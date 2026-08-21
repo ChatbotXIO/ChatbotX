@@ -24,6 +24,14 @@ export type GuestSessionState = {
   guestConversationId: string | null
   isNewGuestSession: boolean
   accessToken: string | null
+  /**
+   * Resolved workspace logo URL, already gated server-side on
+   * `config.showLogo` (undefined when the flag is off or no logo is set).
+   * Kept as separate store state rather than a `WebchatClientConfig` field
+   * so the DTO's allow-listed key set — asserted by
+   * webchat-guest-session.test.ts — stays unchanged.
+   */
+  workspaceLogoUrl?: string
   user: UserResource | null
   config: WebchatClientConfig
 
@@ -58,12 +66,14 @@ export type GuestSessionStore = GuestSessionState & GuestSessionActions
 export const createGuestSessionStore = (
   props: WebchatClientConfig,
   accessToken: string | null = null,
+  workspaceLogoUrl?: string,
 ) => {
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
     isNewGuestSession: false,
     accessToken,
+    workspaceLogoUrl,
     user: null,
     config: props,
 
@@ -244,6 +254,7 @@ export const createGuestSessionStore = (
         type: "message",
         parentId: null,
         attributes: null,
+        sendError: null,
         ...message,
       }
 

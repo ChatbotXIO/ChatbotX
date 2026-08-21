@@ -4,16 +4,16 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
-export const aiAgentQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue(queueNames.enum.aiAgent, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const aiAgentQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue(queueNames.enum.aiAgent, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })
 
 export const AI_FILES_DEFAULT_CHUNK_SIZE = 1000
 export const AI_FILES_DEFAULT_OVERLAP_SIZE = 200

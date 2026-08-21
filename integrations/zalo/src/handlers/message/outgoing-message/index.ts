@@ -29,13 +29,17 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       ctx,
       data: { contact, message },
     } = props
+    const messageIds: string[] = []
     try {
       for await (const zaloMessage of convertMessageToZaloMessage(
         ctx.auth,
         message,
       )) {
         const payload = buildMessagePayload(contact, zaloMessage)
-        await sendMessageToZaloOA(ctx.auth, payload)
+        const response = await sendMessageToZaloOA(ctx.auth, payload)
+        if (response.data?.message_id) {
+          messageIds.push(response.data.message_id)
+        }
         logger.info(`Message sent for Zalo OA UID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -43,8 +47,10 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
+    // Returning the provider ids lets the worker backfill the row's sourceId,
+    // so the oa_send_* webhook echo dedups instead of inserting a duplicate.
     return {
-      messageIds: [],
+      messageIds,
     }
   }
 
@@ -150,12 +156,16 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
       ctx,
       data: { contact },
     } = props
+    const messageIds: string[] = []
     try {
       for await (const zaloMessage of convertFlowStepToZaloMessage(props)) {
-        await sendMessageToZaloOA(
+        const response = await sendMessageToZaloOA(
           ctx.auth,
           buildMessagePayload(contact, zaloMessage),
         )
+        if (response.data?.message_id) {
+          messageIds.push(response.data.message_id)
+        }
         logger.info(`Message sent for ID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -164,6 +174,6 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
     }
 
     return {
-      messageIds: [],
+      messageIds,
     }
   }

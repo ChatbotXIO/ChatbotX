@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 // ---------------------------------------------------------------------------
 // These tests cover OUR orchestration logic in the flow-step handlers
@@ -112,27 +113,47 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/database/schema — sentinel objects
 // ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/database/schema", () => ({
-  tagModel: {
-    id: "tagModel.id",
-    name: "tagModel.name",
-    workspaceId: "tagModel.workspaceId",
-  },
-  contactsOnSequenceModel: {
-    id: "contactsOnSequenceModel.id",
-    contactId: "contactsOnSequenceModel.contactId",
-    sequenceId: "contactsOnSequenceModel.sequenceId",
-    workspaceId: "contactsOnSequenceModel.workspaceId",
-  },
-  contactsToTagsModel: {
-    contactId: "contactsToTagsModel.contactId",
-    tagId: "contactsToTagsModel.tagId",
-  },
-  contactModel: {
-    id: "contactModel.id",
-    workspaceId: "contactModel.workspaceId",
-  },
-}))
+// Do NOT importOriginal the real schema module here: its index pulls in the
+// message sharding client, which opens a database connection at import time.
+vi.mock("@chatbotx.io/database/schema", () => {
+  const explicit: Record<string, unknown> = {
+    tagModel: {
+      id: "tagModel.id",
+      name: "tagModel.name",
+      workspaceId: "tagModel.workspaceId",
+    },
+    contactsOnSequenceModel: {
+      id: "contactsOnSequenceModel.id",
+      contactId: "contactsOnSequenceModel.contactId",
+      sequenceId: "contactsOnSequenceModel.sequenceId",
+      workspaceId: "contactsOnSequenceModel.workspaceId",
+    },
+    contactsToTagsModel: {
+      contactId: "contactsToTagsModel.contactId",
+      tagId: "contactsToTagsModel.tagId",
+    },
+    contactModel: {
+      id: "contactModel.id",
+      workspaceId: "contactModel.workspaceId",
+    },
+    // Real values: ads-conversion/schema.ts (pulled in transitively via
+    // tag/service.ts -> ads-conversion/service.ts) uses these at module scope
+    // to build Zod schemas from adsConversionRuleModel's column shape.
+    createSelectSchema: (
+      _table: unknown,
+      refinements?: Record<string, unknown>,
+    ) => z.object(refinements ?? {}),
+    adsConversionChannelSchema: z.enum(["whatsapp", "facebook"]),
+    adsConversionEventTypeSchema: z.enum(["lead", "purchase"]),
+  }
+  // The real schema index pulls in the message sharding client (opens a DB
+  // connection at import), so serve `{}` sentinels for any model the wider
+  // import graph touches instead of importOriginal.
+  return new Proxy(explicit, {
+    get: (target, prop) => (prop in target ? target[prop as string] : {}),
+    has: () => true,
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/business
@@ -146,8 +167,15 @@ const enqueueAttach = vi.fn(() => {
 const enqueueDetach = vi.fn(() => {
   order.push("enqueue")
 })
+const enqueueTagAppliedEvaluationsForInbox = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/business", () => ({
   tagSyncService: { enqueueAttach, enqueueDetach },
+  adsConversionService: {
+    isEligibleChannel: (channel: string | null | undefined) =>
+      channel === "whatsapp",
+    enqueueTagAppliedEvaluationsForInbox: (...args: unknown[]) =>
+      enqueueTagAppliedEvaluationsForInbox(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
@@ -212,10 +240,16 @@ const {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function addProps(tags: string[], workspaceId = "ws-1", contactId = "c-1") {
+function addProps(
+  tags: string[],
+  workspaceId = "ws-1",
+  contactId = "c-1",
+  contactInbox?: { id: string; inboxId: string; channel: string },
+) {
   return {
     conversation: { workspaceId, contactId },
     step: { tags },
+    contactInbox,
   } as unknown as Parameters<typeof addContactTag>[0]
 }
 
@@ -300,6 +334,7 @@ function reset() {
   enqueueDetach.mockImplementation(() => {
     order.push("enqueue")
   })
+  enqueueTagAppliedEvaluationsForInbox.mockReset()
 }
 
 // ============================================================================
@@ -454,6 +489,66 @@ describe("addContactTag", () => {
       tagId: "tag-9",
     })
     expect(emitTagApplied).toHaveBeenCalledWith("ws-42", "c-77", "tag-9")
+  })
+
+  test("enqueues the ads conversion tagApplied evaluation when a WhatsApp contactInbox is in scope", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = [{ tagId: "tag-1" }]
+
+    await addContactTag(
+      addProps(["alpha"], "ws-1", "c-1", {
+        id: "ci-1",
+        inboxId: "inbox-1",
+        channel: "whatsapp",
+      }),
+    )
+
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledTimes(1)
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      contactInboxId: "ci-1",
+      tagIds: ["tag-1"],
+    })
+  })
+
+  test("does NOT enqueue the ads conversion evaluation without a contactInbox in scope", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = [{ tagId: "tag-1" }]
+
+    await addContactTag(addProps(["alpha"]))
+
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
+  })
+
+  test("does NOT enqueue the ads conversion evaluation for a non-WhatsApp contactInbox", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = [{ tagId: "tag-1" }]
+
+    await addContactTag(
+      addProps(["alpha"], "ws-1", "c-1", {
+        id: "ci-1",
+        inboxId: "inbox-1",
+        channel: "messenger",
+      }),
+    )
+
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
+  })
+
+  test("does NOT enqueue the ads conversion evaluation when no tags were newly linked", async () => {
+    state.txExistingTags = [{ id: "tag-1" }]
+    state.txNewlyLinked = []
+
+    await addContactTag(
+      addProps(["alpha"], "ws-1", "c-1", {
+        id: "ci-1",
+        inboxId: "inbox-1",
+        channel: "whatsapp",
+      }),
+    )
+
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
   })
 })
 

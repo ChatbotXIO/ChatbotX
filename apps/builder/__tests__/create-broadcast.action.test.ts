@@ -59,30 +59,58 @@ vi.mock("@chatbotx.io/database/queries/contact-filter/permission", () => ({
     contactFilter ?? undefined,
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      flowModel: { findFirst: mockFlowFindFirst },
-      messengerMessageTemplateModel: {
-        findFirst: mockMessengerTemplateFindFirst,
+vi.mock("@chatbotx.io/database/client", async () => {
+  const { messengerMessageTemplateModel } = await import(
+    "@chatbotx.io/database/schema"
+  )
+  return {
+    // `db.query.*.findFirst` is mocked directly below, so `where` conditions
+    // built with these are never evaluated by real drizzle — only need to
+    // not throw when called.
+    eq: (...args: unknown[]) => ({ eq: args }),
+    and: (...args: unknown[]) => ({ and: args }),
+    db: {
+      query: {
+        flowModel: { findFirst: mockFlowFindFirst },
+        integrationMessengerModel: {
+          findFirst: mockIntegrationMessengerFindFirst,
+        },
+        integrationWhatsappModel: {
+          findFirst: mockIntegrationWhatsappFindFirst,
+        },
       },
-      whatsappMessageTemplateModel: {
-        findFirst: mockWhatsappTemplateFindFirst,
-      },
-      integrationMessengerModel: {
-        findFirst: mockIntegrationMessengerFindFirst,
-      },
-      integrationWhatsappModel: {
-        findFirst: mockIntegrationWhatsappFindFirst,
-      },
+      insert: mockDbInsert,
+      // BroadcastService.load{Whatsapp,Messenger}TemplateDetail() joins the
+      // template to its integration via a select() chain rather than
+      // query.*.findFirst() — the "found template" mocks below stand in for
+      // the chain's terminal awaited value (an array with 0 or 1 rows).
+      select: () => ({
+        from: (table: unknown) => ({
+          innerJoin: () => ({
+            where: () => ({
+              limit: async () => {
+                const template =
+                  table === messengerMessageTemplateModel
+                    ? await mockMessengerTemplateFindFirst()
+                    : await mockWhatsappTemplateFindFirst()
+                return template ? [template] : []
+              },
+            }),
+          }),
+        }),
+      }),
     },
-    insert: mockDbInsert,
-  },
-}))
+  }
+})
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: { _: "broadcastModel" },
-}))
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/schema")>()
+  return {
+    ...actual,
+    broadcastModel: { _: "broadcastModel" },
+  }
+})
 
 const { createBroadcastAction } = await import(
   "../src/features/broadcasts/actions/create-broadcast.action"

@@ -7,9 +7,11 @@ node_modules
 docker-data/*
 dist
 .turbo
-/apps/build/.next
+**/.turbo
+**/.next
 /apps/worker/dist
 /apps/mcp-server/dist
+/apps/javascript-executor/dist
 .devcontainer
 **/.git
 **/*.md
@@ -19,3 +21,24 @@ dist
 .git
 .github
 reports
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+**/.secrets
+**/.secrets/**
+**/*.key
+**/*.pem
+**/id_ed25519*
+**/id_rsa*
+
+# Drizzle migration snapshots: dev-time-only artifacts of `drizzle-kit generate`
+# (82MB across 148 files vs 768KB of actual migration.sql). Nothing in any image
+# reads them — the container's migration runner uses drizzle-orm's
+# readMigrationFiles(), which globs only `<folder>/migration.sql`, and
+# drizzle-kit is never installed in the image. They MUST stay in git:
+# `drizzle-kit generate` diffs src/schema against the newest snapshot to build
+# the next migration (see packages/database/scripts/check-schema-drift.mjs).
+packages/database/drizzle/*/snapshot.json

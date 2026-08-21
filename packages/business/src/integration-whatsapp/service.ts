@@ -8,7 +8,12 @@ import type {
 } from "@chatbotx.io/database/types"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
+import { z } from "zod"
 import { BaseService } from "../base.service"
+import { logger } from "../logger"
+import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
+import { platformCredentialService } from "../platform-credential/service"
+import { workspaceService } from "../workspace/service"
 
 export type RegistrationStatus = WhatsappRegistrationStatus
 
@@ -27,6 +32,50 @@ type FindWorkspaceIntegrationInput = {
   id: string
   workspaceId: string
 }
+
+type RefreshCapiScopeCacheInput = FindWorkspaceIntegrationInput & {
+  now?: Date
+  maxAgeMs?: number
+  checkScope: (params: {
+    accessToken: string
+    wabaId: string
+  }) => Promise<boolean>
+}
+
+type ReplaceAuthInput = FindWorkspaceIntegrationInput & {
+  auth: unknown
+  hasCapiScope: boolean
+  capiScopeCheckedAt?: Date
+}
+
+type EnsureDatasetIdInput = FindWorkspaceIntegrationInput & {
+  provision: (params: {
+    wabaId: string
+    /** WABA display name — turn into the dataset name so it is not "unknown". */
+    wabaName: string
+    accessToken: string
+  }) => Promise<string>
+}
+
+export const WHATSAPP_CAPI_SCOPE = "whatsapp_business_manage_events"
+export const WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+export const whatsappAuthForCapiScopeSchema = z.object({
+  version: z.string().trim().min(1).optional(),
+  tokens: z.object({
+    accessToken: z.string().trim().min(1),
+  }),
+  metadata: z.object({
+    wabaId: z.string().trim().min(1),
+  }),
+})
+
+// `isManual` is set only for manual token-entry connections; embedded-signup
+// (OAuth) connections leave it undefined. It gates whether the agency System
+// User has access to the WABA (see `resolveDatasetCreationTokens`).
+const whatsappConnectionTypeSchema = z.object({
+  metadata: z.object({ isManual: z.boolean().optional() }).optional(),
+})
 
 type ClaimVerificationCodeSlotInput = FindWorkspaceIntegrationInput & {
   cooldownSeconds: number
@@ -228,10 +277,240 @@ class IntegrationWhatsappService extends BaseService {
     })
   }
 
+  listByWorkspaceId(workspaceId: string) {
+    return integrationWhatsappRepository.listByWorkspaceId(workspaceId)
+  }
+
+  findByIdForWorkspace(
+    input: FindWorkspaceIntegrationInput,
+  ): Promise<IntegrationWhatsappModel | null> {
+    return integrationWhatsappRepository.findByIdForWorkspace(input)
+  }
+
   findWorkspaceIntegration(
     input: FindWorkspaceIntegrationInput,
   ): Promise<IntegrationWhatsappModel | null> {
-    return integrationWhatsappRepository.findWorkspaceIntegration(input)
+    return integrationWhatsappRepository.findByIdForWorkspace(input)
+  }
+
+  /**
+   * Resolves the WhatsApp integration owning an inbox, for the explicit
+   * "Send Meta CAPI Event" action (Meta Conversions API). Mirrors the
+   * messenger/instagram `findByInboxIdForWorkspace` contract — throws rather
+   * than returning null so it composes with `metaConversionsService`'s
+   * generic per-channel integration resolver.
+   */
+  async findByInboxIdForWorkspace(input: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<IntegrationWhatsappModel> {
+    const integration =
+      await integrationWhatsappRepository.findByInboxIdForWorkspace(input)
+
+    if (!integration) {
+      throw new Error("WhatsApp integration not found for workspace")
+    }
+
+    return integration
+  }
+
+  findAllForTokenRefresh() {
+    return integrationWhatsappRepository.findAllForTokenRefresh()
+  }
+
+  findForTokenRefreshByWorkspaceIds(workspaceIds: string[]) {
+    return integrationWhatsappRepository.findForTokenRefreshByWorkspaceIds(
+      workspaceIds,
+    )
+  }
+
+  /**
+   * Replace the stored OAuth credentials after a token refresh. Scoped by
+   * workspace so a forged integration id can never touch another tenant's row.
+   */
+  updateAuth(
+    input: FindWorkspaceIntegrationInput & { auth: Record<string, unknown> },
+  ): Promise<void> {
+    return integrationWhatsappRepository.updateAuth(input)
+  }
+
+  markTokenRefreshError(id: string, error: string): Promise<void> {
+    return integrationWhatsappRepository.markTokenRefreshError(id, error)
+  }
+
+  async refreshCapiScopeCache(
+    input: RefreshCapiScopeCacheInput,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const now = input.now ?? new Date()
+    const maxAgeMs = input.maxAgeMs ?? WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS
+    const existing = await this.findWorkspaceIntegration(input)
+    if (!existing) {
+      return null
+    }
+
+    if (
+      existing.capiScopeCheckedAt &&
+      now.getTime() - existing.capiScopeCheckedAt.getTime() < maxAgeMs
+    ) {
+      return existing
+    }
+
+    const expectedCapiScopeCheckedAt = existing.capiScopeCheckedAt ?? null
+    const claimed =
+      await integrationWhatsappRepository.claimCapiScopeCacheRefresh({
+        id: input.id,
+        workspaceId: input.workspaceId,
+        capiScopeCheckedAt: now,
+        expectedCapiScopeCheckedAt,
+      })
+    if (!claimed) {
+      return this.findWorkspaceIntegration(input)
+    }
+
+    const auth = whatsappAuthForCapiScopeSchema.parse(existing.auth)
+    let hasCapiScope: boolean
+    try {
+      hasCapiScope = await input.checkScope({
+        accessToken: auth.tokens.accessToken,
+        wabaId: existing.wabaId,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, id: input.id, workspaceId: input.workspaceId },
+        "integration-whatsapp: CAPI scope refresh failed",
+      )
+      // Keep the claim timestamp so a transient Meta failure does not trigger a
+      // request-path retry storm; the previous scope value remains authoritative.
+      return claimed
+    }
+
+    return integrationWhatsappRepository.updateCapiScopeCache({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      hasCapiScope,
+      capiScopeCheckedAt: now,
+      expectedCapiScopeCheckedAt: now,
+    })
+  }
+
+  async replaceAuth(
+    input: ReplaceAuthInput,
+  ): Promise<IntegrationWhatsappModel> {
+    const existing = await this.findWorkspaceIntegration(input)
+    if (!existing) {
+      throw new Error("WhatsApp integration not found")
+    }
+
+    const auth = whatsappAuthForCapiScopeSchema.parse(input.auth)
+    if (auth.metadata.wabaId !== existing.wabaId) {
+      throw new Error(
+        "Reconnect returned a different WhatsApp Business Account",
+      )
+    }
+
+    const updated = await integrationWhatsappRepository.replaceAuth({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      auth: input.auth,
+      hasCapiScope: input.hasCapiScope,
+      capiScopeCheckedAt: input.capiScopeCheckedAt ?? new Date(),
+    })
+    if (!updated) {
+      throw new Error("WhatsApp integration not found")
+    }
+
+    return updated
+  }
+
+  async ensureDatasetId(input: EnsureDatasetIdInput): Promise<string> {
+    const existing = await this.findWorkspaceIntegration(input)
+    if (!existing) {
+      throw new Error("WhatsApp integration not found")
+    }
+
+    if (existing.datasetId) {
+      return existing.datasetId
+    }
+
+    const auth = whatsappAuthForCapiScopeSchema.parse(existing.auth)
+    const { primaryToken, fallbackToken } =
+      await this.resolveDatasetCreationTokens({
+        integration: existing,
+        workspaceId: input.workspaceId,
+        connectToken: auth.tokens.accessToken,
+      })
+    const datasetId = await createDatasetWithFallback({
+      primaryToken,
+      fallbackToken,
+      create: (accessToken) =>
+        input.provision({
+          wabaId: existing.wabaId,
+          wabaName: existing.name,
+          accessToken,
+        }),
+    })
+
+    const updated = await integrationWhatsappRepository.updateDatasetIdIfNull({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      datasetId,
+    })
+    if (updated?.datasetId) {
+      return updated.datasetId
+    }
+
+    const reread = await this.findWorkspaceIntegration(input)
+    if (reread?.datasetId) {
+      return reread.datasetId
+    }
+
+    throw new Error("WhatsApp integration dataset id was not stored")
+  }
+
+  /**
+   * The `primaryToken` used to CREATE a Meta CAPI dataset for a WhatsApp
+   * integration, plus the `fallbackToken` to retry with when Meta rejects the
+   * primary for authorization reasons (see `createDatasetWithFallback`).
+   *
+   * Embedded-signup (OAuth) connections had the agency System User added to
+   * their WABA (`addSystemUser`), so the dataset is created with that
+   * system-user token — Meta then attributes the dataset "Creator" to the
+   * business, not the personal user who connected — falling back to the connect
+   * token if that system user cannot create the dataset. Manual token-entry
+   * connections have no such system user on their WABA, and owners without a
+   * WhatsApp credential have no system-user token, so both use the connect token
+   * with no fallback. Either way, provisioning never regresses.
+   */
+  async resolveDatasetCreationTokens(input: {
+    integration: { auth: unknown }
+    workspaceId: string
+    connectToken: string
+    tx?: DatabaseClient
+  }): Promise<{ primaryToken: string; fallbackToken: string | null }> {
+    const connection = whatsappConnectionTypeSchema.safeParse(
+      input.integration.auth,
+    )
+    if (connection.success && connection.data.metadata?.isManual) {
+      return { primaryToken: input.connectToken, fallbackToken: null }
+    }
+
+    const workspace = await workspaceService.findById({
+      id: input.workspaceId,
+      tx: input.tx,
+    })
+    const systemUserToken =
+      await platformCredentialService.resolveWhatsappSystemUserToken({
+        ownerId: workspace.ownerId,
+        tx: input.tx,
+      })
+    if (!systemUserToken) {
+      return { primaryToken: input.connectToken, fallbackToken: null }
+    }
+
+    return {
+      primaryToken: systemUserToken,
+      fallbackToken: input.connectToken,
+    }
   }
 
   /**

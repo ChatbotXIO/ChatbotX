@@ -1,10 +1,10 @@
 import { z } from "zod"
 import { channelTypes } from "./channel"
 
-export const importTypes = z.enum(["contacts", "coupons", "products"])
+export const importTypes = z.enum(["contacts", "coupons", "products", "flow"])
 export type ImportType = z.infer<typeof importTypes>
 
-export const importFormats = z.enum(["csv", "xlsx", "xls"])
+export const importFormats = z.enum(["csv", "xlsx", "xls", "json"])
 export type ImportFormat = z.infer<typeof importFormats>
 
 export const importStatuses = z.enum([
@@ -23,6 +23,7 @@ export const contactImportFields = z.enum([
   "email",
   "firstName",
   "lastName",
+  "sourceUserId",
 ])
 export type ContactImportField = z.infer<typeof contactImportFields>
 
@@ -33,6 +34,10 @@ export const contactImportColumnMapSchema = z
     email: z.string().optional(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
+    // Channel-agnostic column-map key mirroring `ContactInbox.sourceUserId`
+    // (e.g. a WhatsApp Business-Scoped User ID). Only whatsapp import extracts
+    // it today — see `extractRowData`.
+    sourceUserId: z.string().optional(),
   })
   .strip()
 export type ContactImportColumnMap = z.infer<
@@ -104,8 +109,14 @@ export const productImportMetaSchema = z.object({
 })
 export type ProductImportMeta = z.infer<typeof productImportMetaSchema>
 
+export const flowImportMetaSchema = z.object({
+  folderId: z.string().nullable().optional(),
+})
+export type FlowImportMeta = z.infer<typeof flowImportMetaSchema>
+
 export const importMetaByType = {
   contacts: contactImportMetaSchema,
   coupons: couponImportMetaSchema,
   products: productImportMetaSchema,
+  flow: flowImportMetaSchema,
 } as const satisfies Record<ImportType, z.ZodTypeAny>

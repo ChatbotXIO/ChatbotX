@@ -5,6 +5,7 @@ import {
   stripEmptyAndUnresolvedJsonValues,
 } from "@chatbotx.io/business"
 import { createSourceTimezoneResolver } from "@chatbotx.io/business/contact-custom-field"
+import { javascriptExecutionService } from "@chatbotx.io/business/javascript-execution"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import {
   type SystemFieldType,
@@ -13,6 +14,7 @@ import {
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import {
   type CountCharactersStepSchema,
+  type ExecuteJavascriptStepSchema,
   type ExternalRequestStepSchema,
   type FormatDateStepSchema,
   FormatTimezone,
@@ -25,15 +27,19 @@ import {
   SourceTimezoneStrategy,
 } from "@chatbotx.io/utils/datetime"
 import {
+  coerceCustomFieldValueForJavascript,
   contactVariableService,
   extractVariables,
   getSystemFieldValue,
   interpolate,
+  interpolateIntoJavascript,
   resolveContactVariablesDeep,
+  resolveJavascriptInput,
 } from "@chatbotx.io/variables"
 import { faker } from "@faker-js/faker"
 import { formatInTimeZone } from "date-fns-tz"
 import { getProperty } from "dot-prop"
+import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
 
@@ -324,6 +330,79 @@ export async function externalRequest({
       status: "error",
       errorMessage:
         error instanceof Error ? error.message : "External request failed",
+      result: null,
+    }
+  }
+}
+
+export async function handleExecuteJavascript({
+  contactInbox,
+  conversation,
+  step,
+}: ExecuteStepProps<ExecuteJavascriptStepSchema>): Promise<ExecuteStepResult> {
+  try {
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+      conversation,
+    })
+    // Coerced the same way resolveJavascriptInput coerces `{{name}}`
+    // lookups below, so a custom field is typed consistently in `input`
+    // regardless of whether the code reaches it via `input["name"]` or via
+    // a `{{name}}` placeholder rewritten to that same property access.
+    const input: Record<string, unknown> = Object.fromEntries(
+      [...variables.customFieldsMap.entries()].map(([name, field]) => [
+        name,
+        coerceCustomFieldValueForJavascript(field.value, field.type),
+      ]),
+    )
+
+    const systemFieldEntries = await Promise.all(
+      systemFieldTypes.options.map(
+        async (systemField) =>
+          [
+            systemField,
+            await getSystemFieldValue(variables, systemField),
+          ] as const,
+      ),
+    )
+    for (const [systemField, value] of systemFieldEntries) {
+      input[systemField] = value
+    }
+
+    // Authors can reference contact/system/custom/coupon fields as
+    // `{{name}}` in the code, same as the Tiptap picker inserts elsewhere.
+    // Every referenced name is resolved to a plain value and merged into
+    // `input` (coupons are the only name here not already in `input` above),
+    // then `step.code`'s placeholders are rewritten to `input["name"]`
+    // property-access expressions — never a spliced value — so a
+    // contact-controlled value can never be interpreted as JavaScript. See
+    // resolveJavascriptInput / interpolateIntoJavascript in
+    // @chatbotx.io/variables.
+    const jsInputEntries = await resolveJavascriptInput(step.code, variables)
+    for (const [name, value] of jsInputEntries) {
+      input[name] = value
+    }
+    const code = interpolateIntoJavascript(
+      step.code,
+      new Set(jsInputEntries.keys()),
+    )
+
+    await javascriptExecutionService.executeAndMap({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      code,
+      input,
+      customFieldId: step.customFieldId,
+    })
+
+    return { status: "success", result: null }
+  } catch (error) {
+    logger.error({ err: error }, "[handleExecuteJavascript] failed")
+    return {
+      status: "error",
+      errorMessage:
+        error instanceof Error ? error.message : "JavaScript execution failed",
       result: null,
     }
   }

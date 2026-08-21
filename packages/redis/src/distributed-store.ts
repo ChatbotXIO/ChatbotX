@@ -291,6 +291,21 @@ export const distributedStoreFactory = (
     )
     return result === "OK"
   },
+
+  /**
+   * Plain `SET key val EX ttl` — unlike {@link setNumberIfNotExists} this
+   * always writes, overwriting any existing value. Used for fast-path markers
+   * where existence (not the stored value) is the signal, so the exact value
+   * doesn't matter as long as one is present.
+   */
+  async setNumber(
+    key: string,
+    value: number,
+    ttlInSeconds: number,
+  ): Promise<void> {
+    const redisClient = await getRedisClient()
+    await redisClient.set(key, String(value), "EX", ttlInSeconds)
+  },
 })
 
 export type DistributedStore = ReturnType<typeof distributedStoreFactory>

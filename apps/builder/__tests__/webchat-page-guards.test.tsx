@@ -7,12 +7,18 @@ const {
   mockFindFirst,
   mockGetDomainFromHeader,
   mockHeaders,
+  mockIsCommunity,
   mockWorkspaceFind,
 } = vi.hoisted(() => ({
   mockFindFirst: vi.fn(),
   mockGetDomainFromHeader: vi.fn(),
   mockHeaders: vi.fn(),
+  mockIsCommunity: vi.fn(() => false),
   mockWorkspaceFind: vi.fn(),
+}))
+
+vi.mock("@/env", () => ({
+  isCommunity: mockIsCommunity,
 }))
 
 vi.mock("next/headers", () => ({
@@ -45,6 +51,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@/lib/domain", () => ({
   getDomainFromHeader: mockGetDomainFromHeader,
+}))
+
+vi.mock("@/features/tenant/utils", () => ({
+  getTenantSettings: vi.fn().mockResolvedValue({
+    appUrl: "https://app.chatbotx.io",
+    storageUrl: "https://storage.example.com/",
+  }),
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -115,6 +128,7 @@ const setReferer = (referer: string | null) => {
 describe("WebchatPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockIsCommunity.mockReturnValue(false)
     mockFindFirst.mockResolvedValue(targetWebchat)
     mockWorkspaceFind.mockResolvedValue({ scheduledDeletionAt: null })
     mockGetDomainFromHeader.mockResolvedValue("app.chatbotx.io")
@@ -202,6 +216,81 @@ describe("WebchatPage", () => {
     expect(rendered).not.toContain(
       "This website is not authorized to load this chat widget.",
     )
+  })
+
+  test("community render injects the branding menu entry for legacy rows", async () => {
+    mockIsCommunity.mockReturnValue(true)
+    mockFindFirst.mockResolvedValue({
+      ...targetWebchat,
+      authorizedDomains: [],
+      persistentMenus: [
+        { label: "Docs", type: "url", url: "https://docs.example" },
+      ],
+    })
+    setReferer(null)
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    const config = (
+      element as {
+        props: { config: { persistentMenus: { url?: string }[] } }
+      }
+    ).props.config
+    expect(config.persistentMenus).toHaveLength(2)
+    expect(config.persistentMenus.at(-1)).toEqual({
+      label: "⚡ Built with chatbotx.io",
+      type: "url",
+      url: "https://app.chatbotx.io/?ref=selfhosted&channel=webchat",
+    })
+  })
+
+  test("community render keeps an existing branding entry untouched", async () => {
+    mockIsCommunity.mockReturnValue(true)
+    const brandingUrl =
+      "https://app.chatbotx.io/?ref=selfhosted&channel=webchat"
+    mockFindFirst.mockResolvedValue({
+      ...targetWebchat,
+      authorizedDomains: [],
+      persistentMenus: [{ label: "custom", type: "url", url: brandingUrl }],
+    })
+    setReferer(null)
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    const config = (
+      element as {
+        props: { config: { persistentMenus: { url?: string }[] } }
+      }
+    ).props.config
+    expect(config.persistentMenus).toEqual([
+      { label: "custom", type: "url", url: brandingUrl },
+    ])
+  })
+
+  test("non-community render leaves persistentMenus unchanged", async () => {
+    mockIsCommunity.mockReturnValue(false)
+    const menus = [{ label: "Docs", type: "url", url: "https://docs.example" }]
+    mockFindFirst.mockResolvedValue({
+      ...targetWebchat,
+      authorizedDomains: [],
+      persistentMenus: menus,
+    })
+    setReferer(null)
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    const config = (
+      element as {
+        props: { config: { persistentMenus: { url?: string }[] } }
+      }
+    ).props.config
+    expect(config.persistentMenus).toEqual(menus)
   })
 
   test("returns notFound when the webchat does not exist", async () => {

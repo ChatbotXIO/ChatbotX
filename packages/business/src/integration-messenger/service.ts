@@ -15,6 +15,13 @@ class MessengerIntegrationService extends BaseService {
     return findOrFail({ table: integrationMessengerModel, where: { inboxId } })
   }
 
+  findByInboxIdForWorkspace(props: { inboxId: string; workspaceId: string }) {
+    return findOrFail({
+      table: integrationMessengerModel,
+      where: { inboxId: props.inboxId, workspaceId: props.workspaceId },
+    })
+  }
+
   findByIdForWorkspace(props: { id: string; workspaceId: string }) {
     return db.query.integrationMessengerModel.findFirst({
       where: { id: props.id, workspaceId: props.workspaceId },

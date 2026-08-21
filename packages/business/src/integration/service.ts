@@ -14,6 +14,7 @@ import {
   integrationMetaCatalogModel,
   integrationModel,
   integrationTiktokModel,
+  integrationWhatsappModel,
   integrationZaloModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationModel } from "@chatbotx.io/database/types"
@@ -25,6 +26,7 @@ export type TokenRefreshErrorChannel =
   | "instagram"
   | "instagramFacebook"
   | "messenger"
+  | "whatsapp"
 
 export type TokenRefreshErrorIntegration = {
   id: string
@@ -71,61 +73,75 @@ class IntegrationService extends BaseService {
   async findTokenRefreshErrorsByWorkspaceId(
     workspaceId: string,
   ): Promise<TokenRefreshErrorIntegration[]> {
-    const [zalos, tiktoks, instagrams, messengers] = await Promise.all([
-      db
-        .select({
-          id: integrationZaloModel.id,
-          name: integrationZaloModel.name,
-          error: integrationZaloModel.tokenRefreshError,
-        })
-        .from(integrationZaloModel)
-        .where(
-          and(
-            eq(integrationZaloModel.workspaceId, workspaceId),
-            isNotNull(integrationZaloModel.tokenRefreshError),
+    const [zalos, tiktoks, instagrams, messengers, whatsapps] =
+      await Promise.all([
+        db
+          .select({
+            id: integrationZaloModel.id,
+            name: integrationZaloModel.name,
+            error: integrationZaloModel.tokenRefreshError,
+          })
+          .from(integrationZaloModel)
+          .where(
+            and(
+              eq(integrationZaloModel.workspaceId, workspaceId),
+              isNotNull(integrationZaloModel.tokenRefreshError),
+            ),
           ),
-        ),
-      db
-        .select({
-          id: integrationTiktokModel.id,
-          name: integrationTiktokModel.name,
-          error: integrationTiktokModel.tokenRefreshError,
-        })
-        .from(integrationTiktokModel)
-        .where(
-          and(
-            eq(integrationTiktokModel.workspaceId, workspaceId),
-            isNotNull(integrationTiktokModel.tokenRefreshError),
+        db
+          .select({
+            id: integrationTiktokModel.id,
+            name: integrationTiktokModel.name,
+            error: integrationTiktokModel.tokenRefreshError,
+          })
+          .from(integrationTiktokModel)
+          .where(
+            and(
+              eq(integrationTiktokModel.workspaceId, workspaceId),
+              isNotNull(integrationTiktokModel.tokenRefreshError),
+            ),
           ),
-        ),
-      db
-        .select({
-          id: integrationInstagramModel.id,
-          name: integrationInstagramModel.name,
-          error: integrationInstagramModel.tokenRefreshError,
-          type: integrationInstagramModel.type,
-        })
-        .from(integrationInstagramModel)
-        .where(
-          and(
-            eq(integrationInstagramModel.workspaceId, workspaceId),
-            isNotNull(integrationInstagramModel.tokenRefreshError),
+        db
+          .select({
+            id: integrationInstagramModel.id,
+            name: integrationInstagramModel.name,
+            error: integrationInstagramModel.tokenRefreshError,
+            type: integrationInstagramModel.type,
+          })
+          .from(integrationInstagramModel)
+          .where(
+            and(
+              eq(integrationInstagramModel.workspaceId, workspaceId),
+              isNotNull(integrationInstagramModel.tokenRefreshError),
+            ),
           ),
-        ),
-      db
-        .select({
-          id: integrationMessengerModel.id,
-          name: integrationMessengerModel.name,
-          error: integrationMessengerModel.tokenRefreshError,
-        })
-        .from(integrationMessengerModel)
-        .where(
-          and(
-            eq(integrationMessengerModel.workspaceId, workspaceId),
-            isNotNull(integrationMessengerModel.tokenRefreshError),
+        db
+          .select({
+            id: integrationMessengerModel.id,
+            name: integrationMessengerModel.name,
+            error: integrationMessengerModel.tokenRefreshError,
+          })
+          .from(integrationMessengerModel)
+          .where(
+            and(
+              eq(integrationMessengerModel.workspaceId, workspaceId),
+              isNotNull(integrationMessengerModel.tokenRefreshError),
+            ),
           ),
-        ),
-    ])
+        db
+          .select({
+            id: integrationWhatsappModel.id,
+            name: integrationWhatsappModel.name,
+            error: integrationWhatsappModel.tokenRefreshError,
+          })
+          .from(integrationWhatsappModel)
+          .where(
+            and(
+              eq(integrationWhatsappModel.workspaceId, workspaceId),
+              isNotNull(integrationWhatsappModel.tokenRefreshError),
+            ),
+          ),
+      ])
 
     return [
       ...zalos.map((row) => ({
@@ -152,6 +168,12 @@ class IntegrationService extends BaseService {
       ...messengers.map((row) => ({
         id: row.id,
         channel: "messenger" as const,
+        name: row.name,
+        error: row.error as string,
+      })),
+      ...whatsapps.map((row) => ({
+        id: row.id,
+        channel: "whatsapp" as const,
         name: row.name,
         error: row.error as string,
       })),

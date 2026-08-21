@@ -7,12 +7,74 @@ registries:
     password: ${{secrets.DOCKER_PASSWORD}}
 
 updates:
+  # No Dockerfile lives at the repo root — each app has its own under
+  # apps/<app>/docker/Dockerfile, and dependabot's docker ecosystem has no
+  # glob support, so each needs its own directory entry or its base image
+  # never gets tracked.
+  # Node's active LTS line is even-numbered but only becomes LTS each
+  # October; block major bumps so we don't jump onto a non-LTS "Current"
+  # release (e.g. 26 before Oct 2026) — bump the Dockerfile major by hand
+  # once the next LTS ships.
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/apps/builder/docker"
     schedule:
       interval: "daily"
     registries:
       - dockerhub
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
+  - package-ecosystem: "docker"
+    directory: "/apps/worker/docker"
+    schedule:
+      interval: "daily"
+    registries:
+      - dockerhub
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
+  - package-ecosystem: "docker"
+    directory: "/apps/realtime/docker"
+    schedule:
+      interval: "daily"
+    registries:
+      - dockerhub
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
+  - package-ecosystem: "docker"
+    directory: "/apps/mcp-server/docker"
+    schedule:
+      interval: "daily"
+    registries:
+      - dockerhub
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
+  - package-ecosystem: "docker"
+    directory: "/apps/javascript-executor/docker"
+    schedule:
+      interval: "daily"
+    registries:
+      - dockerhub
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
+
+  # Tracks the actions pinned in .github/workflows/*.yml (actions/checkout,
+  # docker/build-push-action, etc.) — without this entry nothing refreshes
+  # those versions, floating-tag or SHA-pinned alike.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(ci)"
 
   # pnpm workspace: a single root entry covers every apps/* packages/* integrations/*
   # member because they share one root pnpm-lock.yaml. Dependabot reads

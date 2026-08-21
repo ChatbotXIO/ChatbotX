@@ -4,16 +4,29 @@ import {
   db,
   eq,
   gt,
+  inArray,
+  isNull,
+  isUniqueViolationError,
+  or,
+  type SQL,
   sql,
 } from "@chatbotx.io/database/client"
 import type { ContactInboxReferral } from "@chatbotx.io/database/schema"
-import { contactInboxModel, contactModel } from "@chatbotx.io/database/schema"
+import {
+  CONTACT_INBOX_SOURCE_USER_ID_KEY,
+  contactInboxModel,
+  contactModel,
+} from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ContactModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
+import {
+  type IncomingContact,
+  isSourceUserIdKeyedIdentity,
+} from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
 
@@ -98,6 +111,55 @@ const compactReferral = (
   return nextReferral
 }
 
+/**
+ * A scoped-user-id-keyed row (e.g. WhatsApp BSUID-keyed) may later see the
+ * contact's primary identity — the phone — appear in a payload. Returns that
+ * newly-learned identity for the caller to write to `Contact.phoneNumber`;
+ * `ContactInbox.sourceId` itself is never rewritten.
+ */
+const resolveLearnedPrimaryIdentity = (
+  contactInbox: ContactInboxModel,
+  incomingContact: IncomingContact,
+): string | undefined => {
+  if (!isSourceUserIdKeyedIdentity(contactInbox)) {
+    return
+  }
+  if (!incomingContact.sourceId) {
+    return
+  }
+  if (incomingContact.sourceId === contactInbox.sourceId) {
+    return
+  }
+  if (incomingContact.sourceId === incomingContact.sourceUserId) {
+    return
+  }
+  return incomingContact.sourceId
+}
+
+/**
+ * WHERE clause matching contact-inbox rows in an inbox by EITHER identity
+ * column, with the empty-list guard every caller needs (`inArray` must never
+ * receive an empty array; `or(single)` is a no-op wrapper). Shared by the
+ * import dedup check here and the coexist bulk import's existing-rows
+ * resolution so the two cannot drift.
+ */
+export const buildContactInboxIdentityWhere = (props: {
+  inboxId: string
+  sourceIds: string[]
+  sourceUserIds: string[]
+}): SQL | undefined => {
+  const { inboxId, sourceIds, sourceUserIds } = props
+  const identityPredicates = [
+    ...(sourceIds.length > 0
+      ? [inArray(contactInboxModel.sourceId, sourceIds)]
+      : []),
+    ...(sourceUserIds.length > 0
+      ? [inArray(contactInboxModel.sourceUserId, sourceUserIds)]
+      : []),
+  ]
+  return and(eq(contactInboxModel.inboxId, inboxId), or(...identityPredicates))
+}
+
 class ContactInboxService extends BaseService {
   protected readonly cachePrefix: string = "contact-inboxes"
 
@@ -153,6 +215,37 @@ class ContactInboxService extends BaseService {
     })
   }
 
+  /**
+   * The most recently active contact inbox for a `sourceId` alone, scoped to
+   * one workspace — for callers that only have `{{user_id}}` (the system
+   * field, which resolves to `sourceId`) and no `inboxId` to disambiguate.
+   * `sourceId` is only unique per `(inboxId, sourceId)` — the SAME external
+   * id can legitimately belong to different contacts across different
+   * inboxes even within one workspace (e.g. the same phone number messaging
+   * two WhatsApp numbers), so a caller that also has the exact `inboxId`
+   * should use `findLatestBySource` instead; this is a best-effort fallback
+   * for surfaces (like the Dynamic Image trigger URL) that don't.
+   */
+  async findLatestBySourceId(props: {
+    tx?: DatabaseClient
+    sourceId: string
+    workspaceId: string
+  }): Promise<ContactInboxModel | undefined> {
+    const { tx = db, sourceId, workspaceId } = props
+    const rows = await tx
+      .select()
+      .from(contactInboxModel)
+      .where(
+        and(
+          eq(contactInboxModel.sourceId, sourceId),
+          this.workspaceScope(workspaceId),
+        ),
+      )
+      .orderBy(sql`${contactInboxModel.lastMessageAt} DESC NULLS LAST`)
+      .limit(1)
+    return rows[0]
+  }
+
   async findBy(props: {
     tx?: DatabaseClient
     where: Partial<FindByProps>
@@ -196,25 +289,42 @@ class ContactInboxService extends BaseService {
   }
 
   /**
-   * Of the given candidate source ids, the subset already linked to this inbox.
-   * Used by the contact import to dedup rows that already exist. Uncached: the
-   * import gates inserts on this and must not see a stale miss. Accepts a `tx`
-   * so the locked re-check can read within the same connection if needed.
+   * Of the given candidate ids, the subsets already linked to this inbox by
+   * `sourceId` OR by the scoped `sourceUserId` (e.g. a WhatsApp BSUID) —
+   * covers a row whose scoped id was already backfilled onto an existing
+   * phone-keyed row. Used by the contact import to dedup rows that already
+   * exist. One query, mirroring the resolution shape in
+   * `bulk-historical-import.ts`, including its empty-array guard: the
+   * `sourceUserId` arm is only added when `sourceUserIds` is non-empty.
+   * Uncached: the import gates inserts on this and must not see a stale miss.
    */
-  async findExistingSourceIds(props: {
+  async findExistingSourceIdentities(props: {
     tx?: DatabaseClient
     inboxId: string
     sourceIds: string[]
-  }): Promise<Set<string>> {
-    const { tx = db, inboxId, sourceIds } = props
-    if (sourceIds.length === 0) {
-      return new Set()
+    sourceUserIds: string[]
+  }): Promise<{ sourceIds: Set<string>; sourceUserIds: Set<string> }> {
+    const { tx = db, inboxId, sourceIds, sourceUserIds } = props
+    if (sourceIds.length === 0 && sourceUserIds.length === 0) {
+      return { sourceIds: new Set(), sourceUserIds: new Set() }
     }
-    const rows = await tx.query.contactInboxModel.findMany({
-      where: { inboxId, sourceId: { in: sourceIds } },
-      columns: { sourceId: true },
-    })
-    return new Set(rows.map((row) => row.sourceId))
+
+    const rows = await tx
+      .select({
+        sourceId: contactInboxModel.sourceId,
+        sourceUserId: contactInboxModel.sourceUserId,
+      })
+      .from(contactInboxModel)
+      .where(
+        buildContactInboxIdentityWhere({ inboxId, sourceIds, sourceUserIds }),
+      )
+
+    return {
+      sourceIds: new Set(rows.map((row) => row.sourceId)),
+      sourceUserIds: new Set(
+        rows.flatMap((row) => (row.sourceUserId ? [row.sourceUserId] : [])),
+      ),
+    }
   }
 
   async findManyByIds(ids: string[]): Promise<ContactInboxWithAnalytics[]> {
@@ -560,6 +670,112 @@ class ContactInboxService extends BaseService {
       .limit(1)
     const row = rows[0]
     return row !== undefined
+  }
+
+  /**
+   * Backfills identity fields Meta reveals AFTER a ContactInbox row already
+   * exists (a returning WhatsApp Business-Scoped User ID adopter, or a phone
+   * that becomes visible on a previously BSUID-keyed row). Channel-agnostic:
+   * driven entirely by comparing `incomingContact` to the already-resolved
+   * `contactInbox` row, no channel-specific naming or branching.
+   *
+   * `ContactInbox.sourceId` is NEVER rewritten — a row's primary identity is
+   * fixed at creation (stability rule; a resolver-chain match already proved
+   * `sourceId` or `sourceUserId` still matches this row).
+   *
+   * - `sourceUserId`: backfilled only when currently null. Guarded by the
+   *   partial unique index `(inboxId, sourceUserId)`; a losing race (the id
+   *   was just claimed by another row in this inbox) is caught and skipped
+   *   with a structured warn log — cross-row contact merge is a documented
+   *   follow-up, not handled here.
+   * - `sourceUsername`: upserted on change (display-only, never a key).
+   * - Phone learned later on a BSUID-keyed row (`sourceId === sourceUserId`):
+   *   when the incoming payload's own `sourceId` differs from both the row's
+   *   `sourceId` and its `sourceUserId`, it is a newly-visible primary
+   *   identity (e.g. a phone) — returned as `learnedPrimaryIdentity` for the
+   *   caller to write to `Contact.phoneNumber` via `contactService.update`
+   *   (kept out of this service to avoid a cross-domain import cycle);
+   *   never written into `ContactInbox.sourceId`.
+   */
+  async syncScopedIdentity(props: {
+    tx?: DatabaseClient
+    contactInbox: ContactInboxModel
+    incomingContact: IncomingContact
+  }): Promise<{
+    contactInbox: ContactInboxModel
+    learnedPrimaryIdentity?: string
+  }> {
+    const { tx = db, incomingContact } = props
+    let contactInbox = props.contactInbox
+
+    const updateRow = async (
+      set: Partial<Pick<ContactInboxModel, "sourceUserId" | "sourceUsername">>,
+      options?: { onlyWhenSourceUserIdNull?: boolean },
+    ): Promise<boolean> => {
+      const [updated] = await tx
+        .update(contactInboxModel)
+        .set(set)
+        .where(
+          and(
+            eq(contactInboxModel.id, contactInbox.id),
+            options?.onlyWhenSourceUserIdNull
+              ? isNull(contactInboxModel.sourceUserId)
+              : undefined,
+          ),
+        )
+        .returning()
+      if (updated) {
+        contactInbox = updated
+      }
+      return updated !== undefined
+    }
+
+    const backfillSourceUserId =
+      Boolean(incomingContact.sourceUserId) && !contactInbox.sourceUserId
+    const upsertSourceUsername =
+      Boolean(incomingContact.sourceUsername) &&
+      incomingContact.sourceUsername !== contactInbox.sourceUsername
+    const usernameSet = { sourceUsername: incomingContact.sourceUsername }
+
+    // One combined UPDATE for the common "identity reveal" message that
+    // carries both fields. `applied` stays false when the scoped-id claim is
+    // lost to a concurrent writer (guard row gone, or unique violation) —
+    // the single fallback below then preserves the username on its own.
+    let applied = false
+    if (backfillSourceUserId) {
+      try {
+        applied = await updateRow(
+          {
+            sourceUserId: incomingContact.sourceUserId,
+            ...(upsertSourceUsername ? usernameSet : {}),
+          },
+          { onlyWhenSourceUserIdNull: true },
+        )
+      } catch (error) {
+        if (!isUniqueViolationError(error, CONTACT_INBOX_SOURCE_USER_ID_KEY)) {
+          throw error
+        }
+        logger.warn(
+          {
+            contactInboxId: contactInbox.id,
+            inboxId: contactInbox.inboxId,
+            sourceUserId: incomingContact.sourceUserId,
+          },
+          "ContactInbox.sourceUserId backfill skipped: already claimed by another row in this inbox",
+        )
+      }
+    }
+    if (!applied && upsertSourceUsername) {
+      await updateRow(usernameSet)
+    }
+
+    return {
+      contactInbox,
+      learnedPrimaryIdentity: resolveLearnedPrimaryIdentity(
+        contactInbox,
+        incomingContact,
+      ),
+    }
   }
 
   async invalidateTracking(

@@ -55,9 +55,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
-  workspaceMemberRoles: { enum: { owner: "owner" } },
-}))
+vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/partials")>()
+  return {
+    ...actual,
+    workspaceMemberRoles: { enum: { owner: "owner" } },
+  }
+})
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID: "1",
@@ -68,7 +73,19 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(async (_key: string, resolver: () => unknown) => resolver()),
   invalidateCacheByTags: mocks.invalidateCacheByTags,
+  distributedLock: {
+    runExclusive: vi.fn(async ({ fn }: { fn: () => unknown }) => fn()),
+  },
+  createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
+
+vi.mock("@chatbotx.io/worker-config", () => ({
+  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
+}))
+
+// These suites exercise the quota-driven create path; the community
+// workspace cap is covered by __tests__/workspace.service.test.ts.
+vi.mock("../../keys", () => ({ isCommunity: vi.fn(() => false) }))
 
 vi.mock("../../enterprise/tenant/service", () => ({
   tenantService: { findByOwner: vi.fn(async () => undefined) },

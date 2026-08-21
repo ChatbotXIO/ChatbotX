@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/table"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
 import { TiktokDisconnect } from "./components/tiktok-disconnect"
@@ -65,7 +66,16 @@ export function TiktokManage({
           <TableBody>
             {integrationTiktoks.map((integrationTiktok) => (
               <TableRow key={integrationTiktok.id}>
-                <TableCell>{integrationTiktok.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {integrationTiktok.tokenRefreshError && (
+                      <TokenRefreshErrorIcon
+                        message={integrationTiktok.tokenRefreshError}
+                      />
+                    )}
+                    {integrationTiktok.name}
+                  </div>
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <TiktokRefreshToken integrationTiktok={integrationTiktok} />
                   <TiktokDisconnect integrationTiktok={integrationTiktok} />

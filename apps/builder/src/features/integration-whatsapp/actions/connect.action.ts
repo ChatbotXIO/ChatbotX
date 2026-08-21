@@ -51,6 +51,7 @@ import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl, getBrokerOrigin } from "@/lib/oauth-broker"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { authActionClient } from "@/lib/safe-action"
+import { hasWhatsappCapiScope } from "../libs/capi-scope"
 import {
   isCoexistOnboardingIntent,
   WHATSAPP_OAUTH_CALLBACK_PATH,
@@ -110,7 +111,7 @@ async function deriveSignupTargets(
 
   const waba = await findWaba({
     wabaId,
-    acessToken: accessToken,
+    accessToken,
     version,
     fields: "owner_business_info",
   })
@@ -874,6 +875,17 @@ export const connectWhatsappAction = authActionClient
           auth,
           isCoexist,
           platformType,
+        })
+
+        await integrationWhatsappService.refreshCapiScopeCache({
+          id: integrationRow.id,
+          workspaceId,
+          maxAgeMs: 0,
+          checkScope: (scopeInput) =>
+            hasWhatsappCapiScope({
+              ...scopeInput,
+              appAccessToken: `${whatsappSettings.clientId}|${whatsappSettings.clientSecret}`,
+            }),
         })
 
         let registrationError:

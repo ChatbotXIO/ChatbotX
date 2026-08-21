@@ -1,7 +1,9 @@
 "use client"
 
+import { defaultReplyFrequencies } from "@chatbotx.io/database/partials"
 import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
@@ -18,10 +20,24 @@ import { updateWorkspaceAdvancedAction } from "./actions/update-workspace-action
 import {
   allCountryOptions,
   allSupportedLanguages,
+  allTimezoneCodes,
   allTimezoneOptions,
   UNKNOWN_COUNTRY,
 } from "./schema/types"
 import { updateWorkspaceAdvancedRequest } from "./schema/update-workspace-schema"
+
+// Legacy workspaces (and every channel-connect action) store the timezone as
+// `"UTC"`, but `allTimezoneCodes` is keyed by the IANA canonical `"Etc/UTC"`.
+// Left as-is, `z.enum(allTimezoneCodes)` rejects `"UTC"`, the whole advanced
+// form is invalid, and the Confirm button stays disabled forever. Coerce any
+// stored value that is not a known code to a valid one so the form loads valid
+// and self-heals the row on the next save.
+const FALLBACK_TIMEZONE = "Etc/UTC"
+const timezoneCodeSet = new Set<string>(allTimezoneCodes)
+
+function normalizeTimezone(timezone: string): string {
+  return timezoneCodeSet.has(timezone) ? timezone : FALLBACK_TIMEZONE
+}
 
 export function UpdateWorkspaceAdvancedForm({
   workspace,
@@ -30,6 +46,12 @@ export function UpdateWorkspaceAdvancedForm({
 }) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
+  const defaultReplyFrequencyOptions = defaultReplyFrequencies.options.map(
+    (frequency) => ({
+      value: frequency,
+      label: t(`fields.defaultReplyFrequency.options.${frequency}`),
+    }),
+  )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateWorkspaceAdvancedAction.bind(null, workspace.id),
@@ -53,9 +75,10 @@ export function UpdateWorkspaceAdvancedForm({
         mode: "onChange",
         defaultValues: {
           defaultReply: workspace.defaultReply ?? "",
+          defaultReplyFrequency: workspace.defaultReplyFrequency,
           targetCountry: workspace.targetCountry ?? UNKNOWN_COUNTRY,
           language: workspace.language,
-          timezone: workspace.timezone,
+          timezone: normalizeTimezone(workspace.timezone),
           brandColor: workspace.brandColor,
           developmentMode: workspace.developmentMode,
         },
@@ -63,6 +86,8 @@ export function UpdateWorkspaceAdvancedForm({
       errorMapProps: {},
     },
   )
+
+  const hasDefaultReply = Boolean(form.watch("defaultReply"))
 
   return (
     <Card>
@@ -73,15 +98,34 @@ export function UpdateWorkspaceAdvancedForm({
             onSubmit={handleSubmitWithAction}
           >
             <SettingRow
-              description={t("fields.defaultReply.description")}
+              description={
+                <>
+                  <p>{t("fields.defaultReply.description")}</p>
+                  {hasDefaultReply && (
+                    <p>{t("fields.defaultReplyFrequency.description")}</p>
+                  )}
+                </>
+              }
               label={t("fields.defaultReply.label")}
             >
-              <ComboboxField
-                emptyText={t("actions.noRecordFound")}
-                name="defaultReply"
-                options={flowOptions}
-                placeholder={t("actions.pleaseSelect")}
-              />
+              <div className="flex flex-col gap-2">
+                <ComboboxField
+                  allowClear
+                  clearLabel={t("messages.none")}
+                  emptyText={t("actions.noRecordFound")}
+                  emptyValue={null}
+                  name="defaultReply"
+                  options={flowOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                />
+                {hasDefaultReply && (
+                  <SelectField
+                    name="defaultReplyFrequency"
+                    options={defaultReplyFrequencyOptions}
+                    placeholder={t("actions.pleaseSelect")}
+                  />
+                )}
+              </div>
             </SettingRow>
 
             <SettingRow

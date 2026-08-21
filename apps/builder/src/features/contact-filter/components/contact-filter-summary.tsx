@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 import type { ContactFilterCriteria } from "../schemas"
 import {
   formatConditionValueDisplay,
+  formatCtwaRetargetChipLabel,
   getConditionOptions,
   getFieldConfigs,
 } from "./contact-filter-config"
@@ -52,6 +53,22 @@ export function ContactFilterSummary({
       </div>
       <div className="space-y-2">
         {contactFilter.conditions.map((condition) => {
+          // Machine-generated, no-operator condition — render before any
+          // `condition.operator` access, which this branch doesn't have.
+          // `"segment" in condition` (not `condition.field === "ctwaRetarget"`)
+          // narrows cleanly — see the comment in
+          // `contact-filter-condition-row.tsx`.
+          if ("segment" in condition) {
+            return (
+              <div
+                className="rounded-md border bg-background px-3 py-2 text-sm"
+                key={`ctwaRetarget:${condition.segment}:${condition.adId ?? "all"}:${condition.since}:${condition.until}`}
+              >
+                {formatCtwaRetargetChipLabel(condition, t)}
+              </div>
+            )
+          }
+
           const isCustomField = condition.field === "customField"
           const isCouponTopic = condition.field === "couponTopic"
           const fieldConfig = configs.find((config) => {

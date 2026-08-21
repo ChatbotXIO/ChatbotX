@@ -8,6 +8,7 @@ import {
   parseOriginError,
   WhatsappException,
 } from "../exception"
+import { logger } from "./logger"
 
 function extractApiFields(exc: WhatsappException): ChannelErrorSource {
   const originFields = parseOriginError(exc.getOriginError())
@@ -92,6 +93,7 @@ const PAYLOAD_INVALID_CODES = new Set([
   132_015, // Template paused
   132_016, // Template permanently disabled
   132_018, // Template validation error
+  131_062, // Authentication-category template (or bid/optimization spec) sent to a BSUID-keyed recipient
   132_068, // Flow blocked
   132_069, // Flow throttled
   134_100, // Only marketing messages allowed
@@ -232,7 +234,7 @@ export function isRevokedTokenError(error: unknown): boolean {
 }
 
 export function mapToChannelError(rawError: unknown): ChannelError {
-  console.log("mapToChannelError", rawError)
+  logger.debug({ rawError }, "mapToChannelError")
   if (rawError instanceof ChannelError) {
     return rawError
   }

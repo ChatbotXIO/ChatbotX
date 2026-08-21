@@ -33,6 +33,7 @@ const waitRow = {
   flowId: "flow-1",
   flowVersionId: "flow-version-1",
   contactInboxId: "contact-inbox-1",
+  appointmentId: null,
   conversationId: "conversation-1",
   nodeId: "next-node",
   stepId: "step-1",
@@ -87,6 +88,21 @@ describe("runWaitResume", () => {
           broadcastId: "broadcast-1",
           contactInboxId: "contact-inbox-1",
         },
+      }),
+    )
+  })
+
+  test("preserves appointmentId when resuming the connected node", async () => {
+    smartDelayService.findById.mockResolvedValueOnce({
+      ...waitRow,
+      appointmentId: "appointment-1",
+    })
+
+    await runWaitResume({ smartDelayId: "smart-delay-1" })
+
+    expect(runFlowNode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appointmentId: "appointment-1",
       }),
     )
   })

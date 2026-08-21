@@ -7,6 +7,7 @@ import type { ContactFilterCondition } from "../schemas"
 import {
   type FieldConfig,
   formatConditionValueDisplay,
+  formatCtwaRetargetChipLabel,
 } from "./contact-filter-config"
 
 type ContactFilterConditionRowProps = {
@@ -25,6 +26,34 @@ export const ContactFilterConditionRow = ({
   onRemove,
 }: ContactFilterConditionRowProps) => {
   const t = useTranslations()
+
+  // Machine-generated, no-operator condition (deep-linked from Ads Analytics'
+  // Retarget menu) — render before any `row.operator` access, which this
+  // branch of the union doesn't have. Removable but not hand-editable.
+  // `"segment" in row` (not `row.field === "ctwaRetarget"`) narrows cleanly:
+  // `ContactFilterField`'s backend enum includes "ctwaRetarget" too, which
+  // leaks into the generic static-field schema's `field` literal (a
+  // pre-existing looseness — see the `@ts-expect-error` in `schemas/index.ts`)
+  // — `field ===` alone wouldn't exclude that leaked, operator-bearing member.
+  if ("segment" in row) {
+    return (
+      <div className="flex min-h-11 items-center gap-2 rounded-md border bg-muted/40 px-3">
+        <span className="flex-1 text-sm">
+          {formatCtwaRetargetChipLabel(row, t)}
+        </span>
+        <Button
+          aria-label={t("actions.remove")}
+          className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+          onClick={onRemove}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <XIcon size={16} />
+        </Button>
+      </div>
+    )
+  }
 
   const isCustomField = row.field === "customField"
   const isCouponTopic = row.field === "couponTopic"

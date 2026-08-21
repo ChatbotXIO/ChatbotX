@@ -1,9 +1,17 @@
 {
   "fields": {
-    "omnichannel": { "label": "Omnicanale" },
-    "smtp": { "label": "SMTP" },
-    "messenger": { "label": "Messenger" },
-    "image": { "label": "Immagine" },
+    "omnichannel": {
+      "label": "Omnicanale"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "Immagine"
+    },
     "instagram": {
       "label": "Instagram",
       "loginTitle": "Accedi con Instagram",
@@ -15,7 +23,9 @@
       "cloneFromMessenger": "Clona da Messenger",
       "clonedFromMessenger": "Clonato da Messenger"
     },
-    "zalo": { "label": "Zalo OA" },
+    "zalo": {
+      "label": "Zalo OA"
+    },
     "telegram": {
       "label": "Telegram",
       "botToken": "Token del bot",
@@ -25,17 +35,39 @@
         "step3": "Dopo aver creato il bot, riceverai il token API del bot. Copia il token API e incollalo qui sotto."
       }
     },
-    "matchAll": { "label": "Soddisfa tutte le condizioni seguenti" },
-    "matchAny": { "label": "Soddisfa una delle condizioni seguenti" },
-    "condition": { "label": "Condizione" },
-    "actions": { "label": "Azioni" },
-    "tags": { "label": "Tag" },
-    "customFields": { "label": "Campi personalizzati" },
-    "pipelines": { "label": "Pipeline" },
-    "sequences": { "label": "Sequenze" },
-    "ecommerce": { "label": "E-commerce" },
-    "entryPointLink": { "label": "Link del punto di ingresso" },
-    "assignedId": { "label": "Assegna a" },
+    "matchAll": {
+      "label": "Soddisfa tutte le condizioni seguenti"
+    },
+    "matchAny": {
+      "label": "Soddisfa una delle condizioni seguenti"
+    },
+    "condition": {
+      "label": "Condizione"
+    },
+    "actions": {
+      "label": "Azioni"
+    },
+    "tags": {
+      "label": "Tag"
+    },
+    "customFields": {
+      "label": "Campi personalizzati"
+    },
+    "pipelines": {
+      "label": "Pipeline"
+    },
+    "sequences": {
+      "label": "Sequenze"
+    },
+    "ecommerce": {
+      "label": "E-commerce"
+    },
+    "entryPointLink": {
+      "label": "Link del punto di ingresso"
+    },
+    "assignedId": {
+      "label": "Assegna a"
+    },
     "operator": {
       "label": "Operatore",
       "is": "È",
@@ -63,8 +95,12 @@
       "onlyContactsMatch": "Solo i contatti che corrispondono a",
       "moreOptions": "Altre opzioni"
     },
-    "contactNote": { "label": "Nota del contatto" },
-    "chooseTime": { "label": "Scegli l'ora" },
+    "contactNote": {
+      "label": "Nota del contatto"
+    },
+    "chooseTime": {
+      "label": "Scegli l'ora"
+    },
     "notificationType": {
       "label": "Tipo di notifica",
       "notifyAdmin": "Notifica amministratore",
@@ -78,18 +114,42 @@
       "telegram": "Telegram",
       "browser": "Browser"
     },
-    "accessToken": { "label": "Token di accesso" },
-    "botField": { "label": "Campo del bot" },
-    "agent": { "label": "Agente" },
-    "aiAgent": { "label": "Agente IA" },
-    "aiQueuedMessages": { "label": "Messaggi IA in coda" },
-    "aiFile": { "label": "File IA" },
-    "aiFunction": { "label": "Funzione IA" },
-    "aiTrigger": { "label": "Trigger IA" },
-    "alphanumericLength": { "label": "Lunghezza alfanumerica" },
-    "analytics": { "label": "Analisi" },
-    "apiKey": { "label": "Chiave API" },
-    "auth": { "label": "Autenticazione" },
+    "accessToken": {
+      "label": "Token di accesso"
+    },
+    "botField": {
+      "label": "Campo del bot"
+    },
+    "agent": {
+      "label": "Agente"
+    },
+    "aiAgent": {
+      "label": "Agente IA"
+    },
+    "aiQueuedMessages": {
+      "label": "Messaggi IA in coda"
+    },
+    "aiFile": {
+      "label": "File IA"
+    },
+    "aiFunction": {
+      "label": "Funzione IA"
+    },
+    "aiTrigger": {
+      "label": "Trigger IA"
+    },
+    "alphanumericLength": {
+      "label": "Lunghezza alfanumerica"
+    },
+    "analytics": {
+      "label": "Analisi"
+    },
+    "apiKey": {
+      "label": "Chiave API"
+    },
+    "auth": {
+      "label": "Autenticazione"
+    },
     "authorizedDomain": {
       "description": "I domini o sottodomini autorizzati ad accedere alla tua webchat.",
       "label": "Domini autorizzati{plural, select, 1 {} other {}}"
@@ -99,44 +159,82 @@
       "placeholder": "example.com",
       "tooltip": "Elenco dei domini ai quali può accedere l'agente IA. Lascia vuoto per consentire tutti i domini."
     },
-    "authToken": { "label": "Token" },
+    "authToken": {
+      "label": "Token"
+    },
     "authType": {
       "headers": "Intestazione personalizzata",
-      "none": "Nessuna",
       "token": "Token"
     },
-    "automatedResponse": { "label": "Risposta automatica" },
-    "avatar": { "label": "Immagine del profilo" },
-    "reflink": { "label": "Link del punto di ingresso" },
-    "qrCode": { "label": "Codice QR" },
+    "automatedResponse": {
+      "label": "Risposta automatica"
+    },
+    "avatar": {
+      "label": "Immagine del profilo"
+    },
+    "reflink": {
+      "label": "Link del punto di ingresso"
+    },
+    "qrCode": {
+      "label": "Codice QR"
+    },
+    "dynamicImage": {
+      "label": "Immagine dinamica"
+    },
     "savePayloadToCustomField": {
       "label": "Salva il payload nel campo personalizzato"
     },
-    "bot": { "label": "Bot" },
-    "botResponse": { "label": "Risposta del bot" },
+    "bot": {
+      "label": "Bot"
+    },
+    "botResponse": {
+      "label": "Risposta del bot"
+    },
     "brandColor": {
       "description": "Questo colore viene utilizzato sui pulsanti per adattarsi al tuo marchio nella pagina di destinazione, nelle e-mail e nella webchat.",
       "label": "Colore del marchio"
     },
-    "broadcast": { "label": "Broadcast" },
-    "trigger": { "label": "Trigger" },
-    "webhook": { "label": "Webhook" },
+    "broadcast": {
+      "label": "Broadcast"
+    },
+    "trigger": {
+      "label": "Trigger"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
     "button": {
       "label": "Pulsante",
       "whenPressed": "Quando viene premuto questo pulsante"
     },
-    "buttonLabel": { "label": "Etichetta del pulsante" },
-    "category": { "label": "Categoria" },
-    "completed": { "label": "Completato" },
-    "workspace": { "label": "Spazio di lavoro" },
+    "buttonLabel": {
+      "label": "Etichetta del pulsante"
+    },
+    "category": {
+      "label": "Categoria"
+    },
+    "completed": {
+      "label": "Completato"
+    },
+    "workspace": {
+      "label": "Spazio di lavoro"
+    },
     "workspaceId": {
       "description": "Identificatore univoco del tuo spazio di lavoro.",
       "label": "ID spazio di lavoro"
     },
-    "workspaceName": { "label": "Nome account" },
-    "contact": { "label": "Contatto" },
-    "contacts": { "label": "Contatti" },
-    "conversation": { "label": "Conversazione" },
+    "workspaceName": {
+      "label": "Nome account"
+    },
+    "contact": {
+      "label": "Contatto"
+    },
+    "contacts": {
+      "label": "Contatti"
+    },
+    "conversation": {
+      "label": "Conversazione"
+    },
     "conversationStarter": {
       "description": "Gli avvii di conversazione vengono utilizzati per iniziare una conversazione con un utente.",
       "label": "Avvii di conversazione{plural, select, 1 {} other {}}",
@@ -146,11 +244,22 @@
         "sendText": "Invia testo"
       }
     },
-    "createdAt": { "label": "Creato il" },
-    "currentTime": { "label": "Ora corrente" },
-    "customRange": { "label": "Intervallo personalizzato" },
-    "customCss": { "label": "CSS personalizzato" },
-    "theme": { "label": "Tema", "placeholder": "Seleziona un tema" },
+    "createdAt": {
+      "label": "Creato il"
+    },
+    "currentTime": {
+      "label": "Ora corrente"
+    },
+    "customRange": {
+      "label": "Intervallo personalizzato"
+    },
+    "customCss": {
+      "label": "CSS personalizzato"
+    },
+    "theme": {
+      "label": "Tema",
+      "placeholder": "Seleziona un tema"
+    },
     "customJS": {
       "label": "JS personalizzato",
       "placeholder": "Inserisci JavaScript personalizzato"
@@ -168,16 +277,26 @@
       "increase": "Aumenta di",
       "decrease": "Diminuisci di"
     },
-    "dataCollect": { "label": "Raccolta dati" },
+    "dataCollect": {
+      "label": "Raccolta dati"
+    },
     "defaultReply": {
       "description": "È la risposta predefinita che il tuo spazio di lavoro invierà agli utenti quando non sa come rispondere al loro messaggio.",
       "label": "Risposta predefinita"
+    },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
     },
     "smartResponseDelaySeconds": {
       "description": "Imposta il tempo di attesa del bot prima di rispondere dopo l'ultimo messaggio dell'utente. Se l'utente invia un altro messaggio, il timer si azzera e i messaggi vengono accodati in un'unica risposta.",
       "label": "Ritardo della risposta del bot",
       "minutes": "{count, plural, one {# minuto} other {# minuti}}",
-      "none": "Nessuno",
       "seconds": "{count, plural, one {# secondo} other {# secondi}}"
     },
     "delayType": {
@@ -198,25 +317,53 @@
       "description": "Il bot funzionerà solo per gli amministratori del bot. Attiva questa opzione se stai creando il bot e non vuoi che utenti non amministratori lo utilizzino.",
       "label": "Modalità sviluppo"
     },
-    "email": { "label": "E-mail", "placeholder": "Inserisci e-mail" },
+    "email": {
+      "label": "E-mail",
+      "placeholder": "Inserisci e-mail"
+    },
     "embedCode": {
       "description": "Copia e incolla questo codice nel tuo sito web per incorporare il widget della chat.",
       "label": "Codice di incorporamento",
       "securityNote": "Nota sulla sicurezza",
       "securityNoteDescription": "Questo widget funzionerà solo nei domini autorizzati nella configurazione della webchat. Assicurati di aggiungere il tuo dominio all'elenco dei domini autorizzati."
     },
-    "processingStatus": { "label": "Stato di elaborazione" },
-    "enable": { "label": "Attiva" },
-    "file": { "label": "File" },
-    "link": { "label": "Link" },
-    "message": { "label": "Messaggio" },
-    "filter": { "label": "Filtro" },
-    "finalMessage": { "label": "Messaggio finale" },
-    "firstName": { "label": "Nome", "placeholder": "Inserisci il nome" },
-    "countryCode": { "label": "Prefisso internazionale" },
-    "contactId": { "label": "ID contatto" },
-    "flow": { "label": "Flusso" },
-    "flowId": { "label": "ID flusso" },
+    "processingStatus": {
+      "label": "Stato di elaborazione"
+    },
+    "enable": {
+      "label": "Attiva"
+    },
+    "file": {
+      "label": "File"
+    },
+    "link": {
+      "label": "Link"
+    },
+    "message": {
+      "label": "Messaggio"
+    },
+    "filter": {
+      "label": "Filtro"
+    },
+    "finalMessage": {
+      "label": "Messaggio finale"
+    },
+    "firstName": {
+      "label": "Nome",
+      "placeholder": "Inserisci il nome"
+    },
+    "countryCode": {
+      "label": "Prefisso internazionale"
+    },
+    "contactId": {
+      "label": "ID contatto"
+    },
+    "flow": {
+      "label": "Flusso"
+    },
+    "flowId": {
+      "label": "ID flusso"
+    },
     "flows": {
       "aiGenerateText": "{aiName}: Genera testo",
       "aiGenerateImage": "{aiName}: Genera immagine",
@@ -230,9 +377,16 @@
       "aiGenerateTextAgent": "{aiName}: Genera agente testuale",
       "aiDeleteMessageHistory": "{aiName}: Elimina cronologia messaggi"
     },
-    "steps": { "label": "Passaggi", "placeholder": "Seleziona passaggio" },
-    "folder": { "label": "Cartella" },
-    "format": { "label": "Formato" },
+    "steps": {
+      "label": "Passaggi",
+      "placeholder": "Seleziona passaggio"
+    },
+    "folder": {
+      "label": "Cartella"
+    },
+    "format": {
+      "label": "Formato"
+    },
     "framework": {
       "angular": "Angular",
       "ember": "Ember",
@@ -240,36 +394,77 @@
       "svelte": "Svelte",
       "vue": "Vue"
     },
-    "function": { "label": "Funzione" },
-    "gemini": { "label": "Gemini" },
-    "geminiModel": { "label": "Modello Gemini" },
+    "function": {
+      "label": "Funzione"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Modello Gemini"
+    },
     "gender": {
       "female": "Donna",
       "label": "Genere",
       "male": "Uomo",
       "unknown": "Sconosciuto"
     },
-    "googleSheets": { "label": "Google Sheets" },
-    "activeCampaign": { "label": "ActiveCampaign" },
-    "getResponse": { "label": "GetResponse" },
-    "mailchimp": { "label": "Mailchimp" },
-    "mailerLite": { "label": "MailerLite" },
-    "klaviyo": { "label": "Klaviyo" },
-    "moosend": { "label": "Moosend" },
-    "host": { "label": "Host", "placeholder": "smtp.example.com" },
-    "hideHeader": { "label": "Nascondi intestazione" },
-    "hideMessageInput": { "label": "Nascondi campo del messaggio" },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "GetResponse"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "Host",
+      "placeholder": "smtp.example.com"
+    },
+    "hideHeader": {
+      "label": "Nascondi intestazione"
+    },
+    "hideMessageInput": {
+      "label": "Nascondi campo del messaggio"
+    },
     "inbox": {
       "label": "Posta in arrivo",
       "placeholder": "Seleziona una casella di posta"
     },
-    "inboxTeam": { "label": "Team della posta in arrivo" },
-    "teamMembers": { "label": "Membri del team" },
-    "inboxTeamMember": { "label": "Membro del team della posta in arrivo" },
-    "inputCustomField": { "label": "Campo personalizzato di input" },
-    "insertLink": { "label": "Inserisci link" },
-    "instructions": { "label": "Messaggio di sistema (prompt)" },
-    "isDefault": { "label": "Contrassegna come predefinito" },
+    "inboxTeam": {
+      "label": "Team della posta in arrivo"
+    },
+    "teamMembers": {
+      "label": "Membri del team"
+    },
+    "inboxTeamMember": {
+      "label": "Membro del team della posta in arrivo"
+    },
+    "inputCustomField": {
+      "label": "Campo personalizzato di input"
+    },
+    "insertLink": {
+      "label": "Inserisci link"
+    },
+    "instructions": {
+      "label": "Messaggio di sistema (prompt)"
+    },
+    "isDefault": {
+      "label": "Contrassegna come predefinito"
+    },
     "isRichResponse": {
       "description": "Restituisce JSON strutturato con messaggi e azioni invece di testo semplice in streaming.",
       "label": "Risposta avanzata"
@@ -279,10 +474,19 @@
       "label": "Lingua",
       "placeholder": "Seleziona lingua"
     },
-    "lastName": { "label": "Cognome", "placeholder": "Inserisci il cognome" },
-    "last30days": { "label": "Ultimi 30 giorni" },
-    "last7days": { "label": "Ultimi 7 giorni" },
-    "lastInput": { "label": "Ultimo input" },
+    "lastName": {
+      "label": "Cognome",
+      "placeholder": "Inserisci il cognome"
+    },
+    "last30days": {
+      "label": "Ultimi 30 giorni"
+    },
+    "last7days": {
+      "label": "Ultimi 7 giorni"
+    },
+    "lastInput": {
+      "label": "Ultimo input"
+    },
     "lastUserInputTypes": {
       "text": "Testo",
       "location": "Posizione",
@@ -293,13 +497,25 @@
       "gif": "GIF",
       "file": "File"
     },
-    "lastMonth": { "label": "Mese scorso" },
-    "lifeTime": { "label": "Intero periodo" },
-    "locale": { "label": "Impostazioni locali" },
-    "errorLog": { "label": "Registro errori" },
+    "lastMonth": {
+      "label": "Mese scorso"
+    },
+    "lifeTime": {
+      "label": "Intero periodo"
+    },
+    "locale": {
+      "label": "Impostazioni locali"
+    },
+    "errorLog": {
+      "label": "Registro errori"
+    },
     "inputType": {
       "label": "Tipo di input",
-      "options": { "text": "Testo", "image": "Immagine", "file": "File" }
+      "options": {
+        "text": "Testo",
+        "image": "Immagine",
+        "file": "File"
+      }
     },
     "extractFields": {
       "label": "Campi da estrarre",
@@ -307,15 +523,23 @@
         "label": "Chiave JSON",
         "placeholder": "ad es. e-mail, telefono, indirizzo"
       },
-      "customFieldId": { "label": "Salva nel campo personalizzato" },
+      "customFieldId": {
+        "label": "Salva nel campo personalizzato"
+      },
       "description": {
         "label": "Descrizione (facoltativa)",
         "placeholder": "Descrivi cosa estrarre"
       }
     },
-    "max": { "label": "Massimo" },
-    "maxOutputTokens": { "label": "Token massimi" },
-    "mcpServer": { "label": "Server MCP" },
+    "max": {
+      "label": "Massimo"
+    },
+    "maxOutputTokens": {
+      "label": "Token massimi"
+    },
+    "mcpServer": {
+      "label": "Server MCP"
+    },
     "systemFunction": {
       "label": "Funzione di sistema",
       "names": {
@@ -326,23 +550,52 @@
         "webSearch": "Ricerca web"
       }
     },
-    "min": { "label": "Minimo" },
-    "model": { "label": "Modello" },
+    "min": {
+      "label": "Minimo"
+    },
+    "model": {
+      "label": "Modello"
+    },
     "name": {
       "label": "Nome",
       "placeholder": "Inserisci nome",
       "searchPlaceholder": "Cerca nome..."
     },
-    "selectUsers": { "label": "Seleziona utenti" },
-    "node": { "label": "Nodo" },
-    "noResults": { "label": "Nessun risultato trovato" },
-    "notes": { "label": "Note" },
-    "numericLength": { "label": "Lunghezza numerica" },
-    "numericValue": { "label": "Valore numerico" },
-    "openai": { "label": "OpenAI" },
-    "operation": { "label": "Operazione" },
-    "outputCustomField": { "label": "Campo personalizzato di output" },
-    "httpMethod": { "label": "Metodo" },
+    "selectUsers": {
+      "label": "Seleziona utenti"
+    },
+    "node": {
+      "label": "Nodo"
+    },
+    "noResults": {
+      "label": "Nessun risultato trovato"
+    },
+    "notes": {
+      "label": "Note"
+    },
+    "numericLength": {
+      "label": "Lunghezza numerica"
+    },
+    "numericValue": {
+      "label": "Valore numerico"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "Operazione"
+    },
+    "outputCustomField": {
+      "label": "Campo personalizzato di output"
+    },
+    "javascriptCode": {
+      "label": "Codice JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Usa JavaScript puro e restituisci un valore. Rete, file, API e librerie esterne non sono disponibili. I dati del contatto e del sistema sono disponibili nell'oggetto `input`."
+    },
+    "httpMethod": {
+      "label": "Metodo"
+    },
     "requestUrl": {
       "label": "URL",
       "placeholder": "https://api.example.com/endpoint"
@@ -365,29 +618,45 @@
         "formEncoded": "Modulo codificato"
       }
     },
-    "statusCode": { "label": "Codice di stato" },
+    "statusCode": {
+      "label": "Codice di stato"
+    },
     "outputMessage": {
       "label": "Messaggio di output",
       "placeholder": "Qual è il messaggio di output?"
     },
-    "paymentHistory": { "label": "Cronologia pagamenti" },
-    "paymentMethods": { "label": "Metodi di pagamento" },
+    "paymentHistory": {
+      "label": "Cronologia pagamenti"
+    },
+    "paymentMethods": {
+      "label": "Metodi di pagamento"
+    },
     "persistentMenu": {
       "description": "I menu persistenti vengono utilizzati per iniziare una conversazione con un utente.",
       "label": "Menu persistenti{plural, select, 1 {} other {}}",
-      "type": { "openWebsite": "Apri sito web", "sendFlow": "Invia flusso" }
+      "type": {
+        "openWebsite": "Apri sito web",
+        "sendFlow": "Invia flusso"
+      }
     },
     "userPersistentMenu": {
       "pageDefault": "Predefinito",
       "label": "Menu persistente dell'utente"
     },
-    "phoneNumber": { "label": "Numero di telefono" },
+    "phoneNumber": {
+      "label": "Numero di telefono"
+    },
     "phoneNumberId": {
       "label": "Numero di telefono",
       "noPhoneNumbersFound": "Nessun numero di telefono trovato per questo account"
     },
-    "port": { "label": "Porta", "placeholder": "587" },
-    "provider": { "label": "Provider" },
+    "port": {
+      "label": "Porta",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Provider"
+    },
     "prompt": {
       "label": "Prompt",
       "placeholder": "Inserisci il prompt"
@@ -397,6 +666,12 @@
     },
     "pageUserName": {
       "label": "Nome utente della pagina"
+    },
+    "waUserId": {
+      "label": "ID utente WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nome utente WhatsApp"
     },
     "purpose": {
       "label": "Scopo",
@@ -682,7 +957,7 @@
       "superAdmin": "Super amministratore",
       "analytics": "Analisi",
       "flows": "Flussi",
-      "contacts": "Contatti",
+      "contacts": "Contatti / Posta in arrivo",
       "onlyAssignedContacts": "Solo contatti assegnati",
       "emailAndPhone": "E-mail e telefono",
       "broadcast": "Broadcast",
@@ -967,7 +1242,7 @@
       "displayName": "Nome visualizzato",
       "connectInstructions": {
         "step1": "Crea un'app TikTok su <link>developers.tiktok.com</link>.",
-        "step2": "Autorizza il tuo account e copia il <strong>token di accesso</strong>, l'<strong>Open ID</strong> e il <strong>segreto client</strong>.",
+        "step2": "Autorizza il tuo account e copia il <strong>token di accesso</strong>, l’<strong>Open ID</strong> e il <strong>segreto client</strong>.",
         "step3": "Incolla qui sotto le credenziali per collegarti."
       }
     },
@@ -1094,6 +1369,23 @@
       "label": "Eventi",
       "placeholder": "Digita il nome di un evento e premi Invio",
       "description": "Aggiungi uno o più nomi di eventi. Quando Make collega un webhook a uno di questi eventi, i dati gli vengono inviati durante l'esecuzione di questo passaggio."
+    },
+    "bookingCalendar": {
+      "label": "Calendario di prenotazione"
+    },
+    "bookingDate": {
+      "label": "Data di prenotazione"
+    },
+    "bookingLink": {
+      "label": "Link di prenotazione"
+    },
+    "n8nEvents": {
+      "label": "Eventi",
+      "placeholder": "Digita un nome di evento e premi Invio",
+      "description": "Aggiungi uno o più nomi di eventi. Quando n8n collega un webhook a uno di questi eventi, i dati gli vengono inviati durante l'esecuzione di questo passaggio."
+    },
+    "enabled": {
+      "label": "Attivo"
     }
   },
   "actions": {
@@ -1140,6 +1432,7 @@
     "disableBot": "Disattiva bot",
     "disconnect": "Disconnetti",
     "download": "Scarica",
+    "downloadTemplate": "Scarica modello",
     "edit": "Modifica",
     "editFeature": "Modifica {feature}",
     "enableBot": "Attiva bot",
@@ -1242,6 +1535,9 @@
     "clone": "Clona",
     "remove": "Rimuovi",
     "restore": "Ripristina"
+  },
+  "errors": {
+    "superAdminRequired": "Devi essere super admin dello spazio di lavoro per farlo."
   },
   "states": {
     "success": "Successo",
@@ -1386,6 +1682,7 @@
     "title": "Fatturazione",
     "plan": {
       "label": "Piano: {plan}",
+      "currentLabel": "Piano attuale",
       "free": "Gratuito"
     },
     "usage": {
@@ -1632,6 +1929,8 @@
       "blocked": "Bloccato",
       "noAdminReply": "Nessuna risposta dell'amministratore",
       "contactCreatedAt": "Contatto creato il",
+      "fromCtwaAd": "Da un'inserzione Click to WhatsApp",
+      "ctwaConversion": "Conversione CTWA",
       "lastUserInputTypes": {
         "text": "Testo",
         "location": "Posizione",
@@ -1641,6 +1940,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Acquisto"
       }
     },
     "fieldGroups": {
@@ -1655,7 +1958,8 @@
       "topicCoupon": "Argomento coupon",
       "customFields": "Campi personalizzati",
       "email": "E-mail",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Inserzioni Click to WhatsApp"
     },
     "languages": {
       "ar": "Arabo",
@@ -1691,9 +1995,22 @@
       "webchat": "Webchat",
       "botLink": "Link del bot",
       "chatPlugin": "Plugin chat C."
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Avvii conversazione CTWA",
+        "leads": "Lead qualificati CTWA",
+        "purchases": "Acquirenti CTWA"
+      },
+      "adPrefix": "inserzione",
+      "allAds": "tutte le inserzioni"
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Questo flusso non è mai stato pubblicato. Pubblicalo prima di esportarlo.",
+      "failed": "Esportazione non riuscita. Riprova."
+    },
     "title": "Flussi",
     "quickReplies": {
       "limitReached": "Limite di risposte rapide raggiunto ({max})."
@@ -1718,8 +2035,7 @@
     },
     "openaiCompatible": {
       "empty": "Collega un provider compatibile con OpenAI nelle impostazioni delle integrazioni prima di usare questo passaggio.",
-      "integration": "Provider compatibile con OpenAI",
-      "none": "Nessuno"
+      "integration": "Provider compatibile con OpenAI"
     },
     "actions": {
       "addContactNotes": "Aggiungi note al contatto",
@@ -1742,6 +2058,7 @@
       "questionnaires": "Questionari",
       "setUpCoupon": "Configura coupon",
       "markCouponUsed": "Contrassegna coupon come utilizzato",
+      "executeJavascript": "Esegui JavaScript",
       "chooseChannel": "Scegli canale",
       "clearCustomField": "Cancella campo personalizzato",
       "condition": "Condizione",
@@ -1819,7 +2136,15 @@
       "unsubscribeSequence": "Annulla iscrizione alla sequenza",
       "splitTraffic": "Suddividi traffico",
       "aiEditImage": "Modifica immagine con IA",
-      "whatsappFlow": "Flusso WhatsApp"
+      "whatsappFlow": "Flusso WhatsApp",
+      "appointmentScheduling": "Pianificazione appuntamenti",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Invia evento Meta CAPI",
+      "import": "Importa flusso",
+      "export": "Esporta",
+      "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
+      "importJsonOnly": "Solo file JSON"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -1851,6 +2176,11 @@
       "selectCustomFieldPlaceholder": "Seleziona un campo personalizzato",
       "addMapping": "Aggiungi mappatura",
       "addCustomField": "Aggiungi"
+    },
+    "sendCarousel": {
+      "addSlide": "Aggiungi scheda",
+      "removeSlide": "Rimuovi scheda",
+      "whatsappLinkButtonIgnored": "Su WhatsApp, il link di questa scheda non funzionerà: una scheda con un pulsante di collegamento non può avere altri pulsanti. Verrà inviata come risposta."
     },
     "additionalSteps": "Passaggi aggiuntivi",
     "delayType": {
@@ -1918,7 +2248,11 @@
     },
     "setCustomField": {
       "temporalHint": "Lascia vuoto per salvare la data e l'ora attuali."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Quando sono presenti pulsanti, TikTok invia solo i primi 40 caratteri di questo messaggio: il resto verrà troncato."
+    },
+    "dataWasSaved": "Dati salvati"
   },
   "folders": {
     "heading": {
@@ -1964,6 +2298,174 @@
     },
     "errors": {
       "invalidAppSettings": "Le impostazioni dell'app Facebook non sono valide"
+    }
+  },
+  "ads": {
+    "title": "Inserzioni",
+    "connectAccounts": {
+      "connectAdAccount": "Collega account pubblicitario",
+      "adAccountName": "Nome account pubblicitario",
+      "adAccountsReconnectBanner": "Il token del tuo account pubblicitario Meta è scaduto o ha perso le autorizzazioni. Ricollega Facebook Ads per mantenere disponibile il reporting delle inserzioni.",
+      "adAccountsNotConnected": "Nessun account pubblicitario Meta è ancora collegato.",
+      "adAccountsEmpty": "Non è stato trovato alcun account pubblicitario Meta per questa connessione Facebook Ads.",
+      "reconnect": "Ricollega",
+      "reconnectSuccess": "Account WhatsApp ricollegato.",
+      "selectAccountLabel": "Account WhatsApp",
+      "status": {
+        "ready": "Eventi automatici pronti",
+        "missingPermission": "Autorizzazione Eventi automatici mancante",
+        "unverified": "Autorizzazione non verificata"
+      },
+      "table": {
+        "wabaId": "ID WABA"
+      },
+      "connectWhatsapp": {
+        "cta": "Collega account WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Eventi di conversione",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Gestisci account pubblicitari",
+      "export": "Esporta",
+      "selectAll": "Seleziona tutto",
+      "whatsappAsset": "Asset WhatsApp",
+      "selectWhatsappAsset": "Seleziona asset WhatsApp",
+      "templates": "Modelli",
+      "selectTemplates": "Seleziona modelli",
+      "noTemplates": "Nessun modello approvato trovato.",
+      "existingRules": "Regole esistenti",
+      "noRules": "Nessuna regola di conversione per questo asset WhatsApp per ora.",
+      "toggleRule": "Attiva o disattiva la regola",
+      "deleteRule": "Elimina regola",
+      "qualifyingTemplateMessageSent": "Viene inviato il messaggio modello qualificante",
+      "qualifyingFirstReply": "Il contatto invia il primo messaggio",
+      "qualifyingAnyReply": "Il contatto invia un messaggio",
+      "when": "Quando",
+      "whenOptions": {
+        "templateSent": "Viene inviato il messaggio modello qualificante",
+        "tagApplied": "Al contatto viene applicato un tag",
+        "keywordMatched": "Il messaggio del contatto corrisponde a una regola di parole chiave",
+        "contactReplied": "Il contatto invia un messaggio"
+      },
+      "tags": "Tag",
+      "selectTags": "Seleziona tag",
+      "noTags": "Nessun tag trovato.",
+      "untitledKeywordRule": "(regola di parole chiave senza titolo)",
+      "keywordRules": "Regole di parole chiave",
+      "selectKeywordRules": "Seleziona regole di parole chiave",
+      "noKeywordRules": "Nessuna regola di parole chiave in entrata trovata.",
+      "replyOptions": "Opzioni di risposta",
+      "firstReplyOnly": "Solo il primo messaggio",
+      "dedupeNote": "Massimo 1 evento al giorno per conversazione per regola.",
+      "dealWon": "Affare vinto",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Acquisto",
+      "messages": {
+        "ruleSaved": "Regola di conversione salvata",
+        "ruleUpdated": "Regola di conversione aggiornata",
+        "ruleDeleted": "Regola di conversione eliminata"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Pagina 1",
+        "page2": "Pagina 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Monitora i lead qualificati",
+        "question": "In quale punto della conversazione vuoi qualificare un contatto come lead?",
+        "when": "Quando",
+        "then": "Allora contrassegna il lead CTWA come"
+      },
+      "trackPurchases": {
+        "title": "Monitora gli acquisti",
+        "question": "Quale modello conferma un acquisto?",
+        "when": "Quando",
+        "then": "Allora",
+        "noValueNote": "Un acquisto basato su regole registra una conversione di Acquisto senza un valore d'ordine: conta per gli acquisti, ma aggiunge 0 al fatturato. Il valore dell'ordine viene rilevato solo dagli Eventi automatici di Meta."
+      }
+    },
+    "analytics": {
+      "title": "Analisi CTWA",
+      "funnelOverview": "Panoramica del funnel",
+      "conversationsStarted": "Conversazioni avviate",
+      "qualifiedLeads": "Lead qualificati",
+      "purchases": "Acquisti",
+      "adSpend": "Spesa pubblicitaria",
+      "spendAccountLevelNote": "La spesa viene riportata a livello di account pubblicitario Meta; quando è selezionato un account WhatsApp, le inserzioni con sola spesa e nessuna attività di funnel per quell'account vengono nascoste.",
+      "revenue": "Fatturato",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Il fatturato presuppone una sola valuta (USD). Gli account pubblicitari con più valute non sono ancora aggregati.",
+      "costPerLead": "Costo/lead",
+      "costPerPurchase": "Costo/acquisto",
+      "impressions": "Impressioni",
+      "clicks": "Clic",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Costo/conversazione",
+      "costCurrencyNote": "Le metriche di costo presuppongono una sola valuta (USD), in linea con la spesa pubblicitaria.",
+      "performanceChart": {
+        "title": "Andamento nel tempo",
+        "empty": "Nessuna conversazione, lead, acquisto o spesa in questo intervallo per ora."
+      },
+      "dateRange": {
+        "oneDay": "1G",
+        "oneWeek": "1S",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Personalizzato",
+        "apply": "Applica"
+      },
+      "allAds": "Tutte le inserzioni",
+      "adAccountFilter": {
+        "all": "Tutti gli account pubblicitari",
+        "label": "Account pubblicitario",
+        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario."
+      },
+      "retarget": "Retarget",
+      "thoseWhoPurchased": "Chi ha acquistato",
+      "thoseWhoStartedConversation": "Chi ha avviato una conversazione",
+      "sendWhatsappBroadcast": "Invia broadcast WhatsApp",
+      "from": "Da",
+      "to": "A",
+      "unattributed": "Non attribuito",
+      "retargetDialog": {
+        "title": "Retarget dei contatti CTWA",
+        "createAudience": "Crea pubblico",
+        "useExistingAudience": "Usa un pubblico esistente",
+        "audienceName": "Nome del pubblico",
+        "audiencePrefix": "CTWA",
+        "confirm": "Avvia sincronizzazione",
+        "success": "Sincronizzazione del pubblico di retargeting in coda.",
+        "error": "Impossibile accodare la sincronizzazione del pubblico di retargeting."
+      },
+      "delivery": {
+        "title": "Consegna delle conversioni",
+        "sent": "Inviato",
+        "pending": "In attesa",
+        "failed": "Non riuscito",
+        "skippedNoScope": "Ignorato (nessun ambito)",
+        "skippedRegion": "Ignorato (regione)",
+        "noScopeWarning": "Alcune conversioni non sono state inviate perché a questo account WhatsApp manca l'autorizzazione per gli eventi. Ricollegalo per abilitare il reporting degli Eventi automatici.",
+        "reconnectCta": "Ricollega account",
+        "empty": "Nessun evento di conversione in questo intervallo per ora."
+      },
+      "export": {
+        "conversations": "Esporta conversazioni",
+        "leads": "Esporta lead",
+        "purchases": "Esporta acquisti"
+      },
+      "csv": {
+        "contactName": "Nome del contatto",
+        "phone": "Telefono",
+        "adId": "ID inserzione",
+        "occurredAt": "Avvenuto il"
+      },
+      "empty": "Nessun dato per ora. Collega un account pubblicitario e inizia a monitorare le conversioni."
     }
   },
   "googleSheets": {
@@ -2252,6 +2754,11 @@
     "noWorkspaces": "Non hai ancora alcuna area di lavoro.",
     "owner": "Proprietario"
   },
+  "notFound": {
+    "title": "Pagina non trovata",
+    "description": "La pagina che stai cercando non esiste o potrebbe essere stata spostata.",
+    "backToHome": "Torna alla home"
+  },
   "editProfile": {
     "title": "Modifica profilo"
   },
@@ -2359,6 +2866,7 @@
     "changeHideState": "Cambia stato di visibilità",
     "commentHidden": "Questo commento è stato nascosto",
     "messageDeleted": "Il messaggio è stato eliminato.",
+    "sendFailed": "Invio non riuscito",
     "repliedToStory": "Ha risposto alla tua storia",
     "sentAttachments": "Inviati {count, plural, one {1 allegato} other {# allegati}}",
     "deleteComment": "Elimina commento",
@@ -2438,10 +2946,19 @@
     "noVersionsFound": "Nessuna versione pubblicata trovata",
     "publishVersionSuccess": "È stata pubblicata una nuova versione",
     "flowConfigIncomplete": "Alcune configurazioni sono incomplete",
+    "whatsappCarouselButtonsMismatch": "Su WhatsApp, un carosello richiede gli stessi pulsanti su ogni scheda: un unico pulsante di collegamento su ogni scheda, oppure lo stesso numero di pulsanti di risposta su ogni scheda",
+    "whatsappCarouselLinkButtonNotAlone": "Su WhatsApp, una scheda del carosello con un pulsante di collegamento non può avere altri pulsanti. Rimuovi gli altri pulsanti su quella scheda, oppure cambia il pulsante di collegamento in un'altra azione.",
     "duplicateNodeError": "Impossibile duplicare il blocco. Riprova.",
     "deleteNodeError": "Impossibile eliminare il blocco. Riprova.",
     "redoHistoryCleared": "Cronologia delle operazioni ripetibili cancellata",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Nessuno",
+    "tiktokCardTitleTooLong": "TikTok abbrevierà questo messaggio: con i pulsanti allegati, vengono inviati solo i primi 40 caratteri. Accorcia il messaggio o rimuovi i pulsanti.",
+    "waTemplateMpmNoProducts": "Aggiungi almeno un prodotto a questo pulsante multi-prodotto prima di pubblicare.",
+    "waTemplateMpmTooManySections": "Un pulsante multi-prodotto può avere al massimo 10 sezioni. Rimuovi alcune sezioni prima di pubblicare.",
+    "waTemplateMpmTooManyProducts": "Un pulsante multi-prodotto può avere al massimo 30 prodotti in totale. Rimuovi alcuni prodotti prima di pubblicare.",
+    "waTemplateLtoExpirationRequired": "Scegli una data di scadenza per l'offerta a tempo limitato prima di inviare.",
+    "waTemplateMpmIncompleteProducts": "Ogni sezione richiede almeno un prodotto selezionato: rimuovi le righe vuote o scegli un prodotto."
   },
   "instagram": {
     "description": "Questa integrazione ti consente di creare bot Instagram.",
@@ -2449,7 +2966,11 @@
     "iceBreakers": "Spunti di conversazione",
     "iceBreakersDescription": "Gli spunti di conversazione consentono agli utenti di avviare una conversazione con il tuo bot mostrando un elenco di domande frequenti.",
     "reconnect": "Ricollega",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "Impostazioni generali",
+      "conversionsApi": "Ottimizzazione annunci"
+    }
   },
   "coexist": {
     "title": "Sincronizzare i contatti esistenti e la cronologia chat?",
@@ -2463,6 +2984,8 @@
     "toggleHelper": "La riattivazione funziona solo se Meta dispone ancora dei dati nel buffer (entro 24 ore dall'onboarding). In caso contrario, disconnetti e riconnetti.",
     "toggleHelperMessenger": "La riattivazione funziona solo se Meta dispone ancora dei dati nel buffer (entro 24 ore dall'onboarding). In caso contrario, disconnetti e riconnetti la Pagina Messenger.",
     "toggleHelperWhatsapp": "La riattivazione funziona solo se Meta dispone ancora dei dati nel buffer (entro 24 ore dall'onboarding). In caso contrario, disconnetti e riconnetti il numero WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "L'IA legge la cronologia sincronizzata",
+    "aiReadsSyncedHistoryHelper": "Se disattivo, l'IA vede solo i nuovi messaggi.",
     "success": {
       "enabled": "Sincronizzazione avviata. I contatti e i messaggi storici appariranno a breve.",
       "disabled": "Sincronizzazione disattivata."
@@ -2505,7 +3028,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Impostazioni generali",
-      "messageTemplates": "Modelli di messaggio"
+      "messageTemplates": "Modelli di messaggio",
+      "conversionsApi": "Ottimizzazione annunci"
     },
     "messageTemplate": {
       "params": {
@@ -2799,6 +3323,13 @@
         "wabaResolveFailed": "Impossibile determinare l'account WhatsApp Business dall'autorizzazione."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "Integrazione WhatsApp non trovata.",
+        "phoneNumberMismatch": "La riconnessione ha restituito l'account WhatsApp Business previsto, ma non il numero di telefono collegato a questo spazio di lavoro.",
+        "wabaMismatch": "La riconnessione ha restituito un account WhatsApp Business diverso. Ricollega lo stesso account."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -2831,22 +3362,38 @@
       "params": {
         "couponCode": "Codice coupon",
         "couponCodePlaceholder": "Inserisci codice coupon",
-        "quickReplyPayload": "Payload della risposta rapida",
-        "quickReplyPayloadPlaceholder": "Inserisci payload (facoltativo)",
         "flowToken": "Token del flusso",
         "flowTokenPlaceholder": "Inserisci token del flusso",
-        "catalogProductId": "ID prodotto",
-        "catalogProductIdPlaceholder": "Inserisci ID del rivenditore del prodotto",
+        "flowNotSynced": "Sincronizza i flussi WhatsApp per mappare i campi inviati.",
+        "catalogProductId": "Prodotto del catalogo",
+        "catalogProductIdPlaceholder": "Cerca prodotti…",
         "carouselCard": "Scheda {index}",
         "limitedTimeOffer": "Scadenza dell'offerta",
-        "limitedTimeOfferPlaceholder": "Inserisci la scadenza in millisecondi",
-        "limitedTimeOfferHelp": "Timestamp Unix in millisecondi relativo alla scadenza dell'offerta",
+        "limitedTimeOfferPlaceholder": "Scegli data e ora di scadenza",
+        "limitedTimeOfferHelp": "L'orario di scadenza viene inviato esattamente come scelto.",
         "location": "Posizione",
         "latitude": "Latitudine",
         "longitude": "Longitudine",
         "locationName": "Nome della posizione (facoltativo)",
         "locationAddress": "Indirizzo (facoltativo)",
-        "enterFormatUrl": "Inserisci URL {format}"
+        "enterFormatUrl": "Inserisci URL {format}",
+        "catalogUseDefault": "Usa la miniatura predefinita del catalogo",
+        "catalogNotConnectedGuidance": "Collega un catalogo Meta per selezionare un prodotto.",
+        "catalogSetupLink": "Vai alle impostazioni del catalogo",
+        "catalogSelectedProductFallback": "Prodotto: {retailerId}",
+        "limitedTimeOfferBadge": "Scade il {date}",
+        "limitedTimeOfferExpiredBadge": "Scaduto il {date}",
+        "mpmSections": "Prodotti",
+        "mpmSectionTitlePlaceholder": "Titolo della sezione (opzionale)",
+        "mpmAddSection": "Aggiungi sezione",
+        "mpmRemoveSection": "Rimuovi sezione",
+        "mpmAddProduct": "Aggiungi prodotto",
+        "mpmRemoveProduct": "Rimuovi prodotto",
+        "mpmNoProductsHelp": "Aggiungi almeno un prodotto prima di pubblicare.",
+        "mpmSectionLimitReached": "Raggiunto il massimo di 10 sezioni.",
+        "mpmProductLimitReached": "Raggiunto il massimo di 30 prodotti.",
+        "mpmProductsSummary": "{productCount} prodotti in {sectionCount} sezioni",
+        "unsupportedButtonParam": "Questo tipo di pulsante non è ancora supportato."
       }
     },
     "sampleBodyCardContent": {
@@ -2871,7 +3418,9 @@
       "flows": "Flussi",
       "messageTemplates": "Modelli di messaggio",
       "profile": "Profilo",
-      "usefulLinks": "Link utili"
+      "usefulLinks": "Link utili",
+      "conversionsApi": "Ottimizzazione annunci",
+      "settings": "Impostazioni"
     },
     "accountHealths": {
       "title": "Gestisci il tuo account WhatsApp",
@@ -3001,7 +3550,13 @@
       "label": "Intestazione del modello"
     },
     "transferPhoneNumber": "Trasferisci il numero di telefono da un altro provider WhatsApp",
-    "signupSessionExpired": "La sessione di registrazione a WhatsApp è scaduta. Avvia nuovamente la connessione."
+    "signupSessionExpired": "La sessione di registrazione a WhatsApp è scaduta. Avvia nuovamente la connessione.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Eventi automatici",
+        "description": "Invia automaticamente gli eventi di conversione da questo numero WhatsApp a Meta. Se manca l’autorizzazione, ricollega l’account per concederla."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
@@ -3041,6 +3596,67 @@
   "qrCodes": {
     "title": "Codici QR",
     "description": "Crea codici QR che rimandano ai flussi del tuo chatbot."
+  },
+  "dynamicImages": {
+    "title": "Immagini dinamiche",
+    "description": "Genera immagini personalizzate per ogni contatto a partire da uno sfondo e livelli di testo, immagine o QR.",
+    "publicUrl": {
+      "label": "URL pubblico",
+      "hint": "Copia e incolla l'URL nel tuo flusso, broadcast o sequenza per inviare immagini personalizzate."
+    },
+    "editor": {
+      "addElement": "Aggiungi elemento",
+      "addImage": "Aggiungi immagine",
+      "addText": "Aggiungi testo",
+      "addQrCode": "Aggiungi codice QR",
+      "template": "Modello",
+      "templateDialogTitle": "Scegli un modello",
+      "templateDialogDescription": "La selezione di un modello sostituisce tutti i livelli attuali.",
+      "layers": "Livelli",
+      "noLayers": "Ancora nessun livello. Aggiungi un elemento per iniziare.",
+      "deleteLayer": "Elimina livello",
+      "layerNameImage": "Immagine",
+      "layerNameText": "Testo",
+      "layerNameQrCode": "Codice QR",
+      "editElement": "Modifica elemento",
+      "selectElementHint": "Seleziona un elemento sulla tela per modificarne le proprietà.",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "priority": "Priorità",
+      "imageType": "Tipo di immagine",
+      "imageTypeUrl": "URL immagine",
+      "imageTypeAvatarUser": "Avatar del contatto",
+      "imageTypeCustomField": "Campo personalizzato",
+      "imageUrl": "URL immagine",
+      "uploadImage": "Carica immagine",
+      "customField": "Campo personalizzato",
+      "imageStyle": "Stile immagine",
+      "imageStyleSquare": "Quadrato",
+      "imageStyleCircle": "Cerchio",
+      "qrText": "Contenuto del codice QR",
+      "qrSize": "Dimensione",
+      "qrColor": "Colore",
+      "qrLogo": "Logo",
+      "uploadLogo": "Carica logo",
+      "textContent": "Contenuto del testo",
+      "fontSize": "Dimensione carattere",
+      "fontFamily": "Tipo di carattere",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Allineamento",
+      "alignLeft": "Sinistra",
+      "alignCenter": "Centro",
+      "alignRight": "Destra",
+      "color": "Colore",
+      "bold": "Grassetto",
+      "italic": "Corsivo",
+      "uppercase": "Maiuscolo"
+    },
+    "preview": {
+      "error": "Impossibile caricare l'immagine dinamica collegata. Potrebbe essere stata eliminata."
+    }
   },
   "magicLinks": {
     "title": "Link magici",
@@ -3098,7 +3714,8 @@
       "clearCustomField": "Cancella campo personalizzato",
       "startAnotherFlow": "Avvia un altro flusso",
       "notifyAdmins": "Notifica gli amministratori",
-      "transferConversationToHuman": "Trasferisci la conversazione a un operatore"
+      "transferConversationToHuman": "Trasferisci la conversazione a un operatore",
+      "sendMetaCapiEvent": "Invia evento Meta CAPI"
     },
     "triggerGoesOff": "Il trigger si attiva",
     "before": "Prima",
@@ -3136,7 +3753,10 @@
     "title": "Registri di controllo"
   },
   "customFields": {
-    "title": "Campi personalizzati"
+    "title": "Campi personalizzati",
+    "variables": {
+      "rawGroup": "Campi personalizzati non elaborati"
+    }
   },
   "keywords": {
     "title": "Parole chiave",
@@ -3615,7 +4235,6 @@
     "allFormsNote": "Verranno acquisiti i contatti provenienti da ogni modulo di questa pagina. I campi standard (e-mail, telefono, nome, genere) vengono salvati automaticamente nei campi corrispondenti del contatto.",
     "leadData": "Dati del contatto acquisito",
     "whatFlow": "Quale flusso viene attivato",
-    "none": "Nessuno",
     "addNewPage": "Aggiungi",
     "noEligiblePages": "Nessuna pagina idonea. Usa \"Aggiungi\" per concedere l'accesso ai contatti acquisiti.",
     "duplicateError": "Esiste già un'automazione per questa pagina e questo modulo.",
@@ -3626,8 +4245,29 @@
     "description": "Crea e gestisci il tuo negozio e-commerce."
   },
   "appointmentScheduling": {
-    "title": "Pianificazione degli appuntamenti",
-    "description": "Crea e gestisci la pianificazione dei tuoi appuntamenti."
+    "title": "Pianificazione appuntamenti",
+    "description": "Crea e gestisci la pianificazione dei tuoi appuntamenti.",
+    "flowModes": {
+      "bookFromCustomField": "Prenota appuntamento",
+      "checkAvailabilityFromCustomField": "Verifica disponibilità",
+      "book": "Selettore data e ora",
+      "checkAvailability": "Selettore intervallo date",
+      "cancel": "Annulla appuntamento"
+    },
+    "fields": {
+      "mode": "Modalità",
+      "dateTimeFieldId": "Salva la data selezionata in",
+      "dateTimeFieldIdSource": "Campo data/ora",
+      "startDateFieldId": "Campo data di inizio",
+      "endDateFieldId": "Campo data di fine",
+      "resultUsedByAI": "Usa il risultato per l'IA",
+      "outputCustomFieldId": "Salva il risultato in un campo personalizzato",
+      "startDateFieldIdSelected": "Salva la data di inizio selezionata in",
+      "endDateFieldIdSelected": "Salva la data di fine selezionata in"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Scegli come questo passaggio del flusso pianifica gli appuntamenti."
+    }
   },
   "templates": {
     "title": "Modelli",
@@ -3990,7 +4630,7 @@
     "expand": "Mostra sottocategorie",
     "collapse": "Nascondi sottocategorie",
     "productCount": "{count, plural, =0 {Nessun prodotto} one {# prodotto} other {# prodotti}}",
-    "deleteChildrenWarning": "{count, plural, one {Anche la sua sottocategoria verrà eliminata.} other {Anche le sue # sottocategorie verranno eliminate.}}"
+    "deleteChildrenWarning": "{count, plural, one {Anche la sua # sottocategoria verrà eliminata.} other {Anche le sue # sottocategorie verranno eliminate.}}"
   },
   "productImport": {
     "title": "Importa",
@@ -4179,6 +4819,382 @@
       "iconPlaceholder": "ad es. book-open, star, circle-question-mark",
       "position": "Ordine",
       "iconSearchLink": "Sfoglia le icone Lucide →"
+    }
+  },
+  "bookingWebview": {
+    "metadataTitle": "Prenota appuntamento",
+    "badge": "Appuntamento",
+    "timezone": "Fuso orario",
+    "empty": "Non è stato trovato alcun orario disponibile.",
+    "noSelection": "Scegli un orario",
+    "actions": {
+      "book": "Prenota appuntamento",
+      "viewDetails": "Visualizza dettagli"
+    },
+    "errors": {
+      "invalidTokenTitle": "Questo link di prenotazione non è disponibile.",
+      "invalidTokenDescription": "Il link potrebbe non essere valido o essere scaduto. Richiedi un nuovo link di prenotazione.",
+      "staleSlot": "Questo orario non è più disponibile. Scegli un altro orario.",
+      "availabilityChanged": "La disponibilità è cambiata mentre sceglievi un orario. Scegli di nuovo.",
+      "submitFailed": "Non siamo riusciti a completare questa richiesta. Riprova."
+    },
+    "success": {
+      "title": "Il tuo appuntamento è stato prenotato.",
+      "description": "I dettagli dell'appuntamento sono pronti."
+    },
+    "schedule": {
+      "metadataTitle": "Dettagli appuntamento",
+      "defaultMessage": "Il tuo appuntamento è stato programmato.",
+      "unknownInvitee": "Ospite",
+      "fields": {
+        "invitee": "Invitato",
+        "time": "Orario",
+        "timezone": "Fuso orario",
+        "location": "Luogo"
+      },
+      "status": {
+        "scheduled": "Programmato",
+        "cancelled": "Annullato"
+      },
+      "locationTypes": {
+        "inPerson": "Riunione di persona",
+        "phoneCall": "Chiamata telefonica",
+        "onlineMeeting": "Riunione online"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Annulla appuntamento",
+      "title": "Annulla appuntamento",
+      "description": "Annulla {calendar} alle {time}.",
+      "action": "Annulla appuntamento",
+      "cancelledTitle": "Appuntamento annullato",
+      "cancelledDescription": "Questo appuntamento è stato annullato.",
+      "unavailableTitle": "Annullamento non disponibile",
+      "unavailableDescription": "Questo appuntamento è già stato annullato, eliminato o è nel passato."
+    },
+    "range": {
+      "metadataTitle": "Verifica disponibilità",
+      "empty": "Non selezionato",
+      "successTitle": "Intervallo di date ricevuto.",
+      "successDescription": "Stiamo verificando gli orari di appuntamento disponibili.",
+      "fields": {
+        "startDate": "Data di inizio",
+        "endDate": "Data di fine",
+        "startTime": "Ora di inizio",
+        "endTime": "Ora di fine"
+      },
+      "actions": {
+        "skip": "Salta"
+      },
+      "errors": {
+        "invalidRange": "La data di fine deve essere uguale o successiva alla data di inizio."
+      },
+      "timezoneHint": "Gli orari sono mostrati in {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Seleziona data",
+    "date": {
+      "title": "Seleziona una data"
+    },
+    "datetime": {
+      "title": "Seleziona data e ora"
+    },
+    "noSelection": "Scegli una data",
+    "actions": {
+      "submit": "Invia"
+    },
+    "success": {
+      "title": "Dati salvati",
+      "description": "Ora puoi chiudere questa scheda."
+    },
+    "errors": {
+      "invalidTokenTitle": "Questo link non è disponibile.",
+      "invalidTokenDescription": "Il link potrebbe non essere valido o essere scaduto. Richiedi un nuovo link.",
+      "submitFailed": "Non siamo riusciti a completare questa richiesta. Riprova."
+    },
+    "monthLabel": "Mese",
+    "yearLabel": "Anno"
+  },
+  "appointments": {
+    "title": "Appuntamenti",
+    "statuses": {
+      "scheduled": "Programmato",
+      "cancelled": "Annullato"
+    },
+    "messages": {
+      "empty": "Nessun appuntamento ancora."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Appuntamenti",
+    "singular": "Appuntamento",
+    "unknownContact": "Contatto sconosciuto",
+    "searchPlaceholder": "Cerca per nome...",
+    "tabs": {
+      "next": "Prossimi",
+      "past": "Passati"
+    },
+    "fields": {
+      "name": "Nome",
+      "date": "Data",
+      "status": "Stato",
+      "calendar": "Calendario"
+    },
+    "statuses": {
+      "scheduled": "Programmato",
+      "cancelled": "Annullato"
+    },
+    "actions": {
+      "cancelAppointment": "Annulla appuntamento"
+    },
+    "dialogs": {
+      "cancelTitle": "Annulla appuntamento",
+      "cancelDescription": "Annulla questo appuntamento ed esegui i relativi effetti collaterali di annullamento.",
+      "deleteTitle": "Elimina appuntamento",
+      "deleteDescription": "Elimina questo appuntamento dall'elenco di gestione. Questa azione non eseguirà il flusso di annullamento."
+    },
+    "messages": {
+      "cancelled": "Appuntamento annullato.",
+      "deleted": "Appuntamento eliminato."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Calendari degli appuntamenti",
+    "singular": "Calendario appuntamenti",
+    "addNew": "Aggiungi nuovo",
+    "none": "Nessuno",
+    "addReminder": "Aggiungi promemoria",
+    "reminderSummary": "Invia promemoria - {calendar} {timing}.",
+    "noExternalConnections": "Nessuna connessione a calendari esterni ancora",
+    "dialogDescriptions": {
+      "create": "Assegna un nome al tuo calendario appuntamenti per iniziare.",
+      "rename": "Rinomina questo calendario appuntamenti."
+    },
+    "tabs": {
+      "calendars": "Calendari",
+      "appointments": "Appuntamenti",
+      "externalCalendars": "Calendari esterni"
+    },
+    "sections": {
+      "appointment": "Qual è il tuo appuntamento",
+      "availability": "Quando si può prenotare?",
+      "duration": "Quanto dura il tuo appuntamento?",
+      "location": "Dove si svolgerà l'appuntamento?",
+      "notifications": "Notifiche",
+      "restrictions": "Restrizioni",
+      "externalCalendar": "Connetti Google Calendar"
+    },
+    "fields": {
+      "description": "Descrizione",
+      "timezone": "Fuso orario",
+      "locationType": "Tipo di luogo",
+      "locationDetail": "Dettaglio",
+      "durationMinutes": "Durata dell'appuntamento",
+      "bufferAfterMinutes": "Aggiungi tempo dopo i tuoi appuntamenti",
+      "scheduleWindowType": "Le persone possono prenotare",
+      "rollingDays": "Giorni scorrevoli",
+      "minAdvanceDays": "Giorni minimi di anticipo",
+      "startDate": "Data di inizio",
+      "endDate": "Data di fine",
+      "specificDate": "Data",
+      "maxAppointmentsPerUser": "Numero massimo di appuntamenti per utente",
+      "maxAppointmentsUnlimited": "Illimitato",
+      "dailyLimitEnabled": "Limite giornaliero",
+      "maxPerDay": "Massimo al giorno",
+      "allowGroupMeeting": "Consenti riunione di gruppo",
+      "maxPerSlot": "Massimo per fascia oraria",
+      "confirmationMessage": "Messaggio di conferma",
+      "confirmationFlowId": "Flusso di conferma",
+      "cancellationFlowId": "Flusso di annullamento",
+      "externalConnectionId": "Calendario esterno",
+      "reminders": "Promemoria",
+      "reminderTimingValue": "Valore",
+      "reminderTimingUnit": "Unità"
+    },
+    "locationTypes": {
+      "inPerson": "Riunione di persona",
+      "phoneCall": "Chiamata telefonica",
+      "onlineMeeting": "Riunione online"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Entro un numero di giorni scorrevoli nel futuro",
+      "dateRange": "Entro un intervallo di date",
+      "specificDay": "Un giorno specifico",
+      "anyFutureDate": "In qualsiasi data futura"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minuti prima",
+      "hours": "Ore prima",
+      "days": "Giorni prima"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minuto prima} other {# minuti prima}}",
+      "hours": "{count, plural, one {un'ora prima} other {# ore prima}}",
+      "days": "{count, plural, one {un giorno prima} other {# giorni prima}}"
+    },
+    "weekdays": {
+      "0": "Domenica",
+      "1": "Lunedì",
+      "2": "Martedì",
+      "3": "Mercoledì",
+      "4": "Giovedì",
+      "5": "Venerdì",
+      "6": "Sabato"
+    },
+    "weekdayEditor": {
+      "description": "Imposta gli intervalli di tempo disponibili per questo giorno.",
+      "unavailable": "Non disponibile",
+      "overlapWarning": "Alcuni intervalli si sovrappongono. Il tempo sovrapposto non viene conteggiato due volte.",
+      "addInterval": "Aggiungi intervallo",
+      "startTime": "Ora di inizio",
+      "endTime": "Ora di fine"
+    },
+    "tooltips": {
+      "timezone": "Il fuso orario in cui stai creando questo calendario. Le persone vedranno la disponibilità in base al proprio fuso orario.",
+      "confirmationFlow": "Il flusso che viene inviato quando l'utente prenota un appuntamento.",
+      "cancellationFlow": "Il flusso che viene inviato quando un appuntamento viene annullato.",
+      "reminders": "Invia promemoria per ricordare all'invitato l'appuntamento.",
+      "appointmentDuration": "Definisci quanto durerà il tuo appuntamento.",
+      "bufferAfterMinutes": "Concediti del tempo cuscinetto per concludere gli appuntamenti prenotati.",
+      "peopleCanSchedule": "Imposta un intervallo di date in cui puoi accettare riunioni.",
+      "maxAppointmentsPerUser": "Il numero massimo di appuntamenti futuri che un utente può prenotare.",
+      "rollingDays": "Consenti la programmazione fino a un massimo di giorni nel futuro",
+      "minAdvanceDays": "Richiedi che le prenotazioni vengano effettuate con almeno questo numero di giorni di anticipo. Usa 0 per consentire prenotazioni in giornata.",
+      "dailyLimit": "Il numero massimo di persone che possono prenotare al giorno.",
+      "allowGroupMeeting": "Consenti a più persone di prenotare nella stessa fascia oraria.",
+      "externalCalendar": "Connetti Google Calendar per sincronizzare i tuoi appuntamenti."
+    },
+    "minutesLabel": "{count} minuti"
+  },
+  "externalCalendars": {
+    "title": "Calendari esterni",
+    "connectGoogle": "Connetti Google",
+    "emptyEmail": "Nessuna email",
+    "fields": {
+      "provider": "Provider",
+      "email": "Email",
+      "calendarId": "ID calendario",
+      "connected": "Connesso",
+      "date": "Data"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Modifica ID calendario",
+      "editDescription": "Scegli l'ID del Google Calendar da controllare per rilevare conflitti e creare eventi degli appuntamenti.",
+      "deleteTitle": "Disconnetti calendario",
+      "deleteDescription": "Disconnetti questo Google Calendar dalla pianificazione degli appuntamenti."
+    },
+    "messages": {
+      "connected": "Google Calendar connesso.",
+      "connectFailed": "Impossibile connettere Google Calendar. Controlla le impostazioni OAuth di Google e l'accesso alla Calendar API, quindi riprova.",
+      "calendarIdUpdated": "ID calendario aggiornato.",
+      "disconnected": "Calendario disconnesso."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Prenotazione",
+    "comingSoonTitle": "Pagina di prenotazione in arrivo",
+    "comingSoonDescription": "Questa pagina di prenotazione pubblica non è ancora disponibile."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Invia eventi LeadSubmitted dalle conversazioni di Messenger, Instagram e WhatsApp a Meta.",
+    "datasetId": "ID dataset",
+    "reconnect": "Riconnetti autorizzazioni",
+    "connectViaFacebook": "Connetti tramite Facebook",
+    "unsupportedExplanation": "Questo account Instagram è stato connesso con Instagram Business Login. Connetti l'account tramite Facebook per usare Meta Conversions API.",
+    "flowStep": {
+      "description": "Accoda un evento LeadSubmitted per Messenger, Instagram o WhatsApp.",
+      "whatsappNote": "Gli eventi WhatsApp vengono inviati solo per le conversazioni avviate da un annuncio click-to-WhatsApp."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Pronto",
+      "missingPermission": "Autorizzazione necessaria",
+      "unverified": "Non verificato",
+      "unsupported": "Non supportato",
+      "notConnected": "Non connesso"
+    },
+    "statusDescriptions": {
+      "ready": "Questa integrazione dispone dell'autorizzazione Meta richiesta per gli eventi di Conversions API.",
+      "missingPermission": "Riconnetti questa integrazione e concedi l'autorizzazione Meta richiesta.",
+      "unverified": "Le impostazioni dell'app della piattaforma non sono disponibili, quindi l'autorizzazione CAPI non può essere verificata.",
+      "unsupported": "Meta Conversions API per Instagram richiede un account connesso tramite Facebook Login for Business.",
+      "notConnected": "Conversions API è uno strumento aziendale di Meta che consente di condividere dati con Meta per migliorare le prestazioni degli annunci."
+    },
+    "errors": {
+      "reconnect": "Impossibile avviare la riconnessione a Meta CAPI.",
+      "messengerNotFound": "Integrazione Messenger non trovata.",
+      "instagramNotFound": "Integrazione Instagram non trovata.",
+      "instagramRequiresFacebook": "Meta CAPI per Instagram richiede la connessione tramite Facebook.",
+      "saveFailed": "Impossibile salvare. Riprova.",
+      "datasetRequired": "Salva un ID dataset prima di aggiungere un token di accesso.",
+      "invalidToken": "Questo token non è riuscito ad accedere al dataset.",
+      "invalidDatasetId": "Inserisci un Dataset ID valido (solo numeri).",
+      "whatsappNotFound": "Integrazione WhatsApp non trovata."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Tipo di evento",
+        "leadSubmitted": "Lead inviato"
+      },
+      "value": "Valore",
+      "valuePlaceholder": "es. 250",
+      "currency": "Valuta",
+      "currencyPlaceholder": "es. USD",
+      "contentCategory": "Categoria del contenuto",
+      "contentCategoryPlaceholder": "La categoria del contenuto associato all'evento",
+      "contentName": "Nome del contenuto",
+      "contentNamePlaceholder": "Il nome della pagina o del prodotto associato all'evento"
+    },
+    "datasetIdPlaceholder": "Incolla l'ID dataset da Gestione eventi",
+    "saveDataset": "Salva",
+    "accessToken": "Token di accesso (opzionale)",
+    "accessTokenHint": "Incolla un token da Gestione eventi per inviare eventi con il tuo token invece del token della pagina connessa. Richiede un ID dataset.",
+    "accessTokenPlaceholder": "Token di accesso di Gestione eventi",
+    "saveToken": "Salva token",
+    "tokenSaved": "Token salvato",
+    "removeToken": "Rimuovi",
+    "saved": "Salvato",
+    "help": {
+      "delay": "Gli eventi possono richiedere fino a 40 minuti per comparire in Gestione eventi e come Lead Meta in Gestione inserzioni."
+    },
+    "connected": "Connesso",
+    "disconnect": "Disconnetti",
+    "openEventManager": "Apri Gestione eventi",
+    "methods": {
+      "oauth": {
+        "title": "Connetti tramite Facebook",
+        "description": "Usa la connessione esistente della tua pagina, quindi scegli un ID dataset.",
+        "connect": "Crea dataset",
+        "connectedLabel": "tramite Facebook"
+      },
+      "custom": {
+        "title": "Connessione personalizzata",
+        "description": "Usa un ID dataset e un token di accesso da Meta Gestione eventi.",
+        "start": "Configura connessione personalizzata",
+        "connect": "Connetti",
+        "connectedLabel": "Personalizzata"
+      },
+      "whatsapp": {
+        "title": "Connetti tramite WhatsApp",
+        "description": "Usa la tua connessione WhatsApp, quindi scegli un ID dataset.",
+        "connect": "Crea dataset",
+        "connectedLabel": "tramite WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Scegli un ID dataset",
+      "description": "Inserisci un ID dataset esistente oppure lascialo vuoto per crearne uno automaticamente.",
+      "save": "Salva",
+      "createDataset": "Crea dataset",
+      "caveat": "Un ID dataset non collegato a questa Pagina o account Instagram potrebbe non attribuire correttamente gli eventi. Lascia questo campo vuoto per creare automaticamente un dataset collegato."
+    },
+    "whatsapp": {
+      "connect": "Connetti"
     }
   }
 }

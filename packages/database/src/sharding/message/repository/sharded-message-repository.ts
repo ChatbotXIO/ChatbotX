@@ -655,6 +655,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
   }
 
+  updateSendError(
+    id: string,
+    sendError: string | null,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      id,
+      workspaceId,
+      { sendError },
+      "updateSendError",
+      createdAt,
+    )
+  }
+
   updateSourceId(
     id: string,
     sourceId: string,

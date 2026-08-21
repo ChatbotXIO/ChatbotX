@@ -1,8 +1,16 @@
 import { MessageShardUnavailableError } from "@chatbotx.io/database/errors"
-import type { ContentType, FileType } from "@chatbotx.io/database/partials"
+import type {
+  ContentType,
+  ConversationAttributes,
+  FileType,
+} from "@chatbotx.io/database/partials"
 import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
+import { verifyUserDataWebviewToken } from "@chatbotx.io/encryption"
 import type { GetUserDataStepSchema } from "@chatbotx.io/flow-config"
-import { ReplyFormat } from "@chatbotx.io/flow-config"
+import {
+  GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE,
+  ReplyFormat,
+} from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { ExecuteStepProps } from "../src/integration/handlers/flow"
 
@@ -21,8 +29,12 @@ const repositoryError: { current: Error | null } = { current: null }
 const contactInboxUpdateTracking = vi.fn(async () => undefined)
 const contactCustomFieldSetValueByKey = vi.fn(async () => undefined)
 const conversationUpdateChallenge = vi.fn(async () => undefined)
+const conversationConsumeChallenge = vi.fn(async () => true)
+const conversationRestoreChallengeIfAbsent = vi.fn(async () => true)
+const workspaceFindById = vi.fn(async () => ({ language: "en" }))
 const resolveTenantSettings = vi.fn(async () => ({
   storageUrl: "https://cdn.example.com/",
+  appUrl: "https://app.example.com",
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -30,8 +42,17 @@ vi.mock("@chatbotx.io/business", () => ({
     setValueByKey: contactCustomFieldSetValueByKey,
   },
   contactInboxService: { updateTracking: contactInboxUpdateTracking },
-  conversationService: { updateChallenge: conversationUpdateChallenge },
+  conversationService: {
+    updateChallenge: conversationUpdateChallenge,
+    consumeChallenge: conversationConsumeChallenge,
+    restoreChallengeIfAbsent: conversationRestoreChallengeIfAbsent,
+  },
+  // Real normalizeLanguage collapses to "vi"/"en"/undefined via a supported-
+  // language allowlist; the handler only branches on "vi" vs. everything
+  // else, so a pass-through is behaviorally equivalent for these tests.
+  normalizeLanguage: (language?: string | null) => language ?? undefined,
   resolveTenantSettings,
+  workspaceService: { findById: workspaceFindById },
 }))
 
 // Attachment values are stored as a public URL; mirror getPublicFileUrl's join
@@ -118,6 +139,12 @@ beforeEach(() => {
   contactCustomFieldSetValueByKey.mockClear()
   conversationUpdateChallenge.mockClear()
   conversationUpdateChallenge.mockResolvedValue(undefined)
+  conversationConsumeChallenge.mockClear()
+  conversationConsumeChallenge.mockResolvedValue(true)
+  conversationRestoreChallengeIfAbsent.mockClear()
+  conversationRestoreChallengeIfAbsent.mockResolvedValue(true)
+  workspaceFindById.mockClear()
+  workspaceFindById.mockResolvedValue({ language: "en" })
 })
 
 type StepOverride = Partial<GetUserDataStepSchema>
@@ -135,7 +162,25 @@ function makeProps(
       contactId: "contact-1",
       assignedUserId: null,
       assignedInboxTeamId: null,
-      additionalAttributes: {},
+      // Legacy in-flight challenge (no challengeId) by default, mirroring a
+      // pre-challengeId production row: consumeCurrentChallenge falls back to
+      // the old unconditional clearChallenge behavior for it, so every
+      // pre-existing handleSkipOrError test below keeps its prior outcome.
+      // Tests exercising the new atomic-claim path override this with a
+      // challengeId.
+      additionalAttributes: {
+        challenge: {
+          type: "step",
+          data: {
+            flowId: "flow-1",
+            flowVersionId: "fv-1",
+            nodeId: "node-1",
+            stepId: "step-1",
+            attempts,
+            lastAttemptAt: new Date(lastAttemptAt),
+          },
+        },
+      },
       lastActivityAt: new Date("2026-01-01T00:00:00Z"),
       createdAt: new Date("2025-12-01T00:00:00Z"),
     },
@@ -485,6 +530,39 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
       }),
     })
   })
+
+  test("keeps the long-standing blank retry behavior for non-webview formats (sends the blank retry text unchanged)", async () => {
+    await getUserData(makeProps(ReplyFormat.email, { retryMessage: "" }, 1))
+
+    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
+      type: "sendFlowMessage",
+      data: expect.objectContaining({
+        step: expect.objectContaining({
+          text: "",
+        }),
+      }),
+    })
+  })
+
+  test("falls back to the step message on date retry so the picker prompt is re-sent with its button", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "not a date" })
+    await getUserData(
+      makeProps(ReplyFormat.date, {
+        message: "Pick your date",
+        retryMessage: "  ",
+      }),
+    )
+
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          text: "Pick your date",
+          quickReplies: [expect.objectContaining({ buttonType: "url" })],
+        }),
+      }),
+    )
+  })
 })
 
 describe("getUserData — auto-skip", () => {
@@ -663,6 +741,7 @@ describe("getUserData — first send (no challenge state)", () => {
           stepId: "step-1",
           attempts: 1,
           lastAttemptAt: expect.any(Date),
+          challengeId: "test-id",
         },
       },
     })
@@ -680,6 +759,20 @@ describe("getUserData — first send (no challenge state)", () => {
     expect(
       challengeSetCalls()[0]?.[0].challenge?.data.flowVersionId,
     ).toBeUndefined()
+  })
+
+  test("writes appointmentId into challenge state and the first prompt job", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.appointmentId = "appointment-1"
+
+    await getUserData(props)
+
+    const [, job] = chatQueueAdd.mock.calls[0]
+    expect(job.data.appointmentId).toBe("appointment-1")
+    expect(challengeSetCalls()[0]?.[0].challenge?.data.appointmentId).toBe(
+      "appointment-1",
+    )
   })
 
   test("still uses sendFlowMessage when there is no broadcast metadata", async () => {
@@ -744,5 +837,492 @@ describe("getUserData — first send (no challenge state)", () => {
 
     releaseWait()
     await expect(resultPromise).resolves.toMatchObject({ status: "wait" })
+  })
+})
+
+function findChatJobCall(action: string) {
+  const call = chatQueueAdd.mock.calls.find(
+    ([callAction]) => callAction === action,
+  )
+  if (!call) {
+    throw new Error(
+      `expected chatQueue.add to have been called with "${action}"`,
+    )
+  }
+  return call[1] as {
+    type: string
+    data: {
+      quickReplies?: {
+        id: string
+        label: string
+        buttonType: string
+        url?: string
+        messengerExtensions?: boolean
+      }[]
+    }
+  }
+}
+
+describe("getUserData — date/datetime webview prompt (RF09/RF10)", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  test("date replyFormat sends a url quick reply with the English label by default", async () => {
+    const props = makeProps(ReplyFormat.date)
+    props.ctx = { variables: { conversation: {} } }
+    workspaceFindById.mockResolvedValueOnce({ language: "en" })
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies).toEqual([
+      {
+        id: "test-id",
+        label: "Select Date",
+        buttonType: "url",
+        url: expect.stringContaining("/extensions/datetime-picker"),
+        messengerExtensions: true,
+      },
+    ])
+  })
+
+  test("uses the Vietnamese label when workspace.language is vi", async () => {
+    workspaceFindById.mockResolvedValueOnce({ language: "vi" })
+    const props = makeProps(ReplyFormat.datetime)
+    props.ctx = { variables: { conversation: {} } }
+
+    await getUserData(props)
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]?.label).toBe("Chọn ngày")
+  })
+
+  test("signs a webview token that verifies and carries the challengeId written to the challenge", async () => {
+    const props = makeProps(ReplyFormat.date)
+    props.ctx = { variables: { conversation: {} } }
+
+    await getUserData(props)
+
+    const job = findChatJobCall("sendChatMessage")
+    const url = new URL(job.data.quickReplies?.[0]?.url ?? "")
+    const token = url.searchParams.get("token")
+    expect(token).toBeTruthy()
+
+    const payload = await verifyUserDataWebviewToken(token as string)
+    expect(payload).toMatchObject({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      channel: "messenger",
+      flowId: "flow-1",
+      flowVersionId: "fv-1",
+      stepId: "step-1",
+      nodeId: "node-1",
+      outputFieldId: "field-1",
+      replyFormat: "date",
+    })
+
+    const challengeCall = conversationUpdateChallenge.mock.calls[0]?.[0]
+    expect(payload.challengeId).toBe(challengeCall?.challenge?.data.challengeId)
+  })
+
+  test("writes the challenge state (with challengeId) before the webview prompt", async () => {
+    const props = makeProps(ReplyFormat.datetime)
+    props.ctx = { variables: { conversation: {} } }
+
+    await getUserData(props)
+
+    expect(conversationUpdateChallenge).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      challenge: {
+        type: "step",
+        data: expect.objectContaining({
+          stepId: "step-1",
+          challengeId: "test-id",
+        }),
+      },
+    })
+  })
+
+  test("does not use the text-prompt (sendFlowMessage) path for date/datetime", async () => {
+    const props = makeProps(ReplyFormat.date)
+    props.ctx = { variables: { conversation: {} } }
+
+    await getUserData(props)
+
+    expect(chatQueueAdd).not.toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.anything(),
+    )
+  })
+
+  test("reuses the existing challengeId from the conversation's current challenge on retry", async () => {
+    lastMessage.current = makeIncomingMessage({ text: "not-a-date" })
+    const props = makeProps(ReplyFormat.date, {}, 1)
+    props.conversation = {
+      ...props.conversation,
+      additionalAttributes: {
+        challenge: {
+          type: "step",
+          data: {
+            flowId: "flow-1",
+            flowVersionId: "fv-1",
+            nodeId: "node-1",
+            stepId: "step-1",
+            attempts: 1,
+            lastAttemptAt: new Date(),
+            challengeId: "existing-challenge-id",
+          },
+        },
+      },
+    }
+
+    await getUserData(props)
+
+    const challengeCall = conversationUpdateChallenge.mock.calls[0]?.[0]
+    expect(challengeCall?.challenge?.data.challengeId).toBe(
+      "existing-challenge-id",
+    )
+
+    const job = findChatJobCall("sendChatMessage")
+    const url = new URL(job.data.quickReplies?.[0]?.url ?? "")
+    const token = url.searchParams.get("token") as string
+    const payload = await verifyUserDataWebviewToken(token)
+    expect(payload.challengeId).toBe("existing-challenge-id")
+  })
+})
+
+describe("getUserData — webview submission (RF09/RF10)", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  function makeWebviewSubmissionProps(challengeId = "test-id") {
+    const props = makeProps(ReplyFormat.date)
+    props.metadata = {
+      type: GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE,
+      stepId: "step-1",
+      challengeId,
+      selectedValue: "2026-08-21T00:00:00.000Z",
+    }
+    return props
+  }
+
+  test("claims the challenge and saves the selected value on success", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(true)
+    const props = makeWebviewSubmissionProps()
+
+    const result = await getUserData(props)
+
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      stepId: "step-1",
+      challengeId: "test-id",
+    })
+    expect(result).toEqual({
+      result: "2026-08-21T00:00:00.000Z",
+      status: "success",
+    })
+    expectCustomFieldWrite("2026-08-21T00:00:00.000Z")
+    expectLastInputFailureUpdate(null)
+    // consumeChallenge already cleared the challenge atomically — the
+    // handler must not issue a separate updateChallenge(undefined) clear.
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("duplicate submission (challenge already consumed) is a no-op", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+    const props = makeWebviewSubmissionProps()
+
+    const result = await getUserData(props)
+
+    expect(result).toEqual({ result: undefined, status: "wait" })
+    expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+    expect(contactInboxUpdateTracking).not.toHaveBeenCalled()
+  })
+
+  test("stale challengeId from a previous challenge cycle is a no-op", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+    const props = makeWebviewSubmissionProps("stale-challenge-id")
+
+    const result = await getUserData(props)
+
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({ challengeId: "stale-challenge-id" }),
+    )
+    expect(result.status).toBe("wait")
+    expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+  })
+
+  test("metadata for a different step falls through to the normal flow instead of claiming", async () => {
+    const props = makeWebviewSubmissionProps()
+    props.metadata = { ...props.metadata, stepId: "other-step" }
+    props.ctx = { variables: { conversation: {} } }
+
+    await getUserData(props)
+
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+  })
+})
+
+describe("getUserData — webview submission side-effect failure (crash-safety, Fix 1)", () => {
+  function makeWebviewSubmissionProps(challengeId = "test-id") {
+    const props = makeProps(ReplyFormat.date)
+    props.metadata = {
+      type: GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE,
+      stepId: "step-1",
+      challengeId,
+      selectedValue: "2026-08-21T00:00:00.000Z",
+    }
+    return props
+  }
+
+  test("restores the challenge (same challengeId) and returns error status when a side effect fails after the claim", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(true)
+    contactCustomFieldSetValueByKey.mockRejectedValueOnce(
+      new Error("field write failed"),
+    )
+    const props = makeWebviewSubmissionProps("test-id")
+
+    const result = await getUserData(props)
+
+    // No unhandled rejection: the promise resolves with an "error" result
+    // rather than throwing.
+    expect(result.status).toBe("error")
+    expect(result.result).toBeUndefined()
+
+    // Restored with the SAME challengeId that was just claimed, so the
+    // contact's existing webview link/token can resubmit successfully. The
+    // restore must go through the conditional restoreChallengeIfAbsent (a
+    // plain updateChallenge could overwrite a newer challenge started
+    // between the claim and the restore).
+    expect(conversationRestoreChallengeIfAbsent).toHaveBeenCalledTimes(1)
+    expect(
+      conversationRestoreChallengeIfAbsent.mock.calls[0]?.[0],
+    ).toMatchObject({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      challenge: {
+        type: "step",
+        data: expect.objectContaining({
+          stepId: "step-1",
+          challengeId: "test-id",
+        }),
+      },
+    })
+    expect(conversationUpdateChallenge).not.toHaveBeenCalled()
+
+    // getUserData's outer catch must NOT also unconditionally clear the
+    // challenge — that would erase the restore above and strand the contact.
+    expect(challengeClearCalls()).toHaveLength(0)
+  })
+
+  test("restores the challenge when updateTracking itself fails (not just the custom-field write)", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(true)
+    contactInboxUpdateTracking.mockRejectedValueOnce(
+      new Error("tracking failed"),
+    )
+    const props = makeWebviewSubmissionProps("test-id")
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("error")
+    expect(conversationRestoreChallengeIfAbsent).toHaveBeenCalledTimes(1)
+  })
+
+  test("tolerates a skipped restore (a newer challenge already exists) and still returns error", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(true)
+    contactCustomFieldSetValueByKey.mockRejectedValueOnce(
+      new Error("field write failed"),
+    )
+    conversationRestoreChallengeIfAbsent.mockResolvedValueOnce(false)
+    const props = makeWebviewSubmissionProps("test-id")
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("error")
+    // The newer challenge must be left untouched — no unconditional write.
+    expect(conversationUpdateChallenge).not.toHaveBeenCalled()
+  })
+})
+
+describe("getUserData — challenge claim race, manual reply vs webview submit (Fix 2)", () => {
+  beforeEach(() => {
+    lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
+  })
+
+  function withChallengeId(
+    props: ExecuteStepProps<GetUserDataStepSchema>,
+    challengeId: string,
+  ): ExecuteStepProps<GetUserDataStepSchema> {
+    const existing = (
+      props.conversation.additionalAttributes as
+        | ConversationAttributes
+        | undefined
+    )?.challenge
+    props.conversation = {
+      ...props.conversation,
+      additionalAttributes: {
+        challenge: {
+          type: "step",
+          data: { ...existing?.data, challengeId },
+        },
+      },
+    }
+    return props
+  }
+
+  test("calls consumeChallenge (not clearChallenge) when the current challenge carries a challengeId", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(true)
+    const props = withChallengeId(makeProps(ReplyFormat.email), "challenge-xyz")
+
+    const result = await getUserData(props)
+
+    expect(conversationConsumeChallenge).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      stepId: "step-1",
+      challengeId: "challenge-xyz",
+    })
+    expect(challengeClearCalls()).toHaveLength(0)
+    expect(result.status).toBe("success")
+  })
+
+  test("loses the claim race to a concurrent webview submit → wait, not success", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+    const props = withChallengeId(makeProps(ReplyFormat.email), "challenge-xyz")
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+  })
+
+  test("legacy challenge (no challengeId) still uses the old unconditional clearChallenge — success (regression)", async () => {
+    // makeProps' default fixture already carries a legacy (no challengeId)
+    // challenge.
+    const props = makeProps(ReplyFormat.email)
+
+    const result = await getUserData(props)
+
+    expect(conversationConsumeChallenge).not.toHaveBeenCalled()
+    expect(challengeClearCalls()).toHaveLength(1)
+    expect(result.status).toBe("success")
+  })
+})
+
+describe("getUserData — autoSkip challenge claim race (Fix 2)", () => {
+  function autoSkipProps(
+    challengeId?: string,
+  ): ExecuteStepProps<GetUserDataStepSchema> {
+    lastMessage.current = makeIncomingMessage({ text: "invalid" })
+    const props = makeProps(
+      ReplyFormat.email,
+      {
+        autoSkip: true,
+        autoSkipFailAttempts: 1,
+        autoSkipTimeValue: 24,
+        autoSkipTimeUnit: "hours" as const,
+      },
+      1,
+    )
+    if (!challengeId) {
+      return props
+    }
+    const existing = (
+      props.conversation.additionalAttributes as
+        | ConversationAttributes
+        | undefined
+    )?.challenge
+    props.conversation = {
+      ...props.conversation,
+      additionalAttributes: {
+        challenge: {
+          type: "step",
+          data: { ...existing?.data, challengeId },
+        },
+      },
+    }
+    return props
+  }
+
+  test("claim wins → skip (regression)", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(true)
+    const props = autoSkipProps("challenge-abc")
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("skip")
+  })
+
+  test("claim lost to a concurrent terminator → wait instead of skip", async () => {
+    conversationConsumeChallenge.mockResolvedValueOnce(false)
+    const props = autoSkipProps("challenge-abc")
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+  })
+})
+
+describe("getUserData — date/datetime webview channel gating (Fix 3)", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  test("whatsapp is not URL-quick-reply capable — falls through to the plain-text prompt", async () => {
+    const props = makeProps(ReplyFormat.date)
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "whatsapp" }
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.objectContaining({ type: "sendFlowMessage" }),
+    )
+    expect(chatQueueAdd).not.toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.anything(),
+    )
+  })
+
+  test("messenger is URL-quick-reply capable — still gets the url quick reply (regression)", async () => {
+    const props = makeProps(ReplyFormat.date)
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "messenger" }
+
+    await getUserData(props)
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]?.buttonType).toBe("url")
+  })
+})
+
+describe("getUserData — non-date replyFormats keep the text prompt path (regression)", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  test("text replyFormat still enqueues via enqueueFlowStepMessage / sendFlowMessage", async () => {
+    const props = makeProps(ReplyFormat.text)
+    props.ctx = { variables: { conversation: {} } }
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.objectContaining({ type: "sendFlowMessage" }),
+    )
+    expect(chatQueueAdd).not.toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.anything(),
+    )
   })
 })

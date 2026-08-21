@@ -167,7 +167,12 @@ describe("setCoexistWhatsappAPI", () => {
 
     // Flag flipped on via the atomic UPDATE … RETURNING (one update on success).
     expect(db.update).toHaveBeenCalledTimes(1)
-    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({ coexistEnabled: true })
+    // aiReadsSyncedHistory defaults to false (zod default) and is written on
+    // enable — the default advances the AI marker (AI ignores synced history).
+    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({
+      coexistEnabled: true,
+      coexistAiReadsSyncedHistory: false,
+    })
 
     // CoexistSyncRun insert with the init-row values.
     expect(db.insert).toHaveBeenCalledTimes(1)
@@ -188,6 +193,25 @@ describe("setCoexistWhatsappAPI", () => {
     expect(mockQueueAdd).not.toHaveBeenCalled()
   })
 
+  test("enabled:true, aiReadsSyncedHistory:true — writes coexistAiReadsSyncedHistory alongside coexistEnabled", async () => {
+    const result = await call(
+      procedure,
+      {
+        workspaceId: "ws-1",
+        integrationId: "int-1",
+        enabled: true,
+        aiReadsSyncedHistory: true,
+      },
+      { context: stubContext },
+    )
+
+    expect(result).toEqual({ success: true })
+    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({
+      coexistEnabled: true,
+      coexistAiReadsSyncedHistory: true,
+    })
+  })
+
   test("enabled:false — flag-only: flips coexistEnabled, no run insert, no delete, no job", async () => {
     const result = await call(
       procedure,
@@ -206,6 +230,24 @@ describe("setCoexistWhatsappAPI", () => {
     expect(dbExecute).not.toHaveBeenCalled()
     expect(mockTriggerSmbAppDataSync).not.toHaveBeenCalled()
     expect(mockQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("enabled:false (decline) — never writes coexistAiReadsSyncedHistory, even when the popup sent aiReadsSyncedHistory:true", async () => {
+    const result = await call(
+      procedure,
+      {
+        workspaceId: "ws-1",
+        integrationId: "int-1",
+        enabled: false,
+        aiReadsSyncedHistory: true,
+      },
+      { context: stubContext },
+    )
+
+    expect(result).toEqual({ success: true })
+    // The UPDATE runs BEFORE the `if (enabled)` branch — decline must never
+    // write coexistAiReadsSyncedHistory, regardless of what the popup sent.
+    expect(dbUpdateBuilder.set).toHaveBeenCalledWith({ coexistEnabled: false })
   })
 
   test("enabled:true — surfaces failure reason and marks the run failed when smb_app_data fails", async () => {
@@ -291,6 +333,40 @@ describe("i18n key presence (H12)", () => {
           coexist: Record<string, unknown>
         }
       ).coexist.toggleHelperWhatsapp,
+    ).toBeDefined()
+  })
+
+  test("coexist.aiReadsSyncedHistoryLabel is defined in en.json and vi.json", () => {
+    expect(
+      (
+        enMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.aiReadsSyncedHistoryLabel,
+    ).toBeDefined()
+    expect(
+      (
+        viMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.aiReadsSyncedHistoryLabel,
+    ).toBeDefined()
+  })
+
+  test("coexist.aiReadsSyncedHistoryHelper is defined in en.json and vi.json", () => {
+    expect(
+      (
+        enMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.aiReadsSyncedHistoryHelper,
+    ).toBeDefined()
+    expect(
+      (
+        viMessages as unknown as Record<string, unknown> & {
+          coexist: Record<string, unknown>
+        }
+      ).coexist.aiReadsSyncedHistoryHelper,
     ).toBeDefined()
   })
 

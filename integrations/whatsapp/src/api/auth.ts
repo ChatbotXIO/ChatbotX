@@ -57,29 +57,64 @@ export const exchangeAccessToken = (
   )
 }
 
+export const exchangeLongLivedToken = (
+  settings: { clientId: string; clientSecret: string },
+  accessToken: string,
+): Promise<string> =>
+  rescue(async () => {
+    const result = await ky
+      .get<ExchangeAccessTokenResponse>(
+        `${API_URL}/${DEFAULT_API_VERSION}/oauth/access_token`,
+        {
+          searchParams: {
+            grant_type: "fb_exchange_token",
+            client_id: settings.clientId,
+            client_secret: settings.clientSecret,
+            fb_exchange_token: accessToken,
+          },
+        },
+      )
+      .json()
+    return result.access_token
+  })
+
+async function requestDebugToken(
+  accessToken: string,
+  debugAccessToken: string,
+): Promise<DebugTokenData | null> {
+  const result = await ky
+    .get<DebugTokenResponse>(`${API_URL}/debug_token`, {
+      searchParams: {
+        input_token: accessToken,
+        access_token: debugAccessToken,
+      },
+    })
+    .json()
+
+  if (!result.data.is_valid) {
+    return null
+  }
+
+  return result.data
+}
+
 export async function debugToken(
   accessToken: string,
   debugAccessToken = accessToken,
 ): Promise<DebugTokenData | null> {
   try {
-    const result = await ky
-      .get<DebugTokenResponse>(`${API_URL}/debug_token`, {
-        searchParams: {
-          input_token: accessToken,
-          access_token: debugAccessToken,
-        },
-      })
-      .json()
-
-    if (!result.data.is_valid) {
-      return null
-    }
-
-    return result.data
+    return await requestDebugToken(accessToken, debugAccessToken)
   } catch (e) {
     logger.error(e, "Failed to debug token")
     return null
   }
+}
+
+export function debugTokenOrThrow(
+  accessToken: string,
+  debugAccessToken = accessToken,
+): Promise<DebugTokenData | null> {
+  return requestDebugToken(accessToken, debugAccessToken)
 }
 
 /**

@@ -42,7 +42,10 @@ export default function AuthorizedDomainField() {
       </p>
       {authorizedDomains.map((field, index) => (
         <div className="flex gap-2" key={field.id}>
-          <InputField name={`authorizedDomains.${index}.value`} />
+          <InputField
+            name={`authorizedDomains.${index}.value`}
+            placeholder="example.com"
+          />
 
           <Button
             aria-label={t("actions.delete")}

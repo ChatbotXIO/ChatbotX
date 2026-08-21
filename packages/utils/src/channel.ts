@@ -3,11 +3,11 @@ import { z } from "zod"
 /**
  * The channels a workspace can talk to a contact through.
  *
- * Lives here rather than in `@chatbotx.io/database` because packages that need
- * to key data by channel — `@chatbotx.io/flow-config` most of all, which holds
- * the per-channel step rules — must not depend on the database layer. Before
- * this move those tables had to fall back to `Record<string, ...>`, so a typo'd
- * or renamed channel silently missed its entry instead of failing to compile.
+ * See this package's README ("Exception: cross-cutting product enums") for why
+ * a product enum lives in a generic-utils package: `@chatbotx.io/flow-config`
+ * needs it without depending on `@chatbotx.io/database`. Before this move those
+ * tables had to fall back to `Record<string, ...>`, so a typo'd or renamed
+ * channel silently missed its entry instead of failing to compile.
  *
  * `@chatbotx.io/database/partials` re-exports this, so the many existing
  * importers there keep working unchanged.
@@ -42,13 +42,13 @@ export type ChannelType = z.infer<typeof channelTypes>
  * silently go missing from the picker or the settings accordion the way the
  * old plain-array lists allowed.
  *
- * `order` is alphabetical by channel name rather than copying either legacy
- * list's order: the create picker (`whatsapp, messenger, instagram, zalo,
- * tiktok, telegram, webchat`) and the settings accordion (`whatsapp,
- * messenger, instagram, zalo, telegram, tiktok, webchat, smtp`) already
- * disagreed with each other before this registry existed, so there was no
- * single order that preserved both — alphabetical is a neutral, unambiguous
- * default going forward.
+ * `order` is a deliberate product-priority order — whatsapp, messenger,
+ * instagram, tiktok, telegram, zalo, webchat, then smtp (Email) — rather than
+ * alphabetical or either legacy list's order: the create picker (`whatsapp,
+ * messenger, instagram, zalo, tiktok, telegram, webchat`) and the settings
+ * accordion (`whatsapp, messenger, instagram, zalo, telegram, tiktok,
+ * webchat, smtp`) already disagreed with each other before this registry
+ * existed. `omnichannel` (the non-connectable fallback) always sorts last.
  */
 export type ChannelCapability = {
   /** Shown as an option on the "create new channel" picker. */
@@ -66,7 +66,7 @@ export type ChannelCapability = {
 }
 
 export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
-  instagram: {
+  whatsapp: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
@@ -78,40 +78,40 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     requiresCredential: true,
     order: 2,
   },
-  smtp: {
-    creatable: false,
-    manageable: true,
-    requiresCredential: false,
-    order: 3,
-  },
-  telegram: {
+  instagram: {
     creatable: true,
     manageable: true,
-    requiresCredential: false,
-    order: 4,
+    requiresCredential: true,
+    order: 3,
   },
   tiktok: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
-    order: 5,
+    order: 4,
   },
-  webchat: {
+  telegram: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
-    order: 6,
-  },
-  whatsapp: {
-    creatable: true,
-    manageable: true,
-    requiresCredential: true,
-    order: 7,
+    order: 5,
   },
   zalo: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
+    order: 6,
+  },
+  webchat: {
+    creatable: true,
+    manageable: true,
+    requiresCredential: false,
+    order: 7,
+  },
+  smtp: {
+    creatable: false,
+    manageable: true,
+    requiresCredential: false,
     order: 8,
   },
   // Not a real connectable channel — the fallback icon/label for unknown
@@ -136,10 +136,9 @@ export const CREATABLE_CHANNELS: ChannelType[] = channelTypes.options
 
 /**
  * Channels with a row in the workspace settings channels accordion, in
- * display order. Still requires a matching `@<channel>` parallel-route slot
- * under `settings/channels/` — Next.js parallel routes are a filesystem
- * constraint this registry cannot remove — but that slot fails loudly (an
- * empty accordion item) rather than the silent omission a hand-maintained
+ * display order. Still requires a matching `settings/channels/<channel>/page.tsx`
+ * route — a filesystem constraint this registry cannot remove — but a missing
+ * route now 404s loudly rather than the silent omission a hand-maintained
  * array allowed.
  */
 export const MANAGEABLE_CHANNELS: ChannelType[] = channelTypes.options

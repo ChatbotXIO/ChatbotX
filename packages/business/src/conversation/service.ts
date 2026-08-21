@@ -190,6 +190,70 @@ class ConversationService extends BaseService {
     }
   }
 
+  /**
+   * Atomic compare-and-clear claim on the conversation's `challenge` jsonb
+   * attribute. Used by webview-submission handlers (e.g. getUserData's
+   * date/datetime picker) to guard against double-submit / stale-token
+   * replay: two concurrent submissions racing to clear the same challenge
+   * must not both "win" — only the row matching the current stepId AND
+   * challengeId is cleared, and only one caller can ever observe a returned
+   * row for a given challengeId. See `.agents/skills/reliability-concurrency`.
+   */
+  async consumeChallenge(props: {
+    workspaceId: string
+    conversationId: string
+    stepId: string
+    challengeId: string
+  }): Promise<boolean> {
+    const { workspaceId, conversationId, stepId, challengeId } = props
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`${conversationModel.additionalAttributes} - 'challenge'`,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+          sql`${conversationModel.additionalAttributes}->'challenge'->'data'->>'stepId' = ${stepId}`,
+          sql`${conversationModel.additionalAttributes}->'challenge'->'data'->>'challengeId' = ${challengeId}`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
+  /**
+   * Compensating write for a failed post-claim side effect: puts a consumed
+   * challenge back so the contact can retry, but ONLY while no challenge
+   * exists on the conversation. Unconditional restore could overwrite a
+   * newer challenge started between the claim and the restore, silently
+   * invalidating that newer cycle's token. Returns false when a challenge
+   * already exists (restore skipped).
+   */
+  async restoreChallengeIfAbsent(props: {
+    workspaceId: string
+    conversationId: string
+    challenge: NonNullable<ConversationAttributes["challenge"]>
+  }): Promise<boolean> {
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{challenge}', ${JSON.stringify(props.challenge)}::jsonb, true)`,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, props.conversationId),
+          eq(conversationModel.workspaceId, props.workspaceId),
+          sql`(${conversationModel.additionalAttributes} IS NULL OR NOT jsonb_exists(${conversationModel.additionalAttributes}, 'challenge'))`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
   async findByContactWithInboxes(props: {
     contactId: string
     workspaceId: string
@@ -637,6 +701,61 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [conversationId] })
+  }
+
+  /**
+   * Batched activity + AI-context-marker advance for coexist sync writes.
+   * ONE VALUES-join UPDATE for the whole bulk (mirrors the pre-existing
+   * `lastActivityAt`-only UPDATE in `applyCoexistActivityUpdates`), extended
+   * to also advance `aiContextLastMessageId`.
+   *
+   * Both columns are advance-only and NULL-guarded per row: a null
+   * `newestMessageAt` leaves `lastActivityAt` untouched, and a null
+   * `aiMarkerMessageId` leaves `aiContextLastMessageId` untouched. The marker
+   * only ever moves FORWARD to a message id actually inserted by a coexist
+   * sync for that conversation (either direction) — never backwards, and
+   * never to an arbitrary id — so a stale/replayed batch can never regress
+   * it. Callers dedup rows by `conversationId` before calling this.
+   */
+  async bulkAdvanceActivityAndAiContextMarker(props: {
+    workspaceId: string
+    rows: Array<{
+      conversationId: string
+      newestMessageAt: Date | null
+      /** Id of the newest sync-inserted message (either direction); null = leave marker untouched. */
+      aiMarkerMessageId: string | null
+    }>
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, rows, tx = db } = props
+    if (rows.length === 0) {
+      return
+    }
+
+    const valueRows = rows.map(
+      (row) => sql`(
+        ${row.conversationId}::int8,
+        ${row.newestMessageAt}::timestamptz,
+        ${row.aiMarkerMessageId}::int8
+      )`,
+    )
+
+    await tx.execute(sql`
+      UPDATE "Conversation" AS t
+      SET "lastActivityAt" = CASE
+            WHEN u.ts IS NOT NULL AND (t."lastActivityAt" IS NULL OR t."lastActivityAt" < u.ts) THEN u.ts
+            ELSE t."lastActivityAt" END,
+          "aiContextLastMessageId" = CASE
+            WHEN u.marker IS NOT NULL AND (t."aiContextLastMessageId" IS NULL OR t."aiContextLastMessageId" < u.marker) THEN u.marker
+            ELSE t."aiContextLastMessageId" END
+      FROM (VALUES ${sql.join(valueRows, sql`, `)}) AS u(id, ts, marker)
+      WHERE t."id" = u.id AND t."workspaceId" = ${workspaceId}::int8
+    `)
+
+    await this.invalidate({
+      workspaceId,
+      ids: rows.map((row) => row.conversationId),
+    })
   }
 
   async updateFlowStepState(props: {

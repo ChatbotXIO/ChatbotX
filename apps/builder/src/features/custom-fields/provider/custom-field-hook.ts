@@ -124,6 +124,21 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.currentTime.label",
   },
   {
+    id: systemFieldTypes.enum.booking_calendar,
+    type: "shortText",
+    labelKey: "fields.bookingCalendar.label",
+  },
+  {
+    id: systemFieldTypes.enum.booking_date,
+    type: "datetime",
+    labelKey: "fields.bookingDate.label",
+  },
+  {
+    id: systemFieldTypes.enum.booking_link,
+    type: "shortText",
+    labelKey: "fields.bookingLink.label",
+  },
+  {
     id: systemFieldTypes.enum.last_seen,
     type: "datetime",
     labelKey: "fields.lastSeen.label",

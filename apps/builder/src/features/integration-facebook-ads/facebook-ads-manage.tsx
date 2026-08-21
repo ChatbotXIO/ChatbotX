@@ -11,23 +11,12 @@ import { SettingRow } from "@/components/setting-row"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { connectFacebookAds } from "./actions/connect.action"
 import { disconnectFacebookAdsAction } from "./actions/disconnect.action"
+import { needsFacebookAdsReconnect } from "./lib/needs-reconnect"
 import type { IntegrationFacebookAdsResource } from "./schemas"
 
 type FacebookAdsManageProps = {
   workspaceId: string
   integrationFacebookAds: IntegrationFacebookAdsResource | undefined
-}
-
-const needsReconnect = (
-  integration: IntegrationFacebookAdsResource,
-): boolean => {
-  if (integration.status === "invalid") {
-    return true
-  }
-  return Boolean(
-    integration.tokenExpiresAt &&
-      new Date(integration.tokenExpiresAt).getTime() < Date.now(),
-  )
 }
 
 export function FacebookAdsManage({
@@ -68,7 +57,7 @@ export function FacebookAdsManage({
     >
       {integrationFacebookAds ? (
         <div className="flex flex-col gap-2">
-          {needsReconnect(integrationFacebookAds) && (
+          {needsFacebookAdsReconnect(integrationFacebookAds) && (
             <Button
               disabled={isPendingConnect}
               onClick={async (e) => {

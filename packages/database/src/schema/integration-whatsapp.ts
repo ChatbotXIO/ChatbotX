@@ -1,7 +1,9 @@
+import type { EncryptedData } from "@chatbotx.io/encryption"
 import { sql } from "drizzle-orm"
 import {
   boolean,
   check,
+  index,
   jsonb,
   pgEnum,
   pgTable,
@@ -55,14 +57,21 @@ export const integrationWhatsappModel = pgTable(
     name: text().notNull(),
     displayPhoneNumber: text().notNull().default(""),
     coexistEnabled: boolean().notNull().default(false),
+    coexistAiReadsSyncedHistory: boolean().notNull().default(false),
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),
     historyDeclined: boolean().notNull().default(false),
+    hasCapiScope: boolean().notNull().default(false),
+    capiScopeCheckedAt: timestamp(timestampConfig),
+    datasetId: text(),
+    capiAccessToken: jsonb().$type<EncryptedData>(),
+    capiDisconnectedAt: timestamp(timestampConfig),
     registrationStatus: whatsappRegistrationStatus()
       .notNull()
       .default("pending_verification"),
     registrationError: jsonb().$type<IntegrationWhatsappRegistrationError>(),
     verificationCodeRequestedAt: timestamp(timestampConfig),
+    tokenRefreshError: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -80,6 +89,10 @@ export const integrationWhatsappModel = pgTable(
     uniqueIndex("IntegrationWhatsapp_inboxId_key").using(
       "btree",
       table.inboxId.asc().nullsLast(),
+    ),
+    index("IntegrationWhatsapp_workspaceId_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
     ),
     // A Meta phone number can back exactly one integration platform-wide.
     // The application already enforces this before insert, but that check and

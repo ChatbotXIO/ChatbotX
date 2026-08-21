@@ -70,6 +70,13 @@ export const buttonPayloadSchema = z
   }))
 export type ButtonPayload = z.infer<typeof buttonPayloadSchema>
 
+/**
+ * Zalo-only wire prefix: `oa.query.hide` button payloads echo back from the
+ * webhook as a text message reading `postback_<payload>`. Zalo's send/receive
+ * handlers and the worker's label resolution must all agree on this marker.
+ */
+export const ZALO_POSTBACK_TEXT_PREFIX = "postback_"
+
 export const encodeButtonPayload = (props: ButtonPayload): string => {
   const parts = [
     props.flowId,

@@ -17,6 +17,11 @@ import {
 import { escapeLikePattern, likeContains } from "../../utils"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
+import {
+  buildCtwaSegmentContactExists,
+  ctwaRetargetDateRange,
+  ctwaRetargetSegments,
+} from "./ctwa-retarget"
 import { buildCustomFieldWhere } from "./custom-field-predicates"
 import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
 import {
@@ -49,6 +54,14 @@ export {
   UNASSIGNED_ASSIGNEE_VALUE,
 } from "./conversation-assignee"
 export {
+  buildCtwaSegmentContactExists,
+  buildCtwaSegmentPredicate,
+  type CtwaRetargetSegment,
+  type CtwaSegmentPredicateInput,
+  ctwaRetargetDateRange,
+  ctwaRetargetSegments,
+} from "./ctwa-retarget"
+export {
   EMAIL_PHONE_FILTER_FIELDS,
   pruneContactFilterFields,
   pruneEmailPhoneFilterConditions,
@@ -79,6 +92,12 @@ const hasWhereParts = (where: ContactWhere): boolean =>
 export const contactFilterHasPredicate = (
   criteria: FilterCriteriaInput,
 ): boolean => hasWhereParts(applyContactFilter(criteria))
+
+type ContactFilterContext = {
+  timezone: string
+  /** Optional workspace scope, read only by the `ctwaRetarget` case. */
+  workspaceId?: string
+}
 
 const conversationExists = joinTableExists(
   conversationModel,
@@ -283,7 +302,9 @@ export function buildContactWhere(input: FilterWhereInput): ContactWhere {
 
   const filters = [
     input.keyword ? buildSmartKeywordWhere(input.keyword) : undefined,
-    input.contactFilter ? applyContactFilter(input.contactFilter) : undefined,
+    input.contactFilter
+      ? applyContactFilter(input.contactFilter, input.workspaceId)
+      : undefined,
   ].filter((filter): filter is ContactWhere =>
     filter ? hasWhereParts(filter) : false,
   )
@@ -339,15 +360,19 @@ export const buildContactInboxContactFilterSQL = ({
 
 export function applyContactFilter(
   criteria: FilterCriteriaInput,
+  workspaceId?: string,
 ): ContactWhere {
   const conditions = criteria.conditions as FilterConditionInput[]
   if (conditions.length === 0) {
     return {}
   }
 
-  const timezone = resolveFilterTimezone(criteria.timezone)
+  const context: ContactFilterContext = {
+    timezone: resolveFilterTimezone(criteria.timezone),
+    workspaceId,
+  }
   const conditionWheres = conditions
-    .map((condition) => buildConditionWhere(condition, timezone))
+    .map((condition) => buildConditionWhere(condition, context))
     .filter((w): w is ContactWhere => Object.keys(w).length > 0)
 
   if (conditionWheres.length === 0) {
@@ -363,8 +388,9 @@ export function applyContactFilter(
 
 function buildConditionWhere(
   condition: FilterConditionInput,
-  timezone: string,
+  context: ContactFilterContext,
 ): ContactWhere {
+  const { timezone } = context
   const { field, operator, value } = condition
 
   switch (field) {
@@ -482,6 +508,43 @@ function buildConditionWhere(
         value,
       )
 
+    case "fromCtwaAd":
+      return buildExistsBooleanWhere(
+        contactInboxExists,
+        sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL AND ${contactInboxModel.referral}->>'ctwaClid' <> ''`,
+        operator,
+        value,
+      )
+
+    case "ctwaRetarget": {
+      const segment = condition.segment
+      if (
+        typeof segment !== "string" ||
+        !(ctwaRetargetSegments as readonly string[]).includes(segment) ||
+        typeof condition.since !== "string" ||
+        typeof condition.until !== "string"
+      ) {
+        return {}
+      }
+      const { since, until } = ctwaRetargetDateRange(
+        condition.since,
+        condition.until,
+      )
+      return existsWhere((contactId) =>
+        buildCtwaSegmentContactExists(
+          {
+            segment: segment as (typeof ctwaRetargetSegments)[number],
+            adId: condition.adId,
+            since,
+            until,
+            workspaceId: context.workspaceId,
+            integrationWhatsappId: condition.integrationWhatsappId,
+          },
+          contactId,
+        ),
+      )
+    }
+
     case "tags":
     case "source":
     case "currentChannel":
@@ -494,6 +557,7 @@ function buildConditionWhere(
     case "broadcastFailed":
     case "subscribedToDripCampaign":
     case "entryPointsLinks":
+    case "ctwaConversion":
       return buildRelationSetWhere(field, operator, value)
 
     case "questionnaireStarted":

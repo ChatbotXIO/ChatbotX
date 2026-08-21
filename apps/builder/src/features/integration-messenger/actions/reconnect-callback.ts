@@ -1,4 +1,7 @@
-import { messengerIntegrationService } from "@chatbotx.io/business"
+import {
+  messengerIntegrationService,
+  resolveTenantSettings,
+} from "@chatbotx.io/business"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   debugToken,
@@ -8,11 +11,13 @@ import {
   toAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import {
+  ensureMessengerWhitelistedDomain,
   exchangeLongLivedToken,
   scopesToPageSubscribeFields,
   subscribePageToAppWebhook,
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
+import { normalizeError } from "universal-error-normalizer"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import { lookupIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
@@ -88,6 +93,7 @@ export async function reconnectMessengerHandler(props: {
       clientId: props.credentialConfig.clientId,
       clientSecret: props.credentialConfig.clientSecret,
       redirectUrl: "",
+      version: props.credentialConfig.version,
       tokens: {
         accessToken: pageToken,
       },
@@ -134,6 +140,34 @@ export async function reconnectMessengerHandler(props: {
       accessToken: pageToken,
       version: props.credentialConfig.version,
       subscribedFields: scopesToPageSubscribeFields(debug?.scopes).join(","),
+    })
+
+    const { appUrl } = await resolveTenantSettings({
+      workspaceId: props.workspaceId,
+    })
+    await ensureMessengerWhitelistedDomain({
+      appUrl,
+      ctx: {
+        auth,
+        platform: {
+          appUrl,
+          wsUrl: "",
+          storageUrl: "",
+          getRealtimeAuthHeaders: async () => ({}),
+        },
+        storagePrefix: "",
+      },
+    }).catch((error) => {
+      logger.warn(
+        {
+          err: normalizeError(error),
+          workspaceId: props.workspaceId,
+          integrationId: props.integrationId,
+          action: "ensureMessengerWhitelistedDomain",
+          reason: "messengerReconnectProfileSyncFailed",
+        },
+        "Messenger whitelist refresh failed during reconnect",
+      )
     })
 
     return { status: "success" }

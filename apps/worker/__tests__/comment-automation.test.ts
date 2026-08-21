@@ -753,6 +753,42 @@ describe("processCommentAIReply", () => {
     expect(mockChatQueueAdd).not.toHaveBeenCalled()
   })
 
+  test("private (instagram): sends an AI-generated DM through the Instagram Login endpoint", async () => {
+    await processCommentAIReply(
+      buildAIJobData({
+        replyChannel: "private",
+        channelType: "instagram",
+        integrationType: "instagram",
+      }) as any,
+    )
+
+    expect(mockSendInstagramPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "AI answer",
+    )
+    expect(mockSendPrivateReply).not.toHaveBeenCalled()
+    expect(mockSendInstagramFacebookPrivateReply).not.toHaveBeenCalled()
+  })
+
+  test("private (instagramFacebook): sends an AI-generated DM through the Instagram-via-Facebook endpoint", async () => {
+    await processCommentAIReply(
+      buildAIJobData({
+        replyChannel: "private",
+        channelType: "instagramFacebook",
+        integrationType: "instagramFacebook",
+      }) as any,
+    )
+
+    expect(mockSendInstagramFacebookPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "AI answer",
+    )
+    expect(mockSendPrivateReply).not.toHaveBeenCalled()
+    expect(mockSendInstagramPrivateReply).not.toHaveBeenCalled()
+  })
+
   test("image-only comment (no message) does not generate or send", async () => {
     await processCommentAIReply(buildAIJobData({ message: "" }) as any)
 

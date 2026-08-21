@@ -14,17 +14,20 @@ export const LICENSE_ISSUER = "https://chatbotx.io/licenses"
  *
  * NOTE: `LICENSE_ISSUER` must match the `iss` claim set by the signer in
  * `../aha.chat-enterprise`, or every token fails verification.
- *
- * TODO(enterprise): replace the placeholder key below with the real public key
- * generated in `../aha.chat-enterprise`. Until then no production license
- * verifies offline.
  */
 export type LicensePublicKeys = Record<string, string>
 
 export const LICENSE_PUBLIC_KEYS: LicensePublicKeys = {
-  "chatbotx-license-ed25519-2026-01": [
+  "chatbotx-license-ed25519-2026-08": [
     "-----BEGIN PUBLIC KEY-----",
-    "MCowBQYDK2VwAyEAaTaaNoUri+gM5SRYbo5xRy/pjaA/jF0w9DhS0AttbH0=",
+    "MCowBQYDK2VwAyEAo+li4bBUyYNnGoOrXm2NLHrUP14S4MTH3lw4Z6C8pl4=",
+    "-----END PUBLIC KEY-----",
+  ].join("\n"),
+  // Dev/test signing key — the matching private key is shared inside the
+  // private enterprise repo so developers can mint local licenses.
+  "chatbotx-license-ed25519-dev": [
+    "-----BEGIN PUBLIC KEY-----",
+    "MCowBQYDK2VwAyEAO5V5i1yZkhjX6pdurY1+S1WPOb7lGVYzxndIfsBSkvk=",
     "-----END PUBLIC KEY-----",
   ].join("\n"),
 }

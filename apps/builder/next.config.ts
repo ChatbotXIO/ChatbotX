@@ -17,11 +17,26 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
+  // Type-checking is NOT part of `next build`: the in-build tsc pass duplicated
+  // `check-types` and OOMs a default 4GB heap. The type gate lives in
+  // .github/workflows/ci.yml (`turbo run check-types lint test`) — keep that
+  // workflow green before trusting a build.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "20mb",
     },
+    // Additive to Next's built-in default list, which already covers
+    // lucide-react. `@chatbotx.io/ui` doesn't belong here: it's imported via
+    // per-file subpaths and its root export is not a re-export barrel, so
+    // there is nothing for this optimization to rewrite.
+    optimizePackageImports: ["@icons-pack/react-simple-icons"],
     // turbopackServerFastRefresh: false,
+    // The Docker build starts from a clean layer and `.next/cache` is not
+    // persisted across CI runs, so this cache is written and never read.
+    turbopackFileSystemCacheForBuild: false,
   },
   poweredByHeader: false,
   async rewrites() {
@@ -118,11 +133,14 @@ const nextConfig: NextConfig = {
   ],
 
   // Resolve bull-board and bullmq from node_modules at runtime, not from the bundle.
+  // @napi-rs/canvas ships a native .node addon (per-platform binary) that the
+  // bundler can't inline — it must stay a runtime require() too.
   serverExternalPackages: [
     "@bull-board/api",
     "@bull-board/ui",
     "@bull-board/hono",
     "bullmq",
+    "@napi-rs/canvas",
   ],
 
   outputFileTracingRoot: require("path").join(import.meta.dirname, "../../"),

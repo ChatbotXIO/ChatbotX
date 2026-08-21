@@ -102,9 +102,13 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   }
 })
 
-vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: vi.fn(),
-}))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/redis")>()
+  return {
+    ...actual,
+    invalidateCacheByTags: vi.fn(),
+  }
+})
 
 vi.mock("@/features/folders/actions/utils", () => ({
   ensureFolderIsExists: vi.fn(async () => undefined),

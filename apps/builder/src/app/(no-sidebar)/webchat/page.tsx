@@ -2,6 +2,7 @@ import {
   isWorkspaceScheduledForDeletion,
   workspaceService,
 } from "@chatbotx.io/business"
+import { ensureBrandingMenuEntry } from "@chatbotx.io/business/branding"
 import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { SearchParams } from "next/dist/server/request/search-params"
@@ -9,15 +10,23 @@ import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import z from "zod"
+import { isCommunity } from "@/env"
+import {
+  BRANDING_TITLE,
+  getBrandingUrl,
+} from "@/features/integration-webchat/lib"
 import {
   getHostFromOrigin,
   isOriginAuthorized,
 } from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import { createWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
+import { CustomWidgetStyle } from "@/features/integration-webchat/lib/widget-css"
 import { GuestSessionStoreProvider } from "@/features/integration-webchat/providers/store/guest-session-provider"
 import { toWebchatClientConfig } from "@/features/integration-webchat/providers/store/lib/webchat-client-config"
 import { WebchatWrapper } from "@/features/integration-webchat/webchat-wrapper"
+import { getTenantSettings } from "@/features/tenant/utils"
+import { getWorkspaceLogoUrl } from "@/features/workspaces/helpers"
 import { getDomainFromHeader } from "@/lib/domain"
 
 type WebchatPageProps = {
@@ -120,12 +129,37 @@ export default async function WebchatPage(props: WebchatPageProps) {
     workspaceId: targetWebchat.workspaceId,
   })
 
+  // Gated server-side so a showLogo=false widget never even receives a URL,
+  // rather than shipping one and relying on the client to hide it.
+  const { storageUrl, appUrl } = await getTenantSettings()
+  const workspaceLogoUrl = targetWebchat.showLogo
+    ? getWorkspaceLogoUrl(workspace, storageUrl)
+    : undefined
+
+  // Community edition always shows the "Built with" branding link. Enforced
+  // here on the read path so legacy rows (or rows edited via direct POSTs)
+  // still render it.
+  const clientConfig = toWebchatClientConfig(targetWebchat)
+  const config = isCommunity()
+    ? {
+        ...clientConfig,
+        persistentMenus: ensureBrandingMenuEntry(clientConfig.persistentMenus, {
+          label: BRANDING_TITLE,
+          url: getBrandingUrl("webchat", appUrl),
+        }),
+      }
+    : clientConfig
+
   return (
     <GuestSessionStoreProvider
       accessToken={accessToken}
-      config={toWebchatClientConfig(targetWebchat)}
+      config={config}
       serverGuestConversationId={guestConversationId}
+      workspaceLogoUrl={workspaceLogoUrl}
     >
+      {targetWebchat.customCss && (
+        <CustomWidgetStyle css={targetWebchat.customCss} />
+      )}
       <WebchatWrapper parentOrigin={embeddingOrigin} referral={data.ref} />
     </GuestSessionStoreProvider>
   )

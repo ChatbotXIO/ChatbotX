@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { createConsumer } from "@chatbotx.io/worker-config/message-queue/factory"
 import pLimit, { type LimitFunction } from "p-limit"
+import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { revertDispatchToPending } from "./revert-dispatch"
@@ -235,6 +236,7 @@ async function startDispatchConsumer() {
   logger.info("Starting dispatch consumer")
 
   try {
+    await ensureBootstrapped()
     await consumer.start()
   } catch (error) {
     logger.error(error, "Error starting dispatch consumer")

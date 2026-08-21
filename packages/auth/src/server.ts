@@ -680,17 +680,23 @@ export function createAuth(config: AuthConfig) {
       },
     },
     trustedOrigins: async () => {
-      // better-auth calls this on every request, so read the active domains from
-      // the short-TTL cache instead of scanning `CustomDomain` each time.
-      const domains = await customDomainService.listActiveDomains()
+      // better-auth resolves the function form of `trustedOrigins` once at
+      // instance creation (createContext), not just per request, so this
+      // thunk also runs while `next build` collects page data — with no
+      // Redis/Postgres reachable. Skip the CustomDomain lookup then; no
+      // requests are served during the build. Mirrors buildSocialProviders above.
+      const staticOrigins = [getBrokerUrl(), env.NEXT_PUBLIC_BUILDER_URL]
+      if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return Array.from(new Set(staticOrigins))
+      }
 
       // Broker + builder + every active custom domain. The broker is where
       // callbacks land; the builder and custom domains are valid relay targets
       // (where sign-in is initiated and the session cookie is written).
+      const domains = await customDomainService.listActiveDomains()
       return Array.from(
         new Set([
-          getBrokerUrl(),
-          env.NEXT_PUBLIC_BUILDER_URL,
+          ...staticOrigins,
           ...domains.map((domain) => `https://${domain}`),
         ]),
       )

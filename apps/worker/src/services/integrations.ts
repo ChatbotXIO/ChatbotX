@@ -12,6 +12,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
+import { integration as integrationGoogleCalendar } from "@chatbotx.io/integration-google-calendar"
 import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
@@ -38,6 +39,7 @@ export const allIntegrations: Record<
   Integration<IntegrationDefinition<any, any, any>> | undefined
 > = {
   gemini: undefined,
+  googleCalendar: integrationGoogleCalendar,
   googleSheets: integrationGoogleSheets,
   messenger: integrationMessenger,
   openai: undefined,

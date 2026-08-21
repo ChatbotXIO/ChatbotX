@@ -231,6 +231,7 @@ export function AIFunctionsCreate({
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
+                type="submit"
               >
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />

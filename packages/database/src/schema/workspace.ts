@@ -2,10 +2,15 @@ import {
   boolean,
   index,
   integer,
+  pgEnum,
   pgTable,
   text,
   timestamp,
 } from "drizzle-orm/pg-core"
+import {
+  type DefaultReplyFrequency,
+  defaultReplyFrequencies,
+} from "../partials"
 import {
   bigintAsString,
   ROOT_TENANT_ID,
@@ -15,12 +20,26 @@ import {
 import { userModel } from "./auth-user"
 import { tenantModel } from "./enterprise/tenant"
 
+// Cast to the (non-empty) literal-union tuple — not `.enum` and not widened to
+// `[string, ...string[]]` — so the column's `enumValues` stays a literal
+// union. That's needed for `createSelectSchema(workspaceModel)`
+// (drizzle-orm/zod) to type this column as a real `z.enum(...)` instead of
+// widening it to `z.string()`.
+export const defaultReplyFrequency = pgEnum(
+  "defaultReplyFrequency",
+  defaultReplyFrequencies.options as [
+    DefaultReplyFrequency,
+    ...DefaultReplyFrequency[],
+  ],
+)
+
 export const workspaceModel = pgTable(
   "Workspace",
   {
     ...sharedColumns,
     name: text().notNull(),
     defaultReply: text(),
+    defaultReplyFrequency: defaultReplyFrequency().notNull().default("allTime"),
     targetCountry: text(),
     language: text().notNull().default("en"),
     timezone: text().notNull().default("UTC"),

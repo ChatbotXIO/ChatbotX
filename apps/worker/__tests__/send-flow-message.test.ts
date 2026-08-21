@@ -10,15 +10,20 @@ const mocks = vi.hoisted(() => ({
   waitForChatJobCompletion: vi.fn(async () => undefined),
 }))
 
-vi.mock("@chatbotx.io/worker-config", () => ({
-  ChatJobAction: {
-    sendChatMessage: "sendChatMessage",
-    sendFlowMessage: "sendFlowMessage",
-  },
-  chatQueue: { add: mocks.chatQueueAdd },
-  IntegrationJobAction: { sendFlow: "sendFlow" },
-  integrationQueue: { add: mocks.integrationQueueAdd },
-}))
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  return {
+    ...actual,
+    ChatJobAction: {
+      sendChatMessage: "sendChatMessage",
+      sendFlowMessage: "sendFlowMessage",
+    },
+    chatQueue: { add: mocks.chatQueueAdd },
+    IntegrationJobAction: { sendFlow: "sendFlow" },
+    integrationQueue: { add: mocks.integrationQueueAdd },
+  }
+})
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { query: {}, update: vi.fn(), insert: vi.fn() },
   eq: vi.fn(),
@@ -88,6 +93,7 @@ describe("sendFlowMessage", () => {
         contactInboxId: "ci-1",
         flowId: "flow-1",
         flowVersionId: "fv-1",
+        executedFlowVersionId: "fv-1",
         step: {
           id: "step-1",
           stepType: "sendText",
@@ -97,6 +103,8 @@ describe("sendFlowMessage", () => {
         metadata: { source: "test" },
         quickReplies: [{ id: "qr-1", label: "Yes" }],
         sendFrom: "inbox",
+        commentAnchor: undefined,
+        appointmentId: undefined,
       },
     })
   })

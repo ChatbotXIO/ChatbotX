@@ -2,6 +2,7 @@
 
 import {
   instagramIntegrationService,
+  integrationWhatsappService,
   isWorkspaceScheduledForDeletion,
   messengerIntegrationService,
   tiktokIntegrationService,
@@ -19,6 +20,10 @@ import {
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken as refreshTiktokAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
+import {
+  integration as integrationWhatsapp,
+  type WhatsappAuthValue,
+} from "@chatbotx.io/integration-whatsapp"
 import {
   calculateExpiresAt,
   refreshAccessToken as refreshZaloAccessToken,
@@ -339,6 +344,64 @@ async function refreshMessengerIntegrations(
   return toSummary(results)
 }
 
+async function refreshOneWhatsapp(
+  id: string,
+  workspaceId: string,
+): Promise<RefreshResult> {
+  if (!integrationWhatsapp.refreshAuth) {
+    return "skipped"
+  }
+
+  return await distributedLock.runExclusive({
+    key: `auth:refresh:whatsapp:${id}`,
+    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
+    fn: async () => {
+      try {
+        const integration =
+          await integrationWhatsappService.findByIdForWorkspace({
+            id,
+            workspaceId,
+          })
+        if (!integration) {
+          return "skipped"
+        }
+
+        const auth = integration.auth as WhatsappAuthValue
+        if (auth.metadata.isManual) {
+          return "skipped"
+        }
+
+        const newAuth = await integrationWhatsapp.refreshAuth?.({ auth })
+        await integrationWhatsappService.updateAuth({
+          id,
+          workspaceId,
+          auth: newAuth as WhatsappAuthValue,
+        })
+        return "refreshed"
+      } catch (error) {
+        await integrationWhatsappService.markTokenRefreshError(
+          id,
+          error instanceof Error ? error.message : String(error),
+        )
+        return "failed"
+      }
+    },
+  })
+}
+
+async function refreshWhatsappIntegrations(
+  workspaceIds: string[],
+): Promise<RefreshSummary> {
+  const integrations =
+    await integrationWhatsappService.findForTokenRefreshByWorkspaceIds(
+      workspaceIds,
+    )
+  const results = await runInBatches(integrations, (integration) =>
+    refreshOneWhatsapp(integration.id, integration.workspaceId),
+  )
+  return toSummary(results)
+}
+
 /**
  * Excludes workspaces mid-deletion-grace-window or blocked for trial/quota
  * reasons (AGENTS.md invariant #14) from the bulk refresh, matching the gates
@@ -383,6 +446,7 @@ export const refreshAllChannelTokensAction = authActionClient.action(
       refreshInstagramIntegrations(workspaceIds),
       refreshInstagramFacebookIntegrations(workspaceIds),
       refreshMessengerIntegrations(workspaceIds),
+      refreshWhatsappIntegrations(workspaceIds),
     ])
 
     return sumSummaries(summaries)

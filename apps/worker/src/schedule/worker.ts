@@ -21,18 +21,16 @@ import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
+import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
 import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syncs"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
-import { refreshInstagramFacebookTokens } from "./handlers/refresh-instagram-facebook-tokens"
-import { refreshInstagramTokens } from "./handlers/refresh-instagram-tokens"
-import { refreshMessengerTokens } from "./handlers/refresh-messenger-tokens"
-import { refreshTiktokTokens } from "./handlers/refresh-tiktok-tokens"
-import { refreshZaloTokens } from "./handlers/refresh-zalo-tokens"
+import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
+import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
 import { syncUserQuota } from "./handlers/sync-user-quota"
@@ -102,6 +100,10 @@ async function startScheduleWorker() {
           await scanSmartDelay()
           return
 
+        case ScheduleJobData.scanAppointmentReminders:
+          await scanAppointmentReminders(job.data.data)
+          return
+
         case ScheduleJobData.syncUserQuota:
           await syncUserQuota()
           return
@@ -134,24 +136,12 @@ async function startScheduleWorker() {
           await purgeWorkspaces()
           return
 
-        case ScheduleJobData.refreshZaloTokens:
-          await refreshZaloTokens()
+        case ScheduleJobData.purgeAutomationThrottle:
+          await purgeAutomationThrottle()
           return
 
-        case ScheduleJobData.refreshTiktokTokens:
-          await refreshTiktokTokens()
-          return
-
-        case ScheduleJobData.refreshInstagramTokens:
-          await refreshInstagramTokens()
-          return
-
-        case ScheduleJobData.refreshMessengerTokens:
-          await refreshMessengerTokens()
-          return
-
-        case ScheduleJobData.refreshInstagramFacebookTokens:
-          await refreshInstagramFacebookTokens()
+        case ScheduleJobData.refreshChannelTokens:
+          await refreshChannelTokens()
           return
 
         case ScheduleJobData.unsubscribeExpiredTrials:

@@ -159,6 +159,7 @@ export const MessageInput = () => {
                 type: "message",
                 parentId: null,
                 attributes: null,
+                sendError: null,
               })
             }
 

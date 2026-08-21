@@ -61,7 +61,7 @@ export function AIMcpServersCreate({
   const authOptions = useMemo(
     () => [
       {
-        label: t("fields.authType.none"),
+        label: t("messages.none"),
         value: aiMcpServerAuthTypes.enum.none,
       },
       {
@@ -330,6 +330,7 @@ export function AIMcpServersCreate({
                   disabled={
                     !form.formState.isValid || form.formState.isSubmitting
                   }
+                  type="submit"
                 >
                   {form.formState.isSubmitting && (
                     <Loader2Icon className="animate-spin" />

@@ -21,25 +21,12 @@ import { findIntegrationTiktokByOpenId } from "@/features/integration-tiktok/que
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { isBrokerHost } from "@/lib/oauth-broker"
+import { logWebhookRequestBody } from "@/lib/webhook-log"
 
 type CredentialType = Parameters<
   typeof platformCredentialService.resolveForOwner
 >[0]["type"]
 
-const logWebhookRequestBody = async (
-  integrationType: string,
-  req: NextRequest,
-) => {
-  try {
-    const body = await req.clone().text()
-    logger.info({ integrationType, body }, "Webhook request body")
-  } catch (e: unknown) {
-    logger.info(
-      { integrationType, err: e },
-      "Failed to read webhook request body for logging",
-    )
-  }
-}
 /**
  * Per-bot/per-account channels (telegram, tiktok) reach their integration
  * handler before any queue consumer runs, so they need the freeze verdict
@@ -50,11 +37,20 @@ const resolveWebhookFreezeReason = async (
   workspaceId: string,
 ): Promise<ReturnType<typeof resolveWorkspaceFreezeReason>> => {
   const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  const accessState = workspace
-    ? await userQuotaService.getAccessState(workspace.ownerId)
-    : null
 
-  return resolveWorkspaceFreezeReason({ accessState, workspace })
+  // Two passes, mirroring withBlockedOwnerGuard: the Workspace row alone
+  // decides `missingWorkspace`/`scheduledForDeletion`; only `ownerBlocked`
+  // needs entitlements, and only the cloud edition can produce it, so
+  // self-hosted installs skip the quota lookup entirely.
+  const rowReason = resolveWorkspaceFreezeReason({ workspace })
+  if (rowReason || !isCloud() || !workspace) {
+    return rowReason
+  }
+
+  return resolveWorkspaceFreezeReason({
+    accessState: await userQuotaService.getAccessState(workspace.ownerId),
+    workspace,
+  })
 }
 
 export const handleWebhook = async (

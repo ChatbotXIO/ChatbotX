@@ -14,11 +14,11 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { CodeEditorField } from "@/components/code-editor-field"
 import {
   type EmailTemplateType,
   updateEmailTemplateSchema,
@@ -28,6 +28,12 @@ import {
   updateEmailTemplateAction,
   updateRootEmailTemplateAction,
 } from "./update-email-template.action"
+
+// codemirror is heavy — load it only when the template editor mounts.
+const CodeEditorField = dynamic(
+  () => import("@/components/code-editor-field").then((m) => m.CodeEditorField),
+  { ssr: false },
+)
 
 type PlatformEmailTemplateEditorProps = {
   type: EmailTemplateType

@@ -20,6 +20,7 @@ import type { TagModel } from "@chatbotx.io/database/types"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
+import { adsConversionService } from "../ads-conversion/service"
 import { BaseService } from "../base.service"
 import { type ContactAccessScope, contactService } from "../contact"
 import { notFoundException } from "../errors"
@@ -195,6 +196,12 @@ class TagService extends BaseService {
       emitTagApplied(workspaceId, contactId, pair.tagId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
         .catch(() => {})
     }
+    // One batch resolve+enqueue call for every newly-attached tag on this
+    // contact instead of one per tag (HIGH-1).
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId,
+      pairs: newlyAttached.map((pair) => ({ contactId, tagId: pair.tagId })),
+    })
   }
 
   /**
@@ -279,6 +286,15 @@ class TagService extends BaseService {
           logger.error({ err: error }, "Failed to emit tagApplied event")
         }
       }
+      // One batch resolve+enqueue call per chunk instead of one per pair
+      // (HIGH-1) — bulkAttachToContacts already chunks contacts at 200.
+      await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+        workspaceId,
+        pairs: pairsToSync.map((pair) => ({
+          contactId: pair.contactId,
+          tagId: pair.tagId,
+        })),
+      })
 
       await tagSyncService.enqueueAttachMany(
         pairsToSync.map((pair) => ({

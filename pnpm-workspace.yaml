@@ -6,6 +6,7 @@ packages:
 onlyBuiltDependencies:
   - core-js-pure
   - esbuild
+  - isolated-vm
   - lefthook
   - '@parcel/watcher'
   - '@swc/core'

@@ -7,6 +7,7 @@ import {
   integration as integrationFacebookAds,
 } from "@chatbotx.io/integration-facebook-ads"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -18,6 +19,8 @@ export const disconnectFacebookAdsAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: [string]
     }) => {
+      await assertWorkspaceSuperAdmin(workspaceId)
+
       const row =
         await integrationFacebookAdsService.findByWorkspaceIdOrFail(workspaceId)
 

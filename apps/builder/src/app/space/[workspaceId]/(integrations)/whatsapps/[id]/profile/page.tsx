@@ -1,14 +1,9 @@
-import { getIdFromParams } from "@chatbotx.io/utils"
-import { notFound } from "next/navigation"
-import { UpdateWhatsappProfile } from "@/features/integration-whatsapp/profile/update-whatsapp-profile"
+import { redirect } from "next/navigation"
 
-export default async function WhatsappMessageTemplatePage(props: {
-  params: Promise<{ workspaceId: string }>
+// The Profile tab merged into the Settings tab.
+export default async function WhatsappProfileRedirect(props: {
+  params: Promise<{ workspaceId: string; id: string }>
 }) {
-  const workspaceId = getIdFromParams(await props.params, "workspaceId")
-  if (!workspaceId) {
-    return notFound()
-  }
-
-  return <UpdateWhatsappProfile workspaceId={workspaceId} />
+  const { workspaceId, id } = await props.params
+  redirect(`/space/${workspaceId}/whatsapps/${id}/settings`)
 }

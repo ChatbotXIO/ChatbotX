@@ -1,4 +1,5 @@
 import { trackingResponseTypes } from "@chatbotx.io/analytics"
+import { adsConversionService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type {
   AutomatedResponseModel,
@@ -20,7 +21,10 @@ export const dispatchAutomatedResponseReply = async (props: {
   contactInbox: ContactInboxModel
   messageId: string
   text: string
-  rules: Pick<AutomatedResponseModel, "keywords" | "flowId" | "text">[]
+  rules: Pick<
+    AutomatedResponseModel,
+    "id" | "keywords" | "flowId" | "text" | "type"
+  >[]
   triggerType: string
 }): Promise<boolean> => {
   const { conversation, contactInbox, messageId, text, rules, triggerType } =
@@ -32,6 +36,22 @@ export const dispatchAutomatedResponseReply = async (props: {
 
     if (!matched) {
       continue
+    }
+
+    // Ads conversion `keywordMatched` trigger: only inbound-type rules
+    // (invariant — never outbound, e.g. replyByOutboundAutomatedResponse)
+    // and only on WhatsApp, where CTWA attribution exists.
+    if (
+      rule.type === "inbound" &&
+      adsConversionService.isEligibleChannel(contactInbox.channel)
+    ) {
+      await adsConversionService.enqueueKeywordMatchedEvaluation({
+        workspaceId: conversation.workspaceId,
+        inboxId: contactInbox.inboxId,
+        contactInboxId: contactInbox.id,
+        automatedResponseId: rule.id,
+        messageId,
+      })
     }
 
     if (rule.flowId) {

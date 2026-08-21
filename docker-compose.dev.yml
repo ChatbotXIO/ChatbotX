@@ -47,6 +47,9 @@ services:
   # BullMQ Worker
   worker:
     <<: *worker-common
+    networks:
+      - chatbotx-network
+      - javascript-executor-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,6 +57,41 @@ services:
         condition: service_healthy
       filesystem:
         condition: service_healthy
+      javascript-executor:
+        condition: service_healthy
+    environment:
+      - JAVASCRIPT_EXECUTOR_URL=http://javascript-executor:3210
+
+  javascript-executor:
+    platform: linux/amd64
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: apps/javascript-executor/docker/Dockerfile
+    environment:
+      JAVASCRIPT_EXECUTOR_TOKEN: ${JAVASCRIPT_EXECUTOR_TOKEN:-change-me-in-production-at-least-32-chars}
+      MAX_CONCURRENCY: ${MAX_CONCURRENCY:-2}
+    networks:
+      - javascript-executor-network
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev
+    pids_limit: 128
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 512M
+          pids: 128
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3210/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   realtime:
     <<: *service-common
@@ -62,3 +100,8 @@ services:
       dockerfile: apps/realtime/docker/Dockerfile
     ports:
       - "1999:1999"
+
+networks:
+  javascript-executor-network:
+    driver: bridge
+    internal: true

@@ -74,7 +74,7 @@ describe("coexist APIs", () => {
     mockDisable.mockResolvedValue({ success: true })
   })
 
-  test("Messenger enabled:true delegates to coexistService.enable", async () => {
+  test("Messenger enabled:true delegates to coexistService.enable with aiReadsSyncedHistory defaulted to false", async () => {
     const result = await call(
       integrationMessengerCoexistAPIs.setCoexistMessengerAPI,
       { workspaceId: "ws-1", integrationId: "int-1", enabled: true },
@@ -86,8 +86,30 @@ describe("coexist APIs", () => {
       workspaceId: "ws-1",
       integrationId: "int-1",
       channel: "messenger",
+      aiReadsSyncedHistory: false,
     })
     expect(mockDisable).not.toHaveBeenCalled()
+  })
+
+  test("Messenger enabled:true, aiReadsSyncedHistory:true delegates it through to coexistService.enable", async () => {
+    const result = await call(
+      integrationMessengerCoexistAPIs.setCoexistMessengerAPI,
+      {
+        workspaceId: "ws-1",
+        integrationId: "int-1",
+        enabled: true,
+        aiReadsSyncedHistory: true,
+      },
+      { context: stubContext },
+    )
+
+    expect(result).toEqual({ success: true })
+    expect(mockEnable).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      integrationId: "int-1",
+      channel: "messenger",
+      aiReadsSyncedHistory: true,
+    })
   })
 
   test("Messenger enabled:false delegates to coexistService.disable", async () => {
@@ -105,7 +127,7 @@ describe("coexist APIs", () => {
     })
   })
 
-  test("Instagram endpoint delegates with channel instagram", async () => {
+  test("Instagram endpoint delegates with channel instagram and aiReadsSyncedHistory defaulted to false", async () => {
     const result = await call(
       integrationInstagramCoexistAPIs.setCoexistInstagramAPI,
       { workspaceId: "ws-1", integrationId: "ig-1", enabled: true },
@@ -117,6 +139,7 @@ describe("coexist APIs", () => {
       workspaceId: "ws-1",
       integrationId: "ig-1",
       channel: "instagram",
+      aiReadsSyncedHistory: false,
     })
   })
 

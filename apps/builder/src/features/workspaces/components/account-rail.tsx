@@ -105,14 +105,23 @@ export const AccountRail = async ({
 
         {cloud && (
           <div className="flex flex-col gap-4 border-t pt-5">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                {t("billing.plan.label", {
-                  plan: planName ?? t("billing.plan.free"),
-                })}
-              </span>
-              <UpgradePlanButton size="sm" variant="outline">
-                <CrownIcon aria-hidden className="size-3.5" />
+            <div className="flex flex-col gap-3">
+              <div className="grid gap-0.5">
+                <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                  {t("billing.plan.currentLabel")}
+                </span>
+                {/*
+                  `wrap-break-word` rather than `truncate`: the rail is only
+                  18rem wide and a plan name is the one string here the user
+                  must be able to read in full, so it wraps to a second line
+                  instead of being clipped with an ellipsis.
+                */}
+                <span className="wrap-break-word font-semibold text-base leading-tight">
+                  {planName ?? t("billing.plan.free")}
+                </span>
+              </div>
+              <UpgradePlanButton className="w-full" size="sm" variant="outline">
+                <CrownIcon aria-hidden className="size-4" />
                 {t("actions.upgradePlan")}
               </UpgradePlanButton>
             </div>
@@ -144,7 +153,16 @@ export const AccountRail = async ({
           component; a second one would split the free space and reopen the
           dead-gap bug this replaces.
         */}
-        <div className="mt-auto flex flex-col gap-1 border-t pt-4">
+        <div
+          className={cn(
+            "mt-auto flex flex-col gap-1",
+            // Community edition with no super admin renders none of the
+            // items below — skip the divider so it doesn't float with
+            // nothing underneath it.
+            (isSuperAdmin || cloud) && "border-t pt-4",
+          )}
+          id="account-rail-menu"
+        >
           {isSuperAdmin && (
             <Link className={railMenuItemClassName} href="/admin">
               <ShieldCheckIcon aria-hidden className="size-4" />
@@ -163,11 +181,13 @@ export const AccountRail = async ({
             client-side navigation would fail. Mirrors the portal, where the
             cross-zone dashboard link is a plain anchor.
           */}
-          <a className={railMenuItemClassName} href="/portal/billing">
-            <CreditCardIcon aria-hidden className="size-4" />
-            {t("actions.billing")}
-          </a>
-          {isPlatformContext && (
+          {cloud && (
+            <a className={railMenuItemClassName} href="/portal/billing">
+              <CreditCardIcon aria-hidden className="size-4" />
+              {t("actions.billing")}
+            </a>
+          )}
+          {cloud && isPlatformContext && (
             <a className={railMenuItemClassName} href="/portal/redeem">
               <TicketIcon aria-hidden className="size-4" />
               {t("actions.redeem")}

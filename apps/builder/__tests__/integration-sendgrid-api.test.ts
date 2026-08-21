@@ -61,6 +61,13 @@ vi.mock("@/lib/auth/auth", () => ({
 // ---- mock: worker-config (prevent Redis init) ------------------------------
 vi.mock("@chatbotx.io/worker-config", () => ({
   getRedisConnection: () => ({}),
+  // Referenced at module scope by packages/business's coexist/workspace
+  // services (pulled in transitively) — plain constants, no side effects.
+  IntegrationJobAction: {
+    coexistMessengerSync: "coexistMessengerSync",
+    coexistInstagramSync: "coexistInstagramSync",
+  },
+  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))
 
 // ---- mock: getSendGridContext -----------------------------------------------

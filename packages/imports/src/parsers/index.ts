@@ -18,6 +18,13 @@ export const createImportRowParser = (
       throw new Error(
         "Legacy .xls files are not supported. Save the workbook as .xlsx and try again.",
       )
+    case "json":
+      // Flow import is a single JSON document, not row data — it is handled
+      // by apps/worker/src/default/handlers/imports/flow-import.ts and never
+      // reaches this row-oriented parser.
+      throw new Error(
+        "JSON imports are not row-parsed; use the flow import handler",
+      )
     default: {
       const exhaustive: never = format
       throw new Error(`Unknown import format: ${exhaustive as string}`)

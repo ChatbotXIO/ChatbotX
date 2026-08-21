@@ -12,6 +12,7 @@ import {
 import {
   type ContactImportMeta,
   type CouponImportMeta,
+  type FlowImportMeta,
   type ImportFormat,
   type ImportStatus,
   type ImportType,
@@ -71,7 +72,12 @@ export const importModel = pgTable(
     format: importFormat().notNull(),
     status: importStatus().notNull(),
     meta: jsonb()
-      .$type<ContactImportMeta | CouponImportMeta | ProductImportMeta>()
+      .$type<
+        | ContactImportMeta
+        | CouponImportMeta
+        | ProductImportMeta
+        | FlowImportMeta
+      >()
       .notNull(),
     totalCount: integer().default(0).notNull(),
     processedCount: integer().default(0).notNull(),

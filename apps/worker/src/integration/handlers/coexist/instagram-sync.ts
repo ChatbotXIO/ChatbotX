@@ -38,7 +38,10 @@ type InstagramIntegrationType = IntegrationInstagramModel["type"]
 // import are identical. `Ctx` must carry the resolved inbox and `Conv` an id so
 // the engine can drive imports without knowing the provider.
 const runInstagramCoexistPull = async <
-  Ctx extends { inbox: InboxModel },
+  Ctx extends {
+    inbox: InboxModel
+    integration: { coexistAiReadsSyncedHistory: boolean }
+  },
   Conv extends { id: string },
   Msg,
 >(
@@ -299,15 +302,22 @@ const runInstagramCoexistPull = async <
                 pageSkipped += imported.skippedMessages
                 attachmentIds.push(...imported.insertedAttachmentIds)
 
-                if (imported.newestMessageAt && imported.oldestMessageAt) {
+                const aiMarkerMessageId = context.integration
+                  .coexistAiReadsSyncedHistory
+                  ? null
+                  : imported.newestMessageId
+                if (
+                  imported.newestMessageAt !== null ||
+                  aiMarkerMessageId !== null
+                ) {
                   activityUpdates.push({
                     contactInboxId: contactLink.contactInboxId,
                     contactId: contactLink.contactId,
-                    workspaceId,
                     conversationId: contactLink.conversationId,
                     newestMessageAt: imported.newestMessageAt,
                     oldestMessageAt: imported.oldestMessageAt,
                     newestIncomingMessageAt: imported.newestIncomingMessageAt,
+                    aiMarkerMessageId,
                   })
                 }
 
@@ -338,7 +348,7 @@ const runInstagramCoexistPull = async <
         ),
       )
 
-      await applyCoexistActivityUpdates(activityUpdates)
+      await applyCoexistActivityUpdates(activityUpdates, { workspaceId })
       importedContactTotal += pageImportedContacts
       importedMessageTotal += pageImportedMessages
       skippedTotal += pageSkipped

@@ -1,5 +1,9 @@
 {
   "flows": {
+    "export": {
+      "notPublished": "Acest flux nu a fost niciodată publicat. Publicați-l înainte de a-l exporta.",
+      "failed": "Exportul a eșuat. Vă rugăm să încercați din nou."
+    },
     "title": "Fluxuri",
     "quickReplies": {
       "limitReached": "A fost atinsă limita de răspunsuri rapide ({max})."
@@ -24,8 +28,7 @@
     },
     "openaiCompatible": {
       "empty": "Conectați un furnizor compatibil cu OpenAI în setările integrării înainte de a utiliza acest pas.",
-      "integration": "Furnizor compatibil cu OpenAI",
-      "none": "Niciunul"
+      "integration": "Furnizor compatibil cu OpenAI"
     },
     "actions": {
       "addContactNotes": "Adaugă note despre contact",
@@ -48,6 +51,7 @@
       "questionnaires": "Chestionare",
       "setUpCoupon": "Configurează cuponul",
       "markCouponUsed": "Marchează cuponul ca utilizat",
+      "executeJavascript": "Execută JavaScript",
       "chooseChannel": "Alege canalul",
       "clearCustomField": "Golește câmpul personalizat",
       "condition": "Condiție",
@@ -125,7 +129,15 @@
       "unsubscribeSequence": "Dezabonează de la secvență",
       "splitTraffic": "Distribuie traficul",
       "aiEditImage": "Editează imaginea cu IA",
-      "whatsappFlow": "Flux WhatsApp"
+      "whatsappFlow": "Flux WhatsApp",
+      "appointmentScheduling": "Programări",
+      "triggerN8n": "Declanșează n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI",
+      "import": "Importă fluxul",
+      "export": "Exportă",
+      "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
+      "importJsonOnly": "Doar fișiere JSON"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -157,6 +169,11 @@
       "selectCustomFieldPlaceholder": "Selectați câmpul personalizat",
       "addMapping": "Adaugă o asociere",
       "addCustomField": "Adaugă"
+    },
+    "sendCarousel": {
+      "addSlide": "Adaugă cardul",
+      "removeSlide": "Elimină cardul",
+      "whatsappLinkButtonIgnored": "Pe WhatsApp, linkul acestui card nu va funcționa: un card cu un buton de link nu poate avea alte butoane. Va fi trimis ca răspuns în schimb."
     },
     "additionalSteps": "Pași suplimentari",
     "delayType": {
@@ -224,7 +241,11 @@
     },
     "setCustomField": {
       "temporalHint": "Lăsați necompletat pentru a salva data și ora curente."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Când sunt atașate butoane, TikTok trimite doar primele 40 de caractere din acest mesaj — restul va fi trunchiat."
+    },
+    "dataWasSaved": "Datele au fost salvate"
   },
   "folders": {
     "heading": {
@@ -270,6 +291,174 @@
     },
     "errors": {
       "invalidAppSettings": "Setările aplicației Facebook nu sunt valide"
+    }
+  },
+  "ads": {
+    "title": "Anunțuri",
+    "connectAccounts": {
+      "connectAdAccount": "Conectează cont de anunțuri",
+      "adAccountName": "Numele contului de anunțuri",
+      "adAccountsReconnectBanner": "Tokenul contului tău de anunțuri Meta a expirat sau a pierdut permisiunile. Reconectează Facebook Ads pentru a păstra raportarea anunțurilor disponibilă.",
+      "adAccountsNotConnected": "Niciun cont de anunțuri Meta nu este conectat încă.",
+      "adAccountsEmpty": "Nu a fost găsit niciun cont de anunțuri Meta pentru această conexiune Facebook Ads.",
+      "reconnect": "Reconectează",
+      "reconnectSuccess": "Contul de WhatsApp a fost reconectat.",
+      "selectAccountLabel": "Cont WhatsApp",
+      "status": {
+        "ready": "Evenimente automate pregătite",
+        "missingPermission": "Permisiunea pentru Evenimente Automate lipsește",
+        "unverified": "Permisiune neverificată"
+      },
+      "table": {
+        "wabaId": "ID WABA"
+      },
+      "connectWhatsapp": {
+        "cta": "Conectează contul WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Evenimente de conversie",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Gestionează conturile de anunțuri",
+      "export": "Exportă",
+      "selectAll": "Selectează tot",
+      "whatsappAsset": "Element WhatsApp",
+      "selectWhatsappAsset": "Selectează elementul WhatsApp",
+      "templates": "Șabloane",
+      "selectTemplates": "Selectează șabloane",
+      "noTemplates": "Nu a fost găsit niciun șablon aprobat.",
+      "existingRules": "Reguli existente",
+      "noRules": "Nu există încă reguli de conversie pentru acest element WhatsApp.",
+      "toggleRule": "Activează sau dezactivează regula",
+      "deleteRule": "Șterge regula",
+      "qualifyingTemplateMessageSent": "Este trimis mesajul șablon de calificare",
+      "qualifyingFirstReply": "Contactul trimite primul său mesaj",
+      "qualifyingAnyReply": "Contactul trimite un mesaj",
+      "when": "Când",
+      "whenOptions": {
+        "templateSent": "Este trimis mesajul șablon de calificare",
+        "tagApplied": "Contactul este etichetat",
+        "keywordMatched": "Mesajul contactului corespunde unei reguli de cuvinte-cheie",
+        "contactReplied": "Contactul trimite un mesaj"
+      },
+      "tags": "Etichete",
+      "selectTags": "Selectează etichete",
+      "noTags": "Nu a fost găsită nicio etichetă.",
+      "untitledKeywordRule": "(regulă de cuvinte-cheie fără titlu)",
+      "keywordRules": "Reguli de cuvinte-cheie",
+      "selectKeywordRules": "Selectează reguli de cuvinte-cheie",
+      "noKeywordRules": "Nu a fost găsită nicio regulă de cuvinte-cheie pentru mesaje primite.",
+      "replyOptions": "Opțiuni de răspuns",
+      "firstReplyOnly": "Doar primul mesaj",
+      "dedupeNote": "Cel mult 1 eveniment pe zi per conversație per regulă.",
+      "dealWon": "Afacere câștigată",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Achiziție",
+      "messages": {
+        "ruleSaved": "Regula de conversie a fost salvată",
+        "ruleUpdated": "Regula de conversie a fost actualizată",
+        "ruleDeleted": "Regula de conversie a fost ștearsă"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Pagina 1",
+        "page2": "Pagina 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Urmărește leadurile calificate",
+        "question": "În ce moment al conversației vrei să califici un contact ca lead?",
+        "when": "Când",
+        "then": "Apoi marchează leadul CTWA ca"
+      },
+      "trackPurchases": {
+        "title": "Urmărește achizițiile",
+        "question": "Ce șablon confirmă o achiziție?",
+        "when": "Când",
+        "then": "Apoi",
+        "noValueNote": "O achiziție bazată pe regulă înregistrează o conversie de tip Achiziție fără o valoare a comenzii — contează pentru achiziții, dar adaugă 0 la venituri. Valoarea comenzii este captată doar de Evenimentele Automate Meta."
+      }
+    },
+    "analytics": {
+      "title": "Analiză CTWA",
+      "funnelOverview": "Prezentare generală a pâlniei",
+      "conversationsStarted": "Conversații începute",
+      "qualifiedLeads": "Leaduri calificate",
+      "purchases": "Achiziții",
+      "adSpend": "Cheltuieli publicitare",
+      "spendAccountLevelNote": "Cheltuielile sunt raportate la nivelul contului de anunțuri Meta; când este selectat un cont de WhatsApp, anunțurile care au doar cheltuieli, fără activitate în pâlnie pentru acel cont, sunt ascunse.",
+      "revenue": "Venituri",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Veniturile presupun o singură monedă (USD). Conturile de anunțuri cu monede mixte nu sunt încă agregate.",
+      "costPerLead": "Cost/lead",
+      "costPerPurchase": "Cost/achiziție",
+      "impressions": "Afișări",
+      "clicks": "Clicuri",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Cost/conversație",
+      "costCurrencyNote": "Valorile de cost presupun o singură monedă (USD), în concordanță cu cheltuielile publicitare.",
+      "performanceChart": {
+        "title": "Performanță în timp",
+        "empty": "Încă nu există conversații, leaduri, achiziții sau cheltuieli în acest interval."
+      },
+      "dateRange": {
+        "oneDay": "1Z",
+        "oneWeek": "1S",
+        "oneMonth": "1L",
+        "threeMonths": "3L",
+        "custom": "Personalizat",
+        "apply": "Aplică"
+      },
+      "allAds": "Toate anunțurile",
+      "adAccountFilter": {
+        "all": "Toate conturile de anunțuri",
+        "label": "Cont de anunțuri",
+        "note": "Anunțurile cu conversii, dar cu cheltuieli zero sau livrare zero în intervalul de date selectat, sunt ascunse la filtrarea după contul de anunțuri."
+      },
+      "retarget": "Retargetare",
+      "thoseWhoPurchased": "Cei care au achiziționat",
+      "thoseWhoStartedConversation": "Cei care au început o conversație",
+      "sendWhatsappBroadcast": "Trimite difuzare WhatsApp",
+      "from": "De la",
+      "to": "Până la",
+      "unattributed": "Neatribuit",
+      "retargetDialog": {
+        "title": "Retargetează contactele CTWA",
+        "createAudience": "Creează audiență",
+        "useExistingAudience": "Folosește o audiență existentă",
+        "audienceName": "Numele audienței",
+        "audiencePrefix": "CTWA",
+        "confirm": "Începe sincronizarea",
+        "success": "Sincronizarea audienței de retargetare a fost adăugată în coadă.",
+        "error": "Nu s-a putut adăuga în coadă sincronizarea audienței de retargetare."
+      },
+      "delivery": {
+        "title": "Livrarea conversiei",
+        "sent": "Trimis",
+        "pending": "În așteptare",
+        "failed": "Eșuat",
+        "skippedNoScope": "Omis (fără domeniu de aplicare)",
+        "skippedRegion": "Omis (regiune)",
+        "noScopeWarning": "Unele conversii nu au fost trimise pentru că acest cont de WhatsApp nu are permisiunea pentru evenimente. Reconectează-l pentru a activa raportarea Evenimentelor Automate.",
+        "reconnectCta": "Reconectează contul",
+        "empty": "Încă nu există evenimente de conversie în acest interval."
+      },
+      "export": {
+        "conversations": "Exportă conversații",
+        "leads": "Exportă leaduri",
+        "purchases": "Exportă achiziții"
+      },
+      "csv": {
+        "contactName": "Numele contactului",
+        "phone": "Telefon",
+        "adId": "ID anunț",
+        "occurredAt": "A avut loc la"
+      },
+      "empty": "Încă nu există date. Conectează un cont de anunțuri și începe să urmărești conversiile."
     }
   },
   "googleSheets": {
@@ -558,6 +747,11 @@
     "noWorkspaces": "Nu aveți încă niciun spațiu de lucru.",
     "owner": "Proprietar"
   },
+  "notFound": {
+    "title": "Pagina nu a fost găsită",
+    "description": "Pagina pe care o cauți nu există sau ar putea fi mutată.",
+    "backToHome": "Înapoi la pagina principală"
+  },
   "editProfile": {
     "title": "Editează profilul"
   },
@@ -605,6 +799,7 @@
     "disableBot": "Dezactivează botul",
     "disconnect": "Deconectează",
     "download": "Descarcă",
+    "downloadTemplate": "Descarcă șablonul",
     "edit": "Editează",
     "editFeature": "Editează {feature}",
     "enableBot": "Activează botul",
@@ -707,6 +902,9 @@
     "clone": "Clonează",
     "remove": "Elimină",
     "restore": "Restaurează"
+  },
+  "errors": {
+    "superAdminRequired": "Trebuie să fii superadministrator al spațiului de lucru pentru a face acest lucru."
   },
   "states": {
     "success": "Succes",
@@ -851,6 +1049,7 @@
     "title": "Facturare",
     "plan": {
       "label": "Plan: {plan}",
+      "currentLabel": "Plan curent",
       "free": "Gratuit"
     },
     "usage": {
@@ -1097,6 +1296,8 @@
       "blocked": "Blocat",
       "noAdminReply": "Niciun răspuns de la administrator",
       "contactCreatedAt": "Contact creat la",
+      "fromCtwaAd": "Din anunț Click to WhatsApp",
+      "ctwaConversion": "Conversie CTWA",
       "lastUserInputTypes": {
         "text": "Text",
         "location": "Locație",
@@ -1106,6 +1307,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Fișier"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Achiziție"
       }
     },
     "fieldGroups": {
@@ -1120,7 +1325,8 @@
       "topicCoupon": "Subiect cupon",
       "customFields": "Câmpuri personalizate",
       "email": "E-mail",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Anunțuri Click to WhatsApp"
     },
     "languages": {
       "ar": "Arabă",
@@ -1156,6 +1362,15 @@
       "webchat": "Webchat",
       "botLink": "Link bot",
       "chatPlugin": "Plugin C. chat"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Inițiatori de conversații CTWA",
+        "leads": "Leaduri calificate CTWA",
+        "purchases": "Cumpărători CTWA"
+      },
+      "adPrefix": "anunț",
+      "allAds": "toate anunțurile"
     }
   },
   "fields": {
@@ -1323,7 +1538,6 @@
     },
     "authType": {
       "headers": "Antet personalizat",
-      "none": "Niciunul",
       "token": "Token"
     },
     "automatedResponse": {
@@ -1337,6 +1551,9 @@
     },
     "qrCode": {
       "label": "Cod QR"
+    },
+    "dynamicImage": {
+      "label": "Imagine dinamică"
     },
     "savePayloadToCustomField": {
       "label": "Salvează conținutul în câmpul personalizat"
@@ -1441,11 +1658,19 @@
       "description": "Acesta este răspunsul implicit pe care spațiul tău de lucru îl va trimite utilizatorilor atunci când nu știe cum să răspundă la mesajul utilizatorului.",
       "label": "Răspuns implicit"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Setează cât timp așteaptă botul înainte de a răspunde după ultimul mesaj al utilizatorului. Dacă utilizatorul trimite alt mesaj, temporizatorul se resetează, iar mesajele sunt grupate într-un singur răspuns.",
       "label": "Întârzierea răspunsului botului",
       "minutes": "{count, plural, one {# minut} other {# minute}}",
-      "none": "Niciuna",
       "seconds": "{count, plural, one {# secundă} other {# secunde}}"
     },
     "delayType": {
@@ -1737,6 +1962,11 @@
     "outputCustomField": {
       "label": "Câmp personalizat de ieșire"
     },
+    "javascriptCode": {
+      "label": "Cod JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Utilizați JavaScript pur și returnați o valoare. Rețeaua, fișierele, API-urile și bibliotecile externe nu sunt disponibile. Datele contactului și ale sistemului sunt disponibile în obiectul `input`."
+    },
     "httpMethod": {
       "label": "Metodă"
     },
@@ -1810,6 +2040,12 @@
     },
     "pageUserName": {
       "label": "Numele utilizatorului paginii"
+    },
+    "waUserId": {
+      "label": "ID utilizator WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nume utilizator WhatsApp"
     },
     "purpose": {
       "label": "Scop",
@@ -2095,7 +2331,7 @@
       "superAdmin": "Super administrator",
       "analytics": "Analiză",
       "flows": "Fluxuri",
-      "contacts": "Contacte",
+      "contacts": "Contacte / Căsuță de mesaje",
       "onlyAssignedContacts": "Numai contactele atribuite",
       "emailAndPhone": "E-mail și telefon",
       "broadcast": "Difuzare",
@@ -2507,6 +2743,23 @@
       "label": "Evenimente",
       "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
       "description": "Adăugați unul sau mai multe nume de evenimente. Când Make atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
+    },
+    "bookingCalendar": {
+      "label": "Calendar de programare"
+    },
+    "bookingDate": {
+      "label": "Data programării"
+    },
+    "bookingLink": {
+      "label": "Link de programare"
+    },
+    "n8nEvents": {
+      "label": "Evenimente",
+      "placeholder": "Introduceți numele unui eveniment și apăsați Enter",
+      "description": "Adăugați unul sau mai multe nume de evenimente. Când n8n atașează un webhook pentru unul dintre aceste evenimente, datele îi sunt trimise la executarea acestui pas."
+    },
+    "enabled": {
+      "label": "Activat"
     }
   },
   "channels": {
@@ -2613,6 +2866,7 @@
     "changeHideState": "Schimbă starea de ascundere",
     "commentHidden": "Acest comentariu a fost ascuns",
     "messageDeleted": "Mesajul a fost șters.",
+    "sendFailed": "Trimiterea a eșuat",
     "repliedToStory": "A răspuns la story-ul tău",
     "sentAttachments": "S-a trimis {count, plural, one {1 atașament} other {# atașamente}}",
     "deleteComment": "Șterge comentariul",
@@ -2692,10 +2946,19 @@
     "noVersionsFound": "Nicio versiune publicată găsită",
     "publishVersionSuccess": "A fost publicată o versiune nouă",
     "flowConfigIncomplete": "Unele configurări sunt incomplete",
+    "whatsappCarouselButtonsMismatch": "Pe WhatsApp, un carusel are nevoie de aceleași butoane pe fiecare card: fie un singur buton de link pe fiecare card, fie același număr de butoane de răspuns pe fiecare card",
+    "whatsappCarouselLinkButtonNotAlone": "Pe WhatsApp, un card de carusel cu un buton de link nu poate avea alte butoane. Elimină celelalte butoane de pe acel card sau schimbă butonul de link cu o altă acțiune.",
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",
     "deleteNodeError": "Blocul nu a putut fi șters. Te rugăm să încerci din nou.",
     "redoHistoryCleared": "Istoricul de refacere a fost șters",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Niciuna",
+    "tiktokCardTitleTooLong": "TikTok va scurta acest mesaj: cu butoane atașate, sunt trimise doar primele 40 de caractere. Scurtează mesajul sau elimină butoanele.",
+    "waTemplateMpmNoProducts": "Adaugă cel puțin un produs la acest buton multi-produs înainte de publicare.",
+    "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
+    "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
+    "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
+    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -2703,7 +2966,11 @@
     "iceBreakers": "Sparge-gheață",
     "iceBreakersDescription": "Sparge-gheața oferă utilizatorilor o modalitate de a începe o conversație cu botul tău, afișând o listă de întrebări frecvente.",
     "reconnect": "Reconectează",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "Setări generale",
+      "conversionsApi": "Optimizare anunțuri"
+    }
   },
   "coexist": {
     "title": "Sincronizezi contactele existente și istoricul conversațiilor?",
@@ -2717,6 +2984,8 @@
     "toggleHelper": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează.",
     "toggleHelperMessenger": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează pagina Messenger.",
     "toggleHelperWhatsapp": "Reactivarea funcționează doar dacă Meta are date puse în tampon (în 24 de ore de la conectare). În caz contrar, deconectează și reconectează numărul WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "AI citește istoricul sincronizat",
+    "aiReadsSyncedHistoryHelper": "Când este oprit, AI vede doar mesajele noi.",
     "success": {
       "enabled": "Sincronizarea a început. Contactele și mesajele istorice vor apărea în curând.",
       "disabled": "Sincronizare dezactivată."
@@ -2759,7 +3028,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Setări generale",
-      "messageTemplates": "Șabloane de mesaje"
+      "messageTemplates": "Șabloane de mesaje",
+      "conversionsApi": "Optimizare anunțuri"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3323,13 @@
         "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "Integrarea WhatsApp nu a fost găsită.",
+        "phoneNumberMismatch": "Reconectarea a returnat Contul WhatsApp Business așteptat, dar nu numărul de telefon conectat la acest spațiu de lucru.",
+        "wabaMismatch": "Reconectarea a returnat un Cont WhatsApp Business diferit. Reconectează același cont."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3085,22 +3362,38 @@
       "params": {
         "couponCode": "Cod cupon",
         "couponCodePlaceholder": "Introdu codul cuponului",
-        "quickReplyPayload": "Payload răspuns rapid",
-        "quickReplyPayloadPlaceholder": "Introdu payload-ul (opțional)",
         "flowToken": "Token flux",
         "flowTokenPlaceholder": "Introdu tokenul fluxului",
-        "catalogProductId": "ID produs",
-        "catalogProductIdPlaceholder": "Introdu ID-ul de retailer al produsului",
+        "flowNotSynced": "Sincronizează fluxurile WhatsApp pentru a asocia câmpurile trimise.",
+        "catalogProductId": "Produs din catalog",
+        "catalogProductIdPlaceholder": "Caută produse…",
         "carouselCard": "Card {index}",
         "limitedTimeOffer": "Ora de expirare a ofertei",
-        "limitedTimeOfferPlaceholder": "Introdu ora de expirare în milisecunde",
-        "limitedTimeOfferHelp": "Marcaj temporal Unix în milisecunde când expiră oferta",
+        "limitedTimeOfferPlaceholder": "Alege data și ora expirării",
+        "limitedTimeOfferHelp": "Ora de expirare este trimisă exact așa cum a fost aleasă.",
         "location": "Locație",
         "latitude": "Latitudine",
         "longitude": "Longitudine",
         "locationName": "Nume locație (opțional)",
         "locationAddress": "Adresă (opțional)",
-        "enterFormatUrl": "Introdu URL-ul {format}"
+        "enterFormatUrl": "Introdu URL-ul {format}",
+        "catalogUseDefault": "Utilizează miniatura implicită din catalog",
+        "catalogNotConnectedGuidance": "Conectează un Catalog Meta pentru a selecta un produs.",
+        "catalogSetupLink": "Mergi la setările Catalogului",
+        "catalogSelectedProductFallback": "Produs: {retailerId}",
+        "limitedTimeOfferBadge": "Expiră la {date}",
+        "limitedTimeOfferExpiredBadge": "A expirat la {date}",
+        "mpmSections": "Produse",
+        "mpmSectionTitlePlaceholder": "Titlul secțiunii (opțional)",
+        "mpmAddSection": "Adaugă secțiune",
+        "mpmRemoveSection": "Elimină secțiunea",
+        "mpmAddProduct": "Adaugă produs",
+        "mpmRemoveProduct": "Elimină produsul",
+        "mpmNoProductsHelp": "Adaugă cel puțin un produs înainte de publicare.",
+        "mpmSectionLimitReached": "S-a atins maximul de 10 secțiuni.",
+        "mpmProductLimitReached": "S-a atins maximul de 30 de produse.",
+        "mpmProductsSummary": "{productCount} produse în {sectionCount} secțiuni",
+        "unsupportedButtonParam": "Acest tip de buton nu este încă acceptat."
       }
     },
     "sampleBodyCardContent": {
@@ -3125,7 +3418,9 @@
       "flows": "Fluxuri",
       "messageTemplates": "Șabloane de mesaje",
       "profile": "Profil",
-      "usefulLinks": "Linkuri utile"
+      "usefulLinks": "Linkuri utile",
+      "conversionsApi": "Optimizare anunțuri",
+      "settings": "Setări"
     },
     "accountHealths": {
       "title": "Gestionează-ți contul WhatsApp",
@@ -3255,7 +3550,13 @@
       "label": "Antet șablon"
     },
     "transferPhoneNumber": "Transferă numărul de telefon de la un alt furnizor WhatsApp",
-    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea."
+    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Evenimente Automate",
+        "description": "Trimite automat evenimente de conversie de la acest număr WhatsApp către Meta. Dacă lipsește permisiunea, reconectează contul pentru a o acorda."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
@@ -3295,6 +3596,67 @@
   "qrCodes": {
     "title": "Coduri QR",
     "description": "Creează coduri QR care leagă la fluxurile tale de chatbot."
+  },
+  "dynamicImages": {
+    "title": "Imagini dinamice",
+    "description": "Generează imagini personalizate pentru fiecare contact dintr-un fundal și straturi de text/imagine/cod QR.",
+    "publicUrl": {
+      "label": "URL public",
+      "hint": "Copiază și lipește URL-ul în fluxul, difuzarea sau secvența ta pentru a trimite imagini personalizate."
+    },
+    "editor": {
+      "addElement": "Adaugă element",
+      "addImage": "Adaugă imagine",
+      "addText": "Adaugă text",
+      "addQrCode": "Adaugă cod QR",
+      "template": "Șablon",
+      "templateDialogTitle": "Alege un șablon",
+      "templateDialogDescription": "Selectarea unui șablon înlocuiește toate straturile curente.",
+      "layers": "Straturi",
+      "noLayers": "Niciun strat încă. Adaugă un element pentru a începe.",
+      "deleteLayer": "Șterge stratul",
+      "layerNameImage": "Imagine",
+      "layerNameText": "Text",
+      "layerNameQrCode": "Cod QR",
+      "editElement": "Editează elementul",
+      "selectElementHint": "Selectează un element pe canvas pentru a-i edita proprietățile.",
+      "width": "Lățime",
+      "height": "Înălțime",
+      "priority": "Prioritate",
+      "imageType": "Tip de imagine",
+      "imageTypeUrl": "URL imagine",
+      "imageTypeAvatarUser": "Avatarul contactului",
+      "imageTypeCustomField": "Câmp personalizat",
+      "imageUrl": "URL imagine",
+      "uploadImage": "Încarcă imagine",
+      "customField": "Câmp personalizat",
+      "imageStyle": "Stil imagine",
+      "imageStyleSquare": "Pătrat",
+      "imageStyleCircle": "Cerc",
+      "qrText": "Conținutul codului QR",
+      "qrSize": "Dimensiune",
+      "qrColor": "Culoare",
+      "qrLogo": "Logo",
+      "uploadLogo": "Încarcă logo",
+      "textContent": "Conținutul textului",
+      "fontSize": "Dimensiunea fontului",
+      "fontFamily": "Familie de fonturi",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alinierea",
+      "alignLeft": "Stânga",
+      "alignCenter": "Centru",
+      "alignRight": "Dreapta",
+      "color": "Culoare",
+      "bold": "Bold",
+      "italic": "Italic",
+      "uppercase": "Majuscule"
+    },
+    "preview": {
+      "error": "Nu s-a putut încărca imaginea dinamică asociată. Este posibil să fi fost ștearsă."
+    }
   },
   "magicLinks": {
     "title": "Linkuri magice",
@@ -3352,7 +3714,8 @@
       "clearCustomField": "Golește câmpul personalizat",
       "startAnotherFlow": "Pornește alt flux",
       "notifyAdmins": "Notifică administratorii",
-      "transferConversationToHuman": "Transferă conversația către un operator"
+      "transferConversationToHuman": "Transferă conversația către un operator",
+      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI"
     },
     "triggerGoesOff": "Declanșatorul se activează",
     "before": "Înainte de",
@@ -3390,7 +3753,10 @@
     "title": "Jurnale de audit"
   },
   "customFields": {
-    "title": "Câmpuri personalizate"
+    "title": "Câmpuri personalizate",
+    "variables": {
+      "rawGroup": "Câmpuri personalizate brute"
+    }
   },
   "keywords": {
     "title": "Cuvinte cheie",
@@ -3592,7 +3958,28 @@
   },
   "appointmentScheduling": {
     "description": "Creează și gestionează programările tale.",
-    "title": "Programări"
+    "title": "Programări",
+    "flowModes": {
+      "bookFromCustomField": "Programează o întâlnire",
+      "checkAvailabilityFromCustomField": "Verifică disponibilitatea",
+      "book": "Selector dată și oră",
+      "checkAvailability": "Selector interval de date",
+      "cancel": "Anulează întâlnirea"
+    },
+    "fields": {
+      "mode": "Mod",
+      "dateTimeFieldId": "Data și ora întâlnirii",
+      "dateTimeFieldIdSource": "Câmp dată/oră",
+      "startDateFieldId": "Câmp dată de început",
+      "endDateFieldId": "Câmp dată de sfârșit",
+      "resultUsedByAI": "Folosește rezultatul pentru AI",
+      "outputCustomFieldId": "Salvează rezultatul în",
+      "startDateFieldIdSelected": "Salvează data de început selectată în",
+      "endDateFieldIdSelected": "Salvează data de sfârșit selectată în"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Alege cum programează întâlniri acest pas al fluxului."
+    }
   },
   "coupons": {
     "actions": {
@@ -3803,7 +4190,6 @@
     "leadForm": "Formular lead",
     "leads": "Lead-uri",
     "noEligiblePages": "Nicio pagină eligibilă. Folosește „Adaugă nouă” pentru a acorda acces la lead-uri.",
-    "none": "Niciuna",
     "subscribeError": "Nu s-a putut abona această pagină la notificările Facebook pentru lead-uri, astfel automatizarea nu a fost creată. Reconectează pagina cu „Adaugă nouă” și încearcă din nou.",
     "title": "Automatizare reclame pentru lead-uri Facebook",
     "whatFlow": "Ce flux este declanșat"
@@ -4434,5 +4820,381 @@
     "title": "Ai fost dezabonat.",
     "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
     "unavailableTitle": "Dezabonare indisponibilă."
+  },
+  "bookingWebview": {
+    "metadataTitle": "Programează o întâlnire",
+    "badge": "Programare",
+    "timezone": "Fus orar",
+    "empty": "Nu a fost găsit niciun interval orar disponibil.",
+    "noSelection": "Alege o oră",
+    "actions": {
+      "book": "Programează o întâlnire",
+      "viewDetails": "Vezi detalii"
+    },
+    "errors": {
+      "invalidTokenTitle": "Acest link de programare nu este disponibil.",
+      "invalidTokenDescription": "Linkul poate fi invalid sau expirat. Solicită un nou link de programare.",
+      "staleSlot": "Această oră nu mai este disponibilă. Te rugăm să alegi o altă oră.",
+      "availabilityChanged": "Disponibilitatea s-a schimbat în timp ce alegeai o oră. Te rugăm să alegi din nou.",
+      "submitFailed": "Nu am putut finaliza această solicitare. Te rugăm să încerci din nou."
+    },
+    "success": {
+      "title": "Programarea ta a fost făcută.",
+      "description": "Detaliile programării sunt gata."
+    },
+    "schedule": {
+      "metadataTitle": "Detaliile programării",
+      "defaultMessage": "Programarea ta a fost efectuată.",
+      "unknownInvitee": "Oaspete",
+      "fields": {
+        "invitee": "Invitat",
+        "time": "Oră",
+        "timezone": "Fus orar",
+        "location": "Locație"
+      },
+      "status": {
+        "scheduled": "Programat",
+        "cancelled": "Anulat"
+      },
+      "locationTypes": {
+        "inPerson": "Întâlnire în persoană",
+        "phoneCall": "Apel telefonic",
+        "onlineMeeting": "Întâlnire online"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Anulează programarea",
+      "title": "Anulează programarea",
+      "description": "Anulează {calendar} la {time}.",
+      "action": "Anulează programarea",
+      "cancelledTitle": "Programare anulată",
+      "cancelledDescription": "Această programare a fost anulată.",
+      "unavailableTitle": "Anulare indisponibilă",
+      "unavailableDescription": "Această programare este deja anulată, ștearsă sau a trecut."
+    },
+    "range": {
+      "metadataTitle": "Verifică disponibilitatea",
+      "empty": "Neselectat",
+      "successTitle": "Intervalul de date a fost primit.",
+      "successDescription": "Verificăm orele disponibile pentru programare.",
+      "fields": {
+        "startDate": "Data de început",
+        "endDate": "Data de sfârșit",
+        "startTime": "Ora de început",
+        "endTime": "Ora de sfârșit"
+      },
+      "actions": {
+        "skip": "Omitere"
+      },
+      "errors": {
+        "invalidRange": "Data de sfârșit trebuie să fie egală sau ulterioară datei de început."
+      },
+      "timezoneHint": "Orele sunt afișate în {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Selectează data",
+    "date": {
+      "title": "Selectează o dată"
+    },
+    "datetime": {
+      "title": "Selectează data și ora"
+    },
+    "noSelection": "Alege o dată",
+    "actions": {
+      "submit": "Trimite"
+    },
+    "success": {
+      "title": "Datele au fost salvate",
+      "description": "Poți închide această filă acum."
+    },
+    "errors": {
+      "invalidTokenTitle": "Acest link nu este disponibil.",
+      "invalidTokenDescription": "Linkul poate fi invalid sau expirat. Te rugăm să soliciți un nou link.",
+      "submitFailed": "Nu am putut finaliza această solicitare. Te rugăm să încerci din nou."
+    },
+    "monthLabel": "Lună",
+    "yearLabel": "An"
+  },
+  "appointments": {
+    "title": "Programări",
+    "statuses": {
+      "scheduled": "Programat",
+      "cancelled": "Anulat"
+    },
+    "messages": {
+      "empty": "Nicio programare încă."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Programări",
+    "singular": "Programare",
+    "unknownContact": "Contact necunoscut",
+    "searchPlaceholder": "Caută după nume...",
+    "tabs": {
+      "next": "Următoare",
+      "past": "Trecute"
+    },
+    "fields": {
+      "name": "Nume",
+      "date": "Dată",
+      "status": "Stare",
+      "calendar": "Calendar"
+    },
+    "statuses": {
+      "scheduled": "Programat",
+      "cancelled": "Anulat"
+    },
+    "actions": {
+      "cancelAppointment": "Anulează programarea"
+    },
+    "dialogs": {
+      "cancelTitle": "Anulează programarea",
+      "cancelDescription": "Anulează această programare și execută efectele secundare de anulare.",
+      "deleteTitle": "Șterge programarea",
+      "deleteDescription": "Șterge această programare din lista de gestionare. Aceasta nu va executa fluxul de anulare."
+    },
+    "messages": {
+      "cancelled": "Programare anulată.",
+      "deleted": "Programare ștearsă."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Calendare de programări",
+    "singular": "Calendar de programări",
+    "addNew": "Adaugă nou",
+    "none": "Niciunul",
+    "addReminder": "Adaugă memento",
+    "reminderSummary": "Trimite memento - {calendar} {timing}.",
+    "noExternalConnections": "Încă nu există conexiuni la calendare externe",
+    "dialogDescriptions": {
+      "create": "Dă un nume calendarului tău de programări pentru a începe.",
+      "rename": "Redenumește acest calendar de programări."
+    },
+    "tabs": {
+      "calendars": "Calendare",
+      "appointments": "Programări",
+      "externalCalendars": "Calendare externe"
+    },
+    "sections": {
+      "appointment": "Care este programarea ta",
+      "availability": "Când pot oamenii să facă o programare?",
+      "duration": "Cât durează programarea ta?",
+      "location": "Unde va avea loc programarea?",
+      "notifications": "Notificări",
+      "restrictions": "Restricții",
+      "externalCalendar": "Conectează Google Calendar"
+    },
+    "fields": {
+      "description": "Descriere",
+      "timezone": "Fus orar",
+      "locationType": "Tip de locație",
+      "locationDetail": "Detaliu",
+      "durationMinutes": "Durata programării",
+      "bufferAfterMinutes": "Adaugă timp după programările tale",
+      "scheduleWindowType": "Persoanele pot programa",
+      "rollingDays": "Zile glisante",
+      "minAdvanceDays": "Zile minime în avans",
+      "startDate": "Data de început",
+      "endDate": "Data de sfârșit",
+      "specificDate": "Dată",
+      "maxAppointmentsPerUser": "Numărul maxim de programări per utilizator",
+      "maxAppointmentsUnlimited": "Nelimitat",
+      "dailyLimitEnabled": "Limită zilnică",
+      "maxPerDay": "Maxim pe zi",
+      "allowGroupMeeting": "Permite întâlniri de grup",
+      "maxPerSlot": "Maxim per interval",
+      "confirmationMessage": "Mesaj de confirmare",
+      "confirmationFlowId": "Flux de confirmare",
+      "cancellationFlowId": "Flux de anulare",
+      "externalConnectionId": "Calendar extern",
+      "reminders": "Mementouri",
+      "reminderTimingValue": "Valoare",
+      "reminderTimingUnit": "Unitate"
+    },
+    "locationTypes": {
+      "inPerson": "Întâlnire în persoană",
+      "phoneCall": "Apel telefonic",
+      "onlineMeeting": "Întâlnire online"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "În limita zilelor glisante din viitor",
+      "dateRange": "Într-un interval de date",
+      "specificDay": "O singură zi specifică",
+      "anyFutureDate": "La orice dată din viitor"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minute înainte",
+      "hours": "Ore înainte",
+      "days": "Zile înainte"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minut înainte} other {# minute înainte}}",
+      "hours": "{count, plural, one {o oră înainte} other {# ore înainte}}",
+      "days": "{count, plural, one {o zi înainte} other {# zile înainte}}"
+    },
+    "weekdays": {
+      "0": "Duminică",
+      "1": "Luni",
+      "2": "Marți",
+      "3": "Miercuri",
+      "4": "Joi",
+      "5": "Vineri",
+      "6": "Sâmbătă"
+    },
+    "weekdayEditor": {
+      "description": "Setează intervalele orare disponibile pentru această zi.",
+      "unavailable": "Indisponibil",
+      "overlapWarning": "Unele intervale se suprapun. Timpul suprapus nu este numărat de două ori.",
+      "addInterval": "Adaugă interval",
+      "startTime": "Ora de început",
+      "endTime": "Ora de sfârșit"
+    },
+    "tooltips": {
+      "timezone": "Fusul orar în care creezi acest calendar. Persoanele vor vedea disponibilitatea în funcție de propriul fus orar.",
+      "confirmationFlow": "Fluxul trimis după ce utilizatorul face o programare.",
+      "cancellationFlow": "Fluxul trimis după ce o programare este anulată.",
+      "reminders": "Trimite mementouri pentru a-i reaminti invitatului despre programare.",
+      "appointmentDuration": "Definește cât va dura programarea ta.",
+      "bufferAfterMinutes": "Oferă-ți un timp tampon pentru a încheia programările rezervate.",
+      "peopleCanSchedule": "Stabilește un interval de date în care poți accepta întâlniri.",
+      "maxAppointmentsPerUser": "Numărul maxim de programări viitoare pe care un utilizator are voie să le facă.",
+      "rollingDays": "Permite programarea până la câte zile în viitor",
+      "minAdvanceDays": "Solicită ca programările să fie făcute cu cel puțin acest număr de zile în avans. Folosește 0 pentru a permite programări în aceeași zi.",
+      "dailyLimit": "Numărul maxim de persoane care au voie să facă o programare pe zi.",
+      "allowGroupMeeting": "Permite mai multor persoane să facă o programare în același interval orar.",
+      "externalCalendar": "Conectează Google Calendar pentru a-ți sincroniza programările."
+    },
+    "minutesLabel": "{count} minute"
+  },
+  "externalCalendars": {
+    "title": "Calendare externe",
+    "connectGoogle": "Conectează Google",
+    "emptyEmail": "Fără email",
+    "fields": {
+      "provider": "Furnizor",
+      "email": "E-mail",
+      "calendarId": "ID Calendar",
+      "connected": "Conectat",
+      "date": "Dată"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Editează ID-ul calendarului",
+      "editDescription": "Alege ID-ul Google Calendar pentru a verifica conflictele și a crea evenimente de programare.",
+      "deleteTitle": "Deconectează calendarul",
+      "deleteDescription": "Deconectează acest Google Calendar de la programări."
+    },
+    "messages": {
+      "connected": "Google Calendar a fost conectat.",
+      "connectFailed": "Nu s-a putut conecta Google Calendar. Verifică setările OAuth Google și accesul la API-ul Calendar, apoi încearcă din nou.",
+      "calendarIdUpdated": "ID-ul calendarului a fost actualizat.",
+      "disconnected": "Calendarul a fost deconectat."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Programare",
+    "comingSoonTitle": "Pagina de programare vine în curând",
+    "comingSoonDescription": "Această pagină publică de programare nu este încă disponibilă."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Trimite evenimente LeadSubmitted din conversațiile Messenger, Instagram și WhatsApp către Meta.",
+    "datasetId": "ID set de date",
+    "reconnect": "Reconectează permisiunile",
+    "connectViaFacebook": "Conectează prin Facebook",
+    "unsupportedExplanation": "Acest cont Instagram a fost conectat cu Instagram Business Login. Conectează contul prin Facebook pentru a folosi Meta Conversions API.",
+    "flowStep": {
+      "description": "Pune în coadă un eveniment LeadSubmitted pentru Messenger, Instagram sau WhatsApp.",
+      "whatsappNote": "Evenimentele WhatsApp sunt trimise doar pentru conversațiile care au început dintr-un anunț click-to-WhatsApp."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Pregătit",
+      "missingPermission": "Permisiune necesară",
+      "unverified": "Neverificat",
+      "unsupported": "Neacceptat",
+      "notConnected": "Neconectat"
+    },
+    "statusDescriptions": {
+      "ready": "Această integrare are permisiunea Meta necesară pentru evenimentele Conversions API.",
+      "missingPermission": "Reconectează această integrare și acordă permisiunea Meta solicitată.",
+      "unverified": "Setările aplicației platformei nu sunt disponibile, deci permisiunea CAPI nu poate fi verificată.",
+      "unsupported": "Meta Conversions API pentru Instagram necesită un cont conectat prin Facebook Login for Business.",
+      "notConnected": "Conversions API este un instrument Meta Business care îți permite să partajezi date cu Meta pentru a îmbunătăți performanța anunțurilor."
+    },
+    "errors": {
+      "reconnect": "Reconectarea Meta CAPI nu a putut fi pornită.",
+      "messengerNotFound": "Integrarea Messenger nu a fost găsită.",
+      "instagramNotFound": "Integrarea Instagram nu a fost găsită.",
+      "instagramRequiresFacebook": "Instagram CAPI necesită conectarea prin Facebook.",
+      "saveFailed": "Nu s-a putut salva. Te rugăm să încerci din nou.",
+      "datasetRequired": "Salvează un ID set de date înainte de a adăuga un token de acces.",
+      "invalidToken": "Acest token nu a putut accesa setul de date.",
+      "invalidDatasetId": "Introdu un Dataset ID valid (doar cifre).",
+      "whatsappNotFound": "Integrarea WhatsApp nu a fost găsită."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Tip de eveniment",
+        "leadSubmitted": "Lead trimis"
+      },
+      "value": "Valoare",
+      "valuePlaceholder": "de ex. 250",
+      "currency": "Monedă",
+      "currencyPlaceholder": "de ex. USD",
+      "contentCategory": "Categorie de conținut",
+      "contentCategoryPlaceholder": "Categoria conținutului asociat evenimentului",
+      "contentName": "Numele conținutului",
+      "contentNamePlaceholder": "Numele paginii sau produsului asociat evenimentului"
+    },
+    "datasetIdPlaceholder": "Lipește ID-ul setului de date din Events Manager",
+    "saveDataset": "Salvează",
+    "accessToken": "Token de acces (opțional)",
+    "accessTokenHint": "Lipește un token din Events Manager pentru a trimite evenimente cu propriul tău token în loc de tokenul paginii conectate. Necesită un ID set de date.",
+    "accessTokenPlaceholder": "Token de acces Events Manager",
+    "saveToken": "Salvează tokenul",
+    "tokenSaved": "Token salvat",
+    "removeToken": "Elimină",
+    "saved": "Salvat",
+    "help": {
+      "delay": "Evenimentele pot dura până la 40 de minute pentru a apărea în Events Manager și a fi afișate ca Meta Leads în Ads Manager."
+    },
+    "connected": "Conectat",
+    "disconnect": "Deconectează",
+    "openEventManager": "Deschide Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Conectează prin Facebook",
+        "description": "Folosește conexiunea existentă a paginii tale, apoi alege un ID set de date.",
+        "connect": "Creează set de date",
+        "connectedLabel": "prin Facebook"
+      },
+      "custom": {
+        "title": "Conexiune personalizată",
+        "description": "Folosește un ID set de date și un token de acces din Meta Events Manager.",
+        "start": "Configurează o conexiune personalizată",
+        "connect": "Conectează",
+        "connectedLabel": "Personalizat"
+      },
+      "whatsapp": {
+        "title": "Conectează prin WhatsApp",
+        "description": "Folosește conexiunea ta WhatsApp, apoi alege un ID set de date.",
+        "connect": "Creează set de date",
+        "connectedLabel": "prin WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Alege un ID set de date",
+      "description": "Introdu un ID set de date existent, sau lasă gol pentru a crea unul automat.",
+      "save": "Salvează",
+      "createDataset": "Creează set de date",
+      "caveat": "Un ID set de date care nu este asociat acestei Pagini sau cont Instagram poate să nu atribuie corect evenimentele. Lasă acest câmp gol pentru a crea automat un set de date asociat."
+    },
+    "whatsapp": {
+      "connect": "Conectează"
+    }
   }
 }

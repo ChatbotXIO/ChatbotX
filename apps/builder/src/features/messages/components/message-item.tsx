@@ -5,6 +5,11 @@ import type {
   MessageStoryReplyEntity,
   MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@chatbotx.io/ui/components/ui/avatar"
 import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
@@ -14,9 +19,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@chatbotx.io/ui/components/ui/carousel"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
+  AlertCircleIcon,
+  BotIcon,
   ExternalLinkIcon,
   ImageIcon,
   PaperclipIcon,
@@ -36,6 +48,13 @@ import { MessageBubble } from "./message-bubble"
 type MessageItemProps = {
   message: MessageResourceWithRelations
   guestDisplay?: boolean
+  /**
+   * Workspace logo shown beside agent/bot bubbles in the guest widget when
+   * `IntegrationWebchat.showLogo` is on. Deliberately opt-in and unused by
+   * the agent inbox, which renders this same component — passing it only
+   * from `webchat-message-list.tsx` keeps inbox rendering unchanged.
+   */
+  avatarUrl?: string
   onChangeHide?: () => void
   onChangeLike?: () => void
   onDelete?: () => void
@@ -58,6 +77,7 @@ export const MessageItem = (props: MessageItemProps) => {
   const {
     message,
     guestDisplay = false,
+    avatarUrl,
     onChangeLike,
     onChangeHide,
     onReply,
@@ -103,6 +123,14 @@ export const MessageItem = (props: MessageItemProps) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
+      {variant === "left" && avatarUrl && (
+        <Avatar className="mt-2 size-7 self-start">
+          <AvatarImage alt="" src={avatarUrl} />
+          <AvatarFallback>
+            <BotIcon aria-hidden className="size-3.5" />
+          </AvatarFallback>
+        </Avatar>
+      )}
       <div className="flex min-h-11 max-w-[70%] flex-col gap-1">
         {storyReply && <StoryReplyContext story={storyReply.story} />}
         {isComment ? (
@@ -175,6 +203,22 @@ export const MessageItem = (props: MessageItemProps) => {
       </div>
 
       <div className="flex">
+        {message.messageType === "outgoing" && message.sendError && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="flex items-center self-center px-1 text-destructive">
+                  <AlertCircleIcon aria-hidden className="size-4" />
+                </span>
+              }
+            />
+            <TooltipContent>
+              <p>
+                {t("sendFailed")}: {message.sendError}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        )}
         {isComment && !isEditing && message.messageType === "incoming" && (
           <Button
             className="self-center opacity-0 transition-opacity group-hover:opacity-100"

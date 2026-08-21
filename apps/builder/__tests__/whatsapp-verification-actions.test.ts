@@ -21,7 +21,7 @@ type VerifyCodeActionHandler = (args: {
 
 const {
   claimVerificationCodeSlotMock,
-  findWorkspaceIntegrationMock,
+  findByIdForWorkspaceMock,
   loggerErrorMock,
   recordRegistrationOutcomeMock,
   registerPhoneNumberMock,
@@ -31,7 +31,7 @@ const {
   verifyCodeMock,
 } = vi.hoisted(() => ({
   claimVerificationCodeSlotMock: vi.fn(),
-  findWorkspaceIntegrationMock: vi.fn(),
+  findByIdForWorkspaceMock: vi.fn(),
   loggerErrorMock: vi.fn(),
   recordRegistrationOutcomeMock: vi.fn(),
   registerPhoneNumberMock: vi.fn(),
@@ -56,7 +56,7 @@ vi.mock("@/lib/safe-action", () => {
 vi.mock("@chatbotx.io/business", () => ({
   integrationWhatsappService: {
     claimVerificationCodeSlot: claimVerificationCodeSlotMock,
-    findWorkspaceIntegration: findWorkspaceIntegrationMock,
+    findByIdForWorkspace: findByIdForWorkspaceMock,
     recordRegistrationOutcome: recordRegistrationOutcomeMock,
     releaseVerificationCodeSlot: releaseVerificationCodeSlotMock,
   },
@@ -168,7 +168,7 @@ const metaRefusedError = () =>
 describe("Whatsapp verification actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    findWorkspaceIntegrationMock.mockResolvedValue(integration)
+    findByIdForWorkspaceMock.mockResolvedValue(integration)
     releaseVerificationCodeSlotMock.mockResolvedValue(undefined)
     claimVerificationCodeSlotMock.mockResolvedValue({
       status: "claimed",
@@ -408,7 +408,7 @@ describe("Whatsapp verification actions", () => {
   })
 
   test("does not call register after OTP for coexist integrations", async () => {
-    findWorkspaceIntegrationMock.mockResolvedValueOnce({
+    findByIdForWorkspaceMock.mockResolvedValueOnce({
       ...integration,
       isCoexist: true,
     })

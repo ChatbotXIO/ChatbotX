@@ -31,6 +31,7 @@ type TiptapEditorProps = {
   initValue?: string
   placeholder?: string
   showEmojiPicker?: boolean
+  enableEmoji?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
   onChange?: (content: string) => void
@@ -43,6 +44,7 @@ export const TiptapEditor = ({
   includeCouponVariables = false,
   placeholder = "Type a message...",
   showEmojiPicker = true,
+  enableEmoji = true,
 }: TiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
@@ -67,11 +69,15 @@ export const TiptapEditor = ({
           listOfPromptVariables: () => promptVariableOptionsRef.current,
         }),
       }),
-      Emoji.configure({
-        emojis: gitHubEmojis,
-        enableEmoticons: true,
-        suggestion: emojiSuggestion,
-      }),
+      ...(enableEmoji
+        ? [
+            Emoji.configure({
+              emojis: gitHubEmojis,
+              enableEmoticons: true,
+              suggestion: emojiSuggestion,
+            }),
+          ]
+        : []),
       Placeholder.configure({
         placeholder,
       }),

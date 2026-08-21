@@ -69,49 +69,65 @@ function NameCell({
   workspaceId: string
 }) {
   const avatarUrl = useAvatarUrl(contact)
-  const inboxHref = `/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`
+  const conversationId = contact.conversation?.id
+  const inboxHref = conversationId
+    ? `/space/${workspaceId}/inbox?conversationId=${conversationId}`
+    : null
   const channel = contact.contactInboxes?.[0]?.channel as
     | ChannelType
     | undefined
 
+  const avatarVisual = (
+    <div className="relative">
+      <Avatar className="size-9 shrink-0">
+        <AvatarImage
+          alt={contact.fullName ?? ""}
+          className="object-cover"
+          src={avatarUrl}
+        />
+        <AvatarFallback className="bg-gray-300 text-sm dark:bg-zinc-100 dark:text-zinc-800">
+          {contact.fullName?.slice(0, 2) ?? "?"}
+        </AvatarFallback>
+      </Avatar>
+      {channel && (
+        <div className="absolute end-0 bottom-0 ltr:translate-x-1 rtl:-translate-x-1">
+          <InboxIcon
+            channel={channel}
+            iconClassName="size-3"
+            showLabel={false}
+            size="small"
+          />
+        </div>
+      )}
+    </div>
+  )
+
+  const avatarNode = inboxHref ? (
+    <Link href={inboxHref} prefetch={false} target="_blank">
+      {avatarVisual}
+    </Link>
+  ) : (
+    avatarVisual
+  )
+
+  const nameNode = inboxHref ? (
+    <Link
+      className="truncate font-medium leading-5"
+      href={inboxHref}
+      prefetch={false}
+      target="_blank"
+    >
+      {contact.fullName}
+    </Link>
+  ) : (
+    <span className="truncate font-medium leading-5">{contact.fullName}</span>
+  )
+
   return (
     <div className="flex max-w-56 items-center gap-3">
-      <Link href={inboxHref} target="_blank">
-        <div className="relative">
-          <Avatar className="size-9 shrink-0">
-            <AvatarImage
-              alt={contact.fullName ?? ""}
-              className="object-cover"
-              src={avatarUrl}
-            />
-            <AvatarFallback className="bg-gray-300 text-sm dark:bg-zinc-100 dark:text-zinc-800">
-              {contact.fullName?.slice(0, 2) ?? "?"}
-            </AvatarFallback>
-          </Avatar>
-          {channel && (
-            <div className="absolute end-0 bottom-0 ltr:translate-x-1 rtl:-translate-x-1">
-              <InboxIcon
-                channel={channel}
-                iconClassName="size-3"
-                showLabel={false}
-                size="small"
-              />
-            </div>
-          )}
-        </div>
-      </Link>
+      {avatarNode}
       <Tooltip>
-        <TooltipTrigger
-          render={
-            <Link
-              className="truncate font-medium leading-5"
-              href={inboxHref}
-              target="_blank"
-            >
-              {contact.fullName}
-            </Link>
-          }
-        />
+        <TooltipTrigger render={nameNode} />
         <TooltipContent>
           <p>{contact.fullName}</p>
         </TooltipContent>

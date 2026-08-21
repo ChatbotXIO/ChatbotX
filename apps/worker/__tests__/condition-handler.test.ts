@@ -233,6 +233,31 @@ describe("handleCondition", () => {
     })
   })
 
+  test("threads appointmentId through variable resolution and the matched branch", async () => {
+    const step = makeStep()
+    matchesContactFilter.mockResolvedValueOnce(true)
+
+    await handleCondition({
+      ...makeProps(step, [
+        { sourceHandle: "first-case", target: "first-target" },
+      ]),
+      appointmentId: "appointment-1",
+    })
+
+    expect(resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      step.cases,
+      expect.objectContaining({ appointmentId: "appointment-1" }),
+    )
+    expect(integrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+      type: "sendFlow",
+      data: expect.objectContaining({
+        appointmentId: "appointment-1",
+        nodeId: "first-target",
+      }),
+    })
+  })
+
   test("threads the case timezone into contact filter matching", async () => {
     const step: ConditionStepSchema = {
       id: "condition-step-1",

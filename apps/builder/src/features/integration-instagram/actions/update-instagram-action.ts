@@ -25,11 +25,13 @@ import {
   type InstagramProfileRequest,
   integration as integrationInstagram,
 } from "@chatbotx.io/integration-instagram"
+import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
 import {
@@ -68,15 +70,19 @@ export const updateInstagramAction = workspaceActionClient
 
           if (integrationInstagramData) {
             const auth = integrationInstagramData.auth as InstagramAuthValue
+            const isFacebook = integrationInstagramData.type === "facebook"
+            const channelIntegration = isFacebook
+              ? integrationInstagramFacebook
+              : integrationInstagram
             const botContext = await buildContext({
               workspaceId: ctx.workspace.id,
-              integrationType: "instagram",
+              integrationType: isFacebook ? "instagramFacebook" : "instagram",
               integration: { ...integrationInstagramData, auth },
             })
 
             const fieldsToDelete = getInstagramFieldsToDelete(parsedInput)
             if (fieldsToDelete.length > 0) {
-              await integrationInstagram.runChannelHandler(
+              await channelIntegration.runChannelHandler(
                 "bot",
                 "deleteProfileFields",
                 {
@@ -102,7 +108,7 @@ export const updateInstagramAction = workspaceActionClient
             }
 
             if (Object.keys(profileData).length > 0) {
-              await integrationInstagram.runChannelHandler(
+              await channelIntegration.runChannelHandler(
                 "bot",
                 "updateProfile",
                 {
@@ -113,7 +119,8 @@ export const updateInstagramAction = workspaceActionClient
             }
           }
         })
-      } catch {
+      } catch (error) {
+        logger.error({ err: error }, "Failed to update Instagram integration")
         throw new ChatbotXException("Failed to update Instagram integration")
       }
     },

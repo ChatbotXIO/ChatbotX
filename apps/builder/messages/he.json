@@ -43,6 +43,7 @@
     "disableBot": "השבתת הבוט",
     "disconnect": "ניתוק",
     "download": "הורדה",
+    "downloadTemplate": "הורדת תבנית",
     "edit": "עריכה",
     "editFeature": "עריכת {feature}",
     "enableBot": "הפעלת הבוט",
@@ -145,6 +146,9 @@
     "clone": "שכפול",
     "remove": "הסרה",
     "restore": "שחזור"
+  },
+  "errors": {
+    "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
   },
   "states": {
     "success": "הצלחה",
@@ -268,6 +272,10 @@
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "תהליך זה מעולם לא פורסם. יש לפרסם אותו לפני הייצוא.",
+      "failed": "הייצוא נכשל. יש לנסות שוב."
+    },
     "title": "תהליכים",
     "quickReplies": {
       "limitReached": "הגעתם למגבלת התשובות המהירות ({max})."
@@ -292,8 +300,7 @@
     },
     "openaiCompatible": {
       "empty": "חברו ספק תואם OpenAI בהגדרות השילובים לפני השימוש בשלב זה.",
-      "integration": "ספק תואם OpenAI",
-      "none": "ללא"
+      "integration": "ספק תואם OpenAI"
     },
     "actions": {
       "addContactNotes": "הוספת הערות לאיש קשר",
@@ -316,6 +323,7 @@
       "questionnaires": "שאלונים",
       "setUpCoupon": "הגדרת קופון",
       "markCouponUsed": "סימון קופון כמשומש",
+      "executeJavascript": "הפעלת JavaScript",
       "chooseChannel": "בחירת ערוץ",
       "clearCustomField": "ניקוי שדה מותאם אישית",
       "condition": "תנאי",
@@ -393,7 +401,15 @@
       "unsubscribeSequence": "ביטול הרשמה לרצף",
       "splitTraffic": "פיצול תעבורה",
       "aiEditImage": "עריכת תמונה באמצעות AI",
-      "whatsappFlow": "תהליך WhatsApp"
+      "whatsappFlow": "תהליך WhatsApp",
+      "appointmentScheduling": "תזמון פגישות",
+      "triggerN8n": "הפעלת n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
+      "import": "ייבוא זרימה",
+      "export": "ייצוא",
+      "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
+      "importJsonOnly": "קבצי JSON בלבד"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -425,6 +441,11 @@
       "selectCustomFieldPlaceholder": "בחירת שדה מותאם אישית",
       "addMapping": "הוספת מיפוי",
       "addCustomField": "הוספת חדש"
+    },
+    "sendCarousel": {
+      "addSlide": "הוספת כרטיס",
+      "removeSlide": "הסרת כרטיס",
+      "whatsappLinkButtonIgnored": "בוואטסאפ, הקישור של כרטיס זה לא יעבוד: כרטיס עם כפתור קישור לא יכול לכלול כפתורים נוספים. הוא יישלח כתשובה במקום זאת."
     },
     "additionalSteps": "שלבים נוספים",
     "delayType": {
@@ -492,7 +513,11 @@
     },
     "setCustomField": {
       "temporalHint": "השאירו ריק כדי לשמור את התאריך/השעה הנוכחיים."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "כאשר מצורפים כפתורים, טיקטוק שולח רק את 40 התווים הראשונים של ההודעה הזו — השאר ייחתך."
+    },
+    "dataWasSaved": "הנתונים נשמרו"
   },
   "folders": {
     "heading": {
@@ -538,6 +563,174 @@
     },
     "errors": {
       "invalidAppSettings": "הגדרות אפליקציית Facebook אינן תקינות"
+    }
+  },
+  "ads": {
+    "title": "מודעות",
+    "connectAccounts": {
+      "connectAdAccount": "חיבור חשבון מודעות",
+      "adAccountName": "שם חשבון המודעות",
+      "adAccountsReconnectBanner": "האסימון של חשבון המודעות שלכם ב-Meta פג תוקף או איבד הרשאות. חברו מחדש את מודעות Facebook כדי לשמור על זמינות דוחות המודעות.",
+      "adAccountsNotConnected": "לא חוברו עדיין חשבונות מודעות של Meta.",
+      "adAccountsEmpty": "לא נמצאו חשבונות מודעות של Meta עבור חיבור מודעות Facebook זה.",
+      "reconnect": "חיבור מחדש",
+      "reconnectSuccess": "חשבון WhatsApp חובר מחדש.",
+      "selectAccountLabel": "חשבון WhatsApp",
+      "status": {
+        "ready": "אירועים אוטומטיים מוכנים",
+        "missingPermission": "חסרה הרשאת אירועים אוטומטיים",
+        "unverified": "ההרשאה לא אומתה"
+      },
+      "table": {
+        "wabaId": "מזהה WABA"
+      },
+      "connectWhatsapp": {
+        "cta": "חיבור חשבון WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "אירועי המרה",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "ניהול חשבונות מודעות",
+      "export": "ייצוא",
+      "selectAll": "בחירת הכול",
+      "whatsappAsset": "נכס WhatsApp",
+      "selectWhatsappAsset": "בחירת נכס WhatsApp",
+      "templates": "תבניות",
+      "selectTemplates": "בחירת תבניות",
+      "noTemplates": "לא נמצאו תבניות מאושרות.",
+      "existingRules": "כללים קיימים",
+      "noRules": "אין עדיין כללי המרה לנכס WhatsApp זה.",
+      "toggleRule": "הפעלה או השבתה של הכלל",
+      "deleteRule": "מחיקת הכלל",
+      "qualifyingTemplateMessageSent": "הודעת התבנית המכשירה נשלחת",
+      "qualifyingFirstReply": "איש הקשר שולח את הודעתו הראשונה",
+      "qualifyingAnyReply": "איש הקשר שולח הודעה",
+      "when": "כאשר",
+      "whenOptions": {
+        "templateSent": "הודעת התבנית המכשירה נשלחת",
+        "tagApplied": "איש הקשר מתוייג",
+        "keywordMatched": "ההודעה של איש הקשר תואמת לכלל מילות מפתח",
+        "contactReplied": "איש הקשר שולח הודעה"
+      },
+      "tags": "תגיות",
+      "selectTags": "בחירת תגיות",
+      "noTags": "לא נמצאו תגיות.",
+      "untitledKeywordRule": "(כלל מילות מפתח ללא שם)",
+      "keywordRules": "כללי מילות מפתח",
+      "selectKeywordRules": "בחירת כללי מילות מפתח",
+      "noKeywordRules": "לא נמצאו כללי מילות מפתח נכנסים.",
+      "replyOptions": "אפשרויות תגובה",
+      "firstReplyOnly": "רק ההודעה הראשונה",
+      "dedupeNote": "אירוע אחד לכל היותר ביום עבור כל שיחה עבור כל כלל.",
+      "dealWon": "עסקה שנסגרה",
+      "eventTypeLead": "ליד",
+      "eventTypePurchase": "רכישה",
+      "messages": {
+        "ruleSaved": "כלל ההמרה נשמר",
+        "ruleUpdated": "כלל ההמרה עודכן",
+        "ruleDeleted": "כלל ההמרה נמחק"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "עמוד 1",
+        "page2": "עמוד 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "מעקב אחר לידים מוכשרים",
+        "question": "באיזה שלב בשיחה תרצו להכשיר איש קשר כליד?",
+        "when": "כאשר",
+        "then": "אז סמנו את ליד ה-CTWA כ"
+      },
+      "trackPurchases": {
+        "title": "מעקב אחר רכישות",
+        "question": "איזו תבנית מאשרת רכישה?",
+        "when": "כאשר",
+        "then": "אז",
+        "noValueNote": "רכישה מבוססת-כלל רושמת המרת רכישה ללא ערך הזמנה — היא נספרת לכיוון הרכישות אך מוסיפה 0 להכנסות. ערך ההזמנה נלכד רק על ידי Meta Automatic Events."
+      }
+    },
+    "analytics": {
+      "title": "אנליטיקת CTWA",
+      "funnelOverview": "סקירת המשפך",
+      "conversationsStarted": "שיחות שהתחילו",
+      "qualifiedLeads": "לידים מוכשרים",
+      "purchases": "רכישות",
+      "adSpend": "הוצאת מודעות",
+      "spendAccountLevelNote": "ההוצאה מדווחת בהתאם לחשבון המודעות של Meta; כאשר נבחר חשבון WhatsApp, מודעות המציגות הוצאה בלבד ללא פעילות משפך עבור אותו חשבון מוסתרות.",
+      "revenue": "הכנסות",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "ההכנסות מניחות מטבע יחיד (USD). חשבונות מודעות במטבעות מעורבים אינם מצטברים עדיין.",
+      "costPerLead": "עלות/ליד",
+      "costPerPurchase": "עלות/רכישה",
+      "impressions": "חשיפות",
+      "clicks": "קליקים",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "עלות/שיחה",
+      "costCurrencyNote": "מדדי העלות מניחים מטבע יחיד (USD), בהתאם להוצאת המודעות.",
+      "performanceChart": {
+        "title": "ביצועים במהלך זמן",
+        "empty": "אין עדיין שיחות, לידים, רכישות או הוצאה בטווח זה."
+      },
+      "dateRange": {
+        "oneDay": "1י",
+        "oneWeek": "1ש",
+        "oneMonth": "1ח",
+        "threeMonths": "3ח",
+        "custom": "מותאם אישית",
+        "apply": "החלה"
+      },
+      "allAds": "כל המודעות",
+      "adAccountFilter": {
+        "all": "כל חשבונות המודעות",
+        "label": "חשבון מודעות",
+        "note": "מודעות עם המרות אך עם הוצאה אפסית או אפס הצגות בטווח התאריכים הנבחר מוסתרות בעת סינון לפי חשבון מודעות."
+      },
+      "retarget": "רימרקטינג",
+      "thoseWhoPurchased": "מי שרכשו",
+      "thoseWhoStartedConversation": "מי שהתחילו שיחה",
+      "sendWhatsappBroadcast": "שליחת שידור WhatsApp",
+      "from": "מ",
+      "to": "עד",
+      "unattributed": "לא מיוחס",
+      "retargetDialog": {
+        "title": "רימרקטינג לאנשי קשר של CTWA",
+        "createAudience": "יצירת קהל",
+        "useExistingAudience": "שימוש בקהל קיים",
+        "audienceName": "שם הקהל",
+        "audiencePrefix": "CTWA",
+        "confirm": "התחלת סנכרון",
+        "success": "סנכרון קהל הרימרקטינג נכנס לתור.",
+        "error": "העמדת סנכרון קהל הרימרקטינג בתור נכשלה."
+      },
+      "delivery": {
+        "title": "מסירת המרות",
+        "sent": "נשלח",
+        "pending": "בהמתנה",
+        "failed": "נכשל",
+        "skippedNoScope": "דולג (ללא הרשאה)",
+        "skippedRegion": "דולג (אזור)",
+        "noScopeWarning": "חלק מההמרות לא נשלחו כי לחשבון WhatsApp זה חסרה הרשאת אירועים. חברו אותו מחדש כדי לאפשר דיווח Automatic Events.",
+        "reconnectCta": "חיבור מחדש של החשבון",
+        "empty": "אין עדיין אירועי המרה בטווח זה."
+      },
+      "export": {
+        "conversations": "ייצוא שיחות",
+        "leads": "ייצוא לידים",
+        "purchases": "ייצוא רכישות"
+      },
+      "csv": {
+        "contactName": "שם איש הקשר",
+        "phone": "טלפון",
+        "adId": "מזהה מודעה",
+        "occurredAt": "התרחש בתאריך"
+      },
+      "empty": "אין עדיין נתונים. חברו חשבון מודעות והתחילו לעקוב אחר המרות."
     }
   },
   "googleSheets": {
@@ -826,6 +1019,11 @@
     "noWorkspaces": "אין לכם עדיין סביבות עבודה.",
     "owner": "בעלים"
   },
+  "notFound": {
+    "title": "הדף לא נמצא",
+    "description": "הדף שחיפשתם אינו קיים או שהועבר.",
+    "backToHome": "חזרה לדף הבית"
+  },
   "editProfile": {
     "title": "עריכת פרופיל"
   },
@@ -892,8 +1090,14 @@
       "badge": "מחיקה מתוזמנת"
     }
   },
-  "workspaces": { "list": { "title": "רשימת סביבות עבודה" } },
-  "workspaceToken": { "title": "אסימון סביבת עבודה" },
+  "workspaces": {
+    "list": {
+      "title": "רשימת סביבות עבודה"
+    }
+  },
+  "workspaceToken": {
+    "title": "אסימון סביבת עבודה"
+  },
   "dialog": {
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו."
   },
@@ -927,6 +1131,7 @@
     "changeHideState": "שינוי מצב הסתרה",
     "commentHidden": "תגובה זו הוסתרה",
     "messageDeleted": "ההודעה נמחקה.",
+    "sendFailed": "השליחה נכשלה",
     "repliedToStory": "הגיב לסטורי שלך",
     "sentAttachments": "נשלחו {count, plural, one {קובץ מצורף אחד} other {# קבצים מצורפים}}",
     "deleteComment": "מחיקת תגובה",
@@ -1006,10 +1211,19 @@
     "noVersionsFound": "לא נמצאו גרסאות שפורסמו",
     "publishVersionSuccess": "גרסה חדשה פורסמה",
     "flowConfigIncomplete": "חלק מההגדרות אינן שלמות",
+    "whatsappCarouselButtonsMismatch": "בוואטסאפ, קרוסלה חייבת לכלול את אותם כפתורים בכל כרטיס: או כפתור קישור יחיד בכל כרטיס, או אותו מספר כפתורי תשובה בכל כרטיס",
+    "whatsappCarouselLinkButtonNotAlone": "בוואטסאפ, כרטיס קרוסלה עם כפתור קישור לא יכול לכלול כפתורים נוספים. הסר את הכפתורים הנוספים בכרטיס הזה, או שנה את כפתור הקישור לפעולה אחרת.",
     "duplicateNodeError": "לא ניתן היה לשכפל את הבלוק. נסו שוב.",
     "deleteNodeError": "לא ניתן היה למחוק את הבלוק. נסו שוב.",
     "redoHistoryCleared": "היסטוריית הביצוע מחדש נוקתה",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "ללא",
+    "tiktokCardTitleTooLong": "טיקטוק יקצר את ההודעה הזו: כאשר מצורפים כפתורים, נשלחים רק 40 התווים הראשונים. קצר את ההודעה או הסר את הכפתורים.",
+    "waTemplateMpmNoProducts": "הוסף לפחות מוצר אחד לכפתור רב-המוצרים הזה לפני הפרסום.",
+    "waTemplateMpmTooManySections": "לכפתור רב-מוצרים יכולים להיות עד 10 מקטעים לכל היותר. הסר מקטעים לפני הפרסום.",
+    "waTemplateMpmTooManyProducts": "לכפתור רב-מוצרים יכולים להיות עד 30 מוצרים בסך הכל. הסר מוצרים לפני הפרסום.",
+    "waTemplateLtoExpirationRequired": "בחרו תאריך תפוגה למבצע המוגבל בזמן לפני השליחה.",
+    "waTemplateMpmIncompleteProducts": "כל מקטע צריך לפחות מוצר אחד שנבחר — הסירו שורות ריקות או בחרו להן מוצר."
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -1017,7 +1231,11 @@
     "iceBreakers": "שאלות פתיחה",
     "iceBreakersDescription": "שאלות פתיחה מאפשרות למשתמשים להתחיל שיחה עם הבוט באמצעות רשימת שאלות נפוצות.",
     "reconnect": "חיבור מחדש",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "הגדרות כלליות",
+      "conversionsApi": "אופטימיזציית מודעות"
+    }
   },
   "messenger": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Messenger.",
@@ -1049,7 +1267,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "הגדרות כלליות",
-      "messageTemplates": "תבניות הודעה"
+      "messageTemplates": "תבניות הודעה",
+      "conversionsApi": "אופטימיזציית מודעות"
     },
     "messageTemplate": {
       "params": {
@@ -1115,6 +1334,8 @@
     "toggleHelper": "הפעלה מחדש פועלת רק אם Meta שמרה נתונים במאגר (בתוך 24 שעות מההצטרפות). אחרת יש לנתק ולחבר מחדש.",
     "toggleHelperMessenger": "הפעלה מחדש פועלת רק אם Meta שמרה נתונים במאגר (בתוך 24 שעות מההצטרפות). אחרת יש לנתק ולחבר מחדש את דף Messenger.",
     "toggleHelperWhatsapp": "הפעלה מחדש פועלת רק אם Meta שמרה נתונים במאגר (בתוך 24 שעות מההצטרפות). אחרת יש לנתק ולחבר מחדש את מספר WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "ה-AI קורא היסטוריה מסונכרנת",
+    "aiReadsSyncedHistoryHelper": "כשכבוי, ה-AI רואה רק הודעות חדשות.",
     "success": {
       "enabled": "הסנכרון התחיל. אנשי קשר והודעות היסטוריים יופיעו בקרוב.",
       "disabled": "הסנכרון הושבת."
@@ -1127,7 +1348,9 @@
       "unknown": "לא ניתן היה להפעיל את הסנכרון. נסו שוב מאוחר יותר."
     }
   },
-  "omnichannel": { "title": "רב-ערוצי" },
+  "omnichannel": {
+    "title": "רב-ערוצי"
+  },
   "openai": {
     "connect": {
       "description": "השיבו למשתמשים באופן טבעי באמצעות AI המבוסס על הנתונים העסקיים שלכם."
@@ -1194,14 +1417,25 @@
   },
   "settings": {
     "title": "הגדרות",
-    "agents": { "description": "תיאור סוכני AI", "title": "סוכני AI" },
+    "agents": {
+      "description": "תיאור סוכני AI",
+      "title": "סוכני AI"
+    },
     "aiTriggers": {
       "description": "תיאור גורמים מפעילים של AI",
       "title": "גורמים מפעילים של AI"
     },
-    "automatedResponses": { "title": "מילות מפתח" },
-    "openai": { "description": "תיאור שילוב OpenAI", "title": "שילוב OpenAI" },
-    "claude": { "description": "תיאור שילוב Claude", "title": "שילוב Claude" },
+    "automatedResponses": {
+      "title": "מילות מפתח"
+    },
+    "openai": {
+      "description": "תיאור שילוב OpenAI",
+      "title": "שילוב OpenAI"
+    },
+    "claude": {
+      "description": "תיאור שילוב Claude",
+      "title": "שילוב Claude"
+    },
     "deepseek": {
       "description": "תיאור שילוב DeepSeek",
       "title": "שילוב DeepSeek"
@@ -1242,10 +1476,20 @@
     "changePasswordDescription": "הגדירו סיסמה חדשה לפני שתמשיכו.",
     "passwordChangeSuccess": "הסיסמה שונתה"
   },
-  "emailTopics": { "title": "נושאי דוא\"ל" },
-  "tags": { "title": "תגיות" },
-  "texts": { "or": "או" },
-  "theme": { "dark": "כהה", "light": "בהיר", "system": "מערכת" },
+  "emailTopics": {
+    "title": "נושאי דוא\"ל"
+  },
+  "tags": {
+    "title": "תגיות"
+  },
+  "texts": {
+    "or": "או"
+  },
+  "theme": {
+    "dark": "כהה",
+    "light": "בהיר",
+    "system": "מערכת"
+  },
   "validation": {
     "maxSize": "גודל הקובץ חורג מהמגבלה המרבית",
     "maxItemsReached": "מותר לכל היותר {max} {feature} בכל סביבת עבודה",
@@ -1265,14 +1509,22 @@
   },
   "whatsapp": {
     "category": {
-      "marketing": { "description": "תיאור קטגוריית שיווק", "label": "שיווק" },
-      "utility": { "description": "תיאור קטגוריית שירות", "label": "שירות" }
+      "marketing": {
+        "description": "תיאור קטגוריית שיווק",
+        "label": "שיווק"
+      },
+      "utility": {
+        "description": "תיאור קטגוריית שירות",
+        "label": "שירות"
+      }
     },
     "commands": {
       "description": "אלו מילות מפתח מיוחדות שמורות לבוט WhatsApp מה לעשות",
       "label": "פקודות"
     },
-    "autoConnect": { "inProgress": "מתבצע חיבור…" },
+    "autoConnect": {
+      "inProgress": "מתבצע חיבור…"
+    },
     "connectExisting": "חיבור חשבון WhatsApp Business קיים",
     "embeddedSignupDone": "ההרשמה הושלמה — ניתן לסגור כרטיסייה זו.",
     "embeddedSignupPopupBlocked": "אפשרו חלונות קופצים באתר זה ונסו שוב.",
@@ -1296,7 +1548,10 @@
       "title": "אימות מספר טלפון WhatsApp",
       "description": "בקשו קוד אימות מ-Meta, הזינו אותו כאן ומספר הטלפון יירשם אוטומטית.",
       "errorTitle": "נדרש אימות של מספר הטלפון",
-      "methods": { "sms": "SMS", "voice": "שיחה קולית" },
+      "methods": {
+        "sms": "SMS",
+        "voice": "שיחה קולית"
+      },
       "actions": {
         "sendCode": "שליחת קוד",
         "resendIn": "שליחה מחדש בעוד {seconds} שניות",
@@ -1333,43 +1588,94 @@
         "wabaResolveFailed": "לא ניתן היה לזהות את חשבון WhatsApp Business מתוך ההרשאה."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "שילוב WhatsApp לא נמצא.",
+        "phoneNumberMismatch": "החיבור מחדש החזיר את חשבון WhatsApp Business הצפוי, אך לא את מספר הטלפון המחובר לסביבת עבודה זו.",
+        "wabaMismatch": "החיבור מחדש החזיר חשבון WhatsApp Business שונה. חברו מחדש את אותו חשבון."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
-      "carouselImage": { "label": "תמונת קרוסלה" },
-      "carouselVideo": { "label": "סרטון קרוסלה" },
-      "document": { "label": "מסמך" },
-      "image": { "label": "תמונה" },
-      "location": { "label": "מיקום" },
-      "text": { "label": "טקסט" },
-      "video": { "label": "וידאו" },
-      "viewCatalog": { "label": "הצגת קטלוג" },
-      "viewProduct": { "label": "הצגת מוצר" },
+      "carouselImage": {
+        "label": "תמונת קרוסלה"
+      },
+      "carouselVideo": {
+        "label": "סרטון קרוסלה"
+      },
+      "document": {
+        "label": "מסמך"
+      },
+      "image": {
+        "label": "תמונה"
+      },
+      "location": {
+        "label": "מיקום"
+      },
+      "text": {
+        "label": "טקסט"
+      },
+      "video": {
+        "label": "וידאו"
+      },
+      "viewCatalog": {
+        "label": "הצגת קטלוג"
+      },
+      "viewProduct": {
+        "label": "הצגת מוצר"
+      },
       "params": {
         "couponCode": "קוד קופון",
         "couponCodePlaceholder": "הזנת קוד קופון",
-        "quickReplyPayload": "מטען תשובה מהירה",
-        "quickReplyPayloadPlaceholder": "הזנת מטען (אופציונלי)",
         "flowToken": "אסימון תהליך",
         "flowTokenPlaceholder": "הזנת אסימון תהליך",
-        "catalogProductId": "מזהה מוצר",
-        "catalogProductIdPlaceholder": "הזנת מזהה המוצר אצל הקמעונאי",
+        "flowNotSynced": "סנכרן תהליכי WhatsApp כדי למפות את השדות שנשלחו.",
+        "catalogProductId": "מוצר מהקטלוג",
+        "catalogProductIdPlaceholder": "חיפוש מוצרים…",
         "carouselCard": "כרטיס {index}",
         "limitedTimeOffer": "מועד תפוגת המבצע",
-        "limitedTimeOfferPlaceholder": "הזנת מועד תפוגה באלפיות שנייה",
-        "limitedTimeOfferHelp": "חותמת זמן Unix באלפיות שנייה שבה המבצע פג",
+        "limitedTimeOfferPlaceholder": "בחר תאריך ושעת תפוגה",
+        "limitedTimeOfferHelp": "שעת התפוגה נשלחת בדיוק כפי שנבחרה.",
         "location": "מיקום",
         "latitude": "קו רוחב",
         "longitude": "קו אורך",
         "locationName": "שם מיקום (אופציונלי)",
         "locationAddress": "כתובת (אופציונלי)",
-        "enterFormatUrl": "הזנת כתובת URL מסוג {format}"
+        "enterFormatUrl": "הזנת כתובת URL מסוג {format}",
+        "catalogUseDefault": "השתמש בתמונה הממוזערת המוגדרת כברירת מחדל של הקטלוג",
+        "catalogNotConnectedGuidance": "חבר קטלוג Meta כדי לבחור מוצר.",
+        "catalogSetupLink": "עבור להגדרות הקטלוג",
+        "catalogSelectedProductFallback": "מוצר: {retailerId}",
+        "limitedTimeOfferBadge": "פג תוקף ב-{date}",
+        "limitedTimeOfferExpiredBadge": "פג תוקף ב-{date}",
+        "mpmSections": "מוצרים",
+        "mpmSectionTitlePlaceholder": "כותרת המקטע (אופציונלי)",
+        "mpmAddSection": "הוסף מקטע",
+        "mpmRemoveSection": "הסר מקטע",
+        "mpmAddProduct": "הוסף מוצר",
+        "mpmRemoveProduct": "הסר מוצר",
+        "mpmNoProductsHelp": "הוסף לפחות מוצר אחד לפני הפרסום.",
+        "mpmSectionLimitReached": "הגעת למקסימום של 10 מקטעים.",
+        "mpmProductLimitReached": "הגעת למקסימום של 30 מוצרים.",
+        "mpmProductsSummary": "{productCount} מוצרים ב-{sectionCount} מקטעים",
+        "unsupportedButtonParam": "סוג כפתור זה עדיין אינו נתמך."
       }
     },
-    "sampleBodyCardContent": { "label": "תוכן גוף כרטיס לדוגמה" },
-    "sampleBodyContent": { "label": "תוכן גוף לדוגמה" },
-    "sampleHeaderContent": { "label": "תוכן כותרת לדוגמה" },
-    "showFooter": { "label": "הצגת כותרת תחתונה" },
-    "showHeader": { "label": "הצגת כותרת" },
+    "sampleBodyCardContent": {
+      "label": "תוכן גוף כרטיס לדוגמה"
+    },
+    "sampleBodyContent": {
+      "label": "תוכן גוף לדוגמה"
+    },
+    "sampleHeaderContent": {
+      "label": "תוכן כותרת לדוגמה"
+    },
+    "showFooter": {
+      "label": "הצגת כותרת תחתונה"
+    },
+    "showHeader": {
+      "label": "הצגת כותרת"
+    },
     "tabs": {
       "accountHealths": "תקינות החשבון",
       "automation": "אוטומציה",
@@ -1377,7 +1683,9 @@
       "flows": "תהליכים",
       "messageTemplates": "תבניות הודעה",
       "profile": "פרופיל",
-      "usefulLinks": "קישורים שימושיים"
+      "usefulLinks": "קישורים שימושיים",
+      "conversionsApi": "אופטימיזציית מודעות",
+      "settings": "הגדרות"
     },
     "accountHealths": {
       "title": "ניהול חשבון WhatsApp",
@@ -1471,7 +1779,10 @@
         "NONE": "ללא",
         "PENDING_REVIEW": "ממתין לבדיקה"
       },
-      "accountMode": { "LIVE": "פעיל", "SANDBOX": "ארגז חול" },
+      "accountMode": {
+        "LIVE": "פעיל",
+        "SANDBOX": "ארגז חול"
+      },
       "canSendMessage": {
         "AVAILABLE": "זמין",
         "LIMITED": "מוגבל",
@@ -1497,10 +1808,20 @@
         }
       }
     },
-    "templateFooter": { "label": "כותרת תחתונה של התבנית" },
-    "templateHeader": { "label": "כותרת התבנית" },
+    "templateFooter": {
+      "label": "כותרת תחתונה של התבנית"
+    },
+    "templateHeader": {
+      "label": "כותרת התבנית"
+    },
     "transferPhoneNumber": "העברת מספר טלפון מספק WhatsApp אחר",
-    "signupSessionExpired": "פג תוקף הפעלת ההרשמה ל-WhatsApp. התחילו את החיבור מחדש."
+    "signupSessionExpired": "פג תוקף הפעלת ההרשמה ל-WhatsApp. התחילו את החיבור מחדש.",
+    "capi": {
+      "automaticEvents": {
+        "title": "אירועים אוטומטיים",
+        "description": "שלח אירועי המרה ממספר וואטסאפ זה אל Meta באופן אוטומטי. אם ההרשאה חסרה, חבר מחדש את החשבון כדי להעניק אותה."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
@@ -1524,9 +1845,15 @@
     "invalidInvitation": "הזמנה זו אינה תקינה או שפג תוקפה.",
     "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד."
   },
-  "inboxTeams": { "title": "צוותי תיבת דואר נכנס" },
-  "userPersistentMenus": { "title": "תפריטי משתמש קבועים" },
-  "webhooks": { "title": "Webhooks" },
+  "inboxTeams": {
+    "title": "צוותי תיבת דואר נכנס"
+  },
+  "userPersistentMenus": {
+    "title": "תפריטי משתמש קבועים"
+  },
+  "webhooks": {
+    "title": "Webhooks"
+  },
   "reflinks": {
     "title": "קישורים לנקודות כניסה",
     "description": "קישורי מילות מפתח שמפעילים תהליכים ולוכדים מטעני הפניה מערוצים."
@@ -1534,6 +1861,67 @@
   "qrCodes": {
     "title": "קודי QR",
     "description": "צרו קודי QR המקשרים לתהליכי הצ'אטבוט שלכם."
+  },
+  "dynamicImages": {
+    "title": "תמונות דינמיות",
+    "description": "יצירת תמונות מותאמות אישית לכל איש קשר מרקע ושכבות טקסט/תמונה/קוד QR.",
+    "publicUrl": {
+      "label": "כתובת URL ציבורית",
+      "hint": "העתיקו והדביקו את כתובת ה-URL בתהליך, בשידור או ברצף שלכם כדי לשלוח תמונות מותאמות אישית."
+    },
+    "editor": {
+      "addElement": "הוספת רכיב",
+      "addImage": "הוספת תמונה",
+      "addText": "הוספת טקסט",
+      "addQrCode": "הוספת קוד QR",
+      "template": "תבנית",
+      "templateDialogTitle": "בחר תבנית",
+      "templateDialogDescription": "בחירת תבנית תחליף את כל השכבות הנוכחיות.",
+      "layers": "שכבות",
+      "noLayers": "אין עדיין שכבות. הוסיפו רכיב כדי להתחיל.",
+      "deleteLayer": "מחיקת שכבה",
+      "layerNameImage": "תמונה",
+      "layerNameText": "טקסט",
+      "layerNameQrCode": "קוד QR",
+      "editElement": "עריכת רכיב",
+      "selectElementHint": "בחרו רכיב על גבי הקנבס כדי לערוך את מאפייניו.",
+      "width": "רוחב",
+      "height": "גובה",
+      "priority": "עדיפות",
+      "imageType": "סוג תמונה",
+      "imageTypeUrl": "כתובת URL של תמונה",
+      "imageTypeAvatarUser": "תמונת פרופיל של איש קשר",
+      "imageTypeCustomField": "שדה מותאם אישית",
+      "imageUrl": "כתובת URL של תמונה",
+      "uploadImage": "העלאת תמונה",
+      "customField": "שדה מותאם אישית",
+      "imageStyle": "סגנון תמונה",
+      "imageStyleSquare": "מרובע",
+      "imageStyleCircle": "עיגול",
+      "qrText": "תוכן קוד QR",
+      "qrSize": "גודל",
+      "qrColor": "צבע",
+      "qrLogo": "לוגו",
+      "uploadLogo": "העלאת לוגו",
+      "textContent": "תוכן הטקסט",
+      "fontSize": "גודל גופן",
+      "fontFamily": "משפחת גופן",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "יישור",
+      "alignLeft": "שמאל",
+      "alignCenter": "מרכז",
+      "alignRight": "ימין",
+      "color": "צבע",
+      "bold": "מודגש",
+      "italic": "נטוי",
+      "uppercase": "אותיות רישיות"
+    },
+    "preview": {
+      "error": "טעינת התמונה הדינמית המקושרת נכשלה. ייתכן שהיא נמחקה."
+    }
   },
   "magicLinks": {
     "title": "קישורי קסם",
@@ -1591,7 +1979,8 @@
       "clearCustomField": "ניקוי שדה מותאם אישית",
       "startAnotherFlow": "הפעלת תהליך אחר",
       "notifyAdmins": "יידוע מנהלי מערכת",
-      "transferConversationToHuman": "העברת השיחה לנציג אנושי"
+      "transferConversationToHuman": "העברת השיחה לנציג אנושי",
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
     },
     "triggerGoesOff": "הגורם המפעיל מופעל",
     "before": "לפני",
@@ -1602,7 +1991,9 @@
     "minute": "דקה",
     "at": "בשעה"
   },
-  "errorLogs": { "title": "יומני שגיאות" },
+  "errorLogs": {
+    "title": "יומני שגיאות"
+  },
   "developerAccessToken": {
     "title": "אסימון גישה ל-API",
     "description": "צרו אסימון שיאפשר לסביבת העבודה לגשת לממשקי ה-API הציבוריים. שמרו את האסימון בסוד ואל תשתפו אותו עם אף אחד."
@@ -1623,8 +2014,15 @@
     "exportTakingLong": "הייצוא נמשך זמן רב מהצפוי",
     "exportTakingLongDescription": "הייצוא עדיין בעיבוד. ניתן לסגור חלון זה ולבדוק שוב בעוד מספר דקות בהיסטוריית הייצוא."
   },
-  "auditLogs": { "title": "יומני ביקורת" },
-  "customFields": { "title": "שדות מותאמים אישית" },
+  "auditLogs": {
+    "title": "יומני ביקורת"
+  },
+  "customFields": {
+    "title": "שדות מותאמים אישית",
+    "variables": {
+      "rawGroup": "שדות מותאמים אישית גולמיים"
+    }
+  },
   "keywords": {
     "title": "מילות מפתח",
     "tabs": {
@@ -1639,8 +2037,12 @@
     },
     "pageWarning": "תוכן הודעה המכיל מילת מפתח לעמוד עלול לגרום לשליחת הודעות ללקוח בלופ אינסופי. השבת את מילת המפתח לעמוד באופן מיידי אם נתקלת במקרה זה!"
   },
-  "triggers": { "title": "גורמים מפעילים" },
-  "users": { "title": "משתמשים" },
+  "triggers": {
+    "title": "גורמים מפעילים"
+  },
+  "users": {
+    "title": "משתמשים"
+  },
   "sequences": {
     "title": "רצפים",
     "subscribers": "מנויים",
@@ -1727,7 +2129,9 @@
     "sunday": "יום ראשון",
     "afterText": "אחרי"
   },
-  "tools": { "title": "כלים" },
+  "tools": {
+    "title": "כלים"
+  },
   "aiProviders": {
     "openai": "OpenAI",
     "gemini": "Gemini",
@@ -1910,7 +2314,9 @@
       "keywords": "מילות מפתח",
       "showCommentsAfter": "הצגת תגובות אחרי"
     },
-    "showCommentsAfter": { "none": "לעולם לא" },
+    "showCommentsAfter": {
+      "none": "לעולם לא"
+    },
     "selectPosts": "בחירת פוסטים",
     "selectPageAll": "כל הדפים",
     "chooseSpecificPosts": "בחירת פוסטים...",
@@ -2006,7 +2412,9 @@
       "keywords": "מילות מפתח",
       "showCommentsAfter": "הצגת תגובות אחרי"
     },
-    "showCommentsAfter": { "none": "לעולם לא" },
+    "showCommentsAfter": {
+      "none": "לעולם לא"
+    },
     "selectPosts": "בחירת פוסטים",
     "selectPageAll": "כל החשבונות",
     "chooseSpecificPosts": "בחירת פוסטים...",
@@ -2092,7 +2500,6 @@
     "allFormsNote": "לידים מכל טופס בדף זה יילכדו. שדות רגילים (דוא\"ל, טלפון, שם, מגדר) נשמרים אוטומטית בשדות המתאימים של איש הקשר.",
     "leadData": "נתוני ליד",
     "whatFlow": "איזה תהליך מופעל",
-    "none": "ללא",
     "addNewPage": "הוספת חדש",
     "noEligiblePages": "אין דפים זכאים. השתמשו ב\"הוספת חדש\" כדי להעניק גישה ללידים.",
     "duplicateError": "כבר קיימת אוטומציה עבור דף וטופס אלה.",
@@ -2104,7 +2511,28 @@
   },
   "appointmentScheduling": {
     "title": "תזמון פגישות",
-    "description": "יצירה וניהול של תזמון הפגישות שלכם."
+    "description": "יצירה וניהול של תזמון הפגישות שלכם.",
+    "flowModes": {
+      "bookFromCustomField": "קביעת פגישה",
+      "checkAvailabilityFromCustomField": "בדיקת זמינות",
+      "book": "בורר תאריך ושעה",
+      "checkAvailability": "בורר טווח תאריכים",
+      "cancel": "ביטול פגישה"
+    },
+    "fields": {
+      "mode": "מצב",
+      "dateTimeFieldId": "תאריך ושעת הפגישה",
+      "dateTimeFieldIdSource": "שדה תאריך ושעה",
+      "startDateFieldId": "שדה תאריך התחלה",
+      "endDateFieldId": "שדה תאריך סיום",
+      "resultUsedByAI": "שימוש בתוצאה עבור AI",
+      "outputCustomFieldId": "שמירת התוצאה ב",
+      "startDateFieldIdSelected": "שמירת תאריך ההתחלה שנבחר ב",
+      "endDateFieldIdSelected": "שמירת תאריך הסיום שנבחר ב"
+    },
+    "dialogDescriptions": {
+      "flowStep": "בחרו כיצד שלב זה בתהליך מתזמן פגישות."
+    }
   },
   "templates": {
     "title": "תבניות",
@@ -2123,7 +2551,9 @@
       "title": "קישורי עזרה",
       "description": "קישורי עזרה המוצגים בסרגל הצד בכל סביבות העבודה שאינן שייכות לדייר ממותג."
     },
-    "queues": { "title": "תורים" }
+    "queues": {
+      "title": "תורים"
+    }
   },
   "platformCredentials": {
     "title": "פרטי כניסה לפלטפורמה",
@@ -2190,7 +2620,10 @@
         "placeholder": "השאירו ריק כדי להשתמש בתבנית ברירת המחדל"
       }
     },
-    "status": { "custom": "מותאם אישית", "default": "ברירת מחדל" },
+    "status": {
+      "custom": "מותאם אישית",
+      "default": "ברירת מחדל"
+    },
     "availableVariables": "משתנים זמינים",
     "preview": {
       "title": "תצוגה מקדימה",
@@ -2228,7 +2661,10 @@
       "title": "למחוק את הנתונים שלכם?",
       "description": "פעולה זו מוחקת לצמיתות את פרטי הקשר בפרופיל, התגיות, השדות המותאמים אישית, הקבצים המצורפים וכל ההודעות של רשומת איש קשר זו."
     },
-    "empty": { "customFields": "אין שדות מותאמים אישית", "tags": "אין תגיות" },
+    "empty": {
+      "customFields": "אין שדות מותאמים אישית",
+      "tags": "אין תגיות"
+    },
     "fields": {
       "email": "דוא\"ל",
       "gender": "מגדר",
@@ -2236,14 +2672,23 @@
       "phone": "טלפון",
       "timezone": "שעה"
     },
-    "sections": { "customFields": "שדות מותאמים אישית", "tags": "תגיות משתמש" },
+    "sections": {
+      "customFields": "שדות מותאמים אישית",
+      "tags": "תגיות משתמש"
+    },
     "unknown": "לא ידוע"
   },
-  "orders": { "title": "הזמנות" },
+  "orders": {
+    "title": "הזמנות"
+  },
   "products": {
     "title": "מוצרים",
-    "create": { "title": "יצירת מוצר" },
-    "edit": { "title": "עריכת מוצר" },
+    "create": {
+      "title": "יצירת מוצר"
+    },
+    "edit": {
+      "title": "עריכת מוצר"
+    },
     "sections": {
       "pricing": "תמחור",
       "images": "תמונות",
@@ -2254,45 +2699,96 @@
       "moreOptions": "אפשרויות נוספות"
     },
     "fields": {
-      "shortDescription": { "label": "תיאור קצר" },
-      "longDescription": { "label": "תיאור ארוך" },
-      "price": { "label": "מחיר" },
-      "taxes": { "label": "מסים (0-100%)" },
-      "discount": { "label": "הנחה (0-100%)" },
-      "currency": { "label": "מטבע" },
+      "shortDescription": {
+        "label": "תיאור קצר"
+      },
+      "longDescription": {
+        "label": "תיאור ארוך"
+      },
+      "price": {
+        "label": "מחיר"
+      },
+      "taxes": {
+        "label": "מסים (0-100%)"
+      },
+      "discount": {
+        "label": "הנחה (0-100%)"
+      },
+      "currency": {
+        "label": "מטבע"
+      },
       "productUrl": {
         "label": "כתובת URL של המוצר",
         "placeholder": "https://store.example.com/products/123",
         "description": "הדף שלקוחות פותחים מתוך קניות ב-Messenger. מוצרים ללא כתובת URL אינם נכללים בסנכרון לקטלוג Meta."
       },
-      "sku": { "label": "SKU", "placeholder": "אופציונלי" },
-      "inventoryPolicy": { "label": "מדיניות מלאי" },
-      "inventoryQuantity": { "label": "כמות" },
+      "sku": {
+        "label": "SKU",
+        "placeholder": "אופציונלי"
+      },
+      "inventoryPolicy": {
+        "label": "מדיניות מלאי"
+      },
+      "inventoryQuantity": {
+        "label": "כמות"
+      },
       "allowOutOfStockPurchase": {
         "label": "אפשר ללקוחות לרכוש מוצר זה כאשר אזל מהמלאי"
       },
-      "vendor": { "label": "ספק" },
-      "rank": { "label": "דירוג" },
-      "category": { "label": "קטגוריה", "placeholder": "ללא קטגוריה" },
-      "subcategory": { "label": "קטגוריית משנה", "placeholder": "ללא" },
-      "isSearchable": { "label": "ניתן לחפש מוצר זה בתוך הבוט" },
+      "vendor": {
+        "label": "ספק"
+      },
+      "rank": {
+        "label": "דירוג"
+      },
+      "category": {
+        "label": "קטגוריה",
+        "placeholder": "ללא קטגוריה"
+      },
+      "subcategory": {
+        "label": "קטגוריית משנה",
+        "placeholder": "ללא"
+      },
+      "isSearchable": {
+        "label": "ניתן לחפש מוצר זה בתוך הבוט"
+      },
       "allowSpecialRequest": {
         "label": "אפשר למשתמש להגיש בקשה מיוחדת (צירוף הערות)"
       },
-      "isActive": { "label": "פעיל" },
-      "isAddonOnly": { "label": "שימוש במוצר זה כתוספת למוצרים אחרים בלבד" },
-      "optionName": { "label": "שם אפשרות" },
-      "optionValue": { "label": "ערך אפשרות" },
-      "variant": { "label": "וריאציה" },
+      "isActive": {
+        "label": "פעיל"
+      },
+      "isAddonOnly": {
+        "label": "שימוש במוצר זה כתוספת למוצרים אחרים בלבד"
+      },
+      "optionName": {
+        "label": "שם אפשרות"
+      },
+      "optionValue": {
+        "label": "ערך אפשרות"
+      },
+      "variant": {
+        "label": "וריאציה"
+      },
       "addImageFromLink": "הוספת תמונה",
       "uploadImage": "העלאת תמונה",
       "tagsDescription": "ניתן לחפש תגיות.",
       "addonsDescription": "הוסיפו מוצרים שלקוחות יכולים לקנות כתוספת. ניתן גם להציע כאן מוצרים בחינם. לדוגמה, מסעדה יכולה להציע כאן משקאות בחינם. יש ליצור מוצר לפני השימוש בו כתוספת.",
-      "addonName": { "label": "שם", "placeholder": "שם" },
-      "addonMaxSelections": { "label": "מספר בחירות מרבי" },
-      "addonProducts": { "label": "מוצרים", "placeholder": "בחירת מוצרים..." },
+      "addonName": {
+        "label": "שם",
+        "placeholder": "שם"
+      },
+      "addonMaxSelections": {
+        "label": "מספר בחירות מרבי"
+      },
+      "addonProducts": {
+        "label": "מוצרים",
+        "placeholder": "בחירת מוצרים..."
+      },
       "variantsDescription": "הוסיפו וריאציות אם למוצר יש כמה גרסאות, כגון גדלים או צבעים שונים",
-      "metaCatalogId": { "label": "מזהה קטלוג Meta" }
+      "metaCatalogId": {
+        "label": "מזהה קטלוג Meta"
+      }
     },
     "inventoryPolicy": {
       "dont_track": "אין לעקוב אחר המלאי",
@@ -2315,7 +2811,10 @@
       "listTopic": "רשימת נושאים",
       "archive": "ארכיון"
     },
-    "topic": { "create": "יצירת חדש", "edit": "עריכת נושא" },
+    "topic": {
+      "create": "יצירת חדש",
+      "edit": "עריכת נושא"
+    },
     "actions": {
       "import": "ייבוא קופונים",
       "export": "הורדת רשימת קופונים",
@@ -2336,9 +2835,17 @@
       "allUsageStatuses": "כל סוגי השימוש",
       "searchCode": "חיפוש קוד"
     },
-    "issueStatuses": { "published": "פורסם", "unpublished": "לא פורסם" },
-    "usageStatuses": { "used": "בשימוש", "notUsed": "טרם נעשה שימוש" },
-    "variables": { "group": "קופונים" },
+    "issueStatuses": {
+      "published": "פורסם",
+      "unpublished": "לא פורסם"
+    },
+    "usageStatuses": {
+      "used": "בשימוש",
+      "notUsed": "טרם נעשה שימוש"
+    },
+    "variables": {
+      "group": "קופונים"
+    },
     "messages": {
       "topicSaved": "נושא הקופון נשמר.",
       "editLocked": "השם והתיאור נעולים לאחר יצירה או ייבוא של קופונים.",
@@ -2377,7 +2884,7 @@
     "cancel": "ביטול",
     "actions": "פעולות קטגוריה",
     "deleteTitle": "למחוק את „{name}”?",
-    "deleteDescription": "{count, plural, =0 {לא הוקצו מוצרים לקטגוריה זו.} one {מוצר אחד יועבר אל ללא קטגוריה.} other {# מוצרים יועברו אל ללא קטגוריה.}}",
+    "deleteDescription": "{count, plural, =0 {לא הוקצו מוצרים לקטגוריה זו.} one {# מוצר יועבר אל ללא קטגוריה.} other {# מוצרים יועברו אל ללא קטגוריה.}}",
     "createSub": "יצירת קטגוריית משנה",
     "empty": "אין עדיין קטגוריות. צרו קטגוריה כדי לקבץ את המוצרים.",
     "columns": {
@@ -2387,8 +2894,8 @@
     },
     "expand": "הצגת קטגוריות משנה",
     "collapse": "הסתרת קטגוריות משנה",
-    "productCount": "{count, plural, =0 {אין מוצרים} one {מוצר אחד} other {# מוצרים}}",
-    "deleteChildrenWarning": "{count, plural, one {גם קטגוריית המשנה האחת שלה תימחק.} other {גם # קטגוריות המשנה שלה יימחקו.}}"
+    "productCount": "{count, plural, =0 {אין מוצרים} one {# מוצר} other {# מוצרים}}",
+    "deleteChildrenWarning": "{count, plural, one {גם # קטגוריית המשנה שלה תימחק.} other {גם # קטגוריות המשנה שלה יימחקו.}}"
   },
   "productImport": {
     "title": "ייבוא",
@@ -2485,8 +2992,14 @@
       "unknown": "לא זמין",
       "never": "לעולם לא",
       "noExpiry": "ללא תפוגה",
-      "authModes": { "oauth": "OAuth", "fbe": "Facebook Business Extension" },
-      "connectionStatuses": { "active": "פעיל", "invalid": "נדרש חיבור מחדש" }
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Facebook Business Extension"
+      },
+      "connectionStatuses": {
+        "active": "פעיל",
+        "invalid": "נדרש חיבור מחדש"
+      }
     },
     "disconnect": "ניתוק",
     "reconnect": "חיבור מחדש",
@@ -2501,8 +3014,14 @@
         "label": "תמונת מוצר",
         "value": "רזולוציה גבוהה של לפחות 500px × 500px, וגודל קובץ של עד 8MB."
       },
-      "video": { "label": "סרטון מוצר", "value": "גודל קובץ של עד 200MB." },
-      "price": { "label": "מחיר", "value": "לכל מוצר חייב להיות מחיר." },
+      "video": {
+        "label": "סרטון מוצר",
+        "value": "גודל קובץ של עד 200MB."
+      },
+      "price": {
+        "label": "מחיר",
+        "value": "לכל מוצר חייב להיות מחיר."
+      },
       "minimumItems": "פרסמו לפחות 6 פריטים כדי שללקוחות יהיה מבחר מספק."
     },
     "historyEmpty": "טרם הופעלו סנכרון או ייבוא.",
@@ -2524,7 +3043,10 @@
       "partial": "הושלם חלקית",
       "failed": "נכשל"
     },
-    "directions": { "push": "הועבר ל-Meta", "import": "יובא מ-Meta" },
+    "directions": {
+      "push": "הועבר ל-Meta",
+      "import": "יובא מ-Meta"
+    },
     "messages": {
       "catalogSelected": "ייבוא הקטלוג התחיל.",
       "syncStarted": "סנכרון קטלוג Meta התחיל.",
@@ -2543,7 +3065,10 @@
       "queueSync": "לא ניתן להוסיף את סנכרון קטלוג Meta לתור."
     }
   },
-  "helpMenu": { "title": "עזרה", "ariaLabel": "פתיחת תפריט עזרה" },
+  "helpMenu": {
+    "title": "עזרה",
+    "ariaLabel": "פתיחת תפריט עזרה"
+  },
   "helpItems": {
     "title": "קישורי עזרה",
     "addTitle": "הוספת קישור עזרה",
@@ -2744,7 +3269,6 @@
     },
     "authType": {
       "headers": "כותרת מותאמת אישית",
-      "none": "ללא",
       "token": "אסימון"
     },
     "automatedResponse": {
@@ -2758,6 +3282,9 @@
     },
     "qrCode": {
       "label": "קוד QR"
+    },
+    "dynamicImage": {
+      "label": "תמונה דינמית"
     },
     "savePayloadToCustomField": {
       "label": "שמירת המטען בשדה מותאם אישית"
@@ -2862,12 +3389,20 @@
       "description": "זוהי תגובת ברירת המחדל שסביבת העבודה שלכם תשלח למשתמשים כאשר אינה יודעת כיצד להשיב להודעת המשתמש.",
       "label": "תשובת ברירת מחדל"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "הגדירו כמה זמן הבוט ימתין לפני שישיב לאחר ההודעה האחרונה של המשתמש. אם המשתמש שולח הודעה נוספת, הטיימר מתאפס וההודעות מצורפות לתגובה אחת.",
       "label": "השהיית תגובת הבוט",
-      "minutes": "{count, plural, one {דקה אחת} other {# דקות}}",
-      "none": "ללא",
-      "seconds": "{count, plural, one {שנייה אחת} other {# שניות}}"
+      "minutes": "{count, plural, one {# דקה} other {# דקות}}",
+      "seconds": "{count, plural, one {# שנייה} other {# שניות}}"
     },
     "delayType": {
       "label": "סוג השהיה",
@@ -3158,6 +3693,11 @@
     "outputCustomField": {
       "label": "שדה פלט מותאם אישית"
     },
+    "javascriptCode": {
+      "label": "קוד JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "השתמשו ב-JavaScript טהור והחזירו ערך. רשת, קבצים, ממשקי API וספריות חיצוניות אינם זמינים. נתוני איש הקשר והמערכת זמינים באובייקט `input`."
+    },
     "httpMethod": {
       "label": "שיטה"
     },
@@ -3231,6 +3771,12 @@
     },
     "pageUserName": {
       "label": "שם המשתמש של הדף"
+    },
+    "waUserId": {
+      "label": "מזהה משתמש בוואטסאפ"
+    },
+    "waUserName": {
+      "label": "שם משתמש בוואטסאפ"
     },
     "purpose": {
       "label": "מטרה",
@@ -3516,7 +4062,7 @@
       "superAdmin": "מנהל-על",
       "analytics": "נתונים אנליטיים",
       "flows": "תהליכים",
-      "contacts": "אנשי קשר",
+      "contacts": "אנשי קשר / תיבת דואר נכנס",
       "onlyAssignedContacts": "אנשי קשר שהוקצו בלבד",
       "emailAndPhone": "דוא\"ל וטלפון",
       "broadcast": "שידור",
@@ -3928,12 +4474,30 @@
       "label": "אירועים",
       "placeholder": "הקלידו שם אירוע ולחצו Enter",
       "description": "הוסיפו שם אירוע אחד או יותר. כאשר Make מצרף Webhook לאחד מהאירועים האלה, הנתונים נשלחים אליו בעת הפעלת שלב זה."
+    },
+    "bookingCalendar": {
+      "label": "יומן הפגישה"
+    },
+    "bookingDate": {
+      "label": "תאריך הפגישה"
+    },
+    "bookingLink": {
+      "label": "קישור להזמנה"
+    },
+    "n8nEvents": {
+      "label": "אירועים",
+      "placeholder": "הקלידו שם אירוע ולחצו Enter",
+      "description": "הוסיפו שם אירוע אחד או יותר. כאשר n8n מצרף Webhook לאחד מהאירועים האלה, הנתונים נשלחים אליו בעת הפעלת שלב זה."
+    },
+    "enabled": {
+      "label": "מופעל"
     }
   },
   "billing": {
     "title": "חיוב",
     "plan": {
       "label": "תוכנית: {plan}",
+      "currentLabel": "התוכנית הנוכחית",
       "free": "חינם"
     },
     "usage": {
@@ -4180,6 +4744,8 @@
       "blocked": "חסום",
       "noAdminReply": "אין תשובה ממנהל מערכת",
       "contactCreatedAt": "איש הקשר נוצר בתאריך",
+      "fromCtwaAd": "ממודעת Click to WhatsApp",
+      "ctwaConversion": "המרת CTWA",
       "lastUserInputTypes": {
         "text": "טקסט",
         "location": "מיקום",
@@ -4189,6 +4755,10 @@
         "audio": "שמע",
         "gif": "GIF",
         "file": "קובץ"
+      },
+      "ctwaConversionTypes": {
+        "lead": "ליד",
+        "purchase": "רכישה"
       }
     },
     "fieldGroups": {
@@ -4203,7 +4773,8 @@
       "topicCoupon": "נושא קופון",
       "customFields": "שדות מותאמים אישית",
       "email": "דוא\"ל",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "מודעות Click to WhatsApp"
     },
     "languages": {
       "ar": "ערבית",
@@ -4239,6 +4810,391 @@
       "webchat": "צ'אט אינטרנט",
       "botLink": "קישור לבוט",
       "chatPlugin": "תוסף צ'אט C."
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "פותחי שיחת CTWA",
+        "leads": "לידים מוכשרים של CTWA",
+        "purchases": "רוכשי CTWA"
+      },
+      "adPrefix": "מודעה",
+      "allAds": "כל המודעות"
+    }
+  },
+  "bookingWebview": {
+    "metadataTitle": "קביעת פגישה",
+    "badge": "פגישה",
+    "timezone": "אזור זמן",
+    "empty": "לא נמצאו זמנים פנויים.",
+    "noSelection": "בחרו זמן",
+    "actions": {
+      "book": "קביעת פגישה",
+      "viewDetails": "צפייה בפרטים"
+    },
+    "errors": {
+      "invalidTokenTitle": "קישור קביעת הפגישה הזה אינו זמין.",
+      "invalidTokenDescription": "ייתכן שהקישור אינו תקין או שפג תוקפו. בקשו קישור קביעת פגישה חדש.",
+      "staleSlot": "הזמן הזה כבר אינו זמין. בחרו זמן אחר.",
+      "availabilityChanged": "הזמינות השתנתה בזמן שבחרתם זמן. בחרו שוב.",
+      "submitFailed": "לא הצלחנו להשלים את הבקשה הזו. נסו שוב."
+    },
+    "success": {
+      "title": "הפגישה שלכם נקבעה.",
+      "description": "פרטי הפגישה מוכנים."
+    },
+    "schedule": {
+      "metadataTitle": "פרטי הפגישה",
+      "defaultMessage": "הפגישה שלכם נקבעה.",
+      "unknownInvitee": "אורח",
+      "fields": {
+        "invitee": "מוזמן",
+        "time": "שעה",
+        "timezone": "אזור זמן",
+        "location": "מיקום"
+      },
+      "status": {
+        "scheduled": "מתוזמן",
+        "cancelled": "בוטל"
+      },
+      "locationTypes": {
+        "inPerson": "פגישה פרונטלית",
+        "phoneCall": "שיחת טלפון",
+        "onlineMeeting": "פגישה מקוונת"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "ביטול פגישה",
+      "title": "ביטול פגישה",
+      "description": "ביטול {calendar} בשעה {time}.",
+      "action": "ביטול פגישה",
+      "cancelledTitle": "הפגישה בוטלה",
+      "cancelledDescription": "הפגישה הזו בוטלה.",
+      "unavailableTitle": "לא ניתן לבטל",
+      "unavailableDescription": "פגישה זו כבר בוטלה, נמחקה, או שמועד קיומה חלף."
+    },
+    "range": {
+      "metadataTitle": "בדיקת זמינות",
+      "empty": "לא נבחר",
+      "successTitle": "טווח התאריכים התקבל.",
+      "successDescription": "אנו בודקים את זמני הפגישות הפנויים.",
+      "fields": {
+        "startDate": "תאריך התחלה",
+        "endDate": "תאריך סיום",
+        "startTime": "שעת התחלה",
+        "endTime": "שעת סיום"
+      },
+      "actions": {
+        "skip": "דילוג"
+      },
+      "errors": {
+        "invalidRange": "תאריך הסיום חייב להיות זהה לתאריך ההתחלה או מאוחר ממנו."
+      },
+      "timezoneHint": "הזמנים מוצגים לפי {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "בחירת תאריך",
+    "date": {
+      "title": "בחרו תאריך"
+    },
+    "datetime": {
+      "title": "בחרו תאריך ושעה"
+    },
+    "noSelection": "בחרו תאריך",
+    "actions": {
+      "submit": "שליחה"
+    },
+    "success": {
+      "title": "הנתונים נשמרו",
+      "description": "כעת ניתן לסגור את הכרטיסייה הזו."
+    },
+    "errors": {
+      "invalidTokenTitle": "קישור זה אינו זמין.",
+      "invalidTokenDescription": "ייתכן שהקישור אינו תקין או שפג תוקפו. בקשו קישור חדש.",
+      "submitFailed": "לא הצלחנו להשלים את הבקשה הזו. נסו שוב."
+    },
+    "monthLabel": "חודש",
+    "yearLabel": "שנה"
+  },
+  "appointments": {
+    "title": "פגישות",
+    "statuses": {
+      "scheduled": "מתוזמן",
+      "cancelled": "בוטל"
+    },
+    "messages": {
+      "empty": "עדיין אין פגישות."
+    }
+  },
+  "appointmentManagement": {
+    "title": "פגישות",
+    "singular": "פגישה",
+    "unknownContact": "איש קשר לא ידוע",
+    "searchPlaceholder": "חיפוש לפי שם...",
+    "tabs": {
+      "next": "קרובות",
+      "past": "שעברו"
+    },
+    "fields": {
+      "name": "שם",
+      "date": "תאריך",
+      "status": "סטטוס",
+      "calendar": "יומן"
+    },
+    "statuses": {
+      "scheduled": "מתוזמן",
+      "cancelled": "בוטל"
+    },
+    "actions": {
+      "cancelAppointment": "ביטול פגישה"
+    },
+    "dialogs": {
+      "cancelTitle": "ביטול פגישה",
+      "cancelDescription": "בטלו פגישה זו והפעילו את השפעות הביטול שלה.",
+      "deleteTitle": "מחיקת פגישה",
+      "deleteDescription": "מחקו פגישה זו מרשימת הניהול. פעולה זו לא תפעיל את תהליך הביטול."
+    },
+    "messages": {
+      "cancelled": "הפגישה בוטלה.",
+      "deleted": "הפגישה נמחקה."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "יומני פגישות",
+    "singular": "יומן פגישות",
+    "addNew": "הוספת חדש",
+    "none": "ללא",
+    "addReminder": "הוספת תזכורת",
+    "reminderSummary": "שליחת תזכורת - {calendar} {timing}.",
+    "noExternalConnections": "עדיין אין חיבורי יומן חיצוניים",
+    "dialogDescriptions": {
+      "create": "תנו ליומן הפגישות שלכם שם כדי להתחיל.",
+      "rename": "שנו את שם יומן הפגישות הזה."
+    },
+    "tabs": {
+      "calendars": "יומנים",
+      "appointments": "פגישות",
+      "externalCalendars": "יומנים חיצוניים"
+    },
+    "sections": {
+      "appointment": "מהי הפגישה שלכם",
+      "availability": "מתי אפשר לקבוע פגישה?",
+      "duration": "כמה זמן נמשכת הפגישה שלכם?",
+      "location": "היכן תתקיים הפגישה?",
+      "notifications": "התראות",
+      "restrictions": "הגבלות",
+      "externalCalendar": "חיבור Google Calendar"
+    },
+    "fields": {
+      "description": "תיאור",
+      "timezone": "אזור זמן",
+      "locationType": "סוג המיקום",
+      "locationDetail": "פרטים",
+      "durationMinutes": "משך הפגישה",
+      "bufferAfterMinutes": "הוספת זמן לאחר הפגישות שלכם",
+      "scheduleWindowType": "ניתן לקבוע פגישה",
+      "rollingDays": "ימים מתגלגלים",
+      "minAdvanceDays": "מספר ימים מינימלי מראש",
+      "startDate": "תאריך התחלה",
+      "endDate": "תאריך סיום",
+      "specificDate": "תאריך",
+      "maxAppointmentsPerUser": "מספר פגישות מקסימלי למשתמש",
+      "maxAppointmentsUnlimited": "ללא הגבלה",
+      "dailyLimitEnabled": "מגבלה יומית",
+      "maxPerDay": "מקסימום ליום",
+      "allowGroupMeeting": "אפשור פגישה קבוצתית",
+      "maxPerSlot": "מקסימום למשבצת זמן",
+      "confirmationMessage": "הודעת אישור",
+      "confirmationFlowId": "תהליך אישור",
+      "cancellationFlowId": "תהליך ביטול",
+      "externalConnectionId": "יומן חיצוני",
+      "reminders": "תזכורות",
+      "reminderTimingValue": "ערך",
+      "reminderTimingUnit": "יחידה"
+    },
+    "locationTypes": {
+      "inPerson": "פגישה פרונטלית",
+      "phoneCall": "שיחת טלפון",
+      "onlineMeeting": "פגישה מקוונת"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "בטווח של ימים מתגלגלים בעתיד",
+      "dateRange": "בטווח תאריכים",
+      "specificDay": "יום ספציפי אחד",
+      "anyFutureDate": "בכל תאריך בעתיד"
+    },
+    "reminderTimingUnits": {
+      "minutes": "דקות לפני",
+      "hours": "שעות לפני",
+      "days": "ימים לפני"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# דקה לפני} other {# דקות לפני}}",
+      "hours": "{count, plural, one {שעה אחת לפני} other {# שעות לפני}}",
+      "days": "{count, plural, one {יום אחד לפני} other {# ימים לפני}}"
+    },
+    "weekdays": {
+      "0": "ראשון",
+      "1": "שני",
+      "2": "שלישי",
+      "3": "רביעי",
+      "4": "חמישי",
+      "5": "שישי",
+      "6": "שבת"
+    },
+    "weekdayEditor": {
+      "description": "הגדירו את טווחי הזמן הזמינים ליום זה.",
+      "unavailable": "לא זמין",
+      "overlapWarning": "חלק מהטווחים חופפים. זמן חופף לא נספר פעמיים.",
+      "addInterval": "הוספת טווח",
+      "startTime": "שעת התחלה",
+      "endTime": "שעת סיום"
+    },
+    "tooltips": {
+      "timezone": "אזור הזמן שבו אתם יוצרים יומן זה. אנשים יראו את הזמינות לפי אזור הזמן שלהם.",
+      "confirmationFlow": "התהליך שנשלח לאחר שהמשתמש קבע פגישה.",
+      "cancellationFlow": "התהליך שנשלח לאחר שפגישה בוטלה.",
+      "reminders": "שלחו תזכורות כדי להזכיר למוזמן על הפגישה.",
+      "appointmentDuration": "הגדירו כמה זמן תימשך הפגישה שלכם.",
+      "bufferAfterMinutes": "תנו לעצמכם זמן חיץ לסיום הפגישות שנקבעו.",
+      "peopleCanSchedule": "הגדירו טווח תאריכים שבו תוכלו לקבל פגישות.",
+      "maxAppointmentsPerUser": "המספר המקסימלי של פגישות עתידיות שמשתמש רשאי לקבוע.",
+      "rollingDays": "אפשרו קביעת פגישות עד כמה ימים בעתיד",
+      "minAdvanceDays": "דרשו שקביעת פגישות תיעשה לפחות כך וכך ימים מראש. השתמשו ב-0 כדי לאפשר קביעה באותו יום.",
+      "dailyLimit": "המספר המקסימלי של אנשים שרשאים לקבוע פגישה ביום.",
+      "allowGroupMeeting": "אפשרו למספר אנשים לקבוע פגישה באותה משבצת זמן.",
+      "externalCalendar": "חברו את Google Calendar כדי לסנכרן את הפגישות שלכם."
+    },
+    "minutesLabel": "{count} דקות"
+  },
+  "externalCalendars": {
+    "title": "יומנים חיצוניים",
+    "connectGoogle": "חיבור Google",
+    "emptyEmail": "אין דוא\"ל",
+    "fields": {
+      "provider": "ספק",
+      "email": "דוא\"ל",
+      "calendarId": "מזהה יומן",
+      "connected": "מחובר",
+      "date": "תאריך"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "עריכת מזהה יומן",
+      "editDescription": "בחרו את מזהה ה-Google Calendar שייבדק לאיתור התנגשויות וליצירת אירועי פגישות.",
+      "deleteTitle": "ניתוק יומן",
+      "deleteDescription": "נתקו את Google Calendar הזה מתזמון הפגישות."
+    },
+    "messages": {
+      "connected": "Google Calendar חובר בהצלחה.",
+      "connectFailed": "לא ניתן היה לחבר את Google Calendar. בדקו את הגדרות ה-Google OAuth ואת הגישה ל-Calendar API ונסו שוב.",
+      "calendarIdUpdated": "מזהה היומן עודכן.",
+      "disconnected": "היומן נותק."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "קביעת פגישה",
+    "comingSoonTitle": "עמוד קביעת הפגישות בקרוב",
+    "comingSoonDescription": "עמוד קביעת הפגישות הציבורי הזה עדיין אינו זמין."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "שליחת אירועי LeadSubmitted משיחות Messenger, Instagram ו-WhatsApp אל Meta.",
+    "datasetId": "מזהה Dataset",
+    "reconnect": "חיבור מחדש להרשאות",
+    "connectViaFacebook": "חיבור דרך Facebook",
+    "unsupportedExplanation": "חשבון Instagram זה חובר באמצעות Instagram Business Login. חברו את החשבון דרך Facebook כדי להשתמש ב-Meta Conversions API.",
+    "flowStep": {
+      "description": "הוסיפו לתור אירוע LeadSubmitted עבור Messenger, Instagram או WhatsApp.",
+      "whatsappNote": "אירועי WhatsApp נשלחים רק עבור שיחות שהתחילו ממודעת click-to-WhatsApp."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "מוכן",
+      "missingPermission": "נדרשת הרשאה",
+      "unverified": "לא מאומת",
+      "unsupported": "לא נתמך",
+      "notConnected": "לא מחובר"
+    },
+    "statusDescriptions": {
+      "ready": "לשילוב זה יש את הרשאת Meta הנדרשת לאירועי Conversions API.",
+      "missingPermission": "חברו מחדש את השילוב הזה והעניקו את הרשאת Meta המבוקשת.",
+      "unverified": "הגדרות אפליקציית הפלטפורמה אינן זמינות, ולכן לא ניתן לאמת את הרשאת ה-CAPI.",
+      "unsupported": "Meta Conversions API עבור Instagram דורש חשבון המחובר דרך Facebook Login for Business.",
+      "notConnected": "ה-Conversions API הוא כלי עסקי של Meta שמאפשר לכם לשתף נתונים עם Meta כדי לשפר את ביצועי המודעות."
+    },
+    "errors": {
+      "reconnect": "החיבור מחדש ל-Meta CAPI נכשל.",
+      "messengerNotFound": "שילוב Messenger לא נמצא.",
+      "instagramNotFound": "שילוב Instagram לא נמצא.",
+      "instagramRequiresFacebook": "Instagram CAPI דורש חיבור דרך Facebook.",
+      "saveFailed": "לא ניתן היה לשמור. נסו שוב.",
+      "datasetRequired": "שמרו מזהה Dataset לפני הוספת אסימון גישה.",
+      "invalidToken": "האסימון הזה לא הצליח לגשת למאגר הנתונים.",
+      "invalidDatasetId": "הזן Dataset ID תקין (ספרות בלבד).",
+      "whatsappNotFound": "שילוב WhatsApp לא נמצא."
+    },
+    "fields": {
+      "eventType": {
+        "label": "סוג אירוע",
+        "leadSubmitted": "ליד נשלח"
+      },
+      "value": "ערך",
+      "valuePlaceholder": "לדוגמה: 250",
+      "currency": "מטבע",
+      "currencyPlaceholder": "לדוגמה: USD",
+      "contentCategory": "קטגוריית תוכן",
+      "contentCategoryPlaceholder": "הקטגוריה של התוכן המשויך לאירוע",
+      "contentName": "שם תוכן",
+      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע"
+    },
+    "datasetIdPlaceholder": "הדביקו את מזהה ה-Dataset מ-Events Manager",
+    "saveDataset": "שמור",
+    "accessToken": "אסימון גישה (אופציונלי)",
+    "accessTokenHint": "הדביקו אסימון מ-Events Manager כדי לשלוח אירועים עם האסימון שלכם במקום אסימון הדף המחובר. נדרש מזהה Dataset.",
+    "accessTokenPlaceholder": "אסימון גישה של Events Manager",
+    "saveToken": "שמירת אסימון",
+    "tokenSaved": "האסימון נשמר",
+    "removeToken": "הסרה",
+    "saved": "נשמר",
+    "help": {
+      "delay": "ייתכן שיחלפו עד 40 דקות עד שהאירועים יופיעו ב-Events Manager ויוצגו כלידים של Meta ב-Ads Manager."
+    },
+    "connected": "מחובר",
+    "disconnect": "ניתוק",
+    "openEventManager": "פתיחת Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "חיבור דרך Facebook",
+        "description": "השתמשו בחיבור הקיים של הדף שלכם, ולאחר מכן בחרו מזהה Dataset.",
+        "connect": "יצירת מערך נתונים",
+        "connectedLabel": "דרך Facebook"
+      },
+      "custom": {
+        "title": "חיבור מותאם אישית",
+        "description": "השתמשו במזהה Dataset ובאסימון גישה מ-Meta Events Manager.",
+        "start": "הגדרת חיבור מותאם אישית",
+        "connect": "חיבור",
+        "connectedLabel": "מותאם אישית"
+      },
+      "whatsapp": {
+        "title": "חיבור דרך WhatsApp",
+        "description": "השתמשו בחיבור ה-WhatsApp שלכם, ולאחר מכן בחרו מזהה Dataset.",
+        "connect": "יצירת מערך נתונים",
+        "connectedLabel": "דרך WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "בחרו מזהה Dataset",
+      "description": "הזינו מזהה Dataset קיים, או השאירו ריק כדי ליצור אחד באופן אוטומטי.",
+      "save": "שמור",
+      "createDataset": "יצירת מערך נתונים",
+      "caveat": "מזהה Dataset שאינו מקושר לעמוד או לחשבון Instagram הזה עלול לא לייחס אירועים כראוי. השאירו שדה זה ריק כדי ליצור מאגר נתונים מקושר באופן אוטומטי."
+    },
+    "whatsapp": {
+      "connect": "חיבור"
     }
   }
 }

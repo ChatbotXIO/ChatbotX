@@ -43,6 +43,7 @@
     "disableBot": "Désactiver le bot",
     "disconnect": "Déconnecter",
     "download": "Télécharger",
+    "downloadTemplate": "Télécharger le modèle",
     "edit": "Modifier",
     "editFeature": "Modifier {feature}",
     "enableBot": "Activer le bot",
@@ -145,6 +146,9 @@
     "clone": "Cloner",
     "remove": "Retirer",
     "restore": "Restaurer"
+  },
+  "errors": {
+    "superAdminRequired": "Vous devez être super-administrateur de l’espace de travail pour effectuer cette action."
   },
   "states": {
     "success": "Réussite",
@@ -289,6 +293,7 @@
     "title": "Facturation",
     "plan": {
       "label": "Forfait : {plan}",
+      "currentLabel": "Forfait actuel",
       "free": "Gratuit"
     },
     "usage": {
@@ -535,6 +540,8 @@
       "blocked": "Bloqué",
       "noAdminReply": "Aucune réponse d’un administrateur",
       "contactCreatedAt": "Contact créé le",
+      "fromCtwaAd": "Depuis une annonce Click to WhatsApp",
+      "ctwaConversion": "Conversion CTWA",
       "lastUserInputTypes": {
         "text": "Texte",
         "location": "Localisation",
@@ -544,6 +551,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "Fichier"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Prospect",
+        "purchase": "Achat"
       }
     },
     "fieldGroups": {
@@ -558,7 +569,8 @@
       "topicCoupon": "Thème du coupon",
       "customFields": "Champs personnalisés",
       "email": "E-mail",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Annonces Click to WhatsApp"
     },
     "languages": {
       "ar": "Arabe",
@@ -594,13 +606,30 @@
       "webchat": "Webchat",
       "botLink": "Lien du bot",
       "chatPlugin": "Plugin de chat C."
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Démarrages de conversation CTWA",
+        "leads": "Prospects qualifiés CTWA",
+        "purchases": "Acheteurs CTWA"
+      },
+      "adPrefix": "annonce",
+      "allAds": "toutes les annonces"
     }
   },
   "fields": {
-    "omnichannel": { "label": "Omnicanal" },
-    "smtp": { "label": "SMTP" },
-    "messenger": { "label": "Messenger" },
-    "image": { "label": "Image" },
+    "omnichannel": {
+      "label": "Omnicanal"
+    },
+    "smtp": {
+      "label": "SMTP"
+    },
+    "messenger": {
+      "label": "Messenger"
+    },
+    "image": {
+      "label": "Image"
+    },
     "instagram": {
       "label": "Instagram",
       "loginTitle": "Se connecter avec Instagram",
@@ -612,7 +641,9 @@
       "cloneFromMessenger": "Cloner depuis Messenger",
       "clonedFromMessenger": "Cloné depuis Messenger"
     },
-    "zalo": { "label": "Zalo OA" },
+    "zalo": {
+      "label": "Zalo OA"
+    },
     "telegram": {
       "label": "Telegram",
       "botToken": "Jeton du bot",
@@ -622,17 +653,39 @@
         "step3": "Après avoir créé le bot, vous recevrez son jeton API. Copiez-le et collez-le ci-dessous."
       }
     },
-    "matchAll": { "label": "Correspondre à toutes les conditions ci-dessous" },
-    "matchAny": { "label": "Correspondre à l’une des conditions ci-dessous" },
-    "condition": { "label": "Condition" },
-    "actions": { "label": "Actions" },
-    "tags": { "label": "Étiquettes" },
-    "customFields": { "label": "Champs personnalisés" },
-    "pipelines": { "label": "Pipelines" },
-    "sequences": { "label": "Séquences" },
-    "ecommerce": { "label": "E-commerce" },
-    "entryPointLink": { "label": "Lien de point d’entrée" },
-    "assignedId": { "label": "Attribuer à" },
+    "matchAll": {
+      "label": "Correspondre à toutes les conditions ci-dessous"
+    },
+    "matchAny": {
+      "label": "Correspondre à l’une des conditions ci-dessous"
+    },
+    "condition": {
+      "label": "Condition"
+    },
+    "actions": {
+      "label": "Actions"
+    },
+    "tags": {
+      "label": "Étiquettes"
+    },
+    "customFields": {
+      "label": "Champs personnalisés"
+    },
+    "pipelines": {
+      "label": "Pipelines"
+    },
+    "sequences": {
+      "label": "Séquences"
+    },
+    "ecommerce": {
+      "label": "E-commerce"
+    },
+    "entryPointLink": {
+      "label": "Lien de point d’entrée"
+    },
+    "assignedId": {
+      "label": "Attribuer à"
+    },
     "operator": {
       "label": "Opérateur",
       "is": "Est",
@@ -660,8 +713,12 @@
       "onlyContactsMatch": "Uniquement les contacts qui correspondent à",
       "moreOptions": "Plus d’options"
     },
-    "contactNote": { "label": "Note du contact" },
-    "chooseTime": { "label": "Choisir l’heure" },
+    "contactNote": {
+      "label": "Note du contact"
+    },
+    "chooseTime": {
+      "label": "Choisir l’heure"
+    },
     "notificationType": {
       "label": "Type de notification",
       "notifyAdmin": "Notifier l’administrateur",
@@ -675,18 +732,42 @@
       "telegram": "Telegram",
       "browser": "Navigateur"
     },
-    "accessToken": { "label": "Jeton d’accès" },
-    "botField": { "label": "Champ du bot" },
-    "agent": { "label": "Agent" },
-    "aiAgent": { "label": "Agent IA" },
-    "aiQueuedMessages": { "label": "Messages IA en file d’attente" },
-    "aiFile": { "label": "Fichier IA" },
-    "aiFunction": { "label": "Fonction IA" },
-    "aiTrigger": { "label": "Déclencheur IA" },
-    "alphanumericLength": { "label": "Longueur alphanumérique" },
-    "analytics": { "label": "Analyses" },
-    "apiKey": { "label": "Clé API" },
-    "auth": { "label": "Authentification" },
+    "accessToken": {
+      "label": "Jeton d’accès"
+    },
+    "botField": {
+      "label": "Champ du bot"
+    },
+    "agent": {
+      "label": "Agent"
+    },
+    "aiAgent": {
+      "label": "Agent IA"
+    },
+    "aiQueuedMessages": {
+      "label": "Messages IA en file d’attente"
+    },
+    "aiFile": {
+      "label": "Fichier IA"
+    },
+    "aiFunction": {
+      "label": "Fonction IA"
+    },
+    "aiTrigger": {
+      "label": "Déclencheur IA"
+    },
+    "alphanumericLength": {
+      "label": "Longueur alphanumérique"
+    },
+    "analytics": {
+      "label": "Analyses"
+    },
+    "apiKey": {
+      "label": "Clé API"
+    },
+    "auth": {
+      "label": "Authentification"
+    },
     "authorizedDomain": {
       "description": "Domaines ou sous-domaines autorisés à accéder à votre webchat.",
       "label": "Domaine autorisé{plural, select, 1 {} other {s}}"
@@ -696,44 +777,82 @@
       "placeholder": "example.com",
       "tooltip": "Liste des domaines auxquels l’agent IA peut accéder. Laissez vide pour autoriser tous les domaines."
     },
-    "authToken": { "label": "Jeton" },
+    "authToken": {
+      "label": "Jeton"
+    },
     "authType": {
       "headers": "En-tête personnalisé",
-      "none": "Aucun",
       "token": "Jeton"
     },
-    "automatedResponse": { "label": "Réponse automatisée" },
-    "avatar": { "label": "Photo de profil" },
-    "reflink": { "label": "Lien de point d’entrée" },
-    "qrCode": { "label": "Code QR" },
+    "automatedResponse": {
+      "label": "Réponse automatisée"
+    },
+    "avatar": {
+      "label": "Photo de profil"
+    },
+    "reflink": {
+      "label": "Lien de point d’entrée"
+    },
+    "qrCode": {
+      "label": "Code QR"
+    },
+    "dynamicImage": {
+      "label": "Image dynamique"
+    },
     "savePayloadToCustomField": {
       "label": "Enregistrer la charge utile dans un champ personnalisé"
     },
-    "bot": { "label": "Bot" },
-    "botResponse": { "label": "Réponse du bot" },
+    "bot": {
+      "label": "Bot"
+    },
+    "botResponse": {
+      "label": "Réponse du bot"
+    },
     "brandColor": {
       "description": "Cette couleur est utilisée sur les boutons pour respecter votre identité visuelle sur la page de destination, dans les e-mails et le webchat.",
       "label": "Couleur de la marque"
     },
-    "broadcast": { "label": "Diffusion" },
-    "trigger": { "label": "Déclencheur" },
-    "webhook": { "label": "Webhook" },
+    "broadcast": {
+      "label": "Diffusion"
+    },
+    "trigger": {
+      "label": "Déclencheur"
+    },
+    "webhook": {
+      "label": "Webhook"
+    },
     "button": {
       "label": "Bouton",
       "whenPressed": "Lorsque ce bouton est actionné"
     },
-    "buttonLabel": { "label": "Libellé du bouton" },
-    "category": { "label": "Catégorie" },
-    "completed": { "label": "Terminé" },
-    "workspace": { "label": "Espace de travail" },
+    "buttonLabel": {
+      "label": "Libellé du bouton"
+    },
+    "category": {
+      "label": "Catégorie"
+    },
+    "completed": {
+      "label": "Terminé"
+    },
+    "workspace": {
+      "label": "Espace de travail"
+    },
     "workspaceId": {
       "description": "Identifiant unique de votre espace de travail.",
       "label": "Identifiant de l’espace de travail"
     },
-    "workspaceName": { "label": "Nom du compte" },
-    "contact": { "label": "Contact" },
-    "contacts": { "label": "Contacts" },
-    "conversation": { "label": "Conversation" },
+    "workspaceName": {
+      "label": "Nom du compte"
+    },
+    "contact": {
+      "label": "Contact"
+    },
+    "contacts": {
+      "label": "Contacts"
+    },
+    "conversation": {
+      "label": "Conversation"
+    },
     "conversationStarter": {
       "description": "Les amorces de conversation servent à démarrer une conversation avec un utilisateur.",
       "label": "Amorce de conversation{plural, select, 1 {} other {s}}",
@@ -743,11 +862,22 @@
         "sendText": "Envoyer du texte"
       }
     },
-    "createdAt": { "label": "Créé le" },
-    "currentTime": { "label": "Heure actuelle" },
-    "customRange": { "label": "Période personnalisée" },
-    "customCss": { "label": "CSS personnalisé" },
-    "theme": { "label": "Thème", "placeholder": "Sélectionnez un thème" },
+    "createdAt": {
+      "label": "Créé le"
+    },
+    "currentTime": {
+      "label": "Heure actuelle"
+    },
+    "customRange": {
+      "label": "Période personnalisée"
+    },
+    "customCss": {
+      "label": "CSS personnalisé"
+    },
+    "theme": {
+      "label": "Thème",
+      "placeholder": "Sélectionnez un thème"
+    },
     "customJS": {
       "label": "JS personnalisé",
       "placeholder": "Saisissez du JavaScript personnalisé"
@@ -765,19 +895,32 @@
       "increase": "Augmenter de",
       "decrease": "Diminuer de"
     },
-    "dataCollect": { "label": "Collecte de données" },
+    "dataCollect": {
+      "label": "Collecte de données"
+    },
     "defaultReply": {
       "description": "Réponse par défaut envoyée aux utilisateurs lorsque votre espace de travail ne sait pas comment répondre à leur message.",
       "label": "Réponse par défaut"
+    },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
     },
     "smartResponseDelaySeconds": {
       "description": "Définissez le délai d’attente du bot après le dernier message de l’utilisateur. Si celui-ci envoie un autre message, le minuteur redémarre et les messages sont regroupés en une seule réponse.",
       "label": "Délai de réponse du bot",
       "minutes": "{count, plural, one {# minute} other {# minutes}}",
-      "none": "Aucun",
       "seconds": "{count, plural, one {# seconde} other {# secondes}}"
     },
-    "delayType": { "label": "Type de délai", "placeholder": "Type de délai" },
+    "delayType": {
+      "label": "Type de délai",
+      "placeholder": "Type de délai"
+    },
     "delayUnit": {
       "days": "Jours",
       "hours": "Heures",
@@ -792,25 +935,53 @@
       "description": "Votre bot fonctionnera uniquement pour ses administrateurs. Activez cette option pendant sa création si vous ne souhaitez pas que les autres utilisateurs puissent l’utiliser.",
       "label": "Mode développement"
     },
-    "email": { "label": "E-mail", "placeholder": "Saisissez l’e-mail" },
+    "email": {
+      "label": "E-mail",
+      "placeholder": "Saisissez l’e-mail"
+    },
     "embedCode": {
       "description": "Copiez et collez ce code dans votre site Web pour intégrer le widget de chat.",
       "label": "Code d’intégration",
       "securityNote": "Note de sécurité",
       "securityNoteDescription": "Ce widget fonctionnera uniquement sur les domaines autorisés dans la configuration de votre webchat. Veillez à ajouter votre domaine à la liste des domaines autorisés."
     },
-    "processingStatus": { "label": "État du traitement" },
-    "enable": { "label": "Activer" },
-    "file": { "label": "Fichier" },
-    "link": { "label": "Lien" },
-    "message": { "label": "Message" },
-    "filter": { "label": "Filtre" },
-    "finalMessage": { "label": "Message final" },
-    "firstName": { "label": "Prénom", "placeholder": "Saisissez le prénom" },
-    "countryCode": { "label": "Indicatif du pays" },
-    "contactId": { "label": "Identifiant du contact" },
-    "flow": { "label": "Flux" },
-    "flowId": { "label": "Identifiant du flux" },
+    "processingStatus": {
+      "label": "État du traitement"
+    },
+    "enable": {
+      "label": "Activer"
+    },
+    "file": {
+      "label": "Fichier"
+    },
+    "link": {
+      "label": "Lien"
+    },
+    "message": {
+      "label": "Message"
+    },
+    "filter": {
+      "label": "Filtre"
+    },
+    "finalMessage": {
+      "label": "Message final"
+    },
+    "firstName": {
+      "label": "Prénom",
+      "placeholder": "Saisissez le prénom"
+    },
+    "countryCode": {
+      "label": "Indicatif du pays"
+    },
+    "contactId": {
+      "label": "Identifiant du contact"
+    },
+    "flow": {
+      "label": "Flux"
+    },
+    "flowId": {
+      "label": "Identifiant du flux"
+    },
     "flows": {
       "aiGenerateText": "{aiName} : générer du texte",
       "aiGenerateImage": "{aiName} : générer une image",
@@ -824,9 +995,16 @@
       "aiGenerateTextAgent": "{aiName} : agent de génération de texte",
       "aiDeleteMessageHistory": "{aiName} : supprimer l’historique des messages"
     },
-    "steps": { "label": "Étapes", "placeholder": "Sélectionnez une étape" },
-    "folder": { "label": "Dossier" },
-    "format": { "label": "Format" },
+    "steps": {
+      "label": "Étapes",
+      "placeholder": "Sélectionnez une étape"
+    },
+    "folder": {
+      "label": "Dossier"
+    },
+    "format": {
+      "label": "Format"
+    },
     "framework": {
       "angular": "Angular",
       "ember": "Ember",
@@ -834,38 +1012,77 @@
       "svelte": "Svelte",
       "vue": "Vue"
     },
-    "function": { "label": "Fonction" },
-    "gemini": { "label": "Gemini" },
-    "geminiModel": { "label": "Modèle Gemini" },
+    "function": {
+      "label": "Fonction"
+    },
+    "gemini": {
+      "label": "Gemini"
+    },
+    "geminiModel": {
+      "label": "Modèle Gemini"
+    },
     "gender": {
       "female": "Femme",
       "label": "Genre",
       "male": "Homme",
       "unknown": "Inconnu"
     },
-    "googleSheets": { "label": "Google Sheets" },
-    "activeCampaign": { "label": "ActiveCampaign" },
-    "getResponse": { "label": "GetResponse" },
-    "mailchimp": { "label": "Mailchimp" },
-    "mailerLite": { "label": "MailerLite" },
-    "klaviyo": { "label": "Klaviyo" },
-    "moosend": { "label": "Moosend" },
-    "host": { "label": "Hôte", "placeholder": "smtp.example.com" },
-    "hideHeader": { "label": "Masquer l’en-tête" },
-    "hideMessageInput": { "label": "Masquer la saisie des messages" },
+    "googleSheets": {
+      "label": "Google Sheets"
+    },
+    "activeCampaign": {
+      "label": "ActiveCampaign"
+    },
+    "getResponse": {
+      "label": "GetResponse"
+    },
+    "mailchimp": {
+      "label": "Mailchimp"
+    },
+    "mailerLite": {
+      "label": "MailerLite"
+    },
+    "klaviyo": {
+      "label": "Klaviyo"
+    },
+    "moosend": {
+      "label": "Moosend"
+    },
+    "host": {
+      "label": "Hôte",
+      "placeholder": "smtp.example.com"
+    },
+    "hideHeader": {
+      "label": "Masquer l’en-tête"
+    },
+    "hideMessageInput": {
+      "label": "Masquer la saisie des messages"
+    },
     "inbox": {
       "label": "Boîte de réception",
       "placeholder": "Sélectionnez une boîte de réception"
     },
-    "inboxTeam": { "label": "Équipe de la boîte de réception" },
-    "teamMembers": { "label": "Membres de l’équipe" },
+    "inboxTeam": {
+      "label": "Équipe de la boîte de réception"
+    },
+    "teamMembers": {
+      "label": "Membres de l’équipe"
+    },
     "inboxTeamMember": {
       "label": "Membre de l’équipe de la boîte de réception"
     },
-    "inputCustomField": { "label": "Champ personnalisé d’entrée" },
-    "insertLink": { "label": "Insérer un lien" },
-    "instructions": { "label": "Message système (invite)" },
-    "isDefault": { "label": "Marquer par défaut" },
+    "inputCustomField": {
+      "label": "Champ personnalisé d’entrée"
+    },
+    "insertLink": {
+      "label": "Insérer un lien"
+    },
+    "instructions": {
+      "label": "Message système (invite)"
+    },
+    "isDefault": {
+      "label": "Marquer par défaut"
+    },
     "isRichResponse": {
       "description": "Renvoyer un JSON structuré avec des messages et des actions au lieu d’un flux de texte brut.",
       "label": "Réponse enrichie"
@@ -875,10 +1092,19 @@
       "label": "Langue",
       "placeholder": "Sélectionnez une langue"
     },
-    "lastName": { "label": "Nom", "placeholder": "Saisissez le nom" },
-    "last30days": { "label": "30 derniers jours" },
-    "last7days": { "label": "7 derniers jours" },
-    "lastInput": { "label": "Dernière saisie" },
+    "lastName": {
+      "label": "Nom",
+      "placeholder": "Saisissez le nom"
+    },
+    "last30days": {
+      "label": "30 derniers jours"
+    },
+    "last7days": {
+      "label": "7 derniers jours"
+    },
+    "lastInput": {
+      "label": "Dernière saisie"
+    },
     "lastUserInputTypes": {
       "text": "Texte",
       "location": "Localisation",
@@ -889,13 +1115,25 @@
       "gif": "GIF",
       "file": "Fichier"
     },
-    "lastMonth": { "label": "Mois dernier" },
-    "lifeTime": { "label": "Depuis toujours" },
-    "locale": { "label": "Paramètres régionaux" },
-    "errorLog": { "label": "Journal des erreurs" },
+    "lastMonth": {
+      "label": "Mois dernier"
+    },
+    "lifeTime": {
+      "label": "Depuis toujours"
+    },
+    "locale": {
+      "label": "Paramètres régionaux"
+    },
+    "errorLog": {
+      "label": "Journal des erreurs"
+    },
     "inputType": {
       "label": "Type d’entrée",
-      "options": { "text": "Texte", "image": "Image", "file": "Fichier" }
+      "options": {
+        "text": "Texte",
+        "image": "Image",
+        "file": "Fichier"
+      }
     },
     "extractFields": {
       "label": "Champs à extraire",
@@ -903,15 +1141,23 @@
         "label": "Clé JSON",
         "placeholder": "p. ex. e-mail, téléphone, adresse"
       },
-      "customFieldId": { "label": "Enregistrer dans un champ personnalisé" },
+      "customFieldId": {
+        "label": "Enregistrer dans un champ personnalisé"
+      },
       "description": {
         "label": "Description (facultative)",
         "placeholder": "Décrivez les éléments à extraire"
       }
     },
-    "max": { "label": "Maximum" },
-    "maxOutputTokens": { "label": "Nombre maximal de jetons" },
-    "mcpServer": { "label": "Serveur MCP" },
+    "max": {
+      "label": "Maximum"
+    },
+    "maxOutputTokens": {
+      "label": "Nombre maximal de jetons"
+    },
+    "mcpServer": {
+      "label": "Serveur MCP"
+    },
     "systemFunction": {
       "label": "Fonction système",
       "names": {
@@ -922,23 +1168,52 @@
         "webSearch": "Recherche Web"
       }
     },
-    "min": { "label": "Minimum" },
-    "model": { "label": "Modèle" },
+    "min": {
+      "label": "Minimum"
+    },
+    "model": {
+      "label": "Modèle"
+    },
     "name": {
       "label": "Nom",
       "placeholder": "Saisissez le nom",
       "searchPlaceholder": "Rechercher un nom..."
     },
-    "selectUsers": { "label": "Sélectionner les utilisateurs" },
-    "node": { "label": "Nœud" },
-    "noResults": { "label": "Aucun résultat trouvé" },
-    "notes": { "label": "Notes" },
-    "numericLength": { "label": "Longueur numérique" },
-    "numericValue": { "label": "Valeur numérique" },
-    "openai": { "label": "OpenAI" },
-    "operation": { "label": "Opération" },
-    "outputCustomField": { "label": "Champ personnalisé de sortie" },
-    "httpMethod": { "label": "Méthode" },
+    "selectUsers": {
+      "label": "Sélectionner les utilisateurs"
+    },
+    "node": {
+      "label": "Nœud"
+    },
+    "noResults": {
+      "label": "Aucun résultat trouvé"
+    },
+    "notes": {
+      "label": "Notes"
+    },
+    "numericLength": {
+      "label": "Longueur numérique"
+    },
+    "numericValue": {
+      "label": "Valeur numérique"
+    },
+    "openai": {
+      "label": "OpenAI"
+    },
+    "operation": {
+      "label": "Opération"
+    },
+    "outputCustomField": {
+      "label": "Champ personnalisé de sortie"
+    },
+    "javascriptCode": {
+      "label": "Code JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Utilisez du JavaScript pur et renvoyez une valeur. Le réseau, les fichiers, les API et les bibliothèques externes ne sont pas disponibles. Les données du contact et du système sont disponibles dans l'objet `input`."
+    },
+    "httpMethod": {
+      "label": "Méthode"
+    },
     "requestUrl": {
       "label": "URL",
       "placeholder": "https://api.example.com/endpoint"
@@ -961,13 +1236,19 @@
         "formEncoded": "Formulaire encodé"
       }
     },
-    "statusCode": { "label": "Code d’état" },
+    "statusCode": {
+      "label": "Code d’état"
+    },
     "outputMessage": {
       "label": "Message de sortie",
       "placeholder": "Quel est le message de sortie ?"
     },
-    "paymentHistory": { "label": "Historique des paiements" },
-    "paymentMethods": { "label": "Moyens de paiement" },
+    "paymentHistory": {
+      "label": "Historique des paiements"
+    },
+    "paymentMethods": {
+      "label": "Moyens de paiement"
+    },
     "persistentMenu": {
       "description": "Les menus persistants servent à démarrer une conversation avec un utilisateur.",
       "label": "Menu persistant{plural, select, 1 {} other {s}}",
@@ -980,16 +1261,36 @@
       "pageDefault": "Par défaut",
       "label": "Menu persistant de l’utilisateur"
     },
-    "phoneNumber": { "label": "Numéro de téléphone" },
+    "phoneNumber": {
+      "label": "Numéro de téléphone"
+    },
     "phoneNumberId": {
       "label": "Numéro de téléphone",
       "noPhoneNumbersFound": "Aucun numéro de téléphone trouvé pour ce compte"
     },
-    "port": { "label": "Port", "placeholder": "587" },
-    "provider": { "label": "Fournisseur" },
-    "prompt": { "label": "Invite", "placeholder": "Saisissez une invite" },
-    "userMessage": { "label": "Message de l’utilisateur" },
-    "pageUserName": { "label": "Nom d’utilisateur de la Page" },
+    "port": {
+      "label": "Port",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Fournisseur"
+    },
+    "prompt": {
+      "label": "Invite",
+      "placeholder": "Saisissez une invite"
+    },
+    "userMessage": {
+      "label": "Message de l’utilisateur"
+    },
+    "pageUserName": {
+      "label": "Nom d’utilisateur de la Page"
+    },
+    "waUserId": {
+      "label": "ID utilisateur WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nom d’utilisateur WhatsApp"
+    },
     "purpose": {
       "label": "Objectif",
       "placeholder": "Que fait cette fonction ?"
@@ -998,21 +1299,44 @@
       "label": "Question",
       "placeholder": "Êtes-vous ouvert aujourd’hui ?"
     },
-    "imageProfileUrl": { "label": "URL de l’image de profil" },
-    "persona": { "label": "Persona", "pageDefault": "Persona par défaut" },
-    "quickReply": { "label": "Réponse rapide" },
-    "search": { "placeholder": "Rechercher..." },
-    "logo": { "label": "Logo" },
-    "logoLight": { "label": "Logo (clair)" },
-    "logoDark": { "label": "Logo (sombre)" },
-    "favicon": { "label": "Favicon" },
+    "imageProfileUrl": {
+      "label": "URL de l’image de profil"
+    },
+    "persona": {
+      "label": "Persona",
+      "pageDefault": "Persona par défaut"
+    },
+    "quickReply": {
+      "label": "Réponse rapide"
+    },
+    "search": {
+      "placeholder": "Rechercher..."
+    },
+    "logo": {
+      "label": "Logo"
+    },
+    "logoLight": {
+      "label": "Logo (clair)"
+    },
+    "logoDark": {
+      "label": "Logo (sombre)"
+    },
+    "favicon": {
+      "label": "Favicon"
+    },
     "brandName": {
       "label": "Nom de la marque",
       "placeholder": "Saisissez le nom de la marque"
     },
-    "policyUrl": { "label": "URL de la politique de confidentialité" },
-    "termsOfServiceUrl": { "label": "URL des conditions d’utilisation" },
-    "showLogo": { "label": "Afficher le logo personnel" },
+    "policyUrl": {
+      "label": "URL de la politique de confidentialité"
+    },
+    "termsOfServiceUrl": {
+      "label": "URL des conditions d’utilisation"
+    },
+    "showLogo": {
+      "label": "Afficher le logo personnel"
+    },
     "quality": {
       "label": "Qualité",
       "options": {
@@ -1043,47 +1367,109 @@
       "success": "Réussite",
       "error": "Erreur"
     },
-    "subtitle": { "placeholder": "Saisissez le sous-titre" },
-    "syncToMessenger": { "label": "Synchroniser avec Messenger" },
-    "tag": { "label": "Étiquette" },
-    "emailTopic": { "label": "Sujet d’e-mail" },
-    "emailTopics": { "label": "Sujets d’e-mail" },
-    "emailTopicSent": { "label": "Envoyés" },
-    "emailTopicDelivered": { "label": "Distribués (%)" },
-    "emailTopicSeen": { "label": "Vus (%)" },
-    "emailTopicClicked": { "label": "Cliqués (%)" },
+    "subtitle": {
+      "placeholder": "Saisissez le sous-titre"
+    },
+    "syncToMessenger": {
+      "label": "Synchroniser avec Messenger"
+    },
+    "tag": {
+      "label": "Étiquette"
+    },
+    "emailTopic": {
+      "label": "Sujet d’e-mail"
+    },
+    "emailTopics": {
+      "label": "Sujets d’e-mail"
+    },
+    "emailTopicSent": {
+      "label": "Envoyés"
+    },
+    "emailTopicDelivered": {
+      "label": "Distribués (%)"
+    },
+    "emailTopicSeen": {
+      "label": "Vus (%)"
+    },
+    "emailTopicClicked": {
+      "label": "Cliqués (%)"
+    },
     "targetCountry": {
       "description": "Pays dans lequel vivent la plupart de vos contacts.",
       "label": "Pays cible"
     },
-    "team": { "label": "Équipe" },
-    "rememberConversation": { "label": "Mémoriser la conversation" },
-    "temperature": { "label": "Température" },
-    "templateMessages": { "label": "Messages modèles" },
-    "text": { "label": "Texte", "placeholder": "Saisissez du texte" },
-    "thisMonth": { "label": "Ce mois-ci" },
+    "team": {
+      "label": "Équipe"
+    },
+    "rememberConversation": {
+      "label": "Mémoriser la conversation"
+    },
+    "temperature": {
+      "label": "Température"
+    },
+    "templateMessages": {
+      "label": "Messages modèles"
+    },
+    "text": {
+      "label": "Texte",
+      "placeholder": "Saisissez du texte"
+    },
+    "thisMonth": {
+      "label": "Ce mois-ci"
+    },
     "timezone": {
       "description": "Ce fuseau horaire est attribué aux contacts dont le fuseau est inconnu.",
       "label": "Fuseau horaire"
     },
-    "title": { "placeholder": "Saisissez le titre" },
-    "today": { "label": "Aujourd’hui" },
-    "tools": { "label": "Outils", "placeholder": "Sélectionnez des outils" },
+    "title": {
+      "placeholder": "Saisissez le titre"
+    },
+    "today": {
+      "label": "Aujourd’hui"
+    },
+    "tools": {
+      "label": "Outils",
+      "placeholder": "Sélectionnez des outils"
+    },
     "triggerFlowId": {
       "label": "Identifiant du flux déclencheur",
       "placeholder": "Quel flux est déclenché ?"
     },
-    "type": { "label": "Type", "placeholder": "Sélectionnez un type" },
-    "lastRead": { "label": "Dernière lecture" },
-    "assignee": { "label": "Responsable" },
-    "modified": { "label": "Modifié" },
-    "estimatedContacts": { "label": "Contacts estimés" },
-    "scheduledAt": { "label": "Planifié le" },
-    "channel": { "label": "Canal" },
-    "comment": { "label": "Commentaire" },
-    "directMessage": { "label": "Message direct" },
-    "updatedAt": { "label": "Mis à jour le" },
-    "url": { "label": "URL", "placeholder": "Saisissez l’URL" },
+    "type": {
+      "label": "Type",
+      "placeholder": "Sélectionnez un type"
+    },
+    "lastRead": {
+      "label": "Dernière lecture"
+    },
+    "assignee": {
+      "label": "Responsable"
+    },
+    "modified": {
+      "label": "Modifié"
+    },
+    "estimatedContacts": {
+      "label": "Contacts estimés"
+    },
+    "scheduledAt": {
+      "label": "Planifié le"
+    },
+    "channel": {
+      "label": "Canal"
+    },
+    "comment": {
+      "label": "Commentaire"
+    },
+    "directMessage": {
+      "label": "Message direct"
+    },
+    "updatedAt": {
+      "label": "Mis à jour le"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "Saisissez l’URL"
+    },
     "userId": {
       "label": "Identifiant de l’utilisateur",
       "placeholders": {
@@ -1094,41 +1480,76 @@
         "zalo": "Identifiant d’utilisateur Zalo"
       }
     },
-    "userTags": { "label": "Étiquettes appliquées par l’utilisateur" },
+    "userTags": {
+      "label": "Étiquettes appliquées par l’utilisateur"
+    },
     "username": {
       "label": "Nom d’utilisateur",
       "placeholder": "user@example.com"
     },
-    "keywords": { "label": "Mots-clés" },
-    "value": { "label": "Valeur" },
-    "wabaId": { "label": "Identifiant WABA" },
-    "webchat": { "label": "Webchat" },
+    "keywords": {
+      "label": "Mots-clés"
+    },
+    "value": {
+      "label": "Valeur"
+    },
+    "wabaId": {
+      "label": "Identifiant WABA"
+    },
+    "webchat": {
+      "label": "Webchat"
+    },
     "welcomeFlowId": {
       "description": "Le message de bienvenue est envoyé automatiquement lorsque l’utilisateur ouvre votre webchat.",
       "label": "Flux de bienvenue"
     },
-    "whatsapp": { "label": "WhatsApp" },
-    "sms": { "label": "SMS" },
-    "viber": { "label": "Viber" },
-    "viberBm": { "label": "Viber BM" },
-    "voice": { "label": "Voix" },
-    "googleBm": { "label": "Google BM" },
-    "landingPage": { "label": "Page de destination" },
-    "whatsappFlow": { "label": "Flux WhatsApp" },
+    "whatsapp": {
+      "label": "WhatsApp"
+    },
+    "sms": {
+      "label": "SMS"
+    },
+    "viber": {
+      "label": "Viber"
+    },
+    "viberBm": {
+      "label": "Viber BM"
+    },
+    "voice": {
+      "label": "Voix"
+    },
+    "googleBm": {
+      "label": "Google BM"
+    },
+    "landingPage": {
+      "label": "Page de destination"
+    },
+    "whatsappFlow": {
+      "label": "Flux WhatsApp"
+    },
     "shortText": {
       "label": "Texte court",
       "placeholder": "Saisissez du texte"
     },
-    "number": { "label": "Nombre", "placeholder": "Saisissez un nombre" },
-    "date": { "label": "Date" },
-    "datetime": { "label": "Date et heure" },
+    "number": {
+      "label": "Nombre",
+      "placeholder": "Saisissez un nombre"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "datetime": {
+      "label": "Date et heure"
+    },
     "boolean": {
       "label": "Booléen",
       "placeholder": "Sélectionnez vrai ou faux",
       "true": "Vrai",
       "false": "Faux"
     },
-    "longText": { "label": "Texte long" },
+    "longText": {
+      "label": "Texte long"
+    },
     "replyFormat": {
       "label": "Format de réponse",
       "number": "Nombre",
@@ -1143,32 +1564,48 @@
       "location": "Localisation",
       "anyInput": "Toute saisie"
     },
-    "workspaceMember": { "label": "Membre de l’espace de travail" },
-    "yesterday": { "label": "Hier" },
+    "workspaceMember": {
+      "label": "Membre de l’espace de travail"
+    },
+    "yesterday": {
+      "label": "Hier"
+    },
     "permissions": {
       "label": "Autorisations",
       "superAdmin": "Super administrateur",
       "analytics": "Analyses",
       "flows": "Flux",
-      "contacts": "Contacts",
+      "contacts": "Contacts / Boîte de réception",
       "onlyAssignedContacts": "Uniquement les contacts attribués",
       "emailAndPhone": "E-mail et téléphone",
       "broadcast": "Diffusion",
       "ecommerce": "E-commerce"
     },
-    "member": { "label": "Membre" },
+    "member": {
+      "label": "Membre"
+    },
     "schedule": {
       "label": "Planification",
       "now": "Maintenant",
       "scheduled": "Planifier pour plus tard"
     },
-    "inputFieldId": { "label": "Champ personnalisé d’entrée" },
-    "aiEditImage": { "inputFieldId": { "label": "Image" } },
-    "inputText": { "label": "Texte d’entrée" },
+    "inputFieldId": {
+      "label": "Champ personnalisé d’entrée"
+    },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "Image"
+      }
+    },
+    "inputText": {
+      "label": "Texte d’entrée"
+    },
     "outputFieldId": {
       "label": "Enregistrer le résultat dans un champ personnalisé"
     },
-    "audio": { "label": "Champ audio" },
+    "audio": {
+      "label": "Champ audio"
+    },
     "voiceType": {
       "label": "Type de voix",
       "placeholder": "Sélectionnez un type de voix"
@@ -1194,78 +1631,186 @@
       "showMore": "Afficher plus",
       "showMoreCount": "Afficher {count} de plus"
     },
-    "spreadsheets": { "label": "Feuilles de calcul" },
-    "retryMessage": { "label": "Message de nouvelle tentative" },
-    "skipButtonLabel": { "label": "Libellé du bouton Ignorer" },
-    "autoSkipTime": { "label": "Délai d’omission automatique" },
+    "spreadsheets": {
+      "label": "Feuilles de calcul"
+    },
+    "retryMessage": {
+      "label": "Message de nouvelle tentative"
+    },
+    "skipButtonLabel": {
+      "label": "Libellé du bouton Ignorer"
+    },
+    "autoSkipTime": {
+      "label": "Délai d’omission automatique"
+    },
     "autoSkipFailAttempts": {
       "label": "Nombre d’échecs avant omission automatique"
     },
-    "autoSkip": { "label": "Omission automatique" },
-    "spreadsheet": { "label": "Feuille de calcul" },
-    "worksheet": { "label": "Feuille" },
-    "source": { "label": "Source", "placeholder": "Sélectionnez une source" },
-    "password": { "label": "Mot de passe", "placeholder": "••••••••" },
-    "passwordConfirmation": { "label": "Saisissez à nouveau le mot de passe" },
-    "newPassword": { "label": "Nouveau mot de passe" },
-    "currentPassword": { "label": "Mot de passe actuel" },
-    "developerAccessToken": { "label": "Jeton d’accès API" },
-    "fullName": { "label": "Nom complet" },
-    "botFields": { "label": "Champs du bot" },
+    "autoSkip": {
+      "label": "Omission automatique"
+    },
+    "spreadsheet": {
+      "label": "Feuille de calcul"
+    },
+    "worksheet": {
+      "label": "Feuille"
+    },
+    "source": {
+      "label": "Source",
+      "placeholder": "Sélectionnez une source"
+    },
+    "password": {
+      "label": "Mot de passe",
+      "placeholder": "••••••••"
+    },
+    "passwordConfirmation": {
+      "label": "Saisissez à nouveau le mot de passe"
+    },
+    "newPassword": {
+      "label": "Nouveau mot de passe"
+    },
+    "currentPassword": {
+      "label": "Mot de passe actuel"
+    },
+    "developerAccessToken": {
+      "label": "Jeton d’accès API"
+    },
+    "fullName": {
+      "label": "Nom complet"
+    },
+    "botFields": {
+      "label": "Champs du bot"
+    },
     "keyword": {
       "label": "Mot-clé",
       "searchPlaceholder": "Rechercher un mot-clé..."
     },
-    "templateId": { "label": "Modèle WhatsApp" },
-    "messengerTemplateId": { "label": "Modèle Messenger" },
-    "whatsappChannel": { "label": "Canal WhatsApp" },
-    "messengerChannel": { "label": "Canal Messenger" },
-    "messages": { "label": "Messages" },
-    "shortcut": { "label": "Raccourci" },
-    "savedReplies": { "label": "Réponses enregistrées" },
-    "role": { "label": "Rôle" },
-    "plan": { "label": "Forfait" },
-    "price": { "label": "Prix" },
-    "annualPrice": { "label": "Prix annuel" },
-    "limitContacts": { "label": "Nombre maximal de contacts" },
+    "templateId": {
+      "label": "Modèle WhatsApp"
+    },
+    "messengerTemplateId": {
+      "label": "Modèle Messenger"
+    },
+    "whatsappChannel": {
+      "label": "Canal WhatsApp"
+    },
+    "messengerChannel": {
+      "label": "Canal Messenger"
+    },
+    "messages": {
+      "label": "Messages"
+    },
+    "shortcut": {
+      "label": "Raccourci"
+    },
+    "savedReplies": {
+      "label": "Réponses enregistrées"
+    },
+    "role": {
+      "label": "Rôle"
+    },
+    "plan": {
+      "label": "Forfait"
+    },
+    "price": {
+      "label": "Prix"
+    },
+    "annualPrice": {
+      "label": "Prix annuel"
+    },
+    "limitContacts": {
+      "label": "Nombre maximal de contacts"
+    },
     "marketingFeatures": {
       "label": "Liste des fonctionnalités marketing",
       "description": "Liste des fonctionnalités du produit visibles par les clients et affichées dans les tableaux tarifaires."
     },
-    "currency": { "label": "Devise" },
-    "clientId": { "label": "Identifiant client" },
-    "clientSecret": { "label": "Secret client" },
-    "verifyToken": { "label": "Jeton de vérification du webhook" },
-    "apiVersion": { "label": "Version de l’API" },
-    "configId": { "label": "Identifiant de configuration de l’application" },
-    "systemUserId": { "label": "Identifiant de l’utilisateur système" },
-    "systemUserToken": { "label": "Jeton de l’utilisateur système" },
-    "businessId": { "label": "Identifiant de l’entreprise" },
-    "businessName": { "label": "Nom de l’entreprise" },
-    "publishableKey": { "label": "Clé publique" },
-    "secretKey": { "label": "Clé secrète" },
-    "freeTrial": { "label": "Essai gratuit", "suffix": "jours" },
-    "pricing": { "label": "Tarification" },
-    "sequence": { "label": "Séquence" },
-    "from": { "label": "De" },
+    "currency": {
+      "label": "Devise"
+    },
+    "clientId": {
+      "label": "Identifiant client"
+    },
+    "clientSecret": {
+      "label": "Secret client"
+    },
+    "verifyToken": {
+      "label": "Jeton de vérification du webhook"
+    },
+    "apiVersion": {
+      "label": "Version de l’API"
+    },
+    "configId": {
+      "label": "Identifiant de configuration de l’application"
+    },
+    "systemUserId": {
+      "label": "Identifiant de l’utilisateur système"
+    },
+    "systemUserToken": {
+      "label": "Jeton de l’utilisateur système"
+    },
+    "businessId": {
+      "label": "Identifiant de l’entreprise"
+    },
+    "businessName": {
+      "label": "Nom de l’entreprise"
+    },
+    "publishableKey": {
+      "label": "Clé publique"
+    },
+    "secretKey": {
+      "label": "Clé secrète"
+    },
+    "freeTrial": {
+      "label": "Essai gratuit",
+      "suffix": "jours"
+    },
+    "pricing": {
+      "label": "Tarification"
+    },
+    "sequence": {
+      "label": "Séquence"
+    },
+    "from": {
+      "label": "De"
+    },
     "fromAddress": {
       "label": "Adresse d’expédition",
       "placeholder": "noreply@example.com"
     },
-    "messageTemplate": { "label": "Modèle de message" },
-    "preheader": { "label": "Pré-en-tête" },
-    "subject": { "label": "Objet" },
-    "to": { "label": "À" },
-    "smtpChannel": { "label": "Canal SMTP" },
+    "messageTemplate": {
+      "label": "Modèle de message"
+    },
+    "preheader": {
+      "label": "Pré-en-tête"
+    },
+    "subject": {
+      "label": "Objet"
+    },
+    "to": {
+      "label": "À"
+    },
+    "smtpChannel": {
+      "label": "Canal SMTP"
+    },
     "magicLink": {
       "label": "Lien magique",
       "nameHint": "Ajouté après /r/{workspaceId}/ dans l’URL publique de suivi. Utilisez uniquement des lettres, des chiffres, des traits de soulignement et des traits d’union.",
       "urlHint": "Utilisez des doubles accolades dans l’URL, par exemple https://example.com/page?utm_campaign='{{campaign}}'. Les valeurs proviennent de la chaîne de requête du lien de suivi."
     },
-    "appId": { "label": "Identifiant de l’application" },
-    "appSecret": { "label": "Secret de l’application" },
-    "webhookVerifyToken": { "label": "Jeton de vérification du webhook" },
-    "heading": { "label": "En-tête", "placeholder": "Saisissez l’en-tête" },
+    "appId": {
+      "label": "Identifiant de l’application"
+    },
+    "appSecret": {
+      "label": "Secret de l’application"
+    },
+    "webhookVerifyToken": {
+      "label": "Jeton de vérification du webhook"
+    },
+    "heading": {
+      "label": "En-tête",
+      "placeholder": "Saisissez l’en-tête"
+    },
     "import": {
       "label": "Importation",
       "uploading": "Téléversement…",
@@ -1284,9 +1829,16 @@
         "row": "Ligne {row}"
       }
     },
-    "line": { "label": "Ligne" },
-    "spacing": { "label": "Espacement" },
-    "code": { "label": "Code", "placeholder": "Saisissez le code" },
+    "line": {
+      "label": "Ligne"
+    },
+    "spacing": {
+      "label": "Espacement"
+    },
+    "code": {
+      "label": "Code",
+      "placeholder": "Saisissez le code"
+    },
     "authCallbackUrl": {
       "label": "URL de rappel d’authentification",
       "hint": "Enregistrez cette URL exacte comme URI de redirection OAuth dans l’application de votre fournisseur. Elle doit utiliser cet hôte et non votre domaine personnalisé, car le fournisseur ne peut pas accéder à un domaine personnalisé."
@@ -1312,51 +1864,121 @@
         "step3": "Collez les identifiants ci-dessous pour vous connecter."
       }
     },
-    "drip": { "label": "Drip" },
-    "sendGrid": { "label": "SendGrid" },
+    "drip": {
+      "label": "Drip"
+    },
+    "sendGrid": {
+      "label": "SendGrid"
+    },
     "currentVersion": "Actuelle",
-    "consecutiveFailedReply": { "label": "Réponses échouées consécutives" },
-    "currentStep": { "label": "Étape actuelle" },
-    "fbChatLink": { "label": "Lien de la boîte de réception Facebook" },
-    "inboxLink": { "label": "Lien de la boîte de réception" },
+    "consecutiveFailedReply": {
+      "label": "Réponses échouées consécutives"
+    },
+    "currentStep": {
+      "label": "Étape actuelle"
+    },
+    "fbChatLink": {
+      "label": "Lien de la boîte de réception Facebook"
+    },
+    "inboxLink": {
+      "label": "Lien de la boîte de réception"
+    },
     "instagramBusinessFollowsUser": {
       "label": "L’entreprise Instagram suit l’utilisateur"
     },
-    "instagramFollowers": { "label": "Abonnés Instagram" },
-    "instagramFollowsBusiness": { "label": "Suit l’entreprise sur Instagram" },
-    "instagramUsername": { "label": "Nom d’utilisateur Instagram" },
-    "instagramVerified": { "label": "Compte Instagram vérifié" },
-    "lastAd": { "label": "Dernière publicité" },
+    "instagramFollowers": {
+      "label": "Abonnés Instagram"
+    },
+    "instagramFollowsBusiness": {
+      "label": "Suit l’entreprise sur Instagram"
+    },
+    "instagramUsername": {
+      "label": "Nom d’utilisateur Instagram"
+    },
+    "instagramVerified": {
+      "label": "Compte Instagram vérifié"
+    },
+    "lastAd": {
+      "label": "Dernière publicité"
+    },
     "lastAdSourcePlatform": {
       "label": "Plateforme source de la dernière publicité"
     },
-    "lastAdSourceUrl": { "label": "URL source de la dernière publicité" },
-    "lastButtonTitle": { "label": "Titre du dernier bouton" },
-    "lastCommentId": { "label": "Identifiant du dernier commentaire" },
+    "lastAdSourceUrl": {
+      "label": "URL source de la dernière publicité"
+    },
+    "lastButtonTitle": {
+      "label": "Titre du dernier bouton"
+    },
+    "lastCommentId": {
+      "label": "Identifiant du dernier commentaire"
+    },
     "lastCommentedPostText": {
       "label": "Texte de la dernière publication commentée"
     },
-    "lastCtwa": { "label": "Dernière CTWA" },
-    "lastFbComment": { "label": "Dernier commentaire Facebook" },
-    "lastInputFailure": { "label": "Dernier échec de saisie" },
-    "lastInteraction": { "label": "Dernière interaction" },
-    "lastLatitude": { "label": "Dernière latitude" },
-    "lastLongitude": { "label": "Dernière longitude" },
-    "lastOutboundMessageAt": { "label": "Date du dernier message sortant" },
-    "lastPostId": { "label": "Identifiant de la dernière publication" },
-    "lastSeen": { "label": "Dernière consultation" },
-    "lastStep": { "label": "Dernière étape" },
-    "me": { "label": "Lien vers mes données" },
-    "phone": { "label": "Téléphone" },
-    "phoneAndEmail": { "label": "Téléphone et e-mail" },
-    "timezoneName": { "label": "Nom du fuseau horaire" },
-    "totalNewTagged": { "label": "Total des nouveaux identifiés" },
-    "totalTagged": { "label": "Total des identifiés" },
-    "userChannel": { "label": "Canal de l’utilisateur" },
-    "userExternalId": { "label": "Identifiant externe de l’utilisateur" },
-    "userHash": { "label": "Hachage de l’utilisateur" },
-    "userSource": { "label": "Source de l’utilisateur" },
-    "webchatParentUrl": { "label": "URL parente du webchat" },
+    "lastCtwa": {
+      "label": "Dernière CTWA"
+    },
+    "lastFbComment": {
+      "label": "Dernier commentaire Facebook"
+    },
+    "lastInputFailure": {
+      "label": "Dernier échec de saisie"
+    },
+    "lastInteraction": {
+      "label": "Dernière interaction"
+    },
+    "lastLatitude": {
+      "label": "Dernière latitude"
+    },
+    "lastLongitude": {
+      "label": "Dernière longitude"
+    },
+    "lastOutboundMessageAt": {
+      "label": "Date du dernier message sortant"
+    },
+    "lastPostId": {
+      "label": "Identifiant de la dernière publication"
+    },
+    "lastSeen": {
+      "label": "Dernière consultation"
+    },
+    "lastStep": {
+      "label": "Dernière étape"
+    },
+    "me": {
+      "label": "Lien vers mes données"
+    },
+    "phone": {
+      "label": "Téléphone"
+    },
+    "phoneAndEmail": {
+      "label": "Téléphone et e-mail"
+    },
+    "timezoneName": {
+      "label": "Nom du fuseau horaire"
+    },
+    "totalNewTagged": {
+      "label": "Total des nouveaux identifiés"
+    },
+    "totalTagged": {
+      "label": "Total des identifiés"
+    },
+    "userChannel": {
+      "label": "Canal de l’utilisateur"
+    },
+    "userExternalId": {
+      "label": "Identifiant externe de l’utilisateur"
+    },
+    "userHash": {
+      "label": "Hachage de l’utilisateur"
+    },
+    "userSource": {
+      "label": "Source de l’utilisateur"
+    },
+    "webchatParentUrl": {
+      "label": "URL parente du webchat"
+    },
     "make": {
       "inviteUrl": "Lien d’invitation",
       "inviteUrlHint": "Lien d’invitation de votre application personnalisée Make publiée (par exemple https://eu2.make.com/app/invite/...)."
@@ -1365,23 +1987,55 @@
       "label": "Événements",
       "placeholder": "Saisissez le nom d’un événement et appuyez sur Entrée",
       "description": "Ajoutez un ou plusieurs noms d’événements. Lorsque Make associe un webhook à l’un de ces événements, des données lui sont envoyées lors de l’exécution de cette étape."
+    },
+    "bookingCalendar": {
+      "label": "Calendrier de réservation"
+    },
+    "bookingDate": {
+      "label": "Date de réservation"
+    },
+    "bookingLink": {
+      "label": "Lien de réservation"
+    },
+    "n8nEvents": {
+      "label": "Événements",
+      "placeholder": "Saisissez le nom d’un événement et appuyez sur Entrée",
+      "description": "Ajoutez un ou plusieurs noms d’événements. Lorsque n8n associe un webhook à l’un de ces événements, des données lui sont envoyées lors de l’exécution de cette étape."
+    },
+    "enabled": {
+      "label": "Activé"
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Ce flux n'a jamais été publié. Publiez-le avant de l'exporter.",
+      "failed": "Échec de l'exportation. Veuillez réessayer."
+    },
     "title": "Flux",
     "quickReplies": {
       "limitReached": "Limite de réponses rapides atteinte ({max})."
     },
-    "buttons": { "limitReached": "Limite de boutons atteinte ({max})." },
-    "aiGenerateText": { "label": "{name} : générer du texte" },
-    "aiGenerateImage": { "label": "{name} : générer une image" },
-    "aiEditImage": { "label": "{name} : modifier une image" },
-    "aiAnalyzeImage": { "label": "{name} : analyser une image" },
-    "aiExtractData": { "label": "{name} : extraire des données" },
+    "buttons": {
+      "limitReached": "Limite de boutons atteinte ({max})."
+    },
+    "aiGenerateText": {
+      "label": "{name} : générer du texte"
+    },
+    "aiGenerateImage": {
+      "label": "{name} : générer une image"
+    },
+    "aiEditImage": {
+      "label": "{name} : modifier une image"
+    },
+    "aiAnalyzeImage": {
+      "label": "{name} : analyser une image"
+    },
+    "aiExtractData": {
+      "label": "{name} : extraire des données"
+    },
     "openaiCompatible": {
       "empty": "Connectez un fournisseur compatible avec OpenAI dans les paramètres d’intégration avant d’utiliser cette étape.",
-      "integration": "Fournisseur compatible avec OpenAI",
-      "none": "Aucun"
+      "integration": "Fournisseur compatible avec OpenAI"
     },
     "actions": {
       "addContactNotes": "Ajouter des notes au contact",
@@ -1404,6 +2058,7 @@
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Configurer le coupon",
       "markCouponUsed": "Marquer le coupon comme utilisé",
+      "executeJavascript": "Exécuter JavaScript",
       "chooseChannel": "Choisir un canal",
       "clearCustomField": "Effacer le champ personnalisé",
       "condition": "Condition",
@@ -1481,7 +2136,15 @@
       "unsubscribeSequence": "Se désabonner de la séquence",
       "splitTraffic": "Répartir le trafic",
       "aiEditImage": "Modification d’image par IA",
-      "whatsappFlow": "Flux WhatsApp"
+      "whatsappFlow": "Flux WhatsApp",
+      "appointmentScheduling": "Planification des rendez-vous",
+      "triggerN8n": "Déclencher n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Envoyer un événement Meta CAPI",
+      "import": "Importer le flux",
+      "export": "Exporter",
+      "importStarted": "Le flux est en cours d'importation. Consultez l'historique des imports pour voir les résultats.",
+      "importJsonOnly": "Fichiers JSON uniquement"
     },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
@@ -1513,6 +2176,11 @@
       "selectCustomFieldPlaceholder": "Sélectionnez un champ personnalisé",
       "addMapping": "Ajouter une correspondance",
       "addCustomField": "Ajouter"
+    },
+    "sendCarousel": {
+      "addSlide": "Ajouter une carte",
+      "removeSlide": "Supprimer la carte",
+      "whatsappLinkButtonIgnored": "Sur WhatsApp, le lien de cette carte ne fonctionnera pas : une carte avec un bouton de lien ne peut pas avoir d'autres boutons. Il sera envoyé comme réponse à la place."
     },
     "additionalSteps": "Étapes supplémentaires",
     "delayType": {
@@ -1580,9 +2248,17 @@
     },
     "setCustomField": {
       "temporalHint": "Laissez ce champ vide pour enregistrer la date et l’heure actuelles."
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Lorsque des boutons sont ajoutés, TikTok n'envoie que les 40 premiers caractères de ce message — le reste sera coupé."
+    },
+    "dataWasSaved": "Les données ont été enregistrées"
+  },
+  "folders": {
+    "heading": {
+      "title": "Dossiers"
     }
   },
-  "folders": { "heading": { "title": "Dossiers" } },
   "gemini": {
     "autoReply": {
       "description": "Activez la réponse automatique par IA pour répondre naturellement aux utilisateurs grâce à une IA alimentée par les données de votre entreprise.",
@@ -1594,7 +2270,9 @@
     },
     "title": "Google Gemini"
   },
-  "general": { "title": "Général" },
+  "general": {
+    "title": "Général"
+  },
   "facebookAds": {
     "title": "Publicités Facebook",
     "setting": {
@@ -1620,6 +2298,174 @@
     },
     "errors": {
       "invalidAppSettings": "Les paramètres de l’application Facebook ne sont pas valides"
+    }
+  },
+  "ads": {
+    "title": "Annonces",
+    "connectAccounts": {
+      "connectAdAccount": "Connecter un compte publicitaire",
+      "adAccountName": "Nom du compte publicitaire",
+      "adAccountsReconnectBanner": "Le jeton de votre compte publicitaire Meta a expiré ou a perdu ses autorisations. Reconnectez Facebook Ads pour continuer à bénéficier des rapports publicitaires.",
+      "adAccountsNotConnected": "Aucun compte publicitaire Meta n’est encore connecté.",
+      "adAccountsEmpty": "Aucun compte publicitaire Meta n’a été trouvé pour cette connexion Facebook Ads.",
+      "reconnect": "Reconnecter",
+      "reconnectSuccess": "Compte WhatsApp reconnecté.",
+      "selectAccountLabel": "Compte WhatsApp",
+      "status": {
+        "ready": "Événements automatiques prêts",
+        "missingPermission": "Autorisation Événements automatiques manquante",
+        "unverified": "Autorisation non vérifiée"
+      },
+      "table": {
+        "wabaId": "ID WABA"
+      },
+      "connectWhatsapp": {
+        "cta": "Connecter le compte WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Événements de conversion",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Gérer les comptes publicitaires",
+      "export": "Exporter",
+      "selectAll": "Tout sélectionner",
+      "whatsappAsset": "Actif WhatsApp",
+      "selectWhatsappAsset": "Sélectionner un actif WhatsApp",
+      "templates": "Modèles",
+      "selectTemplates": "Sélectionner des modèles",
+      "noTemplates": "Aucun modèle approuvé trouvé.",
+      "existingRules": "Règles existantes",
+      "noRules": "Aucune règle de conversion pour cet actif WhatsApp pour le moment.",
+      "toggleRule": "Activer ou désactiver la règle",
+      "deleteRule": "Supprimer la règle",
+      "qualifyingTemplateMessageSent": "Le message modèle qualifiant est envoyé",
+      "qualifyingFirstReply": "Le contact envoie son premier message",
+      "qualifyingAnyReply": "Le contact envoie un message",
+      "when": "Quand",
+      "whenOptions": {
+        "templateSent": "Le message modèle qualifiant est envoyé",
+        "tagApplied": "Le contact est étiqueté",
+        "keywordMatched": "Le message du contact correspond à une règle de mot-clé",
+        "contactReplied": "Le contact envoie un message"
+      },
+      "tags": "Étiquettes",
+      "selectTags": "Sélectionner des étiquettes",
+      "noTags": "Aucune étiquette trouvée.",
+      "untitledKeywordRule": "(règle de mot-clé sans titre)",
+      "keywordRules": "Règles de mots-clés",
+      "selectKeywordRules": "Sélectionner des règles de mots-clés",
+      "noKeywordRules": "Aucune règle de mot-clé entrant trouvée.",
+      "replyOptions": "Options de réponse",
+      "firstReplyOnly": "Seulement le premier message",
+      "dedupeNote": "Au maximum 1 événement par jour, par conversation et par règle.",
+      "dealWon": "Affaire gagnée",
+      "eventTypeLead": "Prospect",
+      "eventTypePurchase": "Achat",
+      "messages": {
+        "ruleSaved": "Règle de conversion enregistrée",
+        "ruleUpdated": "Règle de conversion mise à jour",
+        "ruleDeleted": "Règle de conversion supprimée"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Page 1",
+        "page2": "Page 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Suivre les prospects qualifiés",
+        "question": "À quel moment de la conversation souhaitez-vous qualifier un contact comme prospect ?",
+        "when": "Quand",
+        "then": "Alors marquer le prospect CTWA comme"
+      },
+      "trackPurchases": {
+        "title": "Suivre les achats",
+        "question": "Quel modèle confirme un achat ?",
+        "when": "Quand",
+        "then": "Alors",
+        "noValueNote": "Un achat basé sur une règle enregistre une conversion Achat sans valeur de commande : il compte dans les achats mais ajoute 0 au chiffre d’affaires. La valeur de commande n’est capturée que par les Événements automatiques de Meta."
+      }
+    },
+    "analytics": {
+      "title": "Analyse CTWA",
+      "funnelOverview": "Aperçu de l’entonnoir",
+      "conversationsStarted": "Conversations démarrées",
+      "qualifiedLeads": "Prospects qualifiés",
+      "purchases": "Achats",
+      "adSpend": "Dépenses publicitaires",
+      "spendAccountLevelNote": "Les dépenses sont indiquées au niveau du compte publicitaire Meta ; lorsqu’un compte WhatsApp est sélectionné, les annonces sans activité dans l’entonnoir pour ce compte sont masquées.",
+      "revenue": "Chiffre d’affaires",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Le chiffre d’affaires suppose une seule devise (USD). Les comptes publicitaires multi-devises ne sont pas encore agrégés.",
+      "costPerLead": "Coût/prospect",
+      "costPerPurchase": "Coût/achat",
+      "impressions": "Impressions",
+      "clicks": "Clics",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Coût/conversation",
+      "costCurrencyNote": "Les indicateurs de coût supposent une seule devise (USD), conformément aux dépenses publicitaires.",
+      "performanceChart": {
+        "title": "Performance dans le temps",
+        "empty": "Aucune conversation, prospect, achat ou dépense sur cette période pour le moment."
+      },
+      "dateRange": {
+        "oneDay": "1J",
+        "oneWeek": "1S",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Personnalisé",
+        "apply": "Appliquer"
+      },
+      "allAds": "Toutes les annonces",
+      "adAccountFilter": {
+        "all": "Tous les comptes publicitaires",
+        "label": "Compte publicitaire",
+        "note": "Les annonces avec des conversions mais sans dépense ni diffusion sur la période sélectionnée sont masquées lors du filtrage par compte publicitaire."
+      },
+      "retarget": "Recibler",
+      "thoseWhoPurchased": "Ceux qui ont acheté",
+      "thoseWhoStartedConversation": "Ceux qui ont démarré une conversation",
+      "sendWhatsappBroadcast": "Envoyer une diffusion WhatsApp",
+      "from": "Du",
+      "to": "Au",
+      "unattributed": "Non attribué",
+      "retargetDialog": {
+        "title": "Recibler les contacts CTWA",
+        "createAudience": "Créer une audience",
+        "useExistingAudience": "Utiliser une audience existante",
+        "audienceName": "Nom de l’audience",
+        "audiencePrefix": "CTWA",
+        "confirm": "Démarrer la synchronisation",
+        "success": "Synchronisation de l’audience de reciblage mise en file d’attente.",
+        "error": "Échec de la mise en file d’attente de la synchronisation de l’audience de reciblage."
+      },
+      "delivery": {
+        "title": "Livraison des conversions",
+        "sent": "Envoyé",
+        "pending": "En attente",
+        "failed": "Échoué",
+        "skippedNoScope": "Ignoré (aucune portée)",
+        "skippedRegion": "Ignoré (région)",
+        "noScopeWarning": "Certaines conversions n’ont pas été envoyées car ce compte WhatsApp n’a pas l’autorisation d’événements requise. Reconnectez-le pour activer les rapports d’Événements automatiques.",
+        "reconnectCta": "Reconnecter le compte",
+        "empty": "Aucun événement de conversion sur cette période pour le moment."
+      },
+      "export": {
+        "conversations": "Exporter les conversations",
+        "leads": "Exporter les prospects",
+        "purchases": "Exporter les achats"
+      },
+      "csv": {
+        "contactName": "Nom du contact",
+        "phone": "Téléphone",
+        "adId": "ID de l’annonce",
+        "occurredAt": "Survenu le"
+      },
+      "empty": "Aucune donnée pour le moment. Connectez un compte publicitaire et commencez à suivre les conversions."
     }
   },
   "googleSheets": {
@@ -1758,7 +2604,10 @@
       "providerField": "Sélectionnez un champ MailerLite",
       "addMapping": "Ajouter"
     },
-    "status": { "active": "Abonné", "unconfirmed": "Non confirmé" },
+    "status": {
+      "active": "Abonné",
+      "unconfirmed": "Non confirmé"
+    },
     "errors": {
       "invalidApiKey": "Jeton API non valide. Vérifiez votre jeton API MailerLite et réessayez."
     }
@@ -1889,7 +2738,9 @@
       "noWorkspaceToken": "Aucun jeton d’accès développeur trouvé pour cet espace de travail. Générez-en un dans la section des jetons de l’espace de travail ci-dessus, puis cliquez de nouveau sur Connecter."
     }
   },
-  "integrations": { "title": "Intégrations" },
+  "integrations": {
+    "title": "Intégrations"
+  },
   "platformSettings": {
     "title": "Paramètres de la plateforme",
     "errors": {
@@ -1902,6 +2753,11 @@
     "subtitle": "Choisissez un espace de travail pour reprendre votre activité ou créez-en un.",
     "noWorkspaces": "Vous n’avez pas encore d’espace de travail.",
     "owner": "Propriétaire"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "La page que vous recherchez n'existe pas ou a peut-être été déplacée.",
+    "backToHome": "Retour à l'accueil"
   },
   "editProfile": {
     "title": "Modifier le profil"
@@ -1969,8 +2825,14 @@
       "badge": "Suppression planifiée"
     }
   },
-  "workspaces": { "list": { "title": "Liste des espaces de travail" } },
-  "workspaceToken": { "title": "Jeton de l’espace de travail" },
+  "workspaces": {
+    "list": {
+      "title": "Liste des espaces de travail"
+    }
+  },
+  "workspaceToken": {
+    "title": "Jeton de l’espace de travail"
+  },
   "dialog": {
     "deleteConfirmation": "Êtes-vous absolument sûr ?\nCette action est irréversible.\nVotre {feature} sera définitivement supprimé de nos serveurs."
   },
@@ -2004,6 +2866,7 @@
     "changeHideState": "Modifier l’état masqué",
     "commentHidden": "Ce commentaire a été masqué",
     "messageDeleted": "Le message a été supprimé.",
+    "sendFailed": "Échec de l'envoi",
     "repliedToStory": "A répondu à votre story",
     "sentAttachments": "{count, plural, one {1 pièce jointe envoyée} other {# pièces jointes envoyées}}",
     "deleteComment": "Supprimer le commentaire",
@@ -2083,10 +2946,19 @@
     "noVersionsFound": "Aucune version publiée trouvée",
     "publishVersionSuccess": "Une nouvelle version a été publiée",
     "flowConfigIncomplete": "Certaines configurations sont incomplètes",
+    "whatsappCarouselButtonsMismatch": "Sur WhatsApp, un carrousel nécessite les mêmes boutons sur chaque carte : soit un seul bouton de lien sur chaque carte, soit le même nombre de boutons de réponse sur chaque carte",
+    "whatsappCarouselLinkButtonNotAlone": "Sur WhatsApp, une carte de carrousel avec un bouton de lien ne peut avoir aucun autre bouton. Supprimez les autres boutons de cette carte, ou remplacez le bouton de lien par une autre action.",
     "duplicateNodeError": "Impossible de dupliquer le bloc. Veuillez réessayer.",
     "deleteNodeError": "Impossible de supprimer le bloc. Veuillez réessayer.",
     "redoHistoryCleared": "Historique de rétablissement effacé",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Aucun",
+    "tiktokCardTitleTooLong": "TikTok raccourcira ce message : avec des boutons ajoutés, seuls les 40 premiers caractères sont envoyés. Raccourcissez le message ou supprimez les boutons.",
+    "waTemplateMpmNoProducts": "Ajoutez au moins un produit à ce bouton multi-produits avant de publier.",
+    "waTemplateMpmTooManySections": "Un bouton multi-produits peut comporter au maximum 10 sections. Supprimez des sections avant de publier.",
+    "waTemplateMpmTooManyProducts": "Un bouton multi-produits peut comporter au maximum 30 produits au total. Supprimez des produits avant de publier.",
+    "waTemplateLtoExpirationRequired": "Choisissez une date d'expiration pour l'offre à durée limitée avant l'envoi.",
+    "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit."
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",
@@ -2094,7 +2966,11 @@
     "iceBreakers": "Questions d’introduction",
     "iceBreakersDescription": "Les questions d’introduction permettent aux utilisateurs de démarrer une conversation avec votre bot à partir d’une liste de questions fréquentes.",
     "reconnect": "Reconnecter",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "Paramètres généraux",
+      "conversionsApi": "Optimisation des publicités"
+    }
   },
   "coexist": {
     "title": "Synchroniser les contacts existants et l’historique des discussions ?",
@@ -2108,6 +2984,8 @@
     "toggleHelper": "La réactivation ne fonctionne que si Meta dispose encore de données en mémoire tampon, dans les 24 heures suivant l’intégration. Sinon, déconnectez et reconnectez.",
     "toggleHelperMessenger": "La réactivation ne fonctionne que si Meta dispose encore de données en mémoire tampon, dans les 24 heures suivant l’intégration. Sinon, déconnectez et reconnectez la page Messenger.",
     "toggleHelperWhatsapp": "La réactivation ne fonctionne que si Meta dispose encore de données en mémoire tampon, dans les 24 heures suivant l’intégration. Sinon, déconnectez et reconnectez le numéro WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "L'IA lit l'historique synchronisé",
+    "aiReadsSyncedHistoryHelper": "Si désactivé, l'IA ne voit que les nouveaux messages.",
     "success": {
       "enabled": "Synchronisation démarrée. Les anciens contacts et messages apparaîtront prochainement.",
       "disabled": "Synchronisation désactivée."
@@ -2150,7 +3028,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Paramètres généraux",
-      "messageTemplates": "Modèles de message"
+      "messageTemplates": "Modèles de message",
+      "conversionsApi": "Optimisation des publicités"
     },
     "messageTemplate": {
       "params": {
@@ -2204,7 +3083,9 @@
       "termsRequired": "L’administrateur de la Page doit accepter les Conditions relatives aux contacts des Pages Facebook :"
     }
   },
-  "omnichannel": { "title": "Omnicanal" },
+  "omnichannel": {
+    "title": "Omnicanal"
+  },
   "openai": {
     "connect": {
       "description": "Répondez naturellement aux utilisateurs grâce à une IA alimentée par les données de votre entreprise."
@@ -2279,7 +3160,9 @@
       "description": "Description des déclencheurs IA",
       "title": "Déclencheurs IA"
     },
-    "automatedResponses": { "title": "Mots-clés" },
+    "automatedResponses": {
+      "title": "Mots-clés"
+    },
     "openai": {
       "description": "Description de l’intégration OpenAI",
       "title": "Intégration OpenAI"
@@ -2328,10 +3211,20 @@
     "changePasswordDescription": "Définissez un nouveau mot de passe avant de continuer.",
     "passwordChangeSuccess": "Mot de passe modifié"
   },
-  "emailTopics": { "title": "Sujets d’e-mail" },
-  "tags": { "title": "Étiquettes" },
-  "texts": { "or": "ou" },
-  "theme": { "dark": "Sombre", "light": "Clair", "system": "Système" },
+  "emailTopics": {
+    "title": "Sujets d’e-mail"
+  },
+  "tags": {
+    "title": "Étiquettes"
+  },
+  "texts": {
+    "or": "ou"
+  },
+  "theme": {
+    "dark": "Sombre",
+    "light": "Clair",
+    "system": "Système"
+  },
   "validation": {
     "maxSize": "La taille du fichier dépasse la limite maximale",
     "maxItemsReached": "Maximum de {max} {feature} autorisé par espace de travail",
@@ -2364,7 +3257,9 @@
       "description": "Mots-clés spéciaux indiquant au bot WhatsApp l’action à effectuer",
       "label": "Commandes"
     },
-    "autoConnect": { "inProgress": "Connexion…" },
+    "autoConnect": {
+      "inProgress": "Connexion…"
+    },
     "connectExisting": "Connecter un compte WhatsApp Business existant",
     "embeddedSignupDone": "Inscription terminée — vous pouvez fermer cet onglet.",
     "embeddedSignupPopupBlocked": "Autorisez les fenêtres contextuelles pour ce site, puis réessayez.",
@@ -2388,7 +3283,10 @@
       "title": "Vérifier le numéro de téléphone WhatsApp",
       "description": "Demandez un code de vérification à Meta, saisissez-le ici et le numéro sera automatiquement enregistré.",
       "errorTitle": "Vérification du numéro requise",
-      "methods": { "sms": "SMS", "voice": "Appel vocal" },
+      "methods": {
+        "sms": "SMS",
+        "voice": "Appel vocal"
+      },
       "actions": {
         "sendCode": "Envoyer le code",
         "resendIn": "Renvoyer dans {seconds} s",
@@ -2425,45 +3323,94 @@
         "wabaResolveFailed": "Impossible d’identifier le compte WhatsApp Business à partir de l’autorisation."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "Intégration WhatsApp introuvable.",
+        "phoneNumberMismatch": "La reconnexion a renvoyé le compte WhatsApp Business attendu, mais pas le numéro de téléphone connecté à cet espace de travail.",
+        "wabaMismatch": "La reconnexion a renvoyé un compte WhatsApp Business différent. Veuillez reconnecter le même compte."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
-      "carouselImage": { "label": "Image du carrousel" },
-      "carouselVideo": { "label": "Vidéo du carrousel" },
-      "document": { "label": "Document" },
-      "image": { "label": "Image" },
-      "location": { "label": "Localisation" },
-      "text": { "label": "Texte" },
-      "video": { "label": "Vidéo" },
-      "viewCatalog": { "label": "Afficher le catalogue" },
-      "viewProduct": { "label": "Afficher le produit" },
+      "carouselImage": {
+        "label": "Image du carrousel"
+      },
+      "carouselVideo": {
+        "label": "Vidéo du carrousel"
+      },
+      "document": {
+        "label": "Document"
+      },
+      "image": {
+        "label": "Image"
+      },
+      "location": {
+        "label": "Localisation"
+      },
+      "text": {
+        "label": "Texte"
+      },
+      "video": {
+        "label": "Vidéo"
+      },
+      "viewCatalog": {
+        "label": "Afficher le catalogue"
+      },
+      "viewProduct": {
+        "label": "Afficher le produit"
+      },
       "params": {
         "couponCode": "Code de coupon",
         "couponCodePlaceholder": "Saisissez le code du coupon",
-        "quickReplyPayload": "Charge utile de la réponse rapide",
-        "quickReplyPayloadPlaceholder": "Saisissez la charge utile (facultatif)",
         "flowToken": "Jeton du flux",
         "flowTokenPlaceholder": "Saisissez le jeton du flux",
-        "catalogProductId": "Identifiant du produit",
-        "catalogProductIdPlaceholder": "Saisissez l’identifiant du produit du détaillant",
+        "flowNotSynced": "Synchronisez les flux WhatsApp pour mapper les champs soumis.",
+        "catalogProductId": "Produit du catalogue",
+        "catalogProductIdPlaceholder": "Rechercher des produits…",
         "carouselCard": "Carte {index}",
         "limitedTimeOffer": "Heure d’expiration de l’offre",
-        "limitedTimeOfferPlaceholder": "Saisissez l’heure d’expiration en millisecondes",
-        "limitedTimeOfferHelp": "Horodatage Unix en millisecondes à l’expiration de l’offre",
+        "limitedTimeOfferPlaceholder": "Choisir la date et l’heure d’expiration",
+        "limitedTimeOfferHelp": "L’heure d’expiration est envoyée exactement telle que choisie.",
         "location": "Localisation",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Nom du lieu (facultatif)",
         "locationAddress": "Adresse (facultatif)",
-        "enterFormatUrl": "Saisissez l’URL {format}"
+        "enterFormatUrl": "Saisissez l’URL {format}",
+        "catalogUseDefault": "Utiliser la vignette par défaut du catalogue",
+        "catalogNotConnectedGuidance": "Connectez un catalogue Meta pour sélectionner un produit.",
+        "catalogSetupLink": "Accéder aux paramètres du catalogue",
+        "catalogSelectedProductFallback": "Produit : {retailerId}",
+        "limitedTimeOfferBadge": "Expire le {date}",
+        "limitedTimeOfferExpiredBadge": "Expiré le {date}",
+        "mpmSections": "Produits",
+        "mpmSectionTitlePlaceholder": "Titre de la section (facultatif)",
+        "mpmAddSection": "Ajouter une section",
+        "mpmRemoveSection": "Supprimer la section",
+        "mpmAddProduct": "Ajouter un produit",
+        "mpmRemoveProduct": "Supprimer le produit",
+        "mpmNoProductsHelp": "Ajoutez au moins un produit avant de publier.",
+        "mpmSectionLimitReached": "Maximum de 10 sections atteint.",
+        "mpmProductLimitReached": "Maximum de 30 produits atteint.",
+        "mpmProductsSummary": "{productCount} produits dans {sectionCount} sections",
+        "unsupportedButtonParam": "Ce type de bouton n’est pas encore pris en charge."
       }
     },
     "sampleBodyCardContent": {
       "label": "Exemple de contenu du corps de la carte"
     },
-    "sampleBodyContent": { "label": "Exemple de contenu du corps" },
-    "sampleHeaderContent": { "label": "Exemple de contenu de l’en-tête" },
-    "showFooter": { "label": "Afficher le pied de page" },
-    "showHeader": { "label": "Afficher l’en-tête" },
+    "sampleBodyContent": {
+      "label": "Exemple de contenu du corps"
+    },
+    "sampleHeaderContent": {
+      "label": "Exemple de contenu de l’en-tête"
+    },
+    "showFooter": {
+      "label": "Afficher le pied de page"
+    },
+    "showHeader": {
+      "label": "Afficher l’en-tête"
+    },
     "tabs": {
       "accountHealths": "État du compte",
       "automation": "Automatisation",
@@ -2471,7 +3418,9 @@
       "flows": "Flux",
       "messageTemplates": "Modèles de message",
       "profile": "Profil",
-      "usefulLinks": "Liens utiles"
+      "usefulLinks": "Liens utiles",
+      "conversionsApi": "Optimisation des publicités",
+      "settings": "Paramètres"
     },
     "accountHealths": {
       "title": "Gérer votre compte WhatsApp",
@@ -2565,7 +3514,10 @@
         "NONE": "Aucun",
         "PENDING_REVIEW": "Examen en attente"
       },
-      "accountMode": { "LIVE": "Production", "SANDBOX": "Bac à sable" },
+      "accountMode": {
+        "LIVE": "Production",
+        "SANDBOX": "Bac à sable"
+      },
       "canSendMessage": {
         "AVAILABLE": "DISPONIBLE",
         "LIMITED": "LIMITÉ",
@@ -2591,10 +3543,20 @@
         }
       }
     },
-    "templateFooter": { "label": "Pied de page du modèle" },
-    "templateHeader": { "label": "En-tête du modèle" },
+    "templateFooter": {
+      "label": "Pied de page du modèle"
+    },
+    "templateHeader": {
+      "label": "En-tête du modèle"
+    },
     "transferPhoneNumber": "Transférer le téléphone depuis un autre fournisseur WhatsApp",
-    "signupSessionExpired": "Votre session d’inscription WhatsApp a expiré. Recommencez la connexion."
+    "signupSessionExpired": "Votre session d’inscription WhatsApp a expiré. Recommencez la connexion.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Événements automatiques",
+        "description": "Envoyez automatiquement les événements de conversion de ce numéro WhatsApp vers Meta. Si l’autorisation manque, reconnectez le compte pour l’accorder."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
@@ -2618,9 +3580,15 @@
     "invalidInvitation": "Cette invitation n’est pas valide ou a expiré.",
     "workspaceUnavailable": "Cet espace de travail n’est plus disponible."
   },
-  "inboxTeams": { "title": "Équipes de la boîte de réception" },
-  "userPersistentMenus": { "title": "Menus persistants des utilisateurs" },
-  "webhooks": { "title": "Webhooks" },
+  "inboxTeams": {
+    "title": "Équipes de la boîte de réception"
+  },
+  "userPersistentMenus": {
+    "title": "Menus persistants des utilisateurs"
+  },
+  "webhooks": {
+    "title": "Webhooks"
+  },
   "reflinks": {
     "title": "Liens de point d’entrée",
     "description": "Liens par mot-clé qui démarrent des flux et capturent les charges utiles de référence des canaux."
@@ -2628,6 +3596,67 @@
   "qrCodes": {
     "title": "Codes QR",
     "description": "Créez des codes QR qui renvoient vers les flux de votre chatbot."
+  },
+  "dynamicImages": {
+    "title": "Images dynamiques",
+    "description": "Générez des images personnalisées par contact à partir d’un arrière-plan et de calques de texte, d’image ou de QR code.",
+    "publicUrl": {
+      "label": "URL publique",
+      "hint": "Copiez et collez l'URL dans votre flux, votre diffusion ou votre séquence pour envoyer des images personnalisées."
+    },
+    "editor": {
+      "addElement": "Ajouter un élément",
+      "addImage": "Ajouter une image",
+      "addText": "Ajouter du texte",
+      "addQrCode": "Ajouter un code QR",
+      "template": "Modèle",
+      "templateDialogTitle": "Choisir un modèle",
+      "templateDialogDescription": "La sélection d'un modèle remplace tous les calques actuels.",
+      "layers": "Calques",
+      "noLayers": "Aucun calque pour le moment. Ajoutez un élément pour commencer.",
+      "deleteLayer": "Supprimer le calque",
+      "layerNameImage": "Image",
+      "layerNameText": "Texte",
+      "layerNameQrCode": "Code QR",
+      "editElement": "Modifier l’élément",
+      "selectElementHint": "Sélectionnez un élément sur le canevas pour modifier ses propriétés.",
+      "width": "Largeur",
+      "height": "Hauteur",
+      "priority": "Priorité",
+      "imageType": "Type d’image",
+      "imageTypeUrl": "URL de l’image",
+      "imageTypeAvatarUser": "Avatar du contact",
+      "imageTypeCustomField": "Champ personnalisé",
+      "imageUrl": "URL de l’image",
+      "uploadImage": "Importer une image",
+      "customField": "Champ personnalisé",
+      "imageStyle": "Style d’image",
+      "imageStyleSquare": "Carré",
+      "imageStyleCircle": "Cercle",
+      "qrText": "Contenu du code QR",
+      "qrSize": "Taille",
+      "qrColor": "Couleur",
+      "qrLogo": "Logo",
+      "uploadLogo": "Importer un logo",
+      "textContent": "Contenu du texte",
+      "fontSize": "Taille de police",
+      "fontFamily": "Police",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alignement",
+      "alignLeft": "Gauche",
+      "alignCenter": "Centre",
+      "alignRight": "Droite",
+      "color": "Couleur",
+      "bold": "Gras",
+      "italic": "Italique",
+      "uppercase": "Majuscules"
+    },
+    "preview": {
+      "error": "Échec du chargement de l'image dynamique liée. Elle a peut-être été supprimée."
+    }
   },
   "magicLinks": {
     "title": "Liens magiques",
@@ -2685,7 +3714,8 @@
       "clearCustomField": "Effacer le champ personnalisé",
       "startAnotherFlow": "Démarrer un autre flux",
       "notifyAdmins": "Notifier les administrateurs",
-      "transferConversationToHuman": "Transférer la conversation à un humain"
+      "transferConversationToHuman": "Transférer la conversation à un humain",
+      "sendMetaCapiEvent": "Envoyer un événement Meta CAPI"
     },
     "triggerGoesOff": "Le déclencheur s’active",
     "before": "Avant",
@@ -2696,7 +3726,9 @@
     "minute": "Minute",
     "at": "À"
   },
-  "errorLogs": { "title": "Journaux des erreurs" },
+  "errorLogs": {
+    "title": "Journaux des erreurs"
+  },
   "developerAccessToken": {
     "title": "Jeton d’accès API",
     "description": "Générez un jeton pour permettre à votre espace de travail d’accéder aux API publiques. Gardez ce jeton secret et ne le partagez avec personne."
@@ -2717,8 +3749,15 @@
     "exportTakingLong": "L’exportation prend plus de temps que prévu",
     "exportTakingLongDescription": "L’exportation est toujours en cours. Vous pouvez fermer cette boîte de dialogue et consulter l’historique des exportations dans quelques minutes."
   },
-  "auditLogs": { "title": "Journaux d’audit" },
-  "customFields": { "title": "Champs personnalisés" },
+  "auditLogs": {
+    "title": "Journaux d’audit"
+  },
+  "customFields": {
+    "title": "Champs personnalisés",
+    "variables": {
+      "rawGroup": "Champs personnalisés bruts"
+    }
+  },
   "keywords": {
     "title": "Mots-clés",
     "tabs": {
@@ -2733,8 +3772,12 @@
     },
     "pageWarning": "Un message contenant un mot-clé de Page peut entraîner l'envoi de messages au contact en boucle infinie. Désactivez immédiatement le mot-clé de Page si cela se produit !"
   },
-  "triggers": { "title": "Déclencheurs" },
-  "users": { "title": "Utilisateurs" },
+  "triggers": {
+    "title": "Déclencheurs"
+  },
+  "users": {
+    "title": "Utilisateurs"
+  },
   "sequences": {
     "title": "Séquences",
     "subscribers": "Abonnés",
@@ -2821,7 +3864,9 @@
     "sunday": "Dimanche",
     "afterText": "Après"
   },
-  "tools": { "title": "Outils" },
+  "tools": {
+    "title": "Outils"
+  },
   "aiProviders": {
     "openai": "OpenAI",
     "gemini": "Gemini",
@@ -3004,7 +4049,9 @@
       "keywords": "Mots-clés",
       "showCommentsAfter": "Afficher les commentaires après"
     },
-    "showCommentsAfter": { "none": "Jamais" },
+    "showCommentsAfter": {
+      "none": "Jamais"
+    },
     "selectPosts": "Sélectionner des publications",
     "selectPageAll": "Toutes les Pages",
     "chooseSpecificPosts": "Choisir des publications...",
@@ -3100,7 +4147,9 @@
       "keywords": "Mots-clés",
       "showCommentsAfter": "Afficher les commentaires après"
     },
-    "showCommentsAfter": { "none": "Jamais" },
+    "showCommentsAfter": {
+      "none": "Jamais"
+    },
     "selectPosts": "Sélectionner des publications",
     "selectPageAll": "Tous les comptes",
     "chooseSpecificPosts": "Choisir des publications...",
@@ -3186,7 +4235,6 @@
     "allFormsNote": "Les prospects de tous les formulaires de cette Page seront capturés. Les champs standard (e-mail, téléphone, nom et genre) sont automatiquement enregistrés dans les champs de contact correspondants.",
     "leadData": "Données du prospect",
     "whatFlow": "Flux déclenché",
-    "none": "Aucun",
     "addNewPage": "Ajouter",
     "noEligiblePages": "Aucune Page admissible. Utilisez « Ajouter » pour accorder l’accès aux prospects.",
     "duplicateError": "Une automatisation existe déjà pour cette Page et ce formulaire.",
@@ -3198,7 +4246,28 @@
   },
   "appointmentScheduling": {
     "title": "Planification des rendez-vous",
-    "description": "Créez et gérez la planification de vos rendez-vous."
+    "description": "Créez et gérez la planification de vos rendez-vous.",
+    "flowModes": {
+      "bookFromCustomField": "Réserver un rendez-vous",
+      "checkAvailabilityFromCustomField": "Vérifier les disponibilités",
+      "book": "Sélecteur de date et d’heure",
+      "checkAvailability": "Sélecteur de plage de dates",
+      "cancel": "Annuler un rendez-vous"
+    },
+    "fields": {
+      "mode": "Mode",
+      "dateTimeFieldId": "Enregistrer la date sélectionnée dans",
+      "dateTimeFieldIdSource": "Champ date/heure",
+      "startDateFieldId": "Champ date de début",
+      "endDateFieldId": "Champ date de fin",
+      "resultUsedByAI": "Utiliser le résultat pour l’IA",
+      "outputCustomFieldId": "Enregistrer la réponse dans un champ personnalisé",
+      "startDateFieldIdSelected": "Enregistrer la date de début sélectionnée dans",
+      "endDateFieldIdSelected": "Enregistrer la date de fin sélectionnée dans"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Choisissez comment cette étape du flux planifie les rendez-vous."
+    }
   },
   "templates": {
     "title": "Modèles",
@@ -3217,7 +4286,9 @@
       "title": "Liens d’aide",
       "description": "Liens d’aide affichés dans la barre latérale de tous les espaces de travail qui n’appartiennent pas à un locataire en marque blanche."
     },
-    "queues": { "title": "Files d’attente" }
+    "queues": {
+      "title": "Files d’attente"
+    }
   },
   "platformCredentials": {
     "title": "Identifiants de la plateforme",
@@ -3284,7 +4355,10 @@
         "placeholder": "Laissez vide pour utiliser le modèle par défaut"
       }
     },
-    "status": { "custom": "Personnalisé", "default": "Par défaut" },
+    "status": {
+      "custom": "Personnalisé",
+      "default": "Par défaut"
+    },
     "availableVariables": "Variables disponibles",
     "preview": {
       "title": "Aperçu",
@@ -3339,11 +4413,17 @@
     },
     "unknown": "Inconnu"
   },
-  "orders": { "title": "Commandes" },
+  "orders": {
+    "title": "Commandes"
+  },
   "products": {
     "title": "Produits",
-    "create": { "title": "Créer un produit" },
-    "edit": { "title": "Modifier le produit" },
+    "create": {
+      "title": "Créer un produit"
+    },
+    "edit": {
+      "title": "Modifier le produit"
+    },
     "sections": {
       "pricing": "Tarification",
       "images": "Images",
@@ -3354,50 +4434,96 @@
       "moreOptions": "Plus d’options"
     },
     "fields": {
-      "shortDescription": { "label": "Description courte" },
-      "longDescription": { "label": "Description longue" },
-      "price": { "label": "Prix" },
-      "taxes": { "label": "Taxes (0-100 %)" },
-      "discount": { "label": "Remise (0-100 %)" },
-      "currency": { "label": "Devise" },
+      "shortDescription": {
+        "label": "Description courte"
+      },
+      "longDescription": {
+        "label": "Description longue"
+      },
+      "price": {
+        "label": "Prix"
+      },
+      "taxes": {
+        "label": "Taxes (0-100 %)"
+      },
+      "discount": {
+        "label": "Remise (0-100 %)"
+      },
+      "currency": {
+        "label": "Devise"
+      },
       "productUrl": {
         "label": "URL du produit",
         "placeholder": "https://store.example.com/products/123",
         "description": "Page ouverte par les clients depuis Messenger Shopping. Les produits sans URL sont ignorés lors de la synchronisation avec le catalogue Meta."
       },
-      "sku": { "label": "UGS", "placeholder": "Facultatif" },
-      "inventoryPolicy": { "label": "Politique de stock" },
-      "inventoryQuantity": { "label": "Quantité" },
+      "sku": {
+        "label": "UGS",
+        "placeholder": "Facultatif"
+      },
+      "inventoryPolicy": {
+        "label": "Politique de stock"
+      },
+      "inventoryQuantity": {
+        "label": "Quantité"
+      },
       "allowOutOfStockPurchase": {
         "label": "Autoriser l’achat de ce produit lorsqu’il est épuisé"
       },
-      "vendor": { "label": "Fournisseur" },
-      "rank": { "label": "Classement" },
-      "category": { "label": "Catégorie", "placeholder": "Sans catégorie" },
-      "subcategory": { "label": "Sous-catégorie", "placeholder": "Aucune" },
-      "isSearchable": { "label": "Ce produit peut être recherché dans le bot" },
+      "vendor": {
+        "label": "Fournisseur"
+      },
+      "rank": {
+        "label": "Classement"
+      },
+      "category": {
+        "label": "Catégorie",
+        "placeholder": "Sans catégorie"
+      },
+      "subcategory": {
+        "label": "Sous-catégorie",
+        "placeholder": "Aucune"
+      },
+      "isSearchable": {
+        "label": "Ce produit peut être recherché dans le bot"
+      },
       "allowSpecialRequest": {
         "label": "Autoriser l’utilisateur à faire une demande spéciale (ajouter des notes)"
       },
-      "isActive": { "label": "Actif" },
+      "isActive": {
+        "label": "Actif"
+      },
       "isAddonOnly": {
         "label": "Utiliser ce produit uniquement comme supplément d’autres produits"
       },
-      "optionName": { "label": "Nom de l’option" },
-      "optionValue": { "label": "Valeur de l’option" },
-      "variant": { "label": "Variante" },
+      "optionName": {
+        "label": "Nom de l’option"
+      },
+      "optionValue": {
+        "label": "Valeur de l’option"
+      },
+      "variant": {
+        "label": "Variante"
+      },
       "addImageFromLink": "Ajouter une image",
       "uploadImage": "Téléverser une image",
       "tagsDescription": "Les étiquettes peuvent faire l’objet d’une recherche.",
       "addonsDescription": "Ajoutez des produits que les clients peuvent acheter en supplément. Vous pouvez aussi proposer ici des produits gratuits, par exemple des boissons offertes par un restaurant. Vous devez créer un produit avant de l’utiliser comme supplément.",
-      "addonName": { "label": "Nom", "placeholder": "nom" },
-      "addonMaxSelections": { "label": "Sélections maximales" },
+      "addonName": {
+        "label": "Nom",
+        "placeholder": "nom"
+      },
+      "addonMaxSelections": {
+        "label": "Sélections maximales"
+      },
       "addonProducts": {
         "label": "Produits",
         "placeholder": "Sélectionnez des produits..."
       },
       "variantsDescription": "Ajoutez des variantes si ce produit existe en plusieurs versions, comme différentes tailles ou couleurs",
-      "metaCatalogId": { "label": "Identifiant du catalogue Meta" }
+      "metaCatalogId": {
+        "label": "Identifiant du catalogue Meta"
+      }
     },
     "inventoryPolicy": {
       "dont_track": "Ne pas suivre le stock",
@@ -3420,7 +4546,10 @@
       "listTopic": "Liste des thèmes",
       "archive": "Archives"
     },
-    "topic": { "create": "Créer", "edit": "Modifier le thème" },
+    "topic": {
+      "create": "Créer",
+      "edit": "Modifier le thème"
+    },
     "actions": {
       "import": "Importer des coupons",
       "export": "Télécharger la liste des coupons",
@@ -3441,9 +4570,17 @@
       "allUsageStatuses": "Toutes les utilisations",
       "searchCode": "Rechercher un code"
     },
-    "issueStatuses": { "published": "Publié", "unpublished": "Non publié" },
-    "usageStatuses": { "used": "Utilisé", "notUsed": "Pas encore utilisé" },
-    "variables": { "group": "Coupons" },
+    "issueStatuses": {
+      "published": "Publié",
+      "unpublished": "Non publié"
+    },
+    "usageStatuses": {
+      "used": "Utilisé",
+      "notUsed": "Pas encore utilisé"
+    },
+    "variables": {
+      "group": "Coupons"
+    },
     "messages": {
       "topicSaved": "Thème de coupon enregistré.",
       "editLocked": "Le nom et la description sont verrouillés après la création ou l’importation de coupons.",
@@ -3493,7 +4630,7 @@
     "expand": "Afficher les sous-catégories",
     "collapse": "Masquer les sous-catégories",
     "productCount": "{count, plural, =0 {Aucun produit} one {# produit} other {# produits}}",
-    "deleteChildrenWarning": "{count, plural, one {Sa sous-catégorie sera également supprimée.} other {Ses # sous-catégories seront également supprimées.}}"
+    "deleteChildrenWarning": "{count, plural, one {Sa # sous-catégorie sera également supprimée.} other {Ses # sous-catégories seront également supprimées.}}"
   },
   "productImport": {
     "title": "Importer",
@@ -3590,7 +4727,10 @@
       "unknown": "Indisponible",
       "never": "Jamais",
       "noExpiry": "N’expire pas",
-      "authModes": { "oauth": "OAuth", "fbe": "Extension Facebook Business" },
+      "authModes": {
+        "oauth": "OAuth",
+        "fbe": "Extension Facebook Business"
+      },
       "connectionStatuses": {
         "active": "Active",
         "invalid": "Reconnexion requise"
@@ -3660,7 +4800,10 @@
       "queueSync": "Impossible de mettre la synchronisation du catalogue Meta en file d’attente."
     }
   },
-  "helpMenu": { "title": "Aide", "ariaLabel": "Ouvrir le menu d’aide" },
+  "helpMenu": {
+    "title": "Aide",
+    "ariaLabel": "Ouvrir le menu d’aide"
+  },
   "helpItems": {
     "title": "Liens d’aide",
     "addTitle": "Ajouter un lien d’aide",
@@ -3676,6 +4819,382 @@
       "iconPlaceholder": "p. ex. book-open, star, circle-question-mark",
       "position": "Ordre",
       "iconSearchLink": "Parcourir les icônes Lucide →"
+    }
+  },
+  "bookingWebview": {
+    "metadataTitle": "Réserver un rendez-vous",
+    "badge": "Rendez-vous",
+    "timezone": "Fuseau horaire",
+    "empty": "Aucun créneau disponible n’a été trouvé.",
+    "noSelection": "Choisissez un horaire",
+    "actions": {
+      "book": "Réserver un rendez-vous",
+      "viewDetails": "Voir les détails"
+    },
+    "errors": {
+      "invalidTokenTitle": "Ce lien de réservation n’est pas disponible.",
+      "invalidTokenDescription": "Le lien est peut-être invalide ou expiré. Veuillez demander un nouveau lien de réservation.",
+      "staleSlot": "Cet horaire n’est plus disponible. Veuillez choisir un autre horaire.",
+      "availabilityChanged": "Les disponibilités ont changé pendant que vous choisissiez un horaire. Veuillez choisir à nouveau.",
+      "submitFailed": "Nous n’avons pas pu terminer cette demande. Veuillez réessayer."
+    },
+    "success": {
+      "title": "Votre rendez-vous est réservé.",
+      "description": "Les détails du rendez-vous sont prêts."
+    },
+    "schedule": {
+      "metadataTitle": "Détails du rendez-vous",
+      "defaultMessage": "Votre rendez-vous a été planifié.",
+      "unknownInvitee": "Invité",
+      "fields": {
+        "invitee": "Invité",
+        "time": "Heure",
+        "timezone": "Fuseau horaire",
+        "location": "Lieu"
+      },
+      "status": {
+        "scheduled": "Planifié",
+        "cancelled": "Annulé"
+      },
+      "locationTypes": {
+        "inPerson": "Réunion en personne",
+        "phoneCall": "Appel téléphonique",
+        "onlineMeeting": "Réunion en ligne"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Annuler le rendez-vous",
+      "title": "Annuler le rendez-vous",
+      "description": "Annuler {calendar} à {time}.",
+      "action": "Annuler le rendez-vous",
+      "cancelledTitle": "Rendez-vous annulé",
+      "cancelledDescription": "Ce rendez-vous a été annulé.",
+      "unavailableTitle": "Annulation indisponible",
+      "unavailableDescription": "Ce rendez-vous est déjà annulé, supprimé ou passé."
+    },
+    "range": {
+      "metadataTitle": "Vérifier les disponibilités",
+      "empty": "Non sélectionné",
+      "successTitle": "Plage de dates reçue.",
+      "successDescription": "Nous vérifions les horaires de rendez-vous disponibles.",
+      "fields": {
+        "startDate": "Date de début",
+        "endDate": "Date de fin",
+        "startTime": "Heure de début",
+        "endTime": "Heure de fin"
+      },
+      "actions": {
+        "skip": "Passer"
+      },
+      "errors": {
+        "invalidRange": "La date de fin doit être égale ou postérieure à la date de début."
+      },
+      "timezoneHint": "Les horaires sont affichés en {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Sélectionner une date",
+    "date": {
+      "title": "Sélectionnez une date"
+    },
+    "datetime": {
+      "title": "Sélectionnez une date et une heure"
+    },
+    "noSelection": "Choisissez une date",
+    "actions": {
+      "submit": "Envoyer"
+    },
+    "success": {
+      "title": "Les données ont été enregistrées",
+      "description": "Vous pouvez fermer cet onglet maintenant."
+    },
+    "errors": {
+      "invalidTokenTitle": "Ce lien n’est pas disponible.",
+      "invalidTokenDescription": "Le lien est peut-être invalide ou expiré. Veuillez demander un nouveau lien.",
+      "submitFailed": "Nous n’avons pas pu terminer cette demande. Veuillez réessayer."
+    },
+    "monthLabel": "Mois",
+    "yearLabel": "Année"
+  },
+  "appointments": {
+    "title": "Rendez-vous",
+    "statuses": {
+      "scheduled": "Planifié",
+      "cancelled": "Annulé"
+    },
+    "messages": {
+      "empty": "Aucun rendez-vous pour le moment."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Rendez-vous",
+    "singular": "Rendez-vous",
+    "unknownContact": "Contact inconnu",
+    "searchPlaceholder": "Rechercher par nom...",
+    "tabs": {
+      "next": "À venir",
+      "past": "Passés"
+    },
+    "fields": {
+      "name": "Nom",
+      "date": "Date",
+      "status": "État",
+      "calendar": "Calendrier"
+    },
+    "statuses": {
+      "scheduled": "Planifié",
+      "cancelled": "Annulé"
+    },
+    "actions": {
+      "cancelAppointment": "Annuler le rendez-vous"
+    },
+    "dialogs": {
+      "cancelTitle": "Annuler le rendez-vous",
+      "cancelDescription": "Annulez ce rendez-vous et exécutez les effets associés à son annulation.",
+      "deleteTitle": "Supprimer le rendez-vous",
+      "deleteDescription": "Supprimez ce rendez-vous de la liste de gestion. Cette action n’exécutera pas le flux d’annulation."
+    },
+    "messages": {
+      "cancelled": "Rendez-vous annulé.",
+      "deleted": "Rendez-vous supprimé."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Calendriers de rendez-vous",
+    "singular": "Calendrier de rendez-vous",
+    "addNew": "Ajouter",
+    "none": "Aucun",
+    "addReminder": "Ajouter un rappel",
+    "reminderSummary": "Envoyer un rappel - {calendar} {timing}.",
+    "noExternalConnections": "Aucune connexion à un calendrier externe pour le moment",
+    "dialogDescriptions": {
+      "create": "Donnez un nom à votre calendrier de rendez-vous pour commencer.",
+      "rename": "Renommez ce calendrier de rendez-vous."
+    },
+    "tabs": {
+      "calendars": "Calendriers",
+      "appointments": "Rendez-vous",
+      "externalCalendars": "Calendriers externes"
+    },
+    "sections": {
+      "appointment": "Quel est votre rendez-vous",
+      "availability": "Quand peut-on réserver ?",
+      "duration": "Quelle est la durée de votre rendez-vous ?",
+      "location": "Où le rendez-vous aura-t-il lieu ?",
+      "notifications": "Notifications",
+      "restrictions": "Restrictions",
+      "externalCalendar": "Connecter Google Calendar"
+    },
+    "fields": {
+      "description": "Description",
+      "timezone": "Fuseau horaire",
+      "locationType": "Type de lieu",
+      "locationDetail": "Détail",
+      "durationMinutes": "Durée du rendez-vous",
+      "bufferAfterMinutes": "Ajouter du temps après vos rendez-vous",
+      "scheduleWindowType": "Les personnes peuvent réserver",
+      "rollingDays": "Jours glissants",
+      "minAdvanceDays": "Délai minimum à l’avance (jours)",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "specificDate": "Date",
+      "maxAppointmentsPerUser": "Nombre maximum de rendez-vous par utilisateur",
+      "maxAppointmentsUnlimited": "Illimité",
+      "dailyLimitEnabled": "Limite quotidienne",
+      "maxPerDay": "Maximum par jour",
+      "allowGroupMeeting": "Autoriser les réunions de groupe",
+      "maxPerSlot": "Maximum par créneau",
+      "confirmationMessage": "Message de confirmation",
+      "confirmationFlowId": "Flux de confirmation",
+      "cancellationFlowId": "Flux d’annulation",
+      "externalConnectionId": "Calendrier externe",
+      "reminders": "Rappels",
+      "reminderTimingValue": "Valeur",
+      "reminderTimingUnit": "Unité"
+    },
+    "locationTypes": {
+      "inPerson": "Réunion en personne",
+      "phoneCall": "Appel téléphonique",
+      "onlineMeeting": "Réunion en ligne"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Dans un nombre de jours glissants à venir",
+      "dateRange": "Dans une plage de dates",
+      "specificDay": "Un jour précis",
+      "anyFutureDate": "À n’importe quelle date future"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minutes avant",
+      "hours": "Heures avant",
+      "days": "Jours avant"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minute avant} other {# minutes avant}}",
+      "hours": "{count, plural, one {une heure avant} other {# heures avant}}",
+      "days": "{count, plural, one {un jour avant} other {# jours avant}}"
+    },
+    "weekdays": {
+      "0": "Dimanche",
+      "1": "Lundi",
+      "2": "Mardi",
+      "3": "Mercredi",
+      "4": "Jeudi",
+      "5": "Vendredi",
+      "6": "Samedi"
+    },
+    "weekdayEditor": {
+      "description": "Définissez les plages horaires disponibles pour ce jour.",
+      "unavailable": "Indisponible",
+      "overlapWarning": "Certaines plages se chevauchent. Le temps chevauché n’est pas compté deux fois.",
+      "addInterval": "Ajouter une plage",
+      "startTime": "Heure de début",
+      "endTime": "Heure de fin"
+    },
+    "tooltips": {
+      "timezone": "Le fuseau horaire dans lequel vous créez ce calendrier. Les personnes verront les disponibilités selon leur propre fuseau horaire.",
+      "confirmationFlow": "Le flux envoyé une fois que l’utilisateur a réservé un rendez-vous.",
+      "cancellationFlow": "Le flux envoyé une fois qu’un rendez-vous est annulé.",
+      "reminders": "Envoyez des rappels pour que l’invité se souvienne du rendez-vous.",
+      "appointmentDuration": "Définissez la durée de votre rendez-vous.",
+      "bufferAfterMinutes": "Accordez-vous un temps tampon pour conclure après vos rendez-vous réservés.",
+      "peopleCanSchedule": "Définissez une plage de dates pendant laquelle vous pouvez accepter des rendez-vous.",
+      "maxAppointmentsPerUser": "Le nombre maximum de rendez-vous futurs qu’un utilisateur est autorisé à réserver.",
+      "rollingDays": "Autorisez la réservation jusqu’à un certain nombre de jours dans le futur",
+      "minAdvanceDays": "Exigez que les réservations soient effectuées au moins ce nombre de jours à l’avance. Utilisez 0 pour autoriser les réservations le jour même.",
+      "dailyLimit": "Le nombre maximum de personnes autorisées à réserver par jour.",
+      "allowGroupMeeting": "Autorisez plusieurs personnes à réserver le même créneau horaire.",
+      "externalCalendar": "Connectez Google Calendar pour synchroniser vos rendez-vous."
+    },
+    "minutesLabel": "{count} minutes"
+  },
+  "externalCalendars": {
+    "title": "Calendriers externes",
+    "connectGoogle": "Connecter Google",
+    "emptyEmail": "Aucun e-mail",
+    "fields": {
+      "provider": "Fournisseur",
+      "email": "E-mail",
+      "calendarId": "ID du calendrier",
+      "connected": "Connecté",
+      "date": "Date"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Modifier l’ID du calendrier",
+      "editDescription": "Choisissez l’ID du calendrier Google Calendar à vérifier pour les conflits et la création d’événements de rendez-vous.",
+      "deleteTitle": "Déconnecter le calendrier",
+      "deleteDescription": "Déconnectez ce calendrier Google Calendar de la planification des rendez-vous."
+    },
+    "messages": {
+      "connected": "Google Calendar connecté.",
+      "connectFailed": "Impossible de connecter Google Calendar. Vérifiez les paramètres OAuth Google et l’accès à l’API Calendar, puis réessayez.",
+      "calendarIdUpdated": "ID du calendrier mis à jour.",
+      "disconnected": "Calendrier déconnecté."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Réservation",
+    "comingSoonTitle": "Page de réservation bientôt disponible",
+    "comingSoonDescription": "Cette page de réservation publique n’est pas encore disponible."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Envoyez des événements LeadSubmitted depuis les conversations Messenger, Instagram et WhatsApp vers Meta.",
+    "datasetId": "ID de l’ensemble de données",
+    "reconnect": "Reconnecter les autorisations",
+    "connectViaFacebook": "Connecter via Facebook",
+    "unsupportedExplanation": "Ce compte Instagram a été connecté avec Instagram Business Login. Connectez le compte via Facebook pour utiliser Meta Conversions API.",
+    "flowStep": {
+      "description": "Mettez en file d’attente un événement LeadSubmitted pour Messenger, Instagram ou WhatsApp.",
+      "whatsappNote": "Les événements WhatsApp ne sont envoyés que pour les conversations démarrées à partir d’une publicité click-to-WhatsApp."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Prêt",
+      "missingPermission": "Autorisation requise",
+      "unverified": "Non vérifié",
+      "unsupported": "Non pris en charge",
+      "notConnected": "Non connecté"
+    },
+    "statusDescriptions": {
+      "ready": "Cette intégration dispose de l’autorisation Meta requise pour les événements Conversions API.",
+      "missingPermission": "Reconnectez cette intégration et accordez l’autorisation Meta demandée.",
+      "unverified": "Les paramètres de l’application de la plateforme ne sont pas disponibles, l’autorisation CAPI ne peut donc pas être vérifiée.",
+      "unsupported": "Meta Conversions API pour Instagram nécessite un compte connecté via Facebook Login for Business.",
+      "notConnected": "Conversions API est un outil professionnel Meta qui vous permet de partager des données avec Meta afin d’améliorer les performances de vos publicités."
+    },
+    "errors": {
+      "reconnect": "Échec du démarrage de la reconnexion Meta CAPI.",
+      "messengerNotFound": "Intégration Messenger introuvable.",
+      "instagramNotFound": "Intégration Instagram introuvable.",
+      "instagramRequiresFacebook": "Instagram CAPI nécessite une connexion via Facebook.",
+      "saveFailed": "Impossible d’enregistrer. Veuillez réessayer.",
+      "datasetRequired": "Enregistrez un ID d’ensemble de données avant d’ajouter un jeton d’accès.",
+      "invalidToken": "Ce jeton n’a pas pu accéder à l’ensemble de données.",
+      "invalidDatasetId": "Saisissez un Dataset ID valide (chiffres uniquement).",
+      "whatsappNotFound": "Intégration WhatsApp introuvable."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Type d’événement",
+        "leadSubmitted": "Prospect soumis"
+      },
+      "value": "Valeur",
+      "valuePlaceholder": "p. ex. 250",
+      "currency": "Devise",
+      "currencyPlaceholder": "p. ex. USD",
+      "contentCategory": "Catégorie de contenu",
+      "contentCategoryPlaceholder": "La catégorie du contenu associé à l’événement",
+      "contentName": "Nom du contenu",
+      "contentNamePlaceholder": "Le nom de la page ou du produit associé à l’événement"
+    },
+    "datasetIdPlaceholder": "Collez l’ID de l’ensemble de données depuis Events Manager",
+    "saveDataset": "Enregistrer",
+    "accessToken": "Jeton d’accès (facultatif)",
+    "accessTokenHint": "Collez un jeton depuis Events Manager pour envoyer les événements avec votre propre jeton au lieu du jeton de la page connectée. Nécessite un ID d’ensemble de données.",
+    "accessTokenPlaceholder": "Jeton d’accès Events Manager",
+    "saveToken": "Enregistrer le jeton",
+    "tokenSaved": "Jeton enregistré",
+    "removeToken": "Supprimer",
+    "saved": "Enregistré",
+    "help": {
+      "delay": "Les événements peuvent prendre jusqu’à 40 minutes pour apparaître dans Events Manager et s’afficher comme Meta Leads dans Ads Manager."
+    },
+    "connected": "Connecté",
+    "disconnect": "Déconnecter",
+    "openEventManager": "Ouvrir Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connecter via Facebook",
+        "description": "Utilisez la connexion existante de votre page, puis choisissez un ID d’ensemble de données.",
+        "connect": "Créer un ensemble de données",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Connexion personnalisée",
+        "description": "Utilisez un ID d’ensemble de données et un jeton d’accès depuis Meta Events Manager.",
+        "start": "Configurer une connexion personnalisée",
+        "connect": "Connecter",
+        "connectedLabel": "Personnalisée"
+      },
+      "whatsapp": {
+        "title": "Connecter via WhatsApp",
+        "description": "Utilisez votre connexion WhatsApp, puis choisissez un ID d’ensemble de données.",
+        "connect": "Créer un ensemble de données",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choisissez un ID d’ensemble de données",
+      "description": "Saisissez un ID d’ensemble de données existant, ou laissez le champ vide pour en créer un automatiquement.",
+      "save": "Enregistrer",
+      "createDataset": "Créer un ensemble de données",
+      "caveat": "Un ID d’ensemble de données non lié à cette page ou à ce compte Instagram peut ne pas attribuer les événements correctement. Laissez ce champ vide pour créer automatiquement un ensemble de données lié."
+    },
+    "whatsapp": {
+      "connect": "Connecter"
     }
   }
 }

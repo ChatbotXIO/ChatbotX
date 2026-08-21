@@ -84,9 +84,9 @@ describe("encryptUtils", () => {
       ).rejects.toThrow()
     })
 
-    test("decrypting without aad throws when aad was used at encryption", async () => {
+    test("decrypting without aad falls back to the aad stored on the blob", async () => {
       const blob = await encryptUtils.encryptText("secret", "org:1:whatsapp")
-      await expect(encryptUtils.decryptText(blob)).rejects.toThrow()
+      expect(await encryptUtils.decryptText(blob)).toBe("secret")
     })
 
     test("decrypting with aad throws when no aad was used at encryption", async () => {

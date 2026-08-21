@@ -1,4 +1,4 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodUrlWithVariables } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "../types"
 import { baseStepSchema } from "./base"
@@ -8,7 +8,9 @@ import { stepTypes } from "./step-action"
 export const sendImageStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.sendImage),
   mode: uploadModes,
-  url: z.url(),
+  // Accepts a plain URL or a `{{customField}}` placeholder resolved at send
+  // time by the worker's contact-variable interpolation.
+  url: zodUrlWithVariables(),
   buttons: z.array(buttonStepSchema),
 })
 

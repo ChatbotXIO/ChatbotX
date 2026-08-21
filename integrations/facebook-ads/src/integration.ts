@@ -7,10 +7,13 @@ import { getAdAccounts, getCustomAudiences } from "./apis/ad-accounts"
 import {
   buildHashedPayload,
   buildPageUidPayload,
+  bulkSyncHashedAudienceUsers,
   getAudienceMarketingMessagesPage,
   mutateAudienceUsers,
 } from "./apis/audience-users"
 import { revokeToken } from "./apis/auth"
+import { createCustomAudience } from "./apis/custom-audiences"
+import { getAdInsights } from "./apis/insights"
 import { FacebookAdsException } from "./exception"
 import type {
   FacebookAdsActions,
@@ -33,6 +36,32 @@ const config: IntegrationDefinition<
         props.adAccountId,
         ctx.auth.version,
       ),
+    getAdInsights: ({ ctx, props }) =>
+      getAdInsights({
+        accessToken: ctx.auth.accessToken,
+        adAccountId: props.adAccountId,
+        since: props.since,
+        until: props.until,
+        version: ctx.auth.version,
+        timeIncrement: props.timeIncrement,
+      }),
+    createCustomAudience: ({ ctx, props }) =>
+      createCustomAudience({
+        accessToken: ctx.auth.accessToken,
+        adAccountId: props.adAccountId,
+        name: props.name,
+        description: props.description,
+        version: ctx.auth.version,
+      }),
+    bulkSyncHashedAudienceUsers: ({ ctx, props }) =>
+      bulkSyncHashedAudienceUsers({
+        accessToken: ctx.auth.accessToken,
+        customAudienceId: props.customAudienceId,
+        contacts: props.contacts,
+        operation: props.operation,
+        fallbackCountry: props.fallbackCountry,
+        version: ctx.auth.version,
+      }),
     syncAudienceUser: async ({ ctx, props }): Promise<void> => {
       const { accessToken, version } = ctx.auth
 

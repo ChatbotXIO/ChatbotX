@@ -1,5 +1,5 @@
 import { decodeProtectedHeader, errors, importSPKI, jwtVerify } from "jose"
-import { keys } from "../../keys"
+import { isCloud, isEnterprise, keys } from "../../keys"
 import { LICENSE_ISSUER, LICENSE_PUBLIC_KEYS } from "./public-keys"
 import {
   type LicenseFeature,
@@ -32,6 +32,7 @@ export interface LicenseStatus {
 export type LicenseKeyMap = Record<string, string>
 
 export interface VerifyLicenseOptions {
+  allowedTiers?: readonly LicensePayload["tier"][]
   currentDate?: Date
 }
 
@@ -97,15 +98,24 @@ const statusFromPayload = ({
   payload,
   keyId,
   currentDate,
+  allowedTiers,
   error = null,
 }: {
   state: "valid" | "expired"
   payload: unknown
   keyId: string
   currentDate: Date
+  allowedTiers?: readonly LicensePayload["tier"][]
   error?: string | null
 }): LicenseStatus => {
   const parsed = licensePayloadSchema.parse(payload)
+
+  if (allowedTiers && !allowedTiers.includes(parsed.tier)) {
+    return invalidStatus(
+      `License tier "${parsed.tier}" cannot be used with this edition`,
+      keyId,
+    )
+  }
 
   return {
     state,
@@ -161,6 +171,7 @@ export const verifyLicenseToken = async (
       payload,
       keyId,
       currentDate,
+      allowedTiers: options.allowedTiers,
     })
   } catch (error) {
     if (error instanceof errors.JWTExpired && keyId) {
@@ -170,6 +181,7 @@ export const verifyLicenseToken = async (
           payload: error.payload,
           keyId,
           currentDate,
+          allowedTiers: options.allowedTiers,
           error: error.message,
         })
       } catch (parseError) {
@@ -181,6 +193,18 @@ export const verifyLicenseToken = async (
   }
 }
 
+const resolveAllowedTiers = ():
+  | readonly LicensePayload["tier"][]
+  | undefined => {
+  if (isCloud()) {
+    return ["cloud"]
+  }
+
+  if (isEnterprise()) {
+    return ["enterprise"]
+  }
+}
+
 const resolveLicenseFromEnv = (): Promise<LicenseStatus> => {
   const token = keys().LICENSE_KEY?.trim()
 
@@ -188,7 +212,9 @@ const resolveLicenseFromEnv = (): Promise<LicenseStatus> => {
     return Promise.resolve(missingStatus())
   }
 
-  return verifyLicenseToken(token)
+  return verifyLicenseToken(token, LICENSE_PUBLIC_KEYS, {
+    allowedTiers: resolveAllowedTiers(),
+  })
 }
 
 export const loadLicense = (): Promise<LicenseStatus> => {

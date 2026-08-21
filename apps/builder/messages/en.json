@@ -147,6 +147,9 @@
     "remove": "Remove",
     "restore": "Restore"
   },
+  "errors": {
+    "superAdminRequired": "You need to be a workspace super admin to do this."
+  },
   "states": {
     "success": "Success",
     "error": "Error",
@@ -290,6 +293,7 @@
     "title": "Billing",
     "plan": {
       "label": "Plan: {plan}",
+      "currentLabel": "Current plan",
       "free": "Free"
     },
     "usage": {
@@ -536,6 +540,8 @@
       "blocked": "Blocked",
       "noAdminReply": "No admin reply",
       "contactCreatedAt": "Contact created at",
+      "fromCtwaAd": "From Click to WhatsApp ad",
+      "ctwaConversion": "CTWA conversion",
       "lastUserInputTypes": {
         "text": "Text",
         "location": "Location",
@@ -545,6 +551,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Purchase"
       }
     },
     "fieldGroups": {
@@ -559,7 +569,8 @@
       "topicCoupon": "Topic coupon",
       "customFields": "Custom Fields",
       "email": "Email",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp Ads"
     },
     "languages": {
       "ar": "Arabic",
@@ -595,6 +606,15 @@
       "webchat": "Webchat",
       "botLink": "Bot Link",
       "chatPlugin": "C. chat plugin"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA conversation starters",
+        "leads": "CTWA qualified leads",
+        "purchases": "CTWA purchasers"
+      },
+      "adPrefix": "ad",
+      "allAds": "all ads"
     }
   },
   "channels": {
@@ -836,7 +856,6 @@
     },
     "authType": {
       "headers": "Custom Header",
-      "none": "None",
       "token": "Token"
     },
     "automatedResponse": {
@@ -850,6 +869,9 @@
     },
     "qrCode": {
       "label": "QR Code"
+    },
+    "dynamicImage": {
+      "label": "Dynamic Image"
     },
     "savePayloadToCustomField": {
       "label": "Save payload to custom field"
@@ -920,6 +942,15 @@
     "currentTime": {
       "label": "Current Time"
     },
+    "bookingCalendar": {
+      "label": "Booking Calendar"
+    },
+    "bookingDate": {
+      "label": "Booking Date"
+    },
+    "bookingLink": {
+      "label": "Booking Link"
+    },
     "customRange": {
       "label": "Custom range"
     },
@@ -954,11 +985,19 @@
       "description": "It is the default response that your workspace will send to users when the workspace doesn't know how to respond to the user message.",
       "label": "Default Reply"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Set how long the bot waits before replying after the user’s last message. If the user sends another message, the timer resets and messages are queued into a single response.",
       "label": "Bot reply delay",
       "minutes": "{count, plural, one {# minute} other {# minutes}}",
-      "none": "None",
       "seconds": "{count, plural, one {# second} other {# seconds}}"
     },
     "delayType": {
@@ -1250,6 +1289,11 @@
     "outputCustomField": {
       "label": "Output Custom Field"
     },
+    "javascriptCode": {
+      "label": "JavaScript code",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Use pure JavaScript and return a value. Network, files, APIs, and external libraries are unavailable. Contact and system data is available on the `input` object."
+    },
     "httpMethod": {
       "label": "Method"
     },
@@ -1323,6 +1367,12 @@
     },
     "pageUserName": {
       "label": "Page User Name"
+    },
+    "waUserId": {
+      "label": "WhatsApp User ID"
+    },
+    "waUserName": {
+      "label": "WhatsApp Username"
     },
     "purpose": {
       "label": "Purpose",
@@ -1608,7 +1658,7 @@
       "superAdmin": "Super Admin",
       "analytics": "Analytics",
       "flows": "Flows",
-      "contacts": "Contacts",
+      "contacts": "Contacts / Inbox",
       "onlyAssignedContacts": "Only Assigned Contacts",
       "emailAndPhone": "Email and Phone",
       "broadcast": "Broadcast",
@@ -2020,10 +2070,120 @@
       "label": "Events",
       "placeholder": "Type an event name and press Enter",
       "description": "Add one or more event names. When Make attaches a webhook for one of these events, data is sent to it when this step runs."
+    },
+    "n8nEvents": {
+      "label": "Events",
+      "placeholder": "Type an event name and press Enter",
+      "description": "Add one or more event names. When n8n attaches a webhook for one of these events, data is sent to it when this step runs."
+    },
+    "enabled": {
+      "label": "Enabled"
+    }
+  },
+  "metaConversions": {
+    "flowStep": {
+      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
+      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+    },
+    "title": "Conversions API",
+    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Reconnect permissions",
+    "connectViaFacebook": "Connect via Facebook",
+    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Ready",
+      "missingPermission": "Permission needed",
+      "unverified": "Unverified",
+      "unsupported": "Unsupported",
+      "notConnected": "Not connected"
+    },
+    "statusDescriptions": {
+      "ready": "This integration has the required Meta permission for Conversions API events.",
+      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
+      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
+      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
+      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+    },
+    "errors": {
+      "reconnect": "Failed to start Meta CAPI reconnect.",
+      "messengerNotFound": "Messenger integration not found.",
+      "instagramNotFound": "Instagram integration not found.",
+      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
+      "saveFailed": "Could not save. Please try again.",
+      "datasetRequired": "Save a Dataset ID before adding an access token.",
+      "invalidToken": "This token could not access the dataset.",
+      "invalidDatasetId": "Enter a valid Dataset ID (numbers only).",
+      "whatsappNotFound": "WhatsApp integration not found."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Event type",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Value",
+      "valuePlaceholder": "e.g. 250",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. USD",
+      "contentCategory": "Content Category",
+      "contentCategoryPlaceholder": "The category of the content associated with the event",
+      "contentName": "Content Name",
+      "contentNamePlaceholder": "The name of the page or product associated with the event"
+    },
+    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
+    "saveDataset": "Save",
+    "accessToken": "Access Token (optional)",
+    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
+    "accessTokenPlaceholder": "Events Manager access token",
+    "saveToken": "Save token",
+    "tokenSaved": "Token saved",
+    "removeToken": "Remove",
+    "saved": "Saved",
+    "help": {
+      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+    },
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "openEventManager": "Open Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Connect via Facebook",
+        "description": "Use your page's existing connection, then choose a Dataset ID.",
+        "connect": "Create Dataset",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Custom connection",
+        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
+        "start": "Set up custom connection",
+        "connect": "Connect",
+        "connectedLabel": "Custom"
+      },
+      "whatsapp": {
+        "title": "Connect via WhatsApp",
+        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
+        "connect": "Create Dataset",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Choose a Dataset ID",
+      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "save": "Save",
+      "createDataset": "Create Dataset",
+      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+    },
+    "whatsapp": {
+      "connect": "Connect"
     }
   },
   "flows": {
     "title": "Flows",
+    "export": {
+      "notPublished": "This flow has never been published. Publish it before exporting.",
+      "failed": "Export failed. Please try again."
+    },
     "quickReplies": {
       "limitReached": "Quick reply limit reached ({max})."
     },
@@ -2047,8 +2207,7 @@
     },
     "openaiCompatible": {
       "empty": "Connect an OpenAI-compatible provider in integration settings before using this step.",
-      "integration": "OpenAI-compatible provider",
-      "none": "None"
+      "integration": "OpenAI-compatible provider"
     },
     "actions": {
       "addContactNotes": "Add Contact Notes",
@@ -2062,15 +2221,18 @@
       "aiTextToSpeech": "AI Text to Speech",
       "archiveConversation": "Archive Conversation",
       "assignConversation": "Assign Conversation",
+      "appointmentScheduling": "Appointment Scheduling",
       "autoAssignConversation": "Auto Assign Conversation",
       "blockContact": "Block Contact",
       "broadcastActions": "Broadcast Actions",
       "callApi": "External API Request",
       "make": "Make",
+      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Set up Coupon",
       "markCouponUsed": "Mark Coupon used",
+      "executeJavascript": "Execute JavaScript Code",
       "chooseChannel": "Choose Channel",
       "clearCustomField": "Clear Custom Field",
       "condition": "Condition",
@@ -2087,6 +2249,7 @@
       "markEmailVerified": "Mark Email Verified",
       "activeCampaignSyncContact": "Add Contact to ActiveCampaign",
       "facebookCustomAudience": "Facebook Custom Audience",
+      "sendMetaCapiEvent": "Send Meta CAPI Event",
       "mailchimpAddMember": "Add Contact to MailChimp",
       "mailerLiteAddSubscriber": "Add Contact to MailerLite",
       "klaviyoSyncProfile": "Add Contact to Klaviyo",
@@ -2095,6 +2258,7 @@
       "getResponseAddContact": "Add Contact to GetResponse",
       "sendGridAddContact": "Add Contact to SendGrid",
       "messenger": "Messenger",
+      "metaConversions": "Meta Conversions API",
       "openWebsite": "Open Website",
       "optInEmail": "Opt In Email",
       "optOutEmail": "Opt Out Email",
@@ -2148,7 +2312,11 @@
       "unsubscribeSequence": "Unsubscribe Sequence",
       "splitTraffic": "Split Traffic",
       "aiEditImage": "AI Edit Image",
-      "whatsappFlow": "WhatsApp Flow"
+      "whatsappFlow": "WhatsApp Flow",
+      "import": "Import Flow",
+      "export": "Export",
+      "importStarted": "Flow is importing. Check the import history for results.",
+      "importJsonOnly": "JSON files only"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -2252,7 +2420,11 @@
     },
     "setCustomField": {
       "temporalHint": "Leave it empty to save the current date/time."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "With buttons attached, TikTok only sends the first 40 characters of this message — the rest will be cut off."
+    },
+    "dataWasSaved": "Data was saved"
   },
   "folders": {
     "heading": {
@@ -2298,6 +2470,174 @@
     },
     "errors": {
       "invalidAppSettings": "Facebook App settings are not valid"
+    }
+  },
+  "ads": {
+    "title": "Ads",
+    "connectAccounts": {
+      "connectAdAccount": "Connect Ad Account",
+      "adAccountName": "Ad Account Name",
+      "adAccountsReconnectBanner": "Your Meta ad account token has expired or lost permissions. Reconnect Facebook Ads to keep ads reporting available.",
+      "adAccountsNotConnected": "No Meta ad accounts are connected yet.",
+      "adAccountsEmpty": "No Meta ad accounts were found for this Facebook Ads connection.",
+      "reconnect": "Reconnect",
+      "reconnectSuccess": "WhatsApp account reconnected.",
+      "selectAccountLabel": "WhatsApp account",
+      "status": {
+        "ready": "Automatic events ready",
+        "missingPermission": "Missing Automatic Events permission",
+        "unverified": "Permission not verified"
+      },
+      "table": {
+        "wabaId": "WABA ID"
+      },
+      "connectWhatsapp": {
+        "cta": "Connect WhatsApp account"
+      }
+    },
+    "conversionEvents": {
+      "title": "Conversion events",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Manage Ads Accounts",
+      "export": "Export",
+      "selectAll": "Select All",
+      "whatsappAsset": "WhatsApp asset",
+      "selectWhatsappAsset": "Select WhatsApp asset",
+      "templates": "Templates",
+      "selectTemplates": "Select templates",
+      "noTemplates": "No approved templates found.",
+      "existingRules": "Existing rules",
+      "noRules": "No conversion rules for this WhatsApp asset yet.",
+      "toggleRule": "Enable or disable rule",
+      "deleteRule": "Delete rule",
+      "qualifyingTemplateMessageSent": "Qualifying template message is sent",
+      "qualifyingFirstReply": "Contact sends their first message",
+      "qualifyingAnyReply": "Contact sends a message",
+      "when": "When",
+      "whenOptions": {
+        "templateSent": "Qualifying template message is sent",
+        "tagApplied": "Contact is tagged",
+        "keywordMatched": "Contact's message matches a keyword rule",
+        "contactReplied": "Contact sends a message"
+      },
+      "tags": "Tags",
+      "selectTags": "Select tags",
+      "noTags": "No tags found.",
+      "untitledKeywordRule": "(untitled keyword rule)",
+      "keywordRules": "Keyword rules",
+      "selectKeywordRules": "Select keyword rules",
+      "noKeywordRules": "No inbound keyword rules found.",
+      "replyOptions": "Reply options",
+      "firstReplyOnly": "Only the first message",
+      "dedupeNote": "At most 1 event per day per conversation per rule.",
+      "dealWon": "Deal Won",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Purchase",
+      "messages": {
+        "ruleSaved": "Conversion rule saved",
+        "ruleUpdated": "Conversion rule updated",
+        "ruleDeleted": "Conversion rule deleted"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Page 1",
+        "page2": "Page 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Track qualified leads",
+        "question": "At what point in the conversation do you want to qualify a contact as a lead?",
+        "when": "When",
+        "then": "Then mark CTWA lead as"
+      },
+      "trackPurchases": {
+        "title": "Track purchases",
+        "question": "Which template confirms a purchase?",
+        "when": "When",
+        "then": "Then",
+        "noValueNote": "A rule-based purchase records a Purchase conversion without an order value — it counts toward purchases but adds 0 to revenue. Order value is only captured by Meta Automatic Events."
+      }
+    },
+    "analytics": {
+      "title": "CTWA Analytics",
+      "funnelOverview": "Funnel overview",
+      "conversationsStarted": "Conversations started",
+      "qualifiedLeads": "Qualified leads",
+      "purchases": "Purchases",
+      "adSpend": "Ad spend",
+      "spendAccountLevelNote": "Spend is reported at the Meta ad account level; with a WhatsApp account selected, spend-only ads without funnel activity for that account are hidden.",
+      "revenue": "Revenue",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Revenue assumes a single currency (USD). Mixed-currency ad accounts are not yet aggregated.",
+      "costPerLead": "Cost/lead",
+      "costPerPurchase": "Cost/purchase",
+      "impressions": "Impressions",
+      "clicks": "Clicks",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Cost/conversation",
+      "costCurrencyNote": "Cost metrics assume a single currency (USD), consistent with ad spend.",
+      "performanceChart": {
+        "title": "Performance over time",
+        "empty": "No conversations, leads, purchases, or spend in this range yet."
+      },
+      "dateRange": {
+        "oneDay": "1D",
+        "oneWeek": "1W",
+        "oneMonth": "1M",
+        "threeMonths": "3M",
+        "custom": "Custom",
+        "apply": "Apply"
+      },
+      "allAds": "All Ads",
+      "adAccountFilter": {
+        "all": "All ad accounts",
+        "label": "Ad account",
+        "note": "Ads with conversions but zero spend or zero delivery in the selected date range are hidden while filtering by ad account."
+      },
+      "retarget": "Retarget",
+      "thoseWhoPurchased": "Those who purchased",
+      "thoseWhoStartedConversation": "Those who started a conversation",
+      "sendWhatsappBroadcast": "Send WhatsApp broadcast",
+      "from": "From",
+      "to": "To",
+      "unattributed": "Unattributed",
+      "retargetDialog": {
+        "title": "Retarget CTWA contacts",
+        "createAudience": "Create audience",
+        "useExistingAudience": "Use existing audience",
+        "audienceName": "Audience name",
+        "audiencePrefix": "CTWA",
+        "confirm": "Start sync",
+        "success": "Retarget audience sync queued.",
+        "error": "Failed to queue retarget audience sync."
+      },
+      "delivery": {
+        "title": "Conversion delivery",
+        "sent": "Sent",
+        "pending": "Pending",
+        "failed": "Failed",
+        "skippedNoScope": "Skipped (no scope)",
+        "skippedRegion": "Skipped (region)",
+        "noScopeWarning": "Some conversions were not sent because this WhatsApp account is missing the events permission. Reconnect it to enable Automatic Events reporting.",
+        "reconnectCta": "Reconnect account",
+        "empty": "No conversion events in this range yet."
+      },
+      "export": {
+        "conversations": "Export conversations",
+        "leads": "Export leads",
+        "purchases": "Export purchases"
+      },
+      "csv": {
+        "contactName": "Contact name",
+        "phone": "Phone",
+        "adId": "Ad ID",
+        "occurredAt": "Occurred at"
+      },
+      "empty": "No data yet. Connect an ad account and start tracking conversions."
     }
   },
   "googleSheets": {
@@ -2586,6 +2926,11 @@
     "noWorkspaces": "You don't have any workspaces yet.",
     "owner": "Owner"
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or may have been moved.",
+    "backToHome": "Back to homepage"
+  },
   "editProfile": {
     "title": "Edit Profile"
   },
@@ -2619,6 +2964,7 @@
     "changeHideState": "Change hide state",
     "commentHidden": "This comment was hidden",
     "messageDeleted": "The message has been deleted.",
+    "sendFailed": "Failed to send",
     "repliedToStory": "Replied to your story",
     "sentAttachments": "Sent {count, plural, one {1 attachment} other {# attachments}}",
     "deleteComment": "Delete comment",
@@ -2703,7 +3049,14 @@
     "duplicateNodeError": "Could not duplicate the block. Please try again.",
     "deleteNodeError": "Could not delete the block. Please try again.",
     "redoHistoryCleared": "Redo history cleared",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "None",
+    "tiktokCardTitleTooLong": "TikTok will cut this message short: with buttons attached, only the first 40 characters are sent. Shorten the message or remove the buttons.",
+    "waTemplateMpmNoProducts": "Add at least one product to this multi-product button before publishing.",
+    "waTemplateMpmTooManySections": "A multi-product button can have at most 10 sections. Remove some sections before publishing.",
+    "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
+    "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
+    "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",
@@ -2711,7 +3064,11 @@
     "iceBreakers": "Ice Breakers",
     "iceBreakersDescription": "Ice breakers provide a way for users to start a conversation with your bot by showing a list of frequently asked questions.",
     "reconnect": "Reconnect",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "General Settings",
+      "conversionsApi": "Ads Optimization"
+    }
   },
   "coexist": {
     "title": "Sync existing contacts and chat history?",
@@ -2725,6 +3082,8 @@
     "toggleHelper": "Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect.",
     "toggleHelperMessenger": "Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect the Messenger page.",
     "toggleHelperWhatsapp": "Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect the WhatsApp number.",
+    "aiReadsSyncedHistoryLabel": "AI reads synced history",
+    "aiReadsSyncedHistoryHelper": "When off, AI only sees new messages.",
     "success": {
       "enabled": "Sync started. Historical contacts and messages will appear shortly.",
       "disabled": "Sync disabled."
@@ -2767,7 +3126,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "General Settings",
-      "messageTemplates": "Message Templates"
+      "messageTemplates": "Message Templates",
+      "conversionsApi": "Ads Optimization"
     },
     "messageTemplate": {
       "params": {
@@ -3061,6 +3421,13 @@
         "wabaResolveFailed": "Could not resolve the WhatsApp Business Account from the authorization."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp integration not found.",
+        "phoneNumberMismatch": "Reconnect returned the expected WhatsApp Business Account, but not the phone number connected to this workspace.",
+        "wabaMismatch": "Reconnect returned a different WhatsApp Business Account. Please reconnect the same account."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3093,23 +3460,38 @@
       "params": {
         "couponCode": "Coupon Code",
         "couponCodePlaceholder": "Enter coupon code",
-        "quickReplyPayload": "Quick Reply Payload",
-        "quickReplyPayloadPlaceholder": "Enter payload (optional)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Enter flow token",
         "flowNotSynced": "Sync WhatsApp flows to map submitted fields.",
-        "catalogProductId": "Product ID",
-        "catalogProductIdPlaceholder": "Enter product retailer ID",
+        "catalogProductId": "Catalog product",
+        "catalogProductIdPlaceholder": "Search products…",
+        "catalogUseDefault": "Use catalog default thumbnail",
+        "catalogNotConnectedGuidance": "Connect a Meta Catalog to select a product.",
+        "catalogSetupLink": "Go to Catalog settings",
+        "catalogSelectedProductFallback": "Product: {retailerId}",
         "carouselCard": "Card {index}",
         "limitedTimeOffer": "Offer Expiration Time",
-        "limitedTimeOfferPlaceholder": "Enter expiration time in milliseconds",
-        "limitedTimeOfferHelp": "Unix timestamp in milliseconds when the offer expires",
+        "limitedTimeOfferPlaceholder": "Pick expiration date & time",
+        "limitedTimeOfferHelp": "The offer expiration is sent exactly as picked.",
+        "limitedTimeOfferBadge": "Expires {date}",
+        "limitedTimeOfferExpiredBadge": "Expired {date}",
         "location": "Location",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Location name (optional)",
         "locationAddress": "Address (optional)",
-        "enterFormatUrl": "Enter {format} URL"
+        "enterFormatUrl": "Enter {format} URL",
+        "mpmSections": "Products",
+        "mpmSectionTitlePlaceholder": "Section title (optional)",
+        "mpmAddSection": "Add section",
+        "mpmRemoveSection": "Remove section",
+        "mpmAddProduct": "Add product",
+        "mpmRemoveProduct": "Remove product",
+        "mpmNoProductsHelp": "Add at least one product before publishing.",
+        "mpmSectionLimitReached": "Maximum of 10 sections reached.",
+        "mpmProductLimitReached": "Maximum of 30 products reached.",
+        "mpmProductsSummary": "{productCount} products in {sectionCount} sections",
+        "unsupportedButtonParam": "This button type isn't supported yet."
       }
     },
     "sampleBodyCardContent": {
@@ -3134,7 +3516,9 @@
       "flows": "Flows",
       "messageTemplates": "Message Templates",
       "profile": "Profile",
-      "usefulLinks": "Useful Links"
+      "usefulLinks": "Useful Links",
+      "conversionsApi": "Ads Optimization",
+      "settings": "Settings"
     },
     "accountHealths": {
       "title": "Manage your WhatsApp account",
@@ -3264,7 +3648,13 @@
       "label": "Template Header"
     },
     "transferPhoneNumber": "Transfer phone from another Whatsapp provider",
-    "signupSessionExpired": "Your WhatsApp signup session has expired. Please start the connection again."
+    "signupSessionExpired": "Your WhatsApp signup session has expired. Please start the connection again.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatic Events",
+        "description": "Automatically send conversion events from this WhatsApp number to Meta. If the permission is missing, reconnect the account to grant it."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
@@ -3304,6 +3694,67 @@
   "qrCodes": {
     "title": "QR Codes",
     "description": "Create QR codes that link to your chatbot flows."
+  },
+  "dynamicImages": {
+    "title": "Dynamic Images",
+    "description": "Generate personalized images per contact from a background and text/image/QR layers.",
+    "publicUrl": {
+      "label": "Public URL",
+      "hint": "Copy and paste the URL into your flow, broadcast, or sequence to send personalized images."
+    },
+    "editor": {
+      "addElement": "Add element",
+      "addImage": "Add image",
+      "addText": "Add text",
+      "addQrCode": "Add QR code",
+      "template": "Template",
+      "templateDialogTitle": "Choose a template",
+      "templateDialogDescription": "Selecting a template replaces all current layers.",
+      "layers": "Layers",
+      "noLayers": "No layers yet. Add an element to get started.",
+      "deleteLayer": "Delete layer",
+      "layerNameImage": "Image",
+      "layerNameText": "Text",
+      "layerNameQrCode": "QR code",
+      "editElement": "Edit element",
+      "selectElementHint": "Select an element on the canvas to edit its properties.",
+      "width": "Width",
+      "height": "Height",
+      "priority": "Priority",
+      "imageType": "Image type",
+      "imageTypeUrl": "Image URL",
+      "imageTypeAvatarUser": "Contact avatar",
+      "imageTypeCustomField": "Custom field",
+      "imageUrl": "Image URL",
+      "uploadImage": "Upload image",
+      "customField": "Custom field",
+      "imageStyle": "Image style",
+      "imageStyleSquare": "Square",
+      "imageStyleCircle": "Circle",
+      "qrText": "QR code content",
+      "qrSize": "Size",
+      "qrColor": "Color",
+      "qrLogo": "Logo",
+      "uploadLogo": "Upload logo",
+      "textContent": "Text content",
+      "fontSize": "Font size",
+      "fontFamily": "Font family",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alignment",
+      "alignLeft": "Left",
+      "alignCenter": "Center",
+      "alignRight": "Right",
+      "color": "Color",
+      "bold": "Bold",
+      "italic": "Italic",
+      "uppercase": "Uppercase"
+    },
+    "preview": {
+      "error": "Failed to load the linked dynamic image. It may have been deleted."
+    }
   },
   "magicLinks": {
     "title": "Magic Links",
@@ -3361,6 +3812,7 @@
       "clearCustomField": "Clear Custom Field",
       "startAnotherFlow": "Start Another Flow",
       "notifyAdmins": "Notify Admins",
+      "sendMetaCapiEvent": "Send Meta CAPI Event",
       "transferConversationToHuman": "Transfer Conversation to Human"
     },
     "triggerGoesOff": "Trigger goes off",
@@ -3420,6 +3872,49 @@
   },
   "triggers": {
     "title": "Triggers"
+  },
+  "appointments": {
+    "title": "Appointments",
+    "statuses": {
+      "scheduled": "Scheduled",
+      "cancelled": "Canceled"
+    },
+    "messages": {
+      "empty": "No appointments yet."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Appointments",
+    "singular": "Appointment",
+    "unknownContact": "Unknown contact",
+    "searchPlaceholder": "Search by name...",
+    "tabs": {
+      "next": "Next",
+      "past": "Past"
+    },
+    "fields": {
+      "name": "Name",
+      "date": "Date",
+      "status": "Status",
+      "calendar": "Calendar"
+    },
+    "statuses": {
+      "scheduled": "Scheduled",
+      "cancelled": "Canceled"
+    },
+    "actions": {
+      "cancelAppointment": "Cancel appointment"
+    },
+    "dialogs": {
+      "cancelTitle": "Cancel appointment",
+      "cancelDescription": "Cancel this appointment and run its cancellation side effects.",
+      "deleteTitle": "Delete appointment",
+      "deleteDescription": "Delete this appointment from the management list. This will not run the cancellation flow."
+    },
+    "messages": {
+      "cancelled": "Appointment canceled.",
+      "deleted": "Appointment deleted."
+    }
   },
   "users": {
     "title": "Users"
@@ -3881,7 +4376,6 @@
     "allFormsNote": "Leads from every form on this page will be captured. Standard fields (email, phone, name, gender) are saved to matching contact fields automatically.",
     "leadData": "Lead Data",
     "whatFlow": "What flow is triggered",
-    "none": "None",
     "addNewPage": "Add New",
     "noEligiblePages": "No eligible pages. Use \"Add New\" to grant lead access.",
     "duplicateError": "An automation already exists for this page and form.",
@@ -3893,7 +4387,163 @@
   },
   "appointmentScheduling": {
     "title": "Appointment Scheduling",
-    "description": "Create and manage your appointment scheduling."
+    "description": "Create and manage your appointment scheduling.",
+    "flowModes": {
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Date & time picker",
+      "checkAvailability": "Date range picker",
+      "cancel": "Cancel appointment"
+    },
+    "fields": {
+      "mode": "Mode",
+      "dateTimeFieldId": "Save selected date to",
+      "dateTimeFieldIdSource": "Date/time field",
+      "startDateFieldId": "Start date field",
+      "startDateFieldIdSelected": "Save selected start date to",
+      "endDateFieldId": "End date field",
+      "endDateFieldIdSelected": "Save selected end date to",
+      "resultUsedByAI": "Use result for AI",
+      "outputCustomFieldId": "Save response to a custom field"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Choose how this flow step schedules appointments."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Appointment Calendars",
+    "singular": "Appointment Calendar",
+    "addNew": "Add New",
+    "none": "None",
+    "addReminder": "Add Reminder",
+    "reminderSummary": "Send Reminder - {calendar} {timing}.",
+    "noExternalConnections": "No external calendar connections yet",
+    "dialogDescriptions": {
+      "create": "Give your appointment calendar a name to get started.",
+      "rename": "Rename this appointment calendar."
+    },
+    "tabs": {
+      "calendars": "Calendars",
+      "appointments": "Appointments",
+      "externalCalendars": "External Calendars"
+    },
+    "sections": {
+      "appointment": "What is your appointment",
+      "availability": "When can people book?",
+      "duration": "How long is your appointment?",
+      "location": "Where will the appointment happen?",
+      "notifications": "Notifications",
+      "restrictions": "Restrictions",
+      "externalCalendar": "Connect Google Calendar"
+    },
+    "fields": {
+      "description": "Description",
+      "timezone": "Timezone",
+      "locationType": "Location Type",
+      "locationDetail": "Detail",
+      "durationMinutes": "Appointment duration",
+      "bufferAfterMinutes": "Add time after your appointments",
+      "scheduleWindowType": "People can schedule",
+      "rollingDays": "Rolling Days",
+      "minAdvanceDays": "Minimum days in advance",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "specificDate": "Date",
+      "maxAppointmentsPerUser": "Maximum appointments per user",
+      "maxAppointmentsUnlimited": "Unlimited",
+      "dailyLimitEnabled": "Daily limit",
+      "maxPerDay": "Max Per Day",
+      "allowGroupMeeting": "Allow Group Meeting",
+      "maxPerSlot": "Max Per Slot",
+      "confirmationMessage": "Confirmation Message",
+      "confirmationFlowId": "Confirmation Flow",
+      "cancellationFlowId": "Cancellation Flow",
+      "externalConnectionId": "External Calendar",
+      "reminders": "Reminders",
+      "reminderTimingValue": "Value",
+      "reminderTimingUnit": "Unit"
+    },
+    "locationTypes": {
+      "inPerson": "In-Person Meeting",
+      "phoneCall": "Phone Call",
+      "onlineMeeting": "Online Meeting"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Within rolling days in future",
+      "dateRange": "Within a date range",
+      "specificDay": "One specific day",
+      "anyFutureDate": "At any date in future"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minutes before",
+      "hours": "Hours before",
+      "days": "Days before"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minute before} other {# minutes before}}",
+      "hours": "{count, plural, one {an hour before} other {# hours before}}",
+      "days": "{count, plural, one {a day before} other {# days before}}"
+    },
+    "weekdays": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "weekdayEditor": {
+      "description": "Set the available time intervals for this day.",
+      "unavailable": "Unavailable",
+      "overlapWarning": "Some intervals overlap. Overlapping time is not counted twice.",
+      "addInterval": "Add Interval",
+      "startTime": "Start Time",
+      "endTime": "End Time"
+    },
+    "tooltips": {
+      "timezone": "The timezone you are creating this calendar. People will see availability based on their timezone.",
+      "confirmationFlow": "The flow that is sent once the user book an appointment.",
+      "cancellationFlow": "The flow that is sent once an appointment is canceled.",
+      "reminders": "Send reminders to remember the invitee about the appointment.",
+      "appointmentDuration": "Define how long your appointment will be.",
+      "bufferAfterMinutes": "Give yourself some buffer time to wrap up from booked appointments.",
+      "peopleCanSchedule": "Set a range of dates when you can accept meetings.",
+      "maxAppointmentsPerUser": "The maximum number of future appointments a user is allowed to book.",
+      "rollingDays": "Allow schedule up to how many days in the future",
+      "minAdvanceDays": "Require bookings to be made at least this many days in advance. Use 0 to allow same-day bookings.",
+      "dailyLimit": "The maximum number of people that are allowed to book per day.",
+      "allowGroupMeeting": "Allow many people to book at the same time slot.",
+      "externalCalendar": "Connect Google Calendar to sync your appointments."
+    },
+    "minutesLabel": "{count} minutes"
+  },
+  "externalCalendars": {
+    "title": "External Calendars",
+    "connectGoogle": "Connect Google",
+    "emptyEmail": "No email",
+    "fields": {
+      "provider": "Provider",
+      "email": "Email",
+      "calendarId": "Calendar ID",
+      "connected": "Connected",
+      "date": "Date"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Edit Calendar ID",
+      "editDescription": "Choose the Google Calendar ID to check for conflicts and create appointment events.",
+      "deleteTitle": "Disconnect Calendar",
+      "deleteDescription": "Disconnect this Google Calendar from appointment scheduling."
+    },
+    "messages": {
+      "connected": "Google Calendar connected.",
+      "connectFailed": "Could not connect Google Calendar. Check the Google OAuth settings and Calendar API access, then try again.",
+      "calendarIdUpdated": "Calendar ID updated.",
+      "disconnected": "Calendar disconnected."
+    }
   },
   "templates": {
     "title": "Templates",
@@ -4012,6 +4662,106 @@
     "invalidDescription": "This link is invalid or has expired.",
     "unavailableTitle": "Unsubscribe unavailable.",
     "unavailableDescription": "This workspace is no longer available."
+  },
+  "bookingPage": {
+    "metadataTitle": "Booking",
+    "comingSoonTitle": "Booking page coming soon",
+    "comingSoonDescription": "This public booking page is not available yet."
+  },
+  "bookingWebview": {
+    "metadataTitle": "Book appointment",
+    "badge": "Appointment",
+    "timezone": "Timezone",
+    "empty": "No available times were found.",
+    "noSelection": "Choose a time",
+    "range": {
+      "metadataTitle": "Check availability",
+      "empty": "Not selected",
+      "successTitle": "Date range received.",
+      "successDescription": "We are checking available appointment times.",
+      "fields": {
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "startTime": "Start Time",
+        "endTime": "End Time"
+      },
+      "actions": {
+        "skip": "Skip"
+      },
+      "errors": {
+        "invalidRange": "End Date must be on or after Start Date."
+      },
+      "timezoneHint": "Times are shown in {timezone}."
+    },
+    "actions": {
+      "book": "Book appointment",
+      "viewDetails": "View details"
+    },
+    "errors": {
+      "invalidTokenTitle": "This booking link is unavailable.",
+      "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new booking link.",
+      "staleSlot": "This time is no longer available. Please choose another time.",
+      "availabilityChanged": "Availability changed while you were choosing a time. Please choose again.",
+      "submitFailed": "We couldn't complete this request. Please try again."
+    },
+    "success": {
+      "title": "Your appointment is booked.",
+      "description": "The appointment details are ready."
+    },
+    "schedule": {
+      "metadataTitle": "Appointment details",
+      "defaultMessage": "Your appointment has been scheduled.",
+      "unknownInvitee": "Guest",
+      "fields": {
+        "invitee": "Invitee",
+        "time": "Time",
+        "timezone": "Timezone",
+        "location": "Location"
+      },
+      "status": {
+        "scheduled": "Scheduled",
+        "cancelled": "Canceled"
+      },
+      "locationTypes": {
+        "inPerson": "In-person meeting",
+        "phoneCall": "Phone call",
+        "onlineMeeting": "Online meeting"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Cancel appointment",
+      "title": "Cancel appointment",
+      "description": "Cancel {calendar} at {time}.",
+      "action": "Cancel appointment",
+      "cancelledTitle": "Appointment canceled",
+      "cancelledDescription": "This appointment has been canceled.",
+      "unavailableTitle": "Cancellation unavailable",
+      "unavailableDescription": "This appointment is already canceled, deleted, or in the past."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Select date",
+    "date": {
+      "title": "Select a date"
+    },
+    "datetime": {
+      "title": "Select a date and time"
+    },
+    "noSelection": "Choose a date",
+    "actions": {
+      "submit": "Submit"
+    },
+    "success": {
+      "title": "Data was saved",
+      "description": "You can close this tab now."
+    },
+    "errors": {
+      "invalidTokenTitle": "This link is unavailable.",
+      "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new link.",
+      "submitFailed": "We couldn't complete this request. Please try again."
+    },
+    "monthLabel": "Month",
+    "yearLabel": "Year"
   },
   "extensionsMe": {
     "actions": {

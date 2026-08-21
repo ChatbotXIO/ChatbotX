@@ -9,6 +9,7 @@ import {
   CardSimIcon,
   CircleQuestionMarkIcon,
   CopyIcon,
+  ImagesIcon,
   LinkIcon,
   MapIcon,
   QrCodeIcon,
@@ -72,6 +73,13 @@ const TOOLS_CONFIG = [
     getLink: (id: string) => `/space/${id}/qr-codes`,
   },
   {
+    id: "dynamic-image",
+    labelKey: "dynamicImages.title",
+    descriptionKey: "dynamicImages.description",
+    icon: ImagesIcon,
+    getLink: (id: string) => `/space/${id}/dynamic-images`,
+  },
+  {
     id: "templates",
     labelKey: "templates.title",
     descriptionKey: "templates.description",
@@ -82,6 +90,7 @@ const TOOLS_CONFIG = [
     labelKey: "appointmentScheduling.title",
     descriptionKey: "appointmentScheduling.description",
     icon: CalendarIcon,
+    getLink: (id: string) => `/space/${id}/appointment-calendars`,
   },
   {
     id: "questionnaires",

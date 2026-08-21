@@ -42,8 +42,12 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }))
 
-vi.mock("@chatbotx.io/analytics-nextjs/components/base-dashboard", () => ({
-  BaseDashboard: () => null,
+vi.mock("@chatbotx.io/analytics-nextjs/components/contacts-dashboard", () => ({
+  ContactsDashboard: () => null,
+}))
+
+vi.mock("@/features/analytics/components/analytics-nav", () => ({
+  AnalyticsNav: () => null,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -53,6 +57,9 @@ vi.mock("@chatbotx.io/business", () => ({
       | null
       | undefined,
   ) => Boolean(workspace?.scheduledDeletionAt),
+  inboxService: {
+    distinctConnectedChannels: vi.fn(async () => []),
+  },
   platformCredentialService: {
     resolveForOwner: vi.fn(async () => null),
   },
@@ -76,6 +83,13 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@/lib/platform-credential-owner", () => ({
   resolvePlatformOwnerId: vi.fn(async () => "owner-1"),
   resolveOwnerForWorkspace: vi.fn(async () => "owner-1"),
+}))
+
+vi.mock("@/lib/workspace-quota", () => ({
+  resolveWorkspaceBlockState: vi.fn(async () => ({
+    blocked: false,
+    blockReason: null,
+  })),
 }))
 
 vi.mock("@/features/inboxes/components/inbox-card-list", () => ({
@@ -206,8 +220,8 @@ vi.mock(
 const { default: CreateChannelPage } = await import(
   "../src/app/(no-sidebar)/channels/create/page"
 )
-const { default: DashboardPage } = await import(
-  "../src/app/space/[workspaceId]/dashboard/page"
+const { default: DashboardLayout } = await import(
+  "../src/app/space/[workspaceId]/dashboard/layout"
 )
 const { default: MessengerLayout } = await import(
   "../src/app/space/[workspaceId]/messengers/[id]/layout"
@@ -273,6 +287,7 @@ describe("channel route guards", () => {
 
   test("hides the dashboard add-channel card for non-superAdmins", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      targetWorkspace: { ownerId: "owner-1" },
       targetWorkspaceMember: {
         permissions: {
           ...basePermissions,
@@ -281,7 +296,8 @@ describe("channel route guards", () => {
       },
     })
 
-    const dashboardTree = await DashboardPage({
+    const dashboardTree = await DashboardLayout({
+      children: null,
       params: Promise.resolve({ workspaceId: "ws-1" }),
     })
     renderToStaticMarkup(dashboardTree)
@@ -297,6 +313,7 @@ describe("channel route guards", () => {
 
   test("shows the dashboard add-channel card for superAdmins", async () => {
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      targetWorkspace: { ownerId: "owner-1" },
       targetWorkspaceMember: {
         permissions: {
           ...basePermissions,
@@ -306,7 +323,8 @@ describe("channel route guards", () => {
       },
     })
 
-    const dashboardTree = await DashboardPage({
+    const dashboardTree = await DashboardLayout({
+      children: null,
       params: Promise.resolve({ workspaceId: "ws-1" }),
     })
     renderToStaticMarkup(dashboardTree)

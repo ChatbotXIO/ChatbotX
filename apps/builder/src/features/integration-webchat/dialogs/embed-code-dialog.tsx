@@ -35,10 +35,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
   type="module" onload="window.csmChatWidget?.init({
     webchatId: '${webchat.id}',
     workspaceId: '${webchat.workspaceId}',
-    brandColor: '${webchat.brandColor}',
-    hideHeader: ${webchat.hideHeader},
-    showLogo: ${webchat.showLogo},
-    hideMessageInput: true
+    brandColor: '${webchat.brandColor}'
   });"></script>`
 
   return (

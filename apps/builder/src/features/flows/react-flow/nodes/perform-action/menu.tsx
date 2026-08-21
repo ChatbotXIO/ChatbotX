@@ -4,6 +4,7 @@ import {
   SiGooglegemini,
   SiMake,
   SiMessenger,
+  SiN8n,
 } from "@icons-pack/react-simple-icons"
 import {
   ArchiveIcon,
@@ -11,6 +12,7 @@ import {
   BellRingIcon,
   BotIcon,
   CalculatorIcon,
+  CalendarClockIcon,
   CircleCheckIcon,
   CircleEllipsisIcon,
   ClipboardListIcon,
@@ -528,6 +530,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     ],
   },
   {
+    label: t("flows.actions.appointmentScheduling"),
+    icon: CalendarClockIcon,
+    stepType: stepTypes.enum.appointmentScheduling,
+  },
+  {
     label: t("flows.actions.questionnaires"),
     icon: ClipboardListIcon,
     stepType: stepTypes.enum.questionnaires,
@@ -566,6 +573,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.callApi"),
         icon: GlobeIcon,
         stepType: stepTypes.enum.callApi,
+      },
+      {
+        label: t("flows.actions.executeJavascript"),
+        icon: CodeIcon,
+        stepType: stepTypes.enum.executeJavascript,
       },
     ],
   },
@@ -607,6 +619,18 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     ],
   },
   {
+    label: t("flows.actions.metaConversions"),
+    icon: MegaphoneIcon,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.actions.sendMetaCapiEvent"),
+        icon: MegaphoneIcon,
+        stepType: stepTypes.enum.sendMetaCapiEvent,
+      },
+    ],
+  },
+  {
     label: t("flows.actions.triggers"),
     icon: WebhookIcon,
     stepType: null,
@@ -615,6 +639,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.make"),
         icon: SiMake,
         stepType: stepTypes.enum.make,
+      },
+      {
+        label: t("flows.actions.triggerN8n"),
+        icon: SiN8n,
+        stepType: stepTypes.enum.triggerN8n,
       },
     ],
   },

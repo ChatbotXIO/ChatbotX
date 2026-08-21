@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/table"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
@@ -65,7 +66,16 @@ export function ZaloManage({
           <TableBody>
             {integrationZalos.map((integrationZalo) => (
               <TableRow key={integrationZalo.id}>
-                <TableCell>{integrationZalo.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {integrationZalo.tokenRefreshError && (
+                      <TokenRefreshErrorIcon
+                        message={integrationZalo.tokenRefreshError}
+                      />
+                    )}
+                    {integrationZalo.name}
+                  </div>
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <ZaloRefreshPermissions integrationZalo={integrationZalo} />
                   <ZaloDisconnect integrationZalo={integrationZalo} />

@@ -145,6 +145,11 @@ export type RichResponseContext = {
   conversationId: string
   contactId: string
   contactInboxId: string
+  // The Inbox id (not the ContactInbox id) — carried alongside
+  // contactInboxId/channel so the `add_tag` rich action (MEDIUM-a) can
+  // resolve the WhatsApp integration for this conversation without an extra
+  // contactInbox lookup, mirroring the flow-step `addContactTag` path.
+  inboxId: string
   channel?: string
   executionId: string
   flowContextId: string

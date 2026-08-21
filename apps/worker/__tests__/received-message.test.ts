@@ -31,6 +31,14 @@ const {
   mockContactUpdate,
   mockUpdateTracking,
   mockInvalidateTracking,
+  mockWorkspaceIsActiveNow,
+  mockAppointmentCancelByToken,
+  mockParseAppointmentCancelPostback,
+  mockVerifyAppointmentCancelPostback,
+  mockChatQueueAdd,
+  mockSyncScopedIdentity,
+  mockIsUniqueViolationError,
+  mockDetectFlowVersion,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -83,11 +91,28 @@ const {
     mockDbCount,
     mockCreateNewContactWithMac: vi.fn(),
     mockWorkspaceFind: vi.fn().mockResolvedValue(null),
+    mockWorkspaceIsActiveNow: vi.fn().mockReturnValue(true),
     mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
     mockUpdateTracking: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
     mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
+    mockAppointmentCancelByToken: vi.fn().mockResolvedValue({
+      cancellable: true,
+    }),
+    mockParseAppointmentCancelPostback: vi.fn().mockReturnValue(null),
+    mockVerifyAppointmentCancelPostback: vi.fn(),
+    mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
+    // Pass-through by default: returns the matched contactInbox unchanged so
+    // existing (pre-BSUID) tests keep their exact expected shape.
+    mockSyncScopedIdentity: vi.fn(
+      async ({ contactInbox }: { contactInbox: unknown }) => ({
+        contactInbox,
+        learnedPrimaryIdentity: undefined,
+      }),
+    ),
+    mockIsUniqueViolationError: vi.fn().mockReturnValue(false),
+    mockDetectFlowVersion: vi.fn(),
   }
 })
 
@@ -116,9 +141,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
   findOrFail: mockFindOrFail,
+  isUniqueViolationError: mockIsUniqueViolationError,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  CONTACT_INBOX_SOURCE_ID_KEY: "ContactInbox_inboxId_sourceId_key",
+  CONTACT_INBOX_SOURCE_USER_ID_KEY: "ContactInbox_inboxId_sourceUserId_key",
   contactInboxModel: {
     id: "id",
     lastMessageAt: "lastMessageAt",
@@ -134,6 +162,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  appointmentService: {
+    cancelAppointmentByToken: mockAppointmentCancelByToken,
+  },
   broadcastToWorkspaceParty: mockBroadcast,
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
@@ -141,6 +172,7 @@ vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     updateTracking: mockUpdateTracking,
     invalidateTracking: mockInvalidateTracking,
+    syncScopedIdentity: mockSyncScopedIdentity,
   },
   contactService: {
     unblockIfBlocked: mockContactUnblockIfBlocked,
@@ -155,7 +187,7 @@ vi.mock("@chatbotx.io/business", () => ({
       endTime: null,
       timezone: "UTC",
     }),
-    isActiveNow: vi.fn().mockReturnValue(true),
+    isActiveNow: mockWorkspaceIsActiveNow,
   },
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
@@ -185,8 +217,29 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
 
 vi.mock("@chatbotx.io/sdk", () => ({
   contentTypes: { enum: { text: "text", location: "location" } },
+  // Mirror of the real pure helper — the module is fully mocked here.
+  resolveWithSourceUserIdFallback: async <T>(
+    identity: { sourceId: string; sourceUserId?: string | null },
+    lookup: (
+      where: { sourceId: string } | { sourceUserId: string },
+    ) => Promise<T | undefined>,
+  ): Promise<T | undefined> => {
+    const bySourceId = await lookup({ sourceId: identity.sourceId })
+    if (bySourceId || !identity.sourceUserId) {
+      return bySourceId
+    }
+    return await lookup({ sourceUserId: identity.sourceUserId })
+  },
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
   SdkException: class SdkException extends Error {},
+  // Mirror of the real pure predicate — the module is fully mocked, so the
+  // actual one-liner is restated here.
+  isSourceUserIdKeyedIdentity: (identity: {
+    sourceId: string
+    sourceUserId?: string | null
+  }) =>
+    Boolean(identity.sourceUserId) &&
+    identity.sourceId === identity.sourceUserId,
   getStoryReply: (contentAttributes: unknown) => {
     if (!contentAttributes || typeof contentAttributes !== "object") {
       return
@@ -211,7 +264,18 @@ vi.mock("@chatbotx.io/flow-config", async (importOriginal) => {
   return { ...actual }
 })
 
+vi.mock("@chatbotx.io/encryption", () => ({
+  parseAppointmentCancelPostback: mockParseAppointmentCancelPostback,
+  verifyAppointmentCancelPostback: mockVerifyAppointmentCancelPostback,
+}))
+
 vi.mock("@chatbotx.io/worker-config", () => ({
+  ChatJobAction: {
+    sendChatMessage: "sendChatMessage",
+  },
+  chatQueue: {
+    add: mockChatQueueAdd,
+  },
   IntegrationJobAction: {
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
@@ -225,6 +289,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+vi.mock("../src/lib/db", () => ({
+  detectFlowVersion: mockDetectFlowVersion,
 }))
 
 vi.mock("../src/services/integrations", () => ({
@@ -415,6 +483,16 @@ describe("receiveMessage — message repository branch", () => {
     mockEmit.mockResolvedValue(undefined)
     mockBroadcast.mockReturnValue(undefined)
     mockIntegrationQueueAdd.mockResolvedValue(undefined)
+    mockChatQueueAdd.mockResolvedValue(undefined)
+    mockAppointmentCancelByToken.mockResolvedValue({ cancellable: true })
+    mockParseAppointmentCancelPostback.mockReturnValue(null)
+    mockVerifyAppointmentCancelPostback.mockResolvedValue({
+      workspaceId: "ws-1",
+      appointmentId: "appointment-1",
+      contactId: "contact-1",
+      contactInboxId: "ci-1",
+    })
+    mockWorkspaceIsActiveNow.mockReturnValue(true)
   })
 
   test("calls repository.createOrUpdate() when message has no attachments", async () => {
@@ -508,6 +586,62 @@ describe("receiveMessage — message repository branch", () => {
     })
   })
 
+  test("emits message:received with origin: 'inbound' and isFirstIncomingMessage: true for a contact's first inbound message", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      lastIncomingMessageAt: null,
+      contact: fakeContact,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:received",
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        channel: "messenger",
+        inboxId: "inbox-1",
+        origin: "inbound",
+        messageId: fakeCreatedMessage.id,
+        isFirstIncomingMessage: true,
+      }),
+    )
+  })
+
+  test("emits isFirstIncomingMessage: false when the contact already has a prior inbound message", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      lastIncomingMessageAt: new Date("2025-12-31T00:00:00Z"),
+      contact: fakeContact,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:received",
+      expect.objectContaining({
+        origin: "inbound",
+        isFirstIncomingMessage: false,
+      }),
+    )
+  })
+
   test("updates conversation activity but not lastIncomingMessageAt for outgoing webhook echo", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: {
@@ -547,6 +681,14 @@ describe("receiveMessage — message repository branch", () => {
           lastIncomingMessageAt: expect.any(Date),
         }),
       }),
+    )
+    // An outgoing webhook echo (e.g. an agent's native-app reply synced back
+    // in) is not a genuine contact-authored message, so it must not carry the
+    // `origin: "inbound"` discriminant the ads-conversion contactReplied
+    // listener keys off of.
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:received",
+      expect.not.objectContaining({ origin: "inbound" }),
     )
   })
 
@@ -662,6 +804,184 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
       kind: "postback",
       data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  test("replaces a raw postback payload echo with the flow button label", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockDetectFlowVersion.mockResolvedValue({
+      flowVersion: {
+        id: "fv-1",
+        nodes: [
+          {
+            id: "node-1",
+            data: {
+              details: {
+                steps: [
+                  {
+                    buttons: [
+                      {
+                        id: "77",
+                        label: "Xem sản phẩm",
+                        buttonType: "nextStep",
+                        beforeStep: null,
+                        steps: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      useLatestFlowVersion: true,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: `postback_${postbackAction}`,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+    expect(mockDetectFlowVersion).toHaveBeenCalledWith({
+      flowId: "42",
+      flowVersionId: undefined,
+      workspaceId: "ws-1",
+    })
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Xem sản phẩm" }),
+    )
+    expect(mockUpdateTracking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ lastBtnTitle: "Xem sản phẩm" }),
+      }),
+    )
+    expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
+      kind: "postback",
+      data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  test("keeps the raw postback text when the flow can no longer be resolved", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockDetectFlowVersion.mockRejectedValue(new Error("FlowVersion not found"))
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: `postback_${postbackAction}`,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: `postback_${postbackAction}` }),
+    )
+  })
+
+  test("does not rewrite text when the channel already supplies a button title", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      buttonTitle: "Nút Messenger",
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockDetectFlowVersion).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "hello" }),
+    )
+  })
+
+  test("sends Vietnamese feedback instead of going silent when an appointment cancel token is invalid", async () => {
+    mockParseAppointmentCancelPostback.mockReturnValue("cancel-token")
+    mockVerifyAppointmentCancelPostback.mockRejectedValue(
+      new Error("token expired"),
+    )
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test", language: "vi" },
+      postbackAction: "cancel-token",
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAppointmentCancelByToken).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        conversation: expect.objectContaining({ id: fakeConversation.id }),
+        contactInbox: expect.objectContaining({ id: fakeContactInbox.id }),
+        text: "Liên kết hủy lịch đã hết hạn hoặc không còn khả dụng.",
+      }),
+    })
+  })
+
+  test("sends English feedback for appointment cancel postbacks when the workspace is inactive", async () => {
+    mockParseAppointmentCancelPostback.mockReturnValue("cancel-token")
+    mockWorkspaceIsActiveNow.mockReturnValue(false)
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test", language: "en" },
+      postbackAction: "cancel-token",
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAppointmentCancelByToken).not.toHaveBeenCalled()
+    expect(mockChatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        conversation: expect.objectContaining({ id: fakeConversation.id }),
+        contactInbox: expect.objectContaining({ id: fakeContactInbox.id }),
+        text: "This appointment cannot be cancelled because the workspace is currently inactive.",
+      }),
+    })
+  })
+
+  test("falls back to English feedback when an appointment cancel token is valid but no longer cancellable", async () => {
+    mockParseAppointmentCancelPostback.mockReturnValue("cancel-token")
+    mockAppointmentCancelByToken.mockResolvedValue({ cancellable: false })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test", language: "xx" },
+      postbackAction: "cancel-token",
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAppointmentCancelByToken).toHaveBeenCalled()
+    expect(mockChatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
+      type: "sendChatMessage",
+      data: expect.objectContaining({
+        conversation: expect.objectContaining({ id: fakeConversation.id }),
+        contactInbox: expect.objectContaining({ id: fakeContactInbox.id }),
+        text: "This cancellation link has expired or is no longer available.",
+      }),
     })
   })
 
@@ -1356,5 +1676,315 @@ describe("contact source taxonomy", () => {
         .mocked(allIntegrations.messenger?.runAction)
         .mock.calls.some(([action]) => action === "getPostDetails"),
     ).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// WhatsApp Business-Scoped User ID (BSUID) support
+// ---------------------------------------------------------------------------
+
+describe("receiveMessage — BSUID resolver chain (D3)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindOrFail.mockResolvedValue(fakeConversation)
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "whatsapp" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+  })
+
+  test("falls back to matching by sourceUserId when the sourceId lookup misses (returning username adopter)", async () => {
+    const bsuidContactInbox = {
+      ...fakeContactInbox,
+      id: "ci-bsuid",
+      contactId: "contact-bsuid",
+      sourceId: "user.bsuid-1",
+      sourceUserId: "user.bsuid-1",
+      channel: "whatsapp",
+      contact: { ...fakeContact, id: "contact-bsuid" },
+    }
+    mockFindContactInbox
+      .mockResolvedValueOnce(undefined) // resolveBySourceId miss
+      .mockResolvedValueOnce(bsuidContactInbox) // resolveBySourceUserId hit
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: {
+        sourceId: "84900000099",
+        sourceUserId: "user.bsuid-1",
+        firstName: "Test",
+      },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({
+      ...baseProps,
+      integrationType: "whatsapp",
+    })
+
+    expect(mockFindContactInbox).toHaveBeenCalledTimes(2)
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ contactInboxId: "ci-bsuid" }),
+    )
+  })
+
+  test("never re-runs the sourceId lookup as sourceUserId — sourceId match wins first and short-circuits", async () => {
+    mockFindContactInbox.mockResolvedValueOnce({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+      contact: fakeContact,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: {
+        sourceId: "psid-123",
+        sourceUserId: "user.bsuid-2",
+        firstName: "Test",
+      },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "whatsapp" })
+
+    // Only ONE lookup — resolveBySourceId hit, so resolveBySourceUserId never runs.
+    expect(mockFindContactInbox).toHaveBeenCalledTimes(1)
+  })
+
+  test("backfills sourceUserId/sourceUsername onto the matched row via syncScopedIdentity", async () => {
+    mockFindContactInbox.mockResolvedValueOnce({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+      sourceUserId: null,
+      sourceUsername: null,
+      contact: fakeContact,
+    })
+    const incomingContact = {
+      sourceId: "psid-123",
+      sourceUserId: "user.bsuid-3",
+      sourceUsername: "@handle",
+      firstName: "Test",
+    }
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: incomingContact,
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "whatsapp" })
+
+    expect(mockSyncScopedIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        incomingContact: expect.objectContaining({
+          sourceUserId: "user.bsuid-3",
+          sourceUsername: "@handle",
+        }),
+      }),
+    )
+  })
+})
+
+describe("receiveMessage — new BSUID-keyed contact creation (D2/D8/§8.1)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindOrFail.mockResolvedValue(fakeConversation)
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
+    mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "whatsapp" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+    mockFindContactInbox.mockResolvedValue(undefined)
+  })
+
+  test("creates a BSUID-keyed row (sourceId === sourceUserId) with both new columns set", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: {
+        sourceId: "user.bsuid-4",
+        sourceUserId: "user.bsuid-4",
+        sourceUsername: "@adopter",
+        firstName: "Adopter",
+      },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+          sourceId: "user.bsuid-4",
+          sourceUserId: "user.bsuid-4",
+          sourceUsername: "@adopter",
+          channel: "whatsapp",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "whatsapp" })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        sourceId: "user.bsuid-4",
+        sourceUserId: "user.bsuid-4",
+        sourceUsername: "@adopter",
+      }),
+    )
+  })
+
+  test("does NOT infer locale/timezone from a BSUID-keyed sourceId, even one shaped like a phone number (§8.1)", async () => {
+    // Deliberately picks a value that WOULD have been mis-parsed as a valid
+    // Vietnamese phone number by the pre-fix code path (`inbox.channel ===
+    // "whatsapp"` unconditionally used `sourceId` as the phone hint).
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: {
+        sourceId: "84901234567",
+        sourceUserId: "84901234567",
+        firstName: "Adopter",
+      },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          ...fakeContact,
+          id: "contact-new",
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-new",
+          contactId: "contact-new",
+          sourceId: "84901234567",
+          sourceUserId: "84901234567",
+          channel: "whatsapp",
+        },
+        conversation: fakeConversation,
+      },
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "whatsapp" })
+
+    const rows = await runCapturedNewContactCreate()
+    expect(rows).toContainEqual(
+      expect.objectContaining({
+        locale: undefined,
+        timezone: undefined,
+      }),
+    )
+  })
+
+  test("recovers via the resolver chain when contact creation loses a unique-violation race (D8)", async () => {
+    const winnerContactInbox = {
+      ...fakeContactInbox,
+      id: "ci-winner",
+      contactId: "contact-winner",
+      sourceId: "user.bsuid-5",
+      sourceUserId: "user.bsuid-5",
+      channel: "whatsapp",
+      contact: { ...fakeContact, id: "contact-winner" },
+    }
+    // Initial resolver chain (both miss) already configured via the shared
+    // `mockFindContactInbox.mockResolvedValue(undefined)` in beforeEach;
+    // queue the recovery lookup's hit on top of it.
+    mockFindContactInbox.mockResolvedValueOnce(undefined) // initial resolveBySourceId
+    mockFindContactInbox.mockResolvedValueOnce(undefined) // initial resolveBySourceUserId
+    mockFindContactInbox.mockResolvedValueOnce(winnerContactInbox) // recovery resolveBySourceId
+
+    const raceError = Object.assign(new Error("duplicate key value"), {
+      code: "23505",
+    })
+    mockCreateNewContactWithMac.mockRejectedValueOnce(raceError)
+    mockIsUniqueViolationError.mockReturnValue(true)
+
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: {
+        sourceId: "user.bsuid-5",
+        sourceUserId: "user.bsuid-5",
+        firstName: "Adopter",
+      },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({
+      ...baseProps,
+      integrationType: "whatsapp",
+    })
+
+    expect(mockIsUniqueViolationError).toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ contactInboxId: "ci-winner" }),
+    )
+  })
+
+  test("rethrows a creation error that is not a unique-violation race", async () => {
+    mockIsUniqueViolationError.mockReturnValue(false)
+    mockCreateNewContactWithMac.mockRejectedValueOnce(
+      new Error("connection reset"),
+    )
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "user.bsuid-6", firstName: "Adopter" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await expect(
+      receiveMessage({ ...baseProps, integrationType: "whatsapp" }),
+    ).rejects.toThrow("connection reset")
   })
 })

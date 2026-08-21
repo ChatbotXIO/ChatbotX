@@ -25,6 +25,8 @@ export type GuestSessionStoreProviderProps = {
   config: WebchatClientConfig
   accessToken?: string | null
   serverGuestConversationId: string
+  /** Resolved server-side; see GuestSessionState.workspaceLogoUrl. */
+  workspaceLogoUrl?: string
 }
 
 export const GuestSessionStoreProvider = ({
@@ -32,10 +34,15 @@ export const GuestSessionStoreProvider = ({
   config,
   accessToken = null,
   serverGuestConversationId,
+  workspaceLogoUrl,
 }: GuestSessionStoreProviderProps) => {
   const storeRef = useRef<GuestSessionStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createGuestSessionStore(config, accessToken)
+    storeRef.current = createGuestSessionStore(
+      config,
+      accessToken,
+      workspaceLogoUrl,
+    )
   }
 
   useEffect(() => {

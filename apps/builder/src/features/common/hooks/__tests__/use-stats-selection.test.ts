@@ -14,7 +14,10 @@ describe("stats contact selection", () => {
 
     expect(isContactSelected(selection, "contact-1")).toBe(true)
     expect(getSelectedCount(selection, 42)).toBe(42)
-    expect(getHeaderCheckboxState(selection)).toBe(true)
+    expect(getHeaderCheckboxState(selection)).toEqual({
+      checked: true,
+      indeterminate: false,
+    })
   })
 
   test("toggles a contact into exclusions in all mode", () => {
@@ -26,7 +29,10 @@ describe("stats contact selection", () => {
     expect(selection.mode).toBe("all")
     expect(isContactSelected(selection, "contact-1")).toBe(false)
     expect(getSelectedCount(selection, 10)).toBe(9)
-    expect(getHeaderCheckboxState(selection)).toBe("indeterminate")
+    expect(getHeaderCheckboxState(selection)).toEqual({
+      checked: false,
+      indeterminate: true,
+    })
   })
 
   test("header toggles fully selected all mode to empty manual mode", () => {
@@ -37,7 +43,10 @@ describe("stats contact selection", () => {
 
     expect(selection).toEqual({ mode: "manual", includedIds: new Set() })
     expect(getSelectedCount(selection, 10)).toBe(0)
-    expect(getHeaderCheckboxState(selection)).toBe(false)
+    expect(getHeaderCheckboxState(selection)).toEqual({
+      checked: false,
+      indeterminate: false,
+    })
   })
 
   test("header toggles partial selection back to fully selected all mode", () => {
@@ -48,7 +57,10 @@ describe("stats contact selection", () => {
 
     expect(selection).toEqual({ mode: "all", excludedIds: new Set() })
     expect(getSelectedCount(selection, 10)).toBe(10)
-    expect(getHeaderCheckboxState(selection)).toBe(true)
+    expect(getHeaderCheckboxState(selection)).toEqual({
+      checked: true,
+      indeterminate: false,
+    })
   })
 
   test("manual mode tracks included contact ids", () => {
@@ -60,7 +72,10 @@ describe("stats contact selection", () => {
     expect(selection.mode).toBe("manual")
     expect(isContactSelected(selection, "contact-1")).toBe(true)
     expect(getSelectedCount(selection, 10)).toBe(1)
-    expect(getHeaderCheckboxState(selection)).toBe("indeterminate")
+    expect(getHeaderCheckboxState(selection)).toEqual({
+      checked: false,
+      indeterminate: true,
+    })
   })
 
   test("manual mode normalizes to all mode when every contact is selected", () => {
@@ -72,6 +87,9 @@ describe("stats contact selection", () => {
 
     expect(selection).toEqual({ mode: "all", excludedIds: new Set() })
     expect(getSelectedCount(selection, 1)).toBe(1)
-    expect(getHeaderCheckboxState(selection, 1)).toBe(true)
+    expect(getHeaderCheckboxState(selection, 1)).toEqual({
+      checked: true,
+      indeterminate: false,
+    })
   })
 })

@@ -173,6 +173,66 @@ export const updateMessengerProfile = (props: {
   )
 }
 
+export const getWhitelistedDomains = (props: {
+  ctx: Pick<Context<MessengerAuthValue>, "auth">
+}): Promise<string[]> => {
+  const { ctx } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/me/messenger_profile`
+
+  return rescue(endpoint, async () => {
+    const response: { whitelisted_domains?: string[] } =
+      await facebookGraphClient.get(endpoint, {
+        headers: {
+          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+        },
+        searchParams: {
+          fields: "whitelisted_domains",
+        },
+      })
+
+    return response.whitelisted_domains ?? []
+  })
+}
+
+export const normalizeMessengerWhitelistedDomain = (
+  appUrl: string,
+): string | undefined => {
+  try {
+    const url = new URL(appUrl)
+    if (url.protocol !== "https:") {
+      return
+    }
+    return url.origin
+  } catch {
+    return
+  }
+}
+
+export const ensureMessengerWhitelistedDomain = async (props: {
+  ctx: Context<MessengerAuthValue>
+  appUrl?: string
+}): Promise<void> => {
+  const domain = normalizeMessengerWhitelistedDomain(
+    props.appUrl ?? props.ctx.platform.appUrl,
+  )
+  if (!domain) {
+    return
+  }
+
+  const whitelistedDomains = await getWhitelistedDomains({ ctx: props.ctx })
+  if (whitelistedDomains.includes(domain)) {
+    return
+  }
+
+  await updateMessengerProfile({
+    ctx: props.ctx,
+    params: {
+      whitelisted_domains: [...whitelistedDomains, domain],
+    },
+  })
+}
+
 export const createPersona = (props: {
   ctx: Context<MessengerAuthValue>
   persona: NonNullable<PersonaRequest>
@@ -338,6 +398,8 @@ export const addBranding = async (props: {
   url: string
 }): Promise<void> => {
   const { ctx } = props
+
+  await ensureMessengerWhitelistedDomain({ ctx, appUrl: props.url })
 
   const { persistentMenu } = await getPersistentMenu({ ctx })
 

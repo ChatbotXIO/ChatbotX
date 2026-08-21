@@ -17,6 +17,19 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 vi.mock("@chatbotx.io/sdk", () => ({
   initVariables: mocks.initVariables,
   SdkException: mocks.SdkException,
+  // Mirror of the real pure helper — the module is fully mocked here.
+  resolveWithSourceUserIdFallback: async <T>(
+    identity: { sourceId: string; sourceUserId?: string | null },
+    lookup: (
+      where: { sourceId: string } | { sourceUserId: string },
+    ) => Promise<T | undefined>,
+  ): Promise<T | undefined> => {
+    const bySourceId = await lookup({ sourceId: identity.sourceId })
+    if (bySourceId || !identity.sourceUserId) {
+      return bySourceId
+    }
+    return await lookup({ sourceUserId: identity.sourceUserId })
+  },
 }))
 
 vi.mock("../src/lib/db", () => ({

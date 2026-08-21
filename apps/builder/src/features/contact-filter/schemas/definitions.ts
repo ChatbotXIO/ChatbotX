@@ -36,6 +36,7 @@ export type ContactFilterOptionSource =
   | "sequences"
   | "reflinks"
   | "assignees"
+  | "ctwaConversionTypes"
 
 export type ContactFilterFieldDefinition = {
   field: ContactFilterField
@@ -297,6 +298,16 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.optedInForEmail,
     schemaKind: "boolean",
     optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.fromCtwaAd,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.ctwaConversion,
+    schemaKind: "multiSelect",
+    optionSource: "ctwaConversionTypes",
   },
 ] as const satisfies readonly ContactFilterFieldDefinition[]
 

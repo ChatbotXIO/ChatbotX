@@ -1,3 +1,4 @@
+import { parseEnvBool } from "./env"
 import { keys } from "./keys"
 
 export function getPublicOriginFromRequest(request: Request): string {
@@ -17,7 +18,7 @@ export function getPublicUrlFromRequest(request: Request): URL {
 export function getPublicProtocolFromRequest(
   request: Request,
 ): "http" | "https" {
-  if (keys().FORCE_PUBLIC_HTTPS) {
+  if (parseEnvBool(keys().FORCE_PUBLIC_HTTPS)) {
     return "https"
   }
 

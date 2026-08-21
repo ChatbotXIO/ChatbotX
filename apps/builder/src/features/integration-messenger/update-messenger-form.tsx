@@ -82,9 +82,7 @@ export function UpdateMessengerForm({
               feature: t("fields.messenger.label"),
             }),
           )
-          router.push(
-            `/space/${workspaceId}/settings/channels?channel=messenger`,
-          )
+          router.push(`/space/${workspaceId}/settings/channels/messenger`)
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to update messenger.")
@@ -159,8 +157,11 @@ export function UpdateMessengerForm({
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <ComboboxField
+          allowClear
+          clearLabel={t("messages.none")}
           description={t("fields.welcomeFlowId.description")}
           emptyText={t("actions.noRecordFound")}
+          emptyValue={null}
           label={t("fields.welcomeFlowId.label")}
           name="welcomeFlowId"
           options={flowOptions}
@@ -366,9 +367,7 @@ export function UpdateMessengerForm({
         <DialogFooter>
           <Button
             onClick={() =>
-              router.push(
-                `/space/${workspaceId}/settings/channels?channel=messenger`,
-              )
+              router.push(`/space/${workspaceId}/settings/channels/messenger`)
             }
             type="button"
             variant="link"

@@ -12,6 +12,7 @@ import {
 import { platformCredentialService } from "@chatbotx.io/business"
 import type { CredentialType } from "@chatbotx.io/database/partials"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
+import { isCommunity } from "@/env"
 import { onUserCreated } from "./on-user-created"
 import {
   FACEBOOK_SSO_SCOPES,
@@ -126,6 +127,15 @@ async function resolveCredentialForTenant(
   tenantId: string,
   provider: SocialProvider,
 ): Promise<FacebookAwareCredential | null> {
+  // Community edition ships without social sign-in (email/password + magic
+  // link only). Resolving no credential builds the better-auth instance with
+  // zero social providers, so /api/auth/sign-in/social, OAuth callbacks, and
+  // link-social all reject — and the sign-in pages hide the buttons since
+  // isSocialLoginEnabledForTenant derives from this same resolver.
+  if (isCommunity()) {
+    return null
+  }
+
   const type = PROVIDER_CREDENTIAL_TYPE[provider]
   const decrypted =
     tenantId === ROOT_TENANT_ID

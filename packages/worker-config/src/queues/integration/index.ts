@@ -7,11 +7,12 @@ import type {
   MetadataPayload,
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, OutgoingMessage } from "@chatbotx.io/sdk"
-import { Queue } from "bullmq"
+import { type JobsOptions, Queue } from "bullmq"
 import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
@@ -43,6 +44,7 @@ export const IntegrationJobAction = {
   coexistMessengerSync: "coexistMessengerSync",
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
+  adsAutomaticEvent: "adsAutomaticEvent",
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
   processCommentAutomation: "processCommentAutomation",
@@ -50,7 +52,16 @@ export const IntegrationJobAction = {
   processLeadgen: "processLeadgen",
   processStoryReplyAutomation: "processStoryReplyAutomation",
   captureTemplateFlowResponse: "captureTemplateFlowResponse",
+  // Ads-conversion actions (merged from the retired `adsConversion` queue).
+  evaluateTemplateSent: "evaluateTemplateSent",
+  evaluateConversionTrigger: "evaluateConversionTrigger",
+  sendConversionEvent: "sendConversionEvent",
+  sendMetaCapiEvent: "sendMetaCapiEvent",
+  syncRetargetAudience: "syncRetargetAudience",
 } as const
+
+type IntegrationJobActionValue =
+  (typeof IntegrationJobAction)[keyof typeof IntegrationJobAction]
 
 export type IntegrationJobReceiveMessage = {
   type: typeof IntegrationJobAction.incomingMessage
@@ -139,6 +150,7 @@ export type IntegrationJobRunFlowNode = {
     nodeVisits?: NodeVisits
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    appointmentId?: string
     sendFrom?: "inbox"
     origin?: "channel"
     /** See {@link CommentAnchor}. */
@@ -227,6 +239,7 @@ export type IntegrationJobRunChallenge = {
         stepId: string
         attempts: number
         lastAttemptAt: Date
+        appointmentId?: string
       }
     }
   }
@@ -343,6 +356,97 @@ export type IntegrationJobCoexistAttachmentDownload = {
   }
 }
 
+export type IntegrationJobAdsAutomaticEvent = {
+  type: typeof IntegrationJobAction.adsAutomaticEvent
+  data: {
+    integrationType: "whatsapp"
+    integrationIdentifier: string
+    phoneNumberId: string
+    wabaId: string
+    payload: {
+      event_name: "LeadSubmitted" | "Purchase"
+      id: string
+      timestamp: number | string
+      ctwa_clid: string
+      custom_data?: {
+        currency: string
+        value: number | string
+      }
+    }
+  }
+}
+
+// Ads-conversion job-data variants (merged from the retired `adsConversion`
+// queue).
+// Kept as `AdsConversionJob*` type names since `@chatbotx.io/business` and the
+// handlers under `apps/worker/src/integration/handlers/ads-conversion/` import
+// them by these names.
+
+export type AdsConversionJobSendConversionEvent = {
+  type: typeof IntegrationJobAction.sendConversionEvent
+  data: {
+    adsConversionEventId: string
+    workspaceId: string
+  }
+}
+
+export type IntegrationJobSendMetaCapiEvent = {
+  type: typeof IntegrationJobAction.sendMetaCapiEvent
+  data: {
+    metaCapiEventId: string
+    workspaceId: string
+  }
+}
+
+export type AdsConversionJobEvaluateTemplateSent = {
+  type: typeof IntegrationJobAction.evaluateTemplateSent
+  data: {
+    workspaceId: string
+    integrationWhatsappId: string
+    contactInboxId: string
+    templateId: string
+  }
+}
+
+/**
+ * Generic conversion-trigger evaluation job shared by every trigger type
+ * beyond `templateSent` (tagApplied, keywordMatched, contactReplied). The
+ * `occurrence` discriminant carries just enough context for
+ * `adsConversionService.evaluateConversionTrigger` to match it against each
+ * enabled rule's `trigger` — see `packages/business/src/ads-conversion/schema.ts`.
+ */
+export type AdsConversionJobEvaluateConversionTrigger = {
+  type: typeof IntegrationJobAction.evaluateConversionTrigger
+  data: {
+    workspaceId: string
+    integrationWhatsappId: string
+    contactInboxId: string
+    occurrence:
+      | { type: "tagApplied"; tagId: string }
+      | { type: "keywordMatched"; automatedResponseId: string }
+      | { type: "contactReplied"; isFirstReply: boolean }
+  }
+}
+
+export type AdsConversionJobSyncRetargetAudience = {
+  type: typeof IntegrationJobAction.syncRetargetAudience
+  data: {
+    workspaceId: string
+    customAudienceId: string
+    segment: "conversations" | "leads" | "purchases"
+    adId?: string | null
+    integrationWhatsappId?: string
+    since: string
+    until: string
+  }
+}
+
+export type AdsConversionJobData =
+  | AdsConversionJobSendConversionEvent
+  | AdsConversionJobEvaluateTemplateSent
+  | AdsConversionJobEvaluateConversionTrigger
+  | AdsConversionJobSyncRetargetAudience
+
 /**
  * Fetches a contact's profile picture from the channel's Graph/API, mirrors
  * the bytes to our object storage, and persists the storage path on the
@@ -457,6 +561,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistMessengerSync
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
+  | IntegrationJobAdsAutomaticEvent
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation
@@ -464,11 +569,63 @@ export type IntegrationJobData =
   | IntegrationJobProcessLeadgen
   | IntegrationJobProcessStoryReplyAutomation
   | IntegrationJobCaptureTemplateFlowResponse
+  | AdsConversionJobSendConversionEvent
+  | IntegrationJobSendMetaCapiEvent
+  | AdsConversionJobEvaluateTemplateSent
+  | AdsConversionJobEvaluateConversionTrigger
+  | AdsConversionJobSyncRetargetAudience
 
-export const integrationQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<IntegrationJobData>(queueNames.enum.integration, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const integrationQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<IntegrationJobData>(queueNames.enum.integration, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })
+
+// Ads-conversion jobs need a stronger retry policy than the integration
+// queue default (`attempts: 2` / 5s) — CAPI sends and retarget syncs call
+// out to Meta and should ride out transient 5xx/429s over minutes, not
+// seconds. `sendConversionEvent` additionally gets an explicit BullMQ
+// `priority` so it's picked ahead of the other 3 ads actions once queued —
+// note BullMQ processes *unprioritized* (priority 0, the default for the
+// ~30 existing integration actions) jobs before ANY prioritized job, so this
+// only orders ads-conversion jobs relative to each other, not ahead of the
+// rest of the integration queue. See BullMQ `priority` docs + plan §2.2/HIGH-1.
+const CAPI_EVENT_PRIORITY = 1
+
+const adsConversionRetryOptions: JobsOptions = {
+  attempts: 5,
+  backoff: {
+    type: "exponential",
+    delay: 30_000,
+  },
+}
+
+const jobOptionsByAction: Partial<
+  Record<IntegrationJobActionValue, JobsOptions>
+> = {
+  [IntegrationJobAction.evaluateTemplateSent]: adsConversionRetryOptions,
+  [IntegrationJobAction.evaluateConversionTrigger]: adsConversionRetryOptions,
+  [IntegrationJobAction.sendConversionEvent]: {
+    ...adsConversionRetryOptions,
+    priority: CAPI_EVENT_PRIORITY,
+  },
+  [IntegrationJobAction.sendMetaCapiEvent]: adsConversionRetryOptions,
+  [IntegrationJobAction.syncRetargetAudience]: adsConversionRetryOptions,
+}
+
+/**
+ * Enqueue helper that layers per-action retry/priority defaults
+ * (`jobOptionsByAction`) under the caller's own opts. Producer opts — most
+ * importantly a deterministic `jobId` — MUST win, so they're merged last;
+ * BullMQ itself also treats `jobId` as authoritative regardless of merge
+ * order, but keeping the spread order explicit avoids relying on that.
+ */
+export const enqueueIntegrationJob = (
+  job: IntegrationJobData,
+  opts?: JobsOptions,
+) =>
+  integrationQueue.add(job.type, job, {
+    ...jobOptionsByAction[job.type],
+    ...opts,
+  })

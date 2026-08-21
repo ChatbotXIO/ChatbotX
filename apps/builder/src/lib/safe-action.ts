@@ -90,13 +90,26 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
       throw new Error("Workspace not found")
     }
 
-    const { workspaces } = await getAllWorkspaceMembers(user.id)
+    const { workspaceMembers, workspaces } = await getAllWorkspaceMembers(
+      user.id,
+    )
     const workspace = workspaces.find((c) => c.id === workspaceId)
-    if (!workspace) {
+    const member = workspaceMembers.find((m) => m.workspaceId === workspaceId)
+    if (!(workspace && member)) {
       throw new Error("Workspace not found")
     }
 
-    return next({ ctx: { workspaceId: workspace.id, workspace } })
+    // `permissions` is exposed so actions can gate on it (e.g. superAdmin)
+    // without a second user+member round-trip — the same rows are already
+    // loaded here. The `permissions` jsonb defaults to `{}`, so callers must
+    // fail closed on missing keys (see `hasWorkspacePermission`).
+    return next({
+      ctx: {
+        workspaceId: workspace.id,
+        workspace,
+        workspaceMemberPermissions: member.permissions,
+      },
+    })
   },
 )
 

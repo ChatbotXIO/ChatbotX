@@ -1,7 +1,7 @@
-import { rescue } from "../exception"
+import { rescue, TiktokAPIException } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
-import type { TiktokApiResponse, TiktokSendMessageRequest } from "../schema"
+import type { BusinessApiResponse, TiktokSendMessageRequest } from "../schema"
 
 type SendMessageResult = {
   // TikTok's business/message/send/ response nests the created message's id
@@ -36,8 +36,14 @@ export const uploadTiktokMedia = (
 
     const client = createTiktokBusinessClient(accessToken)
     const response = await client.postFormData<
-      TiktokApiResponse<UploadMediaResult>
+      BusinessApiResponse<UploadMediaResult>
     >("business/message/media/upload/", form)
+
+    if (response.code !== 0) {
+      throw new TiktokAPIException(
+        response.message ?? "TikTok media upload failed",
+      )
+    }
 
     const mediaId = response.data?.media_id
     if (!mediaId) {
@@ -52,10 +58,17 @@ export const sendTiktokMessage = (
 ): Promise<string | undefined> =>
   rescue("business/message/send", async () => {
     const client = createTiktokBusinessClient(accessToken)
-    const response = await client.post<TiktokApiResponse<SendMessageResult>>(
+    const response = await client.post<BusinessApiResponse<SendMessageResult>>(
       "business/message/send/",
       { json: payload },
     )
+
+    if (response.code !== 0) {
+      throw new TiktokAPIException(
+        response.message ?? "TikTok message send failed",
+      )
+    }
+
     const messageId =
       response.data?.message?.message_id ?? response.data?.message_id
     if (!messageId) {

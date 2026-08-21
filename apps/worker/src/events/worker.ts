@@ -1,9 +1,26 @@
 import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
+import { ensureBootstrapped } from "../lib/bootstrap"
 import { analyticsDashboardEvents } from "./analytics"
 import flowEventListener from "./flow"
 import messageEventListener from "./message"
 
-startWorker([messageEventListener, flowEventListener, analyticsDashboardEvents])
+async function startEventWorker() {
+  try {
+    await ensureBootstrapped()
+    console.log("Event worker bootstrapped successfully")
+  } catch (err) {
+    console.error("Failed to bootstrap event worker", err)
+    process.exit(1)
+  }
+
+  startWorker([
+    messageEventListener,
+    flowEventListener,
+    analyticsDashboardEvents,
+  ])
+}
+
+startEventWorker()
 
 let isShuttingDown = false
 async function shutdown(signal: "SIGINT" | "SIGTERM") {

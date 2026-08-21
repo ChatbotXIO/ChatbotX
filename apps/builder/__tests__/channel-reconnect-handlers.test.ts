@@ -8,10 +8,15 @@ const {
   mockFindInstagramIntegration,
   mockUpdateInstagramIntegrationAuth,
   mockExchangeMessengerCode,
+  mockDebugMessengerToken,
   mockGetUserPages,
   mockGetMessengerFacebookUser,
   mockExchangeMessengerLongLivedToken,
+  mockToMessengerAppAccessToken,
+  mockEnsureMessengerWhitelistedDomain,
   mockSubscribePageToAppWebhook,
+  mockScopesToPageSubscribeFields,
+  mockResolveTenantSettings,
   mockGetInstagramAccount,
   mockSubscribeInstagramWebhook,
   mockGetUserInstagramAccounts,
@@ -25,10 +30,15 @@ const {
   mockFindInstagramIntegration: vi.fn(),
   mockUpdateInstagramIntegrationAuth: vi.fn(),
   mockExchangeMessengerCode: vi.fn(),
+  mockDebugMessengerToken: vi.fn(),
   mockGetUserPages: vi.fn(),
   mockGetMessengerFacebookUser: vi.fn(),
   mockExchangeMessengerLongLivedToken: vi.fn(),
+  mockToMessengerAppAccessToken: vi.fn(),
+  mockEnsureMessengerWhitelistedDomain: vi.fn(),
   mockSubscribePageToAppWebhook: vi.fn(),
+  mockScopesToPageSubscribeFields: vi.fn(),
+  mockResolveTenantSettings: vi.fn(),
   mockGetInstagramAccount: vi.fn(),
   mockSubscribeInstagramWebhook: vi.fn(),
   mockGetUserInstagramAccounts: vi.fn(),
@@ -39,6 +49,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  resolveTenantSettings: mockResolveTenantSettings,
   messengerIntegrationService: {
     findByIdForWorkspace: mockFindMessengerIntegration,
     updateAuth: mockUpdateMessengerIntegrationAuth,
@@ -50,13 +61,17 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
+  debugToken: mockDebugMessengerToken,
   exchangeCodeForToken: mockExchangeMessengerCode,
   getFacebookUser: mockGetMessengerFacebookUser,
   getUserPages: mockGetUserPages,
+  toAppAccessToken: mockToMessengerAppAccessToken,
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
+  ensureMessengerWhitelistedDomain: mockEnsureMessengerWhitelistedDomain,
   exchangeLongLivedToken: mockExchangeMessengerLongLivedToken,
+  scopesToPageSubscribeFields: mockScopesToPageSubscribeFields,
   subscribePageToAppWebhook: mockSubscribePageToAppWebhook,
 }))
 
@@ -175,6 +190,16 @@ describe("reconnectMessengerHandler", () => {
     mockExchangeMessengerLongLivedToken.mockImplementation(
       async (_config: unknown, token: string) => `long-${token}`,
     )
+    mockToMessengerAppAccessToken.mockReturnValue("app-access-token")
+    mockResolveTenantSettings.mockResolvedValue({
+      appUrl: "https://app.example.test",
+    })
+    mockDebugMessengerToken.mockResolvedValue({ scopes: ["pages_messaging"] })
+    mockEnsureMessengerWhitelistedDomain.mockResolvedValue(undefined)
+    mockScopesToPageSubscribeFields.mockReturnValue([
+      "messages",
+      "messaging_postbacks",
+    ])
     mockGetUserPages.mockResolvedValue({
       pages: [
         { id: "page-1", name: "Page One", access_token: "page-token" },
@@ -201,7 +226,18 @@ describe("reconnectMessengerHandler", () => {
       pageId: "page-1",
       accessToken: "long-page-token",
       version: "v23.0",
+      subscribedFields: "messages,messaging_postbacks",
     })
+    expect(mockEnsureMessengerWhitelistedDomain).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appUrl: "https://app.example.test",
+        ctx: expect.objectContaining({
+          auth: expect.objectContaining({
+            tokens: { accessToken: "long-page-token" },
+          }),
+        }),
+      }),
+    )
     expect(mockUpdateMessengerIntegrationAuth).toHaveBeenCalledWith({
       id: "im-1",
       workspaceId: "ws-1",
@@ -244,6 +280,23 @@ describe("reconnectMessengerHandler", () => {
     expect(
       mockUpdateMessengerIntegrationAuth.mock.calls[0][0].userInfo,
     ).toBeUndefined()
+  })
+
+  test("still succeeds when refreshing the whitelisted domain fails after auth is stored", async () => {
+    mockEnsureMessengerWhitelistedDomain.mockRejectedValue(
+      new Error("graph timeout"),
+    )
+
+    const result = await executeReconnect()
+
+    expect(result).toEqual({ status: "success" })
+    expect(mockUpdateMessengerIntegrationAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auth: expect.objectContaining({
+          tokens: { accessToken: "long-page-token" },
+        }),
+      }),
+    )
   })
 
   test("keeps the previously stored avatar when the refreshed identity has no avatarUrl", async () => {

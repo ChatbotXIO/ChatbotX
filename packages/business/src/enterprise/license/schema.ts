@@ -23,7 +23,7 @@ export const licensePayloadSchema = z.object({
   exp: z.number().int().positive(),
   nbf: z.number().int().positive().optional(),
   customerName: z.string().min(1),
-  tier: z.enum(["enterprise", "enterprise-plus"]),
+  tier: z.enum(["enterprise", "cloud"]),
   features: z.array(licenseFeatureSchema),
   limits: licenseLimitsSchema,
   licenseId: z.string().min(1),

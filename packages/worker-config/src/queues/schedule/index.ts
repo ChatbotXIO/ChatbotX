@@ -1,8 +1,10 @@
 import { Queue } from "bullmq"
+import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
@@ -17,6 +19,7 @@ export const ScheduleJobData = {
   evaluateDateTimeWebhooks: "evaluateDateTimeWebhooks",
   cleanupWebhookExecutions: "cleanupWebhookExecutions",
   scanSmartDelay: "scanSmartDelay",
+  scanAppointmentReminders: "scanAppointmentReminders",
   syncUserQuota: "syncUserQuota",
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
@@ -26,11 +29,8 @@ export const ScheduleJobData = {
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeWorkspaces: "purgeWorkspaces",
-  refreshZaloTokens: "refreshZaloTokens",
-  refreshTiktokTokens: "refreshTiktokTokens",
-  refreshInstagramTokens: "refreshInstagramTokens",
-  refreshMessengerTokens: "refreshMessengerTokens",
-  refreshInstagramFacebookTokens: "refreshInstagramFacebookTokens",
+  purgeAutomationThrottle: "purgeAutomationThrottle",
+  refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
 } as const
@@ -108,6 +108,14 @@ export type ScheduleJobScanSmartDelay = {
   data: Record<string, never>
 }
 
+export const scheduleJobScanAppointmentRemindersDataSchema = z.object({
+  triggeredAt: z.string().optional(),
+})
+export type ScheduleJobScanAppointmentReminders = {
+  type: typeof ScheduleJobData.scanAppointmentReminders
+  data: z.infer<typeof scheduleJobScanAppointmentRemindersDataSchema>
+}
+
 export type ScheduleJobSyncUserQuota = {
   type: typeof ScheduleJobData.syncUserQuota
   data: Record<string, never>
@@ -153,28 +161,13 @@ export type ScheduleJobPurgeWorkspaces = {
   data: Record<string, never>
 }
 
-export type ScheduleJobRefreshZaloTokens = {
-  type: typeof ScheduleJobData.refreshZaloTokens
+export type ScheduleJobPurgeAutomationThrottle = {
+  type: typeof ScheduleJobData.purgeAutomationThrottle
   data: Record<string, never>
 }
 
-export type ScheduleJobRefreshTiktokTokens = {
-  type: typeof ScheduleJobData.refreshTiktokTokens
-  data: Record<string, never>
-}
-
-export type ScheduleJobRefreshInstagramTokens = {
-  type: typeof ScheduleJobData.refreshInstagramTokens
-  data: Record<string, never>
-}
-
-export type ScheduleJobRefreshMessengerTokens = {
-  type: typeof ScheduleJobData.refreshMessengerTokens
-  data: Record<string, never>
-}
-
-export type ScheduleJobRefreshInstagramFacebookTokens = {
-  type: typeof ScheduleJobData.refreshInstagramFacebookTokens
+export type ScheduleJobRefreshChannelTokens = {
+  type: typeof ScheduleJobData.refreshChannelTokens
   data: Record<string, never>
 }
 
@@ -199,6 +192,7 @@ export type ScheduleJobData =
   | ScheduleJobEvaluateDateTimeWebhooks
   | ScheduleJobCleanupWebhookExecutions
   | ScheduleJobScanSmartDelay
+  | ScheduleJobScanAppointmentReminders
   | ScheduleJobSyncUserQuota
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac
@@ -208,18 +202,14 @@ export type ScheduleJobData =
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
-  | ScheduleJobRefreshZaloTokens
-  | ScheduleJobRefreshTiktokTokens
-  | ScheduleJobRefreshInstagramTokens
-  | ScheduleJobRefreshMessengerTokens
-  | ScheduleJobRefreshInstagramFacebookTokens
+  | ScheduleJobPurgeAutomationThrottle
+  | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
 
-export const scheduleQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const scheduleQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })

@@ -153,6 +153,7 @@ const fakeIntegration = {
   workspaceId: "ws-1",
   phoneNumberId,
   coexistEnabled: true,
+  coexistAiReadsSyncedHistory: false,
   inboxId: "inbox-1",
 }
 
@@ -375,6 +376,35 @@ describe("coexistWhatsappFlush", () => {
     expect(bulkArgs.runId).toBe(runId)
     expect(bulkArgs.batch[0]?.contact.sourceId).toBe("601234567890")
     expect(bulkArgs.batch[0]?.messages[0]?.sourceId).toBe("msg-row-1")
+  })
+
+  it("passes aiReadsSyncedHistory=false through to bulkImportHistorical when coexistAiReadsSyncedHistory is off", async () => {
+    mockFindFirst.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    wireSelect(defaultRunRow(), [makeStagedRow("row-1")])
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    const [bulkArgs] = mockBulkImport.mock.calls[0] as [
+      { aiReadsSyncedHistory: boolean },
+    ]
+    expect(bulkArgs.aiReadsSyncedHistory).toBe(false)
+  })
+
+  it("passes aiReadsSyncedHistory=true through to bulkImportHistorical when coexistAiReadsSyncedHistory is on", async () => {
+    mockFindFirst.mockResolvedValue({
+      ...fakeIntegration,
+      coexistAiReadsSyncedHistory: true,
+    })
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    wireSelect(defaultRunRow(), [makeStagedRow("row-1")])
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    const [bulkArgs] = mockBulkImport.mock.calls[0] as [
+      { aiReadsSyncedHistory: boolean },
+    ]
+    expect(bulkArgs.aiReadsSyncedHistory).toBe(true)
   })
 
   it("does not synthesize system time when a WhatsApp history message has no API timestamp", async () => {

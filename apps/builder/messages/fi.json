@@ -43,6 +43,7 @@
     "disableBot": "Poista botti käytöstä",
     "disconnect": "Katkaise yhteys",
     "download": "Lataa",
+    "downloadTemplate": "Lataa malli",
     "edit": "Muokkaa",
     "editFeature": "Muokkaa: {feature}",
     "enableBot": "Ota botti käyttöön",
@@ -145,6 +146,9 @@
     "clone": "Kloonaa",
     "remove": "Poista",
     "restore": "Palauta"
+  },
+  "errors": {
+    "superAdminRequired": "Sinun täytyy olla työtilan pääylläpitäjä tehdäksesi tämän."
   },
   "states": {
     "success": "Onnistui",
@@ -289,6 +293,7 @@
     "title": "Laskutus",
     "plan": {
       "label": "Tilaus: {plan}",
+      "currentLabel": "Nykyinen tilaus",
       "free": "Ilmainen"
     },
     "usage": {
@@ -535,6 +540,8 @@
       "blocked": "Estetty",
       "noAdminReply": "Ei ylläpitäjän vastausta",
       "contactCreatedAt": "Yhteystieto luotu",
+      "fromCtwaAd": "Click to WhatsApp -mainoksesta",
+      "ctwaConversion": "CTWA-konversio",
       "lastUserInputTypes": {
         "text": "Teksti",
         "location": "Sijainti",
@@ -544,6 +551,10 @@
         "audio": "Ääni",
         "gif": "GIF",
         "file": "Tiedosto"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Liidi",
+        "purchase": "Ostotapahtuma"
       }
     },
     "fieldGroups": {
@@ -558,7 +569,8 @@
       "topicCoupon": "Kuponkiaihe",
       "customFields": "Mukautetut kentät",
       "email": "Sähköposti",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Click to WhatsApp Ads"
     },
     "languages": {
       "ar": "Arabia",
@@ -594,6 +606,15 @@
       "webchat": "Verkkokeskustelu",
       "botLink": "Bottilinkki",
       "chatPlugin": "C.-keskustelulaajennus"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "CTWA-keskustelun aloittajat",
+        "leads": "CTWA-kelpuutetut liidit",
+        "purchases": "CTWA-ostajat"
+      },
+      "adPrefix": "mainos",
+      "allAds": "kaikki mainokset"
     }
   },
   "fields": {
@@ -761,7 +782,6 @@
     },
     "authType": {
       "headers": "Mukautettu otsake",
-      "none": "Ei mitään",
       "token": "Tunnus"
     },
     "automatedResponse": {
@@ -775,6 +795,9 @@
     },
     "qrCode": {
       "label": "QR-koodi"
+    },
+    "dynamicImage": {
+      "label": "Dynaaminen kuva"
     },
     "savePayloadToCustomField": {
       "label": "Tallenna tietosisältö mukautettuun kenttään"
@@ -879,11 +902,19 @@
       "description": "Tämä on oletusvastaus, jonka työtilasi lähettää käyttäjälle, kun työtila ei tiedä, miten käyttäjän viestiin vastataan.",
       "label": "Oletusvastaus"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Määritä, kuinka kauan botti odottaa ennen vastaamista käyttäjän viimeisimmän viestin jälkeen. Jos käyttäjä lähettää uuden viestin, ajastin nollautuu ja viestit kootaan yhdeksi vastaukseksi.",
       "label": "Botin vastausviive",
       "minutes": "{count, plural, one {# minuutti} other {# minuuttia}}",
-      "none": "Ei mitään",
       "seconds": "{count, plural, one {# sekunti} other {# sekuntia}}"
     },
     "delayType": {
@@ -1175,6 +1206,11 @@
     "outputCustomField": {
       "label": "Tulosteen mukautettu kenttä"
     },
+    "javascriptCode": {
+      "label": "JavaScript-koodi",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Käytä puhdasta JavaScriptiä ja palauta arvo. Verkko, tiedostot, API:t ja ulkoiset kirjastot eivät ole käytettävissä. Yhteystiedot ja järjestelmätiedot ovat saatavilla `input`-objektissa."
+    },
     "httpMethod": {
       "label": "Menetelmä"
     },
@@ -1248,6 +1284,12 @@
     },
     "pageUserName": {
       "label": "Sivun käyttäjänimi"
+    },
+    "waUserId": {
+      "label": "WhatsApp-käyttäjätunnus"
+    },
+    "waUserName": {
+      "label": "WhatsApp-käyttäjänimi"
     },
     "purpose": {
       "label": "Tarkoitus",
@@ -1533,7 +1575,7 @@
       "superAdmin": "Pääylläpitäjä",
       "analytics": "Analytiikka",
       "flows": "Flow't",
-      "contacts": "Yhteystiedot",
+      "contacts": "Yhteystiedot / Saapuneet",
       "onlyAssignedContacts": "Vain määritetyt yhteystiedot",
       "emailAndPhone": "Sähköposti ja puhelin",
       "broadcast": "Joukkolähetys",
@@ -1945,9 +1987,30 @@
       "label": "Tapahtumat",
       "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
       "description": "Lisää vähintään yksi tapahtuman nimi. Kun Make liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
+    },
+    "bookingCalendar": {
+      "label": "Ajanvarauskalenteri"
+    },
+    "bookingDate": {
+      "label": "Ajanvarauspäivä"
+    },
+    "bookingLink": {
+      "label": "Varauslinkki"
+    },
+    "n8nEvents": {
+      "label": "Tapahtumat",
+      "placeholder": "Kirjoita tapahtuman nimi ja paina Enter",
+      "description": "Lisää vähintään yksi tapahtuman nimi. Kun n8n liittää webhookin johonkin näistä tapahtumista, sille lähetetään tiedot tämän vaiheen suorittamisen yhteydessä."
+    },
+    "enabled": {
+      "label": "Käytössä"
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Tätä flow'ta ei ole koskaan julkaistu. Julkaise se ennen viemistä.",
+      "failed": "Vienti epäonnistui. Yritä uudelleen."
+    },
     "title": "Flow't",
     "quickReplies": {
       "limitReached": "Pikavastausten enimmäismäärä saavutettu ({max})."
@@ -1972,8 +2035,7 @@
     },
     "openaiCompatible": {
       "empty": "Yhdistä OpenAI-yhteensopiva palveluntarjoaja integraatioasetuksissa ennen tämän vaiheen käyttöä.",
-      "integration": "OpenAI-yhteensopiva palveluntarjoaja",
-      "none": "Ei mitään"
+      "integration": "OpenAI-yhteensopiva palveluntarjoaja"
     },
     "actions": {
       "addContactNotes": "Lisää yhteystiedon muistiinpanoja",
@@ -1996,6 +2058,7 @@
       "questionnaires": "Kyselyt",
       "setUpCoupon": "Määritä kuponki",
       "markCouponUsed": "Merkitse kuponki käytetyksi",
+      "executeJavascript": "Suorita JavaScript",
       "chooseChannel": "Valitse kanava",
       "clearCustomField": "Tyhjennä mukautettu kenttä",
       "condition": "Ehto",
@@ -2073,7 +2136,15 @@
       "unsubscribeSequence": "Poista sekvenssistä",
       "splitTraffic": "Jaa liikenne",
       "aiEditImage": "AI muokkaa kuvaa",
-      "whatsappFlow": "WhatsApp Flow"
+      "whatsappFlow": "WhatsApp Flow",
+      "appointmentScheduling": "Ajanvaraus",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
+      "import": "Tuo vuo",
+      "export": "Vie",
+      "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
+      "importJsonOnly": "Vain JSON-tiedostot"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2105,6 +2176,11 @@
       "selectCustomFieldPlaceholder": "Valitse mukautettu kenttä",
       "addMapping": "Lisää yhdistäminen",
       "addCustomField": "Lisää uusi"
+    },
+    "sendCarousel": {
+      "addSlide": "Lisää kortti",
+      "removeSlide": "Poista kortti",
+      "whatsappLinkButtonIgnored": "WhatsAppissa tämän kortin linkki ei toimi: linkkipainikkeen sisältävällä kortilla ei voi olla muita painikkeita. Se lähetetään sen sijaan vastauksena."
     },
     "additionalSteps": "Lisävaiheet",
     "delayType": {
@@ -2172,7 +2248,11 @@
     },
     "setCustomField": {
       "temporalHint": "Jätä tyhjäksi tallentaaksesi nykyisen päivämäärän ja ajan."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Kun painikkeita on liitetty, TikTok lähettää vain tämän viestin ensimmäiset 40 merkkiä — loput katkaistaan."
+    },
+    "dataWasSaved": "Tiedot tallennettiin"
   },
   "folders": {
     "heading": {
@@ -2218,6 +2298,174 @@
     },
     "errors": {
       "invalidAppSettings": "Facebook-sovelluksen asetukset eivät ole kelvolliset"
+    }
+  },
+  "ads": {
+    "title": "Mainokset",
+    "connectAccounts": {
+      "connectAdAccount": "Yhdistä mainostili",
+      "adAccountName": "Mainostilin nimi",
+      "adAccountsReconnectBanner": "Meta-mainostilisi tunnistetiedot ovat vanhentuneet tai menettäneet käyttöoikeuksia. Yhdistä Facebook Ads uudelleen, jotta mainosraportointi pysyy käytettävissä.",
+      "adAccountsNotConnected": "Yhtään Meta-mainostiliä ei ole vielä yhdistetty.",
+      "adAccountsEmpty": "Tälle Facebook Ads -yhteydelle ei löytynyt Meta-mainostileja.",
+      "reconnect": "Yhdistä uudelleen",
+      "reconnectSuccess": "WhatsApp-tili yhdistetty uudelleen.",
+      "selectAccountLabel": "WhatsApp-tili",
+      "status": {
+        "ready": "Automaattiset tapahtumat valmiina",
+        "missingPermission": "Automaattisten tapahtumien käyttöoikeus puuttuu",
+        "unverified": "Käyttöoikeutta ei ole vahvistettu"
+      },
+      "table": {
+        "wabaId": "WABA-tunnus"
+      },
+      "connectWhatsapp": {
+        "cta": "Yhdistä WhatsApp-tili"
+      }
+    },
+    "conversionEvents": {
+      "title": "Konversiotapahtumat",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Hallitse mainostilejä",
+      "export": "Vie",
+      "selectAll": "Valitse kaikki",
+      "whatsappAsset": "WhatsApp-resurssi",
+      "selectWhatsappAsset": "Valitse WhatsApp-resurssi",
+      "templates": "Mallipohjat",
+      "selectTemplates": "Valitse mallipohjat",
+      "noTemplates": "Hyväksyttyjä mallipohjia ei löytynyt.",
+      "existingRules": "Olemassa olevat säännöt",
+      "noRules": "Tälle WhatsApp-resurssille ei ole vielä konversiosääntöjä.",
+      "toggleRule": "Ota sääntö käyttöön tai poista käytöstä",
+      "deleteRule": "Poista sääntö",
+      "qualifyingTemplateMessageSent": "Kelpuuttava mallipohjaviesti on lähetetty",
+      "qualifyingFirstReply": "Kontakti lähettää ensimmäisen viestinsä",
+      "qualifyingAnyReply": "Kontakti lähettää viestin",
+      "when": "Kun",
+      "whenOptions": {
+        "templateSent": "Kelpuuttava mallipohjaviesti on lähetetty",
+        "tagApplied": "Kontakti tägätään",
+        "keywordMatched": "Kontaktin viesti vastaa avainsanasääntöä",
+        "contactReplied": "Kontakti lähettää viestin"
+      },
+      "tags": "Tägit",
+      "selectTags": "Valitse tägit",
+      "noTags": "Tägejä ei löytynyt.",
+      "untitledKeywordRule": "(nimetön avainsanasääntö)",
+      "keywordRules": "Avainsanasäännöt",
+      "selectKeywordRules": "Valitse avainsanasäännöt",
+      "noKeywordRules": "Saapuvia avainsanasääntöjä ei löytynyt.",
+      "replyOptions": "Vastausasetukset",
+      "firstReplyOnly": "Vain ensimmäinen viesti",
+      "dedupeNote": "Enintään 1 tapahtuma päivässä keskustelua ja sääntöä kohti.",
+      "dealWon": "Kauppa voitettu",
+      "eventTypeLead": "Liidi",
+      "eventTypePurchase": "Ostotapahtuma",
+      "messages": {
+        "ruleSaved": "Konversiosääntö tallennettu",
+        "ruleUpdated": "Konversiosääntö päivitetty",
+        "ruleDeleted": "Konversiosääntö poistettu"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Sivu 1",
+        "page2": "Sivu 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Seuraa kelpuutettuja liidejä",
+        "question": "Missä vaiheessa keskustelua haluat kelpuuttaa kontaktin liidiksi?",
+        "when": "Kun",
+        "then": "Merkitse tämän jälkeen CTWA-liidi tilaan"
+      },
+      "trackPurchases": {
+        "title": "Seuraa ostotapahtumia",
+        "question": "Mikä mallipohja vahvistaa ostotapahtuman?",
+        "when": "Kun",
+        "then": "Silloin",
+        "noValueNote": "Säännöllä käynnistetty ostotapahtuma kirjaa Ostotapahtuma-konversion ilman tilauksen arvoa — se lasketaan ostotapahtumiin, mutta lisää tuloihin 0. Tilauksen arvon tallentaa vain Meta Automaattiset tapahtumat."
+      }
+    },
+    "analytics": {
+      "title": "CTWA-analytiikka",
+      "funnelOverview": "Suppilon yleiskatsaus",
+      "conversationsStarted": "Aloitetut keskustelut",
+      "qualifiedLeads": "Kelpuutetut liidit",
+      "purchases": "Ostotapahtumat",
+      "adSpend": "Mainoskulutus",
+      "spendAccountLevelNote": "Kulutus raportoidaan Meta-mainostilin tasolla; kun WhatsApp-tili on valittu, kyseisen tilin mainokset, joissa on vain kulutusta mutta ei suppiloaktiviteettia, piilotetaan.",
+      "revenue": "Tulot",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Tulot oletetaan yhdessä valuutassa (USD). Sekavaluuttaisia mainostileja ei vielä yhdistetä.",
+      "costPerLead": "Hinta/liidi",
+      "costPerPurchase": "Hinta/ostotapahtuma",
+      "impressions": "Näyttökerrat",
+      "clicks": "Klikkaukset",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Hinta/keskustelu",
+      "costCurrencyNote": "Kustannusmittarit oletetaan yhdessä valuutassa (USD), samoin kuin mainoskulutus.",
+      "performanceChart": {
+        "title": "Suorituskyky ajan mittaan",
+        "empty": "Ei keskusteluja, liidejä, ostotapahtumia tai kulutusta tällä aikavälillä vielä."
+      },
+      "dateRange": {
+        "oneDay": "1P",
+        "oneWeek": "1VK",
+        "oneMonth": "1KK",
+        "threeMonths": "3KK",
+        "custom": "Mukautettu",
+        "apply": "Käytä"
+      },
+      "allAds": "Kaikki mainokset",
+      "adAccountFilter": {
+        "all": "Kaikki mainostilit",
+        "label": "Mainostili",
+        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
+      },
+      "retarget": "Kohdista uudelleen",
+      "thoseWhoPurchased": "Ostotapahtuman tehneet",
+      "thoseWhoStartedConversation": "Keskustelun aloittaneet",
+      "sendWhatsappBroadcast": "Lähetä WhatsApp-joukkoviesti",
+      "from": "Alkaen",
+      "to": "Päättyen",
+      "unattributed": "Ei kohdistettu",
+      "retargetDialog": {
+        "title": "Kohdista CTWA-kontaktit uudelleen",
+        "createAudience": "Luo kohdeyleisö",
+        "useExistingAudience": "Käytä olemassa olevaa kohdeyleisöä",
+        "audienceName": "Kohdeyleisön nimi",
+        "audiencePrefix": "CTWA",
+        "confirm": "Aloita synkronointi",
+        "success": "Uudelleenkohdistuksen kohdeyleisön synkronointi lisätty jonoon.",
+        "error": "Uudelleenkohdistuksen kohdeyleisön synkronoinnin lisääminen jonoon epäonnistui."
+      },
+      "delivery": {
+        "title": "Konversioiden toimitus",
+        "sent": "Lähetetty",
+        "pending": "Odottaa",
+        "failed": "Epäonnistui",
+        "skippedNoScope": "Ohitettu (ei käyttöoikeutta)",
+        "skippedRegion": "Ohitettu (alue)",
+        "noScopeWarning": "Osaa konversioista ei lähetetty, koska tältä WhatsApp-tililtä puuttuu tapahtumien käyttöoikeus. Yhdistä se uudelleen ottaaksesi käyttöön Automaattisten tapahtumien raportoinnin.",
+        "reconnectCta": "Yhdistä tili uudelleen",
+        "empty": "Ei konversiotapahtumia tällä aikavälillä vielä."
+      },
+      "export": {
+        "conversations": "Vie keskustelut",
+        "leads": "Vie liidit",
+        "purchases": "Vie ostotapahtumat"
+      },
+      "csv": {
+        "contactName": "Kontaktin nimi",
+        "phone": "Puhelin",
+        "adId": "Mainostunnus",
+        "occurredAt": "Tapahtumisajankohta"
+      },
+      "empty": "Ei tietoja vielä. Yhdistä mainostili ja aloita konversioiden seuranta."
     }
   },
   "googleSheets": {
@@ -2506,6 +2754,11 @@
     "noWorkspaces": "Sinulla ei ole vielä työtiloja.",
     "owner": "Omistaja"
   },
+  "notFound": {
+    "title": "Sivua ei löytynyt",
+    "description": "Etsimääsi sivua ei ole olemassa tai se on voitu siirtää.",
+    "backToHome": "Takaisin etusivulle"
+  },
   "editProfile": {
     "title": "Muokkaa profiilia"
   },
@@ -2613,6 +2866,7 @@
     "changeHideState": "Vaihda piilotustilaa",
     "commentHidden": "Tämä kommentti piilotettiin",
     "messageDeleted": "Viesti on poistettu.",
+    "sendFailed": "Lähetys epäonnistui",
     "repliedToStory": "Vastasi tarinaasi",
     "sentAttachments": "Lähetettiin {count, plural, one {1 liite} other {# liitettä}}",
     "deleteComment": "Poista kommentti",
@@ -2692,10 +2946,19 @@
     "noVersionsFound": "Julkaistuja versioita ei löytynyt",
     "publishVersionSuccess": "Uusi versio on julkaistu",
     "flowConfigIncomplete": "Jotkin määritykset ovat puutteellisia",
+    "whatsappCarouselButtonsMismatch": "WhatsAppissa karusellin jokaisella kortilla on oltava samat painikkeet: joko yksi linkkipainike jokaisella kortilla tai sama määrä vastauspainikkeita jokaisella kortilla",
+    "whatsappCarouselLinkButtonNotAlone": "WhatsAppissa linkkipainikkeen sisältävällä karusellikortilla ei voi olla muita painikkeita. Poista kortin muut painikkeet tai vaihda linkkipainike toiseen toimintoon.",
     "duplicateNodeError": "Lohkoa ei voitu monistaa. Yritä uudelleen.",
     "deleteNodeError": "Lohkoa ei voitu poistaa. Yritä uudelleen.",
     "redoHistoryCleared": "Uudelleentekohistoria tyhjennetty",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Ei mitään",
+    "tiktokCardTitleTooLong": "TikTok lyhentää tätä viestiä: kun painikkeita on liitetty, vain ensimmäiset 40 merkkiä lähetetään. Lyhennä viestiä tai poista painikkeet.",
+    "waTemplateMpmNoProducts": "Lisää vähintään yksi tuote tähän usean tuotteen painikkeeseen ennen julkaisua.",
+    "waTemplateMpmTooManySections": "Usean tuotteen painikkeessa voi olla enintään 10 osiota. Poista osioita ennen julkaisua.",
+    "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",
+    "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
+    "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -2703,7 +2966,11 @@
     "iceBreakers": "Keskustelunavaukset",
     "iceBreakersDescription": "Keskustelunavaukset auttavat käyttäjiä aloittamaan keskustelun bottisi kanssa näyttämällä luettelon usein kysytyistä kysymyksistä.",
     "reconnect": "Yhdistä uudelleen",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "Yleiset asetukset",
+      "conversionsApi": "Mainosten optimointi"
+    }
   },
   "coexist": {
     "title": "Synkronoidaanko nykyiset yhteystiedot ja keskusteluhistoria?",
@@ -2717,6 +2984,8 @@
     "toggleHelper": "Uudelleen käyttöönotto toimii vain, jos Metalla on puskuroidut tiedot (24 tunnin kuluessa käyttöönotosta). Muussa tapauksessa katkaise yhteys ja yhdistä uudelleen.",
     "toggleHelperMessenger": "Uudelleen käyttöönotto toimii vain, jos Metalla on puskuroidut tiedot (24 tunnin kuluessa käyttöönotosta). Muussa tapauksessa katkaise Messenger-sivun yhteys ja yhdistä uudelleen.",
     "toggleHelperWhatsapp": "Uudelleen käyttöönotto toimii vain, jos Metalla on puskuroidut tiedot (24 tunnin kuluessa käyttöönotosta). Muussa tapauksessa katkaise WhatsApp-numeron yhteys ja yhdistä uudelleen.",
+    "aiReadsSyncedHistoryLabel": "Tekoäly lukee synkronoidun historian",
+    "aiReadsSyncedHistoryHelper": "Pois päältä: tekoäly näkee vain uudet viestit.",
     "success": {
       "enabled": "Synkronointi aloitettu. Historialliset yhteystiedot ja viestit tulevat pian näkyviin.",
       "disabled": "Synkronointi poistettu käytöstä."
@@ -2759,7 +3028,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Yleiset asetukset",
-      "messageTemplates": "Viestimallit"
+      "messageTemplates": "Viestimallit",
+      "conversionsApi": "Mainosten optimointi"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3323,13 @@
         "wabaResolveFailed": "WhatsApp Business -tiliä ei voitu selvittää valtuutuksesta."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "WhatsApp-integraatiota ei löytynyt.",
+        "phoneNumberMismatch": "Uudelleenyhdistäminen palautti odotetun WhatsApp Business -tilin, mutta ei tähän työtilaan yhdistettyä puhelinnumeroa.",
+        "wabaMismatch": "Uudelleenyhdistäminen palautti eri WhatsApp Business -tilin. Yhdistä sama tili uudelleen."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3085,22 +3362,38 @@
       "params": {
         "couponCode": "Kuponkikoodi",
         "couponCodePlaceholder": "Kirjoita kuponkikoodi",
-        "quickReplyPayload": "Pikavastauksen tietosisältö",
-        "quickReplyPayloadPlaceholder": "Kirjoita tietosisältö (valinnainen)",
         "flowToken": "Flow-tunnus",
         "flowTokenPlaceholder": "Kirjoita flow-tunnus",
-        "catalogProductId": "Tuotetunnus",
-        "catalogProductIdPlaceholder": "Kirjoita jälleenmyyjän tuotetunnus",
+        "flowNotSynced": "Synkronoi WhatsApp-flow't lähetettyjen kenttien yhdistämiseksi.",
+        "catalogProductId": "Luettelotuote",
+        "catalogProductIdPlaceholder": "Hae tuotteita…",
         "carouselCard": "Kortti {index}",
         "limitedTimeOffer": "Tarjouksen päättymisaika",
-        "limitedTimeOfferPlaceholder": "Kirjoita päättymisaika millisekunteina",
-        "limitedTimeOfferHelp": "Unix-aikaleima millisekunteina tarjouksen päättymishetkellä",
+        "limitedTimeOfferPlaceholder": "Valitse vanhenemispäivä ja -aika",
+        "limitedTimeOfferHelp": "Vanhenemisaika lähetetään täsmälleen valittuna.",
         "location": "Sijainti",
         "latitude": "Leveysaste",
         "longitude": "Pituusaste",
         "locationName": "Sijainnin nimi (valinnainen)",
         "locationAddress": "Osoite (valinnainen)",
-        "enterFormatUrl": "Kirjoita {format}-URL"
+        "enterFormatUrl": "Kirjoita {format}-URL",
+        "catalogUseDefault": "Käytä luettelon oletuspienoiskuvaa",
+        "catalogNotConnectedGuidance": "Yhdistä Meta-luettelo valitaksesi tuotteen.",
+        "catalogSetupLink": "Siirry luetteloasetuksiin",
+        "catalogSelectedProductFallback": "Tuote: {retailerId}",
+        "limitedTimeOfferBadge": "Vanhenee {date}",
+        "limitedTimeOfferExpiredBadge": "Vanhentui {date}",
+        "mpmSections": "Tuotteet",
+        "mpmSectionTitlePlaceholder": "Osion otsikko (valinnainen)",
+        "mpmAddSection": "Lisää osio",
+        "mpmRemoveSection": "Poista osio",
+        "mpmAddProduct": "Lisää tuote",
+        "mpmRemoveProduct": "Poista tuote",
+        "mpmNoProductsHelp": "Lisää vähintään yksi tuote ennen julkaisua.",
+        "mpmSectionLimitReached": "Enimmäismäärä 10 osiota saavutettu.",
+        "mpmProductLimitReached": "Enimmäismäärä 30 tuotetta saavutettu.",
+        "mpmProductsSummary": "{productCount} tuotetta, {sectionCount} osiossa",
+        "unsupportedButtonParam": "Tätä painiketyyppiä ei vielä tueta."
       }
     },
     "sampleBodyCardContent": {
@@ -3125,7 +3418,9 @@
       "flows": "Flow't",
       "messageTemplates": "Viestimallit",
       "profile": "Profiili",
-      "usefulLinks": "Hyödylliset linkit"
+      "usefulLinks": "Hyödylliset linkit",
+      "conversionsApi": "Mainosten optimointi",
+      "settings": "Asetukset"
     },
     "accountHealths": {
       "title": "Hallitse WhatsApp-tiliäsi",
@@ -3255,7 +3550,13 @@
       "label": "Mallin ylätunniste"
     },
     "transferPhoneNumber": "Siirrä puhelin toiselta WhatsApp-palveluntarjoajalta",
-    "signupSessionExpired": "WhatsApp-rekisteröinti-istuntosi on vanhentunut. Aloita yhdistäminen uudelleen."
+    "signupSessionExpired": "WhatsApp-rekisteröinti-istuntosi on vanhentunut. Aloita yhdistäminen uudelleen.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automaattiset tapahtumat",
+        "description": "Lähetä konversiotapahtumat tästä WhatsApp-numerosta automaattisesti Metalle. Jos lupa puuttuu, yhdistä tili uudelleen myöntääksesi sen."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
@@ -3295,6 +3596,67 @@
   "qrCodes": {
     "title": "QR-koodit",
     "description": "Luo QR-koodeja, jotka linkittävät chatbot-flow'ihisi."
+  },
+  "dynamicImages": {
+    "title": "Dynaamiset kuvat",
+    "description": "Luo yksilöllisiä kuvia kontaktikohtaisesti taustakuvasta sekä teksti-, kuva- ja QR-tasoista.",
+    "publicUrl": {
+      "label": "Julkinen URL-osoite",
+      "hint": "Kopioi ja liitä URL-osoite flow'hun, joukkolähetykseen tai sekvenssiin lähettääksesi yksilöityjä kuvia."
+    },
+    "editor": {
+      "addElement": "Lisää elementti",
+      "addImage": "Lisää kuva",
+      "addText": "Lisää teksti",
+      "addQrCode": "Lisää QR-koodi",
+      "template": "Malli",
+      "templateDialogTitle": "Valitse malli",
+      "templateDialogDescription": "Mallin valitseminen korvaa kaikki nykyiset tasot.",
+      "layers": "Tasot",
+      "noLayers": "Ei tasoja vielä. Lisää elementti aloittaaksesi.",
+      "deleteLayer": "Poista taso",
+      "layerNameImage": "Kuva",
+      "layerNameText": "Teksti",
+      "layerNameQrCode": "QR-koodi",
+      "editElement": "Muokkaa elementtiä",
+      "selectElementHint": "Valitse elementti canvasilta muokataksesi sen ominaisuuksia.",
+      "width": "Leveys",
+      "height": "Korkeus",
+      "priority": "Prioriteetti",
+      "imageType": "Kuvan tyyppi",
+      "imageTypeUrl": "Kuvan URL-osoite",
+      "imageTypeAvatarUser": "Kontaktin profiilikuva",
+      "imageTypeCustomField": "Mukautettu kenttä",
+      "imageUrl": "Kuvan URL-osoite",
+      "uploadImage": "Lataa kuva",
+      "customField": "Mukautettu kenttä",
+      "imageStyle": "Kuvan tyyli",
+      "imageStyleSquare": "Neliö",
+      "imageStyleCircle": "Ympyrä",
+      "qrText": "QR-koodin sisältö",
+      "qrSize": "Koko",
+      "qrColor": "Väri",
+      "qrLogo": "Logo",
+      "uploadLogo": "Lataa logo",
+      "textContent": "Tekstisisältö",
+      "fontSize": "Fontin koko",
+      "fontFamily": "Fontti",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Tasaus",
+      "alignLeft": "Vasemmalle",
+      "alignCenter": "Keskelle",
+      "alignRight": "Oikealle",
+      "color": "Väri",
+      "bold": "Lihavoitu",
+      "italic": "Kursivoitu",
+      "uppercase": "Isot kirjaimet"
+    },
+    "preview": {
+      "error": "Linkitettyä dynaamista kuvaa ei voitu ladata. Se on saatettu poistaa."
+    }
   },
   "magicLinks": {
     "title": "Taikalinkit",
@@ -3352,7 +3714,8 @@
       "clearCustomField": "Tyhjennä mukautettu kenttä",
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
-      "transferConversationToHuman": "Siirrä keskustelu ihmiselle"
+      "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -3390,7 +3753,10 @@
     "title": "Tarkastuslokit"
   },
   "customFields": {
-    "title": "Mukautetut kentät"
+    "title": "Mukautetut kentät",
+    "variables": {
+      "rawGroup": "Raa'at mukautetut kentät"
+    }
   },
   "keywords": {
     "title": "Avainsanat",
@@ -3869,7 +4235,6 @@
     "allFormsNote": "Kaikkien tämän sivun lomakkeiden liidit tallennetaan. Vakiokentät (sähköposti, puhelin, nimi, sukupuoli) tallennetaan automaattisesti vastaaviin yhteystietokenttiin.",
     "leadData": "Liiditiedot",
     "whatFlow": "Käynnistettävä flow",
-    "none": "Ei mitään",
     "addNewPage": "Lisää uusi",
     "noEligiblePages": "Sopivia sivuja ei ole. Myönnä liidien käyttöoikeus valitsemalla Lisää uusi.",
     "duplicateError": "Tälle sivulle ja lomakkeelle on jo olemassa automaatio.",
@@ -3881,7 +4246,28 @@
   },
   "appointmentScheduling": {
     "title": "Ajanvaraus",
-    "description": "Luo ja hallitse ajanvaraustasi."
+    "description": "Luo ja hallitse ajanvaraustasi.",
+    "flowModes": {
+      "bookFromCustomField": "Varaa aika",
+      "checkAvailabilityFromCustomField": "Tarkista saatavuus",
+      "book": "Päivä- ja aikavalitsin",
+      "checkAvailability": "Päivämääräväli-valitsin",
+      "cancel": "Peruuta aika"
+    },
+    "fields": {
+      "mode": "Tila",
+      "dateTimeFieldId": "Ajan päivämäärä ja kellonaika",
+      "dateTimeFieldIdSource": "Päivämäärä/aika-kenttä",
+      "startDateFieldId": "Aloituspäivän kenttä",
+      "endDateFieldId": "Päättymispäivän kenttä",
+      "resultUsedByAI": "Käytä tulosta tekoälylle",
+      "outputCustomFieldId": "Tallenna vastaus mukautettuun kenttään",
+      "startDateFieldIdSelected": "Tallenna valittu aloituspäivä kenttään",
+      "endDateFieldIdSelected": "Tallenna valittu päättymispäivä kenttään"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Valitse, miten tämä flow-vaihe ajoittaa ajanvarauksia."
+    }
   },
   "templates": {
     "title": "Mallit",
@@ -4433,6 +4819,382 @@
       "iconPlaceholder": "esim. book-open, star, circle-question-mark",
       "position": "Järjestys",
       "iconSearchLink": "Selaa Lucide-kuvakkeita →"
+    }
+  },
+  "bookingWebview": {
+    "metadataTitle": "Varaa aika",
+    "badge": "Ajanvaraus",
+    "timezone": "Aikavyöhyke",
+    "empty": "Vapaita aikoja ei löytynyt.",
+    "noSelection": "Valitse aika",
+    "actions": {
+      "book": "Varaa aika",
+      "viewDetails": "Näytä tiedot"
+    },
+    "errors": {
+      "invalidTokenTitle": "Tämä ajanvarauslinkki ei ole käytettävissä.",
+      "invalidTokenDescription": "Linkki saattaa olla virheellinen tai vanhentunut. Pyydä uusi ajanvarauslinkki.",
+      "staleSlot": "Tämä aika ei ole enää saatavilla. Valitse toinen aika.",
+      "availabilityChanged": "Saatavuus muuttui, kun valitsit aikaa. Valitse uudelleen.",
+      "submitFailed": "Emme voineet suorittaa tätä pyyntöä. Yritä uudelleen."
+    },
+    "success": {
+      "title": "Ajanvarauksesi on varattu.",
+      "description": "Ajanvarauksen tiedot ovat valmiit."
+    },
+    "schedule": {
+      "metadataTitle": "Ajanvarauksen tiedot",
+      "defaultMessage": "Ajanvarauksesi on ajastettu.",
+      "unknownInvitee": "Vieras",
+      "fields": {
+        "invitee": "Kutsuttu",
+        "time": "Aika",
+        "timezone": "Aikavyöhyke",
+        "location": "Sijainti"
+      },
+      "status": {
+        "scheduled": "Ajastettu",
+        "cancelled": "Peruutettu"
+      },
+      "locationTypes": {
+        "inPerson": "Tapaaminen paikan päällä",
+        "phoneCall": "Puhelu",
+        "onlineMeeting": "Verkkotapaaminen"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Peruuta aika",
+      "title": "Peruuta aika",
+      "description": "Peruuta {calendar} ajankohtana {time}.",
+      "action": "Peruuta aika",
+      "cancelledTitle": "Ajanvaraus peruutettu",
+      "cancelledDescription": "Tämä ajanvaraus on peruutettu.",
+      "unavailableTitle": "Peruutus ei ole mahdollinen",
+      "unavailableDescription": "Tämä ajanvaraus on jo peruutettu, poistettu tai menneisyydessä."
+    },
+    "range": {
+      "metadataTitle": "Tarkista saatavuus",
+      "empty": "Ei valittu",
+      "successTitle": "Aikaväli vastaanotettu.",
+      "successDescription": "Tarkistamme vapaita ajanvarausaikoja.",
+      "fields": {
+        "startDate": "Aloituspäivä",
+        "endDate": "Päättymispäivä",
+        "startTime": "Alkamisaika",
+        "endTime": "Päättymisaika"
+      },
+      "actions": {
+        "skip": "Ohita"
+      },
+      "errors": {
+        "invalidRange": "Päättymispäivän on oltava sama tai myöhäisempi kuin aloituspäivä."
+      },
+      "timezoneHint": "Ajat näytetään aikavyöhykkeellä {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Valitse päivämäärä",
+    "date": {
+      "title": "Valitse päivämäärä"
+    },
+    "datetime": {
+      "title": "Valitse päivämäärä ja kellonaika"
+    },
+    "noSelection": "Valitse päivämäärä",
+    "actions": {
+      "submit": "Lähetä"
+    },
+    "success": {
+      "title": "Tiedot tallennettiin",
+      "description": "Voit nyt sulkea tämän välilehden."
+    },
+    "errors": {
+      "invalidTokenTitle": "Tämä linkki ei ole käytettävissä.",
+      "invalidTokenDescription": "Linkki saattaa olla virheellinen tai vanhentunut. Pyydä uusi linkki.",
+      "submitFailed": "Emme voineet suorittaa tätä pyyntöä. Yritä uudelleen."
+    },
+    "monthLabel": "Kuukausi",
+    "yearLabel": "Vuosi"
+  },
+  "appointments": {
+    "title": "Ajanvaraukset",
+    "statuses": {
+      "scheduled": "Ajastettu",
+      "cancelled": "Peruutettu"
+    },
+    "messages": {
+      "empty": "Ei vielä ajanvarauksia."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Ajanvaraukset",
+    "singular": "Ajanvaraus",
+    "unknownContact": "Tuntematon yhteystieto",
+    "searchPlaceholder": "Hae nimellä...",
+    "tabs": {
+      "next": "Tulevat",
+      "past": "Menneet"
+    },
+    "fields": {
+      "name": "Nimi",
+      "date": "Päivämäärä",
+      "status": "Tila",
+      "calendar": "Kalenteri"
+    },
+    "statuses": {
+      "scheduled": "Ajastettu",
+      "cancelled": "Peruutettu"
+    },
+    "actions": {
+      "cancelAppointment": "Peruuta aika"
+    },
+    "dialogs": {
+      "cancelTitle": "Peruuta aika",
+      "cancelDescription": "Peruuta tämä ajanvaraus ja suorita sen peruutuksen sivuvaikutukset.",
+      "deleteTitle": "Poista ajanvaraus",
+      "deleteDescription": "Poista tämä ajanvaraus hallintaluettelosta. Tämä ei suorita peruutusflow'ta."
+    },
+    "messages": {
+      "cancelled": "Ajanvaraus peruutettu.",
+      "deleted": "Ajanvaraus poistettu."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Ajanvarauskalenterit",
+    "singular": "Ajanvarauskalenteri",
+    "addNew": "Lisää uusi",
+    "none": "Ei mitään",
+    "addReminder": "Lisää muistutus",
+    "reminderSummary": "Lähetä muistutus - {calendar} {timing}.",
+    "noExternalConnections": "Ei vielä ulkoisia kalenteriyhteyksiä",
+    "dialogDescriptions": {
+      "create": "Anna ajanvarauskalenterillesi nimi aloittaaksesi.",
+      "rename": "Nimeä tämä ajanvarauskalenteri uudelleen."
+    },
+    "tabs": {
+      "calendars": "Kalenterit",
+      "appointments": "Ajanvaraukset",
+      "externalCalendars": "Ulkoiset kalenterit"
+    },
+    "sections": {
+      "appointment": "Mistä ajanvarauksessa on kyse",
+      "availability": "Milloin ihmiset voivat varata ajan?",
+      "duration": "Kuinka pitkä ajanvarauksesi on?",
+      "location": "Missä ajanvaraus tapahtuu?",
+      "notifications": "Ilmoitukset",
+      "restrictions": "Rajoitukset",
+      "externalCalendar": "Yhdistä Google Calendar"
+    },
+    "fields": {
+      "description": "Kuvaus",
+      "timezone": "Aikavyöhyke",
+      "locationType": "Sijaintityyppi",
+      "locationDetail": "Tarkennus",
+      "durationMinutes": "Ajanvarauksen kesto",
+      "bufferAfterMinutes": "Lisää aikaa ajanvarausten jälkeen",
+      "scheduleWindowType": "Ihmiset voivat varata ajan",
+      "rollingDays": "Liukuvat päivät",
+      "minAdvanceDays": "Vähimmäismäärä päiviä etukäteen",
+      "startDate": "Aloituspäivä",
+      "endDate": "Päättymispäivä",
+      "specificDate": "Päivämäärä",
+      "maxAppointmentsPerUser": "Käyttäjäkohtainen ajanvarausten enimmäismäärä",
+      "maxAppointmentsUnlimited": "Rajoittamaton",
+      "dailyLimitEnabled": "Päivittäinen raja",
+      "maxPerDay": "Enimmäismäärä päivässä",
+      "allowGroupMeeting": "Salli ryhmätapaaminen",
+      "maxPerSlot": "Enimmäismäärä per aika",
+      "confirmationMessage": "Vahvistusviesti",
+      "confirmationFlowId": "Vahvistus-flow",
+      "cancellationFlowId": "Peruutus-flow",
+      "externalConnectionId": "Ulkoinen kalenteri",
+      "reminders": "Muistutukset",
+      "reminderTimingValue": "Arvo",
+      "reminderTimingUnit": "Yksikkö"
+    },
+    "locationTypes": {
+      "inPerson": "Tapaaminen paikan päällä",
+      "phoneCall": "Puhelu",
+      "onlineMeeting": "Verkkotapaaminen"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Liukuvan päivämäärän sisällä tulevaisuudessa",
+      "dateRange": "Aikavälin sisällä",
+      "specificDay": "Yhtenä tiettynä päivänä",
+      "anyFutureDate": "Minä tahansa tulevana päivänä"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minuuttia ennen",
+      "hours": "Tuntia ennen",
+      "days": "Päivää ennen"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minuutti ennen} other {# minuuttia ennen}}",
+      "hours": "{count, plural, one {tunti ennen} other {# tuntia ennen}}",
+      "days": "{count, plural, one {päivä ennen} other {# päivää ennen}}"
+    },
+    "weekdays": {
+      "0": "Sunnuntai",
+      "1": "Maanantai",
+      "2": "Tiistai",
+      "3": "Keskiviikko",
+      "4": "Torstai",
+      "5": "Perjantai",
+      "6": "Lauantai"
+    },
+    "weekdayEditor": {
+      "description": "Aseta tämän päivän saatavilla olevat aikavälit.",
+      "unavailable": "Ei saatavilla",
+      "overlapWarning": "Jotkin aikavälit menevät päällekkäin. Päällekkäistä aikaa ei lasketa kahteen kertaan.",
+      "addInterval": "Lisää aikaväli",
+      "startTime": "Alkamisaika",
+      "endTime": "Päättymisaika"
+    },
+    "tooltips": {
+      "timezone": "Aikavyöhyke, jolla luot tämän kalenterin. Ihmiset näkevät saatavuuden oman aikavyöhykkeensä mukaan.",
+      "confirmationFlow": "Flow, joka lähetetään heti kun käyttäjä varaa ajan.",
+      "cancellationFlow": "Flow, joka lähetetään heti kun ajanvaraus peruutetaan.",
+      "reminders": "Lähetä muistutuksia, jotta kutsuttu muistaa ajanvarauksen.",
+      "appointmentDuration": "Määritä, kuinka pitkä ajanvarauksesi on.",
+      "bufferAfterMinutes": "Anna itsellesi puskuriaikaa varattujen ajanvarausten päättymisen jälkeen.",
+      "peopleCanSchedule": "Aseta ajanjakso, jolloin voit ottaa vastaan tapaamisia.",
+      "maxAppointmentsPerUser": "Suurin sallittu määrä tulevia ajanvarauksia, jonka käyttäjä voi varata.",
+      "rollingDays": "Salli varaaminen enintään näin monta päivää tulevaisuuteen",
+      "minAdvanceDays": "Vaadi, että varaus tehdään vähintään näin monta päivää etukäteen. Käytä arvoa 0 salliaksesi saman päivän varaukset.",
+      "dailyLimit": "Suurin sallittu määrä ihmisiä, jotka voivat varata ajan päivässä.",
+      "allowGroupMeeting": "Salli useiden ihmisten varata sama aikaväli.",
+      "externalCalendar": "Yhdistä Google Calendar synkronoidaksesi ajanvarauksesi."
+    },
+    "minutesLabel": "{count} minuuttia"
+  },
+  "externalCalendars": {
+    "title": "Ulkoiset kalenterit",
+    "connectGoogle": "Yhdistä Google",
+    "emptyEmail": "Ei sähköpostia",
+    "fields": {
+      "provider": "Palveluntarjoaja",
+      "email": "Sähköposti",
+      "calendarId": "Kalenterin tunnus",
+      "connected": "Yhdistetty",
+      "date": "Päivämäärä"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Muokkaa kalenterin tunnusta",
+      "editDescription": "Valitse Google Calendar -tunnus, jota käytetään päällekkäisyyksien tarkistamiseen ja ajanvaraustapahtumien luomiseen.",
+      "deleteTitle": "Katkaise kalenteriyhteys",
+      "deleteDescription": "Katkaise tämän Google Calendarin yhteys ajanvaraukseen."
+    },
+    "messages": {
+      "connected": "Google Calendar yhdistetty.",
+      "connectFailed": "Google Calendaria ei voitu yhdistää. Tarkista Google OAuth -asetukset ja Calendar API -käyttöoikeudet ja yritä uudelleen.",
+      "calendarIdUpdated": "Kalenterin tunnus päivitetty.",
+      "disconnected": "Kalenteriyhteys katkaistu."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Ajanvaraus",
+    "comingSoonTitle": "Ajanvaraussivu tulossa pian",
+    "comingSoonDescription": "Tämä julkinen ajanvaraussivu ei ole vielä käytettävissä."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Lähetä LeadSubmitted-tapahtumia Messenger-, Instagram- ja WhatsApp-keskusteluista Metalle.",
+    "datasetId": "Tietojoukon tunnus",
+    "reconnect": "Uusi käyttöoikeudet",
+    "connectViaFacebook": "Yhdistä Facebookin kautta",
+    "unsupportedExplanation": "Tämä Instagram-tili yhdistettiin Instagram Business -kirjautumisella. Yhdistä tili Facebookin kautta käyttääksesi Meta Conversions API:a.",
+    "flowStep": {
+      "description": "Jonota LeadSubmitted-tapahtuma Messengerille, Instagramille tai WhatsAppille.",
+      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Valmis",
+      "missingPermission": "Käyttöoikeus tarvitaan",
+      "unverified": "Vahvistamaton",
+      "unsupported": "Ei tuettu",
+      "notConnected": "Ei yhdistetty"
+    },
+    "statusDescriptions": {
+      "ready": "Tällä integraatiolla on Conversions API -tapahtumiin vaadittu Meta-käyttöoikeus.",
+      "missingPermission": "Yhdistä tämä integraatio uudelleen ja myönnä pyydetty Meta-käyttöoikeus.",
+      "unverified": "Alustan sovellusasetukset eivät ole saatavilla, joten CAPI-käyttöoikeutta ei voida vahvistaa.",
+      "unsupported": "Meta Conversions API Instagramille vaatii tilin, joka on yhdistetty Facebook Login for Business -kirjautumisella.",
+      "notConnected": "Conversions API on Metan liiketoimintatyökalu, jonka avulla voit jakaa tietoja Metalle mainostesi suorituskyvyn parantamiseksi."
+    },
+    "errors": {
+      "reconnect": "Meta CAPI -uudelleenyhdistämisen käynnistäminen epäonnistui.",
+      "messengerNotFound": "Messenger-integraatiota ei löytynyt.",
+      "instagramNotFound": "Instagram-integraatiota ei löytynyt.",
+      "instagramRequiresFacebook": "Instagramin CAPI vaatii yhdistämisen Facebookin kautta.",
+      "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "datasetRequired": "Tallenna tietojoukon tunnus ennen käyttöoikeustunnuksen lisäämistä.",
+      "invalidToken": "Tämä tunnus ei päässyt käsiksi tietojoukkoon.",
+      "invalidDatasetId": "Anna kelvollinen Dataset ID (vain numeroita).",
+      "whatsappNotFound": "WhatsApp-integraatiota ei löytynyt."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Tapahtuman tyyppi",
+        "leadSubmitted": "Liidi lähetetty"
+      },
+      "value": "Arvo",
+      "valuePlaceholder": "esim. 250",
+      "currency": "Valuutta",
+      "currencyPlaceholder": "esim. USD",
+      "contentCategory": "Sisällön luokka",
+      "contentCategoryPlaceholder": "Tapahtumaan liittyvän sisällön luokka",
+      "contentName": "Sisällön nimi",
+      "contentNamePlaceholder": "Tapahtumaan liittyvän sivun tai tuotteen nimi"
+    },
+    "datasetIdPlaceholder": "Liitä tietojoukon tunnus Events Managerista",
+    "saveDataset": "Tallenna",
+    "accessToken": "Käyttöoikeustunnus (valinnainen)",
+    "accessTokenHint": "Liitä tunnus Events Managerista lähettääksesi tapahtumat omalla tunnuksellasi yhdistetyn sivun tunnuksen sijaan. Vaatii tietojoukon tunnuksen.",
+    "accessTokenPlaceholder": "Events Manager -käyttöoikeustunnus",
+    "saveToken": "Tallenna tunnus",
+    "tokenSaved": "Tunnus tallennettu",
+    "removeToken": "Poista",
+    "saved": "Tallennettu",
+    "help": {
+      "delay": "Tapahtumien näkyminen Events Managerissa ja Meta-liideinä Ads Managerissa voi kestää jopa 40 minuuttia."
+    },
+    "connected": "Yhdistetty",
+    "disconnect": "Katkaise yhteys",
+    "openEventManager": "Avaa Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Yhdistä Facebookin kautta",
+        "description": "Käytä sivusi olemassa olevaa yhteyttä ja valitse sitten tietojoukon tunnus.",
+        "connect": "Luo tietojoukko",
+        "connectedLabel": "Facebookin kautta"
+      },
+      "custom": {
+        "title": "Mukautettu yhteys",
+        "description": "Käytä tietojoukon tunnusta ja Meta Events Managerin käyttöoikeustunnusta.",
+        "start": "Määritä mukautettu yhteys",
+        "connect": "Yhdistä",
+        "connectedLabel": "Mukautettu"
+      },
+      "whatsapp": {
+        "title": "Yhdistä WhatsAppin kautta",
+        "description": "Käytä WhatsApp-yhteyttäsi ja valitse sitten tietojoukon tunnus.",
+        "connect": "Luo tietojoukko",
+        "connectedLabel": "WhatsAppin kautta"
+      }
+    },
+    "finalize": {
+      "title": "Valitse tietojoukon tunnus",
+      "description": "Anna olemassa oleva tietojoukon tunnus tai jätä tyhjäksi luodaksesi sen automaattisesti.",
+      "save": "Tallenna",
+      "createDataset": "Luo tietojoukko",
+      "caveat": "Tietojoukon tunnus, jota ei ole linkitetty tähän sivuun tai Instagram-tiliin, ei ehkä kohdista tapahtumia oikein. Jätä tämä kenttä tyhjäksi luodaksesi linkitetyn tietojoukon automaattisesti."
+    },
+    "whatsapp": {
+      "connect": "Yhdistä"
     }
   }
 }

@@ -1,4 +1,5 @@
 import {
+  adsConversionService,
   contactCustomFieldService,
   contactService,
   tagSyncService,
@@ -129,19 +130,36 @@ export async function optOutEmail({
 
 export async function addContactTag({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<AddContactTagStepSchema>) {
   await attachTagsByNames(
     conversation.workspaceId,
     conversation.contactId,
     step.tags,
+    contactInbox,
   )
+}
+
+/**
+ * Minimal contact-inbox shape `attachTagsByNames` needs to resolve+enqueue
+ * the `tagApplied` conversion-trigger evaluation for one specific inbox. A
+ * full `ContactInboxModel` satisfies this structurally, so the flow-step
+ * `addContactTag` path (which has the full row) needs no change; the
+ * rich-response `add_tag` action (MEDIUM-a) only has these three fields in
+ * scope and can pass a minimal object instead.
+ */
+export type TagAttachContactInbox = {
+  id: string
+  inboxId: string
+  channel: string | null
 }
 
 export async function attachTagsByNames(
   workspaceId: string,
   contactId: string,
   tagNames: string[],
+  contactInbox?: TagAttachContactInbox,
 ): Promise<void> {
   if (tagNames.length === 0) {
     return
@@ -204,6 +222,23 @@ export async function attachTagsByNames(
       emitTagApplied(workspaceId, contactId, tagId),
     ),
   )
+
+  // Ads conversion `tagApplied` trigger: only when the caller already has a
+  // specific WhatsApp conversation in scope (the flow-step path) — resolves
+  // and enqueues for that one contactInbox rather than fanning out to every
+  // other WhatsApp-CTWA inbox the contact might have.
+  if (
+    contactInbox &&
+    newlyLinkedTagIds.length > 0 &&
+    adsConversionService.isEligibleChannel(contactInbox.channel)
+  ) {
+    await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
+      workspaceId,
+      inboxId: contactInbox.inboxId,
+      contactInboxId: contactInbox.id,
+      tagIds: newlyLinkedTagIds,
+    })
+  }
 }
 
 export async function removeContactTag({

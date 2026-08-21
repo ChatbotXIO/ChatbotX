@@ -3,6 +3,7 @@ import { conversationService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoryReply } from "@chatbotx.io/sdk"
 import {
+  closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getRedisConnection,
   IntegrationJobAction,
@@ -16,6 +17,8 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
+import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
+import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
@@ -36,6 +39,7 @@ import { runFollowUpResume } from "./handlers/follow-up"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processLeadgen } from "./handlers/lead-ads"
 import { handleMessageStatus } from "./handlers/message-status"
+import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
 import {
   deleteIncomingComment,
   receiveComment,
@@ -260,6 +264,21 @@ async function startIntegrationWorker() {
             await coexistAttachmentDownload(job.data.data)
             return
           }
+          case IntegrationJobAction.adsAutomaticEvent: {
+            await handleAdsAutomaticEvent(job.data.data)
+            return
+          }
+          case IntegrationJobAction.evaluateTemplateSent:
+          case IntegrationJobAction.evaluateConversionTrigger:
+          case IntegrationJobAction.sendConversionEvent:
+          case IntegrationJobAction.syncRetargetAudience: {
+            await dispatchAdsConversionJob(job.data)
+            return
+          }
+          case IntegrationJobAction.sendMetaCapiEvent: {
+            await handleSendMetaCapiEvent(job.data.data)
+            return
+          }
           case IntegrationJobAction.updateContactAvatar: {
             await updateContactAvatar(job.data.data)
             return
@@ -326,7 +345,11 @@ async function startIntegrationWorker() {
     }
     isShuttingDown = true
     try {
-      await Promise.all([worker.close(), closeChatQueueEvents()])
+      await Promise.all([
+        worker.close(),
+        closeChatQueueEvents(),
+        closeIntegrationQueueEvents(),
+      ])
       process.exit(0)
     } catch (err) {
       logger.error(err, "[IntegrationWorker] Error during shutdown")

@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
@@ -74,8 +74,11 @@ export function AddChannelButton({
   }
 
   return (
-    <Button render={<Link href={href ?? "#"} />} size="sm" variant="secondary">
+    <Link
+      className={buttonVariants({ size: "sm", variant: "secondary" })}
+      href={href ?? "#"}
+    >
       {content}
-    </Button>
+    </Link>
   )
 }

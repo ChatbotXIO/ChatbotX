@@ -7,22 +7,24 @@ import type {
   CouponIssueStatus,
   CouponUsageStatus,
 } from "@chatbotx.io/database/partials"
+import { appointmentExternalSyncOperations } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 import { Queue } from "bullmq"
+import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
-export const defaultQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<DefaultJobData>(queueNames.enum.default, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const defaultQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<DefaultJobData>(queueNames.enum.default, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })
 
 export const DefaultJobAction = {
   exportContacts: "exportContacts",
@@ -36,7 +38,19 @@ export const DefaultJobAction = {
   importMetaCatalogProducts: "importMetaCatalogProducts",
   submitMetaCatalogSync: "submitMetaCatalogSync",
   checkMetaCatalogSync: "checkMetaCatalogSync",
+  syncExternalCalendarEvent: "syncExternalCalendarEvent",
+  sendAppointmentReminder: "sendAppointmentReminder",
 } as const
+
+export const syncExternalCalendarEventJobId = (
+  appointmentId: string,
+  operation: string,
+) => `sync-external-event-${appointmentId}-${operation}`
+
+export const sendAppointmentReminderJobId = (
+  appointmentId: string,
+  reminderConfigId: string,
+) => `appt-reminder-${appointmentId}-${reminderConfigId}`
 
 export type ExportContactsFilter = {
   keyword?: string
@@ -208,6 +222,35 @@ export type JobCheckMetaCatalogSync = {
   }
 }
 
+export const jobSyncExternalCalendarEventDataSchema = z.object({
+  workspaceId: z.string(),
+  appointmentId: z.string(),
+  operation: appointmentExternalSyncOperations,
+})
+export type JobSyncExternalCalendarEventData = z.infer<
+  typeof jobSyncExternalCalendarEventDataSchema
+>
+
+export type JobSyncExternalCalendarEvent = {
+  type: typeof DefaultJobAction.syncExternalCalendarEvent
+  data: JobSyncExternalCalendarEventData
+}
+
+export const jobSendAppointmentReminderDataSchema = z.object({
+  workspaceId: z.string(),
+  appointmentId: z.string(),
+  reminderDispatchId: z.string(),
+  reminderConfigId: z.string(),
+})
+export type JobSendAppointmentReminderData = z.infer<
+  typeof jobSendAppointmentReminderDataSchema
+>
+
+export type JobSendAppointmentReminder = {
+  type: typeof DefaultJobAction.sendAppointmentReminder
+  data: JobSendAppointmentReminderData
+}
+
 export type DefaultJobData =
   | JobExportContacts
   | JobExportCoupons
@@ -220,3 +263,5 @@ export type DefaultJobData =
   | JobImportMetaCatalogProducts
   | JobSubmitMetaCatalogSync
   | JobCheckMetaCatalogSync
+  | JobSyncExternalCalendarEvent
+  | JobSendAppointmentReminder

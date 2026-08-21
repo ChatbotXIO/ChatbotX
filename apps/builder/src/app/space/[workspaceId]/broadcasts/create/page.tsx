@@ -1,6 +1,8 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
+import type { SearchParams } from "nuqs/server"
 import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form"
+import { parseCreateBroadcastPrefill } from "@/features/broadcasts/schemas/create-broadcast-prefill"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { ContactStoreProvider } from "@/features/contacts/provider/contact-store-context"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
@@ -17,8 +19,10 @@ import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function CreateBroadcastPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspaceId: string }>
+  searchParams: Promise<SearchParams>
 }) {
   const workspaceId = getIdFromParams(await params, "workspaceId")
   if (!workspaceId) {
@@ -32,6 +36,8 @@ export default async function CreateBroadcastPage({
   const canViewEmailAndPhone = canViewContactEmailAndPhone(
     userAndWorkspace.targetWorkspaceMember.permissions,
   )
+
+  const prefill = parseCreateBroadcastPrefill(await searchParams)
 
   const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
     workspaceId,
@@ -56,6 +62,11 @@ export default async function CreateBroadcastPage({
                       >
                         <CreateBroadcastForm
                           canViewEmailAndPhone={canViewEmailAndPhone}
+                          initialChannel={prefill.channel}
+                          initialContactFilter={prefill.contactFilter}
+                          initialIntegrationWhatsappId={
+                            prefill.integrationWhatsappId
+                          }
                           workspaceId={workspaceId}
                         />
                       </ContactStoreProvider>

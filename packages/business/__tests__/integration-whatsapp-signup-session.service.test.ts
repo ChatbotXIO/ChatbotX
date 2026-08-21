@@ -2,24 +2,36 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // The service owns no SQL of its own — every statement lives in the repository,
 // so this suite mocks that boundary and asserts on what the service asks for.
-const { repositoryMock, encryptTextMock, decryptTextMock } = vi.hoisted(() => ({
-  repositoryMock: {
-    createSignupSession: vi.fn(),
-    consumeSignupSession: vi.fn(),
-    findActiveSignupSession: vi.fn(),
-    findConnectedPhoneNumberIds: vi.fn(),
-    findVerificationCodeRequestedAt: vi.fn(),
-    claimVerificationCodeSlot: vi.fn(),
-    releaseVerificationCodeSlot: vi.fn(),
-    purgeFinishedSignupSessions: vi.fn(),
-    updateRegistration: vi.fn(),
-  },
-  encryptTextMock: vi.fn(),
-  decryptTextMock: vi.fn(),
-}))
+const { repositoryMock, encryptTextMock, decryptTextMock, loggerWarnMock } =
+  vi.hoisted(() => ({
+    repositoryMock: {
+      createSignupSession: vi.fn(),
+      consumeSignupSession: vi.fn(),
+      findActiveSignupSession: vi.fn(),
+      findConnectedPhoneNumberIds: vi.fn(),
+      findByIdForWorkspace: vi.fn(),
+      listByWorkspaceId: vi.fn(),
+      claimCapiScopeCacheRefresh: vi.fn(),
+      replaceAuth: vi.fn(),
+      updateDatasetIdIfNull: vi.fn(),
+      updateCapiScopeCache: vi.fn(),
+      findVerificationCodeRequestedAt: vi.fn(),
+      claimVerificationCodeSlot: vi.fn(),
+      releaseVerificationCodeSlot: vi.fn(),
+      purgeFinishedSignupSessions: vi.fn(),
+      updateRegistration: vi.fn(),
+    },
+    encryptTextMock: vi.fn(),
+    decryptTextMock: vi.fn(),
+    loggerWarnMock: vi.fn(),
+  }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationWhatsappRepository: repositoryMock,
+}))
+
+vi.mock("../src/logger", () => ({
+  logger: { warn: loggerWarnMock },
 }))
 
 vi.mock("@chatbotx.io/encryption", async () => {
@@ -38,14 +50,533 @@ vi.mock("@chatbotx.io/encryption", async () => {
 const { integrationWhatsappService } = await import(
   "../src/integration-whatsapp/service"
 )
+const { workspaceService } = await import("../src/workspace/service")
+const { platformCredentialService } = await import(
+  "../src/platform-credential/service"
+)
 const { ChannelError, ChannelErrorCategory } = await import("@chatbotx.io/sdk")
 
 describe("integrationWhatsappService signup sessions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     repositoryMock.updateRegistration.mockResolvedValue(null)
+    repositoryMock.findByIdForWorkspace.mockResolvedValue(null)
+    repositoryMock.claimCapiScopeCacheRefresh.mockResolvedValue(null)
+    repositoryMock.updateCapiScopeCache.mockResolvedValue(null)
+    repositoryMock.replaceAuth.mockResolvedValue(null)
+    repositoryMock.updateDatasetIdIfNull.mockResolvedValue(null)
     repositoryMock.claimVerificationCodeSlot.mockResolvedValue(null)
     repositoryMock.findVerificationCodeRequestedAt.mockResolvedValue(null)
+    // Default: no agency system-user token, so dataset creation uses the connect
+    // token with no fallback. Individual tests override these spies.
+    vi.spyOn(workspaceService, "findById").mockResolvedValue({
+      ownerId: "owner-1",
+    } as never)
+    vi.spyOn(
+      platformCredentialService,
+      "resolveWhatsappSystemUserToken",
+    ).mockResolvedValue(null)
+  })
+
+  test("uses a fresh CAPI scope cache without calling the checker", async () => {
+    const checkedAt = new Date("2026-08-10T00:00:00.000Z")
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: checkedAt,
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    const checkScope = vi.fn(async () => false)
+
+    const result = await integrationWhatsappService.refreshCapiScopeCache({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      now: new Date("2026-08-10T12:00:00.000Z"),
+      checkScope,
+    })
+
+    expect(result).toMatchObject({ hasCapiScope: true })
+    expect(checkScope).not.toHaveBeenCalled()
+    expect(repositoryMock.updateCapiScopeCache).not.toHaveBeenCalled()
+  })
+
+  test("returns cached dataset id without provisioning", async () => {
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      datasetId: "dataset-cached",
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    const provision = vi.fn(async () => "dataset-new")
+
+    const result = await integrationWhatsappService.ensureDatasetId({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      provision,
+    })
+
+    expect(result).toBe("dataset-cached")
+    expect(provision).not.toHaveBeenCalled()
+    expect(repositoryMock.updateDatasetIdIfNull).not.toHaveBeenCalled()
+  })
+
+  test("provisions and persists an uncached dataset id", async () => {
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      name: "Acme WABA",
+      datasetId: null,
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    repositoryMock.updateDatasetIdIfNull.mockResolvedValue({
+      id: "iw-1",
+      datasetId: "dataset-new",
+    })
+    const provision = vi.fn(async () => "dataset-new")
+
+    const result = await integrationWhatsappService.ensureDatasetId({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      provision,
+    })
+
+    expect(result).toBe("dataset-new")
+    expect(provision).toHaveBeenCalledWith({
+      wabaId: "waba-1",
+      wabaName: "Acme WABA",
+      accessToken: "token-1",
+    })
+    expect(repositoryMock.updateDatasetIdIfNull).toHaveBeenCalledWith({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      datasetId: "dataset-new",
+    })
+  })
+
+  test("retries dataset creation with the connect token when the system-user token is rejected", async () => {
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      name: "Acme WABA",
+      datasetId: null,
+      auth: {
+        tokens: { accessToken: "connect-token" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    repositoryMock.updateDatasetIdIfNull.mockResolvedValue({
+      id: "iw-1",
+      datasetId: "dataset-new",
+    })
+    // Owner has a system-user token, so it is tried first, then the connect
+    // token as fallback.
+    vi.spyOn(
+      platformCredentialService,
+      "resolveWhatsappSystemUserToken",
+    ).mockResolvedValue("sys-token")
+    const provision = vi
+      .fn()
+      .mockRejectedValueOnce(
+        Object.assign(new Error("(#100) Missing Permission"), {
+          code: 100,
+          httpStatusCode: 400,
+        }),
+      )
+      .mockResolvedValueOnce("dataset-new")
+
+    const result = await integrationWhatsappService.ensureDatasetId({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      provision,
+    })
+
+    expect(result).toBe("dataset-new")
+    expect(provision).toHaveBeenNthCalledWith(1, {
+      wabaId: "waba-1",
+      wabaName: "Acme WABA",
+      accessToken: "sys-token",
+    })
+    expect(provision).toHaveBeenNthCalledWith(2, {
+      wabaId: "waba-1",
+      wabaName: "Acme WABA",
+      accessToken: "connect-token",
+    })
+  })
+
+  test("re-reads dataset id when the conditional update loses a race", async () => {
+    repositoryMock.findByIdForWorkspace
+      .mockResolvedValueOnce({
+        id: "iw-1",
+        workspaceId: "ws-1",
+        wabaId: "waba-1",
+        datasetId: null,
+        auth: {
+          tokens: { accessToken: "token-1" },
+          metadata: { wabaId: "waba-1" },
+        },
+      })
+      .mockResolvedValueOnce({
+        id: "iw-1",
+        workspaceId: "ws-1",
+        wabaId: "waba-1",
+        datasetId: "dataset-race",
+      })
+    repositoryMock.updateDatasetIdIfNull.mockResolvedValue(null)
+    const provision = vi.fn(async () => "dataset-new")
+
+    const result = await integrationWhatsappService.ensureDatasetId({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      provision,
+    })
+
+    expect(result).toBe("dataset-race")
+    expect(provision).toHaveBeenCalledTimes(1)
+    expect(repositoryMock.findByIdForWorkspace).toHaveBeenCalledTimes(2)
+  })
+
+  describe("resolveDatasetCreationTokens", () => {
+    test("manual connection uses the connect token with no fallback and skips credential lookup", async () => {
+      const workspaceSpy = vi.spyOn(workspaceService, "findById")
+      const credentialSpy = vi.spyOn(
+        platformCredentialService,
+        "resolveWhatsappSystemUserToken",
+      )
+
+      const result =
+        await integrationWhatsappService.resolveDatasetCreationTokens({
+          integration: { auth: { metadata: { isManual: true } } },
+          workspaceId: "ws-1",
+          connectToken: "connect-token",
+        })
+
+      expect(result).toEqual({
+        primaryToken: "connect-token",
+        fallbackToken: null,
+      })
+      expect(workspaceSpy).not.toHaveBeenCalled()
+      expect(credentialSpy).not.toHaveBeenCalled()
+    })
+
+    test("embedded-signup prefers the system-user token with the connect token as fallback", async () => {
+      vi.spyOn(workspaceService, "findById").mockResolvedValue({
+        ownerId: "owner-1",
+      } as never)
+      vi.spyOn(
+        platformCredentialService,
+        "resolveWhatsappSystemUserToken",
+      ).mockResolvedValue("sys-token")
+
+      const result =
+        await integrationWhatsappService.resolveDatasetCreationTokens({
+          integration: { auth: { metadata: { wabaId: "waba-1" } } },
+          workspaceId: "ws-1",
+          connectToken: "connect-token",
+        })
+
+      expect(result).toEqual({
+        primaryToken: "sys-token",
+        fallbackToken: "connect-token",
+      })
+      expect(
+        platformCredentialService.resolveWhatsappSystemUserToken,
+      ).toHaveBeenCalledWith(expect.objectContaining({ ownerId: "owner-1" }))
+    })
+
+    test("uses the connect token with no fallback when the owner has no credential", async () => {
+      vi.spyOn(workspaceService, "findById").mockResolvedValue({
+        ownerId: "owner-1",
+      } as never)
+      vi.spyOn(
+        platformCredentialService,
+        "resolveWhatsappSystemUserToken",
+      ).mockResolvedValue(null)
+
+      const result =
+        await integrationWhatsappService.resolveDatasetCreationTokens({
+          integration: { auth: { metadata: { wabaId: "waba-1" } } },
+          workspaceId: "ws-1",
+          connectToken: "connect-token",
+        })
+
+      expect(result).toEqual({
+        primaryToken: "connect-token",
+        fallbackToken: null,
+      })
+    })
+  })
+
+  test("refreshes a stale CAPI scope cache and stores the result", async () => {
+    const now = new Date("2026-08-10T12:00:00.000Z")
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: false,
+      capiScopeCheckedAt: new Date("2026-08-09T00:00:00.000Z"),
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    repositoryMock.claimCapiScopeCacheRefresh.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: false,
+      capiScopeCheckedAt: now,
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    repositoryMock.updateCapiScopeCache.mockResolvedValue({
+      id: "iw-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: now,
+    })
+    const checkScope = vi.fn(async () => true)
+
+    const result = await integrationWhatsappService.refreshCapiScopeCache({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      now,
+      checkScope,
+    })
+
+    expect(result).toMatchObject({ hasCapiScope: true })
+    expect(checkScope).toHaveBeenCalledWith({
+      accessToken: "token-1",
+      wabaId: "waba-1",
+    })
+    expect(repositoryMock.claimCapiScopeCacheRefresh).toHaveBeenCalledWith({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      capiScopeCheckedAt: now,
+      expectedCapiScopeCheckedAt: new Date("2026-08-09T00:00:00.000Z"),
+    })
+    expect(repositoryMock.updateCapiScopeCache).toHaveBeenCalledWith({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: now,
+      expectedCapiScopeCheckedAt: now,
+    })
+  })
+
+  test("skips CAPI scope check when another refresh wins the claim", async () => {
+    const now = new Date("2026-08-10T12:00:00.000Z")
+    const current = {
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: new Date("2026-08-10T12:00:01.000Z"),
+      auth: {
+        tokens: { accessToken: "token-2" },
+        metadata: { wabaId: "waba-1" },
+      },
+    }
+    repositoryMock.findByIdForWorkspace
+      .mockResolvedValueOnce({
+        id: "iw-1",
+        workspaceId: "ws-1",
+        wabaId: "waba-1",
+        hasCapiScope: false,
+        capiScopeCheckedAt: new Date("2026-08-09T00:00:00.000Z"),
+        auth: {
+          tokens: { accessToken: "token-1" },
+          metadata: { wabaId: "waba-1" },
+        },
+      })
+      .mockResolvedValueOnce(current)
+    repositoryMock.claimCapiScopeCacheRefresh.mockResolvedValue(null)
+    const checkScope = vi.fn(async () => false)
+
+    const result = await integrationWhatsappService.refreshCapiScopeCache({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      now,
+      checkScope,
+    })
+
+    expect(result).toBe(current)
+    expect(repositoryMock.claimCapiScopeCacheRefresh).toHaveBeenCalledWith({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      capiScopeCheckedAt: now,
+      expectedCapiScopeCheckedAt: new Date("2026-08-09T00:00:00.000Z"),
+    })
+    expect(checkScope).not.toHaveBeenCalled()
+    expect(repositoryMock.updateCapiScopeCache).not.toHaveBeenCalled()
+  })
+
+  test("keeps the existing CAPI scope cache when the checker throws", async () => {
+    const existing = {
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: new Date("2026-08-09T00:00:00.000Z"),
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    }
+    repositoryMock.findByIdForWorkspace.mockResolvedValue(existing)
+    repositoryMock.claimCapiScopeCacheRefresh.mockResolvedValue({
+      ...existing,
+      capiScopeCheckedAt: new Date("2026-08-10T12:00:00.000Z"),
+    })
+    const checkScope = vi.fn().mockRejectedValue(new Error("Meta unavailable"))
+
+    const result = await integrationWhatsappService.refreshCapiScopeCache({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      now: new Date("2026-08-10T12:00:00.000Z"),
+      checkScope,
+    })
+
+    expect(result).toMatchObject({ hasCapiScope: true })
+    expect(checkScope).toHaveBeenCalledWith({
+      accessToken: "token-1",
+      wabaId: "waba-1",
+    })
+    expect(repositoryMock.updateCapiScopeCache).not.toHaveBeenCalled()
+    expect(loggerWarnMock).toHaveBeenCalledOnce()
+  })
+
+  test("stores a definitive false CAPI scope result", async () => {
+    const now = new Date("2026-08-10T12:00:00.000Z")
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: new Date("2026-08-09T00:00:00.000Z"),
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    repositoryMock.claimCapiScopeCacheRefresh.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: now,
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    repositoryMock.updateCapiScopeCache.mockResolvedValue({
+      id: "iw-1",
+      hasCapiScope: false,
+      capiScopeCheckedAt: now,
+    })
+    const checkScope = vi.fn(async () => false)
+
+    const result = await integrationWhatsappService.refreshCapiScopeCache({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      now,
+      checkScope,
+    })
+
+    expect(result).toMatchObject({ hasCapiScope: false })
+    expect(repositoryMock.updateCapiScopeCache).toHaveBeenCalledWith({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      hasCapiScope: false,
+      capiScopeCheckedAt: now,
+      expectedCapiScopeCheckedAt: now,
+    })
+  })
+
+  test("does not clobber fresh reconnect scope when refresh carries an old checked timestamp", async () => {
+    const oldCheckedAt = new Date("2026-08-09T00:00:00.000Z")
+    const reconnectCheckedAt = new Date("2026-08-10T12:00:01.000Z")
+    const now = new Date("2026-08-10T12:00:00.000Z")
+    const row = {
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: oldCheckedAt,
+      auth: {
+        tokens: { accessToken: "token-1" },
+        metadata: { wabaId: "waba-1" },
+      },
+    }
+    repositoryMock.findByIdForWorkspace
+      .mockResolvedValueOnce(row)
+      .mockResolvedValueOnce({
+        ...row,
+        hasCapiScope: true,
+        capiScopeCheckedAt: reconnectCheckedAt,
+        auth: {
+          tokens: { accessToken: "token-2" },
+          metadata: { wabaId: "waba-1" },
+        },
+      })
+    repositoryMock.claimCapiScopeCacheRefresh.mockImplementation(
+      async (input: { expectedCapiScopeCheckedAt: Date | null }) =>
+        input.expectedCapiScopeCheckedAt?.getTime() ===
+        reconnectCheckedAt.getTime()
+          ? { ...row, capiScopeCheckedAt: now }
+          : null,
+    )
+    const checkScope = vi.fn(async () => false)
+
+    const result = await integrationWhatsappService.refreshCapiScopeCache({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      now,
+      checkScope,
+    })
+
+    expect(result).toMatchObject({
+      hasCapiScope: true,
+      capiScopeCheckedAt: reconnectCheckedAt,
+    })
+    expect(checkScope).not.toHaveBeenCalled()
+    expect(repositoryMock.updateCapiScopeCache).not.toHaveBeenCalled()
+  })
+
+  test("rejects replaceAuth when the new auth belongs to a different WABA", async () => {
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-expected",
+    })
+
+    await expect(
+      integrationWhatsappService.replaceAuth({
+        id: "iw-1",
+        workspaceId: "ws-1",
+        auth: {
+          tokens: { accessToken: "token-1" },
+          metadata: { wabaId: "waba-other" },
+        },
+        hasCapiScope: true,
+      }),
+    ).rejects.toThrow("different WhatsApp Business Account")
+    expect(repositoryMock.replaceAuth).not.toHaveBeenCalled()
   })
 
   test("encrypts access token before creating a signup session", async () => {

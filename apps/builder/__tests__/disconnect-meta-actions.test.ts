@@ -19,9 +19,11 @@ const mocks = vi.hoisted(() => {
     dbTransaction: vi.fn(async (callback: (tx: unknown) => Promise<void>) =>
       callback(tx),
     ),
+    coexistTearDownForIntegration: vi.fn().mockResolvedValue(undefined),
     findOrFail: vi.fn(),
     inboxDisconnect: vi.fn().mockResolvedValue(undefined),
     instagramExists: vi.fn().mockResolvedValue(false),
+    metaCapiDeleteByIntegration: vi.fn().mockResolvedValue(undefined),
     loggerWarn: vi.fn(),
     messengerDisconnect: vi.fn().mockResolvedValue(undefined),
     messengerExists: vi.fn().mockResolvedValue(false),
@@ -35,6 +37,9 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
+  coexistService: {
+    tearDownForIntegration: mocks.coexistTearDownForIntegration,
+  },
   inboxService: { disconnect: mocks.inboxDisconnect },
   instagramIntegrationService: { existsForPage: mocks.instagramExists },
   messengerIntegrationService: { existsForPage: mocks.messengerExists },
@@ -47,6 +52,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   findOrFail: mocks.findOrFail,
   inArray: vi.fn((field: unknown, values: unknown[]) => ({ field, values })),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  metaCapiEventRepository: {
+    deleteByIntegration: mocks.metaCapiDeleteByIntegration,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -184,6 +195,14 @@ describe("Meta disconnect actions", () => {
 
     expect(mocks.messengerDisconnect).toHaveBeenCalledWith(messengerRow.auth)
     expect(mocks.subscribePageToAppWebhook).not.toHaveBeenCalled()
+    expect(mocks.metaCapiDeleteByIntegration).toHaveBeenCalledWith(
+      {
+        workspaceId: "workspace-1",
+        channel: "messenger",
+        integrationId: "messenger-1",
+      },
+      mocks.tx,
+    )
   })
 
   test("facebook-backed Instagram disconnect skips app unsubscribe when Messenger sibling exists", async () => {
@@ -214,6 +233,14 @@ describe("Meta disconnect actions", () => {
 
     expect(mocks.instagramFacebookDisconnect).toHaveBeenCalledWith(
       instagramFacebookRow.auth,
+    )
+    expect(mocks.metaCapiDeleteByIntegration).toHaveBeenCalledWith(
+      {
+        workspaceId: "workspace-1",
+        channel: "instagram",
+        integrationId: "instagram-1",
+      },
+      mocks.tx,
     )
   })
 })

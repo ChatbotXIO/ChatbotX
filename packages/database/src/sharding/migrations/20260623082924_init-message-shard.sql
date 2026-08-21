@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS "Message" (
   "type" "messageKind" NOT NULL DEFAULT 'message',
   "parentId" text,
   "attributes" jsonb,
+  "sendError" text,
   PRIMARY KEY ("id", "createdAt")
 );
 
@@ -61,6 +62,7 @@ CREATE TABLE IF NOT EXISTS "Message" (
 ALTER TABLE "Message"
   ADD COLUMN IF NOT EXISTS "deletedAt"   timestamp(6) with time zone,
   ADD COLUMN IF NOT EXISTS "type"        "messageKind" NOT NULL DEFAULT 'message',
+  ADD COLUMN IF NOT EXISTS "sendError"    text,
   ADD COLUMN IF NOT EXISTS "parentId"    text,
   ADD COLUMN IF NOT EXISTS "attributes"  jsonb;
 

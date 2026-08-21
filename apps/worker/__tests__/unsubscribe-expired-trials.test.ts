@@ -11,6 +11,9 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { listDueExpiredTrials },
 }))
 vi.mock("@chatbotx.io/redis", () => ({ distributedLock: { runExclusive } }))
+
+const envState = vi.hoisted(() => ({ NEXT_PUBLIC_EDITION: "cloud" }))
+vi.mock("../src/env", () => ({ env: envState }))
 vi.mock("@chatbotx.io/worker-config", () => ({
   ScheduleJobData: {
     unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
@@ -31,6 +34,7 @@ beforeEach(() => {
   add.mockReset()
   runExclusive.mockClear()
   listDueExpiredTrials.mockResolvedValue({ userIds: [], nextCursor: undefined })
+  envState.NEXT_PUBLIC_EDITION = "cloud"
 })
 
 describe("unsubscribeExpiredTrials", () => {
@@ -112,5 +116,22 @@ describe("unsubscribeExpiredTrials", () => {
 
     expect(addBulk).not.toHaveBeenCalled()
     expect(add).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    "community",
+    "enterprise",
+  ])("is a no-op off cloud (%s) — never scans or tears down", async (edition) => {
+    envState.NEXT_PUBLIC_EDITION = edition
+    listDueExpiredTrials.mockResolvedValue({
+      userIds: ["owner-1"],
+      nextCursor: "owner-1",
+    })
+
+    await unsubscribeExpiredTrials()
+
+    expect(runExclusive).not.toHaveBeenCalled()
+    expect(listDueExpiredTrials).not.toHaveBeenCalled()
+    expect(addBulk).not.toHaveBeenCalled()
   })
 })

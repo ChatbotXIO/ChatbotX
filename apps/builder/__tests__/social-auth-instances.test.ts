@@ -47,6 +47,10 @@ vi.mock("@chatbotx.io/auth/tenant", () => ({
   resolveTenantOwnerId: mockResolveTenantOwnerId,
 }))
 
+vi.mock("@/lib/auth/on-user-created", () => ({
+  onUserCreated: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     findDecryptedPlatform: mockFindDecryptedPlatform,
@@ -63,6 +67,12 @@ vi.mock("@/lib/auth/upgrade-facebook-account", () => ({
   upgradeFacebookAccount: mockUpgradeFacebookAccount,
 }))
 
+const mockIsCommunity = vi.fn(() => false)
+vi.mock("@/env", () => ({
+  isCommunity: mockIsCommunity,
+  isCloud: vi.fn(() => false),
+}))
+
 const credential = (clientId: string, clientSecret = "secret") => ({
   config: { clientId, clientSecret, verifyToken: "token", version: "v1" },
 })
@@ -75,6 +85,7 @@ async function loadModule() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockIsCommunity.mockReturnValue(false)
 })
 
 describe("isSocialLoginEnabledForTenant — google", () => {

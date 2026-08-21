@@ -10,14 +10,17 @@ import {
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
 import {
+  adsConversionService,
   contactInboxService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
+import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import type {
   EventBusMessageMetadata,
   MessageEvenTypeMap,
   MessageFailedPayload,
   MessagePayload,
+  MessageReceivedPayload,
 } from "@chatbotx.io/event-bus"
 import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
@@ -84,6 +87,96 @@ function formatSendFailureError(errorData: unknown): string {
   }
 
   return "Failed to send message"
+}
+
+/**
+ * Ads conversion `contactReplied` trigger. `message:received` is a shared
+ * channel — see message-status.ts, which emits the same event for outbound
+ * delivery-status echoes — so only payloads carrying the `origin: "inbound"`
+ * discriminant (set in received-message.ts, genuine contact-authored
+ * messages only) are eligible.
+ *
+ * `integrationWhatsappId` is resolved per `inboxId` and cached across the
+ * whole batch so a burst of inbound messages across many conversations on
+ * the same WhatsApp number only costs one repository round trip per number,
+ * not one per message.
+ *
+ * HIGH-2: this handler runs on EVERY inbound WhatsApp message platform-wide,
+ * so before enqueueing it also checks the cheap cached `hasEnabledTriggerRule`
+ * gate (per integrationWhatsappId, cached across the same batch the same way
+ * as `integrationIdByInboxId` above) and skips entirely for the overwhelming
+ * majority of workspaces that have no `contactReplied` rule configured.
+ */
+async function enqueueContactRepliedEvaluations(
+  payloads: MessageReceivedPayload[],
+) {
+  const inboundWhatsappPayloads = payloads.filter(
+    (payload) =>
+      payload.origin === "inbound" &&
+      adsConversionService.isEligibleChannel(payload.channel),
+  )
+  if (inboundWhatsappPayloads.length === 0) {
+    return
+  }
+
+  const integrationIdByInboxId = new Map<string, string | null>()
+  const hasContactRepliedRuleByIntegrationId = new Map<string, boolean>()
+
+  for (const payload of inboundWhatsappPayloads) {
+    try {
+      if (!payload.messageId) {
+        continue
+      }
+
+      let integrationWhatsappId = integrationIdByInboxId.get(payload.inboxId)
+      if (integrationWhatsappId === undefined) {
+        const integration =
+          await integrationWhatsappRepository.findWorkspaceIntegrationByInboxId(
+            {
+              workspaceId: payload.workspaceId,
+              inboxId: payload.inboxId,
+            },
+          )
+        integrationWhatsappId = integration?.id ?? null
+        integrationIdByInboxId.set(payload.inboxId, integrationWhatsappId)
+      }
+      if (!integrationWhatsappId) {
+        continue
+      }
+
+      let hasContactRepliedRule = hasContactRepliedRuleByIntegrationId.get(
+        integrationWhatsappId,
+      )
+      if (hasContactRepliedRule === undefined) {
+        hasContactRepliedRule =
+          await adsConversionService.hasEnabledTriggerRule({
+            workspaceId: payload.workspaceId,
+            integrationWhatsappId,
+            triggerType: "contactReplied",
+          })
+        hasContactRepliedRuleByIntegrationId.set(
+          integrationWhatsappId,
+          hasContactRepliedRule,
+        )
+      }
+      if (!hasContactRepliedRule) {
+        continue
+      }
+
+      await adsConversionService.enqueueContactRepliedEvaluation({
+        workspaceId: payload.workspaceId,
+        integrationWhatsappId,
+        contactInboxId: payload.contactInboxId,
+        isFirstReply: payload.isFirstIncomingMessage ?? false,
+        messageId: payload.messageId,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId: payload.workspaceId },
+        "Ads contact-replied gating failed; skipping payload",
+      )
+    }
+  }
 }
 
 type FailedPayloadWithMetadata = MessageFailedPayload & EventBusMessageMetadata
@@ -209,6 +302,10 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "active-hourly",
       handler: macTrackingService.trackMessageInHourly.bind(macTrackingService),
+    },
+    {
+      name: "ads-conversion-contact-replied",
+      handler: enqueueContactRepliedEvaluations,
     },
   ],
 }

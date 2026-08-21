@@ -34,7 +34,7 @@ export type WhatsappMarketingMessagesLiteApiStatus =
 
 export function findWaba(props: {
   wabaId: string
-  acessToken: string
+  accessToken: string
   fields?: string
   version?: string
 }) {
@@ -47,7 +47,7 @@ export function findWaba(props: {
         `${API_URL}/${version}/${props.wabaId}?fields=${fields}`,
         {
           headers: {
-            Authorization: `Bearer ${props.acessToken}`,
+            Authorization: `Bearer ${props.accessToken}`,
           },
         },
       )

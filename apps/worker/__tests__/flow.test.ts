@@ -16,17 +16,22 @@ const chatQueueAdd = vi.fn(async () => undefined)
 const detectConversationAndContactInbox = vi.fn()
 const detectFlowVersion = vi.fn()
 
-vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
-    messageStatus: "messageStatus",
-    runFlowPostback: "runFlowPostback",
-    runFlowQuickReply: "runFlowQuickReply",
-    sendFlow: "sendFlow",
-  },
-  integrationQueue: { add: integrationQueueAdd },
-  ChatJobAction: { sendFlowMessage: "sendFlowMessage" },
-  chatQueue: { add: chatQueueAdd },
-}))
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  return {
+    ...actual,
+    IntegrationJobAction: {
+      messageStatus: "messageStatus",
+      runFlowPostback: "runFlowPostback",
+      runFlowQuickReply: "runFlowQuickReply",
+      sendFlow: "sendFlow",
+    },
+    integrationQueue: { add: integrationQueueAdd },
+    ChatJobAction: { sendFlowMessage: "sendFlowMessage" },
+    chatQueue: { add: chatQueueAdd },
+  }
+})
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { query: {}, update: vi.fn(), insert: vi.fn() },

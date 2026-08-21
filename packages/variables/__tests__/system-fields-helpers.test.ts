@@ -61,6 +61,7 @@ vi.mock("../src/helpers/storage-url", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  appointmentService: { findBy: vi.fn() },
   conversationService: { findDMByContact: vi.fn() },
   messageService: { findById: vi.fn() },
 }))

@@ -23,6 +23,7 @@ export async function handleCondition(
     metadata,
     trackingContext,
     commentAnchor,
+    appointmentId,
   } = props
 
   const resolveMatchedHandleId = async (): Promise<string> => {
@@ -30,7 +31,11 @@ export async function handleCondition(
       const resolvedCases = await resolveContactVariablesDeep(
         conversation.contactId,
         step.cases,
-        { contactInbox, conversation },
+        {
+          contactInbox,
+          conversation,
+          ...(appointmentId ? { appointmentId } : {}),
+        },
       )
 
       for (const conditionCase of resolvedCases) {
@@ -78,6 +83,7 @@ export async function handleCondition(
       flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
       nodeId: connectedNodeId,
       metadata,
+      appointmentId,
       trackingContext,
       sendFrom,
       nodeVisits,

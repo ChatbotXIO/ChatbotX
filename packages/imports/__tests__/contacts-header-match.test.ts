@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   matchContactImportHeaders,
   normalizeContactHeader,
+  SOURCE_USER_ID_EXPORT_HEADER,
 } from "../src/modules/contacts/header-match"
 
 describe("contact import header matching", () => {
@@ -17,6 +18,9 @@ describe("contact import header matching", () => {
     ["Tên", "firstName"],
     ["Last name", "lastName"],
     ["Họ", "lastName"],
+    ["WhatsApp User ID", "sourceUserId"],
+    ["wa_user_id", "sourceUserId"],
+    ["bsuid", "sourceUserId"],
   ])("maps %s to %s", (header, field) => {
     expect(matchContactImportHeaders([header])).toHaveProperty(field, header)
   })
@@ -65,5 +69,16 @@ describe("contact import header matching", () => {
     ["Số điện thoại", "sodienthoai"],
   ])("normalizes Vietnamese variants in %s", (header, normalized) => {
     expect(normalizeContactHeader(header)).toBe(normalized)
+  })
+})
+
+describe("export header round-trip contract", () => {
+  test("the shared export header constant self-maps to sourceUserId", () => {
+    // The export writes SOURCE_USER_ID_EXPORT_HEADER as the column header;
+    // this pins that re-importing that exact file auto-maps the column, so
+    // the two sides can never drift apart silently.
+    expect(
+      matchContactImportHeaders([SOURCE_USER_ID_EXPORT_HEADER]),
+    ).toMatchObject({ sourceUserId: SOURCE_USER_ID_EXPORT_HEADER })
   })
 })

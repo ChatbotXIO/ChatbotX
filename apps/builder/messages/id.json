@@ -43,6 +43,7 @@
     "disableBot": "Nonaktifkan Bot",
     "disconnect": "Putuskan",
     "download": "Unduh",
+    "downloadTemplate": "Unduh templat",
     "edit": "Edit",
     "editFeature": "Edit {feature}",
     "enableBot": "Aktifkan Bot",
@@ -145,6 +146,9 @@
     "clone": "Klon",
     "remove": "Hapus",
     "restore": "Pulihkan"
+  },
+  "errors": {
+    "superAdminRequired": "Anda harus menjadi super admin workspace untuk melakukan ini."
   },
   "states": {
     "success": "Berhasil",
@@ -289,6 +293,7 @@
     "title": "Penagihan",
     "plan": {
       "label": "Paket: {plan}",
+      "currentLabel": "Paket saat ini",
       "free": "Gratis"
     },
     "usage": {
@@ -535,6 +540,8 @@
       "blocked": "Diblokir",
       "noAdminReply": "Tidak ada balasan admin",
       "contactCreatedAt": "Kontak dibuat pada",
+      "fromCtwaAd": "Dari iklan Click to WhatsApp",
+      "ctwaConversion": "Konversi CTWA",
       "lastUserInputTypes": {
         "text": "Teks",
         "location": "Lokasi",
@@ -544,6 +551,10 @@
         "audio": "Audio",
         "gif": "GIF",
         "file": "File"
+      },
+      "ctwaConversionTypes": {
+        "lead": "Lead",
+        "purchase": "Pembelian"
       }
     },
     "fieldGroups": {
@@ -558,7 +569,8 @@
       "topicCoupon": "Topik kupon",
       "customFields": "Kolom Kustom",
       "email": "Email",
-      "sms": "SMS"
+      "sms": "SMS",
+      "ctwaAds": "Iklan Click to WhatsApp"
     },
     "languages": {
       "ar": "Arab",
@@ -594,6 +606,15 @@
       "webchat": "Webchat",
       "botLink": "Tautan Bot",
       "chatPlugin": "Plugin C. chat"
+    },
+    "ctwaRetarget": {
+      "segments": {
+        "conversations": "Pemula percakapan CTWA",
+        "leads": "Lead terkualifikasi CTWA",
+        "purchases": "Pembeli CTWA"
+      },
+      "adPrefix": "iklan",
+      "allAds": "semua iklan"
     }
   },
   "fields": {
@@ -761,7 +782,6 @@
     },
     "authType": {
       "headers": "Kustom Header",
-      "none": "Tidak ada",
       "token": "Token"
     },
     "automatedResponse": {
@@ -774,7 +794,10 @@
       "label": "Tautan Titik Masuk"
     },
     "qrCode": {
-      "label": "QR Code"
+      "label": "Kode QR"
+    },
+    "dynamicImage": {
+      "label": "Gambar Dinamis"
     },
     "savePayloadToCustomField": {
       "label": "Simpan payload ke custom kolom"
@@ -879,11 +902,19 @@
       "description": "Ini adalah respons default yang akan dikirim workspace Anda saat tidak mengetahui cara membalas pesan pengguna.",
       "label": "Balasan Default"
     },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
+    },
     "smartResponseDelaySeconds": {
       "description": "Atur berapa lama bot menunggu sebelum membalas setelah pesan terakhir pengguna. Jika pengguna mengirim pesan lain, waktu akan diatur ulang dan pesan-pesan akan diantrekan menjadi satu respons.",
       "label": "Bot balasan delay",
       "minutes": "{count, plural, one {# menit} other {# menit}}",
-      "none": "Tidak ada",
       "seconds": "{count, plural, one {# detik} other {# detik}}"
     },
     "delayType": {
@@ -1175,6 +1206,11 @@
     "outputCustomField": {
       "label": "Output Kustom Field"
     },
+    "javascriptCode": {
+      "label": "Kode JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Gunakan JavaScript murni dan kembalikan sebuah nilai. Jaringan, file, API, dan pustaka eksternal tidak tersedia. Data kontak dan sistem tersedia melalui objek `input`."
+    },
     "httpMethod": {
       "label": "Metode"
     },
@@ -1248,6 +1284,12 @@
     },
     "pageUserName": {
       "label": "Nama Pengguna Halaman"
+    },
+    "waUserId": {
+      "label": "ID Pengguna WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nama Pengguna WhatsApp"
     },
     "purpose": {
       "label": "Tujuan",
@@ -1533,7 +1575,7 @@
       "superAdmin": "Super Admin",
       "analytics": "Analitik",
       "flows": "Flow",
-      "contacts": "Kontak",
+      "contacts": "Kontak / Inbox",
       "onlyAssignedContacts": "Hanya Kontak yang Ditugaskan",
       "emailAndPhone": "Email dan Telepon",
       "broadcast": "Broadcast",
@@ -1945,9 +1987,30 @@
       "label": "Peristiwa",
       "placeholder": "Ketik nama peristiwa lalu tekan Enter",
       "description": "Tambahkan satu atau beberapa nama peristiwa. Saat Make memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
+    },
+    "bookingCalendar": {
+      "label": "Kalender Pemesanan"
+    },
+    "bookingDate": {
+      "label": "Tanggal Pemesanan"
+    },
+    "bookingLink": {
+      "label": "Tautan pemesanan"
+    },
+    "n8nEvents": {
+      "label": "Peristiwa",
+      "placeholder": "Ketik nama peristiwa lalu tekan Enter",
+      "description": "Tambahkan satu atau beberapa nama peristiwa. Saat n8n memasang webhook untuk salah satu peristiwa ini, data dikirim kepadanya ketika langkah ini dijalankan."
+    },
+    "enabled": {
+      "label": "Diaktifkan"
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Alur ini belum pernah dipublikasikan. Publikasikan sebelum mengekspor.",
+      "failed": "Ekspor gagal. Silakan coba lagi."
+    },
     "title": "Alur",
     "quickReplies": {
       "limitReached": "Batas balasan cepat tercapai ({max})."
@@ -1972,8 +2035,7 @@
     },
     "openaiCompatible": {
       "empty": "Hubungkan penyedia yang kompatibel dengan OpenAI di pengaturan integrasi sebelum menggunakan langkah ini.",
-      "integration": "Penyedia yang kompatibel dengan OpenAI",
-      "none": "Tidak ada"
+      "integration": "Penyedia yang kompatibel dengan OpenAI"
     },
     "actions": {
       "addContactNotes": "Tambah Catatan Kontak",
@@ -1996,6 +2058,7 @@
       "questionnaires": "Kuesioner",
       "setUpCoupon": "Siapkan Kupon",
       "markCouponUsed": "Tandai Kupon Telah Digunakan",
+      "executeJavascript": "Jalankan JavaScript",
       "chooseChannel": "Pilih Channel",
       "clearCustomField": "Kosongkan Kolom Kustom",
       "condition": "Kondisi",
@@ -2073,7 +2136,15 @@
       "unsubscribeSequence": "Berhenti Berlangganan Urutan",
       "splitTraffic": "Bagi Trafik",
       "aiEditImage": "AI Edit Gambar",
-      "whatsappFlow": "Alur WhatsApp"
+      "whatsappFlow": "Alur WhatsApp",
+      "appointmentScheduling": "Penjadwalan Janji Temu",
+      "triggerN8n": "Trigger n8n",
+      "metaConversions": "Meta Conversions API",
+      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",
+      "import": "Impor Alur",
+      "export": "Ekspor",
+      "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
+      "importJsonOnly": "Hanya file JSON"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2105,6 +2176,11 @@
       "selectCustomFieldPlaceholder": "Pilih kolom kustom",
       "addMapping": "Tambah Pemetaan",
       "addCustomField": "Tambah Baru"
+    },
+    "sendCarousel": {
+      "addSlide": "Tambah kartu",
+      "removeSlide": "Hapus kartu",
+      "whatsappLinkButtonIgnored": "Di WhatsApp, tautan kartu ini tidak akan berfungsi: kartu dengan tombol tautan tidak boleh memiliki tombol lain. Kartu ini akan dikirim sebagai balasan."
     },
     "additionalSteps": "Langkah tambahan",
     "delayType": {
@@ -2172,7 +2248,11 @@
     },
     "setCustomField": {
       "temporalHint": "Biarkan kosong untuk menyimpan tanggal/waktu saat ini."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Saat tombol dilampirkan, TikTok hanya mengirim 40 karakter pertama pesan ini — sisanya akan terpotong."
+    },
+    "dataWasSaved": "Data telah disimpan"
   },
   "folders": {
     "heading": {
@@ -2218,6 +2298,174 @@
     },
     "errors": {
       "invalidAppSettings": "Pengaturan Aplikasi Facebook tidak valid"
+    }
+  },
+  "ads": {
+    "title": "Iklan",
+    "connectAccounts": {
+      "connectAdAccount": "Hubungkan Akun Iklan",
+      "adAccountName": "Nama Akun Iklan",
+      "adAccountsReconnectBanner": "Token akun iklan Meta Anda telah berakhir atau kehilangan izin. Hubungkan kembali Iklan Facebook agar pelaporan iklan tetap tersedia.",
+      "adAccountsNotConnected": "Belum ada akun iklan Meta yang terhubung.",
+      "adAccountsEmpty": "Tidak ditemukan akun iklan Meta untuk koneksi Iklan Facebook ini.",
+      "reconnect": "Hubungkan Kembali",
+      "reconnectSuccess": "Akun WhatsApp berhasil dihubungkan kembali.",
+      "selectAccountLabel": "Akun WhatsApp",
+      "status": {
+        "ready": "Peristiwa otomatis siap",
+        "missingPermission": "Izin Peristiwa Otomatis tidak ada",
+        "unverified": "Izin belum diverifikasi"
+      },
+      "table": {
+        "wabaId": "ID WABA"
+      },
+      "connectWhatsapp": {
+        "cta": "Hubungkan akun WhatsApp"
+      }
+    },
+    "conversionEvents": {
+      "title": "Peristiwa konversi",
+      "tabs": {
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+      },
+      "manageAdsAccounts": "Kelola Akun Iklan",
+      "export": "Ekspor",
+      "selectAll": "Pilih Semua",
+      "whatsappAsset": "Aset WhatsApp",
+      "selectWhatsappAsset": "Pilih aset WhatsApp",
+      "templates": "Template",
+      "selectTemplates": "Pilih template",
+      "noTemplates": "Tidak ditemukan template yang disetujui.",
+      "existingRules": "Aturan yang ada",
+      "noRules": "Belum ada aturan konversi untuk aset WhatsApp ini.",
+      "toggleRule": "Aktifkan atau nonaktifkan aturan",
+      "deleteRule": "Hapus aturan",
+      "qualifyingTemplateMessageSent": "Pesan template yang memenuhi syarat dikirim",
+      "qualifyingFirstReply": "Kontak mengirim pesan pertama mereka",
+      "qualifyingAnyReply": "Kontak mengirim pesan",
+      "when": "Ketika",
+      "whenOptions": {
+        "templateSent": "Pesan template yang memenuhi syarat dikirim",
+        "tagApplied": "Kontak diberi tag",
+        "keywordMatched": "Pesan kontak cocok dengan aturan kata kunci",
+        "contactReplied": "Kontak mengirim pesan"
+      },
+      "tags": "Tag",
+      "selectTags": "Pilih tag",
+      "noTags": "Tidak ditemukan tag.",
+      "untitledKeywordRule": "(aturan kata kunci tanpa judul)",
+      "keywordRules": "Aturan kata kunci",
+      "selectKeywordRules": "Pilih aturan kata kunci",
+      "noKeywordRules": "Tidak ditemukan aturan kata kunci masuk.",
+      "replyOptions": "Opsi balasan",
+      "firstReplyOnly": "Hanya pesan pertama",
+      "dedupeNote": "Maksimal 1 peristiwa per hari untuk setiap percakapan per aturan.",
+      "dealWon": "Deal Menang",
+      "eventTypeLead": "Lead",
+      "eventTypePurchase": "Pembelian",
+      "messages": {
+        "ruleSaved": "Aturan konversi disimpan",
+        "ruleUpdated": "Aturan konversi diperbarui",
+        "ruleDeleted": "Aturan konversi dihapus"
+      },
+      "mockAdAccount": "Banana 1",
+      "mockPages": {
+        "page1": "Halaman 1",
+        "page2": "Halaman 2"
+      },
+      "trackQualifiedLeads": {
+        "title": "Lacak lead terkualifikasi",
+        "question": "Pada titik mana dalam percakapan Anda ingin mengualifikasikan kontak sebagai lead?",
+        "when": "Ketika",
+        "then": "Lalu tandai lead CTWA sebagai"
+      },
+      "trackPurchases": {
+        "title": "Lacak pembelian",
+        "question": "Template mana yang mengonfirmasi pembelian?",
+        "when": "Ketika",
+        "then": "Lalu",
+        "noValueNote": "Pembelian berbasis aturan mencatat konversi Pembelian tanpa nilai pesanan — ini dihitung dalam jumlah pembelian tetapi menambahkan 0 pada pendapatan. Nilai pesanan hanya ditangkap oleh Peristiwa Otomatis Meta."
+      }
+    },
+    "analytics": {
+      "title": "Analitik CTWA",
+      "funnelOverview": "Ringkasan funnel",
+      "conversationsStarted": "Percakapan dimulai",
+      "qualifiedLeads": "Lead terkualifikasi",
+      "purchases": "Pembelian",
+      "adSpend": "Pengeluaran iklan",
+      "spendAccountLevelNote": "Pengeluaran dilaporkan pada tingkat akun iklan Meta; ketika sebuah akun WhatsApp dipilih, iklan yang hanya memiliki pengeluaran tanpa aktivitas funnel untuk akun tersebut akan disembunyikan.",
+      "revenue": "Pendapatan",
+      "roas": "ROAS",
+      "revenueCurrencyNote": "Pendapatan mengasumsikan satu mata uang (USD). Akun iklan dengan mata uang campuran belum dapat diagregasi.",
+      "costPerLead": "Biaya/lead",
+      "costPerPurchase": "Biaya/pembelian",
+      "impressions": "Impresi",
+      "clicks": "Klik",
+      "cpc": "CPC",
+      "ctr": "CTR",
+      "cpm": "CPM",
+      "costPerConversation": "Biaya/percakapan",
+      "costCurrencyNote": "Metrik biaya mengasumsikan satu mata uang (USD), konsisten dengan pengeluaran iklan.",
+      "performanceChart": {
+        "title": "Performa dari waktu ke waktu",
+        "empty": "Belum ada percakapan, lead, pembelian, atau pengeluaran dalam rentang ini."
+      },
+      "dateRange": {
+        "oneDay": "1H",
+        "oneWeek": "1M",
+        "oneMonth": "1B",
+        "threeMonths": "3B",
+        "custom": "Kustom",
+        "apply": "Terapkan"
+      },
+      "allAds": "Semua Iklan",
+      "adAccountFilter": {
+        "all": "Semua akun iklan",
+        "label": "Akun iklan",
+        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan."
+      },
+      "retarget": "Retarget",
+      "thoseWhoPurchased": "Mereka yang membeli",
+      "thoseWhoStartedConversation": "Mereka yang memulai percakapan",
+      "sendWhatsappBroadcast": "Kirim broadcast WhatsApp",
+      "from": "Dari",
+      "to": "Hingga",
+      "unattributed": "Tidak teratribusi",
+      "retargetDialog": {
+        "title": "Retarget kontak CTWA",
+        "createAudience": "Buat audiens",
+        "useExistingAudience": "Gunakan audiens yang ada",
+        "audienceName": "Nama audiens",
+        "audiencePrefix": "CTWA",
+        "confirm": "Mulai sinkronisasi",
+        "success": "Sinkronisasi audiens retarget dimasukkan ke antrean.",
+        "error": "Gagal memasukkan sinkronisasi audiens retarget ke antrean."
+      },
+      "delivery": {
+        "title": "Pengiriman konversi",
+        "sent": "Terkirim",
+        "pending": "Menunggu",
+        "failed": "Gagal",
+        "skippedNoScope": "Dilewati (tidak ada scope)",
+        "skippedRegion": "Dilewati (wilayah)",
+        "noScopeWarning": "Beberapa konversi tidak terkirim karena akun WhatsApp ini tidak memiliki izin peristiwa. Hubungkan kembali untuk mengaktifkan pelaporan Peristiwa Otomatis.",
+        "reconnectCta": "Hubungkan kembali akun",
+        "empty": "Belum ada peristiwa konversi dalam rentang ini."
+      },
+      "export": {
+        "conversations": "Ekspor percakapan",
+        "leads": "Ekspor lead",
+        "purchases": "Ekspor pembelian"
+      },
+      "csv": {
+        "contactName": "Nama kontak",
+        "phone": "Telepon",
+        "adId": "ID Iklan",
+        "occurredAt": "Terjadi pada"
+      },
+      "empty": "Belum ada data. Hubungkan akun iklan dan mulai lacak konversi."
     }
   },
   "googleSheets": {
@@ -2506,6 +2754,11 @@
     "noWorkspaces": "Anda belum memiliki ruang kerja.",
     "owner": "Pemilik"
   },
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "description": "Halaman yang Anda cari tidak ada atau mungkin telah dipindahkan.",
+    "backToHome": "Kembali ke halaman utama"
+  },
   "editProfile": {
     "title": "Edit Profil"
   },
@@ -2613,6 +2866,7 @@
     "changeHideState": "Ubah status sembunyikan",
     "commentHidden": "Komentar ini disembunyikan",
     "messageDeleted": "Pesan telah dihapus.",
+    "sendFailed": "Gagal mengirim",
     "repliedToStory": "Membalas story Anda",
     "sentAttachments": "Mengirim {count, plural, one {1 lampiran} other {# lampiran}}",
     "deleteComment": "Hapus komentar",
@@ -2692,10 +2946,19 @@
     "noVersionsFound": "Tidak ada versi yang dipublikasikan",
     "publishVersionSuccess": "Versi baru telah dipublikasikan",
     "flowConfigIncomplete": "Beberapa konfigurasi belum lengkap",
+    "whatsappCarouselButtonsMismatch": "Di WhatsApp, carousel memerlukan tombol yang sama di setiap kartu: satu tombol tautan di setiap kartu, atau jumlah tombol balasan yang sama di setiap kartu",
+    "whatsappCarouselLinkButtonNotAlone": "Di WhatsApp, kartu carousel dengan tombol tautan tidak boleh memiliki tombol lain. Hapus tombol lain pada kartu tersebut, atau ubah tombol tautan menjadi tindakan lain.",
     "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",
     "deleteNodeError": "Blok tidak dapat dihapus. Silakan coba lagi.",
     "redoHistoryCleared": "Riwayat pengulangan dihapus",
-    "historyDepth": "({count})"
+    "historyDepth": "({count})",
+    "none": "Tidak ada",
+    "tiktokCardTitleTooLong": "TikTok akan memotong pesan ini: saat tombol dilampirkan, hanya 40 karakter pertama yang dikirim. Persingkat pesan atau hapus tombolnya.",
+    "waTemplateMpmNoProducts": "Tambahkan setidaknya satu produk ke tombol multi-produk ini sebelum memublikasikan.",
+    "waTemplateMpmTooManySections": "Tombol multi-produk dapat memiliki maksimal 10 bagian. Hapus beberapa bagian sebelum memublikasikan.",
+    "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",
+    "waTemplateLtoExpirationRequired": "Pilih tanggal berakhir untuk penawaran waktu terbatas sebelum mengirim.",
+    "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -2703,7 +2966,11 @@
     "iceBreakers": "Pembuka Percakapan",
     "iceBreakersDescription": "Pembuka percakapan membantu pengguna memulai percakapan dengan bot Anda melalui daftar pertanyaan yang sering diajukan.",
     "reconnect": "Hubungkan kembali",
-    "title": "Instagram"
+    "title": "Instagram",
+    "tabs": {
+      "generalSettings": "Pengaturan Umum",
+      "conversionsApi": "Optimasi Iklan"
+    }
   },
   "coexist": {
     "title": "Sinkronkan kontak dan riwayat obrolan yang sudah ada?",
@@ -2717,6 +2984,8 @@
     "toggleHelper": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali.",
     "toggleHelperMessenger": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali halaman Messenger.",
     "toggleHelperWhatsapp": "Pengaktifan kembali hanya berfungsi jika Meta masih menyimpan data (dalam 24 jam sejak orientasi). Jika tidak, putuskan lalu hubungkan kembali nomor WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "AI membaca riwayat sinkronisasi",
+    "aiReadsSyncedHistoryHelper": "Saat nonaktif, AI hanya melihat pesan baru.",
     "success": {
       "enabled": "Sinkronisasi dimulai. Kontak dan pesan historis akan segera muncul.",
       "disabled": "Sinkronisasi dinonaktifkan."
@@ -2759,7 +3028,8 @@
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Pengaturan Umum",
-      "messageTemplates": "Templat Pesan"
+      "messageTemplates": "Templat Pesan",
+      "conversionsApi": "Optimasi Iklan"
     },
     "messageTemplate": {
       "params": {
@@ -3053,6 +3323,13 @@
         "wabaResolveFailed": "Tidak dapat menentukan Akun WhatsApp Business dari otorisasi."
       }
     },
+    "reconnect": {
+      "errors": {
+        "notFound": "Integrasi WhatsApp tidak ditemukan.",
+        "phoneNumberMismatch": "Hubungkan kembali mengembalikan WhatsApp Business Account yang diharapkan, tetapi bukan nomor telepon yang terhubung ke workspace ini.",
+        "wabaMismatch": "Hubungkan kembali mengembalikan WhatsApp Business Account yang berbeda. Silakan hubungkan kembali akun yang sama."
+      }
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -3085,22 +3362,38 @@
       "params": {
         "couponCode": "Kode Kupon",
         "couponCodePlaceholder": "Masukkan kode kupon",
-        "quickReplyPayload": "Payload Balasan Cepat",
-        "quickReplyPayloadPlaceholder": "Masukkan payload (opsional)",
         "flowToken": "Token Alur",
         "flowTokenPlaceholder": "Masukkan token alur",
-        "catalogProductId": "ID Produk",
-        "catalogProductIdPlaceholder": "Masukkan ID pengecer produk",
+        "flowNotSynced": "Sinkronkan alur WhatsApp untuk memetakan kolom yang dikirim.",
+        "catalogProductId": "Produk katalog",
+        "catalogProductIdPlaceholder": "Cari produk…",
         "carouselCard": "Kartu {index}",
         "limitedTimeOffer": "Waktu Berakhir Penawaran",
-        "limitedTimeOfferPlaceholder": "Masukkan waktu berakhir dalam milidetik",
-        "limitedTimeOfferHelp": "Stempel waktu Unix dalam milidetik saat penawaran berakhir",
+        "limitedTimeOfferPlaceholder": "Pilih tanggal & waktu kedaluwarsa",
+        "limitedTimeOfferHelp": "Waktu kedaluwarsa dikirim persis seperti yang dipilih.",
         "location": "Lokasi",
         "latitude": "Lintang",
         "longitude": "Bujur",
         "locationName": "Nama lokasi (opsional)",
         "locationAddress": "Alamat (opsional)",
-        "enterFormatUrl": "Masukkan URL {format}"
+        "enterFormatUrl": "Masukkan URL {format}",
+        "catalogUseDefault": "Gunakan thumbnail default katalog",
+        "catalogNotConnectedGuidance": "Hubungkan Katalog Meta untuk memilih produk.",
+        "catalogSetupLink": "Buka pengaturan Katalog",
+        "catalogSelectedProductFallback": "Produk: {retailerId}",
+        "limitedTimeOfferBadge": "Berakhir {date}",
+        "limitedTimeOfferExpiredBadge": "Telah berakhir {date}",
+        "mpmSections": "Produk",
+        "mpmSectionTitlePlaceholder": "Judul bagian (opsional)",
+        "mpmAddSection": "Tambah bagian",
+        "mpmRemoveSection": "Hapus bagian",
+        "mpmAddProduct": "Tambah produk",
+        "mpmRemoveProduct": "Hapus produk",
+        "mpmNoProductsHelp": "Tambahkan setidaknya satu produk sebelum memublikasikan.",
+        "mpmSectionLimitReached": "Maksimum 10 bagian tercapai.",
+        "mpmProductLimitReached": "Maksimum 30 produk tercapai.",
+        "mpmProductsSummary": "{productCount} produk dalam {sectionCount} bagian",
+        "unsupportedButtonParam": "Jenis tombol ini belum didukung."
       }
     },
     "sampleBodyCardContent": {
@@ -3125,7 +3418,9 @@
       "flows": "Alur",
       "messageTemplates": "Templat Pesan",
       "profile": "Profil",
-      "usefulLinks": "Tautan Berguna"
+      "usefulLinks": "Tautan Berguna",
+      "conversionsApi": "Optimasi Iklan",
+      "settings": "Pengaturan"
     },
     "accountHealths": {
       "title": "Kelola akun WhatsApp Anda",
@@ -3255,7 +3550,13 @@
       "label": "Header Templat"
     },
     "transferPhoneNumber": "Transfer telepon dari penyedia WhatsApp lain",
-    "signupSessionExpired": "Sesi pendaftaran WhatsApp Anda telah kedaluwarsa. Mulai kembali proses koneksi."
+    "signupSessionExpired": "Sesi pendaftaran WhatsApp Anda telah kedaluwarsa. Mulai kembali proses koneksi.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Peristiwa Otomatis",
+        "description": "Kirim peristiwa konversi dari nomor WhatsApp ini ke Meta secara otomatis. Jika izin belum ada, sambungkan ulang akun untuk memberikannya."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
@@ -3295,6 +3596,67 @@
   "qrCodes": {
     "title": "Kode QR",
     "description": "Buat kode QR yang tertaut ke alur chatbot Anda."
+  },
+  "dynamicImages": {
+    "title": "Gambar Dinamis",
+    "description": "Buat gambar yang dipersonalisasi untuk setiap kontak dari latar belakang dan lapisan teks/gambar/kode QR.",
+    "publicUrl": {
+      "label": "URL Publik",
+      "hint": "Salin dan tempel URL ke alur, broadcast, atau urutan Anda untuk mengirim gambar yang dipersonalisasi."
+    },
+    "editor": {
+      "addElement": "Tambah elemen",
+      "addImage": "Tambah gambar",
+      "addText": "Tambah teks",
+      "addQrCode": "Tambah kode QR",
+      "template": "Templat",
+      "templateDialogTitle": "Pilih templat",
+      "templateDialogDescription": "Memilih templat akan mengganti semua layer yang ada saat ini.",
+      "layers": "Lapisan",
+      "noLayers": "Belum ada lapisan. Tambahkan elemen untuk memulai.",
+      "deleteLayer": "Hapus lapisan",
+      "layerNameImage": "Gambar",
+      "layerNameText": "Teks",
+      "layerNameQrCode": "Kode QR",
+      "editElement": "Edit elemen",
+      "selectElementHint": "Pilih elemen pada kanvas untuk mengedit propertinya.",
+      "width": "Lebar",
+      "height": "Tinggi",
+      "priority": "Prioritas",
+      "imageType": "Jenis gambar",
+      "imageTypeUrl": "URL gambar",
+      "imageTypeAvatarUser": "Avatar kontak",
+      "imageTypeCustomField": "Kolom kustom",
+      "imageUrl": "URL gambar",
+      "uploadImage": "Unggah gambar",
+      "customField": "Kolom kustom",
+      "imageStyle": "Gaya gambar",
+      "imageStyleSquare": "Persegi",
+      "imageStyleCircle": "Lingkaran",
+      "qrText": "Konten kode QR",
+      "qrSize": "Ukuran",
+      "qrColor": "Warna",
+      "qrLogo": "Logo",
+      "uploadLogo": "Unggah logo",
+      "textContent": "Konten teks",
+      "fontSize": "Ukuran huruf",
+      "fontFamily": "Jenis huruf",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Perataan",
+      "alignLeft": "Kiri",
+      "alignCenter": "Tengah",
+      "alignRight": "Kanan",
+      "color": "Warna",
+      "bold": "Tebal",
+      "italic": "Miring",
+      "uppercase": "Huruf kapital"
+    },
+    "preview": {
+      "error": "Gagal memuat gambar dinamis yang tertaut. Gambar mungkin telah dihapus."
+    }
   },
   "magicLinks": {
     "title": "Tautan Ajaib",
@@ -3352,7 +3714,8 @@
       "clearCustomField": "Kosongkan Kolom Kustom",
       "startAnotherFlow": "Mulai Alur Lain",
       "notifyAdmins": "Beri Tahu Admin",
-      "transferConversationToHuman": "Alihkan Percakapan ke Manusia"
+      "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
+      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI"
     },
     "triggerGoesOff": "Pemicu dijalankan",
     "before": "Sebelum",
@@ -3390,7 +3753,10 @@
     "title": "Log Audit"
   },
   "customFields": {
-    "title": "Kolom Kustom"
+    "title": "Kolom Kustom",
+    "variables": {
+      "rawGroup": "Kolom kustom mentah"
+    }
   },
   "keywords": {
     "title": "Kata Kunci",
@@ -3869,7 +4235,6 @@
     "allFormsNote": "Prospek dari setiap formulir di halaman ini akan diambil. Kolom standar (email, telepon, nama, jenis kelamin) otomatis disimpan ke kolom kontak yang sesuai.",
     "leadData": "Data Prospek",
     "whatFlow": "Alur yang dipicu",
-    "none": "Tidak Ada",
     "addNewPage": "Tambahkan Baru",
     "noEligiblePages": "Tidak ada halaman yang memenuhi syarat. Gunakan \"Tambahkan Baru\" untuk memberikan akses prospek.",
     "duplicateError": "Otomatisasi untuk halaman dan formulir ini sudah ada.",
@@ -3881,7 +4246,28 @@
   },
   "appointmentScheduling": {
     "title": "Penjadwalan Janji Temu",
-    "description": "Buat dan kelola penjadwalan janji temu Anda."
+    "description": "Buat dan kelola penjadwalan janji temu Anda.",
+    "flowModes": {
+      "bookFromCustomField": "Buat janji temu",
+      "checkAvailabilityFromCustomField": "Periksa ketersediaan",
+      "book": "Pemilih tanggal & waktu",
+      "checkAvailability": "Pemilih rentang tanggal",
+      "cancel": "Batalkan janji temu"
+    },
+    "fields": {
+      "mode": "Mode",
+      "dateTimeFieldId": "Simpan tanggal terpilih ke",
+      "dateTimeFieldIdSource": "Kolom tanggal/waktu",
+      "startDateFieldId": "Kolom tanggal mulai",
+      "endDateFieldId": "Kolom tanggal selesai",
+      "resultUsedByAI": "Gunakan hasil untuk AI",
+      "outputCustomFieldId": "Simpan respons ke kolom kustom",
+      "startDateFieldIdSelected": "Simpan tanggal mulai terpilih ke",
+      "endDateFieldIdSelected": "Simpan tanggal selesai terpilih ke"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Pilih bagaimana langkah alur ini menjadwalkan janji temu."
+    }
   },
   "templates": {
     "title": "Templat",
@@ -4433,6 +4819,382 @@
       "iconPlaceholder": "mis. book-open, star, circle-question-mark",
       "position": "Urutan",
       "iconSearchLink": "Jelajahi ikon Lucide →"
+    }
+  },
+  "bookingWebview": {
+    "metadataTitle": "Buat janji temu",
+    "badge": "Janji Temu",
+    "timezone": "Zona Waktu",
+    "empty": "Tidak ditemukan waktu yang tersedia.",
+    "noSelection": "Pilih waktu",
+    "actions": {
+      "book": "Buat janji temu",
+      "viewDetails": "Lihat detail"
+    },
+    "errors": {
+      "invalidTokenTitle": "Tautan pemesanan ini tidak tersedia.",
+      "invalidTokenDescription": "Tautan mungkin tidak valid atau sudah kedaluwarsa. Silakan minta tautan pemesanan baru.",
+      "staleSlot": "Waktu ini sudah tidak tersedia. Silakan pilih waktu lain.",
+      "availabilityChanged": "Ketersediaan berubah saat Anda memilih waktu. Silakan pilih lagi.",
+      "submitFailed": "Kami tidak dapat menyelesaikan permintaan ini. Silakan coba lagi."
+    },
+    "success": {
+      "title": "Janji temu Anda telah dibuat.",
+      "description": "Detail janji temu sudah siap."
+    },
+    "schedule": {
+      "metadataTitle": "Detail janji temu",
+      "defaultMessage": "Janji temu Anda telah dijadwalkan.",
+      "unknownInvitee": "Tamu",
+      "fields": {
+        "invitee": "Tamu",
+        "time": "Waktu",
+        "timezone": "Zona Waktu",
+        "location": "Lokasi"
+      },
+      "status": {
+        "scheduled": "Dijadwalkan",
+        "cancelled": "Dibatalkan"
+      },
+      "locationTypes": {
+        "inPerson": "Pertemuan tatap muka",
+        "phoneCall": "Panggilan telepon",
+        "onlineMeeting": "Pertemuan daring"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Batalkan janji temu",
+      "title": "Batalkan janji temu",
+      "description": "Batalkan {calendar} pada {time}.",
+      "action": "Batalkan janji temu",
+      "cancelledTitle": "Janji temu dibatalkan",
+      "cancelledDescription": "Janji temu ini telah dibatalkan.",
+      "unavailableTitle": "Pembatalan tidak tersedia",
+      "unavailableDescription": "Janji temu ini sudah dibatalkan, dihapus, atau sudah lewat waktunya."
+    },
+    "range": {
+      "metadataTitle": "Periksa ketersediaan",
+      "empty": "Belum dipilih",
+      "successTitle": "Rentang tanggal diterima.",
+      "successDescription": "Kami sedang memeriksa waktu janji temu yang tersedia.",
+      "fields": {
+        "startDate": "Tanggal Mulai",
+        "endDate": "Tanggal Selesai",
+        "startTime": "Waktu Mulai",
+        "endTime": "Waktu Selesai"
+      },
+      "actions": {
+        "skip": "Lewati"
+      },
+      "errors": {
+        "invalidRange": "Tanggal Selesai harus sama dengan atau setelah Tanggal Mulai."
+      },
+      "timezoneHint": "Waktu ditampilkan dalam {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Pilih tanggal",
+    "date": {
+      "title": "Pilih tanggal"
+    },
+    "datetime": {
+      "title": "Pilih tanggal dan waktu"
+    },
+    "noSelection": "Pilih tanggal",
+    "actions": {
+      "submit": "Kirim"
+    },
+    "success": {
+      "title": "Data telah disimpan",
+      "description": "Anda sekarang dapat menutup tab ini."
+    },
+    "errors": {
+      "invalidTokenTitle": "Tautan ini tidak tersedia.",
+      "invalidTokenDescription": "Tautan mungkin tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
+      "submitFailed": "Kami tidak dapat menyelesaikan permintaan ini. Silakan coba lagi."
+    },
+    "monthLabel": "Bulan",
+    "yearLabel": "Tahun"
+  },
+  "appointments": {
+    "title": "Janji Temu",
+    "statuses": {
+      "scheduled": "Dijadwalkan",
+      "cancelled": "Dibatalkan"
+    },
+    "messages": {
+      "empty": "Belum ada janji temu."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Janji Temu",
+    "singular": "Janji Temu",
+    "unknownContact": "Kontak tidak dikenal",
+    "searchPlaceholder": "Cari nama...",
+    "tabs": {
+      "next": "Mendatang",
+      "past": "Lampau"
+    },
+    "fields": {
+      "name": "Nama",
+      "date": "Tanggal",
+      "status": "Status",
+      "calendar": "Kalender"
+    },
+    "statuses": {
+      "scheduled": "Dijadwalkan",
+      "cancelled": "Dibatalkan"
+    },
+    "actions": {
+      "cancelAppointment": "Batalkan janji temu"
+    },
+    "dialogs": {
+      "cancelTitle": "Batalkan janji temu",
+      "cancelDescription": "Batalkan janji temu ini dan jalankan efek pembatalannya.",
+      "deleteTitle": "Hapus janji temu",
+      "deleteDescription": "Hapus janji temu ini dari daftar pengelolaan. Ini tidak akan menjalankan flow pembatalan."
+    },
+    "messages": {
+      "cancelled": "Janji temu dibatalkan.",
+      "deleted": "Janji temu dihapus."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Kalender Janji Temu",
+    "singular": "Kalender Janji Temu",
+    "addNew": "Tambah Baru",
+    "none": "Tidak Ada",
+    "addReminder": "Tambah Pengingat",
+    "reminderSummary": "Kirim Pengingat - {calendar} {timing}.",
+    "noExternalConnections": "Belum ada koneksi kalender eksternal",
+    "dialogDescriptions": {
+      "create": "Beri nama kalender janji temu Anda untuk memulai.",
+      "rename": "Ganti nama kalender janji temu ini."
+    },
+    "tabs": {
+      "calendars": "Kalender",
+      "appointments": "Janji Temu",
+      "externalCalendars": "Kalender Eksternal"
+    },
+    "sections": {
+      "appointment": "Apa janji temu Anda",
+      "availability": "Kapan orang dapat membuat janji temu?",
+      "duration": "Berapa lama janji temu Anda?",
+      "location": "Di mana janji temu akan berlangsung?",
+      "notifications": "Notifikasi",
+      "restrictions": "Pembatasan",
+      "externalCalendar": "Hubungkan Google Calendar"
+    },
+    "fields": {
+      "description": "Deskripsi",
+      "timezone": "Zona Waktu",
+      "locationType": "Jenis Lokasi",
+      "locationDetail": "Detail",
+      "durationMinutes": "Durasi janji temu",
+      "bufferAfterMinutes": "Tambahkan waktu setelah janji temu Anda",
+      "scheduleWindowType": "Orang dapat menjadwalkan",
+      "rollingDays": "Hari Bergulir",
+      "minAdvanceDays": "Minimum hari sebelumnya",
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Selesai",
+      "specificDate": "Tanggal",
+      "maxAppointmentsPerUser": "Maksimum janji temu per pengguna",
+      "maxAppointmentsUnlimited": "Tidak terbatas",
+      "dailyLimitEnabled": "Batas harian",
+      "maxPerDay": "Maks per Hari",
+      "allowGroupMeeting": "Izinkan Pertemuan Kelompok",
+      "maxPerSlot": "Maks per Slot",
+      "confirmationMessage": "Pesan Konfirmasi",
+      "confirmationFlowId": "Flow Konfirmasi",
+      "cancellationFlowId": "Flow Pembatalan",
+      "externalConnectionId": "Kalender Eksternal",
+      "reminders": "Pengingat",
+      "reminderTimingValue": "Nilai",
+      "reminderTimingUnit": "Satuan"
+    },
+    "locationTypes": {
+      "inPerson": "Pertemuan Tatap Muka",
+      "phoneCall": "Panggilan Telepon",
+      "onlineMeeting": "Pertemuan Daring"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Dalam hari bergulir ke depan",
+      "dateRange": "Dalam rentang tanggal",
+      "specificDay": "Satu hari tertentu",
+      "anyFutureDate": "Pada tanggal mana pun di masa depan"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Menit sebelumnya",
+      "hours": "Jam sebelumnya",
+      "days": "Hari sebelumnya"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# menit sebelumnya} other {# menit sebelumnya}}",
+      "hours": "{count, plural, one {satu jam sebelumnya} other {# jam sebelumnya}}",
+      "days": "{count, plural, one {satu hari sebelumnya} other {# hari sebelumnya}}"
+    },
+    "weekdays": {
+      "0": "Minggu",
+      "1": "Senin",
+      "2": "Selasa",
+      "3": "Rabu",
+      "4": "Kamis",
+      "5": "Jumat",
+      "6": "Sabtu"
+    },
+    "weekdayEditor": {
+      "description": "Atur interval waktu yang tersedia untuk hari ini.",
+      "unavailable": "Tidak tersedia",
+      "overlapWarning": "Beberapa interval tumpang tindih. Waktu yang tumpang tindih tidak dihitung dua kali.",
+      "addInterval": "Tambah Interval",
+      "startTime": "Waktu Mulai",
+      "endTime": "Waktu Selesai"
+    },
+    "tooltips": {
+      "timezone": "Zona waktu tempat Anda membuat kalender ini. Orang akan melihat ketersediaan berdasarkan zona waktu mereka sendiri.",
+      "confirmationFlow": "Flow yang dikirim setelah pengguna membuat janji temu.",
+      "cancellationFlow": "Flow yang dikirim setelah janji temu dibatalkan.",
+      "reminders": "Kirim pengingat agar peserta tidak lupa dengan janji temunya.",
+      "appointmentDuration": "Tentukan berapa lama janji temu Anda berlangsung.",
+      "bufferAfterMinutes": "Beri diri Anda waktu jeda untuk menyelesaikan janji temu yang telah dipesan.",
+      "peopleCanSchedule": "Atur rentang tanggal saat Anda dapat menerima pertemuan.",
+      "maxAppointmentsPerUser": "Jumlah maksimum janji temu mendatang yang boleh dibuat oleh satu pengguna.",
+      "rollingDays": "Izinkan penjadwalan hingga berapa hari ke depan",
+      "minAdvanceDays": "Wajibkan pemesanan dibuat setidaknya sekian hari sebelumnya. Gunakan 0 untuk mengizinkan pemesanan di hari yang sama.",
+      "dailyLimit": "Jumlah maksimum orang yang boleh membuat janji temu per hari.",
+      "allowGroupMeeting": "Izinkan banyak orang memesan slot waktu yang sama.",
+      "externalCalendar": "Hubungkan Google Calendar untuk menyinkronkan janji temu Anda."
+    },
+    "minutesLabel": "{count} menit"
+  },
+  "externalCalendars": {
+    "title": "Kalender Eksternal",
+    "connectGoogle": "Hubungkan Google",
+    "emptyEmail": "Tidak ada email",
+    "fields": {
+      "provider": "Penyedia",
+      "email": "Email",
+      "calendarId": "ID Kalender",
+      "connected": "Terhubung",
+      "date": "Tanggal"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Edit ID Kalender",
+      "editDescription": "Pilih ID Google Calendar untuk memeriksa konflik dan membuat acara janji temu.",
+      "deleteTitle": "Putuskan Kalender",
+      "deleteDescription": "Putuskan Google Calendar ini dari penjadwalan janji temu."
+    },
+    "messages": {
+      "connected": "Google Calendar terhubung.",
+      "connectFailed": "Tidak dapat menghubungkan Google Calendar. Periksa pengaturan Google OAuth dan akses Calendar API, lalu coba lagi.",
+      "calendarIdUpdated": "ID Kalender diperbarui.",
+      "disconnected": "Kalender diputuskan."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Pemesanan",
+    "comingSoonTitle": "Halaman pemesanan segera hadir",
+    "comingSoonDescription": "Halaman pemesanan publik ini belum tersedia."
+  },
+  "metaConversions": {
+    "title": "Conversions API",
+    "description": "Kirim peristiwa LeadSubmitted dari percakapan Messenger, Instagram, dan WhatsApp ke Meta.",
+    "datasetId": "Dataset ID",
+    "reconnect": "Sambungkan ulang izin",
+    "connectViaFacebook": "Hubungkan via Facebook",
+    "unsupportedExplanation": "Akun Instagram ini terhubung menggunakan Instagram Business Login. Hubungkan akun melalui Facebook untuk menggunakan Meta Conversions API.",
+    "flowStep": {
+      "description": "Antrekan peristiwa LeadSubmitted untuk Messenger, Instagram, atau WhatsApp.",
+      "whatsappNote": "Peristiwa WhatsApp hanya dikirim untuk percakapan yang dimulai dari iklan click-to-WhatsApp."
+    },
+    "status": {
+      "title": "Meta Conversions API",
+      "ready": "Siap",
+      "missingPermission": "Izin diperlukan",
+      "unverified": "Belum diverifikasi",
+      "unsupported": "Tidak didukung",
+      "notConnected": "Belum terhubung"
+    },
+    "statusDescriptions": {
+      "ready": "Integrasi ini memiliki izin Meta yang diperlukan untuk peristiwa Conversions API.",
+      "missingPermission": "Sambungkan ulang integrasi ini dan berikan izin Meta yang diminta.",
+      "unverified": "Pengaturan aplikasi platform tidak tersedia, sehingga izin CAPI tidak dapat diverifikasi.",
+      "unsupported": "Meta Conversions API untuk Instagram memerlukan akun yang terhubung melalui Facebook Login for Business.",
+      "notConnected": "Conversions API adalah Meta Business Tool yang memungkinkan Anda membagikan data ke Meta untuk meningkatkan performa iklan."
+    },
+    "errors": {
+      "reconnect": "Gagal memulai penyambungan ulang Meta CAPI.",
+      "messengerNotFound": "Integrasi Messenger tidak ditemukan.",
+      "instagramNotFound": "Integrasi Instagram tidak ditemukan.",
+      "instagramRequiresFacebook": "Instagram CAPI memerlukan koneksi melalui Facebook.",
+      "saveFailed": "Tidak dapat menyimpan. Silakan coba lagi.",
+      "datasetRequired": "Simpan Dataset ID sebelum menambahkan token akses.",
+      "invalidToken": "Token ini tidak dapat mengakses dataset.",
+      "invalidDatasetId": "Masukkan Dataset ID yang valid (hanya angka).",
+      "whatsappNotFound": "Integrasi WhatsApp tidak ditemukan."
+    },
+    "fields": {
+      "eventType": {
+        "label": "Jenis peristiwa",
+        "leadSubmitted": "Lead Submitted"
+      },
+      "value": "Nilai",
+      "valuePlaceholder": "misalnya 250",
+      "currency": "Mata Uang",
+      "currencyPlaceholder": "misalnya USD",
+      "contentCategory": "Kategori Konten",
+      "contentCategoryPlaceholder": "Kategori konten yang terkait dengan peristiwa ini",
+      "contentName": "Nama Konten",
+      "contentNamePlaceholder": "Nama halaman atau produk yang terkait dengan peristiwa ini"
+    },
+    "datasetIdPlaceholder": "Tempel Dataset ID dari Events Manager",
+    "saveDataset": "Simpan",
+    "accessToken": "Token Akses (opsional)",
+    "accessTokenHint": "Tempel token dari Events Manager untuk mengirim peristiwa menggunakan token Anda sendiri, bukan token halaman yang terhubung. Memerlukan Dataset ID.",
+    "accessTokenPlaceholder": "Token akses Events Manager",
+    "saveToken": "Simpan token",
+    "tokenSaved": "Token disimpan",
+    "removeToken": "Hapus",
+    "saved": "Tersimpan",
+    "help": {
+      "delay": "Peristiwa dapat memerlukan waktu hingga 40 menit untuk muncul di Events Manager dan ditampilkan sebagai Meta Leads di Ads Manager."
+    },
+    "connected": "Terhubung",
+    "disconnect": "Putuskan",
+    "openEventManager": "Buka Event Manager",
+    "methods": {
+      "oauth": {
+        "title": "Hubungkan via Facebook",
+        "description": "Gunakan koneksi halaman Anda yang sudah ada, lalu pilih Dataset ID.",
+        "connect": "Buat Dataset",
+        "connectedLabel": "via Facebook"
+      },
+      "custom": {
+        "title": "Koneksi kustom",
+        "description": "Gunakan Dataset ID dan token akses dari Meta Events Manager.",
+        "start": "Siapkan koneksi kustom",
+        "connect": "Hubungkan",
+        "connectedLabel": "Kustom"
+      },
+      "whatsapp": {
+        "title": "Hubungkan via WhatsApp",
+        "description": "Gunakan koneksi WhatsApp Anda, lalu pilih Dataset ID.",
+        "connect": "Buat Dataset",
+        "connectedLabel": "via WhatsApp"
+      }
+    },
+    "finalize": {
+      "title": "Pilih Dataset ID",
+      "description": "Masukkan Dataset ID yang sudah ada, atau biarkan kosong untuk membuatnya secara otomatis.",
+      "save": "Simpan",
+      "createDataset": "Buat Dataset",
+      "caveat": "Dataset ID yang tidak tertaut ke Halaman atau akun Instagram ini mungkin tidak mengatribusikan peristiwa dengan benar. Biarkan kolom ini kosong untuk membuat dataset tertaut secara otomatis."
+    },
+    "whatsapp": {
+      "connect": "Hubungkan"
     }
   }
 }

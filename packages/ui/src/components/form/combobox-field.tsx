@@ -17,6 +17,7 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { useMemo, useState } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
+import { CLEAR_VALUE } from "./constants"
 import type { SelectOption } from "./select-field"
 
 type OptionItemProps = {
@@ -60,6 +61,7 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   emptyText?: string
   description?: string
   descriptionType?: "inline" | "tooltip"
+  formItemClassName?: string
   options: SelectOption[]
   className?: string
   popoverClassName?: string
@@ -67,6 +69,9 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   triggerValueChange?: (value: string) => void
   disableValues?: string[]
   portal?: boolean
+  allowClear?: boolean
+  clearLabel?: string
+  emptyValue?: null | undefined
 }
 
 export function ComboboxField<T extends FieldValues>({
@@ -80,10 +85,15 @@ export function ComboboxField<T extends FieldValues>({
   emptyText,
   description,
   descriptionType = "inline",
+  formItemClassName,
   options,
   side,
   triggerValueChange,
   disableValues,
+  portal,
+  allowClear,
+  clearLabel,
+  emptyValue,
 }: ComboboxFieldProps<T>) {
   const [open, setOpen] = useState(false)
 
@@ -102,6 +112,7 @@ export function ComboboxField<T extends FieldValues>({
     <FormFieldWrapper<T>
       description={description}
       descriptionType={descriptionType}
+      formItemClassName={formItemClassName}
       label={label}
       name={name}
       required={required}
@@ -112,6 +123,12 @@ export function ComboboxField<T extends FieldValues>({
         const selectedLabel = optionMap.get(field.value ?? "") ?? null
 
         const handleSelect = (value: string) => {
+          if (value === CLEAR_VALUE) {
+            field.onChange(emptyValue as T[FieldPath<T>])
+            triggerValueChange?.("")
+            setOpen(false)
+            return
+          }
           field.onChange(value as T[FieldPath<T>])
           triggerValueChange?.(value)
           setOpen(false)
@@ -142,6 +159,7 @@ export function ComboboxField<T extends FieldValues>({
             <PopoverContent
               align="start"
               className={cn("w-50 p-0", popoverClassName)}
+              portal={portal}
               side={side}
             >
               <Command>
@@ -151,6 +169,21 @@ export function ComboboxField<T extends FieldValues>({
                 />
                 <CommandList>
                   <CommandEmpty>{emptyText ?? "No record found."}</CommandEmpty>
+                  {allowClear && (
+                    <CommandItem
+                      className="text-muted-foreground"
+                      onSelect={() => handleSelect(CLEAR_VALUE)}
+                      value={clearLabel || "----"}
+                    >
+                      {clearLabel || "----"}
+                      <Check
+                        className={cn(
+                          "ms-auto h-4 w-4",
+                          field.value ? "opacity-0" : "opacity-100",
+                        )}
+                      />
+                    </CommandItem>
+                  )}
                   {options.map((option) =>
                     option.children ? (
                       <CommandGroup heading={option.label} key={option.value}>

@@ -4,6 +4,7 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
@@ -39,10 +40,9 @@ export type TriggerJobEvaluate = {
 
 export type TriggerJobData = TriggerJobExecute | TriggerJobEvaluate
 
-export const triggerQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<TriggerJobData>(queueNames.enum.trigger, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const triggerQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<TriggerJobData>(queueNames.enum.trigger, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })

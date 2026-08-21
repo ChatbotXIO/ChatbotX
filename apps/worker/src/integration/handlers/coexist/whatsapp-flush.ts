@@ -45,10 +45,18 @@ import {
  * intentionally permissive (`.passthrough()`, optional fields) — unrecognized
  * shapes are skipped rather than crashing the flush job.
  */
-const waProfileSchema = z.object({ name: z.string().optional() }).passthrough()
+const waProfileSchema = z
+  .object({ name: z.string().optional(), username: z.string().optional() })
+  .passthrough()
 
 const waContactSchema = z
-  .object({ wa_id: z.string(), profile: waProfileSchema.optional() })
+  .object({
+    wa_id: z.string(),
+    // Business-Scoped User ID (BSUID): present for WhatsApp Username
+    // adopters, alongside a possibly-empty `wa_id` (hidden phone).
+    user_id: z.string().optional(),
+    profile: waProfileSchema.optional(),
+  })
   .passthrough()
 
 const waMediaSchema = z
@@ -83,6 +91,10 @@ const waMessageSchema = z
     id: z.string(),
     from: z.string().optional(),
     to: z.string().optional(),
+    // BSUID counterparts of `from`/`to`, present when the phone-based field
+    // is an empty string (Meta changelog 2026-06-12).
+    from_user_id: z.string().optional(),
+    to_user_id: z.string().optional(),
     timestamp: z.union([z.string(), z.number()]).optional(),
     type: z.string().optional(),
     text: z.object({ body: z.string() }).passthrough().optional(),
@@ -99,6 +111,9 @@ const waMessageSchema = z
 const waThreadSchema = z
   .object({
     id: z.string(),
+    // BSUID for this thread's counterparty, present when `id` (wa_id) is an
+    // empty string (username adopter with a hidden phone).
+    user_id: z.string().optional(),
     messages: z.array(waMessageSchema).optional(),
   })
   .passthrough()
@@ -146,6 +161,10 @@ const waEchoSchema = z
   .object({
     from: z.string(),
     to: z.string(),
+    // BSUID counterparts of `from`/`to`, present when the phone-based field
+    // is an empty string (Meta changelog 2026-06-12).
+    from_user_id: z.string().optional(),
+    to_user_id: z.string().optional(),
     id: z.string(),
     timestamp: z.union([z.string(), z.number()]).optional(),
     type: z.string().optional(),
@@ -291,6 +310,30 @@ type ContactWithMessage = {
   message: (IncomingMessage & { createdAt?: Date }) | null
 }
 
+/**
+ * Determines whether a thread message/echo was sent BY the customer
+ * (incoming) or by the business (outgoing). Prefers the phone-based `from`
+ * field (today's behavior, regression-safe); falls back to comparing the
+ * BSUID counterpart (`fromUserId`) against the thread's resolved scoped user
+ * id when `from` is an empty string (username adopter, D7 in the BSUID
+ * plan) — deterministic, no phone-format sniffing.
+ */
+const resolveIsOutgoingMessage = (props: {
+  from: string | undefined
+  fromUserId: string | undefined
+  customerWaId: string
+  customerUserId: string | undefined
+}): boolean => {
+  const { from, fromUserId, customerWaId, customerUserId } = props
+  if (from) {
+    return from !== customerWaId
+  }
+  if (fromUserId && customerUserId) {
+    return fromUserId !== customerUserId
+  }
+  return false
+}
+
 const toDate = (timestamp: string | number | undefined): Date | undefined => {
   if (timestamp === undefined) {
     return
@@ -325,7 +368,48 @@ const EMPTY_EXTRACT: ExtractResult = {
  *   - `value.smb_message_echoes[]`           → outgoing messages from WA Business app
  *   - `value.messages[]`                     → media-asset follow-up / edit / revoke
  */
-const extractFromValue = (payload: unknown): ExtractResult => {
+// Exported for direct unit testing of the BSUID/username extraction and
+// direction-resolution logic — the full `coexistWhatsappFlush` orchestration
+// (DB queries, bulk import, run-state machine) is tested separately.
+type WaIdentityLookups = {
+  nameByWaId: Map<string, string>
+  userIdByWaId: Map<string, string>
+  usernameByWaId: Map<string, string>
+}
+
+/**
+ * Builds the coexist `IncomingContact` for a raw wa_id + optional scoped user
+ * id. Username adopters: Meta can send an empty wa_id (hidden phone)
+ * alongside a Business-Scoped User ID — fall back to it instead of dropping
+ * the row (D2/D7 in the BSUID plan; deterministic, no phone-format sniffing).
+ */
+const buildCoexistIncomingContact = (
+  rawWaId: string,
+  rawUserId: string | undefined,
+  lookups: WaIdentityLookups,
+): {
+  contact: IncomingContact
+  customerWaId: string
+  customerUserId: string | undefined
+} => {
+  const customerUserId = rawUserId ?? lookups.userIdByWaId.get(rawWaId)
+  const customerWaId = rawWaId || customerUserId || ""
+  const sourceUsername = lookups.usernameByWaId.get(rawWaId)
+  return {
+    customerWaId,
+    customerUserId,
+    contact: {
+      sourceId: customerWaId,
+      // Only a real wa_id is a phone number — never the BSUID fallback.
+      ...(rawWaId ? { phoneNumber: rawWaId } : {}),
+      firstName: lookups.nameByWaId.get(rawWaId),
+      ...(customerUserId ? { sourceUserId: customerUserId } : {}),
+      ...(sourceUsername ? { sourceUsername } : {}),
+    },
+  }
+}
+
+export const extractFromValue = (payload: unknown): ExtractResult => {
   const parsed = waValueSchema.safeParse(payload)
   if (!parsed.success) {
     logger.warn(
@@ -337,9 +421,17 @@ const extractFromValue = (payload: unknown): ExtractResult => {
   const value = parsed.data
 
   const nameByWaId = new Map<string, string>()
+  const userIdByWaId = new Map<string, string>()
+  const usernameByWaId = new Map<string, string>()
   for (const contact of value.contacts ?? []) {
     if (contact.profile?.name) {
       nameByWaId.set(contact.wa_id, contact.profile.name)
+    }
+    if (contact.user_id) {
+      userIdByWaId.set(contact.wa_id, contact.user_id)
+    }
+    if (contact.profile?.username) {
+      usernameByWaId.set(contact.wa_id, contact.profile.username)
     }
   }
 
@@ -363,12 +455,12 @@ const extractFromValue = (payload: unknown): ExtractResult => {
     }
 
     for (const thread of entry.threads ?? []) {
-      const customerWaId = thread.id
-      const contact: IncomingContact = {
-        sourceId: customerWaId,
-        phoneNumber: customerWaId,
-        firstName: nameByWaId.get(customerWaId),
-      }
+      const { contact, customerWaId, customerUserId } =
+        buildCoexistIncomingContact(thread.id, thread.user_id, {
+          nameByWaId,
+          userIdByWaId,
+          usernameByWaId,
+        })
 
       const rawMessages = thread.messages ?? []
       // Skip type="errors" entries — Meta could not decode the message
@@ -387,7 +479,12 @@ const extractFromValue = (payload: unknown): ExtractResult => {
       }
 
       for (const message of messages) {
-        const isOutgoing = message.from !== customerWaId
+        const isOutgoing = resolveIsOutgoingMessage({
+          from: message.from,
+          fromUserId: message.from_user_id,
+          customerWaId,
+          customerUserId,
+        })
         const text =
           message.text?.body ?? (message.type ? `[${message.type}]` : "")
         const media = extractMedia(message)
@@ -431,12 +528,11 @@ const extractFromValue = (payload: unknown): ExtractResult => {
     ...(value.smb_message_echoes ?? []),
     ...(value.message_echoes ?? []),
   ]) {
-    const customerWaId = echo.to
-    const contact: IncomingContact = {
-      sourceId: customerWaId,
-      phoneNumber: customerWaId,
-      firstName: nameByWaId.get(customerWaId),
-    }
+    const { contact } = buildCoexistIncomingContact(echo.to, echo.to_user_id, {
+      nameByWaId,
+      userIdByWaId,
+      usernameByWaId,
+    })
     const text = echo.text?.body ?? (echo.type ? `[${echo.type}]` : "")
     const media = extractMedia(echo)
     const attachment = media
@@ -456,18 +552,20 @@ const extractFromValue = (payload: unknown): ExtractResult => {
   }
 
   for (const message of value.messages ?? []) {
+    // Username adopters: fall back to the BSUID when `from` is an empty
+    // string (D2/D7) so patches still resolve to the right ContactInbox
+    // instead of being dropped.
+    const messageContactWaId = message.from || message.from_user_id
     if (message.type === "revoke" || message.revoke) {
       const original = message.revoke?.original_message_id
-      const contactWaId = message.from
-      if (original && contactWaId) {
-        revokes.push({ sourceId: original, contactWaId })
+      if (original && messageContactWaId) {
+        revokes.push({ sourceId: original, contactWaId: messageContactWaId })
       }
       continue
     }
     if (message.type === "edit" || message.edit) {
       const original = message.edit?.original_message_id
-      const contactWaId = message.from
-      if (!(original && contactWaId)) {
+      if (!(original && messageContactWaId)) {
         continue
       }
       const editedText = message.edit?.message?.text?.body ?? null
@@ -482,7 +580,7 @@ const extractFromValue = (payload: unknown): ExtractResult => {
         : null
       edits.push({
         sourceId: original,
-        contactWaId,
+        contactWaId: messageContactWaId,
         text: editedText,
         attachment: editedAttachment,
       })
@@ -490,7 +588,7 @@ const extractFromValue = (payload: unknown): ExtractResult => {
     }
 
     const media = extractMedia(message)
-    if (media && message.from) {
+    if (media && messageContactWaId) {
       const attachment = buildWaIncomingAttachment(
         media.fileType,
         media.payload,
@@ -498,7 +596,7 @@ const extractFromValue = (payload: unknown): ExtractResult => {
       if (attachment) {
         mediaFollowUps.push({
           sourceId: message.id,
-          contactWaId: message.from,
+          contactWaId: messageContactWaId,
           attachment,
         })
       }
@@ -950,6 +1048,8 @@ export const coexistWhatsappFlush = async (
             email: acc.email ?? e.contact.email,
             avatar: acc.avatar ?? e.contact.avatar,
             gender: acc.gender ?? e.contact.gender,
+            sourceUserId: acc.sourceUserId ?? e.contact.sourceUserId,
+            sourceUsername: acc.sourceUsername ?? e.contact.sourceUsername,
           }),
           first.contact,
         )
@@ -964,6 +1064,7 @@ export const coexistWhatsappFlush = async (
           workspaceId: integration.workspaceId,
           runId,
           batch: flat,
+          aiReadsSyncedHistory: integration.coexistAiReadsSyncedHistory,
         })
       } catch (error) {
         // Count every message in this batch as failed; staging rows are NOT

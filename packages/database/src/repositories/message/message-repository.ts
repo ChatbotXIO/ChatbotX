@@ -319,6 +319,13 @@ export interface IMessageRepository {
     createdAt: Date,
   ): Promise<{ id: string } | null>
 
+  updateSendError(
+    id: string,
+    sendError: string | null,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
   updateSourceId(
     id: string,
     sourceId: string,

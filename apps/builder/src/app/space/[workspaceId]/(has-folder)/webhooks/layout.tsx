@@ -1,8 +1,7 @@
 import { folderTypes } from "@chatbotx.io/database/partials"
-import { getIdFromParams } from "@chatbotx.io/utils"
-import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
+import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 export default async function WebhooksLayout({
   children,
@@ -13,10 +12,7 @@ export default async function WebhooksLayout({
   folders: ReactNode
   params: Promise<{ workspaceId: string }>
 }) {
-  const workspaceId = getIdFromParams(await params, "workspaceId")
-  if (!workspaceId) {
-    return notFound()
-  }
+  const workspaceId = await resolveGuardedWorkspaceId(params, "superAdmin")
 
   return (
     <FolderStoreProvider

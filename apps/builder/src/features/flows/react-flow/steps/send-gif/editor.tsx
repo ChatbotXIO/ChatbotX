@@ -11,13 +11,19 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import type { IGif } from "@giphy/js-types"
 import { ImagePlayIcon } from "lucide-react"
+import dynamic from "next/dynamic"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { type SyntheticEvent, useState } from "react"
 import { useFormContext } from "react-hook-form"
-import { GifFinder } from "@/components/gif-finder"
 import { usePlatformCredentialsStore } from "@/features/platform-credentials/provider/platform-credentials-store-context"
 import { BaseStepEditor } from "../base/editor"
+
+// Giphy SDK is heavy — load it only when the send-gif editor mounts.
+const GifFinder = dynamic(
+  () => import("@/components/gif-finder").then((m) => m.GifFinder),
+  { ssr: false },
+)
 
 const FindGifDialog = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()

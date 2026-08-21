@@ -11,7 +11,7 @@ import {
   messageEventTypeSchema,
   UPDATE_STATUS_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
-import { SdkException } from "@chatbotx.io/sdk"
+import { resolveWithSourceUserIdFallback, SdkException } from "@chatbotx.io/sdk"
 import {
   IntegrationJobAction,
   type IntegrationJobMessageStatus,
@@ -23,6 +23,42 @@ import {
 } from "../../services/integrations"
 import { normalizeEpochTimestamp } from "../utils/message"
 import { runFlowPostback } from "./flow"
+
+type StatusContactInboxWhere = { inboxId: string } & (
+  | { sourceId: string }
+  | { sourceUserId: string }
+)
+
+const findStatusContactInbox = (where: StatusContactInboxWhere) =>
+  db.query.contactInboxModel.findFirst({
+    where,
+    with: {
+      conversation: true,
+      contact: true,
+    },
+  })
+
+/**
+ * Resolves the ContactInbox a delivery/read status belongs to. The status
+ * payload's recipient identity is a phone number for classic sends, or a
+ * channel-scoped user id (e.g. a WhatsApp BSUID) for scoped-id sends — the
+ * shared fallback contract probes both in the same order as inbound matching.
+ */
+const resolveStatusContactInbox = async (
+  inboxId: string,
+  recipientIdentity: string,
+) => {
+  // A status with no recipient identity at all must never resolve: querying
+  // sourceId="" could attach the status (read receipts, delivered postbacks)
+  // to an anomalous empty-keyed row belonging to a different contact.
+  if (!recipientIdentity) {
+    return
+  }
+  return await resolveWithSourceUserIdFallback(
+    { sourceId: recipientIdentity, sourceUserId: recipientIdentity },
+    (where) => findStatusContactInbox({ inboxId, ...where }),
+  )
+}
 
 export const handleMessageStatus = async (
   job: IntegrationJobMessageStatus["data"],
@@ -66,16 +102,10 @@ export const handleMessageStatus = async (
   const eventStatus = String(payload.status).toLowerCase()
 
   try {
-    const contactInbox = await db.query.contactInboxModel.findFirst({
-      where: {
-        sourceId: contact.sourceId,
-        inboxId: inbox.id,
-      },
-      with: {
-        conversation: true,
-        contact: true,
-      },
-    })
+    const contactInbox = await resolveStatusContactInbox(
+      inbox.id,
+      contact.sourceId,
+    )
 
     if (!contactInbox?.conversation) {
       throw new SdkException("Unable to find conversation")

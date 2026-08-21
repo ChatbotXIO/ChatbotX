@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  adsConversionService,
   type ContactAccessScope,
   contactService,
   tagSyncService,
@@ -145,6 +146,17 @@ export const updateContactTags = async ({
       workspaceId,
       contactId: contact.id,
       tagId: tag.id,
+    })
+  }
+  // One batch resolve+enqueue call for every newly-applied tag on this
+  // contact instead of one per tag (HIGH-1).
+  if (newlyAppliedTags.length > 0) {
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId,
+      pairs: newlyAppliedTags.map((tag) => ({
+        contactId: contact.id,
+        tagId: tag.id,
+      })),
     })
   }
 

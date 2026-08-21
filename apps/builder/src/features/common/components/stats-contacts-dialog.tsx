@@ -470,6 +470,7 @@ const SelectableContactItem = memo(function SelectableContactItem({
             <Link
               className="max-w-[200px] truncate text-blue-500"
               href={`/space/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
+              prefetch={false}
               target="_blank"
             >
               <span className="truncate font-medium text-sm leading-tight">

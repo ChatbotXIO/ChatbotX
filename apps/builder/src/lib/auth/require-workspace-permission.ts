@@ -50,6 +50,16 @@ export async function requireContactsAccess(
   if (!canAccess) {
     notFound()
   }
+
+  if (userAndWorkspace) {
+    await enforceWorkspaceNotScheduledForDeletionFromRequest(
+      userAndWorkspace.targetWorkspace,
+      hasWorkspacePermission(
+        userAndWorkspace.targetWorkspaceMember.permissions,
+        "superAdmin",
+      ),
+    )
+  }
 }
 
 export async function resolveGuardedWorkspaceId(
