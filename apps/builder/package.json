@@ -108,6 +108,7 @@
     "html-to-text": "^9.0.5",
     "ky": "^2.0.2",
     "libphonenumber-js": "^1.12.42",
+    "livekit-client": "^2.22.0",
     "lodash.unset": "^4.18.0",
     "lucide-react": "^1.14.0",
     "mime-types": "^3.0.2",

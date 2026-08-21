@@ -225,6 +225,39 @@ export const emitConversationUnassigned = async (
     unassignedBy,
   )
 
+// WhatsApp Business Calling events
+export const emitIncomingCall = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: { wacid: string; conversationId?: string },
+) => await emitToAllEmitters("incomingCall", workspaceId, contactId, metadata)
+
+export const emitMissedAudioCall = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: { wacid: string; conversationId?: string },
+) =>
+  await emitToAllEmitters("missedAudioCall", workspaceId, contactId, metadata)
+
+export const emitCallEnded = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: { wacid: string; durationSeconds?: number },
+) => await emitToAllEmitters("callEnded", workspaceId, contactId, metadata)
+
+export const emitCallRecorded = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: { wacid: string; recordingUrl?: string },
+) => await emitToAllEmitters("callRecorded", workspaceId, contactId, metadata)
+
+export const emitCallTranscribed = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: { wacid: string; transcript?: string },
+) =>
+  await emitToAllEmitters("callTranscribed", workspaceId, contactId, metadata)
+
 // Sequence events
 export const emitSequenceSubscribed = async (
   workspaceId: string,

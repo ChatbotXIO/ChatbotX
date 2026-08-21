@@ -25,6 +25,7 @@ import {
   BOT_DISABLE_DURATION_MS,
   isConversationActive,
 } from "../conversations/utils/bot-state"
+import { WhatsappCallDock } from "../integration-whatsapp/calling/call-dock"
 import { MessageInput } from "../messages/components/message-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
@@ -161,6 +162,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
           </div>
         )}
         <ChatRealtime />
+        <WhatsappCallDock />
       </ResizablePanel>
 
       <ResizableHandle withHandle />

@@ -267,6 +267,69 @@ export abstract class BaseEventEmitter {
     })
   }
 
+  // WhatsApp Business Calling events. `metadata.wacid` correlates back to
+  // the WhatsappCall row; recording/transcript events additionally carry the
+  // public recording URL / transcript text for webhook consumers.
+  async incomingCall(
+    workspaceId: string,
+    contactId: string,
+    metadata: { wacid: string; conversationId?: string },
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.incomingCall, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async missedAudioCall(
+    workspaceId: string,
+    contactId: string,
+    metadata: { wacid: string; conversationId?: string },
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.missedAudioCall, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async callEnded(
+    workspaceId: string,
+    contactId: string,
+    metadata: { wacid: string; durationSeconds?: number },
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.callEnded, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async callRecorded(
+    workspaceId: string,
+    contactId: string,
+    metadata: { wacid: string; recordingUrl?: string },
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.callRecorded, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async callTranscribed(
+    workspaceId: string,
+    contactId: string,
+    metadata: { wacid: string; transcript?: string },
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.callTranscribed, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
   async sequenceSubscribed(
     workspaceId: string,
     contactId: string,

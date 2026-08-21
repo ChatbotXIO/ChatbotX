@@ -1,7 +1,12 @@
 "use server"
 
-import { buildContext, integrationWhatsappService } from "@chatbotx.io/business"
+import {
+  buildContext,
+  integrationWhatsappService,
+  whatsappLivekitService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { WhatsappCallingSettings } from "@chatbotx.io/integration-whatsapp/api/calling"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -48,6 +53,36 @@ export const updateWhatsappCallingSettingsAction = workspaceActionClient
       }
       if (parsedInput.callbackPermissionStatus) {
         data.callback_permission_status = parsedInput.callbackPermissionStatus
+      }
+      if (parsedInput.sipEnabled !== undefined) {
+        const sipDomain = whatsappLivekitService.sipDomain()
+        if (parsedInput.sipEnabled && !sipDomain) {
+          throw new ChatbotXException(
+            t("whatsapp.calls.errors.inAppCallingUnavailable"),
+          )
+        }
+        data.sip = parsedInput.sipEnabled
+          ? {
+              status: "ENABLED",
+              // Keep the `calls` lifecycle webhooks flowing — the call log,
+              // inbox activity, and recording pipeline all depend on them.
+              webhook_delivery: "ENABLED",
+              servers: sipDomain ? [{ hostname: sipDomain }] : [],
+            }
+          : { status: "DISABLED" }
+      }
+
+      if (parsedInput.recordingEnabled !== undefined) {
+        await integrationWhatsappRepository.updateCallRecordingEnabled({
+          id: integrationWhatsappId,
+          workspaceId,
+          enabled: parsedInput.recordingEnabled,
+        })
+      }
+
+      // A pure local toggle needs no Meta round-trip.
+      if (Object.keys(data).length === 0) {
+        return
       }
 
       const ctx = await buildContext({

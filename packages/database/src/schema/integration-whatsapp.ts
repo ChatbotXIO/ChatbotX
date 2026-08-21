@@ -57,6 +57,8 @@ export const integrationWhatsappModel = pgTable(
     name: text().notNull(),
     displayPhoneNumber: text().notNull().default(""),
     coexistEnabled: boolean().notNull().default(false),
+    /** Auto-record in-app WhatsApp calls (LiveKit egress) for this number. */
+    callRecordingEnabled: boolean().notNull().default(false),
     coexistAiReadsSyncedHistory: boolean().notNull().default(false),
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),

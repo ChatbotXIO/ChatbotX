@@ -7,6 +7,7 @@ import {
 import usePartySocket from "partysocket/react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
+import { useWhatsappCallStore } from "../integration-whatsapp/calling/call-store"
 import type { MessageResourceWithRelations } from "../messages/schema/resource"
 import { useTenantSettings } from "../tenant"
 import { useChatStore } from "./store/chat-store-provider"
@@ -24,6 +25,8 @@ export function ChatRealtime() {
     updateContact,
     updateConversations,
   } = useChatStore((state) => state)
+  const setIncomingCall = useWhatsappCallStore((state) => state.setIncomingCall)
+  const handleCallEnded = useWhatsappCallStore((state) => state.handleCallEnded)
 
   usePartySocket({
     host: wsUrl,
@@ -81,6 +84,12 @@ export function ChatRealtime() {
               assignedUserId: data.assignedUserId,
               assignedInboxTeamId: data.assignedInboxTeamId,
             })
+            break
+          case RealtimeEventType.whatsappCallRinging:
+            setIncomingCall(data)
+            break
+          case RealtimeEventType.whatsappCallEnded:
+            handleCallEnded(data.wacid)
             break
           default:
             break

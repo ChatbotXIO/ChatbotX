@@ -10,7 +10,12 @@ import {
   whatsappCallRepository,
 } from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
-import { setWebhookExecutionContext } from "@chatbotx.io/events"
+import {
+  emitCallEnded,
+  emitIncomingCall,
+  emitMissedAudioCall,
+  setWebhookExecutionContext,
+} from "@chatbotx.io/events"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import type { MessageWhatsappCallEntity } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -118,7 +123,7 @@ const handleConnect = async (
     return
   }
 
-  await whatsappCallRepository.createIfAbsent({
+  const { isNew } = await whatsappCallRepository.createIfAbsent({
     wacid: event.wacid,
     direction: event.direction,
     status: "ringing",
@@ -127,6 +132,15 @@ const handleConnect = async (
     contactInboxId: detected.contactInbox.id,
     conversationId: detected.conversation.id,
   })
+
+  // Fire the trigger/webhook event only for the winning insert — a Meta
+  // redelivery that lost the createIfAbsent race must not re-fire flows.
+  if (isNew && event.direction === "userInitiated") {
+    await emitIncomingCall(inbox.workspaceId, detected.contactInbox.contactId, {
+      wacid: event.wacid,
+      conversationId: detected.conversation.id,
+    })
+  }
 }
 
 const handleInterimStatus = async (
@@ -212,7 +226,7 @@ const handleTerminate = async (
       )
       return
     }
-    call = await whatsappCallRepository.createIfAbsent({
+    const upserted = await whatsappCallRepository.createIfAbsent({
       wacid: event.wacid,
       direction: event.direction ?? "userInitiated",
       status: "ringing",
@@ -221,6 +235,7 @@ const handleTerminate = async (
       contactInboxId: detected.contactInbox.id,
       conversationId: detected.conversation.id,
     })
+    call = upserted.call
   }
 
   const entity = resolveTerminalEntity(event, call.status, call.direction)
@@ -290,6 +305,22 @@ const handleTerminate = async (
     })
   } catch (error) {
     logger.warn({ err: error }, "Whatsapp call: unable to emit realtime event")
+  }
+
+  // Trigger/webhook events — guarded by isNew above, so a redelivered
+  // terminate never re-fires flows.
+  if (contactInbox) {
+    if (entity.status === "completed") {
+      await emitCallEnded(call.workspaceId, contactInbox.contactId, {
+        wacid: event.wacid,
+        durationSeconds: event.durationSeconds,
+      })
+    } else if (call.direction === "userInitiated") {
+      await emitMissedAudioCall(call.workspaceId, contactInbox.contactId, {
+        wacid: event.wacid,
+        conversationId: call.conversationId,
+      })
+    }
   }
 }
 

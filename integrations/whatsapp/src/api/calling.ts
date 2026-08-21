@@ -37,11 +37,29 @@ export type WhatsappCallHours = {
   holiday_schedule?: WhatsappCallingHolidaySchedule[]
 }
 
+export type WhatsappSipServer = {
+  hostname: string
+  port?: number | string
+  request_uri_user_params?: Record<string, string>
+}
+
+export type WhatsappSipSettings = {
+  status: "ENABLED" | "DISABLED"
+  /**
+   * SIP mode disables the `calls` webhook field by default; ENABLED keeps
+   * lifecycle webhooks flowing — required for the call log/inbox features.
+   */
+  webhook_delivery?: "ENABLED" | "DISABLED"
+  servers?: WhatsappSipServer[]
+}
+
 export type WhatsappCallingSettings = {
   status: "ENABLED" | "DISABLED"
   call_icon_visibility?: "DEFAULT" | "DISABLE_ALL"
   callback_permission_status?: "ENABLED" | "DISABLED"
   call_hours?: WhatsappCallHours
+  sip?: WhatsappSipSettings
+  srtp_key_exchange_protocol?: "DTLS" | "SDES"
 }
 
 /**

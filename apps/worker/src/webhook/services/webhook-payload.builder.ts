@@ -43,6 +43,11 @@ const EVENT_NAMES = {
   [triggerEventTypes.enum.contactReferredExistingContact]:
     "contact_referred_existing_contact",
   [triggerEventTypes.enum.dateTimeBasedTrigger]: "datetime_based_trigger",
+  [triggerEventTypes.enum.incomingCall]: "incoming_call",
+  [triggerEventTypes.enum.missedAudioCall]: "missed_audio_call",
+  [triggerEventTypes.enum.callEnded]: "call_ended",
+  [triggerEventTypes.enum.callRecorded]: "call_recorded",
+  [triggerEventTypes.enum.callTranscribed]: "call_transcribed",
 } satisfies Record<MatchableEventType, string>
 
 async function buildTagPayload(
@@ -187,6 +192,28 @@ const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.contactReferredANewContact]: buildReferralPayload,
   [triggerEventTypes.enum.contactReferredExistingContact]: buildReferralPayload,
   [triggerEventTypes.enum.dateTimeBasedTrigger]: (basePayload, data) => ({
+    ...basePayload,
+    ...data,
+  }),
+  // Call events pass their metadata (wacid, durationSeconds, recordingUrl,
+  // transcript, …) straight through — every field is server-generated.
+  [triggerEventTypes.enum.incomingCall]: (basePayload, data) => ({
+    ...basePayload,
+    ...data,
+  }),
+  [triggerEventTypes.enum.missedAudioCall]: (basePayload, data) => ({
+    ...basePayload,
+    ...data,
+  }),
+  [triggerEventTypes.enum.callEnded]: (basePayload, data) => ({
+    ...basePayload,
+    ...data,
+  }),
+  [triggerEventTypes.enum.callRecorded]: (basePayload, data) => ({
+    ...basePayload,
+    ...data,
+  }),
+  [triggerEventTypes.enum.callTranscribed]: (basePayload, data) => ({
     ...basePayload,
     ...data,
   }),

@@ -1,3 +1,4 @@
+import { whatsappLivekitService } from "@chatbotx.io/business"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   getCallingSettings,
@@ -35,7 +36,9 @@ export default async function WhatsappCallsPage(props: {
     <WhatsappCallsCard
       integrationWhatsappId={data.id}
       loadError={loadError}
+      recordingEnabled={integrationWhatsapp.callRecordingEnabled}
       settings={settings}
+      sipAvailable={whatsappLivekitService.isInAppCallingConfigured()}
       workspaceId={data.workspaceId}
     />
   )

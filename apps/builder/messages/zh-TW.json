@@ -1386,6 +1386,12 @@
     },
     "enabled": {
       "label": "已啟用"
+    },
+    "lastCallRecorded": {
+      "label": "最近通話錄音"
+    },
+    "lastCallTranscript": {
+      "label": "最近通話轉寫"
     }
   },
   "messages": {
@@ -3615,13 +3621,24 @@
       "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
       "errors": {
         "notFound": "WhatsApp integration not found",
-        "notWhatsappConversation": "This conversation is not on WhatsApp"
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
       "permissionRequestBodyLabel": "Message",
       "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
-      "permissionRequestSent": "Call permission request sent"
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller"
     }
   },
   "zalo": {
@@ -3771,7 +3788,9 @@
       "productRemovedFromCart": "產品已從購物車中刪除",
       "productOrdered": "已訂購產品",
       "contactReferredANewContact": "聯絡人推薦了新聯絡人",
-      "contactReferredExistingContact": "聯絡人引用現有聯絡人"
+      "contactReferredExistingContact": "聯絡人引用現有聯絡人",
+      "callRecorded": "通話已錄音",
+      "callTranscribed": "通話已轉寫"
     },
     "actions": {
       "addTag": "新增標籤",

@@ -1,9 +1,17 @@
-import { and, type DatabaseClient, db, eq } from "../../client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  desc,
+  eq,
+  isNotNull,
+  isNull,
+} from "../../client"
 import type {
   WhatsappCallDirection,
   WhatsappCallStatus,
 } from "../../partials/whatsapp-call"
-import { whatsappCallModel } from "../../schema"
+import { contactInboxModel, whatsappCallModel } from "../../schema"
 
 type WhatsappCallRow = typeof whatsappCallModel.$inferSelect
 
@@ -56,12 +64,14 @@ class WhatsappCallRepository {
 
   /**
    * Creates the call row if the wacid is new; otherwise returns the existing
-   * row untouched. Safe against duplicate webhook deliveries and races.
+   * row untouched. Safe against duplicate webhook deliveries and races —
+   * `isNew` tells the caller whether ITS insert won, so one-shot side
+   * effects (trigger events, ringing broadcasts) fire exactly once.
    */
   async createIfAbsent(
     input: WhatsappCallUpsertInput,
     tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow> {
+  ): Promise<{ call: WhatsappCallRow; isNew: boolean }> {
     const inserted = await tx
       .insert(whatsappCallModel)
       .values(input)
@@ -70,14 +80,14 @@ class WhatsappCallRepository {
       .then((rows) => rows[0])
 
     if (inserted) {
-      return inserted
+      return { call: inserted, isNew: true }
     }
 
     const existing = await this.findByWacid(input.wacid, tx)
     if (!existing) {
       throw new Error(`WhatsappCall upsert race lost for wacid ${input.wacid}`)
     }
-    return existing
+    return { call: existing, isNew: false }
   }
 
   /**
@@ -122,6 +132,129 @@ class WhatsappCallRepository {
       }
     }
     return
+  }
+
+  /**
+   * The contact's most recent call that produced a recording — backs the
+   * `{{last_call_recorded}}` system field.
+   */
+  async findLatestRecordedByContactId(
+    contactId: string,
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await this.findLatestByContactId(
+      contactId,
+      whatsappCallModel.recordingPath,
+      tx,
+    )
+  }
+
+  /**
+   * The contact's most recent call that produced a transcript — backs the
+   * `{{last_call_transcript}}` system field.
+   */
+  async findLatestTranscribedByContactId(
+    contactId: string,
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await this.findLatestByContactId(
+      contactId,
+      whatsappCallModel.transcript,
+      tx,
+    )
+  }
+
+  private async findLatestByContactId(
+    contactId: string,
+    requiredColumn:
+      | typeof whatsappCallModel.recordingPath
+      | typeof whatsappCallModel.transcript,
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    const rows = await tx
+      .select({ call: whatsappCallModel })
+      .from(whatsappCallModel)
+      .innerJoin(
+        contactInboxModel,
+        eq(whatsappCallModel.contactInboxId, contactInboxModel.id),
+      )
+      .where(
+        and(
+          eq(contactInboxModel.contactId, contactId),
+          isNotNull(requiredColumn),
+        ),
+      )
+      .orderBy(desc(whatsappCallModel.createdAt))
+      .limit(1)
+    return rows[0]?.call
+  }
+
+  async findByLivekitRoomName(
+    livekitRoomName: string,
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx.query.whatsappCallModel.findFirst({
+      where: { livekitRoomName },
+      orderBy: { createdAt: "desc" },
+    })
+  }
+
+  /** Stamps the LiveKit room carrying this call's audio (in-app calling). */
+  async attachLivekitRoom(
+    props: { wacid: string; livekitRoomName: string },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({ livekitRoomName: props.livekitRoomName })
+      .where(eq(whatsappCallModel.wacid, props.wacid))
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /**
+   * Stamps the recording exactly once — the WHERE on `recordingPath IS NULL`
+   * makes a redelivered egress webhook a no-op (`undefined` return).
+   */
+  async attachRecording(
+    props: { wacid: string; recordingPath: string; recordedAt: Date },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({
+        recordingPath: props.recordingPath,
+        recordedAt: props.recordedAt,
+      })
+      .where(
+        and(
+          eq(whatsappCallModel.wacid, props.wacid),
+          isNull(whatsappCallModel.recordingPath),
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /** Stamps the transcript exactly once (same no-op-on-redelivery contract). */
+  async attachTranscript(
+    props: { wacid: string; transcript: string; transcribedAt: Date },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({
+        transcript: props.transcript,
+        transcribedAt: props.transcribedAt,
+      })
+      .where(
+        and(
+          eq(whatsappCallModel.wacid, props.wacid),
+          isNull(whatsappCallModel.transcript),
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0])
   }
 
   /** Finalizes the call from the Call Terminate webhook. */

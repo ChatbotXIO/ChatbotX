@@ -90,6 +90,8 @@ export const systemFieldTypes = z.enum([
   "last_error_log",
   "last_outbound_message_at",
   "last_commented_post_text",
+  "last_call_recorded",
+  "last_call_transcript",
 
   "last_step",
   "current_step",

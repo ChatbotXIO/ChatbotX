@@ -2078,6 +2078,12 @@
     },
     "enabled": {
       "label": "Đang bật"
+    },
+    "lastCallRecorded": {
+      "label": "Bản ghi âm cuộc gọi gần nhất"
+    },
+    "lastCallTranscript": {
+      "label": "Bản chép lời cuộc gọi gần nhất"
     }
   },
   "flows": {
@@ -3582,13 +3588,24 @@
       "loadFailed": "Không tải được cài đặt cuộc gọi từ Meta. Kiểm tra kết nối của số này và thử lại.",
       "errors": {
         "notFound": "Không tìm thấy tích hợp WhatsApp",
-        "notWhatsappConversation": "Hội thoại này không thuộc kênh WhatsApp"
+        "notWhatsappConversation": "Hội thoại này không thuộc kênh WhatsApp",
+        "callNotFound": "Không tìm thấy cuộc gọi",
+        "callNotReady": "Cuộc gọi chưa sẵn sàng để nghe — thử lại",
+        "inAppCallingUnavailable": "Máy chủ này chưa cấu hình gọi trong ứng dụng",
+        "noCallPermission": "Khách hàng chưa cấp quyền gọi",
+        "audioConnectFailed": "Không kết nối được âm thanh cuộc gọi"
       },
       "permissionRequestTitle": "Xin quyền gọi điện",
       "permissionRequestDescription": "Hỏi khách hàng này cho phép doanh nghiệp gọi qua WhatsApp. Meta giới hạn 1 yêu cầu mỗi 24 giờ và 2 yêu cầu mỗi 7 ngày cho mỗi khách hàng.",
       "permissionRequestBodyLabel": "Tin nhắn",
       "permissionRequestDefaultBody": "Chúng tôi muốn gọi cho bạn qua WhatsApp để hỗ trợ nhanh hơn. Bạn có cho phép chúng tôi gọi không?",
-      "permissionRequestSent": "Đã gửi yêu cầu xin quyền gọi"
+      "permissionRequestSent": "Đã gửi yêu cầu xin quyền gọi",
+      "inAppCallingLabel": "Gọi trong ứng dụng (beta)",
+      "inAppCallingHelper": "Định tuyến cuộc gọi WhatsApp của số này vào inbox để agent nghe máy ngay trên trình duyệt.",
+      "recordingLabel": "Ghi âm cuộc gọi",
+      "recordingHelper": "Tự động ghi âm cuộc gọi trong ứng dụng và đính kèm audio vào hội thoại. Chuyển văn bản chạy khi đã kết nối tích hợp OpenAI.",
+      "incomingCall": "Cuộc gọi WhatsApp đến…",
+      "unknownCaller": "Người gọi không xác định"
     }
   },
   "zalo": {
@@ -3655,7 +3672,9 @@
       "productRemovedFromCart": "Sản phẩm xóa khỏi giỏ",
       "productOrdered": "Sản phẩm đã đặt",
       "contactReferredANewContact": "Liên hệ giới thiệu liên hệ mới",
-      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có"
+      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có",
+      "callRecorded": "Cuộc gọi đã ghi âm",
+      "callTranscribed": "Cuộc gọi đã chuyển văn bản"
     },
     "actions": {
       "addTag": "Thêm thẻ",

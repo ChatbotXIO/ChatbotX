@@ -53,6 +53,10 @@ import { processStoryReplyAutomation } from "./handlers/story-reply-automation"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
 import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
+import {
+  handleWhatsappCallRecordingReady,
+  handleWhatsappCallTranscribe,
+} from "./handlers/whatsapp-call-recording"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
@@ -289,6 +293,14 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.whatsappCallEvent: {
             await handleWhatsappCallEvent(job.data.data)
+            return
+          }
+          case IntegrationJobAction.whatsappCallRecordingReady: {
+            await handleWhatsappCallRecordingReady(job.data.data)
+            return
+          }
+          case IntegrationJobAction.whatsappCallTranscribe: {
+            await handleWhatsappCallTranscribe(job.data.data)
             return
           }
           case IntegrationJobAction.evaluateTemplateSent:

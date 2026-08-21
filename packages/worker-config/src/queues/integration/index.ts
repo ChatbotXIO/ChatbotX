@@ -46,6 +46,8 @@ export const IntegrationJobAction = {
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
   whatsappCallEvent: "whatsappCallEvent",
+  whatsappCallRecordingReady: "whatsappCallRecordingReady",
+  whatsappCallTranscribe: "whatsappCallTranscribe",
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
   processCommentAutomation: "processCommentAutomation",
@@ -407,6 +409,36 @@ export type IntegrationJobWhatsappCallEvent = {
   }
 }
 
+/**
+ * A call recording landed in object storage (LiveKit egress finished).
+ * The handler stamps it onto the WhatsappCall row, drops an audio message
+ * into the conversation, fires the callRecorded event, and chains the
+ * transcription job.
+ */
+export type IntegrationJobWhatsappCallRecordingReady = {
+  type: typeof IntegrationJobAction.whatsappCallRecordingReady
+  data: {
+    wacid: string
+    /** Enables the worker-level blocked-owner guard. */
+    workspaceId: string
+    /** Object-storage path of the audio file (not a public URL). */
+    recordingPath: string
+    mimeType?: string
+    sizeBytes?: number
+    durationSeconds?: number
+  }
+}
+
+/** Speech-to-text over a stored call recording (OpenAI Whisper). */
+export type IntegrationJobWhatsappCallTranscribe = {
+  type: typeof IntegrationJobAction.whatsappCallTranscribe
+  data: {
+    wacid: string
+    /** Enables the worker-level blocked-owner guard. */
+    workspaceId: string
+  }
+}
+
 export type IntegrationJobAdsAutomaticEvent = {
   type: typeof IntegrationJobAction.adsAutomaticEvent
   data: {
@@ -614,6 +646,8 @@ export type IntegrationJobData =
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent
   | IntegrationJobWhatsappCallEvent
+  | IntegrationJobWhatsappCallRecordingReady
+  | IntegrationJobWhatsappCallTranscribe
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation

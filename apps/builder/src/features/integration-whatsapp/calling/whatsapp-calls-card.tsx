@@ -23,6 +23,9 @@ type WhatsappCallsCardProps = {
   integrationWhatsappId: string
   settings: WhatsappCallingSettings | null
   loadError?: string
+  /** LiveKit SIP bridge configured on this deployment (in-app calling, beta). */
+  sipAvailable?: boolean
+  recordingEnabled?: boolean
 }
 
 type ToggleRowProps = {
@@ -58,15 +61,19 @@ export function WhatsappCallsCard({
   integrationWhatsappId,
   settings,
   loadError,
+  sipAvailable = false,
+  recordingEnabled = false,
 }: WhatsappCallsCardProps) {
   const t = useTranslations()
   const [current, setCurrent] = useState<WhatsappCallingSettings>(
     settings ?? { status: "DISABLED" },
   )
+  const [isRecordingEnabled, setIsRecordingEnabled] = useState(recordingEnabled)
   // Snapshot for rolling back the optimistic update when Meta rejects the
   // change — without it the switches would keep showing a state that was
   // never applied remotely.
   const previousRef = useRef(current)
+  const previousRecordingRef = useRef(recordingEnabled)
 
   const { execute, isPending } = useAction(
     updateWhatsappCallingSettingsAction.bind(
@@ -80,6 +87,7 @@ export function WhatsappCallsCard({
       },
       onError: ({ error }) => {
         setCurrent(previousRef.current)
+        setIsRecordingEnabled(previousRecordingRef.current)
         toast.error(error.serverError ?? t("messages.unknownError"))
       },
     },
@@ -164,6 +172,40 @@ export function WhatsappCallsCard({
             )
           }
         />
+        {sipAvailable && (
+          <>
+            <ToggleRow
+              checked={current.sip?.status === "ENABLED"}
+              disabled={isPending || !isCallingEnabled}
+              helper={t("whatsapp.calls.inAppCallingHelper")}
+              label={t("whatsapp.calls.inAppCallingLabel")}
+              onCheckedChange={(next) =>
+                apply(
+                  { sipEnabled: next },
+                  {
+                    ...current,
+                    sip: {
+                      ...current.sip,
+                      status: next ? "ENABLED" : "DISABLED",
+                    },
+                  },
+                )
+              }
+            />
+            <ToggleRow
+              checked={isRecordingEnabled}
+              disabled={isPending || !isCallingEnabled}
+              helper={t("whatsapp.calls.recordingHelper")}
+              label={t("whatsapp.calls.recordingLabel")}
+              onCheckedChange={(next) => {
+                previousRef.current = current
+                previousRecordingRef.current = isRecordingEnabled
+                setIsRecordingEnabled(next)
+                execute({ recordingEnabled: next })
+              }}
+            />
+          </>
+        )}
         <p className="text-muted-foreground text-xs">
           {t("whatsapp.calls.propagationNote")}
         </p>

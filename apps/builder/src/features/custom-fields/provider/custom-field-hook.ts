@@ -114,6 +114,16 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastInput.label",
   },
   {
+    id: systemFieldTypes.enum.last_call_recorded,
+    type: "shortText",
+    labelKey: "fields.lastCallRecorded.label",
+  },
+  {
+    id: systemFieldTypes.enum.last_call_transcript,
+    type: "longText",
+    labelKey: "fields.lastCallTranscript.label",
+  },
+  {
     id: systemFieldTypes.enum["ai.queued.messages"],
     type: "shortText",
     labelKey: "fields.aiQueuedMessages.label",

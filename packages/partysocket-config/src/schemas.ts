@@ -9,6 +9,8 @@ export const RealtimeEventType = {
   contactUnblocked: "contactUnblocked",
   conversationAssigned: "conversationAssigned",
   notifyExportResult: "notifyExportResult",
+  whatsappCallRinging: "whatsappCallRinging",
+  whatsappCallEnded: "whatsappCallEnded",
 } as const
 
 export type RealtimeEventCreateMessage = {
@@ -90,6 +92,30 @@ export type RealtimeEventNotifyExportResult = {
   }
 }
 
+/**
+ * A WhatsApp call's audio landed in a LiveKit room and an agent can pick it
+ * up from the inbox (in-app calling, beta).
+ */
+export type RealtimeEventWhatsappCallRinging = {
+  eventType: typeof RealtimeEventType.whatsappCallRinging
+  data: {
+    wacid: string
+    roomName: string
+    conversationId: string
+    contactInboxId: string
+    contactName?: string | null
+  }
+}
+
+/** The call's LiveKit room closed — dismiss any incoming-call UI. */
+export type RealtimeEventWhatsappCallEnded = {
+  eventType: typeof RealtimeEventType.whatsappCallEnded
+  data: {
+    wacid: string
+    roomName?: string
+  }
+}
+
 export type RealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
@@ -99,3 +125,5 @@ export type RealtimeEventData =
   | RealtimeEventContactCommon
   | RealtimeEventConversationAssigned
   | RealtimeEventTyping
+  | RealtimeEventWhatsappCallRinging
+  | RealtimeEventWhatsappCallEnded

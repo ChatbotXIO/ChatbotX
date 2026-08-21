@@ -1818,6 +1818,12 @@
     },
     "enabled": {
       "label": "Ingeschakeld"
+    },
+    "lastCallRecorded": {
+      "label": "Laatste gespreksopname"
+    },
+    "lastCallTranscript": {
+      "label": "Laatste gesprekstranscript"
     }
   },
   "condition": {
@@ -3582,13 +3588,24 @@
       "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
       "errors": {
         "notFound": "WhatsApp integration not found",
-        "notWhatsappConversation": "This conversation is not on WhatsApp"
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
       "permissionRequestBodyLabel": "Message",
       "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
-      "permissionRequestSent": "Call permission request sent"
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller"
     }
   },
   "zalo": {
@@ -3738,7 +3755,9 @@
       "productRemovedFromCart": "Product uit winkelwagen verwijderd",
       "productOrdered": "Product besteld",
       "contactReferredANewContact": "Contact heeft een nieuw contact doorverwezen",
-      "contactReferredExistingContact": "Contact heeft een bestaand contact doorverwezen"
+      "contactReferredExistingContact": "Contact heeft een bestaand contact doorverwezen",
+      "callRecorded": "Oproep opgenomen",
+      "callTranscribed": "Oproep getranscribeerd"
     },
     "actions": {
       "addTag": "Tag toevoegen",

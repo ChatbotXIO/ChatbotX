@@ -14,6 +14,9 @@ const mocks = vi.hoisted(() => ({
   contactInboxFindBy: vi.fn(),
   updateTracking: vi.fn(),
   invalidateTracking: vi.fn(),
+  emitIncomingCall: vi.fn(),
+  emitMissedAudioCall: vi.fn(),
+  emitCallEnded: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
@@ -44,6 +47,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/events", () => ({
   setWebhookExecutionContext: vi.fn(),
+  emitIncomingCall: mocks.emitIncomingCall,
+  emitMissedAudioCall: mocks.emitMissedAudioCall,
+  emitCallEnded: mocks.emitCallEnded,
 }))
 
 vi.mock("../src/services/integrations", () => ({
@@ -97,7 +103,7 @@ describe("handleWhatsappCallEvent", () => {
       conversation: { id: "conv-1", workspaceId: "ws-1" },
       isNewContact: false,
     })
-    mocks.createIfAbsent.mockResolvedValue(callRow)
+    mocks.createIfAbsent.mockResolvedValue({ call: callRow, isNew: true })
     mocks.findByWacid.mockResolvedValue(callRow)
     mocks.createOrUpdate.mockResolvedValue({
       isNew: true,
@@ -149,6 +155,30 @@ describe("handleWhatsappCallEvent", () => {
       contactInboxId: "ci-1",
       conversationId: "conv-1",
     })
+    expect(mocks.emitIncomingCall).toHaveBeenCalledWith("ws-1", "contact-1", {
+      wacid: "wacid.ABC",
+      conversationId: "conv-1",
+    })
+  })
+
+  test("redelivered connect does not re-fire the incomingCall event", async () => {
+    mocks.createIfAbsent.mockResolvedValue({ call: callRow, isNew: false })
+
+    await handleWhatsappCallEvent({
+      ...baseData,
+      payload: {
+        phoneNumberId: "phone-1",
+        contact: { waId: "84900000001" },
+        event: {
+          kind: "connect",
+          wacid: "wacid.ABC",
+          direction: "userInitiated",
+          from: "84900000001",
+        },
+      },
+    })
+
+    expect(mocks.emitIncomingCall).not.toHaveBeenCalled()
   })
 
   test("interim status advances an existing row", async () => {
@@ -293,6 +323,11 @@ describe("handleWhatsappCallEvent", () => {
         data: expect.objectContaining({ id: "msg-1" }),
       }),
     )
+    expect(mocks.emitCallEnded).toHaveBeenCalledWith("ws-1", "contact-1", {
+      wacid: "wacid.ABC",
+      durationSeconds: 90,
+    })
+    expect(mocks.emitMissedAudioCall).not.toHaveBeenCalled()
   })
 
   test("failed terminate after a rejected status renders as declined", async () => {
@@ -342,6 +377,11 @@ describe("handleWhatsappCallEvent", () => {
     expect(mocks.createOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ text: "Missed voice call" }),
     )
+    expect(mocks.emitMissedAudioCall).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-1",
+      { wacid: "wacid.NEW", conversationId: "conv-1" },
+    )
   })
 
   test("redelivered terminate does not re-broadcast", async () => {
@@ -366,5 +406,7 @@ describe("handleWhatsappCallEvent", () => {
     expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
     expect(mocks.updateFlowStepState).not.toHaveBeenCalled()
     expect(mocks.updateTracking).not.toHaveBeenCalled()
+    expect(mocks.emitCallEnded).not.toHaveBeenCalled()
+    expect(mocks.emitMissedAudioCall).not.toHaveBeenCalled()
   })
 })

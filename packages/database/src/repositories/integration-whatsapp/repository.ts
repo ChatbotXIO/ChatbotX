@@ -207,6 +207,35 @@ class IntegrationWhatsappRepository {
     return row ?? null
   }
 
+  /** Whether the number backing this inbox auto-records in-app calls. */
+  async isCallRecordingEnabledForInbox(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const [row] = await tx
+      .select({ enabled: integrationWhatsappModel.callRecordingEnabled })
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.inboxId, input.inboxId),
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+    return row?.enabled === true
+  }
+
+  /** Toggle auto-recording of in-app calls for this number. */
+  async updateCallRecordingEnabled(
+    input: WorkspaceIntegrationRef & { enabled: boolean },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ callRecordingEnabled: input.enabled })
+      .where(workspaceIntegrationFilter(input))
+  }
+
   /**
    * Replace the stored OAuth credentials after a token refresh. Scoped by
    * workspace so a forged integration id can never touch another tenant's row.

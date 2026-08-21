@@ -58,6 +58,14 @@ export const whatsappCallModel = pgTable(
      * foreign keys by design.
      */
     messageId: bigintAsString(),
+    /** LiveKit room carrying this call's audio (in-app calling, beta). */
+    livekitRoomName: text(),
+    /** Object-storage path of the call recording (LiveKit egress output). */
+    recordingPath: text(),
+    recordedAt: timestamp(timestampConfig),
+    /** Speech-to-text transcript of the recording. */
+    transcript: text(),
+    transcribedAt: timestamp(timestampConfig),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

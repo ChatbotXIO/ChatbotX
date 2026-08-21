@@ -62,6 +62,10 @@ export const BaseEditor = ({
         return t("trigger.conditions.missedAudioCall")
       case triggerEventTypes.enum.callEnded:
         return t("trigger.conditions.callEnded")
+      case triggerEventTypes.enum.callRecorded:
+        return t("trigger.conditions.callRecorded")
+      case triggerEventTypes.enum.callTranscribed:
+        return t("trigger.conditions.callTranscribed")
       case triggerEventTypes.enum.ticketCreated:
         return t("trigger.conditions.ticketCreated")
       case triggerEventTypes.enum.ticketMovedToStage:
