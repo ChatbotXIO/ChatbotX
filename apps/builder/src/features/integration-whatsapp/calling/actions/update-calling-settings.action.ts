@@ -7,6 +7,7 @@ import type { WhatsappCallingSettings } from "@chatbotx.io/integration-whatsapp/
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { integrations } from "@/integration"
+import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateWhatsappCallingSettingsSchema,
@@ -25,6 +26,10 @@ export const updateWhatsappCallingSettingsAction = workspaceActionClient
       bindArgsParsedInputs: readonly [string, string]
     }) => {
       const t = await getTranslations()
+      // Calling settings affect Meta billing (business-initiated calls are
+      // paid) — gate on super admin like connect/reconnect, not mere
+      // membership.
+      await assertWorkspaceSuperAdmin(workspaceId)
       const integrationWhatsapp =
         await integrationWhatsappService.findWorkspaceIntegration({
           id: integrationWhatsappId,

@@ -262,7 +262,10 @@ describe("webhookHandler call events", () => {
         }),
       }),
       // BullMQ forbids ":" in custom job ids — the wacid must be sanitized.
-      { jobId: "wa-call-wacid.ABC_123-status-RINGING" },
+      expect.objectContaining({
+        jobId: "wa-call-wacid.ABC_123-status-RINGING",
+        attempts: 5,
+      }),
     )
     expect(queueAdd).toHaveBeenNthCalledWith(
       2,
@@ -280,7 +283,7 @@ describe("webhookHandler call events", () => {
           }),
         }),
       }),
-      { jobId: "wa-call-wacid.ABC_123-connect" },
+      expect.objectContaining({ jobId: "wa-call-wacid.ABC_123-connect" }),
     )
 
     for (const call of queueAdd.mock.calls) {

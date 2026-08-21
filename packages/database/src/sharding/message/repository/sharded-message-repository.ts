@@ -546,6 +546,36 @@ export class ShardedMessageRepository implements IMessageRepository {
     workspaceId: string,
     newText: string,
   ): Promise<{ id: string } | null> {
+    return await this.patchBySourceId(
+      sourceId,
+      workspaceId,
+      { text: newText },
+      "updateTextBySourceId",
+    )
+  }
+
+  async updateContentBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    patch: {
+      text?: string | null
+      contentAttributes?: Record<string, unknown> | null
+    },
+  ): Promise<{ id: string } | null> {
+    return await this.patchBySourceId(
+      sourceId,
+      workspaceId,
+      patch,
+      "updateContentBySourceId",
+    )
+  }
+
+  private async patchBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    patch: Partial<typeof messageModel.$inferInsert>,
+    caller: string,
+  ): Promise<{ id: string } | null> {
     // sourceId-based update: scan shards from the last 90 days (same window
     // used by findBySourceId for parent-comment lookups).
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
@@ -558,7 +588,7 @@ export class ShardedMessageRepository implements IMessageRepository {
         const client = await this.shardManager.getShardClient(shardInfo.shard)
         const [row] = await client
           .update(messageModel)
-          .set({ text: newText })
+          .set(patch)
           .where(
             and(
               eq(messageModel.sourceId, sourceId),
@@ -571,8 +601,8 @@ export class ShardedMessageRepository implements IMessageRepository {
         }
       } catch (error) {
         logger.warn(
-          { err: error, shardId: shardInfo.shard.id },
-          "Shard update failed in updateTextBySourceId",
+          { err: error, shardId: shardInfo.shard.id, caller },
+          "Shard update failed in patchBySourceId",
         )
       }
     }

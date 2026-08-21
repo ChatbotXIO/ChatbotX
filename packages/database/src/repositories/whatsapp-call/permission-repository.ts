@@ -1,4 +1,4 @@
-import { type DatabaseClient, db } from "../../client"
+import { type DatabaseClient, db, lte } from "../../client"
 import type { WhatsappCallPermissionResponse } from "../../partials/whatsapp-call"
 import { whatsappCallPermissionModel } from "../../schema"
 
@@ -24,8 +24,10 @@ class WhatsappCallPermissionRepository {
   }
 
   /**
-   * Replaces the contact's permission state — Meta's newest response always
-   * wins, so a stale row is fully overwritten.
+   * Replaces the contact's permission state — Meta's newest response wins.
+   * `setWhere` enforces that ordering under concurrency: a job carrying an
+   * older reply than the stored row is a no-op (returns no row), so
+   * out-of-order processing can never regress the grant.
    */
   async upsertForContactInbox(
     input: UpsertPermissionInput,
@@ -43,6 +45,10 @@ class WhatsappCallPermissionRepository {
           expiresAt: data.expiresAt,
           respondedAt: data.respondedAt,
         },
+        setWhere: lte(
+          whatsappCallPermissionModel.respondedAt,
+          data.respondedAt,
+        ),
       })
       .returning()
       .then((rows) => rows[0])

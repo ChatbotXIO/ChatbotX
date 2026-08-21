@@ -305,6 +305,15 @@ export interface IMessageRepository {
 
   updateAttachment(params: UpdateAttachmentParams): Promise<void>
 
+  updateContentBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    patch: {
+      text?: string | null
+      contentAttributes?: Record<string, unknown> | null
+    },
+  ): Promise<{ id: string } | null>
+
   updateMessageAttributes(
     messageId: string,
     workspaceId: string,

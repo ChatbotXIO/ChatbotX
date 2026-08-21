@@ -392,6 +392,18 @@ const callEventJobIdSuffix = (
  */
 const TERMINATE_JOB_DELAY_MS = 2000
 
+/**
+ * Call jobs ride out transient DB/shard outages longer than the queue default
+ * (2 attempts / 5s): the webhook has already ACKed Meta, so a dropped job
+ * loses the call. Failed jobs are also aged out so their deterministic jobId
+ * stops suppressing a later Meta redelivery of the same event forever.
+ */
+const CALL_EVENT_JOB_RETRY_OPTIONS = {
+  attempts: 5,
+  backoff: { type: "exponential", delay: 30_000 },
+  removeOnFail: { age: 6 * 60 * 60 },
+} as const
+
 const enqueueCallEventPayloads = async (
   queue: WebhookQueue,
   callEventPayloads: WhatsappCallEventPayload[],
@@ -414,6 +426,7 @@ const enqueueCallEventPayloads = async (
           // Deduplicates Meta webhook redeliveries: one job per call id per
           // lifecycle step (connect / status-RINGING / … / terminate).
           jobId: `wa-call-${toBullMqSafeIdSegment(payload.event.wacid)}-${callEventJobIdSuffix(payload.event)}`,
+          ...CALL_EVENT_JOB_RETRY_OPTIONS,
           ...(payload.event.kind === "terminate"
             ? { delay: TERMINATE_JOB_DELAY_MS }
             : {}),

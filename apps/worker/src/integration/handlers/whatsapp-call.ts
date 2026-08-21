@@ -153,6 +153,23 @@ const handleInterimStatus = async (
     wacid: event.wacid,
     status,
   })
+
+  // A REJECTED that lost the race against the terminate job upgraded the row
+  // from `failed` to `rejected` above — the already-written activity message
+  // still says "missed", so repair its projection too.
+  if (status === "rejected" && existing.status === "failed") {
+    const entity: MessageWhatsappCallEntity = {
+      type: "whatsapp_call",
+      direction: existing.direction,
+      status: "rejected",
+    }
+    const repository = await createMessageRepository()
+    await repository.updateContentBySourceId(
+      event.wacid,
+      existing.workspaceId,
+      { text: buildCallActivityText(entity), contentAttributes: entity },
+    )
+  }
 }
 
 const resolveTerminalEntity = (
@@ -205,7 +222,13 @@ const handleTerminate = async (
   }
 
   const entity = resolveTerminalEntity(event, call.status, call.direction)
-  const endedAt = parseUnixSeconds(event.endTime ?? event.timestamp)
+  // Prefer Meta's event timestamps: the message dedup on the sharded table
+  // keys on (sourceId, createdAt window), so a replayed terminate must
+  // produce the same createdAt — `new Date()` is only the last resort when
+  // the payload carries no usable time at all.
+  const endedAt = parseUnixSeconds(
+    event.endTime ?? event.timestamp ?? event.startTime,
+  )
 
   const repository = await createMessageRepository()
   const { message, isNew } = await repository.createOrUpdate({

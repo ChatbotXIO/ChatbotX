@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   updateInterimStatus: vi.fn(),
   finalizeByWacid: vi.fn(),
   createOrUpdate: vi.fn(),
+  updateContentBySourceId: vi.fn(),
   broadcastToWorkspaceParty: vi.fn(),
   updateFlowStepState: vi.fn(),
   contactInboxFindBy: vi.fn(),
@@ -37,6 +38,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
   createMessageRepository: vi.fn(async () => ({
     createOrUpdate: mocks.createOrUpdate,
+    updateContentBySourceId: mocks.updateContentBySourceId,
   })),
 }))
 
@@ -167,6 +169,52 @@ describe("handleWhatsappCallEvent", () => {
       wacid: "wacid.ABC",
       status: "accepted",
     })
+  })
+
+  test("late REJECTED after a failed terminate repairs the activity message", async () => {
+    mocks.findByWacid.mockResolvedValue({ ...callRow, status: "failed" })
+
+    await handleWhatsappCallEvent({
+      ...baseData,
+      payload: {
+        phoneNumberId: "phone-1",
+        event: {
+          kind: "status",
+          wacid: "wacid.ABC",
+          status: "REJECTED",
+          timestamp: "1755700050",
+        },
+      },
+    })
+
+    expect(mocks.updateInterimStatus).toHaveBeenCalledWith({
+      wacid: "wacid.ABC",
+      status: "rejected",
+    })
+    expect(mocks.updateContentBySourceId).toHaveBeenCalledWith(
+      "wacid.ABC",
+      "ws-1",
+      {
+        text: "Declined voice call",
+        contentAttributes: {
+          type: "whatsapp_call",
+          direction: "userInitiated",
+          status: "rejected",
+        },
+      },
+    )
+  })
+
+  test("interim status on a live call does not touch the message", async () => {
+    await handleWhatsappCallEvent({
+      ...baseData,
+      payload: {
+        phoneNumberId: "phone-1",
+        event: { kind: "status", wacid: "wacid.ABC", status: "ACCEPTED" },
+      },
+    })
+
+    expect(mocks.updateContentBySourceId).not.toHaveBeenCalled()
   })
 
   test("interim status without a row warns and skips", async () => {

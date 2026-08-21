@@ -44,8 +44,15 @@ export type WhatsappCallingSettings = {
   call_hours?: WhatsappCallHours
 }
 
+/**
+ * The settings read has been observed in two envelope shapes across Graph
+ * API versions/docs: a top-level `calling` object and a `data[0].calling`
+ * wrapper (like `whatsapp_business_profile`). Both are accepted so a shape
+ * change never silently renders the tab as "disabled".
+ */
 type PhoneNumberSettingsResponse = {
   calling?: WhatsappCallingSettings
+  data?: { calling?: WhatsappCallingSettings }[]
 }
 
 const DISABLED_CALLING_SETTINGS: WhatsappCallingSettings = {
@@ -69,7 +76,9 @@ export const getCallingSettings = (
       )
       .json()
 
-    return result.calling ?? DISABLED_CALLING_SETTINGS
+    return (
+      result.calling ?? result.data?.[0]?.calling ?? DISABLED_CALLING_SETTINGS
+    )
   })
 }
 
