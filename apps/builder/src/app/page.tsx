@@ -92,6 +92,7 @@ export default async function MainPage() {
           ownerWorkspaceIds={ownerWorkspaceIds}
           reason={blockReason}
           superAdminWorkspaceIds={superAdminWorkspaceIds}
+          isPlatformAdmin={platformAdmin}
           user={userInfo}
           workspaces={allWorkspaces}
         />

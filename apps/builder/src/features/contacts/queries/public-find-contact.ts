@@ -1,5 +1,6 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
+import { contactInboxModel } from "@chatbotx.io/database/schema"
 import type {
   ContactResponse,
   FindContactRequest,
@@ -26,6 +27,25 @@ export async function resolveContactId({
     throw notFoundException("Invalid identifier format")
   }
 
+  if (prefix === "sourceId") {
+    const contactInbox = await db.query.contactInboxModel.findFirst({
+      where: { sourceId: value },
+      columns: { contactId: true },
+    })
+    if (!contactInbox) {
+      throw notFoundException("Contact not found")
+    }
+
+    const scoped = await db.query.contactModel.findFirst({
+      where: { id: contactInbox.contactId, workspaceId },
+      columns: { id: true },
+    })
+    if (!scoped) {
+      throw notFoundException("Contact not found")
+    }
+    return scoped.id
+  }
+
   const whereClause: Record<string, unknown> = { workspaceId }
 
   if (prefix === "id") {
@@ -39,7 +59,7 @@ export async function resolveContactId({
     whereClause.phoneNumber = value
   } else {
     throw notFoundException(
-      "Invalid identifier format. Use id:, email:, or phone: prefix",
+      "Invalid identifier format. Use id:, email:, phone:, or sourceId: prefix",
     )
   }
 

@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   async rewrites() {
+    const wsUrl = env.NEXT_PUBLIC_INTERNAL_WS_URL
     const alwaysRewrites = [
       {
         source: "/assets/:path*",
@@ -34,6 +35,7 @@ const nextConfig: NextConfig = {
         source: "/zalo_verifier:verifier.html",
         destination: "/api/zalo-verifier/:verifier",
       },
+      { source: "/ws/:path*", destination: `${wsUrl}/:path*` },
     ]
 
     if (process.env.NODE_ENV !== "development") {
@@ -42,7 +44,6 @@ const nextConfig: NextConfig = {
 
     // Local dev: production routes /ws, /storage, /manage/*, and /portal/*
     // via load balancer / Caddy
-    const wsUrl = env.NEXT_PUBLIC_INTERNAL_WS_URL
     const s3Bucket = process.env.S3_BUCKET ?? "chatbotx"
     const s3Endpoint = process.env.S3_ENDPOINT ?? "http://localhost:9000"
     const portalUrl = process.env.PORTAL_INTERNAL_URL ?? "http://localhost:3201"
@@ -53,7 +54,6 @@ const nextConfig: NextConfig = {
     return {
       afterFiles: [
         ...alwaysRewrites,
-        { source: "/ws/:path*", destination: `${wsUrl}/:path*` },
         {
           source: "/storage/:path*",
           destination: `${s3Endpoint}/${s3Bucket}/:path*`,
