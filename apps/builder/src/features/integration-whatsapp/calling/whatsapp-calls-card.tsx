@@ -13,7 +13,7 @@ import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { AlertCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { toast } from "sonner"
 import { updateWhatsappCallingSettingsAction } from "./actions/update-calling-settings.action"
 import type { UpdateWhatsappCallingSettingsSchema } from "./schemas/update-calling-settings-schema"
@@ -63,6 +63,10 @@ export function WhatsappCallsCard({
   const [current, setCurrent] = useState<WhatsappCallingSettings>(
     settings ?? { status: "DISABLED" },
   )
+  // Snapshot for rolling back the optimistic update when Meta rejects the
+  // change — without it the switches would keep showing a state that was
+  // never applied remotely.
+  const previousRef = useRef(current)
 
   const { execute, isPending } = useAction(
     updateWhatsappCallingSettingsAction.bind(
@@ -75,6 +79,7 @@ export function WhatsappCallsCard({
         toast.success(t("messages.savedSuccessfully"))
       },
       onError: ({ error }) => {
+        setCurrent(previousRef.current)
         toast.error(error.serverError ?? t("messages.unknownError"))
       },
     },
@@ -84,6 +89,7 @@ export function WhatsappCallsCard({
     input: UpdateWhatsappCallingSettingsSchema,
     next: WhatsappCallingSettings,
   ) => {
+    previousRef.current = current
     setCurrent(next)
     execute(input)
   }

@@ -1,4 +1,4 @@
-import { and, type DatabaseClient, db, eq, notInArray } from "../../client"
+import { and, type DatabaseClient, db, eq } from "../../client"
 import type {
   WhatsappCallDirection,
   WhatsappCallStatus,
@@ -21,11 +21,30 @@ type WhatsappCallUpsertInput = {
 }
 
 /**
- * Statuses that must never be overwritten by an interim status update —
- * webhook jobs are processed concurrently, so a late RINGING/ACCEPTED status
- * can land after the terminate event for the same call.
+ * Lifecycle ordering guard: webhook jobs are processed concurrently, so a
+ * late RINGING/ACCEPTED can land after the terminate for the same call. A
+ * status may only advance to a higher rank — with one deliberate exception:
+ * `rejected` may overwrite `failed`, because a declined call terminates as
+ * FAILED and the interim REJECTED status can arrive after the terminate job
+ * already finalized the row.
  */
-const TERMINAL_STATUSES: WhatsappCallStatus[] = ["completed", "failed"]
+const STATUS_RANK: Record<WhatsappCallStatus, number> = {
+  ringing: 0,
+  accepted: 1,
+  rejected: 2,
+  failed: 3,
+  completed: 4,
+}
+
+const canAdvanceStatus = (
+  current: WhatsappCallStatus,
+  next: WhatsappCallStatus,
+): boolean => {
+  if (next === "rejected" && current === "failed") {
+    return true
+  }
+  return STATUS_RANK[next] > STATUS_RANK[current]
+}
 
 class WhatsappCallRepository {
   async findByWacid(
@@ -62,20 +81,27 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Advances the call to an interim status (ringing/accepted/rejected).
-   * A no-op when the call already reached a terminal status.
+   * Advances the call to an interim status (ringing/accepted/rejected),
+   * respecting {@link canAdvanceStatus} — a stale or out-of-order status is
+   * a no-op. The WHERE re-checks the observed status so a concurrent writer
+   * cannot be overwritten with stale data.
    */
   async updateInterimStatus(
     props: { wacid: string; status: WhatsappCallStatus },
     tx: DatabaseClient = db,
   ): Promise<void> {
+    const existing = await this.findByWacid(props.wacid, tx)
+    if (!(existing && canAdvanceStatus(existing.status, props.status))) {
+      return
+    }
+
     await tx
       .update(whatsappCallModel)
       .set({ status: props.status })
       .where(
         and(
           eq(whatsappCallModel.wacid, props.wacid),
-          notInArray(whatsappCallModel.status, TERMINAL_STATUSES),
+          eq(whatsappCallModel.status, existing.status),
         ),
       )
   }

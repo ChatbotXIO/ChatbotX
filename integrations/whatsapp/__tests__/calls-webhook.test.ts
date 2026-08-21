@@ -246,8 +246,26 @@ describe("webhookHandler call events", () => {
     ).resolves.toBe("ok")
 
     expect(queueAdd).toHaveBeenCalledTimes(2)
+    // Interim statuses enqueue BEFORE call events so a REJECTED status can
+    // land before its terminate job runs.
     expect(queueAdd).toHaveBeenNthCalledWith(
       1,
+      "whatsappCallEvent",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          payload: expect.objectContaining({
+            event: expect.objectContaining({
+              kind: "status",
+              status: "RINGING",
+            }),
+          }),
+        }),
+      }),
+      // BullMQ forbids ":" in custom job ids — the wacid must be sanitized.
+      { jobId: "wa-call-wacid.ABC_123-status-RINGING" },
+    )
+    expect(queueAdd).toHaveBeenNthCalledWith(
+      2,
       "whatsappCallEvent",
       expect.objectContaining({
         type: "whatsappCallEvent",
@@ -262,23 +280,7 @@ describe("webhookHandler call events", () => {
           }),
         }),
       }),
-      // BullMQ forbids ":" in custom job ids — the wacid must be sanitized.
       { jobId: "wa-call-wacid.ABC_123-connect" },
-    )
-    expect(queueAdd).toHaveBeenNthCalledWith(
-      2,
-      "whatsappCallEvent",
-      expect.objectContaining({
-        data: expect.objectContaining({
-          payload: expect.objectContaining({
-            event: expect.objectContaining({
-              kind: "status",
-              status: "RINGING",
-            }),
-          }),
-        }),
-      }),
-      { jobId: "wa-call-wacid.ABC_123-status-RINGING" },
     )
 
     for (const call of queueAdd.mock.calls) {
@@ -326,6 +328,16 @@ describe("webhookHandler call events", () => {
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({ wacid: "wacid.A" }),
       "Whatsapp call event enqueue failed; webhook will still acknowledge",
+    )
+    // Terminate jobs are delayed so same-batch interim statuses commit first.
+    expect(queueAdd).toHaveBeenNthCalledWith(
+      2,
+      "whatsappCallEvent",
+      expect.anything(),
+      expect.objectContaining({
+        jobId: "wa-call-wacid.B-terminate",
+        delay: 2000,
+      }),
     )
   })
 })

@@ -245,8 +245,12 @@ export const extractCallEventPayloads = (
       const { metadata, contacts, calls, statuses } = parsed.data
       const contact = toContactPayload(contacts)
 
-      for (const item of calls ?? []) {
-        const event = normalizeCallItem(item)
+      // Interim statuses are pushed (and therefore enqueued) BEFORE call
+      // events: when a batch carries both a REJECTED status and its
+      // terminate, the terminate handler must be able to see the rejection
+      // to label the call "declined" rather than "missed".
+      for (const item of statuses ?? []) {
+        const event = normalizeStatusItem(item)
         if (event) {
           payloads.push({
             phoneNumberId: metadata.phone_number_id,
@@ -256,8 +260,8 @@ export const extractCallEventPayloads = (
         }
       }
 
-      for (const item of statuses ?? []) {
-        const event = normalizeStatusItem(item)
+      for (const item of calls ?? []) {
+        const event = normalizeCallItem(item)
         if (event) {
           payloads.push({
             phoneNumberId: metadata.phone_number_id,

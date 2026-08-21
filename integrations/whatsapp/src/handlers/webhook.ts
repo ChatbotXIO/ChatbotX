@@ -382,6 +382,16 @@ const callEventJobIdSuffix = (
   return event.kind
 }
 
+/**
+ * Terminate jobs are delayed slightly so interim status jobs (often enqueued
+ * in the same batch, and possibly from a concurrent webhook delivery) commit
+ * first — the terminate handler labels a FAILED call "declined" only when it
+ * can see a prior REJECTED status. The worker additionally lets a late
+ * REJECTED upgrade a finalized `failed` row, so this delay is a fast path,
+ * not the only defense.
+ */
+const TERMINATE_JOB_DELAY_MS = 2000
+
 const enqueueCallEventPayloads = async (
   queue: WebhookQueue,
   callEventPayloads: WhatsappCallEventPayload[],
@@ -404,6 +414,9 @@ const enqueueCallEventPayloads = async (
           // Deduplicates Meta webhook redeliveries: one job per call id per
           // lifecycle step (connect / status-RINGING / … / terminate).
           jobId: `wa-call-${toBullMqSafeIdSegment(payload.event.wacid)}-${callEventJobIdSuffix(payload.event)}`,
+          ...(payload.event.kind === "terminate"
+            ? { delay: TERMINATE_JOB_DELAY_MS }
+            : {}),
         },
       )
     } catch (err) {
