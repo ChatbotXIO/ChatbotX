@@ -2958,7 +2958,11 @@
     "waTemplateMpmTooManySections": "Nút đa sản phẩm chỉ được có tối đa 10 phần. Hãy xóa bớt phần trước khi xuất bản.",
     "waTemplateMpmTooManyProducts": "Nút đa sản phẩm chỉ được có tối đa 30 sản phẩm. Hãy xóa bớt sản phẩm trước khi xuất bản.",
     "waTemplateLtoExpirationRequired": "Chọn thời điểm hết hạn cho ưu đãi có thời hạn trước khi gửi.",
-    "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó."
+    "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó.",
+    "voiceCall": "Cuộc gọi thoại",
+    "voiceCallDuration": "Cuộc gọi thoại · {duration}",
+    "missedVoiceCall": "Cuộc gọi thoại nhỡ",
+    "declinedVoiceCall": "Cuộc gọi thoại bị từ chối"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

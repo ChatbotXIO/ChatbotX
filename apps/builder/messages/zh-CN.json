@@ -3464,7 +3464,11 @@
     "waTemplateMpmTooManySections": "多商品按钮最多可包含 10 个版块。请在发布前移除部分版块。",
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "发送前请为限时优惠选择到期时间。",
-    "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。"
+    "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。",
+    "voiceCall": "语音通话",
+    "voiceCallDuration": "语音通话 · {duration}",
+    "missedVoiceCall": "未接语音通话",
+    "declinedVoiceCall": "已拒绝的语音通话"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

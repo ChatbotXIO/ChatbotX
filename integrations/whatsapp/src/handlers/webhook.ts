@@ -13,6 +13,10 @@ import {
   whatsappAutomaticEventNameSchema,
   whatsappAutomaticEventsValueSchema,
 } from "../lib/automatic-events"
+import {
+  extractCallEventPayloads,
+  type WhatsappCallEventPayload,
+} from "../lib/calls"
 import { logger } from "../lib/logger"
 import { extractWhatsappStatusRecipientUserId } from "../lib/raw-identity"
 import type { WhatsappConfig } from "../schema"
@@ -225,11 +229,13 @@ const readVerifiedPostPayloads = async (
   rawBodyBuffer: ArrayBuffer
   coexistPayloads: CoexistPayload[]
   automaticEventPayloads: AutomaticEventPayload[]
+  callEventPayloads: WhatsappCallEventPayload[]
 }> => {
   let rawBodyBuffer = new ArrayBuffer(0)
   let rawBodyText = ""
   let coexistPayloads: CoexistPayload[] = []
   let automaticEventPayloads: AutomaticEventPayload[] = []
+  let callEventPayloads: WhatsappCallEventPayload[] = []
   try {
     rawBodyBuffer = await req.arrayBuffer()
     rawBodyText = new TextDecoder().decode(rawBodyBuffer)
@@ -243,11 +249,24 @@ const readVerifiedPostPayloads = async (
         "Whatsapp automatic event extraction failed; webhook will still acknowledge",
       )
     }
+    try {
+      callEventPayloads = extractCallEventPayloads(rawBody)
+    } catch (err) {
+      logger.error(
+        { err },
+        "Whatsapp call event extraction failed; webhook will still acknowledge",
+      )
+    }
   } catch {
     logger.debug("Whatsapp webhook raw body was not JSON; continuing")
   }
 
-  return { rawBodyBuffer, coexistPayloads, automaticEventPayloads }
+  return {
+    rawBodyBuffer,
+    coexistPayloads,
+    automaticEventPayloads,
+    callEventPayloads,
+  }
 }
 
 const capturePostResult = async (input: {
@@ -354,6 +373,52 @@ const enqueueAutomaticEventPayloads = async (
   }
 }
 
+const callEventJobIdSuffix = (
+  event: WhatsappCallEventPayload["event"],
+): string => {
+  if (event.kind === "status") {
+    return `${event.kind}-${event.status}`
+  }
+  return event.kind
+}
+
+const enqueueCallEventPayloads = async (
+  queue: WebhookQueue,
+  callEventPayloads: WhatsappCallEventPayload[],
+): Promise<void> => {
+  // Per-event try/catch: one failed enqueue is logged and skipped without
+  // aborting the rest of the batch (same policy as automatic events).
+  for (const payload of callEventPayloads) {
+    try {
+      await queue?.add(
+        "whatsappCallEvent",
+        {
+          type: "whatsappCallEvent",
+          data: {
+            integrationType: "whatsapp",
+            integrationIdentifier: payload.phoneNumberId,
+            payload,
+          },
+        },
+        {
+          // Deduplicates Meta webhook redeliveries: one job per call id per
+          // lifecycle step (connect / status-RINGING / … / terminate).
+          jobId: `wa-call-${toBullMqSafeIdSegment(payload.event.wacid)}-${callEventJobIdSuffix(payload.event)}`,
+        },
+      )
+    } catch (err) {
+      logger.error(
+        {
+          err,
+          phoneNumberId: payload.phoneNumberId,
+          wacid: payload.event.wacid,
+        },
+        "Whatsapp call event enqueue failed; webhook will still acknowledge",
+      )
+    }
+  }
+}
+
 const dispatchWebhookResult = async (
   queue: WebhookQueue,
   result:
@@ -423,8 +488,12 @@ export const webhookHandler = async (
       // Using arrayBuffer() preserves the exact bytes for HMAC verification;
       // text() would silently re-encode, risking a signature mismatch on
       // non-ASCII payloads. We decode to string only for JSON parsing.
-      const { rawBodyBuffer, coexistPayloads, automaticEventPayloads } =
-        await readVerifiedPostPayloads(props.req)
+      const {
+        rawBodyBuffer,
+        coexistPayloads,
+        automaticEventPayloads,
+        callEventPayloads,
+      } = await readVerifiedPostPayloads(props.req)
       const result = await capturePostResult({
         req: props.req,
         rawBodyBuffer,
@@ -432,6 +501,7 @@ export const webhookHandler = async (
       })
       await enqueueCoexistPayloads(props.queue, coexistPayloads)
       await enqueueAutomaticEventPayloads(props.queue, automaticEventPayloads)
+      await enqueueCallEventPayloads(props.queue, callEventPayloads)
       await dispatchWebhookResult(props.queue, result)
 
       return "ok"

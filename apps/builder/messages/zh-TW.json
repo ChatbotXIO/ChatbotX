@@ -1510,7 +1510,11 @@
     "waTemplateMpmTooManySections": "多商品按鈕最多可包含 10 個版塊。請在發布前移除部分版塊。",
     "waTemplateMpmTooManyProducts": "多商品按鈕總共最多可包含 30 項商品。請在發布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "傳送前請為限時優惠選擇到期時間。",
-    "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。"
+    "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。",
+    "voiceCall": "語音通話",
+    "voiceCallDuration": "語音通話 · {duration}",
+    "missedVoiceCall": "未接語音通話",
+    "declinedVoiceCall": "已拒絕的語音通話"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",

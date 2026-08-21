@@ -2958,7 +2958,11 @@
     "waTemplateMpmTooManySections": "Usean tuotteen painikkeessa voi olla enintään 10 osiota. Poista osioita ennen julkaisua.",
     "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",
     "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
-    "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote."
+    "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote.",
+    "voiceCall": "Äänipuhelu",
+    "voiceCallDuration": "Äänipuhelu · {duration}",
+    "missedVoiceCall": "Vastaamaton äänipuhelu",
+    "declinedVoiceCall": "Hylätty äänipuhelu"
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

@@ -2937,7 +2937,11 @@
     "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
-    "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。"
+    "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
+    "voiceCall": "音声通話",
+    "voiceCallDuration": "音声通話 · {duration}",
+    "missedVoiceCall": "不在着信",
+    "declinedVoiceCall": "拒否された音声通話"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

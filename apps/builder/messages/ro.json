@@ -2958,7 +2958,11 @@
     "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
-    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs."
+    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
+    "voiceCall": "Apel vocal",
+    "voiceCallDuration": "Apel vocal · {duration}",
+    "missedVoiceCall": "Apel vocal pierdut",
+    "declinedVoiceCall": "Apel vocal respins"
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

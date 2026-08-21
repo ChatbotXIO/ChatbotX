@@ -3464,7 +3464,11 @@
     "waTemplateMpmTooManySections": "En flerproduktsknapp kan ha högst 10 sektioner. Ta bort några sektioner innan publicering.",
     "waTemplateMpmTooManyProducts": "En flerproduktsknapp kan ha högst 30 produkter totalt. Ta bort några produkter innan publicering.",
     "waTemplateLtoExpirationRequired": "Välj ett utgångsdatum för det tidsbegränsade erbjudandet innan du skickar.",
-    "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt."
+    "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt.",
+    "voiceCall": "Röstsamtal",
+    "voiceCallDuration": "Röstsamtal · {duration}",
+    "missedVoiceCall": "Missat röstsamtal",
+    "declinedVoiceCall": "Avvisat röstsamtal"
   },
   "messenger": {
     "botProfile": "Botprofil",

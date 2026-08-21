@@ -3056,7 +3056,11 @@
     "waTemplateMpmTooManySections": "A multi-product button can have at most 10 sections. Remove some sections before publishing.",
     "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
     "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
-    "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them."
+    "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them.",
+    "voiceCall": "Voice call",
+    "voiceCallDuration": "Voice call · {duration}",
+    "missedVoiceCall": "Missed voice call",
+    "declinedVoiceCall": "Declined voice call"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

@@ -51,6 +51,7 @@ import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { processStoryReplyAutomation } from "./handlers/story-reply-automation"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
+import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
@@ -266,6 +267,10 @@ async function startIntegrationWorker() {
           }
           case IntegrationJobAction.adsAutomaticEvent: {
             await handleAdsAutomaticEvent(job.data.data)
+            return
+          }
+          case IntegrationJobAction.whatsappCallEvent: {
+            await handleWhatsappCallEvent(job.data.data)
             return
           }
           case IntegrationJobAction.evaluateTemplateSent:

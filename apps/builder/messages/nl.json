@@ -2958,7 +2958,11 @@
     "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
     "waTemplateLtoExpirationRequired": "Kies een vervaldatum voor de tijdelijke aanbieding voordat je verzendt.",
-    "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor."
+    "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor.",
+    "voiceCall": "Spraakoproep",
+    "voiceCallDuration": "Spraakoproep · {duration}",
+    "missedVoiceCall": "Gemiste spraakoproep",
+    "declinedVoiceCall": "Geweigerde spraakoproep"
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

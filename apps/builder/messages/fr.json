@@ -2958,7 +2958,11 @@
     "waTemplateMpmTooManySections": "Un bouton multi-produits peut comporter au maximum 10 sections. Supprimez des sections avant de publier.",
     "waTemplateMpmTooManyProducts": "Un bouton multi-produits peut comporter au maximum 30 produits au total. Supprimez des produits avant de publier.",
     "waTemplateLtoExpirationRequired": "Choisissez une date d'expiration pour l'offre à durée limitée avant l'envoi.",
-    "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit."
+    "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit.",
+    "voiceCall": "Appel vocal",
+    "voiceCallDuration": "Appel vocal · {duration}",
+    "missedVoiceCall": "Appel vocal manqué",
+    "declinedVoiceCall": "Appel vocal refusé"
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",

@@ -4,7 +4,9 @@ import type {
   MessageButtonTemplate,
   MessageStoryReplyEntity,
   MessageTemplateEntity,
+  MessageWhatsappCallEntity,
 } from "@chatbotx.io/sdk"
+import { getWhatsappCallEntity } from "@chatbotx.io/sdk"
 import {
   Avatar,
   AvatarFallback,
@@ -32,6 +34,9 @@ import {
   ExternalLinkIcon,
   ImageIcon,
   PaperclipIcon,
+  PhoneIcon,
+  PhoneMissedIcon,
+  PhoneOffIcon,
   ReplyIcon,
   ThumbsUp,
 } from "lucide-react"
@@ -116,6 +121,10 @@ export const MessageItem = (props: MessageItemProps) => {
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
   const storyReply = getStoryReplyEntity(message.contentAttributes)
+  // A call-activity row renders its localized label from contentAttributes
+  // (see WhatsappCallActivity); the stored text is only an English fallback
+  // for previews and must not double-render here.
+  const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
 
   return (
     <MessageBubble
@@ -131,7 +140,12 @@ export const MessageItem = (props: MessageItemProps) => {
           </AvatarFallback>
         </Avatar>
       )}
-      <div className="flex min-h-11 max-w-[70%] flex-col gap-1">
+      <div
+        className={cn(
+          "flex min-h-11 max-w-[70%] flex-col gap-1",
+          variant === "full" && "mx-auto",
+        )}
+      >
         {storyReply && <StoryReplyContext story={storyReply.story} />}
         {isComment ? (
           (message.text ||
@@ -175,25 +189,26 @@ export const MessageItem = (props: MessageItemProps) => {
           )
         ) : (
           <>
-            {(isDeleted || (message.text && message.text.length > 0)) && (
-              <div
-                className={cn(
-                  "text-sm",
-                  variants[variant],
-                  isDeleted && "opacity-50",
-                )}
-              >
-                <pre className="wrap-break-word whitespace-pre-line font-sans">
-                  {isDeleted ? (
-                    <span className="text-xs italic">
-                      {t("messageDeleted")}
-                    </span>
-                  ) : (
-                    message.text
+            {(isDeleted || (message.text && message.text.length > 0)) &&
+              !whatsappCall && (
+                <div
+                  className={cn(
+                    "text-sm",
+                    variants[variant],
+                    isDeleted && "opacity-50",
                   )}
-                </pre>
-              </div>
-            )}
+                >
+                  <pre className="wrap-break-word whitespace-pre-line font-sans">
+                    {isDeleted ? (
+                      <span className="text-xs italic">
+                        {t("messageDeleted")}
+                      </span>
+                    ) : (
+                      message.text
+                    )}
+                  </pre>
+                </div>
+              )}
             {!isDeleted && hasAttachments && (
               <RenderAttachments message={message} />
             )}
@@ -405,8 +420,51 @@ const StoryReplyContext = (props: {
   )
 }
 
+const formatCallDuration = (durationSeconds: number): string => {
+  const minutes = Math.floor(durationSeconds / 60)
+  const seconds = durationSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, "0")}`
+}
+
+const WhatsappCallActivity = ({
+  call,
+}: {
+  call: MessageWhatsappCallEntity
+}) => {
+  const t = useTranslations("messages")
+
+  let icon = <PhoneIcon aria-hidden className="size-3.5" />
+  let label = t("voiceCall")
+  if (call.status === "completed") {
+    label =
+      call.durationSeconds === undefined
+        ? t("voiceCall")
+        : t("voiceCallDuration", {
+            duration: formatCallDuration(call.durationSeconds),
+          })
+  } else if (call.status === "rejected") {
+    icon = <PhoneOffIcon aria-hidden className="size-3.5" />
+    label = t("declinedVoiceCall")
+  } else {
+    icon = <PhoneMissedIcon aria-hidden className="size-3.5" />
+    label = t("missedVoiceCall")
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-1 text-muted-foreground text-sm">
+      {icon}
+      <span>{label}</span>
+    </div>
+  )
+}
+
 const RenderContentAttributes = (props: MessageItemProps) => {
   const { message, onPostback } = props
+  const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
+  if (whatsappCall) {
+    return <WhatsappCallActivity call={whatsappCall} />
+  }
+
   const contentAttributes = message.contentAttributes as
     | MessageTemplateEntity
     | undefined

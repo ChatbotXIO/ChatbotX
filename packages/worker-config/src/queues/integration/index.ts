@@ -45,6 +45,7 @@ export const IntegrationJobAction = {
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
+  whatsappCallEvent: "whatsappCallEvent",
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
   processCommentAutomation: "processCommentAutomation",
@@ -356,6 +357,56 @@ export type IntegrationJobCoexistAttachmentDownload = {
   }
 }
 
+/**
+ * One normalized event from Meta's `calls` webhook field (WhatsApp Business
+ * Calling). Structurally mirrors `WhatsappCallEventPayload` from
+ * `@chatbotx.io/integration-whatsapp` (worker-config cannot depend on
+ * integration packages — same convention as `adsAutomaticEvent`).
+ */
+export type IntegrationJobWhatsappCallEvent = {
+  type: typeof IntegrationJobAction.whatsappCallEvent
+  data: {
+    integrationType: "whatsapp"
+    integrationIdentifier: string
+    payload: {
+      phoneNumberId: string
+      contact?: {
+        waId: string
+        userId?: string
+        name?: string
+      }
+      event:
+        | {
+            kind: "connect"
+            wacid: string
+            direction: "userInitiated" | "businessInitiated"
+            from?: string
+            to?: string
+            timestamp?: string
+          }
+        | {
+            kind: "terminate"
+            wacid: string
+            direction?: "userInitiated" | "businessInitiated"
+            status: "COMPLETED" | "FAILED"
+            from?: string
+            to?: string
+            timestamp?: string
+            startTime?: string
+            endTime?: string
+            durationSeconds?: number
+          }
+        | {
+            kind: "status"
+            wacid: string
+            status: "RINGING" | "ACCEPTED" | "REJECTED"
+            recipientId?: string
+            timestamp?: string
+          }
+    }
+  }
+}
+
 export type IntegrationJobAdsAutomaticEvent = {
   type: typeof IntegrationJobAction.adsAutomaticEvent
   data: {
@@ -562,6 +613,7 @@ export type IntegrationJobData =
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent
+  | IntegrationJobWhatsappCallEvent
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation
