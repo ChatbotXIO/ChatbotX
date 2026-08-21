@@ -24,10 +24,16 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
   const t = useTranslations("userDataWebview")
   const locale = useLocale()
   // Preselect "now" so the submit bar is actionable immediately — the
-  // contact only adjusts what differs from today.
-  const [pickedDate, setPickedDate] = useState(() => new Date())
+  // contact only adjusts what differs from today. Initialized on the client
+  // only: seeding `new Date()` during SSR hydrates against a different
+  // minute and trips React's hydration mismatch.
+  const [pickedDate, setPickedDate] = useState<Date | null>(null)
   const [submitError, setSubmitError] = useState(false)
   const [completed, setCompleted] = useState(false)
+
+  useEffect(() => {
+    setPickedDate((current) => current ?? new Date())
+  }, [])
 
   const { execute, isPending } = useAction(submitDateTimeAction, {
     onSuccess: ({ data }) => {
@@ -68,6 +74,12 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
         </div>
       </PublicShell>
     )
+  }
+
+  // First client frame before the effect seeds "now": render the empty
+  // light shell so nothing hydrates against a server-side timestamp.
+  if (!pickedDate) {
+    return <PublicShell>{null}</PublicShell>
   }
 
   return (
