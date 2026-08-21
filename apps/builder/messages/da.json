@@ -799,6 +799,9 @@
     "dynamicImage": {
       "label": "Dynamisk billede"
     },
+    "minigame": {
+      "label": "Minispil"
+    },
     "savePayloadToCustomField": {
       "label": "Gem payload til brugerdefineret felt"
     },
@@ -5150,6 +5153,124 @@
     },
     "whatsapp": {
       "connect": "Forbind"
+    }
+  },
+  "minigames": {
+    "title": "Minispil",
+    "description": "Opret og administrer lykkehjul-minispil til dine kunder.",
+    "types": {
+      "luckyWheel": "Lykkehjul",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Lodtrækning",
+      "scratchOff": "Skrabelod"
+    },
+    "createDialog": {
+      "title": "Vælg en minispiltype"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Sum af alle sandsynligheder: {value}%",
+      "loseProbability": "Sandsynlighed for tab: {value}%",
+      "winProbability": "Sandsynlighed for gevinst: {value}%",
+      "newPrize": "Ny gevinst"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Rediger gevinst",
+      "nonWinningTitle": "Rediger ikke-vindende indstilling",
+      "prizeNameLabel": "Gevinstnavn",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Anbefalet størrelse 120x120px",
+      "sendMessage": "Send en besked, når spilleren ikke vinder",
+      "messageMode": "Beskedtype",
+      "messageModeText": "Tekst",
+      "messageModeFlow": "Flow",
+      "messageText": "Besked"
+    },
+    "winningMessageDialog": {
+      "title": "Indstillinger for gevinstbesked",
+      "titleLabel": "Titel",
+      "acceptButtonText": "Tekst på accepter-knap",
+      "shareButtonText": "Tekst på del-knap",
+      "shareButtonDescription": "Beskrivelse af del-knap"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Indstillinger for ikke-vindende besked",
+      "titleLabel": "Titel",
+      "shareButtonText": "Tekst på del-knap",
+      "shareButtonDescription": "Beskrivelse af del-knap"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Del med venner",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Detaljeret forhåndsvisning kommer snart for denne spiltype",
+      "rules": "Regler"
+    },
+    "form": {
+      "generalSettingsTitle": "Generelle indstillinger",
+      "appearanceTitle": "Udseende",
+      "playerSettingsTitle": "Spillerindstillinger",
+      "prizeSettingsTitle": "Gevinstindstillinger"
+    },
+    "generalSettings": {
+      "playedAt": "Spillet den",
+      "rulesDescription": "Regelbeskrivelse",
+      "openerTags": "Tag kontakter, der åbner spillinket",
+      "playerTags": "Tag spillere",
+      "newFriendTags": "Tag nye venner",
+      "shareEnabled": "Tillad deling med venner",
+      "shareMessage": "Delingsbesked",
+      "shareMessageHint": "Brug '{{shareUrl}}' til at indsætte det faktiske spillink — fjern det venligst ikke."
+    },
+    "appearance": {
+      "backgroundColor": "Baggrundsfarve",
+      "machineColor": "Maskinfarve",
+      "decorativeColor": "Dekorativ farve",
+      "ruleTextColor": "Farve på regeltekst",
+      "backgroundImage": "Baggrundsbillede",
+      "backgroundImageDescription": "Anbefalet bredde: 1024px",
+      "prizeDescriptionImage": "Billede til gevinstbeskrivelse (valgfrit)",
+      "prizeDescriptionImageDescription": "Anbefalet bredde: 750px",
+      "startButtonImage": "Billede til start-knap",
+      "startButtonImageDescription": "Anbefalet størrelse: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Antal lykketræk pr. person",
+      "resetPolicyLabel": "Nulstil antal træk",
+      "resetNever": "Nulstil ikke antallet af træk",
+      "resetEveryNDays": "Nulstil antallet af træk hver",
+      "resetIntervalDaysSuffix": "dag(e)"
+    },
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopier og indsæt URL'en i dit flow, din broadcast eller sekvens for at dele dette minispil."
+    },
+    "play": {
+      "close": "Luk",
+      "drawsRemaining": "{count} forsøg tilbage",
+      "noDrawsLeft": "Du har ikke flere forsøg til dette minispil.",
+      "notStartedYet": "Dette minispil er ikke startet endnu.",
+      "ended": "Dette minispil er afsluttet.",
+      "forbiddenTitle": "Adgang nægtet",
+      "forbiddenDescription": "Dette link er ugyldigt eller udløbet.",
+      "comingSoonTitle": "Kommer snart",
+      "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles."
+    },
+    "history": {
+      "title": "Historik",
+      "played": "Spil",
+      "remaining": "Resterende træk",
+      "openedAt": "Først åbnet",
+      "lastPlayedAt": "Senest spillet",
+      "unknownContact": "Ukendt kontakt",
+      "record": "Optegnelse",
+      "recordDialog": {
+        "title": "Spiloptegnelse",
+        "win": "Vandt",
+        "lose": "Ingen præmie",
+        "empty": "Ingen spiloptegnelser endnu"
+      }
     }
   }
 }

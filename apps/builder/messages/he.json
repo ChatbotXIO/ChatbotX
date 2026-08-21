@@ -3265,6 +3265,9 @@
     "dynamicImage": {
       "label": "תמונה דינמית"
     },
+    "minigame": {
+      "label": "מיני-משחק"
+    },
     "savePayloadToCustomField": {
       "label": "שמירת המטען בשדה מותאם אישית"
     },
@@ -5150,6 +5153,124 @@
     },
     "whatsapp": {
       "connect": "חיבור"
+    }
+  },
+  "minigames": {
+    "title": "מיני-משחקים",
+    "description": "צרו ונהלו מיני-משחקי הגרלה עבור הלקוחות שלכם.",
+    "types": {
+      "luckyWheel": "גלגל המזל",
+      "jackpot": "ג'קפוט",
+      "gashapon": "גשאפון",
+      "drawLots": "הגרלת גורל",
+      "scratchOff": "כרטיס גירוד"
+    },
+    "createDialog": {
+      "title": "בחרו סוג מיני-משחק"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "סכום כל ההסתברויות: {value}%",
+      "loseProbability": "הסתברות הפסד: {value}%",
+      "winProbability": "הסתברות זכייה: {value}%",
+      "newPrize": "פרס חדש"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "עריכת פרס",
+      "nonWinningTitle": "עריכת הגדרת אי-זכייה",
+      "prizeNameLabel": "שם הפרס",
+      "nonWinningTitleLabel": "כותרת",
+      "loseImageDescription": "גודל מומלץ 120x120 פיקסלים",
+      "sendMessage": "שליחת הודעה כאשר השחקן לא זוכה",
+      "messageMode": "סוג הודעה",
+      "messageModeText": "טקסט",
+      "messageModeFlow": "פלואו",
+      "messageText": "הודעה"
+    },
+    "winningMessageDialog": {
+      "title": "הגדרות הודעת זכייה",
+      "titleLabel": "כותרת",
+      "acceptButtonText": "טקסט כפתור אישור",
+      "shareButtonText": "טקסט כפתור שיתוף",
+      "shareButtonDescription": "תיאור כפתור שיתוף"
+    },
+    "nonWinningMessageDialog": {
+      "title": "הגדרות הודעת אי-זכייה",
+      "titleLabel": "כותרת",
+      "shareButtonText": "טקסט כפתור שיתוף",
+      "shareButtonDescription": "תיאור כפתור שיתוף"
+    },
+    "preview": {
+      "start": "התחלה",
+      "shareWithFriends": "שיתוף עם חברים",
+      "jackpotHeader": "ג'קפוט",
+      "jackpotBanner": "ג'קפוט",
+      "comingSoon": "תצוגה מקדימה מפורטת תגיע בקרוב עבור סוג משחק זה",
+      "rules": "חוקים"
+    },
+    "form": {
+      "generalSettingsTitle": "הגדרות כלליות",
+      "appearanceTitle": "מראה",
+      "playerSettingsTitle": "הגדרות שחקן",
+      "prizeSettingsTitle": "הגדרות פרסים"
+    },
+    "generalSettings": {
+      "playedAt": "שוחק בתאריך",
+      "rulesDescription": "תיאור החוקים",
+      "openerTags": "תיוג אנשי קשר שפותחים את קישור המשחק",
+      "playerTags": "תיוג שחקנים",
+      "newFriendTags": "תיוג חברים חדשים",
+      "shareEnabled": "אפשרו שיתוף עם חברים",
+      "shareMessage": "הודעת שיתוף",
+      "shareMessageHint": "השתמשו ב-'{{shareUrl}}' כדי להוסיף את קישור המשחק בפועל — נא לא להסיר אותו."
+    },
+    "appearance": {
+      "backgroundColor": "צבע רקע",
+      "machineColor": "צבע המכונה",
+      "decorativeColor": "צבע דקורטיבי",
+      "ruleTextColor": "צבע טקסט החוקים",
+      "backgroundImage": "תמונת רקע",
+      "backgroundImageDescription": "רוחב מומלץ: 1024 פיקסלים",
+      "prizeDescriptionImage": "תמונת תיאור פרס (אופציונלי)",
+      "prizeDescriptionImageDescription": "רוחב מומלץ: 750 פיקסלים",
+      "startButtonImage": "תמונת כפתור התחלה",
+      "startButtonImageDescription": "גודל מומלץ: 360x105 פיקסלים"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "מספר הזדמנויות הגרלה לכל אדם",
+      "resetPolicyLabel": "איפוס הגרלות",
+      "resetNever": "אין לאפס את מספר ההגרלות",
+      "resetEveryNDays": "איפוס מספר ההגרלות כל",
+      "resetIntervalDaysSuffix": "יום/ימים"
+    },
+    "publicUrl": {
+      "label": "קישור ציבורי",
+      "hint": "העתיקו והדביקו את הקישור בפלואו, בשידור או ברצף שלכם כדי לשתף את המיני-משחק הזה."
+    },
+    "play": {
+      "close": "סגור",
+      "drawsRemaining": "נותרו {count} ניסיונות",
+      "noDrawsLeft": "נגמרו לך הניסיונות במיני-משחק זה.",
+      "notStartedYet": "מיני-משחק זה עדיין לא התחיל.",
+      "ended": "מיני-משחק זה הסתיים.",
+      "forbiddenTitle": "הגישה נדחתה",
+      "forbiddenDescription": "קישור זה אינו תקף או שפג תוקפו.",
+      "comingSoonTitle": "בקרוב",
+      "comingSoonDescription": "לא ניתן עדיין לשחק בסוג מיני-משחק זה."
+    },
+    "history": {
+      "title": "היסטוריה",
+      "played": "משחקים",
+      "remaining": "הגרלות שנותרו",
+      "openedAt": "נפתח לראשונה",
+      "lastPlayedAt": "שוחק לאחרונה",
+      "unknownContact": "איש קשר לא ידוע",
+      "record": "רשומה",
+      "recordDialog": {
+        "title": "רשומת משחקים",
+        "win": "זכה",
+        "lose": "ללא פרס",
+        "empty": "אין עדיין רשומות משחק"
+      }
     }
   }
 }

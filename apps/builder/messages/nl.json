@@ -613,6 +613,9 @@
     "dynamicImage": {
       "label": "Dynamische afbeelding"
     },
+    "minigame": {
+      "label": "Minigame"
+    },
     "savePayloadToCustomField": {
       "label": "Payload opslaan in aangepast veld"
     },
@@ -5150,6 +5153,124 @@
     },
     "whatsapp": {
       "connect": "Koppelen"
+    }
+  },
+  "minigames": {
+    "title": "Minigames",
+    "description": "Maak en beheer minigames met prijstrekking voor je klanten.",
+    "types": {
+      "luckyWheel": "Gelukswiel",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Loten trekken",
+      "scratchOff": "Kraslot"
+    },
+    "createDialog": {
+      "title": "Kies een type minigame"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Som van alle kansen: {value}%",
+      "loseProbability": "Verlieskans: {value}%",
+      "winProbability": "Winkans: {value}%",
+      "newPrize": "Nieuwe prijs"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Prijs bewerken",
+      "nonWinningTitle": "Verliesinstelling bewerken",
+      "prizeNameLabel": "Prijsnaam",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Aanbevolen formaat 120x120px",
+      "sendMessage": "Stuur een bericht wanneer de speler niet wint",
+      "messageMode": "Berichttype",
+      "messageModeText": "Tekst",
+      "messageModeFlow": "Flow",
+      "messageText": "Bericht"
+    },
+    "winningMessageDialog": {
+      "title": "Instellingen winbericht",
+      "titleLabel": "Titel",
+      "acceptButtonText": "Tekst accepteerknop",
+      "shareButtonText": "Tekst deelknop",
+      "shareButtonDescription": "Beschrijving deelknop"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Instellingen verliesbericht",
+      "titleLabel": "Titel",
+      "shareButtonText": "Tekst deelknop",
+      "shareButtonDescription": "Beschrijving deelknop"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Delen met vrienden",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Gedetailleerde voorvertoning voor dit speltype volgt binnenkort",
+      "rules": "Regels"
+    },
+    "form": {
+      "generalSettingsTitle": "Algemene instellingen",
+      "appearanceTitle": "Uiterlijk",
+      "playerSettingsTitle": "Spelerinstellingen",
+      "prizeSettingsTitle": "Prijsinstellingen"
+    },
+    "generalSettings": {
+      "playedAt": "Gespeeld op",
+      "rulesDescription": "Spelregels",
+      "openerTags": "Tag contacten die de spellink openen",
+      "playerTags": "Tag spelers",
+      "newFriendTags": "Tag nieuwe vrienden",
+      "shareEnabled": "Delen met vrienden toestaan",
+      "shareMessage": "Deelbericht",
+      "shareMessageHint": "Gebruik '{{shareUrl}}' om de daadwerkelijke spellink in te voegen — verwijder dit niet."
+    },
+    "appearance": {
+      "backgroundColor": "Achtergrondkleur",
+      "machineColor": "Machinekleur",
+      "decorativeColor": "Decoratiekleur",
+      "ruleTextColor": "Kleur regeltekst",
+      "backgroundImage": "Achtergrondafbeelding",
+      "backgroundImageDescription": "Aanbevolen breedte: 1024px",
+      "prizeDescriptionImage": "Prijsbeschrijvingsafbeelding (optioneel)",
+      "prizeDescriptionImageDescription": "Aanbevolen breedte: 750px",
+      "startButtonImage": "Afbeelding startknop",
+      "startButtonImageDescription": "Aanbevolen formaat: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Aantal trekkingskansen per persoon",
+      "resetPolicyLabel": "Trekkingen resetten",
+      "resetNever": "Aantal trekkingen niet resetten",
+      "resetEveryNDays": "Reset het aantal trekkingen elke",
+      "resetIntervalDaysSuffix": "dag(en)"
+    },
+    "publicUrl": {
+      "label": "Openbare URL",
+      "hint": "Kopieer en plak de URL in je flow, broadcast of sequence om deze minigame te delen."
+    },
+    "play": {
+      "close": "Sluiten",
+      "drawsRemaining": "Nog {count} pogingen over",
+      "noDrawsLeft": "Je hebt geen pogingen meer over voor dit minispel.",
+      "notStartedYet": "Dit minispel is nog niet begonnen.",
+      "ended": "Dit minispel is beëindigd.",
+      "forbiddenTitle": "Toegang geweigerd",
+      "forbiddenDescription": "Deze link is ongeldig of verlopen.",
+      "comingSoonTitle": "Binnenkort beschikbaar",
+      "comingSoonDescription": "Dit type minispel is nog niet speelbaar."
+    },
+    "history": {
+      "title": "Geschiedenis",
+      "played": "Gespeeld",
+      "remaining": "Resterende trekkingen",
+      "openedAt": "Eerst geopend",
+      "lastPlayedAt": "Laatst gespeeld",
+      "unknownContact": "Onbekend contact",
+      "record": "Logboek",
+      "recordDialog": {
+        "title": "Speellogboek",
+        "win": "Gewonnen",
+        "lose": "Geen prijs",
+        "empty": "Nog geen speelrecords"
+      }
     }
   }
 }

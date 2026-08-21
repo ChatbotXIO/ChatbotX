@@ -799,6 +799,9 @@
     "dynamicImage": {
       "label": "Dynaaminen kuva"
     },
+    "minigame": {
+      "label": "Minipeli"
+    },
     "savePayloadToCustomField": {
       "label": "Tallenna tietosisältö mukautettuun kenttään"
     },
@@ -5150,6 +5153,124 @@
     },
     "whatsapp": {
       "connect": "Yhdistä"
+    }
+  },
+  "minigames": {
+    "title": "Minipelit",
+    "description": "Luo ja hallinnoi onnenpyörä-minipelejä asiakkaillesi.",
+    "types": {
+      "luckyWheel": "Onnenpyörä",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Arvonta",
+      "scratchOff": "Raaputusarpa"
+    },
+    "createDialog": {
+      "title": "Valitse minipelin tyyppi"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Kaikkien todennäköisyyksien summa: {value}%",
+      "loseProbability": "Häviön todennäköisyys: {value}%",
+      "winProbability": "Voiton todennäköisyys: {value}%",
+      "newPrize": "Uusi palkinto"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Muokkaa palkintoa",
+      "nonWinningTitle": "Muokkaa ei-voittavaa asetusta",
+      "prizeNameLabel": "Palkinnon nimi",
+      "nonWinningTitleLabel": "Otsikko",
+      "loseImageDescription": "Suositeltu koko 120x120px",
+      "sendMessage": "Lähetä viesti, kun pelaaja ei voita",
+      "messageMode": "Viestin tyyppi",
+      "messageModeText": "Teksti",
+      "messageModeFlow": "Flow",
+      "messageText": "Viesti"
+    },
+    "winningMessageDialog": {
+      "title": "Voittoviestin asetukset",
+      "titleLabel": "Otsikko",
+      "acceptButtonText": "Hyväksy-painikkeen teksti",
+      "shareButtonText": "Jaa-painikkeen teksti",
+      "shareButtonDescription": "Jaa-painikkeen kuvaus"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Ei-voittavan viestin asetukset",
+      "titleLabel": "Otsikko",
+      "shareButtonText": "Jaa-painikkeen teksti",
+      "shareButtonDescription": "Jaa-painikkeen kuvaus"
+    },
+    "preview": {
+      "start": "Aloita",
+      "shareWithFriends": "Jaa ystäville",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Yksityiskohtainen esikatselu tälle pelityypille tulossa pian",
+      "rules": "Säännöt"
+    },
+    "form": {
+      "generalSettingsTitle": "Yleiset asetukset",
+      "appearanceTitle": "Ulkoasu",
+      "playerSettingsTitle": "Pelaaja-asetukset",
+      "prizeSettingsTitle": "Palkintoasetukset"
+    },
+    "generalSettings": {
+      "playedAt": "Pelattu",
+      "rulesDescription": "Sääntöjen kuvaus",
+      "openerTags": "Merkitse kontaktit, jotka avaavat pelin linkin",
+      "playerTags": "Merkitse pelaajat",
+      "newFriendTags": "Merkitse uudet ystävät",
+      "shareEnabled": "Salli jakaminen ystävien kanssa",
+      "shareMessage": "Jakoviesti",
+      "shareMessageHint": "Käytä merkintää '{{shareUrl}}' lisätäksesi todellisen pelilinkin — älä poista sitä."
+    },
+    "appearance": {
+      "backgroundColor": "Taustaväri",
+      "machineColor": "Koneen väri",
+      "decorativeColor": "Koristeväri",
+      "ruleTextColor": "Sääntötekstin väri",
+      "backgroundImage": "Taustakuva",
+      "backgroundImageDescription": "Suositeltu leveys: 1024px",
+      "prizeDescriptionImage": "Palkinnon kuvauskuva (valinnainen)",
+      "prizeDescriptionImageDescription": "Suositeltu leveys: 750px",
+      "startButtonImage": "Aloituspainikkeen kuva",
+      "startButtonImageDescription": "Suositeltu koko: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Arvontakertojen määrä per henkilö",
+      "resetPolicyLabel": "Nollaa arvonnat",
+      "resetNever": "Älä nollaa arvontojen määrää",
+      "resetEveryNDays": "Nollaa arvontojen määrä joka",
+      "resetIntervalDaysSuffix": "päivä"
+    },
+    "publicUrl": {
+      "label": "Julkinen URL",
+      "hint": "Kopioi ja liitä URL-osoite flow'hun, joukkoviestiin tai sekvenssiin jakaaksesi tämän minipelin."
+    },
+    "play": {
+      "close": "Sulje",
+      "drawsRemaining": "{count} yritystä jäljellä",
+      "noDrawsLeft": "Sinulla ei ole enää yrityksiä tähän minipeliin.",
+      "notStartedYet": "Tämä minipeli ei ole vielä alkanut.",
+      "ended": "Tämä minipeli on päättynyt.",
+      "forbiddenTitle": "Pääsy evätty",
+      "forbiddenDescription": "Tämä linkki on virheellinen tai vanhentunut.",
+      "comingSoonTitle": "Tulossa pian",
+      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata."
+    },
+    "history": {
+      "title": "Historia",
+      "played": "Pelikerrat",
+      "remaining": "Jäljellä olevat arvonnat",
+      "openedAt": "Avattu ensimmäisen kerran",
+      "lastPlayedAt": "Viimeksi pelattu",
+      "unknownContact": "Tuntematon kontakti",
+      "record": "Tapahtumat",
+      "recordDialog": {
+        "title": "Pelitapahtumat",
+        "win": "Voitti",
+        "lose": "Ei palkintoa",
+        "empty": "Ei pelitapahtumia vielä"
+      }
     }
   }
 }

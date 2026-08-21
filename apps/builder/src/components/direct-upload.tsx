@@ -165,7 +165,7 @@ export function DirectUploadOrInsertLink({
             >
               {fileType === "image" ? (
                 <Image
-                  alt={stepId}
+                  alt={stepId ?? ""}
                   className="h-full w-full object-contain"
                   height={1000}
                   src={publicUrl}

@@ -185,6 +185,9 @@ importers:
       '@chatbotx.io/mail':
         specifier: workspace:*
         version: link:../../packages/mail
+      '@chatbotx.io/minigame-ui':
+        specifier: workspace:*
+        version: link:../../packages/minigame-ui
       '@chatbotx.io/partysocket-config':
         specifier: workspace:*
         version: link:../../packages/partysocket-config
@@ -2575,6 +2578,25 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/minigame-ui:
+    dependencies:
+      '@chatbotx.io/ui':
+        specifier: workspace:*
+        version: link:../ui
+      react:
+        specifier: 19.2.5
+        version: 19.2.5
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/react':
+        specifier: 19.2.14
+        version: 19.2.14
+      typescript:
+        specifier: ^5
+        version: 5.9.3
 
   packages/partysocket-config:
     dependencies:

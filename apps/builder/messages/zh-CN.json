@@ -2258,6 +2258,9 @@
     "dynamicImage": {
       "label": "动态图片"
     },
+    "minigame": {
+      "label": "小游戏"
+    },
     "quality": {
       "label": "品质",
       "options": {
@@ -5150,6 +5153,124 @@
       "cancelledDescription": "此预约已被取消。",
       "unavailableTitle": "无法取消",
       "unavailableDescription": "此预约已取消、已删除或已过期。"
+    }
+  },
+  "minigames": {
+    "title": "小游戏",
+    "description": "为您的客户创建和管理幸运抽奖小游戏。",
+    "types": {
+      "luckyWheel": "幸运转盘",
+      "jackpot": "老虎机",
+      "gashapon": "扭蛋机",
+      "drawLots": "抽签",
+      "scratchOff": "刮刮乐"
+    },
+    "createDialog": {
+      "title": "选择小游戏类型"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "所有概率之和：{value}%",
+      "loseProbability": "未中奖概率：{value}%",
+      "winProbability": "中奖概率：{value}%",
+      "newPrize": "新增奖品"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "编辑奖品",
+      "nonWinningTitle": "编辑未中奖设置",
+      "prizeNameLabel": "奖品名称",
+      "nonWinningTitleLabel": "标题",
+      "loseImageDescription": "建议尺寸 120x120px",
+      "sendMessage": "玩家未中奖时发送消息",
+      "messageMode": "消息类型",
+      "messageModeText": "文本",
+      "messageModeFlow": "流程",
+      "messageText": "消息内容"
+    },
+    "winningMessageDialog": {
+      "title": "中奖消息设置",
+      "titleLabel": "标题",
+      "acceptButtonText": "接受按钮文本",
+      "shareButtonText": "分享按钮文本",
+      "shareButtonDescription": "分享按钮描述"
+    },
+    "nonWinningMessageDialog": {
+      "title": "未中奖消息设置",
+      "titleLabel": "标题",
+      "shareButtonText": "分享按钮文本",
+      "shareButtonDescription": "分享按钮描述"
+    },
+    "preview": {
+      "start": "开始",
+      "shareWithFriends": "与好友分享",
+      "jackpotHeader": "老虎机",
+      "jackpotBanner": "老虎机",
+      "comingSoon": "该游戏类型的详细预览即将推出",
+      "rules": "规则"
+    },
+    "form": {
+      "generalSettingsTitle": "常规设置",
+      "appearanceTitle": "外观",
+      "playerSettingsTitle": "玩家设置",
+      "prizeSettingsTitle": "奖品设置"
+    },
+    "generalSettings": {
+      "playedAt": "参与时间",
+      "rulesDescription": "规则说明",
+      "openerTags": "为打开游戏链接的联系人打标签",
+      "playerTags": "为参与者打标签",
+      "newFriendTags": "为新好友打标签",
+      "shareEnabled": "允许与好友分享",
+      "shareMessage": "分享消息",
+      "shareMessageHint": "使用 '{{shareUrl}}' 插入实际的游戏链接，请勿删除。"
+    },
+    "appearance": {
+      "backgroundColor": "背景颜色",
+      "machineColor": "机身颜色",
+      "decorativeColor": "装饰颜色",
+      "ruleTextColor": "规则文字颜色",
+      "backgroundImage": "背景图片",
+      "backgroundImageDescription": "建议宽度：1024px",
+      "prizeDescriptionImage": "奖品说明图片（可选）",
+      "prizeDescriptionImageDescription": "建议宽度：750px",
+      "startButtonImage": "开始按钮图片",
+      "startButtonImageDescription": "建议尺寸：360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "每人可抽奖次数",
+      "resetPolicyLabel": "重置抽奖次数",
+      "resetNever": "不重置抽奖次数",
+      "resetEveryNDays": "每隔以下天数重置抽奖次数",
+      "resetIntervalDaysSuffix": "天"
+    },
+    "publicUrl": {
+      "label": "公开链接",
+      "hint": "将此链接复制并粘贴到您的流程、群发消息或序列中，以分享此小游戏。"
+    },
+    "play": {
+      "close": "关闭",
+      "drawsRemaining": "剩余 {count} 次机会",
+      "noDrawsLeft": "您在此小游戏中的抽奖机会已用完。",
+      "notStartedYet": "此小游戏尚未开始。",
+      "ended": "此小游戏已结束。",
+      "forbiddenTitle": "访问被拒绝",
+      "forbiddenDescription": "此链接无效或已过期。",
+      "comingSoonTitle": "即将推出",
+      "comingSoonDescription": "此类型的小游戏暂时无法玩。"
+    },
+    "history": {
+      "title": "历史记录",
+      "played": "已玩次数",
+      "remaining": "剩余次数",
+      "openedAt": "首次打开",
+      "lastPlayedAt": "最近游玩",
+      "unknownContact": "未知联系人",
+      "record": "记录",
+      "recordDialog": {
+        "title": "游戏记录",
+        "win": "中奖",
+        "lose": "未中奖",
+        "empty": "暂无游戏记录"
+      }
     }
   }
 }

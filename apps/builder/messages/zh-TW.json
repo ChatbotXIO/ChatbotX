@@ -204,6 +204,9 @@
     "dynamicImage": {
       "label": "動態圖片"
     },
+    "minigame": {
+      "label": "小遊戲"
+    },
     "savePayloadToCustomField": {
       "label": "將負載儲存到自訂欄位"
     },
@@ -5150,6 +5153,124 @@
     },
     "whatsapp": {
       "connect": "連接"
+    }
+  },
+  "minigames": {
+    "title": "小遊戲",
+    "description": "為您的顧客建立並管理幸運抽獎小遊戲。",
+    "types": {
+      "luckyWheel": "幸運轉盤",
+      "jackpot": "拉霸機",
+      "gashapon": "扭蛋機",
+      "drawLots": "抽籤",
+      "scratchOff": "刮刮樂"
+    },
+    "createDialog": {
+      "title": "選擇小遊戲類型"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "所有機率總和：{value}%",
+      "loseProbability": "未中獎機率：{value}%",
+      "winProbability": "中獎機率：{value}%",
+      "newPrize": "新增獎項"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "編輯獎項",
+      "nonWinningTitle": "編輯未中獎設定",
+      "prizeNameLabel": "獎項名稱",
+      "nonWinningTitleLabel": "標題",
+      "loseImageDescription": "建議尺寸 120x120px",
+      "sendMessage": "玩家未中獎時傳送訊息",
+      "messageMode": "訊息類型",
+      "messageModeText": "文字",
+      "messageModeFlow": "流程",
+      "messageText": "訊息內容"
+    },
+    "winningMessageDialog": {
+      "title": "中獎訊息設定",
+      "titleLabel": "標題",
+      "acceptButtonText": "接受按鈕文字",
+      "shareButtonText": "分享按鈕文字",
+      "shareButtonDescription": "分享按鈕說明"
+    },
+    "nonWinningMessageDialog": {
+      "title": "未中獎訊息設定",
+      "titleLabel": "標題",
+      "shareButtonText": "分享按鈕文字",
+      "shareButtonDescription": "分享按鈕說明"
+    },
+    "preview": {
+      "start": "開始",
+      "shareWithFriends": "與朋友分享",
+      "jackpotHeader": "拉霸機",
+      "jackpotBanner": "拉霸機",
+      "comingSoon": "此遊戲類型的詳細預覽即將推出",
+      "rules": "規則"
+    },
+    "form": {
+      "generalSettingsTitle": "一般設定",
+      "appearanceTitle": "外觀",
+      "playerSettingsTitle": "玩家設定",
+      "prizeSettingsTitle": "獎項設定"
+    },
+    "generalSettings": {
+      "playedAt": "遊玩時間",
+      "rulesDescription": "規則說明",
+      "openerTags": "為開啟遊戲連結的聯絡人加上標籤",
+      "playerTags": "為參與者加上標籤",
+      "newFriendTags": "為新朋友加上標籤",
+      "shareEnabled": "允許與朋友分享",
+      "shareMessage": "分享訊息",
+      "shareMessageHint": "使用 '{{shareUrl}}' 插入實際的遊戲連結，請勿移除。"
+    },
+    "appearance": {
+      "backgroundColor": "背景顏色",
+      "machineColor": "機台顏色",
+      "decorativeColor": "裝飾顏色",
+      "ruleTextColor": "規則文字顏色",
+      "backgroundImage": "背景圖片",
+      "backgroundImageDescription": "建議寬度：1024px",
+      "prizeDescriptionImage": "獎項說明圖片（選填）",
+      "prizeDescriptionImageDescription": "建議寬度：750px",
+      "startButtonImage": "開始按鈕圖片",
+      "startButtonImageDescription": "建議尺寸：360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "每人可抽獎次數",
+      "resetPolicyLabel": "重設抽獎次數",
+      "resetNever": "不重設抽獎次數",
+      "resetEveryNDays": "每隔以下天數重設抽獎次數",
+      "resetIntervalDaysSuffix": "天"
+    },
+    "publicUrl": {
+      "label": "公開連結",
+      "hint": "將此連結複製並貼到您的流程、發送或序列中，以分享此小遊戲。"
+    },
+    "play": {
+      "close": "關閉",
+      "drawsRemaining": "剩餘 {count} 次機會",
+      "noDrawsLeft": "您在此小遊戲中的抽獎機會已用完。",
+      "notStartedYet": "此小遊戲尚未開始。",
+      "ended": "此小遊戲已結束。",
+      "forbiddenTitle": "存取遭拒",
+      "forbiddenDescription": "此連結無效或已過期。",
+      "comingSoonTitle": "即將推出",
+      "comingSoonDescription": "此類型的小遊戲暫時無法遊玩。"
+    },
+    "history": {
+      "title": "歷史紀錄",
+      "played": "已玩次數",
+      "remaining": "剩餘次數",
+      "openedAt": "首次開啟",
+      "lastPlayedAt": "最近遊玩",
+      "unknownContact": "未知聯絡人",
+      "record": "紀錄",
+      "recordDialog": {
+        "title": "遊戲紀錄",
+        "win": "中獎",
+        "lose": "未中獎",
+        "empty": "尚無遊戲紀錄"
+      }
     }
   }
 }

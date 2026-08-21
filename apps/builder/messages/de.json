@@ -799,6 +799,9 @@
     "dynamicImage": {
       "label": "Dynamisches Bild"
     },
+    "minigame": {
+      "label": "Minispiel"
+    },
     "savePayloadToCustomField": {
       "label": "Nutzdaten in benutzerdefiniertem Feld speichern"
     },
@@ -5150,6 +5153,124 @@
     },
     "whatsapp": {
       "connect": "Verbinden"
+    }
+  },
+  "minigames": {
+    "title": "Minispiele",
+    "description": "Erstellen und verwalten Sie Gewinnspiel-Minispiele für Ihre Kunden.",
+    "types": {
+      "luckyWheel": "Glücksrad",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Losziehung",
+      "scratchOff": "Rubbellos"
+    },
+    "createDialog": {
+      "title": "Minispiel-Typ auswählen"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Summe aller Wahrscheinlichkeiten: {value}%",
+      "loseProbability": "Verlustwahrscheinlichkeit: {value}%",
+      "winProbability": "Gewinnwahrscheinlichkeit: {value}%",
+      "newPrize": "Neuer Gewinn"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Gewinn bearbeiten",
+      "nonWinningTitle": "Nicht-Gewinn-Einstellung bearbeiten",
+      "prizeNameLabel": "Gewinnname",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Empfohlene Größe 120x120px",
+      "sendMessage": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
+      "messageMode": "Nachrichtentyp",
+      "messageModeText": "Text",
+      "messageModeFlow": "Flow",
+      "messageText": "Nachricht"
+    },
+    "winningMessageDialog": {
+      "title": "Einstellungen für Gewinnnachricht",
+      "titleLabel": "Titel",
+      "acceptButtonText": "Text der Bestätigungsschaltfläche",
+      "shareButtonText": "Text der Teilen-Schaltfläche",
+      "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Einstellungen für Nicht-Gewinn-Nachricht",
+      "titleLabel": "Titel",
+      "shareButtonText": "Text der Teilen-Schaltfläche",
+      "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Mit Freunden teilen",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze",
+      "rules": "Regeln"
+    },
+    "form": {
+      "generalSettingsTitle": "Allgemeine Einstellungen",
+      "appearanceTitle": "Erscheinungsbild",
+      "playerSettingsTitle": "Spielereinstellungen",
+      "prizeSettingsTitle": "Gewinneinstellungen"
+    },
+    "generalSettings": {
+      "playedAt": "Gespielt am",
+      "rulesDescription": "Regelbeschreibung",
+      "openerTags": "Kontakte markieren, die den Spiellink öffnen",
+      "playerTags": "Spieler markieren",
+      "newFriendTags": "Neue Freunde markieren",
+      "shareEnabled": "Teilen mit Freunden erlauben",
+      "shareMessage": "Freigabenachricht",
+      "shareMessageHint": "Verwenden Sie '{{shareUrl}}', um den tatsächlichen Spiellink einzufügen — bitte nicht entfernen."
+    },
+    "appearance": {
+      "backgroundColor": "Hintergrundfarbe",
+      "machineColor": "Maschinenfarbe",
+      "decorativeColor": "Dekorative Farbe",
+      "ruleTextColor": "Farbe des Regeltexts",
+      "backgroundImage": "Hintergrundbild",
+      "backgroundImageDescription": "Empfohlene Breite: 1024px",
+      "prizeDescriptionImage": "Gewinnbeschreibungsbild (optional)",
+      "prizeDescriptionImageDescription": "Empfohlene Breite: 750px",
+      "startButtonImage": "Startschaltflächen-Bild",
+      "startButtonImageDescription": "Empfohlene Größe: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Anzahl der Gewinnspielversuche pro Person",
+      "resetPolicyLabel": "Versuche zurücksetzen",
+      "resetNever": "Anzahl der Versuche nicht zurücksetzen",
+      "resetEveryNDays": "Anzahl der Versuche zurücksetzen alle",
+      "resetIntervalDaysSuffix": "Tag(e)"
+    },
+    "publicUrl": {
+      "label": "Öffentliche URL",
+      "hint": "Kopieren Sie die URL in Ihren Flow, Ihre Broadcast oder Sequenz, um dieses Minispiel zu teilen."
+    },
+    "play": {
+      "close": "Schließen",
+      "drawsRemaining": "{count} Versuche übrig",
+      "noDrawsLeft": "Du hast keine Versuche mehr für dieses Minispiel.",
+      "notStartedYet": "Dieses Minispiel hat noch nicht begonnen.",
+      "ended": "Dieses Minispiel ist beendet.",
+      "forbiddenTitle": "Zugriff verweigert",
+      "forbiddenDescription": "Dieser Link ist ungültig oder abgelaufen.",
+      "comingSoonTitle": "Demnächst verfügbar",
+      "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar."
+    },
+    "history": {
+      "title": "Verlauf",
+      "played": "Spiele",
+      "remaining": "Verbleibende Versuche",
+      "openedAt": "Zuerst geöffnet",
+      "lastPlayedAt": "Zuletzt gespielt",
+      "unknownContact": "Unbekannter Kontakt",
+      "record": "Protokoll",
+      "recordDialog": {
+        "title": "Spielprotokoll",
+        "win": "Gewonnen",
+        "lose": "Kein Gewinn",
+        "empty": "Noch keine Spielprotokolle"
+      }
     }
   }
 }
