@@ -80,10 +80,10 @@ export function InlineDateTimePicker({
 
   return (
     <div className="flex w-full flex-col">
-      <div className="relative flex items-center justify-center border-b px-4 py-3 sm:px-10">
+      <div className="flex items-center justify-between border-b px-4 py-3 sm:px-10">
         <button
           aria-label={monthFormatter.format(new Date(year, month - 1, 1))}
-          className="absolute left-4 flex size-9 items-center justify-center text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary sm:left-10"
+          className="flex size-9 items-center justify-center text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary"
           onClick={() => shiftMonth(-1)}
           type="button"
         >
@@ -121,7 +121,7 @@ export function InlineDateTimePicker({
 
         <button
           aria-label={monthFormatter.format(new Date(year, month + 1, 1))}
-          className="absolute right-4 flex size-9 items-center justify-center text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary sm:right-10"
+          className="flex size-9 items-center justify-center text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary"
           onClick={() => shiftMonth(1)}
           type="button"
         >
@@ -129,7 +129,16 @@ export function InlineDateTimePicker({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-1.5 border-b px-2 pt-4 pb-5 text-center sm:px-8">
+      {/* The 7-column grid is inline style, not a utility class: this public
+          webview is opened from cached Messenger webviews and stale per-route
+          CSS chunks must never be able to collapse the calendar layout. */}
+      <div
+        className="gap-y-1.5 border-b px-2 pt-4 pb-5 text-center sm:px-8"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+        }}
+      >
         {weekdayLabels.map((label) => (
           <div className="pb-2 text-muted-foreground/70 text-sm" key={label}>
             {label}
