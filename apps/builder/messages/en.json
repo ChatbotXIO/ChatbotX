@@ -2423,7 +2423,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "With buttons attached, TikTok only sends the first 40 characters of this message — the rest will be cut off."
-    }
+    },
+    "dataWasSaved": "Data was saved"
   },
   "folders": {
     "heading": {
@@ -4737,6 +4738,30 @@
       "unavailableTitle": "Cancellation unavailable",
       "unavailableDescription": "This appointment is already canceled, deleted, or in the past."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Select date",
+    "date": {
+      "title": "Select a date"
+    },
+    "datetime": {
+      "title": "Select a date and time"
+    },
+    "noSelection": "Choose a date",
+    "actions": {
+      "submit": "Submit"
+    },
+    "success": {
+      "title": "Data was saved",
+      "description": "You can close this tab now."
+    },
+    "errors": {
+      "invalidTokenTitle": "This link is unavailable.",
+      "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new link.",
+      "submitFailed": "We couldn't complete this request. Please try again."
+    },
+    "monthLabel": "Month",
+    "yearLabel": "Year"
   },
   "extensionsMe": {
     "actions": {

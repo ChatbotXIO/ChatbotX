@@ -2251,7 +2251,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Lorsque des boutons sont ajoutés, TikTok n'envoie que les 40 premiers caractères de ce message — le reste sera coupé."
-    }
+    },
+    "dataWasSaved": "Les données ont été enregistrées"
   },
   "folders": {
     "heading": {
@@ -4890,6 +4891,30 @@
       },
       "timezoneHint": "Les horaires sont affichés en {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Sélectionner une date",
+    "date": {
+      "title": "Sélectionnez une date"
+    },
+    "datetime": {
+      "title": "Sélectionnez une date et une heure"
+    },
+    "noSelection": "Choisissez une date",
+    "actions": {
+      "submit": "Envoyer"
+    },
+    "success": {
+      "title": "Les données ont été enregistrées",
+      "description": "Vous pouvez fermer cet onglet maintenant."
+    },
+    "errors": {
+      "invalidTokenTitle": "Ce lien n’est pas disponible.",
+      "invalidTokenDescription": "Le lien est peut-être invalide ou expiré. Veuillez demander un nouveau lien.",
+      "submitFailed": "Nous n’avons pas pu terminer cette demande. Veuillez réessayer."
+    },
+    "monthLabel": "Mois",
+    "yearLabel": "Année"
   },
   "appointments": {
     "title": "Rendez-vous",

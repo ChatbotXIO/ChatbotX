@@ -2940,7 +2940,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "När knappar är kopplade skickar TikTok bara de första 40 tecknen i det här meddelandet — resten klipps bort."
-    }
+    },
+    "dataWasSaved": "Uppgifterna sparades"
   },
   "folders": {
     "heading": {
@@ -4890,6 +4891,30 @@
       },
       "timezoneHint": "Tider visas i {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Välj datum",
+    "date": {
+      "title": "Välj ett datum"
+    },
+    "datetime": {
+      "title": "Välj datum och tid"
+    },
+    "noSelection": "Välj ett datum",
+    "actions": {
+      "submit": "Skicka"
+    },
+    "success": {
+      "title": "Uppgifterna sparades",
+      "description": "Du kan stänga den här fliken nu."
+    },
+    "errors": {
+      "invalidTokenTitle": "Den här länken är inte tillgänglig.",
+      "invalidTokenDescription": "Länken kan vara ogiltig eller ha upphört att gälla. Be om en ny länk.",
+      "submitFailed": "Vi kunde inte slutföra begäran. Försök igen."
+    },
+    "monthLabel": "Månad",
+    "yearLabel": "År"
   },
   "appointments": {
     "title": "Bokningar",

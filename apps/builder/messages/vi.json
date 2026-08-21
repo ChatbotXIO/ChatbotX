@@ -2325,7 +2325,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Khi có gắn nút, TikTok chỉ gửi tối đa 40 ký tự đầu của tin nhắn này — phần còn lại sẽ bị cắt bỏ."
-    }
+    },
+    "dataWasSaved": "Đã lưu dữ liệu"
   },
   "folders": {
     "heading": {
@@ -4639,6 +4640,30 @@
       "unavailableTitle": "Không thể hủy",
       "unavailableDescription": "Cuộc hẹn này đã bị hủy, bị xóa hoặc đã diễn ra."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Chọn ngày",
+    "date": {
+      "title": "Chọn một ngày"
+    },
+    "datetime": {
+      "title": "Chọn ngày và giờ"
+    },
+    "noSelection": "Chọn một ngày",
+    "actions": {
+      "submit": "Gửi"
+    },
+    "success": {
+      "title": "Đã lưu dữ liệu",
+      "description": "Bạn có thể đóng tab này ngay bây giờ."
+    },
+    "errors": {
+      "invalidTokenTitle": "Liên kết này không khả dụng.",
+      "invalidTokenDescription": "Liên kết có thể không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.",
+      "submitFailed": "Không thể hoàn tất yêu cầu này. Vui lòng thử lại."
+    },
+    "monthLabel": "Tháng",
+    "yearLabel": "Năm"
   },
   "extensionsMe": {
     "actions": {

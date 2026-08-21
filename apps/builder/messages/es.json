@@ -2325,7 +2325,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Cuando se adjuntan botones, TikTok solo envía los primeros 40 caracteres de este mensaje; el resto se recortará."
-    }
+    },
+    "dataWasSaved": "Datos guardados"
   },
   "folders": {
     "heading": {
@@ -4890,6 +4891,30 @@
       },
       "timezoneHint": "Los horarios se muestran en {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Seleccionar fecha",
+    "date": {
+      "title": "Selecciona una fecha"
+    },
+    "datetime": {
+      "title": "Selecciona una fecha y hora"
+    },
+    "noSelection": "Elige una fecha",
+    "actions": {
+      "submit": "Enviar"
+    },
+    "success": {
+      "title": "Datos guardados",
+      "description": "Ya puedes cerrar esta pestaña."
+    },
+    "errors": {
+      "invalidTokenTitle": "Este enlace no está disponible.",
+      "invalidTokenDescription": "Es posible que el enlace no sea válido o haya caducado. Solicita un nuevo enlace.",
+      "submitFailed": "No pudimos completar esta solicitud. Inténtalo de nuevo."
+    },
+    "monthLabel": "Mes",
+    "yearLabel": "Año"
   },
   "appointments": {
     "title": "Citas",

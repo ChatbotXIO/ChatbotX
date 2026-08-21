@@ -2325,7 +2325,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Butonlar eklendiğinde TikTok bu mesajın yalnızca ilk 40 karakterini gönderir — geri kalanı kesilir."
-    }
+    },
+    "dataWasSaved": "Veriler kaydedildi"
   },
   "folders": {
     "heading": {
@@ -4890,6 +4891,30 @@
       },
       "timezoneHint": "Saatler {timezone} olarak gösterilir."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Tarih seç",
+    "date": {
+      "title": "Bir tarih seçin"
+    },
+    "datetime": {
+      "title": "Bir tarih ve saat seçin"
+    },
+    "noSelection": "Bir tarih seçin",
+    "actions": {
+      "submit": "Gönder"
+    },
+    "success": {
+      "title": "Veriler kaydedildi",
+      "description": "Artık bu sekmeyi kapatabilirsiniz."
+    },
+    "errors": {
+      "invalidTokenTitle": "Bu bağlantı kullanılamıyor.",
+      "invalidTokenDescription": "Bağlantı geçersiz veya süresi dolmuş olabilir. Lütfen yeni bir bağlantı isteyin.",
+      "submitFailed": "Bu isteği tamamlayamadık. Lütfen tekrar deneyin."
+    },
+    "monthLabel": "Ay",
+    "yearLabel": "Yıl"
   },
   "appointments": {
     "title": "Randevular",

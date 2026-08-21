@@ -516,7 +516,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "כאשר מצורפים כפתורים, טיקטוק שולח רק את 40 התווים הראשונים של ההודעה הזו — השאר ייחתך."
-    }
+    },
+    "dataWasSaved": "הנתונים נשמרו"
   },
   "folders": {
     "heading": {
@@ -4890,6 +4891,30 @@
       },
       "timezoneHint": "הזמנים מוצגים לפי {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "בחירת תאריך",
+    "date": {
+      "title": "בחרו תאריך"
+    },
+    "datetime": {
+      "title": "בחרו תאריך ושעה"
+    },
+    "noSelection": "בחרו תאריך",
+    "actions": {
+      "submit": "שליחה"
+    },
+    "success": {
+      "title": "הנתונים נשמרו",
+      "description": "כעת ניתן לסגור את הכרטיסייה הזו."
+    },
+    "errors": {
+      "invalidTokenTitle": "קישור זה אינו זמין.",
+      "invalidTokenDescription": "ייתכן שהקישור אינו תקין או שפג תוקפו. בקשו קישור חדש.",
+      "submitFailed": "לא הצלחנו להשלים את הבקשה הזו. נסו שוב."
+    },
+    "monthLabel": "חודש",
+    "yearLabel": "שנה"
   },
   "appointments": {
     "title": "פגישות",
