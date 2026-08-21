@@ -3,6 +3,7 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
+import { CreateApiForm } from "@/features/integration-api/components/create-api-form"
 import { InstagramLoginSelect } from "@/features/integration-instagram/components/instagram-login-select"
 import { generateInstagramRedirectUri } from "@/features/integration-instagram/libs/oauth"
 import { generateInstagramFacebookRedirectUri } from "@/features/integration-instagram/libs/oauth-facebook"
@@ -61,6 +62,10 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
 
   if (selectedChannel === "webchat" && isVisible("webchat")) {
     return <SimpleCreateWebchat workspaceId={workspaceId} />
+  }
+
+  if (selectedChannel === "api" && isVisible("api")) {
+    return <CreateApiForm autoOpen={true} workspaceId={workspaceId} />
   }
 
   const [whatsapp, messenger, instagram, instagramFacebook, zalo, tiktok] =

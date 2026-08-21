@@ -2683,6 +2683,26 @@
     },
     "enabled": {
       "label": "已激活"
+    },
+    "api": {
+      "label": "API",
+      "description": "将任何支持 HTTP 的应用程序作为渠道接入。您的应用将入站消息发送到我们的 REST API，我们会将回复投递到您的回调 URL。",
+      "callbackUrl": {
+        "label": "回调 URL",
+        "description": "我们会通过 POST 将出站回复发送到此处，并使用您收件箱专属的密钥进行签名。",
+        "notSet": "未设置"
+      },
+      "token": "代币",
+      "rotateToken": "重新生成代币",
+      "status": {
+        "enabled": "已激活",
+        "disabled": "已停用"
+      },
+      "tokenReveal": {
+        "title": "拷贝您的 API 代币",
+        "description": "此代币仅显示一次。请妥善保存 — 之后将无法再次查看。",
+        "done": "完成"
+      }
     }
   },
   "flowAnalytics": {

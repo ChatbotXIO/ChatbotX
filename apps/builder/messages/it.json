@@ -1386,6 +1386,26 @@
     },
     "enabled": {
       "label": "Attivo"
+    },
+    "api": {
+      "label": "API",
+      "description": "Collega qualsiasi applicazione compatibile con HTTP come canale. La tua app invia i messaggi in arrivo alla nostra API REST e noi consegniamo le risposte al tuo URL di callback.",
+      "callbackUrl": {
+        "label": "URL di callback",
+        "description": "Inviamo qui le risposte in uscita tramite POST, firmate con il segreto specifico della tua casella.",
+        "notSet": "Non impostato"
+      },
+      "token": "Token",
+      "rotateToken": "Rigenera token",
+      "status": {
+        "enabled": "Attivo",
+        "disabled": "Disattivato"
+      },
+      "tokenReveal": {
+        "title": "Copia il tuo token API",
+        "description": "Questo token viene mostrato una sola volta. Conservalo in modo sicuro — non potrai più visualizzarlo in seguito.",
+        "done": "Fatto"
+      }
     }
   },
   "actions": {

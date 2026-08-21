@@ -1386,6 +1386,26 @@
     },
     "enabled": {
       "label": "已啟用"
+    },
+    "api": {
+      "label": "API",
+      "description": "將任何支援 HTTP 的應用程式作為管道接入。您的應用程式會將傳入訊息傳送到我們的 REST API，我們會將回覆傳送到您的回呼 URL。",
+      "callbackUrl": {
+        "label": "回呼 URL",
+        "description": "我們會透過 POST 將傳出回覆傳送到此處，並以您收件匣專屬的密鑰簽署。",
+        "notSet": "尚未設定"
+      },
+      "token": "代幣",
+      "rotateToken": "重新產生代幣",
+      "status": {
+        "enabled": "已啟用",
+        "disabled": "已停用"
+      },
+      "tokenReveal": {
+        "title": "複製您的 API 代幣",
+        "description": "此代幣僅顯示一次。請妥善保存 — 之後將無法再次檢視。",
+        "done": "完成"
+      }
     }
   },
   "messages": {

@@ -2004,6 +2004,26 @@
     },
     "enabled": {
       "label": "Activé"
+    },
+    "api": {
+      "label": "API",
+      "description": "Connectez n’importe quelle application compatible HTTP comme canal. Votre application envoie les messages entrants à notre API REST et nous transmettons les réponses à votre URL de callback.",
+      "callbackUrl": {
+        "label": "URL de callback",
+        "description": "Nous envoyons ici les réponses sortantes par POST, signées avec le secret propre à votre boîte de réception.",
+        "notSet": "Non défini"
+      },
+      "token": "Token",
+      "rotateToken": "Régénérer le token",
+      "status": {
+        "enabled": "Activé",
+        "disabled": "Désactivé"
+      },
+      "tokenReveal": {
+        "title": "Copiez votre token API",
+        "description": "Ce token ne s’affiche qu’une seule fois. Conservez-le en lieu sûr — vous ne pourrez plus le consulter par la suite.",
+        "done": "Terminé"
+      }
     }
   },
   "flows": {

@@ -2004,6 +2004,26 @@
     },
     "enabled": {
       "label": "Aktiviert"
+    },
+    "api": {
+      "label": "API",
+      "description": "Verbinden Sie jede HTTP-fähige Anwendung als Kanal. Ihre App sendet eingehende Nachrichten an unsere REST-API, und wir liefern Antworten an Ihre Callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Wir senden ausgehende Antworten hierhin per POST, signiert mit dem geheimen Schlüssel Ihres Postfachs.",
+        "notSet": "Nicht festgelegt"
+      },
+      "token": "Token",
+      "rotateToken": "Token erneuern",
+      "status": {
+        "enabled": "Aktiviert",
+        "disabled": "Deaktiviert"
+      },
+      "tokenReveal": {
+        "title": "Kopieren Sie Ihr API-Token",
+        "description": "Dieses Token wird nur einmal angezeigt. Bewahren Sie es sicher auf — Sie können es später nicht mehr einsehen.",
+        "done": "Fertig"
+      }
     }
   },
   "flows": {

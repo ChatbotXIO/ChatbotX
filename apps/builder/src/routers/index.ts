@@ -37,6 +37,11 @@ export const router = {
       default: m.broadcastAPIs,
     })),
   ),
+  channelApiAPIs: lazy(() =>
+    import("@/features/integration-api/api").then((m) => ({
+      default: m.channelApiAPIs,
+    })),
+  ),
   conversationsAPI: lazy(() =>
     import("@/features/conversations/api").then((m) => ({
       default: m.conversationsAPI,

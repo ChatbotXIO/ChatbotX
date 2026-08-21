@@ -2004,6 +2004,26 @@
     },
     "enabled": {
       "label": "有効"
+    },
+    "api": {
+      "label": "API",
+      "description": "HTTPに対応した任意のアプリケーションをチャネルとして接続します。アプリからの受信メッセージは弊社のREST APIに送信され、返信はお客様のcallback URLに配信されます。",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "送信する返信はこちらにPOSTされ、受信箱ごとのシークレットで署名されます。",
+        "notSet": "未設定"
+      },
+      "token": "トークン",
+      "rotateToken": "トークンを再発行",
+      "status": {
+        "enabled": "有効",
+        "disabled": "無効"
+      },
+      "tokenReveal": {
+        "title": "APIトークンをコピー",
+        "description": "このトークンは一度だけ表示されます。安全に保管してください。再度表示することはできません。",
+        "done": "完了"
+      }
     }
   },
   "flows": {

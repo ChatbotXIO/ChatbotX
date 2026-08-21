@@ -72,6 +72,7 @@ import { inboxTeamRelations } from "./inbox-team"
 import { inboxTeamMemberRelations } from "./inbox-team-member"
 import { integrationRelations } from "./integration"
 import { integrationActiveCampaignRelations } from "./integration-active-campaign"
+import { integrationApiRelations } from "./integration-api"
 import { integrationClaudeRelations } from "./integration-claude"
 import { integrationDeepseekRelations } from "./integration-deepseek"
 import { integrationDripRelations } from "./integration-drip"
@@ -129,6 +130,7 @@ import { workspaceRelations } from "./workspace"
 import { workspaceMemberRelations } from "./workspace-member"
 
 export const relations = {
+  ...integrationApiRelations,
   ...aiTriggerRelations,
   ...adsConversionEventRelations,
   ...metaCapiEventRelations,

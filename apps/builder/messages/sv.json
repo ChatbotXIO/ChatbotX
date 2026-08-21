@@ -2680,6 +2680,26 @@
     },
     "enabled": {
       "label": "Aktiverad"
+    },
+    "api": {
+      "label": "API",
+      "description": "Anslut vilken HTTP-kapabel applikation som helst som en kanal. Din applikation skickar inkommande meddelanden till vårt REST-API och vi levererar svar till din callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Vi skickar utgående svar hit via POST, signerade med din inkorgs unika hemlighet.",
+        "notSet": "Inte angiven"
+      },
+      "token": "Token",
+      "rotateToken": "Förnya token",
+      "status": {
+        "enabled": "Aktiverad",
+        "disabled": "Inaktiverad"
+      },
+      "tokenReveal": {
+        "title": "Kopiera din API-token",
+        "description": "Denna token visas endast en gång. Förvara den säkert — du kommer inte kunna se den igen.",
+        "done": "Klart"
+      }
     }
   },
   "flowAnalytics": {

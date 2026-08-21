@@ -2078,6 +2078,26 @@
     },
     "enabled": {
       "label": "Etkin"
+    },
+    "api": {
+      "label": "API",
+      "description": "HTTP destekleyen herhangi bir uygulamayı kanal olarak bağlayın. Uygulamanız, gelen mesajları REST API'mize gönderir ve biz de yanıtları callback URL'inize iletiriz.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Giden yanıtları buraya POST ile, gelen kutunuza özel gizli anahtarla imzalanmış şekilde gönderiyoruz.",
+        "notSet": "Ayarlanmadı"
+      },
+      "token": "Jeton",
+      "rotateToken": "Jetonu yenile",
+      "status": {
+        "enabled": "Etkin",
+        "disabled": "Devre Dışı"
+      },
+      "tokenReveal": {
+        "title": "API jetonunuzu kopyalayın",
+        "description": "Bu jeton yalnızca bir kez gösterilir. Güvenli bir şekilde saklayın — tekrar görüntüleyemezsiniz.",
+        "done": "Tamamlandı"
+      }
     }
   },
   "flows": {

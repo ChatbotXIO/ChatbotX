@@ -25,6 +25,7 @@ export const channelTypes = z.enum([
   "telegram",
   "instagram",
   "tiktok",
+  "api",
 ])
 
 export type ChannelType = z.infer<typeof channelTypes>
@@ -43,12 +44,13 @@ export type ChannelType = z.infer<typeof channelTypes>
  * old plain-array lists allowed.
  *
  * `order` is a deliberate product-priority order — whatsapp, messenger,
- * instagram, tiktok, telegram, zalo, webchat, then smtp (Email) — rather than
- * alphabetical or either legacy list's order: the create picker (`whatsapp,
- * messenger, instagram, zalo, tiktok, telegram, webchat`) and the settings
- * accordion (`whatsapp, messenger, instagram, zalo, telegram, tiktok,
- * webchat, smtp`) already disagreed with each other before this registry
- * existed. `omnichannel` (the non-connectable fallback) always sorts last.
+ * instagram, tiktok, telegram, zalo, webchat, then smtp (Email), then api —
+ * rather than alphabetical or either legacy list's order: the create picker
+ * (`whatsapp, messenger, instagram, zalo, tiktok, telegram, webchat`) and the
+ * settings accordion (`whatsapp, messenger, instagram, zalo, telegram,
+ * tiktok, webchat, smtp`) already disagreed with each other before this
+ * registry existed. `omnichannel` (the non-connectable fallback) always
+ * sorts last.
  */
 export type ChannelCapability = {
   /** Shown as an option on the "create new channel" picker. */
@@ -114,6 +116,12 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     requiresCredential: false,
     order: 8,
   },
+  api: {
+    creatable: true,
+    manageable: true,
+    requiresCredential: false,
+    order: 9,
+  },
   // Not a real connectable channel — the fallback icon/label for unknown
   // channel strings (see `InboxIcon`'s `isChannelType` guard). Never offered
   // for creation and never given its own settings row.
@@ -121,7 +129,7 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     creatable: false,
     manageable: false,
     requiresCredential: false,
-    order: 9,
+    order: 10,
   },
 }
 

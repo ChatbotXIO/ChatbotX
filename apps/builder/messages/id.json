@@ -2004,6 +2004,26 @@
     },
     "enabled": {
       "label": "Diaktifkan"
+    },
+    "api": {
+      "label": "API",
+      "description": "Hubungkan aplikasi apa pun yang mendukung HTTP sebagai saluran. Aplikasi Anda mengirim pesan masuk ke REST API kami, dan kami mengirimkan balasan ke callback URL Anda.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Kami mengirimkan balasan keluar ke sini melalui POST, ditandatangani dengan secret khusus kotak masuk Anda.",
+        "notSet": "Belum diatur"
+      },
+      "token": "Token",
+      "rotateToken": "Perbarui token",
+      "status": {
+        "enabled": "Diaktifkan",
+        "disabled": "Dinonaktifkan"
+      },
+      "tokenReveal": {
+        "title": "Salin token API Anda",
+        "description": "Token ini hanya ditampilkan satu kali. Simpan dengan aman — Anda tidak akan bisa melihatnya lagi.",
+        "done": "Selesai"
+      }
     }
   },
   "flows": {

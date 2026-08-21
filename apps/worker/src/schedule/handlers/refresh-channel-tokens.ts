@@ -27,6 +27,7 @@ const refreshTokenAdapter: Record<
   webchat: undefined,
   smtp: undefined,
   telegram: undefined,
+  api: undefined,
 }
 
 export async function refreshChannelTokens(): Promise<void> {

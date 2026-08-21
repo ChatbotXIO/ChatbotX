@@ -2760,6 +2760,26 @@
     },
     "enabled": {
       "label": "Activat"
+    },
+    "api": {
+      "label": "API",
+      "description": "Conectați orice aplicație compatibilă HTTP ca un canal. Aplicația dumneavoastră trimite mesajele primite către API-ul nostru REST, iar noi livrăm răspunsurile la callback URL-ul dumneavoastră.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Trimitem aici răspunsurile trimise prin POST, semnate cu secretul specific căsuței dumneavoastră de mesaje.",
+        "notSet": "Nesetat"
+      },
+      "token": "Token",
+      "rotateToken": "Regenerează token-ul",
+      "status": {
+        "enabled": "Activat",
+        "disabled": "Dezactivat"
+      },
+      "tokenReveal": {
+        "title": "Copiază token-ul tău API",
+        "description": "Acest token este afișat o singură dată. Păstrează-l în siguranță — nu îl vei mai putea vizualiza din nou.",
+        "done": "Finalizat"
+      }
     }
   },
   "channels": {

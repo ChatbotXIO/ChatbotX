@@ -2078,6 +2078,26 @@
     },
     "enabled": {
       "label": "Đang bật"
+    },
+    "api": {
+      "label": "API",
+      "description": "Kết nối bất kỳ ứng dụng nào hỗ trợ HTTP như một kênh. Ứng dụng của bạn gửi tin nhắn đến API REST của chúng tôi và chúng tôi sẽ chuyển phản hồi đến URL callback của bạn.",
+      "callbackUrl": {
+        "label": "URL callback",
+        "description": "Chúng tôi gửi phản hồi đi qua đây bằng POST, được ký bằng khóa bí mật riêng của hộp thư của bạn.",
+        "notSet": "Chưa thiết lập"
+      },
+      "token": "Token",
+      "rotateToken": "Làm mới token",
+      "status": {
+        "enabled": "Đang bật",
+        "disabled": "Tắt"
+      },
+      "tokenReveal": {
+        "title": "Sao chép token API của bạn",
+        "description": "Token này chỉ hiển thị một lần. Hãy lưu trữ an toàn — bạn sẽ không thể xem lại được nữa.",
+        "done": "Xong"
+      }
     }
   },
   "flows": {

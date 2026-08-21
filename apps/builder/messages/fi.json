@@ -2004,6 +2004,26 @@
     },
     "enabled": {
       "label": "Käytössä"
+    },
+    "api": {
+      "label": "API",
+      "description": "Yhdistä mikä tahansa HTTP-yhteensopiva sovellus kanavaksi. Sovelluksesi lähettää saapuvat viestit REST-rajapintaamme, ja me toimitamme vastaukset callback-osoitteeseesi.",
+      "callbackUrl": {
+        "label": "Callback-osoite",
+        "description": "Lähetämme lähtevät vastaukset tänne POST-pyynnöllä, allekirjoitettuna postilaatikkosi omalla salaisuudella.",
+        "notSet": "Ei asetettu"
+      },
+      "token": "Tunnus",
+      "rotateToken": "Vaihda tunnus",
+      "status": {
+        "enabled": "Käytössä",
+        "disabled": "Ei käytössä"
+      },
+      "tokenReveal": {
+        "title": "Kopioi API-tunnuksesi",
+        "description": "Tämä tunnus näytetään vain kerran. Säilytä se turvallisesti — et voi tarkastella sitä enää myöhemmin.",
+        "done": "Valmis"
+      }
     }
   },
   "flows": {

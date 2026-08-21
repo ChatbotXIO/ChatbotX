@@ -1,4 +1,5 @@
 import { integration as integrationActiveCampaign } from "@chatbotx.io/integration-active-campaign"
+import { integration as integrationApi } from "@chatbotx.io/integration-api"
 import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
 import { integration as integrationDrip } from "@chatbotx.io/integration-drip"
 import { integration as integrationFacebookAds } from "@chatbotx.io/integration-facebook-ads"
@@ -21,6 +22,7 @@ import { integration as integrationWhatsapp } from "@chatbotx.io/integration-wha
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 
 export const integrations = {
+  api: integrationApi,
   whatsapp: integrationWhatsapp,
   messenger: integrationMessenger,
   instagram: integrationInstagram,
