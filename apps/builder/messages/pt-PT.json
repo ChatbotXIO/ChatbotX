@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Esta ligação não está disponível.",
       "invalidTokenDescription": "A ligação pode ser inválida ou ter expirado. Peça uma nova ligação.",
       "submitFailed": "Não foi possível concluir este pedido. Tente novamente."
-    }
+    },
+    "monthLabel": "Mês",
+    "yearLabel": "Ano"
   },
   "appointments": {
     "title": "Marcações",

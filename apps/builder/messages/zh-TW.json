@@ -5095,7 +5095,9 @@
       "invalidTokenTitle": "此連結目前無法使用。",
       "invalidTokenDescription": "此連結可能無效或已過期，請索取新的連結。",
       "submitFailed": "我們無法完成此請求，請再試一次。"
-    }
+    },
+    "monthLabel": "月份",
+    "yearLabel": "年份"
   },
   "metaConversions": {
     "title": "Conversions API",

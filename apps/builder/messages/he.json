@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "קישור זה אינו זמין.",
       "invalidTokenDescription": "ייתכן שהקישור אינו תקין או שפג תוקפו. בקשו קישור חדש.",
       "submitFailed": "לא הצלחנו להשלים את הבקשה הזו. נסו שוב."
-    }
+    },
+    "monthLabel": "חודש",
+    "yearLabel": "שנה"
   },
   "appointments": {
     "title": "פגישות",

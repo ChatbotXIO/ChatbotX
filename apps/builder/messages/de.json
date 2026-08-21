@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Dieser Link ist nicht verfügbar.",
       "invalidTokenDescription": "Der Link ist möglicherweise ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.",
       "submitFailed": "Wir konnten diese Anfrage nicht abschließen. Bitte versuchen Sie es erneut."
-    }
+    },
+    "monthLabel": "Monat",
+    "yearLabel": "Jahr"
   },
   "appointments": {
     "title": "Termine",

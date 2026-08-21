@@ -4661,7 +4661,9 @@
       "invalidTokenTitle": "Liên kết này không khả dụng.",
       "invalidTokenDescription": "Liên kết có thể không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.",
       "submitFailed": "Không thể hoàn tất yêu cầu này. Vui lòng thử lại."
-    }
+    },
+    "monthLabel": "Tháng",
+    "yearLabel": "Năm"
   },
   "extensionsMe": {
     "actions": {

@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Dette link er ikke tilgængeligt.",
       "invalidTokenDescription": "Linket kan være ugyldigt eller udløbet. Bed om et nyt link.",
       "submitFailed": "Vi kunne ikke gennemføre denne anmodning. Prøv venligst igen."
-    }
+    },
+    "monthLabel": "Måned",
+    "yearLabel": "År"
   },
   "appointments": {
     "title": "Aftaler",

@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Deze link is niet beschikbaar.",
       "invalidTokenDescription": "De link is mogelijk ongeldig of verlopen. Vraag om een nieuwe link.",
       "submitFailed": "We konden dit verzoek niet voltooien. Probeer het opnieuw."
-    }
+    },
+    "monthLabel": "Maand",
+    "yearLabel": "Jaar"
   },
   "appointments": {
     "title": "Afspraken",

@@ -26,9 +26,30 @@ export function toSelectedValueIso(
   return date.toISOString()
 }
 
-export function formatSelectionLabel(date: Date, mode: "date" | "datetime") {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: mode === "datetime" ? "short" : undefined,
+/**
+ * Chatrace-style submit-bar label: "21 AUG 2026" / "21 AUG 2026 00:07",
+ * locale-aware (month name and ordering follow the workspace locale).
+ */
+export function formatSelectionLabel(
+  date: Date,
+  mode: "date" | "datetime",
+  locale?: string,
+): string {
+  const dayPart = new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   }).format(date)
+
+  if (mode !== "datetime") {
+    return dayPart.toLocaleUpperCase(locale)
+  }
+
+  const timePart = new Intl.DateTimeFormat(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date)
+
+  return `${dayPart} ${timePart}`.toLocaleUpperCase(locale)
 }

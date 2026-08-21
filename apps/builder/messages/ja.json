@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "このリンクはご利用いただけません。",
       "invalidTokenDescription": "リンクが無効か、有効期限が切れている可能性があります。新しいリンクをご請求ください。",
       "submitFailed": "リクエストを完了できませんでした。もう一度お試しください。"
-    }
+    },
+    "monthLabel": "月",
+    "yearLabel": "年"
   },
   "appointments": {
     "title": "予約",

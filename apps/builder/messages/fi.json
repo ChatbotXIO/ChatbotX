@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Tämä linkki ei ole käytettävissä.",
       "invalidTokenDescription": "Linkki saattaa olla virheellinen tai vanhentunut. Pyydä uusi linkki.",
       "submitFailed": "Emme voineet suorittaa tätä pyyntöä. Yritä uudelleen."
-    }
+    },
+    "monthLabel": "Kuukausi",
+    "yearLabel": "Vuosi"
   },
   "appointments": {
     "title": "Ajanvaraukset",

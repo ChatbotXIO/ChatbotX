@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Tautan ini tidak tersedia.",
       "invalidTokenDescription": "Tautan mungkin tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
       "submitFailed": "Kami tidak dapat menyelesaikan permintaan ini. Silakan coba lagi."
-    }
+    },
+    "monthLabel": "Bulan",
+    "yearLabel": "Tahun"
   },
   "appointments": {
     "title": "Janji Temu",

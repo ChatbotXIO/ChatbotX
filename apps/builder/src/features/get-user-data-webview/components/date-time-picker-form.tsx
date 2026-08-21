@@ -1,13 +1,12 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { DateTimePicker } from "@chatbotx.io/ui/components/ui/date-picker"
-import { CalendarCheckIcon, Loader2Icon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { CalendarCheckIcon, Loader2Icon, MoveRightIcon } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ReactNode } from "react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { submitDateTimeAction } from "@/app/extensions/datetime-picker/actions/submit-date-time.action"
+import { InlineDateTimePicker } from "@/features/get-user-data-webview/components/inline-date-time-picker"
 import {
   formatSelectionLabel,
   toSelectedValueIso,
@@ -23,14 +22,12 @@ const MESSENGER_CLOSE_MAX_ATTEMPTS = 12
 
 export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
   const t = useTranslations("userDataWebview")
-  const [pickedDate, setPickedDate] = useState<Date | undefined>(undefined)
+  const locale = useLocale()
+  // Preselect "now" so the submit bar is actionable immediately — the
+  // contact only adjusts what differs from today.
+  const [pickedDate, setPickedDate] = useState(() => new Date())
   const [submitError, setSubmitError] = useState(false)
   const [completed, setCompleted] = useState(false)
-
-  const selectedValue = useMemo(
-    () => toSelectedValueIso(pickedDate, mode),
-    [pickedDate, mode],
-  )
 
   const { execute, isPending } = useAction(submitDateTimeAction, {
     onSuccess: ({ data }) => {
@@ -75,54 +72,43 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
 
   return (
     <PublicShell>
-      <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col">
-        <main className="flex flex-1 flex-col gap-6 p-4 pb-28 sm:p-6">
-          <header className="space-y-2">
-            <h1 className="font-semibold text-2xl tracking-normal">
-              {mode === "datetime" ? t("datetime.title") : t("date.title")}
-            </h1>
-          </header>
-
+      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col">
+        <main className="flex flex-1 flex-col gap-4 p-4 pb-32 sm:p-6">
           {submitError ? (
             <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-destructive text-sm">
               {t("errors.submitFailed")}
             </div>
           ) : null}
 
-          <DateTimePicker
-            granularity={mode === "datetime" ? "minute" : "day"}
-            onChange={(date) => {
-              setPickedDate(date)
+          <InlineDateTimePicker
+            locale={locale}
+            mode={mode}
+            monthLabel={t("monthLabel")}
+            onChange={(next) => {
+              setPickedDate(next)
               setSubmitError(false)
             }}
-            placeholder={t("noSelection")}
             value={pickedDate}
+            yearLabel={t("yearLabel")}
           />
         </main>
 
-        <footer className="fixed inset-x-0 bottom-0 border-t bg-background/95 p-4 backdrop-blur">
-          <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-3">
-            <div className="min-w-0 text-sm">
-              <p className="truncate font-medium">
-                {pickedDate
-                  ? formatSelectionLabel(pickedDate, mode)
-                  : t("noSelection")}
-              </p>
-            </div>
-            <Button
-              disabled={!(selectedValue && !isPending)}
-              onClick={() => {
-                if (!selectedValue) {
-                  return
-                }
+        <footer className="fixed inset-x-0 bottom-0 p-4">
+          <button
+            className="mx-auto flex w-full max-w-2xl items-center justify-center gap-3 rounded-lg bg-primary px-4 py-4 font-bold text-primary-foreground text-sm uppercase tracking-wide transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-70"
+            disabled={isPending}
+            onClick={() => {
+              const selectedValue = toSelectedValueIso(pickedDate, mode)
+              if (selectedValue) {
                 execute({ token, selectedValue })
-              }}
-              type="button"
-            >
-              {isPending ? <Loader2Icon className="animate-spin" /> : null}
-              {t("actions.submit")}
-            </Button>
-          </div>
+              }
+            }}
+            type="button"
+          >
+            {isPending ? <Loader2Icon className="size-4 animate-spin" /> : null}
+            {formatSelectionLabel(pickedDate, mode, locale)}
+            <MoveRightIcon className="size-4" />
+          </button>
         </footer>
       </div>
     </PublicShell>

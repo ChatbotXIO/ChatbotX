@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Este enlace no está disponible.",
       "invalidTokenDescription": "Es posible que el enlace no sea válido o haya caducado. Solicita un nuevo enlace.",
       "submitFailed": "No pudimos completar esta solicitud. Inténtalo de nuevo."
-    }
+    },
+    "monthLabel": "Mes",
+    "yearLabel": "Año"
   },
   "appointments": {
     "title": "Citas",

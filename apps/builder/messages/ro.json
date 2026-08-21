@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Acest link nu este disponibil.",
       "invalidTokenDescription": "Linkul poate fi invalid sau expirat. Te rugăm să soliciți un nou link.",
       "submitFailed": "Nu am putut finaliza această solicitare. Te rugăm să încerci din nou."
-    }
+    },
+    "monthLabel": "Lună",
+    "yearLabel": "An"
   },
   "appointments": {
     "title": "Programări",

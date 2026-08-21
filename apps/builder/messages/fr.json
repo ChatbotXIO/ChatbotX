@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Ce lien n’est pas disponible.",
       "invalidTokenDescription": "Le lien est peut-être invalide ou expiré. Veuillez demander un nouveau lien.",
       "submitFailed": "Nous n’avons pas pu terminer cette demande. Veuillez réessayer."
-    }
+    },
+    "monthLabel": "Mois",
+    "yearLabel": "Année"
   },
   "appointments": {
     "title": "Rendez-vous",

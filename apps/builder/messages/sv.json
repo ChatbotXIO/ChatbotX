@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Den här länken är inte tillgänglig.",
       "invalidTokenDescription": "Länken kan vara ogiltig eller ha upphört att gälla. Be om en ny länk.",
       "submitFailed": "Vi kunde inte slutföra begäran. Försök igen."
-    }
+    },
+    "monthLabel": "Månad",
+    "yearLabel": "År"
   },
   "appointments": {
     "title": "Bokningar",

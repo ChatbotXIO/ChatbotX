@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "Este link está indisponível.",
       "invalidTokenDescription": "O link pode estar inválido ou expirado. Solicite um novo link.",
       "submitFailed": "Não foi possível concluir esta solicitação. Tente novamente."
-    }
+    },
+    "monthLabel": "Mês",
+    "yearLabel": "Ano"
   },
   "appointments": {
     "title": "Compromissos",

@@ -4912,7 +4912,9 @@
       "invalidTokenTitle": "هذا الرابط غير متاح.",
       "invalidTokenDescription": "قد يكون الرابط غير صالح أو منتهي الصلاحية. يُرجى طلب رابط جديد.",
       "submitFailed": "تعذّر إتمام هذا الطلب. يُرجى المحاولة مرة أخرى."
-    }
+    },
+    "monthLabel": "الشهر",
+    "yearLabel": "السنة"
   },
   "appointments": {
     "title": "المواعيد",

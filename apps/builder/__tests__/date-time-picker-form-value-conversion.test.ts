@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { toSelectedValueIso } from "@/features/get-user-data-webview/lib/value-conversion"
+import {
+  formatSelectionLabel,
+  toSelectedValueIso,
+} from "@/features/get-user-data-webview/lib/value-conversion"
 
 describe("toSelectedValueIso", () => {
   test("returns null when no date is picked", () => {
@@ -34,5 +37,32 @@ describe("toSelectedValueIso", () => {
     const result = toSelectedValueIso(pickedLocalDate, "datetime")
 
     expect(result).toBe(pickedLocalDate.toISOString())
+  })
+})
+
+describe("formatSelectionLabel", () => {
+  test("date mode renders an uppercased locale date without time", () => {
+    const label = formatSelectionLabel(
+      new Date(2026, 7, 21, 14, 30),
+      "date",
+      "en",
+    )
+    expect(label).toBe("AUG 21, 2026")
+  })
+
+  test("datetime mode appends a 24h time", () => {
+    const label = formatSelectionLabel(
+      new Date(2026, 7, 21, 0, 7),
+      "datetime",
+      "en",
+    )
+    expect(label).toBe("AUG 21, 2026 00:07")
+  })
+
+  test("follows the workspace locale ordering", () => {
+    const label = formatSelectionLabel(new Date(2026, 7, 21), "date", "vi")
+    expect(label.toLowerCase()).toContain("thg")
+    expect(label).toContain("21")
+    expect(label).toContain("2026")
   })
 })

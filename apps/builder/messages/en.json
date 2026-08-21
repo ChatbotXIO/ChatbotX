@@ -4759,7 +4759,9 @@
       "invalidTokenTitle": "This link is unavailable.",
       "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new link.",
       "submitFailed": "We couldn't complete this request. Please try again."
-    }
+    },
+    "monthLabel": "Month",
+    "yearLabel": "Year"
   },
   "extensionsMe": {
     "actions": {

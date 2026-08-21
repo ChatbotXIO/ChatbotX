@@ -5193,6 +5193,8 @@
       "invalidTokenTitle": "此链接不可用。",
       "invalidTokenDescription": "该链接可能无效或已过期，请索取新的链接。",
       "submitFailed": "无法完成此请求，请重试。"
-    }
+    },
+    "monthLabel": "月份",
+    "yearLabel": "年份"
   }
 }
