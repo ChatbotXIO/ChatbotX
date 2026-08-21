@@ -3581,8 +3581,14 @@
       "propagationNote": "Thay đổi được Meta áp dụng ngay, nhưng ứng dụng WhatsApp của khách hàng có thể mất tới 7 ngày để cập nhật.",
       "loadFailed": "Không tải được cài đặt cuộc gọi từ Meta. Kiểm tra kết nối của số này và thử lại.",
       "errors": {
-        "notFound": "Không tìm thấy tích hợp WhatsApp"
-      }
+        "notFound": "Không tìm thấy tích hợp WhatsApp",
+        "notWhatsappConversation": "Hội thoại này không thuộc kênh WhatsApp"
+      },
+      "permissionRequestTitle": "Xin quyền gọi điện",
+      "permissionRequestDescription": "Hỏi khách hàng này cho phép doanh nghiệp gọi qua WhatsApp. Meta giới hạn 1 yêu cầu mỗi 24 giờ và 2 yêu cầu mỗi 7 ngày cho mỗi khách hàng.",
+      "permissionRequestBodyLabel": "Tin nhắn",
+      "permissionRequestDefaultBody": "Chúng tôi muốn gọi cho bạn qua WhatsApp để hỗ trợ nhanh hơn. Bạn có cho phép chúng tôi gọi không?",
+      "permissionRequestSent": "Đã gửi yêu cầu xin quyền gọi"
     }
   },
   "zalo": {

@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   contentTypes,
+  getWhatsappCallPermissionRequest,
   type MessageHandlers,
   type OutgoingMessage,
 } from "@chatbotx.io/sdk"
@@ -38,7 +39,25 @@ import { convertFlowStepWhatsappOptionList } from "./whatsapp-option-list"
 
 function* convertMessageToWhatsappMessage(
   message: OutgoingMessage,
-): Generator<ClientMessage | null> {
+): Generator<ClientMessage | RawWhatsappMessage | null> {
+  // A permission-request message renders as Meta's call_permission_request
+  // interactive with the message text as its body — never as plain text.
+  if (
+    getWhatsappCallPermissionRequest(message.contentAttributes) &&
+    message.text
+  ) {
+    yield {
+      _type: "interactive_call_permission_request",
+      type: "interactive",
+      interactive: {
+        type: "call_permission_request",
+        body: { text: message.text },
+        action: { name: "call_permission_request" },
+      },
+    }
+    return
+  }
+
   if (message.contentType === contentTypes.enum.text) {
     if (message.text) {
       yield new Text(message.text)
@@ -160,7 +179,8 @@ const isRawWhatsappMessage = (
 ): message is RawWhatsappMessage =>
   message._type === "template" ||
   message._type === "interactive_carousel" ||
-  message._type === "interactive_voice_call"
+  message._type === "interactive_voice_call" ||
+  message._type === "interactive_call_permission_request"
 
 /**
  * Builds the Cloud API message-body fields (everything after
@@ -254,18 +274,22 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
           },
           "sendMessage: dispatching outgoing message",
         )
-        const sendResponse = isBsuidKeyedRecipient
-          ? await postRawMessage({
-              client: whatsappClient,
-              phoneNumberId: ctx.auth.metadata.phoneNumber.id,
-              recipientParams,
-              message: whatsappMessage,
-            })
-          : await whatsappClient.sendMessage(
-              ctx.auth.metadata.phoneNumber.id,
-              contact.sourceId,
-              whatsappMessage,
-            )
+        // Raw payloads (unmodeled by whatsapp-api-js) must bypass the lib
+        // sender for every recipient, not just BSUID-keyed ones — mirrors
+        // sendFlowStep below.
+        const sendResponse =
+          isRawWhatsappMessage(whatsappMessage) || isBsuidKeyedRecipient
+            ? await postRawMessage({
+                client: whatsappClient,
+                phoneNumberId: ctx.auth.metadata.phoneNumber.id,
+                recipientParams,
+                message: whatsappMessage,
+              })
+            : await whatsappClient.sendMessage(
+                ctx.auth.metadata.phoneNumber.id,
+                contact.sourceId,
+                whatsappMessage,
+              )
 
         const serverError = sendResponse as ServerErrorResponse
 

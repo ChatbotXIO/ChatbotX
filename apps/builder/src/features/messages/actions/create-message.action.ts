@@ -74,6 +74,12 @@ export const createMessage = async (props: {
   contactInbox: ContactInboxModel
   parsedInput: CreateMessageRequest
   user?: UserModel
+  /**
+   * Channel-directive attributes stored on the outgoing message (e.g. the
+   * WhatsApp call-permission-request marker). Plain composer sends leave
+   * this unset.
+   */
+  contentAttributes?: Record<string, unknown> | null
 }) => {
   const { conversation, parsedInput, user, contactInbox } = props
 
@@ -122,7 +128,7 @@ export const createMessage = async (props: {
       ? ("comment" as const)
       : ("message" as const),
     parentId,
-    contentAttributes: null,
+    contentAttributes: props.contentAttributes ?? null,
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({

@@ -247,9 +247,25 @@ export type InteractiveVoiceCallMessage = {
   }
 }
 
+/**
+ * Meta's `call_permission_request` interactive — asks the customer to allow
+ * business-initiated WhatsApp calls. Not modeled by whatsapp-api-js, so it's
+ * posted raw.
+ */
+export type InteractiveCallPermissionRequestMessage = {
+  _type: "interactive_call_permission_request"
+  type: "interactive"
+  interactive: {
+    type: "call_permission_request"
+    body: { text: string }
+    action: { name: "call_permission_request" }
+  }
+}
+
 /** Messages posted raw because whatsapp-api-js does not model their payloads. */
 export type RawWhatsappMessage =
   | InteractiveCarouselMessage
+  | InteractiveCallPermissionRequestMessage
   | InteractiveVoiceCallMessage
   | TemplateMessage
 

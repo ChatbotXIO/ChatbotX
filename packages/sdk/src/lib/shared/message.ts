@@ -183,6 +183,28 @@ export type MessageWhatsappCallPermissionReplyEntity = {
 }
 
 /**
+ * Marks an outgoing message as a business-calling permission request. The
+ * WhatsApp send handler renders it as the `call_permission_request`
+ * interactive (with the message text as body) instead of a plain text.
+ */
+export type MessageWhatsappCallPermissionRequestEntity = {
+  type: "whatsapp_call_permission_request"
+}
+
+/** Shape-checked accessor for {@link MessageWhatsappCallPermissionRequestEntity}. */
+export const getWhatsappCallPermissionRequest = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionRequestEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_call_permission_request"
+    ? (contentAttributes as MessageWhatsappCallPermissionRequestEntity)
+    : undefined
+}
+
+/**
  * Extracts the story-reply payload from a message's contentAttributes,
  * accepting both the current `{ type: "story_reply", story }` shape and the
  * legacy `{ storyReply }` shape some already-persisted rows still carry.
