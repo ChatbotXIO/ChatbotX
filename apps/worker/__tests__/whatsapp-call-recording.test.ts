@@ -42,6 +42,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/events", () => ({
   emitCallRecorded: mocks.emitCallRecorded,
   emitCallTranscribed: mocks.emitCallTranscribed,
+  setWebhookExecutionContext: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/worker-config", async () => {
@@ -176,6 +177,7 @@ describe("handleWhatsappCallTranscribe", () => {
     mocks.findByWacid.mockResolvedValue({
       ...callRow,
       recordingPath: "public/space/ws-1/calls/wacid.ABC.ogg",
+      recordedAt: new Date(),
     })
     mocks.aiFindBy.mockResolvedValue({ id: "ai-1" })
     mocks.kyGet.mockReturnValue({
@@ -226,6 +228,21 @@ describe("handleWhatsappCallTranscribe", () => {
 
   test("skips when the call has no recording", async () => {
     mocks.findByWacid.mockResolvedValue({ ...callRow, recordingPath: null })
+
+    await handleWhatsappCallTranscribe({
+      wacid: "wacid.ABC",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.transcribe).not.toHaveBeenCalled()
+  })
+
+  test("skips a claimed-but-unfinished recording slot", async () => {
+    mocks.findByWacid.mockResolvedValue({
+      ...callRow,
+      recordingPath: "public/space/ws-1/calls/wacid.ABC.ogg",
+      recordedAt: null,
+    })
 
     await handleWhatsappCallTranscribe({
       wacid: "wacid.ABC",

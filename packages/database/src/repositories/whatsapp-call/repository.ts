@@ -213,8 +213,54 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Stamps the recording exactly once — the WHERE on `recordingPath IS NULL`
-   * makes a redelivered egress webhook a no-op (`undefined` return).
+   * Claims the recording slot exactly once BEFORE the egress is started —
+   * LiveKit webhooks are at-least-once, and `recordingPath` is only
+   * confirmed at egress end, far too late to guard the start. The CAS on
+   * `recordingPath IS NULL` makes a redelivered `participant_joined` a
+   * no-op (`undefined` return) so a second egress never spins up.
+   */
+  async claimRecordingSlot(
+    props: { wacid: string; recordingPath: string },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({ recordingPath: props.recordingPath })
+      .where(
+        and(
+          eq(whatsappCallModel.wacid, props.wacid),
+          isNull(whatsappCallModel.recordingPath),
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /**
+   * Rolls a failed egress start back so a later attempt can claim again.
+   * Guarded on `recordedAt IS NULL` — once a recording actually finished,
+   * the slot is permanent.
+   */
+  async releaseRecordingSlot(
+    props: { wacid: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(whatsappCallModel)
+      .set({ recordingPath: null })
+      .where(
+        and(
+          eq(whatsappCallModel.wacid, props.wacid),
+          isNull(whatsappCallModel.recordedAt),
+        ),
+      )
+  }
+
+  /**
+   * Finalizes the recording exactly once when the egress lands — the CAS on
+   * `recordedAt IS NULL` makes a redelivered `egress_ended` a no-op
+   * (`undefined` return). `recordingPath` is overwritten with the actual
+   * egress output filename, which is authoritative over the claimed path.
    */
   async attachRecording(
     props: { wacid: string; recordingPath: string; recordedAt: Date },
@@ -229,7 +275,7 @@ class WhatsappCallRepository {
       .where(
         and(
           eq(whatsappCallModel.wacid, props.wacid),
-          isNull(whatsappCallModel.recordingPath),
+          isNull(whatsappCallModel.recordedAt),
         ),
       )
       .returning()

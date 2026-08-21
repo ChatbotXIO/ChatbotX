@@ -97,6 +97,15 @@ class WhatsappLivekitService {
     await rooms.deleteRoom(roomName)
   }
 
+  /** Deterministic per-call object path the recording egress writes to. */
+  buildCallRecordingPath(props: {
+    workspaceId: string
+    wacid: string
+  }): string {
+    const sanitizedWacid = props.wacid.replace(/[^a-zA-Z0-9._-]/g, "_")
+    return `public/space/${props.workspaceId}/calls/${sanitizedWacid}.ogg`
+  }
+
   /**
    * Starts an audio-only recording of the call room, uploaded straight into
    * the app's S3 bucket at a deterministic per-call path. Returns the
@@ -120,8 +129,7 @@ class WhatsappLivekitService {
       throw new Error("Call recording requires S3 storage configuration")
     }
 
-    const sanitizedWacid = props.wacid.replace(/[^a-zA-Z0-9._-]/g, "_")
-    const recordingPath = `public/space/${props.workspaceId}/calls/${sanitizedWacid}.ogg`
+    const recordingPath = this.buildCallRecordingPath(props)
 
     const egress = new EgressClient(config.url, config.apiKey, config.apiSecret)
     const info = await egress.startRoomCompositeEgress(

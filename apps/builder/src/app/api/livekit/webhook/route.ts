@@ -65,25 +65,41 @@ const handleSipParticipantJoined = async (props: {
     return
   }
 
-  // Auto-recording starts as soon as the SIP leg lands (server-side single
-  // point — no double-start when several agents race to answer).
+  // Auto-recording starts as soon as the SIP leg lands. The DB claim (CAS
+  // on recordingPath) is the idempotency gate: LiveKit webhooks are
+  // at-least-once, and a redelivered participant_joined must not spin up a
+  // second egress racing on the same S3 object.
   const recordingEnabled =
     await integrationWhatsappRepository.isCallRecordingEnabledForInbox({
       workspaceId: call.workspaceId,
       inboxId: call.inboxId,
     })
-  if (recordingEnabled && !call.recordingPath) {
-    try {
-      await whatsappLivekitService.startCallRecording({
-        roomName: props.roomName,
-        workspaceId: call.workspaceId,
-        wacid: call.wacid,
-      })
-    } catch (error) {
-      logger.error(
-        { err: error, wacid: call.wacid },
-        "Failed to start call recording egress",
-      )
+  if (recordingEnabled) {
+    const recordingPath = whatsappLivekitService.buildCallRecordingPath({
+      workspaceId: call.workspaceId,
+      wacid: call.wacid,
+    })
+    const claimed = await whatsappCallRepository.claimRecordingSlot({
+      wacid: call.wacid,
+      recordingPath,
+    })
+    if (claimed) {
+      try {
+        await whatsappLivekitService.startCallRecording({
+          roomName: props.roomName,
+          workspaceId: call.workspaceId,
+          wacid: call.wacid,
+        })
+      } catch (error) {
+        // Free the slot so a later delivery can retry the egress.
+        await whatsappCallRepository.releaseRecordingSlot({
+          wacid: call.wacid,
+        })
+        logger.error(
+          { err: error, wacid: call.wacid },
+          "Failed to start call recording egress",
+        )
+      }
     }
   }
 

@@ -10,7 +10,11 @@ import {
   createMessageRepository,
   whatsappCallRepository,
 } from "@chatbotx.io/database/repositories"
-import { emitCallRecorded, emitCallTranscribed } from "@chatbotx.io/events"
+import {
+  emitCallRecorded,
+  emitCallTranscribed,
+  setWebhookExecutionContext,
+} from "@chatbotx.io/events"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -40,6 +44,10 @@ const toBullMqSafeIdSegment = (value: string): string =>
 export const handleWhatsappCallRecordingReady = async (
   data: IntegrationJobWhatsappCallRecordingReady["data"],
 ): Promise<void> => {
+  // Channel-originated: without this, the WebhookEventEmitter's
+  // isWebhookContext() gate silently drops emitCallRecorded (see the same
+  // override in whatsapp-call.ts).
+  setWebhookExecutionContext({ source: "webhook" })
   const call = await whatsappCallRepository.findByWacid(data.wacid)
   if (!call) {
     logger.warn(
@@ -141,11 +149,15 @@ export const handleWhatsappCallRecordingReady = async (
 export const handleWhatsappCallTranscribe = async (
   data: IntegrationJobWhatsappCallTranscribe["data"],
 ): Promise<void> => {
+  // See handleWhatsappCallRecordingReady — required for emitCallTranscribed.
+  setWebhookExecutionContext({ source: "webhook" })
   const call = await whatsappCallRepository.findByWacid(data.wacid)
-  if (!call?.recordingPath) {
+  // recordedAt distinguishes a finished recording from a claimed-but-still-
+  // running egress slot (recordingPath is stamped at claim time).
+  if (!(call?.recordingPath && call.recordedAt)) {
     logger.warn(
       { wacid: data.wacid },
-      "Whatsapp call transcription skipped: no recording",
+      "Whatsapp call transcription skipped: no finished recording",
     )
     return
   }
