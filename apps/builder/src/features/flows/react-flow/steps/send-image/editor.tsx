@@ -20,6 +20,7 @@ const SendImageStepEditor = ({ parentName }: SendImageStepEditorProps) => {
         <DirectUploadOrInsertLink
           fileType="image"
           parentName={parentName}
+          showVariablePicker
           uploadPath={`public/space/${params.workspaceId}/flows/${params.id}/steps/${stepId}`}
         />
       </div>
