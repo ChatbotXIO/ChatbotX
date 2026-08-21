@@ -32,10 +32,10 @@ import { NavMain } from "@/components/nav-main"
 import { NavUsage, type QuotaSummary } from "@/components/nav-usage"
 import { NavUser } from "@/components/nav-user"
 import { WorkspaceSwitcher } from "@/components/workspace-switcher"
-import { canAccessContactsSection } from "@/features/contacts/permissions"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { authClient } from "@/lib/auth/auth-client"
 import {
+  hasContactsAccess,
   hasWorkspacePermission,
   PERMISSION_NAV,
   type WorkspacePermissionKey,
@@ -45,7 +45,7 @@ type SidebarNavItem = {
   title: string
   url: string
   icon: LucideIcon
-  permission?: WorkspacePermissionKey
+  permission: WorkspacePermissionKey
 }
 
 const SETTINGS_GENERAL_URL_SEGMENT = "/settings/general"
@@ -90,6 +90,7 @@ export function AppSidebar({
         title: t("fields.inbox.label"),
         url: `/space/${workspaceId}/inbox`,
         icon: MessageCircleMoreIcon,
+        permission: PERMISSION_NAV.contacts,
       },
       {
         title: t("fields.flows.label"),
@@ -107,11 +108,13 @@ export function AppSidebar({
         title: t("aiAgent.title"),
         url: `/space/${workspaceId}/ai-agents`,
         icon: BrainIcon,
+        permission: PERMISSION_NAV.flows,
       },
       {
         title: t("keywords.title"),
         url: `/space/${workspaceId}/automated-responses`,
         icon: AtomIcon,
+        permission: "superAdmin",
       },
       {
         title: t("broadcasts.title"),
@@ -129,16 +132,19 @@ export function AppSidebar({
         title: t("triggers.title"),
         url: `/space/${workspaceId}/triggers`,
         icon: LightbulbIcon,
+        permission: "superAdmin",
       },
       {
         title: t("webhooks.title"),
         url: `/space/${workspaceId}/webhooks`,
         icon: WebhookIcon,
+        permission: "superAdmin",
       },
       {
         title: t("tools.title"),
         url: `/space/${workspaceId}/tools`,
         icon: WrenchIcon,
+        permission: PERMISSION_NAV.flows,
       },
       {
         title: t("settings.title"),
@@ -150,12 +156,12 @@ export function AppSidebar({
   }
 
   const navMain = data.navMain
-    .filter(
-      (item) =>
-        !item.permission ||
-        (item.permission === PERMISSION_NAV.contacts
-          ? canAccessContactsSection(permissions)
-          : hasWorkspacePermission(permissions, item.permission)),
+    .filter((item) =>
+      // Items gated on the `contacts` flag (Contacts, Inbox) use the shared
+      // contacts-access rule, which also admits assigned-only members.
+      item.permission === PERMISSION_NAV.contacts
+        ? hasContactsAccess(permissions)
+        : hasWorkspacePermission(permissions, item.permission),
     )
     .map((item) => ({
       ...item,

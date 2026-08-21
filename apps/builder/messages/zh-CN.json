@@ -2180,7 +2180,7 @@
     "permissions": {
       "analytics": "分析",
       "broadcast": "广播",
-      "contacts": "联系人",
+      "contacts": "联系人 / 收件匣",
       "ecommerce": "电子商务",
       "emailAndPhone": "电子邮件和电话",
       "flows": "流程",
