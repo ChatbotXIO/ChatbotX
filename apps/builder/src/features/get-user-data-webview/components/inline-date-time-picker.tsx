@@ -26,10 +26,15 @@ const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, index) => index)
 
 const pad2 = (value: number) => String(value).padStart(2, "0")
 
+const SELECT_CLASSES =
+  "h-8 rounded-[3px] border border-input bg-background px-1.5 text-sm focus-visible:outline-2 focus-visible:outline-primary"
+
 /**
- * Full-page inline month calendar (Sunday-first, Chatrace-style): arrows on
- * the outer edges, native month/year selects centered, a fixed 6x7 day grid,
- * and — in datetime mode — native hour/minute selects. Native selects are
+ * Full-viewport inline month calendar (Sunday-first, Chatrace-style): nav
+ * arrows pinned near the screen edges, native month/year selects centered,
+ * hairline dividers between sections, a fixed 6x7 grid of flat full-width
+ * day cells (the selection is a thin rectangular outline), and — in
+ * datetime mode — native hour/minute selects. Native selects are
  * deliberate: they open the platform picker inside the Messenger webview,
  * where custom dropdowns are the flakiest surface.
  */
@@ -60,7 +65,6 @@ export function InlineDateTimePicker({
     () => buildYearOptions(new Date().getFullYear()),
     [],
   )
-  const today = new Date()
 
   const shiftMonth = (delta: number) => {
     const next = new Date(value)
@@ -75,11 +79,11 @@ export function InlineDateTimePicker({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+    <div className="flex w-full flex-col">
+      <div className="relative flex items-center justify-center border-b px-4 py-3 sm:px-10">
         <button
           aria-label={monthFormatter.format(new Date(year, month - 1, 1))}
-          className="flex size-10 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary"
+          className="absolute left-4 flex size-9 items-center justify-center text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary sm:left-10"
           onClick={() => shiftMonth(-1)}
           type="button"
         >
@@ -89,7 +93,7 @@ export function InlineDateTimePicker({
         <div className="flex items-center gap-2">
           <select
             aria-label={monthLabel}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-2 focus-visible:outline-primary"
+            className={SELECT_CLASSES}
             onChange={(event) => setYearMonth(year, Number(event.target.value))}
             value={month}
           >
@@ -101,7 +105,7 @@ export function InlineDateTimePicker({
           </select>
           <select
             aria-label={yearLabel}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-2 focus-visible:outline-primary"
+            className={SELECT_CLASSES}
             onChange={(event) =>
               setYearMonth(Number(event.target.value), month)
             }
@@ -117,7 +121,7 @@ export function InlineDateTimePicker({
 
         <button
           aria-label={monthFormatter.format(new Date(year, month + 1, 1))}
-          className="flex size-10 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary"
+          className="absolute right-4 flex size-9 items-center justify-center text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary sm:right-10"
           onClick={() => shiftMonth(1)}
           type="button"
         >
@@ -125,30 +129,25 @@ export function InlineDateTimePicker({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 text-center">
+      <div className="grid grid-cols-7 gap-y-1.5 border-b px-2 pt-4 pb-5 text-center sm:px-8">
         {weekdayLabels.map((label) => (
-          <div
-            className="pb-2 font-medium text-muted-foreground text-xs"
-            key={label}
-          >
+          <div className="pb-2 text-muted-foreground/70 text-sm" key={label}>
             {label}
           </div>
         ))}
         {cells.map((cell) => {
           const isSelected = isSameCalendarDay(cell.date, value)
-          const isToday = isSameCalendarDay(cell.date, today)
           return (
             <button
               aria-pressed={isSelected}
               className={cn(
-                "mx-auto flex size-10 items-center justify-center rounded-full text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:size-11",
+                "mx-1 flex h-9 items-center justify-center rounded-[3px] border text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:mx-4",
                 cell.inCurrentMonth
                   ? "text-foreground"
                   : "text-muted-foreground/50",
                 isSelected
-                  ? "border border-primary font-semibold text-primary"
-                  : "hover:bg-primary/10",
-                isToday && !isSelected && "font-semibold text-primary",
+                  ? "border-primary font-semibold text-primary"
+                  : "border-transparent hover:bg-primary/5",
               )}
               key={cell.date.toISOString()}
               onClick={() => onChange(withCalendarDay(value, cell.date))}
@@ -161,10 +160,10 @@ export function InlineDateTimePicker({
       </div>
 
       {mode === "datetime" ? (
-        <div className="flex items-center justify-center gap-2 border-t pt-4">
+        <div className="flex items-center justify-center gap-1.5 border-b py-4">
           <select
             aria-label="HH"
-            className="h-10 rounded-md border border-input bg-background px-2 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-primary"
+            className={cn(SELECT_CLASSES, "tabular-nums")}
             onChange={(event) =>
               onChange(
                 withTime(value, Number(event.target.value), value.getMinutes()),
@@ -178,10 +177,10 @@ export function InlineDateTimePicker({
               </option>
             ))}
           </select>
-          <span className="font-semibold text-muted-foreground">:</span>
+          <span className="text-muted-foreground">:</span>
           <select
             aria-label="MM"
-            className="h-10 rounded-md border border-input bg-background px-2 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-primary"
+            className={cn(SELECT_CLASSES, "tabular-nums")}
             onChange={(event) =>
               onChange(
                 withTime(value, value.getHours(), Number(event.target.value)),

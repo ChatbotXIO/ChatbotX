@@ -72,10 +72,10 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
 
   return (
     <PublicShell>
-      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col">
-        <main className="flex flex-1 flex-col gap-4 p-4 pb-32 sm:p-6">
+      <div className="flex min-h-screen w-full flex-col">
+        <main className="flex flex-1 flex-col pb-24">
           {submitError ? (
-            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-destructive text-sm">
+            <div className="mx-2 mt-2 rounded-[3px] border border-destructive/30 bg-destructive/5 p-3 text-destructive text-sm">
               {t("errors.submitFailed")}
             </div>
           ) : null}
@@ -93,9 +93,9 @@ export function DateTimePickerForm({ token, mode }: DateTimePickerFormProps) {
           />
         </main>
 
-        <footer className="fixed inset-x-0 bottom-0 p-4">
+        <footer className="fixed inset-x-0 bottom-0 p-2">
           <button
-            className="mx-auto flex w-full max-w-2xl items-center justify-center gap-3 rounded-lg bg-primary px-4 py-4 font-bold text-primary-foreground text-sm uppercase tracking-wide transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-[3px] bg-primary px-4 py-4 font-bold text-base text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-70"
             disabled={isPending}
             onClick={() => {
               const selectedValue = toSelectedValueIso(pickedDate, mode)
