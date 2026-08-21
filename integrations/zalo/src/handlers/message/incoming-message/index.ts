@@ -1,3 +1,4 @@
+import { ZALO_POSTBACK_TEXT_PREFIX } from "@chatbotx.io/flow-config"
 import {
   type Context,
   contentTypes,
@@ -134,8 +135,8 @@ const getMessageEntity = async (
 
   // Detect postback action
   let postbackAction: string | null = null
-  if (message.text?.startsWith("postback_")) {
-    postbackAction = message.text.replace("postback_", "")
+  if (message.text?.startsWith(ZALO_POSTBACK_TEXT_PREFIX)) {
+    postbackAction = message.text.slice(ZALO_POSTBACK_TEXT_PREFIX.length)
   }
 
   return { message, postbackAction }

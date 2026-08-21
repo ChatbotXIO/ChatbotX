@@ -5,6 +5,7 @@ import {
   encodeButtonPayload,
   extractMetadata,
   type MetadataPayload,
+  ZALO_POSTBACK_TEXT_PREFIX,
 } from "@chatbotx.io/flow-config"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { chunk } from "remeda"
@@ -42,7 +43,7 @@ export function getButtonTemplate(props: {
       return {
         type: "oa.query.hide",
         title: button.label,
-        payload: `postback_${buttonPayload}`,
+        payload: `${ZALO_POSTBACK_TEXT_PREFIX}${buttonPayload}`,
       }
   }
 }
@@ -82,6 +83,6 @@ export function getCanonicalButtonTemplate(
   return {
     type: "oa.query.hide",
     title: button.label,
-    payload: `postback_${button.postback}`,
+    payload: `${ZALO_POSTBACK_TEXT_PREFIX}${button.postback}`,
   }
 }

@@ -1,4 +1,12 @@
-import { decodeButtonPayload } from "@chatbotx.io/flow-config"
+import {
+  decodeButtonPayload,
+  type FlowNode,
+  resolveFlowActionTarget,
+  ZALO_POSTBACK_TEXT_PREFIX,
+} from "@chatbotx.io/flow-config"
+import type { IncomingMessage } from "@chatbotx.io/sdk"
+import { normalizeError } from "universal-error-normalizer"
+import { detectFlowVersion } from "../../lib/db"
 import { logger } from "../../lib/logger"
 
 export type FlowActionKind = "postback" | "quickReply"
@@ -35,4 +43,59 @@ export const sanitizeFlowAction = (
   )
 
   return null
+}
+
+/**
+ * Zalo and Telegram deliver a button tap as a plain text message whose body is
+ * the encoded postback payload, with no button title alongside it — unlike
+ * Messenger/WhatsApp, which send the title. The echo formats differ: Zalo
+ * prefixes the payload (`postback_123::456`), Telegram sends it bare
+ * (`123::456`). Resolve the tapped button's label from the flow so the inbox
+ * shows what the contact actually pressed instead of the raw payload.
+ *
+ * Returns null (leaving the raw text untouched) whenever the channel already
+ * provided a title, the text is not the bare payload echo, or the flow/button
+ * can no longer be resolved — a stale tap must never fail the message save.
+ */
+export const resolvePostbackButtonLabel = async (props: {
+  postbackAction: string | null
+  buttonTitle: string | null | undefined
+  message: IncomingMessage | null
+  workspaceId: string
+}): Promise<string | null> => {
+  const { postbackAction, buttonTitle, message, workspaceId } = props
+  if (!postbackAction || buttonTitle || !message?.text) {
+    return null
+  }
+
+  const isRawPayloadEcho =
+    message.text === postbackAction ||
+    message.text === `${ZALO_POSTBACK_TEXT_PREFIX}${postbackAction}`
+  if (!isRawPayloadEcho) {
+    return null
+  }
+
+  const parsedAction = decodeButtonPayload(postbackAction)
+  if (!parsedAction?.buttonId) {
+    return null
+  }
+
+  try {
+    const { flowVersion } = await detectFlowVersion({
+      flowId: parsedAction.flowId,
+      flowVersionId: parsedAction.flowVersionId,
+      workspaceId,
+    })
+    const target = resolveFlowActionTarget(
+      flowVersion.nodes as unknown as FlowNode[],
+      parsedAction.buttonId,
+    )
+    return target?.details.label ?? null
+  } catch (error) {
+    logger.warn(
+      { error: normalizeError(error), postbackAction, workspaceId },
+      "Could not resolve button label for postback message",
+    )
+    return null
+  }
 }

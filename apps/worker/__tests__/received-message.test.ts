@@ -38,6 +38,7 @@ const {
   mockChatQueueAdd,
   mockSyncScopedIdentity,
   mockIsUniqueViolationError,
+  mockDetectFlowVersion,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -111,6 +112,7 @@ const {
       }),
     ),
     mockIsUniqueViolationError: vi.fn().mockReturnValue(false),
+    mockDetectFlowVersion: vi.fn(),
   }
 })
 
@@ -287,6 +289,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+vi.mock("../src/lib/db", () => ({
+  detectFlowVersion: mockDetectFlowVersion,
 }))
 
 vi.mock("../src/services/integrations", () => ({
@@ -799,6 +805,110 @@ describe("receiveMessage — message repository branch", () => {
       kind: "postback",
       data: expect.objectContaining({ action: postbackAction }),
     })
+  })
+
+  test("replaces a raw postback payload echo with the flow button label", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockDetectFlowVersion.mockResolvedValue({
+      flowVersion: {
+        id: "fv-1",
+        nodes: [
+          {
+            id: "node-1",
+            data: {
+              details: {
+                steps: [
+                  {
+                    buttons: [
+                      {
+                        id: "77",
+                        label: "Xem sản phẩm",
+                        buttonType: "nextStep",
+                        beforeStep: null,
+                        steps: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      useLatestFlowVersion: true,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: `postback_${postbackAction}`,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+    expect(mockDetectFlowVersion).toHaveBeenCalledWith({
+      flowId: "42",
+      flowVersionId: undefined,
+      workspaceId: "ws-1",
+    })
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Xem sản phẩm" }),
+    )
+    expect(mockUpdateTracking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ lastBtnTitle: "Xem sản phẩm" }),
+      }),
+    )
+    expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
+      kind: "postback",
+      data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  test("keeps the raw postback text when the flow can no longer be resolved", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockDetectFlowVersion.mockRejectedValue(new Error("FlowVersion not found"))
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: `postback_${postbackAction}`,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: `postback_${postbackAction}` }),
+    )
+  })
+
+  test("does not rewrite text when the channel already supplies a button title", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      buttonTitle: "Nút Messenger",
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockDetectFlowVersion).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "hello" }),
+    )
   })
 
   test("sends Vietnamese feedback instead of going silent when an appointment cancel token is invalid", async () => {

@@ -85,7 +85,7 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
-import { sanitizeFlowAction } from "./flow-action"
+import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 
 type ContactInboxTracking = ContactInboxTrackingData
 
@@ -249,25 +249,40 @@ export const receiveMessage = async (
     integrationIdentifier,
   })
 
-  const detected = await detectContactAndConversation({
-    incomingContact,
-    inbox,
-    integrationRow,
-    source:
-      metaReferralToContactSource(referralSource) ??
-      contactSources.enum.inboundMessage,
-  })
+  // Label resolution only reads the raw text (direction correction never
+  // changes it) and the workspace, so it can overlap the contact lookup.
+  const [detected, postbackButtonLabel] = await Promise.all([
+    detectContactAndConversation({
+      incomingContact,
+      inbox,
+      integrationRow,
+      source:
+        metaReferralToContactSource(referralSource) ??
+        contactSources.enum.inboundMessage,
+    }),
+    resolvePostbackButtonLabel({
+      postbackAction,
+      buttonTitle: parsedMessage.buttonTitle,
+      message: rawIncomingMessage,
+      workspaceId: inbox.workspaceId,
+    }),
+  ])
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
   }
   const { contactInbox, conversation, contact, isNewContact } = detected
-  const incomingMessage = correctStoryReplyDirectionForNewContact(
+  const directedIncomingMessage = correctStoryReplyDirectionForNewContact(
     rawIncomingMessage,
     isNewContact,
   )
+  const incomingMessage =
+    postbackButtonLabel && directedIncomingMessage
+      ? { ...directedIncomingMessage, text: postbackButtonLabel }
+      : directedIncomingMessage
   const systemFieldUpdates = getReceivedMessageSystemFieldUpdates({
-    ...parsedMessage,
+    buttonTitle: parsedMessage.buttonTitle || postbackButtonLabel,
     message: incomingMessage,
+    referral: parsedMessage.referral,
   })
 
   // Overwrite Contact.phoneNumber/email from message text — every inbound
