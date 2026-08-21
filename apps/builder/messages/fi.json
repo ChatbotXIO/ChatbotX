@@ -2144,7 +2144,8 @@
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot"
+      "importJsonOnly": "Vain JSON-tiedostot",
+      "whatsappCallButton": "Soita WhatsAppissa"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2252,7 +2253,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Kun painikkeita on liitetty, TikTok lähettää vain tämän viestin ensimmäiset 40 merkkiä — loput katkaistaan."
     },
-    "dataWasSaved": "Tiedot tallennettiin"
+    "dataWasSaved": "Tiedot tallennettiin",
+    "whatsappCallButton": {
+      "editButtonTitle": "Muokkaa painiketta",
+      "buttonLabel": "Painikkeen teksti"
+    }
   },
   "folders": {
     "heading": {

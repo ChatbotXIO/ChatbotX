@@ -2218,7 +2218,8 @@
       "import": "Importar flujo",
       "export": "Exportar",
       "importStarted": "El flujo se está importando. Consulta el historial de importaciones para ver los resultados.",
-      "importJsonOnly": "Solo archivos JSON"
+      "importJsonOnly": "Solo archivos JSON",
+      "whatsappCallButton": "Llamar por WhatsApp"
     },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",
@@ -2326,7 +2327,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Cuando se adjuntan botones, TikTok solo envía los primeros 40 caracteres de este mensaje; el resto se recortará."
     },
-    "dataWasSaved": "Datos guardados"
+    "dataWasSaved": "Datos guardados",
+    "whatsappCallButton": {
+      "editButtonTitle": "Editar botón",
+      "buttonLabel": "Etiqueta del botón"
+    }
   },
   "folders": {
     "heading": {

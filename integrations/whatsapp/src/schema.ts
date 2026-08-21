@@ -226,8 +226,32 @@ export type InteractiveCarouselMessage = {
   }
 }
 
+/**
+ * Meta's `voice_call` interactive — body text plus one "Call on WhatsApp"
+ * button. Not modeled by whatsapp-api-js, so it's posted raw.
+ */
+export type InteractiveVoiceCallMessage = {
+  _type: "interactive_voice_call"
+  type: "interactive"
+  interactive: {
+    type: "voice_call"
+    body: { text: string }
+    action: {
+      name: "voice_call"
+      parameters: {
+        display_text: string
+        ttl_minutes?: number
+        payload?: string
+      }
+    }
+  }
+}
+
 /** Messages posted raw because whatsapp-api-js does not model their payloads. */
-export type RawWhatsappMessage = InteractiveCarouselMessage | TemplateMessage
+export type RawWhatsappMessage =
+  | InteractiveCarouselMessage
+  | InteractiveVoiceCallMessage
+  | TemplateMessage
 
 export type WhatsappActions = {
   verifyAccessToken: Handler<

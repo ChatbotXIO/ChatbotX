@@ -86,6 +86,7 @@ import { unsubscribeBroadcastStep } from "./unsubscribe-broadcast"
 import { unsubscribeSequenceStep } from "./unsubscribe-sequence"
 import { updateMessengerContactDataStep } from "./update-messenger-contact-data"
 import { waitStep } from "./wait"
+import whatsappCallButtonStep from "./whatsapp-call-button"
 import whatsappFlowStep from "./whatsapp-flow"
 import whatsappOptionListStep from "./whatsapp-option-list"
 
@@ -183,6 +184,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.email]: emailStep,
   [stepTypes.enum.typing]: typingStep,
   [stepTypes.enum.whatsappOptionList]: whatsappOptionListStep,
+  [stepTypes.enum.whatsappCallButton]: whatsappCallButtonStep,
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenuStep,

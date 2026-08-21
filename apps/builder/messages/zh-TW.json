@@ -2381,7 +2381,8 @@
       "import": "匯入流程",
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
-      "importJsonOnly": "僅限 JSON 檔案"
+      "importJsonOnly": "僅限 JSON 檔案",
+      "whatsappCallButton": "透過 WhatsApp 通話"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2489,7 +2490,11 @@
     "sendText": {
       "tiktokTitleTruncated": "附加按鈕後，TikTok 只會傳送這則訊息的前 40 個字元——其餘部分將被截斷。"
     },
-    "dataWasSaved": "資料已儲存"
+    "dataWasSaved": "資料已儲存",
+    "whatsappCallButton": {
+      "editButtonTitle": "編輯按鈕",
+      "buttonLabel": "按鈕標籤"
+    }
   },
   "folders": {
     "heading": {

@@ -2218,7 +2218,8 @@
       "import": "استيراد التدفق",
       "export": "تصدير",
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
-      "importJsonOnly": "ملفات JSON فقط"
+      "importJsonOnly": "ملفات JSON فقط",
+      "whatsappCallButton": "الاتصال عبر واتساب"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2326,7 +2327,11 @@
     "sendText": {
       "tiktokTitleTruncated": "عند إرفاق أزرار، يرسل TikTok أول 40 حرفًا فقط من هذه الرسالة، وسيتم قص الباقي."
     },
-    "dataWasSaved": "تم حفظ البيانات"
+    "dataWasSaved": "تم حفظ البيانات",
+    "whatsappCallButton": {
+      "editButtonTitle": "تعديل الزر",
+      "buttonLabel": "تسمية الزر"
+    }
   },
   "folders": {
     "heading": {

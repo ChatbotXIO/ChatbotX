@@ -2807,7 +2807,8 @@
       "import": "Importera flöde",
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
-      "importJsonOnly": "Endast JSON-filer"
+      "importJsonOnly": "Endast JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -2941,7 +2942,11 @@
     "sendText": {
       "tiktokTitleTruncated": "När knappar är kopplade skickar TikTok bara de första 40 tecknen i det här meddelandet — resten klipps bort."
     },
-    "dataWasSaved": "Uppgifterna sparades"
+    "dataWasSaved": "Uppgifterna sparades",
+    "whatsappCallButton": {
+      "editButtonTitle": "Redigera knapp",
+      "buttonLabel": "Knappetikett"
+    }
   },
   "folders": {
     "heading": {

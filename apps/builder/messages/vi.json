@@ -2218,7 +2218,8 @@
       "import": "Nhập luồng",
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
-      "importJsonOnly": "Chỉ tệp JSON"
+      "importJsonOnly": "Chỉ tệp JSON",
+      "whatsappCallButton": "Gọi qua WhatsApp"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2326,7 +2327,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Khi có gắn nút, TikTok chỉ gửi tối đa 40 ký tự đầu của tin nhắn này — phần còn lại sẽ bị cắt bỏ."
     },
-    "dataWasSaved": "Đã lưu dữ liệu"
+    "dataWasSaved": "Đã lưu dữ liệu",
+    "whatsappCallButton": {
+      "editButtonTitle": "Chỉnh sửa nút",
+      "buttonLabel": "Nhãn nút"
+    }
   },
   "folders": {
     "heading": {

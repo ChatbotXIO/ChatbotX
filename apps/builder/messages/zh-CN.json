@@ -2810,7 +2810,8 @@
       "import": "导入流程",
       "export": "导出",
       "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
-      "importJsonOnly": "仅限 JSON 文件"
+      "importJsonOnly": "仅限 JSON 文件",
+      "whatsappCallButton": "通过 WhatsApp 通话"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -2944,7 +2945,11 @@
     "sendText": {
       "tiktokTitleTruncated": "附加按钮后，TikTok 只会发送这条消息的前 40 个字符——其余部分将被截断。"
     },
-    "dataWasSaved": "数据已保存"
+    "dataWasSaved": "数据已保存",
+    "whatsappCallButton": {
+      "editButtonTitle": "编辑按钮",
+      "buttonLabel": "按钮标签"
+    }
   },
   "folders": {
     "heading": {

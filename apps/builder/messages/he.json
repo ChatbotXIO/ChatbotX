@@ -409,7 +409,8 @@
       "import": "ייבוא זרימה",
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
-      "importJsonOnly": "קבצי JSON בלבד"
+      "importJsonOnly": "קבצי JSON בלבד",
+      "whatsappCallButton": "התקשרות בוואטסאפ"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -517,7 +518,11 @@
     "sendText": {
       "tiktokTitleTruncated": "כאשר מצורפים כפתורים, טיקטוק שולח רק את 40 התווים הראשונים של ההודעה הזו — השאר ייחתך."
     },
-    "dataWasSaved": "הנתונים נשמרו"
+    "dataWasSaved": "הנתונים נשמרו",
+    "whatsappCallButton": {
+      "editButtonTitle": "עריכת כפתור",
+      "buttonLabel": "תווית כפתור"
+    }
   },
   "folders": {
     "heading": {

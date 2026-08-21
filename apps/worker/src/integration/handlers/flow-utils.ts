@@ -71,6 +71,7 @@ export const MESSAGE_PRODUCING_STEP_TYPES = new Set<StepType>([
   stepTypes.enum.sendWaTemplateMessage,
   stepTypes.enum.sendMessengerTemplateMessage,
   stepTypes.enum.whatsappOptionList,
+  stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
 ])
 

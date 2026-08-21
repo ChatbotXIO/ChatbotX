@@ -4,6 +4,7 @@ import {
   type SendTextStepSchema,
   type SendWaTemplateMessageStepSchema,
   stepTypes,
+  type WhatsappCallButtonStepSchema,
   type WhatsappFlowStepSchema,
   type WhatsappOptionListStepSchema,
 } from "@chatbotx.io/flow-config"
@@ -31,6 +32,7 @@ import { generateOutgoingMessages as convertFlowStepCarousel } from "./send-caro
 import { convertFlowStepImage } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
+import { convertFlowStepWhatsappCallButton } from "./whatsapp-call-button"
 import { convertFlowStepWhatsappFlow } from "./whatsapp-flow"
 import { convertFlowStepWhatsappOptionList } from "./whatsapp-option-list"
 
@@ -127,6 +129,16 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    case stepTypes.enum.whatsappCallButton:
+      yield* convertFlowStepWhatsappCallButton(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            WhatsappCallButtonStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
     case stepTypes.enum.whatsappFlow:
       yield* convertFlowStepWhatsappFlow(
         props as Parameters<
@@ -142,11 +154,13 @@ function* convertFlowStepToWhatsappMessage(
   }
 }
 
-/** `whatsapp-api-js` models neither payload, so both are posted as-is. */
+/** `whatsapp-api-js` models none of these payloads, so they're posted as-is. */
 const isRawWhatsappMessage = (
   message: ClientMessage | RawWhatsappMessage,
 ): message is RawWhatsappMessage =>
-  message._type === "template" || message._type === "interactive_carousel"
+  message._type === "template" ||
+  message._type === "interactive_carousel" ||
+  message._type === "interactive_voice_call"
 
 /**
  * Builds the Cloud API message-body fields (everything after

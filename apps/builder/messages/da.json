@@ -2144,7 +2144,8 @@
       "import": "Importer flow",
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
-      "importJsonOnly": "Kun JSON-filer"
+      "importJsonOnly": "Kun JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2252,7 +2253,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Når der er tilføjet knapper, sender TikTok kun de første 40 tegn af denne besked — resten bliver klippet væk."
     },
-    "dataWasSaved": "Data blev gemt"
+    "dataWasSaved": "Data blev gemt",
+    "whatsappCallButton": {
+      "editButtonTitle": "Rediger Knap",
+      "buttonLabel": "Knap Etiket"
+    }
   },
   "folders": {
     "heading": {

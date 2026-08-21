@@ -2144,7 +2144,8 @@
       "import": "Flow importeren",
       "export": "Exporteren",
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
-      "importJsonOnly": "Alleen JSON-bestanden"
+      "importJsonOnly": "Alleen JSON-bestanden",
+      "whatsappCallButton": "Bellen via WhatsApp"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2252,7 +2253,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Als er knoppen zijn toegevoegd, verstuurt TikTok alleen de eerste 40 tekens van dit bericht — de rest wordt afgekapt."
     },
-    "dataWasSaved": "Gegevens zijn opgeslagen"
+    "dataWasSaved": "Gegevens zijn opgeslagen",
+    "whatsappCallButton": {
+      "editButtonTitle": "Knop bewerken",
+      "buttonLabel": "Knoplabel"
+    }
   },
   "folders": {
     "heading": {

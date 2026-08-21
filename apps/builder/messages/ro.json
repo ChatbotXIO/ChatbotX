@@ -137,7 +137,8 @@
       "import": "Importă fluxul",
       "export": "Exportă",
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
-      "importJsonOnly": "Doar fișiere JSON"
+      "importJsonOnly": "Doar fișiere JSON",
+      "whatsappCallButton": "Sună pe WhatsApp"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -245,7 +246,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Când sunt atașate butoane, TikTok trimite doar primele 40 de caractere din acest mesaj — restul va fi trunchiat."
     },
-    "dataWasSaved": "Datele au fost salvate"
+    "dataWasSaved": "Datele au fost salvate",
+    "whatsappCallButton": {
+      "editButtonTitle": "Editează butonul",
+      "buttonLabel": "Eticheta butonului"
+    }
   },
   "folders": {
     "heading": {

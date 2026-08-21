@@ -2144,7 +2144,8 @@
       "import": "フローをインポート",
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
-      "importJsonOnly": "JSONファイルのみ"
+      "importJsonOnly": "JSONファイルのみ",
+      "whatsappCallButton": "WhatsAppで通話"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2252,7 +2253,11 @@
     "sendText": {
       "tiktokTitleTruncated": "ボタンを追加すると、TikTokはこのメッセージの最初の40文字までしか送信しません。残りは切り捨てられます。"
     },
-    "dataWasSaved": "データが保存されました"
+    "dataWasSaved": "データが保存されました",
+    "whatsappCallButton": {
+      "editButtonTitle": "ボタンを編集",
+      "buttonLabel": "ボタンラベル"
+    }
   },
   "folders": {
     "heading": {

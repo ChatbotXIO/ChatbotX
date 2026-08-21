@@ -17,6 +17,7 @@ import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
 import { sendWaTemplateMessageStepSchema } from "../steps/send-wa-message-template"
 import { typingStepSchema } from "../steps/typing"
+import { whatsappCallButtonStepSchema } from "../steps/whatsapp-call-button"
 import { whatsappFlowStepSchema } from "../steps/whatsapp-flow"
 import { whatsappOptionListStepSchema } from "../steps/whatsapp-option-list"
 import {
@@ -47,6 +48,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
           sendWaTemplateMessageStepSchema,
           sendMessengerTemplateMessageStepSchema,
           whatsappOptionListStepSchema,
+          whatsappCallButtonStepSchema,
           whatsappFlowStepSchema,
           ...actionSteps,
         ]),

@@ -2144,7 +2144,8 @@
       "import": "Impor Alur",
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
-      "importJsonOnly": "Hanya file JSON"
+      "importJsonOnly": "Hanya file JSON",
+      "whatsappCallButton": "Telepon di WhatsApp"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2252,7 +2253,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Saat tombol dilampirkan, TikTok hanya mengirim 40 karakter pertama pesan ini — sisanya akan terpotong."
     },
-    "dataWasSaved": "Data telah disimpan"
+    "dataWasSaved": "Data telah disimpan",
+    "whatsappCallButton": {
+      "editButtonTitle": "Edit Tombol",
+      "buttonLabel": "Label Tombol"
+    }
   },
   "folders": {
     "heading": {

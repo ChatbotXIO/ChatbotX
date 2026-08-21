@@ -79,6 +79,7 @@ const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendText,
   stepTypes.enum.sendVideo,
   stepTypes.enum.sendWaTemplateMessage,
+  stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
   stepTypes.enum.whatsappOptionList,
 ])
@@ -90,6 +91,11 @@ const isBlankTextCarrierStep = (step: SendFlowStepData) => {
 
   if (step.stepType === stepTypes.enum.sendQuickReply) {
     return !step.message.trim()
+  }
+
+  // Meta rejects a voice_call interactive without a body.
+  if (step.stepType === stepTypes.enum.whatsappCallButton) {
+    return !step.text.trim()
   }
 
   return false
@@ -478,7 +484,10 @@ export async function sendFlowStep({
   }
 
   const messageText =
-    resolvedStep.stepType === stepTypes.enum.sendText ? resolvedStep.text : null
+    resolvedStep.stepType === stepTypes.enum.sendText ||
+    resolvedStep.stepType === stepTypes.enum.whatsappCallButton
+      ? resolvedStep.text
+      : null
 
   let message: MessageModel | MessageWithAttachments | undefined
 

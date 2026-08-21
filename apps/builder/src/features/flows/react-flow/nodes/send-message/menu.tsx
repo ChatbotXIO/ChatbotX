@@ -8,6 +8,7 @@ import {
   ListIcon,
   MessageSquareIcon,
   PaperclipIcon,
+  PhoneIcon,
   PictureInPicture2Icon,
   TextIcon,
   TimerIcon,
@@ -83,6 +84,11 @@ const ALL_MENU_ITEMS = (
     icon: ListIcon,
     stepType: stepTypes.enum.whatsappOptionList,
   },
+  whatsappCallButton: {
+    label: t("flows.actions.whatsappCallButton"),
+    icon: PhoneIcon,
+    stepType: stepTypes.enum.whatsappCallButton,
+  },
   typing: {
     label: t("flows.actions.typing"),
     icon: TimerIcon,
@@ -137,6 +143,7 @@ const WHATSAPP_MENU_ORDER = [
   "sendTemplateMessage",
   "whatsappFlow",
   "whatsappOptionList",
+  "whatsappCallButton",
   "typing",
   "sendFile",
   "actions",
