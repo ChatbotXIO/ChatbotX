@@ -531,14 +531,14 @@ describe("getUserData — attempt counter (Bug B fix)", () => {
     })
   })
 
-  test("falls back to the step message when retryMessage is blank (empty text is silently dropped downstream)", async () => {
+  test("keeps the long-standing blank retry behavior for non-webview formats (sends the blank retry text unchanged)", async () => {
     await getUserData(makeProps(ReplyFormat.email, { retryMessage: "" }, 1))
 
     expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
       type: "sendFlowMessage",
       data: expect.objectContaining({
         step: expect.objectContaining({
-          text: "Please enter your email",
+          text: "",
         }),
       }),
     })

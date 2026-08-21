@@ -328,19 +328,31 @@ async function handleSkipOrError(
     "getUserData: input rejected, retrying",
   )
 
-  // `retryMessage` defaults to "" (schema has no minimum), and an empty
-  // prompt is silently dropped by sendChatMessage — the contact would see
-  // nothing at all on an invalid reply. Fall back to the step's main
-  // message whenever retryMessage is blank, so the retry always re-prompts
-  // (and, for date/datetime on capable channels, re-offers the picker
-  // button).
   await sendMessage(
     props,
-    step.retryMessage.trim() || step.message,
+    resolveRetryPromptText(step),
     ((ctx?.variables.conversation.challengeAttempts?.value as number) ?? 1) + 1,
   )
 
   return { result: undefined, status: "retry" }
+}
+
+/**
+ * `retryMessage` defaults to "" (schema has no minimum) and an empty prompt
+ * is silently dropped by the send path. For the webview formats
+ * (date/datetime) a blank retry falls back to the step's main message so the
+ * retry always re-offers the picker button — a silent retry would strand the
+ * contact with no way back to the picker. Every other reply format keeps the
+ * long-standing behavior (blank retry sends nothing): flows built before
+ * this feature may rely on that silence, and typed input still works there.
+ */
+function resolveRetryPromptText(step: GetUserDataStepSchema): string {
+  const isWebviewFormat = Boolean(
+    DATE_TIME_WEBVIEW_MODE_BY_REPLY_FORMAT[step.replyFormat],
+  )
+  return isWebviewFormat
+    ? step.retryMessage.trim() || step.message
+    : step.retryMessage
 }
 
 async function validateUserData(
