@@ -1,13 +1,13 @@
 "use server"
 
 import { assertPublicUrl } from "@chatbotx.io/business"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationApiModel } from "@chatbotx.io/database/schema"
+import { integrationApiRepository } from "@chatbotx.io/database/repositories"
 import type { ApiAuthValue } from "@chatbotx.io/integration-api"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { findIntegrationApiByWorkspaceAndId } from "@/features/integration-api/queries"
 import { workspaceActionClient } from "@/lib/safe-action"
 import type { UpdateApiRequest } from "../schema/mutation"
 import { updateApiRequest } from "../schema/mutation"
@@ -30,10 +30,9 @@ export const updateApiAction = workspaceActionClient
         )
       }
 
-      const existing = await findOrFail({
-        table: integrationApiModel,
-        where: { id, workspaceId },
-        message: "Integration API not found",
+      const existing = await findIntegrationApiByWorkspaceAndId({
+        id,
+        workspaceId,
       })
 
       const auth = existing.auth as ApiAuthValue
@@ -42,15 +41,12 @@ export const updateApiAction = workspaceActionClient
           ? auth
           : { ...auth, callbackUrl: parsedInput.callbackUrl }
 
-      await db
-        .update(integrationApiModel)
-        .set({
-          ...(parsedInput.name !== undefined && { name: parsedInput.name }),
-          ...(parsedInput.callbackUrl !== undefined && {
-            callbackUrl: parsedInput.callbackUrl,
-          }),
-          auth: nextAuth,
-        })
-        .where(eq(integrationApiModel.id, id))
+      await integrationApiRepository.updateSettings({
+        id,
+        workspaceId,
+        name: parsedInput.name,
+        callbackUrl: parsedInput.callbackUrl,
+        auth: nextAuth,
+      })
     },
   )

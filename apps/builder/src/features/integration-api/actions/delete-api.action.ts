@@ -1,14 +1,13 @@
 "use server"
 
-import { inboxService, workspaceService } from "@chatbotx.io/business"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationApiModel } from "@chatbotx.io/database/schema"
+import { integrationApiService, workspaceService } from "@chatbotx.io/business"
 import type { ApiAuthValue } from "@chatbotx.io/integration-api"
 import { integration as integrationApi } from "@chatbotx.io/integration-api"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { findIntegrationApiByWorkspaceAndId } from "@/features/integration-api/queries"
 import { logger } from "@/lib/log"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
@@ -21,11 +20,7 @@ export const deleteApiAction = workspaceActionClientAllowExpired
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
       const [integrationApiRow, workspace] = await Promise.all([
-        findOrFail({
-          table: integrationApiModel,
-          where: { workspaceId, id },
-          message: "Integration API not found",
-        }),
+        findIntegrationApiByWorkspaceAndId({ workspaceId, id }),
         workspaceService.findById({ id: workspaceId }),
       ])
 
@@ -38,16 +33,11 @@ export const deleteApiAction = workspaceActionClientAllowExpired
         )
       }
 
-      await db.transaction(async (tx) => {
-        await tx
-          .delete(integrationApiModel)
-          .where(eq(integrationApiModel.id, integrationApiRow.id))
-        await inboxService.disconnect({
-          inboxId: integrationApiRow.inboxId,
-          ownerId: workspace.ownerId,
-          workspaceId,
-          tx,
-        })
+      await integrationApiService.disconnect({
+        id: integrationApiRow.id,
+        inboxId: integrationApiRow.inboxId,
+        workspaceId,
+        ownerId: workspace.ownerId,
       })
     },
   )

@@ -1,16 +1,12 @@
-import { createHash } from "node:crypto"
 import {
+  inboxService,
   isWorkspaceScheduledForDeletion,
   workspaceService,
 } from "@chatbotx.io/business"
-import { findOrFail } from "@chatbotx.io/database/client"
-import { inboxModel } from "@chatbotx.io/database/schema"
 import { ORPCError } from "@orpc/server"
+import { hashToken } from "@/features/integration-api/lib/token-hash"
 import { findIntegrationApiByTokenHash } from "@/features/integration-api/queries/find-by-token-hash"
 import { base } from "./context"
-
-const hashToken = (token: string): string =>
-  createHash("sha256").update(token).digest("hex")
 
 /**
  * Authenticates a single API-channel inbox, not a workspace. Bearer header
@@ -21,14 +17,14 @@ export const channelApiTokenAuthMidddleware = base.middleware(
   async ({ context, next }) => {
     const authHeader = context.headers.get("Authorization")
     const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice("Bearer ".length)
+      ? authHeader.slice("Bearer ".length).trim()
       : null
     if (!token) {
       throw new ORPCError("UNAUTHORIZED")
     }
 
     const integrationApi = await findIntegrationApiByTokenHash({
-      tokenHash: hashToken(token),
+      tokenHash: await hashToken(token),
     })
     if (!integrationApi?.enabled) {
       throw new ORPCError("UNAUTHORIZED")
@@ -43,11 +39,12 @@ export const channelApiTokenAuthMidddleware = base.middleware(
       })
     }
 
-    const inbox = await findOrFail({
-      table: inboxModel,
+    const inbox = await inboxService.find({
       where: { id: integrationApi.inboxId },
-      message: "Inbox not found",
     })
+    if (!inbox) {
+      throw new ORPCError("UNAUTHORIZED", { message: "Inbox not found" })
+    }
 
     return await next({
       context: {

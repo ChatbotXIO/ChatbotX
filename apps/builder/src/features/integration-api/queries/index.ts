@@ -1,4 +1,5 @@
-import { db } from "@chatbotx.io/database/client"
+import { notFoundException } from "@chatbotx.io/business/errors"
+import { integrationApiRepository } from "@chatbotx.io/database/repositories"
 import type { IntegrationApiModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ApiResource } from "../schema/resource"
@@ -19,10 +20,7 @@ export const listIntegrationApis = async ({
 }): Promise<{ data: ApiResource[] }> => {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  const rows = await db.query.integrationApiModel.findMany({
-    where: { workspaceId },
-    orderBy: { createdAt: "desc" },
-  })
+  const rows = await integrationApiRepository.listByWorkspace(workspaceId)
 
   return { data: rows.map(toResource) }
 }
@@ -33,6 +31,22 @@ export const findIntegrationApiByInboxId = async ({
 }: {
   inboxId: string
 }): Promise<IntegrationApiModel | null> =>
-  (await db.query.integrationApiModel.findFirst({
-    where: { inboxId },
-  })) ?? null
+  await integrationApiRepository.findByInboxId(inboxId)
+
+/** Internal lookup scoped to a workspace — throws when missing, for use by actions. */
+export const findIntegrationApiByWorkspaceAndId = async ({
+  workspaceId,
+  id,
+}: {
+  workspaceId: string
+  id: string
+}): Promise<IntegrationApiModel> => {
+  const row = await integrationApiRepository.findWorkspaceIntegration({
+    workspaceId,
+    id,
+  })
+  if (!row) {
+    throw notFoundException("Integration API not found")
+  }
+  return row
+}

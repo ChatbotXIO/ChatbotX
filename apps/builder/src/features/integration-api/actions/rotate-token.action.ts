@@ -1,11 +1,11 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationApiModel } from "@chatbotx.io/database/schema"
+import { integrationApiRepository } from "@chatbotx.io/database/repositories"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { findIntegrationApiByWorkspaceAndId } from "@/features/integration-api/queries"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { generateApiChannelToken } from "../lib/generate-credentials"
 
@@ -17,18 +17,16 @@ export const rotateApiTokenAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await findOrFail({
-        table: integrationApiModel,
-        where: { id, workspaceId },
-        message: "Integration API not found",
+      await findIntegrationApiByWorkspaceAndId({ id, workspaceId })
+
+      const { token, tokenHash, tokenPrefix } = await generateApiChannelToken()
+
+      await integrationApiRepository.rotateToken({
+        id,
+        workspaceId,
+        tokenHash,
+        tokenPrefix,
       })
-
-      const { token, tokenHash, tokenPrefix } = generateApiChannelToken()
-
-      await db
-        .update(integrationApiModel)
-        .set({ tokenHash, tokenPrefix })
-        .where(eq(integrationApiModel.id, id))
 
       return { token }
     },

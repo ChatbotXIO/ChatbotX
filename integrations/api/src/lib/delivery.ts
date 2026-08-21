@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto"
 import { assertPublicUrl } from "@chatbotx.io/business"
 import ky from "ky"
 import { signApiPayload } from "./signature"
@@ -23,7 +22,7 @@ export const postSignedEnvelope = async (args: {
 
   const rawBody = JSON.stringify(args.envelope)
   const timestamp = Math.floor(Date.now() / 1000).toString()
-  const signature = signApiPayload(args.signingSecret, timestamp, rawBody)
+  const signature = await signApiPayload(args.signingSecret, timestamp, rawBody)
 
   const response = await ky.post(args.callbackUrl, {
     body: rawBody,
@@ -31,7 +30,7 @@ export const postSignedEnvelope = async (args: {
       "Content-Type": "application/json",
       "X-ChatbotX-Signature": `sha256=${signature}`,
       "X-ChatbotX-Timestamp": timestamp,
-      "X-ChatbotX-Delivery": randomUUID(),
+      "X-ChatbotX-Delivery": crypto.randomUUID(),
     },
     timeout: DELIVERY_TIMEOUT_MS,
   })
