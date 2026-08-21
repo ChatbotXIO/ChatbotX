@@ -2962,7 +2962,9 @@
     "voiceCall": "Taleopkald",
     "voiceCallDuration": "Taleopkald · {duration}",
     "missedVoiceCall": "Ubesvaret taleopkald",
-    "declinedVoiceCall": "Afvist taleopkald"
+    "declinedVoiceCall": "Afvist taleopkald",
+    "acceptedCallPermission": "Accepterede anmodning om opkaldstilladelse",
+    "declinedCallPermission": "Afviste anmodning om opkaldstilladelse"
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

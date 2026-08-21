@@ -2962,7 +2962,9 @@
     "voiceCall": "Sesli arama",
     "voiceCallDuration": "Sesli arama · {duration}",
     "missedVoiceCall": "Cevapsız sesli arama",
-    "declinedVoiceCall": "Reddedilen sesli arama"
+    "declinedVoiceCall": "Reddedilen sesli arama",
+    "acceptedCallPermission": "Arama izni isteğini kabul etti",
+    "declinedCallPermission": "Arama izni isteğini reddetti"
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",

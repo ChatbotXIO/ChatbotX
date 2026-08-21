@@ -6,7 +6,10 @@ import type {
   MessageTemplateEntity,
   MessageWhatsappCallEntity,
 } from "@chatbotx.io/sdk"
-import { getWhatsappCallEntity } from "@chatbotx.io/sdk"
+import {
+  getWhatsappCallEntity,
+  getWhatsappCallPermissionReply,
+} from "@chatbotx.io/sdk"
 import {
   Avatar,
   AvatarFallback,
@@ -121,10 +124,14 @@ export const MessageItem = (props: MessageItemProps) => {
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
   const storyReply = getStoryReplyEntity(message.contentAttributes)
-  // A call-activity row renders its localized label from contentAttributes
-  // (see WhatsappCallActivity); the stored text is only an English fallback
-  // for previews and must not double-render here.
+  // Call-related rows render localized labels from contentAttributes (see
+  // WhatsappCallActivity / WhatsappCallPermissionReply); the stored text is
+  // only an English fallback for previews and must not double-render here.
   const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
+  const callPermissionReply = getWhatsappCallPermissionReply(
+    message.contentAttributes,
+  )
+  const suppressRawText = Boolean(whatsappCall || callPermissionReply)
 
   return (
     <MessageBubble
@@ -190,7 +197,7 @@ export const MessageItem = (props: MessageItemProps) => {
         ) : (
           <>
             {(isDeleted || (message.text && message.text.length > 0)) &&
-              !whatsappCall && (
+              !suppressRawText && (
                 <div
                   className={cn(
                     "text-sm",
@@ -458,11 +465,42 @@ const WhatsappCallActivity = ({
   )
 }
 
+const WhatsappCallPermissionReply = ({
+  response,
+}: {
+  response: "accept" | "reject"
+}) => {
+  const t = useTranslations("messages")
+  const isAccepted = response === "accept"
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-3 text-sm">
+      {isAccepted ? (
+        <PhoneIcon aria-hidden className="size-3.5" />
+      ) : (
+        <PhoneOffIcon aria-hidden className="size-3.5" />
+      )}
+      <span>
+        {isAccepted ? t("acceptedCallPermission") : t("declinedCallPermission")}
+      </span>
+    </div>
+  )
+}
+
 const RenderContentAttributes = (props: MessageItemProps) => {
   const { message, onPostback } = props
   const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
   if (whatsappCall) {
     return <WhatsappCallActivity call={whatsappCall} />
+  }
+
+  const callPermissionReply = getWhatsappCallPermissionReply(
+    message.contentAttributes,
+  )
+  if (callPermissionReply) {
+    return (
+      <WhatsappCallPermissionReply response={callPermissionReply.response} />
+    )
   }
 
   const contentAttributes = message.contentAttributes as

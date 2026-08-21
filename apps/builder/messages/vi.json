@@ -2962,7 +2962,9 @@
     "voiceCall": "Cuộc gọi thoại",
     "voiceCallDuration": "Cuộc gọi thoại · {duration}",
     "missedVoiceCall": "Cuộc gọi thoại nhỡ",
-    "declinedVoiceCall": "Cuộc gọi thoại bị từ chối"
+    "declinedVoiceCall": "Cuộc gọi thoại bị từ chối",
+    "acceptedCallPermission": "Đã chấp nhận yêu cầu cấp quyền gọi",
+    "declinedCallPermission": "Đã từ chối yêu cầu cấp quyền gọi"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

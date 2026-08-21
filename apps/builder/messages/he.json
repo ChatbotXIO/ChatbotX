@@ -1227,7 +1227,9 @@
     "voiceCall": "שיחה קולית",
     "voiceCallDuration": "שיחה קולית · {duration}",
     "missedVoiceCall": "שיחה קולית שלא נענתה",
-    "declinedVoiceCall": "שיחה קולית שנדחתה"
+    "declinedVoiceCall": "שיחה קולית שנדחתה",
+    "acceptedCallPermission": "אישר את בקשת ההרשאה לשיחה",
+    "declinedCallPermission": "דחה את בקשת ההרשאה לשיחה"
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",

@@ -1514,7 +1514,9 @@
     "voiceCall": "語音通話",
     "voiceCallDuration": "語音通話 · {duration}",
     "missedVoiceCall": "未接語音通話",
-    "declinedVoiceCall": "已拒絕的語音通話"
+    "declinedVoiceCall": "已拒絕的語音通話",
+    "acceptedCallPermission": "已接受通話權限請求",
+    "declinedCallPermission": "已拒絕通話權限請求"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",

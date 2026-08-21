@@ -2962,7 +2962,9 @@
     "voiceCall": "Panggilan suara",
     "voiceCallDuration": "Panggilan suara · {duration}",
     "missedVoiceCall": "Panggilan suara tak terjawab",
-    "declinedVoiceCall": "Panggilan suara ditolak"
+    "declinedVoiceCall": "Panggilan suara ditolak",
+    "acceptedCallPermission": "Menerima permintaan izin panggilan",
+    "declinedCallPermission": "Menolak permintaan izin panggilan"
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",

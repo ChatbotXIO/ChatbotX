@@ -2962,7 +2962,9 @@
     "voiceCall": "Spraakoproep",
     "voiceCallDuration": "Spraakoproep · {duration}",
     "missedVoiceCall": "Gemiste spraakoproep",
-    "declinedVoiceCall": "Geweigerde spraakoproep"
+    "declinedVoiceCall": "Geweigerde spraakoproep",
+    "acceptedCallPermission": "Verzoek om beltoestemming geaccepteerd",
+    "declinedCallPermission": "Verzoek om beltoestemming geweigerd"
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

@@ -2962,7 +2962,9 @@
     "voiceCall": "مكالمة صوتية",
     "voiceCallDuration": "مكالمة صوتية · {duration}",
     "missedVoiceCall": "مكالمة صوتية فائتة",
-    "declinedVoiceCall": "مكالمة صوتية مرفوضة"
+    "declinedVoiceCall": "مكالمة صوتية مرفوضة",
+    "acceptedCallPermission": "تم قبول طلب إذن الاتصال",
+    "declinedCallPermission": "تم رفض طلب إذن الاتصال"
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",

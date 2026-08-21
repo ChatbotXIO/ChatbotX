@@ -3468,7 +3468,9 @@
     "voiceCall": "Röstsamtal",
     "voiceCallDuration": "Röstsamtal · {duration}",
     "missedVoiceCall": "Missat röstsamtal",
-    "declinedVoiceCall": "Avvisat röstsamtal"
+    "declinedVoiceCall": "Avvisat röstsamtal",
+    "acceptedCallPermission": "Accepterade begäran om samtalstillstånd",
+    "declinedCallPermission": "Avvisade begäran om samtalstillstånd"
   },
   "messenger": {
     "botProfile": "Botprofil",

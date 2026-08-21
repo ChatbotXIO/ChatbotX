@@ -3468,7 +3468,9 @@
     "voiceCall": "语音通话",
     "voiceCallDuration": "语音通话 · {duration}",
     "missedVoiceCall": "未接语音通话",
-    "declinedVoiceCall": "已拒绝的语音通话"
+    "declinedVoiceCall": "已拒绝的语音通话",
+    "acceptedCallPermission": "已接受通话权限请求",
+    "declinedCallPermission": "已拒绝通话权限请求"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

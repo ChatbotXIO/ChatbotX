@@ -2941,7 +2941,9 @@
     "voiceCall": "音声通話",
     "voiceCallDuration": "音声通話 · {duration}",
     "missedVoiceCall": "不在着信",
-    "declinedVoiceCall": "拒否された音声通話"
+    "declinedVoiceCall": "拒否された音声通話",
+    "acceptedCallPermission": "通話許可リクエストを承認しました",
+    "declinedCallPermission": "通話許可リクエストを拒否しました"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

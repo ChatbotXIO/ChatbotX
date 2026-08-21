@@ -3060,7 +3060,9 @@
     "voiceCall": "Voice call",
     "voiceCallDuration": "Voice call · {duration}",
     "missedVoiceCall": "Missed voice call",
-    "declinedVoiceCall": "Declined voice call"
+    "declinedVoiceCall": "Declined voice call",
+    "acceptedCallPermission": "Accepted call permission request",
+    "declinedCallPermission": "Declined call permission request"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

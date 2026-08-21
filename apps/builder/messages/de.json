@@ -2962,7 +2962,9 @@
     "voiceCall": "Sprachanruf",
     "voiceCallDuration": "Sprachanruf · {duration}",
     "missedVoiceCall": "Verpasster Sprachanruf",
-    "declinedVoiceCall": "Abgelehnter Sprachanruf"
+    "declinedVoiceCall": "Abgelehnter Sprachanruf",
+    "acceptedCallPermission": "Anrufberechtigung akzeptiert",
+    "declinedCallPermission": "Anrufberechtigung abgelehnt"
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",

@@ -2962,7 +2962,9 @@
     "voiceCall": "Chiamata vocale",
     "voiceCallDuration": "Chiamata vocale · {duration}",
     "missedVoiceCall": "Chiamata vocale persa",
-    "declinedVoiceCall": "Chiamata vocale rifiutata"
+    "declinedVoiceCall": "Chiamata vocale rifiutata",
+    "acceptedCallPermission": "Ha accettato la richiesta di autorizzazione alla chiamata",
+    "declinedCallPermission": "Ha rifiutato la richiesta di autorizzazione alla chiamata"
   },
   "instagram": {
     "description": "Questa integrazione ti consente di creare bot Instagram.",

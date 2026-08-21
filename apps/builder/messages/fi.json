@@ -2962,7 +2962,9 @@
     "voiceCall": "Äänipuhelu",
     "voiceCallDuration": "Äänipuhelu · {duration}",
     "missedVoiceCall": "Vastaamaton äänipuhelu",
-    "declinedVoiceCall": "Hylätty äänipuhelu"
+    "declinedVoiceCall": "Hylätty äänipuhelu",
+    "acceptedCallPermission": "Hyväksyi soittolupapyynnön",
+    "declinedCallPermission": "Hylkäsi soittolupapyynnön"
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

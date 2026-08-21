@@ -126,6 +126,7 @@ export type IncomingMessage = {
     | MessageWhatsappFlowResponseEntity
     | MessageStoryReplyEntity
     | MessageWhatsappCallEntity
+    | MessageWhatsappCallPermissionReplyEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
@@ -167,6 +168,21 @@ export type MessageWhatsappCallEntity = {
 }
 
 /**
+ * Carried on the message written when a contact answers a business-calling
+ * permission request (`interactive.type: "call_permission_reply"`). The
+ * worker persists the grant state from it and the inbox renders a localized
+ * label.
+ */
+export type MessageWhatsappCallPermissionReplyEntity = {
+  type: "whatsapp_call_permission_reply"
+  response: "accept" | "reject"
+  isPermanent?: boolean
+  /** Unix seconds; absent for permanent grants. */
+  expirationTimestamp?: number
+  responseSource?: string
+}
+
+/**
  * Extracts the story-reply payload from a message's contentAttributes,
  * accepting both the current `{ type: "story_reply", story }` shape and the
  * legacy `{ storyReply }` shape some already-persisted rows still carry.
@@ -201,6 +217,20 @@ export const getWhatsappCallEntity = (
   const attrs = contentAttributes as { type?: string }
   return attrs.type === "whatsapp_call"
     ? (contentAttributes as MessageWhatsappCallEntity)
+    : undefined
+}
+
+/** Shape-checked accessor for {@link MessageWhatsappCallPermissionReplyEntity}. */
+export const getWhatsappCallPermissionReply = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionReplyEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string; response?: unknown }
+  return attrs.type === "whatsapp_call_permission_reply" &&
+    (attrs.response === "accept" || attrs.response === "reject")
+    ? (contentAttributes as MessageWhatsappCallPermissionReplyEntity)
     : undefined
 }
 

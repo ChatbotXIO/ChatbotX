@@ -22,3 +22,9 @@ export const whatsappCallStatuses = z.enum([
   "failed",
 ])
 export type WhatsappCallStatus = z.infer<typeof whatsappCallStatuses>
+
+/** A contact's answer to a business-calling permission request. */
+export const whatsappCallPermissionResponses = z.enum(["accept", "reject"])
+export type WhatsappCallPermissionResponse = z.infer<
+  typeof whatsappCallPermissionResponses
+>

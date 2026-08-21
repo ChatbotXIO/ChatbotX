@@ -2962,7 +2962,9 @@
     "voiceCall": "Apel vocal",
     "voiceCallDuration": "Apel vocal · {duration}",
     "missedVoiceCall": "Apel vocal pierdut",
-    "declinedVoiceCall": "Apel vocal respins"
+    "declinedVoiceCall": "Apel vocal respins",
+    "acceptedCallPermission": "A acceptat cererea de permisiune pentru apel",
+    "declinedCallPermission": "A respins cererea de permisiune pentru apel"
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

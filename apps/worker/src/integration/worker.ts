@@ -1,7 +1,8 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { conversationService } from "@chatbotx.io/business"
+import { whatsappCallPermissionRepository } from "@chatbotx.io/database/repositories"
 import { emit } from "@chatbotx.io/event-bus"
-import { getStoryReply } from "@chatbotx.io/sdk"
+import { getStoryReply, getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import {
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
@@ -100,6 +101,23 @@ async function startIntegrationWorker() {
             const isLocation = message.contentType === "location"
 
             const storyReply = getStoryReply(message.contentAttributes)
+
+            const callPermissionReply = getWhatsappCallPermissionReply(
+              message.contentAttributes,
+            )
+            if (isFromContact && callPermissionReply) {
+              await whatsappCallPermissionRepository.upsertForContactInbox({
+                workspaceId: conversation.workspaceId,
+                contactInboxId: message.contactInboxId,
+                response: callPermissionReply.response,
+                isPermanent: callPermissionReply.isPermanent === true,
+                expiresAt: callPermissionReply.expirationTimestamp
+                  ? new Date(callPermissionReply.expirationTimestamp * 1000)
+                  : null,
+                respondedAt: message.createdAt,
+              })
+              return
+            }
 
             if (isFromContact && storyReply) {
               await integrationQueue.add(

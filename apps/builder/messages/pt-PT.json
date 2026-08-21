@@ -2962,7 +2962,9 @@
     "voiceCall": "Chamada de voz",
     "voiceCallDuration": "Chamada de voz · {duration}",
     "missedVoiceCall": "Chamada de voz perdida",
-    "declinedVoiceCall": "Chamada de voz recusada"
+    "declinedVoiceCall": "Chamada de voz recusada",
+    "acceptedCallPermission": "Aceitou o pedido de permissão de chamada",
+    "declinedCallPermission": "Recusou o pedido de permissão de chamada"
   },
   "instagram": {
     "description": "Esta integração permite-lhe criar bots do Instagram.",
