@@ -6,6 +6,7 @@ import type {
 } from "@chatbotx.io/sdk"
 import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
+import type { WhatsappCallingSettings } from "./api/calling"
 import type {
   ConversationalAutomation,
   WhatsappPhoneNumber,
@@ -266,6 +267,19 @@ export type WhatsappActions = {
     {
       ctx: Context<WhatsappAuthValue>
       data: ConversationalAutomation
+    },
+    void
+  >
+  getCallingSettings: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+    },
+    WhatsappCallingSettings
+  >
+  updateCallingSettings: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      data: Partial<WhatsappCallingSettings>
     },
     void
   >

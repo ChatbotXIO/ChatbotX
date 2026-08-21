@@ -3424,7 +3424,8 @@
       "profile": "Perfil",
       "usefulLinks": "Ligações úteis",
       "conversionsApi": "Otimização de anúncios",
-      "settings": "Definições"
+      "settings": "Definições",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Gerir a sua conta do WhatsApp",
@@ -3559,6 +3560,21 @@
       "automaticEvents": {
         "title": "Eventos Automáticos",
         "description": "Envie automaticamente eventos de conversão deste número de WhatsApp para a Meta. Se a permissão estiver em falta, volte a ligar a conta para a conceder."
+      }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found"
       }
     }
   },

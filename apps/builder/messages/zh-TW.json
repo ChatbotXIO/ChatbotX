@@ -3457,7 +3457,8 @@
       "profile": "簡介",
       "usefulLinks": "有用連結",
       "conversionsApi": "廣告優化",
-      "settings": "設定"
+      "settings": "設定",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3592,6 +3593,21 @@
       "automaticEvents": {
         "title": "自動事件",
         "description": "自動將此 WhatsApp 號碼的轉換事件傳送到 Meta。如果缺少權限,請重新連接帳號以授予權限。"
+      }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found"
       }
     }
   },

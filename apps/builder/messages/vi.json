@@ -3424,7 +3424,8 @@
       "profile": "Hồ sơ",
       "usefulLinks": "Liên kết hữu ích",
       "conversionsApi": "Tối ưu quảng cáo",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "calls": "Cuộc gọi"
     },
     "accountHealths": {
       "title": "Quản lý tài khoản WhatsApp của bạn",
@@ -3559,6 +3560,21 @@
       "automaticEvents": {
         "title": "Automatic Events",
         "description": "Tự động gửi sự kiện chuyển đổi từ số WhatsApp này đến Meta. Nếu thiếu quyền, hãy kết nối lại tài khoản để cấp quyền."
+      }
+    },
+    "calls": {
+      "title": "Cuộc gọi WhatsApp",
+      "description": "Cho phép khách hàng gọi cho doanh nghiệp qua WhatsApp và điều khiển cách hoạt động của tính năng gọi cho số này.",
+      "enableLabel": "Bật tính năng gọi",
+      "enableHelper": "Cho phép các cuộc gọi WhatsApp đến và đi từ số doanh nghiệp này.",
+      "iconVisibilityLabel": "Hiện nút gọi",
+      "iconVisibilityHelper": "Hiển thị nút gọi trong cuộc trò chuyện và trên hồ sơ doanh nghiệp.",
+      "callbackPermissionLabel": "Yêu cầu quyền gọi lại",
+      "callbackPermissionHelper": "Tự động xin phép khách hàng để gọi lại sau cuộc gọi nhỡ hoặc đã hoàn thành.",
+      "propagationNote": "Thay đổi được Meta áp dụng ngay, nhưng ứng dụng WhatsApp của khách hàng có thể mất tới 7 ngày để cập nhật.",
+      "loadFailed": "Không tải được cài đặt cuộc gọi từ Meta. Kiểm tra kết nối của số này và thử lại.",
+      "errors": {
+        "notFound": "Không tìm thấy tích hợp WhatsApp"
       }
     }
   },

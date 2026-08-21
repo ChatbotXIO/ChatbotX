@@ -20,6 +20,10 @@ const TAB_CONFIGS: readonly TabConfig[] = [
     translationKey: "whatsapp.tabs.settings",
   },
   {
+    value: "calls",
+    translationKey: "whatsapp.tabs.calls",
+  },
+  {
     value: "message-templates",
     translationKey: "whatsapp.tabs.messageTemplates",
   },
