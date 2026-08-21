@@ -29,12 +29,15 @@ type FormValues = z.infer<typeof formSchema>
 type RequestCallPermissionDialogProps = {
   workspaceId: string
   conversationId: string
+  /** Inbox backing the displayed conversation — pins the sending number. */
+  inboxId?: string
   children: ReactNode
 }
 
 export function RequestCallPermissionDialog({
   workspaceId,
   conversationId,
+  inboxId,
   children,
 }: RequestCallPermissionDialogProps) {
   const t = useTranslations()
@@ -77,7 +80,7 @@ export function RequestCallPermissionDialog({
             onSubmit={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              form.handleSubmit((values) => execute(values))(e)
+              form.handleSubmit((values) => execute({ ...values, inboxId }))(e)
             }}
           >
             <TextareaField

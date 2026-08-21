@@ -12,6 +12,13 @@ import { workspaceActionClient } from "@/lib/safe-action"
 
 const requestCallPermissionSchema = z.object({
   text: z.string().trim().min(1).max(1024),
+  /**
+   * The inbox backing the conversation the agent is viewing. Required to
+   * pin the send to that WhatsApp number — a contact can have ContactInbox
+   * rows on several connected numbers, and an unscoped lookup could resolve
+   * (and bill Meta's per-customer request limits against) a different one.
+   */
+  inboxId: zodBigintAsString().optional(),
 })
 
 /**
@@ -39,6 +46,7 @@ export const requestCallPermissionAction = workspaceActionClient
         where: {
           contactId: conversation.contactId,
           channel: channelTypes.enum.whatsapp,
+          ...(parsedInput.inboxId ? { inboxId: parsedInput.inboxId } : {}),
         },
       })
       if (!contactInbox) {

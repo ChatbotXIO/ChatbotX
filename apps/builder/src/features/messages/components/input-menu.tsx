@@ -46,6 +46,7 @@ export const InputMenu = ({ setContent }: InputMenuProps) => {
       {!activePost && isWhatsappConversation && conversation && (
         <RequestCallPermissionDialog
           conversationId={conversation.id}
+          inboxId={conversation.contactInboxes[0]?.inboxId}
           workspaceId={conversation.workspaceId}
         >
           <Button type="button" variant="ghost">
