@@ -7,3 +7,9 @@ onlyBuiltDependencies:
   - core-js-pure
   - esbuild
   - lefthook
+  - '@parcel/watcher'
+  - '@swc/core'
+  - msgpackr-extract
+  - msw
+  - sharp
+  - workerd

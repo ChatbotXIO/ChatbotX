@@ -142,7 +142,7 @@ export const QuickRepliesPopover = ({
   return (
     <div onKeyDownCapture={onKeyDownCapture}>
       <Popover onOpenChange={setOpen} open={open && shouldShow}>
-        <PopoverTrigger render={children} />
+        <PopoverTrigger nativeButton={false} render={children} />
         <PopoverContent
           align="start"
           className="max-h-75 w-100 overflow-y-auto p-0"

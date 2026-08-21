@@ -14,7 +14,7 @@ services:
     <<: *network
     image: timescale/timescaledb-ha:pg18-all
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - db-data:/home/postgres/pgdata
     command: ["postgres", "-c", "log_statement=${POSTGRES_LOG_STATEMENT:-none}"]
@@ -87,7 +87,7 @@ services:
     <<: *network
     image: redis:8-alpine
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - cache-data:/data
     healthcheck:
