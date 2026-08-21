@@ -2,6 +2,7 @@
 
 import { describe, expect, test } from "vitest"
 import {
+  hasContactsAccess,
   hasWorkspacePermission,
   PERMISSION_NAV,
   resolveWorkspaceLandingSegment,
@@ -38,6 +39,24 @@ describe("workspace permission routes", () => {
   })
 })
 
+describe("hasContactsAccess", () => {
+  test("grants access with the full contacts flag", () => {
+    expect(hasContactsAccess({ contacts: true })).toBe(true)
+  })
+
+  test("grants access with only the assigned-contacts flag", () => {
+    expect(hasContactsAccess({ onlyAssignedContacts: true })).toBe(true)
+  })
+
+  test("grants access to super admins", () => {
+    expect(hasContactsAccess({ superAdmin: true })).toBe(true)
+  })
+
+  test("denies access without any contacts flag", () => {
+    expect(hasContactsAccess({})).toBe(false)
+  })
+})
+
 describe("resolveWorkspaceLandingSegment", () => {
   test("lands super admins on the dashboard", () => {
     expect(resolveWorkspaceLandingSegment({ superAdmin: true })).toBe(
@@ -61,7 +80,7 @@ describe("resolveWorkspaceLandingSegment", () => {
     ).toBe("flows")
   })
 
-  test("lands on the first granted section in nav priority order", () => {
+  test("lands contacts members on the inbox in nav priority order", () => {
     expect(
       resolveWorkspaceLandingSegment({
         superAdmin: false,
@@ -69,10 +88,27 @@ describe("resolveWorkspaceLandingSegment", () => {
         flows: false,
         contacts: true,
       }),
-    ).toBe("contacts")
+    ).toBe("inbox")
   })
 
-  test("falls back to the ungated inbox when no section is granted", () => {
-    expect(resolveWorkspaceLandingSegment({})).toBe("inbox")
+  test("lands assigned-only members on the inbox", () => {
+    expect(resolveWorkspaceLandingSegment({ onlyAssignedContacts: true })).toBe(
+      "inbox",
+    )
+  })
+
+  test("prefers the inbox over flows for contacts members", () => {
+    expect(
+      resolveWorkspaceLandingSegment({ flows: true, contacts: true }),
+    ).toBe("inbox")
+  })
+
+  test("lands ecommerce-only members on products", () => {
+    expect(resolveWorkspaceLandingSegment({ ecommerce: true })).toBe("products")
+  })
+
+  test("returns null when no section is granted", () => {
+    expect(resolveWorkspaceLandingSegment({})).toBeNull()
+    expect(resolveWorkspaceLandingSegment({ emailAndPhone: true })).toBeNull()
   })
 })
