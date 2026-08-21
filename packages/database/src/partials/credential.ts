@@ -372,3 +372,17 @@ export const credentialEncryptedSchema = z.object({
   aad: z.string().optional(),
 })
 export type CredentialEncrypted = z.infer<typeof credentialEncryptedSchema>
+
+// Derives the aad stamped onto Credential.value at write time
+// (upsertForUser / upsertPlatform / rotate-encryption-key.ts). Decrypt reads
+// the aad back off the blob, so this only needs to stay consistent across
+// writers — but a drift between them would silently change what future rows
+// are bound to, so all writers must go through this helper.
+export const credentialAad = (props: {
+  userId?: string | null
+  type: CredentialType
+  livemode: boolean
+}): string =>
+  props.userId
+    ? `user:${props.userId}:${props.type}:${props.livemode}`
+    : `platform:${props.type}:${props.livemode}`

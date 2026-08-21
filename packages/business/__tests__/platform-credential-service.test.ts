@@ -19,7 +19,20 @@ const credentialPublicSchemas = {
 const credentialEncryptedSchema = {
   parse: vi.fn((value: unknown) => value),
 }
+// Mirrors the real credentialAad from @chatbotx.io/database/partials inline
+// rather than via importOriginal (importing real database-package modules in
+// vitest mocks risks opening a DB connection). The exact-string assertions in
+// the upsert tests below lock this format to the real implementation's.
+const credentialAad = (props: {
+  userId?: string | null
+  type: string
+  livemode: boolean
+}) =>
+  props.userId
+    ? `user:${props.userId}:${props.type}:${props.livemode}`
+    : `platform:${props.type}:${props.livemode}`
 vi.mock("@chatbotx.io/database/partials", () => ({
+  credentialAad,
   credentialEncryptedSchema,
   credentialPublicSchemas,
   credentialSchemas,

@@ -9,6 +9,7 @@ import {
   type CredentialByType,
   type CredentialPublicByType,
   type CredentialType,
+  credentialAad,
   credentialEncryptedSchema,
   credentialPublicSchemas,
   credentialSchemas,
@@ -117,7 +118,7 @@ class PlatformCredentialService extends BaseService {
       tx = db,
     } = props
     const publicConfig = this._publicConfig(type, config)
-    const aad = `user:${userId}:${type}:${livemode}`
+    const aad = credentialAad({ userId, type, livemode })
     const value = await encryptUtils.encryptObject(config, aad)
 
     await tx
@@ -242,7 +243,7 @@ class PlatformCredentialService extends BaseService {
   }): Promise<void> {
     const { type, config, livemode = false, tx = db } = props
     const publicConfig = this._publicConfig(type, config)
-    const aad = `platform:${type}:${livemode}`
+    const aad = credentialAad({ type, livemode })
     const value = await encryptUtils.encryptObject(config, aad)
 
     await tx

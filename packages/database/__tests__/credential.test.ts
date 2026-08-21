@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  credentialAad,
   credentialEncryptedSchema,
   giphyCredentialUpdateSchema,
   googleCredentialUpdateSchema,
@@ -201,5 +202,28 @@ describe("credentialEncryptedSchema", () => {
       tag: "b".repeat(10),
     })
     expect(result.success).toBe(false)
+  })
+})
+
+describe("credentialAad", () => {
+  // Pins the exact aad format at its source. All writers (upsertForUser,
+  // upsertPlatform, rotate-encryption-key.ts) go through this helper; the
+  // business-package tests assert the same strings from the consumer side.
+  test("derives a user-scoped aad when userId is present", () => {
+    expect(
+      credentialAad({ userId: "owner-1", type: "messenger", livemode: true }),
+    ).toBe("user:owner-1:messenger:true")
+  })
+
+  test("derives a platform-scoped aad when userId is absent", () => {
+    expect(credentialAad({ type: "instagram", livemode: false })).toBe(
+      "platform:instagram:false",
+    )
+  })
+
+  test("treats a null userId as platform-scoped", () => {
+    expect(
+      credentialAad({ userId: null, type: "messenger", livemode: false }),
+    ).toBe("platform:messenger:false")
   })
 })

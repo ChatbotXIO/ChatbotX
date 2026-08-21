@@ -23,6 +23,7 @@ import { db } from "../src/client"
 import {
   type CredentialByType,
   type CredentialType,
+  credentialAad,
   credentialEncryptedSchema,
   credentialSchemas,
 } from "../src/partials/credential"
@@ -57,11 +58,10 @@ const main = async (): Promise<void> => {
 
   if (unparseable.length > 0) {
     // These rows fail schema validation (e.g. an unexpected `v`, or a
-    // malformed iv/text/tag) and are silently excluded from `toRotate`
-    // above. Left unrotated, they will become
-    // permanently undecryptable once ENCRYPTION_KEY_PREV is removed, with no
-    // other signal that they were ever a problem. Surface them loudly here
-    // instead of letting the exclusion pass unnoticed.
+    // malformed iv/text/tag) and are excluded from `toRotate` above. Left
+    // unrotated, they become permanently undecryptable once
+    // ENCRYPTION_KEY_PREV is removed, so surface them loudly here rather
+    // than dropping them without a trace.
     console.error(
       `Warning: ${unparseable.length} row(s) failed schema validation and ` +
         "will NOT be rotated. They will become undecryptable once " +
@@ -87,9 +87,11 @@ const main = async (): Promise<void> => {
     try {
       const blob = credentialEncryptedSchema.parse(row.value)
       const type = row.type as CredentialType
-      const aad = row.userId
-        ? `user:${row.userId}:${type}:${row.livemode}`
-        : `platform:${type}:${row.livemode}`
+      const aad = credentialAad({
+        userId: row.userId,
+        type,
+        livemode: row.livemode,
+      })
       const schema = credentialSchemas[type] as unknown as z.ZodType<
         CredentialByType[CredentialType]
       >
