@@ -2081,22 +2081,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "اربط أي تطبيق يدعم HTTP كقناة. يرسل تطبيقك الرسائل الواردة إلى واجهة REST API الخاصة بنا، ونقوم بتسليم الردود إلى رابط الاستدعاء (callback URL) الخاص بك.",
       "callbackUrl": {
-        "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "label": "رابط الاستدعاء (Callback URL)",
+        "description": "نرسل الردود الصادرة إلى هذا الرابط عبر POST، موقّعة بالسر الخاص بصندوق الوارد الخاص بك.",
+        "notSet": "غير محدد"
       },
-      "token": "Token",
-      "rotateToken": "Rotate token",
+      "token": "الرمز المميز",
+      "rotateToken": "تجديد الرمز المميز",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "مفعّل",
+        "disabled": "معطّلة"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "انسخ رمز API المميز الخاص بك",
+        "description": "يظهر هذا الرمز مرة واحدة فقط. احفظه في مكان آمن — لن تتمكن من عرضه مرة أخرى.",
+        "done": "تم"
       }
     }
   },

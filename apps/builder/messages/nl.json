@@ -1821,22 +1821,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "Verbind elke HTTP-compatibele applicatie als kanaal. Je app stuurt inkomende berichten naar onze REST API en wij bezorgen antwoorden op je callback-URL.",
       "callbackUrl": {
-        "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "label": "Callback-URL",
+        "description": "We sturen uitgaande antwoorden hierheen via POST, ondertekend met het geheim van je eigen postvak.",
+        "notSet": "Niet ingesteld"
       },
       "token": "Token",
-      "rotateToken": "Rotate token",
+      "rotateToken": "Token vernieuwen",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "Ingeschakeld",
+        "disabled": "Uitgeschakeld"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "Kopieer je API-token",
+        "description": "Dit token wordt maar één keer getoond. Bewaar het veilig — je kunt het daarna niet meer bekijken.",
+        "done": "Klaar"
       }
     }
   },

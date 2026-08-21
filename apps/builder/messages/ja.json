@@ -2007,22 +2007,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "HTTPに対応した任意のアプリケーションをチャネルとして接続します。アプリからの受信メッセージは弊社のREST APIに送信され、返信はお客様のcallback URLに配信されます。",
       "callbackUrl": {
         "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "description": "送信する返信はこちらにPOSTされ、受信箱ごとのシークレットで署名されます。",
+        "notSet": "未設定"
       },
-      "token": "Token",
-      "rotateToken": "Rotate token",
+      "token": "トークン",
+      "rotateToken": "トークンを再発行",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "有効",
+        "disabled": "無効"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "APIトークンをコピー",
+        "description": "このトークンは一度だけ表示されます。安全に保管してください。再度表示することはできません。",
+        "done": "完了"
       }
     }
   },

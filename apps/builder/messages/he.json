@@ -4494,22 +4494,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "חברו כל אפליקציה התומכת ב-HTTP כערוץ. האפליקציה שלכם שולחת הודעות נכנסות אל ה-REST API שלנו, ואנחנו מעבירים את התגובות אל כתובת ה-callback שלכם.",
       "callbackUrl": {
-        "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "label": "כתובת Callback",
+        "description": "אנחנו שולחים לכאן תגובות יוצאות בבקשת POST, חתומות בסוד הייחודי של תיבת הדואר הנכנס שלכם.",
+        "notSet": "לא הוגדר"
       },
-      "token": "Token",
-      "rotateToken": "Rotate token",
+      "token": "אסימון",
+      "rotateToken": "החלף אסימון",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "מופעל",
+        "disabled": "מושבת"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "העתיקו את אסימון ה-API שלכם",
+        "description": "אסימון זה מוצג פעם אחת בלבד. שמרו אותו במקום בטוח — לא תוכלו לצפות בו שוב.",
+        "done": "בוצע"
       }
     }
   },

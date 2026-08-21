@@ -2763,22 +2763,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "Conectați orice aplicație compatibilă HTTP ca un canal. Aplicația dumneavoastră trimite mesajele primite către API-ul nostru REST, iar noi livrăm răspunsurile la callback URL-ul dumneavoastră.",
       "callbackUrl": {
         "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "description": "Trimitem aici răspunsurile trimise prin POST, semnate cu secretul specific căsuței dumneavoastră de mesaje.",
+        "notSet": "Nesetat"
       },
       "token": "Token",
-      "rotateToken": "Rotate token",
+      "rotateToken": "Regenerează token-ul",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "Activat",
+        "disabled": "Dezactivat"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "Copiază token-ul tău API",
+        "description": "Acest token este afișat o singură dată. Păstrează-l în siguranță — nu îl vei mai putea vizualiza din nou.",
+        "done": "Finalizat"
       }
     }
   },

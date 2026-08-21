@@ -2007,22 +2007,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "Yhdistä mikä tahansa HTTP-yhteensopiva sovellus kanavaksi. Sovelluksesi lähettää saapuvat viestit REST-rajapintaamme, ja me toimitamme vastaukset callback-osoitteeseesi.",
       "callbackUrl": {
-        "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "label": "Callback-osoite",
+        "description": "Lähetämme lähtevät vastaukset tänne POST-pyynnöllä, allekirjoitettuna postilaatikkosi omalla salaisuudella.",
+        "notSet": "Ei asetettu"
       },
-      "token": "Token",
-      "rotateToken": "Rotate token",
+      "token": "Tunnus",
+      "rotateToken": "Vaihda tunnus",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "Käytössä",
+        "disabled": "Ei käytössä"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "Kopioi API-tunnuksesi",
+        "description": "Tämä tunnus näytetään vain kerran. Säilytä se turvallisesti — et voi tarkastella sitä enää myöhemmin.",
+        "done": "Valmis"
       }
     }
   },

@@ -2007,22 +2007,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "Forbind enhver HTTP-kompatibel applikation som en kanal. Din app sender indgående beskeder til vores REST API, og vi leverer svar til din callback-URL.",
       "callbackUrl": {
-        "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "label": "Callback-URL",
+        "description": "Vi sender udgående svar hertil med POST, signeret med din indbakkes eget hemmelige nøgle.",
+        "notSet": "Ikke angivet"
       },
       "token": "Token",
-      "rotateToken": "Rotate token",
+      "rotateToken": "Rotér token",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "Aktiveret",
+        "disabled": "Deaktiveret"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "Kopiér dit API-token",
+        "description": "Dette token vises kun én gang. Opbevar det sikkert — du vil ikke kunne se det igen.",
+        "done": "Færdig"
       }
     }
   },

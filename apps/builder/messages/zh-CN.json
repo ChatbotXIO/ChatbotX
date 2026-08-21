@@ -2686,22 +2686,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "将任何支持 HTTP 的应用程序作为渠道接入。您的应用将入站消息发送到我们的 REST API，我们会将回复投递到您的回调 URL。",
       "callbackUrl": {
-        "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "label": "回调 URL",
+        "description": "我们会通过 POST 将出站回复发送到此处，并使用您收件箱专属的密钥进行签名。",
+        "notSet": "未设置"
       },
-      "token": "Token",
-      "rotateToken": "Rotate token",
+      "token": "代币",
+      "rotateToken": "重新生成代币",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "已激活",
+        "disabled": "已停用"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "拷贝您的 API 代币",
+        "description": "此代币仅显示一次。请妥善保存 — 之后将无法再次查看。",
+        "done": "完成"
       }
     }
   },

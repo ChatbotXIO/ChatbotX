@@ -44,12 +44,13 @@ export type ChannelType = z.infer<typeof channelTypes>
  * old plain-array lists allowed.
  *
  * `order` is a deliberate product-priority order — whatsapp, messenger,
- * instagram, tiktok, telegram, zalo, webchat, then smtp (Email) — rather than
- * alphabetical or either legacy list's order: the create picker (`whatsapp,
- * messenger, instagram, zalo, tiktok, telegram, webchat`) and the settings
- * accordion (`whatsapp, messenger, instagram, zalo, telegram, tiktok,
- * webchat, smtp`) already disagreed with each other before this registry
- * existed. `omnichannel` (the non-connectable fallback) always sorts last.
+ * instagram, tiktok, telegram, zalo, webchat, then smtp (Email), then api —
+ * rather than alphabetical or either legacy list's order: the create picker
+ * (`whatsapp, messenger, instagram, zalo, tiktok, telegram, webchat`) and the
+ * settings accordion (`whatsapp, messenger, instagram, zalo, telegram,
+ * tiktok, webchat, smtp`) already disagreed with each other before this
+ * registry existed. `omnichannel` (the non-connectable fallback) always
+ * sorts last.
  */
 export type ChannelCapability = {
   /** Shown as an option on the "create new channel" picker. */
@@ -67,56 +68,56 @@ export type ChannelCapability = {
 }
 
 export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
-  api: {
-    creatable: true,
-    manageable: true,
-    requiresCredential: false,
-    order: 1,
-  },
   whatsapp: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
-    order: 2,
+    order: 1,
   },
   messenger: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
-    order: 3,
+    order: 2,
   },
   instagram: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
-    order: 4,
+    order: 3,
   },
   tiktok: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
-    order: 5,
+    order: 4,
   },
   telegram: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
-    order: 6,
+    order: 5,
   },
   zalo: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
-    order: 7,
+    order: 6,
   },
   webchat: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
-    order: 8,
+    order: 7,
   },
   smtp: {
     creatable: false,
+    manageable: true,
+    requiresCredential: false,
+    order: 8,
+  },
+  api: {
+    creatable: true,
     manageable: true,
     requiresCredential: false,
     order: 9,

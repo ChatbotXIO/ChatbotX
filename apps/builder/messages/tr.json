@@ -2081,22 +2081,22 @@
     },
     "api": {
       "label": "API",
-      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "description": "HTTP destekleyen herhangi bir uygulamayı kanal olarak bağlayın. Uygulamanız, gelen mesajları REST API'mize gönderir ve biz de yanıtları callback URL'inize iletiriz.",
       "callbackUrl": {
         "label": "Callback URL",
-        "description": "We POST outbound replies here, signed with your per-inbox secret.",
-        "notSet": "Not set"
+        "description": "Giden yanıtları buraya POST ile, gelen kutunuza özel gizli anahtarla imzalanmış şekilde gönderiyoruz.",
+        "notSet": "Ayarlanmadı"
       },
-      "token": "Token",
-      "rotateToken": "Rotate token",
+      "token": "Jeton",
+      "rotateToken": "Jetonu yenile",
       "status": {
-        "enabled": "Enabled",
-        "disabled": "Disabled"
+        "enabled": "Etkin",
+        "disabled": "Devre Dışı"
       },
       "tokenReveal": {
-        "title": "Copy your API token",
-        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
-        "done": "Done"
+        "title": "API jetonunuzu kopyalayın",
+        "description": "Bu jeton yalnızca bir kez gösterilir. Güvenli bir şekilde saklayın — tekrar görüntüleyemezsiniz.",
+        "done": "Tamamlandı"
       }
     }
   },
