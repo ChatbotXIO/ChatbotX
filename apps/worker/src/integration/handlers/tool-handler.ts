@@ -2,6 +2,7 @@ import {
   contactCustomFieldService,
   customFieldService,
   externalRequestService,
+  stripEmptyAndUnresolvedJsonValues,
 } from "@chatbotx.io/business"
 import { createSourceTimezoneResolver } from "@chatbotx.io/business/contact-custom-field"
 import { and, db, inArray } from "@chatbotx.io/database/client"
@@ -263,7 +264,7 @@ async function resolveJsonBodyVariables(
     }
   }
 
-  return interpolate(jsonBody, mapping)
+  return stripEmptyAndUnresolvedJsonValues(interpolate(jsonBody, mapping))
 }
 
 export async function externalRequest({

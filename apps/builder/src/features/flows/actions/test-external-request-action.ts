@@ -1,6 +1,9 @@
 "use server"
 
-import { externalRequestService } from "@chatbotx.io/business"
+import {
+  externalRequestService,
+  stripEmptyAndUnresolvedJsonValues,
+} from "@chatbotx.io/business"
 import { externalRequestFieldsSchema } from "@chatbotx.io/flow-config"
 import {
   type WorkspaceIdRequestParams,
@@ -19,7 +22,20 @@ export const testExternalRequestAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: typeof externalRequestFieldsSchema._output
     }) => {
-      const result = await externalRequestService.execute(parsedInput, {
+      const input =
+        parsedInput.body?.bodyType === "json"
+          ? {
+              ...parsedInput,
+              body: {
+                ...parsedInput.body,
+                jsonBody: stripEmptyAndUnresolvedJsonValues(
+                  parsedInput.body.jsonBody,
+                ),
+              },
+            }
+          : parsedInput
+
+      const result = await externalRequestService.execute(input, {
         workspaceId,
       })
 
