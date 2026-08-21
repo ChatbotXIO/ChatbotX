@@ -1,4 +1,4 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodUrlWithVariables } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "../types"
 import { baseStepSchema } from "./base"
@@ -8,7 +8,7 @@ import { stepTypes } from "./step-action"
 export const sendAudioStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.sendAudio),
   mode: uploadModes,
-  url: z.url(),
+  url: zodUrlWithVariables(),
   buttons: z.array(buttonStepSchema),
 })
 
