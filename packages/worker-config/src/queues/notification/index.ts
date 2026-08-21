@@ -1,3 +1,4 @@
+import type { ContentType } from "@chatbotx.io/database/partials"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -18,6 +19,11 @@ export type NotificationJobNotifyIncomingMessage = {
     workspaceId: string
     conversationId: string
     messageId: string
+    /** Preview text built at enqueue time — Message is a hypertable whose
+     *  lookup needs createdAt, which this payload deliberately does not carry. */
+    messageText?: string
+    contentType?: ContentType
+    attachmentCount?: number
   }
 }
 

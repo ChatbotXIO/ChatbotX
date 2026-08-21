@@ -1,11 +1,15 @@
 import {
+  contactService,
   conversationService,
   deviceTokenService,
   workspaceMemberService,
+  workspaceService,
 } from "@chatbotx.io/business"
 import type { NotificationJobData } from "@chatbotx.io/worker-config"
+import { Expo, type ExpoPushMessage, type ExpoPushToken } from "expo-server-sdk"
 import { logger } from "../../lib/logger"
-import { getFirebaseMessaging } from "../lib/firebase"
+import { buildNotificationContent } from "../lib/build-notification-content"
+import { getExpoClient } from "../lib/expo"
 
 /**
  * Recipients = the assigned user, else every workspace member (unassigned
@@ -30,11 +34,35 @@ const resolveRecipientUserIds = async (
   })
 }
 
+const resolveNotificationContent = async (
+  job: NotificationJobData,
+): Promise<{ title: string; body: string }> => {
+  const { workspaceId, conversationId } = job.data
+
+  const [conversation, workspace] = await Promise.all([
+    conversationService.findByOrFail({
+      where: { id: conversationId, workspaceId },
+    }),
+    workspaceService.findById({ id: workspaceId }),
+  ])
+
+  const contact = await contactService.findById({
+    workspaceId,
+    id: conversation.contactId,
+  })
+
+  return buildNotificationContent({
+    job,
+    contactFullName: contact?.fullName,
+    workspaceLanguage: workspace?.language,
+  })
+}
+
 export const sendPushForNotificationJob = async (
   job: NotificationJobData,
 ): Promise<void> => {
-  const messaging = getFirebaseMessaging()
-  if (!messaging) {
+  const expo = getExpoClient()
+  if (!expo) {
     return
   }
 
@@ -43,28 +71,64 @@ export const sendPushForNotificationJob = async (
     return
   }
 
-  const tokens = await deviceTokenService.findByUserIds({
+  const deviceTokens = await deviceTokenService.findByUserIds({
     userIds: recipientUserIds,
   })
-  if (tokens.length === 0) {
+  if (deviceTokens.length === 0) {
+    return
+  }
+
+  const validTokens: ExpoPushToken[] = []
+  const invalidTokens: string[] = []
+  for (const deviceToken of deviceTokens) {
+    if (Expo.isExpoPushToken(deviceToken.token)) {
+      validTokens.push(deviceToken.token)
+    } else {
+      invalidTokens.push(deviceToken.token)
+    }
+  }
+
+  if (invalidTokens.length > 0) {
+    await deviceTokenService.deleteByTokens({ tokens: invalidTokens })
+  }
+
+  if (validTokens.length === 0) {
     return
   }
 
   const { workspaceId, conversationId } = job.data
   const messageId = "messageId" in job.data ? job.data.messageId : ""
+  const { title, body } = await resolveNotificationContent(job)
 
-  const response = await messaging.sendEachForMulticast({
-    tokens: tokens.map((t) => t.token),
+  const messages: ExpoPushMessage[] = validTokens.map((token) => ({
+    to: token,
+    title,
+    body,
     data: { workspaceId, conversationId, messageId },
-  })
+    sound: "default",
+    channelId: "default",
+    priority: "high",
+  }))
 
+  const chunks = expo.chunkPushNotifications(messages)
   const staleTokens: string[] = []
-  for (const [index, result] of response.responses.entries()) {
-    if (
-      !result.success &&
-      result.error?.code === "messaging/registration-token-not-registered"
-    ) {
-      staleTokens.push(tokens[index].token)
+
+  for (const chunk of chunks) {
+    try {
+      const tickets = await expo.sendPushNotificationsAsync(chunk)
+      for (const [index, ticket] of tickets.entries()) {
+        if (
+          ticket.status === "error" &&
+          ticket.details?.error === "DeviceNotRegistered"
+        ) {
+          const sentMessage = chunk[index]
+          if (typeof sentMessage.to === "string") {
+            staleTokens.push(sentMessage.to)
+          }
+        }
+      }
+    } catch (error) {
+      logger.warn(error, "Expo push chunk failed")
     }
   }
 

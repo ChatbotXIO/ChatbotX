@@ -37,8 +37,11 @@ export const deviceTokensAuthenticatedAPI = {
     })
     .input(unregisterDeviceTokenRequest)
     .output(successResponse)
-    .handler(async ({ input }) => {
-      await deviceTokenService.deleteByToken({ token: input.token })
+    .handler(async ({ input, context }) => {
+      await deviceTokenService.deleteByToken({
+        userId: context.user.id,
+        token: input.token,
+      })
       return { success: true as const }
     }),
 }

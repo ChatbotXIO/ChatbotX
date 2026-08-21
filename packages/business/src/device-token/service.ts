@@ -1,4 +1,5 @@
 import {
+  and,
   type DatabaseClient,
   db,
   eq,
@@ -32,15 +33,21 @@ class DeviceTokenService extends BaseService {
 
   async deleteByToken(props: {
     tx?: DatabaseClient
+    userId: string
     token: string
   }): Promise<void> {
-    const { tx = db, token } = props
+    const { tx = db, userId, token } = props
     await tx
       .delete(userDeviceTokenModel)
-      .where(eq(userDeviceTokenModel.token, token))
+      .where(
+        and(
+          eq(userDeviceTokenModel.token, token),
+          eq(userDeviceTokenModel.userId, userId),
+        ),
+      )
   }
 
-  /** Prunes tokens rejected by FCM (e.g. registration-token-not-registered). */
+  /** Prunes tokens rejected by Expo (e.g. DeviceNotRegistered), plus invalid-format tokens. */
   async deleteByTokens(props: {
     tx?: DatabaseClient
     tokens: string[]

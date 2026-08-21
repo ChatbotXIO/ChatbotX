@@ -85,7 +85,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dot-prop": "^10.1.0",
-    "firebase-admin": "^14.3.0",
+    "expo-server-sdk": "^7.1.0",
     "html-to-text": "^9.0.5",
     "image-size": "^2.0.2",
     "ioredis": "5.10.1",

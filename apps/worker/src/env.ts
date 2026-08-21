@@ -37,10 +37,12 @@ export const env = createEnv({
       .min(1)
       .max(200)
       .default(10),
-    // Firebase Cloud Messaging service account JSON, serialized to a single
-    // env string. Optional — when unset, push notifications are disabled and
-    // the worker logs once instead of throwing.
-    FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
+    // Expo push access token. Only needed if Expo's "enhanced push security"
+    // is enabled on the project; unauthenticated requests work otherwise.
+    EXPO_ACCESS_TOKEN: z.string().optional(),
+    // Kill switch — Expo needs no credential to send, so unlike FCM there is
+    // no natural "unset = disabled" signal. Operators flip this explicitly.
+    EXPO_PUSH_ENABLED: z.coerce.boolean().default(true),
   },
   runtimeEnv: process.env,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",
