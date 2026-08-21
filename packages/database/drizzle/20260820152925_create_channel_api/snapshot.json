@@ -1,9 +1,39 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "dfc8a95c-1b85-4085-962b-4c98f8726faa",
-  "prevIds": ["f3176b85-07a7-4da4-96a6-dbdf431b9ed9"],
+  "id": "2f42e32e-6822-44fe-be1c-c4d3188d388a",
+  "prevIds": ["c0e5c2bd-1f78-4289-b8dc-0bb526d7ce00"],
   "ddl": [
+    {
+      "values": [
+        "pending",
+        "sent",
+        "failed",
+        "skipped_no_scope",
+        "skipped_region"
+      ],
+      "name": "adsConversionCapiStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["automatic", "rule"],
+      "name": "adsConversionEventSource",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["whatsapp", "facebook"],
+      "name": "adsConversionChannel",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["lead", "purchase"],
+      "name": "adsConversionEventType",
+      "entityType": "enums",
+      "schema": "public"
+    },
     {
       "values": ["pending", "success", "error", "processing"],
       "name": "aiConversationEmbeddingStatus",
@@ -99,6 +129,48 @@
       "schema": "public"
     },
     {
+      "values": ["pending", "synced", "failed"],
+      "name": "appointmentExternalSyncStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["inPerson", "phoneCall", "onlineMeeting"],
+      "name": "appointmentLocationTypeSnapshot",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["scheduled", "cancelled"],
+      "name": "appointmentStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["inPerson", "phoneCall", "onlineMeeting"],
+      "name": "appointmentLocationType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["rollingDays", "dateRange", "specificDay", "anyFutureDate"],
+      "name": "appointmentScheduleWindowType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["minutes", "hours", "days"],
+      "name": "appointmentReminderTimingUnit",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["pending", "sent", "cancelled", "failed"],
+      "name": "appointmentReminderDispatchStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["image", "video", "audio", "gif", "file"],
       "name": "fileType",
       "entityType": "enums",
@@ -107,6 +179,12 @@
     {
       "values": ["inbound", "outbound"],
       "name": "automatedResponseType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["defaultReply"],
+      "name": "automationThrottleType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -238,7 +316,7 @@
       "schema": "public"
     },
     {
-      "values": ["csv", "xlsx", "xls"],
+      "values": ["csv", "xlsx", "xls", "json"],
       "name": "importFormat",
       "entityType": "enums",
       "schema": "public"
@@ -250,7 +328,7 @@
       "schema": "public"
     },
     {
-      "values": ["contacts", "coupons", "products"],
+      "values": ["contacts", "coupons", "products", "flow"],
       "name": "importType",
       "entityType": "enums",
       "schema": "public"
@@ -370,6 +448,12 @@
       "schema": "public"
     },
     {
+      "values": ["allTime", "oncePerHour", "oncePerDay"],
+      "name": "defaultReplyFrequency",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["owner", "agent"],
       "name": "workspaceMemberRole",
       "entityType": "enums",
@@ -384,6 +468,18 @@
     {
       "isRlsEnabled": false,
       "name": "ShardTimeRange",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AdsConversionEvent",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AdsConversionRule",
       "entityType": "tables",
       "schema": "public"
     },
@@ -503,6 +599,36 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "Appointment",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AppointmentCalendar",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AppointmentCalendarAvailability",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AppointmentCalendarReminder",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AppointmentReminderDispatch",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Attachment",
       "entityType": "tables",
       "schema": "public"
@@ -546,6 +672,12 @@
     {
       "isRlsEnabled": false,
       "name": "AutomatedResponse",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AutomationThrottle",
       "entityType": "tables",
       "schema": "public"
     },
@@ -660,6 +792,12 @@
     {
       "isRlsEnabled": false,
       "name": "CustomField",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "DynamicImage",
       "entityType": "tables",
       "schema": "public"
     },
@@ -827,6 +965,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "IntegrationApi",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Integration",
       "entityType": "tables",
       "schema": "public"
@@ -864,6 +1008,12 @@
     {
       "isRlsEnabled": false,
       "name": "IntegrationGetResponse",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "IntegrationGoogleCalendar",
       "entityType": "tables",
       "schema": "public"
     },
@@ -930,6 +1080,12 @@
     {
       "isRlsEnabled": false,
       "name": "IntegrationOpenrouter",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "IntegrationOutlookCalendar",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1002,6 +1158,12 @@
     {
       "isRlsEnabled": false,
       "name": "MessengerMessageTemplate",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MetaCapiEvent",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1499,6 +1661,383 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ShardTimeRange"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationWhatsappId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wabaId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "adsConversionEventSource",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "adsConversionEventType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "eventType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ctwaClid",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "numeric",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceEventId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "adsConversionCapiStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "capiStatus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiSentAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "adsConversionChannel",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationWhatsappId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationFacebookAdsId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adAccountId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "adsConversionEventType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "eventType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "trigger",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "markAs",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AdsConversionRule"
     },
     {
       "type": "bigint",
@@ -3994,6 +4533,903 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "calendarId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "endAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inviteeTimezone",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "appointmentStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'scheduled'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "appointmentLocationTypeSnapshot",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "locationType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "locationDetail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "appointmentExternalSyncStatus",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalSyncStatus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cancelledAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "timezone",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "30",
+      "generated": null,
+      "identity": null,
+      "name": "durationMinutes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "bufferAfterMinutes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "appointmentLocationType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "locationType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "locationDetail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "appointmentScheduleWindowType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'rollingDays'",
+      "generated": null,
+      "identity": null,
+      "name": "scheduleWindowType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "scheduleWindowConfig",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "maxAppointmentsPerUser",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "dailyLimitEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "maxPerDay",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "allowGroupMeeting",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "maxPerSlot",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "confirmationMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "confirmationFlowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cancellationFlowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalConnectionId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "publicLinkSlug",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "calendarId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "weekday",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startMinute",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "endMinute",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "calendarId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "timingValue",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "type": "appointmentReminderTimingUnit",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "timingUnit",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "appointmentId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reminderConfigId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sendAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "appointmentReminderDispatchStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "jobId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sentAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cancelledAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "failedReason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "Attachment"
     },
     {
@@ -4996,6 +6432,84 @@
       "entityType": "columns",
       "schema": "public",
       "table": "AutomatedResponse"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomationThrottle"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomationThrottle"
+    },
+    {
+      "type": "automationThrottleType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "throttleType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomationThrottle"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "subjectId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomationThrottle"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "lastTriggeredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomationThrottle"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "claimId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AutomationThrottle"
     },
     {
       "type": "bigint",
@@ -6548,6 +8062,32 @@
       "table": "ContactInbox"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceUserId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactInbox"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceUsername",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactInbox"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -7040,6 +8580,19 @@
       "generated": null,
       "identity": null,
       "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "appointmentId",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactOnSmartDelay"
@@ -7953,6 +9506,123 @@
       "entityType": "columns",
       "schema": "public",
       "table": "CustomField"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customFieldId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "data",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "backgroundUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "DynamicImage"
     },
     {
       "type": "bigint",
@@ -11683,6 +13353,149 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenPrefix",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "callbackUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "Integration"
     },
     {
@@ -12437,6 +14250,110 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'primary'",
+      "generated": null,
+      "identity": null,
+      "name": "providerCalendarId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "IntegrationGoogleSheet"
     },
     {
@@ -12630,6 +14547,84 @@
       "generated": null,
       "identity": null,
       "name": "coexistEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "coexistAiReadsSyncedHistory",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "hasCapiScope",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiScopeCheckedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "datasetId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiAccessToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiDisconnectedAt",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationInstagram"
@@ -13111,6 +15106,84 @@
       "generated": null,
       "identity": null,
       "name": "coexistEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "coexistAiReadsSyncedHistory",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "hasCapiScope",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiScopeCheckedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "datasetId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiAccessToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiDisconnectedAt",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -14036,6 +16109,110 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'primary'",
+      "generated": null,
+      "identity": null,
+      "name": "providerCalendarId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "IntegrationSendGrid"
     },
     {
@@ -14787,6 +16964,19 @@
       "default": "false",
       "generated": null,
       "identity": null,
+      "name": "coexistAiReadsSyncedHistory",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
       "name": "isCoexist",
       "entityType": "columns",
       "schema": "public",
@@ -14814,6 +17004,71 @@
       "generated": null,
       "identity": null,
       "name": "historyDeclined",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "hasCapiScope",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiScopeCheckedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "datasetId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiAccessToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiDisconnectedAt",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationWhatsapp"
@@ -15766,6 +18021,240 @@
       "entityType": "columns",
       "schema": "public",
       "table": "MessengerMessageTemplate"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "eventName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contentCategory",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contentName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "numeric",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "capiStatus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiSentAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
     },
     {
       "type": "bigint",
@@ -20399,6 +22888,19 @@
       "table": "Workspace"
     },
     {
+      "type": "defaultReplyFrequency",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'allTime'",
+      "generated": null,
+      "identity": null,
+      "name": "defaultReplyFrequency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Workspace"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -20878,6 +23380,202 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "ShardTimeRange"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "integrationWhatsappId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "source",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceEventId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AdsConversionEvent_workspace_integration_source_sourceEventId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "eventType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AdsConversionEvent_workspaceId_eventType_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AdsConversionEvent_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AdsConversionEvent_workspaceId_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "adId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AdsConversionEvent_workspaceId_adId_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "channel",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "enabled",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AdsConversionRule_workspaceId_channel_enabled_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AdsConversionRule"
     },
     {
       "nameExplicit": true,
@@ -21831,6 +24529,349 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Appointment_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "startAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Appointment_workspaceId_startAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "calendarId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "startAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Appointment_calendarId_status_startAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "calendarId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Appointment_contactId_calendarId_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentCalendar_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "(\"deletedAt\" is null)",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentCalendar_workspaceId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "publicLinkSlug",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentCalendar_publicLinkSlug_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "calendarId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentCalendarAvailability_calendarId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "calendarId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "timingValue",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "timingUnit",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentCalendarReminder_dedupe_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "jobId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentReminderDispatch_jobId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sendAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentReminderDispatch_status_sendAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "appointmentId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentReminderDispatch_appointmentId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AppointmentReminderDispatch_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "messageId",
           "isExpression": false,
           "asc": true,
@@ -22057,6 +25098,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "AutomatedResponse"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "lastTriggeredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AutomationThrottle_lastTriggeredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AutomationThrottle"
     },
     {
       "nameExplicit": true,
@@ -22564,6 +25626,34 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceUserId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"sourceUserId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactInbox_inboxId_sourceUserId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactInbox"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "contactId",
           "isExpression": false,
           "asc": true,
@@ -22612,6 +25702,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "ContactInbox_contactId_lastOutboundMessageAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactInbox"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "(\"referral\"->>'ctwaClid')",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"referral\"->>'ctwaClid' IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactInbox_referral_ctwaClid_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactInbox"
@@ -22927,6 +26038,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "ContactOnSmartDelay_conversationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "appointmentId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactOnSmartDelay_appointmentId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactOnSmartDelay"
@@ -23574,6 +26706,34 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "CustomField"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "DynamicImage_workspaceId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "DynamicImage"
     },
     {
       "nameExplicit": true,
@@ -24578,6 +27738,69 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "IntegrationApi_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationApi_inboxId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tokenHash",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationApi_tokenHash_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "Integration_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -24862,6 +28085,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationGetResponse"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationGoogleCalendar_integrationId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
     },
     {
       "nameExplicit": true,
@@ -25432,6 +28676,27 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "IntegrationOutlookCalendar_integrationId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "IntegrationSendGrid_integrationId_key",
       "entityType": "indexes",
       "schema": "public",
@@ -25727,6 +28992,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "IntegrationWhatsapp_inboxId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationWhatsapp_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationWhatsapp"
@@ -26192,6 +29478,90 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "MessengerMessageTemplate"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "channel",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MetaCapiEvent_workspaceId_channel_sourceKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MetaCapiEvent_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "channel",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MetaCapiEvent_channel_integrationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MetaCapiEvent"
     },
     {
       "nameExplicit": true,
@@ -28398,6 +31768,84 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "AdsConversionEvent_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationWhatsappId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationWhatsapp",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AdsConversionEvent_IENNsXLBb1k1_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AdsConversionEvent_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AdsConversionEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AdsConversionRule_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationWhatsappId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationWhatsapp",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AdsConversionRule_k99JXbMObQIn_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationFacebookAdsId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationFacebookAds",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AdsConversionRule_fBmu8W26Mw5R_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AdsConversionRule"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "AIAgent_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -28769,6 +32217,201 @@
     },
     {
       "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Appointment_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["calendarId"],
+      "schemaTo": "public",
+      "tableTo": "AppointmentCalendar",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "RESTRICT",
+      "name": "Appointment_calendarId_AppointmentCalendar_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactId"],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Appointment_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["conversationId"],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Appointment_conversationId_Conversation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AppointmentCalendar_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["confirmationFlowId"],
+      "schemaTo": "public",
+      "tableTo": "Flow",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AppointmentCalendar_confirmationFlowId_Flow_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["cancellationFlowId"],
+      "schemaTo": "public",
+      "tableTo": "Flow",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AppointmentCalendar_cancellationFlowId_Flow_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["externalConnectionId"],
+      "schemaTo": "public",
+      "tableTo": "Integration",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AppointmentCalendar_externalConnectionId_Integration_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["calendarId"],
+      "schemaTo": "public",
+      "tableTo": "AppointmentCalendar",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AppointmentCalendarAvailability_QfahoIQAX592_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["calendarId"],
+      "schemaTo": "public",
+      "tableTo": "AppointmentCalendar",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AppointmentCalendarReminder_5O4INfYC3dY3_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["flowId"],
+      "schemaTo": "public",
+      "tableTo": "Flow",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AppointmentCalendarReminder_flowId_Flow_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AppointmentReminderDispatch_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["appointmentId"],
+      "schemaTo": "public",
+      "tableTo": "Appointment",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AppointmentReminderDispatch_appointmentId_Appointment_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["reminderConfigId"],
+      "schemaTo": "public",
+      "tableTo": "AppointmentCalendarReminder",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AppointmentReminderDispatch_a526jJM55OD7_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AppointmentReminderDispatch_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch"
+    },
+    {
+      "nameExplicit": false,
       "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
@@ -28883,6 +32526,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "AutomatedResponse"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AutomationThrottle_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AutomationThrottle"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AutomationThrottle_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AutomationThrottle"
     },
     {
       "nameExplicit": false,
@@ -29159,6 +32828,19 @@
     },
     {
       "nameExplicit": false,
+      "columns": ["appointmentId"],
+      "schemaTo": "public",
+      "tableTo": "Appointment",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "ContactOnSmartDelay_appointmentId_Appointment_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "nameExplicit": false,
       "columns": ["conversationId"],
       "schemaTo": "public",
       "tableTo": "Conversation",
@@ -29416,6 +33098,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "CustomField"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "DynamicImage_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "DynamicImage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["customFieldId"],
+      "schemaTo": "public",
+      "tableTo": "CustomField",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "DynamicImage_customFieldId_CustomField_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "DynamicImage"
     },
     {
       "nameExplicit": false,
@@ -30023,6 +33731,32 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "IntegrationApi_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationApi_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationApi"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "Integration_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -30183,6 +33917,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "IntegrationGetResponse"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationGoogleCalendar_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationId"],
+      "schemaTo": "public",
+      "tableTo": "Integration",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationGoogleCalendar_integrationId_Integration_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar"
     },
     {
       "nameExplicit": false,
@@ -30530,6 +34290,32 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "IntegrationOutlookCalendar_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationId"],
+      "schemaTo": "public",
+      "tableTo": "Integration",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationOutlookCalendar_integrationId_Integration_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "IntegrationSendGrid_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -30781,6 +34567,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "MessengerMessageTemplate"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MetaCapiEvent_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MetaCapiEvent_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MetaCapiEvent"
     },
     {
       "nameExplicit": false,
@@ -31837,6 +35649,14 @@
       "table": "Attachment"
     },
     {
+      "columns": ["workspaceId", "contactInboxId", "throttleType", "subjectId"],
+      "nameExplicit": true,
+      "name": "AutomationThrottle_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "AutomationThrottle"
+    },
+    {
       "columns": ["workspaceId", "hourBucket", "contactInboxId"],
       "nameExplicit": false,
       "name": "ContactActiveHourly_pkey",
@@ -31927,6 +35747,22 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "AdsConversionEvent_pkey",
+      "schema": "public",
+      "table": "AdsConversionEvent",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AdsConversionRule_pkey",
+      "schema": "public",
+      "table": "AdsConversionRule",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "AIAgent_pkey",
       "schema": "public",
       "table": "AIAgent",
@@ -32002,6 +35838,46 @@
       "name": "AnalyticsEmailTopic_pkey",
       "schema": "public",
       "table": "AnalyticsEmailTopic",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Appointment_pkey",
+      "schema": "public",
+      "table": "Appointment",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AppointmentCalendar_pkey",
+      "schema": "public",
+      "table": "AppointmentCalendar",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AppointmentCalendarAvailability_pkey",
+      "schema": "public",
+      "table": "AppointmentCalendarAvailability",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AppointmentCalendarReminder_pkey",
+      "schema": "public",
+      "table": "AppointmentCalendarReminder",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AppointmentReminderDispatch_pkey",
+      "schema": "public",
+      "table": "AppointmentReminderDispatch",
       "entityType": "pks"
     },
     {
@@ -32162,6 +36038,14 @@
       "name": "CustomField_pkey",
       "schema": "public",
       "table": "CustomField",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "DynamicImage_pkey",
+      "schema": "public",
+      "table": "DynamicImage",
       "entityType": "pks"
     },
     {
@@ -32383,6 +36267,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "IntegrationApi_pkey",
+      "schema": "public",
+      "table": "IntegrationApi",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "Integration_pkey",
       "schema": "public",
       "table": "Integration",
@@ -32434,6 +36326,14 @@
       "name": "IntegrationGetResponse_pkey",
       "schema": "public",
       "table": "IntegrationGetResponse",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "IntegrationGoogleCalendar_pkey",
+      "schema": "public",
+      "table": "IntegrationGoogleCalendar",
       "entityType": "pks"
     },
     {
@@ -32527,6 +36427,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "IntegrationOutlookCalendar_pkey",
+      "schema": "public",
+      "table": "IntegrationOutlookCalendar",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "IntegrationSendGrid_pkey",
       "schema": "public",
       "table": "IntegrationSendGrid",
@@ -32602,6 +36510,14 @@
       "name": "MessengerMessageTemplate_pkey",
       "schema": "public",
       "table": "MessengerMessageTemplate",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "MetaCapiEvent_pkey",
+      "schema": "public",
+      "table": "MetaCapiEvent",
       "entityType": "pks"
     },
     {
@@ -32927,6 +36843,13 @@
       "entityType": "checks",
       "schema": "public",
       "table": "IntegrationWhatsapp"
+    },
+    {
+      "value": "\"channel\" IN ('messenger', 'instagram', 'whatsapp')",
+      "name": "MetaCapiEvent_channel_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "MetaCapiEvent"
     },
     {
       "value": "(\"customFieldId\" IS NULL) OR (\"systemFieldKey\" IS NULL)",
