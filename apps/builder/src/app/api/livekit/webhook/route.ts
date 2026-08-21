@@ -202,11 +202,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const roomName = event.egressInfo?.roomName
         const file = event.egressInfo?.fileResults?.[0]
         if (roomName) {
-          await handleEgressEnded({
-            roomName,
-            filename: file?.filename,
-            sizeBytes: file?.size ? Number(file.size) : undefined,
-          })
+          try {
+            await handleEgressEnded({
+              roomName,
+              filename: file?.filename,
+              sizeBytes: file?.size ? Number(file.size) : undefined,
+            })
+          } catch (error) {
+            // The queue handoff is the ONLY durable record of the finished
+            // recording — a 200 here would make LiveKit stop redelivering
+            // and lose it. Redelivery is safe: the BullMQ jobId and the
+            // recordedAt CAS deduplicate everything downstream.
+            logger.error(
+              { err: error, roomName },
+              "LiveKit egress handoff failed; requesting redelivery",
+            )
+            return NextResponse.json({ error: "retry" }, { status: 503 })
+          }
         }
         break
       }
@@ -220,8 +232,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         break
     }
   } catch (error) {
-    // The webhook must still 200 — LiveKit retries are not idempotent-safe
-    // beyond our own guards, and failures are observable in logs.
+    // Non-egress events are UI conveniences (ringing banner, dismissal) —
+    // failures are logged and the webhook still ACKs so LiveKit's retry
+    // budget is saved for deliveries that carry durable state.
     logger.error({ err: error, event: event.event }, "LiveKit webhook failed")
   }
 

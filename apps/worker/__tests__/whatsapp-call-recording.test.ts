@@ -156,8 +156,12 @@ describe("handleWhatsappCallRecordingReady", () => {
     )
   })
 
-  test("redelivered egress webhook is a no-op after the recording is stamped", async () => {
-    mocks.attachRecording.mockResolvedValue(undefined)
+  test("redelivered egress webhook is a no-op after post-processing completed", async () => {
+    mocks.findByWacid.mockResolvedValue({
+      ...callRow,
+      recordingPath: "public/space/ws-1/calls/wacid.ABC.ogg",
+      recordedAt: new Date(),
+    })
 
     await handleWhatsappCallRecordingReady({
       wacid: "wacid.ABC",
@@ -168,6 +172,27 @@ describe("handleWhatsappCallRecordingReady", () => {
     expect(mocks.createOrUpdateWithAttachments).not.toHaveBeenCalled()
     expect(mocks.emitCallRecorded).not.toHaveBeenCalled()
     expect(mocks.queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a retry after a mid-pipeline crash re-runs without duplicating the message events", async () => {
+    // The message already exists from the first attempt (isNew: false) but
+    // recordedAt was never stamped — the retry must still chain
+    // transcription and finish the stamp, without re-broadcasting.
+    mocks.createOrUpdateWithAttachments.mockResolvedValue({
+      isNew: false,
+      result: { id: "msg-1", createdAt: new Date(), attachments: [] },
+    })
+
+    await handleWhatsappCallRecordingReady({
+      wacid: "wacid.ABC",
+      workspaceId: "ws-1",
+      recordingPath: "public/space/ws-1/calls/wacid.ABC.ogg",
+    })
+
+    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.emitCallRecorded).not.toHaveBeenCalled()
+    expect(mocks.queueAdd).toHaveBeenCalled()
+    expect(mocks.attachRecording).toHaveBeenCalled()
   })
 })
 
@@ -237,7 +262,7 @@ describe("handleWhatsappCallTranscribe", () => {
     expect(mocks.transcribe).not.toHaveBeenCalled()
   })
 
-  test("skips a claimed-but-unfinished recording slot", async () => {
+  test("transcribes even when recordedAt has not been stamped yet (enqueue precedes the stamp)", async () => {
     mocks.findByWacid.mockResolvedValue({
       ...callRow,
       recordingPath: "public/space/ws-1/calls/wacid.ABC.ogg",
@@ -249,6 +274,6 @@ describe("handleWhatsappCallTranscribe", () => {
       workspaceId: "ws-1",
     })
 
-    expect(mocks.transcribe).not.toHaveBeenCalled()
+    expect(mocks.transcribe).toHaveBeenCalled()
   })
 })

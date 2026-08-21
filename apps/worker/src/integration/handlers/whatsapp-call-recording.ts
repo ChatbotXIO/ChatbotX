@@ -57,15 +57,13 @@ export const handleWhatsappCallRecordingReady = async (
     return
   }
 
-  const stamped = await whatsappCallRepository.attachRecording({
-    wacid: data.wacid,
-    recordingPath: data.recordingPath,
-    recordedAt: new Date(),
-  })
-  if (!stamped) {
+  // recordedAt is stamped LAST (below): it marks "post-processing done", so a
+  // transient failure mid-pipeline retries the whole handler instead of being
+  // permanently swallowed. Each step below is individually replay-safe.
+  if (call.recordedAt) {
     logger.info(
       { wacid: data.wacid },
-      "Whatsapp call recording already stamped; skipping",
+      "Whatsapp call recording already processed; skipping",
     )
     return
   }
@@ -75,62 +73,72 @@ export const handleWhatsappCallRecordingReady = async (
   })
 
   const repository = await createMessageRepository()
-  const { result: message } = await repository.createOrUpdateWithAttachments(
-    {
-      id: createId(),
-      conversationId: call.conversationId,
-      contactInboxId: call.contactInboxId,
-      workspaceId: call.workspaceId,
-      // One audio message per call recording, replay-safe.
-      sourceId: `wacall-rec-${data.wacid}`,
-      senderType: "system",
-      senderId: null,
-      messageType: "activity",
-      text: null,
-      contentType: "text",
-      contentAttributes: { type: "whatsapp_call_recording", wacid: data.wacid },
-      createdAt: new Date(),
-    },
-    [
+  const { result: message, isNew } =
+    await repository.createOrUpdateWithAttachments(
       {
+        id: createId(),
         conversationId: call.conversationId,
+        contactInboxId: call.contactInboxId,
         workspaceId: call.workspaceId,
-        fileType: "audio",
-        mimeType: data.mimeType ?? DEFAULT_RECORDING_MIME_TYPE,
-        originPath: data.recordingPath,
-        size: data.sizeBytes,
+        // One audio message per call recording, replay-safe.
+        sourceId: `wacall-rec-${data.wacid}`,
+        senderType: "system",
+        senderId: null,
+        messageType: "activity",
+        text: null,
+        contentType: "text",
+        contentAttributes: {
+          type: "whatsapp_call_recording",
+          wacid: data.wacid,
+        },
+        createdAt: new Date(),
       },
-    ],
-  )
-
-  try {
-    broadcastToWorkspaceParty(call.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: {
-        ...message,
-        attachments: message.attachments.map((attachment) => ({
-          ...attachment,
-          url: getPublicFileUrl(attachment.originPath, storageUrl),
-        })),
-      },
-    })
-  } catch (error) {
-    logger.warn(
-      { err: error, wacid: data.wacid },
-      "Whatsapp call recording: unable to emit realtime event",
+      [
+        {
+          conversationId: call.conversationId,
+          workspaceId: call.workspaceId,
+          fileType: "audio",
+          mimeType: data.mimeType ?? DEFAULT_RECORDING_MIME_TYPE,
+          originPath: data.recordingPath,
+          size: data.sizeBytes,
+        },
+      ],
     )
-  }
 
-  const contactInbox = await contactInboxService.findBy({
-    where: { id: call.contactInboxId },
-  })
-  if (contactInbox) {
-    await emitCallRecorded(call.workspaceId, contactInbox.contactId, {
-      wacid: data.wacid,
-      recordingUrl: getPublicFileUrl(data.recordingPath, storageUrl),
+  // Broadcast + event fire once, keyed to the winning message insert — a
+  // retry that found the message already created must not duplicate them
+  // (same pattern as the terminate handler).
+  if (isNew) {
+    try {
+      broadcastToWorkspaceParty(call.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: {
+          ...message,
+          attachments: message.attachments.map((attachment) => ({
+            ...attachment,
+            url: getPublicFileUrl(attachment.originPath, storageUrl),
+          })),
+        },
+      })
+    } catch (error) {
+      logger.warn(
+        { err: error, wacid: data.wacid },
+        "Whatsapp call recording: unable to emit realtime event",
+      )
+    }
+
+    const contactInbox = await contactInboxService.findBy({
+      where: { id: call.contactInboxId },
     })
+    if (contactInbox) {
+      await emitCallRecorded(call.workspaceId, contactInbox.contactId, {
+        wacid: data.wacid,
+        recordingUrl: getPublicFileUrl(data.recordingPath, storageUrl),
+      })
+    }
   }
 
+  // Deterministic jobId — replay-safe.
   await integrationQueue.add(
     IntegrationJobAction.whatsappCallTranscribe,
     {
@@ -139,6 +147,14 @@ export const handleWhatsappCallRecordingReady = async (
     },
     { jobId: `wa-call-transcribe-${toBullMqSafeIdSegment(data.wacid)}` },
   )
+
+  // Mark post-processing complete only after every durable step above
+  // succeeded; a crash before this line simply retries the handler.
+  await whatsappCallRepository.attachRecording({
+    wacid: data.wacid,
+    recordingPath: data.recordingPath,
+    recordedAt: new Date(),
+  })
 }
 
 /**
@@ -152,12 +168,14 @@ export const handleWhatsappCallTranscribe = async (
   // See handleWhatsappCallRecordingReady — required for emitCallTranscribed.
   setWebhookExecutionContext({ source: "webhook" })
   const call = await whatsappCallRepository.findByWacid(data.wacid)
-  // recordedAt distinguishes a finished recording from a claimed-but-still-
-  // running egress slot (recordingPath is stamped at claim time).
-  if (!(call?.recordingPath && call.recordedAt)) {
+  // This job is only enqueued after egress_ended, so a present recordingPath
+  // is a finished file. recordedAt is deliberately NOT required — the ready
+  // handler stamps it after chaining this job, and requiring it here would
+  // race that stamp.
+  if (!call?.recordingPath) {
     logger.warn(
       { wacid: data.wacid },
-      "Whatsapp call transcription skipped: no finished recording",
+      "Whatsapp call transcription skipped: no recording",
     )
     return
   }
