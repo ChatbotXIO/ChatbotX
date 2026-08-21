@@ -27,8 +27,11 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: { add: mocks.integrationQueueAdd },
 }))
 
-const { submitDateTime, submitDateTimeRequestSchema } = await import(
+const { submitDateTime } = await import(
   "../src/app/extensions/datetime-picker/actions/submit-date-time.action"
+)
+const { submitDateTimeRequestSchema } = await import(
+  "../src/features/get-user-data-webview/schemas/action"
 )
 
 const VALID_PAYLOAD = {

@@ -6,14 +6,11 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { z } from "zod"
+import {
+  type SubmitDateTimeInput,
+  submitDateTimeRequestSchema,
+} from "@/features/get-user-data-webview/schemas/action"
 import { actionClient } from "@/lib/safe-action"
-
-export const submitDateTimeRequestSchema = z.object({
-  token: z.string().min(1),
-  selectedValue: z.iso.datetime(),
-})
-type SubmitDateTimeInput = z.infer<typeof submitDateTimeRequestSchema>
 
 export const submitDateTimeAction = actionClient
   .inputSchema(submitDateTimeRequestSchema)
