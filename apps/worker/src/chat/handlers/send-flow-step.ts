@@ -393,6 +393,21 @@ export async function sendFlowStep({
     return
   }
 
+  // The voice_call interactive only exists on WhatsApp — bail before any
+  // Message row is persisted so an omnichannel flow reaching another channel
+  // never shows a fully-worded phantom "sent" message (mirrors the
+  // sendWaTemplateMessage channel guard above).
+  if (
+    step.stepType === stepTypes.enum.whatsappCallButton &&
+    targetContactInbox.channel !== channelTypes.enum.whatsapp
+  ) {
+    logger.debug(
+      { conversationId, stepId: step.id, channel: targetContactInbox.channel },
+      "Skipping whatsappCallButton step on non-whatsapp channel",
+    )
+    return
+  }
+
   if (step.stepType === stepTypes.enum.sendMessengerTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.messenger) {
       return

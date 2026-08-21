@@ -85,25 +85,43 @@ class WhatsappCallRepository {
    * respecting {@link canAdvanceStatus} — a stale or out-of-order status is
    * a no-op. The WHERE re-checks the observed status so a concurrent writer
    * cannot be overwritten with stale data.
+   *
+   * Returns the status the row transitioned FROM when an update was applied
+   * (`undefined` otherwise), so callers can react to the actual DB
+   * transition rather than their own possibly-stale read — e.g. the
+   * `failed → rejected` repair of the call-activity message.
    */
   async updateInterimStatus(
     props: { wacid: string; status: WhatsappCallStatus },
     tx: DatabaseClient = db,
-  ): Promise<void> {
-    const existing = await this.findByWacid(props.wacid, tx)
-    if (!(existing && canAdvanceStatus(existing.status, props.status))) {
-      return
-    }
+  ): Promise<{ previousStatus: WhatsappCallStatus } | undefined> {
+    // Retried once: a concurrent writer can invalidate the optimistic WHERE
+    // between the read and the update (e.g. terminate finalizing to `failed`
+    // right before a REJECTED lands) — the re-read then observes the new
+    // status and re-evaluates the transition against it.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const existing = await this.findByWacid(props.wacid, tx)
+      if (!(existing && canAdvanceStatus(existing.status, props.status))) {
+        return
+      }
 
-    await tx
-      .update(whatsappCallModel)
-      .set({ status: props.status })
-      .where(
-        and(
-          eq(whatsappCallModel.wacid, props.wacid),
-          eq(whatsappCallModel.status, existing.status),
-        ),
-      )
+      const updated = await tx
+        .update(whatsappCallModel)
+        .set({ status: props.status })
+        .where(
+          and(
+            eq(whatsappCallModel.wacid, props.wacid),
+            eq(whatsappCallModel.status, existing.status),
+          ),
+        )
+        .returning({ id: whatsappCallModel.id })
+        .then((rows) => rows[0])
+
+      if (updated) {
+        return { previousStatus: existing.status }
+      }
+    }
+    return
   }
 
   /** Finalizes the call from the Call Terminate webhook. */

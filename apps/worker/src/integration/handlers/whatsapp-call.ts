@@ -149,15 +149,17 @@ const handleInterimStatus = async (
     return
   }
 
-  await whatsappCallRepository.updateInterimStatus({
+  const transition = await whatsappCallRepository.updateInterimStatus({
     wacid: event.wacid,
     status,
   })
 
   // A REJECTED that lost the race against the terminate job upgraded the row
   // from `failed` to `rejected` above — the already-written activity message
-  // still says "missed", so repair its projection too.
-  if (status === "rejected" && existing.status === "failed") {
+  // still says "missed", so repair its projection too. Keyed off the ACTUAL
+  // DB transition (not the read above), which stays correct even when the
+  // terminate finalizes concurrently between our read and the update.
+  if (status === "rejected" && transition?.previousStatus === "failed") {
     const entity: MessageWhatsappCallEntity = {
       type: "whatsapp_call",
       direction: existing.direction,

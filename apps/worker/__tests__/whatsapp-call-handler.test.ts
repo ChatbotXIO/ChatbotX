@@ -173,6 +173,9 @@ describe("handleWhatsappCallEvent", () => {
 
   test("late REJECTED after a failed terminate repairs the activity message", async () => {
     mocks.findByWacid.mockResolvedValue({ ...callRow, status: "failed" })
+    // The repair keys off the transition reported by the repository, not the
+    // handler's own read — mirrors the real failed→rejected upgrade.
+    mocks.updateInterimStatus.mockResolvedValue({ previousStatus: "failed" })
 
     await handleWhatsappCallEvent({
       ...baseData,
