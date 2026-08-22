@@ -107,14 +107,11 @@ services:
     volumes:
       - redis-ui-data:/data
 
-  # In-app WhatsApp calling (beta) — optional, start with:
-  #   docker compose --profile livekit up -d
-  # Dev-only credentials (devkey). Meta's SIP leg cannot reach localhost, so
-  # local testing simulates the caller with the `lk` CLI — see
-  # docs/whatsapp-calling.md#local-development.
+  # In-app WhatsApp calling (beta). Dev-only credentials (devkey). Meta's
+  # SIP leg cannot reach localhost, so local testing simulates the caller
+  # with the `lk` CLI — see docs/whatsapp-calling.md#local-development.
   livekit:
     <<: *network
-    profiles: ["livekit"]
     image: livekit/livekit-server:latest
     command: --config /etc/livekit.yaml
     depends_on:
@@ -131,7 +128,6 @@ services:
 
   livekit-egress:
     <<: *network
-    profiles: ["livekit"]
     image: livekit/egress:latest
     environment:
       EGRESS_CONFIG_FILE: /etc/egress.yaml

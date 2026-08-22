@@ -107,11 +107,11 @@ pipeline, and transcription. The caller is simulated with the `lk` CLI.
 ### 1. Start the stack
 
 ```bash
-docker compose --profile livekit up -d    # livekit + egress (+ shared infra)
+docker compose up -d    # shared infra + livekit + egress (default)
 ```
 
-Uncomment the LiveKit block in `.env` (see `.env.example`) — dev credentials
-`devkey` / `devsecret_devsecret_devsecret_dev` match
+Make sure your `.env` carries the LiveKit block from `.env.example` — dev
+credentials `devkey` / `devsecret_devsecret_devsecret_dev` match
 `docker/livekit/livekit.yaml`, and `LIVEKIT_EGRESS_S3_ENDPOINT` must be
 `http://filesystem:9000` (the egress container cannot resolve `localhost`).
 Restart `pnpm dev` so the builder/worker pick the env up. LiveKit's webhooks
