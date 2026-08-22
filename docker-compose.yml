@@ -117,10 +117,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    # Bound to loopback: the config ships well-known dev credentials, so the
+    # server must never be reachable from the LAN.
     ports:
-      - "7880:7880"
-      - "7881:7881"
-      - "50700-50720:50700-50720/udp"
+      - "127.0.0.1:7880:7880"
+      - "127.0.0.1:7881:7881"
+      - "127.0.0.1:50700-50720:50700-50720/udp"
     volumes:
       - ./docker/livekit/livekit.yaml:/etc/livekit.yaml:ro
     extra_hosts:
