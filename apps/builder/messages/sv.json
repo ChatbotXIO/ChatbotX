@@ -4831,7 +4831,7 @@
   },
   "zalo": {
     "duplicated": "Det här Zalo OA-kontot är redan anslutet till en annan arbetsyta.",
-    "refreshPermissions": "Uppdatera behörigheter",
+    "reconnect": "Återanslut",
     "tagSync": {
       "description": "Spegla lokala taggtilldelningar till denna Zalo OA.",
       "disabled": "Inaktiverad",

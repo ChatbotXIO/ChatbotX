@@ -3580,7 +3580,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "İzinleri yenile",
+    "reconnect": "Yeniden Bağlan",
     "duplicated": "Bu Zalo OA hesabı zaten başka bir çalışma alanına bağlanmış.",
     "tagSync": {
       "title": "Etiket Senkronizasyonu",

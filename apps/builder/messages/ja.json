@@ -3559,7 +3559,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "権限を更新",
+    "reconnect": "再接続",
     "duplicated": "このZalo OAアカウントはすでに別のワークスペースに接続されています。",
     "tagSync": {
       "title": "タグ同期",

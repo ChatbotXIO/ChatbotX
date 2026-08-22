@@ -4831,7 +4831,7 @@
   },
   "zalo": {
     "duplicated": "此Zalo OA 帐户已连接到另一个工作区。",
-    "refreshPermissions": "刷新权限",
+    "reconnect": "重新连接",
     "tagSync": {
       "description": "将本地标记分配镜像到此Zalo OA。",
       "disabled": "已停用",

@@ -3580,7 +3580,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Làm mới quyền",
+    "reconnect": "Kết nối lại",
     "duplicated": "Tài khoản Zalo OA này đã được kết nối với một workspace khác.",
     "tagSync": {
       "title": "Đồng bộ nhãn",
