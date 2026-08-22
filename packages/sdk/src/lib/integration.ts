@@ -70,7 +70,10 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     metadata?: MetadataPayload
     richResponse?: RichResponseContentAttributes
     sendFrom?: "inbox"
-    /** See {@link CommentAnchor}. Channels other than Messenger ignore it. */
+    /**
+     * See {@link CommentAnchor}. Honored by Messenger and Instagram; other
+     * channels ignore it.
+     */
     commentAnchor?: CommentAnchor
   }
 }

@@ -1101,12 +1101,32 @@ describe("sendFlowStep", () => {
     expect(mockSendMessageToChannel).not.toHaveBeenCalled()
   })
 
-  test("suppresses a private commentAnchor when the resolved contactInbox is not messenger", async () => {
+  test("forwards a private commentAnchor when the resolved contactInbox is instagram", async () => {
     const instagramContactInbox = {
       ...fakeContactInbox,
       channel: "instagram",
     } as unknown as typeof fakeContactInbox
     mockFindContactInbox.mockResolvedValue(instagramContactInbox)
+
+    await sendFlowStep({
+      ...baseParams,
+      commentAnchor: { commentId: "comment-1", replyChannel: "private" },
+    })
+
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commentAnchor: { commentId: "comment-1", replyChannel: "private" },
+      }),
+    )
+    expect(mockSendMessageToChannel).not.toHaveBeenCalled()
+  })
+
+  test("suppresses a private commentAnchor when the resolved contactInbox is neither messenger nor instagram", async () => {
+    const webchatContactInbox = {
+      ...fakeContactInbox,
+      channel: "webchat",
+    } as unknown as typeof fakeContactInbox
+    mockFindContactInbox.mockResolvedValue(webchatContactInbox)
 
     await sendFlowStep({
       ...baseParams,
