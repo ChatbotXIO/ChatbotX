@@ -1,0 +1,19 @@
+# Local-dev LiveKit server config for in-app WhatsApp calling (beta).
+# Started via `docker compose --profile livekit up` — see
+# docs/whatsapp-calling.md#local-development. Dev credentials only; never
+# reuse these keys outside localhost.
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50700
+  port_range_end: 50720
+  use_external_ip: false
+redis:
+  address: redis:6379
+keys:
+  devkey: devsecret_devsecret_devsecret_dev
+webhook:
+  api_key: devkey
+  urls:
+    # The builder dev server on the host machine.
+    - http://host.docker.internal:3123/api/livekit/webhook

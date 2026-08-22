@@ -1,0 +1,6 @@
+# Local-dev LiveKit egress (call recording) config.
+api_key: devkey
+api_secret: devsecret_devsecret_devsecret_dev
+ws_url: ws://livekit:7880
+redis:
+  address: redis:6379

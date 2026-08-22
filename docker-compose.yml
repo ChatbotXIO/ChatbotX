@@ -107,6 +107,45 @@ services:
     volumes:
       - redis-ui-data:/data
 
+  # In-app WhatsApp calling (beta) — optional, start with:
+  #   docker compose --profile livekit up -d
+  # Dev-only credentials (devkey). Meta's SIP leg cannot reach localhost, so
+  # local testing simulates the caller with the `lk` CLI — see
+  # docs/whatsapp-calling.md#local-development.
+  livekit:
+    <<: *network
+    profiles: ["livekit"]
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "50700-50720:50700-50720/udp"
+    volumes:
+      - ./docker/livekit/livekit.yaml:/etc/livekit.yaml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  livekit-egress:
+    <<: *network
+    profiles: ["livekit"]
+    image: livekit/egress:latest
+    environment:
+      EGRESS_CONFIG_FILE: /etc/egress.yaml
+    depends_on:
+      redis:
+        condition: service_healthy
+      livekit:
+        condition: service_started
+    volumes:
+      - ./docker/livekit/egress.yaml:/etc/egress.yaml:ro
+    # Audio-only egress still links against chromium deps in the image; give
+    # it shared memory headroom.
+    shm_size: "1gb"
+
 networks:
   chatbotx-network:
     driver: bridge

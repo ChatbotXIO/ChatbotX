@@ -96,6 +96,60 @@ egress recording per number (stored on `IntegrationWhatsapp.callRecordingEnabled
    into the conversation, fires `callRecorded`, and chains transcription
    (`callTranscribed`) through the workspace's OpenAI integration.
 
+## Local development
+
+Meta's SIP leg cannot reach a laptop (it requires a public hostname with a
+valid TLS cert on :5061), so local dev covers everything **except** the real
+Meta audio leg: room lifecycle, the LiveKit webhook route, the incoming-call
+dock, browser audio, recording egress into local RustFS, the worker
+pipeline, and transcription. The caller is simulated with the `lk` CLI.
+
+### 1. Start the stack
+
+```bash
+docker compose --profile livekit up -d    # livekit + egress (+ shared infra)
+```
+
+Uncomment the LiveKit block in `.env` (see `.env.example`) — dev credentials
+`devkey` / `devsecret_devsecret_devsecret_dev` match
+`docker/livekit/livekit.yaml`, and `LIVEKIT_EGRESS_S3_ENDPOINT` must be
+`http://filesystem:9000` (the egress container cannot resolve `localhost`).
+Restart `pnpm dev` so the builder/worker pick the env up. LiveKit's webhooks
+are preconfigured to `http://host.docker.internal:3123/api/livekit/webhook`.
+
+### 2. Simulate an incoming call
+
+The pipeline is driven by two events that are easy to fake locally:
+
+1. **Meta's `connect` webhook** creates the `WhatsappCall` row. With any
+   connected WhatsApp integration in your dev workspace, POST a synthetic
+   payload to its webhook (the dev middleware does not verify HMAC):
+
+   ```bash
+   curl -X POST http://localhost:3123/integrations/whatsapp/webhook \
+     -H 'Content-Type: application/json' \
+     -d '{"object":"whatsapp_business_account","entry":[{"id":"<WABA_ID>","changes":[{"field":"calls","value":{"metadata":{"phone_number_id":"<PHONE_NUMBER_ID>"},"contacts":[{"wa_id":"<CUSTOMER_PHONE>","profile":{"name":"Local Test"}}],"calls":[{"id":"wacid.LOCALTEST1","from":"<CUSTOMER_PHONE>","to":"<BUSINESS_PHONE>","event":"connect","direction":"USER_INITIATED","timestamp":"'$(date +%s)'"}]}}]}]}'
+   ```
+
+2. **The SIP participant joining a room** triggers the ringing dock. Join as
+   a fake caller carrying the correlation attribute
+   ([`lk` CLI](https://github.com/livekit/livekit-cli)):
+
+   ```bash
+   lk room join --url ws://localhost:7880 \
+     --api-key devkey --api-secret devsecret_devsecret_devsecret_dev \
+     --identity fake-caller --attribute wacid=wacid.LOCALTEST1 \
+     --publish-mic local-test-call
+   ```
+
+The inbox now shows the incoming-call dock; answering joins the same room
+and you talk to your own microphone loop. With **Record calls** enabled on
+the number, hanging up produces the egress file in RustFS, the audio message
+in the conversation, and (with an OpenAI integration) the transcript.
+
+To close the loop, fire the matching `terminate` webhook (same curl with
+`"event":"terminate","status":"COMPLETED","duration":30`).
+
 ## Notes & limitations (beta)
 
 - Transcription requires an OpenAI integration on the workspace; without it

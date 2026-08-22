@@ -19,6 +19,12 @@ export const keys = () =>
       LIVEKIT_SIP_DOMAIN: z.string().min(1).optional(),
       /** LiveKit SIP outbound trunk id — required for business-initiated calls. */
       LIVEKIT_SIP_OUTBOUND_TRUNK_ID: z.string().min(1).optional(),
+      /**
+       * S3 endpoint AS SEEN FROM the egress container — needed when the
+       * app-facing S3_ENDPOINT (e.g. http://localhost:9000 in local dev) is
+       * unreachable from inside Docker. Falls back to S3_ENDPOINT.
+       */
+      LIVEKIT_EGRESS_S3_ENDPOINT: z.url().optional(),
       S3_ENDPOINT: z.url().optional(),
       S3_ACCESS_KEY_ID: z.string().min(1).optional(),
       S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),

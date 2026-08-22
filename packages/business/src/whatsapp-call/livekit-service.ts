@@ -130,6 +130,10 @@ class WhatsappLivekitService {
     }
 
     const recordingPath = this.buildCallRecordingPath(props)
+    // The egress worker runs in its own container/host — its view of the
+    // bucket endpoint can differ from the app's (local dev: rustfs vs
+    // localhost).
+    const egressS3Endpoint = env.LIVEKIT_EGRESS_S3_ENDPOINT ?? env.S3_ENDPOINT
 
     const egress = new EgressClient(config.url, config.apiKey, config.apiSecret)
     const info = await egress.startRoomCompositeEgress(
@@ -145,8 +149,8 @@ class WhatsappLivekitService {
               secret: env.S3_SECRET_ACCESS_KEY,
               bucket: env.S3_BUCKET,
               region: env.S3_REGION,
-              endpoint: env.S3_ENDPOINT,
-              forcePathStyle: Boolean(env.S3_ENDPOINT),
+              endpoint: egressS3Endpoint,
+              forcePathStyle: Boolean(egressS3Endpoint),
             }),
           },
         }),
