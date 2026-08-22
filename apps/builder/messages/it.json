@@ -3560,7 +3560,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Aggiorna autorizzazioni",
+    "reconnect": "Ricollega",
     "duplicated": "Questo account Zalo OA è già collegato a un'altra area di lavoro.",
     "tagSync": {
       "title": "Sincronizzazione tag",

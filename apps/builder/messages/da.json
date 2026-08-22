@@ -3560,7 +3560,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh tilladelser",
+    "reconnect": "Forbind igen",
     "duplicated": "Denne Zalo OA konto har allerede been forbundet til another arbejdsområde.",
     "tagSync": {
       "title": "Tag Synkroniser",

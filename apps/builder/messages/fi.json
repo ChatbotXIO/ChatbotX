@@ -3560,7 +3560,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Päivitä käyttöoikeudet",
+    "reconnect": "Yhdistä uudelleen",
     "duplicated": "Tämä Zalo OA -tili on jo yhdistetty toiseen työtilaan.",
     "tagSync": {
       "title": "Tunnisteiden synkronointi",

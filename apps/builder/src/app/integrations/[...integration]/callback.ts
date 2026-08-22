@@ -53,6 +53,7 @@ import {
 import { reconnectMessengerHandler } from "@/features/integration-messenger/actions/reconnect-callback"
 import { connectTiktokHandler } from "@/features/integration-tiktok/actions/connect.action"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
+import { reconnectZaloHandler } from "@/features/integration-zalo/actions/reconnect-callback"
 import { integrations } from "@/integration"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
@@ -515,6 +516,16 @@ export const handleCallback = async (
       })
       if (!zaloCredential) {
         return notFound()
+      }
+
+      if (stateParams.reconnectIntegrationId) {
+        const result = await reconnectZaloHandler({
+          zaloSettings: zaloCredential.config,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          req,
+        })
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
       await connectZaloHandler({

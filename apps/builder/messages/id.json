@@ -3560,7 +3560,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Perbarui izin",
+    "reconnect": "Hubungkan kembali",
     "duplicated": "Akun Zalo OA ini sudah terhubung ke ruang kerja lain.",
     "tagSync": {
       "title": "Sinkronisasi Tag",

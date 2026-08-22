@@ -3560,7 +3560,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Machtigingen vernieuwen",
+    "reconnect": "Opnieuw koppelen",
     "duplicated": "Dit Zalo OA-account is al gekoppeld aan een andere workspace.",
     "tagSync": {
       "title": "Tagsynchronisatie",

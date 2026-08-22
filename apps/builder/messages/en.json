@@ -3658,7 +3658,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh permissions",
+    "reconnect": "Reconnect",
     "duplicated": "This Zalo OA account has already been connected to another workspace.",
     "tagSync": {
       "title": "Tag Sync",

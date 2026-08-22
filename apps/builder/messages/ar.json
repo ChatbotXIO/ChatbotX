@@ -3560,7 +3560,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "تحديث الأذونات",
+    "reconnect": "إعادة الاتصال",
     "duplicated": "حساب Zalo OA هذا مرتبط بالفعل بمساحة عمل أخرى.",
     "tagSync": {
       "title": "مزامنة الوسوم",

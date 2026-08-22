@@ -3560,7 +3560,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Reîmprospătează permisiunile",
+    "reconnect": "Reconectează",
     "duplicated": "Acest cont OA Zalo a fost deja conectat la un alt spațiu de lucru.",
     "tagSync": {
       "title": "Sincronizare etichete",

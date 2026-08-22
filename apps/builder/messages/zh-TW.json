@@ -3593,7 +3593,7 @@
   },
   "zalo": {
     "title": "ZaloOA",
-    "refreshPermissions": "刷新權限",
+    "reconnect": "重新連接",
     "duplicated": "此Zalo OA 帳戶已連接到另一個工作區。",
     "tagSync": {
       "title": "標籤同步",

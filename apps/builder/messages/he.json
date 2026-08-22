@@ -1825,7 +1825,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "רענון הרשאות",
+    "reconnect": "חיבור מחדש",
     "duplicated": "חשבון Zalo OA זה כבר חובר לסביבת עבודה אחרת.",
     "tagSync": {
       "title": "סנכרון תגיות",
