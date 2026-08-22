@@ -24,7 +24,10 @@ describe("sendPrivateReply", () => {
           )
           await expect(request.json()).resolves.toEqual({
             recipient: { comment_id: COMMENT_ID },
-            message: { text: "Hello from Instagram via Facebook" },
+            message: {
+              text: "Hello from Instagram via Facebook",
+              metadata: "SENT_FROM_CHATBOTX",
+            },
           })
           return HttpResponse.json({ recipient_id: "recipient-1" })
         },

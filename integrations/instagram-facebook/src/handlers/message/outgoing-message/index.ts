@@ -15,6 +15,7 @@ import {
   type OutgoingMessage,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
+import { sendPrivateReplyMessage } from "../../../apis/comment"
 import { sendInstagramMessage } from "../../../apis/page"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
@@ -193,17 +194,37 @@ export const sendFlowStep = async (
 ) => {
   const {
     ctx,
-    data: { contact },
+    data: { contact, commentAnchor },
   } = props
   const messageIds: string[] = []
   try {
+    // Consumed by the first Instagram message yielded below, if a private
+    // comment anchor is present — a single flow step can yield more than one
+    // message (e.g. text + attachments), so only the very first send uses the
+    // comment_id-anchored API (exempt from the messaging window); the rest
+    // use the normal path. A "public" anchor is never honored here — it's
+    // delivered via the comment channel's sendComment, not this message
+    // channel's sendFlowStep (see send-flow-step.ts). This check is
+    // defense-in-depth against a public anchor ever reaching this handler by
+    // mistake.
+    let anchorCommentId =
+      commentAnchor?.replyChannel === "private"
+        ? commentAnchor.commentId
+        : undefined
     for await (const instagramMessage of convertFlowStepToInstagramMessage(
       props,
     )) {
-      const response = await sendInstagramMessage(
-        ctx.auth,
-        buildMessagePayload(contact, instagramMessage),
-      )
+      const response = anchorCommentId
+        ? await sendPrivateReplyMessage(
+            ctx.auth,
+            anchorCommentId,
+            instagramMessage,
+          )
+        : await sendInstagramMessage(
+            ctx.auth,
+            buildMessagePayload(contact, instagramMessage),
+          )
+      anchorCommentId = undefined
       if (response.message_id) {
         messageIds.push(response.message_id)
       }

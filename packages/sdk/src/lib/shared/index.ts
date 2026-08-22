@@ -70,11 +70,11 @@ export type ReceivedMessageResult = {
  * - `"public"`: post it as a public comment reply (`comment.sendComment`),
  *   same as the `text`/`AIAgent` public reply types. Works on any channel
  *   that implements `sendComment` (Messenger, Instagram).
- * - `"private"`: send it via Facebook's comment_id-anchored Send API
+ * - `"private"`: send it via Meta's comment_id-anchored Send API
  *   (bypasses the normal messaging-window rule) instead of the standard
- *   PSID-based send, which Facebook rejects for users who only commented and
- *   never messaged the Page. Messenger-only (no Instagram private_replies
- *   equivalent).
+ *   PSID-based send, which Meta rejects for users who only commented and
+ *   never messaged the Page. Supported on Messenger and Instagram (both
+ *   Instagram Login and Instagram-via-Facebook variants).
  */
 export type CommentAnchor = {
   commentId: string
