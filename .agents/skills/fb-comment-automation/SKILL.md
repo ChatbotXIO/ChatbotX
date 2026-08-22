@@ -1,14 +1,15 @@
 ---
 name: fb-comment-automation
 description: >-
-  Work on Facebook/Messenger comment automation — the feature that auto-replies to,
-  likes, or hides comments on Facebook Page posts. Use when changing the comment
-  webhook path, the automation matching/filter logic, reply dispatch (text/flow/AI
-  agent), hide rules, post targeting, or the fb-comments builder feature. Read this
-  BEFORE editing anything under comment-automation to avoid the silent-failure traps.
+  Work on Facebook/Messenger and Instagram comment automation — the feature that
+  auto-replies to, likes, or hides comments on Facebook Page and Instagram posts. Use
+  when changing the comment webhook path, the automation matching/filter logic, reply
+  dispatch (text/flow/AI agent), hide rules, post targeting, or the fb-comments /
+  ig-comments builder features. Read this BEFORE editing anything under
+  comment-automation to avoid the silent-failure traps.
 ---
 
-# Facebook Comment Automation
+# Facebook & Instagram Comment Automation
 
 Full reference: [`docs/fb-comment-automation.md`](../../../docs/fb-comment-automation.md).
 Read it before non-trivial changes. This skill is the quick map + the traps.
@@ -19,20 +20,22 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 |---|---|
 | Automation loop, filters, dispatch | `apps/worker/src/integration/handlers/comment-automation/index.ts` |
 | AI-agent reply (generate + deliver) | `apps/worker/src/integration/handlers/comment-automation/ai-reply.ts` |
+| Per-channel private DM dispatch | `apps/worker/src/integration/handlers/comment-automation/private-reply.ts` (`PRIVATE_REPLY_TEXT_SENDERS`) |
+| Supported channels union | `apps/worker/src/integration/handlers/comment-automation/channel-type.ts` (`CommentAutomationChannelType`) |
 | Attachment info (image/video for hide) | `apps/worker/src/integration/handlers/comment-automation/comment-attachment.ts` |
 | Receive comment + enqueue automation | `apps/worker/src/integration/handlers/received-message.ts` (`receiveComment`) |
-| Webhook parse + enqueue | `integrations/messenger/src/handlers/webhook.ts` |
-| Webhook value schema | `integrations/messenger/src/schema.ts` (`messengerFeedCommentValueSchema`) |
+| Webhook parse + enqueue | `integrations/messenger/src/handlers/webhook.ts`, `integrations/instagram/src/handlers/webhook.ts`, `integrations/instagram-facebook/src/handlers/webhook.ts` |
+| Webhook value schema | `integrations/messenger/src/schema.ts` (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schemas.ts` (`instagramCommentEventValueSchema`) |
 | DB queries (match/dedup/schedule) | `packages/business/src/fb-comment-automation/service.ts` |
 | Schema + option/reply Zod partials | `packages/database/src/schema/fb-comment-automation.ts`, `.../partials/fb-comment-automation.ts` |
 | Dedup ledger | `packages/database/src/schema/fb-comment-automation-reply.ts` |
 | Job types | `packages/worker-config/src/queues/integration/index.ts` |
-| Builder feature (form, actions) | `apps/builder/src/features/fb-comments/` |
+| Builder feature (form, actions) | `apps/builder/src/features/fb-comments/` (Facebook), `apps/builder/src/features/ig-comments/` (Instagram) |
 | Tests | `apps/worker/__tests__/comment-automation.test.ts` |
 
 ## Data-flow in one line
 
-`feed webhook (verb "add") → incomingComment → receiveComment → processCommentAutomation → (AIAgent) commentAIReply`.
+`feed webhook (verb "add") / instagram comments webhook → incomingComment → receiveComment → processCommentAutomation → (AIAgent) commentAIReply`.
 
 ## The traps (read before editing)
 
@@ -64,9 +67,15 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    `(automationId, contactId)` + `postId != ?` queries — no new index needed; use a
    `LIMIT 1` existence check, not `$count`.
 
-6. **Instagram is not implemented.** Builder never sets `type`, so it defaults to
-   `messenger`. Don't add IG-only behavior expecting it to run. IG private-DM text is out
-   of scope.
+6. **Three channels, one loop.** `type` is `messenger` | `instagram` (Instagram Login) |
+   `instagramFacebook` (Instagram via Facebook Login) — see
+   `CommentAutomationChannelType` — and `findActiveAutomations` filters on it, so every
+   capability must be routed per channel. Private DM text works on all three via
+   `PRIVATE_REPLY_TEXT_SENDERS` (comment_id-anchored Send API); comment liking exists
+   only on `messenger` + `instagramFacebook` (Instagram Login's `likeComment` is a logged
+   no-op); the attachment lookup behind `hideComments.hasImage`/`hasVideo` is
+   messenger-only. Hide an unsupported toggle in the builder form instead of shipping a
+   dead switch.
 
 7. **`options.trackUserTags` is a no-op** (defined, not implemented). Every other option
    (including `replyToUsersWhoCommentedOnOtherPosts`) IS enforced — see the option table in
@@ -87,9 +96,11 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 ## Adding a new reply type (recipe)
 
 1. Extend `fbCommentReplySchema.type` (partials).
-2. Handle it in BOTH `executePublicReply` and `executePrivateReply` (`index.ts`). Public =
-   message `type:"comment"` + `replyToCommentId` via `sendChannelMessage`; private =
-   `sendPrivateReply` (messenger only).
+2. Handle it in BOTH `executePublicReply` (`public-reply.ts`) and `executePrivateReply`
+   (`private-reply.ts`). Public = message `type:"comment"` + `replyToCommentId` via
+   `sendChannelMessage`; private = the channel's entry in `PRIVATE_REPLY_TEXT_SENDERS`, so
+   a new type has to work for all three channels (messenger, instagram,
+   instagramFacebook).
 3. Update `willSendReply` so dedup/`repliesCount` only count when a reply is actually
    dispatchable (e.g. require `value`).
 4. If it needs async work (like AIAgent), add a dedicated job in worker-config, a handler,
