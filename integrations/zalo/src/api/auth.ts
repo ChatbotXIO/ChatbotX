@@ -51,7 +51,7 @@ export const refreshAccessToken = (
   handleZaloError("Refresh access token", async () => {
     const client = ZaloHttpClient.createOAuthClient()
 
-    return await client.post<ZaloAccessTokenResponse>(
+    const tokens = await client.post<ZaloAccessTokenResponse>(
       ZALO_API_ENDPOINTS.AUTH.ACCESS_TOKEN,
       {
         headers: {
@@ -66,6 +66,17 @@ export const refreshAccessToken = (
         }),
       },
     )
+
+    // The OAuth endpoint can report failures with HTTP 200 and an unexpected
+    // body shape; a token-less "success" written to the database would
+    // overwrite a working auth with undefined tokens and brick the channel.
+    if (!(tokens.access_token && tokens.refresh_token)) {
+      throw new ZaloException(
+        `Refresh access token failed: ${JSON.stringify(tokens)}`,
+      )
+    }
+
+    return tokens
   })
 
 export type ZaloOAProfileResponse = {
