@@ -46,8 +46,19 @@ Tenant scoping lives in `packages/auth/src/tenant-context.ts` and `server.ts`.
 - **Reseller-owner fallback** — on the reseller's own domain the bound tenant is
   their reseller `Tenant`, but the reseller's own account lives in the root tenant
   (they signed up on the main site). When a scoped email lookup misses, the adapter
-  resolves `Tenant.ownerId` and retries by primary key — so a reseller signs in on
+  resolves `Tenant.ownerId` and retries by primary key, additionally constrained to
+  `tenantId = ROOT_TENANT_ID` — the fallback resolves only the owner's root-tenant
+  account, never a user row parked in any other tenant. So a reseller signs in on
   both the platform URL and their own domain; their sub-accounts only on the domain.
+  This applies to every auth method, including OAuth social sign-in: a social
+  sign-in with the owner's email links to the owner's existing root-tenant account
+  instead of creating a tenant-scoped duplicate (both social providers verify
+  mailbox ownership, so whoever presents the owner's email via OAuth is the owner).
+  Correspondingly, the adapter's `create` wrapper stamps a newly-linked `Account`
+  row with `ROOT_TENANT_ID` (not the bound tenant) whenever its `userId` is the
+  bound tenant's owner, so the row matches the root-tenant `User` it belongs to —
+  `Account.tenantId` has `onDelete: "restrict"`, so a mismatched stamp would block
+  that reseller tenant's deletion.
 - **OAuth state recovery** (`resolveTenantFromOAuthState`) — OAuth providers redirect
   to a fixed, pre-registered redirect URI (the **broker host**, see below), so on
   `/callback/*` the request's `x-domain` is the broker host. The tenant is instead
