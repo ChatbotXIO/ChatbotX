@@ -4268,11 +4268,11 @@
     "title": "Randevu Planlama",
     "description": "Randevu planlamanızı oluşturun ve yönetin.",
     "flowModes": {
-      "bookFromCustomField": "Randevu al",
-      "checkAvailabilityFromCustomField": "Uygunluğu kontrol et",
-      "book": "Tarih ve saat seçici",
-      "checkAvailability": "Tarih aralığı seçici",
-      "cancel": "Randevuyu iptal et"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mod",

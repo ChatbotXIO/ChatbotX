@@ -4268,11 +4268,11 @@
     "title": "予約スケジュール",
     "description": "予約スケジュールを作成・管理します。",
     "flowModes": {
-      "bookFromCustomField": "予約を作成",
-      "checkAvailabilityFromCustomField": "空き状況を確認",
-      "book": "日時ピッカー",
-      "checkAvailability": "日付範囲ピッカー",
-      "cancel": "予約をキャンセル"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "モード",

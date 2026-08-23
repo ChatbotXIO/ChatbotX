@@ -4307,11 +4307,11 @@
     "title": "Lập lịch hẹn",
     "description": "Tạo và quản lý lịch hẹn của bạn.",
     "flowModes": {
-      "bookFromCustomField": "Đặt lịch hẹn",
-      "checkAvailabilityFromCustomField": "Kiểm tra lịch trống",
-      "book": "Bộ chọn ngày giờ",
-      "checkAvailability": "Bộ chọn khoảng ngày",
-      "cancel": "Hủy lịch hẹn"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Chế độ",

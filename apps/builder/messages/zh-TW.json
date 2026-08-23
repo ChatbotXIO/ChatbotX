@@ -4301,11 +4301,11 @@
     "title": "預約安排",
     "description": "建立並管理您的預約安排。",
     "flowModes": {
-      "bookFromCustomField": "預約",
-      "checkAvailabilityFromCustomField": "查看可預約時間",
-      "book": "日期時間選擇器",
-      "checkAvailability": "日期範圍選擇器",
-      "cancel": "取消預約"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "模式",

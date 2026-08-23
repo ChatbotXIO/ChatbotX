@@ -4268,11 +4268,11 @@
     "title": "Afspraken plannen",
     "description": "Maak en beheer je afsprakenplanning.",
     "flowModes": {
-      "bookFromCustomField": "Afspraak boeken",
-      "checkAvailabilityFromCustomField": "Beschikbaarheid controleren",
-      "book": "Datum-/tijdkiezer",
-      "checkAvailability": "Datumbereikkiezer",
-      "cancel": "Afspraak annuleren"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modus",

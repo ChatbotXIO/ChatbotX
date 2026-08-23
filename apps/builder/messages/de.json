@@ -4268,11 +4268,11 @@
     "title": "Terminplanung",
     "description": "Erstellen und verwalten Sie Ihre Terminplanung.",
     "flowModes": {
-      "bookFromCustomField": "Termin buchen",
-      "checkAvailabilityFromCustomField": "Verfügbarkeit prüfen",
-      "book": "Datums-/Zeitauswahl",
-      "checkAvailability": "Datumsbereichsauswahl",
-      "cancel": "Termin absagen"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modus",

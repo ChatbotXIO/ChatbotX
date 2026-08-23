@@ -4268,11 +4268,11 @@
     "title": "Planification des rendez-vous",
     "description": "Créez et gérez la planification de vos rendez-vous.",
     "flowModes": {
-      "bookFromCustomField": "Réserver un rendez-vous",
-      "checkAvailabilityFromCustomField": "Vérifier les disponibilités",
-      "book": "Sélecteur de date et d’heure",
-      "checkAvailability": "Sélecteur de plage de dates",
-      "cancel": "Annuler un rendez-vous"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mode",

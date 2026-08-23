@@ -4411,8 +4411,8 @@
     "flowModes": {
       "bookFromCustomField": "Book appointment",
       "checkAvailabilityFromCustomField": "Check availability",
-      "book": "Date & time picker",
-      "checkAvailability": "Date range picker",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
       "cancel": "Cancel appointment"
     },
     "fields": {

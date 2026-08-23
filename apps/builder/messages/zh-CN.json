@@ -483,11 +483,11 @@
     "description": "创建并管理您的预约安排。",
     "title": "预约安排",
     "flowModes": {
-      "bookFromCustomField": "预约",
-      "checkAvailabilityFromCustomField": "查看可预约时间",
-      "book": "日期时间选择器",
-      "checkAvailability": "日期范围选择器",
-      "cancel": "取消预约"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "模式",

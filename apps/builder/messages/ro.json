@@ -3980,11 +3980,11 @@
     "description": "Creează și gestionează programările tale.",
     "title": "Programări",
     "flowModes": {
-      "bookFromCustomField": "Programează o întâlnire",
-      "checkAvailabilityFromCustomField": "Verifică disponibilitatea",
-      "book": "Selector dată și oră",
-      "checkAvailability": "Selector interval de date",
-      "cancel": "Anulează întâlnirea"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mod",
