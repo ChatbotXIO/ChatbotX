@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minipelit",
+    "title": "Pelillistäminen",
     "description": "Luo ja hallinnoi onnenpyörä-minipelejä asiakkaillesi.",
     "types": {
       "luckyWheel": "Onnenpyörä",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Raaputusarpa"
     },
     "createDialog": {
-      "title": "Valitse minipelin tyyppi"
+      "title": "Valitse minipelin tyyppi",
+      "comingSoon": "Tulossa pian"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Kaikkien todennäköisyyksien summa: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Palkinnon nimi",
       "nonWinningTitleLabel": "Otsikko",
       "loseImageDescription": "Suositeltu koko 120x120px",
+      "quantityLabel": "Palkinnon määrä",
+      "quantityDescription": "Kuinka monta kertaa tämän palkinnon voi vielä voittaa; vähenee yhdellä joka voitolla. Jätä tyhjäksi rajoittamatonta varten.",
       "sendMessage": "Lähetä viesti, kun pelaaja ei voita",
+      "sendWinMessage": "Lähetä viesti voittajalle, joka sai palkinnon",
       "messageMode": "Viestin tyyppi",
       "messageModeText": "Teksti",
       "messageModeFlow": "Flow",

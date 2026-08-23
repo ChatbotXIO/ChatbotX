@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minijocuri",
+    "title": "Gamification",
     "description": "Creează și gestionează minijocuri de tip loterie norocoasă pentru clienții tăi.",
     "types": {
       "luckyWheel": "Roata norocului",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Răzuiește și câștigă"
     },
     "createDialog": {
-      "title": "Alege un tip de minijoc"
+      "title": "Alege un tip de minijoc",
+      "comingSoon": "În curând"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Suma tuturor probabilităților: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Numele premiului",
       "nonWinningTitleLabel": "Titlu",
       "loseImageDescription": "Dimensiune recomandată 120x120px",
+      "quantityLabel": "Cantitate premiu",
+      "quantityDescription": "Numărul de câte ori mai poate fi câștigat acest premiu; scade cu 1 la fiecare câștig. Lasă necompletat pentru nelimitat.",
       "sendMessage": "Trimite un mesaj când jucătorul nu câștigă",
+      "sendWinMessage": "Trimite un mesaj câștigătorului care a primit premiul",
       "messageMode": "Tip mesaj",
       "messageModeText": "Text",
       "messageModeFlow": "Flux",

@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@chatbotx.io/ui": "workspace:*",
+    "lucide-react": "^1.17.0",
     "react": "19.2.5"
   },
   "devDependencies": {

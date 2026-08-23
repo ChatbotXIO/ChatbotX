@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minigiochi",
+    "title": "Gamification",
     "description": "Crea e gestisci minigiochi a estrazione per i tuoi clienti.",
     "types": {
       "luckyWheel": "Ruota della fortuna",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Gratta e vinci"
     },
     "createDialog": {
-      "title": "Scegli un tipo di minigioco"
+      "title": "Scegli un tipo di minigioco",
+      "comingSoon": "Prossimamente"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Somma di tutte le probabilità: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Nome del premio",
       "nonWinningTitleLabel": "Titolo",
       "loseImageDescription": "Dimensione consigliata 120x120px",
+      "quantityLabel": "Quantità del premio",
+      "quantityDescription": "Numero di volte in cui questo premio può ancora essere vinto; diminuisce di 1 a ogni vincita. Lascia vuoto per illimitato.",
       "sendMessage": "Invia un messaggio quando il giocatore non vince",
+      "sendWinMessage": "Invia un messaggio al vincitore che ha ricevuto il premio",
       "messageMode": "Tipo di messaggio",
       "messageModeText": "Testo",
       "messageModeFlow": "Flow",

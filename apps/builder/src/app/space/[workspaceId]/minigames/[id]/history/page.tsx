@@ -3,9 +3,8 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { MinigameHistoryTable } from "@/features/minigames/components/minigame-history-table"
-import { findMinigame, listMinigameHistory } from "@/features/minigames/queries"
+import { listMinigameHistory } from "@/features/minigames/queries"
 import { listMinigameHistorySearchParamsCache } from "@/features/minigames/schemas/query"
 
 export default async function MinigameHistoryPage({
@@ -21,14 +20,10 @@ export default async function MinigameHistoryPage({
   if (!(workspaceId && id)) {
     return notFound()
   }
-  const [t, minigame, search] = await Promise.all([
+  const [t, search] = await Promise.all([
     getTranslations(),
-    findMinigame({ workspaceId, id }),
     listMinigameHistorySearchParamsCache.parse(await searchParams),
   ])
-  if (!minigame) {
-    return notFound()
-  }
   const tablePromises = Promise.all([
     listMinigameHistory({
       ...search,
@@ -37,28 +32,12 @@ export default async function MinigameHistoryPage({
     }),
   ])
   return (
-    <div className="flex flex-col gap-4">
-      <AppBreadcrumb
-        items={[
-          { label: t("tools.title"), href: `/space/${workspaceId}/tools` },
-          {
-            label: t("minigames.title"),
-            href: `/space/${workspaceId}/minigames`,
-          },
-          {
-            label: minigame.name,
-            href: `/space/${workspaceId}/minigames/${id}/edit`,
-          },
-          { label: t("minigames.history.title"), href: "" },
-        ]}
+    <Suspense fallback={<div>{t("actions.loading")}</div>}>
+      <MinigameHistoryTable
+        minigameId={id}
+        promises={tablePromises}
+        workspaceId={workspaceId}
       />
-      <Suspense fallback={<div>{t("actions.loading")}</div>}>
-        <MinigameHistoryTable
-          minigameId={id}
-          promises={tablePromises}
-          workspaceId={workspaceId}
-        />
-      </Suspense>
-    </div>
+    </Suspense>
   )
 }

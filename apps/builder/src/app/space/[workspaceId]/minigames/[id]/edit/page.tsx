@@ -1,7 +1,5 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { getTranslations } from "next-intl/server"
-import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { MinigameForm } from "@/features/minigames/minigame-form"
 import { findMinigame } from "@/features/minigames/queries"
@@ -26,35 +24,18 @@ export default async function EditMinigamePage({
     return notFound()
   }
 
-  const t = await getTranslations()
-
-  const publicUrl = `${getBrokerOrigin()}/minigames?minigameId=${minigame.id}&userId={{user_id}}`
+  const publicUrl = `${getBrokerOrigin()}/minigames?minigameId=${minigame.id}&token={{minigame_play_token}}`
 
   return (
-    <div className="flex flex-col gap-4">
-      <AppBreadcrumb
-        items={[
-          {
-            label: t("tools.title"),
-            href: `/space/${workspaceId}/tools`,
-          },
-          {
-            label: t("minigames.title"),
-            href: `/space/${workspaceId}/minigames`,
-          },
-          { label: t("actions.edit"), href: "" },
-        ]}
-      />
-      <FlowStoreProvider workspaceId={workspaceId}>
-        <TagStoreProvider workspaceId={workspaceId}>
-          <MinigameForm
-            minigame={minigame}
-            mode="edit"
-            publicUrl={publicUrl}
-            workspaceId={workspaceId}
-          />
-        </TagStoreProvider>
-      </FlowStoreProvider>
-    </div>
+    <FlowStoreProvider workspaceId={workspaceId}>
+      <TagStoreProvider workspaceId={workspaceId}>
+        <MinigameForm
+          minigame={minigame}
+          mode="edit"
+          publicUrl={publicUrl}
+          workspaceId={workspaceId}
+        />
+      </TagStoreProvider>
+    </FlowStoreProvider>
   )
 }

@@ -27,7 +27,7 @@ export function DateTimeRangeField({
           required={required}
           saveFormat="iso"
         />
-        <ArrowRightIcon className="mt-2 size-4 flex-none text-muted-foreground" />
+        <ArrowRightIcon className="mt-2 size-4 flex-none text-muted-foreground rtl:rotate-180" />
         <DateTimePickerField
           formItemClassName="min-w-52 flex-1"
           name={toName}

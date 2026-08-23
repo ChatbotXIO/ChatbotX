@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minigames",
+    "title": "Gamification",
     "description": "Maak en beheer minigames met prijstrekking voor je klanten.",
     "types": {
       "luckyWheel": "Gelukswiel",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Kraslot"
     },
     "createDialog": {
-      "title": "Kies een type minigame"
+      "title": "Kies een type minigame",
+      "comingSoon": "Binnenkort beschikbaar"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Som van alle kansen: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Prijsnaam",
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Aanbevolen formaat 120x120px",
+      "quantityLabel": "Prijsaantal",
+      "quantityDescription": "Aantal keren dat deze prijs nog gewonnen kan worden; neemt met 1 af bij elke winst. Laat leeg voor onbeperkt.",
       "sendMessage": "Stuur een bericht wanneer de speler niet wint",
+      "sendWinMessage": "Stuur een bericht naar de winnaar die de prijs heeft ontvangen",
       "messageMode": "Berichttype",
       "messageModeText": "Tekst",
       "messageModeFlow": "Flow",

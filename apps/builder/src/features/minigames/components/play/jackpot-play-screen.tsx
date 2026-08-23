@@ -26,16 +26,22 @@ import { playMinigameAction } from "../../actions/play-minigame.action"
 type JackpotPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
-  userId: string
+  token: string
 }
 
 const SPIN_SYMBOLS = ["7", "🍒", "🍋", "⭐", "🔔", "BAR"]
-const SPIN_INTERVAL_MS = 80
-const REEL_STOP_DELAYS_MS: [number, number, number] = [1200, 1500, 1800]
+const SPIN_INTERVAL_MS = 100
+const REEL_STOP_DELAYS_MS: [number, number, number] = [1200, 3200, 5200]
 const WIN_SYMBOLS: [string, string, string] = ["7", "7", "7"]
 
 function randomSymbol(): string {
   return SPIN_SYMBOLS[Math.floor(Math.random() * SPIN_SYMBOLS.length)]
+}
+
+function setAtIndex<T>(tuple: [T, T, T], index: number, value: T): [T, T, T] {
+  const next: [T, T, T] = [...tuple]
+  next[index] = value
+  return next
 }
 
 function pickMismatchedSymbols(): [string, string, string] {
@@ -100,11 +106,11 @@ function ResultDialog({
               width={96}
             />
           )}
-          <span className="font-medium text-muted-foreground text-sm">
-            {label}
-          </span>
           {title && <DialogTitle className="text-xl">{title}</DialogTitle>}
           {description && <DialogDescription>{description}</DialogDescription>}
+          <span className="font-extrabold text-2xl text-foreground">
+            {label}
+          </span>
         </DialogHeader>
         <DialogFooter className="justify-center sm:justify-center">
           <DialogClose render={<Button type="button">{closeLabel}</Button>} />
@@ -155,7 +161,7 @@ function RulesDialog({
 export function JackpotPlayScreen({
   minigame,
   contactState,
-  userId,
+  token,
 }: JackpotPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -197,16 +203,8 @@ export function JackpotPlayScreen({
       const wait = Math.max(0, delay - elapsed)
       const timeoutId = setTimeout(() => {
         clearInterval(spinIntervalsRef.current[index])
-        setReelSymbols((prev) => {
-          const next: [string, string, string] = [...prev]
-          next[index] = finalSymbols[index]
-          return next
-        })
-        setSpinningReels((prev) => {
-          const next: [boolean, boolean, boolean] = [...prev]
-          next[index] = false
-          return next
-        })
+        setReelSymbols((prev) => setAtIndex(prev, index, finalSymbols[index]))
+        setSpinningReels((prev) => setAtIndex(prev, index, false))
         if (index === REEL_STOP_DELAYS_MS.length - 1) {
           setIsSpinning(false)
           setRemaining(newRemaining)
@@ -244,15 +242,11 @@ export function JackpotPlayScreen({
     spinStartRef.current = Date.now()
     spinIntervalsRef.current = [0, 1, 2].map((index) =>
       setInterval(() => {
-        setReelSymbols((prev) => {
-          const next: [string, string, string] = [...prev]
-          next[index] = randomSymbol()
-          return next
-        })
+        setReelSymbols((prev) => setAtIndex(prev, index, randomSymbol()))
       }, SPIN_INTERVAL_MS),
     )
 
-    execute({ minigameId: minigame.id, userId })
+    execute({ minigameId: minigame.id, token })
   }
 
   const now = Date.now()
@@ -269,7 +263,7 @@ export function JackpotPlayScreen({
           : undefined,
       }}
     >
-      <div className="flex w-full max-w-xs items-center justify-between">
+      <div className="relative w-full max-w-xs text-center">
         <h1
           className="font-semibold text-lg"
           style={{ color: appearance.ruleTextColor }}
@@ -278,7 +272,7 @@ export function JackpotPlayScreen({
         </h1>
         <button
           aria-label={t("minigames.preview.rules")}
-          className="flex size-8 items-center justify-center rounded-full bg-background/70 shadow-sm"
+          className="absolute top-1/2 right-0 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/70 shadow-sm"
           onClick={() => setRulesOpen(true)}
           style={{ color: appearance.ruleTextColor }}
           type="button"
@@ -291,6 +285,7 @@ export function JackpotPlayScreen({
         <JackpotMachineArt
           decorativeColor={appearance.decorativeColor}
           machineColor={appearance.machineColor}
+          pulling={isSpinning}
           reelSymbols={reelSymbols}
           spinningReels={spinningReels}
         />

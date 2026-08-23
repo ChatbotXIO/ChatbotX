@@ -55,7 +55,7 @@
     "exportContacts": "Export Contacts",
     "filter": "Filter",
     "selectFile": "Select file",
-    "insertLink": "Insert link",
+    "insertLink": "Insert Link",
     "addNew": "Add new",
     "send": "Send",
     "loginWithMagicLink": "Login with Magic Link",
@@ -1161,7 +1161,7 @@
       "label": "Input Custom Field"
     },
     "insertLink": {
-      "label": "Insert link"
+      "label": "Insert Link"
     },
     "instructions": {
       "label": "System Message (Prompt)"
@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minigames",
+    "title": "Gamification",
     "description": "Create and manage lucky-draw minigames for your customers.",
     "types": {
       "luckyWheel": "Lucky Wheel",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Scratch Off"
     },
     "createDialog": {
-      "title": "Choose a minigame type"
+      "title": "Choose a minigame type",
+      "comingSoon": "Coming soon"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Sum of all probabilities: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Prize Name",
       "nonWinningTitleLabel": "Title",
       "loseImageDescription": "Recommended size 120x120px",
+      "quantityLabel": "Prize Quantity",
+      "quantityDescription": "Number of times this prize can still be won; decreases by 1 each time it's won. Leave empty for unlimited.",
       "sendMessage": "Send a message when the player doesn't win",
+      "sendWinMessage": "Send message to winner who received the prize",
       "messageMode": "Message type",
       "messageModeText": "Text",
       "messageModeFlow": "Flow",

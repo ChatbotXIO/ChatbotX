@@ -2584,6 +2584,9 @@ importers:
       '@chatbotx.io/ui':
         specifier: workspace:*
         version: link:../ui
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.5)
       react:
         specifier: 19.2.5
         version: 19.2.5

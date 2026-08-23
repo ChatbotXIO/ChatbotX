@@ -44,14 +44,6 @@ export function WinningMessageEditDialog({
             label={t("minigames.winningMessageDialog.acceptButtonText")}
             name="winningMessageSettings.acceptButtonText"
           />
-          <InputField
-            label={t("minigames.winningMessageDialog.shareButtonText")}
-            name="winningMessageSettings.shareButtonText"
-          />
-          <TextareaField
-            label={t("minigames.winningMessageDialog.shareButtonDescription")}
-            name="winningMessageSettings.shareButtonDescription"
-          />
         </div>
 
         <DialogFooter>

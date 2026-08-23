@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minispiele",
+    "title": "Gamification",
     "description": "Erstellen und verwalten Sie Gewinnspiel-Minispiele für Ihre Kunden.",
     "types": {
       "luckyWheel": "Glücksrad",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Rubbellos"
     },
     "createDialog": {
-      "title": "Minispiel-Typ auswählen"
+      "title": "Minispiel-Typ auswählen",
+      "comingSoon": "Demnächst verfügbar"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Summe aller Wahrscheinlichkeiten: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Gewinnname",
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Empfohlene Größe 120x120px",
+      "quantityLabel": "Preismenge",
+      "quantityDescription": "Anzahl, wie oft dieser Preis noch gewonnen werden kann; verringert sich bei jedem Gewinn um 1. Leer lassen für unbegrenzt.",
       "sendMessage": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
+      "sendWinMessage": "Nachricht an den Gewinner senden, der den Preis erhalten hat",
       "messageMode": "Nachrichtentyp",
       "messageModeText": "Text",
       "messageModeFlow": "Flow",

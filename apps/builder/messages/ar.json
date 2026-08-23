@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "الألعاب المصغّرة",
+    "title": "التلعيب",
     "description": "أنشئ وأدر ألعاب سحب الحظ المصغّرة لعملائك.",
     "types": {
       "luckyWheel": "عجلة الحظ",
@@ -5166,7 +5166,8 @@
       "scratchOff": "البطاقة الكاشطة"
     },
     "createDialog": {
-      "title": "اختر نوع اللعبة المصغّرة"
+      "title": "اختر نوع اللعبة المصغّرة",
+      "comingSoon": "قريباً"
     },
     "prizeSettings": {
       "sumOfProbabilities": "مجموع جميع الاحتمالات: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "اسم الجائزة",
       "nonWinningTitleLabel": "العنوان",
       "loseImageDescription": "الحجم الموصى به 120×120 بكسل",
+      "quantityLabel": "كمية الجائزة",
+      "quantityDescription": "عدد المرات المتبقية التي يمكن فيها الفوز بهذه الجائزة؛ ينقص بمقدار 1 مع كل فوز. اتركه فارغًا لعدد غير محدود.",
       "sendMessage": "إرسال رسالة عند عدم فوز اللاعب",
+      "sendWinMessage": "إرسال رسالة إلى الفائز الذي حصل على الجائزة",
       "messageMode": "نوع الرسالة",
       "messageModeText": "نص",
       "messageModeFlow": "تدفق",

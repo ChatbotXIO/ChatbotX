@@ -42,7 +42,7 @@ export default async function MinigamesPage({
           { label: t("minigames.title"), href: "" },
         ]}
       />
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>{t("actions.loading")}</div>}>
         <MinigamesTable promises={promises} workspaceId={workspaceId} />
       </Suspense>
     </div>

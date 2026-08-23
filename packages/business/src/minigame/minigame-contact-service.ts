@@ -9,14 +9,18 @@ import {
   ilike,
 } from "@chatbotx.io/database/client"
 import type {
+  ChannelType,
   MinigameLoseMessage,
   MinigamePlayerSettings,
+  MinigamePrizeSettings,
+  MinigamePrizeWinMessage,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
   contactModel,
   conversationModel,
   minigameContactModel,
+  minigameModel,
   minigamePlayModel,
 } from "@chatbotx.io/database/schema"
 import type {
@@ -40,6 +44,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
+import { tagService } from "../tag/service"
 import { type MinigamePlayResult, resolveMinigamePrize } from "./resolve-prize"
 import { minigameService } from "./service"
 
@@ -103,24 +108,37 @@ class MinigameContactService extends BaseService {
       forUpdate = false,
     } = props
 
-    const existing = forUpdate
-      ? (
-          await tx
-            .select()
-            .from(minigameContactModel)
-            .where(
-              and(
-                eq(minigameContactModel.minigameId, minigameId),
-                eq(minigameContactModel.contactId, contactId),
-              ),
-            )
-            .for("update")
-        )[0]
-      : await tx.query.minigameContactModel.findFirst({
-          where: { minigameId, contactId },
-        })
+    const findExisting = async () =>
+      forUpdate
+        ? (
+            await tx
+              .select()
+              .from(minigameContactModel)
+              .where(
+                and(
+                  eq(minigameContactModel.minigameId, minigameId),
+                  eq(minigameContactModel.contactId, contactId),
+                ),
+              )
+              .for("update")
+          )[0]
+        : await tx.query.minigameContactModel.findFirst({
+            where: { minigameId, contactId },
+          })
+
+    let existing = await findExisting()
 
     if (!existing) {
+      // `onConflictDoNothing` returns no row on conflict WITHOUT raising an
+      // error, unlike a bare INSERT — two concurrent first-plays for the same
+      // (minigameId, contactId) would otherwise both pass the `!existing`
+      // check above and race on `MinigameContact_minigameId_contactId_key`,
+      // throwing an uncaught unique-violation. This branch runs both inside
+      // `recordPlay`'s locking transaction (`forUpdate: true`) and standalone
+      // from the opener-tracking page render, which has no transaction to
+      // retry inside — `ON CONFLICT DO NOTHING` blocks on a concurrently
+      // in-flight conflicting insert and only resolves once it commits, so
+      // the re-select below is guaranteed to see the row.
       const [created] = await tx
         .insert(minigameContactModel)
         .values({
@@ -130,8 +148,19 @@ class MinigameContactService extends BaseService {
           remaining: playerSettings.drawsPerPerson,
           played: 0,
         })
+        .onConflictDoNothing()
         .returning()
-      return created
+
+      if (created) {
+        return created
+      }
+
+      existing = await findExisting()
+      if (!existing) {
+        throw new Error(
+          "MinigameContact insert conflicted but no existing row found",
+        )
+      }
     }
 
     if (
@@ -148,6 +177,59 @@ class MinigameContactService extends BaseService {
     }
 
     return existing
+  }
+
+  /**
+   * Resolves the prize for a draw, excluding any prize whose tracked
+   * `quantity` has already hit 0 — its winRate silently falls through to
+   * `nonWinning` (no redistribution). Always re-reads `prizeSettings` under
+   * `FOR UPDATE` first and derives `hasTrackedQuantity` from that fresh,
+   * locked read — never from a caller-supplied snapshot — since an admin can
+   * toggle quantity tracking on a prize between the caller fetching the
+   * minigame (before the transaction opens) and this call, which would
+   * otherwise skip the lock entirely and let two concurrent plays both read
+   * the same remaining stock and both win the last unit of a capped prize.
+   * The single-row, indexed-PK lock is effectively free even for minigames
+   * with no tracked quantity, trading the old "no lock at all" optimization
+   * for correctness — every play of the same minigame now serializes on this
+   * row for the duration of `recordPlay`'s transaction. The caller must
+   * persist the decremented stock using the same locked `prizeSettings` this
+   * returns.
+   */
+  private async drawPrize(props: {
+    minigameId: string
+    tx: DatabaseClient
+  }): Promise<{
+    result: MinigamePlayResult
+    prizeSettings: MinigamePrizeSettings
+  }> {
+    const { minigameId, tx } = props
+
+    const [row] = await tx
+      .select({ prizeSettings: minigameModel.prizeSettings })
+      .from(minigameModel)
+      .where(eq(minigameModel.id, minigameId))
+      .for("update")
+
+    const lockedPrizeSettings = row.prizeSettings
+    const hasTrackedQuantity = lockedPrizeSettings.prizes.some(
+      (prize) => prize.quantity !== undefined,
+    )
+    if (!hasTrackedQuantity) {
+      return {
+        result: resolveMinigamePrize(lockedPrizeSettings),
+        prizeSettings: lockedPrizeSettings,
+      }
+    }
+
+    const availablePrizes = lockedPrizeSettings.prizes.filter(
+      (prize) => prize.quantity === undefined || prize.quantity > 0,
+    )
+    const result = resolveMinigamePrize({
+      ...lockedPrizeSettings,
+      prizes: availablePrizes,
+    })
+    return { result, prizeSettings: lockedPrizeSettings }
   }
 
   async recordPlay(props: {
@@ -187,7 +269,27 @@ class MinigameContactService extends BaseService {
         )
       }
 
-      const result = resolveMinigamePrize(minigame.prizeSettings)
+      const { result, prizeSettings } = await this.drawPrize({
+        minigameId,
+        tx,
+      })
+
+      if (result.type === "prize" && result.prize.quantity !== undefined) {
+        const remainingQuantity = result.prize.quantity - 1
+        await tx
+          .update(minigameModel)
+          .set({
+            prizeSettings: {
+              ...prizeSettings,
+              prizes: prizeSettings.prizes.map((prize) =>
+                prize.id === result.prize.id
+                  ? { ...prize, quantity: remainingQuantity }
+                  : prize,
+              ),
+            },
+          })
+          .where(eq(minigameModel.id, minigameId))
+      }
 
       const [contactState] = await tx
         .update(minigameContactModel)
@@ -208,6 +310,67 @@ class MinigameContactService extends BaseService {
 
       return { contactState, result }
     })
+  }
+
+  /**
+   * Records a play and dispatches its side effects (player tagging, then the
+   * configured win/lose message) as one unit — the gameplay-outcome
+   * business logic this centralizes previously lived in the app-layer
+   * action, which had to duplicate knowledge of the outcome schema shape.
+   * Message dispatch is fire-and-forget (already logs and swallows failures
+   * internally in `sendOutcomeMessage`) and intentionally not part of the
+   * `recordPlay` transaction — a failed outbound message must never roll
+   * back an already-recorded play.
+   */
+  async recordPlayAndDispatch(props: {
+    minigameId: string
+    contactId: string
+    contactInbox: ContactInboxModel
+    minigame: MinigameModel
+  }): Promise<{
+    contactState: MinigameContactModel
+    result: MinigamePlayResult
+  }> {
+    const { minigameId, contactId, contactInbox, minigame } = props
+
+    const { contactState, result } = await this.recordPlay({
+      minigameId,
+      contactId,
+      minigame,
+    })
+
+    await tagService.attachToContact({
+      workspaceId: minigame.workspaceId,
+      contactId,
+      tagIds: minigame.generalSettings.playerTagIds,
+    })
+
+    if (
+      result.type === "nonWinning" &&
+      minigame.prizeSettings.nonWinning.loseMessage.enabled
+    ) {
+      this.sendLoseMessage({
+        workspaceId: minigame.workspaceId,
+        contactId,
+        contactInbox,
+        loseMessage: minigame.prizeSettings.nonWinning.loseMessage,
+      })
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget, already logs internally on failure
+        .catch(() => {})
+    }
+
+    if (result.type === "prize" && result.prize.winMessage?.enabled) {
+      this.sendWinMessage({
+        workspaceId: minigame.workspaceId,
+        contactId,
+        contactInbox,
+        winMessage: result.prize.winMessage,
+      })
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget, already logs internally on failure
+        .catch(() => {})
+    }
+
+    return { contactState, result }
   }
 
   /**
@@ -326,42 +489,76 @@ class MinigameContactService extends BaseService {
     contactInbox: ContactInboxModel
     loseMessage: MinigameLoseMessage
   }): Promise<void> {
-    const { workspaceId, contactId, contactInbox, loseMessage } = props
-    if (!loseMessage.enabled) {
+    await this.sendOutcomeMessage({
+      ...props,
+      outcomeMessage: props.loseMessage,
+      logContext: "lose",
+    })
+  }
+
+  async sendWinMessage(props: {
+    workspaceId: string
+    contactId: string
+    contactInbox: ContactInboxModel
+    winMessage: MinigamePrizeWinMessage
+  }): Promise<void> {
+    await this.sendOutcomeMessage({
+      ...props,
+      outcomeMessage: props.winMessage,
+      logContext: "win",
+    })
+  }
+
+  private async sendOutcomeMessage(props: {
+    workspaceId: string
+    contactId: string
+    contactInbox: ContactInboxModel
+    outcomeMessage: MinigameLoseMessage | MinigamePrizeWinMessage
+    logContext: "win" | "lose"
+  }): Promise<void> {
+    const { workspaceId, contactId, contactInbox, outcomeMessage, logContext } =
+      props
+    if (!outcomeMessage.enabled) {
       return
     }
 
     try {
-      const conversation = await conversationService.findLatestByContact({
+      // Resolve the DM conversation for the exact channel the player used
+      // (contactInbox comes from ContactInbox.sourceId, matched from the
+      // ?userId= on the play link) — not just "any" conversation for the
+      // contact, which could be an unrelated comment thread.
+      const conversation = await conversationService.findDMByContact({
+        workspaceId,
         contactId,
+        channel: contactInbox.channel as ChannelType,
       })
       if (!conversation) {
         return
       }
 
-      if (loseMessage.mode === "flow") {
-        if (!loseMessage.flowId) {
+      if (outcomeMessage.mode === "flow") {
+        if (!outcomeMessage.flowId) {
           return
         }
         await integrationQueue.add(IntegrationJobAction.sendFlow, {
           type: IntegrationJobAction.sendFlow,
           data: {
             conversationId: conversation.id,
-            contactInboxId: contactInbox,
-            flowId: loseMessage.flowId,
+            contactInboxId: contactInbox.id,
+            flowId: outcomeMessage.flowId,
           },
         })
         return
       }
 
-      if (!loseMessage.text) {
+      if (!outcomeMessage.text) {
         return
       }
 
       const repository = await createMessageRepository()
       const createdAt = new Date()
       const message = await repository.create({
-        text: loseMessage.text,
+        text: outcomeMessage.text,
         messageType: "outgoing",
         workspaceId,
         conversationId: conversation.id,
@@ -395,7 +592,7 @@ class MinigameContactService extends BaseService {
     } catch (error) {
       logger.warn(
         { err: normalizeError(error), workspaceId, contactId },
-        "Failed to send minigame lose message",
+        `Failed to send minigame ${logContext} message`,
       )
     }
   }

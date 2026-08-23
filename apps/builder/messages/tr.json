@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Mini Oyunlar",
+    "title": "Oyunlaştırma",
     "description": "Müşterileriniz için çekiliş tabanlı mini oyunlar oluşturun ve yönetin.",
     "types": {
       "luckyWheel": "Şans Çarkı",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Kazı Kazan"
     },
     "createDialog": {
-      "title": "Bir mini oyun türü seçin"
+      "title": "Bir mini oyun türü seçin",
+      "comingSoon": "Yakında"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Tüm olasılıkların toplamı: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Ödül Adı",
       "nonWinningTitleLabel": "Başlık",
       "loseImageDescription": "Önerilen boyut 120x120px",
+      "quantityLabel": "Ödül Miktarı",
+      "quantityDescription": "Bu ödülün hâlâ kaç kez kazanılabileceği; her kazanımda 1 azalır. Sınırsız için boş bırakın.",
       "sendMessage": "Oyuncu kazanamadığında bir mesaj gönder",
+      "sendWinMessage": "Ödülü kazanan kişiye mesaj gönder",
       "messageMode": "Mesaj türü",
       "messageModeText": "Metin",
       "messageModeFlow": "Akış",

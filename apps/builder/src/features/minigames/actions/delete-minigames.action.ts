@@ -20,10 +20,6 @@ export const deleteMinigamesAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await Promise.all(
-        parsedInput.ids.map((id) =>
-          minigameService.delete({ workspaceId, id }),
-        ),
-      )
+      await minigameService.deleteMany({ workspaceId, ids: parsedInput.ids })
     },
   )

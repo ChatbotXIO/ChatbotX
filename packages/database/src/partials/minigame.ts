@@ -72,11 +72,33 @@ export type MinigamePlayerSettings = z.infer<
   typeof minigamePlayerSettingsSchema
 >
 
+export const minigamePrizeWinMessageSchema = z.discriminatedUnion("mode", [
+  z.object({
+    enabled: z.boolean().default(false),
+    mode: z.literal("text"),
+    text: z.string().max(1000).default(""),
+  }),
+  z.object({
+    enabled: z.boolean().default(false),
+    mode: z.literal("flow"),
+    flowId: zodBigintAsString().nullable().default(null),
+  }),
+])
+export type MinigamePrizeWinMessage = z.infer<
+  typeof minigamePrizeWinMessageSchema
+>
+
 export const minigamePrizeItemSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(100),
   icon: minigameImageSchema,
   winRate: z.number().min(0).max(100),
+  /**
+   * Remaining stock for this prize; decremented by 1 each time it's won.
+   * Omitted means unlimited (no stock is tracked or decremented).
+   */
+  quantity: z.number().int().min(0).optional(),
+  winMessage: minigamePrizeWinMessageSchema,
 })
 export type MinigamePrizeItem = z.infer<typeof minigamePrizeItemSchema>
 
@@ -104,6 +126,16 @@ export type MinigameNonWinningSetting = z.infer<
   typeof minigameNonWinningSettingSchema
 >
 
+/**
+ * Whether a set of prize win-rates plus the non-winning lose-rate sum to
+ * exactly 100%, tolerant of float drift via integer-cents rounding. Shared
+ * between this schema's `.refine()` and the builder's prize-list editor so
+ * the tolerance rule can't drift between client and server.
+ */
+export function isMinigameProbabilityTotalValid(total: number): boolean {
+  return Math.round(total * 100) === 10_000
+}
+
 export const minigamePrizeSettingsSchema = z
   .object({
     prizes: z.array(minigamePrizeItemSchema).default([]),
@@ -114,7 +146,7 @@ export const minigamePrizeSettingsSchema = z
       const total =
         data.prizes.reduce((sum, prize) => sum + prize.winRate, 0) +
         data.nonWinning.loseRate
-      return Math.round(total * 100) === 10_000
+      return isMinigameProbabilityTotalValid(total)
     },
     {
       message: "Total probability of all prizes must equal 100%",

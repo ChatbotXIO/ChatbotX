@@ -31,7 +31,7 @@ export function MinigamePlayRecordDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex flex-col items-center gap-2 text-center">
             <span>{t("minigames.history.recordDialog.title")}</span>
@@ -57,7 +57,12 @@ export function MinigamePlayRecordDialog({
                 ) : null}
               </div>
               <span className="text-muted-foreground text-sm">
-                {formatDate(play.createdAt, { locale })}
+                {formatDate(play.createdAt, {
+                  locale,
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
               </span>
             </div>
           ))}

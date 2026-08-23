@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Mini-jeux",
+    "title": "Gamification",
     "description": "Créez et gérez des mini-jeux de tirage au sort pour vos clients.",
     "types": {
       "luckyWheel": "Roue de la chance",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Carte à gratter"
     },
     "createDialog": {
-      "title": "Choisissez un type de mini-jeu"
+      "title": "Choisissez un type de mini-jeu",
+      "comingSoon": "Bientôt disponible"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Somme de toutes les probabilités : {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Nom du lot",
       "nonWinningTitleLabel": "Titre",
       "loseImageDescription": "Taille recommandée : 120x120px",
+      "quantityLabel": "Quantité du lot",
+      "quantityDescription": "Nombre de fois où ce lot peut encore être gagné ; diminue de 1 à chaque gain. Laissez vide pour illimité.",
       "sendMessage": "Envoyer un message lorsque le joueur ne gagne pas",
+      "sendWinMessage": "Envoyer un message au gagnant ayant reçu le lot",
       "messageMode": "Type de message",
       "messageModeText": "Texte",
       "messageModeFlow": "Flux",

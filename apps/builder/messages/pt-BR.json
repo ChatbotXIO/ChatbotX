@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minijogos",
+    "title": "Gamificação",
     "description": "Crie e gerencie minijogos de sorteio para seus clientes.",
     "types": {
       "luckyWheel": "Roleta da Sorte",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Raspadinha"
     },
     "createDialog": {
-      "title": "Escolha um tipo de minijogo"
+      "title": "Escolha um tipo de minijogo",
+      "comingSoon": "Em breve"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Soma de todas as probabilidades: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Nome do Prêmio",
       "nonWinningTitleLabel": "Título",
       "loseImageDescription": "Tamanho recomendado 120x120px",
+      "quantityLabel": "Quantidade do prêmio",
+      "quantityDescription": "Número de vezes que esse prêmio ainda pode ser ganho; diminui em 1 a cada vitória. Deixe em branco para ilimitado.",
       "sendMessage": "Enviar uma mensagem quando o jogador não ganhar",
+      "sendWinMessage": "Enviar mensagem ao ganhador que recebeu o prêmio",
       "messageMode": "Tipo de mensagem",
       "messageModeText": "Texto",
       "messageModeFlow": "Fluxo",

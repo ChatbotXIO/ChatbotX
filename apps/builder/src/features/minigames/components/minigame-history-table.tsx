@@ -75,21 +75,22 @@ export function MinigameHistoryTable({
     contactName: string
     plays: Plays
   } | null>(null)
-  const { execute: loadPlays } = useAction(
-    getMinigamePlaysAction.bind(null, workspaceId),
-    {
-      onSuccess: ({ data: plays, input }) => {
-        if (plays) {
-          const player = data.find((row) => row.contactId === input.contactId)
-          setRecord({
-            contactName:
-              player?.contact.fullName ?? t("minigames.history.unknownContact"),
-            plays,
-          })
-        }
-      },
-    },
+  const boundGetMinigamePlaysAction = useMemo(
+    () => getMinigamePlaysAction.bind(null, workspaceId),
+    [workspaceId],
   )
+  const { execute: loadPlays } = useAction(boundGetMinigamePlaysAction, {
+    onSuccess: ({ data: plays, input }) => {
+      if (plays) {
+        const player = data.find((row) => row.contactId === input.contactId)
+        setRecord({
+          contactName:
+            player?.contact.fullName ?? t("minigames.history.unknownContact"),
+          plays,
+        })
+      }
+    },
+  })
   const columns = useMemo<ColumnDef<PlayerRow>[]>(
     () => [
       {

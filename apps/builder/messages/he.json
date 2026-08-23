@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "מיני-משחקים",
+    "title": "גיימיפיקציה",
     "description": "צרו ונהלו מיני-משחקי הגרלה עבור הלקוחות שלכם.",
     "types": {
       "luckyWheel": "גלגל המזל",
@@ -5166,7 +5166,8 @@
       "scratchOff": "כרטיס גירוד"
     },
     "createDialog": {
-      "title": "בחרו סוג מיני-משחק"
+      "title": "בחרו סוג מיני-משחק",
+      "comingSoon": "בקרוב"
     },
     "prizeSettings": {
       "sumOfProbabilities": "סכום כל ההסתברויות: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "שם הפרס",
       "nonWinningTitleLabel": "כותרת",
       "loseImageDescription": "גודל מומלץ 120x120 פיקסלים",
+      "quantityLabel": "כמות הפרס",
+      "quantityDescription": "מספר הפעמים שניתן עדיין לזכות בפרס זה; יורד ב-1 בכל זכייה. השאירו ריק ללא הגבלה.",
       "sendMessage": "שליחת הודעה כאשר השחקן לא זוכה",
+      "sendWinMessage": "שליחת הודעה לזוכה שקיבל את הפרס",
       "messageMode": "סוג הודעה",
       "messageModeText": "טקסט",
       "messageModeFlow": "פלואו",

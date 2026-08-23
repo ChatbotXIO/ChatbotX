@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minigame",
+    "title": "Gamifikasi",
     "description": "Buat dan kelola minigame undian berhadiah untuk pelanggan Anda.",
     "types": {
       "luckyWheel": "Roda Keberuntungan",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Gosok Kartu"
     },
     "createDialog": {
-      "title": "Pilih jenis minigame"
+      "title": "Pilih jenis minigame",
+      "comingSoon": "Segera hadir"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Total semua probabilitas: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Nama Hadiah",
       "nonWinningTitleLabel": "Judul",
       "loseImageDescription": "Ukuran yang disarankan 120x120px",
+      "quantityLabel": "Jumlah Hadiah",
+      "quantityDescription": "Jumlah berapa kali hadiah ini masih bisa dimenangkan; berkurang 1 setiap kali dimenangkan. Biarkan kosong untuk tanpa batas.",
       "sendMessage": "Kirim pesan saat pemain tidak menang",
+      "sendWinMessage": "Kirim pesan ke pemenang yang menerima hadiah",
       "messageMode": "Jenis pesan",
       "messageModeText": "Teks",
       "messageModeFlow": "Flow",

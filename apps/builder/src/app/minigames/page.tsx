@@ -1,9 +1,10 @@
-import { contactInboxService, tagService } from "@chatbotx.io/business"
+import { tagService } from "@chatbotx.io/business"
 import {
   minigameContactService,
   minigameService,
 } from "@chatbotx.io/business/minigame"
 import { minigameTypes } from "@chatbotx.io/database/partials"
+import { verifyMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import type { Metadata } from "next"
 import type { SearchParams } from "next/dist/server/request/search-params"
 import { notFound } from "next/navigation"
@@ -44,7 +45,7 @@ function MinigameNotice({
 export default async function MinigamePage(props: MinigamePageProps) {
   const searchParams = await props.searchParams
   const minigameId = getParam(searchParams.minigameId)
-  const userId = getParam(searchParams.userId)
+  const token = getParam(searchParams.token)
 
   if (!minigameId) {
     notFound()
@@ -70,14 +71,13 @@ export default async function MinigamePage(props: MinigamePageProps) {
     )
   }
 
-  const contactInbox = userId
-    ? await contactInboxService.findLatestBySourceId({
-        sourceId: userId,
-        workspaceId: minigame.workspaceId,
-      })
-    : undefined
+  // The play link carries a signed, expiring token (not a raw contact id) so
+  // a contact can only play as themselves — see `signMinigamePlayToken`.
+  const payload = token
+    ? await verifyMinigamePlayToken(token).catch(() => null)
+    : null
 
-  if (!(userId && contactInbox)) {
+  if (!(token && payload) || payload.workspaceId !== minigame.workspaceId) {
     const t = await getTranslations("minigames.play")
     return (
       <MinigameNotice
@@ -87,7 +87,7 @@ export default async function MinigamePage(props: MinigamePageProps) {
     )
   }
 
-  const contactId = contactInbox.contactId
+  const { contactId } = payload
 
   const contactState = await minigameContactService.resolvePlayState({
     minigameId: minigame.id,
@@ -105,7 +105,7 @@ export default async function MinigamePage(props: MinigamePageProps) {
     <JackpotPlayScreen
       contactState={contactState}
       minigame={minigame}
-      userId={userId}
+      token={token}
     />
   )
 }

@@ -63,6 +63,28 @@ type MinigameFormProps =
       publicUrl: string
     }
 
+// `winMessage` was added to `MinigamePrizeItem` after some minigames were
+// already saved, so their persisted `prizeSettings` JSON may be missing it.
+// Passing `undefined` as a form default makes the bound Switch/RadioGroup
+// start uncontrolled, then flip to controlled the moment RHF resolves a
+// value — backfill so every prize always has one. `quantity` is left as-is:
+// `undefined` (unlimited) is a real, permanent value, not a missing one.
+function normalizeMinigamePrizeSettings(
+  prizeSettings: MinigamePrizeSettings,
+): MinigamePrizeSettings {
+  return {
+    ...prizeSettings,
+    prizes: prizeSettings.prizes.map((prize) => ({
+      ...prize,
+      winMessage: prize.winMessage ?? {
+        enabled: false,
+        mode: "text",
+        text: "",
+      },
+    })),
+  }
+}
+
 function PublicUrlSection({ publicUrl }: { publicUrl: string }) {
   const t = useTranslations()
   const [, copy] = useCopyToClipboard()
@@ -114,20 +136,40 @@ export function MinigameForm(props: MinigameFormProps) {
   const workspaceId = props.workspaceId
   const type = isEdit ? props.minigame.type : props.type
 
+  // Baseline snapshot captured once at mount — NOT the live form state — so
+  // `MinigameService.update` can tell "admin didn't touch this prize's
+  // quantity" apart from "the form's stale value now differs from a
+  // quantity decremented by concurrent plays" and avoid clobbering the
+  // latter.
+  const [originalPrizeQuantities] = useState<
+    Record<string, number | undefined>
+  >(() =>
+    isEdit
+      ? Object.fromEntries(
+          props.minigame.prizeSettings.prizes.map((prize) => [
+            prize.id,
+            prize.quantity,
+          ]),
+        )
+      : {},
+  )
+
   const defaultValues = isEdit
     ? {
         type: props.minigame.type,
         generalSettings: props.minigame.generalSettings,
         appearance: props.minigame.appearance,
         playerSettings: props.minigame.playerSettings,
-        prizeSettings: props.minigame.prizeSettings,
+        prizeSettings: normalizeMinigamePrizeSettings(
+          props.minigame.prizeSettings,
+        ),
         winningMessageSettings: props.minigame.winningMessageSettings,
         nonWinningMessageSettings: props.minigame.nonWinningMessageSettings,
       }
     : {
         type: props.type,
         generalSettings: getDefaultMinigameGeneralSettings(),
-        appearance: getDefaultMinigameAppearance(),
+        appearance: getDefaultMinigameAppearance(props.type),
         playerSettings: getDefaultMinigamePlayerSettings(),
         prizeSettings: getDefaultMinigamePrizeSettings(),
         winningMessageSettings: getDefaultMinigameWinningMessageSettings(),
@@ -137,7 +179,12 @@ export function MinigameForm(props: MinigameFormProps) {
 
   const { form, action } = useHookFormAction(
     isEdit
-      ? updateMinigameAction.bind(null, workspaceId, props.minigame.id)
+      ? updateMinigameAction.bind(
+          null,
+          workspaceId,
+          props.minigame.id,
+          originalPrizeQuantities,
+        )
       : createMinigameAction.bind(null, workspaceId),
     zodResolver(isEdit ? updateMinigameRequest : createMinigameRequest),
     {
@@ -190,6 +237,14 @@ export function MinigameForm(props: MinigameFormProps) {
     control: form.control,
     name: "playerSettings.resetPolicy",
   })
+  const winningMessageSettings = useWatch({
+    control: form.control,
+    name: "winningMessageSettings",
+  })
+  const nonWinningMessageSettings = useWatch({
+    control: form.control,
+    name: "nonWinningMessageSettings",
+  })
 
   const handleResetPolicyChange = (value: "never" | "everyNDays") => {
     const drawsPerPerson = form.getValues("playerSettings.drawsPerPerson") ?? 1
@@ -204,7 +259,13 @@ export function MinigameForm(props: MinigameFormProps) {
 
   // `useWatch` returns the RHF-input shape (defaulted fields optional); the
   // preview needs the fully-resolved DB shape, so fill in the same fallbacks
-  // the Zod schema itself defaults to.
+  // the Zod schema itself defaults to. Can't just call
+  // `minigamePrizeSettingsSchema.parse(prizeSettings ?? {})` here instead —
+  // `minigamePrizeItemSchema`'s `name`/`winRate`/`id` and the win/lose
+  // message discriminated unions are required with no `.default()` (that's
+  // real validation for the persisted data, not something to weaken for
+  // preview's sake), so `.parse()` throws on the partial shape mid-edit
+  // (e.g. a newly appended prize row with no name yet).
   const appearanceForPreview: MinigameAppearance = {
     backgroundColor: appearance?.backgroundColor ?? "#F5A623",
     machineColor: appearance?.machineColor ?? "#4A90D9",
@@ -232,6 +293,19 @@ export function MinigameForm(props: MinigameFormProps) {
         url: prize.icon?.url ?? "",
       },
       winRate: prize.winRate ?? 0,
+      quantity: prize.quantity,
+      winMessage:
+        prize.winMessage?.mode === "flow"
+          ? {
+              enabled: prize.winMessage.enabled ?? false,
+              mode: "flow" as const,
+              flowId: prize.winMessage.flowId ?? null,
+            }
+          : {
+              enabled: prize.winMessage?.enabled ?? false,
+              mode: "text" as const,
+              text: prize.winMessage?.text ?? "",
+            },
     })),
     nonWinning: {
       title: prizeSettings?.nonWinning?.title ?? "",
@@ -325,12 +399,12 @@ export function MinigameForm(props: MinigameFormProps) {
                   options={tagOptions}
                   placeholder={t("actions.pleaseSelect")}
                 />
-                <MultiSelectField
-                  label={t("minigames.generalSettings.newFriendTags")}
-                  name="generalSettings.newFriendTagIds"
-                  options={tagOptions}
-                  placeholder={t("actions.pleaseSelect")}
-                />
+                {/* Referral feature temporarily hidden — `newFriendTagIds`
+                    is not yet applied by any service (no referral link
+                    param, no referrerContactId population). Restore this
+                    MultiSelectField (generalSettings.newFriendTagIds) once
+                    the backend wiring exists, so admins don't configure tags
+                    that silently never get applied. */}
                 {/* Share feature temporarily hidden — restore SwitchField
                     (generalSettings.shareEnabled) + TextareaField
                     (generalSettings.shareMessage) here to re-enable. */}
@@ -485,11 +559,12 @@ export function MinigameForm(props: MinigameFormProps) {
             </Card>
 
             <MessagePreviewCard
-              description={generalSettings?.name}
+              description={winningMessageSettings?.description}
               onEdit={() => setWinningMessageDialogOpen(true)}
               title={t("minigames.winningMessageDialog.title")}
             />
             <MessagePreviewCard
+              description={nonWinningMessageSettings?.description}
               onEdit={() => setNonWinningMessageDialogOpen(true)}
               title={t("minigames.nonWinningMessageDialog.title")}
             />

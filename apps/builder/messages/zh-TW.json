@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "小遊戲",
+    "title": "遊戲化",
     "description": "為您的顧客建立並管理幸運抽獎小遊戲。",
     "types": {
       "luckyWheel": "幸運轉盤",
@@ -5166,7 +5166,8 @@
       "scratchOff": "刮刮樂"
     },
     "createDialog": {
-      "title": "選擇小遊戲類型"
+      "title": "選擇小遊戲類型",
+      "comingSoon": "即將推出"
     },
     "prizeSettings": {
       "sumOfProbabilities": "所有機率總和：{value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "獎項名稱",
       "nonWinningTitleLabel": "標題",
       "loseImageDescription": "建議尺寸 120x120px",
+      "quantityLabel": "獎品數量",
+      "quantityDescription": "此獎品還可被中獎的次數；每次中獎減少 1。留空表示不限制。",
       "sendMessage": "玩家未中獎時傳送訊息",
+      "sendWinMessage": "向獲得該獎品的中獎者傳送訊息",
       "messageMode": "訊息類型",
       "messageModeText": "文字",
       "messageModeFlow": "流程",

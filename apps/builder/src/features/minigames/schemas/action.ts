@@ -26,7 +26,7 @@ export type UpdateMinigameRequest = z.infer<typeof updateMinigameRequest>
 
 export const playMinigameRequest = z.object({
   minigameId: zodBigintAsString(),
-  userId: z.string(),
+  token: z.string(),
 })
 export type PlayMinigameRequest = z.infer<typeof playMinigameRequest>
 

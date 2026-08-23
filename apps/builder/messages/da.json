@@ -5156,7 +5156,7 @@
     }
   },
   "minigames": {
-    "title": "Minispil",
+    "title": "Gamification",
     "description": "Opret og administrer lykkehjul-minispil til dine kunder.",
     "types": {
       "luckyWheel": "Lykkehjul",
@@ -5166,7 +5166,8 @@
       "scratchOff": "Skrabelod"
     },
     "createDialog": {
-      "title": "Vælg en minispiltype"
+      "title": "Vælg en minispiltype",
+      "comingSoon": "Kommer snart"
     },
     "prizeSettings": {
       "sumOfProbabilities": "Sum af alle sandsynligheder: {value}%",
@@ -5180,7 +5181,10 @@
       "prizeNameLabel": "Gevinstnavn",
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Anbefalet størrelse 120x120px",
+      "quantityLabel": "Præmieantal",
+      "quantityDescription": "Antal gange denne præmie stadig kan vindes; falder med 1 for hver gevinst. Lad stå tomt for ubegrænset.",
       "sendMessage": "Send en besked, når spilleren ikke vinder",
+      "sendWinMessage": "Send besked til vinderen, der modtog præmien",
       "messageMode": "Beskedtype",
       "messageModeText": "Tekst",
       "messageModeFlow": "Flow",

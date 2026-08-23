@@ -17,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import {
   Tooltip,
   TooltipContent,
@@ -36,9 +35,8 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import React, { use, useMemo } from "react"
-import { toast } from "sonner"
+import { EnabledSwitchCell } from "@/components/data-table/enabled-switch-cell"
 import { enableMinigameAction } from "./actions/enable-minigame.action"
 import { MINIGAME_TYPE_CONFIGS } from "./constants"
 import { DeleteMinigamesDialog } from "./delete-minigames"
@@ -301,29 +299,10 @@ function MinigameEnabledCell(props: {
   workspaceId: string
   checked: boolean
 }) {
-  const router = useRouter()
-
-  const { execute, isPending } = useAction(
-    enableMinigameAction.bind(null, props.workspaceId, props.id),
-    {
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-      onSuccess: () => {
-        router.refresh()
-      },
-    },
+  const action = useMemo(
+    () => enableMinigameAction.bind(null, props.workspaceId, props.id),
+    [props.workspaceId, props.id],
   )
 
-  return (
-    <Switch
-      checked={props.checked}
-      disabled={isPending}
-      onCheckedChange={(value) => {
-        execute({ enabled: value })
-      }}
-    />
-  )
+  return <EnabledSwitchCell action={action} checked={props.checked} />
 }

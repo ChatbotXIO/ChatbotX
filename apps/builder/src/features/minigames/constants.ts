@@ -22,12 +22,12 @@ export const MINIGAME_TYPE_CONFIGS: {
   labelKey: string
   icon: LucideIcon
 }[] = [
+  { type: "jackpot", labelKey: "minigames.types.jackpot", icon: CoinsIcon },
   {
     type: "luckyWheel",
     labelKey: "minigames.types.luckyWheel",
     icon: DicesIcon,
   },
-  { type: "jackpot", labelKey: "minigames.types.jackpot", icon: CoinsIcon },
   { type: "gashapon", labelKey: "minigames.types.gashapon", icon: PackageIcon },
   { type: "drawLots", labelKey: "minigames.types.drawLots", icon: ShuffleIcon },
   {
@@ -36,6 +36,9 @@ export const MINIGAME_TYPE_CONFIGS: {
     icon: TicketIcon,
   },
 ]
+
+/** Only Jackpot has a working gameplay experience so far; the rest are disabled in the type picker. */
+export const MINIGAME_TYPES_ENABLED_FOR_CREATION: MinigameType[] = ["jackpot"]
 
 export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
   const now = new Date()
@@ -53,15 +56,28 @@ export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
   }
 }
 
-export function getDefaultMinigameAppearance(): MinigameAppearance {
+const JACKPOT_DEFAULT_BACKGROUND_IMAGE_URL = "/mini-game/jackpot/background.svg"
+const JACKPOT_DEFAULT_START_BUTTON_IMAGE_URL = "/mini-game/jackpot/button.svg"
+
+export function getDefaultMinigameAppearance(
+  type?: MinigameType,
+): MinigameAppearance {
+  const isJackpot = type === "jackpot"
+
   return {
-    backgroundColor: "#F5A623",
-    machineColor: "#4A90D9",
-    decorativeColor: "#FFFFFF",
-    ruleTextColor: "#000000",
-    backgroundImage: { mode: "file", url: "" },
+    backgroundColor: isJackpot ? "#D4880E" : "#F5A623",
+    machineColor: isJackpot ? "#D82B2B" : "#4A90D9",
+    decorativeColor: isJackpot ? "#FFEA2D" : "#FFFFFF",
+    ruleTextColor: isJackpot ? "#FFFFFF" : "#000000",
+    backgroundImage: {
+      mode: "file",
+      url: isJackpot ? JACKPOT_DEFAULT_BACKGROUND_IMAGE_URL : "",
+    },
     prizeDescriptionImage: { mode: "file", url: "" },
-    startButtonImage: { mode: "file", url: "" },
+    startButtonImage: {
+      mode: "file",
+      url: isJackpot ? JACKPOT_DEFAULT_START_BUTTON_IMAGE_URL : "",
+    },
   }
 }
 
@@ -72,30 +88,19 @@ export function getDefaultMinigamePlayerSettings(): MinigamePlayerSettings {
   }
 }
 
+const DEFAULT_PRIZE_COUNT = 3
+
 export function getDefaultMinigamePrizeSettings(): MinigamePrizeSettings {
   return {
-    prizes: [
-      {
-        id: createId(),
-        name: "Prize 1",
-        icon: { mode: "file", url: "" },
-        winRate: 25,
-      },
-      {
-        id: createId(),
-        name: "Prize 2",
-        icon: { mode: "file", url: "" },
-        winRate: 25,
-      },
-      {
-        id: createId(),
-        name: "Prize 3",
-        icon: { mode: "file", url: "" },
-        winRate: 25,
-      },
-    ],
+    prizes: Array.from({ length: DEFAULT_PRIZE_COUNT }, (_, index) => ({
+      id: createId(),
+      name: `Prize ${index + 1}`,
+      icon: { mode: "file" as const, url: "" },
+      winRate: 25,
+      winMessage: { enabled: false, mode: "text" as const, text: "" },
+    })),
     nonWinning: {
-      title: "Non-winning setting",
+      title: "Non-winning",
       loseRate: 25,
       loseImage: { mode: "file", url: "" },
       loseMessage: { enabled: false, mode: "text", text: "" },

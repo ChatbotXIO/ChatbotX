@@ -42,16 +42,6 @@ export function NonWinningMessageEditDialog({
             label={t("fields.description.label")}
             name="nonWinningMessageSettings.description"
           />
-          <InputField
-            label={t("minigames.nonWinningMessageDialog.shareButtonText")}
-            name="nonWinningMessageSettings.shareButtonText"
-          />
-          <TextareaField
-            label={t(
-              "minigames.nonWinningMessageDialog.shareButtonDescription",
-            )}
-            name="nonWinningMessageSettings.shareButtonDescription"
-          />
         </div>
 
         <DialogFooter>

@@ -7,10 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback } from "react"
-import { MINIGAME_TYPE_CONFIGS } from "../constants"
+import {
+  MINIGAME_TYPE_CONFIGS,
+  MINIGAME_TYPES_ENABLED_FOR_CREATION,
+} from "../constants"
 
 type CreateMinigameTypeDialogProps = {
   open: boolean
@@ -36,35 +40,60 @@ export function CreateMinigameTypeDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-w-2xl">
+      {/* 5 cards (144px) + 4 gaps (16px) + dialog padding (16px each side) = 816px minimum;
+          sized wider (w-220 = 880px) so it isn't a knife-edge fit against rounding. */}
+      <DialogContent className="w-220 sm:max-w-none">
         <DialogHeader>
           <DialogTitle>{t("minigames.createDialog.title")}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-4">
-          {MINIGAME_TYPE_CONFIGS.map((config) => (
-            <Card
-              aria-label={t(config.labelKey)}
-              className="cursor-pointer hover:shadow-md"
-              key={config.type}
-              onClick={() => handleSelect(config.type)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault()
-                  handleSelect(config.type)
+        <div className="flex flex-wrap justify-center gap-4">
+          {MINIGAME_TYPE_CONFIGS.map((config) => {
+            const isEnabled = MINIGAME_TYPES_ENABLED_FOR_CREATION.includes(
+              config.type,
+            )
+
+            return (
+              <Card
+                aria-disabled={!isEnabled}
+                aria-label={t(config.labelKey)}
+                className={cn(
+                  "w-36",
+                  isEnabled
+                    ? "cursor-pointer hover:shadow-md"
+                    : "cursor-not-allowed opacity-50",
+                )}
+                key={config.type}
+                onClick={
+                  isEnabled ? () => handleSelect(config.type) : undefined
                 }
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              <CardContent className="flex flex-col items-center gap-3 py-6">
-                <config.icon className="text-primary" size={30} />
-                <span className="text-center font-medium text-sm">
-                  {t(config.labelKey)}
-                </span>
-              </CardContent>
-            </Card>
-          ))}
+                onKeyDown={
+                  isEnabled
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault()
+                          handleSelect(config.type)
+                        }
+                      }
+                    : undefined
+                }
+                role="button"
+                tabIndex={isEnabled ? 0 : -1}
+              >
+                <CardContent className="flex flex-col items-center gap-3 py-6">
+                  <config.icon className="text-primary" size={30} />
+                  <span className="text-center font-medium text-sm">
+                    {t(config.labelKey)}
+                  </span>
+                  {!isEnabled && (
+                    <span className="text-muted-foreground text-xs">
+                      {t("minigames.createDialog.comingSoon")}
+                    </span>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       </DialogContent>
     </Dialog>

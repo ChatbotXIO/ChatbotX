@@ -1,6 +1,9 @@
 "use client"
 
-import type { MinigamePrizeSettings } from "@chatbotx.io/database/partials"
+import {
+  isMinigameProbabilityTotalValid,
+  type MinigamePrizeSettings,
+} from "@chatbotx.io/database/partials"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -37,7 +40,7 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
   )
   const loseProbability = prizeSettings.nonWinning?.loseRate || 0
   const totalProbability = winProbability + loseProbability
-  const isTotalValid = Math.round(totalProbability * 100) === 10_000
+  const isTotalValid = isMinigameProbabilityTotalValid(totalProbability)
 
   return (
     <div className="flex flex-col gap-4">
@@ -138,6 +141,7 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
             name: "",
             icon: { mode: "file", url: "" },
             winRate: 0,
+            winMessage: { enabled: false, mode: "text", text: "" },
           })
         }
         type="button"
@@ -154,7 +158,7 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
               setEditTarget(null)
             }
           }}
-          open={editTarget !== null}
+          open={true}
           workspaceId={workspaceId}
           {...editTarget}
         />
