@@ -4268,11 +4268,11 @@
     "title": "Aftaleplanlægning",
     "description": "Opret og administrer din aftaleplanlægning.",
     "flowModes": {
-      "bookFromCustomField": "Book aftale",
-      "checkAvailabilityFromCustomField": "Tjek tilgængelighed",
-      "book": "Dato- og tidsvælger",
-      "checkAvailability": "Datointervalvælger",
-      "cancel": "Annuller aftale"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Tilstand",

@@ -4103,11 +4103,11 @@
     "title": "جدولة المواعيد",
     "description": "إنشاء جدولة مواعيدك وإدارتها.",
     "flowModes": {
-      "bookFromCustomField": "حجز موعد",
-      "checkAvailabilityFromCustomField": "التحقق من التوفر",
-      "book": "أداة اختيار التاريخ والوقت",
-      "checkAvailability": "أداة اختيار نطاق التاريخ",
-      "cancel": "إلغاء موعد"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "الوضع",

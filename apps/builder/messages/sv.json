@@ -318,11 +318,11 @@
     "description": "Skapa och hantera din tidsbokning.",
     "title": "Tidsbokning",
     "flowModes": {
-      "bookFromCustomField": "Boka tid",
-      "checkAvailabilityFromCustomField": "Kontrollera tillgänglighet",
-      "book": "Datum- och tidsväljare",
-      "checkAvailability": "Datumintervallväljare",
-      "cancel": "Avboka tid"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Läge",

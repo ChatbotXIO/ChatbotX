@@ -4268,11 +4268,11 @@
     "title": "Pianificazione appuntamenti",
     "description": "Crea e gestisci la pianificazione dei tuoi appuntamenti.",
     "flowModes": {
-      "bookFromCustomField": "Prenota appuntamento",
-      "checkAvailabilityFromCustomField": "Verifica disponibilità",
-      "book": "Selettore data e ora",
-      "checkAvailability": "Selettore intervallo date",
-      "cancel": "Annulla appuntamento"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modalità",

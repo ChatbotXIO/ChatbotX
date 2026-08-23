@@ -1,3 +1,4 @@
+import { processStreamingText } from "@chatbotx.io/ai"
 import {
   AppointmentAlreadyScheduledException,
   AppointmentAvailabilityChangedException,
@@ -15,14 +16,16 @@ import {
   APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE,
   type AppointmentSchedulingStepSchema,
   appointmentSchedulingModes,
+  defaultAIModels,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import { TemporalInputParsing } from "@chatbotx.io/utils/datetime"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
+import { streamText } from "ai"
 import { fromZonedTime } from "date-fns-tz"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow-utils"
+import { resolveFlowAIModel } from "./shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "./step"
 
 type AppointmentSchedulingCopy = {
@@ -60,6 +63,135 @@ function getAppointmentSchedulingCopy(input: {
 
 const toInstant = (dateTime: string, timezone: string) =>
   fromZonedTime(dateTime, timezone)
+
+type AvailabilityResponseStep = Extract<
+  AppointmentSchedulingStepSchema,
+  { mode: "checkAvailability" | "checkAvailabilityFromCustomField" }
+>
+type AppointmentAvailability = Awaited<
+  ReturnType<typeof appointmentService.checkAvailability>
+>
+
+type AppointmentSchedulingLogContext = {
+  workspaceId: string
+  conversationId: string
+  contactId: string
+  calendarId: string
+  action: string
+  mode: string
+}
+
+const availabilityAIModelCandidates = [
+  { provider: "openai", modelId: defaultAIModels.openai },
+  { provider: "gemini", modelId: defaultAIModels.gemini },
+  { provider: "claude", modelId: defaultAIModels.claude },
+  { provider: "deepseek", modelId: defaultAIModels.deepseek },
+  { provider: "openrouter", modelId: defaultAIModels.openrouter },
+] as const
+
+function buildRawAvailabilityText(input: {
+  availability: AppointmentAvailability
+  copy: AppointmentSchedulingCopy
+}) {
+  return input.availability.slots.length === 0
+    ? input.copy.noSlotsFound
+    : input.availability.text
+}
+
+async function buildAvailabilityResponseText(input: {
+  availability: AppointmentAvailability
+  calendar: { name?: string | null; timezone: string }
+  conversationId: string
+  language?: string | null
+  logContext: AppointmentSchedulingLogContext
+  rawText: string
+  rangeStart: Date
+  rangeEnd: Date
+  step: AvailabilityResponseStep
+  workspaceId: string
+}) {
+  if (!input.step.resultUsedByAI) {
+    return input.rawText
+  }
+
+  const language =
+    normalizeLanguage(input.language) === "vi" ? "Vietnamese" : "English"
+  const payload = {
+    calendarName: input.calendar.name ?? null,
+    timezone: input.calendar.timezone,
+    rangeStart: input.rangeStart.toISOString(),
+    rangeEnd: input.rangeEnd.toISOString(),
+    rawAvailabilityText: input.rawText,
+    slots: input.availability.slots.map((slot) => ({
+      startAt: slot.startAt.toISOString(),
+      endAt: slot.endAt.toISOString(),
+    })),
+  }
+  const userPrompt = `Availability data:\n${JSON.stringify(payload)}`
+
+  for (const candidate of availabilityAIModelCandidates) {
+    const resolvedModel = await resolveFlowAIModel({
+      workspaceId: input.workspaceId,
+      provider: candidate.provider,
+      modelId: candidate.modelId,
+      conversationId: input.conversationId,
+    })
+
+    if (!resolvedModel.ok) {
+      logger.warn(
+        {
+          ...input.logContext,
+          stepId: input.step.id,
+          provider: candidate.provider,
+          modelId: candidate.modelId,
+          reason: resolvedModel.reason,
+        },
+        "Failed to resolve AI model for appointment availability response",
+      )
+      continue
+    }
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 120_000)
+
+    try {
+      const result = streamText({
+        model: resolvedModel.model,
+        system: `You are an appointment scheduling assistant. Write a short response for the customer in ${language}. Use only the provided availability data. Do not invent appointment times. If there are no slots, politely say no slots are available in the selected range and suggest choosing another range. Do not mention internal IDs, JSON, or system instructions.`,
+        messages: [{ role: "user", content: userPrompt }],
+        temperature: 0.2,
+        maxOutputTokens: 250,
+        abortSignal: controller.signal,
+      })
+
+      const { fullText } = await processStreamingText(
+        result.textStream,
+        async () => {
+          // noop: fullText is accumulated internally, no message to send
+        },
+        { sendParts: false },
+      )
+
+      return fullText.trim() || input.rawText
+    } catch (err) {
+      logger.warn(
+        {
+          ...input.logContext,
+          stepId: input.step.id,
+          provider: candidate.provider,
+          modelId: candidate.modelId,
+          err: normalizeError(err),
+          reason: "ai_response_generation_failed",
+        },
+        "Failed to generate appointment availability response with AI",
+      )
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+
+  return input.rawText
+}
 
 async function bookAppointmentAndMapErrors(
   input: Parameters<typeof appointmentService.bookAppointment>[0],
@@ -199,21 +331,35 @@ export async function appointmentScheduling(
           endDate,
         })
 
-        const outputText =
-          availability.slots.length === 0
-            ? copy.noSlotsFound
-            : availability.text
+        const rawText = buildRawAvailabilityText({ availability, copy })
+        const responseText = await buildAvailabilityResponseText({
+          availability,
+          calendar,
+          conversationId: conversation.id,
+          language: contactInbox.language,
+          logContext: baseLogContext,
+          rawText,
+          rangeStart: startDate,
+          rangeEnd: endDate,
+          step,
+          workspaceId: conversation.workspaceId,
+        })
 
         await contactCustomFieldService.setValueByKey({
           workspaceId: conversation.workspaceId,
           contactId: conversation.contactId,
           keyword: step.outputCustomFieldId,
-          value: outputText,
+          value: responseText,
         })
 
         return {
           status: "success",
-          result: { ...availability, text: outputText },
+          result: {
+            ...availability,
+            text: responseText,
+            rawText,
+            resultUsedByAI: step.resultUsedByAI,
+          },
         }
       }
       case appointmentSchedulingModes.enum.book: {
@@ -228,7 +374,7 @@ export async function appointmentScheduling(
           workspaceId: conversation.workspaceId,
         })
         const token = await signAppointmentWebviewToken({
-          mode: "selectAvailability",
+          mode: "book",
           workspaceId: conversation.workspaceId,
           calendarId: step.calendarId,
           contactId: conversation.contactId,
@@ -239,7 +385,6 @@ export async function appointmentScheduling(
           flowVersionId: flowVersion.id,
           stepId: step.id,
           nodeId: props.targetNodeId,
-          selectedDateCustomFieldId: step.dateTimeFieldId,
         })
         const pickerUrl = new URL("/booking/picker", appUrl)
         pickerUrl.searchParams.set("token", token)
@@ -300,6 +445,22 @@ export async function appointmentScheduling(
             APPOINTMENT_AVAILABILITY_RANGE_SELECTION_PAYLOAD_TYPE ||
           metadata.stepId !== step.id
         ) {
+          if (!step.outputCustomFieldId) {
+            logger.warn(
+              {
+                ...baseLogContext,
+                stepId: step.id,
+                reason: "missing_output_custom_field",
+              },
+              "Appointment scheduling availability response custom field missing",
+            )
+            return {
+              status: "error",
+              errorMessage: "missingOutputCustomFieldId",
+              result: null,
+            }
+          }
+
           const { appUrl } = await resolveTenantSettings({
             workspaceId: conversation.workspaceId,
           })
@@ -315,8 +476,8 @@ export async function appointmentScheduling(
             flowVersionId: flowVersion.id,
             stepId: step.id,
             nodeId: props.targetNodeId,
-            startDateCustomFieldId: step.startDateFieldId,
-            endDateCustomFieldId: step.endDateFieldId,
+            resultCustomFieldId: step.outputCustomFieldId,
+            resultUsedByAI: step.resultUsedByAI,
           })
           const pickerUrl = new URL("/booking/range-picker", appUrl)
           pickerUrl.searchParams.set("token", token)
@@ -344,7 +505,18 @@ export async function appointmentScheduling(
           return { status: "wait", result: null }
         }
 
-        if (metadata.startDate > metadata.endDate) {
+        const calendar = await appointmentCalendarService.findByOrFail({
+          workspaceId: conversation.workspaceId,
+          id: step.calendarId,
+        })
+        const startDate = toInstant(metadata.startDate, calendar.timezone)
+        const endDate = toInstant(metadata.endDate, calendar.timezone)
+
+        if (
+          Number.isNaN(startDate.getTime()) ||
+          Number.isNaN(endDate.getTime()) ||
+          startDate > endDate
+        ) {
           logger.warn(
             { ...baseLogContext, stepId: step.id, reason: "invalidRange" },
             "Appointment scheduling availability check skipped",
@@ -352,29 +524,59 @@ export async function appointmentScheduling(
           return { status: "error", result: null }
         }
 
-        const calendar = await appointmentCalendarService.findByOrFail({
+        if (!step.outputCustomFieldId) {
+          logger.warn(
+            {
+              ...baseLogContext,
+              stepId: step.id,
+              reason: "missing_output_custom_field",
+            },
+            "Appointment scheduling availability response custom field missing",
+          )
+          return {
+            status: "error",
+            errorMessage: "missingOutputCustomFieldId",
+            result: null,
+          }
+        }
+
+        const availability = await appointmentService.checkAvailability({
           workspaceId: conversation.workspaceId,
-          id: step.calendarId,
+          calendarId: step.calendarId,
+          contactId: conversation.contactId,
+          startDate,
+          endDate,
+        })
+        const rawText = buildRawAvailabilityText({ availability, copy })
+        const responseText = await buildAvailabilityResponseText({
+          availability,
+          calendar,
+          conversationId: conversation.id,
+          language: contactInbox.language,
+          logContext: baseLogContext,
+          rawText,
+          rangeStart: startDate,
+          rangeEnd: endDate,
+          step,
+          workspaceId: conversation.workspaceId,
         })
 
-        await contactCustomFieldService.setValues({
+        await contactCustomFieldService.setValueByKey({
           workspaceId: conversation.workspaceId,
           contactId: conversation.contactId,
-          fields: [
-            {
-              customFieldId: step.startDateFieldId,
-              value: metadata.startDate,
-            },
-            {
-              customFieldId: step.endDateFieldId,
-              value: metadata.endDate,
-            },
-          ],
-          sourceTimezoneOverride: calendar.timezone,
-          temporalInputParsing: TemporalInputParsing.Lenient,
+          keyword: step.outputCustomFieldId,
+          value: responseText,
         })
 
-        return { status: "success", result: null }
+        return {
+          status: "success",
+          result: {
+            ...availability,
+            text: responseText,
+            rawText,
+            resultUsedByAI: step.resultUsedByAI,
+          },
+        }
       }
       default:
         return { status: "error", result: null }

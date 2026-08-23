@@ -12,6 +12,9 @@ const resolveTenantSettings = vi.fn()
 const signAppointmentWebviewToken = vi.fn()
 const chatQueueAdd = vi.fn()
 const loggerWarn = vi.fn()
+const processStreamingText = vi.fn()
+const resolveFlowAIModel = vi.fn()
+const streamText = vi.fn()
 const LOCALE_SEPARATOR_RE = /[-_]/
 
 class MockSlotUnavailableException extends Error {}
@@ -43,8 +46,16 @@ vi.mock("@chatbotx.io/business", () => ({
     MockAppointmentAlreadyScheduledException,
 }))
 
+vi.mock("@chatbotx.io/ai", () => ({
+  processStreamingText,
+}))
+
 vi.mock("@chatbotx.io/encryption", () => ({
   signAppointmentWebviewToken,
+}))
+
+vi.mock("ai", () => ({
+  streamText,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -61,6 +72,10 @@ vi.mock("../src/lib/logger", () => ({
     warn: loggerWarn,
     error: vi.fn(),
   },
+}))
+
+vi.mock("../src/integration/handlers/shared/flow-ai-model-resolver", () => ({
+  resolveFlowAIModel,
 }))
 
 const { appointmentScheduling } = await import(
@@ -91,8 +106,8 @@ const checkAvailabilityStep = {
   stepType: "appointmentScheduling",
   mode: "checkAvailability",
   calendarId: "calendar-1",
-  startDateFieldId: "start-field",
-  endDateFieldId: "end-field",
+  resultUsedByAI: false,
+  outputCustomFieldId: "output-field",
   states: [],
 }
 
@@ -115,6 +130,16 @@ describe("appointmentScheduling handler", () => {
         },
       ],
     })
+    resolveFlowAIModel.mockResolvedValue({
+      ok: true,
+      model: "mock-model",
+    })
+    streamText.mockReturnValue({
+      textStream: ["AI response"],
+    })
+    processStreamingText.mockResolvedValue({
+      fullText: "AI response",
+    })
     hasFutureScheduledAppointmentForContact.mockResolvedValue(false)
   })
 
@@ -135,14 +160,13 @@ describe("appointmentScheduling handler", () => {
         stepType: "appointmentScheduling",
         mode: "book",
         calendarId: "calendar-1",
-        dateTimeFieldId: "field-1",
         states: [],
         nodeId: "stale-node",
       },
     } as never)
 
     expect(signAppointmentWebviewToken).toHaveBeenCalledWith({
-      mode: "selectAvailability",
+      mode: "book",
       workspaceId: "workspace-1",
       calendarId: "calendar-1",
       contactId: "contact-1",
@@ -153,8 +177,10 @@ describe("appointmentScheduling handler", () => {
       flowVersionId: "flow-version-1",
       stepId: "step-1",
       nodeId: "node-from-props",
-      selectedDateCustomFieldId: "field-1",
     })
+    expect(signAppointmentWebviewToken.mock.calls[0]?.[0]).not.toHaveProperty(
+      "selectedDateCustomFieldId",
+    )
     expect(chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
       type: "sendChatMessage",
       data: expect.objectContaining({
@@ -184,7 +210,6 @@ describe("appointmentScheduling handler", () => {
         stepType: "appointmentScheduling",
         mode: "book",
         calendarId: "calendar-1",
-        dateTimeFieldId: "field-1",
         states: [],
       },
     } as never)
@@ -200,15 +225,15 @@ describe("appointmentScheduling handler", () => {
     stepType: "appointmentScheduling",
     mode: "book",
     calendarId: "calendar-1",
-    dateTimeFieldId: "field-1",
     states: [],
   }
 
-  test("book: does not book on picker resume — the selection is already saved to the custom field, and booking happens in the downstream bookFromCustomField step", async () => {
+  test("book: resumes successfully after the webview action has booked the appointment", async () => {
     const metadata = {
       type: "appointmentWebviewSelection",
       stepId: "step-1",
       selectedStartAt: "2026-08-10T02:00:00.000Z",
+      appointmentId: "appointment-1",
     }
 
     const result = await appointmentScheduling({
@@ -245,9 +270,15 @@ describe("appointmentScheduling handler", () => {
       flowVersionId: "flow-version-1",
       stepId: "step-1",
       nodeId: "node-from-props",
-      startDateCustomFieldId: "start-field",
-      endDateCustomFieldId: "end-field",
+      resultCustomFieldId: "output-field",
+      resultUsedByAI: false,
     })
+    expect(signAppointmentWebviewToken.mock.calls[0]?.[0]).not.toHaveProperty(
+      "startDateCustomFieldId",
+    )
+    expect(signAppointmentWebviewToken.mock.calls[0]?.[0]).not.toHaveProperty(
+      "endDateCustomFieldId",
+    )
     expect(chatQueueAdd).toHaveBeenCalledWith("sendChatMessage", {
       type: "sendChatMessage",
       data: expect.objectContaining({
@@ -331,7 +362,7 @@ describe("appointmentScheduling handler", () => {
     expect(checkAvailability).not.toHaveBeenCalled()
   })
 
-  test("saves the selected range and returns success without recomputing availability", async () => {
+  test("checks availability from the selected range and saves the raw response", async () => {
     const result = await appointmentScheduling({
       ...baseProps,
       metadata: {
@@ -344,27 +375,255 @@ describe("appointmentScheduling handler", () => {
       step: checkAvailabilityStep,
     } as never)
 
-    expect(setValues).toHaveBeenCalledWith({
+    expect(checkAvailability).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+      startDate: new Date("2026-08-10T02:00:00.000Z"),
+      endDate: new Date("2026-08-11T10:00:00.000Z"),
+    })
+    expect(setValueByKey).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
-      fields: [
-        {
-          customFieldId: "start-field",
-          value: "2026-08-10T09:00:00.000",
-        },
-        {
-          customFieldId: "end-field",
-          value: "2026-08-11T17:00:00.000",
-        },
-      ],
-      sourceTimezoneOverride: "Asia/Ho_Chi_Minh",
-      temporalInputParsing: "lenient",
+      keyword: "output-field",
+      value: "Available: Aug 10, 9:00 AM",
     })
-    expect(checkAvailability).not.toHaveBeenCalled()
-    expect(setValueByKey).not.toHaveBeenCalled()
+    expect(setValues).not.toHaveBeenCalled()
+    expect(resolveFlowAIModel).not.toHaveBeenCalled()
     expect(signAppointmentWebviewToken).not.toHaveBeenCalled()
     expect(chatQueueAdd).not.toHaveBeenCalled()
-    expect(result).toEqual({ status: "success", result: null })
+    expect(result).toEqual({
+      status: "success",
+      result: {
+        text: "Available: Aug 10, 9:00 AM",
+        rawText: "Available: Aug 10, 9:00 AM",
+        resultUsedByAI: false,
+        slots: [
+          {
+            startAt: new Date("2026-08-10T02:00:00.000Z"),
+            endAt: new Date("2026-08-10T02:30:00.000Z"),
+          },
+        ],
+      },
+    })
+  })
+
+  test("checkAvailability: uses AI response when resultUsedByAI is enabled", async () => {
+    const result = await appointmentScheduling({
+      ...baseProps,
+      metadata: {
+        type: "appointmentAvailabilityRangeSelection",
+        stepId: "step-1",
+        contactInboxId: "contact-inbox-1",
+        startDate: "2026-08-10T09:00:00.000",
+        endDate: "2026-08-11T17:00:00.000",
+      },
+      step: {
+        ...checkAvailabilityStep,
+        resultUsedByAI: true,
+      },
+    } as never)
+
+    expect(resolveFlowAIModel).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      provider: "openai",
+      modelId: "gpt-5.4-mini",
+      conversationId: "conversation-1",
+    })
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "mock-model",
+        temperature: 0.2,
+        maxOutputTokens: 250,
+        system: expect.stringContaining("Vietnamese"),
+        messages: [
+          expect.objectContaining({
+            content: expect.stringContaining("Available: Aug 10, 9:00 AM"),
+          }),
+        ],
+      }),
+    )
+    expect(streamText.mock.calls[0]?.[0].messages[0].content).toContain(
+      "2026-08-10T02:00:00.000Z",
+    )
+    expect(setValueByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      keyword: "output-field",
+      value: "AI response",
+    })
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+        result: expect.objectContaining({
+          text: "AI response",
+          rawText: "Available: Aug 10, 9:00 AM",
+          resultUsedByAI: true,
+        }),
+      }),
+    )
+  })
+
+  test("checkAvailability: tries the next provider when the first model cannot resolve", async () => {
+    resolveFlowAIModel.mockResolvedValueOnce({
+      ok: false,
+      reason: "ai_integration_missing",
+      message: "AI integration missing",
+    })
+    resolveFlowAIModel.mockResolvedValueOnce({
+      ok: true,
+      model: "gemini-model",
+    })
+
+    const result = await appointmentScheduling({
+      ...baseProps,
+      metadata: {
+        type: "appointmentAvailabilityRangeSelection",
+        stepId: "step-1",
+        contactInboxId: "contact-inbox-1",
+        startDate: "2026-08-10T09:00:00.000",
+        endDate: "2026-08-11T17:00:00.000",
+      },
+      step: {
+        ...checkAvailabilityStep,
+        resultUsedByAI: true,
+      },
+    } as never)
+
+    expect(resolveFlowAIModel).toHaveBeenNthCalledWith(1, {
+      workspaceId: "workspace-1",
+      provider: "openai",
+      modelId: "gpt-5.4-mini",
+      conversationId: "conversation-1",
+    })
+    expect(resolveFlowAIModel).toHaveBeenNthCalledWith(2, {
+      workspaceId: "workspace-1",
+      provider: "gemini",
+      modelId: "gemini-3.5-flash",
+      conversationId: "conversation-1",
+    })
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "gemini-model",
+      }),
+    )
+    expect(loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "ai_integration_missing" }),
+      "Failed to resolve AI model for appointment availability response",
+    )
+    expect(setValueByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      keyword: "output-field",
+      value: "AI response",
+    })
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+        result: expect.objectContaining({
+          text: "AI response",
+          rawText: "Available: Aug 10, 9:00 AM",
+          resultUsedByAI: true,
+        }),
+      }),
+    )
+  })
+
+  test("checkAvailability: tries the next provider when AI generation fails", async () => {
+    streamText.mockImplementationOnce(() => {
+      throw new Error("openai down")
+    })
+    streamText.mockReturnValueOnce({
+      textStream: ["Gemini response"],
+    })
+    processStreamingText.mockResolvedValueOnce({
+      fullText: "Gemini response",
+    })
+
+    const result = await appointmentScheduling({
+      ...baseProps,
+      metadata: {
+        type: "appointmentAvailabilityRangeSelection",
+        stepId: "step-1",
+        contactInboxId: "contact-inbox-1",
+        startDate: "2026-08-10T09:00:00.000",
+        endDate: "2026-08-11T17:00:00.000",
+      },
+      step: {
+        ...checkAvailabilityStep,
+        resultUsedByAI: true,
+      },
+    } as never)
+
+    expect(resolveFlowAIModel).toHaveBeenNthCalledWith(2, {
+      workspaceId: "workspace-1",
+      provider: "gemini",
+      modelId: "gemini-3.5-flash",
+      conversationId: "conversation-1",
+    })
+    expect(streamText).toHaveBeenCalledTimes(2)
+    expect(loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "ai_response_generation_failed" }),
+      "Failed to generate appointment availability response with AI",
+    )
+    expect(setValueByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      keyword: "output-field",
+      value: "Gemini response",
+    })
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+        result: expect.objectContaining({
+          text: "Gemini response",
+          rawText: "Available: Aug 10, 9:00 AM",
+          resultUsedByAI: true,
+        }),
+      }),
+    )
+  })
+
+  test("checkAvailability: falls back to raw text when all AI providers fail", async () => {
+    resolveFlowAIModel.mockResolvedValue({
+      ok: false,
+      reason: "ai_integration_missing",
+      message: "AI integration missing",
+    })
+
+    const result = await appointmentScheduling({
+      ...baseProps,
+      metadata: {
+        type: "appointmentAvailabilityRangeSelection",
+        stepId: "step-1",
+        contactInboxId: "contact-inbox-1",
+        startDate: "2026-08-10T09:00:00.000",
+        endDate: "2026-08-11T17:00:00.000",
+      },
+      step: {
+        ...checkAvailabilityStep,
+        resultUsedByAI: true,
+      },
+    } as never)
+
+    expect(resolveFlowAIModel).toHaveBeenCalledTimes(5)
+    expect(streamText).not.toHaveBeenCalled()
+    expect(setValueByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      keyword: "output-field",
+      value: "Available: Aug 10, 9:00 AM",
+    })
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+        result: expect.objectContaining({
+          text: "Available: Aug 10, 9:00 AM",
+          rawText: "Available: Aug 10, 9:00 AM",
+          resultUsedByAI: true,
+        }),
+      }),
+    )
   })
 
   const bookFromCustomFieldStep = {
@@ -534,9 +793,15 @@ describe("appointmentScheduling handler", () => {
     })
     expect(result).toEqual({
       status: "success",
-      result: { text: "Không có lịch trống.", slots: [] },
+      result: {
+        text: "Không có lịch trống.",
+        rawText: "Không có lịch trống.",
+        resultUsedByAI: false,
+        slots: [],
+      },
     })
     expect(setValues).not.toHaveBeenCalled()
+    expect(resolveFlowAIModel).not.toHaveBeenCalled()
   })
 
   test("checkAvailabilityFromCustomField: writes availability text and succeeds", async () => {
@@ -561,6 +826,52 @@ describe("appointmentScheduling handler", () => {
       keyword: "output-field",
       value: "Available: Aug 10, 9:00 AM",
     })
-    expect(result.status).toBe("success")
+    expect(resolveFlowAIModel).not.toHaveBeenCalled()
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+        result: expect.objectContaining({
+          text: "Available: Aug 10, 9:00 AM",
+          rawText: "Available: Aug 10, 9:00 AM",
+          resultUsedByAI: false,
+        }),
+      }),
+    )
+  })
+
+  test("checkAvailabilityFromCustomField: uses the default AI provider rotation when resultUsedByAI is enabled", async () => {
+    findValue.mockResolvedValueOnce("2026-08-10T09:00:00.000Z")
+    findValue.mockResolvedValueOnce("2026-08-11T09:00:00.000Z")
+
+    const result = await appointmentScheduling({
+      ...baseProps,
+      step: {
+        ...checkAvailabilityFromCustomFieldStep,
+        resultUsedByAI: true,
+      },
+    } as never)
+
+    expect(resolveFlowAIModel).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      provider: "openai",
+      modelId: "gpt-5.4-mini",
+      conversationId: "conversation-1",
+    })
+    expect(setValueByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      keyword: "output-field",
+      value: "AI response",
+    })
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+        result: expect.objectContaining({
+          text: "AI response",
+          rawText: "Available: Aug 10, 9:00 AM",
+          resultUsedByAI: true,
+        }),
+      }),
+    )
   })
 })

@@ -4268,11 +4268,11 @@
     "title": "Ajanvaraus",
     "description": "Luo ja hallitse ajanvaraustasi.",
     "flowModes": {
-      "bookFromCustomField": "Varaa aika",
-      "checkAvailabilityFromCustomField": "Tarkista saatavuus",
-      "book": "Päivä- ja aikavalitsin",
-      "checkAvailability": "Päivämääräväli-valitsin",
-      "cancel": "Peruuta aika"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Tila",

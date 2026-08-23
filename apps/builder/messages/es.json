@@ -4268,11 +4268,11 @@
     "title": "Programación de citas",
     "description": "Crea y gestiona tu programación de citas.",
     "flowModes": {
-      "bookFromCustomField": "Reservar cita",
-      "checkAvailabilityFromCustomField": "Comprobar disponibilidad",
-      "book": "Selector de fecha y hora",
-      "checkAvailability": "Selector de rango de fechas",
-      "cancel": "Cancelar cita"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modo",

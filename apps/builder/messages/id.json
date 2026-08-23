@@ -4268,11 +4268,11 @@
     "title": "Penjadwalan Janji Temu",
     "description": "Buat dan kelola penjadwalan janji temu Anda.",
     "flowModes": {
-      "bookFromCustomField": "Buat janji temu",
-      "checkAvailabilityFromCustomField": "Periksa ketersediaan",
-      "book": "Pemilih tanggal & waktu",
-      "checkAvailability": "Pemilih rentang tanggal",
-      "cancel": "Batalkan janji temu"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mode",

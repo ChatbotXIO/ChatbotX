@@ -2513,11 +2513,11 @@
     "title": "תזמון פגישות",
     "description": "יצירה וניהול של תזמון הפגישות שלכם.",
     "flowModes": {
-      "bookFromCustomField": "קביעת פגישה",
-      "checkAvailabilityFromCustomField": "בדיקת זמינות",
-      "book": "בורר תאריך ושעה",
-      "checkAvailability": "בורר טווח תאריכים",
-      "cancel": "ביטול פגישה"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "מצב",

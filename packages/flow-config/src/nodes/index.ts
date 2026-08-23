@@ -1,5 +1,6 @@
 import type { Node } from "@xyflow/react"
 import { z } from "zod"
+import { type StepType, stepTypes } from "../steps/step-action"
 import { addNotesNodeSchema } from "./add-notes"
 import { type NodeType, nodeTypeSchema } from "./base"
 import { conditionNodeSchema } from "./condition"
@@ -41,3 +42,27 @@ export const disabledContinueNodeTypes = [
   nodeTypeSchema.enum.splitTraffic,
   nodeTypeSchema.enum.condition,
 ] as NodeType[]
+
+export const disabledContinueStepTypes = [
+  stepTypes.enum.appointmentScheduling,
+] as StepType[]
+
+export const shouldShowDefaultContinue = (
+  type: NodeType,
+  data: FlowNode["data"],
+) => {
+  if (disabledContinueNodeTypes.includes(type)) {
+    return false
+  }
+
+  if (!("steps" in data.details)) {
+    return true
+  }
+
+  // Only the last step in the node falls through to the node-level Continue
+  // edge when it doesn't branch (see flow.ts's step-array walk) — an earlier
+  // step in the array always advances to the next step instead, regardless
+  // of its own states.
+  const lastStep = data.details.steps?.at(-1)
+  return !(lastStep && disabledContinueStepTypes.includes(lastStep.stepType))
+}

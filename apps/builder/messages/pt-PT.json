@@ -4268,11 +4268,11 @@
     "title": "Agendamento de marcações",
     "description": "Crie e faça a gestão do agendamento das suas marcações.",
     "flowModes": {
-      "bookFromCustomField": "Agendar marcação",
-      "checkAvailabilityFromCustomField": "Verificar disponibilidade",
-      "book": "Seletor de data e hora",
-      "checkAvailability": "Seletor de intervalo de datas",
-      "cancel": "Cancelar marcação"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modo",
