@@ -1,12 +1,14 @@
-import { deviceTokenService } from "@chatbotx.io/business"
-import z from "zod"
+import {
+  deviceTokenService,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { successResponse } from "@/features/common/schemas"
 import { authorizedAPI } from "@/orpc"
 import {
   registerDeviceTokenRequest,
   unregisterDeviceTokenRequest,
 } from "../schema/action"
-
-const successResponse = z.object({ success: z.literal(true) })
 
 export const deviceTokensAuthenticatedAPI = {
   registerDeviceTokenAPI: authorizedAPI
@@ -19,6 +21,16 @@ export const deviceTokensAuthenticatedAPI = {
     .input(registerDeviceTokenRequest)
     .output(successResponse)
     .handler(async ({ input, context }) => {
+      if (input.workspaceId) {
+        const isMember = await workspaceMemberService.isMember({
+          workspaceId: input.workspaceId,
+          userId: context.user.id,
+        })
+        if (!isMember) {
+          throw new ChatbotXException("Not a member of this workspace")
+        }
+      }
+
       await deviceTokenService.upsert({
         userId: context.user.id,
         workspaceId: input.workspaceId,

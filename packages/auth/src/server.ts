@@ -737,7 +737,13 @@ export function createAuth(config: AuthConfig) {
       // thunk also runs while `next build` collects page data — with no
       // Redis/Postgres reachable. Skip the CustomDomain lookup then; no
       // requests are served during the build. Mirrors buildSocialProviders above.
-      const staticOrigins = [getBrokerUrl(), env.NEXT_PUBLIC_BUILDER_URL]
+      const staticOrigins = [
+        getBrokerUrl(),
+        env.NEXT_PUBLIC_BUILDER_URL,
+        // Mobile app deep-link scheme (chatbotx-mobile-app) — social sign-in relays back into the
+        // app via this custom scheme instead of an https:// origin.
+        "chatconnectxapp://",
+      ]
       if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return Array.from(new Set(staticOrigins))
       }

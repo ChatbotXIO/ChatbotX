@@ -2,7 +2,11 @@ import { conversationService } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { bulkUpdateIdsRequest } from "@/features/common/schemas"
+import {
+  bulkUpdateIdsRequest,
+  successResponse,
+} from "@/features/common/schemas"
+import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { archiveConversations } from "../actions/archive-conversation.action"
@@ -30,8 +34,6 @@ const workspaceIdAndIdRequest = z.object({
   workspaceId: zodBigintAsString(),
   id: zodBigintAsString(),
 })
-
-const successResponse = z.object({ success: z.literal(true) })
 
 const postDetailsSchema = z.object({
   text: z.string().optional(),
@@ -114,6 +116,8 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
     .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await assignConversation({
         workspaceId: input.workspaceId,
         contactIds: input.contactIds,
@@ -136,6 +140,8 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
     .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await archiveConversations({
         workspaceId: input.workspaceId,
         ids: input.ids,
@@ -156,7 +162,9 @@ export const conversationsAuthenticatedAPI = {
     )
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await unarchiveConversations({
         workspaceId: input.workspaceId,
         ids: input.ids,
@@ -177,6 +185,8 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
     .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await enableBotForConversations({
         workspaceId: input.workspaceId,
         ids: input.ids,
@@ -198,6 +208,8 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
     .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await disableBotForConversations({
         workspaceId: input.workspaceId,
         ids: input.ids,
@@ -216,7 +228,9 @@ export const conversationsAuthenticatedAPI = {
     .input(workspaceIdAndIdRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await conversationService.updateReadStatus({
         workspaceId: input.workspaceId,
         id: input.id,
@@ -240,7 +254,9 @@ export const conversationsAuthenticatedAPI = {
         agentLastReadAt: z.date().nullable(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       const result = await unreadConversation({
         workspaceId: input.workspaceId,
         id: input.id,
@@ -259,6 +275,8 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
     .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await followConversation({
         workspaceId: input.workspaceId,
         id: input.id,
@@ -277,7 +295,9 @@ export const conversationsAuthenticatedAPI = {
     .input(workspaceIdAndIdRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(successResponse)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
       await unfollowConversation({
         workspaceId: input.workspaceId,
         id: input.id,

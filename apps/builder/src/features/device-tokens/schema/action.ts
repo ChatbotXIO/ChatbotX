@@ -7,13 +7,7 @@ export const registerDeviceTokenRequest = z.object({
   platform: devicePlatformTypes,
   token: z.string().min(1),
 })
-export type RegisterDeviceTokenRequest = z.infer<
-  typeof registerDeviceTokenRequest
->
 
 export const unregisterDeviceTokenRequest = z.object({
   token: z.string().min(1),
 })
-export type UnregisterDeviceTokenRequest = z.infer<
-  typeof unregisterDeviceTokenRequest
->

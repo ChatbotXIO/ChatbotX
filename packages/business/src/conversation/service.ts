@@ -557,22 +557,22 @@ class ConversationService extends BaseService {
     })
 
     if (assignedUserId && assignedUserId !== props.assignedBy) {
-      for (const conv of conversations) {
-        try {
-          await notificationQueue.add(
-            NotificationJobAction.notifyConversationAssigned,
-            {
+      try {
+        await notificationQueue.addBulk(
+          conversations.map((conv) => ({
+            name: NotificationJobAction.notifyConversationAssigned,
+            data: {
               type: NotificationJobAction.notifyConversationAssigned,
               data: { workspaceId, conversationId: conv.id, assignedUserId },
             },
-            { jobId: `notify-assigned-${conv.id}-${assignedUserId}` },
-          )
-        } catch (err) {
-          logger.warn(
-            { err, workspaceId, conversationId: conv.id },
-            "conversation-assigned notification enqueue failed",
-          )
-        }
+            opts: { jobId: `notify-assigned-${conv.id}-${assignedUserId}` },
+          })),
+        )
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, conversationIds: ids },
+          "conversation-assigned notification bulk enqueue failed",
+        )
       }
     }
 

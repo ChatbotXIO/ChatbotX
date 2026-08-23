@@ -6,7 +6,7 @@ import {
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
+import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { changeMessageAttributes } from "../actions/change-message-attributes.action"
@@ -31,19 +31,6 @@ const workspaceIdAndConversationIdRequest = z.object({
   workspaceId: zodBigintAsString(),
   conversationId: zodBigintAsString(),
 })
-
-const assertWorkspaceNotBlocked = async (ownerId: string) => {
-  const { blocked, blockReason } = await resolveWorkspaceBlockState(ownerId)
-  if (blocked) {
-    throw new ChatbotXException(
-      blockReason === "mac"
-        ? "Contact limit reached for this plan"
-        : "This workspace's plan/trial has expired",
-      "workspaceBlocked",
-      402,
-    )
-  }
-}
 
 export const messagesAuthenticatedAPI = {
   listMessagesAuthenticatedAPI: authorizedAPI
@@ -79,6 +66,7 @@ export const messagesAuthenticatedAPI = {
     })
     .input(createMessageRequest.and(workspaceIdAndConversationIdRequest))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(messageResourceWithRelations.nullable())
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
@@ -120,13 +108,15 @@ export const messagesAuthenticatedAPI = {
     })
     .input(editMessageRequest.and(workspaceIdAndConversationIdRequest))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) =>
-      editMessage({
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
+      return editMessage({
         workspaceId: input.workspaceId,
         conversationId: input.conversationId,
         parsedInput: input,
-      }),
-    ),
+      })
+    }),
 
   deleteMessageAuthenticatedAPI: authorizedAPI
     .route({
@@ -137,13 +127,15 @@ export const messagesAuthenticatedAPI = {
     })
     .input(deleteMessageRequest.and(workspaceIdAndConversationIdRequest))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) =>
-      deleteMessage({
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
+      return deleteMessage({
         workspaceId: input.workspaceId,
         conversationId: input.conversationId,
         parsedInput: input,
-      }),
-    ),
+      })
+    }),
 
   changeMessageAttributesAuthenticatedAPI: authorizedAPI
     .route({
@@ -156,11 +148,13 @@ export const messagesAuthenticatedAPI = {
       changeMessageAttributesRequest.and(workspaceIdAndConversationIdRequest),
     )
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) =>
-      changeMessageAttributes({
+    .handler(async ({ input, context }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+
+      return changeMessageAttributes({
         workspaceId: input.workspaceId,
         conversationId: input.conversationId,
         parsedInput: input,
-      }),
-    ),
+      })
+    }),
 }

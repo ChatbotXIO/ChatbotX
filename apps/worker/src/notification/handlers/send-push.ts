@@ -5,6 +5,7 @@ import {
   workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
+import type { ConversationModel } from "@chatbotx.io/database/types"
 import type { NotificationJobData } from "@chatbotx.io/worker-config"
 import { Expo, type ExpoPushMessage, type ExpoPushToken } from "expo-server-sdk"
 import { logger } from "../../lib/logger"
@@ -18,14 +19,12 @@ import { getExpoClient } from "../lib/expo"
  */
 const resolveRecipientUserIds = async (
   job: NotificationJobData,
+  conversation: ConversationModel,
 ): Promise<string[]> => {
   if (job.type === "notifyConversationAssigned") {
     return [job.data.assignedUserId]
   }
 
-  const conversation = await conversationService.findByOrFail({
-    where: { id: job.data.conversationId, workspaceId: job.data.workspaceId },
-  })
   if (conversation.assignedUserId) {
     return [conversation.assignedUserId]
   }
@@ -36,20 +35,17 @@ const resolveRecipientUserIds = async (
 
 const resolveNotificationContent = async (
   job: NotificationJobData,
+  conversation: ConversationModel,
 ): Promise<{ title: string; body: string }> => {
-  const { workspaceId, conversationId } = job.data
+  const { workspaceId } = job.data
 
-  const [conversation, workspace] = await Promise.all([
-    conversationService.findByOrFail({
-      where: { id: conversationId, workspaceId },
+  const [contact, workspace] = await Promise.all([
+    contactService.findById({
+      workspaceId,
+      id: conversation.contactId,
     }),
     workspaceService.findById({ id: workspaceId }),
   ])
-
-  const contact = await contactService.findById({
-    workspaceId,
-    id: conversation.contactId,
-  })
 
   return buildNotificationContent({
     job,
@@ -66,7 +62,11 @@ export const sendPushForNotificationJob = async (
     return
   }
 
-  const recipientUserIds = await resolveRecipientUserIds(job)
+  const conversation = await conversationService.findByOrFail({
+    where: { id: job.data.conversationId, workspaceId: job.data.workspaceId },
+  })
+
+  const recipientUserIds = await resolveRecipientUserIds(job, conversation)
   if (recipientUserIds.length === 0) {
     return
   }
@@ -98,7 +98,7 @@ export const sendPushForNotificationJob = async (
 
   const { workspaceId, conversationId } = job.data
   const messageId = "messageId" in job.data ? job.data.messageId : ""
-  const { title, body } = await resolveNotificationContent(job)
+  const { title, body } = await resolveNotificationContent(job, conversation)
 
   const messages: ExpoPushMessage[] = validTokens.map((token) => ({
     to: token,
@@ -112,6 +112,7 @@ export const sendPushForNotificationJob = async (
 
   const chunks = expo.chunkPushNotifications(messages)
   const staleTokens: string[] = []
+  let failedChunkCount = 0
 
   for (const chunk of chunks) {
     try {
@@ -128,8 +129,16 @@ export const sendPushForNotificationJob = async (
         }
       }
     } catch (error) {
+      failedChunkCount++
       logger.warn(error, "Expo push chunk failed")
     }
+  }
+
+  // If every chunk threw, nothing was delivered — rethrow so BullMQ retries
+  // instead of silently dropping the notification. Partial failures stay
+  // isolated per-chunk above.
+  if (failedChunkCount === chunks.length) {
+    throw new Error(`All ${chunks.length} Expo push chunk(s) failed to send`)
   }
 
   if (staleTokens.length > 0) {
