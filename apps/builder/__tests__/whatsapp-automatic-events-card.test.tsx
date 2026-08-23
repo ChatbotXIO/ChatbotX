@@ -70,6 +70,7 @@ describe("WhatsappAutomaticEventsCard", () => {
       root.render(
         <WhatsappAutomaticEventsCard
           integrationWhatsapp={integration}
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           whatsappCredentialPublic={credential}
           workspaceId="ws-1"
         />,

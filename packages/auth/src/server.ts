@@ -319,6 +319,13 @@ export type AuthConfig = {
    * (self-hosted, tests) to disable.
    */
   onUserCreated?: (user: AuthCreatedUser) => Promise<void> | void
+  /**
+   * Origin to pin social `redirectURI`s to, in place of the broker. The
+   * builder passes the reseller's active custom domain for a tenant-owned
+   * credential; omit to keep the broker (inherited/platform credentials,
+   * self-hosted).
+   */
+  socialRedirectOrigin?: string
 }
 
 /**
@@ -329,6 +336,7 @@ export type AuthConfig = {
 function buildSocialProviders(
   socialCredentials: AuthConfig["socialCredentials"],
   socialScopes: AuthConfig["socialScopes"],
+  redirectOrigin: AuthConfig["socialRedirectOrigin"],
 ) {
   if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD || !socialCredentials) {
     return
@@ -345,7 +353,7 @@ function buildSocialProviders(
       } & SocialAuthCredential
     >
   > = {}
-  const brokerOrigin = new URL(getBrokerUrl()).origin
+  const pinnedOrigin = new URL(redirectOrigin ?? getBrokerUrl()).origin
   for (const provider of SOCIAL_PROVIDERS) {
     const credential = socialCredentials[provider]
     if (credential?.clientId && credential.clientSecret) {
@@ -354,13 +362,15 @@ function buildSocialProviders(
         enabled: true,
         clientId: credential.clientId,
         clientSecret: credential.clientSecret,
-        // Pin the redirect_uri to the broker host. Without this, better-auth
-        // infers it from the request origin (the reseller domain), which is NOT
-        // registered with the provider. The broker is the single registered URI;
-        // the callback relays back to the reseller domain afterwards.
+        // Pin the redirect_uri to a single registered host — the broker by
+        // default, or the reseller's own custom domain for a tenant-owned
+        // credential (`socialRedirectOrigin`). Without this, better-auth
+        // infers it from the request origin, which may not be registered
+        // with the provider. When pinned to the broker, the callback relays
+        // back to the reseller domain afterwards.
         redirectURI: new URL(
           `/api/auth/callback/${provider}`,
-          brokerOrigin,
+          pinnedOrigin,
         ).toString(),
         // Replace (not append to) better-auth's own default scope list when the
         // caller supplies one, so the caller-provided scopes are the single
@@ -451,6 +461,7 @@ export function createAuth(config: AuthConfig) {
   const socialProviders = buildSocialProviders(
     config.socialCredentials,
     config.socialScopes,
+    config.socialRedirectOrigin,
   )
 
   return betterAuth({

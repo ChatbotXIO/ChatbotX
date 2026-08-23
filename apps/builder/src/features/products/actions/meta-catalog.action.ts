@@ -21,8 +21,8 @@ import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import {
   workspaceActionClient,
   workspaceActionClientAllowExpired,
@@ -40,7 +40,8 @@ export const connectMetaCatalogAction = workspaceActionClient
       const t = await getTranslations("metaCatalog.errors")
       throw new ChatbotXException(t("invalidAppSettings"))
     }
-    const redirectUrl = buildBrokerCallbackUrl(
+    const redirectUrl = await buildProviderCallbackUrl(
+      credential,
       "/integrations/messenger/callback",
     )
     const baseUrl = await getOriginUrlFromHeader()

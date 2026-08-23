@@ -60,19 +60,24 @@ Tenant scoping lives in `packages/auth/src/tenant-context.ts` and `server.ts`.
   `Account.tenantId` has `onDelete: "restrict"`, so a mismatched stamp would block
   that reseller tenant's deletion.
 - **OAuth state recovery** (`resolveTenantFromOAuthState`) — OAuth providers redirect
-  to a fixed, pre-registered redirect URI (the **broker host**, see below), so on
-  `/callback/*` the request's `x-domain` is the broker host. The tenant is instead
+  to a redirect URI pinned per-credential (the reseller's own active custom domain for
+  a tenant-owned credential, else the **broker host**, see below), so on `/callback/*`
+  the request's `x-domain` may not match where the flow started. The tenant is instead
   recovered from the persisted OAuth `state` (its `callbackURL` carries the
   originating reseller origin, exposed by `resolveOAuthStateCallbackURL`). Fails safe
   to the root tenant.
-- **Callback relay** — because the provider lands on the broker host, the session
-  cookie would otherwise be minted there and never reach the reseller's domain. So
-  on the `/callback/*` leg the auth route bounces the callback (same `code` + `state`)
-  back to the originating branded host before better-auth processes it, so the
-  session cookie is set on the host the user is actually on. `skipStateCookieCheck`
-  makes this cross-host hand-off safe (state lives in the DB, not only the cookie).
-  This mirrors `resolveRelayTarget` in `apps/builder/src/lib/oauth-referer.ts`, the
-  same relay the channel integrations use (`integrations/[...integration]/callback.ts`).
+- **Callback relay** — the registered callback host can differ from the originating
+  branded host (inherited/platform credentials always land on the broker; a
+  tenant-owned credential lands on the reseller's own domain even when the flow
+  started on the platform host). Landing anywhere but the originating host would mint
+  the session cookie somewhere the user isn't. So on the `/callback/*` leg the auth
+  route bounces the callback (same `code` + `state`) back to the originating branded
+  host before better-auth processes it, so the session cookie is set on the host the
+  user is actually on. `skipStateCookieCheck` makes this cross-host hand-off safe
+  (state lives in the DB, not only the cookie). This mirrors `resolveRelayTarget` in
+  `apps/builder/src/lib/oauth-referer.ts`, the same relay the channel integrations use
+  (`integrations/[...integration]/callback.ts`) — it relays whenever the callback host
+  differs from the originating `referer` host.
 
 The auth route (`apps/builder/src/app/api/auth/[...all]/route.ts`) binds the tenant
 with `withTenant` around the whole better-auth pipeline.
@@ -94,66 +99,94 @@ sees a provider's button only when its credential resolves
 credential** stored under `type: "messenger"`, so resellers don't register a second
 Facebook app just to sign in.
 
-The OAuth `redirect_uri` is always the broker host (each social provider's
-`redirectURI` is pinned to it in `buildSocialProviders`), so a reseller using their
-**own** provider app must register the *broker* callback URL
-(`{broker}/api/auth/callback/<provider>`) in that app's console. The callback then
-relays back to the branded host (see "Callback relay" above) so the session lands
-there.
+The OAuth `redirect_uri` is pinned per-credential in `buildSocialProviders`
+(`packages/auth/src/server.ts`, via `AuthConfig.socialRedirectOrigin`):
+`apps/builder/src/lib/auth/auth-instances.ts` resolves it to the reseller's active
+custom domain for a tenant-owned credential (their own app, on a non-root tenant),
+else the broker host. A reseller using their own provider app registers the callback
+URL on **their own domain** (`{their-domain}/api/auth/callback/<provider>`) when they
+have an active custom domain, otherwise the *broker* callback URL
+(`{broker}/api/auth/callback/<provider>`) — the manage-credentials UI shows the exact
+URL to register. The instance cache key folds in the redirect origin, so activating a
+custom domain resolves to a fresh instance instead of reusing one pinned to the
+broker. Either way, when the callback lands on a host different from where the flow
+started, it relays back to the originating host (see "Callback relay" above) so the
+session lands there.
 
 ## OAuth broker (the "white-label URL")
 
 OAuth providers (Google, Facebook, TikTok, …) only accept a fixed allowlist of
-redirect URIs — wildcards and per-reseller domains are rejected. So every OAuth flow
-(social SSO **and** channel integrations) lands on a single dedicated, brand-neutral
-host — the **broker** — which then relays the callback back to the originating
-reseller domain. This is the same pattern GoHighLevel uses with
-`marketplace.leadconnectorhq.com`.
+redirect URIs — wildcards are rejected, so a URI must be registered explicitly. Every
+OAuth flow (social SSO **and** channel integrations) uses the origin registered for
+the credential in use: the **broker** — a dedicated, brand-neutral host, same pattern
+as GoHighLevel's `marketplace.leadconnectorhq.com` — for inherited/platform
+credentials and self-hosted editions, or the reseller's **own active custom domain**
+for a credential they configured themselves (`Credential.userId` set). Either way, if
+the callback lands on a host different from where the flow started, it relays back to
+the originating host so the code exchange and cookie write happen where the user's
+session actually lives.
 
 - **Config** — `NEXT_PUBLIC_BROKER_URL` (env). Optional; defaults to
   `NEXT_PUBLIC_BUILDER_URL` so single-domain deployments are unaffected. Resolved via
-  `getBrokerUrl()` (`packages/auth/src/keys.ts`) and `getBrokerOrigin()` /
-  `buildBrokerCallbackUrl()` (`apps/builder/src/lib/oauth-broker.ts`).
-- **Where redirect URIs come from** — SSO pins each provider's `redirectURI` in
-  `buildSocialProviders` (`packages/auth/src/server.ts`); integrations build theirs
-  with `buildBrokerCallbackUrl()` in each `features/integration-*/libs/*.ts` and in
+  `getBrokerUrl()` (`packages/auth/src/keys.ts`) and `getBrokerOrigin()`
+  (`apps/builder/src/lib/oauth-broker.ts`).
+- **Where redirect URIs come from** — `apps/builder/src/lib/provider-origin.ts` is the
+  single source of truth: `resolveProviderOriginForCredential`/`buildProviderCallbackUrl`
+  resolve to the reseller's active custom domain when the credential is tenant-owned
+  (`userId` set) and their tenant has one, else the broker. SSO threads the same
+  resolution through `AuthConfig.socialRedirectOrigin` (see "Per-tenant social OAuth"
+  above); integrations call `buildProviderCallbackUrl()` in each
+  `features/integration-*/libs/*.ts`, their connect/reconnect actions, and in
   `integrations/[...integration]/callback.ts` (the token-exchange `redirect_uri` must
-  match the authorize-time one). `trustedOrigins` includes the broker, the builder
-  URL, and every active custom domain.
-- **Relay targets** — `resolveRelayTarget` only relays *from* the broker host, and
-  only *to* an origin we control: the builder URL or an active custom domain.
-  `sanitizeReferer` enforces the same allowlist, so an attacker-controlled `state`
-  cannot drive an open redirect. (Integration `state` is not HMAC-signed; integrity
-  rests on this origin allowlist plus the `workspace.ownerId === userId` ownership
-  check in the callback. Signing `state` is a possible future hardening.)
+  match the authorize-time one — always the same credential resolved on both legs).
+  `trustedOrigins` includes the broker, the builder URL, and every active custom
+  domain.
+- **Relay targets** — `resolveRelayTarget` relays whenever the callback's host differs
+  from the originating `referer` host, and only *to* an origin we control: the builder
+  URL or an active custom domain. `sanitizeReferer` enforces the same allowlist, so an
+  attacker-controlled `state` cannot drive an open redirect. (Integration `state` is
+  not HMAC-signed; integrity rests on this origin allowlist plus the
+  `workspace.ownerId === userId` ownership check in the callback. Signing `state` is a
+  possible future hardening.)
+- **No active domain** — a tenant-owned credential with no active custom domain falls
+  back to the broker server-side (there's nothing else to register with the
+  provider); the manage-credentials UI instead shows a literal
+  `https://<your-domain.com>` placeholder so the reseller isn't misled into
+  registering a host they don't control.
 
 ### Provider-console registration runbook
 
-Register these exact URIs in each provider's developer console (platform-owned app,
-and any reseller-owned app). `{broker}` = `NEXT_PUBLIC_BROKER_URL`:
+Register these exact URIs in each provider's developer console. For the
+platform-owned app (or a self-hosted edition), `{origin}` = `NEXT_PUBLIC_BROKER_URL`
+(or the builder URL). For a reseller-owned app, `{origin}` = the reseller's own active
+custom domain:
 
 | Provider | URI to register |
 |----------|--------------------------|
-| Google SSO | `{broker}/api/auth/callback/google` |
-| Facebook SSO | `{broker}/api/auth/callback/facebook` |
-| Google Sheets | `{broker}/integrations/google/callback` |
-| TikTok | `{broker}/integrations/tiktok/callback` |
-| Messenger | `{broker}/integrations/messenger/callback` |
-| Instagram | `{broker}/integrations/instagram/callback` |
-| Zalo | `{broker}/integrations/zalo/callback` |
-| WhatsApp webhook | `{broker}/integrations/whatsapp/webhook` |
-| TikTok webhook | `{broker}/integrations/tiktok/webhook` |
+| Google SSO | `{origin}/api/auth/callback/google` |
+| Facebook SSO | `{origin}/api/auth/callback/facebook` |
+| Google Sheets | `{origin}/integrations/google-sheets/callback` |
+| Google Calendar | `{origin}/integrations/google-calendar/callback` |
+| TikTok | `{origin}/integrations/tiktok/callback` |
+| Messenger | `{origin}/integrations/messenger/callback` |
+| Instagram | `{origin}/integrations/instagram/callback` |
+| Zalo | `{origin}/integrations/zalo/callback` |
+| WhatsApp webhook | `{origin}/integrations/whatsapp/webhook` |
+| TikTok webhook | `{origin}/integrations/tiktok/webhook` |
 
 (The WhatsApp manual-connect flow registers a per-integration variant,
-`{broker}/integrations/whatsapp/webhook/{integrationId}`, sent to Meta as
+`{origin}/integrations/whatsapp/webhook/{integrationId}`, sent to Meta as
 `override_callback_uri`.)
 
-The platform-credential settings UI surfaces these URLs per provider so resellers can
-copy the exact value into their own console. Receive-side webhook URLs for providers
-that validate the registered host (e.g. WhatsApp/Meta, TikTok) **also use the broker
-host** — the provider cannot reach an unregistered white-label custom domain. Only
-purely internal receive endpoints (no provider-side host validation) stay on the
-reseller's own domain.
+The platform-credential settings UI surfaces these URLs per provider (already resolved
+to the correct origin) so resellers can copy the exact value into their own console.
+Receive-side webhook URLs follow the same per-credential origin as OAuth callbacks —
+inherited/platform credentials on the broker host, tenant-owned credentials on the
+reseller's own active custom domain — since the provider cannot reach an unregistered
+host either way. Webhook *receive* routing itself still dispatches by request host
+(`app/integrations/[...integration]/webhook.ts`): the broker host resolves the
+platform credential, any other (now correctly-registered) host resolves the tenant
+credential for that domain.
 
 ## Branding
 

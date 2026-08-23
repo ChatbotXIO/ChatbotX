@@ -87,9 +87,6 @@ export async function GET(req: NextRequest) {
     redirect("/channels/messenger/select")
   }
 
-  const redirectUri = await generateMessengerRedirectUri(
-    messenger.publicConfig,
-    workspaceId,
-  )
+  const redirectUri = await generateMessengerRedirectUri(messenger, workspaceId)
   redirect(redirectUri)
 }

@@ -9,10 +9,14 @@ import {
   resolveTenantByDomain,
   resolveTenantOwnerId,
 } from "@chatbotx.io/auth/tenant"
-import { platformCredentialService } from "@chatbotx.io/business"
+import {
+  customDomainService,
+  platformCredentialService,
+} from "@chatbotx.io/business"
 import type { CredentialType } from "@chatbotx.io/database/partials"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { isCommunity } from "@/env"
+import { getBrokerOrigin } from "@/lib/oauth-broker"
 import { onUserCreated } from "./on-user-created"
 import {
   FACEBOOK_SSO_SCOPES,
@@ -71,14 +75,22 @@ const instancesByProvider: Record<SocialProvider, Map<string, Auth>> = {
 /** A resolved credential, carrying the Meta API `version` for Facebook. */
 type FacebookAwareCredential = SocialAuthCredential & { version?: string }
 
-/** A stable, non-reversible cache key for a credential (client id + secret + version). */
-function credentialKey(credential: FacebookAwareCredential | null): string {
+/**
+ * A stable, non-reversible cache key for a credential (client id + secret +
+ * version + redirect origin) — a domain activation for a tenant-owned
+ * credential must resolve to a fresh instance, since `redirectURI` is frozen
+ * into the instance at creation (see module doc comment).
+ */
+function credentialKey(
+  credential: FacebookAwareCredential | null,
+  redirectOrigin: string,
+): string {
   if (!credential) {
     return NO_CREDENTIAL_KEY
   }
   return createHash("sha256")
     .update(
-      `${credential.clientId} ${credential.clientSecret} ${credential.version ?? ""}`,
+      `${credential.clientId} ${credential.clientSecret} ${credential.version ?? ""} ${redirectOrigin}`,
     )
     .digest("hex")
 }
@@ -86,9 +98,10 @@ function credentialKey(credential: FacebookAwareCredential | null): string {
 function getAuthForCredential(
   provider: SocialProvider,
   credential: FacebookAwareCredential | null,
+  redirectOrigin: string,
 ): Auth {
   const cache = instancesByProvider[provider]
-  const key = credentialKey(credential)
+  const key = credentialKey(credential, redirectOrigin)
   const cached = cache.get(key)
   if (cached) {
     return cached
@@ -96,6 +109,7 @@ function getAuthForCredential(
 
   const instance = createAuth({
     socialCredentials: { [provider]: credential },
+    socialRedirectOrigin: redirectOrigin,
     onUserCreated,
     // Facebook SSO requests the same Messenger-grade scopes as the channel
     // connect flow (so the token can later be reused to list Pages) and
@@ -118,22 +132,47 @@ function getAuthForCredential(
 /** Fallback only reached if a resolved messenger credential is somehow missing `version` (schema requires it). */
 const DEFAULT_MESSENGER_API_VERSION = "v23.0"
 
+type TenantCredentialResolution = {
+  credential: FacebookAwareCredential | null
+  /** The origin the social `redirectURI` must be pinned to for this credential. */
+  redirectOrigin: string
+}
+
+/**
+ * The origin a tenant's social `redirectURI` must be pinned to: the
+ * reseller's active custom domain for a tenant-owned credential (their own
+ * app, on a non-root tenant), else the broker.
+ */
+async function resolveTenantSocialRedirectOrigin(
+  credentialOwnerId: string | null | undefined,
+  tenantId: string,
+): Promise<string> {
+  if (!(credentialOwnerId && tenantId !== ROOT_TENANT_ID)) {
+    return getBrokerOrigin()
+  }
+  const domain = await customDomainService.findActiveByTenantId(tenantId)
+  return domain ? `https://${domain.domain}` : getBrokerOrigin()
+}
+
 /**
  * The credential a tenant signs in with for `provider`: the reseller's own app
  * when they configured one (and their tenant is active), otherwise the platform
- * default. Returns `null` when neither resolves or the secret is incomplete.
+ * default. `credential` is `null` when neither resolves or the secret is
+ * incomplete. `redirectOrigin` is the reseller's active custom domain for a
+ * tenant-owned credential (their own app, on a non-root tenant), else the
+ * broker.
  */
 async function resolveCredentialForTenant(
   tenantId: string,
   provider: SocialProvider,
-): Promise<FacebookAwareCredential | null> {
+): Promise<TenantCredentialResolution> {
   // Community edition ships without social sign-in (email/password + magic
   // link only). Resolving no credential builds the better-auth instance with
   // zero social providers, so /api/auth/sign-in/social, OAuth callbacks, and
   // link-social all reject — and the sign-in pages hide the buttons since
   // isSocialLoginEnabledForTenant derives from this same resolver.
   if (isCommunity()) {
-    return null
+    return { credential: null, redirectOrigin: getBrokerOrigin() }
   }
 
   const type = PROVIDER_CREDENTIAL_TYPE[provider]
@@ -142,19 +181,27 @@ async function resolveCredentialForTenant(
       ? await platformCredentialService.findDecryptedPlatform({ type })
       : await resolveResellerCredential(tenantId, type)
 
+  const redirectOrigin = await resolveTenantSocialRedirectOrigin(
+    decrypted?.userId,
+    tenantId,
+  )
+
   const clientId = decrypted?.config.clientId
   const clientSecret = decrypted?.config.clientSecret
   if (!(clientId && clientSecret)) {
-    return null
+    return { credential: null, redirectOrigin }
   }
 
   return {
-    clientId,
-    clientSecret,
-    version:
-      provider === "facebook"
-        ? (decrypted?.config as { version: string }).version
-        : undefined,
+    credential: {
+      clientId,
+      clientSecret,
+      version:
+        provider === "facebook"
+          ? (decrypted?.config as { version: string }).version
+          : undefined,
+    },
+    redirectOrigin,
   }
 }
 
@@ -174,10 +221,11 @@ export async function getSocialAuthForTenant(
   tenantId: string,
   provider: SocialProvider,
 ): Promise<Auth> {
-  return getAuthForCredential(
+  const { credential, redirectOrigin } = await resolveCredentialForTenant(
+    tenantId,
     provider,
-    await resolveCredentialForTenant(tenantId, provider),
   )
+  return getAuthForCredential(provider, credential, redirectOrigin)
 }
 
 /** Whether `provider` login resolves for the given tenant (drives button visibility). */
@@ -185,7 +233,8 @@ export async function isSocialLoginEnabledForTenant(
   tenantId: string,
   provider: SocialProvider,
 ): Promise<boolean> {
-  return (await resolveCredentialForTenant(tenantId, provider)) !== null
+  const { credential } = await resolveCredentialForTenant(tenantId, provider)
+  return credential !== null
 }
 
 /** The social providers enabled for the tenant that owns the given domain. */

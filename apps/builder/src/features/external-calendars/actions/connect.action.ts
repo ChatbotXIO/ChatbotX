@@ -8,8 +8,8 @@ import { redirect } from "next/navigation"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { connectExternalCalendarRequest } from "../schemas/action"
 
@@ -43,7 +43,8 @@ export const connectGoogleCalendarAction = workspaceActionClient
       const authUrl = await integrations.googleCalendar.handleRequest?.({
         config: {
           ...googleCredential.config,
-          redirectUrl: buildBrokerCallbackUrl(
+          redirectUrl: await buildProviderCallbackUrl(
+            googleCredential,
             "/integrations/google-calendar/callback",
           ),
           stateParams: {

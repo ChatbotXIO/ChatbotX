@@ -62,6 +62,12 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     resolveForOwner: mockResolveForOwner,
   },
+  customDomainService: {
+    findActiveByTenantId: mockFindActiveByTenantId,
+  },
+  tenantService: {
+    findByOwner: mockFindByOwner,
+  },
 }))
 
 vi.mock("@/lib/platform-credential-owner", () => ({
@@ -98,9 +104,18 @@ vi.mock("@/lib/domain", () => ({
   getOriginUrlFromHeader: vi.fn(async () => "https://app.example.com"),
 }))
 
+const BROKER_ORIGIN = "https://broker.example.com"
+
 vi.mock("@/lib/oauth-broker", () => ({
-  buildBrokerCallbackUrl: (path: string) => `https://broker.example.com${path}`,
+  getBrokerOrigin: () => BROKER_ORIGIN,
 }))
+
+const { mockFindActiveByTenantId, mockFindByOwner } = vi.hoisted(() => ({
+  mockFindActiveByTenantId: vi.fn(),
+  mockFindByOwner: vi.fn(),
+}))
+
+vi.mock("@/env", () => ({ isCloud: () => true }))
 
 await import("../src/features/integration-messenger/actions/reconnect.action")
 await import("../src/features/integration-instagram/actions/reconnect.action")
@@ -134,12 +149,15 @@ describe("reconnectMessengerAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockResolveForOwner.mockResolvedValue({
+      userId: null,
       config: {
         clientId: "client-1",
         clientSecret: "secret-1",
         version: "v23.0",
       },
     })
+    mockFindByOwner.mockResolvedValue(undefined)
+    mockFindActiveByTenantId.mockResolvedValue(undefined)
   })
 
   test("redirects to the Facebook dialog with reconnect state", async () => {
@@ -185,18 +203,46 @@ describe("reconnectMessengerAction", () => {
     )
     expect(mockRedirect).not.toHaveBeenCalled()
   })
-})
 
-describe("reconnectInstagramAction", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+  test("uses the reseller's active custom domain for a tenant-owned credential", async () => {
+    mockFindMessengerIntegration.mockResolvedValue({
+      id: "im-1",
+      pageId: "page-1",
+    })
     mockResolveForOwner.mockResolvedValue({
+      userId: "owner-1",
       config: {
         clientId: "client-1",
         clientSecret: "secret-1",
         version: "v23.0",
       },
     })
+    mockFindByOwner.mockResolvedValue({ id: "t1", status: "active" })
+    mockFindActiveByTenantId.mockResolvedValue({ domain: "chat.acme.com" })
+
+    await executeMessengerReconnect()
+
+    expect(mockGenerateMessengerAuthUrl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        redirectUrl: "https://chat.acme.com/integrations/messenger/callback",
+      }),
+    )
+  })
+})
+
+describe("reconnectInstagramAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockResolveForOwner.mockResolvedValue({
+      userId: null,
+      config: {
+        clientId: "client-1",
+        clientSecret: "secret-1",
+        version: "v23.0",
+      },
+    })
+    mockFindByOwner.mockResolvedValue(undefined)
+    mockFindActiveByTenantId.mockResolvedValue(undefined)
   })
 
   test("opens the direct Instagram dialog for type instagram", async () => {

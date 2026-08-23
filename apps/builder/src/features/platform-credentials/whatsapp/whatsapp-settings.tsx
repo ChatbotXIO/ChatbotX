@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -41,19 +40,17 @@ import { updateWhatsappSettingsAction } from "./update-whatsapp-settings.action"
 export function WhatsappSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: WhatsappCredentialPublic | null
   isInherited?: boolean
+  /** Origin to register with Meta. See `MessengerSettings`' equivalent prop. */
+  callbackOrigin: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  // Webhook + OAuth callback URLs must live on the fixed, provider-registered
-  // broker host — never the reseller's white-label custom domain, which Meta
-  // cannot reach. This matches what `connect.action.ts` registers server-side.
-  const webhookUrl = buildBrokerCallbackUrl("/integrations/whatsapp/webhook")
-  const authCallbackUrl = buildBrokerCallbackUrl(
-    "/integrations/whatsapp/callback",
-  )
+  const webhookUrl = `${callbackOrigin}/integrations/whatsapp/webhook`
+  const authCallbackUrl = `${callbackOrigin}/integrations/whatsapp/callback`
 
   return (
     <Card>

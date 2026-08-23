@@ -48,6 +48,7 @@ export default async function AdsAnalyticsPage(props: {
       <div className="flex min-w-0 flex-1 flex-col gap-5">
         <Suspense>
           <AdsAnalyticsView
+            oauthCallbackUrl={switcherData.oauthCallbackUrl}
             promises={promises}
             range={search}
             selectedIntegrationWhatsappId={selectedAccount?.id ?? null}

@@ -23,21 +23,26 @@ import { resolveRelayTarget } from "@/lib/oauth-referer"
  * fallback applies to every auth method, including OAuth social sign-in — see
  * the findOne reseller-owner fallback in `@chatbotx.io/auth` `server.ts`.
  *
- * OAuth still needs special tenant recovery: the provider redirects to a fixed,
- * pre-registered redirect URI (the broker host — `NEXT_PUBLIC_BROKER_URL`,
- * defaulting to the builder URL), so on the `/callback/*` leg `x-domain` is the
- * broker host. There we recover the tenant from the persisted OAuth `state`
- * instead — its `callbackURL` carries the originating reseller origin. Without
- * this, a social signup on a reseller domain would be created in the root
- * tenant. See `resolveTenantFromOAuthState`.
+ * OAuth still needs special tenant recovery: the provider redirects to a
+ * redirect URI pinned per-credential (the reseller's own active custom domain
+ * for a tenant-owned credential, else the broker host —
+ * `NEXT_PUBLIC_BROKER_URL`, defaulting to the builder URL; see
+ * `auth-instances.ts`), so on the `/callback/*` leg `x-domain` may not match
+ * where the flow started. There we recover the tenant from the persisted
+ * OAuth `state` instead — its `callbackURL` carries the originating reseller
+ * origin. Without this, a social signup on a reseller domain would be created
+ * in the root tenant. See `resolveTenantFromOAuthState`.
  *
  * Two further white-label concerns are handled here:
  *
- * 1. Relay — the fixed broker callback must run on the *originating* branded
- *    host, otherwise the session cookie is minted on the broker host and never
- *    reaches the reseller domain the user is on. So on the `/callback/*` leg we
- *    bounce the callback (same code + state) back to that host before handling.
- *    Mirrors the Facebook/TikTok relay in `integrations/[...integration]`.
+ * 1. Relay — the registered callback host can differ from the *originating*
+ *    branded host (inherited/platform credentials always land on the broker;
+ *    a tenant-owned credential lands on the reseller's own domain even when
+ *    the flow started on the platform host). Landing anywhere but the
+ *    originating host mints the session cookie somewhere the user isn't, so
+ *    on the `/callback/*` leg we bounce the callback (same code + state) back
+ *    to that host before handling. Mirrors the Facebook/TikTok relay in
+ *    `integrations/[...integration]`.
  *
  * 2. Per-tenant social apps — better-auth freezes social-provider config at init,
  *    so we dispatch the social/callback legs to a per-credential auth instance
