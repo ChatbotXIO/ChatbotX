@@ -313,6 +313,7 @@ describe("reconnectZaloAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockResolveForOwner.mockResolvedValue({
+      userId: null,
       config: {
         clientId: "client-1",
         clientSecret: "secret-1",
@@ -320,6 +321,8 @@ describe("reconnectZaloAction", () => {
         version: "v4",
       },
     })
+    mockFindByOwner.mockResolvedValue(undefined)
+    mockFindActiveByTenantId.mockResolvedValue(undefined)
   })
 
   test("redirects to the Zalo dialog with reconnect state", async () => {
@@ -364,5 +367,28 @@ describe("reconnectZaloAction", () => {
       "Zalo App settings not found",
     )
     expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  test("uses the reseller's active custom domain for a tenant-owned credential", async () => {
+    mockFindZaloIntegration.mockResolvedValue({ id: "iz-1", oaId: "oa-1" })
+    mockResolveForOwner.mockResolvedValue({
+      userId: "owner-1",
+      config: {
+        clientId: "client-1",
+        clientSecret: "secret-1",
+        verifyToken: "verify-1",
+        version: "v4",
+      },
+    })
+    mockFindByOwner.mockResolvedValue({ id: "t1", status: "active" })
+    mockFindActiveByTenantId.mockResolvedValue({ domain: "chat.acme.com" })
+
+    await executeZaloReconnect()
+
+    expect(mockGenerateZaloAuthUrl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        redirectUrl: "https://chat.acme.com/integrations/zalo/callback",
+      }),
+    )
   })
 })

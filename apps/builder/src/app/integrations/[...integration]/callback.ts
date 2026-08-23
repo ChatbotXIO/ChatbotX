@@ -526,22 +526,23 @@ export const handleCallback = async (
         return notFound()
       }
 
-      if (stateParams.reconnectIntegrationId) {
-        const result = await reconnectZaloHandler({
-          zaloSettings: zaloCredential.config,
-          workspaceId: workspace.id,
-          integrationId: stateParams.reconnectIntegrationId,
-          req,
-        })
-        return redirect(buildReconnectRedirectUrl(safeReferer, result))
-      }
-
       // Must match the redirect_uri used at authorize time — the tenant's
       // custom domain for a tenant-owned credential, else the broker.
       const zaloRedirectUrl = await buildProviderCallbackUrl(
         zaloCredential,
         "/integrations/zalo/callback",
       )
+
+      if (stateParams.reconnectIntegrationId) {
+        const result = await reconnectZaloHandler({
+          zaloSettings: zaloCredential.config,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          req,
+          callbackUrl: zaloRedirectUrl,
+        })
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
+      }
 
       await connectZaloHandler({
         zaloSettings: zaloCredential.config,
