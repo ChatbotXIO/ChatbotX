@@ -83,6 +83,16 @@ type AuthAdapter = ReturnType<AdapterFactory>
 type WhereClause = Parameters<AuthAdapter["findOne"]>[0]["where"][number]
 
 /**
+ * Match a reseller owner's own account, which lives in the ROOT tenant (they
+ * signed up on the main site). Shared by the reseller-owner fallback in the
+ * adapter; the magic-link gate mirrors it in Drizzle relational form.
+ */
+const ownerRootClauses = (ownerId: string): WhereClause[] => [
+  { field: "id", value: ownerId },
+  { field: "tenantId", value: ROOT_TENANT_ID },
+]
+
+/**
  * Wrap the drizzle adapter so white-label isolation holds at the data layer:
  * every `User` lookup *by email* and every `User` insert is constrained to the
  * current tenant (`getTenantId()` — `ROOT_TENANT_ID` = platform). Lookups by
@@ -97,8 +107,12 @@ export function createTenantScopedAdapter(
   //   • `user` lookups *by email* — the same email is a separate account per
   //     tenant.
   //   • `account` lookups *by social identity* (`accountId`) — the same provider
-  //     identity links to a separate account row per tenant, so social sign-in on
-  //     a reseller domain never resolves the owner's root-tenant account.
+  //     identity links to a separate account row per tenant, so sub-accounts stay
+  //     isolated. The reseller owner's own row is stamped `ROOT_TENANT_ID` (see
+  //     `create` below) and so misses here on their domain; better-auth then
+  //     falls through to the email lookup, where the reseller-owner fallback
+  //     resolves their root-tenant account and the unscoped `userId` account list
+  //     shows the identity as already linked.
   // Lookups by id/token/userId are left untouched, so sessions and a user's own
   // account list stay tenant-neutral.
   const scopeByTenant = (
@@ -172,8 +186,7 @@ export function createTenantScopedAdapter(
         if (ownerId) {
           const ownerWhere: WhereClause[] = [
             ...data.where.filter((clause) => clause.field !== "tenantId"),
-            { field: "id", value: ownerId },
-            { field: "tenantId", value: ROOT_TENANT_ID },
+            ...ownerRootClauses(ownerId),
           ]
           return adapter.findOne<T>({ ...data, where: ownerWhere })
         }
@@ -210,18 +223,15 @@ export function createTenantScopedAdapter(
           return adapter.create<T, R>(data)
         }
         const tenantId = getTenantId()
-        if (data.model === "account") {
-          const ownerId = await resolveTenantOwnerId(tenantId)
-          if (ownerId && data.data.userId === ownerId) {
-            return adapter.create<T, R>({
-              ...data,
-              data: { ...data.data, tenantId: ROOT_TENANT_ID },
-            })
-          }
-        }
+        const ownerId =
+          data.model === "account" ? await resolveTenantOwnerId(tenantId) : null
+        const isOwnerAccount = ownerId !== null && data.data.userId === ownerId
         return adapter.create<T, R>({
           ...data,
-          data: { ...data.data, tenantId },
+          data: {
+            ...data.data,
+            tenantId: isOwnerAccount ? ROOT_TENANT_ID : tenantId,
+          },
         })
       },
     }
@@ -640,7 +650,7 @@ export function createAuth(config: AuthConfig) {
           // Match the tenant's users by email, plus the reseller-owner on their
           // own custom domain (the owner's account lives in the root tenant, so
           // the owner arm is constrained to it). Mirrors the findOne
-          // reseller-owner fallback above.
+          // reseller-owner fallback above (`ownerRootClauses`).
           //
           // NOTE: this only gates whether a link is *sent*. The token better-auth
           // stores in `Verification` carries no tenant, so a token issued in one

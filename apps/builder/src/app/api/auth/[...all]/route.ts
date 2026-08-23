@@ -17,8 +17,8 @@ import { resolveRelayTarget } from "@/lib/oauth-referer"
  * within that reseller's tenant (or the platform when no custom domain matches).
  *
  * The reseller that owns a custom domain can also sign in on that domain: when a
- * scoped lookup misses, the adapter falls back to the tenant owner (`User.id =
- * tenantId`). So a reseller signs into the builder on both the platform URL and
+ * scoped lookup misses, the adapter falls back to the tenant owner (`Tenant.ownerId`,
+ * root-tenant row only). So a reseller signs into the builder on both the platform URL and
  * their own domain; their sub-accounts only on the reseller's domain. This
  * fallback applies to every auth method, including OAuth social sign-in — see
  * the findOne reseller-owner fallback in `@chatbotx.io/auth` `server.ts`.
