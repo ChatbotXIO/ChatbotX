@@ -21,7 +21,7 @@ import { z } from "zod"
 import { hasWhatsappCapiScope } from "@/features/integration-whatsapp/libs/capi-scope"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { logger } from "@/lib/log"
-import { buildBrokerCallbackUrl, getBrokerOrigin } from "@/lib/oauth-broker"
+import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { WHATSAPP_OAUTH_CALLBACK_PATH } from "../libs/embedded-signup"
 import { buildAuthValue, buildWebhookConfig } from "./webhook-url"
@@ -52,10 +52,15 @@ async function findReconnectTarget(input: {
   return existing
 }
 
+type WhatsappCredentialWithOwner = {
+  userId: string | null
+  config: WhatsappCredential
+}
+
 async function resolveWhatsappSettings(input: {
   ownerId: string
   t: ReconnectTranslations
-}): Promise<WhatsappCredential> {
+}): Promise<WhatsappCredentialWithOwner> {
   const credential = await platformCredentialService.resolveForOwner({
     ownerId: input.ownerId,
     type: "whatsapp",
@@ -66,7 +71,7 @@ async function resolveWhatsappSettings(input: {
     )
   }
 
-  return credential.config
+  return { userId: credential.userId, config: credential.config }
 }
 
 async function exchangeAndValidateWhatsappAccount(input: {
@@ -74,12 +79,13 @@ async function exchangeAndValidateWhatsappAccount(input: {
   existing: ExistingWhatsappIntegration
   t: ReconnectTranslations
   whatsappSettings: WhatsappCredential
+  originUrl: string
 }) {
   const accessToken = (
     await exchangeAccessToken(
       input.whatsappSettings,
       input.code,
-      buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH),
+      new URL(WHATSAPP_OAUTH_CALLBACK_PATH, input.originUrl).toString(),
     )
   ).access_token
   const appAccessToken = `${input.whatsappSettings.clientId}|${input.whatsappSettings.clientSecret}`
@@ -128,11 +134,12 @@ async function buildReconnectAuth(input: {
   waba: Awaited<ReturnType<typeof findWaba>>
   wabaId: string
   whatsappSettings: WhatsappCredential
+  originUrl: string
   phoneNumber: Awaited<
     ReturnType<typeof whatsappListPhoneNumbers>
   >["data"][number]
 }) {
-  const originUrl = getBrokerOrigin()
+  const { originUrl } = input
   const webhookConfig = buildWebhookConfig({
     isManual: false,
     integrationId: input.integrationWhatsappId,
@@ -206,10 +213,12 @@ async function reconnectWhatsapp(input: {
     workspaceId: input.workspaceId,
     t,
   })
-  const whatsappSettings = await resolveWhatsappSettings({
+  const whatsappCredential = await resolveWhatsappSettings({
     ownerId: input.ctx.workspace.ownerId,
     t,
   })
+  const whatsappSettings = whatsappCredential.config
+  const originUrl = await resolveProviderOriginForCredential(whatsappCredential)
 
   const { accessToken, appAccessToken, wabaId, waba, phoneNumber } =
     await exchangeAndValidateWhatsappAccount({
@@ -217,6 +226,7 @@ async function reconnectWhatsapp(input: {
       existing,
       t,
       whatsappSettings,
+      originUrl,
     })
   const { auth, hasCapiScope } = await buildReconnectAuth({
     accessToken,
@@ -226,6 +236,7 @@ async function reconnectWhatsapp(input: {
     waba,
     wabaId,
     whatsappSettings,
+    originUrl,
     phoneNumber,
   })
 

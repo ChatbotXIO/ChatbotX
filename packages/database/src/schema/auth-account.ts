@@ -35,9 +35,13 @@ export const accountModel = pgTable(
       }),
     // Tenant key for white-label isolation, mirroring `User.tenantId`. A social
     // identity (`providerId` + `accountId`) links to a *separate* account row per
-    // tenant, so signing in with the same provider on a reseller domain resolves a
-    // tenant-scoped user instead of the owner's root-tenant account. The OAuth
-    // identity lookup is scoped by this column in the auth adapter.
+    // tenant, so the same provider identity signing in under two different
+    // tenants' users gets two account rows. The OAuth identity lookup is scoped
+    // by this column in the auth adapter. Exception: a row linking to the bound
+    // tenant's owner is stamped `ROOT_TENANT_ID` instead of the bound tenant —
+    // the owner's account lives in the root tenant, and this column has
+    // `onDelete: "restrict"`, so stamping the reseller tenant would leave a row
+    // that blocks that tenant's deletion. See the auth adapter's `create` wrapper.
     tenantId: bigintAsString()
       .notNull()
       .default(ROOT_TENANT_ID)

@@ -30,10 +30,12 @@ export function AdsAccountSwitcher({
   integrations,
   whatsappCredentialPublic,
   workspaceId,
+  oauthCallbackUrl,
 }: {
   integrations: AdsAccountSwitcherIntegration[]
   whatsappCredentialPublic: WhatsappCredentialPublic | null
   workspaceId: string
+  oauthCallbackUrl: string
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -109,6 +111,7 @@ export function AdsAccountSwitcher({
       {selectedStatus === "missingPermission" && (
         <WhatsappReconnectButton
           integrationWhatsappId={selectedIntegration.id}
+          oauthCallbackUrl={oauthCallbackUrl}
           settings={whatsappCredentialPublic}
           workspaceId={workspaceId}
         />

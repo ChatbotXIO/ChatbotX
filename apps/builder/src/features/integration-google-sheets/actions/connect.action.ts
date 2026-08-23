@@ -8,8 +8,8 @@ import { redirect } from "next/navigation"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ConnectGoogleSheetsSchema,
@@ -39,15 +39,16 @@ export const connectGoogleSheets = workspaceActionClient
       }
 
       const originUrl = await getOriginUrlFromHeader()
-      // The OAuth redirect_uri must be registered in the Google app (platform or
-      // reseller-owned). A white-label custom domain is not registered there, so
-      // we always send Google to the fixed broker callback and carry the
-      // originating branded origin in `referer`; the callback relays back to it.
-      // Mirrors the messenger/instagram authorize flow. See `oauth-referer.ts`.
+      // The OAuth redirect_uri must be registered in the Google app. For a
+      // tenant-owned credential (their own app), that's the reseller's custom
+      // domain; otherwise it's the broker, and the originating branded origin
+      // is carried in `referer` (the callback relays back to it). Mirrors the
+      // messenger/instagram authorize flow. See `oauth-referer.ts`.
       const redirectUrl = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...googleCredential.config,
-          redirectUrl: buildBrokerCallbackUrl(
+          redirectUrl: await buildProviderCallbackUrl(
+            googleCredential,
             "/integrations/google-sheets/callback",
           ),
           stateParams: {

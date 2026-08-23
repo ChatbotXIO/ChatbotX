@@ -663,6 +663,7 @@ describe("reconnectZaloHandler", () => {
       req: new Request(
         "https://broker.example.com/integrations/zalo/callback?code=code-1",
       ),
+      callbackUrl: "https://broker.example.com/integrations/zalo/callback",
     })
 
   test("stores the fresh tokens when the authorized OA matches", async () => {

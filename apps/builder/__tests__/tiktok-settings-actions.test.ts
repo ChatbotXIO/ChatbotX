@@ -1,11 +1,22 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { removeSpy, resolveSpy, subscribeSpy, upsertSpy } = vi.hoisted(() => ({
+const BROKER_ORIGIN = "https://broker.test"
+
+const {
+  removeSpy,
+  resolveSpy,
+  subscribeSpy,
+  upsertSpy,
+  mockFindActiveByTenantId,
+  mockFindByOwner,
+} = vi.hoisted(() => ({
   removeSpy: vi.fn(),
   resolveSpy: vi.fn(),
   subscribeSpy: vi.fn(),
   upsertSpy: vi.fn(),
+  mockFindActiveByTenantId: vi.fn(),
+  mockFindByOwner: vi.fn(),
 }))
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, any> = {}
@@ -16,13 +27,15 @@ vi.mock("@/lib/safe-action", () => {
 })
 vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: { remove: removeSpy, upsert: upsertSpy },
+  customDomainService: { findActiveByTenantId: mockFindActiveByTenantId },
+  tenantService: { findByOwner: mockFindByOwner },
 }))
 vi.mock("@chatbotx.io/integration-tiktok", () => ({
   subscribeWebhook: subscribeSpy,
 }))
 vi.mock("@/env", () => ({ isCloud: () => true }))
 vi.mock("@/lib/oauth-broker", () => ({
-  buildBrokerCallbackUrl: (path: string) => path,
+  getBrokerOrigin: () => BROKER_ORIGIN,
 }))
 vi.mock("../src/features/platform-credentials/scope", () => ({
   credentialScopeSchema: {},
@@ -42,6 +55,8 @@ describe("TikTok credential actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resolveSpy.mockReturnValue("user-1")
+    mockFindByOwner.mockResolvedValue(undefined)
+    mockFindActiveByTenantId.mockResolvedValue(undefined)
   })
   test("upserts all fields and subscribes webhook", async () => {
     await call(updateTiktokSettingAction)({
@@ -56,6 +71,52 @@ describe("TikTok credential actions", () => {
     })
     expect(subscribeSpy).toHaveBeenCalled()
   })
+
+  test("subscribes the webhook on the broker origin for user scope with no active custom domain", async () => {
+    await call(updateTiktokSettingAction)({
+      ctx: { user: { id: "user-1" } },
+      bindArgsParsedInputs: ["user"],
+      parsedInput: { clientId: "id", clientSecret: "secret" },
+    })
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      { clientId: "id", clientSecret: "secret" },
+      `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+    )
+  })
+
+  test("subscribes the webhook on the tenant's active custom domain for user scope", async () => {
+    mockFindByOwner.mockResolvedValue({ id: "t1", status: "active" })
+    mockFindActiveByTenantId.mockResolvedValue({ domain: "chat.acme.com" })
+
+    await call(updateTiktokSettingAction)({
+      ctx: { user: { id: "user-1" } },
+      bindArgsParsedInputs: ["user"],
+      parsedInput: { clientId: "id", clientSecret: "secret" },
+    })
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      { clientId: "id", clientSecret: "secret" },
+      "https://chat.acme.com/integrations/tiktok/webhook",
+    )
+  })
+
+  test("subscribes the webhook on the broker origin for platform scope, ignoring any tenant domain", async () => {
+    resolveSpy.mockReturnValue(undefined)
+
+    await call(updateTiktokSettingAction)({
+      ctx: { user: { id: "admin-1" } },
+      bindArgsParsedInputs: ["platform"],
+      parsedInput: { clientId: "id", clientSecret: "secret" },
+    })
+
+    expect(subscribeSpy).toHaveBeenCalledWith(
+      { clientId: "id", clientSecret: "secret" },
+      `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+    )
+    expect(mockFindByOwner).not.toHaveBeenCalled()
+  })
+
   test.each(["clientId", "clientSecret"])("rejects empty %s", (field) => {
     expect(
       tiktokCredentialUpdateSchema.safeParse({

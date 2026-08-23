@@ -6,6 +6,7 @@ import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-
 import { WA_OAUTH_RESULT } from "@/features/integration-whatsapp/libs/embedded-signup"
 
 const BROKER_ORIGIN = "https://broker.test"
+const OAUTH_CALLBACK_URL = `${BROKER_ORIGIN}/integrations/whatsapp/callback`
 const OAUTH_CODE = "AQD-relayed-code"
 
 /** Echoes the key back so assertions never depend on the English copy. */
@@ -20,10 +21,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
-}))
-
-vi.mock("@/lib/oauth-broker", () => ({
-  getBrokerOrigin: () => BROKER_ORIGIN,
 }))
 
 vi.mock("@/features/integration-whatsapp/actions/connect.action", () => ({
@@ -74,7 +71,13 @@ describe("WhatsappCreate connect card", () => {
     root = createRoot(container)
 
     act(() => {
-      root.render(<WhatsappCreate settings={SETTINGS} workspaceId="ws-1" />)
+      root.render(
+        <WhatsappCreate
+          oauthCallbackUrl={OAUTH_CALLBACK_URL}
+          settings={SETTINGS}
+          workspaceId="ws-1"
+        />,
+      )
     })
   })
 

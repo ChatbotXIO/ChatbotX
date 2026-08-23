@@ -515,6 +515,7 @@ describe("handleCallback OAuth reconnect", () => {
       workspaceId: "1",
       integrationId: "5",
       req: request,
+      callbackUrl: "https://broker.example.com/integrations/zalo/callback",
     })
     expect(mockConnectZaloHandler).not.toHaveBeenCalled()
 

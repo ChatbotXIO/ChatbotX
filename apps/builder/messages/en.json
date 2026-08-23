@@ -1924,7 +1924,7 @@
     },
     "authCallbackUrl": {
       "label": "Auth Callback URL",
-      "hint": "Register this exact URL as the OAuth redirect URI in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain."
+      "hint": "Register this exact URL as the OAuth redirect URI in your provider app. With your own app and an active custom domain, it's on your custom domain; otherwise it's on the platform host."
     },
     "signInCallbackUrl": {
       "label": "Sign-in Callback URL",
@@ -1932,7 +1932,7 @@
     },
     "webhookUrl": {
       "label": "Webhook URL",
-      "hint": "Register this exact Webhook URL in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain."
+      "hint": "Register this exact Webhook URL in your provider app. With your own app and an active custom domain, it's on your custom domain; otherwise it's on the platform host."
     },
     "tiktok": {
       "label": "TikTok",

@@ -11,10 +11,12 @@ import { TelegramConnect } from "@/features/integration-telegram/components/tele
 import { generateTiktokRedirectUri } from "@/features/integration-tiktok/libs/tiktok"
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
+import { WHATSAPP_OAUTH_CALLBACK_PATH } from "@/features/integration-whatsapp/libs/embedded-signup"
 import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 
 export const dynamic = "force-dynamic"
 
@@ -97,8 +99,13 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     ])
 
   if (selectedChannel === "whatsapp" && whatsapp && isVisible("whatsapp")) {
+    const oauthCallbackUrl = await buildProviderCallbackUrl(
+      whatsapp,
+      WHATSAPP_OAUTH_CALLBACK_PATH,
+    )
     return (
       <WhatsappCreate
+        oauthCallbackUrl={oauthCallbackUrl}
         settings={whatsapp.publicConfig}
         workspaceId={workspaceId}
       />
@@ -125,7 +132,7 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     isVisible("instagram")
   ) {
     const redirectUri = await generateInstagramRedirectUri(
-      instagram.publicConfig,
+      instagram,
       workspaceId,
     )
     redirect(redirectUri)
@@ -140,25 +147,19 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     isVisible("instagram")
   ) {
     const redirectUri = await generateInstagramFacebookRedirectUri(
-      instagramFacebook.publicConfig,
+      instagramFacebook,
       workspaceId,
     )
     redirect(redirectUri)
   }
 
   if (selectedChannel === "zalo" && zalo && isVisible("zalo")) {
-    const redirectUri = await generateZaloRedirectUri(
-      zalo.publicConfig,
-      workspaceId,
-    )
+    const redirectUri = await generateZaloRedirectUri(zalo, workspaceId)
     redirect(redirectUri)
   }
 
   if (selectedChannel === "tiktok" && tiktok && isVisible("tiktok")) {
-    const redirectUri = await generateTiktokRedirectUri(
-      tiktok.publicConfig,
-      workspaceId,
-    )
+    const redirectUri = await generateTiktokRedirectUri(tiktok, workspaceId)
     redirect(redirectUri)
   }
 

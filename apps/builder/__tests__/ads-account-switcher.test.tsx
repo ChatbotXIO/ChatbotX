@@ -107,6 +107,7 @@ describe("AdsAccountSwitcher", () => {
       root.render(
         <AdsAccountSwitcher
           integrations={integrations}
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,

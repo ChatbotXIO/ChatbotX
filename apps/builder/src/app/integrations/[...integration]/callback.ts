@@ -65,9 +65,9 @@ import {
   FB_PENDING_AUTH_MAX_AGE,
 } from "@/lib/facebook-pending-auth"
 import { logger } from "@/lib/log"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
@@ -199,11 +199,13 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // White-label relay: Facebook/TikTok OAuth always lands on the fixed broker
-  // callback (the only registered redirect_uri). When the flow started on a
-  // branded custom domain, bounce the callback back to that domain — where the
-  // user's session cookie lives — preserving the original code + state. The
-  // re-entry runs on the white-label host, so this guard does not match again.
+  // White-label relay: the redirect_uri is pinned per-credential (broker for
+  // inherited/platform, the reseller's own custom domain for a tenant-owned
+  // one — see `lib/provider-origin.ts`), so the callback host can differ from
+  // where the flow started. When it does, bounce the callback back to the
+  // originating domain — where the user's session cookie lives — preserving
+  // the original code + state. The re-entry runs on the originating host, so
+  // this guard does not match again.
   const relayTarget = await resolveRelayTarget(url, stateParams.referer)
   if (relayTarget) {
     return redirect(relayTarget)
@@ -275,9 +277,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        messengerCredential,
         "/integrations/messenger/callback",
       )
 
@@ -383,9 +386,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        instagramCredential,
         "/integrations/instagram/callback",
       )
 
@@ -435,7 +439,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        instagramFacebookCredential,
         "/integrations/instagram-facebook/callback",
       )
 
@@ -493,9 +500,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const tiktokCallbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const tiktokCallbackUrl = await buildProviderCallbackUrl(
+        tiktokCredential,
         "/integrations/tiktok/callback",
       )
 
@@ -518,12 +526,20 @@ export const handleCallback = async (
         return notFound()
       }
 
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const zaloRedirectUrl = await buildProviderCallbackUrl(
+        zaloCredential,
+        "/integrations/zalo/callback",
+      )
+
       if (stateParams.reconnectIntegrationId) {
         const result = await reconnectZaloHandler({
           zaloSettings: zaloCredential.config,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
           req,
+          callbackUrl: zaloRedirectUrl,
         })
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
@@ -532,6 +548,7 @@ export const handleCallback = async (
         zaloSettings: zaloCredential.config,
         workspaceId: workspace.id,
         req,
+        redirectUrl: zaloRedirectUrl,
       })
 
       return redirect(safeReferer)
@@ -549,9 +566,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        facebookAdsCredential,
         "/integrations/facebook-ads/callback",
       )
 
@@ -574,7 +592,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        googleCredential,
         "/integrations/google-calendar/callback",
       )
       try {
@@ -617,10 +638,11 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host after
-      // the relay above. See `connect.action.ts`.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker. See
+      // `connect.action.ts`.
+      const callbackUrl = await buildProviderCallbackUrl(
+        googleCredential,
         "/integrations/google-sheets/callback",
       )
 

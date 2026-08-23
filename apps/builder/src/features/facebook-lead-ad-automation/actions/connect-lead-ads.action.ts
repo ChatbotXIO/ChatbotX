@@ -8,8 +8,8 @@ import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const connectLeadAdsAction = workspaceActionClient
@@ -36,7 +36,8 @@ export const connectLeadAdsAction = workspaceActionClient
       // Facebook app, so this OAuth lands there too. `flow` flags the lead-ads
       // dispatch in the callback handler; `referer` returns the user to the
       // Lead Ads list on completion or cancel.
-      const redirectUrl = buildBrokerCallbackUrl(
+      const redirectUrl = await buildProviderCallbackUrl(
+        messengerCredential,
         "/integrations/messenger/callback",
       )
       const baseUrl = await getOriginUrlFromHeader()
