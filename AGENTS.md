@@ -187,6 +187,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
 - Facebook comment automation: `docs/fb-comment-automation.md` (skill: `.agents/skills/fb-comment-automation/`)
+- Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.

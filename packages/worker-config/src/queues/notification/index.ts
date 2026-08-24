@@ -24,6 +24,10 @@ export type NotificationJobNotifyIncomingMessage = {
     messageText?: string
     contentType?: ContentType
     attachmentCount?: number
+    /** Recipient to skip, e.g. the agent whose own outbound reply round-tripped
+     *  back as an "incoming" message via a channel's echo/coexist sync. Optional
+     *  because most channels have no way to identify the sending user. */
+    excludeUserId?: string
   }
 }
 

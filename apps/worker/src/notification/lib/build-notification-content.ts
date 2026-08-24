@@ -2,11 +2,6 @@ import type { ContentType } from "@chatbotx.io/database/partials"
 import type { NotificationJobData } from "@chatbotx.io/worker-config"
 import { t } from "./strings"
 
-export type NotificationContent = {
-  title: string
-  body: string
-}
-
 const resolveIncomingMessageBody = (
   strings: ReturnType<typeof t>,
   data: {
@@ -37,7 +32,7 @@ export const buildNotificationContent = (props: {
   job: NotificationJobData
   contactFullName: string | null | undefined
   workspaceLanguage: string | undefined
-}): NotificationContent => {
+}): { title: string; body: string } => {
   const { job, contactFullName, workspaceLanguage } = props
   const strings = t(workspaceLanguage)
 

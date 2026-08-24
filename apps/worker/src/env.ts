@@ -42,7 +42,7 @@ export const env = createEnv({
     EXPO_ACCESS_TOKEN: z.string().optional(),
     // Kill switch — Expo needs no credential to send, so unlike FCM there is
     // no natural "unset = disabled" signal. Operators flip this explicitly.
-    EXPO_PUSH_ENABLED: z.coerce.boolean().default(true),
+    EXPO_PUSH_ENABLED: z.stringbool().default(true),
   },
   runtimeEnv: process.env,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

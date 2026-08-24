@@ -2,7 +2,6 @@ import { Expo } from "expo-server-sdk"
 import { env } from "../../env"
 import { logger } from "../../lib/logger"
 
-let loggedDisabled = false
 let client: Expo | null | undefined
 
 /**
@@ -16,10 +15,7 @@ export const getExpoClient = (): Expo | null => {
   }
 
   if (!env.EXPO_PUSH_ENABLED) {
-    if (!loggedDisabled) {
-      logger.info("EXPO_PUSH_ENABLED is false — push notifications disabled")
-      loggedDisabled = true
-    }
+    logger.info("EXPO_PUSH_ENABLED is false — push notifications disabled")
     client = null
     return client
   }

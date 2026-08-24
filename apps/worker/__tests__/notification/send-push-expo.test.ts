@@ -36,14 +36,14 @@ const listUserIdsByWorkspaceId = vi.fn().mockResolvedValue(["user-1"])
 const findByUserIds = vi.fn()
 const deleteByTokens = vi.fn().mockResolvedValue(undefined)
 const contactFindById = vi.fn().mockResolvedValue({ fullName: "Jane Doe" })
-const workspaceFindById = vi.fn().mockResolvedValue({ language: "en" })
+const workspaceFind = vi.fn().mockResolvedValue({ language: "en" })
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findByOrFail },
   workspaceMemberService: { listUserIdsByWorkspaceId },
   deviceTokenService: { findByUserIds, deleteByTokens },
   contactService: { findById: contactFindById },
-  workspaceService: { findById: workspaceFindById },
+  workspaceService: { find: workspaceFind },
 }))
 
 vi.mock("../../src/lib/logger", () => ({
@@ -85,7 +85,7 @@ beforeEach(() => {
     contactId: "contact-1",
   })
   contactFindById.mockResolvedValue({ fullName: "Jane Doe" })
-  workspaceFindById.mockResolvedValue({ language: "en" })
+  workspaceFind.mockResolvedValue({ language: "en" })
   deleteByTokens.mockResolvedValue(undefined)
 })
 
@@ -195,5 +195,41 @@ describe("sendPushForNotificationJob", () => {
     await sendPushForNotificationJob(baseJob())
 
     expect(sendPushNotificationsAsync).not.toHaveBeenCalled()
+  })
+
+  test("degrades to default-locale content instead of throwing when the workspace was purged", async () => {
+    workspaceFind.mockResolvedValue(undefined)
+    findByUserIds.mockResolvedValue([{ token: "Expo[token-1]" }])
+    sendPushNotificationsAsync.mockResolvedValue([{ status: "ok", id: "r1" }])
+
+    await expect(sendPushForNotificationJob(baseJob())).resolves.toBeUndefined()
+
+    expect(sendPushNotificationsAsync).toHaveBeenCalledOnce()
+    const sentMessages = sendPushNotificationsAsync.mock.calls[0][0]
+    expect(sentMessages[0].body).toBe("Hello")
+  })
+
+  test("excludes the acting user from notifyIncomingMessage recipients", async () => {
+    findByOrFail.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: null,
+      contactId: "contact-1",
+    })
+    listUserIdsByWorkspaceId.mockResolvedValue(["user-1", "user-2"])
+    findByUserIds.mockResolvedValue([{ token: "Expo[token-2]" }])
+    sendPushNotificationsAsync.mockResolvedValue([{ status: "ok", id: "r1" }])
+
+    await sendPushForNotificationJob({
+      type: "notifyIncomingMessage",
+      data: {
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        messageId: "msg-1",
+        messageText: "Hello",
+        excludeUserId: "user-1",
+      },
+    } as never)
+
+    expect(findByUserIds).toHaveBeenCalledWith({ userIds: ["user-2"] })
   })
 })

@@ -25,12 +25,16 @@ const resolveRecipientUserIds = async (
     return [job.data.assignedUserId]
   }
 
-  if (conversation.assignedUserId) {
-    return [conversation.assignedUserId]
-  }
-  return await workspaceMemberService.listUserIdsByWorkspaceId({
-    workspaceId: job.data.workspaceId,
-  })
+  const excludeUserId = job.data.excludeUserId
+  const recipientUserIds = conversation.assignedUserId
+    ? [conversation.assignedUserId]
+    : await workspaceMemberService.listUserIdsByWorkspaceId({
+        workspaceId: job.data.workspaceId,
+      })
+
+  return excludeUserId
+    ? recipientUserIds.filter((userId) => userId !== excludeUserId)
+    : recipientUserIds
 }
 
 const resolveNotificationContent = async (
@@ -44,7 +48,7 @@ const resolveNotificationContent = async (
       workspaceId,
       id: conversation.contactId,
     }),
-    workspaceService.findById({ id: workspaceId }),
+    workspaceService.find({ where: { id: workspaceId } }),
   ])
 
   return buildNotificationContent({

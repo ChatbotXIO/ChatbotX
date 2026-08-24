@@ -27,7 +27,11 @@ export const deviceTokensAuthenticatedAPI = {
           userId: context.user.id,
         })
         if (!isMember) {
-          throw new ChatbotXException("Not a member of this workspace")
+          throw new ChatbotXException(
+            "Not a member of this workspace",
+            "forbidden",
+            403,
+          )
         }
       }
 

@@ -251,7 +251,7 @@ export const conversationsAuthenticatedAPI = {
     .output(
       z.object({
         success: z.literal(true),
-        agentLastReadAt: z.date().nullable(),
+        agentLastReadAt: z.coerce.date().nullable(),
       }),
     )
     .handler(async ({ input, context }) => {

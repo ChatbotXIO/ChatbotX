@@ -18,4 +18,3 @@ export const bulkUpdateIdsRequest = z.object({
 export type BulkUpdateIdsRequest = z.infer<typeof bulkUpdateIdsRequest>
 
 export const successResponse = z.object({ success: z.literal(true) })
-export type SuccessResponse = z.infer<typeof successResponse>
