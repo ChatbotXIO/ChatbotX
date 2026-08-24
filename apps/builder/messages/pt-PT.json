@@ -4308,7 +4308,8 @@
       "dialogTitle": "Partilhar modelo",
       "dialogDescription": "Qualquer pessoa com esta ligação pode instalar uma cópia deste modelo num espaço de trabalho da sua organização.",
       "enableLabel": "Ativar ligação de partilha",
-      "linkLabel": "Ligação de partilha"
+      "linkLabel": "Ligação de partilha",
+      "description": "Qualquer pessoa com a ligação pode instalar este modelo no seu próprio espaço de trabalho."
     },
     "installs": {
       "title": "Instalações",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Esta ligação de partilha de modelo é inválida, está desativada ou expirou.",
     "byPublisher": "Por {publisherName}",
     "includes": "Este modelo inclui",
+    "videoTitle": "Vídeo de pré-visualização do modelo",
     "tryItOut": "Experimente",
     "signInToInstall": "Inicie sessão para instalar",
     "selectWorkspace": "Selecione um espaço de trabalho",

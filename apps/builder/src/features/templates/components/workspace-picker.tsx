@@ -8,10 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
+import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { installTemplateAction } from "../actions/install-template.action"
 
@@ -39,6 +40,14 @@ export function WorkspacePicker({
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(
     workspaces[0]?.id,
   )
+  const options = useMemo(
+    () =>
+      workspaces.map((workspace) => ({
+        label: workspace.name,
+        value: workspace.id,
+      })),
+    [workspaces],
+  )
 
   const { execute, isPending } = useAction(
     installTemplateAction.bind(null, selectedWorkspaceId ?? ""),
@@ -57,9 +66,18 @@ export function WorkspacePicker({
     },
   )
 
+  if (workspaces.length === 0) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        {t("noEligibleWorkspaces")}
+      </p>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <Select
+        items={options}
         onValueChange={(value) => {
           if (typeof value === "string") {
             setSelectedWorkspaceId(value)
@@ -82,6 +100,7 @@ export function WorkspacePicker({
         disabled={!selectedWorkspaceId || isPending}
         onClick={() => execute({ shareToken })}
       >
+        {isPending && <Loader2 className="animate-spin" />}
         {t("install")}
       </Button>
     </div>

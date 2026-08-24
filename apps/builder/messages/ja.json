@@ -4308,7 +4308,8 @@
       "dialogTitle": "テンプレートを共有",
       "dialogDescription": "このリンクを持つ人は誰でも、あなたのテナント内のワークスペースにこのテンプレートのコピーをインストールできます。",
       "enableLabel": "共有リンクを有効にする",
-      "linkLabel": "共有リンク"
+      "linkLabel": "共有リンク",
+      "description": "リンクを持つ人は誰でも、このテンプレートを自分のワークスペースにインストールできます。"
     },
     "installs": {
       "title": "インストール",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "このテンプレート共有リンクは無効、無効化済み、または期限切れです。",
     "byPublisher": "{publisherName}による",
     "includes": "このテンプレートに含まれるもの",
+    "videoTitle": "テンプレートのプレビュー動画",
     "tryItOut": "試してみる",
     "signInToInstall": "サインインしてインストール",
     "selectWorkspace": "ワークスペースを選択",

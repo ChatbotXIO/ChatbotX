@@ -4584,7 +4584,8 @@
       "dialogTitle": "Share template",
       "dialogDescription": "Anyone with this link can install a copy of this template into a workspace in your tenant.",
       "enableLabel": "Enable share link",
-      "linkLabel": "Share link"
+      "linkLabel": "Share link",
+      "description": "Anyone with the link can install this template into their own workspace."
     },
     "installs": {
       "title": "Installs",
@@ -4749,6 +4750,7 @@
     "invalidDescription": "This template share link is invalid, disabled, or has expired.",
     "byPublisher": "By {publisherName}",
     "includes": "This template includes",
+    "videoTitle": "Template preview video",
     "tryItOut": "Try it out",
     "signInToInstall": "Sign in to install",
     "selectWorkspace": "Select a workspace",

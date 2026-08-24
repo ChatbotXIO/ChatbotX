@@ -4482,7 +4482,8 @@
       "dialogTitle": "Chia sẻ mẫu",
       "dialogDescription": "Bất kỳ ai có liên kết này đều có thể cài đặt một bản sao của mẫu này vào một workspace trong tổ chức của bạn.",
       "enableLabel": "Bật liên kết chia sẻ",
-      "linkLabel": "Liên kết chia sẻ"
+      "linkLabel": "Liên kết chia sẻ",
+      "description": "Bất kỳ ai có liên kết đều có thể cài đặt mẫu này vào không gian làm việc của riêng họ."
     },
     "installs": {
       "title": "Lượt cài đặt",
@@ -4651,6 +4652,7 @@
     "invalidDescription": "Liên kết chia sẻ mẫu này không hợp lệ, đã bị vô hiệu hóa hoặc đã hết hạn.",
     "byPublisher": "Bởi {publisherName}",
     "includes": "Mẫu này bao gồm",
+    "videoTitle": "Video xem trước mẫu",
     "tryItOut": "Dùng thử",
     "signInToInstall": "Đăng nhập để cài đặt",
     "selectWorkspace": "Chọn một workspace",

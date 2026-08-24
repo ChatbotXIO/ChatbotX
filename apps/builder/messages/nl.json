@@ -4308,7 +4308,8 @@
       "dialogTitle": "Sjabloon delen",
       "dialogDescription": "Iedereen met deze link kan een kopie van dit sjabloon installeren in een werkruimte binnen jouw tenant.",
       "enableLabel": "Deellink inschakelen",
-      "linkLabel": "Deellink"
+      "linkLabel": "Deellink",
+      "description": "Iedereen met de link kan dit sjabloon in zijn eigen werkruimte installeren."
     },
     "installs": {
       "title": "Installaties",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Deze sjabloon-deellink is ongeldig, uitgeschakeld of verlopen.",
     "byPublisher": "Door {publisherName}",
     "includes": "Dit sjabloon bevat",
+    "videoTitle": "Sjabloon-voorbeeldvideo",
     "tryItOut": "Probeer het",
     "signInToInstall": "Log in om te installeren",
     "selectWorkspace": "Selecteer een werkruimte",

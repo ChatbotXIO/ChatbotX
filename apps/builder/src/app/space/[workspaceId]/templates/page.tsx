@@ -1,5 +1,5 @@
 import { templateService } from "@chatbotx.io/business"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
@@ -45,23 +45,20 @@ export default async function TemplatesPage({
           {t("templates.description")}
         </p>
         <div className="flex gap-2">
-          <Button
-            render={
-              <Link href={`/space/${workspaceId}/templates/installs`}>
-                {t("templates.installs.title")}
-              </Link>
-            }
-            variant="outline"
-          />
+          <Link
+            className={buttonVariants({ variant: "outline" })}
+            href={`/space/${workspaceId}/templates/installs`}
+          >
+            {t("templates.installs.title")}
+          </Link>
           {isSuperAdmin && (
-            <Button
-              render={
-                <Link href={`/space/${workspaceId}/templates/create`}>
-                  <PlusIcon />
-                  {t("actions.create")}
-                </Link>
-              }
-            />
+            <Link
+              className={buttonVariants({ variant: "default" })}
+              href={`/space/${workspaceId}/templates/create`}
+            >
+              <PlusIcon />
+              {t("actions.create")}
+            </Link>
           )}
         </div>
       </div>

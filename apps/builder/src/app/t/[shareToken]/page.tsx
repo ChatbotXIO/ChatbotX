@@ -1,20 +1,44 @@
 import { templateService, workspaceMemberService } from "@chatbotx.io/business"
+import { AspectRatio } from "@chatbotx.io/ui/components/ui/aspect-ratio"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@chatbotx.io/ui/components/ui/card"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { getPublicFileUrl } from "@chatbotx.io/utils"
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
+import { cache } from "react"
+import { PublicMessage } from "@/components/public-message"
 import { WorkspacePicker } from "@/features/templates/components/workspace-picker"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUser } from "@/lib/auth/utils"
+
+// Publisher-supplied free text. YouTube IDs are always 11 chars from this
+// alphabet — validate before interpolating into an iframe src.
+const YOUTUBE_VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/
 
 type PublicTemplatePageProps = {
   params: Promise<{ shareToken: string }>
 }
 
 /**
- * Runs the same lookup as the page body so a shared link gets a real OG
- * preview — a disabled/expired/unknown token falls back to a generic title
- * rather than leaking whether the token ever existed.
+ * `generateMetadata` and the page body both need the template; `cache()`
+ * dedupes the two calls into a single lookup per request.
+ */
+const findPublicTemplate = cache(async (shareToken: string) =>
+  templateService.findPublicByShareToken(shareToken),
+)
+
+/**
+ * Every failure mode — bad token, disabled share, expired — collapses into
+ * the same generic invalid-link message and the same neutral title. The page
+ * must never be a token-existence oracle, including in its link preview.
  */
 export async function generateMetadata(
   props: PublicTemplatePageProps,
@@ -22,15 +46,18 @@ export async function generateMetadata(
   const { shareToken } = await props.params
   const [t, template, { storageUrl }] = await Promise.all([
     getTranslations("templatesPublicPage"),
-    templateService.findPublicByShareToken(shareToken),
+    findPublicTemplate(shareToken),
     getTenantSettings(),
   ])
+
   if (!template) {
     return { title: t("invalidTitle") }
   }
+
   const imageUrl = template.imageUrl
     ? getPublicFileUrl(template.imageUrl, storageUrl)
     : null
+
   return {
     title: template.name,
     description: template.description ?? undefined,
@@ -39,14 +66,15 @@ export async function generateMetadata(
       description: template.description ?? undefined,
       images: imageUrl ? [imageUrl] : undefined,
     },
+    twitter: {
+      card: imageUrl ? "summary_large_image" : "summary",
+      title: template.name,
+      description: template.description ?? undefined,
+      images: imageUrl ? [imageUrl] : undefined,
+    },
   }
 }
 
-/**
- * Every failure mode — bad token, disabled share, expired — collapses into
- * the same generic invalid-link message via one try/catch, mirroring
- * `/unsubscribe`. The page must never be a token-existence oracle.
- */
 export default async function PublicTemplatePage(
   props: PublicTemplatePageProps,
 ) {
@@ -56,10 +84,10 @@ export default async function PublicTemplatePage(
     getTranslations("templates.categories"),
   ])
 
-  const template = await templateService.findPublicByShareToken(shareToken)
+  const template = await findPublicTemplate(shareToken)
   if (!template) {
     return (
-      <TemplateMessage
+      <PublicMessage
         description={t("invalidDescription")}
         title={t("invalidTitle")}
       />
@@ -73,67 +101,92 @@ export default async function PublicTemplatePage(
   const imageUrl = template.imageUrl
     ? getPublicFileUrl(template.imageUrl, storageUrl)
     : null
+  const validYoutubeVideoId =
+    template.youtubeVideoId && YOUTUBE_VIDEO_ID_RE.test(template.youtubeVideoId)
+      ? template.youtubeVideoId
+      : null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-16">
-      {imageUrl ? (
-        // biome-ignore lint/performance/noImgElement: external, unoptimized template thumbnail resolved from publisher-uploaded storage
-        <img
-          alt={template.name}
-          className="aspect-video w-full rounded-lg object-cover"
-          height={720}
-          src={imageUrl}
-          width={1280}
-        />
-      ) : null}
-      <div>
-        <h1 className="font-semibold text-2xl">{template.name}</h1>
-        {template.publisherName ? (
-          <p className="text-muted-foreground text-sm">
-            {t("byPublisher", { publisherName: template.publisherName })}
-          </p>
+    <main className="mx-auto w-full max-w-2xl py-4">
+      <Card className="overflow-hidden py-0">
+        {imageUrl ? (
+          <AspectRatio ratio={16 / 9}>
+            {/* biome-ignore lint/performance/noImgElement: external, unoptimized template thumbnail resolved from publisher-uploaded storage */}
+            <img
+              alt={template.name}
+              className="h-full w-full object-cover"
+              height={720}
+              src={imageUrl}
+              width={1280}
+            />
+          </AspectRatio>
         ) : null}
-      </div>
-      {template.description ? (
-        <p className="text-muted-foreground">{template.description}</p>
-      ) : null}
-      {template.youtubeVideoId ? (
-        <div className="aspect-video w-full overflow-hidden rounded-lg">
-          <iframe
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="h-full w-full"
-            src={`https://www.youtube.com/embed/${template.youtubeVideoId}`}
-            title={template.name}
-          />
-        </div>
-      ) : null}
-      <TemplateCategorySummary
-        categoryCounts={template.categoryCounts}
-        categoryLabel={tCategories}
-        label={t("includes")}
-      />
-      {template.testLink ? (
-        <a
-          className="text-primary text-sm underline"
-          href={template.testLink}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {t("tryItOut")}
-        </a>
-      ) : null}
 
-      {user ? (
-        <InstallSection
-          shareToken={shareToken}
-          tenantId={template.tenantId}
-          userId={user.id}
-        />
-      ) : (
-        <SignInPrompt label={t("signInToInstall")} shareToken={shareToken} />
-      )}
-    </div>
+        <CardHeader className="pt-6">
+          <h1 className="font-semibold text-3xl tracking-normal">
+            {template.name}
+          </h1>
+          {template.publisherName ? (
+            <p className="text-muted-foreground text-sm">
+              {t("byPublisher", { publisherName: template.publisherName })}
+            </p>
+          ) : null}
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {template.description ? (
+            <p className="text-muted-foreground">{template.description}</p>
+          ) : null}
+
+          {validYoutubeVideoId ? (
+            <AspectRatio className="overflow-hidden rounded-lg" ratio={16 / 9}>
+              <iframe
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen={true}
+                className="h-full w-full"
+                loading="lazy"
+                src={`https://www.youtube-nocookie.com/embed/${validYoutubeVideoId}`}
+                title={t("videoTitle")}
+              />
+            </AspectRatio>
+          ) : null}
+
+          <TemplateCategorySummary
+            categoryCounts={template.categoryCounts}
+            categoryLabel={tCategories}
+            label={t("includes")}
+          />
+
+          {template.testLink ? (
+            <a
+              className="text-primary text-sm underline"
+              href={template.testLink}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {t("tryItOut")}
+            </a>
+          ) : null}
+        </CardContent>
+
+        <Separator />
+
+        <CardFooter className="flex flex-col items-stretch gap-3 bg-muted/40 py-6">
+          {user ? (
+            <InstallSection
+              shareToken={shareToken}
+              tenantId={template.tenantId}
+              userId={user.id}
+            />
+          ) : (
+            <SignInPrompt
+              label={t("signInToInstall")}
+              shareToken={shareToken}
+            />
+          )}
+        </CardFooter>
+      </Card>
+    </main>
   )
 }
 
@@ -185,12 +238,15 @@ function SignInPrompt({
   label: string
 }) {
   return (
-    <a
-      className="inline-flex w-fit items-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm"
-      href={`/auth/sign-in?callbackURL=${encodeURIComponent(`/t/${shareToken}`)}`}
-    >
-      {label}
-    </a>
+    <Button
+      render={
+        <a
+          href={`/auth/sign-in?callbackURL=${encodeURIComponent(`/t/${shareToken}`)}`}
+        >
+          {label}
+        </a>
+      }
+    />
   )
 }
 
@@ -212,32 +268,12 @@ function TemplateCategorySummary({
   return (
     <div>
       <p className="font-medium text-sm">{label}</p>
-      <ul className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         {nonZeroCategories.map(([category, count]) => (
-          <li
-            className="rounded-full bg-muted px-3 py-1 text-xs"
-            key={category}
-          >
+          <Badge key={category} variant="secondary">
             {categoryLabel(category)} ({count})
-          </li>
+          </Badge>
         ))}
-      </ul>
-    </div>
-  )
-}
-
-function TemplateMessage({
-  title,
-  description,
-}: {
-  title: string
-  description: string
-}) {
-  return (
-    <div className="flex h-screen w-screen items-center justify-center">
-      <div className="max-w-sm text-center">
-        <h1 className="font-semibold text-xl">{title}</h1>
-        <p className="mt-2 text-muted-foreground">{description}</p>
       </div>
     </div>
   )

@@ -4308,7 +4308,8 @@
       "dialogTitle": "Compartilhar modelo",
       "dialogDescription": "Qualquer pessoa com este link pode instalar uma cópia deste modelo em um espaço de trabalho da sua organização.",
       "enableLabel": "Ativar link de compartilhamento",
-      "linkLabel": "Link de compartilhamento"
+      "linkLabel": "Link de compartilhamento",
+      "description": "Qualquer pessoa com o link pode instalar este modelo em seu próprio espaço de trabalho."
     },
     "installs": {
       "title": "Instalações",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Este link de compartilhamento do modelo é inválido, está desativado ou expirou.",
     "byPublisher": "Por {publisherName}",
     "includes": "Este modelo inclui",
+    "videoTitle": "Vídeo de prévia do modelo",
     "tryItOut": "Experimente",
     "signInToInstall": "Faça login para instalar",
     "selectWorkspace": "Selecione um espaço de trabalho",

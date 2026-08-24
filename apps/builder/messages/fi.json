@@ -4308,7 +4308,8 @@
       "dialogTitle": "Jaa malli",
       "dialogDescription": "Kuka tahansa, jolla on tämä linkki, voi asentaa kopion tästä mallista organisaatiosi työtilaan.",
       "enableLabel": "Ota jakolinkki käyttöön",
-      "linkLabel": "Jakolinkki"
+      "linkLabel": "Jakolinkki",
+      "description": "Kuka tahansa, jolla on linkki, voi asentaa tämän mallin omaan työtilaansa."
     },
     "installs": {
       "title": "Asennukset",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Tämä mallin jakolinkki on virheellinen, poistettu käytöstä tai vanhentunut.",
     "byPublisher": "Julkaisija: {publisherName}",
     "includes": "Tämä malli sisältää",
+    "videoTitle": "Mallin esikatseluvideo",
     "tryItOut": "Kokeile sitä",
     "signInToInstall": "Kirjaudu sisään asentaaksesi",
     "selectWorkspace": "Valitse työtila",

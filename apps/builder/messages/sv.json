@@ -4376,7 +4376,8 @@
       "dialogTitle": "Dela mall",
       "dialogDescription": "Alla med den här länken kan installera en kopia av den här mallen i en arbetsyta i din organisation.",
       "enableLabel": "Aktivera dellänk",
-      "linkLabel": "Dellänk"
+      "linkLabel": "Dellänk",
+      "description": "Alla med länken kan installera den här mallen i sin egen arbetsyta."
     },
     "installs": {
       "title": "Installationer",
@@ -4514,6 +4515,7 @@
     "invalidDescription": "Den här mallens dellänk är ogiltig, inaktiverad eller har gått ut.",
     "byPublisher": "Av {publisherName}",
     "includes": "Den här mallen innehåller",
+    "videoTitle": "Förhandsgranskningsvideo för mall",
     "tryItOut": "Prova den",
     "signInToInstall": "Logga in för att installera",
     "selectWorkspace": "Välj en arbetsyta",

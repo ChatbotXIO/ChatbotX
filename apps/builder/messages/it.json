@@ -4308,7 +4308,8 @@
       "dialogTitle": "Condividi modello",
       "dialogDescription": "Chiunque abbia questo link può installare una copia di questo modello in uno spazio di lavoro del tuo tenant.",
       "enableLabel": "Attiva link di condivisione",
-      "linkLabel": "Link di condivisione"
+      "linkLabel": "Link di condivisione",
+      "description": "Chiunque abbia il link può installare questo modello nel proprio spazio di lavoro."
     },
     "installs": {
       "title": "Installazioni",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Questo link di condivisione del modello non è valido, è disattivato o è scaduto.",
     "byPublisher": "Di {publisherName}",
     "includes": "Questo modello include",
+    "videoTitle": "Video di anteprima del modello",
     "tryItOut": "Provalo",
     "signInToInstall": "Accedi per installare",
     "selectWorkspace": "Seleziona uno spazio di lavoro",

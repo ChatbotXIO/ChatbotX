@@ -4376,7 +4376,8 @@
       "dialogTitle": "分享范本",
       "dialogDescription": "任何拥有此链接的人都可以将此范本的副本安装到您所在租户的工作区中。",
       "enableLabel": "启用分享链接",
-      "linkLabel": "分享链接"
+      "linkLabel": "分享链接",
+      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。"
     },
     "installs": {
       "title": "安装记录",
@@ -4514,6 +4515,7 @@
     "invalidDescription": "此范本分享链接无效、已禁用或已过期。",
     "byPublisher": "发布者：{publisherName}",
     "includes": "此范本包含",
+    "videoTitle": "模板预览视频",
     "tryItOut": "立即体验",
     "signInToInstall": "登录以安装",
     "selectWorkspace": "选择一个工作区",

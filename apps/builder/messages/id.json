@@ -4308,7 +4308,8 @@
       "dialogTitle": "Bagikan templat",
       "dialogDescription": "Siapa pun yang memiliki tautan ini dapat menginstal salinan templat ini ke workspace di tenant Anda.",
       "enableLabel": "Aktifkan tautan berbagi",
-      "linkLabel": "Tautan berbagi"
+      "linkLabel": "Tautan berbagi",
+      "description": "Siapa pun yang memiliki tautan dapat menginstal templat ini ke workspace mereka sendiri."
     },
     "installs": {
       "title": "Instalasi",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Tautan berbagi templat ini tidak valid, dinonaktifkan, atau telah kedaluwarsa.",
     "byPublisher": "Oleh {publisherName}",
     "includes": "Templat ini mencakup",
+    "videoTitle": "Video pratinjau templat",
     "tryItOut": "Coba sekarang",
     "signInToInstall": "Masuk untuk menginstal",
     "selectWorkspace": "Pilih workspace",

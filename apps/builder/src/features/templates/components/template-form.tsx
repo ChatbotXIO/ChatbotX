@@ -30,6 +30,7 @@ import type {
 import { saveTemplateRequest } from "../schemas/mutation"
 import { TemplateContentsCard } from "./template-contents-card"
 import { TemplateImageUploadField } from "./template-image-upload-field"
+import { TemplateShareCard } from "./template-share-card"
 
 type TemplateFormProps = {
   workspaceId: string
@@ -154,6 +155,10 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
           workspaceId={workspaceId}
         />
 
+        {template && (
+          <TemplateShareCard template={template} workspaceId={workspaceId} />
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>{t("templates.form.permissions")}</CardTitle>
@@ -162,10 +167,12 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
             <SwitchField
               label={t("templates.form.allowEdit")}
               name="defaultPermissions.allowEdit"
+              required
             />
             <SwitchField
               label={t("templates.form.allowDelete")}
               name="defaultPermissions.allowDelete"
+              required
             />
           </CardContent>
         </Card>
@@ -179,11 +186,13 @@ export function TemplateForm({ workspaceId, template }: TemplateFormProps) {
               description={t("templates.form.createInstallFolderDescription")}
               label={t("templates.form.createInstallFolder")}
               name="createInstallFolder"
+              required
             />
             <SwitchField
               description={t("templates.form.defaultAutoUpdateDescription")}
               label={t("templates.form.defaultAutoUpdate")}
               name="defaultAutoUpdate"
+              required
             />
           </CardContent>
         </Card>

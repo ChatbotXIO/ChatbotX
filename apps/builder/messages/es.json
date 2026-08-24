@@ -4308,7 +4308,8 @@
       "dialogTitle": "Compartir plantilla",
       "dialogDescription": "Cualquiera con este enlace puede instalar una copia de esta plantilla en un espacio de trabajo de tu organización.",
       "enableLabel": "Activar enlace para compartir",
-      "linkLabel": "Enlace para compartir"
+      "linkLabel": "Enlace para compartir",
+      "description": "Cualquiera con el enlace puede instalar esta plantilla en su propio espacio de trabajo."
     },
     "installs": {
       "title": "Instalaciones",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Este enlace de plantilla no es válido, está deshabilitado o ha caducado.",
     "byPublisher": "Por {publisherName}",
     "includes": "Esta plantilla incluye",
+    "videoTitle": "Video de vista previa de la plantilla",
     "tryItOut": "Pruébala",
     "signInToInstall": "Inicia sesión para instalar",
     "selectWorkspace": "Selecciona un espacio de trabajo",

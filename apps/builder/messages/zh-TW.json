@@ -4341,7 +4341,8 @@
       "dialogTitle": "分享範本",
       "dialogDescription": "任何擁有此連結的人都可以將此範本的副本安裝到您所在租戶的工作區中。",
       "enableLabel": "啟用分享連結",
-      "linkLabel": "分享連結"
+      "linkLabel": "分享連結",
+      "description": "任何擁有此連結的人都可以將此範本安裝到自己的工作區。"
     },
     "installs": {
       "title": "安裝記錄",
@@ -4506,6 +4507,7 @@
     "invalidDescription": "此範本分享連結無效、已停用或已過期。",
     "byPublisher": "發布者：{publisherName}",
     "includes": "此範本包含",
+    "videoTitle": "範本預覽影片",
     "tryItOut": "立即體驗",
     "signInToInstall": "登入以安裝",
     "selectWorkspace": "選擇一個工作區",

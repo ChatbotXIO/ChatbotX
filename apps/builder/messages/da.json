@@ -4308,7 +4308,8 @@
       "dialogTitle": "Del skabelon",
       "dialogDescription": "Alle med dette link kan installere en kopi af denne skabelon i et arbejdsområde i din tenant.",
       "enableLabel": "Aktivér dellink",
-      "linkLabel": "Dellink"
+      "linkLabel": "Dellink",
+      "description": "Alle med linket kan installere denne skabelon i deres eget arbejdsområde."
     },
     "installs": {
       "title": "Installationer",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Dette skabelon-dellink er ugyldigt, deaktiveret eller udløbet.",
     "byPublisher": "Af {publisherName}",
     "includes": "Denne skabelon indeholder",
+    "videoTitle": "Skabelonens forhåndsvisningsvideo",
     "tryItOut": "Prøv den",
     "signInToInstall": "Log ind for at installere",
     "selectWorkspace": "Vælg et arbejdsområde",

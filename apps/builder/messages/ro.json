@@ -4843,7 +4843,8 @@
       "dialogTitle": "Distribuie șablonul",
       "dialogDescription": "Oricine are acest link poate instala o copie a acestui șablon într-un spațiu de lucru din organizația ta.",
       "enableLabel": "Activează linkul de distribuire",
-      "linkLabel": "Link de distribuire"
+      "linkLabel": "Link de distribuire",
+      "description": "Oricine are linkul poate instala acest șablon în propriul spațiu de lucru."
     },
     "installs": {
       "title": "Instalări",
@@ -4907,6 +4908,7 @@
     "invalidDescription": "Acest link de distribuire a șablonului este invalid, dezactivat sau expirat.",
     "byPublisher": "De {publisherName}",
     "includes": "Acest șablon include",
+    "videoTitle": "Videoclip de previzualizare a șablonului",
     "tryItOut": "Încearcă-l",
     "signInToInstall": "Autentifică-te pentru a instala",
     "selectWorkspace": "Selectează un spațiu de lucru",

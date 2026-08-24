@@ -4308,7 +4308,8 @@
       "dialogTitle": "Şablonu paylaş",
       "dialogDescription": "Bu bağlantıya sahip herkes, bu şablonun bir kopyasını kendi kuruluşunuzdaki bir çalışma alanına yükleyebilir.",
       "enableLabel": "Paylaşım bağlantısını etkinleştir",
-      "linkLabel": "Paylaşım bağlantısı"
+      "linkLabel": "Paylaşım bağlantısı",
+      "description": "Bağlantıya sahip olan herkes bu şablonu kendi çalışma alanına yükleyebilir."
     },
     "installs": {
       "title": "Yüklemeler",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Bu şablon paylaşım bağlantısı geçersiz, devre dışı bırakılmış veya süresi dolmuş.",
     "byPublisher": "{publisherName} tarafından",
     "includes": "Bu şablon şunları içerir",
+    "videoTitle": "Şablon önizleme videosu",
     "tryItOut": "Deneyin",
     "signInToInstall": "Yüklemek için oturum açın",
     "selectWorkspace": "Bir çalışma alanı seçin",

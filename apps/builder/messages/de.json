@@ -4308,7 +4308,8 @@
       "dialogTitle": "Vorlage teilen",
       "dialogDescription": "Jeder mit diesem Link kann eine Kopie dieser Vorlage in einem Arbeitsbereich Ihres Mandanten installieren.",
       "enableLabel": "Freigabelink aktivieren",
-      "linkLabel": "Freigabelink"
+      "linkLabel": "Freigabelink",
+      "description": "Jeder mit dem Link kann diese Vorlage in seinem eigenen Arbeitsbereich installieren."
     },
     "installs": {
       "title": "Installationen",
@@ -4473,6 +4474,7 @@
     "invalidDescription": "Dieser Vorlagen-Freigabelink ist ungültig, deaktiviert oder abgelaufen.",
     "byPublisher": "Von {publisherName}",
     "includes": "Diese Vorlage enthält",
+    "videoTitle": "Vorlagen-Vorschauvideo",
     "tryItOut": "Ausprobieren",
     "signInToInstall": "Zum Installieren anmelden",
     "selectWorkspace": "Arbeitsbereich auswählen",
