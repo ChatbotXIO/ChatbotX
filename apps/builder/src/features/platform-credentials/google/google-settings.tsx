@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -41,21 +40,23 @@ import { updateGoogleSettingsAction } from "./update-google-settings.action"
 export function GoogleSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: GoogleCredentialPublic | null
   isInherited?: boolean
+  /** Origin to register with Google. See `MessengerSettings`' equivalent prop. */
+  callbackOrigin: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
 
-  // Both Google Sheets (integration) and Google sign-in (SSO) always redirect to
-  // the fixed broker callback, regardless of the reseller's branded domain.
-  // Resellers using their own Google app must whitelist these exact URIs in their
-  // own Google console. See `oauth-broker.ts` / `oauth-referer.ts`.
-  const authCallbackUrl = buildBrokerCallbackUrl(
-    "/integrations/google/callback",
-  )
-  const signInCallbackUrl = buildBrokerCallbackUrl("/api/auth/callback/google")
+  // Google Sheets and Google Calendar are separate registered redirect_uris
+  // (each integration owns its own callback route), and Google sign-in (SSO)
+  // is a third. Resellers using their own Google app must whitelist all three
+  // exact URIs in their own Google console.
+  const sheetsCallbackUrl = `${callbackOrigin}/integrations/google-sheets/callback`
+  const calendarCallbackUrl = `${callbackOrigin}/integrations/google-calendar/callback`
+  const signInCallbackUrl = `${callbackOrigin}/api/auth/callback/google`
 
   return (
     <Card>
@@ -88,12 +89,32 @@ export function GoogleSettings({
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="font-bold">Auth Callback URL:</div>
+              <div className="font-bold">
+                {t("fields.authCallbackUrl.label")} (Google Sheets):
+              </div>
               <div className="flex items-center gap-2">
-                <span className="truncate">{authCallbackUrl}</span>
+                <span className="truncate">{sheetsCallbackUrl}</span>
                 <Button
                   className="flex-none"
-                  onClick={() => handleCopy(authCallbackUrl)}
+                  onClick={() => handleCopy(sheetsCallbackUrl)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">
+                {t("fields.authCallbackUrl.label")} (Google Calendar):
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{calendarCallbackUrl}</span>
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(calendarCallbackUrl)}
                   size="icon"
                   type="button"
                   variant="outline"

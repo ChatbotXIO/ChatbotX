@@ -1,3 +1,4 @@
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Queue } from "bullmq"
 import { z } from "zod"
 import {
@@ -168,7 +169,9 @@ export type ScheduleJobPurgeAutomationThrottle = {
 
 export type ScheduleJobRefreshChannelTokens = {
   type: typeof ScheduleJobData.refreshChannelTokens
-  data: Record<string, never>
+  // No `channels` = refresh every channel. The short-lived scheduler passes
+  // ["zalo", "tiktok"] for the extra midday run (see register-schedules.ts).
+  data: { channels?: ChannelType[] }
 }
 
 export type ScheduleJobUnsubscribeExpiredTrials = {

@@ -26,6 +26,7 @@ import {
   SourceTimezoneStrategy,
 } from "@chatbotx.io/utils/datetime"
 import {
+  coerceCustomFieldValueForJavascript,
   contactVariableService,
   extractVariables,
   getSystemFieldValue,
@@ -344,10 +345,14 @@ export async function handleExecuteJavascript({
       contactInbox,
       conversation,
     })
+    // Coerced the same way resolveJavascriptInput coerces `{{name}}`
+    // lookups below, so a custom field is typed consistently in `input`
+    // regardless of whether the code reaches it via `input["name"]` or via
+    // a `{{name}}` placeholder rewritten to that same property access.
     const input: Record<string, unknown> = Object.fromEntries(
       [...variables.customFieldsMap.entries()].map(([name, field]) => [
         name,
-        field.value,
+        coerceCustomFieldValueForJavascript(field.value, field.type),
       ]),
     )
 

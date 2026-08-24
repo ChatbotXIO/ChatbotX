@@ -163,26 +163,140 @@ function buildTemplateFlowToken(
   return null
 }
 
+const DEFAULT_BUTTON_SUB_TYPE = "url"
+
+const isBlank = (value: string | undefined): boolean => !value?.trim()
+
+/**
+ * Whether the entry carries a real value for its sub_type. Used to pick the
+ * winner among duplicate entries; sub_types whose value is generated at send
+ * time (flow tokens) always count as content.
+ */
+const buttonParamContentChecks: Record<
+  string,
+  (param: WaTemplateButtonParam) => boolean
+> = {
+  url: (param) => !isBlank(param.text),
+  quick_reply: (param) => !isBlank(param.payload),
+  copy_code: (param) => !isBlank(param.coupon_code),
+  flow: () => true,
+  catalog: (param) => !isBlank(param.thumbnail_product_retailer_id),
+  mpm: (param) => (param.sections?.length ?? 0) > 0,
+}
+
+const buttonSubTypeOf = (param: WaTemplateButtonParam): string =>
+  param.sub_type || DEFAULT_BUTTON_SUB_TYPE
+
+const hasButtonParamContent = (param: WaTemplateButtonParam): boolean =>
+  buttonParamContentChecks[buttonSubTypeOf(param)]?.(param) ?? true
+
+/**
+ * Sub_types whose whole button component must be OMITTED (not sent with an
+ * empty value) when the entry carries no content — Meta rejects an explicit
+ * `payload: ""`/`thumbnail_product_retailer_id: ""` rather than treating it
+ * as "no value". The catalog thumbnail is documented optional: Meta applies
+ * the catalog's own default thumbnail when the component is left out
+ * entirely, exactly like a quick reply falls back to its button text.
+ * The blank predicate itself lives in `buttonParamContentChecks` — this set
+ * only declares WHICH sub_types get omit-instead-of-send-blank treatment,
+ * so the two can never drift.
+ */
+const OMIT_WHEN_BLANK_SUB_TYPES: ReadonlySet<string> = new Set([
+  "quick_reply",
+  "catalog",
+])
+
+const shouldOmitWhenBlank = (param: WaTemplateButtonParam): boolean =>
+  OMIT_WHEN_BLANK_SUB_TYPES.has(buttonSubTypeOf(param)) &&
+  !hasButtonParamContent(param)
+
+type ResolvedButtonParam = {
+  param: WaTemplateButtonParam
+  /** Template button index, resolved from the entry's own array position when absent. */
+  index: number
+  hasExplicitIndex: boolean
+}
+
+const explicitIndexKey = (entry: ResolvedButtonParam): string =>
+  `${buttonSubTypeOf(entry.param)}:${entry.index}`
+
+/**
+ * Collapses duplicate `(sub_type, index)` entries left behind by forms that
+ * wrote at the wrong array slot, keeping the FIRST entry that carries content.
+ * Entries without an explicit index keep today's positional behavior and are
+ * never collapsed. The worker's `withQuickReplyButtonParams` relies on this
+ * first-with-content tie-break: it removes legacy quick-reply entries at
+ * indexes it re-binds, so change the winner rule here and there together.
+ */
+function dedupeExplicitIndexParams(
+  entries: ResolvedButtonParam[],
+): ResolvedButtonParam[] {
+  const winners = new Map<string, ResolvedButtonParam>()
+
+  for (const entry of entries) {
+    if (!entry.hasExplicitIndex) {
+      continue
+    }
+    const key = explicitIndexKey(entry)
+    const current = winners.get(key)
+    if (
+      !current ||
+      (!hasButtonParamContent(current.param) &&
+        hasButtonParamContent(entry.param))
+    ) {
+      winners.set(key, entry)
+    }
+  }
+
+  return entries.filter(
+    (entry) =>
+      !entry.hasExplicitIndex || winners.get(explicitIndexKey(entry)) === entry,
+  )
+}
+
+/**
+ * Normalizes persisted button params before they become Graph API components:
+ * drops null holes from sparse form arrays, drops entries whose sub_type must
+ * be omitted rather than sent blank (quick reply without a payload — Meta
+ * rejects `payload: ""`; omitting the component makes the tap return the
+ * button text instead — and catalog without a thumbnail, which falls back to
+ * the catalog's own default when the component is left out), and collapses
+ * legacy duplicates. Indexes are resolved from the ORIGINAL array positions
+ * so removals never shift the positional fallback of the remaining entries.
+ */
+function resolveButtonParams(
+  buttons: ReadonlyArray<WaTemplateButtonParam | null | undefined>,
+): ResolvedButtonParam[] {
+  const resolved = buttons.flatMap((param, position) =>
+    param
+      ? [
+          {
+            param,
+            index: param.index ?? position,
+            hasExplicitIndex: typeof param.index === "number",
+          },
+        ]
+      : [],
+  )
+
+  const withoutOmittedBlanks = resolved.filter(
+    (entry) => !shouldOmitWhenBlank(entry.param),
+  )
+
+  return dedupeExplicitIndexParams(withoutOmittedBlanks)
+}
+
 function buildButtonComponents(
-  buttons: WaTemplateButtonParam[],
+  buttons: ReadonlyArray<WaTemplateButtonParam | null | undefined>,
   tokenContext: TemplateFlowTokenContext,
   cardIndex?: number,
 ): WhatsAppTemplateComponent[] {
-  const components: WhatsAppTemplateComponent[] = []
-
-  for (let i = 0; i < buttons.length; i++) {
-    const param = buttons[i]
-    const subType = param.sub_type || "url"
-
-    components.push({
-      type: "button",
-      sub_type: subType,
-      index: param.index ?? i,
-      parameters: [buildButtonParameter(param, tokenContext, cardIndex)],
-    })
-  }
-
-  return components
+  return resolveButtonParams(buttons).map(({ param, index }) => ({
+    type: "button",
+    sub_type: buttonSubTypeOf(param),
+    index,
+    parameters: [buildButtonParameter(param, tokenContext, cardIndex)],
+  }))
 }
 
 function buildCarouselComponent(

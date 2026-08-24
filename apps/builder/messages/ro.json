@@ -244,7 +244,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Când sunt atașate butoane, TikTok trimite doar primele 40 de caractere din acest mesaj — restul va fi trunchiat."
-    }
+    },
+    "dataWasSaved": "Datele au fost salvate"
   },
   "folders": {
     "heading": {
@@ -2333,7 +2334,7 @@
       "superAdmin": "Super administrator",
       "analytics": "Analiză",
       "flows": "Fluxuri",
-      "contacts": "Contacte",
+      "contacts": "Contacte / Căsuță de mesaje",
       "onlyAssignedContacts": "Numai contactele atribuite",
       "emailAndPhone": "E-mail și telefon",
       "broadcast": "Difuzare",
@@ -2762,6 +2763,26 @@
     },
     "enabled": {
       "label": "Activat"
+    },
+    "api": {
+      "label": "API",
+      "description": "Conectați orice aplicație compatibilă HTTP ca un canal. Aplicația dumneavoastră trimite mesajele primite către API-ul nostru REST, iar noi livrăm răspunsurile la callback URL-ul dumneavoastră.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Trimitem aici răspunsurile trimise prin POST, semnate cu secretul specific căsuței dumneavoastră de mesaje.",
+        "notSet": "Nesetat"
+      },
+      "token": "Token",
+      "rotateToken": "Regenerează token-ul",
+      "status": {
+        "enabled": "Activat",
+        "disabled": "Dezactivat"
+      },
+      "tokenReveal": {
+        "title": "Copiază token-ul tău API",
+        "description": "Acest token este afișat o singură dată. Păstrează-l în siguranță — nu îl vei mai putea vizualiza din nou.",
+        "done": "Finalizat"
+      }
     }
   },
   "channels": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Istoricul de refacere a fost șters",
     "historyDepth": "({count})",
     "none": "Niciuna",
-    "tiktokCardTitleTooLong": "TikTok va scurta acest mesaj: cu butoane atașate, sunt trimise doar primele 40 de caractere. Scurtează mesajul sau elimină butoanele."
+    "tiktokCardTitleTooLong": "TikTok va scurta acest mesaj: cu butoane atașate, sunt trimise doar primele 40 de caractere. Scurtează mesajul sau elimină butoanele.",
+    "waTemplateMpmNoProducts": "Adaugă cel puțin un produs la acest buton multi-produs înainte de publicare.",
+    "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
+    "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
+    "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
+    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Cod cupon",
         "couponCodePlaceholder": "Introdu codul cuponului",
-        "quickReplyPayload": "Payload răspuns rapid",
-        "quickReplyPayloadPlaceholder": "Introdu payload-ul (opțional)",
         "flowToken": "Token flux",
         "flowTokenPlaceholder": "Introdu tokenul fluxului",
         "flowNotSynced": "Sincronizează fluxurile WhatsApp pentru a asocia câmpurile trimise.",
-        "catalogProductId": "ID produs",
-        "catalogProductIdPlaceholder": "Introdu ID-ul de retailer al produsului",
+        "catalogProductId": "Produs din catalog",
+        "catalogProductIdPlaceholder": "Caută produse…",
         "carouselCard": "Card {index}",
         "limitedTimeOffer": "Ora de expirare a ofertei",
-        "limitedTimeOfferPlaceholder": "Introdu ora de expirare în milisecunde",
-        "limitedTimeOfferHelp": "Marcaj temporal Unix în milisecunde când expiră oferta",
+        "limitedTimeOfferPlaceholder": "Alege data și ora expirării",
+        "limitedTimeOfferHelp": "Ora de expirare este trimisă exact așa cum a fost aleasă.",
         "location": "Locație",
         "latitude": "Latitudine",
         "longitude": "Longitudine",
         "locationName": "Nume locație (opțional)",
         "locationAddress": "Adresă (opțional)",
-        "enterFormatUrl": "Introdu URL-ul {format}"
+        "enterFormatUrl": "Introdu URL-ul {format}",
+        "catalogUseDefault": "Utilizează miniatura implicită din catalog",
+        "catalogNotConnectedGuidance": "Conectează un Catalog Meta pentru a selecta un produs.",
+        "catalogSetupLink": "Mergi la setările Catalogului",
+        "catalogSelectedProductFallback": "Produs: {retailerId}",
+        "limitedTimeOfferBadge": "Expiră la {date}",
+        "limitedTimeOfferExpiredBadge": "A expirat la {date}",
+        "mpmSections": "Produse",
+        "mpmSectionTitlePlaceholder": "Titlul secțiunii (opțional)",
+        "mpmAddSection": "Adaugă secțiune",
+        "mpmRemoveSection": "Elimină secțiunea",
+        "mpmAddProduct": "Adaugă produs",
+        "mpmRemoveProduct": "Elimină produsul",
+        "mpmNoProductsHelp": "Adaugă cel puțin un produs înainte de publicare.",
+        "mpmSectionLimitReached": "S-a atins maximul de 10 secțiuni.",
+        "mpmProductLimitReached": "S-a atins maximul de 30 de produse.",
+        "mpmProductsSummary": "{productCount} produse în {sectionCount} secțiuni",
+        "unsupportedButtonParam": "Acest tip de buton nu este încă acceptat."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Reîmprospătează permisiunile",
+    "reconnect": "Reconectează",
     "duplicated": "Acest cont OA Zalo a fost deja conectat la un alt spațiu de lucru.",
     "tagSync": {
       "title": "Sincronizare etichete",
@@ -3942,11 +3983,11 @@
     "description": "Creează și gestionează programările tale.",
     "title": "Programări",
     "flowModes": {
-      "bookFromCustomField": "Programează o întâlnire",
-      "checkAvailabilityFromCustomField": "Verifică disponibilitatea",
-      "book": "Selector dată și oră",
-      "checkAvailability": "Selector interval de date",
-      "cancel": "Anulează întâlnirea"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mod",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Orele sunt afișate în {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Selectează data",
+    "date": {
+      "title": "Selectează o dată"
+    },
+    "datetime": {
+      "title": "Selectează data și ora"
+    },
+    "noSelection": "Alege o dată",
+    "actions": {
+      "submit": "Trimite"
+    },
+    "success": {
+      "title": "Datele au fost salvate",
+      "description": "Poți închide această filă acum."
+    },
+    "errors": {
+      "invalidTokenTitle": "Acest link nu este disponibil.",
+      "invalidTokenDescription": "Linkul poate fi invalid sau expirat. Te rugăm să soliciți un nou link.",
+      "submitFailed": "Nu am putut finaliza această solicitare. Te rugăm să încerci din nou."
+    },
+    "monthLabel": "Lună",
+    "yearLabel": "An"
   },
   "appointments": {
     "title": "Programări",

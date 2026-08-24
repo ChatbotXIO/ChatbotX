@@ -44,6 +44,7 @@ type WhatsappCapiTabProps = {
   capiDisconnected: boolean
   credentialAvailable: boolean
   whatsappCredentialPublic: WhatsappCredentialPublic | null
+  oauthCallbackUrl: string
 }
 
 const statusDescriptionKey = {
@@ -93,6 +94,7 @@ export function WhatsappCapiTab({
   capiDisconnected,
   credentialAvailable,
   whatsappCredentialPublic,
+  oauthCallbackUrl,
 }: WhatsappCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -142,6 +144,7 @@ export function WhatsappCapiTab({
       </Card>
       <WhatsappAutomaticEventsCard
         integrationWhatsapp={integrationWhatsapp}
+        oauthCallbackUrl={oauthCallbackUrl}
         whatsappCredentialPublic={whatsappCredentialPublic}
         workspaceId={workspaceId}
       />

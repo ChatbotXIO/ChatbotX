@@ -182,6 +182,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     await act(async () => {
       root.render(
         <AdsAnalyticsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([
             analyticsData,
             deliverySummary,
@@ -234,6 +235,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     await act(async () => {
       root.render(
         <AdsAnalyticsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([
             analyticsData,
             deliverySummary,

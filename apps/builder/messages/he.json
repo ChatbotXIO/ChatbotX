@@ -516,7 +516,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "כאשר מצורפים כפתורים, טיקטוק שולח רק את 40 התווים הראשונים של ההודעה הזו — השאר ייחתך."
-    }
+    },
+    "dataWasSaved": "הנתונים נשמרו"
   },
   "folders": {
     "heading": {
@@ -1217,7 +1218,12 @@
     "redoHistoryCleared": "היסטוריית הביצוע מחדש נוקתה",
     "historyDepth": "({count})",
     "none": "ללא",
-    "tiktokCardTitleTooLong": "טיקטוק יקצר את ההודעה הזו: כאשר מצורפים כפתורים, נשלחים רק 40 התווים הראשונים. קצר את ההודעה או הסר את הכפתורים."
+    "tiktokCardTitleTooLong": "טיקטוק יקצר את ההודעה הזו: כאשר מצורפים כפתורים, נשלחים רק 40 התווים הראשונים. קצר את ההודעה או הסר את הכפתורים.",
+    "waTemplateMpmNoProducts": "הוסף לפחות מוצר אחד לכפתור רב-המוצרים הזה לפני הפרסום.",
+    "waTemplateMpmTooManySections": "לכפתור רב-מוצרים יכולים להיות עד 10 מקטעים לכל היותר. הסר מקטעים לפני הפרסום.",
+    "waTemplateMpmTooManyProducts": "לכפתור רב-מוצרים יכולים להיות עד 30 מוצרים בסך הכל. הסר מוצרים לפני הפרסום.",
+    "waTemplateLtoExpirationRequired": "בחרו תאריך תפוגה למבצע המוגבל בזמן לפני השליחה.",
+    "waTemplateMpmIncompleteProducts": "כל מקטע צריך לפחות מוצר אחד שנבחר — הסירו שורות ריקות או בחרו להן מוצר."
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -1621,23 +1627,38 @@
       "params": {
         "couponCode": "קוד קופון",
         "couponCodePlaceholder": "הזנת קוד קופון",
-        "quickReplyPayload": "מטען תשובה מהירה",
-        "quickReplyPayloadPlaceholder": "הזנת מטען (אופציונלי)",
         "flowToken": "אסימון תהליך",
         "flowTokenPlaceholder": "הזנת אסימון תהליך",
         "flowNotSynced": "סנכרן תהליכי WhatsApp כדי למפות את השדות שנשלחו.",
-        "catalogProductId": "מזהה מוצר",
-        "catalogProductIdPlaceholder": "הזנת מזהה המוצר אצל הקמעונאי",
+        "catalogProductId": "מוצר מהקטלוג",
+        "catalogProductIdPlaceholder": "חיפוש מוצרים…",
         "carouselCard": "כרטיס {index}",
         "limitedTimeOffer": "מועד תפוגת המבצע",
-        "limitedTimeOfferPlaceholder": "הזנת מועד תפוגה באלפיות שנייה",
-        "limitedTimeOfferHelp": "חותמת זמן Unix באלפיות שנייה שבה המבצע פג",
+        "limitedTimeOfferPlaceholder": "בחר תאריך ושעת תפוגה",
+        "limitedTimeOfferHelp": "שעת התפוגה נשלחת בדיוק כפי שנבחרה.",
         "location": "מיקום",
         "latitude": "קו רוחב",
         "longitude": "קו אורך",
         "locationName": "שם מיקום (אופציונלי)",
         "locationAddress": "כתובת (אופציונלי)",
-        "enterFormatUrl": "הזנת כתובת URL מסוג {format}"
+        "enterFormatUrl": "הזנת כתובת URL מסוג {format}",
+        "catalogUseDefault": "השתמש בתמונה הממוזערת המוגדרת כברירת מחדל של הקטלוג",
+        "catalogNotConnectedGuidance": "חבר קטלוג Meta כדי לבחור מוצר.",
+        "catalogSetupLink": "עבור להגדרות הקטלוג",
+        "catalogSelectedProductFallback": "מוצר: {retailerId}",
+        "limitedTimeOfferBadge": "פג תוקף ב-{date}",
+        "limitedTimeOfferExpiredBadge": "פג תוקף ב-{date}",
+        "mpmSections": "מוצרים",
+        "mpmSectionTitlePlaceholder": "כותרת המקטע (אופציונלי)",
+        "mpmAddSection": "הוסף מקטע",
+        "mpmRemoveSection": "הסר מקטע",
+        "mpmAddProduct": "הוסף מוצר",
+        "mpmRemoveProduct": "הסר מוצר",
+        "mpmNoProductsHelp": "הוסף לפחות מוצר אחד לפני הפרסום.",
+        "mpmSectionLimitReached": "הגעת למקסימום של 10 מקטעים.",
+        "mpmProductLimitReached": "הגעת למקסימום של 30 מוצרים.",
+        "mpmProductsSummary": "{productCount} מוצרים ב-{sectionCount} מקטעים",
+        "unsupportedButtonParam": "סוג כפתור זה עדיין אינו נתמך."
       }
     },
     "sampleBodyCardContent": {
@@ -1804,7 +1825,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "רענון הרשאות",
+    "reconnect": "חיבור מחדש",
     "duplicated": "חשבון Zalo OA זה כבר חובר לסביבת עבודה אחרת.",
     "tagSync": {
       "title": "סנכרון תגיות",
@@ -2492,11 +2513,11 @@
     "title": "תזמון פגישות",
     "description": "יצירה וניהול של תזמון הפגישות שלכם.",
     "flowModes": {
-      "bookFromCustomField": "קביעת פגישה",
-      "checkAvailabilityFromCustomField": "בדיקת זמינות",
-      "book": "בורר תאריך ושעה",
-      "checkAvailability": "בורר טווח תאריכים",
-      "cancel": "ביטול פגישה"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "מצב",
@@ -4044,7 +4065,7 @@
       "superAdmin": "מנהל-על",
       "analytics": "נתונים אנליטיים",
       "flows": "תהליכים",
-      "contacts": "אנשי קשר",
+      "contacts": "אנשי קשר / תיבת דואר נכנס",
       "onlyAssignedContacts": "אנשי קשר שהוקצו בלבד",
       "emailAndPhone": "דוא\"ל וטלפון",
       "broadcast": "שידור",
@@ -4473,6 +4494,26 @@
     },
     "enabled": {
       "label": "מופעל"
+    },
+    "api": {
+      "label": "API",
+      "description": "חברו כל אפליקציה התומכת ב-HTTP כערוץ. האפליקציה שלכם שולחת הודעות נכנסות אל ה-REST API שלנו, ואנחנו מעבירים את התגובות אל כתובת ה-callback שלכם.",
+      "callbackUrl": {
+        "label": "כתובת Callback",
+        "description": "אנחנו שולחים לכאן תגובות יוצאות בבקשת POST, חתומות בסוד הייחודי של תיבת הדואר הנכנס שלכם.",
+        "notSet": "לא הוגדר"
+      },
+      "token": "אסימון",
+      "rotateToken": "החלף אסימון",
+      "status": {
+        "enabled": "מופעל",
+        "disabled": "מושבת"
+      },
+      "tokenReveal": {
+        "title": "העתיקו את אסימון ה-API שלכם",
+        "description": "אסימון זה מוצג פעם אחת בלבד. שמרו אותו במקום בטוח — לא תוכלו לצפות בו שוב.",
+        "done": "בוצע"
+      }
     }
   },
   "billing": {
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "הזמנים מוצגים לפי {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "בחירת תאריך",
+    "date": {
+      "title": "בחרו תאריך"
+    },
+    "datetime": {
+      "title": "בחרו תאריך ושעה"
+    },
+    "noSelection": "בחרו תאריך",
+    "actions": {
+      "submit": "שליחה"
+    },
+    "success": {
+      "title": "הנתונים נשמרו",
+      "description": "כעת ניתן לסגור את הכרטיסייה הזו."
+    },
+    "errors": {
+      "invalidTokenTitle": "קישור זה אינו זמין.",
+      "invalidTokenDescription": "ייתכן שהקישור אינו תקין או שפג תוקפו. בקשו קישור חדש.",
+      "submitFailed": "לא הצלחנו להשלים את הבקשה הזו. נסו שוב."
+    },
+    "monthLabel": "חודש",
+    "yearLabel": "שנה"
   },
   "appointments": {
     "title": "פגישות",

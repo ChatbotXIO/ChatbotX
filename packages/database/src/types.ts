@@ -2,6 +2,7 @@ import type * as schema from "./schema"
 
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
+export type IntegrationApiModel = typeof schema.integrationApiModel.$inferSelect
 export type UserModel = typeof schema.userModel.$inferSelect
 export type AIAgentModel = typeof schema.aiAgentModel.$inferSelect
 export type AIFunctionModel = typeof schema.aiFunctionModel.$inferSelect
@@ -169,6 +170,7 @@ export type WhatsappSignupSessionModel =
   typeof schema.whatsappSignupSessionModel.$inferSelect
 
 export type InboxWithIntegrations = InboxModel & {
+  integrationApi?: IntegrationApiModel | null
   integrationInstagram?: IntegrationInstagramModel | null
   integrationMessenger?: IntegrationMessengerModel | null
   integrationTelegram?: IntegrationTelegramModel | null

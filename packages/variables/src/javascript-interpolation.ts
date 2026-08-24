@@ -1,4 +1,5 @@
 import {
+  type CustomFieldType,
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
@@ -375,6 +376,33 @@ export const interpolateIntoJavascript = (
   return result
 }
 
+/**
+ * Coerces a custom field's raw stored string into the JS value its declared
+ * `type` implies, so `{{age}}` for a `number`-typed field behaves like a
+ * number in an Execute JavaScript step (`{{age}} + 5` adds numerically)
+ * instead of always behaving like a string (`"30" + 5` === `"305"`).
+ *
+ * `date`/`datetime` are deliberately left as their raw ISO string rather
+ * than coerced to a JS `Date` — a `Date` changes semantics more than a
+ * number/boolean coercion does (equality, serialization, `+` behavior all
+ * shift), and isolated-vm's `ExternalCopy` cannot carry a `Date` instance
+ * faithfully across the sandbox boundary. Authors who need date math can
+ * still do `new Date({{signedUpAt}})` themselves.
+ */
+export const coerceCustomFieldValueForJavascript = (
+  value: string,
+  type: CustomFieldType,
+): string | number | boolean | null => {
+  if (type === "number") {
+    const numberValue = Number(value)
+    return Number.isFinite(numberValue) ? numberValue : null
+  }
+  if (type === "boolean") {
+    return value === "true"
+  }
+  return value
+}
+
 // Resolution order mirrors contact-variable.ts's variableResolvers so
 // `{{first_name}}` resolves the same way in JS-step code as in message
 // text: system fields, then `raw:`, then custom fields, then coupons. `raw:`
@@ -387,18 +415,22 @@ export const interpolateIntoJavascript = (
 const resolveJavascriptInputValue = async (
   name: string,
   context: ReplaceVariableProps,
-): Promise<string | null | undefined> => {
+): Promise<string | number | boolean | null | undefined> => {
   if (Object.values(systemFieldTypes.enum).includes(name as SystemFieldType)) {
     return await getSystemFieldValue(context, name as SystemFieldType)
   }
   if (name.startsWith(RAW_CUSTOM_FIELD_VARIABLE_PREFIX)) {
     const rawField = context.customFieldsMap.get(toRawCustomFieldName(name))
     if (rawField) {
-      return rawField.value
+      return coerceCustomFieldValueForJavascript(rawField.value, rawField.type)
     }
   }
   if (context.customFieldsMap.has(name)) {
-    return context.customFieldsMap.get(name)?.value ?? null
+    const field = context.customFieldsMap.get(name)
+    if (!field) {
+      return null
+    }
+    return coerceCustomFieldValueForJavascript(field.value, field.type)
   }
   if (isCouponVariable(name)) {
     return await resolveCouponVariable(context, name)
@@ -408,20 +440,22 @@ const resolveJavascriptInputValue = async (
 
 /**
  * Resolves every `{{...}}` name referenced in an Execute JavaScript step's
- * code to a plain value, keyed the same way `input["name"]` will look it
- * up. Returns only the names it could resolve — `interpolateIntoJavascript`
- * leaves any name missing from this map as the literal `{{...}}` text.
+ * code to a value coerced to match its declared type (see
+ * `coerceCustomFieldValueForJavascript`), keyed the same way
+ * `input["name"]` will look it up. Returns only the names it could
+ * resolve — `interpolateIntoJavascript` leaves any name missing from this
+ * map as the literal `{{...}}` text.
  */
 export const resolveJavascriptInput = async (
   code: string,
   context: ReplaceVariableProps,
-): Promise<Map<string, string | null>> => {
+): Promise<Map<string, string | number | boolean | null>> => {
   const names = extractVariables(code)
   const values = await Promise.all(
     names.map((name) => resolveJavascriptInputValue(name, context)),
   )
 
-  const resolved = new Map<string, string | null>()
+  const resolved = new Map<string, string | number | boolean | null>()
   names.forEach((name, index) => {
     const value = values[index]
     if (value !== undefined) {

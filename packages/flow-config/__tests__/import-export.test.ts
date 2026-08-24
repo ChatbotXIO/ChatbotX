@@ -380,7 +380,7 @@ describe("collectCustomFieldReferences", () => {
                 {
                   id: "s5",
                   stepType: "appointmentScheduling",
-                  mode: "checkAvailability",
+                  mode: "checkAvailabilityFromCustomField",
                   startDateFieldId: "6",
                   endDateFieldId: "7",
                   outputCustomFieldId: "8",

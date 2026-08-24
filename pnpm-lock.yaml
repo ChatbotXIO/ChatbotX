@@ -113,6 +113,9 @@ importers:
       '@chatbotx.io/integration-active-campaign':
         specifier: workspace:*
         version: link:../../integrations/active-campaign
+      '@chatbotx.io/integration-api':
+        specifier: workspace:*
+        version: link:../../integrations/api
       '@chatbotx.io/integration-chatbotx':
         specifier: workspace:*
         version: link:../../integrations/chatbotx
@@ -237,8 +240,8 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0(react@19.2.5)
       '@hono/node-server':
-        specifier: ^2.0.10
-        version: 2.0.10(hono@4.12.28)
+        specifier: ^2.1.1
+        version: 2.1.1(hono@4.12.28)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.4.0(react-hook-form@7.77.0(react@19.2.5))
@@ -697,6 +700,9 @@ importers:
       '@chatbotx.io/integration-active-campaign':
         specifier: workspace:*
         version: link:../../integrations/active-campaign
+      '@chatbotx.io/integration-api':
+        specifier: workspace:*
+        version: link:../../integrations/api
       '@chatbotx.io/integration-chatbotx':
         specifier: workspace:*
         version: link:../../integrations/chatbotx
@@ -926,6 +932,46 @@ importers:
       universal-error-normalizer:
         specifier: ^1.0.0
         version: 1.0.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.4.3
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@chatbotx.io/vitest-config':
+        specifier: workspace:*
+        version: link:../../packages/vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  integrations/api:
+    dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../../packages/business
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      ky:
+        specifier: ^2.0.2
+        version: 2.0.2
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -3620,8 +3666,8 @@ packages:
   '@codemirror/commands@6.10.3':
     resolution: {integrity: sha512-JFRiqhKu+bvSkDLI+rUhJwSxQxYb759W5GBezE8Uc8mHLqC9aV/9aTC7yJSqCtB3F00pylrLCwnyS91Ap5ej4Q==}
 
-  '@codemirror/commands@6.10.4':
-    resolution: {integrity: sha512-Ryk9y9T0FFVF0cUGhAknveAyUOl/A1qReTFi+qPKtOh2Z9F4AUBz3XOrYD4ZEgZirdugVzHvd/2/Wcwy5OliTg==}
+  '@codemirror/commands@6.11.0':
+    resolution: {integrity: sha512-/K4Rl5BN0OtTiPWmJCdqODu38XnDMsDxKY5rgrPnCkutPTJf2wVbkoixLfealF5Kwse/s8P8M5jAiURiwSwnFA==}
 
   '@codemirror/lang-css@6.3.1':
     resolution: {integrity: sha512-kr5fwBGiGtmz6l0LSJIbno9QrifNMUusivHbnA1H6Dmqy4HZFte3UAICix1VuKo0lMPKQr2rqB+0BkKi/S3Ejg==}
@@ -4578,14 +4624,14 @@ packages:
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
 
-  '@hono/node-server@1.19.14':
-    resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
+  '@hono/node-server@1.19.17':
+    resolution: {integrity: sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
 
-  '@hono/node-server@2.0.10':
-    resolution: {integrity: sha512-ZcnNVhKTmyDJeg0UlnZjvM73JBsTAuhrH/J4fjwGOw59PwOW51r4J+p6CsKZWXdKSme4MFqU62CZMOsdDrU4CA==}
+  '@hono/node-server@2.1.1':
+    resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
@@ -12044,7 +12090,7 @@ snapshots:
       '@codemirror/view': 6.43.0
       '@lezer/common': 1.5.2
 
-  '@codemirror/commands@6.10.4':
+  '@codemirror/commands@6.11.0':
     dependencies:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.7.0
@@ -12760,11 +12806,11 @@ snapshots:
     dependencies:
       react: 19.2.5
 
-  '@hono/node-server@1.19.14(hono@4.12.28)':
+  '@hono/node-server@1.19.17(hono@4.12.28)':
     dependencies:
       hono: 4.12.28
 
-  '@hono/node-server@2.0.10(hono@4.12.28)':
+  '@hono/node-server@2.1.1(hono@4.12.28)':
     dependencies:
       hono: 4.12.28
 
@@ -13004,7 +13050,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@4.4.3)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.28)
+      '@hono/node-server': 1.19.17(hono@4.12.28)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -15081,7 +15127,7 @@ snapshots:
   codemirror@6.0.2:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
-      '@codemirror/commands': 6.10.4
+      '@codemirror/commands': 6.11.0
       '@codemirror/language': 6.12.3
       '@codemirror/lint': 6.9.6
       '@codemirror/search': 6.7.0

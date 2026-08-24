@@ -185,16 +185,21 @@ describe("with a dedicated broker host", () => {
     )
   })
 
-  test("does not relay from the builder host — only the broker host relays", async () => {
+  test("relays from the builder host too — relay is not broker-only (tenant-owned credential landed on the platform host)", async () => {
     mockFindActiveByDomain.mockResolvedValue(activeDomain)
     const { resolveRelayTarget } = await loadWithBroker()
 
+    // A reseller with their own app registers their custom domain as the
+    // redirect_uri, so a flow that started on the platform host can still
+    // land the callback on the tenant's own domain.
     const callbackUrl = new URL(
       `${PLATFORM_URL}/integrations/tiktok/callback?code=abc`,
     )
     const referer = "https://chat.acme.com/space/42/dashboard"
 
-    expect(await resolveRelayTarget(callbackUrl, referer)).toBeNull()
+    expect(await resolveRelayTarget(callbackUrl, referer)).toBe(
+      "https://chat.acme.com/integrations/tiktok/callback?code=abc",
+    )
   })
 
   test("does not relay back to the broker itself", async () => {

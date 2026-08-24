@@ -7,9 +7,9 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
-import { refreshZaloPermissionsAction } from "../actions/refresh-permissions.action"
+import { reconnectZaloAction } from "../actions/reconnect.action"
 
-export function ZaloRefreshPermissions({
+export function ZaloReconnect({
   integrationZalo,
 }: {
   integrationZalo: IntegrationZaloModel
@@ -17,12 +17,10 @@ export function ZaloRefreshPermissions({
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
 
+  // No onSuccess: the action ends in a redirect to the Zalo OAuth dialog.
   const { execute, isPending } = useAction(
-    refreshZaloPermissionsAction.bind(null, workspaceId, integrationZalo.id),
+    reconnectZaloAction.bind(null, workspaceId, integrationZalo.id),
     {
-      onSuccess: () => {
-        toast.success(t("zalo.refreshPermissions"))
-      },
       onError: ({ error }) => {
         if (error.serverError) {
           toast.error(error.serverError)
@@ -39,7 +37,7 @@ export function ZaloRefreshPermissions({
       variant="secondary"
     >
       {isPending && <Loader2Icon className="animate-spin" />}
-      {t("zalo.refreshPermissions")}
+      {t("zalo.reconnect")}
     </Button>
   )
 }

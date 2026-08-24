@@ -1661,7 +1661,7 @@
       "superAdmin": "Super Admin",
       "analytics": "Analytics",
       "flows": "Flows",
-      "contacts": "Contacts",
+      "contacts": "Contacts / Inbox",
       "onlyAssignedContacts": "Only Assigned Contacts",
       "emailAndPhone": "Email and Phone",
       "broadcast": "Broadcast",
@@ -1927,7 +1927,7 @@
     },
     "authCallbackUrl": {
       "label": "Auth Callback URL",
-      "hint": "Register this exact URL as the OAuth redirect URI in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain."
+      "hint": "Register this exact URL as the OAuth redirect URI in your provider app. With your own app and an active custom domain, it's on your custom domain; otherwise it's on the platform host."
     },
     "signInCallbackUrl": {
       "label": "Sign-in Callback URL",
@@ -1935,7 +1935,7 @@
     },
     "webhookUrl": {
       "label": "Webhook URL",
-      "hint": "Register this exact Webhook URL in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain."
+      "hint": "Register this exact Webhook URL in your provider app. With your own app and an active custom domain, it's on your custom domain; otherwise it's on the platform host."
     },
     "tiktok": {
       "label": "TikTok",
@@ -2081,6 +2081,26 @@
     },
     "enabled": {
       "label": "Enabled"
+    },
+    "api": {
+      "label": "API",
+      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "We POST outbound replies here, signed with your per-inbox secret.",
+        "notSet": "Not set"
+      },
+      "token": "Token",
+      "rotateToken": "Rotate token",
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "tokenReveal": {
+        "title": "Copy your API token",
+        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
+        "done": "Done"
+      }
     }
   },
   "metaConversions": {
@@ -2426,7 +2446,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "With buttons attached, TikTok only sends the first 40 characters of this message — the rest will be cut off."
-    }
+    },
+    "dataWasSaved": "Data was saved"
   },
   "folders": {
     "heading": {
@@ -3053,7 +3074,12 @@
     "redoHistoryCleared": "Redo history cleared",
     "historyDepth": "({count})",
     "none": "None",
-    "tiktokCardTitleTooLong": "TikTok will cut this message short: with buttons attached, only the first 40 characters are sent. Shorten the message or remove the buttons."
+    "tiktokCardTitleTooLong": "TikTok will cut this message short: with buttons attached, only the first 40 characters are sent. Shorten the message or remove the buttons.",
+    "waTemplateMpmNoProducts": "Add at least one product to this multi-product button before publishing.",
+    "waTemplateMpmTooManySections": "A multi-product button can have at most 10 sections. Remove some sections before publishing.",
+    "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
+    "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
+    "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",
@@ -3457,23 +3483,38 @@
       "params": {
         "couponCode": "Coupon Code",
         "couponCodePlaceholder": "Enter coupon code",
-        "quickReplyPayload": "Quick Reply Payload",
-        "quickReplyPayloadPlaceholder": "Enter payload (optional)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Enter flow token",
         "flowNotSynced": "Sync WhatsApp flows to map submitted fields.",
-        "catalogProductId": "Product ID",
-        "catalogProductIdPlaceholder": "Enter product retailer ID",
+        "catalogProductId": "Catalog product",
+        "catalogProductIdPlaceholder": "Search products…",
+        "catalogUseDefault": "Use catalog default thumbnail",
+        "catalogNotConnectedGuidance": "Connect a Meta Catalog to select a product.",
+        "catalogSetupLink": "Go to Catalog settings",
+        "catalogSelectedProductFallback": "Product: {retailerId}",
         "carouselCard": "Card {index}",
         "limitedTimeOffer": "Offer Expiration Time",
-        "limitedTimeOfferPlaceholder": "Enter expiration time in milliseconds",
-        "limitedTimeOfferHelp": "Unix timestamp in milliseconds when the offer expires",
+        "limitedTimeOfferPlaceholder": "Pick expiration date & time",
+        "limitedTimeOfferHelp": "The offer expiration is sent exactly as picked.",
+        "limitedTimeOfferBadge": "Expires {date}",
+        "limitedTimeOfferExpiredBadge": "Expired {date}",
         "location": "Location",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Location name (optional)",
         "locationAddress": "Address (optional)",
-        "enterFormatUrl": "Enter {format} URL"
+        "enterFormatUrl": "Enter {format} URL",
+        "mpmSections": "Products",
+        "mpmSectionTitlePlaceholder": "Section title (optional)",
+        "mpmAddSection": "Add section",
+        "mpmRemoveSection": "Remove section",
+        "mpmAddProduct": "Add product",
+        "mpmRemoveProduct": "Remove product",
+        "mpmNoProductsHelp": "Add at least one product before publishing.",
+        "mpmSectionLimitReached": "Maximum of 10 sections reached.",
+        "mpmProductLimitReached": "Maximum of 30 products reached.",
+        "mpmProductsSummary": "{productCount} products in {sectionCount} sections",
+        "unsupportedButtonParam": "This button type isn't supported yet."
       }
     },
     "sampleBodyCardContent": {
@@ -3640,7 +3681,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh permissions",
+    "reconnect": "Reconnect",
     "duplicated": "This Zalo OA account has already been connected to another workspace.",
     "tagSync": {
       "title": "Tag Sync",
@@ -4373,8 +4414,8 @@
     "flowModes": {
       "bookFromCustomField": "Book appointment",
       "checkAvailabilityFromCustomField": "Check availability",
-      "book": "Date & time picker",
-      "checkAvailability": "Date range picker",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
       "cancel": "Cancel appointment"
     },
     "fields": {
@@ -4720,6 +4761,30 @@
       "unavailableTitle": "Cancellation unavailable",
       "unavailableDescription": "This appointment is already canceled, deleted, or in the past."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Select date",
+    "date": {
+      "title": "Select a date"
+    },
+    "datetime": {
+      "title": "Select a date and time"
+    },
+    "noSelection": "Choose a date",
+    "actions": {
+      "submit": "Submit"
+    },
+    "success": {
+      "title": "Data was saved",
+      "description": "You can close this tab now."
+    },
+    "errors": {
+      "invalidTokenTitle": "This link is unavailable.",
+      "invalidTokenDescription": "The link may be invalid or expired. Please ask for a new link.",
+      "submitFailed": "We couldn't complete this request. Please try again."
+    },
+    "monthLabel": "Month",
+    "yearLabel": "Year"
   },
   "extensionsMe": {
     "actions": {

@@ -7,27 +7,37 @@ const SOCIAL_PROVIDERS = ["google", "facebook"] as const
 
 const FACEBOOK_SSO_SCOPES = ["email", "public_profile", "pages_messaging"]
 
+const BROKER_ORIGIN = "https://broker.test"
+
 const {
   mockCreateAuth,
+  mockFindActiveByTenantId,
   mockFindDecryptedPlatform,
   mockResolveForOwner,
   mockResolveTenantByDomain,
   mockResolveTenantOwnerId,
   mockUpgradeFacebookAccount,
 } = vi.hoisted(() => ({
-  // createAuth is mocked to a cheap stub tagged by the (provider, clientId) it
-  // was built with, so we can assert which app an instance signs in with and
-  // that instances are reused per credential rather than rebuilt.
+  // createAuth is mocked to a cheap stub tagged by the (provider, clientId,
+  // redirectOrigin) it was built with, so we can assert which app + origin an
+  // instance signs in with and that instances are reused per credential
+  // rather than rebuilt.
   mockCreateAuth: vi.fn(
     (config: {
       socialCredentials?: Record<string, { clientId: string } | null>
+      socialRedirectOrigin?: string
     }) => {
       const [provider, credential] = Object.entries(
         config.socialCredentials ?? {},
       )[0] ?? [null, null]
-      return { provider, clientId: credential?.clientId ?? null }
+      return {
+        provider,
+        clientId: credential?.clientId ?? null,
+        redirectOrigin: config.socialRedirectOrigin,
+      }
     },
   ),
+  mockFindActiveByTenantId: vi.fn(),
   mockFindDecryptedPlatform: vi.fn(),
   mockResolveForOwner: vi.fn(),
   mockResolveTenantByDomain: vi.fn(),
@@ -52,6 +62,9 @@ vi.mock("@/lib/auth/on-user-created", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  customDomainService: {
+    findActiveByTenantId: mockFindActiveByTenantId,
+  },
   platformCredentialService: {
     findDecryptedPlatform: mockFindDecryptedPlatform,
     resolveForOwner: mockResolveForOwner,
@@ -67,13 +80,22 @@ vi.mock("@/lib/auth/upgrade-facebook-account", () => ({
   upgradeFacebookAccount: mockUpgradeFacebookAccount,
 }))
 
+vi.mock("@/lib/oauth-broker", () => ({
+  getBrokerOrigin: () => BROKER_ORIGIN,
+}))
+
 const mockIsCommunity = vi.fn(() => false)
 vi.mock("@/env", () => ({
   isCommunity: mockIsCommunity,
   isCloud: vi.fn(() => false),
 }))
 
-const credential = (clientId: string, clientSecret = "secret") => ({
+const credential = (
+  clientId: string,
+  clientSecret = "secret",
+  userId: string | null = null,
+) => ({
+  userId,
   config: { clientId, clientSecret, verifyToken: "token", version: "v1" },
 })
 
@@ -86,6 +108,7 @@ async function loadModule() {
 beforeEach(() => {
   vi.clearAllMocks()
   mockIsCommunity.mockReturnValue(false)
+  mockFindActiveByTenantId.mockResolvedValue(undefined)
 })
 
 describe("isSocialLoginEnabledForTenant — google", () => {
@@ -304,5 +327,101 @@ describe("getSocialAuthForTenant", () => {
       clientSecret: "secret",
       version: "v23.0",
     })
+  })
+})
+
+describe("getSocialAuthForTenant — tenant-owned credential redirect origin", () => {
+  test("root tenant always resolves the broker origin, even with userId set on the platform row", async () => {
+    mockFindDecryptedPlatform.mockResolvedValue(
+      credential("platform-client", "secret", null),
+    )
+    const { getSocialAuthForTenant } = await loadModule()
+
+    await getSocialAuthForTenant(ROOT_TENANT_ID, "google")
+
+    expect(mockCreateAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ socialRedirectOrigin: BROKER_ORIGIN }),
+    )
+    expect(mockFindActiveByTenantId).not.toHaveBeenCalled()
+  })
+
+  test("a non-root tenant with an inherited (platform) credential still resolves the broker origin", async () => {
+    mockResolveTenantOwnerId.mockResolvedValue(undefined)
+    mockResolveForOwner.mockResolvedValue(undefined)
+    mockFindDecryptedPlatform.mockResolvedValue(
+      credential("platform-client", "secret", null),
+    )
+    const { getSocialAuthForTenant } = await loadModule()
+
+    await getSocialAuthForTenant("42", "google")
+
+    expect(mockCreateAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ socialRedirectOrigin: BROKER_ORIGIN }),
+    )
+  })
+
+  test("a tenant-owned credential with an active custom domain resolves that domain's origin", async () => {
+    mockResolveTenantOwnerId.mockResolvedValue("owner-1")
+    mockResolveForOwner.mockResolvedValue(
+      credential("reseller-client", "secret", "owner-1"),
+    )
+    mockFindActiveByTenantId.mockResolvedValue({ domain: "chat.acme.com" })
+    const { getSocialAuthForTenant } = await loadModule()
+
+    await getSocialAuthForTenant("42", "google")
+
+    expect(mockFindActiveByTenantId).toHaveBeenCalledWith("42")
+    expect(mockCreateAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        socialRedirectOrigin: "https://chat.acme.com",
+      }),
+    )
+  })
+
+  test("a tenant-owned credential with no active custom domain falls back to the broker origin", async () => {
+    mockResolveTenantOwnerId.mockResolvedValue("owner-1")
+    mockResolveForOwner.mockResolvedValue(
+      credential("reseller-client", "secret", "owner-1"),
+    )
+    mockFindActiveByTenantId.mockResolvedValue(undefined)
+    const { getSocialAuthForTenant } = await loadModule()
+
+    await getSocialAuthForTenant("42", "google")
+
+    expect(mockCreateAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ socialRedirectOrigin: BROKER_ORIGIN }),
+    )
+  })
+
+  test("distinct redirect origins for the same credential resolve to distinct cached instances", async () => {
+    mockResolveTenantOwnerId.mockResolvedValue("owner-1")
+    mockResolveForOwner.mockResolvedValue(
+      credential("reseller-client", "secret", "owner-1"),
+    )
+    const { getSocialAuthForTenant } = await loadModule()
+
+    mockFindActiveByTenantId.mockResolvedValueOnce(undefined)
+    const beforeDomain = await getSocialAuthForTenant("42", "google")
+
+    mockFindActiveByTenantId.mockResolvedValueOnce({ domain: "chat.acme.com" })
+    const afterDomain = await getSocialAuthForTenant("42", "google")
+
+    expect(beforeDomain).not.toBe(afterDomain)
+    expect(mockCreateAuth).toHaveBeenCalledTimes(2)
+  })
+
+  test("the same tenant-owned credential and domain reuse the cached instance", async () => {
+    mockResolveTenantOwnerId.mockResolvedValue("owner-1")
+    mockResolveForOwner.mockResolvedValue(
+      credential("reseller-client", "secret", "owner-1"),
+    )
+    mockFindActiveByTenantId.mockResolvedValue({ domain: "chat.acme.com" })
+    const { getSocialAuthForTenant } = await loadModule()
+
+    const first = await getSocialAuthForTenant("42", "google")
+    const second = await getSocialAuthForTenant("42", "google")
+
+    expect(first).toBe(second)
+    expect(mockCreateAuth).toHaveBeenCalledTimes(1)
   })
 })

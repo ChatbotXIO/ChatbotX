@@ -1652,7 +1652,7 @@
       "superAdmin": "Süper Yönetici",
       "analytics": "Analizler",
       "flows": "Akışlar",
-      "contacts": "Kişiler",
+      "contacts": "Kişiler / Gelen Kutusu",
       "onlyAssignedContacts": "Yalnızca Atanmış Kişiler",
       "emailAndPhone": "E-posta ve Telefon",
       "broadcast": "Toplu Gönderim",
@@ -2081,6 +2081,26 @@
     },
     "enabled": {
       "label": "Etkin"
+    },
+    "api": {
+      "label": "API",
+      "description": "HTTP destekleyen herhangi bir uygulamayı kanal olarak bağlayın. Uygulamanız, gelen mesajları REST API'mize gönderir ve biz de yanıtları callback URL'inize iletiriz.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Giden yanıtları buraya POST ile, gelen kutunuza özel gizli anahtarla imzalanmış şekilde gönderiyoruz.",
+        "notSet": "Ayarlanmadı"
+      },
+      "token": "Jeton",
+      "rotateToken": "Jetonu yenile",
+      "status": {
+        "enabled": "Etkin",
+        "disabled": "Devre Dışı"
+      },
+      "tokenReveal": {
+        "title": "API jetonunuzu kopyalayın",
+        "description": "Bu jeton yalnızca bir kez gösterilir. Güvenli bir şekilde saklayın — tekrar görüntüleyemezsiniz.",
+        "done": "Tamamlandı"
+      }
     }
   },
   "flows": {
@@ -2328,7 +2348,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Butonlar eklendiğinde TikTok bu mesajın yalnızca ilk 40 karakterini gönderir — geri kalanı kesilir."
-    }
+    },
+    "dataWasSaved": "Veriler kaydedildi"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Yinele geçmişi temizlendi",
     "historyDepth": "({count})",
     "none": "Yok",
-    "tiktokCardTitleTooLong": "TikTok bu mesajı kısaltacak: butonlar eklendiğinde yalnızca ilk 40 karakter gönderilir. Mesajı kısaltın veya butonları kaldırın."
+    "tiktokCardTitleTooLong": "TikTok bu mesajı kısaltacak: butonlar eklendiğinde yalnızca ilk 40 karakter gönderilir. Mesajı kısaltın veya butonları kaldırın.",
+    "waTemplateMpmNoProducts": "Yayınlamadan önce bu çoklu ürün butonuna en az bir ürün ekleyin.",
+    "waTemplateMpmTooManySections": "Çoklu ürün butonunda en fazla 10 bölüm olabilir. Yayınlamadan önce bazı bölümleri kaldırın.",
+    "waTemplateMpmTooManyProducts": "Çoklu ürün butonunda toplamda en fazla 30 ürün olabilir. Yayınlamadan önce bazı ürünleri kaldırın.",
+    "waTemplateLtoExpirationRequired": "Göndermeden önce sınırlı süreli teklif için bir bitiş tarihi seçin.",
+    "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin."
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Kupon Kodu",
         "couponCodePlaceholder": "Kupon kodunu girin",
-        "quickReplyPayload": "Hızlı Yanıt Verisi",
-        "quickReplyPayloadPlaceholder": "Veriyi girin (isteğe bağlı)",
         "flowToken": "Akış Token'ı",
         "flowTokenPlaceholder": "Akış token'ını girin",
         "flowNotSynced": "Gönderilen alanları eşlemek için WhatsApp akışlarını senkronize edin.",
-        "catalogProductId": "Ürün ID",
-        "catalogProductIdPlaceholder": "Ürün satıcı ID'sini girin",
+        "catalogProductId": "Katalog ürünü",
+        "catalogProductIdPlaceholder": "Ürün ara…",
         "carouselCard": "Kart {index}",
         "limitedTimeOffer": "Teklif Bitiş Süresi",
-        "limitedTimeOfferPlaceholder": "Bitiş süresini milisaniye cinsinden girin",
-        "limitedTimeOfferHelp": "Teklifin sona erdiği milisaniye cinsinden Unix zaman damgası",
+        "limitedTimeOfferPlaceholder": "Son kullanma tarihi ve saatini seçin",
+        "limitedTimeOfferHelp": "Son kullanma zamanı seçildiği gibi gönderilir.",
         "location": "Konum",
         "latitude": "Enlem",
         "longitude": "Boylam",
         "locationName": "Konum adı (isteğe bağlı)",
         "locationAddress": "Adres (isteğe bağlı)",
-        "enterFormatUrl": "{format} URL'sini girin"
+        "enterFormatUrl": "{format} URL'sini girin",
+        "catalogUseDefault": "Katalog varsayılan küçük resmini kullan",
+        "catalogNotConnectedGuidance": "Bir ürün seçmek için Meta Kataloğu bağlayın.",
+        "catalogSetupLink": "Katalog ayarlarına git",
+        "catalogSelectedProductFallback": "Ürün: {retailerId}",
+        "limitedTimeOfferBadge": "{date} tarihinde sona eriyor",
+        "limitedTimeOfferExpiredBadge": "{date} tarihinde sona erdi",
+        "mpmSections": "Ürünler",
+        "mpmSectionTitlePlaceholder": "Bölüm başlığı (isteğe bağlı)",
+        "mpmAddSection": "Bölüm ekle",
+        "mpmRemoveSection": "Bölümü kaldır",
+        "mpmAddProduct": "Ürün ekle",
+        "mpmRemoveProduct": "Ürünü kaldır",
+        "mpmNoProductsHelp": "Yayınlamadan önce en az bir ürün ekleyin.",
+        "mpmSectionLimitReached": "En fazla 10 bölüm sınırına ulaşıldı.",
+        "mpmProductLimitReached": "En fazla 30 ürün sınırına ulaşıldı.",
+        "mpmProductsSummary": "{sectionCount} bölümde {productCount} ürün",
+        "unsupportedButtonParam": "Bu buton türü henüz desteklenmiyor."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "İzinleri yenile",
+    "reconnect": "Yeniden Bağlan",
     "duplicated": "Bu Zalo OA hesabı zaten başka bir çalışma alanına bağlanmış.",
     "tagSync": {
       "title": "Etiket Senkronizasyonu",
@@ -4230,11 +4271,11 @@
     "title": "Randevu Planlama",
     "description": "Randevu planlamanızı oluşturun ve yönetin.",
     "flowModes": {
-      "bookFromCustomField": "Randevu al",
-      "checkAvailabilityFromCustomField": "Uygunluğu kontrol et",
-      "book": "Tarih ve saat seçici",
-      "checkAvailability": "Tarih aralığı seçici",
-      "cancel": "Randevuyu iptal et"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mod",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Saatler {timezone} olarak gösterilir."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Tarih seç",
+    "date": {
+      "title": "Bir tarih seçin"
+    },
+    "datetime": {
+      "title": "Bir tarih ve saat seçin"
+    },
+    "noSelection": "Bir tarih seçin",
+    "actions": {
+      "submit": "Gönder"
+    },
+    "success": {
+      "title": "Veriler kaydedildi",
+      "description": "Artık bu sekmeyi kapatabilirsiniz."
+    },
+    "errors": {
+      "invalidTokenTitle": "Bu bağlantı kullanılamıyor.",
+      "invalidTokenDescription": "Bağlantı geçersiz veya süresi dolmuş olabilir. Lütfen yeni bir bağlantı isteyin.",
+      "submitFailed": "Bu isteği tamamlayamadık. Lütfen tekrar deneyin."
+    },
+    "monthLabel": "Ay",
+    "yearLabel": "Yıl"
   },
   "appointments": {
     "title": "Randevular",

@@ -1652,7 +1652,7 @@
       "superAdmin": "مسؤول أعلى",
       "analytics": "التحليلات",
       "flows": "المسارات",
-      "contacts": "جهات الاتصال",
+      "contacts": "جهات الاتصال / صندوق الوارد",
       "onlyAssignedContacts": "جهات الاتصال المسندة فقط",
       "emailAndPhone": "البريد الإلكتروني والهاتف",
       "broadcast": "البث",
@@ -2081,6 +2081,26 @@
     },
     "enabled": {
       "label": "مفعّل"
+    },
+    "api": {
+      "label": "API",
+      "description": "اربط أي تطبيق يدعم HTTP كقناة. يرسل تطبيقك الرسائل الواردة إلى واجهة REST API الخاصة بنا، ونقوم بتسليم الردود إلى رابط الاستدعاء (callback URL) الخاص بك.",
+      "callbackUrl": {
+        "label": "رابط الاستدعاء (Callback URL)",
+        "description": "نرسل الردود الصادرة إلى هذا الرابط عبر POST، موقّعة بالسر الخاص بصندوق الوارد الخاص بك.",
+        "notSet": "غير محدد"
+      },
+      "token": "الرمز المميز",
+      "rotateToken": "تجديد الرمز المميز",
+      "status": {
+        "enabled": "مفعّل",
+        "disabled": "معطّلة"
+      },
+      "tokenReveal": {
+        "title": "انسخ رمز API المميز الخاص بك",
+        "description": "يظهر هذا الرمز مرة واحدة فقط. احفظه في مكان آمن — لن تتمكن من عرضه مرة أخرى.",
+        "done": "تم"
+      }
     }
   },
   "flows": {
@@ -2328,7 +2348,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "عند إرفاق أزرار، يرسل TikTok أول 40 حرفًا فقط من هذه الرسالة، وسيتم قص الباقي."
-    }
+    },
+    "dataWasSaved": "تم حفظ البيانات"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "تم مسح سجل الإعادة",
     "historyDepth": "({count})",
     "none": "لا شيء",
-    "tiktokCardTitleTooLong": "سيقوم TikTok بتقصير هذه الرسالة: عند إرفاق أزرار، يتم إرسال أول 40 حرفًا فقط. قم بتقصير الرسالة أو إزالة الأزرار."
+    "tiktokCardTitleTooLong": "سيقوم TikTok بتقصير هذه الرسالة: عند إرفاق أزرار، يتم إرسال أول 40 حرفًا فقط. قم بتقصير الرسالة أو إزالة الأزرار.",
+    "waTemplateMpmNoProducts": "أضف منتجًا واحدًا على الأقل إلى زر المنتجات المتعددة هذا قبل النشر.",
+    "waTemplateMpmTooManySections": "يمكن أن يحتوي زر المنتجات المتعددة على 10 أقسام كحد أقصى. أزل بعض الأقسام قبل النشر.",
+    "waTemplateMpmTooManyProducts": "يمكن أن يحتوي زر المنتجات المتعددة على 30 منتجًا كحد أقصى إجمالاً. أزل بعض المنتجات قبل النشر.",
+    "waTemplateLtoExpirationRequired": "اختر تاريخ انتهاء العرض المحدود المدة قبل الإرسال.",
+    "waTemplateMpmIncompleteProducts": "يحتاج كل قسم إلى منتج واحد محدد على الأقل — احذف الصفوف الفارغة أو اختر منتجًا لها."
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "رمز القسيمة",
         "couponCodePlaceholder": "أدخل رمز القسيمة",
-        "quickReplyPayload": "بيانات الرد السريع",
-        "quickReplyPayloadPlaceholder": "أدخل البيانات (اختياري)",
         "flowToken": "رمز المسار",
         "flowTokenPlaceholder": "أدخل رمز المسار",
         "flowNotSynced": "زامن مسارات واتساب لربط الحقول المُرسلة.",
-        "catalogProductId": "معرّف المنتج",
-        "catalogProductIdPlaceholder": "أدخل معرّف المنتج لدى بائع التجزئة",
+        "catalogProductId": "منتج من الكتالوج",
+        "catalogProductIdPlaceholder": "البحث عن المنتجات…",
         "carouselCard": "البطاقة {index}",
         "limitedTimeOffer": "وقت انتهاء العرض",
-        "limitedTimeOfferPlaceholder": "أدخل وقت الانتهاء بالمللي ثانية",
-        "limitedTimeOfferHelp": "طابع Unix الزمني بالمللي ثانية عند انتهاء العرض",
+        "limitedTimeOfferPlaceholder": "اختر تاريخ ووقت الانتهاء",
+        "limitedTimeOfferHelp": "يتم إرسال وقت الانتهاء تمامًا كما تم اختياره.",
         "location": "الموقع",
         "latitude": "خط العرض",
         "longitude": "خط الطول",
         "locationName": "اسم الموقع (اختياري)",
         "locationAddress": "العنوان (اختياري)",
-        "enterFormatUrl": "أدخل عنوان URL بتنسيق {format}"
+        "enterFormatUrl": "أدخل عنوان URL بتنسيق {format}",
+        "catalogUseDefault": "استخدام الصورة المصغّرة الافتراضية للكتالوج",
+        "catalogNotConnectedGuidance": "قم بربط كتالوج Meta لاختيار منتج.",
+        "catalogSetupLink": "الانتقال إلى إعدادات الكتالوج",
+        "catalogSelectedProductFallback": "المنتج: {retailerId}",
+        "limitedTimeOfferBadge": "تنتهي الصلاحية في {date}",
+        "limitedTimeOfferExpiredBadge": "انتهت الصلاحية في {date}",
+        "mpmSections": "المنتجات",
+        "mpmSectionTitlePlaceholder": "عنوان القسم (اختياري)",
+        "mpmAddSection": "إضافة قسم",
+        "mpmRemoveSection": "إزالة القسم",
+        "mpmAddProduct": "إضافة منتج",
+        "mpmRemoveProduct": "إزالة المنتج",
+        "mpmNoProductsHelp": "أضف منتجًا واحدًا على الأقل قبل النشر.",
+        "mpmSectionLimitReached": "تم الوصول إلى الحد الأقصى 10 أقسام.",
+        "mpmProductLimitReached": "تم الوصول إلى الحد الأقصى 30 منتجًا.",
+        "mpmProductsSummary": "{productCount} منتج في {sectionCount} أقسام",
+        "unsupportedButtonParam": "هذا النوع من الأزرار غير مدعوم بعد."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "تحديث الأذونات",
+    "reconnect": "إعادة الاتصال",
     "duplicated": "حساب Zalo OA هذا مرتبط بالفعل بمساحة عمل أخرى.",
     "tagSync": {
       "title": "مزامنة الوسوم",
@@ -4065,11 +4106,11 @@
     "title": "جدولة المواعيد",
     "description": "إنشاء جدولة مواعيدك وإدارتها.",
     "flowModes": {
-      "bookFromCustomField": "حجز موعد",
-      "checkAvailabilityFromCustomField": "التحقق من التوفر",
-      "book": "أداة اختيار التاريخ والوقت",
-      "checkAvailability": "أداة اختيار نطاق التاريخ",
-      "cancel": "إلغاء موعد"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "الوضع",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "تُعرض الأوقات بتوقيت {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "اختيار التاريخ",
+    "date": {
+      "title": "اختر تاريخًا"
+    },
+    "datetime": {
+      "title": "اختر تاريخًا ووقتًا"
+    },
+    "noSelection": "اختر تاريخًا",
+    "actions": {
+      "submit": "إرسال"
+    },
+    "success": {
+      "title": "تم حفظ البيانات",
+      "description": "يمكنك الآن إغلاق هذه العلامة."
+    },
+    "errors": {
+      "invalidTokenTitle": "هذا الرابط غير متاح.",
+      "invalidTokenDescription": "قد يكون الرابط غير صالح أو منتهي الصلاحية. يُرجى طلب رابط جديد.",
+      "submitFailed": "تعذّر إتمام هذا الطلب. يُرجى المحاولة مرة أخرى."
+    },
+    "monthLabel": "الشهر",
+    "yearLabel": "السنة"
   },
   "appointments": {
     "title": "المواعيد",

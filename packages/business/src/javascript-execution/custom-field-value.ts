@@ -6,14 +6,15 @@ import {
 } from "@chatbotx.io/utils/datetime"
 import { normalizeTemporalValueForStorage } from "@chatbotx.io/utils/temporal-input"
 
+export const NUMERIC_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/
 const BOOL_RE = /^(true|false|1|0)$/i
-const NUMERIC_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/
-type CustomFieldValueNormalizer = (
+
+export type CustomFieldValueNormalizer = (
   raw: string,
   timezone?: string | null,
 ) => string | null
 
-const normalizeBoolean = (value: string): string | null => {
+export const normalizeBoolean = (value: string): string | null => {
   if (!BOOL_RE.test(value)) {
     return null
   }
@@ -21,7 +22,7 @@ const normalizeBoolean = (value: string): string | null => {
   return lower === "true" || lower === "1" ? "true" : "false"
 }
 
-const normalizeNumber = (value: string): string | null => {
+export const normalizeNumber = (value: string): string | null => {
   if (!NUMERIC_RE.test(value)) {
     return null
   }
@@ -29,12 +30,12 @@ const normalizeNumber = (value: string): string | null => {
   return Number.isFinite(parsed) ? String(parsed) : null
 }
 
-const normalizeEmail = (raw: string): string | null => {
+export const normalizeEmail = (raw: string): string | null => {
   const lower = raw.toLowerCase()
   return EMAIL_RE.test(lower) ? lower : null
 }
 
-const normalizePhone = (value: string): string | null => {
+export const normalizePhone = (value: string): string | null => {
   if (!PHONE_RE.test(value)) {
     return null
   }
@@ -65,6 +66,24 @@ const customFieldValueNormalizers = {
   shortText: (raw) => raw,
 } as const satisfies Record<CustomFieldType, CustomFieldValueNormalizer>
 
+/**
+ * Shared core: does `raw` normalize to a valid value for `type`? Returns the
+ * canonical string to persist, or `null` when it does not. Deliberately has
+ * NO opinion on what a blank `raw` means — a blank spreadsheet cell means
+ * "skip this row" to CSV import, but a blank JS-step return value means the
+ * author explicitly returned nothing, which the JS step treats as a
+ * mismatch for every non-text type. Callers decide.
+ */
+export const normalizeCustomFieldValueByType = (
+  type: CustomFieldType,
+  raw: string,
+  timezone?: string | null,
+): string | null => customFieldValueNormalizers[type](raw, timezone)
+
+/**
+ * CSV/spreadsheet import semantics: a blank cell means "no value for this
+ * row" and is skipped, not rejected.
+ */
 export const validateCustomFieldValue = (
   type: CustomFieldType,
   raw: string,
@@ -73,5 +92,5 @@ export const validateCustomFieldValue = (
   if (raw.length === 0) {
     return null
   }
-  return customFieldValueNormalizers[type](raw, timezone)
+  return normalizeCustomFieldValueByType(type, raw, timezone)
 }

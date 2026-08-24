@@ -192,6 +192,70 @@ class ConversationService extends BaseService {
     }
   }
 
+  /**
+   * Atomic compare-and-clear claim on the conversation's `challenge` jsonb
+   * attribute. Used by webview-submission handlers (e.g. getUserData's
+   * date/datetime picker) to guard against double-submit / stale-token
+   * replay: two concurrent submissions racing to clear the same challenge
+   * must not both "win" — only the row matching the current stepId AND
+   * challengeId is cleared, and only one caller can ever observe a returned
+   * row for a given challengeId. See `.agents/skills/reliability-concurrency`.
+   */
+  async consumeChallenge(props: {
+    workspaceId: string
+    conversationId: string
+    stepId: string
+    challengeId: string
+  }): Promise<boolean> {
+    const { workspaceId, conversationId, stepId, challengeId } = props
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`${conversationModel.additionalAttributes} - 'challenge'`,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+          sql`${conversationModel.additionalAttributes}->'challenge'->'data'->>'stepId' = ${stepId}`,
+          sql`${conversationModel.additionalAttributes}->'challenge'->'data'->>'challengeId' = ${challengeId}`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
+  /**
+   * Compensating write for a failed post-claim side effect: puts a consumed
+   * challenge back so the contact can retry, but ONLY while no challenge
+   * exists on the conversation. Unconditional restore could overwrite a
+   * newer challenge started between the claim and the restore, silently
+   * invalidating that newer cycle's token. Returns false when a challenge
+   * already exists (restore skipped).
+   */
+  async restoreChallengeIfAbsent(props: {
+    workspaceId: string
+    conversationId: string
+    challenge: NonNullable<ConversationAttributes["challenge"]>
+  }): Promise<boolean> {
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{challenge}', ${JSON.stringify(props.challenge)}::jsonb, true)`,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, props.conversationId),
+          eq(conversationModel.workspaceId, props.workspaceId),
+          sql`(${conversationModel.additionalAttributes} IS NULL OR NOT jsonb_exists(${conversationModel.additionalAttributes}, 'challenge'))`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
   async findByContactWithInboxes(props: {
     contactId: string
     workspaceId: string

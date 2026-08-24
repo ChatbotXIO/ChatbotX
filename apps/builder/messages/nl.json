@@ -1392,7 +1392,7 @@
       "superAdmin": "Superbeheerder",
       "analytics": "Analyses",
       "flows": "Flows",
-      "contacts": "Contacten",
+      "contacts": "Contacten / Inbox",
       "onlyAssignedContacts": "Alleen toegewezen contacten",
       "emailAndPhone": "E-mail en telefoon",
       "broadcast": "Broadcast",
@@ -1821,6 +1821,26 @@
     },
     "enabled": {
       "label": "Ingeschakeld"
+    },
+    "api": {
+      "label": "API",
+      "description": "Verbind elke HTTP-compatibele applicatie als kanaal. Je app stuurt inkomende berichten naar onze REST API en wij bezorgen antwoorden op je callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "We sturen uitgaande antwoorden hierheen via POST, ondertekend met het geheim van je eigen postvak.",
+        "notSet": "Niet ingesteld"
+      },
+      "token": "Token",
+      "rotateToken": "Token vernieuwen",
+      "status": {
+        "enabled": "Ingeschakeld",
+        "disabled": "Uitgeschakeld"
+      },
+      "tokenReveal": {
+        "title": "Kopieer je API-token",
+        "description": "Dit token wordt maar één keer getoond. Bewaar het veilig — je kunt het daarna niet meer bekijken.",
+        "done": "Klaar"
+      }
     }
   },
   "condition": {
@@ -2254,7 +2274,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Als er knoppen zijn toegevoegd, verstuurt TikTok alleen de eerste 40 tekens van dit bericht — de rest wordt afgekapt."
-    }
+    },
+    "dataWasSaved": "Gegevens zijn opgeslagen"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Geschiedenis voor opnieuw uitvoeren gewist",
     "historyDepth": "({count})",
     "none": "Geen",
-    "tiktokCardTitleTooLong": "TikTok verkort dit bericht: als er knoppen zijn toegevoegd, worden alleen de eerste 40 tekens verzonden. Verkort het bericht of verwijder de knoppen."
+    "tiktokCardTitleTooLong": "TikTok verkort dit bericht: als er knoppen zijn toegevoegd, worden alleen de eerste 40 tekens verzonden. Verkort het bericht of verwijder de knoppen.",
+    "waTemplateMpmNoProducts": "Voeg minstens één product toe aan deze multi-productknop voordat je publiceert.",
+    "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
+    "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
+    "waTemplateLtoExpirationRequired": "Kies een vervaldatum voor de tijdelijke aanbieding voordat je verzendt.",
+    "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Kortingscode",
         "couponCodePlaceholder": "Voer kortingscode in",
-        "quickReplyPayload": "Payload voor snel antwoord",
-        "quickReplyPayloadPlaceholder": "Voer payload in (optioneel)",
         "flowToken": "Flowtoken",
         "flowTokenPlaceholder": "Voer flowtoken in",
         "flowNotSynced": "Synchroniseer WhatsApp-flows om ingediende velden te koppelen.",
-        "catalogProductId": "Product-ID",
-        "catalogProductIdPlaceholder": "Voer de retailer-ID van het product in",
+        "catalogProductId": "Catalogusproduct",
+        "catalogProductIdPlaceholder": "Producten zoeken…",
         "carouselCard": "Kaart {index}",
         "limitedTimeOffer": "Vervaltijd van aanbieding",
-        "limitedTimeOfferPlaceholder": "Voer de vervaltijd in milliseconden in",
-        "limitedTimeOfferHelp": "Unix-tijdstempel in milliseconden waarop de aanbieding verloopt",
+        "limitedTimeOfferPlaceholder": "Kies vervaldatum en -tijd",
+        "limitedTimeOfferHelp": "De vervaltijd wordt exact verzonden zoals gekozen.",
         "location": "Locatie",
         "latitude": "Breedtegraad",
         "longitude": "Lengtegraad",
         "locationName": "Locatienaam (optioneel)",
         "locationAddress": "Adres (optioneel)",
-        "enterFormatUrl": "Voer {format}-URL in"
+        "enterFormatUrl": "Voer {format}-URL in",
+        "catalogUseDefault": "Standaard catalogusminiatuur gebruiken",
+        "catalogNotConnectedGuidance": "Verbind een Meta-catalogus om een product te selecteren.",
+        "catalogSetupLink": "Ga naar catalogusinstellingen",
+        "catalogSelectedProductFallback": "Product: {retailerId}",
+        "limitedTimeOfferBadge": "Verloopt op {date}",
+        "limitedTimeOfferExpiredBadge": "Verlopen op {date}",
+        "mpmSections": "Producten",
+        "mpmSectionTitlePlaceholder": "Sectietitel (optioneel)",
+        "mpmAddSection": "Sectie toevoegen",
+        "mpmRemoveSection": "Sectie verwijderen",
+        "mpmAddProduct": "Product toevoegen",
+        "mpmRemoveProduct": "Product verwijderen",
+        "mpmNoProductsHelp": "Voeg minstens één product toe voordat je publiceert.",
+        "mpmSectionLimitReached": "Maximum van 10 secties bereikt.",
+        "mpmProductLimitReached": "Maximum van 30 producten bereikt.",
+        "mpmProductsSummary": "{productCount} producten in {sectionCount} secties",
+        "unsupportedButtonParam": "Dit knoptype wordt nog niet ondersteund."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Machtigingen vernieuwen",
+    "reconnect": "Opnieuw koppelen",
     "duplicated": "Dit Zalo OA-account is al gekoppeld aan een andere workspace.",
     "tagSync": {
       "title": "Tagsynchronisatie",
@@ -4230,11 +4271,11 @@
     "title": "Afspraken plannen",
     "description": "Maak en beheer je afsprakenplanning.",
     "flowModes": {
-      "bookFromCustomField": "Afspraak boeken",
-      "checkAvailabilityFromCustomField": "Beschikbaarheid controleren",
-      "book": "Datum-/tijdkiezer",
-      "checkAvailability": "Datumbereikkiezer",
-      "cancel": "Afspraak annuleren"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modus",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Tijden worden weergegeven in {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Datum selecteren",
+    "date": {
+      "title": "Selecteer een datum"
+    },
+    "datetime": {
+      "title": "Selecteer een datum en tijd"
+    },
+    "noSelection": "Kies een datum",
+    "actions": {
+      "submit": "Verzenden"
+    },
+    "success": {
+      "title": "Gegevens zijn opgeslagen",
+      "description": "U kunt dit tabblad nu sluiten."
+    },
+    "errors": {
+      "invalidTokenTitle": "Deze link is niet beschikbaar.",
+      "invalidTokenDescription": "De link is mogelijk ongeldig of verlopen. Vraag om een nieuwe link.",
+      "submitFailed": "We konden dit verzoek niet voltooien. Probeer het opnieuw."
+    },
+    "monthLabel": "Maand",
+    "yearLabel": "Jaar"
   },
   "appointments": {
     "title": "Afspraken",

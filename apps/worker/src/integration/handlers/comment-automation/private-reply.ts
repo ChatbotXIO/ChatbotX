@@ -103,14 +103,15 @@ export async function executePrivateReply(
           contactInboxId: ctx.contactInboxId,
           flowId: privateReply.value,
           origin: webhookChannelOrigin(),
-          ...(ctx.channelType === "messenger"
-            ? {
-                commentAnchor: {
-                  commentId: ctx.commentId,
-                  replyChannel: "private" as const,
-                },
-              }
-            : {}),
+          // The anchor lets the channel deliver the flow's first message via
+          // Meta's comment_id-anchored Send API (7-day comment window) instead
+          // of a normal DM gated by the 24-hour messaging window. Supported on
+          // all comment-automation channels (messenger, instagram,
+          // instagramFacebook).
+          commentAnchor: {
+            commentId: ctx.commentId,
+            replyChannel: "private" as const,
+          },
         },
       },
       { delay: ctx.delay },

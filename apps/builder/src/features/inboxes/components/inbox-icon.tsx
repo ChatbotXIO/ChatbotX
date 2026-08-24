@@ -19,6 +19,7 @@ import {
   GlobeIcon,
   type LucideIcon,
   MailIcon,
+  WebhookIcon,
 } from "lucide-react"
 import type { ComponentType, SVGProps } from "react"
 import { memo } from "react"
@@ -47,6 +48,10 @@ type InboxIconConfig = {
 }
 
 export const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
+  api: {
+    Icon: WebhookIcon,
+    defaultLabel: "API",
+  },
   messenger: {
     Icon: SiMessenger,
     fill: SiMessengerHex,

@@ -1578,7 +1578,7 @@
       "superAdmin": "Super Admin",
       "analytics": "Analytics",
       "flows": "Flows",
-      "contacts": "Kontakter",
+      "contacts": "Kontakter / Inbox",
       "onlyAssignedContacts": "Kun Tildelt Kontakter",
       "emailAndPhone": "E-mail og Telefon",
       "broadcast": "Broadcast",
@@ -2007,6 +2007,26 @@
     },
     "enabled": {
       "label": "Aktiveret"
+    },
+    "api": {
+      "label": "API",
+      "description": "Forbind enhver HTTP-kompatibel applikation som en kanal. Din app sender indgående beskeder til vores REST API, og vi leverer svar til din callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Vi sender udgående svar hertil med POST, signeret med din indbakkes eget hemmelige nøgle.",
+        "notSet": "Ikke angivet"
+      },
+      "token": "Token",
+      "rotateToken": "Rotér token",
+      "status": {
+        "enabled": "Aktiveret",
+        "disabled": "Deaktiveret"
+      },
+      "tokenReveal": {
+        "title": "Kopiér dit API-token",
+        "description": "Dette token vises kun én gang. Opbevar det sikkert — du vil ikke kunne se det igen.",
+        "done": "Færdig"
+      }
     }
   },
   "flows": {
@@ -2254,7 +2274,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Når der er tilføjet knapper, sender TikTok kun de første 40 tegn af denne besked — resten bliver klippet væk."
-    }
+    },
+    "dataWasSaved": "Data blev gemt"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Gentag historik cleared",
     "historyDepth": "({count})",
     "none": "Ingen",
-    "tiktokCardTitleTooLong": "TikTok vil forkorte denne besked: når der er tilføjet knapper, sendes kun de første 40 tegn. Forkort beskeden, eller fjern knapperne."
+    "tiktokCardTitleTooLong": "TikTok vil forkorte denne besked: når der er tilføjet knapper, sendes kun de første 40 tegn. Forkort beskeden, eller fjern knapperne.",
+    "waTemplateMpmNoProducts": "Tilføj mindst ét produkt til denne multiprodukt-knap før udgivelse.",
+    "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
+    "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
+    "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
+    "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Kupon Kode",
         "couponCodePlaceholder": "Indtast kupon kode",
-        "quickReplyPayload": "Quick Svar Payload",
-        "quickReplyPayloadPlaceholder": "Indtast payload (valgfri)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Indtast flow token",
         "flowNotSynced": "Synkroniser WhatsApp-flows for at knytte indsendte felter.",
-        "catalogProductId": "Product ID",
-        "catalogProductIdPlaceholder": "Indtast product retailer ID",
+        "catalogProductId": "Katalogprodukt",
+        "catalogProductIdPlaceholder": "Søg efter produkter…",
         "carouselCard": "Card {index}",
         "limitedTimeOffer": "Offer Expiration Tid",
-        "limitedTimeOfferPlaceholder": "Indtast expiration tid i milliseconds",
-        "limitedTimeOfferHelp": "Unix timestamp i milliseconds når den offer expires",
+        "limitedTimeOfferPlaceholder": "Vælg udløbsdato og -tid",
+        "limitedTimeOfferHelp": "Udløbstidspunktet sendes præcis som valgt.",
         "location": "Placering",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Placering navn (valgfri)",
         "locationAddress": "Address (valgfri)",
-        "enterFormatUrl": "Indtast {format} URL"
+        "enterFormatUrl": "Indtast {format} URL",
+        "catalogUseDefault": "Brug kataloget standardminiature",
+        "catalogNotConnectedGuidance": "Tilslut et Meta-katalog for at vælge et produkt.",
+        "catalogSetupLink": "Gå til katalogindstillinger",
+        "catalogSelectedProductFallback": "Produkt: {retailerId}",
+        "limitedTimeOfferBadge": "Udløber {date}",
+        "limitedTimeOfferExpiredBadge": "Udløbet {date}",
+        "mpmSections": "Produkter",
+        "mpmSectionTitlePlaceholder": "Sektionstitel (valgfrit)",
+        "mpmAddSection": "Tilføj sektion",
+        "mpmRemoveSection": "Fjern sektion",
+        "mpmAddProduct": "Tilføj produkt",
+        "mpmRemoveProduct": "Fjern produkt",
+        "mpmNoProductsHelp": "Tilføj mindst ét produkt før udgivelse.",
+        "mpmSectionLimitReached": "Maks. 10 sektioner nået.",
+        "mpmProductLimitReached": "Maks. 30 produkter nået.",
+        "mpmProductsSummary": "{productCount} produkter i {sectionCount} sektioner",
+        "unsupportedButtonParam": "Denne knaptype understøttes endnu ikke."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh tilladelser",
+    "reconnect": "Forbind igen",
     "duplicated": "Denne Zalo OA konto har allerede been forbundet til another arbejdsområde.",
     "tagSync": {
       "title": "Tag Synkroniser",
@@ -4230,11 +4271,11 @@
     "title": "Aftaleplanlægning",
     "description": "Opret og administrer din aftaleplanlægning.",
     "flowModes": {
-      "bookFromCustomField": "Book aftale",
-      "checkAvailabilityFromCustomField": "Tjek tilgængelighed",
-      "book": "Dato- og tidsvælger",
-      "checkAvailability": "Datointervalvælger",
-      "cancel": "Annuller aftale"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Tilstand",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Tidspunkter vises i {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Vælg dato",
+    "date": {
+      "title": "Vælg en dato"
+    },
+    "datetime": {
+      "title": "Vælg en dato og et klokkeslæt"
+    },
+    "noSelection": "Vælg en dato",
+    "actions": {
+      "submit": "Send"
+    },
+    "success": {
+      "title": "Data blev gemt",
+      "description": "Du kan lukke denne fane nu."
+    },
+    "errors": {
+      "invalidTokenTitle": "Dette link er ikke tilgængeligt.",
+      "invalidTokenDescription": "Linket kan være ugyldigt eller udløbet. Bed om et nyt link.",
+      "submitFailed": "Vi kunne ikke gennemføre denne anmodning. Prøv venligst igen."
+    },
+    "monthLabel": "Måned",
+    "yearLabel": "År"
   },
   "appointments": {
     "title": "Aftaler",

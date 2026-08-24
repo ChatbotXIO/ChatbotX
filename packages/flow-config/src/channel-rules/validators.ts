@@ -2,6 +2,7 @@ import { type StepType, stepTypes } from "../steps/step-action"
 import type { StepValidator } from "./channel-validator"
 import { sendCarouselValidator } from "./send-carousel-validator"
 import { sendTextValidator } from "./send-text-validator"
+import { sendWaTemplateMessageValidator } from "./send-wa-template-validator"
 
 /**
  * Steps whose rules depend on the channel they are sent through.
@@ -21,4 +22,5 @@ export const channelAwareStepValidators: Partial<
 > = {
   [stepTypes.enum.sendCarousel]: sendCarouselValidator,
   [stepTypes.enum.sendText]: sendTextValidator,
+  [stepTypes.enum.sendWaTemplateMessage]: sendWaTemplateMessageValidator,
 }

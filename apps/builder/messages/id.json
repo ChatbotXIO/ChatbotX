@@ -1578,7 +1578,7 @@
       "superAdmin": "Super Admin",
       "analytics": "Analitik",
       "flows": "Flow",
-      "contacts": "Kontak",
+      "contacts": "Kontak / Inbox",
       "onlyAssignedContacts": "Hanya Kontak yang Ditugaskan",
       "emailAndPhone": "Email dan Telepon",
       "broadcast": "Broadcast",
@@ -2007,6 +2007,26 @@
     },
     "enabled": {
       "label": "Diaktifkan"
+    },
+    "api": {
+      "label": "API",
+      "description": "Hubungkan aplikasi apa pun yang mendukung HTTP sebagai saluran. Aplikasi Anda mengirim pesan masuk ke REST API kami, dan kami mengirimkan balasan ke callback URL Anda.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Kami mengirimkan balasan keluar ke sini melalui POST, ditandatangani dengan secret khusus kotak masuk Anda.",
+        "notSet": "Belum diatur"
+      },
+      "token": "Token",
+      "rotateToken": "Perbarui token",
+      "status": {
+        "enabled": "Diaktifkan",
+        "disabled": "Dinonaktifkan"
+      },
+      "tokenReveal": {
+        "title": "Salin token API Anda",
+        "description": "Token ini hanya ditampilkan satu kali. Simpan dengan aman — Anda tidak akan bisa melihatnya lagi.",
+        "done": "Selesai"
+      }
     }
   },
   "flows": {
@@ -2254,7 +2274,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Saat tombol dilampirkan, TikTok hanya mengirim 40 karakter pertama pesan ini — sisanya akan terpotong."
-    }
+    },
+    "dataWasSaved": "Data telah disimpan"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Riwayat pengulangan dihapus",
     "historyDepth": "({count})",
     "none": "Tidak ada",
-    "tiktokCardTitleTooLong": "TikTok akan memotong pesan ini: saat tombol dilampirkan, hanya 40 karakter pertama yang dikirim. Persingkat pesan atau hapus tombolnya."
+    "tiktokCardTitleTooLong": "TikTok akan memotong pesan ini: saat tombol dilampirkan, hanya 40 karakter pertama yang dikirim. Persingkat pesan atau hapus tombolnya.",
+    "waTemplateMpmNoProducts": "Tambahkan setidaknya satu produk ke tombol multi-produk ini sebelum memublikasikan.",
+    "waTemplateMpmTooManySections": "Tombol multi-produk dapat memiliki maksimal 10 bagian. Hapus beberapa bagian sebelum memublikasikan.",
+    "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",
+    "waTemplateLtoExpirationRequired": "Pilih tanggal berakhir untuk penawaran waktu terbatas sebelum mengirim.",
+    "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Kode Kupon",
         "couponCodePlaceholder": "Masukkan kode kupon",
-        "quickReplyPayload": "Payload Balasan Cepat",
-        "quickReplyPayloadPlaceholder": "Masukkan payload (opsional)",
         "flowToken": "Token Alur",
         "flowTokenPlaceholder": "Masukkan token alur",
         "flowNotSynced": "Sinkronkan alur WhatsApp untuk memetakan kolom yang dikirim.",
-        "catalogProductId": "ID Produk",
-        "catalogProductIdPlaceholder": "Masukkan ID pengecer produk",
+        "catalogProductId": "Produk katalog",
+        "catalogProductIdPlaceholder": "Cari produk…",
         "carouselCard": "Kartu {index}",
         "limitedTimeOffer": "Waktu Berakhir Penawaran",
-        "limitedTimeOfferPlaceholder": "Masukkan waktu berakhir dalam milidetik",
-        "limitedTimeOfferHelp": "Stempel waktu Unix dalam milidetik saat penawaran berakhir",
+        "limitedTimeOfferPlaceholder": "Pilih tanggal & waktu kedaluwarsa",
+        "limitedTimeOfferHelp": "Waktu kedaluwarsa dikirim persis seperti yang dipilih.",
         "location": "Lokasi",
         "latitude": "Lintang",
         "longitude": "Bujur",
         "locationName": "Nama lokasi (opsional)",
         "locationAddress": "Alamat (opsional)",
-        "enterFormatUrl": "Masukkan URL {format}"
+        "enterFormatUrl": "Masukkan URL {format}",
+        "catalogUseDefault": "Gunakan thumbnail default katalog",
+        "catalogNotConnectedGuidance": "Hubungkan Katalog Meta untuk memilih produk.",
+        "catalogSetupLink": "Buka pengaturan Katalog",
+        "catalogSelectedProductFallback": "Produk: {retailerId}",
+        "limitedTimeOfferBadge": "Berakhir {date}",
+        "limitedTimeOfferExpiredBadge": "Telah berakhir {date}",
+        "mpmSections": "Produk",
+        "mpmSectionTitlePlaceholder": "Judul bagian (opsional)",
+        "mpmAddSection": "Tambah bagian",
+        "mpmRemoveSection": "Hapus bagian",
+        "mpmAddProduct": "Tambah produk",
+        "mpmRemoveProduct": "Hapus produk",
+        "mpmNoProductsHelp": "Tambahkan setidaknya satu produk sebelum memublikasikan.",
+        "mpmSectionLimitReached": "Maksimum 10 bagian tercapai.",
+        "mpmProductLimitReached": "Maksimum 30 produk tercapai.",
+        "mpmProductsSummary": "{productCount} produk dalam {sectionCount} bagian",
+        "unsupportedButtonParam": "Jenis tombol ini belum didukung."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Perbarui izin",
+    "reconnect": "Hubungkan kembali",
     "duplicated": "Akun Zalo OA ini sudah terhubung ke ruang kerja lain.",
     "tagSync": {
       "title": "Sinkronisasi Tag",
@@ -4230,11 +4271,11 @@
     "title": "Penjadwalan Janji Temu",
     "description": "Buat dan kelola penjadwalan janji temu Anda.",
     "flowModes": {
-      "bookFromCustomField": "Buat janji temu",
-      "checkAvailabilityFromCustomField": "Periksa ketersediaan",
-      "book": "Pemilih tanggal & waktu",
-      "checkAvailability": "Pemilih rentang tanggal",
-      "cancel": "Batalkan janji temu"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mode",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Waktu ditampilkan dalam {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Pilih tanggal",
+    "date": {
+      "title": "Pilih tanggal"
+    },
+    "datetime": {
+      "title": "Pilih tanggal dan waktu"
+    },
+    "noSelection": "Pilih tanggal",
+    "actions": {
+      "submit": "Kirim"
+    },
+    "success": {
+      "title": "Data telah disimpan",
+      "description": "Anda sekarang dapat menutup tab ini."
+    },
+    "errors": {
+      "invalidTokenTitle": "Tautan ini tidak tersedia.",
+      "invalidTokenDescription": "Tautan mungkin tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
+      "submitFailed": "Kami tidak dapat menyelesaikan permintaan ini. Silakan coba lagi."
+    },
+    "monthLabel": "Bulan",
+    "yearLabel": "Tahun"
   },
   "appointments": {
     "title": "Janji Temu",

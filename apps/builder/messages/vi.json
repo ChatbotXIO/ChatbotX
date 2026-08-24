@@ -1616,7 +1616,7 @@
       "superAdmin": "Siêu quản trị viên",
       "analytics": "Phân tích",
       "flows": "Luồng",
-      "contacts": "Liên hệ",
+      "contacts": "Liên hệ / Hộp thư",
       "onlyAssignedContacts": "Chỉ liên hệ được gán",
       "emailAndPhone": "Email và Số điện thoại",
       "broadcast": "Phát sóng",
@@ -2081,6 +2081,26 @@
     },
     "enabled": {
       "label": "Đang bật"
+    },
+    "api": {
+      "label": "API",
+      "description": "Kết nối bất kỳ ứng dụng nào hỗ trợ HTTP như một kênh. Ứng dụng của bạn gửi tin nhắn đến API REST của chúng tôi và chúng tôi sẽ chuyển phản hồi đến URL callback của bạn.",
+      "callbackUrl": {
+        "label": "URL callback",
+        "description": "Chúng tôi gửi phản hồi đi qua đây bằng POST, được ký bằng khóa bí mật riêng của hộp thư của bạn.",
+        "notSet": "Chưa thiết lập"
+      },
+      "token": "Token",
+      "rotateToken": "Làm mới token",
+      "status": {
+        "enabled": "Đang bật",
+        "disabled": "Tắt"
+      },
+      "tokenReveal": {
+        "title": "Sao chép token API của bạn",
+        "description": "Token này chỉ hiển thị một lần. Hãy lưu trữ an toàn — bạn sẽ không thể xem lại được nữa.",
+        "done": "Xong"
+      }
     }
   },
   "flows": {
@@ -2328,7 +2348,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Khi có gắn nút, TikTok chỉ gửi tối đa 40 ký tự đầu của tin nhắn này — phần còn lại sẽ bị cắt bỏ."
-    }
+    },
+    "dataWasSaved": "Đã lưu dữ liệu"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Đã xoá lịch sử làm lại",
     "historyDepth": "({count})",
     "none": "Không có",
-    "tiktokCardTitleTooLong": "TikTok sẽ cắt ngắn tin nhắn này: khi có gắn nút, chỉ 40 ký tự đầu được gửi đi. Hãy rút ngắn nội dung hoặc gỡ bớt nút."
+    "tiktokCardTitleTooLong": "TikTok sẽ cắt ngắn tin nhắn này: khi có gắn nút, chỉ 40 ký tự đầu được gửi đi. Hãy rút ngắn nội dung hoặc gỡ bớt nút.",
+    "waTemplateMpmNoProducts": "Thêm ít nhất một sản phẩm vào nút đa sản phẩm này trước khi xuất bản.",
+    "waTemplateMpmTooManySections": "Nút đa sản phẩm chỉ được có tối đa 10 phần. Hãy xóa bớt phần trước khi xuất bản.",
+    "waTemplateMpmTooManyProducts": "Nút đa sản phẩm chỉ được có tối đa 30 sản phẩm. Hãy xóa bớt sản phẩm trước khi xuất bản.",
+    "waTemplateLtoExpirationRequired": "Chọn thời điểm hết hạn cho ưu đãi có thời hạn trước khi gửi.",
+    "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Mã giảm giá",
         "couponCodePlaceholder": "Nhập mã giảm giá",
-        "quickReplyPayload": "Payload trả lời nhanh",
-        "quickReplyPayloadPlaceholder": "Nhập payload (tùy chọn)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Nhập flow token",
         "flowNotSynced": "Đồng bộ luồng WhatsApp để ánh xạ các trường đã gửi.",
-        "catalogProductId": "ID sản phẩm",
-        "catalogProductIdPlaceholder": "Nhập ID sản phẩm",
+        "catalogProductId": "Sản phẩm trong danh mục",
+        "catalogProductIdPlaceholder": "Tìm kiếm sản phẩm…",
         "carouselCard": "Thẻ {index}",
         "limitedTimeOffer": "Thời gian hết hạn ưu đãi",
-        "limitedTimeOfferPlaceholder": "Nhập thời gian hết hạn (mili giây)",
-        "limitedTimeOfferHelp": "Unix timestamp tính bằng mili giây khi ưu đãi hết hạn",
+        "limitedTimeOfferPlaceholder": "Chọn ngày & giờ hết hạn",
+        "limitedTimeOfferHelp": "Thời gian hết hạn được gửi chính xác như đã chọn.",
         "location": "Vị trí",
         "latitude": "Vĩ độ",
         "longitude": "Kinh độ",
         "locationName": "Tên vị trí (tùy chọn)",
         "locationAddress": "Địa chỉ (tùy chọn)",
-        "enterFormatUrl": "Nhập URL {format}"
+        "enterFormatUrl": "Nhập URL {format}",
+        "catalogUseDefault": "Dùng ảnh thu nhỏ mặc định của danh mục",
+        "catalogNotConnectedGuidance": "Kết nối Danh mục Meta để chọn sản phẩm.",
+        "catalogSetupLink": "Đi tới cài đặt Danh mục",
+        "catalogSelectedProductFallback": "Sản phẩm: {retailerId}",
+        "limitedTimeOfferBadge": "Hết hạn vào {date}",
+        "limitedTimeOfferExpiredBadge": "Đã hết hạn vào {date}",
+        "mpmSections": "Sản phẩm",
+        "mpmSectionTitlePlaceholder": "Tiêu đề phần (tùy chọn)",
+        "mpmAddSection": "Thêm phần",
+        "mpmRemoveSection": "Xóa phần",
+        "mpmAddProduct": "Thêm sản phẩm",
+        "mpmRemoveProduct": "Xóa sản phẩm",
+        "mpmNoProductsHelp": "Thêm ít nhất một sản phẩm trước khi xuất bản.",
+        "mpmSectionLimitReached": "Đã đạt tối đa 10 phần.",
+        "mpmProductLimitReached": "Đã đạt tối đa 30 sản phẩm.",
+        "mpmProductsSummary": "{productCount} sản phẩm trong {sectionCount} phần",
+        "unsupportedButtonParam": "Loại nút này chưa được hỗ trợ."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Làm mới quyền",
+    "reconnect": "Kết nối lại",
     "duplicated": "Tài khoản Zalo OA này đã được kết nối với một workspace khác.",
     "tagSync": {
       "title": "Đồng bộ nhãn",
@@ -4269,11 +4310,11 @@
     "title": "Lập lịch hẹn",
     "description": "Tạo và quản lý lịch hẹn của bạn.",
     "flowModes": {
-      "bookFromCustomField": "Đặt lịch hẹn",
-      "checkAvailabilityFromCustomField": "Kiểm tra lịch trống",
-      "book": "Bộ chọn ngày giờ",
-      "checkAvailability": "Bộ chọn khoảng ngày",
-      "cancel": "Hủy lịch hẹn"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Chế độ",
@@ -4622,6 +4663,30 @@
       "unavailableTitle": "Không thể hủy",
       "unavailableDescription": "Cuộc hẹn này đã bị hủy, bị xóa hoặc đã diễn ra."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Chọn ngày",
+    "date": {
+      "title": "Chọn một ngày"
+    },
+    "datetime": {
+      "title": "Chọn ngày và giờ"
+    },
+    "noSelection": "Chọn một ngày",
+    "actions": {
+      "submit": "Gửi"
+    },
+    "success": {
+      "title": "Đã lưu dữ liệu",
+      "description": "Bạn có thể đóng tab này ngay bây giờ."
+    },
+    "errors": {
+      "invalidTokenTitle": "Liên kết này không khả dụng.",
+      "invalidTokenDescription": "Liên kết có thể không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.",
+      "submitFailed": "Không thể hoàn tất yêu cầu này. Vui lòng thử lại."
+    },
+    "monthLabel": "Tháng",
+    "yearLabel": "Năm"
   },
   "extensionsMe": {
     "actions": {

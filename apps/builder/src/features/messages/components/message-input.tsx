@@ -51,6 +51,7 @@ import { FileUploadPreview } from "./file-upload"
 import { InputMenu } from "./input-menu"
 
 const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
+  api: 0,
   omnichannel: 0,
   webchat: 0,
   messenger: 24 * 60 * 60,

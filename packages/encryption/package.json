@@ -26,6 +26,7 @@
     "./keys": "./src/keys.ts",
     "./minigame-play-token": "./src/minigame-play-token.ts",
     "./link-signature": "./src/link-signature.ts",
+    "./user-data-webview-token": "./src/user-data-webview-token.ts",
     "./user-hash": "./src/user-hash.ts"
   }
 }

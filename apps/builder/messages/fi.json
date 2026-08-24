@@ -1578,7 +1578,7 @@
       "superAdmin": "Pääylläpitäjä",
       "analytics": "Analytiikka",
       "flows": "Flow't",
-      "contacts": "Yhteystiedot",
+      "contacts": "Yhteystiedot / Saapuneet",
       "onlyAssignedContacts": "Vain määritetyt yhteystiedot",
       "emailAndPhone": "Sähköposti ja puhelin",
       "broadcast": "Joukkolähetys",
@@ -2007,6 +2007,26 @@
     },
     "enabled": {
       "label": "Käytössä"
+    },
+    "api": {
+      "label": "API",
+      "description": "Yhdistä mikä tahansa HTTP-yhteensopiva sovellus kanavaksi. Sovelluksesi lähettää saapuvat viestit REST-rajapintaamme, ja me toimitamme vastaukset callback-osoitteeseesi.",
+      "callbackUrl": {
+        "label": "Callback-osoite",
+        "description": "Lähetämme lähtevät vastaukset tänne POST-pyynnöllä, allekirjoitettuna postilaatikkosi omalla salaisuudella.",
+        "notSet": "Ei asetettu"
+      },
+      "token": "Tunnus",
+      "rotateToken": "Vaihda tunnus",
+      "status": {
+        "enabled": "Käytössä",
+        "disabled": "Ei käytössä"
+      },
+      "tokenReveal": {
+        "title": "Kopioi API-tunnuksesi",
+        "description": "Tämä tunnus näytetään vain kerran. Säilytä se turvallisesti — et voi tarkastella sitä enää myöhemmin.",
+        "done": "Valmis"
+      }
     }
   },
   "flows": {
@@ -2254,7 +2274,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Kun painikkeita on liitetty, TikTok lähettää vain tämän viestin ensimmäiset 40 merkkiä — loput katkaistaan."
-    }
+    },
+    "dataWasSaved": "Tiedot tallennettiin"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Uudelleentekohistoria tyhjennetty",
     "historyDepth": "({count})",
     "none": "Ei mitään",
-    "tiktokCardTitleTooLong": "TikTok lyhentää tätä viestiä: kun painikkeita on liitetty, vain ensimmäiset 40 merkkiä lähetetään. Lyhennä viestiä tai poista painikkeet."
+    "tiktokCardTitleTooLong": "TikTok lyhentää tätä viestiä: kun painikkeita on liitetty, vain ensimmäiset 40 merkkiä lähetetään. Lyhennä viestiä tai poista painikkeet.",
+    "waTemplateMpmNoProducts": "Lisää vähintään yksi tuote tähän usean tuotteen painikkeeseen ennen julkaisua.",
+    "waTemplateMpmTooManySections": "Usean tuotteen painikkeessa voi olla enintään 10 osiota. Poista osioita ennen julkaisua.",
+    "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",
+    "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
+    "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Kuponkikoodi",
         "couponCodePlaceholder": "Kirjoita kuponkikoodi",
-        "quickReplyPayload": "Pikavastauksen tietosisältö",
-        "quickReplyPayloadPlaceholder": "Kirjoita tietosisältö (valinnainen)",
         "flowToken": "Flow-tunnus",
         "flowTokenPlaceholder": "Kirjoita flow-tunnus",
         "flowNotSynced": "Synkronoi WhatsApp-flow't lähetettyjen kenttien yhdistämiseksi.",
-        "catalogProductId": "Tuotetunnus",
-        "catalogProductIdPlaceholder": "Kirjoita jälleenmyyjän tuotetunnus",
+        "catalogProductId": "Luettelotuote",
+        "catalogProductIdPlaceholder": "Hae tuotteita…",
         "carouselCard": "Kortti {index}",
         "limitedTimeOffer": "Tarjouksen päättymisaika",
-        "limitedTimeOfferPlaceholder": "Kirjoita päättymisaika millisekunteina",
-        "limitedTimeOfferHelp": "Unix-aikaleima millisekunteina tarjouksen päättymishetkellä",
+        "limitedTimeOfferPlaceholder": "Valitse vanhenemispäivä ja -aika",
+        "limitedTimeOfferHelp": "Vanhenemisaika lähetetään täsmälleen valittuna.",
         "location": "Sijainti",
         "latitude": "Leveysaste",
         "longitude": "Pituusaste",
         "locationName": "Sijainnin nimi (valinnainen)",
         "locationAddress": "Osoite (valinnainen)",
-        "enterFormatUrl": "Kirjoita {format}-URL"
+        "enterFormatUrl": "Kirjoita {format}-URL",
+        "catalogUseDefault": "Käytä luettelon oletuspienoiskuvaa",
+        "catalogNotConnectedGuidance": "Yhdistä Meta-luettelo valitaksesi tuotteen.",
+        "catalogSetupLink": "Siirry luetteloasetuksiin",
+        "catalogSelectedProductFallback": "Tuote: {retailerId}",
+        "limitedTimeOfferBadge": "Vanhenee {date}",
+        "limitedTimeOfferExpiredBadge": "Vanhentui {date}",
+        "mpmSections": "Tuotteet",
+        "mpmSectionTitlePlaceholder": "Osion otsikko (valinnainen)",
+        "mpmAddSection": "Lisää osio",
+        "mpmRemoveSection": "Poista osio",
+        "mpmAddProduct": "Lisää tuote",
+        "mpmRemoveProduct": "Poista tuote",
+        "mpmNoProductsHelp": "Lisää vähintään yksi tuote ennen julkaisua.",
+        "mpmSectionLimitReached": "Enimmäismäärä 10 osiota saavutettu.",
+        "mpmProductLimitReached": "Enimmäismäärä 30 tuotetta saavutettu.",
+        "mpmProductsSummary": "{productCount} tuotetta, {sectionCount} osiossa",
+        "unsupportedButtonParam": "Tätä painiketyyppiä ei vielä tueta."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Päivitä käyttöoikeudet",
+    "reconnect": "Yhdistä uudelleen",
     "duplicated": "Tämä Zalo OA -tili on jo yhdistetty toiseen työtilaan.",
     "tagSync": {
       "title": "Tunnisteiden synkronointi",
@@ -4230,11 +4271,11 @@
     "title": "Ajanvaraus",
     "description": "Luo ja hallitse ajanvaraustasi.",
     "flowModes": {
-      "bookFromCustomField": "Varaa aika",
-      "checkAvailabilityFromCustomField": "Tarkista saatavuus",
-      "book": "Päivä- ja aikavalitsin",
-      "checkAvailability": "Päivämääräväli-valitsin",
-      "cancel": "Peruuta aika"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Tila",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Ajat näytetään aikavyöhykkeellä {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Valitse päivämäärä",
+    "date": {
+      "title": "Valitse päivämäärä"
+    },
+    "datetime": {
+      "title": "Valitse päivämäärä ja kellonaika"
+    },
+    "noSelection": "Valitse päivämäärä",
+    "actions": {
+      "submit": "Lähetä"
+    },
+    "success": {
+      "title": "Tiedot tallennettiin",
+      "description": "Voit nyt sulkea tämän välilehden."
+    },
+    "errors": {
+      "invalidTokenTitle": "Tämä linkki ei ole käytettävissä.",
+      "invalidTokenDescription": "Linkki saattaa olla virheellinen tai vanhentunut. Pyydä uusi linkki.",
+      "submitFailed": "Emme voineet suorittaa tätä pyyntöä. Yritä uudelleen."
+    },
+    "monthLabel": "Kuukausi",
+    "yearLabel": "Vuosi"
   },
   "appointments": {
     "title": "Ajanvaraukset",

@@ -23,14 +23,16 @@ afterEach(() => {
 })
 
 describe("buildFacebookOAuthDialogUrl", () => {
-  test("opens the Facebook dialog with the broker callback as redirect_uri", async () => {
+  test("opens the Facebook dialog with the caller-supplied redirect_uri", async () => {
     const { buildFacebookOAuthDialogUrl, decodeOAuthState } = await loadWith({
       NEXT_PUBLIC_BROKER_URL: BROKER_URL,
     })
 
+    const redirectUri = `${BROKER_URL}/integrations/whatsapp/callback`
     const result = new URL(
       buildFacebookOAuthDialogUrl({
         resellerOrigin: RESELLER_ORIGIN,
+        redirectUri,
         clientId: "client-1",
         configId: "config-1",
         version: "v21.0",
@@ -45,10 +47,9 @@ describe("buildFacebookOAuthDialogUrl", () => {
     expect(result.searchParams.get("client_id")).toBe("client-1")
     expect(result.searchParams.get("config_id")).toBe("config-1")
     expect(result.searchParams.get("response_type")).toBe("code")
-    // redirect_uri must be the Meta-registered broker callback, not the reseller.
-    expect(result.searchParams.get("redirect_uri")).toBe(
-      `${BROKER_URL}/integrations/whatsapp/callback`,
-    )
+    // redirect_uri is passed straight through — this module no longer decides
+    // which host it points at (see lib/provider-origin.ts).
+    expect(result.searchParams.get("redirect_uri")).toBe(redirectUri)
 
     const state = decodeOAuthState(result.searchParams.get("state") ?? "")
     expect(state).toEqual({ referer: RESELLER_ORIGIN, locale: "vi" })
@@ -59,14 +60,16 @@ describe("buildFacebookOAuthDialogUrl", () => {
     expect(extras.featureType).toBe("only_waba_sharing")
   })
 
-  test("falls back to the builder origin when no broker is configured", async () => {
+  test("passes through a tenant-owned credential's own custom-domain redirect_uri unchanged", async () => {
     const { buildFacebookOAuthDialogUrl } = await loadWith({
-      NEXT_PUBLIC_BROKER_URL: undefined,
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
     })
 
+    const redirectUri = `${RESELLER_ORIGIN}/integrations/whatsapp/callback`
     const result = new URL(
       buildFacebookOAuthDialogUrl({
         resellerOrigin: RESELLER_ORIGIN,
+        redirectUri,
         clientId: "client-1",
         configId: "config-1",
         version: "v21.0",
@@ -75,9 +78,28 @@ describe("buildFacebookOAuthDialogUrl", () => {
       }),
     )
 
-    expect(result.searchParams.get("redirect_uri")).toBe(
-      `${BUILDER_URL}/integrations/whatsapp/callback`,
+    expect(result.searchParams.get("redirect_uri")).toBe(redirectUri)
+  })
+
+  test("still works without a configured broker when the caller supplies the builder origin", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: undefined,
+    })
+
+    const redirectUri = `${BUILDER_URL}/integrations/whatsapp/callback`
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: true,
+        transferPhoneNumber: false,
+      }),
     )
+
+    expect(result.searchParams.get("redirect_uri")).toBe(redirectUri)
   })
 })
 

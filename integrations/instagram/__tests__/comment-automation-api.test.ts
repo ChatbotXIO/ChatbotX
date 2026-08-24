@@ -108,7 +108,10 @@ describe("Instagram Login comment automation APIs", () => {
           )
           await expect(request.json()).resolves.toEqual({
             recipient: { comment_id: COMMENT_ID },
-            message: { text: "Hello from Instagram Login" },
+            message: {
+              text: "Hello from Instagram Login",
+              metadata: "SENT_FROM_CHATBOTX",
+            },
           })
           return HttpResponse.json({ recipient_id: "recipient-1" })
         },

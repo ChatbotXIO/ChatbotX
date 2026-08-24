@@ -960,7 +960,7 @@
       "superAdmin": "超級管理員",
       "analytics": "分析",
       "flows": "流程",
-      "contacts": "聯絡人",
+      "contacts": "聯絡人 / 收件匣",
       "onlyAssignedContacts": "僅分配聯絡人",
       "emailAndPhone": "電子郵件和電話",
       "broadcast": "廣播",
@@ -1389,6 +1389,26 @@
     },
     "enabled": {
       "label": "已啟用"
+    },
+    "api": {
+      "label": "API",
+      "description": "將任何支援 HTTP 的應用程式作為管道接入。您的應用程式會將傳入訊息傳送到我們的 REST API，我們會將回覆傳送到您的回呼 URL。",
+      "callbackUrl": {
+        "label": "回呼 URL",
+        "description": "我們會透過 POST 將傳出回覆傳送到此處，並以您收件匣專屬的密鑰簽署。",
+        "notSet": "尚未設定"
+      },
+      "token": "代幣",
+      "rotateToken": "重新產生代幣",
+      "status": {
+        "enabled": "已啟用",
+        "disabled": "已停用"
+      },
+      "tokenReveal": {
+        "title": "複製您的 API 代幣",
+        "description": "此代幣僅顯示一次。請妥善保存 — 之後將無法再次檢視。",
+        "done": "完成"
+      }
     }
   },
   "messages": {
@@ -1508,7 +1528,12 @@
     "redoHistoryCleared": "重做歷史記錄已清除",
     "historyDepth": "({count})",
     "none": "無",
-    "tiktokCardTitleTooLong": "TikTok 會截斷這則訊息：附加按鈕後，只會傳送前 40 個字元。請縮短訊息內容或移除按鈕。"
+    "tiktokCardTitleTooLong": "TikTok 會截斷這則訊息：附加按鈕後，只會傳送前 40 個字元。請縮短訊息內容或移除按鈕。",
+    "waTemplateMpmNoProducts": "發布前請至少為此多商品按鈕新增一項商品。",
+    "waTemplateMpmTooManySections": "多商品按鈕最多可包含 10 個版塊。請在發布前移除部分版塊。",
+    "waTemplateMpmTooManyProducts": "多商品按鈕總共最多可包含 30 項商品。請在發布前移除部分商品。",
+    "waTemplateLtoExpirationRequired": "傳送前請為限時優惠選擇到期時間。",
+    "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2480,7 +2505,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "附加按鈕後，TikTok 只會傳送這則訊息的前 40 個字元——其餘部分將被截斷。"
-    }
+    },
+    "dataWasSaved": "資料已儲存"
   },
   "folders": {
     "heading": {
@@ -3392,23 +3418,38 @@
       "params": {
         "couponCode": "優惠券代碼",
         "couponCodePlaceholder": "輸入優惠券代碼",
-        "quickReplyPayload": "快速回覆負載",
-        "quickReplyPayloadPlaceholder": "輸入酬載（選填）",
         "flowToken": "流程代幣",
         "flowTokenPlaceholder": "輸入流權杖",
         "flowNotSynced": "同步WhatsApp 流以映射提交的欄位。",
-        "catalogProductId": "產品ID",
-        "catalogProductIdPlaceholder": "輸入產品零售商ID",
+        "catalogProductId": "目錄商品",
+        "catalogProductIdPlaceholder": "搜尋商品…",
         "carouselCard": "卡 {index}",
         "limitedTimeOffer": "優惠到期時間",
-        "limitedTimeOfferPlaceholder": "輸入過期時間（以毫秒為單位）",
-        "limitedTimeOfferHelp": "優惠到期時的 Unix 時間戳記（以毫秒為單位）",
+        "limitedTimeOfferPlaceholder": "選擇到期日期與時間",
+        "limitedTimeOfferHelp": "到期時間將依所選內容準確傳送。",
         "location": "位置",
         "latitude": "緯度",
         "longitude": "經度",
         "locationName": "位置名稱（可選）",
         "locationAddress": "地址（可選）",
-        "enterFormatUrl": "輸入 {format} URL"
+        "enterFormatUrl": "輸入 {format} URL",
+        "catalogUseDefault": "使用目錄預設縮圖",
+        "catalogNotConnectedGuidance": "連結 Meta 目錄以選擇商品。",
+        "catalogSetupLink": "前往目錄設定",
+        "catalogSelectedProductFallback": "商品：{retailerId}",
+        "limitedTimeOfferBadge": "將於 {date} 到期",
+        "limitedTimeOfferExpiredBadge": "已於 {date} 到期",
+        "mpmSections": "商品",
+        "mpmSectionTitlePlaceholder": "版塊標題（選填）",
+        "mpmAddSection": "新增版塊",
+        "mpmRemoveSection": "移除版塊",
+        "mpmAddProduct": "新增商品",
+        "mpmRemoveProduct": "移除商品",
+        "mpmNoProductsHelp": "發布前請至少新增一項商品。",
+        "mpmSectionLimitReached": "已達到最多 10 個版塊的上限。",
+        "mpmProductLimitReached": "已達到最多 30 項商品的上限。",
+        "mpmProductsSummary": "{sectionCount} 個版塊中共 {productCount} 項商品",
+        "unsupportedButtonParam": "此按鈕類型尚不支援。"
       }
     },
     "sampleBodyCardContent": {
@@ -3575,7 +3616,7 @@
   },
   "zalo": {
     "title": "ZaloOA",
-    "refreshPermissions": "刷新權限",
+    "reconnect": "重新連接",
     "duplicated": "此Zalo OA 帳戶已連接到另一個工作區。",
     "tagSync": {
       "title": "標籤同步",
@@ -4263,11 +4304,11 @@
     "title": "預約安排",
     "description": "建立並管理您的預約安排。",
     "flowModes": {
-      "bookFromCustomField": "預約",
-      "checkAvailabilityFromCustomField": "查看可預約時間",
-      "book": "日期時間選擇器",
-      "checkAvailability": "日期範圍選擇器",
-      "cancel": "取消預約"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "模式",
@@ -5056,6 +5097,30 @@
       "unavailableTitle": "無法取消",
       "unavailableDescription": "此預約已取消、已刪除，或時間已過。"
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "選擇日期",
+    "date": {
+      "title": "請選擇日期"
+    },
+    "datetime": {
+      "title": "請選擇日期和時間"
+    },
+    "noSelection": "選擇日期",
+    "actions": {
+      "submit": "送出"
+    },
+    "success": {
+      "title": "資料已儲存",
+      "description": "您現在可以關閉此分頁。"
+    },
+    "errors": {
+      "invalidTokenTitle": "此連結目前無法使用。",
+      "invalidTokenDescription": "此連結可能無效或已過期，請索取新的連結。",
+      "submitFailed": "我們無法完成此請求，請再試一次。"
+    },
+    "monthLabel": "月份",
+    "yearLabel": "年份"
   },
   "metaConversions": {
     "title": "Conversions API",

@@ -5,8 +5,14 @@ import { FormFieldWrapper } from "@chatbotx.io/ui/components/form/field-wrapper"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@chatbotx.io/ui/components/ui/popover"
 import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
 import {
+  CodeXml,
   FileIcon,
   ImageIcon,
   ImagePlayIcon,
@@ -16,21 +22,86 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { usePromptVariableOptions } from "@/components/tiptap/use-prompt-variable-options"
 import { useWorkspaceId } from "@/hooks/routing"
+
+function UrlVariablePicker({
+  onSelect,
+}: {
+  onSelect: (variableName: string) => void
+}) {
+  const t = useTranslations()
+  const [isOpen, setIsOpen] = useState(false)
+  const promptVariableOptions = usePromptVariableOptions({})
+
+  if (promptVariableOptions.length === 0) {
+    return null
+  }
+
+  return (
+    <Popover onOpenChange={setIsOpen} open={isOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            aria-label={t("actions.addVariable")}
+            size="icon"
+            title={t("actions.addVariable")}
+            type="button"
+            variant="outline"
+          >
+            <CodeXml className="size-4" />
+          </Button>
+        }
+      />
+      <PopoverContent className="w-auto p-0">
+        <div className="max-h-60 w-50 overflow-y-auto">
+          {promptVariableOptions.map((field, index) => {
+            const showGroup =
+              Boolean(field.group) &&
+              promptVariableOptions[index - 1]?.group !== field.group
+
+            return (
+              <div key={field.value}>
+                {showGroup ? (
+                  <div className="px-2 pt-2 pb-1 font-medium text-muted-foreground text-xs">
+                    {field.group}
+                  </div>
+                ) : null}
+                <Button
+                  className="w-full cursor-pointer justify-start rounded-none p-2"
+                  onClick={() => {
+                    onSelect(field.value)
+                    setIsOpen(false)
+                  }}
+                  variant="ghost"
+                >
+                  {field.label}
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export function DirectUploadOrInsertLink({
   parentName,
   fileType,
   uploadPath,
   onSuccess,
+  showVariablePicker = false,
 }: {
   parentName: string
   fileType: FileType
   uploadPath: string
   onSuccess?: (url: string) => void
+  // Requires a mounted CustomFieldStoreProvider (e.g. inside the flow editor).
+  showVariablePicker?: boolean
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -81,6 +152,14 @@ export function DirectUploadOrInsertLink({
         }
     }
   }, [fileType])
+
+  const insertUrlVariable = (variableName: string) => {
+    const currentUrl = getValues(`${parentName}.url`) || ""
+    setValue(`${parentName}.url`, `${currentUrl}{{${variableName}}}`, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+  }
 
   const clearInputFile = () => {
     setValue(`${parentName}.url`, "", {
@@ -215,6 +294,9 @@ export function DirectUploadOrInsertLink({
             name={`${parentName}.url`}
             placeholder={t("fields.url.placeholder")}
           />
+          {showVariablePicker && (
+            <UrlVariablePicker onSelect={insertUrlVariable} />
+          )}
           {onSuccess && (
             <Button
               disabled={!publicUrl}

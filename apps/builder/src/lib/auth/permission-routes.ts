@@ -11,44 +11,65 @@ export const PERMISSION_NAV = {
 
 export type WorkspacePermissionKey = keyof WorkspaceMemberPermissions
 
+type PermissionsInput = WorkspaceMemberPermissions | Record<string, unknown>
+
 // The `permissions` jsonb column defaults to `{}`, so at runtime any flag can be
 // absent even though the type claims every key is present. The `Record` union is
 // intentional: it accepts a possibly-partial object, and the strict `=== true`
 // checks fail closed on missing/undefined keys.
 export function hasWorkspacePermission(
-  permissions: WorkspaceMemberPermissions | Record<string, unknown>,
+  permissions: PermissionsInput,
   key: WorkspacePermissionKey,
 ): boolean {
   return permissions.superAdmin === true || permissions[key] === true
 }
 
-// Ordered candidates for the workspace landing route. Each entry maps a path
-// segment (relative to `/space/:workspaceId`) to an optional permission gate.
-// A `null` gate means the page is always reachable, so the last always-open
-// entry guarantees resolution never falls through to a 404. Order reflects the
-// sidebar nav priority: prefer analytics/flows-style landing spots, then fall
-// back to the ungated inbox.
-const WORKSPACE_LANDING_ROUTES = [
-  ...Object.entries(PERMISSION_NAV).map(([segment, permission]) => ({
-    segment,
-    permission,
-  })),
-  { segment: "inbox", permission: null },
-] as const satisfies ReadonlyArray<{
-  segment: string
-  permission: WorkspacePermissionKey | null
-}>
+// Shared "Contacts / Inbox" access rule used by both the /contacts and /inbox
+// sections: full contacts access OR assigned-only access; superAdmin bypasses
+// via hasWorkspacePermission.
+export function hasContactsAccess(permissions: PermissionsInput): boolean {
+  return (
+    hasWorkspacePermission(permissions, "contacts") ||
+    hasWorkspacePermission(permissions, "onlyAssignedContacts")
+  )
+}
+
+// Landing candidates in sidebar nav priority order: every PERMISSION_NAV
+// segment plus `inbox`, which shares the contacts-access rule. Deriving the
+// gates from PERMISSION_NAV keeps a new section added there from silently
+// missing landing resolution.
+const WORKSPACE_LANDING_SEGMENTS = [
+  "dashboard",
+  "inbox",
+  "flows",
+  "contacts",
+  "broadcasts",
+  "sequences",
+  "products",
+] as const satisfies ReadonlyArray<keyof typeof PERMISSION_NAV | "inbox">
+
+function canAccessLandingSegment(
+  segment: (typeof WORKSPACE_LANDING_SEGMENTS)[number],
+  permissions: PermissionsInput,
+): boolean {
+  // `inbox` and `contacts` use the shared contacts-access rule, so members
+  // with only `onlyAssignedContacts` still land there.
+  if (segment === "inbox" || segment === "contacts") {
+    return hasContactsAccess(permissions)
+  }
+  return hasWorkspacePermission(permissions, PERMISSION_NAV[segment])
+}
 
 // Resolve the first section the member can access. Used by the workspace root
 // page so users without `analytics` don't get redirected into a 404 dashboard.
+// Returns null when the member can access no section; the caller turns that
+// into notFound() so we fail closed instead of redirecting into a 404 loop.
 export function resolveWorkspaceLandingSegment(
-  permissions: WorkspaceMemberPermissions | Record<string, unknown>,
-): string {
-  const target = WORKSPACE_LANDING_ROUTES.find(
-    (route) =>
-      route.permission === null ||
-      hasWorkspacePermission(permissions, route.permission),
+  permissions: PermissionsInput,
+): string | null {
+  return (
+    WORKSPACE_LANDING_SEGMENTS.find((segment) =>
+      canAccessLandingSegment(segment, permissions),
+    ) ?? null
   )
-  // `inbox` is always ungated, so `find` always resolves; fall back defensively.
-  return target?.segment ?? "inbox"
 }

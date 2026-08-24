@@ -6,6 +6,7 @@ import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { findTrigger } from "@/features/triggers/queries"
 import UpdateTriggerForm from "@/features/triggers/update-trigger-form"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
+import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 export default async function UpdateTriggerPage({
   params,
@@ -18,6 +19,7 @@ export default async function UpdateTriggerPage({
   }
 
   const { workspaceId, id } = data
+  await requireWorkspacePermission(workspaceId, "superAdmin")
   const trigger = await findTrigger({ workspaceId, id })
   if (!trigger) {
     return notFound()

@@ -318,11 +318,11 @@
     "description": "Skapa och hantera din tidsbokning.",
     "title": "Tidsbokning",
     "flowModes": {
-      "bookFromCustomField": "Boka tid",
-      "checkAvailabilityFromCustomField": "Kontrollera tillgänglighet",
-      "book": "Datum- och tidsväljare",
-      "checkAvailability": "Datumintervallväljare",
-      "cancel": "Avboka tid"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Läge",
@@ -2177,7 +2177,7 @@
     "permissions": {
       "analytics": "Analys",
       "broadcast": "Utskick",
-      "contacts": "Kontakter",
+      "contacts": "Kontakter / Inkorg",
       "ecommerce": "E-handel",
       "emailAndPhone": "E-post och telefon",
       "flows": "Flöden",
@@ -2683,6 +2683,26 @@
     },
     "enabled": {
       "label": "Aktiverad"
+    },
+    "api": {
+      "label": "API",
+      "description": "Anslut vilken HTTP-kapabel applikation som helst som en kanal. Din applikation skickar inkommande meddelanden till vårt REST-API och vi levererar svar till din callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Vi skickar utgående svar hit via POST, signerade med din inkorgs unika hemlighet.",
+        "notSet": "Inte angiven"
+      },
+      "token": "Token",
+      "rotateToken": "Förnya token",
+      "status": {
+        "enabled": "Aktiverad",
+        "disabled": "Inaktiverad"
+      },
+      "tokenReveal": {
+        "title": "Kopiera din API-token",
+        "description": "Denna token visas endast en gång. Förvara den säkert — du kommer inte kunna se den igen.",
+        "done": "Klart"
+      }
     }
   },
   "flowAnalytics": {
@@ -2943,7 +2963,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "När knappar är kopplade skickar TikTok bara de första 40 tecknen i det här meddelandet — resten klipps bort."
-    }
+    },
+    "dataWasSaved": "Uppgifterna sparades"
   },
   "folders": {
     "heading": {
@@ -3461,7 +3482,12 @@
     "viewPost": "Visa inlägg",
     "warning": "Varning!",
     "none": "Ingen",
-    "tiktokCardTitleTooLong": "TikTok kommer att korta ner det här meddelandet: med knappar kopplade skickas bara de första 40 tecknen. Korta ner meddelandet eller ta bort knapparna."
+    "tiktokCardTitleTooLong": "TikTok kommer att korta ner det här meddelandet: med knappar kopplade skickas bara de första 40 tecknen. Korta ner meddelandet eller ta bort knapparna.",
+    "waTemplateMpmNoProducts": "Lägg till minst en produkt i den här flerproduktsknappen innan publicering.",
+    "waTemplateMpmTooManySections": "En flerproduktsknapp kan ha högst 10 sektioner. Ta bort några sektioner innan publicering.",
+    "waTemplateMpmTooManyProducts": "En flerproduktsknapp kan ha högst 30 produkter totalt. Ta bort några produkter innan publicering.",
+    "waTemplateLtoExpirationRequired": "Välj ett utgångsdatum för det tidsbegränsade erbjudandet innan du skickar.",
+    "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt."
   },
   "messenger": {
     "botProfile": "Botprofil",
@@ -4648,8 +4674,8 @@
       },
       "params": {
         "carouselCard": "Kort {index}",
-        "catalogProductId": "Produkt-ID",
-        "catalogProductIdPlaceholder": "Ange produktens återförsäljar-ID",
+        "catalogProductId": "Katalogprodukt",
+        "catalogProductIdPlaceholder": "Sök produkter…",
         "couponCode": "Kupongkod",
         "couponCodePlaceholder": "Ange kupongkod",
         "enterFormatUrl": "Ange URL för {format}",
@@ -4658,14 +4684,29 @@
         "flowNotSynced": "Synkronisera WhatsApp-flöden för att mappa inskickade fält.",
         "latitude": "Latitud",
         "limitedTimeOffer": "Erbjudandets sluttid",
-        "limitedTimeOfferHelp": "Unix-tidsstämpel i millisekunder när erbjudandet löper ut",
-        "limitedTimeOfferPlaceholder": "Ange sluttid i millisekunder",
+        "limitedTimeOfferHelp": "Utgångstiden skickas exakt som den valdes.",
+        "limitedTimeOfferPlaceholder": "Välj utgångsdatum och -tid",
         "location": "Plats",
         "locationAddress": "Adress (valfritt)",
         "locationName": "Platsnamn (valfritt)",
         "longitude": "Longitud",
-        "quickReplyPayload": "Nyttolast för snabbsvar",
-        "quickReplyPayloadPlaceholder": "Ange nyttolast (valfritt)"
+        "catalogUseDefault": "Använd katalogens standardminiatyr",
+        "catalogNotConnectedGuidance": "Anslut en Meta-katalog för att välja en produkt.",
+        "catalogSetupLink": "Gå till kataloginställningar",
+        "catalogSelectedProductFallback": "Produkt: {retailerId}",
+        "limitedTimeOfferBadge": "Går ut {date}",
+        "limitedTimeOfferExpiredBadge": "Gick ut {date}",
+        "mpmSections": "Produkter",
+        "mpmSectionTitlePlaceholder": "Sektionsrubrik (valfritt)",
+        "mpmAddSection": "Lägg till sektion",
+        "mpmRemoveSection": "Ta bort sektion",
+        "mpmAddProduct": "Lägg till produkt",
+        "mpmRemoveProduct": "Ta bort produkt",
+        "mpmNoProductsHelp": "Lägg till minst en produkt innan publicering.",
+        "mpmSectionLimitReached": "Max 10 sektioner uppnått.",
+        "mpmProductLimitReached": "Max 30 produkter uppnått.",
+        "mpmProductsSummary": "{productCount} produkter i {sectionCount} sektioner",
+        "unsupportedButtonParam": "Den här knapptypen stöds inte än."
       },
       "text": {
         "label": "Text"
@@ -4793,7 +4834,7 @@
   },
   "zalo": {
     "duplicated": "Det här Zalo OA-kontot är redan anslutet till en annan arbetsyta.",
-    "refreshPermissions": "Uppdatera behörigheter",
+    "reconnect": "Återanslut",
     "tagSync": {
       "description": "Spegla lokala taggtilldelningar till denna Zalo OA.",
       "disabled": "Inaktiverad",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Tider visas i {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Välj datum",
+    "date": {
+      "title": "Välj ett datum"
+    },
+    "datetime": {
+      "title": "Välj datum och tid"
+    },
+    "noSelection": "Välj ett datum",
+    "actions": {
+      "submit": "Skicka"
+    },
+    "success": {
+      "title": "Uppgifterna sparades",
+      "description": "Du kan stänga den här fliken nu."
+    },
+    "errors": {
+      "invalidTokenTitle": "Den här länken är inte tillgänglig.",
+      "invalidTokenDescription": "Länken kan vara ogiltig eller ha upphört att gälla. Be om en ny länk.",
+      "submitFailed": "Vi kunde inte slutföra begäran. Försök igen."
+    },
+    "monthLabel": "Månad",
+    "yearLabel": "År"
   },
   "appointments": {
     "title": "Bokningar",

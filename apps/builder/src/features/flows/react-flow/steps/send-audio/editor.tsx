@@ -20,6 +20,7 @@ const SendAudioStepEditor = ({ parentName }: SendAudioStepEditorProps) => {
         <DirectUploadOrInsertLink
           fileType="audio"
           parentName={parentName}
+          showVariablePicker
           uploadPath={`public/space/${params.workspaceId}/flows/${params.id}/steps/${stepId}`}
         />
       </div>

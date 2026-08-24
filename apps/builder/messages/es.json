@@ -1652,7 +1652,7 @@
       "superAdmin": "Superadministrador",
       "analytics": "Analíticas",
       "flows": "Flujos",
-      "contacts": "Contactos",
+      "contacts": "Contactos / Bandeja de entrada",
       "onlyAssignedContacts": "Solo Assigned Contactos",
       "emailAndPhone": "Email y Phone",
       "broadcast": "Difusión",
@@ -2081,6 +2081,26 @@
     },
     "enabled": {
       "label": "Activado"
+    },
+    "api": {
+      "label": "API",
+      "description": "Conecta cualquier aplicación compatible con HTTP como canal. Tu app envía los mensajes entrantes a nuestra API REST y nosotros entregamos las respuestas a tu URL de callback.",
+      "callbackUrl": {
+        "label": "URL de callback",
+        "description": "Enviamos aquí las respuestas salientes mediante POST, firmadas con el secreto propio de tu bandeja de entrada.",
+        "notSet": "No configurada"
+      },
+      "token": "Token",
+      "rotateToken": "Rotar token",
+      "status": {
+        "enabled": "Activado",
+        "disabled": "Desactivado"
+      },
+      "tokenReveal": {
+        "title": "Copia tu token de API",
+        "description": "Este token se muestra solo una vez. Guárdalo de forma segura — no podrás volver a verlo.",
+        "done": "Listo"
+      }
     }
   },
   "flows": {
@@ -2328,7 +2348,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Cuando se adjuntan botones, TikTok solo envía los primeros 40 caracteres de este mensaje; el resto se recortará."
-    }
+    },
+    "dataWasSaved": "Datos guardados"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Se borró el historial de rehacer",
     "historyDepth": "({count})",
     "none": "Ninguno",
-    "tiktokCardTitleTooLong": "TikTok recortará este mensaje: con botones adjuntos, solo se envían los primeros 40 caracteres. Acorta el mensaje o elimina los botones."
+    "tiktokCardTitleTooLong": "TikTok recortará este mensaje: con botones adjuntos, solo se envían los primeros 40 caracteres. Acorta el mensaje o elimina los botones.",
+    "waTemplateMpmNoProducts": "Agrega al menos un producto a este botón multiproducto antes de publicar.",
+    "waTemplateMpmTooManySections": "Un botón multiproducto puede tener como máximo 10 secciones. Elimina algunas secciones antes de publicar.",
+    "waTemplateMpmTooManyProducts": "Un botón multiproducto puede tener como máximo 30 productos en total. Elimina algunos productos antes de publicar.",
+    "waTemplateLtoExpirationRequired": "Elige una fecha de vencimiento para la oferta por tiempo limitado antes de enviar.",
+    "waTemplateMpmIncompleteProducts": "Cada sección necesita al menos un producto seleccionado: elimina las filas vacías o elige un producto."
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Coupon Código",
         "couponCodePlaceholder": "Introduce coupon código",
-        "quickReplyPayload": "Quick Respuesta Payload",
-        "quickReplyPayloadPlaceholder": "Introduce payload (opcional)",
         "flowToken": "Token del flujo",
         "flowTokenPlaceholder": "Introduce flow token",
         "flowNotSynced": "Sincroniza los flujos de WhatsApp para asignar los campos enviados.",
-        "catalogProductId": "ID del producto",
-        "catalogProductIdPlaceholder": "Introduce product retailer ID",
+        "catalogProductId": "Producto del catálogo",
+        "catalogProductIdPlaceholder": "Buscar productos…",
         "carouselCard": "Tarjeta {index}",
         "limitedTimeOffer": "Offer Expiration Tiempo",
-        "limitedTimeOfferPlaceholder": "Introduce expiration tiempo en milliseconds",
-        "limitedTimeOfferHelp": "Unix tiempostamp en milliseconds cuando el offer expires",
+        "limitedTimeOfferPlaceholder": "Elige fecha y hora de vencimiento",
+        "limitedTimeOfferHelp": "La hora de vencimiento se envía exactamente como se eligió.",
         "location": "Ubicación",
         "latitude": "Latitud",
         "longitude": "Longitud",
         "locationName": "Location nombre (opcional)",
         "locationAddress": "Dirección (opcional)",
-        "enterFormatUrl": "Introduce {format} URL"
+        "enterFormatUrl": "Introduce {format} URL",
+        "catalogUseDefault": "Usar la miniatura predeterminada del catálogo",
+        "catalogNotConnectedGuidance": "Conecta un catálogo de Meta para seleccionar un producto.",
+        "catalogSetupLink": "Ir a la configuración del catálogo",
+        "catalogSelectedProductFallback": "Producto: {retailerId}",
+        "limitedTimeOfferBadge": "Vence el {date}",
+        "limitedTimeOfferExpiredBadge": "Venció el {date}",
+        "mpmSections": "Productos",
+        "mpmSectionTitlePlaceholder": "Título de la sección (opcional)",
+        "mpmAddSection": "Agregar sección",
+        "mpmRemoveSection": "Quitar sección",
+        "mpmAddProduct": "Agregar producto",
+        "mpmRemoveProduct": "Quitar producto",
+        "mpmNoProductsHelp": "Agrega al menos un producto antes de publicar.",
+        "mpmSectionLimitReached": "Se alcanzó el máximo de 10 secciones.",
+        "mpmProductLimitReached": "Se alcanzó el máximo de 30 productos.",
+        "mpmProductsSummary": "{productCount} productos en {sectionCount} secciones",
+        "unsupportedButtonParam": "Este tipo de botón aún no es compatible."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh permisos",
+    "reconnect": "Volver a conectar",
     "duplicated": "This Zalo OA cuenta tiene already been connected un another espacio de trabajo.",
     "tagSync": {
       "title": "Sincronización de etiquetas",
@@ -4230,11 +4271,11 @@
     "title": "Programación de citas",
     "description": "Crea y gestiona tu programación de citas.",
     "flowModes": {
-      "bookFromCustomField": "Reservar cita",
-      "checkAvailabilityFromCustomField": "Comprobar disponibilidad",
-      "book": "Selector de fecha y hora",
-      "checkAvailability": "Selector de rango de fechas",
-      "cancel": "Cancelar cita"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modo",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Los horarios se muestran en {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Seleccionar fecha",
+    "date": {
+      "title": "Selecciona una fecha"
+    },
+    "datetime": {
+      "title": "Selecciona una fecha y hora"
+    },
+    "noSelection": "Elige una fecha",
+    "actions": {
+      "submit": "Enviar"
+    },
+    "success": {
+      "title": "Datos guardados",
+      "description": "Ya puedes cerrar esta pestaña."
+    },
+    "errors": {
+      "invalidTokenTitle": "Este enlace no está disponible.",
+      "invalidTokenDescription": "Es posible que el enlace no sea válido o haya caducado. Solicita un nuevo enlace.",
+      "submitFailed": "No pudimos completar esta solicitud. Inténtalo de nuevo."
+    },
+    "monthLabel": "Mes",
+    "yearLabel": "Año"
   },
   "appointments": {
     "title": "Citas",

@@ -1578,7 +1578,7 @@
       "superAdmin": "スーパー管理者",
       "analytics": "分析",
       "flows": "フロー",
-      "contacts": "連絡先",
+      "contacts": "連絡先 / 受信トレイ",
       "onlyAssignedContacts": "割り当てられた連絡先のみ",
       "emailAndPhone": "メールと電話番号",
       "broadcast": "一斉配信",
@@ -2007,6 +2007,26 @@
     },
     "enabled": {
       "label": "有効"
+    },
+    "api": {
+      "label": "API",
+      "description": "HTTPに対応した任意のアプリケーションをチャネルとして接続します。アプリからの受信メッセージは弊社のREST APIに送信され、返信はお客様のcallback URLに配信されます。",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "送信する返信はこちらにPOSTされ、受信箱ごとのシークレットで署名されます。",
+        "notSet": "未設定"
+      },
+      "token": "トークン",
+      "rotateToken": "トークンを再発行",
+      "status": {
+        "enabled": "有効",
+        "disabled": "無効"
+      },
+      "tokenReveal": {
+        "title": "APIトークンをコピー",
+        "description": "このトークンは一度だけ表示されます。安全に保管してください。再度表示することはできません。",
+        "done": "完了"
+      }
     }
   },
   "flows": {
@@ -2254,7 +2274,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "ボタンを追加すると、TikTokはこのメッセージの最初の40文字までしか送信しません。残りは切り捨てられます。"
-    }
+    },
+    "dataWasSaved": "データが保存されました"
   },
   "folders": {
     "heading": {
@@ -2934,7 +2955,12 @@
     "redoHistoryCleared": "やり直し履歴を消去しました",
     "historyDepth": "（{count}）",
     "none": "なし",
-    "tiktokCardTitleTooLong": "TikTokはこのメッセージを短縮します。ボタンが付いている場合、最初の40文字のみ送信されます。メッセージを短くするか、ボタンを削除してください。"
+    "tiktokCardTitleTooLong": "TikTokはこのメッセージを短縮します。ボタンが付いている場合、最初の40文字のみ送信されます。メッセージを短くするか、ボタンを削除してください。",
+    "waTemplateMpmNoProducts": "公開前に、このマルチ商品ボタンに少なくとも1つの商品を追加してください。",
+    "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
+    "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
+    "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
+    "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -3338,23 +3364,38 @@
       "params": {
         "couponCode": "クーポンコード",
         "couponCodePlaceholder": "クーポンコードを入力",
-        "quickReplyPayload": "クイック返信のペイロード",
-        "quickReplyPayloadPlaceholder": "ペイロードを入力（任意）",
         "flowToken": "フロートークン",
         "flowTokenPlaceholder": "フロートークンを入力",
         "flowNotSynced": "送信されたフィールドをマッピングするには、WhatsAppフローを同期してください。",
-        "catalogProductId": "商品ID",
-        "catalogProductIdPlaceholder": "小売業者の商品IDを入力",
+        "catalogProductId": "カタログ商品",
+        "catalogProductIdPlaceholder": "商品を検索…",
         "carouselCard": "カード{index}",
         "limitedTimeOffer": "オファーの有効期限",
-        "limitedTimeOfferPlaceholder": "有効期限をミリ秒単位で入力",
-        "limitedTimeOfferHelp": "オファーが期限切れになる時刻のUnixタイムスタンプ（ミリ秒）",
+        "limitedTimeOfferPlaceholder": "有効期限の日時を選択",
+        "limitedTimeOfferHelp": "有効期限は選択した通りに送信されます。",
         "location": "位置情報",
         "latitude": "緯度",
         "longitude": "経度",
         "locationName": "場所名（任意）",
         "locationAddress": "住所（任意）",
-        "enterFormatUrl": "{format}のURLを入力"
+        "enterFormatUrl": "{format}のURLを入力",
+        "catalogUseDefault": "カタログのデフォルトサムネイルを使用",
+        "catalogNotConnectedGuidance": "商品を選択するにはMetaカタログを接続してください。",
+        "catalogSetupLink": "カタログ設定に移動",
+        "catalogSelectedProductFallback": "商品: {retailerId}",
+        "limitedTimeOfferBadge": "{date}に期限切れ",
+        "limitedTimeOfferExpiredBadge": "{date}に期限切れ済み",
+        "mpmSections": "商品",
+        "mpmSectionTitlePlaceholder": "セクションタイトル（任意）",
+        "mpmAddSection": "セクションを追加",
+        "mpmRemoveSection": "セクションを削除",
+        "mpmAddProduct": "商品を追加",
+        "mpmRemoveProduct": "商品を削除",
+        "mpmNoProductsHelp": "公開前に少なくとも1つの商品を追加してください。",
+        "mpmSectionLimitReached": "セクションの上限（10個）に達しました。",
+        "mpmProductLimitReached": "商品の上限（30個）に達しました。",
+        "mpmProductsSummary": "{sectionCount}個のセクションに{productCount}個の商品",
+        "unsupportedButtonParam": "このボタンタイプはまだサポートされていません。"
       }
     },
     "sampleBodyCardContent": {
@@ -3521,7 +3562,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "権限を更新",
+    "reconnect": "再接続",
     "duplicated": "このZalo OAアカウントはすでに別のワークスペースに接続されています。",
     "tagSync": {
       "title": "タグ同期",
@@ -4230,11 +4271,11 @@
     "title": "予約スケジュール",
     "description": "予約スケジュールを作成・管理します。",
     "flowModes": {
-      "bookFromCustomField": "予約を作成",
-      "checkAvailabilityFromCustomField": "空き状況を確認",
-      "book": "日時ピッカー",
-      "checkAvailability": "日付範囲ピッカー",
-      "cancel": "予約をキャンセル"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "モード",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "時間は {timezone} で表示されています。"
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "日付を選択",
+    "date": {
+      "title": "日付を選択してください"
+    },
+    "datetime": {
+      "title": "日付と時刻を選択してください"
+    },
+    "noSelection": "日付を選択",
+    "actions": {
+      "submit": "送信"
+    },
+    "success": {
+      "title": "データが保存されました",
+      "description": "このタブを閉じていただいて構いません。"
+    },
+    "errors": {
+      "invalidTokenTitle": "このリンクはご利用いただけません。",
+      "invalidTokenDescription": "リンクが無効か、有効期限が切れている可能性があります。新しいリンクをご請求ください。",
+      "submitFailed": "リクエストを完了できませんでした。もう一度お試しください。"
+    },
+    "monthLabel": "月",
+    "yearLabel": "年"
   },
   "appointments": {
     "title": "予約",

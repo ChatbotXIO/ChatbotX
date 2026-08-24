@@ -10,12 +10,14 @@ type AdsAccountControlProps = {
   integrations: AdsSwitcherData["integrations"]
   whatsappCredentialPublic: AdsSwitcherData["whatsappCredentialPublic"]
   workspaceId: string
+  oauthCallbackUrl: AdsSwitcherData["oauthCallbackUrl"]
 }
 
 export function AdsAccountControl({
   integrations,
   whatsappCredentialPublic,
   workspaceId,
+  oauthCallbackUrl,
 }: AdsAccountControlProps) {
   const t = useTranslations()
 
@@ -33,6 +35,7 @@ export function AdsAccountControl({
   return (
     <AdsAccountSwitcher
       integrations={integrations}
+      oauthCallbackUrl={oauthCallbackUrl}
       whatsappCredentialPublic={whatsappCredentialPublic}
       workspaceId={workspaceId}
     />

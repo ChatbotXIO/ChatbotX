@@ -110,4 +110,46 @@ describe("resolveGuardedWorkspaceId", () => {
       ),
     ).rejects.toThrow("not found")
   })
+
+  test("returns the workspace id for super admins on superAdmin-gated routes", async () => {
+    mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      targetWorkspaceMember: {
+        permissions: {
+          ...basePermissions,
+          superAdmin: true,
+        },
+      },
+    })
+
+    await expect(
+      resolveGuardedWorkspaceId(
+        Promise.resolve({ workspaceId: "ws-1" }),
+        "superAdmin",
+      ),
+    ).resolves.toBe("ws-1")
+  })
+
+  test("rejects fully-permissioned non-super-admins on superAdmin-gated routes", async () => {
+    mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
+      targetWorkspaceMember: {
+        permissions: {
+          ...basePermissions,
+          analytics: true,
+          flows: true,
+          contacts: true,
+          onlyAssignedContacts: true,
+          emailAndPhone: true,
+          broadcast: true,
+          ecommerce: true,
+        },
+      },
+    })
+
+    await expect(
+      resolveGuardedWorkspaceId(
+        Promise.resolve({ workspaceId: "ws-1" }),
+        "superAdmin",
+      ),
+    ).rejects.toThrow("not found")
+  })
 })

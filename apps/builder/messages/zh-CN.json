@@ -483,11 +483,11 @@
     "description": "创建并管理您的预约安排。",
     "title": "预约安排",
     "flowModes": {
-      "bookFromCustomField": "预约",
-      "checkAvailabilityFromCustomField": "查看可预约时间",
-      "book": "日期时间选择器",
-      "checkAvailability": "日期范围选择器",
-      "cancel": "取消预约"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "模式",
@@ -2180,7 +2180,7 @@
     "permissions": {
       "analytics": "分析",
       "broadcast": "广播",
-      "contacts": "联系人",
+      "contacts": "联系人 / 收件匣",
       "ecommerce": "电子商务",
       "emailAndPhone": "电子邮件和电话",
       "flows": "流程",
@@ -2686,6 +2686,26 @@
     },
     "enabled": {
       "label": "已激活"
+    },
+    "api": {
+      "label": "API",
+      "description": "将任何支持 HTTP 的应用程序作为渠道接入。您的应用将入站消息发送到我们的 REST API，我们会将回复投递到您的回调 URL。",
+      "callbackUrl": {
+        "label": "回调 URL",
+        "description": "我们会通过 POST 将出站回复发送到此处，并使用您收件箱专属的密钥进行签名。",
+        "notSet": "未设置"
+      },
+      "token": "代币",
+      "rotateToken": "重新生成代币",
+      "status": {
+        "enabled": "已激活",
+        "disabled": "已停用"
+      },
+      "tokenReveal": {
+        "title": "拷贝您的 API 代币",
+        "description": "此代币仅显示一次。请妥善保存 — 之后将无法再次查看。",
+        "done": "完成"
+      }
     }
   },
   "flowAnalytics": {
@@ -2946,7 +2966,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "附加按钮后，TikTok 只会发送这条消息的前 40 个字符——其余部分将被截断。"
-    }
+    },
+    "dataWasSaved": "数据已保存"
   },
   "folders": {
     "heading": {
@@ -3461,7 +3482,12 @@
     "warning": "警告！",
     "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，轮播需要在每张卡片上使用相同的按钮：每张卡片上有一个链接按钮，或每张卡片上有相同数量的回应按钮",
     "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，带有链接按钮的轮播卡片不能同时包含其他按钮。请移除此卡片上的其他按钮，或将链接按钮改成其他动作。",
-    "tiktokCardTitleTooLong": "TikTok 会截断这条消息：附加按钮后，只会发送前 40 个字符。请缩短消息内容或移除按钮。"
+    "tiktokCardTitleTooLong": "TikTok 会截断这条消息：附加按钮后，只会发送前 40 个字符。请缩短消息内容或移除按钮。",
+    "waTemplateMpmNoProducts": "发布前请至少为此多商品按钮添加一个商品。",
+    "waTemplateMpmTooManySections": "多商品按钮最多可包含 10 个版块。请在发布前移除部分版块。",
+    "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
+    "waTemplateLtoExpirationRequired": "发送前请为限时优惠选择到期时间。",
+    "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。"
   },
   "messenger": {
     "botProfile": "机器人个人数据",
@@ -4360,10 +4386,10 @@
       "clearCustomField": "清除自订字段",
       "notifyAdmins": "通知管理员",
       "removeTag": "移除标签",
+      "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
-      "transferConversationToHuman": "将对话转移给人类",
-      "sendMetaCapiEvent": "发送 Meta CAPI 事件"
+      "transferConversationToHuman": "将对话转移给人类"
     },
     "after": "之后",
     "at": "在",
@@ -4641,8 +4667,8 @@
       },
       "params": {
         "carouselCard": "卡 {index}",
-        "catalogProductId": "产品ID",
-        "catalogProductIdPlaceholder": "输入产品零售商ID",
+        "catalogProductId": "目录商品",
+        "catalogProductIdPlaceholder": "搜索商品…",
         "couponCode": "优惠券代码",
         "couponCodePlaceholder": "输入优惠券代码",
         "enterFormatUrl": "输入 {format} URL",
@@ -4651,14 +4677,29 @@
         "flowTokenPlaceholder": "输入流权杖",
         "latitude": "纬度",
         "limitedTimeOffer": "优惠到期时间",
-        "limitedTimeOfferHelp": "优惠到期时的 Unix 时间戳记（以毫秒为单位）",
-        "limitedTimeOfferPlaceholder": "输入过期时间（以毫秒为单位）",
+        "limitedTimeOfferHelp": "到期时间将按所选内容准确发送。",
+        "limitedTimeOfferPlaceholder": "选择到期日期和时间",
         "location": "位置",
         "locationAddress": "地址（可选）",
         "locationName": "位置名称（可选）",
         "longitude": "经度",
-        "quickReplyPayload": "快速回复负载",
-        "quickReplyPayloadPlaceholder": "输入酬载（选填）"
+        "catalogUseDefault": "使用目录默认缩略图",
+        "catalogNotConnectedGuidance": "连接 Meta 目录以选择商品。",
+        "catalogSetupLink": "前往目录设置",
+        "catalogSelectedProductFallback": "商品：{retailerId}",
+        "limitedTimeOfferBadge": "将于 {date} 到期",
+        "limitedTimeOfferExpiredBadge": "已于 {date} 到期",
+        "mpmSections": "商品",
+        "mpmSectionTitlePlaceholder": "版块标题（可选）",
+        "mpmAddSection": "添加版块",
+        "mpmRemoveSection": "移除版块",
+        "mpmAddProduct": "添加商品",
+        "mpmRemoveProduct": "移除商品",
+        "mpmNoProductsHelp": "发布前请至少添加一个商品。",
+        "mpmSectionLimitReached": "已达到最多 10 个版块的上限。",
+        "mpmProductLimitReached": "已达到最多 30 个商品的上限。",
+        "mpmProductsSummary": "{sectionCount} 个版块中共 {productCount} 个商品",
+        "unsupportedButtonParam": "暂不支持此按钮类型。"
       },
       "text": {
         "label": "文本"
@@ -4793,7 +4834,7 @@
   },
   "zalo": {
     "duplicated": "此Zalo OA 帐户已连接到另一个工作区。",
-    "refreshPermissions": "刷新权限",
+    "reconnect": "重新连接",
     "tagSync": {
       "description": "将本地标记分配镜像到此Zalo OA。",
       "disabled": "已停用",
@@ -5276,5 +5317,29 @@
         "empty": "暂无游戏记录"
       }
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "选择日期",
+    "date": {
+      "title": "请选择日期"
+    },
+    "datetime": {
+      "title": "请选择日期和时间"
+    },
+    "noSelection": "选择日期",
+    "actions": {
+      "submit": "提交"
+    },
+    "success": {
+      "title": "数据已保存",
+      "description": "您现在可以关闭此标签页。"
+    },
+    "errors": {
+      "invalidTokenTitle": "此链接不可用。",
+      "invalidTokenDescription": "该链接可能无效或已过期，请索取新的链接。",
+      "submitFailed": "无法完成此请求，请重试。"
+    },
+    "monthLabel": "月份",
+    "yearLabel": "年份"
   }
 }

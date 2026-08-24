@@ -13,8 +13,9 @@ import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
-import { ZaloRefreshPermissions } from "./components/zalo-refresh-permissions"
+import { ZaloReconnect } from "./components/zalo-reconnect"
 import type { listIntegrationZalo } from "./queries"
 
 type ZaloManageProps = {
@@ -34,6 +35,7 @@ export function ZaloManage({
   const t = useTranslations()
 
   useChannelDuplicatedError("zalo")
+  useChannelReconnectResult()
 
   if (!isEnabled) {
     return (
@@ -77,7 +79,7 @@ export function ZaloManage({
                   </div>
                 </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
-                  <ZaloRefreshPermissions integrationZalo={integrationZalo} />
+                  <ZaloReconnect integrationZalo={integrationZalo} />
                   <ZaloDisconnect integrationZalo={integrationZalo} />
                 </TableCell>
               </TableRow>

@@ -1578,7 +1578,7 @@
       "superAdmin": "Super administrateur",
       "analytics": "Analyses",
       "flows": "Flux",
-      "contacts": "Contacts",
+      "contacts": "Contacts / Boîte de réception",
       "onlyAssignedContacts": "Uniquement les contacts attribués",
       "emailAndPhone": "E-mail et téléphone",
       "broadcast": "Diffusion",
@@ -2007,6 +2007,26 @@
     },
     "enabled": {
       "label": "Activé"
+    },
+    "api": {
+      "label": "API",
+      "description": "Connectez n’importe quelle application compatible HTTP comme canal. Votre application envoie les messages entrants à notre API REST et nous transmettons les réponses à votre URL de callback.",
+      "callbackUrl": {
+        "label": "URL de callback",
+        "description": "Nous envoyons ici les réponses sortantes par POST, signées avec le secret propre à votre boîte de réception.",
+        "notSet": "Non défini"
+      },
+      "token": "Token",
+      "rotateToken": "Régénérer le token",
+      "status": {
+        "enabled": "Activé",
+        "disabled": "Désactivé"
+      },
+      "tokenReveal": {
+        "title": "Copiez votre token API",
+        "description": "Ce token ne s’affiche qu’une seule fois. Conservez-le en lieu sûr — vous ne pourrez plus le consulter par la suite.",
+        "done": "Terminé"
+      }
     }
   },
   "flows": {
@@ -2254,7 +2274,8 @@
     },
     "sendText": {
       "tiktokTitleTruncated": "Lorsque des boutons sont ajoutés, TikTok n'envoie que les 40 premiers caractères de ce message — le reste sera coupé."
-    }
+    },
+    "dataWasSaved": "Les données ont été enregistrées"
   },
   "folders": {
     "heading": {
@@ -2955,7 +2976,12 @@
     "redoHistoryCleared": "Historique de rétablissement effacé",
     "historyDepth": "({count})",
     "none": "Aucun",
-    "tiktokCardTitleTooLong": "TikTok raccourcira ce message : avec des boutons ajoutés, seuls les 40 premiers caractères sont envoyés. Raccourcissez le message ou supprimez les boutons."
+    "tiktokCardTitleTooLong": "TikTok raccourcira ce message : avec des boutons ajoutés, seuls les 40 premiers caractères sont envoyés. Raccourcissez le message ou supprimez les boutons.",
+    "waTemplateMpmNoProducts": "Ajoutez au moins un produit à ce bouton multi-produits avant de publier.",
+    "waTemplateMpmTooManySections": "Un bouton multi-produits peut comporter au maximum 10 sections. Supprimez des sections avant de publier.",
+    "waTemplateMpmTooManyProducts": "Un bouton multi-produits peut comporter au maximum 30 produits au total. Supprimez des produits avant de publier.",
+    "waTemplateLtoExpirationRequired": "Choisissez une date d'expiration pour l'offre à durée limitée avant l'envoi.",
+    "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit."
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",
@@ -3359,23 +3385,38 @@
       "params": {
         "couponCode": "Code de coupon",
         "couponCodePlaceholder": "Saisissez le code du coupon",
-        "quickReplyPayload": "Charge utile de la réponse rapide",
-        "quickReplyPayloadPlaceholder": "Saisissez la charge utile (facultatif)",
         "flowToken": "Jeton du flux",
         "flowTokenPlaceholder": "Saisissez le jeton du flux",
         "flowNotSynced": "Synchronisez les flux WhatsApp pour mapper les champs soumis.",
-        "catalogProductId": "Identifiant du produit",
-        "catalogProductIdPlaceholder": "Saisissez l’identifiant du produit du détaillant",
+        "catalogProductId": "Produit du catalogue",
+        "catalogProductIdPlaceholder": "Rechercher des produits…",
         "carouselCard": "Carte {index}",
         "limitedTimeOffer": "Heure d’expiration de l’offre",
-        "limitedTimeOfferPlaceholder": "Saisissez l’heure d’expiration en millisecondes",
-        "limitedTimeOfferHelp": "Horodatage Unix en millisecondes à l’expiration de l’offre",
+        "limitedTimeOfferPlaceholder": "Choisir la date et l’heure d’expiration",
+        "limitedTimeOfferHelp": "L’heure d’expiration est envoyée exactement telle que choisie.",
         "location": "Localisation",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Nom du lieu (facultatif)",
         "locationAddress": "Adresse (facultatif)",
-        "enterFormatUrl": "Saisissez l’URL {format}"
+        "enterFormatUrl": "Saisissez l’URL {format}",
+        "catalogUseDefault": "Utiliser la vignette par défaut du catalogue",
+        "catalogNotConnectedGuidance": "Connectez un catalogue Meta pour sélectionner un produit.",
+        "catalogSetupLink": "Accéder aux paramètres du catalogue",
+        "catalogSelectedProductFallback": "Produit : {retailerId}",
+        "limitedTimeOfferBadge": "Expire le {date}",
+        "limitedTimeOfferExpiredBadge": "Expiré le {date}",
+        "mpmSections": "Produits",
+        "mpmSectionTitlePlaceholder": "Titre de la section (facultatif)",
+        "mpmAddSection": "Ajouter une section",
+        "mpmRemoveSection": "Supprimer la section",
+        "mpmAddProduct": "Ajouter un produit",
+        "mpmRemoveProduct": "Supprimer le produit",
+        "mpmNoProductsHelp": "Ajoutez au moins un produit avant de publier.",
+        "mpmSectionLimitReached": "Maximum de 10 sections atteint.",
+        "mpmProductLimitReached": "Maximum de 30 produits atteint.",
+        "mpmProductsSummary": "{productCount} produits dans {sectionCount} sections",
+        "unsupportedButtonParam": "Ce type de bouton n’est pas encore pris en charge."
       }
     },
     "sampleBodyCardContent": {
@@ -3542,7 +3583,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Actualiser les autorisations",
+    "reconnect": "Reconnecter",
     "duplicated": "Ce compte Zalo OA est déjà connecté à un autre espace de travail.",
     "tagSync": {
       "title": "Synchronisation des étiquettes",
@@ -4230,11 +4271,11 @@
     "title": "Planification des rendez-vous",
     "description": "Créez et gérez la planification de vos rendez-vous.",
     "flowModes": {
-      "bookFromCustomField": "Réserver un rendez-vous",
-      "checkAvailabilityFromCustomField": "Vérifier les disponibilités",
-      "book": "Sélecteur de date et d’heure",
-      "checkAvailability": "Sélecteur de plage de dates",
-      "cancel": "Annuler un rendez-vous"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mode",
@@ -4873,6 +4914,30 @@
       },
       "timezoneHint": "Les horaires sont affichés en {timezone}."
     }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Sélectionner une date",
+    "date": {
+      "title": "Sélectionnez une date"
+    },
+    "datetime": {
+      "title": "Sélectionnez une date et une heure"
+    },
+    "noSelection": "Choisissez une date",
+    "actions": {
+      "submit": "Envoyer"
+    },
+    "success": {
+      "title": "Les données ont été enregistrées",
+      "description": "Vous pouvez fermer cet onglet maintenant."
+    },
+    "errors": {
+      "invalidTokenTitle": "Ce lien n’est pas disponible.",
+      "invalidTokenDescription": "Le lien est peut-être invalide ou expiré. Veuillez demander un nouveau lien.",
+      "submitFailed": "Nous n’avons pas pu terminer cette demande. Veuillez réessayer."
+    },
+    "monthLabel": "Mois",
+    "yearLabel": "Année"
   },
   "appointments": {
     "title": "Rendez-vous",

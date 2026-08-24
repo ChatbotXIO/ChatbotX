@@ -8,7 +8,6 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { getBrokerOrigin } from "@/lib/oauth-broker"
 import { reconnectWhatsappAction } from "../actions/reconnect.action"
 import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
 import { parseOAuthRelayResult } from "../libs/oauth-relay"
@@ -18,11 +17,19 @@ export function WhatsappReconnectButton({
   settings,
   workspaceId,
   disabled = false,
+  oauthCallbackUrl,
 }: {
   integrationWhatsappId: string
   settings: WhatsappCredentialPublic | null
   workspaceId: string
   disabled?: boolean
+  /**
+   * Absolute callback URL registered with Meta for this credential — the
+   * broker callback for inherited/platform credentials, or the reseller's
+   * own custom domain callback for a tenant-owned one. Computed server-side
+   * (see `lib/provider-origin.ts`).
+   */
+  oauthCallbackUrl: string
 }) {
   const router = useRouter()
   const t = useTranslations()
@@ -50,11 +57,11 @@ export function WhatsappReconnectButton({
   )
 
   useEffect(() => {
-    const brokerOrigin = getBrokerOrigin()
+    const expectedOrigin = new URL(oauthCallbackUrl).origin
     const handleMessage = (event: MessageEvent) => {
       const result = parseOAuthRelayResult({
         origin: event.origin,
-        brokerOrigin,
+        expectedOrigin,
         data: event.data,
       })
       if (result.type === "ignored") {
@@ -75,7 +82,7 @@ export function WhatsappReconnectButton({
 
     window.addEventListener("message", handleMessage)
     return () => window.removeEventListener("message", handleMessage)
-  }, [execute, setIsWaitingForCode, t])
+  }, [execute, oauthCallbackUrl, setIsWaitingForCode, t])
 
   const openReconnectDialog = () => {
     if (!settings?.clientId) {
@@ -86,6 +93,7 @@ export function WhatsappReconnectButton({
     const authTab = window.open(
       buildFacebookOAuthDialogUrl({
         resellerOrigin: window.location.origin,
+        redirectUri: oauthCallbackUrl,
         clientId: settings.clientId,
         configId: settings.configId,
         version: settings.version,

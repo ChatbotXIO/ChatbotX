@@ -1,10 +1,9 @@
-import { getIdFromParams } from "@chatbotx.io/utils"
-import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
 import { KeywordsDescription } from "@/features/automated-response/keywords-description"
 import { KeywordsTab } from "@/features/automated-response/keywords-tab"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
+import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 export default async function FolderableLayout({
   children,
@@ -15,10 +14,7 @@ export default async function FolderableLayout({
   folders: ReactNode
   params: Promise<{ workspaceId: string }>
 }) {
-  const workspaceId = getIdFromParams(await params, "workspaceId")
-  if (!workspaceId) {
-    return notFound()
-  }
+  const workspaceId = await resolveGuardedWorkspaceId(params, "superAdmin")
 
   return (
     <FolderStoreProvider

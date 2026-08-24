@@ -2,14 +2,33 @@
 
 import {
   type GetUserDataStepSchema,
+  ReplyFormat,
   stateTypes,
 } from "@chatbotx.io/flow-config"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { useTranslations } from "next-intl"
 import { BaseStateViewer } from "../../states/viewer"
 
+const WEBVIEW_REPLY_FORMATS = new Set<string>([
+  ReplyFormat.date,
+  ReplyFormat.datetime,
+])
+
 const GetUserDataStepViewer = ({ data }: { data: GetUserDataStepSchema }) => {
-  const getStateLabel = (stateType: string) =>
-    stateType === stateTypes.skip ? data.skipButtonLabel : undefined
+  const t = useTranslations()
+
+  const getStateLabel = (stateType: string) => {
+    if (stateType === stateTypes.skip) {
+      return data.skipButtonLabel
+    }
+    if (
+      stateType === stateTypes.success &&
+      WEBVIEW_REPLY_FORMATS.has(data.replyFormat)
+    ) {
+      return t("flows.dataWasSaved")
+    }
+    return
+  }
 
   return (
     <Card className="overflow-hidden p-0">

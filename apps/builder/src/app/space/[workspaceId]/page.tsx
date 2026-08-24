@@ -35,6 +35,11 @@ export default async function WorkspacePage(props: WorkspacePageProps) {
   const segment = resolveWorkspaceLandingSegment(
     userAndWorkspace.targetWorkspaceMember.permissions,
   )
+  // No accessible section (e.g. only `emailAndPhone`): fail closed instead of
+  // redirecting into a section that would 404 anyway.
+  if (!segment) {
+    return notFound()
+  }
 
   return redirect(`/space/${workspaceId}/${segment}`)
 }
