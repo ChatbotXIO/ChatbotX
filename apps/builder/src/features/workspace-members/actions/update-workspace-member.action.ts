@@ -1,6 +1,9 @@
 "use server"
 
-import { workspaceMemberCacheTag } from "@chatbotx.io/business"
+import {
+  workspaceMemberCacheTag,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
