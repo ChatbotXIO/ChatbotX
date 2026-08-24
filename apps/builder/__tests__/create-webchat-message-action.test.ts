@@ -165,10 +165,10 @@ vi.mock("@/features/integration-webchat/lib/authorized-domain", () => ({
     origin: string | null | undefined,
     authorizedDomains: string[],
   ) => {
-    if (authorizedDomains.length === 0) {
+    if (!origin) {
       return true
     }
-    if (!origin) {
+    if (authorizedDomains.length === 0) {
       return false
     }
     const host = origin
