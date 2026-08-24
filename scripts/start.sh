@@ -18,6 +18,30 @@ for arg in "$@"; do
   esac
 done
 
+# Instala dependencias solo si falta algo (algún workspace sin node_modules).
+# Detecta el caso de "tsdown: not found" / "node_modules missing" y lo resuelve solo.
+ensure_install() {
+  local need=0
+  if [ ! -d node_modules ] || [ ! -x node_modules/.bin/turbo ]; then
+    need=1
+  else
+    for dir in apps/* packages/* integrations/*; do
+      if [ -f "$dir/package.json" ] && [ ! -d "$dir/node_modules" ]; then
+        echo "  → falta node_modules en: $dir"
+        need=1
+      fi
+    done
+  fi
+  if [ "$need" = "1" ]; then
+    echo "=== 0/6 Dependencias: faltan paquetes, corriendo pnpm install ==="
+    CI=true pnpm install --no-frozen-lockfile || { echo "❌ Falló pnpm install"; exit 1; }
+  else
+    echo "=== 0/6 Dependencias: OK ==="
+  fi
+}
+
+ensure_install
+
 echo "=== 1/6 Infraestructura (postgres/redis/s3) ==="
 docker compose up -d postgres redis filesystem filesystem-init
 
@@ -67,7 +91,14 @@ if [ "$MODE" = "dev" ]; then
   nohup pnpm --filter builder dev > /tmp/opencode/builder-dev.log 2>&1 &
 elif [ "$BUILD" = "1" ] || [ ! -f apps/builder/.next/BUILD_ID ]; then
   echo "Build del builder (tarda unos minutos la primera vez)..."
-  pnpm exec turbo build --concurrency=2
+  if ! pnpm exec turbo build --concurrency=2; then
+    echo ""
+    echo "❌ El build FALLÓ. NO arranco el builder."
+    echo "   (worker y realtime ya quedaron corriendo en background)"
+    echo "   Revisá el error de arriba. Si dice 'tsdown: not found' o"
+    echo "   'node_modules missing', corré: pnpm install"
+    exit 1
+  fi
   setsid env NODE_OPTIONS='--dns-result-order=ipv4first --no-network-family-autoselection' pnpm --filter builder exec dotenv -e .env -e ../../.env -- next start -p 3123 \
     > /tmp/opencode/builder-prod.log 2>&1 < /dev/null &
 else
