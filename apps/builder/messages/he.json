@@ -145,7 +145,8 @@
     "onSuccess": "במקרה של הצלחה",
     "clone": "שכפול",
     "remove": "הסרה",
-    "restore": "שחזור"
+    "restore": "שחזור",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
@@ -2536,7 +2537,60 @@
   },
   "templates": {
     "title": "תבניות",
-    "description": "יצירה וניהול של התבניות שלכם."
+    "description": "צור ונהל את התבניות שלך.",
+    "share": {
+      "label": "שיתוף",
+      "enabled": "משותפת",
+      "disabled": "לא משותפת",
+      "dialogTitle": "שיתוף תבנית",
+      "dialogDescription": "כל מי שיש לו את הקישור הזה יכול להתקין עותק של התבנית הזו בסביבת עבודה בארגון שלך.",
+      "enableLabel": "הפעלת קישור שיתוף",
+      "linkLabel": "קישור שיתוף",
+      "description": "כל מי שיש לו את הקישור יכול להתקין את התבנית הזו בסביבת העבודה שלו."
+    },
+    "installs": {
+      "title": "התקנות",
+      "resources": "משאבים",
+      "warnings": "אזהרות",
+      "completedAt": "הושלם בתאריך",
+      "autoUpdate": "עדכון אוטומטי"
+    },
+    "form": {
+      "contents": "תוכן התבנית",
+      "comingSoon": "בקרוב",
+      "selectAll": "בחירת הכול",
+      "selectedCount": "{count} נבחרו",
+      "details": "פרטים",
+      "permissions": "הרשאות ברירת מחדל",
+      "allowEdit": "אפשר עריכה לאחר ההתקנה",
+      "allowDelete": "אפשר מחיקה לאחר ההתקנה",
+      "publisherName": "שם המפרסם",
+      "youtubeVideoId": "מזהה סרטון YouTube",
+      "youtubeVideoIdDescription": "המזהה בן 11 התווים מכתובת ה-URL של הסרטון, למשל \"dQw4w9WgXcQ\" בכתובת youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "קישור בדיקה",
+      "imageUrl": "תמונת שער",
+      "installBehavior": "התנהגות ההתקנה",
+      "createInstallFolder": "התקנה בתיקייה ייעודית",
+      "createInstallFolderDescription": "מקנן כל משאב שהותקן בתוך תיקייה חדשה אחת הנקראת על שם התבנית הזו.",
+      "defaultAutoUpdate": "סימון התקנות לעדכון כברירת מחדל",
+      "defaultAutoUpdateDescription": "התקנות חדשות יציגו הודעת עדכון זמין בכל פעם שתפרסם מחדש את התבנית הזו."
+    },
+    "categories": {
+      "flows": "תהליכים",
+      "customFields": "שדות מותאמים אישית",
+      "tags": "תגיות",
+      "products": "מוצרים",
+      "productCategories": "קטגוריות מוצרים",
+      "aiFunctions": "פונקציות AI",
+      "aiAgents": "סוכני AI",
+      "calendars": "יומני פגישות",
+      "webchats": "צ'אטים אינטרנטיים",
+      "keywords": "מילות מפתח",
+      "entryPointLinks": "קישורים לנקודות כניסה",
+      "triggers": "גורמים מפעילים",
+      "fbCommentAutomations": "אוטומציות תגובות פייסבוק",
+      "settings": "הגדרות"
+    }
   },
   "qrCodeGenerator": {
     "title": "מחולל קודי QR",
@@ -2651,6 +2705,19 @@
     "invalidDescription": "קישור זה אינו תקין או שפג תוקפו.",
     "unavailableTitle": "ביטול ההרשמה אינו זמין.",
     "unavailableDescription": "סביבת עבודה זו אינה זמינה עוד."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "קישור זה אינו זמין עוד.",
+    "invalidDescription": "קישור השיתוף של התבנית הזו אינו תקין, מושבת או שפג תוקפו.",
+    "byPublisher": "מאת {publisherName}",
+    "includes": "התבנית הזו כוללת",
+    "videoTitle": "סרטון תצוגה מקדימה של התבנית",
+    "tryItOut": "נסה עכשיו",
+    "signInToInstall": "התחבר כדי להתקין",
+    "selectWorkspace": "בחר סביבת עבודה",
+    "install": "התקן",
+    "installStarted": "ההתקנה החלה",
+    "noEligibleWorkspaces": "אין לך סביבת עבודה מתאימה להתקנת התבנית הזו."
   },
   "extensionsMe": {
     "actions": {
@@ -3648,6 +3715,9 @@
     "mcpServer": {
       "label": "שרת MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "פונקציית מערכת",
       "names": {
@@ -3852,7 +3922,9 @@
       "label": "מצב",
       "pending": "ממתין",
       "processing": "בעיבוד",
+      "installing": "Installing",
       "completed": "הושלם",
+      "partial": "Partial",
       "failed": "נכשל",
       "success": "הצלחה",
       "error": "שגיאה"

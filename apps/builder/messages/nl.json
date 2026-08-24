@@ -145,7 +145,8 @@
     "onSuccess": "Bij succes",
     "clone": "Klonen",
     "remove": "Verwijderen",
-    "restore": "Herstellen"
+    "restore": "Herstellen",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Je moet superbeheerder van de werkruimte zijn om dit te doen."
@@ -975,6 +976,9 @@
     "mcpServer": {
       "label": "MCP-server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Systeemfunctie",
       "names": {
@@ -1179,7 +1183,9 @@
       "label": "Status",
       "pending": "In behandeling",
       "processing": "Wordt verwerkt",
+      "installing": "Installing",
       "completed": "Voltooid",
+      "partial": "Partial",
       "failed": "Mislukt",
       "success": "Geslaagd",
       "error": "Fout"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "Sjablonen",
-    "description": "Maak en beheer je sjablonen."
+    "description": "Maak en beheer je sjablonen.",
+    "share": {
+      "label": "Delen",
+      "enabled": "Gedeeld",
+      "disabled": "Niet gedeeld",
+      "dialogTitle": "Sjabloon delen",
+      "dialogDescription": "Iedereen met deze link kan een kopie van dit sjabloon installeren in een werkruimte binnen jouw tenant.",
+      "enableLabel": "Deellink inschakelen",
+      "linkLabel": "Deellink",
+      "description": "Iedereen met de link kan dit sjabloon in zijn eigen werkruimte installeren."
+    },
+    "installs": {
+      "title": "Installaties",
+      "resources": "Bronnen",
+      "warnings": "Waarschuwingen",
+      "completedAt": "Voltooid op",
+      "autoUpdate": "Automatische update"
+    },
+    "form": {
+      "contents": "Sjabloon-inhoud",
+      "comingSoon": "Binnenkort beschikbaar",
+      "selectAll": "Alles selecteren",
+      "selectedCount": "{count} geselecteerd",
+      "details": "Details",
+      "permissions": "Standaardrechten",
+      "allowEdit": "Bewerken na installatie toestaan",
+      "allowDelete": "Verwijderen na installatie toestaan",
+      "publisherName": "Naam uitgever",
+      "youtubeVideoId": "YouTube-video-ID",
+      "youtubeVideoIdDescription": "De 11-tekens-ID uit de video-URL, bijv. \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Omslagafbeelding",
+      "installBehavior": "Installatiegedrag",
+      "createInstallFolder": "Installeren in een aparte map",
+      "createInstallFolderDescription": "Plaatst elke geïnstalleerde bron in één nieuwe map die naar dit sjabloon is vernoemd.",
+      "defaultAutoUpdate": "Installaties standaard markeren voor updates",
+      "defaultAutoUpdateDescription": "Nieuwe installaties tonen een melding over een beschikbare update zodra je dit sjabloon opnieuw publiceert."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Aangepaste velden",
+      "tags": "Tags",
+      "products": "Producten",
+      "productCategories": "Productcategorieën",
+      "aiFunctions": "AI-functies",
+      "aiAgents": "AI-agents",
+      "calendars": "Afspraakkalenders",
+      "webchats": "Webchats",
+      "keywords": "Trefwoorden",
+      "entryPointLinks": "Toegangspuntlinks",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook-reactieautomatiseringen",
+      "settings": "Instellingen"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR-codegenerator",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "Deze link is ongeldig of verlopen.",
     "unavailableTitle": "Afmelden niet beschikbaar.",
     "unavailableDescription": "Deze werkruimte is niet meer beschikbaar."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Deze link is niet meer beschikbaar.",
+    "invalidDescription": "Deze sjabloon-deellink is ongeldig, uitgeschakeld of verlopen.",
+    "byPublisher": "Door {publisherName}",
+    "includes": "Dit sjabloon bevat",
+    "videoTitle": "Sjabloon-voorbeeldvideo",
+    "tryItOut": "Probeer het",
+    "signInToInstall": "Log in om te installeren",
+    "selectWorkspace": "Selecteer een werkruimte",
+    "install": "Installeren",
+    "installStarted": "Installatie gestart",
+    "noEligibleWorkspaces": "Je hebt geen werkruimte die geschikt is om dit sjabloon te installeren."
   },
   "extensionsMe": {
     "actions": {

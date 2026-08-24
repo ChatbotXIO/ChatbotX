@@ -285,6 +285,11 @@ export const router = {
   webhooksAPI: lazy(() =>
     import("@/features/webhooks/api").then((m) => ({ default: m.webhooksAPI })),
   ),
+  templatesAPI: lazy(() =>
+    import("@/features/templates/api").then((m) => ({
+      default: m.templatesAPI,
+    })),
+  ),
   analyticsRoutes: authorizedAPI
     // @ts-expect-error
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

@@ -145,7 +145,8 @@
     "onSuccess": "عند النجاح",
     "clone": "استنساخ",
     "remove": "إزالة",
-    "restore": "استعادة"
+    "restore": "استعادة",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "يجب أن تكون مسؤولًا فائقًا لمساحة العمل للقيام بذلك."
@@ -1235,6 +1236,9 @@
     "mcpServer": {
       "label": "خادم MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "وظيفة النظام",
       "names": {
@@ -1439,9 +1443,11 @@
       "label": "الحالة",
       "pending": "قيد الانتظار",
       "processing": "قيد المعالجة",
+      "installing": "Installing",
       "success": "نجاح",
       "error": "خطأ",
       "completed": "مكتمل",
+      "partial": "Partial",
       "failed": "فاشل"
     },
     "subtitle": {
@@ -4129,7 +4135,60 @@
   },
   "templates": {
     "title": "القوالب",
-    "description": "إنشاء قوالبك وإدارتها."
+    "description": "أنشئ قوالبك وأدرها.",
+    "share": {
+      "label": "مشاركة",
+      "enabled": "تمت المشاركة",
+      "disabled": "غير مُشارَك",
+      "dialogTitle": "مشاركة القالب",
+      "dialogDescription": "يمكن لأي شخص لديه هذا الرابط تثبيت نسخة من هذا القالب في مساحة عمل ضمن مؤسستك.",
+      "enableLabel": "تفعيل رابط المشاركة",
+      "linkLabel": "رابط المشاركة",
+      "description": "يمكن لأي شخص لديه الرابط تثبيت هذا القالب في مساحة العمل الخاصة به."
+    },
+    "installs": {
+      "title": "عمليات التثبيت",
+      "resources": "الموارد",
+      "warnings": "التحذيرات",
+      "completedAt": "اكتمل في",
+      "autoUpdate": "التحديث التلقائي"
+    },
+    "form": {
+      "contents": "محتوى القالب",
+      "comingSoon": "قريبًا",
+      "selectAll": "تحديد الكل",
+      "selectedCount": "تم تحديد {count}",
+      "details": "التفاصيل",
+      "permissions": "الأذونات الافتراضية",
+      "allowEdit": "السماح بالتعديل بعد التثبيت",
+      "allowDelete": "السماح بالحذف بعد التثبيت",
+      "publisherName": "اسم الناشر",
+      "youtubeVideoId": "معرّف فيديو يوتيوب",
+      "youtubeVideoIdDescription": "المعرّف المكوَّن من 11 حرفًا من رابط الفيديو، مثل \"dQw4w9WgXcQ\" في youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "رابط الاختبار",
+      "imageUrl": "صورة الغلاف",
+      "installBehavior": "سلوك التثبيت",
+      "createInstallFolder": "التثبيت في مجلد مخصص",
+      "createInstallFolderDescription": "يضع كل مورد يتم تثبيته داخل مجلد جديد واحد يحمل اسم هذا القالب.",
+      "defaultAutoUpdate": "تمييز عمليات التثبيت للتحديث بشكل افتراضي",
+      "defaultAutoUpdateDescription": "ستعرض عمليات التثبيت الجديدة إشعارًا بتوفر تحديث في كل مرة تعيد فيها نشر هذا القالب."
+    },
+    "categories": {
+      "flows": "المسارات",
+      "customFields": "الحقول المخصصة",
+      "tags": "الوسوم",
+      "products": "المنتجات",
+      "productCategories": "فئات المنتجات",
+      "aiFunctions": "وظائف الذكاء الاصطناعي",
+      "aiAgents": "وكلاء الذكاء الاصطناعي",
+      "calendars": "تقويمات المواعيد",
+      "webchats": "دردشات الويب",
+      "keywords": "الكلمات المفتاحية",
+      "entryPointLinks": "روابط نقاط الدخول",
+      "triggers": "المشغِّلات",
+      "fbCommentAutomations": "أتمتة تعليقات فيسبوك",
+      "settings": "الإعدادات"
+    }
   },
   "qrCodeGenerator": {
     "title": "مولّد رمز QR",
@@ -4244,6 +4303,19 @@
     "invalidDescription": "هذا الرابط غير صالح أو انتهت صلاحيته.",
     "unavailableTitle": "إلغاء الاشتراك غير متاح.",
     "unavailableDescription": "مساحة العمل هذه لم تعد متاحة."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "هذا الرابط لم يعد متاحًا.",
+    "invalidDescription": "رابط مشاركة هذا القالب غير صالح أو معطَّل أو منتهي الصلاحية.",
+    "byPublisher": "بواسطة {publisherName}",
+    "includes": "يتضمن هذا القالب",
+    "videoTitle": "فيديو معاينة القالب",
+    "tryItOut": "جرّبه",
+    "signInToInstall": "سجّل الدخول للتثبيت",
+    "selectWorkspace": "اختر مساحة عمل",
+    "install": "تثبيت",
+    "installStarted": "بدأ التثبيت",
+    "noEligibleWorkspaces": "ليس لديك مساحة عمل مؤهلة لتثبيت هذا القالب."
   },
   "extensionsMe": {
     "actions": {

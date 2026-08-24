@@ -145,7 +145,8 @@
     "onSuccess": "Bei Erfolg",
     "clone": "Klonen",
     "remove": "Entfernen",
-    "restore": "Wiederherstellen"
+    "restore": "Wiederherstellen",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Sie müssen Super-Administrator des Arbeitsbereichs sein, um dies zu tun."
@@ -1161,6 +1162,9 @@
     "mcpServer": {
       "label": "MCP-Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Systemfunktion",
       "names": {
@@ -1365,7 +1369,9 @@
       "label": "Status",
       "pending": "Ausstehend",
       "processing": "In Verarbeitung",
+      "installing": "Installing",
       "completed": "Abgeschlossen",
+      "partial": "Partial",
       "failed": "Fehlgeschlagen",
       "success": "Erfolg",
       "error": "Fehler"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "Vorlagen",
-    "description": "Erstellen und verwalten Sie Ihre Vorlagen."
+    "description": "Erstellen und verwalten Sie Ihre Vorlagen.",
+    "share": {
+      "label": "Teilen",
+      "enabled": "Geteilt",
+      "disabled": "Nicht geteilt",
+      "dialogTitle": "Vorlage teilen",
+      "dialogDescription": "Jeder mit diesem Link kann eine Kopie dieser Vorlage in einem Arbeitsbereich Ihres Mandanten installieren.",
+      "enableLabel": "Freigabelink aktivieren",
+      "linkLabel": "Freigabelink",
+      "description": "Jeder mit dem Link kann diese Vorlage in seinem eigenen Arbeitsbereich installieren."
+    },
+    "installs": {
+      "title": "Installationen",
+      "resources": "Ressourcen",
+      "warnings": "Warnungen",
+      "completedAt": "Abgeschlossen am",
+      "autoUpdate": "Automatische Aktualisierung"
+    },
+    "form": {
+      "contents": "Vorlageninhalt",
+      "comingSoon": "Demnächst verfügbar",
+      "selectAll": "Alle auswählen",
+      "selectedCount": "{count} ausgewählt",
+      "details": "Details",
+      "permissions": "Standardberechtigungen",
+      "allowEdit": "Bearbeitung nach Installation erlauben",
+      "allowDelete": "Löschen nach Installation erlauben",
+      "publisherName": "Name des Herausgebers",
+      "youtubeVideoId": "YouTube-Video-ID",
+      "youtubeVideoIdDescription": "Die 11-stellige ID aus der Video-URL, z. B. \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Titelbild",
+      "installBehavior": "Installationsverhalten",
+      "createInstallFolder": "In einem eigenen Ordner installieren",
+      "createInstallFolderDescription": "Verschachtelt jede installierte Ressource in einem neuen, nach dieser Vorlage benannten Ordner.",
+      "defaultAutoUpdate": "Installationen standardmäßig für Updates markieren",
+      "defaultAutoUpdateDescription": "Neue Installationen zeigen einen Update-Hinweis, sobald Sie diese Vorlage erneut veröffentlichen."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Benutzerdefinierte Felder",
+      "tags": "Tags",
+      "products": "Produkte",
+      "productCategories": "Produktkategorien",
+      "aiFunctions": "KI-Funktionen",
+      "aiAgents": "KI-Agenten",
+      "calendars": "Terminkalender",
+      "webchats": "Webchats",
+      "keywords": "Schlüsselwörter",
+      "entryPointLinks": "Einstiegspunkt-Links",
+      "triggers": "Trigger",
+      "fbCommentAutomations": "Facebook-Kommentarautomatisierungen",
+      "settings": "Einstellungen"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR-Code-Generator",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "Dieser Link ist ungültig oder abgelaufen.",
     "unavailableTitle": "Abmeldung nicht verfügbar.",
     "unavailableDescription": "Dieser Arbeitsbereich ist nicht mehr verfügbar."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Dieser Link ist nicht mehr verfügbar.",
+    "invalidDescription": "Dieser Vorlagen-Freigabelink ist ungültig, deaktiviert oder abgelaufen.",
+    "byPublisher": "Von {publisherName}",
+    "includes": "Diese Vorlage enthält",
+    "videoTitle": "Vorlagen-Vorschauvideo",
+    "tryItOut": "Ausprobieren",
+    "signInToInstall": "Zum Installieren anmelden",
+    "selectWorkspace": "Arbeitsbereich auswählen",
+    "install": "Installieren",
+    "installStarted": "Installation gestartet",
+    "noEligibleWorkspaces": "Sie haben keinen Arbeitsbereich, der für die Installation dieser Vorlage geeignet ist."
   },
   "extensionsMe": {
     "actions": {

@@ -18,6 +18,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
 
 const AI_AGENT_CACHE_TTL_SECONDS = 5 * 60
@@ -217,10 +218,25 @@ class AiAgentService extends BaseService {
     await this.invalidateCacheTags(this.getWorkspaceCacheTag(ctx.workspaceId))
   }
 
+  /**
+   * Public invalidation entrypoint for callers outside this service that
+   * write AI agents directly, e.g. `templateInstallService` after a template
+   * install commits — mirrors `customFieldService.invalidate`.
+   */
+  async invalidate(input: { workspaceId: string }): Promise<void> {
+    await this.invalidateCacheTags(this.getWorkspaceCacheTag(input.workspaceId))
+  }
+
   async delete(
     ctx: { workspaceId: string; ids: string[] },
     tx?: DatabaseClient,
   ): Promise<void> {
+    await assertDeletable({
+      workspaceId: ctx.workspaceId,
+      resourceKind: "aiAgent",
+      resourceIds: ctx.ids,
+    })
+
     const client = tx ?? db
     await client
       .delete(aiAgentModel)

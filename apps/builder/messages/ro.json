@@ -901,7 +901,8 @@
     "onSuccess": "La reușită",
     "clone": "Clonează",
     "remove": "Elimină",
-    "restore": "Restaurează"
+    "restore": "Restaurează",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Trebuie să fii superadministrator al spațiului de lucru pentru a face acest lucru."
@@ -1917,6 +1918,9 @@
     "mcpServer": {
       "label": "Server MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Funcție de sistem",
       "names": {
@@ -2121,7 +2125,9 @@
       "label": "Stare",
       "pending": "În așteptare",
       "processing": "În curs de procesare",
+      "installing": "Installing",
       "completed": "Finalizat",
+      "partial": "Partial",
       "failed": "Eșuat",
       "success": "Succes",
       "error": "Eroare"
@@ -4829,7 +4835,60 @@
   },
   "templates": {
     "description": "Creează și gestionează șabloanele tale.",
-    "title": "Șabloane"
+    "title": "Șabloane",
+    "share": {
+      "label": "Distribuie",
+      "enabled": "Distribuit",
+      "disabled": "Nedistribuit",
+      "dialogTitle": "Distribuie șablonul",
+      "dialogDescription": "Oricine are acest link poate instala o copie a acestui șablon într-un spațiu de lucru din organizația ta.",
+      "enableLabel": "Activează linkul de distribuire",
+      "linkLabel": "Link de distribuire",
+      "description": "Oricine are linkul poate instala acest șablon în propriul spațiu de lucru."
+    },
+    "installs": {
+      "title": "Instalări",
+      "resources": "Resurse",
+      "warnings": "Avertismente",
+      "completedAt": "Finalizat la",
+      "autoUpdate": "Actualizare automată"
+    },
+    "form": {
+      "contents": "Conținutul șablonului",
+      "comingSoon": "În curând",
+      "selectAll": "Selectează tot",
+      "selectedCount": "{count} selectate",
+      "details": "Detalii",
+      "permissions": "Permisiuni implicite",
+      "allowEdit": "Permite editarea după instalare",
+      "allowDelete": "Permite ștergerea după instalare",
+      "publisherName": "Numele editorului",
+      "youtubeVideoId": "ID-ul videoclipului YouTube",
+      "youtubeVideoIdDescription": "ID-ul de 11 caractere din URL-ul videoclipului, de ex. \"dQw4w9WgXcQ\" în youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Link de test",
+      "imageUrl": "Imagine de copertă",
+      "installBehavior": "Comportament la instalare",
+      "createInstallFolder": "Instalează într-un folder dedicat",
+      "createInstallFolderDescription": "Grupează fiecare resursă instalată într-un singur folder nou, denumit după acest șablon.",
+      "defaultAutoUpdate": "Marchează instalările pentru actualizări în mod implicit",
+      "defaultAutoUpdateDescription": "Instalările noi vor afișa o notificare de actualizare disponibilă de fiecare dată când republici acest șablon."
+    },
+    "categories": {
+      "flows": "Fluxuri",
+      "customFields": "Câmpuri personalizate",
+      "tags": "Etichete",
+      "products": "Produse",
+      "productCategories": "Categorii de produse",
+      "aiFunctions": "Funcții AI",
+      "aiAgents": "Agenți AI",
+      "calendars": "Calendare de programări",
+      "webchats": "Chat-uri web",
+      "keywords": "Cuvinte cheie",
+      "entryPointLinks": "Linkuri de intrare",
+      "triggers": "Declanșatoare",
+      "fbCommentAutomations": "Automatizări comentarii Facebook",
+      "settings": "Setări"
+    }
   },
   "tiktok": {
     "description": "Conectează-ți contul TikTok pentru a răspunde la mesajele directe.",
@@ -4843,6 +4902,19 @@
     "title": "Ai fost dezabonat.",
     "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
     "unavailableTitle": "Dezabonare indisponibilă."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Acest link nu mai este disponibil.",
+    "invalidDescription": "Acest link de distribuire a șablonului este invalid, dezactivat sau expirat.",
+    "byPublisher": "De {publisherName}",
+    "includes": "Acest șablon include",
+    "videoTitle": "Videoclip de previzualizare a șablonului",
+    "tryItOut": "Încearcă-l",
+    "signInToInstall": "Autentifică-te pentru a instala",
+    "selectWorkspace": "Selectează un spațiu de lucru",
+    "install": "Instalează",
+    "installStarted": "Instalarea a început",
+    "noEligibleWorkspaces": "Nu ai niciun spațiu de lucru eligibil pentru a instala acest șablon."
   },
   "bookingWebview": {
     "metadataTitle": "Programează o întâlnire",

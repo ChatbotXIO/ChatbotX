@@ -145,7 +145,8 @@
     "onSuccess": "On success",
     "clone": "Clone",
     "remove": "Remove",
-    "restore": "Restore"
+    "restore": "Restore",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "You need to be a workspace super admin to do this."
@@ -1244,6 +1245,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "System Function",
       "names": {
@@ -1448,7 +1452,9 @@
       "label": "Status",
       "pending": "Pending",
       "processing": "Processing",
+      "installing": "Installing",
       "completed": "Completed",
+      "partial": "Partial",
       "failed": "Failed",
       "success": "Success",
       "error": "Error"
@@ -4570,7 +4576,60 @@
   },
   "templates": {
     "title": "Templates",
-    "description": "Create and manage your templates."
+    "description": "Create and manage your templates.",
+    "share": {
+      "label": "Share",
+      "enabled": "Shared",
+      "disabled": "Not shared",
+      "dialogTitle": "Share template",
+      "dialogDescription": "Anyone with this link can install a copy of this template into a workspace in your tenant.",
+      "enableLabel": "Enable share link",
+      "linkLabel": "Share link",
+      "description": "Anyone with the link can install this template into their own workspace."
+    },
+    "installs": {
+      "title": "Installs",
+      "resources": "Resources",
+      "warnings": "Warnings",
+      "completedAt": "Completed at",
+      "autoUpdate": "Auto-update"
+    },
+    "form": {
+      "contents": "Template contents",
+      "comingSoon": "Coming soon",
+      "selectAll": "Select all",
+      "selectedCount": "{count} selected",
+      "details": "Details",
+      "permissions": "Default permissions",
+      "allowEdit": "Allow editing after install",
+      "allowDelete": "Allow deleting after install",
+      "publisherName": "Publisher name",
+      "youtubeVideoId": "YouTube video ID",
+      "youtubeVideoIdDescription": "The 11-character ID from the video's URL, e.g. the \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Test link",
+      "imageUrl": "Cover image",
+      "installBehavior": "Install behavior",
+      "createInstallFolder": "Install into a dedicated folder",
+      "createInstallFolderDescription": "Nest every installed resource under one new folder named after this template.",
+      "defaultAutoUpdate": "Flag installs for updates by default",
+      "defaultAutoUpdateDescription": "New installs will show an update available notice whenever you republish this template."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Custom fields",
+      "tags": "Tags",
+      "products": "Products",
+      "productCategories": "Product categories",
+      "aiFunctions": "AI functions",
+      "aiAgents": "AI agents",
+      "calendars": "Calendars",
+      "webchats": "Webchats",
+      "keywords": "Keywords",
+      "entryPointLinks": "Entry point links",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook comment automations",
+      "settings": "Settings"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Code Generator",
@@ -4685,6 +4744,19 @@
     "invalidDescription": "This link is invalid or has expired.",
     "unavailableTitle": "Unsubscribe unavailable.",
     "unavailableDescription": "This workspace is no longer available."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "This link is no longer available.",
+    "invalidDescription": "This template share link is invalid, disabled, or has expired.",
+    "byPublisher": "By {publisherName}",
+    "includes": "This template includes",
+    "videoTitle": "Template preview video",
+    "tryItOut": "Try it out",
+    "signInToInstall": "Sign in to install",
+    "selectWorkspace": "Select a workspace",
+    "install": "Install",
+    "installStarted": "Install started",
+    "noEligibleWorkspaces": "You don't have a workspace eligible to install this template."
   },
   "bookingPage": {
     "metadataTitle": "Booking",

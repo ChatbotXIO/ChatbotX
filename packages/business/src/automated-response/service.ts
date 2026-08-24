@@ -20,6 +20,7 @@ import { invalidateCacheKeys } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
 
 export type UpdateAutomatedResponseRequest = {
@@ -200,6 +201,12 @@ class AutomatedResponseService extends BaseService {
     ids: string[],
     tx?: DatabaseClient,
   ): Promise<void> {
+    await assertDeletable({
+      workspaceId,
+      resourceKind: "automatedResponse",
+      resourceIds: ids,
+    })
+
     const client = tx ?? db
     await client
       .delete(automatedResponseModel)

@@ -149,7 +149,8 @@
     "uploadFile": "Ladda upp fil",
     "view": "Visa",
     "viewAnalytics": "Visa analys",
-    "wait": "Vänta"
+    "wait": "Vänta",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Du måste vara superadministratör för arbetsytan för att göra detta."
@@ -2032,6 +2033,9 @@
     "mcpServer": {
       "label": "MCP-server"
     },
+    "template": {
+      "label": "Template"
+    },
     "me": {
       "label": "Länk till mina data"
     },
@@ -2405,11 +2409,13 @@
     },
     "status": {
       "completed": "Slutförd",
+      "partial": "Partial",
       "error": "Fel",
       "failed": "Misslyckades",
       "label": "Status",
       "pending": "Väntande",
       "processing": "Bearbetas",
+      "installing": "Installing",
       "success": "Lyckades"
     },
     "statusCode": {
@@ -4362,7 +4368,60 @@
   },
   "templates": {
     "description": "Skapa och hantera dina mallar.",
-    "title": "Mallar"
+    "title": "Mallar",
+    "share": {
+      "label": "Dela",
+      "enabled": "Delad",
+      "disabled": "Inte delad",
+      "dialogTitle": "Dela mall",
+      "dialogDescription": "Alla med den här länken kan installera en kopia av den här mallen i en arbetsyta i din organisation.",
+      "enableLabel": "Aktivera dellänk",
+      "linkLabel": "Dellänk",
+      "description": "Alla med länken kan installera den här mallen i sin egen arbetsyta."
+    },
+    "installs": {
+      "title": "Installationer",
+      "resources": "Resurser",
+      "warnings": "Varningar",
+      "completedAt": "Slutförd",
+      "autoUpdate": "Automatisk uppdatering"
+    },
+    "form": {
+      "contents": "Mallens innehåll",
+      "comingSoon": "Kommer snart",
+      "selectAll": "Markera alla",
+      "selectedCount": "{count} markerade",
+      "details": "Detaljer",
+      "permissions": "Standardbehörigheter",
+      "allowEdit": "Tillåt redigering efter installation",
+      "allowDelete": "Tillåt borttagning efter installation",
+      "publisherName": "Utgivarens namn",
+      "youtubeVideoId": "YouTube-video-id",
+      "youtubeVideoIdDescription": "Det 11-teckens id från videons URL, t.ex. \"dQw4w9WgXcQ\" i youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlänk",
+      "imageUrl": "Omslagsbild",
+      "installBehavior": "Installationsbeteende",
+      "createInstallFolder": "Installera i en dedikerad mapp",
+      "createInstallFolderDescription": "Placerar varje installerad resurs i en ny mapp uppkallad efter den här mallen.",
+      "defaultAutoUpdate": "Markera installationer för uppdatering som standard",
+      "defaultAutoUpdateDescription": "Nya installationer visar ett meddelande om tillgänglig uppdatering varje gång du publicerar om den här mallen."
+    },
+    "categories": {
+      "flows": "Flöden",
+      "customFields": "Anpassade fält",
+      "tags": "Taggar",
+      "products": "Produkter",
+      "productCategories": "Produktkategorier",
+      "aiFunctions": "AI-funktioner",
+      "aiAgents": "AI-agenter",
+      "calendars": "Bokningskalendrar",
+      "webchats": "Webbchattar",
+      "keywords": "Nyckelord",
+      "entryPointLinks": "Länkar till startpunkter",
+      "triggers": "Utlösare",
+      "fbCommentAutomations": "Facebook-kommentarautomatiseringar",
+      "settings": "Inställningar"
+    }
   },
   "texts": {
     "or": "eller"
@@ -4450,6 +4509,19 @@
     "title": "Du har avregistrerats.",
     "unavailableDescription": "Den här arbetsytan är inte längre tillgänglig.",
     "unavailableTitle": "Avregistrering är inte tillgänglig."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Den här länken är inte längre tillgänglig.",
+    "invalidDescription": "Den här mallens dellänk är ogiltig, inaktiverad eller har gått ut.",
+    "byPublisher": "Av {publisherName}",
+    "includes": "Den här mallen innehåller",
+    "videoTitle": "Förhandsgranskningsvideo för mall",
+    "tryItOut": "Prova den",
+    "signInToInstall": "Logga in för att installera",
+    "selectWorkspace": "Välj en arbetsyta",
+    "install": "Installera",
+    "installStarted": "Installationen har startat",
+    "noEligibleWorkspaces": "Du har ingen arbetsyta som är berättigad att installera den här mallen."
   },
   "userPersistentMenus": {
     "title": "Beständiga användarmenyer"

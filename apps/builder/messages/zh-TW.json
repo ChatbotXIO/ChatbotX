@@ -551,6 +551,9 @@
     "mcpServer": {
       "label": "MCP伺服器"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "系統功能",
       "names": {
@@ -747,7 +750,9 @@
       "label": "狀態",
       "pending": "待定",
       "processing": "處理中",
+      "installing": "Installing",
       "completed": "已完成",
+      "partial": "Partial",
       "failed": "失敗",
       "success": "成功",
       "error": "錯誤"
@@ -1714,7 +1719,8 @@
     "onSuccess": "成功",
     "clone": "複製",
     "remove": "移除",
-    "restore": "還原"
+    "restore": "還原",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "您需要是工作區的超級管理員才能執行此操作。"
@@ -4327,7 +4333,60 @@
   },
   "templates": {
     "title": "範本",
-    "description": "建立並管理您的範本。"
+    "description": "建立並管理您的範本。",
+    "share": {
+      "label": "分享",
+      "enabled": "已分享",
+      "disabled": "未分享",
+      "dialogTitle": "分享範本",
+      "dialogDescription": "任何擁有此連結的人都可以將此範本的副本安裝到您所在租戶的工作區中。",
+      "enableLabel": "啟用分享連結",
+      "linkLabel": "分享連結",
+      "description": "任何擁有此連結的人都可以將此範本安裝到自己的工作區。"
+    },
+    "installs": {
+      "title": "安裝記錄",
+      "resources": "資源",
+      "warnings": "警告",
+      "completedAt": "完成時間",
+      "autoUpdate": "自動更新"
+    },
+    "form": {
+      "contents": "範本內容",
+      "comingSoon": "即將推出",
+      "selectAll": "全選",
+      "selectedCount": "已選取 {count} 項",
+      "details": "詳細資料",
+      "permissions": "預設權限",
+      "allowEdit": "允許安裝後編輯",
+      "allowDelete": "允許安裝後刪除",
+      "publisherName": "發布者名稱",
+      "youtubeVideoId": "YouTube 影片 ID",
+      "youtubeVideoIdDescription": "影片網址中的 11 位字元 ID，例如 youtube.com/watch?v=dQw4w9WgXcQ 中的 \"dQw4w9WgXcQ\"",
+      "testLink": "測試連結",
+      "imageUrl": "封面圖片",
+      "installBehavior": "安裝行為",
+      "createInstallFolder": "安裝到專屬資料夾",
+      "createInstallFolderDescription": "將每個已安裝的資源都歸入一個以此範本命名的新資料夾中。",
+      "defaultAutoUpdate": "預設將安裝標記為需要更新",
+      "defaultAutoUpdateDescription": "每次重新發布此範本時，新安裝都會顯示可用更新的提示。"
+    },
+    "categories": {
+      "flows": "流程",
+      "customFields": "自訂欄位",
+      "tags": "標籤",
+      "products": "產品",
+      "productCategories": "產品分類",
+      "aiFunctions": "人工智慧功能",
+      "aiAgents": "AI Agent",
+      "calendars": "預約日曆",
+      "webchats": "網路聊天",
+      "keywords": "關鍵字",
+      "entryPointLinks": "入口點連結",
+      "triggers": "觸發器",
+      "fbCommentAutomations": "Facebook 留言自動化",
+      "settings": "設定"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Code 產生器",
@@ -4442,6 +4501,19 @@
     "invalidDescription": "此連結無效或已過期。",
     "unavailableTitle": "無法取消訂閱。",
     "unavailableDescription": "此工作區不再可用。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "此連結已不再可用。",
+    "invalidDescription": "此範本分享連結無效、已停用或已過期。",
+    "byPublisher": "發布者：{publisherName}",
+    "includes": "此範本包含",
+    "videoTitle": "範本預覽影片",
+    "tryItOut": "立即體驗",
+    "signInToInstall": "登入以安裝",
+    "selectWorkspace": "選擇一個工作區",
+    "install": "安裝",
+    "installStarted": "安裝已開始",
+    "noEligibleWorkspaces": "您沒有適合安裝此範本的工作區。"
   },
   "extensionsMe": {
     "actions": {

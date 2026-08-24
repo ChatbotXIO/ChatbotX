@@ -145,7 +145,8 @@
     "onSuccess": "成功時",
     "clone": "複製",
     "remove": "削除",
-    "restore": "復元"
+    "restore": "復元",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
@@ -1161,6 +1162,9 @@
     "mcpServer": {
       "label": "MCPサーバー"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "システム関数",
       "names": {
@@ -1365,7 +1369,9 @@
       "label": "ステータス",
       "pending": "保留中",
       "processing": "処理中",
+      "installing": "Installing",
       "completed": "完了",
+      "partial": "Partial",
       "failed": "失敗",
       "success": "成功",
       "error": "エラー"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "テンプレート",
-    "description": "テンプレートを作成・管理します。"
+    "description": "テンプレートを作成・管理します。",
+    "share": {
+      "label": "共有",
+      "enabled": "共有中",
+      "disabled": "未共有",
+      "dialogTitle": "テンプレートを共有",
+      "dialogDescription": "このリンクを持つ人は誰でも、あなたのテナント内のワークスペースにこのテンプレートのコピーをインストールできます。",
+      "enableLabel": "共有リンクを有効にする",
+      "linkLabel": "共有リンク",
+      "description": "リンクを持つ人は誰でも、このテンプレートを自分のワークスペースにインストールできます。"
+    },
+    "installs": {
+      "title": "インストール",
+      "resources": "リソース",
+      "warnings": "警告",
+      "completedAt": "完了日時",
+      "autoUpdate": "自動更新"
+    },
+    "form": {
+      "contents": "テンプレートの内容",
+      "comingSoon": "近日公開",
+      "selectAll": "すべて選択",
+      "selectedCount": "{count}件選択中",
+      "details": "詳細",
+      "permissions": "デフォルトの権限",
+      "allowEdit": "インストール後の編集を許可",
+      "allowDelete": "インストール後の削除を許可",
+      "publisherName": "公開者名",
+      "youtubeVideoId": "YouTube動画ID",
+      "youtubeVideoIdDescription": "動画URLに含まれる11文字のID（例: youtube.com/watch?v=dQw4w9WgXcQ の \"dQw4w9WgXcQ\"）",
+      "testLink": "テストリンク",
+      "imageUrl": "カバー画像",
+      "installBehavior": "インストール時の動作",
+      "createInstallFolder": "専用フォルダーにインストールする",
+      "createInstallFolderDescription": "インストールされたすべてのリソースを、このテンプレートの名前を付けた新しい1つのフォルダーにまとめます。",
+      "defaultAutoUpdate": "インストールをデフォルトで更新対象としてマークする",
+      "defaultAutoUpdateDescription": "このテンプレートを再公開するたびに、新規インストールに更新通知が表示されます。"
+    },
+    "categories": {
+      "flows": "フロー",
+      "customFields": "カスタムフィールド",
+      "tags": "タグ",
+      "products": "商品",
+      "productCategories": "商品カテゴリー",
+      "aiFunctions": "AI関数",
+      "aiAgents": "AIエージェント",
+      "calendars": "予約カレンダー",
+      "webchats": "Webチャット",
+      "keywords": "キーワード",
+      "entryPointLinks": "エントリーポイントリンク",
+      "triggers": "トリガー",
+      "fbCommentAutomations": "Facebookコメント自動化",
+      "settings": "設定"
+    }
   },
   "qrCodeGenerator": {
     "title": "QRコード生成",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "このリンクは無効か、有効期限が切れています。",
     "unavailableTitle": "配信を停止できません。",
     "unavailableDescription": "このワークスペースは利用できなくなりました。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "このリンクはご利用いただけません。",
+    "invalidDescription": "このテンプレート共有リンクは無効、無効化済み、または期限切れです。",
+    "byPublisher": "{publisherName}による",
+    "includes": "このテンプレートに含まれるもの",
+    "videoTitle": "テンプレートのプレビュー動画",
+    "tryItOut": "試してみる",
+    "signInToInstall": "サインインしてインストール",
+    "selectWorkspace": "ワークスペースを選択",
+    "install": "インストール",
+    "installStarted": "インストールを開始しました",
+    "noEligibleWorkspaces": "このテンプレートをインストールできるワークスペースがありません。"
   },
   "extensionsMe": {
     "actions": {

@@ -145,7 +145,8 @@
     "onSuccess": "Al completarse",
     "clone": "Clonar",
     "remove": "Quitar",
-    "restore": "Restaurar"
+    "restore": "Restaurar",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Debes ser superadministrador del espacio de trabajo para hacer esto."
@@ -1235,6 +1236,9 @@
     "mcpServer": {
       "label": "Servidor MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Función del sistema",
       "names": {
@@ -1439,7 +1443,9 @@
       "label": "Estado",
       "pending": "Pendiente",
       "processing": "Procesando",
+      "installing": "Installing",
       "completed": "Completado",
+      "partial": "Partial",
       "failed": "Fallido",
       "success": "Éxito",
       "error": "Error"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "Plantillas",
-    "description": "Crear y Gestionar tu plantillas."
+    "description": "Crea y gestiona tus plantillas.",
+    "share": {
+      "label": "Compartir",
+      "enabled": "Compartida",
+      "disabled": "No compartida",
+      "dialogTitle": "Compartir plantilla",
+      "dialogDescription": "Cualquiera con este enlace puede instalar una copia de esta plantilla en un espacio de trabajo de tu organización.",
+      "enableLabel": "Activar enlace para compartir",
+      "linkLabel": "Enlace para compartir",
+      "description": "Cualquiera con el enlace puede instalar esta plantilla en su propio espacio de trabajo."
+    },
+    "installs": {
+      "title": "Instalaciones",
+      "resources": "Recursos",
+      "warnings": "Advertencias",
+      "completedAt": "Completado el",
+      "autoUpdate": "Actualización automática"
+    },
+    "form": {
+      "contents": "Contenido de la plantilla",
+      "comingSoon": "Próximamente",
+      "selectAll": "Seleccionar todo",
+      "selectedCount": "{count} seleccionados",
+      "details": "Detalles",
+      "permissions": "Permisos predeterminados",
+      "allowEdit": "Permitir edición después de instalar",
+      "allowDelete": "Permitir eliminación después de instalar",
+      "publisherName": "Nombre del publicador",
+      "youtubeVideoId": "ID del vídeo de YouTube",
+      "youtubeVideoIdDescription": "El ID de 11 caracteres de la URL del vídeo, por ejemplo \"dQw4w9WgXcQ\" en youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Enlace de prueba",
+      "imageUrl": "Imagen de portada",
+      "installBehavior": "Comportamiento de instalación",
+      "createInstallFolder": "Instalar en una carpeta dedicada",
+      "createInstallFolderDescription": "Anida todos los recursos instalados dentro de una nueva carpeta con el nombre de esta plantilla.",
+      "defaultAutoUpdate": "Marcar instalaciones para actualizaciones de forma predeterminada",
+      "defaultAutoUpdateDescription": "Las nuevas instalaciones mostrarán un aviso de actualización disponible cada vez que vuelvas a publicar esta plantilla."
+    },
+    "categories": {
+      "flows": "Flujos",
+      "customFields": "Campos personalizados",
+      "tags": "Etiquetas",
+      "products": "Productos",
+      "productCategories": "Categorías de productos",
+      "aiFunctions": "Funciones de IA",
+      "aiAgents": "Agentes de IA",
+      "calendars": "Calendarios de citas",
+      "webchats": "Webchats",
+      "keywords": "Palabras clave",
+      "entryPointLinks": "Entry Point Enlaces",
+      "triggers": "Desencadenadores",
+      "fbCommentAutomations": "Automatizaciones de comentarios de Facebook",
+      "settings": "Configuración"
+    }
   },
   "qrCodeGenerator": {
     "title": "Generador de códigos QR",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "This enlace es no válido o tiene expired.",
     "unavailableTitle": "Unsubscribe undisponible.",
     "unavailableDescription": "This workspace es no longer disponible."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Este enlace ya no está disponible.",
+    "invalidDescription": "Este enlace de plantilla no es válido, está deshabilitado o ha caducado.",
+    "byPublisher": "Por {publisherName}",
+    "includes": "Esta plantilla incluye",
+    "videoTitle": "Video de vista previa de la plantilla",
+    "tryItOut": "Pruébala",
+    "signInToInstall": "Inicia sesión para instalar",
+    "selectWorkspace": "Selecciona un espacio de trabajo",
+    "install": "Instalar",
+    "installStarted": "Instalación iniciada",
+    "noEligibleWorkspaces": "No tienes ningún espacio de trabajo apto para instalar esta plantilla."
   },
   "extensionsMe": {
     "actions": {

@@ -145,7 +145,8 @@
     "onSuccess": "Khi thành công",
     "clone": "Nhân bản",
     "remove": "Xóa",
-    "restore": "Khôi phục"
+    "restore": "Khôi phục",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
@@ -1208,6 +1209,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Hàm hệ thống",
       "names": {
@@ -1412,7 +1416,9 @@
       "label": "Trạng thái",
       "pending": "Đang chờ",
       "processing": "Đang xử lý",
+      "installing": "Installing",
       "completed": "Hoàn tất",
+      "partial": "Partial",
       "failed": "Thất bại",
       "success": "Thành công",
       "error": "Lỗi"
@@ -4468,7 +4474,60 @@
   },
   "templates": {
     "title": "Mẫu",
-    "description": "Tạo và quản lý các mẫu của bạn."
+    "description": "Tạo và quản lý các mẫu của bạn.",
+    "share": {
+      "label": "Chia sẻ",
+      "enabled": "Đã chia sẻ",
+      "disabled": "Chưa chia sẻ",
+      "dialogTitle": "Chia sẻ mẫu",
+      "dialogDescription": "Bất kỳ ai có liên kết này đều có thể cài đặt một bản sao của mẫu này vào một workspace trong tổ chức của bạn.",
+      "enableLabel": "Bật liên kết chia sẻ",
+      "linkLabel": "Liên kết chia sẻ",
+      "description": "Bất kỳ ai có liên kết đều có thể cài đặt mẫu này vào không gian làm việc của riêng họ."
+    },
+    "installs": {
+      "title": "Lượt cài đặt",
+      "resources": "Tài nguyên",
+      "warnings": "Cảnh báo",
+      "completedAt": "Hoàn tất lúc",
+      "autoUpdate": "Tự động cập nhật"
+    },
+    "form": {
+      "contents": "Nội dung mẫu",
+      "comingSoon": "Sắp ra mắt",
+      "selectAll": "Chọn tất cả",
+      "selectedCount": "Đã chọn {count}",
+      "details": "Chi tiết",
+      "permissions": "Quyền mặc định",
+      "allowEdit": "Cho phép chỉnh sửa sau khi cài đặt",
+      "allowDelete": "Cho phép xóa sau khi cài đặt",
+      "publisherName": "Tên nhà xuất bản",
+      "youtubeVideoId": "ID video YouTube",
+      "youtubeVideoIdDescription": "ID gồm 11 ký tự lấy từ URL video, ví dụ \"dQw4w9WgXcQ\" trong youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Liên kết thử nghiệm",
+      "imageUrl": "Ảnh bìa",
+      "installBehavior": "Hành vi khi cài đặt",
+      "createInstallFolder": "Cài đặt vào một thư mục riêng",
+      "createInstallFolderDescription": "Đưa mọi tài nguyên đã cài đặt vào một thư mục mới duy nhất, được đặt tên theo mẫu này.",
+      "defaultAutoUpdate": "Đánh dấu các lượt cài đặt cần cập nhật theo mặc định",
+      "defaultAutoUpdateDescription": "Các lượt cài đặt mới sẽ hiển thị thông báo có bản cập nhật mỗi khi bạn xuất bản lại mẫu này."
+    },
+    "categories": {
+      "flows": "Luồng",
+      "customFields": "Trường tùy chỉnh",
+      "tags": "Thẻ",
+      "products": "Sản phẩm",
+      "productCategories": "Danh mục sản phẩm",
+      "aiFunctions": "AI Functions",
+      "aiAgents": "AI Agent",
+      "calendars": "Lịch hẹn",
+      "webchats": "Webchat",
+      "keywords": "Từ khóa",
+      "entryPointLinks": "Liên kết giới thiệu",
+      "triggers": "Trigger",
+      "fbCommentAutomations": "Tự động hóa bình luận Facebook",
+      "settings": "Cài đặt"
+    }
   },
   "qrCodeGenerator": {
     "title": "Trình tạo mã QR",
@@ -4587,6 +4646,19 @@
     "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
     "unavailableTitle": "Không thể hủy đăng ký.",
     "unavailableDescription": "Không gian làm việc này không còn khả dụng."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Liên kết này không còn khả dụng.",
+    "invalidDescription": "Liên kết chia sẻ mẫu này không hợp lệ, đã bị vô hiệu hóa hoặc đã hết hạn.",
+    "byPublisher": "Bởi {publisherName}",
+    "includes": "Mẫu này bao gồm",
+    "videoTitle": "Video xem trước mẫu",
+    "tryItOut": "Dùng thử",
+    "signInToInstall": "Đăng nhập để cài đặt",
+    "selectWorkspace": "Chọn một workspace",
+    "install": "Cài đặt",
+    "installStarted": "Đã bắt đầu cài đặt",
+    "noEligibleWorkspaces": "Bạn không có workspace nào đủ điều kiện để cài đặt mẫu này."
   },
   "bookingPage": {
     "metadataTitle": "Đặt lịch",

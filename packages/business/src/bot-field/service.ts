@@ -22,6 +22,7 @@ import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { folderService } from "../folder/service"
+import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
 
 type ListBotFieldsInput = {
@@ -243,6 +244,12 @@ class BotFieldService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const { workspaceId, ids, tx = db } = props
+
+    await assertDeletable({
+      workspaceId,
+      resourceKind: "botField",
+      resourceIds: ids,
+    })
 
     await tx
       .delete(botFieldModel)

@@ -149,7 +149,8 @@
     "uploadFile": "上传文件",
     "view": "查看",
     "viewAnalytics": "查看分析",
-    "wait": "等等"
+    "wait": "等等",
+    "loadMore": "Load more"
   },
   "activeCampaign": {
     "automations": {
@@ -2040,6 +2041,9 @@
     "mcpServer": {
       "label": "MCP服务器"
     },
+    "template": {
+      "label": "Template"
+    },
     "me": {
       "label": "我的数据链接"
     },
@@ -2408,11 +2412,13 @@
     },
     "status": {
       "completed": "已完成",
+      "partial": "Partial",
       "error": "错误",
       "failed": "失败",
       "label": "状态",
       "pending": "待定",
       "processing": "处理中",
+      "installing": "Installing",
       "success": "成功"
     },
     "statusCode": {
@@ -4361,8 +4367,61 @@
     "title": "Telegram"
   },
   "templates": {
-    "description": "创建并管理您的范本。",
-    "title": "范本"
+    "description": "创建和管理您的范本。",
+    "title": "范本",
+    "share": {
+      "label": "分享",
+      "enabled": "已分享",
+      "disabled": "未分享",
+      "dialogTitle": "分享范本",
+      "dialogDescription": "任何拥有此链接的人都可以将此范本的副本安装到您所在租户的工作区中。",
+      "enableLabel": "启用分享链接",
+      "linkLabel": "分享链接",
+      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。"
+    },
+    "installs": {
+      "title": "安装记录",
+      "resources": "资源",
+      "warnings": "警告",
+      "completedAt": "完成时间",
+      "autoUpdate": "自动更新"
+    },
+    "form": {
+      "contents": "范本内容",
+      "comingSoon": "即将推出",
+      "selectAll": "全选",
+      "selectedCount": "已选择 {count} 项",
+      "details": "详情",
+      "permissions": "默认权限",
+      "allowEdit": "允许安装后编辑",
+      "allowDelete": "允许安装后删除",
+      "publisherName": "发布者名称",
+      "youtubeVideoId": "YouTube 视频 ID",
+      "youtubeVideoIdDescription": "视频 URL 中的 11 位字符 ID，例如 youtube.com/watch?v=dQw4w9WgXcQ 中的 \"dQw4w9WgXcQ\"",
+      "testLink": "测试链接",
+      "imageUrl": "封面图片",
+      "installBehavior": "安装行为",
+      "createInstallFolder": "安装到专属文件夹",
+      "createInstallFolderDescription": "将每个已安装的资源都归入一个以此范本命名的新文件夹中。",
+      "defaultAutoUpdate": "默认将安装标记为需要更新",
+      "defaultAutoUpdateDescription": "每次重新发布此范本时，新安装都会显示可用更新的提示。"
+    },
+    "categories": {
+      "flows": "流程",
+      "customFields": "自订字段",
+      "tags": "标签",
+      "products": "产品",
+      "productCategories": "产品分类",
+      "aiFunctions": "人工智能功能",
+      "aiAgents": "AI Agent",
+      "calendars": "预约日历",
+      "webchats": "网络聊天",
+      "keywords": "关键字",
+      "entryPointLinks": "入口点链接",
+      "triggers": "触发器",
+      "fbCommentAutomations": "Facebook 评论自动化",
+      "settings": "设置"
+    }
   },
   "texts": {
     "or": "或"
@@ -4450,6 +4509,19 @@
     "title": "您已取消订阅。",
     "unavailableDescription": "此工作区不再可用。",
     "unavailableTitle": "无法取消订阅。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "此链接已不再可用。",
+    "invalidDescription": "此范本分享链接无效、已禁用或已过期。",
+    "byPublisher": "发布者：{publisherName}",
+    "includes": "此范本包含",
+    "videoTitle": "模板预览视频",
+    "tryItOut": "立即体验",
+    "signInToInstall": "登录以安装",
+    "selectWorkspace": "选择一个工作区",
+    "install": "安装",
+    "installStarted": "安装已开始",
+    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。"
   },
   "userPersistentMenus": {
     "title": "用户常驻菜单"

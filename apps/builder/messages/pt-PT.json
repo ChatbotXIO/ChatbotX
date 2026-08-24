@@ -145,7 +145,8 @@
     "onSuccess": "Em caso de sucesso",
     "clone": "Clonar",
     "remove": "Remover",
-    "restore": "Restaurar"
+    "restore": "Restaurar",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Tem de ser um superadministrador do espaço de trabalho para fazer isto."
@@ -1161,6 +1162,9 @@
     "mcpServer": {
       "label": "Servidor MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Função do sistema",
       "names": {
@@ -1365,7 +1369,9 @@
       "label": "Estado",
       "pending": "Pendente",
       "processing": "Em processamento",
+      "installing": "Installing",
       "completed": "Concluído",
+      "partial": "Partial",
       "failed": "Falhou",
       "success": "Sucesso",
       "error": "Erro"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "Modelos",
-    "description": "Crie e faça a gestão dos seus modelos."
+    "description": "Crie e faça a gestão dos seus modelos.",
+    "share": {
+      "label": "Partilhar",
+      "enabled": "Partilhado",
+      "disabled": "Não partilhado",
+      "dialogTitle": "Partilhar modelo",
+      "dialogDescription": "Qualquer pessoa com esta ligação pode instalar uma cópia deste modelo num espaço de trabalho da sua organização.",
+      "enableLabel": "Ativar ligação de partilha",
+      "linkLabel": "Ligação de partilha",
+      "description": "Qualquer pessoa com a ligação pode instalar este modelo no seu próprio espaço de trabalho."
+    },
+    "installs": {
+      "title": "Instalações",
+      "resources": "Recursos",
+      "warnings": "Avisos",
+      "completedAt": "Concluído em",
+      "autoUpdate": "Atualização automática"
+    },
+    "form": {
+      "contents": "Conteúdo do modelo",
+      "comingSoon": "Brevemente",
+      "selectAll": "Selecionar tudo",
+      "selectedCount": "{count} selecionado(s)",
+      "details": "Detalhes",
+      "permissions": "Permissões predefinidas",
+      "allowEdit": "Permitir edição após a instalação",
+      "allowDelete": "Permitir eliminação após a instalação",
+      "publisherName": "Nome do publicador",
+      "youtubeVideoId": "ID do vídeo do YouTube",
+      "youtubeVideoIdDescription": "O ID de 11 caracteres do URL do vídeo, por ex. \"dQw4w9WgXcQ\" em youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Ligação de teste",
+      "imageUrl": "Imagem de capa",
+      "installBehavior": "Comportamento de instalação",
+      "createInstallFolder": "Instalar numa pasta dedicada",
+      "createInstallFolderDescription": "Agrupa todos os recursos instalados numa nova pasta com o nome deste modelo.",
+      "defaultAutoUpdate": "Marcar instalações para atualização por predefinição",
+      "defaultAutoUpdateDescription": "As novas instalações mostrarão um aviso de atualização disponível sempre que republicar este modelo."
+    },
+    "categories": {
+      "flows": "Fluxos",
+      "customFields": "Campos personalizados",
+      "tags": "Etiquetas",
+      "products": "Produtos",
+      "productCategories": "Categorias de produtos",
+      "aiFunctions": "Funções de IA",
+      "aiAgents": "Agentes de IA",
+      "calendars": "Calendários de marcações",
+      "webchats": "Webchats",
+      "keywords": "Palavras-chave",
+      "entryPointLinks": "Ligações de ponto de entrada",
+      "triggers": "Acionadores",
+      "fbCommentAutomations": "Automatizações de comentários do Facebook",
+      "settings": "Definições"
+    }
   },
   "qrCodeGenerator": {
     "title": "Gerador de códigos QR",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "Esta ligação é inválida ou expirou.",
     "unavailableTitle": "Cancelamento de subscrição indisponível.",
     "unavailableDescription": "Este espaço de trabalho já não está disponível."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Esta ligação já não está disponível.",
+    "invalidDescription": "Esta ligação de partilha de modelo é inválida, está desativada ou expirou.",
+    "byPublisher": "Por {publisherName}",
+    "includes": "Este modelo inclui",
+    "videoTitle": "Vídeo de pré-visualização do modelo",
+    "tryItOut": "Experimente",
+    "signInToInstall": "Inicie sessão para instalar",
+    "selectWorkspace": "Selecione um espaço de trabalho",
+    "install": "Instalar",
+    "installStarted": "Instalação iniciada",
+    "noEligibleWorkspaces": "Não tem nenhum espaço de trabalho elegível para instalar este modelo."
   },
   "extensionsMe": {
     "actions": {

@@ -145,7 +145,8 @@
     "onSuccess": "Başarı durumunda",
     "clone": "Klonla",
     "remove": "Kaldır",
-    "restore": "Geri Yükle"
+    "restore": "Geri Yükle",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
@@ -1235,6 +1236,9 @@
     "mcpServer": {
       "label": "MCP Sunucusu"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Sistem İşlevi",
       "names": {
@@ -1439,7 +1443,9 @@
       "label": "Durum",
       "pending": "Bekliyor",
       "processing": "İşleniyor",
+      "installing": "Installing",
       "completed": "Tamamlandı",
+      "partial": "Partial",
       "failed": "Başarısız",
       "success": "Başarılı",
       "error": "Hata"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "Şablonlar",
-    "description": "Şablonlarınızı oluşturun ve yönetin."
+    "description": "Şablonlarınızı oluşturun ve yönetin.",
+    "share": {
+      "label": "Paylaş",
+      "enabled": "Paylaşıldı",
+      "disabled": "Paylaşılmadı",
+      "dialogTitle": "Şablonu paylaş",
+      "dialogDescription": "Bu bağlantıya sahip herkes, bu şablonun bir kopyasını kendi kuruluşunuzdaki bir çalışma alanına yükleyebilir.",
+      "enableLabel": "Paylaşım bağlantısını etkinleştir",
+      "linkLabel": "Paylaşım bağlantısı",
+      "description": "Bağlantıya sahip olan herkes bu şablonu kendi çalışma alanına yükleyebilir."
+    },
+    "installs": {
+      "title": "Yüklemeler",
+      "resources": "Kaynaklar",
+      "warnings": "Uyarılar",
+      "completedAt": "Tamamlanma tarihi",
+      "autoUpdate": "Otomatik güncelleme"
+    },
+    "form": {
+      "contents": "Şablon içeriği",
+      "comingSoon": "Yakında",
+      "selectAll": "Tümünü seç",
+      "selectedCount": "{count} seçildi",
+      "details": "Ayrıntılar",
+      "permissions": "Varsayılan izinler",
+      "allowEdit": "Yüklemeden sonra düzenlemeye izin ver",
+      "allowDelete": "Yüklemeden sonra silmeye izin ver",
+      "publisherName": "Yayıncı adı",
+      "youtubeVideoId": "YouTube video kimliği",
+      "youtubeVideoIdDescription": "Video URL'sindeki 11 karakterli kimlik, ör. youtube.com/watch?v=dQw4w9WgXcQ içindeki \"dQw4w9WgXcQ\"",
+      "testLink": "Test bağlantısı",
+      "imageUrl": "Kapak görseli",
+      "installBehavior": "Yükleme davranışı",
+      "createInstallFolder": "Ayrılmış bir klasöre yükle",
+      "createInstallFolderDescription": "Yüklenen her kaynağı bu şablonun adını taşıyan tek bir yeni klasörün altına yerleştirir.",
+      "defaultAutoUpdate": "Yüklemeleri varsayılan olarak güncelleme için işaretle",
+      "defaultAutoUpdateDescription": "Bu şablonu her yeniden yayınladığınızda, yeni yüklemelerde güncelleme bildirimi gösterilir."
+    },
+    "categories": {
+      "flows": "Akışlar",
+      "customFields": "Özel Alanlar",
+      "tags": "Etiketler",
+      "products": "Ürünler",
+      "productCategories": "Ürün kategorileri",
+      "aiFunctions": "Yapay Zekâ İşlevleri",
+      "aiAgents": "Yapay Zekâ Temsilcileri",
+      "calendars": "Randevu Takvimleri",
+      "webchats": "Web Sohbetleri",
+      "keywords": "Anahtar Kelimeler",
+      "entryPointLinks": "Giriş Noktası Bağlantıları",
+      "triggers": "Tetikleyiciler",
+      "fbCommentAutomations": "Facebook yorum otomasyonları",
+      "settings": "Ayarlar"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Kod Oluşturucu",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
     "unavailableTitle": "Abonelikten çıkma kullanılamıyor.",
     "unavailableDescription": "Bu çalışma alanı artık kullanılamıyor."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Bu bağlantı artık kullanılamıyor.",
+    "invalidDescription": "Bu şablon paylaşım bağlantısı geçersiz, devre dışı bırakılmış veya süresi dolmuş.",
+    "byPublisher": "{publisherName} tarafından",
+    "includes": "Bu şablon şunları içerir",
+    "videoTitle": "Şablon önizleme videosu",
+    "tryItOut": "Deneyin",
+    "signInToInstall": "Yüklemek için oturum açın",
+    "selectWorkspace": "Bir çalışma alanı seçin",
+    "install": "Yükle",
+    "installStarted": "Yükleme başladı",
+    "noEligibleWorkspaces": "Bu şablonu yüklemeye uygun bir çalışma alanınız yok."
   },
   "extensionsMe": {
     "actions": {

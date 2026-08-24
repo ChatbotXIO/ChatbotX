@@ -145,7 +145,8 @@
     "onSuccess": "På succes",
     "clone": "Klon",
     "remove": "Fjern",
-    "restore": "Gendan"
+    "restore": "Gendan",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
@@ -1161,6 +1162,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "System Function",
       "names": {
@@ -1365,7 +1369,9 @@
       "label": "Status",
       "pending": "Pending",
       "processing": "Processing",
+      "installing": "Installing",
       "completed": "Completed",
+      "partial": "Partial",
       "failed": "Failed",
       "success": "Succes",
       "error": "Fejl"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "Skabeloner",
-    "description": "Opret og administrer din skabeloner."
+    "description": "Opret og administrer dine skabeloner.",
+    "share": {
+      "label": "Del",
+      "enabled": "Delt",
+      "disabled": "Ikke delt",
+      "dialogTitle": "Del skabelon",
+      "dialogDescription": "Alle med dette link kan installere en kopi af denne skabelon i et arbejdsområde i din tenant.",
+      "enableLabel": "Aktivér dellink",
+      "linkLabel": "Dellink",
+      "description": "Alle med linket kan installere denne skabelon i deres eget arbejdsområde."
+    },
+    "installs": {
+      "title": "Installationer",
+      "resources": "Ressourcer",
+      "warnings": "Advarsler",
+      "completedAt": "Afsluttet",
+      "autoUpdate": "Automatisk opdatering"
+    },
+    "form": {
+      "contents": "Skabelonindhold",
+      "comingSoon": "Kommer snart",
+      "selectAll": "Vælg alle",
+      "selectedCount": "{count} valgt",
+      "details": "Detaljer",
+      "permissions": "Standardtilladelser",
+      "allowEdit": "Tillad redigering efter installation",
+      "allowDelete": "Tillad sletning efter installation",
+      "publisherName": "Udgivernavn",
+      "youtubeVideoId": "YouTube-video-id",
+      "youtubeVideoIdDescription": "Det 11-tegns id fra videoens URL, f.eks. \"dQw4w9WgXcQ\" i youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Forsidebillede",
+      "installBehavior": "Installationsadfærd",
+      "createInstallFolder": "Installer i en dedikeret mappe",
+      "createInstallFolderDescription": "Placer alle installerede ressourcer i én ny mappe opkaldt efter denne skabelon.",
+      "defaultAutoUpdate": "Markér installationer til opdatering som standard",
+      "defaultAutoUpdateDescription": "Nye installationer viser en besked om tilgængelig opdatering, hver gang du genudgiver denne skabelon."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Brugerdefinerede felter",
+      "tags": "Tags",
+      "products": "Produkter",
+      "productCategories": "Produktkategorier",
+      "aiFunctions": "AI-funktioner",
+      "aiAgents": "AI-agenter",
+      "calendars": "Aftalekalendere",
+      "webchats": "Webchats",
+      "keywords": "Nøgleord",
+      "entryPointLinks": "Entry Point Links",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook-kommentarautomatiseringer",
+      "settings": "Indstillinger"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Kode Generator",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "Denne link er ugyldig eller har udløbet.",
     "unavailableTitle": "Afmeld unavailable.",
     "unavailableDescription": "Denne arbejdsområde er ingen longer tilgængelig."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Dette link er ikke længere tilgængeligt.",
+    "invalidDescription": "Dette skabelon-dellink er ugyldigt, deaktiveret eller udløbet.",
+    "byPublisher": "Af {publisherName}",
+    "includes": "Denne skabelon indeholder",
+    "videoTitle": "Skabelonens forhåndsvisningsvideo",
+    "tryItOut": "Prøv den",
+    "signInToInstall": "Log ind for at installere",
+    "selectWorkspace": "Vælg et arbejdsområde",
+    "install": "Installer",
+    "installStarted": "Installation startet",
+    "noEligibleWorkspaces": "Du har ikke et arbejdsområde, der er egnet til at installere denne skabelon."
   },
   "extensionsMe": {
     "actions": {

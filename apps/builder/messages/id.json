@@ -145,7 +145,8 @@
     "onSuccess": "Saat berhasil",
     "clone": "Klon",
     "remove": "Hapus",
-    "restore": "Pulihkan"
+    "restore": "Pulihkan",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Anda harus menjadi super admin workspace untuk melakukan ini."
@@ -1161,6 +1162,9 @@
     "mcpServer": {
       "label": "Server MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Fungsi Sistem",
       "names": {
@@ -1365,7 +1369,9 @@
       "label": "Status",
       "pending": "Menunggu",
       "processing": "Sedang diproses",
+      "installing": "Installing",
       "completed": "Selesai",
+      "partial": "Partial",
       "failed": "Gagal",
       "success": "Berhasil",
       "error": "Kesalahan"
@@ -4294,7 +4300,60 @@
   },
   "templates": {
     "title": "Templat",
-    "description": "Buat dan kelola templat Anda."
+    "description": "Buat dan kelola templat Anda.",
+    "share": {
+      "label": "Bagikan",
+      "enabled": "Dibagikan",
+      "disabled": "Tidak dibagikan",
+      "dialogTitle": "Bagikan templat",
+      "dialogDescription": "Siapa pun yang memiliki tautan ini dapat menginstal salinan templat ini ke workspace di tenant Anda.",
+      "enableLabel": "Aktifkan tautan berbagi",
+      "linkLabel": "Tautan berbagi",
+      "description": "Siapa pun yang memiliki tautan dapat menginstal templat ini ke workspace mereka sendiri."
+    },
+    "installs": {
+      "title": "Instalasi",
+      "resources": "Sumber daya",
+      "warnings": "Peringatan",
+      "completedAt": "Selesai pada",
+      "autoUpdate": "Pembaruan otomatis"
+    },
+    "form": {
+      "contents": "Isi templat",
+      "comingSoon": "Segera hadir",
+      "selectAll": "Pilih semua",
+      "selectedCount": "{count} dipilih",
+      "details": "Detail",
+      "permissions": "Izin default",
+      "allowEdit": "Izinkan pengeditan setelah instalasi",
+      "allowDelete": "Izinkan penghapusan setelah instalasi",
+      "publisherName": "Nama penerbit",
+      "youtubeVideoId": "ID video YouTube",
+      "youtubeVideoIdDescription": "ID 11 karakter dari URL video, misalnya \"dQw4w9WgXcQ\" pada youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Tautan uji",
+      "imageUrl": "Gambar sampul",
+      "installBehavior": "Perilaku instalasi",
+      "createInstallFolder": "Instal ke folder khusus",
+      "createInstallFolderDescription": "Menempatkan setiap sumber daya yang diinstal ke dalam satu folder baru yang diberi nama sesuai templat ini.",
+      "defaultAutoUpdate": "Tandai instalasi untuk pembaruan secara default",
+      "defaultAutoUpdateDescription": "Instalasi baru akan menampilkan pemberitahuan pembaruan tersedia setiap kali Anda menerbitkan ulang templat ini."
+    },
+    "categories": {
+      "flows": "Flow",
+      "customFields": "Kustom Field",
+      "tags": "Tag",
+      "products": "Produk",
+      "productCategories": "Kategori produk",
+      "aiFunctions": "Fungsi AI",
+      "aiAgents": "Agen AI",
+      "calendars": "Kalender Janji Temu",
+      "webchats": "Webchat",
+      "keywords": "Kata Kunci",
+      "entryPointLinks": "Tautan Titik Masuk",
+      "triggers": "Trigger",
+      "fbCommentAutomations": "Otomatisasi komentar Facebook",
+      "settings": "Pengaturan"
+    }
   },
   "qrCodeGenerator": {
     "title": "Pembuat Kode QR",
@@ -4409,6 +4468,19 @@
     "invalidDescription": "Tautan ini tidak valid atau sudah kedaluwarsa.",
     "unavailableTitle": "Berhenti berlangganan tidak tersedia.",
     "unavailableDescription": "Ruang kerja ini tidak lagi tersedia."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Tautan ini sudah tidak tersedia lagi.",
+    "invalidDescription": "Tautan berbagi templat ini tidak valid, dinonaktifkan, atau telah kedaluwarsa.",
+    "byPublisher": "Oleh {publisherName}",
+    "includes": "Templat ini mencakup",
+    "videoTitle": "Video pratinjau templat",
+    "tryItOut": "Coba sekarang",
+    "signInToInstall": "Masuk untuk menginstal",
+    "selectWorkspace": "Pilih workspace",
+    "install": "Instal",
+    "installStarted": "Instalasi dimulai",
+    "noEligibleWorkspaces": "Anda tidak memiliki workspace yang memenuhi syarat untuk menginstal templat ini."
   },
   "extensionsMe": {
     "actions": {
