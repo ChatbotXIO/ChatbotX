@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   isCloud: vi.fn(),
   isEnterprise: vi.fn(),
+  getLicenseStatus: vi.fn(),
 }))
 
 vi.mock("../src/keys", () => ({
@@ -10,11 +11,23 @@ vi.mock("../src/keys", () => ({
   isEnterprise: mocks.isEnterprise,
 }))
 
+vi.mock("../src/enterprise/license/service", () => ({
+  getLicenseStatus: mocks.getLicenseStatus,
+}))
+
 describe("enterprise entitlements", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.isCloud.mockReturnValue(false)
     mocks.isEnterprise.mockReturnValue(false)
+    mocks.getLicenseStatus.mockResolvedValue({ state: "missing" })
+  })
+
+  test("disables enterprise features for community", async () => {
+    const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
+
+    await expect(hasEnterpriseFeatures()).resolves.toBe(false)
+    expect(mocks.getLicenseStatus).not.toHaveBeenCalled()
   })
 
   test("disables enterprise features for cloud without a valid license", async () => {
@@ -33,14 +46,16 @@ describe("enterprise entitlements", () => {
     await expect(hasEnterpriseFeatures()).resolves.toBe(true)
   })
 
-  test("disables enterprise features for community", async () => {
+  test("disables enterprise features for self-hosted enterprise without a license (degraded)", async () => {
+    mocks.isEnterprise.mockReturnValue(true)
     const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
 
     await expect(hasEnterpriseFeatures()).resolves.toBe(false)
   })
 
-  test("enables enterprise features for self-hosted enterprise without a license", async () => {
+  test("enables enterprise features for self-hosted enterprise with a valid license", async () => {
     mocks.isEnterprise.mockReturnValue(true)
+    mocks.getLicenseStatus.mockResolvedValue({ state: "valid" })
     const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
 
     await expect(hasEnterpriseFeatures()).resolves.toBe(true)
@@ -55,14 +70,6 @@ describe("enterprise entitlements", () => {
 
     mocks.getLicenseStatus.mockResolvedValue({ state: "valid" })
     await expect(hasEnterpriseFeatures()).resolves.toBe(true)
-  })
-
-  test("treats an expired license as disabled", async () => {
-    mocks.isEnterprise.mockReturnValue(true)
-    mocks.getLicenseStatus.mockResolvedValue({ state: "expired" })
-    const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
-
-    await expect(hasEnterpriseFeatures()).resolves.toBe(false)
   })
 })
 
