@@ -289,4 +289,9 @@ export const router = {
     // @ts-expect-error
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .router(analyticsRoutes),
+  mediaLibraryAPI: lazy(() =>
+    import("@/features/media-library/api").then((m) => ({
+      default: m.mediaLibraryAPI,
+    })),
+  ),
 }

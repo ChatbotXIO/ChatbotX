@@ -5341,5 +5341,29 @@
         "empty": "Chưa có bản ghi lượt chơi nào"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Thư viện Media",
+    "searchPlaceholder": "Tìm kiếm tệp...",
+    "newFolder": "Thư mục mới",
+    "recent": "Gần đây",
+    "favourite": "Yêu thích",
+    "upload": "Tải lên",
+    "done": "Xong",
+    "deleteFolder": "Xoá thư mục",
+    "renameFolder": "Đổi tên thư mục",
+    "noFiles": "Không tìm thấy tệp",
+    "noFolders": "Chưa có thư mục",
+    "folderNamePlaceholder": "Tên thư mục",
+    "confirmDeleteFolder": "Xoá thư mục và toàn bộ tệp?",
+    "confirmDeleteFolderDescription": "Tất cả tệp trong thư mục này sẽ bị xoá vĩnh viễn khỏi máy chủ. Hành động này không thể hoàn tác.",
+    "confirmDeleteFile": "Xoá tệp?",
+    "confirmDeleteFileDescription": "Tệp này sẽ bị xoá vĩnh viễn khỏi máy chủ.",
+    "addToFavourites": "Thêm vào yêu thích",
+    "removeFromFavourites": "Bỏ khỏi yêu thích",
+    "deleteFile": "Xoá tệp",
+    "filesCount": "{count, plural, =0 {Không có tệp} =1 {1 tệp} other {# tệp}}",
+    "openMediaLibrary": "Mở Thư viện Media",
+    "uploadFailed": "Tải lên thất bại: {name}"
   }
 }

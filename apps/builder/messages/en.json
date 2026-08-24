@@ -5341,5 +5341,29 @@
         "empty": "No play records yet"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Media Library",
+    "searchPlaceholder": "Search files...",
+    "newFolder": "New folder",
+    "recent": "Recent",
+    "favourite": "Favourite",
+    "upload": "Upload",
+    "done": "Done",
+    "deleteFolder": "Delete folder",
+    "renameFolder": "Rename folder",
+    "noFiles": "No files found",
+    "noFolders": "No folders yet",
+    "folderNamePlaceholder": "Folder name",
+    "confirmDeleteFolder": "Delete folder and all its files?",
+    "confirmDeleteFolderDescription": "All files in this folder will be permanently deleted from the server. This action cannot be undone.",
+    "confirmDeleteFile": "Delete file?",
+    "confirmDeleteFileDescription": "This file will be permanently deleted from the server.",
+    "addToFavourites": "Add to favourites",
+    "removeFromFavourites": "Remove from favourites",
+    "deleteFile": "Delete file",
+    "filesCount": "{count, plural, =0 {No files} =1 {1 file} other {# files}}",
+    "openMediaLibrary": "Open Media Library",
+    "uploadFailed": "Failed to upload {name}"
   }
 }

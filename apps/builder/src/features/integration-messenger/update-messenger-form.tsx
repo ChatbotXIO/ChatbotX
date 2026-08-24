@@ -46,7 +46,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
-import { DirectUploadOrInsertLink } from "@/components/direct-upload"
+import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import PersistentMenuField from "../integration-webchat/components/persistent-menu-field"
 import { updateMessengerAction } from "./actions/update-messenger-action"
@@ -317,10 +317,9 @@ export function UpdateMessengerForm({
                       <Label>{t("fields.imageProfileUrl.label")}</Label>
                       <Card>
                         <CardContent>
-                          <DirectUploadOrInsertLink
+                          <MediaLibraryOrInsertLink
                             fileType={fileTypes.enum.image}
                             parentName={`personas.${index}.profilePicture`}
-                            uploadPath={`public/space/${workspaceId}/personas/${persona.id}/profile-picture`}
                           />
                         </CardContent>
                       </Card>
