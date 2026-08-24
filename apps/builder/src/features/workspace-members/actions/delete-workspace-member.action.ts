@@ -27,9 +27,15 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
     })
 
     if (workspaceMember.role === "owner") {
-      throw new ChatbotXException(
-        "You cannot delete the owner of the workspace",
-      )
+      const members = await workspaceMemberService.listByWorkspaceId({
+        workspaceId,
+      })
+      const ownerCount = members.filter((m) => m.role === "owner").length
+      if (ownerCount <= 1) {
+        throw new ChatbotXException(
+          "You cannot delete the last owner of the workspace",
+        )
+      }
     }
 
     const currentUserAndTargetChatbot =
