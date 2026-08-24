@@ -42,6 +42,24 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       )
     }
 
+    // Role change guards (fork fibrazo): never leave the workspace ownerless.
+    const nextRole = parsedInput.role
+    if (nextRole && nextRole !== workspaceMember.role) {
+      const members = await workspaceMemberService.listByWorkspaceId({
+        workspaceId,
+      })
+      const ownerCount = members.filter((m) => m.role === "owner").length
+      if (
+        workspaceMember.role === "owner" &&
+        nextRole === "agent" &&
+        ownerCount <= 1
+      ) {
+        throw new ChatbotXException(
+          "You cannot demote the last owner of the workspace",
+        )
+      }
+    }
+
     const updateInput = isCommunity()
       ? {
           ...parsedInput,
