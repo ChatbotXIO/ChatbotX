@@ -53,6 +53,9 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 const isCommunity = vi.fn(() => false)
 vi.mock("../src/keys", () => ({ isCommunity }))
+vi.mock("../src/user", () => ({
+  isPlatformAdmin: vi.fn(async () => true),
+}))
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
   return {

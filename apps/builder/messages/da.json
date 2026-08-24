@@ -1707,7 +1707,9 @@
       "label": "Saved Replies"
     },
     "role": {
-      "label": "Role"
+      "label": "Role",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Plan"

@@ -157,11 +157,11 @@ export function UpdateWorkspaceMemberForm({
           <RadioGroupField
             label={t("fields.role.label")}
             name="role"
-            orientation="horizontal"
             options={[
               { value: "owner", label: t("fields.role.owner") },
               { value: "agent", label: t("fields.role.agent") },
             ]}
+            orientation="horizontal"
           />
         </div>
 

@@ -1089,7 +1089,9 @@
       "label": "Risposte salvate"
     },
     "role": {
-      "label": "Ruolo"
+      "label": "Ruolo",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Piano"

@@ -1781,7 +1781,9 @@
       "label": "Respuestas guardadas"
     },
     "role": {
-      "label": "Rol"
+      "label": "Rol",
+      "owner": "Propietario",
+      "agent": "Agente"
     },
     "plan": {
       "label": "Plan"

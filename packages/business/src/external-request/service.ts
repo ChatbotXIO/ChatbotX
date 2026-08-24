@@ -235,7 +235,6 @@ class ExternalRequestService extends BaseService {
 
 export const externalRequestService = new ExternalRequestService()
 
-
 /**
  * Removes object keys whose value is empty or still contains an unresolved
  * `{{placeholder}}`. Used when a variable has no value (null, empty, or

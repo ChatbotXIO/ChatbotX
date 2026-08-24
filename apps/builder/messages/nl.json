@@ -1521,7 +1521,9 @@
       "label": "Opgeslagen antwoorden"
     },
     "role": {
-      "label": "Rol"
+      "label": "Rol",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Abonnement"

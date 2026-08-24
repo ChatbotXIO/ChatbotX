@@ -1707,7 +1707,9 @@
       "label": "Réponses enregistrées"
     },
     "role": {
-      "label": "Rôle"
+      "label": "Rôle",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Forfait"

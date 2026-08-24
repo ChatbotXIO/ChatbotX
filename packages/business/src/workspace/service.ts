@@ -18,10 +18,15 @@ import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
 import { tenantService } from "../enterprise/tenant/service"
-import { notFoundException, workspaceLimitReachedException } from "../errors"
+import {
+  forbiddenException,
+  notFoundException,
+  workspaceLimitReachedException,
+} from "../errors"
 import { isCommunity } from "../keys"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { isPlatformAdmin } from "../user"
 import { userQuotaService } from "../user-quota/service"
 import {
   type WorkspaceTeardownIntegrations,
@@ -365,6 +370,17 @@ class WorkspaceService extends BaseService {
     createdBy: string
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
+    // Fibrazo fork: only the platform admin may create workspaces. Agents and
+    // invited members join existing workspaces — they must not be able to spin
+    // up their own by connecting a channel.
+    const creator = await db.query.userModel.findFirst({
+      where: { id: props.createdBy },
+      columns: { id: true, email: true },
+    })
+    if (!(creator && (await isPlatformAdmin(creator)))) {
+      throw forbiddenException("Only platform admins can create workspaces")
+    }
+
     if (isCommunity()) {
       // Community edition allows exactly one workspace per owner. Serialize
       // the count-then-insert so concurrent create requests cannot both pass.
