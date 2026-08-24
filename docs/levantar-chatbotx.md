@@ -3,6 +3,35 @@
 > Entorno local de fede. Los puertos están desplazados porque **sysbrazo** (Laravel) ocupa los estándar.
 > Esto es lo que hay que hacer cada vez que se cae o "no llegan mensajes de Telegram".
 
+## ⚡ Automático: `scripts/start.sh` (todo en uno)
+
+Hay un script que hace **los pasos 1→6 de una sola vez** (infra + ngrok + `.env` + webhook de Telegram + apps). Es la vía rápida; los pasos manuales de abajo quedan como referencia para debuguear.
+
+```bash
+bash scripts/start.sh            # arranca todo (builder ya buildeado, rápido)
+bash scripts/start.sh --build    # rebuild del builder y arranca (1ª vez o tras cambios)
+bash scripts/start.sh --dev      # builder en modo dev (hot-reload, lento)
+```
+
+Qué hace por dentro:
+
+| Paso | Acción |
+| --- | --- |
+| 1/6 | `docker compose up -d postgres redis filesystem filesystem-init` |
+| 2/6 | `ngrok start --all` (si no está corriendo) |
+| 3/6 | Lee la URL pública del túnel `chatbotx` desde la API de ngrok (`:4040`) |
+| 4/6 | Reescribe `NEXT_PUBLIC_BROKER_URL` en `.env` con esa URL |
+| 5/6 | Lee el token + `botId` de `IntegrationTelegram` y registra el webhook de Telegram |
+| 6/6 | Levanta `worker` + `realtime` (dev) y el `builder` (dev / prod según el modo) |
+
+Logs:
+
+- Builder: `/tmp/opencode/builder-prod.log` (o `builder-dev.log` en `--dev`)
+- Worker: `/tmp/opencode/worker-dev.log`
+- Realtime: `/tmp/opencode/realtime-dev.log`
+
+> Requisitos: ngrok ya configurado con el túnel `chatbotx` (sección 3) y el bot de Telegram ya conectado (si no hay fila en `IntegrationTelegram`, saltea el webhook con un warning).
+
 ## 0. Arranque desde cero (reinicié el PC — en este orden)
 
 ```bash
@@ -149,3 +178,4 @@ NEXT_PUBLIC_BROKER_URL=https://<ngrok-chatbotx>
 2. ¿ngrok apunta a 3123? → `curl http://127.0.0.1:4040/api/tunnels`.
 3. ¿El builder está arriba en 3123? → `curl -o /dev/null -w '%{http_code}' http://localhost:3123/integrations/telegram/webhook?botId=<botId>` (debe dar 400, no 404).
 4. ¿El worker está arriba? → logs de `/tmp/opencode/worker-dev.log`.
+
