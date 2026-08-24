@@ -16,3 +16,5 @@ export const bulkUpdateIdsRequest = z.object({
   ids: z.array(zodBigintAsString()),
 })
 export type BulkUpdateIdsRequest = z.infer<typeof bulkUpdateIdsRequest>
+
+export const successResponse = z.object({ success: z.literal(true) })

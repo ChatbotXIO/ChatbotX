@@ -36,11 +36,22 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx.io/events"
+import {
+  type RealtimeEventConversationUpdatedChanges,
+  RealtimeEventType,
+} from "@chatbotx.io/partysocket-config"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
+import {
+  ChatJobAction,
+  chatQueue,
+  NotificationJobAction,
+  notificationQueue,
+} from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException } from "../errors"
+import { logger } from "../logger"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
 
@@ -438,6 +449,12 @@ class ConversationService extends BaseService {
     if (!created) {
       throw new Error("Conversation not found")
     }
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationCreated,
+      data: created,
+    })
+
     return created
   }
 
@@ -467,6 +484,14 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: ids,
+        changes: { archivedAt: archivedAt?.toISOString() ?? null },
+      },
+    })
 
     const eventType = archivedAt
       ? "conversation:archived"
@@ -518,6 +543,38 @@ class ConversationService extends BaseService {
       .where(inArray(conversationModel.id, ids))
       .returning()
     await this.invalidate({ workspaceId, ids })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: ids,
+        changes: { assignedUserId, assignedInboxTeamId },
+      },
+    })
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationAssigned,
+      data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
+    })
+
+    if (assignedUserId && assignedUserId !== props.assignedBy) {
+      try {
+        await notificationQueue.addBulk(
+          conversations.map((conv) => ({
+            name: NotificationJobAction.notifyConversationAssigned,
+            data: {
+              type: NotificationJobAction.notifyConversationAssigned,
+              data: { workspaceId, conversationId: conv.id, assignedUserId },
+            },
+            opts: { jobId: `notify-assigned-${conv.id}-${assignedUserId}` },
+          })),
+        )
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, conversationIds: ids },
+          "conversation-assigned notification bulk enqueue failed",
+        )
+      }
+    }
 
     const assignedTo = assignedUserId || assignedInboxTeamId
     for (const conv of conversations) {
@@ -583,6 +640,11 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: { conversationIds: ids, changes: { botEnabled } },
+    })
   }
 
   async updateFollowed(props: {
@@ -612,6 +674,11 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: { conversationIds: [id], changes: { followed } },
+    })
 
     if (followed) {
       await emitConversationFollowUp(workspaceId, contactId, id, props.userId)
@@ -643,6 +710,14 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: [id],
+        changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
+      },
+    })
   }
 
   /**
@@ -894,6 +969,49 @@ class ConversationService extends BaseService {
     })
 
     return true
+  }
+
+  // ─── Realtime ────────────────────────────────────────────────────────────
+
+  /**
+   * Best-effort realtime broadcast via the chat queue (same path used by
+   * message create/edit/delete). Never blocks or fails the caller's mutation
+   * — errors are logged and swallowed.
+   */
+  private async broadcastConversationEvent(
+    workspaceId: string,
+    event:
+      | {
+          eventType: typeof RealtimeEventType.conversationCreated
+          data: unknown
+        }
+      | {
+          eventType: typeof RealtimeEventType.conversationUpdated
+          data: {
+            conversationIds: string[]
+            changes: RealtimeEventConversationUpdatedChanges
+          }
+        }
+      | {
+          eventType: typeof RealtimeEventType.conversationAssigned
+          data: {
+            conversationIds: string[]
+            assignedUserId: string | null
+            assignedInboxTeamId: string | null
+          }
+        },
+  ): Promise<void> {
+    try {
+      await chatQueue.add(ChatJobAction.broadcastEvent, {
+        type: ChatJobAction.broadcastEvent,
+        data: { workspaceId, event },
+      })
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId, eventType: event.eventType },
+        "conversation realtime broadcast enqueue failed",
+      )
+    }
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────

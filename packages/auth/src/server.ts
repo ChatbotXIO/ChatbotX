@@ -24,7 +24,7 @@ import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
-import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
+import { anonymous, bearer, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
@@ -703,6 +703,12 @@ export function createAuth(config: AuthConfig) {
         },
       }),
       oneTimeToken(),
+      // Enables mobile (bearer-only) clients: a before-hook rewrites
+      // `Authorization: Bearer <token>` into the session cookie header, and an
+      // after-hook mirrors session Set-Cookie into a `set-auth-token` response
+      // header. Since it rewrites `context.headers`, `auth.api.getSession`
+      // (and everything built on it — oRPC, authMiddleware) works unchanged.
+      bearer(),
       anonymous({
         emailDomainName: "anonymous.example.com",
         generateName: () => `Anonymous ${createId()}`,
@@ -731,7 +737,13 @@ export function createAuth(config: AuthConfig) {
       // thunk also runs while `next build` collects page data — with no
       // Redis/Postgres reachable. Skip the CustomDomain lookup then; no
       // requests are served during the build. Mirrors buildSocialProviders above.
-      const staticOrigins = [getBrokerUrl(), env.NEXT_PUBLIC_BUILDER_URL]
+      const staticOrigins = [
+        getBrokerUrl(),
+        env.NEXT_PUBLIC_BUILDER_URL,
+        // Mobile app deep-link scheme (chatbotx-mobile-app) — social sign-in relays back into the
+        // app via this custom scheme instead of an https:// origin.
+        "chatconnectxapp://",
+      ]
       if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return Array.from(new Set(staticOrigins))
       }
