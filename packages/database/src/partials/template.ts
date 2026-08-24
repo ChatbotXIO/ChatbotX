@@ -18,7 +18,7 @@ import { z } from "zod"
 export const templateManifestOnlyCategories = z.enum([
   "customFields",
   "tags",
-  "productCategories",
+  // "productCategories",
 ])
 export type TemplateManifestOnlyCategory = z.infer<
   typeof templateManifestOnlyCategories
@@ -26,16 +26,16 @@ export type TemplateManifestOnlyCategory = z.infer<
 
 export const templateResourceCategories = z.enum([
   "flows",
-  "products",
-  "aiFunctions",
-  "aiAgents",
-  "calendars",
-  "webchats",
-  "keywords",
-  "entryPointLinks",
-  "triggers",
-  "fbCommentAutomations",
-  "settings",
+  // "products",
+  // "aiFunctions",
+  // "aiAgents",
+  // "calendars",
+  // "webchats",
+  // "keywords",
+  // "entryPointLinks",
+  // "triggers",
+  // "fbCommentAutomations",
+  // "settings",
 ])
 export type TemplateResourceCategory = z.infer<
   typeof templateResourceCategories
