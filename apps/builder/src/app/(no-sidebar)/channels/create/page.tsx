@@ -1,4 +1,8 @@
-import { platformCredentialService, tenantService } from "@chatbotx.io/business"
+import {
+  isPlatformAdmin,
+  platformCredentialService,
+  tenantService,
+} from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
@@ -12,7 +16,7 @@ import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-creat
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
-import { getCurrentUserId } from "@/lib/auth/utils"
+import { getCurrentUser } from "@/lib/auth/utils"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 
 export const dynamic = "force-dynamic"
@@ -34,12 +38,22 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
 
   const selectedChannel = searchParams.channel
 
-  const userId = await getCurrentUserId()
-  if (!userId) {
+  const user = await getCurrentUser()
+  if (!user) {
     return notFound()
   }
 
-  const platformOwnerId = await resolvePlatformOwnerId({ userId, workspaceId })
+  // Fibrazo fork: only the platform admin may create a new workspace via the
+  // first-channel flow. Existing members connect channels inside their
+  // workspace (that path already requires superAdmin above).
+  if (!(workspaceId || (await isPlatformAdmin(user)))) {
+    redirect("/")
+  }
+
+  const platformOwnerId = await resolvePlatformOwnerId({
+    userId: user.id,
+    workspaceId,
+  })
 
   // Two-tier channel-visibility policy (platform admin + white-label owner).
   // Pure UI gate — checked before every create branch (including the
