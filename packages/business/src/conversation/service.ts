@@ -118,16 +118,18 @@ class ConversationService extends BaseService {
   async findDMByContact(props: {
     workspaceId: string
     contactId: string
+    channel?: ChannelType | null
     tx?: DatabaseClient
   }): Promise<ConversationModel | undefined> {
-    const { tx = db, workspaceId, contactId } = props
+    const { tx = db, workspaceId, contactId, channel } = props
     // Read receipts always target the DM conversation (sourceId IS NULL). Only
     // TikTok and Facebook comment conversations have a non-null sourceId.
+    const usesSourceId = dmConversationUsesSourceId(channel)
     return await tx.query.conversationModel.findFirst({
       where: {
         workspaceId,
         contactId,
-        sourceId: { isNull: true },
+        sourceId: usesSourceId ? { isNotNull: true } : { isNull: true },
       },
     })
   }

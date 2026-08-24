@@ -799,6 +799,9 @@
     "dynamicImage": {
       "label": "Image dynamique"
     },
+    "minigame": {
+      "label": "Mini-jeu"
+    },
     "savePayloadToCustomField": {
       "label": "Enregistrer la charge utile dans un champ personnalisé"
     },
@@ -5215,6 +5218,128 @@
     },
     "whatsapp": {
       "connect": "Connecter"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Créez et gérez des mini-jeux de tirage au sort pour vos clients.",
+    "types": {
+      "luckyWheel": "Roue de la chance",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Tirage au sort",
+      "scratchOff": "Carte à gratter"
+    },
+    "createDialog": {
+      "title": "Choisissez un type de mini-jeu",
+      "comingSoon": "Bientôt disponible"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Somme de toutes les probabilités : {value}%",
+      "loseProbability": "Probabilité de perte : {value}%",
+      "winProbability": "Probabilité de gain : {value}%",
+      "newPrize": "Nouveau lot"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Modifier le lot",
+      "nonWinningTitle": "Modifier le paramètre de non-gain",
+      "prizeNameLabel": "Nom du lot",
+      "nonWinningTitleLabel": "Titre",
+      "loseImageDescription": "Taille recommandée : 120x120px",
+      "quantityLabel": "Quantité du lot",
+      "quantityDescription": "Nombre de fois où ce lot peut encore être gagné ; diminue de 1 à chaque gain. Laissez vide pour illimité.",
+      "sendMessage": "Envoyer un message lorsque le joueur ne gagne pas",
+      "sendWinMessage": "Envoyer un message au gagnant ayant reçu le lot",
+      "messageMode": "Type de message",
+      "messageModeText": "Texte",
+      "messageModeFlow": "Flux",
+      "messageText": "Message"
+    },
+    "winningMessageDialog": {
+      "title": "Paramètres du message de gain",
+      "titleLabel": "Titre",
+      "acceptButtonText": "Texte du bouton d’acceptation",
+      "shareButtonText": "Texte du bouton de partage",
+      "shareButtonDescription": "Description du bouton de partage"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Paramètres du message de non-gain",
+      "titleLabel": "Titre",
+      "shareButtonText": "Texte du bouton de partage",
+      "shareButtonDescription": "Description du bouton de partage"
+    },
+    "preview": {
+      "start": "Démarrer",
+      "shareWithFriends": "Partager avec des amis",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Aperçu détaillé bientôt disponible pour ce type de jeu",
+      "rules": "Règles"
+    },
+    "form": {
+      "generalSettingsTitle": "Paramètres généraux",
+      "appearanceTitle": "Apparence",
+      "playerSettingsTitle": "Paramètres du joueur",
+      "prizeSettingsTitle": "Paramètres des lots"
+    },
+    "generalSettings": {
+      "playedAt": "Joué le",
+      "rulesDescription": "Description des règles",
+      "openerTags": "Étiqueter les contacts qui ouvrent le lien du jeu",
+      "playerTags": "Étiqueter les joueurs",
+      "newFriendTags": "Étiqueter les nouveaux amis",
+      "shareEnabled": "Autoriser le partage avec des amis",
+      "shareMessage": "Message de partage",
+      "shareMessageHint": "Utilisez '{{shareUrl}}' pour insérer le lien réel du jeu — merci de ne pas le supprimer."
+    },
+    "appearance": {
+      "backgroundColor": "Couleur de fond",
+      "machineColor": "Couleur de la machine",
+      "decorativeColor": "Couleur décorative",
+      "ruleTextColor": "Couleur du texte des règles",
+      "backgroundImage": "Image de fond",
+      "backgroundImageDescription": "Largeur recommandée : 1024px",
+      "prizeDescriptionImage": "Image de description des lots (facultatif)",
+      "prizeDescriptionImageDescription": "Largeur recommandée : 750px",
+      "startButtonImage": "Image du bouton de démarrage",
+      "startButtonImageDescription": "Taille recommandée : 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Nombre de chances de tirage par personne",
+      "resetPolicyLabel": "Réinitialiser les tirages",
+      "resetNever": "Ne jamais réinitialiser le nombre de tirages",
+      "resetEveryNDays": "Réinitialiser le nombre de tirages tous les",
+      "resetIntervalDaysSuffix": "jour(s)"
+    },
+    "publicUrl": {
+      "label": "URL publique",
+      "hint": "Copiez et collez l’URL dans votre flux, votre diffusion ou votre séquence pour partager ce mini-jeu."
+    },
+    "play": {
+      "close": "Fermer",
+      "drawsRemaining": "{count} essais restants",
+      "noDrawsLeft": "Vous n'avez plus d'essais pour ce minijeu.",
+      "notStartedYet": "Ce minijeu n'a pas encore commencé.",
+      "ended": "Ce minijeu est terminé.",
+      "forbiddenTitle": "Accès refusé",
+      "forbiddenDescription": "Ce lien est invalide ou a expiré.",
+      "comingSoonTitle": "Bientôt disponible",
+      "comingSoonDescription": "Ce type de minijeu n'est pas encore jouable."
+    },
+    "history": {
+      "title": "Historique",
+      "played": "Parties jouées",
+      "remaining": "Tirages restants",
+      "openedAt": "Première ouverture",
+      "lastPlayedAt": "Dernière partie",
+      "unknownContact": "Contact inconnu",
+      "record": "Registre",
+      "recordDialog": {
+        "title": "Registre des parties",
+        "win": "Gagné",
+        "lose": "Pas de lot",
+        "empty": "Aucun registre de parties pour le moment"
+      }
     }
   }
 }

@@ -873,6 +873,9 @@
     "dynamicImage": {
       "label": "Dinamik Görsel"
     },
+    "minigame": {
+      "label": "Mini oyun"
+    },
     "savePayloadToCustomField": {
       "label": "Yükü özel alana kaydet"
     },
@@ -5215,6 +5218,128 @@
     },
     "whatsapp": {
       "connect": "Bağlan"
+    }
+  },
+  "minigames": {
+    "title": "Oyunlaştırma",
+    "description": "Müşterileriniz için çekiliş tabanlı mini oyunlar oluşturun ve yönetin.",
+    "types": {
+      "luckyWheel": "Şans Çarkı",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Kura Çekimi",
+      "scratchOff": "Kazı Kazan"
+    },
+    "createDialog": {
+      "title": "Bir mini oyun türü seçin",
+      "comingSoon": "Yakında"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Tüm olasılıkların toplamı: {value}%",
+      "loseProbability": "Kaybetme olasılığı: {value}%",
+      "winProbability": "Kazanma olasılığı: {value}%",
+      "newPrize": "Yeni Ödül"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Ödülü Düzenle",
+      "nonWinningTitle": "Kazanamama Ayarını Düzenle",
+      "prizeNameLabel": "Ödül Adı",
+      "nonWinningTitleLabel": "Başlık",
+      "loseImageDescription": "Önerilen boyut 120x120px",
+      "quantityLabel": "Ödül Miktarı",
+      "quantityDescription": "Bu ödülün hâlâ kaç kez kazanılabileceği; her kazanımda 1 azalır. Sınırsız için boş bırakın.",
+      "sendMessage": "Oyuncu kazanamadığında bir mesaj gönder",
+      "sendWinMessage": "Ödülü kazanan kişiye mesaj gönder",
+      "messageMode": "Mesaj türü",
+      "messageModeText": "Metin",
+      "messageModeFlow": "Akış",
+      "messageText": "Mesaj"
+    },
+    "winningMessageDialog": {
+      "title": "Kazanma Mesajı Ayarları",
+      "titleLabel": "Başlık",
+      "acceptButtonText": "Kabul Et Buton Metni",
+      "shareButtonText": "Paylaş Buton Metni",
+      "shareButtonDescription": "Paylaş Buton Açıklaması"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Kazanamama Mesajı Ayarları",
+      "titleLabel": "Başlık",
+      "shareButtonText": "Paylaş Buton Metni",
+      "shareButtonDescription": "Paylaş Buton Açıklaması"
+    },
+    "preview": {
+      "start": "Başla",
+      "shareWithFriends": "Arkadaşlarla paylaş",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Bu oyun türü için ayrıntılı önizleme yakında sunulacak",
+      "rules": "Kurallar"
+    },
+    "form": {
+      "generalSettingsTitle": "Genel Ayar",
+      "appearanceTitle": "Görünüm",
+      "playerSettingsTitle": "Oyuncu Ayarları",
+      "prizeSettingsTitle": "Ödül Ayarları"
+    },
+    "generalSettings": {
+      "playedAt": "Oynanma Zamanı",
+      "rulesDescription": "Kural Açıklaması",
+      "openerTags": "Oyun bağlantısını açan kişileri etiketle",
+      "playerTags": "Oyuncuları etiketle",
+      "newFriendTags": "Yeni arkadaşları etiketle",
+      "shareEnabled": "Arkadaşlarla paylaşmaya izin ver",
+      "shareMessage": "Paylaşım Mesajı",
+      "shareMessageHint": "Gerçek oyun bağlantısını eklemek için '{{shareUrl}}' kullanın — lütfen kaldırmayın."
+    },
+    "appearance": {
+      "backgroundColor": "Arka Plan Rengi",
+      "machineColor": "Makine Rengi",
+      "decorativeColor": "Dekoratif Renk",
+      "ruleTextColor": "Kural Metni Rengi",
+      "backgroundImage": "Arka Plan Görseli",
+      "backgroundImageDescription": "Önerilen genişlik: 1024px",
+      "prizeDescriptionImage": "Ödül Açıklama Görseli (İsteğe Bağlı)",
+      "prizeDescriptionImageDescription": "Önerilen genişlik: 750px",
+      "startButtonImage": "Başlat Butonu Görseli",
+      "startButtonImageDescription": "Önerilen boyut: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Kişi başına şans çekiliş hakkı sayısı",
+      "resetPolicyLabel": "Çekilişleri sıfırla",
+      "resetNever": "Çekiliş sayısını sıfırlama",
+      "resetEveryNDays": "Çekiliş sayısını her şu kadar günde bir sıfırla",
+      "resetIntervalDaysSuffix": "gün"
+    },
+    "publicUrl": {
+      "label": "Genel URL",
+      "hint": "Bu mini oyunu paylaşmak için URL'yi akışınıza, yayınınıza veya dizinize kopyalayıp yapıştırın."
+    },
+    "play": {
+      "close": "Kapat",
+      "drawsRemaining": "{count} deneme hakkı kaldı",
+      "noDrawsLeft": "Bu mini oyun için deneme hakkınız kalmadı.",
+      "notStartedYet": "Bu mini oyun henüz başlamadı.",
+      "ended": "Bu mini oyun sona erdi.",
+      "forbiddenTitle": "Erişim reddedildi",
+      "forbiddenDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
+      "comingSoonTitle": "Çok yakında",
+      "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor."
+    },
+    "history": {
+      "title": "Geçmiş",
+      "played": "Oynama sayısı",
+      "remaining": "Kalan çekiliş",
+      "openedAt": "İlk açılış",
+      "lastPlayedAt": "Son oynama",
+      "unknownContact": "Bilinmeyen kişi",
+      "record": "Kayıt",
+      "recordDialog": {
+        "title": "Oyun kaydı",
+        "win": "Kazandı",
+        "lose": "Ödül yok",
+        "empty": "Henüz oyun kaydı yok"
+      }
     }
   }
 }

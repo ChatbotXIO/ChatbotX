@@ -9,6 +9,7 @@ import {
   CardSimIcon,
   CircleQuestionMarkIcon,
   CopyIcon,
+  Gamepad2Icon,
   ImagesIcon,
   LinkIcon,
   MapIcon,
@@ -130,6 +131,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "coupons.description",
     icon: TicketPercentIcon,
     getLink: (id: string) => `/space/${id}/topic-coupons`,
+  },
+  {
+    id: "minigames",
+    labelKey: "minigames.title",
+    descriptionKey: "minigames.description",
+    icon: Gamepad2Icon,
+    getLink: (id: string) => `/space/${id}/minigames`,
   },
   // {
   //   id: "webhooks",

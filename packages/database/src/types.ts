@@ -148,6 +148,10 @@ export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
 export type DynamicImageModel = typeof schema.dynamicImageModel.$inferSelect
+export type MinigameModel = typeof schema.minigameModel.$inferSelect
+export type MinigameContactModel =
+  typeof schema.minigameContactModel.$inferSelect
+export type MinigamePlayModel = typeof schema.minigamePlayModel.$inferSelect
 export type MagicLinkModel = typeof schema.magicLinkModel.$inferSelect
 export type IntegrationInstagramModel =
   typeof schema.integrationInstagramModel.$inferSelect

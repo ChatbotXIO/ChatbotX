@@ -868,6 +868,9 @@
     "dynamicImage": {
       "label": "Ảnh động"
     },
+    "minigame": {
+      "label": "Minigame"
+    },
     "savePayloadToCustomField": {
       "label": "Lưu payload vào trường tùy chỉnh"
     },
@@ -5215,6 +5218,128 @@
     },
     "whatsapp": {
       "connect": "Kết nối"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Tạo và quản lý các minigame vòng quay may mắn dành cho khách hàng của bạn.",
+    "types": {
+      "luckyWheel": "Vòng quay may mắn",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Rút thăm",
+      "scratchOff": "Cào trúng thưởng"
+    },
+    "createDialog": {
+      "title": "Chọn loại minigame",
+      "comingSoon": "Sắp ra mắt"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Tổng tất cả tỷ lệ: {value}%",
+      "loseProbability": "Tỷ lệ trượt thưởng: {value}%",
+      "winProbability": "Tỷ lệ trúng thưởng: {value}%",
+      "newPrize": "Thêm giải thưởng"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Chỉnh sửa giải thưởng",
+      "nonWinningTitle": "Chỉnh sửa thiết lập không trúng thưởng",
+      "prizeNameLabel": "Tên giải thưởng",
+      "nonWinningTitleLabel": "Tiêu đề",
+      "loseImageDescription": "Kích thước đề xuất 120x120px",
+      "quantityLabel": "Số lượng giải thưởng",
+      "quantityDescription": "Số lần giải thưởng này còn có thể trúng; giảm 1 mỗi khi có người trúng. Để trống nếu không giới hạn.",
+      "sendMessage": "Gửi tin nhắn khi người chơi không trúng thưởng",
+      "sendWinMessage": "Gửi tin nhắn cho người trúng giải",
+      "messageMode": "Loại tin nhắn",
+      "messageModeText": "Văn bản",
+      "messageModeFlow": "Kịch bản",
+      "messageText": "Nội dung tin nhắn"
+    },
+    "winningMessageDialog": {
+      "title": "Thiết lập tin nhắn khi trúng thưởng",
+      "titleLabel": "Tiêu đề",
+      "acceptButtonText": "Nội dung nút Chấp nhận",
+      "shareButtonText": "Nội dung nút Chia sẻ",
+      "shareButtonDescription": "Mô tả nút Chia sẻ"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Thiết lập tin nhắn khi không trúng thưởng",
+      "titleLabel": "Tiêu đề",
+      "shareButtonText": "Nội dung nút Chia sẻ",
+      "shareButtonDescription": "Mô tả nút Chia sẻ"
+    },
+    "preview": {
+      "start": "Bắt đầu",
+      "shareWithFriends": "Chia sẻ với bạn bè",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Bản xem trước chi tiết cho loại trò chơi này sẽ sớm ra mắt",
+      "rules": "Luật chơi"
+    },
+    "form": {
+      "generalSettingsTitle": "Thiết lập chung",
+      "appearanceTitle": "Giao diện",
+      "playerSettingsTitle": "Cài đặt người chơi",
+      "prizeSettingsTitle": "Thiết lập giải thưởng"
+    },
+    "generalSettings": {
+      "playedAt": "Thời gian diễn ra",
+      "rulesDescription": "Mô tả thể lệ",
+      "openerTags": "Gắn thẻ liên hệ mở link minigame",
+      "playerTags": "Gắn thẻ người chơi",
+      "newFriendTags": "Gắn thẻ bạn bè mới",
+      "shareEnabled": "Cho phép chia sẻ với bạn bè",
+      "shareMessage": "Nội dung chia sẻ",
+      "shareMessageHint": "Sử dụng '{{shareUrl}}' để chèn link minigame thực tế — vui lòng không xóa nó."
+    },
+    "appearance": {
+      "backgroundColor": "Màu nền",
+      "machineColor": "Màu máy",
+      "decorativeColor": "Màu trang trí",
+      "ruleTextColor": "Màu văn bản thể lệ",
+      "backgroundImage": "Ảnh nền",
+      "backgroundImageDescription": "Chiều rộng đề xuất: 1024px",
+      "prizeDescriptionImage": "Ảnh mô tả giải thưởng (Tùy chọn)",
+      "prizeDescriptionImageDescription": "Chiều rộng đề xuất: 750px",
+      "startButtonImage": "Ảnh nút Bắt đầu",
+      "startButtonImageDescription": "Kích thước đề xuất: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Số lượt quay may mắn mỗi người",
+      "resetPolicyLabel": "Đặt lại lượt quay",
+      "resetNever": "Không đặt lại số lượt quay",
+      "resetEveryNDays": "Đặt lại số lượt quay mỗi",
+      "resetIntervalDaysSuffix": "ngày"
+    },
+    "publicUrl": {
+      "label": "URL công khai",
+      "hint": "Sao chép và dán URL vào kịch bản, chiến dịch quảng bá hoặc chuỗi tin nhắn để chia sẻ minigame này."
+    },
+    "play": {
+      "close": "Đóng",
+      "drawsRemaining": "Còn lại {count} lượt chơi",
+      "noDrawsLeft": "Bạn đã hết lượt chơi cho minigame này.",
+      "notStartedYet": "Minigame này chưa bắt đầu.",
+      "ended": "Minigame này đã kết thúc.",
+      "forbiddenTitle": "Không có quyền truy cập",
+      "forbiddenDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+      "comingSoonTitle": "Sắp ra mắt",
+      "comingSoonDescription": "Loại minigame này chưa thể chơi được."
+    },
+    "history": {
+      "title": "Lịch sử",
+      "played": "Lượt đã chơi",
+      "remaining": "Lượt còn lại",
+      "openedAt": "Mở lần đầu",
+      "lastPlayedAt": "Chơi gần nhất",
+      "unknownContact": "Liên hệ không xác định",
+      "record": "Bản ghi",
+      "recordDialog": {
+        "title": "Bản ghi lượt chơi",
+        "win": "Trúng thưởng",
+        "lose": "Không trúng",
+        "empty": "Chưa có bản ghi lượt chơi nào"
+      }
     }
   }
 }

@@ -799,6 +799,9 @@
     "dynamicImage": {
       "label": "ダイナミック画像"
     },
+    "minigame": {
+      "label": "ミニゲーム"
+    },
     "savePayloadToCustomField": {
       "label": "ペイロードをカスタムフィールドに保存"
     },
@@ -5215,6 +5218,128 @@
     },
     "whatsapp": {
       "connect": "連携"
+    }
+  },
+  "minigames": {
+    "title": "ゲーミフィケーション",
+    "description": "顧客向けに抽選ミニゲームを作成・管理します。",
+    "types": {
+      "luckyWheel": "ラッキーホイール",
+      "jackpot": "ジャックポット",
+      "gashapon": "ガシャポン",
+      "drawLots": "くじ引き",
+      "scratchOff": "スクラッチくじ"
+    },
+    "createDialog": {
+      "title": "ミニゲームの種類を選択",
+      "comingSoon": "近日公開"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "全確率の合計：{value}%",
+      "loseProbability": "はずれ確率：{value}%",
+      "winProbability": "当選確率：{value}%",
+      "newPrize": "新しい景品"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "景品を編集",
+      "nonWinningTitle": "はずれ設定を編集",
+      "prizeNameLabel": "景品名",
+      "nonWinningTitleLabel": "タイトル",
+      "loseImageDescription": "推奨サイズ 120x120px",
+      "quantityLabel": "景品数量",
+      "quantityDescription": "この景品があと何回当選できるかを示します。当選するたびに1減ります。無制限にする場合は空欄のままにしてください。",
+      "sendMessage": "はずれた場合にメッセージを送信する",
+      "sendWinMessage": "景品を獲得した当選者にメッセージを送信する",
+      "messageMode": "メッセージタイプ",
+      "messageModeText": "テキスト",
+      "messageModeFlow": "フロー",
+      "messageText": "メッセージ"
+    },
+    "winningMessageDialog": {
+      "title": "当選メッセージの設定",
+      "titleLabel": "タイトル",
+      "acceptButtonText": "承諾ボタンのテキスト",
+      "shareButtonText": "シェアボタンのテキスト",
+      "shareButtonDescription": "シェアボタンの説明"
+    },
+    "nonWinningMessageDialog": {
+      "title": "はずれメッセージの設定",
+      "titleLabel": "タイトル",
+      "shareButtonText": "シェアボタンのテキスト",
+      "shareButtonDescription": "シェアボタンの説明"
+    },
+    "preview": {
+      "start": "開始",
+      "shareWithFriends": "友達にシェア",
+      "jackpotHeader": "ジャックポット",
+      "jackpotBanner": "ジャックポット",
+      "comingSoon": "このゲームタイプの詳細プレビューは近日公開予定です",
+      "rules": "ルール"
+    },
+    "form": {
+      "generalSettingsTitle": "一般設定",
+      "appearanceTitle": "デザイン",
+      "playerSettingsTitle": "プレイヤー設定",
+      "prizeSettingsTitle": "景品設定"
+    },
+    "generalSettings": {
+      "playedAt": "プレイ日時",
+      "rulesDescription": "ルールの説明",
+      "openerTags": "ゲームリンクを開いた人にタグを付ける",
+      "playerTags": "プレイヤーにタグを付ける",
+      "newFriendTags": "新しい友達にタグを付ける",
+      "shareEnabled": "友達へのシェアを許可する",
+      "shareMessage": "シェアメッセージ",
+      "shareMessageHint": "実際のゲームリンクを挿入するには '{{shareUrl}}' を使用してください。削除しないでください。"
+    },
+    "appearance": {
+      "backgroundColor": "背景色",
+      "machineColor": "マシンの色",
+      "decorativeColor": "装飾の色",
+      "ruleTextColor": "ルールテキストの色",
+      "backgroundImage": "背景画像",
+      "backgroundImageDescription": "推奨幅：1024px",
+      "prizeDescriptionImage": "景品説明画像（任意）",
+      "prizeDescriptionImageDescription": "推奨幅：750px",
+      "startButtonImage": "スタートボタン画像",
+      "startButtonImageDescription": "推奨サイズ：360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "1人あたりの抽選回数",
+      "resetPolicyLabel": "抽選回数のリセット",
+      "resetNever": "抽選回数をリセットしない",
+      "resetEveryNDays": "抽選回数を次の日数ごとにリセットする",
+      "resetIntervalDaysSuffix": "日"
+    },
+    "publicUrl": {
+      "label": "公開URL",
+      "hint": "このURLをフロー、配信、またはシーケンスにコピー＆ペーストして、このミニゲームを共有してください。"
+    },
+    "play": {
+      "close": "閉じる",
+      "drawsRemaining": "残り{count}回",
+      "noDrawsLeft": "このミニゲームの残り回数がありません。",
+      "notStartedYet": "このミニゲームはまだ開始していません。",
+      "ended": "このミニゲームは終了しました。",
+      "forbiddenTitle": "アクセスが拒否されました",
+      "forbiddenDescription": "このリンクは無効か、期限切れです。",
+      "comingSoonTitle": "近日公開",
+      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。"
+    },
+    "history": {
+      "title": "履歴",
+      "played": "プレイ回数",
+      "remaining": "残り回数",
+      "openedAt": "初回オープン",
+      "lastPlayedAt": "最終プレイ",
+      "unknownContact": "不明な連絡先",
+      "record": "記録",
+      "recordDialog": {
+        "title": "プレイ記録",
+        "win": "当選",
+        "lose": "ハズレ",
+        "empty": "プレイ記録はまだありません"
+      }
     }
   }
 }
