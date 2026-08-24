@@ -22,12 +22,14 @@ vi.mock("@chatbotx.io/analytics", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    query: { userModel: {
-      findFirst: vi.fn(async () => ({
-        id: "owner-1",
-        email: "demo@example.com",
-      })),
-    } },
+    query: {
+      userModel: {
+        findFirst: vi.fn(async () => ({
+          id: "owner-1",
+          email: "demo@example.com",
+        })),
+      },
+    },
     insert: mocks.workspaceInsert,
     delete: mocks.workspaceDelete,
     transaction: mocks.dbTransaction,

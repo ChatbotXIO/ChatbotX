@@ -1707,7 +1707,9 @@
       "label": "Balasan Tersimpan"
     },
     "role": {
-      "label": "Peran"
+      "label": "Peran",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Paket"

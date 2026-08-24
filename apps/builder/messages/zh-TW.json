@@ -1089,7 +1089,9 @@
       "label": "已儲存的回覆"
     },
     "role": {
-      "label": "角色"
+      "label": "角色",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "方案"

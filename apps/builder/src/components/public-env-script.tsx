@@ -17,12 +17,12 @@ export function PublicEnvScript() {
   }
   return (
     <Script
-      id="public-env"
-      strategy="beforeInteractive"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: inject env to window
       dangerouslySetInnerHTML={{
         __html: `window.__ENV=${JSON.stringify(env)}`,
       }}
+      id="public-env"
+      strategy="beforeInteractive"
     />
   )
 }

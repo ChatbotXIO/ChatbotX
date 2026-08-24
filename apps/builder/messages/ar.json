@@ -1781,7 +1781,9 @@
       "label": "الردود المحفوظة"
     },
     "role": {
-      "label": "الدور"
+      "label": "الدور",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "الخطة"

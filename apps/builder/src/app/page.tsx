@@ -89,10 +89,10 @@ export default async function MainPage() {
         <WorkspacesList
           blocked={cloud && blocked}
           isAtLimit={atLimit?.workspaces ?? false}
+          isPlatformAdmin={platformAdmin}
           ownerWorkspaceIds={ownerWorkspaceIds}
           reason={blockReason}
           superAdminWorkspaceIds={superAdminWorkspaceIds}
-          isPlatformAdmin={platformAdmin}
           user={userInfo}
           workspaces={allWorkspaces}
         />

@@ -1,6 +1,5 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
-import { contactInboxModel } from "@chatbotx.io/database/schema"
 import type {
   ContactResponse,
   FindContactRequest,
