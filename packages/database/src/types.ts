@@ -28,6 +28,11 @@ export type AppointmentReminderDispatchModel =
 export type FlowModel = typeof schema.flowModel.$inferSelect
 export type FolderModel = typeof schema.folderModel.$inferSelect
 export type TagModel = typeof schema.tagModel.$inferSelect
+export type TemplateModel = typeof schema.templateModel.$inferSelect
+export type TemplateInstallationModel =
+  typeof schema.templateInstallationModel.$inferSelect
+export type TemplateInstalledResourceModel =
+  typeof schema.templateInstalledResourceModel.$inferSelect
 export type EmailTopicModel = typeof schema.emailTopicModel.$inferSelect
 export type AnalyticsEmailTopicModel =
   typeof schema.analyticsEmailTopicModel.$inferSelect

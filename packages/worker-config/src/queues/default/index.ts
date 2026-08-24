@@ -40,6 +40,7 @@ export const DefaultJobAction = {
   checkMetaCatalogSync: "checkMetaCatalogSync",
   syncExternalCalendarEvent: "syncExternalCalendarEvent",
   sendAppointmentReminder: "sendAppointmentReminder",
+  installTemplate: "installTemplate",
 } as const
 
 export const syncExternalCalendarEventJobId = (
@@ -251,6 +252,14 @@ export type JobSendAppointmentReminder = {
   data: JobSendAppointmentReminderData
 }
 
+export type JobInstallTemplate = {
+  type: typeof DefaultJobAction.installTemplate
+  data: {
+    installationId: string
+    workspaceId: string
+  }
+}
+
 export type DefaultJobData =
   | JobExportContacts
   | JobExportCoupons
@@ -265,3 +274,4 @@ export type DefaultJobData =
   | JobCheckMetaCatalogSync
   | JobSyncExternalCalendarEvent
   | JobSendAppointmentReminder
+  | JobInstallTemplate

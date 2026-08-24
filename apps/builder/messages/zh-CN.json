@@ -149,7 +149,8 @@
     "uploadFile": "上传文件",
     "view": "查看",
     "viewAnalytics": "查看分析",
-    "wait": "等等"
+    "wait": "等等",
+    "loadMore": "Load more"
   },
   "activeCampaign": {
     "automations": {
@@ -2040,6 +2041,9 @@
     "mcpServer": {
       "label": "MCP服务器"
     },
+    "template": {
+      "label": "Template"
+    },
     "me": {
       "label": "我的数据链接"
     },
@@ -2408,11 +2412,13 @@
     },
     "status": {
       "completed": "已完成",
+      "partial": "Partial",
       "error": "错误",
       "failed": "失败",
       "label": "状态",
       "pending": "待定",
       "processing": "处理中",
+      "installing": "Installing",
       "success": "成功"
     },
     "statusCode": {
@@ -4362,7 +4368,56 @@
   },
   "templates": {
     "description": "创建并管理您的范本。",
-    "title": "范本"
+    "title": "范本",
+    "share": {
+      "label": "Share",
+      "enabled": "Shared",
+      "disabled": "Not shared"
+    },
+    "installs": {
+      "title": "Installs",
+      "resources": "Resources",
+      "warnings": "Warnings",
+      "completedAt": "Completed at",
+      "autoUpdate": "Auto-update",
+      "updateNow": "Update now",
+      "updateStarted": "Update started"
+    },
+    "form": {
+      "contents": "Template contents",
+      "comingSoon": "Coming soon",
+      "selectAll": "Select all",
+      "selectedCount": "{count} selected",
+      "details": "Details",
+      "permissions": "Default permissions",
+      "allowEdit": "Allow editing after install",
+      "allowDelete": "Allow deleting after install",
+      "publisherName": "Publisher name",
+      "youtubeVideoId": "YouTube video ID",
+      "testLink": "Test link",
+      "imageUrl": "Cover image",
+      "installBehavior": "Install behavior",
+      "createInstallFolder": "Install into a dedicated folder",
+      "createInstallFolderDescription": "Nest every installed resource under one new folder named after this template.",
+      "defaultAutoUpdate": "Flag installs for updates by default",
+      "defaultAutoUpdateDescription": "New installs will show an update available notice whenever you republish this template."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Custom fields",
+      "tags": "Tags",
+      "products": "Products",
+      "productCategories": "Product categories",
+      "aiFunctions": "AI functions",
+      "aiAgents": "AI agents",
+      "calendars": "Calendars",
+      "webchats": "Webchats",
+      "keywords": "Keywords",
+      "entryPointLinks": "Entry point links",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook comment automations",
+      "settings": "Settings"
+    }
   },
   "texts": {
     "or": "或"
@@ -4450,6 +4505,18 @@
     "title": "您已取消订阅。",
     "unavailableDescription": "此工作区不再可用。",
     "unavailableTitle": "无法取消订阅。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "This link is no longer available.",
+    "invalidDescription": "This template share link is invalid, disabled, or has expired.",
+    "byPublisher": "By {publisherName}",
+    "includes": "This template includes",
+    "tryItOut": "Try it out",
+    "signInToInstall": "Sign in to install",
+    "selectWorkspace": "Select a workspace",
+    "install": "Install",
+    "installStarted": "Install started",
+    "noEligibleWorkspaces": "You don't have a workspace eligible to install this template."
   },
   "userPersistentMenus": {
     "title": "用户常驻菜单"

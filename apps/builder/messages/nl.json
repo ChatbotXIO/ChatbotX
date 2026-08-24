@@ -145,7 +145,8 @@
     "onSuccess": "Bij succes",
     "clone": "Klonen",
     "remove": "Verwijderen",
-    "restore": "Herstellen"
+    "restore": "Herstellen",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Je moet superbeheerder van de werkruimte zijn om dit te doen."
@@ -975,6 +976,9 @@
     "mcpServer": {
       "label": "MCP-server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Systeemfunctie",
       "names": {
@@ -1179,7 +1183,9 @@
       "label": "Status",
       "pending": "In behandeling",
       "processing": "Wordt verwerkt",
+      "installing": "Installing",
       "completed": "Voltooid",
+      "partial": "Partial",
       "failed": "Mislukt",
       "success": "Geslaagd",
       "error": "Fout"
@@ -4294,7 +4300,56 @@
   },
   "templates": {
     "title": "Sjablonen",
-    "description": "Maak en beheer je sjablonen."
+    "description": "Maak en beheer je sjablonen.",
+    "share": {
+      "label": "Share",
+      "enabled": "Shared",
+      "disabled": "Not shared"
+    },
+    "installs": {
+      "title": "Installs",
+      "resources": "Resources",
+      "warnings": "Warnings",
+      "completedAt": "Completed at",
+      "autoUpdate": "Auto-update",
+      "updateNow": "Update now",
+      "updateStarted": "Update started"
+    },
+    "form": {
+      "contents": "Template contents",
+      "comingSoon": "Coming soon",
+      "selectAll": "Select all",
+      "selectedCount": "{count} selected",
+      "details": "Details",
+      "permissions": "Default permissions",
+      "allowEdit": "Allow editing after install",
+      "allowDelete": "Allow deleting after install",
+      "publisherName": "Publisher name",
+      "youtubeVideoId": "YouTube video ID",
+      "testLink": "Test link",
+      "imageUrl": "Cover image",
+      "installBehavior": "Install behavior",
+      "createInstallFolder": "Install into a dedicated folder",
+      "createInstallFolderDescription": "Nest every installed resource under one new folder named after this template.",
+      "defaultAutoUpdate": "Flag installs for updates by default",
+      "defaultAutoUpdateDescription": "New installs will show an update available notice whenever you republish this template."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Custom fields",
+      "tags": "Tags",
+      "products": "Products",
+      "productCategories": "Product categories",
+      "aiFunctions": "AI functions",
+      "aiAgents": "AI agents",
+      "calendars": "Calendars",
+      "webchats": "Webchats",
+      "keywords": "Keywords",
+      "entryPointLinks": "Entry point links",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook comment automations",
+      "settings": "Settings"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR-codegenerator",
@@ -4409,6 +4464,18 @@
     "invalidDescription": "Deze link is ongeldig of verlopen.",
     "unavailableTitle": "Afmelden niet beschikbaar.",
     "unavailableDescription": "Deze werkruimte is niet meer beschikbaar."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "This link is no longer available.",
+    "invalidDescription": "This template share link is invalid, disabled, or has expired.",
+    "byPublisher": "By {publisherName}",
+    "includes": "This template includes",
+    "tryItOut": "Try it out",
+    "signInToInstall": "Sign in to install",
+    "selectWorkspace": "Select a workspace",
+    "install": "Install",
+    "installStarted": "Install started",
+    "noEligibleWorkspaces": "You don't have a workspace eligible to install this template."
   },
   "extensionsMe": {
     "actions": {

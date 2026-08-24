@@ -117,6 +117,9 @@ import { sequenceStepRelations } from "./sequence-step"
 import { spreadsheetRelations } from "./spreadsheet"
 import { tagRelations } from "./tag"
 import { tagChannelRelations } from "./tag-channel"
+import { templateRelations } from "./template"
+import { templateInstallationRelations } from "./template-installation"
+import { templateInstalledResourceRelations } from "./template-installed-resource"
 import { triggerRelations } from "./trigger"
 import { conditionRelations } from "./trigger-condition"
 import { triggerContactHistoryRelations } from "./trigger-contact-history"
@@ -141,6 +144,9 @@ export const relations = {
   ...integrationOpenaiRelations,
   ...contactRelations,
   ...tagRelations,
+  ...templateRelations,
+  ...templateInstallationRelations,
+  ...templateInstalledResourceRelations,
   ...accountRelations,
   ...userRelations,
   ...workspaceRelations,

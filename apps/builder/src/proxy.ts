@@ -26,6 +26,10 @@ const publicRoutes = [
   "/booking",
   "/portal/redeem",
   "/webchat",
+  // Trailing slash is deliberate: `isPublicRoute` below is a bare
+  // unanchored `startsWith`, so "/t" (no slash) would also match
+  // "/templates" and make the authenticated template list world-readable.
+  "/t/",
 ]
 const signinPath = "/auth/sign-in"
 
