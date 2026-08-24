@@ -5,7 +5,7 @@ import {
 } from "./appointment-token-utils"
 
 const TOKEN_AAD = "minigame-play-token"
-const DEFAULT_TOKEN_TTL_MS = 60 * 60 * 1000
+const DEFAULT_TOKEN_TTL_MS = 24 * 60 * 60 * 1000
 
 export const minigamePlayPayloadSchema = z.object({
   workspaceId: z.string().min(1),
