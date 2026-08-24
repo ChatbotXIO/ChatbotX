@@ -25,6 +25,7 @@ const publicRoutes = [
   "/extensions",
   "/booking",
   "/portal/redeem",
+  "/webchat",
 ]
 const signinPath = "/auth/sign-in"
 
@@ -118,7 +119,7 @@ function isPublicRoute(pathname: string) {
 
 export const config = {
   matcher: [
-    "/((?!webchat|zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json|dynamic-image/).*)",
+    "/((?!zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json|dynamic-image/).*)",
     "/api/presigned-upload",
     "/api/whatsapp/:path*",
   ],
