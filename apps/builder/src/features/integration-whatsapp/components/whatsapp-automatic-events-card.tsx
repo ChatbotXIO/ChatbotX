@@ -29,10 +29,12 @@ export function WhatsappAutomaticEventsCard({
   integrationWhatsapp,
   whatsappCredentialPublic,
   workspaceId,
+  oauthCallbackUrl,
 }: {
   integrationWhatsapp: AutomaticEventsIntegration
   whatsappCredentialPublic: WhatsappCredentialPublic | null
   workspaceId: string
+  oauthCallbackUrl: string
 }) {
   const t = useTranslations()
   const status = getPermissionStatus(
@@ -74,6 +76,7 @@ export function WhatsappAutomaticEventsCard({
           {status === "missingPermission" && (
             <WhatsappReconnectButton
               integrationWhatsappId={integrationWhatsapp.id}
+              oauthCallbackUrl={oauthCallbackUrl}
               settings={whatsappCredentialPublic}
               workspaceId={workspaceId}
             />

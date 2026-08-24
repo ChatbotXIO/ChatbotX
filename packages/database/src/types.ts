@@ -2,7 +2,10 @@ import type * as schema from "./schema"
 
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
+export type IntegrationApiModel = typeof schema.integrationApiModel.$inferSelect
 export type UserModel = typeof schema.userModel.$inferSelect
+export type UserDeviceTokenModel =
+  typeof schema.userDeviceTokenModel.$inferSelect
 export type AIAgentModel = typeof schema.aiAgentModel.$inferSelect
 export type AIFunctionModel = typeof schema.aiFunctionModel.$inferSelect
 export type AIMCPServerModel = typeof schema.aiMCPServerModel.$inferSelect
@@ -27,6 +30,11 @@ export type AppointmentReminderDispatchModel =
 export type FlowModel = typeof schema.flowModel.$inferSelect
 export type FolderModel = typeof schema.folderModel.$inferSelect
 export type TagModel = typeof schema.tagModel.$inferSelect
+export type TemplateModel = typeof schema.templateModel.$inferSelect
+export type TemplateInstallationModel =
+  typeof schema.templateInstallationModel.$inferSelect
+export type TemplateInstalledResourceModel =
+  typeof schema.templateInstalledResourceModel.$inferSelect
 export type EmailTopicModel = typeof schema.emailTopicModel.$inferSelect
 export type AnalyticsEmailTopicModel =
   typeof schema.analyticsEmailTopicModel.$inferSelect
@@ -147,6 +155,10 @@ export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
 export type DynamicImageModel = typeof schema.dynamicImageModel.$inferSelect
+export type MinigameModel = typeof schema.minigameModel.$inferSelect
+export type MinigameContactModel =
+  typeof schema.minigameContactModel.$inferSelect
+export type MinigamePlayModel = typeof schema.minigamePlayModel.$inferSelect
 export type MagicLinkModel = typeof schema.magicLinkModel.$inferSelect
 export type IntegrationInstagramModel =
   typeof schema.integrationInstagramModel.$inferSelect
@@ -165,6 +177,7 @@ export type WhatsappSignupSessionModel =
   typeof schema.whatsappSignupSessionModel.$inferSelect
 
 export type InboxWithIntegrations = InboxModel & {
+  integrationApi?: IntegrationApiModel | null
   integrationInstagram?: IntegrationInstagramModel | null
   integrationMessenger?: IntegrationMessengerModel | null
   integrationTelegram?: IntegrationTelegramModel | null

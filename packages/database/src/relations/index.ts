@@ -72,6 +72,7 @@ import { inboxTeamRelations } from "./inbox-team"
 import { inboxTeamMemberRelations } from "./inbox-team-member"
 import { integrationRelations } from "./integration"
 import { integrationActiveCampaignRelations } from "./integration-active-campaign"
+import { integrationApiRelations } from "./integration-api"
 import { integrationClaudeRelations } from "./integration-claude"
 import { integrationDeepseekRelations } from "./integration-deepseek"
 import { integrationDripRelations } from "./integration-drip"
@@ -102,6 +103,9 @@ import { messageRelations } from "./message"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
 import { metaCapiEventRelations } from "./meta-capi-event"
 import { metaCatalogRelations } from "./meta-catalog"
+import { minigameRelations } from "./minigame"
+import { minigameContactRelations } from "./minigame-contact"
+import { minigamePlayRelations } from "./minigame-play"
 import { productRelations } from "./product"
 import { productCategoryRelations } from "./product-category"
 import { questionnaireRelations } from "./questionnaire"
@@ -113,12 +117,16 @@ import { sequenceStepRelations } from "./sequence-step"
 import { spreadsheetRelations } from "./spreadsheet"
 import { tagRelations } from "./tag"
 import { tagChannelRelations } from "./tag-channel"
+import { templateRelations } from "./template"
+import { templateInstallationRelations } from "./template-installation"
+import { templateInstalledResourceRelations } from "./template-installed-resource"
 import { triggerRelations } from "./trigger"
 import { conditionRelations } from "./trigger-condition"
 import { triggerContactHistoryRelations } from "./trigger-contact-history"
 import { triggerExecutionRelations } from "./trigger-execution"
 import { triggerStatsRelations } from "./trigger-stats"
 import { userRelations } from "./user"
+import { userDeviceTokenRelations } from "./user-device-token"
 import { userPersistentMenuRelations } from "./user-persistent-menu"
 import { webhookRelations } from "./webhook"
 import { webhookExecutionRelations } from "./webhook-execution"
@@ -129,6 +137,7 @@ import { workspaceRelations } from "./workspace"
 import { workspaceMemberRelations } from "./workspace-member"
 
 export const relations = {
+  ...integrationApiRelations,
   ...aiTriggerRelations,
   ...adsConversionEventRelations,
   ...metaCapiEventRelations,
@@ -136,6 +145,9 @@ export const relations = {
   ...integrationOpenaiRelations,
   ...contactRelations,
   ...tagRelations,
+  ...templateRelations,
+  ...templateInstallationRelations,
+  ...templateInstalledResourceRelations,
   ...accountRelations,
   ...userRelations,
   ...workspaceRelations,
@@ -254,6 +266,10 @@ export const relations = {
   ...questionnaireRelations,
   ...coexistSyncRunRelations,
   ...userPersistentMenuRelations,
+  ...userDeviceTokenRelations,
   ...whatsappSignupSessionRelations,
   ...automationThrottleRelations,
+  ...minigameRelations,
+  ...minigameContactRelations,
+  ...minigamePlayRelations,
 }

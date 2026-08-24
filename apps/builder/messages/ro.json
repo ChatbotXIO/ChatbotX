@@ -901,7 +901,8 @@
     "onSuccess": "La reușită",
     "clone": "Clonează",
     "remove": "Elimină",
-    "restore": "Restaurează"
+    "restore": "Restaurează",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Trebuie să fii superadministrator al spațiului de lucru pentru a face acest lucru."
@@ -1555,6 +1556,9 @@
     "dynamicImage": {
       "label": "Imagine dinamică"
     },
+    "minigame": {
+      "label": "Minijoc"
+    },
     "savePayloadToCustomField": {
       "label": "Salvează conținutul în câmpul personalizat"
     },
@@ -1914,6 +1918,9 @@
     "mcpServer": {
       "label": "Server MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Funcție de sistem",
       "names": {
@@ -2118,7 +2125,9 @@
       "label": "Stare",
       "pending": "În așteptare",
       "processing": "În curs de procesare",
+      "installing": "Installing",
       "completed": "Finalizat",
+      "partial": "Partial",
       "failed": "Eșuat",
       "success": "Succes",
       "error": "Eroare"
@@ -2762,6 +2771,26 @@
     },
     "enabled": {
       "label": "Activat"
+    },
+    "api": {
+      "label": "API",
+      "description": "Conectați orice aplicație compatibilă HTTP ca un canal. Aplicația dumneavoastră trimite mesajele primite către API-ul nostru REST, iar noi livrăm răspunsurile la callback URL-ul dumneavoastră.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Trimitem aici răspunsurile trimise prin POST, semnate cu secretul specific căsuței dumneavoastră de mesaje.",
+        "notSet": "Nesetat"
+      },
+      "token": "Token",
+      "rotateToken": "Regenerează token-ul",
+      "status": {
+        "enabled": "Activat",
+        "disabled": "Dezactivat"
+      },
+      "tokenReveal": {
+        "title": "Copiază token-ul tău API",
+        "description": "Acest token este afișat o singură dată. Păstrează-l în siguranță — nu îl vei mai putea vizualiza din nou.",
+        "done": "Finalizat"
+      }
     }
   },
   "channels": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Reîmprospătează permisiunile",
+    "reconnect": "Reconectează",
     "duplicated": "Acest cont OA Zalo a fost deja conectat la un alt spațiu de lucru.",
     "tagSync": {
       "title": "Sincronizare etichete",
@@ -3962,11 +3991,11 @@
     "description": "Creează și gestionează programările tale.",
     "title": "Programări",
     "flowModes": {
-      "bookFromCustomField": "Programează o întâlnire",
-      "checkAvailabilityFromCustomField": "Verifică disponibilitatea",
-      "book": "Selector dată și oră",
-      "checkAvailability": "Selector interval de date",
-      "cancel": "Anulează întâlnirea"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mod",
@@ -4808,7 +4837,60 @@
   },
   "templates": {
     "description": "Creează și gestionează șabloanele tale.",
-    "title": "Șabloane"
+    "title": "Șabloane",
+    "share": {
+      "label": "Distribuie",
+      "enabled": "Distribuit",
+      "disabled": "Nedistribuit",
+      "dialogTitle": "Distribuie șablonul",
+      "dialogDescription": "Oricine are acest link poate instala o copie a acestui șablon într-un spațiu de lucru din organizația ta.",
+      "enableLabel": "Activează linkul de distribuire",
+      "linkLabel": "Link de distribuire",
+      "description": "Oricine are linkul poate instala acest șablon în propriul spațiu de lucru."
+    },
+    "installs": {
+      "title": "Instalări",
+      "resources": "Resurse",
+      "warnings": "Avertismente",
+      "completedAt": "Finalizat la",
+      "autoUpdate": "Actualizare automată"
+    },
+    "form": {
+      "contents": "Conținutul șablonului",
+      "comingSoon": "În curând",
+      "selectAll": "Selectează tot",
+      "selectedCount": "{count} selectate",
+      "details": "Detalii",
+      "permissions": "Permisiuni implicite",
+      "allowEdit": "Permite editarea după instalare",
+      "allowDelete": "Permite ștergerea după instalare",
+      "publisherName": "Numele editorului",
+      "youtubeVideoId": "ID-ul videoclipului YouTube",
+      "youtubeVideoIdDescription": "ID-ul de 11 caractere din URL-ul videoclipului, de ex. \"dQw4w9WgXcQ\" în youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Link de test",
+      "imageUrl": "Imagine de copertă",
+      "installBehavior": "Comportament la instalare",
+      "createInstallFolder": "Instalează într-un folder dedicat",
+      "createInstallFolderDescription": "Grupează fiecare resursă instalată într-un singur folder nou, denumit după acest șablon.",
+      "defaultAutoUpdate": "Marchează instalările pentru actualizări în mod implicit",
+      "defaultAutoUpdateDescription": "Instalările noi vor afișa o notificare de actualizare disponibilă de fiecare dată când republici acest șablon."
+    },
+    "categories": {
+      "flows": "Fluxuri",
+      "customFields": "Câmpuri personalizate",
+      "tags": "Etichete",
+      "products": "Produse",
+      "productCategories": "Categorii de produse",
+      "aiFunctions": "Funcții AI",
+      "aiAgents": "Agenți AI",
+      "calendars": "Calendare de programări",
+      "webchats": "Chat-uri web",
+      "keywords": "Cuvinte cheie",
+      "entryPointLinks": "Linkuri de intrare",
+      "triggers": "Declanșatoare",
+      "fbCommentAutomations": "Automatizări comentarii Facebook",
+      "settings": "Setări"
+    }
   },
   "tiktok": {
     "description": "Conectează-ți contul TikTok pentru a răspunde la mesajele directe.",
@@ -4822,6 +4904,19 @@
     "title": "Ai fost dezabonat.",
     "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
     "unavailableTitle": "Dezabonare indisponibilă."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Acest link nu mai este disponibil.",
+    "invalidDescription": "Acest link de distribuire a șablonului este invalid, dezactivat sau expirat.",
+    "byPublisher": "De {publisherName}",
+    "includes": "Acest șablon include",
+    "videoTitle": "Videoclip de previzualizare a șablonului",
+    "tryItOut": "Încearcă-l",
+    "signInToInstall": "Autentifică-te pentru a instala",
+    "selectWorkspace": "Selectează un spațiu de lucru",
+    "install": "Instalează",
+    "installStarted": "Instalarea a început",
+    "noEligibleWorkspaces": "Nu ai niciun spațiu de lucru eligibil pentru a instala acest șablon."
   },
   "bookingWebview": {
     "metadataTitle": "Programează o întâlnire",
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Conectează"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Creează și gestionează minijocuri de tip loterie norocoasă pentru clienții tăi.",
+    "types": {
+      "luckyWheel": "Roata norocului",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Tragere la sorți",
+      "scratchOff": "Răzuiește și câștigă"
+    },
+    "createDialog": {
+      "title": "Alege un tip de minijoc",
+      "comingSoon": "În curând"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Suma tuturor probabilităților: {value}%",
+      "loseProbability": "Probabilitate de pierdere: {value}%",
+      "winProbability": "Probabilitate de câștig: {value}%",
+      "newPrize": "Premiu nou"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Editează premiul",
+      "nonWinningTitle": "Editează setarea pentru „fără câștig”",
+      "prizeNameLabel": "Numele premiului",
+      "nonWinningTitleLabel": "Titlu",
+      "loseImageDescription": "Dimensiune recomandată 120x120px",
+      "quantityLabel": "Cantitate premiu",
+      "quantityDescription": "Numărul de câte ori mai poate fi câștigat acest premiu; scade cu 1 la fiecare câștig. Lasă necompletat pentru nelimitat.",
+      "sendMessage": "Trimite un mesaj când jucătorul nu câștigă",
+      "sendWinMessage": "Trimite un mesaj câștigătorului care a primit premiul",
+      "messageMode": "Tip mesaj",
+      "messageModeText": "Text",
+      "messageModeFlow": "Flux",
+      "messageText": "Mesaj"
+    },
+    "winningMessageDialog": {
+      "title": "Setări mesaj de câștig",
+      "titleLabel": "Titlu",
+      "acceptButtonText": "Text buton Acceptă",
+      "shareButtonText": "Text buton Distribuie",
+      "shareButtonDescription": "Descriere buton Distribuie"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Setări mesaj fără câștig",
+      "titleLabel": "Titlu",
+      "shareButtonText": "Text buton Distribuie",
+      "shareButtonDescription": "Descriere buton Distribuie"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Distribuie prietenilor",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Previzualizarea detaliată pentru acest tip de joc va fi disponibilă în curând",
+      "rules": "Reguli"
+    },
+    "form": {
+      "generalSettingsTitle": "Setări generale",
+      "appearanceTitle": "Aspect",
+      "playerSettingsTitle": "Setări jucător",
+      "prizeSettingsTitle": "Setări premii"
+    },
+    "generalSettings": {
+      "playedAt": "Jucat la",
+      "rulesDescription": "Descrierea regulilor",
+      "openerTags": "Etichetează contactele care deschid linkul jocului",
+      "playerTags": "Etichetează jucătorii",
+      "newFriendTags": "Etichetează prietenii noi",
+      "shareEnabled": "Permite distribuirea către prieteni",
+      "shareMessage": "Mesaj de distribuire",
+      "shareMessageHint": "Folosește '{{shareUrl}}' pentru a introduce linkul real al jocului — te rugăm să nu îl elimini."
+    },
+    "appearance": {
+      "backgroundColor": "Culoare fundal",
+      "machineColor": "Culoare mecanism",
+      "decorativeColor": "Culoare decorativă",
+      "ruleTextColor": "Culoare text reguli",
+      "backgroundImage": "Imagine de fundal",
+      "backgroundImageDescription": "Lățime recomandată: 1024px",
+      "prizeDescriptionImage": "Imagine descriere premiu (opțional)",
+      "prizeDescriptionImageDescription": "Lățime recomandată: 750px",
+      "startButtonImage": "Imagine buton Start",
+      "startButtonImageDescription": "Dimensiune recomandată: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Numărul de șanse de tragere norocoasă per persoană",
+      "resetPolicyLabel": "Resetare trageri",
+      "resetNever": "Nu reseta numărul de trageri",
+      "resetEveryNDays": "Resetează numărul de trageri la fiecare",
+      "resetIntervalDaysSuffix": "zi(le)"
+    },
+    "publicUrl": {
+      "label": "URL public",
+      "hint": "Copiază și inserează URL-ul în fluxul, difuzarea sau secvența ta pentru a distribui acest minijoc."
+    },
+    "play": {
+      "close": "Închide",
+      "drawsRemaining": "{count} încercări rămase",
+      "noDrawsLeft": "Nu mai ai încercări pentru acest minijoc.",
+      "notStartedYet": "Acest minijoc nu a început încă.",
+      "ended": "Acest minijoc s-a încheiat.",
+      "forbiddenTitle": "Acces refuzat",
+      "forbiddenDescription": "Acest link este invalid sau a expirat.",
+      "comingSoonTitle": "În curând",
+      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă."
+    },
+    "history": {
+      "title": "Istoric",
+      "played": "Jocuri",
+      "remaining": "Extrageri rămase",
+      "openedAt": "Prima deschidere",
+      "lastPlayedAt": "Ultimul joc",
+      "unknownContact": "Contact necunoscut",
+      "record": "Înregistrare",
+      "recordDialog": {
+        "title": "Înregistrări de joc",
+        "win": "A câștigat",
+        "lose": "Fără premiu",
+        "empty": "Nu există încă înregistrări de joc"
+      }
     }
   }
 }

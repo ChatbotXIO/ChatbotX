@@ -145,7 +145,8 @@
     "onSuccess": "במקרה של הצלחה",
     "clone": "שכפול",
     "remove": "הסרה",
-    "restore": "שחזור"
+    "restore": "שחזור",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
@@ -1825,7 +1826,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "רענון הרשאות",
+    "reconnect": "חיבור מחדש",
     "duplicated": "חשבון Zalo OA זה כבר חובר לסביבת עבודה אחרת.",
     "tagSync": {
       "title": "סנכרון תגיות",
@@ -2513,11 +2514,11 @@
     "title": "תזמון פגישות",
     "description": "יצירה וניהול של תזמון הפגישות שלכם.",
     "flowModes": {
-      "bookFromCustomField": "קביעת פגישה",
-      "checkAvailabilityFromCustomField": "בדיקת זמינות",
-      "book": "בורר תאריך ושעה",
-      "checkAvailability": "בורר טווח תאריכים",
-      "cancel": "ביטול פגישה"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "מצב",
@@ -2536,7 +2537,60 @@
   },
   "templates": {
     "title": "תבניות",
-    "description": "יצירה וניהול של התבניות שלכם."
+    "description": "צור ונהל את התבניות שלך.",
+    "share": {
+      "label": "שיתוף",
+      "enabled": "משותפת",
+      "disabled": "לא משותפת",
+      "dialogTitle": "שיתוף תבנית",
+      "dialogDescription": "כל מי שיש לו את הקישור הזה יכול להתקין עותק של התבנית הזו בסביבת עבודה בארגון שלך.",
+      "enableLabel": "הפעלת קישור שיתוף",
+      "linkLabel": "קישור שיתוף",
+      "description": "כל מי שיש לו את הקישור יכול להתקין את התבנית הזו בסביבת העבודה שלו."
+    },
+    "installs": {
+      "title": "התקנות",
+      "resources": "משאבים",
+      "warnings": "אזהרות",
+      "completedAt": "הושלם בתאריך",
+      "autoUpdate": "עדכון אוטומטי"
+    },
+    "form": {
+      "contents": "תוכן התבנית",
+      "comingSoon": "בקרוב",
+      "selectAll": "בחירת הכול",
+      "selectedCount": "{count} נבחרו",
+      "details": "פרטים",
+      "permissions": "הרשאות ברירת מחדל",
+      "allowEdit": "אפשר עריכה לאחר ההתקנה",
+      "allowDelete": "אפשר מחיקה לאחר ההתקנה",
+      "publisherName": "שם המפרסם",
+      "youtubeVideoId": "מזהה סרטון YouTube",
+      "youtubeVideoIdDescription": "המזהה בן 11 התווים מכתובת ה-URL של הסרטון, למשל \"dQw4w9WgXcQ\" בכתובת youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "קישור בדיקה",
+      "imageUrl": "תמונת שער",
+      "installBehavior": "התנהגות ההתקנה",
+      "createInstallFolder": "התקנה בתיקייה ייעודית",
+      "createInstallFolderDescription": "מקנן כל משאב שהותקן בתוך תיקייה חדשה אחת הנקראת על שם התבנית הזו.",
+      "defaultAutoUpdate": "סימון התקנות לעדכון כברירת מחדל",
+      "defaultAutoUpdateDescription": "התקנות חדשות יציגו הודעת עדכון זמין בכל פעם שתפרסם מחדש את התבנית הזו."
+    },
+    "categories": {
+      "flows": "תהליכים",
+      "customFields": "שדות מותאמים אישית",
+      "tags": "תגיות",
+      "products": "מוצרים",
+      "productCategories": "קטגוריות מוצרים",
+      "aiFunctions": "פונקציות AI",
+      "aiAgents": "סוכני AI",
+      "calendars": "יומני פגישות",
+      "webchats": "צ'אטים אינטרנטיים",
+      "keywords": "מילות מפתח",
+      "entryPointLinks": "קישורים לנקודות כניסה",
+      "triggers": "גורמים מפעילים",
+      "fbCommentAutomations": "אוטומציות תגובות פייסבוק",
+      "settings": "הגדרות"
+    }
   },
   "qrCodeGenerator": {
     "title": "מחולל קודי QR",
@@ -2651,6 +2705,19 @@
     "invalidDescription": "קישור זה אינו תקין או שפג תוקפו.",
     "unavailableTitle": "ביטול ההרשמה אינו זמין.",
     "unavailableDescription": "סביבת עבודה זו אינה זמינה עוד."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "קישור זה אינו זמין עוד.",
+    "invalidDescription": "קישור השיתוף של התבנית הזו אינו תקין, מושבת או שפג תוקפו.",
+    "byPublisher": "מאת {publisherName}",
+    "includes": "התבנית הזו כוללת",
+    "videoTitle": "סרטון תצוגה מקדימה של התבנית",
+    "tryItOut": "נסה עכשיו",
+    "signInToInstall": "התחבר כדי להתקין",
+    "selectWorkspace": "בחר סביבת עבודה",
+    "install": "התקן",
+    "installStarted": "ההתקנה החלה",
+    "noEligibleWorkspaces": "אין לך סביבת עבודה מתאימה להתקנת התבנית הזו."
   },
   "extensionsMe": {
     "actions": {
@@ -3286,6 +3353,9 @@
     "dynamicImage": {
       "label": "תמונה דינמית"
     },
+    "minigame": {
+      "label": "מיני-משחק"
+    },
     "savePayloadToCustomField": {
       "label": "שמירת המטען בשדה מותאם אישית"
     },
@@ -3645,6 +3715,9 @@
     "mcpServer": {
       "label": "שרת MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "פונקציית מערכת",
       "names": {
@@ -3849,7 +3922,9 @@
       "label": "מצב",
       "pending": "ממתין",
       "processing": "בעיבוד",
+      "installing": "Installing",
       "completed": "הושלם",
+      "partial": "Partial",
       "failed": "נכשל",
       "success": "הצלחה",
       "error": "שגיאה"
@@ -4493,6 +4568,26 @@
     },
     "enabled": {
       "label": "מופעל"
+    },
+    "api": {
+      "label": "API",
+      "description": "חברו כל אפליקציה התומכת ב-HTTP כערוץ. האפליקציה שלכם שולחת הודעות נכנסות אל ה-REST API שלנו, ואנחנו מעבירים את התגובות אל כתובת ה-callback שלכם.",
+      "callbackUrl": {
+        "label": "כתובת Callback",
+        "description": "אנחנו שולחים לכאן תגובות יוצאות בבקשת POST, חתומות בסוד הייחודי של תיבת הדואר הנכנס שלכם.",
+        "notSet": "לא הוגדר"
+      },
+      "token": "אסימון",
+      "rotateToken": "החלף אסימון",
+      "status": {
+        "enabled": "מופעל",
+        "disabled": "מושבת"
+      },
+      "tokenReveal": {
+        "title": "העתיקו את אסימון ה-API שלכם",
+        "description": "אסימון זה מוצג פעם אחת בלבד. שמרו אותו במקום בטוח — לא תוכלו לצפות בו שוב.",
+        "done": "בוצע"
+      }
     }
   },
   "billing": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "חיבור"
+    }
+  },
+  "minigames": {
+    "title": "גיימיפיקציה",
+    "description": "צרו ונהלו מיני-משחקי הגרלה עבור הלקוחות שלכם.",
+    "types": {
+      "luckyWheel": "גלגל המזל",
+      "jackpot": "ג'קפוט",
+      "gashapon": "גשאפון",
+      "drawLots": "הגרלת גורל",
+      "scratchOff": "כרטיס גירוד"
+    },
+    "createDialog": {
+      "title": "בחרו סוג מיני-משחק",
+      "comingSoon": "בקרוב"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "סכום כל ההסתברויות: {value}%",
+      "loseProbability": "הסתברות הפסד: {value}%",
+      "winProbability": "הסתברות זכייה: {value}%",
+      "newPrize": "פרס חדש"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "עריכת פרס",
+      "nonWinningTitle": "עריכת הגדרת אי-זכייה",
+      "prizeNameLabel": "שם הפרס",
+      "nonWinningTitleLabel": "כותרת",
+      "loseImageDescription": "גודל מומלץ 120x120 פיקסלים",
+      "quantityLabel": "כמות הפרס",
+      "quantityDescription": "מספר הפעמים שניתן עדיין לזכות בפרס זה; יורד ב-1 בכל זכייה. השאירו ריק ללא הגבלה.",
+      "sendMessage": "שליחת הודעה כאשר השחקן לא זוכה",
+      "sendWinMessage": "שליחת הודעה לזוכה שקיבל את הפרס",
+      "messageMode": "סוג הודעה",
+      "messageModeText": "טקסט",
+      "messageModeFlow": "פלואו",
+      "messageText": "הודעה"
+    },
+    "winningMessageDialog": {
+      "title": "הגדרות הודעת זכייה",
+      "titleLabel": "כותרת",
+      "acceptButtonText": "טקסט כפתור אישור",
+      "shareButtonText": "טקסט כפתור שיתוף",
+      "shareButtonDescription": "תיאור כפתור שיתוף"
+    },
+    "nonWinningMessageDialog": {
+      "title": "הגדרות הודעת אי-זכייה",
+      "titleLabel": "כותרת",
+      "shareButtonText": "טקסט כפתור שיתוף",
+      "shareButtonDescription": "תיאור כפתור שיתוף"
+    },
+    "preview": {
+      "start": "התחלה",
+      "shareWithFriends": "שיתוף עם חברים",
+      "jackpotHeader": "ג'קפוט",
+      "jackpotBanner": "ג'קפוט",
+      "comingSoon": "תצוגה מקדימה מפורטת תגיע בקרוב עבור סוג משחק זה",
+      "rules": "חוקים"
+    },
+    "form": {
+      "generalSettingsTitle": "הגדרות כלליות",
+      "appearanceTitle": "מראה",
+      "playerSettingsTitle": "הגדרות שחקן",
+      "prizeSettingsTitle": "הגדרות פרסים"
+    },
+    "generalSettings": {
+      "playedAt": "שוחק בתאריך",
+      "rulesDescription": "תיאור החוקים",
+      "openerTags": "תיוג אנשי קשר שפותחים את קישור המשחק",
+      "playerTags": "תיוג שחקנים",
+      "newFriendTags": "תיוג חברים חדשים",
+      "shareEnabled": "אפשרו שיתוף עם חברים",
+      "shareMessage": "הודעת שיתוף",
+      "shareMessageHint": "השתמשו ב-'{{shareUrl}}' כדי להוסיף את קישור המשחק בפועל — נא לא להסיר אותו."
+    },
+    "appearance": {
+      "backgroundColor": "צבע רקע",
+      "machineColor": "צבע המכונה",
+      "decorativeColor": "צבע דקורטיבי",
+      "ruleTextColor": "צבע טקסט החוקים",
+      "backgroundImage": "תמונת רקע",
+      "backgroundImageDescription": "רוחב מומלץ: 1024 פיקסלים",
+      "prizeDescriptionImage": "תמונת תיאור פרס (אופציונלי)",
+      "prizeDescriptionImageDescription": "רוחב מומלץ: 750 פיקסלים",
+      "startButtonImage": "תמונת כפתור התחלה",
+      "startButtonImageDescription": "גודל מומלץ: 360x105 פיקסלים"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "מספר הזדמנויות הגרלה לכל אדם",
+      "resetPolicyLabel": "איפוס הגרלות",
+      "resetNever": "אין לאפס את מספר ההגרלות",
+      "resetEveryNDays": "איפוס מספר ההגרלות כל",
+      "resetIntervalDaysSuffix": "יום/ימים"
+    },
+    "publicUrl": {
+      "label": "קישור ציבורי",
+      "hint": "העתיקו והדביקו את הקישור בפלואו, בשידור או ברצף שלכם כדי לשתף את המיני-משחק הזה."
+    },
+    "play": {
+      "close": "סגור",
+      "drawsRemaining": "נותרו {count} ניסיונות",
+      "noDrawsLeft": "נגמרו לך הניסיונות במיני-משחק זה.",
+      "notStartedYet": "מיני-משחק זה עדיין לא התחיל.",
+      "ended": "מיני-משחק זה הסתיים.",
+      "forbiddenTitle": "הגישה נדחתה",
+      "forbiddenDescription": "קישור זה אינו תקף או שפג תוקפו.",
+      "comingSoonTitle": "בקרוב",
+      "comingSoonDescription": "לא ניתן עדיין לשחק בסוג מיני-משחק זה."
+    },
+    "history": {
+      "title": "היסטוריה",
+      "played": "משחקים",
+      "remaining": "הגרלות שנותרו",
+      "openedAt": "נפתח לראשונה",
+      "lastPlayedAt": "שוחק לאחרונה",
+      "unknownContact": "איש קשר לא ידוע",
+      "record": "רשומה",
+      "recordDialog": {
+        "title": "רשומת משחקים",
+        "win": "זכה",
+        "lose": "ללא פרס",
+        "empty": "אין עדיין רשומות משחק"
+      }
     }
   }
 }

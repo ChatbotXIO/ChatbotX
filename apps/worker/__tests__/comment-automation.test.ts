@@ -632,7 +632,7 @@ describe("processCommentAutomation flow private reply", () => {
     )
   })
 
-  test("instagram: enqueues sendFlow without a commentAnchor (no private_replies API)", async () => {
+  test("instagram: enqueues a sendFlow job carrying a private commentAnchor", async () => {
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
     ])
@@ -645,7 +645,34 @@ describe("processCommentAutomation flow private reply", () => {
     expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
       "sendFlow",
       expect.objectContaining({
-        data: expect.not.objectContaining({ commentAnchor: expect.anything() }),
+        type: "sendFlow",
+        data: expect.objectContaining({
+          flowId: "flow-1",
+          commentAnchor: { commentId: COMMENT_ID, replyChannel: "private" },
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("instagramFacebook: enqueues a sendFlow job carrying a private commentAnchor", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
+    ])
+
+    await processCommentAutomation({
+      ...buildJobData(),
+      integrationType: "instagramFacebook",
+    } as any)
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        type: "sendFlow",
+        data: expect.objectContaining({
+          flowId: "flow-1",
+          commentAnchor: { commentId: COMMENT_ID, replyChannel: "private" },
+        }),
       }),
       expect.anything(),
     )

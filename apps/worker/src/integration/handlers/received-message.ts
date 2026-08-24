@@ -76,6 +76,8 @@ import {
   type IntegrationJobReceiveMessage,
   type IntegrationJobUpdateIncomingComment,
   integrationQueue,
+  NotificationJobAction,
+  notificationQueue,
 } from "@chatbotx.io/worker-config"
 import { UnrecoverableError } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
@@ -670,6 +672,31 @@ const saveAndBroadcastMessage = async (props: {
     })
   } catch (error) {
     logger.warn(error, "Unable to emit realtime message")
+  }
+
+  // Push notification for a genuinely new inbound message only — this
+  // broadcast above is unconditional, so the guard here is built explicitly
+  // rather than copied from it.
+  if (isNew && isInboundMessage) {
+    try {
+      await notificationQueue.add(
+        NotificationJobAction.notifyIncomingMessage,
+        {
+          type: NotificationJobAction.notifyIncomingMessage,
+          data: {
+            workspaceId: inbox.workspaceId,
+            conversationId: conversation.id,
+            messageId: newMessage.id,
+            messageText: newMessage.text?.slice(0, 140),
+            contentType: newMessage.contentType,
+            attachmentCount: newMessage.attachments.length,
+          },
+        },
+        { jobId: `notify-incoming-${newMessage.id}` },
+      )
+    } catch (error) {
+      logger.warn(error, "Unable to enqueue incoming message notification")
+    }
   }
 
   if (isNew) {

@@ -64,9 +64,24 @@ vi.mock("@chatbotx.io/database/partials", async () => {
   return actual
 })
 
-vi.mock("@chatbotx.io/utils", () => ({
-  zodBigintAsString: () => ({}),
-}))
+vi.mock("@chatbotx.io/utils", () => {
+  // The `importActual` above for `@chatbotx.io/database/partials` still
+  // resolves that module's own `zodBigintAsString` import through this same
+  // mock registry — and its barrel re-exports every partial schema
+  // (including unrelated ones, e.g. minigame.ts) whose module-eval-time
+  // `.nullable()`/`.optional()` chains would break against a stub that only
+  // has `{}`. This proxy chains any further method call back to itself so
+  // it never breaks regardless of which Zod methods a schema happens to use.
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        return () => proxy
+      },
+    },
+  )
+  return { zodBigintAsString: () => proxy }
+})
 
 vi.mock("@/features/custom-fields/queries", () => ({
   listCustomFields: mocks.listCustomFields,

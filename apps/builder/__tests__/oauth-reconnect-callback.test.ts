@@ -29,6 +29,8 @@ const {
   mockReconnectMessengerHandler,
   mockReconnectInstagramHandler,
   mockReconnectInstagramFacebookHandler,
+  mockReconnectZaloHandler,
+  mockConnectZaloHandler,
   mockExchangeAndVerifyGoogleCalendar,
   mockCreateGoogleFromOAuthCallback,
   mockResolveOwnerForWorkspace,
@@ -63,6 +65,8 @@ const {
   mockReconnectMessengerHandler: vi.fn(),
   mockReconnectInstagramHandler: vi.fn(),
   mockReconnectInstagramFacebookHandler: vi.fn(),
+  mockReconnectZaloHandler: vi.fn(),
+  mockConnectZaloHandler: vi.fn(),
   mockExchangeAndVerifyGoogleCalendar: vi.fn(),
   mockCreateGoogleFromOAuthCallback: vi.fn(),
   mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
@@ -175,7 +179,11 @@ vi.mock("@/features/integration-tiktok/actions/connect.action", () => ({
 }))
 
 vi.mock("@/features/integration-zalo/actions/connect-zalo.action", () => ({
-  connectZaloHandler: vi.fn(),
+  connectZaloHandler: mockConnectZaloHandler,
+}))
+
+vi.mock("@/features/integration-zalo/actions/reconnect-callback", () => ({
+  reconnectZaloHandler: mockReconnectZaloHandler,
 }))
 
 vi.mock("@/integration", () => ({
@@ -486,6 +494,70 @@ describe("handleCallback OAuth reconnect", () => {
     expect(mockUpsertFacebookAds).toHaveBeenCalled()
     expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith(REFERER)
+  })
+
+  test("zalo reconnect dispatches to the handler and skips the connect flow", async () => {
+    mockReconnectZaloHandler.mockResolvedValue({ status: "success" })
+
+    const request = buildCallbackRequest("zalo", {
+      workspaceId: "1",
+      referer: "https://app.example.com/space/1/settings/channels?channel=zalo",
+      reconnectIntegrationId: "5",
+    })
+    await handleCallback("zalo", request)
+
+    expect(mockReconnectZaloHandler).toHaveBeenCalledWith({
+      zaloSettings: {
+        clientId: "client-1",
+        clientSecret: "secret-1",
+        version: "v23.0",
+      },
+      workspaceId: "1",
+      integrationId: "5",
+      req: request,
+      callbackUrl: "https://broker.example.com/integrations/zalo/callback",
+    })
+    expect(mockConnectZaloHandler).not.toHaveBeenCalled()
+
+    const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
+    expect(redirectTarget.searchParams.get("reconnect")).toBe("success")
+    expect(redirectTarget.searchParams.get("channel")).toBe("zalo")
+  })
+
+  test("zalo reconnect failure redirects with the error reason", async () => {
+    mockReconnectZaloHandler.mockResolvedValue({
+      status: "error",
+      reason: "accountNotFound",
+    })
+
+    await handleCallback(
+      "zalo",
+      buildCallbackRequest("zalo", {
+        workspaceId: "1",
+        referer:
+          "https://app.example.com/space/1/settings/channels?channel=zalo",
+        reconnectIntegrationId: "5",
+      }),
+    )
+
+    expect(mockConnectZaloHandler).not.toHaveBeenCalled()
+    const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
+    expect(redirectTarget.searchParams.get("reconnect")).toBe("error")
+    expect(redirectTarget.searchParams.get("reason")).toBe("accountNotFound")
+  })
+
+  test("zalo connect flow without reconnect state still runs the connect handler", async () => {
+    await handleCallback(
+      "zalo",
+      buildCallbackRequest("zalo", {
+        workspaceId: "1",
+        referer:
+          "https://app.example.com/space/1/settings/channels?channel=zalo",
+      }),
+    )
+
+    expect(mockConnectZaloHandler).toHaveBeenCalled()
+    expect(mockReconnectZaloHandler).not.toHaveBeenCalled()
   })
 
   test("instagram reconnect passes the exchanged user token to the handler", async () => {

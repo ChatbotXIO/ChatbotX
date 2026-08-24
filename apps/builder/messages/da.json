@@ -145,7 +145,8 @@
     "onSuccess": "På succes",
     "clone": "Klon",
     "remove": "Fjern",
-    "restore": "Gendan"
+    "restore": "Gendan",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
@@ -799,6 +800,9 @@
     "dynamicImage": {
       "label": "Dynamisk billede"
     },
+    "minigame": {
+      "label": "Minispil"
+    },
     "savePayloadToCustomField": {
       "label": "Gem payload til brugerdefineret felt"
     },
@@ -1158,6 +1162,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "System Function",
       "names": {
@@ -1362,7 +1369,9 @@
       "label": "Status",
       "pending": "Pending",
       "processing": "Processing",
+      "installing": "Installing",
       "completed": "Completed",
+      "partial": "Partial",
       "failed": "Failed",
       "success": "Succes",
       "error": "Fejl"
@@ -2006,6 +2015,26 @@
     },
     "enabled": {
       "label": "Aktiveret"
+    },
+    "api": {
+      "label": "API",
+      "description": "Forbind enhver HTTP-kompatibel applikation som en kanal. Din app sender indgående beskeder til vores REST API, og vi leverer svar til din callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Vi sender udgående svar hertil med POST, signeret med din indbakkes eget hemmelige nøgle.",
+        "notSet": "Ikke angivet"
+      },
+      "token": "Token",
+      "rotateToken": "Rotér token",
+      "status": {
+        "enabled": "Aktiveret",
+        "disabled": "Deaktiveret"
+      },
+      "tokenReveal": {
+        "title": "Kopiér dit API-token",
+        "description": "Dette token vises kun én gang. Opbevar det sikkert — du vil ikke kunne se det igen.",
+        "done": "Færdig"
+      }
     }
   },
   "flows": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh tilladelser",
+    "reconnect": "Forbind igen",
     "duplicated": "Denne Zalo OA konto har allerede been forbundet til another arbejdsområde.",
     "tagSync": {
       "title": "Tag Synkroniser",
@@ -4250,11 +4279,11 @@
     "title": "Aftaleplanlægning",
     "description": "Opret og administrer din aftaleplanlægning.",
     "flowModes": {
-      "bookFromCustomField": "Book aftale",
-      "checkAvailabilityFromCustomField": "Tjek tilgængelighed",
-      "book": "Dato- og tidsvælger",
-      "checkAvailability": "Datointervalvælger",
-      "cancel": "Annuller aftale"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Tilstand",
@@ -4273,7 +4302,60 @@
   },
   "templates": {
     "title": "Skabeloner",
-    "description": "Opret og administrer din skabeloner."
+    "description": "Opret og administrer dine skabeloner.",
+    "share": {
+      "label": "Del",
+      "enabled": "Delt",
+      "disabled": "Ikke delt",
+      "dialogTitle": "Del skabelon",
+      "dialogDescription": "Alle med dette link kan installere en kopi af denne skabelon i et arbejdsområde i din tenant.",
+      "enableLabel": "Aktivér dellink",
+      "linkLabel": "Dellink",
+      "description": "Alle med linket kan installere denne skabelon i deres eget arbejdsområde."
+    },
+    "installs": {
+      "title": "Installationer",
+      "resources": "Ressourcer",
+      "warnings": "Advarsler",
+      "completedAt": "Afsluttet",
+      "autoUpdate": "Automatisk opdatering"
+    },
+    "form": {
+      "contents": "Skabelonindhold",
+      "comingSoon": "Kommer snart",
+      "selectAll": "Vælg alle",
+      "selectedCount": "{count} valgt",
+      "details": "Detaljer",
+      "permissions": "Standardtilladelser",
+      "allowEdit": "Tillad redigering efter installation",
+      "allowDelete": "Tillad sletning efter installation",
+      "publisherName": "Udgivernavn",
+      "youtubeVideoId": "YouTube-video-id",
+      "youtubeVideoIdDescription": "Det 11-tegns id fra videoens URL, f.eks. \"dQw4w9WgXcQ\" i youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Forsidebillede",
+      "installBehavior": "Installationsadfærd",
+      "createInstallFolder": "Installer i en dedikeret mappe",
+      "createInstallFolderDescription": "Placer alle installerede ressourcer i én ny mappe opkaldt efter denne skabelon.",
+      "defaultAutoUpdate": "Markér installationer til opdatering som standard",
+      "defaultAutoUpdateDescription": "Nye installationer viser en besked om tilgængelig opdatering, hver gang du genudgiver denne skabelon."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Brugerdefinerede felter",
+      "tags": "Tags",
+      "products": "Produkter",
+      "productCategories": "Produktkategorier",
+      "aiFunctions": "AI-funktioner",
+      "aiAgents": "AI-agenter",
+      "calendars": "Aftalekalendere",
+      "webchats": "Webchats",
+      "keywords": "Nøgleord",
+      "entryPointLinks": "Entry Point Links",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook-kommentarautomatiseringer",
+      "settings": "Indstillinger"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Kode Generator",
@@ -4388,6 +4470,19 @@
     "invalidDescription": "Denne link er ugyldig eller har udløbet.",
     "unavailableTitle": "Afmeld unavailable.",
     "unavailableDescription": "Denne arbejdsområde er ingen longer tilgængelig."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Dette link er ikke længere tilgængeligt.",
+    "invalidDescription": "Dette skabelon-dellink er ugyldigt, deaktiveret eller udløbet.",
+    "byPublisher": "Af {publisherName}",
+    "includes": "Denne skabelon indeholder",
+    "videoTitle": "Skabelonens forhåndsvisningsvideo",
+    "tryItOut": "Prøv den",
+    "signInToInstall": "Log ind for at installere",
+    "selectWorkspace": "Vælg et arbejdsområde",
+    "install": "Installer",
+    "installStarted": "Installation startet",
+    "noEligibleWorkspaces": "Du har ikke et arbejdsområde, der er egnet til at installere denne skabelon."
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Forbind"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Opret og administrer lykkehjul-minispil til dine kunder.",
+    "types": {
+      "luckyWheel": "Lykkehjul",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Lodtrækning",
+      "scratchOff": "Skrabelod"
+    },
+    "createDialog": {
+      "title": "Vælg en minispiltype",
+      "comingSoon": "Kommer snart"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Sum af alle sandsynligheder: {value}%",
+      "loseProbability": "Sandsynlighed for tab: {value}%",
+      "winProbability": "Sandsynlighed for gevinst: {value}%",
+      "newPrize": "Ny gevinst"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Rediger gevinst",
+      "nonWinningTitle": "Rediger ikke-vindende indstilling",
+      "prizeNameLabel": "Gevinstnavn",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Anbefalet størrelse 120x120px",
+      "quantityLabel": "Præmieantal",
+      "quantityDescription": "Antal gange denne præmie stadig kan vindes; falder med 1 for hver gevinst. Lad stå tomt for ubegrænset.",
+      "sendMessage": "Send en besked, når spilleren ikke vinder",
+      "sendWinMessage": "Send besked til vinderen, der modtog præmien",
+      "messageMode": "Beskedtype",
+      "messageModeText": "Tekst",
+      "messageModeFlow": "Flow",
+      "messageText": "Besked"
+    },
+    "winningMessageDialog": {
+      "title": "Indstillinger for gevinstbesked",
+      "titleLabel": "Titel",
+      "acceptButtonText": "Tekst på accepter-knap",
+      "shareButtonText": "Tekst på del-knap",
+      "shareButtonDescription": "Beskrivelse af del-knap"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Indstillinger for ikke-vindende besked",
+      "titleLabel": "Titel",
+      "shareButtonText": "Tekst på del-knap",
+      "shareButtonDescription": "Beskrivelse af del-knap"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Del med venner",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Detaljeret forhåndsvisning kommer snart for denne spiltype",
+      "rules": "Regler"
+    },
+    "form": {
+      "generalSettingsTitle": "Generelle indstillinger",
+      "appearanceTitle": "Udseende",
+      "playerSettingsTitle": "Spillerindstillinger",
+      "prizeSettingsTitle": "Gevinstindstillinger"
+    },
+    "generalSettings": {
+      "playedAt": "Spillet den",
+      "rulesDescription": "Regelbeskrivelse",
+      "openerTags": "Tag kontakter, der åbner spillinket",
+      "playerTags": "Tag spillere",
+      "newFriendTags": "Tag nye venner",
+      "shareEnabled": "Tillad deling med venner",
+      "shareMessage": "Delingsbesked",
+      "shareMessageHint": "Brug '{{shareUrl}}' til at indsætte det faktiske spillink — fjern det venligst ikke."
+    },
+    "appearance": {
+      "backgroundColor": "Baggrundsfarve",
+      "machineColor": "Maskinfarve",
+      "decorativeColor": "Dekorativ farve",
+      "ruleTextColor": "Farve på regeltekst",
+      "backgroundImage": "Baggrundsbillede",
+      "backgroundImageDescription": "Anbefalet bredde: 1024px",
+      "prizeDescriptionImage": "Billede til gevinstbeskrivelse (valgfrit)",
+      "prizeDescriptionImageDescription": "Anbefalet bredde: 750px",
+      "startButtonImage": "Billede til start-knap",
+      "startButtonImageDescription": "Anbefalet størrelse: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Antal lykketræk pr. person",
+      "resetPolicyLabel": "Nulstil antal træk",
+      "resetNever": "Nulstil ikke antallet af træk",
+      "resetEveryNDays": "Nulstil antallet af træk hver",
+      "resetIntervalDaysSuffix": "dag(e)"
+    },
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopier og indsæt URL'en i dit flow, din broadcast eller sekvens for at dele dette minispil."
+    },
+    "play": {
+      "close": "Luk",
+      "drawsRemaining": "{count} forsøg tilbage",
+      "noDrawsLeft": "Du har ikke flere forsøg til dette minispil.",
+      "notStartedYet": "Dette minispil er ikke startet endnu.",
+      "ended": "Dette minispil er afsluttet.",
+      "forbiddenTitle": "Adgang nægtet",
+      "forbiddenDescription": "Dette link er ugyldigt eller udløbet.",
+      "comingSoonTitle": "Kommer snart",
+      "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles."
+    },
+    "history": {
+      "title": "Historik",
+      "played": "Spil",
+      "remaining": "Resterende træk",
+      "openedAt": "Først åbnet",
+      "lastPlayedAt": "Senest spillet",
+      "unknownContact": "Ukendt kontakt",
+      "record": "Optegnelse",
+      "recordDialog": {
+        "title": "Spiloptegnelse",
+        "win": "Vandt",
+        "lose": "Ingen præmie",
+        "empty": "Ingen spiloptegnelser endnu"
+      }
     }
   }
 }

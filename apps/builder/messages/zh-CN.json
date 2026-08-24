@@ -149,7 +149,8 @@
     "uploadFile": "上传文件",
     "view": "查看",
     "viewAnalytics": "查看分析",
-    "wait": "等等"
+    "wait": "等等",
+    "loadMore": "Load more"
   },
   "activeCampaign": {
     "automations": {
@@ -483,11 +484,11 @@
     "description": "创建并管理您的预约安排。",
     "title": "预约安排",
     "flowModes": {
-      "bookFromCustomField": "预约",
-      "checkAvailabilityFromCustomField": "查看可预约时间",
-      "book": "日期时间选择器",
-      "checkAvailability": "日期范围选择器",
-      "cancel": "取消预约"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "模式",
@@ -2040,6 +2041,9 @@
     "mcpServer": {
       "label": "MCP服务器"
     },
+    "template": {
+      "label": "Template"
+    },
     "me": {
       "label": "我的数据链接"
     },
@@ -2258,6 +2262,9 @@
     "dynamicImage": {
       "label": "动态图片"
     },
+    "minigame": {
+      "label": "小游戏"
+    },
     "quality": {
       "label": "品质",
       "options": {
@@ -2407,11 +2414,13 @@
     },
     "status": {
       "completed": "已完成",
+      "partial": "Partial",
       "error": "错误",
       "failed": "失败",
       "label": "状态",
       "pending": "待定",
       "processing": "处理中",
+      "installing": "Installing",
       "success": "成功"
     },
     "statusCode": {
@@ -2685,6 +2694,26 @@
     },
     "enabled": {
       "label": "已激活"
+    },
+    "api": {
+      "label": "API",
+      "description": "将任何支持 HTTP 的应用程序作为渠道接入。您的应用将入站消息发送到我们的 REST API，我们会将回复投递到您的回调 URL。",
+      "callbackUrl": {
+        "label": "回调 URL",
+        "description": "我们会通过 POST 将出站回复发送到此处，并使用您收件箱专属的密钥进行签名。",
+        "notSet": "未设置"
+      },
+      "token": "代币",
+      "rotateToken": "重新生成代币",
+      "status": {
+        "enabled": "已激活",
+        "disabled": "已停用"
+      },
+      "tokenReveal": {
+        "title": "拷贝您的 API 代币",
+        "description": "此代币仅显示一次。请妥善保存 — 之后将无法再次查看。",
+        "done": "完成"
+      }
     }
   },
   "flowAnalytics": {
@@ -4340,8 +4369,61 @@
     "title": "Telegram"
   },
   "templates": {
-    "description": "创建并管理您的范本。",
-    "title": "范本"
+    "description": "创建和管理您的范本。",
+    "title": "范本",
+    "share": {
+      "label": "分享",
+      "enabled": "已分享",
+      "disabled": "未分享",
+      "dialogTitle": "分享范本",
+      "dialogDescription": "任何拥有此链接的人都可以将此范本的副本安装到您所在租户的工作区中。",
+      "enableLabel": "启用分享链接",
+      "linkLabel": "分享链接",
+      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。"
+    },
+    "installs": {
+      "title": "安装记录",
+      "resources": "资源",
+      "warnings": "警告",
+      "completedAt": "完成时间",
+      "autoUpdate": "自动更新"
+    },
+    "form": {
+      "contents": "范本内容",
+      "comingSoon": "即将推出",
+      "selectAll": "全选",
+      "selectedCount": "已选择 {count} 项",
+      "details": "详情",
+      "permissions": "默认权限",
+      "allowEdit": "允许安装后编辑",
+      "allowDelete": "允许安装后删除",
+      "publisherName": "发布者名称",
+      "youtubeVideoId": "YouTube 视频 ID",
+      "youtubeVideoIdDescription": "视频 URL 中的 11 位字符 ID，例如 youtube.com/watch?v=dQw4w9WgXcQ 中的 \"dQw4w9WgXcQ\"",
+      "testLink": "测试链接",
+      "imageUrl": "封面图片",
+      "installBehavior": "安装行为",
+      "createInstallFolder": "安装到专属文件夹",
+      "createInstallFolderDescription": "将每个已安装的资源都归入一个以此范本命名的新文件夹中。",
+      "defaultAutoUpdate": "默认将安装标记为需要更新",
+      "defaultAutoUpdateDescription": "每次重新发布此范本时，新安装都会显示可用更新的提示。"
+    },
+    "categories": {
+      "flows": "流程",
+      "customFields": "自订字段",
+      "tags": "标签",
+      "products": "产品",
+      "productCategories": "产品分类",
+      "aiFunctions": "人工智能功能",
+      "aiAgents": "AI Agent",
+      "calendars": "预约日历",
+      "webchats": "网络聊天",
+      "keywords": "关键字",
+      "entryPointLinks": "入口点链接",
+      "triggers": "触发器",
+      "fbCommentAutomations": "Facebook 评论自动化",
+      "settings": "设置"
+    }
   },
   "texts": {
     "or": "或"
@@ -4429,6 +4511,19 @@
     "title": "您已取消订阅。",
     "unavailableDescription": "此工作区不再可用。",
     "unavailableTitle": "无法取消订阅。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "此链接已不再可用。",
+    "invalidDescription": "此范本分享链接无效、已禁用或已过期。",
+    "byPublisher": "发布者：{publisherName}",
+    "includes": "此范本包含",
+    "videoTitle": "模板预览视频",
+    "tryItOut": "立即体验",
+    "signInToInstall": "登录以安装",
+    "selectWorkspace": "选择一个工作区",
+    "install": "安装",
+    "installStarted": "安装已开始",
+    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。"
   },
   "userPersistentMenus": {
     "title": "用户常驻菜单"
@@ -4813,7 +4908,7 @@
   },
   "zalo": {
     "duplicated": "此Zalo OA 帐户已连接到另一个工作区。",
-    "refreshPermissions": "刷新权限",
+    "reconnect": "重新连接",
     "tagSync": {
       "description": "将本地标记分配镜像到此Zalo OA。",
       "disabled": "已停用",
@@ -5173,6 +5268,128 @@
       "cancelledDescription": "此预约已被取消。",
       "unavailableTitle": "无法取消",
       "unavailableDescription": "此预约已取消、已删除或已过期。"
+    }
+  },
+  "minigames": {
+    "title": "游戏化",
+    "description": "为您的客户创建和管理幸运抽奖小游戏。",
+    "types": {
+      "luckyWheel": "幸运转盘",
+      "jackpot": "老虎机",
+      "gashapon": "扭蛋机",
+      "drawLots": "抽签",
+      "scratchOff": "刮刮乐"
+    },
+    "createDialog": {
+      "title": "选择小游戏类型",
+      "comingSoon": "即将推出"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "所有概率之和：{value}%",
+      "loseProbability": "未中奖概率：{value}%",
+      "winProbability": "中奖概率：{value}%",
+      "newPrize": "新增奖品"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "编辑奖品",
+      "nonWinningTitle": "编辑未中奖设置",
+      "prizeNameLabel": "奖品名称",
+      "nonWinningTitleLabel": "标题",
+      "loseImageDescription": "建议尺寸 120x120px",
+      "quantityLabel": "奖品数量",
+      "quantityDescription": "该奖品还可被中奖的次数；每次中奖减少 1。留空表示不限制。",
+      "sendMessage": "玩家未中奖时发送消息",
+      "sendWinMessage": "向获得该奖品的中奖者发送消息",
+      "messageMode": "消息类型",
+      "messageModeText": "文本",
+      "messageModeFlow": "流程",
+      "messageText": "消息内容"
+    },
+    "winningMessageDialog": {
+      "title": "中奖消息设置",
+      "titleLabel": "标题",
+      "acceptButtonText": "接受按钮文本",
+      "shareButtonText": "分享按钮文本",
+      "shareButtonDescription": "分享按钮描述"
+    },
+    "nonWinningMessageDialog": {
+      "title": "未中奖消息设置",
+      "titleLabel": "标题",
+      "shareButtonText": "分享按钮文本",
+      "shareButtonDescription": "分享按钮描述"
+    },
+    "preview": {
+      "start": "开始",
+      "shareWithFriends": "与好友分享",
+      "jackpotHeader": "老虎机",
+      "jackpotBanner": "老虎机",
+      "comingSoon": "该游戏类型的详细预览即将推出",
+      "rules": "规则"
+    },
+    "form": {
+      "generalSettingsTitle": "常规设置",
+      "appearanceTitle": "外观",
+      "playerSettingsTitle": "玩家设置",
+      "prizeSettingsTitle": "奖品设置"
+    },
+    "generalSettings": {
+      "playedAt": "参与时间",
+      "rulesDescription": "规则说明",
+      "openerTags": "为打开游戏链接的联系人打标签",
+      "playerTags": "为参与者打标签",
+      "newFriendTags": "为新好友打标签",
+      "shareEnabled": "允许与好友分享",
+      "shareMessage": "分享消息",
+      "shareMessageHint": "使用 '{{shareUrl}}' 插入实际的游戏链接，请勿删除。"
+    },
+    "appearance": {
+      "backgroundColor": "背景颜色",
+      "machineColor": "机身颜色",
+      "decorativeColor": "装饰颜色",
+      "ruleTextColor": "规则文字颜色",
+      "backgroundImage": "背景图片",
+      "backgroundImageDescription": "建议宽度：1024px",
+      "prizeDescriptionImage": "奖品说明图片（可选）",
+      "prizeDescriptionImageDescription": "建议宽度：750px",
+      "startButtonImage": "开始按钮图片",
+      "startButtonImageDescription": "建议尺寸：360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "每人可抽奖次数",
+      "resetPolicyLabel": "重置抽奖次数",
+      "resetNever": "不重置抽奖次数",
+      "resetEveryNDays": "每隔以下天数重置抽奖次数",
+      "resetIntervalDaysSuffix": "天"
+    },
+    "publicUrl": {
+      "label": "公开链接",
+      "hint": "将此链接复制并粘贴到您的流程、群发消息或序列中，以分享此小游戏。"
+    },
+    "play": {
+      "close": "关闭",
+      "drawsRemaining": "剩余 {count} 次机会",
+      "noDrawsLeft": "您在此小游戏中的抽奖机会已用完。",
+      "notStartedYet": "此小游戏尚未开始。",
+      "ended": "此小游戏已结束。",
+      "forbiddenTitle": "访问被拒绝",
+      "forbiddenDescription": "此链接无效或已过期。",
+      "comingSoonTitle": "即将推出",
+      "comingSoonDescription": "此类型的小游戏暂时无法玩。"
+    },
+    "history": {
+      "title": "历史记录",
+      "played": "已玩次数",
+      "remaining": "剩余次数",
+      "openedAt": "首次打开",
+      "lastPlayedAt": "最近游玩",
+      "unknownContact": "未知联系人",
+      "record": "记录",
+      "recordDialog": {
+        "title": "游戏记录",
+        "win": "中奖",
+        "lose": "未中奖",
+        "empty": "暂无游戏记录"
+      }
     }
   },
   "userDataWebview": {

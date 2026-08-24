@@ -1,4 +1,4 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, inArray } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import {
   flowAnalyticsSessionModel,
@@ -19,6 +19,7 @@ import { customFieldService } from "../custom-field/service"
 import { notFoundException } from "../errors"
 import { flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
+import { assertDeletable } from "../template/installed-resource.service"
 
 class FlowService extends BaseService {
   async findBy(
@@ -298,6 +299,38 @@ class FlowService extends BaseService {
       })
 
       return { flowId, createdCustomFieldIds: createdIds }
+    })
+  }
+
+  /**
+   * Deletes the given flows and soft-deletes their analytics sessions in one
+   * transaction, scoped to `workspaceId` so a caller cannot delete a flow
+   * belonging to another workspace by id alone.
+   */
+  async deleteMany(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<void> {
+    const flows = await db.query.flowModel.findMany({
+      where: { workspaceId: input.workspaceId, id: { in: input.ids } },
+    })
+    if (flows.length === 0) {
+      return
+    }
+    const flowIds = flows.map((flow) => flow.id)
+
+    await assertDeletable({
+      workspaceId: input.workspaceId,
+      resourceKind: "flow",
+      resourceIds: flowIds,
+    })
+
+    await db.transaction(async (tx) => {
+      await tx.delete(flowModel).where(inArray(flowModel.id, flowIds))
+      await tx
+        .update(flowAnalyticsSessionModel)
+        .set({ deletedAt: new Date() })
+        .where(inArray(flowAnalyticsSessionModel.flowId, flowIds))
     })
   }
 }

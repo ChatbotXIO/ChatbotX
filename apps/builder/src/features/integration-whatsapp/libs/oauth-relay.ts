@@ -12,13 +12,14 @@ const whatsappOAuthRelayResultSchema = z.object({
 
 export function parseOAuthRelayResult(params: {
   origin: string
-  brokerOrigin: string
+  /** The origin the OAuth callback was registered on for this credential. */
+  expectedOrigin: string
   data: unknown
 }):
   | { type: "ignored" }
   | { type: "success"; code: string }
   | { type: "error" } {
-  if (params.origin !== params.brokerOrigin) {
+  if (params.origin !== params.expectedOrigin) {
     return { type: "ignored" }
   }
 

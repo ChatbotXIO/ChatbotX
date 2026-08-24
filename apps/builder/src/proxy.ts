@@ -14,6 +14,7 @@ const publicRoutes = [
   "/r",
   "/l",
   "/dynamic-images",
+  "/minigames",
   "/auth",
   "/api",
   "/ws",
@@ -24,6 +25,11 @@ const publicRoutes = [
   "/extensions",
   "/booking",
   "/portal/redeem",
+  "/webchat",
+  // Trailing slash is deliberate: `isPublicRoute` below is a bare
+  // unanchored `startsWith`, so "/t" (no slash) would also match
+  // "/templates" and make the authenticated template list world-readable.
+  "/t/",
 ]
 const signinPath = "/auth/sign-in"
 
@@ -117,7 +123,7 @@ function isPublicRoute(pathname: string) {
 
 export const config = {
   matcher: [
-    "/((?!webchat|zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json|dynamic-image/).*)",
+    "/((?!zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json|dynamic-image/).*)",
     "/api/presigned-upload",
     "/api/whatsapp/:path*",
   ],

@@ -32,6 +32,7 @@ import { ChatbotXException, notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { flowVersionService } from "../flow-version"
 import { logger } from "../logger"
+import { assertDeletable } from "../template/installed-resource.service"
 
 const MINUTES_PER_DAY = 1440
 const DATE_LABEL_FORMAT = "yyyy-MM-dd"
@@ -562,6 +563,11 @@ export class AppointmentCalendarService extends BaseService {
     if (input.ids.length === 0) {
       return
     }
+    await assertDeletable({
+      workspaceId: input.workspaceId,
+      resourceKind: "calendar",
+      resourceIds: input.ids,
+    })
     await appointmentCalendarRepository.softDeleteMany(input)
   }
 

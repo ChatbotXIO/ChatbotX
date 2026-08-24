@@ -145,7 +145,8 @@
     "onSuccess": "عند النجاح",
     "clone": "استنساخ",
     "remove": "إزالة",
-    "restore": "استعادة"
+    "restore": "استعادة",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "يجب أن تكون مسؤولًا فائقًا لمساحة العمل للقيام بذلك."
@@ -873,6 +874,9 @@
     "dynamicImage": {
       "label": "صورة ديناميكية"
     },
+    "minigame": {
+      "label": "لعبة مصغّرة"
+    },
     "savePayloadToCustomField": {
       "label": "حفظ الحمولة في حقل مخصص"
     },
@@ -1232,6 +1236,9 @@
     "mcpServer": {
       "label": "خادم MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "وظيفة النظام",
       "names": {
@@ -1436,9 +1443,11 @@
       "label": "الحالة",
       "pending": "قيد الانتظار",
       "processing": "قيد المعالجة",
+      "installing": "Installing",
       "success": "نجاح",
       "error": "خطأ",
       "completed": "مكتمل",
+      "partial": "Partial",
       "failed": "فاشل"
     },
     "subtitle": {
@@ -2080,6 +2089,26 @@
     },
     "enabled": {
       "label": "مفعّل"
+    },
+    "api": {
+      "label": "API",
+      "description": "اربط أي تطبيق يدعم HTTP كقناة. يرسل تطبيقك الرسائل الواردة إلى واجهة REST API الخاصة بنا، ونقوم بتسليم الردود إلى رابط الاستدعاء (callback URL) الخاص بك.",
+      "callbackUrl": {
+        "label": "رابط الاستدعاء (Callback URL)",
+        "description": "نرسل الردود الصادرة إلى هذا الرابط عبر POST، موقّعة بالسر الخاص بصندوق الوارد الخاص بك.",
+        "notSet": "غير محدد"
+      },
+      "token": "الرمز المميز",
+      "rotateToken": "تجديد الرمز المميز",
+      "status": {
+        "enabled": "مفعّل",
+        "disabled": "معطّلة"
+      },
+      "tokenReveal": {
+        "title": "انسخ رمز API المميز الخاص بك",
+        "description": "يظهر هذا الرمز مرة واحدة فقط. احفظه في مكان آمن — لن تتمكن من عرضه مرة أخرى.",
+        "done": "تم"
+      }
     }
   },
   "flows": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "تحديث الأذونات",
+    "reconnect": "إعادة الاتصال",
     "duplicated": "حساب Zalo OA هذا مرتبط بالفعل بمساحة عمل أخرى.",
     "tagSync": {
       "title": "مزامنة الوسوم",
@@ -4085,11 +4114,11 @@
     "title": "جدولة المواعيد",
     "description": "إنشاء جدولة مواعيدك وإدارتها.",
     "flowModes": {
-      "bookFromCustomField": "حجز موعد",
-      "checkAvailabilityFromCustomField": "التحقق من التوفر",
-      "book": "أداة اختيار التاريخ والوقت",
-      "checkAvailability": "أداة اختيار نطاق التاريخ",
-      "cancel": "إلغاء موعد"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "الوضع",
@@ -4108,7 +4137,60 @@
   },
   "templates": {
     "title": "القوالب",
-    "description": "إنشاء قوالبك وإدارتها."
+    "description": "أنشئ قوالبك وأدرها.",
+    "share": {
+      "label": "مشاركة",
+      "enabled": "تمت المشاركة",
+      "disabled": "غير مُشارَك",
+      "dialogTitle": "مشاركة القالب",
+      "dialogDescription": "يمكن لأي شخص لديه هذا الرابط تثبيت نسخة من هذا القالب في مساحة عمل ضمن مؤسستك.",
+      "enableLabel": "تفعيل رابط المشاركة",
+      "linkLabel": "رابط المشاركة",
+      "description": "يمكن لأي شخص لديه الرابط تثبيت هذا القالب في مساحة العمل الخاصة به."
+    },
+    "installs": {
+      "title": "عمليات التثبيت",
+      "resources": "الموارد",
+      "warnings": "التحذيرات",
+      "completedAt": "اكتمل في",
+      "autoUpdate": "التحديث التلقائي"
+    },
+    "form": {
+      "contents": "محتوى القالب",
+      "comingSoon": "قريبًا",
+      "selectAll": "تحديد الكل",
+      "selectedCount": "تم تحديد {count}",
+      "details": "التفاصيل",
+      "permissions": "الأذونات الافتراضية",
+      "allowEdit": "السماح بالتعديل بعد التثبيت",
+      "allowDelete": "السماح بالحذف بعد التثبيت",
+      "publisherName": "اسم الناشر",
+      "youtubeVideoId": "معرّف فيديو يوتيوب",
+      "youtubeVideoIdDescription": "المعرّف المكوَّن من 11 حرفًا من رابط الفيديو، مثل \"dQw4w9WgXcQ\" في youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "رابط الاختبار",
+      "imageUrl": "صورة الغلاف",
+      "installBehavior": "سلوك التثبيت",
+      "createInstallFolder": "التثبيت في مجلد مخصص",
+      "createInstallFolderDescription": "يضع كل مورد يتم تثبيته داخل مجلد جديد واحد يحمل اسم هذا القالب.",
+      "defaultAutoUpdate": "تمييز عمليات التثبيت للتحديث بشكل افتراضي",
+      "defaultAutoUpdateDescription": "ستعرض عمليات التثبيت الجديدة إشعارًا بتوفر تحديث في كل مرة تعيد فيها نشر هذا القالب."
+    },
+    "categories": {
+      "flows": "المسارات",
+      "customFields": "الحقول المخصصة",
+      "tags": "الوسوم",
+      "products": "المنتجات",
+      "productCategories": "فئات المنتجات",
+      "aiFunctions": "وظائف الذكاء الاصطناعي",
+      "aiAgents": "وكلاء الذكاء الاصطناعي",
+      "calendars": "تقويمات المواعيد",
+      "webchats": "دردشات الويب",
+      "keywords": "الكلمات المفتاحية",
+      "entryPointLinks": "روابط نقاط الدخول",
+      "triggers": "المشغِّلات",
+      "fbCommentAutomations": "أتمتة تعليقات فيسبوك",
+      "settings": "الإعدادات"
+    }
   },
   "qrCodeGenerator": {
     "title": "مولّد رمز QR",
@@ -4223,6 +4305,19 @@
     "invalidDescription": "هذا الرابط غير صالح أو انتهت صلاحيته.",
     "unavailableTitle": "إلغاء الاشتراك غير متاح.",
     "unavailableDescription": "مساحة العمل هذه لم تعد متاحة."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "هذا الرابط لم يعد متاحًا.",
+    "invalidDescription": "رابط مشاركة هذا القالب غير صالح أو معطَّل أو منتهي الصلاحية.",
+    "byPublisher": "بواسطة {publisherName}",
+    "includes": "يتضمن هذا القالب",
+    "videoTitle": "فيديو معاينة القالب",
+    "tryItOut": "جرّبه",
+    "signInToInstall": "سجّل الدخول للتثبيت",
+    "selectWorkspace": "اختر مساحة عمل",
+    "install": "تثبيت",
+    "installStarted": "بدأ التثبيت",
+    "noEligibleWorkspaces": "ليس لديك مساحة عمل مؤهلة لتثبيت هذا القالب."
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "ربط"
+    }
+  },
+  "minigames": {
+    "title": "التلعيب",
+    "description": "أنشئ وأدر ألعاب سحب الحظ المصغّرة لعملائك.",
+    "types": {
+      "luckyWheel": "عجلة الحظ",
+      "jackpot": "جاكبوت",
+      "gashapon": "آلة الكبسولات",
+      "drawLots": "القرعة",
+      "scratchOff": "البطاقة الكاشطة"
+    },
+    "createDialog": {
+      "title": "اختر نوع اللعبة المصغّرة",
+      "comingSoon": "قريباً"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "مجموع جميع الاحتمالات: {value}%",
+      "loseProbability": "احتمال الخسارة: {value}%",
+      "winProbability": "احتمال الفوز: {value}%",
+      "newPrize": "جائزة جديدة"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "تعديل الجائزة",
+      "nonWinningTitle": "تعديل إعداد عدم الفوز",
+      "prizeNameLabel": "اسم الجائزة",
+      "nonWinningTitleLabel": "العنوان",
+      "loseImageDescription": "الحجم الموصى به 120×120 بكسل",
+      "quantityLabel": "كمية الجائزة",
+      "quantityDescription": "عدد المرات المتبقية التي يمكن فيها الفوز بهذه الجائزة؛ ينقص بمقدار 1 مع كل فوز. اتركه فارغًا لعدد غير محدود.",
+      "sendMessage": "إرسال رسالة عند عدم فوز اللاعب",
+      "sendWinMessage": "إرسال رسالة إلى الفائز الذي حصل على الجائزة",
+      "messageMode": "نوع الرسالة",
+      "messageModeText": "نص",
+      "messageModeFlow": "تدفق",
+      "messageText": "نص الرسالة"
+    },
+    "winningMessageDialog": {
+      "title": "إعدادات رسالة الفوز",
+      "titleLabel": "العنوان",
+      "acceptButtonText": "نص زر القبول",
+      "shareButtonText": "نص زر المشاركة",
+      "shareButtonDescription": "وصف زر المشاركة"
+    },
+    "nonWinningMessageDialog": {
+      "title": "إعدادات رسالة عدم الفوز",
+      "titleLabel": "العنوان",
+      "shareButtonText": "نص زر المشاركة",
+      "shareButtonDescription": "وصف زر المشاركة"
+    },
+    "preview": {
+      "start": "ابدأ",
+      "shareWithFriends": "مشاركة مع الأصدقاء",
+      "jackpotHeader": "جاكبوت",
+      "jackpotBanner": "جاكبوت",
+      "comingSoon": "المعاينة التفصيلية لهذا النوع من الألعاب قريبًا",
+      "rules": "القواعد"
+    },
+    "form": {
+      "generalSettingsTitle": "الإعدادات العامة",
+      "appearanceTitle": "المظهر",
+      "playerSettingsTitle": "إعدادات اللاعب",
+      "prizeSettingsTitle": "إعدادات الجوائز"
+    },
+    "generalSettings": {
+      "playedAt": "وقت اللعب",
+      "rulesDescription": "وصف القواعد",
+      "openerTags": "وسم جهات الاتصال التي تفتح رابط اللعبة",
+      "playerTags": "وسم اللاعبين",
+      "newFriendTags": "وسم الأصدقاء الجدد",
+      "shareEnabled": "السماح بالمشاركة مع الأصدقاء",
+      "shareMessage": "رسالة المشاركة",
+      "shareMessageHint": "استخدم '{{shareUrl}}' لإدراج رابط اللعبة الفعلي — يُرجى عدم إزالته."
+    },
+    "appearance": {
+      "backgroundColor": "لون الخلفية",
+      "machineColor": "لون الجهاز",
+      "decorativeColor": "لون الزخرفة",
+      "ruleTextColor": "لون نص القواعد",
+      "backgroundImage": "صورة الخلفية",
+      "backgroundImageDescription": "العرض الموصى به: 1024 بكسل",
+      "prizeDescriptionImage": "صورة وصف الجائزة (اختياري)",
+      "prizeDescriptionImageDescription": "العرض الموصى به: 750 بكسل",
+      "startButtonImage": "صورة زر البدء",
+      "startButtonImageDescription": "الحجم الموصى به: 360×105 بكسل"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "عدد فرص السحب لكل شخص",
+      "resetPolicyLabel": "إعادة تعيين مرات السحب",
+      "resetNever": "عدم إعادة تعيين عدد مرات السحب",
+      "resetEveryNDays": "إعادة تعيين عدد مرات السحب كل",
+      "resetIntervalDaysSuffix": "يوم/أيام"
+    },
+    "publicUrl": {
+      "label": "الرابط العام",
+      "hint": "انسخ الرابط والصقه في التدفق أو البث أو التسلسل الخاص بك لمشاركة هذه اللعبة المصغّرة."
+    },
+    "play": {
+      "close": "إغلاق",
+      "drawsRemaining": "{count} محاولة متبقية",
+      "noDrawsLeft": "لقد استنفدت محاولاتك في هذه اللعبة.",
+      "notStartedYet": "لم تبدأ هذه اللعبة بعد.",
+      "ended": "انتهت هذه اللعبة.",
+      "forbiddenTitle": "تم رفض الوصول",
+      "forbiddenDescription": "هذا الرابط غير صالح أو منتهي الصلاحية.",
+      "comingSoonTitle": "قريباً",
+      "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد."
+    },
+    "history": {
+      "title": "السجل",
+      "played": "عدد مرات اللعب",
+      "remaining": "السحوبات المتبقية",
+      "openedAt": "أول فتح",
+      "lastPlayedAt": "آخر لعب",
+      "unknownContact": "جهة اتصال غير معروفة",
+      "record": "السجل",
+      "recordDialog": {
+        "title": "سجل اللعب",
+        "win": "فاز",
+        "lose": "بدون جائزة",
+        "empty": "لا توجد سجلات لعب بعد"
+      }
     }
   }
 }

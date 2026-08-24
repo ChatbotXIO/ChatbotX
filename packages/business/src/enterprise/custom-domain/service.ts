@@ -49,4 +49,22 @@ export const customDomainService = {
       },
     )
   },
+
+  /**
+   * The tenant's active custom domain, if any. `CustomDomain.tenantId` is
+   * unique, so there is at most one — no "first active" picking needed.
+   */
+  findActiveByTenantId(tenantId: string) {
+    return withCache(
+      `custom-domain:active-tenant:${tenantId}`,
+      () =>
+        db.query.customDomainModel.findFirst({
+          where: { tenantId, status: "active" },
+        }),
+      {
+        tags: [`cd:tenant:${tenantId}`],
+        dynamicTags: (result) => (result ? [`cd:domain:${result.domain}`] : []),
+      },
+    )
+  },
 }

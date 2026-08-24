@@ -4,6 +4,11 @@ import type {
   CredentialType,
 } from "@chatbotx.io/database/partials"
 import { isCloud } from "@/env"
+import { getBrokerOrigin } from "@/lib/oauth-broker"
+import {
+  PLACEHOLDER_DOMAIN_ORIGIN,
+  resolveTenantCustomDomainOrigin,
+} from "@/lib/provider-origin"
 import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
 import { InstagramSettings } from "./instagram/instagram-settings"
@@ -111,34 +116,55 @@ export async function ManagePlatformCredentials({
     tiktokResult.status === "fulfilled" ? tiktokResult.value : emptyCard
   const make = makeResult.status === "fulfilled" ? makeResult.value : emptyCard
 
+  // For a tenant-owned credential (their own app), provider-facing URLs must
+  // use the reseller's active custom domain — falling back to a literal
+  // placeholder when they haven't activated one yet, never the broker (that
+  // would silently mislead them into registering a host they don't control).
+  // Inherited credentials always show the broker, since the platform app is
+  // what's actually registered. See `lib/provider-origin.ts`.
+  const tenantOrigin = scopedUserId
+    ? ((await resolveTenantCustomDomainOrigin(scopedUserId)) ??
+      PLACEHOLDER_DOMAIN_ORIGIN)
+    : getBrokerOrigin()
+  const brokerOrigin = getBrokerOrigin()
+  const callbackOriginFor = (isInherited: boolean) =>
+    isInherited ? brokerOrigin : tenantOrigin
+
   return (
     <CredentialScopeProvider scope={scope}>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <MessengerSettings
+          callbackOrigin={callbackOriginFor(messenger.isInherited)}
           isInherited={messenger.isInherited}
           publicConfig={messenger.publicConfig}
         />
         <InstagramSettings
+          callbackOrigin={callbackOriginFor(instagram.isInherited)}
           isInherited={instagram.isInherited}
           publicConfig={instagram.publicConfig}
         />
         <InstagramFacebookSettings
+          callbackOrigin={callbackOriginFor(instagramFacebook.isInherited)}
           isInherited={instagramFacebook.isInherited}
           publicConfig={instagramFacebook.publicConfig}
         />
         <GoogleSettings
+          callbackOrigin={callbackOriginFor(google.isInherited)}
           isInherited={google.isInherited}
           publicConfig={google.publicConfig}
         />
         <WhatsappSettings
+          callbackOrigin={callbackOriginFor(whatsapp.isInherited)}
           isInherited={whatsapp.isInherited}
           publicConfig={whatsapp.publicConfig}
         />
         <ZaloSettings
+          callbackOrigin={callbackOriginFor(zalo.isInherited)}
           isInherited={zalo.isInherited}
           publicConfig={zalo.publicConfig}
         />
         <TiktokSettings
+          callbackOrigin={callbackOriginFor(tiktok.isInherited)}
           isInherited={tiktok.isInherited}
           publicConfig={tiktok.publicConfig}
         />

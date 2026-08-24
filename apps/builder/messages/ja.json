@@ -145,7 +145,8 @@
     "onSuccess": "成功時",
     "clone": "複製",
     "remove": "削除",
-    "restore": "復元"
+    "restore": "復元",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
@@ -799,6 +800,9 @@
     "dynamicImage": {
       "label": "ダイナミック画像"
     },
+    "minigame": {
+      "label": "ミニゲーム"
+    },
     "savePayloadToCustomField": {
       "label": "ペイロードをカスタムフィールドに保存"
     },
@@ -1158,6 +1162,9 @@
     "mcpServer": {
       "label": "MCPサーバー"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "システム関数",
       "names": {
@@ -1362,7 +1369,9 @@
       "label": "ステータス",
       "pending": "保留中",
       "processing": "処理中",
+      "installing": "Installing",
       "completed": "完了",
+      "partial": "Partial",
       "failed": "失敗",
       "success": "成功",
       "error": "エラー"
@@ -2006,6 +2015,26 @@
     },
     "enabled": {
       "label": "有効"
+    },
+    "api": {
+      "label": "API",
+      "description": "HTTPに対応した任意のアプリケーションをチャネルとして接続します。アプリからの受信メッセージは弊社のREST APIに送信され、返信はお客様のcallback URLに配信されます。",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "送信する返信はこちらにPOSTされ、受信箱ごとのシークレットで署名されます。",
+        "notSet": "未設定"
+      },
+      "token": "トークン",
+      "rotateToken": "トークンを再発行",
+      "status": {
+        "enabled": "有効",
+        "disabled": "無効"
+      },
+      "tokenReveal": {
+        "title": "APIトークンをコピー",
+        "description": "このトークンは一度だけ表示されます。安全に保管してください。再度表示することはできません。",
+        "done": "完了"
+      }
     }
   },
   "flows": {
@@ -3541,7 +3570,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "権限を更新",
+    "reconnect": "再接続",
     "duplicated": "このZalo OAアカウントはすでに別のワークスペースに接続されています。",
     "tagSync": {
       "title": "タグ同期",
@@ -4250,11 +4279,11 @@
     "title": "予約スケジュール",
     "description": "予約スケジュールを作成・管理します。",
     "flowModes": {
-      "bookFromCustomField": "予約を作成",
-      "checkAvailabilityFromCustomField": "空き状況を確認",
-      "book": "日時ピッカー",
-      "checkAvailability": "日付範囲ピッカー",
-      "cancel": "予約をキャンセル"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "モード",
@@ -4273,7 +4302,60 @@
   },
   "templates": {
     "title": "テンプレート",
-    "description": "テンプレートを作成・管理します。"
+    "description": "テンプレートを作成・管理します。",
+    "share": {
+      "label": "共有",
+      "enabled": "共有中",
+      "disabled": "未共有",
+      "dialogTitle": "テンプレートを共有",
+      "dialogDescription": "このリンクを持つ人は誰でも、あなたのテナント内のワークスペースにこのテンプレートのコピーをインストールできます。",
+      "enableLabel": "共有リンクを有効にする",
+      "linkLabel": "共有リンク",
+      "description": "リンクを持つ人は誰でも、このテンプレートを自分のワークスペースにインストールできます。"
+    },
+    "installs": {
+      "title": "インストール",
+      "resources": "リソース",
+      "warnings": "警告",
+      "completedAt": "完了日時",
+      "autoUpdate": "自動更新"
+    },
+    "form": {
+      "contents": "テンプレートの内容",
+      "comingSoon": "近日公開",
+      "selectAll": "すべて選択",
+      "selectedCount": "{count}件選択中",
+      "details": "詳細",
+      "permissions": "デフォルトの権限",
+      "allowEdit": "インストール後の編集を許可",
+      "allowDelete": "インストール後の削除を許可",
+      "publisherName": "公開者名",
+      "youtubeVideoId": "YouTube動画ID",
+      "youtubeVideoIdDescription": "動画URLに含まれる11文字のID（例: youtube.com/watch?v=dQw4w9WgXcQ の \"dQw4w9WgXcQ\"）",
+      "testLink": "テストリンク",
+      "imageUrl": "カバー画像",
+      "installBehavior": "インストール時の動作",
+      "createInstallFolder": "専用フォルダーにインストールする",
+      "createInstallFolderDescription": "インストールされたすべてのリソースを、このテンプレートの名前を付けた新しい1つのフォルダーにまとめます。",
+      "defaultAutoUpdate": "インストールをデフォルトで更新対象としてマークする",
+      "defaultAutoUpdateDescription": "このテンプレートを再公開するたびに、新規インストールに更新通知が表示されます。"
+    },
+    "categories": {
+      "flows": "フロー",
+      "customFields": "カスタムフィールド",
+      "tags": "タグ",
+      "products": "商品",
+      "productCategories": "商品カテゴリー",
+      "aiFunctions": "AI関数",
+      "aiAgents": "AIエージェント",
+      "calendars": "予約カレンダー",
+      "webchats": "Webチャット",
+      "keywords": "キーワード",
+      "entryPointLinks": "エントリーポイントリンク",
+      "triggers": "トリガー",
+      "fbCommentAutomations": "Facebookコメント自動化",
+      "settings": "設定"
+    }
   },
   "qrCodeGenerator": {
     "title": "QRコード生成",
@@ -4388,6 +4470,19 @@
     "invalidDescription": "このリンクは無効か、有効期限が切れています。",
     "unavailableTitle": "配信を停止できません。",
     "unavailableDescription": "このワークスペースは利用できなくなりました。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "このリンクはご利用いただけません。",
+    "invalidDescription": "このテンプレート共有リンクは無効、無効化済み、または期限切れです。",
+    "byPublisher": "{publisherName}による",
+    "includes": "このテンプレートに含まれるもの",
+    "videoTitle": "テンプレートのプレビュー動画",
+    "tryItOut": "試してみる",
+    "signInToInstall": "サインインしてインストール",
+    "selectWorkspace": "ワークスペースを選択",
+    "install": "インストール",
+    "installStarted": "インストールを開始しました",
+    "noEligibleWorkspaces": "このテンプレートをインストールできるワークスペースがありません。"
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "連携"
+    }
+  },
+  "minigames": {
+    "title": "ゲーミフィケーション",
+    "description": "顧客向けに抽選ミニゲームを作成・管理します。",
+    "types": {
+      "luckyWheel": "ラッキーホイール",
+      "jackpot": "ジャックポット",
+      "gashapon": "ガシャポン",
+      "drawLots": "くじ引き",
+      "scratchOff": "スクラッチくじ"
+    },
+    "createDialog": {
+      "title": "ミニゲームの種類を選択",
+      "comingSoon": "近日公開"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "全確率の合計：{value}%",
+      "loseProbability": "はずれ確率：{value}%",
+      "winProbability": "当選確率：{value}%",
+      "newPrize": "新しい景品"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "景品を編集",
+      "nonWinningTitle": "はずれ設定を編集",
+      "prizeNameLabel": "景品名",
+      "nonWinningTitleLabel": "タイトル",
+      "loseImageDescription": "推奨サイズ 120x120px",
+      "quantityLabel": "景品数量",
+      "quantityDescription": "この景品があと何回当選できるかを示します。当選するたびに1減ります。無制限にする場合は空欄のままにしてください。",
+      "sendMessage": "はずれた場合にメッセージを送信する",
+      "sendWinMessage": "景品を獲得した当選者にメッセージを送信する",
+      "messageMode": "メッセージタイプ",
+      "messageModeText": "テキスト",
+      "messageModeFlow": "フロー",
+      "messageText": "メッセージ"
+    },
+    "winningMessageDialog": {
+      "title": "当選メッセージの設定",
+      "titleLabel": "タイトル",
+      "acceptButtonText": "承諾ボタンのテキスト",
+      "shareButtonText": "シェアボタンのテキスト",
+      "shareButtonDescription": "シェアボタンの説明"
+    },
+    "nonWinningMessageDialog": {
+      "title": "はずれメッセージの設定",
+      "titleLabel": "タイトル",
+      "shareButtonText": "シェアボタンのテキスト",
+      "shareButtonDescription": "シェアボタンの説明"
+    },
+    "preview": {
+      "start": "開始",
+      "shareWithFriends": "友達にシェア",
+      "jackpotHeader": "ジャックポット",
+      "jackpotBanner": "ジャックポット",
+      "comingSoon": "このゲームタイプの詳細プレビューは近日公開予定です",
+      "rules": "ルール"
+    },
+    "form": {
+      "generalSettingsTitle": "一般設定",
+      "appearanceTitle": "デザイン",
+      "playerSettingsTitle": "プレイヤー設定",
+      "prizeSettingsTitle": "景品設定"
+    },
+    "generalSettings": {
+      "playedAt": "プレイ日時",
+      "rulesDescription": "ルールの説明",
+      "openerTags": "ゲームリンクを開いた人にタグを付ける",
+      "playerTags": "プレイヤーにタグを付ける",
+      "newFriendTags": "新しい友達にタグを付ける",
+      "shareEnabled": "友達へのシェアを許可する",
+      "shareMessage": "シェアメッセージ",
+      "shareMessageHint": "実際のゲームリンクを挿入するには '{{shareUrl}}' を使用してください。削除しないでください。"
+    },
+    "appearance": {
+      "backgroundColor": "背景色",
+      "machineColor": "マシンの色",
+      "decorativeColor": "装飾の色",
+      "ruleTextColor": "ルールテキストの色",
+      "backgroundImage": "背景画像",
+      "backgroundImageDescription": "推奨幅：1024px",
+      "prizeDescriptionImage": "景品説明画像（任意）",
+      "prizeDescriptionImageDescription": "推奨幅：750px",
+      "startButtonImage": "スタートボタン画像",
+      "startButtonImageDescription": "推奨サイズ：360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "1人あたりの抽選回数",
+      "resetPolicyLabel": "抽選回数のリセット",
+      "resetNever": "抽選回数をリセットしない",
+      "resetEveryNDays": "抽選回数を次の日数ごとにリセットする",
+      "resetIntervalDaysSuffix": "日"
+    },
+    "publicUrl": {
+      "label": "公開URL",
+      "hint": "このURLをフロー、配信、またはシーケンスにコピー＆ペーストして、このミニゲームを共有してください。"
+    },
+    "play": {
+      "close": "閉じる",
+      "drawsRemaining": "残り{count}回",
+      "noDrawsLeft": "このミニゲームの残り回数がありません。",
+      "notStartedYet": "このミニゲームはまだ開始していません。",
+      "ended": "このミニゲームは終了しました。",
+      "forbiddenTitle": "アクセスが拒否されました",
+      "forbiddenDescription": "このリンクは無効か、期限切れです。",
+      "comingSoonTitle": "近日公開",
+      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。"
+    },
+    "history": {
+      "title": "履歴",
+      "played": "プレイ回数",
+      "remaining": "残り回数",
+      "openedAt": "初回オープン",
+      "lastPlayedAt": "最終プレイ",
+      "unknownContact": "不明な連絡先",
+      "record": "記録",
+      "recordDialog": {
+        "title": "プレイ記録",
+        "win": "当選",
+        "lose": "ハズレ",
+        "empty": "プレイ記録はまだありません"
+      }
     }
   }
 }

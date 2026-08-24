@@ -2,14 +2,15 @@ import { env } from "@/env"
 
 /**
  * The OAuth broker — a dedicated, brand-neutral host (GHL/LeadConnector-style)
- * registered as the single `redirect_uri` with every OAuth provider (Google,
- * Facebook, TikTok, Google Sheets, …). Every white-label callback lands here and
- * is then relayed back to the originating domain (see `oauth-referer.ts`), so the
- * code exchange and cookie write happen where the user's session actually lives.
- *
- * Webhook *receive* URLs for providers that validate the registered host (e.g.
- * WhatsApp/Meta, TikTok) also use this broker origin, not just OAuth redirects —
- * the provider cannot reach an unregistered white-label custom domain.
+ * used as the `redirect_uri` for inherited/platform-owned OAuth credentials
+ * and self-hosted editions. A tenant-owned credential (a reseller's own
+ * provider app, `Credential.userId` set) instead uses that reseller's active
+ * custom domain — see `lib/provider-origin.ts`, the actual source of truth
+ * for "which origin does this credential's redirect_uri use". Either way, a
+ * callback that lands on a host different from where the flow started is
+ * relayed back to the originating domain (see `oauth-referer.ts`), so the
+ * code exchange and cookie write happen where the user's session actually
+ * lives.
  *
  * Falls back to `NEXT_PUBLIC_BUILDER_URL` when no dedicated broker is configured,
  * keeping single-domain deployments unchanged.

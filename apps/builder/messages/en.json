@@ -55,7 +55,7 @@
     "exportContacts": "Export Contacts",
     "filter": "Filter",
     "selectFile": "Select file",
-    "insertLink": "Insert link",
+    "insertLink": "Insert Link",
     "addNew": "Add new",
     "send": "Send",
     "loginWithMagicLink": "Login with Magic Link",
@@ -145,7 +145,8 @@
     "onSuccess": "On success",
     "clone": "Clone",
     "remove": "Remove",
-    "restore": "Restore"
+    "restore": "Restore",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "You need to be a workspace super admin to do this."
@@ -873,6 +874,9 @@
     "dynamicImage": {
       "label": "Dynamic Image"
     },
+    "minigame": {
+      "label": "Minigame"
+    },
     "savePayloadToCustomField": {
       "label": "Save payload to custom field"
     },
@@ -1158,7 +1162,7 @@
       "label": "Input Custom Field"
     },
     "insertLink": {
-      "label": "Insert link"
+      "label": "Insert Link"
     },
     "instructions": {
       "label": "System Message (Prompt)"
@@ -1240,6 +1244,9 @@
     },
     "mcpServer": {
       "label": "MCP Server"
+    },
+    "template": {
+      "label": "Template"
     },
     "systemFunction": {
       "label": "System Function",
@@ -1445,7 +1452,9 @@
       "label": "Status",
       "pending": "Pending",
       "processing": "Processing",
+      "installing": "Installing",
       "completed": "Completed",
+      "partial": "Partial",
       "failed": "Failed",
       "success": "Success",
       "error": "Error"
@@ -1926,7 +1935,7 @@
     },
     "authCallbackUrl": {
       "label": "Auth Callback URL",
-      "hint": "Register this exact URL as the OAuth redirect URI in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain."
+      "hint": "Register this exact URL as the OAuth redirect URI in your provider app. With your own app and an active custom domain, it's on your custom domain; otherwise it's on the platform host."
     },
     "signInCallbackUrl": {
       "label": "Sign-in Callback URL",
@@ -1934,7 +1943,7 @@
     },
     "webhookUrl": {
       "label": "Webhook URL",
-      "hint": "Register this exact Webhook URL in your provider app. It must use this host, not your custom domain — the provider cannot reach a custom domain."
+      "hint": "Register this exact Webhook URL in your provider app. With your own app and an active custom domain, it's on your custom domain; otherwise it's on the platform host."
     },
     "tiktok": {
       "label": "TikTok",
@@ -2080,6 +2089,26 @@
     },
     "enabled": {
       "label": "Enabled"
+    },
+    "api": {
+      "label": "API",
+      "description": "Connect any HTTP-capable application as a channel. Your app sends inbound messages to our REST API and we deliver replies to your callback URL.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "We POST outbound replies here, signed with your per-inbox secret.",
+        "notSet": "Not set"
+      },
+      "token": "Token",
+      "rotateToken": "Rotate token",
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "tokenReveal": {
+        "title": "Copy your API token",
+        "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
+        "done": "Done"
+      }
     }
   },
   "metaConversions": {
@@ -3660,7 +3689,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh permissions",
+    "reconnect": "Reconnect",
     "duplicated": "This Zalo OA account has already been connected to another workspace.",
     "tagSync": {
       "title": "Tag Sync",
@@ -4393,8 +4422,8 @@
     "flowModes": {
       "bookFromCustomField": "Book appointment",
       "checkAvailabilityFromCustomField": "Check availability",
-      "book": "Date & time picker",
-      "checkAvailability": "Date range picker",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
       "cancel": "Cancel appointment"
     },
     "fields": {
@@ -4549,7 +4578,60 @@
   },
   "templates": {
     "title": "Templates",
-    "description": "Create and manage your templates."
+    "description": "Create and manage your templates.",
+    "share": {
+      "label": "Share",
+      "enabled": "Shared",
+      "disabled": "Not shared",
+      "dialogTitle": "Share template",
+      "dialogDescription": "Anyone with this link can install a copy of this template into a workspace in your tenant.",
+      "enableLabel": "Enable share link",
+      "linkLabel": "Share link",
+      "description": "Anyone with the link can install this template into their own workspace."
+    },
+    "installs": {
+      "title": "Installs",
+      "resources": "Resources",
+      "warnings": "Warnings",
+      "completedAt": "Completed at",
+      "autoUpdate": "Auto-update"
+    },
+    "form": {
+      "contents": "Template contents",
+      "comingSoon": "Coming soon",
+      "selectAll": "Select all",
+      "selectedCount": "{count} selected",
+      "details": "Details",
+      "permissions": "Default permissions",
+      "allowEdit": "Allow editing after install",
+      "allowDelete": "Allow deleting after install",
+      "publisherName": "Publisher name",
+      "youtubeVideoId": "YouTube video ID",
+      "youtubeVideoIdDescription": "The 11-character ID from the video's URL, e.g. the \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Test link",
+      "imageUrl": "Cover image",
+      "installBehavior": "Install behavior",
+      "createInstallFolder": "Install into a dedicated folder",
+      "createInstallFolderDescription": "Nest every installed resource under one new folder named after this template.",
+      "defaultAutoUpdate": "Flag installs for updates by default",
+      "defaultAutoUpdateDescription": "New installs will show an update available notice whenever you republish this template."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Custom fields",
+      "tags": "Tags",
+      "products": "Products",
+      "productCategories": "Product categories",
+      "aiFunctions": "AI functions",
+      "aiAgents": "AI agents",
+      "calendars": "Calendars",
+      "webchats": "Webchats",
+      "keywords": "Keywords",
+      "entryPointLinks": "Entry point links",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook comment automations",
+      "settings": "Settings"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Code Generator",
@@ -4664,6 +4746,19 @@
     "invalidDescription": "This link is invalid or has expired.",
     "unavailableTitle": "Unsubscribe unavailable.",
     "unavailableDescription": "This workspace is no longer available."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "This link is no longer available.",
+    "invalidDescription": "This template share link is invalid, disabled, or has expired.",
+    "byPublisher": "By {publisherName}",
+    "includes": "This template includes",
+    "videoTitle": "Template preview video",
+    "tryItOut": "Try it out",
+    "signInToInstall": "Sign in to install",
+    "selectWorkspace": "Select a workspace",
+    "install": "Install",
+    "installStarted": "Install started",
+    "noEligibleWorkspaces": "You don't have a workspace eligible to install this template."
   },
   "bookingPage": {
     "metadataTitle": "Booking",
@@ -5197,6 +5292,128 @@
       "iconPlaceholder": "e.g. book-open, star, circle-question-mark",
       "position": "Order",
       "iconSearchLink": "Browse Lucide icons →"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Create and manage lucky-draw minigames for your customers.",
+    "types": {
+      "luckyWheel": "Lucky Wheel",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Draw Lots",
+      "scratchOff": "Scratch Off"
+    },
+    "createDialog": {
+      "title": "Choose a minigame type",
+      "comingSoon": "Coming soon"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Sum of all probabilities: {value}%",
+      "loseProbability": "Lose probability: {value}%",
+      "winProbability": "Win probability: {value}%",
+      "newPrize": "New Prize"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Edit Prize",
+      "nonWinningTitle": "Edit Non-winning Setting",
+      "prizeNameLabel": "Prize Name",
+      "nonWinningTitleLabel": "Title",
+      "loseImageDescription": "Recommended size 120x120px",
+      "quantityLabel": "Prize Quantity",
+      "quantityDescription": "Number of times this prize can still be won; decreases by 1 each time it's won. Leave empty for unlimited.",
+      "sendMessage": "Send a message when the player doesn't win",
+      "sendWinMessage": "Send message to winner who received the prize",
+      "messageMode": "Message type",
+      "messageModeText": "Text",
+      "messageModeFlow": "Flow",
+      "messageText": "Message"
+    },
+    "winningMessageDialog": {
+      "title": "Winning Message Settings",
+      "titleLabel": "Title",
+      "acceptButtonText": "Accept Button Text",
+      "shareButtonText": "Share Button Text",
+      "shareButtonDescription": "Share Button Description"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Non-winning Message Settings",
+      "titleLabel": "Title",
+      "shareButtonText": "Share Button Text",
+      "shareButtonDescription": "Share Button Description"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Share with friends",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Detailed preview coming soon for this game type",
+      "rules": "Rules"
+    },
+    "form": {
+      "generalSettingsTitle": "General Setting",
+      "appearanceTitle": "Appearance",
+      "playerSettingsTitle": "Player Settings",
+      "prizeSettingsTitle": "Prize Settings"
+    },
+    "generalSettings": {
+      "playedAt": "Played At",
+      "rulesDescription": "Rules Description",
+      "openerTags": "Tag contacts who open the game link",
+      "playerTags": "Tag players",
+      "newFriendTags": "Tag new friends",
+      "shareEnabled": "Allow sharing with friends",
+      "shareMessage": "Sharing Message",
+      "shareMessageHint": "Use '{{shareUrl}}' to insert the actual game link — please don't remove it."
+    },
+    "appearance": {
+      "backgroundColor": "Background Color",
+      "machineColor": "Machine Color",
+      "decorativeColor": "Decorative Color",
+      "ruleTextColor": "Rule Text Color",
+      "backgroundImage": "Background Image",
+      "backgroundImageDescription": "Recommended width: 1024px",
+      "prizeDescriptionImage": "Prize Description Image (Optional)",
+      "prizeDescriptionImageDescription": "Recommended width: 750px",
+      "startButtonImage": "Start Button Image",
+      "startButtonImageDescription": "Recommended size: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Number of lucky draw chances per person",
+      "resetPolicyLabel": "Reset draws",
+      "resetNever": "Do not reset the number of draws",
+      "resetEveryNDays": "Reset the number of draws every",
+      "resetIntervalDaysSuffix": "day(s)"
+    },
+    "publicUrl": {
+      "label": "Public URL",
+      "hint": "Copy and paste the URL into your flow, broadcast, or sequence to share this minigame."
+    },
+    "play": {
+      "close": "Close",
+      "drawsRemaining": "{count} draws remaining",
+      "noDrawsLeft": "You are out of draws for this minigame.",
+      "notStartedYet": "This minigame has not started yet.",
+      "ended": "This minigame has ended.",
+      "forbiddenTitle": "Access denied",
+      "forbiddenDescription": "This link is invalid or has expired.",
+      "comingSoonTitle": "Coming soon",
+      "comingSoonDescription": "This minigame type is not playable yet."
+    },
+    "history": {
+      "title": "History",
+      "played": "Plays",
+      "remaining": "Remaining draws",
+      "openedAt": "First opened",
+      "lastPlayedAt": "Last played",
+      "unknownContact": "Unknown contact",
+      "record": "Record",
+      "recordDialog": {
+        "title": "Play record",
+        "win": "Won",
+        "lose": "No prize",
+        "empty": "No play records yet"
+      }
     }
   }
 }

@@ -166,6 +166,10 @@ class TagService extends BaseService {
   }): Promise<void> {
     const { workspaceId, contactId, tagIds, tx = db } = props
 
+    if (tagIds.length === 0) {
+      return
+    }
+
     await findOrFail({
       table: contactModel,
       where: { id: contactId, workspaceId },

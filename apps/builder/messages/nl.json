@@ -145,7 +145,8 @@
     "onSuccess": "Bij succes",
     "clone": "Klonen",
     "remove": "Verwijderen",
-    "restore": "Herstellen"
+    "restore": "Herstellen",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Je moet superbeheerder van de werkruimte zijn om dit te doen."
@@ -613,6 +614,9 @@
     "dynamicImage": {
       "label": "Dynamische afbeelding"
     },
+    "minigame": {
+      "label": "Minigame"
+    },
     "savePayloadToCustomField": {
       "label": "Payload opslaan in aangepast veld"
     },
@@ -972,6 +976,9 @@
     "mcpServer": {
       "label": "MCP-server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Systeemfunctie",
       "names": {
@@ -1176,7 +1183,9 @@
       "label": "Status",
       "pending": "In behandeling",
       "processing": "Wordt verwerkt",
+      "installing": "Installing",
       "completed": "Voltooid",
+      "partial": "Partial",
       "failed": "Mislukt",
       "success": "Geslaagd",
       "error": "Fout"
@@ -1820,6 +1829,26 @@
     },
     "enabled": {
       "label": "Ingeschakeld"
+    },
+    "api": {
+      "label": "API",
+      "description": "Verbind elke HTTP-compatibele applicatie als kanaal. Je app stuurt inkomende berichten naar onze REST API en wij bezorgen antwoorden op je callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "We sturen uitgaande antwoorden hierheen via POST, ondertekend met het geheim van je eigen postvak.",
+        "notSet": "Niet ingesteld"
+      },
+      "token": "Token",
+      "rotateToken": "Token vernieuwen",
+      "status": {
+        "enabled": "Ingeschakeld",
+        "disabled": "Uitgeschakeld"
+      },
+      "tokenReveal": {
+        "title": "Kopieer je API-token",
+        "description": "Dit token wordt maar één keer getoond. Bewaar het veilig — je kunt het daarna niet meer bekijken.",
+        "done": "Klaar"
+      }
     }
   },
   "condition": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Machtigingen vernieuwen",
+    "reconnect": "Opnieuw koppelen",
     "duplicated": "Dit Zalo OA-account is al gekoppeld aan een andere workspace.",
     "tagSync": {
       "title": "Tagsynchronisatie",
@@ -4250,11 +4279,11 @@
     "title": "Afspraken plannen",
     "description": "Maak en beheer je afsprakenplanning.",
     "flowModes": {
-      "bookFromCustomField": "Afspraak boeken",
-      "checkAvailabilityFromCustomField": "Beschikbaarheid controleren",
-      "book": "Datum-/tijdkiezer",
-      "checkAvailability": "Datumbereikkiezer",
-      "cancel": "Afspraak annuleren"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modus",
@@ -4273,7 +4302,60 @@
   },
   "templates": {
     "title": "Sjablonen",
-    "description": "Maak en beheer je sjablonen."
+    "description": "Maak en beheer je sjablonen.",
+    "share": {
+      "label": "Delen",
+      "enabled": "Gedeeld",
+      "disabled": "Niet gedeeld",
+      "dialogTitle": "Sjabloon delen",
+      "dialogDescription": "Iedereen met deze link kan een kopie van dit sjabloon installeren in een werkruimte binnen jouw tenant.",
+      "enableLabel": "Deellink inschakelen",
+      "linkLabel": "Deellink",
+      "description": "Iedereen met de link kan dit sjabloon in zijn eigen werkruimte installeren."
+    },
+    "installs": {
+      "title": "Installaties",
+      "resources": "Bronnen",
+      "warnings": "Waarschuwingen",
+      "completedAt": "Voltooid op",
+      "autoUpdate": "Automatische update"
+    },
+    "form": {
+      "contents": "Sjabloon-inhoud",
+      "comingSoon": "Binnenkort beschikbaar",
+      "selectAll": "Alles selecteren",
+      "selectedCount": "{count} geselecteerd",
+      "details": "Details",
+      "permissions": "Standaardrechten",
+      "allowEdit": "Bewerken na installatie toestaan",
+      "allowDelete": "Verwijderen na installatie toestaan",
+      "publisherName": "Naam uitgever",
+      "youtubeVideoId": "YouTube-video-ID",
+      "youtubeVideoIdDescription": "De 11-tekens-ID uit de video-URL, bijv. \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Omslagafbeelding",
+      "installBehavior": "Installatiegedrag",
+      "createInstallFolder": "Installeren in een aparte map",
+      "createInstallFolderDescription": "Plaatst elke geïnstalleerde bron in één nieuwe map die naar dit sjabloon is vernoemd.",
+      "defaultAutoUpdate": "Installaties standaard markeren voor updates",
+      "defaultAutoUpdateDescription": "Nieuwe installaties tonen een melding over een beschikbare update zodra je dit sjabloon opnieuw publiceert."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Aangepaste velden",
+      "tags": "Tags",
+      "products": "Producten",
+      "productCategories": "Productcategorieën",
+      "aiFunctions": "AI-functies",
+      "aiAgents": "AI-agents",
+      "calendars": "Afspraakkalenders",
+      "webchats": "Webchats",
+      "keywords": "Trefwoorden",
+      "entryPointLinks": "Toegangspuntlinks",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook-reactieautomatiseringen",
+      "settings": "Instellingen"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR-codegenerator",
@@ -4388,6 +4470,19 @@
     "invalidDescription": "Deze link is ongeldig of verlopen.",
     "unavailableTitle": "Afmelden niet beschikbaar.",
     "unavailableDescription": "Deze werkruimte is niet meer beschikbaar."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Deze link is niet meer beschikbaar.",
+    "invalidDescription": "Deze sjabloon-deellink is ongeldig, uitgeschakeld of verlopen.",
+    "byPublisher": "Door {publisherName}",
+    "includes": "Dit sjabloon bevat",
+    "videoTitle": "Sjabloon-voorbeeldvideo",
+    "tryItOut": "Probeer het",
+    "signInToInstall": "Log in om te installeren",
+    "selectWorkspace": "Selecteer een werkruimte",
+    "install": "Installeren",
+    "installStarted": "Installatie gestart",
+    "noEligibleWorkspaces": "Je hebt geen werkruimte die geschikt is om dit sjabloon te installeren."
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Koppelen"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Maak en beheer minigames met prijstrekking voor je klanten.",
+    "types": {
+      "luckyWheel": "Gelukswiel",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Loten trekken",
+      "scratchOff": "Kraslot"
+    },
+    "createDialog": {
+      "title": "Kies een type minigame",
+      "comingSoon": "Binnenkort beschikbaar"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Som van alle kansen: {value}%",
+      "loseProbability": "Verlieskans: {value}%",
+      "winProbability": "Winkans: {value}%",
+      "newPrize": "Nieuwe prijs"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Prijs bewerken",
+      "nonWinningTitle": "Verliesinstelling bewerken",
+      "prizeNameLabel": "Prijsnaam",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Aanbevolen formaat 120x120px",
+      "quantityLabel": "Prijsaantal",
+      "quantityDescription": "Aantal keren dat deze prijs nog gewonnen kan worden; neemt met 1 af bij elke winst. Laat leeg voor onbeperkt.",
+      "sendMessage": "Stuur een bericht wanneer de speler niet wint",
+      "sendWinMessage": "Stuur een bericht naar de winnaar die de prijs heeft ontvangen",
+      "messageMode": "Berichttype",
+      "messageModeText": "Tekst",
+      "messageModeFlow": "Flow",
+      "messageText": "Bericht"
+    },
+    "winningMessageDialog": {
+      "title": "Instellingen winbericht",
+      "titleLabel": "Titel",
+      "acceptButtonText": "Tekst accepteerknop",
+      "shareButtonText": "Tekst deelknop",
+      "shareButtonDescription": "Beschrijving deelknop"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Instellingen verliesbericht",
+      "titleLabel": "Titel",
+      "shareButtonText": "Tekst deelknop",
+      "shareButtonDescription": "Beschrijving deelknop"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Delen met vrienden",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Gedetailleerde voorvertoning voor dit speltype volgt binnenkort",
+      "rules": "Regels"
+    },
+    "form": {
+      "generalSettingsTitle": "Algemene instellingen",
+      "appearanceTitle": "Uiterlijk",
+      "playerSettingsTitle": "Spelerinstellingen",
+      "prizeSettingsTitle": "Prijsinstellingen"
+    },
+    "generalSettings": {
+      "playedAt": "Gespeeld op",
+      "rulesDescription": "Spelregels",
+      "openerTags": "Tag contacten die de spellink openen",
+      "playerTags": "Tag spelers",
+      "newFriendTags": "Tag nieuwe vrienden",
+      "shareEnabled": "Delen met vrienden toestaan",
+      "shareMessage": "Deelbericht",
+      "shareMessageHint": "Gebruik '{{shareUrl}}' om de daadwerkelijke spellink in te voegen — verwijder dit niet."
+    },
+    "appearance": {
+      "backgroundColor": "Achtergrondkleur",
+      "machineColor": "Machinekleur",
+      "decorativeColor": "Decoratiekleur",
+      "ruleTextColor": "Kleur regeltekst",
+      "backgroundImage": "Achtergrondafbeelding",
+      "backgroundImageDescription": "Aanbevolen breedte: 1024px",
+      "prizeDescriptionImage": "Prijsbeschrijvingsafbeelding (optioneel)",
+      "prizeDescriptionImageDescription": "Aanbevolen breedte: 750px",
+      "startButtonImage": "Afbeelding startknop",
+      "startButtonImageDescription": "Aanbevolen formaat: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Aantal trekkingskansen per persoon",
+      "resetPolicyLabel": "Trekkingen resetten",
+      "resetNever": "Aantal trekkingen niet resetten",
+      "resetEveryNDays": "Reset het aantal trekkingen elke",
+      "resetIntervalDaysSuffix": "dag(en)"
+    },
+    "publicUrl": {
+      "label": "Openbare URL",
+      "hint": "Kopieer en plak de URL in je flow, broadcast of sequence om deze minigame te delen."
+    },
+    "play": {
+      "close": "Sluiten",
+      "drawsRemaining": "Nog {count} pogingen over",
+      "noDrawsLeft": "Je hebt geen pogingen meer over voor dit minispel.",
+      "notStartedYet": "Dit minispel is nog niet begonnen.",
+      "ended": "Dit minispel is beëindigd.",
+      "forbiddenTitle": "Toegang geweigerd",
+      "forbiddenDescription": "Deze link is ongeldig of verlopen.",
+      "comingSoonTitle": "Binnenkort beschikbaar",
+      "comingSoonDescription": "Dit type minispel is nog niet speelbaar."
+    },
+    "history": {
+      "title": "Geschiedenis",
+      "played": "Gespeeld",
+      "remaining": "Resterende trekkingen",
+      "openedAt": "Eerst geopend",
+      "lastPlayedAt": "Laatst gespeeld",
+      "unknownContact": "Onbekend contact",
+      "record": "Logboek",
+      "recordDialog": {
+        "title": "Speellogboek",
+        "win": "Gewonnen",
+        "lose": "Geen prijs",
+        "empty": "Nog geen speelrecords"
+      }
     }
   }
 }

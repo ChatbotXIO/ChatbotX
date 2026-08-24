@@ -145,7 +145,8 @@
     "onSuccess": "Başarı durumunda",
     "clone": "Klonla",
     "remove": "Kaldır",
-    "restore": "Geri Yükle"
+    "restore": "Geri Yükle",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
@@ -873,6 +874,9 @@
     "dynamicImage": {
       "label": "Dinamik Görsel"
     },
+    "minigame": {
+      "label": "Mini oyun"
+    },
     "savePayloadToCustomField": {
       "label": "Yükü özel alana kaydet"
     },
@@ -1232,6 +1236,9 @@
     "mcpServer": {
       "label": "MCP Sunucusu"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Sistem İşlevi",
       "names": {
@@ -1436,7 +1443,9 @@
       "label": "Durum",
       "pending": "Bekliyor",
       "processing": "İşleniyor",
+      "installing": "Installing",
       "completed": "Tamamlandı",
+      "partial": "Partial",
       "failed": "Başarısız",
       "success": "Başarılı",
       "error": "Hata"
@@ -2080,6 +2089,26 @@
     },
     "enabled": {
       "label": "Etkin"
+    },
+    "api": {
+      "label": "API",
+      "description": "HTTP destekleyen herhangi bir uygulamayı kanal olarak bağlayın. Uygulamanız, gelen mesajları REST API'mize gönderir ve biz de yanıtları callback URL'inize iletiriz.",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "Giden yanıtları buraya POST ile, gelen kutunuza özel gizli anahtarla imzalanmış şekilde gönderiyoruz.",
+        "notSet": "Ayarlanmadı"
+      },
+      "token": "Jeton",
+      "rotateToken": "Jetonu yenile",
+      "status": {
+        "enabled": "Etkin",
+        "disabled": "Devre Dışı"
+      },
+      "tokenReveal": {
+        "title": "API jetonunuzu kopyalayın",
+        "description": "Bu jeton yalnızca bir kez gösterilir. Güvenli bir şekilde saklayın — tekrar görüntüleyemezsiniz.",
+        "done": "Tamamlandı"
+      }
     }
   },
   "flows": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "İzinleri yenile",
+    "reconnect": "Yeniden Bağlan",
     "duplicated": "Bu Zalo OA hesabı zaten başka bir çalışma alanına bağlanmış.",
     "tagSync": {
       "title": "Etiket Senkronizasyonu",
@@ -4250,11 +4279,11 @@
     "title": "Randevu Planlama",
     "description": "Randevu planlamanızı oluşturun ve yönetin.",
     "flowModes": {
-      "bookFromCustomField": "Randevu al",
-      "checkAvailabilityFromCustomField": "Uygunluğu kontrol et",
-      "book": "Tarih ve saat seçici",
-      "checkAvailability": "Tarih aralığı seçici",
-      "cancel": "Randevuyu iptal et"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mod",
@@ -4273,7 +4302,60 @@
   },
   "templates": {
     "title": "Şablonlar",
-    "description": "Şablonlarınızı oluşturun ve yönetin."
+    "description": "Şablonlarınızı oluşturun ve yönetin.",
+    "share": {
+      "label": "Paylaş",
+      "enabled": "Paylaşıldı",
+      "disabled": "Paylaşılmadı",
+      "dialogTitle": "Şablonu paylaş",
+      "dialogDescription": "Bu bağlantıya sahip herkes, bu şablonun bir kopyasını kendi kuruluşunuzdaki bir çalışma alanına yükleyebilir.",
+      "enableLabel": "Paylaşım bağlantısını etkinleştir",
+      "linkLabel": "Paylaşım bağlantısı",
+      "description": "Bağlantıya sahip olan herkes bu şablonu kendi çalışma alanına yükleyebilir."
+    },
+    "installs": {
+      "title": "Yüklemeler",
+      "resources": "Kaynaklar",
+      "warnings": "Uyarılar",
+      "completedAt": "Tamamlanma tarihi",
+      "autoUpdate": "Otomatik güncelleme"
+    },
+    "form": {
+      "contents": "Şablon içeriği",
+      "comingSoon": "Yakında",
+      "selectAll": "Tümünü seç",
+      "selectedCount": "{count} seçildi",
+      "details": "Ayrıntılar",
+      "permissions": "Varsayılan izinler",
+      "allowEdit": "Yüklemeden sonra düzenlemeye izin ver",
+      "allowDelete": "Yüklemeden sonra silmeye izin ver",
+      "publisherName": "Yayıncı adı",
+      "youtubeVideoId": "YouTube video kimliği",
+      "youtubeVideoIdDescription": "Video URL'sindeki 11 karakterli kimlik, ör. youtube.com/watch?v=dQw4w9WgXcQ içindeki \"dQw4w9WgXcQ\"",
+      "testLink": "Test bağlantısı",
+      "imageUrl": "Kapak görseli",
+      "installBehavior": "Yükleme davranışı",
+      "createInstallFolder": "Ayrılmış bir klasöre yükle",
+      "createInstallFolderDescription": "Yüklenen her kaynağı bu şablonun adını taşıyan tek bir yeni klasörün altına yerleştirir.",
+      "defaultAutoUpdate": "Yüklemeleri varsayılan olarak güncelleme için işaretle",
+      "defaultAutoUpdateDescription": "Bu şablonu her yeniden yayınladığınızda, yeni yüklemelerde güncelleme bildirimi gösterilir."
+    },
+    "categories": {
+      "flows": "Akışlar",
+      "customFields": "Özel Alanlar",
+      "tags": "Etiketler",
+      "products": "Ürünler",
+      "productCategories": "Ürün kategorileri",
+      "aiFunctions": "Yapay Zekâ İşlevleri",
+      "aiAgents": "Yapay Zekâ Temsilcileri",
+      "calendars": "Randevu Takvimleri",
+      "webchats": "Web Sohbetleri",
+      "keywords": "Anahtar Kelimeler",
+      "entryPointLinks": "Giriş Noktası Bağlantıları",
+      "triggers": "Tetikleyiciler",
+      "fbCommentAutomations": "Facebook yorum otomasyonları",
+      "settings": "Ayarlar"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Kod Oluşturucu",
@@ -4388,6 +4470,19 @@
     "invalidDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
     "unavailableTitle": "Abonelikten çıkma kullanılamıyor.",
     "unavailableDescription": "Bu çalışma alanı artık kullanılamıyor."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Bu bağlantı artık kullanılamıyor.",
+    "invalidDescription": "Bu şablon paylaşım bağlantısı geçersiz, devre dışı bırakılmış veya süresi dolmuş.",
+    "byPublisher": "{publisherName} tarafından",
+    "includes": "Bu şablon şunları içerir",
+    "videoTitle": "Şablon önizleme videosu",
+    "tryItOut": "Deneyin",
+    "signInToInstall": "Yüklemek için oturum açın",
+    "selectWorkspace": "Bir çalışma alanı seçin",
+    "install": "Yükle",
+    "installStarted": "Yükleme başladı",
+    "noEligibleWorkspaces": "Bu şablonu yüklemeye uygun bir çalışma alanınız yok."
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Bağlan"
+    }
+  },
+  "minigames": {
+    "title": "Oyunlaştırma",
+    "description": "Müşterileriniz için çekiliş tabanlı mini oyunlar oluşturun ve yönetin.",
+    "types": {
+      "luckyWheel": "Şans Çarkı",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Kura Çekimi",
+      "scratchOff": "Kazı Kazan"
+    },
+    "createDialog": {
+      "title": "Bir mini oyun türü seçin",
+      "comingSoon": "Yakında"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Tüm olasılıkların toplamı: {value}%",
+      "loseProbability": "Kaybetme olasılığı: {value}%",
+      "winProbability": "Kazanma olasılığı: {value}%",
+      "newPrize": "Yeni Ödül"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Ödülü Düzenle",
+      "nonWinningTitle": "Kazanamama Ayarını Düzenle",
+      "prizeNameLabel": "Ödül Adı",
+      "nonWinningTitleLabel": "Başlık",
+      "loseImageDescription": "Önerilen boyut 120x120px",
+      "quantityLabel": "Ödül Miktarı",
+      "quantityDescription": "Bu ödülün hâlâ kaç kez kazanılabileceği; her kazanımda 1 azalır. Sınırsız için boş bırakın.",
+      "sendMessage": "Oyuncu kazanamadığında bir mesaj gönder",
+      "sendWinMessage": "Ödülü kazanan kişiye mesaj gönder",
+      "messageMode": "Mesaj türü",
+      "messageModeText": "Metin",
+      "messageModeFlow": "Akış",
+      "messageText": "Mesaj"
+    },
+    "winningMessageDialog": {
+      "title": "Kazanma Mesajı Ayarları",
+      "titleLabel": "Başlık",
+      "acceptButtonText": "Kabul Et Buton Metni",
+      "shareButtonText": "Paylaş Buton Metni",
+      "shareButtonDescription": "Paylaş Buton Açıklaması"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Kazanamama Mesajı Ayarları",
+      "titleLabel": "Başlık",
+      "shareButtonText": "Paylaş Buton Metni",
+      "shareButtonDescription": "Paylaş Buton Açıklaması"
+    },
+    "preview": {
+      "start": "Başla",
+      "shareWithFriends": "Arkadaşlarla paylaş",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Bu oyun türü için ayrıntılı önizleme yakında sunulacak",
+      "rules": "Kurallar"
+    },
+    "form": {
+      "generalSettingsTitle": "Genel Ayar",
+      "appearanceTitle": "Görünüm",
+      "playerSettingsTitle": "Oyuncu Ayarları",
+      "prizeSettingsTitle": "Ödül Ayarları"
+    },
+    "generalSettings": {
+      "playedAt": "Oynanma Zamanı",
+      "rulesDescription": "Kural Açıklaması",
+      "openerTags": "Oyun bağlantısını açan kişileri etiketle",
+      "playerTags": "Oyuncuları etiketle",
+      "newFriendTags": "Yeni arkadaşları etiketle",
+      "shareEnabled": "Arkadaşlarla paylaşmaya izin ver",
+      "shareMessage": "Paylaşım Mesajı",
+      "shareMessageHint": "Gerçek oyun bağlantısını eklemek için '{{shareUrl}}' kullanın — lütfen kaldırmayın."
+    },
+    "appearance": {
+      "backgroundColor": "Arka Plan Rengi",
+      "machineColor": "Makine Rengi",
+      "decorativeColor": "Dekoratif Renk",
+      "ruleTextColor": "Kural Metni Rengi",
+      "backgroundImage": "Arka Plan Görseli",
+      "backgroundImageDescription": "Önerilen genişlik: 1024px",
+      "prizeDescriptionImage": "Ödül Açıklama Görseli (İsteğe Bağlı)",
+      "prizeDescriptionImageDescription": "Önerilen genişlik: 750px",
+      "startButtonImage": "Başlat Butonu Görseli",
+      "startButtonImageDescription": "Önerilen boyut: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Kişi başına şans çekiliş hakkı sayısı",
+      "resetPolicyLabel": "Çekilişleri sıfırla",
+      "resetNever": "Çekiliş sayısını sıfırlama",
+      "resetEveryNDays": "Çekiliş sayısını her şu kadar günde bir sıfırla",
+      "resetIntervalDaysSuffix": "gün"
+    },
+    "publicUrl": {
+      "label": "Genel URL",
+      "hint": "Bu mini oyunu paylaşmak için URL'yi akışınıza, yayınınıza veya dizinize kopyalayıp yapıştırın."
+    },
+    "play": {
+      "close": "Kapat",
+      "drawsRemaining": "{count} deneme hakkı kaldı",
+      "noDrawsLeft": "Bu mini oyun için deneme hakkınız kalmadı.",
+      "notStartedYet": "Bu mini oyun henüz başlamadı.",
+      "ended": "Bu mini oyun sona erdi.",
+      "forbiddenTitle": "Erişim reddedildi",
+      "forbiddenDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
+      "comingSoonTitle": "Çok yakında",
+      "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor."
+    },
+    "history": {
+      "title": "Geçmiş",
+      "played": "Oynama sayısı",
+      "remaining": "Kalan çekiliş",
+      "openedAt": "İlk açılış",
+      "lastPlayedAt": "Son oynama",
+      "unknownContact": "Bilinmeyen kişi",
+      "record": "Kayıt",
+      "recordDialog": {
+        "title": "Oyun kaydı",
+        "win": "Kazandı",
+        "lose": "Ödül yok",
+        "empty": "Henüz oyun kaydı yok"
+      }
     }
   }
 }

@@ -6,7 +6,8 @@ import {
   tiktokCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import { subscribeWebhook } from "@chatbotx.io/integration-tiktok"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { getBrokerOrigin } from "@/lib/oauth-broker"
+import { resolveTenantProviderOrigin } from "@/lib/provider-origin"
 import { authActionClient } from "@/lib/safe-action"
 import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
 
@@ -20,9 +21,16 @@ export const updateTiktokSettingAction = authActionClient
       clientSecret: parsedInput.clientSecret,
     }
 
+    // The webhook must be registered on the same host TikTok's push actually
+    // reaches: the reseller's own custom domain for a tenant-owned (user
+    // scope) credential, otherwise the broker.
+    const webhookOrigin = scopedUserId
+      ? await resolveTenantProviderOrigin(scopedUserId)
+      : getBrokerOrigin()
+
     await subscribeWebhook(
       { clientId: config.clientId, clientSecret: config.clientSecret },
-      buildBrokerCallbackUrl("/integrations/tiktok/webhook"),
+      new URL("/integrations/tiktok/webhook", webhookOrigin).toString(),
     )
 
     await platformCredentialService.upsert({

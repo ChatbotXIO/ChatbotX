@@ -145,7 +145,8 @@
     "onSuccess": "Al completarse",
     "clone": "Clonar",
     "remove": "Quitar",
-    "restore": "Restaurar"
+    "restore": "Restaurar",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Debes ser superadministrador del espacio de trabajo para hacer esto."
@@ -873,6 +874,9 @@
     "dynamicImage": {
       "label": "Imagen dinámica"
     },
+    "minigame": {
+      "label": "Minijuego"
+    },
     "savePayloadToCustomField": {
       "label": "Guardar la carga útil en un campo personalizado"
     },
@@ -1232,6 +1236,9 @@
     "mcpServer": {
       "label": "Servidor MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Función del sistema",
       "names": {
@@ -1436,7 +1443,9 @@
       "label": "Estado",
       "pending": "Pendiente",
       "processing": "Procesando",
+      "installing": "Installing",
       "completed": "Completado",
+      "partial": "Partial",
       "failed": "Fallido",
       "success": "Éxito",
       "error": "Error"
@@ -2080,6 +2089,26 @@
     },
     "enabled": {
       "label": "Activado"
+    },
+    "api": {
+      "label": "API",
+      "description": "Conecta cualquier aplicación compatible con HTTP como canal. Tu app envía los mensajes entrantes a nuestra API REST y nosotros entregamos las respuestas a tu URL de callback.",
+      "callbackUrl": {
+        "label": "URL de callback",
+        "description": "Enviamos aquí las respuestas salientes mediante POST, firmadas con el secreto propio de tu bandeja de entrada.",
+        "notSet": "No configurada"
+      },
+      "token": "Token",
+      "rotateToken": "Rotar token",
+      "status": {
+        "enabled": "Activado",
+        "disabled": "Desactivado"
+      },
+      "tokenReveal": {
+        "title": "Copia tu token de API",
+        "description": "Este token se muestra solo una vez. Guárdalo de forma segura — no podrás volver a verlo.",
+        "done": "Listo"
+      }
     }
   },
   "flows": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh permisos",
+    "reconnect": "Volver a conectar",
     "duplicated": "This Zalo OA cuenta tiene already been connected un another espacio de trabajo.",
     "tagSync": {
       "title": "Sincronización de etiquetas",
@@ -4250,11 +4279,11 @@
     "title": "Programación de citas",
     "description": "Crea y gestiona tu programación de citas.",
     "flowModes": {
-      "bookFromCustomField": "Reservar cita",
-      "checkAvailabilityFromCustomField": "Comprobar disponibilidad",
-      "book": "Selector de fecha y hora",
-      "checkAvailability": "Selector de rango de fechas",
-      "cancel": "Cancelar cita"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modo",
@@ -4273,7 +4302,60 @@
   },
   "templates": {
     "title": "Plantillas",
-    "description": "Crear y Gestionar tu plantillas."
+    "description": "Crea y gestiona tus plantillas.",
+    "share": {
+      "label": "Compartir",
+      "enabled": "Compartida",
+      "disabled": "No compartida",
+      "dialogTitle": "Compartir plantilla",
+      "dialogDescription": "Cualquiera con este enlace puede instalar una copia de esta plantilla en un espacio de trabajo de tu organización.",
+      "enableLabel": "Activar enlace para compartir",
+      "linkLabel": "Enlace para compartir",
+      "description": "Cualquiera con el enlace puede instalar esta plantilla en su propio espacio de trabajo."
+    },
+    "installs": {
+      "title": "Instalaciones",
+      "resources": "Recursos",
+      "warnings": "Advertencias",
+      "completedAt": "Completado el",
+      "autoUpdate": "Actualización automática"
+    },
+    "form": {
+      "contents": "Contenido de la plantilla",
+      "comingSoon": "Próximamente",
+      "selectAll": "Seleccionar todo",
+      "selectedCount": "{count} seleccionados",
+      "details": "Detalles",
+      "permissions": "Permisos predeterminados",
+      "allowEdit": "Permitir edición después de instalar",
+      "allowDelete": "Permitir eliminación después de instalar",
+      "publisherName": "Nombre del publicador",
+      "youtubeVideoId": "ID del vídeo de YouTube",
+      "youtubeVideoIdDescription": "El ID de 11 caracteres de la URL del vídeo, por ejemplo \"dQw4w9WgXcQ\" en youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Enlace de prueba",
+      "imageUrl": "Imagen de portada",
+      "installBehavior": "Comportamiento de instalación",
+      "createInstallFolder": "Instalar en una carpeta dedicada",
+      "createInstallFolderDescription": "Anida todos los recursos instalados dentro de una nueva carpeta con el nombre de esta plantilla.",
+      "defaultAutoUpdate": "Marcar instalaciones para actualizaciones de forma predeterminada",
+      "defaultAutoUpdateDescription": "Las nuevas instalaciones mostrarán un aviso de actualización disponible cada vez que vuelvas a publicar esta plantilla."
+    },
+    "categories": {
+      "flows": "Flujos",
+      "customFields": "Campos personalizados",
+      "tags": "Etiquetas",
+      "products": "Productos",
+      "productCategories": "Categorías de productos",
+      "aiFunctions": "Funciones de IA",
+      "aiAgents": "Agentes de IA",
+      "calendars": "Calendarios de citas",
+      "webchats": "Webchats",
+      "keywords": "Palabras clave",
+      "entryPointLinks": "Entry Point Enlaces",
+      "triggers": "Desencadenadores",
+      "fbCommentAutomations": "Automatizaciones de comentarios de Facebook",
+      "settings": "Configuración"
+    }
   },
   "qrCodeGenerator": {
     "title": "Generador de códigos QR",
@@ -4388,6 +4470,19 @@
     "invalidDescription": "This enlace es no válido o tiene expired.",
     "unavailableTitle": "Unsubscribe undisponible.",
     "unavailableDescription": "This workspace es no longer disponible."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Este enlace ya no está disponible.",
+    "invalidDescription": "Este enlace de plantilla no es válido, está deshabilitado o ha caducado.",
+    "byPublisher": "Por {publisherName}",
+    "includes": "Esta plantilla incluye",
+    "videoTitle": "Video de vista previa de la plantilla",
+    "tryItOut": "Pruébala",
+    "signInToInstall": "Inicia sesión para instalar",
+    "selectWorkspace": "Selecciona un espacio de trabajo",
+    "install": "Instalar",
+    "installStarted": "Instalación iniciada",
+    "noEligibleWorkspaces": "No tienes ningún espacio de trabajo apto para instalar esta plantilla."
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Conectar"
+    }
+  },
+  "minigames": {
+    "title": "Gamificación",
+    "description": "Crea y gestiona minijuegos de sorteo para tus clientes.",
+    "types": {
+      "luckyWheel": "Ruleta de la suerte",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Sorteo",
+      "scratchOff": "Rasca y gana"
+    },
+    "createDialog": {
+      "title": "Elige un tipo de minijuego",
+      "comingSoon": "Próximamente"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Suma de todas las probabilidades: {value}%",
+      "loseProbability": "Probabilidad de no ganar: {value}%",
+      "winProbability": "Probabilidad de ganar: {value}%",
+      "newPrize": "Nuevo premio"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Editar premio",
+      "nonWinningTitle": "Editar configuración de no premiado",
+      "prizeNameLabel": "Nombre del premio",
+      "nonWinningTitleLabel": "Título",
+      "loseImageDescription": "Tamaño recomendado 120x120px",
+      "quantityLabel": "Cantidad del premio",
+      "quantityDescription": "Número de veces que este premio aún se puede ganar; disminuye en 1 cada vez que se gana. Deja vacío para ilimitado.",
+      "sendMessage": "Enviar un mensaje cuando el jugador no gane",
+      "sendWinMessage": "Enviar mensaje al ganador que recibió el premio",
+      "messageMode": "Tipo de mensaje",
+      "messageModeText": "Texto",
+      "messageModeFlow": "Flujo",
+      "messageText": "Mensaje"
+    },
+    "winningMessageDialog": {
+      "title": "Configuración del mensaje de premio",
+      "titleLabel": "Título",
+      "acceptButtonText": "Texto del botón de aceptar",
+      "shareButtonText": "Texto del botón de compartir",
+      "shareButtonDescription": "Descripción del botón de compartir"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Configuración del mensaje de no premiado",
+      "titleLabel": "Título",
+      "shareButtonText": "Texto del botón de compartir",
+      "shareButtonDescription": "Descripción del botón de compartir"
+    },
+    "preview": {
+      "start": "Comenzar",
+      "shareWithFriends": "Compartir con amigos",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "La vista previa detallada de este tipo de juego estará disponible próximamente",
+      "rules": "Reglas"
+    },
+    "form": {
+      "generalSettingsTitle": "Configuración general",
+      "appearanceTitle": "Apariencia",
+      "playerSettingsTitle": "Configuración del jugador",
+      "prizeSettingsTitle": "Configuración de premios"
+    },
+    "generalSettings": {
+      "playedAt": "Jugado el",
+      "rulesDescription": "Descripción de las reglas",
+      "openerTags": "Etiquetar a los contactos que abren el enlace del juego",
+      "playerTags": "Etiquetar a los jugadores",
+      "newFriendTags": "Etiquetar a los nuevos amigos",
+      "shareEnabled": "Permitir compartir con amigos",
+      "shareMessage": "Mensaje para compartir",
+      "shareMessageHint": "Usa '{{shareUrl}}' para insertar el enlace real del juego — por favor, no lo elimines."
+    },
+    "appearance": {
+      "backgroundColor": "Color de fondo",
+      "machineColor": "Color de la máquina",
+      "decorativeColor": "Color decorativo",
+      "ruleTextColor": "Color del texto de las reglas",
+      "backgroundImage": "Imagen de fondo",
+      "backgroundImageDescription": "Ancho recomendado: 1024px",
+      "prizeDescriptionImage": "Imagen de descripción del premio (opcional)",
+      "prizeDescriptionImageDescription": "Ancho recomendado: 750px",
+      "startButtonImage": "Imagen del botón de inicio",
+      "startButtonImageDescription": "Tamaño recomendado: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Número de intentos de sorteo por persona",
+      "resetPolicyLabel": "Reiniciar intentos",
+      "resetNever": "No reiniciar el número de intentos",
+      "resetEveryNDays": "Reiniciar el número de intentos cada",
+      "resetIntervalDaysSuffix": "día(s)"
+    },
+    "publicUrl": {
+      "label": "URL pública",
+      "hint": "Copia y pega la URL en tu flujo, difusión o secuencia para compartir este minijuego."
+    },
+    "play": {
+      "close": "Cerrar",
+      "drawsRemaining": "{count} intentos restantes",
+      "noDrawsLeft": "Te has quedado sin intentos para este minijuego.",
+      "notStartedYet": "Este minijuego aún no ha comenzado.",
+      "ended": "Este minijuego ha finalizado.",
+      "forbiddenTitle": "Acceso denegado",
+      "forbiddenDescription": "Este enlace no es válido o ha caducado.",
+      "comingSoonTitle": "Próximamente",
+      "comingSoonDescription": "Este tipo de minijuego aún no está disponible."
+    },
+    "history": {
+      "title": "Historial",
+      "played": "Jugadas",
+      "remaining": "Tiradas restantes",
+      "openedAt": "Primera apertura",
+      "lastPlayedAt": "Última jugada",
+      "unknownContact": "Contacto desconocido",
+      "record": "Registro",
+      "recordDialog": {
+        "title": "Registro de jugadas",
+        "win": "Ganó",
+        "lose": "Sin premio",
+        "empty": "Aún no hay registros de jugadas"
+      }
     }
   }
 }

@@ -7,8 +7,10 @@ import {
 import { notFound } from "next/navigation"
 import { WhatsappCapiTab } from "@/features/integration-whatsapp/components/whatsapp-capi-tab"
 import { hasWhatsappCapiScope } from "@/features/integration-whatsapp/libs/capi-scope"
+import { WHATSAPP_OAUTH_CALLBACK_PATH } from "@/features/integration-whatsapp/libs/embedded-signup"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
 
 export default async function WhatsappCapiPage(props: {
   params: Promise<{ workspaceId: string; id: string }>
@@ -56,6 +58,8 @@ export default async function WhatsappCapiPage(props: {
       : integrationWhatsapp
 
   const resolved = refreshed ?? integrationWhatsapp
+  const oauthCallbackOrigin =
+    await resolveProviderOriginForCredential(whatsappCredential)
 
   return (
     <WhatsappCapiTab
@@ -70,6 +74,10 @@ export default async function WhatsappCapiPage(props: {
         hasCapiScope: resolved.hasCapiScope,
         datasetId: resolved.datasetId,
       }}
+      oauthCallbackUrl={new URL(
+        WHATSAPP_OAUTH_CALLBACK_PATH,
+        oauthCallbackOrigin,
+      ).toString()}
       whatsappCredentialPublic={whatsappCredential?.publicConfig ?? null}
     />
   )

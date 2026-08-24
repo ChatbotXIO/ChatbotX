@@ -145,7 +145,8 @@
     "onSuccess": "Onnistuessa",
     "clone": "Kloonaa",
     "remove": "Poista",
-    "restore": "Palauta"
+    "restore": "Palauta",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Sinun täytyy olla työtilan pääylläpitäjä tehdäksesi tämän."
@@ -799,6 +800,9 @@
     "dynamicImage": {
       "label": "Dynaaminen kuva"
     },
+    "minigame": {
+      "label": "Minipeli"
+    },
     "savePayloadToCustomField": {
       "label": "Tallenna tietosisältö mukautettuun kenttään"
     },
@@ -1158,6 +1162,9 @@
     "mcpServer": {
       "label": "MCP-palvelin"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Järjestelmätoiminto",
       "names": {
@@ -1362,7 +1369,9 @@
       "label": "Tila",
       "pending": "Odottaa",
       "processing": "Käsitellään",
+      "installing": "Installing",
       "completed": "Valmis",
+      "partial": "Partial",
       "failed": "Epäonnistui",
       "success": "Onnistui",
       "error": "Virhe"
@@ -2006,6 +2015,26 @@
     },
     "enabled": {
       "label": "Käytössä"
+    },
+    "api": {
+      "label": "API",
+      "description": "Yhdistä mikä tahansa HTTP-yhteensopiva sovellus kanavaksi. Sovelluksesi lähettää saapuvat viestit REST-rajapintaamme, ja me toimitamme vastaukset callback-osoitteeseesi.",
+      "callbackUrl": {
+        "label": "Callback-osoite",
+        "description": "Lähetämme lähtevät vastaukset tänne POST-pyynnöllä, allekirjoitettuna postilaatikkosi omalla salaisuudella.",
+        "notSet": "Ei asetettu"
+      },
+      "token": "Tunnus",
+      "rotateToken": "Vaihda tunnus",
+      "status": {
+        "enabled": "Käytössä",
+        "disabled": "Ei käytössä"
+      },
+      "tokenReveal": {
+        "title": "Kopioi API-tunnuksesi",
+        "description": "Tämä tunnus näytetään vain kerran. Säilytä se turvallisesti — et voi tarkastella sitä enää myöhemmin.",
+        "done": "Valmis"
+      }
     }
   },
   "flows": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Päivitä käyttöoikeudet",
+    "reconnect": "Yhdistä uudelleen",
     "duplicated": "Tämä Zalo OA -tili on jo yhdistetty toiseen työtilaan.",
     "tagSync": {
       "title": "Tunnisteiden synkronointi",
@@ -4250,11 +4279,11 @@
     "title": "Ajanvaraus",
     "description": "Luo ja hallitse ajanvaraustasi.",
     "flowModes": {
-      "bookFromCustomField": "Varaa aika",
-      "checkAvailabilityFromCustomField": "Tarkista saatavuus",
-      "book": "Päivä- ja aikavalitsin",
-      "checkAvailability": "Päivämääräväli-valitsin",
-      "cancel": "Peruuta aika"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Tila",
@@ -4273,7 +4302,60 @@
   },
   "templates": {
     "title": "Mallit",
-    "description": "Luo ja hallitse mallejasi."
+    "description": "Luo ja hallitse mallejasi.",
+    "share": {
+      "label": "Jaa",
+      "enabled": "Jaettu",
+      "disabled": "Ei jaettu",
+      "dialogTitle": "Jaa malli",
+      "dialogDescription": "Kuka tahansa, jolla on tämä linkki, voi asentaa kopion tästä mallista organisaatiosi työtilaan.",
+      "enableLabel": "Ota jakolinkki käyttöön",
+      "linkLabel": "Jakolinkki",
+      "description": "Kuka tahansa, jolla on linkki, voi asentaa tämän mallin omaan työtilaansa."
+    },
+    "installs": {
+      "title": "Asennukset",
+      "resources": "Resurssit",
+      "warnings": "Varoitukset",
+      "completedAt": "Valmistui",
+      "autoUpdate": "Automaattinen päivitys"
+    },
+    "form": {
+      "contents": "Mallin sisältö",
+      "comingSoon": "Tulossa pian",
+      "selectAll": "Valitse kaikki",
+      "selectedCount": "{count} valittu",
+      "details": "Tiedot",
+      "permissions": "Oletusoikeudet",
+      "allowEdit": "Salli muokkaus asennuksen jälkeen",
+      "allowDelete": "Salli poistaminen asennuksen jälkeen",
+      "publisherName": "Julkaisijan nimi",
+      "youtubeVideoId": "YouTube-videon tunnus",
+      "youtubeVideoIdDescription": "11-merkkinen tunnus videon URL-osoitteesta, esim. \"dQw4w9WgXcQ\" osoitteessa youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testilinkki",
+      "imageUrl": "Kansikuva",
+      "installBehavior": "Asennuksen toiminta",
+      "createInstallFolder": "Asenna omaan kansioon",
+      "createInstallFolderDescription": "Sijoittaa jokaisen asennetun resurssin uuteen, tämän mallin mukaan nimettyyn kansioon.",
+      "defaultAutoUpdate": "Merkitse asennukset oletuksena päivitettäviksi",
+      "defaultAutoUpdateDescription": "Uudet asennukset näyttävät päivitysilmoituksen aina, kun julkaiset tämän mallin uudelleen."
+    },
+    "categories": {
+      "flows": "Flowt",
+      "customFields": "Mukautetut kentät",
+      "tags": "Tunnisteet",
+      "products": "Tuotteet",
+      "productCategories": "Tuotekategoriat",
+      "aiFunctions": "AI-toiminnot",
+      "aiAgents": "AI-agentit",
+      "calendars": "Ajanvarauskalenterit",
+      "webchats": "Verkkokeskustelut",
+      "keywords": "Avainsanat",
+      "entryPointLinks": "Aloituspisteiden linkit",
+      "triggers": "Käynnistimet",
+      "fbCommentAutomations": "Facebook-kommenttiautomaatiot",
+      "settings": "Asetukset"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR-koodigeneraattori",
@@ -4388,6 +4470,19 @@
     "invalidDescription": "Tämä linkki on virheellinen tai vanhentunut.",
     "unavailableTitle": "Tilauksen peruuttaminen ei ole käytettävissä.",
     "unavailableDescription": "Tämä työtila ei ole enää käytettävissä."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Tämä linkki ei ole enää käytettävissä.",
+    "invalidDescription": "Tämä mallin jakolinkki on virheellinen, poistettu käytöstä tai vanhentunut.",
+    "byPublisher": "Julkaisija: {publisherName}",
+    "includes": "Tämä malli sisältää",
+    "videoTitle": "Mallin esikatseluvideo",
+    "tryItOut": "Kokeile sitä",
+    "signInToInstall": "Kirjaudu sisään asentaaksesi",
+    "selectWorkspace": "Valitse työtila",
+    "install": "Asenna",
+    "installStarted": "Asennus aloitettu",
+    "noEligibleWorkspaces": "Sinulla ei ole työtilaa, johon tämän mallin voi asentaa."
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Yhdistä"
+    }
+  },
+  "minigames": {
+    "title": "Pelillistäminen",
+    "description": "Luo ja hallinnoi onnenpyörä-minipelejä asiakkaillesi.",
+    "types": {
+      "luckyWheel": "Onnenpyörä",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Arvonta",
+      "scratchOff": "Raaputusarpa"
+    },
+    "createDialog": {
+      "title": "Valitse minipelin tyyppi",
+      "comingSoon": "Tulossa pian"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Kaikkien todennäköisyyksien summa: {value}%",
+      "loseProbability": "Häviön todennäköisyys: {value}%",
+      "winProbability": "Voiton todennäköisyys: {value}%",
+      "newPrize": "Uusi palkinto"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Muokkaa palkintoa",
+      "nonWinningTitle": "Muokkaa ei-voittavaa asetusta",
+      "prizeNameLabel": "Palkinnon nimi",
+      "nonWinningTitleLabel": "Otsikko",
+      "loseImageDescription": "Suositeltu koko 120x120px",
+      "quantityLabel": "Palkinnon määrä",
+      "quantityDescription": "Kuinka monta kertaa tämän palkinnon voi vielä voittaa; vähenee yhdellä joka voitolla. Jätä tyhjäksi rajoittamatonta varten.",
+      "sendMessage": "Lähetä viesti, kun pelaaja ei voita",
+      "sendWinMessage": "Lähetä viesti voittajalle, joka sai palkinnon",
+      "messageMode": "Viestin tyyppi",
+      "messageModeText": "Teksti",
+      "messageModeFlow": "Flow",
+      "messageText": "Viesti"
+    },
+    "winningMessageDialog": {
+      "title": "Voittoviestin asetukset",
+      "titleLabel": "Otsikko",
+      "acceptButtonText": "Hyväksy-painikkeen teksti",
+      "shareButtonText": "Jaa-painikkeen teksti",
+      "shareButtonDescription": "Jaa-painikkeen kuvaus"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Ei-voittavan viestin asetukset",
+      "titleLabel": "Otsikko",
+      "shareButtonText": "Jaa-painikkeen teksti",
+      "shareButtonDescription": "Jaa-painikkeen kuvaus"
+    },
+    "preview": {
+      "start": "Aloita",
+      "shareWithFriends": "Jaa ystäville",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Yksityiskohtainen esikatselu tälle pelityypille tulossa pian",
+      "rules": "Säännöt"
+    },
+    "form": {
+      "generalSettingsTitle": "Yleiset asetukset",
+      "appearanceTitle": "Ulkoasu",
+      "playerSettingsTitle": "Pelaaja-asetukset",
+      "prizeSettingsTitle": "Palkintoasetukset"
+    },
+    "generalSettings": {
+      "playedAt": "Pelattu",
+      "rulesDescription": "Sääntöjen kuvaus",
+      "openerTags": "Merkitse kontaktit, jotka avaavat pelin linkin",
+      "playerTags": "Merkitse pelaajat",
+      "newFriendTags": "Merkitse uudet ystävät",
+      "shareEnabled": "Salli jakaminen ystävien kanssa",
+      "shareMessage": "Jakoviesti",
+      "shareMessageHint": "Käytä merkintää '{{shareUrl}}' lisätäksesi todellisen pelilinkin — älä poista sitä."
+    },
+    "appearance": {
+      "backgroundColor": "Taustaväri",
+      "machineColor": "Koneen väri",
+      "decorativeColor": "Koristeväri",
+      "ruleTextColor": "Sääntötekstin väri",
+      "backgroundImage": "Taustakuva",
+      "backgroundImageDescription": "Suositeltu leveys: 1024px",
+      "prizeDescriptionImage": "Palkinnon kuvauskuva (valinnainen)",
+      "prizeDescriptionImageDescription": "Suositeltu leveys: 750px",
+      "startButtonImage": "Aloituspainikkeen kuva",
+      "startButtonImageDescription": "Suositeltu koko: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Arvontakertojen määrä per henkilö",
+      "resetPolicyLabel": "Nollaa arvonnat",
+      "resetNever": "Älä nollaa arvontojen määrää",
+      "resetEveryNDays": "Nollaa arvontojen määrä joka",
+      "resetIntervalDaysSuffix": "päivä"
+    },
+    "publicUrl": {
+      "label": "Julkinen URL",
+      "hint": "Kopioi ja liitä URL-osoite flow'hun, joukkoviestiin tai sekvenssiin jakaaksesi tämän minipelin."
+    },
+    "play": {
+      "close": "Sulje",
+      "drawsRemaining": "{count} yritystä jäljellä",
+      "noDrawsLeft": "Sinulla ei ole enää yrityksiä tähän minipeliin.",
+      "notStartedYet": "Tämä minipeli ei ole vielä alkanut.",
+      "ended": "Tämä minipeli on päättynyt.",
+      "forbiddenTitle": "Pääsy evätty",
+      "forbiddenDescription": "Tämä linkki on virheellinen tai vanhentunut.",
+      "comingSoonTitle": "Tulossa pian",
+      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata."
+    },
+    "history": {
+      "title": "Historia",
+      "played": "Pelikerrat",
+      "remaining": "Jäljellä olevat arvonnat",
+      "openedAt": "Avattu ensimmäisen kerran",
+      "lastPlayedAt": "Viimeksi pelattu",
+      "unknownContact": "Tuntematon kontakti",
+      "record": "Tapahtumat",
+      "recordDialog": {
+        "title": "Pelitapahtumat",
+        "win": "Voitti",
+        "lose": "Ei palkintoa",
+        "empty": "Ei pelitapahtumia vielä"
+      }
     }
   }
 }

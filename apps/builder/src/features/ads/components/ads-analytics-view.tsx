@@ -85,6 +85,7 @@ type AdsAnalyticsViewProps = {
   >
   switcherIntegrations: AdsSwitcherData["integrations"]
   whatsappCredentialPublic: AdsSwitcherData["whatsappCredentialPublic"]
+  oauthCallbackUrl: AdsSwitcherData["oauthCallbackUrl"]
 }
 
 const formatFunnelPercent = (value: number, total: number) => {
@@ -512,6 +513,7 @@ export function AdsAnalyticsView({
   selectedIntegrationWhatsappId,
   switcherIntegrations,
   whatsappCredentialPublic,
+  oauthCallbackUrl,
   workspaceId,
 }: AdsAnalyticsViewProps) {
   const t = useTranslations()
@@ -539,6 +541,7 @@ export function AdsAnalyticsView({
         <div className="flex flex-col items-end gap-8">
           <AdsAccountControl
             integrations={switcherIntegrations}
+            oauthCallbackUrl={oauthCallbackUrl}
             whatsappCredentialPublic={whatsappCredentialPublic}
             workspaceId={workspaceId}
           />

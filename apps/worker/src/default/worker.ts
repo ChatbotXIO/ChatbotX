@@ -14,6 +14,7 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
+import { installTemplate } from "./handlers/install-template"
 import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
 import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
 import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
@@ -116,6 +117,12 @@ async function startDefaultWorker() {
             return
           }
           await sendAppointmentReminder(job.data.data)
+          return
+        case DefaultJobAction.installTemplate:
+          if (await isBlockedJob(job.data.data)) {
+            return
+          }
+          await installTemplate(job.data.data)
           return
         default:
           logger.warn(`Unknown job name: ${job.name}`)

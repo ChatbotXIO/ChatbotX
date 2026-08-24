@@ -149,7 +149,8 @@
     "uploadFile": "Ladda upp fil",
     "view": "Visa",
     "viewAnalytics": "Visa analys",
-    "wait": "Vänta"
+    "wait": "Vänta",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Du måste vara superadministratör för arbetsytan för att göra detta."
@@ -318,11 +319,11 @@
     "description": "Skapa och hantera din tidsbokning.",
     "title": "Tidsbokning",
     "flowModes": {
-      "bookFromCustomField": "Boka tid",
-      "checkAvailabilityFromCustomField": "Kontrollera tillgänglighet",
-      "book": "Datum- och tidsväljare",
-      "checkAvailability": "Datumintervallväljare",
-      "cancel": "Avboka tid"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Läge",
@@ -2032,6 +2033,9 @@
     "mcpServer": {
       "label": "MCP-server"
     },
+    "template": {
+      "label": "Template"
+    },
     "me": {
       "label": "Länk till mina data"
     },
@@ -2255,6 +2259,9 @@
     "dynamicImage": {
       "label": "Dynamisk bild"
     },
+    "minigame": {
+      "label": "Minispel"
+    },
     "quality": {
       "label": "Kvalitet",
       "options": {
@@ -2404,11 +2411,13 @@
     },
     "status": {
       "completed": "Slutförd",
+      "partial": "Partial",
       "error": "Fel",
       "failed": "Misslyckades",
       "label": "Status",
       "pending": "Väntande",
       "processing": "Bearbetas",
+      "installing": "Installing",
       "success": "Lyckades"
     },
     "statusCode": {
@@ -2682,6 +2691,26 @@
     },
     "enabled": {
       "label": "Aktiverad"
+    },
+    "api": {
+      "label": "API",
+      "description": "Anslut vilken HTTP-kapabel applikation som helst som en kanal. Din applikation skickar inkommande meddelanden till vårt REST-API och vi levererar svar till din callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Vi skickar utgående svar hit via POST, signerade med din inkorgs unika hemlighet.",
+        "notSet": "Inte angiven"
+      },
+      "token": "Token",
+      "rotateToken": "Förnya token",
+      "status": {
+        "enabled": "Aktiverad",
+        "disabled": "Inaktiverad"
+      },
+      "tokenReveal": {
+        "title": "Kopiera din API-token",
+        "description": "Denna token visas endast en gång. Förvara den säkert — du kommer inte kunna se den igen.",
+        "done": "Klart"
+      }
     }
   },
   "flowAnalytics": {
@@ -4341,7 +4370,60 @@
   },
   "templates": {
     "description": "Skapa och hantera dina mallar.",
-    "title": "Mallar"
+    "title": "Mallar",
+    "share": {
+      "label": "Dela",
+      "enabled": "Delad",
+      "disabled": "Inte delad",
+      "dialogTitle": "Dela mall",
+      "dialogDescription": "Alla med den här länken kan installera en kopia av den här mallen i en arbetsyta i din organisation.",
+      "enableLabel": "Aktivera dellänk",
+      "linkLabel": "Dellänk",
+      "description": "Alla med länken kan installera den här mallen i sin egen arbetsyta."
+    },
+    "installs": {
+      "title": "Installationer",
+      "resources": "Resurser",
+      "warnings": "Varningar",
+      "completedAt": "Slutförd",
+      "autoUpdate": "Automatisk uppdatering"
+    },
+    "form": {
+      "contents": "Mallens innehåll",
+      "comingSoon": "Kommer snart",
+      "selectAll": "Markera alla",
+      "selectedCount": "{count} markerade",
+      "details": "Detaljer",
+      "permissions": "Standardbehörigheter",
+      "allowEdit": "Tillåt redigering efter installation",
+      "allowDelete": "Tillåt borttagning efter installation",
+      "publisherName": "Utgivarens namn",
+      "youtubeVideoId": "YouTube-video-id",
+      "youtubeVideoIdDescription": "Det 11-teckens id från videons URL, t.ex. \"dQw4w9WgXcQ\" i youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlänk",
+      "imageUrl": "Omslagsbild",
+      "installBehavior": "Installationsbeteende",
+      "createInstallFolder": "Installera i en dedikerad mapp",
+      "createInstallFolderDescription": "Placerar varje installerad resurs i en ny mapp uppkallad efter den här mallen.",
+      "defaultAutoUpdate": "Markera installationer för uppdatering som standard",
+      "defaultAutoUpdateDescription": "Nya installationer visar ett meddelande om tillgänglig uppdatering varje gång du publicerar om den här mallen."
+    },
+    "categories": {
+      "flows": "Flöden",
+      "customFields": "Anpassade fält",
+      "tags": "Taggar",
+      "products": "Produkter",
+      "productCategories": "Produktkategorier",
+      "aiFunctions": "AI-funktioner",
+      "aiAgents": "AI-agenter",
+      "calendars": "Bokningskalendrar",
+      "webchats": "Webbchattar",
+      "keywords": "Nyckelord",
+      "entryPointLinks": "Länkar till startpunkter",
+      "triggers": "Utlösare",
+      "fbCommentAutomations": "Facebook-kommentarautomatiseringar",
+      "settings": "Inställningar"
+    }
   },
   "texts": {
     "or": "eller"
@@ -4429,6 +4511,19 @@
     "title": "Du har avregistrerats.",
     "unavailableDescription": "Den här arbetsytan är inte längre tillgänglig.",
     "unavailableTitle": "Avregistrering är inte tillgänglig."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Den här länken är inte längre tillgänglig.",
+    "invalidDescription": "Den här mallens dellänk är ogiltig, inaktiverad eller har gått ut.",
+    "byPublisher": "Av {publisherName}",
+    "includes": "Den här mallen innehåller",
+    "videoTitle": "Förhandsgranskningsvideo för mall",
+    "tryItOut": "Prova den",
+    "signInToInstall": "Logga in för att installera",
+    "selectWorkspace": "Välj en arbetsyta",
+    "install": "Installera",
+    "installStarted": "Installationen har startat",
+    "noEligibleWorkspaces": "Du har ingen arbetsyta som är berättigad att installera den här mallen."
   },
   "userPersistentMenus": {
     "title": "Beständiga användarmenyer"
@@ -4813,7 +4908,7 @@
   },
   "zalo": {
     "duplicated": "Det här Zalo OA-kontot är redan anslutet till en annan arbetsyta.",
-    "refreshPermissions": "Uppdatera behörigheter",
+    "reconnect": "Återanslut",
     "tagSync": {
       "description": "Spegla lokala taggtilldelningar till denna Zalo OA.",
       "disabled": "Inaktiverad",
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Anslut"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Skapa och hantera lyckohjulsminispel för dina kunder.",
+    "types": {
+      "luckyWheel": "Lyckohjul",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Dra lott",
+      "scratchOff": "Skrapa"
+    },
+    "createDialog": {
+      "title": "Välj en minispelstyp",
+      "comingSoon": "Kommer snart"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Summan av alla sannolikheter: {value}%",
+      "loseProbability": "Förlustsannolikhet: {value}%",
+      "winProbability": "Vinstsannolikhet: {value}%",
+      "newPrize": "Nytt pris"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Redigera pris",
+      "nonWinningTitle": "Redigera inställning för förlust",
+      "prizeNameLabel": "Prisnamn",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Rekommenderad storlek 120x120px",
+      "quantityLabel": "Antal vinster",
+      "quantityDescription": "Antal gånger detta pris fortfarande kan vinnas; minskar med 1 för varje vinst. Lämna tomt för obegränsat.",
+      "sendMessage": "Skicka ett meddelande när spelaren inte vinner",
+      "sendWinMessage": "Skicka meddelande till vinnaren som fick priset",
+      "messageMode": "Meddelandetyp",
+      "messageModeText": "Text",
+      "messageModeFlow": "Flöde",
+      "messageText": "Meddelande"
+    },
+    "winningMessageDialog": {
+      "title": "Inställningar för vinstmeddelande",
+      "titleLabel": "Titel",
+      "acceptButtonText": "Text för Acceptera-knapp",
+      "shareButtonText": "Text för Dela-knapp",
+      "shareButtonDescription": "Beskrivning för Dela-knapp"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Inställningar för förlustmeddelande",
+      "titleLabel": "Titel",
+      "shareButtonText": "Text för Dela-knapp",
+      "shareButtonDescription": "Beskrivning för Dela-knapp"
+    },
+    "preview": {
+      "start": "Starta",
+      "shareWithFriends": "Dela med vänner",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Detaljerad förhandsvisning kommer snart för den här speltypen",
+      "rules": "Regler"
+    },
+    "form": {
+      "generalSettingsTitle": "Allmänna inställningar",
+      "appearanceTitle": "Utseende",
+      "playerSettingsTitle": "Spelarinställningar",
+      "prizeSettingsTitle": "Prisinställningar"
+    },
+    "generalSettings": {
+      "playedAt": "Spelad",
+      "rulesDescription": "Regelbeskrivning",
+      "openerTags": "Tagga kontakter som öppnar spellänken",
+      "playerTags": "Tagga spelare",
+      "newFriendTags": "Tagga nya vänner",
+      "shareEnabled": "Tillåt delning med vänner",
+      "shareMessage": "Delningsmeddelande",
+      "shareMessageHint": "Använd '{{shareUrl}}' för att infoga den faktiska spellänken — ta inte bort den."
+    },
+    "appearance": {
+      "backgroundColor": "Bakgrundsfärg",
+      "machineColor": "Maskinfärg",
+      "decorativeColor": "Dekorationsfärg",
+      "ruleTextColor": "Textfärg för regler",
+      "backgroundImage": "Bakgrundsbild",
+      "backgroundImageDescription": "Rekommenderad bredd: 1024px",
+      "prizeDescriptionImage": "Bild för prisbeskrivning (valfritt)",
+      "prizeDescriptionImageDescription": "Rekommenderad bredd: 750px",
+      "startButtonImage": "Bild för startknapp",
+      "startButtonImageDescription": "Rekommenderad storlek: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Antal lyckodragningar per person",
+      "resetPolicyLabel": "Återställ dragningar",
+      "resetNever": "Återställ inte antalet dragningar",
+      "resetEveryNDays": "Återställ antalet dragningar var",
+      "resetIntervalDaysSuffix": "dag(ar)"
+    },
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopiera och klistra in URL:en i ditt flöde, din utskick eller sekvens för att dela det här minispelet."
+    },
+    "play": {
+      "close": "Stäng",
+      "drawsRemaining": "{count} försök kvar",
+      "noDrawsLeft": "Du har inga fler försök kvar för det här minispelet.",
+      "notStartedYet": "Det här minispelet har inte startat än.",
+      "ended": "Det här minispelet har avslutats.",
+      "forbiddenTitle": "Åtkomst nekad",
+      "forbiddenDescription": "Den här länken är ogiltig eller har gått ut.",
+      "comingSoonTitle": "Kommer snart",
+      "comingSoonDescription": "Den här typen av minispel går inte att spela än."
+    },
+    "history": {
+      "title": "Historik",
+      "played": "Spelade",
+      "remaining": "Återstående dragningar",
+      "openedAt": "Först öppnad",
+      "lastPlayedAt": "Senast spelad",
+      "unknownContact": "Okänd kontakt",
+      "record": "Logg",
+      "recordDialog": {
+        "title": "Spellogg",
+        "win": "Vann",
+        "lose": "Ingen vinst",
+        "empty": "Inga spelloggar ännu"
+      }
     }
   }
 }

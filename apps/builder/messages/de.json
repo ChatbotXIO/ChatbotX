@@ -145,7 +145,8 @@
     "onSuccess": "Bei Erfolg",
     "clone": "Klonen",
     "remove": "Entfernen",
-    "restore": "Wiederherstellen"
+    "restore": "Wiederherstellen",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Sie müssen Super-Administrator des Arbeitsbereichs sein, um dies zu tun."
@@ -799,6 +800,9 @@
     "dynamicImage": {
       "label": "Dynamisches Bild"
     },
+    "minigame": {
+      "label": "Minispiel"
+    },
     "savePayloadToCustomField": {
       "label": "Nutzdaten in benutzerdefiniertem Feld speichern"
     },
@@ -1158,6 +1162,9 @@
     "mcpServer": {
       "label": "MCP-Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Systemfunktion",
       "names": {
@@ -1362,7 +1369,9 @@
       "label": "Status",
       "pending": "Ausstehend",
       "processing": "In Verarbeitung",
+      "installing": "Installing",
       "completed": "Abgeschlossen",
+      "partial": "Partial",
       "failed": "Fehlgeschlagen",
       "success": "Erfolg",
       "error": "Fehler"
@@ -2006,6 +2015,26 @@
     },
     "enabled": {
       "label": "Aktiviert"
+    },
+    "api": {
+      "label": "API",
+      "description": "Verbinden Sie jede HTTP-fähige Anwendung als Kanal. Ihre App sendet eingehende Nachrichten an unsere REST-API, und wir liefern Antworten an Ihre Callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Wir senden ausgehende Antworten hierhin per POST, signiert mit dem geheimen Schlüssel Ihres Postfachs.",
+        "notSet": "Nicht festgelegt"
+      },
+      "token": "Token",
+      "rotateToken": "Token erneuern",
+      "status": {
+        "enabled": "Aktiviert",
+        "disabled": "Deaktiviert"
+      },
+      "tokenReveal": {
+        "title": "Kopieren Sie Ihr API-Token",
+        "description": "Dieses Token wird nur einmal angezeigt. Bewahren Sie es sicher auf — Sie können es später nicht mehr einsehen.",
+        "done": "Fertig"
+      }
     }
   },
   "flows": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Berechtigungen aktualisieren",
+    "reconnect": "Erneut verbinden",
     "duplicated": "Dieses Zalo-OA-Konto wurde bereits mit einem anderen Arbeitsbereich verbunden.",
     "tagSync": {
       "title": "Tag-Synchronisierung",
@@ -4250,11 +4279,11 @@
     "title": "Terminplanung",
     "description": "Erstellen und verwalten Sie Ihre Terminplanung.",
     "flowModes": {
-      "bookFromCustomField": "Termin buchen",
-      "checkAvailabilityFromCustomField": "Verfügbarkeit prüfen",
-      "book": "Datums-/Zeitauswahl",
-      "checkAvailability": "Datumsbereichsauswahl",
-      "cancel": "Termin absagen"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modus",
@@ -4273,7 +4302,60 @@
   },
   "templates": {
     "title": "Vorlagen",
-    "description": "Erstellen und verwalten Sie Ihre Vorlagen."
+    "description": "Erstellen und verwalten Sie Ihre Vorlagen.",
+    "share": {
+      "label": "Teilen",
+      "enabled": "Geteilt",
+      "disabled": "Nicht geteilt",
+      "dialogTitle": "Vorlage teilen",
+      "dialogDescription": "Jeder mit diesem Link kann eine Kopie dieser Vorlage in einem Arbeitsbereich Ihres Mandanten installieren.",
+      "enableLabel": "Freigabelink aktivieren",
+      "linkLabel": "Freigabelink",
+      "description": "Jeder mit dem Link kann diese Vorlage in seinem eigenen Arbeitsbereich installieren."
+    },
+    "installs": {
+      "title": "Installationen",
+      "resources": "Ressourcen",
+      "warnings": "Warnungen",
+      "completedAt": "Abgeschlossen am",
+      "autoUpdate": "Automatische Aktualisierung"
+    },
+    "form": {
+      "contents": "Vorlageninhalt",
+      "comingSoon": "Demnächst verfügbar",
+      "selectAll": "Alle auswählen",
+      "selectedCount": "{count} ausgewählt",
+      "details": "Details",
+      "permissions": "Standardberechtigungen",
+      "allowEdit": "Bearbeitung nach Installation erlauben",
+      "allowDelete": "Löschen nach Installation erlauben",
+      "publisherName": "Name des Herausgebers",
+      "youtubeVideoId": "YouTube-Video-ID",
+      "youtubeVideoIdDescription": "Die 11-stellige ID aus der Video-URL, z. B. \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Titelbild",
+      "installBehavior": "Installationsverhalten",
+      "createInstallFolder": "In einem eigenen Ordner installieren",
+      "createInstallFolderDescription": "Verschachtelt jede installierte Ressource in einem neuen, nach dieser Vorlage benannten Ordner.",
+      "defaultAutoUpdate": "Installationen standardmäßig für Updates markieren",
+      "defaultAutoUpdateDescription": "Neue Installationen zeigen einen Update-Hinweis, sobald Sie diese Vorlage erneut veröffentlichen."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Benutzerdefinierte Felder",
+      "tags": "Tags",
+      "products": "Produkte",
+      "productCategories": "Produktkategorien",
+      "aiFunctions": "KI-Funktionen",
+      "aiAgents": "KI-Agenten",
+      "calendars": "Terminkalender",
+      "webchats": "Webchats",
+      "keywords": "Schlüsselwörter",
+      "entryPointLinks": "Einstiegspunkt-Links",
+      "triggers": "Trigger",
+      "fbCommentAutomations": "Facebook-Kommentarautomatisierungen",
+      "settings": "Einstellungen"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR-Code-Generator",
@@ -4388,6 +4470,19 @@
     "invalidDescription": "Dieser Link ist ungültig oder abgelaufen.",
     "unavailableTitle": "Abmeldung nicht verfügbar.",
     "unavailableDescription": "Dieser Arbeitsbereich ist nicht mehr verfügbar."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Dieser Link ist nicht mehr verfügbar.",
+    "invalidDescription": "Dieser Vorlagen-Freigabelink ist ungültig, deaktiviert oder abgelaufen.",
+    "byPublisher": "Von {publisherName}",
+    "includes": "Diese Vorlage enthält",
+    "videoTitle": "Vorlagen-Vorschauvideo",
+    "tryItOut": "Ausprobieren",
+    "signInToInstall": "Zum Installieren anmelden",
+    "selectWorkspace": "Arbeitsbereich auswählen",
+    "install": "Installieren",
+    "installStarted": "Installation gestartet",
+    "noEligibleWorkspaces": "Sie haben keinen Arbeitsbereich, der für die Installation dieser Vorlage geeignet ist."
   },
   "extensionsMe": {
     "actions": {
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Verbinden"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Erstellen und verwalten Sie Gewinnspiel-Minispiele für Ihre Kunden.",
+    "types": {
+      "luckyWheel": "Glücksrad",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Losziehung",
+      "scratchOff": "Rubbellos"
+    },
+    "createDialog": {
+      "title": "Minispiel-Typ auswählen",
+      "comingSoon": "Demnächst verfügbar"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Summe aller Wahrscheinlichkeiten: {value}%",
+      "loseProbability": "Verlustwahrscheinlichkeit: {value}%",
+      "winProbability": "Gewinnwahrscheinlichkeit: {value}%",
+      "newPrize": "Neuer Gewinn"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Gewinn bearbeiten",
+      "nonWinningTitle": "Nicht-Gewinn-Einstellung bearbeiten",
+      "prizeNameLabel": "Gewinnname",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Empfohlene Größe 120x120px",
+      "quantityLabel": "Preismenge",
+      "quantityDescription": "Anzahl, wie oft dieser Preis noch gewonnen werden kann; verringert sich bei jedem Gewinn um 1. Leer lassen für unbegrenzt.",
+      "sendMessage": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
+      "sendWinMessage": "Nachricht an den Gewinner senden, der den Preis erhalten hat",
+      "messageMode": "Nachrichtentyp",
+      "messageModeText": "Text",
+      "messageModeFlow": "Flow",
+      "messageText": "Nachricht"
+    },
+    "winningMessageDialog": {
+      "title": "Einstellungen für Gewinnnachricht",
+      "titleLabel": "Titel",
+      "acceptButtonText": "Text der Bestätigungsschaltfläche",
+      "shareButtonText": "Text der Teilen-Schaltfläche",
+      "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Einstellungen für Nicht-Gewinn-Nachricht",
+      "titleLabel": "Titel",
+      "shareButtonText": "Text der Teilen-Schaltfläche",
+      "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Mit Freunden teilen",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze",
+      "rules": "Regeln"
+    },
+    "form": {
+      "generalSettingsTitle": "Allgemeine Einstellungen",
+      "appearanceTitle": "Erscheinungsbild",
+      "playerSettingsTitle": "Spielereinstellungen",
+      "prizeSettingsTitle": "Gewinneinstellungen"
+    },
+    "generalSettings": {
+      "playedAt": "Gespielt am",
+      "rulesDescription": "Regelbeschreibung",
+      "openerTags": "Kontakte markieren, die den Spiellink öffnen",
+      "playerTags": "Spieler markieren",
+      "newFriendTags": "Neue Freunde markieren",
+      "shareEnabled": "Teilen mit Freunden erlauben",
+      "shareMessage": "Freigabenachricht",
+      "shareMessageHint": "Verwenden Sie '{{shareUrl}}', um den tatsächlichen Spiellink einzufügen — bitte nicht entfernen."
+    },
+    "appearance": {
+      "backgroundColor": "Hintergrundfarbe",
+      "machineColor": "Maschinenfarbe",
+      "decorativeColor": "Dekorative Farbe",
+      "ruleTextColor": "Farbe des Regeltexts",
+      "backgroundImage": "Hintergrundbild",
+      "backgroundImageDescription": "Empfohlene Breite: 1024px",
+      "prizeDescriptionImage": "Gewinnbeschreibungsbild (optional)",
+      "prizeDescriptionImageDescription": "Empfohlene Breite: 750px",
+      "startButtonImage": "Startschaltflächen-Bild",
+      "startButtonImageDescription": "Empfohlene Größe: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Anzahl der Gewinnspielversuche pro Person",
+      "resetPolicyLabel": "Versuche zurücksetzen",
+      "resetNever": "Anzahl der Versuche nicht zurücksetzen",
+      "resetEveryNDays": "Anzahl der Versuche zurücksetzen alle",
+      "resetIntervalDaysSuffix": "Tag(e)"
+    },
+    "publicUrl": {
+      "label": "Öffentliche URL",
+      "hint": "Kopieren Sie die URL in Ihren Flow, Ihre Broadcast oder Sequenz, um dieses Minispiel zu teilen."
+    },
+    "play": {
+      "close": "Schließen",
+      "drawsRemaining": "{count} Versuche übrig",
+      "noDrawsLeft": "Du hast keine Versuche mehr für dieses Minispiel.",
+      "notStartedYet": "Dieses Minispiel hat noch nicht begonnen.",
+      "ended": "Dieses Minispiel ist beendet.",
+      "forbiddenTitle": "Zugriff verweigert",
+      "forbiddenDescription": "Dieser Link ist ungültig oder abgelaufen.",
+      "comingSoonTitle": "Demnächst verfügbar",
+      "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar."
+    },
+    "history": {
+      "title": "Verlauf",
+      "played": "Spiele",
+      "remaining": "Verbleibende Versuche",
+      "openedAt": "Zuerst geöffnet",
+      "lastPlayedAt": "Zuletzt gespielt",
+      "unknownContact": "Unbekannter Kontakt",
+      "record": "Protokoll",
+      "recordDialog": {
+        "title": "Spielprotokoll",
+        "win": "Gewonnen",
+        "lose": "Kein Gewinn",
+        "empty": "Noch keine Spielprotokolle"
+      }
     }
   }
 }

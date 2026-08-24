@@ -145,7 +145,8 @@
     "onSuccess": "Khi thành công",
     "clone": "Nhân bản",
     "remove": "Xóa",
-    "restore": "Khôi phục"
+    "restore": "Khôi phục",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
@@ -868,6 +869,9 @@
     "dynamicImage": {
       "label": "Ảnh động"
     },
+    "minigame": {
+      "label": "Minigame"
+    },
     "savePayloadToCustomField": {
       "label": "Lưu payload vào trường tùy chỉnh"
     },
@@ -1205,6 +1209,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Hàm hệ thống",
       "names": {
@@ -1409,7 +1416,9 @@
       "label": "Trạng thái",
       "pending": "Đang chờ",
       "processing": "Đang xử lý",
+      "installing": "Installing",
       "completed": "Hoàn tất",
+      "partial": "Partial",
       "failed": "Thất bại",
       "success": "Thành công",
       "error": "Lỗi"
@@ -2080,6 +2089,26 @@
     },
     "enabled": {
       "label": "Đang bật"
+    },
+    "api": {
+      "label": "API",
+      "description": "Kết nối bất kỳ ứng dụng nào hỗ trợ HTTP như một kênh. Ứng dụng của bạn gửi tin nhắn đến API REST của chúng tôi và chúng tôi sẽ chuyển phản hồi đến URL callback của bạn.",
+      "callbackUrl": {
+        "label": "URL callback",
+        "description": "Chúng tôi gửi phản hồi đi qua đây bằng POST, được ký bằng khóa bí mật riêng của hộp thư của bạn.",
+        "notSet": "Chưa thiết lập"
+      },
+      "token": "Token",
+      "rotateToken": "Làm mới token",
+      "status": {
+        "enabled": "Đang bật",
+        "disabled": "Tắt"
+      },
+      "tokenReveal": {
+        "title": "Sao chép token API của bạn",
+        "description": "Token này chỉ hiển thị một lần. Hãy lưu trữ an toàn — bạn sẽ không thể xem lại được nữa.",
+        "done": "Xong"
+      }
     }
   },
   "flows": {
@@ -3562,7 +3591,7 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Làm mới quyền",
+    "reconnect": "Kết nối lại",
     "duplicated": "Tài khoản Zalo OA này đã được kết nối với một workspace khác.",
     "tagSync": {
       "title": "Đồng bộ nhãn",
@@ -4289,11 +4318,11 @@
     "title": "Lập lịch hẹn",
     "description": "Tạo và quản lý lịch hẹn của bạn.",
     "flowModes": {
-      "bookFromCustomField": "Đặt lịch hẹn",
-      "checkAvailabilityFromCustomField": "Kiểm tra lịch trống",
-      "book": "Bộ chọn ngày giờ",
-      "checkAvailability": "Bộ chọn khoảng ngày",
-      "cancel": "Hủy lịch hẹn"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Chế độ",
@@ -4447,7 +4476,60 @@
   },
   "templates": {
     "title": "Mẫu",
-    "description": "Tạo và quản lý các mẫu của bạn."
+    "description": "Tạo và quản lý các mẫu của bạn.",
+    "share": {
+      "label": "Chia sẻ",
+      "enabled": "Đã chia sẻ",
+      "disabled": "Chưa chia sẻ",
+      "dialogTitle": "Chia sẻ mẫu",
+      "dialogDescription": "Bất kỳ ai có liên kết này đều có thể cài đặt một bản sao của mẫu này vào một workspace trong tổ chức của bạn.",
+      "enableLabel": "Bật liên kết chia sẻ",
+      "linkLabel": "Liên kết chia sẻ",
+      "description": "Bất kỳ ai có liên kết đều có thể cài đặt mẫu này vào không gian làm việc của riêng họ."
+    },
+    "installs": {
+      "title": "Lượt cài đặt",
+      "resources": "Tài nguyên",
+      "warnings": "Cảnh báo",
+      "completedAt": "Hoàn tất lúc",
+      "autoUpdate": "Tự động cập nhật"
+    },
+    "form": {
+      "contents": "Nội dung mẫu",
+      "comingSoon": "Sắp ra mắt",
+      "selectAll": "Chọn tất cả",
+      "selectedCount": "Đã chọn {count}",
+      "details": "Chi tiết",
+      "permissions": "Quyền mặc định",
+      "allowEdit": "Cho phép chỉnh sửa sau khi cài đặt",
+      "allowDelete": "Cho phép xóa sau khi cài đặt",
+      "publisherName": "Tên nhà xuất bản",
+      "youtubeVideoId": "ID video YouTube",
+      "youtubeVideoIdDescription": "ID gồm 11 ký tự lấy từ URL video, ví dụ \"dQw4w9WgXcQ\" trong youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Liên kết thử nghiệm",
+      "imageUrl": "Ảnh bìa",
+      "installBehavior": "Hành vi khi cài đặt",
+      "createInstallFolder": "Cài đặt vào một thư mục riêng",
+      "createInstallFolderDescription": "Đưa mọi tài nguyên đã cài đặt vào một thư mục mới duy nhất, được đặt tên theo mẫu này.",
+      "defaultAutoUpdate": "Đánh dấu các lượt cài đặt cần cập nhật theo mặc định",
+      "defaultAutoUpdateDescription": "Các lượt cài đặt mới sẽ hiển thị thông báo có bản cập nhật mỗi khi bạn xuất bản lại mẫu này."
+    },
+    "categories": {
+      "flows": "Luồng",
+      "customFields": "Trường tùy chỉnh",
+      "tags": "Thẻ",
+      "products": "Sản phẩm",
+      "productCategories": "Danh mục sản phẩm",
+      "aiFunctions": "AI Functions",
+      "aiAgents": "AI Agent",
+      "calendars": "Lịch hẹn",
+      "webchats": "Webchat",
+      "keywords": "Từ khóa",
+      "entryPointLinks": "Liên kết giới thiệu",
+      "triggers": "Trigger",
+      "fbCommentAutomations": "Tự động hóa bình luận Facebook",
+      "settings": "Cài đặt"
+    }
   },
   "qrCodeGenerator": {
     "title": "Trình tạo mã QR",
@@ -4566,6 +4648,19 @@
     "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
     "unavailableTitle": "Không thể hủy đăng ký.",
     "unavailableDescription": "Không gian làm việc này không còn khả dụng."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Liên kết này không còn khả dụng.",
+    "invalidDescription": "Liên kết chia sẻ mẫu này không hợp lệ, đã bị vô hiệu hóa hoặc đã hết hạn.",
+    "byPublisher": "Bởi {publisherName}",
+    "includes": "Mẫu này bao gồm",
+    "videoTitle": "Video xem trước mẫu",
+    "tryItOut": "Dùng thử",
+    "signInToInstall": "Đăng nhập để cài đặt",
+    "selectWorkspace": "Chọn một workspace",
+    "install": "Cài đặt",
+    "installStarted": "Đã bắt đầu cài đặt",
+    "noEligibleWorkspaces": "Bạn không có workspace nào đủ điều kiện để cài đặt mẫu này."
   },
   "bookingPage": {
     "metadataTitle": "Đặt lịch",
@@ -5197,6 +5292,128 @@
     },
     "whatsapp": {
       "connect": "Kết nối"
+    }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Tạo và quản lý các minigame vòng quay may mắn dành cho khách hàng của bạn.",
+    "types": {
+      "luckyWheel": "Vòng quay may mắn",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Rút thăm",
+      "scratchOff": "Cào trúng thưởng"
+    },
+    "createDialog": {
+      "title": "Chọn loại minigame",
+      "comingSoon": "Sắp ra mắt"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Tổng tất cả tỷ lệ: {value}%",
+      "loseProbability": "Tỷ lệ trượt thưởng: {value}%",
+      "winProbability": "Tỷ lệ trúng thưởng: {value}%",
+      "newPrize": "Thêm giải thưởng"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Chỉnh sửa giải thưởng",
+      "nonWinningTitle": "Chỉnh sửa thiết lập không trúng thưởng",
+      "prizeNameLabel": "Tên giải thưởng",
+      "nonWinningTitleLabel": "Tiêu đề",
+      "loseImageDescription": "Kích thước đề xuất 120x120px",
+      "quantityLabel": "Số lượng giải thưởng",
+      "quantityDescription": "Số lần giải thưởng này còn có thể trúng; giảm 1 mỗi khi có người trúng. Để trống nếu không giới hạn.",
+      "sendMessage": "Gửi tin nhắn khi người chơi không trúng thưởng",
+      "sendWinMessage": "Gửi tin nhắn cho người trúng giải",
+      "messageMode": "Loại tin nhắn",
+      "messageModeText": "Văn bản",
+      "messageModeFlow": "Kịch bản",
+      "messageText": "Nội dung tin nhắn"
+    },
+    "winningMessageDialog": {
+      "title": "Thiết lập tin nhắn khi trúng thưởng",
+      "titleLabel": "Tiêu đề",
+      "acceptButtonText": "Nội dung nút Chấp nhận",
+      "shareButtonText": "Nội dung nút Chia sẻ",
+      "shareButtonDescription": "Mô tả nút Chia sẻ"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Thiết lập tin nhắn khi không trúng thưởng",
+      "titleLabel": "Tiêu đề",
+      "shareButtonText": "Nội dung nút Chia sẻ",
+      "shareButtonDescription": "Mô tả nút Chia sẻ"
+    },
+    "preview": {
+      "start": "Bắt đầu",
+      "shareWithFriends": "Chia sẻ với bạn bè",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "comingSoon": "Bản xem trước chi tiết cho loại trò chơi này sẽ sớm ra mắt",
+      "rules": "Luật chơi"
+    },
+    "form": {
+      "generalSettingsTitle": "Thiết lập chung",
+      "appearanceTitle": "Giao diện",
+      "playerSettingsTitle": "Cài đặt người chơi",
+      "prizeSettingsTitle": "Thiết lập giải thưởng"
+    },
+    "generalSettings": {
+      "playedAt": "Thời gian diễn ra",
+      "rulesDescription": "Mô tả thể lệ",
+      "openerTags": "Gắn thẻ liên hệ mở link minigame",
+      "playerTags": "Gắn thẻ người chơi",
+      "newFriendTags": "Gắn thẻ bạn bè mới",
+      "shareEnabled": "Cho phép chia sẻ với bạn bè",
+      "shareMessage": "Nội dung chia sẻ",
+      "shareMessageHint": "Sử dụng '{{shareUrl}}' để chèn link minigame thực tế — vui lòng không xóa nó."
+    },
+    "appearance": {
+      "backgroundColor": "Màu nền",
+      "machineColor": "Màu máy",
+      "decorativeColor": "Màu trang trí",
+      "ruleTextColor": "Màu văn bản thể lệ",
+      "backgroundImage": "Ảnh nền",
+      "backgroundImageDescription": "Chiều rộng đề xuất: 1024px",
+      "prizeDescriptionImage": "Ảnh mô tả giải thưởng (Tùy chọn)",
+      "prizeDescriptionImageDescription": "Chiều rộng đề xuất: 750px",
+      "startButtonImage": "Ảnh nút Bắt đầu",
+      "startButtonImageDescription": "Kích thước đề xuất: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Số lượt quay may mắn mỗi người",
+      "resetPolicyLabel": "Đặt lại lượt quay",
+      "resetNever": "Không đặt lại số lượt quay",
+      "resetEveryNDays": "Đặt lại số lượt quay mỗi",
+      "resetIntervalDaysSuffix": "ngày"
+    },
+    "publicUrl": {
+      "label": "URL công khai",
+      "hint": "Sao chép và dán URL vào kịch bản, chiến dịch quảng bá hoặc chuỗi tin nhắn để chia sẻ minigame này."
+    },
+    "play": {
+      "close": "Đóng",
+      "drawsRemaining": "Còn lại {count} lượt chơi",
+      "noDrawsLeft": "Bạn đã hết lượt chơi cho minigame này.",
+      "notStartedYet": "Minigame này chưa bắt đầu.",
+      "ended": "Minigame này đã kết thúc.",
+      "forbiddenTitle": "Không có quyền truy cập",
+      "forbiddenDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+      "comingSoonTitle": "Sắp ra mắt",
+      "comingSoonDescription": "Loại minigame này chưa thể chơi được."
+    },
+    "history": {
+      "title": "Lịch sử",
+      "played": "Lượt đã chơi",
+      "remaining": "Lượt còn lại",
+      "openedAt": "Mở lần đầu",
+      "lastPlayedAt": "Chơi gần nhất",
+      "unknownContact": "Liên hệ không xác định",
+      "record": "Bản ghi",
+      "recordDialog": {
+        "title": "Bản ghi lượt chơi",
+        "win": "Trúng thưởng",
+        "lose": "Không trúng",
+        "empty": "Chưa có bản ghi lượt chơi nào"
+      }
     }
   }
 }

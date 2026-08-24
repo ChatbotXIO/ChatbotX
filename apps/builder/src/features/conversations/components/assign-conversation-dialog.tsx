@@ -79,7 +79,6 @@ export default function AssignConversationDialog({
           mode: "onChange",
           defaultValues,
         },
-        errorMapProps: {},
       },
     )
 

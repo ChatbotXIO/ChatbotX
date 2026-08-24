@@ -27,12 +27,16 @@ const refreshTokenAdapter: Record<
   webchat: undefined,
   smtp: undefined,
   telegram: undefined,
+  api: undefined,
 }
 
-export async function refreshChannelTokens(): Promise<void> {
+export async function refreshChannelTokens(
+  channels?: ChannelType[],
+): Promise<void> {
   const entries = Object.entries(refreshTokenAdapter).filter(
     (entry): entry is [ChannelType, () => Promise<void>] =>
-      entry[1] !== undefined,
+      entry[1] !== undefined &&
+      (!channels || channels.includes(entry[0] as ChannelType)),
   )
 
   const results = await Promise.allSettled(

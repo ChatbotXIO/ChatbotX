@@ -205,6 +205,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -236,6 +237,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -268,6 +270,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -311,6 +314,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -353,6 +357,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}

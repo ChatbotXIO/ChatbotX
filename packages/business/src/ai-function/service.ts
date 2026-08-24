@@ -9,6 +9,7 @@ import type { AIFunctionModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { assertDeletable } from "../template/installed-resource.service"
 
 type FindByProps = {
   tx?: DatabaseClient
@@ -66,6 +67,12 @@ class AiFunctionService extends BaseService {
         }),
       )
     }
+
+    await assertDeletable({
+      workspaceId: ctx.workspaceId,
+      resourceKind: "aiFunction",
+      resourceIds: [ctx.aiFunctionId],
+    })
 
     await this.delete(ctx.aiFunctionId)
   }

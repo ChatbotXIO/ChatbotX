@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -41,17 +40,17 @@ import { updateZaloSettingsAction } from "./update-zalo-settings.action"
 export function ZaloSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: ZaloCredentialPublic | null
   isInherited?: boolean
+  /** Origin to register with Zalo. See `MessengerSettings`' equivalent prop. */
+  callbackOrigin: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  // Webhook + OAuth callback URLs must live on the fixed, provider-registered
-  // broker host — never the reseller's white-label custom domain, which Zalo
-  // cannot reach. Resellers using their own Zalo app whitelist these URIs.
-  const webhookUrl = buildBrokerCallbackUrl("/integrations/zalo/webhook")
-  const authCallbackUrl = buildBrokerCallbackUrl("/integrations/zalo/callback")
+  const webhookUrl = `${callbackOrigin}/integrations/zalo/webhook`
+  const authCallbackUrl = `${callbackOrigin}/integrations/zalo/callback`
 
   return (
     <Card>

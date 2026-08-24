@@ -1,24 +1,30 @@
 import type { TiktokCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-tiktok"
 import { getOriginFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 
 export async function generateTiktokRedirectUri(
-  publicConfig: TiktokCredentialPublic,
+  credential: {
+    userId: string | null
+    publicConfig: TiktokCredentialPublic
+  },
   workspaceId?: string | null,
 ) {
-  // The OAuth redirect_uri must be registered in the TikTok app (platform or
-  // reseller-owned). A white-label custom domain is not registered there, so we
-  // always send TikTok to the fixed broker callback and recover the originating
-  // branded domain from `referer` (the callback relays back to it).
-  const redirectUrl = buildBrokerCallbackUrl("/integrations/tiktok/callback")
+  // The OAuth redirect_uri must be registered in the TikTok app. For a
+  // tenant-owned credential (their own app), that's the reseller's custom
+  // domain; otherwise it's the broker, and the originating branded domain is
+  // recovered from `referer` (the callback relays back to it).
+  const redirectUrl = await buildProviderCallbackUrl(
+    credential,
+    "/integrations/tiktok/callback",
+  )
   const baseUrl = await getOriginFromHeader()
   const referer = workspaceId
     ? new URL(`/space/${workspaceId}`, baseUrl).toString()
     : baseUrl
 
   return generateAuthUrl({
-    clientId: publicConfig.clientId,
+    clientId: credential.publicConfig.clientId,
     redirectUrl,
     stateParams: {
       workspaceId,

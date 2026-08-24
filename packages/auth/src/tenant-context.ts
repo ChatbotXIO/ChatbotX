@@ -17,16 +17,7 @@ import { ROOT_TENANT_ID, verificationModel } from "@chatbotx.io/database/schema"
  * accounts across tenants. See `server.ts` for the adapter wrapper that reads
  * `getTenantId()`.
  */
-/**
- * `strictScope` disables the reseller-owner fallback in the adapter (see
- * `server.ts`). It is set on the OAuth social-callback path so that signing in
- * with a social provider on a reseller's domain always resolves to a
- * tenant-scoped user — even for the reseller owner, whose root-tenant account
- * the fallback would otherwise match. Email/password and magic-link keep the
- * fallback (they don't run with this flag), so the owner can still sign in to
- * their platform account on their own domain by those methods.
- */
-type TenantStore = { tenantId: string; strictScope?: boolean }
+type TenantStore = { tenantId: string }
 
 /**
  * The tenant ALS instance MUST be a process-wide singleton. `withTenant` (called
@@ -50,20 +41,8 @@ if (!globalForTenant.__chatbotxTenantStorage) {
 const tenantStorage = globalForTenant.__chatbotxTenantStorage
 
 /** Run `fn` with the given tenant bound for the duration of the async call. */
-export function withTenant<T>(
-  tenantId: string,
-  fn: () => T,
-  options?: { strictScope?: boolean },
-): T {
-  return tenantStorage.run({ tenantId, strictScope: options?.strictScope }, fn)
-}
-
-/**
- * Whether the current context forbids the reseller-owner fallback — true only on
- * the OAuth social-callback path, where every sign-in must stay tenant-scoped.
- */
-export function isStrictTenantScope(): boolean {
-  return tenantStorage.getStore()?.strictScope ?? false
+export function withTenant<T>(tenantId: string, fn: () => T): T {
+  return tenantStorage.run({ tenantId }, fn)
 }
 
 /**

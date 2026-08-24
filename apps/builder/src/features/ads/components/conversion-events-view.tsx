@@ -45,6 +45,7 @@ type ConversionEventsViewProps = {
   selectedAccount: ConversionEventsData["whatsappIntegrations"][number] | null
   switcherIntegrations: AdsSwitcherData["integrations"]
   whatsappCredentialPublic: AdsSwitcherData["whatsappCredentialPublic"]
+  oauthCallbackUrl: AdsSwitcherData["oauthCallbackUrl"]
 }
 
 type WhatsappRuleBuilderProps = {
@@ -318,6 +319,7 @@ export function ConversionEventsView({
   selectedAccount,
   switcherIntegrations,
   whatsappCredentialPublic,
+  oauthCallbackUrl,
 }: ConversionEventsViewProps) {
   const t = useTranslations()
   const [data] = use(promises)
@@ -335,6 +337,7 @@ export function ConversionEventsView({
           </Button>
           <AdsAccountControl
             integrations={switcherIntegrations}
+            oauthCallbackUrl={oauthCallbackUrl}
             whatsappCredentialPublic={whatsappCredentialPublic}
             workspaceId={workspaceId}
           />

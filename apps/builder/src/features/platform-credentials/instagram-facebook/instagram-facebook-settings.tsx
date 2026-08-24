@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -42,18 +41,17 @@ import { updateInstagramFacebookSettingAction } from "./update-instagram-faceboo
 export function InstagramFacebookSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: InstagramFacebookCredentialPublic | null
   isInherited?: boolean
+  /** Origin to register with Meta. See `MessengerSettings`' equivalent prop. */
+  callbackOrigin: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  const webhookUrl = buildBrokerCallbackUrl(
-    "/integrations/instagramFacebook/webhook",
-  )
-  const authCallbackUrl = buildBrokerCallbackUrl(
-    "/integrations/instagram-facebook/callback",
-  )
+  const webhookUrl = `${callbackOrigin}/integrations/instagramFacebook/webhook`
+  const authCallbackUrl = `${callbackOrigin}/integrations/instagram-facebook/callback`
 
   return (
     <Card>
