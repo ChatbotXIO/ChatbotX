@@ -71,6 +71,19 @@ export const buttonStepSchema = z
 export type ButtonStepProps = z.infer<typeof buttonStepSchema>
 export type ButtonStepInput = z.input<typeof buttonStepSchema>
 
+/**
+ * The URL an `openWebsite` button opens, or `undefined` for every other
+ * button type. Channel-neutral on purpose — WhatsApp's cta_url message and
+ * the carousel card link both narrow the same discriminated union to decide
+ * whether a button carries a link instead of a reply.
+ */
+export const getButtonLinkUrl = (
+  button: ButtonStepProps,
+): string | undefined =>
+  button.buttonType === buttonTypes.enum.openWebsite
+    ? button.beforeStep.url
+    : undefined
+
 export const buttonStepDefaultFn = (
   props?: Pick<ButtonStepProps, "label">,
 ): ButtonStepProps => ({
