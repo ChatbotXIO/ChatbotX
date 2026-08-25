@@ -71,6 +71,7 @@
     "reset": "איפוס",
     "save": "שמירה",
     "selectAll": "בחירת הכול",
+    "unselect": "ביטול בחירה",
     "selectRow": "בחירת שורה",
     "sendFlow": "שליחת תהליך",
     "sendMessage": "שליחת הודעה",
@@ -1144,6 +1145,8 @@
     "editMessagePlaceholder": "עריכת ההודעה...",
     "saveEdit": "שמירה",
     "cancelEdit": "ביטול",
+    "replaceAttachment": "החלף קובץ מצורף",
+    "addAttachment": "הוסף קובץ מצורף",
     "failedToCopy": "ההעתקה נכשלה",
     "failedToPreviewImage": "התצוגה המקדימה של התמונה נכשלה",
     "loadingData": "הנתונים נטענים...",
@@ -5413,5 +5416,32 @@
         "empty": "אין עדיין רשומות משחק"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "ספריית מדיה",
+    "searchPlaceholder": "חיפוש קבצים...",
+    "newFolder": "תיקייה חדשה",
+    "recent": "אחרונים",
+    "favourite": "מועדפים",
+    "upload": "העלאה",
+    "done": "סיום",
+    "deleteFolder": "מחיקת תיקייה",
+    "renameFolder": "שינוי שם תיקייה",
+    "noFiles": "לא נמצאו קבצים",
+    "noFolders": "אין עדיין תיקיות",
+    "folderNamePlaceholder": "שם התיקייה",
+    "confirmDeleteFolder": "למחוק את התיקייה ואת כל הקבצים שבה?",
+    "confirmDeleteFolderDescription": "כל הקבצים בתיקייה זו יימחקו לצמיתות מהשרת. לא ניתן לבטל פעולה זו.",
+    "confirmDeleteFile": "למחוק את הקובץ?",
+    "confirmDeleteFileDescription": "קובץ זה יימחק לצמיתות מהשרת.",
+    "addToFavourites": "הוספה למועדפים",
+    "removeFromFavourites": "הסרה מהמועדפים",
+    "deleteFile": "מחיקת קובץ",
+    "selectOnlyOneFile": "ניתן לבחור קובץ אחד בלבד",
+    "confirmDeleteFiles": "{count, plural, =1 {למחוק קובץ אחד?} other {למחוק # קבצים?}}",
+    "confirmDeleteFilesDescription": "קבצים אלה יימחקו לצמיתות מהשרת. לא ניתן לבטל פעולה זו.",
+    "filesCount": "{count, plural, =0 {אין קבצים} =1 {קובץ אחד} other {# קבצים}}",
+    "openMediaLibrary": "פתיחת ספריית מדיה",
+    "uploadFailed": "העלאת {name} נכשלה"
   }
 }

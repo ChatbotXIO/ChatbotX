@@ -1488,6 +1488,7 @@
     "reset": "Reimposta",
     "save": "Salva",
     "selectAll": "Seleziona tutto",
+    "unselect": "Deseleziona",
     "selectRow": "Seleziona riga",
     "sendFlow": "Invia flusso",
     "sendMessage": "Invia messaggio",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "Modifica il messaggio...",
     "saveEdit": "Salva",
     "cancelEdit": "Annulla",
+    "replaceAttachment": "Sostituisci allegato",
+    "addAttachment": "Aggiungi allegato",
     "failedToCopy": "Impossibile copiare",
     "failedToPreviewImage": "Impossibile visualizzare l'anteprima dell'immagine",
     "loadingData": "Caricamento dati...",
@@ -5413,5 +5416,32 @@
         "empty": "Ancora nessun registro di partite"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Libreria multimediale",
+    "searchPlaceholder": "Cerca file...",
+    "newFolder": "Nuova cartella",
+    "recent": "Recenti",
+    "favourite": "Preferiti",
+    "upload": "Carica",
+    "done": "Fatto",
+    "deleteFolder": "Elimina cartella",
+    "renameFolder": "Rinomina cartella",
+    "noFiles": "Nessun file trovato",
+    "noFolders": "Nessuna cartella ancora",
+    "folderNamePlaceholder": "Nome cartella",
+    "confirmDeleteFolder": "Eliminare la cartella e tutti i suoi file?",
+    "confirmDeleteFolderDescription": "Tutti i file in questa cartella verranno eliminati permanentemente dal server. Questa azione non può essere annullata.",
+    "confirmDeleteFile": "Eliminare il file?",
+    "confirmDeleteFileDescription": "Questo file verrà eliminato permanentemente dal server.",
+    "addToFavourites": "Aggiungi ai preferiti",
+    "removeFromFavourites": "Rimuovi dai preferiti",
+    "deleteFile": "Elimina file",
+    "selectOnlyOneFile": "Puoi selezionare solo 1 file",
+    "confirmDeleteFiles": "{count, plural, =1 {Eliminare 1 file?} other {Eliminare # file?}}",
+    "confirmDeleteFilesDescription": "Questi file verranno eliminati permanentemente dal server. Questa azione non può essere annullata.",
+    "filesCount": "{count, plural, =0 {Nessun file} =1 {1 file} other {# file}}",
+    "openMediaLibrary": "Apri libreria multimediale",
+    "uploadFailed": "Caricamento di {name} non riuscito"
   }
 }

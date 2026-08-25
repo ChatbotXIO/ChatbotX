@@ -71,6 +71,7 @@
     "reset": "Réinitialiser",
     "save": "Enregistrer",
     "selectAll": "Tout sélectionner",
+    "unselect": "Désélectionner",
     "selectRow": "Sélectionner la ligne",
     "sendFlow": "Envoyer le flux",
     "sendMessage": "Envoyer un message",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "Modifiez votre message...",
     "saveEdit": "Enregistrer",
     "cancelEdit": "Annuler",
+    "replaceAttachment": "Remplacer la pièce jointe",
+    "addAttachment": "Ajouter une pièce jointe",
     "failedToCopy": "Échec de la copie",
     "failedToPreviewImage": "Échec de l’aperçu de l’image",
     "loadingData": "Chargement des données...",
@@ -5413,5 +5416,32 @@
         "empty": "Aucun registre de parties pour le moment"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Bibliothèque multimédia",
+    "searchPlaceholder": "Rechercher des fichiers...",
+    "newFolder": "Nouveau dossier",
+    "recent": "Récents",
+    "favourite": "Favori",
+    "upload": "Téléverser",
+    "done": "Terminé",
+    "deleteFolder": "Supprimer le dossier",
+    "renameFolder": "Renommer le dossier",
+    "noFiles": "Aucun fichier trouvé",
+    "noFolders": "Aucun dossier pour le moment",
+    "folderNamePlaceholder": "Nom du dossier",
+    "confirmDeleteFolder": "Supprimer le dossier et tous ses fichiers ?",
+    "confirmDeleteFolderDescription": "Tous les fichiers de ce dossier seront définitivement supprimés du serveur. Cette action est irréversible.",
+    "confirmDeleteFile": "Supprimer le fichier ?",
+    "confirmDeleteFileDescription": "Ce fichier sera définitivement supprimé du serveur.",
+    "addToFavourites": "Ajouter aux favoris",
+    "removeFromFavourites": "Retirer des favoris",
+    "deleteFile": "Supprimer le fichier",
+    "selectOnlyOneFile": "Vous ne pouvez sélectionner qu'un seul fichier",
+    "confirmDeleteFiles": "{count, plural, =1 {Supprimer 1 fichier ?} other {Supprimer # fichiers ?}}",
+    "confirmDeleteFilesDescription": "Ces fichiers seront définitivement supprimés du serveur. Cette action est irréversible.",
+    "filesCount": "{count, plural, =0 {Aucun fichier} =1 {1 fichier} other {# fichiers}}",
+    "openMediaLibrary": "Ouvrir la bibliothèque multimédia",
+    "uploadFailed": "Échec du téléversement de {name}"
   }
 }

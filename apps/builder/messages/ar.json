@@ -71,6 +71,7 @@
     "reset": "إعادة تعيين",
     "save": "حفظ",
     "selectAll": "تحديد الكل",
+    "unselect": "إلغاء التحديد",
     "selectRow": "تحديد الصف",
     "sendFlow": "إرسال المسار",
     "sendMessage": "إرسال رسالة",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "عدّل رسالتك...",
     "saveEdit": "حفظ",
     "cancelEdit": "إلغاء",
+    "replaceAttachment": "استبدال المرفق",
+    "addAttachment": "إضافة مرفق",
     "failedToCopy": "تعذّر النسخ",
     "failedToPreviewImage": "تعذّرت معاينة الصورة",
     "loadingData": "جارٍ تحميل البيانات...",
@@ -5413,5 +5416,32 @@
         "empty": "لا توجد سجلات لعب بعد"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "مكتبة الوسائط",
+    "searchPlaceholder": "البحث عن الملفات...",
+    "newFolder": "مجلد جديد",
+    "recent": "الأحدث",
+    "favourite": "المفضلة",
+    "upload": "رفع",
+    "done": "تم",
+    "deleteFolder": "حذف المجلد",
+    "renameFolder": "إعادة تسمية المجلد",
+    "noFiles": "لا توجد ملفات",
+    "noFolders": "لا توجد مجلدات بعد",
+    "folderNamePlaceholder": "اسم المجلد",
+    "confirmDeleteFolder": "حذف المجلد وجميع ملفاته؟",
+    "confirmDeleteFolderDescription": "سيتم حذف جميع الملفات في هذا المجلد نهائيًا من الخادم. لا يمكن التراجع عن هذا الإجراء.",
+    "confirmDeleteFile": "حذف الملف؟",
+    "confirmDeleteFileDescription": "سيتم حذف هذا الملف نهائيًا من الخادم.",
+    "addToFavourites": "إضافة إلى المفضلة",
+    "removeFromFavourites": "إزالة من المفضلة",
+    "deleteFile": "حذف الملف",
+    "selectOnlyOneFile": "يمكنك تحديد ملف واحد فقط",
+    "confirmDeleteFiles": "{count, plural, =1 {حذف ملف واحد؟} other {حذف # ملفات؟}}",
+    "confirmDeleteFilesDescription": "سيتم حذف هذه الملفات نهائيًا من الخادم. لا يمكن التراجع عن هذا الإجراء.",
+    "filesCount": "{count, plural, =0 {لا توجد ملفات} =1 {ملف واحد} other {# ملفات}}",
+    "openMediaLibrary": "فتح مكتبة الوسائط",
+    "uploadFailed": "فشل رفع {name}"
   }
 }

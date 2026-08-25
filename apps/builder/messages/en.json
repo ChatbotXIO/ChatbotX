@@ -71,6 +71,7 @@
     "reset": "Reset",
     "save": "Save",
     "selectAll": "Select all",
+    "unselect": "Unselect",
     "selectRow": "Select row",
     "sendFlow": "Send Flow",
     "sendMessage": "Send Message",
@@ -3005,6 +3006,8 @@
     "editMessagePlaceholder": "Edit your message...",
     "saveEdit": "Save",
     "cancelEdit": "Cancel",
+    "replaceAttachment": "Replace attachment",
+    "addAttachment": "Add attachment",
     "failedToCopy": "Failed to copy",
     "failedToPreviewImage": "Failed to preview image",
     "loadingData": "Loading data...",
@@ -5413,5 +5416,32 @@
         "empty": "No play records yet"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Media Library",
+    "searchPlaceholder": "Search files...",
+    "newFolder": "New folder",
+    "recent": "Recent",
+    "favourite": "Favourite",
+    "upload": "Upload",
+    "done": "Done",
+    "deleteFolder": "Delete folder",
+    "renameFolder": "Rename folder",
+    "noFiles": "No files found",
+    "noFolders": "No folders yet",
+    "folderNamePlaceholder": "Folder name",
+    "confirmDeleteFolder": "Delete folder and all its files?",
+    "confirmDeleteFolderDescription": "All files in this folder will be permanently deleted from the server. This action cannot be undone.",
+    "confirmDeleteFile": "Delete file?",
+    "confirmDeleteFileDescription": "This file will be permanently deleted from the server.",
+    "addToFavourites": "Add to favourites",
+    "removeFromFavourites": "Remove from favourites",
+    "deleteFile": "Delete file",
+    "selectOnlyOneFile": "You can only select up to 1 file",
+    "confirmDeleteFiles": "{count, plural, =1 {Delete 1 file?} other {Delete # files?}}",
+    "confirmDeleteFilesDescription": "These files will be permanently deleted from the server. This action cannot be undone.",
+    "filesCount": "{count, plural, =0 {No files} =1 {1 file} other {# files}}",
+    "openMediaLibrary": "Open Media Library",
+    "uploadFailed": "Failed to upload {name}"
   }
 }

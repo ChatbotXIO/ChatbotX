@@ -228,3 +228,7 @@ export type ContactActiveHourlyModel =
   typeof schema.contactActiveHourlyModel.$inferSelect
 export type AutomationThrottleModel =
   typeof schema.automationThrottleModel.$inferSelect
+export type MediaLibraryFolderModel =
+  typeof schema.mediaLibraryFolderModel.$inferSelect
+export type MediaLibraryFileModel =
+  typeof schema.mediaLibraryFileModel.$inferSelect

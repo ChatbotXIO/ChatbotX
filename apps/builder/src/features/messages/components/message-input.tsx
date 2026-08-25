@@ -19,6 +19,7 @@ import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
+  ImageIcon,
   PaperclipIcon,
   ReplyIcon,
   SendHorizonalIcon,
@@ -42,6 +43,7 @@ import {
   isConversationActive,
 } from "@/features/conversations/utils/bot-state"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
+import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
@@ -49,6 +51,7 @@ import { createMessageAction } from "../actions/create-message.action"
 import { createMessageRequest } from "../schema/mutation"
 import { FileUploadPreview } from "./file-upload"
 import { InputMenu } from "./input-menu"
+import { MediaFilePreview } from "./media-file-preview"
 
 const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
   api: 0,
@@ -181,6 +184,7 @@ export const MessageInput = () => {
           defaultValues: {
             text: "",
             files: [],
+            mediaFile: undefined,
             clientId: createId(),
             replyToMessageId: undefined,
             replyToMessageCreatedAt: undefined,
@@ -360,12 +364,17 @@ export const MessageInput = () => {
     [channel, isWindowExpired],
   )
 
-  // Check if files are attached
+  // Check if a media file (device upload or Media Library pick) is attached
+  const mediaFile = useWatch({
+    control: form.control,
+    name: "mediaFile",
+  })
   const files = useWatch({
     control: form.control,
     name: "files",
   })
-  const hasFiles = Array.isArray(files) && files.length > 0
+  const hasFiles =
+    Boolean(mediaFile) || (Array.isArray(files) && files.length > 0)
 
   // Early return if no active conversation
   if (!activeConversationId) {
@@ -487,6 +496,7 @@ export const MessageInput = () => {
           {!isInstagramPostComment && (
             <div className="px-2">
               <FileUploadPreview ref={fileUploadRef} />
+              <MediaFilePreview />
             </div>
           )}
           <div className="flex w-full items-center ps-2.5">
@@ -502,15 +512,44 @@ export const MessageInput = () => {
             <div className="message-toolbar flex items-center gap-2">
               {!hasFiles && <InputMenu setContent={setContent} />}
               {!isInstagramPostComment && (
-                <Button
-                  aria-label="Attach file"
-                  className="px-2 py-1.5 [&_svg]:size-5"
-                  onClick={onClickAttachment}
-                  type="button"
-                  variant="ghost"
-                >
-                  <PaperclipIcon aria-hidden="true" />
-                </Button>
+                <>
+                  <Button
+                    aria-label="Attach file"
+                    className="px-2 py-1.5 [&_svg]:size-5"
+                    disabled={Boolean(mediaFile)}
+                    onClick={onClickAttachment}
+                    type="button"
+                    variant="ghost"
+                  >
+                    <PaperclipIcon aria-hidden="true" />
+                  </Button>
+                  <MediaLibraryTrigger
+                    onSelect={(file) => {
+                      form.setValue(
+                        "mediaFile",
+                        {
+                          path: file.path,
+                          url: file.url,
+                          mimeType: file.mimeType,
+                          name: file.name,
+                          size: file.size,
+                        },
+                        { shouldValidate: true },
+                      )
+                    }}
+                    workspaceId={conversation?.workspaceId ?? ""}
+                  >
+                    <Button
+                      aria-label={t("mediaLibrary.openMediaLibrary")}
+                      className="px-2 py-1.5 [&_svg]:size-5"
+                      disabled={Array.isArray(files) && files.length > 0}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ImageIcon aria-hidden="true" />
+                    </Button>
+                  </MediaLibraryTrigger>
+                </>
               )}
               <Button
                 aria-label="Send message"

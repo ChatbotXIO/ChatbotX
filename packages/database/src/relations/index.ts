@@ -99,6 +99,8 @@ import { integrationWebchatRelations } from "./integration-webchat"
 import { integrationWhatsappRelations } from "./integration-whatsapp"
 import { integrationZaloRelations } from "./integration-zalo"
 import { magicLinkRelations } from "./magic-link"
+import { mediaLibraryFileRelations } from "./media-library-file"
+import { mediaLibraryFolderRelations } from "./media-library-folder"
 import { messageRelations } from "./message"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
 import { metaCapiEventRelations } from "./meta-capi-event"
@@ -239,6 +241,8 @@ export const relations = {
   ...contactInboxRelations,
   ...aiFunctionRelations,
   ...botFieldRelations,
+  ...mediaLibraryFolderRelations,
+  ...mediaLibraryFileRelations,
   ...savedReplyRelations,
   ...integrationTelegramRelations,
   ...integrationTiktokRelations,

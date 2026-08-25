@@ -71,6 +71,7 @@
     "reset": "Redefinir",
     "save": "Salvar",
     "selectAll": "Selecionar tudo",
+    "unselect": "Desmarcar",
     "selectRow": "Selecionar linha",
     "sendFlow": "Enviar fluxo",
     "sendMessage": "Enviar mensagem",
@@ -2886,6 +2887,8 @@
     "editMessagePlaceholder": "Edite sua mensagem...",
     "saveEdit": "Salvar",
     "cancelEdit": "Cancelar",
+    "replaceAttachment": "Substituir anexo",
+    "addAttachment": "Adicionar anexo",
     "failedToCopy": "Falha ao copiar",
     "failedToPreviewImage": "Falha ao visualizar a imagem",
     "loadingData": "Carregando dados...",
@@ -5413,5 +5416,32 @@
         "empty": "Ainda não há registros de jogadas"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Biblioteca de mídia",
+    "searchPlaceholder": "Buscar arquivos...",
+    "newFolder": "Nova pasta",
+    "recent": "Recentes",
+    "favourite": "Favorito",
+    "upload": "Enviar",
+    "done": "Concluído",
+    "deleteFolder": "Excluir pasta",
+    "renameFolder": "Renomear pasta",
+    "noFiles": "Nenhum arquivo encontrado",
+    "noFolders": "Ainda não há pastas",
+    "folderNamePlaceholder": "Nome da pasta",
+    "confirmDeleteFolder": "Excluir a pasta e todos os seus arquivos?",
+    "confirmDeleteFolderDescription": "Todos os arquivos desta pasta serão excluídos permanentemente do servidor. Esta ação não pode ser desfeita.",
+    "confirmDeleteFile": "Excluir arquivo?",
+    "confirmDeleteFileDescription": "Este arquivo será excluído permanentemente do servidor.",
+    "addToFavourites": "Adicionar aos favoritos",
+    "removeFromFavourites": "Remover dos favoritos",
+    "deleteFile": "Excluir arquivo",
+    "selectOnlyOneFile": "Você só pode selecionar 1 arquivo",
+    "confirmDeleteFiles": "{count, plural, =1 {Excluir 1 arquivo?} other {Excluir # arquivos?}}",
+    "confirmDeleteFilesDescription": "Esses arquivos serão excluídos permanentemente do servidor. Esta ação não pode ser desfeita.",
+    "filesCount": "{count, plural, =0 {Nenhum arquivo} =1 {1 arquivo} other {# arquivos}}",
+    "openMediaLibrary": "Abrir biblioteca de mídia",
+    "uploadFailed": "Falha ao enviar {name}"
   }
 }

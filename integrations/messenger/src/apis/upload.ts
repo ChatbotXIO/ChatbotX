@@ -38,6 +38,11 @@ export async function resumableUploadImage(
   }
   const imgBuf = Buffer.from(await imgRes.arrayBuffer())
   const mimeType = imgRes.headers.get("content-type") ?? "image/jpeg"
+  if (!mimeType.startsWith("image/")) {
+    throw new Error(
+      `Header image must be an image file, got "${mimeType}" instead`,
+    )
+  }
   const fileName = new URL(imageUrl).pathname.split("/").pop() ?? "header.jpg"
 
   // 2. Create upload session — params as query string per Meta docs

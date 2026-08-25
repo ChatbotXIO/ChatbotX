@@ -71,6 +71,7 @@
     "reset": "Palauta",
     "save": "Tallenna",
     "selectAll": "Valitse kaikki",
+    "unselect": "Poista valinta",
     "selectRow": "Valitse rivi",
     "sendFlow": "Lähetä flow",
     "sendMessage": "Lähetä viesti",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "Muokkaa viestiäsi...",
     "saveEdit": "Tallenna",
     "cancelEdit": "Peruuta",
+    "replaceAttachment": "Korvaa liite",
+    "addAttachment": "Lisää liite",
     "failedToCopy": "Kopiointi epäonnistui",
     "failedToPreviewImage": "Kuvan esikatselu epäonnistui",
     "loadingData": "Ladataan tietoja...",
@@ -5413,5 +5416,32 @@
         "empty": "Ei pelitapahtumia vielä"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Mediakirjasto",
+    "searchPlaceholder": "Hae tiedostoja...",
+    "newFolder": "Uusi kansio",
+    "recent": "Viimeisimmät",
+    "favourite": "Suosikki",
+    "upload": "Lataa",
+    "done": "Valmis",
+    "deleteFolder": "Poista kansio",
+    "renameFolder": "Nimeä kansio uudelleen",
+    "noFiles": "Tiedostoja ei löytynyt",
+    "noFolders": "Ei vielä kansioita",
+    "folderNamePlaceholder": "Kansion nimi",
+    "confirmDeleteFolder": "Poistetaanko kansio ja kaikki sen tiedostot?",
+    "confirmDeleteFolderDescription": "Kaikki tämän kansion tiedostot poistetaan pysyvästi palvelimelta. Tätä toimintoa ei voi kumota.",
+    "confirmDeleteFile": "Poistetaanko tiedosto?",
+    "confirmDeleteFileDescription": "Tämä tiedosto poistetaan pysyvästi palvelimelta.",
+    "addToFavourites": "Lisää suosikkeihin",
+    "removeFromFavourites": "Poista suosikeista",
+    "deleteFile": "Poista tiedosto",
+    "selectOnlyOneFile": "Voit valita vain 1 tiedoston",
+    "confirmDeleteFiles": "{count, plural, =1 {Poistetaanko 1 tiedosto?} other {Poistetaanko # tiedostoa?}}",
+    "confirmDeleteFilesDescription": "Nämä tiedostot poistetaan pysyvästi palvelimelta. Tätä toimintoa ei voi kumota.",
+    "filesCount": "{count, plural, =0 {Ei tiedostoja} =1 {1 tiedosto} other {# tiedostoa}}",
+    "openMediaLibrary": "Avaa mediakirjasto",
+    "uploadFailed": "Tiedoston {name} lataus epäonnistui"
   }
 }

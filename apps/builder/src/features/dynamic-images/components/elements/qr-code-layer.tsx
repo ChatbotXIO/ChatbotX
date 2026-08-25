@@ -3,13 +3,15 @@
 import type { DynamicImageQrCodeElement } from "@chatbotx.io/database/partials"
 import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
+import { ImageIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import QRCode from "react-qr-code"
+import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { DynamicImageVariableTextField } from "../plain-text-variable-field"
 import type { DynamicImageElementPatch } from "../types"
 
@@ -111,15 +113,17 @@ export function DynamicImageQrCodeLayerEditForm(
 
         <div className="flex flex-col gap-1.5">
           <Label>{t("dynamicImages.editor.qrLogo")}</Label>
-          <DirectUploadButton
-            accept="image/*"
-            label={t("dynamicImages.editor.uploadLogo")}
-            onUploadSuccess={(_filePath, _file, publicUrl) =>
-              form.setValue("logoUrl", publicUrl, { shouldDirty: true })
+          <MediaLibraryTrigger
+            onSelect={(file) =>
+              form.setValue("logoUrl", file.url, { shouldDirty: true })
             }
-            uploadPath={`dynamic-images/${workspaceId}/uploads`}
             workspaceId={workspaceId}
-          />
+          >
+            <Button size="sm" type="button" variant="outline">
+              <ImageIcon className="size-4" />
+              {t("dynamicImages.editor.uploadLogo")}
+            </Button>
+          </MediaLibraryTrigger>
         </div>
       </div>
     </Form>

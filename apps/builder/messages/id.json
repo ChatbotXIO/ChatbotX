@@ -71,6 +71,7 @@
     "reset": "Atur Ulang",
     "save": "Simpan",
     "selectAll": "Pilih semua",
+    "unselect": "Batal pilih",
     "selectRow": "Pilih baris",
     "sendFlow": "Kirim Flow",
     "sendMessage": "Kirim Pesan",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "Edit pesan Anda...",
     "saveEdit": "Simpan",
     "cancelEdit": "Batal",
+    "replaceAttachment": "Ganti lampiran",
+    "addAttachment": "Tambah lampiran",
     "failedToCopy": "Gagal menyalin",
     "failedToPreviewImage": "Gagal melihat pratinjau gambar",
     "loadingData": "Memuat data...",
@@ -5413,5 +5416,32 @@
         "empty": "Belum ada catatan permainan"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Pustaka Media",
+    "searchPlaceholder": "Cari file...",
+    "newFolder": "Folder baru",
+    "recent": "Terbaru",
+    "favourite": "Favorit",
+    "upload": "Unggah",
+    "done": "Selesai",
+    "deleteFolder": "Hapus folder",
+    "renameFolder": "Ganti nama folder",
+    "noFiles": "Tidak ada file ditemukan",
+    "noFolders": "Belum ada folder",
+    "folderNamePlaceholder": "Nama folder",
+    "confirmDeleteFolder": "Hapus folder beserta semua filenya?",
+    "confirmDeleteFolderDescription": "Semua file dalam folder ini akan dihapus secara permanen dari server. Tindakan ini tidak dapat dibatalkan.",
+    "confirmDeleteFile": "Hapus file?",
+    "confirmDeleteFileDescription": "File ini akan dihapus secara permanen dari server.",
+    "addToFavourites": "Tambahkan ke favorit",
+    "removeFromFavourites": "Hapus dari favorit",
+    "deleteFile": "Hapus file",
+    "selectOnlyOneFile": "Anda hanya dapat memilih 1 file",
+    "confirmDeleteFiles": "{count, plural, =1 {Hapus 1 file?} other {Hapus # file?}}",
+    "confirmDeleteFilesDescription": "File-file ini akan dihapus secara permanen dari server. Tindakan ini tidak dapat dibatalkan.",
+    "filesCount": "{count, plural, =0 {Tidak ada file} =1 {1 file} other {# file}}",
+    "openMediaLibrary": "Buka Pustaka Media",
+    "uploadFailed": "Gagal mengunggah {name}"
   }
 }

@@ -4,7 +4,7 @@ import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
-import { DirectUploadOrInsertLink } from "@/components/direct-upload"
+import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { ButtonGroupEditor } from "@/features/flows/react-flow/steps/button/editor"
 
 type SendCardStepEditorProps = {
@@ -20,7 +20,7 @@ const SendCardStepEditor = ({ parentName }: SendCardStepEditorProps) => {
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200">
       <div className="relative flex flex-col gap-2 bg-secondary px-3 py-2">
-        <DirectUploadOrInsertLink
+        <MediaLibraryOrInsertLink
           fileType="image"
           parentName={`${parentName}.image`}
           showVariablePicker

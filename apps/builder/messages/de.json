@@ -71,6 +71,7 @@
     "reset": "Zurücksetzen",
     "save": "Speichern",
     "selectAll": "Alle auswählen",
+    "unselect": "Auswahl aufheben",
     "selectRow": "Zeile auswählen",
     "sendFlow": "Flow senden",
     "sendMessage": "Nachricht senden",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "Nachricht bearbeiten...",
     "saveEdit": "Speichern",
     "cancelEdit": "Abbrechen",
+    "replaceAttachment": "Anhang ersetzen",
+    "addAttachment": "Anhang hinzufügen",
     "failedToCopy": "Kopieren fehlgeschlagen",
     "failedToPreviewImage": "Bildvorschau fehlgeschlagen",
     "loadingData": "Daten werden geladen...",
@@ -5413,5 +5416,32 @@
         "empty": "Noch keine Spielprotokolle"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Medienbibliothek",
+    "searchPlaceholder": "Dateien suchen...",
+    "newFolder": "Neuer Ordner",
+    "recent": "Zuletzt verwendet",
+    "favourite": "Favorit",
+    "upload": "Hochladen",
+    "done": "Fertig",
+    "deleteFolder": "Ordner löschen",
+    "renameFolder": "Ordner umbenennen",
+    "noFiles": "Keine Dateien gefunden",
+    "noFolders": "Noch keine Ordner",
+    "folderNamePlaceholder": "Ordnername",
+    "confirmDeleteFolder": "Ordner und alle Dateien löschen?",
+    "confirmDeleteFolderDescription": "Alle Dateien in diesem Ordner werden dauerhaft vom Server gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmDeleteFile": "Datei löschen?",
+    "confirmDeleteFileDescription": "Diese Datei wird dauerhaft vom Server gelöscht.",
+    "addToFavourites": "Zu Favoriten hinzufügen",
+    "removeFromFavourites": "Aus Favoriten entfernen",
+    "deleteFile": "Datei löschen",
+    "selectOnlyOneFile": "Du kannst nur 1 Datei auswählen",
+    "confirmDeleteFiles": "{count, plural, =1 {1 Datei löschen?} other {# Dateien löschen?}}",
+    "confirmDeleteFilesDescription": "Diese Dateien werden dauerhaft vom Server gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "filesCount": "{count, plural, =0 {Keine Dateien} =1 {1 Datei} other {# Dateien}}",
+    "openMediaLibrary": "Medienbibliothek öffnen",
+    "uploadFailed": "Hochladen von {name} fehlgeschlagen"
   }
 }

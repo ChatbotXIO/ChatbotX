@@ -71,6 +71,7 @@
     "reset": "リセット",
     "save": "保存",
     "selectAll": "すべて選択",
+    "unselect": "選択解除",
     "selectRow": "行を選択",
     "sendFlow": "フローを送信",
     "sendMessage": "メッセージを送信",
@@ -2886,6 +2887,8 @@
     "editMessagePlaceholder": "メッセージを編集...",
     "saveEdit": "保存",
     "cancelEdit": "キャンセル",
+    "replaceAttachment": "添付ファイルを置き換える",
+    "addAttachment": "添付ファイルを追加",
     "failedToCopy": "コピーに失敗しました",
     "failedToPreviewImage": "画像のプレビューに失敗しました",
     "loadingData": "データを読み込んでいます...",
@@ -5413,5 +5416,32 @@
         "empty": "プレイ記録はまだありません"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "メディアライブラリ",
+    "searchPlaceholder": "ファイルを検索...",
+    "newFolder": "新しいフォルダ",
+    "recent": "最近",
+    "favourite": "お気に入り",
+    "upload": "アップロード",
+    "done": "完了",
+    "deleteFolder": "フォルダを削除",
+    "renameFolder": "フォルダ名を変更",
+    "noFiles": "ファイルが見つかりません",
+    "noFolders": "フォルダがまだありません",
+    "folderNamePlaceholder": "フォルダ名",
+    "confirmDeleteFolder": "フォルダとすべてのファイルを削除しますか？",
+    "confirmDeleteFolderDescription": "このフォルダ内のすべてのファイルはサーバーから完全に削除されます。この操作は元に戻せません。",
+    "confirmDeleteFile": "ファイルを削除しますか？",
+    "confirmDeleteFileDescription": "このファイルはサーバーから完全に削除されます。",
+    "addToFavourites": "お気に入りに追加",
+    "removeFromFavourites": "お気に入りから削除",
+    "deleteFile": "ファイルを削除",
+    "selectOnlyOneFile": "選択できるファイルは1つだけです",
+    "confirmDeleteFiles": "{count, plural, =1 {1件のファイルを削除しますか？} other {#件のファイルを削除しますか？}}",
+    "confirmDeleteFilesDescription": "これらのファイルはサーバーから完全に削除されます。この操作は元に戻せません。",
+    "filesCount": "{count, plural, =0 {ファイルなし} =1 {1件のファイル} other {#件のファイル}}",
+    "openMediaLibrary": "メディアライブラリを開く",
+    "uploadFailed": "{name} のアップロードに失敗しました"
   }
 }

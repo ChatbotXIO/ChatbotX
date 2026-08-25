@@ -827,6 +827,7 @@
     "reset": "Resetează",
     "save": "Salvează",
     "selectAll": "Selectează tot",
+    "unselect": "Deselectează",
     "selectRow": "Selectează rândul",
     "sendFlow": "Trimite fluxul",
     "sendMessage": "Trimite mesajul",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "Editează-ți mesajul...",
     "saveEdit": "Salvează",
     "cancelEdit": "Anulează",
+    "replaceAttachment": "Înlocuiește atașamentul",
+    "addAttachment": "Adaugă atașament",
     "failedToCopy": "Copierea a eșuat",
     "failedToPreviewImage": "Previzualizarea imaginii a eșuat",
     "loadingData": "Se încarcă datele...",
@@ -5413,5 +5416,32 @@
         "empty": "Nu există încă înregistrări de joc"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Bibliotecă media",
+    "searchPlaceholder": "Căutare fișiere...",
+    "newFolder": "Folder nou",
+    "recent": "Recente",
+    "favourite": "Favorit",
+    "upload": "Încarcă",
+    "done": "Terminat",
+    "deleteFolder": "Șterge folderul",
+    "renameFolder": "Redenumește folderul",
+    "noFiles": "Niciun fișier găsit",
+    "noFolders": "Niciun folder încă",
+    "folderNamePlaceholder": "Numele folderului",
+    "confirmDeleteFolder": "Ștergi folderul și toate fișierele sale?",
+    "confirmDeleteFolderDescription": "Toate fișierele din acest folder vor fi șterse definitiv de pe server. Această acțiune nu poate fi anulată.",
+    "confirmDeleteFile": "Ștergi fișierul?",
+    "confirmDeleteFileDescription": "Acest fișier va fi șters definitiv de pe server.",
+    "addToFavourites": "Adaugă la favorite",
+    "removeFromFavourites": "Elimină din favorite",
+    "deleteFile": "Șterge fișierul",
+    "selectOnlyOneFile": "Poți selecta doar 1 fișier",
+    "confirmDeleteFiles": "{count, plural, =1 {Ștergi 1 fișier?} other {Ștergi # fișiere?}}",
+    "confirmDeleteFilesDescription": "Aceste fișiere vor fi șterse definitiv de pe server. Această acțiune nu poate fi anulată.",
+    "filesCount": "{count, plural, =0 {Niciun fișier} =1 {1 fișier} other {# fișiere}}",
+    "openMediaLibrary": "Deschide biblioteca media",
+    "uploadFailed": "Încărcarea {name} a eșuat"
   }
 }

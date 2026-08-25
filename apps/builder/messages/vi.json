@@ -71,6 +71,7 @@
     "reset": "Đặt lại",
     "save": "Lưu",
     "selectAll": "Chọn tất cả",
+    "unselect": "Bỏ chọn",
     "selectRow": "Chọn hàng",
     "sendFlow": "Gửi luồng",
     "sendMessage": "Gửi tin nhắn",
@@ -2907,6 +2908,8 @@
     "editMessagePlaceholder": "Sửa tin nhắn của bạn...",
     "saveEdit": "Lưu",
     "cancelEdit": "Hủy",
+    "replaceAttachment": "Thay thế tệp đính kèm",
+    "addAttachment": "Thêm tệp đính kèm",
     "failedToCopy": "Sao chép thất bại",
     "failedToPreviewImage": "Không thể xem trước hình ảnh",
     "loadingData": "Đang tải dữ liệu...",
@@ -5413,5 +5416,32 @@
         "empty": "Chưa có bản ghi lượt chơi nào"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Thư viện Media",
+    "searchPlaceholder": "Tìm kiếm tệp...",
+    "newFolder": "Thư mục mới",
+    "recent": "Gần đây",
+    "favourite": "Yêu thích",
+    "upload": "Tải lên",
+    "done": "Xong",
+    "deleteFolder": "Xoá thư mục",
+    "renameFolder": "Đổi tên thư mục",
+    "noFiles": "Không tìm thấy tệp",
+    "noFolders": "Chưa có thư mục",
+    "folderNamePlaceholder": "Tên thư mục",
+    "confirmDeleteFolder": "Xoá thư mục và toàn bộ tệp?",
+    "confirmDeleteFolderDescription": "Tất cả tệp trong thư mục này sẽ bị xoá vĩnh viễn khỏi máy chủ. Hành động này không thể hoàn tác.",
+    "confirmDeleteFile": "Xoá tệp?",
+    "confirmDeleteFileDescription": "Tệp này sẽ bị xoá vĩnh viễn khỏi máy chủ.",
+    "addToFavourites": "Thêm vào yêu thích",
+    "removeFromFavourites": "Bỏ khỏi yêu thích",
+    "deleteFile": "Xoá tệp",
+    "selectOnlyOneFile": "Chỉ được chọn tối đa 1 tệp",
+    "confirmDeleteFiles": "{count, plural, =1 {Xoá 1 tệp?} other {Xoá # tệp?}}",
+    "confirmDeleteFilesDescription": "Các tệp này sẽ bị xoá vĩnh viễn khỏi máy chủ. Hành động này không thể hoàn tác.",
+    "filesCount": "{count, plural, =0 {Không có tệp} =1 {1 tệp} other {# tệp}}",
+    "openMediaLibrary": "Mở Thư viện Media",
+    "uploadFailed": "Tải lên thất bại: {name}"
   }
 }
