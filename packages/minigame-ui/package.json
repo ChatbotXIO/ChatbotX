@@ -8,12 +8,12 @@
   },
   "dependencies": {
     "@chatbotx.io/ui": "workspace:*",
-    "lucide-react": "^1.17.0",
-    "react": "19.2.5"
+    "lucide-react": "^1.33.0",
+    "react": "19.2.8"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "@types/react": "19.2.14",
+    "@types/react": "19.2.18",
     "typescript": "^5"
   },
   "scripts": {

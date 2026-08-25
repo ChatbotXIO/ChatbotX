@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.7.0",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^25.0.1",
-    "msw": "^2.7.3",
+    "msw": "^2.15.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.8"
   },
