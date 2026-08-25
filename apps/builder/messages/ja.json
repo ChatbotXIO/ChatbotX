@@ -542,8 +542,8 @@
       "blocked": "ブロック済み",
       "noAdminReply": "管理者からの返信なし",
       "contactCreatedAt": "連絡先の作成日時",
-      "fromCtwaAd": "Click to WhatsApp広告経由",
-      "ctwaConversion": "CTWAコンバージョン",
+      "fromCtwaAd": "広告経由",
+      "ctwaConversion": "広告コンバージョン",
       "lastUserInputTypes": {
         "text": "テキスト",
         "location": "位置情報",
@@ -572,7 +572,7 @@
       "customFields": "カスタムフィールド",
       "email": "メール",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp広告"
+      "ctwaAds": "広告"
     },
     "languages": {
       "ar": "アラビア語",
@@ -611,9 +611,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA会話開始者",
-        "leads": "CTWA有効リード",
-        "purchases": "CTWA購入者"
+        "conversations": "広告会話開始者",
+        "leads": "広告有効リード",
+        "purchases": "広告購入者"
       },
       "adPrefix": "広告",
       "allAds": "すべての広告"
@@ -2169,12 +2169,14 @@
       "whatsappFlow": "WhatsAppフロー",
       "appointmentScheduling": "予約スケジュール",
       "triggerN8n": "n8n をトリガー",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Meta CAPI イベントを送信",
       "import": "フローをインポート",
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
-      "importJsonOnly": "JSONファイルのみ"
+      "importJsonOnly": "JSONファイルのみ",
+      "adsConversions": "広告とMeta Conversions",
+      "trackAdsLead": "広告リードを記録",
+      "trackAdsPurchase": "広告購入を記録"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2357,6 +2359,8 @@
       "title": "コンバージョンイベント",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "広告アカウントを管理",
@@ -2364,11 +2368,16 @@
       "selectAll": "すべて選択",
       "whatsappAsset": "WhatsAppアセット",
       "selectWhatsappAsset": "WhatsAppアセットを選択",
+      "selectIntegration": "連携",
+      "selectIntegrationPlaceholder": "連携を選択",
+      "noIntegrationsConnected": "このチャネルにはまだ接続済みの連携がありません。",
+      "connectIntegration": "チャネルを接続",
       "templates": "テンプレート",
       "selectTemplates": "テンプレートを選択",
       "noTemplates": "承認済みのテンプレートが見つかりません。",
       "existingRules": "既存のルール",
       "noRules": "このWhatsAppアセットのコンバージョンルールはまだありません。",
+      "noRulesGeneric": "この連携のコンバージョンルールはまだありません。",
       "toggleRule": "ルールを有効化・無効化",
       "deleteRule": "ルールを削除",
       "qualifyingTemplateMessageSent": "対象のテンプレートメッセージが送信されたとき",
@@ -2408,24 +2417,26 @@
         "title": "有効リードを追跡",
         "question": "会話のどの時点で、連絡先をリードとして認定しますか？",
         "when": "条件",
-        "then": "CTWAリードのマーク方法"
+        "then": "CTWAリードのマーク方法",
+        "thenGeneric": "リードのマーク方法"
       },
       "trackPurchases": {
         "title": "購入を追跡",
         "question": "どのテンプレートで購入を確認しますか？",
         "when": "条件",
         "then": "アクション",
-        "noValueNote": "ルールベースの購入は、注文金額なしで購入コンバージョンとして記録されます。購入件数には反映されますが、売上には0として加算されます。注文金額はMetaの自動イベントでのみ取得されます。"
+        "noValueNote": "ルールベースの購入は、注文金額なしで購入コンバージョンとして記録されます。購入件数には反映されますが、売上には0として加算されます。注文金額はMetaの自動イベントでのみ取得されます。",
+        "questionGeneric": "会話のどの時点で購入を記録しますか？"
       }
     },
     "analytics": {
-      "title": "CTWA分析",
+      "title": "広告分析",
       "funnelOverview": "ファネル概要",
       "conversationsStarted": "開始された会話",
       "qualifiedLeads": "有効リード",
       "purchases": "購入",
       "adSpend": "広告費",
-      "spendAccountLevelNote": "広告費はMeta広告アカウント単位で集計されます。WhatsAppアカウントを選択している場合、そのアカウントでファネル上の動きがなく広告費のみ発生した広告は非表示になります。",
+      "spendAccountLevelNote": "広告費はMeta広告アカウント単位で集計されます。アカウントを選択している場合、そのアカウントでファネル上の動きがなく広告費のみ発生した広告は非表示になります。",
       "revenue": "収益",
       "roas": "ROAS",
       "revenueCurrencyNote": "収益は単一通貨（USD）を前提としています。複数通貨の広告アカウントはまだ集計対象外です。",
@@ -2456,19 +2467,25 @@
         "label": "広告アカウント",
         "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。"
       },
+      "channelFilter": {
+        "label": "チャネル",
+        "allAccounts": "すべてのアカウント",
+        "allChannels": "すべてのチャネル"
+      },
       "retarget": "リターゲット",
       "thoseWhoPurchased": "購入したユーザー",
       "thoseWhoStartedConversation": "会話を開始したユーザー",
       "sendWhatsappBroadcast": "WhatsApp一斉配信を送信",
+      "retargetOnChannel": "{channel}でリターゲット",
       "from": "開始",
       "to": "終了",
       "unattributed": "帰属先不明",
       "retargetDialog": {
-        "title": "CTWA連絡先をリターゲット",
+        "title": "広告連絡先をリターゲット",
         "createAudience": "オーディエンスを作成",
         "useExistingAudience": "既存のオーディエンスを使用",
         "audienceName": "オーディエンス名",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "広告",
         "confirm": "同期を開始",
         "success": "リターゲットオーディエンスの同期をキューに追加しました。",
         "error": "リターゲットオーディエンスの同期をキューに追加できませんでした。"
@@ -2480,7 +2497,7 @@
         "failed": "失敗",
         "skippedNoScope": "スキップ（権限なし）",
         "skippedRegion": "スキップ（地域）",
-        "noScopeWarning": "このWhatsAppアカウントにイベント権限がないため、一部のコンバージョンが送信されませんでした。自動イベントレポートを有効にするには、再接続してください。",
+        "noScopeWarning": "このアカウントにイベント権限がないため、一部のコンバージョンが送信されませんでした。自動イベントレポートを有効にするには、再接続してください。",
         "reconnectCta": "アカウントを再接続",
         "empty": "この期間のコンバージョンイベントはまだありません。"
       },
@@ -2493,7 +2510,8 @@
         "contactName": "連絡先名",
         "phone": "電話番号",
         "adId": "広告ID",
-        "occurredAt": "発生日時"
+        "occurredAt": "発生日時",
+        "channel": "チャネル"
       },
       "empty": "データはまだありません。広告アカウントを接続してコンバージョンの追跡を開始しましょう。"
     }
@@ -3726,7 +3744,9 @@
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
       "transferConversationToHuman": "会話を担当者に転送",
-      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信",
+      "trackAdsLead": "広告リードを記録",
+      "trackAdsPurchase": "広告購入を記録"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "連携"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "WhatsApp のクリックして WhatsApp 広告、または Meta 広告リファラルの帰属があるコンタクトに対してのみコンバージョンを記録します。他のコンタクトには影響しません。"
     }
   },
   "minigames": {

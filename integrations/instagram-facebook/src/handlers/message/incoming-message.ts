@@ -1,9 +1,11 @@
+import { normalizeMetaAdReferral } from "@chatbotx.io/business/referral"
 import {
   type Context,
   contentTypes,
   type IncomingAttachment,
   type IncomingContact,
   type IncomingMessage,
+  type MessageReferral,
   messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
@@ -69,7 +71,7 @@ export const receiveMessage = async ({
   }
 
   const messaging = entry.messaging[0]
-  if (!(messaging.message || messaging.postback)) {
+  if (!(messaging.message || messaging.postback || messaging.referral)) {
     throw new InstagramException("No message found")
   }
 
@@ -84,6 +86,8 @@ const getMessageEntity = async (
   let postbackAction: string | null = null
   let quickReplyAction: string | null = null
   let ref: string | null = null
+  let referralSource: string | null = null
+  let referral: MessageReferral | null = null
 
   const contactSourceId =
     messaging.sender.id === ctx.auth.metadata.igId
@@ -119,11 +123,27 @@ const getMessageEntity = async (
       contentType: contentTypes.enum.text,
     }
     postbackAction = messaging.postback.payload
+
+    if (messaging.postback.referral) {
+      ref = messaging.postback.referral.ref ?? null
+      referralSource = messaging.postback.referral.source
+      referral = normalizeMetaAdReferral(messaging.postback.referral)
+    }
   }
 
   if (messaging.referral) {
-    ref = messaging.referral.ref
+    ref = messaging.referral.ref ?? null
+    referralSource = messaging.referral.source
+    referral = normalizeMetaAdReferral(messaging.referral)
   }
 
-  return { message, postbackAction, quickReplyAction, ref, contact }
+  return {
+    message,
+    postbackAction,
+    quickReplyAction,
+    ref,
+    referralSource,
+    referral,
+    contact,
+  }
 }

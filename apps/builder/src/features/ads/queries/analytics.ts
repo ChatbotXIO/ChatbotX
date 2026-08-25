@@ -4,6 +4,7 @@ import {
   filterAdAccountsByIds,
   integrationFacebookAdsService,
 } from "@chatbotx.io/business"
+import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import { mapWithConcurrency } from "@chatbotx.io/utils"
 import {
   getCachedAdAccounts,
@@ -24,9 +25,36 @@ type AdsAnalyticsRange = {
   to: string
   adAccount?: string
   integrationWhatsappId?: string
+  // `channel`/`integrationMessengerId`/`integrationInstagramId` widen this
+  // beyond WhatsApp (Phase 6 analytics UI) — additive next to
+  // `integrationWhatsappId`, omitted keeps whatsapp-only behavior unchanged
+  // (mirrors `GetCtwaFunnelInput`/`ctwaFunnelShape` in the business layer).
+  channel?: AdsConversionChannel
+  integrationMessengerId?: string
+  integrationInstagramId?: string
+  // "All channels" (Ads Analytics default) — the page resolves `channel ===
+  // "all"` into this SEPARATE flag before ever building this range, so
+  // `channel`/every integration id above are always undefined when this is
+  // true (see `page.tsx`'s `analyticsRange`).
+  allChannels?: boolean
 }
 
 const AD_ACCOUNT_ID_RE = /^act_\d+$/
+
+/**
+ * Channel/integration scoping fields shared by every `adsConversionService`
+ * call in this file (`getCtwaFunnel`, `getCapiDeliverySummary`,
+ * `getCtwaFunnelTimeseries`) — lifted straight off `range` unchanged.
+ */
+function channelScope(range: AdsAnalyticsRange) {
+  return {
+    integrationWhatsappId: range.integrationWhatsappId,
+    channel: range.channel,
+    integrationMessengerId: range.integrationMessengerId,
+    integrationInstagramId: range.integrationInstagramId,
+    allChannels: range.allChannels,
+  }
+}
 
 // Facebook Graph API enforces per-access-token rate limits; capping fan-out
 // keeps a workspace connected to many ad accounts from bursting past them on
@@ -209,7 +237,7 @@ export async function getAdsAnalyticsData(
       workspaceId,
       since,
       until,
-      integrationWhatsappId: range.integrationWhatsappId,
+      ...channelScope(range),
     }),
     listInsightsForConnectedAdAccounts({
       workspaceId,
@@ -222,7 +250,11 @@ export async function getAdsAnalyticsData(
   return mergeAdsAnalytics({
     funnel,
     insights: insightsResult.insights,
-    integrationFilterActive: Boolean(range.integrationWhatsappId),
+    integrationFilterActive: Boolean(
+      range.integrationWhatsappId ||
+        range.integrationMessengerId ||
+        range.integrationInstagramId,
+    ),
     adAccountFilterActive: insightsResult.adAccountFilterApplied,
   })
 }
@@ -237,7 +269,7 @@ export function getCapiDeliveryData(
     workspaceId,
     since,
     until,
-    integrationWhatsappId: range.integrationWhatsappId,
+    ...channelScope(range),
   })
 }
 
@@ -274,7 +306,7 @@ export async function getAdsAnalyticsTimeseries(
       workspaceId,
       since,
       until,
-      integrationWhatsappId: range.integrationWhatsappId,
+      ...channelScope(range),
     }),
     listDailyInsightsForConnectedAdAccounts({
       workspaceId,

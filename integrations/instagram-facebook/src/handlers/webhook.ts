@@ -131,8 +131,10 @@ const handleWebhookEvent = async (
       return
     }
 
-    // Skip if this message is not a message or postback
-    if (!(messaging[0].message || messaging[0].postback)) {
+    // Skip if this event is not a message, postback, or standalone referral
+    if (
+      !(messaging[0].message || messaging[0].postback || messaging[0].referral)
+    ) {
       return
     }
 

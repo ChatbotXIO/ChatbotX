@@ -83,4 +83,46 @@ describe("ctwaRetargetConditionSchema", () => {
 
     expect(result.success).toBe(true)
   })
+
+  test.each([
+    "whatsapp",
+    "messenger",
+    "instagram",
+  ] as const)("accepts a condition narrowed to channel %s", (channel) => {
+    const result = ctwaRetargetConditionSchema.safeParse({
+      field: "ctwaRetarget",
+      segment: "conversations",
+      channel,
+      since: "2026-07-01",
+      until: "2026-07-31",
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  test("accepts a condition with channel omitted (any channel, backward compatible with saved filters)", () => {
+    const result = ctwaRetargetConditionSchema.safeParse({
+      field: "ctwaRetarget",
+      segment: "conversations",
+      since: "2026-07-01",
+      until: "2026-07-31",
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.channel).toBeUndefined()
+    }
+  })
+
+  test("rejects an unknown channel", () => {
+    const result = ctwaRetargetConditionSchema.safeParse({
+      field: "ctwaRetarget",
+      segment: "conversations",
+      channel: "facebook",
+      since: "2026-07-01",
+      until: "2026-07-31",
+    })
+
+    expect(result.success).toBe(false)
+  })
 })

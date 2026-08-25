@@ -8,6 +8,16 @@ export type FunnelTotals = {
 export type FunnelAdRow = FunnelTotals & {
   adId: string | null
   adName?: string | null
+  /**
+   * Distinct channel(s) this ad drove conversions/leads/purchases on — only
+   * populated under "All channels" aggregation. A PASSENGER label, not part
+   * of row identity: identity stays `adId` (see `CtwaFunnelAdRow`'s doc
+   * comment in the business layer — Facebook Insights spend is per-`adId`
+   * only, so identity must never split by channel). This merge stays
+   * `adId`-keyed and structurally unchanged; `channels` is carried straight
+   * through from the funnel row.
+   */
+  channels?: string[]
 }
 
 export type InsightSpendRow = {
@@ -115,6 +125,7 @@ export function mergeAdsAnalytics(input: {
       leads: row.leads,
       purchases: row.purchases,
       revenue: row.revenue,
+      channels: row.channels,
     })
   }
 

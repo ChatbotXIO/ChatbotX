@@ -61,6 +61,17 @@ function keywordRuleLabel(rule: AutomatedResponseResource, fallback: string) {
   return rule.keywords.length > 0 ? rule.keywords.join(", ") : fallback
 }
 
+// Default allowlist matches WhatsApp — every currently-supported trigger
+// type. Messenger/Instagram builders pass a narrower list (see
+// conversion-events-view.tsx) so the picker never renders an option the
+// server-side `assertSupportedTrigger` allowlist would reject.
+const allTriggerTypes: AdsConversionRuleTriggerType[] = [
+  "templateSent",
+  "tagApplied",
+  "keywordMatched",
+  "contactReplied",
+]
+
 type ConversionRuleTriggerPickerProps = {
   value: AdsConversionRuleTrigger
   onChange: (value: AdsConversionRuleTrigger) => void
@@ -68,6 +79,7 @@ type ConversionRuleTriggerPickerProps = {
   tags: TagResource[]
   automatedResponses: AutomatedResponseResource[]
   disabled?: boolean
+  allowedTriggerTypes?: AdsConversionRuleTriggerType[]
 }
 
 export function ConversionRuleTriggerPicker({
@@ -77,6 +89,7 @@ export function ConversionRuleTriggerPicker({
   tags,
   automatedResponses,
   disabled,
+  allowedTriggerTypes = allTriggerTypes,
 }: ConversionRuleTriggerPickerProps) {
   const t = useTranslations()
 
@@ -92,24 +105,33 @@ export function ConversionRuleTriggerPicker({
     value: rule.id,
   }))
 
-  const whenItems: TriggerOption[] = [
+  const allWhenItems: (TriggerOption & {
+    type: AdsConversionRuleTriggerType
+  })[] = [
     {
       label: t("ads.conversionEvents.whenOptions.templateSent"),
+      type: "templateSent",
       value: "templateSent",
     },
     {
       label: t("ads.conversionEvents.whenOptions.tagApplied"),
+      type: "tagApplied",
       value: "tagApplied",
     },
     {
       label: t("ads.conversionEvents.whenOptions.keywordMatched"),
+      type: "keywordMatched",
       value: "keywordMatched",
     },
     {
       label: t("ads.conversionEvents.whenOptions.contactReplied"),
+      type: "contactReplied",
       value: "contactReplied",
     },
   ]
+  const whenItems: TriggerOption[] = allWhenItems.filter((item) =>
+    allowedTriggerTypes.includes(item.type),
+  )
 
   return (
     <>
@@ -260,7 +282,11 @@ export function describeTriggerDetail(
   t: ReturnType<typeof useTranslations>,
   trigger: AdsConversionRuleTrigger,
   data: {
-    whatsappTemplates: { id: string; name: string }[]
+    // The templateSent picker is channel-sourced (Amendment A1): whatsapp
+    // rules resolve names from WABA-synced templates, messenger rules from
+    // the workspace's Messenger message templates. Instagram has no
+    // templateSent option, so it never reads either list.
+    templates: { id: string; name: string }[]
     tags: TagResource[]
     automatedResponses: AutomatedResponseResource[]
   },
@@ -270,9 +296,8 @@ export function describeTriggerDetail(
       return trigger.templateIds
         .map(
           (templateId) =>
-            data.whatsappTemplates.find(
-              (template) => template.id === templateId,
-            )?.name ?? templateId,
+            data.templates.find((template) => template.id === templateId)
+              ?.name ?? templateId,
         )
         .join(", ")
     case "tagApplied":

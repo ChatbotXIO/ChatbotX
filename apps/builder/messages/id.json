@@ -542,8 +542,8 @@
       "blocked": "Diblokir",
       "noAdminReply": "Tidak ada balasan admin",
       "contactCreatedAt": "Kontak dibuat pada",
-      "fromCtwaAd": "Dari iklan Click to WhatsApp",
-      "ctwaConversion": "Konversi CTWA",
+      "fromCtwaAd": "Dari iklan",
+      "ctwaConversion": "Konversi iklan",
       "lastUserInputTypes": {
         "text": "Teks",
         "location": "Lokasi",
@@ -572,7 +572,7 @@
       "customFields": "Kolom Kustom",
       "email": "Email",
       "sms": "SMS",
-      "ctwaAds": "Iklan Click to WhatsApp"
+      "ctwaAds": "Iklan"
     },
     "languages": {
       "ar": "Arab",
@@ -611,9 +611,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "Pemula percakapan CTWA",
-        "leads": "Lead terkualifikasi CTWA",
-        "purchases": "Pembeli CTWA"
+        "conversations": "Pemula percakapan iklan",
+        "leads": "Lead terkualifikasi iklan",
+        "purchases": "Pembeli iklan"
       },
       "adPrefix": "iklan",
       "allAds": "semua iklan"
@@ -2169,12 +2169,14 @@
       "whatsappFlow": "Alur WhatsApp",
       "appointmentScheduling": "Penjadwalan Janji Temu",
       "triggerN8n": "Trigger n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",
       "import": "Impor Alur",
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
-      "importJsonOnly": "Hanya file JSON"
+      "importJsonOnly": "Hanya file JSON",
+      "adsConversions": "Iklan & Meta Conversions",
+      "trackAdsLead": "Lacak Lead Iklan",
+      "trackAdsPurchase": "Lacak Pembelian Iklan"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2357,6 +2359,8 @@
       "title": "Peristiwa konversi",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Kelola Akun Iklan",
@@ -2364,11 +2368,16 @@
       "selectAll": "Pilih Semua",
       "whatsappAsset": "Aset WhatsApp",
       "selectWhatsappAsset": "Pilih aset WhatsApp",
+      "selectIntegration": "Integrasi",
+      "selectIntegrationPlaceholder": "Pilih integrasi",
+      "noIntegrationsConnected": "Belum ada integrasi yang terhubung untuk saluran ini.",
+      "connectIntegration": "Hubungkan saluran",
       "templates": "Template",
       "selectTemplates": "Pilih template",
       "noTemplates": "Tidak ditemukan template yang disetujui.",
       "existingRules": "Aturan yang ada",
       "noRules": "Belum ada aturan konversi untuk aset WhatsApp ini.",
+      "noRulesGeneric": "Belum ada aturan konversi untuk integrasi ini.",
       "toggleRule": "Aktifkan atau nonaktifkan aturan",
       "deleteRule": "Hapus aturan",
       "qualifyingTemplateMessageSent": "Pesan template yang memenuhi syarat dikirim",
@@ -2408,24 +2417,26 @@
         "title": "Lacak lead terkualifikasi",
         "question": "Pada titik mana dalam percakapan Anda ingin mengualifikasikan kontak sebagai lead?",
         "when": "Ketika",
-        "then": "Lalu tandai lead CTWA sebagai"
+        "then": "Lalu tandai lead CTWA sebagai",
+        "thenGeneric": "Lalu tandai lead sebagai"
       },
       "trackPurchases": {
         "title": "Lacak pembelian",
         "question": "Template mana yang mengonfirmasi pembelian?",
         "when": "Ketika",
         "then": "Lalu",
-        "noValueNote": "Pembelian berbasis aturan mencatat konversi Pembelian tanpa nilai pesanan — ini dihitung dalam jumlah pembelian tetapi menambahkan 0 pada pendapatan. Nilai pesanan hanya ditangkap oleh Peristiwa Otomatis Meta."
+        "noValueNote": "Pembelian berbasis aturan mencatat konversi Pembelian tanpa nilai pesanan — ini dihitung dalam jumlah pembelian tetapi menambahkan 0 pada pendapatan. Nilai pesanan hanya ditangkap oleh Peristiwa Otomatis Meta.",
+        "questionGeneric": "Pada titik mana dalam percakapan Anda ingin mencatat pembelian?"
       }
     },
     "analytics": {
-      "title": "Analitik CTWA",
+      "title": "Analitik Iklan",
       "funnelOverview": "Ringkasan funnel",
       "conversationsStarted": "Percakapan dimulai",
       "qualifiedLeads": "Lead terkualifikasi",
       "purchases": "Pembelian",
       "adSpend": "Pengeluaran iklan",
-      "spendAccountLevelNote": "Pengeluaran dilaporkan pada tingkat akun iklan Meta; ketika sebuah akun WhatsApp dipilih, iklan yang hanya memiliki pengeluaran tanpa aktivitas funnel untuk akun tersebut akan disembunyikan.",
+      "spendAccountLevelNote": "Pengeluaran dilaporkan pada tingkat akun iklan Meta; ketika sebuah akun dipilih, iklan yang hanya memiliki pengeluaran tanpa aktivitas funnel untuk akun tersebut akan disembunyikan.",
       "revenue": "Pendapatan",
       "roas": "ROAS",
       "revenueCurrencyNote": "Pendapatan mengasumsikan satu mata uang (USD). Akun iklan dengan mata uang campuran belum dapat diagregasi.",
@@ -2456,19 +2467,25 @@
         "label": "Akun iklan",
         "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan."
       },
+      "channelFilter": {
+        "label": "Saluran",
+        "allAccounts": "Semua akun",
+        "allChannels": "Semua saluran"
+      },
       "retarget": "Retarget",
       "thoseWhoPurchased": "Mereka yang membeli",
       "thoseWhoStartedConversation": "Mereka yang memulai percakapan",
       "sendWhatsappBroadcast": "Kirim broadcast WhatsApp",
+      "retargetOnChannel": "Retarget di {channel}",
       "from": "Dari",
       "to": "Hingga",
       "unattributed": "Tidak teratribusi",
       "retargetDialog": {
-        "title": "Retarget kontak CTWA",
+        "title": "Retarget kontak iklan",
         "createAudience": "Buat audiens",
         "useExistingAudience": "Gunakan audiens yang ada",
         "audienceName": "Nama audiens",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Iklan",
         "confirm": "Mulai sinkronisasi",
         "success": "Sinkronisasi audiens retarget dimasukkan ke antrean.",
         "error": "Gagal memasukkan sinkronisasi audiens retarget ke antrean."
@@ -2480,7 +2497,7 @@
         "failed": "Gagal",
         "skippedNoScope": "Dilewati (tidak ada scope)",
         "skippedRegion": "Dilewati (wilayah)",
-        "noScopeWarning": "Beberapa konversi tidak terkirim karena akun WhatsApp ini tidak memiliki izin peristiwa. Hubungkan kembali untuk mengaktifkan pelaporan Peristiwa Otomatis.",
+        "noScopeWarning": "Beberapa konversi tidak terkirim karena akun ini tidak memiliki izin peristiwa. Hubungkan kembali untuk mengaktifkan pelaporan Peristiwa Otomatis.",
         "reconnectCta": "Hubungkan kembali akun",
         "empty": "Belum ada peristiwa konversi dalam rentang ini."
       },
@@ -2493,7 +2510,8 @@
         "contactName": "Nama kontak",
         "phone": "Telepon",
         "adId": "ID Iklan",
-        "occurredAt": "Terjadi pada"
+        "occurredAt": "Terjadi pada",
+        "channel": "Saluran"
       },
       "empty": "Belum ada data. Hubungkan akun iklan dan mulai lacak konversi."
     }
@@ -3747,7 +3765,9 @@
       "startAnotherFlow": "Mulai Alur Lain",
       "notifyAdmins": "Beri Tahu Admin",
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
-      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI"
+      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",
+      "trackAdsLead": "Lacak Lead Iklan",
+      "trackAdsPurchase": "Lacak Pembelian Iklan"
     },
     "triggerGoesOff": "Pemicu dijalankan",
     "before": "Sebelum",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "Hubungkan"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Hanya mencatat konversi untuk kontak dengan atribusi iklan click-to-WhatsApp WhatsApp atau rujukan iklan Meta. Tidak berpengaruh pada kontak lain."
     }
   },
   "minigames": {

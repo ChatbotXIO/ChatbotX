@@ -446,6 +446,26 @@ export const receiveMessage = async (
     }
   }
 
+  // Referral-only events (no message/postback attached — e.g. a
+  // `messaging_referrals` webhook on an existing thread) never reach the
+  // `if (incomingMessage)` branch above, so `ContactInbox.referral` would
+  // otherwise never get persisted for them. `updateTracking` merges the
+  // referral jsonb via COALESCE and self-invalidates the tracking cache
+  // since no `tx` is passed here. Deliberately does not touch
+  // `firstInteractionAt` (last-touch attribution, not a conversation reset).
+  // Intentionally left uncaught: a transient failure here must fail the
+  // BullMQ job so it retries, otherwise CTM/CTID attribution is silently
+  // lost forever and `runRef` below would run without the persisted
+  // referral. The jsonb merge is idempotent, so a retry is safe.
+  if (!incomingMessage && parsedMessage.referral) {
+    await contactInboxService.updateTracking({
+      contactInboxId: contactInbox.id,
+      contactId: contactInbox.contactId,
+      workspaceId: inbox.workspaceId,
+      data: { referral: parsedMessage.referral },
+    })
+  }
+
   if (ref && isWorkspaceActive) {
     await integrationQueue.add(IntegrationJobAction.runRef, {
       type: IntegrationJobAction.runRef,

@@ -365,6 +365,33 @@ export class ActionExecutor {
         break
       }
 
+      case triggerActions.enum.trackAdsLead: {
+        await adsConversionService.recordTriggerConversion({
+          workspaceId,
+          contactInboxId: recentContactInbox.id,
+          triggerId,
+          eventType: "lead",
+        })
+        break
+      }
+
+      case triggerActions.enum.trackAdsPurchase: {
+        const value =
+          typeof action.value === "string" ? action.value : undefined
+        const currency =
+          typeof action.currency === "string" ? action.currency : undefined
+
+        await adsConversionService.recordTriggerConversion({
+          workspaceId,
+          contactInboxId: recentContactInbox.id,
+          triggerId,
+          eventType: "purchase",
+          value,
+          currency,
+        })
+        break
+      }
+
       case triggerActions.enum.runGoogleSheet: {
         const spreadsheetAction = action.action as StepType
         const spreadsheetId = action.spreadsheetId as string

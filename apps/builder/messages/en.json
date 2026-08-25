@@ -542,8 +542,8 @@
       "blocked": "Blocked",
       "noAdminReply": "No admin reply",
       "contactCreatedAt": "Contact created at",
-      "fromCtwaAd": "From Click to WhatsApp ad",
-      "ctwaConversion": "CTWA conversion",
+      "fromCtwaAd": "From ads",
+      "ctwaConversion": "Ad conversion",
       "lastUserInputTypes": {
         "text": "Text",
         "location": "Location",
@@ -572,7 +572,7 @@
       "customFields": "Custom Fields",
       "email": "Email",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp Ads"
+      "ctwaAds": "Ads"
     },
     "languages": {
       "ar": "Arabic",
@@ -611,9 +611,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA conversation starters",
-        "leads": "CTWA qualified leads",
-        "purchases": "CTWA purchasers"
+        "conversations": "Ad conversation starters",
+        "leads": "Ad qualified leads",
+        "purchases": "Ad purchasers"
       },
       "adPrefix": "ad",
       "allAds": "all ads"
@@ -2206,6 +2206,9 @@
     },
     "whatsapp": {
       "connect": "Connect"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Only records a conversion for contacts attributed to a WhatsApp click-to-WhatsApp ad or a Meta ad referral. It has no effect for other contacts."
     }
   },
   "flows": {
@@ -2288,7 +2291,6 @@
       "getResponseAddContact": "Add Contact to GetResponse",
       "sendGridAddContact": "Add Contact to SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Open Website",
       "optInEmail": "Opt In Email",
       "optOutEmail": "Opt Out Email",
@@ -2346,7 +2348,10 @@
       "import": "Import Flow",
       "export": "Export",
       "importStarted": "Flow is importing. Check the import history for results.",
-      "importJsonOnly": "JSON files only"
+      "importJsonOnly": "JSON files only",
+      "adsConversions": "Ads & Meta Conversions",
+      "trackAdsLead": "Track Ads Lead",
+      "trackAdsPurchase": "Track Ads Purchase"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -2529,6 +2534,8 @@
       "title": "Conversion events",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Manage Ads Accounts",
@@ -2536,11 +2543,16 @@
       "selectAll": "Select All",
       "whatsappAsset": "WhatsApp asset",
       "selectWhatsappAsset": "Select WhatsApp asset",
+      "selectIntegration": "Integration",
+      "selectIntegrationPlaceholder": "Select integration",
+      "noIntegrationsConnected": "No connected integrations for this channel yet.",
+      "connectIntegration": "Connect a channel",
       "templates": "Templates",
       "selectTemplates": "Select templates",
       "noTemplates": "No approved templates found.",
       "existingRules": "Existing rules",
       "noRules": "No conversion rules for this WhatsApp asset yet.",
+      "noRulesGeneric": "No conversion rules for this integration yet.",
       "toggleRule": "Enable or disable rule",
       "deleteRule": "Delete rule",
       "qualifyingTemplateMessageSent": "Qualifying template message is sent",
@@ -2580,24 +2592,26 @@
         "title": "Track qualified leads",
         "question": "At what point in the conversation do you want to qualify a contact as a lead?",
         "when": "When",
-        "then": "Then mark CTWA lead as"
+        "then": "Then mark CTWA lead as",
+        "thenGeneric": "Then mark lead as"
       },
       "trackPurchases": {
         "title": "Track purchases",
         "question": "Which template confirms a purchase?",
         "when": "When",
         "then": "Then",
-        "noValueNote": "A rule-based purchase records a Purchase conversion without an order value — it counts toward purchases but adds 0 to revenue. Order value is only captured by Meta Automatic Events."
+        "noValueNote": "A rule-based purchase records a Purchase conversion without an order value — it counts toward purchases but adds 0 to revenue. Order value is only captured by Meta Automatic Events.",
+        "questionGeneric": "At what point in the conversation do you want to record a purchase?"
       }
     },
     "analytics": {
-      "title": "CTWA Analytics",
+      "title": "Ads Analytics",
       "funnelOverview": "Funnel overview",
       "conversationsStarted": "Conversations started",
       "qualifiedLeads": "Qualified leads",
       "purchases": "Purchases",
       "adSpend": "Ad spend",
-      "spendAccountLevelNote": "Spend is reported at the Meta ad account level; with a WhatsApp account selected, spend-only ads without funnel activity for that account are hidden.",
+      "spendAccountLevelNote": "Spend is reported at the Meta ad account level; with an account selected, spend-only ads without funnel activity for that account are hidden.",
       "revenue": "Revenue",
       "roas": "ROAS",
       "revenueCurrencyNote": "Revenue assumes a single currency (USD). Mixed-currency ad accounts are not yet aggregated.",
@@ -2628,19 +2642,25 @@
         "label": "Ad account",
         "note": "Ads with conversions but zero spend or zero delivery in the selected date range are hidden while filtering by ad account."
       },
+      "channelFilter": {
+        "label": "Channel",
+        "allAccounts": "All accounts",
+        "allChannels": "All channels"
+      },
       "retarget": "Retarget",
       "thoseWhoPurchased": "Those who purchased",
       "thoseWhoStartedConversation": "Those who started a conversation",
       "sendWhatsappBroadcast": "Send WhatsApp broadcast",
+      "retargetOnChannel": "Retarget on {channel}",
       "from": "From",
       "to": "To",
       "unattributed": "Unattributed",
       "retargetDialog": {
-        "title": "Retarget CTWA contacts",
+        "title": "Retarget ad contacts",
         "createAudience": "Create audience",
         "useExistingAudience": "Use existing audience",
         "audienceName": "Audience name",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Ads",
         "confirm": "Start sync",
         "success": "Retarget audience sync queued.",
         "error": "Failed to queue retarget audience sync."
@@ -2652,7 +2672,7 @@
         "failed": "Failed",
         "skippedNoScope": "Skipped (no scope)",
         "skippedRegion": "Skipped (region)",
-        "noScopeWarning": "Some conversions were not sent because this WhatsApp account is missing the events permission. Reconnect it to enable Automatic Events reporting.",
+        "noScopeWarning": "Some conversions were not sent because this account is missing the events permission. Reconnect it to enable Automatic Events reporting.",
         "reconnectCta": "Reconnect account",
         "empty": "No conversion events in this range yet."
       },
@@ -2665,7 +2685,8 @@
         "contactName": "Contact name",
         "phone": "Phone",
         "adId": "Ad ID",
-        "occurredAt": "Occurred at"
+        "occurredAt": "Occurred at",
+        "channel": "Channel"
       },
       "empty": "No data yet. Connect an ad account and start tracking conversions."
     }
@@ -3845,7 +3866,9 @@
       "startAnotherFlow": "Start Another Flow",
       "notifyAdmins": "Notify Admins",
       "sendMetaCapiEvent": "Send Meta CAPI Event",
-      "transferConversationToHuman": "Transfer Conversation to Human"
+      "transferConversationToHuman": "Transfer Conversation to Human",
+      "trackAdsLead": "Track Ads Lead",
+      "trackAdsPurchase": "Track Ads Purchase"
     },
     "triggerGoesOff": "Trigger goes off",
     "before": "Before",

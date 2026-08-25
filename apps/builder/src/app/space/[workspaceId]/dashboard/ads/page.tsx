@@ -1,16 +1,52 @@
+import { perChannelIntegrationIds } from "@chatbotx.io/business"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
-import { resolveSelectedIntegration } from "@/features/ads/lib/select-account"
 import {
   getAdsAnalyticsData,
   getAdsAnalyticsTimeseries,
   getCapiDeliveryData,
 } from "@/features/ads/queries/analytics"
-import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
-import { adsAnalyticsSearchParamsCache } from "@/features/ads/schemas/analytics"
+import {
+  type AdsSwitcherChannelIntegration,
+  type AdsSwitcherData,
+  getAdsSwitcherData,
+} from "@/features/ads/queries/switcher"
+import {
+  type AdsAnalyticsChannel,
+  adsAnalyticsSearchParamsCache,
+} from "@/features/ads/schemas/analytics"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
+
+/** Integrations for the currently selected channel — populates the channel
+ * filter's integration select. WhatsApp rows are labeled "name — phone"
+ * (matching the old account switcher's display) since a workspace commonly
+ * connects several numbers under similar names. "all" always resolves to an
+ * empty list: no single integration spans every channel, so the channel
+ * filter hides the integration select entirely under "All channels" — see
+ * `ChannelFilter`. */
+function resolveChannelIntegrations(
+  channel: AdsAnalyticsChannel,
+  switcherData: AdsSwitcherData,
+): AdsSwitcherChannelIntegration[] {
+  const byChannel: Record<
+    AdsAnalyticsChannel,
+    () => AdsSwitcherChannelIntegration[]
+  > = {
+    whatsapp: () =>
+      switcherData.integrations.map((integration) => ({
+        id: integration.id,
+        name: integration.displayPhoneNumber
+          ? `${integration.name} — ${integration.displayPhoneNumber}`
+          : integration.name,
+      })),
+    messenger: () => switcherData.messengerIntegrations,
+    instagram: () => switcherData.instagramIntegrations,
+    all: () => [],
+  }
+  return byChannel[channel]()
+}
 
 export default async function AdsAnalyticsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -22,23 +58,56 @@ export default async function AdsAnalyticsPage(props: {
   )
   const search = adsAnalyticsSearchParamsCache.parse(await props.searchParams)
   const switcherData = await getAdsSwitcherData(workspaceId)
-  const selectedAccount = resolveSelectedIntegration(
-    switcherData.integrations,
-    search.account,
+
+  // One unified integration select for every channel (channel filter's second
+  // select): an empty `channelAccount` means "All accounts" — aggregate
+  // across every connected integration of the selected channel (the business
+  // layer treats each per-channel FK as optional narrowing, not a forced
+  // single account). WhatsApp joins that contract too; the legacy `account`
+  // URL param (still written by the CAPI-connect redirect flow and old
+  // bookmarks) is honored as a fallback selection when `channelAccount` is
+  // absent.
+  const channelIntegrations = resolveChannelIntegrations(
+    search.channel,
+    switcherData,
   )
+  const requestedIntegrationId =
+    search.channelAccount ||
+    (search.channel === "whatsapp" ? search.account : "")
+  const selectedChannelIntegration =
+    channelIntegrations.find(
+      (integration) => integration.id === requestedIntegrationId,
+    ) ?? null
+
+  // "all" is UI-only (decision 1) and must be resolved into a separate
+  // `allChannels` flag BEFORE it can reach `perChannelIntegrationIds` —
+  // that helper types `channel` as `AdsConversionChannel`, which "all" is
+  // never a member of. `selectedChannelIntegration` is always null here too
+  // (`resolveChannelIntegrations` returns `[]` for "all"), so there is no
+  // integration id to thread through either way.
+  //
+  // Otherwise: `selectedChannelIntegration` already IS `selectedAccount`
+  // when `search.channel === "whatsapp"` (see its definition above), so a
+  // single `perChannelIntegrationIds` call covers both — whichever FK
+  // matches `search.channel` gets `selectedChannelIntegration?.id`, the
+  // other two (and a "no integration selected yet" `undefined` id) resolve
+  // to `undefined`, same as the ternary triplet this replaces.
+  const analyticsRange =
+    search.channel === "all"
+      ? { ...search, channel: undefined, allChannels: true as const }
+      : {
+          ...search,
+          channel: search.channel,
+          ...perChannelIntegrationIds(
+            search.channel,
+            selectedChannelIntegration?.id,
+          ),
+        }
+
   const promises = Promise.all([
-    getAdsAnalyticsData(workspaceId, {
-      ...search,
-      integrationWhatsappId: selectedAccount?.id,
-    }),
-    getCapiDeliveryData(workspaceId, {
-      ...search,
-      integrationWhatsappId: selectedAccount?.id,
-    }),
-    getAdsAnalyticsTimeseries(workspaceId, {
-      ...search,
-      integrationWhatsappId: selectedAccount?.id,
-    }),
+    getAdsAnalyticsData(workspaceId, analyticsRange),
+    getCapiDeliveryData(workspaceId, analyticsRange),
+    getAdsAnalyticsTimeseries(workspaceId, analyticsRange),
   ])
 
   return (
@@ -48,12 +117,13 @@ export default async function AdsAnalyticsPage(props: {
       <div className="flex min-w-0 flex-1 flex-col gap-5">
         <Suspense>
           <AdsAnalyticsView
-            oauthCallbackUrl={switcherData.oauthCallbackUrl}
+            channel={search.channel}
+            channelIntegrations={channelIntegrations}
             promises={promises}
             range={search}
-            selectedIntegrationWhatsappId={selectedAccount?.id ?? null}
-            switcherIntegrations={switcherData.integrations}
-            whatsappCredentialPublic={switcherData.whatsappCredentialPublic}
+            selectedChannelIntegrationId={
+              selectedChannelIntegration?.id ?? null
+            }
             workspaceId={workspaceId}
           />
         </Suspense>

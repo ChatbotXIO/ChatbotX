@@ -542,8 +542,8 @@
       "blocked": "Engellenmiş",
       "noAdminReply": "Yönetici yanıtı yok",
       "contactCreatedAt": "Kişinin oluşturulma zamanı",
-      "fromCtwaAd": "Click to WhatsApp reklamından",
-      "ctwaConversion": "CTWA dönüşümü",
+      "fromCtwaAd": "Reklamdan",
+      "ctwaConversion": "Reklam dönüşümü",
       "lastUserInputTypes": {
         "text": "Metin",
         "location": "Konum",
@@ -572,7 +572,7 @@
       "customFields": "Özel Alanlar",
       "email": "E-posta",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp Ads"
+      "ctwaAds": "Reklamlar"
     },
     "languages": {
       "ar": "Arapça",
@@ -611,9 +611,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA sohbet başlatanlar",
-        "leads": "CTWA nitelikli potansiyel müşteriler",
-        "purchases": "CTWA satın alanlar"
+        "conversations": "Reklam sohbet başlatanlar",
+        "leads": "Reklam nitelikli potansiyel müşteriler",
+        "purchases": "Reklam satın alanlar"
       },
       "adPrefix": "reklam",
       "allAds": "tüm reklamlar"
@@ -2243,12 +2243,14 @@
       "whatsappFlow": "WhatsApp Akışı",
       "appointmentScheduling": "Randevu Planlama",
       "triggerN8n": "n8n'i Tetikle",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder",
       "import": "Akışı içe aktar",
       "export": "Dışa aktar",
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
-      "importJsonOnly": "Yalnızca JSON dosyaları"
+      "importJsonOnly": "Yalnızca JSON dosyaları",
+      "adsConversions": "Reklamlar ve Meta Conversions",
+      "trackAdsLead": "Reklam potansiyel müşterisini izle",
+      "trackAdsPurchase": "Reklam satın alımını izle"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2431,6 +2433,8 @@
       "title": "Dönüşüm olayları",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Reklam Hesaplarını Yönet",
@@ -2438,11 +2442,16 @@
       "selectAll": "Tümünü Seç",
       "whatsappAsset": "WhatsApp varlığı",
       "selectWhatsappAsset": "WhatsApp varlığı seç",
+      "selectIntegration": "Entegrasyon",
+      "selectIntegrationPlaceholder": "Entegrasyon seç",
+      "noIntegrationsConnected": "Bu kanal için henüz bağlı entegrasyon yok.",
+      "connectIntegration": "Bir kanal bağla",
       "templates": "Şablonlar",
       "selectTemplates": "Şablonları seçin",
       "noTemplates": "Onaylanmış şablon bulunamadı.",
       "existingRules": "Mevcut kurallar",
       "noRules": "Bu WhatsApp varlığı için henüz dönüşüm kuralı yok.",
+      "noRulesGeneric": "Bu entegrasyon için henüz dönüşüm kuralı yok.",
       "toggleRule": "Kuralı etkinleştir veya devre dışı bırak",
       "deleteRule": "Kuralı sil",
       "qualifyingTemplateMessageSent": "Niteleyici şablon mesajı gönderildi",
@@ -2482,24 +2491,26 @@
         "title": "Nitelikli potansiyel müşterileri takip edin",
         "question": "Bir kişiyi potansiyel müşteri olarak nitelendirmek istediğiniz konuşma noktası neresidir?",
         "when": "Ne zaman",
-        "then": "O zaman CTWA potansiyel müşterisini şu şekilde işaretle"
+        "then": "O zaman CTWA potansiyel müşterisini şu şekilde işaretle",
+        "thenGeneric": "O zaman potansiyel müşteriyi şu şekilde işaretle"
       },
       "trackPurchases": {
         "title": "Satın almaları takip edin",
         "question": "Hangi şablon bir satın almayı onaylıyor?",
         "when": "Ne zaman",
         "then": "O zaman",
-        "noValueNote": "Kurala dayalı bir satın alma, sipariş değeri olmadan bir Satın Alma dönüşümü kaydeder — satın almalara sayılır ancak gelire 0 ekler. Sipariş değeri yalnızca Meta Otomatik Olaylar tarafından yakalanır."
+        "noValueNote": "Kurala dayalı bir satın alma, sipariş değeri olmadan bir Satın Alma dönüşümü kaydeder — satın almalara sayılır ancak gelire 0 ekler. Sipariş değeri yalnızca Meta Otomatik Olaylar tarafından yakalanır.",
+        "questionGeneric": "Konuşmanın hangi noktasında bir satın almayı kaydetmek istiyorsunuz?"
       }
     },
     "analytics": {
-      "title": "CTWA Analizleri",
+      "title": "Reklam Analizleri",
       "funnelOverview": "Huni genel görünümü",
       "conversationsStarted": "Başlatılan sohbetler",
       "qualifiedLeads": "Nitelikli potansiyel müşteriler",
       "purchases": "Satın Almalar",
       "adSpend": "Reklam harcaması",
-      "spendAccountLevelNote": "Harcama, Meta reklam hesabı düzeyinde raporlanır; bir WhatsApp hesabı seçildiğinde, o hesap için huni etkinliği olmayan yalnızca harcama içeren reklamlar gizlenir.",
+      "spendAccountLevelNote": "Harcama, Meta reklam hesabı düzeyinde raporlanır; bir hesap seçildiğinde, o hesap için huni etkinliği olmayan yalnızca harcama içeren reklamlar gizlenir.",
       "revenue": "Gelir",
       "roas": "ROAS",
       "revenueCurrencyNote": "Gelir tek bir para birimi (USD) varsayar. Karma para birimli reklam hesapları henüz birleştirilmiyor.",
@@ -2530,19 +2541,25 @@
         "label": "Reklam hesabı",
         "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir."
       },
+      "channelFilter": {
+        "label": "Kanal",
+        "allAccounts": "Tüm hesaplar",
+        "allChannels": "Tüm kanallar"
+      },
       "retarget": "Yeniden Hedefle",
       "thoseWhoPurchased": "Satın alanlar",
       "thoseWhoStartedConversation": "Sohbet başlatanlar",
       "sendWhatsappBroadcast": "WhatsApp toplu mesajı gönder",
+      "retargetOnChannel": "{channel} üzerinde yeniden hedefleme",
       "from": "Başlangıç",
       "to": "Bitiş",
       "unattributed": "Atfedilmemiş",
       "retargetDialog": {
-        "title": "CTWA kişilerini yeniden hedefle",
+        "title": "Reklam kişilerini yeniden hedefle",
         "createAudience": "Hedef kitle oluştur",
         "useExistingAudience": "Mevcut hedef kitleyi kullan",
         "audienceName": "Hedef kitle adı",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Reklamlar",
         "confirm": "Senkronizasyonu Başlat",
         "success": "Yeniden hedefleme hedef kitlesi senkronizasyonu kuyruğa alındı.",
         "error": "Yeniden hedefleme hedef kitlesi senkronizasyonu kuyruğa alınamadı."
@@ -2554,7 +2571,7 @@
         "failed": "Başarısız",
         "skippedNoScope": "Atlandı (kapsam yok)",
         "skippedRegion": "Atlandı (bölge)",
-        "noScopeWarning": "Bu WhatsApp hesabında olaylar izni eksik olduğu için bazı dönüşümler gönderilmedi. Otomatik Olaylar raporlamasını etkinleştirmek için hesabı yeniden bağlayın.",
+        "noScopeWarning": "Bu hesapta olaylar izni eksik olduğu için bazı dönüşümler gönderilmedi. Otomatik Olaylar raporlamasını etkinleştirmek için hesabı yeniden bağlayın.",
         "reconnectCta": "Hesabı yeniden bağla",
         "empty": "Bu aralıkta henüz dönüşüm olayı yok."
       },
@@ -2567,7 +2584,8 @@
         "contactName": "Kişi adı",
         "phone": "Telefon",
         "adId": "Reklam Kimliği",
-        "occurredAt": "Gerçekleşme zamanı"
+        "occurredAt": "Gerçekleşme zamanı",
+        "channel": "Kanal"
       },
       "empty": "Henüz veri yok. Bir reklam hesabı bağlayın ve dönüşümleri takip etmeye başlayın."
     }
@@ -3747,7 +3765,9 @@
       "startAnotherFlow": "Başka Bir Akış Başlat",
       "notifyAdmins": "Yöneticileri Bilgilendir",
       "transferConversationToHuman": "Görüşmeyi İnsana Aktar",
-      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder"
+      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder",
+      "trackAdsLead": "Reklam potansiyel müşterisini izle",
+      "trackAdsPurchase": "Reklam satın alımını izle"
     },
     "triggerGoesOff": "Tetikleyici devreye girer",
     "before": "Önce",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "Bağlan"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Yalnızca WhatsApp click-to-WhatsApp reklamı veya Meta reklam yönlendirmesi ile ilişkilendirilmiş kişiler için dönüşüm kaydeder. Diğer kişiler için etkisi yoktur."
     }
   },
   "minigames": {

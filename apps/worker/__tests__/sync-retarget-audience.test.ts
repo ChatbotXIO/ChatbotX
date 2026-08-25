@@ -169,4 +169,29 @@ describe("handleSyncRetargetAudience", () => {
     )
     expect(mocks.markInvalid).not.toHaveBeenCalled()
   })
+
+  test("threads channel + integrationMessengerId through to listRetargetContacts (Phase 3 widening)", async () => {
+    mocks.listRetargetContacts.mockResolvedValueOnce([
+      { id: "ci-1", email: "person@example.com", phoneNumber: null },
+    ])
+
+    await handleSyncRetargetAudience({
+      workspaceId: "ws-1",
+      customAudienceId: "aud-1",
+      segment: "conversations" as const,
+      adId: null,
+      channel: "messenger" as const,
+      integrationMessengerId: "im-1",
+      since: "2026-08-01T00:00:00.000Z",
+      until: "2026-08-10T23:59:59.999Z",
+    })
+
+    expect(mocks.listRetargetContacts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        integrationWhatsappId: undefined,
+      }),
+    )
+  })
 })

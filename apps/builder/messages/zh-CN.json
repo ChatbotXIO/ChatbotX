@@ -219,6 +219,11 @@
         "label": "广告账号",
         "note": "按广告账号筛选时，在所选日期范围内有转化但花费为 0 或投放为 0 的广告会被隐藏。"
       },
+      "channelFilter": {
+        "label": "渠道",
+        "allAccounts": "所有账号",
+        "allChannels": "所有渠道"
+      },
       "adSpend": "广告花费",
       "allAds": "所有广告",
       "clicks": "点击次数",
@@ -233,7 +238,8 @@
         "adId": "广告 ID",
         "contactName": "联系人名称",
         "occurredAt": "发生时间",
-        "phone": "电话"
+        "phone": "电话",
+        "channel": "渠道"
       },
       "ctr": "CTR",
       "dateRange": {
@@ -247,7 +253,7 @@
       "delivery": {
         "empty": "此范围内还没有转化事件。",
         "failed": "失败",
-        "noScopeWarning": "部分转化未发送，因为此 WhatsApp 账号缺少事件权限。请重新连接以启用 Automatic Events 报表。",
+        "noScopeWarning": "部分转化未发送，因为此账号缺少事件权限。请重新连接以启用 Automatic Events 报表。",
         "pending": "待处理",
         "reconnectCta": "重新连接账号",
         "sent": "已发送",
@@ -273,22 +279,23 @@
       "retarget": "再营销",
       "retargetDialog": {
         "audienceName": "受众名称",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "广告",
         "confirm": "开始同步",
         "createAudience": "创建受众",
         "error": "无法加入再营销受众同步队列。",
         "success": "已加入再营销受众同步队列。",
-        "title": "再营销 CTWA 联系人",
+        "title": "再营销广告联系人",
         "useExistingAudience": "使用现有受众"
       },
       "revenue": "营收",
       "revenueCurrencyNote": "营收默认按单一币种（USD）计算。混合币种广告账号目前还无法汇总。",
       "roas": "ROAS",
       "sendWhatsappBroadcast": "发送 WhatsApp 广播",
-      "spendAccountLevelNote": "花费按 Meta 广告账号层级统计；选择 WhatsApp 账号后，该账号下只有花费但没有漏斗活动的广告会被隐藏。",
+      "retargetOnChannel": "在{channel}上重新定向",
+      "spendAccountLevelNote": "花费按 Meta 广告账号层级统计；选择账号后，该账号下只有花费但没有漏斗活动的广告会被隐藏。",
       "thoseWhoPurchased": "已购买的人",
       "thoseWhoStartedConversation": "已开始对话的人",
-      "title": "CTWA 分析",
+      "title": "广告分析",
       "to": "到",
       "unattributed": "未归因"
     },
@@ -336,6 +343,7 @@
       },
       "noKeywordRules": "未找到任何传入关键字规则。",
       "noRules": "此 WhatsApp 资产还没有转化规则。",
+      "noRulesGeneric": "此集成还没有转化规则。",
       "noTags": "未找到标签。",
       "noTemplates": "未找到已批准的模板。",
       "qualifyingAnyReply": "联系人发送消息",
@@ -347,8 +355,14 @@
       "selectTags": "选择标签",
       "selectTemplates": "选择模板",
       "selectWhatsappAsset": "选择 WhatsApp 资产",
+      "selectIntegration": "集成",
+      "selectIntegrationPlaceholder": "选择集成",
+      "noIntegrationsConnected": "此渠道尚未连接任何集成。",
+      "connectIntegration": "连接渠道",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "tags": "标签",
@@ -360,11 +374,13 @@
         "question": "哪个模板用于确认购买？",
         "then": "然后",
         "title": "跟踪购买",
-        "when": "当"
+        "when": "当",
+        "questionGeneric": "您想在对话的哪个时间点记录购买？"
       },
       "trackQualifiedLeads": {
         "question": "您希望在对话的哪个阶段将联系人判定为潜在客户？",
         "then": "然后将 CTWA 潜在客户标记为",
+        "thenGeneric": "然后将潜在客户标记为",
         "title": "跟踪合格潜在客户",
         "when": "当"
       },
@@ -789,9 +805,9 @@
       "adPrefix": "广告",
       "allAds": "所有广告",
       "segments": {
-        "conversations": "CTWA 对话发起者",
-        "leads": "CTWA 合格潜在客户",
-        "purchases": "CTWA 购买者"
+        "conversations": "广告对话发起者",
+        "leads": "广告合格潜在客户",
+        "purchases": "广告购买者"
       }
     },
     "datePlaceholder": "年-月-日",
@@ -800,7 +816,7 @@
     "fieldGroups": {
       "analytics": "分析",
       "broadcastWhatsapp": "广播 (WhatsApp)",
-      "ctwaAds": "点击 WhatsApp 广告",
+      "ctwaAds": "广告",
       "customFields": "自订字段",
       "ecommerce": "电子商务",
       "email": "电子邮件",
@@ -835,7 +851,7 @@
       "conversationTransferredToHuman": "对话转移到人类",
       "country": "国家/地区",
       "couponTopic": "优惠券",
-      "ctwaConversion": "CTWA 转化",
+      "ctwaConversion": "广告转化",
       "ctwaConversionTypes": {
         "lead": "潜在客户",
         "purchase": "购买"
@@ -860,7 +876,7 @@
       "followUp": "跟进",
       "followerCountOnInstagram": "Instagram 追踪者数",
       "followsBusinessOnInstagram": "关注 Instagram 上的商家",
-      "fromCtwaAd": "来自 Click to WhatsApp 广告",
+      "fromCtwaAd": "来自广告",
       "fullName": "全名",
       "gender": "性别",
       "hasContactInfo": "电话和电子邮件",
@@ -2836,11 +2852,13 @@
       "appointmentScheduling": "预约安排",
       "triggerN8n": "触发 n8n",
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
-      "metaConversions": "Meta Conversions API",
       "import": "导入流程",
       "export": "导出",
       "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
-      "importJsonOnly": "仅限 JSON 文件"
+      "importJsonOnly": "仅限 JSON 文件",
+      "adsConversions": "广告与 Meta Conversions",
+      "trackAdsLead": "跟踪广告线索",
+      "trackAdsPurchase": "跟踪广告购买"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -4451,7 +4469,9 @@
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
-      "transferConversationToHuman": "将对话转移给人类"
+      "transferConversationToHuman": "将对话转移给人类",
+      "trackAdsLead": "跟踪广告线索",
+      "trackAdsPurchase": "跟踪广告购买"
     },
     "after": "之后",
     "at": "在",
@@ -5015,6 +5035,9 @@
     },
     "whatsapp": {
       "connect": "连接"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "仅为具有 WhatsApp 点击进入 WhatsApp 广告或 Meta 广告引荐归因的联系人记录转化。对其他联系人没有影响。"
     }
   },
   "appointments": {

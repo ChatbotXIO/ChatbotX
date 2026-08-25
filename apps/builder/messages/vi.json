@@ -542,8 +542,8 @@
       "blocked": "Đã chặn",
       "noAdminReply": "Không có phản hồi quản trị viên",
       "contactCreatedAt": "Ngày tạo liên hệ",
-      "fromCtwaAd": "Đến từ quảng cáo Click to WhatsApp",
-      "ctwaConversion": "Chuyển đổi CTWA",
+      "fromCtwaAd": "Đến từ quảng cáo",
+      "ctwaConversion": "Chuyển đổi quảng cáo",
       "lastUserInputTypes": {
         "text": "Văn bản",
         "location": "Vị trí",
@@ -572,7 +572,7 @@
       "customFields": "Trường tùy chỉnh",
       "email": "Email",
       "sms": "SMS",
-      "ctwaAds": "Quảng cáo Click to WhatsApp"
+      "ctwaAds": "Quảng cáo"
     },
     "languages": {
       "ar": "Tiếng Ả Rập",
@@ -611,9 +611,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA người bắt đầu hội thoại",
-        "leads": "CTWA khách tiềm năng đạt chuẩn",
-        "purchases": "CTWA người đã mua"
+        "conversations": "Người bắt đầu hội thoại từ quảng cáo",
+        "leads": "Khách tiềm năng đạt chuẩn từ quảng cáo",
+        "purchases": "Người đã mua từ quảng cáo"
       },
       "adPrefix": "quảng cáo",
       "allAds": "tất cả quảng cáo"
@@ -2189,7 +2189,6 @@
       "getResponseAddContact": "Thêm liên hệ vào GetResponse",
       "sendGridAddContact": "Thêm liên hệ vào SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "API Chuyển đổi Meta",
       "openWebsite": "Mở trang web",
       "optInEmail": "Đăng ký nhận email",
       "optOutEmail": "Hủy đăng ký email",
@@ -2248,7 +2247,10 @@
       "import": "Nhập luồng",
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
-      "importJsonOnly": "Chỉ tệp JSON"
+      "importJsonOnly": "Chỉ tệp JSON",
+      "adsConversions": "Quảng cáo và Meta Conversions",
+      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
+      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2431,6 +2433,8 @@
       "title": "Sự kiện chuyển đổi",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Quản lý tài khoản quảng cáo",
@@ -2438,11 +2442,16 @@
       "selectAll": "Chọn tất cả",
       "whatsappAsset": "Tài sản WhatsApp",
       "selectWhatsappAsset": "Chọn tài sản WhatsApp",
+      "selectIntegration": "Tích hợp",
+      "selectIntegrationPlaceholder": "Chọn tích hợp",
+      "noIntegrationsConnected": "Chưa có tích hợp nào được kết nối cho kênh này.",
+      "connectIntegration": "Kết nối một kênh",
       "templates": "Mẫu tin nhắn",
       "selectTemplates": "Chọn mẫu tin nhắn",
       "noTemplates": "Không tìm thấy mẫu đã phê duyệt.",
       "existingRules": "Quy tắc hiện có",
       "noRules": "Chưa có quy tắc chuyển đổi cho tài sản WhatsApp này.",
+      "noRulesGeneric": "Chưa có quy tắc chuyển đổi cho tích hợp này.",
       "toggleRule": "Bật hoặc tắt quy tắc",
       "deleteRule": "Xóa quy tắc",
       "qualifyingTemplateMessageSent": "Tin nhắn mẫu đủ điều kiện được gửi",
@@ -2482,24 +2491,26 @@
         "title": "Theo dõi khách hàng tiềm năng đạt chuẩn",
         "question": "Tại thời điểm nào trong cuộc hội thoại bạn muốn xác định một liên hệ là khách hàng tiềm năng?",
         "when": "Khi",
-        "then": "Thì đánh dấu khách hàng tiềm năng CTWA là"
+        "then": "Thì đánh dấu khách hàng tiềm năng CTWA là",
+        "thenGeneric": "Thì đánh dấu khách hàng tiềm năng là"
       },
       "trackPurchases": {
         "title": "Theo dõi mua hàng",
         "question": "Mẫu tin nào xác nhận một giao dịch mua?",
         "when": "Khi",
         "then": "Thì",
-        "noValueNote": "Quy tắc mua hàng ghi nhận một chuyển đổi Mua mà không có giá trị đơn hàng — nó được tính vào số lượt mua nhưng cộng 0 vào doanh thu. Giá trị đơn hàng chỉ được ghi nhận bởi Meta Automatic Events."
+        "noValueNote": "Quy tắc mua hàng ghi nhận một chuyển đổi Mua mà không có giá trị đơn hàng — nó được tính vào số lượt mua nhưng cộng 0 vào doanh thu. Giá trị đơn hàng chỉ được ghi nhận bởi Meta Automatic Events.",
+        "questionGeneric": "Tại thời điểm nào trong hội thoại bạn muốn ghi nhận một lượt mua hàng?"
       }
     },
     "analytics": {
-      "title": "Phân tích CTWA",
+      "title": "Phân tích quảng cáo",
       "funnelOverview": "Tổng quan phễu",
       "conversationsStarted": "Cuộc hội thoại đã bắt đầu",
       "qualifiedLeads": "Khách hàng tiềm năng đạt chuẩn",
       "purchases": "Lượt mua",
       "adSpend": "Chi tiêu quảng cáo",
-      "spendAccountLevelNote": "Chi tiêu được báo cáo ở cấp tài khoản quảng cáo Meta; khi chọn tài khoản WhatsApp, các quảng cáo chỉ có chi tiêu nhưng không có hoạt động phễu cho tài khoản đó sẽ bị ẩn.",
+      "spendAccountLevelNote": "Chi tiêu được báo cáo ở cấp tài khoản quảng cáo Meta; khi chọn tài khoản, các quảng cáo chỉ có chi tiêu nhưng không có hoạt động phễu cho tài khoản đó sẽ bị ẩn.",
       "revenue": "Doanh thu",
       "roas": "ROAS",
       "revenueCurrencyNote": "Doanh thu giả định một loại tiền tệ duy nhất (USD). Các tài khoản quảng cáo đa tiền tệ chưa được tổng hợp.",
@@ -2530,19 +2541,25 @@
         "label": "Tài khoản quảng cáo",
         "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo."
       },
+      "channelFilter": {
+        "label": "Kênh",
+        "allAccounts": "Tất cả tài khoản",
+        "allChannels": "Tất cả kênh"
+      },
       "retarget": "Tiếp thị lại",
       "thoseWhoPurchased": "Những người đã mua",
       "thoseWhoStartedConversation": "Những người đã bắt đầu cuộc hội thoại",
       "sendWhatsappBroadcast": "Gửi broadcast WhatsApp",
+      "retargetOnChannel": "Tiếp thị lại trên {channel}",
       "from": "Từ ngày",
       "to": "Đến ngày",
       "unattributed": "Không gán quảng cáo",
       "retargetDialog": {
-        "title": "Tiếp thị lại liên hệ CTWA",
+        "title": "Tiếp thị lại liên hệ quảng cáo",
         "createAudience": "Tạo tệp đối tượng",
         "useExistingAudience": "Dùng tệp hiện có",
         "audienceName": "Tên tệp đối tượng",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Quảng cáo",
         "confirm": "Bắt đầu đồng bộ",
         "success": "Đã đưa tác vụ đồng bộ tệp tiếp thị lại vào hàng đợi.",
         "error": "Không thể đưa tác vụ đồng bộ tệp tiếp thị lại vào hàng đợi."
@@ -2554,7 +2571,7 @@
         "failed": "Thất bại",
         "skippedNoScope": "Bỏ qua (thiếu quyền)",
         "skippedRegion": "Bỏ qua (khu vực)",
-        "noScopeWarning": "Một số chuyển đổi chưa được gửi vì tài khoản WhatsApp này thiếu quyền sự kiện. Kết nối lại để bật báo cáo Automatic Events.",
+        "noScopeWarning": "Một số chuyển đổi chưa được gửi vì tài khoản này thiếu quyền sự kiện. Kết nối lại để bật báo cáo Automatic Events.",
         "reconnectCta": "Kết nối lại tài khoản",
         "empty": "Chưa có sự kiện chuyển đổi nào trong khoảng thời gian này."
       },
@@ -2567,7 +2584,8 @@
         "contactName": "Tên liên hệ",
         "phone": "Số điện thoại",
         "adId": "ID quảng cáo",
-        "occurredAt": "Thời điểm xảy ra"
+        "occurredAt": "Thời điểm xảy ra",
+        "channel": "Kênh"
       },
       "empty": "Chưa có dữ liệu. Hãy kết nối tài khoản quảng cáo và bắt đầu theo dõi chuyển đổi."
     }
@@ -3664,7 +3682,9 @@
       "startAnotherFlow": "Bắt đầu luồng khác",
       "notifyAdmins": "Thông báo quản trị viên",
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
-      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI",
+      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
+      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
     },
     "triggerGoesOff": "Trigger kích hoạt",
     "before": "Trước",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "Kết nối"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Chỉ ghi nhận chuyển đổi cho các liên hệ có gán nhãn quảng cáo click-to-WhatsApp của WhatsApp hoặc giới thiệu quảng cáo Meta. Không ảnh hưởng đến các liên hệ khác."
     }
   },
   "minigames": {

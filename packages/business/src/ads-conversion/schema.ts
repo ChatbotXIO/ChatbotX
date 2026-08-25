@@ -4,6 +4,10 @@ import {
   adsConversionRuleModel,
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
+import {
+  metaCapiCurrencySchema,
+  metaCapiValueSchema,
+} from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
@@ -39,6 +43,8 @@ export const adsConversionRuleResource = createSelectSchema(
     workspaceId: zodBigintAsString(),
     integrationWhatsappId: zodBigintAsString().nullable(),
     integrationFacebookAdsId: zodBigintAsString().nullable(),
+    integrationMessengerId: zodBigintAsString().nullable(),
+    integrationInstagramId: zodBigintAsString().nullable(),
     trigger: adsConversionRuleTriggerSchema,
   },
 )
@@ -59,6 +65,10 @@ export const createAdsConversionRuleInput = z.object({
   channel: adsConversionChannelSchema,
   integrationWhatsappId: zodBigintAsString().nullable().optional(),
   integrationFacebookAdsId: zodBigintAsString().nullable().optional(),
+  // Messenger/Instagram FKs (Phase 2 generalization) — mirrors
+  // AdsConversionRule's per-channel FK columns (Phase 1 schema).
+  integrationMessengerId: zodBigintAsString().nullable().optional(),
+  integrationInstagramId: zodBigintAsString().nullable().optional(),
   adAccountId: z.string().trim().min(1).nullable().optional(),
   eventType: adsConversionEventTypeSchema,
   trigger: adsConversionRuleTriggerSchema,
@@ -122,9 +132,17 @@ export type IngestAutomaticAdsConversionEventInput = z.infer<
   typeof ingestAutomaticAdsConversionEventInput
 >
 
+/**
+ * `channel`/`integrationId` (Amendment A1): WhatsApp keeps its `ctwaClid`
+ * gate; Messenger gates on ad-referral attribution — see
+ * `adsConversionService.evaluateTemplateSent`. Instagram has no template
+ * entity/step, so the service rejects it rather than accepting a third
+ * channel value here.
+ */
 export const evaluateTemplateSentInput = z.object({
   workspaceId: zodBigintAsString(),
-  integrationWhatsappId: zodBigintAsString(),
+  channel: adsConversionChannelSchema,
+  integrationId: zodBigintAsString(),
   contactInboxId: zodBigintAsString(),
   templateId: z.string().trim().min(1),
 })
@@ -159,9 +177,16 @@ export type EvaluateConversionTriggerOccurrence = z.infer<
   typeof evaluateConversionTriggerOccurrenceSchema
 >
 
+/**
+ * `channel`/`integrationId` generalize the previously WhatsApp-only
+ * `integrationWhatsappId` field so this shape matches
+ * `AdsConversionJobEvaluateConversionTrigger`'s payload 1:1 — the worker
+ * handler stays a thin pass-through (Phase 3).
+ */
 export const evaluateConversionTriggerInput = z.object({
   workspaceId: zodBigintAsString(),
-  integrationWhatsappId: zodBigintAsString(),
+  channel: adsConversionChannelSchema,
+  integrationId: zodBigintAsString(),
   contactInboxId: zodBigintAsString(),
   occurrence: evaluateConversionTriggerOccurrenceSchema,
 })
@@ -189,11 +214,48 @@ const withOrderedDateRange = <Schema extends typeof ctwaDateRangeShape>(
     path: ["until"],
   })
 
+/**
+ * `channel`/`integrationMessengerId`/`integrationInstagramId` are additive
+ * next to `integrationWhatsappId` (Phase 2 generalization) — omitted keeps
+ * every pre-Phase-1 caller's WhatsApp-only behavior unchanged.
+ *
+ * `allChannels` is the "All channels" Ads Analytics dashboard's dedicated
+ * flag — a separate boolean rather than a fake `channel: "all"` DB value so
+ * it can never leak into `AdsConversionChannel`/`adsEligibleChannelTypes`-
+ * gated writer paths (contact-filter, the worker's
+ * `listRetargetContactsInput`, rule/event inserts). It means "drop the
+ * channel filter entirely", never achieved by omitting `channel` — omitted
+ * still defaults to whatsapp (`DEFAULT_ADS_CONVERSION_CHANNEL`) everywhere
+ * else. Only this analytics range schema carries it; the shared export/
+ * retarget writer schemas below (`listAdsConversionExportRowsInput`,
+ * `listRetargetContactsInput`) deliberately do not.
+ */
 const ctwaFunnelShape = ctwaDateRangeShape.extend({
   integrationWhatsappId: zodBigintAsString().optional(),
+  channel: adsConversionChannelSchema.optional(),
+  integrationMessengerId: zodBigintAsString().optional(),
+  integrationInstagramId: zodBigintAsString().optional(),
+  allChannels: z.boolean().optional(),
 })
 
-export const getCtwaFunnelInput = withOrderedDateRange(ctwaFunnelShape)
+// `allChannels` aggregates across every ads-eligible channel/integration —
+// there is no single integration to scope to, so combining it with any
+// integration id is a caller bug (the builder page resolves `channel ===
+// "all"` into `allChannels` BEFORE ever calling `perChannelIntegrationIds`,
+// so a well-behaved caller never hits this).
+export const getCtwaFunnelInput = withOrderedDateRange(ctwaFunnelShape).refine(
+  (input) =>
+    !(
+      input.allChannels &&
+      (input.integrationWhatsappId ||
+        input.integrationMessengerId ||
+        input.integrationInstagramId)
+    ),
+  {
+    message: "allChannels cannot be combined with an integration id",
+    path: ["allChannels"],
+  },
+)
 export type GetCtwaFunnelInput = z.input<typeof getCtwaFunnelInput>
 
 export const adsConversionExportSegments = z.enum([
@@ -209,6 +271,9 @@ const adsConversionRowsShape = ctwaDateRangeShape.extend({
   segment: adsConversionExportSegments,
   adId: z.string().trim().min(1).nullable().optional(),
   integrationWhatsappId: zodBigintAsString().optional(),
+  channel: adsConversionChannelSchema.optional(),
+  integrationMessengerId: zodBigintAsString().optional(),
+  integrationInstagramId: zodBigintAsString().optional(),
   afterId: zodBigintAsString().optional(),
 })
 
@@ -231,6 +296,79 @@ export type ListRetargetContactsInput = z.input<
   typeof listRetargetContactsInput
 >
 
+/**
+ * Analytics-only "All channels" export — a SEPARATE shape from
+ * `adsConversionRowsShape`/`listAdsConversionExportRowsInput`, not an
+ * `allChannels` field bolted onto it: that shared shape backs BOTH the
+ * legacy channel-scoped export AND the worker's retarget audience sync
+ * (`listRetargetContactsInput`), and `channel`/integration ids there keep
+ * their "omitted = whatsapp" writer-path default. This shape carries no
+ * channel/integration fields at all — aggregating across every channel has
+ * no single channel or integration to scope to — so there is nothing to
+ * default and nothing for a zod refinement to reject.
+ */
+const allChannelAdsExportRowsShape = ctwaDateRangeShape.extend({
+  segment: adsConversionExportSegments,
+  adId: z.string().trim().min(1).nullable().optional(),
+  afterId: zodBigintAsString().optional(),
+})
+
+export const listAllChannelAdsExportRowsInput = withOrderedDateRange(
+  allChannelAdsExportRowsShape.extend({
+    limit: z.number().int().positive().max(1000),
+  }),
+)
+export type ListAllChannelAdsExportRowsInput = z.input<
+  typeof listAllChannelAdsExportRowsInput
+>
+
+/**
+ * Input for `adsConversionService.recordTriggerConversion` — the Trigger
+ * automation actions `trackAdsLead`/`trackAdsPurchase`
+ * (apps/worker/src/trigger/services/action-executor.ts). Deliberately takes
+ * a bare `contactInboxId` (not `channel`/`inboxId` the way the tagApplied/
+ * keywordMatched hook points do): the service loads the contact inbox itself
+ * so a non-ads-eligible-channel contact inbox is a cheap one-indexed-lookup
+ * no-op without the caller having to pre-resolve the channel.
+ * `value`/`currency` are STATIC config only (same as `sendMetaCapiEvent`) —
+ * no custom-field variable resolution.
+ */
+export const recordTriggerConversionInput = z.object({
+  workspaceId: zodBigintAsString(),
+  contactInboxId: zodBigintAsString(),
+  triggerId: zodBigintAsString(),
+  eventType: adsConversionEventTypeSchema,
+  value: metaCapiValueSchema,
+  currency: metaCapiCurrencySchema,
+})
+export type RecordTriggerConversionInput = z.infer<
+  typeof recordTriggerConversionInput
+>
+
+/**
+ * Input for `adsConversionService.recordFlowStepConversion` — the Flow steps
+ * `trackAdsLead`/`trackAdsPurchase`
+ * (`packages/flow-config/src/steps/track-ads-{lead,purchase}.ts`). Mirrors
+ * `recordTriggerConversionInput` field-for-field except `flowNodeId` replaces
+ * `triggerId` — both are normalized into the same origin-aware core
+ * (`recordAdsConversion` in `./record-ads-conversion`), which namespaces the
+ * dedup key by origin kind (`trigger-...` vs `flowstep-...`) so the two never
+ * collide. `value`/`currency` are STATIC config only (same as
+ * `sendMetaCapiEvent`/`recordTriggerConversion`) — no custom-field variable
+ * resolution.
+ */
+export const recordFlowStepConversionInput = z.object({
+  workspaceId: zodBigintAsString(),
+  contactInboxId: zodBigintAsString(),
+  flowNodeId: zodBigintAsString(),
+  eventType: adsConversionEventTypeSchema,
+  value: metaCapiValueSchema,
+  currency: metaCapiCurrencySchema,
+})
+export type RecordFlowStepConversionInput = z.infer<
+  typeof recordFlowStepConversionInput
+>
+
 export const retargetAdInput = z
   .object({
     segment: adsConversionExportSegments,
@@ -238,6 +376,9 @@ export const retargetAdInput = z
     since: z.coerce.date(),
     until: z.coerce.date(),
     integrationWhatsappId: zodBigintAsString().optional(),
+    channel: adsConversionChannelSchema.optional(),
+    integrationMessengerId: zodBigintAsString().optional(),
+    integrationInstagramId: zodBigintAsString().optional(),
     adAccountId: z.string().trim().min(1),
     audienceName: z.string().trim().min(1).optional(),
     customAudienceId: z.string().trim().min(1).optional(),

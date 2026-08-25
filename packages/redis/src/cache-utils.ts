@@ -22,11 +22,19 @@ export const withCache = async <T>(
   fn: () => Promise<T>,
   options?: {
     ttl?: number
+    /**
+     * Per-result TTL override (seconds); falls back to `ttl` when it returns
+     * undefined. Lets gate-style callers cache a negative result briefly while
+     * keeping the positive result long-lived — tag-based invalidation is
+     * best-effort, so a stale cached `false` guarding an event-producing path
+     * must expire quickly on its own.
+     */
+    ttlFor?: (result: T) => number | undefined
     tags?: string[]
     dynamicTags?: (result: T) => string[] | undefined
   },
 ): Promise<T> => {
-  const { ttl = 24 * 60 * 60, tags = [], dynamicTags } = options || {}
+  const { ttl = 24 * 60 * 60, ttlFor, tags = [], dynamicTags } = options || {}
   const cacheKey = `${CACHE_KEY_PREFIX}${key}`
 
   // Cache reads must never break callers: on a Redis failure (timeout, cold
@@ -51,16 +59,25 @@ export const withCache = async <T>(
   // Cache writes are best-effort: a failure here must not break the caller,
   // which already has a valid result from the source function.
   try {
-    await distributedStore.put(cacheKey, superjson.serialize(result), ttl)
+    const resolvedTtl = ttlFor?.(result) ?? ttl
+    await distributedStore.put(
+      cacheKey,
+      superjson.serialize(result),
+      resolvedTtl,
+    )
 
     // Add tags to the cache
     const dynamicTagsResult = dynamicTags?.(result)
     const allTags = [...tags, ...(dynamicTagsResult || [])]
     if (allTags.length > 0) {
+      // The tag set is shared by every key under the tag — its expiry must
+      // never be truncated by one short-lived (e.g. negative-result) entry,
+      // or longer-lived siblings would drop out of tag invalidation early.
+      const tagTtl = Math.max(resolvedTtl, ttl)
       await Promise.all(
         allTags.map(async (tag) => {
           await distributedStore.sadd(`tags:${tag}`, cacheKey)
-          await distributedStore.expire(`tags:${tag}`, ttl)
+          await distributedStore.expire(`tags:${tag}`, tagTtl)
         }),
       )
     }

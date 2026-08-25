@@ -96,14 +96,10 @@ export const instagramReadSchema = z.object({
   watermark: z.number().optional(),
 })
 
-export const instagramPostbackSchema = z.object({
-  mid: z.string(),
-  title: z.string(),
-  payload: z.string(),
-})
-
 export const instagramReferralSchema = z.object({
-  ref: z.string(),
+  // Meta only includes `ref` when the ad/link actually sets a ref param —
+  // most CTD ad referrals arrive without it.
+  ref: z.string().optional(),
   source: z.string(),
   type: z.string(),
   ad_id: z.string().optional(),
@@ -121,6 +117,13 @@ export const instagramReferralSchema = z.object({
     .optional(),
 })
 export type InstagramReferral = z.infer<typeof instagramReferralSchema>
+
+export const instagramPostbackSchema = z.object({
+  mid: z.string(),
+  title: z.string(),
+  payload: z.string(),
+  referral: instagramReferralSchema.optional(),
+})
 
 export const instagramMessagingEventSchema = z.object({
   sender: idSchema,

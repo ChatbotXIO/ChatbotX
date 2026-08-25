@@ -1959,8 +1959,8 @@
       "blocked": "Geblokkeerd",
       "noAdminReply": "Geen antwoord van beheerder",
       "contactCreatedAt": "Contact aangemaakt op",
-      "fromCtwaAd": "Van Click-to-WhatsApp-advertentie",
-      "ctwaConversion": "CTWA-conversie",
+      "fromCtwaAd": "Van advertentie",
+      "ctwaConversion": "Advertentieconversie",
       "lastUserInputTypes": {
         "text": "Tekst",
         "location": "Locatie",
@@ -1989,7 +1989,7 @@
       "customFields": "Aangepaste velden",
       "email": "E-mail",
       "sms": "Sms",
-      "ctwaAds": "Click-to-WhatsApp-advertenties"
+      "ctwaAds": "Advertenties"
     },
     "languages": {
       "ar": "Arabisch",
@@ -2028,9 +2028,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA-gespreksstarters",
-        "leads": "CTWA-gekwalificeerde leads",
-        "purchases": "CTWA-kopers"
+        "conversations": "Advertentie-gespreksstarters",
+        "leads": "Advertentie-gekwalificeerde leads",
+        "purchases": "Advertentie-kopers"
       },
       "adPrefix": "advertentie",
       "allAds": "alle advertenties"
@@ -2169,12 +2169,14 @@
       "whatsappFlow": "WhatsApp-flow",
       "appointmentScheduling": "Afspraken plannen",
       "triggerN8n": "Trigger n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",
       "import": "Flow importeren",
       "export": "Exporteren",
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
-      "importJsonOnly": "Alleen JSON-bestanden"
+      "importJsonOnly": "Alleen JSON-bestanden",
+      "adsConversions": "Advertenties en Meta Conversions",
+      "trackAdsLead": "Advertentie-lead bijhouden",
+      "trackAdsPurchase": "Advertentie-aankoop bijhouden"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2357,6 +2359,8 @@
       "title": "Conversie-events",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Advertentieaccounts beheren",
@@ -2364,11 +2368,16 @@
       "selectAll": "Alles selecteren",
       "whatsappAsset": "WhatsApp-asset",
       "selectWhatsappAsset": "WhatsApp-asset selecteren",
+      "selectIntegration": "Integratie",
+      "selectIntegrationPlaceholder": "Integratie selecteren",
+      "noIntegrationsConnected": "Nog geen gekoppelde integraties voor dit kanaal.",
+      "connectIntegration": "Kanaal koppelen",
       "templates": "Sjablonen",
       "selectTemplates": "Sjablonen selecteren",
       "noTemplates": "Geen goedgekeurde sjablonen gevonden.",
       "existingRules": "Bestaande regels",
       "noRules": "Nog geen conversieregels voor dit WhatsApp-asset.",
+      "noRulesGeneric": "Nog geen conversieregels voor deze integratie.",
       "toggleRule": "Regel in- of uitschakelen",
       "deleteRule": "Regel verwijderen",
       "qualifyingTemplateMessageSent": "Kwalificerend sjabloonbericht wordt verzonden",
@@ -2408,24 +2417,26 @@
         "title": "Gekwalificeerde leads bijhouden",
         "question": "Op welk punt in het gesprek wil je een contact als lead kwalificeren?",
         "when": "Wanneer",
-        "then": "Markeer CTWA-lead dan als"
+        "then": "Markeer CTWA-lead dan als",
+        "thenGeneric": "Markeer lead dan als"
       },
       "trackPurchases": {
         "title": "Aankopen bijhouden",
         "question": "Welk sjabloon bevestigt een aankoop?",
         "when": "Wanneer",
         "then": "Dan",
-        "noValueNote": "Een op regels gebaseerde aankoop registreert een aankoopconversie zonder bestelwaarde – die telt mee voor aankopen, maar draagt 0 bij aan de omzet. De bestelwaarde wordt alleen vastgelegd door Meta's automatische events."
+        "noValueNote": "Een op regels gebaseerde aankoop registreert een aankoopconversie zonder bestelwaarde – die telt mee voor aankopen, maar draagt 0 bij aan de omzet. De bestelwaarde wordt alleen vastgelegd door Meta's automatische events.",
+        "questionGeneric": "Op welk punt in het gesprek wil je een aankoop registreren?"
       }
     },
     "analytics": {
-      "title": "CTWA-analyse",
+      "title": "Advertentieanalyse",
       "funnelOverview": "Funneloverzicht",
       "conversationsStarted": "Gestarte gesprekken",
       "qualifiedLeads": "Gekwalificeerde leads",
       "purchases": "Aankopen",
       "adSpend": "Advertentie-uitgaven",
-      "spendAccountLevelNote": "Uitgaven worden gerapporteerd op het niveau van het Meta-advertentieaccount; met een geselecteerd WhatsApp-account worden advertenties met alleen uitgaven maar zonder funnelactiviteit voor dat account verborgen.",
+      "spendAccountLevelNote": "Uitgaven worden gerapporteerd op het niveau van het Meta-advertentieaccount; met een geselecteerd account worden advertenties met alleen uitgaven maar zonder funnelactiviteit voor dat account verborgen.",
       "revenue": "Omzet",
       "roas": "ROAS",
       "revenueCurrencyNote": "Omzet gaat uit van één valuta (USD). Advertentieaccounts met meerdere valuta's worden nog niet samengevoegd.",
@@ -2456,19 +2467,25 @@
         "label": "Advertentieaccount",
         "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount."
       },
+      "channelFilter": {
+        "label": "Kanaal",
+        "allAccounts": "Alle accounts",
+        "allChannels": "Alle kanalen"
+      },
       "retarget": "Retargeten",
       "thoseWhoPurchased": "Degenen die hebben gekocht",
       "thoseWhoStartedConversation": "Degenen die een gesprek zijn gestart",
       "sendWhatsappBroadcast": "WhatsApp-broadcast versturen",
+      "retargetOnChannel": "Retargeten op {channel}",
       "from": "Van",
       "to": "Tot",
       "unattributed": "Niet toegewezen",
       "retargetDialog": {
-        "title": "CTWA-contacten retargeten",
+        "title": "Advertentiecontacten retargeten",
         "createAudience": "Doelgroep aanmaken",
         "useExistingAudience": "Bestaande doelgroep gebruiken",
         "audienceName": "Naam doelgroep",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Advertenties",
         "confirm": "Synchronisatie starten",
         "success": "Synchronisatie van retargetingdoelgroep staat in de wachtrij.",
         "error": "Synchronisatie van retargetingdoelgroep kon niet in de wachtrij worden geplaatst."
@@ -2480,7 +2497,7 @@
         "failed": "Mislukt",
         "skippedNoScope": "Overgeslagen (geen bereik)",
         "skippedRegion": "Overgeslagen (regio)",
-        "noScopeWarning": "Sommige conversies zijn niet verzonden omdat dit WhatsApp-account de rechten voor events mist. Koppel het opnieuw om rapportage van automatische events in te schakelen.",
+        "noScopeWarning": "Sommige conversies zijn niet verzonden omdat dit account de rechten voor events mist. Koppel het opnieuw om rapportage van automatische events in te schakelen.",
         "reconnectCta": "Account opnieuw koppelen",
         "empty": "Nog geen conversie-events in deze periode."
       },
@@ -2493,7 +2510,8 @@
         "contactName": "Naam contact",
         "phone": "Telefoon",
         "adId": "Advertentie-ID",
-        "occurredAt": "Opgetreden op"
+        "occurredAt": "Opgetreden op",
+        "channel": "Kanaal"
       },
       "empty": "Nog geen gegevens. Koppel een advertentieaccount en begin met het bijhouden van conversies."
     }
@@ -3747,7 +3765,9 @@
       "startAnotherFlow": "Andere flow starten",
       "notifyAdmins": "Beheerders informeren",
       "transferConversationToHuman": "Gesprek overdragen aan een medewerker",
-      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden"
+      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",
+      "trackAdsLead": "Advertentie-lead bijhouden",
+      "trackAdsPurchase": "Advertentie-aankoop bijhouden"
     },
     "triggerGoesOff": "Trigger wordt geactiveerd",
     "before": "Voor",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "Koppelen"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Registreert alleen een conversie voor contacten met WhatsApp click-to-WhatsApp- of Meta-advertentieverwijzingsattributie. Heeft geen effect op andere contacten."
     }
   },
   "minigames": {

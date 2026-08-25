@@ -12,6 +12,16 @@ const mocks = vi.hoisted(() => ({
   ensureDataset: vi.fn(),
   sendConversionEvent: vi.fn(),
   defaultQueueAdd: vi.fn(),
+  // Messenger/Instagram CAPI send branch (Phase 3).
+  findMessengerIntegration: vi.fn(),
+  findInstagramIntegration: vi.fn(),
+  findContactInbox: vi.fn(),
+  findContactByIdForWorkspace: vi.fn(),
+  resolveCapiAccessToken: vi.fn(),
+  metaEnsureDatasetId: vi.fn(),
+  metaEnsureDataset: vi.fn(),
+  metaSendConversionEvent: vi.fn(),
+  refreshCapiScopeCache: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", async () => {
@@ -24,6 +34,23 @@ vi.mock("@chatbotx.io/business", async () => {
       findWorkspaceIntegration: mocks.findWorkspaceIntegration,
       ensureDatasetId: mocks.ensureDatasetId,
     },
+    messengerIntegrationService: {
+      findByIdForWorkspace: mocks.findMessengerIntegration,
+    },
+    instagramIntegrationService: {
+      findByIdForWorkspace: mocks.findInstagramIntegration,
+    },
+    contactInboxService: {
+      findByUncached: mocks.findContactInbox,
+    },
+    contactService: {
+      findById: mocks.findContactByIdForWorkspace,
+    },
+    metaConversionsService: {
+      ensureDatasetId: mocks.metaEnsureDatasetId,
+      refreshCapiScopeCache: mocks.refreshCapiScopeCache,
+    },
+    resolveCapiAccessToken: mocks.resolveCapiAccessToken,
     withBlockedOwnerGuard: mocks.withBlockedOwnerGuard,
   }
 })
@@ -38,11 +65,29 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
   buildDatasetName: (name: string) =>
     name.trim() ? `${name.trim()} Event Data` : "Event Data",
+  ensureDataset: mocks.metaEnsureDataset,
+  sendConversionEvent: mocks.metaSendConversionEvent,
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/conversions", () => ({
   ensureDataset: mocks.ensureDataset,
   sendConversionEvent: mocks.sendConversionEvent,
+}))
+
+vi.mock("@chatbotx.io/integration-messenger", () => ({
+  debugToken: vi.fn(),
+  hasPageEventsScope: vi.fn(),
+  toAppAccessToken: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
+  debugToken: vi.fn(),
+  hasInstagramManageEventsScope: vi.fn(),
+  toAppAccessToken: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
+  debugTokenOrThrow: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/worker-config", async () => {
@@ -279,5 +324,272 @@ describe("handleSendConversionEvent", () => {
 
     expect(mocks.findWorkspaceIntegration).not.toHaveBeenCalled()
     expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe("handleSendConversionEvent — messenger/instagram (Phase 3)", () => {
+  const messengerEvent = {
+    id: "ace-2",
+    workspaceId: "ws-1",
+    channel: "messenger" as const,
+    integrationMessengerId: "im-1",
+    integrationInstagramId: null,
+    eventType: "lead" as const,
+    occurredAt: new Date("2026-08-10T10:00:00.000Z"),
+    sourceEventId: "source-2",
+    contactInboxId: "ci-1",
+    currency: null,
+    value: null,
+    capiStatus: "pending" as const,
+  }
+
+  const instagramEvent = {
+    ...messengerEvent,
+    id: "ace-3",
+    channel: "instagram" as const,
+    integrationMessengerId: null,
+    integrationInstagramId: "ii-1",
+    sourceEventId: "source-3",
+  }
+
+  const messengerIntegration = {
+    id: "im-1",
+    workspaceId: "ws-1",
+    inboxId: "inbox-1",
+    pageId: "page-1",
+    hasCapiScope: true,
+    datasetId: "meta-dataset-1",
+  }
+
+  const instagramIntegration = {
+    id: "ii-1",
+    workspaceId: "ws-1",
+    inboxId: "inbox-1",
+    igId: "ig-1",
+    hasCapiScope: true,
+    datasetId: "meta-dataset-1",
+  }
+
+  const contactInbox = {
+    id: "ci-1",
+    sourceId: "psid-1",
+    contactId: "contact-1",
+    inboxId: "inbox-1",
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findMessengerIntegration.mockResolvedValue(messengerIntegration)
+    mocks.findInstagramIntegration.mockResolvedValue(instagramIntegration)
+    mocks.findContactInbox.mockResolvedValue(contactInbox)
+    // Workspace-scoped: resolving a truthy row here is what asserts the
+    // contact inbox's contact actually belongs to `event.workspaceId`.
+    mocks.findContactByIdForWorkspace.mockResolvedValue({
+      id: "contact-1",
+      workspaceId: "ws-1",
+    })
+    mocks.resolveCapiAccessToken.mockResolvedValue({
+      accessToken: "manual-token-1",
+      source: "manual",
+    })
+    mocks.metaSendConversionEvent.mockResolvedValue(undefined)
+    mocks.updateCapiStatus.mockResolvedValue({ id: "ace-2" })
+  })
+
+  test("sends a messenger conversion event using page identity + contact PSID", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.findMessengerIntegration).toHaveBeenCalledWith({
+      id: "im-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.findContactInbox).toHaveBeenCalledWith({
+      where: { id: "ci-1" },
+    })
+    expect(mocks.metaSendConversionEvent).toHaveBeenCalledWith({
+      datasetId: "meta-dataset-1",
+      accessToken: "manual-token-1",
+      event: {
+        eventName: "LeadSubmitted",
+        occurredAt: messengerEvent.occurredAt,
+        eventId: "source-2",
+        currency: null,
+        value: null,
+        messagingChannel: "messenger",
+        pageId: "page-1",
+        pageScopedUserId: "psid-1",
+      },
+    })
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "sent",
+      capiSentAt: expect.any(Date),
+    })
+  })
+
+  test("sends an instagram Purchase conversion event using ig identity + contact IGSID", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue({
+      ...instagramEvent,
+      eventType: "purchase" as const,
+      currency: "USD",
+      value: "9.99",
+    })
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-3",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.findInstagramIntegration).toHaveBeenCalledWith({
+      id: "ii-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.metaSendConversionEvent).toHaveBeenCalledWith({
+      datasetId: "meta-dataset-1",
+      accessToken: "manual-token-1",
+      event: {
+        eventName: "Purchase",
+        occurredAt: instagramEvent.occurredAt,
+        eventId: "source-3",
+        currency: "USD",
+        value: "9.99",
+        messagingChannel: "instagram",
+        instagramBusinessAccountId: "ig-1",
+        igSid: "psid-1",
+      },
+    })
+  })
+
+  test("marks failed when the AdsConversionEvent has no contactInboxId", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue({
+      ...messengerEvent,
+      contactInboxId: null,
+    })
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.findContactInbox).not.toHaveBeenCalled()
+    expect(mocks.metaSendConversionEvent).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "failed",
+    })
+  })
+
+  test("marks failed when the contact inbox is not found", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    mocks.findContactInbox.mockResolvedValue(undefined)
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.metaSendConversionEvent).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "failed",
+    })
+  })
+
+  test("marks failed when the messenger integration id is missing", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue({
+      ...messengerEvent,
+      integrationMessengerId: null,
+    })
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.findMessengerIntegration).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "failed",
+    })
+  })
+
+  test("marks failed when the messenger integration is not found", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    mocks.findMessengerIntegration.mockResolvedValue(null)
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.metaSendConversionEvent).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "failed",
+    })
+  })
+
+  test("marks failed when the contact inbox's contact belongs to a different workspace", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    // `contactInboxService.findByUncached` is looked up by id alone, with no
+    // workspace scoping — simulate a foreign/stale contactInboxId by having
+    // the workspace-scoped contact lookup come back empty.
+    mocks.findContactByIdForWorkspace.mockResolvedValue(undefined)
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.findContactByIdForWorkspace).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "contact-1",
+    })
+    expect(mocks.metaSendConversionEvent).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "failed",
+    })
+  })
+
+  test("marks failed when the contact inbox belongs to a different inbox than the resolved integration", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    // Same workspace, but the contact inbox's inbox does not match the
+    // messenger integration's inbox — e.g. a contactInboxId that drifted to
+    // a different page/integration within the same workspace.
+    mocks.findContactInbox.mockResolvedValue({
+      ...contactInbox,
+      inboxId: "inbox-other",
+    })
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.metaSendConversionEvent).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "failed",
+    })
   })
 })

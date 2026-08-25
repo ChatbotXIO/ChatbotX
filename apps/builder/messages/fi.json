@@ -542,8 +542,8 @@
       "blocked": "Estetty",
       "noAdminReply": "Ei ylläpitäjän vastausta",
       "contactCreatedAt": "Yhteystieto luotu",
-      "fromCtwaAd": "Click to WhatsApp -mainoksesta",
-      "ctwaConversion": "CTWA-konversio",
+      "fromCtwaAd": "Mainoksesta",
+      "ctwaConversion": "Mainoksen konversio",
       "lastUserInputTypes": {
         "text": "Teksti",
         "location": "Sijainti",
@@ -572,7 +572,7 @@
       "customFields": "Mukautetut kentät",
       "email": "Sähköposti",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp Ads"
+      "ctwaAds": "Mainokset"
     },
     "languages": {
       "ar": "Arabia",
@@ -611,9 +611,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA-keskustelun aloittajat",
-        "leads": "CTWA-kelpuutetut liidit",
-        "purchases": "CTWA-ostajat"
+        "conversations": "Mainoksen keskustelun aloittajat",
+        "leads": "Mainoksen kelpuutetut liidit",
+        "purchases": "Mainoksen ostajat"
       },
       "adPrefix": "mainos",
       "allAds": "kaikki mainokset"
@@ -2169,12 +2169,14 @@
       "whatsappFlow": "WhatsApp Flow",
       "appointmentScheduling": "Ajanvaraus",
       "triggerN8n": "Trigger n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot"
+      "importJsonOnly": "Vain JSON-tiedostot",
+      "adsConversions": "Mainokset ja Meta Conversions",
+      "trackAdsLead": "Seuraa mainoksen liidiä",
+      "trackAdsPurchase": "Seuraa mainoksen ostoa"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2357,6 +2359,8 @@
       "title": "Konversiotapahtumat",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Hallitse mainostilejä",
@@ -2364,11 +2368,16 @@
       "selectAll": "Valitse kaikki",
       "whatsappAsset": "WhatsApp-resurssi",
       "selectWhatsappAsset": "Valitse WhatsApp-resurssi",
+      "selectIntegration": "Integraatio",
+      "selectIntegrationPlaceholder": "Valitse integraatio",
+      "noIntegrationsConnected": "Tälle kanavalle ei ole vielä yhdistettyjä integraatioita.",
+      "connectIntegration": "Yhdistä kanava",
       "templates": "Mallipohjat",
       "selectTemplates": "Valitse mallipohjat",
       "noTemplates": "Hyväksyttyjä mallipohjia ei löytynyt.",
       "existingRules": "Olemassa olevat säännöt",
       "noRules": "Tälle WhatsApp-resurssille ei ole vielä konversiosääntöjä.",
+      "noRulesGeneric": "Tälle integraatiolle ei ole vielä konversiosääntöjä.",
       "toggleRule": "Ota sääntö käyttöön tai poista käytöstä",
       "deleteRule": "Poista sääntö",
       "qualifyingTemplateMessageSent": "Kelpuuttava mallipohjaviesti on lähetetty",
@@ -2408,24 +2417,26 @@
         "title": "Seuraa kelpuutettuja liidejä",
         "question": "Missä vaiheessa keskustelua haluat kelpuuttaa kontaktin liidiksi?",
         "when": "Kun",
-        "then": "Merkitse tämän jälkeen CTWA-liidi tilaan"
+        "then": "Merkitse tämän jälkeen CTWA-liidi tilaan",
+        "thenGeneric": "Merkitse tämän jälkeen liidi tilaan"
       },
       "trackPurchases": {
         "title": "Seuraa ostotapahtumia",
         "question": "Mikä mallipohja vahvistaa ostotapahtuman?",
         "when": "Kun",
         "then": "Silloin",
-        "noValueNote": "Säännöllä käynnistetty ostotapahtuma kirjaa Ostotapahtuma-konversion ilman tilauksen arvoa — se lasketaan ostotapahtumiin, mutta lisää tuloihin 0. Tilauksen arvon tallentaa vain Meta Automaattiset tapahtumat."
+        "noValueNote": "Säännöllä käynnistetty ostotapahtuma kirjaa Ostotapahtuma-konversion ilman tilauksen arvoa — se lasketaan ostotapahtumiin, mutta lisää tuloihin 0. Tilauksen arvon tallentaa vain Meta Automaattiset tapahtumat.",
+        "questionGeneric": "Missä vaiheessa keskustelua haluat kirjata oston?"
       }
     },
     "analytics": {
-      "title": "CTWA-analytiikka",
+      "title": "Mainosanalytiikka",
       "funnelOverview": "Suppilon yleiskatsaus",
       "conversationsStarted": "Aloitetut keskustelut",
       "qualifiedLeads": "Kelpuutetut liidit",
       "purchases": "Ostotapahtumat",
       "adSpend": "Mainoskulutus",
-      "spendAccountLevelNote": "Kulutus raportoidaan Meta-mainostilin tasolla; kun WhatsApp-tili on valittu, kyseisen tilin mainokset, joissa on vain kulutusta mutta ei suppiloaktiviteettia, piilotetaan.",
+      "spendAccountLevelNote": "Kulutus raportoidaan Meta-mainostilin tasolla; kun tili on valittu, kyseisen tilin mainokset, joissa on vain kulutusta mutta ei suppiloaktiviteettia, piilotetaan.",
       "revenue": "Tulot",
       "roas": "ROAS",
       "revenueCurrencyNote": "Tulot oletetaan yhdessä valuutassa (USD). Sekavaluuttaisia mainostileja ei vielä yhdistetä.",
@@ -2456,19 +2467,25 @@
         "label": "Mainostili",
         "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
       },
+      "channelFilter": {
+        "label": "Kanava",
+        "allAccounts": "Kaikki tilit",
+        "allChannels": "Kaikki kanavat"
+      },
       "retarget": "Kohdista uudelleen",
       "thoseWhoPurchased": "Ostotapahtuman tehneet",
       "thoseWhoStartedConversation": "Keskustelun aloittaneet",
       "sendWhatsappBroadcast": "Lähetä WhatsApp-joukkoviesti",
+      "retargetOnChannel": "Uudelleenkohdistus kanavalla {channel}",
       "from": "Alkaen",
       "to": "Päättyen",
       "unattributed": "Ei kohdistettu",
       "retargetDialog": {
-        "title": "Kohdista CTWA-kontaktit uudelleen",
+        "title": "Kohdista mainoskontaktit uudelleen",
         "createAudience": "Luo kohdeyleisö",
         "useExistingAudience": "Käytä olemassa olevaa kohdeyleisöä",
         "audienceName": "Kohdeyleisön nimi",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Mainokset",
         "confirm": "Aloita synkronointi",
         "success": "Uudelleenkohdistuksen kohdeyleisön synkronointi lisätty jonoon.",
         "error": "Uudelleenkohdistuksen kohdeyleisön synkronoinnin lisääminen jonoon epäonnistui."
@@ -2480,7 +2497,7 @@
         "failed": "Epäonnistui",
         "skippedNoScope": "Ohitettu (ei käyttöoikeutta)",
         "skippedRegion": "Ohitettu (alue)",
-        "noScopeWarning": "Osaa konversioista ei lähetetty, koska tältä WhatsApp-tililtä puuttuu tapahtumien käyttöoikeus. Yhdistä se uudelleen ottaaksesi käyttöön Automaattisten tapahtumien raportoinnin.",
+        "noScopeWarning": "Osaa konversioista ei lähetetty, koska tältä tililtä puuttuu tapahtumien käyttöoikeus. Yhdistä se uudelleen ottaaksesi käyttöön Automaattisten tapahtumien raportoinnin.",
         "reconnectCta": "Yhdistä tili uudelleen",
         "empty": "Ei konversiotapahtumia tällä aikavälillä vielä."
       },
@@ -2493,7 +2510,8 @@
         "contactName": "Kontaktin nimi",
         "phone": "Puhelin",
         "adId": "Mainostunnus",
-        "occurredAt": "Tapahtumisajankohta"
+        "occurredAt": "Tapahtumisajankohta",
+        "channel": "Kanava"
       },
       "empty": "Ei tietoja vielä. Yhdistä mainostili ja aloita konversioiden seuranta."
     }
@@ -3747,7 +3765,9 @@
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
-      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
+      "trackAdsLead": "Seuraa mainoksen liidiä",
+      "trackAdsPurchase": "Seuraa mainoksen ostoa"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "Yhdistä"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Tallentaa muunnoksen vain kontakteille, joilla on WhatsAppin click-to-WhatsApp- tai Metan mainosviittausattribuutio. Ei vaikuta muihin kontakteihin."
     }
   },
   "minigames": {

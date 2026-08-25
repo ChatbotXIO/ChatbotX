@@ -157,6 +157,8 @@ const range = {
   from: "2026-08-01",
   to: "2026-08-10",
   account: "",
+  channel: "whatsapp",
+  channelAccount: "",
   adAccount: "",
 } as AdsAnalyticsSearchParams
 
@@ -182,16 +184,15 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     await act(async () => {
       root.render(
         <AdsAnalyticsView
-          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
+          channel="whatsapp"
+          channelIntegrations={[]}
           promises={Promise.resolve([
             analyticsData,
             deliverySummary,
             timeseries,
           ])}
           range={range}
-          selectedIntegrationWhatsappId="iw-1"
-          switcherIntegrations={[]}
-          whatsappCredentialPublic={null}
+          selectedChannelIntegrationId="iw-1"
           workspaceId="ws-1"
         />,
       )
@@ -235,16 +236,15 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     await act(async () => {
       root.render(
         <AdsAnalyticsView
-          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
+          channel="whatsapp"
+          channelIntegrations={[]}
           promises={Promise.resolve([
             analyticsData,
             deliverySummary,
             timeseries,
           ])}
           range={range}
-          selectedIntegrationWhatsappId={null}
-          switcherIntegrations={[]}
-          whatsappCredentialPublic={null}
+          selectedChannelIntegrationId={null}
           workspaceId="ws-1"
         />,
       )
@@ -257,5 +257,31 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     expect(container.textContent).not.toContain(
       "ads.analytics.delivery.reconnectCta",
     )
+  })
+
+  test("shows a messenger-channel reconnect CTA linked to the messenger capi settings page", async () => {
+    await act(async () => {
+      root.render(
+        <AdsAnalyticsView
+          channel="messenger"
+          channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
+          promises={Promise.resolve([
+            analyticsData,
+            deliverySummary,
+            timeseries,
+          ])}
+          range={{ ...range, channel: "messenger", channelAccount: "msg-1" }}
+          selectedChannelIntegrationId="msg-1"
+          workspaceId="ws-1"
+        />,
+      )
+      await Promise.resolve()
+    })
+
+    expect(
+      Array.from(container.querySelectorAll("a")).some((anchor) =>
+        anchor.href.includes("/messengers/msg-1/capi"),
+      ),
+    ).toBe(true)
   })
 })

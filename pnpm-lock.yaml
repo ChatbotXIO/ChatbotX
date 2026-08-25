@@ -1241,6 +1241,9 @@ importers:
 
   integrations/instagram-facebook:
     dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../../packages/business
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../../packages/flow-config

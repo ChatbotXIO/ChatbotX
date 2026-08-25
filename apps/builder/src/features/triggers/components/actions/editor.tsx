@@ -12,6 +12,7 @@ import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { CapiEventFields } from "@/features/meta-conversions/components/capi-event-fields"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { GoogleSheetAction } from "./run-google-sheet"
+import { TrackAdsPurchaseFields } from "./track-ads-purchase-fields"
 
 export const ActionEditor = ({
   parentName,
@@ -65,6 +66,8 @@ export const ActionEditor = ({
       return <GoogleSheetAction parentName={parentName} />
     case triggerActions.enum.sendMetaCapiEvent:
       return <CapiEventFields parentName={parentName} />
+    case triggerActions.enum.trackAdsPurchase:
+      return <TrackAdsPurchaseFields parentName={parentName} />
     default:
       return null
   }

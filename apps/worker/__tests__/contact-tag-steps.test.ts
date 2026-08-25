@@ -506,6 +506,7 @@ describe("addContactTag", () => {
     expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledTimes(1)
     expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledWith({
       workspaceId: "ws-1",
+      channel: "whatsapp",
       inboxId: "inbox-1",
       contactInboxId: "ci-1",
       tagIds: ["tag-1"],

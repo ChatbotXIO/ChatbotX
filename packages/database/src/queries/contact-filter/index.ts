@@ -1,3 +1,4 @@
+import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
 import {
   type AnyColumn,
   inArray,
@@ -18,7 +19,9 @@ import { escapeLikePattern, likeContains } from "../../utils"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import {
+  adReferralPredicate,
   buildCtwaSegmentContactExists,
+  type CtwaSegmentPredicateInput,
   ctwaRetargetDateRange,
   ctwaRetargetSegments,
 } from "./ctwa-retarget"
@@ -88,6 +91,17 @@ export {
 
 const hasWhereParts = (where: ContactWhere): boolean =>
   Object.keys(where).length > 0
+
+/**
+ * Channels the `ctwaRetarget` condition's optional `channel` narrowing
+ * accepts — the subset of `AdsConversionChannel` that has per-contact
+ * `ContactInbox`/`AdsConversionEvent` rows (`buildCtwaSegmentPredicate`'s
+ * channel-specific branches). `facebook` has no contact-scoped conversation
+ * concept, so it is intentionally excluded here.
+ */
+const CTWA_RETARGET_CHANNELS: ReadonlySet<string> = new Set(
+  adsEligibleChannelTypes.options,
+)
 
 export const contactFilterHasPredicate = (
   criteria: FilterCriteriaInput,
@@ -511,7 +525,7 @@ function buildConditionWhere(
     case "fromCtwaAd":
       return buildExistsBooleanWhere(
         contactInboxExists,
-        sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL AND ${contactInboxModel.referral}->>'ctwaClid' <> ''`,
+        adReferralPredicate(),
         operator,
         value,
       )
@@ -523,6 +537,12 @@ function buildConditionWhere(
         !(ctwaRetargetSegments as readonly string[]).includes(segment) ||
         typeof condition.since !== "string" ||
         typeof condition.until !== "string"
+      ) {
+        return {}
+      }
+      if (
+        condition.channel !== undefined &&
+        !CTWA_RETARGET_CHANNELS.has(condition.channel)
       ) {
         return {}
       }
@@ -539,6 +559,7 @@ function buildConditionWhere(
             until,
             workspaceId: context.workspaceId,
             integrationWhatsappId: condition.integrationWhatsappId,
+            channel: condition.channel as CtwaSegmentPredicateInput["channel"],
           },
           contactId,
         ),

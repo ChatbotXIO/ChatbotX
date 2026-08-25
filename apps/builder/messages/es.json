@@ -542,8 +542,8 @@
       "blocked": "Bloqueado",
       "noAdminReply": "Sin respuesta de un administrador",
       "contactCreatedAt": "Contacto creado el",
-      "fromCtwaAd": "Desde un anuncio de Click to WhatsApp",
-      "ctwaConversion": "Conversión CTWA",
+      "fromCtwaAd": "Desde un anuncio",
+      "ctwaConversion": "Conversión de anuncio",
       "lastUserInputTypes": {
         "text": "Texto",
         "location": "Ubicación",
@@ -572,7 +572,7 @@
       "customFields": "Campos personalizados",
       "email": "Correo",
       "sms": "SMS",
-      "ctwaAds": "Anuncios Click to WhatsApp"
+      "ctwaAds": "Anuncios"
     },
     "languages": {
       "ar": "Árabe",
@@ -611,9 +611,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "Inicios de conversación CTWA",
-        "leads": "Clientes potenciales calificados CTWA",
-        "purchases": "Compradores CTWA"
+        "conversations": "Inicios de conversación por anuncio",
+        "leads": "Clientes potenciales calificados por anuncio",
+        "purchases": "Compradores por anuncio"
       },
       "adPrefix": "anuncio",
       "allAds": "todos los anuncios"
@@ -2243,12 +2243,14 @@
       "whatsappFlow": "WhatsApp Flujo",
       "appointmentScheduling": "Programación de citas",
       "triggerN8n": "Activar n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Enviar evento Meta CAPI",
       "import": "Importar flujo",
       "export": "Exportar",
       "importStarted": "El flujo se está importando. Consulta el historial de importaciones para ver los resultados.",
-      "importJsonOnly": "Solo archivos JSON"
+      "importJsonOnly": "Solo archivos JSON",
+      "adsConversions": "Anuncios y Meta Conversions",
+      "trackAdsLead": "Registrar cliente potencial de anuncios",
+      "trackAdsPurchase": "Registrar compra de anuncios"
     },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",
@@ -2431,6 +2433,8 @@
       "title": "Eventos de conversión",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Administrar cuentas publicitarias",
@@ -2438,11 +2442,16 @@
       "selectAll": "Seleccionar todo",
       "whatsappAsset": "Recurso de WhatsApp",
       "selectWhatsappAsset": "Seleccionar recurso de WhatsApp",
+      "selectIntegration": "Integración",
+      "selectIntegrationPlaceholder": "Seleccionar integración",
+      "noIntegrationsConnected": "Aún no hay integraciones conectadas para este canal.",
+      "connectIntegration": "Conectar un canal",
       "templates": "Plantillas",
       "selectTemplates": "Seleccionar plantillas",
       "noTemplates": "No se encontraron plantillas aprobadas.",
       "existingRules": "Reglas existentes",
       "noRules": "Aún no hay reglas de conversión para este recurso de WhatsApp.",
+      "noRulesGeneric": "Aún no hay reglas de conversión para esta integración.",
       "toggleRule": "Activar o desactivar la regla",
       "deleteRule": "Eliminar regla",
       "qualifyingTemplateMessageSent": "Se envía el mensaje de plantilla calificador",
@@ -2482,24 +2491,26 @@
         "title": "Hacer seguimiento de clientes potenciales calificados",
         "question": "¿En qué punto de la conversación deseas calificar a un contacto como cliente potencial?",
         "when": "Cuándo",
-        "then": "Entonces marcar el cliente potencial CTWA como"
+        "then": "Entonces marcar el cliente potencial CTWA como",
+        "thenGeneric": "Entonces marcar el cliente potencial como"
       },
       "trackPurchases": {
         "title": "Hacer seguimiento de compras",
         "question": "¿Qué plantilla confirma una compra?",
         "when": "Cuándo",
         "then": "Entonces",
-        "noValueNote": "Una compra basada en reglas registra una conversión de Compra sin un valor de pedido: cuenta para las compras, pero suma 0 a los ingresos. El valor del pedido solo se captura mediante los Eventos automáticos de Meta."
+        "noValueNote": "Una compra basada en reglas registra una conversión de Compra sin un valor de pedido: cuenta para las compras, pero suma 0 a los ingresos. El valor del pedido solo se captura mediante los Eventos automáticos de Meta.",
+        "questionGeneric": "¿En qué punto de la conversación quieres registrar una compra?"
       }
     },
     "analytics": {
-      "title": "Análisis de CTWA",
+      "title": "Análisis de anuncios",
       "funnelOverview": "Resumen del embudo",
       "conversationsStarted": "Conversaciones iniciadas",
       "qualifiedLeads": "Clientes potenciales calificados",
       "purchases": "Compras",
       "adSpend": "Gasto publicitario",
-      "spendAccountLevelNote": "El gasto se informa a nivel de la cuenta publicitaria de Meta; cuando se selecciona una cuenta de WhatsApp, los anuncios con solo gasto y sin actividad de embudo para esa cuenta se ocultan.",
+      "spendAccountLevelNote": "El gasto se informa a nivel de la cuenta publicitaria de Meta; cuando se selecciona una cuenta, los anuncios con solo gasto y sin actividad de embudo para esa cuenta se ocultan.",
       "revenue": "Ingresos",
       "roas": "ROAS",
       "revenueCurrencyNote": "Los ingresos asumen una sola moneda (USD). Las cuentas publicitarias con múltiples monedas aún no se agregan.",
@@ -2530,19 +2541,25 @@
         "label": "Cuenta publicitaria",
         "note": "Los anuncios con conversiones pero sin gasto ni entrega en el rango de fechas seleccionado se ocultan al filtrar por cuenta publicitaria."
       },
+      "channelFilter": {
+        "label": "Canal",
+        "allAccounts": "Todas las cuentas",
+        "allChannels": "Todos los canales"
+      },
       "retarget": "Reorientar",
       "thoseWhoPurchased": "Quienes compraron",
       "thoseWhoStartedConversation": "Quienes iniciaron una conversación",
       "sendWhatsappBroadcast": "Enviar difusión de WhatsApp",
+      "retargetOnChannel": "Retargeting en {channel}",
       "from": "Desde",
       "to": "Hasta",
       "unattributed": "Sin atribuir",
       "retargetDialog": {
-        "title": "Reorientar contactos CTWA",
+        "title": "Reorientar contactos de anuncios",
         "createAudience": "Crear audiencia",
         "useExistingAudience": "Usar audiencia existente",
         "audienceName": "Nombre de la audiencia",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Anuncios",
         "confirm": "Iniciar sincronización",
         "success": "Sincronización de la audiencia de reorientación en cola.",
         "error": "No se pudo poner en cola la sincronización de la audiencia de reorientación."
@@ -2554,7 +2571,7 @@
         "failed": "Fallido",
         "skippedNoScope": "Omitido (sin alcance)",
         "skippedRegion": "Omitido (región)",
-        "noScopeWarning": "Algunas conversiones no se enviaron porque a esta cuenta de WhatsApp le falta el permiso de eventos. Vuelve a conectarla para habilitar los informes de Eventos automáticos.",
+        "noScopeWarning": "Algunas conversiones no se enviaron porque a esta cuenta le falta el permiso de eventos. Vuelve a conectarla para habilitar los informes de Eventos automáticos.",
         "reconnectCta": "Reconectar cuenta",
         "empty": "Aún no hay eventos de conversión en este rango."
       },
@@ -2567,7 +2584,8 @@
         "contactName": "Nombre del contacto",
         "phone": "Teléfono",
         "adId": "ID del anuncio",
-        "occurredAt": "Ocurrió el"
+        "occurredAt": "Ocurrió el",
+        "channel": "Canal"
       },
       "empty": "Aún no hay datos. Conecta una cuenta publicitaria y comienza a hacer seguimiento de las conversiones."
     }
@@ -3747,7 +3765,9 @@
       "startAnotherFlow": "Start Another Flujo",
       "notifyAdmins": "Notificar a los administradores",
       "transferConversationToHuman": "Transfer Conversation un Human",
-      "sendMetaCapiEvent": "Enviar evento Meta CAPI"
+      "sendMetaCapiEvent": "Enviar evento Meta CAPI",
+      "trackAdsLead": "Registrar cliente potencial de anuncios",
+      "trackAdsPurchase": "Registrar compra de anuncios"
     },
     "triggerGoesOff": "Desencadenador goes off",
     "before": "Antes",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "Conectar"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Solo registra una conversión para contactos con atribución de anuncio click-to-WhatsApp de WhatsApp o referencia de anuncio de Meta. No tiene efecto en otros contactos."
     }
   },
   "minigames": {

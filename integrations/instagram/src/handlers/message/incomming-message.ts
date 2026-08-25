@@ -1,4 +1,4 @@
-import { deriveAdSourcePlatform } from "@chatbotx.io/business/referral"
+import { normalizeMetaAdReferral } from "@chatbotx.io/business/referral"
 import {
   type Context,
   contentTypes,
@@ -18,7 +18,6 @@ import {
   type InstagramMessage,
   type InstagramMessagingEvent,
   instagramWebhookEventSchema,
-  type InstagramReferral as RawInstagramReferral,
 } from "../../schemas"
 
 const getMessageAttachments = async (
@@ -78,25 +77,6 @@ const getMessageLocation = (message: InstagramMessage) => {
     longitude: String(longitude),
   }
 }
-
-const normalizeReferral = (
-  referral: RawInstagramReferral,
-): MessageReferral => ({
-  ref: referral.ref,
-  source: referral.source,
-  type: referral.type,
-  adId: referral.ad_id ?? null,
-  adTitle: referral.ads_context_data?.ad_title ?? null,
-  sourceUrl: referral.source_url ?? null,
-  sourcePlatform:
-    referral.source_platform ?? deriveAdSourcePlatform(referral.source_url),
-  postId: referral.ads_context_data?.post_id ?? null,
-  photoUrl: referral.ads_context_data?.photo_url ?? null,
-  videoUrl: referral.ads_context_data?.video_url ?? null,
-  productId: referral.ads_context_data?.product_id ?? null,
-  flowId: referral.ads_context_data?.flow_id ?? null,
-  raw: referral,
-})
 
 export const receiveMessage = async ({
   ctx,
@@ -176,12 +156,18 @@ const getMessageEntity = async (
     }
     postbackAction = messaging.postback.payload
     buttonTitle = messaging.postback.title
+
+    if (messaging.postback.referral) {
+      ref = messaging.postback.referral.ref ?? null
+      referralSource = messaging.postback.referral.source
+      referral = normalizeMetaAdReferral(messaging.postback.referral)
+    }
   }
 
   if (messaging.referral) {
-    ref = messaging.referral.ref
+    ref = messaging.referral.ref ?? null
     referralSource = messaging.referral.source
-    referral = normalizeReferral(messaging.referral)
+    referral = normalizeMetaAdReferral(messaging.referral)
   }
 
   return {

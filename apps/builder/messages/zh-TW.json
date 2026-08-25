@@ -2118,8 +2118,8 @@
       "blocked": "已阻止",
       "noAdminReply": "無管理員回覆",
       "contactCreatedAt": "聯絡人建立時間",
-      "fromCtwaAd": "來自 Click to WhatsApp 廣告",
-      "ctwaConversion": "CTWA 轉換",
+      "fromCtwaAd": "來自廣告",
+      "ctwaConversion": "廣告轉換",
       "lastUserInputTypes": {
         "text": "文字",
         "location": "位置",
@@ -2148,7 +2148,7 @@
       "customFields": "自訂欄位",
       "email": "電子郵件",
       "sms": "簡訊",
-      "ctwaAds": "Click to WhatsApp 廣告"
+      "ctwaAds": "廣告"
     },
     "languages": {
       "ar": "阿拉伯語",
@@ -2187,9 +2187,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA 對話發起者",
-        "leads": "CTWA 合格名單",
-        "purchases": "CTWA 購買者"
+        "conversations": "廣告對話發起者",
+        "leads": "廣告合格名單",
+        "purchases": "廣告購買者"
       },
       "adPrefix": "廣告",
       "allAds": "所有廣告"
@@ -2402,12 +2402,14 @@
       "whatsappFlow": "WhatsApp流程",
       "appointmentScheduling": "預約安排",
       "triggerN8n": "觸發 n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "傳送 Meta CAPI 事件",
       "import": "匯入流程",
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
-      "importJsonOnly": "僅限 JSON 檔案"
+      "importJsonOnly": "僅限 JSON 檔案",
+      "adsConversions": "廣告與 Meta Conversions",
+      "trackAdsLead": "追蹤廣告名單",
+      "trackAdsPurchase": "追蹤廣告購買"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2590,6 +2592,8 @@
       "title": "轉換事件",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "管理廣告帳戶",
@@ -2597,11 +2601,16 @@
       "selectAll": "全選",
       "whatsappAsset": "WhatsApp 資產",
       "selectWhatsappAsset": "選擇 WhatsApp 資產",
+      "selectIntegration": "整合",
+      "selectIntegrationPlaceholder": "選擇整合",
+      "noIntegrationsConnected": "此管道尚未連接任何整合。",
+      "connectIntegration": "連接管道",
       "templates": "範本",
       "selectTemplates": "選擇範本",
       "noTemplates": "找不到任何已核准的範本。",
       "existingRules": "現有規則",
       "noRules": "此 WhatsApp 資產尚無轉換規則。",
+      "noRulesGeneric": "此整合尚無轉換規則。",
       "toggleRule": "啟用或停用規則",
       "deleteRule": "刪除規則",
       "qualifyingTemplateMessageSent": "已傳送符合資格的範本訊息",
@@ -2641,24 +2650,26 @@
         "title": "追蹤合格名單",
         "question": "您希望在對話的哪個階段將聯絡人認定為合格名單？",
         "when": "當",
-        "then": "然後將 CTWA 名單標記為"
+        "then": "然後將 CTWA 名單標記為",
+        "thenGeneric": "然後將名單標記為"
       },
       "trackPurchases": {
         "title": "追蹤購買",
         "question": "哪個範本可確認購買？",
         "when": "當",
         "then": "然後",
-        "noValueNote": "以規則為基礎的購買會記錄一筆沒有訂單金額的購買轉換：計入購買次數，但營收增加為 0。訂單金額僅由 Meta 自動事件擷取。"
+        "noValueNote": "以規則為基礎的購買會記錄一筆沒有訂單金額的購買轉換：計入購買次數，但營收增加為 0。訂單金額僅由 Meta 自動事件擷取。",
+        "questionGeneric": "您想在對話的哪個時間點記錄購買？"
       }
     },
     "analytics": {
-      "title": "CTWA 分析",
+      "title": "廣告分析",
       "funnelOverview": "轉換流程總覽",
       "conversationsStarted": "已發起的對話",
       "qualifiedLeads": "合格名單",
       "purchases": "購買",
       "adSpend": "廣告花費",
-      "spendAccountLevelNote": "花費是以 Meta 廣告帳戶層級回報的；當選取了某個 WhatsApp 帳戶時，該帳戶下只有花費、沒有轉換流程活動的廣告將被隱藏。",
+      "spendAccountLevelNote": "花費是以 Meta 廣告帳戶層級回報的；當選取了某個帳戶時，該帳戶下只有花費、沒有轉換流程活動的廣告將被隱藏。",
       "revenue": "營收",
       "roas": "廣告投資報酬率 (ROAS)",
       "revenueCurrencyNote": "營收假設採用單一貨幣（美元）。目前尚未支援彙總多幣別的廣告帳戶。",
@@ -2689,19 +2700,25 @@
         "label": "廣告帳戶",
         "note": "以廣告帳戶篩選時，在所選日期範圍內有轉換但花費或曝光為零的廣告將被隱藏。"
       },
+      "channelFilter": {
+        "label": "頻道",
+        "allAccounts": "所有帳戶",
+        "allChannels": "所有頻道"
+      },
       "retarget": "再行銷",
       "thoseWhoPurchased": "已購買的使用者",
       "thoseWhoStartedConversation": "已發起對話的使用者",
       "sendWhatsappBroadcast": "傳送 WhatsApp 廣播",
+      "retargetOnChannel": "在{channel}上重新定位",
       "from": "從",
       "to": "到",
       "unattributed": "未歸因",
       "retargetDialog": {
-        "title": "再行銷 CTWA 聯絡人",
+        "title": "再行銷廣告聯絡人",
         "createAudience": "建立受眾",
         "useExistingAudience": "使用現有受眾",
         "audienceName": "受眾名稱",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "廣告",
         "confirm": "開始同步",
         "success": "再行銷受眾同步已排入佇列。",
         "error": "無法將再行銷受眾同步排入佇列。"
@@ -2713,7 +2730,7 @@
         "failed": "失敗",
         "skippedNoScope": "已略過（無權限範圍）",
         "skippedRegion": "已略過（地區）",
-        "noScopeWarning": "由於此 WhatsApp 帳戶缺少事件權限，部分轉換未能傳送。請重新連接以啟用自動事件回報。",
+        "noScopeWarning": "由於此帳戶缺少事件權限，部分轉換未能傳送。請重新連接以啟用自動事件回報。",
         "reconnectCta": "重新連接帳戶",
         "empty": "此範圍內尚無轉換事件。"
       },
@@ -2726,7 +2743,8 @@
         "contactName": "聯絡人姓名",
         "phone": "電話",
         "adId": "廣告 ID",
-        "occurredAt": "發生時間"
+        "occurredAt": "發生時間",
+        "channel": "頻道"
       },
       "empty": "尚無資料。請連接廣告帳戶並開始追蹤轉換。"
     }
@@ -3780,7 +3798,9 @@
       "startAnotherFlow": "開始另一個流程",
       "notifyAdmins": "通知管理員",
       "transferConversationToHuman": "將對話轉移給人類",
-      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件",
+      "trackAdsLead": "追蹤廣告名單",
+      "trackAdsPurchase": "追蹤廣告購買"
     },
     "triggerGoesOff": "觸發器熄滅",
     "before": "之前",
@@ -5293,6 +5313,9 @@
     },
     "whatsapp": {
       "connect": "連接"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "僅會為具有 WhatsApp 點擊式 WhatsApp 廣告或 Meta 廣告推薦歸因的聯絡人記錄轉換。對其他聯絡人沒有影響。"
     }
   },
   "minigames": {
