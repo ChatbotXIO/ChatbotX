@@ -25,7 +25,6 @@ import {
   FormItem,
   FormMessage,
 } from "@chatbotx.io/ui/components/ui/form"
-import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
@@ -43,6 +42,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { createMessengerMessageTemplateAction } from "./actions/create-message-template"
 import { messengerTemplateLanguageOptions } from "./components/language-options"
 import { TextWithVariablesField } from "./components/text-with-variables-field"
@@ -404,23 +404,24 @@ export function CreateMessageTemplateDialog({
                           </div>
                         </div>
 
-                        <DirectUploadButton
-                          accept="image/png,image/jpeg,image/gif"
-                          label={t("messenger.messageTemplate.create.image")}
-                          maxFiles={1}
-                          onUploadSuccess={(_, file, publicUrl) => {
-                            form.setValue("headerImageUrl", publicUrl, {
+                        <MediaLibraryTrigger
+                          onSelect={(file) => {
+                            form.setValue("headerImageUrl", file.url, {
                               shouldDirty: true,
                               shouldValidate: true,
                             })
                             setUploadedImage({
                               name: file.name,
-                              url: publicUrl,
+                              url: file.url,
                             })
                           }}
-                          uploadPath={`public/space/${workspaceId}/messenger-templates/${integrationMessengerId}`}
                           workspaceId={workspaceId}
-                        />
+                        >
+                          <Button size="sm" type="button" variant="outline">
+                            <ImageIcon className="size-4" />
+                            {t("messenger.messageTemplate.create.image")}
+                          </Button>
+                        </MediaLibraryTrigger>
                       </div>
                       <FormMessage />
                     </FormItem>

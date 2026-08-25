@@ -121,6 +121,7 @@
     "scanQRCode": "Skanna mig med din kamera",
     "search": "Sök",
     "selectAll": "Markera alla",
+    "unselect": "Avmarkera",
     "selectFile": "Välj fil",
     "selectRow": "Markera rad",
     "send": "Skicka",
@@ -3371,6 +3372,8 @@
     "archiveFeatureDescription": "Är du säker på att du vill arkivera {feature}?",
     "botIsActive": "Boten är aktiv",
     "cancelEdit": "Avbryt",
+    "replaceAttachment": "Ersätt bilaga",
+    "addAttachment": "Lägg till bilaga",
     "changeDefault": "Ändra standard",
     "changeDefaultDescription": "Är du säker på att du vill ändra standardagenten för AI?",
     "changeHideState": "Ändra dölj-status",
@@ -5341,5 +5344,32 @@
         "empty": "Inga spelloggar ännu"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Mediebibliotek",
+    "searchPlaceholder": "Sök filer...",
+    "newFolder": "Ny mapp",
+    "recent": "Senaste",
+    "favourite": "Favorit",
+    "upload": "Ladda upp",
+    "done": "Klar",
+    "deleteFolder": "Ta bort mapp",
+    "renameFolder": "Byt namn på mapp",
+    "noFiles": "Inga filer hittades",
+    "noFolders": "Inga mappar än",
+    "folderNamePlaceholder": "Mappnamn",
+    "confirmDeleteFolder": "Ta bort mappen och alla dess filer?",
+    "confirmDeleteFolderDescription": "Alla filer i denna mapp kommer att tas bort permanent från servern. Denna åtgärd kan inte ångras.",
+    "confirmDeleteFile": "Ta bort fil?",
+    "confirmDeleteFileDescription": "Denna fil kommer att tas bort permanent från servern.",
+    "addToFavourites": "Lägg till som favorit",
+    "removeFromFavourites": "Ta bort som favorit",
+    "deleteFile": "Ta bort fil",
+    "selectOnlyOneFile": "Du kan bara välja 1 fil",
+    "confirmDeleteFiles": "{count, plural, =1 {Ta bort 1 fil?} other {Ta bort # filer?}}",
+    "confirmDeleteFilesDescription": "Dessa filer kommer att tas bort permanent från servern. Denna åtgärd kan inte ångras.",
+    "filesCount": "{count, plural, =0 {Inga filer} =1 {1 fil} other {# filer}}",
+    "openMediaLibrary": "Öppna mediebibliotek",
+    "uploadFailed": "Det gick inte att ladda upp {name}"
   }
 }

@@ -71,6 +71,7 @@
     "reset": "Sıfırla",
     "save": "Kaydet",
     "selectAll": "Tümünü seç",
+    "unselect": "Seçimi kaldır",
     "selectRow": "Satırı seç",
     "sendFlow": "Akışı Gönder",
     "sendMessage": "Mesaj Gönder",
@@ -2901,6 +2902,8 @@
     "editMessagePlaceholder": "Mesajınızı düzenleyin...",
     "saveEdit": "Kaydet",
     "cancelEdit": "İptal",
+    "replaceAttachment": "Eki değiştir",
+    "addAttachment": "Ek ekle",
     "failedToCopy": "Kopyalanamadı",
     "failedToPreviewImage": "Görsel önizlenemedi",
     "loadingData": "Veriler yükleniyor...",
@@ -5341,5 +5344,32 @@
         "empty": "Henüz oyun kaydı yok"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Medya Kitaplığı",
+    "searchPlaceholder": "Dosya ara...",
+    "newFolder": "Yeni klasör",
+    "recent": "Son kullanılanlar",
+    "favourite": "Favori",
+    "upload": "Yükle",
+    "done": "Bitti",
+    "deleteFolder": "Klasörü sil",
+    "renameFolder": "Klasörü yeniden adlandır",
+    "noFiles": "Dosya bulunamadı",
+    "noFolders": "Henüz klasör yok",
+    "folderNamePlaceholder": "Klasör adı",
+    "confirmDeleteFolder": "Klasör ve tüm dosyaları silinsin mi?",
+    "confirmDeleteFolderDescription": "Bu klasördeki tüm dosyalar sunucudan kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+    "confirmDeleteFile": "Dosya silinsin mi?",
+    "confirmDeleteFileDescription": "Bu dosya sunucudan kalıcı olarak silinecek.",
+    "addToFavourites": "Favorilere ekle",
+    "removeFromFavourites": "Favorilerden kaldır",
+    "deleteFile": "Dosyayı sil",
+    "selectOnlyOneFile": "Yalnızca 1 dosya seçebilirsiniz",
+    "confirmDeleteFiles": "{count, plural, =1 {1 dosya silinsin mi?} other {# dosya silinsin mi?}}",
+    "confirmDeleteFilesDescription": "Bu dosyalar sunucudan kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+    "filesCount": "{count, plural, =0 {Dosya yok} =1 {1 dosya} other {# dosya}}",
+    "openMediaLibrary": "Medya Kitaplığını Aç",
+    "uploadFailed": "{name} yüklenemedi"
   }
 }

@@ -26,9 +26,10 @@ import { useMemo, useRef, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { usePromptVariableOptions } from "@/components/tiptap/use-prompt-variable-options"
+import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { useWorkspaceId } from "@/hooks/routing"
 
-function UrlVariablePicker({
+export function UrlVariablePicker({
   onSelect,
 }: {
   onSelect: (variableName: string) => void
@@ -95,6 +96,7 @@ export function DirectUploadOrInsertLink({
   uploadPath,
   onSuccess,
   showVariablePicker = false,
+  useMediaLibrary = false,
 }: {
   parentName: string
   fileType: FileType
@@ -102,6 +104,9 @@ export function DirectUploadOrInsertLink({
   onSuccess?: (url: string) => void
   // Requires a mounted CustomFieldStoreProvider (e.g. inside the flow editor).
   showVariablePicker?: boolean
+  // Pick an existing workspace file from the Media Library instead of only
+  // uploading a new one from the device.
+  useMediaLibrary?: boolean
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -121,6 +126,21 @@ export function DirectUploadOrInsertLink({
 
   const chooseUploadFile = () => {
     triggerRef.current?.click()
+  }
+
+  const handleMediaLibrarySelect = (file: { url: string }) => {
+    if (onSuccess) {
+      onSuccess(file.url)
+    } else {
+      setValue(`${parentName}.url`, file.url, {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+      setValue(`${parentName}.mode`, "file", {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+    }
   }
 
   const fileConfigs = useMemo(() => {
@@ -178,31 +198,33 @@ export function DirectUploadOrInsertLink({
         {(field) => <Input type="hidden" {...field} />}
       </FormFieldWrapper>
 
-      <DirectUploadButton
-        accept={fileConfigs.mimeType}
-        className="hidden"
-        label={t("actions.uploadFile")}
-        maxSize={10_485_760} // 10MB
-        multiple={false}
-        onUploadError={(error, file) => {
-          toast.error(`Failed to upload ${file.name}`, {
-            description: error.message,
-          })
-        }}
-        onUploadSuccess={(_filePath, _file, finalUrl) => {
-          setValue(`${parentName}.url`, finalUrl, {
-            shouldValidate: true,
-            shouldDirty: true,
-          })
-          setValue(`${parentName}.mode`, "file", {
-            shouldValidate: true,
-            shouldDirty: true,
-          })
-        }}
-        triggerRef={triggerRef}
-        uploadPath={uploadPath}
-        workspaceId={workspaceId}
-      />
+      {!useMediaLibrary && (
+        <DirectUploadButton
+          accept={fileConfigs.mimeType}
+          className="hidden"
+          label={t("actions.uploadFile")}
+          maxSize={10_485_760} // 10MB
+          multiple={false}
+          onUploadError={(error, file) => {
+            toast.error(`Failed to upload ${file.name}`, {
+              description: error.message,
+            })
+          }}
+          onUploadSuccess={(_filePath, _file, finalUrl) => {
+            setValue(`${parentName}.url`, finalUrl, {
+              shouldValidate: true,
+              shouldDirty: true,
+            })
+            setValue(`${parentName}.mode`, "file", {
+              shouldValidate: true,
+              shouldDirty: true,
+            })
+          }}
+          triggerRef={triggerRef}
+          uploadPath={uploadPath}
+          workspaceId={workspaceId}
+        />
+      )}
 
       {uploadMode === "file" ? (
         <>
@@ -210,67 +232,102 @@ export function DirectUploadOrInsertLink({
             {(field) => <Input type="hidden" {...field} />}
           </FormFieldWrapper>
 
-          <DirectUploadButton
-            accept={fileConfigs.mimeType}
-            className="hidden"
-            label={t("actions.uploadFile")}
-            maxSize={10_485_760} // 10MB
-            multiple={false}
-            onUploadError={(error, file) => {
-              toast.error(`Failed to upload ${file.name}`, {
-                description: error.message,
-              })
-            }}
-            onUploadSuccess={(_filePath, _file, finalUrl) => {
-              if (onSuccess) {
-                onSuccess(finalUrl)
-              } else {
-                setValue(`${parentName}.url`, finalUrl, {
-                  shouldValidate: true,
-                  shouldDirty: true,
+          {!useMediaLibrary && (
+            <DirectUploadButton
+              accept={fileConfigs.mimeType}
+              className="hidden"
+              label={t("actions.uploadFile")}
+              maxSize={10_485_760} // 10MB
+              multiple={false}
+              onUploadError={(error, file) => {
+                toast.error(`Failed to upload ${file.name}`, {
+                  description: error.message,
                 })
-              }
-            }}
-            triggerRef={triggerRef}
-            uploadPath={uploadPath}
-            workspaceId={workspaceId}
-          />
+              }}
+              onUploadSuccess={(_filePath, _file, finalUrl) => {
+                if (onSuccess) {
+                  onSuccess(finalUrl)
+                } else {
+                  setValue(`${parentName}.url`, finalUrl, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              }}
+              triggerRef={triggerRef}
+              uploadPath={uploadPath}
+              workspaceId={workspaceId}
+            />
+          )}
           {publicUrl && publicUrl.length > 0 ? (
-            <Button
-              className="relative flex h-full w-full p-0!"
-              onClick={chooseUploadFile}
-              type="button"
-              variant="ghost"
-            >
-              {fileType === "image" ? (
-                <Image
-                  alt={stepId ?? ""}
-                  className="h-full w-full object-contain"
-                  height={1000}
-                  src={publicUrl}
-                  width={1000}
-                />
+            (() => {
+              const thumbnailContent =
+                fileType === "image" ? (
+                  <Image
+                    alt={stepId ?? ""}
+                    className="object-contain"
+                    fill={true}
+                    sizes="240px"
+                    src={publicUrl}
+                  />
+                ) : (
+                  <div className="flex w-full min-w-0 items-center gap-2 px-3">
+                    <fileConfigs.icon className="size-5 flex-none" />
+                    <span className="min-w-0 flex-1 truncate text-start">
+                      {publicUrl}
+                    </span>
+                  </div>
+                )
+              const thumbnailButton = (
+                <Button
+                  className="relative flex h-full w-full overflow-hidden p-0!"
+                  onClick={useMediaLibrary ? undefined : chooseUploadFile}
+                  type="button"
+                  variant="ghost"
+                >
+                  {thumbnailContent}
+                </Button>
+              )
+              return useMediaLibrary ? (
+                <MediaLibraryTrigger
+                  onSelect={handleMediaLibrarySelect}
+                  uploadPath={uploadPath}
+                  workspaceId={workspaceId}
+                >
+                  {thumbnailButton}
+                </MediaLibraryTrigger>
               ) : (
-                <div className="flex w-full min-w-0 items-center gap-2 px-3">
-                  <fileConfigs.icon className="size-5 flex-none" />
-                  <span className="min-w-0 flex-1 truncate text-start">
-                    {publicUrl}
-                  </span>
-                </div>
-              )}
-            </Button>
+                thumbnailButton
+              )
+            })()
           ) : (
             <div className="flex w-full flex-col items-center justify-center">
               <fileConfigs.icon className="mt-2" size={24} />
               <div className="flex items-center justify-center gap-2">
-                <Button
-                  className="p-0 text-primary"
-                  onClick={chooseUploadFile}
-                  type="button"
-                  variant="link"
-                >
-                  {t("actions.uploadFile")}
-                </Button>
+                {useMediaLibrary ? (
+                  <MediaLibraryTrigger
+                    onSelect={handleMediaLibrarySelect}
+                    uploadPath={uploadPath}
+                    workspaceId={workspaceId}
+                  >
+                    <Button
+                      className="p-0 text-primary"
+                      type="button"
+                      variant="link"
+                    >
+                      {t("actions.uploadFile")}
+                    </Button>
+                  </MediaLibraryTrigger>
+                ) : (
+                  <Button
+                    className="p-0 text-primary"
+                    onClick={chooseUploadFile}
+                    type="button"
+                    variant="link"
+                  >
+                    {t("actions.uploadFile")}
+                  </Button>
+                )}
                 <span className="font-medium text-foreground text-sm">
                   {t("texts.or")}
                 </span>

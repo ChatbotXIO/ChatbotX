@@ -71,6 +71,7 @@
     "reset": "Nulstil",
     "save": "Gem",
     "selectAll": "Vælg alle",
+    "unselect": "Fravælg",
     "selectRow": "Vælg række",
     "sendFlow": "Send flow",
     "sendMessage": "Send besked",
@@ -2901,6 +2902,8 @@
     "editMessagePlaceholder": "Rediger din besked...",
     "saveEdit": "Gem",
     "cancelEdit": "Annullér",
+    "replaceAttachment": "Udskift vedhæftning",
+    "addAttachment": "Tilføj vedhæftning",
     "failedToCopy": "Mislykkedes til kopiér",
     "failedToPreviewImage": "Mislykkedes til preview billede",
     "loadingData": "Indlæser data...",
@@ -5341,5 +5344,32 @@
         "empty": "Ingen spiloptegnelser endnu"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Mediebibliotek",
+    "searchPlaceholder": "Søg efter filer...",
+    "newFolder": "Ny mappe",
+    "recent": "Seneste",
+    "favourite": "Favorit",
+    "upload": "Upload",
+    "done": "Færdig",
+    "deleteFolder": "Slet mappe",
+    "renameFolder": "Omdøb mappe",
+    "noFiles": "Ingen filer fundet",
+    "noFolders": "Ingen mapper endnu",
+    "folderNamePlaceholder": "Mappenavn",
+    "confirmDeleteFolder": "Slet mappe og alle dens filer?",
+    "confirmDeleteFolderDescription": "Alle filer i denne mappe slettes permanent fra serveren. Denne handling kan ikke fortrydes.",
+    "confirmDeleteFile": "Slet fil?",
+    "confirmDeleteFileDescription": "Denne fil slettes permanent fra serveren.",
+    "addToFavourites": "Føj til favoritter",
+    "removeFromFavourites": "Fjern fra favoritter",
+    "deleteFile": "Slet fil",
+    "selectOnlyOneFile": "Du kan kun vælge 1 fil",
+    "confirmDeleteFiles": "{count, plural, =1 {Slet 1 fil?} other {Slet # filer?}}",
+    "confirmDeleteFilesDescription": "Disse filer slettes permanent fra serveren. Denne handling kan ikke fortrydes.",
+    "filesCount": "{count, plural, =0 {Ingen filer} =1 {1 fil} other {# filer}}",
+    "openMediaLibrary": "Åbn mediebibliotek",
+    "uploadFailed": "Kunne ikke uploade {name}"
   }
 }

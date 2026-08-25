@@ -87,8 +87,9 @@ export function DirectUploadButton({
             })
 
             if (!presignedResponse.ok) {
+              const errorBody = await presignedResponse.json().catch(() => null)
               throw new Error(
-                `Failed to get presigned URL: ${presignedResponse.statusText}`,
+                `Failed to get presigned URL: ${errorBody?.error ?? presignedResponse.statusText}`,
               )
             }
 

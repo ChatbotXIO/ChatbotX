@@ -132,6 +132,7 @@ export function PrizeItemEditDialog(props: PrizeItemEditDialogProps) {
                   fileType={fileTypes.enum.image}
                   parentName={imageFieldName}
                   uploadPath={`public/space/${workspaceId}/minigames/prizes`}
+                  useMediaLibrary
                 />
               </CardContent>
             </Card>

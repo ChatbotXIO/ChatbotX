@@ -275,6 +275,47 @@ Full-page create/edit forms follow this layout:
 </div>
 ```
 
+### Interactive Elements — Use `<Button>`
+
+**Never use a raw `<button>` element.** Always use `Button` from `@chatbotx.io/ui/components/ui/button` — including icon-only buttons, buttons wrapped in a `group`/`hover` container, and buttons rendered inside a base-ui trigger (`DropdownMenuTrigger`, `DialogClose`, etc. via their `render` prop).
+
+```typescript
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+
+// WRONG — raw HTML button
+<button className="flex items-center gap-2 rounded-md px-3 py-2" onClick={onClick} type="button">
+  <PlusIcon className="size-4" />
+  {t("actions.create")}
+</button>
+
+// CORRECT — Button component
+<Button onClick={onClick} type="button" variant="ghost">
+  <PlusIcon className="size-4" />
+  {t("actions.create")}
+</Button>
+```
+
+Variants: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, `dashed`. Sizes: `default`, `sm`, `lg`, `icon` (use `icon` for icon-only buttons, not a text-labelled size with padding overrides).
+
+For a base-ui trigger that needs a custom element (`DropdownMenuTrigger`, `DialogClose`, `TooltipTrigger`), pass `<Button>` via the `render` prop instead of a raw `<button>`:
+
+```typescript
+<DropdownMenuTrigger
+  render={
+    <Button size="icon" type="button" variant="ghost">
+      <MoreVerticalIcon className="size-3.5" />
+    </Button>
+  }
+/>
+```
+
+`Button` renders as `inline-flex items-center justify-center` with size-driven height/padding (`buttonVariants` in `packages/ui/src/components/ui/button.tsx`). When reusing it for a non-standard layout (e.g. a full-width nav item, or a card that stacks children vertically), override what doesn't fit instead of fighting it with a raw `<button>`:
+
+- Full-width, left-aligned row (sidebar nav item, list row): add `justify-start`.
+- Vertically stacked children (a clickable card): add `flex-col items-stretch justify-start h-auto gap-0` — `Button`'s base classes lay out children in a row by default.
+- Compact icon-only button that shouldn't be a fixed 36px square: use `size="icon"` and override with `size-auto` (or an explicit `size-*`) plus your own padding.
+- A `bg-primary`/active-state button must also override `hover:bg-primary` (or similar) — `variant="ghost"`'s default `hover:bg-accent` will otherwise flash a different color on hover while the button is in its active/selected state.
+
 ### CRITICAL — Default Values for Nullable Text Fields
 
 React Hook Form requires non-null values for controlled text inputs. Passing `null` as a `defaultValues` entry causes React to treat the input as **uncontrolled**, triggering warnings and unpredictable behavior.

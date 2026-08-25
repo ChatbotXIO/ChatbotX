@@ -71,6 +71,7 @@
     "reset": "Restablecer",
     "save": "Guardar",
     "selectAll": "Seleccionar todo",
+    "unselect": "Deseleccionar",
     "selectRow": "Seleccionar fila",
     "sendFlow": "Enviar flujo",
     "sendMessage": "Enviar mensaje",
@@ -2901,6 +2902,8 @@
     "editMessagePlaceholder": "Edit tu mensaje...",
     "saveEdit": "Guardar",
     "cancelEdit": "Cancelar",
+    "replaceAttachment": "Reemplazar archivo adjunto",
+    "addAttachment": "Agregar archivo adjunto",
     "failedToCopy": "Failed un copy",
     "failedToPreviewImage": "Failed un preview imagen",
     "loadingData": "Cargando datos...",
@@ -5341,5 +5344,32 @@
         "empty": "Aún no hay registros de jugadas"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Biblioteca de medios",
+    "searchPlaceholder": "Buscar archivos...",
+    "newFolder": "Nueva carpeta",
+    "recent": "Recientes",
+    "favourite": "Favoritos",
+    "upload": "Subir",
+    "done": "Listo",
+    "deleteFolder": "Eliminar carpeta",
+    "renameFolder": "Renombrar carpeta",
+    "noFiles": "No se encontraron archivos",
+    "noFolders": "Aún no hay carpetas",
+    "folderNamePlaceholder": "Nombre de la carpeta",
+    "confirmDeleteFolder": "¿Eliminar la carpeta y todos sus archivos?",
+    "confirmDeleteFolderDescription": "Todos los archivos de esta carpeta se eliminarán permanentemente del servidor. Esta acción no se puede deshacer.",
+    "confirmDeleteFile": "¿Eliminar archivo?",
+    "confirmDeleteFileDescription": "Este archivo se eliminará permanentemente del servidor.",
+    "addToFavourites": "Agregar a favoritos",
+    "removeFromFavourites": "Quitar de favoritos",
+    "deleteFile": "Eliminar archivo",
+    "selectOnlyOneFile": "Solo puedes seleccionar 1 archivo",
+    "confirmDeleteFiles": "{count, plural, =1 {¿Eliminar 1 archivo?} other {¿Eliminar # archivos?}}",
+    "confirmDeleteFilesDescription": "Estos archivos se eliminarán permanentemente del servidor. Esta acción no se puede deshacer.",
+    "filesCount": "{count, plural, =0 {Sin archivos} =1 {1 archivo} other {# archivos}}",
+    "openMediaLibrary": "Abrir biblioteca de medios",
+    "uploadFailed": "Error al subir {name}"
   }
 }

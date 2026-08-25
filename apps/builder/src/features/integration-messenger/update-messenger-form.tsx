@@ -320,6 +320,7 @@ export function UpdateMessengerForm({
                           <MediaLibraryOrInsertLink
                             fileType={fileTypes.enum.image}
                             parentName={`personas.${index}.profilePicture`}
+                            uploadPath={`public/space/${workspaceId}/personas/${persona.id}/profile-picture`}
                           />
                         </CardContent>
                       </Card>

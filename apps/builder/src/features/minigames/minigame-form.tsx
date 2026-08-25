@@ -444,6 +444,7 @@ export function MinigameForm(props: MinigameFormProps) {
                         fileType={fileTypes.enum.image}
                         parentName="appearance.backgroundImage"
                         uploadPath={`public/space/${workspaceId}/minigames/appearance`}
+                        useMediaLibrary
                       />
                     </CardContent>
                   </Card>
@@ -461,6 +462,7 @@ export function MinigameForm(props: MinigameFormProps) {
                         fileType={fileTypes.enum.image}
                         parentName="appearance.prizeDescriptionImage"
                         uploadPath={`public/space/${workspaceId}/minigames/appearance`}
+                        useMediaLibrary
                       />
                     </CardContent>
                   </Card>
@@ -476,6 +478,7 @@ export function MinigameForm(props: MinigameFormProps) {
                         fileType={fileTypes.enum.image}
                         parentName="appearance.startButtonImage"
                         uploadPath={`public/space/${workspaceId}/minigames/appearance`}
+                        useMediaLibrary
                       />
                     </CardContent>
                   </Card>

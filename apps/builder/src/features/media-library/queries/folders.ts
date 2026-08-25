@@ -1,6 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
+import { count, db, eq } from "@chatbotx.io/database/client"
+import { mediaLibraryFileModel } from "@chatbotx.io/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListFoldersRequest, ListFoldersResponse } from "../schemas"
 
@@ -9,10 +10,29 @@ export async function listMediaLibraryFolders(
 ): Promise<ListFoldersResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const data = await db.query.mediaLibraryFolderModel.findMany({
-    where: { workspaceId: input.workspaceId },
-    orderBy: (t, { asc }) => [asc(t.name)],
-  })
+  const [folders, fileCounts] = await Promise.all([
+    db.query.mediaLibraryFolderModel.findMany({
+      where: { workspaceId: input.workspaceId },
+      orderBy: (t, { asc }) => [asc(t.name)],
+    }),
+    db
+      .select({
+        folderId: mediaLibraryFileModel.folderId,
+        count: count(),
+      })
+      .from(mediaLibraryFileModel)
+      .where(eq(mediaLibraryFileModel.workspaceId, input.workspaceId))
+      .groupBy(mediaLibraryFileModel.folderId),
+  ])
 
-  return { data }
+  const fileCountByFolderId = new Map(
+    fileCounts.map((row) => [row.folderId, row.count]),
+  )
+
+  return {
+    data: folders.map((folder) => ({
+      ...folder,
+      fileCount: fileCountByFolderId.get(folder.id) ?? 0,
+    })),
+  }
 }

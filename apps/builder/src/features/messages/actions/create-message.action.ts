@@ -14,15 +14,22 @@ import type {
   ConversationModel,
   UserModel,
 } from "@chatbotx.io/database/types"
-import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
+import {
+  guessFileTypeFromMimeType,
+  pathJoin,
+  type UploadedFile,
+  uploader,
+  uploadMultipleFiles,
+} from "@chatbotx.io/filesystem"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { findMediaLibraryFileByPath } from "@/features/media-library/queries/files"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageRequest,
@@ -101,6 +108,34 @@ export const createMessage = async (props: {
       parsedInput.files,
       `public/space/${conversation.workspaceId}/conversations/${conversation.id}`,
     )
+  } else if ("mediaFile" in parsedInput && parsedInput.mediaFile) {
+    const mediaLibraryFile = await findMediaLibraryFileByPath({
+      workspaceId: conversation.workspaceId,
+      path: parsedInput.mediaFile.path,
+    })
+    if (!mediaLibraryFile) {
+      throw new ChatbotXException("Media library file not found")
+    }
+
+    // Copy into a conversation-scoped path instead of reusing the Media
+    // Library file's own S3 key: attachments must outlive the Media Library
+    // file they were picked from, since deleting that file (or its folder)
+    // later must not break an already-sent message.
+    const attachmentPath = pathJoin(
+      `public/space/${conversation.workspaceId}/conversations/${conversation.id}`,
+      createId(),
+    )
+    await uploader.copyObject(mediaLibraryFile.path, attachmentPath)
+
+    uploadedFiles = [
+      {
+        name: mediaLibraryFile.name,
+        mimeType: mediaLibraryFile.mimeType,
+        originPath: attachmentPath,
+        size: mediaLibraryFile.size,
+        fileType: guessFileTypeFromMimeType(mediaLibraryFile.mimeType),
+      },
+    ]
   }
 
   const repository = await createMessageRepository()

@@ -1,5 +1,7 @@
 "use server"
 
+import { resolveTenantSettings } from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   and,
   db,
@@ -10,14 +12,21 @@ import {
   type SQL,
 } from "@chatbotx.io/database/client"
 import { mediaLibraryFileModel } from "@chatbotx.io/database/schema"
-import { env } from "@/env"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListFilesRequest, ListFilesResponse } from "../schemas"
+import {
+  type ListFilesRequest,
+  type ListFilesResponse,
+  MEDIA_LIBRARY_FILES_PAGE_SIZE,
+} from "../schemas"
 
 export async function listMediaLibraryFiles(
   input: ListFilesRequest,
 ): Promise<ListFilesResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
+
+  const { storageUrl } = await resolveTenantSettings({
+    workspaceId: input.workspaceId,
+  })
 
   const conditions: SQL[] = [
     eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
@@ -40,17 +49,43 @@ export async function listMediaLibraryFiles(
       ? desc(mediaLibraryFileModel.lastAccessedAt)
       : desc(mediaLibraryFileModel.createdAt)
 
+  const page = input.page ?? 1
+
   const data = await db
     .select()
     .from(mediaLibraryFileModel)
     .where(and(...conditions))
     .orderBy(orderByColumn)
-    .limit(input.filter === "recent" ? 50 : 200)
+    .limit(MEDIA_LIBRARY_FILES_PAGE_SIZE)
+    .offset((page - 1) * MEDIA_LIBRARY_FILES_PAGE_SIZE)
 
   return {
     data: data.map((file) => ({
       ...file,
-      url: new URL(file.path, env.NEXT_PUBLIC_STORAGE_URL ?? "").toString(),
+      url: getPublicFileUrl(file.path, storageUrl),
     })),
   }
+}
+
+/**
+ * Confirms a storage path belongs to a Media Library file owned by the given
+ * workspace, so a client-supplied path can't be used to reference another
+ * workspace's (or otherwise arbitrary) storage object.
+ */
+export async function findMediaLibraryFileByPath(input: {
+  workspaceId: string
+  path: string
+}) {
+  const [file] = await db
+    .select()
+    .from(mediaLibraryFileModel)
+    .where(
+      and(
+        eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+        eq(mediaLibraryFileModel.path, input.path),
+      ),
+    )
+    .limit(1)
+
+  return file ?? null
 }

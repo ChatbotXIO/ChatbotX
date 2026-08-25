@@ -71,6 +71,7 @@
     "reset": "Opnieuw instellen",
     "save": "Opslaan",
     "selectAll": "Alles selecteren",
+    "unselect": "Selectie opheffen",
     "selectRow": "Rij selecteren",
     "sendFlow": "Flow verzenden",
     "sendMessage": "Bericht verzenden",
@@ -2901,6 +2902,8 @@
     "editMessagePlaceholder": "Bewerk je bericht...",
     "saveEdit": "Opslaan",
     "cancelEdit": "Annuleren",
+    "replaceAttachment": "Bijlage vervangen",
+    "addAttachment": "Bijlage toevoegen",
     "failedToCopy": "Kopiëren is mislukt",
     "failedToPreviewImage": "Voorbeeld van afbeelding laden is mislukt",
     "loadingData": "Gegevens laden...",
@@ -5341,5 +5344,32 @@
         "empty": "Nog geen speelrecords"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "Mediabibliotheek",
+    "searchPlaceholder": "Bestanden zoeken...",
+    "newFolder": "Nieuwe map",
+    "recent": "Recent",
+    "favourite": "Favoriet",
+    "upload": "Uploaden",
+    "done": "Klaar",
+    "deleteFolder": "Map verwijderen",
+    "renameFolder": "Map hernoemen",
+    "noFiles": "Geen bestanden gevonden",
+    "noFolders": "Nog geen mappen",
+    "folderNamePlaceholder": "Mapnaam",
+    "confirmDeleteFolder": "Map en alle bestanden verwijderen?",
+    "confirmDeleteFolderDescription": "Alle bestanden in deze map worden permanent van de server verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "confirmDeleteFile": "Bestand verwijderen?",
+    "confirmDeleteFileDescription": "Dit bestand wordt permanent van de server verwijderd.",
+    "addToFavourites": "Toevoegen aan favorieten",
+    "removeFromFavourites": "Verwijderen uit favorieten",
+    "deleteFile": "Bestand verwijderen",
+    "selectOnlyOneFile": "Je kunt maar 1 bestand selecteren",
+    "confirmDeleteFiles": "{count, plural, =1 {1 bestand verwijderen?} other {# bestanden verwijderen?}}",
+    "confirmDeleteFilesDescription": "Deze bestanden worden permanent van de server verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "filesCount": "{count, plural, =0 {Geen bestanden} =1 {1 bestand} other {# bestanden}}",
+    "openMediaLibrary": "Mediabibliotheek openen",
+    "uploadFailed": "Uploaden van {name} mislukt"
   }
 }

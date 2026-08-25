@@ -1,6 +1,14 @@
 "use server"
 
-import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  and,
+  db,
+  eq,
+  findOrFail,
+  inArray,
+  sql,
+} from "@chatbotx.io/database/client"
 import {
   mediaLibraryFileModel,
   mediaLibraryFolderModel,
@@ -13,6 +21,7 @@ import type {
   CreateFolderRequest,
   DeleteFileRequest,
   DeleteFolderRequest,
+  MoveFilesRequest,
   RenameFolderRequest,
   ToggleFavouriteRequest,
 } from "../schemas"
@@ -34,7 +43,12 @@ export async function renameMediaLibraryFolder(input: RenameFolderRequest) {
   await db
     .update(mediaLibraryFolderModel)
     .set({ name: input.name })
-    .where(eq(mediaLibraryFolderModel.id, input.folderId))
+    .where(
+      and(
+        eq(mediaLibraryFolderModel.id, input.folderId),
+        eq(mediaLibraryFolderModel.workspaceId, input.workspaceId),
+      ),
+    )
 }
 
 export async function deleteMediaLibraryFolder(input: DeleteFolderRequest) {
@@ -56,14 +70,37 @@ export async function deleteMediaLibraryFolder(input: DeleteFolderRequest) {
     }
     await tx
       .delete(mediaLibraryFileModel)
-      .where(eq(mediaLibraryFileModel.folderId, input.folderId))
+      .where(
+        and(
+          eq(mediaLibraryFileModel.folderId, input.folderId),
+          eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+        ),
+      )
     await tx
       .delete(mediaLibraryFolderModel)
-      .where(eq(mediaLibraryFolderModel.id, input.folderId))
+      .where(
+        and(
+          eq(mediaLibraryFolderModel.id, input.folderId),
+          eq(mediaLibraryFolderModel.workspaceId, input.workspaceId),
+        ),
+      )
   })
 }
 
 export async function createMediaLibraryFile(input: CreateFileRequest) {
+  // `path` is client-supplied and must be confirmed to live under this
+  // workspace's own storage prefix before we persist it — otherwise a
+  // workspace member could register another workspace's real S3 object as
+  // their own Media Library file, then delete it via
+  // deleteMediaLibraryFileAction (see genericHandler's identical check in
+  // apps/builder/src/lib/upload/handlers.ts).
+  const isWorkspaceScopedPath =
+    input.path.startsWith(`workspaces/${input.workspaceId}/`) ||
+    input.path.startsWith(`public/space/${input.workspaceId}/`)
+  if (!isWorkspaceScopedPath) {
+    throw new ChatbotXException("Invalid file path", "invalidPath", 400)
+  }
+
   const [file] = await db
     .insert(mediaLibraryFileModel)
     .values({
@@ -101,6 +138,18 @@ export async function deleteMediaLibraryFile(input: DeleteFileRequest) {
     .where(eq(mediaLibraryFileModel.id, input.fileId))
 }
 
+export async function moveMediaLibraryFiles(input: MoveFilesRequest) {
+  await db
+    .update(mediaLibraryFileModel)
+    .set({ folderId: input.folderId ?? null })
+    .where(
+      and(
+        eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+        inArray(mediaLibraryFileModel.id, input.fileIds),
+      ),
+    )
+}
+
 export async function toggleMediaLibraryFavourite(
   input: ToggleFavouriteRequest,
 ) {
@@ -123,5 +172,10 @@ export async function recordMediaLibraryFileAccess(input: {
   await db
     .update(mediaLibraryFileModel)
     .set({ lastAccessedAt: sql`CURRENT_TIMESTAMP` })
-    .where(eq(mediaLibraryFileModel.id, input.fileId))
+    .where(
+      and(
+        eq(mediaLibraryFileModel.id, input.fileId),
+        eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+      ),
+    )
 }

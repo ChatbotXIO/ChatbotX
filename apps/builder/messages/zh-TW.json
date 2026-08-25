@@ -1453,6 +1453,8 @@
     "editMessagePlaceholder": "編輯您的留言...",
     "saveEdit": "儲存",
     "cancelEdit": "取消",
+    "replaceAttachment": "取代附件",
+    "addAttachment": "新增附件",
     "failedToCopy": "複製失敗",
     "failedToPreviewImage": "預覽影像失敗",
     "loadingData": "正在載入資料...",
@@ -1640,6 +1642,7 @@
     "reset": "重設",
     "save": "儲存",
     "selectAll": "全選",
+    "unselect": "取消選取",
     "selectRow": "選擇行",
     "sendFlow": "傳送流程",
     "sendMessage": "傳送訊息",
@@ -5341,5 +5344,32 @@
         "empty": "尚無遊戲紀錄"
       }
     }
+  },
+  "mediaLibrary": {
+    "title": "媒體庫",
+    "searchPlaceholder": "搜尋檔案...",
+    "newFolder": "新增資料夾",
+    "recent": "最近",
+    "favourite": "收藏",
+    "upload": "上傳",
+    "done": "完成",
+    "deleteFolder": "刪除資料夾",
+    "renameFolder": "重新命名資料夾",
+    "noFiles": "找不到檔案",
+    "noFolders": "尚無資料夾",
+    "folderNamePlaceholder": "資料夾名稱",
+    "confirmDeleteFolder": "刪除此資料夾及其所有檔案？",
+    "confirmDeleteFolderDescription": "此資料夾中的所有檔案將從伺服器永久刪除。此操作無法復原。",
+    "confirmDeleteFile": "刪除檔案？",
+    "confirmDeleteFileDescription": "此檔案將從伺服器永久刪除。",
+    "addToFavourites": "加入收藏",
+    "removeFromFavourites": "取消收藏",
+    "deleteFile": "刪除檔案",
+    "selectOnlyOneFile": "只能選擇 1 個檔案",
+    "confirmDeleteFiles": "{count, plural, =1 {刪除 1 個檔案？} other {刪除 # 個檔案？}}",
+    "confirmDeleteFilesDescription": "這些檔案將從伺服器永久刪除。此操作無法復原。",
+    "filesCount": "{count, plural, =0 {沒有檔案} =1 {1 個檔案} other {# 個檔案}}",
+    "openMediaLibrary": "開啟媒體庫",
+    "uploadFailed": "{name} 上傳失敗"
   }
 }

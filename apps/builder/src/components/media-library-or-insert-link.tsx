@@ -16,27 +16,41 @@ import Image from "next/image"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
-import { useFormContext } from "react-hook-form"
+import { useFormContext, useWatch } from "react-hook-form"
+import { UrlVariablePicker } from "@/components/direct-upload"
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 
 export function MediaLibraryOrInsertLink({
   parentName,
   fileType,
+  uploadPath,
+  showVariablePicker = false,
 }: {
   parentName: string
   fileType: FileType
+  uploadPath?: string
+  // Requires a mounted CustomFieldStoreProvider (e.g. inside the flow editor).
+  showVariablePicker?: boolean
 }) {
   const params = useParams<{ workspaceId: string }>()
   const t = useTranslations()
 
-  const { setValue, getValues } = useFormContext()
+  const { control, setValue, getValues } = useFormContext()
   const [uploadMode, setUploadMode] = useState(getValues(`${parentName}.mode`))
-  const publicUrl = getValues(`${parentName}.url`)
-  const stepId = getValues(`${parentName}.id`)
+  const publicUrl = useWatch({ control, name: `${parentName}.url` })
+  const stepId = useWatch({ control, name: `${parentName}.id` })
 
   const chooseInsertLink = () => {
-    setValue(`${parentName}.mode`, "link")
-    setUploadMode("link")
+    setValue(`${parentName}.mode`, "url")
+    setUploadMode("url")
+  }
+
+  const insertUrlVariable = (variableName: string) => {
+    const currentUrl = getValues(`${parentName}.url`) || ""
+    setValue(`${parentName}.url`, `${currentUrl}{{${variableName}}}`, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
   }
 
   const fileConfigs = useMemo(() => {
@@ -69,17 +83,27 @@ export function MediaLibraryOrInsertLink({
           {publicUrl && publicUrl.length > 0 ? (
             <MediaLibraryTrigger
               onSelect={(file) => {
-                setValue(`${parentName}.url`, file.url)
+                setValue(`${parentName}.url`, file.url, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
               }}
+              uploadPath={uploadPath}
               workspaceId={params.workspaceId}
             >
               <Button
-                className="relative h-[150px] w-[240px] p-0!"
+                className="relative h-37.5 w-60 overflow-hidden p-0!"
                 type="button"
                 variant="ghost"
               >
                 {fileType === "image" ? (
-                  <Image alt={stepId ?? ""} fill={true} src={publicUrl} />
+                  <Image
+                    alt={stepId ?? ""}
+                    className="object-cover"
+                    fill={true}
+                    sizes="240px"
+                    src={publicUrl}
+                  />
                 ) : (
                   <>
                     <fileConfigs.icon className="size-5" />
@@ -94,8 +118,12 @@ export function MediaLibraryOrInsertLink({
               <div className="flex items-center justify-center gap-2">
                 <MediaLibraryTrigger
                   onSelect={(file) => {
-                    setValue(`${parentName}.url`, file.url)
+                    setValue(`${parentName}.url`, file.url, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
                   }}
+                  uploadPath={uploadPath}
                   workspaceId={params.workspaceId}
                 >
                   <Button
@@ -129,6 +157,9 @@ export function MediaLibraryOrInsertLink({
             name={`${parentName}.url`}
             placeholder={t("fields.url.placeholder")}
           />
+          {showVariablePicker && (
+            <UrlVariablePicker onSelect={insertUrlVariable} />
+          )}
         </div>
       )}
     </>
