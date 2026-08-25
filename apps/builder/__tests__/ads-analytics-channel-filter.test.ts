@@ -244,3 +244,68 @@ describe("ads analytics 'All channels' aggregation", () => {
     expect(result.perAd[0]?.channels).toEqual(["messenger", "instagram"])
   })
 })
+
+describe("adsAnalyticsChannelDisplayOrder", () => {
+  test("lists 'All channels' first, then every ads-eligible channel", async () => {
+    const { adsAnalyticsChannelDisplayOrder, adsAnalyticsChannelValues } =
+      await import("@/features/ads/schemas/analytics")
+
+    expect(adsAnalyticsChannelDisplayOrder[0]).toBe("all")
+    // Same membership as the parse-order list, order aside.
+    expect([...adsAnalyticsChannelDisplayOrder].sort()).toEqual(
+      [...adsAnalyticsChannelValues].sort(),
+    )
+  })
+})
+
+describe("resolveAdsAnalyticsChannel", () => {
+  const load = () => import("@/features/ads/schemas/analytics")
+
+  test("resolves a legacy ?account link (channel 'all', no channelAccount) to whatsapp", async () => {
+    const { resolveAdsAnalyticsChannel } = await load()
+
+    expect(
+      resolveAdsAnalyticsChannel({
+        channel: "all",
+        account: "iw-1",
+        channelAccount: "",
+      }),
+    ).toBe("whatsapp")
+  })
+
+  test("keeps 'all' for a fresh visit (no account)", async () => {
+    const { resolveAdsAnalyticsChannel } = await load()
+
+    expect(
+      resolveAdsAnalyticsChannel({
+        channel: "all",
+        account: "",
+        channelAccount: "",
+      }),
+    ).toBe("all")
+  })
+
+  test("does not override when a new channelAccount is present", async () => {
+    const { resolveAdsAnalyticsChannel } = await load()
+
+    expect(
+      resolveAdsAnalyticsChannel({
+        channel: "all",
+        account: "iw-1",
+        channelAccount: "im-2",
+      }),
+    ).toBe("all")
+  })
+
+  test("leaves an explicit concrete channel untouched", async () => {
+    const { resolveAdsAnalyticsChannel } = await load()
+
+    expect(
+      resolveAdsAnalyticsChannel({
+        channel: "messenger",
+        account: "iw-1",
+        channelAccount: "",
+      }),
+    ).toBe("messenger")
+  })
+})

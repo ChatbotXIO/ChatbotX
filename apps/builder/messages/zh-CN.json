@@ -2729,6 +2729,15 @@
         "description": "此代币仅显示一次。请妥善保存 — 之后将无法再次查看。",
         "done": "完成"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flowAnalytics": {

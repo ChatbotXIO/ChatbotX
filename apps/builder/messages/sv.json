@@ -2726,6 +2726,15 @@
         "description": "Denna token visas endast en gång. Förvara den säkert — du kommer inte kunna se den igen.",
         "done": "Klart"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flowAnalytics": {

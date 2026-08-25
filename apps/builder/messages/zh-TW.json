@@ -1414,6 +1414,15 @@
         "description": "此代幣僅顯示一次。請妥善保存 — 之後將無法再次檢視。",
         "done": "完成"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "messages": {

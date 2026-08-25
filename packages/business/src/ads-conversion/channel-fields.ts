@@ -1,4 +1,7 @@
-import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
+import type {
+  AdsConversionChannel,
+  ContactInboxReferral,
+} from "@chatbotx.io/database/schema"
 import {
   type AdReferralChannelType,
   adReferralChannelTypes,
@@ -159,5 +162,55 @@ export function perChannelIntegrationIdsOrNull(
     integrationWhatsappId: channel === "whatsapp" ? integrationId : null,
     integrationMessengerId: channel === "messenger" ? integrationId : null,
     integrationInstagramId: channel === "instagram" ? integrationId : null,
+  }
+}
+
+/** Compact, bounded ad-attribution summary derived from a `ContactInbox.referral`
+ * — the only pieces of the raw referral jsonb that are safe to ship to a client
+ * (the rest, including `referral.raw`, is an arbitrary webhook payload).
+ * `sourceUrl` is the ad/post the contact clicked from, shown as a link in the
+ * inbox contact detail. */
+export type AdReferralInfo = {
+  adTitle: string | null
+  sourceUrl: string | null
+}
+
+/**
+ * Channel-agnostic "did this ContactInbox originate from a paid ad click"
+ * check for a single already-fetched `ContactInbox.referral`, mirroring
+ * {@link adReferralPredicate} (`packages/database/src/queries/contact-filter/
+ * ctwa-retarget.ts`) byte-for-byte — that function expresses the identical
+ * OR of the same two branches as SQL for the `fromCtwaAd` filter field. Both
+ * MUST stay in sync (enforced by a shared case-matrix unit test):
+ *
+ *  - WhatsApp CTWA: `referral.ctwaClid` is set and non-empty.
+ *  - Messenger/Instagram CTM/CTID: `referral.adId` is set AND
+ *    `referral.source === "ADS"` (excludes ig.me SHORTLINK referrals).
+ *
+ * No `channel` parameter is needed — same reasoning as `adReferralPredicate`:
+ * the two branches key off channel-exclusive referral fields, so they can
+ * never double-match a single referral payload.
+ *
+ * Returns `null` when the referral is absent or doesn't match either branch;
+ * otherwise returns the compact `{ adTitle, sourceUrl }` shape (never the raw
+ * referral).
+ */
+export function resolveAdReferral(
+  referral: ContactInboxReferral | null | undefined,
+): AdReferralInfo | null {
+  if (!referral) {
+    return null
+  }
+
+  const isWhatsappCtwa = referral.ctwaClid != null && referral.ctwaClid !== ""
+  const isMetaAdReferral = referral.adId != null && referral.source === "ADS"
+
+  if (!(isWhatsappCtwa || isMetaAdReferral)) {
+    return null
+  }
+
+  return {
+    adTitle: referral.adTitle ?? null,
+    sourceUrl: referral.sourceUrl ?? null,
   }
 }

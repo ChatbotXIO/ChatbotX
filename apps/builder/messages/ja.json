@@ -2034,6 +2034,15 @@
         "description": "このトークンは一度だけ表示されます。安全に保管してください。再度表示することはできません。",
         "done": "完了"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {

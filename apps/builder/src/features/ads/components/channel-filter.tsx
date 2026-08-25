@@ -13,7 +13,7 @@ import { useMemo } from "react"
 import {
   type AdsAnalyticsChannel,
   type AdsAnalyticsSearchParams,
-  adsAnalyticsChannelValues,
+  adsAnalyticsChannelDisplayOrder,
 } from "../schemas/analytics"
 
 type ChannelIntegration = { id: string; name: string }
@@ -40,7 +40,7 @@ export function ChannelFilter({
 
   const channelOptions = useMemo(
     () =>
-      adsAnalyticsChannelValues.map((channel) => ({
+      adsAnalyticsChannelDisplayOrder.map((channel) => ({
         // "all" has no `ads.conversionEvents.tabs.all` key (it is not a
         // real channel tab) — special label branch instead of a fake tab
         // key (decision/Phase 4 i18n requirement).

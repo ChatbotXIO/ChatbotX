@@ -17,9 +17,34 @@ export const conversationResource = createSelectSchema(conversationModel, {
 })
 export type ConversationResource = z.infer<typeof conversationResource>
 
+// Compact ad-attribution summary derived server-side from `ContactInbox.
+// referral` (see `resolveAdReferral` in `@chatbotx.io/business/ads-conversion/
+// channel-fields`) — never the raw referral jsonb, which carries an arbitrary
+// webhook payload and must not leave the server.
+export const adReferralResource = z.object({
+  adTitle: z.string().nullable(),
+  // Nullish (not just nullable): tolerates payloads produced before `sourceUrl`
+  // was added to `resolveAdReferral` — a client store persisted across a deploy,
+  // or a dev HMR skew where the schema rebuilt but the business helper did not.
+  // The live mapper always sets it (string | null); this only guards version skew.
+  sourceUrl: z.string().nullish(),
+})
+
+// Conversation-only extension of the shared `contactInboxResource` — kept out
+// of the base resource so contact APIs (including public/workspace-token
+// routes that nest `contactInboxResource`) are unaffected. Both conversation
+// query paths (`listConversations` and `findConversation`) must map to this
+// exact shape or oRPC output validation fails.
+export const conversationContactInboxResource = contactInboxResource.extend({
+  adReferral: adReferralResource.nullable(),
+})
+export type ConversationContactInboxResource = z.infer<
+  typeof conversationContactInboxResource
+>
+
 export const listConversationsItemResource = conversationResource.and(
   z.object({
-    contactInboxes: z.array(contactInboxResource),
+    contactInboxes: z.array(conversationContactInboxResource),
     messages: z.array(messageResourceWithRelations),
     contact: contactResource.nullable(),
     assignedUser: userResource.nullable(),

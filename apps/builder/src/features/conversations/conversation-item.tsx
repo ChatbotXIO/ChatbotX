@@ -6,6 +6,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
@@ -31,6 +32,7 @@ import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { readConversationAction } from "./actions/read-conversation.action"
 import { resolveLastMessagePreview } from "./queries/resolve-last-message-preview"
 import type { ListConversationItemResource } from "./schema/resource"
+import { adBadgeLabelKey, selectAdBadge } from "./utils/ad-badge"
 
 type ConversationItemProps = {
   conversation: ListConversationItemResource
@@ -89,6 +91,50 @@ const assignedIcon = (
   return
 }
 
+// Violet palette for the "Ads" pill. Applied as an inline style (not Tailwind
+// classes) because the pill renders through base-ui's `TooltipTrigger
+// render={...}`, which does not reliably forward utility classNames to the
+// underlying element — inline style always lands.
+const AD_BADGE_STYLE = {
+  backgroundColor: "#ede9fe",
+  borderColor: "#ddd6fe",
+  color: "#6d28d9",
+} as const
+
+// Compact violet "Ads" pill shown on the conversation row's bottom line when
+// the contact arrived from a Meta ad. The ad title (when present) is surfaced
+// in a tooltip. Channel-specific label (CTWA/CTM/CTID) is resolved by the caller.
+function AdBadgePill({
+  label,
+  adTitle,
+}: {
+  label: string
+  adTitle: string | null
+}) {
+  const pill = (
+    <Badge
+      className="shrink-0 rounded px-1.5 py-0 font-medium text-[10px] leading-4"
+      style={AD_BADGE_STYLE}
+      variant="outline"
+    >
+      {label}
+    </Badge>
+  )
+
+  if (!adTitle) {
+    return pill
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={pill} />
+      <TooltipContent align="center" side="top">
+        {adTitle}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 export default function ConversationItem({
   conversation,
   onSelect,
@@ -107,6 +153,12 @@ export default function ConversationItem({
       conversation.contactLastReadAt &&
       !isAfter(conversation.agentLastReadAt, conversation.contactLastReadAt),
   )
+  // Show one "Ads" badge if ANY of this conversation's contactInboxes came
+  // from a Meta ad (WhatsApp CTWA or Messenger/Instagram CTM/CTID) — mirrors
+  // WATI's "CTWA" tag. `adReferral` is computed server-side per contactInbox
+  // (see `resolveAdReferral`); `selectAdBadge` picks the first non-empty
+  // adTitle for the tooltip independently of which inbox triggered the badge.
+  const adBadge = selectAdBadge(conversation.contactInboxes)
 
   const contactAvatar = useMemo(
     () => (
@@ -226,13 +278,21 @@ export default function ConversationItem({
           >
             {previewText}
           </div>
-          <p className="text-end text-neutral-400 text-xs">
-            <span>
+          <div className="flex items-center justify-between gap-1 text-xs">
+            {adBadge ? (
+              <AdBadgePill
+                adTitle={adBadge.adTitle}
+                label={t(adBadgeLabelKey(adBadge.channel))}
+              />
+            ) : (
+              <span />
+            )}
+            <span className="text-neutral-400">
               {conversation.lastActivityAt
                 ? formatDistanceToNowStrict(conversation.lastActivityAt)
                 : " "}
             </span>
-          </p>
+          </div>
         </div>
       </Button>
     </div>

@@ -26,6 +26,34 @@ export const adsAnalyticsChannelValues = [
 ] as const
 export type AdsAnalyticsChannel = AdsEligibleChannelType | "all"
 
+// Display order for the analytics channel dropdown — "All channels" leads (the
+// default aggregate view), then the concrete channels in their canonical order.
+// Kept separate from `adsAnalyticsChannelValues` (whose order backs URL parsing
+// and defaults) so display ordering never couples to parse ordering.
+export const adsAnalyticsChannelDisplayOrder = [
+  "all",
+  ...adsEligibleChannelTypes.options,
+] as const satisfies readonly AdsAnalyticsChannel[]
+
+/**
+ * Resolves the effective channel for the ads analytics page. A legacy WhatsApp
+ * deep link (`?account=<id>` with no explicit channel and no new
+ * `channelAccount`) predates the channel filter and its "all" default; it must
+ * resolve back to "whatsapp" so the linked integration is still selected rather
+ * than silently folded into the all-channels aggregate. Fresh visits (no
+ * `account`) and any explicit `channel`/`channelAccount` selection are returned
+ * unchanged.
+ */
+export function resolveAdsAnalyticsChannel(input: {
+  channel: AdsAnalyticsChannel
+  account: string
+  channelAccount: string
+}): AdsAnalyticsChannel {
+  return input.channel === "all" && input.account && !input.channelAccount
+    ? "whatsapp"
+    : input.channel
+}
+
 const toDateKey = (date: Date): string => date.toISOString().slice(0, 10)
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/
 

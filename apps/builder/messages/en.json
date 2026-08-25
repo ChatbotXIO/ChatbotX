@@ -2108,6 +2108,15 @@
         "description": "This token is shown only once. Store it securely — you will not be able to view it again.",
         "done": "Done"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "metaConversions": {

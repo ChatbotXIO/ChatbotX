@@ -15,6 +15,7 @@ import {
 import {
   type AdsAnalyticsChannel,
   adsAnalyticsSearchParamsCache,
+  resolveAdsAnalyticsChannel,
 } from "@/features/ads/schemas/analytics"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
@@ -59,6 +60,12 @@ export default async function AdsAnalyticsPage(props: {
   const search = adsAnalyticsSearchParamsCache.parse(await props.searchParams)
   const switcherData = await getAdsSwitcherData(workspaceId)
 
+  // Preserve legacy WhatsApp deep links / the CAPI-connect redirect
+  // (`?account=<id>`) against the channel filter's "all" default — see
+  // `resolveAdsAnalyticsChannel`.
+  const resolvedChannel = resolveAdsAnalyticsChannel(search)
+  const resolvedSearch = { ...search, channel: resolvedChannel }
+
   // One unified integration select for every channel (channel filter's second
   // select): an empty `channelAccount` means "All accounts" — aggregate
   // across every connected integration of the selected channel (the business
@@ -68,12 +75,12 @@ export default async function AdsAnalyticsPage(props: {
   // bookmarks) is honored as a fallback selection when `channelAccount` is
   // absent.
   const channelIntegrations = resolveChannelIntegrations(
-    search.channel,
+    resolvedChannel,
     switcherData,
   )
   const requestedIntegrationId =
     search.channelAccount ||
-    (search.channel === "whatsapp" ? search.account : "")
+    (resolvedChannel === "whatsapp" ? search.account : "")
   const selectedChannelIntegration =
     channelIntegrations.find(
       (integration) => integration.id === requestedIntegrationId,
@@ -93,13 +100,13 @@ export default async function AdsAnalyticsPage(props: {
   // other two (and a "no integration selected yet" `undefined` id) resolve
   // to `undefined`, same as the ternary triplet this replaces.
   const analyticsRange =
-    search.channel === "all"
-      ? { ...search, channel: undefined, allChannels: true as const }
+    resolvedChannel === "all"
+      ? { ...resolvedSearch, channel: undefined, allChannels: true as const }
       : {
-          ...search,
-          channel: search.channel,
+          ...resolvedSearch,
+          channel: resolvedChannel,
           ...perChannelIntegrationIds(
-            search.channel,
+            resolvedChannel,
             selectedChannelIntegration?.id,
           ),
         }
@@ -117,10 +124,10 @@ export default async function AdsAnalyticsPage(props: {
       <div className="flex min-w-0 flex-1 flex-col gap-5">
         <Suspense>
           <AdsAnalyticsView
-            channel={search.channel}
+            channel={resolvedChannel}
             channelIntegrations={channelIntegrations}
             promises={promises}
-            range={search}
+            range={resolvedSearch}
             selectedChannelIntegrationId={
               selectedChannelIntegration?.id ?? null
             }

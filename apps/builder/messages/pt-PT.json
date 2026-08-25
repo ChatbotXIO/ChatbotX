@@ -2034,6 +2034,15 @@
         "description": "Este token é apresentado apenas uma vez. Guarde-o em segurança — não poderá voltar a consultá-lo.",
         "done": "Concluído"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {

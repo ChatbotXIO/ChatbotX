@@ -2034,6 +2034,15 @@
         "description": "Dette token vises kun én gang. Opbevar det sikkert — du vil ikke kunne se det igen.",
         "done": "Færdig"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
