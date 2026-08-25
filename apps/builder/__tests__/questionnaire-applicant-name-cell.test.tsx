@@ -1,7 +1,7 @@
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { QuestionnaireApplicantAvatarCell } from "../src/features/questionnaires/components/questionnaire-applicant-avatar-cell"
+import { QuestionnaireApplicantNameCell } from "../src/features/questionnaires/components/questionnaire-applicant-name-cell"
 
 vi.mock("@chatbotx.io/ui/components/ui/avatar", () => ({
   Avatar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -13,13 +13,21 @@ vi.mock("@chatbotx.io/ui/components/ui/avatar", () => ({
   ),
 }))
 
+vi.mock("@chatbotx.io/ui/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  TooltipContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TooltipTrigger: ({ render }: { render: ReactNode }) => render,
+}))
+
 vi.mock("@/features/tenant", () => ({
   useTenantSettings: () => ({
     storageUrl: "https://cdn.example.com/chatbotx",
   }),
 }))
 
-describe("QuestionnaireApplicantAvatarCell", () => {
+describe("QuestionnaireApplicantNameCell", () => {
   let container: HTMLDivElement
   let root: Root
 
@@ -38,17 +46,16 @@ describe("QuestionnaireApplicantAvatarCell", () => {
   })
 
   test("converts storage avatars and preserves absolute URLs", () => {
-    const onClick = vi.fn()
-
     act(() => {
       root.render(
-        <QuestionnaireApplicantAvatarCell
+        <QuestionnaireApplicantNameCell
           contact={{
             avatar: "public/space/workspace-1/contacts/contact-1/avatar.png",
             fullName: "Jane Doe",
           }}
-          onClick={onClick}
+          conversationId="conversation-1"
           unknownContactLabel="Unknown contact"
+          workspaceId="workspace-1"
         />,
       )
     })
@@ -60,24 +67,21 @@ describe("QuestionnaireApplicantAvatarCell", () => {
       "https://cdn.example.com/chatbotx/public/space/workspace-1/contacts/contact-1/avatar.png",
     )
 
-    const button = container.querySelector("button")
-    expect(button).not.toBeNull()
-
-    act(() => {
-      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
-    })
-
-    expect(onClick).toHaveBeenCalledTimes(1)
+    const link = container.querySelector("a")
+    expect(link?.getAttribute("href")).toBe(
+      "/space/workspace-1/inbox?conversationId=conversation-1",
+    )
+    expect(link?.getAttribute("target")).toBe("_blank")
 
     act(() => {
       root.render(
-        <QuestionnaireApplicantAvatarCell
+        <QuestionnaireApplicantNameCell
           contact={{
             avatar: "https://images.example.com/avatar.png",
             fullName: "Jane Doe",
           }}
-          onClick={onClick}
           unknownContactLabel="Unknown contact"
+          workspaceId="workspace-1"
         />,
       )
     })
