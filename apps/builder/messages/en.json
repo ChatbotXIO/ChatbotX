@@ -2168,7 +2168,16 @@
       "contentCategory": "Content Category",
       "contentCategoryPlaceholder": "The category of the content associated with the event",
       "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "contentNamePlaceholder": "The name of the page or product associated with the event",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
     "saveDataset": "Save",
@@ -2218,6 +2227,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Only records a conversion for contacts attributed to a WhatsApp click-to-WhatsApp ad or a Meta ad referral. It has no effect for other contacts."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "flows": {

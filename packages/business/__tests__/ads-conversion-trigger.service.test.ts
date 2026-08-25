@@ -338,6 +338,124 @@ describe("AdsConversionService.recordTriggerConversion", () => {
     expect(mocks.enqueueIntegrationJob).not.toHaveBeenCalled()
   })
 
+  test("purchase with orderId: distinct order ids on the same day produce distinct sourceEventIds (Codex #8)", async () => {
+    const first = await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "purchase",
+      value: "10",
+      orderId: "order-A",
+    })
+    const second = await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "purchase",
+      value: "20",
+      orderId: "order-B",
+    })
+
+    expect(first).not.toBeNull()
+    expect(second).not.toBeNull()
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledTimes(2)
+
+    const sourceEventIds = mocks.insertIgnoreDuplicate.mock.calls.map(
+      (call) => (call[0] as { sourceEventId: string }).sourceEventId,
+    )
+    expect(sourceEventIds).toEqual([
+      "trigger-trigger-1-purchase-inbox-ci-1-20260810-order-order-A",
+      "trigger-trigger-1-purchase-inbox-ci-1-20260810-order-order-B",
+    ])
+    expect(new Set(sourceEventIds).size).toBe(2)
+  })
+
+  test("purchase with orderId: the SAME order id retried produces the SAME sourceEventId (still deduped)", async () => {
+    await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "purchase",
+      value: "10",
+      orderId: "order-A",
+    })
+    await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "purchase",
+      value: "10",
+      orderId: "order-A",
+    })
+
+    const sourceEventIds = mocks.insertIgnoreDuplicate.mock.calls.map(
+      (call) => (call[0] as { sourceEventId: string }).sourceEventId,
+    )
+    expect(sourceEventIds[0]).toBe(sourceEventIds[1])
+  })
+
+  test("purchase orderId is normalized (trimmed) before entering sourceEventId", async () => {
+    await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "purchase",
+      value: "10",
+      orderId: "  order-A  ",
+    })
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderId: "order-A",
+        sourceEventId:
+          "trigger-trigger-1-purchase-inbox-ci-1-20260810-order-order-A",
+      }),
+      undefined,
+    )
+  })
+
+  test("purchase without orderId keeps the pre-#4 sourceEventId byte-identical", async () => {
+    await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "purchase",
+      value: "10",
+    })
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderId: null,
+        contents: null,
+        sourceEventId: "trigger-trigger-1-purchase-inbox-ci-1-20260810",
+      }),
+      undefined,
+    )
+  })
+
+  test("purchase threads contents onto the inserted row", async () => {
+    const contents = [
+      { id: "sku-1", quantity: 2, itemPrice: 10 },
+      { id: "sku-2", quantity: 1, itemPrice: 15 },
+    ]
+
+    await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "purchase",
+      value: "35",
+      contents,
+    })
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({ contents }),
+      undefined,
+    )
+  })
+
+  test("orderId/contents are forced null for a lead event even if somehow provided upstream", async () => {
+    await adsConversionService.recordTriggerConversion({
+      ...baseInput,
+      eventType: "lead",
+    })
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "lead",
+        orderId: null,
+        contents: null,
+      }),
+      undefined,
+    )
+  })
+
   test("messenger: non-attributed contact (SHORTLINK / no ADS referral) is a no-op", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue({
       id: "ci-2",

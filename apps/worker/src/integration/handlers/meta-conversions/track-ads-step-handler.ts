@@ -32,6 +32,8 @@ async function recordTrackAdsFlowStepConversion(
   eventType: RecordFlowStepConversionInput["eventType"],
   value?: string,
   currency?: string,
+  orderId?: string,
+  contents?: RecordFlowStepConversionInput["contents"],
 ): Promise<ExecuteStepResult> {
   const { contactInbox, conversation, targetNodeId, step } = props
 
@@ -51,6 +53,8 @@ async function recordTrackAdsFlowStepConversion(
       eventType,
       value,
       currency,
+      orderId,
+      contents,
     })
 
     return { status: "success", result: null }
@@ -93,5 +97,7 @@ export function handleTrackAdsPurchaseStep(
     "purchase",
     props.step.value,
     props.step.currency,
+    props.step.orderId,
+    props.step.contents,
   )
 }

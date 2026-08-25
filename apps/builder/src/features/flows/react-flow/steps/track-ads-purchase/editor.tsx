@@ -3,6 +3,7 @@
 import { TrendingUpIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { CapiValueCurrencyFields } from "@/features/meta-conversions/components/capi-value-currency-fields"
+import { PurchaseEnrichmentFields } from "@/features/meta-conversions/components/purchase-enrichment-fields"
 import { BaseStepEditor } from "../base/editor"
 
 type TrackAdsPurchaseEditorProps = {
@@ -28,6 +29,7 @@ export const TrackAdsPurchaseEditor = ({
         </p>
         <div className="mt-2 flex flex-col gap-4">
           <CapiValueCurrencyFields parentName={parentName} />
+          <PurchaseEnrichmentFields parentName={parentName} />
         </div>
       </div>
     </BaseStepEditor>

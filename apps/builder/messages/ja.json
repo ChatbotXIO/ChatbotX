@@ -5275,7 +5275,16 @@
       "contentCategory": "コンテンツカテゴリ",
       "contentCategoryPlaceholder": "イベントに関連付けられたコンテンツのカテゴリ",
       "contentName": "コンテンツ名",
-      "contentNamePlaceholder": "イベントに関連付けられたページまたは商品の名前"
+      "contentNamePlaceholder": "イベントに関連付けられたページまたは商品の名前",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Events Manager からデータセットIDを貼り付けてください",
     "saveDataset": "保存",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "WhatsApp のクリックして WhatsApp 広告、または Meta 広告リファラルの帰属があるコンタクトに対してのみコンバージョンを記録します。他のコンタクトには影響しません。"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

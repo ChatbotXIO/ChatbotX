@@ -203,6 +203,31 @@ describe("AdsConversionService.recordFlowStepConversion", () => {
     )
   })
 
+  test("whatsapp: attributed purchase threads orderId/contents onto the inserted row and into sourceEventId (plan #4)", async () => {
+    const contents = [{ id: "sku-1", quantity: 2, itemPrice: 10 }]
+
+    await expect(
+      adsConversionService.recordFlowStepConversion({
+        ...baseFlowStepInput,
+        eventType: "purchase",
+        value: "20",
+        orderId: "order-XYZ",
+        contents,
+      }),
+    ).resolves.toMatchObject({ id: "event-1" })
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "purchase",
+        orderId: "order-XYZ",
+        contents,
+        sourceEventId:
+          "flowstep-node-1-purchase-inbox-ci-1-20260810-order-order-XYZ",
+      }),
+      undefined,
+    )
+  })
+
   test("messenger: attributed lead inserts a flowstep-source event scoped to the messenger integration FK", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue({
       id: "ci-2",

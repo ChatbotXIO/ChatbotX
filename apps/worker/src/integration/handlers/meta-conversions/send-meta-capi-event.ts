@@ -1,10 +1,13 @@
 import {
   contactInboxService,
+  contactService,
+  hashContactUserData,
   type MetaConversionsChannel,
   type MetaConversionsIntegrationByChannel,
   metaConversionsService,
   resolveCapiAccessToken,
   withBlockedOwnerGuard,
+  workspaceService,
 } from "@chatbotx.io/business"
 import {
   buildDatasetName,
@@ -12,6 +15,7 @@ import {
   type MetaCapiEventName,
   sendConversionEvent,
 } from "@chatbotx.io/integration-meta-conversions"
+import type { HashedCapiUserData } from "@chatbotx.io/utils/meta-capi"
 import {
   DefaultJobAction,
   defaultQueue,
@@ -70,6 +74,8 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
   currency?: string | null
   contentCategory?: string | null
   contentName?: string | null
+  userData?: HashedCapiUserData
+  limitedDataUse?: boolean
   integration: MetaConversionsIntegrationByChannel[TChannel]
 }) {
   if (input.channel === "messenger") {
@@ -91,6 +97,10 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
           ? { contentCategory: input.contentCategory }
           : {}),
         ...(input.contentName ? { contentName: input.contentName } : {}),
+        ...(input.userData ? { userData: input.userData } : {}),
+        ...(input.limitedDataUse
+          ? { limitedDataUse: input.limitedDataUse }
+          : {}),
       },
     }
   }
@@ -119,6 +129,10 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
           ? { contentCategory: input.contentCategory }
           : {}),
         ...(input.contentName ? { contentName: input.contentName } : {}),
+        ...(input.userData ? { userData: input.userData } : {}),
+        ...(input.limitedDataUse
+          ? { limitedDataUse: input.limitedDataUse }
+          : {}),
       },
     }
   }
@@ -141,6 +155,8 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
         ? { contentCategory: input.contentCategory }
         : {}),
       ...(input.contentName ? { contentName: input.contentName } : {}),
+      ...(input.userData ? { userData: input.userData } : {}),
+      ...(input.limitedDataUse ? { limitedDataUse: input.limitedDataUse } : {}),
     },
   }
 }
@@ -191,6 +207,14 @@ export async function handleSendMetaCapiEvent(
       return
     }
 
+    // Limited Data Use (plan #3): read once per event, OUTSIDE the try/catch
+    // below so a read failure (DB/Redis blip, workspace gone) throws and
+    // propagates out of `withBlockedOwnerGuard` for a BullMQ retry instead of
+    // being caught and silently sent with the wrong LDU state.
+    const workspace = await workspaceService.findById({
+      id: event.workspaceId,
+    })
+
     try {
       const contactInbox = await contactInboxService.findByUncached({
         where: { id: event.contactInboxId },
@@ -209,6 +233,46 @@ export async function handleSendMetaCapiEvent(
             contactInboxId: event.contactInboxId,
           },
           "Meta CAPI event contact inbox not found; marked failed",
+        )
+        return
+      }
+
+      // Defense-in-depth identity check (Phase 0 — Codex CRITICAL#1): mirrors
+      // `handleSendMetaChannelConversionEvent`'s guard in
+      // `send-conversion-event.ts`. `contactInbox` above is looked up by id
+      // alone (no workspace/inbox scoping in the query itself), and it powers
+      // the PSID/IGSID/wa_id (`contactInbox.sourceId`) — and, from Phase 2 on,
+      // hashed customer-info — sent to Meta's CAPI as this contact's identity.
+      // Without this check a stale/foreign `contactInboxId` on the event would
+      // leak one tenant's messaging identity (and PII) into another tenant's ad
+      // dataset. `ContactInboxModel` has no direct `workspaceId` column, so
+      // workspace membership is verified via the workspace-scoped
+      // `contactService.findById` (returns undefined for a foreign workspace);
+      // inbox membership is verified directly against the resolved
+      // integration's `inboxId`.
+      const contactInboxContact = await contactService.findById({
+        workspaceId: event.workspaceId,
+        id: contactInbox.contactId,
+      })
+      if (
+        !contactInboxContact ||
+        contactInbox.inboxId !== integration.inboxId
+      ) {
+        await metaConversionsService.updateCapiStatus({
+          id: event.id,
+          workspaceId: event.workspaceId,
+          ...failedStatus,
+          capiError: "contactInboxWorkspaceMismatch",
+        })
+        logger.error(
+          {
+            metaCapiEventId: event.id,
+            workspaceId: event.workspaceId,
+            contactInboxId: contactInbox.id,
+            contactInboxInboxId: contactInbox.inboxId,
+            integrationInboxId: integration.inboxId,
+          },
+          "Meta CAPI event contact inbox workspace/inbox mismatch; marked failed",
         )
         return
       }
@@ -268,6 +332,11 @@ export async function handleSendMetaCapiEvent(
                 }),
             })
 
+      // Customer-info matching (plan #1) — `contactInboxContact` was already
+      // resolved and workspace/inbox-validated by the Phase 0 guard above, so
+      // it is safe to hash and send.
+      const userData = await hashContactUserData(contactInboxContact)
+
       await sendConversionEvent(
         buildEventPayload({
           channel: event.channel,
@@ -282,6 +351,8 @@ export async function handleSendMetaCapiEvent(
           currency: event.currency,
           contentCategory: event.contentCategory,
           contentName: event.contentName,
+          userData,
+          limitedDataUse: workspace.capiLimitedDataUse,
           integration: integrationForSend,
         }),
       )

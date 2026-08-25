@@ -135,6 +135,49 @@ describe("Track Ads Purchase flow step contract", () => {
       actionSteps.some((schema) => schema.safeParse(defaults).success),
     ).toBe(true)
   })
+
+  test("accepts orderId + contents (plan #4)", () => {
+    const parsed = trackAdsPurchaseSchema.parse({
+      ...trackAdsPurchaseDefaultFn(),
+      value: "35",
+      orderId: "order-123",
+      contents: [
+        { id: "sku-1", quantity: 2, itemPrice: 10 },
+        { id: "sku-2", quantity: 1, itemPrice: 15 },
+      ],
+    })
+
+    expect(parsed.orderId).toBe("order-123")
+    expect(parsed.contents).toHaveLength(2)
+  })
+
+  test("treats a cleared orderId field as unset", () => {
+    const parsed = trackAdsPurchaseSchema.parse({
+      ...trackAdsPurchaseDefaultFn(),
+      orderId: "",
+    })
+
+    expect(parsed.orderId).toBeUndefined()
+  })
+
+  test("rejects a contradictory value/contents total", () => {
+    expect(() =>
+      trackAdsPurchaseSchema.parse({
+        ...trackAdsPurchaseDefaultFn(),
+        value: "999",
+        contents: [{ id: "sku-1", quantity: 2, itemPrice: 10 }],
+      }),
+    ).toThrow()
+  })
+
+  test("rejects a contents item with a non-positive quantity", () => {
+    expect(() =>
+      trackAdsPurchaseSchema.parse({
+        ...trackAdsPurchaseDefaultFn(),
+        contents: [{ id: "sku-1", quantity: 0, itemPrice: 10 }],
+      }),
+    ).toThrow()
+  })
 })
 
 /**

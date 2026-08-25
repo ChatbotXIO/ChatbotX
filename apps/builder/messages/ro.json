@@ -5275,7 +5275,16 @@
       "contentCategory": "Categorie de conținut",
       "contentCategoryPlaceholder": "Categoria conținutului asociat evenimentului",
       "contentName": "Numele conținutului",
-      "contentNamePlaceholder": "Numele paginii sau produsului asociat evenimentului"
+      "contentNamePlaceholder": "Numele paginii sau produsului asociat evenimentului",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Lipește ID-ul setului de date din Events Manager",
     "saveDataset": "Salvează",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Înregistrează o conversie doar pentru contactele cu atribuire de anunț click-to-WhatsApp sau recomandare de anunț Meta. Nu are efect asupra celorlalte contacte."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

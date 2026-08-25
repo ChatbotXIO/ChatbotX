@@ -5275,7 +5275,16 @@
       "contentCategory": "Sisällön luokka",
       "contentCategoryPlaceholder": "Tapahtumaan liittyvän sisällön luokka",
       "contentName": "Sisällön nimi",
-      "contentNamePlaceholder": "Tapahtumaan liittyvän sivun tai tuotteen nimi"
+      "contentNamePlaceholder": "Tapahtumaan liittyvän sivun tai tuotteen nimi",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Liitä tietojoukon tunnus Events Managerista",
     "saveDataset": "Tallenna",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Tallentaa muunnoksen vain kontakteille, joilla on WhatsAppin click-to-WhatsApp- tai Metan mainosviittausattribuutio. Ei vaikuta muihin kontakteihin."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

@@ -5275,7 +5275,16 @@
       "contentCategory": "קטגוריית תוכן",
       "contentCategoryPlaceholder": "הקטגוריה של התוכן המשויך לאירוע",
       "contentName": "שם תוכן",
-      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע"
+      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "הדביקו את מזהה ה-Dataset מ-Events Manager",
     "saveDataset": "שמור",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "רושם המרה רק עבור אנשי קשר עם ייחוס למודעת click-to-WhatsApp או הפניית מודעה של Meta. אין השפעה על אנשי קשר אחרים."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

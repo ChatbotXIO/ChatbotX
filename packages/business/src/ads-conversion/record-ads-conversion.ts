@@ -4,6 +4,7 @@ import {
   contactInboxRepository,
 } from "@chatbotx.io/database/repositories"
 import type { AdsConversionEventModel } from "@chatbotx.io/database/types"
+import type { PurchaseContentItem } from "@chatbotx.io/utils/meta-capi"
 import { formatUtcDay } from "../lib/date"
 import {
   type AdReferralChannel,
@@ -67,7 +68,66 @@ type RecordAdsConversionCoreInput = {
   eventType: RecordTriggerConversionInput["eventType"]
   value: RecordTriggerConversionInput["value"]
   currency: RecordTriggerConversionInput["currency"]
+  /** Richer Purchase data (plan #4) — Purchase-only; the zod input schemas
+   * already reject these on non-purchase events (see `./schema`). */
+  orderId: RecordTriggerConversionInput["orderId"]
+  contents: RecordTriggerConversionInput["contents"]
 }
+
+// Bounded max length for a normalized `orderId` fed into `sourceEventId`
+// (Codex #8) — mirrors `metaCapiOrderIdSchema`'s own max, kept as a separate
+// constant here since `buildSourceEventId` normalizes independently of the
+// zod layer (an already-validated `orderId` is trusted, but this stays a
+// defense-in-depth bound on the dedup key itself).
+const MAX_ORDER_ID_LENGTH = 200
+
+/**
+ * Normalizes a Purchase `orderId` for inclusion in `sourceEventId` (Codex
+ * #8): trims and rejects over-long values, so formatting variants (extra
+ * whitespace) of the same order id don't produce distinct Meta events, and
+ * an absurdly long value can't bloat the dedup key. Returns `undefined` for
+ * anything that normalizes away — callers then fall back to the pre-#4
+ * `sourceEventId` shape, keeping it byte-identical when no order id is
+ * present.
+ */
+function normalizeOrderIdForDedup(orderId?: string): string | undefined {
+  if (!orderId) {
+    return
+  }
+  const trimmed = orderId.trim()
+  if (!trimmed || trimmed.length > MAX_ORDER_ID_LENGTH) {
+    return
+  }
+  return trimmed
+}
+
+/**
+ * Purchase-only `orderId`/`contents` insert values — `null` for every
+ * non-purchase event, mirroring how `value`/`currency` are already gated on
+ * `eventType === "purchase"` in both insert builders below.
+ */
+function purchaseInsertFields(coreInput: RecordAdsConversionCoreInput): {
+  orderId: string | null
+  contents: PurchaseContentItem[] | null
+} {
+  if (coreInput.eventType !== "purchase") {
+    return { orderId: null, contents: null }
+  }
+  return {
+    orderId: normalizeOrderIdForDedup(coreInput.orderId) ?? null,
+    contents: coreInput.contents ?? null,
+  }
+}
+
+// Meta's Conversions API accepts `event_time` up to 7 days in the past
+// (https://developers.facebook.com/docs/marketing-api/conversions-api/using-the-api
+// — "The event_time can be up to 7 days before you send an event to Meta.").
+// `occurredAt` here is stamped at insert time (`new Date()` below), so a
+// `pending` row that is retried after the BullMQ retry/backoff window is
+// exhausted is still within Meta's acceptance window in every realistic
+// case — but a row stuck `pending` for longer than 7 days (e.g. a long
+// outage) will be silently rejected by Meta on eventual send. Nothing in
+// this module currently re-stamps `occurredAt` on retry.
 
 async function recordAdsConversion(
   input: RecordAdsConversionCoreInput,
@@ -117,6 +177,8 @@ function buildSourceEventId(input: {
   eventType: RecordAdsConversionCoreInput["eventType"]
   contactInboxId: string
   now: Date
+  /** Already-normalized (`normalizeOrderIdForDedup`) Purchase order id. */
+  normalizedOrderId?: string
 }): string {
   // `eventType` is REQUIRED in the key: a single automation origin can carry
   // both a trackAdsLead and a trackAdsPurchase action, and without the
@@ -130,8 +192,17 @@ function buildSourceEventId(input: {
   // they intentionally produce two distinct events (different automation
   // origins), same "per-mechanism dedup" contract already documented for
   // rule-vs-trigger.
+  //
+  // `normalizedOrderId` (Codex #8, plan #4) is appended as a LAST, optional
+  // token: two distinct same-day Purchase orders for the same contact/origin
+  // would otherwise collapse into one Meta event under the per-day key
+  // above. Retrying the SAME order still dedupes (same normalized id ->
+  // same key). Absent -> byte-identical to the pre-#4 key (backward-compat).
   const originPrefix = input.origin.kind === "trigger" ? "trigger" : "flowstep"
-  return `${originPrefix}-${input.origin.id}-${input.eventType}-inbox-${input.contactInboxId}-${formatUtcDay(input.now)}`
+  const orderSuffix = input.normalizedOrderId
+    ? `-order-${input.normalizedOrderId}`
+    : ""
+  return `${originPrefix}-${input.origin.id}-${input.eventType}-inbox-${input.contactInboxId}-${formatUtcDay(input.now)}${orderSuffix}`
 }
 
 async function recordWhatsappAdsConversion(input: {
@@ -159,11 +230,13 @@ async function recordWhatsappAdsConversion(input: {
   }
 
   const now = new Date()
+  const { orderId, contents } = purchaseInsertFields(coreInput)
   const sourceEventId = buildSourceEventId({
     origin: coreInput.origin,
     eventType: coreInput.eventType,
     contactInboxId: input.contactInboxId,
     now,
+    normalizedOrderId: orderId ?? undefined,
   })
 
   return await insertConversionEventOrRecover(
@@ -183,6 +256,8 @@ async function recordWhatsappAdsConversion(input: {
           : null,
       value:
         coreInput.eventType === "purchase" ? (coreInput.value ?? null) : null,
+      orderId,
+      contents,
       occurredAt: now,
       sourceEventId,
       capiStatus: "pending",
@@ -221,11 +296,13 @@ async function recordAdReferralAdsConversion(input: {
   }
 
   const now = new Date()
+  const { orderId, contents } = purchaseInsertFields(coreInput)
   const sourceEventId = buildSourceEventId({
     origin: coreInput.origin,
     eventType: coreInput.eventType,
     contactInboxId: input.contactInboxId,
     now,
+    normalizedOrderId: orderId ?? undefined,
   })
 
   return await insertConversionEventOrRecover(
@@ -243,6 +320,8 @@ async function recordAdReferralAdsConversion(input: {
           : null,
       value:
         coreInput.eventType === "purchase" ? (coreInput.value ?? null) : null,
+      orderId,
+      contents,
       occurredAt: now,
       sourceEventId,
       capiStatus: "pending",
@@ -278,6 +357,8 @@ export function recordTriggerConversion(
       eventType: parsed.eventType,
       value: parsed.value,
       currency: parsed.currency,
+      orderId: parsed.orderId,
+      contents: parsed.contents,
     },
     tx,
   )
@@ -303,6 +384,8 @@ export function recordFlowStepConversion(
       eventType: parsed.eventType,
       value: parsed.value,
       currency: parsed.currency,
+      orderId: parsed.orderId,
+      contents: parsed.contents,
     },
     tx,
   )

@@ -51,6 +51,13 @@ export const workspaceModel = pgTable(
     endTime: text(),
     logo: text(),
     scheduledDeletionAt: timestamp(timestampConfig),
+    // Meta Conversions API Limited Data Use (plan #3) — a workspace-level
+    // toggle only; there is no per-contact opt_out in v1 (needs a dedicated,
+    // auditable ads-consent field/policy first — `Contact.blockedAt` is a
+    // MESSAGING block and must never be treated as ads consent). Read via
+    // `workspaceService` in both CAPI send handlers; default off so existing
+    // workspaces are unaffected until a user opts in.
+    capiLimitedDataUse: boolean().default(false).notNull(),
     ownerId: bigintAsString()
       .notNull()
       .references(() => userModel.id, {

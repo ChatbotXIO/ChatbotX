@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   metaEnsureDataset: vi.fn(),
   metaSendConversionEvent: vi.fn(),
   refreshCapiScopeCache: vi.fn(),
+  findWorkspaceById: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", async () => {
@@ -52,6 +53,9 @@ vi.mock("@chatbotx.io/business", async () => {
     },
     resolveCapiAccessToken: mocks.resolveCapiAccessToken,
     withBlockedOwnerGuard: mocks.withBlockedOwnerGuard,
+    workspaceService: {
+      findById: mocks.findWorkspaceById,
+    },
   }
 })
 
@@ -107,6 +111,7 @@ vi.mock("../src/lib/logger", () => ({
 const { handleSendConversionEvent } = await import(
   "../src/integration/handlers/ads-conversion/send-conversion-event"
 )
+const { logger } = await import("../src/lib/logger")
 
 const jobData = {
   adsConversionEventId: "ace-1",
@@ -147,6 +152,10 @@ describe("handleSendConversionEvent", () => {
     mocks.ensureDatasetId.mockResolvedValue("dataset-1")
     mocks.sendConversionEvent.mockResolvedValue(undefined)
     mocks.updateCapiStatus.mockResolvedValue({ id: "ace-1" })
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "ws-1",
+      capiLimitedDataUse: false,
+    })
   })
 
   test("sends a pending event and marks it sent", async () => {
@@ -173,6 +182,10 @@ describe("handleSendConversionEvent", () => {
         wabaId: "waba-1",
         currency: "USD",
         value: "12.34",
+        userData: undefined,
+        limitedDataUse: false,
+        orderId: undefined,
+        contents: undefined,
       },
     })
     expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
@@ -182,6 +195,36 @@ describe("handleSendConversionEvent", () => {
       to: "sent",
       capiSentAt: expect.any(Date),
     })
+  })
+
+  test("threads limitedDataUse: true from the workspace onto the whatsapp conversion event payload", async () => {
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "ws-1",
+      capiLimitedDataUse: true,
+    })
+
+    await handleSendConversionEvent(jobData)
+
+    expect(mocks.sendConversionEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({ limitedDataUse: true }),
+      }),
+    )
+  })
+
+  test("a workspace read failure propagates (throws) instead of sending with the wrong LDU state", async () => {
+    mocks.findWorkspaceById.mockRejectedValue(
+      new Error("workspace read failed"),
+    )
+
+    await expect(handleSendConversionEvent(jobData)).rejects.toThrow(
+      "workspace read failed",
+    )
+
+    expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).not.toHaveBeenCalledWith(
+      expect.objectContaining({ to: "failed" }),
+    )
   })
 
   test("creates the dataset with the token chosen by ensureDatasetId", async () => {
@@ -255,6 +298,48 @@ describe("handleSendConversionEvent", () => {
     })
   })
 
+  test("Codex #7 regression: the terminal-failure log NEVER serializes the raw error object (only a sanitized message+code record)", async () => {
+    // A realistic Graph/WhatsApp HTTP error whose `origin` carries the
+    // outgoing request — including an Authorization header for a manual CAPI
+    // token — plus, for good measure, a `contact` property, simulating the
+    // worst case where a raw error accidentally captured PII. None of this
+    // may reach `logger.warn`.
+    const dangerousError = Object.assign(new Error("Graph API rejected"), {
+      code: "OAuthException",
+      origin: {
+        request: {
+          headers: {
+            Authorization: "Bearer super-secret-manual-capi-token",
+          },
+        },
+      },
+      contact: { email: "user@example.com", phoneNumber: "+15551234567" },
+    })
+    mocks.sendConversionEvent.mockRejectedValue(dangerousError)
+
+    await handleSendConversionEvent(jobData)
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        adsConversionEventId: "ace-1",
+        workspaceId: "ws-1",
+        err: { message: "Graph API rejected", code: "OAuthException" },
+      }),
+      "Ads conversion event marked failed",
+    )
+
+    // Belt-and-suspenders: serialize every actual logger.warn call and
+    // confirm none of the sensitive substrings ever appear.
+    const serializedCalls = JSON.stringify(
+      (logger.warn as ReturnType<typeof vi.fn>).mock.calls,
+    )
+    expect(serializedCalls).not.toContain("super-secret-manual-capi-token")
+    expect(serializedCalls).not.toContain("Authorization")
+    expect(serializedCalls).not.toContain("user@example.com")
+    expect(serializedCalls).not.toContain("+15551234567")
+    expect(serializedCalls).not.toContain("origin")
+  })
+
   test("throws retryable failures so BullMQ retries", async () => {
     const retryableError = Object.assign(new Error("rate limited"), {
       retryable: true,
@@ -303,6 +388,94 @@ describe("handleSendConversionEvent", () => {
     mocks.updateCapiStatus.mockResolvedValue(null)
 
     await expect(handleSendConversionEvent(jobData)).resolves.toBeUndefined()
+  })
+
+  test("whatsapp: enriches with hashed customer-info when contactInboxId resolves to a valid, in-workspace/in-inbox contact", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue({
+      ...pendingEvent,
+      contactInboxId: "ci-wa-1",
+    })
+    mocks.findWorkspaceIntegration.mockResolvedValue({
+      ...integration,
+      inboxId: "inbox-wa-1",
+    })
+    mocks.findContactInbox.mockResolvedValue({
+      id: "ci-wa-1",
+      contactId: "contact-1",
+      inboxId: "inbox-wa-1",
+    })
+    mocks.findContactByIdForWorkspace.mockResolvedValue({
+      id: "contact-1",
+      email: "john_smith@gmail.com",
+    })
+
+    await handleSendConversionEvent(jobData)
+
+    expect(mocks.findContactInbox).toHaveBeenCalledWith({
+      where: { id: "ci-wa-1" },
+    })
+    expect(mocks.findContactByIdForWorkspace).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "contact-1",
+    })
+    expect(mocks.sendConversionEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({
+          userData: {
+            em: [
+              "62a14e44f765419d10fea99367361a727c12365e2520f32218d505ed9aa0f62f",
+            ],
+            external_id: [
+              "35cbf2467d4fcab72620da43ded47984b0b3edfca1fa34c3fe43dd4917165d8a",
+            ],
+          },
+        }),
+      }),
+    )
+  })
+
+  test("whatsapp: omits userData when the event has no contactInboxId (core send is unaffected)", async () => {
+    await handleSendConversionEvent(jobData)
+
+    expect(mocks.findContactInbox).not.toHaveBeenCalled()
+    expect(mocks.sendConversionEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({ userData: undefined }),
+      }),
+    )
+  })
+
+  test("whatsapp: omits userData when the contact inbox belongs to a different inbox than the resolved integration (never leaks foreign-tenant PII)", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue({
+      ...pendingEvent,
+      contactInboxId: "ci-wa-1",
+    })
+    mocks.findWorkspaceIntegration.mockResolvedValue({
+      ...integration,
+      inboxId: "inbox-wa-1",
+    })
+    mocks.findContactInbox.mockResolvedValue({
+      id: "ci-wa-1",
+      contactId: "contact-1",
+      inboxId: "inbox-other",
+    })
+    mocks.findContactByIdForWorkspace.mockResolvedValue({
+      id: "contact-1",
+      email: "john_smith@gmail.com",
+    })
+
+    await handleSendConversionEvent(jobData)
+
+    // The core send still succeeds — only the optional enrichment is
+    // skipped (Phase 0 protects PII, never blocks an already-valid send).
+    expect(mocks.sendConversionEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({ userData: undefined }),
+      }),
+    )
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "sent" }),
+    )
   })
 
   test("missing event is a no-op", async () => {
@@ -394,6 +567,54 @@ describe("handleSendConversionEvent — messenger/instagram (Phase 3)", () => {
     })
     mocks.metaSendConversionEvent.mockResolvedValue(undefined)
     mocks.updateCapiStatus.mockResolvedValue({ id: "ace-2" })
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "ws-1",
+      capiLimitedDataUse: false,
+    })
+  })
+
+  // Deterministic — matches `hashContactUserData({ id: "contact-1" })`'s
+  // external_id (SHA-256 of the opaque contact id, unnormalized). Computed
+  // independently with `shasum -a 256`, not hand-guessed.
+  const CONTACT_1_EXTERNAL_ID_HASH =
+    "35cbf2467d4fcab72620da43ded47984b0b3edfca1fa34c3fe43dd4917165d8a"
+
+  test("threads limitedDataUse: true from the workspace onto the messenger conversion event payload", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    mocks.findWorkspaceById.mockResolvedValue({
+      id: "ws-1",
+      capiLimitedDataUse: true,
+    })
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.metaSendConversionEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({ limitedDataUse: true }),
+      }),
+    )
+  })
+
+  test("a workspace read failure propagates (throws) instead of sending with the wrong LDU state", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    mocks.findWorkspaceById.mockRejectedValue(
+      new Error("workspace read failed"),
+    )
+
+    await expect(
+      handleSendConversionEvent({
+        adsConversionEventId: "ace-2",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("workspace read failed")
+
+    expect(mocks.metaSendConversionEvent).not.toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).not.toHaveBeenCalledWith(
+      expect.objectContaining({ to: "failed" }),
+    )
   })
 
   test("sends a messenger conversion event using page identity + contact PSID", async () => {
@@ -423,6 +644,10 @@ describe("handleSendConversionEvent — messenger/instagram (Phase 3)", () => {
         messagingChannel: "messenger",
         pageId: "page-1",
         pageScopedUserId: "psid-1",
+        userData: { external_id: [CONTACT_1_EXTERNAL_ID_HASH] },
+        limitedDataUse: false,
+        orderId: undefined,
+        contents: undefined,
       },
     })
     expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
@@ -463,6 +688,10 @@ describe("handleSendConversionEvent — messenger/instagram (Phase 3)", () => {
         messagingChannel: "instagram",
         instagramBusinessAccountId: "ig-1",
         igSid: "psid-1",
+        userData: { external_id: [CONTACT_1_EXTERNAL_ID_HASH] },
+        limitedDataUse: false,
+        orderId: undefined,
+        contents: undefined,
       },
     })
   })

@@ -5275,7 +5275,16 @@
       "contentCategory": "فئة المحتوى",
       "contentCategoryPlaceholder": "فئة المحتوى المرتبط بالحدث",
       "contentName": "اسم المحتوى",
-      "contentNamePlaceholder": "اسم الصفحة أو المنتج المرتبط بالحدث"
+      "contentNamePlaceholder": "اسم الصفحة أو المنتج المرتبط بالحدث",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "الصق معرف Dataset من Events Manager",
     "saveDataset": "حفظ",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "يسجّل التحويل فقط للمخاطبين الذين لديهم إسناد من إعلان WhatsApp للنقر للمحادثة أو إحالة إعلان من Meta. لا يوجد تأثير على المخاطبين الآخرين."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

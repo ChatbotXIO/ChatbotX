@@ -5275,7 +5275,16 @@
       "contentCategory": "Indholdskategori",
       "contentCategoryPlaceholder": "Kategorien for det indhold, der er knyttet til hændelsen",
       "contentName": "Indholdsnavn",
-      "contentNamePlaceholder": "Navnet på siden eller produktet, der er knyttet til hændelsen"
+      "contentNamePlaceholder": "Navnet på siden eller produktet, der er knyttet til hændelsen",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Indsæt Dataset-ID fra Events Manager",
     "saveDataset": "Gem",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Registrerer kun en konvertering for kontakter med WhatsApp click-to-WhatsApp- eller Meta-annoncehenvisningsattribuering. Har ingen effekt for andre kontakter."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

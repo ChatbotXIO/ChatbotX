@@ -5275,7 +5275,16 @@
       "contentCategory": "İçerik Kategorisi",
       "contentCategoryPlaceholder": "Etkinlikle ilişkili içeriğin kategorisi",
       "contentName": "İçerik Adı",
-      "contentNamePlaceholder": "Etkinlikle ilişkili sayfanın veya ürünün adı"
+      "contentNamePlaceholder": "Etkinlikle ilişkili sayfanın veya ürünün adı",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Etkinlik Yöneticisi'nden Veri Kümesi ID'sini yapıştırın",
     "saveDataset": "Kaydet",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Yalnızca WhatsApp click-to-WhatsApp reklamı veya Meta reklam yönlendirmesi ile ilişkilendirilmiş kişiler için dönüşüm kaydeder. Diğer kişiler için etkisi yoktur."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

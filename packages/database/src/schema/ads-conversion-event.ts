@@ -1,7 +1,9 @@
+import type { PurchaseContentItem } from "@chatbotx.io/utils/meta-capi"
 import { sql } from "drizzle-orm"
 import {
   check,
   index,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -110,6 +112,14 @@ export const adsConversionEventModel = pgTable(
     }),
     currency: text(),
     value: numeric(),
+    // Richer Purchase data (plan #4) — both optional/Purchase-only; NULL for
+    // every existing row and every Lead event. `contents` line items back
+    // the Meta CAPI `custom_data.contents[]`/`num_items`/`content_type`
+    // fields; `orderId` backs `custom_data.order_id` and (normalized) feeds
+    // the send-time `sourceEventId` so distinct same-day orders don't dedupe
+    // into one Meta event — see `record-ads-conversion.ts`.
+    orderId: text(),
+    contents: jsonb().$type<PurchaseContentItem[]>(),
     occurredAt: timestamp(timestampConfig).notNull(),
     sourceEventId: text().notNull(),
     capiStatus: adsConversionCapiStatus().notNull().default("pending"),

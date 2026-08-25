@@ -5275,7 +5275,16 @@
       "contentCategory": "Kategori Konten",
       "contentCategoryPlaceholder": "Kategori konten yang terkait dengan peristiwa ini",
       "contentName": "Nama Konten",
-      "contentNamePlaceholder": "Nama halaman atau produk yang terkait dengan peristiwa ini"
+      "contentNamePlaceholder": "Nama halaman atau produk yang terkait dengan peristiwa ini",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Tempel Dataset ID dari Events Manager",
     "saveDataset": "Simpan",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Hanya mencatat konversi untuk kontak dengan atribusi iklan click-to-WhatsApp WhatsApp atau rujukan iklan Meta. Tidak berpengaruh pada kontak lain."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

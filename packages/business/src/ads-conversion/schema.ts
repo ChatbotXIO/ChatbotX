@@ -5,13 +5,34 @@ import {
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
 import {
+  assertPurchaseValueMatchesContents,
+  metaCapiContentsSchema,
   metaCapiCurrencySchema,
+  metaCapiOrderIdSchema,
   metaCapiValueSchema,
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 const nonEmptyStringArray = z.array(z.string().trim().min(1)).min(1)
+
+/**
+ * Richer Purchase data (plan #4) — `orderId`/`contents` are Purchase-only;
+ * a Lead event carrying either is a caller bug, rejected here rather than
+ * silently dropped (Codex #4). Shared by `recordTriggerConversionInput` and
+ * `recordFlowStepConversionInput` (the Trigger action / flow-step bridges
+ * into `recordAdsConversion`) so the rule can't drift between the two.
+ */
+function rejectPurchaseFieldsOnNonPurchase(input: {
+  eventType: string
+  orderId?: string
+  contents?: unknown[]
+}): boolean {
+  if (input.eventType === "purchase") {
+    return true
+  }
+  return !(input.orderId || input.contents)
+}
 
 export const adsConversionRuleTriggerSchema = z.discriminatedUnion("type", [
   z.object({
@@ -333,14 +354,25 @@ export type ListAllChannelAdsExportRowsInput = z.input<
  * `value`/`currency` are STATIC config only (same as `sendMetaCapiEvent`) —
  * no custom-field variable resolution.
  */
-export const recordTriggerConversionInput = z.object({
-  workspaceId: zodBigintAsString(),
-  contactInboxId: zodBigintAsString(),
-  triggerId: zodBigintAsString(),
-  eventType: adsConversionEventTypeSchema,
-  value: metaCapiValueSchema,
-  currency: metaCapiCurrencySchema,
-})
+export const recordTriggerConversionInput = z
+  .object({
+    workspaceId: zodBigintAsString(),
+    contactInboxId: zodBigintAsString(),
+    triggerId: zodBigintAsString(),
+    eventType: adsConversionEventTypeSchema,
+    value: metaCapiValueSchema,
+    currency: metaCapiCurrencySchema,
+    orderId: metaCapiOrderIdSchema,
+    contents: metaCapiContentsSchema,
+  })
+  .refine(rejectPurchaseFieldsOnNonPurchase, {
+    message: "orderId/contents are only valid for purchase events",
+    path: ["orderId"],
+  })
+  .refine(assertPurchaseValueMatchesContents, {
+    message: "value must equal the sum of contents (quantity × item_price)",
+    path: ["value"],
+  })
 export type RecordTriggerConversionInput = z.infer<
   typeof recordTriggerConversionInput
 >
@@ -357,14 +389,25 @@ export type RecordTriggerConversionInput = z.infer<
  * `sendMetaCapiEvent`/`recordTriggerConversion`) — no custom-field variable
  * resolution.
  */
-export const recordFlowStepConversionInput = z.object({
-  workspaceId: zodBigintAsString(),
-  contactInboxId: zodBigintAsString(),
-  flowNodeId: zodBigintAsString(),
-  eventType: adsConversionEventTypeSchema,
-  value: metaCapiValueSchema,
-  currency: metaCapiCurrencySchema,
-})
+export const recordFlowStepConversionInput = z
+  .object({
+    workspaceId: zodBigintAsString(),
+    contactInboxId: zodBigintAsString(),
+    flowNodeId: zodBigintAsString(),
+    eventType: adsConversionEventTypeSchema,
+    value: metaCapiValueSchema,
+    currency: metaCapiCurrencySchema,
+    orderId: metaCapiOrderIdSchema,
+    contents: metaCapiContentsSchema,
+  })
+  .refine(rejectPurchaseFieldsOnNonPurchase, {
+    message: "orderId/contents are only valid for purchase events",
+    path: ["orderId"],
+  })
+  .refine(assertPurchaseValueMatchesContents, {
+    message: "value must equal the sum of contents (quantity × item_price)",
+    path: ["value"],
+  })
 export type RecordFlowStepConversionInput = z.infer<
   typeof recordFlowStepConversionInput
 >

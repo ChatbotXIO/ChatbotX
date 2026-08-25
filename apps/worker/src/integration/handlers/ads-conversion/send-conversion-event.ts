@@ -3,6 +3,7 @@ import {
   type AdReferralChannel,
   contactInboxService,
   contactService,
+  hashContactUserData,
   integrationWhatsappService,
   isAdReferralChannel,
   type MetaConversionsIntegrationByChannel,
@@ -10,6 +11,7 @@ import {
   resolveCapiAccessToken,
   whatsappAuthForCapiScopeSchema,
   withBlockedOwnerGuard,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { adsConversionEventRepository } from "@chatbotx.io/database/repositories"
 import type { AdsConversionEventModel } from "@chatbotx.io/database/types"
@@ -24,6 +26,10 @@ import {
   ensureDataset as ensureWhatsappConversionsDataset,
   sendConversionEvent as sendWhatsappConversionEvent,
 } from "@chatbotx.io/integration-whatsapp/api/conversions"
+import type {
+  HashedCapiUserData,
+  PurchaseContentItem,
+} from "@chatbotx.io/utils/meta-capi"
 import {
   type AdsConversionJobSendConversionEvent,
   DefaultJobAction,
@@ -35,6 +41,7 @@ import {
   findEventIntegration,
   refreshScopeCache,
 } from "../meta-conversions/capi-scope-checkers"
+import { sanitizeCapiError } from "../meta-conversions/sanitize-capi-error"
 
 type SendConversionEventData = AdsConversionJobSendConversionEvent["data"]
 
@@ -98,6 +105,14 @@ type SharedMetaConversionEventFields = {
   eventId: string
   currency: string | null
   value: string | null
+  /** Hashed customer-info (plan #1). */
+  userData?: HashedCapiUserData
+  /** Limited Data Use (plan #3). */
+  limitedDataUse?: boolean
+  /** Purchase order id (plan #4). */
+  orderId?: string | null
+  /** Purchase line items (plan #4). */
+  contents?: PurchaseContentItem[] | null
 }
 
 /**
@@ -171,10 +186,50 @@ async function reportTerminalCapiFailure(input: {
     {
       adsConversionEventId: event.id,
       workspaceId: event.workspaceId,
-      err: error,
+      err: sanitizeCapiError(error),
     },
     "Ads conversion event marked failed",
   )
+}
+
+/**
+ * Best-effort customer-info enrichment for the WhatsApp branch (plan #1).
+ * Unlike the Messenger/Instagram branch, WhatsApp's core send identity
+ * (ctwaClid/wabaId) already lives directly on the `AdsConversionEvent` row —
+ * it does not depend on `event.contactInboxId` at all (which can be null,
+ * e.g. an automatic event ingested without attribution). So a missing
+ * contactInboxId, a missing contact inbox, or a workspace/inbox mismatch here
+ * means only "no PII to add", never "abort the send": the core identity is
+ * already valid, and a false-positive block on unrelated attribution
+ * weirdness would be a needless send failure. The workspace/inbox check
+ * mirrors the Phase 0 guard exactly — it's what stands between an
+ * unvalidated contactInboxId and a foreign contact's PII, it just resolves
+ * to "no enrichment" here instead of "no send" as it does elsewhere.
+ */
+async function resolveWhatsappUserData(
+  event: AdsConversionEventModel,
+  inboxId: string,
+): Promise<HashedCapiUserData | undefined> {
+  if (!event.contactInboxId) {
+    return
+  }
+
+  const contactInbox = await contactInboxService.findByUncached({
+    where: { id: event.contactInboxId },
+  })
+  if (!contactInbox) {
+    return
+  }
+
+  const contact = await contactService.findById({
+    workspaceId: event.workspaceId,
+    id: contactInbox.contactId,
+  })
+  if (!contact || contactInbox.inboxId !== inboxId) {
+    return
+  }
+
+  return hashContactUserData(contact)
 }
 
 async function handleSendWhatsappConversionEvent(
@@ -222,6 +277,13 @@ async function handleSendWhatsappConversionEvent(
     return
   }
 
+  // Limited Data Use (plan #3): read once per event, OUTSIDE the try/catch
+  // below so a read failure throws and propagates for a BullMQ retry instead
+  // of being caught and silently sent with the wrong LDU state.
+  const workspace = await workspaceService.findById({
+    id: event.workspaceId,
+  })
+
   try {
     // Dataset provisioning shares the send's error classification: a
     // retryable Meta error rethrows for a BullMQ retry, while a terminal one
@@ -243,6 +305,8 @@ async function handleSendWhatsappConversionEvent(
         }),
     })
 
+    const userData = await resolveWhatsappUserData(event, integration.inboxId)
+
     await sendWhatsappConversionEvent({
       datasetId,
       accessToken: auth.tokens.accessToken,
@@ -257,6 +321,10 @@ async function handleSendWhatsappConversionEvent(
         value: event.value,
         messagingOutcomeType:
           event.source === "automatic" ? "automatic_events" : undefined,
+        userData,
+        limitedDataUse: workspace.capiLimitedDataUse,
+        orderId: event.orderId,
+        contents: event.contents,
       },
     })
   } catch (error) {
@@ -386,6 +454,13 @@ async function handleSendMetaChannelConversionEvent(
     return
   }
 
+  // Limited Data Use (plan #3): read once per event, OUTSIDE the try/catch
+  // below so a read failure throws and propagates for a BullMQ retry instead
+  // of being caught and silently sent with the wrong LDU state.
+  const workspace = await workspaceService.findById({
+    id: event.workspaceId,
+  })
+
   try {
     const auth = await resolveCapiAccessToken(integration)
     const integrationForSend =
@@ -426,6 +501,11 @@ async function handleSendMetaChannelConversionEvent(
               }),
           })
 
+    // Customer-info matching (plan #1) — `contactInboxContact` was already
+    // resolved and workspace/inbox-validated by the guard above, so it is
+    // safe to hash and send.
+    const userData = await hashContactUserData(contactInboxContact)
+
     const eventName = capiEventNameByEventType[event.eventType]
     const sharedEventFields = {
       eventName,
@@ -433,6 +513,10 @@ async function handleSendMetaChannelConversionEvent(
       eventId: event.sourceEventId,
       currency: event.currency,
       value: event.value,
+      userData,
+      limitedDataUse: workspace.capiLimitedDataUse,
+      orderId: event.orderId,
+      contents: event.contents,
     }
 
     await sendMetaConversionEvent({

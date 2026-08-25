@@ -23,6 +23,7 @@
     "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",
     "./id": "./src/id.ts",
+    "./meta-capi": "./src/meta-capi.ts",
     "./temporal-input": "./src/temporal-input/index.ts",
     "./variables": "./src/variables.ts",
     "./zod": "./src/zod.ts"

@@ -5275,7 +5275,16 @@
       "contentCategory": "內容類別",
       "contentCategoryPlaceholder": "與此事件相關聯的內容類別",
       "contentName": "內容名稱",
-      "contentNamePlaceholder": "與此事件相關聯的頁面或產品名稱"
+      "contentNamePlaceholder": "與此事件相關聯的頁面或產品名稱",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "貼上來自 Events Manager 的資料集 ID",
     "saveDataset": "儲存",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "僅會為具有 WhatsApp 點擊式 WhatsApp 廣告或 Meta 廣告推薦歸因的聯絡人記錄轉換。對其他聯絡人沒有影響。"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

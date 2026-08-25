@@ -5275,7 +5275,16 @@
       "contentCategory": "Contentcategorie",
       "contentCategoryPlaceholder": "De categorie van de content die bij de gebeurtenis hoort",
       "contentName": "Contentnaam",
-      "contentNamePlaceholder": "De naam van de pagina of het product dat bij de gebeurtenis hoort"
+      "contentNamePlaceholder": "De naam van de pagina of het product dat bij de gebeurtenis hoort",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Plak de Dataset-ID uit Events Manager",
     "saveDataset": "Opslaan",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Registreert alleen een conversie voor contacten met WhatsApp click-to-WhatsApp- of Meta-advertentieverwijzingsattributie. Heeft geen effect op andere contacten."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

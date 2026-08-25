@@ -5275,7 +5275,16 @@
       "contentCategory": "Categoria del contenuto",
       "contentCategoryPlaceholder": "La categoria del contenuto associato all'evento",
       "contentName": "Nome del contenuto",
-      "contentNamePlaceholder": "Il nome della pagina o del prodotto associato all'evento"
+      "contentNamePlaceholder": "Il nome della pagina o del prodotto associato all'evento",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Incolla l'ID dataset da Gestione eventi",
     "saveDataset": "Salva",
@@ -5325,6 +5334,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "Registra una conversione solo per i contatti con attribuzione a un annuncio click-to-WhatsApp o a un referral pubblicitario Meta. Non ha effetto sugli altri contatti."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

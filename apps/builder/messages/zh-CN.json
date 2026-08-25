@@ -4997,7 +4997,16 @@
       "contentCategory": "内容类别",
       "contentCategoryPlaceholder": "与此事件相关联的内容类别",
       "contentName": "内容名称",
-      "contentNamePlaceholder": "与此事件相关联的页面或产品名称"
+      "contentNamePlaceholder": "与此事件相关联的页面或产品名称",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "粘贴来自事件管理工具的数据集 ID",
     "saveDataset": "保存",
@@ -5047,6 +5056,10 @@
     },
     "trackAdsFlowStep": {
       "helpNote": "仅为具有 WhatsApp 点击进入 WhatsApp 广告或 Meta 广告引荐归因的联系人记录转化。对其他联系人没有影响。"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "appointments": {

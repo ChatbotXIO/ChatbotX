@@ -3,6 +3,7 @@ import {
   contactCustomFieldService,
   conversationService,
   metaConversionsService,
+  type RecordTriggerConversionInput,
   tagSyncService,
 } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
@@ -380,6 +381,11 @@ export class ActionExecutor {
           typeof action.value === "string" ? action.value : undefined
         const currency =
           typeof action.currency === "string" ? action.currency : undefined
+        const orderId =
+          typeof action.orderId === "string" ? action.orderId : undefined
+        const contents = Array.isArray(action.contents)
+          ? (action.contents as RecordTriggerConversionInput["contents"])
+          : undefined
 
         await adsConversionService.recordTriggerConversion({
           workspaceId,
@@ -388,6 +394,8 @@ export class ActionExecutor {
           eventType: "purchase",
           value,
           currency,
+          orderId,
+          contents,
         })
         break
       }
