@@ -598,6 +598,7 @@ export const handleCallback = async (
         googleCredential,
         "/integrations/google-calendar/callback",
       )
+      let connectStatus: "success" | "error" = "success"
       try {
         const connection = await exchangeAndVerifyGoogleCalendar({
           credentialConfig: googleCredential.config,
@@ -612,21 +613,18 @@ export const handleCallback = async (
           providerCalendarId: connection.providerCalendarId,
           email: connection.email,
         })
-
-        const successUrl = new URL(safeReferer)
-        successUrl.searchParams.set("externalCalendarConnect", "success")
-
-        return redirect(successUrl.toString())
       } catch (error) {
         logger.error(
           { err: normalizeError(error), workspaceId: workspace.id },
           "Failed to connect Google Calendar from OAuth callback",
         )
-        const errorUrl = new URL(safeReferer)
-        errorUrl.searchParams.set("externalCalendarConnect", "error")
-
-        return redirect(errorUrl.toString())
+        connectStatus = "error"
       }
+
+      const resultUrl = new URL(safeReferer)
+      resultUrl.searchParams.set("externalCalendarConnect", connectStatus)
+
+      return redirect(resultUrl.toString())
     }
 
     case "googleSheets": {
