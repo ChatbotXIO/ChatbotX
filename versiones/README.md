@@ -11,6 +11,7 @@ tiene el plan que se siguió y el resumen de lo que se hizo (archivos + cómo vo
 | [#2](PR2-fibrazo-sourceid-license/) | `fix/fibrazo-sourceid-license` | Fix 404 `sourceId` + licencia enterprise sin key + start.sh |
 | [#3](PR3-workspace-members-role/) | `feat/workspace-members-role` | Borrar owner + selector de rol Owner/Agent |
 | [#4](PR4-workspace-create-gate/) | `fix/workspace-create-gate` | Gate de creación de workspaces + CI verde (lint/i18n/tests) |
+| [#5](PR5-workspace-switcher-gate/) | `fix/workspace-switcher-gate` | Ocultar \"Add workspace\" para no-admins + limpieza workspace del asesor |
 
 > PR #1 (`feat/fibrazo-fork-setup`) — setup inicial del fork: realtime auth URL, host binding,
 > healthcheck, etc. Está documentada en `FORK-CHANGES.md` (secciones 1-5).
