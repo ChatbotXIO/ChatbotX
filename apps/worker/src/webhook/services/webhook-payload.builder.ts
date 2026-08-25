@@ -195,7 +195,7 @@ const PAYLOAD_BUILDERS = {
     ...basePayload,
     ...data,
   }),
-  // Call events pass their metadata (wacid, durationSeconds, recordingUrl,
+  // Call events pass their metadata (callId, durationSeconds, recordingUrl,
   // transcript, …) straight through — every field is server-generated.
   [triggerEventTypes.enum.incomingCall]: (basePayload, data) => ({
     ...basePayload,

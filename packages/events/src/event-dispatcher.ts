@@ -1,5 +1,11 @@
 import type { ContactInfoType } from "@chatbotx.io/database/partials"
-import type { BaseEventEmitter } from "./base-emitter"
+import type {
+  BaseEventEmitter,
+  CallEndedMetadata,
+  CallRecordedMetadata,
+  CallTranscribedMetadata,
+  IncomingCallMetadata,
+} from "./base-emitter"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"
@@ -225,36 +231,36 @@ export const emitConversationUnassigned = async (
     unassignedBy,
   )
 
-// WhatsApp Business Calling events
+// Voice-call events (channel-neutral — `metadata.callId` is the provider id)
 export const emitIncomingCall = async (
   workspaceId: string,
   contactId: string,
-  metadata: { wacid: string; conversationId?: string },
+  metadata: IncomingCallMetadata,
 ) => await emitToAllEmitters("incomingCall", workspaceId, contactId, metadata)
 
 export const emitMissedAudioCall = async (
   workspaceId: string,
   contactId: string,
-  metadata: { wacid: string; conversationId?: string },
+  metadata: IncomingCallMetadata,
 ) =>
   await emitToAllEmitters("missedAudioCall", workspaceId, contactId, metadata)
 
 export const emitCallEnded = async (
   workspaceId: string,
   contactId: string,
-  metadata: { wacid: string; durationSeconds?: number },
+  metadata: CallEndedMetadata,
 ) => await emitToAllEmitters("callEnded", workspaceId, contactId, metadata)
 
 export const emitCallRecorded = async (
   workspaceId: string,
   contactId: string,
-  metadata: { wacid: string; recordingUrl?: string },
+  metadata: CallRecordedMetadata,
 ) => await emitToAllEmitters("callRecorded", workspaceId, contactId, metadata)
 
 export const emitCallTranscribed = async (
   workspaceId: string,
   contactId: string,
-  metadata: { wacid: string; transcript?: string },
+  metadata: CallTranscribedMetadata,
 ) =>
   await emitToAllEmitters("callTranscribed", workspaceId, contactId, metadata)
 

@@ -132,7 +132,7 @@ export const handleWhatsappCallRecordingReady = async (
     })
     if (contactInbox) {
       await emitCallRecorded(call.workspaceId, contactInbox.contactId, {
-        wacid: data.wacid,
+        callId: data.wacid,
         recordingUrl: getPublicFileUrl(data.recordingPath, storageUrl),
       })
     }
@@ -244,7 +244,7 @@ export const handleWhatsappCallTranscribe = async (
     })
     if (contactInbox) {
       await emitCallTranscribed(call.workspaceId, contactInbox.contactId, {
-        wacid: data.wacid,
+        callId: data.wacid,
         transcript: transcript.text,
       })
     }

@@ -143,7 +143,7 @@ describe("handleWhatsappCallRecordingReady", () => {
       ],
     )
     expect(mocks.emitCallRecorded).toHaveBeenCalledWith("ws-1", "contact-1", {
-      wacid: "wacid.ABC",
+      callId: "wacid.ABC",
       recordingUrl:
         "https://cdn.example.com/public/space/ws-1/calls/wacid.ABC.ogg",
     })
@@ -235,7 +235,7 @@ describe("handleWhatsappCallTranscribe", () => {
     expect(mocks.emitCallTranscribed).toHaveBeenCalledWith(
       "ws-1",
       "contact-1",
-      { wacid: "wacid.ABC", transcript: "hello from the call" },
+      { callId: "wacid.ABC", transcript: "hello from the call" },
     )
   })
 

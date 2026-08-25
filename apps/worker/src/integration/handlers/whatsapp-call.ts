@@ -137,7 +137,7 @@ const handleConnect = async (
   // redelivery that lost the createIfAbsent race must not re-fire flows.
   if (isNew && event.direction === "userInitiated") {
     await emitIncomingCall(inbox.workspaceId, detected.contactInbox.contactId, {
-      wacid: event.wacid,
+      callId: event.wacid,
       conversationId: detected.conversation.id,
     })
   }
@@ -166,6 +166,7 @@ const handleInterimStatus = async (
   const transition = await whatsappCallRepository.updateInterimStatus({
     wacid: event.wacid,
     status,
+    current: existing,
   })
 
   // A REJECTED that lost the race against the terminate job upgraded the row
@@ -312,12 +313,12 @@ const handleTerminate = async (
   if (contactInbox) {
     if (entity.status === "completed") {
       await emitCallEnded(call.workspaceId, contactInbox.contactId, {
-        wacid: event.wacid,
+        callId: event.wacid,
         durationSeconds: event.durationSeconds,
       })
     } else if (call.direction === "userInitiated") {
       await emitMissedAudioCall(call.workspaceId, contactInbox.contactId, {
-        wacid: event.wacid,
+        callId: event.wacid,
         conversationId: call.conversationId,
       })
     }

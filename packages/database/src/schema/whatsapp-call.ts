@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   integer,
@@ -108,5 +109,10 @@ export const whatsappCallModel = pgTable(
       "btree",
       table.contactInboxId.asc().nullsLast(),
     ),
+    // LiveKit webhooks (egress_ended / room_finished) look calls up by room
+    // name on every delivery; partial so only in-app calls carry the index.
+    index("WhatsappCall_livekitRoomName_idx")
+      .using("btree", table.livekitRoomName.asc().nullsLast())
+      .where(sql`"livekitRoomName" IS NOT NULL`),
   ],
 )

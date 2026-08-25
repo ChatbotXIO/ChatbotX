@@ -156,7 +156,7 @@ describe("handleWhatsappCallEvent", () => {
       conversationId: "conv-1",
     })
     expect(mocks.emitIncomingCall).toHaveBeenCalledWith("ws-1", "contact-1", {
-      wacid: "wacid.ABC",
+      callId: "wacid.ABC",
       conversationId: "conv-1",
     })
   })
@@ -198,6 +198,7 @@ describe("handleWhatsappCallEvent", () => {
     expect(mocks.updateInterimStatus).toHaveBeenCalledWith({
       wacid: "wacid.ABC",
       status: "accepted",
+      current: expect.objectContaining({ wacid: "wacid.ABC" }),
     })
   })
 
@@ -223,6 +224,7 @@ describe("handleWhatsappCallEvent", () => {
     expect(mocks.updateInterimStatus).toHaveBeenCalledWith({
       wacid: "wacid.ABC",
       status: "rejected",
+      current: expect.objectContaining({ wacid: "wacid.ABC" }),
     })
     expect(mocks.updateContentBySourceId).toHaveBeenCalledWith(
       "wacid.ABC",
@@ -324,7 +326,7 @@ describe("handleWhatsappCallEvent", () => {
       }),
     )
     expect(mocks.emitCallEnded).toHaveBeenCalledWith("ws-1", "contact-1", {
-      wacid: "wacid.ABC",
+      callId: "wacid.ABC",
       durationSeconds: 90,
     })
     expect(mocks.emitMissedAudioCall).not.toHaveBeenCalled()
@@ -380,7 +382,7 @@ describe("handleWhatsappCallEvent", () => {
     expect(mocks.emitMissedAudioCall).toHaveBeenCalledWith(
       "ws-1",
       "contact-1",
-      { wacid: "wacid.NEW", conversationId: "conv-1" },
+      { callId: "wacid.NEW", conversationId: "conv-1" },
     )
   })
 

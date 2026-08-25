@@ -102,15 +102,21 @@ class WhatsappCallRepository {
    * `failed → rejected` repair of the call-activity message.
    */
   async updateInterimStatus(
-    props: { wacid: string; status: WhatsappCallStatus },
+    props: {
+      wacid: string
+      status: WhatsappCallStatus
+      /** Pre-fetched row to avoid a redundant read on the common path. */
+      current?: WhatsappCallRow
+    },
     tx: DatabaseClient = db,
   ): Promise<{ previousStatus: WhatsappCallStatus } | undefined> {
     // Retried once: a concurrent writer can invalidate the optimistic WHERE
     // between the read and the update (e.g. terminate finalizing to `failed`
-    // right before a REJECTED lands) — the re-read then observes the new
-    // status and re-evaluates the transition against it.
+    // right before a REJECTED lands). The caller-supplied `current` seeds the
+    // first attempt; the race-retry always re-reads to observe the new status.
+    let existing = props.current
     for (let attempt = 0; attempt < 2; attempt++) {
-      const existing = await this.findByWacid(props.wacid, tx)
+      existing ??= await this.findByWacid(props.wacid, tx)
       if (!(existing && canAdvanceStatus(existing.status, props.status))) {
         return
       }
@@ -130,6 +136,8 @@ class WhatsappCallRepository {
       if (updated) {
         return { previousStatus: existing.status }
       }
+      // Lost the optimistic WHERE — force a fresh read on the retry.
+      existing = undefined
     }
     return
   }

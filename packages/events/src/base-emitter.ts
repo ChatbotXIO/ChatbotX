@@ -4,6 +4,21 @@ import {
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
 
+/** Channel-neutral voice-call event metadata carried to triggers/webhooks. */
+export type CallEventMetadata = { callId: string }
+export type IncomingCallMetadata = CallEventMetadata & {
+  conversationId?: string
+}
+export type CallEndedMetadata = CallEventMetadata & {
+  durationSeconds?: number
+}
+export type CallRecordedMetadata = CallEventMetadata & {
+  recordingUrl?: string
+}
+export type CallTranscribedMetadata = CallEventMetadata & {
+  transcript?: string
+}
+
 /**
  * Base event emitter class with common functionality
  */
@@ -267,13 +282,13 @@ export abstract class BaseEventEmitter {
     })
   }
 
-  // WhatsApp Business Calling events. `metadata.wacid` correlates back to
-  // the WhatsappCall row; recording/transcript events additionally carry the
-  // public recording URL / transcript text for webhook consumers.
+  // Voice-call events (channel-neutral: `metadata.callId` is the provider's
+  // call id — a WhatsApp WACID today). Recording/transcript events also carry
+  // the public recording URL / transcript text for webhook consumers.
   async incomingCall(
     workspaceId: string,
     contactId: string,
-    metadata: { wacid: string; conversationId?: string },
+    metadata: IncomingCallMetadata,
   ): Promise<void> {
     await this.emit(triggerEventTypes.enum.incomingCall, {
       workspaceId,
@@ -285,7 +300,7 @@ export abstract class BaseEventEmitter {
   async missedAudioCall(
     workspaceId: string,
     contactId: string,
-    metadata: { wacid: string; conversationId?: string },
+    metadata: IncomingCallMetadata,
   ): Promise<void> {
     await this.emit(triggerEventTypes.enum.missedAudioCall, {
       workspaceId,
@@ -297,7 +312,7 @@ export abstract class BaseEventEmitter {
   async callEnded(
     workspaceId: string,
     contactId: string,
-    metadata: { wacid: string; durationSeconds?: number },
+    metadata: CallEndedMetadata,
   ): Promise<void> {
     await this.emit(triggerEventTypes.enum.callEnded, {
       workspaceId,
@@ -309,7 +324,7 @@ export abstract class BaseEventEmitter {
   async callRecorded(
     workspaceId: string,
     contactId: string,
-    metadata: { wacid: string; recordingUrl?: string },
+    metadata: CallRecordedMetadata,
   ): Promise<void> {
     await this.emit(triggerEventTypes.enum.callRecorded, {
       workspaceId,
@@ -321,7 +336,7 @@ export abstract class BaseEventEmitter {
   async callTranscribed(
     workspaceId: string,
     contactId: string,
-    metadata: { wacid: string; transcript?: string },
+    metadata: CallTranscribedMetadata,
   ): Promise<void> {
     await this.emit(triggerEventTypes.enum.callTranscribed, {
       workspaceId,
