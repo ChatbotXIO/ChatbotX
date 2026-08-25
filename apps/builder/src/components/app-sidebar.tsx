@@ -180,7 +180,10 @@ export function AppSidebar({
           <BrandIcon alt="Brand" />
         </Link>
         <div className="border-b px-1">
-          <WorkspaceSwitcher workspaces={allWorkspaces} />
+          <WorkspaceSwitcher
+            isPlatformAdmin={isPlatformAdmin}
+            workspaces={allWorkspaces}
+          />
         </div>
       </SidebarHeader>
       <SidebarContent>

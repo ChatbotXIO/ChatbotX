@@ -31,8 +31,10 @@ import { useWorkspaceId } from "@/hooks/routing"
 
 export function WorkspaceSwitcher({
   workspaces,
+  isPlatformAdmin = false,
 }: {
   workspaces: WorkspaceResource[]
+  isPlatformAdmin?: boolean
 }) {
   const { isMobile } = useSidebar()
   const workspaceId = useWorkspaceId()
@@ -113,21 +115,25 @@ export function WorkspaceSwitcher({
                 }
               />
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="gap-2 p-2"
-              render={
-                <Link
-                  className="gap-4 font-medium text-muted-foreground"
-                  href="/channels/create"
-                >
-                  <PlusCircle className="ms-2 size-4" />
-                  {t("actions.addFeature", {
-                    feature: t("fields.workspace.label"),
-                  })}
-                </Link>
-              }
-            />
+            {isPlatformAdmin ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2 p-2"
+                  render={
+                    <Link
+                      className="gap-4 font-medium text-muted-foreground"
+                      href="/channels/create"
+                    >
+                      <PlusCircle className="ms-2 size-4" />
+                      {t("actions.addFeature", {
+                        feature: t("fields.workspace.label"),
+                      })}
+                    </Link>
+                  }
+                />
+              </>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
