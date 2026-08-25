@@ -68,6 +68,7 @@ const appointmentWhere = (input: AppointmentListInput, now = new Date()) =>
   )
 
 type AppointmentListRow = typeof appointmentModel.$inferSelect & {
+  contactAvatar: string | null
   calendarName: string
   contactFirstName: string | null
   contactLastName: string | null
@@ -106,6 +107,7 @@ export const appointmentRepository = {
           cancelledAt: appointmentModel.cancelledAt,
           deletedAt: appointmentModel.deletedAt,
           calendarName: appointmentCalendarModel.name,
+          contactAvatar: contactModel.avatar,
           contactFirstName: contactModel.firstName,
           contactLastName: contactModel.lastName,
           contactFullName: contactModel.fullName,
