@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "إعادة المحاولة",
     "copy": "نسخ",
     "copyUrl": "نسخ الرابط",
     "actions": "الإجراءات",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {لا توجد ملفات} =1 {ملف واحد} other {# ملفات}}",
     "openMediaLibrary": "فتح مكتبة الوسائط",
     "uploadFailed": "فشل رفع {name}"
+  },
+  "adsCampaign": {
+    "title": "الإعلانات",
+    "createCta": "إنشاء إعلان",
+    "prereq": {
+      "notConnected": "قم بربط Facebook Ads لإنشاء إعلانات مراسلة لهذه القناة.",
+      "connectCta": "ربط Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "بلا",
+      "housing": "الإسكان",
+      "employment": "التوظيف",
+      "credit": "الائتمان",
+      "issues": "قضايا اجتماعية أو انتخابات أو سياسة",
+      "financialProducts": "المنتجات والخدمات المالية",
+      "onlineGambling": "المقامرة والألعاب عبر الإنترنت"
+    },
+    "fields": {
+      "objective": {
+        "label": "الهدف",
+        "value": "التفاعل (المراسلة)"
+      },
+      "specialAdCategory": {
+        "label": "فئة الإعلان الخاصة",
+        "description": "اختيار فئة مقيّدة يزيل خيارات الاستهداف حسب العمر والجنس وخيارات استهداف أخرى لا تسمح بها Meta لهذه الفئة.",
+        "restrictedNote": "تم تعطيل الاستهداف حسب العمر والجنس لأنه تم اختيار فئة إعلان خاصة مقيّدة."
+      },
+      "adAccount": {
+        "label": "حساب الإعلانات"
+      },
+      "whatsappPage": {
+        "label": "صفحة فيسبوك",
+        "description": "لا تزال إعلانات WhatsApp تتطلب صفحة فيسبوك مرتبطة — اختر الصفحة المتصلة التي تريد استخدامها."
+      },
+      "dailyBudget": {
+        "label": "الميزانية اليومية",
+        "placeholder": "مثال: 2000",
+        "description": "أدخل المبلغ بأصغر وحدة عملة في حساب الإعلانات الخاص بك (مثال: السنت بالنسبة للدولار الأمريكي)."
+      },
+      "countries": {
+        "label": "الدول"
+      },
+      "ageRange": {
+        "min": "الحد الأدنى للعمر",
+        "max": "الحد الأقصى للعمر"
+      },
+      "gender": {
+        "label": "الجنس",
+        "male": "ذكر",
+        "female": "أنثى"
+      },
+      "schedule": {
+        "start": "وقت البدء",
+        "end": "وقت الانتهاء"
+      },
+      "destination": {
+        "label": "الوجهة"
+      },
+      "callToAction": {
+        "label": "دعوة لاتخاذ إجراء",
+        "derivedNote": "يتم اشتقاق زر الدعوة لاتخاذ إجراء ({type}) تلقائيًا من القناة."
+      },
+      "specialAdCategoryCountry": {
+        "label": "بلد فئة الإعلان",
+        "description": "مطلوب من Meta لفئة القضايا الاجتماعية أو الانتخابات أو السياسة — البلد المصرح لك بتشغيل هذه الإعلانات فيه."
+      }
+    },
+    "welcomeMessage": {
+      "title": "رسالة الترحيب",
+      "label": "رسالة الترحيب",
+      "description": "تُرسل تلقائيًا عندما يبدأ شخص ما محادثة من هذا الإعلان.",
+      "mode": {
+        "default": "استخدام رسالة Meta الافتراضية",
+        "single": "رسالة واحدة",
+        "templates": "اختبار ما يصل إلى 5 نسخ من الرسالة"
+      },
+      "messageLabel": "الرسالة",
+      "templateLabel": "النسخة {index}",
+      "headingPlaceholder": "العنوان (اختياري)",
+      "addTemplate": "إضافة نسخة",
+      "templatesLimit": "يمكن اختبار ما يصل إلى {max} نسخة."
+    },
+    "creative": {
+      "mediaRequired": "قم برفع صورة أو فيديو للمتابعة.",
+      "mediaType": {
+        "label": "الوسائط الإبداعية",
+        "orVideo": "أو فيديو",
+        "selectAdAccountFirst": "اختر حساب إعلانات قبل رفع الوسائط.",
+        "uploadImage": "رفع صورة",
+        "uploadVideo": "رفع فيديو"
+      },
+      "uploading": "جارٍ الرفع...",
+      "videoProcessing": "جارٍ معالجة الفيديو...",
+      "videoReady": "الفيديو جاهز",
+      "videoProcessingFailed": "فشلت معالجة الفيديو. يرجى تجربة ملف آخر.",
+      "previewAlt": "معاينة الإبداع",
+      "primaryText": "النص الأساسي",
+      "headline": "العنوان الرئيسي"
+    },
+    "wizard": {
+      "createDraft": "إنشاء كمسودة موقوفة",
+      "campaignStep": {
+        "title": "الحملة",
+        "namePlaceholder": "أدخل اسمًا لهذا الإعلان"
+      },
+      "adSetStep": {
+        "title": "مجموعة الإعلانات"
+      },
+      "creativeStep": {
+        "title": "إبداع الإعلان"
+      },
+      "preflightStep": {
+        "title": "المراجعة"
+      },
+      "errors": {
+        "nameRequired": "أدخل اسمًا لهذا الإعلان.",
+        "adAccountRequired": "اختر حساب إعلانات.",
+        "budgetRequired": "أدخل ميزانية يومية.",
+        "countryRequired": "اختر دولة واحدة على الأقل.",
+        "mediaRequired": "ارفع صورة أو فيديو."
+      }
+    },
+    "preflight": {
+      "title": "الملخص",
+      "pausedNote": "يُنشأ هذا الإعلان كمسودة موقوفة. لن يُنشر أي شيء ولن يُنفق أي مال حتى تقوم بنشره."
+    },
+    "publishConfirm": {
+      "title": "هل تريد نشر هذا الإعلان؟",
+      "description": "يؤدي النشر إلى تفعيل الحملة ومجموعة الإعلانات والإعلان بالترتيب. ستبدأ Meta بإنفاق ميزانيتك بمجرد بدء التسليم.",
+      "confirm": "نشر"
+    },
+    "list": {
+      "viewOnMeta": "العرض على Meta",
+      "empty": "لا توجد إعلانات مراسلة حتى الآن.",
+      "createState": "حالة المسودة",
+      "actions": "الإجراءات",
+      "notPublishedYet": "لم يُنشر بعد",
+      "draftReady": "المسودة جاهزة",
+      "createFailed": "فشل الإنشاء",
+      "creating": "جارٍ الإنشاء...",
+      "publish": "نشر",
+      "pause": "إيقاف مؤقت"
+    },
+    "messages": {
+      "created": "تم إنشاء مسودة الإعلان.",
+      "actionSucceeded": "تم."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "أنشئ وأدر إعلانات Click-to-WhatsApp هنا."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "أنشئ وأدر إعلانات Click-to-Messenger هنا."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "أنشئ وأدر إعلانات Click-to-Instagram هنا."
+      },
+      "connectCta": "ربط Facebook Ads",
+      "reconnectCta": "إعادة الربط",
+      "reconnectNeeded": "يحتاج هذا الاتصال إلى إعادة الربط.",
+      "refresh": "تحديث",
+      "whatsappPageRequiredNote": "لا تزال إعلانات النقر للانتقال إلى WhatsApp تتطلب صفحة فيسبوك مرتبطة (متطلب من Meta) — ستختارها عند إنشاء إعلان.",
+      "emptyDashboardNote": "لن تظهر الإعلانات التي تُنشأ هنا في لوحة معلومات الإعلانات ما لم يكن لدى مساحة العمل هذه أيضًا تكامل Facebook Ads منفصل متصل."
+    },
+    "insights": {
+      "title": "الأداء",
+      "empty": "لا توجد بيانات بعد",
+      "impressions": "مرات الظهور",
+      "reach": "الوصول",
+      "spend": "الإنفاق",
+      "clicks": "النقرات",
+      "conversations": "المحادثات",
+      "costPerConversation": "التكلفة/محادثة",
+      "costPerConversationTooltip": "متوسط التكلفة لكل محادثة مراسلة بدأت.",
+      "datePresetLabel": "الفترة:",
+      "datePreset": {
+        "maximum": "كل الأوقات",
+        "last_30d": "آخر 30 يومًا",
+        "last_7d": "آخر 7 أيام"
+      }
+    }
   }
 }

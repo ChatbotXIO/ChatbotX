@@ -2156,6 +2156,9 @@ importers:
       '@chatbotx.io/imports':
         specifier: workspace:*
         version: link:../imports
+      '@chatbotx.io/integration-facebook-ads':
+        specifier: workspace:*
+        version: link:../../integrations/facebook-ads
       '@chatbotx.io/integration-google-calendar':
         specifier: workspace:*
         version: link:../../integrations/google-calendar

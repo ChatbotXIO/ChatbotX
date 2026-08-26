@@ -1585,6 +1585,7 @@
     "collapse": "隱藏子類別"
   },
   "actions": {
+    "retry": "重試",
     "copy": "複製",
     "copyUrl": "複製 URL",
     "actions": "操作",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {沒有檔案} =1 {1 個檔案} other {# 個檔案}}",
     "openMediaLibrary": "開啟媒體庫",
     "uploadFailed": "{name} 上傳失敗"
+  },
+  "adsCampaign": {
+    "title": "廣告",
+    "createCta": "建立廣告",
+    "prereq": {
+      "notConnected": "請連接 Facebook Ads，以便為此渠道建立訊息廣告。",
+      "connectCta": "連接 Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "無",
+      "housing": "住房",
+      "employment": "就業",
+      "credit": "信用",
+      "issues": "社會議題、選舉或政治",
+      "financialProducts": "金融產品和服務",
+      "onlineGambling": "線上博彩和遊戲"
+    },
+    "fields": {
+      "objective": {
+        "label": "行銷目標",
+        "value": "互動（訊息）"
+      },
+      "specialAdCategory": {
+        "label": "特殊廣告類別",
+        "description": "選擇受限類別後，Meta 不允許該類別使用的年齡、性別等目標鎖定選項將被移除。",
+        "restrictedNote": "由於已選擇受限的特殊廣告類別，年齡與性別目標鎖定已停用。"
+      },
+      "adAccount": {
+        "label": "廣告帳戶"
+      },
+      "whatsappPage": {
+        "label": "Facebook 粉絲專頁",
+        "description": "WhatsApp 廣告仍須連結一個 Facebook 粉絲專頁——請選擇要使用的已連接粉絲專頁。"
+      },
+      "dailyBudget": {
+        "label": "每日預算",
+        "placeholder": "例如 2000",
+        "description": "請以廣告帳戶的最小貨幣單位輸入金額（例如美元對應美分）。"
+      },
+      "countries": {
+        "label": "國家"
+      },
+      "ageRange": {
+        "min": "最低年齡",
+        "max": "最高年齡"
+      },
+      "gender": {
+        "label": "性別",
+        "male": "男性",
+        "female": "女性"
+      },
+      "schedule": {
+        "start": "開始時間",
+        "end": "結束時間"
+      },
+      "destination": {
+        "label": "導向目的地"
+      },
+      "callToAction": {
+        "label": "行動呼籲按鈕",
+        "derivedNote": "行動呼籲按鈕（{type}）會依渠道自動產生。"
+      },
+      "specialAdCategoryCountry": {
+        "label": "廣告類別國家/地區",
+        "description": "Meta 對社會議題、選舉或政治類別的要求——你獲授權投放此類廣告的國家/地區。"
+      }
+    },
+    "welcomeMessage": {
+      "title": "歡迎訊息",
+      "label": "歡迎訊息",
+      "description": "當有人透過此廣告開始對話時，會自動傳送。",
+      "mode": {
+        "default": "使用 Meta 的預設訊息",
+        "single": "單一訊息",
+        "templates": "最多測試 5 種訊息版本"
+      },
+      "messageLabel": "訊息",
+      "templateLabel": "版本 {index}",
+      "headingPlaceholder": "標題（選填）",
+      "addTemplate": "新增版本",
+      "templatesLimit": "最多可測試 {max} 種版本。"
+    },
+    "creative": {
+      "mediaRequired": "請上傳圖片或影片以繼續。",
+      "mediaType": {
+        "label": "廣告素材",
+        "orVideo": "或影片",
+        "selectAdAccountFirst": "請先選擇廣告帳戶，再上傳素材。",
+        "uploadImage": "上傳圖片",
+        "uploadVideo": "上傳影片"
+      },
+      "uploading": "上傳中...",
+      "videoProcessing": "影片處理中...",
+      "videoReady": "影片已就緒",
+      "videoProcessingFailed": "影片處理失敗，請嘗試其他檔案。",
+      "previewAlt": "素材預覽",
+      "primaryText": "主要文字",
+      "headline": "標題"
+    },
+    "wizard": {
+      "createDraft": "建立為已暫停的草稿",
+      "campaignStep": {
+        "title": "廣告活動",
+        "namePlaceholder": "為此廣告命名"
+      },
+      "adSetStep": {
+        "title": "廣告組合"
+      },
+      "creativeStep": {
+        "title": "廣告素材"
+      },
+      "preflightStep": {
+        "title": "審閱"
+      },
+      "errors": {
+        "nameRequired": "請輸入此廣告的名稱。",
+        "adAccountRequired": "請選擇廣告帳戶。",
+        "budgetRequired": "請輸入每日預算。",
+        "countryRequired": "請至少選擇一個國家。",
+        "mediaRequired": "請上傳圖片或影片。"
+      }
+    },
+    "preflight": {
+      "title": "摘要",
+      "pausedNote": "此廣告會建立為已暫停的草稿。在您發布之前，不會上線放送，也不會產生任何費用。"
+    },
+    "publishConfirm": {
+      "title": "要發布此廣告嗎？",
+      "description": "發布後將依序啟用廣告活動、廣告組合與廣告。一旦開始放送，Meta 便會開始消耗您的預算。",
+      "confirm": "發布"
+    },
+    "list": {
+      "viewOnMeta": "在 Meta 上查看",
+      "empty": "尚無訊息廣告。",
+      "createState": "草稿狀態",
+      "actions": "操作",
+      "notPublishedYet": "尚未發布",
+      "draftReady": "草稿已就緒",
+      "createFailed": "建立失敗",
+      "creating": "建立中...",
+      "publish": "發布",
+      "pause": "暫停"
+    },
+    "messages": {
+      "created": "廣告草稿已建立。",
+      "actionSucceeded": "已完成。"
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "在此建立與管理Click-to-WhatsApp廣告。"
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "在此建立與管理Click-to-Messenger廣告。"
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "在此建立與管理Click-to-Instagram廣告。"
+      },
+      "connectCta": "連接 Facebook Ads",
+      "reconnectCta": "重新連接",
+      "reconnectNeeded": "此連線需要重新連接。",
+      "refresh": "重新整理",
+      "whatsappPageRequiredNote": "點擊即可開啟 WhatsApp 的廣告仍須連結一個 Facebook 粉絲專頁（Meta 的規定）——您可在建立廣告時選擇。",
+      "emptyDashboardNote": "除非此工作區也已連接獨立的 Facebook Ads 整合，否則在此建立的廣告不會顯示在廣告儀表板中。"
+    },
+    "insights": {
+      "title": "成效",
+      "empty": "尚無資料",
+      "impressions": "曝光次數",
+      "reach": "觸及人數",
+      "spend": "花費",
+      "clicks": "點擊",
+      "conversations": "對話數",
+      "costPerConversation": "每次對話成本",
+      "costPerConversationTooltip": "每次發起訊息對話的平均成本。",
+      "datePresetLabel": "時間範圍：",
+      "datePreset": {
+        "maximum": "全部時間",
+        "last_30d": "最近30天",
+        "last_7d": "最近7天"
+      }
+    }
   }
 }

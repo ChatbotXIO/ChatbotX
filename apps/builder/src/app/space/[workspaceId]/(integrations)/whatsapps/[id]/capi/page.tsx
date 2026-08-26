@@ -5,6 +5,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
+import { checkMessagingAdsConnectionState } from "@/features/ads-campaign/queries"
 import { WhatsappCapiTab } from "@/features/integration-whatsapp/components/whatsapp-capi-tab"
 import { hasWhatsappCapiScope } from "@/features/integration-whatsapp/libs/capi-scope"
 import { WHATSAPP_OAUTH_CALLBACK_PATH } from "@/features/integration-whatsapp/libs/embedded-signup"
@@ -21,10 +22,16 @@ export default async function WhatsappCapiPage(props: {
   }
 
   const { workspaceId, id } = data
-  const [workspace, integrationWhatsapp] = await Promise.all([
-    workspaceService.findById({ id: workspaceId }),
-    integrationWhatsappService.findByIdForWorkspace({ id, workspaceId }),
-  ])
+  const [workspace, integrationWhatsapp, messagingAdsConnectionState] =
+    await Promise.all([
+      workspaceService.findById({ id: workspaceId }),
+      integrationWhatsappService.findByIdForWorkspace({ id, workspaceId }),
+      checkMessagingAdsConnectionState({
+        workspaceId,
+        channel: "whatsapp",
+        integrationId: id,
+      }),
+    ])
   if (!integrationWhatsapp) {
     return notFound()
   }
@@ -74,6 +81,7 @@ export default async function WhatsappCapiPage(props: {
         hasCapiScope: resolved.hasCapiScope,
         datasetId: resolved.datasetId,
       }}
+      messagingAdsConnectionState={messagingAdsConnectionState}
       oauthCallbackUrl={new URL(
         WHATSAPP_OAUTH_CALLBACK_PATH,
         oauthCallbackOrigin,

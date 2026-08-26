@@ -8,6 +8,8 @@ const {
   mockUpdateMessengerIntegrationAuth,
   mockFindInstagramIntegration,
   mockUpdateInstagramIntegrationAuth,
+  mockFindWhatsappIntegration,
+  mockUpsertMessagingAdsConnection,
   mockResolveForOwner,
   mockIsMember,
   mockFindWorkspaceById,
@@ -41,11 +43,14 @@ const {
   mockRedirect,
   mockAuditRecord,
   mockWithAuditContext,
+  mockAssertSuperAdmin,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockUpdateMessengerIntegrationAuth: vi.fn(),
   mockFindInstagramIntegration: vi.fn(),
   mockUpdateInstagramIntegrationAuth: vi.fn(),
+  mockFindWhatsappIntegration: vi.fn(),
+  mockUpsertMessagingAdsConnection: vi.fn(),
   mockResolveForOwner: vi.fn(),
   mockIsMember: vi.fn(),
   mockFindWorkspaceById: vi.fn(),
@@ -83,11 +88,16 @@ const {
   mockWithAuditContext: vi.fn(
     async (_ctx: unknown, fn: () => Promise<unknown>) => await fn(),
   ),
+  mockAssertSuperAdmin: vi.fn(async () => undefined),
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: mockAuditRecord },
   withAuditContext: mockWithAuditContext,
+}))
+
+vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({
+  assertWorkspaceSuperAdmin: mockAssertSuperAdmin,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -98,6 +108,12 @@ vi.mock("@chatbotx.io/business", () => ({
   instagramIntegrationService: {
     findByIdForWorkspace: mockFindInstagramIntegration,
     updateAuth: mockUpdateInstagramIntegrationAuth,
+  },
+  integrationWhatsappService: {
+    findByIdForWorkspace: mockFindWhatsappIntegration,
+  },
+  messagingAdsConnectionService: {
+    upsertFromOAuth: mockUpsertMessagingAdsConnection,
   },
   appointmentExternalCalendarService: {
     createGoogleFromOAuthCallback: mockCreateGoogleFromOAuthCallback,
@@ -219,7 +235,7 @@ vi.mock("@/lib/auth/utils", () => ({
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
 vi.mock("@/lib/facebook-pending-auth", () => ({
@@ -553,6 +569,111 @@ describe("handleCallback OAuth reconnect", () => {
       expect.any(Function),
     )
     expect(mockRedirect).toHaveBeenCalledWith(REFERER)
+  })
+
+  test("messagingAds flow stores the token on the per-integration connection after verifying ownership", async () => {
+    mockExchangeFacebookAdsCode.mockResolvedValue("short-token")
+    mockExchangeFacebookAdsLongLivedToken.mockResolvedValue({
+      accessToken: "ads-token",
+      expiresIn: 3600,
+    })
+    mockFindWhatsappIntegration.mockResolvedValue({
+      id: "9",
+      workspaceId: "1",
+    })
+
+    await handleCallback(
+      "messenger",
+      buildCallbackRequest("messenger", {
+        workspaceId: "1",
+        referer: REFERER,
+        flow: "messagingAds",
+        messagingAdsChannel: "whatsapp",
+        messagingAdsIntegrationId: "9",
+      }),
+    )
+
+    expect(mockFindWhatsappIntegration).toHaveBeenCalledWith({
+      id: "9",
+      workspaceId: "1",
+    })
+    expect(mockUpsertMessagingAdsConnection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "1",
+        channel: "whatsapp",
+        integrationId: "9",
+        auth: expect.objectContaining({ accessToken: "ads-token" }),
+      }),
+    )
+    expect(mockUpsertFacebookAds).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith(REFERER)
+  })
+
+  test("messagingAds flow rejects state missing channel/integrationId without storing a token", async () => {
+    await expect(
+      handleCallback(
+        "messenger",
+        buildCallbackRequest("messenger", {
+          workspaceId: "1",
+          referer: REFERER,
+          flow: "messagingAds",
+        }),
+      ),
+    ).rejects.toThrow("not found")
+
+    expect(mockUpsertMessagingAdsConnection).not.toHaveBeenCalled()
+  })
+
+  test("messagingAds flow rejects an integration that does not belong to the workspace/channel", async () => {
+    mockFindWhatsappIntegration.mockResolvedValue(undefined)
+
+    await expect(
+      handleCallback(
+        "messenger",
+        buildCallbackRequest("messenger", {
+          workspaceId: "1",
+          referer: REFERER,
+          flow: "messagingAds",
+          messagingAdsChannel: "whatsapp",
+          // Forged/foreign id — the ownership lookup returns nothing.
+          messagingAdsIntegrationId: "999",
+        }),
+      ),
+    ).rejects.toThrow("not found")
+
+    expect(mockFindWhatsappIntegration).toHaveBeenCalledWith({
+      id: "999",
+      workspaceId: "1",
+    })
+    expect(mockUpsertMessagingAdsConnection).not.toHaveBeenCalled()
+    expect(mockExchangeFacebookAdsCode).not.toHaveBeenCalled()
+  })
+
+  test("messagingAds flow blocks a non-super-admin before storing any token", async () => {
+    // Connecting an ads token is a super-admin action; a bare member who
+    // round-trips a crafted OAuth state must be rejected at the callback.
+    mockAssertSuperAdmin.mockRejectedValueOnce(
+      new Error("super admin required"),
+    )
+    mockFindWhatsappIntegration.mockResolvedValue({ id: "9", workspaceId: "1" })
+
+    await expect(
+      handleCallback(
+        "messenger",
+        buildCallbackRequest("messenger", {
+          workspaceId: "1",
+          referer: REFERER,
+          flow: "messagingAds",
+          messagingAdsChannel: "whatsapp",
+          messagingAdsIntegrationId: "9",
+        }),
+      ),
+    ).rejects.toThrow("not found")
+
+    // Blocked BEFORE ownership lookup + token exchange + storage.
+    expect(mockFindWhatsappIntegration).not.toHaveBeenCalled()
+    expect(mockExchangeFacebookAdsCode).not.toHaveBeenCalled()
+    expect(mockUpsertMessagingAdsConnection).not.toHaveBeenCalled()
   })
 
   test("zalo reconnect dispatches to the handler and skips the connect flow", async () => {

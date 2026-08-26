@@ -4,6 +4,7 @@
     "title": "QR-kod"
   },
   "actions": {
+    "retry": "Försök igen",
     "actions": "Åtgärder",
     "activate": "Aktivera",
     "add": "Lägg till",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {Inga filer} =1 {1 fil} other {# filer}}",
     "openMediaLibrary": "Öppna mediebibliotek",
     "uploadFailed": "Det gick inte att ladda upp {name}"
+  },
+  "adsCampaign": {
+    "title": "Annonser",
+    "createCta": "Skapa annons",
+    "prereq": {
+      "notConnected": "Anslut Facebook Ads för att skapa meddelandeannonser för den här kanalen.",
+      "connectCta": "Anslut Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Ingen",
+      "housing": "Bostäder",
+      "employment": "Anställning",
+      "credit": "Kredit",
+      "issues": "Sociala frågor, val eller politik",
+      "financialProducts": "Finansiella produkter och tjänster",
+      "onlineGambling": "Onlinespel och hasardspel"
+    },
+    "fields": {
+      "objective": {
+        "label": "Mål",
+        "value": "Engagemang (meddelanden)"
+      },
+      "specialAdCategory": {
+        "label": "Särskild annonskategori",
+        "description": "Om du väljer en begränsad kategori tas ålder, kön och annan målgruppsinriktning bort som Meta inte tillåter för den kategorin.",
+        "restrictedNote": "Målgruppsinriktning efter ålder och kön är inaktiverad eftersom en begränsad särskild annonskategori har valts."
+      },
+      "adAccount": {
+        "label": "Annonskonto"
+      },
+      "whatsappPage": {
+        "label": "Facebook-sida",
+        "description": "WhatsApp-annonser kräver fortfarande en länkad Facebook-sida — välj den anslutna sidan som ska användas."
+      },
+      "dailyBudget": {
+        "label": "Daglig budget",
+        "placeholder": "t.ex. 2000",
+        "description": "Ange beloppet i annonskontots minsta valutaenhet (t.ex. cent för USD)."
+      },
+      "countries": {
+        "label": "Länder"
+      },
+      "ageRange": {
+        "min": "Lägsta ålder",
+        "max": "Högsta ålder"
+      },
+      "gender": {
+        "label": "Kön",
+        "male": "Man",
+        "female": "Kvinna"
+      },
+      "schedule": {
+        "start": "Starttid",
+        "end": "Sluttid"
+      },
+      "destination": {
+        "label": "Destination"
+      },
+      "callToAction": {
+        "label": "Uppmaning till handling",
+        "derivedNote": "Knappen för uppmaning till handling ({type}) härleds automatiskt från kanalen."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Land för annonskategori",
+        "description": "Krävs av Meta för kategorin samhällsfrågor, val eller politik — landet där du har behörighet att visa dessa annonser."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Välkomstmeddelande",
+      "label": "Välkomstmeddelande",
+      "description": "Skickas automatiskt när någon startar en konversation från den här annonsen.",
+      "mode": {
+        "default": "Använd Metas standardmeddelande",
+        "single": "Enstaka meddelande",
+        "templates": "Testa upp till 5 meddelandevarianter"
+      },
+      "messageLabel": "Meddelande",
+      "templateLabel": "Variant {index}",
+      "headingPlaceholder": "Rubrik (valfritt)",
+      "addTemplate": "Lägg till variant",
+      "templatesLimit": "Upp till {max} varianter kan testas."
+    },
+    "creative": {
+      "mediaRequired": "Ladda upp en bild eller video för att fortsätta.",
+      "mediaType": {
+        "label": "Annonsmaterial",
+        "orVideo": "eller video",
+        "selectAdAccountFirst": "Välj ett annonskonto innan du laddar upp media.",
+        "uploadImage": "Ladda upp bild",
+        "uploadVideo": "Ladda upp video"
+      },
+      "uploading": "Laddar upp...",
+      "videoProcessing": "Bearbetar video...",
+      "videoReady": "Videon är klar",
+      "videoProcessingFailed": "Videobearbetningen misslyckades. Prova en annan fil.",
+      "previewAlt": "Förhandsgranskning av annonsmaterial",
+      "primaryText": "Primär text",
+      "headline": "Rubrik"
+    },
+    "wizard": {
+      "createDraft": "Skapa som pausat utkast",
+      "campaignStep": {
+        "title": "Kampanj",
+        "namePlaceholder": "Namnge den här annonsen"
+      },
+      "adSetStep": {
+        "title": "Annonsuppsättning"
+      },
+      "creativeStep": {
+        "title": "Annonsmaterial"
+      },
+      "preflightStep": {
+        "title": "Granskning"
+      },
+      "errors": {
+        "nameRequired": "Ange ett namn för den här annonsen.",
+        "adAccountRequired": "Välj ett annonskonto.",
+        "budgetRequired": "Ange en daglig budget.",
+        "countryRequired": "Välj minst ett land.",
+        "mediaRequired": "Ladda upp en bild eller video."
+      }
+    },
+    "preflight": {
+      "title": "Sammanfattning",
+      "pausedNote": "Den här annonsen skapas som ett pausat utkast. Inget publiceras och inga pengar spenderas förrän du publicerar den."
+    },
+    "publishConfirm": {
+      "title": "Publicera den här annonsen?",
+      "description": "Publicering aktiverar kampanjen, annonsuppsättningen och annonsen i tur och ordning. Meta börjar spendera din budget när leveransen startar.",
+      "confirm": "Publicera"
+    },
+    "list": {
+      "viewOnMeta": "Visa på Meta",
+      "empty": "Inga meddelandeannonser ännu.",
+      "createState": "Utkaststatus",
+      "actions": "Åtgärder",
+      "notPublishedYet": "Inte publicerad än",
+      "draftReady": "Utkast klart",
+      "createFailed": "Det gick inte att skapa",
+      "creating": "Skapar...",
+      "publish": "Publicera",
+      "pause": "Pausa"
+    },
+    "messages": {
+      "created": "Annonsutkast skapat.",
+      "actionSucceeded": "Klart."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Skapa och hantera Click-to-WhatsApp-annonser här."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Skapa och hantera Click-to-Messenger-annonser här."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Skapa och hantera Click-to-Instagram-annonser här."
+      },
+      "connectCta": "Anslut Facebook Ads",
+      "reconnectCta": "Anslut igen",
+      "reconnectNeeded": "Den här anslutningen behöver återanslutas.",
+      "refresh": "Uppdatera",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp-annonser kräver fortfarande en länkad Facebook-sida (ett krav från Meta) — du väljer den när du skapar en annons.",
+      "emptyDashboardNote": "Annonser som skapas här visas inte på annonspanelen om inte den här arbetsytan även har den separata Facebook Ads-integrationen ansluten."
+    },
+    "insights": {
+      "title": "Prestanda",
+      "empty": "Inga data ännu",
+      "impressions": "Visningar",
+      "reach": "Räckvidd",
+      "spend": "Spendering",
+      "clicks": "Klick",
+      "conversations": "Konversationer",
+      "costPerConversation": "Kostnad/konv.",
+      "costPerConversationTooltip": "Genomsnittlig kostnad per påbörjad meddelandekonversation.",
+      "datePresetLabel": "Period:",
+      "datePreset": {
+        "maximum": "Hela perioden",
+        "last_30d": "Senaste 30 dagarna",
+        "last_7d": "Senaste 7 dagarna"
+      }
+    }
   }
 }

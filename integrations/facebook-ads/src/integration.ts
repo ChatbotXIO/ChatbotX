@@ -3,7 +3,28 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { getAdAccounts, getCustomAudiences } from "./apis/ad-accounts"
+import {
+  getAdAccountDetails,
+  getAdAccounts,
+  getCustomAudiences,
+} from "./apis/ad-accounts"
+import {
+  createAdCreative,
+  findAdCreativeByOperationId,
+} from "./apis/adcreatives"
+import { uploadAdImage } from "./apis/adimages"
+import {
+  createAd,
+  findAdByOperationId,
+  listAdsByIds,
+  updateAdStatus,
+} from "./apis/ads"
+import {
+  createAdSet,
+  findAdSetByOperationId,
+  updateAdSetStatus,
+} from "./apis/adsets"
+import { getAdVideoStatus, uploadAdVideo } from "./apis/advideos"
 import {
   buildHashedPayload,
   buildPageUidPayload,
@@ -12,8 +33,15 @@ import {
   mutateAudienceUsers,
 } from "./apis/audience-users"
 import { revokeToken } from "./apis/auth"
+import {
+  createCampaign,
+  findCampaignByOperationId,
+  getCampaign,
+  listCampaignsByIds,
+  updateCampaignStatus,
+} from "./apis/campaigns"
 import { createCustomAudience } from "./apis/custom-audiences"
-import { getAdInsights } from "./apis/insights"
+import { getAdInsights, getMessagingAdsInsightsByAdIds } from "./apis/insights"
 import { FacebookAdsException } from "./exception"
 import type {
   FacebookAdsActions,
@@ -103,6 +131,122 @@ const config: IntegrationDefinition<
         version,
       })
     },
+
+    // --- Messaging ads (CTM/CTID/CTWA) --------------------------------
+    getAdAccountDetails: ({ ctx, props }) =>
+      getAdAccountDetails(
+        ctx.auth.accessToken,
+        props.adAccountId,
+        ctx.auth.version,
+      ),
+    createMessagingCampaign: ({ ctx, props }) =>
+      createCampaign({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    findMessagingCampaignByOperationId: ({ ctx, props }) =>
+      findCampaignByOperationId({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    updateMessagingCampaignStatus: ({ ctx, props }) =>
+      updateCampaignStatus({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    getMessagingCampaign: ({ ctx, props }) =>
+      getCampaign({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    listMessagingCampaignsByIds: ({ ctx, props }) =>
+      listCampaignsByIds({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    createMessagingAdSet: ({ ctx, props }) =>
+      createAdSet({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    findMessagingAdSetByOperationId: ({ ctx, props }) =>
+      findAdSetByOperationId({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    updateMessagingAdSetStatus: ({ ctx, props }) =>
+      updateAdSetStatus({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    createMessagingAdCreative: ({ ctx, props }) =>
+      createAdCreative({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    findMessagingAdCreativeByOperationId: ({ ctx, props }) =>
+      findAdCreativeByOperationId({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    createMessagingAd: ({ ctx, props }) =>
+      createAd({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    findMessagingAdByOperationId: ({ ctx, props }) =>
+      findAdByOperationId({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    updateMessagingAdStatus: ({ ctx, props }) =>
+      updateAdStatus({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    listMessagingAdsByIds: ({ ctx, props }) =>
+      listAdsByIds({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    getMessagingAdsInsights: ({ ctx, props }) =>
+      getMessagingAdsInsightsByAdIds({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    uploadMessagingAdImage: ({ ctx, props }) =>
+      uploadAdImage({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    uploadMessagingAdVideo: ({ ctx, props }) =>
+      uploadAdVideo({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
+    getMessagingAdVideoStatus: ({ ctx, props }) =>
+      getAdVideoStatus({
+        accessToken: ctx.auth.accessToken,
+        version: ctx.auth.version,
+        ...props,
+      }),
   },
   handleRequest: () => {
     throw SdkException.methodNotImplemented()

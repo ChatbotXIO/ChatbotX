@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Yeniden dene",
     "copy": "Kopyala",
     "copyUrl": "URL'yi Kopyala",
     "actions": "Eylemler",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {Dosya yok} =1 {1 dosya} other {# dosya}}",
     "openMediaLibrary": "Medya Kitaplığını Aç",
     "uploadFailed": "{name} yüklenemedi"
+  },
+  "adsCampaign": {
+    "title": "Reklamlar",
+    "createCta": "Reklam oluştur",
+    "prereq": {
+      "notConnected": "Bu kanal için mesajlaşma reklamları oluşturmak üzere Facebook Ads'i bağlayın.",
+      "connectCta": "Facebook Ads'i bağla"
+    },
+    "specialAdCategory": {
+      "none": "Yok",
+      "housing": "Konut",
+      "employment": "İstihdam",
+      "credit": "Kredi",
+      "issues": "Sosyal konular, seçimler veya siyaset",
+      "financialProducts": "Finansal ürünler ve hizmetler",
+      "onlineGambling": "Çevrimiçi kumar ve oyun"
+    },
+    "fields": {
+      "objective": {
+        "label": "Hedef",
+        "value": "Etkileşim (mesajlaşma)"
+      },
+      "specialAdCategory": {
+        "label": "Özel reklam kategorisi",
+        "description": "Kısıtlı bir kategori seçmek, Meta'nın o kategori için izin vermediği yaş, cinsiyet ve diğer hedefleme seçeneklerini kaldırır.",
+        "restrictedNote": "Kısıtlı bir özel reklam kategorisi seçildiği için yaş ve cinsiyet hedeflemesi devre dışı bırakıldı."
+      },
+      "adAccount": {
+        "label": "Reklam hesabı"
+      },
+      "whatsappPage": {
+        "label": "Facebook Sayfası",
+        "description": "WhatsApp reklamları yine de bağlı bir Facebook Sayfası gerektirir — kullanılacak bağlı Sayfayı seçin."
+      },
+      "dailyBudget": {
+        "label": "Günlük bütçe",
+        "placeholder": "örn. 2000",
+        "description": "Tutarı reklam hesabınızın en küçük para birimi biriminde girin (örn. USD için cent)."
+      },
+      "countries": {
+        "label": "Ülkeler"
+      },
+      "ageRange": {
+        "min": "Minimum yaş",
+        "max": "Maksimum yaş"
+      },
+      "gender": {
+        "label": "Cinsiyet",
+        "male": "Erkek",
+        "female": "Kadın"
+      },
+      "schedule": {
+        "start": "Başlangıç saati",
+        "end": "Bitiş saati"
+      },
+      "destination": {
+        "label": "Hedef"
+      },
+      "callToAction": {
+        "label": "Eylem çağrısı",
+        "derivedNote": "Eylem çağrısı düğmesi ({type}) kanaldan otomatik olarak türetilir."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Reklam kategorisi ülkesi",
+        "description": "Meta tarafından sosyal konular, seçimler veya siyaset kategorisi için gereklidir — bu reklamları yayınlamaya yetkili olduğunuz ülke."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Karşılama mesajı",
+      "label": "Karşılama mesajı",
+      "description": "Birisi bu reklamdan bir konuşma başlattığında otomatik olarak gönderilir.",
+      "mode": {
+        "default": "Meta'nın varsayılan mesajını kullan",
+        "single": "Tek mesaj",
+        "templates": "5'e kadar mesaj varyantı test et"
+      },
+      "messageLabel": "Mesaj",
+      "templateLabel": "Varyant {index}",
+      "headingPlaceholder": "Başlık (isteğe bağlı)",
+      "addTemplate": "Varyant ekle",
+      "templatesLimit": "En fazla {max} varyant test edilebilir."
+    },
+    "creative": {
+      "mediaRequired": "Devam etmek için bir görsel veya video yükleyin.",
+      "mediaType": {
+        "label": "Kreatif medya",
+        "orVideo": "veya video",
+        "selectAdAccountFirst": "Medya yüklemeden önce bir reklam hesabı seçin.",
+        "uploadImage": "Görsel yükle",
+        "uploadVideo": "Video yükle"
+      },
+      "uploading": "Yükleniyor...",
+      "videoProcessing": "Video işleniyor...",
+      "videoReady": "Video hazır",
+      "videoProcessingFailed": "Video işleme başarısız oldu. Lütfen farklı bir dosya deneyin.",
+      "previewAlt": "Kreatif önizleme",
+      "primaryText": "Ana metin",
+      "headline": "Başlık"
+    },
+    "wizard": {
+      "createDraft": "Duraklatılmış taslak olarak oluştur",
+      "campaignStep": {
+        "title": "Kampanya",
+        "namePlaceholder": "Bu reklamı adlandırın"
+      },
+      "adSetStep": {
+        "title": "Reklam seti"
+      },
+      "creativeStep": {
+        "title": "Reklam kreatifi"
+      },
+      "preflightStep": {
+        "title": "İnceleme"
+      },
+      "errors": {
+        "nameRequired": "Bu reklam için bir ad girin.",
+        "adAccountRequired": "Bir reklam hesabı seçin.",
+        "budgetRequired": "Bir günlük bütçe girin.",
+        "countryRequired": "En az bir ülke seçin.",
+        "mediaRequired": "Bir görsel veya video yükleyin."
+      }
+    },
+    "preflight": {
+      "title": "Özet",
+      "pausedNote": "Bu reklam duraklatılmış taslak olarak oluşturulur. Siz yayınlayana kadar hiçbir şey yayına alınmaz ve para harcanmaz."
+    },
+    "publishConfirm": {
+      "title": "Bu reklam yayınlansın mı?",
+      "description": "Yayınlama, kampanyayı, reklam setini ve reklamı sırasıyla etkinleştirir. Teslimat başladığında Meta bütçenizi harcamaya başlayacaktır.",
+      "confirm": "Yayınla"
+    },
+    "list": {
+      "viewOnMeta": "Meta'da görüntüle",
+      "empty": "Henüz mesajlaşma reklamı yok.",
+      "createState": "Taslak durumu",
+      "actions": "İşlemler",
+      "notPublishedYet": "Henüz yayınlanmadı",
+      "draftReady": "Taslak hazır",
+      "createFailed": "Oluşturma başarısız oldu",
+      "creating": "Oluşturuluyor...",
+      "publish": "Yayınla",
+      "pause": "Duraklat"
+    },
+    "messages": {
+      "created": "Reklam taslağı oluşturuldu.",
+      "actionSucceeded": "Tamamlandı."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Click-to-WhatsApp reklamlarını buradan oluşturun ve yönetin."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Click-to-Messenger reklamlarını buradan oluşturun ve yönetin."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Click-to-Instagram reklamlarını buradan oluşturun ve yönetin."
+      },
+      "connectCta": "Facebook Ads'i bağla",
+      "reconnectCta": "Yeniden bağlan",
+      "reconnectNeeded": "Bu bağlantının yeniden bağlanması gerekiyor.",
+      "refresh": "Yenile",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp reklamları yine de bağlı bir Facebook Sayfası gerektirir (bir Meta zorunluluğu) — bir reklam oluştururken bunu seçeceksiniz.",
+      "emptyDashboardNote": "Bu çalışma alanında ayrıca ayrı Facebook Ads entegrasyonu bağlı olmadıkça, burada oluşturulan reklamlar Reklamlar panosunda görünmeyecektir."
+    },
+    "insights": {
+      "title": "Performans",
+      "empty": "Henüz veri yok",
+      "impressions": "Gösterimler",
+      "reach": "Erişim",
+      "spend": "Harcama",
+      "clicks": "Tıklamalar",
+      "conversations": "Görüşmeler",
+      "costPerConversation": "Görüşme başına maliyet",
+      "costPerConversationTooltip": "Başlatılan mesajlaşma başına ortalama maliyet.",
+      "datePresetLabel": "Dönem:",
+      "datePreset": {
+        "maximum": "Tüm zamanlar",
+        "last_30d": "Son 30 gün",
+        "last_7d": "Son 7 gün"
+      }
+    }
   }
 }

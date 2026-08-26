@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "נסה שוב",
     "copy": "העתקה",
     "copyUrl": "העתקת כתובת URL",
     "actions": "פעולות",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {אין קבצים} =1 {קובץ אחד} other {# קבצים}}",
     "openMediaLibrary": "פתיחת ספריית מדיה",
     "uploadFailed": "העלאת {name} נכשלה"
+  },
+  "adsCampaign": {
+    "title": "מודעות",
+    "createCta": "יצירת מודעה",
+    "prereq": {
+      "notConnected": "חבר את Facebook Ads כדי ליצור מודעות הודעות עבור ערוץ זה.",
+      "connectCta": "חיבור Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "ללא",
+      "housing": "דיור",
+      "employment": "תעסוקה",
+      "credit": "אשראי",
+      "issues": "נושאים חברתיים, בחירות או פוליטיקה",
+      "financialProducts": "מוצרים ושירותים פיננסיים",
+      "onlineGambling": "הימורים ומשחקים מקוונים"
+    },
+    "fields": {
+      "objective": {
+        "label": "יעד",
+        "value": "מעורבות (הודעות)"
+      },
+      "specialAdCategory": {
+        "label": "קטגוריית מודעה מיוחדת",
+        "description": "בחירה בקטגוריה מוגבלת מסירה אפשרויות מיקוד לפי גיל, מגדר ואפשרויות מיקוד נוספות ש-Meta אינה מתירה עבור אותה קטגוריה.",
+        "restrictedNote": "מיקוד לפי גיל ומגדר מושבת מכיוון שנבחרה קטגוריית מודעה מיוחדת מוגבלת."
+      },
+      "adAccount": {
+        "label": "חשבון מודעות"
+      },
+      "whatsappPage": {
+        "label": "דף פייסבוק",
+        "description": "מודעות WhatsApp עדיין דורשות דף פייסבוק מקושר — בחר את הדף המחובר שברצונך להשתמש בו."
+      },
+      "dailyBudget": {
+        "label": "תקציב יומי",
+        "placeholder": "לדוגמה: 2000",
+        "description": "הזן את הסכום ביחידת המטבע הקטנה ביותר של חשבון המודעות שלך (למשל, סנטים עבור דולר ארה\"ב)."
+      },
+      "countries": {
+        "label": "מדינות"
+      },
+      "ageRange": {
+        "min": "גיל מינימלי",
+        "max": "גיל מקסימלי"
+      },
+      "gender": {
+        "label": "מגדר",
+        "male": "זכר",
+        "female": "נקבה"
+      },
+      "schedule": {
+        "start": "שעת התחלה",
+        "end": "שעת סיום"
+      },
+      "destination": {
+        "label": "יעד"
+      },
+      "callToAction": {
+        "label": "קריאה לפעולה",
+        "derivedNote": "כפתור הקריאה לפעולה ({type}) נגזר אוטומטית מהערוץ."
+      },
+      "specialAdCategoryCountry": {
+        "label": "מדינת קטגוריית המודעה",
+        "description": "נדרש על ידי Meta עבור קטגוריית נושאים חברתיים, בחירות או פוליטיקה — המדינה שבה אתה מורשה להריץ מודעות אלה."
+      }
+    },
+    "welcomeMessage": {
+      "title": "הודעת ברוכים הבאים",
+      "label": "הודעת ברוכים הבאים",
+      "description": "נשלחת אוטומטית כאשר מישהו מתחיל שיחה ממודעה זו.",
+      "mode": {
+        "default": "השתמש בהודעת ברירת המחדל של Meta",
+        "single": "הודעה בודדת",
+        "templates": "בדוק עד 5 גרסאות הודעה"
+      },
+      "messageLabel": "הודעה",
+      "templateLabel": "גרסה {index}",
+      "headingPlaceholder": "כותרת (אופציונלי)",
+      "addTemplate": "הוספת גרסה",
+      "templatesLimit": "ניתן לבדוק עד {max} גרסאות."
+    },
+    "creative": {
+      "mediaRequired": "העלה תמונה או סרטון כדי להמשיך.",
+      "mediaType": {
+        "label": "מדיה קריאייטיב",
+        "orVideo": "או וידאו",
+        "selectAdAccountFirst": "בחר חשבון מודעות לפני העלאת מדיה.",
+        "uploadImage": "העלאת תמונה",
+        "uploadVideo": "העלאת וידאו"
+      },
+      "uploading": "מעלה...",
+      "videoProcessing": "מעבד וידאו...",
+      "videoReady": "הווידאו מוכן",
+      "videoProcessingFailed": "עיבוד הווידאו נכשל. נסה קובץ אחר.",
+      "previewAlt": "תצוגה מקדימה של הקריאייטיב",
+      "primaryText": "טקסט ראשי",
+      "headline": "כותרת"
+    },
+    "wizard": {
+      "createDraft": "צור כטיוטה מושהית",
+      "campaignStep": {
+        "title": "קמפיין",
+        "namePlaceholder": "תן שם למודעה זו"
+      },
+      "adSetStep": {
+        "title": "קבוצת מודעות"
+      },
+      "creativeStep": {
+        "title": "קריאייטיב של המודעה"
+      },
+      "preflightStep": {
+        "title": "סקירה"
+      },
+      "errors": {
+        "nameRequired": "הזן שם למודעה זו.",
+        "adAccountRequired": "בחר חשבון מודעות.",
+        "budgetRequired": "הזן תקציב יומי.",
+        "countryRequired": "בחר לפחות מדינה אחת.",
+        "mediaRequired": "העלה תמונה או וידאו."
+      }
+    },
+    "preflight": {
+      "title": "סיכום",
+      "pausedNote": "מודעה זו נוצרת כטיוטה מושהית. שום דבר לא עולה לאוויר, ולא מוציאים כסף, עד שתפרסם אותה."
+    },
+    "publishConfirm": {
+      "title": "לפרסם את המודעה הזו?",
+      "description": "פרסום מפעיל את הקמפיין, קבוצת המודעות והמודעה לפי הסדר. Meta תתחיל להוציא את התקציב שלך ברגע שהמסירה תתחיל.",
+      "confirm": "פרסום"
+    },
+    "list": {
+      "viewOnMeta": "הצג ב-Meta",
+      "empty": "אין עדיין מודעות הודעות.",
+      "createState": "סטטוס טיוטה",
+      "actions": "פעולות",
+      "notPublishedYet": "טרם פורסם",
+      "draftReady": "הטיוטה מוכנה",
+      "createFailed": "היצירה נכשלה",
+      "creating": "יוצר...",
+      "publish": "פרסום",
+      "pause": "השהה"
+    },
+    "messages": {
+      "created": "טיוטת מודעה נוצרה.",
+      "actionSucceeded": "בוצע."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "צור ונהל מודעות Click-to-WhatsApp כאן."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "צור ונהל מודעות Click-to-Messenger כאן."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "צור ונהל מודעות Click-to-Instagram כאן."
+      },
+      "connectCta": "חיבור Facebook Ads",
+      "reconnectCta": "התחבר מחדש",
+      "reconnectNeeded": "חיבור זה צריך להתחבר מחדש.",
+      "refresh": "רענן",
+      "whatsappPageRequiredNote": "מודעות Click-to-WhatsApp עדיין דורשות דף פייסבוק מקושר (דרישה של Meta) — תבחר אותו בעת יצירת מודעה.",
+      "emptyDashboardNote": "מודעות שנוצרות כאן לא יופיעו בלוח הבקרה של המודעות אלא אם לסביבת העבודה הזו יש גם אינטגרציית Facebook Ads נפרדת מחוברת."
+    },
+    "insights": {
+      "title": "ביצועים",
+      "empty": "אין נתונים עדיין",
+      "impressions": "חשיפות",
+      "reach": "טווח הגעה",
+      "spend": "הוצאה",
+      "clicks": "קליקים",
+      "conversations": "שיחות",
+      "costPerConversation": "עלות/שיחה",
+      "costPerConversationTooltip": "עלות ממוצעת לכל שיחת הודעות שהתחילה.",
+      "datePresetLabel": "תקופה:",
+      "datePreset": {
+        "maximum": "כל הזמן",
+        "last_30d": "30 הימים האחרונים",
+        "last_7d": "7 הימים האחרונים"
+      }
+    }
   }
 }

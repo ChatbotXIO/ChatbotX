@@ -12,6 +12,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
+import { MessagingAdsBox } from "@/features/ads-campaign/components/messaging-ads-box"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
 import {
@@ -45,6 +46,7 @@ type WhatsappCapiTabProps = {
   credentialAvailable: boolean
   whatsappCredentialPublic: WhatsappCredentialPublic | null
   oauthCallbackUrl: string
+  messagingAdsConnectionState: { connected: boolean; reconnectNeeded: boolean }
 }
 
 const statusDescriptionKey = {
@@ -95,6 +97,7 @@ export function WhatsappCapiTab({
   credentialAvailable,
   whatsappCredentialPublic,
   oauthCallbackUrl,
+  messagingAdsConnectionState,
 }: WhatsappCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -146,6 +149,12 @@ export function WhatsappCapiTab({
         integrationWhatsapp={integrationWhatsapp}
         oauthCallbackUrl={oauthCallbackUrl}
         whatsappCredentialPublic={whatsappCredentialPublic}
+        workspaceId={workspaceId}
+      />
+      <MessagingAdsBox
+        channel="whatsapp"
+        initialConnectionState={messagingAdsConnectionState}
+        integrationId={integrationWhatsapp.id}
         workspaceId={workspaceId}
       />
     </div>

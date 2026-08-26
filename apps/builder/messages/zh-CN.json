@@ -4,6 +4,7 @@
     "title": "QR Code"
   },
   "actions": {
+    "retry": "重试",
     "actions": "操作",
     "activate": "激活",
     "add": "添加",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {没有文件} =1 {1 个文件} other {# 个文件}}",
     "openMediaLibrary": "打开媒体库",
     "uploadFailed": "{name} 上传失败"
+  },
+  "adsCampaign": {
+    "title": "广告",
+    "createCta": "创建广告",
+    "prereq": {
+      "notConnected": "连接 Facebook Ads 后即可为此渠道创建私信广告。",
+      "connectCta": "连接 Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "无",
+      "housing": "住房",
+      "employment": "就业",
+      "credit": "信贷",
+      "issues": "社会议题、选举或政治",
+      "financialProducts": "金融产品和服务",
+      "onlineGambling": "在线博彩和游戏"
+    },
+    "fields": {
+      "objective": {
+        "label": "推广目标",
+        "value": "互动（私信）"
+      },
+      "specialAdCategory": {
+        "label": "特殊广告类别",
+        "description": "选择受限类别后，Meta 不允许对该类别使用的年龄、性别等定向选项将被移除。",
+        "restrictedNote": "由于已选择受限的特殊广告类别，年龄和性别定向已被禁用。"
+      },
+      "adAccount": {
+        "label": "广告账户"
+      },
+      "whatsappPage": {
+        "label": "Facebook 主页",
+        "description": "WhatsApp 广告仍需绑定一个 Facebook 主页——请选择要使用的已连接主页。"
+      },
+      "dailyBudget": {
+        "label": "每日预算",
+        "placeholder": "例如 2000",
+        "description": "请以广告账户的最小货币单位输入金额（例如美元对应美分）。"
+      },
+      "countries": {
+        "label": "国家/地区"
+      },
+      "ageRange": {
+        "min": "最小年龄",
+        "max": "最大年龄"
+      },
+      "gender": {
+        "label": "性别",
+        "male": "男性",
+        "female": "女性"
+      },
+      "schedule": {
+        "start": "开始时间",
+        "end": "结束时间"
+      },
+      "destination": {
+        "label": "投放目的地"
+      },
+      "callToAction": {
+        "label": "行动号召按钮",
+        "derivedNote": "行动号召按钮（{type}）会根据渠道自动生成。"
+      },
+      "specialAdCategoryCountry": {
+        "label": "广告类别国家/地区",
+        "description": "Meta 对社会议题、选举或政治类别的要求——你获授权投放此类广告的国家/地区。"
+      }
+    },
+    "welcomeMessage": {
+      "title": "欢迎语",
+      "label": "欢迎语",
+      "description": "当有人通过此广告发起对话时会自动发送。",
+      "mode": {
+        "default": "使用 Meta 的默认消息",
+        "single": "单条消息",
+        "templates": "最多测试 5 个消息版本"
+      },
+      "messageLabel": "消息",
+      "templateLabel": "版本 {index}",
+      "headingPlaceholder": "标题（可选）",
+      "addTemplate": "添加版本",
+      "templatesLimit": "最多可测试 {max} 个版本。"
+    },
+    "creative": {
+      "mediaRequired": "请上传图片或视频以继续。",
+      "mediaType": {
+        "label": "创意素材",
+        "orVideo": "或视频",
+        "selectAdAccountFirst": "请先选择广告账户，再上传素材。",
+        "uploadImage": "上传图片",
+        "uploadVideo": "上传视频"
+      },
+      "uploading": "正在上传...",
+      "videoProcessing": "正在处理视频...",
+      "videoReady": "视频已就绪",
+      "videoProcessingFailed": "视频处理失败，请尝试其他文件。",
+      "previewAlt": "创意预览",
+      "primaryText": "主要文案",
+      "headline": "标题"
+    },
+    "wizard": {
+      "createDraft": "创建为已暂停的草稿",
+      "campaignStep": {
+        "title": "广告系列",
+        "namePlaceholder": "为此广告命名"
+      },
+      "adSetStep": {
+        "title": "广告组"
+      },
+      "creativeStep": {
+        "title": "广告创意"
+      },
+      "preflightStep": {
+        "title": "审核"
+      },
+      "errors": {
+        "nameRequired": "请输入此广告的名称。",
+        "adAccountRequired": "请选择广告账户。",
+        "budgetRequired": "请输入每日预算。",
+        "countryRequired": "请至少选择一个国家/地区。",
+        "mediaRequired": "请上传图片或视频。"
+      }
+    },
+    "preflight": {
+      "title": "摘要",
+      "pausedNote": "此广告将创建为已暂停的草稿。在您发布之前，不会上线投放，也不会产生任何费用。"
+    },
+    "publishConfirm": {
+      "title": "要发布此广告吗？",
+      "description": "发布后将依次启用广告系列、广告组和广告。一旦开始投放，Meta 将开始消耗您的预算。",
+      "confirm": "发布"
+    },
+    "list": {
+      "viewOnMeta": "在 Meta 上查看",
+      "empty": "暂无私信广告。",
+      "createState": "草稿状态",
+      "actions": "操作",
+      "notPublishedYet": "尚未发布",
+      "draftReady": "草稿已就绪",
+      "createFailed": "创建失败",
+      "creating": "正在创建...",
+      "publish": "发布",
+      "pause": "暂停"
+    },
+    "messages": {
+      "created": "广告草稿已创建。",
+      "actionSucceeded": "已完成。"
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "在此创建和管理Click-to-WhatsApp广告。"
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "在此创建和管理Click-to-Messenger广告。"
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "在此创建和管理Click-to-Instagram广告。"
+      },
+      "connectCta": "连接 Facebook Ads",
+      "reconnectCta": "重新连接",
+      "reconnectNeeded": "此连接需要重新连接。",
+      "refresh": "刷新",
+      "whatsappPageRequiredNote": "点击进入 WhatsApp 的广告仍需绑定一个 Facebook 主页（Meta 的强制要求）——您可在创建广告时选择。",
+      "emptyDashboardNote": "除非此工作区还连接了独立的 Facebook Ads 集成，否则在此创建的广告不会显示在广告仪表盘中。"
+    },
+    "insights": {
+      "title": "效果",
+      "empty": "暂无数据",
+      "impressions": "展示次数",
+      "reach": "覆盖人数",
+      "spend": "花费",
+      "clicks": "点击",
+      "conversations": "对话数",
+      "costPerConversation": "每次对话成本",
+      "costPerConversationTooltip": "每次发起消息对话的平均成本。",
+      "datePresetLabel": "时间段：",
+      "datePreset": {
+        "maximum": "全部时间",
+        "last_30d": "最近30天",
+        "last_7d": "最近7天"
+      }
+    }
   }
 }

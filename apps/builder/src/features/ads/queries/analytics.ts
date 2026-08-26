@@ -83,6 +83,13 @@ type SelectedAdAccounts = {
  * connected to, narrowed by `adAccountId` when it matches a connected
  * account. Returns `null` when there is no integration or the account list
  * fails to load — callers should treat that as "no insights, no filter".
+ *
+ * Deliberately reads the WORKSPACE-WIDE `IntegrationFacebookAds` connection
+ * only — NOT the per-integration `MessagingAdsConnection` boxes
+ * (out/plan/ctwa-ctm-ctid-box-merge.md "Dashboard" contract, Phase 6). A
+ * workspace connected ONLY through a box (no separate Facebook Ads
+ * integration) has an empty dashboard by design; this is documented, not a
+ * bug — see the box's `adsCampaign.box.emptyDashboardNote` copy.
  */
 async function resolveSelectedAdAccounts(input: {
   workspaceId: string

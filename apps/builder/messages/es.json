@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Reintentar",
     "copy": "Copiar",
     "copyUrl": "Copiar URL",
     "actions": "Acciones",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {Sin archivos} =1 {1 archivo} other {# archivos}}",
     "openMediaLibrary": "Abrir biblioteca de medios",
     "uploadFailed": "Error al subir {name}"
+  },
+  "adsCampaign": {
+    "title": "Anuncios",
+    "createCta": "Crear anuncio",
+    "prereq": {
+      "notConnected": "Conecta Facebook Ads para crear anuncios de mensajería para este canal.",
+      "connectCta": "Conectar Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Ninguna",
+      "housing": "Vivienda",
+      "employment": "Empleo",
+      "credit": "Crédito",
+      "issues": "Temas sociales, elecciones o política",
+      "financialProducts": "Productos y servicios financieros",
+      "onlineGambling": "Juegos y apuestas en línea"
+    },
+    "fields": {
+      "objective": {
+        "label": "Objetivo",
+        "value": "Interacción (mensajería)"
+      },
+      "specialAdCategory": {
+        "label": "Categoría especial de anuncio",
+        "description": "Seleccionar una categoría restringida elimina la segmentación por edad, sexo y otros criterios que Meta no permite para esa categoría.",
+        "restrictedNote": "La segmentación por edad y sexo está desactivada porque se ha seleccionado una categoría especial de anuncio restringida."
+      },
+      "adAccount": {
+        "label": "Cuenta publicitaria"
+      },
+      "whatsappPage": {
+        "label": "Página de Facebook",
+        "description": "Los anuncios de WhatsApp siguen requiriendo una Página de Facebook vinculada — selecciona la Página conectada que quieras usar."
+      },
+      "dailyBudget": {
+        "label": "Presupuesto diario",
+        "placeholder": "p. ej. 2000",
+        "description": "Introduce el importe en la unidad monetaria más pequeña de tu cuenta publicitaria (por ejemplo, céntimos para EUR)."
+      },
+      "countries": {
+        "label": "Países"
+      },
+      "ageRange": {
+        "min": "Edad mínima",
+        "max": "Edad máxima"
+      },
+      "gender": {
+        "label": "Sexo",
+        "male": "Hombre",
+        "female": "Mujer"
+      },
+      "schedule": {
+        "start": "Hora de inicio",
+        "end": "Hora de fin"
+      },
+      "destination": {
+        "label": "Destino"
+      },
+      "callToAction": {
+        "label": "Llamada a la acción",
+        "derivedNote": "El botón de llamada a la acción ({type}) se determina automáticamente según el canal."
+      },
+      "specialAdCategoryCountry": {
+        "label": "País de la categoría del anuncio",
+        "description": "Meta lo requiere para la categoría de temas sociales, elecciones o política: el país en el que tienes autorización para publicar estos anuncios."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Mensaje de bienvenida",
+      "label": "Mensaje de bienvenida",
+      "description": "Se envía automáticamente cuando alguien inicia una conversación desde este anuncio.",
+      "mode": {
+        "default": "Usar el mensaje predeterminado de Meta",
+        "single": "Mensaje único",
+        "templates": "Probar hasta 5 variantes de mensaje"
+      },
+      "messageLabel": "Mensaje",
+      "templateLabel": "Variante {index}",
+      "headingPlaceholder": "Encabezado (opcional)",
+      "addTemplate": "Añadir variante",
+      "templatesLimit": "Se pueden probar hasta {max} variantes."
+    },
+    "creative": {
+      "mediaRequired": "Sube una imagen o un vídeo para continuar.",
+      "mediaType": {
+        "label": "Medio creativo",
+        "orVideo": "o video",
+        "selectAdAccountFirst": "Selecciona una cuenta publicitaria antes de subir contenido multimedia.",
+        "uploadImage": "Subir imagen",
+        "uploadVideo": "Subir video"
+      },
+      "uploading": "Subiendo...",
+      "videoProcessing": "Procesando video...",
+      "videoReady": "Video listo",
+      "videoProcessingFailed": "Error al procesar el video. Prueba con otro archivo.",
+      "previewAlt": "Vista previa del creativo",
+      "primaryText": "Texto principal",
+      "headline": "Titular"
+    },
+    "wizard": {
+      "createDraft": "Crear como borrador en pausa",
+      "campaignStep": {
+        "title": "Campaña",
+        "namePlaceholder": "Ponle un nombre a este anuncio"
+      },
+      "adSetStep": {
+        "title": "Conjunto de anuncios"
+      },
+      "creativeStep": {
+        "title": "Creatividad del anuncio"
+      },
+      "preflightStep": {
+        "title": "Revisión"
+      },
+      "errors": {
+        "nameRequired": "Introduce un nombre para este anuncio.",
+        "adAccountRequired": "Selecciona una cuenta publicitaria.",
+        "budgetRequired": "Introduce un presupuesto diario.",
+        "countryRequired": "Selecciona al menos un país.",
+        "mediaRequired": "Sube una imagen o un video."
+      }
+    },
+    "preflight": {
+      "title": "Resumen",
+      "pausedNote": "Este anuncio se crea como un borrador en pausa. No se publica nada ni se gasta dinero hasta que lo publiques."
+    },
+    "publishConfirm": {
+      "title": "¿Publicar este anuncio?",
+      "description": "Publicarlo activa la campaña, el conjunto de anuncios y el anuncio en ese orden. Meta empezará a gastar tu presupuesto en cuanto comience la entrega.",
+      "confirm": "Publicar"
+    },
+    "list": {
+      "viewOnMeta": "Ver en Meta",
+      "empty": "Aún no hay anuncios de mensajería.",
+      "createState": "Estado del borrador",
+      "actions": "Acciones",
+      "notPublishedYet": "Aún no publicado",
+      "draftReady": "Borrador listo",
+      "createFailed": "Error al crear",
+      "creating": "Creando...",
+      "publish": "Publicar",
+      "pause": "Pausar"
+    },
+    "messages": {
+      "created": "Borrador de anuncio creado.",
+      "actionSucceeded": "Listo."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Crea y gestiona anuncios Click-to-WhatsApp aquí."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Crea y gestiona anuncios Click-to-Messenger aquí."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Crea y gestiona anuncios Click-to-Instagram aquí."
+      },
+      "connectCta": "Conectar Facebook Ads",
+      "reconnectCta": "Reconectar",
+      "reconnectNeeded": "Esta conexión debe reconectarse.",
+      "refresh": "Actualizar",
+      "whatsappPageRequiredNote": "Los anuncios de clic a WhatsApp siguen requiriendo una Página de Facebook vinculada (un requisito de Meta); la elegirás al crear un anuncio.",
+      "emptyDashboardNote": "Los anuncios creados aquí no aparecerán en el panel de anuncios a menos que este espacio de trabajo también tenga conectada la integración independiente de Facebook Ads."
+    },
+    "insights": {
+      "title": "Rendimiento",
+      "empty": "Aún no hay datos",
+      "impressions": "Impresiones",
+      "reach": "Alcance",
+      "spend": "Gasto",
+      "clicks": "Clics",
+      "conversations": "Conversaciones",
+      "costPerConversation": "Costo/conv.",
+      "costPerConversationTooltip": "Costo promedio por conversación de mensajería iniciada.",
+      "datePresetLabel": "Período:",
+      "datePreset": {
+        "maximum": "Todo el tiempo",
+        "last_30d": "Últimos 30 días",
+        "last_7d": "Últimos 7 días"
+      }
+    }
   }
 }

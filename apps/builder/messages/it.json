@@ -1426,6 +1426,7 @@
     }
   },
   "actions": {
+    "retry": "Riprova",
     "copy": "Copia",
     "copyUrl": "Copia URL",
     "actions": "Azioni",
@@ -5505,5 +5506,189 @@
     "filesCount": "{count, plural, =0 {Nessun file} =1 {1 file} other {# file}}",
     "openMediaLibrary": "Apri libreria multimediale",
     "uploadFailed": "Caricamento di {name} non riuscito"
+  },
+  "adsCampaign": {
+    "title": "Inserzioni",
+    "createCta": "Crea inserzione",
+    "prereq": {
+      "notConnected": "Collega Facebook Ads per creare inserzioni di messaggistica per questo canale.",
+      "connectCta": "Collega Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Nessuna",
+      "housing": "Alloggio",
+      "employment": "Occupazione",
+      "credit": "Credito",
+      "issues": "Temi sociali, elezioni o politica",
+      "financialProducts": "Prodotti e servizi finanziari",
+      "onlineGambling": "Gioco d’azzardo e giochi online"
+    },
+    "fields": {
+      "objective": {
+        "label": "Obiettivo",
+        "value": "Interazione (messaggistica)"
+      },
+      "specialAdCategory": {
+        "label": "Categoria speciale di inserzione",
+        "description": "Selezionando una categoria soggetta a restrizioni si rimuove la targetizzazione per età, sesso e altri criteri non consentiti da Meta per tale categoria.",
+        "restrictedNote": "La targetizzazione per età e sesso è disattivata perché è selezionata una categoria speciale di inserzione soggetta a restrizioni."
+      },
+      "adAccount": {
+        "label": "Account pubblicitario"
+      },
+      "whatsappPage": {
+        "label": "Pagina Facebook",
+        "description": "Le inserzioni WhatsApp richiedono comunque una Pagina Facebook collegata: seleziona la Pagina connessa da utilizzare."
+      },
+      "dailyBudget": {
+        "label": "Budget giornaliero",
+        "placeholder": "es. 2000",
+        "description": "Inserisci l'importo nella più piccola unità di valuta del tuo account pubblicitario (ad es. centesimi per EUR)."
+      },
+      "countries": {
+        "label": "Paesi"
+      },
+      "ageRange": {
+        "min": "Età minima",
+        "max": "Età massima"
+      },
+      "gender": {
+        "label": "Sesso",
+        "male": "Uomo",
+        "female": "Donna"
+      },
+      "schedule": {
+        "start": "Ora di inizio",
+        "end": "Ora di fine"
+      },
+      "destination": {
+        "label": "Destinazione"
+      },
+      "callToAction": {
+        "label": "Invito all'azione",
+        "derivedNote": "Il pulsante di invito all'azione ({type}) viene determinato automaticamente in base al canale."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Paese della categoria pubblicitaria",
+        "description": "Richiesto da Meta per la categoria questioni sociali, elezioni o politica — il paese in cui sei autorizzato a pubblicare questi annunci."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Messaggio di benvenuto",
+      "label": "Messaggio di benvenuto",
+      "description": "Inviato automaticamente quando qualcuno avvia una conversazione da questa inserzione.",
+      "mode": {
+        "default": "Usa il messaggio predefinito di Meta",
+        "single": "Messaggio singolo",
+        "templates": "Testa fino a 5 varianti di messaggio"
+      },
+      "messageLabel": "Messaggio",
+      "templateLabel": "Variante {index}",
+      "headingPlaceholder": "Titolo (facoltativo)",
+      "addTemplate": "Aggiungi variante",
+      "templatesLimit": "È possibile testare fino a {max} varianti."
+    },
+    "creative": {
+      "mediaRequired": "Carica un'immagine o un video per continuare.",
+      "mediaType": {
+        "label": "Contenuto creativo",
+        "orVideo": "o video",
+        "selectAdAccountFirst": "Seleziona un account pubblicitario prima di caricare contenuti multimediali.",
+        "uploadImage": "Carica immagine",
+        "uploadVideo": "Carica video"
+      },
+      "uploading": "Caricamento in corso...",
+      "videoProcessing": "Elaborazione del video in corso...",
+      "videoReady": "Video pronto",
+      "videoProcessingFailed": "Elaborazione del video non riuscita. Prova con un altro file.",
+      "previewAlt": "Anteprima della creatività",
+      "primaryText": "Testo principale",
+      "headline": "Titolo"
+    },
+    "wizard": {
+      "createDraft": "Crea come bozza in pausa",
+      "campaignStep": {
+        "title": "Campagna",
+        "namePlaceholder": "Assegna un nome a questa inserzione"
+      },
+      "adSetStep": {
+        "title": "Gruppo di inserzioni"
+      },
+      "creativeStep": {
+        "title": "Creatività dell'inserzione"
+      },
+      "preflightStep": {
+        "title": "Revisione"
+      },
+      "errors": {
+        "nameRequired": "Inserisci un nome per questa inserzione.",
+        "adAccountRequired": "Seleziona un account pubblicitario.",
+        "budgetRequired": "Inserisci un budget giornaliero.",
+        "countryRequired": "Seleziona almeno un paese.",
+        "mediaRequired": "Carica un'immagine o un video."
+      }
+    },
+    "preflight": {
+      "title": "Riepilogo",
+      "pausedNote": "Questa inserzione viene creata come bozza in pausa. Nulla viene pubblicato e non viene speso denaro finché non la pubblichi."
+    },
+    "publishConfirm": {
+      "title": "Pubblicare questa inserzione?",
+      "description": "La pubblicazione attiva in ordine la campagna, il gruppo di inserzioni e l'inserzione. Meta inizierà a spendere il tuo budget non appena avrà inizio la diffusione.",
+      "confirm": "Pubblica"
+    },
+    "list": {
+      "viewOnMeta": "Visualizza su Meta",
+      "empty": "Ancora nessuna inserzione di messaggistica.",
+      "createState": "Stato della bozza",
+      "actions": "Azioni",
+      "notPublishedYet": "Non ancora pubblicata",
+      "draftReady": "Bozza pronta",
+      "createFailed": "Creazione non riuscita",
+      "creating": "Creazione in corso...",
+      "publish": "Pubblica",
+      "pause": "Metti in pausa"
+    },
+    "messages": {
+      "created": "Bozza dell'inserzione creata.",
+      "actionSucceeded": "Fatto."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Crea e gestisci gli annunci Click-to-WhatsApp qui."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Crea e gestisci gli annunci Click-to-Messenger qui."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Crea e gestisci gli annunci Click-to-Instagram qui."
+      },
+      "connectCta": "Collega Facebook Ads",
+      "reconnectCta": "Riconnetti",
+      "reconnectNeeded": "Questa connessione deve essere ristabilita.",
+      "refresh": "Aggiorna",
+      "whatsappPageRequiredNote": "Le inserzioni Click-to-WhatsApp richiedono comunque una Pagina Facebook collegata (un requisito di Meta): la sceglierai al momento della creazione di un'inserzione.",
+      "emptyDashboardNote": "Le inserzioni create qui non compariranno nella dashboard Inserzioni a meno che questo workspace non abbia anche l'integrazione separata di Facebook Ads connessa."
+    },
+    "insights": {
+      "title": "Rendimento",
+      "empty": "Ancora nessun dato",
+      "impressions": "Impressioni",
+      "reach": "Copertura",
+      "spend": "Spesa",
+      "clicks": "Clic",
+      "conversations": "Conversazioni",
+      "costPerConversation": "Costo/conv.",
+      "costPerConversationTooltip": "Costo medio per conversazione di messaggistica avviata.",
+      "datePresetLabel": "Periodo:",
+      "datePreset": {
+        "maximum": "Sempre",
+        "last_30d": "Ultimi 30 giorni",
+        "last_7d": "Ultimi 7 giorni"
+      }
+    }
   }
 }

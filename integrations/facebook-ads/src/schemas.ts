@@ -5,6 +5,24 @@ import {
   type Handler,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
+import type { META_STATUS, MessagingAdChannel } from "./messaging-ads/constants"
+import type {
+  AdAccountDetails,
+  AdVideoStatus,
+  CreateAdCreativeInput,
+  CreateAdInput,
+  CreateAdSetInput,
+  CreateCampaignInput,
+  MessagingAdInsight,
+  MetaAd,
+  MetaAdCreative,
+  MetaAdSet,
+  MetaCampaign,
+  UploadAdImageInput,
+  UploadAdVideoInput,
+} from "./messaging-ads/types"
+
+type MetaStatusValue = (typeof META_STATUS)[keyof typeof META_STATUS]
 
 export type FacebookAdsConfig = {
   clientId: string
@@ -92,6 +110,14 @@ export type GetAdInsightsProps = {
   timeIncrement?: 1
 }
 
+/** Props for the messaging-ads box "Ads Insights" panel read — see `getMessagingAdsInsightsByAdIds` (`apis/insights.ts`). */
+export type GetMessagingAdsInsightsProps = {
+  adAccountId: string
+  adIds: string[]
+  channel: MessagingAdChannel
+  datePreset?: string
+}
+
 export type CreateCustomAudienceProps = {
   adAccountId: string
   name: string
@@ -132,5 +158,123 @@ export type FacebookAdsActions = {
   syncAudienceUser: Handler<
     { ctx: Context<FacebookAdsAuthValue>; props: SyncAudienceUserProps },
     void
+  >
+
+  // --- Messaging ads (CTM/CTID/CTWA) — out/plan/ctm-ctid-ads-manager.md ----
+  getAdAccountDetails: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: { adAccountId: string } },
+    AdAccountDetails
+  >
+  createMessagingCampaign: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: Omit<CreateCampaignInput, "accessToken" | "version">
+    },
+    MetaCampaign
+  >
+  findMessagingCampaignByOperationId: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: { adAccountId: string; operationId: string }
+    },
+    MetaCampaign | null
+  >
+  updateMessagingCampaignStatus: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: { campaignId: string; status: MetaStatusValue }
+    },
+    void
+  >
+  getMessagingCampaign: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: { campaignId: string } },
+    MetaCampaign
+  >
+  listMessagingCampaignsByIds: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: { campaignIds: string[] } },
+    MetaCampaign[]
+  >
+  createMessagingAdSet: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: Omit<CreateAdSetInput, "accessToken" | "version">
+    },
+    MetaAdSet
+  >
+  findMessagingAdSetByOperationId: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: { campaignId: string; operationId: string }
+    },
+    MetaAdSet | null
+  >
+  updateMessagingAdSetStatus: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: { adSetId: string; status: MetaStatusValue }
+    },
+    void
+  >
+  createMessagingAdCreative: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: Omit<CreateAdCreativeInput, "accessToken" | "version">
+    },
+    MetaAdCreative
+  >
+  findMessagingAdCreativeByOperationId: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: { adAccountId: string; operationId: string }
+    },
+    MetaAdCreative | null
+  >
+  createMessagingAd: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: Omit<CreateAdInput, "accessToken" | "version">
+    },
+    MetaAd
+  >
+  findMessagingAdByOperationId: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: { adSetId: string; operationId: string }
+    },
+    MetaAd | null
+  >
+  updateMessagingAdStatus: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: { adId: string; status: MetaStatusValue }
+    },
+    void
+  >
+  listMessagingAdsByIds: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: { adIds: string[] } },
+    MetaAd[]
+  >
+  /** Ads Insights — a SEPARATE read from `listMessagingAdsByIds`, never joined into it (keeps the ads LIST fast). See `GetMessagingAdsInsightsProps`. */
+  getMessagingAdsInsights: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: GetMessagingAdsInsightsProps },
+    MessagingAdInsight[]
+  >
+  uploadMessagingAdImage: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: Omit<UploadAdImageInput, "accessToken" | "version">
+    },
+    { imageHash: string }
+  >
+  uploadMessagingAdVideo: Handler<
+    {
+      ctx: Context<FacebookAdsAuthValue>
+      props: Omit<UploadAdVideoInput, "accessToken" | "version">
+    },
+    { videoId: string }
+  >
+  getMessagingAdVideoStatus: Handler<
+    { ctx: Context<FacebookAdsAuthValue>; props: { videoId: string } },
+    AdVideoStatus
   >
 }

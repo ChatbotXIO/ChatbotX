@@ -34,6 +34,7 @@
     "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/imports": "workspace:*",
+    "@chatbotx.io/integration-facebook-ads": "workspace:*",
     "@chatbotx.io/integration-google-calendar": "workspace:*",
     "@chatbotx.io/javascript-sandbox": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
