@@ -657,7 +657,7 @@ async function runAIReply(
           variables,
         })
       : ""
-    const completePrompt = props.summary
+    const completePrompt = props.summary && !aiAgent.disableSummary
       ? `Conversation Context: ${props.summary}\n\n${promptBase}`
       : promptBase
 
@@ -819,6 +819,7 @@ async function runAIReply(
       if (directSendTracker.sentText) {
         await aiContextService.appendHistory({
           conversationId: conversation.id,
+          disableSummary: aiAgent.disableSummary,
           newMessages: [
             {
               message: {
@@ -842,6 +843,7 @@ async function runAIReply(
     if (messageCount > 0 && fullText) {
       await aiContextService.appendHistory({
         conversationId: conversation.id,
+        disableSummary: aiAgent.disableSummary,
         newMessages: [
           {
             message: {

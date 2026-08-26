@@ -1166,6 +1166,10 @@
       "description": "Düz metin akışı yerine mesajlar ve eylemler içeren yapılandırılmış JSON döndürün.",
       "label": "Zengin Yanıt"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "Kişinin dili bilinmediğinde kişilere varsayılan dil atanır.",
       "label": "Dil",

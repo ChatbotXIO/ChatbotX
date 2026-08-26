@@ -156,7 +156,7 @@ async function runAIReplyInternal(
           variables,
         })
       : ""
-    const completePrompt = props.summary
+    const completePrompt = props.summary && !aiAgent.disableSummary
       ? `Conversation Context: ${props.summary}\n\n${promptBase}`
       : promptBase
 
@@ -269,6 +269,7 @@ async function runAIReplyInternal(
     if (fullText) {
       await aiContextService.appendHistory({
         conversationId: conversation.id,
+        disableSummary: aiAgent.disableSummary,
         newMessages: [
           {
             message: {

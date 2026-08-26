@@ -3667,6 +3667,10 @@
       "description": "החזרת JSON מובנה עם הודעות ופעולות במקום הזרמת טקסט רגיל.",
       "label": "תגובה עשירה"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "לאנשי קשר מוקצית שפת ברירת המחדל כאשר שפת איש הקשר אינה ידועה.",
       "label": "שפה",

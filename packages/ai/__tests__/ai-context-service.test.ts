@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   findConversationAIContextState: vi.fn(),
   getSafeSinceTime: vi.fn(),
   get: vi.fn(),
+  queueAdd: vi.fn(),
   loggerError: vi.fn(),
   runExclusive: vi.fn(),
   summarizeConversation: vi.fn(),
@@ -20,7 +21,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 vi.mock("@chatbotx.io/worker-config", () => ({
   AIJobAction: { summarizeConversation: "summarizeConversation" },
-  aiAgentQueue: { add: vi.fn() },
+  aiAgentQueue: { add: mocks.queueAdd },
 }))
 vi.mock("../src/server/cache/ai-context-store", () => ({
   aiContextStore: {
@@ -103,6 +104,29 @@ describe("aiContextService.getOrInitContext", () => {
       lastActivityAt,
       365 * 24 * 60 * 60 * 1000,
     )
+  })
+
+  test("does not summarize restored history when summaries are disabled", async () => {
+    const createdAt = new Date("2026-06-01T00:00:00.000Z")
+    mocks.createMessageRepository.mockResolvedValue({
+      findAIContextMessages: vi.fn().mockResolvedValue([
+        { id: "10", text: "new lead", senderType: "contact", createdAt },
+      ]),
+    })
+    mocks.findConversationAIContextState.mockResolvedValue({
+      aiContextLastMessageId: null,
+      lastActivityAt: createdAt,
+    })
+
+    const result = await aiContextService.getOrInitContext({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      disableSummary: true,
+    })
+
+    expect(result?.summary).toBe("")
+    expect(result?.history).toHaveLength(1)
+    expect(mocks.summarizeConversation).not.toHaveBeenCalled()
   })
 
   test("keeps only messages newer than the marker when timestamps match", async () => {
@@ -198,5 +222,68 @@ describe("aiContextService.getOrInitContext", () => {
     expect(mocks.createMessageRepository).not.toHaveBeenCalled()
     expect(findAIContextMessages).not.toHaveBeenCalled()
     expect(mocks.update).not.toHaveBeenCalled()
+  })
+})
+
+describe("aiContextService.appendHistory", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.runExclusive.mockImplementation(
+      (_conversationId: string, fn: () => Promise<unknown>) => fn(),
+    )
+    mocks.update.mockResolvedValue(undefined)
+  })
+
+  test("does not enqueue summarization when summaries are disabled", async () => {
+    const existingHistory = Array.from({ length: 100 }, (_, index) => ({
+      role: "user" as const,
+      content: `message ${index}`,
+      messageId: `${index}`,
+      createdAt: index,
+    }))
+    mocks.get
+      .mockResolvedValueOnce({
+        markerMessageId: null,
+        summary: "old summary",
+        history: existingHistory,
+        summarizing: false,
+        needsResummarize: false,
+        updatedAt: Date.now(),
+      })
+      .mockResolvedValueOnce({
+        markerMessageId: null,
+        summary: "old summary",
+        history: existingHistory.slice(1),
+        summarizing: false,
+        needsResummarize: false,
+        updatedAt: Date.now(),
+      })
+
+    await aiContextService.appendHistory({
+      conversationId: "conv-1",
+      disableSummary: true,
+      newMessages: [
+        {
+          message: { role: "assistant", content: "reply" },
+          messageId: "reply-1",
+          createdAt: 101,
+        },
+      ],
+    })
+
+    expect(mocks.queueAdd).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({
+        needsResummarize: false,
+        history: expect.arrayContaining([
+          expect.objectContaining({ messageId: "reply-1" }),
+        ]),
+      }),
+    )
+    const updatePayload = mocks.update.mock.calls[0]?.[1] as {
+      history: unknown[]
+    }
+    expect(updatePayload.history).toHaveLength(100)
   })
 })

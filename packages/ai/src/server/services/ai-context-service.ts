@@ -227,8 +227,9 @@ export const aiContextService = {
     workspaceId: string
     conversationId: string
     preferredModels?: AIAgentProviderModels
+    disableSummary?: boolean
   }): Promise<AIContext | null> {
-    const { workspaceId, conversationId, preferredModels } = props
+    const { workspaceId, conversationId, preferredModels, disableSummary } = props
 
     return await aiContextStore
       .runExclusive(conversationId, async () => {
@@ -270,7 +271,7 @@ export const aiContextService = {
           const modelMessages = this.mapContextToModelMessages(aiHistory)
 
           const summary =
-            modelMessages.length > 0
+            modelMessages.length > 0 && !disableSummary
               ? await summarizeConversation({
                   workspaceId,
                   messages: modelMessages,
@@ -318,8 +319,9 @@ export const aiContextService = {
   async appendHistory(props: {
     conversationId: string
     newMessages: ContextInputMessage[]
+    disableSummary?: boolean
   }): Promise<AIContext | null> {
-    const { conversationId, newMessages } = props
+    const { conversationId, newMessages, disableSummary } = props
 
     return await aiContextStore
       .runExclusive(conversationId, async () => {
@@ -354,11 +356,15 @@ export const aiContextService = {
           return await aiContextStore.get(conversationId)
         }
 
-        const shouldSummarize = currentHistory.length > MAX_CONVERSATION_HISTORY
+        const shouldSummarize =
+          currentHistory.length > MAX_CONVERSATION_HISTORY && !disableSummary
         const isSummarizing = context.summarizing === true
+        const history = disableSummary
+          ? currentHistory.slice(-MAX_CONVERSATION_HISTORY)
+          : currentHistory
 
         await aiContextStore.update(conversationId, {
-          history: currentHistory,
+          history,
           needsResummarize: shouldSummarize && isSummarizing,
         })
 

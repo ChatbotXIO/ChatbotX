@@ -480,6 +480,10 @@
       "description": "傳回包含訊息與操作的結構化 JSON，而不是純文字流。",
       "label": "豐富回應"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "聯絡人將套用此預設語言。",
       "label": "語言",

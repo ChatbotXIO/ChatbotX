@@ -61,6 +61,7 @@ export type CreateAIAgentRequest = {
   tools: string[]
   isDefault: boolean
   isRichResponse: boolean
+  disableSummary: boolean
   webSearchAuthorizedDomains?: WebSearchAuthorizedDomain[] | null
 }
 

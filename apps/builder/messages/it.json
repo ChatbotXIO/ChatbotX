@@ -472,6 +472,10 @@
       "description": "Restituisce JSON strutturato con messaggi e azioni invece di testo semplice in streaming.",
       "label": "Risposta avanzata"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "Ai contatti viene assegnata la lingua predefinita quando la loro lingua è sconosciuta.",
       "label": "Lingua",

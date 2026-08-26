@@ -1092,6 +1092,10 @@
       "description": "プレーンテキストのストリーミングではなく、メッセージとアクションを含む構造化JSONを返します。",
       "label": "リッチレスポンス"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "連絡先の言語が不明な場合、デフォルト言語が連絡先に割り当てられます。",
       "label": "言語",

@@ -1166,6 +1166,10 @@
       "description": "Devuelve JSON estructurado con mensajes y acciones en lugar de transmitir texto sin formato.",
       "label": "Respuesta enriquecida"
     },
+    "disableSummary": {
+      "description": "Usa solo los mensajes recientes de la conversación, sin el resumen acumulado. Las conversaciones largas pueden perder el contexto anterior a los últimos mensajes.",
+      "label": "Deshabilitar resumen de conversación"
+    },
     "language": {
       "description": "A los contactos se les asigna el idioma predeterminado cuando se desconoce su idioma.",
       "label": "Idioma",

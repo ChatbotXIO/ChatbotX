@@ -78,6 +78,7 @@ function makeAIAgent(overrides?: Partial<AIAgentModel>): AIAgentModel {
     messages: [],
     isDefault: false,
     isRichResponse: false,
+    disableSummary: false,
     tools: [],
     webSearchAuthorizedDomains: [],
     models: [{ provider: "openai", model: "gpt-5.4-mini" }],
@@ -179,6 +180,21 @@ describe("AI agent runner OpenAI-compatible providers", () => {
       }),
       modelId: "gpt-4o-mini",
     })
+  })
+
+  test("omits conversation summary from the system prompt when disabled", async () => {
+    await runAIAgentRunner({
+      aiAgent: makeAIAgent({ disableSummary: true }),
+      conversation: makeConversation(),
+      messages: [] as ModelMessage[],
+      summary: "Old lead data",
+    })
+
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: "You are helpful.",
+      }),
+    )
   })
 
   test("runs a preferred OpenAI-compatible model without native provider filtering", async () => {

@@ -165,6 +165,7 @@ export function UpdateAIAgentDialog({
       setValue("messages", agent.messages as UpdateAIAgentRequest["messages"])
       setValue("tools", agent.tools)
       setValue("isRichResponse", agent.isRichResponse)
+      setValue("disableSummary", agent.disableSummary)
       setValue(
         "webSearchAuthorizedDomains",
         agent.webSearchAuthorizedDomains.map((domain) => ({ value: domain })),
@@ -341,6 +342,15 @@ export function UpdateAIAgentDialog({
 
             <AIToolMultiSelect name="tools" />
             <WebSearchAuthorizedDomainsField />
+            <div>
+              <div className="flex items-center gap-3">
+                <Label>{t("fields.disableSummary.label")}</Label>
+                <SwitchField formItemClassName="w-auto" name="disableSummary" />
+              </div>
+              <p className="wrap-break-words mt-1.5 text-muted-foreground text-sm">
+                {t("fields.disableSummary.description")}
+              </p>
+            </div>
             <div>
               <div className="flex items-center gap-3">
                 <Label>{t("fields.isRichResponse.label")}</Label>

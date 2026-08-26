@@ -230,6 +230,7 @@ function makeAIAgent(overrides?: Partial<AIAgentModel>): AIAgentModel {
     messages: [],
     isDefault: false,
     isRichResponse: true,
+    disableSummary: false,
     tools: [],
     webSearchAuthorizedDomains: [],
     models: [{ provider: "openai", model: "gpt-4o" }] as AIAgentModel["models"],

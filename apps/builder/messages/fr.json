@@ -1092,6 +1092,10 @@
       "description": "Renvoyer un JSON structuré avec des messages et des actions au lieu d’un flux de texte brut.",
       "label": "Réponse enrichie"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "La langue par défaut est attribuée aux contacts dont la langue est inconnue.",
       "label": "Langue",
