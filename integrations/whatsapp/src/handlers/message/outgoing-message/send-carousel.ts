@@ -34,6 +34,7 @@ export function* generateOutgoingMessages(
       flowVersionId: props.flowVersionId,
       metadata: props.metadata,
       quickReplies: isLastCard ? props.quickReplies : undefined,
+      contactInboxId: props.contactInboxId,
       payload: card,
     })
   }

@@ -100,6 +100,7 @@ const cardRenderers: Record<
       bodyText: content.body,
       media: content.imageUrl ? new Image(content.imageUrl) : undefined,
       footer: content.footer ? generateFooter(content.footer) : undefined,
+      contactInboxId: props.contactInboxId,
     }),
 
   [cardLayouts.captionedImage]: (_props, content) => {
