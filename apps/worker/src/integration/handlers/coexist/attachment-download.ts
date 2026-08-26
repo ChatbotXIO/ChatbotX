@@ -62,8 +62,23 @@ const getStorageExtension = (
   return MIME_EXTENSION_MAP[mimeType] ?? ""
 }
 
-/** Maximum allowed attachment size in bytes (50 MiB). */
-const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024
+/** Maximum allowed attachment size in bytes (100 MiB). */
+export const MAX_ATTACHMENT_BYTES = 100 * 1024 * 1024
+
+/**
+ * Thrown when an attachment is genuinely larger than `MAX_ATTACHMENT_BYTES`.
+ * This is a PERMANENT condition — the same bytes exceed the cap on every
+ * retry — so the download handler treats it as a terminal skip (logs and
+ * returns) instead of rethrowing, which would burn all 5 BullMQ attempts and
+ * spam identical error logs for a job that can never succeed. Transient
+ * failures (network, 5xx, timeout) keep throwing so they still retry.
+ */
+export class AttachmentTooLargeError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "AttachmentTooLargeError"
+  }
+}
 
 const isPendingOriginPath = (path: string): boolean =>
   path.startsWith("http://") ||
@@ -91,7 +106,7 @@ const readBodyWithCap = async (
   if (declaredHeader !== null) {
     const declared = Number.parseInt(declaredHeader, 10)
     if (!Number.isNaN(declared) && declared > MAX_ATTACHMENT_BYTES) {
-      throw new SdkException(
+      throw new AttachmentTooLargeError(
         `[coexist-attachment] ${label} exceeds size limit: ${declared} bytes (max ${MAX_ATTACHMENT_BYTES})`,
       )
     }
@@ -116,7 +131,7 @@ const readBodyWithCap = async (
     total += value.byteLength
     if (total > MAX_ATTACHMENT_BYTES) {
       await reader.cancel()
-      throw new SdkException(
+      throw new AttachmentTooLargeError(
         `[coexist-attachment] ${label} body exceeds size limit: >${MAX_ATTACHMENT_BYTES} bytes`,
       )
     }
@@ -293,6 +308,18 @@ export const coexistAttachmentDownload = async (
       row.mimeType,
     )
   } catch (err) {
+    // An oversized attachment is a permanent condition: retrying re-downloads
+    // the same too-large bytes and fails identically, burning every BullMQ
+    // attempt. Terminate the job cleanly (no rethrow → no retry) and leave the
+    // row pending; a future coexist sync may re-enqueue it, but it never enters
+    // a retry storm. All other failures stay retryable.
+    if (err instanceof AttachmentTooLargeError) {
+      logger.warn(
+        { attachmentId, channel, err },
+        "[coexist-attachment] attachment exceeds size cap — skipping (permanent)",
+      )
+      return
+    }
     logger.error(
       { err, attachmentId, channel },
       "[coexist-attachment] download failed",

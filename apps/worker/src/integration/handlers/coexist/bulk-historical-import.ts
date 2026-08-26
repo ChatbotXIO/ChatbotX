@@ -176,6 +176,121 @@ const isUniqueMessagePkViolation = (err: unknown): boolean => {
   return false
 }
 
+/**
+ * Cap on how many times a single row's id is re-minted while probing past
+ * DB-occupied `(id, createdAt)` slots. Each attempt advances the factory's
+ * disambiguator; 64 is far beyond any realistic same-second slot occupancy, so
+ * exhausting it signals something genuinely wrong and is surfaced loudly.
+ */
+const MAX_PK_REMINT_ATTEMPTS = 64
+
+/**
+ * Insert a single row that PK-collided, re-minting its id until it lands in a
+ * free `(id, createdAt)` slot. Each `makeMessageId` call advances the factory's
+ * in-process `used` set, so successive attempts probe forward instead of
+ * re-emitting the colliding id. Genuine duplicates never reach here — they
+ * match the arbiter and are swallowed silently by `bulkCreate`.
+ */
+const remintRow = async (
+  repository: IMessageRepository,
+  row: CreateMessageInput,
+  makeMessageId: HistoricalIdFactory,
+  contactInboxId: string,
+  runId: string,
+): Promise<{ id: string; sourceId: string | null }[]> => {
+  for (let attempt = 0; attempt < MAX_PK_REMINT_ATTEMPTS; attempt++) {
+    const reminted: CreateMessageInput = {
+      ...row,
+      id: makeMessageId(
+        row.createdAt as Date,
+        row.sourceId ?? "",
+        contactInboxId,
+      ),
+    }
+    try {
+      return await repository.bulkCreate([reminted])
+    } catch (err) {
+      if (!isUniqueMessagePkViolation(err)) {
+        throw err
+      }
+      // Still colliding — loop; the next mint advances to another slot.
+    }
+  }
+  logger.error(
+    {
+      runId,
+      sourceId: row.sourceId,
+      createdAt: row.createdAt,
+      attempts: MAX_PK_REMINT_ATTEMPTS,
+    },
+    "[coexist] Message PK collision unresolved after re-minting — giving up on row",
+  )
+  throw new Error(
+    `[coexist] Message PK collision unresolved after ${MAX_PK_REMINT_ATTEMPTS} re-mints (sourceId=${row.sourceId})`,
+  )
+}
+
+/**
+ * Converge a batch that is KNOWN to contain at least one PK `(id, createdAt)`
+ * collision the repository's arbiter `(contactInboxId, sourceId, createdAt)`
+ * does not catch.
+ *
+ * A PK-thrown row is ALWAYS a distinct message: a genuine re-import matches the
+ * arbiter and is swallowed by `onConflictDoNothing`, never throwing. The clash
+ * is a rare 14-bit id-hash collision with a row already in the DB — invisible
+ * to `makeMessageId`'s in-process `used` set. We isolate the colliders by
+ * splitting the batch in halves (a half whose rows are all fine still inserts
+ * in one bulk call), and re-mint only the single rows that truly collide. This
+ * shifts only the offending rows and provably converges, unlike the previous
+ * whole-batch re-mint which just traded one collision for another.
+ *
+ * Re-minting is safe for idempotency: the stored id no longer equals the
+ * deterministic id, but a future re-import is deduped by the arbiter tuple, not
+ * the id.
+ */
+const convergePkCollisions = async (
+  repository: IMessageRepository,
+  inputs: CreateMessageInput[],
+  makeMessageId: HistoricalIdFactory,
+  contactInboxId: string,
+  runId: string,
+): Promise<{ id: string; sourceId: string | null }[]> => {
+  if (inputs.length === 1) {
+    return await remintRow(
+      repository,
+      inputs[0],
+      makeMessageId,
+      contactInboxId,
+      runId,
+    )
+  }
+
+  const mid = Math.floor(inputs.length / 2)
+  const halves = [inputs.slice(0, mid), inputs.slice(mid)]
+  const out: { id: string; sourceId: string | null }[] = []
+  // Sequential, not parallel: all rows share one factory `used` set, so
+  // concurrent minting would race on slot assignment.
+  for (const half of halves) {
+    try {
+      out.push(...(await repository.bulkCreate(half)))
+    } catch (err) {
+      if (!isUniqueMessagePkViolation(err)) {
+        throw err
+      }
+      out.push(
+        ...(await convergePkCollisions(
+          repository,
+          half,
+          makeMessageId,
+          contactInboxId,
+          runId,
+        )),
+      )
+    }
+  }
+  return out
+}
+
 export type HistoricalMessage = IncomingMessage & { createdAt?: Date }
 
 export type ContactImportLink = {
@@ -1009,8 +1124,12 @@ export const bulkImportMessages = async (props: {
   })
 
   // Insert messages via repository — always shard-aware (ShardedMessageRepository).
-  // PK collision (snowflake id clash across runs) triggers a one-time retry with
-  // fresh IDs; the onConflictDoNothing inside bulkCreate handles sourceId dupes.
+  // A PK `(id, createdAt)` collision (a rare 14-bit id-hash clash with a row
+  // already in the DB) is NOT caught by bulkCreate's arbiter onConflictDoNothing
+  // on (contactInboxId, sourceId, createdAt), so it surfaces as 23505. It is
+  // resolved by `remintingBulkInsert`, which re-mints ONLY the colliding rows
+  // until they find a free slot; genuine duplicates are still swallowed by the
+  // arbiter.
   //
   // Atomicity trade-off: bulkCreate runs outside any transaction wrapping the
   // surrounding conversation/contactInbox updates. A crash mid-batch leaves
@@ -1039,40 +1158,25 @@ export const bulkImportMessages = async (props: {
         )
         throw err
       }
-      // A PK collision is an anticipated, self-healing condition (rare 14-bit
-      // disambiguator clash with an existing row) — warn, then retry with
-      // re-minted ids. Only escalate to error if the retry also fails (below).
+      // A PK collision is an anticipated, self-healing condition. Converge by
+      // re-minting only the colliding rows (see remintingBulkInsert) instead of
+      // reshuffling the whole batch — the latter just traded one collision for
+      // another and never converged.
       logger.warn(
         {
           runId,
           total: messageInputs.length,
           dbCause: describeDatabaseError(err),
         },
-        "[coexist] Message PK collision — regenerating IDs and retrying",
+        "[coexist] Message PK collision — re-minting colliding rows and retrying",
       )
-      const retried = messageInputs.map((input) => ({
-        ...input,
-        // Re-call advances past the colliding slot via the factory's used-set.
-        id: makeMessageId(
-          input.createdAt as Date,
-          input.sourceId ?? "",
-          contactInboxId,
-        ),
-      }))
-      try {
-        insertedRows = await repository.bulkCreate(retried)
-      } catch (retryErr) {
-        logger.error(
-          {
-            runId,
-            total: retried.length,
-            dbCause: describeDatabaseError(retryErr),
-            sampleIds: retried.slice(0, 5).map((m) => m.id),
-          },
-          "[coexist] Message bulkCreate retry ALSO failed after re-minting IDs",
-        )
-        throw retryErr
-      }
+      insertedRows = await convergePkCollisions(
+        repository,
+        messageInputs,
+        makeMessageId,
+        contactInboxId,
+        runId,
+      )
     }
   }
 
