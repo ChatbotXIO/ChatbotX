@@ -1,5 +1,6 @@
 import type { PassThrough } from "node:stream"
 import { workspaceService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import {
@@ -23,6 +24,7 @@ import {
   loopableItemsCount,
 } from "@chatbotx.io/worker-config"
 import { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
+import { runJobWithAuditContext } from "../../lib/run-job-with-audit-context"
 
 type ExportData = JobExportContacts["data"]
 
@@ -405,7 +407,19 @@ const MAX_EXPORT_ROWS = 500_000
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-export const loopableExportContacts = async (data: ExportData) => {
+export const loopableExportContacts = async (data: ExportData) =>
+  runJobWithAuditContext(
+    {
+      requestedUserId: data.requestedUserId,
+      workspaceId: data.workspaceId,
+      source: "default:exportContacts",
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+    },
+    () => loopableExportContactsInner(data),
+  )
+
+const loopableExportContactsInner = async (data: ExportData) => {
   const { workspaceId, fileId, fields, outputPath, outputFormat } = data
   const fileIds = { fileId, workspaceId }
 
@@ -490,6 +504,16 @@ export const loopableExportContacts = async (data: ExportData) => {
       fileSize: String(totalBytes),
       meta: { totalRecords },
     })
+
+    if (finalStatus === fileStatuses.enum.uploaded) {
+      await auditService.record({
+        action: "export",
+        detail: "exported contacts",
+        userId: data.requestedUserId,
+        workspaceId: data.workspaceId,
+        source: "default:exportContacts",
+      })
+    }
   } catch (error) {
     // Destroy the source stream and wait for the multipart upload to settle so
     // lib-storage aborts the partial upload (default leavePartsOnError=false)

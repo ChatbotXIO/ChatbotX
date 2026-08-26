@@ -158,7 +158,8 @@
     "skip": "Omitir"
   },
   "admins": {
-    "title": "Administradores"
+    "title": "Administradores",
+    "adminActivityLogs": "Registro de actividad de administradores"
   },
   "assignAdmin": {
     "assignConversation": "Asignar conversación",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "The export es still processing. tú puede Cerrar este dialog y check back en un few minutos desde el export history."
   },
   "auditLogs": {
-    "title": "Registros de auditoría"
+    "title": "Registros de auditoría",
+    "columns": {
+      "user": "Usuario",
+      "action": "Acción",
+      "detail": "Detalle",
+      "ipAddress": "Dirección IP",
+      "date": "Fecha"
+    },
+    "filters": {
+      "from": "Desde",
+      "to": "Hasta",
+      "user": "Usuario",
+      "userPlaceholder": "ID de usuario",
+      "keyword": "Palabra clave",
+      "keywordPlaceholder": "Acción o detalle",
+      "allAdmins": "Todos los administradores"
+    }
   },
   "customFields": {
     "title": "Campos personalizados",

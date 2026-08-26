@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationGoogleSheetsModel,
@@ -47,6 +48,13 @@ export const disconnectGoogleSheetsAction = authActionClient
           .delete(integrationModel)
           .where(eq(integrationModel.id, googleSheets.integrationId))
       })
+
+      await auditService.record({
+        workspaceId,
+        action: "disconnect",
+        detail: "disconnected the Google Sheets integration",
+      })
+
       return
     },
   )

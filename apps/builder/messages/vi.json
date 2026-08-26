@@ -158,7 +158,8 @@
     "skip": "Bỏ qua"
   },
   "admins": {
-    "title": "Quản trị viên"
+    "title": "Quản trị viên",
+    "adminActivityLogs": "Nhật ký hoạt động quản trị"
   },
   "assignAdmin": {
     "assignConversation": "Gán cuộc trò chuyện",
@@ -3728,7 +3729,23 @@
     "title": "Nhật ký lỗi"
   },
   "auditLogs": {
-    "title": "Nhật ký kiểm tra"
+    "title": "Nhật ký kiểm tra",
+    "columns": {
+      "user": "Người dùng",
+      "action": "Hành động",
+      "detail": "Chi tiết",
+      "ipAddress": "Địa chỉ IP",
+      "date": "Ngày"
+    },
+    "filters": {
+      "from": "Từ",
+      "to": "Đến",
+      "user": "Người dùng",
+      "userPlaceholder": "ID người dùng",
+      "keyword": "Từ khóa",
+      "keywordPlaceholder": "Hành động, chi tiết hoặc địa chỉ IP",
+      "allAdmins": "Tất cả admin"
+    }
   },
   "customFields": {
     "title": "Trường tùy chỉnh",

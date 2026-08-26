@@ -188,6 +188,11 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+const recordAuditLog = vi.fn()
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
+}))
+
 vi.mock("@chatbotx.io/analytics", () => ({
   macTrackingService: {
     claimNewActiveContact: (...args: unknown[]) =>
@@ -252,6 +257,7 @@ const baseMeta = {
 const buildRow = (overrides: Record<string, unknown> = {}) => ({
   id: "imp-1",
   workspaceId: "ws-1",
+  userId: "user-1",
   inboxId: "inbox-1",
   fileId: "file-1",
   type: "contacts",
@@ -308,6 +314,7 @@ beforeEach(() => {
   workspaceUsageIncrement.mockResolvedValue(undefined)
   claimNewActiveContact.mockReset()
   claimNewActiveContacts.mockReset()
+  recordAuditLog.mockReset()
 })
 
 const runContactsImport = (row: unknown) =>
@@ -348,6 +355,32 @@ describe("contacts import pipeline", () => {
     })
     // One bulk transaction for the whole chunk, not one per row.
     expect(transactionFn).toHaveBeenCalledTimes(1)
+    expect(recordAuditLog).toHaveBeenCalledWith({
+      action: "import",
+      detail: "imported contacts",
+      userId: "user-1",
+      workspaceId: "ws-1",
+      source: "default:runImportPipeline",
+    })
+  })
+
+  test("does not emit an import audit row when the row has no attributable userId", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf(["external_id,phone,email", "ext-1,+15551234567,a@example.com"]),
+    )
+
+    await runContactsImport(buildRow({ userId: null }))
+
+    expect(recordAuditLog).not.toHaveBeenCalled()
+  })
+
+  test("does not emit an import audit row when marking the row failed", async () => {
+    findFirstInbox.mockResolvedValue(undefined)
+
+    await runContactsImport(buildRow())
+
+    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 
   test("verifies object size server-side even when a stored file size exists", async () => {

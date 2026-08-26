@@ -53,6 +53,19 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { find: vi.fn(async () => ({ timezone: "UTC" })) },
 }))
 
+const recordAuditLog = vi.fn()
+vi.mock("@chatbotx.io/business/audit", async () => {
+  const { AsyncLocalStorage } = await import("node:async_hooks")
+  const storage = new AsyncLocalStorage<Record<string, unknown>>()
+  return {
+    SYSTEM_ACTOR: "system",
+    withAuditContext: (actor: Record<string, unknown>, fn: () => unknown) =>
+      storage.run(actor, fn),
+    getAuditActor: () => storage.getStore(),
+    auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
+  }
+})
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactCustomFieldModel: {},
   fileModel: { id: "File.id", workspaceId: "File.workspaceId" },
@@ -138,6 +151,7 @@ beforeEach(() => {
   updateSet.mockReset()
   updateWhere.mockReset()
   createUpload.mockClear()
+  recordAuditLog.mockReset()
 })
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -175,6 +189,13 @@ describe("loopableExportContacts", () => {
       meta: { totalRecords: 1 },
     })
     expect(lastUpdate().fileSize).toBeDefined()
+    expect(recordAuditLog).toHaveBeenCalledWith({
+      action: "export",
+      detail: "exported contacts",
+      userId: "user-1",
+      workspaceId: "ws-1",
+      source: "default:exportContacts",
+    })
   })
 
   test("paginates with keyset and persists progress per chunk", async () => {
@@ -221,6 +242,7 @@ describe("loopableExportContacts", () => {
       status: "failed",
       meta: { totalRecords: 0 },
     })
+    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 
   test("marks the file failed and rethrows when the query errors", async () => {
@@ -231,6 +253,7 @@ describe("loopableExportContacts", () => {
     await expect(loopableExportContacts(buildData())).rejects.toThrow("db down")
 
     expect(lastUpdate()).toMatchObject({ status: "failed" })
+    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 
   test("renders tag membership as Yes/No", async () => {

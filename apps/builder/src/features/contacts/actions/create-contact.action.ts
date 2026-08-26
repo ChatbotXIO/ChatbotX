@@ -7,6 +7,7 @@ import {
   quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
@@ -245,6 +246,12 @@ export const createContact = async ({
         return { contact, contactInbox }
       },
     })
+
+  await auditService.record({
+    workspaceId,
+    action: "create",
+    detail: `created a new contact (#${contact.id})`,
+  })
 
   await emitContactCreated(
     workspaceId,

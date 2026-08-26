@@ -158,7 +158,8 @@
     "skip": "Spring over"
   },
   "admins": {
-    "title": "Administratorer"
+    "title": "Administratorer",
+    "adminActivityLogs": "Administratoraktivitetslog"
   },
   "assignAdmin": {
     "assignConversation": "Tildel samtale",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "Den eksportér er still processing. Du kan close denne dialog og check tilbage i a few minutter fra den eksportér historik."
   },
   "auditLogs": {
-    "title": "Audit Logfiler"
+    "title": "Audit Logfiler",
+    "columns": {
+      "user": "Bruger",
+      "action": "Handling",
+      "detail": "Detalje",
+      "ipAddress": "IP-adresse",
+      "date": "Dato"
+    },
+    "filters": {
+      "from": "Fra",
+      "to": "Til",
+      "user": "Bruger",
+      "userPlaceholder": "Bruger-id",
+      "keyword": "Nøgleord",
+      "keywordPlaceholder": "Handling eller detalje",
+      "allAdmins": "Alle administratorer"
+    }
   },
   "customFields": {
     "title": "Brugerdefineret Felter",

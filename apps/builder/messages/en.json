@@ -158,7 +158,8 @@
     "skip": "Skip"
   },
   "admins": {
-    "title": "Admins"
+    "title": "Admins",
+    "adminActivityLogs": "Admin Activity Logs"
   },
   "assignAdmin": {
     "assignConversation": "Assign conversation",
@@ -3925,7 +3926,23 @@
     "exportTakingLongDescription": "The export is still processing. You can close this dialog and check back in a few minutes from the export history."
   },
   "auditLogs": {
-    "title": "Audit Logs"
+    "title": "Audit Logs",
+    "columns": {
+      "user": "User",
+      "action": "Action",
+      "detail": "Detail",
+      "ipAddress": "IP Address",
+      "date": "Date"
+    },
+    "filters": {
+      "from": "From",
+      "to": "To",
+      "user": "User",
+      "userPlaceholder": "User ID",
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Action, detail, or IP address",
+      "allAdmins": "All Admin"
+    }
   },
   "customFields": {
     "title": "Custom Fields",

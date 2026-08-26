@@ -1,3 +1,4 @@
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -177,5 +178,24 @@ describe("chat worker bot message quota gate", () => {
 
     expect(mocks.isBotMessageQuotaReached).not.toHaveBeenCalled()
     expect(mocks.sendMessageToChannel).toHaveBeenCalledOnce()
+  })
+
+  test("populates the audit actor with the resolved workspace and job source before invoking the handler", async () => {
+    let capturedActor: ReturnType<typeof getAuditActor>
+    mocks.sendFlowStep.mockImplementationOnce(() => {
+      capturedActor = getAuditActor()
+    })
+
+    await mocks.processJob?.({
+      id: "job-1",
+      data: { type: "sendFlowMessage", data: {} },
+    })
+
+    expect(capturedActor).toEqual(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        source: "chat:sendFlowMessage",
+      }),
+    )
   })
 })

@@ -158,7 +158,8 @@
     "skip": "Ignorado"
   },
   "admins": {
-    "title": "Administradores"
+    "title": "Administradores",
+    "adminActivityLogs": "Registo de atividade do administrador"
   },
   "assignAdmin": {
     "assignConversation": "Atribuir conversa",
@@ -3807,7 +3808,23 @@
     "exportTakingLongDescription": "A exportação continua a ser processada. Pode fechar esta caixa de diálogo e voltar a consultar o histórico de exportações dentro de alguns minutos."
   },
   "auditLogs": {
-    "title": "Registos de auditoria"
+    "title": "Registos de auditoria",
+    "columns": {
+      "user": "Utilizador",
+      "action": "Ação",
+      "detail": "Detalhe",
+      "ipAddress": "Endereço IP",
+      "date": "Data"
+    },
+    "filters": {
+      "from": "De",
+      "to": "Até",
+      "user": "Utilizador",
+      "userPlaceholder": "ID do utilizador",
+      "keyword": "Palavra-chave",
+      "keywordPlaceholder": "Ação ou detalhe",
+      "allAdmins": "Todos os admins"
+    }
   },
   "customFields": {
     "title": "Campos personalizados",

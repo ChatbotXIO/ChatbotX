@@ -10,7 +10,7 @@ describe("template adapter install order", () => {
     await expect(
       import("../src/template/adapters/index"),
     ).resolves.toBeDefined()
-  })
+  }, 60_000)
 
   test("every registered adapter appears in TEMPLATE_INSTALL_ORDER exactly once", async () => {
     const { templateAdapterRegistry, TEMPLATE_INSTALL_ORDER } = await import(

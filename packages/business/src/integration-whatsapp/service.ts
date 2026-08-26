@@ -419,6 +419,8 @@ class IntegrationWhatsappService extends BaseService {
       throw new Error("WhatsApp integration not found")
     }
 
+    await this.audit("update", "reconnected the WhatsApp channel")
+
     return updated
   }
 

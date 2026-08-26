@@ -158,7 +158,8 @@
     "skip": "Überspringen"
   },
   "admins": {
-    "title": "Admins"
+    "title": "Admins",
+    "adminActivityLogs": "Admin-Aktivitätsprotokoll"
   },
   "assignAdmin": {
     "assignConversation": "Unterhaltung zuweisen",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "Der Export wird noch verarbeitet. Sie können diesen Dialog schließen und in einigen Minuten im Exportverlauf erneut nachsehen."
   },
   "auditLogs": {
-    "title": "Audit-Protokolle"
+    "title": "Audit-Protokolle",
+    "columns": {
+      "user": "Benutzer",
+      "action": "Aktion",
+      "detail": "Detail",
+      "ipAddress": "IP-Adresse",
+      "date": "Datum"
+    },
+    "filters": {
+      "from": "Von",
+      "to": "Bis",
+      "user": "Benutzer",
+      "userPlaceholder": "Benutzer-ID",
+      "keyword": "Stichwort",
+      "keywordPlaceholder": "Aktion oder Detail",
+      "allAdmins": "Alle Admins"
+    }
   },
   "customFields": {
     "title": "Benutzerdefinierte Felder",

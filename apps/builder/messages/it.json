@@ -1584,7 +1584,8 @@
     "skip": "Salta"
   },
   "admins": {
-    "title": "Amministratori"
+    "title": "Amministratori",
+    "adminActivityLogs": "Registro attività amministratori"
   },
   "assignAdmin": {
     "assignConversation": "Assegna conversazione",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "L'esportazione è ancora in corso. Puoi chiudere questa finestra e ricontrollare tra qualche minuto nella cronologia delle esportazioni."
   },
   "auditLogs": {
-    "title": "Registri di controllo"
+    "title": "Registri di controllo",
+    "columns": {
+      "user": "Utente",
+      "action": "Azione",
+      "detail": "Dettaglio",
+      "ipAddress": "Indirizzo IP",
+      "date": "Data"
+    },
+    "filters": {
+      "from": "Da",
+      "to": "A",
+      "user": "Utente",
+      "userPlaceholder": "ID utente",
+      "keyword": "Parola chiave",
+      "keywordPlaceholder": "Azione o dettaglio",
+      "allAdmins": "Tutti gli amministratori"
+    }
   },
   "customFields": {
     "title": "Campi personalizzati",

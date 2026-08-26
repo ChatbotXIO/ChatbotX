@@ -3,11 +3,14 @@ import { integrationTypes } from "@chatbotx.io/database/partials"
 import { integrationApiRepository } from "@chatbotx.io/database/repositories"
 import type { IntegrationApiModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import { dispatchAuditRecord } from "../audit/dispatcher"
+import { BaseService } from "../base.service"
 import { connectChannelIntegration } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
 
 type ConnectIntegrationApiInput = {
   ownerId: string
+  actorUserId: string
   workspaceId?: string
   name: string
   auth: Parameters<typeof integrationApiRepository.insert>[0]["auth"]
@@ -26,11 +29,12 @@ type DisconnectIntegrationApiInput = {
   ownerId: string
 }
 
-class IntegrationApiService {
+class IntegrationApiService extends BaseService {
   async connect(
     input: ConnectIntegrationApiInput,
   ): Promise<{ workspaceId: string; inbox: IntegrationApiModel }> {
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
+      const workspaceCreated = !input.workspaceId
       const workspaceId =
         input.workspaceId ?? (await input.createWorkspace?.(tx))
       if (!workspaceId) {
@@ -67,8 +71,32 @@ class IntegrationApiService {
           ),
       })
 
-      return { workspaceId, inbox: integration }
+      return { workspaceId, inbox: integration, workspaceCreated }
     })
+
+    // Sanctioned exception: `connect()` is reachable from `authActionClient`
+    // (create-api.action.ts), which never puts `workspaceId` into the ALS
+    // actor — only workspace-scoped action clients do. this.audit() would
+    // silently no-op here, so bypass it with an explicit override.
+    if (result.workspaceCreated) {
+      // Matches the other 5 "connect channel creates a new workspace" flows
+      // (WhatsApp/Instagram x2/Messenger/Telegram/Webchat) — API channel is
+      // the 6th entry point that can create a workspace on connect.
+      await dispatchAuditRecord({
+        userId: input.actorUserId,
+        workspaceId: result.workspaceId,
+        action: "create",
+        detail: `created the workspace (#${result.workspaceId})`,
+      })
+    }
+    await dispatchAuditRecord({
+      userId: input.actorUserId,
+      workspaceId: result.workspaceId,
+      action: "create",
+      detail: `created a new API key (#${result.inbox.id})`,
+    })
+
+    return result
   }
 
   async disconnect(input: DisconnectIntegrationApiInput): Promise<void> {
@@ -81,6 +109,8 @@ class IntegrationApiService {
         tx,
       })
     })
+
+    await this.audit("delete", `revoked an API key (#${input.id})`)
   }
 }
 

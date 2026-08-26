@@ -71,6 +71,8 @@ export type JobExportContacts = {
     restrictToAssignedUserId?: string
     outputPath: string
     outputFormat: "csv"
+    ipAddress?: string
+    userAgent?: string
   } & (
     | { contactIds: string[]; filter?: undefined }
     | { contactIds?: undefined; filter: ExportContactsFilter }
@@ -123,6 +125,8 @@ export type JobRunImport = {
   type: typeof DefaultJobAction.runImport
   data: {
     importId: string
+    ipAddress?: string
+    userAgent?: string
   }
 }
 
@@ -141,10 +145,14 @@ export type JobSendErrorLog = {
 export type JobSendAuditLog = {
   type: typeof DefaultJobAction.sendAuditLog
   data: {
+    auditLogId?: string
     userId: string
     workspaceId: string
     action: string
     detail: string
+    ipAddress?: string
+    userAgent?: string
+    source?: string
   }
 }
 

@@ -332,6 +332,11 @@ class FlowService extends BaseService {
         .set({ deletedAt: new Date() })
         .where(inArray(flowAnalyticsSessionModel.flowId, flowIds))
     })
+
+    await this.audit(
+      "delete",
+      `deleted flow${flows.length > 1 ? "s" : ""} (${flows.map((flow) => `#${flow.id}`).join(", ")})`,
+    )
   }
 }
 

@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockUpdateReturning,
   mockUpdateWhere,
   mockUpdateSet,
   mockUpdate,
@@ -10,21 +11,27 @@ const {
   mockIsDatabaseError,
   mockReturnValidationErrors,
   mockGetTranslations,
+  mockAuditRecord,
 } = vi.hoisted(() => {
-  const mockUpdateWhere = vi.fn().mockResolvedValue(undefined)
+  const mockUpdateReturning = vi.fn().mockResolvedValue([{ id: "seq-1" }])
+  const mockUpdateWhere = vi.fn().mockReturnValue({
+    returning: mockUpdateReturning,
+  })
   const mockUpdateSet = vi.fn().mockReturnValue({ where: mockUpdateWhere })
   const mockUpdate = vi.fn().mockReturnValue({ set: mockUpdateSet })
 
   return {
+    mockUpdateReturning,
     mockUpdateWhere,
     mockUpdateSet,
     mockUpdate,
-    mockFindOrFail: vi.fn().mockResolvedValue(undefined),
+    mockFindOrFail: vi.fn().mockResolvedValue({ id: "seq-1", name: "Seq" }),
     mockIsDatabaseError: vi.fn().mockReturnValue(false),
     mockReturnValidationErrors: vi
       .fn()
       .mockReturnValue({ __validationError: true }),
     mockGetTranslations: vi.fn().mockResolvedValue((k: string) => k),
+    mockAuditRecord: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -46,6 +53,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   sequenceModel: { id: "id", name: "name", workspaceId: "workspaceId" },
+}))
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: mockAuditRecord },
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -79,14 +90,19 @@ const SEQ_ID = "seq-1"
 function resetUpdateChain() {
   mockUpdate.mockReturnValue({ set: mockUpdateSet })
   mockUpdateSet.mockReturnValue({ where: mockUpdateWhere })
-  mockUpdateWhere.mockResolvedValue(undefined)
+  mockUpdateWhere.mockReturnValue({ returning: mockUpdateReturning })
+  mockUpdateReturning.mockResolvedValue([{ id: "seq-1" }])
 }
 
 describe("updateSequenceAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetUpdateChain()
-    mockFindOrFail.mockResolvedValue(undefined)
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      active: false,
+    })
     mockIsDatabaseError.mockReturnValue(false)
     mockGetTranslations.mockResolvedValue((k: string) => k)
     mockReturnValidationErrors.mockReturnValue({ __validationError: true })
@@ -136,11 +152,53 @@ describe("updateSequenceAction", () => {
       expect(mockUpdateSet).toHaveBeenCalledWith(parsedInput)
     })
 
+    test("skips update and audit when active is unchanged", async () => {
+      mockFindOrFail.mockResolvedValue({
+        id: "seq-1",
+        name: "Seq",
+        active: true,
+      })
+
+      await callAction({
+        bindArgsParsedInputs: [WS, SEQ_ID],
+        parsedInput: { active: true },
+      })
+
+      expect(mockUpdate).not.toHaveBeenCalled()
+      expect(mockAuditRecord).not.toHaveBeenCalled()
+    })
+
+    test("records enabled detail only when active actually changes by itself", async () => {
+      await callAction({
+        bindArgsParsedInputs: [WS, SEQ_ID],
+        parsedInput: { active: true },
+      })
+
+      expect(mockAuditRecord).toHaveBeenCalledWith({
+        workspaceId: WS,
+        action: "update",
+        detail: "enabled a sequence (#seq-1)",
+      })
+    })
+
+    test("records generic update detail when name and active change together", async () => {
+      await callAction({
+        bindArgsParsedInputs: [WS, SEQ_ID],
+        parsedInput: { name: "New Name", active: true },
+      })
+
+      expect(mockAuditRecord).toHaveBeenCalledWith({
+        workspaceId: WS,
+        action: "update",
+        detail: "updated a sequence (#seq-1)",
+      })
+    })
+
     test("returns undefined on success (no explicit return value)", async () => {
       // Act
       const result = await callAction({
         bindArgsParsedInputs: [WS, SEQ_ID],
-        parsedInput: { name: "Seq" },
+        parsedInput: { name: "Updated Seq" },
       })
 
       // Assert
@@ -170,7 +228,7 @@ describe("updateSequenceAction", () => {
       const dbError = Object.assign(new Error("unique violation"), {
         cause: { code: "23505" },
       })
-      mockUpdateWhere.mockRejectedValue(dbError)
+      mockUpdateReturning.mockRejectedValue(dbError)
       mockIsDatabaseError.mockReturnValue(true)
 
       // Act
@@ -191,14 +249,14 @@ describe("updateSequenceAction", () => {
       const dbError = Object.assign(new Error("other db"), {
         cause: { code: "XXXXX" },
       })
-      mockUpdateWhere.mockRejectedValue(dbError)
+      mockUpdateReturning.mockRejectedValue(dbError)
       mockIsDatabaseError.mockReturnValue(true)
 
       // Act & Assert
       await expect(
         callAction({
           bindArgsParsedInputs: [WS, SEQ_ID],
-          parsedInput: { name: "Seq" },
+          parsedInput: { name: "Updated Seq" },
         }),
       ).rejects.toThrow("Failed to update sequence")
       expect(mockReturnValidationErrors).not.toHaveBeenCalled()
@@ -206,14 +264,14 @@ describe("updateSequenceAction", () => {
 
     test("throws 'Failed to update sequence' for non-DB errors", async () => {
       // Arrange
-      mockUpdateWhere.mockRejectedValue(new Error("network error"))
+      mockUpdateReturning.mockRejectedValue(new Error("network error"))
       mockIsDatabaseError.mockReturnValue(false)
 
       // Act & Assert
       await expect(
         callAction({
           bindArgsParsedInputs: [WS, SEQ_ID],
-          parsedInput: { name: "Seq" },
+          parsedInput: { name: "Updated Seq" },
         }),
       ).rejects.toThrow("Failed to update sequence")
     })
@@ -224,7 +282,11 @@ describe("updateSequence (exported helper)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetUpdateChain()
-    mockFindOrFail.mockResolvedValue(undefined)
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      active: false,
+    })
     mockIsDatabaseError.mockReturnValue(false)
     mockGetTranslations.mockResolvedValue((k: string) => k)
     mockReturnValidationErrors.mockReturnValue({ __validationError: true })

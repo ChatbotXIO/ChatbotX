@@ -158,7 +158,8 @@
     "skip": "Ohita"
   },
   "admins": {
-    "title": "Ylläpitäjät"
+    "title": "Ylläpitäjät",
+    "adminActivityLogs": "Ylläpitäjän toimintaloki"
   },
   "assignAdmin": {
     "assignConversation": "Määritä keskustelu",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "Vientiä käsitellään edelleen. Voit sulkea tämän valintaikkunan ja tarkistaa tilanteen muutaman minuutin kuluttua vientihistoriasta."
   },
   "auditLogs": {
-    "title": "Tarkastuslokit"
+    "title": "Tarkastuslokit",
+    "columns": {
+      "user": "Käyttäjä",
+      "action": "Toiminto",
+      "detail": "Tiedot",
+      "ipAddress": "IP-osoite",
+      "date": "Päivämäärä"
+    },
+    "filters": {
+      "from": "Alkaen",
+      "to": "Päättyen",
+      "user": "Käyttäjä",
+      "userPlaceholder": "Käyttäjätunnus",
+      "keyword": "Avainsana",
+      "keywordPlaceholder": "Toiminto tai tiedot",
+      "allAdmins": "Kaikki ylläpitäjät"
+    }
   },
   "customFields": {
     "title": "Mukautetut kentät",

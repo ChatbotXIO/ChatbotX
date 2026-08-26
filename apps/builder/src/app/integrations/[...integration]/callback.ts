@@ -6,6 +6,7 @@ import {
   workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -68,6 +69,7 @@ import { logger } from "@/lib/log"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
+import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
@@ -301,12 +303,26 @@ export const handleCallback = async (
       // the referer (the integrations settings page) instead of the Messenger
       // page picker.
       if (stateParams.flow === "facebookAds") {
-        await storeFacebookAdsConnection({
-          credentialConfig: messengerCredential.config,
-          code,
-          callbackUrl,
-          workspaceId: workspace.id,
-        })
+        // storeFacebookAdsConnection -> integrationFacebookAdsService.upsert()
+        // calls this.audit(), which resolves userId/workspaceId from the ALS
+        // actor context. This raw OAuth route never populates it (unlike
+        // workspace-scoped action clients), so the audit call would silently
+        // no-op without this wrap.
+        await withAuditContext(
+          {
+            userId,
+            workspaceId: workspace.id,
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          },
+          () =>
+            storeFacebookAdsConnection({
+              credentialConfig: messengerCredential.config,
+              code,
+              callbackUrl,
+              workspaceId: workspace.id,
+            }),
+        )
         return redirect(safeReferer)
       }
 
@@ -327,6 +343,16 @@ export const handleCallback = async (
           code,
           callbackUrl,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            detail: "reconnected the Messenger channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
@@ -406,6 +432,16 @@ export const handleCallback = async (
           integrationId: stateParams.reconnectIntegrationId,
           userToken,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            detail: "reconnected the Instagram channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
@@ -458,6 +494,16 @@ export const handleCallback = async (
           integrationId: stateParams.reconnectIntegrationId,
           userToken,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            detail: "reconnected the Instagram channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
@@ -510,6 +556,7 @@ export const handleCallback = async (
       await connectTiktokHandler({
         tiktokSettings: tiktokCredential.config,
         workspaceId: workspace.id,
+        userId,
         req,
         redirectUrl: tiktokCallbackUrl,
       })
@@ -541,12 +588,28 @@ export const handleCallback = async (
           req,
           callbackUrl: zaloRedirectUrl,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            // Same wording/shape as the Messenger/Instagram reconnect calls
+            // above: this is the OAuth-popup "Reconnect" button, not the
+            // silent refresh_token-based flow that "refreshed the Zalo
+            // channel permissions" (refresh-all-channel-tokens.action.ts,
+            // refresh-zalo-tokens.ts) describes — keep those distinct.
+            detail: "reconnected the Zalo channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
       await connectZaloHandler({
         zaloSettings: zaloCredential.config,
         workspaceId: workspace.id,
+        userId,
         req,
         redirectUrl: zaloRedirectUrl,
       })
@@ -573,12 +636,21 @@ export const handleCallback = async (
         "/integrations/facebook-ads/callback",
       )
 
-      await storeFacebookAdsConnection({
-        credentialConfig: facebookAdsCredential.config,
-        code,
-        callbackUrl,
-        workspaceId: workspace.id,
-      })
+      await withAuditContext(
+        {
+          userId,
+          workspaceId: workspace.id,
+          ipAddress: getGuestClientIp(req.headers),
+          userAgent: req.headers.get("user-agent") ?? undefined,
+        },
+        () =>
+          storeFacebookAdsConnection({
+            credentialConfig: facebookAdsCredential.config,
+            code,
+            callbackUrl,
+            workspaceId: workspace.id,
+          }),
+      )
 
       return redirect(safeReferer)
     }
@@ -680,6 +752,17 @@ export const handleCallback = async (
       })
     }
   })
+
+  if (integrationType === "googleSheets") {
+    await auditService.record({
+      userId,
+      workspaceId: workspace.id,
+      action: "connect",
+      detail: "connected a new Google Sheets integration",
+      ipAddress: getGuestClientIp(req.headers),
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    })
+  }
 
   return redirect(safeReferer)
 }

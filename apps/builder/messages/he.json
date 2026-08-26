@@ -158,7 +158,8 @@
     "skip": "דילוג"
   },
   "admins": {
-    "title": "מנהלי מערכת"
+    "title": "מנהלי מערכת",
+    "adminActivityLogs": "יומן פעילות מנהלים"
   },
   "assignAdmin": {
     "assignConversation": "הקצאת שיחה",
@@ -2039,7 +2040,23 @@
     "exportTakingLongDescription": "הייצוא עדיין בעיבוד. ניתן לסגור חלון זה ולבדוק שוב בעוד מספר דקות בהיסטוריית הייצוא."
   },
   "auditLogs": {
-    "title": "יומני ביקורת"
+    "title": "יומני ביקורת",
+    "columns": {
+      "user": "משתמש",
+      "action": "פעולה",
+      "detail": "פרטים",
+      "ipAddress": "כתובת IP",
+      "date": "תאריך"
+    },
+    "filters": {
+      "from": "מ",
+      "to": "עד",
+      "user": "משתמש",
+      "userPlaceholder": "מזהה משתמש",
+      "keyword": "מילת מפתח",
+      "keywordPlaceholder": "פעולה או פרטים",
+      "allAdmins": "כל המנהלים"
+    }
   },
   "customFields": {
     "title": "שדות מותאמים אישית",

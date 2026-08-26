@@ -7,6 +7,7 @@ const {
   mockInstalledResourceFindMany,
   mockInstallationFindMany,
   mockRemoveTriggerCache,
+  mockTriggerFindMany,
 } = vi.hoisted(() => {
   const mockDeleteWhere = vi.fn().mockResolvedValue(undefined)
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
@@ -15,6 +16,7 @@ const {
     mockInstalledResourceFindMany: vi.fn(),
     mockInstallationFindMany: vi.fn(),
     mockRemoveTriggerCache: vi.fn(),
+    mockTriggerFindMany: vi.fn(),
   }
 })
 
@@ -27,6 +29,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
       templateInstallationModel: {
         findMany: mockInstallationFindMany,
+      },
+      triggerModel: {
+        findMany: mockTriggerFindMany,
       },
     },
   },
@@ -74,6 +79,7 @@ describe("triggerService.deleteMany", () => {
 
   test("deletes and invalidates the cache when nothing blocks it", async () => {
     mockInstalledResourceFindMany.mockResolvedValue([])
+    mockTriggerFindMany.mockResolvedValue([])
 
     await triggerService.deleteMany({ workspaceId: "ws-1", ids: ["trigger-1"] })
 

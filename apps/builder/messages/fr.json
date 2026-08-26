@@ -158,7 +158,8 @@
     "skip": "Ignorer"
   },
   "admins": {
-    "title": "Administrateurs"
+    "title": "Administrateurs",
+    "adminActivityLogs": "Journal d'activité des administrateurs"
   },
   "assignAdmin": {
     "assignConversation": "Attribuer la conversation",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "L’exportation est toujours en cours. Vous pouvez fermer cette boîte de dialogue et consulter l’historique des exportations dans quelques minutes."
   },
   "auditLogs": {
-    "title": "Journaux d’audit"
+    "title": "Journaux d’audit",
+    "columns": {
+      "user": "Utilisateur",
+      "action": "Action",
+      "detail": "Détail",
+      "ipAddress": "Adresse IP",
+      "date": "Date"
+    },
+    "filters": {
+      "from": "Du",
+      "to": "Au",
+      "user": "Utilisateur",
+      "userPlaceholder": "ID utilisateur",
+      "keyword": "Mot-clé",
+      "keywordPlaceholder": "Action ou détail",
+      "allAdmins": "Tous les admins"
+    }
   },
   "customFields": {
     "title": "Champs personnalisés",

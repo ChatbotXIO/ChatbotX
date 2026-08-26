@@ -22,6 +22,13 @@ const mocks = vi.hoisted(() => ({
   isInvalidMetaTokenError: vi.fn(),
   resolveRetailerIds: vi.fn(),
   queueAdd: vi.fn(),
+  recordAuditLog: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: {
+    record: (...args: unknown[]) => mocks.recordAuditLog(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -268,6 +275,7 @@ describe("Meta Catalog sync workers", () => {
       results: [{ retailerId: "product-1", success: true }],
     })
     mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+    mocks.complete.mockResolvedValueOnce("succeeded")
 
     await checkMetaCatalogSync({
       workspaceId: "workspace-1",
@@ -281,6 +289,87 @@ describe("Meta Catalog sync workers", () => {
     expect(mocks.complete).toHaveBeenCalledWith(
       expect.objectContaining({ catalogId: "catalog-snapshot" }),
     )
+    expect(mocks.recordAuditLog).toHaveBeenCalledWith({
+      action: "catalog_synced",
+      detail: "Meta catalog sync completed",
+      workspaceId: "workspace-1",
+      source: "default:checkMetaCatalogSync",
+    })
+  })
+
+  test("does not audit a catalog sync completion that finished partial or failed", async () => {
+    mocks.claim.mockResolvedValue({
+      id: "run-snapshot",
+      catalogId: "catalog-snapshot",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+    mocks.submitItemsBatch.mockResolvedValue({ handles: ["handle-1"] })
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-snapshot",
+    })
+
+    mocks.findRun.mockResolvedValue({
+      id: "run-snapshot",
+      status: "running",
+      catalogId: "catalog-snapshot",
+      handles: [
+        {
+          handle: "handle-1",
+          items: [{ productId: "product-1", retailerId: "product-1" }],
+        },
+      ],
+    })
+    mocks.checkItemsBatch.mockResolvedValue({
+      completed: true,
+      results: [{ retailerId: "product-1", success: true }],
+    })
+    mocks.listProducts.mockResolvedValue([{ id: "product-1" }])
+    mocks.complete.mockResolvedValueOnce("partial")
+
+    await checkMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-snapshot",
+      attempt: 0,
+    })
+
+    expect(mocks.recordAuditLog).not.toHaveBeenCalled()
+  })
+
+  test("audits a sync that completes inline with nothing to submit", async () => {
+    mocks.claim.mockResolvedValue({
+      id: "run-empty",
+      catalogId: "catalog-1",
+      scope: "all",
+      categoryId: null,
+      selectedProductIds: [],
+      handles: [],
+    })
+    mocks.listProducts.mockResolvedValue([])
+    mocks.complete.mockResolvedValueOnce("succeeded")
+
+    await submitMetaCatalogSync({
+      workspaceId: "workspace-1",
+      runId: "run-empty",
+    })
+
+    expect(mocks.complete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runId: "run-empty",
+        succeededItems: [],
+        errors: [],
+      }),
+    )
+    expect(mocks.recordAuditLog).toHaveBeenCalledWith({
+      action: "catalog_synced",
+      detail: "Meta catalog sync completed",
+      workspaceId: "workspace-1",
+      source: "default:submitMetaCatalogSync",
+    })
   })
 
   test("rejects a run whose connection does not belong to the job context", async () => {

@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { aiEmbeddingModel, aiFileModel } from "@chatbotx.io/database/schema"
 import { uploader } from "@chatbotx.io/filesystem"
@@ -35,6 +36,12 @@ export const deleteAIFile = async (ctx: {
       await uploader.deleteObject(targetAIFile.path)
       await tx.delete(aiEmbeddingModel).where(eq(aiEmbeddingModel.id, ctx.id))
       await tx.delete(aiFileModel).where(eq(aiFileModel.id, ctx.id))
+    })
+
+    await auditService.record({
+      workspaceId: ctx.workspaceId,
+      action: "delete",
+      detail: `deleted a Knowledge (#${ctx.id})`,
     })
   } catch (error) {
     logger.warn(error, `deleteAIFileAction failed for id: ${ctx.id}`)

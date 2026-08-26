@@ -1,3 +1,4 @@
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import type { AdsConversionJobData } from "@chatbotx.io/worker-config"
 import { describe, expect, test, vi } from "vitest"
 
@@ -256,5 +257,19 @@ describe("ads-conversion actions route through the shared integration switch", (
     await integrationWorker?.processor({ data: jobData })
 
     expect(workerState.dispatchAdsConversionJob).toHaveBeenCalledWith(jobData)
+  })
+
+  test("populates the audit actor with the job source before dispatching", async () => {
+    let capturedActor: ReturnType<typeof getAuditActor>
+    workerState.dispatchAdsConversionJob.mockImplementationOnce(() => {
+      capturedActor = getAuditActor()
+    })
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({ data: adsConversionJobs[0] })
+
+    expect(capturedActor).toEqual(
+      expect.objectContaining({ source: "integration:evaluateTemplateSent" }),
+    )
   })
 })
