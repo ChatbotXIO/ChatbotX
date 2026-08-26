@@ -4,6 +4,7 @@ import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { CapiValueCurrencyFields } from "./capi-value-currency-fields"
 
 type CapiEventFieldsProps = {
   parentName: string
@@ -42,19 +43,7 @@ export const CapiEventFields = ({ parentName }: CapiEventFieldsProps) => {
         name={`${parentName}.contentName`}
         placeholder={t("metaConversions.fields.contentNamePlaceholder")}
       />
-      <InputField
-        inputMode="decimal"
-        label={t("metaConversions.fields.value")}
-        name={`${parentName}.value`}
-        placeholder={t("metaConversions.fields.valuePlaceholder")}
-      />
-      <InputField
-        label={t("metaConversions.fields.currency")}
-        maxLength={3}
-        name={`${parentName}.currency`}
-        placeholder={t("metaConversions.fields.currencyPlaceholder")}
-        style={{ textTransform: "uppercase" }}
-      />
+      <CapiValueCurrencyFields parentName={parentName} />
     </div>
   )
 }

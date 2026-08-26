@@ -1,3 +1,7 @@
+import type {
+  HashedCapiUserData,
+  PurchaseContentItem,
+} from "@chatbotx.io/utils/meta-capi"
 import { z } from "zod"
 import {
   DEFAULT_API_VERSION,
@@ -10,6 +14,21 @@ import {
 } from "../lib/http-client"
 import type { MetaCapiEventName, MetaMessagingChannel } from "../schemas"
 
+// Shared enrichment fields (plan #1/#3/#4) duplicated per channel-variant
+// literal below, mirroring this file's pre-existing pattern of duplicating
+// currency/value/contentCategory/contentName across the three variants
+// rather than a common base type.
+type MetaCapiEnrichmentFields = {
+  /** Hashed customer-info (plan #1) — merged into the channel's `user_data`. */
+  userData?: HashedCapiUserData
+  /** Limited Data Use (plan #3) — emits the fixed top-level LDU triple. */
+  limitedDataUse?: boolean
+  /** Purchase order id (plan #4) — `custom_data.order_id`. */
+  orderId?: string | null
+  /** Purchase line items (plan #4) — `custom_data.contents[]`. */
+  contents?: PurchaseContentItem[] | null
+}
+
 type MessengerEventInput = {
   eventName: MetaCapiEventName
   occurredAt: Date
@@ -21,7 +40,7 @@ type MessengerEventInput = {
   value?: string | number | null
   contentCategory?: string | null
   contentName?: string | null
-}
+} & MetaCapiEnrichmentFields
 
 type InstagramEventInput = {
   eventName: MetaCapiEventName
@@ -34,7 +53,7 @@ type InstagramEventInput = {
   value?: string | number | null
   contentCategory?: string | null
   contentName?: string | null
-}
+} & MetaCapiEnrichmentFields
 
 type WhatsappEventInput = {
   eventName: MetaCapiEventName
@@ -47,7 +66,7 @@ type WhatsappEventInput = {
   value?: string | number | null
   contentCategory?: string | null
   contentName?: string | null
-}
+} & MetaCapiEnrichmentFields
 
 export type MetaConversionEventInput =
   | MessengerEventInput
@@ -99,10 +118,29 @@ const channelUserDataBuilders = {
   ) => Record<string, string>
 }
 
+// Purchase `content_type`/`num_items`/`contents[]` (plan #4). `num_items` is
+// the SUM of each line item's quantity — NOT the array length, per Meta's
+// spec (a line item can itself represent multiple units of the same SKU).
+const buildContentsData = (contents: PurchaseContentItem[]) => ({
+  content_type: "product",
+  num_items: contents.reduce((total, item) => total + item.quantity, 0),
+  contents: contents.map((item) => ({
+    id: item.id,
+    quantity: item.quantity,
+    item_price: item.itemPrice,
+  })),
+})
+
 const buildCustomData = (event: MetaConversionEventInput) => {
   const hasValue = event.value !== null && event.value !== undefined
+  const hasContents = Boolean(event.contents && event.contents.length > 0)
   const hasAny =
-    event.currency || hasValue || event.contentCategory || event.contentName
+    event.currency ||
+    hasValue ||
+    event.contentCategory ||
+    event.contentName ||
+    event.orderId ||
+    hasContents
   return hasAny
     ? {
         custom_data: {
@@ -112,13 +150,34 @@ const buildCustomData = (event: MetaConversionEventInput) => {
             ? { content_category: event.contentCategory }
             : {}),
           ...(event.contentName ? { content_name: event.contentName } : {}),
+          ...(event.orderId ? { order_id: event.orderId } : {}),
+          ...(hasContents && event.contents
+            ? buildContentsData(event.contents)
+            : {}),
         },
       }
     : {}
 }
 
-const buildChannelUserData = (event: MetaConversionEventInput) =>
-  channelUserDataBuilders[event.messagingChannel](event)
+// Identity keys first, then hashed customer-info fields — the two never
+// collide (channel identity keys are page_id/ig_sid/etc, hashed fields are
+// em/ph/fn/ln/external_id).
+const buildChannelUserData = (event: MetaConversionEventInput) => ({
+  ...channelUserDataBuilders[event.messagingChannel](event),
+  ...(event.userData ?? {}),
+})
+
+// Limited Data Use (plan #3): a FIXED top-level triple, never arbitrary
+// caller-supplied processing options — Meta auto-geolocates from this,
+// restricting only US-state users covered by state privacy law.
+const buildDataProcessingOptions = (event: MetaConversionEventInput) =>
+  event.limitedDataUse
+    ? {
+        data_processing_options: ["LDU"] as const,
+        data_processing_options_country: 0,
+        data_processing_options_state: 0,
+      }
+    : {}
 
 const buildConversionEventPayload = (event: MetaConversionEventInput) => ({
   event_name: event.eventName,
@@ -128,6 +187,7 @@ const buildConversionEventPayload = (event: MetaConversionEventInput) => ({
   messaging_channel: event.messagingChannel,
   user_data: buildChannelUserData(event),
   ...buildCustomData(event),
+  ...buildDataProcessingOptions(event),
 })
 
 export const sendConversionEvent = ({

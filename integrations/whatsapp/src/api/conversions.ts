@@ -1,3 +1,7 @@
+import type {
+  HashedCapiUserData,
+  PurchaseContentItem,
+} from "@chatbotx.io/utils/meta-capi"
 import ky from "ky"
 import { z } from "zod"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
@@ -39,6 +43,14 @@ export type ConversionEventInput = {
   // API for Business Messaging payload has no messaging_outcome_data, and
   // claiming "automatic_events" for a self-detected event would be inaccurate.
   messagingOutcomeType?: "automatic_events"
+  /** Hashed customer-info (plan #1) — merged into `user_data`. */
+  userData?: HashedCapiUserData
+  /** Limited Data Use (plan #3) — emits the fixed top-level LDU triple. */
+  limitedDataUse?: boolean
+  /** Purchase order id (plan #4) — `custom_data.order_id`. */
+  orderId?: string | null
+  /** Purchase line items (plan #4) — `custom_data.contents[]`. */
+  contents?: PurchaseContentItem[] | null
 }
 
 type EnsureDatasetInput = {
@@ -132,20 +144,50 @@ export function ensureDataset({
   })
 }
 
+// Purchase `content_type`/`num_items`/`contents[]` (plan #4) — mirrors
+// `integrations/meta-conversions/src/apis/events.ts`'s `buildContentsData`.
+// `num_items` is the SUM of each line item's quantity, not the array length.
+function buildContentsData(contents: PurchaseContentItem[]) {
+  return {
+    content_type: "product",
+    num_items: contents.reduce((total, item) => total + item.quantity, 0),
+    contents: contents.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      item_price: item.itemPrice,
+    })),
+  }
+}
+
 function buildConversionEventPayload(event: ConversionEventInput) {
   const hasValue = event.value !== null && event.value !== undefined
+  const hasContents = Boolean(event.contents && event.contents.length > 0)
   const customData =
-    event.currency || hasValue
+    event.currency || hasValue || event.orderId || hasContents
       ? {
           custom_data: {
             ...(event.currency ? { currency: event.currency } : {}),
             ...(hasValue ? { value: Number(event.value) } : {}),
+            ...(event.orderId ? { order_id: event.orderId } : {}),
+            ...(hasContents && event.contents
+              ? buildContentsData(event.contents)
+              : {}),
           },
         }
       : {}
 
   const messagingOutcomeData = event.messagingOutcomeType
     ? { messaging_outcome_data: { outcome_type: event.messagingOutcomeType } }
+    : {}
+
+  // Limited Data Use (plan #3): a FIXED top-level triple, never arbitrary
+  // caller-supplied processing options.
+  const dataProcessingOptions = event.limitedDataUse
+    ? {
+        data_processing_options: ["LDU"] as const,
+        data_processing_options_country: 0,
+        data_processing_options_state: 0,
+      }
     : {}
 
   return {
@@ -155,11 +197,15 @@ function buildConversionEventPayload(event: ConversionEventInput) {
     action_source: "business_messaging",
     messaging_channel: "whatsapp",
     ...messagingOutcomeData,
+    // Identity keys first, then hashed customer-info fields (plan #1) — no
+    // key collisions between the two.
     user_data: {
       whatsapp_business_account_id: event.wabaId,
       ctwa_clid: event.ctwaClid,
+      ...(event.userData ?? {}),
     },
     ...customData,
+    ...dataProcessingOptions,
   }
 }
 

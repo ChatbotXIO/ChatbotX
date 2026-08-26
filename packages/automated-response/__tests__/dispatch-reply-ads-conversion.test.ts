@@ -85,6 +85,7 @@ describe("dispatchAutomatedResponseReply ads conversion keywordMatched trigger",
     expect(mockEnqueueKeywordMatchedEvaluation).toHaveBeenCalledTimes(1)
     expect(mockEnqueueKeywordMatchedEvaluation).toHaveBeenCalledWith({
       workspaceId: "ws-1",
+      channel: "whatsapp",
       inboxId: "inbox-1",
       contactInboxId: "ci-1",
       automatedResponseId: "ar-1",

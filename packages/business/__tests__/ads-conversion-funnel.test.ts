@@ -23,4 +23,32 @@ describe("getCtwaFunnelInput", () => {
     expect(result.success).toBe(true)
     expect(result.data).toMatchObject({ integrationWhatsappId: "9" })
   })
+
+  test("accepts allChannels with no integration id", () => {
+    const result = getCtwaFunnelInput.safeParse({
+      workspaceId: "1",
+      allChannels: true,
+      since: new Date("2026-08-10T00:00:00.000Z"),
+      until: new Date("2026-08-11T23:59:59.999Z"),
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data).toMatchObject({ allChannels: true })
+  })
+
+  test.each([
+    ["integrationWhatsappId", { integrationWhatsappId: "1" }],
+    ["integrationMessengerId", { integrationMessengerId: "1" }],
+    ["integrationInstagramId", { integrationInstagramId: "1" }],
+  ])("rejects allChannels combined with %s", (_label, integrationField) => {
+    const result = getCtwaFunnelInput.safeParse({
+      workspaceId: "1",
+      allChannels: true,
+      ...integrationField,
+      since: new Date("2026-08-10T00:00:00.000Z"),
+      until: new Date("2026-08-11T23:59:59.999Z"),
+    })
+
+    expect(result.success).toBe(false)
+  })
 })

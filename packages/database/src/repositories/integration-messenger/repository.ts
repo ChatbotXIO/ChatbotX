@@ -55,6 +55,30 @@ export const integrationMessengerRepository = {
     return row ?? null
   },
 
+  /**
+   * Messenger counterpart to
+   * `integrationWhatsappRepository.findWorkspaceIntegrationByInboxId` (Phase
+   * 3 channel-aware ads-conversion gate call sites): resolves the Messenger
+   * integration that owns a given `Inbox.id`.
+   */
+  async findWorkspaceIntegrationByInboxId(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string } | null> {
+    const [row] = await tx
+      .select({ id: integrationMessengerModel.id })
+      .from(integrationMessengerModel)
+      .where(
+        and(
+          eq(integrationMessengerModel.inboxId, input.inboxId),
+          eq(integrationMessengerModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  },
+
   async updateCapiScopeCache(
     input: UpdateMessengerCapiScopeCacheInput,
     tx: DatabaseClient = db,

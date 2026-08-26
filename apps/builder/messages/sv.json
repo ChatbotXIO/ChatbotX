@@ -633,7 +633,7 @@
       "instagram": "Instagram",
       "opportunity": "Affärsmöjlighet",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp-annonser",
+      "ctwaAds": "Annonser",
       "systemFields": "Systemfält",
       "systemTime": "Systemtid",
       "topicCoupon": "Kupongämne"
@@ -654,8 +654,8 @@
       "completedWhatsAppFlows": "Slutförda WhatsApp-flöden",
       "consecutiveAiFailures": "Antal AI-fel i följd",
       "contactCreatedAt": "Kontakten skapades",
-      "fromCtwaAd": "Från Click to WhatsApp-annons",
-      "ctwaConversion": "CTWA-konvertering",
+      "fromCtwaAd": "Från annons",
+      "ctwaConversion": "Annonskonvertering",
       "contactCreatedDate": "Datum då kontakten skapades",
       "contactCreatedDateMinutesAgo": "Datum då kontakten skapades (minuter sedan)",
       "continent": "Kontinent",
@@ -795,9 +795,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA-samtalsstartare",
-        "leads": "CTWA-kvalificerade leads",
-        "purchases": "CTWA-köpare"
+        "conversations": "Annons-samtalsstartare",
+        "leads": "Annons-kvalificerade leads",
+        "purchases": "Annons-köpare"
       },
       "adPrefix": "annons",
       "allAds": "alla annonser"
@@ -1035,6 +1035,8 @@
       "title": "Konverteringshändelser",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Hantera annonskonton",
@@ -1042,11 +1044,16 @@
       "selectAll": "Markera alla",
       "whatsappAsset": "WhatsApp-tillgång",
       "selectWhatsappAsset": "Välj WhatsApp-tillgång",
+      "selectIntegration": "Integration",
+      "selectIntegrationPlaceholder": "Välj integration",
+      "noIntegrationsConnected": "Inga anslutna integrationer för denna kanal ännu.",
+      "connectIntegration": "Anslut en kanal",
       "templates": "Mallar",
       "selectTemplates": "Välj mallar",
       "noTemplates": "Inga godkända mallar hittades.",
       "existingRules": "Befintliga regler",
       "noRules": "Inga konverteringsregler för denna WhatsApp-tillgång ännu.",
+      "noRulesGeneric": "Inga konverteringsregler för denna integration ännu.",
       "toggleRule": "Aktivera eller inaktivera regel",
       "deleteRule": "Ta bort regel",
       "qualifyingTemplateMessageSent": "Kvalificerande mallmeddelande skickas",
@@ -1086,24 +1093,26 @@
         "title": "Spåra kvalificerade leads",
         "question": "Vid vilken punkt i konversationen vill du kvalificera en kontakt som lead?",
         "when": "När",
-        "then": "Markera då CTWA-lead som"
+        "then": "Markera då CTWA-lead som",
+        "thenGeneric": "Markera då lead som"
       },
       "trackPurchases": {
         "title": "Spåra köp",
         "question": "Vilken mall bekräftar ett köp?",
         "when": "När",
         "then": "Då",
-        "noValueNote": "Ett regelbaserat köp registrerar en köpkonvertering utan ordervärde – det räknas mot köp men bidrar med 0 till intäkterna. Ordervärde registreras endast av Metas automatiska händelser."
+        "noValueNote": "Ett regelbaserat köp registrerar en köpkonvertering utan ordervärde – det räknas mot köp men bidrar med 0 till intäkterna. Ordervärde registreras endast av Metas automatiska händelser.",
+        "questionGeneric": "Vid vilken punkt i konversationen vill du registrera ett köp?"
       }
     },
     "analytics": {
-      "title": "CTWA-analys",
+      "title": "Annonsanalys",
       "funnelOverview": "Tratt-översikt",
       "conversationsStarted": "Startade konversationer",
       "qualifiedLeads": "Kvalificerade leads",
       "purchases": "Köp",
       "adSpend": "Annonsutgifter",
-      "spendAccountLevelNote": "Utgifter rapporteras på Meta-annonskontonivå; med ett valt WhatsApp-konto döljs annonser med enbart utgifter och ingen tratt-aktivitet för det kontot.",
+      "spendAccountLevelNote": "Utgifter rapporteras på Meta-annonskontonivå; med ett valt konto döljs annonser med enbart utgifter och ingen tratt-aktivitet för det kontot.",
       "revenue": "Intäkter",
       "roas": "ROAS",
       "revenueCurrencyNote": "Intäkter förutsätter en enda valuta (USD). Annonskonton med blandade valutor sammanställs inte ännu.",
@@ -1134,19 +1143,25 @@
         "label": "Annonskonto",
         "note": "Annonser med konverteringar men noll utgifter eller noll leverans i det valda datumintervallet döljs vid filtrering efter annonskonto."
       },
+      "channelFilter": {
+        "label": "Kanal",
+        "allAccounts": "Alla konton",
+        "allChannels": "Alla kanaler"
+      },
       "retarget": "Retargeting",
       "thoseWhoPurchased": "De som har köpt",
       "thoseWhoStartedConversation": "De som startade en konversation",
       "sendWhatsappBroadcast": "Skicka WhatsApp-utskick",
+      "retargetOnChannel": "Retargeting på {channel}",
       "from": "Från",
       "to": "Till",
       "unattributed": "Ej attribuerat",
       "retargetDialog": {
-        "title": "Retargeta CTWA-kontakter",
+        "title": "Retargeta annonskontakter",
         "createAudience": "Skapa målgrupp",
         "useExistingAudience": "Använd befintlig målgrupp",
         "audienceName": "Målgruppens namn",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Annonser",
         "confirm": "Starta synkronisering",
         "success": "Synkronisering av retargeting-målgrupp har lagts i kö.",
         "error": "Det gick inte att köa synkronisering av retargeting-målgrupp."
@@ -1158,7 +1173,7 @@
         "failed": "Misslyckades",
         "skippedNoScope": "Hoppades över (ingen behörighetsomfattning)",
         "skippedRegion": "Hoppades över (region)",
-        "noScopeWarning": "Vissa konverteringar skickades inte eftersom detta WhatsApp-konto saknar behörigheten för händelser. Anslut det igen för att aktivera rapportering av automatiska händelser.",
+        "noScopeWarning": "Vissa konverteringar skickades inte eftersom detta konto saknar behörigheten för händelser. Anslut det igen för att aktivera rapportering av automatiska händelser.",
         "reconnectCta": "Anslut konto igen",
         "empty": "Inga konverteringshändelser i detta intervall ännu."
       },
@@ -1171,7 +1186,8 @@
         "contactName": "Kontaktens namn",
         "phone": "Telefon",
         "adId": "Annons-ID",
-        "occurredAt": "Skedde vid"
+        "occurredAt": "Skedde vid",
+        "channel": "Kanal"
       },
       "empty": "Inga data ännu. Anslut ett annonskonto och börja spåra konverteringar."
     }
@@ -2710,6 +2726,15 @@
         "description": "Denna token visas endast en gång. Förvara den säkert — du kommer inte kunna se den igen.",
         "done": "Klart"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flowAnalytics": {
@@ -2831,13 +2856,15 @@
       "whatsappFlow": "WhatsApp-flöde",
       "whatsappOptionList": "Alternativlista",
       "appointmentScheduling": "Tidsbokning",
-      "metaConversions": "Meta Conversions API",
       "triggerN8n": "Trigger n8n",
       "sendMetaCapiEvent": "Skicka Meta CAPI-händelse",
       "import": "Importera flöde",
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
-      "importJsonOnly": "Endast JSON-filer"
+      "importJsonOnly": "Endast JSON-filer",
+      "adsConversions": "Annonser och Meta Conversions",
+      "trackAdsLead": "Spåra annonslead",
+      "trackAdsPurchase": "Spåra annonsköp"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -4451,7 +4478,9 @@
       "setCustomField": "Ange anpassat fält",
       "startAnotherFlow": "Starta ett annat flöde",
       "transferConversationToHuman": "Överför konversationen till en människa",
-      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse"
+      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse",
+      "trackAdsLead": "Spåra annonslead",
+      "trackAdsPurchase": "Spåra annonsköp"
     },
     "after": "Efter",
     "at": "Kl.",
@@ -5246,7 +5275,16 @@
       "contentCategory": "Innehållskategori",
       "contentCategoryPlaceholder": "Kategorin för innehållet som är kopplat till händelsen",
       "contentName": "Innehållsnamn",
-      "contentNamePlaceholder": "Namnet på sidan eller produkten som är kopplad till händelsen"
+      "contentNamePlaceholder": "Namnet på sidan eller produkten som är kopplad till händelsen",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Klistra in Dataset-ID från Events Manager",
     "saveDataset": "Spara",
@@ -5293,6 +5331,13 @@
     },
     "whatsapp": {
       "connect": "Anslut"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Registrerar bara en konvertering för kontakter med attribuering från en klicka-till-WhatsApp-annons eller Meta-annonshänvisning. Har ingen effekt för andra kontakter."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

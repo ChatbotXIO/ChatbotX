@@ -37,15 +37,12 @@ import type {
   ChatJobSendWhatsappTemplateMessage,
 } from "@chatbotx.io/worker-config"
 import {
-  enqueueIntegrationJob,
-  IntegrationJobAction,
-} from "@chatbotx.io/worker-config"
-import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
 import { shouldSuppressRetryableChannelError } from "../utils/retry"
+import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
 import { convertButtonsToTemplate } from "./send-flow-step"
 import { sendFlowStepToChannel } from "./send-message"
 
@@ -76,47 +73,6 @@ const assertTemplateAllowedForContactInbox = (props: {
       `Cannot send a ${templateCategory} template to a Business-Scoped User ID recipient`,
       ChannelErrorCategory.PAYLOAD_INVALID,
       { code: 131_062 },
-    )
-  }
-}
-
-type EnqueueTemplateSentEvaluationInput = {
-  workspaceId: string
-  integrationWhatsappId: string
-  contactInboxId: string
-  templateId: string
-  messageId: string
-}
-
-async function enqueueTemplateSentEvaluation(
-  input: EnqueueTemplateSentEvaluationInput,
-): Promise<void> {
-  try {
-    await enqueueIntegrationJob(
-      {
-        type: IntegrationJobAction.evaluateTemplateSent,
-        data: {
-          workspaceId: input.workspaceId,
-          integrationWhatsappId: input.integrationWhatsappId,
-          contactInboxId: input.contactInboxId,
-          templateId: input.templateId,
-        },
-      },
-      {
-        jobId: `ads-conversion-evaluate-template-${input.messageId}`,
-      },
-    )
-  } catch (err) {
-    logger.warn(
-      {
-        err,
-        workspaceId: input.workspaceId,
-        integrationWhatsappId: input.integrationWhatsappId,
-        contactInboxId: input.contactInboxId,
-        templateId: input.templateId,
-        messageId: input.messageId,
-      },
-      "Failed to enqueue ads conversion template-sent evaluation",
     )
   }
 }
@@ -380,7 +336,8 @@ export async function processWhatsappTemplate(
 
     await enqueueTemplateSentEvaluation({
       workspaceId: conversation.workspaceId,
-      integrationWhatsappId: validated.inbox.integrationWhatsapp.id,
+      channel: "whatsapp",
+      integrationId: validated.inbox.integrationWhatsapp.id,
       contactInboxId: contactInbox.id,
       templateId: template.id,
       messageId: newMessage.id,

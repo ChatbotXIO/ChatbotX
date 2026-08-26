@@ -406,12 +406,14 @@
       "whatsappFlow": "תהליך WhatsApp",
       "appointmentScheduling": "תזמון פגישות",
       "triggerN8n": "הפעלת n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
       "import": "ייבוא זרימה",
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
-      "importJsonOnly": "קבצי JSON בלבד"
+      "importJsonOnly": "קבצי JSON בלבד",
+      "adsConversions": "מודעות ו-Meta Conversions",
+      "trackAdsLead": "מעקב אחר ליד ממודעות",
+      "trackAdsPurchase": "מעקב אחר רכישה ממודעות"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -594,6 +596,8 @@
       "title": "אירועי המרה",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "ניהול חשבונות מודעות",
@@ -601,11 +605,16 @@
       "selectAll": "בחירת הכול",
       "whatsappAsset": "נכס WhatsApp",
       "selectWhatsappAsset": "בחירת נכס WhatsApp",
+      "selectIntegration": "אינטגרציה",
+      "selectIntegrationPlaceholder": "בחירת אינטגרציה",
+      "noIntegrationsConnected": "אין עדיין אינטגרציות מחוברות לערוץ זה.",
+      "connectIntegration": "חיבור ערוץ",
       "templates": "תבניות",
       "selectTemplates": "בחירת תבניות",
       "noTemplates": "לא נמצאו תבניות מאושרות.",
       "existingRules": "כללים קיימים",
       "noRules": "אין עדיין כללי המרה לנכס WhatsApp זה.",
+      "noRulesGeneric": "אין עדיין כללי המרה לאינטגרציה זו.",
       "toggleRule": "הפעלה או השבתה של הכלל",
       "deleteRule": "מחיקת הכלל",
       "qualifyingTemplateMessageSent": "הודעת התבנית המכשירה נשלחת",
@@ -645,24 +654,26 @@
         "title": "מעקב אחר לידים מוכשרים",
         "question": "באיזה שלב בשיחה תרצו להכשיר איש קשר כליד?",
         "when": "כאשר",
-        "then": "אז סמנו את ליד ה-CTWA כ"
+        "then": "אז סמנו את ליד ה-CTWA כ",
+        "thenGeneric": "אז סמנו את הליד כ"
       },
       "trackPurchases": {
         "title": "מעקב אחר רכישות",
         "question": "איזו תבנית מאשרת רכישה?",
         "when": "כאשר",
         "then": "אז",
-        "noValueNote": "רכישה מבוססת-כלל רושמת המרת רכישה ללא ערך הזמנה — היא נספרת לכיוון הרכישות אך מוסיפה 0 להכנסות. ערך ההזמנה נלכד רק על ידי Meta Automatic Events."
+        "noValueNote": "רכישה מבוססת-כלל רושמת המרת רכישה ללא ערך הזמנה — היא נספרת לכיוון הרכישות אך מוסיפה 0 להכנסות. ערך ההזמנה נלכד רק על ידי Meta Automatic Events.",
+        "questionGeneric": "באיזה שלב בשיחה תרצה לתעד רכישה?"
       }
     },
     "analytics": {
-      "title": "אנליטיקת CTWA",
+      "title": "אנליטיקת מודעות",
       "funnelOverview": "סקירת המשפך",
       "conversationsStarted": "שיחות שהתחילו",
       "qualifiedLeads": "לידים מוכשרים",
       "purchases": "רכישות",
       "adSpend": "הוצאת מודעות",
-      "spendAccountLevelNote": "ההוצאה מדווחת בהתאם לחשבון המודעות של Meta; כאשר נבחר חשבון WhatsApp, מודעות המציגות הוצאה בלבד ללא פעילות משפך עבור אותו חשבון מוסתרות.",
+      "spendAccountLevelNote": "ההוצאה מדווחת בהתאם לחשבון המודעות של Meta; כאשר נבחר חשבון, מודעות המציגות הוצאה בלבד ללא פעילות משפך עבור אותו חשבון מוסתרות.",
       "revenue": "הכנסות",
       "roas": "ROAS",
       "revenueCurrencyNote": "ההכנסות מניחות מטבע יחיד (USD). חשבונות מודעות במטבעות מעורבים אינם מצטברים עדיין.",
@@ -693,19 +704,25 @@
         "label": "חשבון מודעות",
         "note": "מודעות עם המרות אך עם הוצאה אפסית או אפס הצגות בטווח התאריכים הנבחר מוסתרות בעת סינון לפי חשבון מודעות."
       },
+      "channelFilter": {
+        "label": "ערוץ",
+        "allAccounts": "כל החשבונות",
+        "allChannels": "כל הערוצים"
+      },
       "retarget": "רימרקטינג",
       "thoseWhoPurchased": "מי שרכשו",
       "thoseWhoStartedConversation": "מי שהתחילו שיחה",
       "sendWhatsappBroadcast": "שליחת שידור WhatsApp",
+      "retargetOnChannel": "מיקוד מחדש ב-{channel}",
       "from": "מ",
       "to": "עד",
       "unattributed": "לא מיוחס",
       "retargetDialog": {
-        "title": "רימרקטינג לאנשי קשר של CTWA",
+        "title": "רימרקטינג לאנשי קשר של מודעות",
         "createAudience": "יצירת קהל",
         "useExistingAudience": "שימוש בקהל קיים",
         "audienceName": "שם הקהל",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "מודעות",
         "confirm": "התחלת סנכרון",
         "success": "סנכרון קהל הרימרקטינג נכנס לתור.",
         "error": "העמדת סנכרון קהל הרימרקטינג בתור נכשלה."
@@ -717,7 +734,7 @@
         "failed": "נכשל",
         "skippedNoScope": "דולג (ללא הרשאה)",
         "skippedRegion": "דולג (אזור)",
-        "noScopeWarning": "חלק מההמרות לא נשלחו כי לחשבון WhatsApp זה חסרה הרשאת אירועים. חברו אותו מחדש כדי לאפשר דיווח Automatic Events.",
+        "noScopeWarning": "חלק מההמרות לא נשלחו כי לחשבון זה חסרה הרשאת אירועים. חברו אותו מחדש כדי לאפשר דיווח Automatic Events.",
         "reconnectCta": "חיבור מחדש של החשבון",
         "empty": "אין עדיין אירועי המרה בטווח זה."
       },
@@ -730,7 +747,8 @@
         "contactName": "שם איש הקשר",
         "phone": "טלפון",
         "adId": "מזהה מודעה",
-        "occurredAt": "התרחש בתאריך"
+        "occurredAt": "התרחש בתאריך",
+        "channel": "ערוץ"
       },
       "empty": "אין עדיין נתונים. חברו חשבון מודעות והתחילו לעקוב אחר המרות."
     }
@@ -1984,7 +2002,9 @@
       "startAnotherFlow": "הפעלת תהליך אחר",
       "notifyAdmins": "יידוע מנהלי מערכת",
       "transferConversationToHuman": "העברת השיחה לנציג אנושי",
-      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
+      "trackAdsLead": "מעקב אחר ליד ממודעות",
+      "trackAdsPurchase": "מעקב אחר רכישה ממודעות"
     },
     "triggerGoesOff": "הגורם המפעיל מופעל",
     "before": "לפני",
@@ -4589,6 +4609,15 @@
         "description": "אסימון זה מוצג פעם אחת בלבד. שמרו אותו במקום בטוח — לא תוכלו לצפות בו שוב.",
         "done": "בוצע"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "billing": {
@@ -4842,8 +4871,8 @@
       "blocked": "חסום",
       "noAdminReply": "אין תשובה ממנהל מערכת",
       "contactCreatedAt": "איש הקשר נוצר בתאריך",
-      "fromCtwaAd": "ממודעת Click to WhatsApp",
-      "ctwaConversion": "המרת CTWA",
+      "fromCtwaAd": "ממודעה",
+      "ctwaConversion": "המרת מודעה",
       "lastUserInputTypes": {
         "text": "טקסט",
         "location": "מיקום",
@@ -4872,7 +4901,7 @@
       "customFields": "שדות מותאמים אישית",
       "email": "דוא\"ל",
       "sms": "SMS",
-      "ctwaAds": "מודעות Click to WhatsApp"
+      "ctwaAds": "מודעות"
     },
     "languages": {
       "ar": "ערבית",
@@ -4911,9 +4940,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "פותחי שיחת CTWA",
-        "leads": "לידים מוכשרים של CTWA",
-        "purchases": "רוכשי CTWA"
+        "conversations": "פותחי שיחה ממודעות",
+        "leads": "לידים מוכשרים ממודעות",
+        "purchases": "רוכשים ממודעות"
       },
       "adPrefix": "מודעה",
       "allAds": "כל המודעות"
@@ -5246,7 +5275,16 @@
       "contentCategory": "קטגוריית תוכן",
       "contentCategoryPlaceholder": "הקטגוריה של התוכן המשויך לאירוע",
       "contentName": "שם תוכן",
-      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע"
+      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "הדביקו את מזהה ה-Dataset מ-Events Manager",
     "saveDataset": "שמור",
@@ -5293,6 +5331,13 @@
     },
     "whatsapp": {
       "connect": "חיבור"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "רושם המרה רק עבור אנשי קשר עם ייחוס למודעת click-to-WhatsApp או הפניית מודעה של Meta. אין השפעה על אנשי קשר אחרים."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {

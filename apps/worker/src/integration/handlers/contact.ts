@@ -234,6 +234,7 @@ export async function attachTagsByNames(
   ) {
     await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
       workspaceId,
+      channel: contactInbox.channel,
       inboxId: contactInbox.inboxId,
       contactInboxId: contactInbox.id,
       tagIds: newlyLinkedTagIds,

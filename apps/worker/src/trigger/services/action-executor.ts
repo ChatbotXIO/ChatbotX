@@ -3,6 +3,7 @@ import {
   contactCustomFieldService,
   conversationService,
   metaConversionsService,
+  type RecordTriggerConversionInput,
   tagSyncService,
 } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
@@ -361,6 +362,40 @@ export class ActionExecutor {
           currency,
           contentCategory,
           contentName,
+        })
+        break
+      }
+
+      case triggerActions.enum.trackAdsLead: {
+        await adsConversionService.recordTriggerConversion({
+          workspaceId,
+          contactInboxId: recentContactInbox.id,
+          triggerId,
+          eventType: "lead",
+        })
+        break
+      }
+
+      case triggerActions.enum.trackAdsPurchase: {
+        const value =
+          typeof action.value === "string" ? action.value : undefined
+        const currency =
+          typeof action.currency === "string" ? action.currency : undefined
+        const orderId =
+          typeof action.orderId === "string" ? action.orderId : undefined
+        const contents = Array.isArray(action.contents)
+          ? (action.contents as RecordTriggerConversionInput["contents"])
+          : undefined
+
+        await adsConversionService.recordTriggerConversion({
+          workspaceId,
+          contactInboxId: recentContactInbox.id,
+          triggerId,
+          eventType: "purchase",
+          value,
+          currency,
+          orderId,
+          contents,
         })
         break
       }

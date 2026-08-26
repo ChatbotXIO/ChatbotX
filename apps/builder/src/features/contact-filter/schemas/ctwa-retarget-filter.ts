@@ -1,4 +1,5 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { MAX_ADS_ANALYTICS_RANGE_DAYS } from "@/features/ads/schemas/analytics"
 
@@ -11,6 +12,16 @@ export const ctwaRetargetSegments = z.enum([
   "purchases",
 ])
 export type CtwaRetargetSegment = z.infer<typeof ctwaRetargetSegments>
+
+/**
+ * Channels the `ctwaRetarget` condition's optional `channel` narrowing
+ * accepts — the canonical ads-eligible list (`adsEligibleChannelTypes`),
+ * which `CTWA_RETARGET_CHANNELS` in
+ * `packages/database/src/queries/contact-filter/index.ts` derives from too.
+ * `facebook` has no contact-scoped conversation concept and is not in it.
+ */
+export const ctwaRetargetChannelSchema = adsEligibleChannelTypes
+export type CtwaRetargetChannel = z.infer<typeof ctwaRetargetChannelSchema>
 
 /**
  * Machine-generated "CTWA retarget" condition — deep-linked from Ads
@@ -32,6 +43,11 @@ export const ctwaRetargetConditionSchema = z
     // path. Safe to accept from the client: the resolved SQL is workspace-
     // scoped, so a foreign integration id matches nothing.
     integrationWhatsappId: zodBigintAsString().optional(),
+    // Optional channel narrowing (Phase 4 generalization). Omitted keeps the
+    // pre-existing WhatsApp-only (`ctwaClid`-keyed) behavior, so saved
+    // filters created before this field existed keep parsing and resolving
+    // identically.
+    channel: ctwaRetargetChannelSchema.optional(),
     since: z.string().regex(DATE_KEY_PATTERN, "Expected YYYY-MM-DD"),
     until: z.string().regex(DATE_KEY_PATTERN, "Expected YYYY-MM-DD"),
   })

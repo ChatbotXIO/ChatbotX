@@ -145,14 +145,10 @@ export const messengerReadSchema = z.object({
   watermark: z.number(),
 })
 
-export const messengerPostbackSchema = z.object({
-  mid: z.string(),
-  title: z.string(),
-  payload: z.string(),
-})
-
 export const messengerReferralSchema = z.object({
-  ref: z.string(),
+  // Meta only includes `ref` when the ad/link actually sets a ref param —
+  // most CTM ad referrals arrive without it.
+  ref: z.string().optional(),
   source: z.string(),
   type: z.string(),
   ad_id: z.string().optional(),
@@ -170,6 +166,13 @@ export const messengerReferralSchema = z.object({
     .optional(),
 })
 export type MessengerReferral = z.infer<typeof messengerReferralSchema>
+
+export const messengerPostbackSchema = z.object({
+  mid: z.string(),
+  title: z.string(),
+  payload: z.string(),
+  referral: messengerReferralSchema.optional(),
+})
 
 export const messengerMessagingEventSchema = z.object({
   sender: idSchema,

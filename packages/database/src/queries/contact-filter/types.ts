@@ -18,6 +18,13 @@ export type ContactFilterConditionInput = {
   adId?: string
   /** Present for `field === "ctwaRetarget"` conditions — scopes the segment to one WhatsApp integration. */
   integrationWhatsappId?: string
+  /**
+   * Present for `field === "ctwaRetarget"` conditions — optionally narrows
+   * the segment to one channel (`whatsapp` | `messenger` | `instagram`).
+   * Omitted keeps the pre-existing WhatsApp-only (`ctwaClid`-keyed) behavior
+   * for backward compatibility with saved filters.
+   */
+  channel?: string
   /** Present for `field === "ctwaRetarget"` conditions (`YYYY-MM-DD`). */
   since?: string
   /** Present for `field === "ctwaRetarget"` conditions (`YYYY-MM-DD`). */
