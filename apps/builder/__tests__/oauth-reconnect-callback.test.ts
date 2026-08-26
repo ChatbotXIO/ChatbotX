@@ -39,6 +39,8 @@ const {
   mockCookieSet,
   mockNotFound,
   mockRedirect,
+  mockAuditRecord,
+  mockWithAuditContext,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockUpdateMessengerIntegrationAuth: vi.fn(),
@@ -77,6 +79,15 @@ const {
     throw new Error("not found")
   }),
   mockRedirect: vi.fn(),
+  mockAuditRecord: vi.fn().mockResolvedValue(undefined),
+  mockWithAuditContext: vi.fn(
+    async (_ctx: unknown, fn: () => Promise<unknown>) => await fn(),
+  ),
+}))
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: mockAuditRecord },
+  withAuditContext: mockWithAuditContext,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -243,6 +254,7 @@ const buildCallbackRequest = (
 ) => {
   const state = Buffer.from(JSON.stringify(stateParams)).toString("base64")
   return {
+    headers: new Headers(),
     url: `https://app.example.com/integrations/${integrationType}/callback?code=code-1&state=${encodeURIComponent(state)}`,
   } as unknown as NextRequest
 }
@@ -492,7 +504,54 @@ describe("handleCallback OAuth reconnect", () => {
     )
 
     expect(mockUpsertFacebookAds).toHaveBeenCalled()
+    expect(mockWithAuditContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        workspaceId: "1",
+      }),
+      expect.any(Function),
+    )
     expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith(REFERER)
+  })
+
+  test("standalone facebook ads callback stores the token inside audit context", async () => {
+    mockExchangeFacebookAdsCode.mockResolvedValue("short-token")
+    mockExchangeFacebookAdsLongLivedToken.mockResolvedValue({
+      accessToken: "ads-token",
+      expiresIn: 3600,
+    })
+
+    await handleCallback(
+      "facebookAds",
+      buildCallbackRequest("facebook-ads", {
+        workspaceId: "1",
+        referer: REFERER,
+      }),
+    )
+
+    expect(mockResolveForOwner).toHaveBeenCalledWith({
+      ownerId: "platform-owner-1",
+      type: "messenger",
+    })
+    expect(mockUpsertFacebookAds).toHaveBeenCalledWith({
+      workspaceId: "1",
+      auth: expect.objectContaining({
+        authType: "custom",
+        accessToken: "ads-token",
+        version: "v23.0",
+      }),
+      tokenExpiresAt: expect.any(Date),
+    })
+    expect(mockWithAuditContext).toHaveBeenCalledWith(
+      {
+        userId: "user-1",
+        workspaceId: "1",
+        ipAddress: "unknown",
+        userAgent: undefined,
+      },
+      expect.any(Function),
+    )
     expect(mockRedirect).toHaveBeenCalledWith(REFERER)
   })
 

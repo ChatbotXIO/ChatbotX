@@ -213,7 +213,8 @@
     "title": "ActiveCampaign"
   },
   "admins": {
-    "title": "Administratörer"
+    "title": "Administratörer",
+    "adminActivityLogs": "Administratörsaktivitetslogg"
   },
   "aiAgent": {
     "defaultAgent": "Standardagent",
@@ -349,7 +350,23 @@
     "user": "Användare"
   },
   "auditLogs": {
-    "title": "Granskningsloggar"
+    "title": "Granskningsloggar",
+    "columns": {
+      "user": "Användare",
+      "action": "Åtgärd",
+      "detail": "Detalj",
+      "ipAddress": "IP-adress",
+      "date": "Datum"
+    },
+    "filters": {
+      "from": "Från",
+      "to": "Till",
+      "user": "Användare",
+      "userPlaceholder": "Användar-ID",
+      "keyword": "Nyckelord",
+      "keywordPlaceholder": "Åtgärd eller detalj",
+      "allAdmins": "Alla administratörer"
+    }
   },
   "auth": {
     "acceptTermsAndPolicy": "Genom att klicka på fortsätt godkänner du vår",

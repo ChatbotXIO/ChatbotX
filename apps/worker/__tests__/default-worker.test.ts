@@ -1,3 +1,4 @@
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import type { DefaultJobData } from "@chatbotx.io/worker-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -269,6 +270,22 @@ describe("default worker", () => {
     expect(workerState.isBlockedWorkspace).toHaveBeenCalledWith("workspace-1")
     expect(workerState.sendAppointmentReminder).toHaveBeenCalledWith(
       jobData.data,
+    )
+  })
+
+  test("populates the audit actor with the resolved workspace and job source", async () => {
+    let capturedActor: ReturnType<typeof getAuditActor>
+    workerState.handleBulkTagContacts.mockImplementationOnce(() => {
+      capturedActor = getAuditActor()
+    })
+
+    await processDefaultJob(buildBulkTagContactsJob())
+
+    expect(capturedActor).toEqual(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        source: "default:bulkTagContacts",
+      }),
     )
   })
 })

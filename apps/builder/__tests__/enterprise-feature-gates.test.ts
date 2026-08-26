@@ -10,6 +10,7 @@ const {
   mockIsPlatformAdmin,
   mockCompileEmailPreview,
   mockAssertCanAccess,
+  mockAssertWorkspaceSuperAdmin,
   mockDbFindMany,
   mockDbCount,
 } = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ const {
   mockIsPlatformAdmin: vi.fn(async () => true),
   mockCompileEmailPreview: vi.fn(() => "<html>preview</html>"),
   mockAssertCanAccess: vi.fn(async () => undefined),
+  mockAssertWorkspaceSuperAdmin: vi.fn(async () => undefined),
   mockDbFindMany: vi.fn(async () => []),
   mockDbCount: vi.fn(async () => 0),
 }))
@@ -65,6 +67,10 @@ vi.mock("@chatbotx.io/mail/preview", () => ({
 
 vi.mock("@/lib/auth/utils", () => ({
   assertCurrentUserCanAccessChatbot: mockAssertCanAccess,
+}))
+
+vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({
+  assertWorkspaceSuperAdmin: mockAssertWorkspaceSuperAdmin,
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -159,6 +165,7 @@ describe("enterprise mutations reject without a valid license", () => {
       listAuditLogs({ workspaceId: "ws-1" } as never),
     ).rejects.toMatchObject({ code: "enterpriseFeatureRequired" })
     expect(mockAssertCanAccess).not.toHaveBeenCalled()
+    expect(mockAssertWorkspaceSuperAdmin).not.toHaveBeenCalled()
     expect(mockDbFindMany).not.toHaveBeenCalled()
   })
 })
@@ -192,6 +199,6 @@ describe("enterprise mutations proceed with a valid license", () => {
     await expect(
       listAuditLogs({ workspaceId: "ws-1" } as never),
     ).resolves.toEqual({ data: [], pageCount: 0 })
-    expect(mockAssertCanAccess).toHaveBeenCalled()
+    expect(mockAssertWorkspaceSuperAdmin).toHaveBeenCalledWith("ws-1")
   })
 })

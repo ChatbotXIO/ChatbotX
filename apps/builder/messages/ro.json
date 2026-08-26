@@ -932,7 +932,8 @@
     "skip": "Omitere"
   },
   "admins": {
-    "title": "Administratori"
+    "title": "Administratori",
+    "adminActivityLogs": "Jurnal de activitate al administratorului"
   },
   "assignAdmin": {
     "assignConversation": "Atribuie conversația",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "Exportul este încă în curs de procesare. Poți închide acest dialog și poți reveni peste câteva minute din istoricul exporturilor."
   },
   "auditLogs": {
-    "title": "Jurnale de audit"
+    "title": "Jurnale de audit",
+    "columns": {
+      "user": "Utilizator",
+      "action": "Acțiune",
+      "detail": "Detaliu",
+      "ipAddress": "Adresă IP",
+      "date": "Data"
+    },
+    "filters": {
+      "from": "De la",
+      "to": "Până la",
+      "user": "Utilizator",
+      "userPlaceholder": "ID utilizator",
+      "keyword": "Cuvânt cheie",
+      "keywordPlaceholder": "Acțiune sau detaliu",
+      "allAdmins": "Toți administratorii"
+    }
   },
   "customFields": {
     "title": "Câmpuri personalizate",

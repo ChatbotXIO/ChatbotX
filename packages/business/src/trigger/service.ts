@@ -23,6 +23,11 @@ class TriggerService extends BaseService {
       resourceIds: input.ids,
     })
 
+    const deletedTriggers = await db.query.triggerModel.findMany({
+      where: { workspaceId: input.workspaceId, id: { in: input.ids } },
+      columns: { id: true },
+    })
+
     await db
       .delete(triggerModel)
       .where(
@@ -33,6 +38,13 @@ class TriggerService extends BaseService {
       )
 
     await removeTriggerCache(input.workspaceId)
+
+    if (deletedTriggers.length > 0) {
+      await this.audit(
+        "delete",
+        `deleted trigger${deletedTriggers.length > 1 ? "s" : ""} (${deletedTriggers.map((trigger) => `#${trigger.id}`).join(", ")})`,
+      )
+    }
   }
 }
 

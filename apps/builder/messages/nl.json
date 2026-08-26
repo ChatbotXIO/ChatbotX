@@ -158,7 +158,8 @@
     "skip": "Overslaan"
   },
   "admins": {
-    "title": "Beheerders"
+    "title": "Beheerders",
+    "adminActivityLogs": "Beheerdersactiviteitenlogboek"
   },
   "assignAdmin": {
     "assignConversation": "Gesprek toewijzen",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "De export wordt nog verwerkt. Je kunt dit dialoogvenster sluiten en over enkele minuten de exportgeschiedenis bekijken."
   },
   "auditLogs": {
-    "title": "Auditlogboeken"
+    "title": "Auditlogboeken",
+    "columns": {
+      "user": "Gebruiker",
+      "action": "Actie",
+      "detail": "Detail",
+      "ipAddress": "IP-adres",
+      "date": "Datum"
+    },
+    "filters": {
+      "from": "Van",
+      "to": "Tot",
+      "user": "Gebruiker",
+      "userPlaceholder": "Gebruikers-ID",
+      "keyword": "Trefwoord",
+      "keywordPlaceholder": "Actie of detail",
+      "allAdmins": "Alle admins"
+    }
   },
   "customFields": {
     "title": "Aangepaste velden",

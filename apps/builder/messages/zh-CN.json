@@ -210,7 +210,8 @@
     "title": "ActiveCampaign"
   },
   "admins": {
-    "title": "管理员"
+    "title": "管理员",
+    "adminActivityLogs": "管理员活动日志"
   },
   "ads": {
     "analytics": {
@@ -530,7 +531,23 @@
     "user": "用户"
   },
   "auditLogs": {
-    "title": "审核日志"
+    "title": "审核日志",
+    "columns": {
+      "user": "用户",
+      "action": "操作",
+      "detail": "详情",
+      "ipAddress": "IP 地址",
+      "date": "日期"
+    },
+    "filters": {
+      "from": "起始日期",
+      "to": "结束日期",
+      "user": "用户",
+      "userPlaceholder": "用户 ID",
+      "keyword": "关键词",
+      "keywordPlaceholder": "操作或详情",
+      "allAdmins": "所有管理员"
+    }
   },
   "auth": {
     "acceptTermsAndPolicy": "点击继续即表示您同意我们的",

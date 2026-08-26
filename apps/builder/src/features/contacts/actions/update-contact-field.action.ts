@@ -9,6 +9,7 @@ import {
   normalizeLanguage,
   normalizeStoredTimezone,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db } from "@chatbotx.io/database/client"
 import {
   type FillableContactKey,
@@ -68,6 +69,7 @@ export const updateContactFields = async (
   )
 
   // Prepare data
+  const submittedContactFields: Partial<ContactModel> = {}
   const contactFields: Partial<ContactModel> = {}
   const customFields: Record<string, string> = {}
   const contactInboxId = parsedInput[contactInboxIdField]
@@ -84,20 +86,48 @@ export const updateContactFields = async (
     }
 
     if (fillableContactKeys.includes(key as FillableContactKey)) {
-      assignContactFieldValue(contactFields, key as FillableContactKey, value)
+      assignContactFieldValue(
+        submittedContactFields,
+        key as FillableContactKey,
+        value,
+      )
     } else if (allCustomFieldsMap.has(key)) {
       customFields[key] = value
     }
   }
 
+  for (const [key, value] of Object.entries(submittedContactFields) as [
+    FillableContactKey,
+    ContactModel[FillableContactKey],
+  ][]) {
+    if (value !== existingContact[key]) {
+      contactFields[key] = value
+    }
+  }
+
   const hasCustomFields = Object.keys(customFields).length > 0
+  const shouldUpdateContactFields = Object.keys(contactFields).length > 0
+
+  let shouldUpdateLanguage = false
+  if (contactInboxId && language) {
+    const contactInbox = await contactInboxService.findByUncached({
+      where: { id: contactInboxId, contactId: ctx.id },
+    })
+    shouldUpdateLanguage = contactInbox
+      ? language !== contactInbox.language
+      : false
+  }
+
+  if (!(shouldUpdateContactFields || shouldUpdateLanguage || hasCustomFields)) {
+    return
+  }
 
   const customFieldChanges = await db.transaction(async (tx) => {
-    if (Object.keys(contactFields).length > 0) {
+    if (shouldUpdateContactFields) {
       await contactService.update(ctx, contactFields, tx)
     }
 
-    if (contactInboxId && language) {
+    if (shouldUpdateLanguage && contactInboxId && language) {
       await contactInboxService.updateLanguage({
         tx,
         workspaceId: ctx.workspaceId,
@@ -125,15 +155,37 @@ export const updateContactFields = async (
     )
   })
 
-  await emitContactInfoChangeEvents(ctx.workspaceId, ctx.id, existingContact, {
-    phoneNumber: contactFields.phoneNumber ?? existingContact.phoneNumber,
-    email: contactFields.email ?? existingContact.email,
+  const hasRealChange =
+    shouldUpdateContactFields ||
+    shouldUpdateLanguage ||
+    customFieldChanges.length > 0
+
+  if (!hasRealChange) {
+    return
+  }
+
+  await auditService.record({
+    workspaceId: ctx.workspaceId,
+    action: "update",
+    detail: `updated a contact (#${ctx.id})`,
   })
+
+  if (shouldUpdateContactFields) {
+    await emitContactInfoChangeEvents(
+      ctx.workspaceId,
+      ctx.id,
+      existingContact,
+      {
+        phoneNumber: contactFields.phoneNumber ?? existingContact.phoneNumber,
+        email: contactFields.email ?? existingContact.email,
+      },
+    )
+  }
 
   // Emit custom-field change events only after the transaction commits: the
   // trigger worker re-reads the value from the DB, so a mid-transaction emit
   // could surface uncommitted or rolled-back data.
-  if (hasCustomFields) {
+  if (customFieldChanges.length > 0) {
     await contactCustomFieldService.emitCustomFieldChanges({
       workspaceId: ctx.workspaceId,
       contactId: ctx.id,

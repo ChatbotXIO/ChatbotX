@@ -158,7 +158,8 @@
     "skip": "تخطٍ"
   },
   "admins": {
-    "title": "المسؤولون"
+    "title": "المسؤولون",
+    "adminActivityLogs": "سجل نشاط المسؤول"
   },
   "assignAdmin": {
     "assignConversation": "إسناد المحادثة",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "لا تزال عملية التصدير جارية. يمكنك إغلاق مربع الحوار هذا والتحقق مرة أخرى بعد بضع دقائق من سجل التصدير."
   },
   "auditLogs": {
-    "title": "سجلات التدقيق"
+    "title": "سجلات التدقيق",
+    "columns": {
+      "user": "المستخدم",
+      "action": "الإجراء",
+      "detail": "التفاصيل",
+      "ipAddress": "عنوان IP",
+      "date": "التاريخ"
+    },
+    "filters": {
+      "from": "من",
+      "to": "إلى",
+      "user": "المستخدم",
+      "userPlaceholder": "معرف المستخدم",
+      "keyword": "الكلمة المفتاحية",
+      "keywordPlaceholder": "الإجراء أو التفاصيل",
+      "allAdmins": "كل المسؤولين"
+    }
   },
   "customFields": {
     "title": "الحقول المخصصة",

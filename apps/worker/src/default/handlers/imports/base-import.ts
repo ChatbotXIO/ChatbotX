@@ -1,4 +1,5 @@
 import { importService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import type { ImportFormat, ImportType } from "@chatbotx.io/database/partials"
 import type { fileModel, importModel } from "@chatbotx.io/database/schema"
 import { uploader } from "@chatbotx.io/filesystem"
@@ -183,6 +184,19 @@ export const runImportPipeline = async <TMeta, TDeps, TRow extends object>(
     counters,
     errorSample,
   })
+
+  // Matches PLAN-audit-log.md Phase 7 step 6's original gating: only contact
+  // imports are audited (coupons/products are silently skipped), and only
+  // when the import has an attributable requester.
+  if (row.type === "contacts" && row.userId) {
+    await auditService.record({
+      action: "import",
+      detail: "imported contacts",
+      userId: row.userId,
+      workspaceId: row.workspaceId,
+      source: "default:runImportPipeline",
+    })
+  }
 }
 
 const failImport = async (importId: string, message: string): Promise<void> => {

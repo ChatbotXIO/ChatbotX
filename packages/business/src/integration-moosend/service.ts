@@ -45,6 +45,10 @@ class IntegrationMoosendService extends BaseService {
 
     const existingId = await updateExisting()
     if (existingId) {
+      await this.audit(
+        "update",
+        "updated the Moosend integration configuration",
+      )
       return existingId
     }
 
@@ -64,6 +68,7 @@ class IntegrationMoosendService extends BaseService {
           auth: encryptedAuth,
         })
       })
+      await this.audit("connect", "connected a new Moosend integration")
       return moosendId
     } catch (error) {
       if (!isWorkspaceUniqueViolation(error)) {
@@ -73,6 +78,10 @@ class IntegrationMoosendService extends BaseService {
       if (!winnerId) {
         throw error
       }
+      await this.audit(
+        "update",
+        "updated the Moosend integration configuration",
+      )
       return winnerId
     }
   }
@@ -90,6 +99,8 @@ class IntegrationMoosendService extends BaseService {
         .delete(integrationModel)
         .where(eq(integrationModel.id, existing.integrationId))
     })
+
+    await this.audit("disconnect", "disconnected the Moosend integration")
   }
 }
 

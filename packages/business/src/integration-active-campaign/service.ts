@@ -52,6 +52,10 @@ class IntegrationActiveCampaignService extends BaseService {
 
     const existingId = await updateExisting()
     if (existingId) {
+      await this.audit(
+        "update",
+        "updated the ActiveCampaign integration configuration",
+      )
       return existingId
     }
 
@@ -71,6 +75,7 @@ class IntegrationActiveCampaignService extends BaseService {
           auth: encryptedAuth,
         })
       })
+      await this.audit("connect", "connected a new ActiveCampaign integration")
       return activeCampaignId
     } catch (error) {
       if (!isWorkspaceUniqueViolation(error)) {
@@ -80,6 +85,10 @@ class IntegrationActiveCampaignService extends BaseService {
       if (!winnerId) {
         throw error
       }
+      await this.audit(
+        "update",
+        "updated the ActiveCampaign integration configuration",
+      )
       return winnerId
     }
   }
@@ -97,6 +106,11 @@ class IntegrationActiveCampaignService extends BaseService {
         .delete(integrationModel)
         .where(eq(integrationModel.id, existing.integrationId))
     })
+
+    await this.audit(
+      "disconnect",
+      "disconnected the ActiveCampaign integration",
+    )
   }
 }
 

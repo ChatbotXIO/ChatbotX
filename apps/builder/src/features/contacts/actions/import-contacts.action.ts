@@ -1,5 +1,6 @@
 "use server"
 
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import {
   type ContactImportMeta,
@@ -132,9 +133,15 @@ export const importContactsAction = workspaceActionClient
         })
       })
 
+      const actor = getAuditActor()
+
       await defaultQueue.add(DefaultJobAction.runImport, {
         type: DefaultJobAction.runImport,
-        data: { importId },
+        data: {
+          importId,
+          ipAddress: actor?.ipAddress,
+          userAgent: actor?.userAgent,
+        },
       })
 
       return { importId }

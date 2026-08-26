@@ -16,6 +16,8 @@ vi.mock("../src/integration-openai-compatible/validate-base-url", () => ({
   validateOpenaiCompatibleBaseUrlForEnvironment: mocks.validateBaseUrl,
 }))
 
+vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord: vi.fn() }))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn(),
   db: {

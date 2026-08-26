@@ -158,7 +158,8 @@
     "skip": "スキップ"
   },
   "admins": {
-    "title": "管理者"
+    "title": "管理者",
+    "adminActivityLogs": "管理者アクティビティログ"
   },
   "assignAdmin": {
     "assignConversation": "会話を割り当て",
@@ -3790,7 +3791,23 @@
     "exportTakingLongDescription": "エクスポートは引き続き処理中です。このダイアログを閉じ、数分後にエクスポート履歴から確認できます。"
   },
   "auditLogs": {
-    "title": "監査ログ"
+    "title": "監査ログ",
+    "columns": {
+      "user": "ユーザー",
+      "action": "アクション",
+      "detail": "詳細",
+      "ipAddress": "IPアドレス",
+      "date": "日付"
+    },
+    "filters": {
+      "from": "開始日",
+      "to": "終了日",
+      "user": "ユーザー",
+      "userPlaceholder": "ユーザーID",
+      "keyword": "キーワード",
+      "keywordPlaceholder": "アクションまたは詳細",
+      "allAdmins": "すべての管理者"
+    }
   },
   "customFields": {
     "title": "カスタムフィールド",

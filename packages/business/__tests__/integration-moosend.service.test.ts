@@ -17,6 +17,8 @@ const updateChain = {
   })),
 }
 
+vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord: vi.fn() }))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {

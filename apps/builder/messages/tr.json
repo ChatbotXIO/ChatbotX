@@ -158,7 +158,8 @@
     "skip": "Atla"
   },
   "admins": {
-    "title": "Yöneticiler"
+    "title": "Yöneticiler",
+    "adminActivityLogs": "Yönetici Etkinlik Günlüğü"
   },
   "assignAdmin": {
     "assignConversation": "Görüşmeyi ata",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "Dışa aktarma hâlâ işleniyor. Bu iletişim kutusunu kapatıp birkaç dakika sonra dışa aktarma geçmişinden tekrar kontrol edebilirsiniz."
   },
   "auditLogs": {
-    "title": "Denetim Günlükleri"
+    "title": "Denetim Günlükleri",
+    "columns": {
+      "user": "Kullanıcı",
+      "action": "İşlem",
+      "detail": "Detay",
+      "ipAddress": "IP Adresi",
+      "date": "Tarih"
+    },
+    "filters": {
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "user": "Kullanıcı",
+      "userPlaceholder": "Kullanıcı Kimliği",
+      "keyword": "Anahtar kelime",
+      "keywordPlaceholder": "İşlem veya detay",
+      "allAdmins": "Tüm Adminler"
+    }
   },
   "customFields": {
     "title": "Özel Alanlar",

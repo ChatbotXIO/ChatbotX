@@ -49,6 +49,10 @@ class IntegrationGetResponseService extends BaseService {
 
     const existingId = await updateExisting()
     if (existingId) {
+      await this.audit(
+        "update",
+        "updated the GetResponse integration configuration",
+      )
       return existingId
     }
 
@@ -68,6 +72,7 @@ class IntegrationGetResponseService extends BaseService {
           auth: encryptedAuth,
         })
       })
+      await this.audit("connect", "connected a new GetResponse integration")
       return getResponseId
     } catch (error) {
       if (!isWorkspaceUniqueViolation(error)) {
@@ -77,6 +82,10 @@ class IntegrationGetResponseService extends BaseService {
       if (!winnerId) {
         throw error
       }
+      await this.audit(
+        "update",
+        "updated the GetResponse integration configuration",
+      )
       return winnerId
     }
   }
@@ -94,6 +103,8 @@ class IntegrationGetResponseService extends BaseService {
         .delete(integrationModel)
         .where(eq(integrationModel.id, existing.integrationId))
     })
+
+    await this.audit("disconnect", "disconnected the GetResponse integration")
   }
 }
 

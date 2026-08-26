@@ -66,6 +66,10 @@ class IntegrationFacebookAdsService extends BaseService {
 
     const existingId = await updateExisting()
     if (existingId) {
+      await this.audit(
+        "update",
+        "updated the Facebook Ads integration configuration",
+      )
       return existingId
     }
 
@@ -85,6 +89,7 @@ class IntegrationFacebookAdsService extends BaseService {
           ...values,
         })
       })
+      await this.audit("connect", "connected a new Facebook Ads integration")
       return facebookAdsId
     } catch (error) {
       if (!isWorkspaceUniqueViolation(error)) {
@@ -94,6 +99,10 @@ class IntegrationFacebookAdsService extends BaseService {
       if (!winnerId) {
         throw error
       }
+      await this.audit(
+        "update",
+        "updated the Facebook Ads integration configuration",
+      )
       return winnerId
     }
   }
@@ -122,6 +131,8 @@ class IntegrationFacebookAdsService extends BaseService {
         .delete(integrationModel)
         .where(eq(integrationModel.id, existing.integrationId))
     })
+
+    await this.audit("disconnect", "disconnected the Facebook Ads integration")
   }
 }
 

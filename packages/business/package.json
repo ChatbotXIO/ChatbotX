@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./ads-conversion/channel-fields": "./src/ads-conversion/channel-fields.ts",
+    "./audit": "./src/audit/index.ts",
     "./branding": "./src/platform/branding.ts",
     "./contact-custom-field": "./src/contact-custom-field/index.ts",
     "./contact-custom-field-value": "./src/contact-custom-field/value-service.ts",

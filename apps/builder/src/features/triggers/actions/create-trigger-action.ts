@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
 import { folderTypes } from "@chatbotx.io/database/partials"
@@ -68,6 +69,12 @@ export const createTriggerAction = workspaceActionClient
         .then((rows) => rows[0])
 
       await updateTriggerCache(workspaceId)
+
+      await auditService.record({
+        workspaceId,
+        action: "create",
+        detail: `created a new trigger (#${result.id})`,
+      })
 
       return result
     },

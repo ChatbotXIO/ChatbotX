@@ -158,7 +158,8 @@
     "skip": "Lewati"
   },
   "admins": {
-    "title": "Admin"
+    "title": "Admin",
+    "adminActivityLogs": "Log Aktivitas Admin"
   },
   "assignAdmin": {
     "assignConversation": "Tetapkan percakapan",
@@ -3811,7 +3812,23 @@
     "exportTakingLongDescription": "Ekspor masih diproses. Anda dapat menutup dialog ini dan memeriksanya kembali dalam beberapa menit dari riwayat ekspor."
   },
   "auditLogs": {
-    "title": "Log Audit"
+    "title": "Log Audit",
+    "columns": {
+      "user": "Pengguna",
+      "action": "Tindakan",
+      "detail": "Detail",
+      "ipAddress": "Alamat IP",
+      "date": "Tanggal"
+    },
+    "filters": {
+      "from": "Dari",
+      "to": "Hingga",
+      "user": "Pengguna",
+      "userPlaceholder": "ID Pengguna",
+      "keyword": "Kata kunci",
+      "keywordPlaceholder": "Tindakan atau detail",
+      "allAdmins": "Semua Admin"
+    }
   },
   "customFields": {
     "title": "Kolom Kustom",

@@ -47,6 +47,12 @@ export class WorkspaceMemberService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const { id, workspaceId, tx = db } = props
+
+    const member = await tx.query.workspaceMemberModel.findFirst({
+      where: { id, workspaceId },
+      with: { user: true },
+    })
+
     await tx
       .delete(workspaceMemberModel)
       .where(
@@ -64,6 +70,13 @@ export class WorkspaceMemberService extends BaseService {
           "workspace usage team member decrement failed",
         )
       })
+
+    if (!props.tx && member) {
+      await this.audit(
+        "delete",
+        `removed ${member.user.name ?? member.user.email} from workspace`,
+      )
+    }
   }
 
   async listByUserIdUncached(props: {

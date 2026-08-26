@@ -1,6 +1,7 @@
 "use server"
 
 import { inboxService, workspaceService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationTelegramModel } from "@chatbotx.io/database/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
@@ -50,6 +51,11 @@ export const disconnectTelegramAction = workspaceActionClientAllowExpired
           workspaceId,
           tx,
         })
+      })
+
+      await auditService.record({
+        action: "disconnect",
+        detail: `disconnected the Telegram channel (#${integrationTelegram.id})`,
       })
     },
   )

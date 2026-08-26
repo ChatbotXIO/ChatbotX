@@ -1743,7 +1743,8 @@
     "skip": "跳過"
   },
   "admins": {
-    "title": "管理員"
+    "title": "管理員",
+    "adminActivityLogs": "管理員活動記錄"
   },
   "assignAdmin": {
     "assignConversation": "指派對話",
@@ -3844,7 +3845,23 @@
     "exportTakingLongDescription": "匯出仍在處理中。您可以關閉此對話框，並在幾分鐘後返回檢視匯出歷史記錄。"
   },
   "auditLogs": {
-    "title": "審核日誌"
+    "title": "審核日誌",
+    "columns": {
+      "user": "使用者",
+      "action": "操作",
+      "detail": "詳情",
+      "ipAddress": "IP 位址",
+      "date": "日期"
+    },
+    "filters": {
+      "from": "起始日期",
+      "to": "結束日期",
+      "user": "使用者",
+      "userPlaceholder": "使用者 ID",
+      "keyword": "關鍵字",
+      "keywordPlaceholder": "操作或詳情",
+      "allAdmins": "所有管理員"
+    }
   },
   "customFields": {
     "title": "自訂欄位",
