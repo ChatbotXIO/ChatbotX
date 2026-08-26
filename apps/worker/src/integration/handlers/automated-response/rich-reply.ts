@@ -70,7 +70,11 @@ export async function handleRichAIReply({
 
   if (directSendTracker.sent) {
     if (directSendTracker.sentText) {
-      await appendAssistantHistory(conversation.id, directSendTracker.sentText)
+      await appendAssistantHistory({
+        content: directSendTracker.sentText,
+        conversationId: conversation.id,
+        disableSummary: props.aiAgent.disableSummary,
+      })
     }
     return buildSuccessResult({ buildToolStats, modelId, provider })
   }
@@ -98,7 +102,11 @@ export async function handleRichAIReply({
     if (parseResult.reason === "plain_text" && parseResult.text.trim()) {
       const trimmedText = parseResult.text.trim()
       await sendMessageAndWait(conversation.id, trimmedText, trackingContext)
-      await appendAssistantHistory(conversation.id, trimmedText)
+      await appendAssistantHistory({
+        content: trimmedText,
+        conversationId: conversation.id,
+        disableSummary: props.aiAgent.disableSummary,
+      })
       return buildSuccessResult({ buildToolStats, modelId, provider })
     }
 
@@ -166,20 +174,26 @@ export async function handleRichAIReply({
     })
   }
 
-  await appendAssistantHistory(conversation.id, fullText)
+  await appendAssistantHistory({
+    content: fullText,
+    conversationId: conversation.id,
+    disableSummary: props.aiAgent.disableSummary,
+  })
 
   return buildSuccessResult({ buildToolStats, modelId, provider })
 }
 
-async function appendAssistantHistory(
-  conversationId: string,
-  content: string,
-): Promise<void> {
+async function appendAssistantHistory(props: {
+  conversationId: string
+  content: string
+  disableSummary?: boolean
+}): Promise<void> {
   await aiContextService.appendHistory({
-    conversationId,
+    conversationId: props.conversationId,
+    disableSummary: props.disableSummary,
     newMessages: [
       {
-        message: { role: "assistant", content },
+        message: { role: "assistant", content: props.content },
         createdAt: Date.now(),
       },
     ],

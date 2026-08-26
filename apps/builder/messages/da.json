@@ -1093,6 +1093,10 @@
       "description": "Return structured JSON med beskeder og actions instead af plain tekst streaming.",
       "label": "Rich Svar"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "Kontakter er tildelt den standard sprog når den kontakt sprog er unknown.",
       "label": "Sprog",

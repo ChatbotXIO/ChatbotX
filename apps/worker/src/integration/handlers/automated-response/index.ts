@@ -173,6 +173,7 @@ export async function processAutomatedResponse(
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
       preferredModels: aiAgentModels,
+      disableSummary: aiAgent.disableSummary,
     })
     const markerMessageId =
       aiContext?.markerMessageId ??
@@ -227,6 +228,7 @@ export async function processAutomatedResponse(
         newMessages.length > 0
           ? await aiContextService.appendHistory({
               conversationId: conversation.id,
+              disableSummary: aiAgent.disableSummary,
               newMessages,
             })
           : aiContext

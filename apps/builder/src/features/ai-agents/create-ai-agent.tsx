@@ -100,6 +100,7 @@ export function CreateAIAgentDialog({
           prompt: "",
           isDefault: false,
           isRichResponse: false,
+          disableSummary: false,
           messages: [],
           models: [
             ...aiChatProviders.map((provider) => ({
@@ -334,6 +335,15 @@ export function CreateAIAgentDialog({
 
             <AIToolMultiSelect name="tools" />
             <WebSearchAuthorizedDomainsField />
+            <div>
+              <div className="flex items-center gap-3">
+                <Label>{t("fields.disableSummary.label")}</Label>
+                <SwitchField formItemClassName="w-auto" name="disableSummary" />
+              </div>
+              <p className="wrap-break-words mt-1.5 text-muted-foreground text-sm">
+                {t("fields.disableSummary.description")}
+              </p>
+            </div>
             <div>
               <div className="flex items-center gap-3">
                 <Label>{t("fields.isRichResponse.label")}</Label>

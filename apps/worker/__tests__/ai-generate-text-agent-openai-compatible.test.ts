@@ -62,6 +62,7 @@ function makeAgent(): AIAgentModel {
     messages: [],
     isDefault: false,
     isRichResponse: false,
+    disableSummary: false,
     tools: [],
     webSearchAuthorizedDomains: [],
     models: [{ provider: "openai", model: "gpt-5.4-mini" }],

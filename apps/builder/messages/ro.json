@@ -1867,6 +1867,10 @@
       "description": "Returnează JSON structurat cu mesaje și acțiuni în locul unui flux de text simplu.",
       "label": "Răspuns complex"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "Contactelor li se atribuie limba implicită atunci când limba contactului este necunoscută.",
       "label": "Limbă",

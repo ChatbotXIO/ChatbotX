@@ -1093,6 +1093,10 @@
       "description": "Palauta jäsennelty JSON, joka sisältää viestit ja toiminnot, pelkän tekstin suoratoiston sijaan.",
       "label": "Monipuolinen vastaus"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "Yhteystiedoille määritetään oletuskieli, kun yhteystiedon kieltä ei tunneta.",
       "label": "Kieli",

@@ -1889,6 +1889,10 @@
       "description": "Returnera strukturerad JSON med meddelanden och åtgärder i stället för direktuppspelad oformaterad text.",
       "label": "Strukturerat svar"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "jsonPath": {
       "placeholder": "Ange JSON-sökväg",
       "targetThisRow": "Fyll den här raden från JSON"

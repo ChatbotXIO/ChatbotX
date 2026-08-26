@@ -26,6 +26,7 @@ type TemplateAIAgentEntry = {
   tools: string[]
   isDefault: boolean
   isRichResponse: boolean
+  disableSummary?: boolean
   webSearchAuthorizedDomains?: string[] | null
 }
 
@@ -102,6 +103,7 @@ export const aiAgentsAdapter: ResourceAdapter = {
         // otherwise enforces by clearing the flag first.
         isDefault: false,
         isRichResponse: entry.isRichResponse,
+        disableSummary: entry.disableSummary ?? false,
         webSearchAuthorizedDomains: entry.webSearchAuthorizedDomains ?? [],
       })
 
@@ -167,6 +169,7 @@ export const aiAgentsAdapter: ResourceAdapter = {
         tools: row.tools,
         isDefault: row.isDefault,
         isRichResponse: row.isRichResponse,
+        disableSummary: row.disableSummary,
         webSearchAuthorizedDomains: row.webSearchAuthorizedDomains,
       }))
 

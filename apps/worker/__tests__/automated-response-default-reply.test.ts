@@ -190,6 +190,7 @@ function makeAIAgent(overrides?: Partial<AIAgentModel>): AIAgentModel {
     messages: [],
     isDefault: false,
     isRichResponse: false,
+    disableSummary: false,
     tools: ["sys:some_tool"],
     webSearchAuthorizedDomains: [],
     models: [{ provider: "openai", model: "gpt-4o" }] as AIAgentModel["models"],
@@ -546,6 +547,21 @@ describe("replyByAI — default reply flow fallback", () => {
       text: "Answer this burst:\n{{ai.queued.messages}}",
       variables: expect.anything(),
     })
+  })
+
+  test("omits conversation summary from the system prompt when disabled", async () => {
+    await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent({ disableSummary: true }),
+      defaultReplyFlowId: null,
+      summary: "Old lead data",
+    })
+
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: "You are a helpful assistant.",
+      }),
+    )
   })
 
   test("triggers the default reply flow instead of the canned fallback text when configured and valid", async () => {

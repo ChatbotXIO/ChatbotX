@@ -1093,6 +1093,10 @@
       "description": "Devolver JSON estruturado com mensagens e ações em vez de transmissão de texto simples.",
       "label": "Resposta avançada"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "É atribuído o idioma predefinido aos contactos quando o respetivo idioma é desconhecido.",
       "label": "Idioma",

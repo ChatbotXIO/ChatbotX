@@ -1168,6 +1168,10 @@
       "description": "Trả về JSON có cấu trúc gồm tin nhắn và hành động thay vì stream văn bản thuần.",
       "label": "Rich Response"
     },
+    "disableSummary": {
+      "description": "Chỉ dùng các tin nhắn gần đây trong cuộc trò chuyện, không dùng bản tóm tắt tích lũy. Cuộc trò chuyện dài có thể mất ngữ cảnh cũ hơn các tin nhắn mới nhất.",
+      "label": "Tắt tóm tắt cuộc trò chuyện"
+    },
     "language": {
       "description": "Liên hệ được gán ngôn ngữ mặc định khi ngôn ngữ liên hệ không xác định.",
       "label": "Ngôn ngữ",

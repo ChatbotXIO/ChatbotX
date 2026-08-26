@@ -52,6 +52,7 @@ export async function handleAIGenerateTextAgent({
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
       preferredModels: aiAgentModels,
+      disableSummary: aiAgent.disableSummary,
     })
 
     const messages = await buildAIAgentMessages(

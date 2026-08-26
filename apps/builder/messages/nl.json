@@ -907,6 +907,10 @@
       "description": "Retourneer gestructureerde JSON met berichten en acties in plaats van streaming in platte tekst.",
       "label": "Verrijkt antwoord"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "Contacten krijgen de standaardtaal toegewezen wanneer hun taal onbekend is.",
       "label": "Taal",

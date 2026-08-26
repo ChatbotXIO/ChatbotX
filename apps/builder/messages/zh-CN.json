@@ -1892,6 +1892,10 @@
       "description": "传回包含消息与操作的结构化 JSON，而不是纯文本流。",
       "label": "丰富回应"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "javascriptCode": {
       "description": "使用纯 JavaScript 并返回一个值。网络、文件、API 和外部库均不可用。可通过 `input` 对象访问联系人和系统数据。",
       "label": "JavaScript 代码",

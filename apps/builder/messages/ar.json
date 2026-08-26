@@ -1167,6 +1167,10 @@
       "description": "إرجاع JSON منظم يحتوي على رسائل وإجراءات بدلًا من بث نص عادي.",
       "label": "رد منسّق"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "تُعيّن اللغة الافتراضية لجهات الاتصال عندما تكون لغتها غير معروفة.",
       "label": "اللغة",

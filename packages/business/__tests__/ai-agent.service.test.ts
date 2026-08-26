@@ -120,6 +120,7 @@ const aiAgent = {
 } as AIAgentModel
 
 const createRequest = {
+  disableSummary: false,
   isDefault: false,
   isRichResponse: false,
   maxOutputTokens: 1000,

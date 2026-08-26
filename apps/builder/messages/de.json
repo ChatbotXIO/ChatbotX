@@ -1093,6 +1093,10 @@
       "description": "Strukturiertes JSON mit Nachrichten und Aktionen anstelle eines einfachen Textstreams zurückgeben.",
       "label": "Strukturierte Antwort"
     },
+    "disableSummary": {
+      "description": "Use only recent conversation messages, without the accumulated summary. Long conversations may lose context older than the latest messages.",
+      "label": "Disable conversation summary"
+    },
     "language": {
       "description": "Kontakten wird die Standardsprache zugewiesen, wenn ihre Sprache unbekannt ist.",
       "label": "Sprache",

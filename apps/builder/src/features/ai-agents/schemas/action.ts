@@ -64,6 +64,7 @@ export const createAIAgentRequest = z.object({
   webSearchAuthorizedDomains: webSearchAuthorizedDomainsSchema.default([]),
   isDefault: z.boolean(),
   isRichResponse: z.boolean().default(false),
+  disableSummary: z.boolean().default(false),
 })
 export type CreateAIAgentRequest = z.infer<typeof createAIAgentRequest>
 
@@ -71,6 +72,7 @@ export const updateAIAgentRequest = createAIAgentRequest
   .extend({
     webSearchAuthorizedDomains: webSearchAuthorizedDomainsSchema,
     isRichResponse: z.boolean(),
+    disableSummary: z.boolean(),
   })
   .partial()
 export type UpdateAIAgentRequest = z.infer<typeof updateAIAgentRequest>
