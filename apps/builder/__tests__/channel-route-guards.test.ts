@@ -8,6 +8,8 @@ const {
   mockRequireWorkspacePermission,
   mockGetCurrentUserAndTargetWorkspace,
   mockGetCurrentUserId,
+  mockGetCurrentUser,
+  mockIsPlatformAdmin,
   mockNotFound,
   mockRedirect,
   mockInboxCardList,
@@ -16,6 +18,8 @@ const {
   mockRequireWorkspacePermission: vi.fn(async () => undefined),
   mockGetCurrentUserAndTargetWorkspace: vi.fn(),
   mockGetCurrentUserId: vi.fn(),
+  mockGetCurrentUser: vi.fn(async () => ({ id: "user-1" })),
+  mockIsPlatformAdmin: vi.fn(async () => true),
   mockNotFound: vi.fn(() => {
     throw new Error("not found")
   }),
@@ -31,6 +35,7 @@ vi.mock("@/lib/auth/require-workspace-permission", () => ({
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: mockGetCurrentUserAndTargetWorkspace,
   getCurrentUserId: mockGetCurrentUserId,
+  getCurrentUser: mockGetCurrentUser,
 }))
 
 vi.mock("next/navigation", () => ({
@@ -51,6 +56,7 @@ vi.mock("@/features/analytics/components/analytics-nav", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  isPlatformAdmin: mockIsPlatformAdmin,
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }
@@ -254,6 +260,8 @@ describe("channel route guards", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetCurrentUserId.mockResolvedValue("user-1")
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1" })
+    mockIsPlatformAdmin.mockResolvedValue(true)
   })
 
   test("guards workspace-scoped channel creation on /channels/create", async () => {
@@ -282,6 +290,20 @@ describe("channel route guards", () => {
       }),
     ).resolves.toBeDefined()
 
+    expect(mockRequireWorkspacePermission).not.toHaveBeenCalled()
+  })
+
+  test("redirects non-platform-admins away from the new-workspace flow (fork gate)", async () => {
+    mockIsPlatformAdmin.mockResolvedValue(false)
+
+    await CreateChannelPage({
+      searchParams: Promise.resolve({
+        channel: "whatsapp",
+        workspaceId: null,
+      }),
+    })
+
+    expect(mockRedirect).toHaveBeenCalledWith("/")
     expect(mockRequireWorkspacePermission).not.toHaveBeenCalled()
   })
 

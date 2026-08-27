@@ -22,6 +22,7 @@ vi.mock("@/lib/auth/require-workspace-permission", () => ({
 
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserId: vi.fn(async () => "user-1"),
+  getCurrentUser: vi.fn(async () => ({ id: "user-1" })),
 }))
 
 vi.mock("next/navigation", () => ({
@@ -34,6 +35,7 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  isPlatformAdmin: vi.fn(async () => true),
   platformCredentialService: {
     resolveForOwner: vi.fn(async () => null),
   },

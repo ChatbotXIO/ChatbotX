@@ -19,6 +19,7 @@ const {
   mockUserFindFirst,
   mockWorkspaceFindById,
   mockWorkspaceMemberServiceDelete,
+  mockWorkspaceMemberServiceListByWorkspaceId,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
@@ -41,6 +42,7 @@ const {
     mockGetCurrentUserAndTargetWorkspace: vi.fn(),
     mockInsertReturning,
     mockWorkspaceMemberServiceDelete: vi.fn(),
+    mockWorkspaceMemberServiceListByWorkspaceId: vi.fn(),
     mockInsertValues,
     mockInvalidateCacheByTags: vi.fn(),
     mockIsCommunity: vi.fn(),
@@ -80,6 +82,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   workspaceMemberService: {
     delete: mockWorkspaceMemberServiceDelete,
+    listByWorkspaceId: mockWorkspaceMemberServiceListByWorkspaceId,
   },
   workspaceService: {
     findById: mockWorkspaceFindById,
@@ -488,19 +491,22 @@ describe("deleteWorkspaceMemberAction", () => {
     mockCurrentMember()
   })
 
-  test("rejects deleting the workspace owner", async () => {
+  test("rejects deleting the last workspace owner", async () => {
     mockFindOrFail.mockResolvedValue({
       id: MEMBER_ID,
       userId: MEMBER_USER_ID,
       workspaceId: WORKSPACE_ID,
       role: "owner",
     })
+    mockWorkspaceMemberServiceListByWorkspaceId.mockResolvedValue([
+      { id: MEMBER_ID, role: "owner" },
+    ])
 
     await expect(
       (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
         deleteActionCtx(),
       ),
-    ).rejects.toThrow("You cannot delete the owner of the workspace")
+    ).rejects.toThrow("You cannot delete the last owner of the workspace")
 
     expect(mockWorkspaceMemberServiceDelete).not.toHaveBeenCalled()
   })
