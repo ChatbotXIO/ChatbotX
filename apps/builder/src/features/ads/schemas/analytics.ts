@@ -7,6 +7,23 @@ import { accountSearchParam } from "./account"
 export const toDateKey = (date: Date): string => date.toISOString().slice(0, 10)
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/
 
+/**
+ * A `from`/`to` URL param is usable only if it is a real calendar day, not just
+ * the right shape: the regex alone accepts `2026-13-01` (parses to an Invalid
+ * Date that would later throw in the clamp branch's `toISOString()`) and
+ * `2026-02-30` (silently normalized to Mar 2, so the returned key would no
+ * longer match the window). Require a canonical round-trip so any such value
+ * falls back to the default instead — keeping the query bounds and the exported
+ * date keys reliable.
+ */
+function isValidDateKey(key: string): boolean {
+  if (!DATE_KEY_RE.test(key)) {
+    return false
+  }
+  const parsed = new Date(`${key}T00:00:00.000Z`)
+  return !Number.isNaN(parsed.getTime()) && toDateKey(parsed) === key
+}
+
 // HIGH-5: without a cap, a manipulated from/to URL param can force a huge
 // Facebook Graph API + CAPI-funnel date-range scan/loop (every day in the
 // range gets its own row/aggregation). 366 covers a full leap year for
@@ -58,8 +75,8 @@ export function parseAnalyticsDateRange(input: { from: string; to: string }): {
   to: string
 } {
   const fallback = getDefaultAdsAnalyticsRange()
-  const from = DATE_KEY_RE.test(input.from) ? input.from : fallback.from
-  const to = DATE_KEY_RE.test(input.to) ? input.to : fallback.to
+  const from = isValidDateKey(input.from) ? input.from : fallback.from
+  const to = isValidDateKey(input.to) ? input.to : fallback.to
   const since = new Date(`${from}T00:00:00.000Z`)
   const until = new Date(`${to}T23:59:59.999Z`)
 

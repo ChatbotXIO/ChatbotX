@@ -85,4 +85,24 @@ describe("parseAnalyticsDateRange", () => {
     expect(result.from).toBe(fallback.from)
     expect(result.to).toBe(fallback.to)
   })
+
+  test("falls back for calendar-invalid keys that pass the shape regex", () => {
+    const fallback = getDefaultAdsAnalyticsRange()
+
+    // Out-of-range month/day are the right shape but not real days. Each must
+    // fall back to a valid key rather than reach the clamp branch as an Invalid
+    // Date (which threw before) or be returned silently normalized.
+    for (const bad of ["2026-13-01", "2026-02-30", "2026-00-10"]) {
+      expect(
+        parseAnalyticsDateRange({ from: bad, to: "2026-08-27" }).from,
+      ).toBe(fallback.from)
+
+      // `to` invalid + an ancient valid `from` routes through the clamp branch;
+      // it must NOT throw and must carry the fallback `to`.
+      const asTo = parseAnalyticsDateRange({ from: "2020-01-01", to: bad })
+      expect(asTo.to).toBe(fallback.to)
+      expect(Number.isNaN(asTo.since.getTime())).toBe(false)
+      expect(Number.isNaN(asTo.until.getTime())).toBe(false)
+    }
+  })
 })
