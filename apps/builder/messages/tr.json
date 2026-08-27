@@ -5603,6 +5603,7 @@
         "uploadVideo": "Video yükle"
       },
       "uploading": "Yükleniyor...",
+      "imageUploadFailed": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
       "videoProcessing": "Video işleniyor...",
       "videoReady": "Video hazır",
       "videoProcessingFailed": "Video işleme başarısız oldu. Lütfen farklı bir dosya deneyin.",

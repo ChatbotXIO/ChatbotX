@@ -5603,6 +5603,7 @@
         "uploadVideo": "העלאת וידאו"
       },
       "uploading": "מעלה...",
+      "imageUploadFailed": "העלאת התמונה נכשלה. נסה שוב.",
       "videoProcessing": "מעבד וידאו...",
       "videoReady": "הווידאו מוכן",
       "videoProcessingFailed": "עיבוד הווידאו נכשל. נסה קובץ אחר.",

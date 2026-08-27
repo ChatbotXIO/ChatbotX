@@ -39,9 +39,10 @@ export function WelcomeMessageEditor() {
 
   return (
     <div className="space-y-3">
+      {/* No `label` here: the section's "Welcome message" <h4> already labels
+          this control — a field label would duplicate it. */}
       <SelectField
         description={t("adsCampaign.welcomeMessage.description")}
-        label={t("adsCampaign.welcomeMessage.label")}
         name="welcomeMessageType"
         options={modeOptions}
         triggerValueChange={handleModeChange}

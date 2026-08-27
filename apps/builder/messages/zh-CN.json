@@ -5603,6 +5603,7 @@
         "uploadVideo": "上传视频"
       },
       "uploading": "正在上传...",
+      "imageUploadFailed": "图片上传失败，请重试。",
       "videoProcessing": "正在处理视频...",
       "videoReady": "视频已就绪",
       "videoProcessingFailed": "视频处理失败，请尝试其他文件。",

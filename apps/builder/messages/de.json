@@ -5603,6 +5603,7 @@
         "uploadVideo": "Video hochladen"
       },
       "uploading": "Wird hochgeladen...",
+      "imageUploadFailed": "Bild-Upload fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "videoProcessing": "Video wird verarbeitet...",
       "videoReady": "Video bereit",
       "videoProcessingFailed": "Videoverarbeitung fehlgeschlagen. Bitte versuche es mit einer anderen Datei.",

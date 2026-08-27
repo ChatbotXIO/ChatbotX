@@ -80,24 +80,76 @@ export type MessagingAdWelcomeMessageInput =
       }[]
     }
 
+/**
+ * LEGACY shape — rows persisted before the presigned-S3 upload switch. Meta's
+ * `image_hash` was uploaded to the ad-account image library at WIZARD time and
+ * persisted directly. Kept readable (never written by new code) so an
+ * old, un-retried draft can still publish — see `isLegacyImageMedia`.
+ */
+export type LegacyImageMediaInput = {
+  kind: "image"
+  imageHash: string
+  link: string
+  message?: string
+  headline?: string
+  description?: string
+  caption?: string
+}
+
+/**
+ * CURRENT shape — the browser uploads straight to our own object storage via
+ * a presigned URL; only the S3 key + the `File` row id (ownership proof) are
+ * persisted here. `imageMimeType`/`imageFileName` are CLIENT-DECLARED and
+ * informational only — never trusted for any security or Meta-upload
+ * decision. The authoritative MIME + a server-generated safe filename are
+ * derived from the bytes themselves at create time (see
+ * `resolveStoredImageBytes` in `@chatbotx.io/business`).
+ */
+export type StoredImageMediaInput = {
+  kind: "image"
+  imageKey: string
+  fileId: string
+  imageMimeType?: string
+  imageFileName?: string
+  link: string
+  message?: string
+  headline?: string
+  description?: string
+  caption?: string
+}
+
+export type VideoMediaInput = {
+  kind: "video"
+  videoId: string
+  thumbnailImageHash?: string
+  title?: string
+  message?: string
+  linkDescription?: string
+}
+
+/**
+ * `MessagingAdCreativeMediaInput` is a plain TypeScript union — the jsonb
+ * column is NOT re-validated by zod on read, so a persisted row can be either
+ * image shape. Both image variants share the `kind: "image"` discriminant
+ * (their extra fields differ), so narrowing between them needs the `in`-based
+ * type guards below rather than `kind` alone.
+ */
 export type MessagingAdCreativeMediaInput =
-  | {
-      kind: "image"
-      imageHash: string
-      link: string
-      message?: string
-      headline?: string
-      description?: string
-      caption?: string
-    }
-  | {
-      kind: "video"
-      videoId: string
-      thumbnailImageHash?: string
-      title?: string
-      message?: string
-      linkDescription?: string
-    }
+  | LegacyImageMediaInput
+  | StoredImageMediaInput
+  | VideoMediaInput
+
+export function isLegacyImageMedia(
+  media: MessagingAdCreativeMediaInput,
+): media is LegacyImageMediaInput {
+  return media.kind === "image" && "imageHash" in media
+}
+
+export function isStoredImageMedia(
+  media: MessagingAdCreativeMediaInput,
+): media is StoredImageMediaInput {
+  return media.kind === "image" && "imageKey" in media
+}
 
 export type MessagingAdOperationInput = {
   adAccountId: string

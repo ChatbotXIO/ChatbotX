@@ -5603,6 +5603,7 @@
         "uploadVideo": "Carregar vídeo"
       },
       "uploading": "A carregar...",
+      "imageUploadFailed": "Falha ao carregar a imagem. Tente novamente.",
       "videoProcessing": "A processar vídeo...",
       "videoReady": "Vídeo pronto",
       "videoProcessingFailed": "Falha ao processar o vídeo. Experimente outro ficheiro.",

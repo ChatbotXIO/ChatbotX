@@ -5603,6 +5603,7 @@
         "uploadVideo": "Tải lên video"
       },
       "uploading": "Đang tải lên...",
+      "imageUploadFailed": "Tải ảnh lên thất bại. Vui lòng thử lại.",
       "videoProcessing": "Đang xử lý video...",
       "videoReady": "Video đã sẵn sàng",
       "videoProcessingFailed": "Xử lý video thất bại. Vui lòng thử một tệp khác.",

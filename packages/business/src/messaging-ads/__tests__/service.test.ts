@@ -35,6 +35,8 @@ const mocks = vi.hoisted(() => ({
     Promise.resolve({ pageId: "pg_1" }),
   ),
   createId: vi.fn(() => "op_generated"),
+  resolveStoredImageBytes: vi.fn(),
+  deleteObject: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -82,6 +84,14 @@ vi.mock("../resolve-channel-assets", () => ({
   resolveMessagingAdChannelAssets: mocks.resolveMessagingAdChannelAssets,
 }))
 
+vi.mock("../media-preflight", () => ({
+  resolveStoredImageBytes: mocks.resolveStoredImageBytes,
+}))
+
+vi.mock("@chatbotx.io/filesystem", () => ({
+  uploader: { deleteObject: mocks.deleteObject },
+}))
+
 const { messagingAdCampaignService } = await import("../service")
 
 function baseRecord(overrides: Record<string, unknown> = {}) {
@@ -124,7 +134,53 @@ beforeEach(() => {
   mocks.listCachedMessagingAdsInsights.mockResolvedValue([])
   mocks.markInvalid.mockResolvedValue(undefined)
   mocks.resolveMessagingAdChannelAssets.mockResolvedValue({ pageId: "pg_1" })
+  mocks.resolveStoredImageBytes.mockReset()
+  mocks.deleteObject.mockResolvedValue(undefined)
 })
+
+const STORED_IMAGE_KEY = "public/space/ws_1/ads-campaign/creatives/abc"
+const MAXIMUM_SIZE_ERROR = /maximum allowed size/
+
+function storedImageRecord(overrides: Record<string, unknown> = {}) {
+  return baseRecord({
+    input: {
+      adAccountId: "act_9",
+      campaign: { name: "My ad", specialAdCategories: ["NONE"] },
+      adSet: { dailyBudgetMinorUnits: 2000, targeting: { countries: ["US"] } },
+      creative: {
+        media: {
+          kind: "image",
+          imageKey: STORED_IMAGE_KEY,
+          fileId: "file_1",
+          link: "https://x.com",
+        },
+        welcomeMessage: { type: "default" },
+      },
+    },
+    ...overrides,
+  })
+}
+
+function storedImageCreateInput() {
+  return {
+    workspaceId: "ws_1",
+    channel: "messenger" as const,
+    integrationId: "im_1",
+    adAccountId: "act_9",
+    name: "My ad",
+    campaign: { specialAdCategories: ["NONE" as const] },
+    adSet: { dailyBudgetMinorUnits: 2000, targeting: { countries: ["US"] } },
+    creative: {
+      media: {
+        kind: "image" as const,
+        imageKey: STORED_IMAGE_KEY,
+        fileId: "file_1",
+        link: "https://x.com",
+      },
+      welcomeMessage: { type: "default" as const },
+    },
+  }
+}
 
 /** Makes `updateCreateProgress` accumulate onto a running row, matching the real repository's UPDATE semantics (each call merges onto the CURRENT row, not the original). */
 function accumulateCreateProgress(record: Record<string, unknown>) {
@@ -639,5 +695,239 @@ describe("listInsights (ownership scoping)", () => {
 
     expect(result).toEqual([])
     expect(mocks.listCachedMessagingAdsInsights).not.toHaveBeenCalled()
+  })
+})
+
+describe("createDraft — stored-image media", () => {
+  test("preflights BEFORE any Graph call, uploads via runAction, and resolves the create-time hash without persisting it", async () => {
+    const record = storedImageRecord()
+    mocks.createOp.mockResolvedValue(record)
+    accumulateCreateProgress(record)
+    mocks.resolveStoredImageBytes.mockResolvedValue({
+      bytes: new Uint8Array([1, 2, 3]),
+      mimeType: "image/png",
+      fileName: "file_1.png",
+    })
+    mocks.runAction.mockImplementation((action: string) => {
+      if (action === "createMessagingCampaign") {
+        return { id: "camp_1" }
+      }
+      if (action === "createMessagingAdSet") {
+        return { id: "adset_1" }
+      }
+      if (action === "uploadMessagingAdImage") {
+        return { imageHash: "resolved_hash_1" }
+      }
+      if (action === "createMessagingAdCreative") {
+        return { id: "creative_1" }
+      }
+      if (action === "createMessagingAd") {
+        return { id: "ad_1" }
+      }
+      throw new Error(`unexpected action ${action}`)
+    })
+
+    const result = await messagingAdCampaignService.createDraft(
+      storedImageCreateInput(),
+    )
+
+    expect(result.metaAdId).toBe("ad_1")
+    expect(mocks.resolveStoredImageBytes).toHaveBeenCalledTimes(1)
+    expect(mocks.resolveStoredImageBytes).toHaveBeenCalledWith({
+      workspaceId: "ws_1",
+      media: expect.objectContaining({ imageKey: STORED_IMAGE_KEY }),
+    })
+
+    const uploadCall = mocks.runAction.mock.calls.find(
+      (call) => call[0] === "uploadMessagingAdImage",
+    )
+    expect(uploadCall?.[1].props).toEqual({
+      adAccountId: "act_9",
+      fileName: "file_1.png",
+      mimeType: "image/png",
+      bytes: new Uint8Array([1, 2, 3]),
+    })
+
+    const creativeCall = mocks.runAction.mock.calls.find(
+      (call) => call[0] === "createMessagingAdCreative",
+    )
+    expect(creativeCall?.[1].props.media.linkData.image_hash).toBe(
+      "resolved_hash_1",
+    )
+
+    // Preflight is called before the first Graph POST (createMessagingCampaign).
+    const campaignCallOrder = mocks.runAction.mock.invocationCallOrder[
+      mocks.runAction.mock.calls.findIndex(
+        (call) => call[0] === "createMessagingCampaign",
+      )
+    ] as number
+    expect(
+      mocks.resolveStoredImageBytes.mock.invocationCallOrder[0],
+    ).toBeLessThan(campaignCallOrder)
+  })
+
+  test("a preflight rejection fails the whole operation with ZERO Graph calls", async () => {
+    const record = storedImageRecord()
+    mocks.createOp.mockResolvedValue(record)
+    mocks.updateCreateProgress.mockResolvedValue(record)
+    mocks.resolveStoredImageBytes.mockRejectedValue(
+      new Error("This image exceeds the maximum allowed size."),
+    )
+
+    await expect(
+      messagingAdCampaignService.createDraft(storedImageCreateInput()),
+    ).rejects.toThrow(MAXIMUM_SIZE_ERROR)
+
+    expect(mocks.runAction).not.toHaveBeenCalled()
+  })
+})
+
+describe("ensureAdCreative — legacy imageHash media", () => {
+  test("never calls the preflight or uploadMessagingAdImage — uses the persisted hash directly", async () => {
+    const record = baseRecord()
+    mocks.createOp.mockResolvedValue(record)
+    accumulateCreateProgress(record)
+    mocks.runAction.mockImplementation((action: string) => {
+      if (action === "createMessagingCampaign") {
+        return { id: "camp_1" }
+      }
+      if (action === "createMessagingAdSet") {
+        return { id: "adset_1" }
+      }
+      if (action === "createMessagingAdCreative") {
+        return { id: "creative_1" }
+      }
+      if (action === "createMessagingAd") {
+        return { id: "ad_1" }
+      }
+      throw new Error(`unexpected action ${action}`)
+    })
+
+    await messagingAdCampaignService.createDraft({
+      workspaceId: "ws_1",
+      channel: "messenger",
+      integrationId: "im_1",
+      adAccountId: "act_9",
+      name: "My ad",
+      campaign: { specialAdCategories: ["NONE"] },
+      adSet: { dailyBudgetMinorUnits: 2000, targeting: { countries: ["US"] } },
+      creative: {
+        media: { kind: "image", imageHash: "hash", link: "https://x.com" },
+        welcomeMessage: { type: "default" },
+      },
+    })
+
+    expect(mocks.resolveStoredImageBytes).not.toHaveBeenCalled()
+    const calledActions = mocks.runAction.mock.calls.map((call) => call[0])
+    expect(calledActions).not.toContain("uploadMessagingAdImage")
+    const creativeCall = mocks.runAction.mock.calls.find(
+      (call) => call[0] === "createMessagingAdCreative",
+    )
+    expect(creativeCall?.[1].props.media.linkData.image_hash).toBe("hash")
+  })
+})
+
+describe("retryDraft — stored-image media re-derives the hash without persisting it", () => {
+  test("preflights again on retry even when the creative step itself is skipped (metaAdCreativeId already set)", async () => {
+    const record = storedImageRecord({
+      integrationMessengerId: "im_1",
+      metaCampaignId: "camp_1",
+      metaAdSetId: "adset_1",
+      metaAdCreativeId: "creative_1",
+      createState: "creativeCreated",
+    })
+    mocks.findByIdForWorkspace.mockResolvedValue(record)
+    mocks.claimForRetry.mockResolvedValue(record)
+    accumulateCreateProgress(record)
+    mocks.resolveStoredImageBytes.mockResolvedValue({
+      bytes: new Uint8Array([9]),
+      mimeType: "image/png",
+      fileName: "file_1.png",
+    })
+    mocks.runAction.mockImplementation((action: string) => {
+      if (action === "createMessagingAd") {
+        return { id: "ad_1" }
+      }
+      throw new Error(`unexpected action ${action}`)
+    })
+
+    await messagingAdCampaignService.retryDraft({
+      workspaceId: "ws_1",
+      operationId: "op_1",
+    })
+
+    // Re-verified on every retry (defense-in-depth), even though the create
+    // step itself is skipped — the resolved bytes are simply unused here.
+    expect(mocks.resolveStoredImageBytes).toHaveBeenCalledTimes(1)
+    const calledActions = mocks.runAction.mock.calls.map((call) => call[0])
+    expect(calledActions).not.toContain("uploadMessagingAdImage")
+    expect(calledActions).not.toContain("createMessagingAdCreative")
+  })
+})
+
+describe("deleteOperation — stored-image cleanup", () => {
+  test("best-effort deletes the stored creative image object", async () => {
+    const record = storedImageRecord({
+      metaCampaignId: "camp_1",
+      metaAdSetId: "adset_1",
+      metaAdId: "ad_1",
+    })
+    mocks.findByIdForWorkspace.mockResolvedValue(record)
+    mocks.updatePublishState.mockImplementation((input) =>
+      Promise.resolve({ ...record, ...input }),
+    )
+    mocks.runAction.mockResolvedValue(undefined)
+
+    await messagingAdCampaignService.deleteOperation({
+      workspaceId: "ws_1",
+      operationId: "op_1",
+    })
+
+    expect(mocks.deleteObject).toHaveBeenCalledWith(STORED_IMAGE_KEY)
+  })
+
+  test("records a cleanupError (without failing the delete) when the object delete fails", async () => {
+    const record = storedImageRecord({
+      metaCampaignId: "camp_1",
+      metaAdSetId: "adset_1",
+      metaAdId: "ad_1",
+    })
+    mocks.findByIdForWorkspace.mockResolvedValue(record)
+    mocks.updatePublishState.mockImplementation((input) =>
+      Promise.resolve({ ...record, ...input }),
+    )
+    mocks.runAction.mockResolvedValue(undefined)
+    mocks.deleteObject.mockRejectedValue(new Error("S3 unavailable"))
+
+    await messagingAdCampaignService.deleteOperation({
+      workspaceId: "ws_1",
+      operationId: "op_1",
+    })
+
+    expect(mocks.setCleanupError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cleanupError: expect.stringContaining("image("),
+      }),
+    )
+  })
+
+  test("never touches storage for a legacy imageHash record", async () => {
+    const record = baseRecord({
+      metaCampaignId: "camp_1",
+      metaAdSetId: "adset_1",
+      metaAdId: "ad_1",
+    })
+    mocks.findByIdForWorkspace.mockResolvedValue(record)
+    mocks.updatePublishState.mockImplementation((input) =>
+      Promise.resolve({ ...record, ...input }),
+    )
+    mocks.runAction.mockResolvedValue(undefined)
+
+    await messagingAdCampaignService.deleteOperation({
+      workspaceId: "ws_1",
+      operationId: "op_1",
+    })
+
+    expect(mocks.deleteObject).not.toHaveBeenCalled()
   })
 })

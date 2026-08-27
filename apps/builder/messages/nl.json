@@ -5603,6 +5603,7 @@
         "uploadVideo": "Video uploaden"
       },
       "uploading": "Uploaden...",
+      "imageUploadFailed": "Afbeelding uploaden mislukt. Probeer het opnieuw.",
       "videoProcessing": "Video wordt verwerkt...",
       "videoReady": "Video gereed",
       "videoProcessingFailed": "Video verwerken mislukt. Probeer een ander bestand.",

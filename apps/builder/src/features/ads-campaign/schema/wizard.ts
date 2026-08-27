@@ -1,7 +1,11 @@
 // Pure enum subpath — the canonical Meta `special_ad_categories` list, the
 // SINGLE source of truth. Importing the `messaging-ads/constants` subpath (not
 // the package root) keeps `ky`/server API code out of this schema's bundle.
-import { specialAdCategories } from "@chatbotx.io/integration-facebook-ads/messaging-ads/constants"
+import {
+  buildMessagingAdCreativeStoragePrefix,
+  requiresSpecialAdCategoryCountry,
+  specialAdCategories,
+} from "@chatbotx.io/integration-facebook-ads/messaging-ads/constants"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
@@ -57,10 +61,22 @@ export const welcomeMessageSchema = z.discriminatedUnion("type", [
   }),
 ])
 
+/**
+ * New-shape only — a legacy `{ imageHash }` row only ever exists already
+ * persisted (from before the presigned-S3 upload switch) and is never
+ * re-submitted through this oRPC boundary. `imageKey`'s workspace-namespace
+ * prefix is checked below, on `createMessagingAdRequest` (this schema alone
+ * has no `workspaceId` in scope). `imageMimeType`/`imageFileName` are
+ * client-declared and informational only — the create-time preflight derives
+ * the authoritative MIME + a server-generated filename from the bytes.
+ */
 export const creativeMediaSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("image"),
-    imageHash: z.string().trim().min(1),
+    imageKey: z.string().trim().min(1).max(1024),
+    fileId: z.string().trim().min(1),
+    imageMimeType: z.string().trim().max(255).optional(),
+    imageFileName: z.string().trim().max(255).optional(),
     link: z.url(),
     message: z.string().trim().max(500).optional(),
     headline: z.string().trim().max(40).optional(),
@@ -77,56 +93,77 @@ export const creativeMediaSchema = z.discriminatedUnion("kind", [
   }),
 ])
 
-export const createMessagingAdRequest = z.object({
-  workspaceId: zodBigintAsString(),
-  channel: messagingAdChannelSchema,
-  integrationId: zodBigintAsString(),
-  whatsappPageIntegrationId: zodBigintAsString().optional(),
-  adAccountId: z
-    .string()
-    .trim()
-    .regex(/^act_\d+$/),
-  name: z.string().trim().min(1).max(120),
-  campaign: z
-    .object({
-      // Meta's `special_ad_categories` array — one or more categories, or the
-      // `["NONE"]` sentinel for no category. `CREDIT` is a valid enum value for
-      // reading legacy campaigns, but the create UI no longer offers it (Meta
-      // deprecated it) — see `specialAdCategoryOptions`.
-      specialAdCategories: z.array(specialAdCategorySchema).min(1),
-      specialAdCategoryCountry: z.array(z.string().trim().length(2)).optional(),
-    })
-    // Meta hard-requires `special_ad_category_country` whenever ANY real special
-    // ad category is used. Block it here (before any campaign is created on
-    // Meta) instead of letting it fail with a confusing Graph error and leave
-    // an orphaned paused campaign. The `["NONE"]` sentinel needs no country.
-    .refine(
-      (c) =>
-        c.specialAdCategories.every((category) => category === "NONE") ||
-        (c.specialAdCategoryCountry?.length ?? 0) > 0,
-      {
-        path: ["specialAdCategoryCountry"],
-        message: "A country is required for the selected special ad category.",
-      },
-    ),
-  adSet: z
-    .object({
-      dailyBudgetMinorUnits: z.coerce.number().int().positive(),
-      targeting: messagingAdTargetingSchema,
-      startTime: z.string().trim().optional(),
-      endTime: z.string().trim().optional(),
-    })
-    .refine(
-      (a) =>
-        !(a.startTime && a.endTime) ||
-        new Date(a.startTime).getTime() < new Date(a.endTime).getTime(),
-      { path: ["endTime"], message: "endTime must be after startTime" },
-    ),
-  creative: z.object({
-    media: creativeMediaSchema,
-    welcomeMessage: welcomeMessageSchema,
-  }),
-})
+export const createMessagingAdRequest = z
+  .object({
+    workspaceId: zodBigintAsString(),
+    channel: messagingAdChannelSchema,
+    integrationId: zodBigintAsString(),
+    whatsappPageIntegrationId: zodBigintAsString().optional(),
+    adAccountId: z
+      .string()
+      .trim()
+      .regex(/^act_\d+$/),
+    name: z.string().trim().min(1).max(120),
+    campaign: z
+      .object({
+        // Meta's `special_ad_categories` array — one or more categories, or the
+        // `["NONE"]` sentinel for no category. `CREDIT` is a valid enum value for
+        // reading legacy campaigns, but the create UI no longer offers it (Meta
+        // deprecated it) — see `specialAdCategoryOptions`.
+        specialAdCategories: z.array(specialAdCategorySchema).min(1),
+        specialAdCategoryCountry: z
+          .array(z.string().trim().length(2))
+          .optional(),
+      })
+      // Meta hard-requires `special_ad_category_country` ONLY for
+      // ISSUES_ELECTIONS_POLITICS. For HOUSING/EMPLOYMENT/CREDIT/FINANCIAL it
+      // is optional (Meta defaults it to the ad account's tax country), so
+      // never force it there. Block the genuinely-required case here — before a
+      // campaign is created on Meta — instead of failing with a confusing Graph
+      // error and leaving an orphaned paused campaign.
+      .refine(
+        (c) =>
+          !requiresSpecialAdCategoryCountry(c.specialAdCategories) ||
+          (c.specialAdCategoryCountry?.length ?? 0) > 0,
+        {
+          path: ["specialAdCategoryCountry"],
+          message:
+            "A country is required for the social issues, elections or politics category.",
+        },
+      ),
+    adSet: z
+      .object({
+        dailyBudgetMinorUnits: z.coerce.number().int().positive(),
+        targeting: messagingAdTargetingSchema,
+        startTime: z.string().trim().optional(),
+        endTime: z.string().trim().optional(),
+      })
+      .refine(
+        (a) =>
+          !(a.startTime && a.endTime) ||
+          new Date(a.startTime).getTime() < new Date(a.endTime).getTime(),
+        { path: ["endTime"], message: "endTime must be after startTime" },
+      ),
+    creative: z.object({
+      media: creativeMediaSchema,
+      welcomeMessage: welcomeMessageSchema,
+    }),
+  })
+  // A stored-image `imageKey` must live inside THIS request's own workspace
+  // namespace — reject a forged/foreign/cross-workspace key BEFORE any Meta
+  // call (the business-layer preflight re-checks this again at create time,
+  // this is the earliest, cheapest rejection point).
+  .refine(
+    (req) =>
+      req.creative.media.kind !== "image" ||
+      req.creative.media.imageKey.startsWith(
+        `${buildMessagingAdCreativeStoragePrefix(req.workspaceId)}/`,
+      ),
+    {
+      path: ["creative", "media", "imageKey"],
+      message: "Image is not owned by this workspace.",
+    },
+  )
 export type CreateMessagingAdRequest = z.infer<typeof createMessagingAdRequest>
 
 export const operationIdParamsSchema = z.object({
@@ -134,12 +171,14 @@ export const operationIdParamsSchema = z.object({
   operationId: zodBigintAsString(),
 })
 
-// Uploads are materialized in builder memory, so bound the payload and pin the
-// MIME allowlist to prevent memory exhaustion / arbitrary content type.
-// base64 length ≈ bytes * 4/3, so these caps are ~10MB image / ~100MB video.
-const MAX_IMAGE_BASE64_LENGTH = 14_000_000
+// Video uploads are still materialized in builder memory (base64-in-JSON, at
+// wizard time), so bound the payload and pin the MIME allowlist to prevent
+// memory exhaustion / arbitrary content type. base64 length ≈ bytes * 4/3, so
+// this cap is ~100MB. Images no longer go through this path — the browser
+// uploads straight to presigned S3 (see `creativeMediaSchema` above and
+// `MAX_MESSAGING_AD_IMAGE_BYTES`/`MESSAGING_AD_IMAGE_MIME_ALLOWLIST` for the
+// real byte cap enforced there and at create-time preflight).
 const MAX_VIDEO_BASE64_LENGTH = 140_000_000
-const IMAGE_MIME_RE = /^image\/(jpeg|png|gif|webp)$/
 const VIDEO_MIME_RE = /^video\/(mp4|quicktime)$/
 
 const messagingAdsIntegrationIdentity = {
@@ -147,17 +186,6 @@ const messagingAdsIntegrationIdentity = {
   channel: messagingAdChannelSchema,
   integrationId: zodBigintAsString(),
 }
-
-export const uploadAdImageRequest = z.object({
-  ...messagingAdsIntegrationIdentity,
-  adAccountId: z
-    .string()
-    .trim()
-    .regex(/^act_\d+$/),
-  fileName: z.string().trim().min(1).max(255),
-  mimeType: z.string().trim().regex(IMAGE_MIME_RE),
-  base64: z.string().trim().min(1).max(MAX_IMAGE_BASE64_LENGTH),
-})
 
 export const uploadAdVideoRequest = z.object({
   ...messagingAdsIntegrationIdentity,

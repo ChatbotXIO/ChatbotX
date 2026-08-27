@@ -81,11 +81,13 @@ export function CreateAdWizardDialog({
     defaultValues: wizardDefaultValues,
   })
 
-  // Uploaded media (image_hash / video_id) is created UNDER the ad account
-  // selected at upload time. If the user then switches ad account, that media
-  // belongs to the old account and Meta rejects a creative that references it.
-  // Clear the uploaded media when the ad account changes so the user re-uploads
-  // under the new account.
+  // Uploaded VIDEO media (video_id) is created UNDER the ad account selected
+  // at upload time — if the user then switches ad account, that media
+  // belongs to the old account and Meta rejects a creative that references
+  // it. Images no longer upload to Meta at wizard time (S3 key only, ad-
+  // account-agnostic), but are cleared here too for a consistent "start
+  // fresh" UX. Clear the uploaded media when the ad account changes so the
+  // user re-uploads under the new account.
   const adAccountId = form.watch("adAccountId")
   const prevAdAccountIdRef = useRef(adAccountId)
   useEffect(() => {
@@ -94,7 +96,10 @@ export function CreateAdWizardDialog({
       prevAdAccountIdRef.current !== adAccountId
     ) {
       form.setValue("mediaKind", "")
-      form.setValue("imageHash", "")
+      form.setValue("imageKey", "")
+      form.setValue("fileId", "")
+      form.setValue("imageMimeType", "")
+      form.setValue("imageFileName", "")
       form.setValue("imagePreviewUrl", "")
       form.setValue("videoId", "")
       form.setValue("videoThumbnailHash", "")

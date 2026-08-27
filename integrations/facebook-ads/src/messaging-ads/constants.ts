@@ -66,6 +66,25 @@ export const RESTRICTED_SPECIAL_AD_CATEGORIES: readonly SpecialAdCategory[] = [
   "FINANCIAL_PRODUCTS_SERVICES",
 ]
 
+/**
+ * Categories for which Meta HARD-REQUIRES `special_ad_category_country`.
+ * Per Meta's Special Ad Categories docs this is ONLY
+ * `ISSUES_ELECTIONS_POLITICS` ("you must also set a special_ad_category_country").
+ * For HOUSING/EMPLOYMENT/CREDIT/FINANCIAL_PRODUCTS_SERVICES the country is
+ * OPTIONAL — the docs say it "will default to your listed tax country, if it is
+ * not set" — so never force it there.
+ */
+export const COUNTRY_REQUIRED_SPECIAL_AD_CATEGORIES: readonly SpecialAdCategory[] =
+  ["ISSUES_ELECTIONS_POLITICS"]
+
+/** True when the chosen categories include one that hard-requires a country. */
+export function requiresSpecialAdCategoryCountry(
+  categories: readonly string[],
+): boolean {
+  const required = COUNTRY_REQUIRED_SPECIAL_AD_CATEGORIES as readonly string[]
+  return categories.some((category) => required.includes(category))
+}
+
 // ---------------------------------------------------------------------------
 // Ad set
 // ---------------------------------------------------------------------------
@@ -188,6 +207,51 @@ export const messagingAdConfigByChannel: Record<
     needsInstagramActor: false,
     promotedObjectKind: "pageAndWhatsappNumber",
   },
+}
+
+// ---------------------------------------------------------------------------
+// Ad creative image storage — NOT a Meta API literal, but colocated here (a
+// plain-literal, `ky`/server-import-free file) as the SINGLE shared manifest
+// the browser upload button, the create-time preflight, and the oRPC schema
+// all import, so the byte cap / MIME allowlist / storage prefix can never
+// drift between client and server.
+// ---------------------------------------------------------------------------
+
+/** ~10MB — mirrors the former ~10MB base64-char cap, now a real byte limit checked via `headObject` BEFORE any bytes are buffered. */
+export const MAX_MESSAGING_AD_IMAGE_BYTES = 10 * 1024 * 1024
+
+export const MESSAGING_AD_IMAGE_MIME_ALLOWLIST = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+] as const
+export type MessagingAdImageMimeType =
+  (typeof MESSAGING_AD_IMAGE_MIME_ALLOWLIST)[number]
+
+/**
+ * `File.subType` (and the presigned-upload request `type`) tag for a
+ * messaging-ad creative image upload — the create-time preflight's ownership
+ * proof rejects any `File` row not carrying this tag. Duplicated as a plain
+ * literal (not imported) in `packages/database/src/partials/file.ts`'s
+ * `uploadTypes` enum and `apps/builder/.../features/import/schemas/presign.ts`'s
+ * `subType` union, the same way `messagingAdChannelTypes` duplicates
+ * `adsEligibleChannelTypes` — `database`/`apps/builder` cannot depend on this
+ * integration package for a single string literal.
+ */
+export const MESSAGING_AD_CREATIVE_UPLOAD_KIND = "adsCampaignCreative" as const
+
+/**
+ * Presigned-upload storage prefix for one workspace's ad-creative images —
+ * shared by the browser uploader (`uploadPath`), the upload-path authz
+ * handler, and the create-time preflight's ownership check so they can never
+ * drift apart. No trailing slash (callers append one when checking a strict
+ * prefix match).
+ */
+export function buildMessagingAdCreativeStoragePrefix(
+  workspaceId: string,
+): string {
+  return `public/space/${workspaceId}/ads-campaign/creatives`
 }
 
 export type PromotedObject = {

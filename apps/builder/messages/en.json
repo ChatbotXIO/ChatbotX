@@ -5603,6 +5603,7 @@
         "uploadVideo": "Upload video"
       },
       "uploading": "Uploading...",
+      "imageUploadFailed": "Image upload failed. Please try again.",
       "videoProcessing": "Processing video...",
       "videoReady": "Video ready",
       "videoProcessingFailed": "Video processing failed. Please try a different file.",

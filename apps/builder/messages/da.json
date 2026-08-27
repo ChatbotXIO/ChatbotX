@@ -5603,6 +5603,7 @@
         "uploadVideo": "Upload video"
       },
       "uploading": "Uploader...",
+      "imageUploadFailed": "Billedupload mislykkedes. Prøv igen.",
       "videoProcessing": "Behandler video...",
       "videoReady": "Video klar",
       "videoProcessingFailed": "Videobehandling mislykkedes. Prøv en anden fil.",

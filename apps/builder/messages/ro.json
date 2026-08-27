@@ -5603,6 +5603,7 @@
         "uploadVideo": "Încarcă video"
       },
       "uploading": "Se încarcă...",
+      "imageUploadFailed": "Încărcarea imaginii a eșuat. Încercați din nou.",
       "videoProcessing": "Se procesează videoclipul...",
       "videoReady": "Videoclip pregătit",
       "videoProcessingFailed": "Procesarea videoclipului a eșuat. Încearcă un alt fișier.",

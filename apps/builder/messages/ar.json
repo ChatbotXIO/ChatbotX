@@ -5603,6 +5603,7 @@
         "uploadVideo": "رفع فيديو"
       },
       "uploading": "جارٍ الرفع...",
+      "imageUploadFailed": "فشل تحميل الصورة. يرجى المحاولة مرة أخرى.",
       "videoProcessing": "جارٍ معالجة الفيديو...",
       "videoReady": "الفيديو جاهز",
       "videoProcessingFailed": "فشلت معالجة الفيديو. يرجى تجربة ملف آخر.",

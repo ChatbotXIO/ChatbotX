@@ -1,3 +1,4 @@
+import { requiresSpecialAdCategoryCountry } from "@chatbotx.io/integration-facebook-ads/messaging-ads/constants"
 import { z } from "zod"
 
 export type WizardMessagingAdChannel = "messenger" | "instagram" | "whatsapp"
@@ -96,7 +97,13 @@ const wizardObjectSchema = z.object({
   endTime: z.string().trim(),
 
   mediaKind: z.enum(["", "image", "video"]),
-  imageHash: z.string().trim(),
+  // The S3 key + minted `File` row id from the presigned upload — never a
+  // Meta `image_hash` (that is derived transiently at create time, see
+  // `resolveStoredImageBytes` in `@chatbotx.io/business`).
+  imageKey: z.string().trim(),
+  fileId: z.string().trim(),
+  imageMimeType: z.string().trim(),
+  imageFileName: z.string().trim(),
   imagePreviewUrl: z.string().trim(),
   imageLink: z.string().trim(),
   imageMessage: z.string().trim().max(500),
@@ -133,9 +140,11 @@ export function buildWizardFormSchema(channel: WizardMessagingAdChannel) {
         message: "Select a Facebook Page",
       })
     }
-    // Meta requires a country whenever ANY special ad category is selected.
+    // Meta requires a country ONLY for the social issues/elections/politics
+    // category — for HOUSING/EMPLOYMENT/CREDIT/FINANCIAL it defaults to the ad
+    // account's tax country, so it stays optional there.
     if (
-      values.specialAdCategories.length > 0 &&
+      requiresSpecialAdCategoryCountry(values.specialAdCategories) &&
       values.specialAdCategoryCountry.length === 0
     ) {
       ctx.addIssue({
@@ -146,7 +155,7 @@ export function buildWizardFormSchema(channel: WizardMessagingAdChannel) {
     }
     if (
       values.mediaKind === "image" &&
-      !(values.imageHash && values.imageLink)
+      !(values.imageKey && values.fileId && values.imageLink)
     ) {
       ctx.addIssue({
         code: "custom",
@@ -213,7 +222,10 @@ export const wizardDefaultValues: WizardFormValues = {
   startTime: "",
   endTime: "",
   mediaKind: "",
-  imageHash: "",
+  imageKey: "",
+  fileId: "",
+  imageMimeType: "",
+  imageFileName: "",
   imagePreviewUrl: "",
   imageLink: "",
   imageMessage: "",
@@ -247,7 +259,8 @@ export const STEP_FIELDS: (keyof WizardFormValues)[][] = [
   ],
   [
     "mediaKind",
-    "imageHash",
+    "imageKey",
+    "fileId",
     "imageLink",
     "videoId",
     "videoReady",

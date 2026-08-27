@@ -5603,6 +5603,7 @@
         "uploadVideo": "動画をアップロード"
       },
       "uploading": "アップロード中...",
+      "imageUploadFailed": "画像のアップロードに失敗しました。もう一度お試しください。",
       "videoProcessing": "動画を処理中...",
       "videoReady": "動画の準備ができました",
       "videoProcessingFailed": "動画の処理に失敗しました。別のファイルをお試しください。",

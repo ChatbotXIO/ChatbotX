@@ -92,7 +92,10 @@ export function buildCreateMessagingAdRequest(
         values.mediaKind === "image"
           ? {
               kind: "image",
-              imageHash: values.imageHash,
+              imageKey: values.imageKey,
+              fileId: values.fileId,
+              imageMimeType: values.imageMimeType || undefined,
+              imageFileName: values.imageFileName || undefined,
               link: values.imageLink,
               message: values.imageMessage || undefined,
               headline: values.imageHeadline || undefined,

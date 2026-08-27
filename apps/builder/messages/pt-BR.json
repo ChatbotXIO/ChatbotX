@@ -5603,6 +5603,7 @@
         "uploadVideo": "Enviar vídeo"
       },
       "uploading": "Enviando...",
+      "imageUploadFailed": "Falha ao enviar a imagem. Tente novamente.",
       "videoProcessing": "Processando vídeo...",
       "videoReady": "Vídeo pronto",
       "videoProcessingFailed": "Falha ao processar o vídeo. Tente um arquivo diferente.",

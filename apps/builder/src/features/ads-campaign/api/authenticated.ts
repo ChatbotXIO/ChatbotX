@@ -26,7 +26,6 @@ import {
   messagingAdChannelSchema,
   messagingAdsInsightsRequest,
   operationIdParamsSchema,
-  uploadAdImageRequest,
   uploadAdVideoRequest,
   videoStatusRequest,
 } from "../schema/wizard"
@@ -221,31 +220,6 @@ export const adsCampaignAuthenticatedAPI = {
     .handler(({ input: { refresh, ...input } }) =>
       getCachedMessagingAdAccountDetails({ ...input, forceRefresh: refresh }),
     ),
-
-  uploadAdImage: authorizedAPI
-    .route({
-      method: "POST",
-      path: "/workspaces/{workspaceId}/ads-campaign/upload-image",
-      summary: "Upload a creative image to Meta — returns the image_hash",
-      tags: ["AdsCampaign"],
-    })
-    .input(uploadAdImageRequest)
-    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(z.object({ imageHash: z.string() }))
-    .handler(async ({ input }) => {
-      await assertWorkspaceSuperAdmin(input.workspaceId)
-      const { ctx, integration } =
-        await getMessagingAdsContextForIntegration(input)
-      return integration.runAction("uploadMessagingAdImage", {
-        ctx,
-        props: {
-          adAccountId: input.adAccountId,
-          fileName: input.fileName,
-          mimeType: input.mimeType,
-          bytes: new Uint8Array(Buffer.from(input.base64, "base64")),
-        },
-      })
-    }),
 
   uploadAdVideo: authorizedAPI
     .route({

@@ -1,15 +1,17 @@
-import type {
-  MessagingAdChannel,
-  MessagingAdCreativeMediaInput,
-  MessagingAdOperationInput,
-  MessagingAdTargetingInput,
-  MessagingAdWelcomeMessageInput,
+import {
+  isStoredImageMedia,
+  type MessagingAdChannel,
+  type MessagingAdCreativeMediaInput,
+  type MessagingAdOperationInput,
+  type MessagingAdTargetingInput,
+  type MessagingAdWelcomeMessageInput,
 } from "@chatbotx.io/database/partials"
 import {
   integrationMessengerRepository,
   messagingAdOperationRepository,
 } from "@chatbotx.io/database/repositories"
 import type { MessagingAdOperationModel } from "@chatbotx.io/database/types"
+import { uploader } from "@chatbotx.io/filesystem"
 import {
   buildPromotedObject,
   type FacebookAdsAuthValue,
@@ -35,6 +37,10 @@ import {
   messagingAdsConnectionService,
 } from "../messaging-ads-connection"
 import { mapCreativeMedia, mapTargeting, mapWelcomeMessage } from "./mappers"
+import {
+  type ResolvedStoredImage,
+  resolveStoredImageBytes,
+} from "./media-preflight"
 import {
   type MessagingAdChannelAssets,
   resolveMessagingAdChannelAssets,
@@ -276,9 +282,28 @@ class MessagingAdCampaignService {
     const config = messagingAdConfigByChannel[this.channelOf(record)]
 
     try {
+      // Bounded preflight BEFORE any Graph POST (`ensureCampaign` is the
+      // first one) — for a stored-image draft, re-verify ownership + size +
+      // content on EVERY call (first create AND every retry) so a
+      // forged/deleted/oversized object never creates an orphan
+      // campaign/ad-set, and a retry always re-derives fresh bytes (the
+      // image_hash itself is never persisted).
+      const media = record.input.creative.media
+      const resolvedImage = isStoredImageMedia(media)
+        ? await resolveStoredImageBytes({
+            workspaceId: record.workspaceId,
+            media,
+          })
+        : undefined
       record = await this.ensureCampaign(record, ctx)
       record = await this.ensureAdSet(record, ctx, config, assets)
-      record = await this.ensureAdCreative(record, ctx, config, assets)
+      record = await this.ensureAdCreative(
+        record,
+        ctx,
+        config,
+        assets,
+        resolvedImage,
+      )
       record = await this.ensureAd(record, ctx)
       return record
     } catch (error) {
@@ -390,10 +415,18 @@ class MessagingAdCampaignService {
     ctx: MessagingAdsCtx,
     config: (typeof messagingAdConfigByChannel)[MessagingAdChannel],
     assets: MessagingAdChannelAssets,
+    resolvedImage: ResolvedStoredImage | undefined,
   ): Promise<MessagingAdOperationModel> {
     if (record.metaAdCreativeId) {
       return record
     }
+    const media = record.input.creative.media
+    const resolvedImageHash = await this.resolveImageHash(
+      record,
+      ctx,
+      media,
+      resolvedImage,
+    )
     const creative =
       await facebookAdsIntegration.runAction<"createMessagingAdCreative">(
         "createMessagingAdCreative",
@@ -406,7 +439,7 @@ class MessagingAdCampaignService {
             instagramActorId: config.needsInstagramActor
               ? assets.instagramActorId
               : undefined,
-            media: mapCreativeMedia(record.input.creative.media),
+            media: mapCreativeMedia(media, resolvedImageHash),
             pageWelcomeMessage: mapWelcomeMessage(
               record.input.creative.welcomeMessage,
             ),
@@ -430,6 +463,45 @@ class MessagingAdCampaignService {
         createState: "creativeCreated",
       }
     )
+  }
+
+  /**
+   * Stored-image creatives never persist an `image_hash` — it is derived
+   * fresh at create time via the integration action (never the low-level
+   * `apis/adimages.ts` directly, so the Graph auth boundary stays with
+   * `runAction`). Legacy `imageHash` drafts and the video branch need no
+   * Meta upload here.
+   */
+  private async resolveImageHash(
+    record: MessagingAdOperationModel,
+    ctx: MessagingAdsCtx,
+    media: MessagingAdCreativeMediaInput,
+    resolvedImage: ResolvedStoredImage | undefined,
+  ): Promise<string | undefined> {
+    if (media.kind !== "image" || !isStoredImageMedia(media)) {
+      return
+    }
+    if (!resolvedImage) {
+      // `runCreateSteps` always preflights a stored-image draft before
+      // calling `ensureAdCreative` — unreachable in practice.
+      throw new Error(
+        "ensureAdCreative: stored-image media missing preflight bytes",
+      )
+    }
+    const { imageHash } =
+      await facebookAdsIntegration.runAction<"uploadMessagingAdImage">(
+        "uploadMessagingAdImage",
+        {
+          ctx,
+          props: {
+            adAccountId: record.adAccountId,
+            fileName: resolvedImage.fileName,
+            mimeType: resolvedImage.mimeType,
+            bytes: resolvedImage.bytes,
+          },
+        },
+      )
+    return imageHash
   }
 
   private async ensureAd(
@@ -713,6 +785,21 @@ class MessagingAdCampaignService {
         identity,
         errors,
       )
+    }
+
+    // Best-effort release of the stored creative image (mirrors the
+    // Meta-archive best-effort pattern above, surfaced via the same
+    // `cleanupError`) — retained until now so a retry could still re-derive
+    // the image_hash from it.
+    const media = record.input.creative.media
+    if (isStoredImageMedia(media)) {
+      try {
+        await uploader.deleteObject(media.imageKey)
+      } catch (error) {
+        errors.push(
+          `image(${media.imageKey}): ${toPublicErrorMessage(error, "Could not delete the stored creative image.")}`,
+        )
+      }
     }
 
     await messagingAdOperationRepository.setCleanupError({

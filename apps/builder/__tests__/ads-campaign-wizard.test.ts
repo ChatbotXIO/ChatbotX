@@ -12,7 +12,10 @@ const baseValues = {
   dailyBudgetMinorUnits: 2000,
   countries: ["US"],
   mediaKind: "image" as const,
-  imageHash: "hash_1",
+  imageKey: "public/space/ws_1/ads-campaign/creatives/abc123",
+  fileId: "file_1",
+  imageMimeType: "image/png",
+  imageFileName: "photo.png",
   imageLink: "https://example.com",
   welcomeMessageType: "default" as const,
 }
@@ -26,7 +29,8 @@ describe("wizardFormSchema", () => {
     const result = wizardFormSchema.safeParse({
       ...baseValues,
       mediaKind: "",
-      imageHash: "",
+      imageKey: "",
+      fileId: "",
       imageLink: "",
     })
     expect(result.success).toBe(false)
@@ -69,6 +73,33 @@ describe("wizardFormSchema", () => {
     })
     expect(result.success).toBe(false)
   })
+
+  test("does NOT require a country for HOUSING (Meta defaults it to the tax country)", () => {
+    const result = wizardFormSchema.safeParse({
+      ...baseValues,
+      specialAdCategories: ["HOUSING"],
+      specialAdCategoryCountry: [],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  test("requires a country for ISSUES_ELECTIONS_POLITICS", () => {
+    const result = wizardFormSchema.safeParse({
+      ...baseValues,
+      specialAdCategories: ["ISSUES_ELECTIONS_POLITICS"],
+      specialAdCategoryCountry: [],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("accepts ISSUES_ELECTIONS_POLITICS once a country is provided", () => {
+    const result = wizardFormSchema.safeParse({
+      ...baseValues,
+      specialAdCategories: ["ISSUES_ELECTIONS_POLITICS"],
+      specialAdCategoryCountry: ["US"],
+    })
+    expect(result.success).toBe(true)
+  })
 })
 
 describe("buildCreateMessagingAdRequest", () => {
@@ -80,7 +111,10 @@ describe("buildCreateMessagingAdRequest", () => {
     })
     expect(request.creative.media).toEqual({
       kind: "image",
-      imageHash: "hash_1",
+      imageKey: "public/space/ws_1/ads-campaign/creatives/abc123",
+      fileId: "file_1",
+      imageMimeType: "image/png",
+      imageFileName: "photo.png",
       link: "https://example.com",
       message: undefined,
       headline: undefined,

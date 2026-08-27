@@ -108,6 +108,7 @@ export type AIConversationEmbeddingModel =
   typeof schema.aiConversationEmbeddingModel.$inferSelect
 export type AIEmbeddingModel = typeof schema.aiEmbeddingModel.$inferSelect
 export type AIFileModel = typeof schema.aiFileModel.$inferSelect
+export type FileModel = typeof schema.fileModel.$inferSelect
 export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect

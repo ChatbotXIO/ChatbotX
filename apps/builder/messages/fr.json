@@ -5603,6 +5603,7 @@
         "uploadVideo": "Importer une vidéo"
       },
       "uploading": "Importation en cours...",
+      "imageUploadFailed": "Échec du téléchargement de l'image. Veuillez réessayer.",
       "videoProcessing": "Traitement de la vidéo en cours...",
       "videoReady": "Vidéo prête",
       "videoProcessingFailed": "Échec du traitement de la vidéo. Veuillez essayer un autre fichier.",

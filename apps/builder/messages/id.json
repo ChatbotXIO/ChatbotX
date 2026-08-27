@@ -5603,6 +5603,7 @@
         "uploadVideo": "Unggah video"
       },
       "uploading": "Mengunggah...",
+      "imageUploadFailed": "Gagal mengunggah gambar. Silakan coba lagi.",
       "videoProcessing": "Memproses video...",
       "videoReady": "Video siap",
       "videoProcessingFailed": "Pemrosesan video gagal. Silakan coba file lain.",

@@ -1,7 +1,8 @@
-import type {
-  MessagingAdCreativeMediaInput,
-  MessagingAdTargetingInput,
-  MessagingAdWelcomeMessageInput,
+import {
+  isLegacyImageMedia,
+  type MessagingAdCreativeMediaInput,
+  type MessagingAdTargetingInput,
+  type MessagingAdWelcomeMessageInput,
 } from "@chatbotx.io/database/partials"
 import {
   type CreativeMedia,
@@ -26,16 +27,30 @@ export function mapTargeting(
   return enforceSpecialAdCategoryTargeting(targeting, specialAdCategories)
 }
 
-/** Domain media snapshot -> the exact Graph `link_data`/`video_data` creative media shape. */
+/**
+ * Domain media snapshot -> the exact Graph `link_data`/`video_data` creative
+ * media shape. `resolvedImageHash` is the transient, never-persisted
+ * `image_hash` derived at create time (legacy `imageHash` rows already carry
+ * their own hash and never need one).
+ */
 export function mapCreativeMedia(
   input: MessagingAdCreativeMediaInput,
+  resolvedImageHash?: string,
 ): CreativeMedia {
   if (input.kind === "image") {
+    const imageHash = isLegacyImageMedia(input)
+      ? input.imageHash
+      : resolvedImageHash
+    if (!imageHash) {
+      throw new Error(
+        "mapCreativeMedia: a stored-image creative requires a resolved image_hash",
+      )
+    }
     return {
       kind: "image",
       linkData: {
         link: input.link,
-        image_hash: input.imageHash,
+        image_hash: imageHash,
         ...(input.message ? { message: input.message } : {}),
         ...(input.headline ? { name: input.headline } : {}),
         ...(input.description ? { description: input.description } : {}),

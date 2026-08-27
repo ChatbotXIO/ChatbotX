@@ -5603,6 +5603,7 @@
         "uploadVideo": "Subir video"
       },
       "uploading": "Subiendo...",
+      "imageUploadFailed": "Error al subir la imagen. Inténtalo de nuevo.",
       "videoProcessing": "Procesando video...",
       "videoReady": "Video listo",
       "videoProcessingFailed": "Error al procesar el video. Prueba con otro archivo.",

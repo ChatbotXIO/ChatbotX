@@ -50,6 +50,7 @@
     "date-fns-tz": "^3.2.0",
     "dot-prop": "^10.1.0",
     "drizzle-orm": "1.0.0-beta.22",
+    "image-size": "^2.0.2",
     "jose": "^6.2.3",
     "libphonenumber-js": "^1.12.42",
     "qrcode": "^1.5.4",

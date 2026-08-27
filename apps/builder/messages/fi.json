@@ -5603,6 +5603,7 @@
         "uploadVideo": "Lataa video"
       },
       "uploading": "Ladataan...",
+      "imageUploadFailed": "Kuvan lataus epäonnistui. Yritä uudelleen.",
       "videoProcessing": "Käsitellään videota...",
       "videoReady": "Video valmis",
       "videoProcessingFailed": "Videon käsittely epäonnistui. Kokeile toista tiedostoa.",

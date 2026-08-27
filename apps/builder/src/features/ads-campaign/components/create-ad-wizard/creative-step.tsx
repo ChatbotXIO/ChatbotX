@@ -1,10 +1,17 @@
 "use client"
 
-import { messagingAdConfigByChannel } from "@chatbotx.io/integration-facebook-ads"
+import {
+  buildMessagingAdCreativeStoragePrefix,
+  MAX_MESSAGING_AD_IMAGE_BYTES,
+  MESSAGING_AD_CREATIVE_UPLOAD_KIND,
+  MESSAGING_AD_IMAGE_MIME_ALLOWLIST,
+  messagingAdConfigByChannel,
+} from "@chatbotx.io/integration-facebook-ads"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
 import { Loader2Icon, UploadIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
@@ -68,38 +75,32 @@ export function CreativeStep({ workspaceId, channel, integrationId }: Props) {
     }
   }, [])
 
-  const handleImageUpload = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0]
-      if (!(file && adAccountId)) {
-        return
-      }
-      setIsUploading(true)
-      try {
-        const base64 = await readFileAsBase64(file)
-        const previewUrl = URL.createObjectURL(file)
-        const result = await client.adsCampaignAPI.uploadAdImage({
-          workspaceId,
-          channel,
-          integrationId,
-          adAccountId,
-          fileName: file.name,
-          mimeType: file.type,
-          base64,
-        })
-        setValue("mediaKind", "image", { shouldValidate: true })
-        setValue("imageHash", result.imageHash, { shouldValidate: true })
-        setValue("imagePreviewUrl", previewUrl)
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : t("messages.error"),
-        )
-      } finally {
-        setIsUploading(false)
-      }
+  // Presigned S3 upload (browser -> our storage directly) — no bytes transit
+  // the builder server, and no Meta call happens at wizard time. Only the S3
+  // key + the minted `File` row id are stored in form state; the Meta
+  // `image_hash` is derived transiently at create time from the stored
+  // object (see `resolveStoredImageBytes` in `@chatbotx.io/business`).
+  const handleImageUploadSuccess = useCallback(
+    (
+      path: string,
+      file: File,
+      _publicUrl: string,
+      meta: { fileId: string; mimeType: string },
+    ) => {
+      const previewUrl = URL.createObjectURL(file)
+      setValue("mediaKind", "image", { shouldValidate: true })
+      setValue("imageKey", path, { shouldValidate: true })
+      setValue("fileId", meta.fileId, { shouldValidate: true })
+      setValue("imageMimeType", meta.mimeType)
+      setValue("imageFileName", file.name)
+      setValue("imagePreviewUrl", previewUrl)
     },
-    [adAccountId, channel, integrationId, setValue, t, workspaceId],
+    [setValue],
   )
+
+  const handleImageUploadError = useCallback(() => {
+    toast.error(t("adsCampaign.creative.imageUploadFailed"))
+  }, [t])
 
   const pollVideoStatus = useCallback(
     async (videoId: string) => {
@@ -192,26 +193,18 @@ export function CreativeStep({ workspaceId, channel, integrationId }: Props) {
         <div className="space-y-1.5">
           <Label>{t("adsCampaign.creative.mediaType.label")}</Label>
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              disabled={!adAccountId || isUploading}
-              // Renders a <label> (wrapping the hidden file input), not a native
-              // <button> — tell Base UI so it drops native-button semantics.
-              nativeButton={false}
-              render={
-                <label>
-                  <UploadIcon className="size-3.5" />
-                  {t("adsCampaign.creative.mediaType.uploadImage")}
-                  <input
-                    accept="image/*"
-                    className="sr-only"
-                    disabled={!adAccountId}
-                    onChange={handleImageUpload}
-                    type="file"
-                  />
-                </label>
-              }
-              type="button"
-              variant="outline"
+            <DirectUploadButton
+              accept={MESSAGING_AD_IMAGE_MIME_ALLOWLIST.join(",")}
+              disabled={!adAccountId}
+              label={t("adsCampaign.creative.mediaType.uploadImage")}
+              maxSize={MAX_MESSAGING_AD_IMAGE_BYTES}
+              multiple={false}
+              onUploadError={handleImageUploadError}
+              onUploadSuccess={handleImageUploadSuccess}
+              uploadPath={buildMessagingAdCreativeStoragePrefix(workspaceId)}
+              uploadSubType={MESSAGING_AD_CREATIVE_UPLOAD_KIND}
+              uploadType={MESSAGING_AD_CREATIVE_UPLOAD_KIND}
+              workspaceId={workspaceId}
             />
             <Button
               disabled={!adAccountId || isUploading}
