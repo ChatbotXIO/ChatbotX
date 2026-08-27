@@ -1416,9 +1416,19 @@
         "description": "Questo token viene mostrato una sola volta. Conservalo in modo sicuro — non potrai più visualizzarlo in seguito.",
         "done": "Fatto"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "actions": {
+    "retry": "Riprova",
     "copy": "Copia",
     "copyUrl": "Copia URL",
     "actions": "Azioni",
@@ -1490,6 +1500,7 @@
     "reset": "Reimposta",
     "save": "Salva",
     "selectAll": "Seleziona tutto",
+    "unselect": "Deseleziona",
     "selectRow": "Seleziona riga",
     "sendFlow": "Invia flusso",
     "sendMessage": "Invia messaggio",
@@ -1576,7 +1587,8 @@
     "skip": "Salta"
   },
   "admins": {
-    "title": "Amministratori"
+    "title": "Amministratori",
+    "adminActivityLogs": "Registro attività amministratori"
   },
   "assignAdmin": {
     "assignConversation": "Assegna conversazione",
@@ -1960,8 +1972,8 @@
       "blocked": "Bloccato",
       "noAdminReply": "Nessuna risposta dell'amministratore",
       "contactCreatedAt": "Contatto creato il",
-      "fromCtwaAd": "Da un'inserzione Click to WhatsApp",
-      "ctwaConversion": "Conversione CTWA",
+      "fromCtwaAd": "Da un'inserzione",
+      "ctwaConversion": "Conversione inserzione",
       "lastUserInputTypes": {
         "text": "Testo",
         "location": "Posizione",
@@ -1990,7 +2002,7 @@
       "customFields": "Campi personalizzati",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Inserzioni Click to WhatsApp"
+      "ctwaAds": "Inserzioni"
     },
     "languages": {
       "ar": "Arabo",
@@ -2029,9 +2041,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "Avvii conversazione CTWA",
-        "leads": "Lead qualificati CTWA",
-        "purchases": "Acquirenti CTWA"
+        "conversations": "Avvii conversazione da inserzione",
+        "leads": "Lead qualificati da inserzione",
+        "purchases": "Acquirenti da inserzione"
       },
       "adPrefix": "inserzione",
       "allAds": "tutte le inserzioni"
@@ -2170,12 +2182,14 @@
       "whatsappFlow": "Flusso WhatsApp",
       "appointmentScheduling": "Pianificazione appuntamenti",
       "triggerN8n": "Trigger n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Invia evento Meta CAPI",
       "import": "Importa flusso",
       "export": "Esporta",
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
-      "importJsonOnly": "Solo file JSON"
+      "importJsonOnly": "Solo file JSON",
+      "adsConversions": "Annunci e Meta Conversions",
+      "trackAdsLead": "Traccia lead pubblicitario",
+      "trackAdsPurchase": "Traccia acquisto pubblicitario"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -2333,6 +2347,11 @@
   },
   "ads": {
     "title": "Inserzioni",
+    "dashboardNav": {
+      "whatsapp": "Annunci Click-to-WhatsApp",
+      "messenger": "Annunci Click-to-Messenger",
+      "instagram": "Annunci Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Collega account pubblicitario",
       "adAccountName": "Nome account pubblicitario",
@@ -2358,6 +2377,8 @@
       "title": "Eventi di conversione",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Gestisci account pubblicitari",
@@ -2365,11 +2386,16 @@
       "selectAll": "Seleziona tutto",
       "whatsappAsset": "Asset WhatsApp",
       "selectWhatsappAsset": "Seleziona asset WhatsApp",
+      "selectIntegration": "Integrazione",
+      "selectIntegrationPlaceholder": "Seleziona integrazione",
+      "noIntegrationsConnected": "Nessuna integrazione connessa per questo canale al momento.",
+      "connectIntegration": "Collega un canale",
       "templates": "Modelli",
       "selectTemplates": "Seleziona modelli",
       "noTemplates": "Nessun modello approvato trovato.",
       "existingRules": "Regole esistenti",
       "noRules": "Nessuna regola di conversione per questo asset WhatsApp per ora.",
+      "noRulesGeneric": "Nessuna regola di conversione per questa integrazione per ora.",
       "toggleRule": "Attiva o disattiva la regola",
       "deleteRule": "Elimina regola",
       "qualifyingTemplateMessageSent": "Viene inviato il messaggio modello qualificante",
@@ -2409,24 +2435,26 @@
         "title": "Monitora i lead qualificati",
         "question": "In quale punto della conversazione vuoi qualificare un contatto come lead?",
         "when": "Quando",
-        "then": "Allora contrassegna il lead CTWA come"
+        "then": "Allora contrassegna il lead CTWA come",
+        "thenGeneric": "Allora contrassegna il lead come"
       },
       "trackPurchases": {
         "title": "Monitora gli acquisti",
         "question": "Quale modello conferma un acquisto?",
         "when": "Quando",
         "then": "Allora",
-        "noValueNote": "Un acquisto basato su regole registra una conversione di Acquisto senza un valore d'ordine: conta per gli acquisti, ma aggiunge 0 al fatturato. Il valore dell'ordine viene rilevato solo dagli Eventi automatici di Meta."
+        "noValueNote": "Un acquisto basato su regole registra una conversione di Acquisto senza un valore d'ordine: conta per gli acquisti, ma aggiunge 0 al fatturato. Il valore dell'ordine viene rilevato solo dagli Eventi automatici di Meta.",
+        "questionGeneric": "In quale momento della conversazione vuoi registrare un acquisto?"
       }
     },
     "analytics": {
-      "title": "Analisi CTWA",
+      "title": "Analisi degli annunci",
       "funnelOverview": "Panoramica del funnel",
       "conversationsStarted": "Conversazioni avviate",
       "qualifiedLeads": "Lead qualificati",
       "purchases": "Acquisti",
       "adSpend": "Spesa pubblicitaria",
-      "spendAccountLevelNote": "La spesa viene riportata a livello di account pubblicitario Meta; quando è selezionato un account WhatsApp, le inserzioni con sola spesa e nessuna attività di funnel per quell'account vengono nascoste.",
+      "spendAccountLevelNote": "La spesa viene riportata a livello di account pubblicitario Meta; quando è selezionato un account, le inserzioni con sola spesa e nessuna attività di funnel per quell'account vengono nascoste.",
       "revenue": "Fatturato",
       "roas": "ROAS",
       "revenueCurrencyNote": "Il fatturato presuppone una sola valuta (USD). Gli account pubblicitari con più valute non sono ancora aggregati.",
@@ -2455,21 +2483,27 @@
       "adAccountFilter": {
         "all": "Tutti gli account pubblicitari",
         "label": "Account pubblicitario",
-        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario."
+        "unavailable": "Impossibile caricare gli account pubblicitari: controlla la connessione Ads di questa integrazione, oppure la connessione Facebook Ads del workspace, nelle impostazioni."
+      },
+      "channelFilter": {
+        "label": "Canale",
+        "allAccounts": "Tutti gli account",
+        "allChannels": "Tutti i canali"
       },
       "retarget": "Retarget",
       "thoseWhoPurchased": "Chi ha acquistato",
       "thoseWhoStartedConversation": "Chi ha avviato una conversazione",
       "sendWhatsappBroadcast": "Invia broadcast WhatsApp",
+      "retargetOnChannel": "Retargeting su {channel}",
       "from": "Da",
       "to": "A",
       "unattributed": "Non attribuito",
       "retargetDialog": {
-        "title": "Retarget dei contatti CTWA",
+        "title": "Retarget dei contatti degli annunci",
         "createAudience": "Crea pubblico",
         "useExistingAudience": "Usa un pubblico esistente",
         "audienceName": "Nome del pubblico",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Annunci",
         "confirm": "Avvia sincronizzazione",
         "success": "Sincronizzazione del pubblico di retargeting in coda.",
         "error": "Impossibile accodare la sincronizzazione del pubblico di retargeting."
@@ -2481,7 +2515,7 @@
         "failed": "Non riuscito",
         "skippedNoScope": "Ignorato (nessun ambito)",
         "skippedRegion": "Ignorato (regione)",
-        "noScopeWarning": "Alcune conversioni non sono state inviate perché a questo account WhatsApp manca l'autorizzazione per gli eventi. Ricollegalo per abilitare il reporting degli Eventi automatici.",
+        "noScopeWarning": "Alcune conversioni non sono state inviate perché a questo account manca l'autorizzazione per gli eventi. Ricollegalo per abilitare il reporting degli Eventi automatici.",
         "reconnectCta": "Ricollega account",
         "empty": "Nessun evento di conversione in questo intervallo per ora."
       },
@@ -2494,7 +2528,8 @@
         "contactName": "Nome del contatto",
         "phone": "Telefono",
         "adId": "ID inserzione",
-        "occurredAt": "Avvenuto il"
+        "occurredAt": "Avvenuto il",
+        "channel": "Canale"
       },
       "empty": "Nessun dato per ora. Collega un account pubblicitario e inizia a monitorare le conversioni."
     }
@@ -2909,6 +2944,8 @@
     "editMessagePlaceholder": "Modifica il messaggio...",
     "saveEdit": "Salva",
     "cancelEdit": "Annulla",
+    "replaceAttachment": "Sostituisci allegato",
+    "addAttachment": "Aggiungi allegato",
     "failedToCopy": "Impossibile copiare",
     "failedToPreviewImage": "Impossibile visualizzare l'anteprima dell'immagine",
     "loadingData": "Caricamento dati...",
@@ -3746,7 +3783,9 @@
       "startAnotherFlow": "Avvia un altro flusso",
       "notifyAdmins": "Notifica gli amministratori",
       "transferConversationToHuman": "Trasferisci la conversazione a un operatore",
-      "sendMetaCapiEvent": "Invia evento Meta CAPI"
+      "sendMetaCapiEvent": "Invia evento Meta CAPI",
+      "trackAdsLead": "Traccia lead pubblicitario",
+      "trackAdsPurchase": "Traccia acquisto pubblicitario"
     },
     "triggerGoesOff": "Il trigger si attiva",
     "before": "Prima",
@@ -3781,7 +3820,23 @@
     "exportTakingLongDescription": "L'esportazione è ancora in corso. Puoi chiudere questa finestra e ricontrollare tra qualche minuto nella cronologia delle esportazioni."
   },
   "auditLogs": {
-    "title": "Registri di controllo"
+    "title": "Registri di controllo",
+    "columns": {
+      "user": "Utente",
+      "action": "Azione",
+      "detail": "Dettaglio",
+      "ipAddress": "Indirizzo IP",
+      "date": "Data"
+    },
+    "filters": {
+      "from": "Da",
+      "to": "A",
+      "user": "Utente",
+      "userPlaceholder": "ID utente",
+      "keyword": "Parola chiave",
+      "keywordPlaceholder": "Azione o dettaglio",
+      "allAdmins": "Tutti gli amministratori"
+    }
   },
   "customFields": {
     "title": "Campi personalizzati",
@@ -5245,7 +5300,16 @@
       "contentCategory": "Categoria del contenuto",
       "contentCategoryPlaceholder": "La categoria del contenuto associato all'evento",
       "contentName": "Nome del contenuto",
-      "contentNamePlaceholder": "Il nome della pagina o del prodotto associato all'evento"
+      "contentNamePlaceholder": "Il nome della pagina o del prodotto associato all'evento",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Incolla l'ID dataset da Gestione eventi",
     "saveDataset": "Salva",
@@ -5292,6 +5356,13 @@
     },
     "whatsapp": {
       "connect": "Connetti"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Registra una conversione solo per i contatti con attribuzione a un annuncio click-to-WhatsApp o a un referral pubblicitario Meta. Non ha effetto sugli altri contatti."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {
@@ -5413,6 +5484,218 @@
         "win": "Vinto",
         "lose": "Nessun premio",
         "empty": "Ancora nessun registro di partite"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Libreria multimediale",
+    "searchPlaceholder": "Cerca file...",
+    "newFolder": "Nuova cartella",
+    "recent": "Recenti",
+    "favourite": "Preferiti",
+    "upload": "Carica",
+    "done": "Fatto",
+    "deleteFolder": "Elimina cartella",
+    "renameFolder": "Rinomina cartella",
+    "noFiles": "Nessun file trovato",
+    "noFolders": "Nessuna cartella ancora",
+    "folderNamePlaceholder": "Nome cartella",
+    "confirmDeleteFolder": "Eliminare la cartella e tutti i suoi file?",
+    "confirmDeleteFolderDescription": "Tutti i file in questa cartella verranno eliminati permanentemente dal server. Questa azione non può essere annullata.",
+    "confirmDeleteFile": "Eliminare il file?",
+    "confirmDeleteFileDescription": "Questo file verrà eliminato permanentemente dal server.",
+    "addToFavourites": "Aggiungi ai preferiti",
+    "removeFromFavourites": "Rimuovi dai preferiti",
+    "deleteFile": "Elimina file",
+    "selectOnlyOneFile": "Puoi selezionare solo 1 file",
+    "confirmDeleteFiles": "{count, plural, =1 {Eliminare 1 file?} other {Eliminare # file?}}",
+    "confirmDeleteFilesDescription": "Questi file verranno eliminati permanentemente dal server. Questa azione non può essere annullata.",
+    "filesCount": "{count, plural, =0 {Nessun file} =1 {1 file} other {# file}}",
+    "openMediaLibrary": "Apri libreria multimediale",
+    "uploadFailed": "Caricamento di {name} non riuscito"
+  },
+  "adsCampaign": {
+    "title": "Inserzioni",
+    "createCta": "Crea inserzione",
+    "prereq": {
+      "notConnected": "Collega Facebook Ads per creare inserzioni di messaggistica per questo canale.",
+      "connectCta": "Collega Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Nessuna",
+      "housing": "Alloggio",
+      "employment": "Occupazione",
+      "credit": "Credito",
+      "issues": "Temi sociali, elezioni o politica",
+      "financialProducts": "Prodotti e servizi finanziari",
+      "onlineGambling": "Gioco d’azzardo e giochi online"
+    },
+    "fields": {
+      "objective": {
+        "label": "Obiettivo",
+        "value": "Interazione (messaggistica)"
+      },
+      "specialAdCategory": {
+        "label": "Categoria speciale di inserzione",
+        "description": "Selezionando una categoria soggetta a restrizioni si rimuove la targetizzazione per età, sesso e altri criteri non consentiti da Meta per tale categoria.",
+        "restrictedNote": "La targetizzazione per età e sesso è disattivata perché è selezionata una categoria speciale di inserzione soggetta a restrizioni."
+      },
+      "adAccount": {
+        "label": "Account pubblicitario"
+      },
+      "whatsappPage": {
+        "label": "Pagina Facebook",
+        "description": "Le inserzioni WhatsApp richiedono comunque una Pagina Facebook collegata: seleziona la Pagina connessa da utilizzare."
+      },
+      "dailyBudget": {
+        "label": "Budget giornaliero",
+        "placeholder": "es. 2000",
+        "description": "Inserisci l'importo nella più piccola unità di valuta del tuo account pubblicitario (ad es. centesimi per EUR)."
+      },
+      "countries": {
+        "label": "Paesi"
+      },
+      "ageRange": {
+        "min": "Età minima",
+        "max": "Età massima"
+      },
+      "gender": {
+        "label": "Sesso",
+        "male": "Uomo",
+        "female": "Donna"
+      },
+      "schedule": {
+        "start": "Ora di inizio",
+        "end": "Ora di fine"
+      },
+      "destination": {
+        "label": "Destinazione"
+      },
+      "callToAction": {
+        "label": "Invito all'azione",
+        "derivedNote": "Il pulsante di invito all'azione ({type}) viene determinato automaticamente in base al canale."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Paese della categoria pubblicitaria",
+        "description": "Richiesto da Meta per la categoria questioni sociali, elezioni o politica — il paese in cui sei autorizzato a pubblicare questi annunci."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Messaggio di benvenuto",
+      "label": "Messaggio di benvenuto",
+      "description": "Inviato automaticamente quando qualcuno avvia una conversazione da questa inserzione.",
+      "mode": {
+        "default": "Usa il messaggio predefinito di Meta",
+        "single": "Messaggio singolo",
+        "templates": "Testa fino a 5 varianti di messaggio"
+      },
+      "messageLabel": "Messaggio",
+      "templateLabel": "Variante {index}",
+      "headingPlaceholder": "Titolo (facoltativo)",
+      "addTemplate": "Aggiungi variante",
+      "templatesLimit": "È possibile testare fino a {max} varianti."
+    },
+    "creative": {
+      "mediaRequired": "Carica un'immagine o un video per continuare.",
+      "mediaType": {
+        "label": "Contenuto creativo",
+        "orVideo": "o video",
+        "selectAdAccountFirst": "Seleziona un account pubblicitario prima di caricare contenuti multimediali.",
+        "uploadImage": "Carica immagine",
+        "uploadVideo": "Carica video"
+      },
+      "uploading": "Caricamento in corso...",
+      "imageUploadFailed": "Caricamento dell'immagine non riuscito. Riprova.",
+      "videoProcessing": "Elaborazione del video in corso...",
+      "videoReady": "Video pronto",
+      "videoProcessingFailed": "Elaborazione del video non riuscita. Prova con un altro file.",
+      "previewAlt": "Anteprima della creatività",
+      "primaryText": "Testo principale",
+      "headline": "Titolo"
+    },
+    "wizard": {
+      "createDraft": "Crea come bozza in pausa",
+      "campaignStep": {
+        "title": "Campagna",
+        "namePlaceholder": "Assegna un nome a questa inserzione"
+      },
+      "adSetStep": {
+        "title": "Gruppo di inserzioni"
+      },
+      "creativeStep": {
+        "title": "Creatività dell'inserzione"
+      },
+      "preflightStep": {
+        "title": "Revisione"
+      },
+      "errors": {
+        "nameRequired": "Inserisci un nome per questa inserzione.",
+        "adAccountRequired": "Seleziona un account pubblicitario.",
+        "budgetRequired": "Inserisci un budget giornaliero.",
+        "countryRequired": "Seleziona almeno un paese.",
+        "mediaRequired": "Carica un'immagine o un video."
+      }
+    },
+    "preflight": {
+      "title": "Riepilogo",
+      "pausedNote": "Questa inserzione viene creata come bozza in pausa. Nulla viene pubblicato e non viene speso denaro finché non la pubblichi."
+    },
+    "publishConfirm": {
+      "title": "Pubblicare questa inserzione?",
+      "description": "La pubblicazione attiva in ordine la campagna, il gruppo di inserzioni e l'inserzione. Meta inizierà a spendere il tuo budget non appena avrà inizio la diffusione.",
+      "confirm": "Pubblica"
+    },
+    "list": {
+      "viewOnMeta": "Visualizza su Meta",
+      "empty": "Ancora nessuna inserzione di messaggistica.",
+      "createState": "Stato della bozza",
+      "actions": "Azioni",
+      "notPublishedYet": "Non ancora pubblicata",
+      "draftReady": "Bozza pronta",
+      "createFailed": "Creazione non riuscita",
+      "creating": "Creazione in corso...",
+      "publish": "Pubblica",
+      "pause": "Metti in pausa"
+    },
+    "messages": {
+      "created": "Bozza dell'inserzione creata.",
+      "actionSucceeded": "Fatto."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Crea e gestisci gli annunci Click-to-WhatsApp qui."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Crea e gestisci gli annunci Click-to-Messenger qui."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Crea e gestisci gli annunci Click-to-Instagram qui."
+      },
+      "connectCta": "Collega Facebook Ads",
+      "reconnectCta": "Riconnetti",
+      "reconnectNeeded": "Questa connessione deve essere ristabilita.",
+      "refresh": "Aggiorna",
+      "whatsappPageRequiredNote": "Le inserzioni Click-to-WhatsApp richiedono comunque una Pagina Facebook collegata (un requisito di Meta): la sceglierai al momento della creazione di un'inserzione.",
+      "emptyDashboardNote": "Gli annunci creati qui ora compaiono automaticamente nella dashboard Annunci di questo canale — seleziona questa integrazione dal relativo filtro per vederne account e spesa."
+    },
+    "insights": {
+      "title": "Rendimento",
+      "empty": "Ancora nessun dato",
+      "impressions": "Impressioni",
+      "reach": "Copertura",
+      "spend": "Spesa",
+      "clicks": "Clic",
+      "conversations": "Conversazioni",
+      "costPerConversation": "Costo/conv.",
+      "costPerConversationTooltip": "Costo medio per conversazione di messaggistica avviata.",
+      "datePresetLabel": "Periodo:",
+      "datePreset": {
+        "maximum": "Sempre",
+        "last_30d": "Ultimi 30 giorni",
+        "last_7d": "Ultimi 7 giorni"
       }
     }
   }

@@ -108,6 +108,7 @@ export async function handleAIGenerateTextAgent({
         customFieldId: step.outputFieldId,
         fullText: result.fullText,
         workspaceId: conversation.workspaceId,
+        contactInboxId: contactInbox.id,
       })
     }
 

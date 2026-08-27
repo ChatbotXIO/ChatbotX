@@ -59,12 +59,21 @@ export async function saveResultToCustomField(props: {
   customFieldId: string
   fullText: string
   workspaceId: string
+  /**
+   * The `ContactInbox` this write originated from, when the caller has one in
+   * scope. Threaded to `setValues` so a custom-field trigger fired by this
+   * change attributes ads/CAPI actions to the originating integration's inbox
+   * instead of falling back to the contact's most-recently-active inbox.
+   */
+  contactInboxId?: string
 }) {
-  const { contactId, customFieldId, fullText, workspaceId } = props
+  const { contactId, customFieldId, fullText, workspaceId, contactInboxId } =
+    props
 
   await contactCustomFieldService.setValues({
     workspaceId,
     contactId,
+    contactInboxId,
     fields: [{ customFieldId, value: fullText }],
   })
 }

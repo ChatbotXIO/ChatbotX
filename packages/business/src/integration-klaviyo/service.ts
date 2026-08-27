@@ -44,6 +44,10 @@ class IntegrationKlaviyoService extends BaseService {
 
     const existingId = await updateExisting()
     if (existingId) {
+      await this.audit(
+        "update",
+        "updated the Klaviyo integration configuration",
+      )
       return existingId
     }
 
@@ -63,6 +67,7 @@ class IntegrationKlaviyoService extends BaseService {
           auth: encryptedAuth,
         })
       })
+      await this.audit("connect", "connected a new Klaviyo integration")
       return klaviyoId
     } catch (error) {
       if (!isWorkspaceUniqueViolation(error)) {
@@ -72,6 +77,10 @@ class IntegrationKlaviyoService extends BaseService {
       if (!winnerId) {
         throw error
       }
+      await this.audit(
+        "update",
+        "updated the Klaviyo integration configuration",
+      )
       return winnerId
     }
   }
@@ -89,6 +98,8 @@ class IntegrationKlaviyoService extends BaseService {
         .delete(integrationModel)
         .where(eq(integrationModel.id, existing.integrationId))
     })
+
+    await this.audit("disconnect", "disconnected the Klaviyo integration")
   }
 }
 

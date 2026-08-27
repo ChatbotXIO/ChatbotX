@@ -1,6 +1,7 @@
 "use server"
 
 import { assertPublicUrl } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { integrationApiRepository } from "@chatbotx.io/database/repositories"
 import type { ApiAuthValue } from "@chatbotx.io/integration-api"
 import {
@@ -47,6 +48,12 @@ export const updateApiAction = workspaceActionClient
         name: parsedInput.name,
         callbackUrl: parsedInput.callbackUrl,
         auth: nextAuth,
+      })
+
+      await auditService.record({
+        workspaceId,
+        action: "update",
+        detail: `updated the API key configuration (#${id})`,
       })
     },
   )

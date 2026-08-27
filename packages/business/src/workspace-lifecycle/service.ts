@@ -397,18 +397,19 @@ class WorkspaceLifecycleService extends BaseService {
     return deleted
   }
 
+  /** Returns the ids of the owner's workspaces this call tore down, so callers that need to attribute a per-workspace side effect (e.g. audit rows) don't have to re-query. */
   async deactivateOwnerWorkspaces(props: {
     ownerId: string
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel?: WorkspaceTeardownLevel
-  }): Promise<void> {
+  }): Promise<string[]> {
     const workspaces = await db.query.workspaceModel.findMany({
       where: { ownerId: props.ownerId },
       columns: { id: true, tenantId: true },
     })
 
     if (workspaces.length === 0) {
-      return
+      return []
     }
 
     const teardownLevel = props.teardownLevel ?? "pause"
@@ -428,6 +429,8 @@ class WorkspaceLifecycleService extends BaseService {
       props.ownerId,
       workspaces[0]?.tenantId ?? ROOT_TENANT_ID,
     )
+
+    return workspaces.map((workspace) => workspace.id)
   }
 
   private async disconnectWorkspaceInbox(props: {

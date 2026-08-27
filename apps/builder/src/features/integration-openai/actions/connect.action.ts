@@ -2,6 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationModel,
@@ -95,6 +96,14 @@ export const connectOpenAIAction = authActionClient
         workspaceId,
         aiProviders.enum.openai,
       )
+
+      await auditService.record({
+        workspaceId,
+        action: integrationOpenAI ? "update" : "connect",
+        detail: integrationOpenAI
+          ? "updated the OpenAI integration configuration"
+          : "connected a new OpenAI integration",
+      })
 
       return
     },

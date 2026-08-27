@@ -393,6 +393,16 @@ describe("bulkImportHistorical", () => {
     expect(result.skippedContacts).toBe(0)
     expect(result.failedMessages).toBe(0)
     expect(result.contactInboxIds.get("src-1")).toBe("ci-1")
+    // Threads the newly-created ContactInbox id (not the contact id) into
+    // emitContactCreated so a Trigger action attributes to this channel.
+    expect(mockEmitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "id-1",
+      "Bob",
+      undefined,
+      "bob@example.com",
+      "ci-1",
+    )
   })
 
   it("tracks workspace usage for newly-imported coexist contacts without consuming quota", async () => {

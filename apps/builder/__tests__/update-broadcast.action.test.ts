@@ -2,22 +2,33 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockDbUpdate, mockUpdateSet, mockUpdateWhere, mockFindOrFail, mockEq } =
-  vi.hoisted(() => {
-    const mockUpdateWhere = vi.fn().mockResolvedValue(undefined)
-    const mockUpdateSet = vi.fn()
-    mockUpdateSet.mockReturnValue({ where: mockUpdateWhere })
-    const mockDbUpdate = vi.fn()
-    mockDbUpdate.mockReturnValue({ set: mockUpdateSet })
+const {
+  mockDbUpdate,
+  mockUpdateSet,
+  mockUpdateWhere,
+  mockFindOrFail,
+  mockEq,
+  mockRecordAuditLog,
+} = vi.hoisted(() => {
+  const mockUpdateWhere = vi.fn().mockResolvedValue(undefined)
+  const mockUpdateSet = vi.fn()
+  mockUpdateSet.mockReturnValue({ where: mockUpdateWhere })
+  const mockDbUpdate = vi.fn()
+  mockDbUpdate.mockReturnValue({ set: mockUpdateSet })
 
-    return {
-      mockDbUpdate,
-      mockUpdateSet,
-      mockUpdateWhere,
-      mockFindOrFail: vi.fn(),
-      mockEq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
-    }
-  })
+  return {
+    mockDbUpdate,
+    mockUpdateSet,
+    mockUpdateWhere,
+    mockFindOrFail: vi.fn(),
+    mockEq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
+    mockRecordAuditLog: vi.fn(),
+  }
+})
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: (...args: unknown[]) => mockRecordAuditLog(...args) },
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -67,7 +78,11 @@ describe("updateBroadcast", () => {
   })
 
   test("calls db.update with parsedInput after finding broadcast", async () => {
-    const mockBroadcast = { id: BROADCAST_ID, workspaceId: WORKSPACE_ID }
+    const mockBroadcast = {
+      id: BROADCAST_ID,
+      workspaceId: WORKSPACE_ID,
+      name: "Broadcast",
+    }
     mockFindOrFail.mockResolvedValue(mockBroadcast)
 
     await updateBroadcast(
@@ -86,10 +101,19 @@ describe("updateBroadcast", () => {
     )
     expect(mockDbUpdate).toHaveBeenCalledOnce()
     expect(mockUpdateSet).toHaveBeenCalledWith({ name: "Updated Name" })
+    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      action: "update",
+      detail: `updated a broadcast (#${BROADCAST_ID})`,
+    })
   })
 
   test("scopes findOrFail by workspaceId to prevent cross-workspace access", async () => {
-    const mockBroadcast = { id: BROADCAST_ID, workspaceId: WORKSPACE_ID }
+    const mockBroadcast = {
+      id: BROADCAST_ID,
+      workspaceId: WORKSPACE_ID,
+      name: "Broadcast",
+    }
     mockFindOrFail.mockResolvedValue(mockBroadcast)
 
     await updateBroadcast(
@@ -104,7 +128,11 @@ describe("updateBroadcast", () => {
   })
 
   test("uses eq(broadcastModel.id, broadcast.id) in the where clause", async () => {
-    const mockBroadcast = { id: BROADCAST_ID, workspaceId: WORKSPACE_ID }
+    const mockBroadcast = {
+      id: BROADCAST_ID,
+      workspaceId: WORKSPACE_ID,
+      name: "Broadcast",
+    }
     mockFindOrFail.mockResolvedValue(mockBroadcast)
 
     await updateBroadcast(
@@ -119,7 +147,11 @@ describe("updateBroadcast", () => {
   })
 
   test("returns undefined on success", async () => {
-    const mockBroadcast = { id: BROADCAST_ID, workspaceId: WORKSPACE_ID }
+    const mockBroadcast = {
+      id: BROADCAST_ID,
+      workspaceId: WORKSPACE_ID,
+      name: "Broadcast",
+    }
     mockFindOrFail.mockResolvedValue(mockBroadcast)
 
     const result = await updateBroadcast(

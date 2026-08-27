@@ -29,8 +29,10 @@ export {
   couponTopicConditionSchema,
 } from "./coupon-topic-filter"
 export {
+  type CtwaRetargetChannel,
   type CtwaRetargetCondition,
   type CtwaRetargetSegment,
+  ctwaRetargetChannelSchema,
   ctwaRetargetConditionSchema,
   ctwaRetargetSegments,
 } from "./ctwa-retarget-filter"

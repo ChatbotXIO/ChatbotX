@@ -81,6 +81,7 @@ export function UpdateWorkspaceAdvancedForm({
           timezone: normalizeTimezone(workspace.timezone),
           brandColor: workspace.brandColor,
           developmentMode: workspace.developmentMode,
+          capiLimitedDataUse: workspace.capiLimitedDataUse,
         },
       },
       errorMapProps: {},
@@ -177,6 +178,13 @@ export function UpdateWorkspaceAdvancedForm({
               label={t("fields.developmentMode.label")}
             >
               <SwitchField className="mt-1.5" name="developmentMode" />
+            </SettingRow>
+
+            <SettingRow
+              description={t("metaConversions.limitedDataUse.description")}
+              label={t("metaConversions.limitedDataUse.label")}
+            >
+              <SwitchField className="mt-1.5" name="capiLimitedDataUse" />
             </SettingRow>
 
             <div className="mt-4 flex flex-start">

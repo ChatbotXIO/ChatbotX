@@ -150,6 +150,21 @@ class AutomatedResponseService extends BaseService {
       })
       .returning()
     await this.invalidateCache(workspaceId)
+
+    // Template install (`template/adapters/keywords.ts`) is the only caller
+    // that passes `tx` — it shares 1 transaction across every resource type
+    // in the template, so an audit fired here could reference a row that
+    // gets rolled back later if a *different* resource in the same install
+    // fails. Out of audit-log scope for that path entirely (no compensating
+    // "installed template" event either) — only the standalone Keywords →
+    // Create action (never passes `tx`) is audited.
+    if (!tx) {
+      await this.audit(
+        "create",
+        `created a new keyword automation (#${created.id})`,
+      )
+    }
+
     return created
   }
 
@@ -159,11 +174,20 @@ class AutomatedResponseService extends BaseService {
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
+
+    // Fetched before the write so a Save that resubmits identical values
+    // doesn't produce an "updated" audit entry.
+    const existing = await client.query.automatedResponseModel.findFirst({
+      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      columns: { folderId: true, keywords: true, text: true, flowId: true },
+    })
+    const nextKeywords = data.keywords?.map((m) => m.value) ?? []
+
     const [updated] = await client
       .update(automatedResponseModel)
       .set({
         ...data,
-        keywords: data.keywords?.map((m) => m.value) ?? [],
+        keywords: nextKeywords,
       })
       .where(
         and(
@@ -173,6 +197,31 @@ class AutomatedResponseService extends BaseService {
       )
       .returning()
     await this.invalidateCache(ctx.workspaceId)
+
+    if (!updated) {
+      return updated as unknown as AutomatedResponseModel
+    }
+
+    const keywordsChanged =
+      !existing ||
+      nextKeywords.length !== existing.keywords.length ||
+      nextKeywords.some(
+        (keyword, index) => keyword !== existing.keywords[index],
+      )
+    const changed =
+      !existing ||
+      (data.folderId !== undefined && data.folderId !== existing.folderId) ||
+      (data.text !== undefined && data.text !== existing.text) ||
+      (data.flowId !== undefined && data.flowId !== existing.flowId) ||
+      keywordsChanged
+
+    if (!tx && changed) {
+      await this.audit(
+        "update",
+        `updated a keyword automation (#${updated.id})`,
+      )
+    }
+
     return updated
   }
 
@@ -182,6 +231,12 @@ class AutomatedResponseService extends BaseService {
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
+
+    const existing = await client.query.automatedResponseModel.findFirst({
+      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      columns: { status: true },
+    })
+
     const [updated] = await client
       .update(automatedResponseModel)
       .set({ status })
@@ -193,6 +248,18 @@ class AutomatedResponseService extends BaseService {
       )
       .returning()
     await this.invalidateCache(ctx.workspaceId)
+
+    if (!updated) {
+      return updated as unknown as AutomatedResponseModel
+    }
+
+    if (!tx && existing?.status !== status) {
+      await this.audit(
+        "update",
+        `${status ? "enabled" : "disabled"} a keyword automation (#${updated.id})`,
+      )
+    }
+
     return updated
   }
 
@@ -208,7 +275,8 @@ class AutomatedResponseService extends BaseService {
     })
 
     const client = tx ?? db
-    await client
+
+    const deleted = await client
       .delete(automatedResponseModel)
       .where(
         and(
@@ -216,7 +284,15 @@ class AutomatedResponseService extends BaseService {
           inArray(automatedResponseModel.id, ids),
         ),
       )
+      .returning({ id: automatedResponseModel.id })
     await this.invalidateCache(workspaceId)
+
+    if (!tx && deleted.length > 0) {
+      await this.audit(
+        "delete",
+        `deleted keyword automation${deleted.length > 1 ? "s" : ""} ${deleted.map((row) => `#${row.id}`).join(", ")}`,
+      )
+    }
   }
 
   async invalidateCache(workspaceId: string): Promise<void> {

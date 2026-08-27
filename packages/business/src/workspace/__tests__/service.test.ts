@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   dbTransaction: vi.fn(),
   purgeWorkspaceHeavyData: vi.fn(),
   isPlatformAdmin: vi.fn(),
+  dispatchAuditRecord: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -134,6 +135,10 @@ vi.mock("../../workspace-lifecycle/service", () => ({
   },
 }))
 
+vi.mock("../../audit/dispatcher", () => ({
+  dispatchAuditRecord: mocks.dispatchAuditRecord,
+}))
+
 vi.mock("../../workspace-member/service", () => ({
   workspaceMemberCacheTag: vi.fn((userId: string) => `member:${userId}`),
   workspaceMemberService: {
@@ -160,6 +165,7 @@ beforeEach(() => {
   mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
   mocks.isPlatformAdmin.mockReset()
   mocks.isPlatformAdmin.mockResolvedValue(true)
+  mocks.dispatchAuditRecord.mockReset()
 
   mocks.workspaceInsert.mockReturnValue({
     values: mocks.workspaceInsertValues.mockReturnValue({
@@ -218,6 +224,45 @@ describe("WorkspaceService.create", () => {
     })
     expect(mocks.workspaceInsert).not.toHaveBeenCalled()
     expect(mocks.createMember).not.toHaveBeenCalled()
+  })
+
+  test("records a create audit event with the explicit workspaceId override when no tx is passed", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: true })
+    mocks.workspaceInsertValues.mockReturnValueOnce({
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "new-workspace", name: "Acme" }]),
+    })
+
+    await workspaceService.create({
+      data: { name: "Acme", tenantId: "1" } as never,
+      createdBy: "owner-1",
+    })
+
+    expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith({
+      userId: "owner-1",
+      workspaceId: "new-workspace",
+      action: "create",
+      detail: "created the workspace (#new-workspace)",
+    })
+  })
+
+  test("skips the create audit event when the caller passed its own transaction", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: true })
+    mocks.workspaceInsertValues.mockReturnValueOnce({
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "new-workspace", name: "Acme" }]),
+    })
+    const tx = { insert: mocks.workspaceInsert } as never
+
+    await workspaceService.create({
+      data: { name: "Acme", tenantId: "1" } as never,
+      createdBy: "owner-1",
+      tx,
+    })
+
+    expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
   })
 })
 

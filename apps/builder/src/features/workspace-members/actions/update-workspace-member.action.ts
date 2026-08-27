@@ -1,9 +1,11 @@
 "use server"
 
+import { isDeepStrictEqual } from "node:util"
 import {
   workspaceMemberCacheTag,
   workspaceMemberService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
@@ -73,14 +75,57 @@ export const updateWorkspaceMemberAction = workspaceActionClient
           permissions: normalizeContactsPermissions(parsedInput.permissions),
         }
 
-    await db
+    const permissionsChanged = !isDeepStrictEqual(
+      workspaceMember.permissions,
+      updateInput.permissions,
+    )
+    const notificationsChanged = !(
+      isDeepStrictEqual(
+        workspaceMember.notificationTypes,
+        updateInput.notificationTypes,
+      ) &&
+      isDeepStrictEqual(
+        workspaceMember.notificationChannels,
+        updateInput.notificationChannels,
+      )
+    )
+
+    // updateWorkspaceMemberRequest currently has exactly these 3 fields, so
+    // this covers every field in updateInput. If a new field is added to the
+    // schema, it MUST be added to permissionsChanged/notificationsChanged (or
+    // diffed separately) below, or it will silently never be persisted.
+    if (!(permissionsChanged || notificationsChanged)) {
+      return
+    }
+
+    const updated = await db
       .update(workspaceMemberModel)
       .set(updateInput)
       .where(eq(workspaceMemberModel.id, workspaceMember.id))
+      .returning({ id: workspaceMemberModel.id })
+
+    if (updated.length === 0) {
+      return
+    }
 
     // The member's permissions/nav are served from the cached
     // `listByUserId` result; bust it so the change takes effect immediately.
     await invalidateCacheByTags([
       workspaceMemberCacheTag(workspaceMember.userId),
     ])
+
+    // Only a real permissions/role change is in the audit-log spec for this
+    // action — a save that only touches notification settings must not be
+    // recorded as a "changed role" event.
+    if (permissionsChanged) {
+      const targetUser = await db.query.userModel.findFirst({
+        where: { id: workspaceMember.userId },
+        columns: { name: true, email: true },
+      })
+
+      await auditService.record({
+        action: "role_change",
+        detail: `changed role of ${targetUser?.name ?? targetUser?.email ?? "a member"} to ${updateInput.permissions.superAdmin ? "admin" : "member"}`,
+      })
+    }
   })

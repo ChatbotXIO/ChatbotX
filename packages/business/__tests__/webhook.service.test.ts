@@ -66,6 +66,9 @@ vi.mock("@chatbotx.io/utils", () => ({
 const assertPublicUrl = vi.fn(async () => undefined)
 vi.mock("../src/net/ssrf-guard", () => ({ assertPublicUrl }))
 
+const dispatchAuditRecord = vi.fn(async () => undefined)
+vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
+
 const { updateWebhookCache, removeWebhookCache } = await import(
   "@chatbotx.io/events"
 )
@@ -176,6 +179,10 @@ describe("webhookService.unregister", () => {
 
     expect(mocks.deleteFn).toHaveBeenCalledWith(mocks.webhookModel)
     expect(removeWebhookCache).toHaveBeenCalledWith("workspace-1")
+    expect(dispatchAuditRecord).toHaveBeenCalledWith({
+      action: "delete",
+      detail: "deleted webhook(s) (#webhook-1)",
+    })
   })
 
   test("throws not-found when no row matches the workspace", async () => {

@@ -2,6 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationClaudeModel } from "@chatbotx.io/database/schema"
 import {
@@ -40,5 +41,11 @@ export const updateIntegrationClaudeAction = workspaceActionClient
         workspaceId,
         aiProviders.enum.claude,
       )
+
+      await auditService.record({
+        workspaceId,
+        action: "update",
+        detail: "updated the Claude integration configuration",
+      })
     },
   )

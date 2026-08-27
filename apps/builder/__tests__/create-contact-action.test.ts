@@ -10,6 +10,11 @@ const mockFindOrFail = vi.fn()
 const mockEmit = vi.fn()
 const mockEmitContactCreated = vi.fn()
 const mockReturnValidationErrors = vi.fn((_schema, errors) => errors)
+const mockRecordAuditLog = vi.fn()
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: (...args: unknown[]) => mockRecordAuditLog(...args) },
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
@@ -202,6 +207,11 @@ describe("createContact", () => {
     // createContactWithoutMac itself, not by the action, so the action must
     // not separately increment it (that would double-count).
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
+    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      action: "create",
+      detail: "created a new contact (#contact-1)",
+    })
   })
 
   test("attaches manual contacts to the selected workspace inbox", async () => {
@@ -806,6 +816,7 @@ describe("createContact", () => {
       "Ada",
       "+15551234567",
       "ada@example.com",
+      "contact-inbox-1",
     )
     expect(mockEmit).toHaveBeenCalledWith(
       "analytics:dashboard",

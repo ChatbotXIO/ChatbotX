@@ -74,12 +74,6 @@ export const FileUploadPreview = ({
     </div>
   ))
 
-  // useEffect(() => {
-  //   // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
-  //   // biome-ignore lint/complexity/noForEach: wip
-  //   return () => files.forEach((file) => URL.revokeObjectURL(file.preview))
-  // }, [files])
-
   return (
     <section className="dropzone-container">
       <Controller

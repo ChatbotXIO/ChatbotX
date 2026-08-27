@@ -16,6 +16,7 @@ import {
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { formatInTimeZone } from "date-fns-tz"
+import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { tenantService } from "../enterprise/tenant/service"
 import {
@@ -118,6 +119,20 @@ class WorkspaceService extends BaseService {
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
     const { id, data, tx = db } = props
+
+    // Fetched before the write so the audit message can tell a real rename
+    // apart from a no-op save that resubmits the same name (e.g. the Basic
+    // settings form always sends `name`, changed or not).
+    let previousName: string | undefined
+    if (data.name !== undefined) {
+      previousName = (
+        await tx.query.workspaceModel.findFirst({
+          where: { id },
+          columns: { name: true },
+        })
+      )?.name
+    }
+
     const [updated] = await tx
       .update(workspaceModel)
       .set(data)
@@ -132,6 +147,26 @@ class WorkspaceService extends BaseService {
       ...memberUserIds.map((userId) => workspaceMemberCacheTag(userId)),
     ])
 
+    // Only when a caller-owned transaction hasn't been passed in — emitting
+    // here while nested in an open db.transaction(...) would enqueue an audit
+    // row for a write that might still roll back.
+    const changedKeys = Object.keys(data)
+    const onlyScheduledDeletionChanged =
+      changedKeys.length === 1 && changedKeys[0] === "scheduledDeletionAt"
+    if (!props.tx && changedKeys.length > 0 && !onlyScheduledDeletionChanged) {
+      const nameChanged = data.name !== undefined && data.name !== previousName
+      let detail: string
+      if (data.token !== undefined) {
+        // Never include the raw token value in the audit trail.
+        detail = "created/regenerated workspace API key"
+      } else if (nameChanged) {
+        detail = "changed the workspace name"
+      } else {
+        detail = "updated the workspace configuration"
+      }
+      await this.audit("update", detail)
+    }
+
     return updated
   }
 
@@ -140,13 +175,20 @@ class WorkspaceService extends BaseService {
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
     const { tx = db } = props
-    return await this.update({
+    const workspace = await this.update({
       id: props.id,
       tx,
       data: {
         scheduledDeletionAt: nextScheduledDeletionAt(),
       },
     })
+    if (!props.tx) {
+      await this.audit(
+        "schedule_deletion",
+        "scheduled the workspace for deletion",
+      )
+    }
+    return workspace
   }
 
   async cancelDeletion(props: {
@@ -154,13 +196,17 @@ class WorkspaceService extends BaseService {
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
     const { tx = db } = props
-    return await this.update({
+    const workspace = await this.update({
       id: props.id,
       tx,
       data: {
         scheduledDeletionAt: null,
       },
     })
+    if (!props.tx) {
+      await this.audit("cancel_deletion", "canceled the workspace deletion")
+    }
+    return workspace
   }
 
   /**
@@ -471,6 +517,21 @@ class WorkspaceService extends BaseService {
     })
 
     await this.invalidateCacheTags([workspaceMemberCacheTag(props.createdBy)])
+
+    // Sanctioned exception: no workspaceId exists in the ALS actor yet at
+    // this point, so this bypasses this.audit() with an explicit override.
+    // Only fires when the caller didn't supply its own open transaction (see
+    // the comment above on `consumed` for why channel-connect callers do) —
+    // emitting here while nested in one could log a workspace that later
+    // rolls back.
+    if (!props.tx) {
+      await dispatchAuditRecord({
+        userId: props.createdBy,
+        workspaceId: newWorkspace.id,
+        action: "create",
+        detail: `created the workspace (#${newWorkspace.id})`,
+      })
+    }
 
     return newWorkspace
   }

@@ -29,6 +29,7 @@ import {
   IdCardIcon,
   LanguagesIcon,
   type LucideIcon,
+  MegaphoneIcon,
   PhoneIcon,
   TextIcon,
   UserRoundIcon,
@@ -46,6 +47,41 @@ import { EditContactField } from "./edit-contact-field"
 import type { GetContactResponse } from "./schemas/query"
 import type { ContactEditableField } from "./schemas/resource"
 import { useAvatarUrl } from "./utils"
+
+// Guards the ad source URL to navigable http(s) so a non-URL / `javascript:`
+// referral value never becomes an anchor href.
+const HTTP_URL_RE = /^https?:\/\//
+
+const READ_ONLY_VALUE_CLASS =
+  "inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px]"
+
+// Read-only field value: an external link when the field carries an `href`
+// (e.g. the ad source URL), otherwise plain muted text.
+function ReadOnlyFieldValue({
+  href,
+  children,
+}: {
+  href?: string | null
+  children: React.ReactNode
+}) {
+  if (href) {
+    return (
+      <a
+        className={`${READ_ONLY_VALUE_CLASS} text-primary underline hover:text-primary/80`}
+        href={href}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {children}
+      </a>
+    )
+  }
+  return (
+    <div className={`${READ_ONLY_VALUE_CLASS} text-muted-foreground`}>
+      {children}
+    </div>
+  )
+}
 
 const formatGender = (
   gender: string | null | undefined,
@@ -275,6 +311,16 @@ export const ContactDetail = ({
       if (conversation?.contact) {
         const activeContactInbox = conversation.contactInboxes[0]
         const channelContactId = activeContactInbox?.sourceId
+        // The ad the contact clicked from (any ad-attributed inbox), shown as
+        // a link right under Contact ID. Guarded to http(s) so a non-navigable
+        // / `javascript:` referral value never becomes an anchor href.
+        const rawAdSourceUrl = conversation.contactInboxes.find(
+          (contactInbox) => contactInbox.adReferral?.sourceUrl,
+        )?.adReferral?.sourceUrl
+        const adSourceUrl =
+          rawAdSourceUrl && HTTP_URL_RE.test(rawAdSourceUrl)
+            ? rawAdSourceUrl
+            : null
         const tmpContactFields: ContactEditableField[] = [
           {
             key: "channelContactId",
@@ -284,6 +330,19 @@ export const ContactDetail = ({
             type: "shortText",
             readOnly: true,
           },
+          ...(adSourceUrl
+            ? [
+                {
+                  key: "adSource",
+                  icon: MegaphoneIcon,
+                  label: t("fields.adSource.label"),
+                  value: adSourceUrl,
+                  href: adSourceUrl,
+                  type: "shortText" as const,
+                  readOnly: true,
+                },
+              ]
+            : []),
           ...buildScopedIdentityFields(activeContactInbox, t),
           {
             key: "language",
@@ -420,9 +479,9 @@ export const ContactDetail = ({
               </div>
 
               {editable.readOnly ? (
-                <div className="inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px] text-muted-foreground">
+                <ReadOnlyFieldValue href={editable.href}>
                   {fieldValue}
-                </div>
+                </ReadOnlyFieldValue>
               ) : (
                 <Button
                   className="flex-1 justify-start truncate text-[12px]"

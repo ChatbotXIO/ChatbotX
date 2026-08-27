@@ -3,11 +3,16 @@ import {
   contactCustomFieldService,
   conversationService,
   metaConversionsService,
+  type RecordTriggerConversionInput,
   tagSyncService,
 } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { triggerActions } from "@chatbotx.io/database/partials"
-import { contactsToTagsModel } from "@chatbotx.io/database/schema"
+import type { ContactInboxWorkspaceRow } from "@chatbotx.io/database/repositories"
+import {
+  contactsToTagsModel,
+  metaCapiEventChannelSchema,
+} from "@chatbotx.io/database/schema"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   errorStateDefaultFn,
@@ -40,6 +45,7 @@ import {
   updateSpreadsheetRow,
 } from "../../integration/handlers/spreadsheet-handler"
 import type { ActionExecutionContext } from "../types"
+import { resolveActionContactInbox } from "./resolve-action-contact-inbox"
 
 export class ActionExecutor {
   async execute(context: ActionExecutionContext): Promise<void> {
@@ -61,17 +67,20 @@ export class ActionExecutor {
       return
     }
 
-    const recentContactInbox = await db.query.contactInboxModel.findFirst({
-      where: {
+    // Lazy + memoized: only the 5 inbox-consuming branches below need a
+    // ContactInbox at all (§3.3) — resolving it eagerly for every action
+    // wastes a query on the other 10 (tag/custom-field/conversation-state
+    // actions), which only need `conversation`. Memoized so a switch branch
+    // (currently none) can't trigger the resolve twice.
+    let contactInboxPromise: Promise<ContactInboxWorkspaceRow | null> | null =
+      null
+    const getContactInbox = (): Promise<ContactInboxWorkspaceRow | null> => {
+      contactInboxPromise ??= resolveActionContactInbox({
         contactId,
-      },
-      orderBy: {
-        lastMessageAt: "desc",
-      },
-    })
-    if (!recentContactInbox) {
-      baseLogger.warn(`No recent contact inbox found for contact ${contactId}`)
-      return
+        workspaceId,
+        contactInboxId: context.contactInboxId,
+      })
+      return contactInboxPromise
     }
 
     switch (actionType) {
@@ -164,6 +173,14 @@ export class ActionExecutor {
       }
 
       case triggerActions.enum.startAnotherFlow: {
+        const contactInbox = await getContactInbox()
+        if (!contactInbox) {
+          baseLogger.warn(
+            `No contact inbox found for contact ${contactId}, skipping startAnotherFlow action`,
+          )
+          break
+        }
+
         const flowId = action.flowId as string
         const flow = await db.query.flowModel.findFirst({
           where: {
@@ -184,7 +201,7 @@ export class ActionExecutor {
           type: IntegrationJobAction.sendFlow,
           data: {
             conversationId: conversation,
-            contactInboxId: recentContactInbox,
+            contactInboxId: contactInbox.id,
             flowId,
             origin: webhookChannelOrigin(),
           },
@@ -321,13 +338,20 @@ export class ActionExecutor {
         break
 
       case triggerActions.enum.sendMetaCapiEvent: {
-        if (
-          recentContactInbox.channel !== "messenger" &&
-          recentContactInbox.channel !== "instagram" &&
-          recentContactInbox.channel !== "whatsapp"
-        ) {
+        const contactInbox = await getContactInbox()
+        if (!contactInbox) {
           baseLogger.warn(
-            `Unsupported Meta CAPI trigger channel: ${recentContactInbox.channel}`,
+            `No contact inbox found for contact ${contactId}, skipping sendMetaCapiEvent action`,
+          )
+          break
+        }
+
+        const capiChannel = metaCapiEventChannelSchema.safeParse(
+          contactInbox.channel,
+        )
+        if (!capiChannel.success) {
+          baseLogger.warn(
+            `Unsupported Meta CAPI trigger channel: ${contactInbox.channel}`,
           )
           break
         }
@@ -347,15 +371,15 @@ export class ActionExecutor {
 
         await metaConversionsService.enqueueLeadEvent({
           workspaceId,
-          channel: recentContactInbox.channel,
-          contactInboxId: recentContactInbox.id,
-          inboxId: recentContactInbox.inboxId,
+          channel: capiChannel.data,
+          contactInboxId: contactInbox.id,
+          inboxId: contactInbox.inboxId,
           source: "triggerAction",
           sourceKey: metaConversionsService.buildLeadSourceKey({
             scope: "trigger",
             scopeId: triggerId,
-            contactInboxId: recentContactInbox.id,
-            channel: recentContactInbox.channel,
+            contactInboxId: contactInbox.id,
+            channel: capiChannel.data,
           }),
           value,
           currency,
@@ -365,7 +389,65 @@ export class ActionExecutor {
         break
       }
 
+      case triggerActions.enum.trackAdsLead: {
+        const contactInbox = await getContactInbox()
+        if (!contactInbox) {
+          baseLogger.warn(
+            `No contact inbox found for contact ${contactId}, skipping trackAdsLead action`,
+          )
+          break
+        }
+
+        await adsConversionService.recordTriggerConversion({
+          workspaceId,
+          contactInboxId: contactInbox.id,
+          triggerId,
+          eventType: "lead",
+        })
+        break
+      }
+
+      case triggerActions.enum.trackAdsPurchase: {
+        const contactInbox = await getContactInbox()
+        if (!contactInbox) {
+          baseLogger.warn(
+            `No contact inbox found for contact ${contactId}, skipping trackAdsPurchase action`,
+          )
+          break
+        }
+
+        const value =
+          typeof action.value === "string" ? action.value : undefined
+        const currency =
+          typeof action.currency === "string" ? action.currency : undefined
+        const orderId =
+          typeof action.orderId === "string" ? action.orderId : undefined
+        const contents = Array.isArray(action.contents)
+          ? (action.contents as RecordTriggerConversionInput["contents"])
+          : undefined
+
+        await adsConversionService.recordTriggerConversion({
+          workspaceId,
+          contactInboxId: contactInbox.id,
+          triggerId,
+          eventType: "purchase",
+          value,
+          currency,
+          orderId,
+          contents,
+        })
+        break
+      }
+
       case triggerActions.enum.runGoogleSheet: {
+        const contactInbox = await getContactInbox()
+        if (!contactInbox) {
+          baseLogger.warn(
+            `No contact inbox found for contact ${contactId}, skipping runGoogleSheet action`,
+          )
+          break
+        }
+
         const spreadsheetAction = action.action as StepType
         const spreadsheetId = action.spreadsheetId as string
         const sheetName = action.sheetName as string
@@ -374,7 +456,7 @@ export class ActionExecutor {
 
         const baseProps = {
           conversation,
-          contactInbox: recentContactInbox,
+          contactInbox,
         } as unknown as Omit<ExecuteStepProps<SpreadsheetGetRowSchema>, "step">
 
         switch (spreadsheetAction) {

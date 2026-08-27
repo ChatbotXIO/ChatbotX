@@ -104,6 +104,7 @@
     "countries-list": "^3.3.0",
     "currency-codes": "^2.2.0",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dot-prop": "^10.1.0",
     "emoji-picker-react": "^4.19.1",
     "hono": "^4.12.28",

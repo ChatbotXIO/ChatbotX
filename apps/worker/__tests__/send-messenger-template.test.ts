@@ -102,6 +102,13 @@ vi.mock("@chatbotx.io/event-bus", () => ({
   emit: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock("@chatbotx.io/worker-config", () => ({
+  IntegrationJobAction: {
+    evaluateTemplateSent: "evaluateTemplateSent",
+  },
+  enqueueIntegrationJob: vi.fn().mockResolvedValue(undefined),
+}))
+
 const { processMessengerTemplate } = await import(
   "../src/chat/handlers/send-messenger-template"
 )
@@ -112,12 +119,14 @@ const { validateMessengerTemplate, replaceMessengerTemplateVariables } =
   await import("../src/integration/handlers/messenger-template-handler")
 const { db } = await import("@chatbotx.io/database/client")
 const { emit } = await import("@chatbotx.io/event-bus")
+const { enqueueIntegrationJob } = await import("@chatbotx.io/worker-config")
 
 const mockSendFlowStep = sendFlowStepToChannel as MockInstance
 const mockValidate = validateMessengerTemplate as MockInstance
 const mockReplace = replaceMessengerTemplateVariables as MockInstance
 const mockDbUpdate = db.update as MockInstance
 const mockEmit = emit as MockInstance
+const mockEnqueueIntegrationJob = enqueueIntegrationJob as MockInstance
 
 const CONVERSATION = {
   id: "conv-1",
@@ -206,5 +215,51 @@ describe("processMessengerTemplate — sourceId persistence", () => {
     expect(setCall).not.toHaveBeenCalledWith(
       expect.objectContaining({ sourceId: expect.any(String) }),
     )
+  })
+})
+
+describe("processMessengerTemplate — ads conversion template-sent enqueue (Amendment A1)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockValidate.mockResolvedValue(VALIDATED)
+    mockReplace.mockImplementation(
+      ({ templateParams }: { templateParams: unknown }) =>
+        Promise.resolve(templateParams),
+    )
+    mockSendFlowStep.mockResolvedValue({ messageIds: ["mid.ABC123"] })
+  })
+
+  test("enqueues an evaluateTemplateSent job for the messenger channel after a successful send", async () => {
+    await processMessengerTemplate({
+      conversation: CONVERSATION as never,
+      contactInbox: CONTACT_INBOX as never,
+      template: TEMPLATE,
+    })
+
+    expect(mockEnqueueIntegrationJob).toHaveBeenCalledWith(
+      {
+        type: "evaluateTemplateSent",
+        data: {
+          workspaceId: "ws-1",
+          channel: "messenger",
+          integrationId: "intg-1",
+          contactInboxId: "ci-1",
+          templateId: "tmpl-1",
+        },
+      },
+      { jobId: "ads-conversion-evaluate-template-msg-1" },
+    )
+  })
+
+  test("never fails the send when the enqueue rejects", async () => {
+    mockEnqueueIntegrationJob.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      processMessengerTemplate({
+        conversation: CONVERSATION as never,
+        contactInbox: CONTACT_INBOX as never,
+        template: TEMPLATE,
+      }),
+    ).resolves.toMatchObject({ messageId: "msg-1" })
   })
 })

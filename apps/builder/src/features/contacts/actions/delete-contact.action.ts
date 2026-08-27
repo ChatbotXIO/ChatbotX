@@ -1,6 +1,7 @@
 "use server"
 
 import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   type WorkspaceIdRequestParams,
@@ -19,6 +20,14 @@ export const deleteContact = async (ctx: {
   accessScope?: ContactAccessScope
 }) => {
   const contacts = await contactService.delete(ctx)
+
+  if (contacts.length > 0) {
+    await auditService.record({
+      workspaceId: ctx.workspaceId,
+      action: "delete",
+      detail: `deleted contact${contacts.length > 1 ? "s" : ""} (${contacts.map((contact) => `#${contact.id}`).join(", ")})`,
+    })
+  }
 
   const occurredAt = new Date()
   for (const contact of contacts) {

@@ -3,6 +3,7 @@ import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { workspaceService } from "../workspace"
@@ -22,7 +23,7 @@ export type CreateWebchatRequest = {
   welcomeFlowId?: string | null
 }
 
-class IntegrationWebchatService {
+class IntegrationWebchatService extends BaseService {
   /**
    * Provisions a new Inbox + IntegrationWebchat row together, mirroring
    * `createWebchatAction` (`apps/builder/src/features/integration-webchat/
@@ -113,6 +114,11 @@ class IntegrationWebchatService {
         tx,
       })
     })
+
+    await this.audit(
+      "disconnect",
+      `disconnected the Webchat channel (#${integrationWebchat.id})`,
+    )
   }
 }
 

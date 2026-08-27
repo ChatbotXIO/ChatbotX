@@ -113,6 +113,7 @@ export async function handleAIGenerateText({
       customFieldId: step.outputFieldId,
       fullText,
       workspaceId: conversation.workspaceId,
+      contactInboxId: contactInbox.id,
     })
 
     return { status: "success", result: null }

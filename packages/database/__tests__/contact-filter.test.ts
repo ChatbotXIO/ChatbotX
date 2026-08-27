@@ -2298,6 +2298,16 @@ describe("applyContactFilter — CTWA fields", () => {
     expect(positive.sql).toContain(
       `"ContactInbox"."referral"->>'ctwaClid' <> ''`,
     )
+    // Generalized (Phase 4): also matches Messenger/Instagram CTM/CTID
+    // ad-referral rows, which have no `ctwaClid` equivalent — WhatsApp's
+    // `referral.source` is never `"ADS"`, so this OR branch never
+    // double-matches (or shrinks) existing WhatsApp results.
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'adId' IS NOT NULL`,
+    )
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'source' = 'ADS'`,
+    )
 
     const negative = renderContactWhere(
       applyContactFilter({
@@ -2545,6 +2555,125 @@ describe("applyContactFilter — ctwaRetarget", () => {
     const where = applyContactFilter({
       operator: "and",
       conditions: [{ field: "ctwaRetarget", segment: "not-a-real-segment" }],
+    })
+    expect(where).toEqual({})
+  })
+
+  // Saved-filter contract (ctwaRetargetConditionSchema): channel omitted =
+  // ANY channel — so conversations must match BOTH WhatsApp (ctwaClid) and
+  // CTM/CTID (adId + source='ADS') contacts, mirroring the events branch
+  // which applies no channel filter in that case. Every pre-generalization
+  // saved filter only ever had WhatsApp data to match, so its historical
+  // results are unchanged.
+  test("channel omitted matches any channel: ctwaClid OR ad-referral conversations", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "conversations",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    expect(query.sql).toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
+    )
+    expect(query.sql).toContain(`"ContactInbox"."referral"->>'source' = 'ADS'`)
+  })
+
+  test("channel: whatsapp renders the ctwaClid-keyed predicate (pre-generalization behavior)", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "conversations",
+              channel: "whatsapp",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    expect(query.sql).toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
+    )
+  })
+
+  test("channel: messenger narrows conversations to the ad-referral predicate (adId + source=ADS)", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "conversations",
+              channel: "messenger",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    expect(query.sql).toContain(
+      `"ContactInbox"."referral"->>'adId' IS NOT NULL`,
+    )
+    expect(query.sql).toContain(`"ContactInbox"."referral"->>'source' = 'ADS'`)
+    expect(query.sql).not.toContain(
+      `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
+    )
+  })
+
+  test("channel: instagram narrows leads/purchases to AdsConversionEvent.channel", () => {
+    const query = renderContactWhere(
+      applyContactFilter(
+        {
+          operator: "and",
+          conditions: [
+            {
+              field: "ctwaRetarget",
+              segment: "leads",
+              channel: "instagram",
+              since: "2026-07-01",
+              until: "2026-07-31",
+            },
+          ],
+        },
+        "ws-1",
+      ),
+    )
+    expect(query.sql).toContain('"AdsConversionEvent"."channel" =')
+    expect(query.params).toEqual(
+      expect.arrayContaining(["lead", "instagram", "ws-1"]),
+    )
+  })
+
+  test("renders no predicate for an unrecognized ctwaRetarget channel", () => {
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "ctwaRetarget",
+          segment: "conversations",
+          channel: "facebook",
+          since: "2026-07-01",
+          until: "2026-07-31",
+        },
+      ],
     })
     expect(where).toEqual({})
   })

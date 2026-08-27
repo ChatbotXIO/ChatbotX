@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Yritä uudelleen",
     "copy": "Kopioi",
     "copyUrl": "Kopioi URL",
     "actions": "Toiminnot",
@@ -71,6 +72,7 @@
     "reset": "Palauta",
     "save": "Tallenna",
     "selectAll": "Valitse kaikki",
+    "unselect": "Poista valinta",
     "selectRow": "Valitse rivi",
     "sendFlow": "Lähetä flow",
     "sendMessage": "Lähetä viesti",
@@ -157,7 +159,8 @@
     "skip": "Ohita"
   },
   "admins": {
-    "title": "Ylläpitäjät"
+    "title": "Ylläpitäjät",
+    "adminActivityLogs": "Ylläpitäjän toimintaloki"
   },
   "assignAdmin": {
     "assignConversation": "Määritä keskustelu",
@@ -541,8 +544,8 @@
       "blocked": "Estetty",
       "noAdminReply": "Ei ylläpitäjän vastausta",
       "contactCreatedAt": "Yhteystieto luotu",
-      "fromCtwaAd": "Click to WhatsApp -mainoksesta",
-      "ctwaConversion": "CTWA-konversio",
+      "fromCtwaAd": "Mainoksesta",
+      "ctwaConversion": "Mainoksen konversio",
       "lastUserInputTypes": {
         "text": "Teksti",
         "location": "Sijainti",
@@ -571,7 +574,7 @@
       "customFields": "Mukautetut kentät",
       "email": "Sähköposti",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp Ads"
+      "ctwaAds": "Mainokset"
     },
     "languages": {
       "ar": "Arabia",
@@ -610,9 +613,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA-keskustelun aloittajat",
-        "leads": "CTWA-kelpuutetut liidit",
-        "purchases": "CTWA-ostajat"
+        "conversations": "Mainoksen keskustelun aloittajat",
+        "leads": "Mainoksen kelpuutetut liidit",
+        "purchases": "Mainoksen ostajat"
       },
       "adPrefix": "mainos",
       "allAds": "kaikki mainokset"
@@ -2035,6 +2038,15 @@
         "description": "Tämä tunnus näytetään vain kerran. Säilytä se turvallisesti — et voi tarkastella sitä enää myöhemmin.",
         "done": "Valmis"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
@@ -2170,12 +2182,14 @@
       "whatsappFlow": "WhatsApp Flow",
       "appointmentScheduling": "Ajanvaraus",
       "triggerN8n": "Trigger n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot"
+      "importJsonOnly": "Vain JSON-tiedostot",
+      "adsConversions": "Mainokset ja Meta Conversions",
+      "trackAdsLead": "Seuraa mainoksen liidiä",
+      "trackAdsPurchase": "Seuraa mainoksen ostoa"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2333,6 +2347,11 @@
   },
   "ads": {
     "title": "Mainokset",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-mainokset",
+      "messenger": "Click-to-Messenger-mainokset",
+      "instagram": "Click-to-Instagram-mainokset"
+    },
     "connectAccounts": {
       "connectAdAccount": "Yhdistä mainostili",
       "adAccountName": "Mainostilin nimi",
@@ -2358,6 +2377,8 @@
       "title": "Konversiotapahtumat",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Hallitse mainostilejä",
@@ -2365,11 +2386,16 @@
       "selectAll": "Valitse kaikki",
       "whatsappAsset": "WhatsApp-resurssi",
       "selectWhatsappAsset": "Valitse WhatsApp-resurssi",
+      "selectIntegration": "Integraatio",
+      "selectIntegrationPlaceholder": "Valitse integraatio",
+      "noIntegrationsConnected": "Tälle kanavalle ei ole vielä yhdistettyjä integraatioita.",
+      "connectIntegration": "Yhdistä kanava",
       "templates": "Mallipohjat",
       "selectTemplates": "Valitse mallipohjat",
       "noTemplates": "Hyväksyttyjä mallipohjia ei löytynyt.",
       "existingRules": "Olemassa olevat säännöt",
       "noRules": "Tälle WhatsApp-resurssille ei ole vielä konversiosääntöjä.",
+      "noRulesGeneric": "Tälle integraatiolle ei ole vielä konversiosääntöjä.",
       "toggleRule": "Ota sääntö käyttöön tai poista käytöstä",
       "deleteRule": "Poista sääntö",
       "qualifyingTemplateMessageSent": "Kelpuuttava mallipohjaviesti on lähetetty",
@@ -2409,24 +2435,26 @@
         "title": "Seuraa kelpuutettuja liidejä",
         "question": "Missä vaiheessa keskustelua haluat kelpuuttaa kontaktin liidiksi?",
         "when": "Kun",
-        "then": "Merkitse tämän jälkeen CTWA-liidi tilaan"
+        "then": "Merkitse tämän jälkeen CTWA-liidi tilaan",
+        "thenGeneric": "Merkitse tämän jälkeen liidi tilaan"
       },
       "trackPurchases": {
         "title": "Seuraa ostotapahtumia",
         "question": "Mikä mallipohja vahvistaa ostotapahtuman?",
         "when": "Kun",
         "then": "Silloin",
-        "noValueNote": "Säännöllä käynnistetty ostotapahtuma kirjaa Ostotapahtuma-konversion ilman tilauksen arvoa — se lasketaan ostotapahtumiin, mutta lisää tuloihin 0. Tilauksen arvon tallentaa vain Meta Automaattiset tapahtumat."
+        "noValueNote": "Säännöllä käynnistetty ostotapahtuma kirjaa Ostotapahtuma-konversion ilman tilauksen arvoa — se lasketaan ostotapahtumiin, mutta lisää tuloihin 0. Tilauksen arvon tallentaa vain Meta Automaattiset tapahtumat.",
+        "questionGeneric": "Missä vaiheessa keskustelua haluat kirjata oston?"
       }
     },
     "analytics": {
-      "title": "CTWA-analytiikka",
+      "title": "Mainosanalytiikka",
       "funnelOverview": "Suppilon yleiskatsaus",
       "conversationsStarted": "Aloitetut keskustelut",
       "qualifiedLeads": "Kelpuutetut liidit",
       "purchases": "Ostotapahtumat",
       "adSpend": "Mainoskulutus",
-      "spendAccountLevelNote": "Kulutus raportoidaan Meta-mainostilin tasolla; kun WhatsApp-tili on valittu, kyseisen tilin mainokset, joissa on vain kulutusta mutta ei suppiloaktiviteettia, piilotetaan.",
+      "spendAccountLevelNote": "Kulutus raportoidaan Meta-mainostilin tasolla; kun tili on valittu, kyseisen tilin mainokset, joissa on vain kulutusta mutta ei suppiloaktiviteettia, piilotetaan.",
       "revenue": "Tulot",
       "roas": "ROAS",
       "revenueCurrencyNote": "Tulot oletetaan yhdessä valuutassa (USD). Sekavaluuttaisia mainostileja ei vielä yhdistetä.",
@@ -2455,21 +2483,27 @@
       "adAccountFilter": {
         "all": "Kaikki mainostilit",
         "label": "Mainostili",
-        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
+        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista."
+      },
+      "channelFilter": {
+        "label": "Kanava",
+        "allAccounts": "Kaikki tilit",
+        "allChannels": "Kaikki kanavat"
       },
       "retarget": "Kohdista uudelleen",
       "thoseWhoPurchased": "Ostotapahtuman tehneet",
       "thoseWhoStartedConversation": "Keskustelun aloittaneet",
       "sendWhatsappBroadcast": "Lähetä WhatsApp-joukkoviesti",
+      "retargetOnChannel": "Uudelleenkohdistus kanavalla {channel}",
       "from": "Alkaen",
       "to": "Päättyen",
       "unattributed": "Ei kohdistettu",
       "retargetDialog": {
-        "title": "Kohdista CTWA-kontaktit uudelleen",
+        "title": "Kohdista mainoskontaktit uudelleen",
         "createAudience": "Luo kohdeyleisö",
         "useExistingAudience": "Käytä olemassa olevaa kohdeyleisöä",
         "audienceName": "Kohdeyleisön nimi",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Mainokset",
         "confirm": "Aloita synkronointi",
         "success": "Uudelleenkohdistuksen kohdeyleisön synkronointi lisätty jonoon.",
         "error": "Uudelleenkohdistuksen kohdeyleisön synkronoinnin lisääminen jonoon epäonnistui."
@@ -2481,7 +2515,7 @@
         "failed": "Epäonnistui",
         "skippedNoScope": "Ohitettu (ei käyttöoikeutta)",
         "skippedRegion": "Ohitettu (alue)",
-        "noScopeWarning": "Osaa konversioista ei lähetetty, koska tältä WhatsApp-tililtä puuttuu tapahtumien käyttöoikeus. Yhdistä se uudelleen ottaaksesi käyttöön Automaattisten tapahtumien raportoinnin.",
+        "noScopeWarning": "Osaa konversioista ei lähetetty, koska tältä tililtä puuttuu tapahtumien käyttöoikeus. Yhdistä se uudelleen ottaaksesi käyttöön Automaattisten tapahtumien raportoinnin.",
         "reconnectCta": "Yhdistä tili uudelleen",
         "empty": "Ei konversiotapahtumia tällä aikavälillä vielä."
       },
@@ -2494,7 +2528,8 @@
         "contactName": "Kontaktin nimi",
         "phone": "Puhelin",
         "adId": "Mainostunnus",
-        "occurredAt": "Tapahtumisajankohta"
+        "occurredAt": "Tapahtumisajankohta",
+        "channel": "Kanava"
       },
       "empty": "Ei tietoja vielä. Yhdistä mainostili ja aloita konversioiden seuranta."
     }
@@ -2909,6 +2944,8 @@
     "editMessagePlaceholder": "Muokkaa viestiäsi...",
     "saveEdit": "Tallenna",
     "cancelEdit": "Peruuta",
+    "replaceAttachment": "Korvaa liite",
+    "addAttachment": "Lisää liite",
     "failedToCopy": "Kopiointi epäonnistui",
     "failedToPreviewImage": "Kuvan esikatselu epäonnistui",
     "loadingData": "Ladataan tietoja...",
@@ -3746,7 +3783,9 @@
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
-      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
+      "trackAdsLead": "Seuraa mainoksen liidiä",
+      "trackAdsPurchase": "Seuraa mainoksen ostoa"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -3781,7 +3820,23 @@
     "exportTakingLongDescription": "Vientiä käsitellään edelleen. Voit sulkea tämän valintaikkunan ja tarkistaa tilanteen muutaman minuutin kuluttua vientihistoriasta."
   },
   "auditLogs": {
-    "title": "Tarkastuslokit"
+    "title": "Tarkastuslokit",
+    "columns": {
+      "user": "Käyttäjä",
+      "action": "Toiminto",
+      "detail": "Tiedot",
+      "ipAddress": "IP-osoite",
+      "date": "Päivämäärä"
+    },
+    "filters": {
+      "from": "Alkaen",
+      "to": "Päättyen",
+      "user": "Käyttäjä",
+      "userPlaceholder": "Käyttäjätunnus",
+      "keyword": "Avainsana",
+      "keywordPlaceholder": "Toiminto tai tiedot",
+      "allAdmins": "Kaikki ylläpitäjät"
+    }
   },
   "customFields": {
     "title": "Mukautetut kentät",
@@ -5245,7 +5300,16 @@
       "contentCategory": "Sisällön luokka",
       "contentCategoryPlaceholder": "Tapahtumaan liittyvän sisällön luokka",
       "contentName": "Sisällön nimi",
-      "contentNamePlaceholder": "Tapahtumaan liittyvän sivun tai tuotteen nimi"
+      "contentNamePlaceholder": "Tapahtumaan liittyvän sivun tai tuotteen nimi",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Liitä tietojoukon tunnus Events Managerista",
     "saveDataset": "Tallenna",
@@ -5292,6 +5356,13 @@
     },
     "whatsapp": {
       "connect": "Yhdistä"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Tallentaa muunnoksen vain kontakteille, joilla on WhatsAppin click-to-WhatsApp- tai Metan mainosviittausattribuutio. Ei vaikuta muihin kontakteihin."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {
@@ -5413,6 +5484,218 @@
         "win": "Voitti",
         "lose": "Ei palkintoa",
         "empty": "Ei pelitapahtumia vielä"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Mediakirjasto",
+    "searchPlaceholder": "Hae tiedostoja...",
+    "newFolder": "Uusi kansio",
+    "recent": "Viimeisimmät",
+    "favourite": "Suosikki",
+    "upload": "Lataa",
+    "done": "Valmis",
+    "deleteFolder": "Poista kansio",
+    "renameFolder": "Nimeä kansio uudelleen",
+    "noFiles": "Tiedostoja ei löytynyt",
+    "noFolders": "Ei vielä kansioita",
+    "folderNamePlaceholder": "Kansion nimi",
+    "confirmDeleteFolder": "Poistetaanko kansio ja kaikki sen tiedostot?",
+    "confirmDeleteFolderDescription": "Kaikki tämän kansion tiedostot poistetaan pysyvästi palvelimelta. Tätä toimintoa ei voi kumota.",
+    "confirmDeleteFile": "Poistetaanko tiedosto?",
+    "confirmDeleteFileDescription": "Tämä tiedosto poistetaan pysyvästi palvelimelta.",
+    "addToFavourites": "Lisää suosikkeihin",
+    "removeFromFavourites": "Poista suosikeista",
+    "deleteFile": "Poista tiedosto",
+    "selectOnlyOneFile": "Voit valita vain 1 tiedoston",
+    "confirmDeleteFiles": "{count, plural, =1 {Poistetaanko 1 tiedosto?} other {Poistetaanko # tiedostoa?}}",
+    "confirmDeleteFilesDescription": "Nämä tiedostot poistetaan pysyvästi palvelimelta. Tätä toimintoa ei voi kumota.",
+    "filesCount": "{count, plural, =0 {Ei tiedostoja} =1 {1 tiedosto} other {# tiedostoa}}",
+    "openMediaLibrary": "Avaa mediakirjasto",
+    "uploadFailed": "Tiedoston {name} lataus epäonnistui"
+  },
+  "adsCampaign": {
+    "title": "Mainokset",
+    "createCta": "Luo mainos",
+    "prereq": {
+      "notConnected": "Yhdistä Facebook Ads luodaksesi viestimainoksia tälle kanavalle.",
+      "connectCta": "Yhdistä Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Ei mitään",
+      "housing": "Asuminen",
+      "employment": "Työllisyys",
+      "credit": "Luotto",
+      "issues": "Yhteiskunnalliset kysymykset, vaalit tai politiikka",
+      "financialProducts": "Rahoitustuotteet ja -palvelut",
+      "onlineGambling": "Verkkopelit ja -uhkapelit"
+    },
+    "fields": {
+      "objective": {
+        "label": "Tavoite",
+        "value": "Sitoutuminen (viestit)"
+      },
+      "specialAdCategory": {
+        "label": "Erityinen mainoskategoria",
+        "description": "Rajoitetun kategorian valitseminen poistaa iän, sukupuolen ja muun kohdennuksen, jota Meta ei salli kyseiselle kategorialle.",
+        "restrictedNote": "Iän ja sukupuolen mukainen kohdennus on poistettu käytöstä, koska rajoitettu erityinen mainoskategoria on valittu."
+      },
+      "adAccount": {
+        "label": "Mainostili"
+      },
+      "whatsappPage": {
+        "label": "Facebook-sivu",
+        "description": "WhatsApp-mainokset edellyttävät edelleen linkitettyä Facebook-sivua — valitse käytettävä yhdistetty sivu."
+      },
+      "dailyBudget": {
+        "label": "Päiväbudjetti",
+        "placeholder": "esim. 2000",
+        "description": "Anna summa mainostilisi pienimpänä valuuttayksikkönä (esim. sentteinä USD:lle)."
+      },
+      "countries": {
+        "label": "Maat"
+      },
+      "ageRange": {
+        "min": "Vähimmäisikä",
+        "max": "Enimmäisikä"
+      },
+      "gender": {
+        "label": "Sukupuoli",
+        "male": "Mies",
+        "female": "Nainen"
+      },
+      "schedule": {
+        "start": "Alkamisaika",
+        "end": "Päättymisaika"
+      },
+      "destination": {
+        "label": "Kohde"
+      },
+      "callToAction": {
+        "label": "Toimintakehotus",
+        "derivedNote": "Toimintakehotuspainike ({type}) määräytyy automaattisesti kanavan perusteella."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Mainoskategorian maa",
+        "description": "Meta vaatii yhteiskunnallisten aiheiden, vaalien tai politiikan kategoriassa — maa, jossa sinulla on lupa näyttää näitä mainoksia."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Tervetuloviesti",
+      "label": "Tervetuloviesti",
+      "description": "Lähetetään automaattisesti, kun joku aloittaa keskustelun tästä mainoksesta.",
+      "mode": {
+        "default": "Käytä Metan oletusviestiä",
+        "single": "Yksi viesti",
+        "templates": "Testaa jopa 5 viestivaihtoehtoa"
+      },
+      "messageLabel": "Viesti",
+      "templateLabel": "Vaihtoehto {index}",
+      "headingPlaceholder": "Otsikko (valinnainen)",
+      "addTemplate": "Lisää vaihtoehto",
+      "templatesLimit": "Testattavana voi olla enintään {max} vaihtoehtoa."
+    },
+    "creative": {
+      "mediaRequired": "Lataa kuva tai video jatkaaksesi.",
+      "mediaType": {
+        "label": "Mainosmateriaali",
+        "orVideo": "tai video",
+        "selectAdAccountFirst": "Valitse mainostili ennen median lataamista.",
+        "uploadImage": "Lataa kuva",
+        "uploadVideo": "Lataa video"
+      },
+      "uploading": "Ladataan...",
+      "imageUploadFailed": "Kuvan lataus epäonnistui. Yritä uudelleen.",
+      "videoProcessing": "Käsitellään videota...",
+      "videoReady": "Video valmis",
+      "videoProcessingFailed": "Videon käsittely epäonnistui. Kokeile toista tiedostoa.",
+      "previewAlt": "Mainosmateriaalin esikatselu",
+      "primaryText": "Pääteksti",
+      "headline": "Otsikko"
+    },
+    "wizard": {
+      "createDraft": "Luo pysäytettynä luonnoksena",
+      "campaignStep": {
+        "title": "Kampanja",
+        "namePlaceholder": "Nimeä tämä mainos"
+      },
+      "adSetStep": {
+        "title": "Mainosjoukko"
+      },
+      "creativeStep": {
+        "title": "Mainosmateriaali"
+      },
+      "preflightStep": {
+        "title": "Katselmus"
+      },
+      "errors": {
+        "nameRequired": "Anna tälle mainokselle nimi.",
+        "adAccountRequired": "Valitse mainostili.",
+        "budgetRequired": "Anna päiväbudjetti.",
+        "countryRequired": "Valitse vähintään yksi maa.",
+        "mediaRequired": "Lataa kuva tai video."
+      }
+    },
+    "preflight": {
+      "title": "Yhteenveto",
+      "pausedNote": "Tämä mainos luodaan pysäytettynä luonnoksena. Mikään ei julkaistu eikä rahaa käytetä, ennen kuin julkaiset sen."
+    },
+    "publishConfirm": {
+      "title": "Julkaistaanko tämä mainos?",
+      "description": "Julkaiseminen aktivoi kampanjan, mainosjoukon ja mainoksen järjestyksessä. Meta alkaa käyttää budjettiasi, kun toimitus alkaa.",
+      "confirm": "Julkaise"
+    },
+    "list": {
+      "viewOnMeta": "Näytä Metassa",
+      "empty": "Ei vielä viestimainoksia.",
+      "createState": "Luonnoksen tila",
+      "actions": "Toiminnot",
+      "notPublishedYet": "Ei vielä julkaistu",
+      "draftReady": "Luonnos valmis",
+      "createFailed": "Luominen epäonnistui",
+      "creating": "Luodaan...",
+      "publish": "Julkaise",
+      "pause": "Keskeytä"
+    },
+    "messages": {
+      "created": "Mainosluonnos luotu.",
+      "actionSucceeded": "Valmis."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Luo ja hallitse Click-to-WhatsApp-mainoksia täällä."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Luo ja hallitse Click-to-Messenger-mainoksia täällä."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Luo ja hallitse Click-to-Instagram-mainoksia täällä."
+      },
+      "connectCta": "Yhdistä Facebook Ads",
+      "reconnectCta": "Yhdistä uudelleen",
+      "reconnectNeeded": "Tämä yhteys on muodostettava uudelleen.",
+      "refresh": "Päivitä",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp-mainokset edellyttävät edelleen linkitettyä Facebook-sivua (Metan vaatimus) — valitset sen mainosta luodessasi.",
+      "emptyDashboardNote": "Täällä luodut mainokset näkyvät nyt automaattisesti tämän kanavan mainostaulussa — valitse tämä integraatio sen suodattimesta nähdäksesi sen tilit ja kulutuksen."
+    },
+    "insights": {
+      "title": "Suorituskyky",
+      "empty": "Ei vielä tietoja",
+      "impressions": "Näyttökerrat",
+      "reach": "Kattavuus",
+      "spend": "Kulutus",
+      "clicks": "Klikkaukset",
+      "conversations": "Keskustelut",
+      "costPerConversation": "Hinta/keskustelu",
+      "costPerConversationTooltip": "Keskimääräinen hinta aloitettua viestikeskustelua kohden.",
+      "datePresetLabel": "Ajanjakso:",
+      "datePreset": {
+        "maximum": "Koko ajalta",
+        "last_30d": "Viimeiset 30 päivää",
+        "last_7d": "Viimeiset 7 päivää"
       }
     }
   }

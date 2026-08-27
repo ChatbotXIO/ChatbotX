@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
   }
 
   return {
+    auditRecord: vi.fn().mockResolvedValue(undefined),
     dbTransaction: vi.fn(async (callback: (tx: unknown) => Promise<void>) =>
       callback(tx),
     ),
@@ -35,6 +36,10 @@ const mocks = vi.hoisted(() => {
     workspaceFindById: vi.fn(),
   }
 })
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: mocks.auditRecord },
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
   coexistService: {
@@ -242,5 +247,22 @@ describe("Meta disconnect actions", () => {
       },
       mocks.tx,
     )
+    expect(mocks.auditRecord).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      action: "disconnect",
+      detail: "disconnected the Instagram channel (#instagram-1)",
+    })
+  })
+
+  test("messenger disconnect records a disconnect audit event after the transaction resolves", async () => {
+    mocks.findOrFail.mockResolvedValueOnce(messengerRow)
+
+    await disconnectMessenger({ workspaceId: "workspace-1", id: "messenger-1" })
+
+    expect(mocks.auditRecord).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      action: "disconnect",
+      detail: "disconnected the Messenger channel (#messenger-1)",
+    })
   })
 })

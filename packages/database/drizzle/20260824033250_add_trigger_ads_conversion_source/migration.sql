@@ -1,0 +1,1 @@
+ALTER TYPE "adsConversionEventSource" ADD VALUE 'trigger';

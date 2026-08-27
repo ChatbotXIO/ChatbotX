@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Opnieuw proberen",
     "copy": "Kopiëren",
     "copyUrl": "URL kopiëren",
     "actions": "Acties",
@@ -71,6 +72,7 @@
     "reset": "Opnieuw instellen",
     "save": "Opslaan",
     "selectAll": "Alles selecteren",
+    "unselect": "Selectie opheffen",
     "selectRow": "Rij selecteren",
     "sendFlow": "Flow verzenden",
     "sendMessage": "Bericht verzenden",
@@ -157,7 +159,8 @@
     "skip": "Overslaan"
   },
   "admins": {
-    "title": "Beheerders"
+    "title": "Beheerders",
+    "adminActivityLogs": "Beheerdersactiviteitenlogboek"
   },
   "assignAdmin": {
     "assignConversation": "Gesprek toewijzen",
@@ -1849,6 +1852,15 @@
         "description": "Dit token wordt maar één keer getoond. Bewaar het veilig — je kunt het daarna niet meer bekijken.",
         "done": "Klaar"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "condition": {
@@ -1960,8 +1972,8 @@
       "blocked": "Geblokkeerd",
       "noAdminReply": "Geen antwoord van beheerder",
       "contactCreatedAt": "Contact aangemaakt op",
-      "fromCtwaAd": "Van Click-to-WhatsApp-advertentie",
-      "ctwaConversion": "CTWA-conversie",
+      "fromCtwaAd": "Van advertentie",
+      "ctwaConversion": "Advertentieconversie",
       "lastUserInputTypes": {
         "text": "Tekst",
         "location": "Locatie",
@@ -1990,7 +2002,7 @@
       "customFields": "Aangepaste velden",
       "email": "E-mail",
       "sms": "Sms",
-      "ctwaAds": "Click-to-WhatsApp-advertenties"
+      "ctwaAds": "Advertenties"
     },
     "languages": {
       "ar": "Arabisch",
@@ -2029,9 +2041,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA-gespreksstarters",
-        "leads": "CTWA-gekwalificeerde leads",
-        "purchases": "CTWA-kopers"
+        "conversations": "Advertentie-gespreksstarters",
+        "leads": "Advertentie-gekwalificeerde leads",
+        "purchases": "Advertentie-kopers"
       },
       "adPrefix": "advertentie",
       "allAds": "alle advertenties"
@@ -2170,12 +2182,14 @@
       "whatsappFlow": "WhatsApp-flow",
       "appointmentScheduling": "Afspraken plannen",
       "triggerN8n": "Trigger n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",
       "import": "Flow importeren",
       "export": "Exporteren",
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
-      "importJsonOnly": "Alleen JSON-bestanden"
+      "importJsonOnly": "Alleen JSON-bestanden",
+      "adsConversions": "Advertenties en Meta Conversions",
+      "trackAdsLead": "Advertentie-lead bijhouden",
+      "trackAdsPurchase": "Advertentie-aankoop bijhouden"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2333,6 +2347,11 @@
   },
   "ads": {
     "title": "Advertenties",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-advertenties",
+      "messenger": "Click-to-Messenger-advertenties",
+      "instagram": "Click-to-Instagram-advertenties"
+    },
     "connectAccounts": {
       "connectAdAccount": "Advertentieaccount koppelen",
       "adAccountName": "Naam advertentieaccount",
@@ -2358,6 +2377,8 @@
       "title": "Conversie-events",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Advertentieaccounts beheren",
@@ -2365,11 +2386,16 @@
       "selectAll": "Alles selecteren",
       "whatsappAsset": "WhatsApp-asset",
       "selectWhatsappAsset": "WhatsApp-asset selecteren",
+      "selectIntegration": "Integratie",
+      "selectIntegrationPlaceholder": "Integratie selecteren",
+      "noIntegrationsConnected": "Nog geen gekoppelde integraties voor dit kanaal.",
+      "connectIntegration": "Kanaal koppelen",
       "templates": "Sjablonen",
       "selectTemplates": "Sjablonen selecteren",
       "noTemplates": "Geen goedgekeurde sjablonen gevonden.",
       "existingRules": "Bestaande regels",
       "noRules": "Nog geen conversieregels voor dit WhatsApp-asset.",
+      "noRulesGeneric": "Nog geen conversieregels voor deze integratie.",
       "toggleRule": "Regel in- of uitschakelen",
       "deleteRule": "Regel verwijderen",
       "qualifyingTemplateMessageSent": "Kwalificerend sjabloonbericht wordt verzonden",
@@ -2409,24 +2435,26 @@
         "title": "Gekwalificeerde leads bijhouden",
         "question": "Op welk punt in het gesprek wil je een contact als lead kwalificeren?",
         "when": "Wanneer",
-        "then": "Markeer CTWA-lead dan als"
+        "then": "Markeer CTWA-lead dan als",
+        "thenGeneric": "Markeer lead dan als"
       },
       "trackPurchases": {
         "title": "Aankopen bijhouden",
         "question": "Welk sjabloon bevestigt een aankoop?",
         "when": "Wanneer",
         "then": "Dan",
-        "noValueNote": "Een op regels gebaseerde aankoop registreert een aankoopconversie zonder bestelwaarde – die telt mee voor aankopen, maar draagt 0 bij aan de omzet. De bestelwaarde wordt alleen vastgelegd door Meta's automatische events."
+        "noValueNote": "Een op regels gebaseerde aankoop registreert een aankoopconversie zonder bestelwaarde – die telt mee voor aankopen, maar draagt 0 bij aan de omzet. De bestelwaarde wordt alleen vastgelegd door Meta's automatische events.",
+        "questionGeneric": "Op welk punt in het gesprek wil je een aankoop registreren?"
       }
     },
     "analytics": {
-      "title": "CTWA-analyse",
+      "title": "Advertentieanalyse",
       "funnelOverview": "Funneloverzicht",
       "conversationsStarted": "Gestarte gesprekken",
       "qualifiedLeads": "Gekwalificeerde leads",
       "purchases": "Aankopen",
       "adSpend": "Advertentie-uitgaven",
-      "spendAccountLevelNote": "Uitgaven worden gerapporteerd op het niveau van het Meta-advertentieaccount; met een geselecteerd WhatsApp-account worden advertenties met alleen uitgaven maar zonder funnelactiviteit voor dat account verborgen.",
+      "spendAccountLevelNote": "Uitgaven worden gerapporteerd op het niveau van het Meta-advertentieaccount; met een geselecteerd account worden advertenties met alleen uitgaven maar zonder funnelactiviteit voor dat account verborgen.",
       "revenue": "Omzet",
       "roas": "ROAS",
       "revenueCurrencyNote": "Omzet gaat uit van één valuta (USD). Advertentieaccounts met meerdere valuta's worden nog niet samengevoegd.",
@@ -2455,21 +2483,27 @@
       "adAccountFilter": {
         "all": "Alle advertentieaccounts",
         "label": "Advertentieaccount",
-        "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount."
+        "unavailable": "Kan advertentieaccounts niet laden — controleer de Ads-koppeling van deze integratie, of de Facebook Ads-koppeling van de workspace, in de instellingen."
+      },
+      "channelFilter": {
+        "label": "Kanaal",
+        "allAccounts": "Alle accounts",
+        "allChannels": "Alle kanalen"
       },
       "retarget": "Retargeten",
       "thoseWhoPurchased": "Degenen die hebben gekocht",
       "thoseWhoStartedConversation": "Degenen die een gesprek zijn gestart",
       "sendWhatsappBroadcast": "WhatsApp-broadcast versturen",
+      "retargetOnChannel": "Retargeten op {channel}",
       "from": "Van",
       "to": "Tot",
       "unattributed": "Niet toegewezen",
       "retargetDialog": {
-        "title": "CTWA-contacten retargeten",
+        "title": "Advertentiecontacten retargeten",
         "createAudience": "Doelgroep aanmaken",
         "useExistingAudience": "Bestaande doelgroep gebruiken",
         "audienceName": "Naam doelgroep",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Advertenties",
         "confirm": "Synchronisatie starten",
         "success": "Synchronisatie van retargetingdoelgroep staat in de wachtrij.",
         "error": "Synchronisatie van retargetingdoelgroep kon niet in de wachtrij worden geplaatst."
@@ -2481,7 +2515,7 @@
         "failed": "Mislukt",
         "skippedNoScope": "Overgeslagen (geen bereik)",
         "skippedRegion": "Overgeslagen (regio)",
-        "noScopeWarning": "Sommige conversies zijn niet verzonden omdat dit WhatsApp-account de rechten voor events mist. Koppel het opnieuw om rapportage van automatische events in te schakelen.",
+        "noScopeWarning": "Sommige conversies zijn niet verzonden omdat dit account de rechten voor events mist. Koppel het opnieuw om rapportage van automatische events in te schakelen.",
         "reconnectCta": "Account opnieuw koppelen",
         "empty": "Nog geen conversie-events in deze periode."
       },
@@ -2494,7 +2528,8 @@
         "contactName": "Naam contact",
         "phone": "Telefoon",
         "adId": "Advertentie-ID",
-        "occurredAt": "Opgetreden op"
+        "occurredAt": "Opgetreden op",
+        "channel": "Kanaal"
       },
       "empty": "Nog geen gegevens. Koppel een advertentieaccount en begin met het bijhouden van conversies."
     }
@@ -2909,6 +2944,8 @@
     "editMessagePlaceholder": "Bewerk je bericht...",
     "saveEdit": "Opslaan",
     "cancelEdit": "Annuleren",
+    "replaceAttachment": "Bijlage vervangen",
+    "addAttachment": "Bijlage toevoegen",
     "failedToCopy": "Kopiëren is mislukt",
     "failedToPreviewImage": "Voorbeeld van afbeelding laden is mislukt",
     "loadingData": "Gegevens laden...",
@@ -3746,7 +3783,9 @@
       "startAnotherFlow": "Andere flow starten",
       "notifyAdmins": "Beheerders informeren",
       "transferConversationToHuman": "Gesprek overdragen aan een medewerker",
-      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden"
+      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",
+      "trackAdsLead": "Advertentie-lead bijhouden",
+      "trackAdsPurchase": "Advertentie-aankoop bijhouden"
     },
     "triggerGoesOff": "Trigger wordt geactiveerd",
     "before": "Voor",
@@ -3781,7 +3820,23 @@
     "exportTakingLongDescription": "De export wordt nog verwerkt. Je kunt dit dialoogvenster sluiten en over enkele minuten de exportgeschiedenis bekijken."
   },
   "auditLogs": {
-    "title": "Auditlogboeken"
+    "title": "Auditlogboeken",
+    "columns": {
+      "user": "Gebruiker",
+      "action": "Actie",
+      "detail": "Detail",
+      "ipAddress": "IP-adres",
+      "date": "Datum"
+    },
+    "filters": {
+      "from": "Van",
+      "to": "Tot",
+      "user": "Gebruiker",
+      "userPlaceholder": "Gebruikers-ID",
+      "keyword": "Trefwoord",
+      "keywordPlaceholder": "Actie of detail",
+      "allAdmins": "Alle admins"
+    }
   },
   "customFields": {
     "title": "Aangepaste velden",
@@ -5245,7 +5300,16 @@
       "contentCategory": "Contentcategorie",
       "contentCategoryPlaceholder": "De categorie van de content die bij de gebeurtenis hoort",
       "contentName": "Contentnaam",
-      "contentNamePlaceholder": "De naam van de pagina of het product dat bij de gebeurtenis hoort"
+      "contentNamePlaceholder": "De naam van de pagina of het product dat bij de gebeurtenis hoort",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Plak de Dataset-ID uit Events Manager",
     "saveDataset": "Opslaan",
@@ -5292,6 +5356,13 @@
     },
     "whatsapp": {
       "connect": "Koppelen"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Registreert alleen een conversie voor contacten met WhatsApp click-to-WhatsApp- of Meta-advertentieverwijzingsattributie. Heeft geen effect op andere contacten."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {
@@ -5413,6 +5484,218 @@
         "win": "Gewonnen",
         "lose": "Geen prijs",
         "empty": "Nog geen speelrecords"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Mediabibliotheek",
+    "searchPlaceholder": "Bestanden zoeken...",
+    "newFolder": "Nieuwe map",
+    "recent": "Recent",
+    "favourite": "Favoriet",
+    "upload": "Uploaden",
+    "done": "Klaar",
+    "deleteFolder": "Map verwijderen",
+    "renameFolder": "Map hernoemen",
+    "noFiles": "Geen bestanden gevonden",
+    "noFolders": "Nog geen mappen",
+    "folderNamePlaceholder": "Mapnaam",
+    "confirmDeleteFolder": "Map en alle bestanden verwijderen?",
+    "confirmDeleteFolderDescription": "Alle bestanden in deze map worden permanent van de server verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "confirmDeleteFile": "Bestand verwijderen?",
+    "confirmDeleteFileDescription": "Dit bestand wordt permanent van de server verwijderd.",
+    "addToFavourites": "Toevoegen aan favorieten",
+    "removeFromFavourites": "Verwijderen uit favorieten",
+    "deleteFile": "Bestand verwijderen",
+    "selectOnlyOneFile": "Je kunt maar 1 bestand selecteren",
+    "confirmDeleteFiles": "{count, plural, =1 {1 bestand verwijderen?} other {# bestanden verwijderen?}}",
+    "confirmDeleteFilesDescription": "Deze bestanden worden permanent van de server verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "filesCount": "{count, plural, =0 {Geen bestanden} =1 {1 bestand} other {# bestanden}}",
+    "openMediaLibrary": "Mediabibliotheek openen",
+    "uploadFailed": "Uploaden van {name} mislukt"
+  },
+  "adsCampaign": {
+    "title": "Advertenties",
+    "createCta": "Advertentie maken",
+    "prereq": {
+      "notConnected": "Verbind Facebook Ads om berichtenadvertenties voor dit kanaal te maken.",
+      "connectCta": "Facebook Ads verbinden"
+    },
+    "specialAdCategory": {
+      "none": "Geen",
+      "housing": "Huisvesting",
+      "employment": "Werkgelegenheid",
+      "credit": "Krediet",
+      "issues": "Maatschappelijke kwesties, verkiezingen of politiek",
+      "financialProducts": "Financiële producten en diensten",
+      "onlineGambling": "Online gokken en gaming"
+    },
+    "fields": {
+      "objective": {
+        "label": "Doelstelling",
+        "value": "Interactie (berichten)"
+      },
+      "specialAdCategory": {
+        "label": "Speciale advertentiecategorie",
+        "description": "Als u een beperkte categorie selecteert, worden leeftijd, geslacht en andere targetingopties verwijderd die Meta voor die categorie niet toestaat.",
+        "restrictedNote": "Targeting op leeftijd en geslacht is uitgeschakeld omdat een beperkte speciale advertentiecategorie is geselecteerd."
+      },
+      "adAccount": {
+        "label": "Advertentieaccount"
+      },
+      "whatsappPage": {
+        "label": "Facebook-pagina",
+        "description": "Voor WhatsApp-advertenties is nog steeds een gekoppelde Facebook-pagina vereist — selecteer de verbonden pagina die u wilt gebruiken."
+      },
+      "dailyBudget": {
+        "label": "Dagbudget",
+        "placeholder": "bijv. 2000",
+        "description": "Voer het bedrag in de kleinste valuta-eenheid van uw advertentieaccount in (bijv. centen voor USD)."
+      },
+      "countries": {
+        "label": "Landen"
+      },
+      "ageRange": {
+        "min": "Minimumleeftijd",
+        "max": "Maximumleeftijd"
+      },
+      "gender": {
+        "label": "Geslacht",
+        "male": "Man",
+        "female": "Vrouw"
+      },
+      "schedule": {
+        "start": "Starttijd",
+        "end": "Eindtijd"
+      },
+      "destination": {
+        "label": "Bestemming"
+      },
+      "callToAction": {
+        "label": "Call-to-action",
+        "derivedNote": "De call-to-actionknop ({type}) wordt automatisch afgeleid van het kanaal."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Land van advertentiecategorie",
+        "description": "Vereist door Meta voor de categorie maatschappelijke kwesties, verkiezingen of politiek — het land waarin je deze advertenties mag weergeven."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Welkomstbericht",
+      "label": "Welkomstbericht",
+      "description": "Wordt automatisch verzonden wanneer iemand vanuit deze advertentie een gesprek start.",
+      "mode": {
+        "default": "Standaardbericht van Meta gebruiken",
+        "single": "Eén bericht",
+        "templates": "Tot 5 berichtvarianten testen"
+      },
+      "messageLabel": "Bericht",
+      "templateLabel": "Variant {index}",
+      "headingPlaceholder": "Kop (optioneel)",
+      "addTemplate": "Variant toevoegen",
+      "templatesLimit": "Er kunnen maximaal {max} varianten worden getest."
+    },
+    "creative": {
+      "mediaRequired": "Upload een afbeelding of video om door te gaan.",
+      "mediaType": {
+        "label": "Advertentiemateriaal",
+        "orVideo": "of video",
+        "selectAdAccountFirst": "Selecteer een advertentieaccount voordat u media uploadt.",
+        "uploadImage": "Afbeelding uploaden",
+        "uploadVideo": "Video uploaden"
+      },
+      "uploading": "Uploaden...",
+      "imageUploadFailed": "Afbeelding uploaden mislukt. Probeer het opnieuw.",
+      "videoProcessing": "Video wordt verwerkt...",
+      "videoReady": "Video gereed",
+      "videoProcessingFailed": "Video verwerken mislukt. Probeer een ander bestand.",
+      "previewAlt": "Voorbeeld van advertentiemateriaal",
+      "primaryText": "Primaire tekst",
+      "headline": "Kop"
+    },
+    "wizard": {
+      "createDraft": "Als gepauzeerd concept maken",
+      "campaignStep": {
+        "title": "Campagne",
+        "namePlaceholder": "Geef deze advertentie een naam"
+      },
+      "adSetStep": {
+        "title": "Advertentieset"
+      },
+      "creativeStep": {
+        "title": "Advertentiemateriaal"
+      },
+      "preflightStep": {
+        "title": "Controle"
+      },
+      "errors": {
+        "nameRequired": "Voer een naam in voor deze advertentie.",
+        "adAccountRequired": "Selecteer een advertentieaccount.",
+        "budgetRequired": "Voer een dagbudget in.",
+        "countryRequired": "Selecteer ten minste één land.",
+        "mediaRequired": "Upload een afbeelding of video."
+      }
+    },
+    "preflight": {
+      "title": "Overzicht",
+      "pausedNote": "Deze advertentie wordt als gepauzeerd concept gemaakt. Er gaat niets live en er wordt geen geld uitgegeven totdat u de advertentie publiceert."
+    },
+    "publishConfirm": {
+      "title": "Deze advertentie publiceren?",
+      "description": "Publiceren activeert de campagne, advertentieset en advertentie in die volgorde. Meta begint uw budget te besteden zodra de levering start.",
+      "confirm": "Publiceren"
+    },
+    "list": {
+      "viewOnMeta": "Bekijk op Meta",
+      "empty": "Nog geen berichtenadvertenties.",
+      "createState": "Conceptstatus",
+      "actions": "Acties",
+      "notPublishedYet": "Nog niet gepubliceerd",
+      "draftReady": "Concept gereed",
+      "createFailed": "Aanmaken mislukt",
+      "creating": "Bezig met maken...",
+      "publish": "Publiceren",
+      "pause": "Pauzeren"
+    },
+    "messages": {
+      "created": "Advertentieconcept gemaakt.",
+      "actionSucceeded": "Gereed."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Maak en beheer Click-to-WhatsApp-advertenties hier."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Maak en beheer Click-to-Messenger-advertenties hier."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Maak en beheer Click-to-Instagram-advertenties hier."
+      },
+      "connectCta": "Facebook Ads verbinden",
+      "reconnectCta": "Opnieuw verbinden",
+      "reconnectNeeded": "Deze verbinding moet opnieuw tot stand worden gebracht.",
+      "refresh": "Vernieuwen",
+      "whatsappPageRequiredNote": "Voor click-to-WhatsApp-advertenties is nog steeds een gekoppelde Facebook-pagina vereist (een vereiste van Meta) — u kiest deze bij het maken van een advertentie.",
+      "emptyDashboardNote": "Advertenties die hier worden gemaakt, verschijnen nu automatisch op het advertentiedashboard van dit kanaal — selecteer deze integratie in het filter daar om de accounts en uitgaven te zien."
+    },
+    "insights": {
+      "title": "Prestaties",
+      "empty": "Nog geen gegevens",
+      "impressions": "Vertoningen",
+      "reach": "Bereik",
+      "spend": "Uitgaven",
+      "clicks": "Klikken",
+      "conversations": "Gesprekken",
+      "costPerConversation": "Kosten/gesprek",
+      "costPerConversationTooltip": "Gemiddelde kosten per gestart berichtgesprek.",
+      "datePresetLabel": "Periode:",
+      "datePreset": {
+        "maximum": "Alle tijd",
+        "last_30d": "Laatste 30 dagen",
+        "last_7d": "Laatste 7 dagen"
       }
     }
   }

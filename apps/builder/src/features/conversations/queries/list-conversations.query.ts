@@ -1,8 +1,10 @@
 "use server"
 
 import { conversationService } from "@chatbotx.io/business"
+import { resolveAdReferral } from "@chatbotx.io/business/ads-conversion/channel-fields"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
+import type { ContactInboxModel, InboxModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { endOfHour } from "date-fns"
 import z from "zod"
@@ -14,6 +16,7 @@ import {
 } from "@/lib/auth/utils"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import type {
+  ConversationContactInboxResource,
   FindConversationRequest,
   FindConversationResponse,
   ListConversationsResponse,
@@ -22,6 +25,20 @@ import { buildConversationWhere } from "./build-conversation-where"
 import { resolveLastMessageSinceTime } from "./last-message-window"
 
 const DEFAULT_PER_PAGE = 20
+
+// Shared by BOTH conversation query paths (`listConversations` and
+// `findConversation`) so a raw `contactInbox.referral` — an arbitrary webhook
+// payload — never reaches the oRPC response and both paths produce the exact
+// same `conversationContactInboxResource` shape (output validation requires
+// this). `referral` is destructured out (never spread) so it cannot leak
+// even transiently in the mapped object.
+const mapConversationContactInboxes = (
+  contactInboxes: readonly (ContactInboxModel & { inbox: InboxModel })[],
+): ConversationContactInboxResource[] =>
+  contactInboxes.map(({ referral, ...rest }) => ({
+    ...rest,
+    adReferral: resolveAdReferral(referral),
+  }))
 
 const conversationCursorSchema = z.object({
   lastActivityAt: z.coerce.date().nullable(),
@@ -122,7 +139,7 @@ export const listConversations = async (
       return {
         ...c,
         contact: c.contact ?? null,
-        contactInboxes: c.contactInboxes,
+        contactInboxes: mapConversationContactInboxes(c.contactInboxes),
         assignedUser: c.assignedUser ?? null,
         assignedInboxTeam: c.assignedInboxTeam ?? null,
         messages: lastMessage ? [lastMessage] : [],
@@ -170,6 +187,9 @@ export const findConversation = async (
   return {
     data: {
       ...conversation,
+      contactInboxes: mapConversationContactInboxes(
+        conversation.contactInboxes,
+      ),
       messages: lastMessages.length > 0 ? [lastMessages[0]] : [],
     },
   }

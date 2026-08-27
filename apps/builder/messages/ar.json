@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "إعادة المحاولة",
     "copy": "نسخ",
     "copyUrl": "نسخ الرابط",
     "actions": "الإجراءات",
@@ -71,6 +72,7 @@
     "reset": "إعادة تعيين",
     "save": "حفظ",
     "selectAll": "تحديد الكل",
+    "unselect": "إلغاء التحديد",
     "selectRow": "تحديد الصف",
     "sendFlow": "إرسال المسار",
     "sendMessage": "إرسال رسالة",
@@ -157,7 +159,8 @@
     "skip": "تخطٍ"
   },
   "admins": {
-    "title": "المسؤولون"
+    "title": "المسؤولون",
+    "adminActivityLogs": "سجل نشاط المسؤول"
   },
   "assignAdmin": {
     "assignConversation": "إسناد المحادثة",
@@ -541,8 +544,8 @@
       "blocked": "محظور",
       "noAdminReply": "لا يوجد رد من المشرف",
       "contactCreatedAt": "تاريخ إنشاء جهة الاتصال",
-      "fromCtwaAd": "من إعلان Click to WhatsApp",
-      "ctwaConversion": "تحويل CTWA",
+      "fromCtwaAd": "من الإعلانات",
+      "ctwaConversion": "تحويل الإعلان",
       "lastUserInputTypes": {
         "text": "نص",
         "location": "الموقع",
@@ -571,7 +574,7 @@
       "customFields": "الحقول المخصصة",
       "email": "البريد الإلكتروني",
       "sms": "الرسائل النصية",
-      "ctwaAds": "إعلانات Click to WhatsApp"
+      "ctwaAds": "الإعلانات"
     },
     "languages": {
       "ar": "العربية",
@@ -610,9 +613,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "بادئو محادثات CTWA",
-        "leads": "عملاء CTWA المحتملون المؤهلون",
-        "purchases": "مشترو CTWA"
+        "conversations": "بادئو محادثات الإعلانات",
+        "leads": "عملاء الإعلانات المحتملون المؤهلون",
+        "purchases": "مشترو الإعلانات"
       },
       "adPrefix": "إعلان",
       "allAds": "جميع الإعلانات"
@@ -2109,6 +2112,15 @@
         "description": "يظهر هذا الرمز مرة واحدة فقط. احفظه في مكان آمن — لن تتمكن من عرضه مرة أخرى.",
         "done": "تم"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
@@ -2244,12 +2256,14 @@
       "whatsappFlow": "مسار واتساب",
       "appointmentScheduling": "جدولة المواعيد",
       "triggerN8n": "تشغيل n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "إرسال حدث Meta CAPI",
       "import": "استيراد التدفق",
       "export": "تصدير",
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
-      "importJsonOnly": "ملفات JSON فقط"
+      "importJsonOnly": "ملفات JSON فقط",
+      "adsConversions": "الإعلانات وتحويلات Meta",
+      "trackAdsLead": "تتبع عميل محتمل من الإعلانات",
+      "trackAdsPurchase": "تتبع عملية شراء من الإعلانات"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2407,6 +2421,11 @@
   },
   "ads": {
     "title": "الإعلانات",
+    "dashboardNav": {
+      "whatsapp": "إعلانات Click-to-WhatsApp",
+      "messenger": "إعلانات Click-to-Messenger",
+      "instagram": "إعلانات Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "ربط حساب إعلاني",
       "adAccountName": "اسم الحساب الإعلاني",
@@ -2432,6 +2451,8 @@
       "title": "أحداث التحويل",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "إنستغرام",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "إدارة الحسابات الإعلانية",
@@ -2439,11 +2460,16 @@
       "selectAll": "تحديد الكل",
       "whatsappAsset": "أصل WhatsApp",
       "selectWhatsappAsset": "اختر أصل WhatsApp",
+      "selectIntegration": "التكامل",
+      "selectIntegrationPlaceholder": "اختر التكامل",
+      "noIntegrationsConnected": "لا توجد عمليات ربط متصلة بهذه القناة بعد.",
+      "connectIntegration": "ربط قناة",
       "templates": "القوالب",
       "selectTemplates": "اختر القوالب",
       "noTemplates": "لم يتم العثور على قوالب معتمدة.",
       "existingRules": "القواعد الحالية",
       "noRules": "لا توجد قواعد تحويل لهذا أصل WhatsApp حتى الآن.",
+      "noRulesGeneric": "لا توجد قواعد تحويل لهذا الربط بعد.",
       "toggleRule": "تفعيل أو تعطيل القاعدة",
       "deleteRule": "حذف القاعدة",
       "qualifyingTemplateMessageSent": "يتم إرسال رسالة القالب المؤهِّلة",
@@ -2483,24 +2509,26 @@
         "title": "تتبع العملاء المحتملين المؤهلين",
         "question": "في أي مرحلة من المحادثة تريد تأهيل جهة الاتصال كعميل محتمل؟",
         "when": "عندما",
-        "then": "ثم صنّف عميل CTWA المحتمل كـ"
+        "then": "ثم صنّف عميل CTWA المحتمل كـ",
+        "thenGeneric": "ثم صنّف العميل المحتمل كـ"
       },
       "trackPurchases": {
         "title": "تتبع المشتريات",
         "question": "أي قالب يؤكد عملية الشراء؟",
         "when": "عندما",
         "then": "ثم",
-        "noValueNote": "يسجّل الشراء المبني على قاعدة تحويل شراء دون قيمة طلب — يُحسب ضمن المشتريات لكنه يضيف 0 إلى الإيرادات. يتم تسجيل قيمة الطلب فقط بواسطة Meta Automatic Events."
+        "noValueNote": "يسجّل الشراء المبني على قاعدة تحويل شراء دون قيمة طلب — يُحسب ضمن المشتريات لكنه يضيف 0 إلى الإيرادات. يتم تسجيل قيمة الطلب فقط بواسطة Meta Automatic Events.",
+        "questionGeneric": "في أي مرحلة من المحادثة تريد تسجيل عملية شراء؟"
       }
     },
     "analytics": {
-      "title": "تحليلات CTWA",
+      "title": "تحليلات الإعلانات",
       "funnelOverview": "نظرة عامة على مسار التحويل",
       "conversationsStarted": "المحادثات المبدوءة",
       "qualifiedLeads": "العملاء المحتملون المؤهلون",
       "purchases": "المشتريات",
       "adSpend": "الإنفاق الإعلاني",
-      "spendAccountLevelNote": "يُسجَّل الإنفاق على مستوى حساب Meta الإعلاني؛ عند تحديد حساب WhatsApp، تُخفى الإعلانات ذات الإنفاق فقط بدون أي نشاط في مسار التحويل لذلك الحساب.",
+      "spendAccountLevelNote": "يُسجَّل الإنفاق على مستوى حساب Meta الإعلاني؛ عند تحديد حساب، تُخفى الإعلانات ذات الإنفاق فقط بدون أي نشاط في مسار التحويل لذلك الحساب.",
       "revenue": "الإيرادات",
       "roas": "ROAS",
       "revenueCurrencyNote": "تفترض الإيرادات عملة واحدة (USD). لا يتم تجميع الحسابات الإعلانية متعددة العملات حاليًا.",
@@ -2529,21 +2557,27 @@
       "adAccountFilter": {
         "all": "جميع الحسابات الإعلانية",
         "label": "الحساب الإعلاني",
-        "note": "تُخفى الإعلانات ذات التحويلات ولكن بإنفاق صفري أو توصيل صفري في النطاق الزمني المحدد عند التصفية حسب الحساب الإعلاني."
+        "unavailable": "تعذّر تحميل حسابات الإعلانات — تحقّق من اتصال الإعلانات الخاص بهذا التكامل، أو اتصال Facebook Ads الخاص بمساحة العمل، في الإعدادات."
+      },
+      "channelFilter": {
+        "label": "القناة",
+        "allAccounts": "كل الحسابات",
+        "allChannels": "جميع القنوات"
       },
       "retarget": "إعادة الاستهداف",
       "thoseWhoPurchased": "من قاموا بالشراء",
       "thoseWhoStartedConversation": "من بدؤوا محادثة",
       "sendWhatsappBroadcast": "إرسال بث WhatsApp",
+      "retargetOnChannel": "استهداف مجدد على {channel}",
       "from": "من",
       "to": "إلى",
       "unattributed": "غير مُنسوب",
       "retargetDialog": {
-        "title": "إعادة استهداف جهات اتصال CTWA",
+        "title": "إعادة استهداف جهات اتصال الإعلانات",
         "createAudience": "إنشاء جمهور",
         "useExistingAudience": "استخدام جمهور موجود",
         "audienceName": "اسم الجمهور",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "الإعلانات",
         "confirm": "بدء المزامنة",
         "success": "تم وضع مزامنة جمهور إعادة الاستهداف في قائمة الانتظار.",
         "error": "فشل وضع مزامنة جمهور إعادة الاستهداف في قائمة الانتظار."
@@ -2555,7 +2589,7 @@
         "failed": "فشل",
         "skippedNoScope": "تم التخطي (لا يوجد نطاق صلاحية)",
         "skippedRegion": "تم التخطي (المنطقة)",
-        "noScopeWarning": "لم يتم إرسال بعض التحويلات لأن حساب WhatsApp هذا يفتقد إذن الأحداث. أعد ربطه لتفعيل تقارير Automatic Events.",
+        "noScopeWarning": "لم يتم إرسال بعض التحويلات لأن هذا الحساب يفتقد إذن الأحداث. أعد ربطه لتفعيل تقارير Automatic Events.",
         "reconnectCta": "إعادة ربط الحساب",
         "empty": "لا توجد أحداث تحويل في هذا النطاق حتى الآن."
       },
@@ -2568,7 +2602,8 @@
         "contactName": "اسم جهة الاتصال",
         "phone": "الهاتف",
         "adId": "معرّف الإعلان",
-        "occurredAt": "وقت الحدوث"
+        "occurredAt": "وقت الحدوث",
+        "channel": "القناة"
       },
       "empty": "لا توجد بيانات حتى الآن. اربط حسابًا إعلانيًا وابدأ بتتبع التحويلات."
     }
@@ -2909,6 +2944,8 @@
     "editMessagePlaceholder": "عدّل رسالتك...",
     "saveEdit": "حفظ",
     "cancelEdit": "إلغاء",
+    "replaceAttachment": "استبدال المرفق",
+    "addAttachment": "إضافة مرفق",
     "failedToCopy": "تعذّر النسخ",
     "failedToPreviewImage": "تعذّرت معاينة الصورة",
     "loadingData": "جارٍ تحميل البيانات...",
@@ -3746,7 +3783,9 @@
       "startAnotherFlow": "بدء مسار آخر",
       "notifyAdmins": "إشعار المسؤولين",
       "transferConversationToHuman": "نقل المحادثة إلى موظف",
-      "sendMetaCapiEvent": "إرسال حدث Meta CAPI"
+      "sendMetaCapiEvent": "إرسال حدث Meta CAPI",
+      "trackAdsLead": "تتبع عميل محتمل من الإعلانات",
+      "trackAdsPurchase": "تتبع عملية شراء من الإعلانات"
     },
     "triggerGoesOff": "يتم تشغيل المشغّل",
     "before": "قبل",
@@ -3781,7 +3820,23 @@
     "exportTakingLongDescription": "لا تزال عملية التصدير جارية. يمكنك إغلاق مربع الحوار هذا والتحقق مرة أخرى بعد بضع دقائق من سجل التصدير."
   },
   "auditLogs": {
-    "title": "سجلات التدقيق"
+    "title": "سجلات التدقيق",
+    "columns": {
+      "user": "المستخدم",
+      "action": "الإجراء",
+      "detail": "التفاصيل",
+      "ipAddress": "عنوان IP",
+      "date": "التاريخ"
+    },
+    "filters": {
+      "from": "من",
+      "to": "إلى",
+      "user": "المستخدم",
+      "userPlaceholder": "معرف المستخدم",
+      "keyword": "الكلمة المفتاحية",
+      "keywordPlaceholder": "الإجراء أو التفاصيل",
+      "allAdmins": "كل المسؤولين"
+    }
   },
   "customFields": {
     "title": "الحقول المخصصة",
@@ -5245,7 +5300,16 @@
       "contentCategory": "فئة المحتوى",
       "contentCategoryPlaceholder": "فئة المحتوى المرتبط بالحدث",
       "contentName": "اسم المحتوى",
-      "contentNamePlaceholder": "اسم الصفحة أو المنتج المرتبط بالحدث"
+      "contentNamePlaceholder": "اسم الصفحة أو المنتج المرتبط بالحدث",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "الصق معرف Dataset من Events Manager",
     "saveDataset": "حفظ",
@@ -5292,6 +5356,13 @@
     },
     "whatsapp": {
       "connect": "ربط"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "يسجّل التحويل فقط للمخاطبين الذين لديهم إسناد من إعلان WhatsApp للنقر للمحادثة أو إحالة إعلان من Meta. لا يوجد تأثير على المخاطبين الآخرين."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {
@@ -5413,6 +5484,218 @@
         "win": "فاز",
         "lose": "بدون جائزة",
         "empty": "لا توجد سجلات لعب بعد"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "مكتبة الوسائط",
+    "searchPlaceholder": "البحث عن الملفات...",
+    "newFolder": "مجلد جديد",
+    "recent": "الأحدث",
+    "favourite": "المفضلة",
+    "upload": "رفع",
+    "done": "تم",
+    "deleteFolder": "حذف المجلد",
+    "renameFolder": "إعادة تسمية المجلد",
+    "noFiles": "لا توجد ملفات",
+    "noFolders": "لا توجد مجلدات بعد",
+    "folderNamePlaceholder": "اسم المجلد",
+    "confirmDeleteFolder": "حذف المجلد وجميع ملفاته؟",
+    "confirmDeleteFolderDescription": "سيتم حذف جميع الملفات في هذا المجلد نهائيًا من الخادم. لا يمكن التراجع عن هذا الإجراء.",
+    "confirmDeleteFile": "حذف الملف؟",
+    "confirmDeleteFileDescription": "سيتم حذف هذا الملف نهائيًا من الخادم.",
+    "addToFavourites": "إضافة إلى المفضلة",
+    "removeFromFavourites": "إزالة من المفضلة",
+    "deleteFile": "حذف الملف",
+    "selectOnlyOneFile": "يمكنك تحديد ملف واحد فقط",
+    "confirmDeleteFiles": "{count, plural, =1 {حذف ملف واحد؟} other {حذف # ملفات؟}}",
+    "confirmDeleteFilesDescription": "سيتم حذف هذه الملفات نهائيًا من الخادم. لا يمكن التراجع عن هذا الإجراء.",
+    "filesCount": "{count, plural, =0 {لا توجد ملفات} =1 {ملف واحد} other {# ملفات}}",
+    "openMediaLibrary": "فتح مكتبة الوسائط",
+    "uploadFailed": "فشل رفع {name}"
+  },
+  "adsCampaign": {
+    "title": "الإعلانات",
+    "createCta": "إنشاء إعلان",
+    "prereq": {
+      "notConnected": "قم بربط Facebook Ads لإنشاء إعلانات مراسلة لهذه القناة.",
+      "connectCta": "ربط Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "بلا",
+      "housing": "الإسكان",
+      "employment": "التوظيف",
+      "credit": "الائتمان",
+      "issues": "قضايا اجتماعية أو انتخابات أو سياسة",
+      "financialProducts": "المنتجات والخدمات المالية",
+      "onlineGambling": "المقامرة والألعاب عبر الإنترنت"
+    },
+    "fields": {
+      "objective": {
+        "label": "الهدف",
+        "value": "التفاعل (المراسلة)"
+      },
+      "specialAdCategory": {
+        "label": "فئة الإعلان الخاصة",
+        "description": "اختيار فئة مقيّدة يزيل خيارات الاستهداف حسب العمر والجنس وخيارات استهداف أخرى لا تسمح بها Meta لهذه الفئة.",
+        "restrictedNote": "تم تعطيل الاستهداف حسب العمر والجنس لأنه تم اختيار فئة إعلان خاصة مقيّدة."
+      },
+      "adAccount": {
+        "label": "حساب الإعلانات"
+      },
+      "whatsappPage": {
+        "label": "صفحة فيسبوك",
+        "description": "لا تزال إعلانات WhatsApp تتطلب صفحة فيسبوك مرتبطة — اختر الصفحة المتصلة التي تريد استخدامها."
+      },
+      "dailyBudget": {
+        "label": "الميزانية اليومية",
+        "placeholder": "مثال: 2000",
+        "description": "أدخل المبلغ بأصغر وحدة عملة في حساب الإعلانات الخاص بك (مثال: السنت بالنسبة للدولار الأمريكي)."
+      },
+      "countries": {
+        "label": "الدول"
+      },
+      "ageRange": {
+        "min": "الحد الأدنى للعمر",
+        "max": "الحد الأقصى للعمر"
+      },
+      "gender": {
+        "label": "الجنس",
+        "male": "ذكر",
+        "female": "أنثى"
+      },
+      "schedule": {
+        "start": "وقت البدء",
+        "end": "وقت الانتهاء"
+      },
+      "destination": {
+        "label": "الوجهة"
+      },
+      "callToAction": {
+        "label": "دعوة لاتخاذ إجراء",
+        "derivedNote": "يتم اشتقاق زر الدعوة لاتخاذ إجراء ({type}) تلقائيًا من القناة."
+      },
+      "specialAdCategoryCountry": {
+        "label": "بلد فئة الإعلان",
+        "description": "مطلوب من Meta لفئة القضايا الاجتماعية أو الانتخابات أو السياسة — البلد المصرح لك بتشغيل هذه الإعلانات فيه."
+      }
+    },
+    "welcomeMessage": {
+      "title": "رسالة الترحيب",
+      "label": "رسالة الترحيب",
+      "description": "تُرسل تلقائيًا عندما يبدأ شخص ما محادثة من هذا الإعلان.",
+      "mode": {
+        "default": "استخدام رسالة Meta الافتراضية",
+        "single": "رسالة واحدة",
+        "templates": "اختبار ما يصل إلى 5 نسخ من الرسالة"
+      },
+      "messageLabel": "الرسالة",
+      "templateLabel": "النسخة {index}",
+      "headingPlaceholder": "العنوان (اختياري)",
+      "addTemplate": "إضافة نسخة",
+      "templatesLimit": "يمكن اختبار ما يصل إلى {max} نسخة."
+    },
+    "creative": {
+      "mediaRequired": "قم برفع صورة أو فيديو للمتابعة.",
+      "mediaType": {
+        "label": "الوسائط الإبداعية",
+        "orVideo": "أو فيديو",
+        "selectAdAccountFirst": "اختر حساب إعلانات قبل رفع الوسائط.",
+        "uploadImage": "رفع صورة",
+        "uploadVideo": "رفع فيديو"
+      },
+      "uploading": "جارٍ الرفع...",
+      "imageUploadFailed": "فشل تحميل الصورة. يرجى المحاولة مرة أخرى.",
+      "videoProcessing": "جارٍ معالجة الفيديو...",
+      "videoReady": "الفيديو جاهز",
+      "videoProcessingFailed": "فشلت معالجة الفيديو. يرجى تجربة ملف آخر.",
+      "previewAlt": "معاينة الإبداع",
+      "primaryText": "النص الأساسي",
+      "headline": "العنوان الرئيسي"
+    },
+    "wizard": {
+      "createDraft": "إنشاء كمسودة موقوفة",
+      "campaignStep": {
+        "title": "الحملة",
+        "namePlaceholder": "أدخل اسمًا لهذا الإعلان"
+      },
+      "adSetStep": {
+        "title": "مجموعة الإعلانات"
+      },
+      "creativeStep": {
+        "title": "إبداع الإعلان"
+      },
+      "preflightStep": {
+        "title": "المراجعة"
+      },
+      "errors": {
+        "nameRequired": "أدخل اسمًا لهذا الإعلان.",
+        "adAccountRequired": "اختر حساب إعلانات.",
+        "budgetRequired": "أدخل ميزانية يومية.",
+        "countryRequired": "اختر دولة واحدة على الأقل.",
+        "mediaRequired": "ارفع صورة أو فيديو."
+      }
+    },
+    "preflight": {
+      "title": "الملخص",
+      "pausedNote": "يُنشأ هذا الإعلان كمسودة موقوفة. لن يُنشر أي شيء ولن يُنفق أي مال حتى تقوم بنشره."
+    },
+    "publishConfirm": {
+      "title": "هل تريد نشر هذا الإعلان؟",
+      "description": "يؤدي النشر إلى تفعيل الحملة ومجموعة الإعلانات والإعلان بالترتيب. ستبدأ Meta بإنفاق ميزانيتك بمجرد بدء التسليم.",
+      "confirm": "نشر"
+    },
+    "list": {
+      "viewOnMeta": "العرض على Meta",
+      "empty": "لا توجد إعلانات مراسلة حتى الآن.",
+      "createState": "حالة المسودة",
+      "actions": "الإجراءات",
+      "notPublishedYet": "لم يُنشر بعد",
+      "draftReady": "المسودة جاهزة",
+      "createFailed": "فشل الإنشاء",
+      "creating": "جارٍ الإنشاء...",
+      "publish": "نشر",
+      "pause": "إيقاف مؤقت"
+    },
+    "messages": {
+      "created": "تم إنشاء مسودة الإعلان.",
+      "actionSucceeded": "تم."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "أنشئ وأدر إعلانات Click-to-WhatsApp هنا."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "أنشئ وأدر إعلانات Click-to-Messenger هنا."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "أنشئ وأدر إعلانات Click-to-Instagram هنا."
+      },
+      "connectCta": "ربط Facebook Ads",
+      "reconnectCta": "إعادة الربط",
+      "reconnectNeeded": "يحتاج هذا الاتصال إلى إعادة الربط.",
+      "refresh": "تحديث",
+      "whatsappPageRequiredNote": "لا تزال إعلانات النقر للانتقال إلى WhatsApp تتطلب صفحة فيسبوك مرتبطة (متطلب من Meta) — ستختارها عند إنشاء إعلان.",
+      "emptyDashboardNote": "تظهر الإعلانات التي تُنشأ هنا الآن تلقائيًا في لوحة معلومات الإعلانات الخاصة بهذه القناة — اختر هذا التكامل من عامل التصفية هناك لرؤية حساباته وإنفاقه."
+    },
+    "insights": {
+      "title": "الأداء",
+      "empty": "لا توجد بيانات بعد",
+      "impressions": "مرات الظهور",
+      "reach": "الوصول",
+      "spend": "الإنفاق",
+      "clicks": "النقرات",
+      "conversations": "المحادثات",
+      "costPerConversation": "التكلفة/محادثة",
+      "costPerConversationTooltip": "متوسط التكلفة لكل محادثة مراسلة بدأت.",
+      "datePresetLabel": "الفترة:",
+      "datePreset": {
+        "maximum": "كل الأوقات",
+        "last_30d": "آخر 30 يومًا",
+        "last_7d": "آخر 7 أيام"
       }
     }
   }

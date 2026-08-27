@@ -1,6 +1,7 @@
 "use server"
 
 import { tiktokIntegrationService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
@@ -63,6 +64,12 @@ const refreshTiktokToken = async (ctx: { workspaceId: string; id: string }) => {
         }
 
         await tiktokIntegrationService.updateAuth(ctx.id, updatedAuth)
+
+        await auditService.record({
+          workspaceId: ctx.workspaceId,
+          action: "refresh",
+          detail: "refreshed the TikTok channel token",
+        })
       } catch (error) {
         logger.error(error, "Failed to refresh TikTok token")
         await tiktokIntegrationService.markTokenRefreshError(

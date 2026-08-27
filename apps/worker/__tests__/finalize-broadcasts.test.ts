@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ── db spies ──────────────────────────────────────────────────────────────────
 const findManyBroadcast = vi.fn()
 const dbCountMock = vi.fn()
+const returningSpy = vi.fn()
+const recordAuditLog = vi.fn()
 
 type UpdateCall = {
   table: unknown
@@ -18,6 +20,10 @@ const runExclusiveSpy = vi.fn()
 const loggerInfoSpy = vi.fn()
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
@@ -30,13 +36,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
       set: (values: Record<string, unknown>) => ({
         where: (condition: unknown) => {
           updateCalls.push({ table, values, condition })
-          return Promise.resolve()
+          return Object.assign(Promise.resolve(), {
+            returning: (...args: unknown[]) => returningSpy(...args),
+          })
         },
       }),
     }),
   },
   and: (...args: unknown[]) => ({ __and: args }),
   eq: (a: unknown, b: unknown) => ({ __eq: [a, b] }),
+  ne: (a: unknown, b: unknown) => ({ __ne: [a, b] }),
   or: (...args: unknown[]) => ({ __or: args }),
   isNotNull: (a: unknown) => ({ __isNotNull: a }),
 }))
@@ -89,6 +98,8 @@ const makeBroadcast = (
   overrides: Record<string, unknown> = {},
 ) => ({
   id,
+  name: "Broadcast",
+  workspaceId: "workspace-1",
   status: "sending",
   contactCount,
   ...overrides,
@@ -99,6 +110,8 @@ beforeEach(() => {
   updateCalls.length = 0
   findManyBroadcast.mockResolvedValue([])
   dbCountMock.mockResolvedValue(0)
+  returningSpy.mockResolvedValue([{ id: "b-1" }])
+  recordAuditLog.mockResolvedValue(undefined)
 })
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -160,6 +173,23 @@ describe("finalizeBroadcasts", () => {
       expect(result).toEqual({ skipped: false, finalized: 1 })
       expect(updateCalls).toHaveLength(1)
       expect(updateCalls[0].values).toMatchObject({ status: "sent" })
+      expect(recordAuditLog).toHaveBeenCalledWith({
+        action: "broadcast_sent",
+        detail: "sent a broadcast (#b-1)",
+        workspaceId: "workspace-1",
+        source: "schedule:finalizeBroadcasts",
+      })
+    })
+
+    test("does not emit broadcast_sent when process-broadcast-contacts already won the race (dedupe)", async () => {
+      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 10)])
+      dbCountMock.mockResolvedValue(10)
+      returningSpy.mockResolvedValue([])
+
+      const result = await finalizeBroadcasts()
+
+      expect(result).toEqual({ skipped: false, finalized: 1 })
+      expect(recordAuditLog).not.toHaveBeenCalled()
     })
 
     test("completed > total also finalizes", async () => {

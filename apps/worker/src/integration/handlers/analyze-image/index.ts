@@ -13,6 +13,7 @@ import type { ExecuteStepResult } from "../step"
 
 export async function handleAIAnalyzeImage({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<AIAnalyzeImageSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
@@ -95,6 +96,7 @@ export async function handleAIAnalyzeImage({
         customFieldId: step.outputFieldId,
         fullText,
         workspaceId: conversation.workspaceId,
+        contactInboxId: contactInbox.id,
       })
     }
 

@@ -536,6 +536,7 @@ async function getConversationFromInput(
     result.value.contact.firstName || undefined,
     result.value.contact.phoneNumber || undefined,
     result.value.contact.email || undefined,
+    result.value.contactInbox.id,
   )
 
   return {

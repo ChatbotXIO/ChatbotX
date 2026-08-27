@@ -213,6 +213,7 @@ async function handleReflink(props: {
     conversation.contactId,
     refData.name,
     reflink.id,
+    contactInbox.id,
   )
 
   if (reflink.customFieldId) {
@@ -221,6 +222,7 @@ async function handleReflink(props: {
       customFieldId: reflink.customFieldId,
       fullText: refData.name,
       workspaceId: conversation.workspaceId,
+      contactInboxId: contactInbox.id,
     })
   }
 

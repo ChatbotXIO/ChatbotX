@@ -12,6 +12,11 @@ export const router = {
   adsAPI: lazy(() =>
     import("@/features/ads/api").then((m) => ({ default: m.adsAPI })),
   ),
+  adsCampaignAPI: lazy(() =>
+    import("@/features/ads-campaign/api").then((m) => ({
+      default: m.adsCampaignAPI,
+    })),
+  ),
   appointmentCalendarsAPI: lazy(() =>
     import("@/features/appointment-calendars/api").then((m) => ({
       default: m.appointmentCalendarsAPI,
@@ -299,4 +304,9 @@ export const router = {
     // @ts-expect-error
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .router(analyticsRoutes),
+  mediaLibraryAPI: lazy(() =>
+    import("@/features/media-library/api").then((m) => ({
+      default: m.mediaLibraryAPI,
+    })),
+  ),
 }

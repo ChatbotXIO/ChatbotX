@@ -246,6 +246,7 @@ const buildProps = () =>
       contactId: "contact-1",
       workspaceId: "workspace-1",
     },
+    contactInbox: { id: "contact-inbox-1" },
     step: {},
   }) as unknown as Parameters<
     typeof import("../src/integration/handlers/contact").subscribeBroadcast
@@ -305,6 +306,7 @@ describe("unsubscribeBroadcast", () => {
     expect(emitContactUnsubscribed).toHaveBeenCalledWith(
       "workspace-1",
       "contact-1",
+      "contact-inbox-1",
     )
   })
 })

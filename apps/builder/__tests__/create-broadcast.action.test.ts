@@ -12,6 +12,7 @@ const {
   mockIntegrationMessengerFindFirst,
   mockIntegrationWhatsappFindFirst,
   mockReturnValidationErrors,
+  mockRecordAuditLog,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn()
@@ -33,8 +34,13 @@ const {
     mockIntegrationMessengerFindFirst: vi.fn(),
     mockIntegrationWhatsappFindFirst: vi.fn(),
     mockReturnValidationErrors,
+    mockRecordAuditLog: vi.fn(),
   }
 })
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: (...args: unknown[]) => mockRecordAuditLog(...args) },
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -313,6 +319,41 @@ describe("createBroadcastAction — happy path insert", () => {
     expect(insertedValues.status).toBe("scheduled")
     expect(insertedValues.workspaceId).toBe(WORKSPACE_ID)
     expect(result).toBe(mockBroadcast)
+    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      action: "create",
+      detail: "created a new broadcast (#bc-4)",
+    })
+    // schedulesType "now" in baseInput → also emits a launch row.
+    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      action: "launch",
+      detail: "launched a broadcast (#bc-4)",
+    })
+  })
+
+  test("does not emit a launch row for a future-scheduled broadcast", async () => {
+    const mockBroadcast = { id: "bc-future", name: "Broadcast" }
+    mockInsertReturning.mockResolvedValue([mockBroadcast])
+
+    await (createBroadcastAction as (props: unknown) => Promise<unknown>)({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        flowId: "flow-1",
+        schedulesType: "future",
+        schedulesAt: new Date().toISOString(),
+      },
+    })
+
+    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      action: "create",
+      detail: "created a new broadcast (#bc-future)",
+    })
+    expect(mockRecordAuditLog).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: "launch" }),
+    )
   })
 
   test("persists integrationMessengerId so audience scoping matches the preview", async () => {

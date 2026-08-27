@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Thử lại",
     "copy": "Sao chép",
     "copyUrl": "Sao chép URL",
     "actions": "Hành động",
@@ -71,6 +72,7 @@
     "reset": "Đặt lại",
     "save": "Lưu",
     "selectAll": "Chọn tất cả",
+    "unselect": "Bỏ chọn",
     "selectRow": "Chọn hàng",
     "sendFlow": "Gửi luồng",
     "sendMessage": "Gửi tin nhắn",
@@ -157,7 +159,8 @@
     "skip": "Bỏ qua"
   },
   "admins": {
-    "title": "Quản trị viên"
+    "title": "Quản trị viên",
+    "adminActivityLogs": "Nhật ký hoạt động quản trị"
   },
   "assignAdmin": {
     "assignConversation": "Gán cuộc trò chuyện",
@@ -541,8 +544,8 @@
       "blocked": "Đã chặn",
       "noAdminReply": "Không có phản hồi quản trị viên",
       "contactCreatedAt": "Ngày tạo liên hệ",
-      "fromCtwaAd": "Đến từ quảng cáo Click to WhatsApp",
-      "ctwaConversion": "Chuyển đổi CTWA",
+      "fromCtwaAd": "Đến từ quảng cáo",
+      "ctwaConversion": "Chuyển đổi quảng cáo",
       "lastUserInputTypes": {
         "text": "Văn bản",
         "location": "Vị trí",
@@ -571,7 +574,7 @@
       "customFields": "Trường tùy chỉnh",
       "email": "Email",
       "sms": "SMS",
-      "ctwaAds": "Quảng cáo Click to WhatsApp"
+      "ctwaAds": "Quảng cáo"
     },
     "languages": {
       "ar": "Tiếng Ả Rập",
@@ -610,9 +613,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA người bắt đầu hội thoại",
-        "leads": "CTWA khách tiềm năng đạt chuẩn",
-        "purchases": "CTWA người đã mua"
+        "conversations": "Người bắt đầu hội thoại từ quảng cáo",
+        "leads": "Khách tiềm năng đạt chuẩn từ quảng cáo",
+        "purchases": "Người đã mua từ quảng cáo"
       },
       "adPrefix": "quảng cáo",
       "allAds": "tất cả quảng cáo"
@@ -2109,6 +2112,15 @@
         "description": "Token này chỉ hiển thị một lần. Hãy lưu trữ an toàn — bạn sẽ không thể xem lại được nữa.",
         "done": "Xong"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
@@ -2190,7 +2202,6 @@
       "getResponseAddContact": "Thêm liên hệ vào GetResponse",
       "sendGridAddContact": "Thêm liên hệ vào SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "API Chuyển đổi Meta",
       "openWebsite": "Mở trang web",
       "optInEmail": "Đăng ký nhận email",
       "optOutEmail": "Hủy đăng ký email",
@@ -2249,7 +2260,10 @@
       "import": "Nhập luồng",
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
-      "importJsonOnly": "Chỉ tệp JSON"
+      "importJsonOnly": "Chỉ tệp JSON",
+      "adsConversions": "Quảng cáo và Meta Conversions",
+      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
+      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2407,6 +2421,11 @@
   },
   "ads": {
     "title": "Quảng cáo",
+    "dashboardNav": {
+      "whatsapp": "Quảng cáo Click-to-WhatsApp",
+      "messenger": "Quảng cáo Click-to-Messenger",
+      "instagram": "Quảng cáo Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Kết nối tài khoản quảng cáo",
       "adAccountName": "Tên tài khoản quảng cáo",
@@ -2432,6 +2451,8 @@
       "title": "Sự kiện chuyển đổi",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Quản lý tài khoản quảng cáo",
@@ -2439,11 +2460,16 @@
       "selectAll": "Chọn tất cả",
       "whatsappAsset": "Tài sản WhatsApp",
       "selectWhatsappAsset": "Chọn tài sản WhatsApp",
+      "selectIntegration": "Tích hợp",
+      "selectIntegrationPlaceholder": "Chọn tích hợp",
+      "noIntegrationsConnected": "Chưa có tích hợp nào được kết nối cho kênh này.",
+      "connectIntegration": "Kết nối một kênh",
       "templates": "Mẫu tin nhắn",
       "selectTemplates": "Chọn mẫu tin nhắn",
       "noTemplates": "Không tìm thấy mẫu đã phê duyệt.",
       "existingRules": "Quy tắc hiện có",
       "noRules": "Chưa có quy tắc chuyển đổi cho tài sản WhatsApp này.",
+      "noRulesGeneric": "Chưa có quy tắc chuyển đổi cho tích hợp này.",
       "toggleRule": "Bật hoặc tắt quy tắc",
       "deleteRule": "Xóa quy tắc",
       "qualifyingTemplateMessageSent": "Tin nhắn mẫu đủ điều kiện được gửi",
@@ -2483,24 +2509,26 @@
         "title": "Theo dõi khách hàng tiềm năng đạt chuẩn",
         "question": "Tại thời điểm nào trong cuộc hội thoại bạn muốn xác định một liên hệ là khách hàng tiềm năng?",
         "when": "Khi",
-        "then": "Thì đánh dấu khách hàng tiềm năng CTWA là"
+        "then": "Thì đánh dấu khách hàng tiềm năng CTWA là",
+        "thenGeneric": "Thì đánh dấu khách hàng tiềm năng là"
       },
       "trackPurchases": {
         "title": "Theo dõi mua hàng",
         "question": "Mẫu tin nào xác nhận một giao dịch mua?",
         "when": "Khi",
         "then": "Thì",
-        "noValueNote": "Quy tắc mua hàng ghi nhận một chuyển đổi Mua mà không có giá trị đơn hàng — nó được tính vào số lượt mua nhưng cộng 0 vào doanh thu. Giá trị đơn hàng chỉ được ghi nhận bởi Meta Automatic Events."
+        "noValueNote": "Quy tắc mua hàng ghi nhận một chuyển đổi Mua mà không có giá trị đơn hàng — nó được tính vào số lượt mua nhưng cộng 0 vào doanh thu. Giá trị đơn hàng chỉ được ghi nhận bởi Meta Automatic Events.",
+        "questionGeneric": "Tại thời điểm nào trong hội thoại bạn muốn ghi nhận một lượt mua hàng?"
       }
     },
     "analytics": {
-      "title": "Phân tích CTWA",
+      "title": "Phân tích quảng cáo",
       "funnelOverview": "Tổng quan phễu",
       "conversationsStarted": "Cuộc hội thoại đã bắt đầu",
       "qualifiedLeads": "Khách hàng tiềm năng đạt chuẩn",
       "purchases": "Lượt mua",
       "adSpend": "Chi tiêu quảng cáo",
-      "spendAccountLevelNote": "Chi tiêu được báo cáo ở cấp tài khoản quảng cáo Meta; khi chọn tài khoản WhatsApp, các quảng cáo chỉ có chi tiêu nhưng không có hoạt động phễu cho tài khoản đó sẽ bị ẩn.",
+      "spendAccountLevelNote": "Chi tiêu được báo cáo ở cấp tài khoản quảng cáo Meta; khi chọn tài khoản, các quảng cáo chỉ có chi tiêu nhưng không có hoạt động phễu cho tài khoản đó sẽ bị ẩn.",
       "revenue": "Doanh thu",
       "roas": "ROAS",
       "revenueCurrencyNote": "Doanh thu giả định một loại tiền tệ duy nhất (USD). Các tài khoản quảng cáo đa tiền tệ chưa được tổng hợp.",
@@ -2529,21 +2557,27 @@
       "adAccountFilter": {
         "all": "Tất cả tài khoản quảng cáo",
         "label": "Tài khoản quảng cáo",
-        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo."
+        "unavailable": "Không tải được tài khoản quảng cáo — hãy kiểm tra kết nối Ads của tích hợp này, hoặc kết nối Facebook Ads của workspace, trong phần cài đặt."
+      },
+      "channelFilter": {
+        "label": "Kênh",
+        "allAccounts": "Tất cả tài khoản",
+        "allChannels": "Tất cả kênh"
       },
       "retarget": "Tiếp thị lại",
       "thoseWhoPurchased": "Những người đã mua",
       "thoseWhoStartedConversation": "Những người đã bắt đầu cuộc hội thoại",
       "sendWhatsappBroadcast": "Gửi broadcast WhatsApp",
+      "retargetOnChannel": "Tiếp thị lại trên {channel}",
       "from": "Từ ngày",
       "to": "Đến ngày",
       "unattributed": "Không gán quảng cáo",
       "retargetDialog": {
-        "title": "Tiếp thị lại liên hệ CTWA",
+        "title": "Tiếp thị lại liên hệ quảng cáo",
         "createAudience": "Tạo tệp đối tượng",
         "useExistingAudience": "Dùng tệp hiện có",
         "audienceName": "Tên tệp đối tượng",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Quảng cáo",
         "confirm": "Bắt đầu đồng bộ",
         "success": "Đã đưa tác vụ đồng bộ tệp tiếp thị lại vào hàng đợi.",
         "error": "Không thể đưa tác vụ đồng bộ tệp tiếp thị lại vào hàng đợi."
@@ -2555,7 +2589,7 @@
         "failed": "Thất bại",
         "skippedNoScope": "Bỏ qua (thiếu quyền)",
         "skippedRegion": "Bỏ qua (khu vực)",
-        "noScopeWarning": "Một số chuyển đổi chưa được gửi vì tài khoản WhatsApp này thiếu quyền sự kiện. Kết nối lại để bật báo cáo Automatic Events.",
+        "noScopeWarning": "Một số chuyển đổi chưa được gửi vì tài khoản này thiếu quyền sự kiện. Kết nối lại để bật báo cáo Automatic Events.",
         "reconnectCta": "Kết nối lại tài khoản",
         "empty": "Chưa có sự kiện chuyển đổi nào trong khoảng thời gian này."
       },
@@ -2568,7 +2602,8 @@
         "contactName": "Tên liên hệ",
         "phone": "Số điện thoại",
         "adId": "ID quảng cáo",
-        "occurredAt": "Thời điểm xảy ra"
+        "occurredAt": "Thời điểm xảy ra",
+        "channel": "Kênh"
       },
       "empty": "Chưa có dữ liệu. Hãy kết nối tài khoản quảng cáo và bắt đầu theo dõi chuyển đổi."
     }
@@ -2909,6 +2944,8 @@
     "editMessagePlaceholder": "Sửa tin nhắn của bạn...",
     "saveEdit": "Lưu",
     "cancelEdit": "Hủy",
+    "replaceAttachment": "Thay thế tệp đính kèm",
+    "addAttachment": "Thêm tệp đính kèm",
     "failedToCopy": "Sao chép thất bại",
     "failedToPreviewImage": "Không thể xem trước hình ảnh",
     "loadingData": "Đang tải dữ liệu...",
@@ -3663,7 +3700,9 @@
       "startAnotherFlow": "Bắt đầu luồng khác",
       "notifyAdmins": "Thông báo quản trị viên",
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
-      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI",
+      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
+      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
     },
     "triggerGoesOff": "Trigger kích hoạt",
     "before": "Trước",
@@ -3698,7 +3737,23 @@
     "title": "Nhật ký lỗi"
   },
   "auditLogs": {
-    "title": "Nhật ký kiểm tra"
+    "title": "Nhật ký kiểm tra",
+    "columns": {
+      "user": "Người dùng",
+      "action": "Hành động",
+      "detail": "Chi tiết",
+      "ipAddress": "Địa chỉ IP",
+      "date": "Ngày"
+    },
+    "filters": {
+      "from": "Từ",
+      "to": "Đến",
+      "user": "Người dùng",
+      "userPlaceholder": "ID người dùng",
+      "keyword": "Từ khóa",
+      "keywordPlaceholder": "Hành động, chi tiết hoặc địa chỉ IP",
+      "allAdmins": "Tất cả admin"
+    }
   },
   "customFields": {
     "title": "Trường tùy chỉnh",
@@ -5245,7 +5300,16 @@
       "contentCategory": "Danh mục nội dung",
       "contentCategoryPlaceholder": "Danh mục của nội dung gắn với sự kiện",
       "contentName": "Tên nội dung",
-      "contentNamePlaceholder": "Tên trang hoặc sản phẩm gắn với sự kiện"
+      "contentNamePlaceholder": "Tên trang hoặc sản phẩm gắn với sự kiện",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Dán Dataset ID từ Events Manager",
     "saveDataset": "Lưu",
@@ -5292,6 +5356,13 @@
     },
     "whatsapp": {
       "connect": "Kết nối"
+    },
+    "trackAdsFlowStep": {
+      "helpNote": "Chỉ ghi nhận chuyển đổi cho các liên hệ có gán nhãn quảng cáo click-to-WhatsApp của WhatsApp hoặc giới thiệu quảng cáo Meta. Không ảnh hưởng đến các liên hệ khác."
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "minigames": {
@@ -5413,6 +5484,218 @@
         "win": "Trúng thưởng",
         "lose": "Không trúng",
         "empty": "Chưa có bản ghi lượt chơi nào"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Thư viện Media",
+    "searchPlaceholder": "Tìm kiếm tệp...",
+    "newFolder": "Thư mục mới",
+    "recent": "Gần đây",
+    "favourite": "Yêu thích",
+    "upload": "Tải lên",
+    "done": "Xong",
+    "deleteFolder": "Xoá thư mục",
+    "renameFolder": "Đổi tên thư mục",
+    "noFiles": "Không tìm thấy tệp",
+    "noFolders": "Chưa có thư mục",
+    "folderNamePlaceholder": "Tên thư mục",
+    "confirmDeleteFolder": "Xoá thư mục và toàn bộ tệp?",
+    "confirmDeleteFolderDescription": "Tất cả tệp trong thư mục này sẽ bị xoá vĩnh viễn khỏi máy chủ. Hành động này không thể hoàn tác.",
+    "confirmDeleteFile": "Xoá tệp?",
+    "confirmDeleteFileDescription": "Tệp này sẽ bị xoá vĩnh viễn khỏi máy chủ.",
+    "addToFavourites": "Thêm vào yêu thích",
+    "removeFromFavourites": "Bỏ khỏi yêu thích",
+    "deleteFile": "Xoá tệp",
+    "selectOnlyOneFile": "Chỉ được chọn tối đa 1 tệp",
+    "confirmDeleteFiles": "{count, plural, =1 {Xoá 1 tệp?} other {Xoá # tệp?}}",
+    "confirmDeleteFilesDescription": "Các tệp này sẽ bị xoá vĩnh viễn khỏi máy chủ. Hành động này không thể hoàn tác.",
+    "filesCount": "{count, plural, =0 {Không có tệp} =1 {1 tệp} other {# tệp}}",
+    "openMediaLibrary": "Mở Thư viện Media",
+    "uploadFailed": "Tải lên thất bại: {name}"
+  },
+  "adsCampaign": {
+    "title": "Quảng cáo",
+    "createCta": "Tạo quảng cáo",
+    "prereq": {
+      "notConnected": "Kết nối Facebook Ads để tạo quảng cáo nhắn tin cho kênh này.",
+      "connectCta": "Kết nối Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Không có",
+      "housing": "Nhà ở",
+      "employment": "Việc làm",
+      "credit": "Tín dụng",
+      "issues": "Vấn đề xã hội, bầu cử hoặc chính trị",
+      "financialProducts": "Sản phẩm và dịch vụ tài chính",
+      "onlineGambling": "Cờ bạc và trò chơi trực tuyến"
+    },
+    "fields": {
+      "objective": {
+        "label": "Mục tiêu",
+        "value": "Tương tác (nhắn tin)"
+      },
+      "specialAdCategory": {
+        "label": "Danh mục quảng cáo đặc biệt",
+        "description": "Chọn một danh mục bị hạn chế sẽ loại bỏ tùy chọn nhắm mục tiêu theo độ tuổi, giới tính và các tùy chọn khác mà Meta không cho phép đối với danh mục đó.",
+        "restrictedNote": "Nhắm mục tiêu theo độ tuổi và giới tính đã bị tắt vì đã chọn danh mục quảng cáo đặc biệt bị hạn chế."
+      },
+      "adAccount": {
+        "label": "Tài khoản quảng cáo"
+      },
+      "whatsappPage": {
+        "label": "Trang Facebook",
+        "description": "Quảng cáo WhatsApp vẫn yêu cầu một Trang Facebook được liên kết — chọn Trang đã kết nối để sử dụng."
+      },
+      "dailyBudget": {
+        "label": "Ngân sách hàng ngày",
+        "placeholder": "vd. 2000",
+        "description": "Nhập số tiền theo đơn vị tiền tệ nhỏ nhất của tài khoản quảng cáo của bạn (vd. cent đối với USD)."
+      },
+      "countries": {
+        "label": "Quốc gia"
+      },
+      "ageRange": {
+        "min": "Độ tuổi tối thiểu",
+        "max": "Độ tuổi tối đa"
+      },
+      "gender": {
+        "label": "Giới tính",
+        "male": "Nam",
+        "female": "Nữ"
+      },
+      "schedule": {
+        "start": "Thời gian bắt đầu",
+        "end": "Thời gian kết thúc"
+      },
+      "destination": {
+        "label": "Điểm đến"
+      },
+      "callToAction": {
+        "label": "Lời kêu gọi hành động",
+        "derivedNote": "Nút lời kêu gọi hành động ({type}) được tự động lấy từ kênh."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Quốc gia cho danh mục quảng cáo",
+        "description": "Meta bắt buộc với danh mục vấn đề xã hội, bầu cử hoặc chính trị — quốc gia bạn được phép chạy quảng cáo này."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Tin nhắn chào mừng",
+      "label": "Tin nhắn chào mừng",
+      "description": "Được gửi tự động khi ai đó bắt đầu cuộc trò chuyện từ quảng cáo này.",
+      "mode": {
+        "default": "Dùng tin nhắn mặc định của Meta",
+        "single": "Một tin nhắn",
+        "templates": "Thử nghiệm tối đa 5 biến thể tin nhắn"
+      },
+      "messageLabel": "Tin nhắn",
+      "templateLabel": "Biến thể {index}",
+      "headingPlaceholder": "Tiêu đề (không bắt buộc)",
+      "addTemplate": "Thêm biến thể",
+      "templatesLimit": "Có thể thử nghiệm tối đa {max} biến thể."
+    },
+    "creative": {
+      "mediaRequired": "Tải lên hình ảnh hoặc video để tiếp tục.",
+      "mediaType": {
+        "label": "Nội dung sáng tạo",
+        "orVideo": "hoặc video",
+        "selectAdAccountFirst": "Chọn tài khoản quảng cáo trước khi tải lên nội dung.",
+        "uploadImage": "Tải lên hình ảnh",
+        "uploadVideo": "Tải lên video"
+      },
+      "uploading": "Đang tải lên...",
+      "imageUploadFailed": "Tải ảnh lên thất bại. Vui lòng thử lại.",
+      "videoProcessing": "Đang xử lý video...",
+      "videoReady": "Video đã sẵn sàng",
+      "videoProcessingFailed": "Xử lý video thất bại. Vui lòng thử một tệp khác.",
+      "previewAlt": "Xem trước nội dung sáng tạo",
+      "primaryText": "Văn bản chính",
+      "headline": "Tiêu đề"
+    },
+    "wizard": {
+      "createDraft": "Tạo dưới dạng bản nháp tạm dừng",
+      "campaignStep": {
+        "title": "Chiến dịch",
+        "namePlaceholder": "Đặt tên cho quảng cáo này"
+      },
+      "adSetStep": {
+        "title": "Nhóm quảng cáo"
+      },
+      "creativeStep": {
+        "title": "Nội dung quảng cáo"
+      },
+      "preflightStep": {
+        "title": "Xem lại"
+      },
+      "errors": {
+        "nameRequired": "Nhập tên cho quảng cáo này.",
+        "adAccountRequired": "Chọn một tài khoản quảng cáo.",
+        "budgetRequired": "Nhập ngân sách hàng ngày.",
+        "countryRequired": "Chọn ít nhất một quốc gia.",
+        "mediaRequired": "Tải lên hình ảnh hoặc video."
+      }
+    },
+    "preflight": {
+      "title": "Tóm tắt",
+      "pausedNote": "Quảng cáo này được tạo dưới dạng bản nháp tạm dừng. Sẽ không có gì được đăng và không có khoản tiền nào bị chi tiêu cho đến khi bạn xuất bản."
+    },
+    "publishConfirm": {
+      "title": "Xuất bản quảng cáo này?",
+      "description": "Xuất bản sẽ lần lượt kích hoạt chiến dịch, nhóm quảng cáo và quảng cáo. Meta sẽ bắt đầu chi tiêu ngân sách của bạn khi việc phân phối bắt đầu.",
+      "confirm": "Xuất bản"
+    },
+    "list": {
+      "viewOnMeta": "Xem trên Meta",
+      "empty": "Chưa có quảng cáo nhắn tin nào.",
+      "createState": "Trạng thái bản nháp",
+      "actions": "Hành động",
+      "notPublishedYet": "Chưa xuất bản",
+      "draftReady": "Bản nháp đã sẵn sàng",
+      "createFailed": "Tạo thất bại",
+      "creating": "Đang tạo...",
+      "publish": "Xuất bản",
+      "pause": "Tạm dừng"
+    },
+    "messages": {
+      "created": "Đã tạo bản nháp quảng cáo.",
+      "actionSucceeded": "Hoàn tất."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Tạo và quản lý quảng cáo Click-to-WhatsApp tại đây."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Tạo và quản lý quảng cáo Click-to-Messenger tại đây."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Tạo và quản lý quảng cáo Click-to-Instagram tại đây."
+      },
+      "connectCta": "Kết nối Facebook Ads",
+      "reconnectCta": "Kết nối lại",
+      "reconnectNeeded": "Kết nối này cần được kết nối lại.",
+      "refresh": "Làm mới",
+      "whatsappPageRequiredNote": "Quảng cáo Click-to-WhatsApp vẫn yêu cầu một Trang Facebook được liên kết (yêu cầu của Meta) — bạn sẽ chọn Trang này khi tạo quảng cáo.",
+      "emptyDashboardNote": "Các quảng cáo được tạo tại đây giờ đây sẽ tự động xuất hiện trên bảng điều khiển Quảng cáo của kênh này — hãy chọn tích hợp này trong bộ lọc ở đó để xem tài khoản và chi tiêu của nó."
+    },
+    "insights": {
+      "title": "Hiệu quả",
+      "empty": "Chưa có dữ liệu",
+      "impressions": "Hiển thị",
+      "reach": "Tiếp cận",
+      "spend": "Chi tiêu",
+      "clicks": "Nhấp",
+      "conversations": "Hội thoại",
+      "costPerConversation": "CP/hội thoại",
+      "costPerConversationTooltip": "Chi phí trung bình cho mỗi cuộc hội thoại được bắt đầu.",
+      "datePresetLabel": "Khoảng thời gian:",
+      "datePreset": {
+        "maximum": "Toàn thời gian",
+        "last_30d": "30 ngày qua",
+        "last_7d": "7 ngày qua"
       }
     }
   }

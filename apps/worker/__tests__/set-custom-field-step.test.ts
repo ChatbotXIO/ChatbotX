@@ -110,6 +110,7 @@ describe("setContactCustomField", () => {
       sourceTimezoneOverride: "Asia/Ho_Chi_Minh",
       temporalInputParsing: "lenient",
       fillEmptyTemporalWithNow: true,
+      contactInboxId: "ci-1",
     })
   })
 

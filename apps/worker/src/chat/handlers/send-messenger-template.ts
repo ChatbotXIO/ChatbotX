@@ -40,6 +40,7 @@ import {
 } from "../../integration/handlers/messenger-template-handler"
 import { logger } from "../../lib/logger"
 import { shouldSuppressRetryableChannelError } from "../utils/retry"
+import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
 import { sendFlowStepToChannel } from "./send-message"
 
 export interface ProcessMessengerTemplateParams {
@@ -231,6 +232,20 @@ export async function processMessengerTemplate(
         template: { ...template, params: replacedParams },
       },
       metadata,
+      messageId: newMessage.id,
+    })
+
+    // Amendment A1: extends the `templateSent` conversion trigger to
+    // Messenger. Unconditional (no `hasEnabledTriggerRule` pre-check) — same
+    // as the WhatsApp call site; the evaluator's own cheap attribution
+    // lookup is the real gate. Never fails the send: enqueue errors are
+    // logged and swallowed inside the helper.
+    await enqueueTemplateSentEvaluation({
+      workspaceId: conversation.workspaceId,
+      channel: "messenger",
+      integrationId: validated.inbox.integrationMessenger.id,
+      contactInboxId: contactInbox.id,
+      templateId: template.id,
       messageId: newMessage.id,
     })
 

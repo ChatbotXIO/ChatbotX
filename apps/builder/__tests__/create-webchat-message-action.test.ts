@@ -706,6 +706,7 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
       undefined,
       undefined,
       undefined,
+      "ci-new",
     )
     expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
       "sendFlow",

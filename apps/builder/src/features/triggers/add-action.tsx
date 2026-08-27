@@ -21,6 +21,8 @@ import { defaultFn as runGoogleSheetAction } from "./components/actions/schemas/
 import { defaultFn as sendMetaCapiEventAction } from "./components/actions/schemas/send-meta-capi-event"
 import { defaultFn as setCustomFieldAction } from "./components/actions/schemas/set-custom-field"
 import { defaultFn as startFlowAction } from "./components/actions/schemas/start-flow"
+import { defaultFn as trackAdsLeadAction } from "./components/actions/schemas/track-ads-lead"
+import { defaultFn as trackAdsPurchaseAction } from "./components/actions/schemas/track-ads-purchase"
 import { defaultFn as transferConversationToHumanAction } from "./components/actions/schemas/transfer-conversation-to-human"
 
 type ActionOption = {
@@ -35,6 +37,8 @@ type ActionOption = {
     | typeof transferConversationToHumanAction
     | typeof sendMetaCapiEventAction
     | typeof runGoogleSheetAction
+    | typeof trackAdsLeadAction
+    | typeof trackAdsPurchaseAction
 }
 
 export function AddAction({
@@ -84,6 +88,16 @@ export function AddAction({
         label: "Google Sheets",
         value: triggerActions.enum.runGoogleSheet,
         defaultFn: runGoogleSheetAction,
+      },
+      {
+        label: t("trigger.actions.trackAdsLead"),
+        value: triggerActions.enum.trackAdsLead,
+        defaultFn: trackAdsLeadAction,
+      },
+      {
+        label: t("trigger.actions.trackAdsPurchase"),
+        value: triggerActions.enum.trackAdsPurchase,
+        defaultFn: trackAdsPurchaseAction,
       },
     ],
     [t],

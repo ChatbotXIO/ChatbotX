@@ -284,6 +284,7 @@ describe("contactSequenceService", () => {
         "contact-1",
         "sequence-old",
         "Old sequence",
+        undefined,
       )
     })
     expect(
@@ -322,5 +323,107 @@ describe("contactSequenceService", () => {
     expect(transactionSpy).not.toHaveBeenCalled()
     expect(cancelPendingDispatchesSpy).not.toHaveBeenCalled()
     expect(deleteWhereSpy).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------
+  // contactInboxId threading (finding 3 — flow-step unsubscribe threads,
+  // bulk removal doesn't, multi-contact-with-id warns and drops).
+  // ---------------------------------------------------------------------
+
+  test("threads a single-contact contactInboxId into emitSequenceUnsubscribed (flow-step unsubscribe)", async () => {
+    await contactSequenceService.removeContactSequencesForContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      sequenceIds: ["sequence-1"],
+      reason: "unsubscribed_via_flow",
+      contactInboxId: "ci-1",
+    })
+
+    await vi.waitFor(() => {
+      expect(emitSequenceUnsubscribedSpy).toHaveBeenCalledWith(
+        "ws-1",
+        "contact-1",
+        "sequence-1",
+        "Sequence 1",
+        "ci-1",
+      )
+    })
+    expect(loggerWarnSpy).not.toHaveBeenCalled()
+  })
+
+  test("drops and warns on a contactInboxId supplied for a multi-contact removal instead of misattributing", async () => {
+    findManySpy.mockResolvedValue([
+      {
+        contactId: "contact-1",
+        id: "enrollment-1",
+        sequenceId: "sequence-1",
+        workspaceId: "ws-1",
+      },
+      {
+        contactId: "contact-2",
+        id: "enrollment-2",
+        sequenceId: "sequence-1",
+        workspaceId: "ws-1",
+      },
+    ])
+
+    await contactSequenceService.removeContactSequencesForContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1", "contact-2"],
+      sequenceIds: ["sequence-1"],
+      reason: "enrollment_removed",
+      contactInboxId: "ci-1",
+    })
+
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", contactCount: 2 },
+      "Dropping contactInboxId for a multi-contact sequence removal to avoid misattribution",
+    )
+    await vi.waitFor(() => {
+      expect(emitSequenceUnsubscribedSpy).toHaveBeenCalledTimes(2)
+    })
+    expect(emitSequenceUnsubscribedSpy).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-1",
+      "sequence-1",
+      "Sequence 1",
+      undefined,
+    )
+    expect(emitSequenceUnsubscribedSpy).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-2",
+      "sequence-1",
+      "Sequence 1",
+      undefined,
+    )
+  })
+
+  test("bulk removal without a contactInboxId never warns and emits with no attribution (genuine fallback)", async () => {
+    findManySpy.mockResolvedValue([
+      {
+        contactId: "contact-1",
+        id: "enrollment-1",
+        sequenceId: "sequence-1",
+        workspaceId: "ws-1",
+      },
+      {
+        contactId: "contact-2",
+        id: "enrollment-2",
+        sequenceId: "sequence-1",
+        workspaceId: "ws-1",
+      },
+    ])
+
+    await contactSequenceService.removeContactSequencesForContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1", "contact-2"],
+      sequenceIds: ["sequence-1"],
+      reason: "enrollment_removed",
+    })
+
+    expect(loggerWarnSpy).not.toHaveBeenCalled()
+    await vi.waitFor(() => {
+      expect(emitSequenceUnsubscribedSpy).toHaveBeenCalledTimes(2)
+    })
   })
 })
