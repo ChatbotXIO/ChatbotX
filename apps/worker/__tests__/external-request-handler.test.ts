@@ -15,6 +15,40 @@ vi.mock("@chatbotx.io/business", () => ({
   contactCustomFieldService: {
     setValues: mocks.setValues,
   },
+  // Faithful copy of the jsonBody cleaner (the real module cannot be
+  // imported here: it pulls @chatbotx.io/integration-facebook-ads, which is
+  // not resolvable in the test workspace). Keep in sync with
+  // packages/business/src/external-request/service.ts.
+  stripEmptyAndUnresolvedJsonValues: (jsonStr: string): string => {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(jsonStr)
+    } catch {
+      return jsonStr
+    }
+
+    const clean = (value: unknown): unknown => {
+      if (Array.isArray(value)) {
+        return value.map(clean)
+      }
+      if (value && typeof value === "object") {
+        const out: Record<string, unknown> = {}
+        for (const [key, entry] of Object.entries(value)) {
+          if (
+            typeof entry === "string" &&
+            (entry.length === 0 || entry.includes("{{"))
+          ) {
+            continue
+          }
+          out[key] = clean(entry)
+        }
+        return out
+      }
+      return value
+    }
+
+    return JSON.stringify(clean(parsed))
+  },
 }))
 
 vi.mock("@chatbotx.io/variables", () => ({
