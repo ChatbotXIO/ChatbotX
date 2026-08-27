@@ -1,58 +1,5 @@
-import {
-  type AdsEligibleChannelType,
-  adsEligibleChannelTypes,
-} from "@chatbotx.io/utils/channel"
-import {
-  createSearchParamsCache,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs/server"
+import { createSearchParamsCache, parseAsString } from "nuqs/server"
 import { accountSearchParam } from "./account"
-
-// The channel filter narrows the funnel to one ads-eligible channel at a
-// time — derived from the canonical `adsEligibleChannelTypes` list
-// ("facebook" is a dead AdsConversionChannel value and is not in it) — PLUS
-// the analytics-UI-only "all" sentinel (All channels default). "all" is
-// deliberately NOT part of `adsEligibleChannelTypes`/`AdsConversionChannel`:
-// it must never reach the DB enum, `adsEligibleChannelTypes`-gated writers,
-// the worker's `listRetargetContactsInput`, or contact-filter — every caller
-// on those paths resolves `channel === "all"` into a separate `allChannels`
-// boolean BEFORE the value can leak there (see `page.tsx`'s
-// `resolveChannelIntegrations`/`perChannelIntegrationIds` and
-// `ads-analytics-view.tsx`'s per-channel maps).
-export const adsAnalyticsChannelValues = [
-  ...adsEligibleChannelTypes.options,
-  "all",
-] as const
-export type AdsAnalyticsChannel = AdsEligibleChannelType | "all"
-
-// Display order for the analytics channel dropdown — "All channels" leads (the
-// default aggregate view), then the concrete channels in their canonical order.
-// Kept separate from `adsAnalyticsChannelValues` (whose order backs URL parsing
-// and defaults) so display ordering never couples to parse ordering.
-export const adsAnalyticsChannelDisplayOrder = [
-  "all",
-  ...adsEligibleChannelTypes.options,
-] as const satisfies readonly AdsAnalyticsChannel[]
-
-/**
- * Resolves the effective channel for the ads analytics page. A legacy WhatsApp
- * deep link (`?account=<id>` with no explicit channel and no new
- * `channelAccount`) predates the channel filter and its "all" default; it must
- * resolve back to "whatsapp" so the linked integration is still selected rather
- * than silently folded into the all-channels aggregate. Fresh visits (no
- * `account`) and any explicit `channel`/`channelAccount` selection are returned
- * unchanged.
- */
-export function resolveAdsAnalyticsChannel(input: {
-  channel: AdsAnalyticsChannel
-  account: string
-  channelAccount: string
-}): AdsAnalyticsChannel {
-  return input.channel === "all" && input.account && !input.channelAccount
-    ? "whatsapp"
-    : input.channel
-}
 
 // Exported so the shared `DateRangePresetFilter` bridge (Ads is URL-driven,
 // not store-driven) formats its `?from=&to=` params identically to this
@@ -90,15 +37,10 @@ const defaultRange = getDefaultAdsAnalyticsRange()
 export const adsAnalyticsSearchParamsCache = createSearchParamsCache({
   account: accountSearchParam,
   // `channelAccount` narrows to one messenger/instagram integration for the
-  // selected `channel` — mirrors `account`'s role for whatsapp, but omitted
+  // selected channel — mirrors `account`'s role for whatsapp, but omitted
   // (default "") aggregates across every connected integration for that
-  // channel instead of forcing a single selection.
-  // Default = "all" (decision 8): the dashboard opens aggregated across
-  // every ads-eligible channel. `DEFAULT_ADS_CONVERSION_CHANNEL` (the
-  // DB/query "omitted = whatsapp" default) is untouched — this only changes
-  // the URL default. Legacy deep links with `?channel=whatsapp` still pin
-  // one channel.
-  channel: parseAsStringLiteral(adsAnalyticsChannelValues).withDefault("all"),
+  // channel instead of forcing a single selection. The channel itself is the
+  // route segment (`/dashboard/ads/<channel>`), never a search param.
   channelAccount: parseAsString.withDefault(""),
   adAccount: parseAsString.withDefault(""),
   from: parseAsString.withDefault(defaultRange.from),

@@ -273,7 +273,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
             deliverySummary,
             timeseries,
           ])}
-          range={{ ...range, channel: "messenger", channelAccount: "msg-1" }}
+          range={{ ...range, channelAccount: "msg-1" }}
           selectedChannelIntegrationId="msg-1"
           workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
           workspaceId="ws-1"
