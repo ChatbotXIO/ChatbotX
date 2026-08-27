@@ -746,6 +746,11 @@ export const adsConversionEventRepository = {
     // (never string-interpolated) exactly like
     // `message-stats.repository.ts`'s `AT TIME ZONE ${timezone}`.
     const timezone = input.timezone ?? "UTC"
+    // NOTE: every GROUP BY below references this expression by SELECT ordinal
+    // (`sql\`1\``, date is always the FIRST selected column) instead of
+    // repeating `dateExpression`: the bound `${timezone}` param would render as
+    // a DIFFERENT placeholder ($1 in SELECT vs $6 in GROUP BY) and Postgres
+    // rejects the two as non-matching expressions.
     const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
     const rows = input.integrationWhatsappId
       ? await tx
@@ -768,7 +773,7 @@ export const adsConversionEventRepository = {
             eq(contactModel.id, contactInboxModel.contactId),
           )
           .where(filters)
-          .groupBy(dateExpression, adIdExpression)
+          .groupBy(sql`1`, adIdExpression)
       : await tx
           .select({
             date: dateExpression,
@@ -781,7 +786,7 @@ export const adsConversionEventRepository = {
             eq(contactModel.id, contactInboxModel.contactId),
           )
           .where(filters)
-          .groupBy(dateExpression, adIdExpression)
+          .groupBy(sql`1`, adIdExpression)
 
     return rows.map((row) => ({
       date: row.date,
@@ -854,7 +859,7 @@ export const adsConversionEventRepository = {
       .from(contactInboxModel)
       .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
       .where(and(...adConversationBaseFilters(input)))
-      .groupBy(dateExpression, adIdExpression)
+      .groupBy(sql`1`, adIdExpression)
 
     return rows.map((row) => ({
       date: row.date,
@@ -934,7 +939,7 @@ export const adsConversionEventRepository = {
       .from(contactInboxModel)
       .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
       .where(filters)
-      .groupBy(dateExpression, adIdExpression, contactInboxModel.channel)
+      .groupBy(sql`1`, adIdExpression, contactInboxModel.channel)
 
     return rows.map((row) => ({
       date: row.date,
@@ -1034,7 +1039,7 @@ export const adsConversionEventRepository = {
         .from(adsConversionEventModel)
         .where(and(...dateRangeEventFilters(input)))
         .groupBy(
-          dateExpression,
+          sql`1`,
           adsConversionEventModel.adId,
           adsConversionEventModel.eventType,
           adsConversionEventModel.channel,
@@ -1059,7 +1064,7 @@ export const adsConversionEventRepository = {
       .from(adsConversionEventModel)
       .where(and(...dateRangeEventFilters(input)))
       .groupBy(
-        dateExpression,
+        sql`1`,
         adsConversionEventModel.adId,
         adsConversionEventModel.eventType,
       )
