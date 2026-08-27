@@ -2669,7 +2669,8 @@
       "adAccountFilter": {
         "all": "All ad accounts",
         "label": "Ad account",
-        "note": "Ads with conversions but zero spend or zero delivery in the selected date range are hidden while filtering by ad account."
+        "note": "Ads with conversions but zero spend or zero delivery in the selected date range are hidden while filtering by ad account.",
+        "unavailable": "Couldn't load Facebook ad accounts — check the Facebook Ads connection in workspace settings."
       },
       "channelFilter": {
         "label": "Channel",

@@ -2714,7 +2714,8 @@
       "adAccountFilter": {
         "all": "所有廣告帳戶",
         "label": "廣告帳戶",
-        "note": "以廣告帳戶篩選時，在所選日期範圍內有轉換但花費或曝光為零的廣告將被隱藏。"
+        "note": "以廣告帳戶篩選時，在所選日期範圍內有轉換但花費或曝光為零的廣告將被隱藏。",
+        "unavailable": "無法載入 Facebook 廣告帳號——請在工作區設定中檢查 Facebook Ads 連線。"
       },
       "channelFilter": {
         "label": "頻道",

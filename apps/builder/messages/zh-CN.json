@@ -224,7 +224,8 @@
       "adAccountFilter": {
         "all": "所有广告账号",
         "label": "广告账号",
-        "note": "按广告账号筛选时，在所选日期范围内有转化但花费为 0 或投放为 0 的广告会被隐藏。"
+        "note": "按广告账号筛选时，在所选日期范围内有转化但花费为 0 或投放为 0 的广告会被隐藏。",
+        "unavailable": "无法加载 Facebook 广告账户——请在工作区设置中检查 Facebook Ads 连接。"
       },
       "channelFilter": {
         "label": "渠道",

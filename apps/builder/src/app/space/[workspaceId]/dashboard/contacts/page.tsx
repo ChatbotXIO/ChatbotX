@@ -2,6 +2,7 @@ import { ContactsDashboard } from "@chatbotx.io/analytics-nextjs/components/cont
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
+import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
@@ -34,11 +35,15 @@ export default async function ContactsAnalyticsPage({
     userAndWorkspace.targetWorkspaceMember.permissions,
     "superAdmin",
   )
+  const adsChannels = await resolveAdsDashboardChannels({
+    workspaceId,
+    isSuperAdmin,
+  })
 
   return (
     <ContactsDashboard
       defaultSearchParams={{ workspaceId, timezone }}
-      nav={<AnalyticsNav showAds={isSuperAdmin} />}
+      nav={<AnalyticsNav adsChannels={adsChannels} />}
       workspaceCreatedAt={targetWorkspace.createdAt}
     />
   )

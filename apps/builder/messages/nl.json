@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Alle advertentieaccounts",
         "label": "Advertentieaccount",
-        "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount."
+        "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount.",
+        "unavailable": "Kan Facebook-advertentieaccounts niet laden — controleer de Facebook Ads-koppeling in de workspace-instellingen."
       },
       "channelFilter": {
         "label": "Kanaal",

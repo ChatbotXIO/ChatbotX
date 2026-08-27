@@ -88,6 +88,13 @@ vi.mock("@chatbotx.io/business", () => ({
     integrationMessengerId: channel === "messenger" ? integrationId : undefined,
     integrationInstagramId: channel === "instagram" ? integrationId : undefined,
   }),
+  inboxService: {
+    distinctConnectedChannels: vi.fn(async () => [
+      "whatsapp",
+      "messenger",
+      "instagram",
+    ]),
+  },
 }))
 
 vi.mock("@/features/analytics/components/analytics-nav", () => ({

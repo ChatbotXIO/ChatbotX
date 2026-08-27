@@ -32,9 +32,11 @@ describe("AnalyticsNav", () => {
     container.remove()
   })
 
-  test("showAds renders exactly the 3 Ads dashboard links with the right hrefs and labels", async () => {
+  test("renders exactly the 3 Ads dashboard links with the right hrefs and labels when all channels are connected", async () => {
     await act(async () => {
-      root.render(<AnalyticsNav showAds />)
+      root.render(
+        <AnalyticsNav adsChannels={["whatsapp", "messenger", "instagram"]} />,
+      )
       await Promise.resolve()
     })
 
@@ -56,9 +58,11 @@ describe("AnalyticsNav", () => {
     ])
   })
 
-  test("also renders Contacts and Conversations links when showAds is true", async () => {
+  test("also renders Contacts and Conversations links", async () => {
     await act(async () => {
-      root.render(<AnalyticsNav showAds />)
+      root.render(
+        <AnalyticsNav adsChannels={["whatsapp", "messenger", "instagram"]} />,
+      )
       await Promise.resolve()
     })
 
@@ -77,9 +81,9 @@ describe("AnalyticsNav", () => {
     ).toBe(true)
   })
 
-  test("showAds=false renders no Ads dashboard links", async () => {
+  test("empty adsChannels renders no Ads dashboard links", async () => {
     await act(async () => {
-      root.render(<AnalyticsNav showAds={false} />)
+      root.render(<AnalyticsNav adsChannels={[]} />)
       await Promise.resolve()
     })
 
@@ -91,9 +95,28 @@ describe("AnalyticsNav", () => {
     expect(adsLinks).toHaveLength(0)
   })
 
+  test("a subset of connected channels renders only those links, in eligible order", async () => {
+    await act(async () => {
+      root.render(<AnalyticsNav adsChannels={["whatsapp", "messenger"]} />)
+      await Promise.resolve()
+    })
+
+    const links = Array.from(container.querySelectorAll("a"))
+    const adsLinks = links.filter((link) =>
+      link.getAttribute("href")?.includes("/dashboard/ads/"),
+    )
+
+    expect(adsLinks.map((link) => link.getAttribute("href"))).toEqual([
+      "/space/ws-1/dashboard/ads/whatsapp",
+      "/space/ws-1/dashboard/ads/messenger",
+    ])
+  })
+
   test("marks the Click-to-Messenger Ads link active when on its route", async () => {
     await act(async () => {
-      root.render(<AnalyticsNav showAds />)
+      root.render(
+        <AnalyticsNav adsChannels={["whatsapp", "messenger", "instagram"]} />,
+      )
       await Promise.resolve()
     })
 

@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Kaikki mainostilit",
         "label": "Mainostili",
-        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
+        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan.",
+        "unavailable": "Facebook-mainostilien lataus epäonnistui — tarkista Facebook Ads -yhteys työtilan asetuksista."
       },
       "channelFilter": {
         "label": "Kanava",

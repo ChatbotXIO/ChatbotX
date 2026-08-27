@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Semua akun iklan",
         "label": "Akun iklan",
-        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan."
+        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan.",
+        "unavailable": "Tidak dapat memuat akun iklan Facebook — periksa koneksi Facebook Ads di pengaturan workspace."
       },
       "channelFilter": {
         "label": "Saluran",

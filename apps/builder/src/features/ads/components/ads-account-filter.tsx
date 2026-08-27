@@ -69,9 +69,9 @@ export function AdsAccountFilter({
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div className="grid gap-2">
-        <div className="text-muted-foreground text-sm">
-          {t("ads.conversionEvents.selectIntegration")}
-        </div>
+        {/* No visible heading — the select's value/placeholder is
+            self-explanatory next to the ad-account filter; the aria-label on
+            the trigger keeps it accessible. */}
         <Select
           items={integrationOptions}
           onValueChange={(value) => pushParams(value as string)}

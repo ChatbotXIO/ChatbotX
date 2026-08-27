@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
+import type { AdsEligibleChannelType } from "@chatbotx.io/utils/channel"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -12,18 +12,21 @@ type AnalyticsNavLink = {
   segment: string
 }
 
-// One Ads Analytics menu entry per ads-eligible channel (Click-to-WhatsApp /
-// Click-to-Messenger / Click-to-Instagram), each opening
-// `/dashboard/ads/<channel>` scoped to that channel — driven entirely from
-// `adsEligibleChannelTypes` so a future channel only needs a
-// `ads.dashboardNav.<channel>` translation key, never a new branch here.
-const ADS_DASHBOARD_CHANNELS = adsEligibleChannelTypes.options
-
 /**
  * Secondary left navigation inside the Analytics section, mirroring the
  * former AdsNav pattern: Contacts / Conversations / Ads sub-pages.
+ *
+ * One Ads Analytics menu entry per channel in `adsChannels` (Click-to-WhatsApp /
+ * Click-to-Messenger / Click-to-Instagram), each opening
+ * `/dashboard/ads/<channel>` scoped to that channel. Callers resolve which
+ * channels a workspace actually has integrated (see
+ * `resolveAdsDashboardChannels`) — an empty array renders no Ads entries.
  */
-export function AnalyticsNav({ showAds }: { showAds: boolean }) {
+export function AnalyticsNav({
+  adsChannels,
+}: {
+  adsChannels: readonly AdsEligibleChannelType[]
+}) {
   const t = useTranslations()
   const pathname = usePathname()
   const workspaceId = useWorkspaceId()
@@ -33,12 +36,10 @@ export function AnalyticsNav({ showAds }: { showAds: boolean }) {
   const links: AnalyticsNavLink[] = [
     { label: t("analytics.contacts"), segment: "contacts" },
     { label: t("analytics.conversations"), segment: "conversations" },
-    ...(showAds
-      ? ADS_DASHBOARD_CHANNELS.map((channel) => ({
-          label: t(`ads.dashboardNav.${channel}`),
-          segment: `ads/${channel}`,
-        }))
-      : []),
+    ...adsChannels.map((channel) => ({
+      label: t(`ads.dashboardNav.${channel}`),
+      segment: `ads/${channel}`,
+    })),
   ]
 
   return (

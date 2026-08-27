@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Tous les comptes publicitaires",
         "label": "Compte publicitaire",
-        "note": "Les annonces avec des conversions mais sans dépense ni diffusion sur la période sélectionnée sont masquées lors du filtrage par compte publicitaire."
+        "note": "Les annonces avec des conversions mais sans dépense ni diffusion sur la période sélectionnée sont masquées lors du filtrage par compte publicitaire.",
+        "unavailable": "Impossible de charger les comptes publicitaires Facebook — vérifiez la connexion Facebook Ads dans les paramètres de l'espace de travail."
       },
       "channelFilter": {
         "label": "Canal",

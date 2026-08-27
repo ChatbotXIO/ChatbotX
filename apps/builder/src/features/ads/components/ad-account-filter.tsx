@@ -54,32 +54,22 @@ export function AdAccountFilter({
     [accounts, t],
   )
 
-  if (adAccounts.isLoading || adAccounts.error || !adAccounts.data) {
+  // Only hide during the initial load (avoids a layout flash). A FAILED load
+  // must NOT silently remove the filter — render it disabled with the
+  // unavailable note instead, so the user can see the control exists and why
+  // it cannot be used (e.g. the Facebook Ads connection needs attention).
+  if (adAccounts.isLoading) {
     return null
   }
+  const isUnavailable = Boolean(adAccounts.error) || !adAccounts.data
+  const noteText = isUnavailable
+    ? t("ads.analytics.adAccountFilter.unavailable")
+    : t("ads.analytics.adAccountFilter.note")
 
   return (
-    <div className="grid gap-2">
-      <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-        {t("ads.analytics.adAccountFilter.label")}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <span
-                aria-label={t("ads.analytics.adAccountFilter.note")}
-                className="inline-flex text-muted-foreground"
-                role="img"
-              >
-                <InfoIcon className="size-3.5" />
-              </span>
-            }
-          />
-          <TooltipContent className="max-w-xs">
-            {t("ads.analytics.adAccountFilter.note")}
-          </TooltipContent>
-        </Tooltip>
-      </div>
+    <div className="flex items-center gap-1.5">
       <Select
+        disabled={isUnavailable}
         items={options}
         onValueChange={(value) => {
           const nextAdAccount = value as string
@@ -100,7 +90,7 @@ export function AdAccountFilter({
           className="w-full min-w-56"
           id="ads-analytics-ad-account"
         >
-          <SelectValue placeholder={t("ads.analytics.adAccountFilter.label")} />
+          <SelectValue placeholder={t("ads.analytics.adAccountFilter.all")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="">
@@ -113,6 +103,20 @@ export function AdAccountFilter({
           ))}
         </SelectContent>
       </Select>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span
+              aria-label={noteText}
+              className="inline-flex text-muted-foreground"
+              role="img"
+            >
+              <InfoIcon className="size-3.5" />
+            </span>
+          }
+        />
+        <TooltipContent className="max-w-xs">{noteText}</TooltipContent>
+      </Tooltip>
     </div>
   )
 }

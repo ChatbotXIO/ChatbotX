@@ -2555,7 +2555,8 @@
       "adAccountFilter": {
         "all": "Tüm reklam hesapları",
         "label": "Reklam hesabı",
-        "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir."
+        "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir.",
+        "unavailable": "Facebook reklam hesapları yüklenemedi — çalışma alanı ayarlarındaki Facebook Ads bağlantısını kontrol edin."
       },
       "channelFilter": {
         "label": "Kanal",

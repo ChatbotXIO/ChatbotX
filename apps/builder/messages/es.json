@@ -2555,7 +2555,8 @@
       "adAccountFilter": {
         "all": "Todas las cuentas publicitarias",
         "label": "Cuenta publicitaria",
-        "note": "Los anuncios con conversiones pero sin gasto ni entrega en el rango de fechas seleccionado se ocultan al filtrar por cuenta publicitaria."
+        "note": "Los anuncios con conversiones pero sin gasto ni entrega en el rango de fechas seleccionado se ocultan al filtrar por cuenta publicitaria.",
+        "unavailable": "No se pudieron cargar las cuentas publicitarias de Facebook: revisa la conexión de Facebook Ads en la configuración del workspace."
       },
       "channelFilter": {
         "label": "Canal",

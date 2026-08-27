@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Tutti gli account pubblicitari",
         "label": "Account pubblicitario",
-        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario."
+        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario.",
+        "unavailable": "Impossibile caricare gli account pubblicitari di Facebook: controlla la connessione Facebook Ads nelle impostazioni del workspace."
       },
       "channelFilter": {
         "label": "Canale",

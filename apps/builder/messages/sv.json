@@ -1164,7 +1164,8 @@
       "adAccountFilter": {
         "all": "Alla annonskonton",
         "label": "Annonskonto",
-        "note": "Annonser med konverteringar men noll utgifter eller noll leverans i det valda datumintervallet döljs vid filtrering efter annonskonto."
+        "note": "Annonser med konverteringar men noll utgifter eller noll leverans i det valda datumintervallet döljs vid filtrering efter annonskonto.",
+        "unavailable": "Det gick inte att läsa in Facebook-annonskonton — kontrollera Facebook Ads-anslutningen i arbetsytans inställningar."
       },
       "channelFilter": {
         "label": "Kanal",

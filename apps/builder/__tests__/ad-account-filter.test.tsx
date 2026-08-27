@@ -147,12 +147,20 @@ describe("AdAccountFilter", () => {
     )
   })
 
-  test("returns null on SWR error", () => {
+  test("renders a disabled select with the unavailable note on SWR error (never vanishes silently)", () => {
     swrState.data = undefined
     swrState.error = new Error("not connected")
 
     renderFilter()
 
-    expect(container.textContent).toBe("")
+    // The control must stay visible so the user can see WHY it is unusable
+    // (e.g. the Facebook Ads connection needs attention) instead of the
+    // filter silently disappearing. (The Select mock is a passthrough, so
+    // the disabled prop itself isn't observable here — the rendered
+    // unavailable note is the contract.)
+    expect(container.textContent).not.toBe("")
+    expect(container.textContent).toContain(
+      "ads.analytics.adAccountFilter.unavailable",
+    )
   })
 })

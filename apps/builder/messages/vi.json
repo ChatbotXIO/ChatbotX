@@ -2555,7 +2555,8 @@
       "adAccountFilter": {
         "all": "Tất cả tài khoản quảng cáo",
         "label": "Tài khoản quảng cáo",
-        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo."
+        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo.",
+        "unavailable": "Không tải được tài khoản quảng cáo Facebook — hãy kiểm tra kết nối Facebook Ads trong cài đặt workspace."
       },
       "channelFilter": {
         "label": "Kênh",

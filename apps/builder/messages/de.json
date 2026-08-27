@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Alle Werbekonten",
         "label": "Werbekonto",
-        "note": "Anzeigen mit Konversionen, aber ohne Ausgaben oder Zustellung im ausgewählten Zeitraum, werden bei der Filterung nach Werbekonto ausgeblendet."
+        "note": "Anzeigen mit Konversionen, aber ohne Ausgaben oder Zustellung im ausgewählten Zeitraum, werden bei der Filterung nach Werbekonto ausgeblendet.",
+        "unavailable": "Facebook-Werbekonten konnten nicht geladen werden — prüfe die Facebook-Ads-Verbindung in den Workspace-Einstellungen."
       },
       "channelFilter": {
         "label": "Kanal",

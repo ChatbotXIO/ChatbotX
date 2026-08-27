@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Todas as contas de anúncios",
         "label": "Conta de anúncios",
-        "note": "Anúncios com conversões, mas com investimento zero ou entrega zero no período selecionado, ficam ocultos ao filtrar por conta de anúncios."
+        "note": "Anúncios com conversões, mas com investimento zero ou entrega zero no período selecionado, ficam ocultos ao filtrar por conta de anúncios.",
+        "unavailable": "Não foi possível carregar as contas de anúncios do Facebook — verifique a conexão do Facebook Ads nas configurações do workspace."
       },
       "channelFilter": {
         "label": "Canal",

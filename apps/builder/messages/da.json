@@ -2481,7 +2481,8 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
+        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto.",
+        "unavailable": "Kunne ikke indlæse Facebook-annoncekonti — tjek Facebook Ads-forbindelsen i workspace-indstillingerne."
       },
       "channelFilter": {
         "label": "Kanal",
