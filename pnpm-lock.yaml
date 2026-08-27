@@ -2028,6 +2028,12 @@ importers:
       '@types/react':
         specifier: 19.2.14
         version: 19.2.14
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      react-dom:
+        specifier: 19.2.5
+        version: 19.2.5(react@19.2.5)
       tsx:
         specifier: ^4.23.0
         version: 4.23.0
