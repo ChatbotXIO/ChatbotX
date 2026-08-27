@@ -51,7 +51,7 @@ export function PreflightStep({ channel }: Props) {
           <Row
             label={t("adsCampaign.fields.specialAdCategory.label")}
             value={
-              values.specialAdCategory ||
+              (values.specialAdCategories ?? []).join(", ") ||
               t("adsCampaign.specialAdCategory.none")
             }
           />

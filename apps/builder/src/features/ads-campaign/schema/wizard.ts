@@ -89,28 +89,24 @@ export const createMessagingAdRequest = z.object({
   name: z.string().trim().min(1).max(120),
   campaign: z
     .object({
-      // Exactly one category — either a real one or the `["NONE"]` sentinel.
-      // A campaign belongs to at most one special ad category, so more than one
-      // is rejected here (defense-in-depth behind the single-select UI) rather
-      // than sent to Meta as an invalid combination.
-      specialAdCategories: z
-        .array(specialAdCategorySchema)
-        .min(1)
-        .max(1, "A campaign can have only one special ad category."),
+      // Meta's `special_ad_categories` array — one or more categories, or the
+      // `["NONE"]` sentinel for no category. `CREDIT` is a valid enum value for
+      // reading legacy campaigns, but the create UI no longer offers it (Meta
+      // deprecated it) — see `specialAdCategoryOptions`.
+      specialAdCategories: z.array(specialAdCategorySchema).min(1),
       specialAdCategoryCountry: z.array(z.string().trim().length(2)).optional(),
     })
-    // Meta hard-requires `special_ad_category_country` when the social
-    // issues/elections/politics category is used. Block it here (before any
-    // campaign is created on Meta) instead of letting it fail server-side with
-    // a confusing Graph error and leave an orphaned paused campaign.
+    // Meta hard-requires `special_ad_category_country` whenever ANY real special
+    // ad category is used. Block it here (before any campaign is created on
+    // Meta) instead of letting it fail with a confusing Graph error and leave
+    // an orphaned paused campaign. The `["NONE"]` sentinel needs no country.
     .refine(
       (c) =>
-        !c.specialAdCategories.includes("ISSUES_ELECTIONS_POLITICS") ||
+        c.specialAdCategories.every((category) => category === "NONE") ||
         (c.specialAdCategoryCountry?.length ?? 0) > 0,
       {
         path: ["specialAdCategoryCountry"],
-        message:
-          "A country is required for the social issues, elections or politics category.",
+        message: "A country is required for the selected special ad category.",
       },
     ),
   adSet: z

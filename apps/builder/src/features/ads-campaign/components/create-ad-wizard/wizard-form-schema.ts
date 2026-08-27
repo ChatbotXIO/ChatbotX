@@ -15,15 +15,16 @@ export const genderOptions = [
 ] as const
 
 /**
- * Selectable restricted categories only — "NONE" is not a selectable option
- * (an empty selection already means "no restricted category"), so the
- * multi-select can never end up with the contradictory "NONE + HOUSING"
- * combination a plain checkbox list would allow.
+ * Selectable special ad categories. Meta's `special_ad_categories` is an array
+ * and multiple may be combined (e.g. Housing + Employment). "NONE" is not a
+ * selectable option — an empty selection already means "no special category".
+ * `CREDIT` is intentionally excluded: Meta deprecated it on 2025-01-14 and now
+ * REJECTS campaign creates that use it, so it is replaced by
+ * `FINANCIAL_PRODUCTS_SERVICES` (they are also mutually exclusive per Meta).
  */
 export const specialAdCategoryOptions = [
   { value: "HOUSING", label: "adsCampaign.specialAdCategory.housing" },
   { value: "EMPLOYMENT", label: "adsCampaign.specialAdCategory.employment" },
-  { value: "CREDIT", label: "adsCampaign.specialAdCategory.credit" },
   {
     value: "FINANCIAL_PRODUCTS_SERVICES",
     label: "adsCampaign.specialAdCategory.financialProducts",
@@ -38,13 +39,12 @@ export const specialAdCategoryOptions = [
   },
 ] as const
 
-// Housing / Employment / Credit / Financial products & services strip
-// age/gender/detailed targeting (Meta's HEC+FPS restriction). Issues/elections/
+// Housing / Employment / Financial products & services strip
+// age/gender/detailed targeting (Meta's HEF restriction). Issues/elections/
 // politics and online gambling carry different rules, not the targeting strip.
 export const RESTRICTED_SPECIAL_AD_CATEGORIES = new Set([
   "HOUSING",
   "EMPLOYMENT",
-  "CREDIT",
   "FINANCIAL_PRODUCTS_SERVICES",
 ])
 
@@ -71,17 +71,16 @@ export const welcomeMessageTemplateSchema = z.object({
 const wizardObjectSchema = z.object({
   name: z.string().trim().min(1).max(120),
   /**
-   * A campaign belongs to at most ONE special ad category (matching Meta Ads
-   * Manager's single-choice control). `""` = None; otherwise one of
-   * `specialAdCategoryOptions`. Single-select by design so a user can never
-   * submit an invalid/contradictory combination (e.g. Credit + Financial
-   * Products, which are the same category) that Meta rejects.
+   * Meta's `special_ad_categories` is an array — zero or more of
+   * `specialAdCategoryOptions`. Empty = "NONE". The deprecated `CREDIT` value is
+   * not offered (see `specialAdCategoryOptions`).
    */
-  specialAdCategory: z.enum([
-    "",
-    ...specialAdCategoryOptions.map((o) => o.value),
-  ] as [string, ...string[]]),
-  /** ISO-2 countries — Meta REQUIRES this when the politics category is selected (see `CATEGORIES_REQUIRING_COUNTRY`). */
+  specialAdCategories: z.array(
+    z.enum(
+      specialAdCategoryOptions.map((o) => o.value) as [string, ...string[]],
+    ),
+  ),
+  /** ISO-2 countries — Meta REQUIRES this whenever ANY special ad category is selected. */
   specialAdCategoryCountry: z.array(z.string()),
   adAccountId: z.string().trim().min(1),
   whatsappPageIntegrationId: z.string().trim(),
@@ -125,11 +124,6 @@ const wizardObjectSchema = z.object({
  * `page_id` the WhatsApp integration itself doesn't carry. The wizard is
  * instantiated per channel, so the resolver is built from the acting channel.
  */
-/** Special ad categories Meta REQUIRES a `special_ad_category_country` for. */
-export const CATEGORIES_REQUIRING_COUNTRY = new Set([
-  "ISSUES_ELECTIONS_POLITICS",
-])
-
 export function buildWizardFormSchema(channel: WizardMessagingAdChannel) {
   return wizardObjectSchema.superRefine((values, ctx) => {
     if (channel === "whatsapp" && !values.whatsappPageIntegrationId) {
@@ -139,15 +133,15 @@ export function buildWizardFormSchema(channel: WizardMessagingAdChannel) {
         message: "Select a Facebook Page",
       })
     }
+    // Meta requires a country whenever ANY special ad category is selected.
     if (
-      CATEGORIES_REQUIRING_COUNTRY.has(values.specialAdCategory) &&
+      values.specialAdCategories.length > 0 &&
       values.specialAdCategoryCountry.length === 0
     ) {
       ctx.addIssue({
         code: "custom",
         path: ["specialAdCategoryCountry"],
-        message:
-          "Select at least one country for the social issues, elections or politics category",
+        message: "Select at least one country for the special ad category",
       })
     }
     if (
@@ -207,7 +201,7 @@ export type WizardFormValues = z.infer<typeof wizardObjectSchema>
 
 export const wizardDefaultValues: WizardFormValues = {
   name: "",
-  specialAdCategory: "",
+  specialAdCategories: [],
   specialAdCategoryCountry: [],
   adAccountId: "",
   whatsappPageIntegrationId: "",
@@ -239,7 +233,7 @@ export const wizardDefaultValues: WizardFormValues = {
 
 /** Per-step field names, used to validate only the active step via `form.trigger(...)`. */
 export const STEP_FIELDS: (keyof WizardFormValues)[][] = [
-  ["name", "specialAdCategory", "specialAdCategoryCountry"],
+  ["name", "specialAdCategories", "specialAdCategoryCountry"],
   [
     "adAccountId",
     "whatsappPageIntegrationId",
