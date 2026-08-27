@@ -141,7 +141,7 @@ describe("automatedResponseService audit side effects", () => {
     })
     expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith({
       action: "delete",
-      detail: "deleted keyword automation #automation-1",
+      detail: "deleted keyword automation (#automation-1)",
     })
   })
 })

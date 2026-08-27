@@ -5,9 +5,9 @@ import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { authActionClient } from "@/lib/safe-action"
+import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
-export const deleteAIAgentAction = authActionClient
+export const deleteAIAgentAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(async (props) => {
