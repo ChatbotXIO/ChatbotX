@@ -246,3 +246,22 @@ describe("listCachedMessagingAdsInsights", () => {
     expect(mocks.markInvalid).toHaveBeenCalledWith(ref)
   })
 })
+
+describe("cache scope tenancy", () => {
+  test("the cache key embeds the workspaceId — two workspaces NEVER share a channel:integrationId cache entry", async () => {
+    // Regression guard for the cross-workspace warm-cache leak: with a key of
+    // only `channel:integrationId`, workspace B could read workspace A's
+    // cached ad-account list by guessing/replaying the integration id.
+    mocks.runAction.mockResolvedValue([])
+
+    await listCachedMessagingAdAccounts({ ...ref, workspaceId: "ws_A" })
+    await listCachedMessagingAdAccounts({ ...ref, workspaceId: "ws_B" })
+
+    const keys = mocks.getOrRevalidate.mock.calls.map(
+      ([input]: [{ key?: string }]) => input.key,
+    )
+    expect(keys[0]).toContain("ws_A:")
+    expect(keys[1]).toContain("ws_B:")
+    expect(keys[0]).not.toBe(keys[1])
+  })
+})

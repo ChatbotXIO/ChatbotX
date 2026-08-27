@@ -31,10 +31,13 @@ export type MessagingAdsIntegrationRef = {
   integrationId: string
 }
 
+// Mirrors `graph-reads.ts`'s workspace-scoped cache key — invalidation must
+// target the exact same scope string the reads are cached under.
 const scopeOf = (input: {
+  workspaceId: string
   channel: MessagingAdChannel
   integrationId: string
-}) => `${input.channel}:${input.integrationId}`
+}) => `${input.workspaceId}:${input.channel}:${input.integrationId}`
 
 /**
  * Per-integration Facebook Ads connection for the messaging-ads boxes
@@ -53,6 +56,14 @@ class MessagingAdsConnectionService {
       workspaceId: input.workspaceId,
       ...perChannelIntegrationIdsOrNull(input.channel, input.integrationId),
     })
+  }
+
+  /** Every active connection for one channel — see the repository method's doc comment for why this is the Ads dashboard's channel-wide union source. */
+  listForChannel(input: {
+    workspaceId: string
+    channel: MessagingAdChannel
+  }): Promise<MessagingAdsConnectionModel[]> {
+    return messagingAdsConnectionRepository.listForChannel(input)
   }
 
   /**

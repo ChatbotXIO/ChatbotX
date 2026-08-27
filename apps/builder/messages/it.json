@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Tutti gli account pubblicitari",
         "label": "Account pubblicitario",
-        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario.",
-        "unavailable": "Impossibile caricare gli account pubblicitari di Facebook: controlla la connessione Facebook Ads nelle impostazioni del workspace."
+        "unavailable": "Impossibile caricare gli account pubblicitari: controlla la connessione Ads di questa integrazione, oppure la connessione Facebook Ads del workspace, nelle impostazioni."
       },
       "channelFilter": {
         "label": "Canale",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Questa connessione deve essere ristabilita.",
       "refresh": "Aggiorna",
       "whatsappPageRequiredNote": "Le inserzioni Click-to-WhatsApp richiedono comunque una Pagina Facebook collegata (un requisito di Meta): la sceglierai al momento della creazione di un'inserzione.",
-      "emptyDashboardNote": "Le inserzioni create qui non compariranno nella dashboard Inserzioni a meno che questo workspace non abbia anche l'integrazione separata di Facebook Ads connessa."
+      "emptyDashboardNote": "Gli annunci creati qui ora compaiono automaticamente nella dashboard Annunci di questo canale — seleziona questa integrazione dal relativo filtro per vederne account e spesa."
     },
     "insights": {
       "title": "Rendimento",

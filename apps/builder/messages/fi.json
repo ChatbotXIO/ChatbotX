@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Kaikki mainostilit",
         "label": "Mainostili",
-        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan.",
-        "unavailable": "Facebook-mainostilien lataus epäonnistui — tarkista Facebook Ads -yhteys työtilan asetuksista."
+        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista."
       },
       "channelFilter": {
         "label": "Kanava",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Tämä yhteys on muodostettava uudelleen.",
       "refresh": "Päivitä",
       "whatsappPageRequiredNote": "Click-to-WhatsApp-mainokset edellyttävät edelleen linkitettyä Facebook-sivua (Metan vaatimus) — valitset sen mainosta luodessasi.",
-      "emptyDashboardNote": "Täällä luodut mainokset eivät näy mainostaulussa, ellei tässä työtilassa ole yhdistettynä myös erillistä Facebook Ads -integraatiota."
+      "emptyDashboardNote": "Täällä luodut mainokset näkyvät nyt automaattisesti tämän kanavan mainostaulussa — valitse tämä integraatio sen suodattimesta nähdäksesi sen tilit ja kulutuksen."
     },
     "insights": {
       "title": "Suorituskyky",

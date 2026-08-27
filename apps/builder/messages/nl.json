@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Alle advertentieaccounts",
         "label": "Advertentieaccount",
-        "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount.",
-        "unavailable": "Kan Facebook-advertentieaccounts niet laden — controleer de Facebook Ads-koppeling in de workspace-instellingen."
+        "unavailable": "Kan advertentieaccounts niet laden — controleer de Ads-koppeling van deze integratie, of de Facebook Ads-koppeling van de workspace, in de instellingen."
       },
       "channelFilter": {
         "label": "Kanaal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Deze verbinding moet opnieuw tot stand worden gebracht.",
       "refresh": "Vernieuwen",
       "whatsappPageRequiredNote": "Voor click-to-WhatsApp-advertenties is nog steeds een gekoppelde Facebook-pagina vereist (een vereiste van Meta) — u kiest deze bij het maken van een advertentie.",
-      "emptyDashboardNote": "Advertenties die hier worden gemaakt, verschijnen niet in het advertentiedashboard, tenzij deze workspace ook de aparte Facebook Ads-integratie heeft verbonden."
+      "emptyDashboardNote": "Advertenties die hier worden gemaakt, verschijnen nu automatisch op het advertentiedashboard van dit kanaal — selecteer deze integratie in het filter daar om de accounts en uitgaven te zien."
     },
     "insights": {
       "title": "Prestaties",

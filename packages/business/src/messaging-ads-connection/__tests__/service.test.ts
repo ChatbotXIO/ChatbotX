@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   findForIntegration: vi.fn(),
+  listForChannel: vi.fn(),
   create: vi.fn(),
   updateAuth: vi.fn(),
   updateStatus: vi.fn(),
@@ -23,6 +24,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   messagingAdsConnectionRepository: {
     findForIntegration: mocks.findForIntegration,
+    listForChannel: mocks.listForChannel,
     create: mocks.create,
     updateAuth: mocks.updateAuth,
     updateStatus: mocks.updateStatus,
@@ -78,6 +80,23 @@ describe("findForIntegration", () => {
   })
 })
 
+describe("listForChannel", () => {
+  test("passes workspaceId and channel straight through to the repository", async () => {
+    mocks.listForChannel.mockResolvedValue([{ id: "conn_1" }, { id: "conn_2" }])
+
+    const result = await messagingAdsConnectionService.listForChannel({
+      workspaceId: "ws_1",
+      channel: "instagram",
+    })
+
+    expect(result).toEqual([{ id: "conn_1" }, { id: "conn_2" }])
+    expect(mocks.listForChannel).toHaveBeenCalledWith({
+      workspaceId: "ws_1",
+      channel: "instagram",
+    })
+  })
+})
+
 describe("upsertFromOAuth", () => {
   test("updates the existing connection's auth when one already exists (reconnect)", async () => {
     mocks.findForIntegration.mockResolvedValue({
@@ -101,7 +120,7 @@ describe("upsertFromOAuth", () => {
     // A reconnect may attach a token with different ad-account access —
     // the cache for this connection must be invalidated either way.
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
-      "whatsapp:iw_1",
+      "ws_1:whatsapp:iw_1",
     )
   })
 
@@ -218,7 +237,7 @@ describe("disconnect", () => {
       workspaceId: "ws_1",
     })
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
-      "whatsapp:iw_1",
+      "ws_1:whatsapp:iw_1",
     )
   })
 })

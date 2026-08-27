@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   delete: vi.fn(),
   findFirst: vi.fn(),
+  findMany: vi.fn(),
 }))
 
 vi.mock("../src/client", () => ({
@@ -23,7 +24,10 @@ vi.mock("../src/client", () => ({
     update: mocks.update,
     delete: mocks.delete,
     query: {
-      messagingAdsConnectionModel: { findFirst: mocks.findFirst },
+      messagingAdsConnectionModel: {
+        findFirst: mocks.findFirst,
+        findMany: mocks.findMany,
+      },
     },
   },
   eq: mocks.eq,
@@ -92,6 +96,34 @@ describe("messagingAdsConnectionRepository.findForIntegration", () => {
     })
 
     expect(result).toBeNull()
+  })
+})
+
+describe("messagingAdsConnectionRepository.listForChannel", () => {
+  test("scopes by workspaceId AND channel, and only returns active rows", async () => {
+    const rows = [{ id: "conn_1" }, { id: "conn_2" }]
+    mocks.findMany.mockResolvedValue(rows)
+
+    const result = await messagingAdsConnectionRepository.listForChannel({
+      workspaceId: "ws_1",
+      channel: "messenger",
+    })
+
+    expect(result).toEqual(rows)
+    expect(mocks.findMany).toHaveBeenCalledWith({
+      where: { workspaceId: "ws_1", channel: "messenger", status: "active" },
+    })
+  })
+
+  test("returns an empty array when no connection exists for the channel", async () => {
+    mocks.findMany.mockResolvedValue([])
+
+    const result = await messagingAdsConnectionRepository.listForChannel({
+      workspaceId: "ws_1",
+      channel: "instagram",
+    })
+
+    expect(result).toEqual([])
   })
 })
 

@@ -1164,8 +1164,7 @@
       "adAccountFilter": {
         "all": "Alla annonskonton",
         "label": "Annonskonto",
-        "note": "Annonser med konverteringar men noll utgifter eller noll leverans i det valda datumintervallet döljs vid filtrering efter annonskonto.",
-        "unavailable": "Det gick inte att läsa in Facebook-annonskonton — kontrollera Facebook Ads-anslutningen i arbetsytans inställningar."
+        "unavailable": "Det gick inte att läsa in annonskonton — kontrollera den här integrationens Ads-anslutning, eller arbetsytans Facebook Ads-anslutning, i inställningarna."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Den här anslutningen behöver återanslutas.",
       "refresh": "Uppdatera",
       "whatsappPageRequiredNote": "Click-to-WhatsApp-annonser kräver fortfarande en länkad Facebook-sida (ett krav från Meta) — du väljer den när du skapar en annons.",
-      "emptyDashboardNote": "Annonser som skapas här visas inte på annonspanelen om inte den här arbetsytan även har den separata Facebook Ads-integrationen ansluten."
+      "emptyDashboardNote": "Annonser som skapas här visas nu automatiskt på den här kanalens annonspanel — välj den här integrationen i filtret där för att se dess konton och kostnader."
     },
     "insights": {
       "title": "Prestanda",

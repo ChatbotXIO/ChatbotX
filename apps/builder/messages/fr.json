@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Tous les comptes publicitaires",
         "label": "Compte publicitaire",
-        "note": "Les annonces avec des conversions mais sans dépense ni diffusion sur la période sélectionnée sont masquées lors du filtrage par compte publicitaire.",
-        "unavailable": "Impossible de charger les comptes publicitaires Facebook — vérifiez la connexion Facebook Ads dans les paramètres de l'espace de travail."
+        "unavailable": "Impossible de charger les comptes publicitaires — vérifiez la connexion Ads de cette intégration, ou la connexion Facebook Ads de l'espace de travail, dans les paramètres."
       },
       "channelFilter": {
         "label": "Canal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Cette connexion doit être reconnectée.",
       "refresh": "Actualiser",
       "whatsappPageRequiredNote": "Les publicités Click-to-WhatsApp nécessitent toujours une Page Facebook associée (une exigence de Meta) — vous la choisirez lors de la création d'une publicité.",
-      "emptyDashboardNote": "Les publicités créées ici n'apparaîtront pas sur le tableau de bord Publicités à moins que cet espace de travail ait également l'intégration Facebook Ads distincte connectée."
+      "emptyDashboardNote": "Les publicités créées ici apparaissent désormais automatiquement sur le tableau de bord Publicités de ce canal — sélectionnez cette intégration dans son filtre pour voir ses comptes et ses dépenses."
     },
     "insights": {
       "title": "Performance",

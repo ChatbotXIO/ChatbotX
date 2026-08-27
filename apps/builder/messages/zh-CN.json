@@ -224,8 +224,7 @@
       "adAccountFilter": {
         "all": "所有广告账号",
         "label": "广告账号",
-        "note": "按广告账号筛选时，在所选日期范围内有转化但花费为 0 或投放为 0 的广告会被隐藏。",
-        "unavailable": "无法加载 Facebook 广告账户——请在工作区设置中检查 Facebook Ads 连接。"
+        "unavailable": "无法加载广告账户——请在设置中检查此集成的 Ads 连接，或工作区的 Facebook Ads 连接。"
       },
       "channelFilter": {
         "label": "渠道",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "此连接需要重新连接。",
       "refresh": "刷新",
       "whatsappPageRequiredNote": "点击进入 WhatsApp 的广告仍需绑定一个 Facebook 主页（Meta 的强制要求）——您可在创建广告时选择。",
-      "emptyDashboardNote": "除非此工作区还连接了独立的 Facebook Ads 集成，否则在此创建的广告不会显示在广告仪表盘中。"
+      "emptyDashboardNote": "在此创建的广告现在会自动显示在此渠道的广告仪表盘中——在那里的筛选器中选择此集成即可查看其账户和花费。"
     },
     "insights": {
       "title": "效果",

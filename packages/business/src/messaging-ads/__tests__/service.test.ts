@@ -242,7 +242,7 @@ describe("createDraft", () => {
     // v3 correction #8: every mutation invalidates the Graph-read cache for
     // this integration's connection scope.
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
-      "messenger:im_1",
+      "ws_1:messenger:im_1",
     )
   })
 
@@ -412,7 +412,7 @@ describe("publish", () => {
       expect.objectContaining({ publishState: "published" }),
     )
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
-      "messenger:im_1",
+      "ws_1:messenger:im_1",
     )
   })
 
@@ -581,7 +581,7 @@ describe("retryDraft", () => {
     const calledActions = mocks.runAction.mock.calls.map((call) => call[0])
     expect(calledActions).not.toContain("createMessagingCampaign")
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
-      "messenger:im_1",
+      "ws_1:messenger:im_1",
     )
   })
 })

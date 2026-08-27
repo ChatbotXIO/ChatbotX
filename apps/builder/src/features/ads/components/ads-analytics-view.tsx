@@ -735,12 +735,19 @@ export function AdsAnalyticsView({
               `AnalyticsNav`) — this only selects the integration/account
               within the current channel, with "All accounts" aggregating
               across every one of its integrations (WhatsApp included). */}
+          {/* User-requested order: Ad accounts on the left, Integration on
+              the right (was the reverse). */}
+          <AdAccountFilter
+            channel={channel}
+            range={range}
+            selectedChannelIntegrationId={selectedChannelIntegrationId}
+            workspaceId={workspaceId}
+          />
           <AdsAccountFilter
             channelIntegrations={channelIntegrations}
             range={range}
             selectedIntegrationId={selectedChannelIntegrationId}
           />
-          <AdAccountFilter range={range} workspaceId={workspaceId} />
         </div>
       </div>
 
