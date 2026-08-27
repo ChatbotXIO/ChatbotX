@@ -19,7 +19,7 @@ function refererPathFor(
   workspaceId: string,
   integrationId: string,
 ): string {
-  return `/space/${workspaceId}/${CHANNEL_ROUTE_SEGMENT[channel]}/${integrationId}/capi`
+  return `/space/${workspaceId}/${CHANNEL_ROUTE_SEGMENT[channel]}/${integrationId}/ads`
 }
 
 /** `bindArgsParsedInputs`: `[workspaceId, integrationId]` — `channel` is a regular action input since it isn't part of the URL the box lives on. */

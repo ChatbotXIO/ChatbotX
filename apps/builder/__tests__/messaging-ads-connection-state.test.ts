@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
 // checkMessagingAdsConnectionState — the per-integration connection state
-// each channel's capi/page.tsx fetches server-side and passes to
+// each channel's ads/page.tsx fetches server-side and passes to
 // `MessagingAdsBox`. Replaces the old workspace-only
 // `checkAdsCampaignPrerequisites` (v3 correction #5): a workspace with N
 // integrations of the same channel can have a DIFFERENT connection state per

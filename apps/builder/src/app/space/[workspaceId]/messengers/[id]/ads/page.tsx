@@ -1,12 +1,20 @@
-import { notFound, redirect } from "next/navigation"
+import {
+  metaConversionsService,
+  platformCredentialService,
+  workspaceService,
+} from "@chatbotx.io/business"
+import {
+  debugToken,
+  hasPageEventsScope,
+  toAppAccessToken,
+} from "@chatbotx.io/integration-messenger"
+import { notFound } from "next/navigation"
+import { checkMessagingAdsConnectionState } from "@/features/ads-campaign/queries"
+import { MessengerCapiTab } from "@/features/integration-messenger/components/messenger-capi-tab"
+import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 
-/**
- * The standalone "Ads" tab moved into a titled box (CTM) inside the existing
- * "Ads Optimization" tab — see `messenger-capi-tab.tsx` and
- * out/plan/ctwa-ctm-ctid-box-merge.md Phase 5. Kept as a redirect (not
- * deleted) so old bookmarks/links to `.../ads` keep working.
- */
 export default async function MessengerAdsPage(props: {
   params: Promise<{ workspaceId: string; id: string }>
 }) {
@@ -14,5 +22,60 @@ export default async function MessengerAdsPage(props: {
   if (!data) {
     return notFound()
   }
-  return redirect(`/space/${data.workspaceId}/messengers/${data.id}/capi`)
+
+  const { workspaceId, id } = data
+  const [workspace, integrationMessenger, messagingAdsConnectionState] =
+    await Promise.all([
+      workspaceService.findById({ id: workspaceId }),
+      findIntegrationMessenger({ workspaceId, id }),
+      checkMessagingAdsConnectionState({
+        workspaceId,
+        channel: "messenger",
+        integrationId: id,
+      }),
+    ])
+  const messengerCredential = await platformCredentialService.resolveForOwner({
+    ownerId: await resolveOwnerForWorkspace(workspace),
+    type: "messenger",
+  })
+  // A manual access token + dataset is ready without the OAuth scope, and a
+  // user-disconnected integration must stay disconnected — both skip the scope
+  // refresh (which can throw CapiScopeRefreshError on an expired OAuth token).
+  const usesManualToken = Boolean(
+    integrationMessenger.capiAccessToken && integrationMessenger.datasetId,
+  )
+  const capiDisconnected = Boolean(integrationMessenger.capiDisconnectedAt)
+  const refreshed =
+    messengerCredential && !(usesManualToken || capiDisconnected)
+      ? await metaConversionsService
+          .refreshCapiScopeCache({
+            channel: "messenger",
+            integration: integrationMessenger,
+            checkScope: async ({ accessToken }) => {
+              const debug = await debugToken({
+                inputToken: accessToken,
+                appAccessToken: toAppAccessToken(messengerCredential.config),
+                version: messengerCredential.config.version,
+              })
+              return hasPageEventsScope(debug.scopes)
+            },
+          })
+          .catch(() => integrationMessenger)
+      : integrationMessenger
+
+  const resolved = refreshed ?? integrationMessenger
+
+  return (
+    <MessengerCapiTab
+      capiDisconnected={capiDisconnected}
+      credentialAvailable={Boolean(messengerCredential)}
+      hasManualCapiAccessToken={Boolean(resolved.capiAccessToken)}
+      integrationMessenger={{
+        id: resolved.id,
+        hasCapiScope: resolved.hasCapiScope,
+        datasetId: resolved.datasetId,
+      }}
+      messagingAdsConnectionState={messagingAdsConnectionState}
+    />
+  )
 }

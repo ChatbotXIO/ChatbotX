@@ -228,7 +228,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     )
     expect(
       Array.from(container.querySelectorAll("a")).some((anchor) =>
-        anchor.href.includes("/whatsapps/iw-1/capi"),
+        anchor.href.includes("/whatsapps/iw-1/ads"),
       ),
     ).toBe(true)
     expect(container.textContent).not.toContain(
@@ -264,7 +264,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     )
   })
 
-  test("shows a messenger-channel reconnect CTA linked to the messenger capi settings page", async () => {
+  test("shows a messenger-channel reconnect CTA linked to the messenger ads settings page", async () => {
     await act(async () => {
       root.render(
         <AdsAnalyticsView
@@ -286,7 +286,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
 
     expect(
       Array.from(container.querySelectorAll("a")).some((anchor) =>
-        anchor.href.includes("/messengers/msg-1/capi"),
+        anchor.href.includes("/messengers/msg-1/ads"),
       ),
     ).toBe(true)
   })

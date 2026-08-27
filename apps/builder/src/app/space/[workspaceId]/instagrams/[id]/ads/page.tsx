@@ -1,12 +1,20 @@
-import { notFound, redirect } from "next/navigation"
+import {
+  metaConversionsService,
+  platformCredentialService,
+  workspaceService,
+} from "@chatbotx.io/business"
+import {
+  debugToken,
+  hasInstagramManageEventsScope,
+  toAppAccessToken,
+} from "@chatbotx.io/integration-instagram-facebook"
+import { notFound } from "next/navigation"
+import { checkMessagingAdsConnectionState } from "@/features/ads-campaign/queries"
+import { InstagramCapiTab } from "@/features/integration-instagram/components/instagram-capi-tab"
+import { findIntegrationInstagram } from "@/features/integration-instagram/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 
-/**
- * The standalone "Ads" tab moved into a titled box (CTID) inside the
- * existing "Ads Optimization" tab — see `instagram-capi-tab.tsx` and
- * out/plan/ctwa-ctm-ctid-box-merge.md Phase 5. Kept as a redirect (not
- * deleted) so old bookmarks/links to `.../ads` keep working.
- */
 export default async function InstagramAdsPage(props: {
   params: Promise<{ workspaceId: string; id: string }>
 }) {
@@ -14,5 +22,64 @@ export default async function InstagramAdsPage(props: {
   if (!data) {
     return notFound()
   }
-  return redirect(`/space/${data.workspaceId}/instagrams/${data.id}/capi`)
+
+  const { workspaceId, id } = data
+  const [workspace, integrationInstagram, messagingAdsConnectionState] =
+    await Promise.all([
+      workspaceService.findById({ id: workspaceId }),
+      findIntegrationInstagram({ workspaceId, id }),
+      checkMessagingAdsConnectionState({
+        workspaceId,
+        channel: "instagram",
+        integrationId: id,
+      }),
+    ])
+  const instagramCredential =
+    integrationInstagram.type === "facebook"
+      ? await platformCredentialService.resolveForOwner({
+          ownerId: await resolveOwnerForWorkspace(workspace),
+          type: "instagramFacebook",
+        })
+      : null
+  // A manual access token + dataset is ready without the OAuth scope, and a
+  // user-disconnected integration must stay disconnected — both skip the scope
+  // refresh (which can throw CapiScopeRefreshError on an expired OAuth token).
+  const usesManualToken = Boolean(
+    integrationInstagram.capiAccessToken && integrationInstagram.datasetId,
+  )
+  const capiDisconnected = Boolean(integrationInstagram.capiDisconnectedAt)
+  const refreshed =
+    instagramCredential && !(usesManualToken || capiDisconnected)
+      ? await metaConversionsService
+          .refreshCapiScopeCache({
+            channel: "instagram",
+            integration: integrationInstagram,
+            checkScope: async ({ accessToken }) => {
+              const debug = await debugToken({
+                inputToken: accessToken,
+                appAccessToken: toAppAccessToken(instagramCredential.config),
+                version: instagramCredential.config.version,
+              })
+              return hasInstagramManageEventsScope(debug.scopes)
+            },
+          })
+          .catch(() => integrationInstagram)
+      : integrationInstagram
+
+  const resolved = refreshed ?? integrationInstagram
+
+  return (
+    <InstagramCapiTab
+      capiDisconnected={capiDisconnected}
+      credentialAvailable={Boolean(instagramCredential)}
+      hasManualCapiAccessToken={Boolean(resolved.capiAccessToken)}
+      integrationInstagram={{
+        id: resolved.id,
+        type: resolved.type,
+        hasCapiScope: resolved.hasCapiScope,
+        datasetId: resolved.datasetId,
+      }}
+      messagingAdsConnectionState={messagingAdsConnectionState}
+    />
+  )
 }

@@ -234,7 +234,7 @@ function DeliveryCount({
 }
 
 // The Automatic Events / CAPI permission lives on each channel integration's
-// Ads Optimization (capi) tab (Phase 6: generalized beyond WhatsApp), so the
+// Ads Optimization (ads) tab (Phase 6: generalized beyond WhatsApp), so the
 // CTA needs a concrete channel + integration to target.
 function buildCapiSettingsHref(
   workspaceId: string,
@@ -242,7 +242,7 @@ function buildCapiSettingsHref(
   integrationId: string,
 ) {
   const segment = CAPI_SETTINGS_SEGMENT_BY_CHANNEL[channel]
-  return `/space/${workspaceId}/${segment}/${integrationId}/capi`
+  return `/space/${workspaceId}/${segment}/${integrationId}/ads`
 }
 
 // Formatters take the next-intl locale explicitly: it is identical on the
