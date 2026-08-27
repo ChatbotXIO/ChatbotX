@@ -85,8 +85,51 @@ pnpm --filter realtime dev     # WebSockets → http://localhost:1999
 > **Build de producción del builder** (solo ese paquete): `pnpm --filter builder build`.
 > La fase de bundling de Next/Turbopack es la que más RAM consume — con la máquina
 > llena (Docker + apps de escritorio) puede matarla el OOM killer (exit 137).
-> Antes de buildear, cerrá apps pesadas y/o limitá el heap:
-> `NODE_OPTIONS="--max-old-space-size=4096" pnpm --filter builder build`.
+> **Build seguro (no congela la UI):** limitar heap + baja prioridad + 4 cores.
+> ⚠️ La variable de entorno va SIEMPRE al principio (antes de `nice`/`taskset`):
+> `NODE_OPTIONS="--max-old-space-size=4096" nice -n 19 taskset -c 0-3 pnpm --filter builder build`
+
+### Matar las apps (antes de rebuild)
+
+`pkill` acepta un solo patrón por vez, por eso van separados. No matar Docker ni ngrok.
+
+```bash
+pkill -f '[n]ext start'      # builder (producción, next start)
+pkill -f '[t]sx --watch'     # worker (11 procesos)
+pkill -f '[p]artykit dev'    # realtime
+```
+
+Verificación (tiene que quedar vacío):
+
+```bash
+ps aux | grep -E 'next start|tsx --watch|partykit dev' | grep -v grep
+```
+
+> Los corchetes `[n]` evitan que el propio `pkill`/`grep` se maté a sí mismo.
+> Si el builder corre con `pnpm dev` (modo dev, no `next start`), matarlo con
+> `pkill -f '[n]ext-server'` o `pkill -f '[t]urbopack'` según el proceso.
+
+### Rebuild completo (matar → build → arrancar)
+
+**Obligatorio matar el builder** antes de buildear: el build escribe en `.next` mientras
+`next start` lo está leyendo (archivos corruptos). Worker y realtime no leen `.next`,
+pero conviene matarlos por RAM. **NUNCA** matar Docker (postgres/redis) ni ngrok.
+
+```bash
+# 1. Matar las 3 apps
+pkill -f '[n]ext start'
+pkill -f '[t]sx --watch'
+pkill -f '[p]artykit dev'
+
+# 2. Build seguro (env AL PRINCIPIO; nice + taskset = no congela la UI)
+NODE_OPTIONS="--max-old-space-size=4096" nice -n 19 taskset -c 0-3 pnpm --filter builder build
+
+# 3. Arrancar todo (builder, worker, realtime + re-registra webhook de Telegram)
+bash scripts/start.sh
+```
+
+> Alternativa todo-en-uno (hace build + arranca): `bash scripts/start.sh --build` — pero
+> sin el `nice`/`taskset`, así que si la máquina está justa de RAM, mejor por partes.
 
 ## 3. ngrok — DOS túneles en UN solo agente
 
