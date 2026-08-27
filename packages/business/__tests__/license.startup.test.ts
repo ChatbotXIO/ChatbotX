@@ -79,7 +79,7 @@ describe("assertLicenseAtStartup", () => {
     vi.restoreAllMocks()
   })
 
-  test("exits 1 when enterprise edition has no LICENSE_KEY", async () => {
+  test("starts degraded (no exit) when enterprise edition has no LICENSE_KEY", async () => {
     setEdition("enterprise")
     vi.resetModules()
     const exitSpy = vi
@@ -87,12 +87,11 @@ describe("assertLicenseAtStartup", () => {
       .mockImplementation(() => undefined as never)
     const assertLicenseAtStartup = await importAssertLicenseAtStartup()
 
-    await assertLicenseAtStartup()
-
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    await expect(assertLicenseAtStartup()).resolves.toBeUndefined()
+    expect(exitSpy).not.toHaveBeenCalled()
   })
 
-  test("exits 1 when enterprise edition has a malformed/wrong-signature token", async () => {
+  test("starts degraded (no exit) when enterprise edition has a malformed/wrong-signature token", async () => {
     setEdition("enterprise")
     const otherKeyPair = await generateKeyPair("EdDSA", {
       crv: "Ed25519",
@@ -112,9 +111,8 @@ describe("assertLicenseAtStartup", () => {
       .mockImplementation(() => undefined as never)
     const assertLicenseAtStartup = await importAssertLicenseAtStartup()
 
-    await assertLicenseAtStartup()
-
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    await expect(assertLicenseAtStartup()).resolves.toBeUndefined()
+    expect(exitSpy).not.toHaveBeenCalled()
   })
 
   test("resolves without exiting for a valid enterprise license", async () => {
@@ -162,7 +160,7 @@ describe("assertLicenseAtStartup", () => {
     expect(exitSpy).not.toHaveBeenCalled()
   })
 
-  test("exits 1 when cloud edition has no LICENSE_KEY", async () => {
+  test("starts degraded (no exit) when cloud edition has no LICENSE_KEY", async () => {
     setEdition("cloud")
     vi.resetModules()
     const exitSpy = vi
@@ -170,9 +168,8 @@ describe("assertLicenseAtStartup", () => {
       .mockImplementation(() => undefined as never)
     const assertLicenseAtStartup = await importAssertLicenseAtStartup()
 
-    await assertLicenseAtStartup()
-
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    await expect(assertLicenseAtStartup()).resolves.toBeUndefined()
+    expect(exitSpy).not.toHaveBeenCalled()
   })
 
   test("resolves without exiting for a valid license on cloud edition", async () => {
@@ -189,7 +186,7 @@ describe("assertLicenseAtStartup", () => {
     expect(exitSpy).not.toHaveBeenCalled()
   })
 
-  test("exits 1 when enterprise edition has a cloud-tier license", async () => {
+  test("resolves without exiting when enterprise edition has a cloud-tier license", async () => {
     setEdition("enterprise")
     process.env.LICENSE_KEY = await signLicense({ tier: "cloud" })
     vi.resetModules()
@@ -199,12 +196,11 @@ describe("assertLicenseAtStartup", () => {
       .mockImplementation(() => undefined as never)
     const assertLicenseAtStartup = await importAssertLicenseAtStartup()
 
-    await assertLicenseAtStartup()
-
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    await expect(assertLicenseAtStartup()).resolves.toBeUndefined()
+    expect(exitSpy).not.toHaveBeenCalled()
   })
 
-  test("exits 1 when cloud edition has an enterprise-tier license", async () => {
+  test("resolves without exiting when cloud edition has an enterprise-tier license", async () => {
     setEdition("cloud")
     process.env.LICENSE_KEY = await signLicense({ tier: "enterprise" })
     vi.resetModules()
@@ -214,8 +210,7 @@ describe("assertLicenseAtStartup", () => {
       .mockImplementation(() => undefined as never)
     const assertLicenseAtStartup = await importAssertLicenseAtStartup()
 
-    await assertLicenseAtStartup()
-
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    await expect(assertLicenseAtStartup()).resolves.toBeUndefined()
+    expect(exitSpy).not.toHaveBeenCalled()
   })
 })

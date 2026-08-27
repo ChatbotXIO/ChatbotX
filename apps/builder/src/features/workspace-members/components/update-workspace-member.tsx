@@ -1,5 +1,6 @@
 "use client"
 
+import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -138,6 +139,7 @@ export function UpdateWorkspaceMemberForm({
   useEffect(() => {
     if (workspaceMember) {
       reset({
+        role: workspaceMember.role,
         permissions: workspaceMember.permissions,
         // notificationTypes: workspaceMember.notificationTypes,
         // notificationChannels: workspaceMember.notificationChannels,
@@ -151,6 +153,18 @@ export function UpdateWorkspaceMemberForm({
         className={cn("flex flex-col gap-6", className)}
         onSubmit={handleSubmitWithAction}
       >
+        <div className="flex flex-col gap-4">
+          <RadioGroupField
+            label={t("fields.role.label")}
+            name="role"
+            options={[
+              { value: "owner", label: t("fields.role.owner") },
+              { value: "agent", label: t("fields.role.agent") },
+            ]}
+            orientation="horizontal"
+          />
+        </div>
+
         <div className="flex flex-col gap-4">
           <Label>{t("fields.permissions.label")}</Label>
           <div className="flex flex-col gap-4">

@@ -4315,7 +4315,9 @@
       "label": "תשובות שמורות"
     },
     "role": {
-      "label": "תפקיד"
+      "label": "תפקיד",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "תוכנית"

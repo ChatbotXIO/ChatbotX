@@ -201,10 +201,6 @@ class ExternalRequestService extends BaseService {
     const { workspaceId, contactId, input, mapping } = props
     const result = await this.execute(input, { workspaceId, contactId })
 
-    if (result.statusCode >= 400) {
-      return result
-    }
-
     let responseJson: unknown
     try {
       responseJson = JSON.parse(result.responseBody)
@@ -238,3 +234,41 @@ class ExternalRequestService extends BaseService {
 }
 
 export const externalRequestService = new ExternalRequestService()
+
+/**
+ * Removes object keys whose value is empty or still contains an unresolved
+ * `{{placeholder}}`. Used when a variable has no value (null, empty, or
+ * unknown) — the whole parameter is omitted from the JSON body instead of
+ * sending `""` or the literal `{{...}}` text to the target API.
+ */
+export function stripEmptyAndUnresolvedJsonValues(jsonStr: string): string {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(jsonStr)
+  } catch {
+    // Not parseable JSON — leave the string untouched.
+    return jsonStr
+  }
+
+  const clean = (value: unknown): unknown => {
+    if (Array.isArray(value)) {
+      return value.map(clean)
+    }
+    if (value && typeof value === "object") {
+      const out: Record<string, unknown> = {}
+      for (const [key, entry] of Object.entries(value)) {
+        if (
+          typeof entry === "string" &&
+          (entry.length === 0 || entry.includes("{{"))
+        ) {
+          continue
+        }
+        out[key] = clean(entry)
+      }
+      return out
+    }
+    return value
+  }
+
+  return JSON.stringify(clean(parsed))
+}

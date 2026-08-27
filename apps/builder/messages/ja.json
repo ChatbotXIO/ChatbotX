@@ -1719,7 +1719,9 @@
       "label": "保存済みの返信"
     },
     "role": {
-      "label": "ロール"
+      "label": "ロール",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "プラン"

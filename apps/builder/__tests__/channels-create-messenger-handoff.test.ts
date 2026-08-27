@@ -2,15 +2,19 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockGetCurrentUserId, mockRedirect, mockResolveForOwner } = vi.hoisted(
-  () => ({
-    mockGetCurrentUserId: vi.fn(async () => "user-1"),
-    mockRedirect: vi.fn((path: string) => {
-      throw new Error(`redirect:${path}`)
-    }),
-    mockResolveForOwner: vi.fn(),
+const {
+  mockGetCurrentUser,
+  mockGetCurrentUserId,
+  mockRedirect,
+  mockResolveForOwner,
+} = vi.hoisted(() => ({
+  mockGetCurrentUserId: vi.fn(async () => "user-1"),
+  mockGetCurrentUser: vi.fn(async () => ({ id: "user-1" })),
+  mockRedirect: vi.fn((path: string) => {
+    throw new Error(`redirect:${path}`)
   }),
-)
+  mockResolveForOwner: vi.fn(),
+}))
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
@@ -20,6 +24,7 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  isPlatformAdmin: vi.fn(async () => true),
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
   tenantService: {
     resolveVisibleChannels: vi.fn(async () => [
@@ -54,7 +59,10 @@ vi.mock("@/lib/auth/require-workspace-permission", () => ({
   requireWorkspacePermission: vi.fn(async () => undefined),
 }))
 
-vi.mock("@/lib/auth/utils", () => ({ getCurrentUserId: mockGetCurrentUserId }))
+vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserId: mockGetCurrentUserId,
+  getCurrentUser: mockGetCurrentUser,
+}))
 
 vi.mock("@/features/inboxes/components/inbox-select-card", () => ({
   default: () => null,

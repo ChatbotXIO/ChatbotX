@@ -1,7 +1,10 @@
 "use server"
 
 import { isDeepStrictEqual } from "node:util"
-import { workspaceMemberCacheTag } from "@chatbotx.io/business"
+import {
+  workspaceMemberCacheTag,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
@@ -42,6 +45,24 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       throw new ChatbotXException(
         "You are not authorized to update this workspace member. You need to be a super admin to do this.",
       )
+    }
+
+    // Role change guards (fork fibrazo): never leave the workspace ownerless.
+    const nextRole = parsedInput.role
+    if (nextRole && nextRole !== workspaceMember.role) {
+      const members = await workspaceMemberService.listByWorkspaceId({
+        workspaceId,
+      })
+      const ownerCount = members.filter((m) => m.role === "owner").length
+      if (
+        workspaceMember.role === "owner" &&
+        nextRole === "agent" &&
+        ownerCount <= 1
+      ) {
+        throw new ChatbotXException(
+          "You cannot demote the last owner of the workspace",
+        )
+      }
     }
 
     const updateInput = isCommunity()

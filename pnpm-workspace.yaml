@@ -8,3 +8,9 @@ onlyBuiltDependencies:
   - esbuild
   - isolated-vm
   - lefthook
+  - '@parcel/watcher'
+  - '@swc/core'
+  - msgpackr-extract
+  - msw
+  - sharp
+  - workerd

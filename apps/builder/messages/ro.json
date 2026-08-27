@@ -2498,7 +2498,9 @@
       "label": "Răspunsuri salvate"
     },
     "role": {
-      "label": "Rol"
+      "label": "Rol",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Plan"

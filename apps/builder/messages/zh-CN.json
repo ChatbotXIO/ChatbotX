@@ -2359,7 +2359,9 @@
       "label": "重试消息"
     },
     "role": {
-      "label": "角色"
+      "label": "角色",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "savePayloadToCustomField": {
       "label": "将负载保存到自订字段"

@@ -1719,7 +1719,9 @@
       "label": "Respostas salvas"
     },
     "role": {
-      "label": "Função"
+      "label": "Função",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Plano"

@@ -147,6 +147,7 @@ const ExternalRequestDialog = ({ parentName }: { parentName: string }) => {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger
+        nativeButton={false}
         render={
           <div className="flex justify-center">
             <Button size="sm" type="button" variant="outline">

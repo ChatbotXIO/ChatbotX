@@ -1859,7 +1859,9 @@
       "label": "Publishable Key"
     },
     "role": {
-      "label": "Role"
+      "label": "Role",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "secretKey": {
       "label": "Secret Key"

@@ -2356,7 +2356,9 @@
       "label": "Försöksmeddelande"
     },
     "role": {
-      "label": "Roll"
+      "label": "Roll",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "savePayloadToCustomField": {
       "label": "Spara nyttolast i anpassat fält"

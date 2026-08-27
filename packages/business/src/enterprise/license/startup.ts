@@ -2,13 +2,13 @@ import { isCloud, isEnterprise, keys } from "../../keys"
 import { logger } from "../../logger"
 import { getLicenseStatus } from "./service"
 
-const logLicenseError = (
+const logLicenseDegraded = (
   state: "invalid" | "missing",
   error: string | null,
 ): void => {
-  logger.error(
+  logger.warn(
     { edition: keys().NEXT_PUBLIC_EDITION, state, error },
-    "This edition requires a valid LICENSE_KEY issued for this deployment. Refusing to start.",
+    "Enterprise license missing or invalid; starting degraded without enterprise features.",
   )
 }
 
@@ -39,8 +39,10 @@ export const assertLicenseAtStartup = async (): Promise<void> => {
   const license = await getLicenseStatus()
 
   if (license.state === "missing" || license.state === "invalid") {
-    logLicenseError(license.state, license.error)
-    process.exit(1)
+    // FORK fibrazo/sysbrazo: do not abort startup when no valid LICENSE_KEY is
+    // configured. Degrade to the community feature set instead of refusing to
+    // start (see FORK-CHANGES.md "Desbloquear edición enterprise").
+    logLicenseDegraded(license.state, license.error)
     return
   }
 

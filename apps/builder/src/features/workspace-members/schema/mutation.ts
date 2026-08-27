@@ -1,3 +1,4 @@
+import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
 export const inviteWorkspaceMemberRequest = z.object({
@@ -23,6 +24,7 @@ export type InviteWorkspaceMemberRequest = z.infer<
 
 export const updateWorkspaceMemberRequest = inviteWorkspaceMemberRequest.extend(
   {
+    role: workspaceMemberRoles,
     notificationTypes: z.object({
       notifyAdmin: z.boolean(),
       newMessageToHuman: z.boolean(),

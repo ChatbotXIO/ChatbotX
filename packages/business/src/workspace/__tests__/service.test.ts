@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   invalidateCacheByTags: vi.fn(),
   dbTransaction: vi.fn(),
   purgeWorkspaceHeavyData: vi.fn(),
+  isPlatformAdmin: vi.fn(),
   dispatchAuditRecord: vi.fn(),
 }))
 
@@ -22,7 +23,14 @@ vi.mock("@chatbotx.io/analytics", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    query: { userModel: { findFirst: vi.fn(async () => undefined) } },
+    query: {
+      userModel: {
+        findFirst: vi.fn(async () => ({
+          id: "owner-1",
+          email: "demo@example.com",
+        })),
+      },
+    },
     insert: mocks.workspaceInsert,
     delete: mocks.workspaceDelete,
     transaction: mocks.dbTransaction,
@@ -88,6 +96,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 // workspace cap is covered by __tests__/workspace.service.test.ts.
 vi.mock("../../keys", () => ({ isCommunity: vi.fn(() => false) }))
 
+vi.mock("../../user", () => ({
+  isPlatformAdmin: mocks.isPlatformAdmin,
+}))
+
 vi.mock("../../enterprise/tenant/service", () => ({
   tenantService: { findByOwner: vi.fn(async () => undefined) },
 }))
@@ -151,6 +163,8 @@ beforeEach(() => {
   mocks.dbTransaction.mockReset()
   mocks.purgeWorkspaceHeavyData.mockReset()
   mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
+  mocks.isPlatformAdmin.mockReset()
+  mocks.isPlatformAdmin.mockResolvedValue(true)
   mocks.dispatchAuditRecord.mockReset()
 
   mocks.workspaceInsert.mockReturnValue({
@@ -193,6 +207,23 @@ describe("WorkspaceService.create", () => {
     expect(result).toEqual({ id: "new-workspace" })
     expect(mocks.workspaceInsert).toHaveBeenCalledTimes(1)
     expect(mocks.createMember).toHaveBeenCalledTimes(1)
+  })
+
+  test("throws a forbidden exception when the creator is not a platform admin", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: true })
+    mocks.isPlatformAdmin.mockResolvedValue(false)
+
+    const createWorkspace = workspaceService.create({
+      data: { name: "Acme", tenantId: "1" } as never,
+      createdBy: "owner-1",
+    })
+
+    await expect(createWorkspace).rejects.toMatchObject({
+      code: "forbidden",
+      message: "Only platform admins can create workspaces",
+    })
+    expect(mocks.workspaceInsert).not.toHaveBeenCalled()
+    expect(mocks.createMember).not.toHaveBeenCalled()
   })
 
   test("records a create audit event with the explicit workspaceId override when no tx is passed", async () => {

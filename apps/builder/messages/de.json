@@ -1719,7 +1719,9 @@
       "label": "Gespeicherte Antworten"
     },
     "role": {
-      "label": "Rolle"
+      "label": "Rolle",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Tarif"

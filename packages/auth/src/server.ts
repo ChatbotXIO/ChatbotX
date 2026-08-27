@@ -539,6 +539,7 @@ export function createAuth(config: AuthConfig) {
     socialProviders,
     emailAndPassword: {
       enabled: true,
+      disableSignup: true,
       requireEmailVerification: true,
       sendResetPassword: async ({ user, url }, request) => {
         if (!request) {

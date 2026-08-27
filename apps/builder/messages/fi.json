@@ -1719,7 +1719,9 @@
       "label": "Tallennetut vastaukset"
     },
     "role": {
-      "label": "Rooli"
+      "label": "Rooli",
+      "owner": "Owner",
+      "agent": "Agent"
     },
     "plan": {
       "label": "Tilaus"

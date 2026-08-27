@@ -152,3 +152,6 @@ export const workspaceLimitReachedException = () =>
     "Workspace limit reached for this plan",
     "workspaceLimitReached",
   )
+
+export const forbiddenException = (message: string) =>
+  new ChatbotXException(message, "forbidden", 403)

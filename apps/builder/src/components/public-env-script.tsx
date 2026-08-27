@@ -1,3 +1,5 @@
+import Script from "next/script"
+
 const PUBLIC_ENV_KEYS = [
   "NEXT_PUBLIC_BUILDER_URL",
   "NEXT_PUBLIC_BROKER_URL",
@@ -14,11 +16,13 @@ export function PublicEnvScript() {
     env[key] = process.env[key]
   }
   return (
-    <script
+    <Script
       // biome-ignore lint/security/noDangerouslySetInnerHtml: inject env to window
       dangerouslySetInnerHTML={{
         __html: `window.__ENV=${JSON.stringify(env)}`,
       }}
+      id="public-env"
+      strategy="beforeInteractive"
     />
   )
 }

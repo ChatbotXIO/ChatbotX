@@ -33,6 +33,7 @@ type WorkspacesListProps = {
   reason?: "status" | "mac" | null
   ownerWorkspaceIds?: string[]
   superAdminWorkspaceIds?: string[]
+  isPlatformAdmin?: boolean
 }
 
 const CARD_STYLES =
@@ -192,12 +193,13 @@ const WorkspacesList = async ({
   reason,
   ownerWorkspaceIds = [],
   superAdminWorkspaceIds = [],
+  isPlatformAdmin = false,
 }: WorkspacesListProps) => {
   const t = await getTranslations()
   const createLabel = t("actions.createFeature", {
     feature: t("fields.workspace.label"),
   })
-  const showCreateCard = !isCommunity()
+  const showCreateCard = !isCommunity() && isPlatformAdmin
   const ownerIds = new Set(ownerWorkspaceIds)
   const superAdminIds = new Set(superAdminWorkspaceIds)
   const ownerLabel = t("home.owner")
