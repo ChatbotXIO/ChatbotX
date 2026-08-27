@@ -2555,8 +2555,7 @@
       "adAccountFilter": {
         "all": "Tất cả tài khoản quảng cáo",
         "label": "Tài khoản quảng cáo",
-        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo.",
-        "unavailable": "Không tải được tài khoản quảng cáo Facebook — hãy kiểm tra kết nối Facebook Ads trong cài đặt workspace."
+        "unavailable": "Không tải được tài khoản quảng cáo — hãy kiểm tra kết nối Ads của tích hợp này, hoặc kết nối Facebook Ads của workspace, trong phần cài đặt."
       },
       "channelFilter": {
         "label": "Kênh",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Kết nối này cần được kết nối lại.",
       "refresh": "Làm mới",
       "whatsappPageRequiredNote": "Quảng cáo Click-to-WhatsApp vẫn yêu cầu một Trang Facebook được liên kết (yêu cầu của Meta) — bạn sẽ chọn Trang này khi tạo quảng cáo.",
-      "emptyDashboardNote": "Các quảng cáo được tạo tại đây sẽ không xuất hiện trên bảng điều khiển Quảng cáo trừ khi không gian làm việc này cũng đã kết nối tích hợp Facebook Ads riêng biệt."
+      "emptyDashboardNote": "Các quảng cáo được tạo tại đây giờ đây sẽ tự động xuất hiện trên bảng điều khiển Quảng cáo của kênh này — hãy chọn tích hợp này trong bộ lọc ở đó để xem tài khoản và chi tiêu của nó."
     },
     "insights": {
       "title": "Hiệu quả",

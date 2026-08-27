@@ -32,6 +32,11 @@ type WorkspaceConnectionRef = {
   workspaceId: string
 }
 
+type WorkspaceChannelRef = {
+  workspaceId: string
+  channel: MessagingAdChannel
+}
+
 export const messagingAdsConnectionRepository = {
   async findForIntegration(
     input: WorkspaceIntegrationFkRef,
@@ -52,6 +57,29 @@ export const messagingAdsConnectionRepository = {
       },
     })
     return row ?? null
+  },
+
+  /**
+   * Every `MessagingAdsConnection` row of one channel, workspace-scoped — the
+   * per-channel union source for the Ads dashboard's ad-account filter/spend
+   * fan-out (`resolveChannelAdAccountSources` in
+   * `apps/builder/src/features/ads/queries/channel-ad-accounts.ts`). Only
+   * `active` rows are returned: an `invalid` row (a prior Graph 190, or an
+   * undecryptable auth blob — see `buildMessagingAdsContext`) cannot build a
+   * box context, so including it here would just re-fail downstream on every
+   * call.
+   */
+  async listForChannel(
+    input: WorkspaceChannelRef,
+    tx: DatabaseClient = db,
+  ): Promise<MessagingAdsConnectionModel[]> {
+    return await tx.query.messagingAdsConnectionModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        channel: input.channel,
+        status: "active",
+      },
+    })
   },
 
   async create(

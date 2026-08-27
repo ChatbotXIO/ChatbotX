@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto.",
-        "unavailable": "Kunne ikke indlæse Facebook-annoncekonti — tjek Facebook Ads-forbindelsen i workspace-indstillingerne."
+        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Denne forbindelse skal genoprettes.",
       "refresh": "Opdater",
       "whatsappPageRequiredNote": "Click-to-WhatsApp-annoncer kræver stadig en tilknyttet Facebook-side (et Meta-krav) — du vælger den, når du opretter en annonce.",
-      "emptyDashboardNote": "Annoncer, der oprettes her, vises ikke på annoncepanelet, medmindre denne workspace også har den separate Facebook Ads-integration tilsluttet."
+      "emptyDashboardNote": "Annoncer, der oprettes her, vises nu automatisk på denne kanals annoncepanel — vælg denne integration i filteret der for at se dens konti og forbrug."
     },
     "insights": {
       "title": "Ydeevne",

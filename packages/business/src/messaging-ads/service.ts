@@ -151,7 +151,7 @@ class MessagingAdCampaignService {
     try {
       const result = await this.runCreateSteps(record, ctx, assets)
       await invalidateMessagingAdsCache(
-        this.cacheScope(input.channel, input.integrationId),
+        this.cacheScope(input.workspaceId, input.channel, input.integrationId),
       )
       return result
     } catch (error) {
@@ -212,7 +212,9 @@ class MessagingAdCampaignService {
       // resumed create can produce a NEW metaAdId, so a previously-cached
       // effective-status batch (keyed by the OLD ad-id set) must not keep
       // serving after this operation joins the list.
-      await invalidateMessagingAdsCache(this.cacheScope(channel, integrationId))
+      await invalidateMessagingAdsCache(
+        this.cacheScope(record.workspaceId, channel, integrationId),
+      )
       return result
     } catch (error) {
       await this.markInvalidOnTokenError(
@@ -226,10 +228,13 @@ class MessagingAdCampaignService {
   }
 
   private cacheScope(
+    workspaceId: string,
     channel: MessagingAdChannel,
     integrationId: string,
   ): string {
-    return `${channel}:${integrationId}`
+    // Mirrors `messaging-ads-connection/graph-reads.ts` scopeOf — the cache
+    // key is workspace-scoped so invalidation must be too.
+    return `${workspaceId}:${channel}:${integrationId}`
   }
 
   private async markInvalidOnTokenError(
@@ -643,7 +648,9 @@ class MessagingAdCampaignService {
         publishState: "publishFailed",
         lastError: toPublicErrorMessage(error, GENERIC_ERROR),
       })
-      await invalidateMessagingAdsCache(this.cacheScope(channel, integrationId))
+      await invalidateMessagingAdsCache(
+        this.cacheScope(record.workspaceId, channel, integrationId),
+      )
       return updated ?? record
     }
 
@@ -662,7 +669,9 @@ class MessagingAdCampaignService {
       workspaceId: record.workspaceId,
       publishState: "published",
     })
-    await invalidateMessagingAdsCache(this.cacheScope(channel, integrationId))
+    await invalidateMessagingAdsCache(
+      this.cacheScope(record.workspaceId, channel, integrationId),
+    )
     return updated ?? record
   }
 
@@ -734,7 +743,9 @@ class MessagingAdCampaignService {
       publishState: "paused",
       lastError: errors.length ? errors.join("; ") : null,
     })
-    await invalidateMessagingAdsCache(this.cacheScope(channel, integrationId))
+    await invalidateMessagingAdsCache(
+      this.cacheScope(record.workspaceId, channel, integrationId),
+    )
     return updated ?? record
   }
 
@@ -812,7 +823,9 @@ class MessagingAdCampaignService {
       workspaceId: record.workspaceId,
       publishState: errors.length ? "deleting" : "deleted",
     })
-    await invalidateMessagingAdsCache(this.cacheScope(channel, integrationId))
+    await invalidateMessagingAdsCache(
+      this.cacheScope(record.workspaceId, channel, integrationId),
+    )
     return updated ?? record
   }
 

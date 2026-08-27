@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Alle Werbekonten",
         "label": "Werbekonto",
-        "note": "Anzeigen mit Konversionen, aber ohne Ausgaben oder Zustellung im ausgewählten Zeitraum, werden bei der Filterung nach Werbekonto ausgeblendet.",
-        "unavailable": "Facebook-Werbekonten konnten nicht geladen werden — prüfe die Facebook-Ads-Verbindung in den Workspace-Einstellungen."
+        "unavailable": "Werbekonten konnten nicht geladen werden — prüfe die Ads-Verbindung dieser Integration oder die Facebook-Ads-Verbindung des Workspaces in den Einstellungen."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Diese Verbindung muss erneut hergestellt werden.",
       "refresh": "Aktualisieren",
       "whatsappPageRequiredNote": "Click-to-WhatsApp-Anzeigen erfordern weiterhin eine verknüpfte Facebook-Seite (eine Anforderung von Meta) — du wählst sie beim Erstellen einer Anzeige aus.",
-      "emptyDashboardNote": "Hier erstellte Anzeigen erscheinen nicht im Anzeigen-Dashboard, es sei denn, dieser Workspace verfügt zusätzlich über die separate, verbundene Facebook-Ads-Integration."
+      "emptyDashboardNote": "Hier erstellte Anzeigen erscheinen jetzt automatisch im Anzeigen-Dashboard dieses Kanals — wähle diese Integration im dortigen Filter aus, um ihre Konten und Ausgaben zu sehen."
     },
     "insights": {
       "title": "Leistung",

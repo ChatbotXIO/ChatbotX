@@ -2,6 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import {
+  type FacebookAdsContext,
   getCachedAdAccounts,
   getCachedAdInsights,
   getCachedCustomAudiences,
@@ -163,6 +164,41 @@ describe("Facebook Ads cached queries", () => {
         timeIncrement: 1,
       },
     })
+  })
+
+  test("accepts a context resolver from a different source (e.g. a box's per-integration connection) — getContext is generic, not tied to getFacebookAdsContext", async () => {
+    // Mirrors the shape `buildMessagingAdsContext`
+    // (`@chatbotx.io/business/messaging-ads-connection`) produces — the Ads
+    // dashboard's per-source context routing (`analytics.ts`'s
+    // `buildContextResolverBySource`) passes resolvers like this one
+    // interchangeably with `getFacebookAdsContext`'s.
+    const boxContext = {
+      storagePrefix: "ws-1",
+      auth: { authType: "custom" as const, accessToken: "box-token" },
+      authStore: { load: vi.fn(), save: vi.fn() },
+      integrationDetail: { id: "conn_1" },
+      uploader: {},
+      platform: {},
+    } as unknown as FacebookAdsContext
+
+    await getCachedAdInsights({
+      workspaceId: "ws-1",
+      adAccountId: "act_9",
+      since: "2026-08-01",
+      until: "2026-08-11",
+      getContext: () => Promise.resolve(boxContext),
+    })
+
+    expect(mocks.runAction).toHaveBeenCalledWith("getAdInsights", {
+      ctx: boxContext,
+      props: {
+        adAccountId: "act_9",
+        since: "2026-08-01",
+        until: "2026-08-11",
+      },
+    })
+    // The resolver used, not getFacebookAdsContext's own buildContext path.
+    expect(mocks.buildContext).not.toHaveBeenCalled()
   })
 
   test("scopes custom audience cache keys by workspace and ad account", async () => {

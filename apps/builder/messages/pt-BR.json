@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Todas as contas de anúncios",
         "label": "Conta de anúncios",
-        "note": "Anúncios com conversões, mas com investimento zero ou entrega zero no período selecionado, ficam ocultos ao filtrar por conta de anúncios.",
-        "unavailable": "Não foi possível carregar as contas de anúncios do Facebook — verifique a conexão do Facebook Ads nas configurações do workspace."
+        "unavailable": "Não foi possível carregar as contas de anúncios — verifique a conexão de Ads desta integração, ou a conexão do Facebook Ads do workspace, nas configurações."
       },
       "channelFilter": {
         "label": "Canal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Esta conexão precisa ser reconectada.",
       "refresh": "Atualizar",
       "whatsappPageRequiredNote": "Anúncios de clique para o WhatsApp ainda exigem uma Página do Facebook vinculada (exigência da Meta) — você a escolherá ao criar um anúncio.",
-      "emptyDashboardNote": "Os anúncios criados aqui não aparecerão no painel de Anúncios, a menos que este workspace também tenha a integração separada do Facebook Ads conectada."
+      "emptyDashboardNote": "Os anúncios criados aqui agora aparecem automaticamente no painel de Anúncios deste canal — selecione esta integração no filtro de lá para ver suas contas e gastos."
     },
     "insights": {
       "title": "Desempenho",

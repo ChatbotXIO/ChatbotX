@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "すべての広告アカウント",
         "label": "広告アカウント",
-        "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。",
-        "unavailable": "Facebook広告アカウントを読み込めませんでした。ワークスペース設定でFacebook Ads連携を確認してください。"
+        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。"
       },
       "channelFilter": {
         "label": "チャネル",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "この連携は再接続が必要です。",
       "refresh": "更新",
       "whatsappPageRequiredNote": "クリック・トゥ・WhatsApp広告には（Metaの要件として）リンクされたFacebookページが必要です。広告作成時に選択します。",
-      "emptyDashboardNote": "このワークスペースに別途Facebook Ads連携が接続されていない限り、ここで作成した広告は広告ダッシュボードに表示されません。"
+      "emptyDashboardNote": "ここで作成した広告は、このチャネルの広告ダッシュボードに自動的に表示されるようになりました。アカウントと費用を確認するには、そこのフィルターでこの連携を選択してください。"
     },
     "insights": {
       "title": "パフォーマンス",

@@ -174,7 +174,7 @@ describe("generateAdsAuthUrl", () => {
 
     expect(url.origin).toBe("https://www.facebook.com")
     expect(url.searchParams.get("scope")).toBe(
-      "ads_read,ads_management,pages_manage_ads,pages_read_engagement,pages_show_list,whatsapp_business_management",
+      "ads_read,ads_management,pages_manage_ads,pages_read_engagement,pages_show_list",
     )
     expect(url.searchParams.get("client_id")).toBe("client-1")
     expect(

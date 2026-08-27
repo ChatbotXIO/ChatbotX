@@ -2714,8 +2714,7 @@
       "adAccountFilter": {
         "all": "所有廣告帳戶",
         "label": "廣告帳戶",
-        "note": "以廣告帳戶篩選時，在所選日期範圍內有轉換但花費或曝光為零的廣告將被隱藏。",
-        "unavailable": "無法載入 Facebook 廣告帳號——請在工作區設定中檢查 Facebook Ads 連線。"
+        "unavailable": "無法載入廣告帳號——請在設定中檢查此整合的 Ads 連線，或工作區的 Facebook Ads 連線。"
       },
       "channelFilter": {
         "label": "頻道",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "此連線需要重新連接。",
       "refresh": "重新整理",
       "whatsappPageRequiredNote": "點擊即可開啟 WhatsApp 的廣告仍須連結一個 Facebook 粉絲專頁（Meta 的規定）——您可在建立廣告時選擇。",
-      "emptyDashboardNote": "除非此工作區也已連接獨立的 Facebook Ads 整合，否則在此建立的廣告不會顯示在廣告儀表板中。"
+      "emptyDashboardNote": "在此建立的廣告現在會自動顯示在此頻道的廣告儀表板中——在那裡的篩選器中選擇此整合即可查看其帳號與花費。"
     },
     "insights": {
       "title": "成效",

@@ -433,8 +433,7 @@
       "adAccountFilter": {
         "all": "Toate conturile de anunțuri",
         "label": "Cont de anunțuri",
-        "note": "Anunțurile cu conversii, dar cu cheltuieli zero sau livrare zero în intervalul de date selectat, sunt ascunse la filtrarea după contul de anunțuri.",
-        "unavailable": "Nu s-au putut încărca conturile de reclame Facebook — verifică conexiunea Facebook Ads din setările workspace-ului."
+        "unavailable": "Conturile de reclame nu au putut fi încărcate — verifică conexiunea Ads a acestei integrări sau conexiunea Facebook Ads a spațiului de lucru, din setări."
       },
       "channelFilter": {
         "label": "Canal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Această conexiune trebuie reconectată.",
       "refresh": "Reîmprospătează",
       "whatsappPageRequiredNote": "Reclamele Click-to-WhatsApp necesită în continuare o Pagină Facebook conectată (o cerință Meta) — o vei alege la crearea unei reclame.",
-      "emptyDashboardNote": "Reclamele create aici nu vor apărea în panoul de control Reclame decât dacă acest spațiu de lucru are conectată și integrarea separată Facebook Ads."
+      "emptyDashboardNote": "Reclamele create aici apar acum automat în panoul de control Reclame al acestui canal — selectează această integrare din filtrul de acolo pentru a vedea conturile și cheltuielile ei."
     },
     "insights": {
       "title": "Performanță",

@@ -2555,8 +2555,7 @@
       "adAccountFilter": {
         "all": "Tüm reklam hesapları",
         "label": "Reklam hesabı",
-        "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir.",
-        "unavailable": "Facebook reklam hesapları yüklenemedi — çalışma alanı ayarlarındaki Facebook Ads bağlantısını kontrol edin."
+        "unavailable": "Reklam hesapları yüklenemedi — bu entegrasyonun Ads bağlantısını veya çalışma alanının Facebook Ads bağlantısını ayarlardan kontrol edin."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Bu bağlantının yeniden bağlanması gerekiyor.",
       "refresh": "Yenile",
       "whatsappPageRequiredNote": "Click-to-WhatsApp reklamları yine de bağlı bir Facebook Sayfası gerektirir (bir Meta zorunluluğu) — bir reklam oluştururken bunu seçeceksiniz.",
-      "emptyDashboardNote": "Bu çalışma alanında ayrıca ayrı Facebook Ads entegrasyonu bağlı olmadıkça, burada oluşturulan reklamlar Reklamlar panosunda görünmeyecektir."
+      "emptyDashboardNote": "Burada oluşturulan reklamlar artık bu kanalın Reklamlar panosunda otomatik olarak görünür — hesaplarını ve harcamasını görmek için oradaki filtreden bu entegrasyonu seçin."
     },
     "insights": {
       "title": "Performans",

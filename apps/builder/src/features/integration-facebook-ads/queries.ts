@@ -1,10 +1,12 @@
 import {
   buildContext,
+  type IntegrationContext,
   integrationFacebookAdsService,
 } from "@chatbotx.io/business"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import {
   type FacebookAdInsight,
+  type FacebookAdsAuthValue,
   facebookAdsAuthSchema,
   integration as facebookAdsIntegration,
 } from "@chatbotx.io/integration-facebook-ads"
@@ -27,9 +29,15 @@ export const getFacebookAdsContext = async (workspaceId: string) => {
   })
 }
 
-export type FacebookAdsContext = Awaited<
-  ReturnType<typeof getFacebookAdsContext>
->
+// Deliberately the shared `IntegrationContext<FacebookAdsAuthValue>` shape,
+// not `Awaited<ReturnType<typeof getFacebookAdsContext>>` — `getContext`
+// resolvers passed into `getCachedAdInsights`/`getCachedDailyAdInsights`
+// (below) also come from `buildMessagingAdsContext`
+// (`@chatbotx.io/business/messaging-ads-connection`, the box's per-integration
+// connection), which produces byte-identical shape via the same
+// `buildContextWithAuthStore` under the hood. See `apps/builder/src/features/
+// ads/queries/analytics.ts`'s `buildContextResolverBySource`.
+export type FacebookAdsContext = IntegrationContext<FacebookAdsAuthValue>
 
 export function getCachedAdAccounts(workspaceId: string) {
   return withCache(

@@ -69,10 +69,14 @@ type MessagingAdsIntegrationRef = {
   forceRefresh?: boolean
 }
 
+// Scope INCLUDES workspaceId: the shared Redis cache must never serve one
+// workspace's Graph reads to another workspace that guesses (or reuses) the
+// same channel+integrationId — the key itself is the tenancy boundary.
 const scopeOf = (input: {
+  workspaceId: string
   channel: MessagingAdChannel
   integrationId: string
-}) => `${input.channel}:${input.integrationId}`
+}) => `${input.workspaceId}:${input.channel}:${input.integrationId}`
 
 /** Cached ad-account list for one integration's connection — through the SWR cache described in out/plan/ctwa-ctm-ctid-box-merge.md Phase 2/v3 correction #7. */
 export function listCachedMessagingAdAccounts(

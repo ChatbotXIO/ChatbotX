@@ -2481,8 +2481,7 @@
       "adAccountFilter": {
         "all": "Semua akun iklan",
         "label": "Akun iklan",
-        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan.",
-        "unavailable": "Tidak dapat memuat akun iklan Facebook — periksa koneksi Facebook Ads di pengaturan workspace."
+        "unavailable": "Tidak dapat memuat akun iklan — periksa koneksi Ads integrasi ini, atau koneksi Facebook Ads workspace, di pengaturan."
       },
       "channelFilter": {
         "label": "Saluran",
@@ -5678,7 +5677,7 @@
       "reconnectNeeded": "Koneksi ini perlu dihubungkan ulang.",
       "refresh": "Segarkan",
       "whatsappPageRequiredNote": "Iklan Click-to-WhatsApp tetap memerlukan Halaman Facebook yang tertaut (persyaratan Meta) — Anda akan memilihnya saat membuat iklan.",
-      "emptyDashboardNote": "Iklan yang dibuat di sini tidak akan muncul di dasbor Iklan kecuali ruang kerja ini juga memiliki integrasi Facebook Ads terpisah yang terhubung."
+      "emptyDashboardNote": "Iklan yang dibuat di sini sekarang otomatis muncul di dasbor Iklan channel ini — pilih integrasi ini dari filter di sana untuk melihat akun dan pengeluarannya."
     },
     "insights": {
       "title": "Performa",
