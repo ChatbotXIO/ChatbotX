@@ -215,6 +215,11 @@
     "adminActivityLogs": "管理员活动日志"
   },
   "ads": {
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp广告",
+      "messenger": "Click-to-Messenger广告",
+      "instagram": "Click-to-Instagram广告"
+    },
     "analytics": {
       "adAccountFilter": {
         "all": "所有广告账号",

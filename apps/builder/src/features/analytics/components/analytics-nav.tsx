@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -10,6 +11,13 @@ type AnalyticsNavLink = {
   label: string
   segment: string
 }
+
+// One Ads Analytics menu entry per ads-eligible channel (Click-to-WhatsApp /
+// Click-to-Messenger / Click-to-Instagram), each opening
+// `/dashboard/ads/<channel>` scoped to that channel — driven entirely from
+// `adsEligibleChannelTypes` so a future channel only needs a
+// `ads.dashboardNav.<channel>` translation key, never a new branch here.
+const ADS_DASHBOARD_CHANNELS = adsEligibleChannelTypes.options
 
 /**
  * Secondary left navigation inside the Analytics section, mirroring the
@@ -25,7 +33,12 @@ export function AnalyticsNav({ showAds }: { showAds: boolean }) {
   const links: AnalyticsNavLink[] = [
     { label: t("analytics.contacts"), segment: "contacts" },
     { label: t("analytics.conversations"), segment: "conversations" },
-    ...(showAds ? [{ label: t("ads.title"), segment: "ads" }] : []),
+    ...(showAds
+      ? ADS_DASHBOARD_CHANNELS.map((channel) => ({
+          label: t(`ads.dashboardNav.${channel}`),
+          segment: `ads/${channel}`,
+        }))
+      : []),
   ]
 
   return (

@@ -573,6 +573,11 @@
   },
   "ads": {
     "title": "מודעות",
+    "dashboardNav": {
+      "whatsapp": "מודעות Click-to-WhatsApp",
+      "messenger": "מודעות Click-to-Messenger",
+      "instagram": "מודעות Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "חיבור חשבון מודעות",
       "adAccountName": "שם חשבון המודעות",

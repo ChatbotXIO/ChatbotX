@@ -2345,6 +2345,11 @@
   },
   "ads": {
     "title": "Annonces",
+    "dashboardNav": {
+      "whatsapp": "Publicités Click-to-WhatsApp",
+      "messenger": "Publicités Click-to-Messenger",
+      "instagram": "Publicités Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Connecter un compte publicitaire",
       "adAccountName": "Nom du compte publicitaire",

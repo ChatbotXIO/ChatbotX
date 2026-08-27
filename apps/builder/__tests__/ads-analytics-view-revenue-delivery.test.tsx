@@ -68,6 +68,7 @@ vi.mock("@chatbotx.io/ui/components/ui/dialog", () => ({
 vi.mock("@chatbotx.io/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => children,
   DropdownMenuContent: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuGroup: ({ children }: { children: ReactNode }) => children,
   DropdownMenuItem: ({ children }: { children: ReactNode }) => children,
   DropdownMenuPortal: ({ children }: { children: ReactNode }) => children,
   DropdownMenuSub: ({ children }: { children: ReactNode }) => children,
@@ -193,6 +194,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
           ])}
           range={range}
           selectedChannelIntegrationId="iw-1"
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
           workspaceId="ws-1"
         />,
       )
@@ -245,6 +247,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
           ])}
           range={range}
           selectedChannelIntegrationId={null}
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
           workspaceId="ws-1"
         />,
       )
@@ -272,6 +275,7 @@ describe("AdsAnalyticsView revenue and delivery", () => {
           ])}
           range={{ ...range, channel: "messenger", channelAccount: "msg-1" }}
           selectedChannelIntegrationId="msg-1"
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
           workspaceId="ws-1"
         />,
       )

@@ -3,11 +3,11 @@
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { ChannelFilter } from "@/features/ads/components/channel-filter"
+import { AdsAccountFilter } from "@/features/ads/components/ads-account-filter"
 import type { AdsAnalyticsSearchParams } from "@/features/ads/schemas/analytics"
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/space/ws-1/dashboard/ads",
+  usePathname: () => "/space/ws-1/dashboard/ads/messenger",
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }))
@@ -34,9 +34,10 @@ const baseRange = {
   account: "",
   channelAccount: "",
   adAccount: "",
-} as Omit<AdsAnalyticsSearchParams, "channel">
+  channel: "messenger",
+} as AdsAnalyticsSearchParams
 
-describe("ChannelFilter — 'All channels' option and integration-select visibility", () => {
+describe("AdsAccountFilter — integration/account select only, no channel select", () => {
   let container: HTMLDivElement
   let root: Root
 
@@ -54,31 +55,36 @@ describe("ChannelFilter — 'All channels' option and integration-select visibil
     container.remove()
   })
 
-  test("renders an 'All channels' option via the special label branch, not a fake tabs.all key", async () => {
+  test("renders no channel select — the channel select trigger id is absent", async () => {
     await act(async () => {
       root.render(
-        <ChannelFilter
-          channelIntegrations={[]}
-          range={{ ...baseRange, channel: "all" }}
-          selectedIntegrationId={null}
+        <AdsAccountFilter
+          channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
+          range={baseRange}
+          selectedIntegrationId="msg-1"
         />,
       )
       await Promise.resolve()
     })
 
-    expect(container.textContent).toContain(
+    expect(
+      container.querySelector('[data-select-trigger="ads-analytics-channel"]'),
+    ).toBeNull()
+    expect(container.textContent).not.toContain(
       "ads.analytics.channelFilter.allChannels",
     )
-    expect(container.textContent).not.toContain("ads.conversionEvents.tabs.all")
+    expect(container.textContent).not.toContain(
+      "ads.analytics.channelFilter.label",
+    )
   })
 
-  test("hides the integration select entirely when channel is 'all'", async () => {
+  test("renders the integration/account select with the current channel's integrations", async () => {
     await act(async () => {
       root.render(
-        <ChannelFilter
+        <AdsAccountFilter
           channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
-          range={{ ...baseRange, channel: "all" }}
-          selectedIntegrationId={null}
+          range={baseRange}
+          selectedIntegrationId="msg-1"
         />,
       )
       await Promise.resolve()
@@ -88,16 +94,20 @@ describe("ChannelFilter — 'All channels' option and integration-select visibil
       container.querySelector(
         '[data-select-trigger="ads-analytics-channel-account"]',
       ),
-    ).toBeNull()
+    ).not.toBeNull()
+    expect(container.textContent).toContain("My Page")
+    expect(container.textContent).toContain(
+      "ads.analytics.channelFilter.allAccounts",
+    )
   })
 
-  test("shows the integration select for a concrete channel", async () => {
+  test("shows the integration select even with an empty integrations list (no 'all channels' hide branch anymore)", async () => {
     await act(async () => {
       root.render(
-        <ChannelFilter
-          channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
-          range={{ ...baseRange, channel: "messenger" }}
-          selectedIntegrationId="msg-1"
+        <AdsAccountFilter
+          channelIntegrations={[]}
+          range={baseRange}
+          selectedIntegrationId={null}
         />,
       )
       await Promise.resolve()

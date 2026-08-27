@@ -297,6 +297,11 @@
   },
   "ads": {
     "title": "Anunțuri",
+    "dashboardNav": {
+      "whatsapp": "Reclame Click-to-WhatsApp",
+      "messenger": "Reclame Click-to-Messenger",
+      "instagram": "Reclame Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Conectează cont de anunțuri",
       "adAccountName": "Numele contului de anunțuri",

@@ -2345,6 +2345,11 @@
   },
   "ads": {
     "title": "Iklan",
+    "dashboardNav": {
+      "whatsapp": "Iklan Click-to-WhatsApp",
+      "messenger": "Iklan Click-to-Messenger",
+      "instagram": "Iklan Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Hubungkan Akun Iklan",
       "adAccountName": "Nama Akun Iklan",

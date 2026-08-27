@@ -1028,6 +1028,11 @@
   },
   "ads": {
     "title": "Annonser",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-annonser",
+      "messenger": "Click-to-Messenger-annonser",
+      "instagram": "Click-to-Instagram-annonser"
+    },
     "connectAccounts": {
       "connectAdAccount": "Anslut annonskonto",
       "adAccountName": "Namn på annonskonto",

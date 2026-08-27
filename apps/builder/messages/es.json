@@ -2419,6 +2419,11 @@
   },
   "ads": {
     "title": "Anuncios",
+    "dashboardNav": {
+      "whatsapp": "Anuncios Click-to-WhatsApp",
+      "messenger": "Anuncios Click-to-Messenger",
+      "instagram": "Anuncios Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Conectar cuenta publicitaria",
       "adAccountName": "Nombre de la cuenta publicitaria",

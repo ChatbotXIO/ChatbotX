@@ -2419,6 +2419,11 @@
   },
   "ads": {
     "title": "Quảng cáo",
+    "dashboardNav": {
+      "whatsapp": "Quảng cáo Click-to-WhatsApp",
+      "messenger": "Quảng cáo Click-to-Messenger",
+      "instagram": "Quảng cáo Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Kết nối tài khoản quảng cáo",
       "adAccountName": "Tên tài khoản quảng cáo",

@@ -2578,6 +2578,11 @@
   },
   "ads": {
     "title": "廣告",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp廣告",
+      "messenger": "Click-to-Messenger廣告",
+      "instagram": "Click-to-Instagram廣告"
+    },
     "connectAccounts": {
       "connectAdAccount": "連接廣告帳戶",
       "adAccountName": "廣告帳戶名稱",

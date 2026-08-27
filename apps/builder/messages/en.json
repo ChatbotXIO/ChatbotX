@@ -2533,6 +2533,11 @@
   },
   "ads": {
     "title": "Ads",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp Ads",
+      "messenger": "Click-to-Messenger Ads",
+      "instagram": "Click-to-Instagram Ads"
+    },
     "connectAccounts": {
       "connectAdAccount": "Connect Ad Account",
       "adAccountName": "Ad Account Name",

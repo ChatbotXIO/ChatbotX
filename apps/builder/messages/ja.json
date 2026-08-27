@@ -2345,6 +2345,11 @@
   },
   "ads": {
     "title": "広告",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp広告",
+      "messenger": "Click-to-Messenger広告",
+      "instagram": "Click-to-Instagram広告"
+    },
     "connectAccounts": {
       "connectAdAccount": "広告アカウントを接続",
       "adAccountName": "広告アカウント名",

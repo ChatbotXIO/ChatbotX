@@ -1,5 +1,9 @@
 "use client"
 
+import {
+  DateRangePresetFilter,
+  resolvePresetOption,
+} from "@chatbotx.io/analytics-nextjs/components/date-range-preset-filter"
 import type { CapiDeliverySummary } from "@chatbotx.io/business"
 // Narrow subpath import (not the `@chatbotx.io/business` barrel) — this is a
 // "use client" component; see the comment atop `channel-fields.ts` for why.
@@ -49,6 +53,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
+import type { AdsEligibleChannelType } from "@chatbotx.io/utils/channel"
 import {
   ChevronDownIcon,
   DownloadIcon,
@@ -64,32 +69,29 @@ import { toast } from "sonner"
 import useSWR from "swr"
 import { client } from "@/lib/orpc/orpc"
 import { retargetAdAction } from "../actions/retarget"
+import { useAdsRangeUrl } from "../hooks/use-ads-range-url"
+import { parseLocalDateKey } from "../lib/ads-date-key"
 import { buildWhatsappRetargetHref } from "../lib/build-whatsapp-retarget-href"
 import type { AdsAnalyticsData } from "../lib/merge-analytics"
 import type { AdsAnalyticsTimeseriesRow } from "../queries/analytics"
-import type {
-  AdsAnalyticsChannel,
-  AdsAnalyticsSearchParams,
-} from "../schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "../schemas/analytics"
 import { AdAccountFilter } from "./ad-account-filter"
+import { AdsAccountFilter } from "./ads-account-filter"
 import { AdsPerformanceChart } from "./ads-performance-chart"
-import { ChannelFilter } from "./channel-filter"
-import { DateRangeControls } from "./date-range-controls"
 
 type ChannelIntegration = { id: string; name: string }
 
-// A concrete, single ads-eligible channel — excludes the "All channels"
-// analytics-UI-only sentinel. Every per-channel action (CAPI settings link,
-// retarget dialog seed, export FK lookup) needs exactly one of these, never
-// "all" — see decision 1/7 in the "All channels" plan.
-type ConcreteAdsChannel = Exclude<AdsAnalyticsChannel, "all">
+// The dashboard page always renders one concrete, single ads-eligible
+// channel now (the former "All channels" aggregate view lived only in the
+// URL-filter era — see `AnalyticsNav`'s per-channel menu items). Every
+// per-channel action (CAPI settings link, retarget dialog seed, export FK
+// lookup) needs exactly one of these.
+type ConcreteAdsChannel = AdsEligibleChannelType
 
 // Route segments for each channel's Ads Optimization (capi) settings page —
 // mirrors buildCapiSettingsHref's original whatsapp-only comment: the
 // Automatic Events / CAPI permission lives per-integration, so the CTA needs
-// a concrete integration + channel to target. No "all" entry: the CAPI
-// reconnect CTA is delivery-summary-level (needs ONE integration + scope),
-// so it is hidden entirely under "all" rather than mislabeled.
+// a concrete integration + channel to target.
 const CAPI_SETTINGS_SEGMENT_BY_CHANNEL: Record<ConcreteAdsChannel, string> = {
   whatsapp: "whatsapps",
   messenger: "messengers",
@@ -102,28 +104,29 @@ type RetargetDialogState = {
   segment: RetargetSegment
   adId?: string | null
   adName?: string | null
-  // The concrete channel THIS entry targets — never the page's "all"
-  // filter. Under a single-channel view this always equals the page
-  // filter; under "all" it is the specific channel the user picked from a
-  // per-channel row action (decision 7).
+  // The channel THIS entry targets — always the page's current (concrete)
+  // channel filter now that "All channels" no longer exists in the UI.
   channel: ConcreteAdsChannel
 } | null
 
 type AdsAnalyticsViewProps = {
   workspaceId: string
   range: AdsAnalyticsSearchParams
-  // `channel` is the currently viewed AdsConversionChannel;
-  // `selectedChannelIntegrationId` is the server-resolved integration for it
-  // (every channel resolves from `channelIntegrations` + `channelAccount`,
-  // WhatsApp additionally honoring the legacy `account` param as fallback),
-  // null meaning "All accounts — aggregate across every connected
-  // integration for that channel".
-  channel: AdsAnalyticsChannel
+  // `channel` is the currently viewed channel (the dashboard menu item
+  // implies it — see `AnalyticsNav`); `selectedChannelIntegrationId` is the
+  // server-resolved integration for it (resolved from `channelIntegrations`
+  // + `channelAccount`, WhatsApp additionally honoring the legacy `account`
+  // param as fallback), null meaning "All accounts — aggregate across every
+  // connected integration for that channel".
+  channel: ConcreteAdsChannel
   channelIntegrations: ChannelIntegration[]
   selectedChannelIntegrationId: string | null
   promises: Promise<
     [AdsAnalyticsData, CapiDeliverySummary, AdsAnalyticsTimeseriesRow[]]
   >
+  // Floors the "Lifetime" preset at workspace birth so its range matches what
+  // the server can actually return and the preset label resolves correctly.
+  workspaceCreatedAt: Date
 }
 
 const formatFunnelPercent = (value: number, total: number) => {
@@ -277,7 +280,7 @@ function buildExportHref(input: {
   segment: "conversations" | "leads" | "purchases"
   range: AdsAnalyticsSearchParams
   adId?: string | null
-  channel: AdsAnalyticsChannel
+  channel: ConcreteAdsChannel
   integrationWhatsappId?: string | null
   selectedChannelIntegrationId?: string | null
 }) {
@@ -293,17 +296,11 @@ function buildExportHref(input: {
   if (input.range.account) {
     params.set("account", input.range.account)
   }
-  // "all" has no single integration to scope to — the export route's
-  // analytics-only "All channels" mode (decision 6) ignores integration
-  // params entirely, so there is nothing to resolve/set here.
-  if (input.channel === "all") {
-    return `/space/${input.workspaceId}/dashboard/ads/export?${params.toString()}`
-  }
   // Whatsapp's id comes from the page-level `account` switcher
-  // (`integrationWhatsappId`); messenger/instagram from the channel filter's
+  // (`integrationWhatsappId`); messenger/instagram from the account filter's
   // own `selectedChannelIntegrationId` — same "which prop is this channel's
-  // id source" split as `AdsAnalyticsPage`'s `analyticsRange`. Once resolved,
-  // the URL param name is just the channel's FK column name.
+  // id source" split as `AdsChannelAnalyticsPage`'s `analyticsRange`. Once
+  // resolved, the URL param name is just the channel's FK column name.
   const integrationId =
     input.channel === "whatsapp"
       ? input.integrationWhatsappId
@@ -546,16 +543,8 @@ function RetargetAudienceDialog({
               retarget.execute({
                 segment: dialog.segment,
                 adId: dialog.adId,
-                // `dialog.channel` — the entry's own concrete channel
-                // (decision 7), never the page's `channel` filter (which is
-                // "all" under the aggregated view). `selectedChannelIntegrationId`
-                // is guaranteed null whenever the page filter is "all" (the
-                // page never resolves an integration selection for it — see
-                // `page.tsx`'s `resolveChannelIntegrations`), so this
-                // naturally comes out integration-omitted ("aggregate across
-                // every integration of that channel") under "all" while
-                // preserving the existing single-channel-with-selected-
-                // account behavior unchanged.
+                // `dialog.channel` always equals the page's current channel
+                // now — there is only ever one channel in view.
                 channel: dialog.channel,
                 ...perChannelIntegrationIds(
                   dialog.channel,
@@ -585,6 +574,7 @@ export function AdsAnalyticsView({
   promises,
   range,
   selectedChannelIntegrationId,
+  workspaceCreatedAt,
   workspaceId,
 }: AdsAnalyticsViewProps) {
   // WhatsApp-only surfaces (retarget hrefs, export param) read the same
@@ -596,6 +586,17 @@ export function AdsAnalyticsView({
   const locale = useLocale()
   const [data, delivery, timeseries] = use(promises)
   const router = useRouter()
+  const pushAdsRange = useAdsRangeUrl()
+
+  // The URL is the source of truth for the date range (server-fetched). Rebuild
+  // the shared filter's initial Date range from the `from`/`to` date-keys as
+  // LOCAL calendar days (matching how `useAdsRangeUrl` writes them), and derive
+  // the preset those days correspond to so the control's label stays in sync.
+  const filterRange = {
+    from: parseLocalDateKey(range.from),
+    to: parseLocalDateKey(range.to),
+  }
+  const filterPreset = resolvePresetOption(filterRange, workspaceCreatedAt)
   const [retargetDialog, setRetargetDialog] =
     useState<RetargetDialogState>(null)
   const hasData =
@@ -610,12 +611,10 @@ export function AdsAnalyticsView({
     delivery.skippedNoScope +
     delivery.skippedRegion
 
-  // Per-ad row action builders (decision 7) — shared by both the
-  // single-channel-row direct-entry layout and the multi-channel-row
-  // per-channel submenu layout below. Each item seeds the retarget dialog
-  // with an EXPLICIT concrete channel (never the page's "all" filter).
+  // Per-ad row action builder — each item seeds the retarget dialog with
+  // the page's current channel (the only channel a row can ever belong to
+  // now that the dashboard is single-channel per page).
   const renderRetargetSegmentItems = (
-    rowChannel: ConcreteAdsChannel,
     adId: string | null,
     adName: string | null | undefined,
   ) => (
@@ -626,7 +625,7 @@ export function AdsAnalyticsView({
             segment: "purchases",
             adId,
             adName,
-            channel: rowChannel,
+            channel,
           })
         }
       >
@@ -638,7 +637,7 @@ export function AdsAnalyticsView({
             segment: "leads",
             adId,
             adName,
-            channel: rowChannel,
+            channel,
           })
         }
       >
@@ -650,7 +649,7 @@ export function AdsAnalyticsView({
             segment: "conversations",
             adId,
             adName,
-            channel: rowChannel,
+            channel,
           })
         }
       >
@@ -698,19 +697,33 @@ export function AdsAnalyticsView({
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <h1 className="font-semibold text-xl">{t("ads.analytics.title")}</h1>
-        <div className="flex flex-col items-end gap-4">
-          {/* Unified channel + integration selects sit where the old
-              WhatsApp-only account switcher lived — one pair of controls
-              drives every channel, with "All accounts" aggregating across
-              the selected channel's integrations (WhatsApp included). */}
-          <ChannelFilter
+        <div className="flex flex-wrap items-end justify-end gap-3">
+          {/* The channel is implied by the dashboard menu item (see
+              `AnalyticsNav`) — this only selects the integration/account
+              within the current channel, with "All accounts" aggregating
+              across every one of its integrations (WhatsApp included). */}
+          <AdsAccountFilter
             channelIntegrations={channelIntegrations}
             range={range}
             selectedIntegrationId={selectedChannelIntegrationId}
           />
-          <DateRangeControls range={range}>
-            <AdAccountFilter range={range} workspaceId={workspaceId} />
-          </DateRangeControls>
+          <AdAccountFilter range={range} workspaceId={workspaceId} />
+          {/* Same refresh + preset-dropdown + custom-range-dialog UI as the
+              Contacts/Conversations dashboards (`DateRangePresetFilter`),
+              bridged to this URL-driven, server-fetched page instead of the
+              shared analytics store — see `useAdsRangeUrl`. `key` on the URL
+              range remounts it so back/forward and deep links re-sync the
+              displayed range; `defaultPreset` is derived so a restored range
+              shows the correct preset (or the custom date text) instead of
+              always "Last 7 days". */}
+          <DateRangePresetFilter
+            defaultPreset={filterPreset}
+            initialFrom={filterRange.from.getTime()}
+            initialTo={filterRange.to.getTime()}
+            key={`${range.from}_${range.to}`}
+            onChange={pushAdsRange}
+            workspaceCreatedAt={workspaceCreatedAt}
+          />
         </div>
       </div>
 
@@ -868,12 +881,10 @@ export function AdsAnalyticsView({
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 text-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                   <span>{t("ads.analytics.delivery.noScopeWarning")}</span>
                   {/* The reconnect CTA is delivery-summary-level (needs ONE
-                      integration + scope) — hidden both for the aggregate
-                      "All accounts" view (no selected account to link to)
-                      and for "All channels" (no single channel/integration
-                      either — decision 7); delivery counts above stay
-                      visible either way. */}
-                  {channel !== "all" && selectedChannelIntegrationId ? (
+                      integration + scope) — hidden under "All accounts"
+                      (no selected account to link to); delivery counts
+                      above stay visible either way. */}
+                  {selectedChannelIntegrationId ? (
                     <Link
                       className={buttonVariants({
                         size: "sm",
@@ -942,115 +953,46 @@ export function AdsAnalyticsView({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.perAd.map((ad) => {
-                  // Under a single-channel view every row shares the page
-                  // filter (channels is only populated by the business layer
-                  // when `allChannels` is set); under "all" this is the ad's
-                  // own distinct channel set (decision 4) — almost always
-                  // one channel, occasionally more.
-                  const rowChannels: ConcreteAdsChannel[] =
-                    channel === "all"
-                      ? ((ad.channels ?? []) as ConcreteAdsChannel[])
-                      : [channel]
-
-                  return (
-                    <TableRow key={ad.adId ?? "unattributed"}>
-                      <TableCell className="font-medium">
-                        {ad.adName ??
-                          ad.adId ??
-                          t("ads.analytics.unattributed")}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {rowChannels.map((rowChannel) => (
-                            <span
-                              className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-medium text-xs"
-                              key={rowChannel}
-                            >
-                              {t(`ads.conversionEvents.tabs.${rowChannel}`)}
-                            </span>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatMoney(locale, ad.spend)}</TableCell>
-                      <TableCell>
-                        {ad.purchases.toLocaleString(locale)}
-                      </TableCell>
-                      <TableCell>{formatMoney(locale, ad.revenue)}</TableCell>
-                      <TableCell>
-                        {formatMoney(locale, ad.costPerPurchase)}
-                      </TableCell>
-                      <TableCell>{formatRoas(ad.roas)}</TableCell>
-                      <TableCell>{ad.leads.toLocaleString(locale)}</TableCell>
-                      <TableCell>
-                        {formatMoney(locale, ad.costPerLead)}
-                      </TableCell>
-                      <TableCell>{formatMoney(locale, ad.cpc)}</TableCell>
-                      <TableCell className="text-right">
-                        {/* An ad with no attributed channel (e.g. a
-                            spend-only Facebook Insights row with zero
-                            conversions under "all") has nothing to retarget
-                            on — no dropdown rather than an ambiguous one. */}
-                        {rowChannels.length === 0 ? null : (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <Button className="gap-1" size="sm">
-                                  {t("ads.analytics.retarget")}
-                                  <ChevronDownIcon className="size-4" />
-                                </Button>
-                              }
-                            />
-                            <DropdownMenuContent align="end">
-                              {rowChannels.length === 1 ? (
-                                <>
-                                  {renderRetargetSegmentItems(
-                                    rowChannels[0],
-                                    ad.adId,
-                                    ad.adName,
-                                  )}
-                                  {rowChannels[0] === "whatsapp"
-                                    ? renderWhatsappBroadcastSub(ad.adId)
-                                    : null}
-                                </>
-                              ) : (
-                                <>
-                                  {/* Rare multi-channel row (decision 7): a
-                                      per-channel submenu instead of one
-                                      direct entry set — each item inside
-                                      carries its own concrete channel. */}
-                                  {rowChannels.map((rowChannel) => (
-                                    <DropdownMenuSub key={rowChannel}>
-                                      <DropdownMenuSubTrigger>
-                                        {t("ads.analytics.retargetOnChannel", {
-                                          channel: t(
-                                            `ads.conversionEvents.tabs.${rowChannel}`,
-                                          ),
-                                        })}
-                                      </DropdownMenuSubTrigger>
-                                      <DropdownMenuPortal>
-                                        <DropdownMenuSubContent>
-                                          {renderRetargetSegmentItems(
-                                            rowChannel,
-                                            ad.adId,
-                                            ad.adName,
-                                          )}
-                                        </DropdownMenuSubContent>
-                                      </DropdownMenuPortal>
-                                    </DropdownMenuSub>
-                                  ))}
-                                  {rowChannels.includes("whatsapp")
-                                    ? renderWhatsappBroadcastSub(ad.adId)
-                                    : null}
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
+                {data.perAd.map((ad) => (
+                  <TableRow key={ad.adId ?? "unattributed"}>
+                    <TableCell className="font-medium">
+                      {ad.adName ?? ad.adId ?? t("ads.analytics.unattributed")}
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-medium text-xs">
+                        {t(`ads.conversionEvents.tabs.${channel}`)}
+                      </span>
+                    </TableCell>
+                    <TableCell>{formatMoney(locale, ad.spend)}</TableCell>
+                    <TableCell>{ad.purchases.toLocaleString(locale)}</TableCell>
+                    <TableCell>{formatMoney(locale, ad.revenue)}</TableCell>
+                    <TableCell>
+                      {formatMoney(locale, ad.costPerPurchase)}
+                    </TableCell>
+                    <TableCell>{formatRoas(ad.roas)}</TableCell>
+                    <TableCell>{ad.leads.toLocaleString(locale)}</TableCell>
+                    <TableCell>{formatMoney(locale, ad.costPerLead)}</TableCell>
+                    <TableCell>{formatMoney(locale, ad.cpc)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button className="gap-1" size="sm">
+                              {t("ads.analytics.retarget")}
+                              <ChevronDownIcon className="size-4" />
+                            </Button>
+                          }
+                        />
+                        <DropdownMenuContent align="end">
+                          {renderRetargetSegmentItems(ad.adId, ad.adName)}
+                          {channel === "whatsapp"
+                            ? renderWhatsappBroadcastSub(ad.adId)
+                            : null}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </CardContent>

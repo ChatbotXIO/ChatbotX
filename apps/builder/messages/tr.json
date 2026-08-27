@@ -2419,6 +2419,11 @@
   },
   "ads": {
     "title": "Reklamlar",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp Reklamları",
+      "messenger": "Click-to-Messenger Reklamları",
+      "instagram": "Click-to-Instagram Reklamları"
+    },
     "connectAccounts": {
       "connectAdAccount": "Reklam Hesabı Bağla",
       "adAccountName": "Reklam Hesabı Adı",

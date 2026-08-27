@@ -13,7 +13,7 @@ const mockExecute = vi.fn()
 const mockPush = vi.fn()
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/space/ws-1/dashboard/ads",
+  usePathname: () => "/space/ws-1/dashboard/ads/whatsapp",
   useRouter: () => ({ push: mockPush }),
   useSearchParams: () => new URLSearchParams(),
 }))
@@ -85,11 +85,11 @@ vi.mock("@chatbotx.io/ui/components/ui/dialog", () => ({
 }))
 
 // `DropdownMenuItem`/`DropdownMenuSubTrigger` render as real DOM elements
-// (not no-ops) so tests can click through the per-channel retarget menu —
-// the other revenue/delivery test file's no-op mocks are too thin for that.
+// (not no-ops) so tests can click through the retarget menu.
 vi.mock("@chatbotx.io/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => children,
   DropdownMenuContent: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuGroup: ({ children }: { children: ReactNode }) => children,
   DropdownMenuItem: ({
     children,
     onClick,
@@ -197,7 +197,7 @@ async function flush() {
   await Promise.resolve()
 }
 
-describe("AdsAnalyticsView — 'All channels' per-ad channel column and row actions", () => {
+describe("AdsAnalyticsView — single-channel retarget row actions", () => {
   let container: HTMLDivElement
   let root: Root
 
@@ -217,7 +217,7 @@ describe("AdsAnalyticsView — 'All channels' per-ad channel column and row acti
     container.remove()
   })
 
-  test("legacy single-channel view still renders one badge from the page filter (byte-identical)", async () => {
+  test("renders one badge for the page's channel and one direct entry set (no per-channel submenu)", async () => {
     const data: AdsAnalyticsData = {
       totals: emptyTotals,
       perAd: [singleChannelRow],
@@ -231,6 +231,7 @@ describe("AdsAnalyticsView — 'All channels' per-ad channel column and row acti
           promises={Promise.resolve([data, deliverySummary, timeseries])}
           range={{ ...baseRange, channel: "whatsapp" }}
           selectedChannelIntegrationId={null}
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
           workspaceId="ws-1"
         />,
       )
@@ -240,151 +241,11 @@ describe("AdsAnalyticsView — 'All channels' per-ad channel column and row acti
     expect(container.textContent).toContain(
       "ads.conversionEvents.tabs.whatsapp",
     )
-    // Single-channel row: one direct entry set, no per-channel submenu label.
+    // Single-channel view: one direct entry set, no per-channel submenu label.
     expect(container.textContent).not.toContain("retargetOnChannel")
   })
 
-  test("under 'all', a single-channel ad row still renders ONE badge and ONE direct entry set (no submenu)", async () => {
-    const data: AdsAnalyticsData = {
-      totals: emptyTotals,
-      perAd: [{ ...singleChannelRow, channels: ["messenger"] }],
-    }
-
-    await act(async () => {
-      root.render(
-        <AdsAnalyticsView
-          channel="all"
-          channelIntegrations={[]}
-          promises={Promise.resolve([data, deliverySummary, timeseries])}
-          range={{ ...baseRange, channel: "all" }}
-          selectedChannelIntegrationId={null}
-          workspaceId="ws-1"
-        />,
-      )
-      await flush()
-    })
-
-    expect(container.textContent).toContain(
-      "ads.conversionEvents.tabs.messenger",
-    )
-    expect(container.textContent).not.toContain("retargetOnChannel")
-  })
-
-  test("under 'all', a multi-channel ad row renders a badge per channel and a per-channel submenu", async () => {
-    const data: AdsAnalyticsData = {
-      totals: emptyTotals,
-      perAd: [{ ...singleChannelRow, channels: ["messenger", "instagram"] }],
-    }
-
-    await act(async () => {
-      root.render(
-        <AdsAnalyticsView
-          channel="all"
-          channelIntegrations={[]}
-          promises={Promise.resolve([data, deliverySummary, timeseries])}
-          range={{ ...baseRange, channel: "all" }}
-          selectedChannelIntegrationId={null}
-          workspaceId="ws-1"
-        />,
-      )
-      await flush()
-    })
-
-    expect(container.textContent).toContain(
-      "ads.conversionEvents.tabs.messenger",
-    )
-    expect(container.textContent).toContain(
-      "ads.conversionEvents.tabs.instagram",
-    )
-    // Rare multi-channel row: per-channel submenu, not one flat entry set.
-    expect(container.textContent).toContain("retargetOnChannel")
-  })
-
-  test("an ad row with no attributed channel under 'all' renders no retarget dropdown", async () => {
-    const data: AdsAnalyticsData = {
-      totals: emptyTotals,
-      perAd: [{ ...singleChannelRow, adId: "ad-spend-only", channels: [] }],
-    }
-
-    await act(async () => {
-      root.render(
-        <AdsAnalyticsView
-          channel="all"
-          channelIntegrations={[]}
-          promises={Promise.resolve([data, deliverySummary, timeseries])}
-          range={{ ...baseRange, channel: "all" }}
-          selectedChannelIntegrationId={null}
-          workspaceId="ws-1"
-        />,
-      )
-      await flush()
-    })
-
-    expect(container.textContent).not.toContain("ads.analytics.retarget")
-  })
-
-  test("under 'all', selecting a per-channel retarget entry seeds the dialog with that channel and integration OMITTED", async () => {
-    const data: AdsAnalyticsData = {
-      totals: emptyTotals,
-      perAd: [{ ...singleChannelRow, channels: ["messenger", "instagram"] }],
-    }
-
-    await act(async () => {
-      root.render(
-        <AdsAnalyticsView
-          channel="all"
-          channelIntegrations={[]}
-          promises={Promise.resolve([data, deliverySummary, timeseries])}
-          range={{ ...baseRange, channel: "all" }}
-          selectedChannelIntegrationId={null}
-          workspaceId="ws-1"
-        />,
-      )
-      await flush()
-    })
-
-    const buttons = Array.from(
-      container.querySelectorAll<HTMLButtonElement>("button[data-menu-item]"),
-    )
-    const purchasesButton = buttons.find(
-      (button) => button.textContent === "ads.analytics.thoseWhoPurchased",
-    )
-    expect(purchasesButton).toBeDefined()
-
-    await act(async () => {
-      purchasesButton?.click()
-      await flush()
-    })
-
-    expect(
-      container.querySelector('[data-testid="retarget-dialog"]'),
-    ).not.toBeNull()
-
-    const confirmButton = Array.from(
-      container.querySelectorAll<HTMLButtonElement>("button"),
-    ).find(
-      (button) => button.textContent === "ads.analytics.retargetDialog.confirm",
-    )
-    expect(confirmButton?.disabled).toBe(false)
-
-    await act(async () => {
-      confirmButton?.click()
-      await flush()
-    })
-
-    expect(mockExecute).toHaveBeenCalledWith(
-      expect.objectContaining({
-        segment: "purchases",
-        adId: "ad-1",
-        channel: "messenger",
-        integrationWhatsappId: undefined,
-        integrationMessengerId: undefined,
-        integrationInstagramId: undefined,
-      }),
-    )
-  })
-
-  test("outside 'all', selecting a retarget entry keeps preserving the selected integration (regression)", async () => {
+  test("selecting a retarget entry keeps preserving the selected integration (regression)", async () => {
     const data: AdsAnalyticsData = {
       totals: emptyTotals,
       perAd: [singleChannelRow],
@@ -398,6 +259,7 @@ describe("AdsAnalyticsView — 'All channels' per-ad channel column and row acti
           promises={Promise.resolve([data, deliverySummary, timeseries])}
           range={{ ...baseRange, channel: "whatsapp" }}
           selectedChannelIntegrationId="iw-1"
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
           workspaceId="ws-1"
         />,
       )

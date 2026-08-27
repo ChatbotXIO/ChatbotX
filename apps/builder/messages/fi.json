@@ -2345,6 +2345,11 @@
   },
   "ads": {
     "title": "Mainokset",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-mainokset",
+      "messenger": "Click-to-Messenger-mainokset",
+      "instagram": "Click-to-Instagram-mainokset"
+    },
     "connectAccounts": {
       "connectAdAccount": "Yhdistä mainostili",
       "adAccountName": "Mainostilin nimi",
