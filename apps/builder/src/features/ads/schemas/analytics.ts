@@ -141,11 +141,13 @@ export function parseAnalyticsDateRange(input: {
   // Cap by calendar-day KEYS (UTC-anchored key arithmetic), not elapsed
   // instant milliseconds — a DST/dateline-skipping timezone (e.g.
   // Pacific/Apia's 2011 skipped day) compresses elapsed time and would let a
-  // 367-key range slip under an instant-based cap.
-  const rangeDays =
+  // 367-key range slip under an instant-based cap. The cap counts INCLUSIVE
+  // calendar days: key-diff + 1 (from == to is a 1-day range).
+  const inclusiveRangeDays =
     (Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) /
-    MS_PER_DAY
-  if (rangeDays <= MAX_ADS_ANALYTICS_RANGE_DAYS) {
+      MS_PER_DAY +
+    1
+  if (inclusiveRangeDays <= MAX_ADS_ANALYTICS_RANGE_DAYS) {
     return { since, until, from, to, timezone }
   }
 

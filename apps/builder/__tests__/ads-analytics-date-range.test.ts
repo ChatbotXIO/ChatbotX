@@ -46,6 +46,18 @@ describe("parseAnalyticsDateRange", () => {
     expect(result.to).toBe("2026-08-11")
   })
 
+  test("clamps a 367-inclusive-day span (one past the cap) — key-diff off-by-one guard", () => {
+    // 2025-08-10 → 2026-08-11 is a key-diff of 366, i.e. 367 INCLUSIVE days —
+    // exactly one over the cap. An instant- or diff-based check lets it slip.
+    const result = parseAnalyticsDateRange({
+      from: "2025-08-10",
+      to: "2026-08-11",
+    })
+
+    expect(result.from).toBe("2025-08-11")
+    expect(result.to).toBe("2026-08-11")
+  })
+
   test("clamps an over-cap span to the last 366 days ending at `to` (HIGH-5)", () => {
     // A 40-year span (or the "Lifetime" preset on an old workspace) must stay
     // bounded by the scan guard, but the user should see the most recent year
