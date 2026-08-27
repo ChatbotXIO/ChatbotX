@@ -108,6 +108,7 @@ export type AIConversationEmbeddingModel =
   typeof schema.aiConversationEmbeddingModel.$inferSelect
 export type AIEmbeddingModel = typeof schema.aiEmbeddingModel.$inferSelect
 export type AIFileModel = typeof schema.aiFileModel.$inferSelect
+export type FileModel = typeof schema.fileModel.$inferSelect
 export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
@@ -191,6 +192,10 @@ export type InboxWithIntegrations = InboxModel & {
 export type ContactOnSmartDelayModel =
   typeof schema.contactOnSmartDelayModel.$inferSelect
 export type MessageCleanupModel = typeof schema.messageCleanupModel.$inferSelect
+export type MessagingAdOperationModel =
+  typeof schema.messagingAdOperationModel.$inferSelect
+export type MessagingAdsConnectionModel =
+  typeof schema.messagingAdsConnectionModel.$inferSelect
 export type AnalyticsContactEventModel =
   typeof schema.analyticsContactEventModel.$inferSelect
 export type AnalyticsBotMessageEventModel =

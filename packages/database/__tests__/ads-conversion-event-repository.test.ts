@@ -1061,3 +1061,133 @@ describe("adsConversionEventRepository — allChannels ('All channels' Ads Analy
     ])
   })
 })
+
+describe("adsConversionEventRepository day-bucketing — viewer timezone parameterization", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // Every day-bucketed `...ByDayAndAd` method's `select({ date: ... })` call
+  // carries the day-bucketing `SQL` fragment under a `date` key — compile it
+  // with the same `PgDialect().sqlToQuery` technique used elsewhere in this
+  // file to assert the timezone reaches the query as a bound PARAMETER
+  // (never string-interpolated), mirroring
+  // `message-stats.repository.ts`'s `AT TIME ZONE ${timezone}`.
+  const renderDateExpression = (chain: Chain) =>
+    new PgDialect().sqlToQuery(
+      (chain.select.mock.calls[0]?.[0] as { date: unknown }).date as never,
+    )
+
+  test("countCtwaConversationsByDayAndAd defaults day-bucketing to UTC when timezone is omitted", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countCtwaConversationsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+      },
+      { select: chain.select } as never,
+    )
+
+    const query = renderDateExpression(chain)
+    expect(query.sql).toContain("AT TIME ZONE")
+    expect(query.params).toContain("UTC")
+  })
+
+  test("countCtwaConversationsByDayAndAd parameterizes AT TIME ZONE on the given viewer timezone", async () => {
+    const chain = createQueryChain([])
+
+    await adsConversionEventRepository.countCtwaConversationsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+        timezone: "Asia/Saigon",
+      },
+      { select: chain.select } as never,
+    )
+
+    const query = renderDateExpression(chain)
+    expect(query.sql).toContain("AT TIME ZONE")
+    expect(query.params).toContain("Asia/Saigon")
+    expect(query.params).not.toContain("UTC")
+  })
+
+  test("countAdConversationsByDayAndAd defaults to UTC and parameterizes an explicit viewer timezone", async () => {
+    const defaultChain = createQueryChain([])
+    await adsConversionEventRepository.countAdConversationsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        channel: "messenger",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+      },
+      { select: defaultChain.select } as never,
+    )
+    expect(renderDateExpression(defaultChain).params).toContain("UTC")
+
+    const tzChain = createQueryChain([])
+    await adsConversionEventRepository.countAdConversationsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        channel: "messenger",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+        timezone: "America/New_York",
+      },
+      { select: tzChain.select } as never,
+    )
+    expect(renderDateExpression(tzChain).params).toContain("America/New_York")
+  })
+
+  test("countAllChannelConversationsByDayAndAd defaults to UTC and parameterizes an explicit viewer timezone", async () => {
+    const defaultChain = createQueryChain([])
+    await adsConversionEventRepository.countAllChannelConversationsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+      },
+      { select: defaultChain.select } as never,
+    )
+    expect(renderDateExpression(defaultChain).params).toContain("UTC")
+
+    const tzChain = createQueryChain([])
+    await adsConversionEventRepository.countAllChannelConversationsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+        timezone: "Asia/Saigon",
+      },
+      { select: tzChain.select } as never,
+    )
+    expect(renderDateExpression(tzChain).params).toContain("Asia/Saigon")
+  })
+
+  test("countConversionEventsByDayAndAd defaults to UTC and parameterizes an explicit viewer timezone", async () => {
+    const defaultChain = createQueryChain([])
+    await adsConversionEventRepository.countConversionEventsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+      },
+      { select: defaultChain.select } as never,
+    )
+    expect(renderDateExpression(defaultChain).params).toContain("UTC")
+
+    const tzChain = createQueryChain([])
+    await adsConversionEventRepository.countConversionEventsByDayAndAd(
+      {
+        workspaceId: "ws-1",
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+        timezone: "Asia/Saigon",
+      },
+      { select: tzChain.select } as never,
+    )
+    expect(renderDateExpression(tzChain).params).toContain("Asia/Saigon")
+  })
+})

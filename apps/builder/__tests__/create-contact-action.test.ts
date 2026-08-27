@@ -816,6 +816,7 @@ describe("createContact", () => {
       "Ada",
       "+15551234567",
       "ada@example.com",
+      "contact-inbox-1",
     )
     expect(mockEmit).toHaveBeenCalledWith(
       "analytics:dashboard",

@@ -323,6 +323,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
+      date-fns-tz:
+        specifier: ^3.2.0
+        version: 3.2.0(date-fns@4.4.0)
       dot-prop:
         specifier: ^10.1.0
         version: 10.1.0
@@ -2028,6 +2031,12 @@ importers:
       '@types/react':
         specifier: 19.2.14
         version: 19.2.14
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      react-dom:
+        specifier: 19.2.5
+        version: 19.2.5(react@19.2.5)
       tsx:
         specifier: ^4.23.0
         version: 4.23.0
@@ -2156,6 +2165,9 @@ importers:
       '@chatbotx.io/imports':
         specifier: workspace:*
         version: link:../imports
+      '@chatbotx.io/integration-facebook-ads':
+        specifier: workspace:*
+        version: link:../../integrations/facebook-ads
       '@chatbotx.io/integration-google-calendar':
         specifier: workspace:*
         version: link:../../integrations/google-calendar
@@ -2201,6 +2213,9 @@ importers:
       drizzle-orm:
         specifier: 1.0.0-beta.22
         version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(zod@4.4.3)
+      image-size:
+        specifier: ^2.0.2
+        version: 2.0.2
       jose:
         specifier: ^6.2.3
         version: 6.2.3

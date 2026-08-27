@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Prøv igen",
     "copy": "Kopiér",
     "copyUrl": "Kopiér URL",
     "actions": "Handlinger",
@@ -2344,6 +2345,11 @@
   },
   "ads": {
     "title": "Annoncer",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-annoncer",
+      "messenger": "Click-to-Messenger-annoncer",
+      "instagram": "Click-to-Instagram-annoncer"
+    },
     "connectAccounts": {
       "connectAdAccount": "Forbind annoncekonto",
       "adAccountName": "Annoncekontonavn",
@@ -2475,7 +2481,7 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
+        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Ingen filer} =1 {1 fil} other {# filer}}",
     "openMediaLibrary": "Åbn mediebibliotek",
     "uploadFailed": "Kunne ikke uploade {name}"
+  },
+  "adsCampaign": {
+    "title": "Annoncer",
+    "createCta": "Opret annonce",
+    "prereq": {
+      "notConnected": "Tilslut Facebook Ads for at oprette besked-annoncer til denne kanal.",
+      "connectCta": "Tilslut Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Ingen",
+      "housing": "Bolig",
+      "employment": "Beskæftigelse",
+      "credit": "Kredit",
+      "issues": "Sociale spørgsmål, valg eller politik",
+      "financialProducts": "Finansielle produkter og tjenester",
+      "onlineGambling": "Onlinespil og -hasardspil"
+    },
+    "fields": {
+      "objective": {
+        "label": "Mål",
+        "value": "Engagement (beskeder)"
+      },
+      "specialAdCategory": {
+        "label": "Særlig annoncekategori",
+        "description": "Hvis du vælger en begrænset kategori, fjernes alder, køn og anden målretning, som Meta ikke tillader for den kategori.",
+        "restrictedNote": "Målretning efter alder og køn er deaktiveret, fordi en begrænset særlig annoncekategori er valgt."
+      },
+      "adAccount": {
+        "label": "Annoncekonto"
+      },
+      "whatsappPage": {
+        "label": "Facebook-side",
+        "description": "WhatsApp-annoncer kræver stadig en tilknyttet Facebook-side — vælg den forbundne side, der skal bruges."
+      },
+      "dailyBudget": {
+        "label": "Dagligt budget",
+        "placeholder": "f.eks. 2000",
+        "description": "Angiv beløbet i din annoncekontos mindste valutaenhed (f.eks. cent for USD)."
+      },
+      "countries": {
+        "label": "Lande"
+      },
+      "ageRange": {
+        "min": "Minimumsalder",
+        "max": "Maksimumsalder"
+      },
+      "gender": {
+        "label": "Køn",
+        "male": "Mand",
+        "female": "Kvinde"
+      },
+      "schedule": {
+        "start": "Starttidspunkt",
+        "end": "Sluttidspunkt"
+      },
+      "destination": {
+        "label": "Destination"
+      },
+      "callToAction": {
+        "label": "Opfordring til handling",
+        "derivedNote": "Knappen til opfordring til handling ({type}) udledes automatisk fra kanalen."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Land for annoncekategori",
+        "description": "Kræves af Meta for kategorien sociale emner, valg eller politik — det land, du er godkendt til at køre disse annoncer i."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Velkomstbesked",
+      "label": "Velkomstbesked",
+      "description": "Sendes automatisk, når nogen starter en samtale fra denne annonce.",
+      "mode": {
+        "default": "Brug Metas standardbesked",
+        "single": "Enkelt besked",
+        "templates": "Test op til 5 beskedvarianter"
+      },
+      "messageLabel": "Besked",
+      "templateLabel": "Variant {index}",
+      "headingPlaceholder": "Overskrift (valgfri)",
+      "addTemplate": "Tilføj variant",
+      "templatesLimit": "Op til {max} varianter kan testes."
+    },
+    "creative": {
+      "mediaRequired": "Upload et billede eller en video for at fortsætte.",
+      "mediaType": {
+        "label": "Kreativt medie",
+        "orVideo": "eller video",
+        "selectAdAccountFirst": "Vælg en annoncekonto, før du uploader medier.",
+        "uploadImage": "Upload billede",
+        "uploadVideo": "Upload video"
+      },
+      "uploading": "Uploader...",
+      "imageUploadFailed": "Billedupload mislykkedes. Prøv igen.",
+      "videoProcessing": "Behandler video...",
+      "videoReady": "Video klar",
+      "videoProcessingFailed": "Videobehandling mislykkedes. Prøv en anden fil.",
+      "previewAlt": "Forhåndsvisning af kreativ",
+      "primaryText": "Primær tekst",
+      "headline": "Overskrift"
+    },
+    "wizard": {
+      "createDraft": "Opret som pauseret kladde",
+      "campaignStep": {
+        "title": "Kampagne",
+        "namePlaceholder": "Navngiv denne annonce"
+      },
+      "adSetStep": {
+        "title": "Annoncesæt"
+      },
+      "creativeStep": {
+        "title": "Annoncekreativ"
+      },
+      "preflightStep": {
+        "title": "Gennemgang"
+      },
+      "errors": {
+        "nameRequired": "Angiv et navn til denne annonce.",
+        "adAccountRequired": "Vælg en annoncekonto.",
+        "budgetRequired": "Angiv et dagligt budget.",
+        "countryRequired": "Vælg mindst ét land.",
+        "mediaRequired": "Upload et billede eller en video."
+      }
+    },
+    "preflight": {
+      "title": "Oversigt",
+      "pausedNote": "Denne annonce oprettes som en pauseret kladde. Intet går live, og der bruges ingen penge, før du udgiver den."
+    },
+    "publishConfirm": {
+      "title": "Udgiv denne annonce?",
+      "description": "Udgivelse aktiverer kampagnen, annoncesættet og annoncen i rækkefølge. Meta begynder at bruge dit budget, når leveringen starter.",
+      "confirm": "Udgiv"
+    },
+    "list": {
+      "viewOnMeta": "Vis på Meta",
+      "empty": "Ingen besked-annoncer endnu.",
+      "createState": "Kladdestatus",
+      "actions": "Handlinger",
+      "notPublishedYet": "Endnu ikke udgivet",
+      "draftReady": "Kladde klar",
+      "createFailed": "Oprettelse mislykkedes",
+      "creating": "Opretter...",
+      "publish": "Udgiv",
+      "pause": "Sæt på pause"
+    },
+    "messages": {
+      "created": "Annoncekladde oprettet.",
+      "actionSucceeded": "Udført."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Opret og administrer Click-to-WhatsApp-annoncer her."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Opret og administrer Click-to-Messenger-annoncer her."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Opret og administrer Click-to-Instagram-annoncer her."
+      },
+      "connectCta": "Tilslut Facebook Ads",
+      "reconnectCta": "Tilslut igen",
+      "reconnectNeeded": "Denne forbindelse skal genoprettes.",
+      "refresh": "Opdater",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp-annoncer kræver stadig en tilknyttet Facebook-side (et Meta-krav) — du vælger den, når du opretter en annonce.",
+      "emptyDashboardNote": "Annoncer, der oprettes her, vises nu automatisk på denne kanals annoncepanel — vælg denne integration i filteret der for at se dens konti og forbrug."
+    },
+    "insights": {
+      "title": "Ydeevne",
+      "empty": "Ingen data endnu",
+      "impressions": "Visninger",
+      "reach": "Rækkevidde",
+      "spend": "Forbrug",
+      "clicks": "Klik",
+      "conversations": "Samtaler",
+      "costPerConversation": "Pris/samtale",
+      "costPerConversationTooltip": "Gennemsnitlig pris pr. påbegyndt beskedsamtale.",
+      "datePresetLabel": "Periode:",
+      "datePreset": {
+        "maximum": "Hele perioden",
+        "last_30d": "Sidste 30 dage",
+        "last_7d": "Sidste 7 dage"
+      }
+    }
   }
 }

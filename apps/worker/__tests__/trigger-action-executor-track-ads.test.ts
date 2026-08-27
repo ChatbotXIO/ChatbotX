@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   conversationFindFirst: vi.fn(),
-  contactInboxFindFirst: vi.fn(),
+  findByIdForContact: vi.fn(),
+  findMostRecentByContact: vi.fn(),
   recordTriggerConversion: vi.fn(),
 }))
 
@@ -11,9 +12,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       conversationModel: {
         findFirst: (...args: unknown[]) => mocks.conversationFindFirst(...args),
-      },
-      contactInboxModel: {
-        findFirst: (...args: unknown[]) => mocks.contactInboxFindFirst(...args),
       },
     },
     insert: () => ({
@@ -32,6 +30,15 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   contactsToTagsModel: {
     contactId: "contactsToTagsModel.contactId",
     tagId: "contactsToTagsModel.tagId",
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxRepository: {
+    findByIdForContact: (...args: unknown[]) =>
+      mocks.findByIdForContact(...args),
+    findMostRecentByContact: (...args: unknown[]) =>
+      mocks.findMostRecentByContact(...args),
   },
 }))
 
@@ -83,10 +90,9 @@ describe("ActionExecutor trackAdsLead / trackAdsPurchase", () => {
       contactId: "contact-1",
       workspaceId: "ws-1",
     })
-    mocks.contactInboxFindFirst.mockResolvedValue({
+    mocks.findMostRecentByContact.mockResolvedValue({
       id: "ci-1",
       inboxId: "inbox-1",
-      contactId: "contact-1",
       channel: "whatsapp",
     })
     mocks.recordTriggerConversion.mockResolvedValue({

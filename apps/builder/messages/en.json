@@ -147,7 +147,8 @@
     "clone": "Clone",
     "remove": "Remove",
     "restore": "Restore",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "retry": "Retry"
   },
   "errors": {
     "superAdminRequired": "You need to be a workspace super admin to do this."
@@ -2532,6 +2533,11 @@
   },
   "ads": {
     "title": "Ads",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp Ads",
+      "messenger": "Click-to-Messenger Ads",
+      "instagram": "Click-to-Instagram Ads"
+    },
     "connectAccounts": {
       "connectAdAccount": "Connect Ad Account",
       "adAccountName": "Ad Account Name",
@@ -2663,7 +2669,7 @@
       "adAccountFilter": {
         "all": "All ad accounts",
         "label": "Ad account",
-        "note": "Ads with conversions but zero spend or zero delivery in the selected date range are hidden while filtering by ad account."
+        "unavailable": "Couldn't load ad accounts — check this integration's Ads connection, or the workspace's Facebook Ads connection, in settings."
       },
       "channelFilter": {
         "label": "Channel",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {No files} =1 {1 file} other {# files}}",
     "openMediaLibrary": "Open Media Library",
     "uploadFailed": "Failed to upload {name}"
+  },
+  "adsCampaign": {
+    "title": "Ads",
+    "createCta": "Create Ad",
+    "prereq": {
+      "notConnected": "Connect Facebook Ads to create messaging ads for this channel.",
+      "connectCta": "Connect Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "None",
+      "housing": "Housing",
+      "employment": "Employment",
+      "credit": "Credit",
+      "issues": "Social issues, elections or politics",
+      "financialProducts": "Financial products and services",
+      "onlineGambling": "Online gambling and gaming"
+    },
+    "fields": {
+      "objective": {
+        "label": "Objective",
+        "value": "Engagement (messaging)"
+      },
+      "specialAdCategory": {
+        "label": "Special ad category",
+        "description": "Selecting a restricted category removes age, gender, and other targeting Meta does not allow for that category.",
+        "restrictedNote": "Age and gender targeting are disabled because a restricted special ad category is selected."
+      },
+      "adAccount": {
+        "label": "Ad account"
+      },
+      "whatsappPage": {
+        "label": "Facebook Page",
+        "description": "WhatsApp ads still require a linked Facebook Page — select the connected Page to use."
+      },
+      "dailyBudget": {
+        "label": "Daily budget",
+        "placeholder": "e.g. 2000",
+        "description": "Enter the amount in your ad account's smallest currency unit (e.g. cents for USD)."
+      },
+      "countries": {
+        "label": "Countries"
+      },
+      "ageRange": {
+        "min": "Minimum age",
+        "max": "Maximum age"
+      },
+      "gender": {
+        "label": "Gender",
+        "male": "Male",
+        "female": "Female"
+      },
+      "schedule": {
+        "start": "Start time",
+        "end": "End time"
+      },
+      "destination": {
+        "label": "Destination"
+      },
+      "callToAction": {
+        "label": "Call to action",
+        "derivedNote": "The call-to-action button ({type}) is derived automatically from the channel."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Ad category country",
+        "description": "Required by Meta for the social issues, elections or politics category — the country you are authorized to run these ads in."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Welcome message",
+      "label": "Welcome message",
+      "description": "Sent automatically when someone starts a conversation from this ad.",
+      "mode": {
+        "default": "Use Meta's default message",
+        "single": "Single message",
+        "templates": "Test up to 5 message variants"
+      },
+      "messageLabel": "Message",
+      "templateLabel": "Variant {index}",
+      "headingPlaceholder": "Heading (optional)",
+      "addTemplate": "Add variant",
+      "templatesLimit": "Up to {max} variants can be tested."
+    },
+    "creative": {
+      "mediaRequired": "Upload an image or video to continue.",
+      "mediaType": {
+        "label": "Creative media",
+        "orVideo": "or video",
+        "selectAdAccountFirst": "Select an ad account before uploading media.",
+        "uploadImage": "Upload image",
+        "uploadVideo": "Upload video"
+      },
+      "uploading": "Uploading...",
+      "imageUploadFailed": "Image upload failed. Please try again.",
+      "videoProcessing": "Processing video...",
+      "videoReady": "Video ready",
+      "videoProcessingFailed": "Video processing failed. Please try a different file.",
+      "previewAlt": "Creative preview",
+      "primaryText": "Primary text",
+      "headline": "Headline"
+    },
+    "wizard": {
+      "createDraft": "Create as paused draft",
+      "campaignStep": {
+        "title": "Campaign",
+        "namePlaceholder": "Name this ad"
+      },
+      "adSetStep": {
+        "title": "Ad set"
+      },
+      "creativeStep": {
+        "title": "Ad creative"
+      },
+      "preflightStep": {
+        "title": "Review"
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this ad.",
+        "adAccountRequired": "Select an ad account.",
+        "budgetRequired": "Enter a daily budget.",
+        "countryRequired": "Select at least one country.",
+        "mediaRequired": "Upload an image or video."
+      }
+    },
+    "preflight": {
+      "title": "Summary",
+      "pausedNote": "This ad is created as a paused draft. Nothing goes live, and no money is spent, until you publish it."
+    },
+    "publishConfirm": {
+      "title": "Publish this ad?",
+      "description": "Publishing activates the campaign, ad set, and ad in order. Meta will start spending your budget once delivery begins.",
+      "confirm": "Publish"
+    },
+    "list": {
+      "viewOnMeta": "View on Meta",
+      "empty": "No messaging ads yet.",
+      "createState": "Draft status",
+      "actions": "Actions",
+      "notPublishedYet": "Not published yet",
+      "draftReady": "Draft ready",
+      "createFailed": "Creation failed",
+      "creating": "Creating...",
+      "publish": "Publish",
+      "pause": "Pause"
+    },
+    "messages": {
+      "created": "Ad draft created.",
+      "actionSucceeded": "Done."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Create and manage Click-to-WhatsApp ads here."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Create and manage Click-to-Messenger ads here."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Create and manage Click-to-Instagram ads here."
+      },
+      "connectCta": "Connect Facebook Ads",
+      "reconnectCta": "Reconnect",
+      "reconnectNeeded": "This connection needs to be reconnected.",
+      "refresh": "Refresh",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp ads still require a linked Facebook Page (a Meta requirement) — you'll choose it when creating an ad.",
+      "emptyDashboardNote": "Ads created here now appear on this channel's Ads dashboard automatically — select this integration from its filter there to see its accounts and spend."
+    },
+    "insights": {
+      "title": "Performance",
+      "empty": "No data yet",
+      "impressions": "Impressions",
+      "reach": "Reach",
+      "spend": "Spend",
+      "clicks": "Clicks",
+      "conversations": "Conversations",
+      "costPerConversation": "Cost/conv.",
+      "costPerConversationTooltip": "Average cost per messaging conversation started.",
+      "datePresetLabel": "Period:",
+      "datePreset": {
+        "maximum": "All time",
+        "last_30d": "Last 30 days",
+        "last_7d": "Last 7 days"
+      }
+    }
   }
 }

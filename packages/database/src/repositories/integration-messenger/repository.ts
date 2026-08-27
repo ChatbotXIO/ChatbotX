@@ -42,6 +42,28 @@ const capiScopeCasFilter = (
   )
 
 export const integrationMessengerRepository = {
+  /**
+   * Lists the workspace's connected Messenger Pages — used by the messaging-
+   * ads wizard's WhatsApp step to let the user pick which Page supplies
+   * `promoted_object.page_id` (`IntegrationWhatsapp` has no `pageId` column
+   * of its own; see `packages/business/src/messaging-ads/resolve-channel-
+   * assets.ts`).
+   */
+  listByWorkspaceId(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+  ): Promise<Pick<IntegrationMessengerModel, "id" | "name" | "pageId">[]> {
+    return tx
+      .select({
+        id: integrationMessengerModel.id,
+        name: integrationMessengerModel.name,
+        pageId: integrationMessengerModel.pageId,
+      })
+      .from(integrationMessengerModel)
+      .where(eq(integrationMessengerModel.workspaceId, workspaceId))
+      .orderBy(integrationMessengerModel.createdAt)
+  },
+
   async findWorkspaceIntegration(
     input: WorkspaceIntegrationRef,
     tx: DatabaseClient = db,

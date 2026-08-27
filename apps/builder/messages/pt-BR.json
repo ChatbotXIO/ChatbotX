@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Tentar novamente",
     "copy": "Copiar",
     "copyUrl": "Copiar URL",
     "actions": "Ações",
@@ -2344,6 +2345,11 @@
   },
   "ads": {
     "title": "Anúncios",
+    "dashboardNav": {
+      "whatsapp": "Anúncios Click-to-WhatsApp",
+      "messenger": "Anúncios Click-to-Messenger",
+      "instagram": "Anúncios Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Conectar conta de anúncios",
       "adAccountName": "Nome da conta de anúncios",
@@ -2475,7 +2481,7 @@
       "adAccountFilter": {
         "all": "Todas as contas de anúncios",
         "label": "Conta de anúncios",
-        "note": "Anúncios com conversões, mas com investimento zero ou entrega zero no período selecionado, ficam ocultos ao filtrar por conta de anúncios."
+        "unavailable": "Não foi possível carregar as contas de anúncios — verifique a conexão de Ads desta integração, ou a conexão do Facebook Ads do workspace, nas configurações."
       },
       "channelFilter": {
         "label": "Canal",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Nenhum arquivo} =1 {1 arquivo} other {# arquivos}}",
     "openMediaLibrary": "Abrir biblioteca de mídia",
     "uploadFailed": "Falha ao enviar {name}"
+  },
+  "adsCampaign": {
+    "title": "Anúncios",
+    "createCta": "Criar anúncio",
+    "prereq": {
+      "notConnected": "Conecte o Facebook Ads para criar anúncios de mensagens para este canal.",
+      "connectCta": "Conectar Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Nenhuma",
+      "housing": "Habitação",
+      "employment": "Emprego",
+      "credit": "Crédito",
+      "issues": "Questões sociais, eleições ou política",
+      "financialProducts": "Produtos e serviços financeiros",
+      "onlineGambling": "Jogos e apostas online"
+    },
+    "fields": {
+      "objective": {
+        "label": "Objetivo",
+        "value": "Engajamento (mensagens)"
+      },
+      "specialAdCategory": {
+        "label": "Categoria especial de anúncio",
+        "description": "Selecionar uma categoria restrita remove idade, gênero e outras opções de segmentação que a Meta não permite para essa categoria.",
+        "restrictedNote": "A segmentação por idade e gênero está desativada porque uma categoria especial de anúncio restrita foi selecionada."
+      },
+      "adAccount": {
+        "label": "Conta de anúncios"
+      },
+      "whatsappPage": {
+        "label": "Página do Facebook",
+        "description": "Anúncios do WhatsApp ainda exigem uma Página do Facebook vinculada — selecione a Página conectada a ser usada."
+      },
+      "dailyBudget": {
+        "label": "Orçamento diário",
+        "placeholder": "ex.: 2000",
+        "description": "Informe o valor na menor unidade monetária da sua conta de anúncios (ex.: centavos para USD)."
+      },
+      "countries": {
+        "label": "Países"
+      },
+      "ageRange": {
+        "min": "Idade mínima",
+        "max": "Idade máxima"
+      },
+      "gender": {
+        "label": "Gênero",
+        "male": "Masculino",
+        "female": "Feminino"
+      },
+      "schedule": {
+        "start": "Horário de início",
+        "end": "Horário de término"
+      },
+      "destination": {
+        "label": "Destino"
+      },
+      "callToAction": {
+        "label": "Chamada para ação",
+        "derivedNote": "O botão de chamada para ação ({type}) é derivado automaticamente do canal."
+      },
+      "specialAdCategoryCountry": {
+        "label": "País da categoria de anúncio",
+        "description": "Exigido pela Meta para a categoria de questões sociais, eleições ou política — o país em que você tem autorização para veicular esses anúncios."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Mensagem de boas-vindas",
+      "label": "Mensagem de boas-vindas",
+      "description": "Enviada automaticamente quando alguém inicia uma conversa a partir deste anúncio.",
+      "mode": {
+        "default": "Usar a mensagem padrão da Meta",
+        "single": "Mensagem única",
+        "templates": "Testar até 5 variações de mensagem"
+      },
+      "messageLabel": "Mensagem",
+      "templateLabel": "Variação {index}",
+      "headingPlaceholder": "Título (opcional)",
+      "addTemplate": "Adicionar variação",
+      "templatesLimit": "É possível testar até {max} variações."
+    },
+    "creative": {
+      "mediaRequired": "Envie uma imagem ou vídeo para continuar.",
+      "mediaType": {
+        "label": "Mídia do criativo",
+        "orVideo": "ou vídeo",
+        "selectAdAccountFirst": "Selecione uma conta de anúncios antes de enviar mídia.",
+        "uploadImage": "Enviar imagem",
+        "uploadVideo": "Enviar vídeo"
+      },
+      "uploading": "Enviando...",
+      "imageUploadFailed": "Falha ao enviar a imagem. Tente novamente.",
+      "videoProcessing": "Processando vídeo...",
+      "videoReady": "Vídeo pronto",
+      "videoProcessingFailed": "Falha ao processar o vídeo. Tente um arquivo diferente.",
+      "previewAlt": "Prévia do criativo",
+      "primaryText": "Texto principal",
+      "headline": "Título"
+    },
+    "wizard": {
+      "createDraft": "Criar como rascunho pausado",
+      "campaignStep": {
+        "title": "Campanha",
+        "namePlaceholder": "Dê um nome a este anúncio"
+      },
+      "adSetStep": {
+        "title": "Conjunto de anúncios"
+      },
+      "creativeStep": {
+        "title": "Criativo do anúncio"
+      },
+      "preflightStep": {
+        "title": "Revisão"
+      },
+      "errors": {
+        "nameRequired": "Informe um nome para este anúncio.",
+        "adAccountRequired": "Selecione uma conta de anúncios.",
+        "budgetRequired": "Informe um orçamento diário.",
+        "countryRequired": "Selecione pelo menos um país.",
+        "mediaRequired": "Envie uma imagem ou um vídeo."
+      }
+    },
+    "preflight": {
+      "title": "Resumo",
+      "pausedNote": "Este anúncio é criado como rascunho pausado. Nada entra no ar, e nenhum valor é gasto, até que você o publique."
+    },
+    "publishConfirm": {
+      "title": "Publicar este anúncio?",
+      "description": "Publicar ativa a campanha, o conjunto de anúncios e o anúncio, nessa ordem. A Meta começará a gastar seu orçamento assim que a entrega for iniciada.",
+      "confirm": "Publicar"
+    },
+    "list": {
+      "viewOnMeta": "Ver no Meta",
+      "empty": "Ainda não há anúncios de mensagens.",
+      "createState": "Status do rascunho",
+      "actions": "Ações",
+      "notPublishedYet": "Ainda não publicado",
+      "draftReady": "Rascunho pronto",
+      "createFailed": "Falha na criação",
+      "creating": "Criando...",
+      "publish": "Publicar",
+      "pause": "Pausar"
+    },
+    "messages": {
+      "created": "Rascunho de anúncio criado.",
+      "actionSucceeded": "Concluído."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Crie e gerencie anúncios Click-to-WhatsApp aqui."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Crie e gerencie anúncios Click-to-Messenger aqui."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Crie e gerencie anúncios Click-to-Instagram aqui."
+      },
+      "connectCta": "Conectar Facebook Ads",
+      "reconnectCta": "Reconectar",
+      "reconnectNeeded": "Esta conexão precisa ser reconectada.",
+      "refresh": "Atualizar",
+      "whatsappPageRequiredNote": "Anúncios de clique para o WhatsApp ainda exigem uma Página do Facebook vinculada (exigência da Meta) — você a escolherá ao criar um anúncio.",
+      "emptyDashboardNote": "Os anúncios criados aqui agora aparecem automaticamente no painel de Anúncios deste canal — selecione esta integração no filtro de lá para ver suas contas e gastos."
+    },
+    "insights": {
+      "title": "Desempenho",
+      "empty": "Ainda sem dados",
+      "impressions": "Impressões",
+      "reach": "Alcance",
+      "spend": "Gasto",
+      "clicks": "Cliques",
+      "conversations": "Conversas",
+      "costPerConversation": "Custo/conv.",
+      "costPerConversationTooltip": "Custo médio por conversa de mensagem iniciada.",
+      "datePresetLabel": "Período:",
+      "datePreset": {
+        "maximum": "Todo o período",
+        "last_30d": "Últimos 30 dias",
+        "last_7d": "Últimos 7 dias"
+      }
+    }
   }
 }

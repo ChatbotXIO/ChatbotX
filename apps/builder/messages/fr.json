@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Réessayer",
     "copy": "Copier",
     "copyUrl": "Copier l’URL",
     "actions": "Actions",
@@ -2344,6 +2345,11 @@
   },
   "ads": {
     "title": "Annonces",
+    "dashboardNav": {
+      "whatsapp": "Publicités Click-to-WhatsApp",
+      "messenger": "Publicités Click-to-Messenger",
+      "instagram": "Publicités Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Connecter un compte publicitaire",
       "adAccountName": "Nom du compte publicitaire",
@@ -2475,7 +2481,7 @@
       "adAccountFilter": {
         "all": "Tous les comptes publicitaires",
         "label": "Compte publicitaire",
-        "note": "Les annonces avec des conversions mais sans dépense ni diffusion sur la période sélectionnée sont masquées lors du filtrage par compte publicitaire."
+        "unavailable": "Impossible de charger les comptes publicitaires — vérifiez la connexion Ads de cette intégration, ou la connexion Facebook Ads de l'espace de travail, dans les paramètres."
       },
       "channelFilter": {
         "label": "Canal",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Aucun fichier} =1 {1 fichier} other {# fichiers}}",
     "openMediaLibrary": "Ouvrir la bibliothèque multimédia",
     "uploadFailed": "Échec du téléversement de {name}"
+  },
+  "adsCampaign": {
+    "title": "Publicités",
+    "createCta": "Créer une publicité",
+    "prereq": {
+      "notConnected": "Connectez Facebook Ads pour créer des publicités de messagerie pour ce canal.",
+      "connectCta": "Connecter Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Aucune",
+      "housing": "Logement",
+      "employment": "Emploi",
+      "credit": "Crédit",
+      "issues": "Enjeux sociaux, élections ou politique",
+      "financialProducts": "Produits et services financiers",
+      "onlineGambling": "Jeux d’argent et jeux en ligne"
+    },
+    "fields": {
+      "objective": {
+        "label": "Objectif",
+        "value": "Interactions (messagerie)"
+      },
+      "specialAdCategory": {
+        "label": "Catégorie spéciale de publicité",
+        "description": "Sélectionner une catégorie soumise à restrictions supprime le ciblage par âge, sexe et autres critères que Meta n'autorise pas pour cette catégorie.",
+        "restrictedNote": "Le ciblage par âge et par sexe est désactivé car une catégorie spéciale de publicité soumise à restrictions est sélectionnée."
+      },
+      "adAccount": {
+        "label": "Compte publicitaire"
+      },
+      "whatsappPage": {
+        "label": "Page Facebook",
+        "description": "Les publicités WhatsApp nécessitent toujours une Page Facebook associée — sélectionnez la Page connectée à utiliser."
+      },
+      "dailyBudget": {
+        "label": "Budget quotidien",
+        "placeholder": "ex. 2000",
+        "description": "Saisissez le montant dans la plus petite unité monétaire de votre compte publicitaire (par ex. des centimes pour l'EUR)."
+      },
+      "countries": {
+        "label": "Pays"
+      },
+      "ageRange": {
+        "min": "Âge minimum",
+        "max": "Âge maximum"
+      },
+      "gender": {
+        "label": "Sexe",
+        "male": "Homme",
+        "female": "Femme"
+      },
+      "schedule": {
+        "start": "Heure de début",
+        "end": "Heure de fin"
+      },
+      "destination": {
+        "label": "Destination"
+      },
+      "callToAction": {
+        "label": "Appel à l'action",
+        "derivedNote": "Le bouton d'appel à l'action ({type}) est déterminé automatiquement en fonction du canal."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Pays de la catégorie de publicité",
+        "description": "Requis par Meta pour la catégorie enjeux sociaux, élections ou politique — le pays où vous êtes autorisé à diffuser ces publicités."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Message de bienvenue",
+      "label": "Message de bienvenue",
+      "description": "Envoyé automatiquement lorsqu'une personne démarre une conversation depuis cette publicité.",
+      "mode": {
+        "default": "Utiliser le message par défaut de Meta",
+        "single": "Message unique",
+        "templates": "Tester jusqu'à 5 variantes de message"
+      },
+      "messageLabel": "Message",
+      "templateLabel": "Variante {index}",
+      "headingPlaceholder": "Titre (facultatif)",
+      "addTemplate": "Ajouter une variante",
+      "templatesLimit": "Jusqu'à {max} variantes peuvent être testées."
+    },
+    "creative": {
+      "mediaRequired": "Importez une image ou une vidéo pour continuer.",
+      "mediaType": {
+        "label": "Média créatif",
+        "orVideo": "ou vidéo",
+        "selectAdAccountFirst": "Sélectionnez un compte publicitaire avant d'importer un média.",
+        "uploadImage": "Importer une image",
+        "uploadVideo": "Importer une vidéo"
+      },
+      "uploading": "Importation en cours...",
+      "imageUploadFailed": "Échec du téléchargement de l'image. Veuillez réessayer.",
+      "videoProcessing": "Traitement de la vidéo en cours...",
+      "videoReady": "Vidéo prête",
+      "videoProcessingFailed": "Échec du traitement de la vidéo. Veuillez essayer un autre fichier.",
+      "previewAlt": "Aperçu de la création",
+      "primaryText": "Texte principal",
+      "headline": "Titre"
+    },
+    "wizard": {
+      "createDraft": "Créer comme brouillon en pause",
+      "campaignStep": {
+        "title": "Campagne",
+        "namePlaceholder": "Nommez cette publicité"
+      },
+      "adSetStep": {
+        "title": "Ensemble de publicités"
+      },
+      "creativeStep": {
+        "title": "Création publicitaire"
+      },
+      "preflightStep": {
+        "title": "Vérification"
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour cette publicité.",
+        "adAccountRequired": "Sélectionnez un compte publicitaire.",
+        "budgetRequired": "Saisissez un budget quotidien.",
+        "countryRequired": "Sélectionnez au moins un pays.",
+        "mediaRequired": "Importez une image ou une vidéo."
+      }
+    },
+    "preflight": {
+      "title": "Résumé",
+      "pausedNote": "Cette publicité est créée comme un brouillon en pause. Rien n'est publié et aucun montant n'est dépensé tant que vous ne la publiez pas."
+    },
+    "publishConfirm": {
+      "title": "Publier cette publicité ?",
+      "description": "La publication active la campagne, l'ensemble de publicités et la publicité dans cet ordre. Meta commencera à dépenser votre budget dès le début de la diffusion.",
+      "confirm": "Publier"
+    },
+    "list": {
+      "viewOnMeta": "Voir sur Meta",
+      "empty": "Aucune publicité de messagerie pour le moment.",
+      "createState": "Statut du brouillon",
+      "actions": "Actions",
+      "notPublishedYet": "Pas encore publiée",
+      "draftReady": "Brouillon prêt",
+      "createFailed": "Échec de la création",
+      "creating": "Création en cours...",
+      "publish": "Publier",
+      "pause": "Mettre en pause"
+    },
+    "messages": {
+      "created": "Brouillon de publicité créé.",
+      "actionSucceeded": "Terminé."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Créez et gérez les publicités Click-to-WhatsApp ici."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Créez et gérez les publicités Click-to-Messenger ici."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Créez et gérez les publicités Click-to-Instagram ici."
+      },
+      "connectCta": "Connecter Facebook Ads",
+      "reconnectCta": "Reconnecter",
+      "reconnectNeeded": "Cette connexion doit être reconnectée.",
+      "refresh": "Actualiser",
+      "whatsappPageRequiredNote": "Les publicités Click-to-WhatsApp nécessitent toujours une Page Facebook associée (une exigence de Meta) — vous la choisirez lors de la création d'une publicité.",
+      "emptyDashboardNote": "Les publicités créées ici apparaissent désormais automatiquement sur le tableau de bord Publicités de ce canal — sélectionnez cette intégration dans son filtre pour voir ses comptes et ses dépenses."
+    },
+    "insights": {
+      "title": "Performance",
+      "empty": "Pas encore de données",
+      "impressions": "Impressions",
+      "reach": "Couverture",
+      "spend": "Dépenses",
+      "clicks": "Clics",
+      "conversations": "Conversations",
+      "costPerConversation": "Coût/conv.",
+      "costPerConversationTooltip": "Coût moyen par conversation de messagerie démarrée.",
+      "datePresetLabel": "Période :",
+      "datePreset": {
+        "maximum": "Tout le temps",
+        "last_30d": "30 derniers jours",
+        "last_7d": "7 derniers jours"
+      }
+    }
   }
 }

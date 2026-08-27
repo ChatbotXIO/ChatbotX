@@ -195,6 +195,39 @@ describe("AdsConversionService.getCtwaFunnelTimeseries", () => {
     )
   })
 
+  test("omitting timezone leaves it undefined on the repository call (repository defaults to UTC)", async () => {
+    await adsConversionService.getCtwaFunnelTimeseries({
+      workspaceId: "1",
+      since: new Date("2026-08-10T00:00:00.000Z"),
+      until: new Date("2026-08-11T23:59:59.999Z"),
+    })
+
+    expect(
+      mocks.countCtwaConversationsByDayAndAd.mock.calls[0]?.[0].timezone,
+    ).toBeUndefined()
+    expect(
+      mocks.countConversionEventsByDayAndAd.mock.calls[0]?.[0].timezone,
+    ).toBeUndefined()
+  })
+
+  test("threads an explicit viewer timezone through to both daily repository queries", async () => {
+    await adsConversionService.getCtwaFunnelTimeseries({
+      workspaceId: "1",
+      since: new Date("2026-08-10T00:00:00.000Z"),
+      until: new Date("2026-08-11T23:59:59.999Z"),
+      timezone: "Asia/Saigon",
+    })
+
+    expect(mocks.countCtwaConversationsByDayAndAd).toHaveBeenCalledWith(
+      expect.objectContaining({ timezone: "Asia/Saigon" }),
+      undefined,
+    )
+    expect(mocks.countConversionEventsByDayAndAd).toHaveBeenCalledWith(
+      expect.objectContaining({ timezone: "Asia/Saigon" }),
+      undefined,
+    )
+  })
+
   test("keeps rows for different ads on the same day distinct", async () => {
     mocks.countCtwaConversationsByDayAndAd.mockResolvedValue([
       { date: "2026-08-10", adId: "ad-1", conversations: 3 },
@@ -361,6 +394,28 @@ describe("AdsConversionService.getCtwaFunnel — allChannels ('All channels' def
 describe("AdsConversionService.getCtwaFunnelTimeseries — allChannels", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  test("threads an explicit viewer timezone through to the all-channel day-bucketed repository method", async () => {
+    mocks.countAllChannelConversationsByDayAndAd.mockResolvedValue([])
+    mocks.countConversionEventsByDayAndAd.mockResolvedValue([])
+
+    await adsConversionService.getCtwaFunnelTimeseries({
+      workspaceId: "1",
+      allChannels: true,
+      since: new Date("2026-08-10T00:00:00.000Z"),
+      until: new Date("2026-08-11T23:59:59.999Z"),
+      timezone: "Asia/Saigon",
+    })
+
+    expect(mocks.countAllChannelConversationsByDayAndAd).toHaveBeenCalledWith(
+      expect.objectContaining({ timezone: "Asia/Saigon" }),
+      undefined,
+    )
+    expect(mocks.countConversionEventsByDayAndAd).toHaveBeenCalledWith(
+      expect.objectContaining({ timezone: "Asia/Saigon" }),
+      undefined,
+    )
   })
 
   test("dispatches to the all-channel day-bucketed repository method and accumulates same-day/same-ad rows across channels", async () => {

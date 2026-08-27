@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "再試行",
     "copy": "コピー",
     "copyUrl": "URLをコピー",
     "actions": "操作",
@@ -2344,6 +2345,11 @@
   },
   "ads": {
     "title": "広告",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp広告",
+      "messenger": "Click-to-Messenger広告",
+      "instagram": "Click-to-Instagram広告"
+    },
     "connectAccounts": {
       "connectAdAccount": "広告アカウントを接続",
       "adAccountName": "広告アカウント名",
@@ -2475,7 +2481,7 @@
       "adAccountFilter": {
         "all": "すべての広告アカウント",
         "label": "広告アカウント",
-        "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。"
+        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。"
       },
       "channelFilter": {
         "label": "チャネル",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {ファイルなし} =1 {1件のファイル} other {#件のファイル}}",
     "openMediaLibrary": "メディアライブラリを開く",
     "uploadFailed": "{name} のアップロードに失敗しました"
+  },
+  "adsCampaign": {
+    "title": "広告",
+    "createCta": "広告を作成",
+    "prereq": {
+      "notConnected": "このチャネルでメッセージ広告を作成するには、Facebook Adsを連携してください。",
+      "connectCta": "Facebook Adsを連携"
+    },
+    "specialAdCategory": {
+      "none": "なし",
+      "housing": "住宅",
+      "employment": "雇用",
+      "credit": "信用",
+      "issues": "社会問題、選挙、政治",
+      "financialProducts": "金融商品とサービス",
+      "onlineGambling": "オンラインギャンブルとゲーム"
+    },
+    "fields": {
+      "objective": {
+        "label": "目的",
+        "value": "エンゲージメント（メッセージ）"
+      },
+      "specialAdCategory": {
+        "label": "特別な広告カテゴリ",
+        "description": "制限付きカテゴリを選択すると、Metaがそのカテゴリで許可していない年齢、性別などのターゲティングが解除されます。",
+        "restrictedNote": "制限付きの特別な広告カテゴリが選択されているため、年齢と性別のターゲティングは無効になっています。"
+      },
+      "adAccount": {
+        "label": "広告アカウント"
+      },
+      "whatsappPage": {
+        "label": "Facebookページ",
+        "description": "WhatsApp広告でもリンクされたFacebookページが必要です。使用する連携済みのページを選択してください。"
+      },
+      "dailyBudget": {
+        "label": "1日の予算",
+        "placeholder": "例：2000",
+        "description": "広告アカウントの最小通貨単位（USDの場合はセントなど）で金額を入力してください。"
+      },
+      "countries": {
+        "label": "国"
+      },
+      "ageRange": {
+        "min": "最低年齢",
+        "max": "最高年齢"
+      },
+      "gender": {
+        "label": "性別",
+        "male": "男性",
+        "female": "女性"
+      },
+      "schedule": {
+        "start": "開始日時",
+        "end": "終了日時"
+      },
+      "destination": {
+        "label": "遷移先"
+      },
+      "callToAction": {
+        "label": "行動を促すボタン",
+        "derivedNote": "行動を促すボタン（{type}）はチャネルから自動的に決定されます。"
+      },
+      "specialAdCategoryCountry": {
+        "label": "広告カテゴリの国",
+        "description": "社会問題、選挙、政治のカテゴリでMetaが必須とします — これらの広告を配信する許可がある国です。"
+      }
+    },
+    "welcomeMessage": {
+      "title": "ウェルカムメッセージ",
+      "label": "ウェルカムメッセージ",
+      "description": "この広告から会話が開始されると自動的に送信されます。",
+      "mode": {
+        "default": "Metaのデフォルトメッセージを使用",
+        "single": "単一のメッセージ",
+        "templates": "最大5つのメッセージパターンをテスト"
+      },
+      "messageLabel": "メッセージ",
+      "templateLabel": "バリエーション{index}",
+      "headingPlaceholder": "見出し（任意）",
+      "addTemplate": "バリエーションを追加",
+      "templatesLimit": "最大{max}件のバリエーションをテストできます。"
+    },
+    "creative": {
+      "mediaRequired": "続行するには画像または動画をアップロードしてください。",
+      "mediaType": {
+        "label": "クリエイティブメディア",
+        "orVideo": "または動画",
+        "selectAdAccountFirst": "メディアをアップロードする前に広告アカウントを選択してください。",
+        "uploadImage": "画像をアップロード",
+        "uploadVideo": "動画をアップロード"
+      },
+      "uploading": "アップロード中...",
+      "imageUploadFailed": "画像のアップロードに失敗しました。もう一度お試しください。",
+      "videoProcessing": "動画を処理中...",
+      "videoReady": "動画の準備ができました",
+      "videoProcessingFailed": "動画の処理に失敗しました。別のファイルをお試しください。",
+      "previewAlt": "クリエイティブのプレビュー",
+      "primaryText": "メインテキスト",
+      "headline": "見出し"
+    },
+    "wizard": {
+      "createDraft": "一時停止した下書きとして作成",
+      "campaignStep": {
+        "title": "キャンペーン",
+        "namePlaceholder": "この広告の名前を入力"
+      },
+      "adSetStep": {
+        "title": "広告セット"
+      },
+      "creativeStep": {
+        "title": "広告クリエイティブ"
+      },
+      "preflightStep": {
+        "title": "確認"
+      },
+      "errors": {
+        "nameRequired": "この広告の名前を入力してください。",
+        "adAccountRequired": "広告アカウントを選択してください。",
+        "budgetRequired": "1日の予算を入力してください。",
+        "countryRequired": "少なくとも1つの国を選択してください。",
+        "mediaRequired": "画像または動画をアップロードしてください。"
+      }
+    },
+    "preflight": {
+      "title": "概要",
+      "pausedNote": "この広告は一時停止した下書きとして作成されます。公開するまでは配信されず、費用も発生しません。"
+    },
+    "publishConfirm": {
+      "title": "この広告を公開しますか？",
+      "description": "公開すると、キャンペーン、広告セット、広告が順番に有効化されます。配信が始まると、Metaは予算の消化を開始します。",
+      "confirm": "公開"
+    },
+    "list": {
+      "viewOnMeta": "Metaで表示",
+      "empty": "メッセージ広告はまだありません。",
+      "createState": "下書きのステータス",
+      "actions": "操作",
+      "notPublishedYet": "未公開",
+      "draftReady": "下書きの準備ができました",
+      "createFailed": "作成に失敗しました",
+      "creating": "作成中...",
+      "publish": "公開",
+      "pause": "一時停止"
+    },
+    "messages": {
+      "created": "広告の下書きを作成しました。",
+      "actionSucceeded": "完了しました。"
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Click-to-WhatsApp広告をここで作成・管理します。"
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Click-to-Messenger広告をここで作成・管理します。"
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Click-to-Instagram広告をここで作成・管理します。"
+      },
+      "connectCta": "Facebook Adsを連携",
+      "reconnectCta": "再連携",
+      "reconnectNeeded": "この連携は再接続が必要です。",
+      "refresh": "更新",
+      "whatsappPageRequiredNote": "クリック・トゥ・WhatsApp広告には（Metaの要件として）リンクされたFacebookページが必要です。広告作成時に選択します。",
+      "emptyDashboardNote": "ここで作成した広告は、このチャネルの広告ダッシュボードに自動的に表示されるようになりました。アカウントと費用を確認するには、そこのフィルターでこの連携を選択してください。"
+    },
+    "insights": {
+      "title": "パフォーマンス",
+      "empty": "データはまだありません",
+      "impressions": "インプレッション",
+      "reach": "リーチ",
+      "spend": "消化金額",
+      "clicks": "クリック",
+      "conversations": "会話数",
+      "costPerConversation": "会話あたり単価",
+      "costPerConversationTooltip": "開始されたメッセージ会話あたりの平均コスト。",
+      "datePresetLabel": "期間:",
+      "datePreset": {
+        "maximum": "全期間",
+        "last_30d": "過去30日間",
+        "last_7d": "過去7日間"
+      }
+    }
   }
 }

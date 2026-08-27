@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Yritä uudelleen",
     "copy": "Kopioi",
     "copyUrl": "Kopioi URL",
     "actions": "Toiminnot",
@@ -2344,6 +2345,11 @@
   },
   "ads": {
     "title": "Mainokset",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-mainokset",
+      "messenger": "Click-to-Messenger-mainokset",
+      "instagram": "Click-to-Instagram-mainokset"
+    },
     "connectAccounts": {
       "connectAdAccount": "Yhdistä mainostili",
       "adAccountName": "Mainostilin nimi",
@@ -2475,7 +2481,7 @@
       "adAccountFilter": {
         "all": "Kaikki mainostilit",
         "label": "Mainostili",
-        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
+        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista."
       },
       "channelFilter": {
         "label": "Kanava",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Ei tiedostoja} =1 {1 tiedosto} other {# tiedostoa}}",
     "openMediaLibrary": "Avaa mediakirjasto",
     "uploadFailed": "Tiedoston {name} lataus epäonnistui"
+  },
+  "adsCampaign": {
+    "title": "Mainokset",
+    "createCta": "Luo mainos",
+    "prereq": {
+      "notConnected": "Yhdistä Facebook Ads luodaksesi viestimainoksia tälle kanavalle.",
+      "connectCta": "Yhdistä Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Ei mitään",
+      "housing": "Asuminen",
+      "employment": "Työllisyys",
+      "credit": "Luotto",
+      "issues": "Yhteiskunnalliset kysymykset, vaalit tai politiikka",
+      "financialProducts": "Rahoitustuotteet ja -palvelut",
+      "onlineGambling": "Verkkopelit ja -uhkapelit"
+    },
+    "fields": {
+      "objective": {
+        "label": "Tavoite",
+        "value": "Sitoutuminen (viestit)"
+      },
+      "specialAdCategory": {
+        "label": "Erityinen mainoskategoria",
+        "description": "Rajoitetun kategorian valitseminen poistaa iän, sukupuolen ja muun kohdennuksen, jota Meta ei salli kyseiselle kategorialle.",
+        "restrictedNote": "Iän ja sukupuolen mukainen kohdennus on poistettu käytöstä, koska rajoitettu erityinen mainoskategoria on valittu."
+      },
+      "adAccount": {
+        "label": "Mainostili"
+      },
+      "whatsappPage": {
+        "label": "Facebook-sivu",
+        "description": "WhatsApp-mainokset edellyttävät edelleen linkitettyä Facebook-sivua — valitse käytettävä yhdistetty sivu."
+      },
+      "dailyBudget": {
+        "label": "Päiväbudjetti",
+        "placeholder": "esim. 2000",
+        "description": "Anna summa mainostilisi pienimpänä valuuttayksikkönä (esim. sentteinä USD:lle)."
+      },
+      "countries": {
+        "label": "Maat"
+      },
+      "ageRange": {
+        "min": "Vähimmäisikä",
+        "max": "Enimmäisikä"
+      },
+      "gender": {
+        "label": "Sukupuoli",
+        "male": "Mies",
+        "female": "Nainen"
+      },
+      "schedule": {
+        "start": "Alkamisaika",
+        "end": "Päättymisaika"
+      },
+      "destination": {
+        "label": "Kohde"
+      },
+      "callToAction": {
+        "label": "Toimintakehotus",
+        "derivedNote": "Toimintakehotuspainike ({type}) määräytyy automaattisesti kanavan perusteella."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Mainoskategorian maa",
+        "description": "Meta vaatii yhteiskunnallisten aiheiden, vaalien tai politiikan kategoriassa — maa, jossa sinulla on lupa näyttää näitä mainoksia."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Tervetuloviesti",
+      "label": "Tervetuloviesti",
+      "description": "Lähetetään automaattisesti, kun joku aloittaa keskustelun tästä mainoksesta.",
+      "mode": {
+        "default": "Käytä Metan oletusviestiä",
+        "single": "Yksi viesti",
+        "templates": "Testaa jopa 5 viestivaihtoehtoa"
+      },
+      "messageLabel": "Viesti",
+      "templateLabel": "Vaihtoehto {index}",
+      "headingPlaceholder": "Otsikko (valinnainen)",
+      "addTemplate": "Lisää vaihtoehto",
+      "templatesLimit": "Testattavana voi olla enintään {max} vaihtoehtoa."
+    },
+    "creative": {
+      "mediaRequired": "Lataa kuva tai video jatkaaksesi.",
+      "mediaType": {
+        "label": "Mainosmateriaali",
+        "orVideo": "tai video",
+        "selectAdAccountFirst": "Valitse mainostili ennen median lataamista.",
+        "uploadImage": "Lataa kuva",
+        "uploadVideo": "Lataa video"
+      },
+      "uploading": "Ladataan...",
+      "imageUploadFailed": "Kuvan lataus epäonnistui. Yritä uudelleen.",
+      "videoProcessing": "Käsitellään videota...",
+      "videoReady": "Video valmis",
+      "videoProcessingFailed": "Videon käsittely epäonnistui. Kokeile toista tiedostoa.",
+      "previewAlt": "Mainosmateriaalin esikatselu",
+      "primaryText": "Pääteksti",
+      "headline": "Otsikko"
+    },
+    "wizard": {
+      "createDraft": "Luo pysäytettynä luonnoksena",
+      "campaignStep": {
+        "title": "Kampanja",
+        "namePlaceholder": "Nimeä tämä mainos"
+      },
+      "adSetStep": {
+        "title": "Mainosjoukko"
+      },
+      "creativeStep": {
+        "title": "Mainosmateriaali"
+      },
+      "preflightStep": {
+        "title": "Katselmus"
+      },
+      "errors": {
+        "nameRequired": "Anna tälle mainokselle nimi.",
+        "adAccountRequired": "Valitse mainostili.",
+        "budgetRequired": "Anna päiväbudjetti.",
+        "countryRequired": "Valitse vähintään yksi maa.",
+        "mediaRequired": "Lataa kuva tai video."
+      }
+    },
+    "preflight": {
+      "title": "Yhteenveto",
+      "pausedNote": "Tämä mainos luodaan pysäytettynä luonnoksena. Mikään ei julkaistu eikä rahaa käytetä, ennen kuin julkaiset sen."
+    },
+    "publishConfirm": {
+      "title": "Julkaistaanko tämä mainos?",
+      "description": "Julkaiseminen aktivoi kampanjan, mainosjoukon ja mainoksen järjestyksessä. Meta alkaa käyttää budjettiasi, kun toimitus alkaa.",
+      "confirm": "Julkaise"
+    },
+    "list": {
+      "viewOnMeta": "Näytä Metassa",
+      "empty": "Ei vielä viestimainoksia.",
+      "createState": "Luonnoksen tila",
+      "actions": "Toiminnot",
+      "notPublishedYet": "Ei vielä julkaistu",
+      "draftReady": "Luonnos valmis",
+      "createFailed": "Luominen epäonnistui",
+      "creating": "Luodaan...",
+      "publish": "Julkaise",
+      "pause": "Keskeytä"
+    },
+    "messages": {
+      "created": "Mainosluonnos luotu.",
+      "actionSucceeded": "Valmis."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Luo ja hallitse Click-to-WhatsApp-mainoksia täällä."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Luo ja hallitse Click-to-Messenger-mainoksia täällä."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Luo ja hallitse Click-to-Instagram-mainoksia täällä."
+      },
+      "connectCta": "Yhdistä Facebook Ads",
+      "reconnectCta": "Yhdistä uudelleen",
+      "reconnectNeeded": "Tämä yhteys on muodostettava uudelleen.",
+      "refresh": "Päivitä",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp-mainokset edellyttävät edelleen linkitettyä Facebook-sivua (Metan vaatimus) — valitset sen mainosta luodessasi.",
+      "emptyDashboardNote": "Täällä luodut mainokset näkyvät nyt automaattisesti tämän kanavan mainostaulussa — valitse tämä integraatio sen suodattimesta nähdäksesi sen tilit ja kulutuksen."
+    },
+    "insights": {
+      "title": "Suorituskyky",
+      "empty": "Ei vielä tietoja",
+      "impressions": "Näyttökerrat",
+      "reach": "Kattavuus",
+      "spend": "Kulutus",
+      "clicks": "Klikkaukset",
+      "conversations": "Keskustelut",
+      "costPerConversation": "Hinta/keskustelu",
+      "costPerConversationTooltip": "Keskimääräinen hinta aloitettua viestikeskustelua kohden.",
+      "datePresetLabel": "Ajanjakso:",
+      "datePreset": {
+        "maximum": "Koko ajalta",
+        "last_30d": "Viimeiset 30 päivää",
+        "last_7d": "Viimeiset 7 päivää"
+      }
+    }
   }
 }

@@ -34,6 +34,11 @@ export type AdsSwitcherData = {
   // BOTH IG packages (native login + via Facebook Page) as one list, matching
   // the single `integrationInstagramId` FK that backs both.
   instagramIntegrations: AdsSwitcherChannelIntegration[]
+  // Floors the date filter's "Lifetime" preset at workspace birth (reused from
+  // the workspace this query already loads — no extra round-trip), so Lifetime
+  // scans only the workspace's real history instead of the 2020 partition floor
+  // and stays under the ads range cap for workspaces younger than that cap.
+  workspaceCreatedAt: Date
 }
 
 export async function getAdsSwitcherData(
@@ -78,5 +83,6 @@ export async function getAdsSwitcherData(
       id,
       name,
     })),
+    workspaceCreatedAt: workspace.createdAt,
   }
 }

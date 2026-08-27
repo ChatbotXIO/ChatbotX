@@ -23,6 +23,11 @@ const exportRequestSchema = z.object({
   integrationInstagramId: zodBigintAsString().optional(),
   from: z.string().trim().min(1),
   to: z.string().trim().min(1),
+  // Viewer IANA timezone (mirrors `buildExportHref`'s `tz` param) so the CSV
+  // rows use the exact same [since, until] window as the on-screen dashboard
+  // instead of silently reverting to UTC anchoring. Omitted/invalid resolves
+  // to "UTC" in `resolveTimezone` — old export links keep working unchanged.
+  tz: z.string().trim().max(64).optional(),
 })
 
 /**
@@ -39,6 +44,8 @@ const allChannelExportRequestSchema = z.object({
   adId: z.string().trim().min(1).nullable().optional(),
   from: z.string().trim().min(1),
   to: z.string().trim().min(1),
+  // See `exportRequestSchema.tz`.
+  tz: z.string().trim().max(64).optional(),
 })
 
 const EXPORT_PAGE_SIZE = 500

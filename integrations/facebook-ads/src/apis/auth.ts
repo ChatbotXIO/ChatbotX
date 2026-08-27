@@ -9,16 +9,24 @@ export function generateAdsAuthUrl({
   version = DEFAULT_API_VERSION,
   redirectUrl,
   stateParams,
+  // Defaults to the base Ads scope set so the existing `facebookAds` flow is
+  // unchanged. The per-channel messaging-ads connect flow (CTM/CTID/CTWA)
+  // passes the base scopes PLUS its channel-specific additions — v3
+  // correction #1 (out/plan/ctwa-ctm-ctid-box-merge.md): this hook did not
+  // exist before and every extra scope a channel box needs must go through
+  // it, never a second hardcoded scope list.
+  scopes = FACEBOOK_ADS_SCOPES,
 }: {
   clientId: string
   version?: string
   redirectUrl: string
   stateParams?: Record<string, unknown>
+  scopes?: readonly string[]
 }): string {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUrl,
-    scope: FACEBOOK_ADS_SCOPES.join(","),
+    scope: scopes.join(","),
     response_type: "code",
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
   })

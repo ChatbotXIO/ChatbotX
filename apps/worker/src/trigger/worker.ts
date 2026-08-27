@@ -1,3 +1,4 @@
+import { extractContactInboxId } from "@chatbotx.io/events"
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
@@ -61,12 +62,17 @@ async function startTriggerWorker() {
                 `Found ${matchedTriggers.length} triggers for event type ${eventData.eventType}`,
               )
 
+              const contactInboxId = extractContactInboxId(eventData.eventData)
+
               await runWithWebhookExecutionContext(
                 eventData.channelOriginated ? { source: "webhook" } : {},
                 () =>
                   Promise.allSettled(
                     matchedTriggers.map((trigger) =>
-                      triggerExecutor.execute(trigger, eventData.contactId),
+                      triggerExecutor.execute(trigger, {
+                        contactId: eventData.contactId,
+                        contactInboxId,
+                      }),
                     ),
                   ),
               )

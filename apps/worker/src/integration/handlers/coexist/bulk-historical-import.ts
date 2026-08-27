@@ -976,6 +976,7 @@ export const bulkImportContacts = async (props: {
       ev.firstName,
       ev.phoneNumber,
       ev.email,
+      ev.contactInboxId,
     ).catch((error) => {
       logger.error(error, "[coexist] Failed to emit contactCreated event")
     })

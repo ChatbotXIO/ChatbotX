@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Thử lại",
     "copy": "Sao chép",
     "copyUrl": "Sao chép URL",
     "actions": "Hành động",
@@ -2418,6 +2419,11 @@
   },
   "ads": {
     "title": "Quảng cáo",
+    "dashboardNav": {
+      "whatsapp": "Quảng cáo Click-to-WhatsApp",
+      "messenger": "Quảng cáo Click-to-Messenger",
+      "instagram": "Quảng cáo Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Kết nối tài khoản quảng cáo",
       "adAccountName": "Tên tài khoản quảng cáo",
@@ -2549,7 +2555,7 @@
       "adAccountFilter": {
         "all": "Tất cả tài khoản quảng cáo",
         "label": "Tài khoản quảng cáo",
-        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo."
+        "unavailable": "Không tải được tài khoản quảng cáo — hãy kiểm tra kết nối Ads của tích hợp này, hoặc kết nối Facebook Ads của workspace, trong phần cài đặt."
       },
       "channelFilter": {
         "label": "Kênh",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Không có tệp} =1 {1 tệp} other {# tệp}}",
     "openMediaLibrary": "Mở Thư viện Media",
     "uploadFailed": "Tải lên thất bại: {name}"
+  },
+  "adsCampaign": {
+    "title": "Quảng cáo",
+    "createCta": "Tạo quảng cáo",
+    "prereq": {
+      "notConnected": "Kết nối Facebook Ads để tạo quảng cáo nhắn tin cho kênh này.",
+      "connectCta": "Kết nối Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Không có",
+      "housing": "Nhà ở",
+      "employment": "Việc làm",
+      "credit": "Tín dụng",
+      "issues": "Vấn đề xã hội, bầu cử hoặc chính trị",
+      "financialProducts": "Sản phẩm và dịch vụ tài chính",
+      "onlineGambling": "Cờ bạc và trò chơi trực tuyến"
+    },
+    "fields": {
+      "objective": {
+        "label": "Mục tiêu",
+        "value": "Tương tác (nhắn tin)"
+      },
+      "specialAdCategory": {
+        "label": "Danh mục quảng cáo đặc biệt",
+        "description": "Chọn một danh mục bị hạn chế sẽ loại bỏ tùy chọn nhắm mục tiêu theo độ tuổi, giới tính và các tùy chọn khác mà Meta không cho phép đối với danh mục đó.",
+        "restrictedNote": "Nhắm mục tiêu theo độ tuổi và giới tính đã bị tắt vì đã chọn danh mục quảng cáo đặc biệt bị hạn chế."
+      },
+      "adAccount": {
+        "label": "Tài khoản quảng cáo"
+      },
+      "whatsappPage": {
+        "label": "Trang Facebook",
+        "description": "Quảng cáo WhatsApp vẫn yêu cầu một Trang Facebook được liên kết — chọn Trang đã kết nối để sử dụng."
+      },
+      "dailyBudget": {
+        "label": "Ngân sách hàng ngày",
+        "placeholder": "vd. 2000",
+        "description": "Nhập số tiền theo đơn vị tiền tệ nhỏ nhất của tài khoản quảng cáo của bạn (vd. cent đối với USD)."
+      },
+      "countries": {
+        "label": "Quốc gia"
+      },
+      "ageRange": {
+        "min": "Độ tuổi tối thiểu",
+        "max": "Độ tuổi tối đa"
+      },
+      "gender": {
+        "label": "Giới tính",
+        "male": "Nam",
+        "female": "Nữ"
+      },
+      "schedule": {
+        "start": "Thời gian bắt đầu",
+        "end": "Thời gian kết thúc"
+      },
+      "destination": {
+        "label": "Điểm đến"
+      },
+      "callToAction": {
+        "label": "Lời kêu gọi hành động",
+        "derivedNote": "Nút lời kêu gọi hành động ({type}) được tự động lấy từ kênh."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Quốc gia cho danh mục quảng cáo",
+        "description": "Meta bắt buộc với danh mục vấn đề xã hội, bầu cử hoặc chính trị — quốc gia bạn được phép chạy quảng cáo này."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Tin nhắn chào mừng",
+      "label": "Tin nhắn chào mừng",
+      "description": "Được gửi tự động khi ai đó bắt đầu cuộc trò chuyện từ quảng cáo này.",
+      "mode": {
+        "default": "Dùng tin nhắn mặc định của Meta",
+        "single": "Một tin nhắn",
+        "templates": "Thử nghiệm tối đa 5 biến thể tin nhắn"
+      },
+      "messageLabel": "Tin nhắn",
+      "templateLabel": "Biến thể {index}",
+      "headingPlaceholder": "Tiêu đề (không bắt buộc)",
+      "addTemplate": "Thêm biến thể",
+      "templatesLimit": "Có thể thử nghiệm tối đa {max} biến thể."
+    },
+    "creative": {
+      "mediaRequired": "Tải lên hình ảnh hoặc video để tiếp tục.",
+      "mediaType": {
+        "label": "Nội dung sáng tạo",
+        "orVideo": "hoặc video",
+        "selectAdAccountFirst": "Chọn tài khoản quảng cáo trước khi tải lên nội dung.",
+        "uploadImage": "Tải lên hình ảnh",
+        "uploadVideo": "Tải lên video"
+      },
+      "uploading": "Đang tải lên...",
+      "imageUploadFailed": "Tải ảnh lên thất bại. Vui lòng thử lại.",
+      "videoProcessing": "Đang xử lý video...",
+      "videoReady": "Video đã sẵn sàng",
+      "videoProcessingFailed": "Xử lý video thất bại. Vui lòng thử một tệp khác.",
+      "previewAlt": "Xem trước nội dung sáng tạo",
+      "primaryText": "Văn bản chính",
+      "headline": "Tiêu đề"
+    },
+    "wizard": {
+      "createDraft": "Tạo dưới dạng bản nháp tạm dừng",
+      "campaignStep": {
+        "title": "Chiến dịch",
+        "namePlaceholder": "Đặt tên cho quảng cáo này"
+      },
+      "adSetStep": {
+        "title": "Nhóm quảng cáo"
+      },
+      "creativeStep": {
+        "title": "Nội dung quảng cáo"
+      },
+      "preflightStep": {
+        "title": "Xem lại"
+      },
+      "errors": {
+        "nameRequired": "Nhập tên cho quảng cáo này.",
+        "adAccountRequired": "Chọn một tài khoản quảng cáo.",
+        "budgetRequired": "Nhập ngân sách hàng ngày.",
+        "countryRequired": "Chọn ít nhất một quốc gia.",
+        "mediaRequired": "Tải lên hình ảnh hoặc video."
+      }
+    },
+    "preflight": {
+      "title": "Tóm tắt",
+      "pausedNote": "Quảng cáo này được tạo dưới dạng bản nháp tạm dừng. Sẽ không có gì được đăng và không có khoản tiền nào bị chi tiêu cho đến khi bạn xuất bản."
+    },
+    "publishConfirm": {
+      "title": "Xuất bản quảng cáo này?",
+      "description": "Xuất bản sẽ lần lượt kích hoạt chiến dịch, nhóm quảng cáo và quảng cáo. Meta sẽ bắt đầu chi tiêu ngân sách của bạn khi việc phân phối bắt đầu.",
+      "confirm": "Xuất bản"
+    },
+    "list": {
+      "viewOnMeta": "Xem trên Meta",
+      "empty": "Chưa có quảng cáo nhắn tin nào.",
+      "createState": "Trạng thái bản nháp",
+      "actions": "Hành động",
+      "notPublishedYet": "Chưa xuất bản",
+      "draftReady": "Bản nháp đã sẵn sàng",
+      "createFailed": "Tạo thất bại",
+      "creating": "Đang tạo...",
+      "publish": "Xuất bản",
+      "pause": "Tạm dừng"
+    },
+    "messages": {
+      "created": "Đã tạo bản nháp quảng cáo.",
+      "actionSucceeded": "Hoàn tất."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Tạo và quản lý quảng cáo Click-to-WhatsApp tại đây."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Tạo và quản lý quảng cáo Click-to-Messenger tại đây."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Tạo và quản lý quảng cáo Click-to-Instagram tại đây."
+      },
+      "connectCta": "Kết nối Facebook Ads",
+      "reconnectCta": "Kết nối lại",
+      "reconnectNeeded": "Kết nối này cần được kết nối lại.",
+      "refresh": "Làm mới",
+      "whatsappPageRequiredNote": "Quảng cáo Click-to-WhatsApp vẫn yêu cầu một Trang Facebook được liên kết (yêu cầu của Meta) — bạn sẽ chọn Trang này khi tạo quảng cáo.",
+      "emptyDashboardNote": "Các quảng cáo được tạo tại đây giờ đây sẽ tự động xuất hiện trên bảng điều khiển Quảng cáo của kênh này — hãy chọn tích hợp này trong bộ lọc ở đó để xem tài khoản và chi tiêu của nó."
+    },
+    "insights": {
+      "title": "Hiệu quả",
+      "empty": "Chưa có dữ liệu",
+      "impressions": "Hiển thị",
+      "reach": "Tiếp cận",
+      "spend": "Chi tiêu",
+      "clicks": "Nhấp",
+      "conversations": "Hội thoại",
+      "costPerConversation": "CP/hội thoại",
+      "costPerConversationTooltip": "Chi phí trung bình cho mỗi cuộc hội thoại được bắt đầu.",
+      "datePresetLabel": "Khoảng thời gian:",
+      "datePreset": {
+        "maximum": "Toàn thời gian",
+        "last_30d": "30 ngày qua",
+        "last_7d": "7 ngày qua"
+      }
+    }
   }
 }

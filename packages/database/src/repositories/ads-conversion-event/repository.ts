@@ -175,6 +175,18 @@ type DateRangeInput = {
    * (undefined) keeps every existing caller's query byte-identical.
    */
   allChannels?: boolean
+  /**
+   * Viewer IANA timezone for the day-bucketed (`...ByDayAndAd`) siblings'
+   * `AT TIME ZONE` bucketing — mirrors
+   * `message-stats.repository.ts`'s `AT TIME ZONE ${timezone}` pattern.
+   * Omitted defaults to `"UTC"` at each call site, so every pre-migration
+   * caller keeps its exact prior bucketing behavior. Ignored by the
+   * non-day-bucketed siblings (`countCtwaConversationsByAd`,
+   * `countAdConversationsByAd`, `countAllChannelConversationsByAd`,
+   * `countConversionEventsByAd`, `countByCapiStatus`) — only the [since,
+   * until] window (already timezone-anchored by the caller) matters there.
+   */
+  timezone?: string
 }
 
 type AdConversationDateRangeInput = {
@@ -184,6 +196,8 @@ type AdConversationDateRangeInput = {
   channel: Extract<AdsConversionChannel, AdReferralChannelType>
   integrationMessengerId?: string
   integrationInstagramId?: string
+  /** See `DateRangeInput.timezone`. */
+  timezone?: string
 }
 
 type ExportSegmentInput = DateRangeInput & {
@@ -726,9 +740,18 @@ export const adsConversionEventRepository = {
     const adIdExpression = sql<
       string | null
     >`${contactInboxModel.referral}->>'adId'`
-    // Explicit UTC date bucketing — `DATE(col)`/`col::date` depend on the
-    // session timezone, so the day boundary must be pinned via AT TIME ZONE.
-    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`
+    // Explicit date bucketing pinned to `input.timezone` (default "UTC") via
+    // AT TIME ZONE — `DATE(col)`/`col::date` depend on the session timezone
+    // instead, so the day boundary must be pinned explicitly. Parameterized
+    // (never string-interpolated) exactly like
+    // `message-stats.repository.ts`'s `AT TIME ZONE ${timezone}`.
+    const timezone = input.timezone ?? "UTC"
+    // NOTE: every GROUP BY below references this expression by SELECT ordinal
+    // (`sql\`1\``, date is always the FIRST selected column) instead of
+    // repeating `dateExpression`: the bound `${timezone}` param would render as
+    // a DIFFERENT placeholder ($1 in SELECT vs $6 in GROUP BY) and Postgres
+    // rejects the two as non-matching expressions.
+    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
     const rows = input.integrationWhatsappId
       ? await tx
           .select({
@@ -750,7 +773,7 @@ export const adsConversionEventRepository = {
             eq(contactModel.id, contactInboxModel.contactId),
           )
           .where(filters)
-          .groupBy(dateExpression, adIdExpression)
+          .groupBy(sql`1`, adIdExpression)
       : await tx
           .select({
             date: dateExpression,
@@ -763,7 +786,7 @@ export const adsConversionEventRepository = {
             eq(contactModel.id, contactInboxModel.contactId),
           )
           .where(filters)
-          .groupBy(dateExpression, adIdExpression)
+          .groupBy(sql`1`, adIdExpression)
 
     return rows.map((row) => ({
       date: row.date,
@@ -806,12 +829,14 @@ export const adsConversionEventRepository = {
   /**
    * Day-bucketed sibling of `countAdConversationsByAd` — see its doc comment.
    *
-   * KNOWN LIMITATION (pre-existing, shared with the CTWA variants): days are
-   * bucketed in UTC, while Meta Insights buckets spend/impressions in the ad
-   * account's reporting timezone. For non-UTC ad accounts, conversions near
-   * midnight can land on an adjacent chart day relative to the spend row they
-   * are merged with. Fixing this requires bucketing by each selected ad
-   * account's timezone — a reporting-contract change tracked as follow-up.
+   * Days are bucketed in `input.timezone` (default "UTC"), which the caller
+   * resolves to the VIEWER's timezone (see `parseAnalyticsDateRange`) — while
+   * Meta Insights buckets spend/impressions in the ad account's reporting
+   * timezone (unavoidable, no per-request override). For a viewer whose
+   * timezone differs from the ad account's, conversions near midnight can
+   * still land on an adjacent chart day relative to the spend row they are
+   * merged with — a residual, documented seam, not something bucketing alone
+   * can close. See the "RESIDUAL SEAM" note in `ads-date-key.ts`.
    */
   async countAdConversationsByDayAndAd(
     input: AdConversationDateRangeInput,
@@ -820,8 +845,10 @@ export const adsConversionEventRepository = {
     const adIdExpression = sql<
       string | null
     >`${contactInboxModel.referral}->>'adId'`
-    // Explicit UTC date bucketing — see countCtwaConversationsByDayAndAd.
-    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`
+    // Explicit date bucketing pinned to `input.timezone` — see
+    // countCtwaConversationsByDayAndAd.
+    const timezone = input.timezone ?? "UTC"
+    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
 
     const rows = await tx
       .select({
@@ -832,7 +859,7 @@ export const adsConversionEventRepository = {
       .from(contactInboxModel)
       .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
       .where(and(...adConversationBaseFilters(input)))
-      .groupBy(dateExpression, adIdExpression)
+      .groupBy(sql`1`, adIdExpression)
 
     return rows.map((row) => ({
       date: row.date,
@@ -885,7 +912,7 @@ export const adsConversionEventRepository = {
 
   /** Day-bucketed sibling of `countAllChannelConversationsByAd` — see its doc comment. */
   async countAllChannelConversationsByDayAndAd(
-    input: Pick<DateRangeInput, "workspaceId" | "since" | "until">,
+    input: Pick<DateRangeInput, "workspaceId" | "since" | "until" | "timezone">,
     tx: DatabaseClient = db,
   ): Promise<AllChannelConversationCountByDayAndAd[]> {
     const filters = and(
@@ -897,8 +924,10 @@ export const adsConversionEventRepository = {
     const adIdExpression = sql<
       string | null
     >`${contactInboxModel.referral}->>'adId'`
-    // Explicit UTC date bucketing — see countCtwaConversationsByDayAndAd.
-    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`
+    // Explicit date bucketing pinned to `input.timezone` — see
+    // countCtwaConversationsByDayAndAd.
+    const timezone = input.timezone ?? "UTC"
+    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
 
     const rows = await tx
       .select({
@@ -910,7 +939,7 @@ export const adsConversionEventRepository = {
       .from(contactInboxModel)
       .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
       .where(filters)
-      .groupBy(dateExpression, adIdExpression, contactInboxModel.channel)
+      .groupBy(sql`1`, adIdExpression, contactInboxModel.channel)
 
     return rows.map((row) => ({
       date: row.date,
@@ -991,8 +1020,10 @@ export const adsConversionEventRepository = {
     input: DateRangeInput,
     tx: DatabaseClient = db,
   ): Promise<AdsConversionEventCountByDayAndAd[]> {
-    // Explicit UTC date bucketing — see countCtwaConversationsByDayAndAd.
-    const dateExpression = sql<string>`to_char(${adsConversionEventModel.occurredAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`
+    // Explicit date bucketing pinned to `input.timezone` — see
+    // countCtwaConversationsByDayAndAd.
+    const timezone = input.timezone ?? "UTC"
+    const dateExpression = sql<string>`to_char(${adsConversionEventModel.occurredAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
 
     // Same byte-identical-when-falsy, early-return branching as
     // countConversionEventsByAd.
@@ -1008,7 +1039,7 @@ export const adsConversionEventRepository = {
         .from(adsConversionEventModel)
         .where(and(...dateRangeEventFilters(input)))
         .groupBy(
-          dateExpression,
+          sql`1`,
           adsConversionEventModel.adId,
           adsConversionEventModel.eventType,
           adsConversionEventModel.channel,
@@ -1033,7 +1064,7 @@ export const adsConversionEventRepository = {
       .from(adsConversionEventModel)
       .where(and(...dateRangeEventFilters(input)))
       .groupBy(
-        dateExpression,
+        sql`1`,
         adsConversionEventModel.adId,
         adsConversionEventModel.eventType,
       )

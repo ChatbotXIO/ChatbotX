@@ -1,14 +1,22 @@
 import {
   appointmentExternalCalendarService,
+  instagramIntegrationService,
   integrationFacebookAdsService,
   integrationMetaCatalogService,
+  integrationWhatsappService,
+  messagingAdsConnectionService,
+  messengerIntegrationService,
   platformCredentialService,
   workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
 import { db } from "@chatbotx.io/database/client"
-import type { IntegrationType } from "@chatbotx.io/database/partials"
+import {
+  type IntegrationType,
+  type MessagingAdChannel,
+  messagingAdChannelTypes,
+} from "@chatbotx.io/database/partials"
 import {
   integrationGoogleSheetsModel,
   integrationModel,
@@ -56,6 +64,7 @@ import { connectTiktokHandler } from "@/features/integration-tiktok/actions/conn
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { reconnectZaloHandler } from "@/features/integration-zalo/actions/reconnect-callback"
 import { integrations } from "@/integration"
+import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
 import {
@@ -78,11 +87,19 @@ const stateValidationSchema = z.object({
   // redirect_uri registered with the Facebook app); the connect action sets
   // this flag so the Messenger branch dispatches to the right token-storage /
   // webhook-subscription logic instead of the page picker.
-  flow: z.enum(["facebookAds", "facebookLeadAds", "metaCatalog"]).optional(),
+  flow: z
+    .enum(["facebookAds", "facebookLeadAds", "metaCatalog", "messagingAds"])
+    .optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
   // of this existing integration row (matched against its stored page/account
   // identity) instead of running the connect/page-select flow.
   reconnectIntegrationId: zodBigintAsString().optional(),
+  // `flow: "messagingAds"` only — the per-integration messaging-ads box
+  // (CTWA/CTM/CTID) this connect targets. Both required together and
+  // re-validated against `workspaceId` (ownership + channel match) before
+  // any token is stored — see the `messagingAds` branch below.
+  messagingAdsChannel: messagingAdChannelTypes.optional(),
+  messagingAdsIntegrationId: zodBigintAsString().optional(),
 })
 
 // Exchange the OAuth code for a long-lived Facebook Ads token and store it
@@ -117,6 +134,70 @@ const storeFacebookAdsConnection = async (args: {
     workspaceId: args.workspaceId,
     auth: facebookAdsAuth,
     tokenExpiresAt,
+  })
+}
+
+/**
+ * Verifies `messagingAdsIntegrationId` is a REAL channel integration that
+ * belongs to `workspaceId` and matches `channel` before any token is stored
+ * — the OAuth callback is an API boundary, so a forged/stale integration id
+ * (or a channel mismatch) must never be trusted (v3 correction, "callback
+ * ownership check"). Returns `false` on any mismatch; callers fall back to
+ * `notFound()`.
+ */
+const messagingAdsIntegrationBelongsToWorkspace = async (args: {
+  workspaceId: string
+  channel: MessagingAdChannel
+  integrationId: string
+}): Promise<boolean> => {
+  const ref = { id: args.integrationId, workspaceId: args.workspaceId }
+  if (args.channel === "whatsapp") {
+    return Boolean(await integrationWhatsappService.findByIdForWorkspace(ref))
+  }
+  if (args.channel === "messenger") {
+    return Boolean(await messengerIntegrationService.findByIdForWorkspace(ref))
+  }
+  return Boolean(await instagramIntegrationService.findByIdForWorkspace(ref))
+}
+
+// Exchange the OAuth code for a long-lived Facebook Ads token and store it
+// (encrypted) on the per-integration `MessagingAdsConnection` row — the
+// per-box counterpart to `storeFacebookAdsConnection` below. Deliberately
+// does NOT reuse `integrationFacebookAdsService`/`storeFacebookAdsConnection`
+// — those write the workspace-wide `IntegrationFacebookAds` table, which is
+// the WRONG table for a per-integration box connection (v3 correction #4).
+const storeMessagingAdsConnection = async (args: {
+  credentialConfig: { clientId: string; clientSecret: string; version?: string }
+  code: string
+  callbackUrl: string
+  workspaceId: string
+  channel: MessagingAdChannel
+  integrationId: string
+}): Promise<void> => {
+  const shortLivedToken = await exchangeFacebookAdsCode(
+    args.credentialConfig,
+    args.code,
+    args.callbackUrl,
+  )
+  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
+    args.credentialConfig,
+    shortLivedToken,
+  )
+  const tokenExpiresAt = expiresIn
+    ? new Date(Date.now() + expiresIn * 1000)
+    : null
+
+  const facebookAdsAuth: FacebookAdsAuthValue = {
+    authType: AuthType.custom,
+    accessToken,
+    expiresAt: tokenExpiresAt?.toISOString(),
+    version: args.credentialConfig.version,
+  }
+  await messagingAdsConnectionService.upsertFromOAuth({
+    workspaceId: args.workspaceId,
+    channel: args.channel,
+    integrationId: args.integrationId,
+    auth: facebookAdsAuth,
   })
 }
 
@@ -323,6 +404,66 @@ export const handleCallback = async (
               workspaceId: workspace.id,
             }),
         )
+        return redirect(safeReferer)
+      }
+
+      // Per-integration messaging-ads box connect (CTWA/CTM/CTID). An API
+      // boundary: re-validate the target integration belongs to THIS
+      // workspace and matches the claimed channel before storing anything —
+      // `stateParams` is attacker-controlled (round-tripped through the
+      // Facebook OAuth `state` param).
+      if (stateParams.flow === "messagingAds") {
+        if (
+          !(
+            stateParams.messagingAdsChannel &&
+            stateParams.messagingAdsIntegrationId
+          )
+        ) {
+          logger.debug(
+            { workspaceId: workspace.id },
+            "messagingAds OAuth state is missing channel/integrationId",
+          )
+          return notFound()
+        }
+        // Connecting an ads token is a super-admin action (the connect action
+        // asserts it too). The OAuth `state` is attacker-forgeable, so a bare
+        // workspace member could otherwise round-trip a crafted state and bind
+        // their own Facebook token to a workspace integration — re-assert
+        // super-admin here at the storage boundary (Codex impl-review).
+        try {
+          await assertWorkspaceSuperAdmin(workspace.id)
+        } catch {
+          logger.info(
+            { workspaceId: workspace.id, userId },
+            "messagingAds OAuth callback: non-super-admin blocked",
+          )
+          return notFound()
+        }
+        const belongsToWorkspace =
+          await messagingAdsIntegrationBelongsToWorkspace({
+            workspaceId: workspace.id,
+            channel: stateParams.messagingAdsChannel,
+            integrationId: stateParams.messagingAdsIntegrationId,
+          })
+        if (!belongsToWorkspace) {
+          logger.info(
+            {
+              workspaceId: workspace.id,
+              channel: stateParams.messagingAdsChannel,
+              integrationId: stateParams.messagingAdsIntegrationId,
+            },
+            "messagingAds OAuth target integration does not belong to this workspace/channel",
+          )
+          return notFound()
+        }
+        await storeMessagingAdsConnection({
+          credentialConfig: messengerCredential.config,
+          code,
+          callbackUrl,
+          workspaceId: workspace.id,
+          channel: stateParams.messagingAdsChannel,
+          integrationId: stateParams.messagingAdsIntegrationId,
+        })
         return redirect(safeReferer)
       }
 

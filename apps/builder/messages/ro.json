@@ -297,6 +297,11 @@
   },
   "ads": {
     "title": "Anunțuri",
+    "dashboardNav": {
+      "whatsapp": "Reclame Click-to-WhatsApp",
+      "messenger": "Reclame Click-to-Messenger",
+      "instagram": "Reclame Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Conectează cont de anunțuri",
       "adAccountName": "Numele contului de anunțuri",
@@ -428,7 +433,7 @@
       "adAccountFilter": {
         "all": "Toate conturile de anunțuri",
         "label": "Cont de anunțuri",
-        "note": "Anunțurile cu conversii, dar cu cheltuieli zero sau livrare zero în intervalul de date selectat, sunt ascunse la filtrarea după contul de anunțuri."
+        "unavailable": "Conturile de reclame nu au putut fi încărcate — verifică conexiunea Ads a acestei integrări sau conexiunea Facebook Ads a spațiului de lucru, din setări."
       },
       "channelFilter": {
         "label": "Canal",
@@ -774,6 +779,7 @@
     "title": "Editează profilul"
   },
   "actions": {
+    "retry": "Reîncearcă",
     "copy": "Copiază",
     "copyUrl": "Copiază adresa URL",
     "actions": "Acțiuni",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Niciun fișier} =1 {1 fișier} other {# fișiere}}",
     "openMediaLibrary": "Deschide biblioteca media",
     "uploadFailed": "Încărcarea {name} a eșuat"
+  },
+  "adsCampaign": {
+    "title": "Reclame",
+    "createCta": "Creează reclamă",
+    "prereq": {
+      "notConnected": "Conectează Facebook Ads pentru a crea reclame de mesagerie pentru acest canal.",
+      "connectCta": "Conectează Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Niciuna",
+      "housing": "Locuințe",
+      "employment": "Angajare",
+      "credit": "Credit",
+      "issues": "Probleme sociale, alegeri sau politică",
+      "financialProducts": "Produse și servicii financiare",
+      "onlineGambling": "Jocuri de noroc și jocuri online"
+    },
+    "fields": {
+      "objective": {
+        "label": "Obiectiv",
+        "value": "Interacțiune (mesagerie)"
+      },
+      "specialAdCategory": {
+        "label": "Categorie specială de reclamă",
+        "description": "Selectarea unei categorii restricționate elimină direcționarea în funcție de vârstă, sex și alte criterii pe care Meta nu le permite pentru acea categorie.",
+        "restrictedNote": "Direcționarea în funcție de vârstă și sex este dezactivată deoarece este selectată o categorie specială de reclamă restricționată."
+      },
+      "adAccount": {
+        "label": "Cont publicitar"
+      },
+      "whatsappPage": {
+        "label": "Pagină Facebook",
+        "description": "Reclamele WhatsApp necesită în continuare o Pagină Facebook conectată — selectează Pagina conectată pe care vrei să o folosești."
+      },
+      "dailyBudget": {
+        "label": "Buget zilnic",
+        "placeholder": "de ex. 2000",
+        "description": "Introdu suma în cea mai mică unitate monetară a contului tău publicitar (de ex. cenți pentru USD)."
+      },
+      "countries": {
+        "label": "Țări"
+      },
+      "ageRange": {
+        "min": "Vârsta minimă",
+        "max": "Vârsta maximă"
+      },
+      "gender": {
+        "label": "Sex",
+        "male": "Bărbat",
+        "female": "Femeie"
+      },
+      "schedule": {
+        "start": "Ora de început",
+        "end": "Ora de sfârșit"
+      },
+      "destination": {
+        "label": "Destinație"
+      },
+      "callToAction": {
+        "label": "Îndemn la acțiune",
+        "derivedNote": "Butonul de îndemn la acțiune ({type}) este determinat automat pe baza canalului."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Țara categoriei de anunț",
+        "description": "Necesar de Meta pentru categoria probleme sociale, alegeri sau politică — țara în care ești autorizat să difuzezi aceste anunțuri."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Mesaj de bun venit",
+      "label": "Mesaj de bun venit",
+      "description": "Trimis automat atunci când cineva începe o conversație din această reclamă.",
+      "mode": {
+        "default": "Folosește mesajul implicit al Meta",
+        "single": "Mesaj unic",
+        "templates": "Testează până la 5 variante de mesaj"
+      },
+      "messageLabel": "Mesaj",
+      "templateLabel": "Varianta {index}",
+      "headingPlaceholder": "Titlu (opțional)",
+      "addTemplate": "Adaugă variantă",
+      "templatesLimit": "Pot fi testate până la {max} variante."
+    },
+    "creative": {
+      "mediaRequired": "Încarcă o imagine sau un videoclip pentru a continua.",
+      "mediaType": {
+        "label": "Conținut creativ",
+        "orVideo": "sau video",
+        "selectAdAccountFirst": "Selectează un cont publicitar înainte de a încărca conținut media.",
+        "uploadImage": "Încarcă imagine",
+        "uploadVideo": "Încarcă video"
+      },
+      "uploading": "Se încarcă...",
+      "imageUploadFailed": "Încărcarea imaginii a eșuat. Încercați din nou.",
+      "videoProcessing": "Se procesează videoclipul...",
+      "videoReady": "Videoclip pregătit",
+      "videoProcessingFailed": "Procesarea videoclipului a eșuat. Încearcă un alt fișier.",
+      "previewAlt": "Previzualizare material creativ",
+      "primaryText": "Text principal",
+      "headline": "Titlu"
+    },
+    "wizard": {
+      "createDraft": "Creează ca ciornă în pauză",
+      "campaignStep": {
+        "title": "Campanie",
+        "namePlaceholder": "Denumește această reclamă"
+      },
+      "adSetStep": {
+        "title": "Set de reclame"
+      },
+      "creativeStep": {
+        "title": "Material creativ"
+      },
+      "preflightStep": {
+        "title": "Revizuire"
+      },
+      "errors": {
+        "nameRequired": "Introdu un nume pentru această reclamă.",
+        "adAccountRequired": "Selectează un cont publicitar.",
+        "budgetRequired": "Introdu un buget zilnic.",
+        "countryRequired": "Selectează cel puțin o țară.",
+        "mediaRequired": "Încarcă o imagine sau un videoclip."
+      }
+    },
+    "preflight": {
+      "title": "Rezumat",
+      "pausedNote": "Această reclamă este creată ca ciornă în pauză. Nimic nu devine activ și nu se cheltuiesc bani până când nu o publici."
+    },
+    "publishConfirm": {
+      "title": "Publici această reclamă?",
+      "description": "Publicarea activează, în ordine, campania, setul de reclame și reclama. Meta va începe să îți cheltuiască bugetul de îndată ce începe difuzarea.",
+      "confirm": "Publică"
+    },
+    "list": {
+      "viewOnMeta": "Vezi pe Meta",
+      "empty": "Încă nu există reclame de mesagerie.",
+      "createState": "Stare ciornă",
+      "actions": "Acțiuni",
+      "notPublishedYet": "Nepublicată încă",
+      "draftReady": "Ciornă pregătită",
+      "createFailed": "Creare eșuată",
+      "creating": "Se creează...",
+      "publish": "Publică",
+      "pause": "Pauză"
+    },
+    "messages": {
+      "created": "Ciorna reclamei a fost creată.",
+      "actionSucceeded": "Gata."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Creează și gestionează reclame Click-to-WhatsApp aici."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Creează și gestionează reclame Click-to-Messenger aici."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Creează și gestionează reclame Click-to-Instagram aici."
+      },
+      "connectCta": "Conectează Facebook Ads",
+      "reconnectCta": "Reconectează",
+      "reconnectNeeded": "Această conexiune trebuie reconectată.",
+      "refresh": "Reîmprospătează",
+      "whatsappPageRequiredNote": "Reclamele Click-to-WhatsApp necesită în continuare o Pagină Facebook conectată (o cerință Meta) — o vei alege la crearea unei reclame.",
+      "emptyDashboardNote": "Reclamele create aici apar acum automat în panoul de control Reclame al acestui canal — selectează această integrare din filtrul de acolo pentru a vedea conturile și cheltuielile ei."
+    },
+    "insights": {
+      "title": "Performanță",
+      "empty": "Încă nu există date",
+      "impressions": "Afișări",
+      "reach": "Acoperire",
+      "spend": "Cheltuieli",
+      "clicks": "Clicuri",
+      "conversations": "Conversații",
+      "costPerConversation": "Cost/conv.",
+      "costPerConversationTooltip": "Cost mediu pe conversație de mesagerie inițiată.",
+      "datePresetLabel": "Perioadă:",
+      "datePreset": {
+        "maximum": "Toată perioada",
+        "last_30d": "Ultimele 30 de zile",
+        "last_7d": "Ultimele 7 zile"
+      }
+    }
   }
 }

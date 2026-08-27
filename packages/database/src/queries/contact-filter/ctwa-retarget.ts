@@ -334,8 +334,27 @@ export function adReferralPredicate(): SQL {
 
 /**
  * `since`/`until` on the `ctwaRetarget` filter condition are `YYYY-MM-DD`
- * date keys (not timezone-aware); resolve them to UTC day boundaries,
- * mirroring `parseAnalyticsDateRange` in the builder's ads analytics schema.
+ * date keys (not timezone-aware); resolve them to UTC day boundaries.
+ *
+ * DELIBERATELY STILL UTC-ANCHORED (documented seam, not an oversight): the
+ * Ads Analytics "Retarget → Send WhatsApp broadcast" deep link
+ * (`buildWhatsappRetargetHref`) hands this function the SAME `from`/`to`
+ * date keys as the dashboard's own `parseAnalyticsDateRange`, which now
+ * anchors to the VIEWER's timezone (see
+ * `docs/plans/2026-08-27-ads-timezone-migration.md`). This function was not
+ * threaded the same way: `ctwaRetargetDateRange` sits behind the generic
+ * contact-filter condition dispatcher (`buildWhereFromCondition` in
+ * `queries/contact-filter/index.ts`), shared by every filter type across
+ * segments, broadcasts, and audiences — not analytics-specific. The
+ * `ctwaRetarget` condition is also JSON-serialized into a URL and can be
+ * persisted as a saved filter; baking in a snapshot of "the viewer's
+ * timezone at link-build time" would silently go stale if evaluated later or
+ * by a different viewer, a correctness question the live analytics dashboard
+ * doesn't have. Closing this seam requires deciding that question plus
+ * touching `ctwaRetargetConditionSchema`
+ * (`apps/builder/src/features/contact-filter/schemas/ctwa-retarget-filter.ts`),
+ * `buildWhatsappRetargetHref`, and the generic dispatcher — out of scope
+ * here; left UTC-anchored, same as before this migration.
  */
 export function ctwaRetargetDateRange(
   since: string,

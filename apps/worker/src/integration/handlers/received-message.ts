@@ -1399,6 +1399,7 @@ const createNewContactAndContactInbox = async (props: {
     newContact.firstName || undefined,
     newContact.phoneNumber || undefined,
     newContact.email || undefined,
+    contactInbox.id,
   )
 
   if (contactInbox.sourceId) {

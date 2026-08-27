@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Opnieuw proberen",
     "copy": "Kopiëren",
     "copyUrl": "URL kopiëren",
     "actions": "Acties",
@@ -2344,6 +2345,11 @@
   },
   "ads": {
     "title": "Advertenties",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-advertenties",
+      "messenger": "Click-to-Messenger-advertenties",
+      "instagram": "Click-to-Instagram-advertenties"
+    },
     "connectAccounts": {
       "connectAdAccount": "Advertentieaccount koppelen",
       "adAccountName": "Naam advertentieaccount",
@@ -2475,7 +2481,7 @@
       "adAccountFilter": {
         "all": "Alle advertentieaccounts",
         "label": "Advertentieaccount",
-        "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount."
+        "unavailable": "Kan advertentieaccounts niet laden — controleer de Ads-koppeling van deze integratie, of de Facebook Ads-koppeling van de workspace, in de instellingen."
       },
       "channelFilter": {
         "label": "Kanaal",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Geen bestanden} =1 {1 bestand} other {# bestanden}}",
     "openMediaLibrary": "Mediabibliotheek openen",
     "uploadFailed": "Uploaden van {name} mislukt"
+  },
+  "adsCampaign": {
+    "title": "Advertenties",
+    "createCta": "Advertentie maken",
+    "prereq": {
+      "notConnected": "Verbind Facebook Ads om berichtenadvertenties voor dit kanaal te maken.",
+      "connectCta": "Facebook Ads verbinden"
+    },
+    "specialAdCategory": {
+      "none": "Geen",
+      "housing": "Huisvesting",
+      "employment": "Werkgelegenheid",
+      "credit": "Krediet",
+      "issues": "Maatschappelijke kwesties, verkiezingen of politiek",
+      "financialProducts": "Financiële producten en diensten",
+      "onlineGambling": "Online gokken en gaming"
+    },
+    "fields": {
+      "objective": {
+        "label": "Doelstelling",
+        "value": "Interactie (berichten)"
+      },
+      "specialAdCategory": {
+        "label": "Speciale advertentiecategorie",
+        "description": "Als u een beperkte categorie selecteert, worden leeftijd, geslacht en andere targetingopties verwijderd die Meta voor die categorie niet toestaat.",
+        "restrictedNote": "Targeting op leeftijd en geslacht is uitgeschakeld omdat een beperkte speciale advertentiecategorie is geselecteerd."
+      },
+      "adAccount": {
+        "label": "Advertentieaccount"
+      },
+      "whatsappPage": {
+        "label": "Facebook-pagina",
+        "description": "Voor WhatsApp-advertenties is nog steeds een gekoppelde Facebook-pagina vereist — selecteer de verbonden pagina die u wilt gebruiken."
+      },
+      "dailyBudget": {
+        "label": "Dagbudget",
+        "placeholder": "bijv. 2000",
+        "description": "Voer het bedrag in de kleinste valuta-eenheid van uw advertentieaccount in (bijv. centen voor USD)."
+      },
+      "countries": {
+        "label": "Landen"
+      },
+      "ageRange": {
+        "min": "Minimumleeftijd",
+        "max": "Maximumleeftijd"
+      },
+      "gender": {
+        "label": "Geslacht",
+        "male": "Man",
+        "female": "Vrouw"
+      },
+      "schedule": {
+        "start": "Starttijd",
+        "end": "Eindtijd"
+      },
+      "destination": {
+        "label": "Bestemming"
+      },
+      "callToAction": {
+        "label": "Call-to-action",
+        "derivedNote": "De call-to-actionknop ({type}) wordt automatisch afgeleid van het kanaal."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Land van advertentiecategorie",
+        "description": "Vereist door Meta voor de categorie maatschappelijke kwesties, verkiezingen of politiek — het land waarin je deze advertenties mag weergeven."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Welkomstbericht",
+      "label": "Welkomstbericht",
+      "description": "Wordt automatisch verzonden wanneer iemand vanuit deze advertentie een gesprek start.",
+      "mode": {
+        "default": "Standaardbericht van Meta gebruiken",
+        "single": "Eén bericht",
+        "templates": "Tot 5 berichtvarianten testen"
+      },
+      "messageLabel": "Bericht",
+      "templateLabel": "Variant {index}",
+      "headingPlaceholder": "Kop (optioneel)",
+      "addTemplate": "Variant toevoegen",
+      "templatesLimit": "Er kunnen maximaal {max} varianten worden getest."
+    },
+    "creative": {
+      "mediaRequired": "Upload een afbeelding of video om door te gaan.",
+      "mediaType": {
+        "label": "Advertentiemateriaal",
+        "orVideo": "of video",
+        "selectAdAccountFirst": "Selecteer een advertentieaccount voordat u media uploadt.",
+        "uploadImage": "Afbeelding uploaden",
+        "uploadVideo": "Video uploaden"
+      },
+      "uploading": "Uploaden...",
+      "imageUploadFailed": "Afbeelding uploaden mislukt. Probeer het opnieuw.",
+      "videoProcessing": "Video wordt verwerkt...",
+      "videoReady": "Video gereed",
+      "videoProcessingFailed": "Video verwerken mislukt. Probeer een ander bestand.",
+      "previewAlt": "Voorbeeld van advertentiemateriaal",
+      "primaryText": "Primaire tekst",
+      "headline": "Kop"
+    },
+    "wizard": {
+      "createDraft": "Als gepauzeerd concept maken",
+      "campaignStep": {
+        "title": "Campagne",
+        "namePlaceholder": "Geef deze advertentie een naam"
+      },
+      "adSetStep": {
+        "title": "Advertentieset"
+      },
+      "creativeStep": {
+        "title": "Advertentiemateriaal"
+      },
+      "preflightStep": {
+        "title": "Controle"
+      },
+      "errors": {
+        "nameRequired": "Voer een naam in voor deze advertentie.",
+        "adAccountRequired": "Selecteer een advertentieaccount.",
+        "budgetRequired": "Voer een dagbudget in.",
+        "countryRequired": "Selecteer ten minste één land.",
+        "mediaRequired": "Upload een afbeelding of video."
+      }
+    },
+    "preflight": {
+      "title": "Overzicht",
+      "pausedNote": "Deze advertentie wordt als gepauzeerd concept gemaakt. Er gaat niets live en er wordt geen geld uitgegeven totdat u de advertentie publiceert."
+    },
+    "publishConfirm": {
+      "title": "Deze advertentie publiceren?",
+      "description": "Publiceren activeert de campagne, advertentieset en advertentie in die volgorde. Meta begint uw budget te besteden zodra de levering start.",
+      "confirm": "Publiceren"
+    },
+    "list": {
+      "viewOnMeta": "Bekijk op Meta",
+      "empty": "Nog geen berichtenadvertenties.",
+      "createState": "Conceptstatus",
+      "actions": "Acties",
+      "notPublishedYet": "Nog niet gepubliceerd",
+      "draftReady": "Concept gereed",
+      "createFailed": "Aanmaken mislukt",
+      "creating": "Bezig met maken...",
+      "publish": "Publiceren",
+      "pause": "Pauzeren"
+    },
+    "messages": {
+      "created": "Advertentieconcept gemaakt.",
+      "actionSucceeded": "Gereed."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Maak en beheer Click-to-WhatsApp-advertenties hier."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Maak en beheer Click-to-Messenger-advertenties hier."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Maak en beheer Click-to-Instagram-advertenties hier."
+      },
+      "connectCta": "Facebook Ads verbinden",
+      "reconnectCta": "Opnieuw verbinden",
+      "reconnectNeeded": "Deze verbinding moet opnieuw tot stand worden gebracht.",
+      "refresh": "Vernieuwen",
+      "whatsappPageRequiredNote": "Voor click-to-WhatsApp-advertenties is nog steeds een gekoppelde Facebook-pagina vereist (een vereiste van Meta) — u kiest deze bij het maken van een advertentie.",
+      "emptyDashboardNote": "Advertenties die hier worden gemaakt, verschijnen nu automatisch op het advertentiedashboard van dit kanaal — selecteer deze integratie in het filter daar om de accounts en uitgaven te zien."
+    },
+    "insights": {
+      "title": "Prestaties",
+      "empty": "Nog geen gegevens",
+      "impressions": "Vertoningen",
+      "reach": "Bereik",
+      "spend": "Uitgaven",
+      "clicks": "Klikken",
+      "conversations": "Gesprekken",
+      "costPerConversation": "Kosten/gesprek",
+      "costPerConversationTooltip": "Gemiddelde kosten per gestart berichtgesprek.",
+      "datePresetLabel": "Periode:",
+      "datePreset": {
+        "maximum": "Alle tijd",
+        "last_30d": "Laatste 30 dagen",
+        "last_7d": "Laatste 7 dagen"
+      }
+    }
   }
 }

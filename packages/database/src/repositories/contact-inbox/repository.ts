@@ -3,6 +3,7 @@ import {
   and,
   type DatabaseClient,
   db,
+  desc,
   eq,
   inArray,
   type SQL,
@@ -125,6 +126,80 @@ export const contactInboxRepository = {
         ),
       )
       .where(eq(contactInboxModel.id, input.id))
+      .limit(1)
+
+    return row ?? null
+  },
+
+  /**
+   * Single-row, workspace- AND contact-scoped load of a contact inbox by id —
+   * used by `resolveActionContactInbox` to validate a `contactInboxId`
+   * threaded from a trigger event before trusting it as the Trigger action's
+   * attribution target. The extra `contactId` predicate (beyond the
+   * `findByIdForWorkspace` join) guards against a stale/foreign id (e.g. a
+   * contact-merge or an id from a different contact) silently attributing to
+   * the wrong contact's inbox — the caller falls back to
+   * `findMostRecentByContact` when this returns `null`.
+   */
+  async findByIdForContact(
+    input: { id: string; contactId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxWorkspaceRow | null> {
+    const [row] = await tx
+      .select({
+        id: contactInboxModel.id,
+        channel: contactInboxModel.channel,
+        inboxId: contactInboxModel.inboxId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(
+        and(
+          eq(contactInboxModel.id, input.id),
+          eq(contactInboxModel.contactId, input.contactId),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  },
+
+  /**
+   * Workspace-scoped "most recently active inbox" for a contact — the
+   * fallback `resolveActionContactInbox` uses when no producer threaded a
+   * `contactInboxId` (schema-precludes-attribution events like
+   * `dateTimeBasedTrigger`, or a stale/foreign threaded id). Mirrors the
+   * ordering of the `db.query.contactInboxModel.findFirst({ orderBy:
+   * { lastMessageAt: "desc" } })` call it replaces (NULLS LAST is Postgres's
+   * default `desc` behavior, so ties/no-messages-yet inboxes sort last, same
+   * as before).
+   */
+  async findMostRecentByContact(
+    input: { contactId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxWorkspaceRow | null> {
+    const [row] = await tx
+      .select({
+        id: contactInboxModel.id,
+        channel: contactInboxModel.channel,
+        inboxId: contactInboxModel.inboxId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(eq(contactInboxModel.contactId, input.contactId))
+      .orderBy(desc(contactInboxModel.lastMessageAt))
       .limit(1)
 
     return row ?? null

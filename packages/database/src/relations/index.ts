@@ -102,6 +102,8 @@ import { magicLinkRelations } from "./magic-link"
 import { mediaLibraryFileRelations } from "./media-library-file"
 import { mediaLibraryFolderRelations } from "./media-library-folder"
 import { messageRelations } from "./message"
+import { messagingAdOperationRelations } from "./messaging-ad-operation"
+import { messagingAdsConnectionRelations } from "./messaging-ads-connection"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
 import { metaCapiEventRelations } from "./meta-capi-event"
 import { metaCatalogRelations } from "./meta-catalog"
@@ -143,6 +145,8 @@ export const relations = {
   ...aiTriggerRelations,
   ...adsConversionEventRelations,
   ...metaCapiEventRelations,
+  ...messagingAdOperationRelations,
+  ...messagingAdsConnectionRelations,
   ...adsConversionRuleRelations,
   ...integrationOpenaiRelations,
   ...contactRelations,

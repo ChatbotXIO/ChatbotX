@@ -98,7 +98,7 @@ describe("TriggerExecutorService action sibling isolation (trackAdsLead / trackA
           { type: "trackAdsPurchase", value: "10.00", currency: "USD" },
         ],
       } as never,
-      "contact-1",
+      { contactId: "contact-1" },
     )
 
     expect(mocks.actionExecutorExecute).toHaveBeenCalledTimes(2)
@@ -107,12 +107,14 @@ describe("TriggerExecutorService action sibling isolation (trackAdsLead / trackA
       contactId: "contact-1",
       triggerId: "trigger-1",
       workspaceId: "ws-1",
+      contactInboxId: undefined,
     })
     expect(mocks.actionExecutorExecute).toHaveBeenNthCalledWith(2, {
       action: { type: "trackAdsPurchase", value: "10.00", currency: "USD" },
       contactId: "contact-1",
       triggerId: "trigger-1",
       workspaceId: "ws-1",
+      contactInboxId: undefined,
     })
     // Trigger-level bookkeeping still runs — the whole trigger is recorded
     // as a success even though it carried multiple ads-tracking actions.
@@ -136,7 +138,7 @@ describe("TriggerExecutorService action sibling isolation (trackAdsLead / trackA
           { type: "trackAdsPurchase", value: "10.00", currency: "USD" },
         ],
       } as never,
-      "contact-1",
+      { contactId: "contact-1" },
     )
 
     // Both actions were attempted despite the first one throwing.

@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Coba lagi",
     "copy": "Salin",
     "copyUrl": "Salin URL",
     "actions": "Tindakan",
@@ -2344,6 +2345,11 @@
   },
   "ads": {
     "title": "Iklan",
+    "dashboardNav": {
+      "whatsapp": "Iklan Click-to-WhatsApp",
+      "messenger": "Iklan Click-to-Messenger",
+      "instagram": "Iklan Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Hubungkan Akun Iklan",
       "adAccountName": "Nama Akun Iklan",
@@ -2475,7 +2481,7 @@
       "adAccountFilter": {
         "all": "Semua akun iklan",
         "label": "Akun iklan",
-        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan."
+        "unavailable": "Tidak dapat memuat akun iklan — periksa koneksi Ads integrasi ini, atau koneksi Facebook Ads workspace, di pengaturan."
       },
       "channelFilter": {
         "label": "Saluran",
@@ -5505,5 +5511,190 @@
     "filesCount": "{count, plural, =0 {Tidak ada file} =1 {1 file} other {# file}}",
     "openMediaLibrary": "Buka Pustaka Media",
     "uploadFailed": "Gagal mengunggah {name}"
+  },
+  "adsCampaign": {
+    "title": "Iklan",
+    "createCta": "Buat iklan",
+    "prereq": {
+      "notConnected": "Hubungkan Facebook Ads untuk membuat iklan perpesanan untuk saluran ini.",
+      "connectCta": "Hubungkan Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Tidak ada",
+      "housing": "Perumahan",
+      "employment": "Ketenagakerjaan",
+      "credit": "Kredit",
+      "issues": "Isu sosial, pemilu, atau politik",
+      "financialProducts": "Produk dan layanan keuangan",
+      "onlineGambling": "Perjudian dan permainan online"
+    },
+    "fields": {
+      "objective": {
+        "label": "Tujuan",
+        "value": "Keterlibatan (perpesanan)"
+      },
+      "specialAdCategory": {
+        "label": "Kategori iklan khusus",
+        "description": "Memilih kategori terbatas menghapus penargetan usia, gender, dan penargetan lain yang tidak diizinkan Meta untuk kategori tersebut.",
+        "restrictedNote": "Penargetan usia dan gender dinonaktifkan karena kategori iklan khusus yang terbatas dipilih."
+      },
+      "adAccount": {
+        "label": "Akun iklan"
+      },
+      "whatsappPage": {
+        "label": "Halaman Facebook",
+        "description": "Iklan WhatsApp tetap memerlukan Halaman Facebook yang tertaut — pilih Halaman yang terhubung untuk digunakan."
+      },
+      "dailyBudget": {
+        "label": "Anggaran harian",
+        "placeholder": "mis. 2000",
+        "description": "Masukkan jumlah dalam satuan mata uang terkecil akun iklan Anda (mis. sen untuk USD)."
+      },
+      "countries": {
+        "label": "Negara"
+      },
+      "ageRange": {
+        "min": "Usia minimum",
+        "max": "Usia maksimum"
+      },
+      "gender": {
+        "label": "Gender",
+        "male": "Pria",
+        "female": "Wanita"
+      },
+      "schedule": {
+        "start": "Waktu mulai",
+        "end": "Waktu berakhir"
+      },
+      "destination": {
+        "label": "Tujuan"
+      },
+      "callToAction": {
+        "label": "Ajakan bertindak",
+        "derivedNote": "Tombol ajakan bertindak ({type}) diturunkan secara otomatis dari saluran."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Negara kategori iklan",
+        "description": "Diperlukan oleh Meta untuk kategori isu sosial, pemilu, atau politik — negara tempat Anda diizinkan menjalankan iklan ini."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Pesan sambutan",
+      "label": "Pesan sambutan",
+      "description": "Dikirim secara otomatis saat seseorang memulai percakapan dari iklan ini.",
+      "mode": {
+        "default": "Gunakan pesan default Meta",
+        "single": "Pesan tunggal",
+        "templates": "Uji hingga 5 varian pesan"
+      },
+      "messageLabel": "Pesan",
+      "templateLabel": "Varian {index}",
+      "headingPlaceholder": "Judul (opsional)",
+      "addTemplate": "Tambah varian",
+      "templatesLimit": "Hingga {max} varian dapat diuji."
+    },
+    "creative": {
+      "mediaRequired": "Unggah gambar atau video untuk melanjutkan.",
+      "mediaType": {
+        "label": "Media kreatif",
+        "orVideo": "atau video",
+        "selectAdAccountFirst": "Pilih akun iklan sebelum mengunggah media.",
+        "uploadImage": "Unggah gambar",
+        "uploadVideo": "Unggah video"
+      },
+      "uploading": "Mengunggah...",
+      "imageUploadFailed": "Gagal mengunggah gambar. Silakan coba lagi.",
+      "videoProcessing": "Memproses video...",
+      "videoReady": "Video siap",
+      "videoProcessingFailed": "Pemrosesan video gagal. Silakan coba file lain.",
+      "previewAlt": "Pratinjau kreatif",
+      "primaryText": "Teks utama",
+      "headline": "Judul utama"
+    },
+    "wizard": {
+      "createDraft": "Buat sebagai draf yang dijeda",
+      "campaignStep": {
+        "title": "Kampanye",
+        "namePlaceholder": "Beri nama iklan ini"
+      },
+      "adSetStep": {
+        "title": "Set iklan"
+      },
+      "creativeStep": {
+        "title": "Materi iklan"
+      },
+      "preflightStep": {
+        "title": "Tinjauan"
+      },
+      "errors": {
+        "nameRequired": "Masukkan nama untuk iklan ini.",
+        "adAccountRequired": "Pilih akun iklan.",
+        "budgetRequired": "Masukkan anggaran harian.",
+        "countryRequired": "Pilih setidaknya satu negara.",
+        "mediaRequired": "Unggah gambar atau video."
+      }
+    },
+    "preflight": {
+      "title": "Ringkasan",
+      "pausedNote": "Iklan ini dibuat sebagai draf yang dijeda. Tidak ada yang tayang, dan tidak ada uang yang dikeluarkan, sampai Anda mempublikasikannya."
+    },
+    "publishConfirm": {
+      "title": "Publikasikan iklan ini?",
+      "description": "Mempublikasikan akan mengaktifkan kampanye, set iklan, dan iklan secara berurutan. Meta akan mulai membelanjakan anggaran Anda setelah pengiriman dimulai.",
+      "confirm": "Publikasikan"
+    },
+    "list": {
+      "viewOnMeta": "Lihat di Meta",
+      "empty": "Belum ada iklan perpesanan.",
+      "createState": "Status draf",
+      "actions": "Tindakan",
+      "notPublishedYet": "Belum dipublikasikan",
+      "draftReady": "Draf siap",
+      "createFailed": "Pembuatan gagal",
+      "creating": "Membuat...",
+      "publish": "Publikasikan",
+      "pause": "Jeda"
+    },
+    "messages": {
+      "created": "Draf iklan dibuat.",
+      "actionSucceeded": "Selesai."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Buat dan kelola iklan Click-to-WhatsApp di sini."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Buat dan kelola iklan Click-to-Messenger di sini."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Buat dan kelola iklan Click-to-Instagram di sini."
+      },
+      "connectCta": "Hubungkan Facebook Ads",
+      "reconnectCta": "Hubungkan ulang",
+      "reconnectNeeded": "Koneksi ini perlu dihubungkan ulang.",
+      "refresh": "Segarkan",
+      "whatsappPageRequiredNote": "Iklan Click-to-WhatsApp tetap memerlukan Halaman Facebook yang tertaut (persyaratan Meta) — Anda akan memilihnya saat membuat iklan.",
+      "emptyDashboardNote": "Iklan yang dibuat di sini sekarang otomatis muncul di dasbor Iklan channel ini — pilih integrasi ini dari filter di sana untuk melihat akun dan pengeluarannya."
+    },
+    "insights": {
+      "title": "Performa",
+      "empty": "Belum ada data",
+      "impressions": "Tayangan",
+      "reach": "Jangkauan",
+      "spend": "Pengeluaran",
+      "clicks": "Klik",
+      "conversations": "Percakapan",
+      "costPerConversation": "Biaya/percakapan",
+      "costPerConversationTooltip": "Biaya rata-rata per percakapan pesan yang dimulai.",
+      "datePresetLabel": "Periode:",
+      "datePreset": {
+        "maximum": "Sepanjang waktu",
+        "last_30d": "30 hari terakhir",
+        "last_7d": "7 hari terakhir"
+      }
+    }
   }
 }
