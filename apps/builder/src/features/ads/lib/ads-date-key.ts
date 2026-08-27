@@ -7,15 +7,24 @@
  * date), making the dashboard fetch the wrong window. Format and parse are a
  * matched pair so a written key round-trips back to the same calendar day.
  *
- * KNOWN INTERIM SEAM (tracked): these keys are the user's LOCAL calendar day,
- * but `parseAnalyticsDateRange` / the ads-conversion repository still anchor and
- * bucket by UTC day (`... AT TIME ZONE 'UTC' ...`). For a non-UTC viewer that
- * shifts the queried window by their UTC offset. This is deliberate: the shared
- * filter is local-oriented (its forward-compatible, correct end-state), and the
- * full move of the Ads reporting pipeline off hardcoded UTC — day-bucketing,
- * the funnel/spend day-keys, the external CSV contract, and the ad-account
- * reporting timezone — is a separate planned project. See
- * `docs/plans/2026-08-27-ads-timezone-migration.md`.
+ * SEAM CLOSED for the DB-backed pipeline (funnel, timeseries, CSV export):
+ * `parseAnalyticsDateRange` now resolves the viewer's IANA timezone (the `tz`
+ * URL param, threaded alongside these keys — see `use-ads-range-url.ts`) and
+ * converts the local day boundaries to exact UTC instants via `date-fns-tz`'s
+ * `fromZonedTime`, and the ads-conversion repository's day-bucketing
+ * (`AT TIME ZONE`) is parameterized on that same timezone. A viewer's picked
+ * calendar day now queries the matching window regardless of their UTC
+ * offset. See `docs/plans/2026-08-27-ads-timezone-migration.md` for the
+ * completed migration record.
+ *
+ * RESIDUAL SEAM (by design, not a bug): Meta Graph API's `insights` endpoint
+ * interprets `since`/`until` date-keys in the AD ACCOUNT's own reporting
+ * timezone, not the viewer's — there is no per-request override. Spend/
+ * impressions numbers reconcile with Meta Ads Manager (ad-account TZ);
+ * DB-sourced conversions/funnel/timeseries reconcile with the viewer's "my
+ * day" (viewer TZ). These two can legitimately disagree near midnight for a
+ * viewer whose timezone differs from the ad account's — documented, not
+ * fixable without Meta changing Insights' timezone contract.
  */
 
 const pad = (value: number): string => String(value).padStart(2, "0")

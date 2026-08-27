@@ -23,6 +23,11 @@ import { parseAnalyticsDateRange } from "../schemas/analytics"
 type AdsAnalyticsRange = {
   from: string
   to: string
+  // Viewer's IANA timezone (from the `tz` URL param) — resolved by
+  // `parseAnalyticsDateRange`/`resolveTimezone` to exact UTC instants for
+  // every DB-backed query below. Omitted/invalid resolves to "UTC", the
+  // pre-migration behavior.
+  tz?: string
   adAccount?: string
   integrationWhatsappId?: string
   // `channel`/`integrationMessengerId`/`integrationInstagramId` widen this
@@ -158,6 +163,7 @@ async function listInsightsForConnectedAdAccounts(input: {
       return result.value.map((row) => ({
         adId: row.ad_id,
         adName: row.ad_name,
+        currency: row.account_currency ?? null,
         spend: row.spend,
         impressions: row.impressions,
         clicks: row.clicks,
@@ -246,6 +252,12 @@ export async function getAdsAnalyticsData(
       until,
       ...channelScope(range),
     }),
+    // `from`/`to` here are still raw date-KEYS (not the resolved UTC
+    // instants) — Meta Graph API's `insights` endpoint interprets them in
+    // the AD ACCOUNT's own reporting timezone, not the viewer's. This is
+    // unavoidable (no per-request override) and deliberately unchanged by
+    // the viewer-timezone migration — see the "RESIDUAL SEAM" note in
+    // `ads-date-key.ts`.
     listInsightsForConnectedAdAccounts({
       workspaceId,
       since: from,
@@ -303,7 +315,7 @@ export async function getAdsAnalyticsTimeseries(
   workspaceId: string,
   range: AdsAnalyticsRange,
 ): Promise<AdsAnalyticsTimeseriesRow[]> {
-  const { since, until, from, to } = parseAnalyticsDateRange(range)
+  const { since, until, from, to, timezone } = parseAnalyticsDateRange(range)
   const adAccountId = AD_ACCOUNT_ID_RE.test(range.adAccount ?? "")
     ? range.adAccount
     : undefined
@@ -313,8 +325,11 @@ export async function getAdsAnalyticsTimeseries(
       workspaceId,
       since,
       until,
+      timezone,
       ...channelScope(range),
     }),
+    // `from`/`to` date-KEYS, interpreted by Meta in the ad account's own
+    // reporting timezone — see the comment in `getAdsAnalyticsData` above.
     listDailyInsightsForConnectedAdAccounts({
       workspaceId,
       since: from,

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   getDefaultAdsAnalyticsRange,
   parseAnalyticsDateRange,
+  resolveTimezone,
 } from "@/features/ads/schemas/analytics"
 
 describe("getDefaultAdsAnalyticsRange", () => {
@@ -104,5 +105,78 @@ describe("parseAnalyticsDateRange", () => {
       expect(Number.isNaN(asTo.since.getTime())).toBe(false)
       expect(Number.isNaN(asTo.until.getTime())).toBe(false)
     }
+  })
+
+  test("defaults to UTC anchoring when `tz` is omitted (backward compat)", () => {
+    const result = parseAnalyticsDateRange({
+      from: "2026-07-13",
+      to: "2026-08-11",
+    })
+
+    expect(result.timezone).toBe("UTC")
+    expect(result.since.toISOString()).toBe("2026-07-13T00:00:00.000Z")
+    expect(result.until.toISOString()).toBe("2026-08-11T23:59:59.999Z")
+  })
+
+  test("converts local day boundaries to exact UTC instants for a non-UTC viewer timezone", () => {
+    const result = parseAnalyticsDateRange({
+      from: "2026-08-27",
+      to: "2026-08-27",
+      tz: "Asia/Saigon",
+    })
+
+    expect(result.timezone).toBe("Asia/Saigon")
+    expect(result.since.toISOString()).toBe("2026-08-26T17:00:00.000Z")
+    expect(result.until.toISOString()).toBe("2026-08-27T16:59:59.999Z")
+  })
+
+  test("falls back to UTC for an invalid `tz` (old byte-identical behavior)", () => {
+    const invalidTz = parseAnalyticsDateRange({
+      from: "2026-07-13",
+      to: "2026-08-11",
+      tz: "not-a-tz",
+    })
+    expect(invalidTz.timezone).toBe("UTC")
+    expect(invalidTz.since.toISOString()).toBe("2026-07-13T00:00:00.000Z")
+
+    const tooLongTz = parseAnalyticsDateRange({
+      from: "2026-07-13",
+      to: "2026-08-11",
+      tz: "A".repeat(65),
+    })
+    expect(tooLongTz.timezone).toBe("UTC")
+    expect(tooLongTz.since.toISOString()).toBe("2026-07-13T00:00:00.000Z")
+  })
+
+  test("the over-cap clamp branch anchors the clamped window to the viewer timezone", () => {
+    const result = parseAnalyticsDateRange({
+      from: "1986-08-11",
+      to: "2026-08-27",
+      tz: "Asia/Saigon",
+    })
+
+    expect(result.from).toBe("2025-08-27")
+    expect(result.to).toBe("2026-08-27")
+    expect(result.timezone).toBe("Asia/Saigon")
+    // The clamped `since` is local midnight of `result.from` in Asia/Saigon
+    // (UTC+7), not UTC midnight.
+    expect(result.since.toISOString()).toBe("2025-08-26T17:00:00.000Z")
+    const spanDays =
+      (result.until.getTime() - result.since.getTime()) / (24 * 60 * 60 * 1000)
+    expect(spanDays).toBeLessThanOrEqual(366)
+  })
+})
+
+describe("resolveTimezone", () => {
+  test("passes through a valid IANA timezone name", () => {
+    expect(resolveTimezone("Asia/Saigon")).toBe("Asia/Saigon")
+    expect(resolveTimezone("America/New_York")).toBe("America/New_York")
+    expect(resolveTimezone("UTC")).toBe("UTC")
+  })
+
+  test("falls back to UTC for garbage input", () => {
+    expect(resolveTimezone("not-a-tz")).toBe("UTC")
+    expect(resolveTimezone("")).toBe("UTC")
+    expect(resolveTimezone("A".repeat(65))).toBe("UTC")
   })
 })

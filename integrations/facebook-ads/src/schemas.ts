@@ -68,6 +68,8 @@ const numericInsightField = z
 export const facebookAdInsightSchema = z.object({
   ad_id: z.string(),
   ad_name: z.string().optional(),
+  /** ISO currency of the owning ad account — `spend` is denominated in it. */
+  account_currency: z.string().optional(),
   spend: numericInsightField,
   impressions: numericInsightField,
   clicks: numericInsightField,

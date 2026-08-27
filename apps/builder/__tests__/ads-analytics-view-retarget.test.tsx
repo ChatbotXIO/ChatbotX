@@ -221,6 +221,7 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
     const data: AdsAnalyticsData = {
       totals: emptyTotals,
       perAd: [singleChannelRow],
+      spendCurrency: null,
     }
 
     await act(async () => {
@@ -249,6 +250,7 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
     const data: AdsAnalyticsData = {
       totals: emptyTotals,
       perAd: [singleChannelRow],
+      spendCurrency: null,
     }
 
     await act(async () => {

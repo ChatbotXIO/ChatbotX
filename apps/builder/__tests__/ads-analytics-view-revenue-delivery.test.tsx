@@ -140,6 +140,7 @@ const analyticsData = {
       costPerConversation: 10,
     },
   ],
+  spendCurrency: "USD",
 } satisfies AdsAnalyticsData
 
 const deliverySummary = {
@@ -157,6 +158,7 @@ const timeseries = [
 const range = {
   from: "2026-08-01",
   to: "2026-08-10",
+  tz: "",
   account: "",
   channel: "whatsapp",
   channelAccount: "",

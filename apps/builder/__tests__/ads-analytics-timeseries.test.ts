@@ -260,6 +260,24 @@ describe("getAdsAnalyticsTimeseries", () => {
     expect(result[0]).toMatchObject({ date: "2026-08-01", conversations: 3 })
   })
 
+  test("threads the resolved viewer timezone into the funnel timeseries repository call, defaulting to UTC", async () => {
+    mocks.findByWorkspaceId.mockResolvedValue(null)
+
+    await getAdsAnalyticsTimeseries("ws-1", RANGE)
+    expect(mocks.getCtwaFunnelTimeseries).toHaveBeenCalledWith(
+      expect.objectContaining({ timezone: "UTC" }),
+    )
+
+    vi.clearAllMocks()
+    mocks.findByWorkspaceId.mockResolvedValue(null)
+    mocks.getCtwaFunnelTimeseries.mockResolvedValue([])
+
+    await getAdsAnalyticsTimeseries("ws-1", { ...RANGE, tz: "Asia/Saigon" })
+    expect(mocks.getCtwaFunnelTimeseries).toHaveBeenCalledWith(
+      expect.objectContaining({ timezone: "Asia/Saigon" }),
+    )
+  })
+
   test("keeps funnel data and sets spend null when Meta insights fail to load", async () => {
     mocks.getCtwaFunnelTimeseries.mockResolvedValue([
       {

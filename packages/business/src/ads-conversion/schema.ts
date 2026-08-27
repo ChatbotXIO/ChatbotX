@@ -257,6 +257,15 @@ const ctwaFunnelShape = ctwaDateRangeShape.extend({
   integrationMessengerId: zodBigintAsString().optional(),
   integrationInstagramId: zodBigintAsString().optional(),
   allChannels: z.boolean().optional(),
+  // Viewer IANA timezone for day-bucketing (`getCtwaFunnelTimeseries`'s
+  // repository queries) — mirrors `message-stats.repository.ts`'s
+  // `AT TIME ZONE ${timezone}` pattern. Omitted defaults to "UTC" at the
+  // repository layer, so every pre-migration caller (this field didn't
+  // exist before) keeps its exact prior day-bucketing behavior. `getCtwaFunnel`/
+  // `getCapiDeliverySummary` accept it too (shared shape) but never use it —
+  // neither buckets by day, only the already timezone-anchored [since, until]
+  // window matters for them.
+  timezone: z.string().optional(),
 })
 
 // `allChannels` aggregates across every ads-eligible channel/integration —

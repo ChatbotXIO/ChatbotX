@@ -110,7 +110,17 @@ export const createMessagingAdRequest = z
         // `["NONE"]` sentinel for no category. `CREDIT` is a valid enum value for
         // reading legacy campaigns, but the create UI no longer offers it (Meta
         // deprecated it) — see `specialAdCategoryOptions`.
-        specialAdCategories: z.array(specialAdCategorySchema).min(1),
+        specialAdCategories: z
+          .array(specialAdCategorySchema)
+          .min(1)
+          // `CREDIT` stays in the enum so legacy campaigns still READ, but
+          // Meta deprecated it for creation (it folded into
+          // FINANCIAL_PRODUCTS_SERVICES) — reject it here so a direct API
+          // caller cannot submit what the UI already forbids.
+          .refine((categories) => !categories.includes("CREDIT"), {
+            message:
+              "CREDIT is deprecated — use FINANCIAL_PRODUCTS_SERVICES instead.",
+          }),
         specialAdCategoryCountry: z
           .array(z.string().trim().length(2))
           .optional(),

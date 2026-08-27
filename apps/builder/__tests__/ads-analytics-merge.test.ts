@@ -563,3 +563,55 @@ describe("mergeAdsAnalytics — 'All channels' channels passenger label", () => 
     expect(result.perAd[0]?.channels).toBeUndefined()
   })
 })
+
+describe("mergeAdsAnalytics — spendCurrency", () => {
+  const emptyFunnel = {
+    totals: { conversations: 0, leads: 0, purchases: 0, revenue: 0 },
+    perAd: [],
+  }
+
+  test("exposes the single shared ad-account currency", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [
+        { adId: "ad-1", currency: "VND", spend: 100 },
+        { adId: "ad-2", currency: "VND", spend: 50 },
+      ],
+    })
+
+    expect(result.spendCurrency).toBe("VND")
+  })
+
+  test("returns null for mixed-currency ad accounts (never stamp a wrong symbol)", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [
+        { adId: "ad-1", currency: "USD", spend: 100 },
+        { adId: "ad-2", currency: "VND", spend: 50 },
+      ],
+    })
+
+    expect(result.spendCurrency).toBeNull()
+  })
+
+  test("returns null when one row's currency is unknown even if others agree", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [
+        { adId: "ad-1", currency: "USD", spend: 100 },
+        { adId: "ad-2", spend: 50 },
+      ],
+    })
+
+    expect(result.spendCurrency).toBeNull()
+  })
+
+  test("returns null when no insights carry a currency", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [{ adId: "ad-1", spend: 100 }],
+    })
+
+    expect(result.spendCurrency).toBeNull()
+  })
+})

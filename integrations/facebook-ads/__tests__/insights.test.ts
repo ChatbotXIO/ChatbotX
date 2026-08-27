@@ -53,7 +53,9 @@ describe("getAdInsights", () => {
         clicks: 40,
       },
     ])
-    expect(capturedFields).toBe("ad_id,ad_name,spend,impressions,clicks")
+    expect(capturedFields).toBe(
+      "ad_id,ad_name,account_currency,spend,impressions,clicks",
+    )
     expect(capturedLevel).toBe("ad")
     expect(capturedTimeRange).toBe(
       JSON.stringify({ since: "2026-08-01", until: "2026-08-10" }),
@@ -96,7 +98,7 @@ describe("getAdInsights", () => {
     })
 
     expect(capturedFields).toBe(
-      "ad_id,ad_name,spend,impressions,clicks,date_start",
+      "ad_id,ad_name,account_currency,spend,impressions,clicks,date_start",
     )
     expect(capturedTimeIncrement).toBe("1")
     expect(insights[0]?.date_start).toBe("2026-08-01")

@@ -163,6 +163,34 @@ describe("ads analytics export route", () => {
     })
   })
 
+  test("threads `tz` into the resolved [since, until] window so CSV rows match the on-screen viewer-local window", async () => {
+    mockListExportRows.mockResolvedValueOnce([])
+
+    await callRoute(
+      "segment=leads&from=2026-08-27&to=2026-08-27&tz=Asia%2FSaigon",
+    )
+
+    expect(mockListExportRows).toHaveBeenCalledWith(
+      expect.objectContaining({
+        since: new Date("2026-08-26T17:00:00.000Z"),
+        until: new Date("2026-08-27T16:59:59.999Z"),
+      }),
+    )
+  })
+
+  test("falls back to UTC anchoring for an omitted `tz` (old export links keep working unchanged)", async () => {
+    mockListExportRows.mockResolvedValueOnce([])
+
+    await callRoute("segment=leads&from=2026-08-01&to=2026-08-10")
+
+    expect(mockListExportRows).toHaveBeenCalledWith(
+      expect.objectContaining({
+        since: new Date("2026-08-01T00:00:00.000Z"),
+        until: new Date("2026-08-10T23:59:59.999Z"),
+      }),
+    )
+  })
+
   test("explicit channel=whatsapp gets the 5-column ads-whatsapp-* format", async () => {
     mockListExportRows.mockResolvedValueOnce([
       {

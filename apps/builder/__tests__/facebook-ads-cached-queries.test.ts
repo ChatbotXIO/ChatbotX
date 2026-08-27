@@ -123,10 +123,10 @@ describe("Facebook Ads cached queries", () => {
     expect(mocks.cacheKeys).toContain("fb-ads:ad-accounts:ws-1")
     expect(mocks.cacheKeys).toContain("fb-ads:ad-accounts:ws-2")
     expect(mocks.cacheKeys).toContain(
-      "fb-ads:insights:v2:ws-1:act_1:2026-08-01:2026-08-11",
+      "fb-ads:insights:v3:ws-1:act_1:2026-08-01:2026-08-11",
     )
     expect(mocks.cacheKeys).toContain(
-      "fb-ads:insights:v2:ws-2:act_1:2026-08-01:2026-08-11",
+      "fb-ads:insights:v3:ws-2:act_1:2026-08-01:2026-08-11",
     )
     expect(new Set(mocks.cacheKeys).size).toBe(mocks.cacheKeys.length)
     expect(mocks.runAction).toHaveBeenCalledTimes(4)
@@ -149,8 +149,8 @@ describe("Facebook Ads cached queries", () => {
     })
 
     expect(mocks.cacheKeys).toEqual([
-      "fb-ads:insights:v2:ws-1:act_1:2026-08-01:2026-08-11",
-      "fb-ads:insights-daily:v1:ws-1:act_1:2026-08-01:2026-08-11",
+      "fb-ads:insights:v3:ws-1:act_1:2026-08-01:2026-08-11",
+      "fb-ads:insights-daily:v2:ws-1:act_1:2026-08-01:2026-08-11",
     ])
     expect(mocks.runAction).toHaveBeenCalledWith("getAdInsights", {
       ctx: expect.objectContaining({

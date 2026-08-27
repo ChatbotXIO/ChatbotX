@@ -74,6 +74,12 @@ describe("useAdsRangeUrl", () => {
     expect(pathname).toBe("/space/ws-1/dashboard/ads/whatsapp")
     expect(params.get("from")).toBe("2026-08-12")
     expect(params.get("to")).toBe("2026-08-19")
+    // The browser's resolved IANA timezone is stamped alongside from/to so
+    // the server can convert these local day boundaries back to exact UTC
+    // instants for the viewer's timezone.
+    expect(params.get("tz")).toBe(
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+    )
     // Every other existing search param is preserved.
     expect(params.get("channel")).toBe("whatsapp")
     expect(params.get("channelAccount")).toBe("iw-1")

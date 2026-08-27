@@ -203,3 +203,31 @@ describe("buildCreateMessagingAdRequest", () => {
     })
   })
 })
+
+describe("createMessagingAdRequest — special ad categories", () => {
+  const buildFor = (categories: string[]) =>
+    buildCreateMessagingAdRequest(
+      { ...baseValues, specialAdCategories: categories },
+      { workspaceId: "ws_1", channel: "messenger", integrationId: "im_1" },
+    )
+
+  test("rejects deprecated CREDIT on create (read-only enum value)", async () => {
+    const { createMessagingAdRequest } = await import(
+      "@/features/ads-campaign/schema/wizard"
+    )
+    expect(
+      createMessagingAdRequest.safeParse(buildFor(["CREDIT"])).success,
+    ).toBe(false)
+  })
+
+  test("accepts FINANCIAL_PRODUCTS_SERVICES (CREDIT's replacement)", async () => {
+    const { createMessagingAdRequest } = await import(
+      "@/features/ads-campaign/schema/wizard"
+    )
+    expect(
+      createMessagingAdRequest.safeParse(
+        buildFor(["FINANCIAL_PRODUCTS_SERVICES"]),
+      ).success,
+    ).toBe(true)
+  })
+})

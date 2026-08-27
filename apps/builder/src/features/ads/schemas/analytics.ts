@@ -1,3 +1,4 @@
+import { fromZonedTime } from "date-fns-tz"
 import { createSearchParamsCache, parseAsString } from "nuqs/server"
 import { accountSearchParam } from "./account"
 
@@ -62,37 +63,90 @@ export const adsAnalyticsSearchParamsCache = createSearchParamsCache({
   adAccount: parseAsString.withDefault(""),
   from: parseAsString.withDefault(defaultRange.from),
   to: parseAsString.withDefault(defaultRange.to),
+  // Carries the viewer's IANA timezone name (e.g. `Intl.DateTimeFormat().
+  // resolvedOptions().timeZone`, threaded from the client — a server
+  // component can't read the browser's timezone). Default "" resolves to
+  // "UTC" in `resolveTimezone`/`parseAnalyticsDateRange`, so a request that
+  // never carried `tz` (an old bookmark, an external/legacy caller) keeps
+  // the pre-migration UTC-anchored behavior byte-identical.
+  tz: parseAsString.withDefault(""),
 })
 
 export type AdsAnalyticsSearchParams = Awaited<
   ReturnType<typeof adsAnalyticsSearchParamsCache.parse>
 >
 
-export function parseAnalyticsDateRange(input: { from: string; to: string }): {
+const MAX_TIMEZONE_NAME_LENGTH = 64
+
+/**
+ * Resolves an untrusted `tz` value (a URL search param) to a timezone name
+ * safe to hand to `Intl`/`date-fns-tz`. `Intl.DateTimeFormat` is the
+ * authority on "is this a real IANA name" — a length cap runs first only to
+ * avoid constructing a `DateTimeFormat` from a pathologically long string,
+ * never as a substitute for the validity check. Falls back to `"UTC"`,
+ * matching the pipeline's pre-migration behavior for any caller that omits
+ * or mangles the param.
+ */
+export function resolveTimezone(tz: string): string {
+  if (tz.length > MAX_TIMEZONE_NAME_LENGTH) {
+    return "UTC"
+  }
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: tz })
+    return tz
+  } catch {
+    return "UTC"
+  }
+}
+
+/** Local midnight of `dateKey` in `timezone`, as the exact UTC instant. */
+function zonedDayStart(dateKey: string, timezone: string): Date {
+  return fromZonedTime(`${dateKey}T00:00:00.000`, timezone)
+}
+
+/** The last local millisecond of `dateKey` in `timezone`, as a UTC instant. */
+function zonedDayEnd(dateKey: string, timezone: string): Date {
+  return fromZonedTime(`${dateKey}T23:59:59.999`, timezone)
+}
+
+export function parseAnalyticsDateRange(input: {
+  from: string
+  to: string
+  tz?: string
+}): {
   since: Date
   until: Date
   from: string
   to: string
+  timezone: string
 } {
+  const timezone = resolveTimezone(input.tz ?? "")
   const fallback = getDefaultAdsAnalyticsRange()
   const from = isValidDateKey(input.from) ? input.from : fallback.from
   const to = isValidDateKey(input.to) ? input.to : fallback.to
-  const since = new Date(`${from}T00:00:00.000Z`)
-  const until = new Date(`${to}T23:59:59.999Z`)
+  const since = zonedDayStart(from, timezone)
+  const until = zonedDayEnd(to, timezone)
 
   // Inverted order (from after to) is unsalvageable — fall back to the default.
   if (since.getTime() > until.getTime()) {
     return {
-      since: new Date(`${fallback.from}T00:00:00.000Z`),
-      until: new Date(`${fallback.to}T23:59:59.999Z`),
+      since: zonedDayStart(fallback.from, timezone),
+      until: zonedDayEnd(fallback.to, timezone),
       from: fallback.from,
       to: fallback.to,
+      timezone,
     }
   }
 
-  const rangeDays = (until.getTime() - since.getTime()) / MS_PER_DAY
+  // Cap by calendar-day KEYS (UTC-anchored key arithmetic), not elapsed
+  // instant milliseconds — a DST/dateline-skipping timezone (e.g.
+  // Pacific/Apia's 2011 skipped day) compresses elapsed time and would let a
+  // 367-key range slip under an instant-based cap.
+  const rangeDays =
+    (Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) /
+    MS_PER_DAY
   if (rangeDays <= MAX_ADS_ANALYTICS_RANGE_DAYS) {
-    return { since, until, from, to }
+    return { since, until, from, to, timezone }
   }
 
   // Over the cap — clamp the START to the most recent allowed window ending at
@@ -102,11 +156,20 @@ export function parseAnalyticsDateRange(input: { from: string; to: string }): {
   // the user sees the most recent year of data under the label they picked
   // instead of a silent, unexplained 7-day window. The cap counts inclusive
   // calendar days, so the earliest allowed `from` is `to` minus (MAX - 1) days.
-  const clampedSince = new Date(`${to}T00:00:00.000Z`)
-  clampedSince.setUTCDate(
-    clampedSince.getUTCDate() - (MAX_ADS_ANALYTICS_RANGE_DAYS - 1),
+  // This arithmetic stays on UTC-anchored date-KEYS (calendar-day subtraction
+  // is timezone-independent) — only the final `since`/`until` instants below
+  // are anchored to the viewer's timezone.
+  const clampedSinceKeyBasis = new Date(`${to}T00:00:00.000Z`)
+  clampedSinceKeyBasis.setUTCDate(
+    clampedSinceKeyBasis.getUTCDate() - (MAX_ADS_ANALYTICS_RANGE_DAYS - 1),
   )
-  const clampedFrom = clampedSince.toISOString().slice(0, 10)
+  const clampedFrom = clampedSinceKeyBasis.toISOString().slice(0, 10)
 
-  return { since: clampedSince, until, from: clampedFrom, to }
+  return {
+    since: zonedDayStart(clampedFrom, timezone),
+    until,
+    from: clampedFrom,
+    to,
+    timezone,
+  }
 }

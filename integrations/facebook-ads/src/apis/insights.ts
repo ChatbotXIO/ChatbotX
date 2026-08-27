@@ -51,6 +51,7 @@ async function fetchAllPages<T>(
 const graphAdInsightRowSchema = z.object({
   ad_id: z.string().trim().min(1),
   ad_name: z.string().optional(),
+  account_currency: z.string().optional(),
   spend: z.union([z.string(), z.number()]).optional(),
   impressions: z.union([z.string(), z.number()]).optional(),
   clicks: z.union([z.string(), z.number()]).optional(),
@@ -77,8 +78,8 @@ export function getAdInsights({
 }: GetAdInsightsInput): Promise<FacebookAdInsight[]> {
   const endpoint = `${version}/${adAccountId}/insights`
   const fields = timeIncrement
-    ? "ad_id,ad_name,spend,impressions,clicks,date_start"
-    : "ad_id,ad_name,spend,impressions,clicks"
+    ? "ad_id,ad_name,account_currency,spend,impressions,clicks,date_start"
+    : "ad_id,ad_name,account_currency,spend,impressions,clicks"
 
   return rescue(endpoint, async () => {
     const rows = await fetchAllPages<unknown>(endpoint, {

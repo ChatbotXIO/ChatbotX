@@ -247,15 +247,24 @@ function buildCapiSettingsHref(
 
 // Formatters take the next-intl locale explicitly: it is identical on the
 // server render and client hydration, unlike the Intl default locale.
-function formatMoney(locale: string, value: number | null): string {
+//
+// `currency` is the ad accounts' shared ISO currency (`data.spendCurrency`).
+// When it is null — mixed-currency accounts or no insights — render a bare
+// number instead of stamping a (wrong) currency symbol on the value.
+function formatMoney(
+  locale: string,
+  value: number | null,
+  currency: string | null,
+): string {
   if (value === null) {
     return "-"
   }
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value)
+  return new Intl.NumberFormat(
+    locale,
+    currency
+      ? { style: "currency", currency, maximumFractionDigits: 2 }
+      : { maximumFractionDigits: 2 },
+  ).format(value)
 }
 
 function formatRoas(value: number | null): string {
@@ -295,6 +304,12 @@ function buildExportHref(input: {
   }
   if (input.range.account) {
     params.set("account", input.range.account)
+  }
+  // Same `tz` the on-screen dashboard resolved this range with, so the CSV
+  // export queries the identical viewer-local window instead of silently
+  // reverting to UTC anchoring.
+  if (input.range.tz) {
+    params.set("tz", input.range.tz)
   }
   // Whatsapp's id comes from the page-level `account` switcher
   // (`integrationWhatsappId`); messenger/instagram from the account filter's
@@ -783,20 +798,28 @@ export function AdsAnalyticsView({
                 : undefined
             }
             label={t("ads.analytics.adSpend")}
-            value={formatMoney(locale, data.totals.spend)}
+            value={formatMoney(locale, data.totals.spend, data.spendCurrency)}
           />
           <CostTile
             label={t("ads.analytics.costPerLead")}
-            value={formatMoney(locale, data.totals.costPerLead)}
+            value={formatMoney(
+              locale,
+              data.totals.costPerLead,
+              data.spendCurrency,
+            )}
           />
           <CostTile
             label={t("ads.analytics.costPerPurchase")}
-            value={formatMoney(locale, data.totals.costPerPurchase)}
+            value={formatMoney(
+              locale,
+              data.totals.costPerPurchase,
+              data.spendCurrency,
+            )}
           />
           <CostTile
             info={t("ads.analytics.revenueCurrencyNote")}
             label={t("ads.analytics.revenue")}
-            value={formatMoney(locale, data.totals.revenue)}
+            value={formatMoney(locale, data.totals.revenue, data.spendCurrency)}
           />
           <CostTile
             label={t("ads.analytics.roas")}
@@ -817,7 +840,7 @@ export function AdsAnalyticsView({
         <CostTile
           info={t("ads.analytics.costCurrencyNote")}
           label={t("ads.analytics.cpc")}
-          value={formatMoney(locale, data.totals.cpc)}
+          value={formatMoney(locale, data.totals.cpc, data.spendCurrency)}
         />
         <CostTile
           label={t("ads.analytics.ctr")}
@@ -826,12 +849,16 @@ export function AdsAnalyticsView({
         <CostTile
           info={t("ads.analytics.costCurrencyNote")}
           label={t("ads.analytics.cpm")}
-          value={formatMoney(locale, data.totals.cpm)}
+          value={formatMoney(locale, data.totals.cpm, data.spendCurrency)}
         />
         <CostTile
           info={t("ads.analytics.costCurrencyNote")}
           label={t("ads.analytics.costPerConversation")}
-          value={formatMoney(locale, data.totals.costPerConversation)}
+          value={formatMoney(
+            locale,
+            data.totals.costPerConversation,
+            data.spendCurrency,
+          )}
         />
       </div>
 
@@ -965,16 +992,28 @@ export function AdsAnalyticsView({
                         {t(`ads.conversionEvents.tabs.${channel}`)}
                       </span>
                     </TableCell>
-                    <TableCell>{formatMoney(locale, ad.spend)}</TableCell>
-                    <TableCell>{ad.purchases.toLocaleString(locale)}</TableCell>
-                    <TableCell>{formatMoney(locale, ad.revenue)}</TableCell>
                     <TableCell>
-                      {formatMoney(locale, ad.costPerPurchase)}
+                      {formatMoney(locale, ad.spend, data.spendCurrency)}
+                    </TableCell>
+                    <TableCell>{ad.purchases.toLocaleString(locale)}</TableCell>
+                    <TableCell>
+                      {formatMoney(locale, ad.revenue, data.spendCurrency)}
+                    </TableCell>
+                    <TableCell>
+                      {formatMoney(
+                        locale,
+                        ad.costPerPurchase,
+                        data.spendCurrency,
+                      )}
                     </TableCell>
                     <TableCell>{formatRoas(ad.roas)}</TableCell>
                     <TableCell>{ad.leads.toLocaleString(locale)}</TableCell>
-                    <TableCell>{formatMoney(locale, ad.costPerLead)}</TableCell>
-                    <TableCell>{formatMoney(locale, ad.cpc)}</TableCell>
+                    <TableCell>
+                      {formatMoney(locale, ad.costPerLead, data.spendCurrency)}
+                    </TableCell>
+                    <TableCell>
+                      {formatMoney(locale, ad.cpc, data.spendCurrency)}
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger

@@ -1633,6 +1633,7 @@ class AdsConversionService extends BaseService {
           workspaceId: parsed.workspaceId,
           since: parsed.since,
           until: parsed.until,
+          timezone: parsed.timezone,
         },
         tx,
       )
@@ -1647,6 +1648,7 @@ class AdsConversionService extends BaseService {
           channel: parsed.channel,
           integrationMessengerId: parsed.integrationMessengerId,
           integrationInstagramId: parsed.integrationInstagramId,
+          timezone: parsed.timezone,
         },
         tx,
       )

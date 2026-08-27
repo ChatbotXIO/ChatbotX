@@ -31,6 +31,7 @@ vi.mock("@chatbotx.io/ui/components/ui/select", () => ({
 const baseRange = {
   from: "2026-08-01",
   to: "2026-08-10",
+  tz: "",
   account: "",
   channelAccount: "",
   adAccount: "",

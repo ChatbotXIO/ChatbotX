@@ -76,7 +76,7 @@ export function getCachedAdInsights(input: {
   getContext: () => Promise<FacebookAdsContext>
 }): Promise<FacebookAdInsight[]> {
   return withCache(
-    `fb-ads:insights:v2:${input.workspaceId}:${input.adAccountId}:${input.since}:${input.until}`,
+    `fb-ads:insights:v3:${input.workspaceId}:${input.adAccountId}:${input.since}:${input.until}`,
     async () => {
       const ctx = await input.getContext()
       return facebookAdsIntegration.runAction("getAdInsights", {
@@ -100,7 +100,7 @@ export function getCachedDailyAdInsights(input: {
   getContext: () => Promise<FacebookAdsContext>
 }): Promise<FacebookAdInsight[]> {
   return withCache(
-    `fb-ads:insights-daily:v1:${input.workspaceId}:${input.adAccountId}:${input.since}:${input.until}`,
+    `fb-ads:insights-daily:v2:${input.workspaceId}:${input.adAccountId}:${input.since}:${input.until}`,
     async () => {
       const ctx = await input.getContext()
       return facebookAdsIntegration.runAction("getAdInsights", {
