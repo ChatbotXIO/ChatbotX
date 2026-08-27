@@ -7,16 +7,14 @@ const {
   mockGetCurrentUserId,
   mockRedirect,
   mockResolveForOwner,
-} = vi.hoisted(
-  () => ({
-    mockGetCurrentUserId: vi.fn(async () => "user-1"),
-    mockGetCurrentUser: vi.fn(async () => ({ id: "user-1" })),
-    mockRedirect: vi.fn((path: string) => {
-      throw new Error(`redirect:${path}`)
-    }),
-    mockResolveForOwner: vi.fn(),
+} = vi.hoisted(() => ({
+  mockGetCurrentUserId: vi.fn(async () => "user-1"),
+  mockGetCurrentUser: vi.fn(async () => ({ id: "user-1" })),
+  mockRedirect: vi.fn((path: string) => {
+    throw new Error(`redirect:${path}`)
   }),
-)
+  mockResolveForOwner: vi.fn(),
+}))
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
