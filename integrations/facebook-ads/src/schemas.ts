@@ -172,13 +172,6 @@ export type FacebookAdsActions = {
     },
     MetaCampaign
   >
-  findMessagingCampaignByOperationId: Handler<
-    {
-      ctx: Context<FacebookAdsAuthValue>
-      props: { adAccountId: string; operationId: string }
-    },
-    MetaCampaign | null
-  >
   updateMessagingCampaignStatus: Handler<
     {
       ctx: Context<FacebookAdsAuthValue>
@@ -201,13 +194,6 @@ export type FacebookAdsActions = {
     },
     MetaAdSet
   >
-  findMessagingAdSetByOperationId: Handler<
-    {
-      ctx: Context<FacebookAdsAuthValue>
-      props: { campaignId: string; operationId: string }
-    },
-    MetaAdSet | null
-  >
   updateMessagingAdSetStatus: Handler<
     {
       ctx: Context<FacebookAdsAuthValue>
@@ -222,26 +208,12 @@ export type FacebookAdsActions = {
     },
     MetaAdCreative
   >
-  findMessagingAdCreativeByOperationId: Handler<
-    {
-      ctx: Context<FacebookAdsAuthValue>
-      props: { adAccountId: string; operationId: string }
-    },
-    MetaAdCreative | null
-  >
   createMessagingAd: Handler<
     {
       ctx: Context<FacebookAdsAuthValue>
       props: Omit<CreateAdInput, "accessToken" | "version">
     },
     MetaAd
-  >
-  findMessagingAdByOperationId: Handler<
-    {
-      ctx: Context<FacebookAdsAuthValue>
-      props: { adSetId: string; operationId: string }
-    },
-    MetaAd | null
   >
   updateMessagingAdStatus: Handler<
     {

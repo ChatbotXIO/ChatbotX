@@ -1117,6 +1117,18 @@ describe("receiveMessage — new contact MAC gate", () => {
     // `contacts` is recorded inside createNewContactWithMac now, so the handler
     // must not increment it separately (avoids double-counting).
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
+    // Threads the freshly-created ContactInbox id — not merely the contact
+    // id — so a Trigger action reacting to newContact attributes to THIS
+    // channel instead of falling back to most-recent-inbox.
+    const { emitContactCreated } = await import("@chatbotx.io/events")
+    expect(emitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-new",
+      "Test",
+      undefined,
+      undefined,
+      "ci-new",
+    )
   })
 
   test("still fetches getProfile for an outgoing webhook echo when creating a new contact", async () => {

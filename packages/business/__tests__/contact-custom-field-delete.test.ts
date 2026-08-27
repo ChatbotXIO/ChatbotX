@@ -68,6 +68,7 @@ describe("contactCustomFieldService.deleteByKey", () => {
       workspaceId: "ws-1",
       contactId: "contact-1",
       keyword: "Birthday",
+      contactInboxId: "ci-1",
     })
 
     // Assert: value snapshotted BEFORE delete, one event, one batched cache call.
@@ -77,6 +78,7 @@ describe("contactCustomFieldService.deleteByKey", () => {
     })
     expect(mocks.deleteWhere).toHaveBeenCalledOnce()
     expect(mocks.emitCustomFieldChanged).toHaveBeenCalledTimes(1)
+    // contactInboxId threads through to the trigger-attribution consumer.
     expect(mocks.emitCustomFieldChanged).toHaveBeenCalledWith(
       "ws-1",
       "contact-1",
@@ -84,6 +86,7 @@ describe("contactCustomFieldService.deleteByKey", () => {
       "Birthday",
       "2026-07-21T17:00:00.000Z",
       null,
+      "ci-1",
     )
     // The single contact's cache is invalidated so the detail view refreshes.
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledTimes(1)

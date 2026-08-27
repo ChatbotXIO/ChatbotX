@@ -343,6 +343,7 @@ class MinigameContactService extends BaseService {
       workspaceId: minigame.workspaceId,
       contactId,
       tagIds: minigame.generalSettings.playerTagIds,
+      contactInboxId: contactInbox.id,
     })
 
     if (

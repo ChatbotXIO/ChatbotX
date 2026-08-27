@@ -32,6 +32,7 @@ const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
   loggerInfo: vi.fn(),
   findByIdForWorkspace: vi.fn(),
+  findMostRecentByContact: vi.fn(),
   findAttributionByContactInbox: vi.fn(),
   findAttributionByAdReferral: vi.fn(),
   findBySourceEventId: vi.fn(),
@@ -111,6 +112,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
   contactInboxRepository: {
     findByIdForWorkspace: mocks.findByIdForWorkspace,
+    findMostRecentByContact: mocks.findMostRecentByContact,
   },
   integrationWhatsappRepository: {
     findWorkspaceIntegrationByInboxId: mocks.findWorkspaceIntegrationByInboxId,
@@ -208,6 +210,11 @@ describe("Trigger trackAdsLead/trackAdsPurchase full chain (TriggerExecutorServi
       channel: "whatsapp",
       inboxId: "inbox-1",
     })
+    mocks.findMostRecentByContact.mockResolvedValue({
+      id: "ci-1",
+      channel: "whatsapp",
+      inboxId: "inbox-1",
+    })
     mocks.findWorkspaceIntegrationByInboxId.mockResolvedValue({ id: "iw-1" })
     mocks.findAttributionByContactInbox.mockResolvedValue({
       id: "ci-1",
@@ -248,7 +255,7 @@ describe("Trigger trackAdsLead/trackAdsPurchase full chain (TriggerExecutorServi
           { type: "trackAdsPurchase", value: "10.00", currency: "USD" },
         ],
       } as never,
-      "contact-1",
+      { contactId: "contact-1" },
     )
 
     expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledTimes(2)
@@ -324,7 +331,7 @@ describe("Trigger trackAdsLead/trackAdsPurchase full chain (TriggerExecutorServi
         workspaceId: "ws-1",
         actions: [{ type: "trackAdsLead" }],
       } as never,
-      "contact-1",
+      { contactId: "contact-1" },
     )
 
     expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()

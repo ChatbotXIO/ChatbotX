@@ -36,7 +36,7 @@ export type MessagingAdTargeting = {
 export type CreateCampaignInput = {
   accessToken: string
   adAccountId: string
-  /** Correlation-tagged name — see `buildCorrelationName`. */
+  /** User-facing object name shown in Meta Ads Manager. */
   name: string
   specialAdCategories: SpecialAdCategory[]
   /** Required by Meta when a restricted special ad category applies to a specific market. */
@@ -60,7 +60,7 @@ export type CreateAdSetInput = {
   accessToken: string
   adAccountId: string
   campaignId: string
-  /** Correlation-tagged name — see `buildCorrelationName`. */
+  /** User-facing object name shown in Meta Ads Manager. */
   name: string
   /** Integer minor currency units (e.g. cents for USD). */
   dailyBudgetMinorUnits: number
@@ -149,7 +149,7 @@ export type CallToAction = {
 export type CreateAdCreativeInput = {
   accessToken: string
   adAccountId: string
-  /** Correlation-tagged name — see `buildCorrelationName`. */
+  /** User-facing object name shown in Meta Ads Manager. */
   name: string
   pageId: string
   /** CTID only. */
@@ -171,7 +171,7 @@ export type MetaAdCreative = {
 export type CreateAdInput = {
   accessToken: string
   adAccountId: string
-  /** Correlation-tagged name — see `buildCorrelationName`. */
+  /** User-facing object name shown in Meta Ads Manager. */
   name: string
   adSetId: string
   creativeId: string

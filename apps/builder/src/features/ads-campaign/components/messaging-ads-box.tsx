@@ -20,12 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
-import {
-  AlertTriangleIcon,
-  Loader2Icon,
-  PlusIcon,
-  RefreshCwIcon,
-} from "lucide-react"
+import { AlertTriangleIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -166,9 +161,9 @@ export function MessagingAdsBox({
   const insightGroupsKey = insightGroups
     .map((group) => `${group.adAccountId}:${[...group.adIds].sort().join(",")}`)
     .join("|")
-  const fetchInsights = async (
-    forceRefresh?: boolean,
-  ): Promise<Map<string, MessagingAdInsightResource>> => {
+  const fetchInsights = async (): Promise<
+    Map<string, MessagingAdInsightResource>
+  > => {
     const results = await Promise.all(
       insightGroups.map((group) =>
         client.adsCampaignAPI.getMessagingAdsInsights({
@@ -178,7 +173,6 @@ export function MessagingAdsBox({
           adAccountId: group.adAccountId,
           adIds: group.adIds,
           datePreset,
-          refresh: forceRefresh,
         }),
       ),
     )
@@ -201,7 +195,7 @@ export function MessagingAdsBox({
           insightGroupsKey,
         ]
       : null,
-    () => fetchInsights(false),
+    () => fetchInsights(),
   )
 
   const { executeAsync: onConnect, isPending: isConnecting } = useAction(
@@ -229,21 +223,12 @@ export function MessagingAdsBox({
     },
   )
 
-  const isRefreshing = list.isValidating || insights.isValidating
-  const handleRefresh = () => {
-    list.mutate(
-      client.adsCampaignAPI.listMessagingAds({
-        workspaceId,
-        channel,
-        integrationId,
-        refresh: true,
-      }),
-      { revalidate: false },
-    )
-    if (insightGroups.length > 0) {
-      insights.mutate(fetchInsights(true), { revalidate: false })
-    }
-  }
+  // Show a spinner ONLY during a genuine load — the first list/insights fetch,
+  // or a date-preset change (a fresh insights key with no cache). Never on SWR's
+  // background revalidation (`isValidating` on focus/reconnect), which would
+  // read as "always loading". Data otherwise refreshes itself: SWR revalidates
+  // on focus and after every create/publish/pause/delete (`list.mutate()`).
+  const isLoading = list.isLoading || insights.isLoading
 
   return (
     <Card>
@@ -254,20 +239,14 @@ export function MessagingAdsBox({
             <CardDescription>{t(labelKeys.description)}</CardDescription>
           </div>
           {initialConnectionState.connected && (
-            <div className="flex items-center gap-1">
-              <Button
-                aria-label={t("adsCampaign.box.refresh")}
-                disabled={isRefreshing}
-                onClick={handleRefresh}
-                size="icon"
-                title={t("adsCampaign.box.refresh")}
-                type="button"
-                variant="ghost"
-              >
-                <RefreshCwIcon
-                  className={isRefreshing ? "size-4 animate-spin" : "size-4"}
+            <div className="flex items-center gap-2">
+              {isLoading && (
+                <Loader2Icon
+                  aria-label={t("messages.loading")}
+                  className="size-4 animate-spin text-muted-foreground"
+                  role="status"
                 />
-              </Button>
+              )}
               <Button
                 onClick={() => setWizardOpen(true)}
                 size="sm"

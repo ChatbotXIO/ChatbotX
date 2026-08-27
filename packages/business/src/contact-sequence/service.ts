@@ -26,6 +26,7 @@ type RemovedEnrollment = {
   contactId: string
   sequenceId: string
   workspaceId: string
+  contactInboxId?: string
 }
 type RemoveEnrollmentsResult = {
   dispatchesToRemove: DispatchToRemove[]
@@ -41,6 +42,13 @@ type RemoveContactSequencesForContactsParams = {
   sequenceIds: string[]
   useTransaction?: boolean
   workspaceId: string
+  /**
+   * The `ContactInbox` the flow-step unsubscribe (`removeContactSequence`)
+   * has in scope. Only ever honored when `contactIds.length === 1` — see
+   * `removeContactSequencesForContacts` — so it can never misattribute a
+   * bulk removal (builder bulk unsubscribe, membership-diff) to one inbox.
+   */
+  contactInboxId?: string
 }
 
 type RemoveContactSequencesForContactParams = {
@@ -51,6 +59,7 @@ type RemoveContactSequencesForContactParams = {
   sequenceIds: string[]
   useTransaction?: boolean
   workspaceId: string
+  contactInboxId?: string
 }
 
 type UpdateContactSequencesParams = {
@@ -95,6 +104,20 @@ class ContactSequenceService extends BaseService {
       return []
     }
 
+    // A threaded contactInboxId is only ever attributable to a single
+    // contact's removal — honoring it for a multi-contact batch (builder
+    // bulk unsubscribe, membership-diff) would misattribute every other
+    // contact's unsubscribedFromSequence event to this one inbox.
+    let attributableContactInboxId: string | undefined
+    if (params.contactInboxId && contactIds.length === 1) {
+      attributableContactInboxId = params.contactInboxId
+    } else if (params.contactInboxId) {
+      logger.warn(
+        { workspaceId, contactCount: contactIds.length },
+        "Dropping contactInboxId for a multi-contact sequence removal to avoid misattribution",
+      )
+    }
+
     const removeWithClient = async (tx: DrizzleClient) => {
       const enrollments = await tx.query.contactsOnSequenceModel.findMany({
         where: {
@@ -110,7 +133,12 @@ class ContactSequenceService extends BaseService {
         },
       })
 
-      return await this.removeEnrollmentsWithClient(tx, enrollments, reason)
+      return await this.removeEnrollmentsWithClient(
+        tx,
+        enrollments,
+        reason,
+        attributableContactInboxId,
+      )
     }
 
     const removalResult: RemoveEnrollmentsResult = useTransaction
@@ -154,6 +182,7 @@ class ContactSequenceService extends BaseService {
       client: params.client,
       removeFromSchedule: params.removeFromSchedule,
       useTransaction: params.useTransaction,
+      contactInboxId: params.contactInboxId,
     })
   }
 
@@ -232,6 +261,7 @@ class ContactSequenceService extends BaseService {
       workspaceId: string
     }>,
     reason: RemoveReason,
+    contactInboxId?: string,
   ): Promise<RemoveEnrollmentsResult> {
     if (enrollments.length === 0) {
       return { dispatchesToRemove: [], removedEnrollments: [] }
@@ -270,6 +300,7 @@ class ContactSequenceService extends BaseService {
         contactId: enrollment.contactId,
         sequenceId: enrollment.sequenceId,
         workspaceId: enrollment.workspaceId,
+        contactInboxId,
       })),
     }
   }
@@ -299,6 +330,7 @@ class ContactSequenceService extends BaseService {
           enrollment.contactId,
           enrollment.sequenceId,
           sequenceNameById.get(enrollment.sequenceId) ?? "",
+          enrollment.contactInboxId,
         ),
       ),
     )

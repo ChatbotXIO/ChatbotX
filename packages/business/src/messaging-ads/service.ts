@@ -11,7 +11,6 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type { MessagingAdOperationModel } from "@chatbotx.io/database/types"
 import {
-  buildCorrelationName,
   buildPromotedObject,
   type FacebookAdsAuthValue,
   integration as facebookAdsIntegration,
@@ -115,7 +114,7 @@ class MessagingAdCampaignService {
     return integrationMessengerRepository.listByWorkspaceId(workspaceId)
   }
 
-  /** Starts a brand-new draft: resolves assets, persists the operation record BEFORE the first Graph POST, then runs the create-with-reconcile chain. */
+  /** Starts a brand-new draft: resolves assets, persists the operation record BEFORE the first Graph POST, then runs the create chain. */
   async createDraft(
     input: CreateMessagingAdDraftInput,
   ): Promise<MessagingAdOperationModel> {
@@ -162,7 +161,7 @@ class MessagingAdCampaignService {
     }
   }
 
-  /** Resumes a partially-created draft using the SAME operationId — never blind-retries, always reconciles against Meta first. */
+  /** Resumes a partially-created draft using the SAME operationId — `ensureX` skips any step whose Meta id is already persisted on the record, so a resume never re-creates an already-created object. */
   async retryDraft(input: {
     workspaceId: string
     operationId: string
@@ -170,8 +169,8 @@ class MessagingAdCampaignService {
     // Resolve everything read-only (record, assets, Graph context) FIRST — a
     // failure here must leave the op in `failed` so it stays retryable. Only
     // once those succeed do we atomically claim the op (CAS failed -> pending)
-    // right before any Graph reconcile/create, so two concurrent retries of the
-    // same operation can't both create a duplicate campaign/ad-set/ad tree.
+    // right before any Graph create, so two concurrent retries of the same
+    // operation can't both create a duplicate campaign/ad-set/ad tree.
     const record = await this.getOrFail(input)
     const assets = await resolveMessagingAdChannelAssets({
       workspaceId: record.workspaceId,
@@ -275,25 +274,12 @@ class MessagingAdCampaignService {
   ): Promise<MessagingAdOperationModel> {
     let record = initial
     const config = messagingAdConfigByChannel[this.channelOf(record)]
-    const correlationName = buildCorrelationName(record.name, record.id)
 
     try {
-      record = await this.ensureCampaign(record, ctx, correlationName)
-      record = await this.ensureAdSet(
-        record,
-        ctx,
-        correlationName,
-        config,
-        assets,
-      )
-      record = await this.ensureAdCreative(
-        record,
-        ctx,
-        correlationName,
-        config,
-        assets,
-      )
-      record = await this.ensureAd(record, ctx, correlationName)
+      record = await this.ensureCampaign(record, ctx)
+      record = await this.ensureAdSet(record, ctx, config, assets)
+      record = await this.ensureAdCreative(record, ctx, config, assets)
+      record = await this.ensureAd(record, ctx)
       return record
     } catch (error) {
       // Mark `failed` on a failure at ANY step (not only `pending`): the
@@ -314,35 +300,25 @@ class MessagingAdCampaignService {
   private async ensureCampaign(
     record: MessagingAdOperationModel,
     ctx: MessagingAdsCtx,
-    correlationName: string,
   ): Promise<MessagingAdOperationModel> {
     if (record.metaCampaignId) {
       return record
     }
-    const existing =
-      await facebookAdsIntegration.runAction<"findMessagingCampaignByOperationId">(
-        "findMessagingCampaignByOperationId",
-        {
-          ctx,
-          props: { adAccountId: record.adAccountId, operationId: record.id },
-        },
-      )
     const campaign: MetaCampaign =
-      existing ??
-      (await facebookAdsIntegration.runAction<"createMessagingCampaign">(
+      await facebookAdsIntegration.runAction<"createMessagingCampaign">(
         "createMessagingCampaign",
         {
           ctx,
           props: {
             adAccountId: record.adAccountId,
-            name: correlationName,
+            name: record.name,
             specialAdCategories: record.input.campaign
               .specialAdCategories as SpecialAdCategory[],
             specialAdCategoryCountry:
               record.input.campaign.specialAdCategoryCountry,
           },
         },
-      ))
+      )
     const updated = await messagingAdOperationRepository.updateCreateProgress({
       id: record.id,
       workspaceId: record.workspaceId,
@@ -361,7 +337,6 @@ class MessagingAdCampaignService {
   private async ensureAdSet(
     record: MessagingAdOperationModel,
     ctx: MessagingAdsCtx,
-    correlationName: string,
     config: (typeof messagingAdConfigByChannel)[MessagingAdChannel],
     assets: MessagingAdChannelAssets,
   ): Promise<MessagingAdOperationModel> {
@@ -371,24 +346,15 @@ class MessagingAdCampaignService {
     if (!record.metaCampaignId) {
       throw new Error("ensureAdSet called before the campaign was created")
     }
-    const existing =
-      await facebookAdsIntegration.runAction<"findMessagingAdSetByOperationId">(
-        "findMessagingAdSetByOperationId",
-        {
-          ctx,
-          props: { campaignId: record.metaCampaignId, operationId: record.id },
-        },
-      )
     const adSet: MetaAdSet =
-      existing ??
-      (await facebookAdsIntegration.runAction<"createMessagingAdSet">(
+      await facebookAdsIntegration.runAction<"createMessagingAdSet">(
         "createMessagingAdSet",
         {
           ctx,
           props: {
             adAccountId: record.adAccountId,
             campaignId: record.metaCampaignId,
-            name: correlationName,
+            name: record.name,
             dailyBudgetMinorUnits: record.input.adSet.dailyBudgetMinorUnits,
             destinationType: config.destinationType,
             promotedObject: buildPromotedObject(this.channelOf(record), {
@@ -403,7 +369,7 @@ class MessagingAdCampaignService {
             endTime: record.input.adSet.endTime,
           },
         },
-      ))
+      )
     const updated = await messagingAdOperationRepository.updateCreateProgress({
       id: record.id,
       workspaceId: record.workspaceId,
@@ -422,30 +388,20 @@ class MessagingAdCampaignService {
   private async ensureAdCreative(
     record: MessagingAdOperationModel,
     ctx: MessagingAdsCtx,
-    correlationName: string,
     config: (typeof messagingAdConfigByChannel)[MessagingAdChannel],
     assets: MessagingAdChannelAssets,
   ): Promise<MessagingAdOperationModel> {
     if (record.metaAdCreativeId) {
       return record
     }
-    const existing =
-      await facebookAdsIntegration.runAction<"findMessagingAdCreativeByOperationId">(
-        "findMessagingAdCreativeByOperationId",
-        {
-          ctx,
-          props: { adAccountId: record.adAccountId, operationId: record.id },
-        },
-      )
     const creative =
-      existing ??
-      (await facebookAdsIntegration.runAction<"createMessagingAdCreative">(
+      await facebookAdsIntegration.runAction<"createMessagingAdCreative">(
         "createMessagingAdCreative",
         {
           ctx,
           props: {
             adAccountId: record.adAccountId,
-            name: correlationName,
+            name: record.name,
             pageId: assets.pageId,
             instagramActorId: config.needsInstagramActor
               ? assets.instagramActorId
@@ -460,7 +416,7 @@ class MessagingAdCampaignService {
             },
           },
         },
-      ))
+      )
     const updated = await messagingAdOperationRepository.updateCreateProgress({
       id: record.id,
       workspaceId: record.workspaceId,
@@ -479,7 +435,6 @@ class MessagingAdCampaignService {
   private async ensureAd(
     record: MessagingAdOperationModel,
     ctx: MessagingAdsCtx,
-    correlationName: string,
   ): Promise<MessagingAdOperationModel> {
     if (record.metaAdId) {
       return record
@@ -487,28 +442,19 @@ class MessagingAdCampaignService {
     if (!(record.metaAdSetId && record.metaAdCreativeId)) {
       throw new Error("ensureAd called before the ad set/creative were created")
     }
-    const existing =
-      await facebookAdsIntegration.runAction<"findMessagingAdByOperationId">(
-        "findMessagingAdByOperationId",
-        {
-          ctx,
-          props: { adSetId: record.metaAdSetId, operationId: record.id },
-        },
-      )
     const ad: MetaAd =
-      existing ??
-      (await facebookAdsIntegration.runAction<"createMessagingAd">(
+      await facebookAdsIntegration.runAction<"createMessagingAd">(
         "createMessagingAd",
         {
           ctx,
           props: {
             adAccountId: record.adAccountId,
-            name: correlationName,
+            name: record.name,
             adSetId: record.metaAdSetId,
             creativeId: record.metaAdCreativeId,
           },
         },
-      ))
+      )
     const updated = await messagingAdOperationRepository.updateCreateProgress({
       id: record.id,
       workspaceId: record.workspaceId,

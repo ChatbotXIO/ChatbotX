@@ -259,6 +259,7 @@ export const createContact = async ({
     contact.firstName || undefined,
     contact.phoneNumber || undefined,
     contact.email || undefined,
+    contactInbox.id,
   )
 
   if (contactInbox.sourceId) {

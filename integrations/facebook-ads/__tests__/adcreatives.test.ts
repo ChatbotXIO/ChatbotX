@@ -7,8 +7,7 @@ const BASE = "https://graph.facebook.com"
 const ACCESS_TOKEN = "ADS_TOKEN"
 
 describe("createAdCreative", () => {
-  // Meta create endpoints are form-urlencoded; object_story_spec is a
-  // JSON-string field value. This helper captures + parses it.
+  // Creative metadata is sent as JSON; capture the native object story spec.
   const captureObjectStorySpec = () => {
     const captured: {
       spec?: Record<string, unknown>
@@ -17,10 +16,10 @@ describe("createAdCreative", () => {
       http.post(
         `${BASE}/${DEFAULT_API_VERSION}/act_9/adcreatives`,
         async ({ request }) => {
-          const form = Object.fromEntries(
-            (await request.formData()).entries(),
-          ) as Record<string, string>
-          captured.spec = JSON.parse(form.object_story_spec ?? "{}")
+          const body = (await request.json()) as {
+            object_story_spec?: Record<string, unknown>
+          }
+          captured.spec = body.object_story_spec
           return HttpResponse.json({ id: "creative_1" })
         },
       ),

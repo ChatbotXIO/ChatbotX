@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 // messagingAdCampaignService — the operation-record orchestrator. Mocks the
 // repository, the Facebook Ads context/dispatcher, and the channel-asset
-// resolver at the module boundary so the create-with-reconcile chain and the
+// resolver at the module boundary so the create chain (each `ensureX` skips
+// straight to CREATE unless its Meta id is already persisted) and the
 // publish compensation logic are asserted without touching a real DB or
 // Graph API.
 // ---------------------------------------------------------------------------
@@ -53,9 +54,9 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   return { ...actual, createId: mocks.createId }
 })
 
-// Real `buildCorrelationName`/`buildPromotedObject`/`META_STATUS`/
-// `messagingAdConfigByChannel` are pure and exercised for real; only the
-// Graph dispatcher (`integration`) and `getGraphErrorCode` are mocked.
+// Real `buildPromotedObject`/`META_STATUS`/`messagingAdConfigByChannel` are
+// pure and exercised for real; only the Graph dispatcher (`integration`) and
+// `getGraphErrorCode` are mocked.
 vi.mock("@chatbotx.io/integration-facebook-ads", async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -140,26 +141,14 @@ describe("createDraft", () => {
     mocks.createOp.mockResolvedValue(record)
     accumulateCreateProgress(record)
     mocks.runAction.mockImplementation((action: string) => {
-      if (action === "findMessagingCampaignByOperationId") {
-        return null
-      }
       if (action === "createMessagingCampaign") {
         return { id: "camp_1" }
-      }
-      if (action === "findMessagingAdSetByOperationId") {
-        return null
       }
       if (action === "createMessagingAdSet") {
         return { id: "adset_1" }
       }
-      if (action === "findMessagingAdCreativeByOperationId") {
-        return null
-      }
       if (action === "createMessagingAdCreative") {
         return { id: "creative_1" }
-      }
-      if (action === "findMessagingAdByOperationId") {
-        return null
       }
       if (action === "createMessagingAd") {
         return { id: "ad_1" }
@@ -183,16 +172,17 @@ describe("createDraft", () => {
 
     expect(result.metaAdId).toBe("ad_1")
     const calledActions = mocks.runAction.mock.calls.map((call) => call[0])
+    // No reconcile-by-name lookup: each step goes straight to CREATE.
     expect(calledActions).toEqual([
-      "findMessagingCampaignByOperationId",
       "createMessagingCampaign",
-      "findMessagingAdSetByOperationId",
       "createMessagingAdSet",
-      "findMessagingAdCreativeByOperationId",
       "createMessagingAdCreative",
-      "findMessagingAdByOperationId",
       "createMessagingAd",
     ])
+    // The object name passed to Meta is the plain record name — no
+    // `[cbx:operationId]` correlation tag appended.
+    const campaignProps = mocks.runAction.mock.calls[0]?.[1]?.props
+    expect(campaignProps.name).toBe("My ad")
     // v3 correction #8: every mutation invalidates the Graph-read cache for
     // this integration's connection scope.
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
@@ -205,9 +195,6 @@ describe("createDraft", () => {
     mocks.createOp.mockResolvedValue(record)
     mocks.getGraphErrorCode.mockReturnValue(190)
     mocks.runAction.mockImplementation((action: string) => {
-      if (action === "findMessagingCampaignByOperationId") {
-        return null
-      }
       if (action === "createMessagingCampaign") {
         throw new Error("token expired")
       }
@@ -243,19 +230,16 @@ describe("createDraft", () => {
     expect(mocks.invalidateMessagingAdsCache).not.toHaveBeenCalled()
   })
 
-  test("reconcile: adopts an already-created campaign instead of duplicating it", async () => {
-    const record = baseRecord()
+  test("resume: a persisted metaCampaignId is never re-created", async () => {
+    const record = baseRecord({
+      createState: "campaignCreated",
+      metaCampaignId: "camp_existing",
+    })
     mocks.createOp.mockResolvedValue(record)
     accumulateCreateProgress(record)
     mocks.runAction.mockImplementation((action: string) => {
-      if (action === "findMessagingCampaignByOperationId") {
-        return { id: "camp_existing" }
-      }
       if (action === "createMessagingCampaign") {
         throw new Error("should not create a duplicate campaign")
-      }
-      if (action.startsWith("find")) {
-        return null
       }
       if (action === "createMessagingAdSet") {
         return { id: "adset_1" }
@@ -269,7 +253,7 @@ describe("createDraft", () => {
       throw new Error(`unexpected action ${action}`)
     })
 
-    await messagingAdCampaignService.createDraft({
+    const result = await messagingAdCampaignService.createDraft({
       workspaceId: "ws_1",
       channel: "messenger",
       integrationId: "im_1",
@@ -283,9 +267,17 @@ describe("createDraft", () => {
       },
     })
 
-    expect(mocks.updateCreateProgress).toHaveBeenCalledWith(
-      expect.objectContaining({ metaCampaignId: "camp_existing" }),
-    )
+    // ensureCampaign returns early on the already-persisted id — it never
+    // calls updateCreateProgress with a NEW metaCampaignId for the campaign
+    // step, and `createMessagingCampaign` is never invoked (see the mock
+    // implementation above, which throws if it is).
+    expect(result.metaCampaignId).toBe("camp_existing")
+    const calledActions = mocks.runAction.mock.calls.map((call) => call[0])
+    expect(calledActions).toEqual([
+      "createMessagingAdSet",
+      "createMessagingAdCreative",
+      "createMessagingAd",
+    ])
   })
 
   test("on failure, persists lastError without losing already-made progress", async () => {
@@ -298,9 +290,6 @@ describe("createDraft", () => {
       Promise.resolve({ ...record, ...input }),
     )
     mocks.runAction.mockImplementation((action: string) => {
-      if (action === "findMessagingAdSetByOperationId") {
-        return null
-      }
       if (action === "createMessagingAdSet") {
         throw new Error("Graph API rejected the ad set")
       }
@@ -515,9 +504,6 @@ describe("retryDraft", () => {
     mocks.claimForRetry.mockResolvedValue(record)
     accumulateCreateProgress(record)
     mocks.runAction.mockImplementation((action: string) => {
-      if (action.startsWith("find")) {
-        return null
-      }
       if (action === "createMessagingAdSet") {
         return { id: "adset_1" }
       }
@@ -535,6 +521,9 @@ describe("retryDraft", () => {
       operationId: "op_1",
     })
 
+    // The already-persisted campaign id is never re-created on resume.
+    const calledActions = mocks.runAction.mock.calls.map((call) => call[0])
+    expect(calledActions).not.toContain("createMessagingCampaign")
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
       "messenger:im_1",
     )

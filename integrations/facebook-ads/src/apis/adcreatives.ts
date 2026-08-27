@@ -2,8 +2,6 @@ import { z } from "zod"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookAdsGraphClient } from "../lib/http-client"
-import { fetchAllMessagingAdsPages } from "../lib/messaging-ads-pagination"
-import { operationIdNameFilter } from "../messaging-ads/constants"
 import type {
   CreateAdCreativeInput,
   LinkData,
@@ -11,8 +9,6 @@ import type {
   VideoData,
 } from "../messaging-ads/types"
 import { buildPageWelcomeMessage } from "../messaging-ads/welcome-message"
-
-const AD_CREATIVE_FIELDS = "id,name"
 
 const adCreativeSchema = z.object({ id: z.string().trim().min(1) })
 
@@ -74,43 +70,14 @@ export function createAdCreative(
   const endpoint = `${version}/${adAccountId}/adcreatives`
 
   return rescue(endpoint, async () => {
-    // Multipart form-data body (Meta's documented `-F` transport).
-    // `object_story_spec` is a JSON-string field value.
-    const response = await facebookAdsGraphClient.postFormFields<unknown>(
+    const response = await facebookAdsGraphClient.postJsonFields<unknown>(
       endpoint,
       {
         access_token: accessToken,
         name,
-        object_story_spec: JSON.stringify(buildObjectStorySpec(input)),
+        object_story_spec: buildObjectStorySpec(input),
       },
     )
     return adCreativeSchema.parse(response)
-  })
-}
-
-/** Reconcile step — creatives are act-level (no parent edge), so filter directly on the account. */
-export function findAdCreativeByOperationId(input: {
-  accessToken: string
-  adAccountId: string
-  operationId: string
-  version?: string
-}): Promise<MetaAdCreative | null> {
-  const {
-    accessToken,
-    adAccountId,
-    operationId,
-    version = DEFAULT_API_VERSION,
-  } = input
-  const endpoint = `${version}/${adAccountId}/adcreatives`
-
-  return rescue(endpoint, async () => {
-    const rows = await fetchAllMessagingAdsPages<unknown>(endpoint, {
-      fields: AD_CREATIVE_FIELDS,
-      filtering: operationIdNameFilter(operationId),
-      limit: "10",
-      access_token: accessToken,
-    })
-    const parsed = z.array(adCreativeSchema).parse(rows)
-    return parsed[0] ?? null
   })
 }

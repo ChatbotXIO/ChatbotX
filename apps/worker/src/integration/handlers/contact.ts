@@ -70,17 +70,20 @@ export async function setContactCustomField({
     sourceTimezoneOverride: step.timezone,
     temporalInputParsing: TemporalInputParsing.Lenient,
     fillEmptyTemporalWithNow: true,
+    contactInboxId: contactInbox.id,
   })
 }
 
 export async function clearContactCustomField({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<ClearCustomFieldStepSchema>) {
   await contactCustomFieldService.deleteByKey({
     workspaceId: conversation.workspaceId,
     contactId: conversation.contactId,
     keyword: step.inputFieldId,
+    contactInboxId: contactInbox.id,
   })
 }
 
@@ -219,7 +222,7 @@ export async function attachTagsByNames(
 
   await Promise.all(
     newlyLinkedTagIds.map((tagId) =>
-      emitTagApplied(workspaceId, contactId, tagId),
+      emitTagApplied(workspaceId, contactId, tagId, contactInbox?.id),
     ),
   )
 
@@ -244,12 +247,14 @@ export async function attachTagsByNames(
 
 export async function removeContactTag({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<AddContactTagStepSchema>) {
   await detachTagsByNames(
     conversation.workspaceId,
     conversation.contactId,
     step.tags,
+    contactInbox,
   )
 }
 
@@ -257,6 +262,7 @@ export async function detachTagsByNames(
   workspaceId: string,
   contactId: string,
   tagNames: string[],
+  contactInbox?: TagAttachContactInbox,
 ): Promise<void> {
   if (tagNames.length === 0) {
     return
@@ -298,7 +304,9 @@ export async function detachTagsByNames(
   }
 
   await Promise.all(
-    tags.map((tag) => emitTagRemoved(workspaceId, contactId, tag.id)),
+    tags.map((tag) =>
+      emitTagRemoved(workspaceId, contactId, tag.id, contactInbox?.id),
+    ),
   )
 }
 
@@ -339,6 +347,7 @@ export async function deleteContact({
 
 export async function addContactSequence({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<SubscribeSequenceStepSchema>) {
   if (!step.sequenceId) {
@@ -400,11 +409,13 @@ export async function addContactSequence({
     conversation.contactId,
     step.sequenceId,
     sequence?.name ?? "",
+    contactInbox.id,
   )
 }
 
 export async function removeContactSequence({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<UnsubscribeSequenceStepSchema>) {
   if (!step.sequenceId) {
@@ -416,6 +427,7 @@ export async function removeContactSequence({
     contactId: conversation.contactId,
     sequenceIds: [step.sequenceId],
     reason: "unsubscribed_via_flow",
+    contactInboxId: contactInbox.id,
   })
 }
 
@@ -436,6 +448,7 @@ export async function subscribeBroadcast({
 
 export async function unsubscribeBroadcast({
   conversation,
+  contactInbox,
 }: ExecuteStepProps<UnsubscribeBroadcastStepSchema>) {
   await db
     .update(contactModel)
@@ -450,5 +463,6 @@ export async function unsubscribeBroadcast({
   await emitContactUnsubscribed(
     conversation.workspaceId,
     conversation.contactId,
+    contactInbox.id,
   )
 }

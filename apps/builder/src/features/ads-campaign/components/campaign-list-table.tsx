@@ -22,9 +22,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
-import { ExternalLinkIcon, InfoIcon, MoreVerticalIcon } from "lucide-react"
+import {
+  ExternalLinkIcon,
+  InfoIcon,
+  MoreVerticalIcon,
+  PauseIcon,
+  RotateCwIcon,
+  Trash2Icon,
+  UploadIcon,
+} from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { client } from "@/lib/orpc/orpc"
 import type {
@@ -70,124 +78,76 @@ function hasDelivery(insight: MessagingAdInsightResource | undefined): boolean {
   )
 }
 
-function StatItem({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
-    </span>
-  )
-}
+const EM_DASH = "—"
 
-function PerformanceCell({
+/**
+ * Renders one right-aligned metric cell, resolving the shared three states so
+ * every metric column reads consistently: no ad on Meta yet / insights still
+ * loading / delivered-with-data. `render` only runs once an insight with real
+ * delivery exists.
+ */
+function MetricCell({
   insightsByAdId,
   insightsLoading,
   row,
+  render,
 }: {
   insightsByAdId: Map<string, MessagingAdInsightResource> | undefined
   insightsLoading: boolean
   row: MessagingAdOperationResource
+  render: (insight: MessagingAdInsightResource) => ReactNode
 }) {
-  const t = useTranslations()
-  const locale = useLocale()
-
-  // Never on Meta yet (still a local draft) — nothing to fetch insights for.
   if (!row.metaAdId) {
-    return (
-      <span className="text-muted-foreground text-xs">
-        {t("adsCampaign.insights.empty")}
-      </span>
-    )
+    return <span className="text-muted-foreground">{EM_DASH}</span>
   }
-
   const insight = insightsByAdId?.get(row.metaAdId)
-
   if (!insight && insightsLoading) {
-    return (
-      <div className="flex flex-col gap-1.5">
-        <Skeleton className="h-3 w-36" />
-        <Skeleton className="h-3 w-24" />
-      </div>
-    )
+    return <Skeleton className="ml-auto h-3 w-12" />
   }
-
-  if (!hasDelivery(insight)) {
-    return (
-      <span className="text-muted-foreground text-xs">
-        {t("adsCampaign.insights.empty")}
-      </span>
-    )
+  if (!(insight && hasDelivery(insight))) {
+    return <span className="text-muted-foreground">{EM_DASH}</span>
   }
-
-  // hasDelivery(insight) narrows insight to defined at runtime, but TS can't
-  // see through the helper — assert once here instead of re-checking.
-  const data = insight as MessagingAdInsightResource
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-      <StatItem
-        label={t("adsCampaign.insights.impressions")}
-        value={formatCount(locale, data.impressions)}
-      />
-      <StatItem
-        label={t("adsCampaign.insights.conversations")}
-        value={formatCount(locale, data.conversations)}
-      />
-      <StatItem
-        label={t("adsCampaign.insights.spend")}
-        value={formatMoney(locale, data.spend, data.currency)}
-      />
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span className="inline-flex cursor-default items-baseline gap-1 whitespace-nowrap">
-              <span className="text-muted-foreground">
-                {t("adsCampaign.insights.costPerConversation")}
-              </span>
-              <span className="font-medium text-foreground">
-                {data.costPerConversation === null
-                  ? "—"
-                  : formatMoney(
-                      locale,
-                      data.costPerConversation,
-                      data.currency,
-                    )}
-              </span>
-              <InfoIcon className="size-3 text-muted-foreground" />
-            </span>
-          }
-        />
-        <TooltipContent className="max-w-xs text-xs">
-          <p>{t("adsCampaign.insights.costPerConversationTooltip")}</p>
-          <p className="mt-1">
-            {t("adsCampaign.insights.reach")}: {formatCount(locale, data.reach)}
-          </p>
-          <p>
-            {t("adsCampaign.insights.clicks")}:{" "}
-            {formatCount(locale, data.clicks)}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  )
+  return <>{render(insight)}</>
 }
 
-function createStateLabelKey(createState: string): string {
-  if (createState === "adCreated") {
-    return "adsCampaign.list.draftReady"
-  }
-  if (createState === "failed") {
-    return "adsCampaign.list.createFailed"
-  }
-  return "adsCampaign.list.creating"
-}
-
+/**
+ * Single lifecycle status per row — collapses the previously separate
+ * "Status" (Meta delivery) and "Draft status" (local create progress) columns,
+ * which read ambiguously side by side, into one badge that reflects where the
+ * ad actually is: still creating → creation failed → draft (created, not
+ * published) → live delivery status (Active/Paused).
+ */
 const EFFECTIVE_STATUS_VARIANT: Record<
   string,
   "default" | "secondary" | "destructive"
 > = {
   ACTIVE: "default",
   PAUSED: "secondary",
+}
+
+function StatusCell({ row }: { row: MessagingAdOperationResource }) {
+  const t = useTranslations()
+
+  if (row.createState === "failed") {
+    return (
+      <Badge variant="destructive">{t("adsCampaign.list.createFailed")}</Badge>
+    )
+  }
+  if (row.createState !== "adCreated") {
+    return <Badge variant="secondary">{t("adsCampaign.list.creating")}</Badge>
+  }
+  if (!row.effectiveStatus) {
+    return (
+      <Badge variant="outline">{t("adsCampaign.list.notPublishedYet")}</Badge>
+    )
+  }
+  return (
+    <Badge
+      variant={EFFECTIVE_STATUS_VARIANT[row.effectiveStatus] ?? "secondary"}
+    >
+      {row.effectiveStatus}
+    </Badge>
+  )
 }
 
 const AD_ACCOUNT_PREFIX_RE = /^act_/
@@ -210,6 +170,7 @@ export function CampaignListTable({
   insightsLoading,
 }: Props) {
   const t = useTranslations()
+  const locale = useLocale()
   const [pendingAction, setPendingAction] = useState<string | null>(null)
   const [publishTarget, setPublishTarget] = useState<string | null>(null)
 
@@ -259,103 +220,168 @@ export function CampaignListTable({
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("fields.name.label")}</TableHead>
-            <TableHead>{t("fields.status.label")}</TableHead>
-            <TableHead>{t("adsCampaign.list.createState")}</TableHead>
-            <TableHead>{t("adsCampaign.insights.title")}</TableHead>
-            <TableHead className="text-end">
-              {t("adsCampaign.list.actions")}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="font-medium">{row.name}</TableCell>
-              <TableCell>
-                {row.effectiveStatus ? (
-                  <Badge
-                    variant={
-                      EFFECTIVE_STATUS_VARIANT[row.effectiveStatus] ??
-                      "secondary"
-                    }
-                  >
-                    {row.effectiveStatus}
-                  </Badge>
-                ) : (
-                  <span className="text-muted-foreground text-xs">
-                    {t("adsCampaign.list.notPublishedYet")}
-                  </span>
-                )}
-              </TableCell>
-              <TableCell className="text-muted-foreground text-xs">
-                {t(createStateLabelKey(row.createState))}
-              </TableCell>
-              <TableCell>
-                <PerformanceCell
-                  insightsByAdId={insightsByAdId}
-                  insightsLoading={insightsLoading}
-                  row={row}
-                />
-              </TableCell>
-              <TableCell className="text-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        disabled={pendingAction === row.id}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <MoreVerticalIcon className="size-3.5" />
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent align="end">
-                    {row.createState === "failed" ? (
-                      <DropdownMenuItem
-                        onClick={() => runAction(row.id, "retry")}
-                      >
-                        {t("actions.retry")}
-                      </DropdownMenuItem>
-                    ) : (
-                      <>
-                        <DropdownMenuItem
-                          disabled={row.createState !== "adCreated"}
-                          onClick={() => setPublishTarget(row.id)}
-                        >
-                          {t("adsCampaign.list.publish")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => runAction(row.id, "pause")}
-                        >
-                          {t("adsCampaign.list.pause")}
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {row.metaCampaignId && (
-                      <DropdownMenuItem onClick={() => openMetaAdsManager(row)}>
-                        <ExternalLinkIcon className="size-3.5" />
-                        {t("adsCampaign.list.viewOnMeta")}
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      onClick={() => runAction(row.id, "delete")}
-                      variant="destructive"
-                    >
-                      {t("actions.delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("fields.name.label")}</TableHead>
+              <TableHead>{t("fields.status.label")}</TableHead>
+              <TableHead className="text-end">
+                {t("adsCampaign.insights.impressions")}
+              </TableHead>
+              <TableHead className="text-end">
+                {t("adsCampaign.insights.conversations")}
+              </TableHead>
+              <TableHead className="text-end">
+                {t("adsCampaign.insights.spend")}
+              </TableHead>
+              <TableHead className="text-end">
+                {t("adsCampaign.insights.costPerConversation")}
+              </TableHead>
+              <TableHead className="text-end">
+                {t("adsCampaign.list.actions")}
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell className="font-medium">{row.name}</TableCell>
+                <TableCell>
+                  <StatusCell row={row} />
+                </TableCell>
+                <TableCell className="text-end tabular-nums">
+                  <MetricCell
+                    insightsByAdId={insightsByAdId}
+                    insightsLoading={insightsLoading}
+                    render={(insight) =>
+                      formatCount(locale, insight.impressions)
+                    }
+                    row={row}
+                  />
+                </TableCell>
+                <TableCell className="text-end tabular-nums">
+                  <MetricCell
+                    insightsByAdId={insightsByAdId}
+                    insightsLoading={insightsLoading}
+                    render={(insight) =>
+                      formatCount(locale, insight.conversations)
+                    }
+                    row={row}
+                  />
+                </TableCell>
+                <TableCell className="text-end tabular-nums">
+                  <MetricCell
+                    insightsByAdId={insightsByAdId}
+                    insightsLoading={insightsLoading}
+                    render={(insight) =>
+                      formatMoney(locale, insight.spend, insight.currency)
+                    }
+                    row={row}
+                  />
+                </TableCell>
+                <TableCell className="text-end tabular-nums">
+                  <MetricCell
+                    insightsByAdId={insightsByAdId}
+                    insightsLoading={insightsLoading}
+                    render={(insight) => (
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="inline-flex cursor-default items-center justify-end gap-1 whitespace-nowrap">
+                              {insight.costPerConversation === null
+                                ? EM_DASH
+                                : formatMoney(
+                                    locale,
+                                    insight.costPerConversation,
+                                    insight.currency,
+                                  )}
+                              <InfoIcon className="size-3 text-muted-foreground" />
+                            </span>
+                          }
+                        />
+                        <TooltipContent className="max-w-xs text-xs">
+                          <p>
+                            {t(
+                              "adsCampaign.insights.costPerConversationTooltip",
+                            )}
+                          </p>
+                          <p className="mt-1">
+                            {t("adsCampaign.insights.reach")}:{" "}
+                            {formatCount(locale, insight.reach)}
+                          </p>
+                          <p>
+                            {t("adsCampaign.insights.clicks")}:{" "}
+                            {formatCount(locale, insight.clicks)}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    row={row}
+                  />
+                </TableCell>
+                <TableCell className="text-end">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          disabled={pendingAction === row.id}
+                          size="icon"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <MoreVerticalIcon className="size-3.5" />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end" className="w-48">
+                      {row.createState === "failed" ? (
+                        <DropdownMenuItem
+                          onClick={() => runAction(row.id, "retry")}
+                        >
+                          <RotateCwIcon className="size-3.5" />
+                          {t("actions.retry")}
+                        </DropdownMenuItem>
+                      ) : (
+                        <>
+                          <DropdownMenuItem
+                            disabled={row.createState !== "adCreated"}
+                            onClick={() => setPublishTarget(row.id)}
+                          >
+                            <UploadIcon className="size-3.5" />
+                            {t("adsCampaign.list.publish")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => runAction(row.id, "pause")}
+                          >
+                            <PauseIcon className="size-3.5" />
+                            {t("adsCampaign.list.pause")}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {row.metaCampaignId && (
+                        <DropdownMenuItem
+                          onClick={() => openMetaAdsManager(row)}
+                        >
+                          <ExternalLinkIcon className="size-3.5" />
+                          {t("adsCampaign.list.viewOnMeta")}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={() => runAction(row.id, "delete")}
+                        variant="destructive"
+                      >
+                        <Trash2Icon className="size-3.5" />
+                        {t("actions.delete")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <PublishConfirmDialog
         isPending={pendingAction === publishTarget}

@@ -102,6 +102,7 @@ vi.mock("../src/workspace/service", () => ({
 
 const { contactService } = await import("../src/contact/service")
 const { contactSources } = await import("@chatbotx.io/database/partials")
+const { emitContactCreated } = await import("@chatbotx.io/events")
 
 describe("contactService.upsertByIdentifier", () => {
   beforeEach(() => {
@@ -138,6 +139,28 @@ describe("contactService.upsertByIdentifier", () => {
 
     expect(createContactWithoutMac).toHaveBeenCalledWith(
       expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+  })
+
+  test("threads the newly-created ContactInbox id into emitContactCreated", async () => {
+    await contactService.upsertByIdentifier({
+      workspaceId: "ws-1",
+      identifier: "email:ada@example.com",
+      source: contactSources.enum.api,
+      data: { firstName: "Ada" },
+    })
+
+    // makeInsert returns id "ci-1" for the ContactInbox row (no `id` field in
+    // its insert values, so the mock's synthetic id survives the `...row`
+    // spread) — this asserts the trigger-attribution fix threads THAT id,
+    // not the contact's own id, as the trailing arg.
+    expect(emitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "generated-id",
+      "Ada",
+      undefined,
+      "ada@example.com",
+      "ci-1",
     )
   })
 })

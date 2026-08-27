@@ -695,8 +695,26 @@ export function AdsAnalyticsView({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="font-semibold text-xl">{t("ads.analytics.title")}</h1>
+      {/* Filters stack, right-aligned: the date range (refresh + preset +
+          custom-range) on top, the integration/account selectors on their own
+          row below it. */}
+      <div className="flex flex-col items-end gap-3">
+        {/* Same refresh + preset-dropdown + custom-range-dialog UI as the
+            Contacts/Conversations dashboards (`DateRangePresetFilter`),
+            bridged to this URL-driven, server-fetched page instead of the
+            shared analytics store — see `useAdsRangeUrl`. `key` on the URL
+            range remounts it so back/forward and deep links re-sync the
+            displayed range; `defaultPreset` is derived so a restored range
+            shows the correct preset (or the custom date text) instead of
+            always "Last 7 days". */}
+        <DateRangePresetFilter
+          defaultPreset={filterPreset}
+          initialFrom={filterRange.from.getTime()}
+          initialTo={filterRange.to.getTime()}
+          key={`${range.from}_${range.to}`}
+          onChange={pushAdsRange}
+          workspaceCreatedAt={workspaceCreatedAt}
+        />
         <div className="flex flex-wrap items-end justify-end gap-3">
           {/* The channel is implied by the dashboard menu item (see
               `AnalyticsNav`) — this only selects the integration/account
@@ -708,22 +726,6 @@ export function AdsAnalyticsView({
             selectedIntegrationId={selectedChannelIntegrationId}
           />
           <AdAccountFilter range={range} workspaceId={workspaceId} />
-          {/* Same refresh + preset-dropdown + custom-range-dialog UI as the
-              Contacts/Conversations dashboards (`DateRangePresetFilter`),
-              bridged to this URL-driven, server-fetched page instead of the
-              shared analytics store — see `useAdsRangeUrl`. `key` on the URL
-              range remounts it so back/forward and deep links re-sync the
-              displayed range; `defaultPreset` is derived so a restored range
-              shows the correct preset (or the custom date text) instead of
-              always "Last 7 days". */}
-          <DateRangePresetFilter
-            defaultPreset={filterPreset}
-            initialFrom={filterRange.from.getTime()}
-            initialTo={filterRange.to.getTime()}
-            key={`${range.from}_${range.to}`}
-            onChange={pushAdsRange}
-            workspaceCreatedAt={workspaceCreatedAt}
-          />
         </div>
       </div>
 

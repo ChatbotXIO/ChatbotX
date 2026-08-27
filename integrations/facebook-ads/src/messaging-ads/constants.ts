@@ -4,11 +4,12 @@
  * `DEFAULT_API_VERSION` (v23.0 — see `../constants.ts`). Sourced from:
  *   - out/plan/ctm-ctid-ads-manager.md (base CTM/CTID flow)
  *   - out/plan/ctwa-ads-manager.md (WhatsApp delta)
- * Every value is doc-derived; anything the Phase-0 live-token contract spike
- * (mandatory per both plans, not yet run) has not verified against a real
- * v23.0 response is flagged `// Phase 0 confirm`. Correcting an enum after
- * Phase 0 runs means editing ONLY this file — no other module should inline a
- * Meta literal.
+ * Every create-side value here has been verified against the v23.0 docs AND a
+ * live ad create (campaign → ad set → creative → ad). The few values that a
+ * live create does NOT exercise — read-side insights `action_type` (attribution
+ * window per destination) and the `page_welcome_message` JSON contract — are
+ * still flagged `// Phase 0 confirm`. Correcting an enum means editing ONLY
+ * this file — no other module should inline a Meta literal.
  */
 
 export type MessagingAdChannel = "messenger" | "instagram" | "whatsapp"
@@ -70,23 +71,25 @@ export const RESTRICTED_SPECIAL_AD_CATEGORIES: readonly SpecialAdCategory[] = [
 // ---------------------------------------------------------------------------
 
 /**
- * // Phase 0 confirm: the CTM/CTID guide's worked examples show
- * `optimization_goal: "IMPRESSIONS"` + `billing_event: "IMPRESSIONS"`; the
- * approved plan prefers `CONVERSATIONS` optimization (message-conversation
- * outcomes) paired with `LOWEST_COST_WITHOUT_CAP` bidding and NO `bid_amount`.
- * Both combinations are documented by Meta for messaging destinations —
- * which one v23.0 actually accepts for a given destination_type is a Phase 0
- * output. This is the ONE place to change the default once confirmed.
+ * Verified against Meta Marketing API v23.0 docs AND a live ad-set create:
+ * under `OUTCOME_ENGAGEMENT` the docs list `CONVERSATIONS` as a valid
+ * `optimization_goal` ("Engagement objective can optimize for CONVERSATIONS"),
+ * paired with `billing_event: "IMPRESSIONS"` and `LOWEST_COST_WITHOUT_CAP`
+ * bidding — which requires NO `bid_amount` (docs: `bid_amount` is required only
+ * for `*_BID_CAP`/`COST_CAP` strategies). This is the ONE place to change the
+ * default if the desired optimization ever changes.
  */
 export const MESSAGING_AD_SET_OPTIMIZATION_GOAL = "CONVERSATIONS" as const
 export const MESSAGING_AD_SET_BILLING_EVENT = "IMPRESSIONS" as const
 export const MESSAGING_AD_SET_BID_STRATEGY = "LOWEST_COST_WITHOUT_CAP" as const
 
 /**
- * `destination_type` per channel. // Phase 0 confirm: docs also show a newer
- * `MESSAGING_*` enum family (`MESSAGING_MESSENGER`/`MESSAGING_INSTAGRAM_DIRECT`/
- * `MESSAGING_WHATSAPP`) — which family v23.0 accepts must be proven live
- * before this ships to real ad spend.
+ * `destination_type` per channel. Verified against v23.0 docs + a live ad-set
+ * create: single-destination in-app click-to-message ads use `MESSENGER` /
+ * `INSTAGRAM_DIRECT` / `WHATSAPP`. The newer `MESSAGING_*` enum family
+ * (`MESSAGING_MESSENGER`/`MESSAGING_INSTAGRAM_DIRECT`/`MESSAGING_WHATSAPP`) is
+ * for the SEPARATE website-to-messaging and click-to-multidestination flows,
+ * which this manager does not use.
  */
 export const MESSAGING_AD_DESTINATION_TYPE_BY_CHANNEL: Record<
   MessagingAdChannel,
@@ -98,9 +101,11 @@ export const MESSAGING_AD_DESTINATION_TYPE_BY_CHANNEL: Record<
 }
 
 /**
- * `call_to_action.type` per channel (CTM/CTID plan §CTA; CTWA delta).
- * `value.app_destination` is derived from the SAME per-channel value as
- * `destination_type` today — // Phase 0 confirm they never diverge.
+ * `call_to_action.type` per channel — verified against v23.0 docs: the three
+ * messaging CTAs are exactly `MESSAGE_PAGE` (Messenger), `INSTAGRAM_MESSAGE`
+ * (Instagram) and `WHATSAPP_MESSAGE` (WhatsApp). `value.app_destination` uses
+ * the same per-channel value as `destination_type` (docs show the CTA carrying
+ * `{app_destination: MESSENGER}` etc.).
  */
 export const MESSAGING_AD_CTA_TYPE_BY_CHANNEL: Record<
   MessagingAdChannel,
@@ -188,12 +193,10 @@ export const messagingAdConfigByChannel: Record<
 export type PromotedObject = {
   page_id: string
   /**
-   * // Phase 0 confirm (out/plan/ctwa-ads-manager.md): `whatsapp_phone_number`
-   * (E.164 display number) vs `page_number_id` (the phone number's Graph
-   *id*, e.g. `IntegrationWhatsapp.phoneNumberId`) are DIFFERENT fields with
-   * different value forms — NOT interchangeable. Defaulting to the E.164
-   * display number here because that is the field name shown in the CTWA
-   * guide's worked example; verify against v23.0 in Phase 0.
+   * Verified against v23.0 docs: the WhatsApp click-to-message `promoted_object`
+   * carries `whatsapp_phone_number` — a numeric string, the WhatsApp phone
+   * number for the promoted ad. It is NOT `page_number_id` (the phone number's
+   * Graph id) — different field, different value form.
    */
   whatsapp_phone_number?: string
 }
@@ -221,31 +224,4 @@ export function buildPromotedObject(
     page_id: input.pageId,
     whatsapp_phone_number: input.whatsappPhoneNumber,
   }
-}
-
-// ---------------------------------------------------------------------------
-// Durable operation correlation marker (Meta is not transactional — see
-// out/plan/ctm-ctid-ads-manager.md "Durable operation model")
-// ---------------------------------------------------------------------------
-
-const CORRELATION_TAG_PREFIX = "[cbx:"
-const CORRELATION_TAG_SUFFIX = "]"
-
-/** Embeds the operationId into a user-facing object name, collision-safe. */
-export function buildCorrelationName(
-  label: string,
-  operationId: string,
-): string {
-  return `${label} ${CORRELATION_TAG_PREFIX}${operationId}${CORRELATION_TAG_SUFFIX}`
-}
-
-/** Graph `filtering` query param value to find objects tagged with `operationId`. */
-export function operationIdNameFilter(operationId: string): string {
-  return JSON.stringify([
-    {
-      field: "name",
-      operator: "CONTAIN",
-      value: `${CORRELATION_TAG_PREFIX}${operationId}${CORRELATION_TAG_SUFFIX}`,
-    },
-  ])
 }

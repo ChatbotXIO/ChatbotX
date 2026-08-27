@@ -1,10 +1,8 @@
 import { describe, expect, test } from "vitest"
 import {
-  buildCorrelationName,
   buildPromotedObject,
   MESSAGING_AD_CHANNELS,
   messagingAdConfigByChannel,
-  operationIdNameFilter,
 } from "../src/messaging-ads/constants"
 import {
   enforceSpecialAdCategoryTargeting,
@@ -63,21 +61,6 @@ describe("buildPromotedObject", () => {
 
   test("whatsapp without a phone number throws", () => {
     expect(() => buildPromotedObject("whatsapp", { pageId: "pg_1" })).toThrow()
-  })
-})
-
-describe("correlation marker helpers", () => {
-  test("buildCorrelationName embeds the operationId", () => {
-    expect(buildCorrelationName("My Campaign", "op_123")).toBe(
-      "My Campaign [cbx:op_123]",
-    )
-  })
-
-  test("operationIdNameFilter produces a Graph CONTAIN filter", () => {
-    const filter = JSON.parse(operationIdNameFilter("op_123"))
-    expect(filter).toEqual([
-      { field: "name", operator: "CONTAIN", value: "[cbx:op_123]" },
-    ])
   })
 })
 

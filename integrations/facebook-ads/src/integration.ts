@@ -8,22 +8,10 @@ import {
   getAdAccounts,
   getCustomAudiences,
 } from "./apis/ad-accounts"
-import {
-  createAdCreative,
-  findAdCreativeByOperationId,
-} from "./apis/adcreatives"
+import { createAdCreative } from "./apis/adcreatives"
 import { uploadAdImage } from "./apis/adimages"
-import {
-  createAd,
-  findAdByOperationId,
-  listAdsByIds,
-  updateAdStatus,
-} from "./apis/ads"
-import {
-  createAdSet,
-  findAdSetByOperationId,
-  updateAdSetStatus,
-} from "./apis/adsets"
+import { createAd, listAdsByIds, updateAdStatus } from "./apis/ads"
+import { createAdSet, updateAdSetStatus } from "./apis/adsets"
 import { getAdVideoStatus, uploadAdVideo } from "./apis/advideos"
 import {
   buildHashedPayload,
@@ -35,7 +23,6 @@ import {
 import { revokeToken } from "./apis/auth"
 import {
   createCampaign,
-  findCampaignByOperationId,
   getCampaign,
   listCampaignsByIds,
   updateCampaignStatus,
@@ -145,12 +132,6 @@ const config: IntegrationDefinition<
         version: ctx.auth.version,
         ...props,
       }),
-    findMessagingCampaignByOperationId: ({ ctx, props }) =>
-      findCampaignByOperationId({
-        accessToken: ctx.auth.accessToken,
-        version: ctx.auth.version,
-        ...props,
-      }),
     updateMessagingCampaignStatus: ({ ctx, props }) =>
       updateCampaignStatus({
         accessToken: ctx.auth.accessToken,
@@ -175,12 +156,6 @@ const config: IntegrationDefinition<
         version: ctx.auth.version,
         ...props,
       }),
-    findMessagingAdSetByOperationId: ({ ctx, props }) =>
-      findAdSetByOperationId({
-        accessToken: ctx.auth.accessToken,
-        version: ctx.auth.version,
-        ...props,
-      }),
     updateMessagingAdSetStatus: ({ ctx, props }) =>
       updateAdSetStatus({
         accessToken: ctx.auth.accessToken,
@@ -193,20 +168,8 @@ const config: IntegrationDefinition<
         version: ctx.auth.version,
         ...props,
       }),
-    findMessagingAdCreativeByOperationId: ({ ctx, props }) =>
-      findAdCreativeByOperationId({
-        accessToken: ctx.auth.accessToken,
-        version: ctx.auth.version,
-        ...props,
-      }),
     createMessagingAd: ({ ctx, props }) =>
       createAd({
-        accessToken: ctx.auth.accessToken,
-        version: ctx.auth.version,
-        ...props,
-      }),
-    findMessagingAdByOperationId: ({ ctx, props }) =>
-      findAdByOperationId({
         accessToken: ctx.auth.accessToken,
         version: ctx.auth.version,
         ...props,

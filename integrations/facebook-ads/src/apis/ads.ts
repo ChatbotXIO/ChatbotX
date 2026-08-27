@@ -2,8 +2,7 @@ import { z } from "zod"
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookAdsGraphClient } from "../lib/http-client"
-import { fetchAllMessagingAdsPages } from "../lib/messaging-ads-pagination"
-import { META_STATUS, operationIdNameFilter } from "../messaging-ads/constants"
+import { META_STATUS } from "../messaging-ads/constants"
 import type { CreateAdInput, MetaAd } from "../messaging-ads/types"
 
 const AD_FIELDS = "id,name,status,effective_status"
@@ -30,46 +29,17 @@ export function createAd({
   const endpoint = `${version}/${adAccountId}/ads`
 
   return rescue(endpoint, async () => {
-    // Multipart form-data body (Meta's documented `-F` transport). The
-    // `creative` object is a JSON-string field value.
-    const response = await facebookAdsGraphClient.postFormFields<unknown>(
+    const response = await facebookAdsGraphClient.postJsonFields<unknown>(
       endpoint,
       {
         access_token: accessToken,
         name,
         adset_id: adSetId,
-        creative: JSON.stringify({ creative_id: creativeId }),
+        creative: { creative_id: creativeId },
         status: META_STATUS.paused,
       },
     )
     return createResponseSchema.parse(response)
-  })
-}
-
-/** Reconcile step — finds an ad already created for this operation, scoped to the found ad set. */
-export function findAdByOperationId(input: {
-  accessToken: string
-  adSetId: string
-  operationId: string
-  version?: string
-}): Promise<MetaAd | null> {
-  const {
-    accessToken,
-    adSetId,
-    operationId,
-    version = DEFAULT_API_VERSION,
-  } = input
-  const endpoint = `${version}/${adSetId}/ads`
-
-  return rescue(endpoint, async () => {
-    const rows = await fetchAllMessagingAdsPages<unknown>(endpoint, {
-      fields: AD_FIELDS,
-      filtering: operationIdNameFilter(operationId),
-      limit: "10",
-      access_token: accessToken,
-    })
-    const parsed = z.array(adSchema).parse(rows)
-    return parsed[0] ?? null
   })
 }
 
@@ -83,8 +53,7 @@ export function updateAdStatus(input: {
   const endpoint = `${version}/${adId}`
 
   return rescue(endpoint, async () => {
-    // `status` as a multipart form field — see `updateCampaignStatus`.
-    await facebookAdsGraphClient.postFormFields<unknown>(endpoint, {
+    await facebookAdsGraphClient.postJsonFields<unknown>(endpoint, {
       access_token: accessToken,
       status,
     })

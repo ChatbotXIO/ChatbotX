@@ -1,10 +1,6 @@
 import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test } from "vitest"
-import {
-  createCampaign,
-  findCampaignByOperationId,
-  updateCampaignStatus,
-} from "../src/apis/campaigns"
+import { createCampaign, updateCampaignStatus } from "../src/apis/campaigns"
 import { DEFAULT_API_VERSION } from "../src/constants"
 
 const BASE = "https://graph.facebook.com"
@@ -12,17 +8,15 @@ const ACCESS_TOKEN = "ADS_TOKEN"
 
 describe("createCampaign", () => {
   test("creates a PAUSED, ABO, OUTCOME_ENGAGEMENT campaign", async () => {
-    let capturedBody: Record<string, string> = {}
+    let capturedBody: Record<string, unknown> = {}
+    let contentType = ""
 
     server.use(
       http.post(
         `${BASE}/${DEFAULT_API_VERSION}/act_9/campaigns`,
         async ({ request }) => {
-          // Meta create endpoints are multipart/form-data (not JSON) —
-          // array/object params are JSON-string field values.
-          capturedBody = Object.fromEntries(
-            (await request.formData()).entries(),
-          ) as Record<string, string>
+          contentType = request.headers.get("content-type") ?? ""
+          capturedBody = (await request.json()) as Record<string, unknown>
           return HttpResponse.json({
             id: "camp_1",
             name: "My Campaign [cbx:op_1]",
@@ -43,23 +37,22 @@ describe("createCampaign", () => {
     expect(capturedBody).toMatchObject({
       objective: "OUTCOME_ENGAGEMENT",
       buying_type: "AUCTION",
-      // "no category" -> ["NONE"] (Meta REQUIRES a non-empty value; `[]` is
-      // rejected as "not provided" with "(#100) … is required").
-      special_ad_categories: JSON.stringify(["NONE"]),
+      // Meta requires the documented NONE sentinel for no special category.
+      special_ad_categories: ["NONE"],
+      is_adset_budget_sharing_enabled: false,
       status: "PAUSED",
     })
+    expect(contentType).toContain("application/json")
     expect(capturedBody).not.toHaveProperty("daily_budget")
   })
 
   test("sends real categories with the NONE marker stripped", async () => {
-    let capturedBody: Record<string, string> = {}
+    let capturedBody: Record<string, unknown> = {}
     server.use(
       http.post(
         `${BASE}/${DEFAULT_API_VERSION}/act_9/campaigns`,
         async ({ request }) => {
-          capturedBody = Object.fromEntries(
-            (await request.formData()).entries(),
-          ) as Record<string, string>
+          capturedBody = (await request.json()) as Record<string, unknown>
           return HttpResponse.json({ id: "camp_2" })
         },
       ),
@@ -73,70 +66,44 @@ describe("createCampaign", () => {
       specialAdCategories: ["HOUSING", "NONE"],
     })
 
-    expect(capturedBody.special_ad_categories).toBe(JSON.stringify(["HOUSING"]))
+    expect(capturedBody.special_ad_categories).toEqual(["HOUSING"])
   })
-})
 
-describe("findCampaignByOperationId", () => {
-  test("filters by the correlation name marker and returns the first match", async () => {
-    let capturedFilter: string | null = null
-
+  test("sends every selected special ad category", async () => {
+    let capturedBody: Record<string, unknown> = {}
     server.use(
-      http.get(
+      http.post(
         `${BASE}/${DEFAULT_API_VERSION}/act_9/campaigns`,
-        ({ request }) => {
-          capturedFilter = new URL(request.url).searchParams.get("filtering")
-          return HttpResponse.json({
-            data: [
-              {
-                id: "camp_existing",
-                name: "Resumed [cbx:op_1]",
-                status: "PAUSED",
-                effective_status: "PAUSED",
-              },
-            ],
-          })
+        async ({ request }) => {
+          capturedBody = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json({ id: "camp_3" })
         },
       ),
     )
 
-    const found = await findCampaignByOperationId({
+    await createCampaign({
       accessToken: ACCESS_TOKEN,
       adAccountId: "act_9",
-      operationId: "op_1",
+      name: "Housing and employment campaign [cbx:op_3]",
+      specialAdCategories: ["HOUSING", "EMPLOYMENT"],
     })
 
-    expect(found?.id).toBe("camp_existing")
-    expect(capturedFilter).toContain("[cbx:op_1]")
-  })
-
-  test("returns null when nothing matches (fresh operation)", async () => {
-    server.use(
-      http.get(`${BASE}/${DEFAULT_API_VERSION}/act_9/campaigns`, () =>
-        HttpResponse.json({ data: [] }),
-      ),
-    )
-
-    const found = await findCampaignByOperationId({
-      accessToken: ACCESS_TOKEN,
-      adAccountId: "act_9",
-      operationId: "op_new",
-    })
-
-    expect(found).toBeNull()
+    expect(capturedBody.special_ad_categories).toEqual([
+      "HOUSING",
+      "EMPLOYMENT",
+    ])
   })
 })
 
 describe("updateCampaignStatus", () => {
-  test("sends the status transition as a multipart form field", async () => {
+  test("sends the status transition as JSON", async () => {
     let capturedStatus: string | null = null
     server.use(
       http.post(
         `${BASE}/${DEFAULT_API_VERSION}/camp_1`,
         async ({ request }) => {
-          capturedStatus = (await request.formData()).get("status") as
-            | string
-            | null
+          capturedStatus =
+            ((await request.json()) as { status?: string }).status ?? null
           return HttpResponse.json({ success: true })
         },
       ),
