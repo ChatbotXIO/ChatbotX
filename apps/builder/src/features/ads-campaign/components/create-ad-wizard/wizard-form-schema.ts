@@ -70,12 +70,17 @@ export const welcomeMessageTemplateSchema = z.object({
  */
 const wizardObjectSchema = z.object({
   name: z.string().trim().min(1).max(120),
-  /** Empty = "NONE" (no restricted category) — see `specialAdCategoryOptions`. */
-  specialAdCategories: z.array(
-    z.enum(
-      specialAdCategoryOptions.map((o) => o.value) as [string, ...string[]],
-    ),
-  ),
+  /**
+   * A campaign belongs to at most ONE special ad category (matching Meta Ads
+   * Manager's single-choice control). `""` = None; otherwise one of
+   * `specialAdCategoryOptions`. Single-select by design so a user can never
+   * submit an invalid/contradictory combination (e.g. Credit + Financial
+   * Products, which are the same category) that Meta rejects.
+   */
+  specialAdCategory: z.enum([
+    "",
+    ...specialAdCategoryOptions.map((o) => o.value),
+  ] as [string, ...string[]]),
   /** ISO-2 countries — Meta REQUIRES this when the politics category is selected (see `CATEGORIES_REQUIRING_COUNTRY`). */
   specialAdCategoryCountry: z.array(z.string()),
   adAccountId: z.string().trim().min(1),
@@ -135,9 +140,7 @@ export function buildWizardFormSchema(channel: WizardMessagingAdChannel) {
       })
     }
     if (
-      values.specialAdCategories.some((c) =>
-        CATEGORIES_REQUIRING_COUNTRY.has(c),
-      ) &&
+      CATEGORIES_REQUIRING_COUNTRY.has(values.specialAdCategory) &&
       values.specialAdCategoryCountry.length === 0
     ) {
       ctx.addIssue({
@@ -204,7 +207,7 @@ export type WizardFormValues = z.infer<typeof wizardObjectSchema>
 
 export const wizardDefaultValues: WizardFormValues = {
   name: "",
-  specialAdCategories: [],
+  specialAdCategory: "",
   specialAdCategoryCountry: [],
   adAccountId: "",
   whatsappPageIntegrationId: "",
@@ -236,7 +239,7 @@ export const wizardDefaultValues: WizardFormValues = {
 
 /** Per-step field names, used to validate only the active step via `form.trigger(...)`. */
 export const STEP_FIELDS: (keyof WizardFormValues)[][] = [
-  ["name", "specialAdCategories", "specialAdCategoryCountry"],
+  ["name", "specialAdCategory", "specialAdCategoryCountry"],
   [
     "adAccountId",
     "whatsappPageIntegrationId",

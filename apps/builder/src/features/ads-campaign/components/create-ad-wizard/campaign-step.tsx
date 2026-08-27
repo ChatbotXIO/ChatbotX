@@ -2,6 +2,7 @@
 
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useWatch } from "react-hook-form"
 import { messagingAdCountryOptions } from "../../lib/country-options"
@@ -13,17 +14,20 @@ import {
 export function CampaignStep() {
   const t = useTranslations()
 
-  const selectedCategories = useWatch({ name: "specialAdCategories" }) as
-    | string[]
+  const selectedCategory = useWatch({ name: "specialAdCategory" }) as
+    | string
     | undefined
-  const needsCountry = (selectedCategories ?? []).some((c) =>
-    CATEGORIES_REQUIRING_COUNTRY.has(c),
-  )
+  const needsCountry = CATEGORIES_REQUIRING_COUNTRY.has(selectedCategory ?? "")
 
-  const categoryOptions = specialAdCategoryOptions.map((option) => ({
-    value: option.value,
-    label: t(option.label),
-  }))
+  // Single-select: "None" (empty value) plus the mutually-exclusive Meta
+  // categories, so an invalid combination can never be submitted.
+  const categoryOptions = [
+    { value: "", label: t("adsCampaign.specialAdCategory.none") },
+    ...specialAdCategoryOptions.map((option) => ({
+      value: option.value,
+      label: t(option.label),
+    })),
+  ]
 
   return (
     <div className="space-y-4">
@@ -44,10 +48,10 @@ export function CampaignStep() {
         </p>
       </div>
 
-      <MultiSelectField
+      <SelectField
         description={t("adsCampaign.fields.specialAdCategory.description")}
         label={t("adsCampaign.fields.specialAdCategory.label")}
-        name="specialAdCategories"
+        name="specialAdCategory"
         options={categoryOptions}
         placeholder={t("adsCampaign.specialAdCategory.none")}
       />

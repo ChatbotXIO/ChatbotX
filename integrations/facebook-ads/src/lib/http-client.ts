@@ -1,10 +1,44 @@
 import ky, { type KyInstance } from "ky"
 import { GRAPH_API_URL } from "../constants"
+import { facebookAdsLogger } from "../logger"
 
 type RequestOptions = {
   headers?: Record<string, string>
   searchParams?: Record<string, string>
   json?: unknown
+}
+
+/** Field names whose values are credentials and must NEVER be logged. */
+const CREDENTIAL_FIELD_RE = /access_?token|password|secret|api[_-]?key|auth/i
+
+/**
+ * Opt-in wire debug for the Meta write path — set `FACEBOOK_ADS_WIRE_DEBUG=1`
+ * to log each POST's endpoint + form fields (e.g. `special_ad_categories`) when
+ * diagnosing a `#100` in production. Credential fields (`access_token`, …) are
+ * dropped by name, so the token is never written to logs; disabled by default.
+ */
+async function logWireDebug(request: Request): Promise<void> {
+  if (
+    process.env.FACEBOOK_ADS_WIRE_DEBUG !== "1" ||
+    request.method !== "POST"
+  ) {
+    return
+  }
+  const fields: Record<string, string> = {}
+  try {
+    const form = await request.clone().formData()
+    form.forEach((value, key) => {
+      if (!CREDENTIAL_FIELD_RE.test(key) && typeof value === "string") {
+        fields[key] = value
+      }
+    })
+  } catch {
+    // Body is not multipart form-data — nothing to log safely.
+  }
+  facebookAdsLogger.warn(
+    { path: new URL(request.url).pathname, fields },
+    "[FB-WIRE]",
+  )
 }
 
 class FacebookAdsHttpClient {
@@ -19,6 +53,9 @@ class FacebookAdsHttpClient {
         methods: ["get"],
         statusCodes: [408, 429, 500, 502, 503, 504],
         backoffLimit: 1000,
+      },
+      hooks: {
+        beforeRequest: [({ request }) => logWireDebug(request)],
       },
     })
   }

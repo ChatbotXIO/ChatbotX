@@ -89,7 +89,14 @@ export const createMessagingAdRequest = z.object({
   name: z.string().trim().min(1).max(120),
   campaign: z
     .object({
-      specialAdCategories: z.array(specialAdCategorySchema).min(1),
+      // Exactly one category — either a real one or the `["NONE"]` sentinel.
+      // A campaign belongs to at most one special ad category, so more than one
+      // is rejected here (defense-in-depth behind the single-select UI) rather
+      // than sent to Meta as an invalid combination.
+      specialAdCategories: z
+        .array(specialAdCategorySchema)
+        .min(1)
+        .max(1, "A campaign can have only one special ad category."),
       specialAdCategoryCountry: z.array(z.string().trim().length(2)).optional(),
     })
     // Meta hard-requires `special_ad_category_country` when the social

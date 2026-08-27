@@ -120,6 +120,14 @@ describe("buildCreateMessagingAdRequest", () => {
     expect(request.campaign.specialAdCategories).toEqual(["NONE"])
   })
 
+  test("maps the single selected special ad category to a one-element array", () => {
+    const request = buildCreateMessagingAdRequest(
+      { ...baseValues, specialAdCategory: "HOUSING" },
+      { workspaceId: "ws_1", channel: "messenger", integrationId: "im_1" },
+    )
+    expect(request.campaign.specialAdCategories).toEqual(["HOUSING"])
+  })
+
   test("includes whatsappPageIntegrationId only for the whatsapp channel", () => {
     const request = buildCreateMessagingAdRequest(
       { ...baseValues, whatsappPageIntegrationId: "im_page_1" },

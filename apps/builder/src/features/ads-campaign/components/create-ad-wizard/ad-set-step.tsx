@@ -31,7 +31,7 @@ export function AdSetStep({ workspaceId, channel, integrationId }: Props) {
   const t = useTranslations()
   const { control, register } = useFormContext<WizardFormValues>()
   const adAccountId = useWatch({ control, name: "adAccountId" })
-  const specialAdCategories = useWatch({ control, name: "specialAdCategories" })
+  const specialAdCategory = useWatch({ control, name: "specialAdCategory" })
 
   const adAccounts = useSWR(
     ["ads-campaign-ad-accounts", workspaceId, channel, integrationId],
@@ -73,11 +73,8 @@ export function AdSetStep({ workspaceId, channel, integrationId }: Props) {
   )
 
   const isRestricted = useMemo(
-    () =>
-      (specialAdCategories ?? []).some((category) =>
-        RESTRICTED_SPECIAL_AD_CATEGORIES.has(category),
-      ),
-    [specialAdCategories],
+    () => RESTRICTED_SPECIAL_AD_CATEGORIES.has(specialAdCategory ?? ""),
+    [specialAdCategory],
   )
 
   const adAccountOptions = (adAccounts.data?.data ?? []).map((account) => ({

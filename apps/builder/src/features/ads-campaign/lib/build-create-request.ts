@@ -51,8 +51,10 @@ export function buildCreateMessagingAdRequest(
     integrationId: string
   },
 ): CreateMessagingAdRequest {
-  const specialAdCategories = values.specialAdCategories.length
-    ? values.specialAdCategories
+  // Meta's `special_ad_categories` is an array; our single-select maps to the
+  // one chosen category, or the `["NONE"]` sentinel when none is selected.
+  const specialAdCategories = values.specialAdCategory
+    ? [values.specialAdCategory]
     : ["NONE"]
 
   return {
