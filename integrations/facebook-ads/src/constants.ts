@@ -8,13 +8,14 @@ export const DEFAULT_API_VERSION = "v23.0"
  * create CTM/CTID/CTWA ads (page_id/instagram_actor_id in object_story_spec,
  * promoted_object.page_id, page_welcome_message). `pages_manage_ads` /
  * `pages_read_engagement` / `pages_show_list` are confirmed required by the
- * CTM/CTID guide. `whatsapp_business_management` is a Phase-0 HYPOTHESIS for
- * CTWA's promoted_object WhatsApp-number resolution — out/plan/ctwa-ads-manager.md
- * "CTWA prerequisite/asset linkage" — kept here so the OAuth consent screen
- * asks once, but the real CTWA gate is the (ad account, Page, WABA, phone
- * number) tuple-authorization check in Phase 0, not this scope alone.
- * // Phase 0 confirm: verify all 4 scopes are actually granted/required against
- * a live v23.0 token before removing this comment.
+ * CTM/CTID guide.
+ *
+ * CHANNEL-SPECIFIC scopes do NOT belong here: `whatsapp_business_management`
+ * (CTWA-only, Phase-0 hypothesis for promoted_object WhatsApp-number
+ * resolution) lives in the per-channel additions map
+ * (`messaging-ads-scopes.ts` `MESSAGING_ADS_EXTRA_SCOPES.whatsapp`) so a
+ * CTM/CTID connect never asks the user for a WhatsApp permission it does not
+ * use.
  */
 export const FACEBOOK_ADS_SCOPES = [
   "ads_read",
@@ -22,7 +23,6 @@ export const FACEBOOK_ADS_SCOPES = [
   "pages_manage_ads",
   "pages_read_engagement",
   "pages_show_list",
-  "whatsapp_business_management",
 ]
 
 /** Facebook caps `limit` at 500 for these edges; 499 mirrors the legacy product. */
