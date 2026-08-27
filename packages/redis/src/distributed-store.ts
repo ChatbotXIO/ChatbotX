@@ -157,6 +157,15 @@ export const distributedStoreFactory = (
     return result as T
   },
 
+  /**
+   * Partial hash update. A field with value `undefined` (or simply omitted
+   * from `value`) is left untouched — that's the "don't touch this field"
+   * signal a `Partial<T>` update relies on. A field explicitly set to `null`
+   * IS written (serialized as the JSON string `"null"`, which `hgetJson`
+   * parses back to `null`) — that's how a caller clears a nullable field
+   * back to its schema default; skipping it here would make every `null`
+   * write to an already-populated field a silent no-op.
+   */
   async merge<T extends Record<string, unknown>>(
     key: string,
     value: T,
@@ -166,7 +175,7 @@ export const distributedStoreFactory = (
     const serializedFields: Record<string, string> = {}
 
     for (const [field, fieldValue] of Object.entries(value)) {
-      if (fieldValue === null || fieldValue === undefined) {
+      if (fieldValue === undefined) {
         continue
       }
       serializedFields[field] = JSON.stringify(fieldValue)

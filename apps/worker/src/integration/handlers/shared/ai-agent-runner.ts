@@ -33,6 +33,7 @@ import { contactVariableService } from "@chatbotx.io/variables"
 import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
+import { logProviderAttempt } from "./provider-attempt-logger"
 
 export type ReplyByAIProps = {
   conversation: ConversationModel
@@ -106,12 +107,29 @@ export async function runAIAgentRunner(
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
-    for (const providerInfo of providersToRun) {
+    for (const [index, providerInfo] of providersToRun.entries()) {
+      const attemptStartedAt = Date.now()
       const result = await runAIReplyInternal(
         props,
         providerInfo,
         tools,
         controller.signal,
+      )
+      const durationMs = Date.now() - attemptStartedAt
+      logProviderAttempt(
+        logger,
+        durationMs,
+        {
+          conversationId: props.conversation.id,
+          workspaceId: props.conversation.workspaceId,
+          agentId: props.aiAgent.id,
+          provider: getProviderName(providerInfo),
+          providerIndex: index,
+          providerCount: providersToRun.length,
+          durationMs,
+          responded: Boolean(result?.responded),
+        },
+        "[ai-agent-runner] fallback chain provider attempt",
       )
       if (result?.responded) {
         return result

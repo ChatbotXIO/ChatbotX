@@ -151,5 +151,12 @@ export const aiPolicies = {
 export const toolPrefixes = z.enum(["file", "fn", "mcp", "sys"])
 
 export const MAX_CONVERSATION_HISTORY = 100
+// Absolute ceiling on cached AI context history, enforced unconditionally in
+// `appendHistory` regardless of summarizer health. Unlike
+// `MAX_CONVERSATION_HISTORY` (which only triggers a summarize job), this is
+// the last-resort guard against unbounded prompt growth if summarization is
+// ever stuck/broken — 50% headroom above the trigger point so it never clips
+// history while a healthy summarize job is still catching up asynchronously.
+export const MAX_CONVERSATION_HISTORY_HARD_CAP = 150
 export const MAX_SUMMARY_LENGTH = 1000
 export const AI_MESSAGE_HISTORY_LOOKBACK_MS = 365 * 24 * 60 * 60 * 1000
