@@ -8,7 +8,14 @@ import { isCloud, isEnterprise } from "../keys"
  * offline license — setting NEXT_PUBLIC_EDITION alone never unlocks features.
  */
 export const hasEnterpriseFeatures = async (): Promise<boolean> => {
-  if (!(isCloud() || isEnterprise())) {
+  // FORK fibrazo/sysbrazo: self-hosted enterprise unlocks everything even
+  // without a valid LICENSE_KEY (see FORK-CHANGES.md "Desbloquear edición
+  // enterprise"). Only cloud keeps the license gate.
+  if (isEnterprise()) {
+    return true
+  }
+
+  if (!isCloud()) {
     return false
   }
 
