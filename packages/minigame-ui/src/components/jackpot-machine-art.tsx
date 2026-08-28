@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { shade as shadeColor } from "../lib/color"
 
 type JackpotMachineArtProps = {
   machineColor: string
@@ -10,59 +11,41 @@ type JackpotMachineArtProps = {
   pulling?: boolean
 }
 
-const DEFAULT_REEL_SYMBOLS: [string, string, string] = ["7", "7", "7"]
+const JACKPOT_SYMBOLS_BASE_PATH = "/mini-game/jackpot/symbols"
+
+/** Every non-jackpot reel symbol, used to fill the spin-flicker and mismatched stops. */
+export const JACKPOT_REEL_SYMBOLS = [
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-red-seven.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-bar.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-cherry.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-clover.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-crown.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-gem-emerald.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-gem-ruby.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-grapes.svg`,
+  `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-orange.svg`,
+] as const
+
+/** The three-of-a-kind symbol shown on a winning spin. */
+export const JACKPOT_WIN_SYMBOL = `${JACKPOT_SYMBOLS_BASE_PATH}/symbol-red-seven.svg`
+
+const DEFAULT_REEL_SYMBOLS: [string, string, string] = [
+  JACKPOT_WIN_SYMBOL,
+  JACKPOT_WIN_SYMBOL,
+  JACKPOT_WIN_SYMBOL,
+]
 const DEFAULT_SPINNING_REELS: [boolean, boolean, boolean] = [
   false,
   false,
   false,
 ]
 
-const HEX_COMPONENT_LENGTH = 2
-const HEX_PAIR_LENGTH = 6
+// Intentionally not `@chatbotx.io/ui`'s `hexToRgb`: this fallback tuple keeps
+// malformed input a visible dark red instead of silently rendering black.
 const FALLBACK_RGB: [number, number, number] = [138, 0, 0]
-const MAX_CHANNEL = 255
 
-// Intentionally local rather than `@chatbotx.io/ui`'s `hexToRgb`: this one
-// supports 3-digit shorthand hex and falls back to a visible dark-red tuple
-// on malformed input instead of silently rendering black.
-function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.replace("#", "")
-  const normalized =
-    clean.length === 3
-      ? clean
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : clean
-  if (normalized.length !== HEX_PAIR_LENGTH) {
-    return FALLBACK_RGB
-  }
-  const r = Number.parseInt(normalized.slice(0, HEX_COMPONENT_LENGTH), 16)
-  const g = Number.parseInt(
-    normalized.slice(HEX_COMPONENT_LENGTH, HEX_COMPONENT_LENGTH * 2),
-    16,
-  )
-  const b = Number.parseInt(
-    normalized.slice(HEX_COMPONENT_LENGTH * 2, HEX_COMPONENT_LENGTH * 3),
-    16,
-  )
-  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
-    return FALLBACK_RGB
-  }
-  return [r, g, b]
-}
-
-function toHexChannel(value: number): string {
-  const clamped = Math.min(MAX_CHANNEL, Math.max(0, Math.round(value)))
-  return clamped.toString(16).padStart(HEX_COMPONENT_LENGTH, "0")
-}
-
-/** Shifts a hex color toward white (amount > 0) or black (amount < 0). */
 function shade(hex: string, amount: number): string {
-  const [r, g, b] = hexToRgb(hex)
-  const target = amount < 0 ? 0 : MAX_CHANNEL
-  const weight = Math.abs(amount)
-  return `#${toHexChannel(r + (target - r) * weight)}${toHexChannel(g + (target - g) * weight)}${toHexChannel(b + (target - b) * weight)}`
+  return shadeColor(hex, amount, FALLBACK_RGB)
 }
 
 const REEL_WINDOWS = [
@@ -76,11 +59,7 @@ const REEL_HEIGHT = 264
 const REEL_SLIDE_DURATION_MS = 100
 const LEVER_PULL_DURATION_MS = 1000
 
-function computeReelFontSize(symbol: string): number {
-  return symbol.length <= 1
-    ? REEL_WIDTH * 0.62
-    : Math.min(REEL_WIDTH * 0.62, (REEL_WIDTH * 0.82) / (symbol.length * 0.62))
-}
+const REEL_SYMBOL_PADDING_RATIO = 0.16
 
 /**
  * Renders one reel's symbol with a top-to-bottom slide transition on every
@@ -113,50 +92,33 @@ function ReelWindow({
     })
   }, [symbol])
 
-  const textX = x + REEL_WIDTH / 2
-  const textY = REEL_Y + REEL_HEIGHT / 2 + 2
-  const currentFontSize = computeReelFontSize(displaySymbol)
-  const prevFontSize = prevSymbol ? computeReelFontSize(prevSymbol) : 0
+  const imageSize = REEL_WIDTH * (1 - REEL_SYMBOL_PADDING_RATIO * 2)
+  const imageX = x + (REEL_WIDTH - imageSize) / 2
+  const imageY = REEL_Y + (REEL_HEIGHT - imageSize) / 2
 
   return (
     <g clipPath={`url(#${clipId})`}>
       {prevSymbol !== null && (
-        <text
+        <image
           className="reel-slide-out"
-          dominantBaseline="central"
-          fill="#dc2626"
-          fontFamily="Arial, Helvetica, sans-serif"
-          fontSize={prevFontSize}
-          fontWeight={900}
+          height={imageSize}
+          href={prevSymbol}
           key={`prev-${tick}`}
-          paintOrder="stroke"
-          stroke="#111827"
-          strokeWidth={prevFontSize * 0.075}
-          textAnchor="middle"
-          x={textX}
-          y={textY}
-        >
-          {prevSymbol}
-        </text>
+          width={imageSize}
+          x={imageX}
+          y={imageY}
+        />
       )}
-      <text
+      <image
         className={tick > 0 ? "reel-slide-in" : undefined}
-        dominantBaseline="central"
-        fill="#dc2626"
-        fontFamily="Arial, Helvetica, sans-serif"
-        fontSize={currentFontSize}
-        fontWeight={900}
+        height={imageSize}
+        href={displaySymbol}
         key={`cur-${tick}`}
-        paintOrder="stroke"
-        stroke="#111827"
-        strokeWidth={currentFontSize * 0.075}
         style={spinning ? { filter: "blur(0.8px)" } : undefined}
-        textAnchor="middle"
-        x={textX}
-        y={textY}
-      >
-        {displaySymbol}
-      </text>
+        width={imageSize}
+        x={imageX}
+        y={imageY}
+      />
     </g>
   )
 }

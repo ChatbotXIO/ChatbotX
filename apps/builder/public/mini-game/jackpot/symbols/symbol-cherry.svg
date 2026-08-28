@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <radialGradient id="chRed1" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fda4af"/>
+      <stop offset="35%" stop-color="#f43f5e"/>
+      <stop offset="75%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#881337"/>
+    </radialGradient>
+    <filter id="shCh"><feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.4"/></filter>
+  </defs>
+  <g filter="url(#shCh)">
+    <!-- Stems -->
+    <path d="M 34,48 Q 48,22 68,18" stroke="#15803d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M 66,54 Q 60,28 68,18" stroke="#15803d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <!-- Leaf -->
+    <path d="M 68,18 Q 84,14 88,26 Q 78,32 68,18 Z" fill="#22c55e" stroke="#166534" stroke-width="1"/>
+    <!-- Left Cherry -->
+    <circle cx="34" cy="60" r="22" fill="url(#chRed1)" stroke="#881337" stroke-width="1.5"/>
+    <ellipse cx="28" cy="52" rx="6" ry="4" fill="#ffffff" opacity="0.8"/>
+    <!-- Right Cherry -->
+    <circle cx="68" cy="64" r="22" fill="url(#chRed1)" stroke="#881337" stroke-width="1.5"/>
+    <ellipse cx="62" cy="56" rx="6" ry="4" fill="#ffffff" opacity="0.8"/>
+  </g>
+</svg>

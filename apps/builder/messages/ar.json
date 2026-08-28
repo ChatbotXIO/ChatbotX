@@ -1076,8 +1076,8 @@
       "aiDeleteMessageHistory": "{aiName}: حذف سجل الرسائل"
     },
     "steps": {
-      "label": "الخطوات",
-      "placeholder": "اختر خطوة"
+      "label": "عقدة",
+      "placeholder": "اختر عقدة"
     },
     "folder": {
       "label": "المجلد"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "مجموع جميع الاحتمالات: {value}%",
       "loseProbability": "احتمال الخسارة: {value}%",
       "winProbability": "احتمال الفوز: {value}%",
-      "newPrize": "جائزة جديدة"
+      "newPrize": "جائزة جديدة",
+      "prizeNameCustomFieldLabel": "حفظ اسم الجائزة في الحقل المخصص"
     },
     "prizeItemDialog": {
       "prizeTitle": "تعديل الجائزة",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "العنوان",
       "loseImageDescription": "الحجم الموصى به 120×120 بكسل",
       "quantityLabel": "كمية الجائزة",
-      "quantityDescription": "عدد المرات المتبقية التي يمكن فيها الفوز بهذه الجائزة؛ ينقص بمقدار 1 مع كل فوز. اتركه فارغًا لعدد غير محدود.",
-      "sendMessage": "إرسال رسالة عند عدم فوز اللاعب",
-      "sendWinMessage": "إرسال رسالة إلى الفائز الذي حصل على الجائزة",
-      "messageMode": "نوع الرسالة",
-      "messageModeText": "نص",
-      "messageModeFlow": "تدفق",
-      "messageText": "نص الرسالة"
+      "quantityDescription": "عدد المرات المتبقية التي يمكن فيها الفوز بهذه الجائزة؛ ينقص بمقدار 1 مع كل فوز. اتركه فارغًا لعدد غير محدود."
+    },
+    "outcomeMessage": {
+      "enableWin": "إرسال رسالة إلى الفائز الذي حصل على الجائزة",
+      "enableLose": "إرسال رسالة عند عدم فوز اللاعب",
+      "mode": "نوع الرسالة",
+      "modeText": "نص",
+      "modeFlow": "تدفق",
+      "text": "نص الرسالة"
     },
     "winningMessageDialog": {
       "title": "إعدادات رسالة الفوز",
       "titleLabel": "العنوان",
+      "prizeNameHint": "يمكنك استخدام '{{prize_name}}' في العنوان والوصف لإدراج اسم الجائزة.",
       "acceptButtonText": "نص زر القبول",
       "shareButtonText": "نص زر المشاركة",
       "shareButtonDescription": "وصف زر المشاركة"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "مشاركة مع الأصدقاء",
       "jackpotHeader": "جاكبوت",
       "jackpotBanner": "جاكبوت",
-      "comingSoon": "المعاينة التفصيلية لهذا النوع من الألعاب قريبًا",
-      "rules": "القواعد"
+      "luckyWheelHeader": "عجلة الحظ",
+      "comingSoon": "المعاينة التفصيلية لهذا النوع من الألعاب قريبًا"
     },
     "form": {
       "generalSettingsTitle": "الإعدادات العامة",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "إعدادات الجوائز"
     },
     "generalSettings": {
+      "showName": "مرئي",
       "playedAt": "وقت اللعب",
       "rulesDescription": "وصف القواعد",
       "openerTags": "وسم جهات الاتصال التي تفتح رابط اللعبة",

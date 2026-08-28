@@ -1076,8 +1076,8 @@
       "aiDeleteMessageHistory": "{aiName}: Mesaj Geçmişini Sil"
     },
     "steps": {
-      "label": "Adımlar",
-      "placeholder": "Adım seçin"
+      "label": "Düğüm",
+      "placeholder": "Düğüm seçin"
     },
     "folder": {
       "label": "Klasör"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "Tüm olasılıkların toplamı: {value}%",
       "loseProbability": "Kaybetme olasılığı: {value}%",
       "winProbability": "Kazanma olasılığı: {value}%",
-      "newPrize": "Yeni Ödül"
+      "newPrize": "Yeni Ödül",
+      "prizeNameCustomFieldLabel": "Ödül adını Özel Alan'a kaydet"
     },
     "prizeItemDialog": {
       "prizeTitle": "Ödülü Düzenle",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "Başlık",
       "loseImageDescription": "Önerilen boyut 120x120px",
       "quantityLabel": "Ödül Miktarı",
-      "quantityDescription": "Bu ödülün hâlâ kaç kez kazanılabileceği; her kazanımda 1 azalır. Sınırsız için boş bırakın.",
-      "sendMessage": "Oyuncu kazanamadığında bir mesaj gönder",
-      "sendWinMessage": "Ödülü kazanan kişiye mesaj gönder",
-      "messageMode": "Mesaj türü",
-      "messageModeText": "Metin",
-      "messageModeFlow": "Akış",
-      "messageText": "Mesaj"
+      "quantityDescription": "Bu ödülün hâlâ kaç kez kazanılabileceği; her kazanımda 1 azalır. Sınırsız için boş bırakın."
+    },
+    "outcomeMessage": {
+      "enableWin": "Ödülü kazanan kişiye mesaj gönder",
+      "enableLose": "Oyuncu kazanamadığında bir mesaj gönder",
+      "mode": "Mesaj türü",
+      "modeText": "Metin",
+      "modeFlow": "Akış",
+      "text": "Mesaj"
     },
     "winningMessageDialog": {
       "title": "Kazanma Mesajı Ayarları",
       "titleLabel": "Başlık",
+      "prizeNameHint": "Ödül adını eklemek için başlık ve açıklamada '{{prize_name}}' kullanabilirsiniz.",
       "acceptButtonText": "Kabul Et Buton Metni",
       "shareButtonText": "Paylaş Buton Metni",
       "shareButtonDescription": "Paylaş Buton Açıklaması"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "Arkadaşlarla paylaş",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Bu oyun türü için ayrıntılı önizleme yakında sunulacak",
-      "rules": "Kurallar"
+      "luckyWheelHeader": "ŞANS ÇARKI",
+      "comingSoon": "Bu oyun türü için ayrıntılı önizleme yakında sunulacak"
     },
     "form": {
       "generalSettingsTitle": "Genel Ayar",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "Ödül Ayarları"
     },
     "generalSettings": {
+      "showName": "Görünür",
       "playedAt": "Oynanma Zamanı",
       "rulesDescription": "Kural Açıklaması",
       "openerTags": "Oyun bağlantısını açan kişileri etiketle",

@@ -1002,8 +1002,8 @@
       "aiDeleteMessageHistory": "{aiName}: Nachrichtenverlauf löschen"
     },
     "steps": {
-      "label": "Schritte",
-      "placeholder": "Schritt auswählen"
+      "label": "Node",
+      "placeholder": "Node auswählen"
     },
     "folder": {
       "label": "Ordner"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "Summe aller Wahrscheinlichkeiten: {value}%",
       "loseProbability": "Verlustwahrscheinlichkeit: {value}%",
       "winProbability": "Gewinnwahrscheinlichkeit: {value}%",
-      "newPrize": "Neuer Gewinn"
+      "newPrize": "Neuer Gewinn",
+      "prizeNameCustomFieldLabel": "Preisname in Benutzerdefiniertes Feld speichern"
     },
     "prizeItemDialog": {
       "prizeTitle": "Gewinn bearbeiten",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Empfohlene Größe 120x120px",
       "quantityLabel": "Preismenge",
-      "quantityDescription": "Anzahl, wie oft dieser Preis noch gewonnen werden kann; verringert sich bei jedem Gewinn um 1. Leer lassen für unbegrenzt.",
-      "sendMessage": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
-      "sendWinMessage": "Nachricht an den Gewinner senden, der den Preis erhalten hat",
-      "messageMode": "Nachrichtentyp",
-      "messageModeText": "Text",
-      "messageModeFlow": "Flow",
-      "messageText": "Nachricht"
+      "quantityDescription": "Anzahl, wie oft dieser Preis noch gewonnen werden kann; verringert sich bei jedem Gewinn um 1. Leer lassen für unbegrenzt."
+    },
+    "outcomeMessage": {
+      "enableWin": "Nachricht an den Gewinner senden, der den Preis erhalten hat",
+      "enableLose": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
+      "mode": "Nachrichtentyp",
+      "modeText": "Text",
+      "modeFlow": "Flow",
+      "text": "Nachricht"
     },
     "winningMessageDialog": {
       "title": "Einstellungen für Gewinnnachricht",
       "titleLabel": "Titel",
+      "prizeNameHint": "Sie können '{{prize_name}}' im Titel und in der Beschreibung verwenden, um den Preisnamen einzufügen.",
       "acceptButtonText": "Text der Bestätigungsschaltfläche",
       "shareButtonText": "Text der Teilen-Schaltfläche",
       "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "Mit Freunden teilen",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze",
-      "rules": "Regeln"
+      "luckyWheelHeader": "GLÜCKSRAD",
+      "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze"
     },
     "form": {
       "generalSettingsTitle": "Allgemeine Einstellungen",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "Gewinneinstellungen"
     },
     "generalSettings": {
+      "showName": "Sichtbar",
       "playedAt": "Gespielt am",
       "rulesDescription": "Regelbeschreibung",
       "openerTags": "Kontakte markieren, die den Spiellink öffnen",

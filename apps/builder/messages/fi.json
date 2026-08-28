@@ -1002,8 +1002,8 @@
       "aiDeleteMessageHistory": "{aiName}: Poista viestihistoria"
     },
     "steps": {
-      "label": "Vaiheet",
-      "placeholder": "Valitse vaihe"
+      "label": "Solmu",
+      "placeholder": "Valitse solmu"
     },
     "folder": {
       "label": "Kansio"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "Kaikkien todennäköisyyksien summa: {value}%",
       "loseProbability": "Häviön todennäköisyys: {value}%",
       "winProbability": "Voiton todennäköisyys: {value}%",
-      "newPrize": "Uusi palkinto"
+      "newPrize": "Uusi palkinto",
+      "prizeNameCustomFieldLabel": "Tallenna palkinnon nimi mukautettuun kenttään"
     },
     "prizeItemDialog": {
       "prizeTitle": "Muokkaa palkintoa",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "Otsikko",
       "loseImageDescription": "Suositeltu koko 120x120px",
       "quantityLabel": "Palkinnon määrä",
-      "quantityDescription": "Kuinka monta kertaa tämän palkinnon voi vielä voittaa; vähenee yhdellä joka voitolla. Jätä tyhjäksi rajoittamatonta varten.",
-      "sendMessage": "Lähetä viesti, kun pelaaja ei voita",
-      "sendWinMessage": "Lähetä viesti voittajalle, joka sai palkinnon",
-      "messageMode": "Viestin tyyppi",
-      "messageModeText": "Teksti",
-      "messageModeFlow": "Flow",
-      "messageText": "Viesti"
+      "quantityDescription": "Kuinka monta kertaa tämän palkinnon voi vielä voittaa; vähenee yhdellä joka voitolla. Jätä tyhjäksi rajoittamatonta varten."
+    },
+    "outcomeMessage": {
+      "enableWin": "Lähetä viesti voittajalle, joka sai palkinnon",
+      "enableLose": "Lähetä viesti, kun pelaaja ei voita",
+      "mode": "Viestin tyyppi",
+      "modeText": "Teksti",
+      "modeFlow": "Flow",
+      "text": "Viesti"
     },
     "winningMessageDialog": {
       "title": "Voittoviestin asetukset",
       "titleLabel": "Otsikko",
+      "prizeNameHint": "Voit käyttää muuttujaa '{{prize_name}}' otsikossa ja kuvauksessa lisätäksesi palkinnon nimen.",
       "acceptButtonText": "Hyväksy-painikkeen teksti",
       "shareButtonText": "Jaa-painikkeen teksti",
       "shareButtonDescription": "Jaa-painikkeen kuvaus"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "Jaa ystäville",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Yksityiskohtainen esikatselu tälle pelityypille tulossa pian",
-      "rules": "Säännöt"
+      "luckyWheelHeader": "ONNENPYÖRÄ",
+      "comingSoon": "Yksityiskohtainen esikatselu tälle pelityypille tulossa pian"
     },
     "form": {
       "generalSettingsTitle": "Yleiset asetukset",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "Palkintoasetukset"
     },
     "generalSettings": {
+      "showName": "Näkyvä",
       "playedAt": "Pelattu",
       "rulesDescription": "Sääntöjen kuvaus",
       "openerTags": "Merkitse kontaktit, jotka avaavat pelin linkin",

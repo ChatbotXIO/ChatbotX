@@ -381,8 +381,8 @@
       "aiDeleteMessageHistory": "{aiName}: Elimina cronologia messaggi"
     },
     "steps": {
-      "label": "Passaggi",
-      "placeholder": "Seleziona passaggio"
+      "label": "Nodo",
+      "placeholder": "Seleziona nodo"
     },
     "folder": {
       "label": "Cartella"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "Somma di tutte le probabilità: {value}%",
       "loseProbability": "Probabilità di perdita: {value}%",
       "winProbability": "Probabilità di vincita: {value}%",
-      "newPrize": "Nuovo premio"
+      "newPrize": "Nuovo premio",
+      "prizeNameCustomFieldLabel": "Salva il nome del premio nel Campo personalizzato"
     },
     "prizeItemDialog": {
       "prizeTitle": "Modifica premio",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "Titolo",
       "loseImageDescription": "Dimensione consigliata 120x120px",
       "quantityLabel": "Quantità del premio",
-      "quantityDescription": "Numero di volte in cui questo premio può ancora essere vinto; diminuisce di 1 a ogni vincita. Lascia vuoto per illimitato.",
-      "sendMessage": "Invia un messaggio quando il giocatore non vince",
-      "sendWinMessage": "Invia un messaggio al vincitore che ha ricevuto il premio",
-      "messageMode": "Tipo di messaggio",
-      "messageModeText": "Testo",
-      "messageModeFlow": "Flow",
-      "messageText": "Messaggio"
+      "quantityDescription": "Numero di volte in cui questo premio può ancora essere vinto; diminuisce di 1 a ogni vincita. Lascia vuoto per illimitato."
+    },
+    "outcomeMessage": {
+      "enableWin": "Invia un messaggio al vincitore che ha ricevuto il premio",
+      "enableLose": "Invia un messaggio quando il giocatore non vince",
+      "mode": "Tipo di messaggio",
+      "modeText": "Testo",
+      "modeFlow": "Flow",
+      "text": "Messaggio"
     },
     "winningMessageDialog": {
       "title": "Impostazioni messaggio di vincita",
       "titleLabel": "Titolo",
+      "prizeNameHint": "Puoi usare '{{prize_name}}' nel titolo e nella descrizione per inserire il nome del premio.",
       "acceptButtonText": "Testo del pulsante di accettazione",
       "shareButtonText": "Testo del pulsante di condivisione",
       "shareButtonDescription": "Descrizione del pulsante di condivisione"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "Condividi con gli amici",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "L’anteprima dettagliata per questo tipo di gioco sarà disponibile a breve",
-      "rules": "Regole"
+      "luckyWheelHeader": "RUOTA DELLA FORTUNA",
+      "comingSoon": "L’anteprima dettagliata per questo tipo di gioco sarà disponibile a breve"
     },
     "form": {
       "generalSettingsTitle": "Impostazioni generali",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "Impostazioni premi"
     },
     "generalSettings": {
+      "showName": "Visibile",
       "playedAt": "Giocato il",
       "rulesDescription": "Descrizione delle regole",
       "openerTags": "Assegna un tag ai contatti che aprono il link del gioco",

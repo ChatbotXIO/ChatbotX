@@ -2459,8 +2459,8 @@
       "label": "状态码"
     },
     "steps": {
-      "label": "步骤",
-      "placeholder": "选择步骤"
+      "label": "节点",
+      "placeholder": "选择节点"
     },
     "subject": {
       "label": "主题"
@@ -5351,7 +5351,8 @@
       "sumOfProbabilities": "所有概率之和：{value}%",
       "loseProbability": "未中奖概率：{value}%",
       "winProbability": "中奖概率：{value}%",
-      "newPrize": "新增奖品"
+      "newPrize": "新增奖品",
+      "prizeNameCustomFieldLabel": "将奖品名称保存到自订字段"
     },
     "prizeItemDialog": {
       "prizeTitle": "编辑奖品",
@@ -5360,17 +5361,20 @@
       "nonWinningTitleLabel": "标题",
       "loseImageDescription": "建议尺寸 120x120px",
       "quantityLabel": "奖品数量",
-      "quantityDescription": "该奖品还可被中奖的次数；每次中奖减少 1。留空表示不限制。",
-      "sendMessage": "玩家未中奖时发送消息",
-      "sendWinMessage": "向获得该奖品的中奖者发送消息",
-      "messageMode": "消息类型",
-      "messageModeText": "文本",
-      "messageModeFlow": "流程",
-      "messageText": "消息内容"
+      "quantityDescription": "该奖品还可被中奖的次数；每次中奖减少 1。留空表示不限制。"
+    },
+    "outcomeMessage": {
+      "enableWin": "向获得该奖品的中奖者发送消息",
+      "enableLose": "玩家未中奖时发送消息",
+      "mode": "消息类型",
+      "modeText": "文本",
+      "modeFlow": "流程",
+      "text": "消息内容"
     },
     "winningMessageDialog": {
       "title": "中奖消息设置",
       "titleLabel": "标题",
+      "prizeNameHint": "您可以在标题和描述中使用 '{{prize_name}}' 来插入奖品名称。",
       "acceptButtonText": "接受按钮文本",
       "shareButtonText": "分享按钮文本",
       "shareButtonDescription": "分享按钮描述"
@@ -5386,8 +5390,8 @@
       "shareWithFriends": "与好友分享",
       "jackpotHeader": "老虎机",
       "jackpotBanner": "老虎机",
-      "comingSoon": "该游戏类型的详细预览即将推出",
-      "rules": "规则"
+      "luckyWheelHeader": "幸运转盘",
+      "comingSoon": "该游戏类型的详细预览即将推出"
     },
     "form": {
       "generalSettingsTitle": "常规设置",
@@ -5396,6 +5400,7 @@
       "prizeSettingsTitle": "奖品设置"
     },
     "generalSettings": {
+      "showName": "可见",
       "playedAt": "参与时间",
       "rulesDescription": "规则说明",
       "openerTags": "为打开游戏链接的联系人打标签",

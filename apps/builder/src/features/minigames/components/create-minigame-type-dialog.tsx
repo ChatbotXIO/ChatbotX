@@ -1,6 +1,5 @@
 "use client"
 
-import { JackpotMachineArt } from "@chatbotx.io/minigame-ui"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
   Dialog,
@@ -14,12 +13,10 @@ import { useTranslations } from "next-intl"
 import type { KeyboardEvent } from "react"
 import { useCallback } from "react"
 import {
-  getDefaultMinigameAppearance,
   MINIGAME_TYPE_CONFIGS,
   MINIGAME_TYPES_ENABLED_FOR_CREATION,
 } from "../constants"
-
-const JACKPOT_PREVIEW_APPEARANCE = getDefaultMinigameAppearance("jackpot")
+import { MINIGAME_TYPE_CARD_ART } from "./preview/minigame-preview-registry"
 
 type CreateMinigameTypeDialogProps = {
   open: boolean
@@ -57,7 +54,7 @@ export function CreateMinigameTypeDialog({
             const isEnabled = MINIGAME_TYPES_ENABLED_FOR_CREATION.includes(
               config.type,
             )
-            const isJackpot = config.type === "jackpot"
+            const previewArt = MINIGAME_TYPE_CARD_ART[config.type]
 
             const cardButtonProps = {
               "aria-disabled": !isEnabled,
@@ -75,7 +72,7 @@ export function CreateMinigameTypeDialog({
               tabIndex: isEnabled ? 0 : -1,
             }
 
-            if (isJackpot) {
+            if (previewArt) {
               return (
                 <Card
                   className={cn(
@@ -90,22 +87,13 @@ export function CreateMinigameTypeDialog({
                   <CardContent
                     className="relative flex h-full w-full items-center justify-center bg-center bg-cover p-0"
                     style={{
-                      backgroundColor:
-                        JACKPOT_PREVIEW_APPEARANCE.backgroundColor,
-                      backgroundImage: JACKPOT_PREVIEW_APPEARANCE
-                        .backgroundImage.url
-                        ? `url(${JACKPOT_PREVIEW_APPEARANCE.backgroundImage.url})`
+                      backgroundColor: previewArt.backgroundColor,
+                      backgroundImage: previewArt.backgroundImageUrl
+                        ? `url(${previewArt.backgroundImageUrl})`
                         : undefined,
                     }}
                   >
-                    <div className="w-20">
-                      <JackpotMachineArt
-                        decorativeColor={
-                          JACKPOT_PREVIEW_APPEARANCE.decorativeColor
-                        }
-                        machineColor={JACKPOT_PREVIEW_APPEARANCE.machineColor}
-                      />
-                    </div>
+                    <div className="w-20">{previewArt.art}</div>
 
                     <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-2 pt-8 pb-2">
                       <span className="block text-center font-medium text-sm text-white">

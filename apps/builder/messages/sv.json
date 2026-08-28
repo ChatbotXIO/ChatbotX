@@ -2456,8 +2456,8 @@
       "label": "Statuskod"
     },
     "steps": {
-      "label": "Steg",
-      "placeholder": "Välj steg"
+      "label": "Nod",
+      "placeholder": "Välj nod"
     },
     "subject": {
       "label": "Ämne"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "Summan av alla sannolikheter: {value}%",
       "loseProbability": "Förlustsannolikhet: {value}%",
       "winProbability": "Vinstsannolikhet: {value}%",
-      "newPrize": "Nytt pris"
+      "newPrize": "Nytt pris",
+      "prizeNameCustomFieldLabel": "Spara prisnamn i Anpassat fält"
     },
     "prizeItemDialog": {
       "prizeTitle": "Redigera pris",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Rekommenderad storlek 120x120px",
       "quantityLabel": "Antal vinster",
-      "quantityDescription": "Antal gånger detta pris fortfarande kan vinnas; minskar med 1 för varje vinst. Lämna tomt för obegränsat.",
-      "sendMessage": "Skicka ett meddelande när spelaren inte vinner",
-      "sendWinMessage": "Skicka meddelande till vinnaren som fick priset",
-      "messageMode": "Meddelandetyp",
-      "messageModeText": "Text",
-      "messageModeFlow": "Flöde",
-      "messageText": "Meddelande"
+      "quantityDescription": "Antal gånger detta pris fortfarande kan vinnas; minskar med 1 för varje vinst. Lämna tomt för obegränsat."
+    },
+    "outcomeMessage": {
+      "enableWin": "Skicka meddelande till vinnaren som fick priset",
+      "enableLose": "Skicka ett meddelande när spelaren inte vinner",
+      "mode": "Meddelandetyp",
+      "modeText": "Text",
+      "modeFlow": "Flöde",
+      "text": "Meddelande"
     },
     "winningMessageDialog": {
       "title": "Inställningar för vinstmeddelande",
       "titleLabel": "Titel",
+      "prizeNameHint": "Du kan använda '{{prize_name}}' i titeln och beskrivningen för att infoga prisnamnet.",
       "acceptButtonText": "Text för Acceptera-knapp",
       "shareButtonText": "Text för Dela-knapp",
       "shareButtonDescription": "Beskrivning för Dela-knapp"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "Dela med vänner",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Detaljerad förhandsvisning kommer snart för den här speltypen",
-      "rules": "Regler"
+      "luckyWheelHeader": "LYCKOHJUL",
+      "comingSoon": "Detaljerad förhandsvisning kommer snart för den här speltypen"
     },
     "form": {
       "generalSettingsTitle": "Allmänna inställningar",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "Prisinställningar"
     },
     "generalSettings": {
+      "showName": "Synlig",
       "playedAt": "Spelad",
       "rulesDescription": "Regelbeskrivning",
       "openerTags": "Tagga kontakter som öppnar spellänken",

@@ -37,14 +37,18 @@ export const MINIGAME_TYPE_CONFIGS: {
   },
 ]
 
-/** Only Jackpot has a working gameplay experience so far; the rest are disabled in the type picker. */
-export const MINIGAME_TYPES_ENABLED_FOR_CREATION: MinigameType[] = ["jackpot"]
+/** Only Jackpot and Lucky Wheel have a working gameplay experience so far; the rest are disabled in the type picker. */
+export const MINIGAME_TYPES_ENABLED_FOR_CREATION: MinigameType[] = [
+  "jackpot",
+  "luckyWheel",
+]
 
 export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
   const now = new Date()
   const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   return {
     name: "",
+    showName: true,
     playedAtFrom: now.toISOString(),
     playedAtTo: oneWeekLater.toISOString(),
     rulesDescription: "",
@@ -58,26 +62,58 @@ export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
 
 const JACKPOT_DEFAULT_BACKGROUND_IMAGE_URL = "/mini-game/jackpot/background.svg"
 const JACKPOT_DEFAULT_START_BUTTON_IMAGE_URL = "/mini-game/jackpot/button.svg"
+const LUCKY_WHEEL_DEFAULT_BACKGROUND_IMAGE_URL =
+  "/mini-game/lucky-wheel/background.png"
+const LUCKY_WHEEL_DEFAULT_START_BUTTON_IMAGE_URL =
+  "/mini-game/lucky-wheel/button.png"
 
 export function getDefaultMinigameAppearance(
   type?: MinigameType,
 ): MinigameAppearance {
-  const isJackpot = type === "jackpot"
+  if (type === "jackpot") {
+    return {
+      backgroundColor: "#D4880E",
+      machineColor: "#D82B2B",
+      decorativeColor: "#FFEA2D",
+      ruleTextColor: "#FFFFFF",
+      backgroundImage: {
+        mode: "file",
+        url: JACKPOT_DEFAULT_BACKGROUND_IMAGE_URL,
+      },
+      prizeDescriptionImage: { mode: "file", url: "" },
+      startButtonImage: {
+        mode: "file",
+        url: JACKPOT_DEFAULT_START_BUTTON_IMAGE_URL,
+      },
+    }
+  }
+
+  if (type === "luckyWheel") {
+    return {
+      backgroundColor: "#1B3B6F",
+      machineColor: "#E63946",
+      decorativeColor: "#FFD166",
+      ruleTextColor: "#FFFFFF",
+      backgroundImage: {
+        mode: "file",
+        url: LUCKY_WHEEL_DEFAULT_BACKGROUND_IMAGE_URL,
+      },
+      prizeDescriptionImage: { mode: "file", url: "" },
+      startButtonImage: {
+        mode: "file",
+        url: LUCKY_WHEEL_DEFAULT_START_BUTTON_IMAGE_URL,
+      },
+    }
+  }
 
   return {
-    backgroundColor: isJackpot ? "#D4880E" : "#F5A623",
-    machineColor: isJackpot ? "#D82B2B" : "#4A90D9",
-    decorativeColor: isJackpot ? "#FFEA2D" : "#FFFFFF",
-    ruleTextColor: isJackpot ? "#FFFFFF" : "#000000",
-    backgroundImage: {
-      mode: "file",
-      url: isJackpot ? JACKPOT_DEFAULT_BACKGROUND_IMAGE_URL : "",
-    },
+    backgroundColor: "#F5A623",
+    machineColor: "#4A90D9",
+    decorativeColor: "#FFFFFF",
+    ruleTextColor: "#000000",
+    backgroundImage: { mode: "file", url: "" },
     prizeDescriptionImage: { mode: "file", url: "" },
-    startButtonImage: {
-      mode: "file",
-      url: isJackpot ? JACKPOT_DEFAULT_START_BUTTON_IMAGE_URL : "",
-    },
+    startButtonImage: { mode: "file", url: "" },
   }
 }
 
@@ -97,14 +133,13 @@ export function getDefaultMinigamePrizeSettings(): MinigamePrizeSettings {
       name: `Prize ${index + 1}`,
       icon: { mode: "file" as const, url: "" },
       winRate: 25,
-      winMessage: { enabled: false, mode: "text" as const, text: "" },
     })),
     nonWinning: {
       title: "Non-winning",
       loseRate: 25,
       loseImage: { mode: "file", url: "" },
-      loseMessage: { enabled: false, mode: "text", text: "" },
     },
+    prizeNameCustomFieldId: null,
   }
 }
 
@@ -115,6 +150,7 @@ export function getDefaultMinigameWinningMessageSettings(): MinigameWinningMessa
     acceptButtonText: "",
     shareButtonText: "",
     shareButtonDescription: "",
+    outcomeMessage: { enabled: false, mode: "text", text: "" },
   }
 }
 
@@ -124,5 +160,6 @@ export function getDefaultMinigameNonWinningMessageSettings(): MinigameNonWinnin
     description: "",
     shareButtonText: "",
     shareButtonDescription: "",
+    outcomeMessage: { enabled: false, mode: "text", text: "" },
   }
 }

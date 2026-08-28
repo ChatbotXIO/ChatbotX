@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
+import { OutcomeMessageFields } from "./outcome-message-fields"
 
 type NonWinningMessageEditDialogProps = {
   open: boolean
@@ -43,6 +44,11 @@ export function NonWinningMessageEditDialog({
             name="nonWinningMessageSettings.description"
           />
         </div>
+
+        <OutcomeMessageFields
+          enabledLabel={t("minigames.outcomeMessage.enableLose")}
+          fieldPrefix="nonWinningMessageSettings.outcomeMessage"
+        />
 
         <DialogFooter>
           <DialogClose

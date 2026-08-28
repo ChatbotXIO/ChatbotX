@@ -1002,8 +1002,8 @@
       "aiDeleteMessageHistory": "{aiName}: Slet Besked Historik"
     },
     "steps": {
-      "label": "Steps",
-      "placeholder": "Vælg trin"
+      "label": "Node",
+      "placeholder": "Vælg node"
     },
     "folder": {
       "label": "Mappe"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "Sum af alle sandsynligheder: {value}%",
       "loseProbability": "Sandsynlighed for tab: {value}%",
       "winProbability": "Sandsynlighed for gevinst: {value}%",
-      "newPrize": "Ny gevinst"
+      "newPrize": "Ny gevinst",
+      "prizeNameCustomFieldLabel": "Gem præmienavn i Brugerdefineret Felt"
     },
     "prizeItemDialog": {
       "prizeTitle": "Rediger gevinst",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Anbefalet størrelse 120x120px",
       "quantityLabel": "Præmieantal",
-      "quantityDescription": "Antal gange denne præmie stadig kan vindes; falder med 1 for hver gevinst. Lad stå tomt for ubegrænset.",
-      "sendMessage": "Send en besked, når spilleren ikke vinder",
-      "sendWinMessage": "Send besked til vinderen, der modtog præmien",
-      "messageMode": "Beskedtype",
-      "messageModeText": "Tekst",
-      "messageModeFlow": "Flow",
-      "messageText": "Besked"
+      "quantityDescription": "Antal gange denne præmie stadig kan vindes; falder med 1 for hver gevinst. Lad stå tomt for ubegrænset."
+    },
+    "outcomeMessage": {
+      "enableWin": "Send besked til vinderen, der modtog præmien",
+      "enableLose": "Send en besked, når spilleren ikke vinder",
+      "mode": "Beskedtype",
+      "modeText": "Tekst",
+      "modeFlow": "Flow",
+      "text": "Besked"
     },
     "winningMessageDialog": {
       "title": "Indstillinger for gevinstbesked",
       "titleLabel": "Titel",
+      "prizeNameHint": "Du kan bruge '{{prize_name}}' i titlen og beskrivelsen for at indsætte præmienavnet.",
       "acceptButtonText": "Tekst på accepter-knap",
       "shareButtonText": "Tekst på del-knap",
       "shareButtonDescription": "Beskrivelse af del-knap"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "Del med venner",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Detaljeret forhåndsvisning kommer snart for denne spiltype",
-      "rules": "Regler"
+      "luckyWheelHeader": "LYKKEHJUL",
+      "comingSoon": "Detaljeret forhåndsvisning kommer snart for denne spiltype"
     },
     "form": {
       "generalSettingsTitle": "Generelle indstillinger",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "Gevinstindstillinger"
     },
     "generalSettings": {
+      "showName": "Synlig",
       "playedAt": "Spillet den",
       "rulesDescription": "Regelbeskrivelse",
       "openerTags": "Tag kontakter, der åbner spillinket",

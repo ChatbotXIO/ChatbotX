@@ -1776,8 +1776,8 @@
       "aiDeleteMessageHistory": "{aiName}: Șterge istoricul mesajelor"
     },
     "steps": {
-      "label": "Pași",
-      "placeholder": "Selectează pasul"
+      "label": "Nod",
+      "placeholder": "Selectează nodul"
     },
     "folder": {
       "label": "Dosar"
@@ -5375,7 +5375,8 @@
       "sumOfProbabilities": "Suma tuturor probabilităților: {value}%",
       "loseProbability": "Probabilitate de pierdere: {value}%",
       "winProbability": "Probabilitate de câștig: {value}%",
-      "newPrize": "Premiu nou"
+      "newPrize": "Premiu nou",
+      "prizeNameCustomFieldLabel": "Salvează numele premiului în Câmp personalizat"
     },
     "prizeItemDialog": {
       "prizeTitle": "Editează premiul",
@@ -5384,17 +5385,20 @@
       "nonWinningTitleLabel": "Titlu",
       "loseImageDescription": "Dimensiune recomandată 120x120px",
       "quantityLabel": "Cantitate premiu",
-      "quantityDescription": "Numărul de câte ori mai poate fi câștigat acest premiu; scade cu 1 la fiecare câștig. Lasă necompletat pentru nelimitat.",
-      "sendMessage": "Trimite un mesaj când jucătorul nu câștigă",
-      "sendWinMessage": "Trimite un mesaj câștigătorului care a primit premiul",
-      "messageMode": "Tip mesaj",
-      "messageModeText": "Text",
-      "messageModeFlow": "Flux",
-      "messageText": "Mesaj"
+      "quantityDescription": "Numărul de câte ori mai poate fi câștigat acest premiu; scade cu 1 la fiecare câștig. Lasă necompletat pentru nelimitat."
+    },
+    "outcomeMessage": {
+      "enableWin": "Trimite un mesaj câștigătorului care a primit premiul",
+      "enableLose": "Trimite un mesaj când jucătorul nu câștigă",
+      "mode": "Tip mesaj",
+      "modeText": "Text",
+      "modeFlow": "Flux",
+      "text": "Mesaj"
     },
     "winningMessageDialog": {
       "title": "Setări mesaj de câștig",
       "titleLabel": "Titlu",
+      "prizeNameHint": "Poți folosi '{{prize_name}}' în titlu și descriere pentru a insera numele premiului.",
       "acceptButtonText": "Text buton Acceptă",
       "shareButtonText": "Text buton Distribuie",
       "shareButtonDescription": "Descriere buton Distribuie"
@@ -5410,8 +5414,8 @@
       "shareWithFriends": "Distribuie prietenilor",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Previzualizarea detaliată pentru acest tip de joc va fi disponibilă în curând",
-      "rules": "Reguli"
+      "luckyWheelHeader": "ROATA NOROCULUI",
+      "comingSoon": "Previzualizarea detaliată pentru acest tip de joc va fi disponibilă în curând"
     },
     "form": {
       "generalSettingsTitle": "Setări generale",
@@ -5420,6 +5424,7 @@
       "prizeSettingsTitle": "Setări premii"
     },
     "generalSettings": {
+      "showName": "Vizibil",
       "playedAt": "Jucat la",
       "rulesDescription": "Descrierea regulilor",
       "openerTags": "Etichetează contactele care deschid linkul jocului",

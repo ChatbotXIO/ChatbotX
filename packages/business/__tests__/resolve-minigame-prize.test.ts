@@ -18,14 +18,13 @@ function makeSettings(
       name: `Prize ${index}`,
       icon: { mode: "file", url: "" },
       winRate,
-      winMessage: { enabled: false, mode: "text", text: "" },
     })),
     nonWinning: {
       title: "Non-winning",
       loseRate,
       loseImage: { mode: "file", url: "" },
-      loseMessage: { enabled: false, mode: "text", text: "" },
     },
+    prizeNameCustomFieldId: null,
   }
 }
 
