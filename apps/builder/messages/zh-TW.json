@@ -389,8 +389,8 @@
       "aiDeleteMessageHistory": "{aiName}：刪除訊息歷史記錄"
     },
     "steps": {
-      "label": "步驟",
-      "placeholder": "選擇步驟"
+      "label": "節點",
+      "placeholder": "選擇節點"
     },
     "folder": {
       "label": "資料夾"
@@ -5381,7 +5381,8 @@
       "sumOfProbabilities": "所有機率總和：{value}%",
       "loseProbability": "未中獎機率：{value}%",
       "winProbability": "中獎機率：{value}%",
-      "newPrize": "新增獎項"
+      "newPrize": "新增獎項",
+      "prizeNameCustomFieldLabel": "將獎品名稱儲存到自訂欄位"
     },
     "prizeItemDialog": {
       "prizeTitle": "編輯獎項",
@@ -5390,17 +5391,20 @@
       "nonWinningTitleLabel": "標題",
       "loseImageDescription": "建議尺寸 120x120px",
       "quantityLabel": "獎品數量",
-      "quantityDescription": "此獎品還可被中獎的次數；每次中獎減少 1。留空表示不限制。",
-      "sendMessage": "玩家未中獎時傳送訊息",
-      "sendWinMessage": "向獲得該獎品的中獎者傳送訊息",
-      "messageMode": "訊息類型",
-      "messageModeText": "文字",
-      "messageModeFlow": "流程",
-      "messageText": "訊息內容"
+      "quantityDescription": "此獎品還可被中獎的次數；每次中獎減少 1。留空表示不限制。"
+    },
+    "outcomeMessage": {
+      "enableWin": "向獲得該獎品的中獎者傳送訊息",
+      "enableLose": "玩家未中獎時傳送訊息",
+      "mode": "訊息類型",
+      "modeText": "文字",
+      "modeFlow": "流程",
+      "text": "訊息內容"
     },
     "winningMessageDialog": {
       "title": "中獎訊息設定",
       "titleLabel": "標題",
+      "prizeNameHint": "您可以在標題和說明中使用 '{{prize_name}}' 來插入獎品名稱。",
       "acceptButtonText": "接受按鈕文字",
       "shareButtonText": "分享按鈕文字",
       "shareButtonDescription": "分享按鈕說明"
@@ -5416,8 +5420,8 @@
       "shareWithFriends": "與朋友分享",
       "jackpotHeader": "拉霸機",
       "jackpotBanner": "拉霸機",
-      "comingSoon": "此遊戲類型的詳細預覽即將推出",
-      "rules": "規則"
+      "luckyWheelHeader": "幸運轉盤",
+      "comingSoon": "此遊戲類型的詳細預覽即將推出"
     },
     "form": {
       "generalSettingsTitle": "一般設定",
@@ -5426,6 +5430,7 @@
       "prizeSettingsTitle": "獎項設定"
     },
     "generalSettings": {
+      "showName": "可見",
       "playedAt": "遊玩時間",
       "rulesDescription": "規則說明",
       "openerTags": "為開啟遊戲連結的聯絡人加上標籤",

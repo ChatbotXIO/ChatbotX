@@ -817,8 +817,8 @@
       "aiDeleteMessageHistory": "{aiName}: berichtgeschiedenis verwijderen"
     },
     "steps": {
-      "label": "Stappen",
-      "placeholder": "Selecteer een stap"
+      "label": "Node",
+      "placeholder": "Selecteer een node"
     },
     "folder": {
       "label": "Map"
@@ -5381,7 +5381,8 @@
       "sumOfProbabilities": "Som van alle kansen: {value}%",
       "loseProbability": "Verlieskans: {value}%",
       "winProbability": "Winkans: {value}%",
-      "newPrize": "Nieuwe prijs"
+      "newPrize": "Nieuwe prijs",
+      "prizeNameCustomFieldLabel": "Prijsnaam opslaan in Aangepast veld"
     },
     "prizeItemDialog": {
       "prizeTitle": "Prijs bewerken",
@@ -5390,17 +5391,20 @@
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Aanbevolen formaat 120x120px",
       "quantityLabel": "Prijsaantal",
-      "quantityDescription": "Aantal keren dat deze prijs nog gewonnen kan worden; neemt met 1 af bij elke winst. Laat leeg voor onbeperkt.",
-      "sendMessage": "Stuur een bericht wanneer de speler niet wint",
-      "sendWinMessage": "Stuur een bericht naar de winnaar die de prijs heeft ontvangen",
-      "messageMode": "Berichttype",
-      "messageModeText": "Tekst",
-      "messageModeFlow": "Flow",
-      "messageText": "Bericht"
+      "quantityDescription": "Aantal keren dat deze prijs nog gewonnen kan worden; neemt met 1 af bij elke winst. Laat leeg voor onbeperkt."
+    },
+    "outcomeMessage": {
+      "enableWin": "Stuur een bericht naar de winnaar die de prijs heeft ontvangen",
+      "enableLose": "Stuur een bericht wanneer de speler niet wint",
+      "mode": "Berichttype",
+      "modeText": "Tekst",
+      "modeFlow": "Flow",
+      "text": "Bericht"
     },
     "winningMessageDialog": {
       "title": "Instellingen winbericht",
       "titleLabel": "Titel",
+      "prizeNameHint": "Je kunt '{{prize_name}}' gebruiken in de titel en beschrijving om de prijsnaam in te voegen.",
       "acceptButtonText": "Tekst accepteerknop",
       "shareButtonText": "Tekst deelknop",
       "shareButtonDescription": "Beschrijving deelknop"
@@ -5416,8 +5420,8 @@
       "shareWithFriends": "Delen met vrienden",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Gedetailleerde voorvertoning voor dit speltype volgt binnenkort",
-      "rules": "Regels"
+      "luckyWheelHeader": "GELUKSWIEL",
+      "comingSoon": "Gedetailleerde voorvertoning voor dit speltype volgt binnenkort"
     },
     "form": {
       "generalSettingsTitle": "Algemene instellingen",
@@ -5426,6 +5430,7 @@
       "prizeSettingsTitle": "Prijsinstellingen"
     },
     "generalSettings": {
+      "showName": "Zichtbaar",
       "playedAt": "Gespeeld op",
       "rulesDescription": "Spelregels",
       "openerTags": "Tag contacten die de spellink openen",

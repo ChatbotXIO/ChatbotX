@@ -1003,8 +1003,8 @@
       "aiDeleteMessageHistory": "{aiName}: Hapus Message History"
     },
     "steps": {
-      "label": "Langkah",
-      "placeholder": "Pilih step"
+      "label": "Node",
+      "placeholder": "Pilih node"
     },
     "folder": {
       "label": "Folder"
@@ -5381,7 +5381,8 @@
       "sumOfProbabilities": "Total semua probabilitas: {value}%",
       "loseProbability": "Probabilitas kalah: {value}%",
       "winProbability": "Probabilitas menang: {value}%",
-      "newPrize": "Hadiah Baru"
+      "newPrize": "Hadiah Baru",
+      "prizeNameCustomFieldLabel": "Simpan nama hadiah ke Kustom Field"
     },
     "prizeItemDialog": {
       "prizeTitle": "Edit Hadiah",
@@ -5390,17 +5391,20 @@
       "nonWinningTitleLabel": "Judul",
       "loseImageDescription": "Ukuran yang disarankan 120x120px",
       "quantityLabel": "Jumlah Hadiah",
-      "quantityDescription": "Jumlah berapa kali hadiah ini masih bisa dimenangkan; berkurang 1 setiap kali dimenangkan. Biarkan kosong untuk tanpa batas.",
-      "sendMessage": "Kirim pesan saat pemain tidak menang",
-      "sendWinMessage": "Kirim pesan ke pemenang yang menerima hadiah",
-      "messageMode": "Jenis pesan",
-      "messageModeText": "Teks",
-      "messageModeFlow": "Flow",
-      "messageText": "Pesan"
+      "quantityDescription": "Jumlah berapa kali hadiah ini masih bisa dimenangkan; berkurang 1 setiap kali dimenangkan. Biarkan kosong untuk tanpa batas."
+    },
+    "outcomeMessage": {
+      "enableWin": "Kirim pesan ke pemenang yang menerima hadiah",
+      "enableLose": "Kirim pesan saat pemain tidak menang",
+      "mode": "Jenis pesan",
+      "modeText": "Teks",
+      "modeFlow": "Flow",
+      "text": "Pesan"
     },
     "winningMessageDialog": {
       "title": "Pengaturan Pesan Kemenangan",
       "titleLabel": "Judul",
+      "prizeNameHint": "Anda dapat menggunakan '{{prize_name}}' di judul dan deskripsi untuk menyisipkan nama hadiah.",
       "acceptButtonText": "Teks Tombol Terima",
       "shareButtonText": "Teks Tombol Bagikan",
       "shareButtonDescription": "Deskripsi Tombol Bagikan"
@@ -5416,8 +5420,8 @@
       "shareWithFriends": "Bagikan ke teman",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Pratinjau detail akan segera hadir untuk jenis permainan ini",
-      "rules": "Aturan"
+      "luckyWheelHeader": "RODA KEBERUNTUNGAN",
+      "comingSoon": "Pratinjau detail akan segera hadir untuk jenis permainan ini"
     },
     "form": {
       "generalSettingsTitle": "Pengaturan Umum",
@@ -5426,6 +5430,7 @@
       "prizeSettingsTitle": "Pengaturan Hadiah"
     },
     "generalSettings": {
+      "showName": "Terlihat",
       "playedAt": "Dimainkan Pada",
       "rulesDescription": "Deskripsi Aturan",
       "openerTags": "Beri tag kontak yang membuka tautan permainan",

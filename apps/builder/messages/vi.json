@@ -1078,8 +1078,8 @@
       "aiDeleteMessageHistory": "{aiName}: Xóa lịch sử tin nhắn"
     },
     "steps": {
-      "label": "Bước",
-      "placeholder": "Chọn bước"
+      "label": "Node",
+      "placeholder": "Chọn node"
     },
     "folder": {
       "label": "Thư mục"
@@ -5381,7 +5381,8 @@
       "sumOfProbabilities": "Tổng tất cả tỷ lệ: {value}%",
       "loseProbability": "Tỷ lệ trượt thưởng: {value}%",
       "winProbability": "Tỷ lệ trúng thưởng: {value}%",
-      "newPrize": "Thêm giải thưởng"
+      "newPrize": "Thêm giải thưởng",
+      "prizeNameCustomFieldLabel": "Lưu tên phần thưởng vào Trường tùy chỉnh"
     },
     "prizeItemDialog": {
       "prizeTitle": "Chỉnh sửa giải thưởng",
@@ -5390,17 +5391,20 @@
       "nonWinningTitleLabel": "Tiêu đề",
       "loseImageDescription": "Kích thước đề xuất 120x120px",
       "quantityLabel": "Số lượng giải thưởng",
-      "quantityDescription": "Số lần giải thưởng này còn có thể trúng; giảm 1 mỗi khi có người trúng. Để trống nếu không giới hạn.",
-      "sendMessage": "Gửi tin nhắn khi người chơi không trúng thưởng",
-      "sendWinMessage": "Gửi tin nhắn cho người trúng giải",
-      "messageMode": "Loại tin nhắn",
-      "messageModeText": "Văn bản",
-      "messageModeFlow": "Kịch bản",
-      "messageText": "Nội dung tin nhắn"
+      "quantityDescription": "Số lần giải thưởng này còn có thể trúng; giảm 1 mỗi khi có người trúng. Để trống nếu không giới hạn."
+    },
+    "outcomeMessage": {
+      "enableWin": "Gửi tin nhắn cho người trúng giải",
+      "enableLose": "Gửi tin nhắn khi người chơi không trúng thưởng",
+      "mode": "Loại tin nhắn",
+      "modeText": "Văn bản",
+      "modeFlow": "Kịch bản",
+      "text": "Nội dung tin nhắn"
     },
     "winningMessageDialog": {
       "title": "Thiết lập tin nhắn khi trúng thưởng",
       "titleLabel": "Tiêu đề",
+      "prizeNameHint": "Bạn có thể dùng '{{prize_name}}' trong tiêu đề và mô tả để chèn tên phần thưởng.",
       "acceptButtonText": "Nội dung nút Chấp nhận",
       "shareButtonText": "Nội dung nút Chia sẻ",
       "shareButtonDescription": "Mô tả nút Chia sẻ"
@@ -5416,8 +5420,8 @@
       "shareWithFriends": "Chia sẻ với bạn bè",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Bản xem trước chi tiết cho loại trò chơi này sẽ sớm ra mắt",
-      "rules": "Luật chơi"
+      "luckyWheelHeader": "VÒNG QUAY MAY MẮN",
+      "comingSoon": "Bản xem trước chi tiết cho loại trò chơi này sẽ sớm ra mắt"
     },
     "form": {
       "generalSettingsTitle": "Thiết lập chung",
@@ -5426,6 +5430,7 @@
       "prizeSettingsTitle": "Thiết lập giải thưởng"
     },
     "generalSettings": {
+      "showName": "Hiển thị",
       "playedAt": "Thời gian diễn ra",
       "rulesDescription": "Mô tả thể lệ",
       "openerTags": "Gắn thẻ liên hệ mở link minigame",

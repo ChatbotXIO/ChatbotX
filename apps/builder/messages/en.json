@@ -1086,8 +1086,8 @@
       "aiDeleteMessageHistory": "{aiName}: Delete Message History"
     },
     "steps": {
-      "label": "Steps",
-      "placeholder": "Select step"
+      "label": "Node",
+      "placeholder": "Select node"
     },
     "folder": {
       "label": "Folder"
@@ -5381,7 +5381,8 @@
       "sumOfProbabilities": "Sum of all probabilities: {value}%",
       "loseProbability": "Lose probability: {value}%",
       "winProbability": "Win probability: {value}%",
-      "newPrize": "New Prize"
+      "newPrize": "New Prize",
+      "prizeNameCustomFieldLabel": "Save prize name to Custom Field"
     },
     "prizeItemDialog": {
       "prizeTitle": "Edit Prize",
@@ -5390,17 +5391,20 @@
       "nonWinningTitleLabel": "Title",
       "loseImageDescription": "Recommended size 120x120px",
       "quantityLabel": "Prize Quantity",
-      "quantityDescription": "Number of times this prize can still be won; decreases by 1 each time it's won. Leave empty for unlimited.",
-      "sendMessage": "Send a message when the player doesn't win",
-      "sendWinMessage": "Send message to winner who received the prize",
-      "messageMode": "Message type",
-      "messageModeText": "Text",
-      "messageModeFlow": "Flow",
-      "messageText": "Message"
+      "quantityDescription": "Number of times this prize can still be won; decreases by 1 each time it's won. Leave empty for unlimited."
+    },
+    "outcomeMessage": {
+      "enableWin": "Send message to winner who received the prize",
+      "enableLose": "Send a message when the player doesn't win",
+      "mode": "Message type",
+      "modeText": "Text",
+      "modeFlow": "Flow",
+      "text": "Message"
     },
     "winningMessageDialog": {
       "title": "Winning Message Settings",
       "titleLabel": "Title",
+      "prizeNameHint": "You can use '{{prize_name}}' in the title and description to insert the prize name.",
       "acceptButtonText": "Accept Button Text",
       "shareButtonText": "Share Button Text",
       "shareButtonDescription": "Share Button Description"
@@ -5416,8 +5420,8 @@
       "shareWithFriends": "Share with friends",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Detailed preview coming soon for this game type",
-      "rules": "Rules"
+      "luckyWheelHeader": "LUCKY WHEEL",
+      "comingSoon": "Detailed preview coming soon for this game type"
     },
     "form": {
       "generalSettingsTitle": "General Setting",
@@ -5426,6 +5430,7 @@
       "prizeSettingsTitle": "Prize Settings"
     },
     "generalSettings": {
+      "showName": "Visible",
       "playedAt": "Played At",
       "rulesDescription": "Rules Description",
       "openerTags": "Tag contacts who open the game link",

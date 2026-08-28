@@ -1003,8 +1003,8 @@
       "aiDeleteMessageHistory": "{aiName}：メッセージ履歴を削除"
     },
     "steps": {
-      "label": "ステップ",
-      "placeholder": "ステップを選択"
+      "label": "ノード",
+      "placeholder": "ノードを選択"
     },
     "folder": {
       "label": "フォルダー"
@@ -5381,7 +5381,8 @@
       "sumOfProbabilities": "全確率の合計：{value}%",
       "loseProbability": "はずれ確率：{value}%",
       "winProbability": "当選確率：{value}%",
-      "newPrize": "新しい景品"
+      "newPrize": "新しい景品",
+      "prizeNameCustomFieldLabel": "景品名をカスタムフィールドに保存"
     },
     "prizeItemDialog": {
       "prizeTitle": "景品を編集",
@@ -5390,17 +5391,20 @@
       "nonWinningTitleLabel": "タイトル",
       "loseImageDescription": "推奨サイズ 120x120px",
       "quantityLabel": "景品数量",
-      "quantityDescription": "この景品があと何回当選できるかを示します。当選するたびに1減ります。無制限にする場合は空欄のままにしてください。",
-      "sendMessage": "はずれた場合にメッセージを送信する",
-      "sendWinMessage": "景品を獲得した当選者にメッセージを送信する",
-      "messageMode": "メッセージタイプ",
-      "messageModeText": "テキスト",
-      "messageModeFlow": "フロー",
-      "messageText": "メッセージ"
+      "quantityDescription": "この景品があと何回当選できるかを示します。当選するたびに1減ります。無制限にする場合は空欄のままにしてください。"
+    },
+    "outcomeMessage": {
+      "enableWin": "景品を獲得した当選者にメッセージを送信する",
+      "enableLose": "はずれた場合にメッセージを送信する",
+      "mode": "メッセージタイプ",
+      "modeText": "テキスト",
+      "modeFlow": "フロー",
+      "text": "メッセージ"
     },
     "winningMessageDialog": {
       "title": "当選メッセージの設定",
       "titleLabel": "タイトル",
+      "prizeNameHint": "タイトルと説明で '{{prize_name}}' を使用すると、景品名を挿入できます。",
       "acceptButtonText": "承諾ボタンのテキスト",
       "shareButtonText": "シェアボタンのテキスト",
       "shareButtonDescription": "シェアボタンの説明"
@@ -5416,8 +5420,8 @@
       "shareWithFriends": "友達にシェア",
       "jackpotHeader": "ジャックポット",
       "jackpotBanner": "ジャックポット",
-      "comingSoon": "このゲームタイプの詳細プレビューは近日公開予定です",
-      "rules": "ルール"
+      "luckyWheelHeader": "ラッキーホイール",
+      "comingSoon": "このゲームタイプの詳細プレビューは近日公開予定です"
     },
     "form": {
       "generalSettingsTitle": "一般設定",
@@ -5426,6 +5430,7 @@
       "prizeSettingsTitle": "景品設定"
     },
     "generalSettings": {
+      "showName": "表示",
       "playedAt": "プレイ日時",
       "rulesDescription": "ルールの説明",
       "openerTags": "ゲームリンクを開いた人にタグを付ける",

@@ -3599,8 +3599,8 @@
       "aiDeleteMessageHistory": "{aiName}: מחיקת היסטוריית הודעות"
     },
     "steps": {
-      "label": "שלבים",
-      "placeholder": "בחירת שלב"
+      "label": "צומת",
+      "placeholder": "בחירת צומת"
     },
     "folder": {
       "label": "תיקייה"
@@ -5381,7 +5381,8 @@
       "sumOfProbabilities": "סכום כל ההסתברויות: {value}%",
       "loseProbability": "הסתברות הפסד: {value}%",
       "winProbability": "הסתברות זכייה: {value}%",
-      "newPrize": "פרס חדש"
+      "newPrize": "פרס חדש",
+      "prizeNameCustomFieldLabel": "שמירת שם הפרס בשדה מותאם אישית"
     },
     "prizeItemDialog": {
       "prizeTitle": "עריכת פרס",
@@ -5390,17 +5391,20 @@
       "nonWinningTitleLabel": "כותרת",
       "loseImageDescription": "גודל מומלץ 120x120 פיקסלים",
       "quantityLabel": "כמות הפרס",
-      "quantityDescription": "מספר הפעמים שניתן עדיין לזכות בפרס זה; יורד ב-1 בכל זכייה. השאירו ריק ללא הגבלה.",
-      "sendMessage": "שליחת הודעה כאשר השחקן לא זוכה",
-      "sendWinMessage": "שליחת הודעה לזוכה שקיבל את הפרס",
-      "messageMode": "סוג הודעה",
-      "messageModeText": "טקסט",
-      "messageModeFlow": "פלואו",
-      "messageText": "הודעה"
+      "quantityDescription": "מספר הפעמים שניתן עדיין לזכות בפרס זה; יורד ב-1 בכל זכייה. השאירו ריק ללא הגבלה."
+    },
+    "outcomeMessage": {
+      "enableWin": "שליחת הודעה לזוכה שקיבל את הפרס",
+      "enableLose": "שליחת הודעה כאשר השחקן לא זוכה",
+      "mode": "סוג הודעה",
+      "modeText": "טקסט",
+      "modeFlow": "פלואו",
+      "text": "הודעה"
     },
     "winningMessageDialog": {
       "title": "הגדרות הודעת זכייה",
       "titleLabel": "כותרת",
+      "prizeNameHint": "ניתן להשתמש ב-'{{prize_name}}' בכותרת ובתיאור כדי להוסיף את שם הפרס.",
       "acceptButtonText": "טקסט כפתור אישור",
       "shareButtonText": "טקסט כפתור שיתוף",
       "shareButtonDescription": "תיאור כפתור שיתוף"
@@ -5416,8 +5420,8 @@
       "shareWithFriends": "שיתוף עם חברים",
       "jackpotHeader": "ג'קפוט",
       "jackpotBanner": "ג'קפוט",
-      "comingSoon": "תצוגה מקדימה מפורטת תגיע בקרוב עבור סוג משחק זה",
-      "rules": "חוקים"
+      "luckyWheelHeader": "גלגל המזל",
+      "comingSoon": "תצוגה מקדימה מפורטת תגיע בקרוב עבור סוג משחק זה"
     },
     "form": {
       "generalSettingsTitle": "הגדרות כלליות",
@@ -5426,6 +5430,7 @@
       "prizeSettingsTitle": "הגדרות פרסים"
     },
     "generalSettings": {
+      "showName": "גלוי",
       "playedAt": "שוחק בתאריך",
       "rulesDescription": "תיאור החוקים",
       "openerTags": "תיוג אנשי קשר שפותחים את קישור המשחק",
