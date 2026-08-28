@@ -1,4 +1,9 @@
 import {
+  FieldReferenceKind,
+  formatBotFieldReference,
+  parseFieldReference,
+} from "../field-reference"
+import {
   CROSS_FLOW_NODE_FIELD,
   DISCRIMINATED_REFERENCE_FIELDS,
   FLOW_REFERENCE_FIELD,
@@ -115,6 +120,57 @@ const resolveScalarRef = (
   return { resolved: false }
 }
 
+type BotFieldSlotResult = { matched: true; value: string } | { matched: false }
+
+/**
+ * Recognizes a valid `bot_field:<id>` token in a scalar `customField`-kind
+ * reference slot (`inputFieldId`, `customFieldId`, ...) and resolves it
+ * against `idMaps.botField` instead of `idMaps.customField` — mirrors
+ * `remapPrefixedToken`'s "leave unchanged + report onUnresolved on a miss"
+ * contract, but is a dedicated helper (not routed through
+ * `PREFIXED_REFERENCE_FIELDS`) because it must run on every customField-kind
+ * scalar slot, not just the free-text `tools` key.
+ *
+ * Returns `{ matched: false }` for anything that is not a well-formed bot
+ * token (a legacy numeric id, a legacy name, or a malformed near-token like
+ * `bot_field:abc`) so the caller falls through to the normal customField
+ * resolution — a malformed near-token is never misreported as a botField
+ * reference.
+ *
+ * When `"botField"` is excluded by `options.kinds`, a well-formed token is
+ * still reported as matched (so it is never misrouted into customField
+ * resolution) but is left completely untouched — no rewrite, no warning —
+ * consistent with how every other kind gate behaves when out of scope.
+ */
+const resolveBotFieldReferenceSlot = (
+  value: unknown,
+  path: string,
+  idMaps: ReferenceIdMaps,
+  options: RemapOptions | undefined,
+): BotFieldSlotResult => {
+  if (typeof value !== "string") {
+    return { matched: false }
+  }
+  const parsed = parseFieldReference(value)
+  if (parsed.kind !== FieldReferenceKind.botField) {
+    return { matched: false }
+  }
+  if (!kindEnabled(FieldReferenceKind.botField, options?.kinds)) {
+    return { matched: true, value }
+  }
+  const idMap = idMaps[FieldReferenceKind.botField]
+  const mapped = idMap?.get(parsed.id)
+  if (mapped) {
+    return { matched: true, value: formatBotFieldReference(mapped) }
+  }
+  options?.onUnresolved?.({
+    entityKind: FieldReferenceKind.botField,
+    path,
+    value: parsed.id,
+  })
+  return { matched: true, value }
+}
+
 const remapArrayRef = (
   value: unknown,
   entityKind: string,
@@ -130,6 +186,26 @@ const remapArrayRef = (
     const result = resolveScalarRef(item, entityKind, itemPath, idMaps, options)
     return result.resolved ? result.value : item
   })
+}
+
+/**
+ * Shared shape behind every scalar reference slot below: resolve `child`
+ * against `idMaps[kind]`, or recurse into it (it may still contain nested
+ * reference slots) when there is no map entry to rewrite.
+ */
+const resolveScalarOrRecurse = (
+  child: unknown,
+  kind: string,
+  childPath: string,
+  idMaps: ReferenceIdMaps,
+  options: RemapOptions | undefined,
+  depth: number,
+): unknown => {
+  const result = resolveScalarRef(child, kind, childPath, idMaps, options)
+  if (result.resolved) {
+    return result.value
+  }
+  return remapValue(child, childPath, idMaps, options, depth + 1)
 }
 
 const resolveDiscriminatedKind = (
@@ -217,18 +293,34 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
   const { key, child, childPath, container, idMaps, options, depth } = args
 
   const scalarKind = REFERENCE_FIELD_ENTITY_KIND[key]
-  if (scalarKind && kindEnabled(scalarKind, options?.kinds)) {
-    const result = resolveScalarRef(
-      child,
-      scalarKind,
-      childPath,
-      idMaps,
-      options,
-    )
-    if (result.resolved) {
-      return result.value
+  if (scalarKind) {
+    // A `bot_field:<id>` token can appear in any customField-kind slot
+    // (Account Fields reuse the same picker/steps as Custom Fields). It must
+    // be recognized and routed to `idMaps.botField` BEFORE the generic
+    // customField resolution below runs — otherwise the whole token would be
+    // looked up as a literal customField id/name and either misresolve or
+    // spuriously warn as an unresolved customField reference.
+    if (scalarKind === FieldReferenceKind.customField) {
+      const botFieldResult = resolveBotFieldReferenceSlot(
+        child,
+        childPath,
+        idMaps,
+        options,
+      )
+      if (botFieldResult.matched) {
+        return botFieldResult.value
+      }
     }
-    return remapValue(child, childPath, idMaps, options, depth + 1)
+    if (kindEnabled(scalarKind, options?.kinds)) {
+      return resolveScalarOrRecurse(
+        child,
+        scalarKind,
+        childPath,
+        idMaps,
+        options,
+        depth,
+      )
+    }
   }
 
   const arrayKind = REFERENCE_ARRAY_FIELD_ENTITY_KIND[key]
@@ -242,17 +334,14 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
 
   const discriminatedKind = resolveDiscriminatedKind(key, container)
   if (discriminatedKind && kindEnabled(discriminatedKind, options?.kinds)) {
-    const result = resolveScalarRef(
+    return resolveScalarOrRecurse(
       child,
       discriminatedKind,
       childPath,
       idMaps,
       options,
+      depth,
     )
-    if (result.resolved) {
-      return result.value
-    }
-    return remapValue(child, childPath, idMaps, options, depth + 1)
   }
 
   if (PREFIXED_REFERENCE_FIELDS.has(key)) {
@@ -260,11 +349,14 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
   }
 
   if (key === FLOW_REFERENCE_FIELD && kindEnabled("flow", options?.kinds)) {
-    const result = resolveScalarRef(child, "flow", childPath, idMaps, options)
-    if (result.resolved) {
-      return result.value
-    }
-    return remapValue(child, childPath, idMaps, options, depth + 1)
+    return resolveScalarOrRecurse(
+      child,
+      "flow",
+      childPath,
+      idMaps,
+      options,
+      depth,
+    )
   }
 
   if (
@@ -272,17 +364,14 @@ const remapEntry = (args: RemapEntryArgs): unknown => {
     args.hasCrossFlowJump &&
     kindEnabled("flowNode", options?.kinds)
   ) {
-    const result = resolveScalarRef(
+    return resolveScalarOrRecurse(
       child,
       "flowNode",
       childPath,
       idMaps,
       options,
+      depth,
     )
-    if (result.resolved) {
-      return result.value
-    }
-    return remapValue(child, childPath, idMaps, options, depth + 1)
   }
 
   return remapValue(child, childPath, idMaps, options, depth + 1)

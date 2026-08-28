@@ -1,4 +1,5 @@
 import {
+  botFieldService,
   customFieldService,
   flowService,
   importService,
@@ -130,6 +131,7 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
   const exportedFlow = parsed.data.flows[0]
 
   let createdCustomFieldIds: string[]
+  let createdBotFieldIds: string[]
   let warnings: ReturnType<typeof collectFlowReferenceWarnings>
   try {
     const result = await flowService.importFlowExport({
@@ -141,20 +143,29 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
       nodes: exportedFlow.nodes,
       edges: exportedFlow.edges,
       customFields: parsed.data.customFields,
+      botFields: parsed.data.botFields,
       folderId: parsedMeta.data.folderId,
     })
     createdCustomFieldIds = result.createdCustomFieldIds
-    // Custom-field creation is unconditional, so any customField reference
-    // whose source id has a manifest entry is guaranteed resolved — warn on
-    // the *source* graph (ids still recognizable against the manifest), then
-    // drop exactly those warnings. Other kinds (sequence, aiAgent,
-    // integration, …) are untouched by the manifest and warn exactly as
-    // before; an unmapped customField id (no manifest entry) still warns.
-    const manifestIds = new Set(Object.keys(parsed.data.customFields))
+    createdBotFieldIds = result.createdBotFieldIds
+    // Custom-field (and bot-field) creation is unconditional, so any
+    // reference whose source id has a manifest entry is guaranteed resolved
+    // — warn on the *source* graph (ids still recognizable against the
+    // manifest), then drop exactly those warnings. Other kinds (sequence,
+    // aiAgent, integration, …) are untouched by either manifest and warn
+    // exactly as before; an unmapped customField/botField id (no manifest
+    // entry) still warns.
+    const customFieldManifestIds = new Set(
+      Object.keys(parsed.data.customFields),
+    )
+    const botFieldManifestIds = new Set(Object.keys(parsed.data.botFields))
     warnings = collectFlowReferenceWarnings(exportedFlow).filter(
       (warning) =>
         !(
-          warning.entityKind === "customField" && manifestIds.has(warning.value)
+          (warning.entityKind === "customField" &&
+            customFieldManifestIds.has(warning.value)) ||
+          (warning.entityKind === "botField" &&
+            botFieldManifestIds.has(warning.value))
         ),
     )
   } catch (error) {
@@ -165,6 +176,9 @@ export const runFlowImport = async (row: ImportRow): Promise<void> => {
 
   if (createdCustomFieldIds.length > 0) {
     await customFieldService.invalidate({ workspaceId: row.workspaceId })
+  }
+  if (createdBotFieldIds.length > 0) {
+    await botFieldService.invalidate({ workspaceId: row.workspaceId })
   }
 
   const MAX_WARNING_SAMPLE = 50

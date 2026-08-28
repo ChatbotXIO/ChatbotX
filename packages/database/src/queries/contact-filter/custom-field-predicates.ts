@@ -1,3 +1,4 @@
+import { BOOLEAN_LITERAL_PATTERN_SOURCE } from "@chatbotx.io/utils/custom-field"
 import {
   DATE_PART_LENGTH,
   DEFAULT_FILTER_TIMEZONE,
@@ -102,6 +103,9 @@ function buildCustomFieldPositivePredicate(
   if (valueType === "number") {
     return buildNumberCustomFieldPredicate(operator, value, intervalValue)
   }
+  if (valueType === "boolean") {
+    return buildBooleanCustomFieldPredicate(operator, value)
+  }
   if (valueType === "datetime") {
     return buildDatetimeCustomFieldPredicate(
       operator,
@@ -183,6 +187,37 @@ function buildNumberCustomFieldPredicate(
     default:
       return
   }
+}
+
+/**
+ * `boolean` custom fields, guarded + cast the same way `number` is: a
+ * whitespace-tolerant, case-insensitive literal guard (source shared with the
+ * write-side normalizers via `BOOLEAN_LITERAL_PATTERN_SOURCE`, so SQL and JS
+ * can never disagree on what "looks boolean") followed by a `NULLIF(...)::boolean`
+ * cast that only ever runs on a value the guard already accepted. A legacy row
+ * that fails the guard (blank or garbage like `"12313"`) yields NULL from the
+ * cast and never matches `eq` — same "guarded, never throws" philosophy as the
+ * numeric/datetime branches. Only `eq` is produced here; `isEmpty`/`isNotEmpty`
+ * are handled generically above (only `''` counts as empty) and `ne` is not
+ * offered by the UI but is handled for free by the caller, which negates `eq`
+ * via `NEGATION_TO_POSITIVE` before wrapping it in `NOT EXISTS`.
+ */
+function buildBooleanCustomFieldPredicate(
+  operator: string,
+  value: unknown,
+): SQL | undefined {
+  if (operator !== operatorTypes.enum.eq) {
+    return
+  }
+  if (typeof value !== "string" || value === "") {
+    return
+  }
+
+  const column = contactCustomFieldModel.value
+  const guard = sql`lower(btrim(${column})) ~ ${BOOLEAN_LITERAL_PATTERN_SOURCE}`
+  const boolValue = sql`NULLIF(lower(btrim(${column})), '')::boolean`
+
+  return sql`(${guard} AND ${boolValue} = ${value === "true"})`
 }
 
 type TemporalCast = "timestamp" | "timestamptz"

@@ -4,6 +4,7 @@ import {
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
+import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import {
   CalendarClockIcon,
@@ -16,7 +17,7 @@ import {
   TextIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useCustomFieldStore } from "./custom-field-store-context"
 
 export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
@@ -172,6 +173,27 @@ export const reservedCustomFieldIds: {
   },
 ]
 
+/**
+ * Groups already-built option lists into the "System Fields" / "Custom
+ * Fields" / "Account Fields" sections rendered by `ComboboxField` (via
+ * `SelectOption.children`). Pure and side-effect free so the grouping shape
+ * is unit-testable without mounting the hook. A group is omitted entirely
+ * when it has no options, so a workspace with no Account Fields yet never
+ * renders an empty "Account Fields" heading.
+ */
+export const buildGroupedFieldOptions = (groups: {
+  systemFields: { label: string; options: SelectOption[] }
+  customFields: { label: string; options: SelectOption[] }
+  accountFields: { label: string; options: SelectOption[] }
+}): SelectOption[] =>
+  ([groups.systemFields, groups.customFields, groups.accountFields] as const)
+    .filter((group) => group.options.length > 0)
+    .map((group) => ({
+      value: `__group__:${group.label}`,
+      label: group.label,
+      children: group.options,
+    }))
+
 export const useCustomFieldSelectOptions = (
   props: {
     customFieldTypes?: CustomFieldType[]
@@ -180,6 +202,14 @@ export const useCustomFieldSelectOptions = (
     customFieldValueKey?: "name"
     channels?: ChannelType[]
     reservedFieldIds?: SystemFieldType[]
+    /**
+     * When true, also includes Account Fields (bot fields) as a separate
+     * group at the end of the option list, using
+     * `formatBotFieldReference(id)` as the option value. Defaults to false so
+     * the ~24 existing consumers keep their current flat-list shape,
+     * byte-identical. Allowlisted v1 surfaces only (see plan 3.3).
+     */
+    includeBotFields?: boolean
   } = {},
 ): SelectOption[] => {
   const {
@@ -189,12 +219,21 @@ export const useCustomFieldSelectOptions = (
     customFieldValueKey,
     channels,
     reservedFieldIds,
+    includeBotFields,
   } = props
   const t = useTranslations()
 
-  const { customFields: rawCustomFields } = useCustomFieldStore(
-    (state) => state,
-  )
+  const {
+    customFields: rawCustomFields,
+    botFields: rawBotFields,
+    ensureBotFieldsLoaded,
+  } = useCustomFieldStore((state) => state)
+
+  useEffect(() => {
+    if (includeBotFields) {
+      ensureBotFieldsLoaded()
+    }
+  }, [includeBotFields, ensureBotFieldsLoaded])
 
   // `channels` still drives the filter below; it no longer prefixes the label.
   const reservedCustomFieldOptions = useMemo(
@@ -241,15 +280,41 @@ export const useCustomFieldSelectOptions = (
         ),
       )
 
-    return [...reservedOptions, ...customOptions]
+    if (!includeBotFields) {
+      return [...reservedOptions, ...customOptions]
+    }
+
+    const botOptions = rawBotFields
+      .filter((field) => matchesType(field.type))
+      .map((field) =>
+        toOption(field, formatBotFieldReference(field.id.toString())),
+      )
+
+    return buildGroupedFieldOptions({
+      systemFields: {
+        label: t("fields.customField.groupSystemFields"),
+        options: reservedOptions,
+      },
+      customFields: {
+        label: t("fields.customField.groupCustomFields"),
+        options: customOptions,
+      },
+      accountFields: {
+        label: t("fields.customField.groupAccountFields"),
+        options: botOptions,
+      },
+    })
   }, [
     customFieldTypes,
     customFieldValueKey,
     channels,
     reservedFieldIds,
     includeReserved,
+    includeBotFields,
     rawCustomFields,
+    rawBotFields,
     prefix,
     reservedCustomFieldOptions,
+    t,
   ])
 }

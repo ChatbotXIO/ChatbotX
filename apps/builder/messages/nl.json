@@ -714,7 +714,10 @@
       "append": "Aan het einde toevoegen",
       "prepend": "Aan het begin toevoegen",
       "increase": "Verhogen met",
-      "decrease": "Verlagen met"
+      "decrease": "Verlagen met",
+      "groupSystemFields": "Systeemvelden",
+      "groupCustomFields": "Aangepaste velden",
+      "groupAccountFields": "Botvelden"
     },
     "dataCollect": {
       "label": "Gegevens verzamelen"
@@ -2967,6 +2970,9 @@
     "duplicatedSuccess": "{feature} gedupliceerd",
     "duplicateConfirmation": "Hiermee wordt een kopie van je {feature} gemaakt.",
     "deleteFeature": "{feature} verwijderen",
+    "resetFeature": "{feature} resetten",
+    "resetConfirmation": "Hiermee worden de waarden van de geselecteerde {feature} leeggemaakt.\nDeze actie kan niet ongedaan worden gemaakt.",
+    "resetSuccess": "{feature} succesvol gereset",
     "deleteConfirmation": "Weet je het absoluut zeker?\nDeze actie kan niet ongedaan worden gemaakt.\nHiermee wordt je {feature} permanent van onze servers verwijderd.",
     "addFeature": "{feature} toevoegen",
     "signOutConfirmation": "Weet je zeker dat je wilt uitloggen?",
@@ -5701,5 +5707,8 @@
         "last_7d": "Laatste 7 dagen"
       }
     }
+  },
+  "accountFields": {
+    "title": "Botvelden"
   }
 }

@@ -1,3 +1,9 @@
+import {
+  BOOLEAN_FALSY_LITERALS,
+  BOOLEAN_LITERAL_PATTERN_SOURCE,
+  BOOLEAN_TRUTHY_LITERALS,
+  canonicalBooleanLiteral,
+} from "@chatbotx.io/utils/custom-field"
 import { relationsFilterToSQL, type SQL } from "drizzle-orm"
 import { alias, PgDialect } from "drizzle-orm/pg-core"
 import { describe, expect, test } from "vitest"
@@ -3212,7 +3218,6 @@ describe("applyContactFilter — custom fields", () => {
   })
 
   test.each([
-    "boolean",
     "select",
     "text",
   ])("renders %s custom-field eq as a plain value comparison", (valueType) => {
@@ -3223,6 +3228,144 @@ describe("applyContactFilter — custom fields", () => {
     expect(query.sql).not.toContain("NOT EXISTS")
     expect(query.sql).toContain('"ContactCustomField"."value" =')
     expect(query.params).toContain("yes")
+  })
+})
+
+describe("applyContactFilter — boolean custom fields", () => {
+  const booleanField = (operator: string, value?: unknown) => {
+    const condition =
+      value === undefined
+        ? {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType: "boolean",
+            operator,
+          }
+        : {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType: "boolean",
+            operator,
+            value,
+          }
+
+    return applyContactFilter({
+      operator: "and",
+      conditions: [condition],
+    })
+  }
+
+  /**
+   * The predicate only ever guards/casts the STORED column value at query
+   * time — a real Postgres is needed to prove a given stored string actually
+   * matches. This package's contact-filter tests never run against a live
+   * DB (they assert rendered SQL text/params only, see `renderContactWhere`
+   * above); a live-Postgres integration test that would prove this against a
+   * real `::boolean` cast is therefore out of scope for this render-based
+   * harness.
+   *
+   * Short of that, this table is a HAND-WRITTEN truth table reasoned
+   * independently from Postgres's own documented boolean literal semantics
+   * (case-insensitive, whitespace-trimmed `true/yes/on/1/t/y` and
+   * `false/no/off/0/f/n`) — it deliberately does NOT derive its expectations
+   * by calling `canonicalBooleanLiteral` (the earlier version of this test
+   * did exactly that, which is circular: `canonicalBooleanLiteral` is the
+   * SAME source `BOOLEAN_LITERAL_PATTERN_SOURCE`/the SQL guard regex is
+   * generated from, so a bug in that shared literal set would silently pass
+   * both the implementation and the "expectation"). Only the ASSERTION below
+   * exercises the real implementation, so this table can actually catch a
+   * regression in it.
+   */
+  test.each([
+    { stored: "TRUE", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: " TRUE ", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "true", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "1", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "0", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "FALSE", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "f", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "yes", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "off", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "", eqTrueMatches: false, eqFalseMatches: false },
+    { stored: "12313", eqTrueMatches: false, eqFalseMatches: false },
+  ])("stored $stored -> eq true matches:$eqTrueMatches, eq false matches:$eqFalseMatches (hand-written oracle, whitespace/case-tolerant)", ({
+    stored,
+    eqTrueMatches,
+    eqFalseMatches,
+  }) => {
+    expect(canonicalBooleanLiteral(stored) === "true").toBe(eqTrueMatches)
+    expect(canonicalBooleanLiteral(stored) === "false").toBe(eqFalseMatches)
+  })
+
+  test("drift guard: every canonical boolean literal passes the SQL guard regex and maps to the same boolean", () => {
+    const guardRegex = new RegExp(BOOLEAN_LITERAL_PATTERN_SOURCE)
+
+    for (const literal of BOOLEAN_TRUTHY_LITERALS) {
+      expect(guardRegex.test(literal)).toBe(true)
+      expect(canonicalBooleanLiteral(literal)).toBe("true")
+    }
+    for (const literal of BOOLEAN_FALSY_LITERALS) {
+      expect(guardRegex.test(literal)).toBe(true)
+      expect(canonicalBooleanLiteral(literal)).toBe("false")
+    }
+    // Garbage never passes the guard, so it can never reach the cast.
+    expect(guardRegex.test("12313")).toBe(false)
+    expect(canonicalBooleanLiteral("12313")).toBeNull()
+  })
+
+  test("renders eq true with a whitespace/case-tolerant guard and boolean cast", () => {
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.eq, "true"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
+    expect(query.sql).toContain("lower(btrim(")
+    expect(query.sql).toContain("::boolean")
+    expect(query.params).toContain(true)
+  })
+
+  test("renders eq false comparing against a literal false parameter", () => {
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.eq, "false"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
+    expect(query.params).toContain(false)
+  })
+
+  test("isEmpty/isNotEmpty for boolean fields only treat '' as empty (unchanged)", () => {
+    const isEmptyQuery = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.isEmpty),
+    )
+    const isNotEmptyQuery = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.isNotEmpty),
+    )
+
+    expect(isEmptyQuery.sql).toContain("NOT EXISTS (")
+    expect(isEmptyQuery.sql).toContain("IS NOT NULL")
+    expect(isEmptyQuery.sql).toContain("<> ''")
+    expect(isNotEmptyQuery.sql).toContain("EXISTS (")
+    expect(isNotEmptyQuery.sql).not.toContain("NOT EXISTS")
+    expect(isNotEmptyQuery.sql).toContain("IS NOT NULL")
+    expect(isNotEmptyQuery.sql).toContain("<> ''")
+  })
+
+  test("drops a boolean custom-field condition with a blank eq value", () => {
+    expect(booleanField(operatorTypes.enum.eq, "")).toEqual({})
+  })
+
+  test("negates eq via NOT EXISTS if ne is ever received for a boolean field", () => {
+    // The UI never offers `ne` for boolean, but NEGATION_TO_POSITIVE maps it
+    // to `eq` + an outer negate, mirroring how `number`/`text` handle it.
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.ne, "true"),
+    )
+
+    expect(query.sql).toContain("NOT EXISTS (")
+    expect(query.sql).toContain("::boolean")
+    expect(query.params).toContain(true)
   })
 })
 

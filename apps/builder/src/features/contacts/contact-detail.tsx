@@ -41,6 +41,7 @@ import { useChatStore } from "../chat/store/chat-store-provider"
 import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
+import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
@@ -235,7 +236,11 @@ export const ContactDetail = ({
     [t],
   )
 
-  const getContactFieldDisplayValue = (key: string, value: string) => {
+  const getContactFieldDisplayValue = (
+    key: string,
+    value: string,
+    type: CustomFieldType,
+  ) => {
     switch (key) {
       case "language":
         return getLanguageLabel(value, t)
@@ -244,7 +249,10 @@ export const ContactDetail = ({
       case "timezone":
         return formatTimezoneLabel(value)
       default:
-        return value
+        return formatCustomFieldDisplayValue(type, value, timezone, {
+          false: t("fields.boolean.false"),
+          true: t("fields.boolean.true"),
+        })
     }
   }
 
@@ -263,7 +271,7 @@ export const ContactDetail = ({
               formValue: value,
               value: isTemporalCustomFieldType(field.type)
                 ? formatCustomFieldValueInTimeZone(field.type, value, timezone)
-                : getContactFieldDisplayValue(fieldKey, value),
+                : getContactFieldDisplayValue(fieldKey, value, field.type),
             }
           : field,
       ),
@@ -411,10 +419,14 @@ export const ContactDetail = ({
               key: contactCustomField.id,
               icon: customFieldIconsMap[targetCustomField.type],
               label: targetCustomField.name,
-              value: formatCustomFieldValueInTimeZone(
+              value: formatCustomFieldDisplayValue(
                 targetCustomField.type,
                 contactCustomField.value,
                 timezone,
+                {
+                  false: t("fields.boolean.false"),
+                  true: t("fields.boolean.true"),
+                },
               ),
               formValue: isTemporalCustomFieldType(targetCustomField.type)
                 ? resolveTemporalCustomFieldFormValue(

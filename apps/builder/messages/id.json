@@ -900,7 +900,10 @@
       "append": "Append ke end",
       "prepend": "Prepend ke beginning",
       "increase": "Tambah sebesar",
-      "decrease": "Kurangi sebesar"
+      "decrease": "Kurangi sebesar",
+      "groupSystemFields": "Kolom Sistem",
+      "groupCustomFields": "Kolom Kustom",
+      "groupAccountFields": "Kolom Bot"
     },
     "dataCollect": {
       "label": "Pengumpulan Data"
@@ -1691,7 +1694,7 @@
       "label": "Nama Lengkap"
     },
     "botFields": {
-      "label": "Field Bot"
+      "label": "Kolom Bot"
     },
     "keyword": {
       "label": "Kata Kunci",
@@ -2967,6 +2970,9 @@
     "duplicatedSuccess": "{feature} berhasil diduplikat",
     "duplicateConfirmation": "Tindakan ini akan membuat salinan {feature} Anda.",
     "deleteFeature": "Hapus {feature}",
+    "resetFeature": "Atur ulang {feature}",
+    "resetConfirmation": "Tindakan ini akan mengosongkan nilai {feature} yang dipilih.\nTindakan ini tidak dapat dibatalkan.",
+    "resetSuccess": "{feature} berhasil diatur ulang",
     "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami.",
     "addFeature": "Tambah {feature}",
     "signOutConfirmation": "Apakah Anda yakin ingin keluar?",
@@ -5701,5 +5707,8 @@
         "last_7d": "7 hari terakhir"
       }
     }
+  },
+  "accountFields": {
+    "title": "Kolom Bot"
   }
 }

@@ -238,8 +238,8 @@ const BooleanValueField = () => {
     <SelectField
       name="value"
       options={[
-        { label: t("condition.yes"), value: "true" },
-        { label: t("condition.no"), value: "false" },
+        { label: t("fields.boolean.true"), value: "true" },
+        { label: t("fields.boolean.false"), value: "false" },
       ]}
     />
   )

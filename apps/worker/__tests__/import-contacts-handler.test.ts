@@ -609,6 +609,39 @@ describe("contacts import pipeline", () => {
     )
   })
 
+  // Import's boolean vocabulary widened from the old true/false/1/0
+  // allowlist to the full Postgres boolean-literal set (shared with the
+  // runtime coercion normalizer and the SQL filter guard) — a literal like
+  // "yes" used to fail validation and skip the field; it now imports.
+  test("imports a widened boolean literal instead of dropping it", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findManyCustomFields.mockResolvedValue([{ id: "1", type: "boolean" }])
+    getObjectStream.mockResolvedValue(
+      streamOf(["external_id,phone,subscribed", "ext-1,+15551234567,yes"]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          columnMap: { contactId: "external_id", phoneNumber: "phone" },
+          fieldMapping: [{ customFieldId: "1", column: "subscribed" }],
+        },
+      }),
+    )
+
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entries: [
+          {
+            contactId: expect.any(String),
+            fields: [{ customFieldId: "1", value: "true" }],
+          },
+        ],
+      }),
+    )
+  })
+
   test("normalizes imported date and datetime custom fields from loose formats", async () => {
     findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     findManyCustomFields.mockResolvedValue([

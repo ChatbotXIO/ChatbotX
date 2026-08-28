@@ -1,3 +1,8 @@
+import {
+  BOT_FIELD_REFERENCE_PREFIX,
+  FieldReferenceKind,
+} from "../field-reference"
+
 /**
  * Single source of truth for every workspace-scoped entity reference the
  * flow/template exporters know how to find, warn about, or remap. Extracted
@@ -91,12 +96,22 @@ export const DISCRIMINATED_REFERENCE_FIELDS: Readonly<
  * `AIAgent.tools` holding `"fn:12345"` / `"file:67890"` / `"mcp:11111"`.
  * Gated to an explicit key allowlist below — rewriting *any* string matching
  * `prefix:id` would corrupt free text that happens to contain `"fn:..."`.
+ *
+ * `bot_field` is also registered here so this stays the single source of
+ * truth for "which prefix maps to which entity kind", even though bot-field
+ * tokens are NOT dispatched through the free-text `tools`-style path below
+ * (`PREFIXED_REFERENCE_FIELDS` never lists a scalar-slot key like
+ * `inputFieldId`) — they are recognized by VALUE shape in the scalar
+ * reference-slot walker (`remap.ts`) instead, since the id must be resolved
+ * against `idMaps.botField`, never `idMaps.customField`, regardless of which
+ * key name holds it.
  */
 export const PREFIXED_REFERENCE_ENTITY_KIND: Readonly<Record<string, string>> =
   {
     fn: "aiFunction",
     file: "aiFile",
     mcp: "aiMcpServer",
+    [BOT_FIELD_REFERENCE_PREFIX]: FieldReferenceKind.botField,
   }
 
 /** Keys whose string/array-of-string values may hold `prefix:id` tokens. */

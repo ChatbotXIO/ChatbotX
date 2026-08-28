@@ -1578,7 +1578,10 @@
       "label": "Anpassat fält",
       "prepend": "Lägg till i början",
       "savePayloadTo": "Spara svar i anpassat fält",
-      "set_value": "Ange värde"
+      "set_value": "Ange värde",
+      "groupSystemFields": "Systemfält",
+      "groupCustomFields": "Anpassade fält",
+      "groupAccountFields": "Botfält"
     },
     "customFields": {
       "label": "Anpassade fält"
@@ -3450,6 +3453,9 @@
     "deleteConfirmation": "Är du helt säker?\nDen här åtgärden kan inte ångras.\nDetta tar permanent bort {feature} från våra servrar.",
     "deleteFailed": "Det gick inte att ta bort {feature}",
     "deleteFeature": "Ta bort {feature}",
+    "resetFeature": "Återställ {feature}",
+    "resetConfirmation": "Detta rensar värdena för de valda {feature}.\nDenna åtgärd kan inte ångras.",
+    "resetSuccess": "{feature} återställdes",
     "deleteFileComingSoon": "Funktionen för att ta bort filer kommer snart",
     "deleteMessageSuccess": "Meddelandet har tagits bort",
     "deleteNodeError": "Det gick inte att ta bort blocket. Försök igen.",
@@ -5701,5 +5707,8 @@
         "last_7d": "Senaste 7 dagarna"
       }
     }
+  },
+  "accountFields": {
+    "title": "Botfält"
   }
 }

@@ -1,34 +1,42 @@
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { EMAIL_RE, NON_DIGIT_RE, PHONE_RE } from "@chatbotx.io/imports/parsers"
 import {
+  canonicalNumberLiteral,
+  coerceBooleanLiteral,
+} from "@chatbotx.io/utils/custom-field"
+import {
   type TemporalCustomFieldType,
   TemporalInputParsing,
 } from "@chatbotx.io/utils/datetime"
 import { normalizeTemporalValueForStorage } from "@chatbotx.io/utils/temporal-input"
-
-export const NUMERIC_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/
-const BOOL_RE = /^(true|false|1|0)$/i
 
 export type CustomFieldValueNormalizer = (
   raw: string,
   timezone?: string | null,
 ) => string | null
 
-export const normalizeBoolean = (value: string): string | null => {
-  if (!BOOL_RE.test(value)) {
-    return null
-  }
-  const lower = value.toLowerCase()
-  return lower === "true" || lower === "1" ? "true" : "false"
-}
+/**
+ * Same generous rule as every runtime write path (user-confirmed): a falsy
+ * literal → "false", ANY other non-empty value → "true" — nobody has to type
+ * the literal exactly. Blank input never reaches this normalizer
+ * (`validateCustomFieldValue` short-circuits it as "skip"), so a non-empty
+ * boolean cell/return value always imports.
+ */
+export const normalizeBoolean = (value: string): string | null =>
+  coerceBooleanLiteral(value)
 
-export const normalizeNumber = (value: string): string | null => {
-  if (!NUMERIC_RE.test(value)) {
-    return null
-  }
-  const parsed = Number.parseFloat(value)
-  return Number.isFinite(parsed) ? String(parsed) : null
-}
+/**
+ * Thin wrapper over the shared `number` canonicalizer in
+ * `@chatbotx.io/utils/custom-field` (`canonicalNumberLiteral`) — the same
+ * vocabulary the storage-side runtime coercion uses — mirroring how
+ * `normalizeBoolean` above wraps `canonicalBooleanLiteral`. This WIDENS what
+ * import/JS-execution accept from the old hand-rolled regex allowlist to
+ * everything JS `Number()` accepts (`"+1"`, `"1."`, hex `"0x10"`);
+ * unparseable/blank input still returns `null` (import/JS callers skip the
+ * field rather than guess).
+ */
+export const normalizeNumber = (value: string): string | null =>
+  canonicalNumberLiteral(value)
 
 export const normalizeEmail = (raw: string): string | null => {
   const lower = raw.toLowerCase()

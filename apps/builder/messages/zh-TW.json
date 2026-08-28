@@ -292,7 +292,10 @@
       "append": "追加到末尾",
       "prepend": "加入到開頭",
       "increase": "增加",
-      "decrease": "減少"
+      "decrease": "減少",
+      "groupSystemFields": "系統欄位",
+      "groupCustomFields": "自訂欄位",
+      "groupAccountFields": "機器人欄位"
     },
     "dataCollect": {
       "label": "資料收集"
@@ -1492,6 +1495,9 @@
     "duplicatedSuccess": "{feature} 複製成功",
     "duplicateConfirmation": "這會建立 {feature} 的副本。",
     "deleteFeature": "刪除 {feature}",
+    "resetFeature": "重置{feature}",
+    "resetConfirmation": "這將清空所選{feature}的值。\n此操作無法復原。",
+    "resetSuccess": "{feature}重置成功",
     "deleteConfirmation": "您確定嗎？\n此操作無法復原。\n這將從我們的伺服器永久刪除您的 {feature}。",
     "addFeature": "新增 {feature}",
     "signOutConfirmation": "您確定要退出嗎？",
@@ -5701,5 +5707,8 @@
         "last_7d": "最近7天"
       }
     }
+  },
+  "accountFields": {
+    "title": "機器人欄位"
   }
 }

@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest"
 import {
+  BOT_FIELD_REFERENCE_PREFIX,
+  FieldReferenceKind,
+} from "../src/field-reference"
+import { PREFIXED_REFERENCE_ENTITY_KIND } from "../src/import-export/reference-fields"
+import {
   collectReferencesByKind,
   remapFlowGraphReferences,
   remapReferences,
@@ -54,6 +59,123 @@ describe("remapReferences — multi-kind", () => {
       customFieldId: "cf-target",
       aiAgentId: "agent-1",
     })
+  })
+})
+
+describe("PREFIXED_REFERENCE_ENTITY_KIND — bot_field entry", () => {
+  test("registers the same prefix and kind field-reference.ts defines", () => {
+    expect(PREFIXED_REFERENCE_ENTITY_KIND[BOT_FIELD_REFERENCE_PREFIX]).toBe(
+      FieldReferenceKind.botField,
+    )
+  })
+})
+
+describe("remapReferences — bot_field scalar slot tokens", () => {
+  test("remaps a well-formed bot_field token in a customField-kind slot against idMaps.botField", () => {
+    const remapped = remapReferences(
+      { inputFieldId: "bot_field:1" },
+      { botField: new Map([["1", "42"]]) },
+    )
+
+    expect(remapped).toEqual({ inputFieldId: "bot_field:42" })
+  })
+
+  test("leaves an unmapped bot_field token untouched and reports it as a botField miss", () => {
+    const unresolved: unknown[] = []
+    const remapped = remapReferences(
+      { customFieldId: "bot_field:99" },
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref) },
+    )
+
+    expect(remapped).toEqual({ customFieldId: "bot_field:99" })
+    expect(unresolved).toEqual([
+      { entityKind: "botField", path: "customFieldId", value: "99" },
+    ])
+  })
+
+  test("never misroutes a bot_field token against idMaps.customField", () => {
+    const remapped = remapReferences(
+      { inputFieldId: "bot_field:1" },
+      {
+        // A customField map entry keyed "bot_field:1" would only ever be hit
+        // if the token were (incorrectly) treated as a literal customField
+        // id/name — asserting it stays "bot_field:1" (unresolved botField,
+        // not a customField hit) proves the ordering.
+        customField: new Map([["bot_field:1", "should-not-apply"]]),
+      },
+    )
+
+    expect(remapped).toEqual({ inputFieldId: "bot_field:1" })
+  })
+
+  test("a malformed near-token is treated as a legacy customField key, not a botField reference", () => {
+    const unresolved: unknown[] = []
+    const remapped = remapReferences(
+      { inputFieldId: "bot_field:abc" },
+      { customField: new Map([["bot_field:abc", "target"]]) },
+      { onUnresolved: (ref) => unresolved.push(ref) },
+    )
+
+    expect(remapped).toEqual({ inputFieldId: "target" })
+    expect(unresolved).toEqual([])
+  })
+
+  test("a malformed near-token with no customField match is left untouched and warns as customField, never botField", () => {
+    const unresolved: unknown[] = []
+    const remapped = remapReferences(
+      { inputFieldId: "bot_field:" },
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref) },
+    )
+
+    expect(remapped).toEqual({ inputFieldId: "bot_field:" })
+    expect(unresolved).toEqual([
+      { entityKind: "customField", path: "inputFieldId", value: "bot_field:" },
+    ])
+  })
+
+  test("kinds gating: kinds:['botField'] remaps the token and leaves a sibling customFieldId inert", () => {
+    const remapped = remapReferences(
+      { inputFieldId: "bot_field:1", customFieldId: "42" },
+      {
+        botField: new Map([["1", "target-bot"]]),
+        customField: new Map([["42", "target-custom"]]),
+      },
+      { kinds: ["botField"] },
+    )
+
+    expect(remapped).toEqual({
+      inputFieldId: "bot_field:target-bot",
+      customFieldId: "42",
+    })
+  })
+
+  test("kinds gating: kinds:['customField'] leaves a bot_field token untouched without warning", () => {
+    const unresolved: unknown[] = []
+    const remapped = remapReferences(
+      { inputFieldId: "bot_field:1", customFieldId: "42" },
+      {
+        botField: new Map([["1", "target-bot"]]),
+        customField: new Map([["42", "target-custom"]]),
+      },
+      { kinds: ["customField"], onUnresolved: (ref) => unresolved.push(ref) },
+    )
+
+    expect(remapped).toEqual({
+      inputFieldId: "bot_field:1",
+      customFieldId: "target-custom",
+    })
+    expect(unresolved).toEqual([])
+  })
+
+  test("does not mutate the input", () => {
+    const value = { inputFieldId: "bot_field:1" }
+    const original = JSON.parse(JSON.stringify(value))
+
+    remapReferences(value, { botField: new Map([["1", "target"]]) })
+
+    expect(value).toEqual(original)
   })
 })
 
@@ -226,5 +348,15 @@ describe("collectReferencesByKind", () => {
 
     expect(byKind.has("customField")).toBe(true)
     expect(byKind.has("aiAgent")).toBe(false)
+  })
+
+  test("groups a bot_field token under botField, not customField", () => {
+    const byKind = collectReferencesByKind({
+      inputFieldId: "bot_field:7",
+      customFieldId: "42",
+    })
+
+    expect(byKind.get("botField")).toEqual(new Set(["7"]))
+    expect(byKind.get("customField")).toEqual(new Set(["42"]))
   })
 })

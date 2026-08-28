@@ -1,5 +1,8 @@
 import { type DatabaseClient, db, inArray } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import {
+  type CustomFieldType,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import {
   flowAnalyticsSessionModel,
   flowModel,
@@ -8,18 +11,59 @@ import {
 import type { FlowModel, FlowVersionModel } from "@chatbotx.io/database/types"
 import type {
   EdgeSchema,
+  FlowExportBotField,
   FlowExportCustomField,
   FlowVersionSchema,
 } from "@chatbotx.io/flow-config"
-import { remapCustomFieldReferences } from "@chatbotx.io/flow-config"
+import { remapFlowGraphReferences } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
+import { botFieldService } from "../bot-field/service"
 import { customFieldService } from "../custom-field/service"
 import { notFoundException } from "../errors"
 import { flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
 import { assertDeletable } from "../template/installed-resource.service"
+
+type FieldManifestEntry = { name: string; type: CustomFieldType }
+
+type ResolveFieldsByNameAndType = (props: {
+  workspaceId: string
+  fields: FieldManifestEntry[]
+  tx?: DatabaseClient
+}) => Promise<{ idMap: Map<string, string>; createdIds: string[] }>
+
+/**
+ * Resolves a `{ sourceId: manifestEntry }` import manifest (customField or
+ * botField) against the target workspace via `resolve`, then rekeys the
+ * result from `resolveByNameAndType`'s (name, type)-key map to the source ->
+ * target id map `remapFlowGraphReferences` expects. Shared by
+ * `importFlowExport`'s customField and botField branches, which are
+ * otherwise identical apart from which service resolves the manifest.
+ */
+const resolveManifestIdMap = async (
+  manifest: Record<string, FieldManifestEntry>,
+  resolve: ResolveFieldsByNameAndType,
+  workspaceId: string,
+  tx: DatabaseClient,
+): Promise<{ idMap: Map<string, string>; createdIds: string[] }> => {
+  const entries = Object.entries(manifest)
+  const { idMap: resolvedByKey, createdIds } = await resolve({
+    workspaceId,
+    fields: entries.map(([, field]) => field),
+    tx,
+  })
+
+  const idMap = new Map(
+    entries.flatMap(([sourceId, field]) => {
+      const targetId = resolvedByKey.get(customFieldResolutionKey(field))
+      return targetId ? [[sourceId, targetId] as const] : []
+    }),
+  )
+
+  return { idMap, createdIds }
+}
 
 class FlowService extends BaseService {
   async findBy(
@@ -227,15 +271,15 @@ class FlowService extends BaseService {
   }
 
   /**
-   * Full flow-import orchestration: resolves the export's custom-field
-   * manifest against the target workspace, remaps `nodes`/`edges` to the
-   * resolved ids, and inserts the flow — all inside one transaction, so a
-   * failed flow insert cannot leave orphan custom fields behind.
+   * Full flow-import orchestration: resolves the export's custom-field AND
+   * bot-field manifests against the target workspace, remaps `nodes`/`edges`
+   * to the resolved ids, and inserts the flow — all inside one transaction,
+   * so a failed flow insert cannot leave orphan custom/bot fields behind.
    *
    * Cache invalidation for created fields is deliberately NOT done here (it
    * would run inside the transaction and could repopulate Redis from an
    * uncommitted read) — the caller must invalidate once, after this resolves,
-   * using the returned `createdCustomFieldIds`.
+   * using the returned `createdCustomFieldIds`/`createdBotFieldIds`.
    */
   async importFlowExport(input: {
     workspaceId: string
@@ -246,30 +290,34 @@ class FlowService extends BaseService {
     nodes: FlowVersionSchema[]
     edges: EdgeSchema[]
     customFields: Record<string, FlowExportCustomField>
+    botFields: Record<string, FlowExportBotField>
     folderId?: string | null
   }): Promise<{
     flowId: string
     createdCustomFieldIds: string[]
+    createdBotFieldIds: string[]
   }> {
     return await db.transaction(async (tx) => {
-      const manifestEntries = Object.entries(input.customFields)
-      const { idMap: resolvedByKey, createdIds } =
-        await customFieldService.resolveByNameAndType({
-          workspaceId: input.workspaceId,
-          fields: manifestEntries.map(([, field]) => field),
+      const { idMap: customFieldIdMap, createdIds } =
+        await resolveManifestIdMap(
+          input.customFields,
+          (props) => customFieldService.resolveByNameAndType(props),
+          input.workspaceId,
           tx,
-        })
+        )
 
-      const idMap = new Map(
-        manifestEntries.flatMap(([sourceId, field]) => {
-          const targetId = resolvedByKey.get(customFieldResolutionKey(field))
-          return targetId ? [[sourceId, targetId] as const] : []
-        }),
-      )
+      const { idMap: botFieldIdMap, createdIds: createdBotFieldIds } =
+        await resolveManifestIdMap(
+          input.botFields,
+          (props) => botFieldService.resolveByNameAndType(props),
+          input.workspaceId,
+          tx,
+        )
 
-      const remapped = remapCustomFieldReferences(
+      const remapped = remapFlowGraphReferences(
         { nodes: input.nodes, edges: input.edges },
-        idMap,
+        { customField: customFieldIdMap, botField: botFieldIdMap },
+        { kinds: ["customField", "botField"] },
       )
 
       const requestedFolderId =
@@ -298,7 +346,11 @@ class FlowService extends BaseService {
         tx,
       })
 
-      return { flowId, createdCustomFieldIds: createdIds }
+      return {
+        flowId,
+        createdCustomFieldIds: createdIds,
+        createdBotFieldIds,
+      }
     })
   }
 

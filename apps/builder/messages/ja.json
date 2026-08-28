@@ -900,7 +900,10 @@
       "append": "末尾に追加",
       "prepend": "先頭に追加",
       "increase": "次の値だけ増やす",
-      "decrease": "次の値だけ減らす"
+      "decrease": "次の値だけ減らす",
+      "groupSystemFields": "システムフィールド",
+      "groupCustomFields": "カスタムフィールド",
+      "groupAccountFields": "ボットフィールド"
     },
     "dataCollect": {
       "label": "データ収集"
@@ -2946,6 +2949,9 @@
     "duplicatedSuccess": "{feature}を複製しました",
     "duplicateConfirmation": "{feature}のコピーが作成されます。",
     "deleteFeature": "{feature}を削除",
+    "resetFeature": "{feature}をリセット",
+    "resetConfirmation": "選択した{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
+    "resetSuccess": "{feature}をリセットしました",
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。",
     "addFeature": "{feature}を追加",
     "signOutConfirmation": "サインアウトしてもよろしいですか？",
@@ -5701,5 +5707,8 @@
         "last_7d": "過去7日間"
       }
     }
+  },
+  "accountFields": {
+    "title": "ボットフィールド"
   }
 }

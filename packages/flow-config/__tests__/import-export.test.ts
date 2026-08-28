@@ -4,6 +4,7 @@ import {
   buttonTypes,
   chooseChannelStepDefaultFn,
   collectCustomFieldReferences,
+  collectFieldReferences,
   collectFlowReferenceWarnings,
   conditionNodeDefaultFn,
   FLOW_EXPORT_FORMAT_VERSION,
@@ -112,6 +113,84 @@ describe("flow export/import round trip", () => {
     expect(importedFlow.nodes).toEqual(flow.nodes)
     expect(importedFlow.edges).toEqual(flow.edges)
     expect(importedFlow.startNodeId).toEqual(flow.startNodeId)
+  })
+
+  test("an export produced before the botFields manifest existed still parses, defaulting botFields to {}", () => {
+    const flow = buildFixtureFlow()
+    const envelope: Record<string, unknown> = {
+      formatVersion: FLOW_EXPORT_FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      source: { workspaceId: "1", flowId: "1" },
+      flows: [flow],
+      customFields: {},
+      // Deliberately no `botFields` key — simulates an export written before
+      // this manifest was added.
+    }
+
+    const result = parseFlowExport(envelope)
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.data.botFields).toEqual({})
+    }
+  })
+
+  test("parses a botFields manifest entry alongside customFields", () => {
+    const flow = buildFixtureFlow()
+    const envelope = {
+      formatVersion: FLOW_EXPORT_FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      source: { workspaceId: "1", flowId: "1" },
+      flows: [flow],
+      customFields: { "42": { name: "Birthday", type: "date" } },
+      botFields: { "7": { name: "Loyalty Points", type: "number" } },
+    }
+
+    const result = parseFlowExport(envelope)
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.data.botFields).toEqual({
+        "7": { name: "Loyalty Points", type: "number" },
+      })
+    }
+  })
+
+  test("rejects a botFields manifest entry whose name starts with the reserved bot_field: prefix", () => {
+    const flow = buildFixtureFlow()
+    const envelope = {
+      formatVersion: FLOW_EXPORT_FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      source: { workspaceId: "1", flowId: "1" },
+      flows: [flow],
+      customFields: {},
+      botFields: { "7": { name: "bot_field:123", type: "number" } },
+    }
+
+    const result = parseFlowExport(envelope)
+
+    expect(result.ok).toBe(false)
+  })
+
+  // customFields intentionally does NOT reject the reserved prefix: `CustomField`
+  // predates the guard, so a legacy workspace can already contain a name that
+  // collides with it. Rejecting the manifest here would turn a pre-existing
+  // data-hygiene issue into a hard import failure. See the comment on
+  // `flowExportCustomFieldSchema`.
+  test("still accepts a customFields manifest entry whose name starts with the reserved bot_field: prefix (legacy data)", () => {
+    const flow = buildFixtureFlow()
+    const envelope = {
+      formatVersion: FLOW_EXPORT_FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      source: { workspaceId: "1", flowId: "1" },
+      flows: [flow],
+      customFields: { "42": { name: "bot_field:123", type: "shortText" } },
+      botFields: {},
+    }
+
+    const result = parseFlowExport(envelope)
+
+    expect(result.ok).toBe(true)
   })
 
   test("rejects an unknown formatVersion", () => {
@@ -399,6 +478,131 @@ describe("collectCustomFieldReferences", () => {
     })
 
     expect(ids.sort()).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"])
+  })
+})
+
+describe("collectFieldReferences", () => {
+  test("splits numeric customField ids and bot_field tokens into their own lists", () => {
+    const result = collectFieldReferences({
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                { id: "s1", stepType: "setCustomField", inputFieldId: "42" },
+                {
+                  id: "s2",
+                  stepType: "setCustomField",
+                  inputFieldId: "bot_field:7",
+                },
+                {
+                  id: "s3",
+                  stepType: "condition",
+                  cases: [
+                    {
+                      id: "c1",
+                      conditions: [{ customFieldId: "bot_field:8" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+
+    expect(result.customFieldIds).toEqual(["42"])
+    expect(result.botFieldIds.sort()).toEqual(["7", "8"])
+  })
+
+  test("a malformed near-token contributes to neither list", () => {
+    const result = collectFieldReferences({
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "setCustomField",
+                  inputFieldId: "bot_field:abc",
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+
+    expect(result.customFieldIds).toEqual([])
+    expect(result.botFieldIds).toEqual([])
+  })
+
+  test("dedupes bot field ids referenced from multiple slots", () => {
+    const result = collectFieldReferences({
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "setCustomField",
+                  inputFieldId: "bot_field:7",
+                },
+                {
+                  id: "s2",
+                  stepType: "condition",
+                  cases: [
+                    {
+                      id: "c1",
+                      conditions: [{ customFieldId: "bot_field:7" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+
+    expect(result.botFieldIds).toEqual(["7"])
+  })
+
+  test("collectCustomFieldReferences stays behaviorally identical (thin wrapper)", () => {
+    const flow = {
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                { id: "s1", stepType: "setCustomField", inputFieldId: "42" },
+                {
+                  id: "s2",
+                  stepType: "setCustomField",
+                  inputFieldId: "bot_field:7",
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    }
+
+    expect(collectCustomFieldReferences(flow)).toEqual(
+      collectFieldReferences(flow).customFieldIds,
+    )
+    expect(collectCustomFieldReferences(flow)).toEqual(["42"])
   })
 })
 

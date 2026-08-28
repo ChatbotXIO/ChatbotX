@@ -115,6 +115,7 @@ const GetUserDataStepForm = ({
         <CustomFieldField
           customFieldTypes={outputFieldTypes}
           emptyText={t("actions.noRecordFound")}
+          includeBotFields
           label={t("fields.outputCustomField.label")}
           name="outputFieldId"
           placeholder={t("actions.pleaseSelect")}

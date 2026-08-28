@@ -983,7 +983,10 @@
       "append": "Append to the end",
       "prepend": "Prepend to the beginning",
       "increase": "Increase by",
-      "decrease": "Decrease by"
+      "decrease": "Decrease by",
+      "groupSystemFields": "System Fields",
+      "groupCustomFields": "Custom Fields",
+      "groupAccountFields": "Bot Fields"
     },
     "dataCollect": {
       "label": "Data Collect"
@@ -3081,6 +3084,9 @@
     "duplicatedSuccess": "{feature} duplicated successfully",
     "duplicateConfirmation": "This will create a copy of your {feature}.",
     "deleteFeature": "Delete {feature}",
+    "resetFeature": "Reset {feature}",
+    "resetConfirmation": "This will clear the values of the selected {feature} back to empty.\nThis action cannot be undone.",
+    "resetSuccess": "{feature} reset successfully",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",
     "signOutConfirmation": "Are you sure you want to sign out?",
@@ -5701,5 +5707,8 @@
         "last_7d": "Last 7 days"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bot Fields"
   }
 }

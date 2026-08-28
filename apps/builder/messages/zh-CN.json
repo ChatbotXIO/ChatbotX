@@ -1581,7 +1581,10 @@
       "label": "自订字段",
       "prepend": "加入到开头",
       "savePayloadTo": "将回应保存到自订字段",
-      "set_value": "设置值"
+      "set_value": "设置值",
+      "groupSystemFields": "系统字段",
+      "groupCustomFields": "自订字段",
+      "groupAccountFields": "机器人字段"
     },
     "customFields": {
       "label": "自订字段"
@@ -3450,6 +3453,9 @@
     "deleteConfirmation": "您确定吗？\n此操作无法复原。\n这将从我们的服务器永久删除您的 {feature}。",
     "deleteFailed": "删除 {feature} 失败",
     "deleteFeature": "删除 {feature}",
+    "resetFeature": "重置{feature}",
+    "resetConfirmation": "这将清空所选{feature}的值。\n此操作无法撤销。",
+    "resetSuccess": "{feature}重置成功",
     "deleteFileComingSoon": "删除文件功能即将推出",
     "deleteMessageSuccess": "消息已删除",
     "deleteNodeError": "无法删除该区块。请再试一次。",
@@ -5701,5 +5707,8 @@
         "last_7d": "最近7天"
       }
     }
+  },
+  "accountFields": {
+    "title": "机器人字段"
   }
 }

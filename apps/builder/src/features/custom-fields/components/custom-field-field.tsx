@@ -16,15 +16,27 @@ type CustomFieldFieldProps = Omit<
   channels?: ChannelType[]
   customFieldTypes?: CustomFieldType[]
   includeReserved?: boolean
+  /**
+   * Also offers Account Fields (bot fields) in a separate group. Allowlisted
+   * v1 surfaces only — see `useCustomFieldSelectOptions`.
+   */
+  includeBotFields?: boolean
 }
 
 export default function CustomFieldField(props: CustomFieldFieldProps) {
-  const { channels, customFieldTypes, includeReserved, ...rest } = props
+  const {
+    channels,
+    customFieldTypes,
+    includeReserved,
+    includeBotFields,
+    ...rest
+  } = props
 
   const customFieldOptions = useCustomFieldSelectOptions({
     channels,
     customFieldTypes,
     includeReserved,
+    includeBotFields,
   })
 
   return <ComboboxField {...rest} options={customFieldOptions} />

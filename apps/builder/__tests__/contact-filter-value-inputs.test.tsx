@@ -317,8 +317,8 @@ describe("ContactFilterConditionDialog value inputs", () => {
     expect(
       container.querySelector('[data-testid="select-value"]'),
     ).not.toBeNull()
-    expect(container.textContent).toContain("Yes")
-    expect(container.textContent).toContain("No")
+    expect(container.textContent).toContain("fields.boolean.true")
+    expect(container.textContent).toContain("fields.boolean.false")
 
     renderDialog({ config: configs.select, value: "female" })
     expect(
