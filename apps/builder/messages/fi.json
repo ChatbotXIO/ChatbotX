@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Haluatko varmasti katkaista kohteen {feature} yhteyden?",
     "disconnectSuccess": "Kohteen {feature} yhteys katkaistiin",
     "reply": "Vastaa",
+    "privateReply": "Yksityinen vastaus",
     "viewMessage": "Näytä viesti",
     "changeLikeState": "Vaihda tykkäystilaa",
     "changeHideState": "Vaihda piilotustilaa",

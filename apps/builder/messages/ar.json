@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "هل أنت متأكد من رغبتك في قطع اتصال {feature}؟",
     "disconnectSuccess": "تم قطع اتصال {feature} بنجاح",
     "reply": "رد",
+    "privateReply": "رد خاص",
     "viewMessage": "عرض الرسالة",
     "changeLikeState": "تغيير حالة الإعجاب",
     "changeHideState": "تغيير حالة الإخفاء",

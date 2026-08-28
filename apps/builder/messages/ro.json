@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Ești sigur că vrei să deconectezi {feature}?",
     "disconnectSuccess": "{feature} deconectat cu succes",
     "reply": "Răspunde",
+    "privateReply": "Răspuns privat",
     "viewMessage": "Vezi mesajul",
     "changeLikeState": "Schimbă starea de apreciere",
     "changeHideState": "Schimbă starea de ascundere",

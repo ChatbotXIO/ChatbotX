@@ -58,6 +58,9 @@ export const createMessageRequest = z
       clientId: zodBigintAsString().optional(),
       replyToMessageId: z.string().optional(),
       replyToMessageCreatedAt: z.coerce.date().optional(),
+      // When true, the outgoing comment is sent as a comment-anchored private
+      // reply DM instead of a public comment reply.
+      isPrivateReply: z.boolean().optional(),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>

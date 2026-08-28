@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Weet je zeker dat je {feature} wilt loskoppelen?",
     "disconnectSuccess": "{feature} losgekoppeld",
     "reply": "Beantwoorden",
+    "privateReply": "Privé antwoord",
     "viewMessage": "Bericht bekijken",
     "changeLikeState": "Vind-ik-leukstatus wijzigen",
     "changeHideState": "Verbergstatus wijzigen",

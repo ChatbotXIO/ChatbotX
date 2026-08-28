@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Apakah Anda yakin ingin memutuskan {feature}?",
     "disconnectSuccess": "{feature} berhasil diputuskan",
     "reply": "Balas",
+    "privateReply": "Balasan pribadi",
     "viewMessage": "Lihat pesan",
     "changeLikeState": "Ubah status suka",
     "changeHideState": "Ubah status sembunyikan",
