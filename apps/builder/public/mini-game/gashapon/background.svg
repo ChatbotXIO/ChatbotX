@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 2340" width="1080" height="2340">
+  <defs>
+    <radialGradient cx="50%" cy="30%" id="gashaponSky" r="80%">
+      <stop offset="0%" stop-color="#fff0f6"/>
+      <stop offset="45%" stop-color="#ffd3e0"/>
+      <stop offset="100%" stop-color="#ff9fc2"/>
+    </radialGradient>
+    <linearGradient id="gashaponCapsuleA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#ffd23f"/>
+    </linearGradient>
+    <linearGradient id="gashaponCapsuleB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#ff5fa2"/>
+    </linearGradient>
+    <linearGradient id="gashaponCapsuleC" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#7dd3fc"/>
+    </linearGradient>
+  </defs>
+
+  <rect fill="url(#gashaponSky)" height="2340" width="1080" x="0" y="0"/>
+
+  <g opacity="0.85">
+    <circle cx="150" cy="260" fill="url(#gashaponCapsuleA)" r="60"/>
+    <circle cx="900" cy="360" fill="url(#gashaponCapsuleB)" r="45"/>
+    <circle cx="220" cy="620" fill="url(#gashaponCapsuleC)" r="34"/>
+    <circle cx="960" cy="720" fill="url(#gashaponCapsuleA)" r="52"/>
+    <circle cx="120" cy="980" fill="url(#gashaponCapsuleB)" r="30"/>
+    <circle cx="930" cy="1080" fill="url(#gashaponCapsuleC)" r="40"/>
+    <circle cx="180" cy="1420" fill="url(#gashaponCapsuleA)" r="46"/>
+    <circle cx="910" cy="1560" fill="url(#gashaponCapsuleB)" r="36"/>
+    <circle cx="150" cy="1900" fill="url(#gashaponCapsuleC)" r="50"/>
+    <circle cx="940" cy="2020" fill="url(#gashaponCapsuleA)" r="40"/>
+    <circle cx="260" cy="2180" fill="url(#gashaponCapsuleB)" r="32"/>
+  </g>
+
+  <g fill="#ffffff" opacity="0.5">
+    <circle cx="540" cy="180" r="10"/>
+    <circle cx="700" cy="260" r="6"/>
+    <circle cx="380" cy="240" r="6"/>
+    <circle cx="620" cy="1200" r="8"/>
+    <circle cx="460" cy="1900" r="7"/>
+    <circle cx="760" cy="2100" r="9"/>
+  </g>
+</svg>

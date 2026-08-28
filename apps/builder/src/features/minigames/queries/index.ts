@@ -9,7 +9,7 @@ import type {
   ListMinigamesRequest,
   ListMinigamesResponse,
 } from "../schemas/query"
-import type { MinigameResource } from "../schemas/resource"
+import { type MinigameResource, minigameResource } from "../schemas/resource"
 
 export async function listMinigames(
   input: ListMinigamesRequest,
@@ -38,7 +38,7 @@ export async function findMinigame(where: {
   await assertCurrentUserCanAccessChatbot(where.workspaceId)
 
   try {
-    return await minigameService.find(where)
+    return minigameResource.parse(await minigameService.find(where))
   } catch (error) {
     if (error instanceof ChatbotXException && error.code === "notFound") {
       return

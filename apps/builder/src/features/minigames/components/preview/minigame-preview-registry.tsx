@@ -6,12 +6,14 @@ import type {
   MinigameType,
 } from "@chatbotx.io/database/partials"
 import {
+  GashaponMachineArt,
   JackpotMachineArt,
   LuckyWheelArt,
   type LuckyWheelSegment,
 } from "@chatbotx.io/minigame-ui"
 import type { ComponentType, ReactNode } from "react"
 import { getDefaultMinigameAppearance } from "../../constants"
+import { GashaponPreview } from "./gashapon-preview"
 import { JackpotPreview } from "./jackpot-preview"
 import { LuckyWheelPreview } from "./lucky-wheel-preview"
 
@@ -31,6 +33,7 @@ export const MINIGAME_PREVIEW_COMPONENTS: Partial<
 > = {
   jackpot: JackpotPreview,
   luckyWheel: LuckyWheelPreview,
+  gashapon: GashaponPreview,
 }
 
 type MinigameTypeCardArt = {
@@ -42,6 +45,7 @@ type MinigameTypeCardArt = {
 const JACKPOT_PREVIEW_APPEARANCE = getDefaultMinigameAppearance("jackpot")
 const LUCKY_WHEEL_PREVIEW_APPEARANCE =
   getDefaultMinigameAppearance("luckyWheel")
+const GASHAPON_PREVIEW_APPEARANCE = getDefaultMinigameAppearance("gashapon")
 
 const LUCKY_WHEEL_PREVIEW_SEGMENT_COUNT = 6
 const LUCKY_WHEEL_PREVIEW_SEGMENTS: LuckyWheelSegment[] = Array.from(
@@ -74,6 +78,17 @@ export const MINIGAME_TYPE_CARD_ART: Partial<
         segments={LUCKY_WHEEL_PREVIEW_SEGMENTS}
         transitionDurationMs={0}
         transitionEasing="none"
+      />
+    ),
+  },
+  gashapon: {
+    backgroundColor: GASHAPON_PREVIEW_APPEARANCE.backgroundColor,
+    backgroundImageUrl: GASHAPON_PREVIEW_APPEARANCE.backgroundImage.url,
+    art: (
+      <GashaponMachineArt
+        decorativeColor={GASHAPON_PREVIEW_APPEARANCE.decorativeColor}
+        machineColor={GASHAPON_PREVIEW_APPEARANCE.machineColor}
+        phase="idle"
       />
     ),
   },

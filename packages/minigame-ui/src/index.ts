@@ -1,3 +1,4 @@
+export * from "./components/gashapon-machine-art"
 export * from "./components/jackpot-machine-art"
 export * from "./components/jackpot-start-button"
 export * from "./components/lucky-wheel-art"

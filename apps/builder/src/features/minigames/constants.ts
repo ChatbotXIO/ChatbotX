@@ -37,10 +37,11 @@ export const MINIGAME_TYPE_CONFIGS: {
   },
 ]
 
-/** Only Jackpot and Lucky Wheel have a working gameplay experience so far; the rest are disabled in the type picker. */
+/** Only Jackpot, Lucky Wheel, and Gashapon have a working gameplay experience so far; the rest are disabled in the type picker. */
 export const MINIGAME_TYPES_ENABLED_FOR_CREATION: MinigameType[] = [
   "jackpot",
   "luckyWheel",
+  "gashapon",
 ]
 
 export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
@@ -48,7 +49,7 @@ export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
   const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   return {
     name: "",
-    showName: true,
+    showName: false,
     playedAtFrom: now.toISOString(),
     playedAtTo: oneWeekLater.toISOString(),
     rulesDescription: "",
@@ -66,6 +67,9 @@ const LUCKY_WHEEL_DEFAULT_BACKGROUND_IMAGE_URL =
   "/mini-game/lucky-wheel/background.png"
 const LUCKY_WHEEL_DEFAULT_START_BUTTON_IMAGE_URL =
   "/mini-game/lucky-wheel/button.png"
+const GASHAPON_DEFAULT_BACKGROUND_IMAGE_URL =
+  "/mini-game/gashapon/background.svg"
+const GASHAPON_DEFAULT_START_BUTTON_IMAGE_URL = "/mini-game/gashapon/button.svg"
 
 export function getDefaultMinigameAppearance(
   type?: MinigameType,
@@ -102,6 +106,24 @@ export function getDefaultMinigameAppearance(
       startButtonImage: {
         mode: "file",
         url: LUCKY_WHEEL_DEFAULT_START_BUTTON_IMAGE_URL,
+      },
+    }
+  }
+
+  if (type === "gashapon") {
+    return {
+      backgroundColor: "#FFD3E0",
+      machineColor: "#FF5FA2",
+      decorativeColor: "#FFD23F",
+      ruleTextColor: "#4A1942",
+      backgroundImage: {
+        mode: "file",
+        url: GASHAPON_DEFAULT_BACKGROUND_IMAGE_URL,
+      },
+      prizeDescriptionImage: { mode: "file", url: "" },
+      startButtonImage: {
+        mode: "file",
+        url: GASHAPON_DEFAULT_START_BUTTON_IMAGE_URL,
       },
     }
   }
