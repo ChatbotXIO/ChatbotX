@@ -70,56 +70,39 @@ describe("encryptUtils", () => {
   })
 
   describe("aad binding", () => {
-    test("encrypts and decrypts with matching aad", async () => {
+    // decryptText/decryptObject take no aad parameter: the aad a caller
+    // stamped at encrypt time travels with the blob and is read back
+    // automatically, so any holder of the blob can decrypt it without
+    // reconstructing the writer's context.
+    test("decrypts a blob that carries an aad without any caller input", async () => {
       const blob = await encryptUtils.encryptText("secret", "org:1:whatsapp")
-      expect(await encryptUtils.decryptText(blob, "org:1:whatsapp")).toBe(
-        "secret",
-      )
-    })
-
-    test("decrypting with wrong aad throws", async () => {
-      const blob = await encryptUtils.encryptText("secret", "org:1:whatsapp")
-      await expect(
-        encryptUtils.decryptText(blob, "org:2:whatsapp"),
-      ).rejects.toThrow()
-    })
-
-    test("decrypting without aad falls back to the aad stored on the blob", async () => {
-      const blob = await encryptUtils.encryptText("secret", "org:1:whatsapp")
+      expect(blob.aad).toBe("org:1:whatsapp")
       expect(await encryptUtils.decryptText(blob)).toBe("secret")
     })
 
-    test("decrypting with aad throws when no aad was used at encryption", async () => {
+    test("decrypts a blob with no aad the same way", async () => {
       const blob = await encryptUtils.encryptText("secret")
-      await expect(
-        encryptUtils.decryptText(blob, "org:1:whatsapp"),
-      ).rejects.toThrow()
+      expect(blob.aad).toBeUndefined()
+      expect(await encryptUtils.decryptText(blob)).toBe("secret")
     })
 
-    test("encryptObject/decryptObject round-trip with matching aad", async () => {
+    // The aad is still authenticated by the GCM tag, not merely echoed back:
+    // rewriting it after the fact must invalidate decryption. This is the
+    // guarantee that remains once decrypt stops taking a caller-supplied aad.
+    test("tampering with the stored aad throws", async () => {
+      const blob = await encryptUtils.encryptText("secret", "org:1:whatsapp")
+      const tampered: EncryptedData = { ...blob, aad: "org:2:whatsapp" }
+      await expect(encryptUtils.decryptText(tampered)).rejects.toThrow()
+    })
+
+    test("encryptObject/decryptObject round-trip with an aad-carrying blob", async () => {
       const original = { clientId: "app_123", clientSecret: "s3cr3t" }
       const schema = z.object({
         clientId: z.string(),
         clientSecret: z.string(),
       })
       const blob = await encryptUtils.encryptObject(original, "org:1:messenger")
-      expect(
-        await encryptUtils.decryptObject(blob, schema, "org:1:messenger"),
-      ).toEqual(original)
-    })
-
-    test("decryptObject with wrong aad throws", async () => {
-      const schema = z.object({
-        clientId: z.string(),
-        clientSecret: z.string(),
-      })
-      const blob = await encryptUtils.encryptObject(
-        { clientId: "app_123", clientSecret: "s3cr3t" },
-        "org:1:messenger",
-      )
-      await expect(
-        encryptUtils.decryptObject(blob, schema, "org:9:messenger"),
-      ).rejects.toThrow()
+      expect(await encryptUtils.decryptObject(blob, schema)).toEqual(original)
     })
   })
 

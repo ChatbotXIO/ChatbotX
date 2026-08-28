@@ -23,6 +23,7 @@ import { db } from "../src/client"
 import {
   type CredentialByType,
   type CredentialType,
+  credentialAad,
   credentialEncryptedSchema,
   credentialSchemas,
 } from "../src/partials/credential"
@@ -41,14 +42,38 @@ const main = async (): Promise<void> => {
 
   const rows = await db.select().from(platformCredentialModel)
 
+  const unparseable: (typeof rows)[number][] = []
   const toRotate = rows.filter((row) => {
     const result = credentialEncryptedSchema.safeParse(row.value)
-    return result.success && result.data.kid !== activeKid
+    if (!result.success) {
+      unparseable.push(row)
+      return false
+    }
+    return result.data.kid !== activeKid
   })
 
   console.log(
     `Found ${toRotate.length} of ${rows.length} rows to rotate → kid="${activeKid}".`,
   )
+
+  if (unparseable.length > 0) {
+    // These rows fail schema validation (e.g. an unexpected `v`, or a
+    // malformed iv/text/tag) and are excluded from `toRotate` above. Left
+    // unrotated, they become permanently undecryptable once
+    // ENCRYPTION_KEY_PREV is removed, so surface them loudly here rather
+    // than dropping them without a trace.
+    console.error(
+      `Warning: ${unparseable.length} row(s) failed schema validation and ` +
+        "will NOT be rotated. They will become undecryptable once " +
+        "ENCRYPTION_KEY_PREV is removed. Investigate before completing " +
+        "rotation:",
+    )
+    for (const row of unparseable) {
+      console.error(
+        `  [id:${row.id} userId:${row.userId ?? "platform"} type:${row.type}]`,
+      )
+    }
+  }
 
   if (isDryRun) {
     console.log("Dry run — no changes written.")
@@ -62,14 +87,16 @@ const main = async (): Promise<void> => {
     try {
       const blob = credentialEncryptedSchema.parse(row.value)
       const type = row.type as CredentialType
-      const aad = row.userId
-        ? `user:${row.userId}:${type}:${row.livemode}`
-        : `platform:${type}:${row.livemode}`
+      const aad = credentialAad({
+        userId: row.userId,
+        type,
+        livemode: row.livemode,
+      })
       const schema = credentialSchemas[type] as unknown as z.ZodType<
         CredentialByType[CredentialType]
       >
 
-      const config = await encryptUtils.decryptObject(blob, schema, aad)
+      const config = await encryptUtils.decryptObject(blob, schema)
       const newValue = await encryptUtils.encryptObject(config, aad)
 
       await db
