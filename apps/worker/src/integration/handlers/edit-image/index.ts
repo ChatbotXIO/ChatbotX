@@ -4,6 +4,7 @@ import {
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
 import { assertPublicUrl, resolveTenantSettings } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL,
@@ -247,6 +248,12 @@ export async function handleAIEditImage({
       },
       "[ai-edit-image] Step failed",
     )
+    await logProviderError({
+      provider: "openai",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error: err,
+    })
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)

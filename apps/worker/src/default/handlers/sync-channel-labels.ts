@@ -1,4 +1,5 @@
 import { buildContext } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { db, isNull, sql } from "@chatbotx.io/database/client"
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -18,6 +19,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/sche
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
 import { createId } from "@chatbotx.io/utils"
+import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
 import type { JobSyncChannelLabels } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 
@@ -80,26 +82,30 @@ async function runMessengerScan(props: {
     },
   })
 
-  await scanContactInboxes(integration.inboxId, async (contactInbox) => {
-    const fbLabels = await integrationMessenger.runChannelHandler(
-      "bot",
-      "listLabels",
-      { ctx, data: { sourceId: contactInbox.sourceId } },
-    )
-    const labels: NormalizedLabel[] = fbLabels.map((fbLabel) => ({
-      externalLabelId: fbLabel.id,
-      name: fbLabel.name,
-    }))
-    for (const label of labels) {
-      await upsertLabelMapping({
-        workspaceId,
-        channelType: channelTypes.enum.messenger,
-        integrationId: integration.id,
-        label,
-        contactInbox,
-      })
-    }
-  })
+  await scanContactInboxes(
+    { workspaceId, provider: "messenger" },
+    integration.inboxId,
+    async (contactInbox) => {
+      const fbLabels = await integrationMessenger.runChannelHandler(
+        "bot",
+        "listLabels",
+        { ctx, data: { sourceId: contactInbox.sourceId } },
+      )
+      const labels: NormalizedLabel[] = fbLabels.map((fbLabel) => ({
+        externalLabelId: fbLabel.id,
+        name: fbLabel.name,
+      }))
+      for (const label of labels) {
+        await upsertLabelMapping({
+          workspaceId,
+          channelType: channelTypes.enum.messenger,
+          integrationId: integration.id,
+          label,
+          contactInbox,
+        })
+      }
+    },
+  )
 }
 
 async function runZaloScan(props: {
@@ -116,29 +122,37 @@ async function runZaloScan(props: {
     },
   })
 
-  await scanContactInboxes(integration.inboxId, async (contactInbox) => {
-    const detail = await integrationZalo.runAction("getUserDetail", {
-      ctx,
-      userId: contactInbox.sourceId,
-    })
-    const names = detail.tags_and_notes_info?.tag_names ?? []
-    const labels: NormalizedLabel[] = names.map((name) => ({
-      externalLabelId: name,
-      name,
-    }))
-    for (const label of labels) {
-      await upsertLabelMapping({
-        workspaceId,
-        channelType: channelTypes.enum.zalo,
-        integrationId: integration.id,
-        label,
-        contactInbox,
+  await scanContactInboxes(
+    { workspaceId, provider: "zalo" },
+    integration.inboxId,
+    async (contactInbox) => {
+      const detail = await integrationZalo.runAction("getUserDetail", {
+        ctx,
+        userId: contactInbox.sourceId,
       })
-    }
-  })
+      const names = detail.tags_and_notes_info?.tag_names ?? []
+      const labels: NormalizedLabel[] = names.map((name) => ({
+        externalLabelId: name,
+        name,
+      }))
+      for (const label of labels) {
+        await upsertLabelMapping({
+          workspaceId,
+          channelType: channelTypes.enum.zalo,
+          integrationId: integration.id,
+          label,
+          contactInbox,
+        })
+      }
+    },
+  )
 }
 
 async function scanContactInboxes(
+  // `workspaceId` and `provider` exist only so the per-user catch below can
+  // attribute the failure: the scanned rows carry neither, and this helper is
+  // shared by the Messenger and Zalo scans.
+  attribution: { workspaceId: string; provider: ErrorLogProvider },
   inboxId: string,
   processContact: (contactInbox: ContactInboxModel) => Promise<void>,
 ): Promise<void> {
@@ -163,6 +177,12 @@ async function scanContactInboxes(
               { contactInboxId: contactInbox.id, error },
               "scan: per-user error, skipping",
             )
+            await logProviderError({
+              provider: attribution.provider,
+              workspaceId: attribution.workspaceId,
+              contactId: contactInbox.contactId,
+              error,
+            })
           }
           await sleep(SLEEP_MS)
         }

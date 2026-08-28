@@ -5,6 +5,7 @@ import {
   igStoryAutomationService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type {
   FBCommentIncludeKeywords,
   IgStoryTarget,
@@ -263,6 +264,12 @@ export async function processStoryReplyAutomation(
         { err, automationId: automation.id, messageId, workspaceId },
         "Failed to process story reply automation",
       )
+      await logProviderError({
+        provider: "instagram",
+        workspaceId,
+        contactId: contactInbox.contactId,
+        error: err,
+      })
     }
   }
 }

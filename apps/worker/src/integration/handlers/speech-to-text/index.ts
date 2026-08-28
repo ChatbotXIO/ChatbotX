@@ -1,5 +1,6 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiIntegrationService, getAIModel } from "@chatbotx.io/ai/server"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { AISpeechToTextSchema } from "@chatbotx.io/flow-config"
 import { experimental_transcribe as transcribe } from "ai"
 import ky from "ky"
@@ -110,6 +111,12 @@ export async function handleAISpeechToText({
   } catch (err) {
     const error = normalizeError(err)
     logger.error(error, "[ai-speech-to-text] Step failed")
+    await logProviderError({
+      provider: "openai",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error: err,
+    })
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)

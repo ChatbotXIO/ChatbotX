@@ -1,5 +1,6 @@
 import { zaloIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   calculateExpiresAt,
   refreshAccessToken,
@@ -82,6 +83,11 @@ async function refreshWithLockHeld(integration: {
       integration.id,
       error instanceof Error ? error.message : String(error),
     )
+    await logProviderError({
+      provider: "zalo",
+      workspaceId: integration.workspaceId,
+      error,
+    })
   }
 }
 

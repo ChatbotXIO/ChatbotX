@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationDripService } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { DripSubscribeSubscriberSchema } from "@chatbotx.io/flow-config"
@@ -123,6 +124,12 @@ export const subscribeDripSubscriber = async (
       { ...logContext, error: normalized },
       "Drip sync-subscriber step failed",
     )
+    await logProviderError({
+      provider: "drip",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error,
+    })
     return {
       status: "error",
       errorMessage: normalized.message,

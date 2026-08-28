@@ -6,6 +6,7 @@ import type {
   ChannelType,
   CouponIssueStatus,
   CouponUsageStatus,
+  ErrorLogProvider,
 } from "@chatbotx.io/database/partials"
 import { appointmentExternalSyncOperations } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
@@ -130,15 +131,41 @@ export type JobRunImport = {
   }
 }
 
+/** One `ErrorLog` row, as carried on a `sendErrorLog` job. */
+export type ErrorLogEntry = {
+  workspaceId: string
+  /**
+   * Written verbatim to `ErrorLog.action`. A closed set — see
+   * `@chatbotx.io/utils/error-log`.
+   */
+  provider: ErrorLogProvider
+  /** Set whenever a contact was in scope at the point of failure. */
+  contactId?: string
+  error: {
+    /**
+     * The provider's message only. Deliberately never a stack — `ErrorLog` is
+     * workspace-facing, and a stack leaks absolute server paths and our
+     * internal call chain. See `logProviderError` in `@chatbotx.io/business`.
+     */
+    message: string
+    /**
+     * The provider's real HTTP status, or `null` when the failure was not an
+     * HTTP error (a thrown `TypeError`, a timeout). Never a fabricated 500.
+     */
+    httpCode: string | null
+  }
+}
+
+/**
+ * Carries a *batch* of rows rather than one. The `default` queue is shared with
+ * user-visible work (`exportContacts`, `runImport`, `installTemplate`) at
+ * `concurrency: 5`, so one job per failed message would let a single broadcast
+ * to an expired token starve them behind hundreds of thousands of log writes.
+ */
 export type JobSendErrorLog = {
   type: typeof DefaultJobAction.sendErrorLog
   data: {
-    workspaceId: string
-    error: {
-      message: string
-      stack?: string
-      httpCode: string
-    }
+    entries: ErrorLogEntry[]
   }
 }
 

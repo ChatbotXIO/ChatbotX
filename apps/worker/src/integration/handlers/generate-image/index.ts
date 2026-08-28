@@ -4,6 +4,7 @@ import {
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
 import { resolveTenantSettings } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   type AIGenerateImageQualityType,
@@ -202,6 +203,12 @@ export async function handleAIGenerateImage({
       },
       "[ai-generate-image] Step failed",
     )
+    await logProviderError({
+      provider: "openai",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error: err,
+    })
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)

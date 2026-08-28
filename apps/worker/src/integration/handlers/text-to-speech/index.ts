@@ -1,5 +1,6 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiIntegrationService, getAIModel } from "@chatbotx.io/ai/server"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { AITextToSpeechSchema } from "@chatbotx.io/flow-config"
 import {
   experimental_generateSpeech as generateSpeech,
@@ -103,6 +104,12 @@ export async function handleAITextToSpeech({
       const error = normalizeError(err)
       logger.error(error, "[ai-text-to-speech] Step failed")
     }
+    await logProviderError({
+      provider: "openai",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error: err,
+    })
     return {
       status: "error",
       errorMessage:

@@ -5,6 +5,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { MetaCatalogBatchHandle } from "@chatbotx.io/database/partials"
 import { metaCatalogItemRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -309,5 +310,12 @@ export async function submitMetaCatalogSync(
       throw error
     }
     await metaCatalogSyncRunService.fail(data.runId, error)
+    // The raw `error`, not `safeLog.message`: `ErrorLog.detail` is stored
+    // unredacted by explicit product decision.
+    await logProviderError({
+      provider: "meta-catalog",
+      workspaceId: data.workspaceId,
+      error,
+    })
   }
 }

@@ -30,7 +30,13 @@ export const listErrorLogsResponse = z.object({
   data: z.array(
     errorLogResource.and(
       z.object({
-        contact: contactResource.nullable(),
+        contact: contactResource
+          .and(
+            z.object({
+              conversation: z.object({ id: z.string() }).nullish(),
+            }),
+          )
+          .nullable(),
       }),
     ),
   ),

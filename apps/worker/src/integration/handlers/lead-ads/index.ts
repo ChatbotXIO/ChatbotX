@@ -5,6 +5,7 @@ import {
   facebookLeadAdsLeadService,
   isRichSystemContactField,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   contactSources,
   type FacebookLeadFieldMapping,
@@ -19,6 +20,8 @@ import {
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import type { IncomingContact } from "@chatbotx.io/sdk"
 import type { IntegrationJobProcessLeadgen } from "@chatbotx.io/worker-config"
+import type { Job } from "bullmq"
+import { isFinalAttempt } from "../../../lib/job-attempts"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
 import { runFlowNode } from "../flow"
@@ -99,6 +102,7 @@ async function applyField(props: {
  */
 export async function processLeadgen(
   data: IntegrationJobProcessLeadgen["data"],
+  job: Job,
 ): Promise<void> {
   const { integrationType, integrationIdentifier, leadgenId, formId } = data
 
@@ -213,6 +217,17 @@ export async function processLeadgen(
         { error: releaseError, leadgenId },
         "processLeadgen: failed to release lead claim",
       )
+    }
+    // Lead Ads rides the `facebook-ads` provider — there is no separate
+    // integration. Logged before the rethrow so BullMQ retry/dead-letter
+    // behaviour is unchanged, and only once the retries are spent so one
+    // logical failure does not write a row per attempt.
+    if (isFinalAttempt(job)) {
+      await logProviderError({
+        provider: "facebook-ads",
+        workspaceId: inbox.workspaceId,
+        error,
+      })
     }
     throw error
   }

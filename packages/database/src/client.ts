@@ -196,18 +196,12 @@ export const isDatabaseError = (
   error.cause !== null &&
   "code" in error.cause
 
-/**
- * Detects a unique-constraint violation (SQLSTATE 23505).
- *
- * Pass `constraint` to match one specific index — a table with several unique
- * indexes otherwise reports every collision the same way, and each usually
- * needs its own message.
- */
-export const isUniqueViolationError = (
+const isConstraintViolationError = (
   error: unknown,
+  code: string,
   constraint?: string,
 ): boolean => {
-  if (!(isDatabaseError(error) && error.cause.code === "23505")) {
+  if (!(isDatabaseError(error) && error.cause.code === code)) {
     return false
   }
 
@@ -219,6 +213,32 @@ export const isUniqueViolationError = (
 
   return cause.constraint === constraint
 }
+
+/**
+ * Detects a unique-constraint violation (SQLSTATE 23505).
+ *
+ * Pass `constraint` to match one specific index — a table with several unique
+ * indexes otherwise reports every collision the same way, and each usually
+ * needs its own message.
+ */
+export const isUniqueViolationError = (
+  error: unknown,
+  constraint?: string,
+): boolean => isConstraintViolationError(error, "23505", constraint)
+
+/**
+ * Detects a foreign-key violation (SQLSTATE 23503).
+ *
+ * Distinguishing this from a transient failure matters wherever the fallback
+ * is lossy — dropping an attribution column and retrying is right for a row
+ * whose referent was deleted, and wrong for a connection drop.
+ *
+ * Pass `constraint` to match one specific foreign key.
+ */
+export const isForeignKeyViolationError = (
+  error: unknown,
+  constraint?: string,
+): boolean => isConstraintViolationError(error, "23503", constraint)
 
 export type DatabaseErrorDescription = {
   code?: string

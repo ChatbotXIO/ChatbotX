@@ -4,6 +4,7 @@ import {
   McpClient,
   normalizeMcpContent,
 } from "@chatbotx.io/ai/server"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { APICallError, streamText } from "ai"
@@ -122,6 +123,12 @@ export async function handleAIGenerateText({
       throw err
     }
     const error = normalizeError(err)
+    await logProviderError({
+      provider: "openai",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error: err,
+    })
     if (APICallError.isInstance(err) && err.statusCode === 402) {
       logger.error({ err: error }, "AI provider insufficient credits")
       return {

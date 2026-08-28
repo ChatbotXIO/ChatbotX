@@ -37,6 +37,16 @@ const pool = new Pool({
   max: 1,
 })
 
+/**
+ * PostgreSQL rejects a handful of statements inside a transaction block, the
+ * one that matters here being `CREATE INDEX CONCURRENTLY` — the only way to
+ * add an index to a hot table without a `SHARE` lock that blocks every insert
+ * for the duration of the build.
+ */
+const CONCURRENTLY_RE = /\bCONCURRENTLY\b/i
+
+const isNonTransactional = (statement) => CONCURRENTLY_RE.test(statement)
+
 const runMigrationsSequentially = async (db) => {
   const migrationsTable = "__drizzle_migrations"
   const migrationsSchema = "drizzle"
@@ -74,19 +84,35 @@ const runMigrationsSequentially = async (db) => {
   })
 
   for (const migration of migrationsToRun) {
-    await db.transaction(async (tx) => {
-      for (const stmt of migration.sql) {
-        if (stmt.trim()) {
-          await tx.execute(sql.raw(stmt))
-        }
-      }
-
-      await tx.execute(sql`
+    const statements = migration.sql.filter((stmt) => stmt.trim())
+    const recordMigration = (executor) =>
+      executor.execute(sql`
         insert into ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)}
           ("hash", "created_at", "name")
         values(${migration.hash}, ${migration.folderMillis}, ${migration.name ?? null})
       `)
-    })
+
+    if (statements.some(isNonTransactional)) {
+      // `CREATE INDEX CONCURRENTLY` (and friends) cannot run inside a
+      // transaction block, so the whole migration runs unwrapped. It is
+      // therefore NOT atomic: a failure part-way leaves the earlier
+      // statements applied and the migration unrecorded, so every statement
+      // in such a migration must be individually re-runnable — use
+      // `IF NOT EXISTS`. Note a failed CONCURRENTLY build leaves an INVALID
+      // index that `IF NOT EXISTS` will then skip; drop it before re-running.
+      for (const stmt of statements) {
+        await db.execute(sql.raw(stmt))
+      }
+      await recordMigration(db)
+    } else {
+      await db.transaction(async (tx) => {
+        for (const stmt of statements) {
+          await tx.execute(sql.raw(stmt))
+        }
+
+        await recordMigration(tx)
+      })
+    }
 
     console.log(`Applied migration: ${migration.name}`)
   }
@@ -240,7 +266,18 @@ try {
   await reconcileRenamedMigrations(client)
   await reconcileSquashedQuestionnaireMigration(client)
   const db = drizzle({ client })
-  if (useSequentialMigrations) {
+  // Drizzle's batch migrator wraps everything in one transaction, which a
+  // `CONCURRENTLY` statement cannot survive. The sequential runner is the only
+  // path that can unwrap a migration, so it wins over the opt-out.
+  const hasNonTransactionalMigration = readMigrationFiles({
+    migrationsFolder,
+  }).some(({ sql: statements }) => statements.some(isNonTransactional))
+  if (useSequentialMigrations || hasNonTransactionalMigration) {
+    if (!useSequentialMigrations) {
+      console.log(
+        "DATABASE_MIGRATIONS_SEQUENTIAL=false ignored: a pending migration cannot run inside a transaction.",
+      )
+    }
     await runMigrationsSequentially(db)
   } else {
     await migrate(db, { migrationsFolder })
