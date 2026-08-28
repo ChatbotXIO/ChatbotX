@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "{feature} bağlantısını kesmek istediğinizden emin misiniz?",
     "disconnectSuccess": "{feature} bağlantısı başarıyla kesildi",
     "reply": "Yanıtla",
+    "privateReply": "Özel yanıt",
     "viewMessage": "Mesajı görüntüle",
     "changeLikeState": "Beğeni durumunu değiştir",
     "changeHideState": "Gizleme durumunu değiştir",

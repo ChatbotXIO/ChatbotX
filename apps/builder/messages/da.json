@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Er du sikker du want til afbryd den {feature}?",
     "disconnectSuccess": "{feature} disconnected successfully",
     "reply": "Svar",
+    "privateReply": "Privat svar",
     "viewMessage": "Vis besked",
     "changeLikeState": "Change like state",
     "changeHideState": "Change hide state",

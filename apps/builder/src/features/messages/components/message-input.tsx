@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
   ImageIcon,
+  LockIcon,
   PaperclipIcon,
   ReplyIcon,
   SendHorizonalIcon,
@@ -82,6 +83,7 @@ export const MessageInput = () => {
     updateConversation,
     replyToMessage,
     setReplyToMessage,
+    isPrivateReply,
     messages,
   } = useChatStore((state) => state)
 
@@ -136,12 +138,19 @@ export const MessageInput = () => {
       {
         actionProps: {
           onExecute: ({ input }: { input: unknown }) => {
-            // try to push raw message to store
+            // try to push raw message to store — skipped for a private
+            // reply, since that message belongs to the contact's DM
+            // conversation, not whichever post/comment conversation is
+            // currently open here.
             if (
               typeof input === "object" &&
               input !== null &&
               "text" in input &&
-              input.text
+              input.text &&
+              !(
+                "isPrivateReply" in input &&
+                (input as { isPrivateReply?: boolean }).isPrivateReply
+              )
             ) {
               const typedInput = input as { text: string; clientId: string }
               appendMessage({
@@ -188,6 +197,7 @@ export const MessageInput = () => {
             clientId: createId(),
             replyToMessageId: undefined,
             replyToMessageCreatedAt: undefined,
+            isPrivateReply: undefined,
           },
         },
         errorMapProps: {},
@@ -201,10 +211,11 @@ export const MessageInput = () => {
       "replyToMessageCreatedAt",
       replyToMessage?.createdAt ?? undefined,
     )
+    form.setValue("isPrivateReply", replyToMessage ? isPrivateReply : undefined)
     if (replyToMessage) {
       textareaRef.current?.focus()
     }
-  }, [form, replyToMessage])
+  }, [form, replyToMessage, isPrivateReply])
 
   // Memoize emoji selection handler
   const setContent = useCallback(
@@ -455,8 +466,17 @@ export const MessageInput = () => {
         >
           {replyToMessage && (
             <div className="mx-2.5 mb-1 flex items-start gap-2 rounded-lg border-primary bg-muted px-3 py-2 text-sm">
-              <ReplyIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              {isPrivateReply ? (
+                <LockIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              ) : (
+                <ReplyIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              )}
               <span className="flex-1 truncate text-muted-foreground">
+                {isPrivateReply && (
+                  <span className="me-1 font-medium text-foreground">
+                    {t("messages.privateReply")}:
+                  </span>
+                )}
                 {replyToMessage.text || t("messages.facebookComment")}
               </span>
               <Button

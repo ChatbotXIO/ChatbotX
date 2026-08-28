@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Voulez-vous vraiment déconnecter {feature} ?",
     "disconnectSuccess": "{feature} déconnecté",
     "reply": "Répondre",
+    "privateReply": "Réponse privée",
     "viewMessage": "Afficher le message",
     "changeLikeState": "Modifier l’état J’aime",
     "changeHideState": "Modifier l’état masqué",

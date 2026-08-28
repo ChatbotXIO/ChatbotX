@@ -2904,6 +2904,7 @@
     "disconnectFeatureDescription": "{feature}を切断してもよろしいですか？",
     "disconnectSuccess": "{feature}を切断しました",
     "reply": "返信",
+    "privateReply": "プライベート返信",
     "viewMessage": "メッセージを表示",
     "changeLikeState": "「いいね！」の状態を変更",
     "changeHideState": "非表示状態を変更",

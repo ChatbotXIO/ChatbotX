@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Möchten Sie die Verbindung mit {feature} wirklich trennen?",
     "disconnectSuccess": "Verbindung mit {feature} erfolgreich getrennt",
     "reply": "Antworten",
+    "privateReply": "Private Antwort",
     "viewMessage": "Nachricht anzeigen",
     "changeLikeState": "Gefällt-mir-Status ändern",
     "changeHideState": "Sichtbarkeitsstatus ändern",

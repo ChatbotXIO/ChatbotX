@@ -2904,6 +2904,7 @@
     "disconnectFeatureDescription": "Tem certeza de que deseja desconectar {feature}?",
     "disconnectSuccess": "{feature} desconectado com sucesso",
     "reply": "Responder",
+    "privateReply": "Resposta privada",
     "viewMessage": "Ver mensagem",
     "changeLikeState": "Alterar estado da curtida",
     "changeHideState": "Alterar estado de ocultação",

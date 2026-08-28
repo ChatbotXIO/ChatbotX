@@ -26,6 +26,8 @@ export const IntegrationJobAction = {
   incomingComment: "incomingComment",
   updateIncomingComment: "updateIncomingComment",
   deleteIncomingComment: "deleteIncomingComment",
+  deleteIncomingMessage: "deleteIncomingMessage",
+  messageReaction: "messageReaction",
   messageStatus: "messageStatus",
   runFlowPostback: "runFlowPostback",
   runFlowQuickReply: "runFlowQuickReply",
@@ -106,6 +108,27 @@ export type IntegrationJobDeleteIncomingComment = {
     integrationType: string
     integrationIdentifier: string
     commentId: string
+  }
+}
+
+export type IntegrationJobDeleteIncomingMessage = {
+  type: typeof IntegrationJobAction.deleteIncomingMessage
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    messageId: string
+  }
+}
+
+export type IntegrationJobMessageReaction = {
+  type: typeof IntegrationJobAction.messageReaction
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    messageId: string
+    action: "react" | "unreact"
+    emoji?: string
+    contactSourceId: string
   }
 }
 
@@ -566,6 +589,8 @@ export type IntegrationJobData =
   | IntegrationJobReceiveComment
   | IntegrationJobUpdateIncomingComment
   | IntegrationJobDeleteIncomingComment
+  | IntegrationJobDeleteIncomingMessage
+  | IntegrationJobMessageReaction
   | IntegrationJobMessageStatus
   | IntegrationJobRunFlowNode
   | IntegrationJobSendFlowPostback

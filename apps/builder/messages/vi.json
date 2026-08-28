@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Bạn có chắc chắn muốn ngắt kết nối {feature}?",
     "disconnectSuccess": "Đã ngắt kết nối {feature} thành công",
     "reply": "Trả lời",
+    "privateReply": "Trả lời riêng tư",
     "viewMessage": "Xem tin nhắn",
     "changeLikeState": "Thay đổi trạng thái thích",
     "changeHideState": "Thay đổi trạng thái ẩn",

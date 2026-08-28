@@ -1451,6 +1451,7 @@
     "disconnectFeatureDescription": "您確定要中斷 {feature} 的連線嗎？",
     "disconnectSuccess": "{feature} 已中斷連線",
     "reply": "回覆",
+    "privateReply": "私訊回覆",
     "viewMessage": "檢視訊息",
     "changeLikeState": "更改類似狀態",
     "changeHideState": "更改隱藏狀態",

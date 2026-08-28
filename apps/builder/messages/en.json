@@ -3039,6 +3039,7 @@
     "disconnectFeatureDescription": "Are you sure you want to disconnect the {feature}?",
     "disconnectSuccess": "{feature} disconnected successfully",
     "reply": "Reply",
+    "privateReply": "Private reply",
     "viewMessage": "View message",
     "changeLikeState": "Change like state",
     "changeHideState": "Change hide state",

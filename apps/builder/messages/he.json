@@ -1153,6 +1153,7 @@
     "disconnectFeatureDescription": "האם לנתק את {feature}?",
     "disconnectSuccess": "{feature} נותק בהצלחה",
     "reply": "תשובה",
+    "privateReply": "תגובה פרטית",
     "viewMessage": "הצגת הודעה",
     "changeLikeState": "שינוי מצב לייק",
     "changeHideState": "שינוי מצב הסתרה",

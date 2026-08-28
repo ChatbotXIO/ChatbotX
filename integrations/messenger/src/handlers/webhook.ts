@@ -78,165 +78,218 @@ const handleWebhookEvent = async (
       )
     }
 
-    const entry = webhookData.entry[0]
-    if (!entry) {
-      return
-    }
-
-    const labelChange = entry.changes?.find(
-      (c: { field: string }) => c.field === "inbox_labels",
-    )
-    if (labelChange) {
-      await queue?.add("channelLabelChange", {
-        type: "channelLabelChange",
-        data: {
-          integrationType: "messenger",
-          integrationIdentifier: entry.id,
-          payload: webhookData,
-        },
-      })
-      return
-    }
-
-    const feedChanges =
-      entry.changes?.filter((c: { field: string }) => c.field === "feed") ?? []
-    if (feedChanges.length > 0) {
-      for (const feedChange of feedChanges) {
-        const parsed = messengerFeedCommentValueSchema.safeParse(
-          feedChange.value,
-        )
-        if (!parsed.success) {
-          logger.warn(
-            { issues: parsed.error.issues, value: feedChange.value },
-            "Unrecognized feed webhook payload",
-          )
-          continue
-        }
-        const value = parsed.data
-        if (value.verb === "add" && value.from.id !== entry.id) {
-          // New comment from an external user — route to inbox
-          await queue?.add("incomingComment", {
-            type: "incomingComment",
-            data: {
-              integrationType: "messenger",
-              integrationIdentifier: entry.id,
-              commentData: {
-                commentId: value.comment_id,
-                postId: value.post_id,
-                parentId: value.parent_id,
-                fromId: value.from.id,
-                fromName: value.from.name,
-                message: value.message,
-                createdTime: value.created_time,
-              },
-            },
-          })
-        } else if (value.verb === "edited" && value.from.id !== entry.id) {
-          // Commenter edited their comment — sync the new text to the DB
-          await queue?.add("updateIncomingComment", {
-            type: "updateIncomingComment",
-            data: {
-              integrationType: "messenger",
-              integrationIdentifier: entry.id,
-              commentId: value.comment_id,
-              newText: value.message ?? "",
-            },
-          })
-        } else if (value.verb === "remove") {
-          // Commenter or page deleted the comment — soft-delete in the DB
-          await queue?.add("deleteIncomingComment", {
-            type: "deleteIncomingComment",
-            data: {
-              integrationType: "messenger",
-              integrationIdentifier: entry.id,
-              commentId: value.comment_id,
-            },
-          })
-        }
-      }
-      return
-    }
-
-    const leadgenChanges =
-      entry.changes?.filter((c: { field: string }) => c.field === "leadgen") ??
-      []
-    if (leadgenChanges.length > 0) {
-      for (const leadgenChange of leadgenChanges) {
-        const parsed = messengerLeadgenValueSchema.safeParse(
-          leadgenChange.value,
-        )
-        if (!parsed.success) {
-          logger.warn(
-            { issues: parsed.error.issues, value: leadgenChange.value },
-            "Unrecognized leadgen webhook payload",
-          )
-          continue
-        }
-        const value = parsed.data
-        await queue?.add("processLeadgen", {
-          type: "processLeadgen",
+    // Meta batches multiple entries — and multiple messaging events per
+    // entry — into a single webhook POST (e.g. a contact sending several DMs
+    // quickly). Every entry/event must be processed, not just the first.
+    for (const entry of webhookData.entry) {
+      const labelChange = entry.changes?.find(
+        (c: { field: string }) => c.field === "inbox_labels",
+      )
+      if (labelChange) {
+        await queue?.add("channelLabelChange", {
+          type: "channelLabelChange",
           data: {
             integrationType: "messenger",
             integrationIdentifier: entry.id,
-            leadgenId: value.leadgen_id,
-            formId: value.form_id,
+            payload: { object: webhookData.object, entry: [entry] },
+          },
+        })
+        continue
+      }
+
+      const feedChanges =
+        entry.changes?.filter((c: { field: string }) => c.field === "feed") ??
+        []
+      if (feedChanges.length > 0) {
+        for (const feedChange of feedChanges) {
+          const parsed = messengerFeedCommentValueSchema.safeParse(
+            feedChange.value,
+          )
+          if (!parsed.success) {
+            logger.warn(
+              { issues: parsed.error.issues, value: feedChange.value },
+              "Unrecognized feed webhook payload",
+            )
+            continue
+          }
+          const value = parsed.data
+          if (value.verb === "add" && value.from.id !== entry.id) {
+            // New comment from an external user — route to inbox
+            await queue?.add("incomingComment", {
+              type: "incomingComment",
+              data: {
+                integrationType: "messenger",
+                integrationIdentifier: entry.id,
+                commentData: {
+                  commentId: value.comment_id,
+                  postId: value.post_id,
+                  parentId: value.parent_id,
+                  fromId: value.from.id,
+                  fromName: value.from.name,
+                  message: value.message,
+                  createdTime: value.created_time,
+                },
+              },
+            })
+          } else if (value.verb === "edited" && value.from.id !== entry.id) {
+            // Commenter edited their comment — sync the new text to the DB
+            await queue?.add("updateIncomingComment", {
+              type: "updateIncomingComment",
+              data: {
+                integrationType: "messenger",
+                integrationIdentifier: entry.id,
+                commentId: value.comment_id,
+                newText: value.message ?? "",
+              },
+            })
+          } else if (value.verb === "remove") {
+            // Commenter or page deleted the comment — soft-delete in the DB
+            await queue?.add("deleteIncomingComment", {
+              type: "deleteIncomingComment",
+              data: {
+                integrationType: "messenger",
+                integrationIdentifier: entry.id,
+                commentId: value.comment_id,
+              },
+            })
+          }
+        }
+        continue
+      }
+
+      const leadgenChanges =
+        entry.changes?.filter(
+          (c: { field: string }) => c.field === "leadgen",
+        ) ?? []
+      if (leadgenChanges.length > 0) {
+        for (const leadgenChange of leadgenChanges) {
+          const parsed = messengerLeadgenValueSchema.safeParse(
+            leadgenChange.value,
+          )
+          if (!parsed.success) {
+            logger.warn(
+              { issues: parsed.error.issues, value: leadgenChange.value },
+              "Unrecognized leadgen webhook payload",
+            )
+            continue
+          }
+          const value = parsed.data
+          await queue?.add("processLeadgen", {
+            type: "processLeadgen",
+            data: {
+              integrationType: "messenger",
+              integrationIdentifier: entry.id,
+              leadgenId: value.leadgen_id,
+              formId: value.form_id,
+            },
+          })
+        }
+        continue
+      }
+
+      if (!entry.messaging || entry.messaging.length === 0) {
+        continue
+      }
+
+      for (const messagingEvent of entry.messaging) {
+        // Reshape to a single-entry, single-messaging-event payload so
+        // downstream consumers — which only ever read entry[0]/messaging[0] —
+        // see exactly the one event this job is for.
+        const singleEventPayload = {
+          object: webhookData.object,
+          entry: [
+            { id: entry.id, time: entry.time, messaging: [messagingEvent] },
+          ],
+        }
+
+        if (messagingEvent.read) {
+          await queue?.add("contactMarkAsRead", {
+            type: "contactMarkAsRead",
+            data: {
+              integrationType: "messenger",
+              integrationIdentifier: entry.id,
+              sourceConversationId: messagingEvent.sender.id,
+              payload: singleEventPayload,
+            },
+          })
+          continue
+        }
+
+        if (messagingEvent.reaction) {
+          await queue?.add("messageReaction", {
+            type: "messageReaction",
+            data: {
+              integrationType: "messenger",
+              integrationIdentifier: entry.id,
+              messageId: messagingEvent.reaction.mid,
+              action: messagingEvent.reaction.action,
+              emoji: messagingEvent.reaction.emoji,
+              contactSourceId: messagingEvent.sender.id,
+            },
+          })
+          continue
+        }
+
+        if (messagingEvent.message?.is_deleted) {
+          await queue?.add("deleteIncomingMessage", {
+            type: "deleteIncomingMessage",
+            data: {
+              integrationType: "messenger",
+              integrationIdentifier: entry.id,
+              messageId: messagingEvent.message.mid,
+            },
+          })
+          continue
+        }
+
+        // Skip events that carry none of message/postback/referral (e.g. a
+        // pure delivery receipt) — nothing downstream can process them.
+        if (
+          !(
+            messagingEvent.message ||
+            messagingEvent.postback ||
+            messagingEvent.referral
+          )
+        ) {
+          continue
+        }
+
+        // Calculate integration identifier
+        const integrationIdentifier = messagingEvent.message?.is_echo
+          ? messagingEvent.sender.id
+          : messagingEvent.recipient.id
+
+        if (messagingEvent.postback) {
+          await queue?.add("incomingMessage", {
+            type: "incomingMessage",
+            data: {
+              integrationType: "messenger",
+              integrationIdentifier,
+              payload: singleEventPayload,
+              action: messagingEvent.postback.payload,
+            },
+          })
+          continue
+        }
+
+        if (
+          messagingEvent.message?.is_echo === true &&
+          messagingEvent.message?.metadata === MESSENGER_MESSAGE_METADATA
+        ) {
+          // Skip other echoes that passed schema validation
+          continue
+        }
+
+        await queue?.add("incomingMessage", {
+          type: "incomingMessage",
+          data: {
+            integrationType: "messenger",
+            integrationIdentifier,
+            payload: singleEventPayload,
           },
         })
       }
-      return
     }
-
-    if (!entry.messaging || entry.messaging.length === 0) {
-      return
-    }
-
-    if (entry.messaging[0]?.read) {
-      await queue?.add("contactMarkAsRead", {
-        type: "contactMarkAsRead",
-        data: {
-          integrationType: "messenger",
-          integrationIdentifier: entry.id,
-          sourceConversationId: entry.messaging[0].sender.id,
-          payload: webhookData,
-        },
-      })
-      return
-    }
-
-    // Calculate integration identifier
-    const integrationIdentifier = entry.messaging[0].message?.is_echo
-      ? entry.messaging[0].sender.id
-      : entry.messaging[0].recipient.id
-
-    if (entry.messaging[0].postback) {
-      await queue?.add("incomingMessage", {
-        type: "incomingMessage",
-        data: {
-          integrationType: "messenger",
-          integrationIdentifier,
-          payload: webhookData,
-          action: entry.messaging[0].postback.payload,
-        },
-      })
-      return
-    }
-
-    if (
-      entry.messaging[0].message?.is_echo === true &&
-      entry.messaging[0].message?.metadata === MESSENGER_MESSAGE_METADATA
-    ) {
-      // Skip other echoes that passed schema validation
-      return
-    }
-
-    await queue?.add("incomingMessage", {
-      type: "incomingMessage",
-      data: {
-        integrationType: "messenger",
-        integrationIdentifier,
-        payload: webhookData,
-      },
-    })
   } catch (error) {
     const errorMessage =
       error instanceof Error

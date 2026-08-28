@@ -2925,6 +2925,7 @@
     "disconnectFeatureDescription": "Vuoi davvero disconnettere {feature}?",
     "disconnectSuccess": "{feature} disconnesso correttamente",
     "reply": "Rispondi",
+    "privateReply": "Risposta privata",
     "viewMessage": "Visualizza messaggio",
     "changeLikeState": "Cambia stato del Mi piace",
     "changeHideState": "Cambia stato di visibilità",

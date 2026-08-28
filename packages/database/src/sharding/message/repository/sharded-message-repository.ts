@@ -692,7 +692,7 @@ export class ShardedMessageRepository implements IMessageRepository {
   ): Promise<{ id: string }[]> {
     const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
 
-    // Step 1: find parent DB id — search in createdAt shard + write shard only.
+    // Step 1: find parent DB id — search in createdAt shard + write shard first.
     const parentTimeShards = await this.getShardsForRange(
       createdAt,
       endOfHour(createdAt),
@@ -700,11 +700,18 @@ export class ShardedMessageRepository implements IMessageRepository {
     const parentShards = this.mergeWriteShard(parentTimeShards, writeShard)
 
     let parentDbId: string | null = null
+    // The caller's `createdAt` is only ever a hint (e.g. "now", for a
+    // webhook-driven unsend/delete with no known original timestamp) — once
+    // the row is actually found, its real createdAt replaces it below so
+    // Step 2 searches the shard(s) the row truly lives in.
+    let realCreatedAt: Date = createdAt
+    const triedShardIds = new Set<string>()
     for (const shardInfo of parentShards) {
+      triedShardIds.add(shardInfo.shard.id)
       try {
         const client = await this.shardManager.getShardClient(shardInfo.shard)
         const [parent] = await client
-          .select({ id: messageModel.id })
+          .select({ id: messageModel.id, createdAt: messageModel.createdAt })
           .from(messageModel)
           .where(
             and(
@@ -715,6 +722,7 @@ export class ShardedMessageRepository implements IMessageRepository {
           .limit(1)
         if (parent) {
           parentDbId = parent.id
+          realCreatedAt = parent.createdAt
           break
         }
       } catch (error) {
@@ -725,10 +733,56 @@ export class ShardedMessageRepository implements IMessageRepository {
       }
     }
 
+    // The narrow, createdAt-hinted search above misses a row whenever the
+    // hint doesn't match the row's real creation time closely enough (e.g. a
+    // webhook-driven unsend/delete for a message created hours or days ago).
+    // Before giving up, fall back to every shard that has ever existed —
+    // `getShardsForRange` is cached, so this only costs extra work on the
+    // miss path, never on the already-correct-createdAt path.
+    if (!parentDbId) {
+      const allTimeShards = await this.getShardsForRange(
+        new Date(0),
+        new Date(),
+      )
+      const fallbackShards = this.mergeWriteShard(
+        allTimeShards,
+        writeShard,
+      ).filter((shardInfo) => !triedShardIds.has(shardInfo.shard.id))
+
+      for (const shardInfo of fallbackShards) {
+        try {
+          const client = await this.shardManager.getShardClient(shardInfo.shard)
+          const [parent] = await client
+            .select({ id: messageModel.id, createdAt: messageModel.createdAt })
+            .from(messageModel)
+            .where(
+              and(
+                eq(messageModel.workspaceId, workspaceId),
+                eq(messageModel.sourceId, sourceId),
+              ),
+            )
+            .limit(1)
+          if (parent) {
+            parentDbId = parent.id
+            realCreatedAt = parent.createdAt
+            break
+          }
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed while looking up parent in deleteBySourceId (fallback scan)",
+          )
+        }
+      }
+    }
+
     // Step 2: soft-delete parent + children.
-    // Parent lives in its createdAt shard; children (replies) can be in any
-    // shard from createdAt onwards.
-    const childTimeShards = await this.getShardsForRange(createdAt, new Date())
+    // Parent lives in its (real) createdAt shard; children (replies) can be
+    // in any shard from there onwards.
+    const childTimeShards = await this.getShardsForRange(
+      realCreatedAt,
+      new Date(),
+    )
     const shards = this.mergeWriteShard(childTimeShards, writeShard)
 
     if (shards.length === 0) {
