@@ -2,7 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "77d7f599-e007-4346-bd14-a02ee697df26",
-  "prevIds": ["1f84963d-4b61-432b-bef3-f2a515ed10d0"],
+  "prevIds": ["0175a088-2db4-41f1-8c16-b85bd4c07a36"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],

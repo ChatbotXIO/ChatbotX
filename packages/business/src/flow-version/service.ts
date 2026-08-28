@@ -4,10 +4,13 @@ import {
   db,
   desc,
   eq,
+  findOrFail,
 } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import type { FlowVersionModel } from "@chatbotx.io/database/types"
+import type { EdgeSchema, FlowVersionSchema } from "@chatbotx.io/flow-config"
 import { withCache } from "@chatbotx.io/redis"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 
@@ -284,6 +287,91 @@ class FlowVersionService extends BaseService {
 
   async invalidateList(flowId: string): Promise<void> {
     await this.invalidateCacheTags(`flows:${flowId}:versions`)
+  }
+
+  async updateDraft(props: {
+    workspaceId: string
+    id: string
+    data: { nodes: FlowVersionSchema[]; edges: EdgeSchema[] }
+  }): Promise<void> {
+    const { workspaceId, id, data } = props
+
+    const flowVersion = await findOrFail({
+      table: flowVersionModel,
+      where: { id, workspaceId, isDraft: true },
+      message: "Draft flow version not found",
+    })
+
+    await db
+      .update(flowVersionModel)
+      .set({ nodes: data.nodes, edges: data.edges })
+      .where(eq(flowVersionModel.id, flowVersion.id))
+  }
+
+  /**
+   * Publishes the workspace's current draft: snapshots the submitted
+   * nodes/edges onto the draft row, demotes the previous `isLatest` published
+   * version, and inserts a new published version pointed at by
+   * `flowModel.currentVersionId` — all in one transaction. Mirrors the
+   * "insert version isLatest:true + update currentVersionId" shape in
+   * `FlowService.createPublishedDefault`.
+   */
+  async publish(props: {
+    workspaceId: string
+    id: string
+    data: { nodes: FlowVersionSchema[]; edges: EdgeSchema[] }
+  }): Promise<void> {
+    const { workspaceId, id, data } = props
+
+    const flow = await db.query.flowModel.findFirst({
+      where: { id, workspaceId },
+      with: {
+        flowVersions: {
+          where: { isDraft: true },
+        },
+      },
+    })
+    if (!flow || flow.flowVersions.length === 0) {
+      throw notFoundException("Flow not found")
+    }
+
+    const draftVersion = flow.flowVersions[0]
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(flowVersionModel)
+        .set({ isLatest: false })
+        .where(
+          and(
+            eq(flowVersionModel.flowId, flow.id),
+            eq(flowVersionModel.isLatest, true),
+          ),
+        )
+
+      await tx
+        .update(flowVersionModel)
+        .set({ nodes: data.nodes, edges: data.edges })
+        .where(eq(flowVersionModel.id, draftVersion.id))
+
+      const newVersionId = createId()
+      await tx.insert(flowVersionModel).values({
+        id: newVersionId,
+        workspaceId: flow.workspaceId,
+        flowId: flow.id,
+        isDraft: false,
+        isLatest: true,
+        ...data,
+        startNodeId: draftVersion.startNodeId,
+      })
+
+      await tx
+        .update(flowModel)
+        .set({ currentVersionId: newVersionId })
+        .where(eq(flowModel.id, flow.id))
+    })
+
+    await this.invalidateList(flow.id)
+    await this.audit("publish", `published a flow (#${flow.id})`)
   }
 }
 

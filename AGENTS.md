@@ -23,7 +23,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 | `apps/cli`        | Command-line client (`chatbotx-cli`).                                                                                   |
 | `apps/mcp-server` | MCP server exposing public API surfaces.                                                                                |
 | `apps/javascript-executor` | Internal HTTP service that executes flow-step JavaScript in isolated-vm.                                      |
-| `packages/*`      | Shared libraries: `database` (Drizzle + PostgreSQL), `ui`, `public-apis`, `sdk`, `worker-config`, `ai`, etc.            |
+| `packages/*`      | Shared libraries: `database` (Drizzle + PostgreSQL), `ui`, `sdk`, `worker-config`, `ai`, etc.                           |
 | `integrations/*`  | Channel and vendor integrations (WhatsApp, Messenger, Telegram, Zalo, TikTok, webchat, SMTP, OpenAI, Google Sheets, …). |
 
 ## Stack (high level)

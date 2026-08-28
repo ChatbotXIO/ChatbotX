@@ -1,7 +1,6 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { savedReplyModel } from "@chatbotx.io/database/schema"
+import { savedReplyService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { editSavedReplyRequest } from "../schema/mutation"
@@ -15,22 +14,9 @@ export const editSavedReplyAction = workspaceActionClient
       parsedInput,
     } = props
 
-    const savedReply = await findOrFail({
-      table: savedReplyModel,
-      where: {
-        id,
-        workspaceId,
-      },
-      message: "Saved reply not found",
+    return await savedReplyService.update({
+      workspaceId,
+      id,
+      data: parsedInput,
     })
-    const [updatedSavedReply] = await db
-      .update(savedReplyModel)
-      .set({
-        shortcut: parsedInput.shortcut,
-        text: parsedInput.text,
-      })
-      .where(eq(savedReplyModel.id, savedReply.id))
-      .returning()
-
-    return updatedSavedReply
   })

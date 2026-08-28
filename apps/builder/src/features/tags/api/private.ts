@@ -57,7 +57,7 @@ const privateUpdateTagAPI = authorizedAPI
     return await updateTag({
       workspaceId,
       id,
-      parsedInput: rest,
+      data: rest,
     })
   })
 

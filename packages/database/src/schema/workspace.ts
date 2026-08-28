@@ -74,10 +74,18 @@ export const workspaceModel = pgTable(
         onDelete: "restrict",
         onUpdate: "cascade",
       }),
+    // Deprecated: legacy plaintext token, kept temporarily for dual-read while
+    // existing tokens migrate to `tokenHash`. New/rotated tokens are looked up
+    // by `tokenHash` only — see `workspaceTokenAuthMidddleware`.
     token: text(),
+    // SHA-256 hex digest of the workspace API token (`hashToken()` from
+    // `apps/builder/src/features/integration-api/lib/token-hash.ts`). Nullable
+    // until every existing `token` row is backfilled.
+    tokenHash: text(),
   },
   (table) => [
     index("Workspace_tenantId_idx").on(table.tenantId),
     index("Workspace_scheduledDeletionAt_idx").on(table.scheduledDeletionAt),
+    index("Workspace_tokenHash_idx").on(table.tokenHash),
   ],
 )

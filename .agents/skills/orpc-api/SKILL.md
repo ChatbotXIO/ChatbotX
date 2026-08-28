@@ -12,7 +12,7 @@ description: >-
 
 - **oRPC** serves both **RPC** (`/rpc`) and **OpenAPI** (`/api`) endpoints
 - Base context: `{ headers, user?, workspace? }`
-- Two auth stacks: `authorizedAPI` (session) and `workspaceTokenAuthAPI` (header token)
+- Three auth stacks: `authorizedAPI` (session), `workspaceTokenAuthAPI` (workspace bearer/query token), and `channelApiTokenAPI` (per-inbox channel API bearer token)
 - Routers are plain objects of procedures, composed via object spreading
 
 ## Auth Stacks
@@ -20,7 +20,8 @@ description: >-
 Defined in `apps/builder/src/orpc.ts`:
 
 - **`authorizedAPI`**: `base` → error mapping → `authMiddleware` (session/cookie auth)
-- **`workspaceTokenAuthAPI`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header)
+- **`workspaceTokenAuthAPI`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header, with a legacy `?token=` query fallback and a deprecated plaintext-token dual-read; see `middlewares/workspace-token-auth.ts`)
+- **`channelApiTokenAPI`**: `base` → error mapping → `channelApiTokenAuthMidddleware` (Authorization: Bearer header only — no query fallback; token is looked up by hash, never plaintext; scoped to a single inbox, not a whole workspace; see `middlewares/channel-api-token-auth.ts`)
 
 Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per-procedure.
 

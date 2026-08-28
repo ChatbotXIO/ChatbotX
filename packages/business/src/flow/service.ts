@@ -1,4 +1,10 @@
-import { type DatabaseClient, db, inArray } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  eq,
+  findOrFail,
+  inArray,
+} from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import {
   flowAnalyticsSessionModel,
@@ -11,7 +17,10 @@ import type {
   FlowExportCustomField,
   FlowVersionSchema,
 } from "@chatbotx.io/flow-config"
-import { remapCustomFieldReferences } from "@chatbotx.io/flow-config"
+import {
+  remapCustomFieldReferences,
+  sendMessageNodeDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
@@ -20,6 +29,17 @@ import { notFoundException } from "../errors"
 import { flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
 import { assertDeletable } from "../template/installed-resource.service"
+
+type CreateFlowData = {
+  name: string
+  folderId?: string | null
+}
+
+type UpdateFlowData = {
+  name?: string
+  active?: boolean
+  enableInInbox?: boolean
+}
 
 class FlowService extends BaseService {
   async findBy(
@@ -39,6 +59,95 @@ class FlowService extends BaseService {
   ): Promise<boolean> {
     const row = await this.findBy({ workspaceId, id: flowId }, tx)
     return Boolean(row)
+  }
+
+  async create(props: {
+    workspaceId: string
+    data: CreateFlowData
+  }): Promise<FlowModel> {
+    const { workspaceId, data } = props
+
+    if (data.folderId) {
+      await folderService.ensureExists({
+        id: data.folderId,
+        workspaceId,
+        folderType: "flow",
+      })
+    }
+
+    const defaultNode = sendMessageNodeDefaultFn({
+      dataProps: {
+        name: "Send Message #1",
+        isStartNode: true,
+      },
+    })
+
+    const flow = await db.transaction(async (tx) => {
+      const flowId = createId()
+      const [insertedFlow] = await tx
+        .insert(flowModel)
+        .values({
+          ...data,
+          id: flowId,
+          workspaceId,
+        })
+        .returning()
+
+      await tx.insert(flowAnalyticsSessionModel).values({
+        id: createId(),
+        workspaceId,
+        flowId,
+      })
+
+      await tx.insert(flowVersionModel).values({
+        id: createId(),
+        workspaceId,
+        flowId,
+        // biome-ignore lint/suspicious/noExplicitAny: temporary any to bypass circular dependency between flow and flow version
+        nodes: [defaultNode as any],
+        edges: [],
+        isDraft: true,
+        startNodeId: defaultNode.id,
+      })
+
+      return insertedFlow
+    })
+
+    await this.audit("create", `created a new flow (#${flow.id})`)
+
+    return flow
+  }
+
+  async update(props: {
+    workspaceId: string
+    id: string
+    data: UpdateFlowData
+  }): Promise<void> {
+    const { workspaceId, id, data } = props
+
+    const flow = await findOrFail({
+      table: flowModel,
+      where: { id, workspaceId },
+      message: "Flow not found",
+    })
+
+    const hasChanges = Object.entries(data).some(
+      ([key, value]) => flow[key as keyof UpdateFlowData] !== value,
+    )
+    if (!hasChanges) {
+      return
+    }
+
+    const updated = await db
+      .update(flowModel)
+      .set(data)
+      .where(eq(flowModel.id, flow.id))
+      .returning({ id: flowModel.id })
+    if (updated.length === 0) {
+      return
+    }
+
+    await this.audit("update", `updated a flow (#${flow.id})`)
   }
 
   /**

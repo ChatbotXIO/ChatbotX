@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { customFieldModel } from "@chatbotx.io/database/schema"
+import { customFieldService } from "@chatbotx.io/business"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -25,19 +24,7 @@ export const deleteFieldsAction = workspaceActionClient
     },
   )
 
-export const deleteCustomFields = async ({
-  workspaceId,
-  ids,
-}: {
+export const deleteCustomFields = async (props: {
   workspaceId: string
   ids: string[]
-}) => {
-  await db
-    .delete(customFieldModel)
-    .where(
-      and(
-        eq(customFieldModel.workspaceId, workspaceId),
-        inArray(customFieldModel.id, ids),
-      ),
-    )
-}
+}) => await customFieldService.delete(props)

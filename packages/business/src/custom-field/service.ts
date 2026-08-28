@@ -22,7 +22,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
 import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { ChatbotXException, notFoundException } from "../errors"
 import { folderService } from "../folder/service"
 import type { PaginatedResult } from "../types"
 
@@ -304,6 +304,14 @@ class CustomFieldService extends BaseService {
   }): Promise<CustomFieldModel> {
     const { workspaceId, data, tx = db } = props
 
+    const existing = await tx.query.customFieldModel.findFirst({
+      columns: { id: true },
+      where: { workspaceId, type: data.type, name: data.name },
+    })
+    if (existing) {
+      throw new ChatbotXException("Name is already taken", "nameTaken", 400)
+    }
+
     if (data.folderId) {
       await folderService.ensureExists({
         id: data.folderId,
@@ -331,6 +339,21 @@ class CustomFieldService extends BaseService {
       key: ctx.id,
       tx,
     })
+
+    if (data.name) {
+      const duplicate = await tx.query.customFieldModel.findFirst({
+        columns: { id: true },
+        where: {
+          workspaceId: ctx.workspaceId,
+          type: existing.type,
+          name: data.name,
+          id: { ne: existing.id },
+        },
+      })
+      if (duplicate) {
+        throw new ChatbotXException("Name is already taken", "nameTaken", 400)
+      }
+    }
 
     if (data.folderId && data.folderId !== existing.folderId) {
       await folderService.ensureExists({

@@ -94,7 +94,7 @@ const updateTagWorkspaceTokenAPI = workspaceTokenAuthAPI
     return await updateTag({
       workspaceId: context.workspace.id,
       id,
-      parsedInput: rest,
+      data: rest,
     })
   })
 

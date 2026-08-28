@@ -210,6 +210,47 @@ import { myModel } from "@chatbotx.io/database/schema"
 const item = await findOrFail({ table: myModel, where: { id } })
 ```
 
+## Repository Convention
+
+Repositories live in `packages/database/src/repositories/<name>/` and are **pure data access**: they receive params, run Drizzle queries, return rows. No caching, no business rules, no audit — those belong to the service in `packages/business`.
+
+**Shape (mandatory for new repositories; migrate old ones when touched):**
+
+```
+packages/database/src/repositories/<name>/
+  repository.ts   → class <Name>Repository { ... } + export const <name>Repository = new <Name>Repository()
+  index.ts        → export { <name>Repository } from "./repository" + exported param/row types
+```
+
+```typescript
+// packages/database/src/repositories/tag/repository.ts
+import { type DatabaseClient, db } from "../../client"
+import { tagModel } from "../../schema"
+
+export type ListTagsParams = { workspaceId: string; page?: number | null }
+
+class TagRepository {
+  async list(params: ListTagsParams, tx: DatabaseClient = db) {
+    return await tx.query.tagModel.findMany({ where: { workspaceId: params.workspaceId } })
+  }
+}
+
+export const tagRepository = new TagRepository()
+```
+
+Rules:
+
+- **Class + singleton**, not object literals and not loose exported functions. Uniform shape means uniform mocking (`vi.spyOn(tagRepository, "list")`) and room for a shared base (tx injection, tenant scoping, sharding) without rewriting callers.
+- **Stateless.** No fields other than what a constructor injects; never hold a cache or request state inside a repository.
+- **Method names are short verbs without the resource name**: `list`, `findById`, `findByKey`, `create`, `update`, `delete`, `count`, `incrementX`. `tagRepository.list(...)`, never `tagRepository.listTags(...)`.
+- **Accept `tx: DatabaseClient = db` as the last parameter** so the same method works inside and outside `db.transaction()`.
+- **Import internally with relative paths** (`../../client`, `../../schema`, `../../utils`) — never `@chatbotx.io/database/*` from inside the package.
+- **Register once** in `packages/database/src/repositories/index.ts` with `export * from "./<name>"`.
+
+Cache placement: `withCache` / `invalidateCacheTags` (from `@chatbotx.io/redis`) are called in the **service**, wrapping the repository call. The service is the only layer that knows every write path and therefore the only layer that can invalidate correctly.
+
+Create a repository only when the query is reused across services, is complex enough to deserve isolated tests, or needs to swap its data source (e.g. sharding — see `message/`). A service with a handful of one-line queries may call `db` directly; do not add a repository as pure indirection.
+
 ## Soft-delete convention
 
 `Workspace.scheduledDeletionAt` is the repository's soft-delete convention:

@@ -11,56 +11,38 @@ const {
   mockTxUpdate,
   mockTxSet,
   mockTxWhere,
-  mockInvalidateList,
+  mockInvalidateCacheTags,
   mockCreateId,
-  mockAuditRecord,
+  mockFindOrFail,
 } = vi.hoisted(() => {
-  const mockTxInsertValues = vi.fn().mockResolvedValue(undefined)
-  const mockTxInsert = vi.fn().mockReturnValue({ values: mockTxInsertValues })
-  const mockTxWhere = vi.fn().mockResolvedValue(undefined)
-  const mockTxSet = vi.fn().mockReturnValue({ where: mockTxWhere })
-  const mockTxUpdate = vi.fn().mockReturnValue({ set: mockTxSet })
+  const insertValues = vi.fn().mockResolvedValue(undefined)
+  const insert = vi.fn().mockReturnValue({ values: insertValues })
+  const updateWhere = vi.fn().mockResolvedValue(undefined)
+  const updateSet = vi.fn().mockReturnValue({ where: updateWhere })
+  const update = vi.fn().mockReturnValue({ set: updateSet })
 
   return {
     mockFlowFindFirst: vi.fn(),
     mockDbTransaction: vi.fn(),
-    mockTxInsert,
-    mockTxInsertValues,
-    mockTxUpdate,
-    mockTxSet,
-    mockTxWhere,
-    mockInvalidateList: vi.fn().mockResolvedValue(undefined),
+    mockTxInsert: insert,
+    mockTxInsertValues: insertValues,
+    mockTxUpdate: update,
+    mockTxSet: updateSet,
+    mockTxWhere: updateWhere,
+    mockInvalidateCacheTags: vi.fn().mockResolvedValue(undefined),
     mockCreateId: vi.fn(),
-    mockAuditRecord: vi.fn().mockResolvedValue(undefined),
+    mockFindOrFail: vi.fn(),
   }
 })
-
-vi.mock("@/lib/safe-action", () => {
-  const chain: Record<string, unknown> = {}
-  chain.bindArgsSchemas = () => chain
-  chain.inputSchema = () => chain
-  chain.action = (fn: unknown) => fn
-  return { workspaceActionClient: chain }
-})
-
-vi.mock("@chatbotx.io/business", () => ({
-  flowVersionService: { invalidateList: mockInvalidateList },
-}))
-
-vi.mock("@chatbotx.io/business/errors", () => ({
-  notFoundException: (message: string) => new Error(message),
-}))
-
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: mockAuditRecord },
-}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { flowModel: { findFirst: mockFlowFindFirst } },
     transaction: mockDbTransaction,
   },
+  findOrFail: mockFindOrFail,
   and: (...args: unknown[]) => ({ and: args }),
+  desc: (...args: unknown[]) => ({ desc: args }),
   eq: (...args: unknown[]) => ({ eq: args }),
 }))
 
@@ -73,14 +55,26 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/redis", () => ({
+  withCache: vi.fn(async (_key: string, resolver: () => unknown) => resolver()),
+}))
+
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const original = (await importOriginal()) as Record<string, unknown>
   return { ...original, createId: mockCreateId }
 })
 
-const { publishFlow } = await import(
-  "../src/features/flows/actions/publish-flow-action"
-)
+class FakeBaseService {
+  invalidateCacheTags = mockInvalidateCacheTags
+  audit = vi.fn()
+}
+vi.mock("../../base.service", () => ({ BaseService: FakeBaseService }))
+
+vi.mock("../../errors", () => ({
+  notFoundException: (message: string) => new Error(message),
+}))
+
+const { flowVersionService } = await import("../service")
 
 const findInsertedVersion = () =>
   mockTxInsertValues.mock.calls[0]?.[0] as {
@@ -98,7 +92,7 @@ const findDraftUpdateValue = () => {
   return call?.[0] as { nodes: Array<{ id: string }> } | undefined
 }
 
-describe("publishFlow", () => {
+describe("FlowVersionService.publish", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockTxInsertValues.mockResolvedValue(undefined)
@@ -154,10 +148,11 @@ describe("publishFlow", () => {
       ],
     })
 
-    await publishFlow(
-      { workspaceId: "1", id: "10" },
-      { nodes: [currentNode], edges: [] },
-    )
+    await flowVersionService.publish({
+      workspaceId: "1",
+      id: "10",
+      data: { nodes: [currentNode], edges: [] },
+    })
 
     const inserted = findInsertedVersion()
     expect(inserted.isDraft).toBe(false)
@@ -173,7 +168,7 @@ describe("publishFlow", () => {
     const draftUpdate = findDraftUpdateValue()
     expect(draftUpdate?.nodes).toEqual([expect.objectContaining({ id: "2" })])
 
-    expect(mockInvalidateList).toHaveBeenCalledWith("10")
+    expect(mockInvalidateCacheTags).toHaveBeenCalledWith("flows:10:versions")
   })
 
   /**
@@ -203,10 +198,11 @@ describe("publishFlow", () => {
       flowVersions: [{ id: "100", startNodeId: "2", nodes: [], edges: [] }],
     })
 
-    await publishFlow(
-      { workspaceId: "1", id: "10" },
-      { nodes: [node], edges: [] },
-    )
+    await flowVersionService.publish({
+      workspaceId: "1",
+      id: "10",
+      data: { nodes: [node], edges: [] },
+    })
 
     const inserted = findInsertedVersion()
     expect(mockTxSet).toHaveBeenCalledWith({ currentVersionId: inserted.id })
@@ -221,7 +217,11 @@ describe("publishFlow", () => {
     })
 
     await expect(
-      publishFlow({ workspaceId: "1", id: "10" }, { nodes: [], edges: [] }),
+      flowVersionService.publish({
+        workspaceId: "1",
+        id: "10",
+        data: { nodes: [], edges: [] },
+      }),
     ).rejects.toThrow("Flow not found")
   })
 })

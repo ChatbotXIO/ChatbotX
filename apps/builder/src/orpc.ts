@@ -7,67 +7,45 @@ import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-
 import { base } from "./middlewares/context"
 import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-auth"
 
-export const authorizedAPI = base
-  .use(
-    onError((error: Error) => {
-      logger.error(
-        { err: error, cause: JSON.stringify(error.cause) },
-        "Error in authorizedAPI",
-      )
+function mapKnownOrpcErrors(error: unknown) {
+  if (!(error instanceof Error)) {
+    return
+  }
 
-      if (error.name === ChatbotXException.name) {
-        throw new ORPCError((error as ChatbotXException).code, {
-          message: error.message,
-          status: (error as ChatbotXException).httpStatusCode || 400,
-        })
-      }
+  if (error.name === ChatbotXException.name) {
+    throw new ORPCError((error as ChatbotXException).code, {
+      message: error.message,
+      status: (error as ChatbotXException).httpStatusCode || 400,
+    })
+  }
 
-      if (error.name === ModelNotfoundException.name) {
-        throw new ORPCError("notFound", {
-          message: error.message,
-          status: 404,
-        })
-      }
-    }),
+  if (error.name === ModelNotfoundException.name) {
+    throw new ORPCError("notFound", {
+      message: error.message,
+      status: 404,
+    })
+  }
+}
+
+function logAndMapKnownOrpcErrors(error: unknown) {
+  logger.error(
+    {
+      err: error,
+      cause: JSON.stringify(error instanceof Error ? error.cause : undefined),
+    },
+    "Error in oRPC handler",
   )
+  mapKnownOrpcErrors(error)
+}
+
+export const authorizedAPI = base
+  .use(onError(logAndMapKnownOrpcErrors))
   .use(authMiddleware)
 
 export const workspaceTokenAuthAPI = base
-  .use(
-    onError((error: Error) => {
-      if (error.name === ChatbotXException.name) {
-        throw new ORPCError((error as ChatbotXException).code, {
-          message: error.message,
-          status: (error as ChatbotXException).httpStatusCode || 400,
-        })
-      }
-
-      if (error.name === ModelNotfoundException.name) {
-        throw new ORPCError("notFound", {
-          message: error.message,
-          status: 404,
-        })
-      }
-    }),
-  )
+  .use(onError(logAndMapKnownOrpcErrors))
   .use(workspaceTokenAuthMidddleware)
 
 export const channelApiTokenAPI = base
-  .use(
-    onError((error: Error) => {
-      if (error.name === ChatbotXException.name) {
-        throw new ORPCError((error as ChatbotXException).code, {
-          message: error.message,
-          status: (error as ChatbotXException).httpStatusCode || 400,
-        })
-      }
-
-      if (error.name === ModelNotfoundException.name) {
-        throw new ORPCError("notFound", {
-          message: error.message,
-          status: 404,
-        })
-      }
-    }),
-  )
+  .use(onError(logAndMapKnownOrpcErrors))
   .use(channelApiTokenAuthMidddleware)

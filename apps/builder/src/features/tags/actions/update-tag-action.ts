@@ -1,8 +1,6 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { tagModel } from "@chatbotx.io/database/schema"
-import { returnValidationErrors } from "next-safe-action"
+import { tagService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -21,54 +19,12 @@ export const updateTagAction = workspaceActionClient
       parsedInput: UpdateTagSchema
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await updateTag({ workspaceId, id, parsedInput })
+      await updateTag({ workspaceId, id, data: parsedInput })
     },
   )
 
-export const updateTag = async ({
-  workspaceId,
-  id,
-  parsedInput,
-}: {
+export const updateTag = async (props: {
   workspaceId: string
   id: string
-  parsedInput: UpdateTagSchema
-}) => {
-  const existingTag = await db.query.tagModel.findFirst({
-    columns: {
-      id: true,
-    },
-    where: {
-      name: parsedInput.name,
-      workspaceId,
-      deletedAt: { isNull: true as const },
-      id: {
-        ne: id,
-      },
-    },
-  })
-  if (existingTag) {
-    return returnValidationErrors(updateTagSchema, {
-      name: {
-        _errors: ["Name is already taken."],
-      },
-    })
-  }
-
-  const tag = await findOrFail({
-    table: tagModel,
-    where: { id, workspaceId, deletedAt: { isNull: true as const } },
-    message: "Tag not found",
-  })
-
-  const updatedTag = await db
-    .update(tagModel)
-    .set({
-      name: parsedInput.name,
-    })
-    .where(eq(tagModel.id, tag.id))
-    .returning()
-    .then((result) => result[0])
-
-  return updatedTag
-}
+  data: UpdateTagSchema
+}) => await tagService.update(props)
