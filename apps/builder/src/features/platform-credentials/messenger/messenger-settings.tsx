@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -41,19 +40,22 @@ import { updateMessengerSettingAction } from "./update-messenger-settings.action
 export function MessengerSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: MessengerCredentialPublic | null
   isInherited?: boolean
+  /**
+   * Origin to register with Meta: the broker for inherited credentials, the
+   * reseller's own active custom domain (or the `<your-domain.com>`
+   * placeholder when none is active yet) for a tenant-owned credential. See
+   * `lib/provider-origin.ts`.
+   */
+  callbackOrigin: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  // Webhook + OAuth callback URLs must live on the fixed, provider-registered
-  // broker host — never the reseller's white-label custom domain, which Meta
-  // cannot reach. Resellers using their own Facebook app whitelist these URIs.
-  const webhookUrl = buildBrokerCallbackUrl("/integrations/messenger/webhook")
-  const authCallbackUrl = buildBrokerCallbackUrl(
-    "/integrations/messenger/callback",
-  )
+  const webhookUrl = `${callbackOrigin}/integrations/messenger/webhook`
+  const authCallbackUrl = `${callbackOrigin}/integrations/messenger/callback`
 
   return (
     <Card>

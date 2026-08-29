@@ -115,6 +115,7 @@ export const AIExtractDataDialog = ({
 
               {inputType === "text" ? (
                 <TiptapEditorField
+                  includeBotFieldVariables
                   label={t("fields.inputText.label")}
                   name="inputFieldId"
                   required
@@ -169,6 +170,7 @@ export const AIExtractDataDialog = ({
                       <ArrowRightIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground rtl:rotate-180" />
                       <CustomFieldSelect
                         allowCreate={true}
+                        includeBotFields
                         includeReserved={false}
                         label=""
                         name={`extractFields.${index}.customFieldId`}

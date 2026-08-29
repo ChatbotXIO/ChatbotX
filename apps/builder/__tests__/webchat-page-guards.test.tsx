@@ -174,7 +174,7 @@ describe("WebchatPage", () => {
     )
   })
 
-  test("still renders the chat for a third-party referer when authorizedDomains is empty", async () => {
+  test("shows the unauthorized-domain message for a third-party referer when authorizedDomains is empty (fail closed)", async () => {
     mockFindFirst.mockResolvedValue({ ...targetWebchat, authorizedDomains: [] })
     setReferer("https://anyone.example")
 
@@ -182,8 +182,11 @@ describe("WebchatPage", () => {
       searchParams: Promise.resolve(searchParams),
     })
 
-    expect((element as { type: { name: string } }).type.name).toBe(
-      "GuestSessionStoreProvider",
+    expect(isValidElement<{ children: unknown }>(element)).toBe(true)
+    const rendered = JSON.stringify(element)
+    expect(rendered).toContain("Webchat unavailable")
+    expect(rendered).toContain(
+      "This website is not authorized to load this chat widget.",
     )
   })
 

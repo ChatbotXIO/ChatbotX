@@ -13,6 +13,7 @@ import {
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import {
+  type ChannelType,
   type ContactSource,
   contactSources,
   type SystemFieldType,
@@ -20,6 +21,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { signAppointmentScheduleToken } from "@chatbotx.io/encryption"
+import { signMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
 import {
   DATE_FORMAT,
@@ -28,6 +30,7 @@ import {
   formatCustomFieldValueInTimeZone,
   formatWithFallback,
 } from "@chatbotx.io/utils/datetime"
+import { VARIABLE_PLACEHOLDER_SOURCE } from "@chatbotx.io/utils/variables"
 import {
   getAssignedTeamName,
   resolveAssigneeEmail,
@@ -55,8 +58,14 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-const VARIABLE_PLACEHOLDER_REGEX =
-  /\{\{([\w.]+|coupon:[^{}\n]+|raw:[^{}\n]+)\}\}/g
+// Exported so javascript-interpolation.ts scans the same placeholder syntax as
+// the message-text path. Built (global, for `matchAll`/`replace`) from the
+// shared canonical grammar in `@chatbotx.io/utils` — the single source of truth,
+// so both resolvers and the flow-builder validators can't drift.
+export const VARIABLE_PLACEHOLDER_REGEX = new RegExp(
+  VARIABLE_PLACEHOLDER_SOURCE,
+  "g",
+)
 // `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
 // where the placeholder sits — a call the position-independent mapping can't
 // make. resolveGenderLabel returns the opening form; inside a sentence it is
@@ -130,6 +139,21 @@ export const interpolate = (
         : value.toLowerCase()
     },
   )
+
+// Canonical definition — contact-variable.ts and javascript-interpolation.ts
+// both import this instead of redefining it, so the `raw:` prefix can't
+// drift between the message-text resolver and the JS-code resolver.
+export const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
+
+// Canonical definition — contact-variable.ts and javascript-interpolation.ts
+// both import this instead of redefining it, so the `raw:` prefix and
+// name-stripping logic can't drift between the message-text resolver and the
+// JS-code resolver. Matches custom-field names exactly (no trimming): the
+// map is keyed by the raw `customField.name`, and the token is built from
+// that same name, so any normalisation here would break names with
+// meaningful surrounding whitespace.
+export const toRawCustomFieldName = (variable: string): string =>
+  variable.slice(RAW_CUSTOM_FIELD_VARIABLE_PREFIX.length)
 
 const getTimezone = ({
   contact,
@@ -211,6 +235,7 @@ const getFlowStepValue = async (
   const conversation = await conversationService.findDMByContact({
     workspaceId: context.contact.workspaceId,
     contactId: context.contact.id,
+    channel: context.contactInbox?.channel as ChannelType | undefined,
   })
   return conversation?.[key] ?? null
 }
@@ -346,6 +371,16 @@ export const getSystemFieldValue = async (
       }
       return await signUserHash({
         sourceId: contactInbox.sourceId,
+        contactInboxId: contactInbox.id,
+      })
+    }
+    case systemFieldTypes.enum.minigame_play_token: {
+      if (!contactInbox) {
+        return null
+      }
+      return await signMinigamePlayToken({
+        workspaceId: contact.workspaceId,
+        contactId: contact.id,
         contactInboxId: contactInbox.id,
       })
     }

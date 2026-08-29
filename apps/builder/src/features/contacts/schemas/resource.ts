@@ -20,4 +20,7 @@ export type ContactEditableField = {
   options?: SelectOption[]
   type: CustomFieldType
   readOnly?: boolean
+  // When set, the read-only value renders as an external link (e.g. an ad
+  // source URL). Only used for read-only fields.
+  href?: string | null
 }

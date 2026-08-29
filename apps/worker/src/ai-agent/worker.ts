@@ -10,6 +10,7 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
+import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { processAIFile } from "./handlers/process-ai-file"
 import { processConversationSource } from "./handlers/process-conversation-source"
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
@@ -30,30 +31,36 @@ async function startAIAgentWorker() {
     async (job: Job<AIJobData>) => {
       logger.info(job.data, `Worker received job: ${job.id}`)
 
-      if (await isBlockedWorkspace(await resolveWorkspaceId(job.data.data))) {
+      const workspaceId = await resolveWorkspaceId(job.data.data)
+      if (await isBlockedWorkspace(workspaceId)) {
         return
       }
 
-      switch (job.data.type) {
-        case AIJobAction.processAIFile:
-          await processAIFile(job.data.data)
-          return
-        case AIJobAction.processPendingEmbedding:
-          await processPendingEmbedding(job.data.data)
-          return
-        case AIJobAction.summarizeConversation:
-          await handleSummarizeConversation(job.data.data)
-          return
-        case AIJobAction.processConversationSource:
-          await processConversationSource(job.data.data)
-          return
-        case AIJobAction.processConversationSourceEmbedding:
-          await processConversationSourceEmbedding(job.data.data)
-          return
-        default:
-          logger.warn(`Unknown job name: ${job.name}`)
-          return
-      }
+      await runJobWithAuditContext(
+        { workspaceId, source: `ai-agent:${job.data.type}` },
+        async () => {
+          switch (job.data.type) {
+            case AIJobAction.processAIFile:
+              await processAIFile(job.data.data)
+              return
+            case AIJobAction.processPendingEmbedding:
+              await processPendingEmbedding(job.data.data)
+              return
+            case AIJobAction.summarizeConversation:
+              await handleSummarizeConversation(job.data.data)
+              return
+            case AIJobAction.processConversationSource:
+              await processConversationSource(job.data.data)
+              return
+            case AIJobAction.processConversationSourceEmbedding:
+              await processConversationSourceEmbedding(job.data.data)
+              return
+            default:
+              logger.warn(`Unknown job name: ${job.name}`)
+              return
+          }
+        },
+      )
     },
     {
       connection: getRedisConnection(),

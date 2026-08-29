@@ -4,8 +4,14 @@ import { parseOriginError, ZaloException } from "./exception"
 import { logger } from "./logger"
 
 type ZaloApiErrorResponse = {
-  error: number
-  message: string
+  error?: number
+  message?: string
+  // The OAuth endpoints (/v4/oa/access_token) report failures with these
+  // fields instead of the numeric error/message pair — and may do so with
+  // HTTP 200, so status-based handling never sees them.
+  error_name?: string
+  error_reason?: string
+  error_description?: string
 }
 
 type ZaloClientConfig = {
@@ -83,14 +89,26 @@ export class ZaloHttpClient {
       const response = await responsePromise
       const data = (await response.json()) as T & ZaloApiErrorResponse
 
-      if (typeof data === "object" && data !== null && "error" in data) {
+      if (typeof data === "object" && data !== null) {
         const apiError = data as ZaloApiErrorResponse
-        if (apiError.error !== 0) {
-          const wrapped = { response: { error: apiError } }
+        const hasNumericError =
+          "error" in apiError && Number(apiError.error) !== 0
+        const hasOauthError = typeof apiError.error_name === "string"
+
+        if (hasNumericError || hasOauthError) {
+          const message =
+            apiError.message ??
+            apiError.error_description ??
+            apiError.error_reason ??
+            apiError.error_name
+          const wrapped = {
+            response: { error: { error: apiError.error, message } },
+          }
           const sdkException = parseOriginError(wrapped)
 
           throw new ZaloException(
-            sdkException.message ?? `Zalo OA API error: ${apiError.message}`,
+            sdkException.message ??
+              `Zalo OA API error: ${JSON.stringify(data)}`,
             sdkException.httpStatusCode,
             sdkException.code,
             sdkException.subCode,

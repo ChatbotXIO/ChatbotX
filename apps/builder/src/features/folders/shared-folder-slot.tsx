@@ -43,7 +43,6 @@ export default async function SharedFolderSlot(props: {
     case "flows":
       folderType = folderTypes.enum.flow
       break
-    case "bot-fields":
     case "custom-fields":
       folderType = folderTypes.enum.customField
       break

@@ -618,9 +618,9 @@ export async function sendFlowStep({
     let attachmentInput:
       | Parameters<typeof repository.createWithAttachments>[1][0]
       | undefined
-    if ("url" in step) {
+    if ("url" in stepWithSignedBookingLinks) {
       const uploadedFile = await uploadFileFromUrl(
-        step.url,
+        stepWithSignedBookingLinks.url,
         `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
       )
       attachmentInput = {
@@ -696,13 +696,16 @@ export async function sendFlowStep({
           messageId: message?.id,
           messageCreatedAt: message?.createdAt,
           sendFrom,
-          // Comment-anchored private replies are Messenger-only (no Instagram
-          // private_replies equivalent) — defensive re-check in case a resolved
-          // contactInboxId ever points at a different channel than the job
-          // intended. A "public" anchor never reaches this branch (routed to
-          // sendMessageToChannel above instead).
+          // Comment-anchored private replies are supported on Messenger and
+          // Instagram (both variants collapse to the "instagram" channel),
+          // which share Meta's comment_id-anchored Send API — defensive
+          // re-check in case a resolved contactInboxId ever points at a
+          // different channel than the job intended. A "public" anchor never
+          // reaches this branch (routed to sendMessageToChannel above
+          // instead).
           commentAnchor:
-            targetContactInbox.channel === channelTypes.enum.messenger &&
+            (targetContactInbox.channel === channelTypes.enum.messenger ||
+              targetContactInbox.channel === channelTypes.enum.instagram) &&
             commentAnchor?.replyChannel === "private"
               ? commentAnchor
               : undefined,

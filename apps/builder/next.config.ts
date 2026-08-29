@@ -14,6 +14,16 @@ const storageUrl = env.NEXT_PUBLIC_STORAGE_URL ?? `${appUrl}/storage`
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  // These `@chatbotx.io/*` workspace packages are consumed as SOURCE (their
+  // `exports` point at `./src/*.ts`). pnpm symlinks them under node_modules, so
+  // without this Next/Turbopack treats them as vendored externals and does NOT
+  // recompile them on edit during `next dev` — server-side changes to them
+  // silently keep running the previously-compiled copy. Listing them here puts
+  // them through the compile+watch pipeline so edits actually take effect.
+  transpilePackages: [
+    "@chatbotx.io/integration-facebook-ads",
+    "@chatbotx.io/business",
+  ],
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
@@ -34,6 +44,9 @@ const nextConfig: NextConfig = {
     // there is nothing for this optimization to rewrite.
     optimizePackageImports: ["@icons-pack/react-simple-icons"],
     // turbopackServerFastRefresh: false,
+    // The Docker build starts from a clean layer and `.next/cache` is not
+    // persisted across CI runs, so this cache is written and never read.
+    turbopackFileSystemCacheForBuild: false,
   },
   poweredByHeader: false,
   async rewrites() {
@@ -130,11 +143,14 @@ const nextConfig: NextConfig = {
   ],
 
   // Resolve bull-board and bullmq from node_modules at runtime, not from the bundle.
+  // @napi-rs/canvas ships a native .node addon (per-platform binary) that the
+  // bundler can't inline — it must stay a runtime require() too.
   serverExternalPackages: [
     "@bull-board/api",
     "@bull-board/ui",
     "@bull-board/hono",
     "bullmq",
+    "@napi-rs/canvas",
   ],
 
   outputFileTracingRoot: require("path").join(import.meta.dirname, "../../"),

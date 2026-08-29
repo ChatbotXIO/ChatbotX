@@ -9,6 +9,8 @@ export const RealtimeEventType = {
   contactUnblocked: "contactUnblocked",
   conversationAssigned: "conversationAssigned",
   notifyExportResult: "notifyExportResult",
+  conversationCreated: "conversationCreated",
+  conversationUpdated: "conversationUpdated",
 } as const
 
 export type RealtimeEventCreateMessage = {
@@ -90,6 +92,31 @@ export type RealtimeEventNotifyExportResult = {
   }
 }
 
+export type RealtimeEventConversationCreated = {
+  eventType: typeof RealtimeEventType.conversationCreated
+  // Full conversation row — shape owned by @chatbotx.io/business's
+  // ConversationModel; kept as `unknown` here to avoid a dependency from this
+  // package (imported client-side) on the database schema package.
+  data: unknown
+}
+
+export type RealtimeEventConversationUpdatedChanges = {
+  archivedAt?: string | null
+  assignedUserId?: string | null
+  assignedInboxTeamId?: string | null
+  followed?: boolean
+  agentLastReadAt?: string | null
+  botEnabled?: boolean
+}
+
+export type RealtimeEventConversationUpdated = {
+  eventType: typeof RealtimeEventType.conversationUpdated
+  data: {
+    conversationIds: string[]
+    changes: RealtimeEventConversationUpdatedChanges
+  }
+}
+
 export type RealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
@@ -99,3 +126,6 @@ export type RealtimeEventData =
   | RealtimeEventContactCommon
   | RealtimeEventConversationAssigned
   | RealtimeEventTyping
+  | RealtimeEventNotifyExportResult
+  | RealtimeEventConversationCreated
+  | RealtimeEventConversationUpdated

@@ -15,6 +15,8 @@ class IntegrationOpenAIService extends BaseService {
     await db
       .delete(integrationModel)
       .where(eq(integrationModel.id, existing.integrationId))
+
+    await this.audit("disconnect", "disconnected the OpenAI integration")
   }
 }
 

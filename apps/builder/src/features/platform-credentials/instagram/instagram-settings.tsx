@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -41,18 +40,16 @@ import { updateInstagramSettingAction } from "./update-instagram-settings.action
 export function InstagramSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: InstagramCredentialPublic | null
   isInherited?: boolean
+  /** Origin to register with Meta. See `MessengerSettings`' equivalent prop. */
+  callbackOrigin: string
 }) {
   const { handleCopy } = useClipboard()
-  // Webhook + OAuth callback URLs must live on the fixed, provider-registered
-  // broker host — never the reseller's white-label custom domain, which Meta
-  // cannot reach. Resellers using their own Facebook app whitelist these URIs.
-  const webhookUrl = buildBrokerCallbackUrl("/integrations/instagram/webhook")
-  const authCallbackUrl = buildBrokerCallbackUrl(
-    "/integrations/instagram/callback",
-  )
+  const webhookUrl = `${callbackOrigin}/integrations/instagram/webhook`
+  const authCallbackUrl = `${callbackOrigin}/integrations/instagram/callback`
 
   return (
     <Card>

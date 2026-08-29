@@ -15,6 +15,7 @@ import type {
 import { emit } from "@chatbotx.io/event-bus"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
+  bindWaTemplateQuickReplyButtons,
   extractTemplateParams,
   messageEventTypeSchema,
   type SendWaTemplateMessageStepSchema,
@@ -36,15 +37,12 @@ import type {
   ChatJobSendWhatsappTemplateMessage,
 } from "@chatbotx.io/worker-config"
 import {
-  enqueueIntegrationJob,
-  IntegrationJobAction,
-} from "@chatbotx.io/worker-config"
-import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
 import { shouldSuppressRetryableChannelError } from "../utils/retry"
+import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
 import { convertButtonsToTemplate } from "./send-flow-step"
 import { sendFlowStepToChannel } from "./send-message"
 
@@ -79,47 +77,6 @@ const assertTemplateAllowedForContactInbox = (props: {
   }
 }
 
-type EnqueueTemplateSentEvaluationInput = {
-  workspaceId: string
-  integrationWhatsappId: string
-  contactInboxId: string
-  templateId: string
-  messageId: string
-}
-
-async function enqueueTemplateSentEvaluation(
-  input: EnqueueTemplateSentEvaluationInput,
-): Promise<void> {
-  try {
-    await enqueueIntegrationJob(
-      {
-        type: IntegrationJobAction.evaluateTemplateSent,
-        data: {
-          workspaceId: input.workspaceId,
-          integrationWhatsappId: input.integrationWhatsappId,
-          contactInboxId: input.contactInboxId,
-          templateId: input.templateId,
-        },
-      },
-      {
-        jobId: `ads-conversion-evaluate-template-${input.messageId}`,
-      },
-    )
-  } catch (err) {
-    logger.warn(
-      {
-        err,
-        workspaceId: input.workspaceId,
-        integrationWhatsappId: input.integrationWhatsappId,
-        contactInboxId: input.contactInboxId,
-        templateId: input.templateId,
-        messageId: input.messageId,
-      },
-      "Failed to enqueue ads conversion template-sent evaluation",
-    )
-  }
-}
-
 export interface ProcessWhatsappTemplateParams {
   broadcastId?: string
   contactInbox: ContactInboxModel
@@ -139,6 +96,67 @@ export interface ProcessWhatsappTemplateResult {
   message: typeof messageModel.$inferSelect
   messageId: string
   providerMessageId?: string
+}
+
+type WaTemplateParams = SendWaTemplateMessageStepSchema["template"]["params"]
+
+/**
+ * Template quick-reply buttons route exactly like regular flow buttons: each
+ * seeded step button already receives an encoded postback from
+ * `convertButtonsToTemplate`. That same string becomes the quick_reply
+ * component payload, so the value Meta echoes back in
+ * `messages.button.payload` is the postback the flow-action handler routes.
+ * Steps without a quick-reply tail (legacy flows, broadcasts) yield no
+ * bindings and the params pass through untouched — no component is sent and
+ * Meta's default (button text) applies.
+ */
+function withQuickReplyButtonParams(props: {
+  params: WaTemplateParams
+  components: TemplateComponent[]
+  stepButtons: SendWaTemplateMessageStepSchema["buttons"]
+  flowButtonTemplates: ReturnType<typeof convertButtonsToTemplate>
+}): WaTemplateParams {
+  const postbackByButtonId = new Map(
+    props.flowButtonTemplates.map((button) => [button.id, button.postback]),
+  )
+
+  const quickReplyParams = bindWaTemplateQuickReplyButtons(
+    props.components,
+    props.stepButtons,
+  ).flatMap(({ templateButtonIndex, stepButton }) => {
+    const payload = postbackByButtonId.get(stepButton.id)
+    return payload
+      ? [
+          {
+            sub_type: "quick_reply" as const,
+            index: templateButtonIndex,
+            payload,
+          },
+        ]
+      : []
+  })
+
+  if (quickReplyParams.length === 0) {
+    return props.params
+  }
+
+  // Generated postbacks must win over quick-reply payloads persisted by the
+  // old form at the same template index — otherwise the send-layer dedupe
+  // keeps the legacy payload and the connected flow branch never routes.
+  const boundIndexes = new Set(quickReplyParams.map((param) => param.index))
+  const withoutBoundLegacyQuickReplies = (props.params.button ?? []).filter(
+    (param) =>
+      !(
+        param?.sub_type === "quick_reply" &&
+        typeof param.index === "number" &&
+        boundIndexes.has(param.index)
+      ),
+  )
+
+  return {
+    ...props.params,
+    button: [...withoutBoundLegacyQuickReplies, ...quickReplyParams],
+  }
 }
 
 export async function processWhatsappTemplate(
@@ -206,13 +224,32 @@ export async function processWhatsappTemplate(
       components: (validated.template.components as TemplateComponent[]) || [],
     })
 
+    const flowButtons = flow?.buttons ?? []
+    const flowButtonTemplates =
+      flow && flowButtons.length > 0
+        ? convertButtonsToTemplate({
+            flowId: flow.id,
+            flowVersionId: flow.versionId,
+            buttons: flowButtons,
+            metadata,
+            contactInboxId: contactInbox.id,
+          })
+        : []
+
+    const resolvedParams = withQuickReplyButtonParams({
+      params: replacedParams,
+      components: (validated.template.components as TemplateComponent[]) || [],
+      stepButtons: flowButtons,
+      flowButtonTemplates,
+    })
+
     const contentAttributes = {
       type: "whatsapp_template",
       template: {
         name: template.name,
         language: template.language,
         id: template.id,
-        params: replacedParams,
+        params: resolvedParams,
       },
       stepId: step?.id,
       nodeId: step?.nodeId,
@@ -224,15 +261,10 @@ export async function processWhatsappTemplate(
       metadata,
     }
 
-    if (flow?.buttons && flow.buttons.length > 0) {
+    if (flowButtonTemplates.length > 0) {
       contentAttributes.payload = {
         templateType: "button",
-        buttons: convertButtonsToTemplate({
-          flowId: flow.id,
-          flowVersionId: flow.versionId,
-          buttons: flow.buttons,
-          contactInboxId: contactInbox.id,
-        }),
+        buttons: flowButtonTemplates,
       }
     }
 
@@ -291,11 +323,12 @@ export async function processWhatsappTemplate(
         nodeId: step?.nodeId ?? createId(),
         stepType: stepTypes.enum.sendWaTemplateMessage,
         buttons: [],
-        // Send the variable-resolved params to the channel. The raw
-        // `template.params` still holds unresolved tokens like {{first_name}};
-        // the integration builds the Graph API payload verbatim and cannot
-        // resolve them, so the recipient would otherwise receive literal tokens.
-        template: { ...template, params: replacedParams },
+        // Send the variable-resolved params (plus injected quick-reply
+        // payloads) to the channel. The raw `template.params` still holds
+        // unresolved tokens like {{first_name}}; the integration builds the
+        // Graph API payload verbatim and cannot resolve them, so the recipient
+        // would otherwise receive literal tokens.
+        template: { ...template, params: resolvedParams },
       },
       metadata,
       messageId: newMessage.id,
@@ -303,7 +336,8 @@ export async function processWhatsappTemplate(
 
     await enqueueTemplateSentEvaluation({
       workspaceId: conversation.workspaceId,
-      integrationWhatsappId: validated.inbox.integrationWhatsapp.id,
+      channel: "whatsapp",
+      integrationId: validated.inbox.integrationWhatsapp.id,
       contactInboxId: contactInbox.id,
       templateId: template.id,
       messageId: newMessage.id,

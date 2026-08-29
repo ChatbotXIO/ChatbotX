@@ -31,6 +31,7 @@ export type ConversationAttributes = {
       attempts: number
       lastAttemptAt: Date
       appointmentId?: string
+      challengeId?: string
     }
   }
 }

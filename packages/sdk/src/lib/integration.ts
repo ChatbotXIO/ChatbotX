@@ -70,7 +70,10 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     metadata?: MetadataPayload
     richResponse?: RichResponseContentAttributes
     sendFrom?: "inbox"
-    /** See {@link CommentAnchor}. Channels other than Messenger ignore it. */
+    /**
+     * See {@link CommentAnchor}. Honored by Messenger and Instagram; other
+     * channels ignore it.
+     */
     commentAnchor?: CommentAnchor
   }
 }
@@ -140,6 +143,23 @@ export type MessageHandlers<
 
 export type CommentHandlers<IAuth extends AuthValue> = {
   sendComment: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+        message: OutgoingMessage
+        metadata?: MetadataPayload
+        sendFrom?: "inbox"
+      }
+    },
+    {
+      messageIds: string[]
+    }
+  >
+  // Sends a comment-anchored private reply DM instead of a public comment
+  // reply. Same input/output shape as sendComment — `message.contentAttributes.
+  // replyToCommentId` identifies the comment being replied to.
+  sendPrivateReply: Handler<
     {
       ctx: Context<IAuth>
       data: {

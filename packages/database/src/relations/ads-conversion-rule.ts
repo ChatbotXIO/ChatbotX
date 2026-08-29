@@ -17,5 +17,13 @@ export const adsConversionRuleRelations = defineRelationsPart(schema, (r) => ({
       from: r.adsConversionRuleModel.integrationFacebookAdsId,
       to: r.integrationFacebookAdsModel.id,
     }),
+    integrationMessenger: r.one.integrationMessengerModel({
+      from: r.adsConversionRuleModel.integrationMessengerId,
+      to: r.integrationMessengerModel.id,
+    }),
+    integrationInstagram: r.one.integrationInstagramModel({
+      from: r.adsConversionRuleModel.integrationInstagramId,
+      to: r.integrationInstagramModel.id,
+    }),
   },
 }))

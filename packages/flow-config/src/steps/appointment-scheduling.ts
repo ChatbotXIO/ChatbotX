@@ -45,7 +45,6 @@ export const appointmentSchedulingStepSchema = z.discriminatedUnion("mode", [
   z.object({
     ...appointmentSchedulingBaseFields,
     mode: z.literal(appointmentSchedulingModes.enum.book),
-    dateTimeFieldId: z.string().trim().min(1),
   }),
   z.object({
     ...appointmentSchedulingBaseFields,
@@ -54,8 +53,8 @@ export const appointmentSchedulingStepSchema = z.discriminatedUnion("mode", [
   z.object({
     ...appointmentSchedulingBaseFields,
     mode: z.literal(appointmentSchedulingModes.enum.checkAvailability),
-    startDateFieldId: z.string().trim().min(1),
-    endDateFieldId: z.string().trim().min(1),
+    resultUsedByAI: z.boolean().default(false),
+    outputCustomFieldId: z.string().trim().min(1),
   }),
 ])
 export type AppointmentSchedulingStepSchema = z.infer<

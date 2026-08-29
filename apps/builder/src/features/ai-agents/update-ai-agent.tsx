@@ -292,7 +292,7 @@ export function UpdateAIAgentDialog({
                 </Popover>
               </div>
 
-              <PlainTextEditorField name="prompt" />
+              <PlainTextEditorField includeBotFieldVariables name="prompt" />
             </div>
 
             <div className="flex flex-col gap-3">
@@ -312,6 +312,9 @@ export function UpdateAIAgentDialog({
                     />
                   </div>
                   <div className="ps-3 pe-12 pt-14 pb-3">
+                    {/* No bot-field variables here: the runner interpolates
+                        only `prompt` — configured messages reach the model
+                        verbatim, so a token would never resolve. */}
                     <PlainTextEditorField name={`messages.${index}.content`} />
                   </div>
                   <Button

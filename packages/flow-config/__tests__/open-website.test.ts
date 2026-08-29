@@ -20,6 +20,15 @@ describe("openWebsiteStepSchema", () => {
     expect(openWebsiteStepSchema.safeParse(value).success).toBe(true)
   })
 
+  test("accepts a bare variable that resolves to a URL at runtime", () => {
+    const value = {
+      ...openWebsiteStepDefaultFn(),
+      url: "{{booking_link}}",
+    }
+
+    expect(openWebsiteStepSchema.safeParse(value).success).toBe(true)
+  })
+
   test("rejects non-URL strings", () => {
     const value = {
       ...openWebsiteStepDefaultFn(),

@@ -1,62 +1,40 @@
-import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
-import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
-import { resolveSelectedIntegration } from "@/features/ads/lib/select-account"
 import {
-  getAdsAnalyticsData,
-  getAdsAnalyticsTimeseries,
-  getCapiDeliveryData,
-} from "@/features/ads/queries/analytics"
-import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
-import { adsAnalyticsSearchParamsCache } from "@/features/ads/schemas/analytics"
-import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
-import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
+  adsEligibleChannelTypes,
+  DEFAULT_ADS_CONVERSION_CHANNEL,
+} from "@chatbotx.io/utils/channel"
+import { redirect } from "next/navigation"
+import type { SearchParams } from "nuqs/server"
+import { buildRedirectSearch } from "@/lib/build-redirect-search"
 
-export default async function AdsAnalyticsPage(props: {
+/**
+ * Resolves the channel a channel-less `/dashboard/ads` visit should land on.
+ * A stale bookmark from before the split can still carry the old channel
+ * filter's `?channel=` param — honor it when it names an ads-eligible channel
+ * so a Messenger/Instagram bookmark keeps showing that channel instead of
+ * silently snapping to WhatsApp. Anything else (absent, the old `all`
+ * aggregate sentinel, a typo) resolves to the canonical default.
+ */
+function resolveRedirectChannel(channel: string | string[] | undefined) {
+  const parsed = adsEligibleChannelTypes.safeParse(
+    Array.isArray(channel) ? channel[0] : channel,
+  )
+  return parsed.success ? parsed.data : DEFAULT_ADS_CONVERSION_CHANNEL
+}
+
+// The single "Ads" menu item was split into one entry per ads-eligible
+// channel (`/dashboard/ads/whatsapp` | `/messenger` | `/instagram`) — see
+// `AnalyticsNav`. This channel-less route only exists for old bookmarks and
+// the CAPI-connect redirect (`?account=<id>`), which predate the split;
+// forward the query string and land on the requested (or default) channel so
+// a stale selection is preserved and a future default change never silently
+// targets the wrong channel.
+export default async function AdsAnalyticsRedirectPage(props: {
   params: Promise<{ workspaceId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const workspaceId = await resolveGuardedWorkspaceId(
-    props.params,
-    "superAdmin",
-  )
-  const search = adsAnalyticsSearchParamsCache.parse(await props.searchParams)
-  const switcherData = await getAdsSwitcherData(workspaceId)
-  const selectedAccount = resolveSelectedIntegration(
-    switcherData.integrations,
-    search.account,
-  )
-  const promises = Promise.all([
-    getAdsAnalyticsData(workspaceId, {
-      ...search,
-      integrationWhatsappId: selectedAccount?.id,
-    }),
-    getCapiDeliveryData(workspaceId, {
-      ...search,
-      integrationWhatsappId: selectedAccount?.id,
-    }),
-    getAdsAnalyticsTimeseries(workspaceId, {
-      ...search,
-      integrationWhatsappId: selectedAccount?.id,
-    }),
-  ])
-
-  return (
-    <div className="flex gap-6">
-      {/* This page is superAdmin-guarded, so the Ads link is always shown. */}
-      <AnalyticsNav showAds />
-      <div className="flex min-w-0 flex-1 flex-col gap-5">
-        <Suspense>
-          <AdsAnalyticsView
-            promises={promises}
-            range={search}
-            selectedIntegrationWhatsappId={selectedAccount?.id ?? null}
-            switcherIntegrations={switcherData.integrations}
-            whatsappCredentialPublic={switcherData.whatsappCredentialPublic}
-            workspaceId={workspaceId}
-          />
-        </Suspense>
-      </div>
-    </div>
-  )
+  const { workspaceId } = await props.params
+  const searchParams = await props.searchParams
+  const channel = resolveRedirectChannel(searchParams.channel)
+  const search = buildRedirectSearch(searchParams)
+  redirect(`/space/${workspaceId}/dashboard/ads/${channel}${search}`)
 }

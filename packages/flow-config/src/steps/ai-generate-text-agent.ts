@@ -1,6 +1,7 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
+import { zodFieldReference } from "../field-reference"
 import {
   errorStateDefaultFn,
   errorStateSchema,
@@ -30,7 +31,7 @@ export const aiGenerateTextAgentSchema = z
     model: z.string().trim().optional(),
     aiAgentId: zodBigintAsString(),
     message: z.string().trim().min(1),
-    outputFieldId: z.string().trim().min(1),
+    outputFieldId: zodFieldReference(),
     rememberConversation: z.boolean(),
     states: z.tuple([successStateSchema, errorStateSchema]).optional(),
   })

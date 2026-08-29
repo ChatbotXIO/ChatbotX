@@ -24,6 +24,9 @@ const {
   mockSubscribeInstagramFacebookWebhook,
   mockBuildIntegrationUserInfo,
   mockLookupIntegrationUserInfo,
+  mockFindZaloIntegration,
+  mockUpdateZaloIntegrationAuth,
+  mockZaloHandleRequest,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockUpdateMessengerIntegrationAuth: vi.fn(),
@@ -46,6 +49,9 @@ const {
   mockSubscribeInstagramFacebookWebhook: vi.fn(),
   mockBuildIntegrationUserInfo: vi.fn(),
   mockLookupIntegrationUserInfo: vi.fn(),
+  mockFindZaloIntegration: vi.fn(),
+  mockUpdateZaloIntegrationAuth: vi.fn(),
+  mockZaloHandleRequest: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -57,6 +63,10 @@ vi.mock("@chatbotx.io/business", () => ({
   instagramIntegrationService: {
     findByIdForWorkspace: mockFindInstagramIntegration,
     updateAuth: mockUpdateInstagramIntegrationAuth,
+  },
+  zaloIntegrationService: {
+    findById: mockFindZaloIntegration,
+    updateAuth: mockUpdateZaloIntegrationAuth,
   },
 }))
 
@@ -94,6 +104,16 @@ vi.mock("@/lib/log", () => ({
   logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
+vi.mock("@/integration", () => ({
+  integrations: {
+    zalo: { handleRequest: mockZaloHandleRequest },
+  },
+}))
+
+vi.mock("@/lib/oauth-broker", () => ({
+  buildBrokerCallbackUrl: (path: string) => `https://broker.example.com${path}`,
+}))
+
 // Pass-through impl of the real helpers minus the avatar upload: the upload is
 // storage-dependent, so tests stamp a fixed path when an avatarUrl is given.
 vi.mock("@/lib/integration-user-info", () => ({
@@ -108,6 +128,9 @@ const { reconnectInstagramHandler, reconnectInstagramFacebookHandler } =
   await import(
     "../src/features/integration-instagram/actions/reconnect-callback"
   )
+const { reconnectZaloHandler } = await import(
+  "../src/features/integration-zalo/actions/reconnect-callback"
+)
 
 const credentialConfig = {
   clientId: "client-1",
@@ -605,5 +628,93 @@ describe("reconnectInstagramFacebookHandler", () => {
 
     expect(result).toEqual({ status: "error", reason: "notFound" })
     expect(mockGetUserInstagramAccounts).not.toHaveBeenCalled()
+  })
+})
+
+describe("reconnectZaloHandler", () => {
+  const zaloSettings = {
+    clientId: "client-1",
+    clientSecret: "secret-1",
+    verifyToken: "verify-1",
+    version: "v4",
+  }
+
+  const freshAuthValue = {
+    authType: "oauth2",
+    oaId: "oa-1",
+    tokens: {
+      accessToken: "new-access-token",
+      refreshToken: "new-refresh-token",
+    },
+    metadata: { version: "v4", oaName: "OA One" },
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindZaloIntegration.mockResolvedValue({ id: "iz-1", oaId: "oa-1" })
+    mockZaloHandleRequest.mockResolvedValue(freshAuthValue)
+  })
+
+  const executeReconnect = () =>
+    reconnectZaloHandler({
+      zaloSettings,
+      workspaceId: "ws-1",
+      integrationId: "iz-1",
+      req: new Request(
+        "https://broker.example.com/integrations/zalo/callback?code=code-1",
+      ),
+      callbackUrl: "https://broker.example.com/integrations/zalo/callback",
+    })
+
+  test("stores the fresh tokens when the authorized OA matches", async () => {
+    const result = await executeReconnect()
+
+    expect(result).toEqual({ status: "success" })
+    expect(mockZaloHandleRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          ...zaloSettings,
+          redirectUrl: "https://broker.example.com/integrations/zalo/callback",
+        }),
+      }),
+    )
+    expect(mockUpdateZaloIntegrationAuth).toHaveBeenCalledWith(
+      "iz-1",
+      freshAuthValue,
+      "OA One",
+    )
+  })
+
+  test("returns accountNotFound when a different OA was authorized", async () => {
+    mockZaloHandleRequest.mockResolvedValue({
+      ...freshAuthValue,
+      oaId: "other-oa",
+    })
+
+    const result = await executeReconnect()
+
+    expect(result).toEqual({ status: "error", reason: "accountNotFound" })
+    expect(mockUpdateZaloIntegrationAuth).not.toHaveBeenCalled()
+  })
+
+  test("returns notFound when the integration is not in the workspace", async () => {
+    mockFindZaloIntegration.mockRejectedValue(
+      new Error("Integration Zalo not found"),
+    )
+
+    const result = await executeReconnect()
+
+    expect(result).toEqual({ status: "error", reason: "notFound" })
+    expect(mockZaloHandleRequest).not.toHaveBeenCalled()
+    expect(mockUpdateZaloIntegrationAuth).not.toHaveBeenCalled()
+  })
+
+  test("returns failed when the token exchange throws", async () => {
+    mockZaloHandleRequest.mockRejectedValue(new Error("zalo down"))
+
+    const result = await executeReconnect()
+
+    expect(result).toEqual({ status: "error", reason: "failed" })
+    expect(mockUpdateZaloIntegrationAuth).not.toHaveBeenCalled()
   })
 })

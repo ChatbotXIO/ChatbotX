@@ -79,7 +79,6 @@ export default function AssignConversationDialog({
           mode: "onChange",
           defaultValues,
         },
-        errorMapProps: {},
       },
     )
 
@@ -95,7 +94,7 @@ export default function AssignConversationDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger render={trigger} />
+      <DialogTrigger nativeButton={false} render={trigger} />
 
       <DialogContent className="max-h-screen max-w-md">
         <DialogHeader>

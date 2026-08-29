@@ -317,7 +317,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
 
     expect(dbInsert).toHaveBeenCalledWith(contactsToTagsModel)
     expect(dbInsert).toHaveBeenCalledWith(contactToTagChannelModel)
-    expect(emitTagApplied).toHaveBeenCalledWith(WS_ID, "c-1", "tag-1")
+    expect(emitTagApplied).toHaveBeenCalledWith(WS_ID, "c-1", "tag-1", "ci-1")
   })
 
   test("add creates tag + channel from page_label_name, then assigns", async () => {
@@ -379,7 +379,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
 
     expect(dbDelete).toHaveBeenCalledWith(contactToTagChannelModel)
     expect(dbDelete).toHaveBeenCalledWith(contactsToTagsModel)
-    expect(emitTagRemoved).toHaveBeenCalledWith(WS_ID, "c-1", "tag-1")
+    expect(emitTagRemoved).toHaveBeenCalledWith(WS_ID, "c-1", "tag-1", "ci-1")
   })
 
   test("remove without user is a no-op", async () => {
@@ -465,6 +465,10 @@ describe("handleChannelLabelWebhook — zalo", () => {
     expect(dbDelete).toHaveBeenCalledWith(contactToTagChannelModel)
     expect(dbDelete).toHaveBeenCalledWith(contactsToTagsModel)
     expect(emitTagRemoved).toHaveBeenCalledTimes(2)
+    // Each contact attributes to its OWN contactInbox from this label event,
+    // not a shared/most-recent one across the batch.
+    expect(emitTagRemoved).toHaveBeenCalledWith(WS_ID, "c-1", "tag-1", "ci-1")
+    expect(emitTagRemoved).toHaveBeenCalledWith(WS_ID, "c-2", "tag-1", "ci-2")
   })
 
   test("remove_user_from_tag with empty user_ids is a no-op", async () => {

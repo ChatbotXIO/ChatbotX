@@ -1,9 +1,10 @@
 import { customFieldTypes } from "@chatbotx.io/database/partials"
+import { zodFieldName } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createCustomFieldRequest = z.object({
-  name: z.string().trim().min(1).max(255),
+  name: zodFieldName(),
   type: customFieldTypes,
   folderId: zodBigintAsString().nullish(),
   description: z.string().nullish(),
@@ -18,7 +19,7 @@ export type CreateCustomFieldResponse = z.infer<
 >
 
 export const updateCustomFieldRequest = z.object({
-  name: z.string().trim().min(1).max(255),
+  name: zodFieldName(),
   description: z.string().optional(),
   folderId: zodBigintAsString().nullish(),
 })

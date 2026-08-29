@@ -7,13 +7,23 @@ import {
 } from "@chatbotx.io/database/client"
 import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import { emitCustomFieldChanged } from "@chatbotx.io/events"
+import {
+  FieldOperationType,
+  FieldReferenceKind,
+  parseFieldReference,
+} from "@chatbotx.io/flow-config"
 import { createId, isNumericId } from "@chatbotx.io/utils"
+import {
+  canonicalBooleanLiteral,
+  canonicalNumberLiteral,
+} from "@chatbotx.io/utils/custom-field"
 import {
   type SourceTimezoneStrategy,
   TemporalInputParsing,
 } from "@chatbotx.io/utils/datetime"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { botFieldService } from "../bot-field/service"
+import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import {
   createSourceTimezoneResolver,
@@ -50,6 +60,13 @@ type SetValuesInput = {
    * flow "set custom field" step so an empty date/datetime records "now".
    */
   fillEmptyTemporalWithNow?: boolean
+  /**
+   * The `ContactInbox` the caller has in scope (e.g. the flow-step "set
+   * custom field" handler) — forwarded to `emitCustomFieldChanges` so the
+   * Trigger action that reacts to this change attributes to the right
+   * inbox instead of the contact's most-recently-active one.
+   */
+  contactInboxId?: string
 }
 
 /**
@@ -68,12 +85,22 @@ type EmitCustomFieldChangesInput = {
   workspaceId: string
   contactId: string
   changes: PendingContactCustomFieldChange[]
+  contactInboxId?: string
 }
 
 type DeleteByKeyInput = {
   workspaceId: string
   contactId: string
   keyword: string
+  contactInboxId?: string
+  /**
+   * Opt-in only (default false): when true AND `keyword` is a well-formed
+   * `bot_field:<id>` reference token, delegate to `botFieldService` instead
+   * of the contact-scoped lookup below. Default-false keeps every existing
+   * caller (including the public workspace-token contact endpoints) unable
+   * to reach Account Fields — see `docs/plans/2026-08-28-account-fields-custom-fields-page.md` §3.2.
+   */
+  allowBotFields?: boolean
 }
 
 type DeleteByCustomFieldIdInput = {
@@ -103,6 +130,31 @@ type SetValueByKeyInput = DeleteByKeyInput & {
   temporalInputParsing?: TemporalInputParsing
   /** Blank temporal value -> stamp "now" in the resolved source zone. */
   fillEmptyTemporalWithNow?: boolean
+  /**
+   * Consumed ONLY by the bot-field branch (`allowBotFields: true` + a
+   * `bot_field:<id>` token) — defaults to `set` there. The contact branch
+   * below IGNORES this field and always sets the value, preserving today's
+   * set-only behavior byte-for-byte; the contact-field operation no-op is a
+   * pre-existing platform bug tracked separately (plan §3.2, Phase 5).
+   */
+  operation?: FieldOperationType
+}
+
+/**
+ * Extracts the bot-field key from `keyword` when `allowBotFields` is set AND
+ * `keyword` is a well-formed `bot_field:<id>` token — the single dispatch
+ * guard shared by `setValueByKey`/`deleteByKey` so both stay in lockstep with
+ * the "default-false" opt-in contract documented on `DeleteByKeyInput`.
+ */
+const resolveBotFieldKey = (
+  keyword: string,
+  allowBotFields?: boolean,
+): string | null => {
+  if (!allowBotFields) {
+    return null
+  }
+  const parsed = parseFieldReference(keyword)
+  return parsed.kind === FieldReferenceKind.botField ? parsed.id : null
 }
 
 // Cache tags for contact-scoped invalidation. Building the full set in one call
@@ -303,6 +355,7 @@ class ContactCustomFieldService extends BaseService {
       workspaceId: input.workspaceId,
       contactId: input.contactId,
       changes,
+      contactInboxId: input.contactInboxId,
     })
   }
 
@@ -329,7 +382,7 @@ class ContactCustomFieldService extends BaseService {
   async emitCustomFieldChanges(
     input: EmitCustomFieldChangesInput,
   ): Promise<void> {
-    const { workspaceId, contactId, changes } = input
+    const { workspaceId, contactId, changes, contactInboxId } = input
 
     for (const change of changes) {
       emitCustomFieldChanged(
@@ -339,6 +392,7 @@ class ContactCustomFieldService extends BaseService {
         change.customFieldName,
         change.oldValue,
         change.newValue,
+        contactInboxId,
       ).catch((error: unknown) => {
         logger.warn(
           {
@@ -395,7 +449,7 @@ class ContactCustomFieldService extends BaseService {
   async insertNormalizedValuesForNewContacts(
     input: InsertNormalizedValuesForNewContactsInput,
   ): Promise<void> {
-    const { entries, tx = db } = input
+    const { workspaceId, entries, tx = db } = input
     const values = entries.flatMap(({ contactId, fields }) =>
       fields.map((field) => ({
         id: createId(),
@@ -409,7 +463,54 @@ class ContactCustomFieldService extends BaseService {
       return
     }
 
+    await this.assertValuesAreCanonical({ workspaceId, values, tx })
     await tx.insert(contactCustomFieldModel).values(values)
+  }
+
+  /**
+   * The import fast-path above bypasses `writeValues` (and its per-type
+   * normalization) for throughput — its CONTRACT is that the caller already
+   * normalized every value. This guard makes the boundary self-preserving:
+   * a future caller passing a non-canonical boolean/number fails fast with a
+   * typed error instead of silently persisting garbage. Temporal/text stay
+   * on the caller's contract (validating them here would need the timezone
+   * plumbing the fast-path exists to avoid). One batched, indexed query;
+   * canonical inputs (the only ones the importer produces) pass untouched.
+   */
+  private async assertValuesAreCanonical(props: {
+    workspaceId: string
+    values: Array<{ customFieldId: string; value: string }>
+    tx: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, values, tx } = props
+    const typeById = new Map(
+      (
+        await tx.query.customFieldModel.findMany({
+          where: {
+            workspaceId,
+            id: { in: [...new Set(values.map((v) => v.customFieldId))] },
+          },
+          columns: { id: true, type: true },
+        })
+      ).map((field) => [field.id, field.type] as const),
+    )
+
+    for (const { customFieldId, value } of values) {
+      if (value.length === 0) {
+        continue
+      }
+      const type = typeById.get(customFieldId)
+      const isCanonical =
+        (type === "boolean" && canonicalBooleanLiteral(value) === value) ||
+        (type === "number" && canonicalNumberLiteral(value) === value)
+      if ((type === "boolean" || type === "number") && !isCanonical) {
+        throw new ChatbotXException(
+          `Non-canonical ${type} value for custom field ${customFieldId}; normalize before calling insertNormalizedValuesForNewContacts.`,
+          "invalidCustomFieldValue",
+          400,
+        )
+      }
+    }
   }
 
   async setValueByKey(input: SetValueByKeyInput): Promise<void> {
@@ -421,7 +522,24 @@ class ContactCustomFieldService extends BaseService {
       sourceTimezoneOverride,
       temporalInputParsing,
       fillEmptyTemporalWithNow,
+      contactInboxId,
+      allowBotFields,
+      operation,
     } = input
+
+    const botFieldKey = resolveBotFieldKey(keyword, allowBotFields)
+    if (botFieldKey) {
+      await botFieldService.applyValueOperation({
+        workspaceId,
+        key: botFieldKey,
+        operation: operation ?? FieldOperationType.set,
+        value,
+        sourceTimezoneOverride,
+        temporalInputParsing,
+        fillEmptyTemporalWithNow,
+      })
+      return
+    }
 
     let customField: { id: string } | undefined
 
@@ -450,11 +568,19 @@ class ContactCustomFieldService extends BaseService {
       sourceTimezoneOverride,
       temporalInputParsing,
       fillEmptyTemporalWithNow,
+      contactInboxId,
     })
   }
 
   async deleteByKey(input: DeleteByKeyInput): Promise<void> {
-    const { workspaceId, contactId, keyword } = input
+    const { workspaceId, contactId, keyword, contactInboxId, allowBotFields } =
+      input
+
+    const botFieldKey = resolveBotFieldKey(keyword, allowBotFields)
+    if (botFieldKey) {
+      await botFieldService.clearValueByKey({ workspaceId, key: botFieldKey })
+      return
+    }
 
     let customField: { id: string; name: string } | undefined
 
@@ -503,6 +629,7 @@ class ContactCustomFieldService extends BaseService {
       customField.name,
       oldValue,
       null,
+      contactInboxId,
     ).catch((error: unknown) => {
       logger.warn(
         { err: error, workspaceId, contactId, customFieldId: customField.id },

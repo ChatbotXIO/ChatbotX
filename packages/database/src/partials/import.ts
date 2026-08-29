@@ -44,10 +44,22 @@ export type ContactImportColumnMap = z.infer<
   typeof contactImportColumnMapSchema
 >
 
+/**
+ * Mapping target: a contact custom field id, or a workspace-level bot field
+ * (Account Field) reference in the `bot_field:<id>` token shape used by the
+ * combined field picker. A bot field holds ONE value per workspace, so the
+ * import applies its mapped column once after completion (last row wins)
+ * instead of writing per row.
+ */
+const contactImportFieldTargetSchema = z.union([
+  bigintAsStringSchema,
+  z.string().regex(/^bot_field:\d+$/),
+])
+
 export const contactImportFieldMappingSchema = z.array(
   z.object({
     column: z.string(),
-    customFieldId: bigintAsStringSchema,
+    customFieldId: contactImportFieldTargetSchema,
   }),
 )
 export type ContactImportFieldMapping = z.infer<

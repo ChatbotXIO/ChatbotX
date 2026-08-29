@@ -7,10 +7,11 @@ import { AuthType } from "@chatbotx.io/sdk"
 /**
  * Build the WhatsApp webhook callback config.
  *
- * `originUrl` must be a fixed, Meta-registered host (the OAuth broker / canonical
- * builder origin) — never a white-label custom domain. On manual connect this URL
- * is sent to Meta as `override_callback_uri`, and Meta cannot reach or trust an
- * unregistered branded domain. See `connect.action.ts` and `lib/oauth-broker.ts`.
+ * `originUrl` must be a host Meta can reach and trust: the reseller's own
+ * custom domain for a tenant-owned credential (their own app), otherwise the
+ * broker / canonical builder origin. On manual connect this URL is sent to
+ * Meta as `override_callback_uri`. See `connect.action.ts` and
+ * `lib/provider-origin.ts`.
  */
 export function buildWebhookConfig(params: {
   isManual: boolean
@@ -37,9 +38,9 @@ export function buildWebhookConfig(params: {
 }
 
 /**
- * Build the persisted WhatsApp auth value. `originUrl` follows the same
- * broker-host rule as `buildWebhookConfig`: the stored `redirectUrl` must live on
- * the fixed registered host, not a white-label custom domain.
+ * Build the persisted WhatsApp auth value. `originUrl` follows the same rule
+ * as `buildWebhookConfig`: the stored `redirectUrl` lives on the tenant's
+ * custom domain for a tenant-owned credential, otherwise the broker.
  */
 export async function buildAuthValue(params: {
   whatsappSettings: WhatsappCredential

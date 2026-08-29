@@ -8,6 +8,7 @@ import {
   tiktokIntegrationService,
   zaloIntegrationService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import {
   type InstagramAuthValue,
   integration as integrationInstagram,
@@ -36,7 +37,11 @@ import { authActionClient } from "@/lib/safe-action"
 import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 
 const BATCH_SIZE = 50
-const REFRESH_LOCK_TIMEOUT_SECONDS = 10
+// Must outlive the channel APIs' HTTP timeouts (Zalo's OAuth client allows
+// 30s): the Zalo refresh token is single-use, so if the lock expired mid-call
+// the daily cron could consume the same refresh token concurrently and
+// clobber the rotated tokens.
+const REFRESH_LOCK_TIMEOUT_SECONDS = 60
 
 type RefreshResult = "failed" | "refreshed" | "skipped"
 type RefreshSummary = { refreshed: number; failed: number }
@@ -64,7 +69,14 @@ async function runInBatches<T>(
   const results: RefreshResult[] = []
   for (let i = 0; i < items.length; i += BATCH_SIZE) {
     const batch = items.slice(i, i + BATCH_SIZE)
-    results.push(...(await Promise.all(batch.map(worker))))
+    results.push(
+      ...(await Promise.all(
+        // A failed lock acquisition (the daily cron already refreshing this
+        // row, redis hiccup) throws outside the worker's own try/catch; it
+        // must not reject the whole batch and abort the remaining rows.
+        batch.map((item) => worker(item).catch((): RefreshResult => "failed")),
+      )),
+    )
   }
   return results
 }
@@ -99,6 +111,11 @@ async function refreshOneZalo(
             refreshToken: newTokens.refresh_token,
             expiresAt: calculateExpiresAt(newTokens.expires_in),
           },
+        })
+        await auditService.record({
+          workspaceId,
+          action: "refresh",
+          detail: "refreshed the Zalo channel permissions",
         })
         return "refreshed"
       } catch (error) {
@@ -157,6 +174,11 @@ async function refreshOneTiktok(
             ),
           },
         })
+        await auditService.record({
+          workspaceId,
+          action: "refresh",
+          detail: "refreshed the TikTok channel token",
+        })
         return "refreshed"
       } catch (error) {
         await tiktokIntegrationService.markTokenRefreshError(
@@ -208,6 +230,11 @@ async function refreshOneInstagram(
           id,
           workspaceId,
           auth: newAuth as InstagramAuthValue,
+        })
+        await auditService.record({
+          workspaceId,
+          action: "refresh",
+          detail: "refreshed the Instagram channel token",
         })
         return "refreshed"
       } catch (error) {
@@ -265,6 +292,11 @@ async function refreshOneInstagramFacebook(
           workspaceId,
           auth: newAuth as InstagramAuthValue,
         })
+        await auditService.record({
+          workspaceId,
+          action: "refresh",
+          detail: "refreshed the Instagram channel token",
+        })
         return "refreshed"
       } catch (error) {
         await instagramIntegrationService.markTokenRefreshError(
@@ -318,6 +350,11 @@ async function refreshOneMessenger(
           id,
           workspaceId,
           auth: newAuth as MessengerAuthValue,
+        })
+        await auditService.record({
+          workspaceId,
+          action: "refresh",
+          detail: "refreshed the Messenger channel token",
         })
         return "refreshed"
       } catch (error) {
@@ -376,6 +413,11 @@ async function refreshOneWhatsapp(
           id,
           workspaceId,
           auth: newAuth as WhatsappAuthValue,
+        })
+        await auditService.record({
+          workspaceId,
+          action: "refresh",
+          detail: "refreshed the WhatsApp channel token",
         })
         return "refreshed"
       } catch (error) {

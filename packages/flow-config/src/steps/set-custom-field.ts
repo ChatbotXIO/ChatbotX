@@ -1,5 +1,6 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { zodFieldReference } from "../field-reference"
 import { stepTypes } from "./step-action"
 
 export const FieldOperationType = {
@@ -15,7 +16,7 @@ export type FieldOperationType =
 export const setCustomFieldStepSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.setCustomField),
-  inputFieldId: z.string().trim().min(1),
+  inputFieldId: zodFieldReference(),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),
   /**

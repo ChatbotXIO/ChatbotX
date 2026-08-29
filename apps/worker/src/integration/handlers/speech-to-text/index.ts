@@ -26,6 +26,7 @@ const supportedAudioMimeTypes = z.enum([
 
 export async function handleAISpeechToText({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<AISpeechToTextSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
@@ -101,6 +102,7 @@ export async function handleAISpeechToText({
         customFieldId: step.outputFieldId,
         fullText: transcript.text,
         workspaceId: conversation.workspaceId,
+        contactInboxId: contactInbox.id,
       })
     }
 

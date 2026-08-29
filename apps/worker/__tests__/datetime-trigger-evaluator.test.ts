@@ -210,6 +210,13 @@ describe("evaluateDateTimeTriggers", () => {
       customFieldIds: ["field-2"],
     })
     expect(actionExecute).toHaveBeenCalledTimes(2)
+    // datetimeBasedTrigger never threads a contactInboxId (schema precludes
+    // attribution — Conversation has no inbox column) — ActionExecutor must
+    // fall back to the contact's most-recently-active inbox via
+    // resolveActionContactInbox's findMostRecentByContact path.
+    for (const call of actionExecute.mock.calls) {
+      expect(call[0]).not.toHaveProperty("contactInboxId")
+    }
   })
 
   test("waits for all datetime conditions before executing a trigger across cursor pages", async () => {

@@ -1,4 +1,4 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodUrlWithVariables } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { baseStepSchema } from "./base"
 import { buttonStepSchema } from "./button"
@@ -11,7 +11,7 @@ export const sendCardStepSchema = baseStepSchema.extend({
   subtitle: z.string().trim().max(80).optional(),
   image: sendImageStepSchema
     .extend({
-      url: z.url().or(z.literal("")),
+      url: zodUrlWithVariables().or(z.literal("")),
     })
     .optional(),
   buttons: z.array(buttonStepSchema).max(3),

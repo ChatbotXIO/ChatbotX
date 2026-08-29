@@ -1,9 +1,11 @@
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Queue } from "bullmq"
 import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
@@ -28,6 +30,7 @@ export const ScheduleJobData = {
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeWorkspaces: "purgeWorkspaces",
+  purgeAutomationThrottle: "purgeAutomationThrottle",
   refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
@@ -159,9 +162,16 @@ export type ScheduleJobPurgeWorkspaces = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeAutomationThrottle = {
+  type: typeof ScheduleJobData.purgeAutomationThrottle
+  data: Record<string, never>
+}
+
 export type ScheduleJobRefreshChannelTokens = {
   type: typeof ScheduleJobData.refreshChannelTokens
-  data: Record<string, never>
+  // No `channels` = refresh every channel. The short-lived scheduler passes
+  // ["zalo", "tiktok"] for the extra midday run (see register-schedules.ts).
+  data: { channels?: ChannelType[] }
 }
 
 export type ScheduleJobUnsubscribeExpiredTrials = {
@@ -195,14 +205,14 @@ export type ScheduleJobData =
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
+  | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
 
-export const scheduleQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const scheduleQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })

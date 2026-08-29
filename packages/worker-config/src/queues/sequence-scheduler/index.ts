@@ -1,6 +1,6 @@
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { Queue } from "bullmq"
-import { defaultJobOptions } from "../../lib/connection"
+import { defaultJobOptions, isNoRedisEnv } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
 export type SequenceSchedulerJobData = {
@@ -15,7 +15,7 @@ let sequenceSchedulerQueueInstance: Queue<SequenceSchedulerJobData> | null =
 
 export const getSequenceSchedulerQueue =
   async (): Promise<Queue<SequenceSchedulerJobData> | null> => {
-    if (process.env.NEXT_PHASE === "phase-production-build") {
+    if (isNoRedisEnv()) {
       return null
     }
 

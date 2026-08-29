@@ -87,6 +87,14 @@ const handleWebhookEvent = async (
       throw new SdkException("Missing sender/recipient in message event")
     }
 
+    // Delivery receipts carry only the delivered msg_id — no text or
+    // attachments — so routing them to incomingMessage makes the handler
+    // throw "No content found" and the job retry forever. There is no
+    // delivered-status pipeline yet; ack and drop.
+    if (webhookData.event_name === "user_received_message") {
+      return
+    }
+
     if (webhookData.event_name === "user_seen_message") {
       await queue.add("contactMarkAsRead", {
         type: "contactMarkAsRead",

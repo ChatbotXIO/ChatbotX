@@ -1,4 +1,5 @@
 import {
+  botFieldService,
   contactCustomFieldService,
   contactInboxService,
   messageCleanupService,
@@ -6,8 +7,10 @@ import {
   workspaceService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
+import { validateCustomFieldValue } from "@chatbotx.io/business/javascript-execution"
 import { db, inArray } from "@chatbotx.io/database/client"
 import {
+  type ContactImportFieldMapping,
   type ContactImportMeta,
   type CustomFieldType,
   contactImportMetaSchema,
@@ -20,6 +23,10 @@ import {
   conversationModel,
   type inboxModel,
 } from "@chatbotx.io/database/schema"
+import {
+  FieldReferenceKind,
+  parseFieldReference,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../../../../lib/logger"
 import type {
@@ -28,13 +35,30 @@ import type {
   ImportRow,
   ImportTypeHandler,
 } from "../../base-import"
-import { validateCustomFieldValue } from "../../validations/custom-field-value"
-import { type ContactRow, extractRowData } from "./extractor"
+import {
+  type ContactRow,
+  extractRowData,
+  readMappedColumnValue,
+} from "./extractor"
 
 type ContactDeps = {
   customFieldTypes: Map<string, CustomFieldType>
   inbox: typeof inboxModel.$inferSelect
   ownerId: string
+  /** `fieldMapping` entries targeting contact custom fields (per-row). */
+  customMappings: ContactImportFieldMapping
+  /**
+   * `fieldMapping` entries targeting workspace-level bot fields
+   * (`bot_field:<id>` references from the combined picker). A bot field holds
+   * one value per workspace, so writing it per row would just be N-1 wasted
+   * overwrites — instead the latest mapped value is tracked here and applied
+   * once in `finalize` (last valid row wins).
+   */
+  botMappings: Array<{ column: string; botFieldId: string }>
+  /** Types of the mapped bot fields, resolved once in `prepare` (batched). */
+  botFieldTypes: Map<string, CustomFieldType>
+  /** Already-normalized (canonical) values — see `processContactRow`. */
+  botFieldLatest: Map<string, string>
 }
 
 type AcceptedContact = {
@@ -51,11 +75,24 @@ const prepareContacts = async ({
   row: ImportRow
   meta: ContactImportMeta
 }): Promise<ImportPrepareResult<ContactDeps>> => {
-  const customFieldIds = meta.fieldMapping?.length
-    ? meta.fieldMapping.map((m) => m.customFieldId)
-    : []
+  // Split the mapping by target: contact custom fields stay per-row; bot
+  // field references are collected during row processing and applied once
+  // after completion.
+  const customMappings: ContactImportFieldMapping = []
+  const botMappings: Array<{ column: string; botFieldId: string }> = []
+  for (const mapping of meta.fieldMapping ?? []) {
+    const parsed = parseFieldReference(mapping.customFieldId)
+    if (parsed.kind === FieldReferenceKind.botField) {
+      botMappings.push({ column: mapping.column, botFieldId: parsed.id })
+    } else {
+      customMappings.push(mapping)
+    }
+  }
 
-  const [inbox, workspace, tag, fields] = await Promise.all([
+  const customFieldIds = customMappings.map((m) => m.customFieldId)
+  const botFieldIds = [...new Set(botMappings.map((m) => m.botFieldId))]
+
+  const [inbox, workspace, tag, fields, botFields] = await Promise.all([
     row.inboxId
       ? db.query.inboxModel.findFirst({
           where: { id: row.inboxId, workspaceId: row.workspaceId },
@@ -72,6 +109,16 @@ const prepareContacts = async ({
       ? db.query.customFieldModel.findMany({
           where: { id: { in: customFieldIds }, workspaceId: row.workspaceId },
           columns: { id: true, type: true },
+        })
+      : [],
+    // Batched once here (not per-row) so `processContactRow` can validate
+    // each candidate value against the SAME lenient normalizer used for
+    // custom fields instead of leaving it to the strict runtime coercion
+    // `botFieldService.updateByKey` applies in `finalize`.
+    botFieldIds.length
+      ? botFieldService.findManyByIds({
+          workspaceId: row.workspaceId,
+          ids: botFieldIds,
         })
       : [],
   ])
@@ -91,9 +138,22 @@ const prepareContacts = async ({
     customFieldTypes.set(field.id, field.type)
   }
 
+  const botFieldTypes = new Map<string, CustomFieldType>()
+  for (const field of botFields) {
+    botFieldTypes.set(field.id, field.type)
+  }
+
   return {
     ok: true,
-    deps: { customFieldTypes, inbox, ownerId: workspace.ownerId },
+    deps: {
+      customFieldTypes,
+      inbox,
+      ownerId: workspace.ownerId,
+      customMappings,
+      botMappings,
+      botFieldTypes,
+      botFieldLatest: new Map<string, string>(),
+    },
   }
 }
 
@@ -102,12 +162,35 @@ const processContactRow = (
   rawRow: Record<string, unknown>,
   meta: ContactImportMeta,
 ): ContactRow | null => {
-  const mapped = extractRowData(rawRow, meta.columnMap, meta.fieldMapping, {
+  const mapped = extractRowData(rawRow, meta.columnMap, deps.customMappings, {
     countryCode: meta.countryCode,
     channel: meta.channel,
   })
   if (!mapped) {
     return null
+  }
+
+  // Bot-field-mapped columns: remember the latest VALID, non-blank value from
+  // each row, normalized through the SAME lenient normalizer CSV custom-field
+  // imports use (`validateCustomFieldValue` — accepts e.g. a loose date like
+  // `28/08/2026`). A blank cell is skipped outright; a non-blank cell that
+  // fails to normalize for the field's type is also skipped so the
+  // previously tracked valid value survives (last VALID row wins). The
+  // tracked value is already canonical, so `finalize`'s
+  // `botFieldService.updateByKey` write is a no-op re-normalization.
+  for (const mapping of deps.botMappings) {
+    const type = deps.botFieldTypes.get(mapping.botFieldId)
+    if (!type) {
+      continue
+    }
+    const value = readMappedColumnValue(rawRow, mapping.column)
+    if (value === undefined) {
+      continue
+    }
+    const normalized = validateCustomFieldValue(type, value, meta.timezone)
+    if (normalized !== null) {
+      deps.botFieldLatest.set(mapping.botFieldId, normalized)
+    }
   }
 
   const safeCustomFields = mapped.customFields.flatMap((field) => {
@@ -343,6 +426,42 @@ const processContactBatch = async (
   }
 }
 
+/**
+ * Applies the bot-field-mapped values collected during row processing once
+ * after the import completes (last valid row wins). Values in
+ * `botFieldLatest` were already validated/normalized per-row in
+ * `processContactRow` via `validateCustomFieldValue` (the same lenient
+ * normalizer used for custom fields), so `updateByKey`'s own runtime
+ * coercion is idempotent here — re-running it on an already-canonical value
+ * (e.g. an ISO temporal literal passes Strict) is a no-op. The try/catch
+ * remains defense-in-depth for genuine write failures (DB error, field
+ * deleted mid-import): logged and skipped, never failing the import.
+ */
+const finalizeContacts = async (ctx: {
+  row: ImportRow
+  meta: ContactImportMeta
+  deps: ContactDeps
+}): Promise<void> => {
+  for (const [botFieldId, value] of ctx.deps.botFieldLatest) {
+    try {
+      await botFieldService.updateByKey({
+        workspaceId: ctx.row.workspaceId,
+        key: botFieldId,
+        data: { value },
+      })
+    } catch (error) {
+      logger.error(
+        {
+          err: error,
+          workspaceId: ctx.row.workspaceId,
+          botFieldId,
+        },
+        "Import bot field value update failed; skipping",
+      )
+    }
+  }
+}
+
 export const contactsImportHandler: ImportTypeHandler<
   ContactImportMeta,
   ContactDeps,
@@ -353,4 +472,5 @@ export const contactsImportHandler: ImportTypeHandler<
   prepare: prepareContacts,
   processRow: processContactRow,
   processBatch: processContactBatch,
+  finalize: finalizeContacts,
 }

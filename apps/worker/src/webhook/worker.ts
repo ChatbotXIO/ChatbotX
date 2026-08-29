@@ -10,6 +10,7 @@ import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
 const webhookMatcher = new WebhookMatcherService()
@@ -26,18 +27,24 @@ async function startWebhookWorker() {
   const worker = new Worker(
     queueNames.enum.webhook,
     async (job: Job<WebhookJobData>) => {
-      if (await isBlockedWorkspace(job.data.data.workspaceId)) {
+      const { workspaceId } = job.data.data
+      if (await isBlockedWorkspace(workspaceId)) {
         return
       }
 
-      switch (job.data.type) {
-        case WebhookJobAction.evaluateWebhooks: {
-          await webhookMatcher.findAndExecuteWebhooks(job.data.data)
-          return
-        }
-        default:
-          return
-      }
+      await runJobWithAuditContext(
+        { workspaceId, source: "webhook:evaluateWebhooks" },
+        async () => {
+          switch (job.data.type) {
+            case WebhookJobAction.evaluateWebhooks: {
+              await webhookMatcher.findAndExecuteWebhooks(job.data.data)
+              return
+            }
+            default:
+              return
+          }
+        },
+      )
     },
     {
       connection: getRedisConnection(),

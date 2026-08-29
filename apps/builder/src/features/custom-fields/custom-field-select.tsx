@@ -38,6 +38,11 @@ type CustomFieldSelectProps = {
    * when the field is optional and picking nothing is a valid choice.
    */
   clearable?: boolean
+  /**
+   * Also offers Account Fields (bot fields) in a separate group. Allowlisted
+   * v1 surfaces only — see `useCustomFieldSelectOptions`.
+   */
+  includeBotFields?: boolean
 }
 
 // Language-neutral marker for the "no selection" option.
@@ -59,6 +64,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     portal,
     createDefaultType,
     clearable,
+    includeBotFields,
   } = props
 
   const workspaceId = useWorkspaceId()
@@ -67,6 +73,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     includeReserved,
     channels,
     reservedFieldIds,
+    includeBotFields,
   })
 
   const options = useMemo(

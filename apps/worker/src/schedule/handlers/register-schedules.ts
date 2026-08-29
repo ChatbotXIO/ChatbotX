@@ -1,3 +1,4 @@
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   PURGE_WORKSPACES_INTERVAL_MINUTES,
   ScheduleJobData,
@@ -267,6 +268,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeAutomationThrottle,
+    {
+      pattern: "0 * * * *",
+    },
+    {
+      name: ScheduleJobData.purgeAutomationThrottle,
+      data: {
+        type: ScheduleJobData.purgeAutomationThrottle,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.refreshChannelTokens,
     {
       pattern: "0 2 * * *",
@@ -276,6 +291,26 @@ export const registerSchedules = async () => {
       data: {
         type: ScheduleJobData.refreshChannelTokens,
         data: {},
+      },
+    },
+  )
+
+  // Zalo and TikTok tokens only live ~24-25h, so the single 02:00 run leaves
+  // almost no margin: one missed run and they expire mid-day. This extra
+  // midday run keeps them at most ~12h from a refresh; the long-lived
+  // Meta/WhatsApp tokens stay on the daily run above.
+  await scheduleQueue.upsertJobScheduler(
+    "refreshShortLivedChannelTokens",
+    {
+      pattern: "0 14 * * *",
+    },
+    {
+      name: ScheduleJobData.refreshChannelTokens,
+      data: {
+        type: ScheduleJobData.refreshChannelTokens,
+        data: {
+          channels: [channelTypes.enum.zalo, channelTypes.enum.tiktok],
+        },
       },
     },
   )

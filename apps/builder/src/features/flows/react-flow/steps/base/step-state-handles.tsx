@@ -15,6 +15,7 @@ type StateHandleProps = {
   label?: string
   borderClass: string
   fillClass: string
+  labelClassName?: string
 }
 
 export function StateHandle({
@@ -22,6 +23,7 @@ export function StateHandle({
   label,
   borderClass,
   fillClass,
+  labelClassName,
 }: StateHandleProps) {
   const connections = useNodeConnections({
     handleType: "source",
@@ -31,7 +33,7 @@ export function StateHandle({
 
   return (
     <div className="relative flex items-center gap-2 text-xs">
-      {label}
+      <span className={labelClassName}>{label}</span>
       <div
         className={cn(
           "h-4 w-4 rounded-full border-2",

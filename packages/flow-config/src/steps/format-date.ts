@@ -1,5 +1,6 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { zodFieldReference } from "../field-reference"
 import { stepTypes } from "./step-action"
 
 export const FormatTimezone = {
@@ -10,9 +11,9 @@ export const FormatTimezone = {
 export const formatDateStepSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.formatDate),
-  inputFieldId: z.string().trim().min(1),
+  inputFieldId: zodFieldReference(),
   format: z.string().trim().min(1),
-  outputFieldId: z.string().trim().min(1),
+  outputFieldId: zodFieldReference(),
   timezone: z.enum(FormatTimezone),
 })
 export type FormatDateStepSchema = z.infer<typeof formatDateStepSchema>

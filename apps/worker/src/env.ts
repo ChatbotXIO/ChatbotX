@@ -31,6 +31,18 @@ export const env = createEnv({
       .min(1000)
       .max(9 * 60 * 1000)
       .default(120_000),
+    NOTIFICATION_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(200)
+      .default(10),
+    // Expo push access token. Only needed if Expo's "enhanced push security"
+    // is enabled on the project; unauthenticated requests work otherwise.
+    EXPO_ACCESS_TOKEN: z.string().optional(),
+    // Kill switch — Expo needs no credential to send, so unlike FCM there is
+    // no natural "unset = disabled" signal. Operators flip this explicitly.
+    EXPO_PUSH_ENABLED: z.stringbool().default(true),
   },
   runtimeEnv: process.env,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

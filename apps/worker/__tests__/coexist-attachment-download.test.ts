@@ -122,7 +122,10 @@ vi.mock("../src/lib/logger", () => ({
 // Import the handler AFTER mocks
 // ---------------------------------------------------------------------------
 
-import { coexistAttachmentDownload } from "../src/integration/handlers/coexist/attachment-download"
+import {
+  coexistAttachmentDownload,
+  MAX_ATTACHMENT_BYTES,
+} from "../src/integration/handlers/coexist/attachment-download"
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -358,10 +361,13 @@ describe("coexistAttachmentDownload", () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // SECURITY: size cap
+  // SIZE CAP: an oversized attachment is a PERMANENT condition, so the handler
+  // must skip it terminally (log a warning and return) rather than throw —
+  // throwing would burn all BullMQ retry attempts on a job that can never
+  // succeed. See AttachmentTooLargeError.
   // ─────────────────────────────────────────────────────────────────────────
 
-  it("rejects Messenger response with content-length exceeding MAX_ATTACHMENT_BYTES", async () => {
+  it("skips (no throw) a Messenger response whose content-length exceeds the cap", async () => {
     wireSelectChain({
       id: "att-001",
       originPath: "https://example.com/media/huge.mp4",
@@ -369,19 +375,27 @@ describe("coexistAttachmentDownload", () => {
     })
     wireIntegrationLookup()
 
-    const OVER_LIMIT = String(51 * 1024 * 1024) // 51 MB
+    const OVER_LIMIT = String(MAX_ATTACHMENT_BYTES + 1)
     const fetchMock = vi.fn(() =>
       Promise.resolve(makeFetchResponse({ contentLength: OVER_LIMIT })),
     )
     vi.stubGlobal("fetch", fetchMock)
 
-    await expect(coexistAttachmentDownload(BASE_DATA)).rejects.toThrow()
+    // Must resolve (terminal skip), never reject — a reject would trigger retry.
+    await expect(coexistAttachmentDownload(BASE_DATA)).resolves.toBeUndefined()
     expect(mockPutObject).not.toHaveBeenCalled()
+    expect(mockUpdateAttachment).not.toHaveBeenCalled()
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ attachmentId: BASE_DATA.attachmentId }),
+      expect.stringContaining("exceeds size cap"),
+    )
+    // Terminal skip must NOT be logged as an error (that reads as a failure).
+    expect(mockLoggerError).not.toHaveBeenCalled()
 
     vi.unstubAllGlobals()
   })
 
-  it("rejects Messenger response whose body bytes exceed MAX_ATTACHMENT_BYTES (no content-length)", async () => {
+  it("skips (no throw) a Messenger response whose streamed body exceeds the cap (no content-length)", async () => {
     wireSelectChain({
       id: "att-001",
       originPath: "https://example.com/media/huge.mp4",
@@ -393,19 +407,24 @@ describe("coexistAttachmentDownload", () => {
       Promise.resolve(
         makeFetchResponse({
           contentLength: undefined, // no header — must be caught by streaming cap
-          totalBytes: 51 * 1024 * 1024, // 51 MB streamed
+          totalBytes: MAX_ATTACHMENT_BYTES + 1, // one byte past the cap
+          chunkSize: 10 * 1024 * 1024,
         }),
       ),
     )
     vi.stubGlobal("fetch", fetchMock)
 
-    await expect(coexistAttachmentDownload(BASE_DATA)).rejects.toThrow()
+    await expect(coexistAttachmentDownload(BASE_DATA)).resolves.toBeUndefined()
     expect(mockPutObject).not.toHaveBeenCalled()
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ attachmentId: BASE_DATA.attachmentId }),
+      expect.stringContaining("exceeds size cap"),
+    )
 
     vi.unstubAllGlobals()
   })
 
-  it("rejects WhatsApp response with content-length exceeding MAX_ATTACHMENT_BYTES", async () => {
+  it("skips (no throw) a WhatsApp response whose content-length exceeds the cap", async () => {
     wireSelectChain({
       id: "att-001",
       originPath: "wa-media:media-id-xyz",
@@ -413,14 +432,35 @@ describe("coexistAttachmentDownload", () => {
     })
     wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "whatsapp" })
 
-    const OVER_LIMIT = String(51 * 1024 * 1024)
+    const OVER_LIMIT = String(MAX_ATTACHMENT_BYTES + 1)
     const fetchMock = vi.fn(() =>
       Promise.resolve(makeFetchResponse({ contentLength: OVER_LIMIT })),
     )
     vi.stubGlobal("fetch", fetchMock)
 
-    await expect(coexistAttachmentDownload(WA_DATA)).rejects.toThrow()
+    await expect(coexistAttachmentDownload(WA_DATA)).resolves.toBeUndefined()
     expect(mockPutObject).not.toHaveBeenCalled()
+
+    vi.unstubAllGlobals()
+  })
+
+  it("still throws (retryable) on a transient download failure — non-size errors keep retrying", async () => {
+    wireSelectChain({
+      id: "att-001",
+      originPath: "https://example.com/media/photo.jpg",
+      mimeType: "image/jpeg",
+    })
+    wireIntegrationLookup()
+
+    // A 5xx is transient: the handler must rethrow so BullMQ retries it.
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(makeFetchResponse({ ok: false })),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(coexistAttachmentDownload(BASE_DATA)).rejects.toThrow()
+    expect(mockPutObject).not.toHaveBeenCalled()
+    expect(mockLoggerError).toHaveBeenCalled()
 
     vi.unstubAllGlobals()
   })

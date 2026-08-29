@@ -1,3 +1,4 @@
+import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -12,6 +13,7 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
@@ -24,6 +26,8 @@ export const IntegrationJobAction = {
   incomingComment: "incomingComment",
   updateIncomingComment: "updateIncomingComment",
   deleteIncomingComment: "deleteIncomingComment",
+  deleteIncomingMessage: "deleteIncomingMessage",
+  messageReaction: "messageReaction",
   messageStatus: "messageStatus",
   runFlowPostback: "runFlowPostback",
   runFlowQuickReply: "runFlowQuickReply",
@@ -104,6 +108,27 @@ export type IntegrationJobDeleteIncomingComment = {
     integrationType: string
     integrationIdentifier: string
     commentId: string
+  }
+}
+
+export type IntegrationJobDeleteIncomingMessage = {
+  type: typeof IntegrationJobAction.deleteIncomingMessage
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    messageId: string
+  }
+}
+
+export type IntegrationJobMessageReaction = {
+  type: typeof IntegrationJobAction.messageReaction
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    messageId: string
+    action: "react" | "unreact"
+    emoji?: string
+    contactSourceId: string
   }
 }
 
@@ -397,11 +422,20 @@ export type IntegrationJobSendMetaCapiEvent = {
   }
 }
 
+/**
+ * `channel`/`integrationId` generalize this beyond WhatsApp (Amendment A1:
+ * Messenger also supports the `templateSent` trigger — see
+ * `apps/worker/src/chat/handlers/send-messenger-template.ts`). Instagram has
+ * no template entity, so `channel` is only ever `"whatsapp"` or `"messenger"`
+ * here in practice, though the type stays the full `AdsConversionChannel` to
+ * match `evaluateTemplateSentInput` 1:1 for a thin pass-through.
+ */
 export type AdsConversionJobEvaluateTemplateSent = {
   type: typeof IntegrationJobAction.evaluateTemplateSent
   data: {
     workspaceId: string
-    integrationWhatsappId: string
+    channel: AdsConversionChannel
+    integrationId: string
     contactInboxId: string
     templateId: string
   }
@@ -413,12 +447,15 @@ export type AdsConversionJobEvaluateTemplateSent = {
  * `occurrence` discriminant carries just enough context for
  * `adsConversionService.evaluateConversionTrigger` to match it against each
  * enabled rule's `trigger` — see `packages/business/src/ads-conversion/schema.ts`.
+ * `channel`/`integrationId` generalize the previous WhatsApp-only
+ * `integrationWhatsappId` field (Phase 2 generalization).
  */
 export type AdsConversionJobEvaluateConversionTrigger = {
   type: typeof IntegrationJobAction.evaluateConversionTrigger
   data: {
     workspaceId: string
-    integrationWhatsappId: string
+    channel: AdsConversionChannel
+    integrationId: string
     contactInboxId: string
     occurrence:
       | { type: "tagApplied"; tagId: string }
@@ -427,6 +464,13 @@ export type AdsConversionJobEvaluateConversionTrigger = {
   }
 }
 
+/**
+ * `channel`/`integrationMessengerId`/`integrationInstagramId` widen this
+ * beyond WhatsApp (Phase 3 retarget chain widening) — additive next to the
+ * pre-existing `integrationWhatsappId` field so an omitted `channel` keeps
+ * every pre-Phase-3 caller's WhatsApp-or-any-account behavior unchanged.
+ * Mirrors `RetargetAdInput` in `packages/business/src/ads-conversion/schema.ts`.
+ */
 export type AdsConversionJobSyncRetargetAudience = {
   type: typeof IntegrationJobAction.syncRetargetAudience
   data: {
@@ -435,6 +479,9 @@ export type AdsConversionJobSyncRetargetAudience = {
     segment: "conversations" | "leads" | "purchases"
     adId?: string | null
     integrationWhatsappId?: string
+    channel?: AdsConversionChannel
+    integrationMessengerId?: string
+    integrationInstagramId?: string
     since: string
     until: string
   }
@@ -542,6 +589,8 @@ export type IntegrationJobData =
   | IntegrationJobReceiveComment
   | IntegrationJobUpdateIncomingComment
   | IntegrationJobDeleteIncomingComment
+  | IntegrationJobDeleteIncomingMessage
+  | IntegrationJobMessageReaction
   | IntegrationJobMessageStatus
   | IntegrationJobRunFlowNode
   | IntegrationJobSendFlowPostback
@@ -574,13 +623,12 @@ export type IntegrationJobData =
   | AdsConversionJobEvaluateConversionTrigger
   | AdsConversionJobSyncRetargetAudience
 
-export const integrationQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<IntegrationJobData>(queueNames.enum.integration, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const integrationQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<IntegrationJobData>(queueNames.enum.integration, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })
 
 // Ads-conversion jobs need a stronger retry policy than the integration
 // queue default (`attempts: 2` / 5s) — CAPI sends and retarget syncs call

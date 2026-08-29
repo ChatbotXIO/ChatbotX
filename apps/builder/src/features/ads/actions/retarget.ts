@@ -4,6 +4,7 @@ import {
   buildContext,
   integrationFacebookAdsService,
 } from "@chatbotx.io/business"
+import { adsConversionChannelSchema } from "@chatbotx.io/database/schema"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import {
@@ -25,6 +26,13 @@ const retargetAdRequest = z
     segment: z.enum(["conversations", "leads", "purchases"]),
     adId: z.string().trim().min(1).nullable().optional(),
     integrationWhatsappId: zodBigintAsString().optional(),
+    // `channel`/`integrationMessengerId`/`integrationInstagramId` widen this
+    // beyond WhatsApp (Phase 3 retarget chain widening) — additive next to
+    // `integrationWhatsappId`, omitted keeps every pre-Phase-3 caller's
+    // behavior unchanged. Mirrors `RetargetAdInput` (business schema).
+    channel: adsConversionChannelSchema.optional(),
+    integrationMessengerId: zodBigintAsString().optional(),
+    integrationInstagramId: zodBigintAsString().optional(),
     since: z.string().trim().min(1),
     until: z.string().trim().min(1),
     adAccountId: z.string().trim().min(1),
@@ -48,15 +56,25 @@ function buildRetargetJobId(input: {
   segment: RetargetAdRequest["segment"]
   adId?: string | null
   integrationWhatsappId?: string
+  channel?: RetargetAdRequest["channel"]
+  integrationMessengerId?: string
+  integrationInstagramId?: string
   since: string
   until: string
 }): string {
+  const accountKey =
+    input.integrationMessengerId ??
+    input.integrationInstagramId ??
+    input.integrationWhatsappId ??
+    "all-accounts"
+
   return [
     "ads-retarget",
     input.workspaceId,
     input.customAudienceId,
     input.segment,
-    input.integrationWhatsappId ?? "all-accounts",
+    input.channel ?? "whatsapp",
+    accountKey,
     input.since,
     input.until,
     input.adId ?? "all",
@@ -112,6 +130,9 @@ export const retargetAdAction = workspaceActionClient
             segment: parsedInput.segment,
             adId: parsedInput.adId,
             integrationWhatsappId: parsedInput.integrationWhatsappId,
+            channel: parsedInput.channel,
+            integrationMessengerId: parsedInput.integrationMessengerId,
+            integrationInstagramId: parsedInput.integrationInstagramId,
             since: parsedInput.since,
             until: parsedInput.until,
           },
@@ -123,6 +144,9 @@ export const retargetAdAction = workspaceActionClient
             segment: parsedInput.segment,
             adId: parsedInput.adId,
             integrationWhatsappId: parsedInput.integrationWhatsappId,
+            channel: parsedInput.channel,
+            integrationMessengerId: parsedInput.integrationMessengerId,
+            integrationInstagramId: parsedInput.integrationInstagramId,
             since: parsedInput.since,
             until: parsedInput.until,
           }),

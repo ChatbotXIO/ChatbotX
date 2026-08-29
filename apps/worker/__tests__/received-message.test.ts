@@ -38,6 +38,7 @@ const {
   mockChatQueueAdd,
   mockSyncScopedIdentity,
   mockIsUniqueViolationError,
+  mockDetectFlowVersion,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -111,6 +112,7 @@ const {
       }),
     ),
     mockIsUniqueViolationError: vi.fn().mockReturnValue(false),
+    mockDetectFlowVersion: vi.fn(),
   }
 })
 
@@ -287,6 +289,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+vi.mock("../src/lib/db", () => ({
+  detectFlowVersion: mockDetectFlowVersion,
 }))
 
 vi.mock("../src/services/integrations", () => ({
@@ -801,6 +807,110 @@ describe("receiveMessage — message repository branch", () => {
     })
   })
 
+  test("replaces a raw postback payload echo with the flow button label", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockDetectFlowVersion.mockResolvedValue({
+      flowVersion: {
+        id: "fv-1",
+        nodes: [
+          {
+            id: "node-1",
+            data: {
+              details: {
+                steps: [
+                  {
+                    buttons: [
+                      {
+                        id: "77",
+                        label: "Xem sản phẩm",
+                        buttonType: "nextStep",
+                        beforeStep: null,
+                        steps: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      useLatestFlowVersion: true,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: `postback_${postbackAction}`,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+    expect(mockDetectFlowVersion).toHaveBeenCalledWith({
+      flowId: "42",
+      flowVersionId: undefined,
+      workspaceId: "ws-1",
+    })
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Xem sản phẩm" }),
+    )
+    expect(mockUpdateTracking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ lastBtnTitle: "Xem sản phẩm" }),
+      }),
+    )
+    expect(mockAutomatedResponseEnqueueFlowAction).toHaveBeenCalledWith({
+      kind: "postback",
+      data: expect.objectContaining({ action: postbackAction }),
+    })
+  })
+
+  test("keeps the raw postback text when the flow can no longer be resolved", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockDetectFlowVersion.mockRejectedValue(new Error("FlowVersion not found"))
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: `postback_${postbackAction}`,
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "zalo" })
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: `postback_${postbackAction}` }),
+    )
+  })
+
+  test("does not rewrite text when the channel already supplies a button title", async () => {
+    const postbackAction = encodeButtonPayload({ flowId: "42", buttonId: "77" })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction,
+      quickReplyAction: null,
+      buttonTitle: "Nút Messenger",
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockDetectFlowVersion).not.toHaveBeenCalled()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "hello" }),
+    )
+  })
+
   test("sends Vietnamese feedback instead of going silent when an appointment cancel token is invalid", async () => {
     mockParseAppointmentCancelPostback.mockReturnValue("cancel-token")
     mockVerifyAppointmentCancelPostback.mockRejectedValue(
@@ -1007,6 +1117,18 @@ describe("receiveMessage — new contact MAC gate", () => {
     // `contacts` is recorded inside createNewContactWithMac now, so the handler
     // must not increment it separately (avoids double-counting).
     expect(mockQuotaIncrement).not.toHaveBeenCalled()
+    // Threads the freshly-created ContactInbox id — not merely the contact
+    // id — so a Trigger action reacting to newContact attributes to THIS
+    // channel instead of falling back to most-recent-inbox.
+    const { emitContactCreated } = await import("@chatbotx.io/events")
+    expect(emitContactCreated).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-new",
+      "Test",
+      undefined,
+      undefined,
+      "ci-new",
+    )
   })
 
   test("still fetches getProfile for an outgoing webhook echo when creating a new contact", async () => {
@@ -1479,6 +1601,136 @@ describe("receiveMessage — new contact MAC gate", () => {
     await receiveMessage(baseProps)
 
     expect(mockContactUpdate).not.toHaveBeenCalled()
+  })
+})
+
+describe("receiveMessage — referral-only events", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+
+    // Existing contact inbox (returning contact receiving a standalone
+    // `messaging_referrals` webhook on an already-open thread) — no new
+    // contact/MAC gate involved.
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: fakeContact,
+    })
+    mockFindOrFail.mockResolvedValue(fakeConversation)
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
+
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
+    mockWorkspaceIsActiveNow.mockReturnValue(true)
+  })
+
+  test("persists ContactInbox.referral without creating a Message row", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: null,
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: "ad-ref",
+      referralSource: "ADS",
+      referral: {
+        ref: "ad-ref",
+        source: "ADS",
+        type: "OPEN_THREAD",
+        adId: "ad-9",
+      },
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(result.message).toBeNull()
+    expect(mockUpdateTracking).toHaveBeenCalledWith({
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      data: {
+        referral: {
+          ref: "ad-ref",
+          source: "ADS",
+          type: "OPEN_THREAD",
+          adId: "ad-9",
+        },
+      },
+    })
+    // Distinguishes this call from the `persistNewMessageSideEffects` path,
+    // which always passes `tx` — this call runs standalone and
+    // self-invalidates the tracking cache.
+    expect(mockUpdateTracking).not.toHaveBeenCalledWith(
+      expect.objectContaining({ tx: expect.anything() }),
+    )
+  })
+
+  test("propagates a referral-only tracking persist failure instead of swallowing it", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: null,
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: "ad-ref",
+      referralSource: "ADS",
+      referral: {
+        ref: "ad-ref",
+        source: "ADS",
+        type: "OPEN_THREAD",
+        adId: "ad-9",
+      },
+    })
+    mockUpdateTracking.mockRejectedValueOnce(new Error("db unavailable"))
+
+    // A transient `updateTracking` failure here must fail the BullMQ job so
+    // it retries — otherwise CTM/CTID referral attribution is silently lost
+    // forever (the job "succeeds" with no persisted referral). It must NOT
+    // be caught and downgraded to a warning.
+    await expect(receiveMessage(baseProps)).rejects.toThrow("db unavailable")
+  })
+
+  test("does not persist tracking when there is no referral and no message", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: null,
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockUpdateTracking).not.toHaveBeenCalled()
+  })
+
+  test("still enqueues the ref job for a referral-only event on an active workspace", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: null,
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: "ad-ref",
+      referralSource: "ADS",
+      referral: { ref: "ad-ref", source: "ADS", type: "OPEN_THREAD" },
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "runRef",
+      expect.objectContaining({
+        type: "runRef",
+        data: expect.objectContaining({ ref: "ad-ref" }),
+      }),
+    )
   })
 })
 

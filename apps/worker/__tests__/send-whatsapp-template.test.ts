@@ -427,7 +427,8 @@ describe("processWhatsappTemplate", () => {
         type: "evaluateTemplateSent",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-1",
+          channel: "whatsapp",
+          integrationId: "iw-1",
           contactInboxId: "ci-1",
           templateId: "tmpl-wa-1",
         },
@@ -530,6 +531,179 @@ describe("processWhatsappTemplate", () => {
         }),
       }),
     )
+  })
+})
+
+describe("processWhatsappTemplate — template quick-reply flow routing", () => {
+  const quickReplyTemplateComponents = [
+    {
+      type: "BUTTONS",
+      buttons: [
+        { type: "URL", text: "Open", url: "https://example.com" },
+        { type: "QUICK_REPLY", text: "Stop" },
+      ],
+    },
+  ]
+
+  const statusButtons = [
+    { id: "btn-delivered", label: "Delivered" },
+    { id: "btn-failed", label: "Failed" },
+  ]
+  const quickReplyButton = { id: "btn-qr", label: "Stop" }
+
+  const flowWithQuickReply = {
+    id: "flow-1",
+    versionId: "fv-1",
+    buttons: [...statusButtons, quickReplyButton] as unknown as NonNullable<
+      ProcessWhatsappTemplateParams["flow"]
+    >["buttons"],
+  }
+
+  const encodedFlowButtons = [
+    {
+      id: "btn-delivered",
+      label: "Delivered",
+      buttonType: "postback",
+      postback: "flow-1:fv-1:btn-delivered",
+    },
+    {
+      id: "btn-failed",
+      label: "Failed",
+      buttonType: "postback",
+      postback: "flow-1:fv-1:btn-failed",
+    },
+    {
+      id: "btn-qr",
+      label: "Stop",
+      buttonType: "postback",
+      postback: "flow-1:fv-1:btn-qr",
+    },
+  ]
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockCreateMessageRepository.mockResolvedValue({
+      create: mockRepositoryCreate,
+      updateSourceId: mockRepositoryUpdateSourceId,
+    })
+    mockValidateTemplate.mockResolvedValue({
+      inbox: { integrationWhatsapp: { id: "iw-1" } },
+      template: {
+        id: "tmpl-wa-1",
+        name: "wa-template",
+        language: "en",
+        components: quickReplyTemplateComponents,
+      },
+    })
+    mockReplaceVariables.mockResolvedValue({})
+    mockContactVariables.mockResolvedValue([])
+    mockSendFlowStep.mockResolvedValue({ messageIds: ["provider-wa-1"] })
+    mockConvertButtons.mockReturnValue(encodedFlowButtons)
+    mockEmit.mockResolvedValue(undefined)
+  })
+
+  test("injects a quick_reply param whose payload is the seeded button's encoded postback", async () => {
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      flow: flowWithQuickReply,
+    })
+
+    const sentStep = mockSendFlowStep.mock.calls[0][0].step
+    expect(sentStep.template.params.button).toEqual([
+      { sub_type: "quick_reply", index: 1, payload: "flow-1:fv-1:btn-qr" },
+    ])
+  })
+
+  test("passes metadata into button conversion so postbacks carry broadcast/sequence context", async () => {
+    const metadata = { broadcastId: "broadcast-9" } as never
+
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      flow: flowWithQuickReply,
+      metadata,
+    })
+
+    expect(mockConvertButtons).toHaveBeenCalledWith(
+      expect.objectContaining({
+        flowId: "flow-1",
+        flowVersionId: "fv-1",
+        contactInboxId: "ci-1",
+        metadata,
+      }),
+    )
+  })
+
+  test("stores the flow buttons on the message payload for status routing and inbox rendering", async () => {
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      flow: flowWithQuickReply,
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          payload: { templateType: "button", buttons: encodedFlowButtons },
+        }),
+      }),
+    )
+  })
+
+  test("a legacy manually-typed payload at the same index is replaced by the generated postback", async () => {
+    // Old form let users type a payload; once the button is connected to a
+    // flow branch, the generated postback must win or the branch never routes
+    // (send-layer dedupe keeps the first content-bearing entry).
+    mockReplaceVariables.mockResolvedValue({
+      button: [{ sub_type: "quick_reply", index: 1, payload: "OLD_MANUAL" }],
+    })
+
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      flow: flowWithQuickReply,
+    })
+
+    const sentStep = mockSendFlowStep.mock.calls[0][0].step
+    expect(sentStep.template.params.button).toEqual([
+      { sub_type: "quick_reply", index: 1, payload: "flow-1:fv-1:btn-qr" },
+    ])
+  })
+
+  test("legacy steps with only status buttons inject nothing (Meta default applies)", async () => {
+    mockConvertButtons.mockReturnValue(encodedFlowButtons.slice(0, 2))
+
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+      flow: {
+        ...flowWithQuickReply,
+        buttons: statusButtons as unknown as NonNullable<
+          ProcessWhatsappTemplateParams["flow"]
+        >["buttons"],
+      },
+    })
+
+    const sentStep = mockSendFlowStep.mock.calls[0][0].step
+    expect(sentStep.template.params.button).toBeUndefined()
+  })
+
+  test("broadcast sends (no flow) inject nothing and skip button conversion", async () => {
+    await processWhatsappTemplate({
+      conversation: fakeConversation,
+      contactInbox: fakeContactInbox,
+      template: fakeTemplate,
+    })
+
+    expect(mockConvertButtons).not.toHaveBeenCalled()
+    const sentStep = mockSendFlowStep.mock.calls[0][0].step
+    expect(sentStep.template.params.button).toBeUndefined()
   })
 })
 

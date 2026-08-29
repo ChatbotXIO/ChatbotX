@@ -8,7 +8,8 @@ const {
   mockInsert,
   mockInsertValues,
   mockResolveByNameAndType,
-  mockRemapCustomFieldReferences,
+  mockBotFieldResolveByNameAndType,
+  mockRemapFlowGraphReferences,
   mockFolderFind,
 } = vi.hoisted(() => {
   const mockInsertValues = vi.fn().mockResolvedValue(undefined)
@@ -20,7 +21,8 @@ const {
     mockInsert,
     mockInsertValues,
     mockResolveByNameAndType: vi.fn(),
-    mockRemapCustomFieldReferences: vi.fn(),
+    mockBotFieldResolveByNameAndType: vi.fn(),
+    mockRemapFlowGraphReferences: vi.fn(),
     mockFolderFind: vi.fn(),
   }
 })
@@ -49,7 +51,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
-  remapCustomFieldReferences: mockRemapCustomFieldReferences,
+  remapFlowGraphReferences: mockRemapFlowGraphReferences,
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({
@@ -66,6 +68,10 @@ vi.mock("../src/errors", () => ({
 
 vi.mock("../src/flow-version", () => ({
   flowVersionService: { findDraft: vi.fn() },
+}))
+
+vi.mock("../src/bot-field/service", () => ({
+  botFieldService: { resolveByNameAndType: mockBotFieldResolveByNameAndType },
 }))
 
 vi.mock("../src/custom-field/service", () => ({
@@ -91,7 +97,11 @@ describe("flowService.importFlowExport", () => {
       idMap: new Map([["date:birthday", "target-42"]]),
       createdIds: ["target-42"],
     })
-    mockRemapCustomFieldReferences.mockReturnValue({
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockReturnValue({
       nodes: [{ id: "1", inputFieldId: "target-42" }],
       edges: [],
     })
@@ -109,6 +119,7 @@ describe("flowService.importFlowExport", () => {
       nodes: [{ id: "1", inputFieldId: "source-42" }] as never,
       edges: [] as never,
       customFields: { "source-42": { name: "Birthday", type: "date" } },
+      botFields: {},
     })
 
     expect(mockResolveByNameAndType).toHaveBeenCalledWith({
@@ -116,13 +127,23 @@ describe("flowService.importFlowExport", () => {
       fields: [{ name: "Birthday", type: "date" }],
       tx: transaction,
     })
-    expect(mockRemapCustomFieldReferences).toHaveBeenCalledWith(
+    expect(mockBotFieldResolveByNameAndType).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      fields: [],
+      tx: transaction,
+    })
+    expect(mockRemapFlowGraphReferences).toHaveBeenCalledWith(
       { nodes: [{ id: "1", inputFieldId: "source-42" }], edges: [] },
-      new Map([["source-42", "target-42"]]),
+      {
+        customField: new Map([["source-42", "target-42"]]),
+        botField: new Map(),
+      },
+      { kinds: ["customField", "botField"] },
     )
     expect(result).toEqual({
       flowId: "new-flow-id",
       createdCustomFieldIds: ["target-42"],
+      createdBotFieldIds: [],
     })
     // The remapped graph is not returned to the caller, so assert it reaches
     // the version row instead — that write is the only consumer.
@@ -135,6 +156,55 @@ describe("flowService.importFlowExport", () => {
     )
   })
 
+  test("resolves a bot field manifest entry into idMaps.botField", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map([["number:loyalty points", "target-bot-7"]]),
+      createdIds: ["target-bot-7"],
+    })
+    mockRemapFlowGraphReferences.mockReturnValue({
+      nodes: [{ id: "1", inputFieldId: "bot_field:target-bot-7" }],
+      edges: [],
+    })
+    mockCreateId
+      .mockReturnValueOnce("new-flow-id")
+      .mockReturnValueOnce("draft-version-id")
+      .mockReturnValueOnce("analytics-id")
+
+    const result = await flowService.importFlowExport({
+      workspaceId: "ws-1",
+      name: "Onboarding",
+      active: true,
+      enableInInbox: true,
+      startNodeId: "1",
+      nodes: [{ id: "1", inputFieldId: "bot_field:source-7" }] as never,
+      edges: [] as never,
+      customFields: {},
+      botFields: { "source-7": { name: "Loyalty Points", type: "number" } },
+    })
+
+    expect(mockBotFieldResolveByNameAndType).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      fields: [{ name: "Loyalty Points", type: "number" }],
+      tx: transaction,
+    })
+    expect(mockRemapFlowGraphReferences).toHaveBeenCalledWith(
+      { nodes: [{ id: "1", inputFieldId: "bot_field:source-7" }], edges: [] },
+      {
+        customField: new Map(),
+        botField: new Map([["source-7", "target-bot-7"]]),
+      },
+      { kinds: ["customField", "botField"] },
+    )
+    expect(result.createdBotFieldIds).toEqual(["target-bot-7"])
+  })
+
   test("an empty manifest short-circuits resolution: nodes pass through unmapped", async () => {
     mockDbTransaction.mockImplementation(async (callback) =>
       callback(transaction),
@@ -143,7 +213,11 @@ describe("flowService.importFlowExport", () => {
       idMap: new Map(),
       createdIds: [],
     })
-    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockImplementation((flow) => flow)
     mockCreateId
       .mockReturnValueOnce("new-flow-id")
       .mockReturnValueOnce("draft-version-id")
@@ -159,6 +233,7 @@ describe("flowService.importFlowExport", () => {
       nodes,
       edges: [] as never,
       customFields: {},
+      botFields: {},
     })
 
     expect(mockResolveByNameAndType).toHaveBeenCalledWith({
@@ -166,7 +241,13 @@ describe("flowService.importFlowExport", () => {
       fields: [],
       tx: transaction,
     })
+    expect(mockBotFieldResolveByNameAndType).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      fields: [],
+      tx: transaction,
+    })
     expect(result.createdCustomFieldIds).toEqual([])
+    expect(result.createdBotFieldIds).toEqual([])
   })
 
   test("a failed flow insert rolls back and leaves no orphaned custom fields (whole call rejects)", async () => {
@@ -177,7 +258,11 @@ describe("flowService.importFlowExport", () => {
       idMap: new Map([["date:birthday", "target-42"]]),
       createdIds: ["target-42"],
     })
-    mockRemapCustomFieldReferences.mockReturnValue({ nodes: [], edges: [] })
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockReturnValue({ nodes: [], edges: [] })
     mockCreateId.mockReturnValue("new-flow-id")
     mockInsertValues.mockRejectedValueOnce(new Error("insert failed"))
 
@@ -191,6 +276,7 @@ describe("flowService.importFlowExport", () => {
         nodes: [] as never,
         edges: [] as never,
         customFields: { "source-42": { name: "Birthday", type: "date" } },
+        botFields: {},
       }),
     ).rejects.toThrow("insert failed")
 
@@ -210,7 +296,11 @@ describe("flowService.importFlowExport", () => {
       idMap: new Map(),
       createdIds: [],
     })
-    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockImplementation((flow) => flow)
     mockFolderFind.mockResolvedValue({ id: "folder-1" })
     mockCreateId
       .mockReturnValueOnce("new-flow-id")
@@ -226,6 +316,7 @@ describe("flowService.importFlowExport", () => {
       nodes: [] as never,
       edges: [] as never,
       customFields: {},
+      botFields: {},
       folderId: "folder-1",
     })
 
@@ -248,7 +339,11 @@ describe("flowService.importFlowExport", () => {
       idMap: new Map(),
       createdIds: [],
     })
-    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockImplementation((flow) => flow)
     mockFolderFind.mockResolvedValue(undefined)
     mockCreateId
       .mockReturnValueOnce("new-flow-id")
@@ -264,6 +359,7 @@ describe("flowService.importFlowExport", () => {
       nodes: [] as never,
       edges: [] as never,
       customFields: {},
+      botFields: {},
       folderId: "deleted-folder",
     })
 
@@ -280,7 +376,11 @@ describe("flowService.importFlowExport", () => {
       idMap: new Map(),
       createdIds: [],
     })
-    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockImplementation((flow) => flow)
     mockCreateId
       .mockReturnValueOnce("new-flow-id")
       .mockReturnValueOnce("draft-version-id")
@@ -295,6 +395,7 @@ describe("flowService.importFlowExport", () => {
       nodes: [] as never,
       edges: [] as never,
       customFields: {},
+      botFields: {},
       folderId: "0",
     })
 
@@ -312,7 +413,11 @@ describe("flowService.importFlowExport", () => {
       idMap: new Map(),
       createdIds: [],
     })
-    mockRemapCustomFieldReferences.mockImplementation((flow) => flow)
+    mockBotFieldResolveByNameAndType.mockResolvedValue({
+      idMap: new Map(),
+      createdIds: [],
+    })
+    mockRemapFlowGraphReferences.mockImplementation((flow) => flow)
     mockCreateId
       .mockReturnValueOnce("new-flow-id")
       .mockReturnValueOnce("draft-version-id")
@@ -327,6 +432,7 @@ describe("flowService.importFlowExport", () => {
       nodes: [] as never,
       edges: [] as never,
       customFields: {},
+      botFields: {},
     })
 
     expect(mockFolderFind).not.toHaveBeenCalled()

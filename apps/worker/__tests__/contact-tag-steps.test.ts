@@ -253,10 +253,16 @@ function addProps(
   } as unknown as Parameters<typeof addContactTag>[0]
 }
 
-function removeProps(tags: string[], workspaceId = "ws-1", contactId = "c-1") {
+function removeProps(
+  tags: string[],
+  workspaceId = "ws-1",
+  contactId = "c-1",
+  contactInbox?: { id: string; inboxId: string; channel: string },
+) {
   return {
     conversation: { workspaceId, contactId },
     step: { tags },
+    contactInbox,
   } as unknown as Parameters<typeof removeContactTag>[0]
 }
 
@@ -267,6 +273,7 @@ function removeSequenceProps(
 ) {
   return {
     conversation: { workspaceId, contactId },
+    contactInbox: { id: "ci-1" },
     step: { sequenceId },
   } as unknown as Parameters<typeof removeContactSequence>[0]
 }
@@ -278,6 +285,7 @@ function addSequenceProps(
 ) {
   return {
     conversation: { workspaceId, contactId },
+    contactInbox: { id: "ci-1" },
     step: { sequenceId },
   } as unknown as Parameters<typeof addContactSequence>[0]
 }
@@ -285,6 +293,7 @@ function addSequenceProps(
 function unsubscribeBroadcastProps(workspaceId = "ws-1", contactId = "c-1") {
   return {
     conversation: { workspaceId, contactId },
+    contactInbox: { id: "ci-1" },
   } as unknown as Parameters<typeof unsubscribeBroadcast>[0]
 }
 
@@ -351,6 +360,7 @@ describe("removeContactSequence", () => {
       contactId: "c-1",
       sequenceIds: ["seq-1"],
       reason: "unsubscribed_via_flow",
+      contactInboxId: "ci-1",
     })
     expect(cancelPendingDispatchesMock).not.toHaveBeenCalled()
     expect(removeDispatchesFromScheduleMock).not.toHaveBeenCalled()
@@ -393,6 +403,7 @@ describe("addContactSequence", () => {
       "c-1",
       "seq-1",
       "Welcome",
+      "ci-1",
     )
   })
 
@@ -417,7 +428,7 @@ describe("unsubscribeBroadcast", () => {
 
     const { db } = await import("@chatbotx.io/database/client")
     expect(db.update).toHaveBeenCalled()
-    expect(emitContactUnsubscribed).toHaveBeenCalledWith("ws-1", "c-1")
+    expect(emitContactUnsubscribed).toHaveBeenCalledWith("ws-1", "c-1", "ci-1")
   })
 })
 
@@ -445,7 +456,12 @@ describe("addContactTag", () => {
     )
 
     expect(emitTagApplied).toHaveBeenCalledTimes(1)
-    expect(emitTagApplied).toHaveBeenCalledWith("ws-1", "c-1", "tag-1")
+    expect(emitTagApplied).toHaveBeenCalledWith(
+      "ws-1",
+      "c-1",
+      "tag-1",
+      undefined,
+    )
   })
 
   test("does NOT enqueue or emit when all pairs already exist (empty RETURNING)", async () => {
@@ -488,7 +504,12 @@ describe("addContactTag", () => {
       contactId: "c-77",
       tagId: "tag-9",
     })
-    expect(emitTagApplied).toHaveBeenCalledWith("ws-42", "c-77", "tag-9")
+    expect(emitTagApplied).toHaveBeenCalledWith(
+      "ws-42",
+      "c-77",
+      "tag-9",
+      undefined,
+    )
   })
 
   test("enqueues the ads conversion tagApplied evaluation when a WhatsApp contactInbox is in scope", async () => {
@@ -506,6 +527,7 @@ describe("addContactTag", () => {
     expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledTimes(1)
     expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledWith({
       workspaceId: "ws-1",
+      channel: "whatsapp",
       inboxId: "inbox-1",
       contactInboxId: "ci-1",
       tagIds: ["tag-1"],
@@ -590,8 +612,18 @@ describe("removeContactTag", () => {
     })
 
     expect(emitTagRemoved).toHaveBeenCalledTimes(2)
-    expect(emitTagRemoved).toHaveBeenCalledWith("ws-1", "c-1", "tag-1")
-    expect(emitTagRemoved).toHaveBeenCalledWith("ws-1", "c-1", "tag-2")
+    expect(emitTagRemoved).toHaveBeenCalledWith(
+      "ws-1",
+      "c-1",
+      "tag-1",
+      undefined,
+    )
+    expect(emitTagRemoved).toHaveBeenCalledWith(
+      "ws-1",
+      "c-1",
+      "tag-2",
+      undefined,
+    )
   })
 
   test("uses workspaceId and contactId from the conversation", async () => {

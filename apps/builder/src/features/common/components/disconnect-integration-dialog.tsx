@@ -46,7 +46,7 @@ export function DisconnectIntegrationDialog({
           render={
             trigger ??
             (isDelete ? (
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="destructive">
                 <Trash aria-hidden="true" className="me-2 size-4" />
                 {t("actions.delete")}
               </Button>

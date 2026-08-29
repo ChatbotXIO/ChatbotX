@@ -1,5 +1,5 @@
+import { validateCustomFieldValue } from "@chatbotx.io/business/javascript-execution"
 import { describe, expect, it } from "vitest"
-import { validateCustomFieldValue } from "../src/default/handlers/imports/validations/custom-field-value"
 
 describe("validateCustomFieldValue", () => {
   describe("shortText / longText", () => {
@@ -46,6 +46,12 @@ describe("validateCustomFieldValue", () => {
       ["-42.5", "-42.5"],
       ["0", "0"],
       ["1.5e2", "150"],
+      // Widened from the old hand-rolled NUMERIC_RE regex to everything JS
+      // `Number()` accepts — same shared canonicalizer (`canonicalNumberLiteral`)
+      // the runtime-coercion write path uses; see @chatbotx.io/utils/custom-field.
+      ["+1", "1"],
+      ["1.", "1"],
+      ["0x10", "16"],
     ])("accepts %s -> %s", (raw, normalized) => {
       expect(validateCustomFieldValue("number", raw)).toBe(normalized)
     })
@@ -63,19 +69,45 @@ describe("validateCustomFieldValue", () => {
   })
 
   describe("boolean", () => {
+    // Widened from the old true/false/1/0 allowlist to the full Postgres
+    // boolean-literal vocabulary shared with the SQL filter guard and the
+    // runtime coercion normalizer — see @chatbotx.io/utils/custom-field.
     it.each([
       ["true", "true"],
       ["TRUE", "true"],
       ["1", "true"],
+      ["t", "true"],
+      ["T", "true"],
+      ["y", "true"],
+      ["yes", "true"],
+      ["YES", "true"],
+      ["on", "true"],
       ["false", "false"],
       ["FALSE", "false"],
       ["0", "false"],
+      ["f", "false"],
+      ["n", "false"],
+      ["no", "false"],
+      ["NO", "false"],
+      ["off", "false"],
+      ["  TRUE  ", "true"],
     ])("normalizes %s -> %s", (raw, normalized) => {
       expect(validateCustomFieldValue("boolean", raw)).toBe(normalized)
     })
 
-    it.each([["yes"], ["no"], ["t"], ["'=true"], [""]])("drops %s", (raw) => {
-      expect(validateCustomFieldValue("boolean", raw)).toBeNull()
+    it("drops a blank cell (skipped before normalization, not coerced)", () => {
+      expect(validateCustomFieldValue("boolean", "")).toBeNull()
+    })
+
+    // Generous coercion policy (user-confirmed): any non-blank unrecognized
+    // value coerces to "true" rather than being dropped — nobody has to type
+    // the literal exactly.
+    it.each([
+      ["'=true"],
+      ["12313"],
+      ["maybe"],
+    ])("coerces unrecognized non-blank %s -> true", (raw) => {
+      expect(validateCustomFieldValue("boolean", raw)).toBe("true")
     })
   })
 

@@ -8,6 +8,7 @@ import {
 import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -21,6 +22,7 @@ import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
+import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
@@ -57,100 +59,108 @@ async function startScheduleWorker() {
 
   const worker = new Worker(
     queueNames.enum.schedule,
-    async (job: Job<ScheduleJobData>) => {
-      switch (job.data.type) {
-        case ScheduleJobData.enqueueBroadcast:
-          await enqueueBroadcast()
-          return
+    async (job: Job<ScheduleJobData>) =>
+      runJobWithAuditContext(
+        { source: `schedule:${job.data.type}` },
+        async () => {
+          switch (job.data.type) {
+            case ScheduleJobData.enqueueBroadcast:
+              await enqueueBroadcast()
+              return
 
-        case ScheduleJobData.prepareBroadcast:
-          await prepareBroadcast(job.data.data.broadcastId)
-          return
+            case ScheduleJobData.prepareBroadcast:
+              await prepareBroadcast(job.data.data.broadcastId)
+              return
 
-        case ScheduleJobData.sendBroadcast:
-          await processBroadcastContacts(job.data.data.broadcastId)
-          return
+            case ScheduleJobData.sendBroadcast:
+              await processBroadcastContacts(job.data.data.broadcastId)
+              return
 
-        case ScheduleJobData.finalizeBroadcasts:
-          await finalizeBroadcasts()
-          return
+            case ScheduleJobData.finalizeBroadcasts:
+              await finalizeBroadcasts()
+              return
 
-        case ScheduleJobData.reconcileBroadcasts:
-          await reconcileBroadcasts()
-          return
+            case ScheduleJobData.reconcileBroadcasts:
+              await reconcileBroadcasts()
+              return
 
-        case ScheduleJobData.evaluateTriggers:
-          await scanDateTimeTriggers()
-          return
+            case ScheduleJobData.evaluateTriggers:
+              await scanDateTimeTriggers()
+              return
 
-        case ScheduleJobData.cleanupTriggers:
-          await cleanupTriggerExecutions()
-          return
+            case ScheduleJobData.cleanupTriggers:
+              await cleanupTriggerExecutions()
+              return
 
-        case ScheduleJobData.evaluateDateTimeWebhooks:
-          await scanDateTimeWebhooks()
-          return
+            case ScheduleJobData.evaluateDateTimeWebhooks:
+              await scanDateTimeWebhooks()
+              return
 
-        case ScheduleJobData.cleanupWebhookExecutions:
-          await cleanupWebhookExecutions()
-          return
+            case ScheduleJobData.cleanupWebhookExecutions:
+              await cleanupWebhookExecutions()
+              return
 
-        case ScheduleJobData.scanSmartDelay:
-          await scanSmartDelay()
-          return
+            case ScheduleJobData.scanSmartDelay:
+              await scanSmartDelay()
+              return
 
-        case ScheduleJobData.scanAppointmentReminders:
-          await scanAppointmentReminders(job.data.data)
-          return
+            case ScheduleJobData.scanAppointmentReminders:
+              await scanAppointmentReminders(job.data.data)
+              return
 
-        case ScheduleJobData.syncUserQuota:
-          await syncUserQuota()
-          return
+            case ScheduleJobData.syncUserQuota:
+              await syncUserQuota()
+              return
 
-        case ScheduleJobData.reconcileTenants:
-          await reconcileTenants()
-          return
+            case ScheduleJobData.reconcileTenants:
+              await reconcileTenants()
+              return
 
-        case ScheduleJobData.maintainMacPartitions:
-          await maintainMacPartitions()
-          return
+            case ScheduleJobData.maintainMacPartitions:
+              await maintainMacPartitions()
+              return
 
-        case ScheduleJobData.scanCoexistRuns:
-          await scanCoexistRuns()
-          return
+            case ScheduleJobData.scanCoexistRuns:
+              await scanCoexistRuns()
+              return
 
-        case ScheduleJobData.reconcileMetaCatalogSyncs:
-          await reconcileMetaCatalogSyncs()
-          return
+            case ScheduleJobData.reconcileMetaCatalogSyncs:
+              await reconcileMetaCatalogSyncs()
+              return
 
-        case ScheduleJobData.purgeCoexistStaging:
-          await purgeCoexistStaging()
-          return
+            case ScheduleJobData.purgeCoexistStaging:
+              await purgeCoexistStaging()
+              return
 
-        case ScheduleJobData.purgeWhatsappSignupSessions:
-          await purgeWhatsappSignupSessions()
-          return
+            case ScheduleJobData.purgeWhatsappSignupSessions:
+              await purgeWhatsappSignupSessions()
+              return
 
-        case ScheduleJobData.purgeWorkspaces:
-          await purgeWorkspaces()
-          return
+            case ScheduleJobData.purgeWorkspaces:
+              await purgeWorkspaces()
+              return
 
-        case ScheduleJobData.refreshChannelTokens:
-          await refreshChannelTokens()
-          return
+            case ScheduleJobData.purgeAutomationThrottle:
+              await purgeAutomationThrottle()
+              return
 
-        case ScheduleJobData.unsubscribeExpiredTrials:
-          await unsubscribeExpiredTrials(job.data.data.cursor)
-          return
+            case ScheduleJobData.refreshChannelTokens:
+              await refreshChannelTokens(job.data.data.channels)
+              return
 
-        case ScheduleJobData.teardownExpiredTrial:
-          await teardownExpiredTrial(job.data.data.userId)
-          return
+            case ScheduleJobData.unsubscribeExpiredTrials:
+              await unsubscribeExpiredTrials(job.data.data.cursor)
+              return
 
-        default:
-          logger.warn("Unknown schedule job type")
-      }
-    },
+            case ScheduleJobData.teardownExpiredTrial:
+              await teardownExpiredTrial(job.data.data.userId)
+              return
+
+            default:
+              logger.warn("Unknown schedule job type")
+          }
+        },
+      ),
     {
       connection: getRedisConnection(),
       ...defaultWorkerOptions,

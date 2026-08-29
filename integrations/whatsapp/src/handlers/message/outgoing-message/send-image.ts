@@ -10,7 +10,7 @@ export function* convertFlowStepImage(
   >[0],
 ) {
   const {
-    data: { step },
+    data: { step, contact },
   } = props
   const quickReplies = props.data.quickReplies ?? []
   if (step.buttons.length + quickReplies.length === 0) {
@@ -28,6 +28,7 @@ export function* convertFlowStepImage(
     metadata: props.data.metadata,
     bodyText: "",
     media: new Image(step.url),
+    contactInboxId: contact.id,
   })) {
     yield message
   }

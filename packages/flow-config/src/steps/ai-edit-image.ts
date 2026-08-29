@@ -1,6 +1,7 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
+import { zodFieldReference } from "../field-reference"
 import {
   errorStateDefaultFn,
   errorStateSchema,
@@ -48,7 +49,7 @@ export const aiEditImageSchema = z.object({
   prompt: z.string().trim().min(1),
   size: z.string().trim().min(1),
   quality: z.string().trim().min(1),
-  outputFieldId: z.string().trim().min(1),
+  outputFieldId: zodFieldReference(),
   states: z.tuple([successStateSchema, errorStateSchema]).optional(),
 })
 

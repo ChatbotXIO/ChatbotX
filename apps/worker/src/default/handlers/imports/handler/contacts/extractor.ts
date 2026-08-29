@@ -64,6 +64,15 @@ const pick = (
   column: string | undefined,
 ): unknown => (column ? row[column] : undefined)
 
+/**
+ * Reads one mapped column's cleaned value exactly the way the custom-field
+ * mapping does — used by the handler to collect bot-field-mapped values.
+ */
+export const readMappedColumnValue = (
+  row: Record<string, unknown>,
+  column: string,
+): string | undefined => cleanText(row[column], MAX_FIELD_LENGTH)
+
 const collectCustomFields = (
   row: Record<string, unknown>,
   fieldMapping: ContactImportFieldMapping | undefined,

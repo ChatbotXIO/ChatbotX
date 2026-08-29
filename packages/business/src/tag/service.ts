@@ -162,9 +162,20 @@ class TagService extends BaseService {
     workspaceId: string
     contactId: string
     tagIds: string[]
+    /**
+     * The `ContactInbox` this attach originated from, when the caller has one
+     * in scope. Threaded to the `tagApplied` event so an ads/CAPI trigger
+     * fired by this tag attributes to the originating integration's inbox
+     * instead of the contact's most-recently-active inbox.
+     */
+    contactInboxId?: string
     tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, contactId, tagIds, tx = db } = props
+    const { workspaceId, contactId, tagIds, contactInboxId, tx = db } = props
+
+    if (tagIds.length === 0) {
+      return
+    }
 
     await findOrFail({
       table: contactModel,
@@ -193,7 +204,7 @@ class TagService extends BaseService {
       .returning({ tagId: contactsToTagsModel.tagId })
 
     for (const pair of newlyAttached) {
-      emitTagApplied(workspaceId, contactId, pair.tagId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
+      emitTagApplied(workspaceId, contactId, pair.tagId, contactInboxId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
         .catch(() => {})
     }
     // One batch resolve+enqueue call for every newly-attached tag on this

@@ -22,3 +22,28 @@ export const listWhatsappMessageTemplatesResponse = z.array(
 export type ListWhatsappMessageTemplatesResponse = z.infer<
   typeof listWhatsappMessageTemplatesResponse
 >
+
+export const searchMetaCatalogProductsRequest = z.object({
+  workspaceId: zodBigintAsString(),
+  keyword: z.string().trim().max(200).optional(),
+})
+export type SearchMetaCatalogProductsRequest = z.infer<
+  typeof searchMetaCatalogProductsRequest
+>
+
+export const metaCatalogProductOptionResource = z.object({
+  retailerId: z.string(),
+  name: z.string(),
+  imageUrl: z.string().nullable(),
+})
+export type MetaCatalogProductOptionResource = z.infer<
+  typeof metaCatalogProductOptionResource
+>
+
+export const searchMetaCatalogProductsResponse = z.object({
+  connected: z.boolean(),
+  items: z.array(metaCatalogProductOptionResource),
+})
+export type SearchMetaCatalogProductsResponse = z.infer<
+  typeof searchMetaCatalogProductsResponse
+>

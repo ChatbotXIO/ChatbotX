@@ -11,6 +11,9 @@ import type { ChannelError } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
+import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
+import { platformCredentialService } from "../platform-credential/service"
+import { workspaceService } from "../workspace/service"
 
 export type RegistrationStatus = WhatsappRegistrationStatus
 
@@ -48,6 +51,8 @@ type ReplaceAuthInput = FindWorkspaceIntegrationInput & {
 type EnsureDatasetIdInput = FindWorkspaceIntegrationInput & {
   provision: (params: {
     wabaId: string
+    /** WABA display name — turn into the dataset name so it is not "unknown". */
+    wabaName: string
     accessToken: string
   }) => Promise<string>
 }
@@ -63,6 +68,13 @@ export const whatsappAuthForCapiScopeSchema = z.object({
   metadata: z.object({
     wabaId: z.string().trim().min(1),
   }),
+})
+
+// `isManual` is set only for manual token-entry connections; embedded-signup
+// (OAuth) connections leave it undefined. It gates whether the agency System
+// User has access to the WABA (see `resolveDatasetCreationTokens`).
+const whatsappConnectionTypeSchema = z.object({
+  metadata: z.object({ isManual: z.boolean().optional() }).optional(),
 })
 
 type ClaimVerificationCodeSlotInput = FindWorkspaceIntegrationInput & {
@@ -407,6 +419,8 @@ class IntegrationWhatsappService extends BaseService {
       throw new Error("WhatsApp integration not found")
     }
 
+    await this.audit("update", "reconnected the WhatsApp channel")
+
     return updated
   }
 
@@ -421,9 +435,21 @@ class IntegrationWhatsappService extends BaseService {
     }
 
     const auth = whatsappAuthForCapiScopeSchema.parse(existing.auth)
-    const datasetId = await input.provision({
-      wabaId: existing.wabaId,
-      accessToken: auth.tokens.accessToken,
+    const { primaryToken, fallbackToken } =
+      await this.resolveDatasetCreationTokens({
+        integration: existing,
+        workspaceId: input.workspaceId,
+        connectToken: auth.tokens.accessToken,
+      })
+    const datasetId = await createDatasetWithFallback({
+      primaryToken,
+      fallbackToken,
+      create: (accessToken) =>
+        input.provision({
+          wabaId: existing.wabaId,
+          wabaName: existing.name,
+          accessToken,
+        }),
     })
 
     const updated = await integrationWhatsappRepository.updateDatasetIdIfNull({
@@ -441,6 +467,52 @@ class IntegrationWhatsappService extends BaseService {
     }
 
     throw new Error("WhatsApp integration dataset id was not stored")
+  }
+
+  /**
+   * The `primaryToken` used to CREATE a Meta CAPI dataset for a WhatsApp
+   * integration, plus the `fallbackToken` to retry with when Meta rejects the
+   * primary for authorization reasons (see `createDatasetWithFallback`).
+   *
+   * Embedded-signup (OAuth) connections had the agency System User added to
+   * their WABA (`addSystemUser`), so the dataset is created with that
+   * system-user token — Meta then attributes the dataset "Creator" to the
+   * business, not the personal user who connected — falling back to the connect
+   * token if that system user cannot create the dataset. Manual token-entry
+   * connections have no such system user on their WABA, and owners without a
+   * WhatsApp credential have no system-user token, so both use the connect token
+   * with no fallback. Either way, provisioning never regresses.
+   */
+  async resolveDatasetCreationTokens(input: {
+    integration: { auth: unknown }
+    workspaceId: string
+    connectToken: string
+    tx?: DatabaseClient
+  }): Promise<{ primaryToken: string; fallbackToken: string | null }> {
+    const connection = whatsappConnectionTypeSchema.safeParse(
+      input.integration.auth,
+    )
+    if (connection.success && connection.data.metadata?.isManual) {
+      return { primaryToken: input.connectToken, fallbackToken: null }
+    }
+
+    const workspace = await workspaceService.findById({
+      id: input.workspaceId,
+      tx: input.tx,
+    })
+    const systemUserToken =
+      await platformCredentialService.resolveWhatsappSystemUserToken({
+        ownerId: workspace.ownerId,
+        tx: input.tx,
+      })
+    if (!systemUserToken) {
+      return { primaryToken: input.connectToken, fallbackToken: null }
+    }
+
+    return {
+      primaryToken: systemUserToken,
+      fallbackToken: input.connectToken,
+    }
   }
 
   /**

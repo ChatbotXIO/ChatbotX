@@ -151,6 +151,7 @@ export function IgStoryForm({
             {replyType === "text" && (
               <TiptapEditorField
                 channels={["instagram"]}
+                includeBotFieldVariables
                 label={t("instagramStoryAutomation.replyMessage")}
                 name="reply.value"
                 placeholder={t(

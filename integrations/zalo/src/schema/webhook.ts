@@ -123,6 +123,7 @@ export const zaloWebhookEventSchema = z.object({
       "user_send_location",
       "user_send_file",
       "user_send_audio",
+      "user_received_message",
       "user_seen_message",
       "oa_send_msg",
       "oa_send_text",
@@ -173,10 +174,17 @@ export const zaloSendMessageRequest = z.object({
 })
 export type ZaloSendMessageRequest = z.infer<typeof zaloSendMessageRequest>
 
+// The /v3.0/oa/message/cs response is enveloped like uploadAttachmentResponse;
+// message_id here equals the msg_id later echoed on oa_send_* webhook events.
 export const zaloSendMessageResponseSchema = z.object({
-  recipient_id: z.string(),
-  message_id: z.string().optional(),
-  attachment_id: z.string().optional(),
+  data: z
+    .object({
+      message_id: z.string().optional(),
+      user_id: z.string().optional(),
+    })
+    .optional(),
+  error: z.number(),
+  message: z.string(),
 })
 export type ZaloSendMessageResponse = z.infer<
   typeof zaloSendMessageResponseSchema

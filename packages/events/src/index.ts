@@ -1,5 +1,6 @@
 // Main unified emitters
 
+export * from "./contact-inbox-context"
 export * from "./context"
 export * from "./event-dispatcher"
 export * from "./event-type-registry"

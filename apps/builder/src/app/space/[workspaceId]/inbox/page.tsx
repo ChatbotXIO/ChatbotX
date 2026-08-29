@@ -11,6 +11,7 @@ import { SavedReplyStoreProvider } from "@/features/saved-replies/provider/saved
 import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
+import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 type InboxPageProps = {
@@ -22,6 +23,8 @@ export default async function InboxPage({ params }: InboxPageProps) {
   if (!workspaceId) {
     return notFound()
   }
+
+  await requireContactsAccess(workspaceId)
 
   const layout = (await cookies()).get("csm:layout:inbox")
   const savedLayout = layout ? JSON.parse(layout.value) : [25, 50, 25]

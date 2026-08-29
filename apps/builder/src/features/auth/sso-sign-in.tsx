@@ -2,21 +2,32 @@
 
 import type { SocialProvider } from "@chatbotx.io/auth/server"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { authClient } from "@/lib/auth/auth-client"
+import { resolveSafeCallbackUrl } from "@/lib/safe-callback-url"
 
 type SSOSignInProps = {
   /** Providers configured for this tenant (own app or platform default). */
   providers: SocialProvider[]
 }
 
-const signInWith = async (provider: SocialProvider): Promise<void> => {
-  // Carry the current (reseller) origin into the OAuth state so the fixed
-  // platform callback can recover this tenant and relay the user back to their
-  // branded domain. See `resolveTenantFromOAuthState` and the route relay.
+const signInWith = async (
+  provider: SocialProvider,
+  callbackParam: string | null,
+): Promise<void> => {
+  // Carry the current (reseller) origin — and the intended destination path —
+  // into the OAuth state so the fixed platform callback can recover this
+  // tenant and relay the user back to their branded domain at the right path.
+  // See `resolveTenantFromOAuthState` and the route relay. Must stay absolute:
+  // a relative value here would break tenant recovery on the broker callback.
+  const { origin } = window.location
   await authClient.signIn.social({
     provider,
-    callbackURL: window.location.origin,
+    callbackURL: new URL(
+      resolveSafeCallbackUrl(callbackParam, origin),
+      origin,
+    ).toString(),
   })
 }
 
@@ -59,6 +70,8 @@ function GoogleIcon() {
 
 export default function SSOSignIn({ providers }: SSOSignInProps) {
   const t = useTranslations()
+  const searchParams = useSearchParams()
+  const callbackParam = searchParams.get("callbackURL")
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -67,7 +80,7 @@ export default function SSOSignIn({ providers }: SSOSignInProps) {
           aria-label={t("auth.continueWithFacebook")}
           className="w-full bg-[#1877F2] text-white hover:bg-[#0F6FE5]"
           onClick={async () => {
-            await signInWith("facebook")
+            await signInWith("facebook", callbackParam)
           }}
           type="button"
         >
@@ -81,7 +94,7 @@ export default function SSOSignIn({ providers }: SSOSignInProps) {
           aria-label={t("auth.continueWithGoogle")}
           className="w-full"
           onClick={async () => {
-            await signInWith("google")
+            await signInWith("google", callbackParam)
           }}
           type="button"
           variant="outline"

@@ -119,7 +119,17 @@ export const rescue = async <T>(
   try {
     return await fn()
   } catch (error) {
-    logger.error(error, `Instagram API call failed: ${endpoint}`)
+    // Channel HTTP errors are already logged once (at the appropriate level) by
+    // the http-client's `toException`, which throws `InstagramAPIException`.
+    // Only log here for errors that did NOT originate from the http client
+    // (e.g. a response transform throwing), so a single failed request never
+    // floods two log lines.
+    const wasLoggedByHttpClient =
+      error instanceof InstagramAPIException &&
+      error.getOriginError() !== undefined
+    if (!wasLoggedByHttpClient) {
+      logger.error(error, `Instagram API call failed: ${endpoint}`)
+    }
 
     let originError: unknown = error
     if (error instanceof InstagramException) {

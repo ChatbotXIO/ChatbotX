@@ -1,11 +1,10 @@
 import { triggerActions } from "@chatbotx.io/database/partials"
-import { FieldOperationType } from "@chatbotx.io/flow-config"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { FieldOperationType, zodFieldReference } from "@chatbotx.io/flow-config"
 import z from "zod"
 
 export const setCustomField = z.object({
   type: z.literal(triggerActions.enum.setCustomField),
-  customFieldId: zodBigintAsString(),
+  customFieldId: zodFieldReference(),
   operation: z.enum(FieldOperationType),
   value: z.string(),
 })

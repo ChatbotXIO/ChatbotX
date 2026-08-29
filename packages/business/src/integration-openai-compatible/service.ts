@@ -127,6 +127,8 @@ class IntegrationOpenaiCompatibleService extends BaseService {
       }
       throw error
     }
+
+    await this.audit("connect", "connected a new OpenAI-compatible integration")
   }
 
   async update(
@@ -177,6 +179,11 @@ class IntegrationOpenaiCompatibleService extends BaseService {
       }
       throw error
     }
+
+    await this.audit(
+      "update",
+      "updated the OpenAI-compatible integration configuration",
+    )
   }
 
   async disconnect(workspaceId: string, id: string) {
@@ -187,6 +194,11 @@ class IntegrationOpenaiCompatibleService extends BaseService {
     await db
       .delete(integrationModel)
       .where(eq(integrationModel.id, existing.integrationId))
+
+    await this.audit(
+      "disconnect",
+      "disconnected the OpenAI-compatible integration",
+    )
   }
 
   private createAuth(apiKey?: string | null): SecretTextAuthValue | null {

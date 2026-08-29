@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 2340" width="1080" height="2340">
+  <defs>
+    <style>
+      :root {
+        --bg-theme-color: #0f172a;
+      }
+      .bg-dyn { fill: var(--bg-theme-color, #0f172a); }
+    </style>
+
+    <!-- Deep Luxury Royal Vignette Background -->
+    <radialGradient id="luxuryVignette" cx="50%" cy="45%" r="75%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="35%" stop-color="#1e1b4b"/>
+      <stop offset="70%" stop-color="#090d16"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+
+    <!-- Volumetric Golden Sunburst Rays -->
+    <radialGradient id="goldRayGrad" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.85"/>
+      <stop offset="30%" stop-color="#f59e0b" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Golden Coin Gradient -->
+    <linearGradient id="floatingCoinGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="30%" stop-color="#fde047"/>
+      <stop offset="70%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#854d0e"/>
+    </linearGradient>
+
+    <!-- Ribbon 3D Gradients -->
+    <linearGradient id="ribbonRuby" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="50%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </linearGradient>
+
+    <linearGradient id="ribbonGold3D" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+
+    <filter id="glowStardust">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 1. BASE BACKGROUND VIGNETTE -->
+  <rect x="0" y="0" width="1080" height="2340" fill="url(#luxuryVignette)"/>
+
+  <!-- 2. VOLUMETRIC GOLDEN SUNBURST RAYS (CENTERED AT Y=1040 AROUND SLOT MACHINE) -->
+  <g transform="translate(540, 1040)">
+    <circle cx="0" cy="0" r="1100" fill="url(#goldRayGrad)"/>
+    
+    <!-- 24 Alternating Volumetric Rays -->
+    <g opacity="0.35">
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(15)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(30)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(45)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(60)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(75)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(90)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(105)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(120)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(135)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(150)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(165)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(180)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(195)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(210)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(225)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(240)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(255)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(270)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(285)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(300)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(315)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(330)"/>
+      <path d="M 0,0 L -70,-1200 L 70,-1200 Z" fill="#fef08a" transform="rotate(345)"/>
+    </g>
+  </g>
+
+  <!-- 3. FLOATING 3D GOLD COINS (ALONG SIDES TO KEEP CENTER GAMEPLAY CLEAN) -->
+  <g id="floating-coins" filter="url(#glowStardust)">
+    <!-- Top-Left Floating Coin -->
+    <g transform="translate(140, 480) rotate(-25)">
+      <ellipse cx="0" cy="8" rx="42" ry="24" fill="#78350f"/>
+      <ellipse cx="0" cy="0" rx="42" ry="24" fill="url(#floatingCoinGold)" stroke="#fffbeb" stroke-width="2"/>
+      <ellipse cx="0" cy="0" rx="30" ry="16" fill="none" stroke="#b45309" stroke-width="2"/>
+      <circle cx="0" cy="0" r="6" fill="#ffffff" opacity="0.8"/>
+    </g>
+
+    <!-- Top-Right Floating Coin -->
+    <g transform="translate(940, 520) rotate(35)">
+      <ellipse cx="0" cy="8" rx="48" ry="26" fill="#78350f"/>
+      <ellipse cx="0" cy="0" rx="48" ry="26" fill="url(#floatingCoinGold)" stroke="#fffbeb" stroke-width="2"/>
+      <ellipse cx="0" cy="0" rx="34" ry="18" fill="none" stroke="#b45309" stroke-width="2"/>
+      <circle cx="0" cy="0" r="7" fill="#ffffff" opacity="0.8"/>
+    </g>
+
+    <!-- Mid-Left Floating Coin -->
+    <g transform="translate(90, 1420) rotate(15)">
+      <ellipse cx="0" cy="6" rx="36" ry="20" fill="#78350f"/>
+      <ellipse cx="0" cy="0" rx="36" ry="20" fill="url(#floatingCoinGold)" stroke="#fffbeb" stroke-width="1.5"/>
+    </g>
+
+    <!-- Mid-Right Floating Coin -->
+    <g transform="translate(990, 1480) rotate(-20)">
+      <ellipse cx="0" cy="7" rx="38" ry="22" fill="#78350f"/>
+      <ellipse cx="0" cy="0" rx="38" ry="22" fill="url(#floatingCoinGold)" stroke="#fffbeb" stroke-width="1.5"/>
+    </g>
+  </g>
+
+  <!-- 4. LUXURY 3D METALLIC RIBBONS (REMOVED) -->
+
+  <!-- 5. STARDUST & SPARKLING DIAMOND GLITTER -->
+  <g id="stardust-particles" fill="#ffffff" filter="url(#glowStardust)">
+    <circle cx="220" cy="380" r="5" opacity="0.8"/>
+    <circle cx="860" cy="410" r="6" opacity="0.9"/>
+    <circle cx="160" cy="850" r="4" opacity="0.7"/>
+    <circle cx="920" cy="880" r="5" opacity="0.85"/>
+    <circle cx="200" cy="1300" r="4" opacity="0.75"/>
+    <circle cx="880" cy="1340" r="6" opacity="0.9"/>
+    <circle cx="140" cy="1750" r="5" opacity="0.8"/>
+    <circle cx="940" cy="1780" r="5" opacity="0.8"/>
+    
+    <!-- Big 4-Point Stars -->
+    <g transform="translate(180, 560)">
+      <path d="M 0,-16 Q 0,0 16,0 Q 0,0 0,16 Q 0,0 -16,0 Q 0,0 0,-16 Z" fill="#fef08a"/>
+    </g>
+    <g transform="translate(900, 620)">
+      <path d="M 0,-20 Q 0,0 20,0 Q 0,0 0,20 Q 0,0 -20,0 Q 0,0 0,-20 Z" fill="#fef08a"/>
+    </g>
+    <g transform="translate(150, 1520)">
+      <path d="M 0,-14 Q 0,0 14,0 Q 0,0 0,14 Q 0,0 -14,0 Q 0,0 0,-14 Z" fill="#fef08a"/>
+    </g>
+  </g>
+</svg>

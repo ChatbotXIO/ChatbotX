@@ -114,6 +114,7 @@ export function MessengerTemplateParamsForm({
             </div>
             <TiptapEditorField
               channels={["messenger"]}
+              includeBotFieldVariables
               name={`${fieldName}.text`}
               placeholder=""
               showEmojiPicker={false}

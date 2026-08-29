@@ -1,7 +1,7 @@
 import {
-  disabledContinueNodeTypes,
   type FlowNode,
   type NodeType,
+  shouldShowDefaultContinue,
 } from "@chatbotx.io/flow-config"
 import {
   Card,
@@ -80,7 +80,7 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
               <ButtonStepViewer data={quickReplyItem} key={quickReplyItem.id} />
             ))}
 
-          {!disabledContinueNodeTypes.includes(type) && (
+          {shouldShowDefaultContinue(type, data) && (
             <div className="relative w-full text-right">
               {/* React Flow keeps this connector on physical Position.Right. */}
               <span className="mr-4">{t("actions.continue")}</span>

@@ -5,6 +5,7 @@ const findFirstInbox = vi.fn()
 const findFirstTag = vi.fn()
 const findManyCustomFields = vi.fn()
 const findManyContactInbox = vi.fn()
+const botFieldFindManyByIds = vi.fn()
 
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
@@ -108,6 +109,7 @@ const findExistingSourceIdentities = vi.fn(async () => ({
 const createNewContactWithMac = vi.fn()
 const incrementBy = vi.fn()
 const workspaceUsageIncrement = vi.fn()
+const botFieldUpdateByKey = vi.fn()
 const claimNewActiveContact = vi.fn()
 const claimNewActiveContacts = vi.fn()
 
@@ -186,6 +188,15 @@ vi.mock("@chatbotx.io/business", () => ({
   workspaceUsageService: {
     increment: (...args: unknown[]) => workspaceUsageIncrement(...args),
   },
+  botFieldService: {
+    updateByKey: (...args: unknown[]) => botFieldUpdateByKey(...args),
+    findManyByIds: (...args: unknown[]) => botFieldFindManyByIds(...args),
+  },
+}))
+
+const recordAuditLog = vi.fn()
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -252,6 +263,7 @@ const baseMeta = {
 const buildRow = (overrides: Record<string, unknown> = {}) => ({
   id: "imp-1",
   workspaceId: "ws-1",
+  userId: "user-1",
   inboxId: "inbox-1",
   fileId: "file-1",
   type: "contacts",
@@ -308,6 +320,11 @@ beforeEach(() => {
   workspaceUsageIncrement.mockResolvedValue(undefined)
   claimNewActiveContact.mockReset()
   claimNewActiveContacts.mockReset()
+  recordAuditLog.mockReset()
+  botFieldUpdateByKey.mockReset()
+  botFieldUpdateByKey.mockResolvedValue(undefined)
+  botFieldFindManyByIds.mockReset()
+  botFieldFindManyByIds.mockResolvedValue([])
 })
 
 const runContactsImport = (row: unknown) =>
@@ -348,6 +365,266 @@ describe("contacts import pipeline", () => {
     })
     // One bulk transaction for the whole chunk, not one per row.
     expect(transactionFn).toHaveBeenCalledTimes(1)
+    expect(recordAuditLog).toHaveBeenCalledWith({
+      action: "import",
+      detail: "imported contacts",
+      userId: "user-1",
+      workspaceId: "ws-1",
+      source: "default:runImportPipeline",
+    })
+  })
+
+  test("a bot_field mapping is applied ONCE after completion with the last row's value", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    botFieldFindManyByIds.mockResolvedValue([{ id: "11", type: "number" }])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email,score",
+        "ext-1,+15551234567,first@example.com,10",
+        "ext-2,+15557654321,second@example.com,25",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          fieldMapping: [{ column: "score", customFieldId: "bot_field:11" }],
+        },
+      }),
+    )
+
+    expect(lastUpdate()).toMatchObject({ status: "completed" })
+    // Not looked up as a contact custom field...
+    expect(findManyCustomFields).not.toHaveBeenCalled()
+    // ...its type is resolved via the bot-field lookup instead...
+    expect(botFieldFindManyByIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["11"],
+    })
+    // ...and written exactly once with the LAST row's value, not per row.
+    expect(botFieldUpdateByKey).toHaveBeenCalledTimes(1)
+    expect(botFieldUpdateByKey).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      key: "11",
+      data: { value: "25" },
+    })
+  })
+
+  test("mixed mapping: custom field entries stay per-row while the bot field entry is finalized once", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findManyCustomFields.mockResolvedValue([{ id: "7", type: "shortText" }])
+    botFieldFindManyByIds.mockResolvedValue([{ id: "11", type: "number" }])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email,note,score",
+        "ext-1,+15551234567,first@example.com,hello,10",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          fieldMapping: [
+            { column: "note", customFieldId: "7" },
+            { column: "score", customFieldId: "bot_field:11" },
+          ],
+        },
+      }),
+    )
+
+    expect(lastUpdate()).toMatchObject({ status: "completed" })
+    // The custom-field lookup only sees the real custom field id.
+    expect(findManyCustomFields).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: { in: ["7"] } }),
+      }),
+    )
+    expect(botFieldUpdateByKey).toHaveBeenCalledTimes(1)
+    expect(botFieldUpdateByKey).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      key: "11",
+      data: { value: "10" },
+    })
+  })
+
+  test("a lenient CSV date normalizes into a date bot field", async () => {
+    // Regression for the P1 finding: a bot field must accept the SAME loose
+    // CSV date formats a custom field does (Lenient temporal parsing), not
+    // just canonical ISO.
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    botFieldFindManyByIds.mockResolvedValue([{ id: "11", type: "date" }])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email,birthday",
+        "ext-1,+15551234567,a@example.com,28/08/2026",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          timezone: "Asia/Ho_Chi_Minh",
+          fieldMapping: [{ column: "birthday", customFieldId: "bot_field:11" }],
+        },
+      }),
+    )
+
+    expect(lastUpdate()).toMatchObject({ status: "completed" })
+    expect(botFieldUpdateByKey).toHaveBeenCalledTimes(1)
+    expect(botFieldUpdateByKey).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      key: "11",
+      data: { value: "2026-08-28T00:00:00+07:00" },
+    })
+  })
+
+  test("an invalid bot field value is skipped; the last VALID row still wins and the import completes", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    botFieldFindManyByIds.mockResolvedValue([{ id: "11", type: "number" }])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email,score",
+        "ext-1,+15551234567,a@example.com,10",
+        "ext-2,+15557654321,b@example.com,not-a-number",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          fieldMapping: [{ column: "score", customFieldId: "bot_field:11" }],
+        },
+      }),
+    )
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 2,
+      failedCount: 0,
+    })
+    // The invalid second row never overwrites the last valid tracked value.
+    expect(botFieldUpdateByKey).toHaveBeenCalledTimes(1)
+    expect(botFieldUpdateByKey).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      key: "11",
+      data: { value: "10" },
+    })
+  })
+
+  test("a blank bot field cell is skipped and never overwrites the tracked value", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    botFieldFindManyByIds.mockResolvedValue([{ id: "11", type: "number" }])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email,score",
+        "ext-1,+15551234567,a@example.com,10",
+        "ext-2,+15557654321,b@example.com,",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          fieldMapping: [{ column: "score", customFieldId: "bot_field:11" }],
+        },
+      }),
+    )
+
+    expect(lastUpdate()).toMatchObject({ status: "completed" })
+    expect(botFieldUpdateByKey).toHaveBeenCalledTimes(1)
+    expect(botFieldUpdateByKey).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      key: "11",
+      data: { value: "10" },
+    })
+  })
+
+  test("no bot field write happens when every row's value is invalid", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    botFieldFindManyByIds.mockResolvedValue([{ id: "11", type: "number" }])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email,score",
+        "ext-1,+15551234567,a@example.com,not-a-number",
+      ]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          fieldMapping: [{ column: "score", customFieldId: "bot_field:11" }],
+        },
+      }),
+    )
+
+    expect(lastUpdate()).toMatchObject({ status: "completed" })
+    expect(botFieldUpdateByKey).not.toHaveBeenCalled()
+  })
+
+  test("a genuine write failure in finalize is logged and skipped without failing the import", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    botFieldFindManyByIds.mockResolvedValue([{ id: "11", type: "number" }])
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email,score",
+        "ext-1,+15551234567,a@example.com,10",
+      ]),
+    )
+    // The value is already valid/normalized; this simulates an unrelated
+    // write-time failure (e.g. the field was deleted mid-import).
+    botFieldUpdateByKey.mockRejectedValueOnce(new Error("Bot field not found"))
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          fieldMapping: [{ column: "score", customFieldId: "bot_field:11" }],
+        },
+      }),
+    )
+
+    expect(lastUpdate()).toMatchObject({ status: "completed" })
+    expect(botFieldUpdateByKey).toHaveBeenCalledTimes(1)
+  })
+
+  test("skips bot field updates when the import fails before completion", async () => {
+    findFirstInbox.mockResolvedValue(undefined)
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          fieldMapping: [{ column: "score", customFieldId: "bot_field:11" }],
+        },
+      }),
+    )
+
+    expect(botFieldUpdateByKey).not.toHaveBeenCalled()
+  })
+
+  test("does not emit an import audit row when the row has no attributable userId", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf(["external_id,phone,email", "ext-1,+15551234567,a@example.com"]),
+    )
+
+    await runContactsImport(buildRow({ userId: null }))
+
+    expect(recordAuditLog).not.toHaveBeenCalled()
+  })
+
+  test("does not emit an import audit row when marking the row failed", async () => {
+    findFirstInbox.mockResolvedValue(undefined)
+
+    await runContactsImport(buildRow())
+
+    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 
   test("verifies object size server-side even when a stored file size exists", async () => {
@@ -570,6 +847,39 @@ describe("contacts import pipeline", () => {
           {
             contactId: expect.any(String),
             fields: [{ customFieldId: "1", value: "42" }],
+          },
+        ],
+      }),
+    )
+  })
+
+  // Import's boolean vocabulary widened from the old true/false/1/0
+  // allowlist to the full Postgres boolean-literal set (shared with the
+  // runtime coercion normalizer and the SQL filter guard) — a literal like
+  // "yes" used to fail validation and skip the field; it now imports.
+  test("imports a widened boolean literal instead of dropping it", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findManyCustomFields.mockResolvedValue([{ id: "1", type: "boolean" }])
+    getObjectStream.mockResolvedValue(
+      streamOf(["external_id,phone,subscribed", "ext-1,+15551234567,yes"]),
+    )
+
+    await runContactsImport(
+      buildRow({
+        meta: {
+          ...baseMeta,
+          columnMap: { contactId: "external_id", phoneNumber: "phone" },
+          fieldMapping: [{ customFieldId: "1", column: "subscribed" }],
+        },
+      }),
+    )
+
+    expect(insertNormalizedCustomFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entries: [
+          {
+            contactId: expect.any(String),
+            fields: [{ customFieldId: "1", value: "true" }],
           },
         ],
       }),

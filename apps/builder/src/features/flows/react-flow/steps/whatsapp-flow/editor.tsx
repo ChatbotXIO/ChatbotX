@@ -89,7 +89,11 @@ const WhatsappFlowStepEditor = ({
       </div>
 
       <div className="space-y-3 bg-secondary px-4 py-2">
-        <TiptapEditorField includeCouponVariables name={`${parentName}.text`} />
+        <TiptapEditorField
+          includeBotFieldVariables
+          includeCouponVariables
+          name={`${parentName}.text`}
+        />
       </div>
 
       <div className="bg-slate-200 px-3 py-2 dark:bg-neutral-900">

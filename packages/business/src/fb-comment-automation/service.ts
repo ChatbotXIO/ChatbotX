@@ -1,4 +1,4 @@
-import { and, db, eq, ne, sql } from "@chatbotx.io/database/client"
+import { and, db, eq, inArray, ne, sql } from "@chatbotx.io/database/client"
 import {
   contactInboxModel,
   fbCommentAutomationModel,
@@ -7,6 +7,7 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
+import { assertDeletable } from "../template/installed-resource.service"
 
 class FbCommentAutomationService extends BaseService {
   findActiveAutomations(props: {
@@ -98,6 +99,28 @@ class FbCommentAutomationService extends BaseService {
         repliesCount: sql`${fbCommentAutomationModel.repliesCount} + 1`,
       })
       .where(eq(fbCommentAutomationModel.id, automationId))
+  }
+
+  async deleteMany(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<void> {
+    if (input.ids.length === 0) {
+      return
+    }
+    await assertDeletable({
+      workspaceId: input.workspaceId,
+      resourceKind: "fbCommentAutomation",
+      resourceIds: input.ids,
+    })
+    await db
+      .delete(fbCommentAutomationModel)
+      .where(
+        and(
+          eq(fbCommentAutomationModel.workspaceId, input.workspaceId),
+          inArray(fbCommentAutomationModel.id, input.ids),
+        ),
+      )
   }
 }
 

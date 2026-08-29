@@ -256,6 +256,7 @@ export function IgCommentForm({
             {privateReplyType === "text" && (
               <TiptapEditorField
                 channels={["instagram"]}
+                includeBotFieldVariables
                 label={t("instagramCommentAutomation.replyMessage")}
                 name="privateReply.value"
                 placeholder={t(
@@ -301,6 +302,7 @@ export function IgCommentForm({
             {publicReplyType === "text" && (
               <TiptapEditorField
                 channels={["instagram"]}
+                includeBotFieldVariables
                 label={t("instagramCommentAutomation.replyMessage")}
                 name="publicReply.value"
                 placeholder={t(

@@ -1,40 +1,32 @@
 import {
-  type CapiScopeCheckInput,
   contactInboxService,
-  instagramIntegrationService,
-  integrationWhatsappService,
+  contactService,
+  hashContactUserData,
   type MetaConversionsChannel,
   type MetaConversionsIntegrationByChannel,
-  messengerIntegrationService,
   metaConversionsService,
-  platformCredentialService,
   resolveCapiAccessToken,
-  WHATSAPP_CAPI_SCOPE,
   withBlockedOwnerGuard,
   workspaceService,
 } from "@chatbotx.io/business"
 import {
-  debugToken as debugInstagramFacebookToken,
-  hasInstagramManageEventsScope,
-  toAppAccessToken as toInstagramFacebookAppAccessToken,
-} from "@chatbotx.io/integration-instagram-facebook"
-import {
-  debugToken as debugMessengerToken,
-  hasPageEventsScope,
-  toAppAccessToken as toMessengerAppAccessToken,
-} from "@chatbotx.io/integration-messenger"
-import {
-  type EnsureDatasetInput,
+  buildDatasetName,
   ensureDataset,
+  type MetaCapiEventName,
   sendConversionEvent,
 } from "@chatbotx.io/integration-meta-conversions"
-import { debugTokenOrThrow } from "@chatbotx.io/integration-whatsapp/api/auth"
+import type { HashedCapiUserData } from "@chatbotx.io/utils/meta-capi"
 import {
   DefaultJobAction,
   defaultQueue,
   type IntegrationJobSendMetaCapiEvent,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
+import {
+  datasetResourceType,
+  findEventIntegration,
+  refreshScopeCache,
+} from "./capi-scope-checkers"
 
 type SendMetaCapiEventData = IntegrationJobSendMetaCapiEvent["data"]
 
@@ -66,168 +58,14 @@ const sentStatus = {
   to: "sent",
 } as const
 
-const datasetResourceTypeByChannel = {
-  messenger: "page",
-  instagram: "igUser",
-  whatsapp: "waba",
-} as const satisfies Record<
-  MetaConversionsChannel,
-  EnsureDatasetInput["resourceType"]
->
-
-const integrationResolvers = {
-  messenger: (input) => messengerIntegrationService.findByIdForWorkspace(input),
-  instagram: (input) => instagramIntegrationService.findByIdForWorkspace(input),
-  whatsapp: (input) => integrationWhatsappService.findByIdForWorkspace(input),
-} satisfies {
-  [TChannel in MetaConversionsChannel]: (input: {
-    id: string
-    workspaceId: string
-  }) => Promise<
-    MetaConversionsIntegrationByChannel[TChannel] | null | undefined
-  >
-}
-
-async function findEventIntegration<TChannel extends MetaConversionsChannel>(
-  channel: TChannel,
-  input: {
-    integrationId: string
-    workspaceId: string
-  },
-): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
-  const resolveIntegration = integrationResolvers[channel] as (input: {
-    id: string
-    workspaceId: string
-  }) => Promise<
-    MetaConversionsIntegrationByChannel[TChannel] | null | undefined
-  >
-
-  return (
-    (await resolveIntegration({
-      id: input.integrationId,
-      workspaceId: input.workspaceId,
-    })) ?? null
-  )
-}
-
-async function checkMessengerCapiScope(
-  input: CapiScopeCheckInput,
-  storedHasCapiScope: boolean,
-  workspaceId: string,
-): Promise<boolean> {
-  const workspace = await workspaceService.findById({ id: workspaceId })
-  const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
-    type: "messenger",
-  })
-  if (!credential) {
-    return storedHasCapiScope
-  }
-
-  const debug = await debugMessengerToken({
-    inputToken: input.accessToken,
-    appAccessToken: toMessengerAppAccessToken(credential.config),
-    version: credential.config.version,
-  })
-
-  return hasPageEventsScope(debug.scopes)
-}
-
-async function checkInstagramCapiScope(
-  input: CapiScopeCheckInput,
-  storedHasCapiScope: boolean,
-  workspaceId: string,
-): Promise<boolean> {
-  const workspace = await workspaceService.findById({ id: workspaceId })
-  const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
-    type: "instagramFacebook",
-  })
-  if (!credential) {
-    return storedHasCapiScope
-  }
-
-  const debug = await debugInstagramFacebookToken({
-    inputToken: input.accessToken,
-    appAccessToken: toInstagramFacebookAppAccessToken(credential.config),
-    version: credential.config.version,
-  })
-
-  return hasInstagramManageEventsScope(debug.scopes)
-}
-
-/**
- * Worker-local WhatsApp CAPI scope check — mirrors the builder's
- * `hasWhatsappCapiScope` (apps/builder/src/features/integration-whatsapp/libs/capi-scope.ts)
- * without importing across the `@/...` app boundary. The app access token
- * comes from the workspace owner's WhatsApp platform credential
- * (`clientId|clientSecret`), same as the messenger/instagram checkers above.
- */
-async function checkWhatsappCapiScope(
-  input: CapiScopeCheckInput,
-  storedHasCapiScope: boolean,
-  workspaceId: string,
-): Promise<boolean> {
-  const workspace = await workspaceService.findById({ id: workspaceId })
-  const credential = await platformCredentialService.resolveForOwner({
-    ownerId: workspace.ownerId,
-    type: "whatsapp",
-  })
-  if (!credential) {
-    return storedHasCapiScope
-  }
-
-  const appAccessToken = `${credential.config.clientId}|${credential.config.clientSecret}`
-  const token = await debugTokenOrThrow(input.accessToken, appAccessToken)
-  const capiScope = token?.granular_scopes?.find(
-    (scope) => scope.scope === WHATSAPP_CAPI_SCOPE,
-  )
-  if (!capiScope) {
-    return false
-  }
-
-  return (
-    !capiScope.target_ids ||
-    capiScope.target_ids.length === 0 ||
-    capiScope.target_ids.includes(input.resourceId)
-  )
-}
-
-const scopeCheckers = {
-  messenger: checkMessengerCapiScope,
-  instagram: checkInstagramCapiScope,
-  whatsapp: checkWhatsappCapiScope,
-} satisfies {
-  [TChannel in MetaConversionsChannel]: (
-    input: CapiScopeCheckInput,
-    storedHasCapiScope: boolean,
-    workspaceId: string,
-  ) => Promise<boolean>
-}
-
-async function refreshScopeCache<TChannel extends MetaConversionsChannel>(
-  channel: TChannel,
-  integration: MetaConversionsIntegrationByChannel[TChannel],
-): Promise<MetaConversionsIntegrationByChannel[TChannel]> {
-  const refreshed = await metaConversionsService.refreshCapiScopeCache({
-    channel,
-    integration,
-    checkScope: (input) =>
-      scopeCheckers[channel](
-        input,
-        integration.hasCapiScope,
-        integration.workspaceId,
-      ),
-  })
-
-  return refreshed ?? integration
-}
-
 function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
   channel: TChannel
   accessToken: string
   datasetId: string
-  eventName: "LeadSubmitted"
+  // Widened to MetaCapiEventName (Phase 1 schema change) so this payload
+  // builder compiles against the DB row's type; actually sending "Purchase"
+  // events is Phase 3 work, not implemented here.
+  eventName: MetaCapiEventName
   occurredAt: Date
   eventId: string
   contactInboxSourceId: string
@@ -236,6 +74,8 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
   currency?: string | null
   contentCategory?: string | null
   contentName?: string | null
+  userData?: HashedCapiUserData
+  limitedDataUse?: boolean
   integration: MetaConversionsIntegrationByChannel[TChannel]
 }) {
   if (input.channel === "messenger") {
@@ -257,6 +97,10 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
           ? { contentCategory: input.contentCategory }
           : {}),
         ...(input.contentName ? { contentName: input.contentName } : {}),
+        ...(input.userData ? { userData: input.userData } : {}),
+        ...(input.limitedDataUse
+          ? { limitedDataUse: input.limitedDataUse }
+          : {}),
       },
     }
   }
@@ -285,6 +129,10 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
           ? { contentCategory: input.contentCategory }
           : {}),
         ...(input.contentName ? { contentName: input.contentName } : {}),
+        ...(input.userData ? { userData: input.userData } : {}),
+        ...(input.limitedDataUse
+          ? { limitedDataUse: input.limitedDataUse }
+          : {}),
       },
     }
   }
@@ -307,6 +155,8 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
         ? { contentCategory: input.contentCategory }
         : {}),
       ...(input.contentName ? { contentName: input.contentName } : {}),
+      ...(input.userData ? { userData: input.userData } : {}),
+      ...(input.limitedDataUse ? { limitedDataUse: input.limitedDataUse } : {}),
     },
   }
 }
@@ -357,6 +207,14 @@ export async function handleSendMetaCapiEvent(
       return
     }
 
+    // Limited Data Use (plan #3): read once per event, OUTSIDE the try/catch
+    // below so a read failure (DB/Redis blip, workspace gone) throws and
+    // propagates out of `withBlockedOwnerGuard` for a BullMQ retry instead of
+    // being caught and silently sent with the wrong LDU state.
+    const workspace = await workspaceService.findById({
+      id: event.workspaceId,
+    })
+
     try {
       const contactInbox = await contactInboxService.findByUncached({
         where: { id: event.contactInboxId },
@@ -375,6 +233,46 @@ export async function handleSendMetaCapiEvent(
             contactInboxId: event.contactInboxId,
           },
           "Meta CAPI event contact inbox not found; marked failed",
+        )
+        return
+      }
+
+      // Defense-in-depth identity check (Phase 0 — Codex CRITICAL#1): mirrors
+      // `handleSendMetaChannelConversionEvent`'s guard in
+      // `send-conversion-event.ts`. `contactInbox` above is looked up by id
+      // alone (no workspace/inbox scoping in the query itself), and it powers
+      // the PSID/IGSID/wa_id (`contactInbox.sourceId`) — and, from Phase 2 on,
+      // hashed customer-info — sent to Meta's CAPI as this contact's identity.
+      // Without this check a stale/foreign `contactInboxId` on the event would
+      // leak one tenant's messaging identity (and PII) into another tenant's ad
+      // dataset. `ContactInboxModel` has no direct `workspaceId` column, so
+      // workspace membership is verified via the workspace-scoped
+      // `contactService.findById` (returns undefined for a foreign workspace);
+      // inbox membership is verified directly against the resolved
+      // integration's `inboxId`.
+      const contactInboxContact = await contactService.findById({
+        workspaceId: event.workspaceId,
+        id: contactInbox.contactId,
+      })
+      if (
+        !contactInboxContact ||
+        contactInbox.inboxId !== integration.inboxId
+      ) {
+        await metaConversionsService.updateCapiStatus({
+          id: event.id,
+          workspaceId: event.workspaceId,
+          ...failedStatus,
+          capiError: "contactInboxWorkspaceMismatch",
+        })
+        logger.error(
+          {
+            metaCapiEventId: event.id,
+            workspaceId: event.workspaceId,
+            contactInboxId: contactInbox.id,
+            contactInboxInboxId: contactInbox.inboxId,
+            integrationInboxId: integration.inboxId,
+          },
+          "Meta CAPI event contact inbox workspace/inbox mismatch; marked failed",
         )
         return
       }
@@ -422,13 +320,22 @@ export async function handleSendMetaCapiEvent(
           : await metaConversionsService.ensureDatasetId({
               channel: event.channel,
               integration: integrationForSend,
-              provisionDataset: ({ resourceId }) =>
+              // The adapter's `buildDatasetProvisionInput` resolves the correct
+              // per-channel dataset-creation token (e.g. WhatsApp's agency
+              // System User token), so this stays channel-generic.
+              provisionDataset: ({ accessToken, resourceId, resourceName }) =>
                 ensureDataset({
-                  resourceType: datasetResourceTypeByChannel[event.channel],
+                  resourceType: datasetResourceType(event.channel),
                   resourceId,
-                  accessToken: auth.accessToken,
+                  accessToken,
+                  datasetName: buildDatasetName(resourceName),
                 }),
             })
+
+      // Customer-info matching (plan #1) — `contactInboxContact` was already
+      // resolved and workspace/inbox-validated by the Phase 0 guard above, so
+      // it is safe to hash and send.
+      const userData = await hashContactUserData(contactInboxContact)
 
       await sendConversionEvent(
         buildEventPayload({
@@ -444,6 +351,8 @@ export async function handleSendMetaCapiEvent(
           currency: event.currency,
           contentCategory: event.contentCategory,
           contentName: event.contentName,
+          userData,
+          limitedDataUse: workspace.capiLimitedDataUse,
           integration: integrationForSend,
         }),
       )

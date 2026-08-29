@@ -41,6 +41,7 @@ import {
   StarOffIcon,
   TagIcon,
   TicketPercentIcon,
+  TrendingUpIcon,
   UserIcon,
   UserRoundXIcon,
   WebhookIcon,
@@ -619,7 +620,7 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     ],
   },
   {
-    label: t("flows.actions.metaConversions"),
+    label: t("flows.actions.adsConversions"),
     icon: MegaphoneIcon,
     stepType: null,
     children: [
@@ -627,6 +628,16 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.sendMetaCapiEvent"),
         icon: MegaphoneIcon,
         stepType: stepTypes.enum.sendMetaCapiEvent,
+      },
+      {
+        label: t("flows.actions.trackAdsLead"),
+        icon: TrendingUpIcon,
+        stepType: stepTypes.enum.trackAdsLead,
+      },
+      {
+        label: t("flows.actions.trackAdsPurchase"),
+        icon: TrendingUpIcon,
+        stepType: stepTypes.enum.trackAdsPurchase,
       },
     ],
   },

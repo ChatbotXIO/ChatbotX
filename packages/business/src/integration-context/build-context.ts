@@ -61,6 +61,31 @@ export type BuildContextIntegrationRow<TAuth extends AuthValue = AuthValue> =
   } & Record<string, unknown>
 
 /**
+ * Build an {@link IntegrationContext} from an already-constructed
+ * {@link AuthStore} instead of deriving one from `integrationType` — for auth
+ * tables that don't follow the `Integration<Channel>` naming convention
+ * `buildContext` assumes (see `makeAuthStoreForTable` in `./auth-store.ts`).
+ * `buildContext` is a thin wrapper over this for the common case.
+ */
+export async function buildContextWithAuthStore<TAuth extends AuthValue>(args: {
+  workspaceId: string
+  auth: TAuth
+  authStore: AuthStore<TAuth>
+  integrationDetail: Record<string, unknown>
+}): Promise<IntegrationContext<TAuth>> {
+  const platformData = await resolvePlatformData(args.workspaceId)
+
+  return {
+    storagePrefix: getStoragePrefix(args.workspaceId),
+    auth: args.auth,
+    authStore: args.authStore,
+    integrationDetail: args.integrationDetail,
+    uploader: defaultUploader,
+    platform: platformData,
+  }
+}
+
+/**
  * Build an {@link IntegrationContext} from an integration row.
  *
  * - `auth`, `id`, and (optionally) `inboxId` are read off the row
@@ -71,19 +96,15 @@ export type BuildContextIntegrationRow<TAuth extends AuthValue = AuthValue> =
  *
  * Used identically from worker handlers and builder server actions.
  */
-export async function buildContext<TAuth extends AuthValue>(args: {
+export function buildContext<TAuth extends AuthValue>(args: {
   workspaceId: string
   integrationType: string
   integration: BuildContextIntegrationRow<TAuth>
 }): Promise<IntegrationContext<TAuth>> {
-  const platformData = await resolvePlatformData(args.workspaceId)
-
-  return {
-    storagePrefix: getStoragePrefix(args.workspaceId),
+  return buildContextWithAuthStore({
+    workspaceId: args.workspaceId,
     auth: args.integration.auth,
     authStore: makeAuthStore<TAuth>(args.integrationType, args.integration),
     integrationDetail: args.integration,
-    uploader: defaultUploader,
-    platform: platformData,
-  }
+  })
 }

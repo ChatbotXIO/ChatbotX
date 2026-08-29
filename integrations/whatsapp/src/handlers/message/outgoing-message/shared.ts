@@ -1,7 +1,9 @@
 import {
+  appendCodeToMagicLink,
   type ButtonStepProps,
   encodeButtonPayload,
   extractMetadata,
+  getButtonLinkUrl,
   type MetadataPayload,
 } from "@chatbotx.io/flow-config"
 import {
@@ -10,6 +12,7 @@ import {
 } from "@chatbotx.io/sdk"
 import {
   ActionButtons,
+  ActionCTA,
   ActionList,
   type Footer,
   Header,
@@ -42,6 +45,19 @@ type WhatsappReplyButton = {
   id: string
   label: string
 }
+
+type WhatsappLinkButton = {
+  id: string
+  label: string
+  url: string
+}
+
+/**
+ * Meta requires a body on every interactive message, including a `cta_url`
+ * one, but a link button carries no body text of its own — mirrors the
+ * carousel's `CAROUSEL_MAIN_BODY` convention for the same requirement.
+ */
+const EMPTY_BODY_PLACEHOLDER = "."
 
 /**
  * `contactInboxId` only reaches the payload of a link button, whose code is read
@@ -139,6 +155,36 @@ function selectReplyButtons(props: {
   return selected
 }
 
+/**
+ * `openWebsite` buttons are pulled out before `selectReplyButtons` ever sees
+ * them: Meta renders a link as its own `cta_url` message, never as a reply, so
+ * treating one as a reply candidate would keep silently dropping its URL.
+ */
+function selectLinkButtons(props: {
+  flowId: string
+  flowVersionId?: string
+  buttons: ButtonStepProps[]
+  metadata?: MetadataPayload
+  contactInboxId?: string
+}): WhatsappLinkButton[] {
+  return props.buttons.flatMap((button) => {
+    const url = getButtonLinkUrl(button)
+    if (!url) {
+      return []
+    }
+
+    const { id, label } = normalizeRawButton({
+      flowId: props.flowId,
+      flowVersionId: props.flowVersionId,
+      button,
+      metadata: props.metadata,
+      contactInboxId: props.contactInboxId,
+    })
+
+    return [{ id, label, url }]
+  })
+}
+
 function chunkList<T>(items: T[], size: number): T[][] {
   return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
     items.slice(index * size, index * size + size),
@@ -146,42 +192,17 @@ function chunkList<T>(items: T[], size: number): T[][] {
 }
 
 /**
- * Builds the message sequence that carries `bodyText`, an optional image and a
- * set of replies.
- *
- * Nothing is discarded to fit a WhatsApp limit: overflowing text and overflowing
- * replies each become additional messages. Only values with nowhere to overflow
- * to — a button title, a footer — are clamped.
+ * The reply-buttons/list half of the message sequence — unchanged behavior,
+ * extracted so `buildWhatsappButtonMessages` can place it beside the `cta_url`
+ * messages a link button now also produces.
  */
-export function buildWhatsappButtonMessages(props: {
-  flowId: string
-  flowVersionId?: string
-  buttons: ButtonStepProps[]
-  quickReplies?: MessageButtonTemplate[]
-  metadata?: MetadataPayload
+function buildReplyMessages(props: {
+  replies: WhatsappReplyButton[]
   bodyText: string
   media?: Image
   footer?: Footer
 }): ClientMessage[] {
-  const replies = selectReplyButtons({
-    flowId: props.flowId,
-    flowVersionId: props.flowVersionId,
-    buttons: props.buttons,
-    quickReplies: props.quickReplies,
-    metadata: props.metadata,
-  })
-
-  if (replies.length === 0) {
-    return []
-  }
-
-  // Only the closing chunk becomes the interactive body; anything before it
-  // leads as plain text so a long message keeps all of its content.
-  const bodyChunks = splitText(props.bodyText, messageLimits.bodyText)
-  const bodyText = bodyChunks.at(-1) ?? ""
-  const leading: ClientMessage[] = bodyChunks
-    .slice(0, -1)
-    .map((chunk) => new Text(chunk))
+  const { replies, bodyText, media, footer } = props
 
   // Reply buttons can carry the image inline, which reads best when it all fits.
   if (replies.length <= MAX_BUTTONS) {
@@ -190,12 +211,11 @@ export function buildWhatsappButtonMessages(props: {
     )
 
     return [
-      ...leading,
       new Interactive(
         new ActionButtons(firstButton, ...restButtons),
         generateBody(bodyText),
-        props.media ? new Header(props.media) : undefined,
-        props.footer,
+        media ? new Header(media) : undefined,
+        footer,
       ),
     ]
   }
@@ -204,8 +224,7 @@ export function buildWhatsappButtonMessages(props: {
   // three replies the image is sent on its own and the replies are spread over
   // as many lists as they need instead of being cut off.
   return [
-    ...leading,
-    ...(props.media ? [props.media] : []),
+    ...(media ? [media] : []),
     ...chunkList(replies, MAX_LIST_ROWS).map((chunk) => {
       const [firstRow, ...restRows] = chunk.map(({ id, label }) =>
         generateRow({ id, title: label }),
@@ -218,8 +237,128 @@ export function buildWhatsappButtonMessages(props: {
         ),
         generateBody(bodyText),
         undefined,
-        props.footer,
+        footer,
       )
     }),
+  ]
+}
+
+/**
+ * One `cta_url` message for a single link button. Meta allows exactly one url
+ * button per message and forbids mixing it with reply buttons, so every link
+ * button becomes its own bubble rather than being combined with another.
+ *
+ * No `media` parameter on purpose: `whatsapp-api-js`'s `Interactive`
+ * constructor throws unless a `cta_url` action's header is text (same
+ * restriction it applies to `ActionList`), so an image can never be this
+ * message's header — see the standalone-`Image` handling in
+ * `buildWhatsappButtonMessages` instead.
+ *
+ * The magic-link code is the button's own encoded id — the same one a reply
+ * would have carried — so the redirect route can still resolve `steps` on
+ * click; see `appendCodeToMagicLink` and `normalizeRawButton`.
+ */
+function buildCtaUrlMessage(props: {
+  linkButton: WhatsappLinkButton
+  bodyText: string
+  footer?: Footer
+}): Interactive {
+  return new Interactive(
+    new ActionCTA(
+      clampText(props.linkButton.label, messageLimits.buttonTitle),
+      appendCodeToMagicLink(props.linkButton.url, props.linkButton.id),
+    ),
+    generateBody(props.bodyText.trim() || EMPTY_BODY_PLACEHOLDER),
+    undefined,
+    props.footer,
+  )
+}
+
+/**
+ * Builds the message sequence that carries `bodyText`, an optional image and a
+ * set of buttons — reply buttons/quick replies plus any `openWebsite` link
+ * buttons.
+ *
+ * Nothing is discarded to fit a WhatsApp limit: overflowing text and overflowing
+ * replies each become additional messages. Only values with nowhere to overflow
+ * to — a button title, a footer — are clamped.
+ *
+ * Meta allows only one body per message and forbids mixing a `cta_url` action
+ * with reply buttons, so only one message — the "primary" one — carries the
+ * real body text; every other button becomes an additional bubble whose body
+ * is just its own label. Reply buttons win the primary slot when present,
+ * since they can hold more than one button and (up to three of them) can still
+ * carry the image inline; otherwise the first link button takes the primary
+ * slot and the image is sent as its own message ahead of it, the same way it
+ * is ahead of a reply list past three buttons.
+ */
+export function buildWhatsappButtonMessages(props: {
+  flowId: string
+  flowVersionId?: string
+  buttons: ButtonStepProps[]
+  quickReplies?: MessageButtonTemplate[]
+  metadata?: MetadataPayload
+  bodyText: string
+  media?: Image
+  footer?: Footer
+  /** Only a link button's magic-link code carries this — see `normalizeRawButton`. */
+  contactInboxId?: string
+}): ClientMessage[] {
+  const linkButtons = selectLinkButtons({
+    flowId: props.flowId,
+    flowVersionId: props.flowVersionId,
+    buttons: props.buttons,
+    metadata: props.metadata,
+    contactInboxId: props.contactInboxId,
+  })
+
+  const replies = selectReplyButtons({
+    flowId: props.flowId,
+    flowVersionId: props.flowVersionId,
+    buttons: props.buttons.filter((button) => !getButtonLinkUrl(button)),
+    quickReplies: props.quickReplies,
+    metadata: props.metadata,
+  })
+
+  if (replies.length === 0 && linkButtons.length === 0) {
+    return []
+  }
+
+  // Only the closing chunk becomes the interactive body; anything before it
+  // leads as plain text so a long message keeps all of its content.
+  const bodyChunks = splitText(props.bodyText, messageLimits.bodyText)
+  const bodyText = bodyChunks.at(-1) ?? ""
+  const leading: ClientMessage[] = bodyChunks
+    .slice(0, -1)
+    .map((chunk) => new Text(chunk))
+
+  if (replies.length > 0) {
+    return [
+      ...leading,
+      ...buildReplyMessages({
+        replies,
+        bodyText,
+        media: props.media,
+        footer: props.footer,
+      }),
+      ...linkButtons.map((linkButton) =>
+        buildCtaUrlMessage({ linkButton, bodyText: linkButton.label }),
+      ),
+    ]
+  }
+
+  const [primaryLink, ...extraLinks] = linkButtons
+
+  return [
+    ...leading,
+    ...(props.media ? [props.media] : []),
+    buildCtaUrlMessage({
+      linkButton: primaryLink,
+      bodyText,
+      footer: props.footer,
+    }),
+    ...extraLinks.map((linkButton) =>
+      buildCtaUrlMessage({ linkButton, bodyText: linkButton.label }),
+    ),
   ]
 }

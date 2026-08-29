@@ -86,6 +86,8 @@ export const APPOINTMENT_AVAILABILITY_RANGE_SELECTION_PAYLOAD_TYPE =
   "appointmentAvailabilityRangeSelection"
 export const APPOINTMENT_AVAILABILITY_RANGE_SKIPPED_PAYLOAD_TYPE =
   "appointmentAvailabilityRangeSkipped"
+export const GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE =
+  "getUserDataWebviewSelection"
 
 export const baseMetadataPayload = z.object({
   stepId: z.string().optional(),
@@ -132,6 +134,13 @@ export const appointmentAvailabilityRangeSkippedPayload =
     stepId: z.string(),
   })
 
+export const getUserDataWebviewSelectionPayload = baseMetadataPayload.extend({
+  type: z.literal(GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE),
+  stepId: z.string(),
+  challengeId: z.string(),
+  selectedValue: z.iso.datetime(),
+})
+
 export type BroadcastMetadataPayload = z.infer<typeof broadcastMetadataPayload>
 
 export type SequenceScheduleMetadataPayload = z.infer<
@@ -145,6 +154,11 @@ export const metadataSchema = z.discriminatedUnion("type", [
   appointmentWebviewSelectionPayload,
   appointmentAvailabilityRangeSelectionPayload,
   appointmentAvailabilityRangeSkippedPayload,
+  getUserDataWebviewSelectionPayload,
 ])
 
 export type MetadataPayload = z.infer<typeof metadataSchema>
+
+export type GetUserDataWebviewSelectionPayload = z.infer<
+  typeof getUserDataWebviewSelectionPayload
+>

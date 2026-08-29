@@ -19,13 +19,12 @@ import {
   PopoverTrigger,
 } from "@chatbotx.io/ui/components/ui/popover"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
-import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
-import { getMimeTypeFromFile } from "@chatbotx.io/ui/lib/file-types"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   EllipsisVerticalIcon,
   ExternalLinkIcon,
   EyeOff,
+  ImageIcon,
   PaperclipIcon,
   PencilIcon,
   TrashIcon,
@@ -33,7 +32,8 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
-import { useRef, useState } from "react"
+import { useState } from "react"
+import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import type { MessageResourceWithRelations } from "../schema/resource"
@@ -73,13 +73,11 @@ export const MessageActionsEditor = ({
   const workspaceId = useWorkspaceId()
 
   const messageText = message.text ?? ""
-  const conversationId = message.conversationId
   const attachments = message.attachments ?? []
 
   const [editText, setEditText] = useState(messageText)
   const [removedAttachment, setRemovedAttachment] = useState(false)
   const [newAttachment, setNewAttachment] = useState<NewAttachment | null>(null)
-  const imageReplaceTriggerRef = useRef<HTMLButtonElement | null>(null)
 
   const existingAttachment = attachments[0] ?? null
   const showExistingAttachment =
@@ -111,23 +109,22 @@ export const MessageActionsEditor = ({
     onEditingChange(false)
   }
 
-  const handleUploadSuccess = (
-    filePath: string,
-    file: File,
-    publicUrl: string,
-  ) => {
-    const mimeType = getMimeTypeFromFile(file)
+  const handleSelectMediaFile = (file: {
+    path: string
+    url: string
+    mimeType: string
+    name: string
+    size: number
+  }) => {
     setNewAttachment({
-      path: filePath,
-      publicUrl,
-      mimeType,
+      path: file.path,
+      publicUrl: file.url,
+      mimeType: file.mimeType,
       name: file.name,
       size: file.size,
     })
     setRemovedAttachment(false)
   }
-
-  const uploadPath = `public/space/${workspaceId}/conversations/${conversationId}`
 
   return (
     <div className="mt-2 flex min-w-52 flex-col gap-2">
@@ -142,29 +139,23 @@ export const MessageActionsEditor = ({
         (existingAttachment.mimeType.startsWith("image/") &&
         existingAttachment.url ? (
           <div className="flex items-center gap-2 rounded-lg border p-2 text-sm">
-            <div className="sr-only">
-              <DirectUploadButton
-                accept="image/*"
-                onUploadSuccess={handleUploadSuccess}
-                triggerRef={imageReplaceTriggerRef}
-                uploadPath={uploadPath}
-                workspaceId={workspaceId}
-              />
-            </div>
             <div className="relative flex-none">
-              <button
-                className="cursor-pointer"
-                onClick={() => imageReplaceTriggerRef.current?.click()}
-                type="button"
+              <MediaLibraryTrigger
+                onSelect={handleSelectMediaFile}
+                workspaceId={workspaceId}
               >
-                <Image
-                  alt={existingAttachment.name ?? existingAttachment.originPath}
-                  className="size-8 rounded object-cover"
-                  height={32}
-                  src={existingAttachment.url}
-                  width={32}
-                />
-              </button>
+                <Button className="h-auto p-0" type="button" variant="ghost">
+                  <Image
+                    alt={
+                      existingAttachment.name ?? existingAttachment.originPath
+                    }
+                    className="size-8 rounded object-cover"
+                    height={32}
+                    src={existingAttachment.url}
+                    width={32}
+                  />
+                </Button>
+              </MediaLibraryTrigger>
               <Button
                 className="absolute -end-1.5 -top-1.5 size-4 rounded-full p-0"
                 onClick={() => setRemovedAttachment(true)}
@@ -194,14 +185,15 @@ export const MessageActionsEditor = ({
             >
               <XIcon className="size-3" />
             </Button>
-            <DirectUploadButton
-              accept="image/*"
-              onUploadSuccess={handleUploadSuccess}
-              uploadPath={uploadPath}
+            <MediaLibraryTrigger
+              onSelect={handleSelectMediaFile}
               workspaceId={workspaceId}
             >
-              {t("messages.replaceAttachment")}
-            </DirectUploadButton>
+              <Button size="sm" type="button" variant="outline">
+                <ImageIcon className="size-4" />
+                {t("messages.replaceAttachment")}
+              </Button>
+            </MediaLibraryTrigger>
           </div>
         ))}
 
@@ -234,14 +226,15 @@ export const MessageActionsEditor = ({
       )}
 
       {!showExistingAttachment && newAttachment === null && (
-        <DirectUploadButton
-          accept="image/*"
-          onUploadSuccess={handleUploadSuccess}
-          uploadPath={uploadPath}
+        <MediaLibraryTrigger
+          onSelect={handleSelectMediaFile}
           workspaceId={workspaceId}
         >
-          {t("messages.addAttachment")}
-        </DirectUploadButton>
+          <Button size="sm" type="button" variant="outline">
+            <ImageIcon className="size-4" />
+            {t("messages.addAttachment")}
+          </Button>
+        </MediaLibraryTrigger>
       )}
 
       <div className="flex gap-2">

@@ -1,15 +1,16 @@
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
-
 /**
  * WhatsApp embedded-signup helpers.
  *
  * Instead of running the Facebook JS SDK (whose OAuth origin is bound to
  * `window.location`, so it breaks on a white-label reseller custom domain), we
- * open the Facebook OAuth dialog directly with `redirect_uri` set to the fixed,
- * Meta-registered broker callback. Facebook returns the `code` to that broker
- * route, which relays it back to the originating reseller tab via
- * `window.opener.postMessage`. The reseller — where the session cookie lives —
- * exchanges the code and derives the WABA/phone/business ids server-side.
+ * open the Facebook OAuth dialog directly with `redirect_uri` set to the
+ * Meta-registered host for the credential in use — the broker for
+ * inherited/platform credentials, or the reseller's own custom domain for a
+ * tenant-owned one (see `lib/provider-origin.ts`). Facebook returns the
+ * `code` to that route, which relays it back to the originating reseller tab
+ * via `window.opener.postMessage`. The reseller — where the session cookie
+ * lives — exchanges the code and derives the WABA/phone/business ids
+ * server-side.
  */
 
 export const EMBEDDED_SIGNUP_FEATURE_TYPES = {
@@ -23,15 +24,15 @@ const EMBEDDED_SIGNUP_FEATURES = {
 
 const FACEBOOK_DIALOG_BASE = "https://www.facebook.com"
 
-/** Broker route Facebook redirects the `code` to (the only registered URI). */
+/** Route Facebook redirects the `code` to — path only; see `redirectUri` above for the host. */
 export const WHATSAPP_OAUTH_CALLBACK_PATH = "/integrations/whatsapp/callback"
 
 /**
- * `window.postMessage` contract between the broker callback route and the
- * reseller tab. The reseller validates `event.origin === getBrokerOrigin()`
- * before trusting it, and the broker validates the reseller origin (from `state`)
- * before posting — so a signup `code` is never relayed to an origin we do not
- * control.
+ * `window.postMessage` contract between the OAuth callback route and the
+ * reseller tab. The reseller validates `event.origin` against the registered
+ * callback origin before trusting it, and the callback route validates the
+ * reseller origin (from `state`) before posting — so a signup `code` is
+ * never relayed to an origin we do not control.
  */
 export const WA_OAUTH_RESULT = "WA_OAUTH_RESULT" as const
 
@@ -126,8 +127,16 @@ function buildEmbeddedSignupExtras(featureType?: string) {
 }
 
 export type FacebookOAuthDialogParams = {
-  /** The reseller origin the broker relays the result back to. */
+  /** The reseller origin the callback relays the result back to. */
   resellerOrigin: string
+  /**
+   * Absolute callback URL registered with Meta for this credential — the
+   * broker callback for inherited/platform credentials, or the reseller's
+   * own custom domain callback for a tenant-owned one. Computed server-side
+   * (see `lib/provider-origin.ts`) and passed in, since this module is
+   * client-side and cannot resolve it itself.
+   */
+  redirectUri: string
   clientId: string
   configId: string
   version: string
@@ -137,9 +146,10 @@ export type FacebookOAuthDialogParams = {
 }
 
 /**
- * Build the absolute Facebook OAuth dialog URL to open in a popup. `redirect_uri`
- * is the broker callback (the only origin registered with Meta); `state` carries
- * the reseller origin so the broker can relay the `code` back to the right tab.
+ * Build the absolute Facebook OAuth dialog URL to open in a popup.
+ * `redirect_uri` is the caller-supplied, Meta-registered callback for this
+ * credential; `state` carries the reseller origin so that callback route can
+ * relay the `code` back to the right tab.
  */
 export function buildFacebookOAuthDialogUrl(
   params: FacebookOAuthDialogParams,
@@ -147,10 +157,7 @@ export function buildFacebookOAuthDialogUrl(
   const url = new URL(`${FACEBOOK_DIALOG_BASE}/${params.version}/dialog/oauth`)
   url.searchParams.set("client_id", params.clientId)
   url.searchParams.set("config_id", params.configId)
-  url.searchParams.set(
-    "redirect_uri",
-    buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH),
-  )
+  url.searchParams.set("redirect_uri", params.redirectUri)
   url.searchParams.set("response_type", "code")
   url.searchParams.set(
     "state",

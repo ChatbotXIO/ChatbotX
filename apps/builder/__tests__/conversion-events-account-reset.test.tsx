@@ -96,6 +96,9 @@ const data = {
       integrationWhatsappId: "iw-1",
     },
   ],
+  messengerIntegrations: [],
+  messengerTemplates: [],
+  instagramIntegrations: [],
   rules: [],
   tags: [],
   automatedResponses: [],
@@ -130,6 +133,7 @@ describe("ConversionEventsView account selection", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -154,6 +158,7 @@ describe("ConversionEventsView account selection", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[1]}
           switcherIntegrations={switcherIntegrations}

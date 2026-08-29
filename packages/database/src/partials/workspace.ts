@@ -15,6 +15,21 @@ export const isSmartResponseDelayOption = (
 export const workspaceMemberRoles = z.enum(["owner", "agent"])
 export type WorkspaceMemberRole = z.infer<typeof workspaceMemberRoles>
 
+/**
+ * Controls how often the workspace's Default Reply flow may fire for the
+ * same contact/channel (ContactInbox). Windows are **rolling**, not
+ * calendar-based:
+ * - `allTime` — no throttling, fires on every unanswered message (today's behavior).
+ * - `oncePerHour` — at most once per rolling 3600s window per ContactInbox.
+ * - `oncePerDay` — at most once per rolling 86400s window per ContactInbox.
+ */
+export const defaultReplyFrequencies = z.enum([
+  "allTime",
+  "oncePerHour",
+  "oncePerDay",
+])
+export type DefaultReplyFrequency = z.infer<typeof defaultReplyFrequencies>
+
 export const workspaceMemberPermissionsSchema = z.object({
   superAdmin: z.boolean(),
   analytics: z.boolean(),

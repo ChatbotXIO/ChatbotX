@@ -61,6 +61,8 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
   getDataset: mockGetDataset,
   ensureDataset: mockEnsureDataset,
+  buildDatasetName: (name: string) =>
+    name.trim() ? `${name.trim()} Event Data` : "Event Data",
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -118,7 +120,7 @@ describe("whatsapp CAPI dataset actions", () => {
     })
   })
 
-  test("provision is superadmin-gated and creates a dataset with resourceType waba", async () => {
+  test("provision creates a dataset with the resolved creation token", async () => {
     await call<ProvisionHandler>(provisionWhatsappCapiDatasetAction)({
       bindArgsParsedInputs: ["ws-1", "wa-1"],
     })
@@ -135,18 +137,23 @@ describe("whatsapp CAPI dataset actions", () => {
       provisionDataset: (input: {
         accessToken: string
         resourceId: string
+        resourceName: string
       }) => Promise<string>
     }
     mockEnsureDataset.mockResolvedValue("dataset-waba-1")
+    // `accessToken` is the per-channel creation token supplied by the adapter
+    // (WhatsApp's agency system-user token); the action forwards it unchanged.
     await provisionCall.provisionDataset({
-      accessToken: "token-1",
+      accessToken: "wa-system-token",
       resourceId: "waba-1",
+      resourceName: "Acme WABA",
     })
 
     expect(mockEnsureDataset).toHaveBeenCalledWith({
       resourceType: "waba",
       resourceId: "waba-1",
-      accessToken: "token-1",
+      accessToken: "wa-system-token",
+      datasetName: "Acme WABA Event Data",
     })
   })
 

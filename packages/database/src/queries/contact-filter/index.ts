@@ -1,3 +1,4 @@
+import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
 import {
   type AnyColumn,
   inArray,
@@ -15,10 +16,13 @@ import {
   questionnaireSubmissionModel,
 } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
+import { buildBotFieldWhere } from "./bot-field-predicates"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import {
+  adReferralPredicate,
   buildCtwaSegmentContactExists,
+  type CtwaSegmentPredicateInput,
   ctwaRetargetDateRange,
   ctwaRetargetSegments,
 } from "./ctwa-retarget"
@@ -89,9 +93,28 @@ export {
 const hasWhereParts = (where: ContactWhere): boolean =>
   Object.keys(where).length > 0
 
+/**
+ * Channels the `ctwaRetarget` condition's optional `channel` narrowing
+ * accepts — the subset of `AdsConversionChannel` that has per-contact
+ * `ContactInbox`/`AdsConversionEvent` rows (`buildCtwaSegmentPredicate`'s
+ * channel-specific branches). `facebook` has no contact-scoped conversation
+ * concept, so it is intentionally excluded here.
+ */
+const CTWA_RETARGET_CHANNELS: ReadonlySet<string> = new Set(
+  adsEligibleChannelTypes.options,
+)
+
+/**
+ * `workspaceId` is optional for backward compat but should always be passed
+ * when available — without it, a criteria whose only condition is `botField`
+ * (workspace-scoped, requires `workspaceId` to build its EXISTS predicate)
+ * would be reported as "no predicate" even though `buildContactWhere` /
+ * `applyContactFilter` (which DO receive `workspaceId`) resolve a real one.
+ */
 export const contactFilterHasPredicate = (
   criteria: FilterCriteriaInput,
-): boolean => hasWhereParts(applyContactFilter(criteria))
+  workspaceId?: string,
+): boolean => hasWhereParts(applyContactFilter(criteria, workspaceId))
 
 type ContactFilterContext = {
   timezone: string
@@ -339,7 +362,7 @@ export const buildContactInboxContactFilterSQL = ({
     return sql`TRUE`
   }
 
-  if (!contactFilterHasPredicate(contactFilter)) {
+  if (!contactFilterHasPredicate(contactFilter, workspaceId)) {
     return sql`FALSE`
   }
 
@@ -511,7 +534,7 @@ function buildConditionWhere(
     case "fromCtwaAd":
       return buildExistsBooleanWhere(
         contactInboxExists,
-        sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL AND ${contactInboxModel.referral}->>'ctwaClid' <> ''`,
+        adReferralPredicate(),
         operator,
         value,
       )
@@ -523,6 +546,12 @@ function buildConditionWhere(
         !(ctwaRetargetSegments as readonly string[]).includes(segment) ||
         typeof condition.since !== "string" ||
         typeof condition.until !== "string"
+      ) {
+        return {}
+      }
+      if (
+        condition.channel !== undefined &&
+        !CTWA_RETARGET_CHANNELS.has(condition.channel)
       ) {
         return {}
       }
@@ -539,6 +568,7 @@ function buildConditionWhere(
             until,
             workspaceId: context.workspaceId,
             integrationWhatsappId: condition.integrationWhatsappId,
+            channel: condition.channel as CtwaSegmentPredicateInput["channel"],
           },
           contactId,
         ),
@@ -592,6 +622,13 @@ function buildConditionWhere(
 
     case "customField":
       return buildCustomFieldWhere({ ...condition, timezone })
+
+    case "botField":
+      return buildBotFieldWhere({
+        ...condition,
+        timezone,
+        workspaceId: context.workspaceId,
+      })
 
     case "archived":
       return buildExistsBooleanWhere(
