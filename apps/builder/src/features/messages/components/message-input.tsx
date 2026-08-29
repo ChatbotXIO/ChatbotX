@@ -1,17 +1,6 @@
 "use client"
 
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
@@ -280,13 +269,6 @@ export const MessageInput = () => {
     conversation?.contactInboxes[0]?.channel === "instagram" &&
     conversation?.sourceId != null
 
-  const [isHumanAgentUnlocked, setIsHumanAgentUnlocked] = useState(false)
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset unlock state when conversation changes
-  useEffect(() => {
-    setIsHumanAgentUnlocked(false)
-  }, [activeConversationId])
-
   const channel = conversation?.contactInboxes[0]?.channel
 
   // Meta DM = messenger or instagram that is NOT a post comment.
@@ -355,11 +337,6 @@ export const MessageInput = () => {
     return Date.now() - lastIncomingTs > windowSeconds * 1000
   }, [channel, lastIncomingTs, clockTick])
 
-  const isMessengerWindowClosed = useMemo(
-    () => isMetaDm && isWindowExpired,
-    [isMetaDm, isWindowExpired],
-  )
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick forces recompute at window boundary
   const isMessengerHumanAgentWindowExpired = useMemo(() => {
     if (!(isMetaDm && lastIncomingTs)) {
@@ -399,43 +376,6 @@ export const MessageInput = () => {
           <p className="text-muted-foreground text-sm">
             {t("messages.humanAgentWindowExpired")}
           </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (isMessengerWindowClosed && !isHumanAgentUnlocked) {
-    return (
-      <div className="m-3 rounded-xl border pt-2">
-        <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            {t("messages.messagingWindowClosed")}
-          </p>
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button size="sm" variant="outline">
-                  {t("messages.sendHumanAgentTag")}
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("messages.warning")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("messages.humanAgentWarningDescription")}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => setIsHumanAgentUnlocked(true)}
-                >
-                  {t("actions.continue")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </div>
     )
