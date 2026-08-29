@@ -572,6 +572,7 @@
       "systemFields": "Trường hệ thống",
       "topicCoupon": "Topic coupon",
       "customFields": "Trường tùy chỉnh",
+      "botFields": "Trường bot",
       "email": "Email",
       "sms": "SMS",
       "ctwaAds": "Quảng cáo"
@@ -809,7 +810,7 @@
       "label": "Token truy cập"
     },
     "botField": {
-      "label": "Trường tài khoản"
+      "label": "Trường bot"
     },
     "agent": {
       "label": "Đại lý"
@@ -975,7 +976,10 @@
       "append": "Thêm vào cuối",
       "prepend": "Thêm vào đầu",
       "increase": "Tăng thêm",
-      "decrease": "Giảm đi"
+      "decrease": "Giảm đi",
+      "groupSystemFields": "Trường hệ thống",
+      "groupCustomFields": "Trường tùy chỉnh",
+      "groupAccountFields": "Trường bot"
     },
     "dataCollect": {
       "label": "Thu thập dữ liệu"
@@ -1732,7 +1736,7 @@
       "label": "Thẻ"
     },
     "botFields": {
-      "label": "Trường tài khoản"
+      "label": "Trường bot"
     },
     "ecommerce": {
       "label": "Thương mại điện tử"
@@ -2967,6 +2971,9 @@
     "duplicatedSuccess": "Đã nhân bản {feature} thành công",
     "duplicateConfirmation": "Thao tác này sẽ tạo một bản sao {feature} của bạn.",
     "deleteFeature": "Xóa {feature}",
+    "resetFeature": "Đặt lại {feature}",
+    "resetConfirmation": "Thao tác này sẽ xóa giá trị của {feature} đã chọn về rỗng.\nHành động này không thể hoàn tác.",
+    "resetSuccess": "Đã đặt lại {feature} thành công",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
     "addFeature": "Thêm {feature}",
     "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
@@ -5702,5 +5709,8 @@
         "last_7d": "7 ngày qua"
       }
     }
+  },
+  "accountFields": {
+    "title": "Trường bot"
   }
 }

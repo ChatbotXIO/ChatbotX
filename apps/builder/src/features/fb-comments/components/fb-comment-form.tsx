@@ -248,6 +248,7 @@ export function FbCommentForm({
             {privateReplyType === "text" && (
               <TiptapEditorField
                 channels={["messenger"]}
+                includeBotFieldVariables
                 label={t("facebookCommentAutomation.replyMessage")}
                 name="privateReply.value"
                 placeholder={t(
@@ -293,6 +294,7 @@ export function FbCommentForm({
             {publicReplyType === "text" && (
               <TiptapEditorField
                 channels={["messenger"]}
+                includeBotFieldVariables
                 label={t("facebookCommentAutomation.replyMessage")}
                 name="publicReply.value"
                 placeholder={t(

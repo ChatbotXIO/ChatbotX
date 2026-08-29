@@ -1196,6 +1196,9 @@
     "duplicatedSuccess": "{feature} שוכפל בהצלחה",
     "duplicateConfirmation": "פעולה זו תיצור עותק של {feature}.",
     "deleteFeature": "מחיקת {feature}",
+    "resetFeature": "איפוס {feature}",
+    "resetConfirmation": "פעולה זו תנקה את הערכים של {feature} שנבחרו.\nלא ניתן לבטל פעולה זו.",
+    "resetSuccess": "{feature} אופס בהצלחה",
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו.",
     "addFeature": "הוספת {feature}",
     "signOutConfirmation": "האם לצאת מהחשבון?",
@@ -3497,7 +3500,10 @@
       "append": "הוספה לסוף",
       "prepend": "הוספה להתחלה",
       "increase": "הגדלה ב-",
-      "decrease": "הקטנה ב-"
+      "decrease": "הקטנה ב-",
+      "groupSystemFields": "שדות מערכת",
+      "groupCustomFields": "שדות מותאמים אישית",
+      "groupAccountFields": "שדות בוט"
     },
     "dataCollect": {
       "label": "איסוף נתונים"
@@ -4923,6 +4929,7 @@
       "systemFields": "שדות מערכת",
       "topicCoupon": "נושא קופון",
       "customFields": "שדות מותאמים אישית",
+      "botFields": "שדות בוט",
       "email": "דוא\"ל",
       "sms": "SMS",
       "ctwaAds": "מודעות"
@@ -5702,5 +5709,8 @@
         "last_7d": "7 הימים האחרונים"
       }
     }
+  },
+  "accountFields": {
+    "title": "שדות בוט"
   }
 }

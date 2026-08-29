@@ -38,12 +38,20 @@ const isSvgUrl = (url: string) => SVG_URL_PATTERN.test(url)
 
 export function UrlVariablePicker({
   onSelect,
+  includeBotFieldVariables = false,
 }: {
   onSelect: (variableName: string) => void
+  // Media message URLs (send image/video/file/audio/card) are deep-resolved
+  // by the worker's `resolveContactVariablesDeep` before send, same as any
+  // other flow-deliverable step field — callers whose URL field actually
+  // ships through that path should opt in.
+  includeBotFieldVariables?: boolean
 }) {
   const t = useTranslations()
   const [isOpen, setIsOpen] = useState(false)
-  const promptVariableOptions = usePromptVariableOptions({})
+  const promptVariableOptions = usePromptVariableOptions({
+    includeBotFieldVariables,
+  })
 
   if (promptVariableOptions.length === 0) {
     return null
@@ -104,6 +112,7 @@ export function DirectUploadOrInsertLink({
   onSuccess,
   showVariablePicker = false,
   useMediaLibrary = false,
+  includeBotFieldVariables = false,
 }: {
   parentName: string
   fileType: FileType
@@ -114,6 +123,9 @@ export function DirectUploadOrInsertLink({
   // Pick an existing workspace file from the Media Library instead of only
   // uploading a new one from the device.
   useMediaLibrary?: boolean
+  // See `UrlVariablePicker`'s doc — only opt in when this URL field is
+  // actually resolved against contact/bot-field variables at send time.
+  includeBotFieldVariables?: boolean
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -360,7 +372,10 @@ export function DirectUploadOrInsertLink({
             placeholder={t("fields.url.placeholder")}
           />
           {showVariablePicker && (
-            <UrlVariablePicker onSelect={insertUrlVariable} />
+            <UrlVariablePicker
+              includeBotFieldVariables={includeBotFieldVariables}
+              onSelect={insertUrlVariable}
+            />
           )}
           {onSuccess && (
             <Button

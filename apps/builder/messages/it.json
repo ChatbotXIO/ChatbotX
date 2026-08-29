@@ -278,7 +278,10 @@
       "append": "Aggiungi alla fine",
       "prepend": "Aggiungi all'inizio",
       "increase": "Aumenta di",
-      "decrease": "Diminuisci di"
+      "decrease": "Diminuisci di",
+      "groupSystemFields": "Campi di sistema",
+      "groupCustomFields": "Campi personalizzati",
+      "groupAccountFields": "Campi del bot"
     },
     "dataCollect": {
       "label": "Raccolta dati"
@@ -1998,6 +2001,7 @@
       "systemFields": "Campi di sistema",
       "topicCoupon": "Argomento coupon",
       "customFields": "Campi personalizzati",
+      "botFields": "Campi del bot",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Inserzioni"
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "{feature} duplicato correttamente",
     "duplicateConfirmation": "Verrà creata una copia di {feature}.",
     "deleteFeature": "Elimina {feature}",
+    "resetFeature": "Reimposta {feature}",
+    "resetConfirmation": "Questo cancellerà i valori dei {feature} selezionati.\nQuesta azione non può essere annullata.",
+    "resetSuccess": "{feature} reimpostato con successo",
     "deleteConfirmation": "Sei assolutamente sicuro?\nQuesta azione non può essere annullata.\nIl tuo {feature} verrà eliminato definitivamente dai nostri server.",
     "addFeature": "Aggiungi {feature}",
     "signOutConfirmation": "Vuoi davvero uscire?",
@@ -5702,5 +5709,8 @@
         "last_7d": "Ultimi 7 giorni"
       }
     }
+  },
+  "accountFields": {
+    "title": "Campi del bot"
   }
 }

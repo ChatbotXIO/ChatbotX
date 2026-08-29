@@ -1,5 +1,6 @@
 import {
   adsConversionService,
+  botFieldService,
   contactCustomFieldService,
   conversationService,
   metaConversionsService,
@@ -17,6 +18,8 @@ import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   errorStateDefaultFn,
   FieldOperationType,
+  FieldReferenceKind,
+  parseFieldReference,
   type SpreadsheetClearRowSchema,
   type SpreadsheetColumnFilterSchema,
   type SpreadsheetContactToSheetMappingSchema,
@@ -152,23 +155,67 @@ export class ActionExecutor {
           (action.operation as (typeof FieldOperationType)[keyof typeof FieldOperationType]) ||
           FieldOperationType.set
 
-        if (operation === FieldOperationType.set) {
-          await contactCustomFieldService.setValues({
-            workspaceId,
-            contactId: conversation.contactId,
-            fields: [{ customFieldId, value }],
-          })
+        const fieldReference = parseFieldReference(customFieldId)
+        switch (fieldReference.kind) {
+          case FieldReferenceKind.botField:
+            // Account Fields support all five operations.
+            await botFieldService.applyValueOperation({
+              workspaceId,
+              key: fieldReference.id,
+              operation,
+              value,
+            })
+            break
+          case FieldReferenceKind.customField:
+            // Today's behavior, unchanged: only `set` persists; every other
+            // operation stays a silent no-op (pre-existing platform bug,
+            // tracked separately — see the Account Fields plan §3.2, Phase 5).
+            if (operation === FieldOperationType.set) {
+              await contactCustomFieldService.setValues({
+                workspaceId,
+                contactId: conversation.contactId,
+                fields: [{ customFieldId, value }],
+              })
+            }
+            break
+          default: {
+            // Exhaustiveness guard — adding a new FieldReference variant
+            // without handling it here becomes a compile error.
+            const _exhaustive: never = fieldReference
+            baseLogger.warn(
+              { fieldReference: _exhaustive },
+              "Unhandled field reference kind in setCustomField",
+            )
+          }
         }
         break
       }
 
       case triggerActions.enum.clearCustomField: {
         const customFieldId = action.customFieldId as string
-        await contactCustomFieldService.deleteByCustomFieldId({
-          workspaceId,
-          contactIds: [conversation.contactId],
-          customFieldId,
-        })
+        const fieldReference = parseFieldReference(customFieldId)
+        switch (fieldReference.kind) {
+          case FieldReferenceKind.botField:
+            await botFieldService.clearValueByKey({
+              workspaceId,
+              key: fieldReference.id,
+            })
+            break
+          case FieldReferenceKind.customField:
+            await contactCustomFieldService.deleteByCustomFieldId({
+              workspaceId,
+              contactIds: [conversation.contactId],
+              customFieldId,
+            })
+            break
+          default: {
+            const _exhaustive: never = fieldReference
+            baseLogger.warn(
+              { fieldReference: _exhaustive },
+              "Unhandled field reference kind in clearCustomField",
+            )
+          }
+        }
         break
       }
 

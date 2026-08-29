@@ -51,6 +51,7 @@ const ConditionStepEditor = ({ parentName }: ConditionStepEditorProps) => {
               <ContactFilter
                 enableVariables={true}
                 excludeFields={CONDITION_EXCLUDED_FILTER_FIELDS}
+                includeBotFields
                 parentName={`${parentName}.cases.${index}`}
               />
             </CardContent>

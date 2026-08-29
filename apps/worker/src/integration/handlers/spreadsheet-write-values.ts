@@ -1,5 +1,11 @@
-import { contactCustomFieldService } from "@chatbotx.io/business"
 import {
+  botFieldService,
+  contactCustomFieldService,
+} from "@chatbotx.io/business"
+import {
+  FieldReferenceKind,
+  parseFieldReference,
+  type SpreadsheetContactToSheetMappingSchema,
   type SpreadsheetSendDataSchema,
   type SpreadsheetStepVersion,
   type SpreadsheetUpdateRowSchema,
@@ -17,22 +23,71 @@ export type WriteValueResolver = (
   props: ExecuteStepProps<SpreadsheetWriteStepSchema>,
 ) => Promise<string[]>
 
+/**
+ * Batches the distinct `bot_field:<id>` tokens out of a v1 Contact→Sheet
+ * mapping into a single workspace-scoped lookup — mirrors the Sheet→Contact
+ * write side (`spreadsheet-handler.ts`'s `updateContactCustomFields`), which
+ * already supports bot field tokens. A blank/unset bot field value resolves
+ * to "" rather than being dropped.
+ */
+const resolveBotFieldValues = async ({
+  workspaceId,
+  map,
+}: {
+  workspaceId: string
+  map: Pick<SpreadsheetContactToSheetMappingSchema, "customFieldId">[]
+}): Promise<Map<string, string>> => {
+  const botFieldIds = [
+    ...new Set(
+      map.flatMap((item) => {
+        if (!item.customFieldId) {
+          return []
+        }
+        const reference = parseFieldReference(item.customFieldId)
+        return reference.kind === FieldReferenceKind.botField
+          ? [reference.id]
+          : []
+      }),
+    ),
+  ]
+  if (botFieldIds.length === 0) {
+    return new Map()
+  }
+
+  const botFields = await botFieldService.findManyByIds({
+    workspaceId,
+    ids: botFieldIds,
+  })
+  return new Map(botFields.map((field) => [field.id, field.value ?? ""]))
+}
+
 const resolveFromCustomFields: WriteValueResolver = async ({
   conversation,
   step,
 }) => {
-  const storedValues = await contactCustomFieldService.listValues({
-    contactId: conversation.contactId,
-  })
+  const [storedValues, botFieldValues] = await Promise.all([
+    contactCustomFieldService.listValues({
+      contactId: conversation.contactId,
+    }),
+    resolveBotFieldValues({
+      workspaceId: conversation.workspaceId,
+      map: step.map,
+    }),
+  ])
   const valueByCustomFieldId = new Map(
     storedValues.map((field) => [field.customFieldId, field.value]),
   )
 
-  return step.map.map((item) =>
-    item.customFieldId
-      ? (valueByCustomFieldId.get(item.customFieldId) ?? "")
-      : "",
-  )
+  return step.map.map((item) => {
+    if (!item.customFieldId) {
+      return ""
+    }
+    const reference = parseFieldReference(item.customFieldId)
+    if (reference.kind === FieldReferenceKind.botField) {
+      return botFieldValues.get(reference.id) ?? ""
+    }
+    return valueByCustomFieldId.get(item.customFieldId) ?? ""
+  })
 }
 
 const resolveFromVariableTemplates: WriteValueResolver = async (props) => {

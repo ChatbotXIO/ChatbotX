@@ -4,11 +4,13 @@ import type {
   ContactModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import type { ContactCustomFieldValue } from "../src/schema"
+import type { BotFieldValue, ContactCustomFieldValue } from "../src/schema"
 import { extractVariables } from "../src/utils"
 
 const {
+  mockBotFieldFindMany,
   mockContactCustomFieldFindMany,
   mockContactFindFirst,
   mockContactInboxFindFirst,
@@ -17,6 +19,7 @@ const {
   mockResolveCouponVariable,
   mockWorkspaceFind,
 } = vi.hoisted(() => ({
+  mockBotFieldFindMany: vi.fn().mockResolvedValue([]),
   mockContactCustomFieldFindMany: vi.fn(),
   mockContactFindFirst: vi.fn(),
   mockContactInboxFindFirst: vi.fn(),
@@ -27,6 +30,10 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  botFieldWorkspaceCacheTags: (workspaceId: string) => [
+    "bot-fields",
+    `bot-fields:${workspaceId}`,
+  ],
   appointmentService: { findBy: vi.fn() },
   contactInboxService: {
     findLatestLastIncomingMessageAtByContactId:
@@ -52,6 +59,14 @@ vi.mock("@chatbotx.io/business/coupon", () => ({
   },
 }))
 
+// Pass-through cache (partial mock: the business import chain also pulls
+// other redis exports, e.g. bloomFilter): each test's mocked bot-field rows
+// must flow fresh through withCache.
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/redis")>()),
+  withCache: async (_key: string, fn: () => Promise<unknown>) => fn(),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
@@ -63,6 +78,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
       contactCustomFieldModel: {
         findMany: mockContactCustomFieldFindMany,
+      },
+      botFieldModel: {
+        findMany: mockBotFieldFindMany,
       },
     },
   },
@@ -107,12 +125,27 @@ const createCustomFieldsMap = (
     ]),
   )
 
+const createBotFieldsMap = (
+  fields: Array<{ id: string; type?: string; value: string | null }>,
+) =>
+  new Map(
+    fields.map((field) => [
+      field.id,
+      {
+        type: field.type ?? "text",
+        value: field.value,
+      } as unknown as BotFieldValue,
+    ]),
+  )
+
 const createVariables = (
   fields: Array<Partial<ContactCustomFieldValue> & { key: string }> = [],
+  botFields: Array<{ id: string; type?: string; value: string | null }> = [],
 ) => ({
   contact,
   contactInbox,
   customFieldsMap: createCustomFieldsMap(fields),
+  botFieldsMap: createBotFieldsMap(botFields),
   workspace,
 })
 
@@ -283,6 +316,47 @@ describe("contactVariableService.replaceAll", () => {
   test("sanity-checks referenced system field names", () => {
     expect(systemFieldTypes.options).toContain("locale")
     expect(systemFieldTypes.options).toContain("first_name")
+  })
+})
+
+describe("contactVariableService.replaceAll bot fields", () => {
+  test("resolves a bot_field:<id> token to the workspace field's stored value", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: `Support hours: {{${formatBotFieldReference("1")}}}`,
+        variables: createVariables([], [{ id: "1", value: "9am - 5pm" }]),
+      }),
+    ).resolves.toBe("Support hours: 9am - 5pm")
+  })
+
+  test("renders a bot field with no stored value as an empty string", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: `Hours: {{${formatBotFieldReference("1")}}}.`,
+        variables: createVariables([], [{ id: "1", value: null }]),
+      }),
+    ).resolves.toBe("Hours: .")
+  })
+
+  test("keeps a bot_field token for a deleted/unknown id literal, matching unknown-variable behavior", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: `{{${formatBotFieldReference("999")}}}`,
+        variables: createVariables([], [{ id: "1", value: "9am - 5pm" }]),
+      }),
+    ).resolves.toBe(`{{${formatBotFieldReference("999")}}}`)
+  })
+
+  test("never collides a bot_field token with a contact custom field of the same name", async () => {
+    await expect(
+      contactVariableService.replaceAll({
+        text: `{{${formatBotFieldReference("1")}}}`,
+        variables: createVariables(
+          [{ key: formatBotFieldReference("1"), value: "wrong value" }],
+          [{ id: "1", value: "right value" }],
+        ),
+      }),
+    ).resolves.toBe("right value")
   })
 })
 
@@ -478,5 +552,27 @@ describe("contactVariableService.getAll", () => {
       workspace,
     })
     expect(mockWorkspaceFind).not.toHaveBeenCalled()
+  })
+
+  test("builds botFieldsMap from the contact's workspace, keyed by field id", async () => {
+    mockContactFindFirst.mockResolvedValue(contact)
+    mockContactCustomFieldFindMany.mockResolvedValue([])
+    mockBotFieldFindMany.mockResolvedValue([
+      { id: "1", type: "shortText", value: "9am - 5pm" },
+    ])
+
+    const result = await contactVariableService.getAll({
+      contactId: "contact-1",
+      contactInbox,
+      workspace,
+    })
+
+    expect(mockBotFieldFindMany).toHaveBeenCalledWith({
+      where: { workspaceId: "workspace-1" },
+    })
+    expect(result.botFieldsMap?.get("1")).toEqual({
+      type: "shortText",
+      value: "9am - 5pm",
+    })
   })
 })

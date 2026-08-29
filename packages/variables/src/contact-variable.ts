@@ -1,4 +1,7 @@
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  botFieldWorkspaceCacheTags,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   type SystemFieldType,
@@ -10,9 +13,18 @@ import type {
   ConversationModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import {
+  FieldReferenceKind,
+  parseFieldReference,
+} from "@chatbotx.io/flow-config"
+import { withCache } from "@chatbotx.io/redis"
 import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
 import { logger } from "./logger"
-import type { ContactCustomFieldValue, ReplaceVariableProps } from "./schema"
+import type {
+  BotFieldValue,
+  ContactCustomFieldValue,
+  ReplaceVariableProps,
+} from "./schema"
 import {
   extractVariables,
   getContactTimezone,
@@ -57,6 +69,38 @@ const customFieldResolver: VariableResolver = {
   },
 }
 
+// Bot fields (Account Fields) are workspace-level, referenced by the
+// `bot_field:<id>` token (see `@chatbotx.io/flow-config`'s
+// `parseFieldReference`/`formatBotFieldReference`) rather than by name, so
+// they never collide with a contact custom field of the same name. `matches`
+// requires the id to actually be present in `botFieldsMap` — mirroring
+// `customFieldResolver` — so a deleted/unknown bot field id is left as
+// literal `{{bot_field:<id>}}` text, exactly like an unknown custom field
+// name today.
+const botFieldResolver: VariableResolver = {
+  matches: (variable, context) => {
+    const parsed = parseFieldReference(variable)
+    return (
+      parsed.kind === FieldReferenceKind.botField &&
+      Boolean(context.botFieldsMap?.has(parsed.id))
+    )
+  },
+  resolve: (variable, context, timezone) => {
+    const parsed = parseFieldReference(variable)
+    if (parsed.kind !== FieldReferenceKind.botField) {
+      return ""
+    }
+    const fieldValue = context.botFieldsMap?.get(parsed.id)
+    return fieldValue
+      ? renderCustomFieldValue(
+          fieldValue.type,
+          fieldValue.value ?? "",
+          timezone,
+        )
+      : ""
+  },
+}
+
 const couponResolver: VariableResolver = {
   matches: (variable) => isCouponVariable(variable),
   resolve: async (variable, context) =>
@@ -66,6 +110,7 @@ const couponResolver: VariableResolver = {
 const variableResolvers = [
   systemFieldResolver,
   rawCustomFieldResolver,
+  botFieldResolver,
   customFieldResolver,
   couponResolver,
 ] as const satisfies readonly VariableResolver[]
@@ -141,6 +186,39 @@ const loadFields = async (
   )
 }
 
+/**
+ * Cached, unlike the per-contact loads above: `getAll` runs on every message
+ * send / automation step, and bot fields are workspace-global and rarely
+ * change — an uncached query here would hit Postgres once per send. The
+ * cache subscribes to `botFieldService`'s own invalidation tags, so every
+ * bot-field write refreshes it. The short TTL is a safety net on top: tag
+ * invalidation is best-effort, and a `getAll` racing a not-yet-committed
+ * bot-field-creating transaction (template install invalidates inside its
+ * tx) could re-cache the pre-commit map — the TTL caps any such staleness
+ * instead of letting it live for the default 24h.
+ */
+const BOT_FIELDS_CACHE_TTL_SECONDS = 5 * 60
+
+const loadBotFields = async (
+  workspaceId: string,
+): Promise<Map<string, BotFieldValue>> =>
+  await withCache(
+    `bot-fields:${workspaceId}:variable-map`,
+    async () => {
+      const rows = await db.query.botFieldModel.findMany({
+        where: { workspaceId },
+      })
+
+      return new Map(
+        rows.map((row) => [row.id, { type: row.type, value: row.value }]),
+      )
+    },
+    {
+      ttl: BOT_FIELDS_CACHE_TTL_SECONDS,
+      tags: botFieldWorkspaceCacheTags(workspaceId),
+    },
+  )
+
 export const contactVariableService = {
   getAll: async (input: GetAllProps): Promise<ReplaceVariableProps> => {
     const [contact, contactInbox, customFieldsMap] = await Promise.all([
@@ -148,10 +226,13 @@ export const contactVariableService = {
       loadInbox(input.contactInbox),
       loadFields(input.contactId),
     ])
-    const workspace = await loadWorkspace({
-      contact,
-      workspace: input.workspace,
-    })
+    const [workspace, botFieldsMap] = await Promise.all([
+      loadWorkspace({
+        contact,
+        workspace: input.workspace,
+      }),
+      loadBotFields(contact.workspaceId),
+    ])
 
     return {
       contact,
@@ -159,6 +240,7 @@ export const contactVariableService = {
       conversation: input.conversation ?? null,
       appointmentId: input.appointmentId,
       customFieldsMap,
+      botFieldsMap,
       workspace,
     }
   },

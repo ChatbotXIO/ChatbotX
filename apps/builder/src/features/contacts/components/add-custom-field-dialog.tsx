@@ -30,6 +30,7 @@ import {
   CustomFieldOperationSelect,
   CustomFieldSelect,
 } from "@/features/custom-fields/custom-field-select"
+import { findFieldByReference } from "@/features/custom-fields/lib/find-field-by-reference"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { useWorkspaceId } from "@/hooks/routing"
 import { getBrowserTimezone } from "../../contact-filter/lib/timezone"
@@ -132,10 +133,22 @@ export default function AddContactCustomFieldDialog({
   )
 }
 
-export const SetCustomField = ({ parentName }: { parentName?: string }) => {
+export const SetCustomField = ({
+  parentName,
+  includeBotFields = false,
+}: {
+  parentName?: string
+  /**
+   * Also offers Account Fields (bot fields) in the picker. Defaults to false:
+   * this component is shared with the contact bulk-edit dialog
+   * (`AddContactCustomFieldDialog`), which must stay contact-pure. Only the
+   * trigger `setCustomField` action editor opts in.
+   */
+  includeBotFields?: boolean
+}) => {
   const form = useFormContext()
   const t = useTranslations()
-  const customFields = useCustomFieldStore((state) => state.customFields)
+  const { customFields, botFields } = useCustomFieldStore((state) => state)
 
   const getFieldName = (field: string) => {
     if (!parentName) {
@@ -149,19 +162,17 @@ export const SetCustomField = ({ parentName }: { parentName?: string }) => {
     name: getFieldName("customFieldId"),
   })
 
-  const selectedCustomFieldType = useMemo(() => {
-    if (!watchCustomFieldId) {
-      return null
-    }
-    const selectedCustomField = customFields.find(
-      (field) => field.id === watchCustomFieldId,
-    )
-    return selectedCustomField?.type ?? null
-  }, [watchCustomFieldId, customFields])
+  const selectedCustomFieldType = useMemo(
+    () =>
+      findFieldByReference(watchCustomFieldId, { customFields, botFields })
+        ?.type ?? null,
+    [watchCustomFieldId, customFields, botFields],
+  )
 
   return (
     <>
       <CustomFieldSelect
+        includeBotFields={includeBotFields}
         name={getFieldName("customFieldId")}
         onValueChange={() => {
           form.resetField(getFieldName("value"))

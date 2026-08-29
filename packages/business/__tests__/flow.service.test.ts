@@ -57,7 +57,16 @@ vi.mock("@chatbotx.io/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
-  remapCustomFieldReferences: vi.fn(),
+  remapFlowGraphReferences: vi.fn(),
+  // Mirror the REAL runtime values (O01–O05) — a made-up shape would silently
+  // mask a failure if flowService ever starts comparing against the enum.
+  FieldOperationType: {
+    set: "O01",
+    append: "O02",
+    prepend: "O03",
+    increase: "O04",
+    decrease: "O05",
+  },
 }))
 
 vi.mock("../src/base.service", () => ({
@@ -72,6 +81,10 @@ vi.mock("../src/flow-version", () => ({
   flowVersionService: {
     findDraft: mockFindDraft,
   },
+}))
+
+vi.mock("../src/bot-field/service", () => ({
+  botFieldService: { resolveByNameAndType: vi.fn() },
 }))
 
 vi.mock("../src/custom-field/service", () => ({

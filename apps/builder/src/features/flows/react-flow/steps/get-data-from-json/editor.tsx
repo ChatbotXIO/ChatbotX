@@ -82,6 +82,7 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
+              includeBotFields
               label={t("fields.inputCustomField.label")}
               name="inputFieldId"
               required
@@ -105,6 +106,7 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
                     </div>
                     <div className="w-[45%]">
                       <CustomFieldSelect
+                        includeBotFields
                         label=""
                         name={`mapping.${index}.outputFieldId`}
                       />

@@ -6,6 +6,10 @@ import {
 import { z } from "zod"
 import { booleanOperators } from "./boolean-filter"
 import {
+  type BotFieldCondition,
+  botFieldConditionSchema,
+} from "./bot-field-filter"
+import {
   type CouponTopicCondition,
   couponTopicConditionSchema,
 } from "./coupon-topic-filter"
@@ -24,6 +28,10 @@ import { numberOperators } from "./number"
 import { selectOperators } from "./select-filter"
 import { textOperators } from "./text-filter"
 
+export {
+  type BotFieldCondition,
+  botFieldConditionSchema,
+} from "./bot-field-filter"
 export {
   type CouponTopicCondition,
   couponTopicConditionSchema,
@@ -60,6 +68,7 @@ export const mappingConditions: Record<FormFieldType, OperatorType[]> = {
 export type ContactFilterCondition =
   | z.infer<(typeof contactFilterConditionSchemas)[number]>
   | CustomFieldCondition
+  | BotFieldCondition
   | CouponTopicCondition
   | CtwaRetargetCondition
 
@@ -78,6 +87,7 @@ export const singleContactFilterConditionSchema = z.union([
     contactFilterConditionSchemas,
   ),
   customFieldConditionSchema,
+  botFieldConditionSchema,
   couponTopicConditionSchema,
   ctwaRetargetConditionSchema,
 ]) as unknown as z.ZodType<ContactFilterCondition>

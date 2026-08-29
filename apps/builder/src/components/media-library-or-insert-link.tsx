@@ -25,12 +25,16 @@ export function MediaLibraryOrInsertLink({
   fileType,
   uploadPath,
   showVariablePicker = false,
+  includeBotFieldVariables = false,
 }: {
   parentName: string
   fileType: FileType
   uploadPath?: string
   // Requires a mounted CustomFieldStoreProvider (e.g. inside the flow editor).
   showVariablePicker?: boolean
+  // See `UrlVariablePicker`'s doc — only opt in when this URL field is
+  // actually resolved against contact/bot-field variables at send time.
+  includeBotFieldVariables?: boolean
 }) {
   const params = useParams<{ workspaceId: string }>()
   const t = useTranslations()
@@ -158,7 +162,10 @@ export function MediaLibraryOrInsertLink({
             placeholder={t("fields.url.placeholder")}
           />
           {showVariablePicker && (
-            <UrlVariablePicker onSelect={insertUrlVariable} />
+            <UrlVariablePicker
+              includeBotFieldVariables={includeBotFieldVariables}
+              onSelect={insertUrlVariable}
+            />
           )}
         </div>
       )}

@@ -572,6 +572,7 @@
       "systemFields": "Systemfelder",
       "topicCoupon": "Thema Gutschein",
       "customFields": "Benutzerdefinierte Felder",
+      "botFields": "Bot-Felder",
       "email": "E-Mail",
       "sms": "SMS",
       "ctwaAds": "Anzeigen"
@@ -900,7 +901,10 @@
       "append": "Am Ende anhängen",
       "prepend": "Am Anfang voranstellen",
       "increase": "Erhöhen um",
-      "decrease": "Verringern um"
+      "decrease": "Verringern um",
+      "groupSystemFields": "Systemfelder",
+      "groupCustomFields": "Benutzerdefinierte Felder",
+      "groupAccountFields": "Bot-Felder"
     },
     "dataCollect": {
       "label": "Datenerfassung"
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "{feature} erfolgreich dupliziert",
     "duplicateConfirmation": "Dadurch wird eine Kopie von {feature} erstellt.",
     "deleteFeature": "{feature} löschen",
+    "resetFeature": "{feature} zurücksetzen",
+    "resetConfirmation": "Dadurch werden die Werte der ausgewählten {feature} geleert.\nDiese Aktion kann nicht rückgängig gemacht werden.",
+    "resetSuccess": "{feature} erfolgreich zurückgesetzt",
     "deleteConfirmation": "Sind Sie sich ganz sicher?\nDiese Aktion kann nicht rückgängig gemacht werden.\nDadurch wird {feature} dauerhaft von unseren Servern gelöscht.",
     "addFeature": "{feature} hinzufügen",
     "signOutConfirmation": "Möchten Sie sich wirklich abmelden?",
@@ -5702,5 +5709,8 @@
         "last_7d": "Letzte 7 Tage"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bot-Felder"
   }
 }

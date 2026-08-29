@@ -1351,6 +1351,7 @@
       "systemFields": "Câmpuri de sistem",
       "topicCoupon": "Subiect cupon",
       "customFields": "Câmpuri personalizate",
+      "botFields": "Câmpurile botului",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Anunțuri"
@@ -1679,7 +1680,10 @@
       "append": "Adaugă la sfârșit",
       "prepend": "Adaugă la început",
       "increase": "Mărește cu",
-      "decrease": "Micșorează cu"
+      "decrease": "Micșorează cu",
+      "groupSystemFields": "Câmpuri de sistem",
+      "groupCustomFields": "Câmpuri personalizate",
+      "groupAccountFields": "Câmpurile botului"
     },
     "dataCollect": {
       "label": "Colectare de date"
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "{feature} duplicat cu succes",
     "duplicateConfirmation": "Aceasta va crea o copie a {feature}.",
     "deleteFeature": "Șterge {feature}",
+    "resetFeature": "Resetează {feature}",
+    "resetConfirmation": "Aceasta va goli valorile {feature} selectate.\nAceastă acțiune nu poate fi anulată.",
+    "resetSuccess": "{feature} resetat cu succes",
     "deleteConfirmation": "Ești absolut sigur?\nAceastă acțiune nu poate fi anulată.\nAceasta va șterge definitiv {feature} de pe serverele noastre.",
     "addFeature": "Adaugă {feature}",
     "signOutConfirmation": "Ești sigur că vrei să te deconectezi?",
@@ -5702,5 +5709,8 @@
         "last_7d": "Ultimele 7 zile"
       }
     }
+  },
+  "accountFields": {
+    "title": "Câmpurile botului"
   }
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -10,13 +11,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { BotFieldValueInput } from "./account-field-value-input"
 import { updateBotFieldAction } from "./actions/update-bot-field.action"
 import { updateBotFieldRequest } from "./schemas/action"
 import type { BotFieldResource } from "./schemas/resource"
@@ -75,7 +83,7 @@ export function UpdateBotFieldDialog({
     if (botField) {
       setValue("name", botField.name)
       setValue("description", botField.description ?? "")
-      // setValue("value", botField.value ?? "")
+      setValue("value", botField.value ?? "")
     }
   }, [botField, setValue])
 
@@ -97,6 +105,20 @@ export function UpdateBotFieldDialog({
               onSubmit={handleSubmitWithAction}
             >
               <InputField label={t("fields.name.label")} name="name" required />
+
+              <FormField
+                control={form.control}
+                name="value"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>{t("fields.value.label")}</FormLabel>
+                    <BotFieldValueInput
+                      type={(botField?.type ?? "shortText") as CustomFieldType}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <TextareaField
                 label={t("fields.description.label")}

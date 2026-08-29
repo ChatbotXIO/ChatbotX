@@ -572,6 +572,7 @@
       "systemFields": "Campos del sistema",
       "topicCoupon": "Tema cupón",
       "customFields": "Campos personalizados",
+      "botFields": "Campos del bot",
       "email": "Correo",
       "sms": "SMS",
       "ctwaAds": "Anuncios"
@@ -974,7 +975,10 @@
       "append": "Añadir al final",
       "prepend": "Añadir al principio",
       "increase": "Aumentar en",
-      "decrease": "Disminuir en"
+      "decrease": "Disminuir en",
+      "groupSystemFields": "Campos del sistema",
+      "groupCustomFields": "Campos personalizados",
+      "groupAccountFields": "Campos del bot"
     },
     "dataCollect": {
       "label": "Recopilación de datos"
@@ -1765,7 +1769,7 @@
       "label": "Full Nombre"
     },
     "botFields": {
-      "label": "Bot Campos"
+      "label": "Campos del bot"
     },
     "keyword": {
       "label": "Claveword",
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "{feature} duplicated correctamente",
     "duplicateConfirmation": "This se Crear un Copiar de tu {feature}.",
     "deleteFeature": "Eliminar {feature}",
+    "resetFeature": "Restablecer {feature}",
+    "resetConfirmation": "Esto borrará los valores de los {feature} seleccionados dejándolos vacíos.\nEsta acción no se puede deshacer.",
+    "resetSuccess": "{feature} restablecido correctamente",
     "deleteConfirmation": "Are tú absolutely sure?\nThis action cannot be undone.\nThis se permanently Eliminar tu {feature} desde our servers.",
     "addFeature": "Añadir {feature}",
     "signOutConfirmation": "Are tú sure tú want un sign out?",
@@ -5702,5 +5709,8 @@
         "last_7d": "Últimos 7 días"
       }
     }
+  },
+  "accountFields": {
+    "title": "Campos del bot"
   }
 }

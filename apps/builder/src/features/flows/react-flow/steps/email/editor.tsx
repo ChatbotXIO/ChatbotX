@@ -90,6 +90,9 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
         </Link>
       </div>
 
+      {/* `from` is sent verbatim by the worker (send-email.ts falls back to
+      the SMTP integration's own address, never interpolates it) — no bot
+      field picker here since a token would never resolve. */}
       <TiptapEditorField
         key={`from-${integrationSmtpId}`}
         label={t("fields.from.label")}
@@ -97,16 +100,19 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
         required
       />
       <TiptapEditorField
+        includeBotFieldVariables
         label={t("fields.to.label")}
         name={`${parentName}.to`}
         required
       />
       <TiptapEditorField
+        includeBotFieldVariables
         label={t("fields.subject.label")}
         name={`${parentName}.subject`}
         required
       />
       <TiptapEditorField
+        includeBotFieldVariables
         label={t("fields.preheader.label")}
         name={`${parentName}.preheader`}
       />

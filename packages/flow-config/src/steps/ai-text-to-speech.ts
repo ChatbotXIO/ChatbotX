@@ -1,6 +1,7 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
+import { zodFieldReference } from "../field-reference"
 import {
   errorStateDefaultFn,
   errorStateSchema,
@@ -39,7 +40,7 @@ export const aiTextToSpeechSchema = z.object({
   message: z.string().trim().min(1),
   voiceType: aiTextToSpeechVoiceTypes,
   voiceTone: z.string().trim().optional(),
-  outputFieldId: z.string().trim().min(1),
+  outputFieldId: zodFieldReference(),
   states: z.tuple([successStateSchema, errorStateSchema]).optional(),
 })
 

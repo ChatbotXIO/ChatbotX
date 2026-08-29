@@ -572,6 +572,7 @@
       "systemFields": "Champs système",
       "topicCoupon": "Thème du coupon",
       "customFields": "Champs personnalisés",
+      "botFields": "Champs du bot",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Publicités"
@@ -900,7 +901,10 @@
       "append": "Ajouter à la fin",
       "prepend": "Ajouter au début",
       "increase": "Augmenter de",
-      "decrease": "Diminuer de"
+      "decrease": "Diminuer de",
+      "groupSystemFields": "Champs système",
+      "groupCustomFields": "Champs personnalisés",
+      "groupAccountFields": "Champs du bot"
     },
     "dataCollect": {
       "label": "Collecte de données"
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "{feature} dupliqué",
     "duplicateConfirmation": "Une copie de votre {feature} sera créée.",
     "deleteFeature": "Supprimer {feature}",
+    "resetFeature": "Réinitialiser {feature}",
+    "resetConfirmation": "Cela effacera les valeurs des {feature} sélectionnés.\nCette action est irréversible.",
+    "resetSuccess": "{feature} réinitialisé avec succès",
     "deleteConfirmation": "Êtes-vous absolument sûr ?\nCette action est irréversible.\nVotre {feature} sera définitivement supprimé de nos serveurs.",
     "addFeature": "Ajouter {feature}",
     "signOutConfirmation": "Voulez-vous vraiment vous déconnecter ?",
@@ -5702,5 +5709,8 @@
         "last_7d": "7 derniers jours"
       }
     }
+  },
+  "accountFields": {
+    "title": "Champs du bot"
   }
 }

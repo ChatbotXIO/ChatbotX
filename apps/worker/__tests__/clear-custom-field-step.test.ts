@@ -87,6 +87,7 @@ describe("clearContactCustomField", () => {
       contactId: "c-1",
       keyword: "42",
       contactInboxId: "ci-1",
+      allowBotFields: true,
     })
   })
 

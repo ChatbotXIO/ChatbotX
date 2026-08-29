@@ -572,6 +572,7 @@
       "systemFields": "Sistem Alanları",
       "topicCoupon": "Kupon konusu",
       "customFields": "Özel Alanlar",
+      "botFields": "Bot Alanları",
       "email": "E-posta",
       "sms": "SMS",
       "ctwaAds": "Reklamlar"
@@ -974,7 +975,10 @@
       "append": "Sona ekle",
       "prepend": "Başa ekle",
       "increase": "Şu kadar artır",
-      "decrease": "Şu kadar azalt"
+      "decrease": "Şu kadar azalt",
+      "groupSystemFields": "Sistem Alanları",
+      "groupCustomFields": "Özel Alanlar",
+      "groupAccountFields": "Bot Alanları"
     },
     "dataCollect": {
       "label": "Veri Toplama"
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "{feature} başarıyla çoğaltıldı",
     "duplicateConfirmation": "Bu, {feature} öğenizin bir kopyasını oluşturacaktır.",
     "deleteFeature": "{feature} Sil",
+    "resetFeature": "{feature} sıfırla",
+    "resetConfirmation": "Bu, seçilen {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
+    "resetSuccess": "{feature} başarıyla sıfırlandı",
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir.",
     "addFeature": "{feature} Ekle",
     "signOutConfirmation": "Oturumu kapatmak istediğinizden emin misiniz?",
@@ -5702,5 +5709,8 @@
         "last_7d": "Son 7 gün"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bot Alanları"
   }
 }

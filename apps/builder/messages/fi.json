@@ -572,6 +572,7 @@
       "systemFields": "Järjestelmäkentät",
       "topicCoupon": "Kuponkiaihe",
       "customFields": "Mukautetut kentät",
+      "botFields": "Bottikentät",
       "email": "Sähköposti",
       "sms": "SMS",
       "ctwaAds": "Mainokset"
@@ -900,7 +901,10 @@
       "append": "Lisää loppuun",
       "prepend": "Lisää alkuun",
       "increase": "Kasvata määrällä",
-      "decrease": "Vähennä määrällä"
+      "decrease": "Vähennä määrällä",
+      "groupSystemFields": "Järjestelmäkentät",
+      "groupCustomFields": "Mukautetut kentät",
+      "groupAccountFields": "Bottikentät"
     },
     "dataCollect": {
       "label": "Tietojen keruu"
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "{feature} monistettiin",
     "duplicateConfirmation": "Tämä luo kopion kohteesta {feature}.",
     "deleteFeature": "Poista {feature}",
+    "resetFeature": "Nollaa {feature}",
+    "resetConfirmation": "Tämä tyhjentää valittujen {feature} arvot.\nTätä toimintoa ei voi kumota.",
+    "resetSuccess": "{feature} nollattu onnistuneesti",
     "deleteConfirmation": "Oletko aivan varma?\nTätä toimintoa ei voi kumota.\nTämä poistaa kohteen {feature} pysyvästi palvelimiltamme.",
     "addFeature": "Lisää {feature}",
     "signOutConfirmation": "Haluatko varmasti kirjautua ulos?",
@@ -5702,5 +5709,8 @@
         "last_7d": "Viimeiset 7 päivää"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bottikentät"
   }
 }

@@ -572,6 +572,7 @@
       "systemFields": "حقول النظام",
       "topicCoupon": "موضوع الكوبون",
       "customFields": "الحقول المخصصة",
+      "botFields": "حقول البوت",
       "email": "البريد الإلكتروني",
       "sms": "الرسائل النصية",
       "ctwaAds": "الإعلانات"
@@ -974,7 +975,10 @@
       "append": "إضافة في النهاية",
       "prepend": "إضافة إلى البداية",
       "increase": "زيادة بمقدار",
-      "decrease": "خفض بمقدار"
+      "decrease": "خفض بمقدار",
+      "groupSystemFields": "حقول النظام",
+      "groupCustomFields": "الحقول المخصصة",
+      "groupAccountFields": "حقول البوت"
     },
     "dataCollect": {
       "label": "جمع البيانات"
@@ -2968,6 +2972,9 @@
     "duplicatedSuccess": "تم تكرار {feature} بنجاح",
     "duplicateConfirmation": "سيؤدي هذا إلى إنشاء نسخة من {feature}.",
     "deleteFeature": "حذف {feature}",
+    "resetFeature": "إعادة تعيين {feature}",
+    "resetConfirmation": "سيؤدي هذا إلى مسح قيم {feature} المحددة وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
+    "resetSuccess": "تمت إعادة تعيين {feature} بنجاح",
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا.",
     "addFeature": "إضافة {feature}",
     "signOutConfirmation": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
@@ -5702,5 +5709,8 @@
         "last_7d": "آخر 7 أيام"
       }
     }
+  },
+  "accountFields": {
+    "title": "حقول البوت"
   }
 }

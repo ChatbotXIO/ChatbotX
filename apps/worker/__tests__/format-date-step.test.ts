@@ -17,14 +17,26 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   setValues: vi.fn(async () => undefined),
-  contactCustomFieldFindFirst: vi.fn(),
+  setValueByKey: vi.fn(async () => undefined),
+  botFieldFind: vi.fn(),
+  botFieldFindByKey: vi.fn(),
+  contactCustomFieldFindValue: vi.fn(),
   customFieldFindFirst: vi.fn(),
   createSourceTimezoneResolver: vi.fn(),
+  loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   customFieldService: { findBy: mocks.customFieldFindFirst },
-  contactCustomFieldService: { setValues: mocks.setValues },
+  contactCustomFieldService: {
+    setValues: mocks.setValues,
+    setValueByKey: mocks.setValueByKey,
+    findValue: mocks.contactCustomFieldFindValue,
+  },
+  botFieldService: {
+    find: mocks.botFieldFind,
+    findByKey: mocks.botFieldFindByKey,
+  },
   externalRequestService: {},
 }))
 
@@ -35,13 +47,9 @@ vi.mock("@chatbotx.io/business/contact-custom-field", () => ({
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
-      contactCustomFieldModel: { findFirst: mocks.contactCustomFieldFindFirst },
-      customFieldModel: { findFirst: mocks.customFieldFindFirst },
+      customFieldModel: { findFirst: vi.fn(), findMany: vi.fn() },
     },
-    $count: vi.fn(),
   },
-  and: (...args: unknown[]) => ({ and: args }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
 }))
 
 vi.mock("@chatbotx.io/variables", () => ({
@@ -50,6 +58,10 @@ vi.mock("@chatbotx.io/variables", () => ({
   getSystemFieldValue: vi.fn(async () => null),
   interpolate: vi.fn((text: string) => text),
   resolveContactVariablesDeep: vi.fn(async (_id, value) => value),
+}))
+
+vi.mock("../src/lib/logger", () => ({
+  logger: { error: mocks.loggerError },
 }))
 
 const { formatDate } = await import("../src/integration/handlers/tool-handler")
@@ -86,9 +98,9 @@ beforeEach(() => {
 
 describe("formatDate step handler", () => {
   test("formats the stored value in the resolved source zone and writes via setValues", async () => {
-    mocks.contactCustomFieldFindFirst.mockResolvedValue({
-      value: "2026-07-23T02:30:00.000Z",
-    })
+    mocks.contactCustomFieldFindValue.mockResolvedValue(
+      "2026-07-23T02:30:00.000Z",
+    )
     mocks.customFieldFindFirst.mockResolvedValue({ type: "text" })
 
     await formatDate(props(step()))
@@ -103,9 +115,9 @@ describe("formatDate step handler", () => {
   })
 
   test("maps the contact timezone choice to the ContactThenWorkspace strategy", async () => {
-    mocks.contactCustomFieldFindFirst.mockResolvedValue({
-      value: "2026-07-23T02:30:00.000Z",
-    })
+    mocks.contactCustomFieldFindValue.mockResolvedValue(
+      "2026-07-23T02:30:00.000Z",
+    )
     mocks.customFieldFindFirst.mockResolvedValue({ type: "text" })
 
     await formatDate(props(step({ timezone: FormatTimezone.contact })))
@@ -118,9 +130,9 @@ describe("formatDate step handler", () => {
   })
 
   test("maps the workspace timezone choice to the Workspace strategy", async () => {
-    mocks.contactCustomFieldFindFirst.mockResolvedValue({
-      value: "2026-07-23T02:30:00.000Z",
-    })
+    mocks.contactCustomFieldFindValue.mockResolvedValue(
+      "2026-07-23T02:30:00.000Z",
+    )
     mocks.customFieldFindFirst.mockResolvedValue({ type: "text" })
 
     await formatDate(props(step({ timezone: FormatTimezone.workspace })))
@@ -131,9 +143,9 @@ describe("formatDate step handler", () => {
   })
 
   test("skips writing when the output field is temporal (would corrupt the stored value)", async () => {
-    mocks.contactCustomFieldFindFirst.mockResolvedValue({
-      value: "2026-07-23T02:30:00.000Z",
-    })
+    mocks.contactCustomFieldFindValue.mockResolvedValue(
+      "2026-07-23T02:30:00.000Z",
+    )
     mocks.customFieldFindFirst.mockResolvedValue({ type: "datetime" })
 
     await formatDate(props(step()))
@@ -143,7 +155,7 @@ describe("formatDate step handler", () => {
   })
 
   test("returns early without writing when the input field has no value", async () => {
-    mocks.contactCustomFieldFindFirst.mockResolvedValue(undefined)
+    mocks.contactCustomFieldFindValue.mockResolvedValue(undefined)
 
     await formatDate(props(step()))
 
@@ -152,14 +164,67 @@ describe("formatDate step handler", () => {
   })
 
   test("returns early without writing when the output field does not exist", async () => {
-    mocks.contactCustomFieldFindFirst.mockResolvedValue({
-      value: "2026-07-23T02:30:00.000Z",
-    })
+    mocks.contactCustomFieldFindValue.mockResolvedValue(
+      "2026-07-23T02:30:00.000Z",
+    )
     mocks.customFieldFindFirst.mockResolvedValue(undefined)
 
     await formatDate(props(step()))
 
     expect(mocks.createSourceTimezoneResolver).not.toHaveBeenCalled()
     expect(mocks.setValues).not.toHaveBeenCalled()
+  })
+
+  test("rejects a temporal Account Field (bot field) output the same as a temporal custom field", async () => {
+    mocks.contactCustomFieldFindValue.mockResolvedValue(
+      "2026-07-23T02:30:00.000Z",
+    )
+    mocks.botFieldFind.mockResolvedValue({ id: "9", type: "datetime" })
+
+    await formatDate(props(step({ outputFieldId: "bot_field:9" })))
+
+    expect(mocks.createSourceTimezoneResolver).not.toHaveBeenCalled()
+    expect(mocks.setValues).not.toHaveBeenCalled()
+    expect(mocks.setValueByKey).not.toHaveBeenCalled()
+  })
+
+  test("reads the input value from a bot field and writes the formatted string to a non-temporal bot field output via setValueByKey", async () => {
+    mocks.botFieldFindByKey.mockResolvedValue({
+      value: "2026-07-23T02:30:00.000Z",
+    })
+    mocks.botFieldFind.mockResolvedValue({ id: "5", type: "shortText" })
+
+    await formatDate(
+      props(
+        step({ inputFieldId: "bot_field:3", outputFieldId: "bot_field:5" }),
+      ),
+    )
+
+    expect(mocks.botFieldFindByKey).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      key: "3",
+    })
+    expect(mocks.setValueByKey).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      keyword: "bot_field:5",
+      value: "2026-07-23 09:30",
+      allowBotFields: true,
+    })
+    expect(mocks.setValues).not.toHaveBeenCalled()
+  })
+
+  test("logs and swallows a failing bot-field output write instead of throwing", async () => {
+    mocks.contactCustomFieldFindValue.mockResolvedValue(
+      "2026-07-23T02:30:00.000Z",
+    )
+    mocks.botFieldFind.mockResolvedValue({ id: "9", type: "shortText" })
+    mocks.setValueByKey.mockRejectedValueOnce(new Error("Bot field not found"))
+
+    await expect(
+      formatDate(props(step({ outputFieldId: "bot_field:9" }))),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.loggerError).toHaveBeenCalledTimes(1)
   })
 })

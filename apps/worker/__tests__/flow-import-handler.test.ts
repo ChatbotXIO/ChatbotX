@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   headObject: vi.fn(),
   importFlowExport: vi.fn(),
   invalidateCustomFields: vi.fn(),
+  invalidateBotFields: vi.fn(),
   updateValues: [] as Record<string, unknown>[],
 }))
 
@@ -45,6 +46,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   customFieldService: {
     invalidate: (...args: unknown[]) => mocks.invalidateCustomFields(...args),
+  },
+  botFieldService: {
+    invalidate: (...args: unknown[]) => mocks.invalidateBotFields(...args),
   },
 }))
 
@@ -142,6 +146,7 @@ describe("runFlowImport", () => {
           nodes: input.nodes,
           edges: input.edges,
           createdCustomFieldIds: [],
+          createdBotFieldIds: [],
         }),
     )
   })
@@ -233,6 +238,7 @@ describe("runFlowImport", () => {
       nodes: [],
       edges: [],
       createdCustomFieldIds: ["field-1"],
+      createdBotFieldIds: [],
     })
     mockStream(buildExportJson())
 
@@ -240,6 +246,30 @@ describe("runFlowImport", () => {
 
     expect(mocks.invalidateCustomFields).toHaveBeenCalledTimes(1)
     expect(mocks.invalidateCustomFields).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("invalidates the bot-field cache only when new fields were created", async () => {
+    mockStream(buildExportJson())
+
+    await runFlowImport(importRow)
+
+    expect(mocks.invalidateBotFields).not.toHaveBeenCalled()
+
+    mocks.importFlowExport.mockResolvedValueOnce({
+      flowId: "new-flow-id",
+      nodes: [],
+      edges: [],
+      createdCustomFieldIds: [],
+      createdBotFieldIds: ["bot-field-1"],
+    })
+    mockStream(buildExportJson())
+
+    await runFlowImport(importRow)
+
+    expect(mocks.invalidateBotFields).toHaveBeenCalledTimes(1)
+    expect(mocks.invalidateBotFields).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
     })
   })
@@ -314,6 +344,7 @@ describe("runFlowImport", () => {
       ],
       edges: [],
       createdCustomFieldIds: [],
+      createdBotFieldIds: [],
     })
 
     await runFlowImport(importRow)
@@ -382,5 +413,164 @@ describe("runFlowImport", () => {
     expect(finalUpdate?.errorMessage).toEqual(
       expect.stringContaining("unresolved reference"),
     )
+  })
+
+  test("does not warn about a bot-field reference that was successfully remapped", async () => {
+    const exportJson = buildExportJson({
+      flows: [
+        {
+          name: "Onboarding",
+          active: true,
+          enableInInbox: true,
+          startNodeId: "1",
+          nodes: [
+            {
+              id: "1",
+              position: { x: 0, y: 0 },
+              measured: { width: 288, height: 100 },
+              type: "sendMessage",
+              data: {
+                name: "Send Message",
+                isStartNode: true,
+                details: {
+                  beforeStep: {
+                    id: "b1",
+                    stepType: "chooseChannel",
+                    channel: "omnichannel",
+                  },
+                  steps: [
+                    {
+                      id: "s1",
+                      stepType: "setCustomField",
+                      inputFieldId: "bot_field:7",
+                      operation: "O01",
+                      value: "42",
+                    },
+                  ],
+                  quickReplies: [],
+                },
+              },
+            },
+          ],
+          edges: [],
+        },
+      ],
+      customFields: {},
+      botFields: {
+        "7": { name: "Loyalty Points", type: "number" },
+      },
+    })
+    mockStream(exportJson)
+
+    mocks.importFlowExport.mockResolvedValueOnce({
+      flowId: "new-flow-id",
+      nodes: [
+        {
+          ...exportJson.flows[0].nodes[0],
+          data: {
+            ...exportJson.flows[0].nodes[0].data,
+            details: {
+              ...exportJson.flows[0].nodes[0].data.details,
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "setCustomField",
+                  inputFieldId: "bot_field:77",
+                  operation: "O01",
+                  value: "42",
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+      createdCustomFieldIds: [],
+      createdBotFieldIds: ["77"],
+    })
+
+    await runFlowImport(importRow)
+
+    const finalUpdate = mocks.updateValues.at(-1)
+    expect(finalUpdate).toMatchObject({ status: "completed" })
+    expect(finalUpdate?.errorMessage).toBeNull()
+  })
+
+  test("still warns about a bot-field reference absent from the manifest", async () => {
+    const exportJson = buildExportJson({
+      flows: [
+        {
+          name: "Onboarding",
+          active: true,
+          enableInInbox: true,
+          startNodeId: "1",
+          nodes: [
+            {
+              id: "1",
+              position: { x: 0, y: 0 },
+              measured: { width: 288, height: 100 },
+              type: "sendMessage",
+              data: {
+                name: "Send Message",
+                isStartNode: true,
+                details: {
+                  beforeStep: {
+                    id: "b1",
+                    stepType: "chooseChannel",
+                    channel: "omnichannel",
+                  },
+                  steps: [
+                    {
+                      id: "s1",
+                      stepType: "setCustomField",
+                      inputFieldId: "bot_field:999",
+                      operation: "O01",
+                      value: "42",
+                    },
+                  ],
+                  quickReplies: [],
+                },
+              },
+            },
+          ],
+          edges: [],
+        },
+      ],
+      customFields: {},
+      // No manifest entry for bot_field:999 — e.g. the bot field was already
+      // deleted in the source workspace at export time.
+      botFields: {},
+    })
+    mockStream(exportJson)
+
+    await runFlowImport(importRow)
+
+    const finalUpdate = mocks.updateValues.at(-1)
+    expect(finalUpdate).toMatchObject({ status: "completed" })
+    expect(finalUpdate?.errorSample).toEqual([
+      expect.objectContaining({
+        row: 1,
+        reason: expect.stringContaining("botField"),
+      }),
+    ])
+    expect(finalUpdate?.errorMessage).toEqual(
+      expect.stringContaining("unresolved reference"),
+    )
+  })
+
+  test("an export with no botFields key (produced before the manifest existed) still imports cleanly", async () => {
+    const exportJson = buildExportJson()
+    // `buildExportJson`'s base shape has no `botFields` key at all —
+    // `flowExportSchema`'s `.default({})` must fill it in during parsing.
+    expect(exportJson).not.toHaveProperty("botFields")
+    mockStream(exportJson)
+
+    await runFlowImport(importRow)
+
+    expect(mocks.importFlowExport).toHaveBeenCalledWith(
+      expect.objectContaining({ botFields: {} }),
+    )
+    const finalUpdate = mocks.updateValues.at(-1)
+    expect(finalUpdate).toMatchObject({ status: "completed" })
   })
 })

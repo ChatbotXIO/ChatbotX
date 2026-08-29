@@ -1,4 +1,5 @@
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -6,7 +7,12 @@ import {
 } from "nuqs/server"
 import z from "zod"
 import { parseAsBigInt } from "@/lib/nuqs"
-import { type BotFieldResource, publicBotFieldResource } from "./resource"
+import { basePaginationRequest } from "@/lib/pagination"
+import {
+  type BotFieldResource,
+  botFieldResource,
+  publicBotFieldResource,
+} from "./resource"
 
 export const listBotFieldsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -27,3 +33,15 @@ export type ListBotFieldsSearchParams = Awaited<
 export const publicListBotFieldsResponse = z.object({
   data: z.array(publicBotFieldResource),
 })
+
+export const listBotFieldsRequest = basePaginationRequest.extend({
+  name: z.string().nullish(),
+  folderId: zodBigintAsString().nullish(),
+})
+export type ListBotFieldsRequest = z.infer<typeof listBotFieldsRequest>
+
+export const listBotFieldsResponse = z.object({
+  data: z.array(botFieldResource),
+  pageCount: z.number(),
+})
+export type ListBotFieldsResponse = z.infer<typeof listBotFieldsResponse>
