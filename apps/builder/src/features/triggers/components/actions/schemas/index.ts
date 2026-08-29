@@ -5,8 +5,6 @@ import { runGoogleSheet } from "./run-google-sheet"
 import { sendMetaCapiEvent } from "./send-meta-capi-event"
 import { setCustomField } from "./set-custom-field"
 import { startFlow } from "./start-flow"
-import { trackAdsLead } from "./track-ads-lead"
-import { trackAdsPurchase } from "./track-ads-purchase"
 import { transferConversationToHuman } from "./transfer-conversation-to-human"
 
 export const allActions = {
@@ -18,6 +16,4 @@ export const allActions = {
   transferConversationToHuman,
   sendMetaCapiEvent,
   runGoogleSheet,
-  trackAdsLead,
-  trackAdsPurchase,
 }

@@ -2263,9 +2263,7 @@
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
       "importJsonOnly": "Chỉ tệp JSON",
-      "adsConversions": "Quảng cáo và Meta Conversions",
-      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
-      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
+      "adsConversions": "Quảng cáo và Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -3705,9 +3703,7 @@
       "startAnotherFlow": "Bắt đầu luồng khác",
       "notifyAdmins": "Thông báo quản trị viên",
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
-      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI",
-      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
-      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
     },
     "triggerGoesOff": "Trigger kích hoạt",
     "before": "Trước",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Kết nối"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Chỉ ghi nhận chuyển đổi cho các liên hệ có gán nhãn quảng cáo click-to-WhatsApp của WhatsApp hoặc giới thiệu quảng cáo Meta. Không ảnh hưởng đến các liên hệ khác."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

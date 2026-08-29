@@ -2189,9 +2189,7 @@
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
       "importJsonOnly": "Kun JSON-filer",
-      "adsConversions": "Annoncer og Meta Conversions",
-      "trackAdsLead": "Spor annonce-lead",
-      "trackAdsPurchase": "Spor annonce-køb"
+      "adsConversions": "Annoncer og Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -3788,9 +3786,7 @@
       "startAnotherFlow": "Start Another Flow",
       "notifyAdmins": "Notify Administratorer",
       "transferConversationToHuman": "Transfer Samtale til Menneskelig",
-      "sendMetaCapiEvent": "Send Meta CAPI Event",
-      "trackAdsLead": "Spor annonce-lead",
-      "trackAdsPurchase": "Spor annonce-køb"
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Udløser goes off",
     "before": "Før",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Forbind"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Registrerer kun en konvertering for kontakter med WhatsApp click-to-WhatsApp- eller Meta-annoncehenvisningsattribuering. Har ingen effekt for andre kontakter."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

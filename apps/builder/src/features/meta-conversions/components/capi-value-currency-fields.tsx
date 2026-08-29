@@ -8,11 +8,9 @@ type CapiValueCurrencyFieldsProps = {
 }
 
 /**
- * Value/currency `InputField` pair shared by `CapiEventFields`
- * (`capi-event-fields.tsx`) and `TrackAdsPurchaseFields`
- * (`apps/builder/src/features/triggers/components/actions/
- * track-ads-purchase-fields.tsx`) — both forms let a user set a STATIC CAPI
- * value/currency on an event, byte-identical between the two.
+ * Value/currency `InputField` pair used by `CapiEventFields`
+ * (`capi-event-fields.tsx`) to let a user set a STATIC CAPI value/currency
+ * on an event.
  */
 export const CapiValueCurrencyFields = ({
   parentName,

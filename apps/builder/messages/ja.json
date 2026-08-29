@@ -2189,9 +2189,7 @@
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
       "importJsonOnly": "JSONファイルのみ",
-      "adsConversions": "広告とMeta Conversions",
-      "trackAdsLead": "広告リードを記録",
-      "trackAdsPurchase": "広告購入を記録"
+      "adsConversions": "広告とMeta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -3767,9 +3765,7 @@
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
       "transferConversationToHuman": "会話を担当者に転送",
-      "sendMetaCapiEvent": "Meta CAPI イベントを送信",
-      "trackAdsLead": "広告リードを記録",
-      "trackAdsPurchase": "広告購入を記録"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "連携"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "WhatsApp のクリックして WhatsApp 広告、または Meta 広告リファラルの帰属があるコンタクトに対してのみコンバージョンを記録します。他のコンタクトには影響しません。"
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

@@ -2189,9 +2189,7 @@
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
       "importJsonOnly": "Vain JSON-tiedostot",
-      "adsConversions": "Mainokset ja Meta Conversions",
-      "trackAdsLead": "Seuraa mainoksen liidiä",
-      "trackAdsPurchase": "Seuraa mainoksen ostoa"
+      "adsConversions": "Mainokset ja Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -3788,9 +3786,7 @@
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
-      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
-      "trackAdsLead": "Seuraa mainoksen liidiä",
-      "trackAdsPurchase": "Seuraa mainoksen ostoa"
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Yhdistä"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Tallentaa muunnoksen vain kontakteille, joilla on WhatsAppin click-to-WhatsApp- tai Metan mainosviittausattribuutio. Ei vaikuta muihin kontakteihin."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

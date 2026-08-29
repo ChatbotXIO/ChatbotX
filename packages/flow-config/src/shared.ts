@@ -57,8 +57,6 @@ import { startExternalFlowStepSchema } from "./steps/start-external-flow"
 import { startExternalNodeStepSchema } from "./steps/start-external-node"
 import { subscribeBroadcastStepSchema } from "./steps/subscribe-broadcast"
 import { subscribeSequenceStepSchema } from "./steps/subscribe-sequence"
-import { trackAdsLeadSchema } from "./steps/track-ads-lead"
-import { trackAdsPurchaseSchema } from "./steps/track-ads-purchase"
 import { triggerN8nStepSchema } from "./steps/trigger-n8n"
 import { unarchiveConversationStepSchema } from "./steps/unarchive-conversation"
 import { unassignConversationStepSchema } from "./steps/unassign-conversation"
@@ -149,8 +147,6 @@ const aiSteps = [
 const messengerSteps = [
   facebookCustomAudienceSchema,
   sendMetaCapiEventSchema,
-  trackAdsLeadSchema,
-  trackAdsPurchaseSchema,
   setMessengerUserPersistentMenuStepSchema,
   enableMessengerComposerStepSchema,
   disableMessengerComposerStepSchema,

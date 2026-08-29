@@ -137,9 +137,7 @@
       "export": "Exportă",
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
       "importJsonOnly": "Doar fișiere JSON",
-      "adsConversions": "Reclame și Meta Conversions",
-      "trackAdsLead": "Urmărește lead din reclame",
-      "trackAdsPurchase": "Urmărește achiziție din reclame"
+      "adsConversions": "Reclame și Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -3788,9 +3786,7 @@
       "startAnotherFlow": "Pornește alt flux",
       "notifyAdmins": "Notifică administratorii",
       "transferConversationToHuman": "Transferă conversația către un operator",
-      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI",
-      "trackAdsLead": "Urmărește lead din reclame",
-      "trackAdsPurchase": "Urmărește achiziție din reclame"
+      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI"
     },
     "triggerGoesOff": "Declanșatorul se activează",
     "before": "Înainte de",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Conectează"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Înregistrează o conversie doar pentru contactele cu atribuire de anunț click-to-WhatsApp sau recomandare de anunț Meta. Nu are efect asupra celorlalte contacte."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

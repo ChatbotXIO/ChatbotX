@@ -2231,9 +2231,6 @@
     "whatsapp": {
       "connect": "Connect"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Only records a conversion for contacts attributed to a WhatsApp click-to-WhatsApp ad or a Meta ad referral. It has no effect for other contacts."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -2377,9 +2374,7 @@
       "export": "Export",
       "importStarted": "Flow is importing. Check the import history for results.",
       "importJsonOnly": "JSON files only",
-      "adsConversions": "Ads & Meta Conversions",
-      "trackAdsLead": "Track Ads Lead",
-      "trackAdsPurchase": "Track Ads Purchase"
+      "adsConversions": "Ads & Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -3902,9 +3897,7 @@
       "startAnotherFlow": "Start Another Flow",
       "notifyAdmins": "Notify Admins",
       "sendMetaCapiEvent": "Send Meta CAPI Event",
-      "transferConversationToHuman": "Transfer Conversation to Human",
-      "trackAdsLead": "Track Ads Lead",
-      "trackAdsPurchase": "Track Ads Purchase"
+      "transferConversationToHuman": "Transfer Conversation to Human"
     },
     "triggerGoesOff": "Trigger goes off",
     "before": "Before",

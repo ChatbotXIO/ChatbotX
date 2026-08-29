@@ -2189,9 +2189,7 @@
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
       "importJsonOnly": "Hanya file JSON",
-      "adsConversions": "Iklan & Meta Conversions",
-      "trackAdsLead": "Lacak Lead Iklan",
-      "trackAdsPurchase": "Lacak Pembelian Iklan"
+      "adsConversions": "Iklan & Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -3788,9 +3786,7 @@
       "startAnotherFlow": "Mulai Alur Lain",
       "notifyAdmins": "Beri Tahu Admin",
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
-      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",
-      "trackAdsLead": "Lacak Lead Iklan",
-      "trackAdsPurchase": "Lacak Pembelian Iklan"
+      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI"
     },
     "triggerGoesOff": "Pemicu dijalankan",
     "before": "Sebelum",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Hubungkan"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Hanya mencatat konversi untuk kontak dengan atribusi iklan click-to-WhatsApp WhatsApp atau rujukan iklan Meta. Tidak berpengaruh pada kontak lain."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

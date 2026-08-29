@@ -2423,9 +2423,7 @@
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
       "importJsonOnly": "僅限 JSON 檔案",
-      "adsConversions": "廣告與 Meta Conversions",
-      "trackAdsLead": "追蹤廣告名單",
-      "trackAdsPurchase": "追蹤廣告購買"
+      "adsConversions": "廣告與 Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -3821,9 +3819,7 @@
       "startAnotherFlow": "開始另一個流程",
       "notifyAdmins": "通知管理員",
       "transferConversationToHuman": "將對話轉移給人類",
-      "sendMetaCapiEvent": "傳送 Meta CAPI 事件",
-      "trackAdsLead": "追蹤廣告名單",
-      "trackAdsPurchase": "追蹤廣告購買"
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
     },
     "triggerGoesOff": "觸發器熄滅",
     "before": "之前",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "連接"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "僅會為具有 WhatsApp 點擊式 WhatsApp 廣告或 Meta 廣告推薦歸因的聯絡人記錄轉換。對其他聯絡人沒有影響。"
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

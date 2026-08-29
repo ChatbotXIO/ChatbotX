@@ -2889,9 +2889,7 @@
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
       "importJsonOnly": "Endast JSON-filer",
-      "adsConversions": "Annonser och Meta Conversions",
-      "trackAdsLead": "Spåra annonslead",
-      "trackAdsPurchase": "Spåra annonsköp"
+      "adsConversions": "Annonser och Meta Conversions"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -4508,9 +4506,7 @@
       "setCustomField": "Ange anpassat fält",
       "startAnotherFlow": "Starta ett annat flöde",
       "transferConversationToHuman": "Överför konversationen till en människa",
-      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse",
-      "trackAdsLead": "Spåra annonslead",
-      "trackAdsPurchase": "Spåra annonsköp"
+      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse"
     },
     "after": "Efter",
     "at": "Kl.",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Anslut"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Registrerar bara en konvertering för kontakter med attribuering från en klicka-till-WhatsApp-annons eller Meta-annonshänvisning. Har ingen effekt för andra kontakter."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
