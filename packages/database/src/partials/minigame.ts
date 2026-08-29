@@ -26,7 +26,7 @@ export type MinigameType = z.infer<typeof minigameTypes>
 export const minigameGeneralSettingsSchema = z
   .object({
     name: z.string().trim().min(1).max(150),
-    showName: z.boolean().default(true),
+    showName: z.boolean().default(false),
     playedAtFrom: z.iso.datetime(),
     playedAtTo: z.iso.datetime(),
     rulesDescription: z.string().max(5000).default(""),
