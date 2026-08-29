@@ -14,6 +14,15 @@ export type MessagingAdGender = 1 | 2
 
 export type MessagingAdTargeting = {
   geo_locations: MessagingAdGeoLocations
+  /**
+   * REQUIRED on ad set CREATE since Graph v23.0 (error code 100 "Advantage
+   * Audience Flag Required" otherwise — Meta enforces this even for
+   * countries-only targeting despite the docs' "default setup" carve-out).
+   * `1` opts in to Advantage+ audience; NOTE: with `1` Meta rejects `age_max`
+   * and only allows `age_min` 18–25, so custom age/gender targeting must
+   * send `0`.
+   */
+  targeting_automation: { advantage_audience: 0 | 1 }
   age_min?: number
   age_max?: number
   genders?: MessagingAdGender[]
