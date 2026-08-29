@@ -572,6 +572,7 @@
       "systemFields": "Champs système",
       "topicCoupon": "Thème du coupon",
       "customFields": "Champs personnalisés",
+      "botFields": "Champs du bot",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Publicités"

@@ -3,6 +3,10 @@ import {
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
+import {
+  FieldReferenceKind,
+  parseFieldReference,
+} from "@chatbotx.io/flow-config"
 import { isCouponVariable, resolveCouponVariable } from "./coupon-variable"
 import type { ReplaceVariableProps } from "./schema"
 import {
@@ -405,13 +409,14 @@ export const coerceCustomFieldValueForJavascript = (
 
 // Resolution order mirrors contact-variable.ts's variableResolvers so
 // `{{first_name}}` resolves the same way in JS-step code as in message
-// text: system fields, then `raw:`, then custom fields, then coupons. `raw:`
-// falls through to the later checks when its stripped name doesn't match a
-// custom field, exactly like rawCustomFieldResolver.matches does — so a
-// custom field literally named e.g. "raw:foo" (not itself found under
-// "foo") is still reachable by its own literal name. Returns `undefined`
-// (distinct from a resolved `null`) when the name doesn't match anything —
-// resolveJavascriptInput uses that to omit it from the result entirely.
+// text: system fields, then `raw:`, then bot fields, then custom fields,
+// then coupons. `raw:` falls through to the later checks when its stripped
+// name doesn't match a custom field, exactly like rawCustomFieldResolver.matches
+// does — so a custom field literally named e.g. "raw:foo" (not itself found
+// under "foo") is still reachable by its own literal name. Returns
+// `undefined` (distinct from a resolved `null`) when the name doesn't match
+// anything — resolveJavascriptInput uses that to omit it from the result
+// entirely.
 const resolveJavascriptInputValue = async (
   name: string,
   context: ReplaceVariableProps,
@@ -424,6 +429,17 @@ const resolveJavascriptInputValue = async (
     if (rawField) {
       return coerceCustomFieldValueForJavascript(rawField.value, rawField.type)
     }
+  }
+  const parsedFieldReference = parseFieldReference(name)
+  if (parsedFieldReference.kind === FieldReferenceKind.botField) {
+    const botField = context.botFieldsMap?.get(parsedFieldReference.id)
+    if (botField) {
+      return coerceCustomFieldValueForJavascript(
+        botField.value ?? "",
+        botField.type,
+      )
+    }
+    return
   }
   if (context.customFieldsMap.has(name)) {
     const field = context.customFieldsMap.get(name)

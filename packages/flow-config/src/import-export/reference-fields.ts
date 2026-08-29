@@ -29,6 +29,13 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   startDateFieldId: "customField",
   endDateFieldId: "customField",
   contactFieldId: "customField",
+  // The Condition step's dynamic `botField` filter condition (see
+  // `flow-config/src/steps/condition.ts`) carries a raw bot-field id in its
+  // own dedicated key — unlike the customField-shared slots above, it is
+  // never a `bot_field:<id>`-prefixed token, so it is registered directly
+  // against the `botField` kind rather than routed through
+  // `resolveBotFieldReferenceSlot` in `remap.ts`.
+  botFieldId: FieldReferenceKind.botField,
   sequenceId: "sequence",
   aiAgentId: "aiAgent",
   integrationId: "integration",

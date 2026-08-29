@@ -184,7 +184,10 @@ export const getCustomFieldValueInputConfig = (
   config: FieldConfig | undefined,
   operator: string | undefined,
 ): CustomFieldValueInputConfig | undefined => {
-  if (!config?.customFieldId) {
+  // `botField` configs reuse this custom-field input logic unchanged (both
+  // are workspace-defined-value fields keyed by `config.customFieldType`) —
+  // see the `FieldConfig` doc comment.
+  if (!(config?.customFieldId || config?.botFieldId)) {
     return
   }
   if (isValuelessOperator(operator)) {

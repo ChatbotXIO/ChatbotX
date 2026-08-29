@@ -82,7 +82,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
     insert: vi.fn(() => ({
       values: (value: unknown) => {
         mocks.insertValues(value)
-        return { returning: mocks.insertReturning }
+        return {
+          returning: mocks.insertReturning,
+          onConflictDoNothing: () => ({ returning: mocks.insertReturning }),
+        }
       },
     })),
     $count: mocks.countMock,
@@ -744,6 +747,45 @@ describe("botFieldService.clearValueByKey", () => {
         key: "field",
       }),
     ).rejects.toThrow("Bot field not found")
+
+    expect(mocks.invalidateCacheTags).not.toHaveBeenCalled()
+  })
+})
+
+describe("botFieldService.resolveByNameAndType", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // Regression: whole-workspace caches (the variables package's bot-field
+  // map) cache the ABSENCE of a field, so creating missing fields during a
+  // template/flow import must invalidate the workspace tags — otherwise the
+  // imported flow's {{bot_field:<newId>}} tokens stay unresolved until TTL.
+  test("invalidates workspace cache tags when it creates missing fields", async () => {
+    mocks.findMany.mockResolvedValue([])
+    mocks.insertReturning.mockResolvedValue([
+      existingRow({ id: "9", name: "new field", type: "shortText" }),
+    ])
+
+    await botFieldService.resolveByNameAndType({
+      workspaceId: "ws-1",
+      fields: [{ name: "new field", type: "shortText" }],
+    })
+
+    expect(mocks.invalidateCacheTags).toHaveBeenCalledWith(
+      expect.arrayContaining(["bot-fields:ws-1", "bot-fields:ws-1:9"]),
+    )
+  })
+
+  test("does not invalidate when every field already exists", async () => {
+    mocks.findMany.mockResolvedValue([
+      existingRow({ id: "1", name: "field", type: "shortText" }),
+    ])
+
+    await botFieldService.resolveByNameAndType({
+      workspaceId: "ws-1",
+      fields: [{ name: "field", type: "shortText" }],
+    })
 
     expect(mocks.invalidateCacheTags).not.toHaveBeenCalled()
   })

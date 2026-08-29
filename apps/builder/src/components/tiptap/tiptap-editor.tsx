@@ -34,6 +34,8 @@ type TiptapEditorProps = {
   enableEmoji?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
+  includeRawCustomFieldVariables?: boolean
+  includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
 }
 
@@ -42,6 +44,8 @@ export const TiptapEditor = ({
   onChange,
   channels,
   includeCouponVariables = false,
+  includeRawCustomFieldVariables = false,
+  includeBotFieldVariables = false,
   placeholder = "Type a message...",
   showEmojiPicker = true,
   enableEmoji = true,
@@ -52,6 +56,8 @@ export const TiptapEditor = ({
   const promptVariableOptions = usePromptVariableOptions({
     channels,
     includeCouponVariables,
+    includeRawCustomFieldVariables,
+    includeBotFieldVariables,
   })
   const promptVariableOptionsRef = useRef(promptVariableOptions)
 
@@ -130,6 +136,26 @@ export const TiptapEditor = ({
       tiptapEditor.commands.setContent(html)
     }
   }, [tiptapEditor, initValue])
+
+  // Variable options load lazily (custom/bot fields, coupons), so the initial
+  // hydration above may have escaped known tokens as plain text. Once options
+  // arrive, upgrade them to labeled mention chips — but only while the
+  // document still equals `initValue` and the editor is not focused, so a
+  // user's in-progress edit is never clobbered.
+  useEffect(() => {
+    if (!(tiptapEditor && initValue) || tiptapEditor.isFocused) {
+      return
+    }
+    if (tiptapEditor.getText({ blockSeparator: "\n" }) !== initValue) {
+      return
+    }
+    tiptapEditor.commands.setContent(
+      plainTextToParagraphHtmlWithVariableMentions(
+        initValue,
+        promptVariableOptions,
+      ),
+    )
+  }, [tiptapEditor, initValue, promptVariableOptions])
 
   return (
     <div className="relative">

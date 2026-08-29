@@ -572,6 +572,7 @@
       "systemFields": "Järjestelmäkentät",
       "topicCoupon": "Kuponkiaihe",
       "customFields": "Mukautetut kentät",
+      "botFields": "Bottikentät",
       "email": "Sähköposti",
       "sms": "SMS",
       "ctwaAds": "Mainokset"

@@ -572,6 +572,7 @@
       "systemFields": "システムフィールド",
       "topicCoupon": "クーポントピック",
       "customFields": "カスタムフィールド",
+      "botFields": "ボットフィールド",
       "email": "メール",
       "sms": "SMS",
       "ctwaAds": "広告"

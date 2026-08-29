@@ -123,6 +123,7 @@ const GetUserDataStepForm = ({
         />
 
         <TiptapEditorField
+          includeBotFieldVariables
           label={t("fields.retryMessage.label")}
           name="retryMessage"
         />
@@ -190,6 +191,7 @@ const GetUserDataStepEditor = ({ parentName }: { parentName: string }) => {
     <BaseStepEditor icon={KeyboardIcon} title={t("flows.actions.getUserData")}>
       <div className="flex flex-col gap-3">
         <TiptapEditorField
+          includeBotFieldVariables
           label={t("fields.messages.label")}
           name={`${parentName}.message`}
           required

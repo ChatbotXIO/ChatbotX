@@ -543,6 +543,38 @@ describe("collectFieldReferences", () => {
     expect(result.botFieldIds).toEqual([])
   })
 
+  test("collects a dedicated botFieldId key (Condition step's botField condition) as a raw id, not a token", () => {
+    const result = collectFieldReferences({
+      nodes: [
+        {
+          id: "1",
+          data: {
+            details: {
+              steps: [
+                {
+                  id: "s1",
+                  stepType: "condition",
+                  cases: [
+                    {
+                      id: "c1",
+                      conditions: [
+                        { field: "botField", botFieldId: "9", operator: "eq" },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      edges: [],
+    })
+
+    expect(result.botFieldIds).toEqual(["9"])
+    expect(result.customFieldIds).toEqual([])
+  })
+
   test("dedupes bot field ids referenced from multiple slots", () => {
     const result = collectFieldReferences({
       nodes: [

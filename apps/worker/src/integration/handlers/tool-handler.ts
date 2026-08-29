@@ -1,25 +1,28 @@
 import {
+  botFieldService,
   contactCustomFieldService,
   customFieldService,
   externalRequestService,
 } from "@chatbotx.io/business"
 import { createSourceTimezoneResolver } from "@chatbotx.io/business/contact-custom-field"
 import { javascriptExecutionService } from "@chatbotx.io/business/javascript-execution"
-import { and, db, inArray } from "@chatbotx.io/database/client"
+import { db } from "@chatbotx.io/database/client"
 import {
+  type CustomFieldType,
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
-import { customFieldModel } from "@chatbotx.io/database/schema"
 import {
   type CountCharactersStepSchema,
   type ExecuteJavascriptStepSchema,
   type ExternalRequestStepSchema,
+  FieldReferenceKind,
   type FormatDateStepSchema,
   FormatTimezone,
   type GenerateCodeStepSchema,
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
+  parseFieldReference,
 } from "@chatbotx.io/flow-config"
 import {
   isTemporalCustomFieldType,
@@ -42,37 +45,176 @@ import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
 
+// ---------------------------------------------------------------------------
+// Shared field-reference read/write helpers for the tool steps below
+// (countCharacters, formatDate, generateCode, getDataFromJSON). Each step's
+// `inputFieldId` / `outputFieldId` / `mapping[].outputFieldId` slot may now
+// hold either a ContactCustomField id (legacy, unprefixed) or a `bot_field:
+// <id>` Account Field reference token — `parseFieldReference` tells the two
+// apart by value shape. Kept local to this file since only these four
+// handlers need field-reference-aware I/O; `setContactCustomField` (the "Set
+// Custom Field" step, in ./contact.ts) has its own bot-field-aware path via
+// `contactCustomFieldService.setValueByKey`.
+// ---------------------------------------------------------------------------
+
+/**
+ * True when the referenced field exists — a workspace-scoped ContactCustomField
+ * definition, or (also workspace-scoped) an Account Field. Used as an
+ * up-front guard before reading/computing a value, mirroring the original
+ * `countCharacters` existence check. Routed through the business layer
+ * (`customFieldService`/`botFieldService`) rather than querying `db` directly
+ * — see `.agents/rules/data-access.md`.
+ */
+async function referencedFieldExists({
+  fieldId,
+  workspaceId,
+}: {
+  fieldId: string
+  workspaceId: string
+}): Promise<boolean> {
+  const reference = parseFieldReference(fieldId)
+  if (reference.kind === FieldReferenceKind.botField) {
+    const botField = await botFieldService.find({
+      workspaceId,
+      id: reference.id,
+    })
+    return Boolean(botField)
+  }
+  const customField = await customFieldService.findBy({
+    where: { id: fieldId, workspaceId },
+  })
+  return Boolean(customField)
+}
+
+/**
+ * Reads a field's stored value regardless of kind. Returns `undefined` when
+ * the field doesn't exist or the contact/workspace has no value stored yet —
+ * callers treat that as "skip this step", matching the pre-bot-field
+ * behavior of a missing `contactCustomFieldModel` row. Routed through
+ * `contactCustomFieldService.findValue`/`botFieldService.findByKey` rather
+ * than querying `db` directly — see `.agents/rules/data-access.md`.
+ */
+async function readReferencedFieldValue({
+  fieldId,
+  workspaceId,
+  contactId,
+}: {
+  fieldId: string
+  workspaceId: string
+  contactId: string
+}): Promise<string | undefined> {
+  const reference = parseFieldReference(fieldId)
+  if (reference.kind === FieldReferenceKind.botField) {
+    const botField = await botFieldService.findByKey({
+      workspaceId,
+      key: reference.id,
+    })
+    return botField?.value ?? undefined
+  }
+  const value = await contactCustomFieldService.findValue({
+    contactId,
+    customFieldId: fieldId,
+  })
+  return value ?? undefined
+}
+
+/** Resolves a field's `CustomFieldType`, regardless of kind. */
+async function resolveReferencedFieldType({
+  fieldId,
+  workspaceId,
+}: {
+  fieldId: string
+  workspaceId: string
+}): Promise<CustomFieldType | undefined> {
+  const reference = parseFieldReference(fieldId)
+  if (reference.kind === FieldReferenceKind.botField) {
+    const botField = await botFieldService.find({
+      workspaceId,
+      id: reference.id,
+    })
+    return botField?.type
+  }
+  const customField = await customFieldService.findBy({
+    where: { id: reference.key, workspaceId },
+  })
+  return customField?.type
+}
+
+/**
+ * Writes a single field's value regardless of kind. Custom-field writes keep
+ * calling `setValues` unchanged (same call shape existing tests assert on).
+ * Account Field writes go through `setValueByKey` with `allowBotFields:
+ * true` — mirroring the "Set Custom Field" step's write path — and are
+ * logged + swallowed on failure (e.g. a since-deleted bot field) so one bad
+ * output never kills the rest of the flow step's job.
+ */
+async function writeReferencedFieldValue({
+  fieldId,
+  workspaceId,
+  contactId,
+  value,
+}: {
+  fieldId: string
+  workspaceId: string
+  contactId: string
+  value: string
+}): Promise<void> {
+  const reference = parseFieldReference(fieldId)
+  if (reference.kind === FieldReferenceKind.botField) {
+    try {
+      await contactCustomFieldService.setValueByKey({
+        workspaceId,
+        contactId,
+        keyword: fieldId,
+        value,
+        allowBotFields: true,
+      })
+    } catch (error: unknown) {
+      logger.error(
+        { err: error, workspaceId, contactId, fieldId },
+        "Failed to write Account Field value from a tool step; continuing",
+      )
+    }
+    return
+  }
+
+  await contactCustomFieldService.setValues({
+    workspaceId,
+    contactId,
+    fields: [{ customFieldId: fieldId, value }],
+  })
+}
+
 export async function countCharacters({
   conversation,
   step,
 }: ExecuteStepProps<CountCharactersStepSchema>) {
-  const customFieldIds = [step.inputFieldId, step.outputFieldId]
-  const customFieldsCount = await db.$count(
-    customFieldModel,
-    and(inArray(customFieldModel.id, customFieldIds)),
-  )
-  if (customFieldsCount !== 2) {
+  const { workspaceId, contactId } = conversation
+
+  const [inputExists, outputExists] = await Promise.all([
+    referencedFieldExists({ fieldId: step.inputFieldId, workspaceId }),
+    referencedFieldExists({ fieldId: step.outputFieldId, workspaceId }),
+  ])
+  if (!(inputExists && outputExists)) {
     return
   }
 
-  // Find target contact custom field
-  const targetContactCustomField =
-    await db.query.contactCustomFieldModel.findFirst({
-      where: {
-        customFieldId: step.inputFieldId,
-        contactId: conversation.contactId,
-      },
-    })
-  if (!targetContactCustomField) {
+  const inputValue = await readReferencedFieldValue({
+    fieldId: step.inputFieldId,
+    workspaceId,
+    contactId,
+  })
+  if (inputValue === undefined) {
     return
   }
 
-  const value = `${`${targetContactCustomField.value}`.length}`
+  const value = `${inputValue.length}`
 
-  await contactCustomFieldService.setValues({
-    workspaceId: conversation.workspaceId,
-    contactId: conversation.contactId,
-    fields: [{ customFieldId: step.outputFieldId, value }],
+  await writeReferencedFieldValue({
+    fieldId: step.outputFieldId,
+    workspaceId,
+    contactId,
+    value,
   })
 }
 
@@ -88,40 +230,45 @@ export async function formatDate({
   conversation,
   step,
 }: ExecuteStepProps<FormatDateStepSchema>) {
-  const inputContactCustomField =
-    await db.query.contactCustomFieldModel.findFirst({
-      where: {
-        customFieldId: step.inputFieldId,
-        contactId: conversation.contactId,
-      },
-    })
-  if (!inputContactCustomField) {
+  const { workspaceId, contactId } = conversation
+
+  const inputValue = await readReferencedFieldValue({
+    fieldId: step.inputFieldId,
+    workspaceId,
+    contactId,
+  })
+  if (inputValue === undefined) {
     return
   }
 
-  const outputCustomField = await customFieldService.findBy({
-    where: { id: step.outputFieldId, workspaceId: conversation.workspaceId },
+  // Writing a display string into a temporal output field would be re-parsed
+  // and corrupt the stored value — reject regardless of whether the output
+  // is a ContactCustomField or an Account Field.
+  const outputType = await resolveReferencedFieldType({
+    fieldId: step.outputFieldId,
+    workspaceId,
   })
-  if (!outputCustomField || isTemporalCustomFieldType(outputCustomField.type)) {
+  if (!outputType || isTemporalCustomFieldType(outputType)) {
     return
   }
 
   const resolveSourceTimezone = createSourceTimezoneResolver({
-    workspaceId: conversation.workspaceId,
-    contactId: conversation.contactId,
+    workspaceId,
+    contactId,
     strategy: FORMAT_DATE_TIMEZONE_STRATEGIES[step.timezone],
   })
 
   const newValue = formatInTimeZone(
-    inputContactCustomField.value,
+    inputValue,
     await resolveSourceTimezone(),
     step.format,
   )
 
-  await contactCustomFieldService.setValues({
-    workspaceId: conversation.workspaceId,
-    contactId: conversation.contactId,
-    fields: [{ customFieldId: step.outputFieldId, value: newValue }],
+  await writeReferencedFieldValue({
+    fieldId: step.outputFieldId,
+    workspaceId,
+    contactId,
+    value: newValue,
   })
 }
 
@@ -150,25 +297,35 @@ export async function generateCode({
   }
 
   if (value) {
-    await contactCustomFieldService.setValues({
+    await writeReferencedFieldValue({
+      fieldId: step.outputFieldId,
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
-      fields: [{ customFieldId: step.outputFieldId, value }],
+      value,
     })
   }
+}
+
+/** Stringifies a resolved JSON-path value for storage; `null`/`undefined` mean "no value to write". */
+function encodeJsonPathValue(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+  return typeof value === "string" ? value : JSON.stringify(value)
 }
 
 export async function getDataFromJSON({
   conversation,
   step,
 }: ExecuteStepProps<GetDataFromJsonStepSchema>): Promise<ExecuteStepResult> {
-  const inputValue = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-      customFieldId: step.inputFieldId,
-    },
+  const { workspaceId, contactId } = conversation
+
+  const inputValue = await readReferencedFieldValue({
+    fieldId: step.inputFieldId,
+    workspaceId,
+    contactId,
   })
-  if (!inputValue) {
+  if (inputValue === undefined) {
     return {
       status: "error",
       errorMessage: "Input custom field not found",
@@ -178,7 +335,7 @@ export async function getDataFromJSON({
 
   let dataJSON: unknown
   try {
-    dataJSON = JSON.parse(inputValue.value)
+    dataJSON = JSON.parse(inputValue)
   } catch {
     return {
       status: "error",
@@ -187,45 +344,74 @@ export async function getDataFromJSON({
     }
   }
 
-  const mapping = step.mapping
+  const mapping = step.mapping.map((entry) => ({
+    ...entry,
+    reference: parseFieldReference(entry.outputFieldId),
+  }))
+  const customFieldMapping = mapping.filter(
+    (entry) => entry.reference.kind === FieldReferenceKind.customField,
+  )
+  const botFieldMapping = mapping.filter(
+    (entry) => entry.reference.kind === FieldReferenceKind.botField,
+  )
 
-  // Find valid custom fields
-  const validCustomFields = await db.query.customFieldModel.findMany({
-    where: {
-      workspaceId: conversation.workspaceId,
-      id: {
-        in: mapping.map((m) => m.outputFieldId),
+  // Custom-field outputs: unchanged behavior — batched existence lookup then
+  // a single `setValues` call (transactional persistence + change events).
+  if (customFieldMapping.length > 0) {
+    const validCustomFields = await db.query.customFieldModel.findMany({
+      where: {
+        workspaceId,
+        id: {
+          in: customFieldMapping.map((entry) => entry.outputFieldId),
+        },
       },
-    },
-    columns: {
-      id: true,
-    },
-  })
-  const validCustomFieldIds = validCustomFields.map((v) => v.id)
-
-  // setValues already batches existence lookup, normalization, persistence, and
-  // change events into a single transaction — build the field list from the
-  // mapping and hand the whole batch over in one call.
-  const fields = mapping.flatMap((data) => {
-    if (!validCustomFieldIds.includes(data.outputFieldId)) {
-      return []
-    }
-    const value = getProperty(dataJSON, data.jsonPath)
-    if (value === undefined || value === null) {
-      return []
-    }
-    const encodedValue =
-      typeof value === "string" ? value : JSON.stringify(value)
-    return [{ customFieldId: data.outputFieldId, value: encodedValue }]
-  })
-
-  if (fields.length > 0) {
-    await contactCustomFieldService.setValues({
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      fields,
+      columns: {
+        id: true,
+      },
     })
+    const validCustomFieldIds = new Set(validCustomFields.map((v) => v.id))
+
+    const fields = customFieldMapping.flatMap((entry) => {
+      if (!validCustomFieldIds.has(entry.outputFieldId)) {
+        return []
+      }
+      const encodedValue = encodeJsonPathValue(
+        getProperty(dataJSON, entry.jsonPath),
+      )
+      if (encodedValue === null) {
+        return []
+      }
+      return [{ customFieldId: entry.outputFieldId, value: encodedValue }]
+    })
+
+    if (fields.length > 0) {
+      await contactCustomFieldService.setValues({
+        workspaceId,
+        contactId,
+        fields,
+      })
+    }
   }
+
+  // Account Field outputs: one `setValueByKey` write per mapping entry — a
+  // missing or failing bot field is logged and skipped by
+  // `writeReferencedFieldValue`, never thrown.
+  await Promise.all(
+    botFieldMapping.map(async (entry) => {
+      const encodedValue = encodeJsonPathValue(
+        getProperty(dataJSON, entry.jsonPath),
+      )
+      if (encodedValue === null) {
+        return
+      }
+      await writeReferencedFieldValue({
+        fieldId: entry.outputFieldId,
+        workspaceId,
+        contactId,
+        value: encodedValue,
+      })
+    }),
+  )
 
   return { status: "success", result: null }
 }

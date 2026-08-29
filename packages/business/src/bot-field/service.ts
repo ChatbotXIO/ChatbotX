@@ -129,7 +129,12 @@ const createWorkspaceSourceTimezoneResolver = (props: {
     explicitSourceTimezone: props.sourceTimezoneOverride,
   })
 
-const botFieldWorkspaceCacheTags = (workspaceId: string): string[] => [
+/**
+ * Exported so read-side caches outside this service (e.g. the variables
+ * package's bot-field map) can subscribe to the same invalidation: every
+ * write path in this service invalidates these tags.
+ */
+export const botFieldWorkspaceCacheTags = (workspaceId: string): string[] => [
   "bot-fields",
   `bot-fields:${workspaceId}`,
 ]
@@ -369,6 +374,16 @@ class BotFieldService extends BaseService {
         return row ? [[key, row.id] as const] : []
       }),
     )
+
+    // Newly created rows must invalidate the workspace tags: whole-workspace
+    // caches (e.g. the variables package's bot-field map) cache the ABSENCE
+    // of a field too, so without this a template-installed flow's
+    // `{{bot_field:<newId>}}` token would stay unresolved until TTL expiry.
+    // (Per-key `findByKey` caches never cached the miss, which is why this
+    // insert historically skipped invalidation.)
+    if (createdIds.length > 0) {
+      await this.invalidate({ workspaceId, ids: createdIds })
+    }
 
     return { idMap, createdIds }
   }

@@ -276,10 +276,11 @@ class FlowService extends BaseService {
    * to the resolved ids, and inserts the flow — all inside one transaction,
    * so a failed flow insert cannot leave orphan custom/bot fields behind.
    *
-   * Cache invalidation for created fields is deliberately NOT done here (it
-   * would run inside the transaction and could repopulate Redis from an
-   * uncommitted read) — the caller must invalidate once, after this resolves,
-   * using the returned `createdCustomFieldIds`/`createdBotFieldIds`.
+   * Cache invalidation: `resolveByNameAndType` invalidates created fields
+   * inside the transaction (best-effort — a concurrent reader can repopulate
+   * Redis from a pre-commit snapshot), so the caller must STILL invalidate
+   * once more after this resolves, using the returned
+   * `createdCustomFieldIds`/`createdBotFieldIds`, to close that window.
    */
   async importFlowExport(input: {
     workspaceId: string

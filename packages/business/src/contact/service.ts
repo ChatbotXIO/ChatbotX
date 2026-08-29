@@ -154,7 +154,7 @@ class ContactService extends BaseService {
     const { workspaceId, contactId, contactFilter } = props
     if (
       contactFilter.conditions.length > 0 &&
-      !contactFilterHasPredicate(contactFilter)
+      !contactFilterHasPredicate(contactFilter, workspaceId)
     ) {
       return false
     }

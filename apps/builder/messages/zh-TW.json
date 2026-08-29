@@ -2163,6 +2163,7 @@
       "systemFields": "系統欄位",
       "topicCoupon": "主題優惠券",
       "customFields": "自訂欄位",
+      "botFields": "機器人欄位",
       "email": "電子郵件",
       "sms": "簡訊",
       "ctwaAds": "廣告"

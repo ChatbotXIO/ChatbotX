@@ -41,6 +41,9 @@ export const collectFlowReferenceWarnings = (
 const isCustomFieldReferenceKey = (key: string): boolean =>
   REFERENCE_FIELD_ENTITY_KIND[key] === "customField"
 
+const isBotFieldReferenceKey = (key: string): boolean =>
+  REFERENCE_FIELD_ENTITY_KIND[key] === FieldReferenceKind.botField
+
 export type FlowFieldReferenceIds = {
   customFieldIds: string[]
   botFieldIds: string[]
@@ -77,6 +80,16 @@ const collectFieldReferenceIds = (
       } else if (isNumericId(child)) {
         ids.customFieldIds.add(child)
       }
+    } else if (
+      isBotFieldReferenceKey(key) &&
+      typeof child === "string" &&
+      isNumericId(child)
+    ) {
+      // A dedicated `botField`-kind key (e.g. the Condition step's
+      // `botFieldId`) holds a raw bot-field id directly — never a
+      // `bot_field:<id>` token — so it is collected without going through
+      // `parseFieldReference`.
+      ids.botFieldIds.add(child)
     }
     collectFieldReferenceIds(child, ids, depth + 1)
   }

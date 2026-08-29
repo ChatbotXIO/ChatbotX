@@ -572,6 +572,7 @@
       "systemFields": "Systemfelder",
       "topicCoupon": "Thema Gutschein",
       "customFields": "Benutzerdefinierte Felder",
+      "botFields": "Bot-Felder",
       "email": "E-Mail",
       "sms": "SMS",
       "ctwaAds": "Anzeigen"

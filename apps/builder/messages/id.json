@@ -572,6 +572,7 @@
       "systemFields": "Kolom Sistem",
       "topicCoupon": "Topik kupon",
       "customFields": "Kolom Kustom",
+      "botFields": "Kolom Bot",
       "email": "Email",
       "sms": "SMS",
       "ctwaAds": "Iklan"

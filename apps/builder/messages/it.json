@@ -2001,6 +2001,7 @@
       "systemFields": "Campi di sistema",
       "topicCoupon": "Argomento coupon",
       "customFields": "Campi personalizzati",
+      "botFields": "Campi del bot",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Inserzioni"

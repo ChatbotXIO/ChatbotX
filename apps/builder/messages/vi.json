@@ -572,6 +572,7 @@
       "systemFields": "Trường hệ thống",
       "topicCoupon": "Topic coupon",
       "customFields": "Trường tùy chỉnh",
+      "botFields": "Trường bot",
       "email": "Email",
       "sms": "SMS",
       "ctwaAds": "Quảng cáo"

@@ -3043,6 +3043,9 @@ importers:
       '@chatbotx.io/encryption':
         specifier: workspace:*
         version: link:../encryption
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../flow-config
       '@chatbotx.io/integration-instagram':
         specifier: workspace:*
         version: link:../../integrations/instagram

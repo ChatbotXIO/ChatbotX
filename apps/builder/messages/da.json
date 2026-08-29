@@ -572,6 +572,7 @@
       "systemFields": "Systemfelter",
       "topicCoupon": "Emnekupon",
       "customFields": "Brugerdefinerede felter",
+      "botFields": "Bot Felter",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Annoncer"

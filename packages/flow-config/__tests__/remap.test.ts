@@ -62,6 +62,50 @@ describe("remapReferences — multi-kind", () => {
   })
 })
 
+describe("remapReferences — botField scalar key (Condition step's botFieldId)", () => {
+  test("remaps a dedicated botFieldId key directly against idMaps.botField (no bot_field: token)", () => {
+    const remapped = remapReferences(
+      { field: "botField", botFieldId: "bf-1", operator: "eq" },
+      { botField: new Map([["bf-1", "bf-target"]]) },
+    )
+
+    expect(remapped).toEqual({
+      field: "botField",
+      botFieldId: "bf-target",
+      operator: "eq",
+    })
+  })
+
+  test("leaves an unmapped botFieldId untouched and reports it via onUnresolved", () => {
+    const unresolved: unknown[] = []
+    const remapped = remapReferences(
+      { botFieldId: "bf-missing" },
+      {},
+      { onUnresolved: (ref) => unresolved.push(ref) },
+    )
+
+    expect(remapped).toEqual({ botFieldId: "bf-missing" })
+    expect(unresolved).toEqual([
+      { entityKind: "botField", path: "botFieldId", value: "bf-missing" },
+    ])
+  })
+
+  test("a sibling customFieldId on the same object is unaffected by the botField map", () => {
+    const remapped = remapReferences(
+      { botFieldId: "bf-1", customFieldId: "cf-1" },
+      {
+        botField: new Map([["bf-1", "bf-target"]]),
+        customField: new Map([["cf-1", "cf-target"]]),
+      },
+    )
+
+    expect(remapped).toEqual({
+      botFieldId: "bf-target",
+      customFieldId: "cf-target",
+    })
+  })
+})
+
 describe("PREFIXED_REFERENCE_ENTITY_KIND — bot_field entry", () => {
   test("registers the same prefix and kind field-reference.ts defines", () => {
     expect(PREFIXED_REFERENCE_ENTITY_KIND[BOT_FIELD_REFERENCE_PREFIX]).toBe(

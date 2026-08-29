@@ -35,7 +35,13 @@ export const importContactsRequest = z
         .array(
           z.object({
             column: z.string().min(1).max(255),
-            customFieldId: zodBigintAsString(),
+            // A custom field id, or a `bot_field:<id>` reference from the
+            // combined picker — a bot-field mapping is applied once after
+            // the import completes (last row wins), not per row.
+            customFieldId: z.union([
+              zodBigintAsString(),
+              z.string().regex(/^bot_field:\d+$/),
+            ]),
           }),
         )
         .max(10)

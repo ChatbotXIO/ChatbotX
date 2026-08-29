@@ -572,6 +572,7 @@
       "systemFields": "System Fields",
       "topicCoupon": "Topic coupon",
       "customFields": "Custom Fields",
+      "botFields": "Bot Fields",
       "email": "Email",
       "sms": "SMS",
       "ctwaAds": "Ads"

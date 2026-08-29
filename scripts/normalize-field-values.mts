@@ -81,6 +81,9 @@ const { coerceBooleanLiteral } = await import(
 const { normalizeNumber } = await import(
   "../packages/business/src/javascript-execution/custom-field-value.ts"
 )
+const { invalidateCacheByTags } = await import(
+  "../packages/redis/src/cache-utils.ts"
+)
 
 const BATCH_SIZE = 1000
 const MAX_SAMPLES_PER_REPORT = 5
@@ -396,6 +399,18 @@ addTotals(grandTotal, contactFieldTotal)
 addTotals(grandTotal, botFieldBooleanReport)
 addTotals(grandTotal, botFieldNumberReport)
 printReport(grandTotal)
+
+// Bot-field caches (per-key reads + the variables package's per-workspace
+// variable-map) all subscribe to the single global "bot-fields" tag —
+// invalidating it is cheap and precise (unlike the per-contact tags below,
+// which are only mentioned in the reminder). Without this, a rewritten bot
+// field value could keep serving stale for up to its cache TTL.
+const botFieldFixesApplied =
+  fix && botFieldBooleanReport.fixable + botFieldNumberReport.fixable > 0
+if (botFieldFixesApplied) {
+  await invalidateCacheByTags(["bot-fields"])
+  console.log("\nInvalidated bot-field caches (tag: bot-fields).")
+}
 
 if (fix && grandTotal.fixable > 0) {
   console.log(
