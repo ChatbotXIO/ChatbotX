@@ -7,6 +7,7 @@ import {
 import {
   type CreativeMedia,
   enforceSpecialAdCategoryTargeting,
+  isRestrictedSpecialAdCategory,
   type MessagingAdTargeting,
   type PageWelcomeMessage,
   type SpecialAdCategory,
@@ -17,8 +18,27 @@ export function mapTargeting(
   input: MessagingAdTargetingInput,
   specialAdCategories: SpecialAdCategory[],
 ): MessagingAdTargeting {
+  // Graph v23.0 requires an explicit `advantage_audience` on ad set CREATE
+  // (code 100 otherwise). Opting in (1) makes Meta reject `age_max` and cap
+  // `age_min` at 25, and Advantage+ audience is only partially rolled out for
+  // restricted special ad categories — so opt out (0) whenever the user
+  // customized ANY targeting field (age/gender/locales) or a restricted
+  // category applies; opt in (1) only for the countries-only default setup,
+  // the one combination live-verified against v23.0. Locales are treated as
+  // customization out of caution: the docs list language as a non-negotiable
+  // constraint under Advantage+, but the 1+locales combo is unverified live.
+  const hasCustomTargeting =
+    input.ageMin !== undefined ||
+    input.ageMax !== undefined ||
+    Boolean(input.genders?.length) ||
+    Boolean(input.locales?.length)
+  const advantageAudience =
+    hasCustomTargeting || isRestrictedSpecialAdCategory(specialAdCategories)
+      ? 0
+      : 1
   const targeting: MessagingAdTargeting = {
     geo_locations: { countries: input.countries },
+    targeting_automation: { advantage_audience: advantageAudience },
     ...(input.ageMin === undefined ? {} : { age_min: input.ageMin }),
     ...(input.ageMax === undefined ? {} : { age_max: input.ageMax }),
     ...(input.genders?.length ? { genders: input.genders } : {}),

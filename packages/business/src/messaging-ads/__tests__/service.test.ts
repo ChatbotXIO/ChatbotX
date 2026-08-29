@@ -580,6 +580,15 @@ describe("retryDraft", () => {
     // The already-persisted campaign id is never re-created on resume.
     const calledActions = mocks.runAction.mock.calls.map((call) => call[0])
     expect(calledActions).not.toContain("createMessagingCampaign")
+    // A resumed create re-runs mapTargeting from the persisted domain input —
+    // the v23.0-required advantage_audience flag must be present on retry too.
+    const adSetCall = mocks.runAction.mock.calls.find(
+      (call) => call[0] === "createMessagingAdSet",
+    )
+    expect(adSetCall?.[1]?.props?.targeting).toMatchObject({
+      geo_locations: { countries: ["US"] },
+      targeting_automation: { advantage_audience: 1 },
+    })
     expect(mocks.invalidateMessagingAdsCache).toHaveBeenCalledWith(
       "ws_1:messenger:im_1",
     )
