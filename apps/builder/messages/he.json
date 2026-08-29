@@ -413,9 +413,7 @@
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
       "importJsonOnly": "קבצי JSON בלבד",
-      "adsConversions": "מודעות ו-Meta Conversions",
-      "trackAdsLead": "מעקב אחר ליד ממודעות",
-      "trackAdsPurchase": "מעקב אחר רכישה ממודעות"
+      "adsConversions": "מודעות ו-Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -2012,9 +2010,7 @@
       "startAnotherFlow": "הפעלת תהליך אחר",
       "notifyAdmins": "יידוע מנהלי מערכת",
       "transferConversationToHuman": "העברת השיחה לנציג אנושי",
-      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
-      "trackAdsLead": "מעקב אחר ליד ממודעות",
-      "trackAdsPurchase": "מעקב אחר רכישה ממודעות"
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
     },
     "triggerGoesOff": "הגורם המפעיל מופעל",
     "before": "לפני",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "חיבור"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "רושם המרה רק עבור אנשי קשר עם ייחוס למודעת click-to-WhatsApp או הפניית מודעה של Meta. אין השפעה על אנשי קשר אחרים."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

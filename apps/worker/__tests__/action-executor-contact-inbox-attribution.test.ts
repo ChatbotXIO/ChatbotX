@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ActionExecutor must resolve the contact inbox via contactInboxRepository
 // (never a raw db.query.contactInboxModel lookup), preferring a threaded
 // contactInboxId over the contact's most-recently-active inbox, and only the
-// 5 inbox-consuming branches (startAnotherFlow, sendMetaCapiEvent,
-// trackAdsLead, trackAdsPurchase, runGoogleSheet) should ever call the
-// resolver at all — the other 11 contact/conversation-scoped actions must run
-// without paying for that query.
+// 3 inbox-consuming branches (startAnotherFlow, sendMetaCapiEvent,
+// runGoogleSheet) should ever call the resolver at all — the other 11
+// contact/conversation-scoped actions must run without paying for that
+// query.
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
@@ -20,7 +20,6 @@ const mocks = vi.hoisted(() => ({
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
   insertReturning: vi.fn(),
-  recordTriggerConversion: vi.fn(),
   enqueueLeadEvent: vi.fn(),
   buildLeadSourceKey: vi.fn(),
   setValues: vi.fn(),
@@ -111,8 +110,6 @@ vi.mock("@chatbotx.io/business", () => ({
   adsConversionService: {
     enqueueTagAppliedEvaluations: (...args: unknown[]) =>
       mocks.enqueueTagAppliedEvaluations(...args),
-    recordTriggerConversion: (...args: unknown[]) =>
-      mocks.recordTriggerConversion(...args),
   },
   metaConversionsService: {
     enqueueLeadEvent: (...args: unknown[]) => mocks.enqueueLeadEvent(...args),
@@ -177,51 +174,11 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       // must win.
       mocks.findByIdForContact.mockResolvedValue(WHATSAPP_INBOX)
       mocks.findMostRecentByContact.mockResolvedValue(MESSENGER_INBOX)
-      mocks.recordTriggerConversion.mockResolvedValue({
-        id: "event-1",
-        capiStatus: "pending",
-      })
       mocks.buildLeadSourceKey.mockReturnValue("source-key")
       mocks.flowFindFirst.mockResolvedValue({
         id: "flow-1",
         currentVersionId: "fv-1",
       })
-    })
-
-    test("trackAdsLead records against the WhatsApp inbox, not the newer Messenger one", async () => {
-      const executor = new ActionExecutor()
-      await executor.execute({
-        action: { type: "trackAdsLead" },
-        contactId: "contact-1",
-        triggerId: "trigger-1",
-        workspaceId: "ws-1",
-        contactInboxId: "ci-whatsapp",
-      })
-
-      expect(mocks.findByIdForContact).toHaveBeenCalledWith({
-        id: "ci-whatsapp",
-        contactId: "contact-1",
-        workspaceId: "ws-1",
-      })
-      expect(mocks.findMostRecentByContact).not.toHaveBeenCalled()
-      expect(mocks.recordTriggerConversion).toHaveBeenCalledWith(
-        expect.objectContaining({ contactInboxId: "ci-whatsapp" }),
-      )
-    })
-
-    test("trackAdsPurchase records against the WhatsApp inbox, not the newer Messenger one", async () => {
-      const executor = new ActionExecutor()
-      await executor.execute({
-        action: { type: "trackAdsPurchase" },
-        contactId: "contact-1",
-        triggerId: "trigger-1",
-        workspaceId: "ws-1",
-        contactInboxId: "ci-whatsapp",
-      })
-
-      expect(mocks.recordTriggerConversion).toHaveBeenCalledWith(
-        expect.objectContaining({ contactInboxId: "ci-whatsapp" }),
-      )
     })
 
     test("sendMetaCapiEvent records against the WhatsApp inbox, not the newer Messenger one", async () => {
@@ -263,16 +220,13 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
   })
 
   describe("fallback — no threaded contactInboxId", () => {
-    test("trackAdsLead falls back to the most-recently-active inbox", async () => {
+    test("sendMetaCapiEvent falls back to the most-recently-active inbox", async () => {
       mocks.findMostRecentByContact.mockResolvedValue(WHATSAPP_INBOX)
-      mocks.recordTriggerConversion.mockResolvedValue({
-        id: "event-1",
-        capiStatus: "pending",
-      })
+      mocks.buildLeadSourceKey.mockReturnValue("source-key")
 
       const executor = new ActionExecutor()
       await executor.execute({
-        action: { type: "trackAdsLead" },
+        action: { type: "sendMetaCapiEvent" },
         contactId: "contact-1",
         triggerId: "trigger-1",
         workspaceId: "ws-1",
@@ -283,44 +237,39 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         contactId: "contact-1",
         workspaceId: "ws-1",
       })
-      expect(mocks.recordTriggerConversion).toHaveBeenCalledWith(
+      expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith(
         expect.objectContaining({ contactInboxId: "ci-whatsapp" }),
       )
     })
   })
 
   describe("stale/foreign threaded id falls back to most-recent", () => {
-    test("trackAdsLead falls back when the threaded contactInboxId doesn't resolve for this contact/workspace", async () => {
+    test("sendMetaCapiEvent falls back when the threaded contactInboxId doesn't resolve for this contact/workspace", async () => {
       mocks.findByIdForContact.mockResolvedValue(null)
       mocks.findMostRecentByContact.mockResolvedValue(MESSENGER_INBOX)
-      mocks.recordTriggerConversion.mockResolvedValue({
-        id: "event-1",
-        capiStatus: "pending",
-      })
+      mocks.buildLeadSourceKey.mockReturnValue("source-key")
 
       const executor = new ActionExecutor()
       await executor.execute({
-        action: { type: "trackAdsLead" },
+        action: { type: "sendMetaCapiEvent" },
         contactId: "contact-1",
         triggerId: "trigger-1",
         workspaceId: "ws-1",
         contactInboxId: "ci-stale",
       })
 
-      expect(mocks.recordTriggerConversion).toHaveBeenCalledWith(
+      expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith(
         expect.objectContaining({ contactInboxId: "ci-messenger" }),
       )
     })
   })
 
-  describe("no inbox at all — the 5 inbox-consuming branches warn and skip", () => {
+  describe("no inbox at all — the 3 inbox-consuming branches warn and skip", () => {
     beforeEach(() => {
       mocks.findMostRecentByContact.mockResolvedValue(null)
     })
 
     test.each([
-      ["trackAdsLead", { type: "trackAdsLead" }],
-      ["trackAdsPurchase", { type: "trackAdsPurchase" }],
       ["sendMetaCapiEvent", { type: "sendMetaCapiEvent" }],
       ["startAnotherFlow", { type: "startAnotherFlow", flowId: "flow-1" }],
       [
@@ -343,7 +292,6 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         }),
       ).resolves.toBeUndefined()
 
-      expect(mocks.recordTriggerConversion).not.toHaveBeenCalled()
       expect(mocks.enqueueLeadEvent).not.toHaveBeenCalled()
       expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
       expect(mocks.getSpreadsheetRow).not.toHaveBeenCalled()

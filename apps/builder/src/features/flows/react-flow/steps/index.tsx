@@ -77,8 +77,6 @@ import { sendExternalFlowStep } from "./start-external-flow"
 import { sendExternalNodeStep } from "./start-external-node"
 import { subscribeBroadcastStep } from "./subscribe-broadcast"
 import { subscribeSequenceStep } from "./subscribe-schedule"
-import { trackAdsLeadStep } from "./track-ads-lead"
-import { trackAdsPurchaseStep } from "./track-ads-purchase"
 import { triggerN8nStep } from "./trigger-n8n"
 import typingStep from "./typing"
 import { unarchiveConversationStep } from "./unarchive-conversation"
@@ -130,8 +128,6 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.activeCampaignSyncContact]: activeCampaignSyncContactStep,
   [stepTypes.enum.facebookCustomAudience]: facebookCustomAudienceStep,
   [stepTypes.enum.sendMetaCapiEvent]: sendMetaCapiEventStep,
-  [stepTypes.enum.trackAdsLead]: trackAdsLeadStep,
-  [stepTypes.enum.trackAdsPurchase]: trackAdsPurchaseStep,
   [stepTypes.enum.getResponseAddContact]: getResponseAddContactStep,
   [stepTypes.enum.dripSubscribeSubscriber]: dripSubscribeSubscriberStep,
   [stepTypes.enum.mailchimpAddMember]: mailchimpAddMemberStep,

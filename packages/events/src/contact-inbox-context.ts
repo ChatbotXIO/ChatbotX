@@ -3,8 +3,8 @@
  * event producer, through the trigger/webhook queue's `metadata`/`eventData`
  * bag, to the trigger worker's action executor. This closes the "wrong
  * inbox" attribution gap: without it, ads-conversion trigger actions
- * (`trackAdsLead`/`trackAdsPurchase`/`sendMetaCapiEvent`/`startAnotherFlow`)
- * fall back to the contact's most-recently-active inbox across ALL
+ * (`sendMetaCapiEvent`/`startAnotherFlow`) fall back to the contact's
+ * most-recently-active inbox across ALL
  * channels instead of the inbox tied to the event that fired the trigger.
  *
  * Both `TriggerEventEmitter` and `WebhookEventEmitter` forward `metadata`

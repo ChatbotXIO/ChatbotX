@@ -2189,9 +2189,7 @@
       "export": "Esporta",
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
       "importJsonOnly": "Solo file JSON",
-      "adsConversions": "Annunci e Meta Conversions",
-      "trackAdsLead": "Traccia lead pubblicitario",
-      "trackAdsPurchase": "Traccia acquisto pubblicitario"
+      "adsConversions": "Annunci e Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -3788,9 +3786,7 @@
       "startAnotherFlow": "Avvia un altro flusso",
       "notifyAdmins": "Notifica gli amministratori",
       "transferConversationToHuman": "Trasferisci la conversazione a un operatore",
-      "sendMetaCapiEvent": "Invia evento Meta CAPI",
-      "trackAdsLead": "Traccia lead pubblicitario",
-      "trackAdsPurchase": "Traccia acquisto pubblicitario"
+      "sendMetaCapiEvent": "Invia evento Meta CAPI"
     },
     "triggerGoesOff": "Il trigger si attiva",
     "before": "Prima",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Connetti"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Registra una conversione solo per i contatti con attribuzione a un annuncio click-to-WhatsApp o a un referral pubblicitario Meta. Non ha effetto sugli altri contatti."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

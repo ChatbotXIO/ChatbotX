@@ -55,7 +55,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   adsConversionService: {
     enqueueTagAppliedEvaluations: vi.fn(),
-    recordTriggerConversion: vi.fn(),
   },
   botFieldService: {
     applyValueOperation: (...args: unknown[]) =>

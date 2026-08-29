@@ -4,7 +4,6 @@ import {
   contactCustomFieldService,
   conversationService,
   metaConversionsService,
-  type RecordTriggerConversionInput,
   tagSyncService,
 } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
@@ -70,9 +69,9 @@ export class ActionExecutor {
       return
     }
 
-    // Lazy + memoized: only the 5 inbox-consuming branches below need a
+    // Lazy + memoized: only the 3 inbox-consuming branches below need a
     // ContactInbox at all (§3.3) — resolving it eagerly for every action
-    // wastes a query on the other 10 (tag/custom-field/conversation-state
+    // wastes a query on the other 11 (tag/custom-field/conversation-state
     // actions), which only need `conversation`. Memoized so a switch branch
     // (currently none) can't trigger the resolve twice.
     let contactInboxPromise: Promise<ContactInboxWorkspaceRow | null> | null =
@@ -432,56 +431,6 @@ export class ActionExecutor {
           currency,
           contentCategory,
           contentName,
-        })
-        break
-      }
-
-      case triggerActions.enum.trackAdsLead: {
-        const contactInbox = await getContactInbox()
-        if (!contactInbox) {
-          baseLogger.warn(
-            `No contact inbox found for contact ${contactId}, skipping trackAdsLead action`,
-          )
-          break
-        }
-
-        await adsConversionService.recordTriggerConversion({
-          workspaceId,
-          contactInboxId: contactInbox.id,
-          triggerId,
-          eventType: "lead",
-        })
-        break
-      }
-
-      case triggerActions.enum.trackAdsPurchase: {
-        const contactInbox = await getContactInbox()
-        if (!contactInbox) {
-          baseLogger.warn(
-            `No contact inbox found for contact ${contactId}, skipping trackAdsPurchase action`,
-          )
-          break
-        }
-
-        const value =
-          typeof action.value === "string" ? action.value : undefined
-        const currency =
-          typeof action.currency === "string" ? action.currency : undefined
-        const orderId =
-          typeof action.orderId === "string" ? action.orderId : undefined
-        const contents = Array.isArray(action.contents)
-          ? (action.contents as RecordTriggerConversionInput["contents"])
-          : undefined
-
-        await adsConversionService.recordTriggerConversion({
-          workspaceId,
-          contactInboxId: contactInbox.id,
-          triggerId,
-          eventType: "purchase",
-          value,
-          currency,
-          orderId,
-          contents,
         })
         break
       }

@@ -117,7 +117,7 @@ export const adsConversionEventModel = pgTable(
     // the Meta CAPI `custom_data.contents[]`/`num_items`/`content_type`
     // fields; `orderId` backs `custom_data.order_id` and (normalized) feeds
     // the send-time `sourceEventId` so distinct same-day orders don't dedupe
-    // into one Meta event — see `record-ads-conversion.ts`.
+    // into one Meta event.
     orderId: text(),
     contents: jsonb().$type<PurchaseContentItem[]>(),
     occurredAt: timestamp(timestampConfig).notNull(),

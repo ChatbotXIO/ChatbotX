@@ -66,10 +66,6 @@ import {
   setMessengerUserPersistentMenu,
 } from "./messenger-user-menu"
 import { handleSendMetaCapiEventStep } from "./meta-conversions/send-meta-capi-event-step-handler"
-import {
-  handleTrackAdsLeadStep,
-  handleTrackAdsPurchaseStep,
-} from "./meta-conversions/track-ads-step-handler"
 import { addOrUpdateMoosendContact } from "./moosend-handler"
 import { questionnaires } from "./questionnaires"
 import { sendEmail } from "./send-email"
@@ -392,8 +388,6 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.activeCampaignSyncContact]: syncActiveCampaignContact,
   [stepTypes.enum.facebookCustomAudience]: handleFacebookCustomAudience,
   [stepTypes.enum.sendMetaCapiEvent]: handleSendMetaCapiEventStep,
-  [stepTypes.enum.trackAdsLead]: handleTrackAdsLeadStep,
-  [stepTypes.enum.trackAdsPurchase]: handleTrackAdsPurchaseStep,
   [stepTypes.enum.getResponseAddContact]: addGetResponseContact,
   [stepTypes.enum.dripSubscribeSubscriber]: subscribeDripSubscriber,
   [stepTypes.enum.mailchimpAddMember]: addMailchimpMember,

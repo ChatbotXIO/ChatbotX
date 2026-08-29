@@ -2189,9 +2189,7 @@
       "export": "Exporteren",
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
       "importJsonOnly": "Alleen JSON-bestanden",
-      "adsConversions": "Advertenties en Meta Conversions",
-      "trackAdsLead": "Advertentie-lead bijhouden",
-      "trackAdsPurchase": "Advertentie-aankoop bijhouden"
+      "adsConversions": "Advertenties en Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -3788,9 +3786,7 @@
       "startAnotherFlow": "Andere flow starten",
       "notifyAdmins": "Beheerders informeren",
       "transferConversationToHuman": "Gesprek overdragen aan een medewerker",
-      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",
-      "trackAdsLead": "Advertentie-lead bijhouden",
-      "trackAdsPurchase": "Advertentie-aankoop bijhouden"
+      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden"
     },
     "triggerGoesOff": "Trigger wordt geactiveerd",
     "before": "Voor",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Koppelen"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Registreert alleen een conversie voor contacten met WhatsApp click-to-WhatsApp- of Meta-advertentieverwijzingsattributie. Heeft geen effect op andere contacten."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

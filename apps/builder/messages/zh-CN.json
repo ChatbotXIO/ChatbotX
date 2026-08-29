@@ -2892,9 +2892,7 @@
       "export": "导出",
       "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
       "importJsonOnly": "仅限 JSON 文件",
-      "adsConversions": "广告与 Meta Conversions",
-      "trackAdsLead": "跟踪广告线索",
-      "trackAdsPurchase": "跟踪广告购买"
+      "adsConversions": "广告与 Meta Conversions"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -4508,9 +4506,7 @@
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
-      "transferConversationToHuman": "将对话转移给人类",
-      "trackAdsLead": "跟踪广告线索",
-      "trackAdsPurchase": "跟踪广告购买"
+      "transferConversationToHuman": "将对话转移给人类"
     },
     "after": "之后",
     "at": "在",
@@ -5083,9 +5079,6 @@
     },
     "whatsapp": {
       "connect": "连接"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "仅为具有 WhatsApp 点击进入 WhatsApp 广告或 Meta 广告引荐归因的联系人记录转化。对其他联系人没有影响。"
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",

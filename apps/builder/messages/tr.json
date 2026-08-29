@@ -2263,9 +2263,7 @@
       "export": "Dışa aktar",
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
       "importJsonOnly": "Yalnızca JSON dosyaları",
-      "adsConversions": "Reklamlar ve Meta Conversions",
-      "trackAdsLead": "Reklam potansiyel müşterisini izle",
-      "trackAdsPurchase": "Reklam satın alımını izle"
+      "adsConversions": "Reklamlar ve Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -3788,9 +3786,7 @@
       "startAnotherFlow": "Başka Bir Akış Başlat",
       "notifyAdmins": "Yöneticileri Bilgilendir",
       "transferConversationToHuman": "Görüşmeyi İnsana Aktar",
-      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder",
-      "trackAdsLead": "Reklam potansiyel müşterisini izle",
-      "trackAdsPurchase": "Reklam satın alımını izle"
+      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder"
     },
     "triggerGoesOff": "Tetikleyici devreye girer",
     "before": "Önce",
@@ -5361,9 +5357,6 @@
     },
     "whatsapp": {
       "connect": "Bağlan"
-    },
-    "trackAdsFlowStep": {
-      "helpNote": "Yalnızca WhatsApp click-to-WhatsApp reklamı veya Meta reklam yönlendirmesi ile ilişkilendirilmiş kişiler için dönüşüm kaydeder. Diğer kişiler için etkisi yoktur."
     },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
