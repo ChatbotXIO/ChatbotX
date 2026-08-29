@@ -29,6 +29,14 @@ export const createMessageRequest = z
       text: z.string().trim().min(1).max(1000),
       mediaFile: mediaLibraryFileRequest,
     }),
+    // Media Library selection identified by DB id — must be listed before
+    // the text-only branch below, since z.object() strips unknown keys: if
+    // the text-only branch matched first, mediaFileId would be silently
+    // dropped and the message would send as plain text.
+    z.object({
+      text: z.string().trim().min(1).max(1000),
+      mediaFileId: zodBigintAsString(),
+    }),
     z.object({
       text: z.string().trim().min(1).max(1000),
     }),
@@ -43,6 +51,9 @@ export const createMessageRequest = z
     }),
     z.object({
       mediaFile: mediaLibraryFileRequest,
+    }),
+    z.object({
+      mediaFileId: zodBigintAsString(),
     }),
     z.object({
       flowId: zodBigintAsString(),

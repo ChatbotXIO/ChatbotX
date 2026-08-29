@@ -89,3 +89,26 @@ export async function findMediaLibraryFileByPath(input: {
 
   return file ?? null
 }
+
+/**
+ * Confirms a DB id belongs to a Media Library file owned by the given
+ * workspace, so a client-supplied id can't be used to reference another
+ * workspace's (or otherwise arbitrary) storage object.
+ */
+export async function findMediaLibraryFileById(input: {
+  workspaceId: string
+  id: string
+}) {
+  const [file] = await db
+    .select()
+    .from(mediaLibraryFileModel)
+    .where(
+      and(
+        eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+        eq(mediaLibraryFileModel.id, input.id),
+      ),
+    )
+    .limit(1)
+
+  return file ?? null
+}

@@ -61,6 +61,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   mediaLibraryFileModel: {
+    id: "file.id",
     workspaceId: "file.workspaceId",
     folderId: "file.folderId",
     isFavourite: "file.isFavourite",
@@ -80,9 +81,11 @@ vi.mock("@/lib/auth/utils", () => ({
   assertCurrentUserCanAccessChatbot: mocks.assertCurrentUserCanAccessChatbot,
 }))
 
-const { listMediaLibraryFiles, findMediaLibraryFileByPath } = await import(
-  "../files"
-)
+const {
+  listMediaLibraryFiles,
+  findMediaLibraryFileByPath,
+  findMediaLibraryFileById,
+} = await import("../files")
 
 const WS = "workspace-1"
 
@@ -266,6 +269,51 @@ describe("findMediaLibraryFileByPath", () => {
     expect(whereArg).toEqual([
       ["file.workspaceId", WS],
       ["file.path", "ws/2/spoofed.png"],
+    ])
+  })
+})
+
+// ── findMediaLibraryFileById ───────────────────────────────────────────────────
+
+describe("findMediaLibraryFileById", () => {
+  test("returns the file when a row matches workspaceId and id", async () => {
+    const file = { id: "file-1", workspaceId: WS, path: "ws/1/a.png" }
+    const { chain } = createSelectChain([file])
+    dbSelect.mockReturnValue(chain)
+
+    const result = await findMediaLibraryFileById({
+      workspaceId: WS,
+      id: "file-1",
+    })
+
+    expect(result).toEqual(file)
+  })
+
+  test("returns null when no row matches", async () => {
+    const { chain } = createSelectChain([])
+    dbSelect.mockReturnValue(chain)
+
+    const result = await findMediaLibraryFileById({
+      workspaceId: WS,
+      id: "missing-id",
+    })
+
+    expect(result).toBeNull()
+  })
+
+  test("scopes the lookup by both workspaceId and id so an id from another workspace never matches", async () => {
+    const { chain } = createSelectChain([])
+    dbSelect.mockReturnValue(chain)
+
+    await findMediaLibraryFileById({
+      workspaceId: WS,
+      id: "file-from-ws-2",
+    })
+
+    const whereArg = chain.where.mock.calls[0]?.[0] as unknown[][]
+    expect(whereArg).toEqual([
+      ["file.workspaceId", WS],
+      ["file.id", "file-from-ws-2"],
     ])
   })
 })

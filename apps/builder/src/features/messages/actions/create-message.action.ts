@@ -30,7 +30,10 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { findMediaLibraryFileByPath } from "@/features/media-library/queries/files"
+import {
+  findMediaLibraryFileById,
+  findMediaLibraryFileByPath,
+} from "@/features/media-library/queries/files"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageRequest,
@@ -76,6 +79,41 @@ export const createMessageAction = workspaceActionClient
       user: ctx.user,
     })
   })
+
+/**
+ * Copies a Media Library file into a conversation-scoped path instead of
+ * reusing the Media Library file's own S3 key: attachments must outlive the
+ * Media Library file they were picked from, since deleting that file (or its
+ * folder) later must not break an already-sent message.
+ */
+type CopyableMediaLibraryFile = {
+  path: string
+  name: string
+  mimeType: string
+  size: number
+}
+
+const copyMediaLibraryFileToConversationAttachment = async (props: {
+  mediaLibraryFile: CopyableMediaLibraryFile
+  workspaceId: string
+  conversationId: string
+}): Promise<UploadedFile> => {
+  const { mediaLibraryFile, workspaceId, conversationId } = props
+
+  const attachmentPath = pathJoin(
+    `public/space/${workspaceId}/conversations/${conversationId}`,
+    createId(),
+  )
+  await uploader.copyObject(mediaLibraryFile.path, attachmentPath)
+
+  return {
+    name: mediaLibraryFile.name,
+    mimeType: mediaLibraryFile.mimeType,
+    originPath: attachmentPath,
+    size: mediaLibraryFile.size,
+    fileType: guessFileTypeFromMimeType(mediaLibraryFile.mimeType),
+  }
+}
 
 export const createMessage = async (props: {
   conversation: ConversationModel
@@ -123,6 +161,7 @@ export const createMessage = async (props: {
       `public/space/${conversation.workspaceId}/conversations/${targetConversation.id}`,
     )
   } else if ("mediaFile" in parsedInput && parsedInput.mediaFile) {
+    // Legacy path-based selection, still used by public oRPC APIs.
     const mediaLibraryFile = await findMediaLibraryFileByPath({
       workspaceId: conversation.workspaceId,
       path: parsedInput.mediaFile.path,
@@ -131,24 +170,28 @@ export const createMessage = async (props: {
       throw new ChatbotXException("Media library file not found")
     }
 
-    // Copy into a conversation-scoped path instead of reusing the Media
-    // Library file's own S3 key: attachments must outlive the Media Library
-    // file they were picked from, since deleting that file (or its folder)
-    // later must not break an already-sent message.
-    const attachmentPath = pathJoin(
-      `public/space/${conversation.workspaceId}/conversations/${targetConversation.id}`,
-      createId(),
-    )
-    await uploader.copyObject(mediaLibraryFile.path, attachmentPath)
+    uploadedFiles = [
+      await copyMediaLibraryFileToConversationAttachment({
+        mediaLibraryFile,
+        workspaceId: conversation.workspaceId,
+        conversationId: targetConversation.id,
+      }),
+    ]
+  } else if ("mediaFileId" in parsedInput && parsedInput.mediaFileId) {
+    const mediaLibraryFile = await findMediaLibraryFileById({
+      workspaceId: conversation.workspaceId,
+      id: parsedInput.mediaFileId,
+    })
+    if (!mediaLibraryFile) {
+      throw new ChatbotXException("Media library file not found")
+    }
 
     uploadedFiles = [
-      {
-        name: mediaLibraryFile.name,
-        mimeType: mediaLibraryFile.mimeType,
-        originPath: attachmentPath,
-        size: mediaLibraryFile.size,
-        fileType: guessFileTypeFromMimeType(mediaLibraryFile.mimeType),
-      },
+      await copyMediaLibraryFileToConversationAttachment({
+        mediaLibraryFile,
+        workspaceId: conversation.workspaceId,
+        conversationId: targetConversation.id,
+      }),
     ]
   }
 

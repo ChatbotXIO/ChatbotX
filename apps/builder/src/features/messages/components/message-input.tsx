@@ -45,6 +45,7 @@ import {
 } from "@/features/conversations/utils/bot-state"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
+import type { ListFilesResponse } from "@/features/media-library/schemas"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
@@ -69,12 +70,23 @@ const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
 
 const MESSENGER_HUMAN_AGENT_WINDOW_SECONDS = 7 * 24 * 60 * 60
 
+// Media Library selection metadata kept for preview purposes only. The form
+// field only carries `mediaFileId` (the DB id sent to the server) — the
+// action submits the resolver-parsed form values directly, so display-only
+// fields like url/name can't live on the form.
+type SelectedMediaFile = Pick<
+  ListFilesResponse["data"][number],
+  "url" | "mimeType" | "name"
+>
+
 export const MessageInput = () => {
   const t = useTranslations()
   const session = authClient.useSession()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
+  const [selectedMediaFile, setSelectedMediaFile] =
+    useState<SelectedMediaFile | null>(null)
 
   const {
     appendMessage,
@@ -177,6 +189,7 @@ export const MessageInput = () => {
             }
 
             form.reset()
+            setSelectedMediaFile(null)
             textareaRef.current?.focus()
           },
           onSuccess: () => {
@@ -186,6 +199,7 @@ export const MessageInput = () => {
             setReplyToMessage(null)
             textareaRef.current?.focus()
             resetFormAndAction()
+            setSelectedMediaFile(null)
             form.setValue("clientId", createId())
           },
         },
@@ -193,7 +207,7 @@ export const MessageInput = () => {
           defaultValues: {
             text: "",
             files: [],
-            mediaFile: undefined,
+            mediaFileId: undefined,
             clientId: createId(),
             replyToMessageId: undefined,
             replyToMessageCreatedAt: undefined,
@@ -376,16 +390,12 @@ export const MessageInput = () => {
   )
 
   // Check if a media file (device upload or Media Library pick) is attached
-  const mediaFile = useWatch({
-    control: form.control,
-    name: "mediaFile",
-  })
   const files = useWatch({
     control: form.control,
     name: "files",
   })
   const hasFiles =
-    Boolean(mediaFile) || (Array.isArray(files) && files.length > 0)
+    Boolean(selectedMediaFile) || (Array.isArray(files) && files.length > 0)
 
   // Early return if no active conversation
   if (!activeConversationId) {
@@ -516,7 +526,15 @@ export const MessageInput = () => {
           {!isInstagramPostComment && (
             <div className="px-2">
               <FileUploadPreview ref={fileUploadRef} />
-              <MediaFilePreview />
+              {selectedMediaFile && (
+                <MediaFilePreview
+                  mediaFile={selectedMediaFile}
+                  onRemove={() => {
+                    setSelectedMediaFile(null)
+                    form.resetField("mediaFileId")
+                  }}
+                />
+              )}
             </div>
           )}
           <div className="flex w-full items-center ps-2.5">
@@ -536,7 +554,7 @@ export const MessageInput = () => {
                   <Button
                     aria-label="Attach file"
                     className="px-2 py-1.5 [&_svg]:size-5"
-                    disabled={Boolean(mediaFile)}
+                    disabled={Boolean(selectedMediaFile)}
                     onClick={onClickAttachment}
                     type="button"
                     variant="ghost"
@@ -545,17 +563,14 @@ export const MessageInput = () => {
                   </Button>
                   <MediaLibraryTrigger
                     onSelect={(file) => {
-                      form.setValue(
-                        "mediaFile",
-                        {
-                          path: file.path,
-                          url: file.url,
-                          mimeType: file.mimeType,
-                          name: file.name,
-                          size: file.size,
-                        },
-                        { shouldValidate: true },
-                      )
+                      form.setValue("mediaFileId", file.id, {
+                        shouldValidate: true,
+                      })
+                      setSelectedMediaFile({
+                        url: file.url,
+                        mimeType: file.mimeType,
+                        name: file.name,
+                      })
                     }}
                     workspaceId={conversation?.workspaceId ?? ""}
                   >
