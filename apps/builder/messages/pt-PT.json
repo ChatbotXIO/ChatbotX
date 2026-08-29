@@ -3093,10 +3093,12 @@
     "selectPage": {
       "noPagesTitle": "Não foram encontradas Páginas do Facebook",
       "noPagesDescription": "As Páginas num Gestor de Negócios exigem acesso ao Gestor de Negócios durante a ligação. Volte a ligar o Messenger e conceda todas as permissões solicitadas.",
+      "noConnectablePagesTitle": "Não há Páginas disponíveis para ligar",
+      "noConnectablePagesDescription": "Não é administrador desta Página",
       "bmLookupFailedTitle": "Poderão faltar páginas do Gestor de Negócios",
       "bmLookupFailedDescription": "Volte a ligar o Messenger e conceda acesso ao Gestor de Negócios para que as páginas geridas através dele possam ser apresentadas.",
       "alreadyConnectedNote": "Esta página já está ligada",
-      "notAdminNote": "É necessária permissão total de administrador na página para a ligar",
+      "notAdminNote": "Não é administrador desta Página",
       "tryAgain": "Tentar ligar novamente"
     },
     "title": "Facebook Messenger",

@@ -3616,9 +3616,11 @@
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
       "bmLookupFailedDescription": "Återanslut Messenger och bevilja åtkomst till Business Manager så att sidor som hanteras där kan visas.",
       "bmLookupFailedTitle": "Business Manager-sidor kan saknas",
+      "noConnectablePagesDescription": "Du är inte administratör för den här sidan",
+      "noConnectablePagesTitle": "Inga sidor tillgängliga att ansluta",
       "noPagesDescription": "Sidor i Business Manager kräver åtkomst till Business Manager under anslutningen. Återanslut Messenger och bevilja alla begärda behörigheter.",
       "noPagesTitle": "Inga Facebook-sidor hittades",
-      "notAdminNote": "Fullständig administratörsbehörighet på sidan krävs för att ansluta",
+      "notAdminNote": "Du är inte administratör för den här sidan",
       "tryAgain": "Försök återansluta"
     },
     "tabs": {

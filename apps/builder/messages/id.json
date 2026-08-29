@@ -3093,10 +3093,12 @@
     "selectPage": {
       "noPagesTitle": "Tidak ada Halaman Facebook yang ditemukan",
       "noPagesDescription": "Halaman di dalam Business Manager memerlukan akses Business Manager saat dihubungkan. Hubungkan kembali Messenger dan berikan semua izin yang diminta.",
+      "noConnectablePagesTitle": "Tidak ada Halaman yang tersedia untuk dihubungkan",
+      "noConnectablePagesDescription": "Anda bukan admin Halaman ini",
       "bmLookupFailedTitle": "Halaman Business Manager mungkin tidak ditampilkan",
       "bmLookupFailedDescription": "Hubungkan kembali Messenger dan berikan akses Business Manager agar halaman yang dikelola melalui Business Manager dapat ditampilkan.",
       "alreadyConnectedNote": "Halaman ini sudah terhubung",
-      "notAdminNote": "Izin admin penuh pada halaman diperlukan untuk menghubungkannya",
+      "notAdminNote": "Anda bukan admin Halaman ini",
       "tryAgain": "Coba hubungkan kembali"
     },
     "title": "Facebook Messenger",

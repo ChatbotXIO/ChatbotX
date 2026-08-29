@@ -3093,10 +3093,12 @@
     "selectPage": {
       "noPagesTitle": "No Facebook Páginas found",
       "noPagesDescription": "Páginas inside un Empresa Manager require Empresa Manager access during connection. ReConectar Messenger y grant todos requested permisos.",
+      "noConnectablePagesTitle": "No hay páginas disponibles para conectar",
+      "noConnectablePagesDescription": "No eres administrador de esta página",
       "bmLookupFailedTitle": "Empresa Manager páginas may be missing",
       "bmLookupFailedDescription": "ReConectar Messenger y grant Empresa Manager access so páginas managed through un Empresa Manager puede be listed.",
       "alreadyConnectedNote": "This página es already connected",
-      "notAdminNote": "Full admin permiso en el página es obligatorio un connect",
+      "notAdminNote": "No eres administrador de esta página",
       "tryAgain": "Intenta volver a conectar"
     },
     "title": "Facebook Messenger",

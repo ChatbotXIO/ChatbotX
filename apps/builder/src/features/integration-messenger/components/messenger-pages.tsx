@@ -96,6 +96,16 @@ export function FacebookPages({
     setValue("pageName", selectPage?.name ?? "")
   }, [watchedPageId, setValue, pages])
 
+  const hasSelectablePage = pages.some(
+    (page) => page.isConnectable && !page.isAlreadyConnected,
+  )
+  // The warning copy blames missing admin permission, so it must only appear
+  // when a non-admin page is actually the reason nothing is selectable. A list
+  // of solely already-connected pages explains itself via each row's note.
+  const showNotAdminWarning =
+    !hasSelectablePage &&
+    pages.some((page) => !(page.isConnectable || page.isAlreadyConnected))
+
   if (pages.length === 0) {
     return (
       <div className="space-y-4">
@@ -130,6 +140,23 @@ export function FacebookPages({
           <InputField name="accessToken" type="hidden" />
           <InputField name="pageName" type="hidden" />
         </div>
+
+        {showNotAdminWarning && (
+          <Alert variant="warning">
+            <AlertTitle>
+              {t("messenger.selectPage.noConnectablePagesTitle")}
+            </AlertTitle>
+            <AlertDescription>
+              <p>{t("messenger.selectPage.noConnectablePagesDescription")}</p>
+              <Link
+                className={buttonVariants({ size: "sm" })}
+                href="/channels/create"
+              >
+                {t("messenger.selectPage.tryAgain")}
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Styling ::-webkit-scrollbar opts out of the OS overlay scrollbar,
             so the bar stays visible whenever the list overflows. */}

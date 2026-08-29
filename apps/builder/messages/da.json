@@ -3093,10 +3093,12 @@
     "selectPage": {
       "noPagesTitle": "Ingen Facebook Pages found",
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during forbindelse. Forbind igen Messenger og grant alle requested tilladelser.",
+      "noConnectablePagesTitle": "Ingen sider tilgængelige til tilslutning",
+      "noConnectablePagesDescription": "Du er ikke administrator for denne side",
       "bmLookupFailedTitle": "Business Manager pages may være missing",
       "bmLookupFailedDescription": "Forbind igen Messenger og grant Business Manager access so pages managed through a Business Manager kan være listed.",
       "alreadyConnectedNote": "Denne page er allerede forbundet",
-      "notAdminNote": "Full administrator permission på den page er påkrævet til forbind",
+      "notAdminNote": "Du er ikke administrator for denne side",
       "tryAgain": "Try reconnecting"
     },
     "title": "Facebook Messenger",

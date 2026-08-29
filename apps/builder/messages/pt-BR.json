@@ -3072,10 +3072,12 @@
     "selectPage": {
       "noPagesTitle": "Nenhuma Página do Facebook encontrada",
       "noPagesDescription": "Páginas dentro de um Gerenciador de Negócios exigem acesso a ele durante a conexão. Reconecte o Messenger e conceda todas as permissões solicitadas.",
+      "noConnectablePagesTitle": "Nenhuma Página disponível para conectar",
+      "noConnectablePagesDescription": "Você não é administrador desta Página",
       "bmLookupFailedTitle": "Algumas páginas do Gerenciador de Negócios podem não aparecer",
       "bmLookupFailedDescription": "Reconecte o Messenger e conceda acesso ao Gerenciador de Negócios para que as páginas gerenciadas por ele possam ser listadas.",
       "alreadyConnectedNote": "Esta página já está conectada",
-      "notAdminNote": "É necessária permissão total de administrador na página para conectá-la",
+      "notAdminNote": "Você não é administrador desta Página",
       "tryAgain": "Tentar reconectar"
     },
     "title": "Facebook Messenger",
