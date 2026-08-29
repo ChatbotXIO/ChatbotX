@@ -1288,10 +1288,12 @@
     "selectPage": {
       "noPagesTitle": "לא נמצאו דפי Facebook",
       "noPagesDescription": "דפים בתוך Business Manager דורשים גישה ל-Business Manager במהלך החיבור. חברו מחדש את Messenger והעניקו את כל ההרשאות המבוקשות.",
+      "noConnectablePagesTitle": "אין דפים זמינים לחיבור",
+      "noConnectablePagesDescription": "אינך מנהל של דף זה",
       "bmLookupFailedTitle": "ייתכן שחסרים דפי Business Manager",
       "bmLookupFailedDescription": "חברו מחדש את Messenger והעניקו גישה ל-Business Manager כדי שניתן יהיה להציג דפים המנוהלים דרכו.",
       "alreadyConnectedNote": "דף זה כבר מחובר",
-      "notAdminNote": "נדרשת הרשאת מנהל מלאה בדף כדי להתחבר",
+      "notAdminNote": "אינך מנהל של דף זה",
       "tryAgain": "ניסיון חיבור מחדש"
     },
     "title": "Facebook Messenger",

@@ -3123,10 +3123,12 @@
     "selectPage": {
       "noPagesTitle": "找不到Facebook 頁面",
       "noPagesDescription": "商務管理平台內的頁面需要在連線期間存取商務管理平台。重新連線Messenger並授予所有請求的權限。",
+      "noConnectablePagesTitle": "沒有可連結的頁面",
+      "noConnectablePagesDescription": "您不是此頁面的管理員",
       "bmLookupFailedTitle": "業務管理平台頁面可能遺失",
       "bmLookupFailedDescription": "重新連接Messenger 並授予商務管理平台存取權限，以便可以列出透過商務管理平台管理的頁面。",
       "alreadyConnectedNote": "該頁面已連接",
-      "notAdminNote": "需要頁面的完全管理員權限才能連接",
+      "notAdminNote": "您不是此頁面的管理員",
       "tryAgain": "嘗試重新連接"
     },
     "title": "Facebook Messenger",

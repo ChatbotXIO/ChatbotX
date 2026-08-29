@@ -3090,10 +3090,12 @@
     "selectPage": {
       "noPagesTitle": "Facebook-sivuja ei löytynyt",
       "noPagesDescription": "Business Managerin sivut edellyttävät Business Manager -käyttöoikeutta yhdistämisen aikana. Yhdistä Messenger uudelleen ja myönnä kaikki pyydetyt oikeudet.",
+      "noConnectablePagesTitle": "Ei yhdistettävissä olevia sivuja",
+      "noConnectablePagesDescription": "Et ole tämän sivun ylläpitäjä",
       "bmLookupFailedTitle": "Business Manager -sivuja saattaa puuttua",
       "bmLookupFailedDescription": "Yhdistä Messenger uudelleen ja myönnä Business Manager -käyttöoikeus, jotta Business Managerin kautta hallinnoidut sivut voidaan näyttää.",
       "alreadyConnectedNote": "Tämä sivu on jo yhdistetty",
-      "notAdminNote": "Yhdistäminen edellyttää sivun täysiä ylläpitäjän oikeuksia",
+      "notAdminNote": "Et ole tämän sivun ylläpitäjä",
       "tryAgain": "Yritä yhdistää uudelleen"
     },
     "title": "Facebook Messenger",

@@ -3090,10 +3090,12 @@
     "selectPage": {
       "noPagesTitle": "Facebook Sayfası bulunamadı",
       "noPagesDescription": "Bir İşletme Yöneticisi içindeki sayfalar, bağlantı sırasında İşletme Yöneticisi erişimi gerektirir. Messenger'ı yeniden bağlayın ve istenen tüm izinleri verin.",
+      "noConnectablePagesTitle": "Bağlanabilecek Sayfa yok",
+      "noConnectablePagesDescription": "Bu Sayfanın yöneticisi değilsiniz",
       "bmLookupFailedTitle": "İşletme Yöneticisi sayfaları eksik olabilir",
       "bmLookupFailedDescription": "Bir İşletme Yöneticisi üzerinden yönetilen sayfaların listelenebilmesi için Messenger'ı yeniden bağlayın ve İşletme Yöneticisi erişimi verin.",
       "alreadyConnectedNote": "Bu sayfa zaten bağlı",
-      "notAdminNote": "Bağlanmak için sayfada tam yönetici izni gereklidir",
+      "notAdminNote": "Bu Sayfanın yöneticisi değilsiniz",
       "tryAgain": "Yeniden bağlanmayı dene"
     },
     "title": "Facebook Messenger",

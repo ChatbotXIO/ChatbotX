@@ -3069,10 +3069,12 @@
     "selectPage": {
       "noPagesTitle": "Facebookページが見つかりません",
       "noPagesDescription": "ビジネスマネージャ内のページに接続するには、ビジネスマネージャへのアクセス権が必要です。Messengerを再接続し、要求されたすべての権限を許可してください。",
+      "noConnectablePagesTitle": "接続できるページがありません",
+      "noConnectablePagesDescription": "あなたはこのページの管理者ではありません",
       "bmLookupFailedTitle": "ビジネスマネージャのページが一部表示されていない可能性があります",
       "bmLookupFailedDescription": "Messengerを再接続し、ビジネスマネージャへのアクセスを許可すると、ビジネスマネージャで管理されているページを一覧表示できます。",
       "alreadyConnectedNote": "このページはすでに接続されています",
-      "notAdminNote": "接続するにはページの完全な管理者権限が必要です",
+      "notAdminNote": "あなたはこのページの管理者ではありません",
       "tryAgain": "再接続を試す"
     },
     "title": "Facebook Messenger",

@@ -3090,10 +3090,12 @@
     "selectPage": {
       "noPagesTitle": "Aucune Page Facebook trouvée",
       "noPagesDescription": "Les Pages d’un Business Manager nécessitent un accès à celui-ci pendant la connexion. Reconnectez Messenger et accordez toutes les autorisations demandées.",
+      "noConnectablePagesTitle": "Aucune Page disponible à connecter",
+      "noConnectablePagesDescription": "Vous n’êtes pas administrateur de cette Page",
       "bmLookupFailedTitle": "Certaines Pages du Business Manager peuvent manquer",
       "bmLookupFailedDescription": "Reconnectez Messenger et accordez l’accès au Business Manager afin de répertorier les Pages qu’il gère.",
       "alreadyConnectedNote": "Cette Page est déjà connectée",
-      "notAdminNote": "Une autorisation d’administration complète de la Page est requise",
+      "notAdminNote": "Vous n’êtes pas administrateur de cette Page",
       "tryAgain": "Réessayer la connexion"
     },
     "title": "Facebook Messenger",

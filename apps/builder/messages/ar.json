@@ -3090,10 +3090,12 @@
     "selectPage": {
       "noPagesTitle": "لم يتم العثور على صفحات Facebook",
       "noPagesDescription": "تتطلب الصفحات الموجودة داخل مدير الأعمال منح صلاحية الوصول إليه أثناء الاتصال. أعد ربط Messenger وامنح جميع الأذونات المطلوبة.",
+      "noConnectablePagesTitle": "لا توجد صفحات متاحة للربط",
+      "noConnectablePagesDescription": "أنت لست مسؤولاً عن هذه الصفحة",
       "bmLookupFailedTitle": "قد تكون بعض صفحات مدير الأعمال غير ظاهرة",
       "bmLookupFailedDescription": "أعد ربط Messenger وامنح صلاحية الوصول إلى مدير الأعمال حتى يمكن عرض الصفحات المُدارة من خلاله.",
       "alreadyConnectedNote": "هذه الصفحة مرتبطة بالفعل",
-      "notAdminNote": "يلزم امتلاك صلاحية مسؤول كاملة على الصفحة للربط",
+      "notAdminNote": "أنت لست مسؤولاً عن هذه الصفحة",
       "tryAgain": "محاولة إعادة الاتصال"
     },
     "title": "Facebook Messenger",

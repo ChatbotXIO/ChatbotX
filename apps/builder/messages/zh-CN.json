@@ -3613,9 +3613,11 @@
       "alreadyConnectedNote": "该页面已连接",
       "bmLookupFailedDescription": "重新连接Messenger 并授予商务管理平台访问权限，以便可以列出通过商务管理平台管理的页面。",
       "bmLookupFailedTitle": "业务管理平台页面可能遗失",
+      "noConnectablePagesDescription": "您不是此页面的管理员",
+      "noConnectablePagesTitle": "没有可连接的页面",
       "noPagesDescription": "商务管理平台内的页面需要在连接期间访问商务管理平台。重新连接Messenger并授予所有请求的权限。",
       "noPagesTitle": "找不到Facebook 页面",
-      "notAdminNote": "需要页面的完全管理员权限才能连接",
+      "notAdminNote": "您不是此页面的管理员",
       "tryAgain": "尝试重新连接"
     },
     "tabs": {
