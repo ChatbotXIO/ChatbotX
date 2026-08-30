@@ -1,4 +1,4 @@
-import { messagesAuthenticatedAPI } from "./authenticated"
+import { messagesAuthenticatedAPI } from "./private"
 
 export const messagesAPI = {
   ...messagesAuthenticatedAPI,

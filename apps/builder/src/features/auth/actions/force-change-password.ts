@@ -7,7 +7,7 @@ import { headers } from "next/headers"
 import { auth } from "@/lib/auth/auth"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { actionClient } from "@/lib/safe-action"
-import { changePasswordRequest } from "../schemas/action"
+import { changePasswordRequest } from "../schema/action"
 
 /**
  * Change the caller's password and clear the forced-change gate in one

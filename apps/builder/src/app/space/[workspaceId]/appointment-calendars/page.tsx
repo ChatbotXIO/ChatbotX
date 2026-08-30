@@ -6,7 +6,7 @@ import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { AppointmentCalendarsTable } from "@/features/appointment-calendars/components/appointment-calendars-table"
 import { listAppointmentCalendars } from "@/features/appointment-calendars/queries"
-import { listAppointmentCalendarsSearchParamsCache } from "@/features/appointment-calendars/schemas/query"
+import { listAppointmentCalendarsSearchParamsCache } from "@/features/appointment-calendars/schema/query"
 
 export default async function AppointmentCalendarsPage({
   params,

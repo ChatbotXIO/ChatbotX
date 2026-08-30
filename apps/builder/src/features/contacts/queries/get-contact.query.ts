@@ -5,7 +5,7 @@ import {
   maskContactEmailAndPhone,
   resolveContactPermissionScope,
 } from "../permissions"
-import type { GetContactRequest, GetContactResponse } from "../schemas/query"
+import type { GetContactRequest, GetContactResponse } from "../schema/query"
 
 export async function getContact(
   input: GetContactRequest,

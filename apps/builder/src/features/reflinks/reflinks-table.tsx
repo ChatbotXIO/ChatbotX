@@ -38,7 +38,7 @@ import React, { use, useMemo } from "react"
 import { GetInboxUrlDialog } from "../inboxes/components/get-inbox-url"
 import { DeleteReflinksDialog } from "./delete-reflinks"
 import { ReflinksTableToolbarActions } from "./reflinks-table-toolbar-actions"
-import type { ListReflinkItem, ListReflinksResponse } from "./schemas/query"
+import type { ListReflinkItem, ListReflinksResponse } from "./schema/query"
 import { UpdateReflinkDialog } from "./update-reflink"
 
 type ReflinksTableProps = {

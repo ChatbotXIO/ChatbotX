@@ -1,8 +1,8 @@
 "use server"
 
 import { templateService } from "@chatbotx.io/business"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { updateShareSettingsRequest } from "../schemas/mutation"
+import { workspaceIdrequestParams } from "@/features/common/schema"
+import { updateShareSettingsRequest } from "../schema/mutation"
 import { templateActionClient } from "./template-action-client"
 
 export const updateShareSettingsAction = templateActionClient

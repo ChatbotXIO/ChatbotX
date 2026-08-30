@@ -11,14 +11,14 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { verifyOpenaiCompatibleProvider } from "../lib"
 import {
   type ConnectOpenaiCompatibleSchema,
   connectOpenaiCompatibleSchema,
   resolveOpenaiCompatibleDefaultModel,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const connectOpenaiCompatibleAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

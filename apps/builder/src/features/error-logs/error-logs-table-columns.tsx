@@ -21,7 +21,7 @@ import { format } from "date-fns"
 import { EllipsisIcon, UserRoundIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
-import type { ErrorLogResource } from "./schemas"
+import type { ErrorLogResource } from "./schema"
 
 type GetColumnsProps = {
   t: ReturnType<typeof useTranslations>

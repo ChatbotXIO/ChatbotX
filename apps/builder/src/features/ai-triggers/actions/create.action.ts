@@ -3,8 +3,8 @@
 import { db } from "@chatbotx.io/database/client"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import { createAITriggerRequest } from "@/features/ai-triggers/schemas/action"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { createAITriggerRequest } from "@/features/ai-triggers/schema/action"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const createAITriggerAction = workspaceActionClient

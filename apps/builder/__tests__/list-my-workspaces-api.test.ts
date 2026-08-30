@@ -65,7 +65,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceModel: {},
 }))
 
-await import("@/features/workspaces/api/authenticated")
+await import("@/features/workspaces/api/private")
 
 const findProcedure = (method: string, path: string) => {
   const found = capturedProcedures.find(

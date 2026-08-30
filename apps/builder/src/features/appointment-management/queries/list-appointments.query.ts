@@ -3,7 +3,7 @@ import {
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListAppointmentsRequest } from "../schemas/query"
+import type { ListAppointmentsRequest } from "../schema/query"
 
 export async function listAppointments(input: ListAppointmentsRequest) {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)

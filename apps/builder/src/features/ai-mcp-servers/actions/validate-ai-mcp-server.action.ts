@@ -5,7 +5,7 @@ import {
   type experimental_MCPClient,
 } from "@ai-sdk/mcp"
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
-import type { ValidateAIMcpServerRequest } from "../schemas/action"
+import type { ValidateAIMcpServerRequest } from "../schema/action"
 
 export const validateAIMcpServer = async ({
   parsedInput,

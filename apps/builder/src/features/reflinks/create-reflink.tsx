@@ -22,7 +22,7 @@ import { toast } from "sonner"
 import { CustomFieldSelect } from "../custom-fields/custom-field-select"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createReflinkAction } from "./actions/create-reflink.action"
-import { createReflinkRequest } from "./schemas/action"
+import { createReflinkRequest } from "./schema/action"
 
 export function CreateReflinkDialog({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()

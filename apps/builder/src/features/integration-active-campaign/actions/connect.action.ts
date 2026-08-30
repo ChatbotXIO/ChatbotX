@@ -8,10 +8,10 @@ import {
 import { SdkException } from "@chatbotx.io/sdk"
 import { getTranslations } from "next-intl/server"
 import { normalizeError } from "universal-error-normalizer"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { connectActiveCampaignSchema } from "../schemas"
+import { connectActiveCampaignSchema } from "../schema"
 
 export const connectActiveCampaignAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

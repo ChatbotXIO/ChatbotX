@@ -42,8 +42,8 @@ import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactSequenceDialog from "./components/remove-contact-sequence-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
 import { ExportContactDialog } from "./export-contact-dialog"
-import type { ExportContactsFilter } from "./schemas/action"
-import type { ContactResponse } from "./schemas/query"
+import type { ExportContactsFilter } from "./schema/action"
+import type { ContactResponse } from "./schema/query"
 
 type ContactListActionProps = {
   workspaceId: string

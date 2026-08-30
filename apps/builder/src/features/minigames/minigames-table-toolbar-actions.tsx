@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { CreateMinigameTypeDialog } from "./components/create-minigame-type-dialog"
 import { DeleteMinigamesDialog } from "./delete-minigames"
-import type { MinigameResource } from "./schemas/resource"
+import type { MinigameResource } from "./schema/resource"
 
 type MinigamesTableToolbarActionsProps = {
   table: Table<MinigameResource>

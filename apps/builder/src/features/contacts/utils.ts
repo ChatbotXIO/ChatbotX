@@ -1,6 +1,6 @@
 import { getPublicFileUrl } from "@chatbotx.io/utils"
 import { useTenantSettings } from "@/features/tenant"
-import type { ContactResource } from "./schemas/resource"
+import type { ContactResource } from "./schema/resource"
 
 type ContactInboxReadTimestamp = {
   contactLastReadAt?: Date | null

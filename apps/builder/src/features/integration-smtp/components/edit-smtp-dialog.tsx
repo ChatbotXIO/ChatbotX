@@ -11,7 +11,7 @@ import {
 import { useTranslations } from "next-intl"
 import type { ReactElement } from "react"
 import { useState } from "react"
-import type { IntegrationSmtpResource } from "../schemas/resource"
+import type { IntegrationSmtpResource } from "../schema/resource"
 import { EditSmtpForm } from "./edit-smtp-form"
 
 type EditSmtpDialogProps = {

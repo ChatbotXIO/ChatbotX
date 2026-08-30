@@ -22,7 +22,7 @@ import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { removeContactSequenceAction } from "../actions/remove-contact-sequence.action"
-import { removeContactSequenceRequest } from "../schemas/contact-sequence"
+import { removeContactSequenceRequest } from "../schema/contact-sequence"
 
 type RemoveContactSequenceDialogProps = {
   trigger: ReactElement

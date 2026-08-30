@@ -1,7 +1,7 @@
 import type { FlowNodeStatsResponse } from "@chatbotx.io/analytics"
 import ky from "ky"
 import { useEffect, useState } from "react"
-import type { FlowResource } from "../../schemas/resource"
+import type { FlowResource } from "../../schema/resource"
 
 type GetFlowLinkProps = {
   flow: FlowResource

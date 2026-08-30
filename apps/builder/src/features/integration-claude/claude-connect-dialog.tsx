@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { useWorkspaceId } from "@/hooks/routing"
 import { connectClaudeAction } from "./actions/connect.action"
-import { connectClaudeSchema } from "./schemas/request"
+import { connectClaudeSchema } from "./schema/request"
 
 export const ClaudeConnectDialog = () => {
   const [open, setOpen] = useState(false)

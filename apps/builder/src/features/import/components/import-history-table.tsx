@@ -19,7 +19,7 @@ import { format } from "date-fns"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import type { listImports } from "../queries/list-imports.queries"
-import type { ListImportsItem } from "../schemas/query"
+import type { ListImportsItem } from "../schema/query"
 
 type ImportHistoryTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listImports>>]>

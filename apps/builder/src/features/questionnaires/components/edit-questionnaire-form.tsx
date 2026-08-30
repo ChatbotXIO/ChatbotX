@@ -41,7 +41,7 @@ import {
   noQuestionnaireTriggerFlowValue,
   type UpdateQuestionnaireRequest,
   updateQuestionnaireRequest,
-} from "../schemas/action"
+} from "../schema/action"
 import {
   getCustomFieldSelectionReset,
   getQuestionFieldMappingReset,

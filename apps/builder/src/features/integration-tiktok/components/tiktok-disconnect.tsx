@@ -7,7 +7,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { disconnectTiktokAction } from "../actions/disconnect.action"
-import type { IntegrationTiktokResource } from "../schemas/resource"
+import type { IntegrationTiktokResource } from "../schema/resource"
 
 export function TiktokDisconnect({
   integrationTiktok,

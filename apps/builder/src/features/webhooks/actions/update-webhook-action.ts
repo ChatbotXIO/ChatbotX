@@ -7,7 +7,7 @@ import { updateWebhookCache } from "@chatbotx.io/events"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { toConditionColumns } from "@/features/conditions/to-condition-columns"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { updateWebhookRequest } from "../schemas/update-webhook-schema"
+import { updateWebhookRequest } from "../schema/update-webhook-schema"
 
 export const updateWebhookAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

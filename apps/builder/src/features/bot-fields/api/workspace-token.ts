@@ -7,9 +7,9 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
 import { workspaceTokenAuthAPI } from "@/orpc"
-import { createBotFieldRequest } from "../schemas/action"
-import { publicListBotFieldsResponse } from "../schemas/query"
-import { publicBotFieldResource } from "../schemas/resource"
+import { createBotFieldRequest } from "../schema/action"
+import { publicListBotFieldsResponse } from "../schema/query"
+import { publicBotFieldResource } from "../schema/resource"
 
 const botFieldWorkspaceTokenAPIs = {
   listBotFieldsWorkspaceTokenAPI: workspaceTokenAuthAPI

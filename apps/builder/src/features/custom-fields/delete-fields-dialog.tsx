@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteFieldsAction } from "./actions/delete-custom-field.action"
-import type { CustomFieldResource } from "./schemas/resource"
+import type { CustomFieldResource } from "./schema/resource"
 
 type DeleteFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string

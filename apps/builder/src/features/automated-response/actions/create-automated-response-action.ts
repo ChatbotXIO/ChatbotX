@@ -6,7 +6,7 @@ import {
   automatedResponseTypes,
 } from "@chatbotx.io/database/partials"
 import { returnValidationErrors } from "next-safe-action"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createAutomatedResponseRequest } from "../schema/action"

@@ -4,7 +4,7 @@ import { botFieldService } from "@chatbotx.io/business"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteBotFieldsAction = workspaceActionClient

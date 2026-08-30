@@ -5,7 +5,7 @@ import { getCurrentUserId } from "@/lib/auth/utils"
 import type {
   GetCouponExportFileRequest,
   GetCouponExportFileResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export async function getCouponExportFile(
   input: GetCouponExportFileRequest,

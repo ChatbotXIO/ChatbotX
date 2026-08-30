@@ -16,7 +16,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
 import type { z } from "zod"
-import { submitBookingRequestSchema } from "@/features/booking-webview/schemas/action"
+import { submitBookingRequestSchema } from "@/features/booking-webview/schema/action"
 import { getOriginFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"

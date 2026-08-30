@@ -9,7 +9,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { updateAIMcpServerRequest } from "../schemas/action"
+import { updateAIMcpServerRequest } from "../schema/action"
 
 export const updateAIMcpServerAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

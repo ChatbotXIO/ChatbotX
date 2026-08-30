@@ -8,8 +8,8 @@ import {
 import {
   listBroadcastAudienceResponse,
   publicListBroadcastsResponse,
-} from "../schemas/query"
-import { publicBroadcastResource } from "../schemas/resource"
+} from "../schema/query"
+import { publicBroadcastResource } from "../schema/resource"
 
 export const broadcastWorkspaceTokenAPIs = {
   listBroadcastsWorkspaceTokenAPI: workspaceTokenAuthAPI

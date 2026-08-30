@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
 import type { AdsAnalyticsData } from "@/features/ads/lib/merge-analytics"
 import type { AdsAnalyticsTimeseriesRow } from "@/features/ads/queries/analytics"
-import type { AdsAnalyticsSearchParams } from "@/features/ads/schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "@/features/ads/schema/analytics"
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/space/ws-1/dashboard/ads",

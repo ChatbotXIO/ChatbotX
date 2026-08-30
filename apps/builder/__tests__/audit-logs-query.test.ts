@@ -65,7 +65,7 @@ const { listAuditLogAdmins, listAuditLogs } = await import(
   "../src/enterprise/features/audit-logs/queries"
 )
 const { getDefaultAuditLogsRange, parseAuditLogsDateRange } = await import(
-  "../src/enterprise/features/audit-logs/schemas/query"
+  "../src/enterprise/features/audit-logs/schema/query"
 )
 
 beforeEach(() => {

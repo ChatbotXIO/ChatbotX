@@ -6,7 +6,7 @@ import {
   findConversationalAutomation,
 } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListWhatsappPhoneNumberAutomation } from "../schemas/get-ice-breakers-schema"
+import type { ListWhatsappPhoneNumberAutomation } from "../schema/get-ice-breakers-schema"
 
 export const findWhatsappAutomation = async (
   input: ListWhatsappPhoneNumberAutomation,

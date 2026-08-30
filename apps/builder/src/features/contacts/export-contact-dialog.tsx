@@ -37,7 +37,7 @@ import {
   contactTagPrefix,
   type ExportContactsFilter,
   exportContactsRequest,
-} from "./schemas/action"
+} from "./schema/action"
 
 type ExportState = {
   fileId: string

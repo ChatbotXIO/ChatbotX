@@ -2,7 +2,7 @@ import { integrationOpenaiCompatibleService } from "@chatbotx.io/business"
 import {
   type IntegrationOpenaiCompatibleResource,
   mapIntegrationOpenaiCompatibleResource,
-} from "../schemas/resource"
+} from "../schema/resource"
 
 export const listIntegrationOpenaiCompatible = async ({
   workspaceId,

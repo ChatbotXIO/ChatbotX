@@ -1,4 +1,4 @@
-import { userPersistentMenusAuthenticatedAPI } from "./authenticated"
+import { userPersistentMenusAuthenticatedAPI } from "./private"
 
 export const userPersistentMenusAPI = {
   ...userPersistentMenusAuthenticatedAPI,

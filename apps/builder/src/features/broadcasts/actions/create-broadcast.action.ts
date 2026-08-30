@@ -8,11 +8,11 @@ import { pruneEmailPhoneFilterConditions } from "@chatbotx.io/database/queries/c
 import { broadcastModel } from "@chatbotx.io/database/schema"
 import { startOfMinute } from "date-fns"
 import { returnValidationErrors } from "next-safe-action"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createBroadcastRequest } from "../schemas/action"
+import { createBroadcastRequest } from "../schema/action"
 
 export const createBroadcastAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

@@ -3,7 +3,7 @@
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import type { ContactFilterCondition } from "../schemas"
+import type { ContactFilterCondition } from "../schema"
 import {
   type FieldConfig,
   formatConditionValueDisplay,

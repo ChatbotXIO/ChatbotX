@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import type { ContactFilterCriteria } from "@/features/contact-filter/schemas"
+import type { ContactFilterCriteria } from "@/features/contact-filter/schema"
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findManyQuery: vi.fn() },

@@ -33,7 +33,7 @@ import { FieldValuePickerPopover } from "@/features/custom-fields/components/fie
 import {
   type ContactFilterCondition,
   singleContactFilterConditionSchema,
-} from "../schemas"
+} from "../schema"
 import {
   type ConditionOption,
   type ContactFilterConditionFormDraft,

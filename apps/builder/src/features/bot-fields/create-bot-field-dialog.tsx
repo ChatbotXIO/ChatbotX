@@ -33,7 +33,7 @@ import { toast } from "sonner"
 import { useCustomFieldTypeLabels } from "../shared-fields/shared"
 import { BotFieldValueInput } from "./account-field-value-input"
 import { createBotFieldAction } from "./actions/create-bot-field.action"
-import { createBotFieldRequest } from "./schemas/action"
+import { createBotFieldRequest } from "./schema/action"
 
 type CreateBotFieldDialogProps = {
   workspaceId: string

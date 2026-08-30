@@ -60,7 +60,7 @@ vi.mock("next-safe-action", () => ({
   returnValidationErrors: mockReturnValidationErrors,
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 

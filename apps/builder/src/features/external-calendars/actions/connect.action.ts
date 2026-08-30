@@ -5,13 +5,13 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel, WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
 import { redirect } from "next/navigation"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { integrations } from "@/integration"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { connectExternalCalendarRequest } from "../schemas/action"
+import { connectExternalCalendarRequest } from "../schema/action"
 
 export const connectGoogleCalendarAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

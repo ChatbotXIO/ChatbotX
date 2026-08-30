@@ -8,8 +8,8 @@ import type {
   ListMinigameHistoryRequest,
   ListMinigamesRequest,
   ListMinigamesResponse,
-} from "../schemas/query"
-import { type MinigameResource, minigameResource } from "../schemas/resource"
+} from "../schema/query"
+import { type MinigameResource, minigameResource } from "../schema/resource"
 
 export async function listMinigames(
   input: ListMinigamesRequest,

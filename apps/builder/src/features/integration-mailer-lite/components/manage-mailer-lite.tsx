@@ -12,7 +12,7 @@ import { DisconnectIntegrationDialog } from "@/features/common/components/discon
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { connectMailerLiteAction } from "../actions/connect.action"
 import { disconnectMailerLiteAction } from "../actions/disconnect.action"
-import { connectMailerLiteSchema } from "../schemas"
+import { connectMailerLiteSchema } from "../schema"
 
 export function ManageMailerLite(props: {
   workspaceId: string

@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { useWorkspaceId } from "@/hooks/routing"
 import { connectDeepSeekAction } from "./actions/connect.action"
-import { connectDeepSeekSchema } from "./schemas/request"
+import { connectDeepSeekSchema } from "./schema/request"
 
 export const DeepSeekConnectDialog = () => {
   const [open, setOpen] = useState(false)

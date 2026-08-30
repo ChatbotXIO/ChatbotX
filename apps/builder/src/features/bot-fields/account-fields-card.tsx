@@ -47,7 +47,7 @@ import { CreateBotFieldDialog } from "./create-bot-field-dialog"
 import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
 import type { listBotFieldsRSC } from "./queries"
 import { ResetBotFieldsDialog } from "./reset-bot-fields-dialog"
-import type { BotFieldResource } from "./schemas/resource"
+import type { BotFieldResource } from "./schema/resource"
 import { UpdateBotFieldDialog } from "./update-bot-field-dialog"
 
 const ACCOUNT_FIELDS_PAGE_SIZE = 10
