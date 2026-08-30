@@ -34,7 +34,12 @@ import {
 } from "../workspace-member/service"
 import { nextScheduledDeletionAt } from "./deletion-schedule"
 
-type WorkspaceWhere = Partial<{ id: string; ownerId: string; token: string }>
+type WorkspaceWhere = Partial<{
+  id: string
+  ownerId: string
+  token: string
+  tokenHash: string
+}>
 type DueWorkspace = Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
 
 const stableKey = (where: WorkspaceWhere) =>

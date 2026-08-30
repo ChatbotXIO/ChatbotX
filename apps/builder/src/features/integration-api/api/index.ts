@@ -3,13 +3,16 @@ import { incomingApiMessageSchema } from "@chatbotx.io/integration-api"
 import { enqueueIntegrationJob } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { logger } from "@/lib/log"
-import { checkChannelApiRateLimit } from "@/lib/rate-limit/channel-api-rate-limit"
+import { checkApiRateLimit } from "@/lib/rate-limit/api-rate-limit"
 import { channelApiTokenAPI } from "@/orpc"
 
 const TOO_MANY_REQUESTS_STATUS = 429
 
 const assertNotRateLimited = async (inboxId: string): Promise<void> => {
-  const { limited, retryAfter } = await checkChannelApiRateLimit({ inboxId })
+  const { limited, retryAfter } = await checkApiRateLimit({
+    scope: "channel-api-rate-limit",
+    key: inboxId,
+  })
   if (limited) {
     throw new ChatbotXException(
       `Too many requests. Retry after ${retryAfter}s.`,

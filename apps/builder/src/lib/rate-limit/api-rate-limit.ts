@@ -10,19 +10,22 @@ type RateLimitStore = Pick<
   "incrementCounter" | "setNumberIfNotExists"
 >
 
-type ChannelApiRateLimitInput = {
-  inboxId: string
+type ApiRateLimitInput = {
+  /** Rate-limit bucket name, e.g. "channel-api-rate-limit" or "workspace-token-rate-limit". */
+  scope: string
+  /** The authenticated identity being limited (inbox id, workspace id, ...). */
+  key: string
   store?: RateLimitStore
   now?: number
 }
 
-type ChannelApiRateLimitResult = {
+type ApiRateLimitResult = {
   limited: boolean
   retryAfter: number
 }
 
-const buildRateLimitKey = (inboxId: string, windowSuffix: string) =>
-  ["channel-api-rate-limit", inboxId, windowSuffix].join(":")
+const buildRateLimitKey = (scope: string, key: string, windowSuffix: string) =>
+  [scope, key, windowSuffix].join(":")
 
 // Fixed-window bucketing, same rationale as guest-rate-limit.ts: fold the
 // window index into the key so a steady sender can't keep extending one
@@ -66,26 +69,28 @@ const incrementWindowCounter = async (
 }
 
 /**
- * Keyed on the inbox id, not the client IP — a per-inbox bearer token is
- * already the authenticated identity, so this sidesteps the `x-forwarded-for`
- * spoofing caveat that IP-keyed limiters carry entirely.
+ * Keyed on the caller's authenticated identity (inbox id, workspace id, ...),
+ * not the client IP — a per-token bearer credential is already that
+ * identity, so this sidesteps the `x-forwarded-for` spoofing caveat that
+ * IP-keyed limiters carry entirely.
  */
-export const checkChannelApiRateLimit = async ({
-  inboxId,
+export const checkApiRateLimit = async ({
+  scope,
+  key: identityKey,
   store = distributedStore,
   now = Date.now(),
-}: ChannelApiRateLimitInput): Promise<ChannelApiRateLimitResult> => {
+}: ApiRateLimitInput): Promise<ApiRateLimitResult> => {
   const windowSuffix = buildWindowSuffix(now, WINDOW_SECONDS)
   const retryAfter = secondsUntilNextWindow(now, WINDOW_SECONDS)
-  const key = buildRateLimitKey(inboxId, windowSuffix)
+  const key = buildRateLimitKey(scope, identityKey, windowSuffix)
 
   try {
     const count = await incrementWindowCounter(store, key, WINDOW_SECONDS)
     return { limited: count > REQUEST_LIMIT, retryAfter }
   } catch (error) {
     logger.warn(
-      { err: error, inboxId },
-      "Channel API rate limit store failed, using local fallback",
+      { err: error, scope, key: identityKey },
+      "API rate limit store failed, using local fallback",
     )
     const count = incrementMemoryWindowCounter(key, WINDOW_SECONDS)
     return { limited: count > REQUEST_LIMIT, retryAfter }
