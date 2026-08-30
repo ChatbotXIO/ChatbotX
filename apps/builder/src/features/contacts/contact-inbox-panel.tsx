@@ -9,7 +9,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
-import type { ContactAppointmentResource } from "../appointments/schemas/resource"
+import type { ContactAppointmentResource } from "../appointments/schema/resource"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
@@ -19,7 +19,7 @@ import type { TagResource } from "../tags/schema/resource"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
-import type { GetContactResponse } from "./schemas/query"
+import type { GetContactResponse } from "./schema/query"
 
 type AccordionModule = {
   readonly keyName: string

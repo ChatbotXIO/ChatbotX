@@ -2,10 +2,6 @@
 
 import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
-import type {
-  WhatsappPhoneNumber,
-  WhatsappPhoneNumberResponse,
-} from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
@@ -20,7 +16,6 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -30,6 +25,7 @@ import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
+import { client } from "@/lib/orpc/orpc"
 import { connectWhatsappAction } from "../actions/connect.action"
 import { useEmbeddedSignupAutoConnect } from "../hooks/use-embedded-signup-auto-connect"
 import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
@@ -40,12 +36,15 @@ import {
   connectWhatsappSchema,
   type ManualOnboardingResult,
   type WhatsappPhoneNumberOption,
-} from "../schemas"
+} from "../schema"
 import { WhatsappPhoneVerificationPanel } from "../verification/whatsapp-phone-verification-panel"
 import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
+type WhatsappPhoneNumber = Awaited<
+  ReturnType<typeof client.integrationWhatsappAPIs.listPhoneNumbersAPI>
+>["data"][number]
+
 // Constants
-const API_ENDPOINT = "/api/whatsapp/phone-numbers/list"
 const MAX_CARD_WIDTH = "max-w-md"
 const CARD_MARGIN = "mx-auto mt-40"
 
@@ -556,14 +555,11 @@ function ManualConnectSection({
     startTransitionPhoneNumbers(async () => {
       try {
         const formData = getValues()
-        const response = await ky
-          .post<WhatsappPhoneNumberResponse>(API_ENDPOINT, {
-            json: {
-              wabaId: formData.wabaId ?? "",
-              accessToken: formData.accessToken ?? "",
-            },
+        const response =
+          await client.integrationWhatsappAPIs.listPhoneNumbersAPI({
+            wabaId: formData.wabaId ?? "",
+            accessToken: formData.accessToken ?? "",
           })
-          .json()
 
         setPhoneNumbers(response.data)
 

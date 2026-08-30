@@ -16,7 +16,7 @@ import integrationsWorkspaceTokenAPIs from "@/features/integrations/api/workspac
 import { refLinksWorkspaceTokenAPIs } from "@/features/reflinks/api/workspace-token"
 import savedReplyWorkspaceTokenAPIs from "@/features/saved-replies/api/workspace-token"
 import { sequencesWorkspaceTokenAPIs } from "@/features/sequences/api/workspace-token"
-import { tagWorkspaceTokenAPIs } from "@/features/tags/api/token-auth"
+import { tagWorkspaceTokenAPIs } from "@/features/tags/api/workspace-token"
 import triggersWorkspaceTokenAPIs from "@/features/triggers/api/workspace-token"
 import webhooksWorkspaceTokenAPIs from "@/features/webhooks/api/workspace-token"
 import workspaceMembersAPIs from "@/features/workspace-members/api/workspace-token"

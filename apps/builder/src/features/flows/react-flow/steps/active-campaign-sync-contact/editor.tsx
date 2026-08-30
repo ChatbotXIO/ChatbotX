@@ -41,10 +41,11 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
+import useSWRImmutable from "swr/immutable"
 import type { z } from "zod"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -105,37 +106,41 @@ const ActiveCampaignDialog = ({ parentName }: { parentName: string }) => {
     data: listsResponse,
     error: listsError,
     isLoading: listsLoading,
-  } = callAPI<{ data: ActiveCampaignList[] }>(
-    isAutomationMode
+  } = useSWRImmutable<{ data: ActiveCampaignList[] }>(
+    isAutomationMode || !workspaceId
       ? null
-      : `/api/workspaces/${workspaceId}/active-campaign/lists`,
+      : ["active-campaign-lists", workspaceId],
+    () => client.integrationActiveCampaignAPI.listLists({ workspaceId }),
   )
   const {
     data: automationsResponse,
     error: automationsError,
     isLoading: automationsLoading,
-  } = callAPI<{ data: ActiveCampaignAutomation[] }>(
-    isAutomationMode
-      ? `/api/workspaces/${workspaceId}/active-campaign/automations`
+  } = useSWRImmutable<{ data: ActiveCampaignAutomation[] }>(
+    isAutomationMode && workspaceId
+      ? ["active-campaign-automations", workspaceId]
       : null,
+    () => client.integrationActiveCampaignAPI.listAutomations({ workspaceId }),
   )
   const {
     data: tagsResponse,
     error: tagsError,
     isLoading: tagsLoading,
-  } = callAPI<{ data: ActiveCampaignTag[] }>(
-    isAutomationMode
+  } = useSWRImmutable<{ data: ActiveCampaignTag[] }>(
+    isAutomationMode || !workspaceId
       ? null
-      : `/api/workspaces/${workspaceId}/active-campaign/tags`,
+      : ["active-campaign-tags", workspaceId],
+    () => client.integrationActiveCampaignAPI.listTags({ workspaceId }),
   )
   const {
     data: customFieldsResponse,
     error: customFieldsError,
     isLoading: customFieldsLoading,
-  } = callAPI<{ data: ActiveCampaignCustomField[] }>(
-    isAutomationMode
+  } = useSWRImmutable<{ data: ActiveCampaignCustomField[] }>(
+    isAutomationMode || !workspaceId
       ? null
-      : `/api/workspaces/${workspaceId}/active-campaign/custom-fields`,
+      : ["active-campaign-custom-fields", workspaceId],
+    () => client.integrationActiveCampaignAPI.listCustomFields({ workspaceId }),
   )
 
   const listOptions = useMemo(

@@ -25,7 +25,7 @@ import { AuthHeader } from "./components/shared"
 import {
   type ForgotPasswordRequest,
   forgotPasswordRequest,
-} from "./schemas/action"
+} from "./schema/action"
 
 export const ForgotPassword = () => {
   const t = useTranslations()

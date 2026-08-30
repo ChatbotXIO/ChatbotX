@@ -4,7 +4,7 @@ import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { ChannelFilter } from "@/features/ads/components/channel-filter"
-import type { AdsAnalyticsSearchParams } from "@/features/ads/schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "@/features/ads/schema/analytics"
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/space/ws-1/dashboard/ads",

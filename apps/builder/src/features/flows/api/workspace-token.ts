@@ -1,30 +1,24 @@
-import z from "zod"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { flowContract } from "@chatbotx.io/api-contract/flow"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
 import { listFlows } from "../queries"
-import { flowResource } from "../schemas/resource"
+
+const os = implement(flowContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
 
 const flowWorkspaceTokenAPIs = {
-  listFlowsWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/flows",
-      summary: "Get all flows",
-      tags: ["Flows"],
-    })
-    .input(z.object({}))
-    .output(
-      z.object({
-        data: z.array(flowResource.pick({ id: true, name: true })),
+  listFlowsWorkspaceTokenAPI: os.listFlowsContract.handler(
+    async ({ context, input }) =>
+      await listFlows({
+        ...input,
+        workspaceId: context.workspace.id,
+        active: true,
       }),
-    )
-    .handler(
-      async ({ context, input }) =>
-        await listFlows({
-          ...input,
-          workspaceId: context.workspace.id,
-          active: true,
-        }),
-    ),
+  ),
 }
 
 export default flowWorkspaceTokenAPIs

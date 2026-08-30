@@ -18,13 +18,13 @@ import { useCopyToClipboard } from "usehooks-ts"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateTagDialog } from "./create-tag-dialog"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
-import type { listTags } from "./queries"
+import type { listTagsRSC } from "./queries"
 import { getTagColumns } from "./tags-table-columns"
 import { TagsTableToolbarActions } from "./tags-table-toolbar-actions"
 import { UpdateTagDialog } from "./update-tag-dialog"
 
 type TagsTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof listTags>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listTagsRSC>>]>
   workspaceId: string
   folderId: string | null
 }

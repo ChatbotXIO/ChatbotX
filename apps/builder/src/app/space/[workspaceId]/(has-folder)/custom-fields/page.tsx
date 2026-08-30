@@ -5,7 +5,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CustomFieldsTable } from "@/features/custom-fields/custom-field-table"
 import { listCustomFieldsRSC } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schema/query"
 
 export default async function CustomFieldsPage(props: {
   params: Promise<{ workspaceId: string }>

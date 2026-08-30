@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest"
 import {
   buildContactImportMeta,
   importContactsRequest,
-} from "@/features/contacts/schemas/contact-import"
+} from "@/features/contacts/schema/contact-import"
 
 describe("importContactsRequest schema", () => {
   // Non-whatsapp channels require a contactId mapping (superRefine).

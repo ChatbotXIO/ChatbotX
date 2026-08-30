@@ -28,7 +28,7 @@ vi.mock("../src/features/contacts/permissions", () => ({
   requireContactPermissionScope: vi.fn(),
 }))
 
-vi.mock("../src/features/contacts/schemas/contact-delete", () => ({
+vi.mock("../src/features/contacts/schema/contact-delete", () => ({
   deleteContactRequest: {},
 }))
 

@@ -103,7 +103,7 @@ vi.mock("@chatbotx.io/utils", () => ({
   zodBigintAsString: vi.fn(),
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdAndIdRequestParams: [],
 }))
 

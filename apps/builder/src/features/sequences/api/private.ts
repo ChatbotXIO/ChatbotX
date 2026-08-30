@@ -9,8 +9,22 @@ import { contactInboxService } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { listSequences } from "../queries"
+import { listSequencesRequest, listSequencesResponse } from "../schema/action"
 
 export const sequencesPrivateAPI = {
+  listSequencesWorkspaceAuthAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/sequences",
+      summary: "List sequences",
+      tags: ["Sequences"],
+    })
+    .input(listSequencesRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listSequencesResponse)
+    .handler(async ({ input }) => await listSequences(input)),
+
   privateGetSequenceStepStatsAPI: authorizedAPI
     .route({
       method: "GET",

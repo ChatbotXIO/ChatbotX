@@ -5,7 +5,7 @@ import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { BotFieldsTable } from "@/features/bot-fields/bot-field-table"
-import { listBotFieldsSearchParams } from "@/features/bot-fields/schemas/query"
+import { listBotFieldsSearchParams } from "@/features/bot-fields/schema/query"
 
 export default async function BotFieldsPage(props: {
   params: Promise<{ workspaceId: string }>

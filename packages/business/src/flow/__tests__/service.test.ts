@@ -91,7 +91,7 @@ describe("FlowService.update", () => {
     expect(mockAudit).toHaveBeenCalledTimes(1)
   })
 
-  test("does not audit when the update returns no rows", async () => {
+  test("throws notFound when the update returns no rows (row deleted mid-request)", async () => {
     mockFindOrFail.mockResolvedValueOnce({
       id: "flow-1",
       workspaceId: WS,
@@ -101,11 +101,13 @@ describe("FlowService.update", () => {
     })
     mockUpdateReturning.mockResolvedValueOnce([])
 
-    await flowService.update({
-      workspaceId: WS,
-      id: "flow-1",
-      data: { name: "Onboarding" },
-    })
+    await expect(
+      flowService.update({
+        workspaceId: WS,
+        id: "flow-1",
+        data: { name: "Onboarding" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
 
     expect(mockDbUpdate).toHaveBeenCalledTimes(1)
     expect(mockAudit).not.toHaveBeenCalled()

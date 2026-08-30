@@ -1,6 +1,6 @@
 import type { ListIntegrationWhatsappResponse } from "@chatbotx.io/business"
-import ky from "ky"
 import { createStore } from "zustand/vanilla"
+import { client } from "@/lib/orpc/orpc"
 
 export type IntegrationWhatsapp = {
   id: string
@@ -64,9 +64,10 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
       try {
         set({ loading: true, error: null })
 
-        const integrations = await ky
-          .get(`/api/workspaces/${workspaceId}/integrations/whatsapp`)
-          .json<ListIntegrationWhatsappResponse>()
+        const integrations: ListIntegrationWhatsappResponse =
+          await client.integrationWhatsappAPIs.listIntegrationWhatsappInternalAPI(
+            { workspaceId },
+          )
 
         set({ integrations })
       } catch (error: unknown) {

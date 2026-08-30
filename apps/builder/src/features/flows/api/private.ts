@@ -14,7 +14,7 @@ import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listFlows } from "../queries"
-import { listFlowsRequest, listFlowsResponse } from "../schemas/query"
+import { listFlowsRequest, listFlowsResponse } from "../schema/query"
 
 export const privateFlowsAPI = {
   privateListFlowsAPI: authorizedAPI

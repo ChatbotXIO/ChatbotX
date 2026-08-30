@@ -4,7 +4,7 @@ import { ConversionEventsView } from "@/features/ads/components/conversion-event
 import { resolveSelectedIntegration } from "@/features/ads/lib/select-account"
 import { getConversionEventsData } from "@/features/ads/queries/conversion-rules"
 import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
-import { conversionEventsSearchParamsCache } from "@/features/ads/schemas/conversion-events"
+import { conversionEventsSearchParamsCache } from "@/features/ads/schema/conversion-events"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 export default async function ConversionEventsPage(props: {

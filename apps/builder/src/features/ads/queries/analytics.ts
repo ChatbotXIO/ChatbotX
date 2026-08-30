@@ -18,7 +18,7 @@ import {
   type InsightSpendRow,
   mergeAdsAnalytics,
 } from "../lib/merge-analytics"
-import { parseAnalyticsDateRange } from "../schemas/analytics"
+import { parseAnalyticsDateRange } from "../schema/analytics"
 
 type AdsAnalyticsRange = {
   from: string

@@ -1,10 +1,6 @@
 "use client"
 
-import type {
-  ListSequenceStepContactsResponse,
-  SequenceStepEventType,
-} from "@chatbotx.io/analytics/schemas"
-import ky from "ky"
+import type { SequenceStepEventType } from "@chatbotx.io/analytics/schemas"
 import { useTranslations } from "next-intl"
 import { memo, useCallback } from "react"
 import {
@@ -13,6 +9,7 @@ import {
 } from "@/features/common/components/stats-contacts-dialog"
 import { addContactTagAction } from "@/features/contacts/actions/add-contact-tag.action"
 import { bulkTagStatsContactsAction } from "@/features/contacts/actions/bulk-tag-stats-contacts.action"
+import { client } from "@/lib/orpc/orpc"
 
 const eventTypeToLabel: Record<SequenceStepEventType, string> = {
   "message:sent": "sent",
@@ -48,19 +45,16 @@ export const SequenceStepContactsDialog = memo(
 
     const fetchPage = useCallback(
       async (page: number, perPage: number): Promise<StatsContactRow[]> => {
-        const result = await ky
-          .get<ListSequenceStepContactsResponse>(
-            `/api/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/contacts`,
-            {
-              searchParams: {
-                eventType,
-                total,
-                page,
-                perPage,
-              },
-            },
-          )
-          .json()
+        const result =
+          await client.sequencesAPI.privateListSequenceStepContactsAPI({
+            workspaceId,
+            sequenceId,
+            stepId,
+            eventType,
+            total,
+            page,
+            perPage,
+          })
 
         return result.data
       },

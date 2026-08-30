@@ -6,7 +6,7 @@ import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { MinigamesTable } from "@/features/minigames/minigames-table"
 import { listMinigames } from "@/features/minigames/queries"
-import { listMinigamesSearchParamsCache } from "@/features/minigames/schemas/query"
+import { listMinigamesSearchParamsCache } from "@/features/minigames/schema/query"
 
 export default async function MinigamesPage({
   params,

@@ -29,7 +29,7 @@ import { integration as integrationInstagramFacebook } from "@chatbotx.io/integr
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -37,7 +37,7 @@ import { findIntegrationInstagram } from "../queries"
 import {
   type UpdateInstagramRequest,
   updateInstagramRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateInstagramAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)

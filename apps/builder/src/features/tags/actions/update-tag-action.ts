@@ -4,7 +4,8 @@ import { tagService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
+import { mapExceptionToFieldError } from "@/lib/action-field-error"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type UpdateTagSchema, updateTagSchema } from "../schema/action"
 
@@ -19,12 +20,11 @@ export const updateTagAction = workspaceActionClient
       parsedInput: UpdateTagSchema
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await updateTag({ workspaceId, id, data: parsedInput })
+      await mapExceptionToFieldError(
+        updateTagSchema,
+        "name",
+        () => tagService.update({ workspaceId, id, data: parsedInput }),
+        "tag",
+      )
     },
   )
-
-export const updateTag = async (props: {
-  workspaceId: string
-  id: string
-  data: UpdateTagSchema
-}) => await tagService.update(props)

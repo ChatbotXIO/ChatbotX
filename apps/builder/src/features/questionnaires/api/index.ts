@@ -1,4 +1,4 @@
-import { questionnairesAuthenticatedAPI } from "./authenticated"
+import { questionnairesAuthenticatedAPI } from "./private"
 
 export const questionnairesAPI = {
   ...questionnairesAuthenticatedAPI,

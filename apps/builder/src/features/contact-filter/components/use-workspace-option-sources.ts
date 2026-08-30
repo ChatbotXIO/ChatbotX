@@ -1,23 +1,21 @@
 "use client"
 
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
-import ky from "ky"
 import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import { client } from "@/lib/orpc/orpc"
 
 type OptionItem = {
   id: string
   name: string
 }
 
-type OptionListResponse = {
-  data: OptionItem[]
-}
-
 type OptionItemsCacheEntry = {
   items: OptionItem[]
   expiresAt: number
 }
+
+type OptionSource = "broadcasts" | "reflinks"
 
 const OPTION_ITEMS_CACHE_TTL_MS = 60_000
 const optionItemsCache = new Map<string, OptionItemsCacheEntry>()
@@ -40,13 +38,13 @@ const buildSearchParamKey = (searchParams?: Record<string, string>) =>
 
 const buildOptionCacheKey = ({
   workspaceId,
-  endpoint,
+  source,
   searchParams,
 }: {
   workspaceId: string
-  endpoint: string
+  source: OptionSource
   searchParams?: Record<string, string>
-}) => `${workspaceId}:${endpoint}:${buildSearchParamKey(searchParams)}`
+}) => `${workspaceId}:${source}:${buildSearchParamKey(searchParams)}`
 
 const getCachedOptionItems = (cacheKey: string): OptionItem[] | undefined => {
   const cachedEntry = optionItemsCache.get(cacheKey)
@@ -62,14 +60,45 @@ const getCachedOptionItems = (cacheKey: string): OptionItem[] | undefined => {
   return cachedEntry.items
 }
 
+const OPTION_SOURCE_FETCHERS: Record<
+  OptionSource,
+  (
+    workspaceId: string,
+    searchParams?: Record<string, string>,
+  ) => Promise<OptionItem[]>
+> = {
+  broadcasts: async (workspaceId, searchParams) => {
+    const channel = searchParams?.channel as
+      | Parameters<
+          typeof client.broadcastAPIs.privateListBroadcastOptionsAPI
+        >[0]["channel"]
+      | undefined
+    if (!channel) {
+      return []
+    }
+    const { data } = await client.broadcastAPIs.privateListBroadcastOptionsAPI({
+      workspaceId,
+      channel,
+    })
+    return data
+  },
+  reflinks: async (workspaceId) => {
+    const { data } =
+      await client.refLinksAPI.listRefLinkOptionsAuthenticatedAPI({
+        workspaceId,
+      })
+    return data
+  },
+}
+
 const loadOptionItems = ({
   workspaceId,
-  endpoint,
+  source,
   searchParams,
   cacheKey,
 }: {
   workspaceId: string
-  endpoint: string
+  source: OptionSource
   searchParams?: Record<string, string>
   cacheKey: string
 }) => {
@@ -83,18 +112,14 @@ const loadOptionItems = ({
     return pendingRequest
   }
 
-  const request = ky
-    .get<OptionListResponse>(`/api/workspaces/${workspaceId}/${endpoint}`, {
-      searchParams,
-    })
-    .json()
-    .then((response) => {
+  const request = OPTION_SOURCE_FETCHERS[source](workspaceId, searchParams)
+    .then((items) => {
       optionItemsCache.set(cacheKey, {
-        items: response.data,
+        items,
         expiresAt: Date.now() + OPTION_ITEMS_CACHE_TTL_MS,
       })
       optionItemsRequests.delete(cacheKey)
-      return response.data
+      return items
     })
     .catch((error: unknown) => {
       optionItemsRequests.delete(cacheKey)
@@ -105,8 +130,8 @@ const loadOptionItems = ({
   return request
 }
 
-const useWorkspaceOptionEndpoint = (
-  endpoint: string,
+const useWorkspaceOptionSource = (
+  source: OptionSource,
   searchParams?: Record<string, string>,
 ): SelectOption[] => {
   const { workspaceId } = useParams<{ workspaceId?: string }>()
@@ -120,7 +145,7 @@ const useWorkspaceOptionEndpoint = (
 
     const cacheKey = buildOptionCacheKey({
       workspaceId,
-      endpoint,
+      source,
       searchParams,
     })
     const cachedItems = getCachedOptionItems(cacheKey)
@@ -133,7 +158,7 @@ const useWorkspaceOptionEndpoint = (
 
     loadOptionItems({
       workspaceId,
-      endpoint,
+      source,
       searchParams,
       cacheKey,
     })
@@ -151,7 +176,7 @@ const useWorkspaceOptionEndpoint = (
     return () => {
       active = false
     }
-  }, [endpoint, searchParams, workspaceId])
+  }, [source, searchParams, workspaceId])
 
   return useMemo(() => toSelectOptions(items), [items])
 }
@@ -161,10 +186,7 @@ const whatsappBroadcastSearchParams = {
 }
 
 export const useBroadcastSelectOptions = (): SelectOption[] =>
-  useWorkspaceOptionEndpoint(
-    "broadcasts/options",
-    whatsappBroadcastSearchParams,
-  )
+  useWorkspaceOptionSource("broadcasts", whatsappBroadcastSearchParams)
 
 export const useReflinkSelectOptions = (): SelectOption[] =>
-  useWorkspaceOptionEndpoint("ref-links/options")
+  useWorkspaceOptionSource("reflinks")

@@ -19,14 +19,14 @@ import {
 import type { ContactModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { listCustomFields } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schema/query"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { maxPerPageString } from "@/lib/shared-request"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type UpdateContactFieldRequest,
   updateContactFieldRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 const contactInboxIdField = "contactInboxId"
 const clientTimezoneField = "clientTimezone"

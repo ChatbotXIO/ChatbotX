@@ -3,7 +3,7 @@
 import { flowVersionService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { updateDraftFlowVersionSchema } from "../schemas/action"
+import { updateDraftFlowVersionSchema } from "../schema/action"
 
 export const updateDraftFlowVersionAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

@@ -5,7 +5,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { contactFilterCriteriaSchema } from "@/features/contact-filter/schemas"
+import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
 
 const conditionCaseEditorSchema = contactFilterCriteriaSchema.extend({
   id: zodBigintAsString(),

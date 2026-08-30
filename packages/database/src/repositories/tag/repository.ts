@@ -41,7 +41,7 @@ export type ListTagsResult = { data: ListTagsRow[]; pageCount: number }
 
 export type TagContactPair = { contactId: string; tagId: string }
 
-const emptyFolderWhere = (folderId?: string | null) =>
+const toFolderIdFilter = (folderId?: string | null) =>
   folderId === null ? { isNull: true as const } : folderId
 
 class TagRepository {
@@ -104,7 +104,7 @@ class TagRepository {
     tx: DatabaseClient = db,
   ) {
     const { workspaceId, key, folderId } = props
-    const folderWhere = emptyFolderWhere(folderId)
+    const folderWhere = toFolderIdFilter(folderId)
 
     if (isNumericId(key)) {
       const byId = await tx.query.tagModel.findFirst({
@@ -219,6 +219,7 @@ class TagRepository {
         and(
           eq(tagModel.id, props.id),
           eq(tagModel.workspaceId, props.workspaceId),
+          isNull(tagModel.deletedAt),
         ),
       )
       .returning()
@@ -307,21 +308,24 @@ class TagRepository {
   }
 
   async unlinkContacts(
-    props: { contactId: string; tagIds: string[] },
+    props: { contactIds: string[]; tagIds: string[] },
     tx: DatabaseClient = db,
-  ) {
-    if (props.tagIds.length === 0) {
+  ): Promise<TagContactPair[]> {
+    if (props.contactIds.length === 0 || props.tagIds.length === 0) {
       return []
     }
     return await tx
       .delete(contactsToTagsModel)
       .where(
         and(
-          eq(contactsToTagsModel.contactId, props.contactId),
+          inArray(contactsToTagsModel.contactId, props.contactIds),
           inArray(contactsToTagsModel.tagId, props.tagIds),
         ),
       )
-      .returning({ tagId: contactsToTagsModel.tagId })
+      .returning({
+        contactId: contactsToTagsModel.contactId,
+        tagId: contactsToTagsModel.tagId,
+      })
   }
 
   async unlinkAllFromContact(
@@ -336,8 +340,8 @@ class TagRepository {
   async unlinkContactExcept(
     props: { contactId: string; keepTagIds: string[] },
     tx: DatabaseClient = db,
-  ) {
-    await tx
+  ): Promise<{ tagId: string }[]> {
+    return await tx
       .delete(contactsToTagsModel)
       .where(
         props.keepTagIds.length > 0
@@ -347,6 +351,7 @@ class TagRepository {
             )
           : eq(contactsToTagsModel.contactId, props.contactId),
       )
+      .returning({ tagId: contactsToTagsModel.tagId })
   }
 
   async findUnsyncedPairs(

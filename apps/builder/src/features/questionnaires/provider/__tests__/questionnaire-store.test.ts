@@ -1,23 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { MockHTTPError, mockKyGet } = vi.hoisted(() => {
-  class MockHTTPError extends Error {
-    constructor(message = "HTTP error") {
-      super(message)
-    }
-  }
+const { mockListQuestionnairesForFlowAPI } = vi.hoisted(() => ({
+  mockListQuestionnairesForFlowAPI: vi.fn(),
+}))
 
-  return {
-    MockHTTPError,
-    mockKyGet: vi.fn(),
-  }
-})
-
-vi.mock("ky", () => ({
-  default: {
-    get: mockKyGet,
+vi.mock("@/lib/orpc/orpc", () => ({
+  client: {
+    questionnairesAPI: {
+      listQuestionnairesForFlowAPI: mockListQuestionnairesForFlowAPI,
+    },
   },
-  HTTPError: MockHTTPError,
 }))
 
 const { createQuestionnaireStore } = await import("../questionnaire-store")
@@ -32,25 +24,23 @@ const deferred = <T>() => {
 }
 
 beforeEach(() => {
-  mockKyGet.mockReset()
+  mockListQuestionnairesForFlowAPI.mockReset()
 })
 
 describe("questionnaire store", () => {
   test("loads and caches questionnaires for flow", async () => {
-    mockKyGet.mockReturnValueOnce({
-      json: vi.fn().mockResolvedValue([
-        { id: "questionnaire-1", name: "Lead capture" },
-        { id: "questionnaire-2", name: "Demo request" },
-      ]),
-    })
+    mockListQuestionnairesForFlowAPI.mockResolvedValueOnce([
+      { id: "questionnaire-1", name: "Lead capture" },
+      { id: "questionnaire-2", name: "Demo request" },
+    ])
 
     const store = createQuestionnaireStore({ workspaceId: "workspace-1" })
 
     await store.getState().getAllQuestionnairesForFlow()
 
-    expect(mockKyGet).toHaveBeenCalledWith(
-      "/api/workspaces/workspace-1/questionnaires/for-flow",
-    )
+    expect(mockListQuestionnairesForFlowAPI).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+    })
     expect(store.getState().questionnaires).toEqual([
       { id: "questionnaire-1", name: "Lead capture" },
       { id: "questionnaire-2", name: "Demo request" },
@@ -60,31 +50,29 @@ describe("questionnaire store", () => {
   })
 
   test("does not fetch again after initialize has completed", async () => {
-    mockKyGet.mockReturnValue({
-      json: vi.fn().mockResolvedValue([{ id: "questionnaire-1", name: "A" }]),
-    })
+    mockListQuestionnairesForFlowAPI.mockResolvedValue([
+      { id: "questionnaire-1", name: "A" },
+    ])
 
     const store = createQuestionnaireStore({ workspaceId: "workspace-1" })
 
     await store.getState().initialize()
     await store.getState().initialize()
 
-    expect(mockKyGet).toHaveBeenCalledTimes(1)
+    expect(mockListQuestionnairesForFlowAPI).toHaveBeenCalledTimes(1)
     expect(store.getState().initialized).toBe(true)
   })
 
   test("dedupes overlapping initialize calls while loading", async () => {
     const response = deferred<{ id: string; name: string }[]>()
-    mockKyGet.mockReturnValueOnce({
-      json: vi.fn().mockReturnValue(response.promise),
-    })
+    mockListQuestionnairesForFlowAPI.mockReturnValueOnce(response.promise)
 
     const store = createQuestionnaireStore({ workspaceId: "workspace-1" })
 
     const firstLoad = store.getState().initialize()
     const secondLoad = store.getState().initialize()
 
-    expect(mockKyGet).toHaveBeenCalledTimes(1)
+    expect(mockListQuestionnairesForFlowAPI).toHaveBeenCalledTimes(1)
 
     response.resolve([{ id: "questionnaire-1", name: "A" }])
     await Promise.all([firstLoad, secondLoad])
@@ -94,10 +82,10 @@ describe("questionnaire store", () => {
     ])
   })
 
-  test("stores HTTP errors without replacing cached questionnaires", async () => {
-    mockKyGet.mockReturnValueOnce({
-      json: vi.fn().mockRejectedValue(new MockHTTPError("HTTP 500")),
-    })
+  test("stores errors without replacing cached questionnaires", async () => {
+    mockListQuestionnairesForFlowAPI.mockRejectedValueOnce(
+      new Error("HTTP 500"),
+    )
 
     const store = createQuestionnaireStore({
       workspaceId: "workspace-1",
@@ -109,7 +97,7 @@ describe("questionnaire store", () => {
     expect(store.getState().questionnaires).toEqual([
       { id: "questionnaire-1", name: "Existing" },
     ])
-    expect(store.getState().error).toBe("HTTP 500")
+    expect(store.getState().error).toBe("Failed to fetch questionnaires")
     expect(store.getState().loading).toBe(false)
   })
 })

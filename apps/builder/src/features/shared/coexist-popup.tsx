@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
-import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
@@ -19,6 +18,7 @@ import type { SetCoexistInstagramResponse } from "@/features/integration-instagr
 import type { SetCoexistMessengerResponse } from "@/features/integration-messenger/api/coexist"
 import type { SetCoexistWhatsappResponse } from "@/features/integration-whatsapp/api/coexist"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
+import { client } from "@/lib/orpc/orpc"
 
 type CoexistPopupProps = {
   channel: "whatsapp" | "messenger" | "instagram"
@@ -31,6 +31,25 @@ type CoexistResponse =
   | SetCoexistWhatsappResponse
   | SetCoexistMessengerResponse
   | SetCoexistInstagramResponse
+
+type CoexistRequest = {
+  workspaceId: string
+  integrationId: string
+  enabled: boolean
+  aiReadsSyncedHistory: boolean
+}
+
+const COEXIST_API_BY_CHANNEL: Record<
+  CoexistPopupProps["channel"],
+  (request: CoexistRequest) => Promise<CoexistResponse>
+> = {
+  whatsapp: (request) =>
+    client.integrationWhatsappAPIs.setCoexistWhatsappAPI(request),
+  messenger: (request) =>
+    client.integrationMessengerAPIs.setCoexistMessengerAPI(request),
+  instagram: (request) =>
+    client.integrationInstagramAPIs.setCoexistInstagramAPI(request),
+}
 
 const CHANNEL_DESCRIPTION_KEYS = {
   whatsapp: "coexist.descriptionWhatsapp",
@@ -73,12 +92,12 @@ export function CoexistPopup({
   const handleChoice = async (enabled: boolean) => {
     setPending(enabled ? "enable" : "decline")
     try {
-      const endpoint = `/api/workspaces/${workspaceId}/integrations/${channel}/${integrationId}/coexist`
-      const result = await ky
-        .post<CoexistResponse>(endpoint, {
-          json: { workspaceId, integrationId, enabled, aiReadsSyncedHistory },
-        })
-        .json()
+      const result = await COEXIST_API_BY_CHANNEL[channel]({
+        workspaceId,
+        integrationId,
+        enabled,
+        aiReadsSyncedHistory,
+      })
 
       setPending(null)
 

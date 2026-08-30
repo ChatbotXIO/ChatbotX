@@ -70,7 +70,7 @@ import type { AdsAnalyticsTimeseriesRow } from "../queries/analytics"
 import type {
   AdsAnalyticsChannel,
   AdsAnalyticsSearchParams,
-} from "../schemas/analytics"
+} from "../schema/analytics"
 import { AdAccountFilter } from "./ad-account-filter"
 import { AdsPerformanceChart } from "./ads-performance-chart"
 import { ChannelFilter } from "./channel-filter"

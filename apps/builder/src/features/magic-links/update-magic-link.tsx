@@ -18,8 +18,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateMagicLinkAction } from "./actions/update-magic-link.action"
-import { updateMagicLinkRequest } from "./schemas/action"
-import type { MagicLinkResource } from "./schemas/resource"
+import { updateMagicLinkRequest } from "./schema/action"
+import type { MagicLinkResource } from "./schema/resource"
 
 type UpdateMagicLinkDialogProps = {
   workspaceId: string

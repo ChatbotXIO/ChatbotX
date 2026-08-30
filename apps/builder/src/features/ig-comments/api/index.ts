@@ -1,4 +1,4 @@
-import { igCommentsPrivateAPI } from "./authenticated"
+import { igCommentsPrivateAPI } from "./private"
 
 export const igCommentsAPI = {
   ...igCommentsPrivateAPI,

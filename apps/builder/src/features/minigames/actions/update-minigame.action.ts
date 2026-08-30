@@ -10,7 +10,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateMinigameRequest,
   updateMinigameRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 const originalPrizeQuantitiesSchema = z.record(
   z.string(),

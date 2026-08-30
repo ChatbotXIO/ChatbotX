@@ -9,13 +9,13 @@ import {
   likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
-import type { AuditLogResource } from "../schemas"
+import type { AuditLogResource } from "../schema"
 import {
   type ListAuditLogsRequest,
   parseAuditLogsDateRange,
-} from "../schemas/query"
+} from "../schema/query"
 
 export type AuditLogAdminOption = {
   id: string

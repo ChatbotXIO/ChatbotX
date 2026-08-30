@@ -144,7 +144,9 @@ class FlowService extends BaseService {
       .where(eq(flowModel.id, flow.id))
       .returning({ id: flowModel.id })
     if (updated.length === 0) {
-      return
+      // Row existed at findOrFail above but is gone now (deleted mid-request)
+      // — report the real outcome instead of a false "success".
+      throw notFoundException("Flow not found")
     }
 
     await this.audit("update", `updated a flow (#${flow.id})`)

@@ -4,7 +4,6 @@ import {
   db,
   desc,
   eq,
-  findOrFail,
 } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import type { FlowVersionModel } from "@chatbotx.io/database/types"
@@ -296,16 +295,21 @@ class FlowVersionService extends BaseService {
   }): Promise<void> {
     const { workspaceId, id, data } = props
 
-    const flowVersion = await findOrFail({
-      table: flowVersionModel,
-      where: { id, workspaceId, isDraft: true },
-      message: "Draft flow version not found",
-    })
-
-    await db
+    const updated = await db
       .update(flowVersionModel)
       .set({ nodes: data.nodes, edges: data.edges })
-      .where(eq(flowVersionModel.id, flowVersion.id))
+      .where(
+        and(
+          eq(flowVersionModel.id, id),
+          eq(flowVersionModel.workspaceId, workspaceId),
+          eq(flowVersionModel.isDraft, true),
+        ),
+      )
+      .returning({ id: flowVersionModel.id })
+
+    if (updated.length === 0) {
+      throw notFoundException("Draft flow version not found")
+    }
   }
 
   /**

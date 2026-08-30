@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import type { IntegrationFacebookAdsResource } from "../../schemas"
+import type { IntegrationFacebookAdsResource } from "../../schema"
 import { needsFacebookAdsReconnect } from "../needs-reconnect"
 
 const baseIntegration = {

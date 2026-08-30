@@ -5,7 +5,7 @@ import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useState } from "react"
-import type { AdsAnalyticsSearchParams } from "../schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "../schema/analytics"
 
 export type AdsAnalyticsDatePreset =
   | "oneDay"

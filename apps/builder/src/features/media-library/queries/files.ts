@@ -17,7 +17,7 @@ import {
   type ListFilesRequest,
   type ListFilesResponse,
   MEDIA_LIBRARY_FILES_PAGE_SIZE,
-} from "../schemas"
+} from "../schema"
 
 export async function listMediaLibraryFiles(
   input: ListFilesRequest,

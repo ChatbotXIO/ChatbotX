@@ -6,19 +6,12 @@ import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ORPCError } from "@orpc/server"
 import { auth } from "@/lib/auth/auth"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
-import { checkWorkspaceOwnerAccess } from "@/lib/workspace/authorize-workspace-access"
+import {
+  checkWorkspaceOwnerAccess,
+  isWorkspaceMutationMethod,
+  workspaceAccessDenialOrpcError,
+} from "@/lib/workspace/authorize-workspace-access"
 import { base } from "./context"
-
-function orpcErrorForWorkspaceAccessDenial(
-  reason: NonNullable<Awaited<ReturnType<typeof checkWorkspaceOwnerAccess>>>,
-) {
-  return reason === "macLimitReached"
-    ? new ORPCError("macLimitReached", {
-        message: "Monthly active contact limit reached",
-        status: 403,
-      })
-    : new ORPCError("trialExpired", { message: "Trial expired", status: 403 })
-}
 
 export const authMiddleware = base.middleware(async ({ context, next }) => {
   const sessionData = await auth.api.getSession({
@@ -55,7 +48,7 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
 })
 
 export const workspaceAuthorizedMidddleware = base.middleware(
-  async ({ context, next }, workspaceId: string) => {
+  async ({ context, next, procedure }, workspaceId: string) => {
     if (!context.user) {
       throw new ORPCError("UNAUTHORIZED")
     }
@@ -77,12 +70,15 @@ export const workspaceAuthorizedMidddleware = base.middleware(
 
     // Owner-quota/trial gate — mirrors workspaceActionClient in safe-action.ts.
     // Without this, an oRPC mutation could bypass the same gate a server
-    // action enforces for the identical operation.
-    const denialReason = await checkWorkspaceOwnerAccess({
-      ownerId: workspaceMember.workspace.ownerId,
-    })
-    if (denialReason) {
-      throw orpcErrorForWorkspaceAccessDenial(denialReason)
+    // action enforces for the identical operation. Reads and deletes stay open
+    // so an expired workspace keeps its read/delete-only mode (invariant #14).
+    if (isWorkspaceMutationMethod(procedure["~orpc"].route.method)) {
+      const denialReason = await checkWorkspaceOwnerAccess({
+        ownerId: workspaceMember.workspace.ownerId,
+      })
+      if (denialReason) {
+        throw workspaceAccessDenialOrpcError(denialReason)
+      }
     }
 
     return withAuditContext(

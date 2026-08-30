@@ -1,8 +1,7 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { maxPerPageString } from "@/lib/shared-request"
-import type { ListCustomFieldsResponse } from "../schemas/query"
-import type { CustomFieldResource } from "../schemas/resource"
+import { client } from "@/lib/orpc/orpc"
+import { maxPerPage } from "@/lib/shared-request"
+import type { CustomFieldResource } from "../schema/resource"
 
 export type CustomFieldState = {
   loading: boolean
@@ -42,7 +41,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
+            error instanceof Error
               ? error.message
               : "Failed to fetch custom fields",
         })
@@ -62,14 +61,11 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
       set({ loading: true, error: null })
 
       try {
-        const searchParams = new URLSearchParams({
-          perPage: maxPerPageString,
-        })
-        const { data } = await ky
-          .get<ListCustomFieldsResponse>(
-            `/api/workspaces/${workspaceId}/custom-fields?${searchParams.toString()}`,
-          )
-          .json()
+        const { data } =
+          await client.customFieldsAPI.privateListCustomFieldsAPI({
+            workspaceId,
+            perPage: maxPerPage,
+          })
 
         set({
           customFields: data,
@@ -77,7 +73,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
+            error instanceof Error
               ? error.message
               : "Failed to fetch custom fields",
         })

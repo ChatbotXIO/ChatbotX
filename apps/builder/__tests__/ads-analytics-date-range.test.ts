@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   getDefaultAdsAnalyticsRange,
   parseAnalyticsDateRange,
-} from "@/features/ads/schemas/analytics"
+} from "@/features/ads/schema/analytics"
 
 describe("parseAnalyticsDateRange", () => {
   test("keeps a normal 30-day range unchanged", () => {

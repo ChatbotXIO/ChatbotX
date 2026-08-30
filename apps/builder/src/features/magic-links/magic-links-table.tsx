@@ -41,7 +41,7 @@ import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field
 import { DeleteMagicLinksDialog } from "./delete-magic-links"
 import { MagicLinkQrDialog } from "./magic-link-qr-dialog"
 import { MagicLinksTableToolbarActions } from "./magic-links-table-toolbar-actions"
-import type { ListMagicLinkItem, ListMagicLinksResponse } from "./schemas/query"
+import type { ListMagicLinkItem, ListMagicLinksResponse } from "./schema/query"
 import { UpdateMagicLinkDialog } from "./update-magic-link"
 
 type MagicLinksTableProps = {

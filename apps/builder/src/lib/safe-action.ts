@@ -17,7 +17,10 @@ import {
 import { getAllWorkspaceMembers } from "@/features/workspace-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
-import { checkWorkspaceOwnerAccess } from "@/lib/workspace/authorize-workspace-access"
+import {
+  checkWorkspaceOwnerAccess,
+  workspaceAccessDenialException,
+} from "@/lib/workspace/authorize-workspace-access"
 import { logger } from "./log"
 
 export const actionClient = createSafeActionClient({
@@ -127,18 +130,6 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
   },
 )
 
-function throwForWorkspaceAccessDenial(
-  reason: NonNullable<Awaited<ReturnType<typeof checkWorkspaceOwnerAccess>>>,
-): never {
-  throw reason === "macLimitReached"
-    ? new ChatbotXException(
-        "Monthly active contact limit reached",
-        "macLimitReached",
-        403,
-      )
-    : new ChatbotXException("Trial expired", "trialExpired", 403)
-}
-
 export const workspaceActionClient = workspaceActionClientAllowExpired.use(
   async ({ ctx, next }) => {
     // Server-side deletion gate: a workspace pending deletion must block every
@@ -161,7 +152,7 @@ export const workspaceActionClient = workspaceActionClientAllowExpired.use(
       ownerId: ctx.workspace.ownerId,
     })
     if (denialReason) {
-      throwForWorkspaceAccessDenial(denialReason)
+      throw workspaceAccessDenialException(denialReason)
     }
 
     return next({ ctx })
@@ -176,7 +167,7 @@ export const workspaceActionClientAllowScheduledDeletion =
       ownerId: ctx.workspace.ownerId,
     })
     if (denialReason) {
-      throwForWorkspaceAccessDenial(denialReason)
+      throw workspaceAccessDenialException(denialReason)
     }
 
     return next({ ctx })

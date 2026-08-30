@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { duplicateAppointmentCalendarAction } from "../actions/duplicate-appointment-calendar.action"
-import type { AppointmentCalendarListItem } from "../schemas/resource"
+import type { AppointmentCalendarListItem } from "../schema/resource"
 
 type Props = {
   workspaceId: string

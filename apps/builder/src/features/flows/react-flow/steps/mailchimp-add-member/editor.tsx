@@ -41,9 +41,10 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
+import useSWRImmutable from "swr/immutable"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -94,21 +95,26 @@ const MailchimpDialog = ({ parentName }: { parentName: string }) => {
     () => form.getValues("mergeFields").length > 0,
   )
 
-  const { data: audiencesResponse, error: audiencesError } = callAPI<{
+  const { data: audiencesResponse, error: audiencesError } = useSWRImmutable<{
     data: MailchimpAudience[]
-  }>(`/api/workspaces/${workspaceId}/mailchimp/audiences`)
-  const { data: tagsResponse } = callAPI<{ data: MailchimpTag[] }>(
-    listId
-      ? `/api/workspaces/${workspaceId}/mailchimp/tags?listId=${encodeURIComponent(listId)}`
-      : null,
+  }>(workspaceId ? ["mailchimp-audiences", workspaceId] : null, () =>
+    client.integrationMailchimpAPI.listAudiences({ workspaceId }),
   )
-  const { data: mergeFieldsResponse, error: mergeFieldsError } = callAPI<{
-    data: MailchimpMergeField[]
-  }>(
-    listId
-      ? `/api/workspaces/${workspaceId}/mailchimp/merge-fields?listId=${encodeURIComponent(listId)}`
-      : null,
+  const { data: tagsResponse } = useSWRImmutable<{ data: MailchimpTag[] }>(
+    listId && workspaceId ? ["mailchimp-tags", workspaceId, listId] : null,
+    () => client.integrationMailchimpAPI.listTags({ workspaceId, listId }),
   )
+  const { data: mergeFieldsResponse, error: mergeFieldsError } =
+    useSWRImmutable<{ data: MailchimpMergeField[] }>(
+      listId && workspaceId
+        ? ["mailchimp-merge-fields", workspaceId, listId]
+        : null,
+      () =>
+        client.integrationMailchimpAPI.listMergeFields({
+          workspaceId,
+          listId,
+        }),
+    )
 
   useEffect(() => {
     if (!mergeFieldsResponse?.data) {

@@ -1,4 +1,4 @@
-import type { ConnectWhatsappSchema } from "../schemas"
+import type { ConnectWhatsappSchema } from "../schema"
 
 /**
  * Field names of the WhatsApp connect form, shared by the form UI and the hooks

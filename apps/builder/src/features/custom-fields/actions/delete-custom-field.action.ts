@@ -6,7 +6,7 @@ import {
   bulkUpdateIdsRequest,
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteFieldsAction = workspaceActionClient
@@ -20,11 +20,6 @@ export const deleteFieldsAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await deleteCustomFields({ workspaceId, ids: parsedInput.ids })
+      await customFieldService.delete({ workspaceId, ids: parsedInput.ids })
     },
   )
-
-export const deleteCustomFields = async (props: {
-  workspaceId: string
-  ids: string[]
-}) => await customFieldService.delete(props)

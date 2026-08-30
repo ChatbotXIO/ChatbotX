@@ -4,12 +4,12 @@ import { botFieldService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateBotFieldRequest,
   updateBotFieldRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateBotFieldAction = workspaceActionClient
   .inputSchema(updateBotFieldRequest)

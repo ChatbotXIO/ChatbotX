@@ -11,10 +11,19 @@ const state = {
   findOrFailError: null as Error | null,
 }
 
+// Mirrors what the real `DELETE ... RETURNING` would produce: every
+// previously-linked tag not present in the resolved (kept) set.
+const removedTagRows = () => {
+  const keepIds = new Set(state.resolvedTags.map((tag) => tag.id))
+  return state.linkedTagIds
+    .filter((id) => !keepIds.has(id))
+    .map((tagId) => ({ tagId }))
+}
+
 const linkContacts = vi.fn(async () => state.linkedPairs)
 const findLinkedTagIds = vi.fn(async () => state.linkedTagIds)
 const ensureByNames = vi.fn(async () => state.resolvedTags)
-const unlinkContactExcept = vi.fn(async () => undefined)
+const unlinkContactExcept = vi.fn(async () => removedTagRows())
 const unlinkContacts = vi.fn(async () => [])
 const findManyByNames = vi.fn(async () => state.tagFindMany)
 const findManyByIds = vi.fn(async () => state.tagFindMany)
@@ -117,7 +126,7 @@ function resetMocks() {
   linkContacts.mockImplementation(async () => state.linkedPairs)
   findLinkedTagIds.mockImplementation(async () => state.linkedTagIds)
   ensureByNames.mockImplementation(async () => state.resolvedTags)
-  unlinkContactExcept.mockImplementation(async () => undefined)
+  unlinkContactExcept.mockImplementation(async () => removedTagRows())
   unlinkContacts.mockImplementation(async () => [])
   findManyByNames.mockImplementation(async () => state.tagFindMany)
   findManyByIds.mockImplementation(async () => state.tagFindMany)
@@ -394,7 +403,7 @@ describe("TagService.removeFromContacts", () => {
       tags: ["tag-a", "tag-b"],
     })
 
-    expect(unlinkContacts).toHaveBeenCalledTimes(2)
+    expect(unlinkContacts).toHaveBeenCalledTimes(1)
     expect(enqueueDetach).toHaveBeenCalledTimes(4)
   })
 
@@ -630,7 +639,7 @@ describe("TagService.syncContactTags", () => {
 
   test("passes tx into ensureByNames and linkContacts within db.transaction", async () => {
     state.findOrFailResult = { id: "c-1" }
-    state.linkedTagIds = []
+    state.linkedTagIds = ["tag-2"]
     state.resolvedTags = [{ id: "tag-1", name: "alpha" }]
 
     await tagService.syncContactTags({
@@ -651,5 +660,19 @@ describe("TagService.syncContactTags", () => {
       { contactId: "c-1", keepTagIds: ["tag-1"] },
       mockTx,
     )
+  })
+
+  test("skips the DELETE entirely when the snapshot diff shows nothing to remove", async () => {
+    state.findOrFailResult = { id: "c-1" }
+    state.linkedTagIds = []
+    state.resolvedTags = [{ id: "tag-1", name: "alpha" }]
+
+    await tagService.syncContactTags({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tags: ["alpha"],
+    })
+
+    expect(unlinkContactExcept).not.toHaveBeenCalled()
   })
 })

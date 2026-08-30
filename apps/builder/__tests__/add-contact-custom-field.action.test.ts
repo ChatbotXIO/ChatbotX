@@ -71,7 +71,7 @@ vi.mock("@chatbotx.io/flow-config", () => ({
   },
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: {},
 }))
 
@@ -87,7 +87,7 @@ vi.mock("../src/features/contacts/permissions", () => ({
   requireContactPermissionScope: vi.fn(),
 }))
 
-vi.mock("../src/features/contacts/schemas/contact-custom-field", () => ({
+vi.mock("../src/features/contacts/schema/contact-custom-field", () => ({
   addContactCustomFieldRequest: {},
 }))
 

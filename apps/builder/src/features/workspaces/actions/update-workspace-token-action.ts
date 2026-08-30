@@ -5,7 +5,8 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
+import { hashToken } from "@/features/integration-api/lib/token-hash"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateWorkspaceTokenRequest,
@@ -28,7 +29,10 @@ const updateWorkspaceToken = async ({
     })
   }
 
-  await workspaceService.update({ id: workspaceId, data: { token } })
+  await workspaceService.update({
+    id: workspaceId,
+    data: { token, tokenHash: await hashToken(token) },
+  })
 }
 
 export const updateWorkspaceTokenAction = workspaceActionClient

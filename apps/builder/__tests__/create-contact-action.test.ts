@@ -103,7 +103,7 @@ const { createContact } = await import(
   "../src/features/contacts/actions/create-contact.action"
 )
 const { createContactRequest } = await import(
-  "../src/features/contacts/schemas/action"
+  "../src/features/contacts/schema/action"
 )
 
 const contact = {

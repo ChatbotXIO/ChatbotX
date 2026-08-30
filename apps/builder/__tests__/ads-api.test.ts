@@ -73,7 +73,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@/features/ads/schemas/conversion-rule", () => {
+vi.mock("@/features/ads/schema/conversion-rule", () => {
   const passthroughSchema = {}
   return {
     listAdsConversionRulesRequest: passthroughSchema,

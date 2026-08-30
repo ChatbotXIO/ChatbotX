@@ -78,7 +78,7 @@ import {
   noAppointmentCalendarSelectionValue,
   type UpdateAppointmentCalendarRequest,
   updateAppointmentCalendarRequest,
-} from "../schemas/action"
+} from "../schema/action"
 import { AppointmentCalendarWeekdayEditor } from "./appointment-calendar-weekday-editor"
 
 type CalendarForEdit = Awaited<ReturnType<typeof getAppointmentCalendar>>

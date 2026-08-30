@@ -248,7 +248,7 @@ describe("ads analytics 'All channels' aggregation", () => {
 describe("adsAnalyticsChannelDisplayOrder", () => {
   test("lists 'All channels' first, then every ads-eligible channel", async () => {
     const { adsAnalyticsChannelDisplayOrder, adsAnalyticsChannelValues } =
-      await import("@/features/ads/schemas/analytics")
+      await import("@/features/ads/schema/analytics")
 
     expect(adsAnalyticsChannelDisplayOrder[0]).toBe("all")
     // Same membership as the parse-order list, order aside.
@@ -259,7 +259,7 @@ describe("adsAnalyticsChannelDisplayOrder", () => {
 })
 
 describe("resolveAdsAnalyticsChannel", () => {
-  const load = () => import("@/features/ads/schemas/analytics")
+  const load = () => import("@/features/ads/schema/analytics")
 
   test("resolves a legacy ?account link (channel 'all', no channelAccount) to whatsapp", async () => {
     const { resolveAdsAnalyticsChannel } = await load()

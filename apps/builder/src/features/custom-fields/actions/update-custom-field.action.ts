@@ -2,11 +2,9 @@
 
 import { customFieldService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { mapExceptionToFieldError } from "@/lib/action-field-error"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type UpdateCustomFieldRequest,
-  updateCustomFieldRequest,
-} from "../schemas/action"
+import { updateCustomFieldRequest } from "../schema/action"
 
 export const updateCustomFieldAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -17,13 +15,10 @@ export const updateCustomFieldAction = workspaceActionClient
       parsedInput,
     } = props
 
-    await updateCustomField({ workspaceId, id }, parsedInput)
+    await mapExceptionToFieldError(
+      updateCustomFieldRequest,
+      "name",
+      () => customFieldService.update({ workspaceId, id }, parsedInput),
+      "customField",
+    )
   })
-
-export const updateCustomField = async (
-  ctx: {
-    workspaceId: string
-    id: string
-  },
-  parsedInput: UpdateCustomFieldRequest,
-) => await customFieldService.update(ctx, parsedInput)

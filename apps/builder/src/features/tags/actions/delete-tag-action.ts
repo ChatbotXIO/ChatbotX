@@ -6,7 +6,7 @@ import {
   bulkUpdateIdsRequest,
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteTagAction = workspaceActionClient
@@ -20,17 +20,6 @@ export const deleteTagAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await deleteTags({ workspaceId, ids: parsedInput.ids })
+      await tagService.deleteMany({ workspaceId, ids: parsedInput.ids })
     },
   )
-
-export const deleteTags = async (props: {
-  workspaceId: string
-  ids: string[]
-}) => await tagService.deleteMany(props)
-
-export const deleteTag = async (props: { workspaceId: string; id: string }) =>
-  await tagService.deleteMany({
-    workspaceId: props.workspaceId,
-    ids: [props.id],
-  })

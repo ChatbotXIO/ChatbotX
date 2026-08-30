@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl"
 import type { ReactElement } from "react"
 import { useEffect, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
-import type { ContactFilterCriteria } from "../schemas"
+import type { ContactFilterCriteria } from "../schema"
 import { CONTACT_FILTER_DIALOG_SIZE_CLASS } from "./contact-filter-dialog-layout"
 import { ContactListFilterPanel } from "./contact-list-filter"
 

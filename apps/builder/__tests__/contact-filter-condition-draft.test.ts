@@ -21,7 +21,7 @@ import {
   getDefaultStaticFieldValue,
   getStaticFieldConditionOptions,
 } from "@/features/contact-filter/components/static-field-filter-config"
-import type { ContactFilterCondition } from "@/features/contact-filter/schemas"
+import type { ContactFilterCondition } from "@/features/contact-filter/schema"
 
 const t = (key: string) => key
 const conditionOptions = getConditionOptions(t)

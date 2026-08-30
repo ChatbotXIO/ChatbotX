@@ -5,7 +5,7 @@ import { authorizedAPI } from "@/orpc"
 import {
   listAdsConversionRulesRequest,
   listAdsConversionRulesResponse,
-} from "../schemas/conversion-rule"
+} from "../schema/conversion-rule"
 
 export const adsAPI = {
   listRules: authorizedAPI

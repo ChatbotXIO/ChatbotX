@@ -1,39 +1,26 @@
-import z from "zod"
-import { basePaginationRequest } from "@/lib/pagination"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { sequenceContract } from "@chatbotx.io/api-contract/sequence"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
 import { getSequence, listSequences } from "../queries"
-import { listSequencesResponse } from "../schema/action"
-import { sequenceResource } from "../schema/resource"
+
+const os = implement(sequenceContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
 
 export const sequencesWorkspaceTokenAPIs = {
-  listSequencesWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/sequences",
-      summary: "List sequences",
-      tags: ["Sequences"],
-    })
-    .input(basePaginationRequest)
-    .output(listSequencesResponse)
-    .handler(
-      async ({ context, input }) =>
-        await listSequences({
-          ...input,
-          workspaceId: context.workspace.id,
-        }),
-    ),
+  listSequencesWorkspaceTokenAPI: os.listSequencesContract.handler(
+    async ({ context, input }) =>
+      await listSequences({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+  ),
 
-  getSequenceWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/sequences/{id}",
-      summary: "Get sequence details",
-      tags: ["Sequences"],
-    })
-    .input(z.object({ id: z.string() }))
-    .output(sequenceResource)
-    .handler(
-      async ({ context, input }) =>
-        await getSequence(context.workspace.id, input.id),
-    ),
+  getSequenceWorkspaceTokenAPI: os.getSequenceContract.handler(
+    async ({ context, input }) =>
+      await getSequence(context.workspace.id, input.id),
+  ),
 }

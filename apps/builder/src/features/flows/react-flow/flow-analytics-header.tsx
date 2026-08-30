@@ -1,13 +1,13 @@
 "use client"
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import type { FlowResource } from "../schemas/resource"
+import { client } from "@/lib/orpc/orpc"
+import type { FlowResource } from "../schema/resource"
 
 export function FlowAnalyticsHeader({ flow }: { flow: FlowResource }) {
   const t = useTranslations()
@@ -17,9 +17,10 @@ export function FlowAnalyticsHeader({ flow }: { flow: FlowResource }) {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      await ky.delete(
-        `/api/workspaces/${flow.workspaceId}/flows/${flow.id}/stats`,
-      )
+      await client.flowsAPI.privateResetFlowStatsAPI({
+        workspaceId: flow.workspaceId,
+        flowId: flow.id,
+      })
       router.push(`/space/${flow.workspaceId}/flows/${flow.id}`)
     } finally {
       setIsDeleting(false)

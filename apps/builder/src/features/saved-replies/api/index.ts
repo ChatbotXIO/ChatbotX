@@ -1,7 +1,7 @@
-import { savedRepliesAuthorizedAPI } from "./authorized"
+import { savedRepliesPrivateAPI } from "./private"
 import savedReplyWorkspaceTokenAPIs from "./workspace-token"
 
 export const savedRepliesAPI = {
-  ...savedRepliesAuthorizedAPI,
+  ...savedRepliesPrivateAPI,
   ...savedReplyWorkspaceTokenAPIs,
 }

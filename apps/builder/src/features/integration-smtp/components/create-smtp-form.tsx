@@ -17,8 +17,8 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { toast } from "sonner"
 import { createSmtpAction } from "../actions/create-smtp.action"
-import { createSmtpRequest } from "../schemas/mutation"
-import { smtpProviderLabels } from "../schemas/resource"
+import { createSmtpRequest } from "../schema/mutation"
+import { smtpProviderLabels } from "../schema/resource"
 
 type CreateSmtpFormProps = {
   readonly workspaceId: string

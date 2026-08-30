@@ -18,8 +18,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateBotFieldAction } from "./actions/update-bot-field.action"
-import { updateBotFieldRequest } from "./schemas/action"
-import type { BotFieldResource } from "./schemas/resource"
+import { updateBotFieldRequest } from "./schema/action"
+import type { BotFieldResource } from "./schema/resource"
 
 type UpdateBotFieldDialogProps = {
   workspaceId: string

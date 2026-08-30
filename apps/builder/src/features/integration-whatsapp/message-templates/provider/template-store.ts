@@ -1,5 +1,5 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { client } from "@/lib/orpc/orpc"
 import type { WhatsappMessageTemplateResource } from "../schema/resource"
 
 export type TemplateState = {
@@ -42,7 +42,7 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
+            error instanceof Error
               ? error.message
               : "Failed to fetch templates",
         })
@@ -64,21 +64,19 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
       try {
         set({ loading: true, error: null })
 
-        const url = `/api/workspaces/${workspaceId}/whatsapp-message-templates`
-
-        const templates = await ky
-          .get(url, {
-            searchParams: {
+        const templates: WhatsappMessageTemplateResource[] =
+          await client.whatsappMessageTemplateAPIs.listWhatsappMessageTemplatesInternalAPI(
+            {
+              workspaceId,
               integrationWhatsappId,
             },
-          })
-          .json<WhatsappMessageTemplateResource[]>()
+          )
 
         set({ templates })
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
+            error instanceof Error
               ? error.message
               : "Failed to fetch templates",
           templates: [],

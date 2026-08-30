@@ -23,7 +23,6 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
-import ky from "ky"
 import { ArrowRightIcon, Loader2Icon, MailIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
@@ -36,6 +35,7 @@ import {
 import useSWRInfinite from "swr/infinite"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
+import { client } from "@/lib/orpc/orpc"
 import { BaseStepEditor } from "../base/editor"
 
 type MailerLiteEditorPage<T> = {
@@ -43,19 +43,30 @@ type MailerLiteEditorPage<T> = {
   meta: { lastPage: number }
 }
 
-const useAllMailerLitePages = <T,>(baseUrl: string) => {
+const useAllMailerLitePages = <T,>(
+  fetchPage: (
+    workspaceId: string,
+    page: number,
+  ) => Promise<MailerLiteEditorPage<T>>,
+  cacheKey: string,
+  workspaceId: string,
+) => {
   const {
     data: pages,
     isLoading,
     setSize,
   } = useSWRInfinite<MailerLiteEditorPage<T>>(
     (pageIndex, previousPage) => {
+      if (!workspaceId) {
+        return null
+      }
       if (previousPage && pageIndex >= previousPage.meta.lastPage) {
         return null
       }
-      return `${baseUrl}?page=${pageIndex + 1}&limit=${MAILER_LITE_EDITOR_PAGE_SIZE}`
+      return [cacheKey, workspaceId, pageIndex + 1] as const
     },
-    (url: string) => ky.get(url).json(),
+    ([, wsId, page]: readonly [string, string, number]) =>
+      fetchPage(wsId, page),
   )
   const lastPage = pages?.[0]?.meta.lastPage ?? 1
 
@@ -70,6 +81,20 @@ const useAllMailerLitePages = <T,>(baseUrl: string) => {
     isLoading,
   }
 }
+
+const fetchMailerLiteGroups = (workspaceId: string, page: number) =>
+  client.integrationMailerLiteAPI.listGroups({
+    workspaceId,
+    page,
+    limit: MAILER_LITE_EDITOR_PAGE_SIZE,
+  })
+
+const fetchMailerLiteFields = (workspaceId: string, page: number) =>
+  client.integrationMailerLiteAPI.listFields({
+    workspaceId,
+    page,
+    limit: MAILER_LITE_EDITOR_PAGE_SIZE,
+  })
 
 const MailerLiteDialog = ({ parentName }: { parentName: string }) => {
   const [open, setOpen] = useState(false)
@@ -88,10 +113,14 @@ const MailerLiteDialog = ({ parentName }: { parentName: string }) => {
   const mappedFields =
     useWatch({ control: form.control, name: "mergeFields" }) ?? []
   const groups = useAllMailerLitePages<MailerLiteGroup>(
-    `/api/workspaces/${workspaceId}/mailer-lite/groups`,
+    fetchMailerLiteGroups,
+    "mailer-lite-groups",
+    workspaceId,
   )
   const providerFields = useAllMailerLitePages<MailerLiteField>(
-    `/api/workspaces/${workspaceId}/mailer-lite/fields`,
+    fetchMailerLiteFields,
+    "mailer-lite-fields",
+    workspaceId,
   )
   const groupOptions = useMemo(
     () =>

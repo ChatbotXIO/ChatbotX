@@ -46,7 +46,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   sequenceStepModel: { id: "id" },
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 

@@ -1,5 +1,5 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
-import type { FlowNode } from "../schemas/flow-node"
+import type { FlowNode } from "../schema/flow-node"
 
 const LEGACY_STEP_TYPE_ALIASES: Record<string, readonly string[]> = {
   [stepTypes.enum.sendWaTemplateMessage]: ["WA_TM01"],

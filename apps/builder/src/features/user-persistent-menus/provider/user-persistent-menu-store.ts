@@ -1,5 +1,5 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { client } from "@/lib/orpc/orpc"
 import type { ListUserPersistentMenusResponse } from "../schema/action"
 
 export type UserPersistentMenuState = {
@@ -44,7 +44,7 @@ export const createUserPersistentMenuStore = (
         await get().getAll(workspaceId)
         set({ loading: false, initialized: true })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
+        if (error instanceof Error) {
           set({ error: error.message, loading: false })
         } else {
           set({
@@ -56,11 +56,10 @@ export const createUserPersistentMenuStore = (
     },
 
     getAll: async (workspaceId: string) => {
-      const { data } = await ky
-        .get<ListUserPersistentMenusResponse>(
-          `/api/workspaces/${workspaceId}/user-persistent-menus`,
+      const { data } =
+        await client.userPersistentMenusAPI.listUserPersistentMenusAuthenticatedAPI(
+          { workspaceId },
         )
-        .json()
 
       set({ menus: data })
     },

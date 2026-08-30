@@ -41,8 +41,8 @@ import { enableMinigameAction } from "./actions/enable-minigame.action"
 import { MINIGAME_TYPE_CONFIGS } from "./constants"
 import { DeleteMinigamesDialog } from "./delete-minigames"
 import { MinigamesTableToolbarActions } from "./minigames-table-toolbar-actions"
-import type { ListMinigamesResponse } from "./schemas/query"
-import type { MinigameResource } from "./schemas/resource"
+import type { ListMinigamesResponse } from "./schema/query"
+import type { MinigameResource } from "./schema/resource"
 
 type MinigamesTableProps = {
   workspaceId: string

@@ -192,13 +192,12 @@ describe("TagService.update", () => {
       }),
     ).rejects.toMatchObject({ code: "nameTaken", httpStatusCode: 400 })
 
-    expect(mocks.findById).not.toHaveBeenCalled()
     expect(mocks.update).not.toHaveBeenCalled()
   })
 
-  test("throws when the target tag does not exist", async () => {
+  test("throws when the target tag does not exist (update returns nothing)", async () => {
     mocks.existsByName.mockResolvedValueOnce(false)
-    mocks.findById.mockResolvedValueOnce(undefined)
+    mocks.update.mockResolvedValueOnce(undefined)
 
     await expect(
       tagService.update({
@@ -207,13 +206,10 @@ describe("TagService.update", () => {
         data: { name: "New Name" },
       }),
     ).rejects.toThrow("Tag not found")
-
-    expect(mocks.update).not.toHaveBeenCalled()
   })
 
-  test("passes tx through to findById (existence check runs in the caller's transaction)", async () => {
+  test("passes tx through to update", async () => {
     mocks.existsByName.mockResolvedValueOnce(false)
-    mocks.findById.mockResolvedValueOnce({ id: "tag-1" })
     mocks.update.mockResolvedValueOnce({
       id: "tag-1",
       name: "Renamed",
@@ -228,15 +224,14 @@ describe("TagService.update", () => {
       tx: fakeTx as never,
     })
 
-    expect(mocks.findById).toHaveBeenCalledWith(
-      { id: "tag-1", workspaceId: WS },
+    expect(mocks.update).toHaveBeenCalledWith(
+      { id: "tag-1", workspaceId: WS, name: "Renamed" },
       fakeTx,
     )
   })
 
   test("updates the name and invalidates cache tags on success", async () => {
     mocks.existsByName.mockResolvedValueOnce(false)
-    mocks.findById.mockResolvedValueOnce({ id: "tag-1" })
     mocks.update.mockResolvedValueOnce({
       id: "tag-1",
       name: "Renamed",
@@ -294,6 +289,24 @@ describe("TagService.deleteMany", () => {
     expect(mocks.enqueueDelete).toHaveBeenNthCalledWith(2, {
       workspaceId: WS,
       tagId: "tag-b",
+    })
+  })
+
+  test("chunks 201 ids into two softDeleteMany calls of 200 and 1", async () => {
+    const { tagRepository } = await import("@chatbotx.io/database/repositories")
+    vi.mocked(tagRepository.softDeleteMany).mockResolvedValue([])
+
+    const ids = Array.from({ length: 201 }, (_, i) => `tag-${i}`)
+    await tagService.deleteMany({ workspaceId: WS, ids })
+
+    expect(tagRepository.softDeleteMany).toHaveBeenCalledTimes(2)
+    expect(tagRepository.softDeleteMany).toHaveBeenNthCalledWith(1, {
+      workspaceId: WS,
+      ids: ids.slice(0, 200),
+    })
+    expect(tagRepository.softDeleteMany).toHaveBeenNthCalledWith(2, {
+      workspaceId: WS,
+      ids: ids.slice(200),
     })
   })
 })

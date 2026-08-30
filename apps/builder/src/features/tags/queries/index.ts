@@ -1,10 +1,6 @@
 import { tagService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type {
-  FindTagRequest,
-  ListTagsRequest,
-  ListTagsResponse,
-} from "../schema/query"
+import type { ListTagsRequest, ListTagsResponse } from "../schema/query"
 
 export const listTagsRSC = async (
   input: ListTagsRequest & { workspaceId: string },
@@ -19,6 +15,3 @@ export async function listTags(
 ): Promise<ListTagsResponse> {
   return await tagService.list(input)
 }
-
-export const findTag = async (input: FindTagRequest) =>
-  await tagService.findByKey(input)

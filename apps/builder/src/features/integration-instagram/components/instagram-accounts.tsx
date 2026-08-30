@@ -15,7 +15,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { selectAccountAction } from "../actions/select-account.action"
-import { selectAccountRequest } from "../schemas/action"
+import { selectAccountRequest } from "../schema/action"
 
 type InstagramCoexistTrigger = {
   integrationId: string

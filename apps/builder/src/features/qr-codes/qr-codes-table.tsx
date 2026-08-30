@@ -32,7 +32,7 @@ import React, { use, useMemo } from "react"
 import { stripQrPrefix } from "./constants"
 import { DeleteQrCodesDialog } from "./delete-qr-codes"
 import { QrCodesTableToolbarActions } from "./qr-codes-table-toolbar-actions"
-import type { ListQrCodeItem, ListQrCodesResponse } from "./schemas/query"
+import type { ListQrCodeItem, ListQrCodesResponse } from "./schema/query"
 
 type QrCodesTableProps = {
   workspaceId: string

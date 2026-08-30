@@ -242,12 +242,15 @@ describe("tagRepository.linkContacts", () => {
 })
 
 describe("tagRepository.unlinkContactExcept", () => {
-  test("deletes everything for the contact when keepTagIds is empty (no notInArray)", async () => {
-    const where = vi.fn().mockResolvedValue(undefined)
+  test("deletes everything for the contact when keepTagIds is empty (no notInArray) and returns removed tagIds", async () => {
+    const returning = vi
+      .fn()
+      .mockResolvedValue([{ tagId: "tag-1" }, { tagId: "tag-2" }])
+    const where = vi.fn().mockReturnValue({ returning })
     const del = vi.fn().mockReturnValue({ where })
     const tx = { delete: del }
 
-    await tagRepository.unlinkContactExcept(
+    const result = await tagRepository.unlinkContactExcept(
       { contactId: "c-1", keepTagIds: [] },
       tx as never,
     )
@@ -255,10 +258,12 @@ describe("tagRepository.unlinkContactExcept", () => {
     expect(where).toHaveBeenCalledTimes(1)
     const clause = where.mock.calls[0]?.[0]
     expect(clause).toBeDefined()
+    expect(result).toEqual([{ tagId: "tag-1" }, { tagId: "tag-2" }])
   })
 
   test("deletes only tags outside keepTagIds when keepTagIds is non-empty", async () => {
-    const where = vi.fn().mockResolvedValue(undefined)
+    const returning = vi.fn().mockResolvedValue([])
+    const where = vi.fn().mockReturnValue({ returning })
     const del = vi.fn().mockReturnValue({ where })
     const tx = { delete: del }
 
@@ -268,6 +273,51 @@ describe("tagRepository.unlinkContactExcept", () => {
     )
 
     expect(where).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("tagRepository.unlinkContacts", () => {
+  test("returns [] without querying when contactIds is empty", async () => {
+    const del = vi.fn()
+    const tx = { delete: del }
+
+    const result = await tagRepository.unlinkContacts(
+      { contactIds: [], tagIds: ["tag-1"] },
+      tx as never,
+    )
+
+    expect(result).toEqual([])
+    expect(del).not.toHaveBeenCalled()
+  })
+
+  test("returns [] without querying when tagIds is empty", async () => {
+    const del = vi.fn()
+    const tx = { delete: del }
+
+    const result = await tagRepository.unlinkContacts(
+      { contactIds: ["c-1"], tagIds: [] },
+      tx as never,
+    )
+
+    expect(result).toEqual([])
+    expect(del).not.toHaveBeenCalled()
+  })
+
+  test("deletes across all given contactIds/tagIds in one call and returns removed pairs", async () => {
+    const returning = vi
+      .fn()
+      .mockResolvedValue([{ contactId: "c-1", tagId: "tag-1" }])
+    const where = vi.fn().mockReturnValue({ returning })
+    const del = vi.fn().mockReturnValue({ where })
+    const tx = { delete: del }
+
+    const result = await tagRepository.unlinkContacts(
+      { contactIds: ["c-1", "c-2"], tagIds: ["tag-1"] },
+      tx as never,
+    )
+
+    expect(del).toHaveBeenCalledTimes(1)
+    expect(result).toEqual([{ contactId: "c-1", tagId: "tag-1" }])
   })
 })
 

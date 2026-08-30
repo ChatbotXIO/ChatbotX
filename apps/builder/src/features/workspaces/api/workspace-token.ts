@@ -1,16 +1,18 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
-import { getWorkspacePublicResource } from "../schema/action"
+import { workspaceContract } from "@chatbotx.io/api-contract/workspace"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
+
+const os = implement(workspaceContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
 
 export const workspaceWorkspaceTokenAPIs = {
-  getWorkspaceWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/workspaces",
-      summary: "Get workspace",
-      tags: ["Workspace"],
-    })
-    .output(getWorkspacePublicResource)
-    .handler(({ context }) => context.workspace),
+  getWorkspaceWorkspaceTokenAPI: os.getWorkspaceContract.handler(
+    ({ context }) => context.workspace,
+  ),
 }
 
 export default workspaceWorkspaceTokenAPIs

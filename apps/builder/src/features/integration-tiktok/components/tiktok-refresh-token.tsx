@@ -7,7 +7,7 @@ import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { refreshTiktokTokenAction } from "../actions/refresh-token.action"
-import type { IntegrationTiktokResource } from "../schemas/resource"
+import type { IntegrationTiktokResource } from "../schema/resource"
 
 export function TiktokRefreshToken({
   integrationTiktok,

@@ -1,62 +1,31 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  fieldFindFirst: vi.fn(),
-  fieldInsert: vi.fn(),
-  fieldInsertValues: vi.fn(),
-  fieldInsertReturning: vi.fn(),
-  fieldUpdate: vi.fn(),
-  fieldUpdateSet: vi.fn(),
-  fieldUpdateWhere: vi.fn(),
-  fieldUpdateReturning: vi.fn(),
+  existsByNameAndType: vi.fn(),
+  findByKey: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
   invalidateCacheByTags: vi.fn(),
   folderEnsureExists: vi.fn(),
-  createId: vi.fn(() => "generated-id"),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      customFieldModel: {
-        findFirst: mocks.fieldFindFirst,
-      },
-    },
-    insert: mocks.fieldInsert,
-    update: mocks.fieldUpdate,
+  db: {},
+  isDatabaseError: vi.fn(() => false),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  customFieldRepository: {
+    existsByNameAndType: mocks.existsByNameAndType,
+    findByKey: mocks.findByKey,
+    create: mocks.create,
+    update: mocks.update,
   },
-  and: (...args: unknown[]) => args,
-  eq: (...args: unknown[]) => args,
-  inArray: (...args: unknown[]) => args,
-}))
-
-vi.mock("@chatbotx.io/database/partials", () => ({
-  rootFolderId: "root",
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  customFieldModel: { id: "customFieldModel" },
-}))
-
-vi.mock("@chatbotx.io/database/utils", () => ({
-  likeContains: vi.fn((value: string) => `%${value}%`),
-  parseOrderByAsObject: vi.fn(() => ({})),
-  parsePagination: vi.fn(() => null),
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(async (_key: string, resolver: () => unknown) => resolver()),
   invalidateCacheByTags: mocks.invalidateCacheByTags,
-}))
-
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: mocks.createId,
-  isNumericId: vi.fn(() => false),
-}))
-
-vi.mock("@chatbotx.io/utils/custom-field", () => ({
-  customFieldResolutionKey: vi.fn(
-    (field: { name: string; type: string }) => `${field.type}:${field.name}`,
-  ),
 }))
 
 vi.mock("../../folder/service", () => ({
@@ -70,33 +39,13 @@ const { ChatbotXException } = await import("../../errors")
 
 const WS = "ws-test-1"
 
-function wireInsertChain() {
-  const chain = {
-    values: mocks.fieldInsertValues.mockReturnThis(),
-    returning: mocks.fieldInsertReturning,
-  }
-  mocks.fieldInsert.mockReturnValue(chain)
-}
-
-function wireUpdateChain() {
-  const chain = {
-    set: mocks.fieldUpdateSet.mockReturnThis(),
-    where: mocks.fieldUpdateWhere.mockReturnThis(),
-    returning: mocks.fieldUpdateReturning,
-  }
-  mocks.fieldUpdate.mockReturnValue(chain)
-}
-
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.createId.mockReturnValue("generated-id")
-  wireInsertChain()
-  wireUpdateChain()
 })
 
 describe("CustomFieldService.create", () => {
   test("throws nameTaken ChatbotXException when workspaceId+type+name already exists", async () => {
-    mocks.fieldFindFirst.mockResolvedValueOnce({ id: "existing-id" })
+    mocks.existsByNameAndType.mockResolvedValueOnce(true)
 
     await expect(
       customFieldService.create({
@@ -105,11 +54,11 @@ describe("CustomFieldService.create", () => {
       }),
     ).rejects.toMatchObject({ code: "nameTaken", httpStatusCode: 400 })
 
-    expect(mocks.fieldInsert).not.toHaveBeenCalled()
+    expect(mocks.create).not.toHaveBeenCalled()
   })
 
   test("rejects with a real ChatbotXException instance", async () => {
-    mocks.fieldFindFirst.mockResolvedValueOnce({ id: "existing-id" })
+    mocks.existsByNameAndType.mockResolvedValueOnce(true)
 
     await expect(
       customFieldService.create({
@@ -120,10 +69,13 @@ describe("CustomFieldService.create", () => {
   })
 
   test("creates the field when no duplicate exists", async () => {
-    mocks.fieldFindFirst.mockResolvedValueOnce(undefined)
-    mocks.fieldInsertReturning.mockResolvedValueOnce([
-      { id: "field-1", name: "Phone", type: "shortText", workspaceId: WS },
-    ])
+    mocks.existsByNameAndType.mockResolvedValueOnce(false)
+    mocks.create.mockResolvedValueOnce({
+      id: "field-1",
+      name: "Phone",
+      type: "shortText",
+      workspaceId: WS,
+    })
 
     const result = await customFieldService.create({
       workspaceId: WS,
@@ -140,10 +92,13 @@ describe("CustomFieldService.create", () => {
   })
 
   test("calls folderService.ensureExists with folderType 'customField' when folderId provided", async () => {
-    mocks.fieldFindFirst.mockResolvedValueOnce(undefined)
-    mocks.fieldInsertReturning.mockResolvedValueOnce([
-      { id: "field-2", name: "Region", type: "shortText", workspaceId: WS },
-    ])
+    mocks.existsByNameAndType.mockResolvedValueOnce(false)
+    mocks.create.mockResolvedValueOnce({
+      id: "field-2",
+      name: "Region",
+      type: "shortText",
+      workspaceId: WS,
+    })
 
     await customFieldService.create({
       workspaceId: WS,
@@ -162,15 +117,13 @@ describe("CustomFieldService.create", () => {
 
 describe("CustomFieldService.update", () => {
   test("throws nameTaken ChatbotXException when another field of the same type has the same name", async () => {
-    mocks.fieldFindFirst
-      // findByKeyOrFail -> findByKey lookup for the existing field itself
-      .mockResolvedValueOnce({
-        id: "field-1",
-        type: "shortText",
-        folderId: null,
-      })
-      // duplicate-name lookup
-      .mockResolvedValueOnce({ id: "field-2" })
+    // findByKeyOrFail -> findByKey lookup for the existing field itself
+    mocks.findByKey.mockResolvedValueOnce({
+      id: "field-1",
+      type: "shortText",
+      folderId: null,
+    })
+    mocks.existsByNameAndType.mockResolvedValueOnce(true)
 
     await expect(
       customFieldService.update(
@@ -181,20 +134,22 @@ describe("CustomFieldService.update", () => {
       ),
     ).rejects.toMatchObject({ code: "nameTaken", httpStatusCode: 400 })
 
-    expect(mocks.fieldUpdate).not.toHaveBeenCalled()
+    expect(mocks.update).not.toHaveBeenCalled()
   })
 
   test("updates when no duplicate name exists", async () => {
-    mocks.fieldFindFirst
-      .mockResolvedValueOnce({
-        id: "field-1",
-        type: "shortText",
-        folderId: null,
-      })
-      .mockResolvedValueOnce(undefined)
-    mocks.fieldUpdateReturning.mockResolvedValueOnce([
-      { id: "field-1", name: "Renamed", type: "shortText", workspaceId: WS },
-    ])
+    mocks.findByKey.mockResolvedValueOnce({
+      id: "field-1",
+      type: "shortText",
+      folderId: null,
+    })
+    mocks.existsByNameAndType.mockResolvedValueOnce(false)
+    mocks.update.mockResolvedValueOnce({
+      id: "field-1",
+      name: "Renamed",
+      type: "shortText",
+      workspaceId: WS,
+    })
 
     const result = await customFieldService.update(
       { workspaceId: WS, id: "field-1" },
@@ -210,20 +165,23 @@ describe("CustomFieldService.update", () => {
   })
 
   test("does not check for duplicates when name is not part of the update", async () => {
-    mocks.fieldFindFirst.mockResolvedValueOnce({
+    mocks.findByKey.mockResolvedValueOnce({
       id: "field-1",
       type: "shortText",
       folderId: null,
     })
-    mocks.fieldUpdateReturning.mockResolvedValueOnce([
-      { id: "field-1", name: "Existing", type: "shortText", workspaceId: WS },
-    ])
+    mocks.update.mockResolvedValueOnce({
+      id: "field-1",
+      name: "Existing",
+      type: "shortText",
+      workspaceId: WS,
+    })
 
     await customFieldService.update(
       { workspaceId: WS, id: "field-1" },
       { description: "New description" },
     )
 
-    expect(mocks.fieldFindFirst).toHaveBeenCalledTimes(1)
+    expect(mocks.existsByNameAndType).not.toHaveBeenCalled()
   })
 })

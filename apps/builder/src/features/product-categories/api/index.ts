@@ -1,5 +1,5 @@
-import { productCategoriesAuthorizedAPI } from "./authorized"
+import { productCategoriesPrivateAPI } from "./private"
 
 export const productCategoriesAPI = {
-  ...productCategoriesAuthorizedAPI,
+  ...productCategoriesPrivateAPI,
 }

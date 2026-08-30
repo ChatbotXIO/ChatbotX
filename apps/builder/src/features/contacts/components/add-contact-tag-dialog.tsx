@@ -23,7 +23,7 @@ import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { useTagStore } from "@/features/tags/provider/tag-store-context"
 import { useWorkspaceId } from "@/hooks/routing"
 import { addContactTagAction } from "../actions/add-contact-tag.action"
-import { addContactTagRequest } from "../schemas/contact-tag"
+import { addContactTagRequest } from "../schema/contact-tag"
 
 type AddContactTagDialogProps = {
   trigger: ReactElement

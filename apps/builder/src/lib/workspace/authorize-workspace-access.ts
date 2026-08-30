@@ -2,9 +2,30 @@ import {
   quotaEnforcementService,
   userQuotaService,
 } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { ORPCError } from "@orpc/server"
 import { isCloud } from "@/env"
 
 export type WorkspaceAccessDenialReason = "trialExpired" | "macLimitReached"
+
+const DENIAL_MESSAGES: Record<WorkspaceAccessDenialReason, string> = {
+  trialExpired: "Trial expired",
+  macLimitReached: "Monthly active contact limit reached",
+}
+
+const DENIAL_HTTP_STATUS = 403
+
+/**
+ * HTTP methods that may run against a workspace whose owner is trial-expired
+ * or over the MAC limit. Mirrors AGENTS.md invariant #14: such workspaces are
+ * read/delete-only, never locked out — so GET/HEAD/DELETE stay open while
+ * POST/PUT/PATCH are gated. A procedure with no declared method is treated as
+ * a mutation (oRPC defaults undeclared routes to POST).
+ */
+const READ_OR_DELETE_METHODS = new Set(["GET", "HEAD", "DELETE"])
+
+export const isWorkspaceMutationMethod = (method: string | undefined) =>
+  !READ_OR_DELETE_METHODS.has(method ?? "POST")
 
 async function getWorkspaceOwnerAccessState(ownerId: string) {
   const accessState = await userQuotaService.getAccessState(ownerId)
@@ -53,3 +74,17 @@ export async function checkWorkspaceOwnerAccess(props: {
 
   return reason === "mac" ? "macLimitReached" : "trialExpired"
 }
+
+/** next-safe-action flavour: thrown by `workspaceActionClient` middlewares. */
+export const workspaceAccessDenialException = (
+  reason: WorkspaceAccessDenialReason,
+) => new ChatbotXException(DENIAL_MESSAGES[reason], reason, DENIAL_HTTP_STATUS)
+
+/** oRPC flavour: thrown by the session and workspace-token middlewares. */
+export const workspaceAccessDenialOrpcError = (
+  reason: WorkspaceAccessDenialReason,
+) =>
+  new ORPCError(reason, {
+    message: DENIAL_MESSAGES[reason],
+    status: DENIAL_HTTP_STATUS,
+  })

@@ -2,12 +2,11 @@ import {
   messengerTemplateStatusSchema,
   whatsappTemplateStatusSchema,
 } from "@chatbotx.io/database/partials"
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListMessengerMessageTemplatesResponse } from "@/features/integration-messenger/message-templates/schema/query"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
-import type { ListMessengerPersonasResponse } from "@/features/personas/schemas/query"
+import type { ListMessengerPersonasResponse } from "@/features/personas/schema/query"
 import { client } from "@/lib/orpc/orpc"
 
 export type FlowTemplateState = {
@@ -105,21 +104,20 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
 
       set({ loadingWhatsappTemplates: true, error: null })
       try {
-        const searchParams: Record<string, string> = {
-          status: whatsappTemplateStatusSchema.enum.APPROVED,
-        }
-        if (integrationWhatsappId) {
-          searchParams.integrationWhatsappId = integrationWhatsappId
-        }
-
-        const templates = await ky
-          .get<ListWhatsappMessageTemplatesResponse>(
-            `/api/workspaces/${workspaceId}/whatsapp-message-templates`,
-            { searchParams, signal },
+        const templates =
+          await client.whatsappMessageTemplateAPIs.listWhatsappMessageTemplatesInternalAPI(
+            {
+              workspaceId,
+              status: whatsappTemplateStatusSchema.enum.APPROVED,
+              integrationWhatsappId,
+            },
+            { signal },
           )
-          .json()
 
-        set({ whatsappTemplates: templates, loadingWhatsappTemplates: false })
+        set({
+          whatsappTemplates: templates as ListWhatsappMessageTemplatesResponse,
+          loadingWhatsappTemplates: false,
+        })
       } catch (error: unknown) {
         if (error instanceof Error && error.name === "AbortError") {
           // A newer fetch superseded this one. Only clear loading if no newer
@@ -131,7 +129,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
         }
         set({
           error:
-            error instanceof HTTPError
+            error instanceof Error
               ? error.message
               : "Failed to fetch WA templates",
           whatsappTemplates: [],
@@ -150,24 +148,22 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
       messengerFetching = true
       set({ loadingMessengerTemplates: true, error: null })
       try {
-        const templates = await ky
-          .get<ListMessengerMessageTemplatesResponse>(
-            `/api/workspaces/${workspaceId}/messenger-message-templates`,
+        const templates =
+          await client.messengerMessageTemplateAPIs.listMessengerMessageTemplatesInternalAPI(
             {
-              searchParams: {
-                status: messengerTemplateStatusSchema.enum.APPROVED,
-              },
+              workspaceId,
+              status: messengerTemplateStatusSchema.enum.APPROVED,
             },
           )
-          .json()
 
         set({
-          messengerTemplates: templates,
+          messengerTemplates:
+            templates as ListMessengerMessageTemplatesResponse,
         })
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
+            error instanceof Error
               ? error.message
               : "Failed to fetch Messenger templates",
         })
@@ -196,7 +192,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
+            error instanceof Error
               ? error.message
               : "Failed to fetch Messenger personas",
         })

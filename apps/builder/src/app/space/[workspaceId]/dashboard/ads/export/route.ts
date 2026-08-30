@@ -5,7 +5,7 @@ import { DEFAULT_ADS_CONVERSION_CHANNEL } from "@chatbotx.io/utils/channel"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { toCsvRow } from "@/features/ads/lib/csv"
-import { parseAnalyticsDateRange } from "@/features/ads/schemas/analytics"
+import { parseAnalyticsDateRange } from "@/features/ads/schema/analytics"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 export const runtime = "nodejs"

@@ -37,9 +37,10 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
+import useSWRImmutable from "swr/immutable"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -88,27 +89,29 @@ const DripDialog = ({ parentName }: { parentName: string }) => {
     data: accountsResponse,
     error: accountsError,
     isLoading: accountsLoading,
-  } = callAPI<{ data: DripAccount[] }>(
-    `/api/workspaces/${workspaceId}/drip/accounts`,
+  } = useSWRImmutable<{ data: DripAccount[] }>(
+    workspaceId ? ["drip-accounts", workspaceId] : null,
+    () => client.integrationDripAPI.listAccounts({ workspaceId }),
   )
   const {
     data: tagsResponse,
     error: tagsError,
     isLoading: tagsLoading,
-  } = callAPI<{ data: string[] }>(
-    accountId
-      ? `/api/workspaces/${workspaceId}/drip/tags?accountId=${encodeURIComponent(accountId)}`
-      : null,
+  } = useSWRImmutable<{ data: string[] }>(
+    accountId && workspaceId ? ["drip-tags", workspaceId, accountId] : null,
+    () => client.integrationDripAPI.listTags({ workspaceId, accountId }),
   )
 
   const {
     data: customFieldsResponse,
     error: customFieldsError,
     isLoading: customFieldsLoading,
-  } = callAPI<{ data: DripCustomField[] }>(
-    accountId
-      ? `/api/workspaces/${workspaceId}/drip/custom-fields?accountId=${encodeURIComponent(accountId)}`
+  } = useSWRImmutable<{ data: DripCustomField[] }>(
+    accountId && workspaceId
+      ? ["drip-custom-fields", workspaceId, accountId]
       : null,
+    () =>
+      client.integrationDripAPI.listCustomFields({ workspaceId, accountId }),
   )
 
   const accountOptions = useMemo(

@@ -4,13 +4,13 @@ import { customFieldService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
+import { mapExceptionToFieldError } from "@/lib/action-field-error"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldRequest,
   createCustomFieldRequest,
-} from "../schemas/action"
-import type { CustomFieldResource } from "../schemas/resource"
+} from "../schema/action"
 
 export const createCustomFieldAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -23,12 +23,11 @@ export const createCustomFieldAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateCustomFieldRequest
     }) => {
-      await createCustomField(workspaceId, parsedInput)
+      await mapExceptionToFieldError(
+        createCustomFieldRequest,
+        "name",
+        () => customFieldService.create({ workspaceId, data: parsedInput }),
+        "customField",
+      )
     },
   )
-
-export const createCustomField = async (
-  workspaceId: string,
-  parsedInput: CreateCustomFieldRequest,
-): Promise<CustomFieldResource> =>
-  await customFieldService.create({ workspaceId, data: parsedInput })

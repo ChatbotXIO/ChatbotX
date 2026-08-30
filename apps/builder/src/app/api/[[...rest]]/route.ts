@@ -4,11 +4,17 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins"
 import { onError } from "@orpc/server"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { logger } from "@/lib/log"
-import { router } from "@/routers"
+import { publicRouter } from "@/routers/public"
 import "@/polyfill"
 
 // Singleton handler — instantiating per request is expensive (rebuilds plugins every call).
-const openAPIHandler = new OpenAPIHandler(router, {
+// Runtime boundary intentionally matches the spec boundary: this handler only
+// ever serves `publicRouter` (workspace-token / channel-token auth), the same
+// router `public-spec.json` documents. Private, session-authed procedures
+// live on `/rpc` (see app/rpc/[[...rest]]/route.ts) and must never be
+// reachable here — a procedure absent from publicRouter now 404s instead of
+// silently answering to a session cookie. See __tests__/public-router-boundary.test.ts.
+const openAPIHandler = new OpenAPIHandler(publicRouter, {
   interceptors: [
     // Log the real error before oRPC masks undefined errors as a generic 500.
     onError((error) => {

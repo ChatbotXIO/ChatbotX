@@ -6,7 +6,7 @@ import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { QuestionnairesTable } from "@/features/questionnaires/components/questionnaires-table"
 import { listQuestionnaires } from "@/features/questionnaires/queries"
-import { listQuestionnairesSearchParamsCache } from "@/features/questionnaires/schemas/query"
+import { listQuestionnairesSearchParamsCache } from "@/features/questionnaires/schema/query"
 
 export default async function QuestionnairesPage({
   params,

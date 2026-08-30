@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { cancelAppointmentAction } from "../actions"
-import type { AppointmentManagementListItem } from "../schemas/resource"
+import type { AppointmentManagementListItem } from "../schema/resource"
 
 type Props = {
   workspaceId: string

@@ -1,17 +1,16 @@
 "use server"
 
-import { type ContactAccessScope, tagService } from "@chatbotx.io/business"
+import { tagService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
-import type { TagResource } from "@/features/tags/schema/resource"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type UpdateContactTagRequest,
   updateContactTagRequest,
-} from "../schemas/contact-tag"
+} from "../schema/contact-tag"
 
 export const updateContactTagAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -25,22 +24,11 @@ export const updateContactTagAction = workspaceActionClient
       parsedInput: UpdateContactTagRequest
     }) => {
       const accessScope = await requireContactPermissionScope(workspaceId)
-      return await updateContactTags({ workspaceId, parsedInput, accessScope })
+      return await tagService.syncContactTags({
+        workspaceId,
+        contactId: parsedInput.contactId,
+        tags: parsedInput.tags,
+        accessScope,
+      })
     },
   )
-
-export const updateContactTags = async ({
-  workspaceId,
-  parsedInput,
-  accessScope,
-}: {
-  workspaceId: string
-  parsedInput: UpdateContactTagRequest
-  accessScope?: ContactAccessScope
-}): Promise<TagResource[]> =>
-  await tagService.syncContactTags({
-    workspaceId,
-    contactId: parsedInput.contactId,
-    tags: parsedInput.tags,
-    accessScope,
-  })

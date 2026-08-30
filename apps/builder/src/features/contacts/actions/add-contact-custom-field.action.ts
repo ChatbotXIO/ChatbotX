@@ -14,13 +14,13 @@ import { FieldOperationType } from "@chatbotx.io/flow-config"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type AddContactCustomFieldRequest,
   addContactCustomFieldRequest,
-} from "../schemas/contact-custom-field"
+} from "../schema/contact-custom-field"
 
 export const addContactCustomFieldAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

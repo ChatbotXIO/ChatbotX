@@ -1,7 +1,7 @@
 import type { FlowNodeStatsResponse } from "@chatbotx.io/analytics"
-import ky from "ky"
 import { useEffect, useState } from "react"
-import type { FlowResource } from "../../schemas/resource"
+import { client } from "@/lib/orpc/orpc"
+import type { FlowResource } from "../../schema/resource"
 
 type GetFlowLinkProps = {
   flow: FlowResource
@@ -12,11 +12,12 @@ export default function AnalyticsFlow({ flow }: GetFlowLinkProps) {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const stats = await ky
-        .get(`/api/workspaces/${flow.workspaceId}/flows/${flow.id}/stats`)
-        .json<FlowNodeStatsResponse>()
+      const stats = await client.flowsAPI.privateGetFlowStatsAPI({
+        workspaceId: flow.workspaceId,
+        flowId: flow.id,
+      })
 
-      setStats(stats)
+      setStats(stats as FlowNodeStatsResponse)
     }
 
     fetchStats()

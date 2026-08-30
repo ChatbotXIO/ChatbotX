@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 import { computeAdsAnalyticsPresetRange } from "@/features/ads/components/date-range-controls"
-import { getDefaultAdsAnalyticsRange } from "@/features/ads/schemas/analytics"
+import { getDefaultAdsAnalyticsRange } from "@/features/ads/schema/analytics"
 
 const NOW = new Date("2026-08-11T15:30:00.000Z")
 

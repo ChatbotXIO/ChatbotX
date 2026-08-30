@@ -1,7 +1,7 @@
 "use server"
 
 import { createUserPersistentMenu } from "@chatbotx.io/database/repositories"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createUserPersistentMenuRequest } from "../schema/action"
 

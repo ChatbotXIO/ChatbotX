@@ -7,7 +7,7 @@ import { z } from "zod"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { recalculateAllContactsInSequence } from "@/features/contact-sequences/utils/calculate-next-run-at"
 import { workspaceActionClient } from "@/lib/safe-action"
 

@@ -31,7 +31,7 @@ import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-fiel
 import {
   type ContactFilterCondition,
   singleContactFilterConditionSchema,
-} from "../schemas"
+} from "../schema"
 import {
   type ConditionOption,
   type ContactFilterConditionFormDraft,

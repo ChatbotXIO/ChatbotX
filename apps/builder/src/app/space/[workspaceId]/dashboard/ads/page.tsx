@@ -16,7 +16,7 @@ import {
   type AdsAnalyticsChannel,
   adsAnalyticsSearchParamsCache,
   resolveAdsAnalyticsChannel,
-} from "@/features/ads/schemas/analytics"
+} from "@/features/ads/schema/analytics"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 

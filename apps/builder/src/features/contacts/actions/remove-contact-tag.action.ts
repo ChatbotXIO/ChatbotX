@@ -1,16 +1,16 @@
 "use server"
 
-import { type ContactAccessScope, tagService } from "@chatbotx.io/business"
+import { tagService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type RemoveContactTagsRequest,
   removeContactTagsRequest,
-} from "../schemas/contact-tag"
+} from "../schema/contact-tag"
 
 export const removeContactTagAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -24,26 +24,11 @@ export const removeContactTagAction = workspaceActionClient
       parsedInput: RemoveContactTagsRequest
     }) => {
       const accessScope = await requireContactPermissionScope(workspaceId)
-      await removeContactTags({
+      await tagService.removeFromContacts({
         workspaceId,
-        parsedInput,
+        ids: parsedInput.ids,
+        tags: parsedInput.tags,
         accessScope,
       })
     },
   )
-
-export const removeContactTags = async ({
-  workspaceId,
-  parsedInput,
-  accessScope,
-}: {
-  workspaceId: string
-  parsedInput: RemoveContactTagsRequest
-  accessScope?: ContactAccessScope
-}) =>
-  await tagService.removeFromContacts({
-    workspaceId,
-    ids: parsedInput.ids,
-    tags: parsedInput.tags,
-    accessScope,
-  })

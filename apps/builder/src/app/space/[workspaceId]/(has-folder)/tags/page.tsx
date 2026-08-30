@@ -3,7 +3,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { listTags } from "@/features/tags/queries"
+import { listTagsRSC } from "@/features/tags/queries"
 import { listTagsSearchParamsCache } from "@/features/tags/schema/query"
 import { TagsTable } from "@/features/tags/tags-table"
 
@@ -21,7 +21,7 @@ export default async function TagsPage(props: {
   const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
-    listTags({
+    listTagsRSC({
       ...search,
       folderId,
       workspaceId,

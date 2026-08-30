@@ -24,7 +24,7 @@ import type {
   MoveFilesRequest,
   RenameFolderRequest,
   ToggleFavouriteRequest,
-} from "../schemas"
+} from "../schema"
 
 export async function createMediaLibraryFolder(input: CreateFolderRequest) {
   const [folder] = await db

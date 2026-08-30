@@ -14,7 +14,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateMagicLinkRequest,
   updateMagicLinkRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateMagicLinkAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

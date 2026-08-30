@@ -4,7 +4,8 @@ import { tagService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
+import { mapExceptionToFieldError } from "@/lib/action-field-error"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type CreateTagRequest, createTagRequest } from "../schema/action"
 
@@ -18,16 +19,13 @@ export const createTagAction = workspaceActionClient
     }: {
       parsedInput: CreateTagRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
-    }) => await createTag({ workspaceId, ...parsedInput }),
+    }) => {
+      const data = await mapExceptionToFieldError(
+        createTagRequest,
+        "name",
+        () => tagService.create({ workspaceId, data: parsedInput }),
+        "tag",
+      )
+      return { data }
+    },
   )
-
-export const createTag = async (
-  parsedInput: CreateTagRequest & { workspaceId: string },
-) => {
-  const { workspaceId, ...data } = parsedInput
-  const newTag = await tagService.create({ workspaceId, data })
-
-  return {
-    data: newTag,
-  }
-}

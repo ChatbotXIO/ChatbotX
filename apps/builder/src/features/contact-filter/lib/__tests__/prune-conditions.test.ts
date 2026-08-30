@@ -1,6 +1,6 @@
 import { contactFilterFields } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
-import type { ContactFilterCondition } from "../../schemas"
+import type { ContactFilterCondition } from "../../schema"
 import { pruneExcludedConditions } from "../prune-conditions"
 
 describe("pruneExcludedConditions", () => {

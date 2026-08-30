@@ -5,15 +5,15 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { FormProvider, useForm, useFormContext } from "react-hook-form"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { allActions } from "@/features/triggers/components/actions/schemas"
+import { allActions } from "@/features/triggers/components/actions/schema"
 import {
   trackAdsLead,
   defaultFn as trackAdsLeadDefaultFn,
-} from "@/features/triggers/components/actions/schemas/track-ads-lead"
+} from "@/features/triggers/components/actions/schema/track-ads-lead"
 import {
   trackAdsPurchase,
   defaultFn as trackAdsPurchaseDefaultFn,
-} from "@/features/triggers/components/actions/schemas/track-ads-purchase"
+} from "@/features/triggers/components/actions/schema/track-ads-purchase"
 import { updateTriggerSchema } from "@/features/triggers/schema/mutation"
 
 vi.mock("next-intl", () => ({

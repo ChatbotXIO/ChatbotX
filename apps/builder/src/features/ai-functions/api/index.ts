@@ -1,4 +1,4 @@
-import { aiFunctionsAuthenticatedAPI } from "./authenticated"
+import { aiFunctionsAuthenticatedAPI } from "./private"
 
 export const aiFunctionsAPI = {
   ...aiFunctionsAuthenticatedAPI,

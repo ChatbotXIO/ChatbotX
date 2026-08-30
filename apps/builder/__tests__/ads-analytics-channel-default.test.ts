@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   adsAnalyticsChannelValues,
   adsAnalyticsSearchParamsCache,
-} from "@/features/ads/schemas/analytics"
+} from "@/features/ads/schema/analytics"
 
 describe("Ads Analytics channel filter — 'All channels' default", () => {
   test("adsAnalyticsChannelValues includes every ads-eligible channel plus the 'all' sentinel", () => {

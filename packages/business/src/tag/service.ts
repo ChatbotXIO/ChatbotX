@@ -134,15 +134,13 @@ class TagService extends BaseService {
       throw new ChatbotXException("Name is already taken.", "nameTaken", 400)
     }
 
-    const existing = await tagRepository.findById({ id, workspaceId }, tx)
-    if (!existing) {
-      throw notFoundException("Tag not found")
-    }
-
     const updated = await tagRepository.update(
       { id, workspaceId, name: data.name },
       tx,
     )
+    if (!updated) {
+      throw notFoundException("Tag not found")
+    }
 
     await this.invalidateCacheTags([
       `workspaces:${workspaceId}#tags`,
@@ -268,12 +266,10 @@ class TagService extends BaseService {
         continue
       }
 
-      for (const contact of contacts) {
-        await tagRepository.unlinkContacts({
-          contactId: contact.id,
-          tagIds: allTagIds,
-        })
-      }
+      await tagRepository.unlinkContacts({
+        contactIds: contacts.map((contact) => contact.id),
+        tagIds: allTagIds,
+      })
 
       // Channel cleanup (unassign + delete ContactToTagChannel) runs in the queue.
       for (const contact of contacts) {
@@ -347,25 +343,28 @@ class TagService extends BaseService {
           )
         }
 
-        // Remove tags no longer selected (local ContactToTag only).
+        // Remove tags no longer selected (local ContactToTag only). Skip the
+        // DELETE entirely when the snapshot diff shows nothing would change.
         const newTagIdSet = new Set(resolvedTags.map((t) => t.id))
-        const removed = Array.from(oldTagIds).filter(
+        const hasRemovals = Array.from(oldTagIds).some(
           (id) => !newTagIdSet.has(id),
         )
-        await tagRepository.unlinkContactExcept(
-          {
-            contactId: contact.id,
-            keepTagIds: resolvedTags.map((t) => t.id),
-          },
-          tx,
-        )
+        const removed = hasRemovals
+          ? await tagRepository.unlinkContactExcept(
+              {
+                contactId: contact.id,
+                keepTagIds: resolvedTags.map((t) => t.id),
+              },
+              tx,
+            )
+          : []
 
         return {
           returnedTags: resolvedTags,
           newlyAppliedTags: resolvedTags.filter(
             (tag) => !oldTagIds.has(tag.id),
           ),
-          removedTagIds: removed,
+          removedTagIds: removed.map((row) => row.tagId),
         }
       })
 
@@ -610,7 +609,7 @@ class TagService extends BaseService {
     })
 
     const removed = await tagRepository.unlinkContacts(
-      { contactId, tagIds },
+      { contactIds: [contactId], tagIds },
       tx,
     )
 

@@ -1,4 +1,4 @@
-import { deviceTokensAuthenticatedAPI } from "./authenticated"
+import { deviceTokensAuthenticatedAPI } from "./private"
 
 export const deviceTokensAPI = {
   ...deviceTokensAuthenticatedAPI,

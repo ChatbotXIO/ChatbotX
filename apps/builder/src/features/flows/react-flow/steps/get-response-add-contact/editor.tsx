@@ -31,10 +31,11 @@ import { CircleHelpIcon, MailIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
+import useSWRImmutable from "swr/immutable"
 import type { z } from "zod"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
 import { BaseStepEditor } from "../base/editor"
 
 type GetResponsePage<T> = {
@@ -85,19 +86,27 @@ const GetResponseDialog = ({ parentName }: { parentName: string }) => {
     data: campaignsResponse,
     error: campaignsError,
     isLoading: campaignsLoading,
-  } = callAPI<GetResponsePage<GetResponseCampaign>>(
-    open
-      ? `/api/workspaces/${workspaceId}/get-response/campaigns?page=1&perPage=${GET_RESPONSE_CAMPAIGNS_PAGE_SIZE}`
-      : null,
+  } = useSWRImmutable<GetResponsePage<GetResponseCampaign>>(
+    open && workspaceId ? ["get-response-campaigns", workspaceId] : null,
+    () =>
+      client.integrationGetResponseAPI.listCampaigns({
+        workspaceId,
+        page: 1,
+        perPage: GET_RESPONSE_CAMPAIGNS_PAGE_SIZE,
+      }),
   )
   const {
     data: tagsResponse,
     error: tagsError,
     isLoading: tagsLoading,
-  } = callAPI<GetResponsePage<GetResponseTag>>(
-    open
-      ? `/api/workspaces/${workspaceId}/get-response/tags?page=1&perPage=${GET_RESPONSE_TAGS_PAGE_SIZE}`
-      : null,
+  } = useSWRImmutable<GetResponsePage<GetResponseTag>>(
+    open && workspaceId ? ["get-response-tags", workspaceId] : null,
+    () =>
+      client.integrationGetResponseAPI.listTags({
+        workspaceId,
+        page: 1,
+        perPage: GET_RESPONSE_TAGS_PAGE_SIZE,
+      }),
   )
 
   const campaignOptions = useMemo(

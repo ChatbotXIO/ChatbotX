@@ -2,7 +2,7 @@ import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { CreateBotFieldDialog } from "./create-bot-field-dialog"
 import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
-import type { BotFieldResource } from "./schemas/resource"
+import type { BotFieldResource } from "./schema/resource"
 
 export function BotFieldToolbarActions({
   workspaceId,

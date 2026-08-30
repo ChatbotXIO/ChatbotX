@@ -1,5 +1,4 @@
 import type { ListInboxesResponse } from "@chatbotx.io/business"
-import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { client } from "@/lib/orpc/orpc"
 import { maxPerPageString } from "@/lib/shared-request"
@@ -45,9 +44,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch inboxes",
+            error instanceof Error ? error.message : "Failed to fetch inboxes",
         })
       } finally {
         set({ initialized: true })
@@ -67,19 +64,12 @@ export const createInboxStore = (props: Partial<InboxState>) =>
           includes: ["integration"],
           perPage: maxPerPageString,
         })
-        //  ky
-        //   .get<PaginatedResponse<InboxResource>>(
-        //     `/api/workspaces/${workspaceId}/inboxes?${searchParams.toString()}`,
-        //   )
-        //   .json()
 
         set({ inboxes: data })
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch inboxes",
+            error instanceof Error ? error.message : "Failed to fetch inboxes",
         })
       } finally {
         set({ loadingInboxes: false })

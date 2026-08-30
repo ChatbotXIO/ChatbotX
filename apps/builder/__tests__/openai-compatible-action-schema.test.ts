@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { connectOpenaiCompatibleSchema } from "@/features/integration-openai-compatible/schemas/request"
+import { connectOpenaiCompatibleSchema } from "@/features/integration-openai-compatible/schema/request"
 
 describe("OpenAI-compatible action schema", () => {
   const validInput = {

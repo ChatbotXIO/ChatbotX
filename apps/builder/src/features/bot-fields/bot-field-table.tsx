@@ -41,7 +41,7 @@ import { useCopyToClipboard } from "usehooks-ts"
 import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label"
 import { BotFieldToolbarActions } from "./bot-field-table-toolbar"
 import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
-import type { BotFieldResource } from "./schemas/resource"
+import type { BotFieldResource } from "./schema/resource"
 import { UpdateBotFieldDialog } from "./update-bot-field-dialog"
 
 type FieldsTableProps = {

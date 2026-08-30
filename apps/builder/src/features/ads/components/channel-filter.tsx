@@ -14,7 +14,7 @@ import {
   type AdsAnalyticsChannel,
   type AdsAnalyticsSearchParams,
   adsAnalyticsChannelDisplayOrder,
-} from "../schemas/analytics"
+} from "../schema/analytics"
 
 type ChannelIntegration = { id: string; name: string }
 

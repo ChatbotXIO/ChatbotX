@@ -12,7 +12,7 @@ import {
 } from "vitest"
 import { useEmbeddedSignupAutoConnect } from "@/features/integration-whatsapp/hooks/use-embedded-signup-auto-connect"
 import { WA_OAUTH_RESULT } from "@/features/integration-whatsapp/libs/embedded-signup"
-import type { ConnectWhatsappSchema } from "@/features/integration-whatsapp/schemas"
+import type { ConnectWhatsappSchema } from "@/features/integration-whatsapp/schema"
 
 const BROKER_ORIGIN = "https://broker.test"
 const FOREIGN_ORIGIN = "https://evil.test"
