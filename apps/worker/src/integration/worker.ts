@@ -367,10 +367,12 @@ async function startIntegrationWorker() {
       // the max wait to tighten this lock (see plan §7, out of scope here).
       lockDuration: 10 * 60 * 1000,
       // No stalledInterval override: with coexist gone there are no
-      // long-running jobs here, so the BullMQ default (30s) applies — a
-      // crashed worker's jobs are re-picked in seconds instead of minutes.
-      // Live workers auto-renew their locks, so the frequent check cannot
-      // false-positive an in-progress job.
+      // long-running jobs here, so the BullMQ default (30s) applies. A
+      // crashed worker's job is reclaimed once its lock EXPIRES and the next
+      // scan runs — ~10–10.5 min after the crash (lock expiry + ≤30s scan),
+      // down from ~10–20 min with the old 10-min scan interval. Live workers
+      // auto-renew their locks (including through awaitChatJob waits), so the
+      // frequent check cannot false-positive an in-progress job.
       maxStalledCount: 1,
     },
   )

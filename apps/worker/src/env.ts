@@ -26,7 +26,8 @@ export const env = createEnv({
     // otherwise BullMQ would treat the job as stalled and reprocess it (double
     // send). Validated so a bad value can't become NaN (= wait forever). Since
     // the coexist split (heavy worker), this max (9 min) is the ONLY reason the
-    // integration worker's lockDuration/stalledInterval stay at 10 min — see
+    // integration worker's lockDuration stays at 10 min (its stalledInterval
+    // reverted to the BullMQ default) — see
     // `apps/worker/src/integration/worker.ts`.
     CHAT_JOB_WAIT_TIMEOUT_MS: z.coerce
       .number()
