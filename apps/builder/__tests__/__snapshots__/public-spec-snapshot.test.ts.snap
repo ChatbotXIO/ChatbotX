@@ -1,0 +1,1174 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`public v1 tags contract spec > matches the committed snapshot 1`] = `
+{
+  "info": {
+    "title": "ChatbotX",
+    "version": "0.0.1",
+  },
+  "openapi": "3.1.1",
+  "paths": {
+    "/v1/tags": {
+      "get": {
+        "deprecated": undefined,
+        "description": undefined,
+        "operationId": "listTagsContract",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "data",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "OK",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "businessError",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "An error occurred while processing your request",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 400,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "400",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "notFound",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Resource not found",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 404,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "404",
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "rateLimitExceeded",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Rate limit exceeded",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 429,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "429",
+          },
+        },
+        "summary": "Get all tags",
+        "tags": [
+          "Tags",
+        ],
+      },
+      "post": {
+        "deprecated": undefined,
+        "description": undefined,
+        "operationId": "createTagContract",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "name",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "OK",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "businessError",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "An error occurred while processing your request",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 400,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "400",
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "invalidRequestData",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Validation error",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 422,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "422",
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "rateLimitExceeded",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Rate limit exceeded",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 429,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "429",
+          },
+        },
+        "summary": "Create a new tag",
+        "tags": [
+          "Tags",
+        ],
+      },
+    },
+    "/v1/tags/{idOrName}": {
+      "get": {
+        "deprecated": undefined,
+        "description": undefined,
+        "operationId": "getTagContract",
+        "parameters": [
+          {
+            "allowEmptyValue": undefined,
+            "allowReserved": undefined,
+            "explode": undefined,
+            "in": "path",
+            "name": "idOrName",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+            "style": undefined,
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "OK",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "businessError",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "An error occurred while processing your request",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 400,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "400",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "notFound",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Resource not found",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 404,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "404",
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "rateLimitExceeded",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Rate limit exceeded",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 429,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "429",
+          },
+        },
+        "summary": "Get tag by id or name",
+        "tags": [
+          "Tags",
+        ],
+      },
+    },
+    "/v1/tags/{id}": {
+      "delete": {
+        "deprecated": undefined,
+        "description": undefined,
+        "operationId": "deleteTagContract",
+        "parameters": [
+          {
+            "allowEmptyValue": undefined,
+            "allowReserved": undefined,
+            "explode": undefined,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "pattern": "\\d+",
+              "type": "string",
+            },
+            "style": undefined,
+          },
+        ],
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {},
+                    {
+                      "not": {},
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "OK",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "businessError",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "An error occurred while processing your request",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 400,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "400",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "notFound",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Resource not found",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 404,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "404",
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "rateLimitExceeded",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Rate limit exceeded",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 429,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "429",
+          },
+        },
+        "summary": "Delete tag",
+        "tags": [
+          "Tags",
+        ],
+      },
+      "put": {
+        "deprecated": undefined,
+        "description": undefined,
+        "operationId": "updateTagContract",
+        "parameters": [
+          {
+            "allowEmptyValue": undefined,
+            "allowReserved": undefined,
+            "explode": undefined,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "pattern": "\\d+",
+              "type": "string",
+            },
+            "style": undefined,
+          },
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "examples": undefined,
+                "properties": {
+                  "name": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "name",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "OK",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "businessError",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "An error occurred while processing your request",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 400,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "400",
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "invalidRequestData",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Validation error",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 422,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "422",
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "code": {
+                          "const": "rateLimitExceeded",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": true,
+                        },
+                        "message": {
+                          "default": "Rate limit exceeded",
+                          "type": "string",
+                        },
+                        "status": {
+                          "const": 429,
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "data": {},
+                        "defined": {
+                          "const": false,
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "status": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                      ],
+                      "type": "object",
+                    },
+                  ],
+                },
+              },
+            },
+            "description": "429",
+          },
+        },
+        "summary": "Update tag",
+        "tags": [
+          "Tags",
+        ],
+      },
+    },
+  },
+}
+`;

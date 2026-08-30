@@ -1,24 +1,20 @@
+import { reflinkContract } from "@chatbotx.io/api-contract/reflink"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { zodBigintAsString } from "@chatbotx.io/utils"
-import { z } from "zod"
-import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
+import { implement, onError } from "@orpc/server"
+import type { BaseContext } from "@/middlewares/context"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import { mapKnownOrpcErrors, requireTokenScope } from "@/orpc"
 import { findReflink } from "../queries"
-import { reflinkResource } from "../schema/resource"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+const os = implement(reflinkContract)
+  .$context<BaseContext>()
+  .use(onError(mapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
+  .use(requireTokenScope("automation"))
 
 export const refLinksWorkspaceTokenAPIs = {
-  getRefLinkWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/ref-links/{id}",
-      summary: "Get a specific ref link",
-      tags: ["Ref Links"],
-    })
-    .input(z.object({ id: zodBigintAsString() }))
-    .output(reflinkResource)
-    .handler(async ({ context, input }) => {
+  getRefLinkWorkspaceTokenAPI: os.getRefLinkContract.handler(
+    async ({ context, input }) => {
       const reflink = await findReflink({
         workspaceId: context.workspace.id,
         id: input.id,
@@ -27,7 +23,8 @@ export const refLinksWorkspaceTokenAPIs = {
         throw notFoundException("Ref link not found")
       }
       return reflink
-    }),
+    },
+  ),
 }
 
 export default refLinksWorkspaceTokenAPIs

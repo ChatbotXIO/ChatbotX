@@ -1,33 +1,25 @@
-import z from "zod"
-import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
+import { flowContract } from "@chatbotx.io/api-contract/flow"
+import { implement, onError } from "@orpc/server"
+import type { BaseContext } from "@/middlewares/context"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import { mapKnownOrpcErrors, requireTokenScope } from "@/orpc"
 import { listFlows } from "../queries"
-import { flowResource } from "../schema/resource"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+const os = implement(flowContract)
+  .$context<BaseContext>()
+  .use(onError(mapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
+  .use(requireTokenScope("automation"))
 
 const flowWorkspaceTokenAPIs = {
-  listFlowsWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/flows",
-      summary: "Get all flows",
-      tags: ["Flows"],
-    })
-    .input(z.object({}))
-    .output(
-      z.object({
-        data: z.array(flowResource.pick({ id: true, name: true })),
+  listFlowsWorkspaceTokenAPI: os.listFlowsContract.handler(
+    async ({ context, input }) =>
+      await listFlows({
+        ...input,
+        workspaceId: context.workspace.id,
+        active: true,
       }),
-    )
-    .handler(
-      async ({ context, input }) =>
-        await listFlows({
-          ...input,
-          workspaceId: context.workspace.id,
-          active: true,
-        }),
-    ),
+  ),
 }
 
 export default flowWorkspaceTokenAPIs

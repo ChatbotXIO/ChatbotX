@@ -1,30 +1,19 @@
+import { keywordContract } from "@chatbotx.io/api-contract/keyword"
 import { automatedResponseService } from "@chatbotx.io/business"
-import {
-  automatedResponseModel,
-  createSelectSchema,
-} from "@chatbotx.io/database/schema"
-import z from "zod"
+import { implement, onError } from "@orpc/server"
 import { maxPerPage } from "@/lib/shared-request"
-import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import type { BaseContext } from "@/middlewares/context"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import { mapKnownOrpcErrors, requireTokenScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+const os = implement(keywordContract)
+  .$context<BaseContext>()
+  .use(onError(mapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
+  .use(requireTokenScope("automation"))
 
-const keywordResource = createSelectSchema(automatedResponseModel, {
-  id: z.string(),
-  workspaceId: z.string(),
-  folderId: z.string().nullable(),
-  flowId: z.string().nullable(),
-})
-
-const listKeywordsWorkspaceTokenAPI = workspaceTokenAuthAPI
-  .route({
-    method: "GET",
-    path: "/v1/keywords",
-    summary: "List keywords (automated responses)",
-    tags: ["Keywords"],
-  })
-  .output(z.object({ data: z.array(keywordResource) }))
-  .handler(async ({ context }) => {
+const listKeywordsWorkspaceTokenAPI = os.listKeywordsContract.handler(
+  async ({ context }) => {
     const { data } = await automatedResponseService.list({
       workspaceId: context.workspace.id,
       type: "inbound",
@@ -36,7 +25,8 @@ const listKeywordsWorkspaceTokenAPI = workspaceTokenAuthAPI
     })
 
     return { data }
-  })
+  },
+)
 
 export const keywordsWorkspaceTokenAPIs = {
   listKeywordsWorkspaceTokenAPI,

@@ -93,12 +93,14 @@ export const authorizedAPI = withErrorMapping.use(authMiddleware)
  * scope that ships after the token was created (least privilege; see the
  * WorkspaceApiToken.scopes doc).
  */
-const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
+export const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
   base.middleware(async ({ context, next }) => {
     // apiToken is always set here in practice — this middleware is only ever
-    // chained after workspaceTokenAuthMidddleware via
-    // workspaceTokenAuthAPIForScope below — but the base context type marks
-    // it optional (shared with authorizedAPI, which never sets it).
+    // chained after workspaceTokenAuthMidddleware, via
+    // workspaceTokenAuthAPIForScope below or directly by a contract-based
+    // implementer (see the @chatbotx.io/api-contract routers) — but the base
+    // context type marks it optional (shared with authorizedAPI, which never
+    // sets it).
     const scopes = context.apiToken?.scopes
     if (scopes !== null && scopes !== undefined && !scopes.includes(scope)) {
       throw new ORPCError("FORBIDDEN", {
