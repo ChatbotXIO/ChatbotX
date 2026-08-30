@@ -17,6 +17,7 @@ const publicRoutes = [
   "/minigames",
   "/auth",
   "/api",
+  "/api-internal",
   "/ws",
   "/storage",
   "/checkout",
