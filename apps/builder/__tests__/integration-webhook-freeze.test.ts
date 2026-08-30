@@ -39,8 +39,19 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   inboxModel: {},
 }))
 
+// Distinct object identity so tests can assert the exact `heavyQueue` passed
+// through to `integration.handleRequest`.
+const mockHeavyQueue = { name: "heavy" }
+const mockIntegrationQueue = { name: "integration" }
+
 vi.mock("@chatbotx.io/worker-config", () => ({
-  integrationQueue: {},
+  integrationQueue: mockIntegrationQueue,
+  // The webhook handler now also threads `heavyQueue` through to
+  // `integration.handleRequest` (coexist actions moved to the `heavy` queue —
+  // see docs/plans/2026-08-30-heavy-worker-coexist-split.md). It must be
+  // exported here or referencing it inside the try block throws (surfacing
+  // as the integration's handleRequest mock never being called).
+  heavyQueue: mockHeavyQueue,
 }))
 
 const isCloud = vi.fn(() => false)
@@ -116,6 +127,15 @@ describe("telegram webhook freeze", () => {
     expect(telegramHandleRequest).toHaveBeenCalledOnce()
   })
 
+  test("passes the heavyQueue through to handleRequest so coexist buffers are not stranded", async () => {
+    await handleWebhook("telegram", request())
+
+    expect(telegramHandleRequest).toHaveBeenCalledOnce()
+    const call = telegramHandleRequest.mock.calls[0][0]
+    expect(call.heavyQueue).toBe(mockHeavyQueue)
+    expect(call.queue).toBe(mockIntegrationQueue)
+  })
+
   test("skips the update when the workspace is scheduled for deletion", async () => {
     workspaceFind.mockResolvedValue({
       ...liveWorkspace,
@@ -173,6 +193,15 @@ describe("tiktok webhook freeze", () => {
     await handleWebhook("tiktok", request())
 
     expect(tiktokHandleRequest).toHaveBeenCalledOnce()
+  })
+
+  test("passes the heavyQueue through to handleRequest so coexist buffers are not stranded", async () => {
+    await handleWebhook("tiktok", request())
+
+    expect(tiktokHandleRequest).toHaveBeenCalledOnce()
+    const call = tiktokHandleRequest.mock.calls[0][0]
+    expect(call.heavyQueue).toBe(mockHeavyQueue)
+    expect(call.queue).toBe(mockIntegrationQueue)
   })
 
   test("skips the event when the workspace is scheduled for deletion", async () => {

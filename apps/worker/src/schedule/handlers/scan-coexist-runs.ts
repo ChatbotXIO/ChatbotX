@@ -9,9 +9,9 @@ import type {
 } from "@chatbotx.io/database/repositories"
 import { getChildLogger } from "@chatbotx.io/logger"
 import {
-  IntegrationJobAction,
-  type IntegrationJobData,
-  integrationQueue,
+  HeavyJobAction,
+  type HeavyJobData,
+  heavyQueue,
 } from "@chatbotx.io/worker-config"
 
 const log = getChildLogger("scan-coexist-runs")
@@ -22,8 +22,8 @@ const MAX_ATTEMPTS = 5
 type CoexistRunEnqueuer = (run: PickedCoexistRun) => Promise<void>
 
 const pullSyncActions = {
-  messenger: IntegrationJobAction.coexistMessengerSync,
-  instagram: IntegrationJobAction.coexistInstagramSync,
+  messenger: HeavyJobAction.coexistMessengerSync,
+  instagram: HeavyJobAction.coexistInstagramSync,
 } satisfies Partial<
   Record<
     CoexistChannel,
@@ -34,7 +34,7 @@ const pullSyncActions = {
 const createPullSyncPayload = (
   run: PickedCoexistRun,
   action: (typeof pullSyncActions)[keyof typeof pullSyncActions],
-): IntegrationJobData => ({
+): HeavyJobData => ({
   type: action,
   data: {
     runId: run.id,
@@ -70,7 +70,7 @@ const coexistRunEnqueuers = {
     }
 
     await enqueueRun(run, {
-      type: IntegrationJobAction.coexistWhatsappFlush,
+      type: HeavyJobAction.coexistWhatsappFlush,
       data: { runId: run.id, phoneNumberId: integration.phoneNumberId },
     })
   },
@@ -78,9 +78,9 @@ const coexistRunEnqueuers = {
 
 async function enqueueRun(
   run: PickedCoexistRun,
-  payload: IntegrationJobData,
+  payload: HeavyJobData,
 ): Promise<void> {
-  await integrationQueue.add(payload.type, payload, {
+  await heavyQueue.add(payload.type, payload, {
     jobId: `coexist-run-${run.id}-${run.attempts}`,
     attempts: 1,
     removeOnComplete: true,

@@ -51,4 +51,27 @@ describe("isNoRedisEnv", () => {
     expect(typeof aiAgentQueue.add).toBe("function")
     expect(aiAgentQueue).not.toHaveProperty("opts")
   })
+
+  // The `heavy` queue (coexist historical sync) is imported at build time by
+  // the builder webhook routes (`heavyQueue` prop on `HandleRequestProps`), so
+  // it must resolve to the fake queue under a no-Redis env just like every
+  // other queue barrel — see docs/plans/2026-08-30-heavy-worker-coexist-split.md.
+  test("importing the heavy queue barrel under vitest yields the fake queue, not a BullMQ Queue", async () => {
+    vi.stubEnv("VITEST", "true")
+
+    const { heavyQueue } = await import("../src/queues/heavy")
+
+    expect(typeof heavyQueue.add).toBe("function")
+    expect(heavyQueue).not.toHaveProperty("opts")
+  })
+
+  test("does not dial Redis for the heavy queue when NEXT_PHASE is phase-production-build", async () => {
+    vi.stubEnv("VITEST", "")
+    vi.stubEnv("NEXT_PHASE", "phase-production-build")
+
+    const { heavyQueue } = await import("../src/queues/heavy")
+
+    expect(typeof heavyQueue.add).toBe("function")
+    expect(heavyQueue).not.toHaveProperty("opts")
+  })
 })

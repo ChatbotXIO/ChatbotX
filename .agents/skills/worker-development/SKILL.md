@@ -19,6 +19,7 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | Worker | Queue/Topic | Entry |
 |--------|------------|-------|
 | integration | `integration` | `src/integration/worker.ts` |
+| heavy | `heavy` | `src/heavy/worker.ts` |
 | chat | `chat` | `src/chat/worker.ts` |
 | ai-agent | `aiAgent` | `src/ai-agent/worker.ts` |
 | default | `default` | `src/default/worker.ts` |
@@ -27,6 +28,19 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | schedule | (cron) | `src/schedule/worker.ts` |
 | sequence-scheduler | Kafka | `src/sequence-scheduler/worker*.ts` |
 | notification | `notification` | `src/notification/worker.ts` |
+
+The `heavy` queue/worker is a **workload-class** queue (not a domain queue):
+long-lock (10 min), throughput-oriented, latency-tolerant jobs that would
+otherwise starve latency-sensitive integration jobs of concurrency slots.
+Coexist historical sync (Messenger/Instagram pulls, WhatsApp staging
+flushes, attachment downloads) is its first tenant — handlers live under
+`src/heavy/handlers/coexist/`, domain-grouped one level down. A future heavy
+workload (e.g. a contact-import backfill) should join this queue with its
+own `handlers/<domain>/` folder rather than spawning a new worker. See
+`docs/plans/2026-08-30-heavy-worker-coexist-split.md` for the full rationale,
+including why the integration worker's `lockDuration`/`stalledInterval` stay
+at 10 minutes after the split (bounded by `CHAT_JOB_WAIT_TIMEOUT_MS`, not by
+coexist chunk sizing anymore).
 
 ## Creating a New Queue
 

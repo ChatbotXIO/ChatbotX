@@ -4,9 +4,9 @@ import type {
   IntegrationInstagramModel,
 } from "@chatbotx.io/database/types"
 import {
-  IntegrationJobAction,
-  type IntegrationJobCoexistInstagramSync,
-  integrationQueue,
+  HeavyJobAction,
+  type HeavyJobCoexistInstagramSync,
+  heavyQueue,
 } from "@chatbotx.io/worker-config"
 import pLimit from "p-limit"
 import { logger } from "../../../lib/logger"
@@ -46,7 +46,7 @@ const runInstagramCoexistPull = async <
   Msg,
 >(
   adapter: PullCoexistAdapter<Ctx, Conv, Msg>,
-  data: IntegrationJobCoexistInstagramSync["data"],
+  data: HeavyJobCoexistInstagramSync["data"],
 ): Promise<void> => {
   const { runId, integrationId, workspaceId } = data
   const jobStart = Date.now()
@@ -355,11 +355,11 @@ const runInstagramCoexistPull = async <
       failedTotal += pageFailed
 
       if (attachmentIds.length > 0) {
-        await integrationQueue.addBulk(
+        await heavyQueue.addBulk(
           attachmentIds.map((attachmentId) => ({
-            name: IntegrationJobAction.coexistAttachmentDownload,
+            name: HeavyJobAction.coexistAttachmentDownload,
             data: {
-              type: IntegrationJobAction.coexistAttachmentDownload,
+              type: HeavyJobAction.coexistAttachmentDownload,
               data: {
                 attachmentId,
                 workspaceId,
@@ -404,10 +404,10 @@ const runInstagramCoexistPull = async <
     }
 
     if (continueLater) {
-      await integrationQueue.add(
-        IntegrationJobAction.coexistInstagramSync,
+      await heavyQueue.add(
+        HeavyJobAction.coexistInstagramSync,
         {
-          type: IntegrationJobAction.coexistInstagramSync,
+          type: HeavyJobAction.coexistInstagramSync,
           data: { runId, integrationId, workspaceId },
         },
         {
@@ -451,17 +451,17 @@ const runInstagramCoexistPull = async <
 // run rows, and job action — only the pull source differs. Adding a provider is
 // one entry here plus its adapter; there is no branching to touch.
 const instagramCoexistProvidersByType = {
-  instagram: (data: IntegrationJobCoexistInstagramSync["data"]) =>
+  instagram: (data: HeavyJobCoexistInstagramSync["data"]) =>
     runInstagramCoexistPull(instagramCoexistAdapter, data),
-  facebook: (data: IntegrationJobCoexistInstagramSync["data"]) =>
+  facebook: (data: HeavyJobCoexistInstagramSync["data"]) =>
     runInstagramCoexistPull(instagramFacebookCoexistAdapter, data),
 } satisfies Record<
   InstagramIntegrationType,
-  (data: IntegrationJobCoexistInstagramSync["data"]) => Promise<void>
+  (data: HeavyJobCoexistInstagramSync["data"]) => Promise<void>
 >
 
 export const coexistInstagramSync = async (
-  data: IntegrationJobCoexistInstagramSync["data"],
+  data: HeavyJobCoexistInstagramSync["data"],
 ): Promise<void> => {
   const { runId, integrationId, workspaceId } = data
 

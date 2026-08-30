@@ -67,6 +67,14 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     coexistMessengerSync: "coexistMessengerSync",
     coexistInstagramSync: "coexistInstagramSync",
   },
+  // coexist/service.ts now sources its job-action strings from HeavyJobAction
+  // (the coexist actions moved to the `heavy` queue) — see
+  // docs/plans/2026-08-30-heavy-worker-coexist-split.md.
+  HeavyJobAction: {
+    coexistMessengerSync: "coexistMessengerSync",
+    coexistInstagramSync: "coexistInstagramSync",
+    coexistWhatsappFlush: "coexistWhatsappFlush",
+  },
   PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))
 

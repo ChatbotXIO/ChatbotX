@@ -55,11 +55,11 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
+  HeavyJobAction: {
     coexistAttachmentDownload: "coexistAttachmentDownload",
     coexistInstagramSync: "coexistInstagramSync",
   },
-  integrationQueue: {
+  heavyQueue: {
     add: mockQueueAdd,
     addBulk: mockQueueAddBulk,
   },
@@ -73,14 +73,14 @@ vi.mock("../src/lib/logger", () => ({
   },
 }))
 
-vi.mock("../src/integration/handlers/coexist/bulk-historical-import", () => ({
+vi.mock("../src/heavy/handlers/coexist/bulk-historical-import", () => ({
   applyCoexistActivityUpdates: mockApplyCoexistActivityUpdates,
   bulkImportContacts: mockBulkImportContacts,
   bulkImportMessages: mockBulkImportMessages,
   createHistoricalIdFactory: vi.fn(() => () => "historical-id"),
 }))
 
-vi.mock("../src/integration/handlers/coexist/instagram-adapter", () => ({
+vi.mock("../src/heavy/handlers/coexist/instagram-adapter", () => ({
   instagramCoexistAdapter: {
     channel: "instagram",
     discoverContactEnrichment: vi.fn(() => ({})),
@@ -96,24 +96,21 @@ vi.mock("../src/integration/handlers/coexist/instagram-adapter", () => ({
 
 // Provider routing imports the Facebook adapter too; stub it so the native
 // (`type: "instagram"`) path stays isolated in this suite.
-vi.mock(
-  "../src/integration/handlers/coexist/instagram-facebook-adapter",
-  () => ({
-    instagramFacebookCoexistAdapter: {
-      channel: "instagram",
-      discoverContactEnrichment: vi.fn(() => ({})),
-      fetchConversationMessages: vi.fn(),
-      getConversationUpdatedAt: vi.fn(),
-      listConversations: vi.fn(),
-      loadContext: mockFbLoadContext,
-      resolveContact: vi.fn(),
-      toHistoricalMessage: vi.fn(),
-    },
-  }),
-)
+vi.mock("../src/heavy/handlers/coexist/instagram-facebook-adapter", () => ({
+  instagramFacebookCoexistAdapter: {
+    channel: "instagram",
+    discoverContactEnrichment: vi.fn(() => ({})),
+    fetchConversationMessages: vi.fn(),
+    getConversationUpdatedAt: vi.fn(),
+    listConversations: vi.fn(),
+    loadContext: mockFbLoadContext,
+    resolveContact: vi.fn(),
+    toHistoricalMessage: vi.fn(),
+  },
+}))
 
 const { coexistInstagramSync } = await import(
-  "../src/integration/handlers/coexist/instagram-sync"
+  "../src/heavy/handlers/coexist/instagram-sync"
 )
 
 const syncData = {

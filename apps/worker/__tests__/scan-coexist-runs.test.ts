@@ -29,12 +29,12 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
+  HeavyJobAction: {
     coexistWhatsappFlush: "coexistWhatsappFlush",
     coexistMessengerSync: "coexistMessengerSync",
     coexistInstagramSync: "coexistInstagramSync",
   },
-  integrationQueue: { add: mockQueueAdd },
+  heavyQueue: { add: mockQueueAdd },
 }))
 
 vi.mock("@chatbotx.io/logger", () => ({

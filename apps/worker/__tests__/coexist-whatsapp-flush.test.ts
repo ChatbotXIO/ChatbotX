@@ -93,12 +93,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
+  HeavyJobAction: {
     coexistWhatsappBuffer: "coexistWhatsappBuffer",
     coexistWhatsappFlush: "coexistWhatsappFlush",
     coexistMessengerSync: "coexistMessengerSync",
+    coexistAttachmentDownload: "coexistAttachmentDownload",
   },
-  integrationQueue: { add: mockQueueAdd },
+  heavyQueue: {
+    add: mockQueueAdd,
+    addBulk: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -131,7 +135,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
-vi.mock("../src/integration/handlers/coexist/bulk-historical-import", () => ({
+vi.mock("../src/heavy/handlers/coexist/bulk-historical-import", () => ({
   bulkImportHistorical: mockBulkImport,
 }))
 
@@ -139,7 +143,7 @@ vi.mock("../src/integration/handlers/coexist/bulk-historical-import", () => ({
 // Import handler after mocks
 // ---------------------------------------------------------------------------
 
-import { coexistWhatsappFlush } from "../src/integration/handlers/coexist/whatsapp-flush"
+import { coexistWhatsappFlush } from "../src/heavy/handlers/coexist/whatsapp-flush"
 
 // ---------------------------------------------------------------------------
 // Fixtures

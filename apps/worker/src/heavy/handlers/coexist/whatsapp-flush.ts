@@ -29,9 +29,9 @@ import {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
-  IntegrationJobAction,
-  type IntegrationJobCoexistWhatsappFlush,
-  integrationQueue,
+  HeavyJobAction,
+  type HeavyJobCoexistWhatsappFlush,
+  heavyQueue,
 } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { logger } from "../../../lib/logger"
@@ -827,7 +827,7 @@ const CHUNK_BUDGET_MS = 4 * 60 * 1000
  * window Meta uses to push it.
  */
 export const coexistWhatsappFlush = async (
-  data: IntegrationJobCoexistWhatsappFlush["data"],
+  data: HeavyJobCoexistWhatsappFlush["data"],
 ): Promise<void> => {
   const { phoneNumberId } = data
   const jobStart = Date.now()
@@ -1114,11 +1114,11 @@ export const coexistWhatsappFlush = async (
       ]
       if (attachmentIdsToDownload.length > 0) {
         try {
-          await integrationQueue.addBulk(
+          await heavyQueue.addBulk(
             attachmentIdsToDownload.map((attachmentId) => ({
-              name: IntegrationJobAction.coexistAttachmentDownload,
+              name: HeavyJobAction.coexistAttachmentDownload,
               data: {
-                type: IntegrationJobAction.coexistAttachmentDownload,
+                type: HeavyJobAction.coexistAttachmentDownload,
                 data: {
                   attachmentId,
                   workspaceId: integration.workspaceId,
@@ -1233,10 +1233,10 @@ export const coexistWhatsappFlush = async (
     // and a continuation is enqueued to keep draining.
     if (continueLater) {
       try {
-        await integrationQueue.add(
-          IntegrationJobAction.coexistWhatsappFlush,
+        await heavyQueue.add(
+          HeavyJobAction.coexistWhatsappFlush,
           {
-            type: IntegrationJobAction.coexistWhatsappFlush,
+            type: HeavyJobAction.coexistWhatsappFlush,
             data: { runId, phoneNumberId },
           },
           {

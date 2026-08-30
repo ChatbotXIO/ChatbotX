@@ -16,6 +16,7 @@ const STANDARD_WORKERS = [
   "chat",
   "events",
   "integration",
+  "heavy",
   "ai-agent",
   "default",
   "trigger",
@@ -69,6 +70,12 @@ describe("docker-entrypoint worker discovery", () => {
     const { stdout, status } = run("worker", "chat")
     expect(status).toBe(0)
     expect(stdout.trim()).toBe(join(distDir, "chat", "worker.mjs"))
+  })
+
+  test("resolves the heavy worker (coexist split) to its dist bundle", () => {
+    const { stdout, status } = run("worker", "heavy")
+    expect(status).toBe(0)
+    expect(stdout.trim()).toBe(join(distDir, "heavy", "worker.mjs"))
   })
 
   test("aliases sequence variants to their historical CLI names", () => {

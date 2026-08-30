@@ -150,7 +150,7 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-import { bulkImportHistorical } from "../src/integration/handlers/coexist/bulk-historical-import"
+import { bulkImportHistorical } from "../src/heavy/handlers/coexist/bulk-historical-import"
 
 // ---------------------------------------------------------------------------
 // Helpers — chain builders mirroring Drizzle's fluent API

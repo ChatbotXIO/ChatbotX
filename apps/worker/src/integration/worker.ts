@@ -6,6 +6,8 @@ import {
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getRedisConnection,
+  heavyJobDataSchema,
+  heavyQueue,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
@@ -22,11 +24,6 @@ import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
-import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
-import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
-import { coexistMessengerSync } from "./handlers/coexist/messenger-sync"
-import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
-import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
 import { processCommentAutomation } from "./handlers/comment-automation"
 import { processCommentAIReply } from "./handlers/comment-automation/ai-reply"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
@@ -78,6 +75,43 @@ async function startIntegrationWorker() {
         runJobWithAuditContext(
           { workspaceId, source: `integration:${job.data.type}` },
           async () => {
+            // ── FORWARD-ONLY SHIM (remove after bull:integration holds no
+            //    coexist jobs; see scripts/check-coexist-drain.mts) ────────
+            //
+            // The 5 coexist actions moved to the `heavy` queue/worker, but
+            // `bull:integration` survives a deploy: legacy coexist jobs
+            // (waiting, delayed ~60s flushes, retrying) are still there after
+            // cutover. `job.data` is typed `IntegrationJobData`, which no
+            // longer includes these actions, so a legacy payload can only be
+            // recognized by parsing — not casting — the raw value against the
+            // runtime `heavyJobDataSchema`.
+            //
+            // Production deploys are Docker Swarm stop-first: the old
+            // integration worker image is fully stopped before the new one
+            // (which owns none of the coexist handlers) starts, so old and
+            // new code never run concurrently. That makes it safe to forward
+            // EVERY recognized legacy action — including flush — into the
+            // `heavy` queue's single jobId namespace instead of executing any
+            // of them in place, which lets this worker drop all coexist
+            // handler knowledge. The forward preserves the original jobId
+            // (dedup-safe) and opts, minus `delay`/`repeat` (already consumed
+            // by having reached execution here; re-adding them would
+            // re-schedule/re-repeat the job on the heavy queue).
+            //
+            // Caveat: attempts state restarts fresh on the forwarded job —
+            // acceptable, since the default `attempts: 2` retry plus the
+            // scan-runs DB-side attempt tracking (`CoexistSyncRun.attempts`)
+            // remains the real retry authority for sync runs.
+            const legacy = heavyJobDataSchema.safeParse(job.data)
+            if (legacy.success) {
+              const { delay: _delay, repeat: _repeat, ...opts } = job.opts
+              await heavyQueue.add(job.name, legacy.data, {
+                ...opts,
+                jobId: job.opts.jobId ?? job.id,
+              })
+              return
+            }
+
             switch (job.data.type) {
               case IntegrationJobAction.incomingMessage: {
                 const {
@@ -255,28 +289,8 @@ async function startIntegrationWorker() {
                 await handleMessageStatus(job.data.data)
                 return
               }
-              case IntegrationJobAction.coexistWhatsappBuffer: {
-                await coexistWhatsappBuffer(job.data.data)
-                return
-              }
               case IntegrationJobAction.channelLabelChange: {
                 await handleChannelLabelWebhook(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistWhatsappFlush: {
-                await coexistWhatsappFlush(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistMessengerSync: {
-                await coexistMessengerSync(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistInstagramSync: {
-                await coexistInstagramSync(job.data.data)
-                return
-              }
-              case IntegrationJobAction.coexistAttachmentDownload: {
-                await coexistAttachmentDownload(job.data.data)
                 return
               }
               case IntegrationJobAction.adsAutomaticEvent: {
@@ -343,11 +357,22 @@ async function startIntegrationWorker() {
       // Override the shared default (5). I/O-bound webhook handling tolerates
       // more parallelism; env-tunable via INTEGRATION_WORKER_CONCURRENCY.
       concurrency: env.INTEGRATION_WORKER_CONCURRENCY,
-      // Coexist historical sync chunks are bounded to ~4 min via self-continuation
-      // (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
-      // 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
+      // Coexist historical sync moved to its own `heavy` worker (see
+      // apps/worker/src/heavy/worker.ts), which now owns the sizing rationale
+      // this comment used to describe. The 10-minute lock stays here for a
+      // different reason: it must stay above CHAT_JOB_WAIT_TIMEOUT_MS (max
+      // 9 min, env.ts) — a shorter lock could let BullMQ treat an
+      // in-progress job as stalled and double-process it while it's still
+      // legitimately waiting on a chat job. A future follow-up could lower
+      // the max wait to tighten this lock (see plan §7, out of scope here).
       lockDuration: 10 * 60 * 1000,
-      stalledInterval: 10 * 60 * 1000,
+      // No stalledInterval override: with coexist gone there are no
+      // long-running jobs here, so the BullMQ default (30s) applies. A
+      // crashed worker's job is reclaimed once its lock EXPIRES and the next
+      // scan runs — ~10–10.5 min after the crash (lock expiry + ≤30s scan),
+      // down from ~10–20 min with the old 10-min scan interval. Live workers
+      // auto-renew their locks (including through awaitChatJob waits), so the
+      // frequent check cannot false-positive an in-progress job.
       maxStalledCount: 1,
     },
   )

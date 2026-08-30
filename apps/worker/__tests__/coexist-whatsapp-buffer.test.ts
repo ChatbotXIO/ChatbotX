@@ -32,12 +32,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
+  HeavyJobAction: {
     coexistWhatsappBuffer: "coexistWhatsappBuffer",
     coexistWhatsappFlush: "coexistWhatsappFlush",
     coexistMessengerSync: "coexistMessengerSync",
   },
-  integrationQueue: { add: mockQueueAdd },
+  heavyQueue: { add: mockQueueAdd },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -63,7 +63,7 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 // Import handler after mocks are registered
 // ---------------------------------------------------------------------------
 
-import { coexistWhatsappBuffer } from "../src/integration/handlers/coexist/whatsapp-buffer"
+import { coexistWhatsappBuffer } from "../src/heavy/handlers/coexist/whatsapp-buffer"
 
 // ---------------------------------------------------------------------------
 // Test helpers

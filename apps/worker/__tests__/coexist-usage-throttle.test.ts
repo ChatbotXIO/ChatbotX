@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { resolveUsageThrottle } from "../src/integration/handlers/coexist/usage-throttle"
+import { resolveUsageThrottle } from "../src/heavy/handlers/coexist/usage-throttle"
 
 describe("resolveUsageThrottle", () => {
   it("keeps default concurrency when usage is absent or low", () => {

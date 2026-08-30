@@ -48,6 +48,14 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     removeOnFail: { count: 5000 },
   },
   getRedisConnection: () => ({}),
+  closeIntegrationQueueEvents: vi.fn(async () => undefined),
+  // Forward-only-shim schema — never matches an `IntegrationJobData` fixture
+  // built by this suite (none of them carry one of the 5 coexist `type`
+  // strings), so `safeParse` always fails here and every job falls through
+  // to the normal switch. The dedicated legacy-drain suite exercises match
+  // cases.
+  heavyJobDataSchema: { safeParse: () => ({ success: false }) },
+  heavyQueue: { add: vi.fn() },
   IntegrationJobAction: {
     evaluateTemplateSent: "evaluateTemplateSent",
     evaluateConversionTrigger: "evaluateConversionTrigger",
@@ -110,21 +118,6 @@ vi.mock("../src/integration/handlers/automated-response", () => ({
 }))
 vi.mock("../src/integration/handlers/challenge", () => ({
   runChallenge: vi.fn(),
-}))
-vi.mock("../src/integration/handlers/coexist/attachment-download", () => ({
-  coexistAttachmentDownload: vi.fn(),
-}))
-vi.mock("../src/integration/handlers/coexist/instagram-sync", () => ({
-  coexistInstagramSync: vi.fn(),
-}))
-vi.mock("../src/integration/handlers/coexist/messenger-sync", () => ({
-  coexistMessengerSync: vi.fn(),
-}))
-vi.mock("../src/integration/handlers/coexist/whatsapp-buffer", () => ({
-  coexistWhatsappBuffer: vi.fn(),
-}))
-vi.mock("../src/integration/handlers/coexist/whatsapp-flush", () => ({
-  coexistWhatsappFlush: vi.fn(),
 }))
 vi.mock("../src/integration/handlers/comment-automation", () => ({
   processCommentAutomation: vi.fn(),

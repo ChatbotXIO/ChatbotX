@@ -9,7 +9,7 @@ import {
 } from "@chatbotx.io/integration-whatsapp"
 import { SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import type { IntegrationJobCoexistAttachmentDownload } from "@chatbotx.io/worker-config"
+import type { HeavyJobCoexistAttachmentDownload } from "@chatbotx.io/worker-config"
 import imageSize from "image-size"
 import { logger } from "../../../lib/logger"
 
@@ -205,8 +205,7 @@ const downloadWhatsappMedia = async (
   }
 }
 
-type AttachmentChannel =
-  IntegrationJobCoexistAttachmentDownload["data"]["channel"]
+type AttachmentChannel = HeavyJobCoexistAttachmentDownload["data"]["channel"]
 type BearerTokenAuth = { tokens: { accessToken: string } }
 type AttachmentDownloadContext = { auth: BearerTokenAuth }
 
@@ -261,7 +260,7 @@ const mediaDownloaders = {
  * — BullMQ `jobId: att-<id>` dedup plus this prefix guard cover idempotency.
  */
 export const coexistAttachmentDownload = async (
-  data: IntegrationJobCoexistAttachmentDownload["data"],
+  data: HeavyJobCoexistAttachmentDownload["data"],
 ): Promise<void> => {
   const { attachmentId, workspaceId, channel, integrationId } = data
 

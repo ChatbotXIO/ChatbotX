@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest"
 import {
   createHistoricalIdFactory,
   decodeHistoricalId,
-} from "../src/integration/handlers/coexist/bulk-historical-import"
+} from "../src/heavy/handlers/coexist/bulk-historical-import"
 
 // Must match COEXIST_EPOCH_MS in bulk-historical-import.ts (the uuniq epoch,
 // so historical IDs decode back to real wall-clock createdAt).

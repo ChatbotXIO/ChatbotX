@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { extractFromValue } from "../src/integration/handlers/coexist/whatsapp-flush"
+import { extractFromValue } from "../src/heavy/handlers/coexist/whatsapp-flush"
 
 // ---------------------------------------------------------------------------
 // WhatsApp Coexistence — BSUID/username extraction (D7, P7)

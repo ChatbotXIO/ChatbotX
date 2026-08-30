@@ -37,7 +37,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
+  HeavyJobAction: {
     coexistInstagramSync: "coexistInstagramSync",
     coexistMessengerSync: "coexistMessengerSync",
     coexistWhatsappFlush: "coexistWhatsappFlush",
