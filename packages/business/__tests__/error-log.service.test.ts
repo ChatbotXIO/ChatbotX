@@ -1,13 +1,24 @@
 import { SdkException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const add = vi.fn()
+const emit = vi.fn()
 
+vi.mock("@chatbotx.io/event-bus", () => ({
+  emit: (...args: unknown[]) => emit(...args),
+}))
+
+// The service short-circuits under `isNoRedisEnv()` — true by default in
+// vitest — exactly as `defaultQueue` falls back to `fakeQueue`. These tests
+// exercise the real emit path, so they opt out of that fallback.
 vi.mock("@chatbotx.io/worker-config", () => ({
-  DefaultJobAction: { sendErrorLog: "sendErrorLog" },
-  defaultQueue: {
-    add: (...args: unknown[]) => add(...args),
-  },
+  isNoRedisEnv: () => false,
+}))
+
+// `@chatbotx.io/utils` constructs a Snowflake singleton at module scope, which
+// throws "Place ID 0 already in use" when `vi.resetModules()` re-evaluates it.
+let nextId = 0
+vi.mock("@chatbotx.io/utils", () => ({
+  createId: () => `id-${nextId++}`,
 }))
 
 const warn = vi.fn()
@@ -18,14 +29,14 @@ const load = async () =>
 
 const loadBatch = async () => await import("../src/error-log/service")
 
-/** Every job carries a batch; the single-input path enqueues a batch of one. */
-const payload = () => add.mock.calls[0]?.[1]?.data?.entries?.[0]
+/** One event per failure: the first emit's payload is the row about to be written. */
+const payload = () => emit.mock.calls[0]?.[1]
 
 describe("logProviderError", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
-    add.mockResolvedValue(undefined)
+    emit.mockResolvedValue("stream-id")
   })
 
   it("enqueues the provider as-is, with no operation suffix", async () => {
@@ -147,9 +158,9 @@ describe("logProviderError", () => {
     expect(payload().error.message).toBe("plain string failure")
   })
 
-  it("never throws when the queue is unavailable", async () => {
+  it("never throws when the event bus is unavailable", async () => {
     const logProviderError = await load()
-    add.mockRejectedValue(new Error("redis down"))
+    emit.mockRejectedValue(new Error("redis down"))
 
     await expect(
       logProviderError({
@@ -166,10 +177,10 @@ describe("logProviderErrors", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
-    add.mockResolvedValue(undefined)
+    emit.mockResolvedValue("stream-id")
   })
 
-  it("enqueues one job for the whole batch, not one per failure", async () => {
+  it("emits one event per failure", async () => {
     const { logProviderErrors } = await loadBatch()
 
     await logProviderErrors(
@@ -180,48 +191,84 @@ describe("logProviderErrors", () => {
       })),
     )
 
-    expect(add).toHaveBeenCalledTimes(1)
-    expect(add.mock.calls[0]?.[1]?.data?.entries).toHaveLength(40)
+    expect(emit).toHaveBeenCalledTimes(40)
+    expect(emit).toHaveBeenCalledWith(
+      "error-log:recorded",
+      expect.objectContaining({ workspaceId: "ws-0" }),
+    )
   })
 
-  it("splits an oversized batch so one job never carries an unbounded payload", async () => {
-    const { logProviderErrors, ERROR_LOG_BATCH_SIZE } = await loadBatch()
+  it("gives every event its own row id so a redelivery cannot duplicate", async () => {
+    const { logProviderErrors } = await loadBatch()
 
     await logProviderErrors(
-      Array.from({ length: ERROR_LOG_BATCH_SIZE * 2 + 5 }, () => ({
+      Array.from({ length: 3 }, () => ({
         provider: "whatsapp" as const,
         workspaceId: "ws-1",
         error: new Error("boom"),
       })),
     )
 
-    expect(add).toHaveBeenCalledTimes(3)
-    expect(add.mock.calls[2]?.[1]?.data?.entries).toHaveLength(5)
+    const ids = emit.mock.calls.map((call) => call[1]?.id)
+    expect(ids.every((id) => typeof id === "string" && id.length > 0)).toBe(
+      true,
+    )
+    expect(new Set(ids).size).toBe(3)
   })
 
-  it("reports the inputs it could not enqueue instead of throwing", async () => {
-    const { logProviderErrors, ERROR_LOG_BATCH_SIZE } = await loadBatch()
-    // The first chunk lands, the second does not.
-    add
-      .mockResolvedValueOnce(undefined)
+  it("reports the inputs it could not emit instead of throwing", async () => {
+    const { logProviderErrors } = await loadBatch()
+    // The first lands, the second does not.
+    emit
+      .mockResolvedValueOnce("stream-id")
       .mockRejectedValueOnce(new Error("redis down"))
 
-    const inputs = Array.from({ length: ERROR_LOG_BATCH_SIZE + 2 }, () => ({
+    const inputs = Array.from({ length: 2 }, () => ({
       provider: "telegram" as const,
       workspaceId: "ws-1",
       error: new Error("boom"),
     }))
 
     await expect(logProviderErrors(inputs)).resolves.toEqual({
-      failedIndexes: [ERROR_LOG_BATCH_SIZE, ERROR_LOG_BATCH_SIZE + 1],
+      failedIndexes: [1],
     })
     expect(warn).toHaveBeenCalled()
   })
 
-  it("enqueues nothing for an empty batch", async () => {
+  it("reports a synchronous routing failure, which emit signals with undefined", async () => {
+    const { logProviderErrors } = await loadBatch()
+    emit.mockReturnValueOnce(undefined)
+
+    await expect(
+      logProviderErrors([
+        { provider: "zalo", workspaceId: "ws-1", error: new Error("boom") },
+      ]),
+    ).resolves.toEqual({ failedIndexes: [0] })
+  })
+
+  it("drops a schema rejection rather than reporting it, since a retry replays the same payload", async () => {
+    const { logProviderErrors } = await loadBatch()
+    // `emit` resolves to "" when the payload fails safeParse. Reporting it
+    // would propagate a poison message onto the message bus via
+    // `recordProviderErrorLog`.
+    emit.mockResolvedValueOnce("")
+
+    await expect(
+      logProviderErrors([
+        {
+          provider: "instagram",
+          workspaceId: "ws-1",
+          error: new Error("boom"),
+        },
+      ]),
+    ).resolves.toEqual({ failedIndexes: [] })
+    expect(warn).toHaveBeenCalled()
+  })
+
+  it("emits nothing for an empty batch", async () => {
     const { logProviderErrors } = await loadBatch()
 
     await expect(logProviderErrors([])).resolves.toEqual({ failedIndexes: [] })
-    expect(add).not.toHaveBeenCalled()
+    expect(emit).not.toHaveBeenCalled()
   })
 })

@@ -4,6 +4,7 @@ import {
   errorLogProviderLabel,
   errorLogProviderLabels,
   errorLogProviders,
+  errorLogProvidersMatchingLabel,
 } from "../src/error-log"
 
 describe("errorLogProviders", () => {
@@ -35,6 +36,21 @@ describe("errorLogProviders", () => {
       false,
     )
     expect(errorLogProviders.safeParse("instagram").success).toBe(true)
+  })
+
+  // Every AI step carries the vendor it ran against, so a Claude failure must
+  // be attributable to Claude rather than folded into OpenAI.
+  it("accepts every AI vendor an AI step can run against", () => {
+    for (const provider of [
+      "openai",
+      "gemini",
+      "claude",
+      "deepseek",
+      "openrouter",
+      "openai-compatible",
+    ]) {
+      expect(errorLogProviders.safeParse(provider).success).toBe(true)
+    }
   })
 
   it("accepts the non-channel third parties", () => {
@@ -71,5 +87,25 @@ describe("errorLogProviderLabel", () => {
     expect(errorLogProviderLabel("some-removed-provider")).toBe(
       "some-removed-provider",
     )
+  })
+})
+
+describe("errorLogProvidersMatchingLabel", () => {
+  // The table renders the label while `action` stores the slug, so the search
+  // has to bridge the two or the visible value is unsearchable.
+  it("finds the provider behind a label that shares no text with its slug", () => {
+    expect(errorLogProvidersMatchingLabel("Email")).toEqual(["smtp"])
+  })
+
+  it("is case-insensitive and matches on a fragment", () => {
+    expect(errorLogProvidersMatchingLabel("meta")).toEqual([
+      "meta-catalog",
+      "meta-conversions",
+    ])
+  })
+
+  it("returns nothing for a blank or unmatched keyword", () => {
+    expect(errorLogProvidersMatchingLabel("   ")).toEqual([])
+    expect(errorLogProvidersMatchingLabel("nothing here")).toEqual([])
   })
 })

@@ -36,7 +36,10 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
-import { shouldSuppressRetryableChannelError } from "../utils/retry"
+import {
+  shouldSuppressRetryableChannelError,
+  willSendRetry,
+} from "../utils/retry"
 
 function broadcastChatEvent(workspaceId: string, event: RealtimeEventData) {
   return chatQueue.add(ChatJobAction.broadcastEvent, {
@@ -48,6 +51,11 @@ function broadcastChatEvent(workspaceId: string, event: RealtimeEventData) {
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
   attemptsMade = 0,
+  // Whether a rethrow from here produces another `message:failed` for this same
+  // send — a BullMQ attempt still in hand, or a caller that catches and
+  // re-emits. Defaults to terminal, so an unaware caller records the failure
+  // rather than losing it.
+  willRetryOnThrow = false,
 ): Promise<{ messageIds: string[] }> {
   const {
     conversation,
@@ -247,6 +255,11 @@ export async function sendMessageToChannel(
       errorData,
       occurredAt: new Date(),
       metadata,
+      willRetry: willSendRetry({
+        error,
+        channel: contactInbox.channel,
+        willRetryOnThrow,
+      }),
     })
     await recordMessageSendError(
       message?.id,

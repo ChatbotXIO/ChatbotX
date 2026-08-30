@@ -23,6 +23,7 @@ import {
   saveResultToCustomField,
 } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import type { ExecuteStepResult } from "../step"
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -204,7 +205,7 @@ export async function handleAIGenerateImage({
       "[ai-generate-image] Step failed",
     )
     await logProviderError({
-      provider: "openai",
+      provider: aiErrorLogProvider(step.provider),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       error: err,

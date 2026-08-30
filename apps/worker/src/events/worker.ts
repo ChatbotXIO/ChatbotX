@@ -1,6 +1,7 @@
 import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { analyticsDashboardEvents } from "./analytics"
+import errorLogEventListener from "./error-log"
 import flowEventListener from "./flow"
 import messageEventListener from "./message"
 
@@ -17,6 +18,7 @@ async function startEventWorker() {
     messageEventListener,
     flowEventListener,
     analyticsDashboardEvents,
+    errorLogEventListener,
   ])
 }
 

@@ -12,6 +12,7 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
+import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -78,19 +79,29 @@ async function startChatWorker() {
         async () => {
           switch (job.data.type) {
             case ChatJobAction.sendChannelMessage:
-              await sendMessageToChannel(job.data.data, job.attemptsMade)
+              await sendMessageToChannel(
+                job.data.data,
+                job.attemptsMade,
+                !isFinalAttempt(job),
+              )
               return
             case ChatJobAction.sendFlowMessage:
               await sendFlowStep(job.data.data)
               return
             case ChatJobAction.sendChatMessage:
-              await sendChatMessage(job.data.data)
+              await sendChatMessage(job.data.data, !isFinalAttempt(job))
               return
             case ChatJobAction.sendWhatsappTemplateMessage:
-              await sendWhatsappTemplateMessage(job.data.data)
+              await sendWhatsappTemplateMessage(
+                job.data.data,
+                !isFinalAttempt(job),
+              )
               return
             case ChatJobAction.sendMessengerTemplateMessage:
-              await sendMessengerTemplateMessage(job.data.data)
+              await sendMessengerTemplateMessage(
+                job.data.data,
+                !isFinalAttempt(job),
+              )
               return
             case ChatJobAction.sendTyping:
               await sendTypingToChannel(job.data.data)

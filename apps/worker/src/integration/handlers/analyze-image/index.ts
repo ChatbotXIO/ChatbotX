@@ -9,6 +9,7 @@ import {
   saveResultToCustomField,
 } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 
@@ -106,7 +107,7 @@ export async function handleAIAnalyzeImage({
     const error = normalizeError(err)
     logger.error(error, "[ai-analyze-image] Step failed")
     await logProviderError({
-      provider: "openai",
+      provider: aiErrorLogProvider(step.provider),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       error: err,

@@ -13,6 +13,7 @@ import {
   waitForChatJobCompletion,
 } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 
@@ -203,7 +204,7 @@ ${schemaDescription}`
 
     // Scoped to the provider call itself. The surrounding `try` also covers
     // our own reads and the custom-field writes below, and attributing one of
-    // those to OpenAI would put a false provider on the row.
+    // those to the AI vendor would put a false provider on the row.
     const { object: extractedData } = await generateObject({
       model: resolvedModel.model,
       system: systemPrompt,
@@ -212,7 +213,7 @@ ${schemaDescription}`
       schema: dynamicSchema,
     }).catch(async (error: unknown) => {
       await logProviderError({
-        provider: "openai",
+        provider: aiErrorLogProvider(step.provider),
         workspaceId: conversation.workspaceId,
         contactId: conversation.contactId,
         error,

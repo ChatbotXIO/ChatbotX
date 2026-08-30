@@ -253,6 +253,51 @@ const reconcileSquashedQuestionnaireMigration = async (client) => {
   )
 }
 
+/**
+ * Whether a **pending** migration contains a statement that cannot run inside a
+ * transaction.
+ *
+ * Only pending ones count. An applied `CONCURRENTLY` migration stays in the
+ * folder forever, so scanning the whole folder would pin the sequential runner
+ * on for every future deploy — silently ignoring
+ * `DATABASE_MIGRATIONS_SEQUENTIAL=false` and printing "a pending migration
+ * cannot run inside a transaction" when nothing is pending.
+ *
+ * Falls back to the whole folder when the ledger cannot be read: on a fresh
+ * database every migration is pending anyway, and the sequential runner is the
+ * safe answer for anything unexpected.
+ */
+const hasPendingNonTransactionalMigration = async (client) => {
+  const localMigrations = readMigrationFiles({ migrationsFolder })
+  const scanAll = () =>
+    localMigrations.some(({ sql: statements }) =>
+      statements.some(isNonTransactional),
+    )
+
+  try {
+    const ledger = await client.query(
+      "SELECT to_regclass('drizzle.__drizzle_migrations') IS NOT NULL AS exists",
+    )
+    if (!ledger.rows[0]?.exists) {
+      return scanAll()
+    }
+
+    const { rows } = await client.query(
+      "SELECT id, hash, created_at, name FROM drizzle.__drizzle_migrations",
+    )
+    return getMigrationsToRun({
+      localMigrations,
+      dbMigrations: rows,
+    }).some(({ sql: statements }) => statements.some(isNonTransactional))
+  } catch (error) {
+    console.warn(
+      "Could not read the migration ledger; assuming every migration is pending.",
+      error,
+    )
+    return scanAll()
+  }
+}
+
 let client
 let migrationLockAcquired = false
 
@@ -269,9 +314,8 @@ try {
   // Drizzle's batch migrator wraps everything in one transaction, which a
   // `CONCURRENTLY` statement cannot survive. The sequential runner is the only
   // path that can unwrap a migration, so it wins over the opt-out.
-  const hasNonTransactionalMigration = readMigrationFiles({
-    migrationsFolder,
-  }).some(({ sql: statements }) => statements.some(isNonTransactional))
+  const hasNonTransactionalMigration =
+    await hasPendingNonTransactionalMigration(client)
   if (useSequentialMigrations || hasNonTransactionalMigration) {
     if (!useSequentialMigrations) {
       console.log(

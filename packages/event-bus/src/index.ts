@@ -1,12 +1,15 @@
 import {
   type AnalyticsDashboardEventMap,
   analyticsDashboardEventSchemas,
+  type ErrorLogEventMap,
+  errorLogEventSchemas,
   type FlowEventMap,
   flowEventSchemas,
   type MessageEventMap,
   messageEventSchemas,
 } from "@chatbotx.io/flow-config"
 import { dashboardEventBus } from "./dashboard"
+import { errorLogEventBus } from "./error-log"
 import { flowEventBus } from "./flow"
 import { logger } from "./logger"
 import { messageEventBus } from "./message"
@@ -19,13 +22,15 @@ export {
   type InferEventMap,
 } from "@chatbotx.io/flow-config"
 export * from "./dashboard"
+export * from "./error-log"
 export * from "./event-bus"
 export * from "./flow"
 export * from "./message"
 
 export type EventMap = MessageEventMap &
   FlowEventMap &
-  AnalyticsDashboardEventMap
+  AnalyticsDashboardEventMap &
+  ErrorLogEventMap
 
 export function emit<K extends keyof EventMap>(type: K, payload: EventMap[K]) {
   try {
@@ -45,6 +50,12 @@ export function emit<K extends keyof EventMap>(type: K, payload: EventMap[K]) {
       return dashboardEventBus.emit(
         type as keyof AnalyticsDashboardEventMap,
         payload as AnalyticsDashboardEventMap[keyof AnalyticsDashboardEventMap],
+      )
+    }
+    if (type in errorLogEventSchemas) {
+      return errorLogEventBus.emit(
+        type as keyof ErrorLogEventMap,
+        payload as ErrorLogEventMap[keyof ErrorLogEventMap],
       )
     }
     return Promise.resolve("")

@@ -1,5 +1,8 @@
 import { buildContext } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
+import {
+  logProviderError,
+  logProviderErrorForChannel,
+} from "@chatbotx.io/business/error-log"
 import { and, db, eq, inArray, isNotNull } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -21,7 +24,6 @@ import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
-import { errorLogProviders } from "@chatbotx.io/utils/error-log"
 import type { JobSyncTag } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 
@@ -418,17 +420,11 @@ async function syncTagDetach(props: {
         { row, error },
         "syncTag(detach): skip per-row unassign error",
       )
-      // `row.channelType` is a plain string here; an unmapped value gets no
-      // row rather than a fabricated provider.
-      const provider = errorLogProviders.safeParse(row.channelType)
-      if (provider.success) {
-        await logProviderError({
-          provider: provider.data,
-          workspaceId,
-          contactId,
-          error,
-        })
-      }
+      await logProviderErrorForChannel(row.channelType, {
+        workspaceId,
+        contactId,
+        error,
+      })
     }
     // Delete the local mapping regardless of sync state / API outcome.
     await db
@@ -547,14 +543,10 @@ async function deleteTagOnChannel(props: {
         { tagId, channel, error },
         "syncTag(delete): skip per-channel API error",
       )
-      const provider = errorLogProviders.safeParse(channel.channelType)
-      if (provider.success) {
-        await logProviderError({
-          provider: provider.data,
-          workspaceId,
-          error,
-        })
-      }
+      await logProviderErrorForChannel(channel.channelType, {
+        workspaceId,
+        error,
+      })
     }
   }
 

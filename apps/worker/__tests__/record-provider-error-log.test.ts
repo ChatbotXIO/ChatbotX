@@ -9,8 +9,9 @@ vi.mock("@chatbotx.io/business/error-log", () => ({
 const loggedInputs = () => logProviderErrors.mock.calls[0]?.[0] ?? []
 
 const warn = vi.fn()
+const error = vi.fn()
 vi.mock("../src/lib/logger", () => ({
-  logger: { warn, error: vi.fn(), info: vi.fn() },
+  logger: { warn, error, info: vi.fn() },
 }))
 
 const load = async () =>
@@ -77,6 +78,39 @@ describe("recordProviderErrorLog", () => {
         subcode: -1,
         isRetryable: true,
       }),
+    ] as never)
+
+    expect(logProviderErrors).not.toHaveBeenCalled()
+  })
+
+  // The emitter, not the error, decides: a Messenger `NETWORK_ERROR` is flagged
+  // retryable but `shouldSuppressRetryableChannelError` abandons the send on the
+  // first attempt, so nothing ever re-attempts it and the row must be written.
+  it("logs a retryable failure the emitter marked as not retrying", async () => {
+    const recordProviderErrorLog = await load()
+
+    await recordProviderErrorLog([
+      payloadFor(
+        "messenger",
+        { message: "socket hang up", isRetryable: true },
+        { willRetry: false },
+      ),
+    ] as never)
+
+    expect(loggedInputs()).toEqual([
+      expect.objectContaining({ provider: "messenger" }),
+    ])
+  })
+
+  it("skips a non-retryable failure the emitter says will be retried", async () => {
+    const recordProviderErrorLog = await load()
+
+    await recordProviderErrorLog([
+      payloadFor(
+        "whatsapp",
+        { message: "boom", isRetryable: false },
+        { willRetry: true },
+      ),
     ] as never)
 
     expect(logProviderErrors).not.toHaveBeenCalled()
@@ -189,29 +223,39 @@ describe("recordProviderErrorLog", () => {
     const recordProviderErrorLog = await load()
     logProviderErrors.mockResolvedValueOnce({ failedIndexes: [0] })
 
-    await expect(
-      recordProviderErrorLog([
-        payloadFor(
-          "whatsapp",
-          { message: "bulk", isRetryable: false },
-          {
-            __eventBusMessageId: "evt-broadcast",
-            metadata: {
-              type: "broadcast",
-              broadcastId: "b-1",
-              contactInboxId: "ci-1",
-            },
+    await recordProviderErrorLog([
+      payloadFor(
+        "whatsapp",
+        { message: "bulk", isRetryable: false },
+        {
+          metadata: {
+            type: "broadcast",
+            broadcastId: "b-1",
+            contactInboxId: "ci-1",
           },
-        ),
-        payloadFor(
-          "messenger",
-          { message: "single", isRetryable: false },
-          { __eventBusMessageId: "evt-single" },
-        ),
-      ] as never),
-    ).resolves.toEqual({ failedMessageIds: ["evt-single"] })
+        },
+      ),
+      payloadFor(
+        "messenger",
+        { message: "single", isRetryable: false },
+        {
+          context: {
+            workspaceId: "ws-2",
+            contactId: "c-2",
+            conversationId: "conv-2",
+            channel: "messenger",
+          },
+        },
+      ),
+    ] as never)
 
     expect(loggedInputs()).toHaveLength(1)
+    // Index 0 of the *eligible* list is the second payload, not the skipped
+    // broadcast one.
+    expect(error).toHaveBeenCalledWith(
+      expect.objectContaining({ count: 1, total: 1, workspaceIds: ["ws-2"] }),
+      expect.stringContaining("error logs dropped"),
+    )
   })
 
   it("handles a batch, logging each terminal payload once", async () => {
@@ -236,39 +280,41 @@ describe("recordProviderErrorLog", () => {
     expect(loggedInputs()).toHaveLength(1)
   })
 
-  it("surfaces the payloads whose enqueue failed for the event bus to retry", async () => {
+  // `messageEventBus` runs without `enableSelectiveRetry`, so the batch is
+  // acked whatever this returns. A dropped error log is reported as an app-log
+  // error rather than dressed up as a retry that will never happen.
+  it("reports dropped error logs instead of asking for a retry it cannot get", async () => {
     const recordProviderErrorLog = await load()
     logProviderErrors.mockResolvedValueOnce({ failedIndexes: [0] })
 
     await expect(
       recordProviderErrorLog([
-        payloadFor(
-          "messenger",
-          { message: "a", isRetryable: false },
-          { __eventBusMessageId: "evt-1" },
-        ),
+        payloadFor("messenger", { message: "a", isRetryable: false }),
       ] as never),
-    ).resolves.toEqual({ failedMessageIds: ["evt-1"] })
+    ).resolves.toBeUndefined()
+
+    expect(error).toHaveBeenCalledWith(
+      expect.objectContaining({ count: 1, workspaceIds: ["ws-1"] }),
+      expect.stringContaining("error logs dropped"),
+    )
   })
 
   // `logProviderErrors` never throws by contract (it swallows and warns), so
   // this can only happen if that contract is broken. When it is, the handler
-  // must not escalate: it surfaces the payload for the event bus to retry,
-  // exactly as the sibling `recordContactInboxSendFailure` does.
+  // must not escalate — the send it is recording has already failed.
   it("resolves without throwing when the error-log write rejects", async () => {
     const recordProviderErrorLog = await load()
     logProviderErrors.mockRejectedValueOnce(new Error("boom"))
 
     await expect(
       recordProviderErrorLog([
-        payloadFor(
-          "messenger",
-          { message: "a", isRetryable: false },
-          {
-            __eventBusMessageId: "evt-1",
-          },
-        ),
+        payloadFor("messenger", { message: "a", isRetryable: false }),
       ] as never),
-    ).resolves.toEqual({ failedMessageIds: ["evt-1"] })
+    ).resolves.toBeUndefined()
+
+    expect(error).toHaveBeenCalledWith(
+      expect.objectContaining({ count: 1 }),
+      expect.stringContaining("error logs dropped"),
+    )
   })
 })

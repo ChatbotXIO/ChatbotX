@@ -18,7 +18,7 @@ import {
   finalizeContactProfile,
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
-import { logProviderError } from "@chatbotx.io/business/error-log"
+import { logProviderErrorForChannel } from "@chatbotx.io/business/error-log"
 import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
   type ContactSource,
@@ -68,7 +68,6 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { errorLogProviders } from "@chatbotx.io/utils/error-log"
 import {
   ChatJobAction,
   chatQueue,
@@ -1430,17 +1429,11 @@ const createNewContactAndContactInbox = async (props: {
           { error, sourceId: incomingContact.sourceId, channel: inbox.channel },
           "detectContactAndConversation: getProfile failed, creating contact without profile data",
         )
-        // `inbox.channel` is a `ChannelType`, which includes `omnichannel`; an
-        // unmapped value gets no row rather than a fabricated provider. No
-        // `contactId` — the contact does not exist yet at this point.
-        const provider = errorLogProviders.safeParse(inbox.channel)
-        if (provider.success) {
-          await logProviderError({
-            provider: provider.data,
-            workspaceId: inbox.workspaceId,
-            error,
-          })
-        }
+        // No `contactId` — the contact does not exist yet at this point.
+        await logProviderErrorForChannel(inbox.channel, {
+          workspaceId: inbox.workspaceId,
+          error,
+        })
       }
     }
   }

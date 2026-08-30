@@ -676,14 +676,21 @@ export async function sendFlowStep({
     ])
 
     const channelSend = isPublicCommentReply
-      ? sendMessageToChannel({
-          conversation,
-          contactInbox: targetContactInbox,
-          message,
-          quickReplies: canonicalQuickReplies,
-          metadata,
-          sendFrom,
-        })
+      ? sendMessageToChannel(
+          {
+            conversation,
+            contactInbox: targetContactInbox,
+            message,
+            quickReplies: canonicalQuickReplies,
+            metadata,
+            sendFrom,
+          },
+          0,
+          // A rethrow from here lands in this function's own catch, which
+          // emits its own `message:failed` for the same send. Without this the
+          // failure would be recorded twice.
+          true,
+        )
       : sendFlowStepToChannel({
           conversation,
           contactInbox: targetContactInbox,
@@ -807,6 +814,9 @@ export async function sendFlowStep({
       },
       errorData: parsedError,
       occurredAt: new Date(),
+      // Always terminal: this catch swallows the error rather than rethrowing,
+      // so the step's BullMQ job completes and nothing re-attempts the send.
+      willRetry: false,
     })
 
     await recordMessageSendError(
@@ -847,6 +857,9 @@ export async function sendFlowStep({
 
 export const sendChatMessage = async (
   props: ChatJobSendChatMessage["data"],
+  // Forwarded from the chat worker: this function rethrows, so a BullMQ attempt
+  // still in hand means another `message:failed` is coming for the same send.
+  willRetryOnThrow = false,
 ) => {
   const {
     conversation,
@@ -977,13 +990,17 @@ export const sendChatMessage = async (
         eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
-      sendMessageToChannel({
-        conversation,
-        contactInbox,
-        message,
-        quickReplies,
-        metadata,
-      }),
+      sendMessageToChannel(
+        {
+          conversation,
+          contactInbox,
+          message,
+          quickReplies,
+          metadata,
+        },
+        0,
+        willRetryOnThrow,
+      ),
     ]
 
     await Promise.all(promises)

@@ -33,7 +33,6 @@ vi.mock("@chatbotx.io/business/audit", () => ({
 }))
 
 // Mocked so the `queueAdd` assertions stay about the sync-continuation
-// enqueue: the real helper enqueues `sendErrorLog` on the same queue.
 vi.mock("@chatbotx.io/business/error-log", () => ({
   logProviderError: (...args: unknown[]) => mocks.logProviderError(...args),
 }))

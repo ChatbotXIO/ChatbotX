@@ -1,6 +1,11 @@
-import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
-import type { ErrorLogEntry } from "@chatbotx.io/worker-config"
-import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
+import type { ErrorLogRecordedPayload } from "@chatbotx.io/event-bus"
+import { emit } from "@chatbotx.io/event-bus"
+import { createId } from "@chatbotx.io/utils"
+import {
+  type ErrorLogProvider,
+  errorLogProviders,
+} from "@chatbotx.io/utils/error-log"
+import { isNoRedisEnv } from "@chatbotx.io/worker-config"
 import { logger } from "../logger"
 
 export type LogProviderErrorInput = {
@@ -38,10 +43,11 @@ const resolveHttpCode = (input: LogProviderErrorInput): string | null => {
 }
 
 /**
- * `detail` is a single unbounded `text` column and the payload rides through
- * Redis first. One pathological SDK error (an HTTP client that embeds the full
- * response body into `message`) would otherwise bloat both. 8KB is far past
- * any real provider message.
+ * `detail` is a single unbounded `text` column and the payload rides through a
+ * Redis stream first. One pathological SDK error (an HTTP client that embeds
+ * the full response body into `message`) would otherwise bloat both. 8KB is far
+ * past any real provider message, and the stream's `maxLen` is sized against
+ * this ceiling — see `packages/event-bus/src/error-log/event-bus.ts`.
  */
 const MAX_DETAIL_LENGTH = 8192
 
@@ -64,15 +70,11 @@ const resolveMessage = (error: unknown): string => {
   return String(error)
 }
 
-/**
- * Entries per queued job. One job per failure would flood the shared `default`
- * queue when a burst of inbound traffic fails at once; one job for an unbounded
- * batch would push a multi-megabyte payload through Redis, since each entry can
- * carry an 8KB `detail`. 100 keeps the worst-case payload under ~1MB.
- */
-export const ERROR_LOG_BATCH_SIZE = 100
-
-const toEntry = (input: LogProviderErrorInput): ErrorLogEntry => ({
+const toEntry = (input: LogProviderErrorInput): ErrorLogRecordedPayload => ({
+  // Minted here, not by the writer, so that a redelivered event re-inserts the
+  // same primary key and `onConflictDoNothing` absorbs it. Without this a crash
+  // between the insert and the stream ack would duplicate the row.
+  id: createId(),
   workspaceId: input.workspaceId,
   provider: input.provider,
   contactId: input.contactId ?? undefined,
@@ -89,36 +91,110 @@ const toEntry = (input: LogProviderErrorInput): ErrorLogEntry => ({
 })
 
 /**
- * Record a batch of third-party API failures in as few queue jobs as possible.
+ * `getRedisConnection` sets `maxRetriesPerRequest: null` and leaves ioredis's
+ * offline queue on, so a command issued while the connection is down is queued
+ * indefinitely and never rejects. Every caller here is inside a `catch` and
+ * awaits, so an unbounded emit would wedge the job that already failed. An
+ * XADD that has not completed in this long is not going to.
+ */
+const EMIT_TIMEOUT_MS = 2000
+
+const TIMED_OUT = Symbol("timed-out")
+
+const withTimeout = async (
+  promise: Promise<string> | undefined,
+): Promise<string | undefined | typeof TIMED_OUT> => {
+  let timer: NodeJS.Timeout | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<typeof TIMED_OUT>((resolve) => {
+        timer = setTimeout(() => resolve(TIMED_OUT), EMIT_TIMEOUT_MS)
+      }),
+    ])
+  } finally {
+    if (timer) {
+      clearTimeout(timer)
+    }
+  }
+}
+
+/**
+ * Record a batch of third-party API failures.
  *
  * For callers that already hold many failures at once — the `message:failed`
  * event-bus handler reads up to 500 payloads per batch. Single-failure callers
  * inside a `catch` should use {@link logProviderError}.
  *
+ * One event per failure, emitted concurrently: the stream batches on the *read*
+ * side (`readBatchSize`), so there is no reason to chunk here, and awaiting in
+ * a loop would turn one caller's 500 failures into 500 serial round trips.
+ * ioredis auto-pipelines commands issued in the same tick, so this is one burst.
+ *
  * **Never throws**, matching {@link logProviderError}. Reports which inputs
- * could not be enqueued via `failedIndexes` (indexes into `inputs`) so the
+ * could not be written via `failedIndexes` (indexes into `inputs`) so the
  * caller can hand them back to its own retry mechanism.
  */
 export const logProviderErrors = async (
   inputs: LogProviderErrorInput[],
 ): Promise<{ failedIndexes: number[] }> => {
-  const failedIndexes: number[] = []
-
-  for (let start = 0; start < inputs.length; start += ERROR_LOG_BATCH_SIZE) {
-    const slice = inputs.slice(start, start + ERROR_LOG_BATCH_SIZE)
-    try {
-      await defaultQueue.add(DefaultJobAction.sendErrorLog, {
-        type: DefaultJobAction.sendErrorLog,
-        data: { entries: slice.map(toEntry) },
-      })
-    } catch (err) {
-      logger.warn(
-        { err, count: slice.length },
-        "logProviderErrors: failed to enqueue error logs",
-      )
-      failedIndexes.push(...slice.map((_, offset) => start + offset))
-    }
+  // Same escape hatch `defaultQueue` uses (`isNoRedisEnv() ? fakeQueue : …`),
+  // which is what this path went through before it moved onto the event bus.
+  // Without it a `next build` or a test run reaches a Redis that is not there,
+  // and ioredis's offline queue holds the command until the timeout above —
+  // turning every covered `catch` block into a multi-second stall.
+  if (isNoRedisEnv()) {
+    return { failedIndexes: [] }
   }
+
+  const results = await Promise.allSettled(
+    inputs.map((input) =>
+      withTimeout(emit("error-log:recorded", toEntry(input))),
+    ),
+  )
+
+  const failedIndexes: number[] = []
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      // The stream write itself failed (Redis unreachable mid-command).
+      // Transient — worth handing back to the caller's retry.
+      logger.warn(
+        { err: result.reason },
+        "logProviderErrors: failed to emit error log",
+      )
+      failedIndexes.push(index)
+      return
+    }
+
+    if (result.value === TIMED_OUT) {
+      logger.warn(
+        { workspaceId: inputs[index]?.workspaceId },
+        "logProviderErrors: emit timed out",
+      )
+      failedIndexes.push(index)
+      return
+    }
+
+    // `emit` resolves to the stream id, or to `""` when the payload failed
+    // `safeParse`, or returns `undefined` when routing threw synchronously.
+    // See `packages/event-bus/src/index.ts`.
+    if (result.value === undefined) {
+      logger.warn("logProviderErrors: emit routing failed")
+      failedIndexes.push(index)
+      return
+    }
+
+    if (result.value === "") {
+      // A schema rejection is deterministic — retrying replays the identical
+      // payload forever. Reporting it would also propagate a poison message up
+      // to `recordProviderErrorLog`, which turns `failedIndexes` into
+      // `failedMessageIds` on the *message* bus. Drop it loudly instead.
+      logger.warn(
+        { workspaceId: inputs[index]?.workspaceId },
+        "logProviderErrors: error log rejected by schema, dropping",
+      )
+    }
+  })
 
   return { failedIndexes }
 }
@@ -126,10 +202,10 @@ export const logProviderErrors = async (
 /**
  * Record a single third-party API failure against a workspace.
  *
- * Enqueues rather than writing directly, so a DB hiccup never lands inside the
- * `catch` block of the thing that already failed. **Never throws** — every
- * caller is inside a `catch`, and an error-logger that escalates is worse than
- * no logger.
+ * Emits onto the `events:error-log` stream rather than writing directly, so a
+ * DB hiccup never lands inside the `catch` block of the thing that already
+ * failed. **Never throws** — every caller is inside a `catch`, and an
+ * error-logger that escalates is worse than no logger.
  *
  * `detail` holds the provider's message raw and unredacted by explicit product
  * decision (see the design spec's "Accepted risk" section) — but never the
@@ -139,4 +215,26 @@ export const logProviderError = async (
   input: LogProviderErrorInput,
 ): Promise<void> => {
   await logProviderErrors([input])
+}
+
+/**
+ * Record a failure whose provider is only known as a runtime string — an
+ * `inbox.channel` or a `channelType` column, which are plain `text` and include
+ * values (`omnichannel`) that are not real destinations.
+ *
+ * An unrecognised channel writes **no row** rather than a fabricated provider,
+ * and does so silently: these callers sit in per-row loops that already logged
+ * the underlying failure to the app logger, so a second warn per row would add
+ * noise without adding information. Callers that need the unmapped value
+ * surfaced (`recordProviderErrorLog`) keep their own `safeParse` and warn.
+ */
+export const logProviderErrorForChannel = async (
+  channel: string,
+  input: Omit<LogProviderErrorInput, "provider">,
+): Promise<void> => {
+  const provider = errorLogProviders.safeParse(channel)
+  if (!provider.success) {
+    return
+  }
+  await logProviderError({ ...input, provider: provider.data })
 }

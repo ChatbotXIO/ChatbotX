@@ -66,7 +66,6 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       importMetaCatalogProducts: "importMetaCatalogProducts",
       runImport: "runImport",
       sendAuditLog: "sendAuditLog",
-      sendErrorLog: "sendErrorLog",
       sendAppointmentReminder: "sendAppointmentReminder",
       syncExternalCalendarEvent: "syncExternalCalendarEvent",
       syncChannelLabels: "syncChannelLabels",
@@ -138,10 +137,6 @@ vi.mock("../src/default/handlers/send-audit-log", () => ({
 vi.mock("../src/default/handlers/send-appointment-reminder", () => ({
   sendAppointmentReminder: (...args: unknown[]) =>
     workerState.sendAppointmentReminder(...args),
-}))
-
-vi.mock("../src/default/handlers/send-error-log", () => ({
-  sendErrorLog: vi.fn(),
 }))
 
 vi.mock("../src/default/handlers/sync-external-calendar-event", () => ({
@@ -311,8 +306,8 @@ describe("default worker", () => {
     )
   })
 
-  test("logs a failed job without writing an ErrorLog row", async () => {
-    // The catch-all no longer writes to ErrorLog: most default-queue jobs make
+  test("logs a failed job without recording a provider error", async () => {
+    // The catch-all does not record to ErrorLog: most default-queue jobs make
     // no third-party calls, so a generic row would pollute a table that means
     // "a third party failed". The six third-party jobs log explicitly instead.
     const err = new Error("fetch failed")
@@ -322,9 +317,8 @@ describe("default worker", () => {
     await triggerFailed({ id: "job-1", data: buildBulkTagContactsJob() }, err)
 
     expect(workerState.loggerError).toHaveBeenCalled()
-    expect(workerState.defaultQueueAdd).not.toHaveBeenCalledWith(
-      "sendErrorLog",
-      expect.anything(),
-    )
+    // The error-log write now rides its own event bus, so the catch-all must
+    // not enqueue anything at all on the default queue.
+    expect(workerState.defaultQueueAdd).not.toHaveBeenCalled()
   })
 })

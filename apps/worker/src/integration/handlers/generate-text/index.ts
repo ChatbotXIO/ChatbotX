@@ -12,6 +12,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow-utils"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 import { buildAIMessages } from "./messages"
@@ -124,7 +125,7 @@ export async function handleAIGenerateText({
     }
     const error = normalizeError(err)
     await logProviderError({
-      provider: "openai",
+      provider: aiErrorLogProvider(step.provider),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       error: err,

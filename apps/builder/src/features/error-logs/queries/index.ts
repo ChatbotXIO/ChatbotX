@@ -5,6 +5,7 @@ import {
   likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
+import { errorLogProvidersMatchingLabel } from "@chatbotx.io/utils/error-log"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListErrorLogsRequest,
@@ -16,6 +17,14 @@ export async function listErrorLogs(
 ): Promise<ListErrorLogsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
+  // `action` stores the provider slug (`smtp`, `meta-catalog`) while the Type
+  // column renders its label ("Email", "Meta catalog"), so an `ilike` on the
+  // column alone cannot match what the user is looking at. Searching the labels
+  // too keeps the visible value searchable.
+  const providersByLabel = input.keyword
+    ? errorLogProvidersMatchingLabel(input.keyword)
+    : []
+
   const where = {
     workspaceId: input.workspaceId,
     ...(input.keyword
@@ -23,6 +32,9 @@ export async function listErrorLogs(
           OR: [
             { action: { ilike: likeContains(input.keyword) } },
             { detail: { ilike: likeContains(input.keyword) } },
+            ...(providersByLabel.length > 0
+              ? [{ action: { in: providersByLabel } }]
+              : []),
           ],
         }
       : {}),

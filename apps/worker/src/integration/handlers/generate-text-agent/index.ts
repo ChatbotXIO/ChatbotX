@@ -14,6 +14,7 @@ import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
 import { runAIAgentRunner } from "../shared/ai-agent-runner"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import type { ExecuteStepResult } from "../step"
 import { buildAIAgentMessages } from "./messages"
 
@@ -129,7 +130,7 @@ export async function handleAIGenerateTextAgent({
       throw err
     }
     await logProviderError({
-      provider: "openai",
+      provider: aiErrorLogProvider(step.provider),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       error: err,

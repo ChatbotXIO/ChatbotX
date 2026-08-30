@@ -75,6 +75,11 @@ export function getColumns({
         label: t("fields.type.label"),
         placeholder: t("fields.type.placeholder"),
         variant: "text",
+        // The column id ("action") matches the DB column so sorting works
+        // directly, but the toolbar's filter must persist under the server's
+        // "keyword" param — `listErrorLogs` reads nothing else, so without this
+        // the only search box on this table writes `?action=` and is ignored.
+        filterKey: "keyword",
       },
       enableColumnFilter: true,
       enableSorting: true,

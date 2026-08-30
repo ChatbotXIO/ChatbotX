@@ -24,6 +24,7 @@ import {
   saveResultToCustomField,
 } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import type { ExecuteStepResult } from "../step"
 import { editImageInputSchema } from "./schema"
 
@@ -249,7 +250,7 @@ export async function handleAIEditImage({
       "[ai-edit-image] Step failed",
     )
     await logProviderError({
-      provider: "openai",
+      provider: aiErrorLogProvider(step.provider),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       error: err,

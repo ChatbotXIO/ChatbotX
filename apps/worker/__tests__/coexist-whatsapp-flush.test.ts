@@ -93,6 +93,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  // `logProviderError` short-circuits on this, as `defaultQueue` does.
+  isNoRedisEnv: () => true,
   IntegrationJobAction: {
     coexistWhatsappBuffer: "coexistWhatsappBuffer",
     coexistWhatsappFlush: "coexistWhatsappFlush",

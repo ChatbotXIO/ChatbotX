@@ -31,3 +31,26 @@ export function shouldSuppressRetryableChannelError(
     AMBIGUOUS_OUTCOME_CATEGORIES.has(error.category)
   )
 }
+
+/**
+ * The `willRetry` to stamp on the `message:failed` this failure is about to
+ * emit — whether another `message:failed` for the *same* send is still to come.
+ * The error-log listener records a send on its last emission only, so getting
+ * this wrong either loses the failure or writes it twice.
+ *
+ * `willRetryOnThrow` is the caller's promise that rethrowing produces another
+ * emission: a BullMQ attempt still in hand, or a wrapping caller that catches
+ * and re-emits (`sendFlowStep`). Rethrowing is the condition — a suppressed
+ * error is swallowed instead, so nothing downstream ever sees it, and a
+ * Messenger `NETWORK_ERROR` takes that path on its very first attempt.
+ */
+export function willSendRetry(props: {
+  error: unknown
+  channel: string
+  willRetryOnThrow: boolean
+}): boolean {
+  if (!props.willRetryOnThrow) {
+    return false
+  }
+  return !shouldSuppressRetryableChannelError(props.error, props.channel)
+}

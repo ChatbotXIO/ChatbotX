@@ -21,7 +21,6 @@ import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
 import { runImport } from "./handlers/run-import"
 import { sendAppointmentReminder } from "./handlers/send-appointment-reminder"
 import { sendAuditLog } from "./handlers/send-audit-log"
-import { sendErrorLog } from "./handlers/send-error-log"
 import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
 import { syncExternalCalendarEvent } from "./handlers/sync-external-calendar-event"
 import { handleSyncTag } from "./handlers/sync-tag"
@@ -60,9 +59,6 @@ async function startDefaultWorker() {
       switch (job.data.type) {
         case DefaultJobAction.sendAuditLog:
           await sendAuditLog(job.data.data)
-          return
-        case DefaultJobAction.sendErrorLog:
-          await sendErrorLog(job.data.data)
           return
         case DefaultJobAction.exportContacts: {
           const { type, data } = job.data

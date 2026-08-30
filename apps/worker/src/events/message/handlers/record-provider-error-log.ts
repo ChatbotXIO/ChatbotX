@@ -5,7 +5,6 @@ import type {
   MessageFailedPayload,
   MessagePayload,
 } from "@chatbotx.io/event-bus"
-import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import {
   BROADCAST_PAYLOAD_TYPE,
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
@@ -56,23 +55,29 @@ const BULK_SEND_ORIGINS = new Set<string>([
 const isBulkSend = (payload: FailedPayloadWithMetadata): boolean =>
   BULK_SEND_ORIGINS.has(payload.metadata?.type ?? "")
 
-type EligibleFailure = {
-  input: LogProviderErrorInput
-  eventBusMessageId?: string
-}
-
 const toEligibleFailure = (
   payload: FailedPayloadWithMetadata,
-): EligibleFailure | null => {
+): { input: LogProviderErrorInput } | null => {
   // Cheapest test first, and the one that removes the most rows.
   if (isBulkSend(payload)) {
     return null
   }
 
   const { isRetryable, statusCode } = readErrorData(payload.errorData)
-  // Terminal failures only: a retryable error will be re-attempted, and
-  // logging each attempt would triple the rows for one logical failure.
-  if (isRetryable) {
+  // Terminal failures only — one row per logical failure, written on the
+  // emission that ends the send.
+  //
+  // `willRetry` is authoritative wherever the emitter sets it, because only
+  // the emitter knows what the worker is about to do: whether the BullMQ job
+  // has attempts left, and whether `shouldSuppressRetryableChannelError` is
+  // about to swallow the error instead of rethrowing it. That second case is
+  // why `errorData.isRetryable` alone is not enough — a Messenger
+  // `NETWORK_ERROR` is flagged retryable, is abandoned on its first attempt,
+  // and would otherwise leave an undelivered message with no row at all.
+  //
+  // Emitters with no retry of their own (a provider's async delivery status)
+  // leave it unset and fall back to the error's own retryability.
+  if (payload.willRetry ?? isRetryable) {
     return null
   }
 
@@ -98,7 +103,6 @@ const toEligibleFailure = (
       error: payload.errorData,
       httpCode: statusCode === undefined ? undefined : String(statusCode),
     },
-    eventBusMessageId: payload[EVENT_BUS_MESSAGE_ID],
   }
 }
 
@@ -137,11 +141,29 @@ export async function recordProviderErrorLog(payloads: MessagePayload[]) {
     failedIndexes = eligible.map((_, index) => index)
   }
 
-  const failedMessageIds = failedIndexes
-    .map((index) => eligible[index]?.eventBusMessageId)
-    .filter((id) => id !== undefined)
-
-  if (failedMessageIds.length > 0) {
-    return { failedMessageIds }
+  if (failedIndexes.length === 0) {
+    return
   }
+
+  // Deliberately not returned as `{ failedMessageIds }`: `messageEventBus` runs
+  // without `enableSelectiveRetry`, so `processAndAck` acks the whole batch
+  // whatever this returns, and reporting ids here would look like a retry that
+  // never happens. The emit already failed after its own timeout and retries,
+  // so the loss is real — log it loudly enough to be alertable instead of
+  // hiding it behind the bus's generic "acking batch despite handler failures"
+  // warn. Turning selective retry on for this bus is not the fix: every other
+  // message listener would start seeing redeliveries, and message sends are not
+  // idempotent.
+  logger.error(
+    {
+      count: failedIndexes.length,
+      total: eligible.length,
+      workspaceIds: [
+        ...new Set(
+          failedIndexes.map((index) => eligible[index]?.input.workspaceId),
+        ),
+      ],
+    },
+    "recordProviderErrorLog: error logs dropped, emit failed and this bus cannot retry",
+  )
 }

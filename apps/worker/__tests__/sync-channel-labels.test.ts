@@ -166,6 +166,14 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 // ---------------------------------------------------------------------------
+// Mock: @chatbotx.io/business/error-log
+// ---------------------------------------------------------------------------
+const logProviderError = vi.fn(async () => undefined)
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: (...args: unknown[]) => logProviderError(...args),
+}))
+
+// ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/utils — partial, preserve zodBigintAsString etc.
 // ---------------------------------------------------------------------------
 let idCounter = 0
@@ -468,6 +476,43 @@ describe("runMessengerScan — per-user error isolation", () => {
     await expect(
       handleSyncChannelLabels(messengerJob()),
     ).resolves.toBeUndefined()
+  })
+
+  // The failure here is per-*integration* (an expired page token fails every
+  // contact), so the scan writes one row for the run rather than one per
+  // `ContactInbox` — six figures of identical rows on a large workspace.
+  test("every user throws → exactly one error log for the whole scan", async () => {
+    state.messengerIntegration = makeMessengerIntegration()
+    state.contactInboxRows = [
+      makeContactInbox({ id: "ci-1" }),
+      makeContactInbox({ id: "ci-2" }),
+      makeContactInbox({ id: "ci-3" }),
+    ]
+    runChannelHandlerMock.mockRejectedValue(new Error("token expired"))
+
+    await handleSyncChannelLabels(messengerJob())
+
+    expect(logProviderError).toHaveBeenCalledTimes(1)
+    expect(logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "messenger",
+        workspaceId: "ws-1",
+        // No contact attribution: the row stands for the run, not for whichever
+        // contact happened to fail first.
+        error: expect.any(Error),
+      }),
+    )
+    expect(logProviderError.mock.calls[0]?.[0]).not.toHaveProperty("contactId")
+  })
+
+  test("no user throws → no error log at all", async () => {
+    state.messengerIntegration = makeMessengerIntegration()
+    state.contactInboxRows = [makeContactInbox({ id: "ci-1" })]
+    runChannelHandlerMock.mockResolvedValue([])
+
+    await handleSyncChannelLabels(messengerJob())
+
+    expect(logProviderError).not.toHaveBeenCalled()
   })
 })
 

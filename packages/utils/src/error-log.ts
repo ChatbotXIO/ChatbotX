@@ -48,10 +48,22 @@ export const errorLogProviders = z.enum([
   "drip",
   "mailer-lite",
   "moosend",
-  // productivity / AI
+  // productivity
   "google-sheets",
   "google-calendar",
+  // AI vendors. Hand-listed rather than derived: the source of truth
+  // (`aiProviders` in `packages/ai`, `aiAgentProviders` in
+  // `packages/database`) sits *above* this package, so importing either would
+  // invert the dependency. `openai-compatible` is the custom-endpoint variant
+  // — a self-hosted or third-party OpenAI-shaped API is not OpenAI, and
+  // folding it in would attribute its failures to a vendor the workspace does
+  // not even use.
   "openai",
+  "gemini",
+  "claude",
+  "deepseek",
+  "openrouter",
+  "openai-compatible",
 ])
 
 export type ErrorLogProvider = z.infer<typeof errorLogProviders>
@@ -99,10 +111,17 @@ export const errorLogProviderLabels = {
   drip: "Drip",
   "mailer-lite": "MailerLite",
   moosend: "Moosend",
-  // productivity / AI
+  // productivity
   "google-sheets": "Google sheets",
   "google-calendar": "Google calendar",
+  // AI vendors — the same names the builder's provider picker shows
+  // (`aiProviders.*` in `apps/builder/messages/en.json`).
   openai: "OpenAI",
+  gemini: "Gemini",
+  claude: "Claude",
+  deepseek: "DeepSeek",
+  openrouter: "OpenRouter",
+  "openai-compatible": "OpenAI Compatible",
 } as const satisfies Record<ErrorLogProvider, string>
 
 /**
@@ -114,4 +133,24 @@ export function errorLogProviderLabel(action: string): string {
   return action in errorLogProviderLabels
     ? errorLogProviderLabels[action as ErrorLogProvider]
     : action
+}
+
+/**
+ * Every provider whose display label contains `keyword`, case-insensitively.
+ *
+ * `ErrorLog.action` stores the slug, so an `ilike` over the column matches what
+ * is stored (`smtp`) and never what the table renders ("Email"). Search
+ * surfaces feed this back in as an `action IN (…)` term so the value a user can
+ * actually see is the value they can search for.
+ */
+export function errorLogProvidersMatchingLabel(
+  keyword: string,
+): ErrorLogProvider[] {
+  const needle = keyword.trim().toLowerCase()
+  if (needle.length === 0) {
+    return []
+  }
+  return Object.entries(errorLogProviderLabels)
+    .filter(([, label]) => label.toLowerCase().includes(needle))
+    .map(([provider]) => provider as ErrorLogProvider)
 }
