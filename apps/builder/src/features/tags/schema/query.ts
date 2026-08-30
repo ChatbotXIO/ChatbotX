@@ -42,10 +42,3 @@ export const publicListTagsResponse = z.object({
   data: z.array(publicTagResource),
 })
 export type ListPublicTagResponse = z.infer<typeof publicListTagsResponse>
-
-export const findTagRequest = z.object({
-  key: z.string(),
-  folderId: zodBigintAsString().nullish(),
-  workspaceId: zodBigintAsString(),
-})
-export type FindTagRequest = z.infer<typeof findTagRequest>

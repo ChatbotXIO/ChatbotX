@@ -1,13 +1,12 @@
-import { db } from "@chatbotx.io/database/client"
+import { tagService } from "@chatbotx.io/business"
+import { tagRepository } from "@chatbotx.io/database/repositories"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
-import { addContactTags } from "../actions/add-contact-tag.action"
 import { createContact } from "../actions/create-contact.action"
 import { deleteContactCustomFields } from "../actions/delete-contact-custom-field.action"
-import { removeContactTags } from "../actions/remove-contact-tag.action"
 import { requireContactPermissionScope } from "../permissions"
 import { getContact } from "../queries/get-contact.query"
 import { getExportFile } from "../queries/get-export-file.query"
@@ -196,12 +195,10 @@ export const contactsAuthenticatedAPI = {
     .handler(async ({ input }) => {
       const { workspaceId, tags, ids } = input
       const accessScope = await requireContactPermissionScope(workspaceId)
-      await addContactTags({
+      await tagService.addToContacts({
         workspaceId,
-        parsedInput: {
-          ids,
-          tags,
-        },
+        ids,
+        tags,
         accessScope,
       })
     }),
@@ -218,20 +215,16 @@ export const contactsAuthenticatedAPI = {
     .handler(async ({ input }) => {
       const { workspaceId, contactId, tagId } = input
       const accessScope = await requireContactPermissionScope(workspaceId)
-      // removeContactTags resolves tags by name; this endpoint takes a tag id.
-      const tag = await db.query.tagModel.findFirst({
-        where: { workspaceId, id: tagId, deletedAt: { isNull: true as const } },
-        columns: { name: true },
-      })
+      // tagService.removeFromContacts resolves tags by name; this endpoint
+      // takes a tag id.
+      const tag = await tagRepository.findById({ workspaceId, id: tagId })
       if (!tag) {
         return
       }
-      await removeContactTags({
+      await tagService.removeFromContacts({
         workspaceId,
-        parsedInput: {
-          ids: [contactId],
-          tags: [tag.name],
-        },
+        ids: [contactId],
+        tags: [tag.name],
         accessScope,
       })
     }),

@@ -1,7 +1,6 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { maxPerPageString } from "@/lib/shared-request"
-import type { ListTagsResponse } from "../schema/query"
+import { client } from "@/lib/orpc/orpc"
+import { maxPerPage } from "@/lib/shared-request"
 import type { TagResource } from "../schema/resource"
 
 export type TagState = {
@@ -51,20 +50,14 @@ export const createTagStore = (props: Partial<TagState>) =>
       set({ loading: true, error: null })
 
       try {
-        const { data } = await ky
-          .get<ListTagsResponse>(`/api/workspaces/${workspaceId}/tags`, {
-            searchParams: {
-              perPage: maxPerPageString,
-            },
-          })
-          .json()
+        const { data } = await client.tagsAPI.privateListWorkspaceTagsAPI({
+          workspaceId,
+          perPage: maxPerPage,
+        })
 
         set({ tags: data, loading: false })
-      } catch (error: unknown) {
-        set({
-          error:
-            error instanceof HTTPError ? error.message : "Failed to fetch tags",
-        })
+      } catch {
+        set({ error: "Failed to fetch tags" })
       } finally {
         set({ loading: false })
       }

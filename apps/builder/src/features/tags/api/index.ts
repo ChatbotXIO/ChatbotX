@@ -1,5 +1,5 @@
 import { privateTagsAPI } from "./private"
-import { tagWorkspaceTokenAPIs } from "./token-auth"
+import { tagWorkspaceTokenAPIs } from "./workspace-token"
 
 export const tagsAPI = {
   ...privateTagsAPI,
