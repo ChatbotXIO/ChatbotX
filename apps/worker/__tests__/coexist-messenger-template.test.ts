@@ -21,7 +21,7 @@ vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-import { fetchConvMessages } from "../src/integration/handlers/coexist/messenger-helpers"
+import { fetchConvMessages } from "../src/heavy/handlers/coexist/messenger-helpers"
 
 type GraphAttachment = Record<string, unknown>
 

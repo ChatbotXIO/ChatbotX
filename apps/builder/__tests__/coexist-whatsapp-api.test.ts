@@ -76,6 +76,14 @@ const mockQueueAdd = vi.fn<
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: {},
+  // coexist/service.ts sources its job-action strings from HeavyJobAction —
+  // the coexist actions moved to the `heavy` queue. See
+  // docs/plans/2026-08-30-heavy-worker-coexist-split.md.
+  HeavyJobAction: {
+    coexistMessengerSync: "coexistMessengerSync",
+    coexistInstagramSync: "coexistInstagramSync",
+    coexistWhatsappFlush: "coexistWhatsappFlush",
+  },
   integrationQueue: {
     add: mockQueueAdd,
   },

@@ -10,7 +10,7 @@ import {
   type PullCoexistChannel,
 } from "@chatbotx.io/database/repositories"
 import type { CoexistSyncRunModel } from "@chatbotx.io/database/types"
-import { IntegrationJobAction } from "@chatbotx.io/worker-config"
+import { HeavyJobAction } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 
 export type CoexistEnableInput = {
@@ -33,26 +33,26 @@ export type CoexistJobStrategy =
   | {
       mode: "pull"
       action:
-        | typeof IntegrationJobAction.coexistMessengerSync
-        | typeof IntegrationJobAction.coexistInstagramSync
+        | typeof HeavyJobAction.coexistMessengerSync
+        | typeof HeavyJobAction.coexistInstagramSync
     }
   | {
       mode: "buffered"
-      action: typeof IntegrationJobAction.coexistWhatsappFlush
+      action: typeof HeavyJobAction.coexistWhatsappFlush
     }
 
 export const coexistJobStrategies = {
   messenger: {
     mode: "pull",
-    action: IntegrationJobAction.coexistMessengerSync,
+    action: HeavyJobAction.coexistMessengerSync,
   },
   instagram: {
     mode: "pull",
-    action: IntegrationJobAction.coexistInstagramSync,
+    action: HeavyJobAction.coexistInstagramSync,
   },
   whatsapp: {
     mode: "buffered",
-    action: IntegrationJobAction.coexistWhatsappFlush,
+    action: HeavyJobAction.coexistWhatsappFlush,
   },
 } satisfies Record<CoexistChannel, CoexistJobStrategy>
 

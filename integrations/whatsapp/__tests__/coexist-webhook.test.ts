@@ -329,11 +329,14 @@ describe("webhookHandler — H2 setTimeout race", () => {
 
     const queueAdd = vi.fn().mockResolvedValue(undefined)
     const queue = { add: queueAdd } as never
+    const heavyQueueAdd = vi.fn().mockResolvedValue(undefined)
+    const heavyQueue = { add: heavyQueueAdd } as never
 
     const handlerPromise = webhookHandler({
       config: baseConfig,
       req: makePostRequest(coexistBody),
       queue,
+      heavyQueue,
     })
 
     // Advance past the internal 300 ms guard — handle_post is still pending.
@@ -347,9 +350,15 @@ describe("webhookHandler — H2 setTimeout race", () => {
     // Let remaining microtasks and promises settle.
     await handlerPromise
 
-    expect(queueAdd).toHaveBeenCalledWith(
+    // The coexist buffer enqueue lands on the `heavy` queue, not the
+    // channel-domain `integration` queue.
+    expect(heavyQueueAdd).toHaveBeenCalledWith(
       "coexistWhatsappBuffer",
       expect.objectContaining({ type: "coexistWhatsappBuffer" }),
+    )
+    expect(queueAdd).not.toHaveBeenCalledWith(
+      "coexistWhatsappBuffer",
+      expect.anything(),
     )
   })
 
@@ -366,11 +375,14 @@ describe("webhookHandler — H2 setTimeout race", () => {
 
     const queueAdd = vi.fn().mockResolvedValue(undefined)
     const queue = { add: queueAdd } as never
+    const heavyQueueAdd = vi.fn().mockResolvedValue(undefined)
+    const heavyQueue = { add: heavyQueueAdd } as never
 
     const handlerPromise = webhookHandler({
       config: baseConfig,
       req: makePostRequest(coexistBody),
       queue,
+      heavyQueue,
     })
 
     // Advance past the 300 ms guard; handle_post is still pending.
@@ -384,9 +396,44 @@ describe("webhookHandler — H2 setTimeout race", () => {
     await expect(handlerPromise).rejects.toThrow()
 
     // Coexist payloads must NOT be enqueued (HMAC not verified).
+    expect(heavyQueueAdd).not.toHaveBeenCalled()
     expect(queueAdd).not.toHaveBeenCalledWith(
       "coexistWhatsappBuffer",
       expect.anything(),
     )
+  })
+
+  it("(c) logs an error (no throw) and still acknowledges the webhook when coexist payloads exist but no heavyQueue was provided", async () => {
+    handlePostMock.mockResolvedValue(200)
+
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+    const queue = { add: queueAdd } as never
+
+    const { logger } = await import("../src/lib/logger")
+    const loggerErrorSpy = vi
+      .spyOn(logger, "error")
+      .mockImplementation(() => undefined as unknown as undefined)
+
+    const handlerPromise = webhookHandler({
+      config: baseConfig,
+      req: makePostRequest(coexistBody),
+      queue,
+      // heavyQueue intentionally omitted — the footgun guard must fire.
+    })
+
+    await vi.advanceTimersByTimeAsync(400)
+
+    await expect(handlerPromise).resolves.toBe("ok")
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ count: 1 }),
+      expect.stringContaining("no heavyQueue was provided"),
+    )
+    expect(queueAdd).not.toHaveBeenCalledWith(
+      "coexistWhatsappBuffer",
+      expect.anything(),
+    )
+
+    loggerErrorSpy.mockRestore()
   })
 })

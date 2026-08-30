@@ -125,7 +125,7 @@ vi.mock("../src/lib/logger", () => ({
 import {
   coexistAttachmentDownload,
   MAX_ATTACHMENT_BYTES,
-} from "../src/integration/handlers/coexist/attachment-download"
+} from "../src/heavy/handlers/coexist/attachment-download"
 
 // ---------------------------------------------------------------------------
 // Fixtures

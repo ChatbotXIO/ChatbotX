@@ -3,6 +3,7 @@ import { defineConfig } from "tsdown"
 export default defineConfig({
   format: ["esm"],
   entry: [
+    "src/heavy/worker.ts",
     "src/chat/worker.ts",
     "src/integration/worker.ts",
     "src/ai-agent/worker.ts",

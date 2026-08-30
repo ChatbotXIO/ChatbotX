@@ -27,7 +27,7 @@ vi.mock("@chatbotx.io/integration-instagram-facebook/apis/sync", () => ({
 import {
   type InstagramFacebookCoexistContext,
   instagramFacebookCoexistAdapter,
-} from "../src/integration/handlers/coexist/instagram-facebook-adapter"
+} from "../src/heavy/handlers/coexist/instagram-facebook-adapter"
 
 const context = {
   integration: {

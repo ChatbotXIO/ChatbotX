@@ -25,8 +25,10 @@ import {
 } from "@chatbotx.io/integration-messenger/apis/usage"
 import type { IncomingContact } from "@chatbotx.io/sdk"
 import {
+  HeavyJobAction,
+  type HeavyJobCoexistMessengerSync,
+  heavyQueue,
   IntegrationJobAction,
-  type IntegrationJobCoexistMessengerSync,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import pLimit from "p-limit"
@@ -585,11 +587,11 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
       // re-enqueues the same jobIds harmlessly.
       if (pageAttachmentIds.length > 0) {
         try {
-          await integrationQueue.addBulk(
+          await heavyQueue.addBulk(
             pageAttachmentIds.map((attachmentId) => ({
-              name: IntegrationJobAction.coexistAttachmentDownload,
+              name: HeavyJobAction.coexistAttachmentDownload,
               data: {
-                type: IntegrationJobAction.coexistAttachmentDownload,
+                type: HeavyJobAction.coexistAttachmentDownload,
                 data: {
                   attachmentId,
                   workspaceId,
@@ -649,7 +651,7 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
  * Idempotent via `Message_(contactInboxId, sourceId)_key`.
  */
 export const coexistMessengerSync = async (
-  data: IntegrationJobCoexistMessengerSync["data"],
+  data: HeavyJobCoexistMessengerSync["data"],
 ): Promise<void> => {
   const { runId, integrationId, workspaceId } = data
   const jobStart = Date.now()
@@ -901,10 +903,10 @@ export const coexistMessengerSync = async (
 
     if (continueLater) {
       try {
-        await integrationQueue.add(
-          IntegrationJobAction.coexistMessengerSync,
+        await heavyQueue.add(
+          HeavyJobAction.coexistMessengerSync,
           {
-            type: IntegrationJobAction.coexistMessengerSync,
+            type: HeavyJobAction.coexistMessengerSync,
             data: { runId, integrationId, workspaceId },
           },
           {

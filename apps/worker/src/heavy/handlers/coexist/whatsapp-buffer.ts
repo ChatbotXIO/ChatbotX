@@ -3,9 +3,9 @@ import { db } from "@chatbotx.io/database/client"
 import { whatsappCoexistStagingModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
-  IntegrationJobAction,
-  type IntegrationJobCoexistWhatsappBuffer,
-  integrationQueue,
+  HeavyJobAction,
+  type HeavyJobCoexistWhatsappBuffer,
+  heavyQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 
@@ -27,7 +27,7 @@ const FLUSH_DELAY_MS = 60_000
  * Run rows are created by the popup-enable action (builder api/coexist.ts).
  */
 export const coexistWhatsappBuffer = async (
-  data: IntegrationJobCoexistWhatsappBuffer["data"],
+  data: HeavyJobCoexistWhatsappBuffer["data"],
 ): Promise<void> => {
   const { phoneNumberId, payload } = data
 
@@ -70,10 +70,10 @@ export const coexistWhatsappBuffer = async (
   // drains, it re-checks for unprocessed rows and self-enqueues one follow-up
   // (also coalesced) — see coexistWhatsappFlush. That keeps the queue free of
   // a per-webhook follow-up storm during a multi-hour history backfill.
-  await integrationQueue.add(
-    IntegrationJobAction.coexistWhatsappFlush,
+  await heavyQueue.add(
+    HeavyJobAction.coexistWhatsappFlush,
     {
-      type: IntegrationJobAction.coexistWhatsappFlush,
+      type: HeavyJobAction.coexistWhatsappFlush,
       data: { phoneNumberId },
     },
     {

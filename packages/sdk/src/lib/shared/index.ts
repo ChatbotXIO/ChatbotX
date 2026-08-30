@@ -15,6 +15,14 @@ export type HandleRequestProps<IConfig extends BaseConfig> = {
   config: IConfig
   req: Request
   queue?: ContextQueue
+  /**
+   * Optional handle to the workload-class `heavy` queue (long-lock,
+   * throughput-oriented, latency-tolerant jobs — see
+   * docs/plans/2026-08-30-heavy-worker-coexist-split.md). Generic — not
+   * channel-specific — so any integration can route its own heavy jobs here;
+   * today only the WhatsApp integration's coexist buffer enqueue consumes it.
+   */
+  heavyQueue?: ContextQueue
 }
 
 export type ReceivedMessageProps = {

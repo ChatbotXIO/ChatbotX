@@ -16,7 +16,8 @@ import { logger } from "../../lib/logger"
 // job.waitUntilFinished() pending forever, and each pending wait keeps a
 // QueueEvents listener plus its captured closures alive — the slow leak that
 // OOM-crashed the integration worker. Validated + capped below the integration
-// worker lockDuration in env.ts.
+// worker lockDuration in env.ts — that lock (10 min) is sized to stay above
+// this max wait, not (post coexist-split) for any coexist-chunking reason.
 const CHAT_JOB_WAIT_TIMEOUT_MS = env.CHAT_JOB_WAIT_TIMEOUT_MS
 
 let chatQueueEvents: QueueEvents | null = null

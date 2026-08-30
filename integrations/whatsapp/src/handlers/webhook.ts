@@ -25,6 +25,7 @@ type AutomaticEventPayload = {
   payload: WhatsappAutomaticEventPayload
 }
 type WebhookQueue = HandleRequestProps<WhatsappConfig>["queue"]
+type HeavyQueue = HandleRequestProps<WhatsappConfig>["heavyQueue"]
 
 /**
  * Per Meta docs, coexist payloads arrive under three distinct `field` values
@@ -306,16 +307,30 @@ const capturePostResult = async (input: {
 }
 
 const enqueueCoexistPayloads = async (
-  queue: WebhookQueue,
+  heavyQueue: HeavyQueue,
   coexistPayloads: CoexistPayload[],
 ): Promise<void> => {
-  if (coexistPayloads.length > 0) {
-    for (const { phoneNumberId, value } of coexistPayloads) {
-      await queue?.add("coexistWhatsappBuffer", {
-        type: "coexistWhatsappBuffer",
-        data: { phoneNumberId, payload: value },
-      })
-    }
+  if (coexistPayloads.length === 0) {
+    return
+  }
+
+  // [R5] Optional-prop footgun guard: coexist payloads exist but the caller
+  // never wired `heavyQueue` into `handleRequest`. Never drop this silently
+  // via `?.` — log loudly so a missing builder-route wire-up surfaces as an
+  // error instead of quietly stranding coexist history on the floor.
+  if (!heavyQueue) {
+    logger.error(
+      { count: coexistPayloads.length },
+      "WhatsApp coexist payloads received but no heavyQueue was provided to handleRequest — dropping",
+    )
+    return
+  }
+
+  for (const { phoneNumberId, value } of coexistPayloads) {
+    await heavyQueue.add("coexistWhatsappBuffer", {
+      type: "coexistWhatsappBuffer",
+      data: { phoneNumberId, payload: value },
+    })
   }
 }
 
@@ -430,7 +445,7 @@ export const webhookHandler = async (
         rawBodyBuffer,
         middleware,
       })
-      await enqueueCoexistPayloads(props.queue, coexistPayloads)
+      await enqueueCoexistPayloads(props.heavyQueue, coexistPayloads)
       await enqueueAutomaticEventPayloads(props.queue, automaticEventPayloads)
       await dispatchWebhookResult(props.queue, result)
 

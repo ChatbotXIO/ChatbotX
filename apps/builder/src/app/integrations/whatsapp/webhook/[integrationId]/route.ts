@@ -1,5 +1,5 @@
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
-import { integrationQueue } from "@chatbotx.io/worker-config"
+import { heavyQueue, integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import {
   findIntegrationWhatsappById,
@@ -109,6 +109,7 @@ const handlePost = async (req: NextRequest, integrationId: string) => {
       } as any,
       req,
       queue: integrationQueue,
+      heavyQueue,
     })
 
     return new Response(handlerResult as BodyInit)

@@ -13,7 +13,7 @@ import type {
   TiktokAuthValue,
   TiktokConfig,
 } from "@chatbotx.io/integration-tiktok"
-import { integrationQueue } from "@chatbotx.io/worker-config"
+import { heavyQueue, integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { isCloud } from "@/env"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
@@ -167,6 +167,7 @@ export const handleWebhook = async (
       } as any,
       req,
       queue: integrationQueue,
+      heavyQueue,
     })
 
     return new Response(result as BodyInit)
@@ -238,6 +239,7 @@ const handleTelegramWebhook = async (req: NextRequest) => {
       } as any,
       req,
       queue: integrationQueue,
+      heavyQueue,
     })
 
     return new Response(result as BodyInit)
@@ -348,6 +350,7 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       config: tiktokConfig,
       req: reqWithBody,
       queue: integrationQueue,
+      heavyQueue,
     })
 
     return new Response(result as BodyInit)

@@ -168,7 +168,7 @@ vi.mock("../src/lib/logger", () => ({
 // ---------------------------------------------------------------------------
 
 const { bulkImportMessages, applyCoexistActivityUpdates } = await import(
-  "../src/integration/handlers/coexist/bulk-historical-import"
+  "../src/heavy/handlers/coexist/bulk-historical-import"
 )
 
 // ---------------------------------------------------------------------------
