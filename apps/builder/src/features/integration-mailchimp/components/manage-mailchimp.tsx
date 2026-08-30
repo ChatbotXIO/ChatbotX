@@ -12,7 +12,7 @@ import { DisconnectIntegrationDialog } from "@/features/common/components/discon
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { connectMailchimpAction } from "../actions/connect.action"
 import { disconnectMailchimpAction } from "../actions/disconnect.action"
-import { connectMailchimpSchema } from "../schemas"
+import { connectMailchimpSchema } from "../schema"
 
 export function ManageMailchimp(props: {
   workspaceId: string

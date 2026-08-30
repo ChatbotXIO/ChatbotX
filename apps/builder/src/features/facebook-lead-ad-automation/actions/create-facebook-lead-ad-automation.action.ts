@@ -7,14 +7,14 @@ import { getTranslations } from "next-intl/server"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { subscribePageLeadgen } from "../lib/pages"
 import {
   type CreateFacebookLeadAdAutomationRequest,
   createFacebookLeadAdAutomationRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const createFacebookLeadAdAutomationAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

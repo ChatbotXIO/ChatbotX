@@ -2,7 +2,7 @@
 
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { updateSmtpRequest } from "../schemas/mutation"
+import { updateSmtpRequest } from "../schema/mutation"
 import { updateSmtp } from "../services/smtp.service"
 
 export const updateSmtpAction = workspaceActionClient

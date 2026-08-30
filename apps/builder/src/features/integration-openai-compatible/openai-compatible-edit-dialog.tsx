@@ -31,8 +31,8 @@ import {
   buildOpenaiCompatibleModelOptions,
   shouldUseCustomOpenaiCompatibleModelInput,
 } from "./model-options"
-import { updateOpenaiCompatibleSchema } from "./schemas/request"
-import type { IntegrationOpenaiCompatibleResource } from "./schemas/resource"
+import { updateOpenaiCompatibleSchema } from "./schema/request"
+import type { IntegrationOpenaiCompatibleResource } from "./schema/resource"
 
 type OpenaiCompatibleEditDialogProps = {
   integration: IntegrationOpenaiCompatibleResource

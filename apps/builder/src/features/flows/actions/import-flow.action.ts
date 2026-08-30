@@ -6,14 +6,14 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { getCurrentUser } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ImportFlowRequest,
   type ImportFlowResponse,
   importFlowRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const importFlowAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

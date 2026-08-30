@@ -4,7 +4,7 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListFacebookLeadAdsRequest,
   ListFacebookLeadAdsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export async function listFacebookLeadAdsAutomations(
   input: ListFacebookLeadAdsRequest,

@@ -72,7 +72,7 @@ vi.mock("next-intl/server", () => ({
   getTranslations: mockGetTranslations,
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 
@@ -80,7 +80,7 @@ vi.mock("@/features/folders/actions/utils", () => ({
   ensureFolderIsExists: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock("../src/features/webhooks/schemas/create-webhook-schema", () => ({
+vi.mock("../src/features/webhooks/schema/create-webhook-schema", () => ({
   createWebhookSchema: {},
 }))
 

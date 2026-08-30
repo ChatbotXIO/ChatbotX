@@ -20,7 +20,7 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 
@@ -54,7 +54,7 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }))
 
-vi.mock("../src/features/ai-files/schemas", () => ({
+vi.mock("../src/features/ai-files/schema", () => ({
   createAIFileRequest: {},
 }))
 

@@ -8,12 +8,12 @@ import { integrationDeepseekModel } from "@chatbotx.io/database/schema"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateDeepSeekRequest,
   updateDeepSeekRequest,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const updateIntegrationDeepSeekAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

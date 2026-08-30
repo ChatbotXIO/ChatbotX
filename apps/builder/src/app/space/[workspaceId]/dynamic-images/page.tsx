@@ -6,7 +6,7 @@ import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { DynamicImagesTable } from "@/features/dynamic-images/dynamic-images-table"
 import { listDynamicImages } from "@/features/dynamic-images/queries"
-import { listDynamicImagesSearchParamsCache } from "@/features/dynamic-images/schemas/query"
+import { listDynamicImagesSearchParamsCache } from "@/features/dynamic-images/schema/query"
 
 export default async function DynamicImagesPage({
   params,

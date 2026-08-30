@@ -1,4 +1,4 @@
-import { dynamicImagesAuthenticatedAPI } from "./authenticated"
+import { dynamicImagesAuthenticatedAPI } from "./private"
 
 export const dynamicImagesAPI = {
   ...dynamicImagesAuthenticatedAPI,

@@ -21,7 +21,7 @@ import {
   getConditionOptions,
 } from "@/features/contact-filter/components/contact-filter-config"
 import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
-import { mappingConditions } from "@/features/contact-filter/schemas"
+import { mappingConditions } from "@/features/contact-filter/schema"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 

@@ -22,8 +22,8 @@ import { QrCodeLinkContent } from "@/features/qr-codes/qr-code-link-content"
 import { useTenantSettings } from "@/features/tenant"
 import { updateQrCodeAction } from "./actions/update-qr-code.action"
 import { QR_CODE_SIZE, stripQrPrefix } from "./constants"
-import { updateQrCodeRequest } from "./schemas/action"
-import type { QrCodeResource } from "./schemas/resource"
+import { updateQrCodeRequest } from "./schema/action"
+import type { QrCodeResource } from "./schema/resource"
 
 export function UpdateQrCodeForm({
   workspaceId,

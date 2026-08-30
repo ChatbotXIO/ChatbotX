@@ -10,7 +10,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { editContactNoteAction } from "./actions/edit-contact-note.action"
-import { updateContactNoteRequest } from "./schemas/action"
+import { updateContactNoteRequest } from "./schema/action"
 
 export function EditContactForm({
   workspaceId,

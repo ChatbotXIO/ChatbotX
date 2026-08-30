@@ -8,7 +8,7 @@ import {
 import type {
   GetExportFileRequest,
   GetExportFileResponse,
-} from "../schemas/action"
+} from "../schema/action"
 
 export async function getExportFile(
   input: GetExportFileRequest,

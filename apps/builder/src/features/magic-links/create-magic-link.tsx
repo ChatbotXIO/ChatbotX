@@ -20,7 +20,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { createMagicLinkAction } from "./actions/create-magic-link.action"
-import { createMagicLinkRequest } from "./schemas/action"
+import { createMagicLinkRequest } from "./schema/action"
 
 export const CreateMagicLinkDialog = ({
   workspaceId,

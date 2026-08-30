@@ -23,7 +23,7 @@ import { EllipsisIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 import { ContactNameCell } from "@/features/contacts/components/contact-name-cell"
-import type { ErrorLogResource } from "./schemas"
+import type { ErrorLogResource } from "./schema"
 
 type GetColumnsProps = {
   t: ReturnType<typeof useTranslations>

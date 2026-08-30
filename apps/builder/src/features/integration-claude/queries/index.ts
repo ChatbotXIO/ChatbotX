@@ -1,5 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import type { IntegrationClaudeResource } from "../schemas/resource"
+import type { IntegrationClaudeResource } from "../schema/resource"
 
 export const findIntegrationClaude = async ({
   workspaceId,

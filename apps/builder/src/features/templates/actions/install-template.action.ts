@@ -6,7 +6,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { installTemplateRequest } from "../schemas/mutation"
+import { installTemplateRequest } from "../schema/mutation"
 
 /**
  * Binds the *user-chosen* target workspace as a bound arg (not part of the

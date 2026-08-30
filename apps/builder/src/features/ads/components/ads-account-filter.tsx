@@ -10,7 +10,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import type { AdsAnalyticsSearchParams } from "../schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "../schema/analytics"
 
 type ChannelIntegration = { id: string; name: string }
 

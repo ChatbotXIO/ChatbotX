@@ -3,9 +3,9 @@
 import { botFieldService } from "@chatbotx.io/business"
 import { isDatabaseError } from "@chatbotx.io/database/client"
 import { returnValidationErrors } from "next-safe-action"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createBotFieldRequest } from "../schemas/action"
+import { createBotFieldRequest } from "../schema/action"
 
 const UNIQUE_VIOLATION_CODE = "23505"
 

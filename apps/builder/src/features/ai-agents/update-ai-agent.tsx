@@ -44,9 +44,9 @@ import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-labe
 import {
   type UpdateAIAgentRequest,
   updateAIAgentRequest,
-} from "@/features/ai-agents/schemas/action"
+} from "@/features/ai-agents/schema/action"
 import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 import { WebSearchAuthorizedDomainsField } from "./components/web-search-authorized-domains-field"
 import {
   buildOpenaiCompatibleAgentModels,

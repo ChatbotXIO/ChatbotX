@@ -22,7 +22,7 @@ import type { ReactElement, ReactNode } from "react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { connectTelegramAction } from "../actions/connect.action"
-import { connectTelegramRequest } from "../schemas/request"
+import { connectTelegramRequest } from "../schema/request"
 
 function ConnectStep({
   index,

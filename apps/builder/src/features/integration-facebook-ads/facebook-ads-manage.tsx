@@ -12,7 +12,7 @@ import { DisconnectIntegrationDialog } from "@/features/common/components/discon
 import { connectFacebookAds } from "./actions/connect.action"
 import { disconnectFacebookAdsAction } from "./actions/disconnect.action"
 import { needsFacebookAdsReconnect } from "./lib/needs-reconnect"
-import type { IntegrationFacebookAdsResource } from "./schemas"
+import type { IntegrationFacebookAdsResource } from "./schema"
 
 type FacebookAdsManageProps = {
   workspaceId: string

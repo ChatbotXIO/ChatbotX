@@ -15,7 +15,7 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import type { listAppointments } from "../queries"
-import type { AppointmentManagementTab } from "../schemas/query"
+import type { AppointmentManagementTab } from "../schema/query"
 import {
   type AppointmentRowAction,
   getAppointmentColumns,

@@ -1,4 +1,4 @@
-import { spreadsheetsAuthenticatedAPI } from "./authenticated"
+import { spreadsheetsAuthenticatedAPI } from "./private"
 
 export const spreadsheetsAPI = {
   ...spreadsheetsAuthenticatedAPI,

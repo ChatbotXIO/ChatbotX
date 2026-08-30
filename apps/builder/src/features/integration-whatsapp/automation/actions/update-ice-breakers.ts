@@ -7,13 +7,13 @@ import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { integrations } from "@/integration"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateWhatsappIceBreakerSchema,
   updateWhatsappIceBreakerSchema,
-} from "../schemas/update-ice-breaker-schema"
+} from "../schema/update-ice-breaker-schema"
 
 export const updateWhatsappIceBreakerAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

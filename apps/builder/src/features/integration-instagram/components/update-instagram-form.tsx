@@ -37,7 +37,7 @@ import {
   type ConversationStarter,
   type PersistentMenuSchema,
   updateInstagramRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 type UpdateInstagramFormProps = {
   integrationInstagram: IntegrationInstagramModel

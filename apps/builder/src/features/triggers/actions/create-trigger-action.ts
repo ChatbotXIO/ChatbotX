@@ -11,7 +11,7 @@ import { getTranslations } from "next-intl/server"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"

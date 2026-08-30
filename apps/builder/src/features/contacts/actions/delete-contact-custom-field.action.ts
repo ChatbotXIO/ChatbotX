@@ -8,13 +8,13 @@ import {
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type DeleteContactCustomFieldsRequest,
   deleteContactCustomFieldsRequest,
-} from "../schemas/contact-custom-field"
+} from "../schema/contact-custom-field"
 
 export const deleteContactCustomFieldAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

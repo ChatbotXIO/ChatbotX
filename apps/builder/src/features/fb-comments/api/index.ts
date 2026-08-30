@@ -1,4 +1,4 @@
-import { fbCommentsPrivateAPI } from "./authenticated"
+import { fbCommentsPrivateAPI } from "./private"
 
 export const fbCommentsAPI = {
   ...fbCommentsPrivateAPI,

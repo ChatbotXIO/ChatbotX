@@ -6,7 +6,7 @@ import type {
   ListContactCustomFieldsRequest,
   ListPublicContactCustomFieldsResponse,
   PublicContactCustomFieldResource,
-} from "../schemas/contact-custom-field"
+} from "../schema/contact-custom-field"
 
 export async function listContactCustomFields(
   input: ListContactCustomFieldsRequest & { accessScope?: ContactAccessScope },

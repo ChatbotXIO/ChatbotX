@@ -5,7 +5,7 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"

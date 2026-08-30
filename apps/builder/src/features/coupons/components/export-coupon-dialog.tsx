@@ -24,7 +24,7 @@ import useSWR from "swr"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { client } from "@/lib/orpc/orpc"
 import { exportCouponsAction } from "../actions/export-coupons.action"
-import type { ExportCouponRequest } from "../schemas/mutation"
+import type { ExportCouponRequest } from "../schema/mutation"
 
 type ExportCouponDialogProps = {
   workspaceId: string

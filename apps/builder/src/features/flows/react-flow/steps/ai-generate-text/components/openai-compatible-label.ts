@@ -4,7 +4,7 @@ import type {
   AIGenerateTextAgentSchema,
   AIGenerateTextSchema,
 } from "@chatbotx.io/flow-config"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 
 type OpenaiCompatibleStep =
   | AIGenerateTextSchema

@@ -27,7 +27,7 @@ import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { client } from "@/lib/orpc/orpc"
 import { connectLeadAdsAction } from "../actions/connect-lead-ads.action"
 import { createFacebookLeadAdAutomationAction } from "../actions/create-facebook-lead-ad-automation.action"
-import { createFacebookLeadAdAutomationRequest } from "../schemas/action"
+import { createFacebookLeadAdAutomationRequest } from "../schema/action"
 import { LeadDataMapping } from "./lead-data-mapping"
 
 // Response shapes come straight from the oRPC API so they track the single

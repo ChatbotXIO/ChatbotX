@@ -10,4 +10,4 @@ export {
   useContactFilterQueryState,
 } from "./components/use-contact-filter-query-state"
 export { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "./lib/restricted-fields"
-export * from "./schemas"
+export * from "./schema"

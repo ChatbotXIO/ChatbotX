@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteMinigamesAction } from "./actions/delete-minigames.action"
-import type { MinigameResource } from "./schemas/resource"
+import type { MinigameResource } from "./schema/resource"
 
 type DeleteMinigamesDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string

@@ -1,4 +1,4 @@
-import personasAuthenticatedAPI from "./authenticated"
+import personasAuthenticatedAPI from "./private"
 
 export const personasAPIs = {
   ...personasAuthenticatedAPI,

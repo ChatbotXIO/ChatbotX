@@ -21,10 +21,7 @@ import {
   maskContactEmailAndPhone,
   resolveContactPermissionScope,
 } from "../permissions"
-import type {
-  ListContactsRequest,
-  ListContactsResponse,
-} from "../schemas/query"
+import type { ListContactsRequest, ListContactsResponse } from "../schema/query"
 
 /**
  * Matches the client's default sort (`contacts-table.tsx` initialState).

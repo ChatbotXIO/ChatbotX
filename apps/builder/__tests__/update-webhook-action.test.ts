@@ -46,7 +46,7 @@ vi.mock("@/features/conditions/to-condition-columns", () => ({
   toConditionColumns: (c: unknown) => c,
 }))
 
-vi.mock("../src/features/webhooks/schemas/update-webhook-schema", () => ({
+vi.mock("../src/features/webhooks/schema/update-webhook-schema", () => ({
   updateWebhookRequest: {},
 }))
 

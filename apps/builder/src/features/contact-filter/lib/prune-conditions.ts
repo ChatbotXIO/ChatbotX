@@ -1,5 +1,5 @@
 import type { ContactFilterField } from "@chatbotx.io/database/partials"
-import type { ContactFilterCondition } from "../schemas"
+import type { ContactFilterCondition } from "../schema"
 
 export const pruneExcludedConditions = (
   conditions: ContactFilterCondition[],

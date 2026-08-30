@@ -7,7 +7,7 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { QrCodesTable } from "@/features/qr-codes/qr-codes-table"
 import { listQrCodes } from "@/features/qr-codes/queries"
-import { listQrCodesSearchParamsCache } from "@/features/qr-codes/schemas/query"
+import { listQrCodesSearchParamsCache } from "@/features/qr-codes/schema/query"
 
 export default async function QrCodesPage({
   params,

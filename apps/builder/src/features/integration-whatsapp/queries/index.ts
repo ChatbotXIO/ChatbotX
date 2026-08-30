@@ -6,7 +6,7 @@ import type {
   IntegrationWhatsappModel,
 } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { PaginatedResponse } from "@/features/common/schema/pagination"
 
 type IntegrationWhatsappWithInbox = IntegrationWhatsappResource & {
   inbox?: Pick<InboxModel, "id" | "name">

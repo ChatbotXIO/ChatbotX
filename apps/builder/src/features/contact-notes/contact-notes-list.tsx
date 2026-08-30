@@ -8,7 +8,7 @@ import {
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import { CircleUserRound, PencilIcon, TrashIcon } from "lucide-react"
 import { useLocale } from "next-intl"
-import type { ContactNoteResource } from "./schemas/resource"
+import type { ContactNoteResource } from "./schema/resource"
 
 export function ContactNoteList({
   allContactNotes,

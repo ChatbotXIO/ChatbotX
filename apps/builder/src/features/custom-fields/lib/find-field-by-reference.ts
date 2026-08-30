@@ -3,8 +3,8 @@ import {
   FieldReferenceKind,
   parseFieldReference,
 } from "@chatbotx.io/flow-config"
-import type { BotFieldResource } from "@/features/bot-fields/schemas/resource"
-import type { CustomFieldResource } from "../schemas/resource"
+import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
+import type { CustomFieldResource } from "../schema/resource"
 
 export type FieldReferenceLookupResult = {
   type: CustomFieldType
