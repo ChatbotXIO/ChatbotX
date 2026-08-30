@@ -1,25 +1,18 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { whatsappMessageTemplateContract } from "@chatbotx.io/api-contract/whatsapp-message-template"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
 import { whatsappMessageTemplateService } from "../queries"
-import {
-  listWhatsappMessageTemplatesRequest,
-  listWhatsappMessageTemplatesResponse,
-} from "../schema/query"
+
+const os = implement(whatsappMessageTemplateContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
 
 export const whatsappMessageTemplateWorkspaceTokenAPIs = {
-  listTemplateMessagesWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/template-messages",
-      summary: "List template messages",
-      tags: ["Template Messages"],
-    })
-    .input(
-      listWhatsappMessageTemplatesRequest.omit({
-        workspaceId: true,
-      }),
-    )
-    .output(listWhatsappMessageTemplatesResponse)
-    .handler(
+  listTemplateMessagesWorkspaceTokenAPI:
+    os.listWhatsappMessageTemplatesContract.handler(
       async ({ context, input }) =>
         await whatsappMessageTemplateService.list({
           where: { ...input, workspaceId: context.workspace.id },

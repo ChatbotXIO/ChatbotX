@@ -1,40 +1,26 @@
+import { workspaceMemberContract } from "@chatbotx.io/api-contract/workspace-member"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
 import { getWorkspaceMember, listWorkspaceMembers } from "../queries"
-import {
-  getWorkspaceMemberRequest,
-  getWorkspaceMemberResponse,
-  listWorkspaceMembersRequest,
-  listWorkspaceMembersResponse,
-} from "../schema/query"
+
+const os = implement(workspaceMemberContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
 
 export const workspaceMembersAPIs = {
-  listMembersWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/members",
-      summary: "List workspace members",
-      tags: ["Members"],
-    })
-    .input(listWorkspaceMembersRequest.omit({ workspaceId: true }))
-    .output(listWorkspaceMembersResponse)
-    .handler(
-      async ({ context, input }) =>
-        await listWorkspaceMembers({
-          ...input,
-          workspaceId: context.workspace.id,
-        }),
-    ),
-  getMemberWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/members/{memberId}",
-      summary: "Get workspace member by id",
-      tags: ["Members"],
-    })
-    .input(getWorkspaceMemberRequest.omit({ workspaceId: true }))
-    .output(getWorkspaceMemberResponse)
-    .handler(async ({ context, input }) => {
+  listMembersWorkspaceTokenAPI: os.listWorkspaceMembersContract.handler(
+    async ({ context, input }) =>
+      await listWorkspaceMembers({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+  ),
+  getMemberWorkspaceTokenAPI: os.getWorkspaceMemberContract.handler(
+    async ({ context, input }) => {
       const member = await getWorkspaceMember({
         ...input,
         workspaceId: context.workspace.id,
@@ -43,7 +29,8 @@ export const workspaceMembersAPIs = {
         throw notFoundException("Member not found")
       }
       return member
-    }),
+    },
+  ),
 }
 
 export default workspaceMembersAPIs

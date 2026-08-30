@@ -1,30 +1,23 @@
+import { integrationContract } from "@chatbotx.io/api-contract/integration"
 import { integrationService } from "@chatbotx.io/business"
-import {
-  createSelectSchema,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
-import z from "zod"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
 
-const integrationResource = createSelectSchema(integrationModel, {
-  id: z.string(),
-  workspaceId: z.string(),
-})
+const os = implement(integrationContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
 
-const listIntegrationsWorkspaceTokenAPI = workspaceTokenAuthAPI
-  .route({
-    method: "GET",
-    path: "/v1/integrations",
-    summary: "List integrations",
-    tags: ["Integrations"],
-  })
-  .output(z.object({ data: z.array(integrationResource) }))
-  .handler(async ({ context }) => {
+const listIntegrationsWorkspaceTokenAPI = os.listIntegrationsContract.handler(
+  async ({ context }) => {
     const data = await integrationService.listByWorkspaceId(
       context.workspace.id,
     )
     return { data }
-  })
+  },
+)
 
 export const integrationsWorkspaceTokenAPIs = {
   listIntegrationsWorkspaceTokenAPI,

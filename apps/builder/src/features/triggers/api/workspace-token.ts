@@ -1,17 +1,17 @@
+import { triggerContract } from "@chatbotx.io/api-contract/trigger"
 import { triggerService } from "@chatbotx.io/business"
-import z from "zod"
-import { workspaceTokenAuthAPI } from "@/orpc"
-import { triggerResource } from "../schema/resource"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
 
-const listTriggersWorkspaceTokenAPI = workspaceTokenAuthAPI
-  .route({
-    method: "GET",
-    path: "/v1/triggers",
-    summary: "List triggers",
-    tags: ["Triggers"],
-  })
-  .output(z.object({ data: z.array(triggerResource) }))
-  .handler(async ({ context }) => {
+const os = implement(triggerContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
+
+const listTriggersWorkspaceTokenAPI = os.listTriggersContract.handler(
+  async ({ context }) => {
     const triggers = await triggerService.listByWorkspaceId(
       context.workspace.id,
     )
@@ -22,7 +22,8 @@ const listTriggersWorkspaceTokenAPI = workspaceTokenAuthAPI
         actions: [],
       })),
     }
-  })
+  },
+)
 
 export const triggersWorkspaceTokenAPIs = {
   listTriggersWorkspaceTokenAPI,

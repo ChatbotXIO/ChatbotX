@@ -1,20 +1,20 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { inboxTeamContract } from "@chatbotx.io/api-contract/enterprise/inbox-team"
+import { implement, onError } from "@orpc/server"
+import { workspaceTokenAuthMidddleware } from "@/middlewares/workspace-token-auth"
+import type { BaseContext } from "@/orpc"
+import { logAndMapKnownOrpcErrors } from "@/orpc"
 import { listInboxTeams } from "../queries"
-import { listInboxTeamsResponse } from "../schema/action"
+
+const os = implement(inboxTeamContract)
+  .$context<BaseContext>()
+  .use(onError(logAndMapKnownOrpcErrors))
+  .use(workspaceTokenAuthMidddleware)
 
 export const inboxTeamsWorkspaceTokenAPIs = {
-  listTeamsWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/teams",
-      summary: "List teams",
-      tags: ["Teams"],
-    })
-    .output(listInboxTeamsResponse)
-    .handler(
-      async ({ context }) =>
-        await listInboxTeams({ workspaceId: context.workspace.id }),
-    ),
+  listTeamsWorkspaceTokenAPI: os.listTeamsContract.handler(
+    async ({ context }) =>
+      await listInboxTeams({ workspaceId: context.workspace.id }),
+  ),
 }
 
 export default inboxTeamsWorkspaceTokenAPIs
