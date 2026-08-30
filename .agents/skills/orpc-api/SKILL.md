@@ -21,7 +21,7 @@ Defined in `apps/builder/src/orpc.ts`:
 
 - **`authorizedAPI`**: `base` → error mapping → `authMiddleware` (session/cookie auth)
 - **`workspaceTokenAuthAPIForScope(scope)`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header) → `requireTokenScope(scope)`. There is deliberately no unscoped variant — every workspace-token endpoint must declare its resource scope. The middleware sets `context.workspace` plus a projected `context.apiToken` (`id`, `workspaceId`, `permission`, `scopes`, `isDefault` — never `tokenHash`/`encryptedToken`). See `docs/developer/workspace-api-tokens.md`.
-- **`channelApiTokenAPI`**: `base` → error mapping → `channelApiTokenAuthMidddleware` (API-channel token)
+- **`channelApiTokenAPI`**: `base` → error mapping → `channelApiTokenAuthMidddleware` (Authorization: Bearer header only — no query fallback; token is looked up by hash, never plaintext; scoped to a single inbox, not a whole workspace; see `middlewares/channel-api-token-auth.ts`)
 
 Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per-procedure.
 

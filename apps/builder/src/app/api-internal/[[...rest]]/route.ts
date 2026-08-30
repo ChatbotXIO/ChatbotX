@@ -3,25 +3,21 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch"
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins"
 import { onError } from "@orpc/server"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
+import { NextResponse } from "next/server"
 import { logger } from "@/lib/log"
-import { publicRouter } from "@/routers/public"
+import { router } from "@/routers"
 import "@/polyfill"
 
-// Singleton handler — instantiating per request is expensive (rebuilds plugins every call).
-// Runtime boundary intentionally matches the spec boundary: this handler only
-// ever serves `publicRouter` (workspace-token / channel-token auth), the same
-// router `public-spec.json` documents. Private, session-authed procedures
-// live on the full router only, mirrored dev-only at /api-internal (see
-// app/api-internal/[[...rest]]/route.ts) — a procedure absent from
-// publicRouter now 404s instead of silently answering to a session cookie.
-// See __tests__/public-router-boundary.test.ts.
-const openAPIHandler = new OpenAPIHandler(publicRouter, {
+// Dev-only mirror of the old /api/[[...rest]] behavior: serves the FULL
+// router (every private, session-authed procedure included) for local
+// debugging via Scalar. Never reachable in production — the public runtime
+// boundary at /api/[[...rest]] intentionally only serves `publicRouter`.
+const openAPIHandler = new OpenAPIHandler(router, {
   interceptors: [
-    // Log the real error before oRPC masks undefined errors as a generic 500.
     onError((error) => {
       logger.error(
         { err: error, cause: JSON.stringify((error as Error)?.cause) },
-        "Error in OpenAPI handler",
+        "Error in internal OpenAPI handler",
       )
     }),
   ],
@@ -33,7 +29,7 @@ const openAPIHandler = new OpenAPIHandler(publicRouter, {
       schemaConverters: [new ZodToJsonSchemaConverter()],
       specGenerateOptions: {
         info: {
-          title: "ChatbotX",
+          title: "ChatbotX (internal, full router)",
           version: "0.0.1",
         },
         commonSchemas: {
@@ -79,8 +75,12 @@ const openAPIHandler = new OpenAPIHandler(publicRouter, {
 })
 
 async function handleRequest(request: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
+
   const { response } = await openAPIHandler.handle(request, {
-    prefix: "/api",
+    prefix: "/api-internal",
     context: { headers: request.headers, url: request.url },
   })
   return response ?? new Response("Not found", { status: 404 })
