@@ -5,8 +5,8 @@ import type {
 } from "@chatbotx.io/database/partials"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ContactFilterRequest } from "@/features/contact-filter/schemas"
-import type { ContactResource } from "@/features/contacts/schemas/resource"
+import type { ContactFilterRequest } from "@/features/contact-filter/schema"
+import type { ContactResource } from "@/features/contacts/schema/resource"
 import type { PostDetails } from "@/features/conversations/schema/query"
 import type {
   ConversationResource,

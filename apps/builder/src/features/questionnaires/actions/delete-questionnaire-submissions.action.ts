@@ -1,9 +1,9 @@
 "use server"
 
 import { questionnaireSubmissionService } from "@chatbotx.io/business"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { deleteQuestionnaireSubmissionsRequest } from "../schemas/action"
+import { deleteQuestionnaireSubmissionsRequest } from "../schema/action"
 
 export const deleteQuestionnaireSubmissionsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

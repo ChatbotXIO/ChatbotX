@@ -17,7 +17,7 @@ import {
 } from "@/features/inboxes/provider/inbox-hook"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import { createContactAction } from "./actions/create-contact.action"
-import { createContactRequest } from "./schemas/action"
+import { createContactRequest } from "./schema/action"
 
 const isChannelType = (channelValue: string): channelValue is ChannelType =>
   channelTypes.options.includes(channelValue as ChannelType)

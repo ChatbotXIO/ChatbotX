@@ -29,7 +29,7 @@ import {
   type ContactFilterSchemaKind,
   type CtwaRetargetCondition,
   type CtwaRetargetSegment,
-} from "../schemas"
+} from "../schema"
 
 export type ConditionOption = {
   value: OperatorType

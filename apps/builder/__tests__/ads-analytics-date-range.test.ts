@@ -3,7 +3,7 @@ import {
   getDefaultAdsAnalyticsRange,
   parseAnalyticsDateRange,
   resolveTimezone,
-} from "@/features/ads/schemas/analytics"
+} from "@/features/ads/schema/analytics"
 
 describe("getDefaultAdsAnalyticsRange", () => {
   test("returns a 7-day window (today back 6 days, UTC) matching the Last 7 days preset default", () => {

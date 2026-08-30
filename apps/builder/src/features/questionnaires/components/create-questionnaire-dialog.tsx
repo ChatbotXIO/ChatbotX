@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createQuestionnaireAction } from "../actions/create-questionnaire.action"
-import { createQuestionnaireRequest } from "../schemas/action"
+import { createQuestionnaireRequest } from "../schema/action"
 
 export function CreateQuestionnaireDialog({
   workspaceId,

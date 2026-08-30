@@ -52,8 +52,8 @@ import {
   getDefaultMinigamePrizeSettings,
   getDefaultMinigameWinningMessageSettings,
 } from "./constants"
-import { createMinigameRequest, updateMinigameRequest } from "./schemas/action"
-import type { MinigameResource } from "./schemas/resource"
+import { createMinigameRequest, updateMinigameRequest } from "./schema/action"
+import type { MinigameResource } from "./schema/resource"
 
 type MinigameFormProps =
   | { mode: "create"; type: MinigameType; workspaceId: string }

@@ -5,11 +5,11 @@ import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-adm
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { resolveChannelAdAccountSources } from "../queries/channel-ad-accounts"
-import { listChannelAdAccountsRequest } from "../schemas/channel-ad-accounts"
+import { listChannelAdAccountsRequest } from "../schema/channel-ad-accounts"
 import {
   listAdsConversionRulesRequest,
   listAdsConversionRulesResponse,
-} from "../schemas/conversion-rule"
+} from "../schema/conversion-rule"
 
 export const adsAPI = {
   listRules: authorizedAPI

@@ -1,8 +1,8 @@
 "use server"
 
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createSmtpRequest } from "../schemas/mutation"
+import { createSmtpRequest } from "../schema/mutation"
 import { createSmtp } from "../services/smtp.service"
 
 export const createSmtpAction = workspaceActionClient

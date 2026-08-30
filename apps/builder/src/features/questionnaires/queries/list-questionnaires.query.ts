@@ -1,6 +1,6 @@
 import { questionnaireService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListQuestionnairesRequest } from "../schemas/query"
+import type { ListQuestionnairesRequest } from "../schema/query"
 
 export async function listQuestionnaires(input: ListQuestionnairesRequest) {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)

@@ -1,6 +1,6 @@
 "use server"
 
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { listSavedReplies } from "../queries"
 

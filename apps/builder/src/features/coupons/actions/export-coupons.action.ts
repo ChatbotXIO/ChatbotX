@@ -6,13 +6,13 @@ import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ExportCouponRequest,
   type ExportCouponResponse,
   exportCouponRequest,
-} from "../schemas/mutation"
+} from "../schema/mutation"
 
 export const exportCouponsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

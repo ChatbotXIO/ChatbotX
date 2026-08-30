@@ -3,8 +3,8 @@ import { rootFolderId } from "@chatbotx.io/database/partials"
 import { webhookModel } from "@chatbotx.io/database/schema"
 import type { WebhookModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { WebhookCollection } from "../schemas"
-import type { GetWebhooksSchema } from "../schemas/get-webhook-schema"
+import type { WebhookCollection } from "../schema"
+import type { GetWebhooksSchema } from "../schema/get-webhook-schema"
 
 export async function getWebhooks(
   input: GetWebhooksSchema,

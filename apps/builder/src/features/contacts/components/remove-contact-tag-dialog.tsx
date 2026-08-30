@@ -22,7 +22,7 @@ import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { removeContactTagAction } from "../actions/remove-contact-tag.action"
-import { removeContactTagsRequest } from "../schemas/contact-tag"
+import { removeContactTagsRequest } from "../schema/contact-tag"
 
 type RemoveContactTagDialogProps = {
   trigger: ReactElement

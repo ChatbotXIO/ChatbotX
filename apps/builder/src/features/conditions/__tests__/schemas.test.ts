@@ -4,8 +4,8 @@ import {
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
-import { customFieldValueChanged } from "../schemas/custom-field-value-changed"
-import { dateTimeBasedTrigger } from "../schemas/date-time-based-trigger"
+import { customFieldValueChanged } from "../schema/custom-field-value-changed"
+import { dateTimeBasedTrigger } from "../schema/date-time-based-trigger"
 
 describe("dateTimeBasedTrigger schema timezone", () => {
   test("preserves the editor-captured timezone on the value object", () => {

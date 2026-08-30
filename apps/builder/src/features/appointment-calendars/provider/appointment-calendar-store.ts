@@ -1,6 +1,6 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ListAppointmentCalendarsForFlowResponse } from "../schemas/query"
+import type { ListAppointmentCalendarsForFlowResponse } from "../schema/query"
 
 export type AppointmentCalendarState = {
   loading: boolean

@@ -1,7 +1,7 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import { parsePagination } from "@chatbotx.io/database/utils"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import type { ListSpreadsheetsRequest } from "../schema/query"
 import type { SpreadsheetResource } from "../schema/resource"
 

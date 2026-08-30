@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteQrCodesAction } from "./actions/delete-qr-codes.action"
-import type { QrCodeResource } from "./schemas/resource"
+import type { QrCodeResource } from "./schema/resource"
 
 type DeleteQrCodesDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string

@@ -4,7 +4,7 @@ import { productService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type ProductFormRequest, productFormRequest } from "../schema/action"
 

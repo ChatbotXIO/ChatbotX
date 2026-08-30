@@ -9,7 +9,7 @@ import {
 import {
   type SubmitDateTimeInput,
   submitDateTimeRequestSchema,
-} from "@/features/get-user-data-webview/schemas/action"
+} from "@/features/get-user-data-webview/schema/action"
 import { actionClient } from "@/lib/safe-action"
 
 export const submitDateTimeAction = actionClient

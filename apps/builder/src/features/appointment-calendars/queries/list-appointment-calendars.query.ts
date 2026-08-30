@@ -1,6 +1,6 @@
 import { appointmentCalendarService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListAppointmentCalendarsRequest } from "../schemas/query"
+import type { ListAppointmentCalendarsRequest } from "../schema/query"
 
 export async function listAppointmentCalendars(
   input: ListAppointmentCalendarsRequest,

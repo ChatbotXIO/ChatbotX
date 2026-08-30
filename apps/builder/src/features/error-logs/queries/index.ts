@@ -9,7 +9,7 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListErrorLogsRequest,
   ListErrorLogsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export async function listErrorLogs(
   input: ListErrorLogsRequest,

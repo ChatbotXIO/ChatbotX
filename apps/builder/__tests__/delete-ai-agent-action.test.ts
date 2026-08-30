@@ -10,7 +10,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   bulkUpdateIdsRequest: {},
   workspaceIdrequestParams: [],
 }))

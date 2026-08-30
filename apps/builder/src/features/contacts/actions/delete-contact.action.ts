@@ -6,13 +6,13 @@ import { emit } from "@chatbotx.io/event-bus"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type DeleteContactRequest,
   deleteContactRequest,
-} from "../schemas/contact-delete"
+} from "../schema/contact-delete"
 
 export const deleteContact = async (ctx: {
   workspaceId: string

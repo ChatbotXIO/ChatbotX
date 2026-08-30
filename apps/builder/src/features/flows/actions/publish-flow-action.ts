@@ -7,7 +7,7 @@ import { and, db, eq } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { type PublishFlowSchema, publishFlowSchema } from "../schemas/action"
+import { type PublishFlowSchema, publishFlowSchema } from "../schema/action"
 
 export const publishFlowAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

@@ -1,7 +1,7 @@
 "use server"
 
 import { questionnaireService } from "@chatbotx.io/business"
-import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
+import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const duplicateQuestionnaireAction = workspaceActionClient

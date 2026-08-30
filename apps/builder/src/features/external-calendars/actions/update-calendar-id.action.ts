@@ -1,10 +1,10 @@
 "use server"
 
 import { appointmentExternalCalendarService } from "@chatbotx.io/business"
-import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
+import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { verifyGoogleCalendarId } from "../lib/google-calendar-provider"
-import { updateExternalCalendarIdRequest } from "../schemas/action"
+import { updateExternalCalendarIdRequest } from "../schema/action"
 
 export const updateGoogleCalendarIdAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)

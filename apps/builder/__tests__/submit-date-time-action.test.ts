@@ -31,7 +31,7 @@ const { submitDateTime } = await import(
   "../src/app/extensions/datetime-picker/actions/submit-date-time.action"
 )
 const { submitDateTimeRequestSchema } = await import(
-  "../src/features/get-user-data-webview/schemas/action"
+  "../src/features/get-user-data-webview/schema/action"
 )
 
 const VALID_PAYLOAD = {

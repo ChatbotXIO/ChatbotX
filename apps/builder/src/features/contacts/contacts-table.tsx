@@ -25,14 +25,14 @@ import {
 } from "@/features/contact-filter"
 import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "@/features/contact-filter/lib/restricted-fields"
 import { client } from "@/lib/orpc/orpc"
-import { getUserName } from "../users/schemas/resource"
+import { getUserName } from "../users/schema/resource"
 import { ContactNameCell } from "./components/contact-name-cell"
 import { CONTACTS_DEFAULT_PER_PAGE } from "./constants"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
-import type { ExportContactsFilter } from "./schemas/action"
-import type { ListContactsResponse } from "./schemas/query"
-import type { ContactResource } from "./schemas/resource"
+import type { ExportContactsFilter } from "./schema/action"
+import type { ListContactsResponse } from "./schema/query"
+import type { ContactResource } from "./schema/resource"
 import { getLatestContactLastReadAt } from "./utils"
 
 const parseSortParam = (value: string | null) => {

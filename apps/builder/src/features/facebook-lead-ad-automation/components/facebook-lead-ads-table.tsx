@@ -32,7 +32,7 @@ import { use, useMemo, useState } from "react"
 import type {
   ListFacebookLeadAdItem,
   ListFacebookLeadAdsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 import { DeleteFacebookLeadAdAutomationsDialog } from "./delete-facebook-lead-ad-automations"
 import { FacebookLeadAdsTableToolbarActions } from "./facebook-lead-ads-table-toolbar-actions"
 

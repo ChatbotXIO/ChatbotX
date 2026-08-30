@@ -54,7 +54,7 @@ import { moveMediaLibraryFilesAction } from "../actions/move-files.action"
 import { recordMediaLibraryFileAccessAction } from "../actions/record-access.action"
 import { renameMediaLibraryFolderAction } from "../actions/rename-folder.action"
 import { toggleMediaLibraryFavouriteAction } from "../actions/toggle-favourite.action"
-import type { ListFilesResponse, ListFoldersResponse } from "../schemas"
+import type { ListFilesResponse, ListFoldersResponse } from "../schema"
 
 type MediaFile = ListFilesResponse["data"][number]
 type MediaFolder = ListFoldersResponse["data"][number]

@@ -64,7 +64,7 @@ import {
   type ConnectWhatsappSchema,
   connectWhatsappSchema,
   type WhatsappPhoneNumberOption,
-} from "../schemas"
+} from "../schema"
 import { buildAuthValue, buildWebhookConfig } from "./webhook-url"
 
 async function resolveAccessToken(

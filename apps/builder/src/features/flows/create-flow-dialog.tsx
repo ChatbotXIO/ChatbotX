@@ -22,7 +22,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createFlowAction } from "./actions/create-flow-action"
-import { createFlowSchema } from "./schemas/action"
+import { createFlowSchema } from "./schema/action"
 
 export function CreateFlowDialog({
   workspaceId,

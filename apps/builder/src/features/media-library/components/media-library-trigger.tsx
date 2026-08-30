@@ -11,7 +11,7 @@ import {
   type ListFilesResponse,
   type ListFoldersResponse,
   MEDIA_LIBRARY_FILES_PAGE_SIZE,
-} from "../schemas"
+} from "../schema"
 import { MediaLibraryDialog } from "./media-library-dialog"
 
 type MediaFile = ListFilesResponse["data"][number]

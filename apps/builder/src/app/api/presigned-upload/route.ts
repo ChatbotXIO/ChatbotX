@@ -13,7 +13,7 @@ import { fileModel } from "@chatbotx.io/database/schema"
 import { uploader } from "@chatbotx.io/filesystem"
 import { createId } from "@chatbotx.io/utils"
 import { type NextRequest, NextResponse } from "next/server"
-import { presignImportUploadRequest } from "@/features/import/schemas/presign"
+import { presignImportUploadRequest } from "@/features/import/schema/presign"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import {
   assertCurrentUserCanAccessChatbot,

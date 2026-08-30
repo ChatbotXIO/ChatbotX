@@ -5,7 +5,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import { z } from "zod"
-import { userResource } from "@/features/users/schemas/resource"
+import { userResource } from "@/features/users/schema/resource"
 import { basePaginationRequest } from "@/lib/pagination"
 import { workspaceMemberResource } from "./resource"
 

@@ -6,7 +6,7 @@ import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { MagicLinksTable } from "@/features/magic-links/magic-links-table"
 import { listMagicLinks } from "@/features/magic-links/queries"
-import { listMagicLinksSearchParamsCache } from "@/features/magic-links/schemas/query"
+import { listMagicLinksSearchParamsCache } from "@/features/magic-links/schema/query"
 
 export default async function MagicLinksPage({
   params,

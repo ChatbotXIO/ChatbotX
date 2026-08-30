@@ -7,7 +7,7 @@ import { z } from "zod"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const bulkDeleteIgCommentsAction = workspaceActionClient

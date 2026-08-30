@@ -6,7 +6,7 @@ import { PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { DeleteDynamicImagesDialog } from "./delete-dynamic-images"
-import type { DynamicImageResource } from "./schemas/resource"
+import type { DynamicImageResource } from "./schema/resource"
 
 type DynamicImagesTableToolbarActionsProps = {
   table: Table<DynamicImageResource>

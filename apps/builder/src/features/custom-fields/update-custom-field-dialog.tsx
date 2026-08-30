@@ -19,8 +19,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
-import { updateCustomFieldRequest } from "./schemas/action"
-import type { CustomFieldResource } from "./schemas/resource"
+import { updateCustomFieldRequest } from "./schema/action"
+import type { CustomFieldResource } from "./schema/resource"
 
 export function UpdateCustomFieldDialog({
   workspaceId,

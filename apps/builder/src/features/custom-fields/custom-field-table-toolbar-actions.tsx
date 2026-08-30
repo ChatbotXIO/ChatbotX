@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
-import type { CustomFieldResource } from "./schemas/resource"
+import type { CustomFieldResource } from "./schema/resource"
 
 type CustomFieldsTableToolbarActionsProps = {
   table: Table<CustomFieldResource>

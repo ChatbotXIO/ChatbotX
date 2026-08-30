@@ -6,12 +6,12 @@ import { integrationGeminiModel } from "@chatbotx.io/database/schema"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateGeminiRequest,
   updateGeminiRequest,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const updateGeminiAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

@@ -5,7 +5,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { MinigameHistoryTable } from "@/features/minigames/components/minigame-history-table"
 import { listMinigameHistory } from "@/features/minigames/queries"
-import { listMinigameHistorySearchParamsCache } from "@/features/minigames/schemas/query"
+import { listMinigameHistorySearchParamsCache } from "@/features/minigames/schema/query"
 
 export default async function MinigameHistoryPage({
   params,

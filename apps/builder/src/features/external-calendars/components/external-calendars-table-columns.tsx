@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
-import type { ExternalCalendarResource } from "../schemas/resource"
+import type { ExternalCalendarResource } from "../schema/resource"
 
 type Props = {
   t: ReturnType<typeof useTranslations>

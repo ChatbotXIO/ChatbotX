@@ -19,7 +19,7 @@ import { BaseEditor } from "./base-editor"
 import {
   type UpdateWebhookSchema,
   updateWebhookRequest,
-} from "./schemas/update-webhook-schema"
+} from "./schema/update-webhook-schema"
 
 type WebhookWithConditions = WebhookModel & {
   conditions?: Array<{

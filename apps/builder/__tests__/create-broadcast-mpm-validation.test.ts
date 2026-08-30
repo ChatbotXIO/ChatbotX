@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
+import { createBroadcastRequest } from "@/features/broadcasts/schema/action"
 
 const baseRequest = {
   channel: "whatsapp",

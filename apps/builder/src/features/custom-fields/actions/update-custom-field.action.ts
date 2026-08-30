@@ -8,7 +8,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateCustomFieldRequest,
   updateCustomFieldRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateCustomFieldAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

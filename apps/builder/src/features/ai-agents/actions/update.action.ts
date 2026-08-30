@@ -2,7 +2,7 @@
 
 import { aiAgentService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { updateAIAgentRequest } from "@/features/ai-agents/schemas/action"
+import { updateAIAgentRequest } from "@/features/ai-agents/schema/action"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const updateAIAgentAction = workspaceActionClient

@@ -75,7 +75,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 const { appointmentsAuthenticatedAPI } = await import(
-  "@/features/appointments/api/authenticated"
+  "@/features/appointments/api/private"
 )
 
 describe("listContactAppointmentsAPI", () => {

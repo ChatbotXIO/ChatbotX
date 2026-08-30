@@ -11,7 +11,7 @@ import {
   getQuestionnaireDashboardSummary,
   listQuestionnaireSubmissions,
 } from "@/features/questionnaires/queries"
-import { listQuestionnaireSubmissionsSearchParamsCache } from "@/features/questionnaires/schemas/query"
+import { listQuestionnaireSubmissionsSearchParamsCache } from "@/features/questionnaires/schema/query"
 
 export default async function QuestionnaireApplicantsPage({
   params,

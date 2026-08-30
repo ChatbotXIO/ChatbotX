@@ -65,7 +65,7 @@ vi.mock("@/lib/safe-action", () => ({
   },
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
   bulkUpdateIdsRequest: {},
 }))

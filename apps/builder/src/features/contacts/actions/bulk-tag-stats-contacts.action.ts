@@ -5,13 +5,13 @@ import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type BulkTagStatsContactsRequest,
   bulkTagStatsContactsRequest,
-} from "../schemas/contact-tag"
+} from "../schema/contact-tag"
 
 export const bulkTagStatsContactsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

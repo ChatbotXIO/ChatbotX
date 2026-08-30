@@ -5,7 +5,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
 import { listBroadcasts } from "@/features/broadcasts/queries"
-import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schemas/query"
+import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schema/query"
 
 export default async function BroadcastsPage(props: {
   params: Promise<{ workspaceId: string }>

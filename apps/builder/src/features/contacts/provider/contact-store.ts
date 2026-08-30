@@ -5,7 +5,7 @@ import type {
 import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { client } from "@/lib/orpc/orpc"
-import type { ContactFilterRequest } from "../schemas/query"
+import type { ContactFilterRequest } from "../schema/query"
 
 export type ContactState = {
   loadingCounts: boolean

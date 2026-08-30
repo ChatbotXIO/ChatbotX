@@ -15,7 +15,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import type { useTranslations } from "next-intl"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
-import type { AuditLogResource } from "./schemas"
+import type { AuditLogResource } from "./schema"
 
 type TranslationFn = ReturnType<typeof useTranslations>
 

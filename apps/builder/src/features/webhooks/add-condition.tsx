@@ -17,15 +17,15 @@ import {
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import { defaultFn as addContactInfoUpdatedCondition } from "../conditions/schemas/contact-info-updated"
-import { defaultFn as addCustomFieldValueChangedCondition } from "../conditions/schemas/custom-field-value-changed"
-import { defaultFn as addDateTimeBaseTriggerCondition } from "../conditions/schemas/date-time-based-trigger"
+import { defaultFn as addContactInfoUpdatedCondition } from "../conditions/schema/contact-info-updated"
+import { defaultFn as addCustomFieldValueChangedCondition } from "../conditions/schema/custom-field-value-changed"
+import { defaultFn as addDateTimeBaseTriggerCondition } from "../conditions/schema/date-time-based-trigger"
 import {
   createDefaultFn,
   createDefaultFnWithSourceId,
-} from "../conditions/schemas/simple-conditions"
-import { defaultFn as addTagAppliedCondition } from "../conditions/schemas/tag-applied"
-import { defaultFn as addTagRemovedCondition } from "../conditions/schemas/tag-removed"
+} from "../conditions/schema/simple-conditions"
+import { defaultFn as addTagAppliedCondition } from "../conditions/schema/tag-applied"
+import { defaultFn as addTagRemovedCondition } from "../conditions/schema/tag-removed"
 
 type ConditionOption = {
   label: string

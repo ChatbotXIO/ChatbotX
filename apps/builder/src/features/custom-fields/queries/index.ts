@@ -5,8 +5,8 @@ import type {
   FindCustomFieldRequest,
   ListCustomFieldsRequest,
   ListCustomFieldsResponse,
-} from "../schemas/query"
-import type { CustomFieldResource } from "../schemas/resource"
+} from "../schema/query"
+import type { CustomFieldResource } from "../schema/resource"
 
 export const listCustomFieldsRSC = async (
   input: ListCustomFieldsRequest & { workspaceId: string },

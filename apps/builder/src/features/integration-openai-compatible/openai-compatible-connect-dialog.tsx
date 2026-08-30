@@ -34,7 +34,7 @@ import {
   buildOpenaiCompatibleModelOptions,
   shouldUseCustomOpenaiCompatibleModelInput,
 } from "./model-options"
-import { connectOpenaiCompatibleSchema } from "./schemas/request"
+import { connectOpenaiCompatibleSchema } from "./schema/request"
 
 type OpenaiCompatibleConnectDialogProps = {
   connectedPresets: string[]

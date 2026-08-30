@@ -24,7 +24,7 @@ import { useTranslations } from "next-intl"
 import { type ReactElement, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
-import { createCustomFieldRequest } from "./schemas/action"
+import { createCustomFieldRequest } from "./schema/action"
 
 type CreateCustomFieldDialogProps = {
   workspaceId: string

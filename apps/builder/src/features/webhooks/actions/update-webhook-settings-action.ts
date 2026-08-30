@@ -9,7 +9,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateWebhookSettingsRequest,
   updateWebhookSettingsRequest,
-} from "../schemas/update-webhook-schema"
+} from "../schema/update-webhook-schema"
 
 export const updateWebhookSettingsAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

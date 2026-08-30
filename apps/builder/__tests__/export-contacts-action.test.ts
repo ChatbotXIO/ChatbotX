@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, test } from "vitest"
-import { exportContactsRequest } from "@/features/contacts/schemas/action"
+import { exportContactsRequest } from "@/features/contacts/schema/action"
 
 describe("exportContactsRequest schema", () => {
   const fields = ["sys:fullName", "sys:email"]

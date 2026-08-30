@@ -5,7 +5,7 @@ import type { Table } from "@tanstack/react-table"
 import { Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import type { QuestionnaireListItem } from "../schemas/resource"
+import type { QuestionnaireListItem } from "../schema/resource"
 import { CreateQuestionnaireDialog } from "./create-questionnaire-dialog"
 import { DeleteQuestionnairesDialog } from "./delete-questionnaires-dialog"
 

@@ -3,7 +3,7 @@ import { listErrorLogs } from "../queries"
 import {
   listErrorLogsRequest,
   publicListErrorLogsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export const errorLogsWorkspaceTokenAPIs = {
   listErrorLogsWorkspaceTokenAPI: workspaceTokenAuthAPI

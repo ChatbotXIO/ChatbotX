@@ -32,7 +32,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
 import { updateFlowAction } from "./actions/update-flow-action"
 import { downloadFlowExport } from "./lib/download-flow-export"
-import type { FlowResource } from "./schemas/resource"
+import type { FlowResource } from "./schema/resource"
 
 type GetColumnsProps = {
   t: ReturnType<typeof useTranslations>
