@@ -21,7 +21,7 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EllipsisVerticalIcon, Trash2Icon } from "lucide-react"
+import { EllipsisVerticalIcon, EyeIcon, Trash2Icon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use, useMemo, useState } from "react"
@@ -29,7 +29,7 @@ import { getQuestionnaireSubmissionDetailAction } from "../actions/get-questionn
 import type { listQuestionnaireSubmissions } from "../queries"
 import { ApplicantDetailModal } from "./applicant-detail-modal"
 import { DeleteApplicantSubmissionDialog } from "./delete-applicant-submission-dialog"
-import { QuestionnaireApplicantAvatarCell } from "./questionnaire-applicant-avatar-cell"
+import { QuestionnaireApplicantNameCell } from "./questionnaire-applicant-name-cell"
 import { QuestionnaireApplicantsTableToolbarActions } from "./questionnaire-applicants-table-toolbar-actions"
 
 type ListResult = Awaited<ReturnType<typeof listQuestionnaireSubmissions>>
@@ -93,24 +93,6 @@ export function QuestionnaireApplicantsTable({
         enableHiding: false,
       },
       {
-        id: "avatar",
-        header: "",
-        cell: ({ row }) => (
-          <QuestionnaireApplicantAvatarCell
-            contact={row.original.contact}
-            onClick={() =>
-              loadDetail({
-                questionnaireId,
-                submissionId: row.original.id,
-              })
-            }
-            unknownContactLabel={t("questionnaires.unknownContact")}
-          />
-        ),
-        enableSorting: false,
-        enableColumnFilter: false,
-      },
-      {
         id: "name",
         accessorFn: (row) => row.contact.fullName,
         header: ({ column }) => (
@@ -119,24 +101,14 @@ export function QuestionnaireApplicantsTable({
             title={t("fields.name.label")}
           />
         ),
-        cell: ({ row }) => {
-          const name =
-            row.original.contact.fullName ?? t("questionnaires.unknownContact")
-          return (
-            <button
-              className="text-start font-medium hover:underline"
-              onClick={() =>
-                loadDetail({
-                  questionnaireId,
-                  submissionId: row.original.id,
-                })
-              }
-              type="button"
-            >
-              {name}
-            </button>
-          )
-        },
+        cell: ({ row }) => (
+          <QuestionnaireApplicantNameCell
+            contact={row.original.contact}
+            conversationId={row.original.conversationId}
+            unknownContactLabel={t("questionnaires.unknownContact")}
+            workspaceId={workspaceId}
+          />
+        ),
         meta: {
           label: t("fields.name.label"),
           placeholder: t("fields.name.searchPlaceholder"),
@@ -204,6 +176,17 @@ export function QuestionnaireApplicantsTable({
             />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
+                onClick={() =>
+                  loadDetail({
+                    questionnaireId,
+                    submissionId: row.original.id,
+                  })
+                }
+              >
+                <EyeIcon />
+                {t("actions.view")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onClick={() => setDeleteId(row.original.id)}
                 variant="destructive"
               >
@@ -217,7 +200,7 @@ export function QuestionnaireApplicantsTable({
         enableColumnFilter: false,
       },
     ],
-    [loadDetail, locale, questionnaireId, t],
+    [loadDetail, locale, questionnaireId, t, workspaceId],
   )
   const { table } = useDataTable({
     data,

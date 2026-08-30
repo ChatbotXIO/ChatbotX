@@ -6,6 +6,10 @@ export type AdsConversionRuleListFilters = {
   channel?: AdsConversionRuleModel["channel"]
   enabled?: AdsConversionRuleModel["enabled"]
   integrationWhatsappId?: string
+  // Additive channel-scoped filters (Phase 2 generalization) — omitted
+  // keeps every pre-Phase-1 caller's WhatsApp-only behavior unchanged.
+  integrationMessengerId?: string
+  integrationInstagramId?: string
 }
 
 export type AdsConversionRuleCreateValues = Omit<
@@ -35,6 +39,8 @@ export const adsConversionRuleRepository = {
         channel: filters.channel,
         enabled: filters.enabled,
         integrationWhatsappId: filters.integrationWhatsappId,
+        integrationMessengerId: filters.integrationMessengerId,
+        integrationInstagramId: filters.integrationInstagramId,
       },
       orderBy: { createdAt: "asc" },
     })

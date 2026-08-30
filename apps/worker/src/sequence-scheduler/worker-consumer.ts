@@ -1,3 +1,4 @@
+import { auditService } from "@chatbotx.io/business/audit"
 import { SEQUENCE_SCHEDULE_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
@@ -13,6 +14,7 @@ import pLimit, { type LimitFunction } from "p-limit"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { revertDispatchToPending } from "./revert-dispatch"
 import { MAX_PROCESS } from "./services/constants"
 import { DispatchProcessorService } from "./services/dispatch-processor.service"
@@ -138,7 +140,13 @@ class DispatchConsumer {
             return
           }
 
-          await this.executeStep(dispatch)
+          await runJobWithAuditContext(
+            {
+              workspaceId: dispatch.workspaceId,
+              source: "sequence-scheduler:executeStep",
+            },
+            () => this.executeStep(dispatch),
+          )
         },
       )
     } catch (error) {
@@ -204,6 +212,13 @@ class DispatchConsumer {
           removeOnComplete: true,
         },
       )
+
+      await auditService.record({
+        action: "sequence_step_sent",
+        detail: "Sequence step sent to contact",
+        workspaceId: dispatch.workspaceId,
+        source: "sequence-scheduler:executeStep",
+      })
     } catch (error) {
       logger.error(
         { error, dispatchId: dispatch.id },

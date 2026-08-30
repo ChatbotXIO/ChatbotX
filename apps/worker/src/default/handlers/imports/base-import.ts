@@ -1,4 +1,5 @@
 import { importService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import type { ImportFormat, ImportType } from "@chatbotx.io/database/partials"
 import type { fileModel, importModel } from "@chatbotx.io/database/schema"
 import { uploader } from "@chatbotx.io/filesystem"
@@ -55,6 +56,16 @@ export type ImportTypeHandler<TMeta, TDeps, TRow extends object> = {
     rows: TRow[],
     ctx: { row: ImportRow; meta: TMeta },
   ) => Promise<BatchResult>
+  /**
+   * Optional post-completion hook, run AFTER the import row is marked
+   * completed. Must not throw the import into a failed state — the pipeline
+   * logs and swallows its errors.
+   */
+  finalize?: (ctx: {
+    row: ImportRow
+    meta: TMeta
+    deps: TDeps
+  }) => Promise<void>
 }
 
 export const runImportPipeline = async <TMeta, TDeps, TRow extends object>(
@@ -183,6 +194,29 @@ export const runImportPipeline = async <TMeta, TDeps, TRow extends object>(
     counters,
     errorSample,
   })
+
+  if (handler.finalize) {
+    try {
+      await handler.finalize({ row, meta, deps: prepared.deps })
+    } catch (error) {
+      // The import itself already completed — a finalize failure must not
+      // flip it to failed or crash the job.
+      logger.error({ err: error }, `Import ${row.id} finalize failed`)
+    }
+  }
+
+  // Matches PLAN-audit-log.md Phase 7 step 6's original gating: only contact
+  // imports are audited (coupons/products are silently skipped), and only
+  // when the import has an attributable requester.
+  if (row.type === "contacts" && row.userId) {
+    await auditService.record({
+      action: "import",
+      detail: "imported contacts",
+      userId: row.userId,
+      workspaceId: row.workspaceId,
+      source: "default:runImportPipeline",
+    })
+  }
 }
 
 const failImport = async (importId: string, message: string): Promise<void> => {

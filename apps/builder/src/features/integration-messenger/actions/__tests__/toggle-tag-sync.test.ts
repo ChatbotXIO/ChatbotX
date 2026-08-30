@@ -24,6 +24,10 @@ vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserId: vi.fn(),
 }))
 
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => new Headers()),
+}))
+
 // Workspace IDs as strings (zodBigintAsString returns string, not BigInt)
 const WORKSPACE_ID = "100"
 const INTEGRATION_ID = "200"
@@ -81,6 +85,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(async () => false),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
+}))
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  getAuditActor: vi.fn(() => undefined),
+  withAuditContext: vi.fn(
+    async (_ctx: unknown, fn: () => Promise<unknown>) => await fn(),
+  ),
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

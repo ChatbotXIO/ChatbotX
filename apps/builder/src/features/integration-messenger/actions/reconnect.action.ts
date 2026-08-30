@@ -10,8 +10,8 @@ import { generateAuthUrl } from "@chatbotx.io/integration-messenger"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 /**
@@ -48,7 +48,8 @@ export const reconnectMessengerAction = workspaceActionClient
         throw new ChatbotXException("Messenger App settings not found")
       }
 
-      const redirectUrl = buildBrokerCallbackUrl(
+      const redirectUrl = await buildProviderCallbackUrl(
+        messengerCredential,
         "/integrations/messenger/callback",
       )
       const baseUrl = await getOriginUrlFromHeader()

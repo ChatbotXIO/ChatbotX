@@ -2,12 +2,14 @@ import { MessageShardUnavailableError } from "@chatbotx.io/database/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  aiAgentQueueAdd: vi.fn(),
   createMessageRepository: vi.fn(),
   delete: vi.fn(),
   findConversationAIContextState: vi.fn(),
   getSafeSinceTime: vi.fn(),
   get: vi.fn(),
   loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
   runExclusive: vi.fn(),
   summarizeConversation: vi.fn(),
   update: vi.fn(),
@@ -20,7 +22,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 vi.mock("@chatbotx.io/worker-config", () => ({
   AIJobAction: { summarizeConversation: "summarizeConversation" },
-  aiAgentQueue: { add: vi.fn() },
+  aiAgentQueue: { add: mocks.aiAgentQueueAdd },
 }))
 vi.mock("../src/server/cache/ai-context-store", () => ({
   aiContextStore: {
@@ -34,7 +36,7 @@ vi.mock("../src/server/services/summarizer", () => ({
   summarizeConversation: mocks.summarizeConversation,
 }))
 vi.mock("../src/logger", () => ({
-  logger: { error: mocks.loggerError },
+  logger: { error: mocks.loggerError, warn: mocks.loggerWarn },
 }))
 
 const { aiContextService } = await import(
@@ -127,6 +129,29 @@ describe("aiContextService.getOrInitContext", () => {
     expect(result?.history.map((message) => message.messageId)).toEqual(["10"])
   })
 
+  test("assigns a unique, monotonic seq to each initial history entry", async () => {
+    const createdAt = new Date("2026-06-01T00:00:00.000Z")
+    const findAIContextMessages = vi.fn().mockResolvedValue([
+      { id: "1", text: "first", senderType: "contact", createdAt },
+      { id: "2", text: "second", senderType: "bot", createdAt },
+      { id: "3", text: "third", senderType: "contact", createdAt },
+    ])
+    mocks.createMessageRepository.mockResolvedValue({ findAIContextMessages })
+    mocks.findConversationAIContextState.mockResolvedValue({
+      aiContextLastMessageId: null,
+      lastActivityAt: createdAt,
+    })
+    mocks.summarizeConversation.mockResolvedValue("summary")
+
+    const result = await aiContextService.getOrInitContext({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+    })
+
+    expect(result?.history.map((m) => m.seq)).toEqual([0, 1, 2])
+    expect(result?.nextSeq).toBe(3)
+  })
+
   test("reinitializes cached context when its marker is stale", async () => {
     const findAIContextMessages = vi.fn().mockResolvedValue([])
     mocks.createMessageRepository.mockResolvedValue({ findAIContextMessages })
@@ -198,5 +223,166 @@ describe("aiContextService.getOrInitContext", () => {
     expect(mocks.createMessageRepository).not.toHaveBeenCalled()
     expect(findAIContextMessages).not.toHaveBeenCalled()
     expect(mocks.update).not.toHaveBeenCalled()
+  })
+})
+
+describe("aiContextService.appendHistory", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.runExclusive.mockImplementation(
+      (_conversationId: string, fn: () => Promise<unknown>) => fn(),
+    )
+    mocks.update.mockResolvedValue(undefined)
+  })
+
+  test("enqueues a summarize job when history exceeds the trigger threshold and no job is in flight", async () => {
+    mocks.get
+      .mockResolvedValueOnce({
+        markerMessageId: null,
+        summary: "",
+        history: Array.from({ length: 100 }, (_, i) => ({
+          role: "user" as const,
+          content: `old-${i}`,
+          messageId: `old-${i}`,
+          createdAt: i,
+        })),
+        summarizing: false,
+        needsResummarize: false,
+        updatedAt: Date.now(),
+      })
+      .mockResolvedValueOnce(null)
+
+    await aiContextService.appendHistory({
+      conversationId: "conv-1",
+      newMessages: [
+        { message: { role: "user", content: "new" }, messageId: "new-1" },
+      ],
+    })
+
+    expect(mocks.aiAgentQueueAdd).toHaveBeenCalledTimes(1)
+    expect(mocks.update).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({
+        history: expect.arrayContaining([
+          expect.objectContaining({ messageId: "new-1" }),
+        ]),
+      }),
+    )
+  })
+
+  test("does not enqueue a second summarize job while one is already marked in-flight, and warns", async () => {
+    mocks.get
+      .mockResolvedValueOnce({
+        markerMessageId: null,
+        summary: "",
+        history: Array.from({ length: 100 }, (_, i) => ({
+          role: "user" as const,
+          content: `old-${i}`,
+          messageId: `old-${i}`,
+          createdAt: i,
+        })),
+        summarizing: true,
+        needsResummarize: false,
+        updatedAt: Date.now(),
+      })
+      .mockResolvedValueOnce(null)
+
+    await aiContextService.appendHistory({
+      conversationId: "conv-1",
+      newMessages: [
+        { message: { role: "user", content: "new" }, messageId: "new-1" },
+      ],
+    })
+
+    expect(mocks.aiAgentQueueAdd).not.toHaveBeenCalled()
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ conversationId: "conv-1" }),
+      expect.stringContaining("summarize job is already marked in-flight"),
+    )
+  })
+
+  test("assigns increasing seq values to newly appended messages, starting from nextSeq", async () => {
+    mocks.get
+      .mockResolvedValueOnce({
+        markerMessageId: null,
+        summary: "",
+        history: [{ role: "user", content: "old", messageId: "old-1", seq: 0 }],
+        nextSeq: 1,
+        summarizing: false,
+        needsResummarize: false,
+        updatedAt: Date.now(),
+      })
+      .mockResolvedValueOnce(null)
+
+    await aiContextService.appendHistory({
+      conversationId: "conv-1",
+      newMessages: [
+        { message: { role: "user", content: "a" }, messageId: "new-a" },
+        { message: { role: "user", content: "b" }, messageId: "new-b" },
+      ],
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      "conv-1",
+      expect.objectContaining({
+        nextSeq: 3,
+        history: [
+          expect.objectContaining({ messageId: "old-1", seq: 0 }),
+          expect.objectContaining({ messageId: "new-a", seq: 1 }),
+          expect.objectContaining({ messageId: "new-b", seq: 2 }),
+        ],
+      }),
+    )
+  })
+
+  test("truncates history to the hard cap when it is stuck growing past the trigger threshold, regardless of the summarizing flag", async () => {
+    const existingHistory = Array.from({ length: 149 }, (_, i) => ({
+      role: "user" as const,
+      content: `old-${i}`,
+      messageId: `old-${i}`,
+      createdAt: i,
+    }))
+    mocks.get
+      .mockResolvedValueOnce({
+        markerMessageId: null,
+        summary: "",
+        history: existingHistory,
+        summarizing: true,
+        needsResummarize: false,
+        updatedAt: Date.now(),
+      })
+      .mockResolvedValueOnce(null)
+
+    await aiContextService.appendHistory({
+      conversationId: "conv-1",
+      newMessages: Array.from({ length: 5 }, (_, i) => ({
+        message: { role: "user" as const, content: `new-${i}` },
+        messageId: `new-${i}`,
+      })),
+    })
+
+    expect(mocks.update).toHaveBeenCalledTimes(1)
+    const [, updatePayload] = mocks.update.mock.calls[0] as [
+      string,
+      { history: Array<{ messageId?: string }> },
+    ]
+    // 149 existing + 5 new = 154, capped to 150 — the oldest 4 are dropped,
+    // the most recent messages (including all 5 new ones) are kept.
+    expect(updatePayload.history).toHaveLength(150)
+    expect(updatePayload.history.at(-1)?.messageId).toBe("new-4")
+    expect(updatePayload.history.some((m) => m.messageId === "old-0")).toBe(
+      false,
+    )
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "conv-1",
+        historyLengthBeforeTruncate: 154,
+        hardCap: 150,
+        droppedCount: 4,
+      }),
+      expect.stringContaining("history exceeded hard cap"),
+    )
+    // Stuck-detection warn should still fire independently of the hard cap.
+    expect(mocks.loggerWarn).toHaveBeenCalled()
   })
 })

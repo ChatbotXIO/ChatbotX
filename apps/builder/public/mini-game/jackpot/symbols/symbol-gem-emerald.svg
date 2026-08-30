@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="emG1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="35%" stop-color="#22c55e"/>
+      <stop offset="70%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#052e16"/>
+    </linearGradient>
+    <filter id="emSh"><feDropShadow dx="2" dy="6" stdDeviation="5" flood-opacity="0.6"/></filter>
+  </defs>
+
+  <g filter="url(#emSh)">
+    <!-- Classic Octagonal Emerald Cut -->
+    <polygon points="26,18 74,18 86,30 86,70 74,82 26,82 14,70 14,30" fill="url(#emG1)" stroke="#dcfce7" stroke-width="2"/>
+
+    <!-- Inner Step Cut Facets -->
+    <polygon points="32,26 68,26 78,36 78,64 68,74 32,74 22,64 22,36" fill="#16a34a" stroke="#dcfce7" stroke-width="1.2"/>
+    <polygon points="38,34 62,34 68,40 68,60 62,66 38,66 32,60 32,40" fill="#4ade80" opacity="0.85"/>
+
+    <!-- Top Highlight Flare -->
+    <polygon points="34,26 66,26 62,34 38,34" fill="#ffffff" opacity="0.75"/>
+    <circle cx="32" cy="40" r="3" fill="#ffffff"/>
+  </g>
+</svg>

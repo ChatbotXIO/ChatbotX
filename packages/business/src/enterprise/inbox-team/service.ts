@@ -68,8 +68,8 @@ class InboxTeamService extends BaseService {
     data: { name: string; userIds: string[] }
   }): Promise<void> {
     const { workspaceId, data } = props
+    const inboxTeamId = createId()
     await db.transaction(async (tx) => {
-      const inboxTeamId = createId()
       await tx.insert(inboxTeamModel).values({
         id: inboxTeamId,
         name: data.name,
@@ -87,6 +87,7 @@ class InboxTeamService extends BaseService {
       }
     })
     await this.invalidate({ workspaceId })
+    await this.audit("create", `created a new team (#${inboxTeamId})`)
   }
 
   async update(
@@ -99,10 +100,20 @@ class InboxTeamService extends BaseService {
       .set(data)
       .where(eq(inboxTeamModel.id, team.id))
     await this.invalidate({ workspaceId: ctx.workspaceId })
+
+    if (data.name !== undefined && data.name !== team.name) {
+      await this.audit("update", `updated a team (#${team.id})`)
+    }
   }
 
   async delete(props: { workspaceId: string; ids: string[] }): Promise<void> {
     const { workspaceId, ids } = props
+
+    const teams = await db.query.inboxTeamModel.findMany({
+      where: { workspaceId, id: { in: ids } },
+      columns: { id: true },
+    })
+
     await db
       .delete(inboxTeamModel)
       .where(
@@ -112,6 +123,13 @@ class InboxTeamService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId })
+
+    if (teams.length > 0) {
+      await this.audit(
+        "delete",
+        `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
+      )
+    }
   }
 
   async addMembers(
@@ -119,6 +137,7 @@ class InboxTeamService extends BaseService {
     userIds: string[],
   ): Promise<void> {
     const team = await this.findByIdOrFail(ctx)
+    let addedUsers: Array<{ name: string | null; email: string }> = []
     await db.transaction(async (tx) => {
       const existingMembers = await tx.query.inboxTeamMemberModel.findMany({
         where: {
@@ -140,9 +159,20 @@ class InboxTeamService extends BaseService {
             inboxTeamId: ctx.inboxTeamId,
           })),
         )
+        addedUsers = await tx.query.userModel.findMany({
+          where: { id: { in: newUserIds } },
+          columns: { name: true, email: true },
+        })
       }
     })
     await this.invalidate({ workspaceId: ctx.workspaceId })
+
+    if (addedUsers.length > 0) {
+      await this.audit(
+        "update",
+        `added ${addedUsers.map((user) => user.name ?? user.email).join(", ")} to the team (#${team.id})`,
+      )
+    }
   }
 
   async removeMembers(
@@ -150,7 +180,15 @@ class InboxTeamService extends BaseService {
     memberIds: string[],
   ): Promise<void> {
     const team = await this.findByIdOrFail(ctx)
-    await db
+    const membersToRemove = await db.query.inboxTeamMemberModel.findMany({
+      where: {
+        id: { in: memberIds },
+        inboxTeamId: team.id,
+      },
+      with: { user: true },
+    })
+
+    const deleted = await db
       .delete(inboxTeamMemberModel)
       .where(
         and(
@@ -158,7 +196,15 @@ class InboxTeamService extends BaseService {
           inArray(inboxTeamMemberModel.id, memberIds),
         ),
       )
+      .returning({ id: inboxTeamMemberModel.id })
     await this.invalidate({ workspaceId: ctx.workspaceId })
+
+    if (deleted.length > 0) {
+      await this.audit(
+        "update",
+        `removed ${membersToRemove.map((member) => member.user.name ?? member.user.email).join(", ")} from the team (#${team.id})`,
+      )
+    }
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────

@@ -132,6 +132,30 @@ describe("submitBookingAction", () => {
     })
   })
 
+  test("skips selected date custom field persistence for direct book tokens", async () => {
+    mocks.verifyAppointmentWebviewToken.mockResolvedValue({
+      mode: "book",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      conversationId: "conversation-1",
+      contactInboxId: "contact-inbox-1",
+      flowId: "flow-1",
+      flowVersionId: "flow-version-1",
+      nodeId: "node-1",
+      stepId: "step-1",
+    })
+
+    await submitBooking({
+      token: "token-1",
+      selectedStartAt: "2026-08-15T09:00:00.000Z",
+      inviteeTimezone: "UTC",
+    })
+
+    expect(mocks.completeWebviewBooking).toHaveBeenCalled()
+    expect(mocks.setValueByKey).not.toHaveBeenCalled()
+    expect(mocks.integrationQueueAdd).toHaveBeenCalled()
+  })
+
   test("still returns staleSlot for actual slot conflicts", async () => {
     mocks.completeWebviewBooking.mockRejectedValue(
       new SlotUnavailableException(),

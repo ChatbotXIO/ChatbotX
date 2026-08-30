@@ -4,6 +4,7 @@ import {
   productService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import type { MetaCatalogBatchHandle } from "@chatbotx.io/database/partials"
 import { metaCatalogItemRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -19,6 +20,8 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { safeMetaCatalogErrorLog } from "./safe-error-log"
+
+const META_CATALOG_SYNC_SOURCE = "default:checkMetaCatalogSync"
 
 const MAX_POLL_ATTEMPTS = 12
 const BASE_POLL_DELAY_MS = 5000
@@ -214,13 +217,22 @@ export async function checkMetaCatalogSync(
           ]
         : []
     })
-    await metaCatalogSyncRunService.complete({
+    const outcome = await metaCatalogSyncRunService.complete({
       runId: run.id,
       integrationMetaCatalogId: connection.id,
       catalogId,
       succeededItems,
       errors,
     })
+
+    if (outcome === "succeeded") {
+      await auditService.record({
+        action: "catalog_synced",
+        detail: "Meta catalog sync completed",
+        workspaceId: data.workspaceId,
+        source: META_CATALOG_SYNC_SOURCE,
+      })
+    }
   } catch (error) {
     if (error instanceof CheckDispatchError) {
       // Keep the run active. BullMQ retries this job, and the scheduled

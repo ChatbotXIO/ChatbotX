@@ -12,6 +12,7 @@ import {
 } from "@aws-sdk/client-s3"
 import { AwsClient } from "aws4fetch"
 import { keys } from "../keys"
+import { buildCopySource } from "./copy-source"
 
 const env = keys()
 
@@ -182,15 +183,10 @@ export class Uploader {
   }
 
   async copyObject(sourcePath: string, destinationPath: string) {
-    const encodedSource = sourcePath
-      .split("/")
-      .map((segment) => encodeURIComponent(segment))
-      .join("/")
-
     const command = new CopyObjectCommand({
       Bucket: env.S3_BUCKET,
       Key: destinationPath,
-      CopySource: `${env.S3_BUCKET}/${encodedSource}`,
+      CopySource: buildCopySource(sourcePath, env.S3_BUCKET, env.S3_ENDPOINT),
     })
 
     return await this.#client.send(command)

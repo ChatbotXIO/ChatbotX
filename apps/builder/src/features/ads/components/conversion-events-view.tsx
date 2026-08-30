@@ -1,9 +1,30 @@
 "use client"
 
-import type { AdsConversionRuleTrigger } from "@chatbotx.io/business"
+import type {
+  AdsConversionRuleResource,
+  AdsConversionRuleTrigger,
+  AdsConversionRuleTriggerType,
+} from "@chatbotx.io/business"
+// Narrow subpath import (not the `@chatbotx.io/business` barrel): this is a
+// "use client" component, and the barrel re-exports `service.ts`, which
+// eagerly pulls the DB client (`env.DATABASE_URL`) into the client bundle —
+// see the comment atop `channel-fields.ts`. Type-only imports above stay on
+// the root package since `import type` is erased and never triggers that.
+import {
+  ADS_INTEGRATION_FK_BY_CHANNEL,
+  type AdsEligibleChannel,
+  perChannelIntegrationIdsOrNull,
+} from "@chatbotx.io/business/ads-conversion/channel-fields"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@chatbotx.io/ui/components/ui/select"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import {
   Tabs,
@@ -18,10 +39,11 @@ import {
   SaveIcon,
   Trash2Icon,
 } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { use, useEffect, useMemo, useState } from "react"
+import { use, useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
   createAdsConversionRuleAction,
@@ -39,22 +61,97 @@ import {
   isTriggerComplete,
 } from "./conversion-rule-trigger-picker"
 
+// The rule builder covers every ads-eligible channel (Amendment A1 UI —
+// "facebook" is a dead channel value, see FacebookRulePlaceholder below).
+type RuleChannel = AdsEligibleChannel
+
 type ConversionEventsViewProps = {
   workspaceId: string
   promises: Promise<[ConversionEventsData]>
   selectedAccount: ConversionEventsData["whatsappIntegrations"][number] | null
   switcherIntegrations: AdsSwitcherData["integrations"]
   whatsappCredentialPublic: AdsSwitcherData["whatsappCredentialPublic"]
+  oauthCallbackUrl: AdsSwitcherData["oauthCallbackUrl"]
 }
 
-type WhatsappRuleBuilderProps = {
+type RuleBuilderIntegration = { id: string; name: string }
+
+/** Normalized shape `templateOptions` (RuleBuilder) reduces both channels'
+ * template lists to before filtering by integration — see its doc comment. */
+type TemplateCandidate = {
+  id: string
+  integrationId: unknown
+  label: string
+}
+
+// Channel × trigger-type allowlist mirrored client-side for the picker UI —
+// the server-side allowlist in `assertSupportedTrigger`
+// (`packages/business/src/ads-conversion/service.ts`) is the actual guard;
+// this only prevents the client from ever offering an option the server
+// would reject. Messenger includes `templateSent` per Amendment A1 (backed
+// by Messenger message templates, not WABA templates); Instagram excludes it
+// — no template entity/step exists for Instagram.
+const channelTriggerConfig: Record<
+  RuleChannel,
+  {
+    allowedTriggerTypes: AdsConversionRuleTriggerType[]
+    defaultTriggerType: AdsConversionRuleTriggerType
+  }
+> = {
+  instagram: {
+    allowedTriggerTypes: ["tagApplied", "keywordMatched", "contactReplied"],
+    defaultTriggerType: "tagApplied",
+  },
+  messenger: {
+    allowedTriggerTypes: [
+      "templateSent",
+      "tagApplied",
+      "keywordMatched",
+      "contactReplied",
+    ],
+    defaultTriggerType: "templateSent",
+  },
+  whatsapp: {
+    allowedTriggerTypes: [
+      "templateSent",
+      "tagApplied",
+      "keywordMatched",
+      "contactReplied",
+    ],
+    defaultTriggerType: "templateSent",
+  },
+}
+
+function buildRuleIntegrationFields(
+  channel: RuleChannel,
+  integrationId: string,
+) {
+  return {
+    integrationFacebookAdsId: null,
+    ...perChannelIntegrationIdsOrNull(channel, integrationId),
+  }
+}
+
+function ruleMatchesIntegration(
+  rule: AdsConversionRuleResource,
+  channel: RuleChannel,
+  integrationId: string,
+): boolean {
+  return rule[ADS_INTEGRATION_FK_BY_CHANNEL[channel]] === integrationId
+}
+
+type RuleBuilderProps = {
+  channel: RuleChannel
   data: ConversionEventsData
   eventType: "lead" | "purchase"
-  selectedAccount: ConversionEventsData["whatsappIntegrations"][number] | null
+  integrations: RuleBuilderIntegration[]
+  onIntegrationChange?: (integrationId: string) => void
+  selectedIntegrationId: string
+  showIntegrationPicker: boolean
   workspaceId: string
 }
 
-type WhatsappRuleEventType = WhatsappRuleBuilderProps["eventType"]
+type RuleBuilderEventType = RuleBuilderProps["eventType"]
 
 const ruleBuilderCopyKeys = {
   lead: {
@@ -72,7 +169,7 @@ const ruleBuilderCopyKeys = {
     when: "ads.conversionEvents.trackPurchases.when",
   },
 } as const satisfies Record<
-  WhatsappRuleEventType,
+  RuleBuilderEventType,
   {
     noValueNote: string | null
     question: string
@@ -85,52 +182,115 @@ const ruleBuilderCopyKeys = {
 const eventTypeLabelKeys = {
   lead: "ads.conversionEvents.eventTypeLead",
   purchase: "ads.conversionEvents.eventTypePurchase",
-} as const satisfies Record<WhatsappRuleEventType, string>
+} as const satisfies Record<RuleBuilderEventType, string>
 
-function WhatsappRuleBuilder({
+function RuleBuilder({
+  channel,
   data,
   eventType,
-  selectedAccount,
+  integrations,
+  onIntegrationChange,
+  selectedIntegrationId,
+  showIntegrationPicker,
   workspaceId,
-}: WhatsappRuleBuilderProps) {
+}: RuleBuilderProps) {
   const t = useTranslations()
   const router = useRouter()
-  const selectedIntegrationId = selectedAccount?.id ?? ""
+  const config = channelTriggerConfig[channel]
   const [trigger, setTrigger] = useState<AdsConversionRuleTrigger>(() =>
-    buildDefaultTrigger("templateSent"),
+    buildDefaultTrigger(config.defaultTriggerType),
   )
   const copyKeys = ruleBuilderCopyKeys[eventType]
+  // Lead's "then" copy names WhatsApp's CTWA terminology explicitly — swap in
+  // the channel-neutral variant for Messenger/Instagram rather than reusing
+  // WhatsApp-specific wording.
+  const thenLabelKey =
+    eventType === "lead" && channel !== "whatsapp"
+      ? "ads.conversionEvents.trackQualifiedLeads.thenGeneric"
+      : copyKeys.thenLabel
+  // "Which template confirms a purchase?" is factually wrong on Instagram —
+  // no template entity exists there (Amendment A1), so its purchase card
+  // opens with the tagApplied trigger and needs template-free wording.
+  const questionKey =
+    eventType === "purchase" && channel === "instagram"
+      ? "ads.conversionEvents.trackPurchases.questionGeneric"
+      : copyKeys.question
+  const noRulesKey =
+    channel === "whatsapp"
+      ? "ads.conversionEvents.noRules"
+      : "ads.conversionEvents.noRulesGeneric"
 
-  const selectedIntegration = selectedAccount
-  const templateOptions = useMemo(
-    () =>
-      data.whatsappTemplates
-        .filter(
-          (template) =>
-            template.integrationWhatsappId === selectedIntegrationId,
-        )
-        .map((template) => ({
-          label: `${template.name} (${template.language})`,
-          value: template.id,
-        })),
-    [data.whatsappTemplates, selectedIntegrationId],
-  )
+  // Only used for the `{id, name}` shape describeTriggerDetail needs — both
+  // variants share that, so the union is safe there. `templateOptions` below
+  // branches explicitly instead of filtering this union, since WhatsApp and
+  // Messenger templates don't share an `integration*Id` field name.
+  const templateSource =
+    channel === "messenger" ? data.messengerTemplates : data.whatsappTemplates
+  const templateOptions = useMemo(() => {
+    if (!config.allowedTriggerTypes.includes("templateSent")) {
+      return []
+    }
+
+    // Normalize each channel's template list to a common
+    // `{id, label, integrationId}` shape first — WhatsApp and Messenger
+    // templates don't share an `integration*Id` field name — then filter +
+    // map that single normalized shape ONCE instead of duplicating the
+    // filter/map pipeline per branch.
+    const {
+      list,
+      fkMatcher,
+    }: {
+      list: TemplateCandidate[]
+      fkMatcher: (template: TemplateCandidate) => boolean
+    } =
+      channel === "messenger"
+        ? {
+            list: data.messengerTemplates.map(
+              (template): TemplateCandidate => ({
+                id: template.id,
+                integrationId: template.integrationMessengerId,
+                label: `${template.name} (${template.language})`,
+              }),
+            ),
+            fkMatcher: (template) =>
+              template.integrationId === selectedIntegrationId,
+          }
+        : {
+            list: data.whatsappTemplates.map(
+              (template): TemplateCandidate => ({
+                id: template.id,
+                integrationId: template.integrationWhatsappId,
+                label: `${template.name} (${template.language})`,
+              }),
+            ),
+            fkMatcher: (template) =>
+              template.integrationId === selectedIntegrationId,
+          }
+
+    return list
+      .filter(fkMatcher)
+      .map((template) => ({ label: template.label, value: template.id }))
+  }, [
+    channel,
+    config.allowedTriggerTypes,
+    data.messengerTemplates,
+    data.whatsappTemplates,
+    selectedIntegrationId,
+  ])
+
   const rules = data.rules.filter(
     (rule) =>
-      rule.integrationWhatsappId === selectedIntegrationId &&
-      rule.eventType === eventType,
+      rule.channel === channel &&
+      rule.eventType === eventType &&
+      ruleMatchesIntegration(rule, channel, selectedIntegrationId),
   )
-
-  useEffect(() => {
-    setTrigger(buildDefaultTrigger("templateSent"))
-  }, [])
 
   const onSettled = () => router.refresh()
   const createRule = useAction(
     createAdsConversionRuleAction.bind(null, workspaceId),
     {
       onSuccess: () => {
-        setTrigger(buildDefaultTrigger("templateSent"))
+        setTrigger(buildDefaultTrigger(config.defaultTriggerType))
         toast.success(t("ads.conversionEvents.messages.ruleSaved"))
         onSettled()
       },
@@ -169,15 +329,60 @@ function WhatsappRuleBuilder({
           <h2 className="font-semibold text-base">{t(copyKeys.title)}</h2>
         </div>
 
-        <p className="ps-12 text-muted-foreground text-sm">
-          {t(copyKeys.question)}
-        </p>
+        {showIntegrationPicker &&
+          (integrations.length > 0 ? (
+            <div className="grid max-w-xs gap-2 ps-12">
+              <Select
+                items={integrations.map((integration) => ({
+                  label: integration.name,
+                  value: integration.id,
+                }))}
+                onValueChange={(value) =>
+                  onIntegrationChange?.(value as string)
+                }
+                value={selectedIntegrationId}
+              >
+                <SelectTrigger
+                  aria-label={t("ads.conversionEvents.selectIntegration")}
+                  className="w-full"
+                >
+                  <SelectValue
+                    placeholder={t(
+                      "ads.conversionEvents.selectIntegrationPlaceholder",
+                    )}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {integrations.map((integration) => (
+                    <SelectItem key={integration.id} value={integration.id}>
+                      {integration.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 ps-12">
+              <p className="text-muted-foreground text-sm">
+                {t("ads.conversionEvents.noIntegrationsConnected")}
+              </p>
+              <Link
+                className={buttonVariants({ size: "sm", variant: "outline" })}
+                href={`/space/${workspaceId}/settings/channels`}
+              >
+                {t("ads.conversionEvents.connectIntegration")}
+              </Link>
+            </div>
+          ))}
+
+        <p className="ps-12 text-muted-foreground text-sm">{t(questionKey)}</p>
 
         <div className="flex flex-col gap-3 border-border border-s-2 ps-4">
           <div className="flex flex-wrap items-end gap-3">
             <ConversionRuleTriggerPicker
+              allowedTriggerTypes={config.allowedTriggerTypes}
               automatedResponses={data.automatedResponses}
-              disabled={!selectedIntegration}
+              disabled={!selectedIntegrationId}
               onChange={setTrigger}
               tags={data.tags}
               templateOptions={templateOptions}
@@ -189,9 +394,8 @@ function WhatsappRuleBuilder({
               disabled={saveDisabled}
               onClick={() =>
                 createRule.execute({
-                  channel: "whatsapp",
-                  integrationWhatsappId: selectedIntegrationId,
-                  integrationFacebookAdsId: null,
+                  channel,
+                  ...buildRuleIntegrationFields(channel, selectedIntegrationId),
                   adAccountId: null,
                   eventType,
                   trigger,
@@ -211,7 +415,7 @@ function WhatsappRuleBuilder({
 
           <div className="flex items-center gap-3">
             <span className="text-muted-foreground text-sm">
-              {t(copyKeys.thenLabel)}
+              {t(thenLabelKey)}
             </span>
             {eventType === "lead" ? (
               <Badge variant="secondary">
@@ -230,9 +434,7 @@ function WhatsappRuleBuilder({
             {t("ads.conversionEvents.existingRules")}
           </h3>
           {rules.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {t("ads.conversionEvents.noRules")}
-            </p>
+            <p className="text-muted-foreground text-sm">{t(noRulesKey)}</p>
           ) : (
             rules.map((rule) => (
               <div
@@ -243,9 +445,17 @@ function WhatsappRuleBuilder({
                   <p className="font-medium text-sm">
                     {describeTriggerLabel(t, rule.trigger)}
                   </p>
-                  {describeTriggerDetail(t, rule.trigger, data) && (
+                  {describeTriggerDetail(t, rule.trigger, {
+                    automatedResponses: data.automatedResponses,
+                    tags: data.tags,
+                    templates: templateSource,
+                  }) && (
                     <p className="truncate text-muted-foreground text-xs">
-                      {describeTriggerDetail(t, rule.trigger, data)}
+                      {describeTriggerDetail(t, rule.trigger, {
+                        automatedResponses: data.automatedResponses,
+                        tags: data.tags,
+                        templates: templateSource,
+                      })}
                     </p>
                   )}
                 </div>
@@ -312,15 +522,70 @@ function FacebookRulePlaceholder() {
   )
 }
 
+function ChannelRulesTabContent({
+  channel,
+  data,
+  integrations,
+  onIntegrationChange,
+  selectedIntegrationId,
+  showIntegrationPicker,
+  workspaceId,
+}: {
+  channel: RuleChannel
+  data: ConversionEventsData
+  integrations: RuleBuilderIntegration[]
+  onIntegrationChange?: (integrationId: string) => void
+  selectedIntegrationId: string
+  showIntegrationPicker: boolean
+  workspaceId: string
+}) {
+  return (
+    <div className="flex flex-col gap-5">
+      <RuleBuilder
+        channel={channel}
+        data={data}
+        eventType="lead"
+        integrations={integrations}
+        onIntegrationChange={onIntegrationChange}
+        selectedIntegrationId={selectedIntegrationId}
+        showIntegrationPicker={showIntegrationPicker}
+        workspaceId={workspaceId}
+      />
+      <RuleBuilder
+        channel={channel}
+        data={data}
+        eventType="purchase"
+        integrations={integrations}
+        onIntegrationChange={onIntegrationChange}
+        selectedIntegrationId={selectedIntegrationId}
+        showIntegrationPicker={showIntegrationPicker}
+        workspaceId={workspaceId}
+      />
+    </div>
+  )
+}
+
 export function ConversionEventsView({
   workspaceId,
   promises,
   selectedAccount,
   switcherIntegrations,
   whatsappCredentialPublic,
+  oauthCallbackUrl,
 }: ConversionEventsViewProps) {
   const t = useTranslations()
   const [data] = use(promises)
+
+  // Messenger/Instagram have no page-level account switcher (unlike
+  // WhatsApp's `selectedAccount`, driven by the `account` URL param shared
+  // with the CAPI connect flow) — each tab defaults to the workspace's first
+  // connected integration for that channel.
+  const [selectedMessengerId, setSelectedMessengerId] = useState(
+    () => data.messengerIntegrations[0]?.id ?? "",
+  )
+  const [selectedInstagramId, setSelectedInstagramId] = useState(
+    () => data.instagramIntegrations[0]?.id ?? "",
+  )
 
   return (
     <div className="flex flex-col gap-5">
@@ -335,6 +600,7 @@ export function ConversionEventsView({
           </Button>
           <AdsAccountControl
             integrations={switcherIntegrations}
+            oauthCallbackUrl={oauthCallbackUrl}
             whatsappCredentialPublic={whatsappCredentialPublic}
             workspaceId={workspaceId}
           />
@@ -346,25 +612,47 @@ export function ConversionEventsView({
           <TabsTrigger className="py-3" value="whatsapp">
             {t("ads.conversionEvents.tabs.whatsapp")}
           </TabsTrigger>
+          <TabsTrigger className="py-3" value="messenger">
+            {t("ads.conversionEvents.tabs.messenger")}
+          </TabsTrigger>
+          <TabsTrigger className="py-3" value="instagram">
+            {t("ads.conversionEvents.tabs.instagram")}
+          </TabsTrigger>
           <TabsTrigger className="py-3" value="facebook">
             {t("ads.conversionEvents.tabs.facebook")}
           </TabsTrigger>
         </TabsList>
         <TabsContent className="pt-4" value="whatsapp">
-          <div className="flex flex-col gap-5">
-            <WhatsappRuleBuilder
-              data={data}
-              eventType="lead"
-              selectedAccount={selectedAccount}
-              workspaceId={workspaceId}
-            />
-            <WhatsappRuleBuilder
-              data={data}
-              eventType="purchase"
-              selectedAccount={selectedAccount}
-              workspaceId={workspaceId}
-            />
-          </div>
+          <ChannelRulesTabContent
+            channel="whatsapp"
+            data={data}
+            integrations={data.whatsappIntegrations}
+            selectedIntegrationId={selectedAccount?.id ?? ""}
+            showIntegrationPicker={false}
+            workspaceId={workspaceId}
+          />
+        </TabsContent>
+        <TabsContent className="pt-4" value="messenger">
+          <ChannelRulesTabContent
+            channel="messenger"
+            data={data}
+            integrations={data.messengerIntegrations}
+            onIntegrationChange={setSelectedMessengerId}
+            selectedIntegrationId={selectedMessengerId}
+            showIntegrationPicker
+            workspaceId={workspaceId}
+          />
+        </TabsContent>
+        <TabsContent className="pt-4" value="instagram">
+          <ChannelRulesTabContent
+            channel="instagram"
+            data={data}
+            integrations={data.instagramIntegrations}
+            onIntegrationChange={setSelectedInstagramId}
+            selectedIntegrationId={selectedInstagramId}
+            showIntegrationPicker
+            workspaceId={workspaceId}
+          />
         </TabsContent>
         <TabsContent className="pt-4" value="facebook">
           <FacebookRulePlaceholder />

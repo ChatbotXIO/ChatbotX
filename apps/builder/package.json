@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "SKIP_ENV_CHECK=true dotenv  -e ../../.env -- next build",
-    "check-types": "tsc --noEmit",
+    "check-types": "NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit",
     "dev": "dotenv -e .env -e ../../.env -- next dev -p 3123 | pino-pretty",
     "https": "dotenv -e .env -e ../../.env -- next dev -p 3123 --experimental-https",
     "i18n:check": "i18n-check --source en --locales messages",
@@ -15,7 +15,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ai-sdk/mcp": "^1.0.37",
+    "@ai-sdk/mcp": "^2.0.32",
     "@base-ui/react": "^1.6.0",
     "@bull-board/api": "^8.1.2",
     "@bull-board/hono": "^8.1.2",
@@ -60,6 +60,7 @@
     "@chatbotx.io/integration-zalo": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
+    "@chatbotx.io/minigame-ui": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/scheduler": "workspace:*",
@@ -104,6 +105,7 @@
     "countries-list": "^3.3.0",
     "currency-codes": "^2.2.0",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dot-prop": "^10.1.0",
     "emoji-picker-react": "^4.19.1",
     "hono": "^4.12.28",

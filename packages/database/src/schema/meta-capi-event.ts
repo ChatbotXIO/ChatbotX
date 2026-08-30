@@ -22,7 +22,7 @@ export const metaCapiEventChannelValues = [
   "instagram",
   "whatsapp",
 ] as const
-export const metaCapiEventNameValues = ["LeadSubmitted"] as const
+export const metaCapiEventNameValues = ["LeadSubmitted", "Purchase"] as const
 export const metaCapiEventSourceValues = ["flowStep", "triggerAction"] as const
 export const metaCapiStatusValues = [
   "pending",

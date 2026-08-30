@@ -266,6 +266,7 @@ function expectCustomFieldWrite(value: string) {
     contactId: "contact-1",
     keyword: "field-1",
     value,
+    allowBotFields: true,
   })
 }
 

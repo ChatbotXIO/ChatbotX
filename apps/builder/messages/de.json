@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Erneut versuchen",
     "copy": "Kopieren",
     "copyUrl": "URL kopieren",
     "actions": "Aktionen",
@@ -71,6 +72,7 @@
     "reset": "Zurücksetzen",
     "save": "Speichern",
     "selectAll": "Alle auswählen",
+    "unselect": "Auswahl aufheben",
     "selectRow": "Zeile auswählen",
     "sendFlow": "Flow senden",
     "sendMessage": "Nachricht senden",
@@ -145,7 +147,8 @@
     "onSuccess": "Bei Erfolg",
     "clone": "Klonen",
     "remove": "Entfernen",
-    "restore": "Wiederherstellen"
+    "restore": "Wiederherstellen",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Sie müssen Super-Administrator des Arbeitsbereichs sein, um dies zu tun."
@@ -156,7 +159,8 @@
     "skip": "Überspringen"
   },
   "admins": {
-    "title": "Admins"
+    "title": "Admins",
+    "adminActivityLogs": "Admin-Aktivitätsprotokoll"
   },
   "assignAdmin": {
     "assignConversation": "Unterhaltung zuweisen",
@@ -540,8 +544,8 @@
       "blocked": "Blockiert",
       "noAdminReply": "Keine Admin-Antwort",
       "contactCreatedAt": "Kontakt erstellt am",
-      "fromCtwaAd": "Von Click-to-WhatsApp-Anzeige",
-      "ctwaConversion": "CTWA-Konversion",
+      "fromCtwaAd": "Von Anzeige",
+      "ctwaConversion": "Anzeigenkonversion",
       "lastUserInputTypes": {
         "text": "Text",
         "location": "Standort",
@@ -568,9 +572,10 @@
       "systemFields": "Systemfelder",
       "topicCoupon": "Thema Gutschein",
       "customFields": "Benutzerdefinierte Felder",
+      "botFields": "Bot-Felder",
       "email": "E-Mail",
       "sms": "SMS",
-      "ctwaAds": "Click-to-WhatsApp-Anzeigen"
+      "ctwaAds": "Anzeigen"
     },
     "languages": {
       "ar": "Arabisch",
@@ -609,9 +614,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA-Gesprächsstarter",
-        "leads": "CTWA-qualifizierte Leads",
-        "purchases": "CTWA-Käufer"
+        "conversations": "Anzeigen-Gesprächsstarter",
+        "leads": "Anzeigen-qualifizierte Leads",
+        "purchases": "Anzeigen-Käufer"
       },
       "adPrefix": "Anzeige",
       "allAds": "alle Anzeigen"
@@ -802,6 +807,9 @@
     "dynamicImage": {
       "label": "Dynamisches Bild"
     },
+    "minigame": {
+      "label": "Minispiel"
+    },
     "savePayloadToCustomField": {
       "label": "Nutzdaten in benutzerdefiniertem Feld speichern"
     },
@@ -896,7 +904,10 @@
       "append": "Am Ende anhängen",
       "prepend": "Am Anfang voranstellen",
       "increase": "Erhöhen um",
-      "decrease": "Verringern um"
+      "decrease": "Verringern um",
+      "groupSystemFields": "Systemfelder",
+      "groupCustomFields": "Benutzerdefinierte Felder",
+      "groupAccountFields": "Bot-Felder"
     },
     "dataCollect": {
       "label": "Datenerfassung"
@@ -999,8 +1010,8 @@
       "aiDeleteMessageHistory": "{aiName}: Nachrichtenverlauf löschen"
     },
     "steps": {
-      "label": "Schritte",
-      "placeholder": "Schritt auswählen"
+      "label": "Node",
+      "placeholder": "Node auswählen"
     },
     "folder": {
       "label": "Ordner"
@@ -1160,6 +1171,9 @@
     },
     "mcpServer": {
       "label": "MCP-Server"
+    },
+    "template": {
+      "label": "Template"
     },
     "systemFunction": {
       "label": "Systemfunktion",
@@ -1365,7 +1379,9 @@
       "label": "Status",
       "pending": "Ausstehend",
       "processing": "In Verarbeitung",
+      "installing": "Installing",
       "completed": "Abgeschlossen",
+      "partial": "Partial",
       "failed": "Fehlgeschlagen",
       "success": "Erfolg",
       "error": "Fehler"
@@ -2027,6 +2043,15 @@
         "description": "Dieses Token wird nur einmal angezeigt. Bewahren Sie es sicher auf — Sie können es später nicht mehr einsehen.",
         "done": "Fertig"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
@@ -2162,12 +2187,12 @@
       "whatsappFlow": "WhatsApp-Flow",
       "appointmentScheduling": "Terminplanung",
       "triggerN8n": "n8n auslösen",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Meta-CAPI-Ereignis senden",
       "import": "Flow importieren",
       "export": "Exportieren",
       "importStarted": "Der Flow wird importiert. Ergebnisse im Importverlauf prüfen.",
-      "importJsonOnly": "Nur JSON-Dateien"
+      "importJsonOnly": "Nur JSON-Dateien",
+      "adsConversions": "Anzeigen & Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",
@@ -2325,6 +2350,11 @@
   },
   "ads": {
     "title": "Anzeigen",
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-Anzeigen",
+      "messenger": "Click-to-Messenger-Anzeigen",
+      "instagram": "Click-to-Instagram-Anzeigen"
+    },
     "connectAccounts": {
       "connectAdAccount": "Werbekonto verbinden",
       "adAccountName": "Name des Werbekontos",
@@ -2350,6 +2380,8 @@
       "title": "Konversionsereignisse",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Werbekonten verwalten",
@@ -2357,11 +2389,16 @@
       "selectAll": "Alle auswählen",
       "whatsappAsset": "WhatsApp-Asset",
       "selectWhatsappAsset": "WhatsApp-Asset auswählen",
+      "selectIntegration": "Integration",
+      "selectIntegrationPlaceholder": "Integration auswählen",
+      "noIntegrationsConnected": "Für diesen Kanal sind noch keine Integrationen verbunden.",
+      "connectIntegration": "Kanal verbinden",
       "templates": "Vorlagen",
       "selectTemplates": "Vorlagen auswählen",
       "noTemplates": "Keine genehmigten Vorlagen gefunden.",
       "existingRules": "Vorhandene Regeln",
       "noRules": "Für dieses WhatsApp-Asset gibt es noch keine Konversionsregeln.",
+      "noRulesGeneric": "Für diese Integration gibt es noch keine Konversionsregeln.",
       "toggleRule": "Regel aktivieren oder deaktivieren",
       "deleteRule": "Regel löschen",
       "qualifyingTemplateMessageSent": "Qualifizierende Vorlagennachricht wird gesendet",
@@ -2401,24 +2438,26 @@
         "title": "Qualifizierte Leads verfolgen",
         "question": "An welchem Punkt im Gespräch möchten Sie einen Kontakt als Lead qualifizieren?",
         "when": "Wenn",
-        "then": "Dann CTWA-Lead markieren als"
+        "then": "Dann CTWA-Lead markieren als",
+        "thenGeneric": "Dann Lead markieren als"
       },
       "trackPurchases": {
         "title": "Käufe verfolgen",
         "question": "Welche Vorlage bestätigt einen Kauf?",
         "when": "Wenn",
         "then": "Dann",
-        "noValueNote": "Ein regelbasierter Kauf erfasst eine Kauf-Konversion ohne Bestellwert – er zählt zu den Käufen, trägt aber 0 zum Umsatz bei. Der Bestellwert wird nur von den automatischen Ereignissen von Meta erfasst."
+        "noValueNote": "Ein regelbasierter Kauf erfasst eine Kauf-Konversion ohne Bestellwert – er zählt zu den Käufen, trägt aber 0 zum Umsatz bei. Der Bestellwert wird nur von den automatischen Ereignissen von Meta erfasst.",
+        "questionGeneric": "An welchem Punkt der Konversation möchten Sie einen Kauf erfassen?"
       }
     },
     "analytics": {
-      "title": "CTWA-Analyse",
+      "title": "Anzeigenanalyse",
       "funnelOverview": "Funnel-Übersicht",
       "conversationsStarted": "Begonnene Gespräche",
       "qualifiedLeads": "Qualifizierte Leads",
       "purchases": "Käufe",
       "adSpend": "Werbeausgaben",
-      "spendAccountLevelNote": "Die Ausgaben werden auf Ebene des Meta-Werbekontos gemeldet; bei ausgewähltem WhatsApp-Konto werden reine Ausgaben-Anzeigen ohne Funnel-Aktivität für dieses Konto ausgeblendet.",
+      "spendAccountLevelNote": "Die Ausgaben werden auf Ebene des Meta-Werbekontos gemeldet; bei ausgewähltem Konto werden reine Ausgaben-Anzeigen ohne Funnel-Aktivität für dieses Konto ausgeblendet.",
       "revenue": "Umsatz",
       "roas": "ROAS",
       "revenueCurrencyNote": "Der Umsatz geht von einer einzigen Währung (USD) aus. Werbekonten mit mehreren Währungen werden noch nicht zusammengeführt.",
@@ -2447,21 +2486,27 @@
       "adAccountFilter": {
         "all": "Alle Werbekonten",
         "label": "Werbekonto",
-        "note": "Anzeigen mit Konversionen, aber ohne Ausgaben oder Zustellung im ausgewählten Zeitraum, werden bei der Filterung nach Werbekonto ausgeblendet."
+        "unavailable": "Werbekonten konnten nicht geladen werden — prüfe die Ads-Verbindung dieser Integration oder die Facebook-Ads-Verbindung des Workspaces in den Einstellungen."
+      },
+      "channelFilter": {
+        "label": "Kanal",
+        "allAccounts": "Alle Konten",
+        "allChannels": "Alle Kanäle"
       },
       "retarget": "Retargeting",
       "thoseWhoPurchased": "Diejenigen, die gekauft haben",
       "thoseWhoStartedConversation": "Diejenigen, die ein Gespräch begonnen haben",
       "sendWhatsappBroadcast": "WhatsApp-Broadcast senden",
+      "retargetOnChannel": "Retargeting auf {channel}",
       "from": "Von",
       "to": "Bis",
       "unattributed": "Nicht zugeordnet",
       "retargetDialog": {
-        "title": "CTWA-Kontakte erneut ansprechen",
+        "title": "Anzeigen-Kontakte erneut ansprechen",
         "createAudience": "Zielgruppe erstellen",
         "useExistingAudience": "Vorhandene Zielgruppe verwenden",
         "audienceName": "Zielgruppenname",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Anzeigen",
         "confirm": "Synchronisierung starten",
         "success": "Synchronisierung der Retargeting-Zielgruppe wurde eingeplant.",
         "error": "Synchronisierung der Retargeting-Zielgruppe konnte nicht eingeplant werden."
@@ -2473,7 +2518,7 @@
         "failed": "Fehlgeschlagen",
         "skippedNoScope": "Übersprungen (kein Berechtigungsumfang)",
         "skippedRegion": "Übersprungen (Region)",
-        "noScopeWarning": "Einige Konversionen wurden nicht gesendet, da diesem WhatsApp-Konto die Berechtigung für Ereignisse fehlt. Verbinden Sie es erneut, um die Berichterstattung für automatische Ereignisse zu aktivieren.",
+        "noScopeWarning": "Einige Konversionen wurden nicht gesendet, da diesem Konto die Berechtigung für Ereignisse fehlt. Verbinden Sie es erneut, um die Berichterstattung für automatische Ereignisse zu aktivieren.",
         "reconnectCta": "Konto erneut verbinden",
         "empty": "In diesem Zeitraum noch keine Konversionsereignisse."
       },
@@ -2486,7 +2531,8 @@
         "contactName": "Kontaktname",
         "phone": "Telefon",
         "adId": "Anzeigen-ID",
-        "occurredAt": "Aufgetreten am"
+        "occurredAt": "Aufgetreten am",
+        "channel": "Kanal"
       },
       "empty": "Noch keine Daten. Verbinden Sie ein Werbekonto und beginnen Sie mit der Konversionsverfolgung."
     }
@@ -2884,6 +2930,7 @@
     "disconnectFeatureDescription": "Möchten Sie die Verbindung mit {feature} wirklich trennen?",
     "disconnectSuccess": "Verbindung mit {feature} erfolgreich getrennt",
     "reply": "Antworten",
+    "privateReply": "Private Antwort",
     "viewMessage": "Nachricht anzeigen",
     "changeLikeState": "Gefällt-mir-Status ändern",
     "changeHideState": "Sichtbarkeitsstatus ändern",
@@ -2901,6 +2948,8 @@
     "editMessagePlaceholder": "Nachricht bearbeiten...",
     "saveEdit": "Speichern",
     "cancelEdit": "Abbrechen",
+    "replaceAttachment": "Anhang ersetzen",
+    "addAttachment": "Anhang hinzufügen",
     "failedToCopy": "Kopieren fehlgeschlagen",
     "failedToPreviewImage": "Bildvorschau fehlgeschlagen",
     "loadingData": "Daten werden geladen...",
@@ -2924,6 +2973,9 @@
     "duplicatedSuccess": "{feature} erfolgreich dupliziert",
     "duplicateConfirmation": "Dadurch wird eine Kopie von {feature} erstellt.",
     "deleteFeature": "{feature} löschen",
+    "resetFeature": "{feature} zurücksetzen",
+    "resetConfirmation": "Dadurch werden die Werte der ausgewählten {feature} geleert.\nDiese Aktion kann nicht rückgängig gemacht werden.",
+    "resetSuccess": "{feature} erfolgreich zurückgesetzt",
     "deleteConfirmation": "Sind Sie sich ganz sicher?\nDiese Aktion kann nicht rückgängig gemacht werden.\nDadurch wird {feature} dauerhaft von unseren Servern gelöscht.",
     "addFeature": "{feature} hinzufügen",
     "signOutConfirmation": "Möchten Sie sich wirklich abmelden?",
@@ -2958,9 +3010,6 @@
     "enableSuccess": "{feature} erfolgreich aktiviert",
     "userInactive": "Benutzer war länger als 7 Tage inaktiv",
     "messagingWindowClosed": "Die Nachricht kann nicht außerhalb des erlaubten Zeitfensters gesendet werden",
-    "sendHumanAgentTag": "Eine Nachricht mit dem Tag HUMAN_AGENT senden",
-    "warning": "Warnung!",
-    "humanAgentWarningDescription": "Sie dürfen nur dann innerhalb von 7 Tagen auf die Nachricht eines Benutzers antworten, wenn das Problem nicht sinnvoll innerhalb von 24 Stunden gelöst werden kann. Beispiele sind Wochenenden, Feiertage oder Fälle, deren Bearbeitung mehr als einen Tag erfordert. Verwenden Sie diese Option aus keinem anderen Grund, da dies Ihre Facebook-Seite oder Ihr Instagram-Konto gefährden könnte. Fahren Sie im Zweifelsfall nicht fort.",
     "humanAgentWindowExpired": "Das Nachrichtenfenster ist abgelaufen. Der Kontakt muss zuerst eine Nachricht senden, um die Unterhaltung wieder zu öffnen.",
     "restoreVersionSuccess": "Flow auf die ausgewählte Version zurückgesetzt",
     "revertToPublishedSuccess": "Entwurf auf die veröffentlichte Version zurückgesetzt",
@@ -3042,10 +3091,12 @@
     "selectPage": {
       "noPagesTitle": "Keine Facebook-Seiten gefunden",
       "noPagesDescription": "Seiten in einem Business Manager erfordern während der Verbindung Zugriff auf den Business Manager. Verbinden Sie Messenger erneut und erteilen Sie alle angeforderten Berechtigungen.",
+      "noConnectablePagesTitle": "Keine Seiten zum Verbinden verfügbar",
+      "noConnectablePagesDescription": "Sie sind kein Administrator dieser Seite",
       "bmLookupFailedTitle": "Business-Manager-Seiten fehlen möglicherweise",
       "bmLookupFailedDescription": "Verbinden Sie Messenger erneut und gewähren Sie Zugriff auf den Business Manager, damit über ihn verwaltete Seiten aufgelistet werden können.",
       "alreadyConnectedNote": "Diese Seite ist bereits verbunden",
-      "notAdminNote": "Zum Verbinden ist die vollständige Admin-Berechtigung für die Seite erforderlich",
+      "notAdminNote": "Sie sind kein Administrator dieser Seite",
       "tryAgain": "Erneute Verbindung versuchen"
     },
     "title": "Facebook Messenger",
@@ -3773,7 +3824,23 @@
     "exportTakingLongDescription": "Der Export wird noch verarbeitet. Sie können diesen Dialog schließen und in einigen Minuten im Exportverlauf erneut nachsehen."
   },
   "auditLogs": {
-    "title": "Audit-Protokolle"
+    "title": "Audit-Protokolle",
+    "columns": {
+      "user": "Benutzer",
+      "action": "Aktion",
+      "detail": "Detail",
+      "ipAddress": "IP-Adresse",
+      "date": "Datum"
+    },
+    "filters": {
+      "from": "Von",
+      "to": "Bis",
+      "user": "Benutzer",
+      "userPlaceholder": "Benutzer-ID",
+      "keyword": "Stichwort",
+      "keywordPlaceholder": "Aktion oder Detail",
+      "allAdmins": "Alle Admins"
+    }
   },
   "customFields": {
     "title": "Benutzerdefinierte Felder",
@@ -4340,11 +4407,11 @@
     "title": "Terminplanung",
     "description": "Erstellen und verwalten Sie Ihre Terminplanung.",
     "flowModes": {
-      "bookFromCustomField": "Termin buchen",
-      "checkAvailabilityFromCustomField": "Verfügbarkeit prüfen",
-      "book": "Datums-/Zeitauswahl",
-      "checkAvailability": "Datumsbereichsauswahl",
-      "cancel": "Termin absagen"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Modus",
@@ -4363,7 +4430,60 @@
   },
   "templates": {
     "title": "Vorlagen",
-    "description": "Erstellen und verwalten Sie Ihre Vorlagen."
+    "description": "Erstellen und verwalten Sie Ihre Vorlagen.",
+    "share": {
+      "label": "Teilen",
+      "enabled": "Geteilt",
+      "disabled": "Nicht geteilt",
+      "dialogTitle": "Vorlage teilen",
+      "dialogDescription": "Jeder mit diesem Link kann eine Kopie dieser Vorlage in einem Arbeitsbereich Ihres Mandanten installieren.",
+      "enableLabel": "Freigabelink aktivieren",
+      "linkLabel": "Freigabelink",
+      "description": "Jeder mit dem Link kann diese Vorlage in seinem eigenen Arbeitsbereich installieren."
+    },
+    "installs": {
+      "title": "Installationen",
+      "resources": "Ressourcen",
+      "warnings": "Warnungen",
+      "completedAt": "Abgeschlossen am",
+      "autoUpdate": "Automatische Aktualisierung"
+    },
+    "form": {
+      "contents": "Vorlageninhalt",
+      "comingSoon": "Demnächst verfügbar",
+      "selectAll": "Alle auswählen",
+      "selectedCount": "{count} ausgewählt",
+      "details": "Details",
+      "permissions": "Standardberechtigungen",
+      "allowEdit": "Bearbeitung nach Installation erlauben",
+      "allowDelete": "Löschen nach Installation erlauben",
+      "publisherName": "Name des Herausgebers",
+      "youtubeVideoId": "YouTube-Video-ID",
+      "youtubeVideoIdDescription": "Die 11-stellige ID aus der Video-URL, z. B. \"dQw4w9WgXcQ\" in youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Titelbild",
+      "installBehavior": "Installationsverhalten",
+      "createInstallFolder": "In einem eigenen Ordner installieren",
+      "createInstallFolderDescription": "Verschachtelt jede installierte Ressource in einem neuen, nach dieser Vorlage benannten Ordner.",
+      "defaultAutoUpdate": "Installationen standardmäßig für Updates markieren",
+      "defaultAutoUpdateDescription": "Neue Installationen zeigen einen Update-Hinweis, sobald Sie diese Vorlage erneut veröffentlichen."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Benutzerdefinierte Felder",
+      "tags": "Tags",
+      "products": "Produkte",
+      "productCategories": "Produktkategorien",
+      "aiFunctions": "KI-Funktionen",
+      "aiAgents": "KI-Agenten",
+      "calendars": "Terminkalender",
+      "webchats": "Webchats",
+      "keywords": "Schlüsselwörter",
+      "entryPointLinks": "Einstiegspunkt-Links",
+      "triggers": "Trigger",
+      "fbCommentAutomations": "Facebook-Kommentarautomatisierungen",
+      "settings": "Einstellungen"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR-Code-Generator",
@@ -4478,6 +4598,19 @@
     "invalidDescription": "Dieser Link ist ungültig oder abgelaufen.",
     "unavailableTitle": "Abmeldung nicht verfügbar.",
     "unavailableDescription": "Dieser Arbeitsbereich ist nicht mehr verfügbar."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Dieser Link ist nicht mehr verfügbar.",
+    "invalidDescription": "Dieser Vorlagen-Freigabelink ist ungültig, deaktiviert oder abgelaufen.",
+    "byPublisher": "Von {publisherName}",
+    "includes": "Diese Vorlage enthält",
+    "videoTitle": "Vorlagen-Vorschauvideo",
+    "tryItOut": "Ausprobieren",
+    "signInToInstall": "Zum Installieren anmelden",
+    "selectWorkspace": "Arbeitsbereich auswählen",
+    "install": "Installieren",
+    "installStarted": "Installation gestartet",
+    "noEligibleWorkspaces": "Sie haben keinen Arbeitsbereich, der für die Installation dieser Vorlage geeignet ist."
   },
   "extensionsMe": {
     "actions": {
@@ -5240,7 +5373,16 @@
       "contentCategory": "Inhaltskategorie",
       "contentCategoryPlaceholder": "Die Kategorie des mit dem Ereignis verknüpften Inhalts",
       "contentName": "Inhaltsname",
-      "contentNamePlaceholder": "Der Name der Seite oder des Produkts, die/das mit dem Ereignis verknüpft ist"
+      "contentNamePlaceholder": "Der Name der Seite oder des Produkts, die/das mit dem Ereignis verknüpft ist",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Dataset-ID aus dem Events Manager einfügen",
     "saveDataset": "Speichern",
@@ -5287,6 +5429,353 @@
     },
     "whatsapp": {
       "connect": "Verbinden"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Erstellen und verwalten Sie Gewinnspiel-Minispiele für Ihre Kunden.",
+    "types": {
+      "luckyWheel": "Glücksrad",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Losziehung",
+      "scratchOff": "Rubbellos"
+    },
+    "createDialog": {
+      "title": "Minispiel-Typ auswählen",
+      "comingSoon": "Demnächst verfügbar"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Summe aller Wahrscheinlichkeiten: {value}%",
+      "loseProbability": "Verlustwahrscheinlichkeit: {value}%",
+      "winProbability": "Gewinnwahrscheinlichkeit: {value}%",
+      "newPrize": "Neuer Gewinn",
+      "prizeNameCustomFieldLabel": "Preisname in Benutzerdefiniertes Feld speichern"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Gewinn bearbeiten",
+      "nonWinningTitle": "Nicht-Gewinn-Einstellung bearbeiten",
+      "prizeNameLabel": "Gewinnname",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Empfohlene Größe 120x120px",
+      "quantityLabel": "Preismenge",
+      "quantityDescription": "Anzahl, wie oft dieser Preis noch gewonnen werden kann; verringert sich bei jedem Gewinn um 1. Leer lassen für unbegrenzt."
+    },
+    "outcomeMessage": {
+      "enableWin": "Nachricht an den Gewinner senden, der den Preis erhalten hat",
+      "enableLose": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
+      "mode": "Nachrichtentyp",
+      "modeText": "Text",
+      "modeFlow": "Flow",
+      "text": "Nachricht"
+    },
+    "winningMessageDialog": {
+      "title": "Einstellungen für Gewinnnachricht",
+      "titleLabel": "Titel",
+      "prizeNameHint": "Sie können '{{prize_name}}' im Titel und in der Beschreibung verwenden, um den Preisnamen einzufügen.",
+      "acceptButtonText": "Text der Bestätigungsschaltfläche",
+      "shareButtonText": "Text der Teilen-Schaltfläche",
+      "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Einstellungen für Nicht-Gewinn-Nachricht",
+      "titleLabel": "Titel",
+      "shareButtonText": "Text der Teilen-Schaltfläche",
+      "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Mit Freunden teilen",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "luckyWheelHeader": "GLÜCKSRAD",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze"
+    },
+    "form": {
+      "generalSettingsTitle": "Allgemeine Einstellungen",
+      "appearanceTitle": "Erscheinungsbild",
+      "playerSettingsTitle": "Spielereinstellungen",
+      "prizeSettingsTitle": "Gewinneinstellungen"
+    },
+    "generalSettings": {
+      "showName": "Sichtbar",
+      "playedAt": "Gespielt am",
+      "rulesDescription": "Regelbeschreibung",
+      "openerTags": "Kontakte markieren, die den Spiellink öffnen",
+      "playerTags": "Spieler markieren",
+      "newFriendTags": "Neue Freunde markieren",
+      "shareEnabled": "Teilen mit Freunden erlauben",
+      "shareMessage": "Freigabenachricht",
+      "shareMessageHint": "Verwenden Sie '{{shareUrl}}', um den tatsächlichen Spiellink einzufügen — bitte nicht entfernen."
+    },
+    "appearance": {
+      "backgroundColor": "Hintergrundfarbe",
+      "machineColor": "Maschinenfarbe",
+      "decorativeColor": "Dekorative Farbe",
+      "ruleTextColor": "Farbe des Regeltexts",
+      "backgroundImage": "Hintergrundbild",
+      "backgroundImageDescription": "Empfohlene Breite: 1024px",
+      "prizeDescriptionImage": "Gewinnbeschreibungsbild (optional)",
+      "prizeDescriptionImageDescription": "Empfohlene Breite: 750px",
+      "startButtonImage": "Startschaltflächen-Bild",
+      "startButtonImageDescription": "Empfohlene Größe: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Anzahl der Gewinnspielversuche pro Person",
+      "resetPolicyLabel": "Versuche zurücksetzen",
+      "resetNever": "Anzahl der Versuche nicht zurücksetzen",
+      "resetEveryNDays": "Anzahl der Versuche zurücksetzen alle",
+      "resetIntervalDaysSuffix": "Tag(e)"
+    },
+    "publicUrl": {
+      "label": "Öffentliche URL",
+      "hint": "Kopieren Sie die URL in Ihren Flow, Ihre Broadcast oder Sequenz, um dieses Minispiel zu teilen."
+    },
+    "play": {
+      "close": "Schließen",
+      "drawsRemaining": "{count} Versuche übrig",
+      "noDrawsLeft": "Du hast keine Versuche mehr für dieses Minispiel.",
+      "notStartedYet": "Dieses Minispiel hat noch nicht begonnen.",
+      "ended": "Dieses Minispiel ist beendet.",
+      "forbiddenTitle": "Zugriff verweigert",
+      "forbiddenDescription": "Dieser Link ist ungültig oder abgelaufen.",
+      "comingSoonTitle": "Demnächst verfügbar",
+      "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar."
+    },
+    "history": {
+      "title": "Verlauf",
+      "played": "Spiele",
+      "remaining": "Verbleibende Versuche",
+      "openedAt": "Zuerst geöffnet",
+      "lastPlayedAt": "Zuletzt gespielt",
+      "unknownContact": "Unbekannter Kontakt",
+      "record": "Protokoll",
+      "recordDialog": {
+        "title": "Spielprotokoll",
+        "win": "Gewonnen",
+        "lose": "Kein Gewinn",
+        "empty": "Noch keine Spielprotokolle"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Medienbibliothek",
+    "searchPlaceholder": "Dateien suchen...",
+    "newFolder": "Neuer Ordner",
+    "recent": "Zuletzt verwendet",
+    "favourite": "Favorit",
+    "upload": "Hochladen",
+    "done": "Fertig",
+    "deleteFolder": "Ordner löschen",
+    "renameFolder": "Ordner umbenennen",
+    "noFiles": "Keine Dateien gefunden",
+    "noFolders": "Noch keine Ordner",
+    "folderNamePlaceholder": "Ordnername",
+    "confirmDeleteFolder": "Ordner und alle Dateien löschen?",
+    "confirmDeleteFolderDescription": "Alle Dateien in diesem Ordner werden dauerhaft vom Server gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmDeleteFile": "Datei löschen?",
+    "confirmDeleteFileDescription": "Diese Datei wird dauerhaft vom Server gelöscht.",
+    "addToFavourites": "Zu Favoriten hinzufügen",
+    "removeFromFavourites": "Aus Favoriten entfernen",
+    "deleteFile": "Datei löschen",
+    "selectOnlyOneFile": "Du kannst nur 1 Datei auswählen",
+    "confirmDeleteFiles": "{count, plural, =1 {1 Datei löschen?} other {# Dateien löschen?}}",
+    "confirmDeleteFilesDescription": "Diese Dateien werden dauerhaft vom Server gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "filesCount": "{count, plural, =0 {Keine Dateien} =1 {1 Datei} other {# Dateien}}",
+    "openMediaLibrary": "Medienbibliothek öffnen",
+    "uploadFailed": "Hochladen von {name} fehlgeschlagen"
+  },
+  "adsCampaign": {
+    "title": "Anzeigen",
+    "createCta": "Anzeige erstellen",
+    "prereq": {
+      "notConnected": "Verbinde Facebook Ads, um Messaging-Anzeigen für diesen Kanal zu erstellen.",
+      "connectCta": "Facebook Ads verbinden"
+    },
+    "specialAdCategory": {
+      "none": "Keine",
+      "housing": "Wohnungswesen",
+      "employment": "Beschäftigung",
+      "credit": "Kredit",
+      "issues": "Soziale Themen, Wahlen oder Politik",
+      "financialProducts": "Finanzprodukte und -dienstleistungen",
+      "onlineGambling": "Online-Glücksspiel und -Gaming"
+    },
+    "fields": {
+      "objective": {
+        "label": "Ziel",
+        "value": "Interaktion (Messaging)"
+      },
+      "specialAdCategory": {
+        "label": "Spezielle Anzeigenkategorie",
+        "description": "Bei Auswahl einer eingeschränkten Kategorie entfällt das Targeting nach Alter, Geschlecht und anderen Kriterien, die Meta für diese Kategorie nicht zulässt.",
+        "restrictedNote": "Das Targeting nach Alter und Geschlecht ist deaktiviert, da eine eingeschränkte spezielle Anzeigenkategorie ausgewählt ist."
+      },
+      "adAccount": {
+        "label": "Werbekonto"
+      },
+      "whatsappPage": {
+        "label": "Facebook-Seite",
+        "description": "WhatsApp-Anzeigen erfordern weiterhin eine verknüpfte Facebook-Seite — wähle die verbundene Seite aus, die verwendet werden soll."
+      },
+      "dailyBudget": {
+        "label": "Tagesbudget",
+        "placeholder": "z. B. 2000",
+        "description": "Gib den Betrag in der kleinsten Währungseinheit deines Werbekontos ein (z. B. Cent bei EUR)."
+      },
+      "countries": {
+        "label": "Länder"
+      },
+      "ageRange": {
+        "min": "Mindestalter",
+        "max": "Höchstalter"
+      },
+      "gender": {
+        "label": "Geschlecht",
+        "male": "Männlich",
+        "female": "Weiblich"
+      },
+      "schedule": {
+        "start": "Startzeit",
+        "end": "Endzeit"
+      },
+      "destination": {
+        "label": "Ziel"
+      },
+      "callToAction": {
+        "label": "Call-to-Action",
+        "derivedNote": "Die Call-to-Action-Schaltfläche ({type}) wird automatisch aus dem Kanal abgeleitet."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Land der Anzeigenkategorie",
+        "description": "Von Meta für die Kategorie soziale Themen, Wahlen oder Politik erforderlich — das Land, in dem du diese Anzeigen schalten darfst."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Willkommensnachricht",
+      "label": "Willkommensnachricht",
+      "description": "Wird automatisch gesendet, wenn jemand über diese Anzeige eine Unterhaltung beginnt.",
+      "mode": {
+        "default": "Standardnachricht von Meta verwenden",
+        "single": "Einzelne Nachricht",
+        "templates": "Bis zu 5 Nachrichtenvarianten testen"
+      },
+      "messageLabel": "Nachricht",
+      "templateLabel": "Variante {index}",
+      "headingPlaceholder": "Überschrift (optional)",
+      "addTemplate": "Variante hinzufügen",
+      "templatesLimit": "Es können bis zu {max} Varianten getestet werden."
+    },
+    "creative": {
+      "mediaRequired": "Lade ein Bild oder Video hoch, um fortzufahren.",
+      "mediaType": {
+        "label": "Creative-Medium",
+        "orVideo": "oder Video",
+        "selectAdAccountFirst": "Wähle ein Werbekonto aus, bevor du Medien hochlädst.",
+        "uploadImage": "Bild hochladen",
+        "uploadVideo": "Video hochladen"
+      },
+      "uploading": "Wird hochgeladen...",
+      "imageUploadFailed": "Bild-Upload fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "videoProcessing": "Video wird verarbeitet...",
+      "videoReady": "Video bereit",
+      "videoProcessingFailed": "Videoverarbeitung fehlgeschlagen. Bitte versuche es mit einer anderen Datei.",
+      "previewAlt": "Creative-Vorschau",
+      "primaryText": "Haupttext",
+      "headline": "Überschrift"
+    },
+    "wizard": {
+      "createDraft": "Als pausierten Entwurf erstellen",
+      "campaignStep": {
+        "title": "Kampagne",
+        "namePlaceholder": "Name für diese Anzeige"
+      },
+      "adSetStep": {
+        "title": "Anzeigengruppe"
+      },
+      "creativeStep": {
+        "title": "Anzeigenmotiv"
+      },
+      "preflightStep": {
+        "title": "Überprüfung"
+      },
+      "errors": {
+        "nameRequired": "Gib einen Namen für diese Anzeige ein.",
+        "adAccountRequired": "Wähle ein Werbekonto aus.",
+        "budgetRequired": "Gib ein Tagesbudget ein.",
+        "countryRequired": "Wähle mindestens ein Land aus.",
+        "mediaRequired": "Lade ein Bild oder Video hoch."
+      }
+    },
+    "preflight": {
+      "title": "Zusammenfassung",
+      "pausedNote": "Diese Anzeige wird als pausierter Entwurf erstellt. Es wird nichts veröffentlicht und kein Geld ausgegeben, bis du sie veröffentlichst."
+    },
+    "publishConfirm": {
+      "title": "Diese Anzeige veröffentlichen?",
+      "description": "Die Veröffentlichung aktiviert nacheinander die Kampagne, die Anzeigengruppe und die Anzeige. Meta beginnt mit der Ausgabe deines Budgets, sobald die Auslieferung startet.",
+      "confirm": "Veröffentlichen"
+    },
+    "list": {
+      "viewOnMeta": "Auf Meta ansehen",
+      "empty": "Noch keine Messaging-Anzeigen.",
+      "createState": "Entwurfsstatus",
+      "actions": "Aktionen",
+      "notPublishedYet": "Noch nicht veröffentlicht",
+      "draftReady": "Entwurf bereit",
+      "createFailed": "Erstellung fehlgeschlagen",
+      "creating": "Wird erstellt...",
+      "publish": "Veröffentlichen",
+      "pause": "Pausieren"
+    },
+    "messages": {
+      "created": "Anzeigenentwurf erstellt.",
+      "actionSucceeded": "Erledigt."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Erstelle und verwalte Click-to-WhatsApp-Anzeigen hier."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Erstelle und verwalte Click-to-Messenger-Anzeigen hier."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Erstelle und verwalte Click-to-Instagram-Anzeigen hier."
+      },
+      "connectCta": "Facebook Ads verbinden",
+      "reconnectCta": "Erneut verbinden",
+      "reconnectNeeded": "Diese Verbindung muss erneut hergestellt werden.",
+      "refresh": "Aktualisieren",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp-Anzeigen erfordern weiterhin eine verknüpfte Facebook-Seite (eine Anforderung von Meta) — du wählst sie beim Erstellen einer Anzeige aus.",
+      "emptyDashboardNote": "Hier erstellte Anzeigen erscheinen jetzt automatisch im Anzeigen-Dashboard dieses Kanals — wähle diese Integration im dortigen Filter aus, um ihre Konten und Ausgaben zu sehen."
+    },
+    "insights": {
+      "title": "Leistung",
+      "empty": "Noch keine Daten",
+      "impressions": "Impressionen",
+      "reach": "Reichweite",
+      "spend": "Ausgaben",
+      "clicks": "Klicks",
+      "conversations": "Konversationen",
+      "costPerConversation": "Kosten/Konv.",
+      "costPerConversationTooltip": "Durchschnittliche Kosten pro gestarteter Nachrichten-Konversation.",
+      "datePresetLabel": "Zeitraum:",
+      "datePreset": {
+        "maximum": "Gesamter Zeitraum",
+        "last_30d": "Letzte 30 Tage",
+        "last_7d": "Letzte 7 Tage"
+      }
+    }
+  },
+  "accountFields": {
+    "title": "Bot-Felder"
   }
 }

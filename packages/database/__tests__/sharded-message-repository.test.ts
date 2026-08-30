@@ -1,3 +1,4 @@
+import { startOfHour } from "date-fns"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageShardUnavailableError } from "../src/errors"
 import type {
@@ -1570,5 +1571,111 @@ describe("ShardedMessageRepository.createOrUpdateWithAttachments — idempotent 
 
     expect(result.isNew).toBe(false)
     expect(shardDb.transaction).not.toHaveBeenCalled()
+  })
+})
+
+describe("ShardedMessageRepository.deleteBySourceId", () => {
+  test("falls back to a full-history shard scan when the createdAt hint misses, and re-searches children using the row's real createdAt", async () => {
+    // Caller only knows "now" (e.g. a webhook-driven unsend with no known
+    // original timestamp) — the message was actually created months earlier,
+    // in a shard the narrow hint-based search never looks at.
+    const staleHint = new Date("2026-06-15T00:00:00Z")
+    const realCreatedAt = new Date("2026-01-01T00:00:00Z")
+
+    const narrowShard = makeShardInfo("tr:narrow", "narrow")
+    const oldShard = makeShardInfo("tr:old", "old")
+
+    const emptySelectChain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([]),
+    }
+    const foundSelectChain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi
+        .fn()
+        .mockResolvedValue([{ id: "msg-old", createdAt: realCreatedAt }]),
+    }
+    const updateChain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue([{ id: "msg-old" }]),
+    }
+
+    const narrowShardClient = {
+      select: vi.fn().mockReturnValue(emptySelectChain),
+    }
+    const oldShardClient = {
+      select: vi.fn().mockReturnValue(foundSelectChain),
+      update: vi.fn().mockReturnValue(updateChain),
+    }
+
+    const getShardsForTimeRange = vi.fn((start: Date) => {
+      // The narrow, hint-scoped search (createdAt..endOfHour(createdAt))
+      // only ever sees the shard that doesn't hold the row.
+      if (start.getTime() === startOfHour(staleHint).getTime()) {
+        return Promise.resolve([narrowShard])
+      }
+      // Both the full-history fallback (epoch..now) and the real-createdAt
+      // children search land on the shard that actually holds the row.
+      return Promise.resolve([oldShard])
+    })
+
+    const shardManager = {
+      getShardsForTimeRange,
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        shard.id === "narrow" ? narrowShardClient : oldShardClient,
+      ),
+    }
+
+    const repo = new ShardedMessageRepository(shardManager as never)
+    const result = await repo.deleteBySourceId("src-old", "ws-1", staleHint)
+
+    expect(result).toEqual([{ id: "msg-old" }])
+
+    // Step 2 (children search) must have used the row's REAL createdAt, not
+    // the caller's stale hint.
+    const childRangeCall = getShardsForTimeRange.mock.calls.find(
+      ([start]: [Date]) =>
+        start.getTime() === startOfHour(realCreatedAt).getTime(),
+    )
+    expect(childRangeCall).toBeDefined()
+  })
+
+  test("does not fall back when the narrow createdAt-hinted search already finds the row", async () => {
+    const createdAt = new Date("2026-06-01T00:00:00Z")
+    const shard = makeShardInfo("tr:s1", "s1")
+
+    const foundSelectChain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{ id: "msg-1", createdAt }]),
+    }
+    const updateChain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue([{ id: "msg-1" }]),
+    }
+    const shardClient = {
+      select: vi.fn().mockReturnValue(foundSelectChain),
+      update: vi.fn().mockReturnValue(updateChain),
+    }
+
+    const getShardsForTimeRange = vi.fn().mockResolvedValue([shard])
+    const shardManager = {
+      getShardsForTimeRange,
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn().mockResolvedValue(shardClient),
+    }
+
+    const repo = new ShardedMessageRepository(shardManager as never)
+    const result = await repo.deleteBySourceId("src-1", "ws-1", createdAt)
+
+    expect(result).toEqual([{ id: "msg-1" }])
+    // Only the narrow parent search + the children search — no full-history
+    // fallback scan when the hint already found the row.
+    expect(getShardsForTimeRange).toHaveBeenCalledTimes(2)
   })
 })

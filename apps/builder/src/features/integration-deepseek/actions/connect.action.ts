@@ -2,6 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationDeepseekModel,
@@ -92,6 +93,14 @@ export const connectDeepSeekAction = workspaceActionClient
         workspaceId,
         aiProviders.enum.deepseek,
       )
+
+      await auditService.record({
+        workspaceId,
+        action: integrationDeepseek ? "update" : "connect",
+        detail: integrationDeepseek
+          ? "updated the DeepSeek integration configuration"
+          : "connected a new DeepSeek integration",
+      })
 
       return
     },

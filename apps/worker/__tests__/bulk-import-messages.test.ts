@@ -340,6 +340,52 @@ describe("bulkImportMessages", () => {
     expect(result.importedMessages).toBe(1)
   })
 
+  test("converges a multi-row PK collision by splitting and re-minting only the colliding row", async () => {
+    // Batch of two distinct messages; only src-2 collides with an existing DB
+    // row on (id, createdAt). The bulk insert fails, the batch is split, the
+    // src-1 half inserts cleanly, and only src-2 is re-minted to a free slot.
+    const pkError = Object.assign(new Error("duplicate key value"), {
+      cause: { code: "23505", constraint: "173_Message_pkey" },
+    })
+
+    let call = 0
+    mockBulkCreate.mockImplementation(
+      (rows: { id: string; sourceId: string | null }[]) => {
+        call++
+        // call 1: the full batch [src-1, src-2] — collides.
+        // call 3: the isolated original src-2 — still collides.
+        if (call === 1 || call === 3) {
+          throw pkError
+        }
+        // call 2: [src-1] inserts; call 4: [re-minted src-2] inserts.
+        return rows.map((r) => ({ id: r.id, sourceId: r.sourceId }))
+      },
+    )
+
+    const result = await bulkImportMessages({
+      ...BASE_PROPS,
+      messages: [makeMessage("src-1"), makeMessage("src-2")],
+    })
+
+    expect(mockBulkCreate).toHaveBeenCalledTimes(4)
+    // Both messages land — no data loss from the collision.
+    expect(result.importedMessages).toBe(2)
+
+    const originalSrc2Id = (
+      mockBulkCreate.mock.calls[2][0] as { id: string; sourceId: string }[]
+    )[0].id
+    const remintedSrc2Id = (
+      mockBulkCreate.mock.calls[3][0] as { id: string; sourceId: string }[]
+    )[0].id
+    // The isolated collider is re-minted to a different id; src-1 is untouched.
+    expect(remintedSrc2Id).not.toBe(originalSrc2Id)
+    const src1Call = mockBulkCreate.mock.calls[1][0] as {
+      id: string
+      sourceId: string
+    }[]
+    expect(src1Call[0].sourceId).toBe("src-1")
+  })
+
   test("does not bump activity itself — returns message timestamps for the caller to batch", async () => {
     // Activity bumps (lastMessageAt / lastActivityAt) are the caller's job now;
     // bulkImportMessages only inserts and reports the newest message time.
@@ -419,6 +465,22 @@ describe("bulkImportMessages", () => {
     expect(result.newestMessageAt).toEqual(newerOutgoingTimestamp)
     expect(result.oldestMessageAt).toEqual(incomingTimestamp)
     expect(result.newestIncomingMessageAt).toEqual(incomingTimestamp)
+  })
+
+  test("fails loudly when a single row cannot find a free slot after the re-mint cap", async () => {
+    // A row that keeps colliding on every re-mint must eventually give up with a
+    // clear error rather than looping forever.
+    const pkError = Object.assign(new Error("duplicate key value"), {
+      cause: { code: "23505", constraint: "173_Message_pkey" },
+    })
+    mockBulkCreate.mockRejectedValue(pkError)
+
+    await expect(
+      bulkImportMessages({ ...BASE_PROPS, messages: [makeMessage("src-1")] }),
+    ).rejects.toThrow("unresolved after")
+    // Initial bulk insert plus the bounded re-mint attempts — proves it looped
+    // and gave up, not that it tried once.
+    expect(mockBulkCreate.mock.calls.length).toBeGreaterThan(2)
   })
 
   test("does NOT retry on non-PK errors — they propagate", async () => {

@@ -43,7 +43,7 @@ export const isOriginAuthorized = (
 
   const domains = authorizedDomains.map(normalizeHost).filter(Boolean)
   if (domains.length === 0) {
-    return true
+    return false
   }
 
   const host = getHostFromOrigin(origin)

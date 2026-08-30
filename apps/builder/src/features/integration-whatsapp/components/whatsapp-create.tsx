@@ -92,11 +92,19 @@ function usePhoneNumbers() {
 type WhatsappCreateProps = {
   workspaceId?: string | null
   settings: WhatsappCredentialPublic
+  /**
+   * Absolute callback URL registered with Meta for this credential — the
+   * broker callback for inherited/platform credentials, or the reseller's
+   * own custom domain callback for a tenant-owned one. Computed server-side
+   * (see `lib/provider-origin.ts`).
+   */
+  oauthCallbackUrl: string
 }
 
 export default function WhatsappCreate({
   workspaceId,
   settings,
+  oauthCallbackUrl,
 }: WhatsappCreateProps) {
   const t = useTranslations()
   const { visibility, updateVisibility } = useFormVisibility()
@@ -263,6 +271,7 @@ export default function WhatsappCreate({
     return (
       <SdkConnectSection
         hasFailed={action.hasErrored}
+        oauthCallbackUrl={oauthCallbackUrl}
         onAutoSubmit={handleSubmitWithAction}
         settings={settings}
         visibility={visibility}
@@ -330,6 +339,8 @@ type SdkConnectSectionProps = {
   onAutoSubmit: () => void
   /** A failed connect hands the flow back to the user for a fresh signup. */
   hasFailed: boolean
+  /** Absolute callback URL registered with Meta for this credential. */
+  oauthCallbackUrl: string
 }
 
 const LAUNCH_BUTTON_CLASS =
@@ -344,6 +355,7 @@ function SdkConnectSection({
   settings,
   onAutoSubmit,
   hasFailed,
+  oauthCallbackUrl,
 }: SdkConnectSectionProps) {
   const t = useTranslations()
   const { control } = useFormContext<ConnectWhatsappSchema>()
@@ -361,11 +373,13 @@ function SdkConnectSection({
     onSubmit: onAutoSubmit,
     onRelayError: () =>
       toast.error(t("messages.connectFailed", { feature: "Whatsapp" })),
+    callbackOrigin: new URL(oauthCallbackUrl).origin,
   })
 
   const openFacebookDialog = useCallback(() => {
     const url = buildFacebookOAuthDialogUrl({
       resellerOrigin: window.location.origin,
+      redirectUri: oauthCallbackUrl,
       clientId: settings.clientId,
       configId: settings.configId,
       version: settings.version,
@@ -374,12 +388,18 @@ function SdkConnectSection({
       locale: document.documentElement.lang || undefined,
     })
     // Open a real tab (not a popup window) — popups get blocked, and a tab keeps
-    // `window.opener` set so the broker callback can relay the code back here.
+    // `window.opener` set so the callback route can relay the code back here.
     const authTab = window.open(url, "_blank")
     if (!authTab) {
       toast.error(t("whatsapp.embeddedSignupPopupBlocked"))
     }
-  }, [settings, watchConnectExisting, watchTransferPhoneNumber, t])
+  }, [
+    settings,
+    oauthCallbackUrl,
+    watchConnectExisting,
+    watchTransferPhoneNumber,
+    t,
+  ])
 
   // Once Meta hands back a code the card keeps every option on screen, showing the
   // choices the user made, but freezes all of them: the server re-derives the

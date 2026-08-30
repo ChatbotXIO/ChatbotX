@@ -6,14 +6,15 @@ import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { ImageIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
+import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import type { DynamicImageElementPatch } from "../types"
 
 type DynamicImageImageLayerPreviewProps = {
@@ -106,15 +107,17 @@ export function DynamicImageImageLayerEditForm(
               name="url"
               placeholder="https://..."
             />
-            <DirectUploadButton
-              accept="image/*"
-              label={t("dynamicImages.editor.uploadImage")}
-              onUploadSuccess={(_filePath, _file, publicUrl) =>
-                form.setValue("url", publicUrl, { shouldDirty: true })
+            <MediaLibraryTrigger
+              onSelect={(file) =>
+                form.setValue("url", file.url, { shouldDirty: true })
               }
-              uploadPath={`dynamic-images/${workspaceId}/uploads`}
               workspaceId={workspaceId}
-            />
+            >
+              <Button size="sm" type="button" variant="outline">
+                <ImageIcon className="size-4" />
+                {t("dynamicImages.editor.uploadImage")}
+              </Button>
+            </MediaLibraryTrigger>
           </div>
         ) : null}
 

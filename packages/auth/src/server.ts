@@ -6,6 +6,7 @@ import {
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
+  ROOT_TENANT_ID,
   sessionModel,
   userModel,
   verificationModel,
@@ -23,15 +24,11 @@ import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
-import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
+import { anonymous, bearer, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
-import {
-  getTenantId,
-  isStrictTenantScope,
-  resolveTenantOwnerId,
-} from "./tenant-context"
+import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
 
 const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
@@ -86,6 +83,16 @@ type AuthAdapter = ReturnType<AdapterFactory>
 type WhereClause = Parameters<AuthAdapter["findOne"]>[0]["where"][number]
 
 /**
+ * Match a reseller owner's own account, which lives in the ROOT tenant (they
+ * signed up on the main site). Shared by the reseller-owner fallback in the
+ * adapter; the magic-link gate mirrors it in Drizzle relational form.
+ */
+const ownerRootClauses = (ownerId: string): WhereClause[] => [
+  { field: "id", value: ownerId },
+  { field: "tenantId", value: ROOT_TENANT_ID },
+]
+
+/**
  * Wrap the drizzle adapter so white-label isolation holds at the data layer:
  * every `User` lookup *by email* and every `User` insert is constrained to the
  * current tenant (`getTenantId()` — `ROOT_TENANT_ID` = platform). Lookups by
@@ -100,8 +107,12 @@ export function createTenantScopedAdapter(
   //   • `user` lookups *by email* — the same email is a separate account per
   //     tenant.
   //   • `account` lookups *by social identity* (`accountId`) — the same provider
-  //     identity links to a separate account row per tenant, so social sign-in on
-  //     a reseller domain never resolves the owner's root-tenant account.
+  //     identity links to a separate account row per tenant, so sub-accounts stay
+  //     isolated. The reseller owner's own row is stamped `ROOT_TENANT_ID` (see
+  //     `create` below) and so misses here on their domain; better-auth then
+  //     falls through to the email lookup, where the reseller-owner fallback
+  //     resolves their root-tenant account and the unscoped `userId` account list
+  //     shows the identity as already linked.
   // Lookups by id/token/userId are left untouched, so sessions and a user's own
   // account list stay tenant-neutral.
   const scopeByTenant = (
@@ -153,18 +164,21 @@ export function createTenantScopedAdapter(
         // tenant is their reseller `Tenant`, but the reseller's account lives in
         // the root tenant (they signed up on the main site) and so is missed by
         // the scoped lookup above. Resolve the bound tenant's owner and retry by
-        // primary key. `Tenant.ownerId` resolves only this tenant's owner — never
-        // another tenant's user — and `id` is unique, so the match is exact.
+        // primary key, additionally constrained to the ROOT tenant — the fallback
+        // resolves only the owner's root-tenant account, never a user parked in
+        // any other tenant. `Tenant.ownerId` resolves only this tenant's owner —
+        // never another tenant's user — and `id` is unique, so the match is exact.
         // Sub-account lookups are tried first, so they keep priority.
         //
-        // Suppressed under `strictScope` (the OAuth social-callback path): a social
-        // sign-in on a reseller domain must always stay tenant-scoped, so even the
-        // owner's email resolves to a tenant-scoped user (created when absent)
-        // rather than matching their root-tenant platform account.
+        // Applies to every email lookup, including the OAuth social path: a social
+        // sign-in with the owner's email links to the owner's root-tenant account
+        // (via better-auth account linking, `trustedProviders` below) instead of
+        // creating a tenant-scoped duplicate. Both social providers verify mailbox
+        // ownership, so whoever presents the owner's email via OAuth is the owner.
         const filtersByEmail = data.where.some(
           (clause) => clause.field === "email",
         )
-        if (!filtersByEmail || isStrictTenantScope()) {
+        if (!filtersByEmail) {
           return result
         }
         const tenantId = getTenantId()
@@ -172,7 +186,7 @@ export function createTenantScopedAdapter(
         if (ownerId) {
           const ownerWhere: WhereClause[] = [
             ...data.where.filter((clause) => clause.field !== "tenantId"),
-            { field: "id", value: ownerId },
+            ...ownerRootClauses(ownerId),
           ]
           return adapter.findOne<T>({ ...data, where: ownerWhere })
         }
@@ -191,17 +205,35 @@ export function createTenantScopedAdapter(
       // Stamp the bound tenant on every `user` and `account` insert so a row's
       // ownership matches the tenant it was created under. `tenantId` is declared
       // as a (non-input) field on both models so better-auth keeps the value.
-      create: <T extends Record<string, unknown>, R = T>(data: {
+      //
+      // Exception: an `account` row linking to the bound tenant's OWNER (matched
+      // via the cache-backed `resolveTenantOwnerId`) is stamped `ROOT_TENANT_ID`
+      // instead — the owner's first social sign-in on their own reseller domain
+      // creates this row for their root-tenant `User`, and `Account.tenantId` has
+      // `onDelete: "restrict"`, so stamping the reseller tenant here would leave a
+      // row that blocks that tenant's deletion while referencing a root-tenant
+      // user. See `auth-account.ts` and the reseller-owner fallback above.
+      create: async <T extends Record<string, unknown>, R = T>(data: {
         model: string
         data: Omit<T, "id">
         select?: string[]
         forceAllowId?: boolean
-      }) =>
-        adapter.create<T, R>(
-          data.model === "user" || data.model === "account"
-            ? { ...data, data: { ...data.data, tenantId: getTenantId() } }
-            : data,
-        ),
+      }) => {
+        if (data.model !== "user" && data.model !== "account") {
+          return adapter.create<T, R>(data)
+        }
+        const tenantId = getTenantId()
+        const ownerId =
+          data.model === "account" ? await resolveTenantOwnerId(tenantId) : null
+        const isOwnerAccount = ownerId !== null && data.data.userId === ownerId
+        return adapter.create<T, R>({
+          ...data,
+          data: {
+            ...data.data,
+            tenantId: isOwnerAccount ? ROOT_TENANT_ID : tenantId,
+          },
+        })
+      },
     }
   }
 
@@ -287,6 +319,13 @@ export type AuthConfig = {
    * (self-hosted, tests) to disable.
    */
   onUserCreated?: (user: AuthCreatedUser) => Promise<void> | void
+  /**
+   * Origin to pin social `redirectURI`s to, in place of the broker. The
+   * builder passes the reseller's active custom domain for a tenant-owned
+   * credential; omit to keep the broker (inherited/platform credentials,
+   * self-hosted).
+   */
+  socialRedirectOrigin?: string
 }
 
 /**
@@ -297,6 +336,7 @@ export type AuthConfig = {
 function buildSocialProviders(
   socialCredentials: AuthConfig["socialCredentials"],
   socialScopes: AuthConfig["socialScopes"],
+  redirectOrigin: AuthConfig["socialRedirectOrigin"],
 ) {
   if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD || !socialCredentials) {
     return
@@ -313,7 +353,7 @@ function buildSocialProviders(
       } & SocialAuthCredential
     >
   > = {}
-  const brokerOrigin = new URL(getBrokerUrl()).origin
+  const pinnedOrigin = new URL(redirectOrigin ?? getBrokerUrl()).origin
   for (const provider of SOCIAL_PROVIDERS) {
     const credential = socialCredentials[provider]
     if (credential?.clientId && credential.clientSecret) {
@@ -322,13 +362,15 @@ function buildSocialProviders(
         enabled: true,
         clientId: credential.clientId,
         clientSecret: credential.clientSecret,
-        // Pin the redirect_uri to the broker host. Without this, better-auth
-        // infers it from the request origin (the reseller domain), which is NOT
-        // registered with the provider. The broker is the single registered URI;
-        // the callback relays back to the reseller domain afterwards.
+        // Pin the redirect_uri to a single registered host — the broker by
+        // default, or the reseller's own custom domain for a tenant-owned
+        // credential (`socialRedirectOrigin`). Without this, better-auth
+        // infers it from the request origin, which may not be registered
+        // with the provider. When pinned to the broker, the callback relays
+        // back to the reseller domain afterwards.
         redirectURI: new URL(
           `/api/auth/callback/${provider}`,
-          brokerOrigin,
+          pinnedOrigin,
         ).toString(),
         // Replace (not append to) better-auth's own default scope list when the
         // caller supplies one, so the caller-provided scopes are the single
@@ -419,6 +461,7 @@ export function createAuth(config: AuthConfig) {
   const socialProviders = buildSocialProviders(
     config.socialCredentials,
     config.socialScopes,
+    config.socialRedirectOrigin,
   )
 
   return betterAuth({
@@ -616,8 +659,9 @@ export function createAuth(config: AuthConfig) {
 
           const tenantId = getTenantId()
           // Match the tenant's users by email, plus the reseller-owner on their
-          // own custom domain (the owner's account lives in the root tenant).
-          // Mirrors the findOne reseller-owner fallback above.
+          // own custom domain (the owner's account lives in the root tenant, so
+          // the owner arm is constrained to it). Mirrors the findOne
+          // reseller-owner fallback above (`ownerRootClauses`).
           //
           // NOTE: this only gates whether a link is *sent*. The token better-auth
           // stores in `Verification` carries no tenant, so a token issued in one
@@ -630,7 +674,10 @@ export function createAuth(config: AuthConfig) {
           const user = await db.query.userModel.findFirst({
             where: {
               email,
-              OR: [{ tenantId }, ...(ownerId ? [{ id: ownerId }] : [])],
+              OR: [
+                { tenantId },
+                ...(ownerId ? [{ id: ownerId, tenantId: ROOT_TENANT_ID }] : []),
+              ],
             },
           })
           if (!user) {
@@ -656,6 +703,12 @@ export function createAuth(config: AuthConfig) {
         },
       }),
       oneTimeToken(),
+      // Enables mobile (bearer-only) clients: a before-hook rewrites
+      // `Authorization: Bearer <token>` into the session cookie header, and an
+      // after-hook mirrors session Set-Cookie into a `set-auth-token` response
+      // header. Since it rewrites `context.headers`, `auth.api.getSession`
+      // (and everything built on it — oRPC, authMiddleware) works unchanged.
+      bearer(),
       anonymous({
         emailDomainName: "anonymous.example.com",
         generateName: () => `Anonymous ${createId()}`,
@@ -684,7 +737,13 @@ export function createAuth(config: AuthConfig) {
       // thunk also runs while `next build` collects page data — with no
       // Redis/Postgres reachable. Skip the CustomDomain lookup then; no
       // requests are served during the build. Mirrors buildSocialProviders above.
-      const staticOrigins = [getBrokerUrl(), env.NEXT_PUBLIC_BUILDER_URL]
+      const staticOrigins = [
+        getBrokerUrl(),
+        env.NEXT_PUBLIC_BUILDER_URL,
+        // Mobile app deep-link scheme (chatbotx-mobile-app) — social sign-in relays back into the
+        // app via this custom scheme instead of an https:// origin.
+        "chatconnectxapp://",
+      ]
       if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return Array.from(new Set(staticOrigins))
       }

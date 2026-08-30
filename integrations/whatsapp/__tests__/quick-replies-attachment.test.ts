@@ -30,6 +30,7 @@ describe("whatsapp quick replies attachment", () => {
       convertFlowStepText({
         data: {
           flowId: "flow-1",
+          contact: { id: "1000000000030", sourceId: "84123456789" },
           step: {
             id: "step-1",
             stepType: "sendText",
@@ -68,6 +69,7 @@ describe("whatsapp quick replies attachment", () => {
       convertFlowStepText({
         data: {
           flowId: "flow-1",
+          contact: { id: "1000000000030", sourceId: "84123456789" },
           step: {
             id: "step-1",
             stepType: "sendText",
@@ -114,6 +116,7 @@ describe("whatsapp quick replies attachment", () => {
       convertFlowStepText({
         data: {
           flowId: "flow-1",
+          contact: { id: "1000000000030", sourceId: "84123456789" },
           step: {
             id: "step-1",
             stepType: "sendText",

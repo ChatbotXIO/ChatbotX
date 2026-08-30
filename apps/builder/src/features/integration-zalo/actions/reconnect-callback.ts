@@ -4,7 +4,6 @@ import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { integrations } from "@/integration"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import { logger } from "@/lib/log"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 
 /**
  * Complete an OAuth reconnect for an existing Zalo OA integration: the user
@@ -17,6 +16,7 @@ export async function reconnectZaloHandler(props: {
   workspaceId: string
   integrationId: string
   req: Request
+  callbackUrl: string
 }): Promise<ReconnectResult> {
   const integrationZalo = await zaloIntegrationService
     .findById({ id: props.integrationId, workspaceId: props.workspaceId })
@@ -29,10 +29,11 @@ export async function reconnectZaloHandler(props: {
     const authValue = (await integrations.zalo.handleRequest({
       config: {
         ...props.zaloSettings,
-        // Must match the redirect_uri used at authorize time (the fixed broker
-        // callback), even though this handler runs on the originating host
-        // after the relay. See `libs/zalo.ts` and `oauth-referer.ts`.
-        redirectUrl: buildBrokerCallbackUrl("/integrations/zalo/callback"),
+        // Must match the redirect_uri used at authorize time — the tenant's
+        // custom domain for a tenant-owned credential, else the broker — even
+        // though this handler runs on the originating host after the relay.
+        // See `libs/zalo.ts` and `oauth-referer.ts`.
+        redirectUrl: props.callbackUrl,
         stateParams: { workspaceId: props.workspaceId },
       },
       req: props.req,

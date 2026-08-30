@@ -122,5 +122,13 @@ export const contactInboxModel = pgTable(
     index("ContactInbox_referral_ctwaClid_idx")
       .using("btree", sql`(${table.referral}->>'ctwaClid')`)
       .where(sql`${table.referral}->>'ctwaClid' IS NOT NULL`),
+    // Superset covering CTM/CTID (Messenger/Instagram) ad-click attribution,
+    // which has no ctwa_clid equivalent — the attribution key is `adId`.
+    // Scoped to source="ADS" so ig.me SHORTLINK referrals are excluded.
+    index("ContactInbox_referral_adId_idx")
+      .using("btree", sql`(${table.referral}->>'adId')`)
+      .where(
+        sql`${table.referral}->>'adId' IS NOT NULL AND ${table.referral}->>'source' = 'ADS'`,
+      ),
   ],
 )

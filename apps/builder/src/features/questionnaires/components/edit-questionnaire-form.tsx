@@ -290,6 +290,7 @@ export function EditQuestionnaireForm({
                         fileType="image"
                         parentName={`questions.${index}.image`}
                         uploadPath={`public/space/${workspaceId}/questionnaires/${questionnaire.id}/questions/${field.id}`}
+                        useMediaLibrary
                       />
                     </div>
                     <SwitchField

@@ -1,4 +1,11 @@
 import { isNumericId } from "@chatbotx.io/utils/id"
+import { FieldReferenceKind, parseFieldReference } from "../field-reference"
+import {
+  isPlainObject,
+  MAX_WALK_DEPTH,
+  REFERENCE_FIELD_ENTITY_KIND,
+} from "./reference-fields"
+import { remapFlowGraphReferences } from "./remap"
 import type { FlowExportedFlow } from "./schema"
 
 export type FlowReferenceWarning = {
@@ -8,150 +15,48 @@ export type FlowReferenceWarning = {
 }
 
 /**
- * Field names that hold a workspace-scoped entity id. Matched by exact key
- * name while walking the exported graph — not a per-stepType table — so a new
- * step referencing an existing entity kind (e.g. another `sequenceId`) is
- * covered automatically. Missing an entry here only costs a warning, never
- * correctness for warnings — but the importer *does* now write based on the
- * `"customField"` entries (see `collectCustomFieldReferences` /
- * `remapCustomFieldReferences` below), so a new custom-field-holding key must
- * be added here to be remapped, not just warned about.
- */
-const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
-  inputFieldId: "customField",
-  outputFieldId: "customField",
-  outputCustomFieldId: "customField",
-  customFieldId: "customField",
-  dateTimeFieldId: "customField",
-  startDateFieldId: "customField",
-  endDateFieldId: "customField",
-  contactFieldId: "customField",
-  sequenceId: "sequence",
-  aiAgentId: "aiAgent",
-  integrationId: "integration",
-  integrationSmtpId: "integration",
-  integrationMessengerId: "integration",
-  calendarId: "calendar",
-  questionnaireId: "questionnaire",
-  topicId: "couponTopic",
-  inboxId: "inbox",
-  personaId: "messengerPersona",
-  spreadsheetId: "spreadsheet",
-}
-
-// `flowId` shows up both as a cross-flow jump target (steps/start-external-flow.ts,
-// steps/start-external-node.ts) and inside the unrelated WA template flow-token
-// encoding — both are still workspace-scoped flow references, so both warn.
-const FLOW_REFERENCE_FIELD = "flowId"
-// Cross-flow node jump target (steps/start-external-node.ts). Sibling field
-// `nodeId` on steps/start-another-node.ts points at the *same* flow being
-// imported, so it is never stale and must not be warned about — it is only
-// treated as a reference when found alongside a sibling `flowId` key.
-const CROSS_FLOW_NODE_FIELD = "nodeId"
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
-
-/**
- * Depth ceiling for the walkers below.
- *
- * These recurse over attacker-supplied JSON. A few step schemas keep an
- * unconstrained escape hatch — `steps: z.array(z.any())` on a null-typed
- * button (`steps/button.ts`), the same on `steps/email.ts`, and
- * `flow_action_data: z.record(z.string(), z.unknown())` on
- * `steps/send-wa-message-template.ts` — so validated input can still carry
- * arbitrary nesting. Node's stack blows around ~10k frames, well inside the
- * 5MB upload cap (a ~100KB file reaches 50k levels), which would surface as
- * an opaque RangeError instead of a readable failure.
- *
- * Anything deeper than this is not a real flow, so the walkers stop
- * descending. Truncating only costs a missed reference *warning*; it never
- * changes what gets written.
- */
-const MAX_WALK_DEPTH = 512
-
-const toWarningValue = (value: unknown): string | null => {
-  if (typeof value === "string" && value.trim().length > 0) {
-    return value
-  }
-  return null
-}
-
-const walk = (
-  value: unknown,
-  path: string,
-  warnings: FlowReferenceWarning[],
-  depth = 0,
-): void => {
-  if (depth > MAX_WALK_DEPTH) {
-    return
-  }
-  if (Array.isArray(value)) {
-    for (const [index, item] of value.entries()) {
-      walk(item, `${path}[${index}]`, warnings, depth + 1)
-    }
-    return
-  }
-  if (!isPlainObject(value)) {
-    return
-  }
-
-  const hasCrossFlowJump = typeof value[FLOW_REFERENCE_FIELD] === "string"
-
-  for (const [key, child] of Object.entries(value)) {
-    const childPath = path ? `${path}.${key}` : key
-    const entityKind = REFERENCE_FIELD_ENTITY_KIND[key]
-    if (entityKind) {
-      const stringValue = toWarningValue(child)
-      if (stringValue) {
-        warnings.push({ entityKind, path: childPath, value: stringValue })
-      }
-    } else if (key === FLOW_REFERENCE_FIELD) {
-      const stringValue = toWarningValue(child)
-      if (stringValue) {
-        warnings.push({
-          entityKind: "flow",
-          path: childPath,
-          value: stringValue,
-        })
-      }
-    } else if (key === CROSS_FLOW_NODE_FIELD && hasCrossFlowJump) {
-      const stringValue = toWarningValue(child)
-      if (stringValue) {
-        warnings.push({
-          entityKind: "flowNode",
-          path: childPath,
-          value: stringValue,
-        })
-      }
-    }
-
-    walk(child, childPath, warnings, depth + 1)
-  }
-}
-
-/**
  * Read-only: finds fields that point at workspace-scoped entities so the
  * caller can report which pickers to repoint after import. Never mutates the
  * graph and never gates the import — an unresolvable reference is reported,
- * not rejected. See packages/flow-config/src/import-export/schema.ts for the
- * envelope this walks.
+ * not rejected.
+ *
+ * Reimplemented on top of the generic walker in `remap.ts` (empty idMaps ->
+ * every in-scope reference misses -> every reference is reported via
+ * `onUnresolved`) so there is exactly one graph-walking implementation.
  */
 export const collectFlowReferenceWarnings = (
   flow: FlowExportedFlow,
 ): FlowReferenceWarning[] => {
   const warnings: FlowReferenceWarning[] = []
-  walk(flow.nodes, "nodes", warnings)
-  walk(flow.edges, "edges", warnings)
+  remapFlowGraphReferences(
+    flow,
+    {},
+    {
+      onUnresolved: (ref) => warnings.push(ref),
+    },
+  )
   return warnings
 }
 
 const isCustomFieldReferenceKey = (key: string): boolean =>
   REFERENCE_FIELD_ENTITY_KIND[key] === "customField"
 
-const collectCustomFieldIds = (
+const isBotFieldReferenceKey = (key: string): boolean =>
+  REFERENCE_FIELD_ENTITY_KIND[key] === FieldReferenceKind.botField
+
+export type FlowFieldReferenceIds = {
+  customFieldIds: string[]
+  botFieldIds: string[]
+}
+
+type FieldReferenceIdSets = {
+  customFieldIds: Set<string>
+  botFieldIds: Set<string>
+}
+
+const collectFieldReferenceIds = (
   value: unknown,
-  ids: Set<string>,
+  ids: FieldReferenceIdSets,
   depth = 0,
 ): void => {
   if (depth > MAX_WALK_DEPTH) {
@@ -159,7 +64,7 @@ const collectCustomFieldIds = (
   }
   if (Array.isArray(value)) {
     for (const item of value) {
-      collectCustomFieldIds(item, ids, depth + 1)
+      collectFieldReferenceIds(item, ids, depth + 1)
     }
     return
   }
@@ -168,74 +73,73 @@ const collectCustomFieldIds = (
   }
 
   for (const [key, child] of Object.entries(value)) {
-    if (
-      isCustomFieldReferenceKey(key) &&
+    if (isCustomFieldReferenceKey(key) && typeof child === "string") {
+      const parsed = parseFieldReference(child)
+      if (parsed.kind === FieldReferenceKind.botField) {
+        ids.botFieldIds.add(parsed.id)
+      } else if (isNumericId(child)) {
+        ids.customFieldIds.add(child)
+      }
+    } else if (
+      isBotFieldReferenceKey(key) &&
       typeof child === "string" &&
       isNumericId(child)
     ) {
-      ids.add(child)
+      // A dedicated `botField`-kind key (e.g. the Condition step's
+      // `botFieldId`) holds a raw bot-field id directly — never a
+      // `bot_field:<id>` token — so it is collected without going through
+      // `parseFieldReference`.
+      ids.botFieldIds.add(child)
     }
-    collectCustomFieldIds(child, ids, depth + 1)
+    collectFieldReferenceIds(child, ids, depth + 1)
   }
 }
 
 /**
- * Read-only: finds every custom-field id referenced by a reference slot
- * (`REFERENCE_FIELD_ENTITY_KIND[key] === "customField"`), deduplicated.
- * System-field slugs (`first_name`, `user_tags`) and merge-tag text share the
- * same slots but are excluded by `isNumericId`, which is fully anchored
- * (`/^\d+$/`) — unlike `zodBigintAsString`'s unanchored pattern, so this
- * filter is a sound discriminator on its own.
+ * Read-only: finds every custom-field id AND every bot-field id referenced by
+ * a reference slot (`REFERENCE_FIELD_ENTITY_KIND[key] === "customField"`),
+ * deduplicated per kind. System-field slugs (`first_name`, `user_tags`) and
+ * merge-tag text share the same slots but are excluded from `customFieldIds`
+ * by `isNumericId`, which is fully anchored (`/^\d+$/`) — unlike
+ * `zodBigintAsString`'s unanchored pattern, so this filter is a sound
+ * discriminator on its own. A malformed near-token (e.g. `bot_field:abc`) is
+ * neither a valid bot token nor a numeric id, so it contributes to neither
+ * list — matching legacy behavior for any other non-numeric legacy name.
+ *
+ * Kept as a dedicated walker (not built on the generic `remapReferences`)
+ * because of the `isNumericId` filter, which only applies on the collect
+ * side — on the write side `idMap.has()` is a sufficient discriminator.
  *
  * Accepts `nodes`/`edges` as `unknown[]` (not the strict `FlowExportedFlow`
  * shape) so callers can pass a flow-version row straight from the DB — those
  * columns are typed loosely (`{ id: string; [x: string]: unknown }[]`) at the
  * jsonb boundary, before `parseFlowExport` narrows them.
  */
+export const collectFieldReferences = (flow: {
+  nodes: readonly unknown[]
+  edges: readonly unknown[]
+}): FlowFieldReferenceIds => {
+  const ids: FieldReferenceIdSets = {
+    customFieldIds: new Set<string>(),
+    botFieldIds: new Set<string>(),
+  }
+  collectFieldReferenceIds(flow.nodes, ids)
+  collectFieldReferenceIds(flow.edges, ids)
+  return {
+    customFieldIds: [...ids.customFieldIds],
+    botFieldIds: [...ids.botFieldIds],
+  }
+}
+
+/**
+ * Thin wrapper over `collectFieldReferences` kept for existing callers that
+ * only ever cared about custom-field ids (behaviorally identical to the
+ * pre-`collectFieldReferences` implementation).
+ */
 export const collectCustomFieldReferences = (flow: {
   nodes: readonly unknown[]
   edges: readonly unknown[]
-}): string[] => {
-  const ids = new Set<string>()
-  collectCustomFieldIds(flow.nodes, ids)
-  collectCustomFieldIds(flow.edges, ids)
-  return [...ids]
-}
-
-const remapCustomFieldIds = (
-  value: unknown,
-  idMap: ReadonlyMap<string, string>,
-  depth = 0,
-): unknown => {
-  // Unlike the read-only walkers, this one is the write path: past the depth
-  // ceiling the subtree is returned *as-is* rather than skipped, so hitting
-  // the limit can only leave references un-remapped (which then surfaces as a
-  // warning) and can never drop imported data.
-  if (depth > MAX_WALK_DEPTH) {
-    return value
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => remapCustomFieldIds(item, idMap, depth + 1))
-  }
-  if (!isPlainObject(value)) {
-    return value
-  }
-
-  const next: Record<string, unknown> = {}
-  for (const [key, child] of Object.entries(value)) {
-    if (
-      isCustomFieldReferenceKey(key) &&
-      typeof child === "string" &&
-      idMap.has(child)
-    ) {
-      // biome-ignore lint/style/noNonNullAssertion: idMap.has(child) just checked above
-      next[key] = idMap.get(child)!
-    } else {
-      next[key] = remapCustomFieldIds(child, idMap, depth + 1)
-    }
-  }
-  return next
-}
+}): string[] => collectFieldReferences(flow).customFieldIds
 
 /**
  * Structural clone of `flow` with every custom-field reference slot rewritten
@@ -243,18 +147,21 @@ const remapCustomFieldIds = (
  * absent from the map passes through unchanged (so it still surfaces as an
  * unresolved-reference warning downstream). Never mutates the input.
  *
- * Rebuilds every plain object key-by-key rather than special-casing known
- * step shapes, so sibling keys on the same row — e.g. a `condition` case's
- * `customFieldType` / `valueType` alongside `customFieldId` — are preserved
- * automatically instead of needing to be threaded through by hand.
+ * One-line adapter over the generic `remapFlowGraphReferences`, restricted to
+ * `kinds: ["customField"]` so every other reference rule (array-valued keys,
+ * discriminated unions, prefixed tokens) is inert here — behavior is
+ * provably identical to the pre-generalization implementation.
  */
 export const remapCustomFieldReferences = <
   T extends Pick<FlowExportedFlow, "edges" | "nodes">,
 >(
   flow: T,
   idMap: ReadonlyMap<string, string>,
-): T => ({
-  ...flow,
-  nodes: remapCustomFieldIds(flow.nodes, idMap) as T["nodes"],
-  edges: remapCustomFieldIds(flow.edges, idMap) as T["edges"],
-})
+): T =>
+  remapFlowGraphReferences(
+    flow,
+    { customField: idMap },
+    {
+      kinds: ["customField"],
+    },
+  )

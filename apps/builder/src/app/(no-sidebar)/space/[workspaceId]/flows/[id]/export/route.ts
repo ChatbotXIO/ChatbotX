@@ -1,11 +1,13 @@
 import {
+  botFieldService,
   customFieldService,
   flowService,
   flowVersionService,
 } from "@chatbotx.io/business"
 import {
-  collectCustomFieldReferences,
+  collectFieldReferences,
   FLOW_EXPORT_FORMAT_VERSION,
+  type FlowExportBotField,
   type FlowExportCustomField,
   flowExportSchema,
 } from "@chatbotx.io/flow-config"
@@ -72,16 +74,28 @@ export async function GET(
     return Response.json({ code: "notPublished" }, { status: 409 })
   }
 
-  const customFieldIds = collectCustomFieldReferences({
+  const { customFieldIds, botFieldIds } = collectFieldReferences({
     nodes: publishedVersion.nodes,
     edges: publishedVersion.edges,
   })
-  const customFieldRows = await customFieldService.findManyByIds({
-    workspaceId: flow.workspaceId,
-    ids: customFieldIds,
-  })
+  const [customFieldRows, botFieldRows] = await Promise.all([
+    customFieldService.findManyByIds({
+      workspaceId: flow.workspaceId,
+      ids: customFieldIds,
+    }),
+    botFieldService.findManyByIds({
+      workspaceId: flow.workspaceId,
+      ids: botFieldIds,
+    }),
+  ])
   const customFields = Object.fromEntries(
     customFieldRows.map((row): [string, FlowExportCustomField] => [
+      row.id,
+      { name: row.name, type: row.type },
+    ]),
+  )
+  const botFields = Object.fromEntries(
+    botFieldRows.map((row): [string, FlowExportBotField] => [
       row.id,
       { name: row.name, type: row.type },
     ]),
@@ -102,6 +116,7 @@ export async function GET(
       },
     ],
     customFields,
+    botFields,
   }
 
   // Guards against export ever emitting a payload the importer would reject —

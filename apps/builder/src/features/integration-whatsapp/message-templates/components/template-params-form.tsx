@@ -82,6 +82,12 @@ type ButtonParamFieldProps = {
 }
 
 function UrlButtonParamField({ param, fieldName }: ButtonParamFieldProps) {
+  // A carousel-card button's params live at `carousel[cardIndex].button[...]`,
+  // which `replaceWhatsappTemplateVariables` never walks (it only resolves
+  // `header`/`body`/`button` at the template's top level) — offering bot
+  // fields there would insert a token that never resolves at send time. A
+  // top-level button (no cardIndex) IS resolved, so it gets the picker.
+  const isCarouselButton = param.cardIndex !== undefined
   return (
     <div className="grid grid-cols-[90px_18px_1fr] items-start gap-2">
       <div className="flex h-7 items-center justify-center rounded-md border bg-muted text-muted-foreground text-xs">
@@ -92,6 +98,7 @@ function UrlButtonParamField({ param, fieldName }: ButtonParamFieldProps) {
       </div>
       <TiptapEditorField
         channels={["whatsapp"]}
+        includeBotFieldVariables={!isCarouselButton}
         name={`${fieldName}.text`}
         placeholder=""
         showEmojiPicker={false}
@@ -636,6 +643,7 @@ export function TemplateParamsForm({
             </div>
             <TiptapEditorField
               channels={["whatsapp"]}
+              includeBotFieldVariables
               name={`${fieldName}.text`}
               placeholder=""
               showEmojiPicker={false}

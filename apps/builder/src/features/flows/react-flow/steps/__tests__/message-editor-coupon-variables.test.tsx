@@ -112,6 +112,7 @@ describe("flow message coupon variables", () => {
     render(<SendTextStepEditor parentName="step" />)
 
     expect(tiptapEditorFieldMock).toHaveBeenCalledWith({
+      includeBotFieldVariables: true,
       includeCouponVariables: true,
       name: "step.text",
     })
@@ -121,6 +122,7 @@ describe("flow message coupon variables", () => {
     render(<WhatsappFlowStepEditor parentName="step" />)
 
     expect(tiptapEditorFieldMock).toHaveBeenCalledWith({
+      includeBotFieldVariables: true,
       includeCouponVariables: true,
       name: "step.text",
     })

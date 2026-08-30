@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 const {
   mockChatQueueAdd,
@@ -84,6 +85,20 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     firstInteractionAt: "firstInteractionAt",
   },
   conversationModel: { id: "conversationId" },
+  mediaLibraryFileModel: {},
+  mediaLibraryFolderModel: {},
+  // media-library/queries/files.ts (pulled in transitively via
+  // findMediaLibraryFileByPath) imports ../schemas, which calls
+  // createSelectSchema(...).extend(...) at module scope.
+  createSelectSchema: () => z.object({}),
+}))
+
+// create-message.action.ts now imports findMediaLibraryFileByPath, which
+// transitively imports the real @/lib/auth/utils -> auth.ts -> server.ts
+// (createAuth) unless mocked, and that needs a userModel export this mock
+// doesn't provide.
+vi.mock("@/lib/auth/utils", () => ({
+  assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({

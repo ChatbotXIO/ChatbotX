@@ -17,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import {
   Tooltip,
   TooltipContent,
@@ -32,9 +31,8 @@ import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import React, { use, useMemo } from "react"
-import { toast } from "sonner"
+import { EnabledSwitchCell } from "@/components/data-table/enabled-switch-cell"
 import { useTenantSettings } from "@/features/tenant"
 import { enableDynamicImageAction } from "./actions/enable-dynamic-image.action"
 import { DeleteDynamicImagesDialog } from "./delete-dynamic-images"
@@ -297,29 +295,10 @@ function DynamicImageEnabledCell(props: {
   workspaceId: string
   checked: boolean
 }) {
-  const router = useRouter()
-
-  const { execute, isPending } = useAction(
-    enableDynamicImageAction.bind(null, props.workspaceId, props.id),
-    {
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-      onSuccess: () => {
-        router.refresh()
-      },
-    },
+  const action = useMemo(
+    () => enableDynamicImageAction.bind(null, props.workspaceId, props.id),
+    [props.workspaceId, props.id],
   )
 
-  return (
-    <Switch
-      checked={props.checked}
-      disabled={isPending}
-      onCheckedChange={(value) => {
-        execute({ enabled: value })
-      }}
-    />
-  )
+  return <EnabledSwitchCell action={action} checked={props.checked} />
 }

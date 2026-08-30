@@ -32,6 +32,49 @@ export const channelTypes = z.enum([
 export type ChannelType = z.infer<typeof channelTypes>
 
 /**
+ * Channels Meta ads attribution (CTWA/CTM/CTID) exists for — the subset of
+ * `channelTypes` with an ads conversion pipeline (referral capture →
+ * conversion rules → CAPI). Lives here for the same reason as `channelTypes`
+ * (see the comment above): `@chatbotx.io/database` (contact-filter queries),
+ * `@chatbotx.io/business` (ads-conversion channel maps), and the builder
+ * (analytics/filter schemas) all need the identical list, and the database
+ * layer cannot import from business. Each layer derives its own stricter
+ * type from this (e.g. business `AdsEligibleChannel` re-checks it against
+ * the DB `AdsConversionChannel` enum via `satisfies`).
+ *
+ * Adding a channel here cascades: every `satisfies Record<AdsEligibleChannel,
+ * ...>` map in `@chatbotx.io/business/ads-conversion/channel-fields` (and its
+ * consumers) fails to compile until the new channel is threaded through.
+ */
+export const adsEligibleChannelTypes = z.enum([
+  "whatsapp",
+  "messenger",
+  "instagram",
+])
+
+export type AdsEligibleChannelType = z.infer<typeof adsEligibleChannelTypes>
+
+/**
+ * The ads-eligible channels whose attribution keys on Meta's ad-referral
+ * webhook fields (`referral.ad_id` + `referral.source === "ADS"`) instead of
+ * a click id (`ctwa_clid`, WhatsApp-only).
+ */
+export const adReferralChannelTypes = z.enum(["messenger", "instagram"])
+
+export type AdReferralChannelType = z.infer<typeof adReferralChannelTypes>
+
+/**
+ * The legacy/DB-default ads-conversion channel: every `AdsConversionEvent`
+ * row created before Phase 2 generalization (messenger/instagram support)
+ * was implicitly WhatsApp, and the DB column still defaults to it. Callers
+ * that accept an optional `channel` and need "omitted = whatsapp" behavior
+ * (query filters, insert conflict-target selection, analytics schema
+ * defaults) fall back to this constant instead of a repeated `"whatsapp"`
+ * literal.
+ */
+export const DEFAULT_ADS_CONVERSION_CHANNEL: AdsEligibleChannelType = "whatsapp"
+
+/**
  * Static, presentation-agnostic facts about a channel that the create picker
  * and settings screens both need. This is the single source of truth for
  * "which channels can a user create/manage and in what order" — it replaces

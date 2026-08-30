@@ -8,7 +8,11 @@ export type ContactFilterConditionInput = {
   customFieldId?: string
   /** Precise custom-field type (`date` | `datetime`) driving temporal semantics. */
   customFieldType?: string
-  /** Form/value-input type of the custom field, used to cast the text value. */
+  /** Present for dynamic bot-field conditions (`field === "botField"`). */
+  botFieldId?: string
+  /** Precise bot-field type (`date` | `datetime`) driving temporal semantics. */
+  botFieldType?: string
+  /** Form/value-input type of the custom/bot field, used to cast the text value. */
   valueType?: string
   /** Present for dynamic coupon-topic conditions (`field === "couponTopic"`). */
   topicId?: string
@@ -18,6 +22,13 @@ export type ContactFilterConditionInput = {
   adId?: string
   /** Present for `field === "ctwaRetarget"` conditions — scopes the segment to one WhatsApp integration. */
   integrationWhatsappId?: string
+  /**
+   * Present for `field === "ctwaRetarget"` conditions — optionally narrows
+   * the segment to one channel (`whatsapp` | `messenger` | `instagram`).
+   * Omitted keeps the pre-existing WhatsApp-only (`ctwaClid`-keyed) behavior
+   * for backward compatibility with saved filters.
+   */
+  channel?: string
   /** Present for `field === "ctwaRetarget"` conditions (`YYYY-MM-DD`). */
   since?: string
   /** Present for `field === "ctwaRetarget"` conditions (`YYYY-MM-DD`). */

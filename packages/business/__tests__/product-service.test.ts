@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   deleteRow: vi.fn(),
   insert: vi.fn(),
+  templateInstalledResourceFindMany: vi.fn(async () => []),
 }))
 
 /** Stands in for the transaction handle; every write is mocked at the repository. */
@@ -19,7 +20,14 @@ const tx = {
 }
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: mocks.transaction },
+  db: {
+    transaction: mocks.transaction,
+    query: {
+      templateInstalledResourceModel: {
+        findMany: mocks.templateInstalledResourceFindMany,
+      },
+    },
+  },
   eq: (column: unknown, value: unknown) => ({ column, value }),
 }))
 

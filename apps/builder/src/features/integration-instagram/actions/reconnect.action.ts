@@ -11,8 +11,8 @@ import { generateAuthUrl as generateInstagramFacebookAuthUrl } from "@chatbotx.i
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 /**
@@ -52,7 +52,8 @@ export const reconnectInstagramAction = workspaceActionClient
         throw new ChatbotXException("Instagram App settings not found")
       }
 
-      const redirectUrl = buildBrokerCallbackUrl(
+      const redirectUrl = await buildProviderCallbackUrl(
+        instagramCredential,
         connectedWithFacebookLogin
           ? "/integrations/instagram-facebook/callback"
           : "/integrations/instagram/callback",

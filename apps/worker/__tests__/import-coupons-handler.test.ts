@@ -65,6 +65,11 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+const recordAuditLog = vi.fn()
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   importModel: {},
 }))

@@ -355,6 +355,7 @@ function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
                   <ArrowRightIcon className="rtl:rotate-180" size={20} />
                   <div className="flex-1">
                     <CustomFieldSelect
+                      includeBotFields
                       label=""
                       name={`fieldMapping.${index}.customFieldId`}
                     />

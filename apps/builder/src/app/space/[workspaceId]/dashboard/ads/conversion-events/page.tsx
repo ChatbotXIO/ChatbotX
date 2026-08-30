@@ -31,6 +31,7 @@ export default async function ConversionEventsPage(props: {
   return (
     <Suspense>
       <ConversionEventsView
+        oauthCallbackUrl={switcherData.oauthCallbackUrl}
         promises={promises}
         selectedAccount={selectedAccount}
         switcherIntegrations={switcherData.integrations}

@@ -26,6 +26,7 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | webhook | `webhook` | `src/webhook/worker.ts` |
 | schedule | (cron) | `src/schedule/worker.ts` |
 | sequence-scheduler | Kafka | `src/sequence-scheduler/worker*.ts` |
+| notification | `notification` | `src/notification/worker.ts` |
 
 ## Creating a New Queue
 

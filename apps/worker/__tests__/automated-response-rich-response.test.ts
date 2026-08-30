@@ -184,7 +184,7 @@ vi.mock("../src/trigger/services/handoff-executor.service", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { warn: warnMock, error: errorMock, info: vi.fn() },
+  logger: { warn: warnMock, error: errorMock, info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

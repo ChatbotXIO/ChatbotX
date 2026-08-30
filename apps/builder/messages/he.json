@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "נסה שוב",
     "copy": "העתקה",
     "copyUrl": "העתקת כתובת URL",
     "actions": "פעולות",
@@ -71,6 +72,7 @@
     "reset": "איפוס",
     "save": "שמירה",
     "selectAll": "בחירת הכול",
+    "unselect": "ביטול בחירה",
     "selectRow": "בחירת שורה",
     "sendFlow": "שליחת תהליך",
     "sendMessage": "שליחת הודעה",
@@ -145,7 +147,8 @@
     "onSuccess": "במקרה של הצלחה",
     "clone": "שכפול",
     "remove": "הסרה",
-    "restore": "שחזור"
+    "restore": "שחזור",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
@@ -156,7 +159,8 @@
     "skip": "דילוג"
   },
   "admins": {
-    "title": "מנהלי מערכת"
+    "title": "מנהלי מערכת",
+    "adminActivityLogs": "יומן פעילות מנהלים"
   },
   "assignAdmin": {
     "assignConversation": "הקצאת שיחה",
@@ -404,12 +408,12 @@
       "whatsappFlow": "תהליך WhatsApp",
       "appointmentScheduling": "תזמון פגישות",
       "triggerN8n": "הפעלת n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
       "import": "ייבוא זרימה",
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
-      "importJsonOnly": "קבצי JSON בלבד"
+      "importJsonOnly": "קבצי JSON בלבד",
+      "adsConversions": "מודעות ו-Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -567,6 +571,11 @@
   },
   "ads": {
     "title": "מודעות",
+    "dashboardNav": {
+      "whatsapp": "מודעות Click-to-WhatsApp",
+      "messenger": "מודעות Click-to-Messenger",
+      "instagram": "מודעות Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "חיבור חשבון מודעות",
       "adAccountName": "שם חשבון המודעות",
@@ -592,6 +601,8 @@
       "title": "אירועי המרה",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "ניהול חשבונות מודעות",
@@ -599,11 +610,16 @@
       "selectAll": "בחירת הכול",
       "whatsappAsset": "נכס WhatsApp",
       "selectWhatsappAsset": "בחירת נכס WhatsApp",
+      "selectIntegration": "אינטגרציה",
+      "selectIntegrationPlaceholder": "בחירת אינטגרציה",
+      "noIntegrationsConnected": "אין עדיין אינטגרציות מחוברות לערוץ זה.",
+      "connectIntegration": "חיבור ערוץ",
       "templates": "תבניות",
       "selectTemplates": "בחירת תבניות",
       "noTemplates": "לא נמצאו תבניות מאושרות.",
       "existingRules": "כללים קיימים",
       "noRules": "אין עדיין כללי המרה לנכס WhatsApp זה.",
+      "noRulesGeneric": "אין עדיין כללי המרה לאינטגרציה זו.",
       "toggleRule": "הפעלה או השבתה של הכלל",
       "deleteRule": "מחיקת הכלל",
       "qualifyingTemplateMessageSent": "הודעת התבנית המכשירה נשלחת",
@@ -643,24 +659,26 @@
         "title": "מעקב אחר לידים מוכשרים",
         "question": "באיזה שלב בשיחה תרצו להכשיר איש קשר כליד?",
         "when": "כאשר",
-        "then": "אז סמנו את ליד ה-CTWA כ"
+        "then": "אז סמנו את ליד ה-CTWA כ",
+        "thenGeneric": "אז סמנו את הליד כ"
       },
       "trackPurchases": {
         "title": "מעקב אחר רכישות",
         "question": "איזו תבנית מאשרת רכישה?",
         "when": "כאשר",
         "then": "אז",
-        "noValueNote": "רכישה מבוססת-כלל רושמת המרת רכישה ללא ערך הזמנה — היא נספרת לכיוון הרכישות אך מוסיפה 0 להכנסות. ערך ההזמנה נלכד רק על ידי Meta Automatic Events."
+        "noValueNote": "רכישה מבוססת-כלל רושמת המרת רכישה ללא ערך הזמנה — היא נספרת לכיוון הרכישות אך מוסיפה 0 להכנסות. ערך ההזמנה נלכד רק על ידי Meta Automatic Events.",
+        "questionGeneric": "באיזה שלב בשיחה תרצה לתעד רכישה?"
       }
     },
     "analytics": {
-      "title": "אנליטיקת CTWA",
+      "title": "אנליטיקת מודעות",
       "funnelOverview": "סקירת המשפך",
       "conversationsStarted": "שיחות שהתחילו",
       "qualifiedLeads": "לידים מוכשרים",
       "purchases": "רכישות",
       "adSpend": "הוצאת מודעות",
-      "spendAccountLevelNote": "ההוצאה מדווחת בהתאם לחשבון המודעות של Meta; כאשר נבחר חשבון WhatsApp, מודעות המציגות הוצאה בלבד ללא פעילות משפך עבור אותו חשבון מוסתרות.",
+      "spendAccountLevelNote": "ההוצאה מדווחת בהתאם לחשבון המודעות של Meta; כאשר נבחר חשבון, מודעות המציגות הוצאה בלבד ללא פעילות משפך עבור אותו חשבון מוסתרות.",
       "revenue": "הכנסות",
       "roas": "ROAS",
       "revenueCurrencyNote": "ההכנסות מניחות מטבע יחיד (USD). חשבונות מודעות במטבעות מעורבים אינם מצטברים עדיין.",
@@ -689,21 +707,27 @@
       "adAccountFilter": {
         "all": "כל חשבונות המודעות",
         "label": "חשבון מודעות",
-        "note": "מודעות עם המרות אך עם הוצאה אפסית או אפס הצגות בטווח התאריכים הנבחר מוסתרות בעת סינון לפי חשבון מודעות."
+        "unavailable": "לא ניתן היה לטעון את חשבונות המודעות — בדקו את חיבור המודעות של האינטגרציה הזו, או את חיבור Facebook Ads של סביבת העבודה, בהגדרות."
+      },
+      "channelFilter": {
+        "label": "ערוץ",
+        "allAccounts": "כל החשבונות",
+        "allChannels": "כל הערוצים"
       },
       "retarget": "רימרקטינג",
       "thoseWhoPurchased": "מי שרכשו",
       "thoseWhoStartedConversation": "מי שהתחילו שיחה",
       "sendWhatsappBroadcast": "שליחת שידור WhatsApp",
+      "retargetOnChannel": "מיקוד מחדש ב-{channel}",
       "from": "מ",
       "to": "עד",
       "unattributed": "לא מיוחס",
       "retargetDialog": {
-        "title": "רימרקטינג לאנשי קשר של CTWA",
+        "title": "רימרקטינג לאנשי קשר של מודעות",
         "createAudience": "יצירת קהל",
         "useExistingAudience": "שימוש בקהל קיים",
         "audienceName": "שם הקהל",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "מודעות",
         "confirm": "התחלת סנכרון",
         "success": "סנכרון קהל הרימרקטינג נכנס לתור.",
         "error": "העמדת סנכרון קהל הרימרקטינג בתור נכשלה."
@@ -715,7 +739,7 @@
         "failed": "נכשל",
         "skippedNoScope": "דולג (ללא הרשאה)",
         "skippedRegion": "דולג (אזור)",
-        "noScopeWarning": "חלק מההמרות לא נשלחו כי לחשבון WhatsApp זה חסרה הרשאת אירועים. חברו אותו מחדש כדי לאפשר דיווח Automatic Events.",
+        "noScopeWarning": "חלק מההמרות לא נשלחו כי לחשבון זה חסרה הרשאת אירועים. חברו אותו מחדש כדי לאפשר דיווח Automatic Events.",
         "reconnectCta": "חיבור מחדש של החשבון",
         "empty": "אין עדיין אירועי המרה בטווח זה."
       },
@@ -728,7 +752,8 @@
         "contactName": "שם איש הקשר",
         "phone": "טלפון",
         "adId": "מזהה מודעה",
-        "occurredAt": "התרחש בתאריך"
+        "occurredAt": "התרחש בתאריך",
+        "channel": "ערוץ"
       },
       "empty": "אין עדיין נתונים. חברו חשבון מודעות והתחילו לעקוב אחר המרות."
     }
@@ -1126,6 +1151,7 @@
     "disconnectFeatureDescription": "האם לנתק את {feature}?",
     "disconnectSuccess": "{feature} נותק בהצלחה",
     "reply": "תשובה",
+    "privateReply": "תגובה פרטית",
     "viewMessage": "הצגת הודעה",
     "changeLikeState": "שינוי מצב לייק",
     "changeHideState": "שינוי מצב הסתרה",
@@ -1143,6 +1169,8 @@
     "editMessagePlaceholder": "עריכת ההודעה...",
     "saveEdit": "שמירה",
     "cancelEdit": "ביטול",
+    "replaceAttachment": "החלף קובץ מצורף",
+    "addAttachment": "הוסף קובץ מצורף",
     "failedToCopy": "ההעתקה נכשלה",
     "failedToPreviewImage": "התצוגה המקדימה של התמונה נכשלה",
     "loadingData": "הנתונים נטענים...",
@@ -1166,6 +1194,9 @@
     "duplicatedSuccess": "{feature} שוכפל בהצלחה",
     "duplicateConfirmation": "פעולה זו תיצור עותק של {feature}.",
     "deleteFeature": "מחיקת {feature}",
+    "resetFeature": "איפוס {feature}",
+    "resetConfirmation": "פעולה זו תנקה את הערכים של {feature} שנבחרו.\nלא ניתן לבטל פעולה זו.",
+    "resetSuccess": "{feature} אופס בהצלחה",
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו.",
     "addFeature": "הוספת {feature}",
     "signOutConfirmation": "האם לצאת מהחשבון?",
@@ -1200,9 +1231,6 @@
     "enableSuccess": "{feature} הופעל בהצלחה",
     "userInactive": "המשתמש לא היה פעיל יותר מ-7 ימים",
     "messagingWindowClosed": "לא ניתן לשלוח את ההודעה מחוץ לחלון המותר",
-    "sendHumanAgentTag": "שליחת הודעה אחת עם תגית HUMAN_AGENT",
-    "warning": "אזהרה!",
-    "humanAgentWarningDescription": "ניתן להשיב להודעת משתמש בתוך 7 ימים רק כאשר לא ניתן לפתור את הבעיה באופן סביר בתוך 24 שעות. דוגמאות כוללות סופי שבוע, חגים או מקרים שדורשים יותר מיום אחד להשלמה. אל תשתמשו באפשרות זו מסיבה אחרת, משום שהיא עלולה לסכן את דף Facebook או חשבון Instagram שלכם. אם אינכם בטוחים, אל תמשיכו.",
     "humanAgentWindowExpired": "חלון שליחת ההודעות פג. איש הקשר חייב לשלוח הודעה תחילה כדי לפתוח מחדש את השיחה.",
     "restoreVersionSuccess": "התהליך שוחזר לגרסה שנבחרה",
     "revertToPublishedSuccess": "הטיוטה הוחזרה לגרסה שפורסמה",
@@ -1258,10 +1286,12 @@
     "selectPage": {
       "noPagesTitle": "לא נמצאו דפי Facebook",
       "noPagesDescription": "דפים בתוך Business Manager דורשים גישה ל-Business Manager במהלך החיבור. חברו מחדש את Messenger והעניקו את כל ההרשאות המבוקשות.",
+      "noConnectablePagesTitle": "אין דפים זמינים לחיבור",
+      "noConnectablePagesDescription": "אינך מנהל של דף זה",
       "bmLookupFailedTitle": "ייתכן שחסרים דפי Business Manager",
       "bmLookupFailedDescription": "חברו מחדש את Messenger והעניקו גישה ל-Business Manager כדי שניתן יהיה להציג דפים המנוהלים דרכו.",
       "alreadyConnectedNote": "דף זה כבר מחובר",
-      "notAdminNote": "נדרשת הרשאת מנהל מלאה בדף כדי להתחבר",
+      "notAdminNote": "אינך מנהל של דף זה",
       "tryAgain": "ניסיון חיבור מחדש"
     },
     "title": "Facebook Messenger",
@@ -2015,7 +2045,23 @@
     "exportTakingLongDescription": "הייצוא עדיין בעיבוד. ניתן לסגור חלון זה ולבדוק שוב בעוד מספר דקות בהיסטוריית הייצוא."
   },
   "auditLogs": {
-    "title": "יומני ביקורת"
+    "title": "יומני ביקורת",
+    "columns": {
+      "user": "משתמש",
+      "action": "פעולה",
+      "detail": "פרטים",
+      "ipAddress": "כתובת IP",
+      "date": "תאריך"
+    },
+    "filters": {
+      "from": "מ",
+      "to": "עד",
+      "user": "משתמש",
+      "userPlaceholder": "מזהה משתמש",
+      "keyword": "מילת מפתח",
+      "keywordPlaceholder": "פעולה או פרטים",
+      "allAdmins": "כל המנהלים"
+    }
   },
   "customFields": {
     "title": "שדות מותאמים אישית",
@@ -2582,11 +2628,11 @@
     "title": "תזמון פגישות",
     "description": "יצירה וניהול של תזמון הפגישות שלכם.",
     "flowModes": {
-      "bookFromCustomField": "קביעת פגישה",
-      "checkAvailabilityFromCustomField": "בדיקת זמינות",
-      "book": "בורר תאריך ושעה",
-      "checkAvailability": "בורר טווח תאריכים",
-      "cancel": "ביטול פגישה"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "מצב",
@@ -2605,7 +2651,60 @@
   },
   "templates": {
     "title": "תבניות",
-    "description": "יצירה וניהול של התבניות שלכם."
+    "description": "צור ונהל את התבניות שלך.",
+    "share": {
+      "label": "שיתוף",
+      "enabled": "משותפת",
+      "disabled": "לא משותפת",
+      "dialogTitle": "שיתוף תבנית",
+      "dialogDescription": "כל מי שיש לו את הקישור הזה יכול להתקין עותק של התבנית הזו בסביבת עבודה בארגון שלך.",
+      "enableLabel": "הפעלת קישור שיתוף",
+      "linkLabel": "קישור שיתוף",
+      "description": "כל מי שיש לו את הקישור יכול להתקין את התבנית הזו בסביבת העבודה שלו."
+    },
+    "installs": {
+      "title": "התקנות",
+      "resources": "משאבים",
+      "warnings": "אזהרות",
+      "completedAt": "הושלם בתאריך",
+      "autoUpdate": "עדכון אוטומטי"
+    },
+    "form": {
+      "contents": "תוכן התבנית",
+      "comingSoon": "בקרוב",
+      "selectAll": "בחירת הכול",
+      "selectedCount": "{count} נבחרו",
+      "details": "פרטים",
+      "permissions": "הרשאות ברירת מחדל",
+      "allowEdit": "אפשר עריכה לאחר ההתקנה",
+      "allowDelete": "אפשר מחיקה לאחר ההתקנה",
+      "publisherName": "שם המפרסם",
+      "youtubeVideoId": "מזהה סרטון YouTube",
+      "youtubeVideoIdDescription": "המזהה בן 11 התווים מכתובת ה-URL של הסרטון, למשל \"dQw4w9WgXcQ\" בכתובת youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "קישור בדיקה",
+      "imageUrl": "תמונת שער",
+      "installBehavior": "התנהגות ההתקנה",
+      "createInstallFolder": "התקנה בתיקייה ייעודית",
+      "createInstallFolderDescription": "מקנן כל משאב שהותקן בתוך תיקייה חדשה אחת הנקראת על שם התבנית הזו.",
+      "defaultAutoUpdate": "סימון התקנות לעדכון כברירת מחדל",
+      "defaultAutoUpdateDescription": "התקנות חדשות יציגו הודעת עדכון זמין בכל פעם שתפרסם מחדש את התבנית הזו."
+    },
+    "categories": {
+      "flows": "תהליכים",
+      "customFields": "שדות מותאמים אישית",
+      "tags": "תגיות",
+      "products": "מוצרים",
+      "productCategories": "קטגוריות מוצרים",
+      "aiFunctions": "פונקציות AI",
+      "aiAgents": "סוכני AI",
+      "calendars": "יומני פגישות",
+      "webchats": "צ'אטים אינטרנטיים",
+      "keywords": "מילות מפתח",
+      "entryPointLinks": "קישורים לנקודות כניסה",
+      "triggers": "גורמים מפעילים",
+      "fbCommentAutomations": "אוטומציות תגובות פייסבוק",
+      "settings": "הגדרות"
+    }
   },
   "qrCodeGenerator": {
     "title": "מחולל קודי QR",
@@ -2720,6 +2819,19 @@
     "invalidDescription": "קישור זה אינו תקין או שפג תוקפו.",
     "unavailableTitle": "ביטול ההרשמה אינו זמין.",
     "unavailableDescription": "סביבת עבודה זו אינה זמינה עוד."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "קישור זה אינו זמין עוד.",
+    "invalidDescription": "קישור השיתוף של התבנית הזו אינו תקין, מושבת או שפג תוקפו.",
+    "byPublisher": "מאת {publisherName}",
+    "includes": "התבנית הזו כוללת",
+    "videoTitle": "סרטון תצוגה מקדימה של התבנית",
+    "tryItOut": "נסה עכשיו",
+    "signInToInstall": "התחבר כדי להתקין",
+    "selectWorkspace": "בחר סביבת עבודה",
+    "install": "התקן",
+    "installStarted": "ההתקנה החלה",
+    "noEligibleWorkspaces": "אין לך סביבת עבודה מתאימה להתקנת התבנית הזו."
   },
   "extensionsMe": {
     "actions": {
@@ -3358,6 +3470,9 @@
     "dynamicImage": {
       "label": "תמונה דינמית"
     },
+    "minigame": {
+      "label": "מיני-משחק"
+    },
     "savePayloadToCustomField": {
       "label": "שמירת המטען בשדה מותאם אישית"
     },
@@ -3452,7 +3567,10 @@
       "append": "הוספה לסוף",
       "prepend": "הוספה להתחלה",
       "increase": "הגדלה ב-",
-      "decrease": "הקטנה ב-"
+      "decrease": "הקטנה ב-",
+      "groupSystemFields": "שדות מערכת",
+      "groupCustomFields": "שדות מותאמים אישית",
+      "groupAccountFields": "שדות בוט"
     },
     "dataCollect": {
       "label": "איסוף נתונים"
@@ -3555,8 +3673,8 @@
       "aiDeleteMessageHistory": "{aiName}: מחיקת היסטוריית הודעות"
     },
     "steps": {
-      "label": "שלבים",
-      "placeholder": "בחירת שלב"
+      "label": "צומת",
+      "placeholder": "בחירת צומת"
     },
     "folder": {
       "label": "תיקייה"
@@ -3716,6 +3834,9 @@
     },
     "mcpServer": {
       "label": "שרת MCP"
+    },
+    "template": {
+      "label": "Template"
     },
     "systemFunction": {
       "label": "פונקציית מערכת",
@@ -3921,7 +4042,9 @@
       "label": "מצב",
       "pending": "ממתין",
       "processing": "בעיבוד",
+      "installing": "Installing",
       "completed": "הושלם",
+      "partial": "Partial",
       "failed": "נכשל",
       "success": "הצלחה",
       "error": "שגיאה"
@@ -4583,6 +4706,15 @@
         "description": "אסימון זה מוצג פעם אחת בלבד. שמרו אותו במקום בטוח — לא תוכלו לצפות בו שוב.",
         "done": "בוצע"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "billing": {
@@ -4836,8 +4968,8 @@
       "blocked": "חסום",
       "noAdminReply": "אין תשובה ממנהל מערכת",
       "contactCreatedAt": "איש הקשר נוצר בתאריך",
-      "fromCtwaAd": "ממודעת Click to WhatsApp",
-      "ctwaConversion": "המרת CTWA",
+      "fromCtwaAd": "ממודעה",
+      "ctwaConversion": "המרת מודעה",
       "lastUserInputTypes": {
         "text": "טקסט",
         "location": "מיקום",
@@ -4864,9 +4996,10 @@
       "systemFields": "שדות מערכת",
       "topicCoupon": "נושא קופון",
       "customFields": "שדות מותאמים אישית",
+      "botFields": "שדות בוט",
       "email": "דוא\"ל",
       "sms": "SMS",
-      "ctwaAds": "מודעות Click to WhatsApp"
+      "ctwaAds": "מודעות"
     },
     "languages": {
       "ar": "ערבית",
@@ -4905,9 +5038,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "פותחי שיחת CTWA",
-        "leads": "לידים מוכשרים של CTWA",
-        "purchases": "רוכשי CTWA"
+        "conversations": "פותחי שיחה ממודעות",
+        "leads": "לידים מוכשרים ממודעות",
+        "purchases": "רוכשים ממודעות"
       },
       "adPrefix": "מודעה",
       "allAds": "כל המודעות"
@@ -5240,7 +5373,16 @@
       "contentCategory": "קטגוריית תוכן",
       "contentCategoryPlaceholder": "הקטגוריה של התוכן המשויך לאירוע",
       "contentName": "שם תוכן",
-      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע"
+      "contentNamePlaceholder": "שם העמוד או המוצר המשויך לאירוע",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "הדביקו את מזהה ה-Dataset מ-Events Manager",
     "saveDataset": "שמור",
@@ -5287,6 +5429,353 @@
     },
     "whatsapp": {
       "connect": "חיבור"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
+  },
+  "minigames": {
+    "title": "גיימיפיקציה",
+    "description": "צרו ונהלו מיני-משחקי הגרלה עבור הלקוחות שלכם.",
+    "types": {
+      "luckyWheel": "גלגל המזל",
+      "jackpot": "ג'קפוט",
+      "gashapon": "גשאפון",
+      "drawLots": "הגרלת גורל",
+      "scratchOff": "כרטיס גירוד"
+    },
+    "createDialog": {
+      "title": "בחרו סוג מיני-משחק",
+      "comingSoon": "בקרוב"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "סכום כל ההסתברויות: {value}%",
+      "loseProbability": "הסתברות הפסד: {value}%",
+      "winProbability": "הסתברות זכייה: {value}%",
+      "newPrize": "פרס חדש",
+      "prizeNameCustomFieldLabel": "שמירת שם הפרס בשדה מותאם אישית"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "עריכת פרס",
+      "nonWinningTitle": "עריכת הגדרת אי-זכייה",
+      "prizeNameLabel": "שם הפרס",
+      "nonWinningTitleLabel": "כותרת",
+      "loseImageDescription": "גודל מומלץ 120x120 פיקסלים",
+      "quantityLabel": "כמות הפרס",
+      "quantityDescription": "מספר הפעמים שניתן עדיין לזכות בפרס זה; יורד ב-1 בכל זכייה. השאירו ריק ללא הגבלה."
+    },
+    "outcomeMessage": {
+      "enableWin": "שליחת הודעה לזוכה שקיבל את הפרס",
+      "enableLose": "שליחת הודעה כאשר השחקן לא זוכה",
+      "mode": "סוג הודעה",
+      "modeText": "טקסט",
+      "modeFlow": "פלואו",
+      "text": "הודעה"
+    },
+    "winningMessageDialog": {
+      "title": "הגדרות הודעת זכייה",
+      "titleLabel": "כותרת",
+      "prizeNameHint": "ניתן להשתמש ב-'{{prize_name}}' בכותרת ובתיאור כדי להוסיף את שם הפרס.",
+      "acceptButtonText": "טקסט כפתור אישור",
+      "shareButtonText": "טקסט כפתור שיתוף",
+      "shareButtonDescription": "תיאור כפתור שיתוף"
+    },
+    "nonWinningMessageDialog": {
+      "title": "הגדרות הודעת אי-זכייה",
+      "titleLabel": "כותרת",
+      "shareButtonText": "טקסט כפתור שיתוף",
+      "shareButtonDescription": "תיאור כפתור שיתוף"
+    },
+    "preview": {
+      "start": "התחלה",
+      "shareWithFriends": "שיתוף עם חברים",
+      "jackpotHeader": "ג'קפוט",
+      "jackpotBanner": "ג'קפוט",
+      "luckyWheelHeader": "גלגל המזל",
+      "gashaponHeader": "גשאפון",
+      "comingSoon": "תצוגה מקדימה מפורטת תגיע בקרוב עבור סוג משחק זה"
+    },
+    "form": {
+      "generalSettingsTitle": "הגדרות כלליות",
+      "appearanceTitle": "מראה",
+      "playerSettingsTitle": "הגדרות שחקן",
+      "prizeSettingsTitle": "הגדרות פרסים"
+    },
+    "generalSettings": {
+      "showName": "גלוי",
+      "playedAt": "שוחק בתאריך",
+      "rulesDescription": "תיאור החוקים",
+      "openerTags": "תיוג אנשי קשר שפותחים את קישור המשחק",
+      "playerTags": "תיוג שחקנים",
+      "newFriendTags": "תיוג חברים חדשים",
+      "shareEnabled": "אפשרו שיתוף עם חברים",
+      "shareMessage": "הודעת שיתוף",
+      "shareMessageHint": "השתמשו ב-'{{shareUrl}}' כדי להוסיף את קישור המשחק בפועל — נא לא להסיר אותו."
+    },
+    "appearance": {
+      "backgroundColor": "צבע רקע",
+      "machineColor": "צבע המכונה",
+      "decorativeColor": "צבע דקורטיבי",
+      "ruleTextColor": "צבע טקסט החוקים",
+      "backgroundImage": "תמונת רקע",
+      "backgroundImageDescription": "רוחב מומלץ: 1024 פיקסלים",
+      "prizeDescriptionImage": "תמונת תיאור פרס (אופציונלי)",
+      "prizeDescriptionImageDescription": "רוחב מומלץ: 750 פיקסלים",
+      "startButtonImage": "תמונת כפתור התחלה",
+      "startButtonImageDescription": "גודל מומלץ: 360x105 פיקסלים"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "מספר הזדמנויות הגרלה לכל אדם",
+      "resetPolicyLabel": "איפוס הגרלות",
+      "resetNever": "אין לאפס את מספר ההגרלות",
+      "resetEveryNDays": "איפוס מספר ההגרלות כל",
+      "resetIntervalDaysSuffix": "יום/ימים"
+    },
+    "publicUrl": {
+      "label": "קישור ציבורי",
+      "hint": "העתיקו והדביקו את הקישור בפלואו, בשידור או ברצף שלכם כדי לשתף את המיני-משחק הזה."
+    },
+    "play": {
+      "close": "סגור",
+      "drawsRemaining": "נותרו {count} ניסיונות",
+      "noDrawsLeft": "נגמרו לך הניסיונות במיני-משחק זה.",
+      "notStartedYet": "מיני-משחק זה עדיין לא התחיל.",
+      "ended": "מיני-משחק זה הסתיים.",
+      "forbiddenTitle": "הגישה נדחתה",
+      "forbiddenDescription": "קישור זה אינו תקף או שפג תוקפו.",
+      "comingSoonTitle": "בקרוב",
+      "comingSoonDescription": "לא ניתן עדיין לשחק בסוג מיני-משחק זה."
+    },
+    "history": {
+      "title": "היסטוריה",
+      "played": "משחקים",
+      "remaining": "הגרלות שנותרו",
+      "openedAt": "נפתח לראשונה",
+      "lastPlayedAt": "שוחק לאחרונה",
+      "unknownContact": "איש קשר לא ידוע",
+      "record": "רשומה",
+      "recordDialog": {
+        "title": "רשומת משחקים",
+        "win": "זכה",
+        "lose": "ללא פרס",
+        "empty": "אין עדיין רשומות משחק"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "ספריית מדיה",
+    "searchPlaceholder": "חיפוש קבצים...",
+    "newFolder": "תיקייה חדשה",
+    "recent": "אחרונים",
+    "favourite": "מועדפים",
+    "upload": "העלאה",
+    "done": "סיום",
+    "deleteFolder": "מחיקת תיקייה",
+    "renameFolder": "שינוי שם תיקייה",
+    "noFiles": "לא נמצאו קבצים",
+    "noFolders": "אין עדיין תיקיות",
+    "folderNamePlaceholder": "שם התיקייה",
+    "confirmDeleteFolder": "למחוק את התיקייה ואת כל הקבצים שבה?",
+    "confirmDeleteFolderDescription": "כל הקבצים בתיקייה זו יימחקו לצמיתות מהשרת. לא ניתן לבטל פעולה זו.",
+    "confirmDeleteFile": "למחוק את הקובץ?",
+    "confirmDeleteFileDescription": "קובץ זה יימחק לצמיתות מהשרת.",
+    "addToFavourites": "הוספה למועדפים",
+    "removeFromFavourites": "הסרה מהמועדפים",
+    "deleteFile": "מחיקת קובץ",
+    "selectOnlyOneFile": "ניתן לבחור קובץ אחד בלבד",
+    "confirmDeleteFiles": "{count, plural, =1 {למחוק קובץ אחד?} other {למחוק # קבצים?}}",
+    "confirmDeleteFilesDescription": "קבצים אלה יימחקו לצמיתות מהשרת. לא ניתן לבטל פעולה זו.",
+    "filesCount": "{count, plural, =0 {אין קבצים} =1 {קובץ אחד} other {# קבצים}}",
+    "openMediaLibrary": "פתיחת ספריית מדיה",
+    "uploadFailed": "העלאת {name} נכשלה"
+  },
+  "adsCampaign": {
+    "title": "מודעות",
+    "createCta": "יצירת מודעה",
+    "prereq": {
+      "notConnected": "חבר את Facebook Ads כדי ליצור מודעות הודעות עבור ערוץ זה.",
+      "connectCta": "חיבור Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "ללא",
+      "housing": "דיור",
+      "employment": "תעסוקה",
+      "credit": "אשראי",
+      "issues": "נושאים חברתיים, בחירות או פוליטיקה",
+      "financialProducts": "מוצרים ושירותים פיננסיים",
+      "onlineGambling": "הימורים ומשחקים מקוונים"
+    },
+    "fields": {
+      "objective": {
+        "label": "יעד",
+        "value": "מעורבות (הודעות)"
+      },
+      "specialAdCategory": {
+        "label": "קטגוריית מודעה מיוחדת",
+        "description": "בחירה בקטגוריה מוגבלת מסירה אפשרויות מיקוד לפי גיל, מגדר ואפשרויות מיקוד נוספות ש-Meta אינה מתירה עבור אותה קטגוריה.",
+        "restrictedNote": "מיקוד לפי גיל ומגדר מושבת מכיוון שנבחרה קטגוריית מודעה מיוחדת מוגבלת."
+      },
+      "adAccount": {
+        "label": "חשבון מודעות"
+      },
+      "whatsappPage": {
+        "label": "דף פייסבוק",
+        "description": "מודעות WhatsApp עדיין דורשות דף פייסבוק מקושר — בחר את הדף המחובר שברצונך להשתמש בו."
+      },
+      "dailyBudget": {
+        "label": "תקציב יומי",
+        "placeholder": "לדוגמה: 2000",
+        "description": "הזן את הסכום ביחידת המטבע הקטנה ביותר של חשבון המודעות שלך (למשל, סנטים עבור דולר ארה\"ב)."
+      },
+      "countries": {
+        "label": "מדינות"
+      },
+      "ageRange": {
+        "min": "גיל מינימלי",
+        "max": "גיל מקסימלי"
+      },
+      "gender": {
+        "label": "מגדר",
+        "male": "זכר",
+        "female": "נקבה"
+      },
+      "schedule": {
+        "start": "שעת התחלה",
+        "end": "שעת סיום"
+      },
+      "destination": {
+        "label": "יעד"
+      },
+      "callToAction": {
+        "label": "קריאה לפעולה",
+        "derivedNote": "כפתור הקריאה לפעולה ({type}) נגזר אוטומטית מהערוץ."
+      },
+      "specialAdCategoryCountry": {
+        "label": "מדינת קטגוריית המודעה",
+        "description": "נדרש על ידי Meta עבור קטגוריית נושאים חברתיים, בחירות או פוליטיקה — המדינה שבה אתה מורשה להריץ מודעות אלה."
+      }
+    },
+    "welcomeMessage": {
+      "title": "הודעת ברוכים הבאים",
+      "label": "הודעת ברוכים הבאים",
+      "description": "נשלחת אוטומטית כאשר מישהו מתחיל שיחה ממודעה זו.",
+      "mode": {
+        "default": "השתמש בהודעת ברירת המחדל של Meta",
+        "single": "הודעה בודדת",
+        "templates": "בדוק עד 5 גרסאות הודעה"
+      },
+      "messageLabel": "הודעה",
+      "templateLabel": "גרסה {index}",
+      "headingPlaceholder": "כותרת (אופציונלי)",
+      "addTemplate": "הוספת גרסה",
+      "templatesLimit": "ניתן לבדוק עד {max} גרסאות."
+    },
+    "creative": {
+      "mediaRequired": "העלה תמונה או סרטון כדי להמשיך.",
+      "mediaType": {
+        "label": "מדיה קריאייטיב",
+        "orVideo": "או וידאו",
+        "selectAdAccountFirst": "בחר חשבון מודעות לפני העלאת מדיה.",
+        "uploadImage": "העלאת תמונה",
+        "uploadVideo": "העלאת וידאו"
+      },
+      "uploading": "מעלה...",
+      "imageUploadFailed": "העלאת התמונה נכשלה. נסה שוב.",
+      "videoProcessing": "מעבד וידאו...",
+      "videoReady": "הווידאו מוכן",
+      "videoProcessingFailed": "עיבוד הווידאו נכשל. נסה קובץ אחר.",
+      "previewAlt": "תצוגה מקדימה של הקריאייטיב",
+      "primaryText": "טקסט ראשי",
+      "headline": "כותרת"
+    },
+    "wizard": {
+      "createDraft": "צור כטיוטה מושהית",
+      "campaignStep": {
+        "title": "קמפיין",
+        "namePlaceholder": "תן שם למודעה זו"
+      },
+      "adSetStep": {
+        "title": "קבוצת מודעות"
+      },
+      "creativeStep": {
+        "title": "קריאייטיב של המודעה"
+      },
+      "preflightStep": {
+        "title": "סקירה"
+      },
+      "errors": {
+        "nameRequired": "הזן שם למודעה זו.",
+        "adAccountRequired": "בחר חשבון מודעות.",
+        "budgetRequired": "הזן תקציב יומי.",
+        "countryRequired": "בחר לפחות מדינה אחת.",
+        "mediaRequired": "העלה תמונה או וידאו."
+      }
+    },
+    "preflight": {
+      "title": "סיכום",
+      "pausedNote": "מודעה זו נוצרת כטיוטה מושהית. שום דבר לא עולה לאוויר, ולא מוציאים כסף, עד שתפרסם אותה."
+    },
+    "publishConfirm": {
+      "title": "לפרסם את המודעה הזו?",
+      "description": "פרסום מפעיל את הקמפיין, קבוצת המודעות והמודעה לפי הסדר. Meta תתחיל להוציא את התקציב שלך ברגע שהמסירה תתחיל.",
+      "confirm": "פרסום"
+    },
+    "list": {
+      "viewOnMeta": "הצג ב-Meta",
+      "empty": "אין עדיין מודעות הודעות.",
+      "createState": "סטטוס טיוטה",
+      "actions": "פעולות",
+      "notPublishedYet": "טרם פורסם",
+      "draftReady": "הטיוטה מוכנה",
+      "createFailed": "היצירה נכשלה",
+      "creating": "יוצר...",
+      "publish": "פרסום",
+      "pause": "השהה"
+    },
+    "messages": {
+      "created": "טיוטת מודעה נוצרה.",
+      "actionSucceeded": "בוצע."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "צור ונהל מודעות Click-to-WhatsApp כאן."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "צור ונהל מודעות Click-to-Messenger כאן."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "צור ונהל מודעות Click-to-Instagram כאן."
+      },
+      "connectCta": "חיבור Facebook Ads",
+      "reconnectCta": "התחבר מחדש",
+      "reconnectNeeded": "חיבור זה צריך להתחבר מחדש.",
+      "refresh": "רענן",
+      "whatsappPageRequiredNote": "מודעות Click-to-WhatsApp עדיין דורשות דף פייסבוק מקושר (דרישה של Meta) — תבחר אותו בעת יצירת מודעה.",
+      "emptyDashboardNote": "מודעות שנוצרות כאן מופיעות כעת אוטומטית בלוח הבקרה של המודעות בערוץ הזה — בחרו את האינטגרציה הזו במסנן שם כדי לראות את החשבונות וההוצאה שלה."
+    },
+    "insights": {
+      "title": "ביצועים",
+      "empty": "אין נתונים עדיין",
+      "impressions": "חשיפות",
+      "reach": "טווח הגעה",
+      "spend": "הוצאה",
+      "clicks": "קליקים",
+      "conversations": "שיחות",
+      "costPerConversation": "עלות/שיחה",
+      "costPerConversationTooltip": "עלות ממוצעת לכל שיחת הודעות שהתחילה.",
+      "datePresetLabel": "תקופה:",
+      "datePreset": {
+        "maximum": "כל הזמן",
+        "last_30d": "30 הימים האחרונים",
+        "last_7d": "7 הימים האחרונים"
+      }
+    }
+  },
+  "accountFields": {
+    "title": "שדות בוט"
   }
 }

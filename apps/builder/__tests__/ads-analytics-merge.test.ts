@@ -419,4 +419,199 @@ describe("mergeAdsAnalytics", () => {
       costPerConversation: 25 / 6,
     })
   })
+
+  // Phase 6: CTM (Messenger) / CTID (Instagram) ads live in the SAME Facebook
+  // ad account and insights API as WhatsApp CTWA ads — mergeAdsAnalytics
+  // merges funnel rows to insight rows purely by `adId`, with no notion of
+  // channel at all. This proves a funnel containing ads attributed to
+  // different channels (e.g. one WhatsApp-channel funnel call and one
+  // messenger-channel funnel call, combined by the caller) still merges
+  // correctly against a single unfiltered insights list — i.e. the function
+  // genuinely needs no changes to support multi-channel ads.
+  test("merges funnel rows spanning multiple channels against a single insights list by adId alone", () => {
+    const result = mergeAdsAnalytics({
+      funnel: {
+        totals: { conversations: 9, leads: 4, purchases: 2, revenue: 60 },
+        perAd: [
+          {
+            // WhatsApp (CTWA) ad
+            adId: "ad-whatsapp-1",
+            conversations: 4,
+            leads: 2,
+            purchases: 1,
+            revenue: 30,
+          },
+          {
+            // Messenger (CTM) ad
+            adId: "ad-messenger-1",
+            conversations: 3,
+            leads: 1,
+            purchases: 1,
+            revenue: 30,
+          },
+          {
+            // Instagram (CTID) ad
+            adId: "ad-instagram-1",
+            conversations: 2,
+            leads: 1,
+            purchases: 0,
+            revenue: 0,
+          },
+        ],
+      },
+      insights: [
+        // One unfiltered insights list for the whole ad account — spend for
+        // ads of every destination/channel comes back together, same as
+        // today's WhatsApp-only flow.
+        { adId: "ad-whatsapp-1", adName: "WA Ad", spend: "10.00" },
+        { adId: "ad-messenger-1", adName: "Messenger Ad", spend: "15.00" },
+        { adId: "ad-instagram-1", adName: "Instagram Ad", spend: "5.00" },
+      ],
+    })
+
+    expect(result.totals).toEqual({
+      conversations: 9,
+      leads: 4,
+      purchases: 2,
+      revenue: 60,
+      spend: 30,
+      costPerLead: 7.5,
+      costPerPurchase: 15,
+      roas: 2,
+      impressions: 0,
+      clicks: 0,
+      cpc: null,
+      ctr: null,
+      cpm: null,
+      costPerConversation: 30 / 9,
+    })
+    expect(result.perAd).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          adId: "ad-whatsapp-1",
+          adName: "WA Ad",
+          spend: 10,
+          revenue: 30,
+        }),
+        expect.objectContaining({
+          adId: "ad-messenger-1",
+          adName: "Messenger Ad",
+          spend: 15,
+          revenue: 30,
+        }),
+        expect.objectContaining({
+          adId: "ad-instagram-1",
+          adName: "Instagram Ad",
+          spend: 5,
+          revenue: 0,
+        }),
+      ]),
+    )
+  })
+})
+
+describe("mergeAdsAnalytics — 'All channels' channels passenger label", () => {
+  test("carries the funnel row's channels straight through, unkeyed by identity", () => {
+    const result = mergeAdsAnalytics({
+      funnel: {
+        totals: { conversations: 5, leads: 1, purchases: 1, revenue: 10 },
+        perAd: [
+          {
+            adId: "ad-mixed",
+            conversations: 5,
+            leads: 1,
+            purchases: 1,
+            revenue: 10,
+            channels: ["messenger", "instagram"],
+          },
+        ],
+      },
+      insights: [{ adId: "ad-mixed", adName: "Mixed Ad", spend: "20.00" }],
+    })
+
+    // adId-unique assumption: ONE merged row for "ad-mixed", spend attached
+    // exactly once (Facebook Insights has no channel dimension — a split
+    // identity would double-count it), channels carried as a passenger
+    // label rather than folded into identity.
+    expect(result.perAd).toHaveLength(1)
+    expect(result.perAd[0]).toEqual(
+      expect.objectContaining({
+        adId: "ad-mixed",
+        spend: 20,
+        channels: ["messenger", "instagram"],
+      }),
+    )
+  })
+
+  test("omits channels for a single-channel funnel row (channels undefined, byte-identical to before)", () => {
+    const result = mergeAdsAnalytics({
+      funnel: {
+        totals: { conversations: 2, leads: 0, purchases: 0, revenue: 0 },
+        perAd: [
+          {
+            adId: "ad-1",
+            conversations: 2,
+            leads: 0,
+            purchases: 0,
+            revenue: 0,
+          },
+        ],
+      },
+      insights: [],
+    })
+
+    expect(result.perAd[0]?.channels).toBeUndefined()
+  })
+})
+
+describe("mergeAdsAnalytics — spendCurrency", () => {
+  const emptyFunnel = {
+    totals: { conversations: 0, leads: 0, purchases: 0, revenue: 0 },
+    perAd: [],
+  }
+
+  test("exposes the single shared ad-account currency", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [
+        { adId: "ad-1", currency: "VND", spend: 100 },
+        { adId: "ad-2", currency: "VND", spend: 50 },
+      ],
+    })
+
+    expect(result.spendCurrency).toBe("VND")
+  })
+
+  test("returns null for mixed-currency ad accounts (never stamp a wrong symbol)", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [
+        { adId: "ad-1", currency: "USD", spend: 100 },
+        { adId: "ad-2", currency: "VND", spend: 50 },
+      ],
+    })
+
+    expect(result.spendCurrency).toBeNull()
+  })
+
+  test("returns null when one row's currency is unknown even if others agree", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [
+        { adId: "ad-1", currency: "USD", spend: 100 },
+        { adId: "ad-2", spend: 50 },
+      ],
+    })
+
+    expect(result.spendCurrency).toBeNull()
+  })
+
+  test("returns null when no insights carry a currency", () => {
+    const result = mergeAdsAnalytics({
+      funnel: emptyFunnel,
+      insights: [{ adId: "ad-1", spend: 100 }],
+    })
+
+    expect(result.spendCurrency).toBeNull()
+  })
 })

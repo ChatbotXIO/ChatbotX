@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { db } from "@chatbotx.io/database/client"
 import {
   flowAnalyticsSessionModel,
@@ -68,6 +69,12 @@ export const createFlowAction = workspaceActionClient
         })
 
         return flow
+      })
+
+      await auditService.record({
+        workspaceId,
+        action: "create",
+        detail: `created a new flow (#${flow.id})`,
       })
 
       return { id: flow.id }

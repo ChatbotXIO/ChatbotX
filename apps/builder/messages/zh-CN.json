@@ -4,6 +4,7 @@
     "title": "QR Code"
   },
   "actions": {
+    "retry": "重试",
     "actions": "操作",
     "activate": "激活",
     "add": "添加",
@@ -121,6 +122,7 @@
     "scanQRCode": "使用相机扫描 QR Code",
     "search": "搜索",
     "selectAll": "全选",
+    "unselect": "取消选择",
     "selectFile": "选择文件",
     "selectRow": "选择行",
     "send": "发送",
@@ -149,7 +151,8 @@
     "uploadFile": "上传文件",
     "view": "查看",
     "viewAnalytics": "查看分析",
-    "wait": "等等"
+    "wait": "等等",
+    "loadMore": "Load more"
   },
   "activeCampaign": {
     "automations": {
@@ -208,14 +211,25 @@
     "title": "ActiveCampaign"
   },
   "admins": {
-    "title": "管理员"
+    "title": "管理员",
+    "adminActivityLogs": "管理员活动日志"
   },
   "ads": {
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp广告",
+      "messenger": "Click-to-Messenger广告",
+      "instagram": "Click-to-Instagram广告"
+    },
     "analytics": {
       "adAccountFilter": {
         "all": "所有广告账号",
         "label": "广告账号",
-        "note": "按广告账号筛选时，在所选日期范围内有转化但花费为 0 或投放为 0 的广告会被隐藏。"
+        "unavailable": "无法加载广告账户——请在设置中检查此集成的 Ads 连接，或工作区的 Facebook Ads 连接。"
+      },
+      "channelFilter": {
+        "label": "渠道",
+        "allAccounts": "所有账号",
+        "allChannels": "所有渠道"
       },
       "adSpend": "广告花费",
       "allAds": "所有广告",
@@ -231,7 +245,8 @@
         "adId": "广告 ID",
         "contactName": "联系人名称",
         "occurredAt": "发生时间",
-        "phone": "电话"
+        "phone": "电话",
+        "channel": "渠道"
       },
       "ctr": "CTR",
       "dateRange": {
@@ -245,7 +260,7 @@
       "delivery": {
         "empty": "此范围内还没有转化事件。",
         "failed": "失败",
-        "noScopeWarning": "部分转化未发送，因为此 WhatsApp 账号缺少事件权限。请重新连接以启用 Automatic Events 报表。",
+        "noScopeWarning": "部分转化未发送，因为此账号缺少事件权限。请重新连接以启用 Automatic Events 报表。",
         "pending": "待处理",
         "reconnectCta": "重新连接账号",
         "sent": "已发送",
@@ -271,22 +286,23 @@
       "retarget": "再营销",
       "retargetDialog": {
         "audienceName": "受众名称",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "广告",
         "confirm": "开始同步",
         "createAudience": "创建受众",
         "error": "无法加入再营销受众同步队列。",
         "success": "已加入再营销受众同步队列。",
-        "title": "再营销 CTWA 联系人",
+        "title": "再营销广告联系人",
         "useExistingAudience": "使用现有受众"
       },
       "revenue": "营收",
       "revenueCurrencyNote": "营收默认按单一币种（USD）计算。混合币种广告账号目前还无法汇总。",
       "roas": "ROAS",
       "sendWhatsappBroadcast": "发送 WhatsApp 广播",
-      "spendAccountLevelNote": "花费按 Meta 广告账号层级统计；选择 WhatsApp 账号后，该账号下只有花费但没有漏斗活动的广告会被隐藏。",
+      "retargetOnChannel": "在{channel}上重新定向",
+      "spendAccountLevelNote": "花费按 Meta 广告账号层级统计；选择账号后，该账号下只有花费但没有漏斗活动的广告会被隐藏。",
       "thoseWhoPurchased": "已购买的人",
       "thoseWhoStartedConversation": "已开始对话的人",
-      "title": "CTWA 分析",
+      "title": "广告分析",
       "to": "到",
       "unattributed": "未归因"
     },
@@ -334,6 +350,7 @@
       },
       "noKeywordRules": "未找到任何传入关键字规则。",
       "noRules": "此 WhatsApp 资产还没有转化规则。",
+      "noRulesGeneric": "此集成还没有转化规则。",
       "noTags": "未找到标签。",
       "noTemplates": "未找到已批准的模板。",
       "qualifyingAnyReply": "联系人发送消息",
@@ -345,8 +362,14 @@
       "selectTags": "选择标签",
       "selectTemplates": "选择模板",
       "selectWhatsappAsset": "选择 WhatsApp 资产",
+      "selectIntegration": "集成",
+      "selectIntegrationPlaceholder": "选择集成",
+      "noIntegrationsConnected": "此渠道尚未连接任何集成。",
+      "connectIntegration": "连接渠道",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "tags": "标签",
@@ -358,11 +381,13 @@
         "question": "哪个模板用于确认购买？",
         "then": "然后",
         "title": "跟踪购买",
-        "when": "当"
+        "when": "当",
+        "questionGeneric": "您想在对话的哪个时间点记录购买？"
       },
       "trackQualifiedLeads": {
         "question": "您希望在对话的哪个阶段将联系人判定为潜在客户？",
         "then": "然后将 CTWA 潜在客户标记为",
+        "thenGeneric": "然后将潜在客户标记为",
         "title": "跟踪合格潜在客户",
         "when": "当"
       },
@@ -483,11 +508,11 @@
     "description": "创建并管理您的预约安排。",
     "title": "预约安排",
     "flowModes": {
-      "bookFromCustomField": "预约",
-      "checkAvailabilityFromCustomField": "查看可预约时间",
-      "book": "日期时间选择器",
-      "checkAvailability": "日期范围选择器",
-      "cancel": "取消预约"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "模式",
@@ -512,7 +537,23 @@
     "user": "用户"
   },
   "auditLogs": {
-    "title": "审核日志"
+    "title": "审核日志",
+    "columns": {
+      "user": "用户",
+      "action": "操作",
+      "detail": "详情",
+      "ipAddress": "IP 地址",
+      "date": "日期"
+    },
+    "filters": {
+      "from": "起始日期",
+      "to": "结束日期",
+      "user": "用户",
+      "userPlaceholder": "用户 ID",
+      "keyword": "关键词",
+      "keywordPlaceholder": "操作或详情",
+      "allAdmins": "所有管理员"
+    }
   },
   "auth": {
     "acceptTermsAndPolicy": "点击继续即表示您同意我们的",
@@ -787,9 +828,9 @@
       "adPrefix": "广告",
       "allAds": "所有广告",
       "segments": {
-        "conversations": "CTWA 对话发起者",
-        "leads": "CTWA 合格潜在客户",
-        "purchases": "CTWA 购买者"
+        "conversations": "广告对话发起者",
+        "leads": "广告合格潜在客户",
+        "purchases": "广告购买者"
       }
     },
     "datePlaceholder": "年-月-日",
@@ -798,8 +839,9 @@
     "fieldGroups": {
       "analytics": "分析",
       "broadcastWhatsapp": "广播 (WhatsApp)",
-      "ctwaAds": "点击 WhatsApp 广告",
+      "ctwaAds": "广告",
       "customFields": "自订字段",
+      "botFields": "机器人字段",
       "ecommerce": "电子商务",
       "email": "电子邮件",
       "facebookInstagramComment": "Facebook / Instagram 留言",
@@ -833,7 +875,7 @@
       "conversationTransferredToHuman": "对话转移到人类",
       "country": "国家/地区",
       "couponTopic": "优惠券",
-      "ctwaConversion": "CTWA 转化",
+      "ctwaConversion": "广告转化",
       "ctwaConversionTypes": {
         "lead": "潜在客户",
         "purchase": "购买"
@@ -858,7 +900,7 @@
       "followUp": "跟进",
       "followerCountOnInstagram": "Instagram 追踪者数",
       "followsBusinessOnInstagram": "关注 Instagram 上的商家",
-      "fromCtwaAd": "来自 Click to WhatsApp 广告",
+      "fromCtwaAd": "来自广告",
       "fullName": "全名",
       "gender": "性别",
       "hasContactInfo": "电话和电子邮件",
@@ -1540,7 +1582,10 @@
       "label": "自订字段",
       "prepend": "加入到开头",
       "savePayloadTo": "将回应保存到自订字段",
-      "set_value": "设置值"
+      "set_value": "设置值",
+      "groupSystemFields": "系统字段",
+      "groupCustomFields": "自订字段",
+      "groupAccountFields": "机器人字段"
     },
     "customFields": {
       "label": "自订字段"
@@ -2043,6 +2088,9 @@
     "mcpServer": {
       "label": "MCP服务器"
     },
+    "template": {
+      "label": "Template"
+    },
     "me": {
       "label": "我的数据链接"
     },
@@ -2261,6 +2309,9 @@
     "dynamicImage": {
       "label": "动态图片"
     },
+    "minigame": {
+      "label": "小游戏"
+    },
     "quality": {
       "label": "品质",
       "options": {
@@ -2408,19 +2459,21 @@
     },
     "status": {
       "completed": "已完成",
+      "partial": "Partial",
       "error": "错误",
       "failed": "失败",
       "label": "状态",
       "pending": "待定",
       "processing": "处理中",
+      "installing": "Installing",
       "success": "成功"
     },
     "statusCode": {
       "label": "状态码"
     },
     "steps": {
-      "label": "步骤",
-      "placeholder": "选择步骤"
+      "label": "节点",
+      "placeholder": "选择节点"
     },
     "subject": {
       "label": "主题"
@@ -2706,6 +2759,15 @@
         "description": "此代币仅显示一次。请妥善保存 — 之后将无法再次查看。",
         "done": "完成"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flowAnalytics": {
@@ -2829,11 +2891,11 @@
       "appointmentScheduling": "预约安排",
       "triggerN8n": "触发 n8n",
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
-      "metaConversions": "Meta Conversions API",
       "import": "导入流程",
       "export": "导出",
       "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
-      "importJsonOnly": "仅限 JSON 文件"
+      "importJsonOnly": "仅限 JSON 文件",
+      "adsConversions": "广告与 Meta Conversions"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -3440,6 +3502,8 @@
     "archiveFeatureDescription": "您确定要封存 {feature} 吗？",
     "botIsActive": "机器人已激活",
     "cancelEdit": "取消",
+    "replaceAttachment": "替换附件",
+    "addAttachment": "添加附件",
     "changeDefault": "更改默认值",
     "changeDefaultDescription": "您确定要更改缺省 AI Agent 吗？",
     "changeHideState": "更改隐藏状态",
@@ -3460,6 +3524,9 @@
     "deleteConfirmation": "您确定吗？\n此操作无法复原。\n这将从我们的服务器永久删除您的 {feature}。",
     "deleteFailed": "删除 {feature} 失败",
     "deleteFeature": "删除 {feature}",
+    "resetFeature": "重置{feature}",
+    "resetConfirmation": "这将清空所选{feature}的值。\n此操作无法撤销。",
+    "resetSuccess": "{feature}重置成功",
     "deleteFileComingSoon": "删除文件功能即将推出",
     "deleteMessageSuccess": "消息已删除",
     "deleteNodeError": "无法删除该区块。请再试一次。",
@@ -3491,7 +3558,6 @@
     "featureNotFound": "{feature} 找不到",
     "flowConfigIncomplete": "部分设置不完整",
     "historyDepth": "({count})",
-    "humanAgentWarningDescription": "只有在问题无法于 24 小时内合理解决时，您才可以在 7 天内回复用户的消息。例如周末、假日，或需要超过一天才能完成的案例。请勿因其他原因使用此选项，否则可能让您的 Facebook 粉专或 Instagram 帐号面临风险。如果您不确定，请不要继续。",
     "humanAgentWindowExpired": "消息传递窗口已过期。联系人必须先发送消息才能重新开始对话。",
     "leaveEmptyToKeepSecret": "留空以保留目前秘密",
     "loadingData": "正在加载数据...",
@@ -3517,6 +3583,7 @@
     "none": "无",
     "poweredBy": "由 {name} 提供技术支持",
     "publishVersionSuccess": "新版本已发布",
+    "privateReply": "私信回复",
     "redoHistoryCleared": "重做历史记录已清除",
     "refreshTokenSuccessfully": "{feature} 权杖更新成功",
     "repliedToStory": "回复了你的故事",
@@ -3535,7 +3602,6 @@
     "selectConversationDescription": "从左侧清单选择一则对话，以查看消息并开始聊天。",
     "selectConversationTitle": "选择对话",
     "sendFailed": "发送失败",
-    "sendHumanAgentTag": "发送一封带有 HUMAN_AGENT 标签的消息",
     "sentAttachments": "已发送 {count, plural, one {1 个附件} other {# 个附件}}",
     "signOutConfirmation": "您确定要退出吗？",
     "success": "成功",
@@ -3548,7 +3614,6 @@
     "videoError": "视频错误",
     "viewMessage": "查看消息",
     "viewPost": "查看贴文",
-    "warning": "警告！",
     "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，轮播需要在每张卡片上使用相同的按钮：每张卡片上有一个链接按钮，或每张卡片上有相同数量的回应按钮",
     "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，带有链接按钮的轮播卡片不能同时包含其他按钮。请移除此卡片上的其他按钮，或将链接按钮改成其他动作。",
     "tiktokCardTitleTooLong": "TikTok 会截断这条消息：附加按钮后，只会发送前 40 个字符。请缩短消息内容或移除按钮。",
@@ -3618,9 +3683,11 @@
       "alreadyConnectedNote": "该页面已连接",
       "bmLookupFailedDescription": "重新连接Messenger 并授予商务管理平台访问权限，以便可以列出通过商务管理平台管理的页面。",
       "bmLookupFailedTitle": "业务管理平台页面可能遗失",
+      "noConnectablePagesDescription": "您不是此页面的管理员",
+      "noConnectablePagesTitle": "没有可连接的页面",
       "noPagesDescription": "商务管理平台内的页面需要在连接期间访问商务管理平台。重新连接Messenger并授予所有请求的权限。",
       "noPagesTitle": "找不到Facebook 页面",
-      "notAdminNote": "需要页面的完全管理员权限才能连接",
+      "notAdminNote": "您不是此页面的管理员",
       "tryAgain": "尝试重新连接"
     },
     "tabs": {
@@ -4430,8 +4497,61 @@
     "title": "Telegram"
   },
   "templates": {
-    "description": "创建并管理您的范本。",
-    "title": "范本"
+    "description": "创建和管理您的范本。",
+    "title": "范本",
+    "share": {
+      "label": "分享",
+      "enabled": "已分享",
+      "disabled": "未分享",
+      "dialogTitle": "分享范本",
+      "dialogDescription": "任何拥有此链接的人都可以将此范本的副本安装到您所在租户的工作区中。",
+      "enableLabel": "启用分享链接",
+      "linkLabel": "分享链接",
+      "description": "任何拥有该链接的人都可以将此模板安装到自己的工作区。"
+    },
+    "installs": {
+      "title": "安装记录",
+      "resources": "资源",
+      "warnings": "警告",
+      "completedAt": "完成时间",
+      "autoUpdate": "自动更新"
+    },
+    "form": {
+      "contents": "范本内容",
+      "comingSoon": "即将推出",
+      "selectAll": "全选",
+      "selectedCount": "已选择 {count} 项",
+      "details": "详情",
+      "permissions": "默认权限",
+      "allowEdit": "允许安装后编辑",
+      "allowDelete": "允许安装后删除",
+      "publisherName": "发布者名称",
+      "youtubeVideoId": "YouTube 视频 ID",
+      "youtubeVideoIdDescription": "视频 URL 中的 11 位字符 ID，例如 youtube.com/watch?v=dQw4w9WgXcQ 中的 \"dQw4w9WgXcQ\"",
+      "testLink": "测试链接",
+      "imageUrl": "封面图片",
+      "installBehavior": "安装行为",
+      "createInstallFolder": "安装到专属文件夹",
+      "createInstallFolderDescription": "将每个已安装的资源都归入一个以此范本命名的新文件夹中。",
+      "defaultAutoUpdate": "默认将安装标记为需要更新",
+      "defaultAutoUpdateDescription": "每次重新发布此范本时，新安装都会显示可用更新的提示。"
+    },
+    "categories": {
+      "flows": "流程",
+      "customFields": "自订字段",
+      "tags": "标签",
+      "products": "产品",
+      "productCategories": "产品分类",
+      "aiFunctions": "人工智能功能",
+      "aiAgents": "AI Agent",
+      "calendars": "预约日历",
+      "webchats": "网络聊天",
+      "keywords": "关键字",
+      "entryPointLinks": "入口点链接",
+      "triggers": "触发器",
+      "fbCommentAutomations": "Facebook 评论自动化",
+      "settings": "设置"
+    }
   },
   "texts": {
     "or": "或"
@@ -4519,6 +4639,19 @@
     "title": "您已取消订阅。",
     "unavailableDescription": "此工作区不再可用。",
     "unavailableTitle": "无法取消订阅。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "此链接已不再可用。",
+    "invalidDescription": "此范本分享链接无效、已禁用或已过期。",
+    "byPublisher": "发布者：{publisherName}",
+    "includes": "此范本包含",
+    "videoTitle": "模板预览视频",
+    "tryItOut": "立即体验",
+    "signInToInstall": "登录以安装",
+    "selectWorkspace": "选择一个工作区",
+    "install": "安装",
+    "installStarted": "安装已开始",
+    "noEligibleWorkspaces": "您没有可安装此范本的合适工作区。"
   },
   "userPersistentMenus": {
     "title": "用户常驻菜单"
@@ -4962,7 +5095,16 @@
       "contentCategory": "内容类别",
       "contentCategoryPlaceholder": "与此事件相关联的内容类别",
       "contentName": "内容名称",
-      "contentNamePlaceholder": "与此事件相关联的页面或产品名称"
+      "contentNamePlaceholder": "与此事件相关联的页面或产品名称",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "粘贴来自事件管理工具的数据集 ID",
     "saveDataset": "保存",
@@ -5009,6 +5151,10 @@
     },
     "whatsapp": {
       "connect": "连接"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
   },
   "appointments": {
@@ -5265,6 +5411,134 @@
       "unavailableDescription": "此预约已取消、已删除或已过期。"
     }
   },
+  "minigames": {
+    "title": "游戏化",
+    "description": "为您的客户创建和管理幸运抽奖小游戏。",
+    "types": {
+      "luckyWheel": "幸运转盘",
+      "jackpot": "老虎机",
+      "gashapon": "扭蛋机",
+      "drawLots": "抽签",
+      "scratchOff": "刮刮乐"
+    },
+    "createDialog": {
+      "title": "选择小游戏类型",
+      "comingSoon": "即将推出"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "所有概率之和：{value}%",
+      "loseProbability": "未中奖概率：{value}%",
+      "winProbability": "中奖概率：{value}%",
+      "newPrize": "新增奖品",
+      "prizeNameCustomFieldLabel": "将奖品名称保存到自订字段"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "编辑奖品",
+      "nonWinningTitle": "编辑未中奖设置",
+      "prizeNameLabel": "奖品名称",
+      "nonWinningTitleLabel": "标题",
+      "loseImageDescription": "建议尺寸 120x120px",
+      "quantityLabel": "奖品数量",
+      "quantityDescription": "该奖品还可被中奖的次数；每次中奖减少 1。留空表示不限制。"
+    },
+    "outcomeMessage": {
+      "enableWin": "向获得该奖品的中奖者发送消息",
+      "enableLose": "玩家未中奖时发送消息",
+      "mode": "消息类型",
+      "modeText": "文本",
+      "modeFlow": "流程",
+      "text": "消息内容"
+    },
+    "winningMessageDialog": {
+      "title": "中奖消息设置",
+      "titleLabel": "标题",
+      "prizeNameHint": "您可以在标题和描述中使用 '{{prize_name}}' 来插入奖品名称。",
+      "acceptButtonText": "接受按钮文本",
+      "shareButtonText": "分享按钮文本",
+      "shareButtonDescription": "分享按钮描述"
+    },
+    "nonWinningMessageDialog": {
+      "title": "未中奖消息设置",
+      "titleLabel": "标题",
+      "shareButtonText": "分享按钮文本",
+      "shareButtonDescription": "分享按钮描述"
+    },
+    "preview": {
+      "start": "开始",
+      "shareWithFriends": "与好友分享",
+      "jackpotHeader": "老虎机",
+      "jackpotBanner": "老虎机",
+      "luckyWheelHeader": "幸运转盘",
+      "gashaponHeader": "扭蛋",
+      "comingSoon": "该游戏类型的详细预览即将推出"
+    },
+    "form": {
+      "generalSettingsTitle": "常规设置",
+      "appearanceTitle": "外观",
+      "playerSettingsTitle": "玩家设置",
+      "prizeSettingsTitle": "奖品设置"
+    },
+    "generalSettings": {
+      "showName": "可见",
+      "playedAt": "参与时间",
+      "rulesDescription": "规则说明",
+      "openerTags": "为打开游戏链接的联系人打标签",
+      "playerTags": "为参与者打标签",
+      "newFriendTags": "为新好友打标签",
+      "shareEnabled": "允许与好友分享",
+      "shareMessage": "分享消息",
+      "shareMessageHint": "使用 '{{shareUrl}}' 插入实际的游戏链接，请勿删除。"
+    },
+    "appearance": {
+      "backgroundColor": "背景颜色",
+      "machineColor": "机身颜色",
+      "decorativeColor": "装饰颜色",
+      "ruleTextColor": "规则文字颜色",
+      "backgroundImage": "背景图片",
+      "backgroundImageDescription": "建议宽度：1024px",
+      "prizeDescriptionImage": "奖品说明图片（可选）",
+      "prizeDescriptionImageDescription": "建议宽度：750px",
+      "startButtonImage": "开始按钮图片",
+      "startButtonImageDescription": "建议尺寸：360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "每人可抽奖次数",
+      "resetPolicyLabel": "重置抽奖次数",
+      "resetNever": "不重置抽奖次数",
+      "resetEveryNDays": "每隔以下天数重置抽奖次数",
+      "resetIntervalDaysSuffix": "天"
+    },
+    "publicUrl": {
+      "label": "公开链接",
+      "hint": "将此链接复制并粘贴到您的流程、群发消息或序列中，以分享此小游戏。"
+    },
+    "play": {
+      "close": "关闭",
+      "drawsRemaining": "剩余 {count} 次机会",
+      "noDrawsLeft": "您在此小游戏中的抽奖机会已用完。",
+      "notStartedYet": "此小游戏尚未开始。",
+      "ended": "此小游戏已结束。",
+      "forbiddenTitle": "访问被拒绝",
+      "forbiddenDescription": "此链接无效或已过期。",
+      "comingSoonTitle": "即将推出",
+      "comingSoonDescription": "此类型的小游戏暂时无法玩。"
+    },
+    "history": {
+      "title": "历史记录",
+      "played": "已玩次数",
+      "remaining": "剩余次数",
+      "openedAt": "首次打开",
+      "lastPlayedAt": "最近游玩",
+      "unknownContact": "未知联系人",
+      "record": "记录",
+      "recordDialog": {
+        "title": "游戏记录",
+        "win": "中奖",
+        "lose": "未中奖",
+        "empty": "暂无游戏记录"
+      }
+    }
+  },
   "userDataWebview": {
     "metadataTitle": "选择日期",
     "date": {
@@ -5288,5 +5562,220 @@
     },
     "monthLabel": "月份",
     "yearLabel": "年份"
+  },
+  "mediaLibrary": {
+    "title": "媒体库",
+    "searchPlaceholder": "搜索文件...",
+    "newFolder": "新建文件夹",
+    "recent": "最近",
+    "favourite": "收藏",
+    "upload": "上传",
+    "done": "完成",
+    "deleteFolder": "删除文件夹",
+    "renameFolder": "重命名文件夹",
+    "noFiles": "未找到文件",
+    "noFolders": "暂无文件夹",
+    "folderNamePlaceholder": "文件夹名称",
+    "confirmDeleteFolder": "删除该文件夹及其所有文件？",
+    "confirmDeleteFolderDescription": "此文件夹中的所有文件将从服务器永久删除。此操作无法撤销。",
+    "confirmDeleteFile": "删除文件？",
+    "confirmDeleteFileDescription": "此文件将从服务器永久删除。",
+    "addToFavourites": "添加到收藏",
+    "removeFromFavourites": "取消收藏",
+    "deleteFile": "删除文件",
+    "selectOnlyOneFile": "只能选择 1 个文件",
+    "confirmDeleteFiles": "{count, plural, =1 {删除 1 个文件？} other {删除 # 个文件？}}",
+    "confirmDeleteFilesDescription": "这些文件将从服务器永久删除。此操作无法撤销。",
+    "filesCount": "{count, plural, =0 {没有文件} =1 {1 个文件} other {# 个文件}}",
+    "openMediaLibrary": "打开媒体库",
+    "uploadFailed": "{name} 上传失败"
+  },
+  "adsCampaign": {
+    "title": "广告",
+    "createCta": "创建广告",
+    "prereq": {
+      "notConnected": "连接 Facebook Ads 后即可为此渠道创建私信广告。",
+      "connectCta": "连接 Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "无",
+      "housing": "住房",
+      "employment": "就业",
+      "credit": "信贷",
+      "issues": "社会议题、选举或政治",
+      "financialProducts": "金融产品和服务",
+      "onlineGambling": "在线博彩和游戏"
+    },
+    "fields": {
+      "objective": {
+        "label": "推广目标",
+        "value": "互动（私信）"
+      },
+      "specialAdCategory": {
+        "label": "特殊广告类别",
+        "description": "选择受限类别后，Meta 不允许对该类别使用的年龄、性别等定向选项将被移除。",
+        "restrictedNote": "由于已选择受限的特殊广告类别，年龄和性别定向已被禁用。"
+      },
+      "adAccount": {
+        "label": "广告账户"
+      },
+      "whatsappPage": {
+        "label": "Facebook 主页",
+        "description": "WhatsApp 广告仍需绑定一个 Facebook 主页——请选择要使用的已连接主页。"
+      },
+      "dailyBudget": {
+        "label": "每日预算",
+        "placeholder": "例如 2000",
+        "description": "请以广告账户的最小货币单位输入金额（例如美元对应美分）。"
+      },
+      "countries": {
+        "label": "国家/地区"
+      },
+      "ageRange": {
+        "min": "最小年龄",
+        "max": "最大年龄"
+      },
+      "gender": {
+        "label": "性别",
+        "male": "男性",
+        "female": "女性"
+      },
+      "schedule": {
+        "start": "开始时间",
+        "end": "结束时间"
+      },
+      "destination": {
+        "label": "投放目的地"
+      },
+      "callToAction": {
+        "label": "行动号召按钮",
+        "derivedNote": "行动号召按钮（{type}）会根据渠道自动生成。"
+      },
+      "specialAdCategoryCountry": {
+        "label": "广告类别国家/地区",
+        "description": "Meta 对社会议题、选举或政治类别的要求——你获授权投放此类广告的国家/地区。"
+      }
+    },
+    "welcomeMessage": {
+      "title": "欢迎语",
+      "label": "欢迎语",
+      "description": "当有人通过此广告发起对话时会自动发送。",
+      "mode": {
+        "default": "使用 Meta 的默认消息",
+        "single": "单条消息",
+        "templates": "最多测试 5 个消息版本"
+      },
+      "messageLabel": "消息",
+      "templateLabel": "版本 {index}",
+      "headingPlaceholder": "标题（可选）",
+      "addTemplate": "添加版本",
+      "templatesLimit": "最多可测试 {max} 个版本。"
+    },
+    "creative": {
+      "mediaRequired": "请上传图片或视频以继续。",
+      "mediaType": {
+        "label": "创意素材",
+        "orVideo": "或视频",
+        "selectAdAccountFirst": "请先选择广告账户，再上传素材。",
+        "uploadImage": "上传图片",
+        "uploadVideo": "上传视频"
+      },
+      "uploading": "正在上传...",
+      "imageUploadFailed": "图片上传失败，请重试。",
+      "videoProcessing": "正在处理视频...",
+      "videoReady": "视频已就绪",
+      "videoProcessingFailed": "视频处理失败，请尝试其他文件。",
+      "previewAlt": "创意预览",
+      "primaryText": "主要文案",
+      "headline": "标题"
+    },
+    "wizard": {
+      "createDraft": "创建为已暂停的草稿",
+      "campaignStep": {
+        "title": "广告系列",
+        "namePlaceholder": "为此广告命名"
+      },
+      "adSetStep": {
+        "title": "广告组"
+      },
+      "creativeStep": {
+        "title": "广告创意"
+      },
+      "preflightStep": {
+        "title": "审核"
+      },
+      "errors": {
+        "nameRequired": "请输入此广告的名称。",
+        "adAccountRequired": "请选择广告账户。",
+        "budgetRequired": "请输入每日预算。",
+        "countryRequired": "请至少选择一个国家/地区。",
+        "mediaRequired": "请上传图片或视频。"
+      }
+    },
+    "preflight": {
+      "title": "摘要",
+      "pausedNote": "此广告将创建为已暂停的草稿。在您发布之前，不会上线投放，也不会产生任何费用。"
+    },
+    "publishConfirm": {
+      "title": "要发布此广告吗？",
+      "description": "发布后将依次启用广告系列、广告组和广告。一旦开始投放，Meta 将开始消耗您的预算。",
+      "confirm": "发布"
+    },
+    "list": {
+      "viewOnMeta": "在 Meta 上查看",
+      "empty": "暂无私信广告。",
+      "createState": "草稿状态",
+      "actions": "操作",
+      "notPublishedYet": "尚未发布",
+      "draftReady": "草稿已就绪",
+      "createFailed": "创建失败",
+      "creating": "正在创建...",
+      "publish": "发布",
+      "pause": "暂停"
+    },
+    "messages": {
+      "created": "广告草稿已创建。",
+      "actionSucceeded": "已完成。"
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "在此创建和管理Click-to-WhatsApp广告。"
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "在此创建和管理Click-to-Messenger广告。"
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "在此创建和管理Click-to-Instagram广告。"
+      },
+      "connectCta": "连接 Facebook Ads",
+      "reconnectCta": "重新连接",
+      "reconnectNeeded": "此连接需要重新连接。",
+      "refresh": "刷新",
+      "whatsappPageRequiredNote": "点击进入 WhatsApp 的广告仍需绑定一个 Facebook 主页（Meta 的强制要求）——您可在创建广告时选择。",
+      "emptyDashboardNote": "在此创建的广告现在会自动显示在此渠道的广告仪表盘中——在那里的筛选器中选择此集成即可查看其账户和花费。"
+    },
+    "insights": {
+      "title": "效果",
+      "empty": "暂无数据",
+      "impressions": "展示次数",
+      "reach": "覆盖人数",
+      "spend": "花费",
+      "clicks": "点击",
+      "conversations": "对话数",
+      "costPerConversation": "每次对话成本",
+      "costPerConversationTooltip": "每次发起消息对话的平均成本。",
+      "datePresetLabel": "时间段：",
+      "datePreset": {
+        "maximum": "全部时间",
+        "last_30d": "最近30天",
+        "last_7d": "最近7天"
+      }
+    }
+  },
+  "accountFields": {
+    "title": "机器人字段"
   }
 }

@@ -61,6 +61,7 @@ vi.mock("@/lib/auth/upgrade-facebook-account", () => ({
 vi.mock("@/env", () => ({
   isCommunity: vi.fn(() => true),
   isCloud: vi.fn(() => false),
+  env: { NEXT_PUBLIC_BUILDER_URL: "https://app.example.com" },
 }))
 
 const credential = (clientId: string) => ({

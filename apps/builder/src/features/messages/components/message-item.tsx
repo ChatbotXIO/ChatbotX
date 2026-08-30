@@ -31,6 +31,7 @@ import {
   BotIcon,
   ExternalLinkIcon,
   ImageIcon,
+  LockIcon,
   PaperclipIcon,
   ReplyIcon,
   ThumbsUp,
@@ -71,6 +72,7 @@ type MessageItemProps = {
   }) => void
   onPostback?: (button: MessageButtonTemplate) => void
   onReply?: (comment: { commentId: string; text: string }) => void
+  onPrivateReply?: (comment: { commentId: string; text: string }) => void
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -81,6 +83,7 @@ export const MessageItem = (props: MessageItemProps) => {
     onChangeLike,
     onChangeHide,
     onReply,
+    onPrivateReply,
     onDelete,
     onEdit,
   } = props
@@ -250,6 +253,36 @@ export const MessageItem = (props: MessageItemProps) => {
             >
               <ReplyIcon className="size-4" />
             </Button>
+          )}
+
+        {isComment &&
+          !isEditing &&
+          onPrivateReply &&
+          message.messageType === "incoming" &&
+          message.sourceId && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    className="self-center opacity-0 transition-opacity group-hover:opacity-100"
+                    onClick={() =>
+                      onPrivateReply({
+                        commentId: message.sourceId as string,
+                        text: message.text ?? "",
+                      })
+                    }
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <LockIcon className="size-4" />
+                  </Button>
+                }
+              />
+              <TooltipContent>
+                <p>{t("privateReply")}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
 
         {isComment && !isEditing && (

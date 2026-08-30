@@ -185,7 +185,7 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     expect(mockEncryptAuth).not.toHaveBeenCalled()
     expect(mockCookieSet).not.toHaveBeenCalled()
     expect(mockGenerateMessengerRedirectUri).toHaveBeenCalledWith(
-      messengerCredential.publicConfig,
+      messengerCredential,
       "ws-1",
     )
   })

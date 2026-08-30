@@ -1,25 +1,31 @@
 import type { InstagramCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-instagram"
 import { getOriginFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 
 export async function generateInstagramRedirectUri(
-  publicConfig: InstagramCredentialPublic,
+  credential: {
+    userId: string | null
+    publicConfig: InstagramCredentialPublic
+  },
   workspaceId?: string | null,
 ) {
-  // The OAuth redirect_uri must be registered in the Facebook app (platform or
-  // reseller-owned). A white-label custom domain is not registered there, so we
-  // always send Facebook to the fixed broker callback and recover the originating
-  // branded domain from `referer` (the callback relays back to it).
-  const redirectUrl = buildBrokerCallbackUrl("/integrations/instagram/callback")
+  // The OAuth redirect_uri must be registered in the Facebook app. For a
+  // tenant-owned credential (their own app), that's the reseller's custom
+  // domain; otherwise it's the broker, and the originating branded domain is
+  // recovered from `referer` (the callback relays back to it).
+  const redirectUrl = await buildProviderCallbackUrl(
+    credential,
+    "/integrations/instagram/callback",
+  )
   const baseUrl = await getOriginFromHeader()
   const referer = workspaceId
     ? new URL(`/space/${workspaceId}`, baseUrl).toString()
     : baseUrl
 
   return generateAuthUrl({
-    clientId: publicConfig.clientId,
-    version: publicConfig.version,
+    clientId: credential.publicConfig.clientId,
+    version: credential.publicConfig.version,
     redirectUrl,
     stateParams: {
       workspaceId,

@@ -19,6 +19,7 @@ const ClearCustomFieldStepEditor = (props: ClearCustomFieldStepEditorProps) => {
       title={t("flows.actions.clearCustomField")}
     >
       <CustomFieldSelect
+        includeBotFields
         includeReserved={false}
         name={`${parentName}.inputFieldId`}
       />

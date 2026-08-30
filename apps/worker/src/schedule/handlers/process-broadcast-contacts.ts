@@ -1,4 +1,5 @@
-import { and, db, eq, sql } from "@chatbotx.io/database/client"
+import { auditService } from "@chatbotx.io/business/audit"
+import { and, db, eq, ne, sql } from "@chatbotx.io/database/client"
 import { broadcastStatuses, channelTypes } from "@chatbotx.io/database/partials"
 import {
   broadcastModel,
@@ -21,6 +22,43 @@ import {
 } from "@chatbotx.io/worker-config"
 import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
+
+const BROADCAST_SENT_SOURCE = "schedule:processBroadcastContacts"
+
+/**
+ * Two independent code paths (this loop and `finalize-broadcasts.ts`'s
+ * reconciliation pass) can race to flip the same broadcast to `sent`. Gating
+ * the emit on the update actually changing a row (via the `ne(status, sent)`
+ * predicate + `.returning()`) is what prevents a double `broadcast_sent` row —
+ * not just a nice-to-have, this is the one place it's load-bearing.
+ */
+const markBroadcastSent = async (broadcast: {
+  id: string
+  name: string
+  workspaceId: string
+}) => {
+  const updated = await db
+    .update(broadcastModel)
+    .set({ status: broadcastStatuses.enum.sent })
+    .where(
+      and(
+        eq(broadcastModel.id, broadcast.id),
+        ne(broadcastModel.status, broadcastStatuses.enum.sent),
+      ),
+    )
+    .returning({ id: broadcastModel.id })
+
+  if (updated.length === 0) {
+    return
+  }
+
+  await auditService.record({
+    action: "broadcast_sent",
+    detail: `sent a broadcast (#${broadcast.id})`,
+    workspaceId: broadcast.workspaceId,
+    source: BROADCAST_SENT_SOURCE,
+  })
+}
 
 const DEFAULT_BROADCAST_RATE_LIMIT = 500
 const BROADCAST_SEND_JOB_RETENTION_SECONDS = 3600
@@ -245,10 +283,7 @@ export const processBroadcastContacts = async (broadcastId: string) => {
       })
 
     if (contactsOnBroadcasts.length === 0) {
-      await db
-        .update(broadcastModel)
-        .set({ status: broadcastStatuses.enum.sent })
-        .where(eq(broadcastModel.id, broadcast.id))
+      await markBroadcastSent(broadcast)
       continue
     }
 
@@ -294,10 +329,7 @@ export const processBroadcastContacts = async (broadcastId: string) => {
       continue
     }
 
-    await db
-      .update(broadcastModel)
-      .set({ status: broadcastStatuses.enum.sent })
-      .where(eq(broadcastModel.id, broadcast.id))
+    await markBroadcastSent(broadcast)
   }
 
   return { processed: totalProcessed }

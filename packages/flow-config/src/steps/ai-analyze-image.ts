@@ -1,6 +1,7 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
+import { zodFieldReference } from "../field-reference"
 import {
   errorStateDefaultFn,
   errorStateSchema,
@@ -37,7 +38,7 @@ export const aiAnalyzeImageSchema = z
     model: z.string().trim(),
     prompt: z.string().trim().min(1),
     inputFieldId: z.string().trim().min(1),
-    outputFieldId: z.string().trim().min(1),
+    outputFieldId: zodFieldReference(),
     temperature: z.number().min(0).max(2),
     maxOutputTokens: z.number().int().min(250).max(4096),
     states: z.tuple([successStateSchema, errorStateSchema]).optional(),

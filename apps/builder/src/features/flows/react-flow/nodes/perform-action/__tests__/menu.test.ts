@@ -19,6 +19,25 @@ describe("perform action SendGrid registration", () => {
   })
 })
 
+describe("perform action ads conversions menu", () => {
+  test("groups sendMetaCapiEvent under the renamed Ads/Meta Conversions group", () => {
+    const adsConversions = performActionMenus(t).find(
+      (item) => item.label === "flows.actions.adsConversions",
+    )
+
+    expect(adsConversions?.children?.map((child) => child.stepType)).toEqual([
+      stepTypes.enum.sendMetaCapiEvent,
+    ])
+    // The old `metaConversions` group label no longer exists — it was
+    // renamed, not duplicated alongside a new group.
+    expect(
+      performActionMenus(t).some(
+        (item) => item.label === "flows.actions.metaConversions",
+      ),
+    ).toBe(false)
+  })
+})
+
 describe("perform action coupon menu", () => {
   test("exposes topic coupon under tools as the create path", () => {
     const tools = performActionMenus(t).find(

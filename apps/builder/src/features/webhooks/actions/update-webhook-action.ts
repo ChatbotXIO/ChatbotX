@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { conditionModel, webhookModel } from "@chatbotx.io/database/schema"
 import { updateWebhookCache } from "@chatbotx.io/events"
@@ -84,6 +85,14 @@ export const updateWebhookAction = workspaceActionClient
     })
 
     await updateWebhookCache(workspaceId)
+
+    if (result) {
+      await auditService.record({
+        workspaceId,
+        action: "update",
+        detail: `updated a webhook (#${result.id})`,
+      })
+    }
 
     return result
   })

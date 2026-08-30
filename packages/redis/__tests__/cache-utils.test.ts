@@ -104,6 +104,40 @@ describe("withCache", () => {
     expect(result).toEqual({ id: "2" })
   })
 
+  test("ttlFor overrides the write TTL per result (short negative, long positive)", async () => {
+    const ttlFor = (hasRule: boolean) => (hasRule ? 60 : 10)
+
+    await withCache("gate:neg", () => Promise.resolve(false), {
+      ttl: 60,
+      ttlFor,
+    })
+    expect(mocks.distributedStore.put).toHaveBeenLastCalledWith(
+      "sj:gate:neg",
+      expect.anything(),
+      10,
+    )
+
+    await withCache("gate:pos", () => Promise.resolve(true), {
+      ttl: 60,
+      ttlFor,
+    })
+    expect(mocks.distributedStore.put).toHaveBeenLastCalledWith(
+      "sj:gate:pos",
+      expect.anything(),
+      60,
+    )
+  })
+
+  test("a short-lived negative entry never truncates the shared tag set's expiry", async () => {
+    await withCache("gate:neg", () => Promise.resolve(false), {
+      ttl: 60,
+      ttlFor: () => 10,
+      tags: ["ws-1"],
+    })
+
+    expect(mocks.distributedStore.expire).toHaveBeenCalledWith("tags:ws-1", 60)
+  })
+
   test("does not cache null or undefined results", async () => {
     const result = await withCache("workspaces:missing", () =>
       Promise.resolve(undefined),

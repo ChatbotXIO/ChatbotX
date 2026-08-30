@@ -82,6 +82,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
           >
             <CustomFieldSelect
               customFieldTypes={["date", "datetime"]}
+              includeBotFields
               label={t("fields.inputCustomField.label")}
               name="inputFieldId"
               required
@@ -96,6 +97,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             <CustomFieldSelect
               allowCreate={true}
               customFieldTypes={["shortText", "longText"]}
+              includeBotFields
               label={t("fields.outputCustomField.label")}
               name="outputFieldId"
               required

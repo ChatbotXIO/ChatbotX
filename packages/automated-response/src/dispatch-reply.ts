@@ -47,6 +47,7 @@ export const dispatchAutomatedResponseReply = async (props: {
     ) {
       await adsConversionService.enqueueKeywordMatchedEvaluation({
         workspaceId: conversation.workspaceId,
+        channel: contactInbox.channel,
         inboxId: contactInbox.inboxId,
         contactInboxId: contactInbox.id,
         automatedResponseId: rule.id,

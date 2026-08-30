@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import {
   and,
   db,
@@ -44,7 +45,7 @@ export const updateSequence = async (
 ) => {
   const t = await getTranslations()
 
-  await findOrFail({
+  const sequence = await findOrFail({
     table: sequenceModel,
     where: {
       id: ctx.id,
@@ -54,10 +55,37 @@ export const updateSequence = async (
   })
 
   try {
-    await db
+    const changedEntries = Object.entries(parsedInput).filter(
+      ([key, value]) => sequence[key as keyof UpdateSequenceSchema] !== value,
+    )
+
+    if (changedEntries.length === 0) {
+      return
+    }
+
+    const updated = await db
       .update(sequenceModel)
       .set(parsedInput)
       .where(and(eq(sequenceModel.id, ctx.id)))
+      .returning({ id: sequenceModel.id })
+
+    if (updated.length === 0) {
+      return
+    }
+
+    const changedKeys = changedEntries.map(([key]) => key)
+    let detail = `updated a sequence (#${sequence.id})`
+    if (changedKeys.length === 1 && changedKeys[0] === "active") {
+      detail = parsedInput.active
+        ? `enabled a sequence (#${sequence.id})`
+        : `disabled a sequence (#${sequence.id})`
+    }
+
+    await auditService.record({
+      workspaceId: ctx.workspaceId,
+      action: "update",
+      detail,
+    })
   } catch (error) {
     if (isDatabaseError(error) && error.cause.code === "23505") {
       return returnValidationErrors(updateSequenceSchema, {

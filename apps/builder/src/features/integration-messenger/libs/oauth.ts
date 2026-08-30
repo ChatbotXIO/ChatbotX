@@ -1,7 +1,7 @@
 import type { MessengerCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-messenger"
 import { getOriginFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 
 /**
  * Where a Messenger OAuth flow returns the user once tokens are stored — the
@@ -19,19 +19,25 @@ export async function buildMessengerReferer(
 }
 
 export async function generateMessengerRedirectUri(
-  publicConfig: MessengerCredentialPublic,
+  credential: {
+    userId: string | null
+    publicConfig: MessengerCredentialPublic
+  },
   workspaceId?: string | null,
 ) {
-  // The OAuth redirect_uri must be registered in the Facebook app (platform or
-  // reseller-owned). A white-label custom domain is not registered there, so we
-  // always send Facebook to the fixed broker callback and recover the originating
-  // branded domain from `referer` (the callback relays back to it).
-  const redirectUrl = buildBrokerCallbackUrl("/integrations/messenger/callback")
+  // The OAuth redirect_uri must be registered in the Facebook app. For a
+  // tenant-owned credential (their own app), that's the reseller's custom
+  // domain; otherwise it's the broker, and the originating branded domain is
+  // recovered from `referer` (the callback relays back to it).
+  const redirectUrl = await buildProviderCallbackUrl(
+    credential,
+    "/integrations/messenger/callback",
+  )
   const referer = await buildMessengerReferer(workspaceId)
 
   return generateAuthUrl({
-    clientId: publicConfig.clientId,
-    version: publicConfig.version,
+    clientId: credential.publicConfig.clientId,
+    version: credential.publicConfig.version,
     redirectUrl,
     stateParams: {
       workspaceId,

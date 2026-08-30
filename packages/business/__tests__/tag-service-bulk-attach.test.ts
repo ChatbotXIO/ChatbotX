@@ -219,3 +219,53 @@ describe("TagService.bulkAttachToContacts", () => {
     expect(result).toEqual({ attachedPairCount: 0 })
   })
 })
+
+describe("TagService.attachToContact", () => {
+  beforeEach(() => {
+    findTags.mockReset()
+    insertValues.mockReset()
+    insertReturning.mockReset()
+    emitTagApplied.mockReset()
+    // attachToContact fires `emitTagApplied(...).catch(...)`, so the mock must
+    // return a thenable rather than the default `undefined`.
+    emitTagApplied.mockResolvedValue(undefined)
+    enqueueTagAppliedEvaluationsBulk.mockReset()
+  })
+
+  test("threads contactInboxId into the tagApplied event when provided", async () => {
+    findTags.mockResolvedValueOnce([{ id: "tag-1" }])
+    insertReturning.mockResolvedValueOnce([{ tagId: "tag-1" }])
+
+    await tagService.attachToContact({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      tagIds: ["tag-1"],
+      contactInboxId: "contact-inbox-1",
+    })
+
+    expect(emitTagApplied).toHaveBeenCalledWith(
+      "workspace-1",
+      "contact-1",
+      "tag-1",
+      "contact-inbox-1",
+    )
+  })
+
+  test("passes contactInboxId as undefined when the caller has no inbox in scope", async () => {
+    findTags.mockResolvedValueOnce([{ id: "tag-1" }])
+    insertReturning.mockResolvedValueOnce([{ tagId: "tag-1" }])
+
+    await tagService.attachToContact({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      tagIds: ["tag-1"],
+    })
+
+    expect(emitTagApplied).toHaveBeenCalledWith(
+      "workspace-1",
+      "contact-1",
+      "tag-1",
+      undefined,
+    )
+  })
+})

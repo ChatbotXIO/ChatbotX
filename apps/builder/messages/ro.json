@@ -132,12 +132,12 @@
       "whatsappFlow": "Flux WhatsApp",
       "appointmentScheduling": "Programări",
       "triggerN8n": "Declanșează n8n",
-      "metaConversions": "Meta Conversions API",
       "sendMetaCapiEvent": "Trimite eveniment Meta CAPI",
       "import": "Importă fluxul",
       "export": "Exportă",
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
-      "importJsonOnly": "Doar fișiere JSON"
+      "importJsonOnly": "Doar fișiere JSON",
+      "adsConversions": "Reclame și Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -295,6 +295,11 @@
   },
   "ads": {
     "title": "Anunțuri",
+    "dashboardNav": {
+      "whatsapp": "Reclame Click-to-WhatsApp",
+      "messenger": "Reclame Click-to-Messenger",
+      "instagram": "Reclame Click-to-Instagram"
+    },
     "connectAccounts": {
       "connectAdAccount": "Conectează cont de anunțuri",
       "adAccountName": "Numele contului de anunțuri",
@@ -320,6 +325,8 @@
       "title": "Evenimente de conversie",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Gestionează conturile de anunțuri",
@@ -327,11 +334,16 @@
       "selectAll": "Selectează tot",
       "whatsappAsset": "Element WhatsApp",
       "selectWhatsappAsset": "Selectează elementul WhatsApp",
+      "selectIntegration": "Integrare",
+      "selectIntegrationPlaceholder": "Selectează integrarea",
+      "noIntegrationsConnected": "Nu există încă integrări conectate pentru acest canal.",
+      "connectIntegration": "Conectează un canal",
       "templates": "Șabloane",
       "selectTemplates": "Selectează șabloane",
       "noTemplates": "Nu a fost găsit niciun șablon aprobat.",
       "existingRules": "Reguli existente",
       "noRules": "Nu există încă reguli de conversie pentru acest element WhatsApp.",
+      "noRulesGeneric": "Nu există încă reguli de conversie pentru această integrare.",
       "toggleRule": "Activează sau dezactivează regula",
       "deleteRule": "Șterge regula",
       "qualifyingTemplateMessageSent": "Este trimis mesajul șablon de calificare",
@@ -371,24 +383,26 @@
         "title": "Urmărește leadurile calificate",
         "question": "În ce moment al conversației vrei să califici un contact ca lead?",
         "when": "Când",
-        "then": "Apoi marchează leadul CTWA ca"
+        "then": "Apoi marchează leadul CTWA ca",
+        "thenGeneric": "Apoi marchează leadul ca"
       },
       "trackPurchases": {
         "title": "Urmărește achizițiile",
         "question": "Ce șablon confirmă o achiziție?",
         "when": "Când",
         "then": "Apoi",
-        "noValueNote": "O achiziție bazată pe regulă înregistrează o conversie de tip Achiziție fără o valoare a comenzii — contează pentru achiziții, dar adaugă 0 la venituri. Valoarea comenzii este captată doar de Evenimentele Automate Meta."
+        "noValueNote": "O achiziție bazată pe regulă înregistrează o conversie de tip Achiziție fără o valoare a comenzii — contează pentru achiziții, dar adaugă 0 la venituri. Valoarea comenzii este captată doar de Evenimentele Automate Meta.",
+        "questionGeneric": "În ce moment al conversației doriți să înregistrați o achiziție?"
       }
     },
     "analytics": {
-      "title": "Analiză CTWA",
+      "title": "Analiză anunțuri",
       "funnelOverview": "Prezentare generală a pâlniei",
       "conversationsStarted": "Conversații începute",
       "qualifiedLeads": "Leaduri calificate",
       "purchases": "Achiziții",
       "adSpend": "Cheltuieli publicitare",
-      "spendAccountLevelNote": "Cheltuielile sunt raportate la nivelul contului de anunțuri Meta; când este selectat un cont de WhatsApp, anunțurile care au doar cheltuieli, fără activitate în pâlnie pentru acel cont, sunt ascunse.",
+      "spendAccountLevelNote": "Cheltuielile sunt raportate la nivelul contului de anunțuri Meta; când este selectat un cont, anunțurile care au doar cheltuieli, fără activitate în pâlnie pentru acel cont, sunt ascunse.",
       "revenue": "Venituri",
       "roas": "ROAS",
       "revenueCurrencyNote": "Veniturile presupun o singură monedă (USD). Conturile de anunțuri cu monede mixte nu sunt încă agregate.",
@@ -417,21 +431,27 @@
       "adAccountFilter": {
         "all": "Toate conturile de anunțuri",
         "label": "Cont de anunțuri",
-        "note": "Anunțurile cu conversii, dar cu cheltuieli zero sau livrare zero în intervalul de date selectat, sunt ascunse la filtrarea după contul de anunțuri."
+        "unavailable": "Conturile de reclame nu au putut fi încărcate — verifică conexiunea Ads a acestei integrări sau conexiunea Facebook Ads a spațiului de lucru, din setări."
+      },
+      "channelFilter": {
+        "label": "Canal",
+        "allAccounts": "Toate conturile",
+        "allChannels": "Toate canalele"
       },
       "retarget": "Retargetare",
       "thoseWhoPurchased": "Cei care au achiziționat",
       "thoseWhoStartedConversation": "Cei care au început o conversație",
       "sendWhatsappBroadcast": "Trimite difuzare WhatsApp",
+      "retargetOnChannel": "Retargetare pe {channel}",
       "from": "De la",
       "to": "Până la",
       "unattributed": "Neatribuit",
       "retargetDialog": {
-        "title": "Retargetează contactele CTWA",
+        "title": "Retargetează contactele din anunțuri",
         "createAudience": "Creează audiență",
         "useExistingAudience": "Folosește o audiență existentă",
         "audienceName": "Numele audienței",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Anunțuri",
         "confirm": "Începe sincronizarea",
         "success": "Sincronizarea audienței de retargetare a fost adăugată în coadă.",
         "error": "Nu s-a putut adăuga în coadă sincronizarea audienței de retargetare."
@@ -443,7 +463,7 @@
         "failed": "Eșuat",
         "skippedNoScope": "Omis (fără domeniu de aplicare)",
         "skippedRegion": "Omis (regiune)",
-        "noScopeWarning": "Unele conversii nu au fost trimise pentru că acest cont de WhatsApp nu are permisiunea pentru evenimente. Reconectează-l pentru a activa raportarea Evenimentelor Automate.",
+        "noScopeWarning": "Unele conversii nu au fost trimise pentru că acest cont nu are permisiunea pentru evenimente. Reconectează-l pentru a activa raportarea Evenimentelor Automate.",
         "reconnectCta": "Reconectează contul",
         "empty": "Încă nu există evenimente de conversie în acest interval."
       },
@@ -456,7 +476,8 @@
         "contactName": "Numele contactului",
         "phone": "Telefon",
         "adId": "ID anunț",
-        "occurredAt": "A avut loc la"
+        "occurredAt": "A avut loc la",
+        "channel": "Canal"
       },
       "empty": "Încă nu există date. Conectează un cont de anunțuri și începe să urmărești conversiile."
     }
@@ -756,6 +777,7 @@
     "title": "Editează profilul"
   },
   "actions": {
+    "retry": "Reîncearcă",
     "copy": "Copiază",
     "copyUrl": "Copiază adresa URL",
     "actions": "Acțiuni",
@@ -827,6 +849,7 @@
     "reset": "Resetează",
     "save": "Salvează",
     "selectAll": "Selectează tot",
+    "unselect": "Deselectează",
     "selectRow": "Selectează rândul",
     "sendFlow": "Trimite fluxul",
     "sendMessage": "Trimite mesajul",
@@ -901,7 +924,8 @@
     "onSuccess": "La reușită",
     "clone": "Clonează",
     "remove": "Elimină",
-    "restore": "Restaurează"
+    "restore": "Restaurează",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Trebuie să fii superadministrator al spațiului de lucru pentru a face acest lucru."
@@ -912,7 +936,8 @@
     "skip": "Omitere"
   },
   "admins": {
-    "title": "Administratori"
+    "title": "Administratori",
+    "adminActivityLogs": "Jurnal de activitate al administratorului"
   },
   "assignAdmin": {
     "assignConversation": "Atribuie conversația",
@@ -1296,8 +1321,8 @@
       "blocked": "Blocat",
       "noAdminReply": "Niciun răspuns de la administrator",
       "contactCreatedAt": "Contact creat la",
-      "fromCtwaAd": "Din anunț Click to WhatsApp",
-      "ctwaConversion": "Conversie CTWA",
+      "fromCtwaAd": "Din anunț",
+      "ctwaConversion": "Conversie anunț",
       "lastUserInputTypes": {
         "text": "Text",
         "location": "Locație",
@@ -1324,9 +1349,10 @@
       "systemFields": "Câmpuri de sistem",
       "topicCoupon": "Subiect cupon",
       "customFields": "Câmpuri personalizate",
+      "botFields": "Câmpurile botului",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Anunțuri Click to WhatsApp"
+      "ctwaAds": "Anunțuri"
     },
     "languages": {
       "ar": "Arabă",
@@ -1365,9 +1391,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "Inițiatori de conversații CTWA",
-        "leads": "Leaduri calificate CTWA",
-        "purchases": "Cumpărători CTWA"
+        "conversations": "Inițiatori de conversații din anunțuri",
+        "leads": "Leaduri calificate din anunțuri",
+        "purchases": "Cumpărători din anunțuri"
       },
       "adPrefix": "anunț",
       "allAds": "toate anunțurile"
@@ -1558,6 +1584,9 @@
     "dynamicImage": {
       "label": "Imagine dinamică"
     },
+    "minigame": {
+      "label": "Minijoc"
+    },
     "savePayloadToCustomField": {
       "label": "Salvează conținutul în câmpul personalizat"
     },
@@ -1652,7 +1681,10 @@
       "append": "Adaugă la sfârșit",
       "prepend": "Adaugă la început",
       "increase": "Mărește cu",
-      "decrease": "Micșorează cu"
+      "decrease": "Micșorează cu",
+      "groupSystemFields": "Câmpuri de sistem",
+      "groupCustomFields": "Câmpuri personalizate",
+      "groupAccountFields": "Câmpurile botului"
     },
     "dataCollect": {
       "label": "Colectare de date"
@@ -1755,8 +1787,8 @@
       "aiDeleteMessageHistory": "{aiName}: Șterge istoricul mesajelor"
     },
     "steps": {
-      "label": "Pași",
-      "placeholder": "Selectează pasul"
+      "label": "Nod",
+      "placeholder": "Selectează nodul"
     },
     "folder": {
       "label": "Dosar"
@@ -1916,6 +1948,9 @@
     },
     "mcpServer": {
       "label": "Server MCP"
+    },
+    "template": {
+      "label": "Template"
     },
     "systemFunction": {
       "label": "Funcție de sistem",
@@ -2121,7 +2156,9 @@
       "label": "Stare",
       "pending": "În așteptare",
       "processing": "În curs de procesare",
+      "installing": "Installing",
       "completed": "Finalizat",
+      "partial": "Partial",
       "failed": "Eșuat",
       "success": "Succes",
       "error": "Eroare"
@@ -2783,6 +2820,15 @@
         "description": "Acest token este afișat o singură dată. Păstrează-l în siguranță — nu îl vei mai putea vizualiza din nou.",
         "done": "Finalizat"
       }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "channels": {
@@ -2884,6 +2930,7 @@
     "disconnectFeatureDescription": "Ești sigur că vrei să deconectezi {feature}?",
     "disconnectSuccess": "{feature} deconectat cu succes",
     "reply": "Răspunde",
+    "privateReply": "Răspuns privat",
     "viewMessage": "Vezi mesajul",
     "changeLikeState": "Schimbă starea de apreciere",
     "changeHideState": "Schimbă starea de ascundere",
@@ -2901,6 +2948,8 @@
     "editMessagePlaceholder": "Editează-ți mesajul...",
     "saveEdit": "Salvează",
     "cancelEdit": "Anulează",
+    "replaceAttachment": "Înlocuiește atașamentul",
+    "addAttachment": "Adaugă atașament",
     "failedToCopy": "Copierea a eșuat",
     "failedToPreviewImage": "Previzualizarea imaginii a eșuat",
     "loadingData": "Se încarcă datele...",
@@ -2924,6 +2973,9 @@
     "duplicatedSuccess": "{feature} duplicat cu succes",
     "duplicateConfirmation": "Aceasta va crea o copie a {feature}.",
     "deleteFeature": "Șterge {feature}",
+    "resetFeature": "Resetează {feature}",
+    "resetConfirmation": "Aceasta va goli valorile {feature} selectate.\nAceastă acțiune nu poate fi anulată.",
+    "resetSuccess": "{feature} resetat cu succes",
     "deleteConfirmation": "Ești absolut sigur?\nAceastă acțiune nu poate fi anulată.\nAceasta va șterge definitiv {feature} de pe serverele noastre.",
     "addFeature": "Adaugă {feature}",
     "signOutConfirmation": "Ești sigur că vrei să te deconectezi?",
@@ -2958,9 +3010,6 @@
     "enableSuccess": "{feature} activat cu succes",
     "userInactive": "Utilizatorul a fost inactiv mai mult de 7 zile",
     "messagingWindowClosed": "Mesajul nu poate fi trimis în afara ferestrei permise",
-    "sendHumanAgentTag": "Trimite un mesaj cu eticheta HUMAN_AGENT",
-    "warning": "Avertisment!",
-    "humanAgentWarningDescription": "Poți răspunde la mesajul unui utilizator în termen de 7 zile doar atunci când problema nu poate fi rezolvată în mod rezonabil în 24 de ore. Exemple includ weekendurile, sărbătorile sau cazurile care necesită mai mult de o zi pentru a fi finalizate. Nu folosi această opțiune din niciun alt motiv, deoarece ar putea pune în pericol pagina ta de Facebook sau contul de Instagram. Dacă nu ești sigur, nu continua.",
     "humanAgentWindowExpired": "Fereastra de mesagerie a expirat. Contactul trebuie să scrie primul pentru a redeschide conversația.",
     "restoreVersionSuccess": "Fluxul a fost restaurat la versiunea selectată",
     "revertToPublishedSuccess": "Ciorna a fost readusă la versiunea publicată",
@@ -3042,10 +3091,12 @@
     "selectPage": {
       "noPagesTitle": "Nicio pagină de Facebook găsită",
       "noPagesDescription": "Paginile din interiorul unui Business Manager necesită acces Business Manager în timpul conectării. Reconectează Messenger și acordă toate permisiunile solicitate.",
+      "noConnectablePagesTitle": "Nicio pagină disponibilă pentru conectare",
+      "noConnectablePagesDescription": "Nu ești administrator al acestei Pagini",
       "bmLookupFailedTitle": "Este posibil să lipsească paginile din Business Manager",
       "bmLookupFailedDescription": "Reconectează Messenger și acordă acces la Business Manager pentru ca paginile gestionate printr-un Business Manager să poată fi listate.",
       "alreadyConnectedNote": "Această pagină este deja conectată",
-      "notAdminNote": "Este necesară permisiunea completă de administrator pe pagină pentru a te conecta",
+      "notAdminNote": "Nu ești administrator al acestei Pagini",
       "tryAgain": "Încearcă să te reconectezi"
     },
     "title": "Facebook Messenger",
@@ -3773,7 +3824,23 @@
     "exportTakingLongDescription": "Exportul este încă în curs de procesare. Poți închide acest dialog și poți reveni peste câteva minute din istoricul exporturilor."
   },
   "auditLogs": {
-    "title": "Jurnale de audit"
+    "title": "Jurnale de audit",
+    "columns": {
+      "user": "Utilizator",
+      "action": "Acțiune",
+      "detail": "Detaliu",
+      "ipAddress": "Adresă IP",
+      "date": "Data"
+    },
+    "filters": {
+      "from": "De la",
+      "to": "Până la",
+      "user": "Utilizator",
+      "userPlaceholder": "ID utilizator",
+      "keyword": "Cuvânt cheie",
+      "keywordPlaceholder": "Acțiune sau detaliu",
+      "allAdmins": "Toți administratorii"
+    }
   },
   "customFields": {
     "title": "Câmpuri personalizate",
@@ -3983,11 +4050,11 @@
     "description": "Creează și gestionează programările tale.",
     "title": "Programări",
     "flowModes": {
-      "bookFromCustomField": "Programează o întâlnire",
-      "checkAvailabilityFromCustomField": "Verifică disponibilitatea",
-      "book": "Selector dată și oră",
-      "checkAvailability": "Selector interval de date",
-      "cancel": "Anulează întâlnirea"
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
     },
     "fields": {
       "mode": "Mod",
@@ -4898,7 +4965,60 @@
   },
   "templates": {
     "description": "Creează și gestionează șabloanele tale.",
-    "title": "Șabloane"
+    "title": "Șabloane",
+    "share": {
+      "label": "Distribuie",
+      "enabled": "Distribuit",
+      "disabled": "Nedistribuit",
+      "dialogTitle": "Distribuie șablonul",
+      "dialogDescription": "Oricine are acest link poate instala o copie a acestui șablon într-un spațiu de lucru din organizația ta.",
+      "enableLabel": "Activează linkul de distribuire",
+      "linkLabel": "Link de distribuire",
+      "description": "Oricine are linkul poate instala acest șablon în propriul spațiu de lucru."
+    },
+    "installs": {
+      "title": "Instalări",
+      "resources": "Resurse",
+      "warnings": "Avertismente",
+      "completedAt": "Finalizat la",
+      "autoUpdate": "Actualizare automată"
+    },
+    "form": {
+      "contents": "Conținutul șablonului",
+      "comingSoon": "În curând",
+      "selectAll": "Selectează tot",
+      "selectedCount": "{count} selectate",
+      "details": "Detalii",
+      "permissions": "Permisiuni implicite",
+      "allowEdit": "Permite editarea după instalare",
+      "allowDelete": "Permite ștergerea după instalare",
+      "publisherName": "Numele editorului",
+      "youtubeVideoId": "ID-ul videoclipului YouTube",
+      "youtubeVideoIdDescription": "ID-ul de 11 caractere din URL-ul videoclipului, de ex. \"dQw4w9WgXcQ\" în youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Link de test",
+      "imageUrl": "Imagine de copertă",
+      "installBehavior": "Comportament la instalare",
+      "createInstallFolder": "Instalează într-un folder dedicat",
+      "createInstallFolderDescription": "Grupează fiecare resursă instalată într-un singur folder nou, denumit după acest șablon.",
+      "defaultAutoUpdate": "Marchează instalările pentru actualizări în mod implicit",
+      "defaultAutoUpdateDescription": "Instalările noi vor afișa o notificare de actualizare disponibilă de fiecare dată când republici acest șablon."
+    },
+    "categories": {
+      "flows": "Fluxuri",
+      "customFields": "Câmpuri personalizate",
+      "tags": "Etichete",
+      "products": "Produse",
+      "productCategories": "Categorii de produse",
+      "aiFunctions": "Funcții AI",
+      "aiAgents": "Agenți AI",
+      "calendars": "Calendare de programări",
+      "webchats": "Chat-uri web",
+      "keywords": "Cuvinte cheie",
+      "entryPointLinks": "Linkuri de intrare",
+      "triggers": "Declanșatoare",
+      "fbCommentAutomations": "Automatizări comentarii Facebook",
+      "settings": "Setări"
+    }
   },
   "tiktok": {
     "description": "Conectează-ți contul TikTok pentru a răspunde la mesajele directe.",
@@ -4912,6 +5032,19 @@
     "title": "Ai fost dezabonat.",
     "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
     "unavailableTitle": "Dezabonare indisponibilă."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Acest link nu mai este disponibil.",
+    "invalidDescription": "Acest link de distribuire a șablonului este invalid, dezactivat sau expirat.",
+    "byPublisher": "De {publisherName}",
+    "includes": "Acest șablon include",
+    "videoTitle": "Videoclip de previzualizare a șablonului",
+    "tryItOut": "Încearcă-l",
+    "signInToInstall": "Autentifică-te pentru a instala",
+    "selectWorkspace": "Selectează un spațiu de lucru",
+    "install": "Instalează",
+    "installStarted": "Instalarea a început",
+    "noEligibleWorkspaces": "Nu ai niciun spațiu de lucru eligibil pentru a instala acest șablon."
   },
   "bookingWebview": {
     "metadataTitle": "Programează o întâlnire",
@@ -5240,7 +5373,16 @@
       "contentCategory": "Categorie de conținut",
       "contentCategoryPlaceholder": "Categoria conținutului asociat evenimentului",
       "contentName": "Numele conținutului",
-      "contentNamePlaceholder": "Numele paginii sau produsului asociat evenimentului"
+      "contentNamePlaceholder": "Numele paginii sau produsului asociat evenimentului",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
     "datasetIdPlaceholder": "Lipește ID-ul setului de date din Events Manager",
     "saveDataset": "Salvează",
@@ -5287,6 +5429,353 @@
     },
     "whatsapp": {
       "connect": "Conectează"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Creează și gestionează minijocuri de tip loterie norocoasă pentru clienții tăi.",
+    "types": {
+      "luckyWheel": "Roata norocului",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Tragere la sorți",
+      "scratchOff": "Răzuiește și câștigă"
+    },
+    "createDialog": {
+      "title": "Alege un tip de minijoc",
+      "comingSoon": "În curând"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Suma tuturor probabilităților: {value}%",
+      "loseProbability": "Probabilitate de pierdere: {value}%",
+      "winProbability": "Probabilitate de câștig: {value}%",
+      "newPrize": "Premiu nou",
+      "prizeNameCustomFieldLabel": "Salvează numele premiului în Câmp personalizat"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Editează premiul",
+      "nonWinningTitle": "Editează setarea pentru „fără câștig”",
+      "prizeNameLabel": "Numele premiului",
+      "nonWinningTitleLabel": "Titlu",
+      "loseImageDescription": "Dimensiune recomandată 120x120px",
+      "quantityLabel": "Cantitate premiu",
+      "quantityDescription": "Numărul de câte ori mai poate fi câștigat acest premiu; scade cu 1 la fiecare câștig. Lasă necompletat pentru nelimitat."
+    },
+    "outcomeMessage": {
+      "enableWin": "Trimite un mesaj câștigătorului care a primit premiul",
+      "enableLose": "Trimite un mesaj când jucătorul nu câștigă",
+      "mode": "Tip mesaj",
+      "modeText": "Text",
+      "modeFlow": "Flux",
+      "text": "Mesaj"
+    },
+    "winningMessageDialog": {
+      "title": "Setări mesaj de câștig",
+      "titleLabel": "Titlu",
+      "prizeNameHint": "Poți folosi '{{prize_name}}' în titlu și descriere pentru a insera numele premiului.",
+      "acceptButtonText": "Text buton Acceptă",
+      "shareButtonText": "Text buton Distribuie",
+      "shareButtonDescription": "Descriere buton Distribuie"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Setări mesaj fără câștig",
+      "titleLabel": "Titlu",
+      "shareButtonText": "Text buton Distribuie",
+      "shareButtonDescription": "Descriere buton Distribuie"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Distribuie prietenilor",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "luckyWheelHeader": "ROATA NOROCULUI",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Previzualizarea detaliată pentru acest tip de joc va fi disponibilă în curând"
+    },
+    "form": {
+      "generalSettingsTitle": "Setări generale",
+      "appearanceTitle": "Aspect",
+      "playerSettingsTitle": "Setări jucător",
+      "prizeSettingsTitle": "Setări premii"
+    },
+    "generalSettings": {
+      "showName": "Vizibil",
+      "playedAt": "Jucat la",
+      "rulesDescription": "Descrierea regulilor",
+      "openerTags": "Etichetează contactele care deschid linkul jocului",
+      "playerTags": "Etichetează jucătorii",
+      "newFriendTags": "Etichetează prietenii noi",
+      "shareEnabled": "Permite distribuirea către prieteni",
+      "shareMessage": "Mesaj de distribuire",
+      "shareMessageHint": "Folosește '{{shareUrl}}' pentru a introduce linkul real al jocului — te rugăm să nu îl elimini."
+    },
+    "appearance": {
+      "backgroundColor": "Culoare fundal",
+      "machineColor": "Culoare mecanism",
+      "decorativeColor": "Culoare decorativă",
+      "ruleTextColor": "Culoare text reguli",
+      "backgroundImage": "Imagine de fundal",
+      "backgroundImageDescription": "Lățime recomandată: 1024px",
+      "prizeDescriptionImage": "Imagine descriere premiu (opțional)",
+      "prizeDescriptionImageDescription": "Lățime recomandată: 750px",
+      "startButtonImage": "Imagine buton Start",
+      "startButtonImageDescription": "Dimensiune recomandată: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Numărul de șanse de tragere norocoasă per persoană",
+      "resetPolicyLabel": "Resetare trageri",
+      "resetNever": "Nu reseta numărul de trageri",
+      "resetEveryNDays": "Resetează numărul de trageri la fiecare",
+      "resetIntervalDaysSuffix": "zi(le)"
+    },
+    "publicUrl": {
+      "label": "URL public",
+      "hint": "Copiază și inserează URL-ul în fluxul, difuzarea sau secvența ta pentru a distribui acest minijoc."
+    },
+    "play": {
+      "close": "Închide",
+      "drawsRemaining": "{count} încercări rămase",
+      "noDrawsLeft": "Nu mai ai încercări pentru acest minijoc.",
+      "notStartedYet": "Acest minijoc nu a început încă.",
+      "ended": "Acest minijoc s-a încheiat.",
+      "forbiddenTitle": "Acces refuzat",
+      "forbiddenDescription": "Acest link este invalid sau a expirat.",
+      "comingSoonTitle": "În curând",
+      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă."
+    },
+    "history": {
+      "title": "Istoric",
+      "played": "Jocuri",
+      "remaining": "Extrageri rămase",
+      "openedAt": "Prima deschidere",
+      "lastPlayedAt": "Ultimul joc",
+      "unknownContact": "Contact necunoscut",
+      "record": "Înregistrare",
+      "recordDialog": {
+        "title": "Înregistrări de joc",
+        "win": "A câștigat",
+        "lose": "Fără premiu",
+        "empty": "Nu există încă înregistrări de joc"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Bibliotecă media",
+    "searchPlaceholder": "Căutare fișiere...",
+    "newFolder": "Folder nou",
+    "recent": "Recente",
+    "favourite": "Favorit",
+    "upload": "Încarcă",
+    "done": "Terminat",
+    "deleteFolder": "Șterge folderul",
+    "renameFolder": "Redenumește folderul",
+    "noFiles": "Niciun fișier găsit",
+    "noFolders": "Niciun folder încă",
+    "folderNamePlaceholder": "Numele folderului",
+    "confirmDeleteFolder": "Ștergi folderul și toate fișierele sale?",
+    "confirmDeleteFolderDescription": "Toate fișierele din acest folder vor fi șterse definitiv de pe server. Această acțiune nu poate fi anulată.",
+    "confirmDeleteFile": "Ștergi fișierul?",
+    "confirmDeleteFileDescription": "Acest fișier va fi șters definitiv de pe server.",
+    "addToFavourites": "Adaugă la favorite",
+    "removeFromFavourites": "Elimină din favorite",
+    "deleteFile": "Șterge fișierul",
+    "selectOnlyOneFile": "Poți selecta doar 1 fișier",
+    "confirmDeleteFiles": "{count, plural, =1 {Ștergi 1 fișier?} other {Ștergi # fișiere?}}",
+    "confirmDeleteFilesDescription": "Aceste fișiere vor fi șterse definitiv de pe server. Această acțiune nu poate fi anulată.",
+    "filesCount": "{count, plural, =0 {Niciun fișier} =1 {1 fișier} other {# fișiere}}",
+    "openMediaLibrary": "Deschide biblioteca media",
+    "uploadFailed": "Încărcarea {name} a eșuat"
+  },
+  "adsCampaign": {
+    "title": "Reclame",
+    "createCta": "Creează reclamă",
+    "prereq": {
+      "notConnected": "Conectează Facebook Ads pentru a crea reclame de mesagerie pentru acest canal.",
+      "connectCta": "Conectează Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Niciuna",
+      "housing": "Locuințe",
+      "employment": "Angajare",
+      "credit": "Credit",
+      "issues": "Probleme sociale, alegeri sau politică",
+      "financialProducts": "Produse și servicii financiare",
+      "onlineGambling": "Jocuri de noroc și jocuri online"
+    },
+    "fields": {
+      "objective": {
+        "label": "Obiectiv",
+        "value": "Interacțiune (mesagerie)"
+      },
+      "specialAdCategory": {
+        "label": "Categorie specială de reclamă",
+        "description": "Selectarea unei categorii restricționate elimină direcționarea în funcție de vârstă, sex și alte criterii pe care Meta nu le permite pentru acea categorie.",
+        "restrictedNote": "Direcționarea în funcție de vârstă și sex este dezactivată deoarece este selectată o categorie specială de reclamă restricționată."
+      },
+      "adAccount": {
+        "label": "Cont publicitar"
+      },
+      "whatsappPage": {
+        "label": "Pagină Facebook",
+        "description": "Reclamele WhatsApp necesită în continuare o Pagină Facebook conectată — selectează Pagina conectată pe care vrei să o folosești."
+      },
+      "dailyBudget": {
+        "label": "Buget zilnic",
+        "placeholder": "de ex. 2000",
+        "description": "Introdu suma în cea mai mică unitate monetară a contului tău publicitar (de ex. cenți pentru USD)."
+      },
+      "countries": {
+        "label": "Țări"
+      },
+      "ageRange": {
+        "min": "Vârsta minimă",
+        "max": "Vârsta maximă"
+      },
+      "gender": {
+        "label": "Sex",
+        "male": "Bărbat",
+        "female": "Femeie"
+      },
+      "schedule": {
+        "start": "Ora de început",
+        "end": "Ora de sfârșit"
+      },
+      "destination": {
+        "label": "Destinație"
+      },
+      "callToAction": {
+        "label": "Îndemn la acțiune",
+        "derivedNote": "Butonul de îndemn la acțiune ({type}) este determinat automat pe baza canalului."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Țara categoriei de anunț",
+        "description": "Necesar de Meta pentru categoria probleme sociale, alegeri sau politică — țara în care ești autorizat să difuzezi aceste anunțuri."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Mesaj de bun venit",
+      "label": "Mesaj de bun venit",
+      "description": "Trimis automat atunci când cineva începe o conversație din această reclamă.",
+      "mode": {
+        "default": "Folosește mesajul implicit al Meta",
+        "single": "Mesaj unic",
+        "templates": "Testează până la 5 variante de mesaj"
+      },
+      "messageLabel": "Mesaj",
+      "templateLabel": "Varianta {index}",
+      "headingPlaceholder": "Titlu (opțional)",
+      "addTemplate": "Adaugă variantă",
+      "templatesLimit": "Pot fi testate până la {max} variante."
+    },
+    "creative": {
+      "mediaRequired": "Încarcă o imagine sau un videoclip pentru a continua.",
+      "mediaType": {
+        "label": "Conținut creativ",
+        "orVideo": "sau video",
+        "selectAdAccountFirst": "Selectează un cont publicitar înainte de a încărca conținut media.",
+        "uploadImage": "Încarcă imagine",
+        "uploadVideo": "Încarcă video"
+      },
+      "uploading": "Se încarcă...",
+      "imageUploadFailed": "Încărcarea imaginii a eșuat. Încercați din nou.",
+      "videoProcessing": "Se procesează videoclipul...",
+      "videoReady": "Videoclip pregătit",
+      "videoProcessingFailed": "Procesarea videoclipului a eșuat. Încearcă un alt fișier.",
+      "previewAlt": "Previzualizare material creativ",
+      "primaryText": "Text principal",
+      "headline": "Titlu"
+    },
+    "wizard": {
+      "createDraft": "Creează ca ciornă în pauză",
+      "campaignStep": {
+        "title": "Campanie",
+        "namePlaceholder": "Denumește această reclamă"
+      },
+      "adSetStep": {
+        "title": "Set de reclame"
+      },
+      "creativeStep": {
+        "title": "Material creativ"
+      },
+      "preflightStep": {
+        "title": "Revizuire"
+      },
+      "errors": {
+        "nameRequired": "Introdu un nume pentru această reclamă.",
+        "adAccountRequired": "Selectează un cont publicitar.",
+        "budgetRequired": "Introdu un buget zilnic.",
+        "countryRequired": "Selectează cel puțin o țară.",
+        "mediaRequired": "Încarcă o imagine sau un videoclip."
+      }
+    },
+    "preflight": {
+      "title": "Rezumat",
+      "pausedNote": "Această reclamă este creată ca ciornă în pauză. Nimic nu devine activ și nu se cheltuiesc bani până când nu o publici."
+    },
+    "publishConfirm": {
+      "title": "Publici această reclamă?",
+      "description": "Publicarea activează, în ordine, campania, setul de reclame și reclama. Meta va începe să îți cheltuiască bugetul de îndată ce începe difuzarea.",
+      "confirm": "Publică"
+    },
+    "list": {
+      "viewOnMeta": "Vezi pe Meta",
+      "empty": "Încă nu există reclame de mesagerie.",
+      "createState": "Stare ciornă",
+      "actions": "Acțiuni",
+      "notPublishedYet": "Nepublicată încă",
+      "draftReady": "Ciornă pregătită",
+      "createFailed": "Creare eșuată",
+      "creating": "Se creează...",
+      "publish": "Publică",
+      "pause": "Pauză"
+    },
+    "messages": {
+      "created": "Ciorna reclamei a fost creată.",
+      "actionSucceeded": "Gata."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Creează și gestionează reclame Click-to-WhatsApp aici."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Creează și gestionează reclame Click-to-Messenger aici."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Creează și gestionează reclame Click-to-Instagram aici."
+      },
+      "connectCta": "Conectează Facebook Ads",
+      "reconnectCta": "Reconectează",
+      "reconnectNeeded": "Această conexiune trebuie reconectată.",
+      "refresh": "Reîmprospătează",
+      "whatsappPageRequiredNote": "Reclamele Click-to-WhatsApp necesită în continuare o Pagină Facebook conectată (o cerință Meta) — o vei alege la crearea unei reclame.",
+      "emptyDashboardNote": "Reclamele create aici apar acum automat în panoul de control Reclame al acestui canal — selectează această integrare din filtrul de acolo pentru a vedea conturile și cheltuielile ei."
+    },
+    "insights": {
+      "title": "Performanță",
+      "empty": "Încă nu există date",
+      "impressions": "Afișări",
+      "reach": "Acoperire",
+      "spend": "Cheltuieli",
+      "clicks": "Clicuri",
+      "conversations": "Conversații",
+      "costPerConversation": "Cost/conv.",
+      "costPerConversationTooltip": "Cost mediu pe conversație de mesagerie inițiată.",
+      "datePresetLabel": "Perioadă:",
+      "datePreset": {
+        "maximum": "Toată perioada",
+        "last_30d": "Ultimele 30 de zile",
+        "last_7d": "Ultimele 7 zile"
+      }
+    }
+  },
+  "accountFields": {
+    "title": "Câmpurile botului"
   }
 }

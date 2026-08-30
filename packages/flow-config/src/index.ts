@@ -8,6 +8,7 @@ export * from "./channel-rules/tiktok-text-rules"
 export * from "./channel-rules/validators"
 export * from "./definition"
 export * from "./event"
+export * from "./field-reference"
 export * from "./import-export/index"
 export * from "./migrations/spreadsheet-write-mapping"
 // Export all nodes

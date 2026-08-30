@@ -192,8 +192,11 @@ describe("webchat guest session store", () => {
 })
 
 describe("webchat authorized domains", () => {
-  test("allows all origins when no domains are configured", () => {
-    expect(isOriginAuthorized("https://example.com", [])).toBe(true)
+  test("rejects origins when no domains are configured (fail closed)", () => {
+    expect(isOriginAuthorized("https://example.com", [])).toBe(false)
+  })
+
+  test("allows a missing origin even when no domains are configured (direct, non-embedded access)", () => {
     expect(isOriginAuthorized(null, [])).toBe(true)
   })
 

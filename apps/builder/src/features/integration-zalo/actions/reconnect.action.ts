@@ -10,8 +10,8 @@ import { generateAuthUrl } from "@chatbotx.io/integration-zalo"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 /**
@@ -44,7 +44,12 @@ export const reconnectZaloAction = workspaceActionClient
         throw new ChatbotXException("Zalo App settings not found")
       }
 
-      const redirectUrl = buildBrokerCallbackUrl("/integrations/zalo/callback")
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const redirectUrl = await buildProviderCallbackUrl(
+        zaloCredential,
+        "/integrations/zalo/callback",
+      )
       const baseUrl = await getOriginUrlFromHeader()
       const referer = new URL(
         `/space/${workspaceId}/settings/channels?channel=zalo`,

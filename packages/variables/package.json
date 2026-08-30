@@ -10,6 +10,7 @@
   "dependencies": {
     "@chatbotx.io/encryption": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/integration-instagram": "workspace:*",
     "@chatbotx.io/integration-messenger": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",

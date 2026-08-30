@@ -1,14 +1,23 @@
 import {
   appointmentExternalCalendarService,
+  instagramIntegrationService,
   integrationFacebookAdsService,
   integrationMetaCatalogService,
   integrationThreadsService,
+  integrationWhatsappService,
+  messagingAdsConnectionService,
+  messengerIntegrationService,
   platformCredentialService,
   workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
 import { db } from "@chatbotx.io/database/client"
-import type { IntegrationType } from "@chatbotx.io/database/partials"
+import {
+  type IntegrationType,
+  type MessagingAdChannel,
+  messagingAdChannelTypes,
+} from "@chatbotx.io/database/partials"
 import {
   integrationGoogleSheetsModel,
   integrationModel,
@@ -61,6 +70,7 @@ import { connectTiktokHandler } from "@/features/integration-tiktok/actions/conn
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { reconnectZaloHandler } from "@/features/integration-zalo/actions/reconnect-callback"
 import { integrations } from "@/integration"
+import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
 import {
@@ -74,6 +84,8 @@ import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
+import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
@@ -82,11 +94,19 @@ const stateValidationSchema = z.object({
   // redirect_uri registered with the Facebook app); the connect action sets
   // this flag so the Messenger branch dispatches to the right token-storage /
   // webhook-subscription logic instead of the page picker.
-  flow: z.enum(["facebookAds", "facebookLeadAds", "metaCatalog"]).optional(),
+  flow: z
+    .enum(["facebookAds", "facebookLeadAds", "metaCatalog", "messagingAds"])
+    .optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
   // of this existing integration row (matched against its stored page/account
   // identity) instead of running the connect/page-select flow.
   reconnectIntegrationId: zodBigintAsString().optional(),
+  // `flow: "messagingAds"` only — the per-integration messaging-ads box
+  // (CTWA/CTM/CTID) this connect targets. Both required together and
+  // re-validated against `workspaceId` (ownership + channel match) before
+  // any token is stored — see the `messagingAds` branch below.
+  messagingAdsChannel: messagingAdChannelTypes.optional(),
+  messagingAdsIntegrationId: zodBigintAsString().optional(),
 })
 
 // Exchange the OAuth code for a long-lived Facebook Ads token and store it
@@ -121,6 +141,70 @@ const storeFacebookAdsConnection = async (args: {
     workspaceId: args.workspaceId,
     auth: facebookAdsAuth,
     tokenExpiresAt,
+  })
+}
+
+/**
+ * Verifies `messagingAdsIntegrationId` is a REAL channel integration that
+ * belongs to `workspaceId` and matches `channel` before any token is stored
+ * — the OAuth callback is an API boundary, so a forged/stale integration id
+ * (or a channel mismatch) must never be trusted (v3 correction, "callback
+ * ownership check"). Returns `false` on any mismatch; callers fall back to
+ * `notFound()`.
+ */
+const messagingAdsIntegrationBelongsToWorkspace = async (args: {
+  workspaceId: string
+  channel: MessagingAdChannel
+  integrationId: string
+}): Promise<boolean> => {
+  const ref = { id: args.integrationId, workspaceId: args.workspaceId }
+  if (args.channel === "whatsapp") {
+    return Boolean(await integrationWhatsappService.findByIdForWorkspace(ref))
+  }
+  if (args.channel === "messenger") {
+    return Boolean(await messengerIntegrationService.findByIdForWorkspace(ref))
+  }
+  return Boolean(await instagramIntegrationService.findByIdForWorkspace(ref))
+}
+
+// Exchange the OAuth code for a long-lived Facebook Ads token and store it
+// (encrypted) on the per-integration `MessagingAdsConnection` row — the
+// per-box counterpart to `storeFacebookAdsConnection` below. Deliberately
+// does NOT reuse `integrationFacebookAdsService`/`storeFacebookAdsConnection`
+// — those write the workspace-wide `IntegrationFacebookAds` table, which is
+// the WRONG table for a per-integration box connection (v3 correction #4).
+const storeMessagingAdsConnection = async (args: {
+  credentialConfig: { clientId: string; clientSecret: string; version?: string }
+  code: string
+  callbackUrl: string
+  workspaceId: string
+  channel: MessagingAdChannel
+  integrationId: string
+}): Promise<void> => {
+  const shortLivedToken = await exchangeFacebookAdsCode(
+    args.credentialConfig,
+    args.code,
+    args.callbackUrl,
+  )
+  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
+    args.credentialConfig,
+    shortLivedToken,
+  )
+  const tokenExpiresAt = expiresIn
+    ? new Date(Date.now() + expiresIn * 1000)
+    : null
+
+  const facebookAdsAuth: FacebookAdsAuthValue = {
+    authType: AuthType.custom,
+    accessToken,
+    expiresAt: tokenExpiresAt?.toISOString(),
+    version: args.credentialConfig.version,
+  }
+  await messagingAdsConnectionService.upsertFromOAuth({
+    workspaceId: args.workspaceId,
+    channel: args.channel,
+    integrationId: args.integrationId,
+    auth: facebookAdsAuth,
   })
 }
 
@@ -205,11 +289,13 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // White-label relay: Facebook/TikTok OAuth always lands on the fixed broker
-  // callback (the only registered redirect_uri). When the flow started on a
-  // branded custom domain, bounce the callback back to that domain — where the
-  // user's session cookie lives — preserving the original code + state. The
-  // re-entry runs on the white-label host, so this guard does not match again.
+  // White-label relay: the redirect_uri is pinned per-credential (broker for
+  // inherited/platform, the reseller's own custom domain for a tenant-owned
+  // one — see `lib/provider-origin.ts`), so the callback host can differ from
+  // where the flow started. When it does, bounce the callback back to the
+  // originating domain — where the user's session cookie lives — preserving
+  // the original code + state. The re-entry runs on the originating host, so
+  // this guard does not match again.
   const relayTarget = await resolveRelayTarget(url, stateParams.referer)
   if (relayTarget) {
     return redirect(relayTarget)
@@ -281,9 +367,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        messengerCredential,
         "/integrations/messenger/callback",
       )
 
@@ -304,11 +391,85 @@ export const handleCallback = async (
       // the referer (the integrations settings page) instead of the Messenger
       // page picker.
       if (stateParams.flow === "facebookAds") {
-        await storeFacebookAdsConnection({
+        // storeFacebookAdsConnection -> integrationFacebookAdsService.upsert()
+        // calls this.audit(), which resolves userId/workspaceId from the ALS
+        // actor context. This raw OAuth route never populates it (unlike
+        // workspace-scoped action clients), so the audit call would silently
+        // no-op without this wrap.
+        await withAuditContext(
+          {
+            userId,
+            workspaceId: workspace.id,
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          },
+          () =>
+            storeFacebookAdsConnection({
+              credentialConfig: messengerCredential.config,
+              code,
+              callbackUrl,
+              workspaceId: workspace.id,
+            }),
+        )
+        return redirect(safeReferer)
+      }
+
+      // Per-integration messaging-ads box connect (CTWA/CTM/CTID). An API
+      // boundary: re-validate the target integration belongs to THIS
+      // workspace and matches the claimed channel before storing anything —
+      // `stateParams` is attacker-controlled (round-tripped through the
+      // Facebook OAuth `state` param).
+      if (stateParams.flow === "messagingAds") {
+        if (
+          !(
+            stateParams.messagingAdsChannel &&
+            stateParams.messagingAdsIntegrationId
+          )
+        ) {
+          logger.debug(
+            { workspaceId: workspace.id },
+            "messagingAds OAuth state is missing channel/integrationId",
+          )
+          return notFound()
+        }
+        // Connecting an ads token is a super-admin action (the connect action
+        // asserts it too). The OAuth `state` is attacker-forgeable, so a bare
+        // workspace member could otherwise round-trip a crafted state and bind
+        // their own Facebook token to a workspace integration — re-assert
+        // super-admin here at the storage boundary (Codex impl-review).
+        try {
+          await assertWorkspaceSuperAdmin(workspace.id)
+        } catch {
+          logger.info(
+            { workspaceId: workspace.id, userId },
+            "messagingAds OAuth callback: non-super-admin blocked",
+          )
+          return notFound()
+        }
+        const belongsToWorkspace =
+          await messagingAdsIntegrationBelongsToWorkspace({
+            workspaceId: workspace.id,
+            channel: stateParams.messagingAdsChannel,
+            integrationId: stateParams.messagingAdsIntegrationId,
+          })
+        if (!belongsToWorkspace) {
+          logger.info(
+            {
+              workspaceId: workspace.id,
+              channel: stateParams.messagingAdsChannel,
+              integrationId: stateParams.messagingAdsIntegrationId,
+            },
+            "messagingAds OAuth target integration does not belong to this workspace/channel",
+          )
+          return notFound()
+        }
+        await storeMessagingAdsConnection({
           credentialConfig: messengerCredential.config,
           code,
           callbackUrl,
           workspaceId: workspace.id,
+          channel: stateParams.messagingAdsChannel,
+          integrationId: stateParams.messagingAdsIntegrationId,
         })
         return redirect(safeReferer)
       }
@@ -330,6 +491,16 @@ export const handleCallback = async (
           code,
           callbackUrl,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            detail: "reconnected the Messenger channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
@@ -389,9 +560,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        instagramCredential,
         "/integrations/instagram/callback",
       )
 
@@ -408,6 +580,16 @@ export const handleCallback = async (
           integrationId: stateParams.reconnectIntegrationId,
           userToken,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            detail: "reconnected the Instagram channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
@@ -441,7 +623,10 @@ export const handleCallback = async (
         return notFound()
       }
 
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        instagramFacebookCredential,
         "/integrations/instagram-facebook/callback",
       )
 
@@ -457,6 +642,16 @@ export const handleCallback = async (
           integrationId: stateParams.reconnectIntegrationId,
           userToken,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            detail: "reconnected the Instagram channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
@@ -558,15 +753,17 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const tiktokCallbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const tiktokCallbackUrl = await buildProviderCallbackUrl(
+        tiktokCredential,
         "/integrations/tiktok/callback",
       )
 
       await connectTiktokHandler({
         tiktokSettings: tiktokCredential.config,
         workspaceId: workspace.id,
+        userId,
         req,
         redirectUrl: tiktokCallbackUrl,
       })
@@ -583,20 +780,45 @@ export const handleCallback = async (
         return notFound()
       }
 
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const zaloRedirectUrl = await buildProviderCallbackUrl(
+        zaloCredential,
+        "/integrations/zalo/callback",
+      )
+
       if (stateParams.reconnectIntegrationId) {
         const result = await reconnectZaloHandler({
           zaloSettings: zaloCredential.config,
           workspaceId: workspace.id,
           integrationId: stateParams.reconnectIntegrationId,
           req,
+          callbackUrl: zaloRedirectUrl,
         })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            // Same wording/shape as the Messenger/Instagram reconnect calls
+            // above: this is the OAuth-popup "Reconnect" button, not the
+            // silent refresh_token-based flow that "refreshed the Zalo
+            // channel permissions" (refresh-all-channel-tokens.action.ts,
+            // refresh-zalo-tokens.ts) describes — keep those distinct.
+            detail: "reconnected the Zalo channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
       await connectZaloHandler({
         zaloSettings: zaloCredential.config,
         workspaceId: workspace.id,
+        userId,
         req,
+        redirectUrl: zaloRedirectUrl,
       })
 
       return redirect(safeReferer)
@@ -614,18 +836,28 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        facebookAdsCredential,
         "/integrations/facebook-ads/callback",
       )
 
-      await storeFacebookAdsConnection({
-        credentialConfig: facebookAdsCredential.config,
-        code,
-        callbackUrl,
-        workspaceId: workspace.id,
-      })
+      await withAuditContext(
+        {
+          userId,
+          workspaceId: workspace.id,
+          ipAddress: getGuestClientIp(req.headers),
+          userAgent: req.headers.get("user-agent") ?? undefined,
+        },
+        () =>
+          storeFacebookAdsConnection({
+            credentialConfig: facebookAdsCredential.config,
+            code,
+            callbackUrl,
+            workspaceId: workspace.id,
+          }),
+      )
 
       return redirect(safeReferer)
     }
@@ -639,9 +871,13 @@ export const handleCallback = async (
         return notFound()
       }
 
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const callbackUrl = await buildProviderCallbackUrl(
+        googleCredential,
         "/integrations/google-calendar/callback",
       )
+      let connectStatus: "success" | "error" = "success"
       try {
         const connection = await exchangeAndVerifyGoogleCalendar({
           credentialConfig: googleCredential.config,
@@ -656,21 +892,18 @@ export const handleCallback = async (
           providerCalendarId: connection.providerCalendarId,
           email: connection.email,
         })
-
-        const successUrl = new URL(safeReferer)
-        successUrl.searchParams.set("externalCalendarConnect", "success")
-
-        return redirect(successUrl.toString())
       } catch (error) {
         logger.error(
           { err: normalizeError(error), workspaceId: workspace.id },
           "Failed to connect Google Calendar from OAuth callback",
         )
-        const errorUrl = new URL(safeReferer)
-        errorUrl.searchParams.set("externalCalendarConnect", "error")
-
-        return redirect(errorUrl.toString())
+        connectStatus = "error"
       }
+
+      const resultUrl = new URL(safeReferer)
+      resultUrl.searchParams.set("externalCalendarConnect", connectStatus)
+
+      return redirect(resultUrl.toString())
     }
 
     case "googleSheets": {
@@ -682,10 +915,11 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed broker
-      // callback), even though this handler may run on a white-label host after
-      // the relay above. See `connect.action.ts`.
-      const callbackUrl = buildBrokerCallbackUrl(
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker. See
+      // `connect.action.ts`.
+      const callbackUrl = await buildProviderCallbackUrl(
+        googleCredential,
         "/integrations/google-sheets/callback",
       )
 
@@ -725,6 +959,17 @@ export const handleCallback = async (
       })
     }
   })
+
+  if (integrationType === "googleSheets") {
+    await auditService.record({
+      userId,
+      workspaceId: workspace.id,
+      action: "connect",
+      detail: "connected a new Google Sheets integration",
+      ipAddress: getGuestClientIp(req.headers),
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    })
+  }
 
   return redirect(safeReferer)
 }

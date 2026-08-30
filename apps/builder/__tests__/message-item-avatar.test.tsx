@@ -9,6 +9,16 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
+// MessageItem -> MessageActions -> MediaLibraryTrigger, which imports its
+// `"use server"` query modules at module scope. Next.js rewrites those to RPC
+// stubs, but vitest evaluates them for real, dragging in the
+// `@chatbotx.io/business` barrel and a live pg Pool — which throws on
+// `env.DATABASE_URL` under the browser-conditions preset. Stubbing the
+// trigger cuts that chain and keeps this test about avatar gating.
+vi.mock("@/features/media-library/components/media-library-trigger", () => ({
+  MediaLibraryTrigger: () => null,
+}))
+
 // Base UI's Avatar.Image only mounts once the underlying <img> actually
 // fires a load/error event (see useImageLoadingStatus), which jsdom never
 // dispatches for a src that isn't really fetched. Mock it down to plain

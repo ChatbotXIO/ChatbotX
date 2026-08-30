@@ -1,47 +1,11 @@
 "use client"
 
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Calendar } from "@chatbotx.io/ui/components/ui/calendar"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@chatbotx.io/ui/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  endOfDay,
-  endOfMonth,
-  startOfDay,
-  startOfMonth,
-  subDays,
-  subMonths,
-} from "date-fns"
-import { Calendar1Icon, RotateCwIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
-import { useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
 import { useAnalysisStore } from "../provider/analysis-store-context"
+import type { PresetOption } from "../schemas"
 import {
-  type AnalysisFilterSchema,
-  analysisFilterSchema,
-  type PresetOption,
-} from "../schemas"
-
-type DateRangeResult = {
-  from: Date
-  to: Date
-}
+  DateRangePresetFilter,
+  type DateRangeResult,
+} from "./date-range-preset-filter"
 
 export type AnalysisFilterFormProps = {
   initialFrom?: number
@@ -52,61 +16,14 @@ export type AnalysisFilterFormProps = {
   onSubmit?: (range: DateRangeResult) => void
 }
 
-function getTodayRange(): DateRangeResult {
-  const today = new Date()
-
-  return { from: startOfDay(today), to: endOfDay(today) }
-}
-
-function getYesterdayRange(): DateRangeResult {
-  const today = new Date()
-  const yesterday = subDays(today, 1)
-
-  return { from: startOfDay(yesterday), to: endOfDay(yesterday) }
-}
-
-function getLast7DaysRange(): DateRangeResult {
-  const today = new Date()
-  const start = subDays(today, 6)
-
-  return { from: startOfDay(start), to: endOfDay(today) }
-}
-
-function getLast30DaysRange(): DateRangeResult {
-  const today = new Date()
-  const start = subDays(today, 29)
-
-  return { from: startOfDay(start), to: endOfDay(today) }
-}
-
-function getThisMonthRange(): DateRangeResult {
-  const today = new Date()
-  const start = startOfMonth(today)
-  const end = endOfMonth(today)
-
-  return { from: start, to: end }
-}
-
-function getLastMonthRange(): DateRangeResult {
-  const today = new Date()
-  const start = startOfMonth(subMonths(today, 1))
-  const end = endOfMonth(start)
-
-  return { from: start, to: end }
-}
-
-// 2020 aligns with the earliest TimescaleDB hypertable partition; data before
-// this date is not expected to exist and a wider floor wastes partition scans.
-const LIFETIME_FLOOR = new Date("2020-01-01T00:00:00.000Z")
-
-function getLifeTimeRange(workspaceCreatedAt?: Date): DateRangeResult {
-  const floor =
-    workspaceCreatedAt && workspaceCreatedAt > LIFETIME_FLOOR
-      ? workspaceCreatedAt
-      : LIFETIME_FLOOR
-  return { from: startOfDay(floor), to: endOfDay(new Date()) }
-}
-
+/**
+ * Store-wired wrapper around the shared `DateRangePresetFilter` UI — every
+ * applied range is forwarded to the caller's `onChange` AND written to the
+ * `useAnalysisStore` context (which drives the Contacts/Conversations/
+ * Reflinks/Magic-links dashboards' data fetching). Ads is URL-driven and
+ * renders `DateRangePresetFilter` directly instead, since wrapping it here
+ * would fire this store's unrelated fetches on every Ads range change.
+ */
 export default function AnalysisFilterForm({
   initialFrom,
   initialTo,
@@ -114,243 +31,18 @@ export default function AnalysisFilterForm({
   workspaceCreatedAt,
   onChange,
 }: AnalysisFilterFormProps) {
-  const t = useTranslations()
-  const locale = useLocale()
-
   const { setRange: setAnalysisRange } = useAnalysisStore((state) => state)
 
-  const form = useForm<AnalysisFilterSchema>({
-    resolver: zodResolver(analysisFilterSchema),
-    defaultValues: {
-      preset: defaultPreset,
-      ...getLast7DaysRange(),
-    },
-  })
-
-  const [preset, setPreset] = useState<PresetOption>(defaultPreset)
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false)
-  const [customRange, setCustomRange] = useState<DateRangeResult | undefined>(
-    undefined,
-  )
-
-  const initialRange: DateRangeResult | null = useMemo(() => {
-    if (typeof initialFrom === "number" && typeof initialTo === "number") {
-      return { from: new Date(initialFrom), to: new Date(initialTo) }
-    }
-    switch (defaultPreset) {
-      case "today":
-        return getTodayRange()
-      case "yesterday":
-        return getYesterdayRange()
-      case "last7":
-        return getLast7DaysRange()
-      case "last30":
-        return getLast30DaysRange()
-      case "thisMonth":
-        return getThisMonthRange()
-      case "lastMonth":
-        return getLastMonthRange()
-      case "lifeTime":
-        return getLifeTimeRange(workspaceCreatedAt)
-      default:
-        return null
-    }
-  }, [initialFrom, initialTo, defaultPreset, workspaceCreatedAt])
-
-  const [range, setRange] = useState<DateRangeResult | null>(initialRange)
-
-  const rangeText = useMemo(() => {
-    if (!range) {
-      return t("analytics.selectRange")
-    }
-    const fromDate = new Date(range.from)
-    const toDate = new Date(range.to)
-    const options: Intl.DateTimeFormatOptions = {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }
-    if (fromDate.toDateString() === toDate.toDateString()) {
-      return fromDate.toLocaleDateString(locale, options)
-    }
-    return `${fromDate.toLocaleDateString(
-      locale,
-      options,
-    )} - ${toDate.toLocaleDateString(locale, options)}`
-  }, [locale, range, t])
-
-  const applyRange = (r: DateRangeResult) => {
-    setRange(r)
-    onChange?.(r)
-    setAnalysisRange(r)
-    form.setValue("from", r.from, { shouldDirty: true })
-    form.setValue("to", r.to, { shouldDirty: true })
-  }
-
-  const handlePresetChange = (value: PresetOption) => {
-    setPreset(value)
-    if (value === "custom") {
-      setDialogOpen(true)
-      return
-    }
-    if (value === "today") {
-      applyRange(getTodayRange())
-      return
-    }
-    if (value === "yesterday") {
-      applyRange(getYesterdayRange())
-      return
-    }
-    if (value === "last7") {
-      applyRange(getLast7DaysRange())
-      return
-    }
-    if (value === "last30") {
-      applyRange(getLast30DaysRange())
-    }
-    if (value === "thisMonth") {
-      applyRange(getThisMonthRange())
-    }
-    if (value === "lastMonth") {
-      applyRange(getLastMonthRange())
-    }
-    if (value === "lifeTime") {
-      applyRange(getLifeTimeRange(workspaceCreatedAt))
-    }
-  }
-
-  const canApplyCustom = !!(customRange?.from && customRange?.to)
-
-  const clearRange = () => {
-    setRange(null)
-    setCustomRange(undefined)
-    // form.setValue("from", , { shouldDirty: true })
-    // form.setValue("to", "", { shouldDirty: true })
-  }
-
   return (
-    <Form {...form}>
-      <form className="flex items-end justify-end gap-3">
-        <Button
-          onClick={() => handlePresetChange("last7")}
-          type="button"
-          variant="outline"
-        >
-          <RotateCwIcon />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                aria-label={t("analytics.dateFilterPreset")}
-                id="date-range-preset"
-                onClick={(e) => {
-                  if (preset === "custom") {
-                    e.preventDefault()
-                    setDialogOpen(true)
-                  }
-                }}
-                type="button"
-                variant="outline"
-              >
-                <Calendar1Icon />
-                {preset === "today" && t("fields.today.label")}
-                {preset === "yesterday" && t("fields.yesterday.label")}
-                {preset === "last7" && t("fields.last7days.label")}
-                {preset === "last30" && t("fields.last30days.label")}
-                {preset === "thisMonth" && t("fields.thisMonth.label")}
-                {preset === "lastMonth" && t("fields.lastMonth.label")}
-                {preset === "lifeTime" && t("fields.lifeTime.label")}
-                {preset === "custom" && rangeText}
-              </Button>
-            }
-          />
-          <DropdownMenuContent>
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => handlePresetChange("today")}>
-                {t("fields.today.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("yesterday")}>
-                {t("fields.yesterday.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("last7")}>
-                {t("fields.last7days.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("last30")}>
-                {t("fields.last30days.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("thisMonth")}>
-                {t("fields.thisMonth.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("lastMonth")}>
-                {t("fields.lastMonth.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("lifeTime")}>
-                {t("fields.lifeTime.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("custom")}>
-                {t("fields.customRange.label")}
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Hidden fields bound to form for consumers; numbers as requested */}
-        <InputField formItemClassName="hidden" name="from" type="hidden" />
-        <InputField formItemClassName="hidden" name="to" type="hidden" />
-
-        {/* Custom range dialog */}
-        <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("fields.customRange.label")}</DialogTitle>
-            </DialogHeader>
-            <div className="p-1">
-              <Calendar
-                className="w-full"
-                disabled={{ after: new Date() }}
-                mode="range"
-                onSelect={(r) => {
-                  if (!(r?.from && r?.to)) {
-                    setCustomRange(undefined)
-                    return
-                  }
-                  setCustomRange({ from: r.from, to: r.to })
-                }}
-                selected={customRange}
-                showOutsideDays
-              />
-            </div>
-            <DialogFooter>
-              <Button onClick={clearRange} type="button" variant="ghost">
-                {t("actions.clear")}
-              </Button>
-              <Button
-                disabled={!canApplyCustom}
-                onClick={() => {
-                  const fromDate = customRange?.from
-                  if (!fromDate) {
-                    return
-                  }
-                  const toDate = customRange?.to
-                  if (!toDate) {
-                    return
-                  }
-                  const r: DateRangeResult = {
-                    from: startOfDay(fromDate),
-                    to: endOfDay(toDate),
-                  }
-                  applyRange(r)
-                  setDialogOpen(false)
-                }}
-                type="button"
-              >
-                {t("actions.continue")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </form>
-    </Form>
+    <DateRangePresetFilter
+      defaultPreset={defaultPreset}
+      initialFrom={initialFrom}
+      initialTo={initialTo}
+      onChange={(range) => {
+        onChange?.(range)
+        setAnalysisRange(range)
+      }}
+      workspaceCreatedAt={workspaceCreatedAt}
+    />
   )
 }
