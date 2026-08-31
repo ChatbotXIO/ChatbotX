@@ -82,8 +82,8 @@ export const workspaceModel = pgTable(
     token: text(),
     // SHA-256 hex digest of the workspace API token (`hashToken()` from
     // `apps/builder/src/features/integration-api/lib/token-hash.ts`), written
-    // on every create/rotate and backfilled for existing rows by the
-    // `20260828025915_create_workspace_token_hash` migration.
+    // whenever the token is (re)generated and backfilled for existing rows by
+    // the `20260828025915_create_workspace_token_hash` migration.
     tokenHash: text(),
   },
   (table) => [

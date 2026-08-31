@@ -53,12 +53,14 @@ async function getWorkspaceOwnerAccessState(ownerId: string) {
 }
 
 /**
- * Owner-quota/trial gate shared by every workspace-scoped entry point (server
- * actions, oRPC session auth, oRPC workspace-token auth). Cloud-only — the
- * self-hosted edition has no quota row and stays unrestricted. Deletion is
- * checked separately by each caller via `isWorkspaceScheduledForDeletion`
- * because it's a distinct, terminal concern that must be evaluated even when
- * quota lookups are skipped (self-hosted, or "allow expired" call sites).
+ * Owner-quota/trial gate shared by every workspace-scoped entry point: server
+ * actions (`workspaceActionClient` in safe-action.ts) and oRPC workspace-token
+ * auth today; oRPC session auth (`workspaceAuthorizedMidddleware`) is a
+ * pending follow-up. Cloud-only — the self-hosted edition has no quota row
+ * and stays unrestricted. Deletion is checked separately by each caller via
+ * `isWorkspaceScheduledForDeletion` because it's a distinct, terminal concern
+ * that must be evaluated even when quota lookups are skipped (self-hosted, or
+ * "allow expired" call sites).
  */
 export async function checkWorkspaceOwnerAccess(props: {
   ownerId: string

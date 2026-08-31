@@ -8,13 +8,13 @@ const {
   isWorkspaceScheduledForDeletion,
   loggerWarn,
   checkWorkspaceOwnerAccess,
-  checkApiRateLimit,
+  assertApiNotRateLimited,
 } = vi.hoisted(() => ({
   find: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
   loggerWarn: vi.fn(),
   checkWorkspaceOwnerAccess: vi.fn().mockResolvedValue(null),
-  checkApiRateLimit: vi.fn().mockResolvedValue({ limited: false }),
+  assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -27,7 +27,7 @@ vi.mock("@/lib/log", () => ({
 }))
 
 vi.mock("@/lib/rate-limit/api-rate-limit", () => ({
-  checkApiRateLimit,
+  assertApiNotRateLimited,
 }))
 
 vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
@@ -69,7 +69,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   isWorkspaceScheduledForDeletion.mockReturnValue(false)
   checkWorkspaceOwnerAccess.mockResolvedValue(null)
-  checkApiRateLimit.mockResolvedValue({ limited: false })
+  assertApiNotRateLimited.mockResolvedValue(undefined)
 })
 
 describe("workspaceTokenAuthMidddleware", () => {
@@ -141,9 +141,36 @@ describe("workspaceTokenAuthMidddleware", () => {
     })
   })
 
+  test("DELETE procedure with a blocked owner still passes (invariant #14)", async () => {
+    find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
+    checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+
+    const headers = new Headers({ Authorization: "Bearer ws1_abc" })
+    await callMiddleware(headers, "DELETE")
+
+    expect(next).toHaveBeenCalled()
+    expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+  })
+
+  test("scheduled-deletion workspace is rejected with FORBIDDEN", async () => {
+    find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
+    isWorkspaceScheduledForDeletion.mockReturnValue(true)
+
+    const headers = new Headers({ Authorization: "Bearer ws1_abc" })
+
+    await expect(callMiddleware(headers, "GET")).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Workspace deletion scheduled",
+    })
+  })
+
   test("rate-limited workspace token is rejected before the owner-access gate", async () => {
     find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
-    checkApiRateLimit.mockResolvedValue({ limited: true, retryAfter: 5 })
+    assertApiNotRateLimited.mockRejectedValue(
+      Object.assign(new Error("Too many requests. Retry after 5s."), {
+        code: "tooManyRequests",
+      }),
+    )
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
 

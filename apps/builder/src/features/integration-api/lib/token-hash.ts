@@ -1,7 +1,6 @@
 /**
- * Single hashing implementation shared by token generation
- * (generate-credentials.ts) and bearer verification
- * (middlewares/channel-api-token-auth.ts) so the two can never drift.
+ * Single hashing implementation for all API bearer tokens — channel API keys
+ * and workspace API tokens — so generation and verification can never drift.
  * Web Crypto only — safe in both Node and edge runtimes.
  */
 export const hashToken = async (token: string): Promise<string> => {

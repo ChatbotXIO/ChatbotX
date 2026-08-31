@@ -1,8 +1,10 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { distributedStore } from "@chatbotx.io/redis"
 import { logger } from "@/lib/log"
 
 const WINDOW_SECONDS = 10
 const REQUEST_LIMIT = 120
+const TOO_MANY_REQUESTS_STATUS = 429
 const memoryCounters = new Map<string, { count: number; expiresAt: number }>()
 
 type RateLimitStore = Pick<
@@ -94,5 +96,23 @@ export const checkApiRateLimit = async ({
     )
     const count = incrementMemoryWindowCounter(key, WINDOW_SECONDS)
     return { limited: count > REQUEST_LIMIT, retryAfter }
+  }
+}
+
+/**
+ * Throwing wrapper around `checkApiRateLimit` shared by every bearer-token
+ * API surface (channel API, workspace token API) so the 429 shape can never
+ * drift between them.
+ */
+export const assertApiNotRateLimited = async (
+  props: ApiRateLimitInput,
+): Promise<void> => {
+  const { limited, retryAfter } = await checkApiRateLimit(props)
+  if (limited) {
+    throw new ChatbotXException(
+      `Too many requests. Retry after ${retryAfter}s.`,
+      "tooManyRequests",
+      TOO_MANY_REQUESTS_STATUS,
+    )
   }
 }

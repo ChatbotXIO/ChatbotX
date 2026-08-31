@@ -2,11 +2,10 @@ import {
   isWorkspaceScheduledForDeletion,
   workspaceService,
 } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { ORPCError } from "@orpc/server"
 import { hashToken } from "@/features/integration-api/lib/token-hash"
 import { logger } from "@/lib/log"
-import { checkApiRateLimit } from "@/lib/rate-limit/api-rate-limit"
+import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import {
   checkWorkspaceOwnerAccess,
   isWorkspaceMutationMethod,
@@ -14,21 +13,11 @@ import {
 } from "@/lib/workspace/authorize-workspace-access"
 import { base } from "./context"
 
-const TOO_MANY_REQUESTS_STATUS = 429
-
-const assertNotRateLimited = async (workspaceId: string): Promise<void> => {
-  const { limited, retryAfter } = await checkApiRateLimit({
+const assertNotRateLimited = (workspaceId: string): Promise<void> =>
+  assertApiNotRateLimited({
     scope: "workspace-token-rate-limit",
     key: workspaceId,
   })
-  if (limited) {
-    throw new ChatbotXException(
-      `Too many requests. Retry after ${retryAfter}s.`,
-      "tooManyRequests",
-      TOO_MANY_REQUESTS_STATUS,
-    )
-  }
-}
 
 export const workspaceTokenAuthMidddleware = base.middleware(
   async ({ context, next, procedure }) => {
@@ -39,16 +28,15 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     // Deprecated: accepting the token as a query param leaks it into access
     // logs and browser history. Kept temporarily for existing integrations;
     // logged below so we can see when it's safe to remove.
-    const apiKeyToken = context.url
-      ? new URL(context.url).searchParams.get("token")
-      : null
+    const url = context.url ? new URL(context.url) : null
+    const apiKeyToken = url?.searchParams.get("token") ?? null
     const token = bearerToken ?? apiKeyToken
     if (!token) {
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
     if (!bearerToken && apiKeyToken) {
       logger.warn(
-        { path: context.url ? new URL(context.url).pathname : undefined },
+        { path: url?.pathname },
         "Workspace token authenticated via deprecated ?token= query param",
       )
     }
