@@ -101,10 +101,12 @@ function HookHost({
   workspaceId,
   conv,
   setContactData,
+  onProfileUpdated,
 }: {
   workspaceId: string
   conv: TestConversation | null
   setContactData: SetContactData
+  onProfileUpdated?: (contactId: string) => void
 }) {
   useAutoRefreshContactProfile({
     workspaceId,
@@ -114,6 +116,7 @@ function HookHost({
       typeof useAutoRefreshContactProfile
     >[0]["conversation"],
     setContactData,
+    onProfileUpdated,
   })
   return null
 }
@@ -150,6 +153,24 @@ describe("useAutoRefreshContactProfile", () => {
       root.render(
         <HookHost
           conv={conv}
+          setContactData={setContactData}
+          workspaceId="ws-1"
+        />,
+      )
+    })
+    return setContactData
+  }
+
+  function renderWithOnUpdated(
+    conv: TestConversation | null,
+    onProfileUpdated: (contactId: string) => void,
+    setContactData = vi.fn(),
+  ) {
+    act(() => {
+      root.render(
+        <HookHost
+          conv={conv}
+          onProfileUpdated={onProfileUpdated}
           setContactData={setContactData}
           workspaceId="ws-1"
         />,
@@ -220,6 +241,19 @@ describe("useAutoRefreshContactProfile", () => {
         contactId: "contact-3",
         contactInboxes: [
           { id: "ci-3", channel: "whatsapp", lastMessageAt: null },
+        ],
+      }),
+    )
+
+    expect(refreshContactProfileActionMock).not.toHaveBeenCalled()
+  })
+
+  test("does not fire and does not throw for an unknown/legacy channel string", () => {
+    render(
+      conversation({
+        contactId: "contact-legacy",
+        contactInboxes: [
+          { id: "ci-legacy", channel: "legacy", lastMessageAt: null },
         ],
       }),
     )
@@ -359,6 +393,68 @@ describe("useAutoRefreshContactProfile", () => {
     expect(updater(prev)).toEqual({ ...prev, ...updatedContact })
     expect(toastMocks.error).not.toHaveBeenCalled()
     expect(toastMocks.success).not.toHaveBeenCalled()
+  })
+
+  test("on updated while still the active contact, calls onProfileUpdated with the contactId (convergence re-fetch trigger)", async () => {
+    const { promise, resolve } = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+    const onProfileUpdated = vi.fn()
+
+    renderWithOnUpdated(
+      conversation({
+        contactId: "contact-9",
+        contactInboxes: [
+          { id: "ci-9", channel: "messenger", lastMessageAt: null },
+        ],
+      }),
+      onProfileUpdated,
+    )
+
+    await act(async () => {
+      resolve({
+        data: { status: "updated", contact: { id: "contact-9" } },
+      })
+      await Promise.resolve()
+    })
+
+    expect(onProfileUpdated).toHaveBeenCalledTimes(1)
+    expect(onProfileUpdated).toHaveBeenCalledWith("contact-9")
+  })
+
+  test("on updated after the panel switched to another contact, does NOT call onProfileUpdated (stale attempt)", async () => {
+    const { promise, resolve } = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+    const onProfileUpdated = vi.fn()
+
+    const convA = conversation({
+      contactId: "contact-a3",
+      contactInboxes: [
+        { id: "ci-a3", channel: "messenger", lastMessageAt: null },
+      ],
+    })
+    const convB = conversation({
+      contactId: "contact-b3",
+      contact: { id: "contact-b3", firstName: "Present", lastName: null },
+      contactInboxes: [
+        { id: "ci-b3", channel: "messenger", lastMessageAt: null },
+      ],
+    })
+
+    renderWithOnUpdated(convA, onProfileUpdated)
+    renderWithOnUpdated(convB, onProfileUpdated)
+
+    await act(async () => {
+      resolve({
+        data: { status: "updated", contact: { id: "contact-a3" } },
+      })
+      await Promise.resolve()
+    })
+
+    expect(onProfileUpdated).not.toHaveBeenCalled()
   })
 
   test.each([

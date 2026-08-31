@@ -22,6 +22,16 @@ export type UseAutoRefreshContactProfileProps = {
   workspaceId: string
   conversation: ListConversationItemResource | null | undefined
   setContactData: SetContactData
+  /**
+   * Called right after the panel-local patch, with the contactId that was
+   * updated — lets the panel re-fetch the canonical contact from the server
+   * so its `contactData` converges even if an earlier `getContact` request
+   * (fired when the panel first opened) resolves AFTER this patch and would
+   * otherwise overwrite it with stale data. The immediate `setContactData`
+   * patch above is kept for instant UI feedback; this is a convergence
+   * guarantee, not a replacement for it.
+   */
+  onProfileUpdated?: (contactId: string) => void
 }
 
 /**
@@ -79,7 +89,7 @@ const selectOnDemandInbox = (
 export function useAutoRefreshContactProfile(
   props: UseAutoRefreshContactProfileProps,
 ): void {
-  const { workspaceId, conversation, setContactData } = props
+  const { workspaceId, conversation, setContactData, onProfileUpdated } = props
   const attemptedContactIds = useRef<Set<string>>(new Set())
   const updateContact = useChatStore((state) => state.updateContact)
   const isMountedRef = useRef(true)
@@ -142,8 +152,15 @@ export function useAutoRefreshContactProfile(
         // resolved (see the hook's doc comment on `activeContactIdRef`).
         if (activeContactIdRef.current === contactId) {
           setContactData((prev) => prev && { ...prev, ...updatedContact })
+          onProfileUpdated?.(contactId)
         }
       })
       .catch(() => undefined) // transport failure (network/RSC) — silent, no state update, no retry
-  }, [conversation, workspaceId, updateContact, setContactData])
+  }, [
+    conversation,
+    workspaceId,
+    updateContact,
+    setContactData,
+    onProfileUpdated,
+  ])
 }

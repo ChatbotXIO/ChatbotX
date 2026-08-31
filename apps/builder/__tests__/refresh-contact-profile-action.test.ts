@@ -205,6 +205,24 @@ describe("refreshContactProfileAction — channel capability gate", () => {
     expect(mocks.refresh).not.toHaveBeenCalled()
     noFactoryMocksCalled()
   })
+
+  test("unknown/legacy channel string returns skipped/channelNotCapable, never throws, factory uncalled", async () => {
+    mocks.findContactInboxByUncached.mockResolvedValueOnce({
+      id: "ci-1",
+      contactId: "contact-1",
+      channel: "legacy",
+      inboxId: "inbox-1",
+      sourceId: "source-1",
+    })
+
+    await expect(callAction({})).resolves.toEqual({
+      status: "skipped",
+      reason: "channelNotCapable",
+    })
+
+    expect(mocks.refresh).not.toHaveBeenCalled()
+    noFactoryMocksCalled()
+  })
 })
 
 describe("refreshContactProfileAction — per-channel factory table", () => {

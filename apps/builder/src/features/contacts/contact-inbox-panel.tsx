@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
 import type { ContactAppointmentResource } from "../appointments/schema/resource"
 import { useChatStore } from "../chat/store/chat-store-provider"
@@ -48,10 +48,41 @@ export const ContactInboxPanel = ({
     null,
   )
 
+  // Guards `getContactAuthenticatedAPI` against out-of-order resolution:
+  // the initial fetch (below) and the auto-refresh convergence re-fetch
+  // (`onProfileUpdated`) can both be in flight for the same contact, and
+  // whichever request was issued LAST must win regardless of which settles
+  // first — otherwise a slow initial fetch resolving after the refresh
+  // patch would silently overwrite the just-applied name/avatar.
+  const requestSeqRef = useRef(0)
+
+  const fetchContactData = useCallback(
+    (contactId: string) => {
+      const seq = ++requestSeqRef.current
+      client.contactsAPIs
+        .getContactAuthenticatedAPI({ workspaceId, contactId })
+        .then((data) => {
+          if (requestSeqRef.current === seq) {
+            setContactData(data)
+          }
+        })
+        .catch(() => {
+          if (requestSeqRef.current === seq) {
+            setContactData(null)
+          }
+        })
+    },
+    [workspaceId],
+  )
+
   useAutoRefreshContactProfile({
     workspaceId,
     conversation: activeConversation,
     setContactData,
+    // Re-fetch the canonical contact once the auto-refresh applies an
+    // update, so `contactData` converges even if the initial fetch below is
+    // still in flight and resolves afterwards.
+    onProfileUpdated: fetchContactData,
   })
   const [coupons, setCoupons] = useState<
     Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>
@@ -64,6 +95,7 @@ export const ContactInboxPanel = ({
     const contactId = storeContact?.id
 
     if (!activeConversationId) {
+      requestSeqRef.current += 1
       setContactData(null)
       setCoupons([])
       setAppointments([])
@@ -71,20 +103,14 @@ export const ContactInboxPanel = ({
     }
 
     if (!contactId) {
+      requestSeqRef.current += 1
       setContactData(null)
       setCoupons([])
       setAppointments([])
       return
     }
 
-    client.contactsAPIs
-      .getContactAuthenticatedAPI({ workspaceId, contactId })
-      .then((data) => {
-        setContactData(data)
-      })
-      .catch(() => {
-        setContactData(null)
-      })
+    fetchContactData(contactId)
 
     client.couponsAPI
       .listContactCouponsAPI({ workspaceId, contactId })
@@ -95,7 +121,7 @@ export const ContactInboxPanel = ({
       .listContactAppointmentsAPI({ workspaceId, contactId })
       .then(setAppointments)
       .catch(() => setAppointments([]))
-  }, [activeConversationId, storeContact?.id, workspaceId])
+  }, [activeConversationId, storeContact?.id, workspaceId, fetchContactData])
 
   const accordionModules: AccordionModule[] = useMemo(() => {
     if (!contactData) {
