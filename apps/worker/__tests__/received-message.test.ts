@@ -1922,6 +1922,44 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     expect(mockResolveIntegrationContextFromContactInbox).not.toHaveBeenCalled()
   })
 
+  test("unknown/legacy channel string on the inbox row → message still persists, refresh not called, receiveMessage never throws", async () => {
+    // Simulates a legacy/unknown `Inbox.channel` value (a plain text()
+    // column) reaching the capability table — regression guard for
+    // resolveInboundProfileNameSource/hasOnDemandProfileApi throwing a
+    // TypeError on an unrecognized channel and rejecting the whole receive
+    // job (which BullMQ would then retry, replaying postback/quickReply/
+    // runRef enqueue for an already-saved message).
+    const legacyInbox = { ...fakeInbox, channel: "legacy" }
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: legacyInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "legacy",
+      contact: fakeContact,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    // `integrationType` (webhook dispatch key) stays a registered value —
+    // only `Inbox.channel` (the capability-table lookup key) is the
+    // legacy/unknown string, matching how a real corrupted/legacy row would
+    // reach `shouldRefreshContactProfile` independent of webhook routing.
+    await receiveMessage(baseProps)
+
+    expect(mockCreateOrUpdate).toHaveBeenCalled()
+    expect(mockContactProfileRefresh).not.toHaveBeenCalled()
+    expect(mockResolveIntegrationContextFromContactInbox).not.toHaveBeenCalled()
+  })
+
   test("tiktok nameless existing contact → refresh not called (inbound: null); a sourceId is never treated as a name", async () => {
     const tiktokInbox = { ...fakeInbox, channel: "tiktok" }
     vi.mocked(

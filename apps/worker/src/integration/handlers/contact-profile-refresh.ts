@@ -55,6 +55,31 @@ type InboundFetcherDeps = {
   incomingContact: IncomingContact
 }
 
+// Name-related fields only. `locale`/`timezone`/`gender` are deliberately
+// NOT forwarded here even when the webhook payload carries them: those
+// columns are only trustworthy once `finalizeContactProfile` has normalized
+// them at contact-creation time (locale normalization, phone-derived
+// timezone), and a later inbound message must never clobber that finalized
+// value with the raw, unnormalized payload value.
+const PAYLOAD_NAME_FIELDS = [
+  "firstName",
+  "lastName",
+  "avatar",
+] as const satisfies readonly (keyof IncomingContact)[]
+
+const pickPayloadNameFields = (
+  incomingContact: IncomingContact,
+): IncomingContact => {
+  const picked: IncomingContact = { sourceId: incomingContact.sourceId }
+  for (const field of PAYLOAD_NAME_FIELDS) {
+    const value = incomingContact[field]
+    if (value !== undefined) {
+      picked[field] = value
+    }
+  }
+  return picked
+}
+
 // Strategy table keyed by `ContactProfileNameSource` — exhaustive via
 // `Record`, so adding a source is one row, never a branch.
 const inboundProfileFetchers: Record<
@@ -62,10 +87,11 @@ const inboundProfileFetchers: Record<
   (deps: InboundFetcherDeps) => ContactProfileFetcher
 > = {
   // What the channel already parsed from the webhook — no network call.
+  // Filtered to name-related fields only; see `pickPayloadNameFields`.
   payload:
     ({ incomingContact }) =>
     () =>
-      Promise.resolve(incomingContact),
+      Promise.resolve(pickPayloadNameFields(incomingContact)),
   // Lazy: integration resolution (and the Graph call itself) only happens
   // when this callback runs, so a missing/disconnected integration surfaces
   // inside `contactProfileRefreshService.refresh` as `failed` + cooldown

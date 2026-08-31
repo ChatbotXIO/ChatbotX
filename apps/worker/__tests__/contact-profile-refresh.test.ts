@@ -165,6 +165,26 @@ describe("shouldRefreshContactProfile", () => {
       }),
     ).toBe(false)
   })
+
+  // `vi.mock("@chatbotx.io/business", async (importOriginal) => ...)` above
+  // is the REAL rules.ts, so this exercises the actual capability-table
+  // null-safety fix, not a mirror.
+  test("rule 1 (capability): unknown/legacy channel string → false, never throws", () => {
+    expect(() =>
+      shouldRefreshContactProfile({
+        channel: "legacy" as never,
+        incomingMessage: inboundTextMessage,
+        contact: namelessContact,
+      }),
+    ).not.toThrow()
+    expect(
+      shouldRefreshContactProfile({
+        channel: "legacy" as never,
+        incomingMessage: inboundTextMessage,
+        contact: namelessContact,
+      }),
+    ).toBe(false)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -223,7 +243,44 @@ describe("refreshExistingContactProfile", () => {
     const call = mockContactProfileRefresh.mock.calls[0]?.[0] as {
       fetchProfile: () => Promise<unknown>
     }
-    await expect(call.fetchProfile()).resolves.toBe(fakeIncomingContact)
+    // Picked to a new object (name-related fields only) — not the same
+    // reference as `fakeIncomingContact` — but equal in value here since
+    // this fixture only carries name-related fields to begin with.
+    await expect(call.fetchProfile()).resolves.toEqual(fakeIncomingContact)
+  })
+
+  test("payload source: strips locale/timezone/gender from the fetched profile, keeps name and avatar", async () => {
+    const apiInbox = { ...fakeInbox, channel: "api" }
+    const apiContactInbox = { ...fakeContactInbox, channel: "api" }
+    const rawIncomingContact = {
+      sourceId: "psid-123",
+      firstName: "Jane",
+      lastName: "Doe",
+      avatar: "public/space/ws-1/avatars/new",
+      // Carried on the webhook payload but must never overwrite the
+      // normalized values `finalizeContactProfile` already wrote at
+      // contact-creation time.
+      locale: "en_US",
+      timezone: "+07:00",
+      gender: "female",
+    }
+
+    await refreshExistingContactProfile({
+      inbox: apiInbox as typeof fakeInbox,
+      contactInbox: apiContactInbox as typeof fakeContactInbox,
+      incomingContact: rawIncomingContact,
+      contactId: "contact-1",
+    })
+
+    const call = mockContactProfileRefresh.mock.calls[0]?.[0] as {
+      fetchProfile: () => Promise<unknown>
+    }
+    await expect(call.fetchProfile()).resolves.toEqual({
+      sourceId: "psid-123",
+      firstName: "Jane",
+      lastName: "Doe",
+      avatar: "public/space/ws-1/avatars/new",
+    })
   })
 
   test("channel with no inbound source (e.g. webchat) → the service is never called", async () => {
