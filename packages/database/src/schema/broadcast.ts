@@ -65,6 +65,8 @@ export const broadcastModel = pgTable(
     subaction: text().notNull(),
     channel: text().notNull(),
     contactCount: integer(),
+    /** Set once every recipient row has been handed to its channel send job; terminal status is resolved after this. */
+    handoffCompletedAt: timestamp(timestampConfig),
   },
   (table) => [
     index("Broadcast_workspaceId_idx").using(
