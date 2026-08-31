@@ -395,7 +395,50 @@ describe("useAutoRefreshContactProfile", () => {
     expect(toastMocks.success).not.toHaveBeenCalled()
   })
 
-  test("two overlapping attempts (A then B before A resolves) each apply their own result independently", async () => {
+  test("transport failure (rejected promise) is swallowed silently — no state update, no unhandled rejection", async () => {
+    const unhandledRejections: unknown[] = []
+    const onUnhandledRejection = (reason: unknown) => {
+      unhandledRejections.push(reason)
+    }
+    process.on("unhandledRejection", onUnhandledRejection)
+
+    let rejectAction!: (reason: unknown) => void
+    const promise = new Promise((_resolve, reject) => {
+      rejectAction = reject
+    })
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+
+    const setContactData = render(
+      conversation({
+        contactId: "contact-transport-fail",
+        contactInboxes: [
+          {
+            id: "ci-transport-fail",
+            channel: "messenger",
+            lastMessageAt: null,
+          },
+        ],
+      }),
+    )
+
+    try {
+      await act(async () => {
+        rejectAction(new Error("network error"))
+        // Flush the microtask queue so `.catch()` runs — an unhandled
+        // rejection (if the fix regresses) would surface on this same tick.
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection)
+    }
+
+    expect(updateContactMock).not.toHaveBeenCalled()
+    expect(setContactData).not.toHaveBeenCalled()
+    expect(unhandledRejections).toHaveLength(0)
+  })
+
+  test("two overlapping attempts (A then B before A resolves): the store is patched for both, but the panel (now showing B) is only patched for B — A's result is stale for the panel", async () => {
     const deferredA = deferred<{
       data: { status: string; contact?: unknown }
     }>()
@@ -424,7 +467,8 @@ describe("useAutoRefreshContactProfile", () => {
     render(convA, setContactData)
     expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
 
-    // Switch to contact B before A resolves — B's refresh starts too.
+    // Switch to contact B before A resolves — B's refresh starts too. The
+    // panel now shows B, so `activeContactIdRef` moves off A.
     render(convB, setContactData)
     expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(2)
 
@@ -432,13 +476,17 @@ describe("useAutoRefreshContactProfile", () => {
     const contactB = { id: "contact-b", firstName: "Bob", lastName: null }
 
     // B resolves first (a real Graph/Telegram round trip has no fixed
-    // ordering), then A resolves — both must still be applied.
+    // ordering) — panel is still showing B, so both store and panel are
+    // patched.
     await act(async () => {
       deferredB.resolve({ data: { status: "updated", contact: contactB } })
       await Promise.resolve()
     })
     expect(updateContactMock).toHaveBeenCalledWith("contact-b", contactB)
 
+    // A resolves AFTER the switch — the store is still patched (it's keyed
+    // by contactId, independent of the panel), but the panel must NOT be
+    // overwritten with A's data since it has already moved on to B.
     await act(async () => {
       deferredA.resolve({ data: { status: "updated", contact: contactA } })
       await Promise.resolve()
@@ -446,7 +494,60 @@ describe("useAutoRefreshContactProfile", () => {
     expect(updateContactMock).toHaveBeenCalledWith("contact-a", contactA)
 
     expect(updateContactMock).toHaveBeenCalledTimes(2)
-    expect(setContactData).toHaveBeenCalledTimes(2)
+    // Only B's result reaches the panel-local patch.
+    expect(setContactData).toHaveBeenCalledTimes(1)
+    const updater = setContactData.mock.calls[0]?.[0] as (
+      prev: unknown,
+    ) => unknown
+    const prev = { id: "contact-b", avatar: null, tags: [] }
+    expect(updater(prev)).toEqual({ ...prev, ...contactB })
+  })
+
+  test("two overlapping attempts (A then B), A resolves BEFORE the switch: the panel is patched for A while it is still showing A", async () => {
+    const deferredA = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(deferredA.promise)
+
+    const setContactData = vi.fn()
+    const convA = conversation({
+      contactId: "contact-a2",
+      contactInboxes: [
+        { id: "ci-a2", channel: "messenger", lastMessageAt: null },
+      ],
+    })
+    const convB = conversation({
+      contactId: "contact-b2",
+      contact: { id: "contact-b2", firstName: "Present", lastName: null },
+      contactInboxes: [
+        { id: "ci-b2", channel: "messenger", lastMessageAt: null },
+      ],
+    })
+
+    // Open contact A — its refresh starts and stays in flight.
+    render(convA, setContactData)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
+
+    const contactA = { id: "contact-a2", firstName: "Alice", lastName: null }
+
+    // A resolves while the panel is STILL showing A.
+    await act(async () => {
+      deferredA.resolve({ data: { status: "updated", contact: contactA } })
+      await Promise.resolve()
+    })
+    expect(updateContactMock).toHaveBeenCalledWith("contact-a2", contactA)
+    expect(setContactData).toHaveBeenCalledTimes(1)
+    const updater = setContactData.mock.calls[0]?.[0] as (
+      prev: unknown,
+    ) => unknown
+    const prev = { id: "contact-a2", avatar: null, tags: [] }
+    expect(updater(prev)).toEqual({ ...prev, ...contactA })
+
+    // Switch to B (already named — not eligible for a new attempt) — no
+    // further patches should occur.
+    render(convB, setContactData)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
+    expect(setContactData).toHaveBeenCalledTimes(1)
   })
 
   test("does not update state after the owning component has unmounted", async () => {

@@ -66,6 +66,15 @@ const selectOnDemandInbox = (
  * whenever IT resolves, independent of any other attempt's order or
  * in-flight state. `isMountedRef` guards against applying a result that
  * resolves after the owning component has unmounted.
+ *
+ * `activeContactIdRef` guards the PANEL-local patch specifically: the store
+ * patch (`updateContact`) is safe to apply for any resolved contactId (it's
+ * keyed by id), but `setContactData` writes into the single contact the
+ * panel currently renders. Without the guard, contact A's refresh resolving
+ * AFTER the operator has already switched the panel to contact B would
+ * overwrite B's visible name/avatar with A's data. The ref is updated for
+ * every conversation change (not just eligible ones) so it always reflects
+ * whichever contact is currently on screen.
  */
 export function useAutoRefreshContactProfile(
   props: UseAutoRefreshContactProfileProps,
@@ -74,6 +83,7 @@ export function useAutoRefreshContactProfile(
   const attemptedContactIds = useRef<Set<string>>(new Set())
   const updateContact = useChatStore((state) => state.updateContact)
   const isMountedRef = useRef(true)
+  const activeContactIdRef = useRef<string | null>(null)
 
   // Re-arm on setup, not just clean up on teardown: React (with
   // reactStrictMode, apps/builder/next.config.ts) double-invokes effects in
@@ -90,6 +100,11 @@ export function useAutoRefreshContactProfile(
   }, [])
 
   useEffect(() => {
+    // Track which contact the panel is currently showing regardless of
+    // eligibility — a later-resolving attempt for a PREVIOUS contact must
+    // never patch `setContactData` once the panel has moved on.
+    activeContactIdRef.current = conversation?.contactId ?? null
+
     if (!(conversation?.contact && conversation.contactId)) {
       return
     }
@@ -110,16 +125,25 @@ export function useAutoRefreshContactProfile(
 
     refreshContactProfileAction(workspaceId, contactId, {
       contactInboxId: contactInbox.id,
-    }).then((result) => {
-      if (!isMountedRef.current) {
-        return
-      }
-      if (result?.data?.status !== "updated") {
-        return
-      }
-      const { contact: updatedContact } = result.data
-      updateContact(contactId, updatedContact)
-      setContactData((prev) => prev && { ...prev, ...updatedContact })
     })
+      .then((result) => {
+        if (!isMountedRef.current) {
+          return
+        }
+        if (result?.data?.status !== "updated") {
+          return
+        }
+        const { contact: updatedContact } = result.data
+        // Store patch: safe for any resolved contactId — the store is keyed
+        // by id, independent of what the panel currently shows.
+        updateContact(contactId, updatedContact)
+        // Panel-local patch: only if the panel is STILL showing this
+        // contact — an operator may have switched away before this attempt
+        // resolved (see the hook's doc comment on `activeContactIdRef`).
+        if (activeContactIdRef.current === contactId) {
+          setContactData((prev) => prev && { ...prev, ...updatedContact })
+        }
+      })
+      .catch(() => undefined) // transport failure (network/RSC) — silent, no state update, no retry
   }, [conversation, workspaceId, updateContact, setContactData])
 }
