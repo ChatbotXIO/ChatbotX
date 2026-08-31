@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "dcb73ba7-1b65-4579-8231-7fc4d19f4895",
-  "prevIds": ["cf8f7e8b-7d65-4c25-8b60-64b8cdbdcd0e"],
+  "id": "f9fd1f14-46b4-4af3-accc-2a3e0c31715b",
+  "prevIds": ["dcb73ba7-1b65-4579-8231-7fc4d19f4895"],
   "ddl": [
     {
       "values": [
@@ -24710,19 +24710,6 @@
       "table": "Workspace"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "tokenHash",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Workspace"
-    },
-    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -34053,27 +34040,6 @@
       "table": "Workspace"
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "tokenHash",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Workspace_tokenHash_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Workspace"
-    },
-    {
       "nameExplicit": false,
       "columns": ["shardId"],
       "schemaTo": "public",
@@ -39528,6 +39494,128 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "UserDeviceToken"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WorkspaceApiToken",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceApiToken_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WorkspaceApiToken_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "WorkspaceApiToken_pkey",
+      "schema": "public",
+      "table": "WorkspaceApiToken",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["tokenHash"],
+      "nullsNotDistinct": false,
+      "name": "WorkspaceApiToken_tokenHash_key",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
     },
     {
       "nameExplicit": true,

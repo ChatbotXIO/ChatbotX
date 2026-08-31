@@ -4,10 +4,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockUpdate,
+  mockReplaceToken,
   mockReturnValidationErrors,
   mockUpdateWorkspaceTokenRequest,
 } = vi.hoisted(() => ({
   mockUpdate: vi.fn().mockResolvedValue(undefined),
+  mockReplaceToken: vi.fn().mockResolvedValue(undefined),
   mockReturnValidationErrors: vi
     .fn()
     .mockReturnValue({ __validationError: true }),
@@ -24,6 +26,7 @@ vi.mock("@/lib/safe-action", () => {
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { update: mockUpdate },
+  workspaceApiTokenService: { replaceToken: mockReplaceToken },
 }))
 
 vi.mock("next-safe-action", () => ({
@@ -59,10 +62,11 @@ describe("updateWorkspaceTokenAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUpdate.mockResolvedValue(undefined)
+    mockReplaceToken.mockResolvedValue(undefined)
     mockReturnValidationErrors.mockReturnValue({ __validationError: true })
   })
 
-  test("rotation writes token and tokenHash together, computed via the real hashToken", async () => {
+  test("rotation writes Workspace.token and replace-writes the WorkspaceApiToken row", async () => {
     const token = `${WORKSPACE_ID}_newtoken`
     const expectedHash = await hashToken(token)
 
@@ -74,11 +78,17 @@ describe("updateWorkspaceTokenAction", () => {
     expect(mockUpdate).toHaveBeenCalledTimes(1)
     expect(mockUpdate).toHaveBeenCalledWith({
       id: WORKSPACE_ID,
-      data: { token, tokenHash: expectedHash },
+      data: { token },
+    })
+
+    expect(mockReplaceToken).toHaveBeenCalledTimes(1)
+    expect(mockReplaceToken).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      tokenHash: expectedHash,
     })
   })
 
-  test("rejects a token that does not start with the workspace id and does not call update", async () => {
+  test("rejects a token that does not start with the workspace id and writes nothing", async () => {
     const token = "other-prefix_token"
 
     await callAction({
@@ -87,6 +97,7 @@ describe("updateWorkspaceTokenAction", () => {
     })
 
     expect(mockUpdate).not.toHaveBeenCalled()
+    expect(mockReplaceToken).not.toHaveBeenCalled()
     expect(mockReturnValidationErrors).toHaveBeenCalledTimes(1)
 
     const [schema, errors] = mockReturnValidationErrors.mock.calls[0] as [

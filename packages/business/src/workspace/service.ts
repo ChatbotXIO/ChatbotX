@@ -38,7 +38,6 @@ type WorkspaceWhere = Partial<{
   id: string
   ownerId: string
   token: string
-  tokenHash: string
 }>
 type DueWorkspace = Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
 

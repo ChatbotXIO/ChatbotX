@@ -4,12 +4,14 @@ import { ORPCError } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  findWorkspaceByTokenHash,
   find,
   isWorkspaceScheduledForDeletion,
   loggerWarn,
   checkWorkspaceOwnerAccess,
   assertApiNotRateLimited,
 } = vi.hoisted(() => ({
+  findWorkspaceByTokenHash: vi.fn(),
   find: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
   loggerWarn: vi.fn(),
@@ -18,6 +20,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  workspaceApiTokenService: { findWorkspaceByTokenHash },
   workspaceService: { find },
   isWorkspaceScheduledForDeletion,
 }))
@@ -76,33 +79,34 @@ describe("workspaceTokenAuthMidddleware", () => {
   test("hash hit skips the plaintext lookup and does not warn", async () => {
     const token = "ws1_abc"
     const tokenHash = await hashToken(token)
-    find.mockImplementation(
-      async ({ where }: { where: Record<string, string> }) =>
-        where.tokenHash === tokenHash
-          ? { id: "ws-1", ownerId: "owner-1", tokenHash }
+    findWorkspaceByTokenHash.mockImplementation(
+      async ({ tokenHash: candidate }: { tokenHash: string }) =>
+        candidate === tokenHash
+          ? { id: "ws-1", ownerId: "owner-1" }
           : undefined,
     )
 
     const headers = new Headers({ Authorization: `Bearer ${token}` })
     await callMiddleware(headers, "GET")
 
-    expect(find).toHaveBeenCalledTimes(1)
+    expect(findWorkspaceByTokenHash).toHaveBeenCalledTimes(1)
+    expect(find).not.toHaveBeenCalled()
     expect(loggerWarn).not.toHaveBeenCalled()
   })
 
   test("hash miss falls back to plaintext lookup and warns", async () => {
     const token = "ws1_abc"
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
     find.mockImplementation(
       async ({ where }: { where: Record<string, string> }) =>
-        where.token === token
-          ? { id: "ws-1", ownerId: "owner-1", tokenHash: null }
-          : undefined,
+        where.token === token ? { id: "ws-1", ownerId: "owner-1" } : undefined,
     )
 
     const headers = new Headers({ Authorization: `Bearer ${token}` })
     await callMiddleware(headers, "GET")
 
-    expect(find).toHaveBeenCalledTimes(2)
+    expect(findWorkspaceByTokenHash).toHaveBeenCalledTimes(1)
+    expect(find).toHaveBeenCalledTimes(1)
     expect(loggerWarn).toHaveBeenCalledWith(
       { workspaceId: "ws-1" },
       "Workspace authenticated via legacy plaintext token",
@@ -110,6 +114,7 @@ describe("workspaceTokenAuthMidddleware", () => {
   })
 
   test("both hash and plaintext miss → INVALID_CHATBOT_TOKEN", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
     find.mockResolvedValue(undefined)
 
     const headers = new Headers({ Authorization: "Bearer nope" })
@@ -120,7 +125,10 @@ describe("workspaceTokenAuthMidddleware", () => {
   })
 
   test("GET procedure with a blocked owner still passes", async () => {
-    find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
+    findWorkspaceByTokenHash.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    })
     checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
@@ -130,7 +138,10 @@ describe("workspaceTokenAuthMidddleware", () => {
   })
 
   test("POST procedure with a blocked owner is rejected with trialExpired 403", async () => {
-    find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
+    findWorkspaceByTokenHash.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    })
     checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
@@ -142,7 +153,10 @@ describe("workspaceTokenAuthMidddleware", () => {
   })
 
   test("DELETE procedure with a blocked owner still passes (invariant #14)", async () => {
-    find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
+    findWorkspaceByTokenHash.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    })
     checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
@@ -153,7 +167,10 @@ describe("workspaceTokenAuthMidddleware", () => {
   })
 
   test("scheduled-deletion workspace is rejected with FORBIDDEN", async () => {
-    find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
+    findWorkspaceByTokenHash.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    })
     isWorkspaceScheduledForDeletion.mockReturnValue(true)
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
@@ -165,7 +182,10 @@ describe("workspaceTokenAuthMidddleware", () => {
   })
 
   test("rate-limited workspace token is rejected before the owner-access gate", async () => {
-    find.mockResolvedValue({ id: "ws-1", ownerId: "owner-1", tokenHash: "h" })
+    findWorkspaceByTokenHash.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+    })
     assertApiNotRateLimited.mockRejectedValue(
       Object.assign(new Error("Too many requests. Retry after 5s."), {
         code: "tooManyRequests",
@@ -183,10 +203,10 @@ describe("workspaceTokenAuthMidddleware", () => {
   test("query-param token warns about the deprecated ?token= usage", async () => {
     const token = "ws1_abc"
     const tokenHash = await hashToken(token)
-    find.mockImplementation(
-      async ({ where }: { where: Record<string, string> }) =>
-        where.tokenHash === tokenHash
-          ? { id: "ws-1", ownerId: "owner-1", tokenHash }
+    findWorkspaceByTokenHash.mockImplementation(
+      async ({ tokenHash: candidate }: { tokenHash: string }) =>
+        candidate === tokenHash
+          ? { id: "ws-1", ownerId: "owner-1" }
           : undefined,
     )
 

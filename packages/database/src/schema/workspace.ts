@@ -74,21 +74,15 @@ export const workspaceModel = pgTable(
         onDelete: "restrict",
         onUpdate: "cascade",
       }),
-    // Deprecated: legacy plaintext token. The tokenHash migration backfills
-    // this column's hash for every pre-existing row, so a null `tokenHash`
-    // here only means the row was written between deploying this code and
-    // running that migration — `workspaceTokenAuthMidddleware` falls back to
-    // this column for that gap only.
+    // Deprecated: legacy plaintext token, superseded by `WorkspaceApiToken`.
+    // `workspaceTokenAuthMidddleware` falls back to this column only for rows
+    // created between deploying the hashing code and backfilling the new
+    // table — remove once that fallback's warn log has been silent for a
+    // release.
     token: text(),
-    // SHA-256 hex digest of the workspace API token (`hashToken()` from
-    // `apps/builder/src/features/integration-api/lib/token-hash.ts`), written
-    // whenever the token is (re)generated and backfilled for existing rows by
-    // the `20260828025915_create_workspace_token_hash` migration.
-    tokenHash: text(),
   },
   (table) => [
     index("Workspace_tenantId_idx").on(table.tenantId),
     index("Workspace_scheduledDeletionAt_idx").on(table.scheduledDeletionAt),
-    index("Workspace_tokenHash_idx").on(table.tokenHash),
   ],
 )

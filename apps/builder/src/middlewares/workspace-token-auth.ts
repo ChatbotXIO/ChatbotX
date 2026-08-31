@@ -1,5 +1,6 @@
 import {
   isWorkspaceScheduledForDeletion,
+  workspaceApiTokenService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ORPCError } from "@orpc/server"
@@ -41,19 +42,21 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       )
     }
 
-    // Primary lookup is by hash. The plaintext fallback only exists for rows
-    // created between deploying this code and running the tokenHash migration
-    // (which backfills every existing token) — remove it, together with the
-    // `token` column, once the warn line below has been silent for a release.
+    // Primary lookup is by hash, via the WorkspaceApiToken table. The
+    // plaintext fallback only exists for rows created between deploying this
+    // code and running the backfill migration (which populates the table for
+    // every existing token) — remove it, together with the `token` column,
+    // once the warn line below has been silent for a release.
     const tokenHash = await hashToken(token)
+    const hashedLookup =
+      await workspaceApiTokenService.findWorkspaceByTokenHash({ tokenHash })
     const workspace =
-      (await workspaceService.find({ where: { tokenHash } })) ??
-      (await workspaceService.find({ where: { token } }))
+      hashedLookup ?? (await workspaceService.find({ where: { token } }))
     if (!workspace) {
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
 
-    if (!workspace.tokenHash) {
+    if (!hashedLookup) {
       logger.warn(
         { workspaceId: workspace.id },
         "Workspace authenticated via legacy plaintext token",

@@ -1,6 +1,9 @@
 "use server"
 
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  workspaceApiTokenService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
@@ -31,7 +34,11 @@ const updateWorkspaceToken = async ({
 
   await workspaceService.update({
     id: workspaceId,
-    data: { token, tokenHash: await hashToken(token) },
+    data: { token },
+  })
+  await workspaceApiTokenService.replaceToken({
+    workspaceId,
+    tokenHash: await hashToken(token),
   })
 }
 

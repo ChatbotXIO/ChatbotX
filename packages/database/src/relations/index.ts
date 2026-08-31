@@ -138,6 +138,7 @@ import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { whatsappSignupSessionRelations } from "./whatsapp-signup-session"
 import { workspaceRelations } from "./workspace"
+import { workspaceApiTokenRelations } from "./workspace-api-token"
 import { workspaceMemberRelations } from "./workspace-member"
 
 export const relations = {
@@ -157,6 +158,7 @@ export const relations = {
   ...accountRelations,
   ...userRelations,
   ...workspaceRelations,
+  ...workspaceApiTokenRelations,
   ...aiAgentRelations,
   ...aiAssistantRelations,
   ...aiConversationSourceRelations,
