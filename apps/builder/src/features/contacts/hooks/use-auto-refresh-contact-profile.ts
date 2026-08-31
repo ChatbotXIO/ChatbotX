@@ -75,12 +75,19 @@ export function useAutoRefreshContactProfile(
   const updateContact = useChatStore((state) => state.updateContact)
   const isMountedRef = useRef(true)
 
-  useEffect(
-    () => () => {
+  // Re-arm on setup, not just clean up on teardown: React (with
+  // reactStrictMode, apps/builder/next.config.ts) double-invokes effects in
+  // dev — setup, cleanup, setup — on initial mount. A cleanup-only effect
+  // would set this to `false` on the first cleanup and never set it back to
+  // `true`, silently disabling every `.then()` below for the component's
+  // entire lifetime in `next dev` (production is single-invoke and
+  // unaffected, but this must not ship either way).
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
       isMountedRef.current = false
-    },
-    [],
-  )
+    }
+  }, [])
 
   useEffect(() => {
     if (!(conversation?.contact && conversation.contactId)) {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act } from "react"
+import { act, StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { SetContactData } from "@/features/contacts/hooks/use-auto-refresh-contact-profile"
@@ -153,6 +153,30 @@ describe("useAutoRefreshContactProfile", () => {
           setContactData={setContactData}
           workspaceId="ws-1"
         />,
+      )
+    })
+    return setContactData
+  }
+
+  // React (with reactStrictMode: true, apps/builder/next.config.ts)
+  // double-invokes effects on initial mount in dev — setup, cleanup, setup —
+  // which the plain `render()` helper above never exercises (a bare
+  // createRoot().render() only single-invokes). Wrapping in <StrictMode>
+  // reproduces that double-invocation so a regression like a cleanup-only
+  // isMountedRef (never re-armed on the second setup) shows up here.
+  function renderStrict(
+    conv: TestConversation | null,
+    setContactData = vi.fn(),
+  ) {
+    act(() => {
+      root.render(
+        <StrictMode>
+          <HookHost
+            conv={conv}
+            setContactData={setContactData}
+            workspaceId="ws-1"
+          />
+        </StrictMode>,
       )
     })
     return setContactData
@@ -456,5 +480,62 @@ describe("useAutoRefreshContactProfile", () => {
     })
 
     expect(updateContactMock).not.toHaveBeenCalled()
+  })
+
+  test("under StrictMode, still applies a refresh that resolves after the double-invoked mount effects", async () => {
+    const { promise, resolve } = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+
+    const setContactData = renderStrict(
+      conversation({
+        contactId: "contact-strict",
+        contactInboxes: [
+          { id: "ci-strict", channel: "messenger", lastMessageAt: null },
+        ],
+      }),
+    )
+
+    const updatedContact = {
+      id: "contact-strict",
+      firstName: "Jane",
+      lastName: "Doe",
+    }
+
+    await act(async () => {
+      resolve({ data: { status: "updated", contact: updatedContact } })
+      await Promise.resolve()
+    })
+
+    // Regression guard: a cleanup-only `isMountedRef` (set to false on the
+    // StrictMode double-invoke's first cleanup and never re-armed) would
+    // silently drop this result for the rest of the mount's lifetime.
+    expect(updateContactMock).toHaveBeenCalledWith(
+      "contact-strict",
+      updatedContact,
+    )
+    expect(setContactData).toHaveBeenCalledTimes(1)
+  })
+
+  test("under StrictMode, fires the action exactly once per contact despite the double-invoked mount effect", () => {
+    renderStrict(
+      conversation({
+        contactId: "contact-strict-once",
+        contactInboxes: [
+          {
+            id: "ci-strict-once",
+            channel: "messenger",
+            lastMessageAt: null,
+          },
+        ],
+      }),
+    )
+
+    // attemptedContactIds.current.add(contactId) runs synchronously, before
+    // the async action call, in the FIRST of the two synchronous
+    // setup-cleanup-setup invocations — so the second setup's `.has()` check
+    // already sees it and bails, and the action fires only once.
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
   })
 })
