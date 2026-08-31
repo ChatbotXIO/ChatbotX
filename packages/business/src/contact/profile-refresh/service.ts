@@ -233,6 +233,21 @@ const refresh = async (
     return { status: "unavailable" }
   }
 
+  // Re-check immediately before the write: an operator (or a concurrent
+  // refresh) may have filled the name while `fetchProfile` was in flight —
+  // the initial `hasEmptyProfileName` check at the top of this function is
+  // now stale. Skip the write rather than clobbering a newer name; no
+  // cooldown (this attempt never actually failed).
+  const contactBeforeWrite = await contactService.findById({
+    workspaceId,
+    id: contactId,
+    accessScope,
+  })
+  if (contactBeforeWrite && !hasEmptyProfileName(contactBeforeWrite)) {
+    await discardUploadedAvatar(update.avatar)
+    return { status: "skipped", reason: "profileComplete" }
+  }
+
   try {
     const updatedContact = await applyContactProfile({
       workspaceId,

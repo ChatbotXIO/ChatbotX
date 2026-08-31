@@ -229,6 +229,21 @@ describe("capability table", () => {
       expect(contactProfileNameCapabilities[channel]).toBeDefined()
     }
   })
+
+  // `Inbox`/`ContactInbox`.`channel` is a plain `text()` column — callers
+  // cast `as ChannelType`, so a legacy/unknown row must resolve to "no
+  // source" instead of throwing on the missing table row.
+  test("resolveInboundProfileNameSource returns null for an unknown channel string, never throws", () => {
+    expect(() =>
+      resolveInboundProfileNameSource("legacy" as never),
+    ).not.toThrow()
+    expect(resolveInboundProfileNameSource("legacy" as never)).toBeNull()
+  })
+
+  test("hasOnDemandProfileApi returns false for an unknown channel string, never throws", () => {
+    expect(() => hasOnDemandProfileApi("legacy" as never)).not.toThrow()
+    expect(hasOnDemandProfileApi("legacy" as never)).toBe(false)
+  })
 })
 
 describe("COOLDOWN_BY_PROFILE_SOURCE", () => {
@@ -538,6 +553,32 @@ describe("contactProfileRefreshService.refresh", () => {
     expect(findByIdOrFailMock).toHaveBeenCalledWith(
       expect.objectContaining({ accessScope }),
     )
+  })
+
+  test("name filled between fetch and write → skipped/profileComplete, no update, uploaded avatar discarded, no cooldown", async () => {
+    // findByIdOrFailMock (top-of-function read) still sees the nameless
+    // contact from `beforeEach`; the re-check `findById` right before the
+    // write sees a name that landed WHILE `fetchProfile` was in flight (an
+    // operator edit, or a concurrent refresh).
+    findByIdMock.mockResolvedValueOnce({
+      firstName: "Jane",
+      lastName: "Doe",
+    })
+    const fetchProfile = vi.fn(async () => ({
+      firstName: "Jane",
+      avatar: "public/space/ws-1/avatars/new",
+    }))
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({ fetchProfile }),
+    )
+
+    expect(result).toEqual({ status: "skipped", reason: "profileComplete" })
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(deleteObjectMock).toHaveBeenCalledWith(
+      "public/space/ws-1/avatars/new",
+    )
+    expect(setNumberMock).not.toHaveBeenCalled()
   })
 })
 

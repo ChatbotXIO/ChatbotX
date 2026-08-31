@@ -44,15 +44,22 @@ export type OnDemandProfileChannel = {
     : never
 }[ChannelType] // "messenger" | "instagram" | "zalo" | "telegram"
 
+/**
+ * Null-safe against a runtime `channel` value outside `ChannelType` — `Inbox`
+ * / `ContactInbox`.`channel` is a plain `text()` column (callers cast `as
+ * ChannelType`), so a legacy/unknown row must resolve to "no source" instead
+ * of throwing a `TypeError` on the missing table row (matches the pre-table
+ * `canGetUserProfileIfNeeded`, which returned `false` for anything unknown).
+ */
 export const resolveInboundProfileNameSource = (
   channel: ChannelType,
 ): ContactProfileNameSource | null =>
-  contactProfileNameCapabilities[channel].inbound
+  contactProfileNameCapabilities[channel]?.inbound ?? null
 
 export const hasOnDemandProfileApi = (
   channel: ChannelType,
 ): channel is OnDemandProfileChannel =>
-  contactProfileNameCapabilities[channel].onDemand
+  contactProfileNameCapabilities[channel]?.onDemand ?? false
 
 /** Only channel-API attempts are rate-limited; payload attempts are free. */
 export const COOLDOWN_BY_PROFILE_SOURCE = {
