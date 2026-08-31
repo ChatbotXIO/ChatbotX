@@ -19,51 +19,21 @@ const mockResolveIntegrationContextFromContactInbox = vi.fn()
 const mockLoggerWarn = vi.fn()
 const mockLoggerDebug = vi.fn()
 
-// Mirror of the real capability table
-// (packages/business/src/contact/profile-refresh/rules.ts) — this module
-// only depends on the two lookup functions built from it, not its shape.
-const CAPABILITIES: Record<
-  string,
-  { inbound: "payload" | "channelApi" | null; onDemand: boolean }
-> = {
-  messenger: { inbound: "channelApi", onDemand: true },
-  instagram: { inbound: "channelApi", onDemand: true },
-  zalo: { inbound: "channelApi", onDemand: true },
-  telegram: { inbound: "channelApi", onDemand: true },
-  whatsapp: { inbound: "payload", onDemand: false },
-  tiktok: { inbound: null, onDemand: false },
-  api: { inbound: "payload", onDemand: false },
-  webchat: { inbound: null, onDemand: false },
-  smtp: { inbound: null, onDemand: false },
-  omnichannel: { inbound: null, onDemand: false },
-}
-
-vi.mock("@chatbotx.io/business", () => ({
-  contactProfileRefreshService: { refresh: mockContactProfileRefresh },
-  resolveInboundProfileNameSource: (channel: string) =>
-    CAPABILITIES[channel]?.inbound ?? null,
-  // Mirror of the real one-liner: empty only when BOTH names are blank.
-  hasEmptyProfileName: (contact: {
-    firstName?: string | null
-    lastName?: string | null
-  }) => !(contact.firstName?.trim() || contact.lastName?.trim()),
-}))
+// Real capability table + predicates (packages/business/src/contact/profile-refresh/rules.ts)
+// — only `contactProfileRefreshService.refresh` (the redis/db-touching part,
+// covered on its own in packages/business/__tests__/contact-profile-refresh.test.ts)
+// is mocked here, so this file can't drift from the real capability table.
+vi.mock("@chatbotx.io/business", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/business")>()
+  return {
+    ...actual,
+    contactProfileRefreshService: { refresh: mockContactProfileRefresh },
+  }
+})
 
 vi.mock("../src/services/integrations", () => ({
   resolveIntegrationContextFromContactInbox:
     mockResolveIntegrationContextFromContactInbox,
-}))
-
-// `isInboundConversationMessage` is extracted from received-message.ts and
-// reused here; mirrored rather than imported for real so this file stays
-// isolated from received-message.ts's much heavier import graph.
-vi.mock("../src/integration/handlers/received-message", () => ({
-  isInboundConversationMessage: (message: {
-    messageType?: string
-    type?: string
-  }) =>
-    message.messageType !== "outgoing" &&
-    (message.type ?? "message") === "message",
 }))
 
 vi.mock("../src/lib/logger", () => ({

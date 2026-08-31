@@ -11,13 +11,26 @@ import type { ContactInboxModel, InboxModel } from "@chatbotx.io/database/types"
 import type { IncomingContact, IncomingMessage } from "@chatbotx.io/sdk"
 import { logger } from "../../lib/logger"
 import { resolveIntegrationContextFromContactInbox } from "../../services/integrations"
-import { isInboundConversationMessage } from "./received-message"
 
 export type ProfileRefreshCandidate = {
   channel: ChannelType
   incomingMessage: IncomingMessage
   contact: ContactProfileName
 }
+
+// "Real inbound" = not an echo/outgoing send, and not a non-message row
+// (e.g. an `activity` reaction row) — owned here (not received-message.ts)
+// so this module's eligibility rule table below doesn't have to import from
+// received-message.ts, which itself imports this module's
+// `refreshExistingContactProfile`/`shouldRefreshContactProfile` (that cycle
+// used to only work because the binding was resolved lazily at call time).
+// received-message.ts imports this back for its own
+// `getMessageActivityTracking` so "inbound" means the same thing everywhere.
+export const isInboundConversationMessage = (
+  incomingMessage: IncomingMessage,
+): boolean =>
+  incomingMessage.messageType !== "outgoing" &&
+  (incomingMessage.type ?? "message") === "message"
 
 // Declarative rule table — every branch is a single-purpose predicate over
 // values already in scope; adding/removing a rule never touches call sites.

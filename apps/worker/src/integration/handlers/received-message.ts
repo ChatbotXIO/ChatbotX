@@ -93,6 +93,7 @@ import {
   isInstagramViaFacebook,
 } from "../../services/integrations"
 import {
+  isInboundConversationMessage,
   refreshExistingContactProfile,
   shouldRefreshContactProfile,
 } from "./contact-profile-refresh"
@@ -820,16 +821,6 @@ const persistNewMessageSideEffects = async (props: {
     await contactInboxService.invalidateTracking(trackingInvalidation)
   }
 }
-
-// "Real inbound" = not an echo/outgoing send, and not a non-message row
-// (e.g. an `activity` reaction row) — reused by the profile-refresh
-// eligibility table (`contact-profile-refresh.ts`) so "inbound" means the
-// same thing everywhere.
-export const isInboundConversationMessage = (
-  incomingMessage: IncomingMessage,
-): boolean =>
-  incomingMessage.messageType !== "outgoing" &&
-  (incomingMessage.type ?? "message") === "message"
 
 const getMessageActivityTracking = (props: {
   incomingMessage: IncomingMessage
