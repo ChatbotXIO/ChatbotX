@@ -34,9 +34,9 @@ vi.mock("../src/contact/service", () => ({
   },
 }))
 
-const updateLanguageMock = vi.fn(async () => null)
+const updateLanguageIfEmptyMock = vi.fn(async () => undefined)
 vi.mock("../src/contact-inbox/service", () => ({
-  contactInboxService: { updateLanguage: updateLanguageMock },
+  contactInboxService: { updateLanguageIfEmpty: updateLanguageIfEmptyMock },
 }))
 
 const logProviderErrorForChannelMock = vi.fn(async () => undefined)
@@ -105,7 +105,7 @@ beforeEach(() => {
   }))
   logProviderErrorForChannelMock.mockResolvedValue(undefined)
   deleteObjectMock.mockResolvedValue(undefined)
-  updateLanguageMock.mockResolvedValue(null)
+  updateLanguageIfEmptyMock.mockResolvedValue({ id: "inbox-1" })
 })
 
 // ─── rules.ts ────────────────────────────────────────────────────────────
@@ -749,12 +749,83 @@ describe("contactProfileRefreshService.refresh — channelApi locale/timezone no
       expect.anything(),
       expect.objectContaining({ locale: "VI-vn", timezone: "+07:00" }),
     )
-    expect(updateLanguageMock).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
+  })
+
+  test("blank channel timezone alongside a locale → locale is written, timezone is NOT (never falls back to a locale-region-derived value)", async () => {
+    // `finalizeContactProfile` would derive Asia/Ho_Chi_Minh from the
+    // vi_VN region when its own `timezone` input is blank — that fallback
+    // is correct at contact-creation time (no timezone at all yet) but
+    // wrong here: the channel DID return a `timezone` field, it was just
+    // blank, so per the strict "only fields the channel returned" reading
+    // nothing should be written for it.
+    const fetchProfile = vi.fn(async () => ({
+      firstName: "Jane",
+      locale: "vi_VN",
+      timezone: "   ",
+    }))
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({ fetchProfile }),
+    )
+
+    expect(result.status).toBe("updated")
+    const [, writtenUpdate] = updateIfProfileNameEmptyMock.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ]
+    expect(writtenUpdate.locale).toBe("vi_VN")
+    expect("timezone" in writtenUpdate).toBe(false)
+  })
+
+  test("locale present, no timezone key at all → timezone is never persisted", async () => {
+    const fetchProfile = vi.fn(async () => ({
+      firstName: "Jane",
+      locale: "vi_VN",
+    }))
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({ fetchProfile }),
+    )
+
+    expect(result.status).toBe("updated")
+    const [, writtenUpdate] = updateIfProfileNameEmptyMock.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ]
+    expect(writtenUpdate.locale).toBe("vi_VN")
+    expect("timezone" in writtenUpdate).toBe(false)
+  })
+
+  test("adversarial: a phone-like sourceId never seeds a phone-derived locale/timezone (no phoneHint wiring exists)", async () => {
+    // The profile carries no `locale`/`timezone` at all, but `sourceId`
+    // looks exactly like a phone number a `phoneHint` COULD resolve to a
+    // real locale/timezone at contact-creation time. The refresh path never
+    // threads any field into `finalizeContactProfile`'s `phoneHint` option,
+    // so this must come back with nothing invented, regardless of how
+    // phone-like the identifier looks.
+    const fetchProfile = vi.fn(async () => ({
+      sourceId: "+14155552671",
+      firstName: "Jane",
+    }))
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({ fetchProfile }),
+    )
+
+    expect(result.status).toBe("updated")
+    const [, writtenUpdate] = updateIfProfileNameEmptyMock.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ]
+    expect(writtenUpdate).toEqual({ firstName: "Jane" })
+    expect("locale" in writtenUpdate).toBe(false)
+    expect("timezone" in writtenUpdate).toBe(false)
   })
 })
 
 describe("contactProfileRefreshService.refresh — ContactInbox.language write", () => {
-  test("inbox language empty + fetched locale → updateLanguage called with the derived language", async () => {
+  test("inbox language empty + fetched locale → updateLanguageIfEmpty called with the derived language", async () => {
     const fetchProfile = vi.fn(async () => ({
       firstName: "Jane",
       locale: "vi_VN",
@@ -768,8 +839,8 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     )
 
     expect(result.status).toBe("updated")
-    expect(updateLanguageMock).toHaveBeenCalledTimes(1)
-    expect(updateLanguageMock).toHaveBeenCalledWith({
+    expect(updateLanguageIfEmptyMock).toHaveBeenCalledTimes(1)
+    expect(updateLanguageIfEmptyMock).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "contact-1",
       contactInboxId: "inbox-1",
@@ -777,7 +848,7 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     })
   })
 
-  test("inbox already has a language → updateLanguage is NOT called", async () => {
+  test("inbox already has a language → updateLanguageIfEmpty is NOT called (in-memory fast path)", async () => {
     const fetchProfile = vi.fn(async () => ({
       firstName: "Jane",
       locale: "vi_VN",
@@ -791,11 +862,11 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     )
 
     expect(result.status).toBe("updated")
-    expect(updateLanguageMock).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
   })
 
-  test("updateLanguage rejects → result is still updated, warn logged, never thrown", async () => {
-    updateLanguageMock.mockRejectedValueOnce(new Error("db down"))
+  test("updateLanguageIfEmpty rejects → result is still updated, warn logged, never thrown", async () => {
+    updateLanguageIfEmptyMock.mockRejectedValueOnce(new Error("db down"))
     const fetchProfile = vi.fn(async () => ({
       firstName: "Jane",
       locale: "vi_VN",
@@ -812,7 +883,32 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     expect(warnMock).toHaveBeenCalled()
   })
 
-  test("no locale/language returned by the channel → nothing derived, updateLanguage not called", async () => {
+  test("updateLanguageIfEmpty resolves undefined (lost the race — a concurrent write already set the language) → no clobber attempted, result stays updated", async () => {
+    // The WHERE-clause emptiness predicate inside the real
+    // `updateLanguageIfEmpty` is what makes this race-safe — simulated here
+    // by making it match zero rows, exactly as it would if an operator or
+    // another job set `ContactInbox.language` WHILE this refresh was in
+    // flight. There is no unconditional fallback write to reach for: the
+    // service only ever calls the conditional method.
+    updateLanguageIfEmptyMock.mockResolvedValueOnce(undefined)
+    const fetchProfile = vi.fn(async () => ({
+      firstName: "Jane",
+      locale: "vi_VN",
+    }))
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({
+        contactInbox: { ...CONTACT_INBOX, language: null },
+        fetchProfile,
+      }),
+    )
+
+    expect(result.status).toBe("updated")
+    expect(updateLanguageIfEmptyMock).toHaveBeenCalledTimes(1)
+    expect(warnMock).not.toHaveBeenCalled()
+  })
+
+  test("no locale/language returned by the channel → nothing derived, updateLanguageIfEmpty not called", async () => {
     const fetchProfile = vi.fn(async () => ({ firstName: "Jane" }))
 
     const result = await contactProfileRefreshService.refresh(
@@ -823,10 +919,45 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     )
 
     expect(result.status).toBe("updated")
-    expect(updateLanguageMock).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
   })
 
-  test("unavailable outcome (no usable name) → updateLanguage never called", async () => {
+  test("name already present (skipped/profileComplete before any fetch) → updateLanguageIfEmpty never called", async () => {
+    findByIdOrFailMock.mockResolvedValueOnce({
+      firstName: "Jane",
+      lastName: null,
+    })
+    const fetchProfile = vi.fn()
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({
+        contactInbox: { ...CONTACT_INBOX, language: null },
+        fetchProfile,
+      }),
+    )
+
+    expect(result).toEqual({ status: "skipped", reason: "profileComplete" })
+    expect(fetchProfile).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
+  })
+
+  test("cooling down (skipped/coolingDown, no fetch) → updateLanguageIfEmpty never called", async () => {
+    existsMock.mockResolvedValueOnce(true)
+    const fetchProfile = vi.fn()
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({
+        contactInbox: { ...CONTACT_INBOX, language: null },
+        fetchProfile,
+      }),
+    )
+
+    expect(result).toEqual({ status: "skipped", reason: "coolingDown" })
+    expect(fetchProfile).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
+  })
+
+  test("unavailable outcome (no usable name) → updateLanguageIfEmpty never called", async () => {
     const fetchProfile = vi.fn(async () => ({
       locale: "vi_VN",
       avatar: "public/space/ws-1/avatars/orphan",
@@ -840,10 +971,10 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     )
 
     expect(result).toEqual({ status: "unavailable" })
-    expect(updateLanguageMock).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
   })
 
-  test("failed outcome (fetch throws) → updateLanguage never called", async () => {
+  test("failed outcome (fetch throws) → updateLanguageIfEmpty never called", async () => {
     const fetchProfile = vi.fn(() => Promise.reject(new Error("graph error")))
 
     const result = await contactProfileRefreshService.refresh(
@@ -854,10 +985,28 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     )
 
     expect(result).toEqual({ status: "failed" })
-    expect(updateLanguageMock).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
   })
 
-  test("raced outcome (name filled concurrently) → updateLanguage never called", async () => {
+  test("contact write fails (updateIfProfileNameEmpty throws) → failed, updateLanguageIfEmpty never called", async () => {
+    updateIfProfileNameEmptyMock.mockRejectedValueOnce(new Error("db down"))
+    const fetchProfile = vi.fn(async () => ({
+      firstName: "Jane",
+      locale: "vi_VN",
+    }))
+
+    const result = await contactProfileRefreshService.refresh(
+      refreshInput({
+        contactInbox: { ...CONTACT_INBOX, language: null },
+        fetchProfile,
+      }),
+    )
+
+    expect(result).toEqual({ status: "failed" })
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
+  })
+
+  test("raced outcome (name filled concurrently) → updateLanguageIfEmpty never called", async () => {
     updateIfProfileNameEmptyMock.mockResolvedValueOnce(undefined)
     const fetchProfile = vi.fn(async () => ({
       firstName: "Jane",
@@ -872,7 +1021,7 @@ describe("contactProfileRefreshService.refresh — ContactInbox.language write",
     )
 
     expect(result).toEqual({ status: "skipped", reason: "profileComplete" })
-    expect(updateLanguageMock).not.toHaveBeenCalled()
+    expect(updateLanguageIfEmptyMock).not.toHaveBeenCalled()
   })
 })
 

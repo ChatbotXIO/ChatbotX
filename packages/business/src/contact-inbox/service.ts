@@ -28,6 +28,7 @@ import {
   isSourceUserIdKeyedIdentity,
 } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import { PROFILE_NAME_BLANK_CHARACTERS } from "../contact/profile-refresh/rules"
 import { logger } from "../logger"
 
 // Lower bound for message lookups/deletions scoped to a contact-inbox: the
@@ -415,6 +416,53 @@ class ContactInboxService extends BaseService {
     await this.invalidateTracking(invalidation)
 
     return invalidation
+  }
+
+  /**
+   * Race-safe variant of `updateLanguage`: the "language is currently
+   * empty" check is folded into the WHERE clause itself (NULL or blank
+   * after `btrim`, same blank-character set `ContactService.updateIfProfileNameEmpty`
+   * binds for `Contact.firstName`/`lastName`) instead of a separate read
+   * before the write — a language set concurrently (an operator edit,
+   * another job) between a caller's in-memory snapshot and this write can
+   * no longer be clobbered: the UPDATE simply matches zero rows. Returns
+   * the updated row, or `undefined` when nothing matched (raced, or the
+   * scope didn't match — either way, not a caller error).
+   */
+  async updateLanguageIfEmpty(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    contactId: string
+    contactInboxId: string
+    language: string
+  }): Promise<ContactInboxModel | undefined> {
+    const { tx = db, workspaceId, contactId, contactInboxId, language } = props
+
+    const [updated] = await tx
+      .update(contactInboxModel)
+      .set({ language })
+      .where(
+        and(
+          eq(contactInboxModel.id, contactInboxId),
+          eq(contactInboxModel.contactId, contactId),
+          this.workspaceScope(workspaceId),
+          sql`btrim(coalesce(${contactInboxModel.language}, ''), ${PROFILE_NAME_BLANK_CHARACTERS}) = ''`,
+        ),
+      )
+      .returning()
+
+    if (!updated) {
+      // Zero rows is the expected outcome of a lost race (the common case
+      // this method exists to guard against), not a scope problem — unlike
+      // `updateLanguage` (unconditional; a miss there always means scope),
+      // so this stays silent, mirroring `updateIfProfileNameEmpty`'s
+      // silent-on-race behavior for `Contact`.
+      return
+    }
+
+    await this.invalidateTracking(this.createTrackingInvalidation(contactId))
+
+    return updated
   }
 
   async updateTracking(props: {
