@@ -57,7 +57,7 @@ export const ContactInboxPanel = ({
   const requestSeqRef = useRef(0)
 
   const fetchContactData = useCallback(
-    (contactId: string, options?: { preserveOnError?: boolean }) => {
+    (contactId: string, preserveOnError = false) => {
       const seq = ++requestSeqRef.current
       client.contactsAPIs
         .getContactAuthenticatedAPI({ workspaceId, contactId })
@@ -73,7 +73,7 @@ export const ContactInboxPanel = ({
           // `contactData` with the fresh name/avatar — a transport blip on
           // this re-fetch must not wipe that out; keeping the patched state
           // is strictly better than showing nothing.
-          if (requestSeqRef.current === seq && !options?.preserveOnError) {
+          if (requestSeqRef.current === seq && !preserveOnError) {
             setContactData(null)
           }
         })
@@ -81,15 +81,19 @@ export const ContactInboxPanel = ({
     [workspaceId],
   )
 
+  // Re-fetch the canonical contact once the auto-refresh applies an update,
+  // so `contactData` converges even if the initial fetch below is still in
+  // flight and resolves afterwards.
+  const onProfileUpdated = useCallback(
+    (contactId: string) => fetchContactData(contactId, true),
+    [fetchContactData],
+  )
+
   useAutoRefreshContactProfile({
     workspaceId,
     conversation: activeConversation,
     setContactData,
-    // Re-fetch the canonical contact once the auto-refresh applies an
-    // update, so `contactData` converges even if the initial fetch below is
-    // still in flight and resolves afterwards.
-    onProfileUpdated: (contactId) =>
-      fetchContactData(contactId, { preserveOnError: true }),
+    onProfileUpdated,
   })
   const [coupons, setCoupons] = useState<
     Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>
@@ -101,15 +105,7 @@ export const ContactInboxPanel = ({
   useEffect(() => {
     const contactId = storeContact?.id
 
-    if (!activeConversationId) {
-      requestSeqRef.current += 1
-      setContactData(null)
-      setCoupons([])
-      setAppointments([])
-      return
-    }
-
-    if (!contactId) {
+    if (!(activeConversationId && contactId)) {
       requestSeqRef.current += 1
       setContactData(null)
       setCoupons([])

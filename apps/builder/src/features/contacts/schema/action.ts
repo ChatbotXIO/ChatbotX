@@ -123,13 +123,10 @@ export type RefreshContactProfileRequest = z.infer<
 // (`packages/business/src/contact/profile-refresh/service.ts`) plus
 // `channelNotCapable` — the one outcome the business service never produces
 // since `refresh()` never inspects the channel name.
-export const refreshContactProfileSkippedReasons = [
-  "profileComplete",
-  "coolingDown",
-  "channelNotCapable",
-] as const
 export type RefreshContactProfileSkippedReason =
-  (typeof refreshContactProfileSkippedReasons)[number]
+  | "profileComplete"
+  | "coolingDown"
+  | "channelNotCapable"
 
 /** Client contract for `refreshContactProfileAction` — `failed` and
  * `unavailable` are returned, never thrown. */

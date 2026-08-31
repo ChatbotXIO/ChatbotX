@@ -57,34 +57,17 @@ const selectOnDemandInbox = (
 
 /**
  * Fires `refreshContactProfileAction` at most once per `contactId` per mount
- * of the owning component (`ContactInboxPanel`) for a nameless contact whose
- * conversation has an on-demand-capable inbox. Silent — no toast on any
- * outcome; a `failed`/`unavailable` result never triggers a retry on another
- * inbox, and switching back to an already-attempted conversation while
- * mounted does not re-fire (only a remount resets the attempted set).
+ * for a nameless contact whose conversation has an on-demand-capable inbox.
+ * Silent — no toast, no retry on another inbox, no re-fire on switching back
+ * to an already-attempted conversation (only a remount resets that).
  *
- * The action is called directly (`refreshContactProfileAction(workspaceId,
- * contactId, input)`) rather than through `useAction` — a single `useAction`
- * instance is scoped to ONE bound action, so reusing it as `contactId`
- * changes within a mount would let next-safe-action's own
- * newer-request-wins tracking silently drop an EARLIER attempt's result once
- * a LATER attempt starts (e.g. contact A's refresh is still in flight when
- * the operator switches to contact B — A's `updated` result, already
- * persisted server-side, would never reach the UI). Calling the action
- * directly gives each attempt its own promise and its own closure over
- * `contactId`/`setContactData`, so every attempt's result is applied
- * whenever IT resolves, independent of any other attempt's order or
- * in-flight state. `isMountedRef` guards against applying a result that
- * resolves after the owning component has unmounted.
- *
- * `activeContactIdRef` guards the PANEL-local patch specifically: the store
- * patch (`updateContact`) is safe to apply for any resolved contactId (it's
- * keyed by id), but `setContactData` writes into the single contact the
- * panel currently renders. Without the guard, contact A's refresh resolving
- * AFTER the operator has already switched the panel to contact B would
- * overwrite B's visible name/avatar with A's data. The ref is updated for
- * every conversation change (not just eligible ones) so it always reflects
- * whichever contact is currently on screen.
+ * The action is called directly rather than through `useAction`, so each
+ * attempt gets its own promise/closure and applies its result independent of
+ * any other attempt's order — `useAction` is scoped to one bound action and
+ * would let a later attempt silently drop an earlier one's result.
+ * `isMountedRef` guards against applying a result after unmount;
+ * `activeContactIdRef` guards the panel-local patch against a stale contact
+ * resolving after the panel has switched to another one.
  */
 export function useAutoRefreshContactProfile(
   props: UseAutoRefreshContactProfileProps,
