@@ -5,7 +5,6 @@ import {
   hasOnDemandProfileApi,
 } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import { useAction } from "next-safe-action/hooks"
 import { useEffect, useRef } from "react"
 import type {
   ConversationContactInboxResource,
@@ -53,6 +52,20 @@ const selectOnDemandInbox = (
  * outcome; a `failed`/`unavailable` result never triggers a retry on another
  * inbox, and switching back to an already-attempted conversation while
  * mounted does not re-fire (only a remount resets the attempted set).
+ *
+ * The action is called directly (`refreshContactProfileAction(workspaceId,
+ * contactId, input)`) rather than through `useAction` — a single `useAction`
+ * instance is scoped to ONE bound action, so reusing it as `contactId`
+ * changes within a mount would let next-safe-action's own
+ * newer-request-wins tracking silently drop an EARLIER attempt's result once
+ * a LATER attempt starts (e.g. contact A's refresh is still in flight when
+ * the operator switches to contact B — A's `updated` result, already
+ * persisted server-side, would never reach the UI). Calling the action
+ * directly gives each attempt its own promise and its own closure over
+ * `contactId`/`setContactData`, so every attempt's result is applied
+ * whenever IT resolves, independent of any other attempt's order or
+ * in-flight state. `isMountedRef` guards against applying a result that
+ * resolves after the owning component has unmounted.
  */
 export function useAutoRefreshContactProfile(
   props: UseAutoRefreshContactProfileProps,
@@ -60,35 +73,24 @@ export function useAutoRefreshContactProfile(
   const { workspaceId, conversation, setContactData } = props
   const attemptedContactIds = useRef<Set<string>>(new Set())
   const updateContact = useChatStore((state) => state.updateContact)
+  const isMountedRef = useRef(true)
 
-  const contactId = conversation?.contactId ?? ""
-
-  const { execute } = useAction(
-    refreshContactProfileAction.bind(null, workspaceId, contactId),
-    {
-      onSuccess: ({ data }) => {
-        if (data?.status !== "updated") {
-          return
-        }
-        updateContact(contactId, data.contact)
-        setContactData((prev) => prev && { ...prev, ...data.contact })
-      },
+  useEffect(
+    () => () => {
+      isMountedRef.current = false
     },
+    [],
   )
 
-  // `execute` is rebuilt every render from the current workspaceId/contactId
-  // — depending on it would refire this effect on every render. The
-  // `attemptedContactIds` guard below is what actually prevents duplicate
-  // attempts, independent of the effect's own re-run cadence.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: execute intentionally excluded, see comment above
   useEffect(() => {
     if (!(conversation?.contact && conversation.contactId)) {
       return
     }
-    if (attemptedContactIds.current.has(conversation.contactId)) {
+    const { contactId, contact } = conversation
+    if (attemptedContactIds.current.has(contactId)) {
       return
     }
-    if (!hasEmptyProfileName(conversation.contact)) {
+    if (!hasEmptyProfileName(contact)) {
       return
     }
 
@@ -97,7 +99,20 @@ export function useAutoRefreshContactProfile(
       return
     }
 
-    attemptedContactIds.current.add(conversation.contactId)
-    execute({ contactInboxId: contactInbox.id })
-  }, [conversation])
+    attemptedContactIds.current.add(contactId)
+
+    refreshContactProfileAction(workspaceId, contactId, {
+      contactInboxId: contactInbox.id,
+    }).then((result) => {
+      if (!isMountedRef.current) {
+        return
+      }
+      if (result?.data?.status !== "updated") {
+        return
+      }
+      const { contact: updatedContact } = result.data
+      updateContact(contactId, updatedContact)
+      setContactData((prev) => prev && { ...prev, ...updatedContact })
+    })
+  }, [conversation, workspaceId, updateContact, setContactData])
 }

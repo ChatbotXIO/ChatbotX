@@ -25,7 +25,6 @@ export const contactInboxResource = createSelectSchema(contactInboxModel, {
     sourceUserId: true,
     sourceUsername: true,
     language: true,
-    lastMessageAt: true,
     lastIncomingMessageAt: true,
     contactLastReadAt: true,
   })

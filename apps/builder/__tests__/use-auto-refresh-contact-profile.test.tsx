@@ -7,9 +7,13 @@ import type { SetContactData } from "@/features/contacts/hooks/use-auto-refresh-
 
 // ---------------------------------------------------------------------------
 // useAutoRefreshContactProfile — selects the newest on-demand-capable inbox
-// for a nameless contact, fires refreshContactProfileAction at most once per
-// contactId per mount, and patches the store + panel contactData only on a
-// status:"updated" result. See
+// for a nameless contact, fires refreshContactProfileAction directly (not
+// via useAction — see the hook's own doc comment for why: a single
+// useAction instance reused across contacts as `conversation` changes would
+// let next-safe-action's newer-request-wins tracking silently drop an
+// earlier in-flight attempt's result) at most once per contactId per mount,
+// and patches the store + panel contactData only on a status:"updated"
+// result — independent of any other attempt's order or in-flight state. See
 // .superpowers/sdd/2026-08-31-messenger-ctm-profile-backfill/task-3-brief.md
 // ---------------------------------------------------------------------------
 
@@ -20,21 +24,10 @@ vi.mock("next-intl", () => ({
 const toastMocks = { error: vi.fn(), success: vi.fn() }
 vi.mock("sonner", () => ({ toast: toastMocks }))
 
-const executeMock = vi.fn()
-let latestOnSuccess: ((args: { data: unknown }) => void) | undefined
-
-vi.mock("next-safe-action/hooks", () => ({
-  useAction: (
-    _action: unknown,
-    options?: { onSuccess?: (args: { data: unknown }) => void },
-  ) => {
-    latestOnSuccess = options?.onSuccess
-    return { execute: executeMock, isPending: false }
-  },
-}))
-
+const refreshContactProfileActionMock = vi.fn()
 vi.mock("@/features/contacts/actions/refresh-contact-profile.action", () => ({
-  refreshContactProfileAction: { bind: () => "bound-refresh-action" },
+  refreshContactProfileAction: (...args: unknown[]) =>
+    refreshContactProfileActionMock(...args),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -94,6 +87,16 @@ const conversation = (
   ...overrides,
 })
 
+// A promise the test controls the settlement of, to simulate an in-flight
+// server action call.
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+  return { promise, resolve }
+}
+
 function HookHost({
   workspaceId,
   conv,
@@ -124,11 +127,15 @@ describe("useAutoRefreshContactProfile", () => {
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
-    executeMock.mockClear()
+    refreshContactProfileActionMock.mockReset()
+    // Default: a never-resolving promise, so tests that don't care about the
+    // result don't need to handle settlement.
+    refreshContactProfileActionMock.mockReturnValue(
+      new Promise(() => undefined),
+    )
     updateContactMock.mockClear()
     toastMocks.error.mockClear()
     toastMocks.success.mockClear()
-    latestOnSuccess = undefined
   })
 
   afterEach(() => {
@@ -161,8 +168,12 @@ describe("useAutoRefreshContactProfile", () => {
       }),
     )
 
-    expect(executeMock).toHaveBeenCalledTimes(1)
-    expect(executeMock).toHaveBeenCalledWith({ contactInboxId: "ci-1" })
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-1",
+      { contactInboxId: "ci-1" },
+    )
   })
 
   test("does not fire for a contact with either name present", () => {
@@ -176,7 +187,7 @@ describe("useAutoRefreshContactProfile", () => {
       }),
     )
 
-    expect(executeMock).not.toHaveBeenCalled()
+    expect(refreshContactProfileActionMock).not.toHaveBeenCalled()
   })
 
   test("does not fire for a non-capable channel", () => {
@@ -189,10 +200,13 @@ describe("useAutoRefreshContactProfile", () => {
       }),
     )
 
-    expect(executeMock).not.toHaveBeenCalled()
+    expect(refreshContactProfileActionMock).not.toHaveBeenCalled()
   })
 
-  test("with two messenger inboxes, picks the most recent lastMessageAt and does not fall back when the action returns failed", () => {
+  test("with two messenger inboxes, picks the most recent lastMessageAt and does not fall back when the action returns failed", async () => {
+    const { promise, resolve } = deferred<{ data: { status: string } }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+
     render(
       conversation({
         contactId: "contact-4",
@@ -211,16 +225,21 @@ describe("useAutoRefreshContactProfile", () => {
       }),
     )
 
-    expect(executeMock).toHaveBeenCalledTimes(1)
-    expect(executeMock).toHaveBeenCalledWith({ contactInboxId: "ci-newer" })
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledWith(
+      "ws-1",
+      "contact-4",
+      { contactInboxId: "ci-newer" },
+    )
 
-    act(() => {
-      latestOnSuccess?.({ data: { status: "failed" } })
+    await act(async () => {
+      resolve({ data: { status: "failed" } })
+      await Promise.resolve()
     })
 
     // No retry against the older inbox — a failed attempt is never retried
     // on a different inbox.
-    expect(executeMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
     expect(updateContactMock).not.toHaveBeenCalled()
   })
 
@@ -240,17 +259,17 @@ describe("useAutoRefreshContactProfile", () => {
     })
 
     render(conv1)
-    expect(executeMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
 
     // Re-render with the same conversation (new object reference).
     render({ ...conv1 })
-    expect(executeMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
 
     // Switch to a different (non-eligible) conversation, then back.
     render(conv2)
-    expect(executeMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
     render({ ...conv1 })
-    expect(executeMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
   })
 
   test("re-fires after a remount", () => {
@@ -262,7 +281,7 @@ describe("useAutoRefreshContactProfile", () => {
     })
 
     render(conv)
-    expect(executeMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
 
     act(() => {
       root.unmount()
@@ -271,13 +290,21 @@ describe("useAutoRefreshContactProfile", () => {
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
-    executeMock.mockClear()
+    refreshContactProfileActionMock.mockClear()
+    refreshContactProfileActionMock.mockReturnValue(
+      new Promise(() => undefined),
+    )
 
     render(conv)
-    expect(executeMock).toHaveBeenCalledTimes(1)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
   })
 
-  test("on updated, patches both the store conversation(s) and the panel contactData", () => {
+  test("on updated, patches both the store conversation(s) and the panel contactData", async () => {
+    const { promise, resolve } = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+
     const setContactData = render(
       conversation({
         contactId: "contact-8",
@@ -294,10 +321,9 @@ describe("useAutoRefreshContactProfile", () => {
       lastName: "Doe",
     }
 
-    act(() => {
-      latestOnSuccess?.({
-        data: { status: "updated", contact: updatedContact },
-      })
+    await act(async () => {
+      resolve({ data: { status: "updated", contact: updatedContact } })
+      await Promise.resolve()
     })
 
     expect(updateContactMock).toHaveBeenCalledWith("contact-8", updatedContact)
@@ -315,7 +341,12 @@ describe("useAutoRefreshContactProfile", () => {
     "skipped",
     "unavailable",
     "failed",
-  ] as const)("on %s, nothing changes and no toast", (status) => {
+  ] as const)("on %s, nothing changes and no toast", async (status) => {
+    const { promise, resolve } = deferred<{
+      data: { status: string; reason?: string }
+    }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+
     const setContactData = render(
       conversation({
         contactId: `contact-status-${status}`,
@@ -325,18 +356,105 @@ describe("useAutoRefreshContactProfile", () => {
       }),
     )
 
-    act(() => {
-      latestOnSuccess?.({
-        data:
-          status === "skipped"
-            ? { status, reason: "profileComplete" }
-            : { status },
-      })
+    await act(async () => {
+      resolve(
+        status === "skipped"
+          ? { data: { status, reason: "profileComplete" } }
+          : { data: { status } },
+      )
+      await Promise.resolve()
     })
 
     expect(updateContactMock).not.toHaveBeenCalled()
     expect(setContactData).not.toHaveBeenCalled()
     expect(toastMocks.error).not.toHaveBeenCalled()
     expect(toastMocks.success).not.toHaveBeenCalled()
+  })
+
+  test("two overlapping attempts (A then B before A resolves) each apply their own result independently", async () => {
+    const deferredA = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    const deferredB = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    refreshContactProfileActionMock
+      .mockReturnValueOnce(deferredA.promise)
+      .mockReturnValueOnce(deferredB.promise)
+
+    const setContactData = vi.fn()
+    const convA = conversation({
+      contactId: "contact-a",
+      contactInboxes: [
+        { id: "ci-a", channel: "messenger", lastMessageAt: null },
+      ],
+    })
+    const convB = conversation({
+      contactId: "contact-b",
+      contactInboxes: [
+        { id: "ci-b", channel: "messenger", lastMessageAt: null },
+      ],
+    })
+
+    // Open contact A — its refresh starts and stays in flight.
+    render(convA, setContactData)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
+
+    // Switch to contact B before A resolves — B's refresh starts too.
+    render(convB, setContactData)
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(2)
+
+    const contactA = { id: "contact-a", firstName: "Alice", lastName: null }
+    const contactB = { id: "contact-b", firstName: "Bob", lastName: null }
+
+    // B resolves first (a real Graph/Telegram round trip has no fixed
+    // ordering), then A resolves — both must still be applied.
+    await act(async () => {
+      deferredB.resolve({ data: { status: "updated", contact: contactB } })
+      await Promise.resolve()
+    })
+    expect(updateContactMock).toHaveBeenCalledWith("contact-b", contactB)
+
+    await act(async () => {
+      deferredA.resolve({ data: { status: "updated", contact: contactA } })
+      await Promise.resolve()
+    })
+    expect(updateContactMock).toHaveBeenCalledWith("contact-a", contactA)
+
+    expect(updateContactMock).toHaveBeenCalledTimes(2)
+    expect(setContactData).toHaveBeenCalledTimes(2)
+  })
+
+  test("does not update state after the owning component has unmounted", async () => {
+    const { promise, resolve } = deferred<{
+      data: { status: string; contact?: unknown }
+    }>()
+    refreshContactProfileActionMock.mockReturnValueOnce(promise)
+
+    render(
+      conversation({
+        contactId: "contact-unmount",
+        contactInboxes: [
+          { id: "ci-unmount", channel: "messenger", lastMessageAt: null },
+        ],
+      }),
+    )
+    expect(refreshContactProfileActionMock).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      root.unmount()
+    })
+
+    await act(async () => {
+      resolve({
+        data: {
+          status: "updated",
+          contact: { id: "contact-unmount", firstName: "Late" },
+        },
+      })
+      await Promise.resolve()
+    })
+
+    expect(updateContactMock).not.toHaveBeenCalled()
   })
 })

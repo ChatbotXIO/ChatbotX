@@ -35,8 +35,17 @@ export const adReferralResource = z.object({
 // routes that nest `contactInboxResource`) are unaffected. Both conversation
 // query paths (`listConversations` and `findConversation`) must map to this
 // exact shape or oRPC output validation fails.
+//
+// `lastMessageAt` is conversation-only for the same reason: the auto-refresh
+// profile hook (`useAutoRefreshContactProfile`) picks the most recently
+// active on-demand-capable inbox among a contact's `contactInboxes`, mirroring
+// the worker's `resolveMessengerUserContext`
+// (apps/worker/src/integration/handlers/messenger-context.ts) — but that
+// selection has no reason to leak into the public/workspace-token contact
+// APIs that nest the shared `contactInboxResource`.
 export const conversationContactInboxResource = contactInboxResource.extend({
   adReferral: adReferralResource.nullable(),
+  lastMessageAt: z.date().nullable(),
 })
 export type ConversationContactInboxResource = z.infer<
   typeof conversationContactInboxResource
