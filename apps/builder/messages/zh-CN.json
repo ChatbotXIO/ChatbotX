@@ -1161,7 +1161,8 @@
     "title": "电子邮件主题"
   },
   "errorLogs": {
-    "title": "错误日志"
+    "title": "错误日志",
+    "unknownContact": "未知联系人"
   },
   "errors": {
     "superAdminRequired": "您必须是工作区超级管理员才能执行此操作。"
@@ -2291,7 +2292,8 @@
       "placeholder": "输入提示"
     },
     "provider": {
-      "label": "提供商"
+      "label": "提供商",
+      "placeholder": "选择提供商"
     },
     "publishableKey": {
       "label": "可发布密钥"

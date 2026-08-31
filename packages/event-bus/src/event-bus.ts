@@ -49,14 +49,30 @@ export class BaseEventBus<
     TEventMap[keyof TEventMap]
   > = BaseEventListener<TEventMap[keyof TEventMap]>,
 > {
-  protected redis: Redis
+  private readonly resolveRedis: () => Redis
+  private resolvedRedis?: Redis
   protected config: EventBusConfig<TEventMap>
   private initialized = false
   private payloadHandler?: PayloadTransformer<TEventMap>
 
-  constructor(redis: Redis, config: EventBusConfig<TEventMap>) {
-    this.redis = redis
+  /**
+   * Accepts a factory as well as a live client so that constructing a bus has
+   * no side effects. The bus singletons are module-scope, and the root barrel
+   * re-exports every one of them, so eagerly calling `getRedisConnection()`
+   * would open connections merely because something imported `emit` — which
+   * broke any consumer's test that did not also mock `@chatbotx.io/redis`.
+   * `getRedisConnection` memoizes, so deferring changes nothing else.
+   */
+  constructor(redis: Redis | (() => Redis), config: EventBusConfig<TEventMap>) {
+    this.resolveRedis = typeof redis === "function" ? redis : () => redis
     this.config = config
+  }
+
+  protected get redis(): Redis {
+    if (!this.resolvedRedis) {
+      this.resolvedRedis = this.resolveRedis()
+    }
+    return this.resolvedRedis
   }
 
   getConfig() {
@@ -215,7 +231,7 @@ export class BaseEventBus<
   }
 
   cloneForGroup(groupName: string): BaseEventBus<TEventMap, TListener> {
-    return new BaseEventBus<TEventMap, TListener>(this.redis, {
+    return new BaseEventBus<TEventMap, TListener>(() => this.redis, {
       ...this.config,
       consumerGroup: groupName,
     })

@@ -14,6 +14,7 @@
     "./contact-sequence": "./src/contact-sequence/index.ts",
     "./coupon": "./src/coupon/index.ts",
     "./dynamic-image": "./src/dynamic-image/index.ts",
+    "./error-log": "./src/error-log/index.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",

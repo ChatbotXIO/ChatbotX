@@ -1361,7 +1361,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "المزوّد"
+      "label": "المزوّد",
+      "placeholder": "اختر المزوّد"
     },
     "prompt": {
       "label": "الموجّه",
@@ -3798,7 +3799,8 @@
     "at": "عند"
   },
   "errorLogs": {
-    "title": "سجلات الأخطاء"
+    "title": "سجلات الأخطاء",
+    "unknownContact": "جهة اتصال غير معروفة"
   },
   "developerAccessToken": {
     "title": "رمز الوصول إلى ChatbotX API",

@@ -270,6 +270,8 @@ vi.mock("@chatbotx.io/encryption", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  // `logProviderError` short-circuits on this, as `defaultQueue` does.
+  isNoRedisEnv: () => true,
   ChatJobAction: {
     sendChatMessage: "sendChatMessage",
   },

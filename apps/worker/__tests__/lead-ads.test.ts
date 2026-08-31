@@ -81,6 +81,11 @@ vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
+const mockLogProviderError = vi.fn()
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: (...args: unknown[]) => mockLogProviderError(...args),
+}))
+
 const { processLeadgen } = await import("../src/integration/handlers/lead-ads")
 
 // ---------------------------------------------------------------------------
@@ -93,6 +98,13 @@ const JOB = {
   leadgenId: "lead-1",
   formId: "form-1",
 }
+
+/**
+ * `defaultJobOptions.attempts` is 2. The handler only writes an `ErrorLog` row
+ * once the retries are spent, so the default fixture is the final attempt.
+ */
+const bullJob = (attemptsMade = 1) =>
+  ({ attemptsMade, opts: { attempts: 2 } }) as never
 
 const INBOX = { id: "inbox-1", workspaceId: "ws-1", channel: "messenger" }
 const INTEGRATION_ROW = {
@@ -144,7 +156,7 @@ describe("processLeadgen", () => {
     })
     mockFindMatching.mockResolvedValue(undefined)
 
-    await processLeadgen(JOB)
+    await processLeadgen(JOB, bullJob())
 
     expect(mockClaim).not.toHaveBeenCalled()
     expect(mockGetLead).not.toHaveBeenCalled()
@@ -163,7 +175,7 @@ describe("processLeadgen", () => {
     })
     mockClaim.mockResolvedValue(null)
 
-    await processLeadgen(JOB)
+    await processLeadgen(JOB, bullJob())
 
     expect(mockGetLead).not.toHaveBeenCalled()
     expect(mockDetect).not.toHaveBeenCalled()
@@ -180,7 +192,7 @@ describe("processLeadgen", () => {
     })
     mockGetLead.mockRejectedValue(new Error("graph 500"))
 
-    await expect(processLeadgen(JOB)).rejects.toThrow("graph 500")
+    await expect(processLeadgen(JOB, bullJob())).rejects.toThrow("graph 500")
 
     expect(mockRelease).toHaveBeenCalledWith({ id: "claim-1" })
     expect(mockIncrementLeadsHandled).not.toHaveBeenCalled()
@@ -199,9 +211,48 @@ describe("processLeadgen", () => {
     mockDetect.mockRejectedValue(new Error("mac quota exceeded"))
     mockRelease.mockRejectedValue(new Error("db down"))
 
-    await expect(processLeadgen(JOB)).rejects.toThrow("mac quota exceeded")
+    await expect(processLeadgen(JOB, bullJob())).rejects.toThrow(
+      "mac quota exceeded",
+    )
 
     expect(mockRelease).toHaveBeenCalledWith({ id: "claim-1" })
+  })
+
+  // `attempts: 2` means an ungated log would write two rows for one logical
+  // failure — the same double-count the terminal-only rule elsewhere avoids.
+  test("failure on a non-final attempt: no error-log row until retries are spent", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      fieldMapping: [],
+      flowId: "flow-9",
+    })
+    mockGetLead.mockRejectedValue(new Error("graph 500"))
+
+    await expect(processLeadgen(JOB, bullJob(0))).rejects.toThrow("graph 500")
+
+    expect(mockLogProviderError).not.toHaveBeenCalled()
+    expect(mockRelease).toHaveBeenCalledWith({ id: "claim-1" })
+  })
+
+  test("failure on the final attempt: writes one error-log row", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      fieldMapping: [],
+      flowId: "flow-9",
+    })
+    mockGetLead.mockRejectedValue(new Error("graph 500"))
+
+    await expect(processLeadgen(JOB, bullJob())).rejects.toThrow("graph 500")
+
+    expect(mockLogProviderError).toHaveBeenCalledTimes(1)
+    expect(mockLogProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "facebook-ads",
+        workspaceId: "ws-1",
+      }),
+    )
   })
 
   test("no inbox_url: skips contact creation, flow, and counter", async () => {
@@ -215,7 +266,7 @@ describe("processLeadgen", () => {
       leadWith([{ name: "email", values: ["a@b.com"] }]),
     )
 
-    await processLeadgen(JOB)
+    await processLeadgen(JOB, bullJob())
 
     expect(mockDetect).not.toHaveBeenCalled()
     expect(mockRunFlowNode).not.toHaveBeenCalled()
@@ -242,7 +293,7 @@ describe("processLeadgen", () => {
       ]),
     )
 
-    await processLeadgen(JOB)
+    await processLeadgen(JOB, bullJob())
 
     expect(mockSetRichSystemFieldByKey).toHaveBeenCalledWith(
       expect.objectContaining({ fieldName: "email", value: "a@b.com" }),
@@ -279,7 +330,7 @@ describe("processLeadgen", () => {
       ]),
     )
 
-    await processLeadgen(JOB)
+    await processLeadgen(JOB, bullJob())
 
     expect(mockSetRichSystemFieldByKey).toHaveBeenCalledWith(
       expect.objectContaining({ fieldName: "email" }),

@@ -179,7 +179,13 @@ export const handleMessageStatus = async (
 
     if (eventStatus === "failed") {
       eventLog.errorData = payload.error ?? {}
-      await emit(messageEventTypeSchema.enum["message:failed"], eventLog)
+      await emit(messageEventTypeSchema.enum["message:failed"], {
+        ...eventLog,
+        // The provider has already decided: an async delivery status is the
+        // final word on a send that left this worker long ago, so nothing will
+        // re-attempt it whatever the error body claims about retryability.
+        willRetry: false,
+      })
     }
 
     if (!message || (eventStatus !== "delivered" && eventStatus !== "failed")) {

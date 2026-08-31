@@ -24,6 +24,7 @@ import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
+import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
@@ -142,6 +143,12 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.purgeAutomationThrottle:
               await purgeAutomationThrottle()
+              return
+
+            // Not workspace-scoped, so no `isBlockedJob` guard (invariant 15
+            // excludes schedule crons other than the two broadcast handlers).
+            case ScheduleJobData.purgeErrorLogs:
+              await purgeErrorLogs()
               return
 
             case ScheduleJobData.refreshChannelTokens:

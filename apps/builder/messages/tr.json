@@ -1361,7 +1361,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Sağlayıcı"
+      "label": "Sağlayıcı",
+      "placeholder": "Sağlayıcı seçin"
     },
     "prompt": {
       "label": "İstem",
@@ -3798,7 +3799,8 @@
     "at": "Şu anda"
   },
   "errorLogs": {
-    "title": "Hata Günlükleri"
+    "title": "Hata Günlükleri",
+    "unknownContact": "Bilinmeyen kişi"
   },
   "developerAccessToken": {
     "title": "API Erişim Token'ı",

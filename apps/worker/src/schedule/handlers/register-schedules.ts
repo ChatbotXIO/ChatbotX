@@ -239,6 +239,22 @@ export const registerSchedules = async () => {
     },
   )
 
+  // Deliberately NOT in CLOUD_ONLY_SCHEDULERS — retention applies to every
+  // edition.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeErrorLogs,
+    {
+      pattern: "0 3 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeErrorLogs,
+      data: {
+        type: ScheduleJobData.purgeErrorLogs,
+        data: {},
+      },
+    },
+  )
+
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeWhatsappSignupSessions,
     {

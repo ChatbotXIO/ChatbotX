@@ -664,7 +664,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "提供商"
+      "label": "提供商",
+      "placeholder": "選擇提供商"
     },
     "prompt": {
       "label": "提示",
@@ -3831,7 +3832,8 @@
     "at": "在"
   },
   "errorLogs": {
-    "title": "錯誤日誌"
+    "title": "錯誤日誌",
+    "unknownContact": "未知聯絡人"
   },
   "developerAccessToken": {
     "title": "API 存取權杖",

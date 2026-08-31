@@ -11,7 +11,13 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   getRedisConnection: workerConfigMock.getRedisConnection,
 }))
 
-import { dashboardEventBus, emit, flowEventBus, messageEventBus } from "../src"
+import {
+  dashboardEventBus,
+  emit,
+  errorLogEventBus,
+  flowEventBus,
+  messageEventBus,
+} from "../src"
 import { logger } from "../src/logger"
 
 describe("emit", () => {
@@ -27,6 +33,9 @@ describe("emit", () => {
     const dashboardEmit = vi
       .spyOn(dashboardEventBus, "emit")
       .mockResolvedValue("dashboard-id")
+    const errorLogEmit = vi
+      .spyOn(errorLogEventBus, "emit")
+      .mockResolvedValue("error-log-id")
 
     await expect(emit("message:sent" as never, {} as never)).resolves.toBe(
       "message-id",
@@ -37,11 +46,15 @@ describe("emit", () => {
     await expect(
       emit("analytics:dashboard" as never, {} as never),
     ).resolves.toBe("dashboard-id")
+    await expect(
+      emit("error-log:recorded" as never, {} as never),
+    ).resolves.toBe("error-log-id")
     await expect(emit("unknown:event" as never, {} as never)).resolves.toBe("")
 
     expect(messageEmit).toHaveBeenCalledTimes(1)
     expect(flowEmit).toHaveBeenCalledTimes(1)
     expect(dashboardEmit).toHaveBeenCalledTimes(1)
+    expect(errorLogEmit).toHaveBeenCalledTimes(1)
   })
 
   test("logs synchronous emit routing failures", () => {

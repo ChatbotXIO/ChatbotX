@@ -66,7 +66,6 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       importMetaCatalogProducts: "importMetaCatalogProducts",
       runImport: "runImport",
       sendAuditLog: "sendAuditLog",
-      sendErrorLog: "sendErrorLog",
       sendAppointmentReminder: "sendAppointmentReminder",
       syncExternalCalendarEvent: "syncExternalCalendarEvent",
       syncChannelLabels: "syncChannelLabels",
@@ -140,10 +139,6 @@ vi.mock("../src/default/handlers/send-appointment-reminder", () => ({
     workerState.sendAppointmentReminder(...args),
 }))
 
-vi.mock("../src/default/handlers/send-error-log", () => ({
-  sendErrorLog: vi.fn(),
-}))
-
 vi.mock("../src/default/handlers/sync-external-calendar-event", () => ({
   syncExternalCalendarEvent: vi.fn(),
 }))
@@ -170,6 +165,28 @@ const buildBulkTagContactsJob = (): DefaultJobData => ({
     workspaceId: "workspace-1",
   },
 })
+
+type FailedListener = (
+  job: { data: DefaultJobData; id: string } | undefined,
+  err: Error,
+) => Promise<void> | void
+
+// Captured at module scope: `clearMocks: true` in the shared vitest config
+// wipes `workerOn.mock.calls` before each test, and the worker registers its
+// listeners once at import time.
+const failedListener = workerState.workerOn.mock.calls.find(
+  ([event]) => event === "failed",
+)?.[1] as FailedListener | undefined
+
+const triggerFailed = async (
+  job: { data: DefaultJobData; id: string } | undefined,
+  err: Error,
+): Promise<void> => {
+  if (!failedListener) {
+    throw new Error("Default worker never registered a `failed` listener")
+  }
+  await failedListener(job, err)
+}
 
 const processDefaultJob = async (
   data: DefaultJobData,
@@ -287,5 +304,21 @@ describe("default worker", () => {
         source: "default:bulkTagContacts",
       }),
     )
+  })
+
+  test("logs a failed job without recording a provider error", async () => {
+    // The catch-all does not record to ErrorLog: most default-queue jobs make
+    // no third-party calls, so a generic row would pollute a table that means
+    // "a third party failed". The six third-party jobs log explicitly instead.
+    const err = new Error("fetch failed")
+
+    // `bulkTagContacts` deliberately: it carries a `workspaceId`, which is
+    // exactly the condition the removed catch-all used to gate its write on.
+    await triggerFailed({ id: "job-1", data: buildBulkTagContactsJob() }, err)
+
+    expect(workerState.loggerError).toHaveBeenCalled()
+    // The error-log write now rides its own event bus, so the catch-all must
+    // not enqueue anything at all on the default queue.
+    expect(workerState.defaultQueueAdd).not.toHaveBeenCalled()
   })
 })

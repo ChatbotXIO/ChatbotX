@@ -1,5 +1,6 @@
 import { tiktokIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
@@ -68,6 +69,11 @@ async function refreshOne(integration: {
               integration.id,
               error instanceof Error ? error.message : String(error),
             )
+            await logProviderError({
+              provider: "tiktok",
+              workspaceId: integration.workspaceId,
+              error,
+            })
           }
         },
       }),

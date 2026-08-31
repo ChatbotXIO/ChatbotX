@@ -1,5 +1,6 @@
 import { integrationWhatsappService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   integration as integrationWhatsapp,
   type WhatsappAuthValue,
@@ -65,6 +66,11 @@ async function refreshOne(integration: {
               integration.id,
               error instanceof Error ? error.message : String(error),
             )
+            await logProviderError({
+              provider: "whatsapp",
+              workspaceId: integration.workspaceId,
+              error,
+            })
           }
         },
       }),

@@ -1334,7 +1334,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Nhà cung cấp"
+      "label": "Nhà cung cấp",
+      "placeholder": "Chọn nhà cung cấp"
     },
     "prompt": {
       "label": "Prompt",
@@ -3735,7 +3736,8 @@
     "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất."
   },
   "errorLogs": {
-    "title": "Nhật ký lỗi"
+    "title": "Nhật ký lỗi",
+    "unknownContact": "Liên hệ không xác định"
   },
   "auditLogs": {
     "title": "Nhật ký kiểm tra",

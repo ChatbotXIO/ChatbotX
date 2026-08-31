@@ -18,6 +18,7 @@ import {
   finalizeContactProfile,
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
+import { logProviderErrorForChannel } from "@chatbotx.io/business/error-log"
 import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
   type ContactSource,
@@ -1428,6 +1429,11 @@ const createNewContactAndContactInbox = async (props: {
           { error, sourceId: incomingContact.sourceId, channel: inbox.channel },
           "detectContactAndConversation: getProfile failed, creating contact without profile data",
         )
+        // No `contactId` — the contact does not exist yet at this point.
+        await logProviderErrorForChannel(inbox.channel, {
+          workspaceId: inbox.workspaceId,
+          error,
+        })
       }
     }
   }

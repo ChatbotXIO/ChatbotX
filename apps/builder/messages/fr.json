@@ -1287,7 +1287,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Fournisseur"
+      "label": "Fournisseur",
+      "placeholder": "Sélectionner un fournisseur"
     },
     "prompt": {
       "label": "Invite",
@@ -3798,7 +3799,8 @@
     "at": "À"
   },
   "errorLogs": {
-    "title": "Journaux des erreurs"
+    "title": "Journaux des erreurs",
+    "unknownContact": "Contact inconnu"
   },
   "developerAccessToken": {
     "title": "Jeton d’accès API",

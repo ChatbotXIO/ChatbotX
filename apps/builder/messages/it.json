@@ -664,7 +664,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Provider"
+      "label": "Provider",
+      "placeholder": "Seleziona provider"
     },
     "prompt": {
       "label": "Prompt",
@@ -3798,7 +3799,8 @@
     "at": "Alle"
   },
   "errorLogs": {
-    "title": "Registri degli errori"
+    "title": "Registri degli errori",
+    "unknownContact": "Contatto sconosciuto"
   },
   "developerAccessToken": {
     "title": "Token di accesso API",

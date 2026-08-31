@@ -1370,7 +1370,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Provider"
+      "label": "Provider",
+      "placeholder": "Select provider"
     },
     "prompt": {
       "label": "Prompt",
@@ -3909,7 +3910,8 @@
     "at": "At"
   },
   "errorLogs": {
-    "title": "Error Logs"
+    "title": "Error Logs",
+    "unknownContact": "Unknown contact"
   },
   "developerAccessToken": {
     "title": "API Access Token",

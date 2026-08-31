@@ -2064,7 +2064,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Furnizor"
+      "label": "Furnizor",
+      "placeholder": "Selectează furnizorul"
     },
     "prompt": {
       "label": "Instrucțiune",
@@ -3798,7 +3799,8 @@
     "at": "La"
   },
   "errorLogs": {
-    "title": "Jurnale de erori"
+    "title": "Jurnale de erori",
+    "unknownContact": "Contact necunoscut"
   },
   "developerAccessToken": {
     "title": "Token de acces API",

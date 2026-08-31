@@ -3,6 +3,7 @@ import {
   buildContext,
   integrationActiveCampaignService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ActiveCampaignSyncContactSchema } from "@chatbotx.io/flow-config"
 import {
@@ -148,6 +149,12 @@ export const syncActiveCampaignContact = async (
       { ...logContext, err: normalized },
       "ActiveCampaign sync-contact step failed",
     )
+    await logProviderError({
+      provider: "active-campaign",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error,
+    })
     return {
       status: "error",
       errorMessage: normalized.message,

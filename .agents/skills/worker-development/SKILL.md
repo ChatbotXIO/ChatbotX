@@ -261,9 +261,9 @@ before its job runs. `resolveWorkspaceId` uses a direct workspace fast path,
 then nested workspace data and integration identifiers, with payload fallbacks
 such as `conversationId` and `importId`.
 
-The guard excludes system/quota/tenancy work: `sendAuditLog`, `sendErrorLog`,
-and schedule cron jobs, except the two broadcast handlers that operate on
-workspace-owned broadcast work. Observability jobs stay unguarded so blocked
+The guard excludes system/quota/tenancy work: `sendAuditLog`, the
+`error-log:recorded` event-bus listener, and schedule cron jobs, except the two
+broadcast handlers that operate on workspace-owned broadcast work. Observability jobs stay unguarded so blocked
 jobs can still report failures.
 
 ## Kafka (Sequence Scheduler Pattern)
