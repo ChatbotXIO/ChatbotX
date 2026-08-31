@@ -4,6 +4,8 @@ import type {
 } from "@chatbotx.io/database/types"
 import { uploader } from "@chatbotx.io/filesystem"
 import type { IncomingContact } from "@chatbotx.io/sdk"
+import { contactInboxService } from "../../contact-inbox/service"
+import { finalizeContactProfile } from "../../contact-locale"
 import { logProviderErrorForChannel } from "../../error-log/service"
 import { logger } from "../../logger"
 import type { ContactAccessScope } from "../service"
@@ -40,7 +42,10 @@ export type ContactProfileRefreshResult =
 export type RefreshContactProfileInput = {
   workspaceId: string
   contactId: string
-  contactInbox: Pick<ContactInboxModel, "id" | "channel">
+  contactInbox: Pick<
+    ContactInboxModel,
+    "id" | "channel" | "contactId" | "language"
+  >
   source: ContactProfileNameSource // decides cooldown policy via COOLDOWN_BY_PROFILE_SOURCE
   accessScope?: ContactAccessScope // builder passes it; worker omits
   fetchProfile: ContactProfileFetcher // strategy — the app's channel call or the parsed payload
@@ -72,6 +77,72 @@ const discardUploadedAvatar = async (avatar: string | null | undefined) => {
     logger.warn(
       { error, avatar },
       "discardUploadedAvatar: failed to delete avatar object",
+    )
+  }
+}
+
+/**
+ * Applies the SAME `locale`/`timezone` normalization the contact-creation
+ * path applies (`finalizeContactProfile`), but WITHOUT `phoneHint` or
+ * `fallbackLocale` — the contact already exists, so a phone-derived or
+ * fallback guess must never overwrite real stored data. Only `channelApi`
+ * refreshes call this (invariant: `payload` stays name+avatar only — see
+ * `PAYLOAD_NAME_FIELDS` in the worker's fetcher). Each field is normalized
+ * independently: `locale`/`timezone` are only replaced in `update` when the
+ * channel actually returned that field (existing mapper rule preserved), and
+ * `language` is derived the same way creation derives it
+ * (`finalizeContactProfile` → `languageFromLocale`) even when the channel
+ * returned no locale at all (e.g. an explicit `language` field).
+ */
+const normalizeChannelApiProfile = (
+  profile: IncomingContact,
+  update: ContactProfileUpdate,
+): { update: ContactProfileUpdate; language: string | undefined } => {
+  const finalized = finalizeContactProfile({
+    locale: update.locale,
+    language: profile.language,
+    timezone: update.timezone,
+  })
+
+  return {
+    update: {
+      ...update,
+      ...(update.locale !== undefined && { locale: finalized.locale }),
+      ...(update.timezone !== undefined && { timezone: finalized.timezone }),
+    },
+    language: finalized.language ?? undefined,
+  }
+}
+
+/**
+ * Best-effort `ContactInbox.language` write, guarded so an operator- or
+ * channel-set language can never be clobbered by a refresh: only writes when
+ * the inbox's CURRENT language is empty/null (creation could set it
+ * unconditionally only because the row was new). A failure here is logged at
+ * `warn` and never changes the refresh result — the `updated` outcome and
+ * the write to `Contact` already succeeded.
+ */
+const writeContactInboxLanguageIfEmpty = async (props: {
+  workspaceId: string
+  contactInbox: Pick<ContactInboxModel, "id" | "contactId" | "language">
+  language: string | undefined
+}): Promise<void> => {
+  const { workspaceId, contactInbox, language } = props
+  if (!(language && !contactInbox.language)) {
+    return
+  }
+
+  try {
+    await contactInboxService.updateLanguage({
+      workspaceId,
+      contactId: contactInbox.contactId,
+      contactInboxId: contactInbox.id,
+      language,
+    })
+  } catch (error) {
+    logger.warn(
+      { error, contactInboxId: contactInbox.id, workspaceId },
+      "writeContactInboxLanguageIfEmpty: failed to update ContactInbox.language",
     )
   }
 }
@@ -275,6 +346,15 @@ const refresh = async (
     return { status: "unavailable" }
   }
 
+  // Only `channelApi` refreshes get the creation-path locale/timezone
+  // normalization and language derivation — `payload` stays name+avatar
+  // only (its raw values are exactly what this normalization protects
+  // against clobbering).
+  const { update: finalizedUpdate, language: finalizedLanguage } =
+    source === "channelApi"
+      ? normalizeChannelApiProfile(profile, update)
+      : { update, language: undefined }
+
   try {
     // The atomic conditional write folds the "name still empty" check into
     // the write itself instead of a separate read before the write — an
@@ -285,16 +365,21 @@ const refresh = async (
       workspaceId,
       contactId,
       accessScope,
-      update,
+      update: finalizedUpdate,
     })
     if (!updatedContact) {
       // Raced, not failed — no cooldown.
-      await discardUploadedAvatar(update.avatar)
+      await discardUploadedAvatar(finalizedUpdate.avatar)
       return { status: "skipped", reason: "profileComplete" }
     }
+    await writeContactInboxLanguageIfEmpty({
+      workspaceId,
+      contactInbox,
+      language: finalizedLanguage,
+    })
     return { status: "updated", contact: updatedContact }
   } catch (error) {
-    await discardUploadedAvatar(update.avatar)
+    await discardUploadedAvatar(finalizedUpdate.avatar)
     await recordProfileRefreshFailure({
       channel: contactInbox.channel,
       workspaceId,
