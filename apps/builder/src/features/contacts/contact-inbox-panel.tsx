@@ -57,7 +57,7 @@ export const ContactInboxPanel = ({
   const requestSeqRef = useRef(0)
 
   const fetchContactData = useCallback(
-    (contactId: string) => {
+    (contactId: string, options?: { preserveOnError?: boolean }) => {
       const seq = ++requestSeqRef.current
       client.contactsAPIs
         .getContactAuthenticatedAPI({ workspaceId, contactId })
@@ -67,7 +67,13 @@ export const ContactInboxPanel = ({
           }
         })
         .catch(() => {
-          if (requestSeqRef.current === seq) {
+          // On the INITIAL open fetch, a failure must clear stale data from
+          // the previous contact. On the auto-refresh convergence re-fetch
+          // (`preserveOnError: true`), the hook has already patched
+          // `contactData` with the fresh name/avatar — a transport blip on
+          // this re-fetch must not wipe that out; keeping the patched state
+          // is strictly better than showing nothing.
+          if (requestSeqRef.current === seq && !options?.preserveOnError) {
             setContactData(null)
           }
         })
@@ -82,7 +88,8 @@ export const ContactInboxPanel = ({
     // Re-fetch the canonical contact once the auto-refresh applies an
     // update, so `contactData` converges even if the initial fetch below is
     // still in flight and resolves afterwards.
-    onProfileUpdated: fetchContactData,
+    onProfileUpdated: (contactId) =>
+      fetchContactData(contactId, { preserveOnError: true }),
   })
   const [coupons, setCoupons] = useState<
     Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>

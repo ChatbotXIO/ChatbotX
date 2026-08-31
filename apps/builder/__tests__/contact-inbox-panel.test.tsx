@@ -53,11 +53,15 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
 // hook's own async `.then()` firing without re-driving the whole
 // refreshContactProfileAction plumbing (already covered in
 // use-auto-refresh-contact-profile.test.tsx).
-const hookCalls: Array<{ onProfileUpdated?: (contactId: string) => void }> = []
+type CapturedHookProps = {
+  onProfileUpdated?: (contactId: string) => void
+  setContactData?: (
+    updater: (prev: { firstName: string | null } | null) => unknown,
+  ) => void
+}
+const hookCalls: CapturedHookProps[] = []
 vi.mock("@/features/contacts/hooks/use-auto-refresh-contact-profile", () => ({
-  useAutoRefreshContactProfile: (props: {
-    onProfileUpdated?: (contactId: string) => void
-  }) => {
+  useAutoRefreshContactProfile: (props: CapturedHookProps) => {
     hookCalls.push(props)
   },
 }))
@@ -114,10 +118,17 @@ const { ContactInboxPanel } = await import(
 
 function deferred<T>() {
   let resolve!: (value: T) => void
-  const promise = new Promise<T>((res) => {
+  let reject!: (reason: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
     resolve = res
+    reject = rej
   })
-  return { promise, resolve }
+  // Attach a no-op catch handler so an intentionally-unresolved/rejected
+  // deferred never surfaces as an unhandled rejection warning in tests that
+  // never await this promise directly (the component under test consumes
+  // it via `.then()/.catch()`, which is what's actually under test).
+  promise.catch(() => undefined)
+  return { promise, resolve, reject }
 }
 
 const baseConversation = {
@@ -215,5 +226,65 @@ describe("ContactInboxPanel", () => {
     })
     detail = container.querySelector('[data-testid="contact-detail"]')
     expect(detail?.textContent).toBe("Jane")
+  })
+  test("refresh patch applied, then the convergence re-fetch REJECTS → the panel keeps the patched name (does not wipe to null)", async () => {
+    const initialFetch = deferred<{ firstName: string | null }>()
+    getContactMock.mockReturnValueOnce(initialFetch.promise) // the panel's own initial fetch on open
+
+    render()
+    expect(getContactMock).toHaveBeenCalledTimes(1)
+
+    // Initial fetch resolves with the (nameless) contact — this is what
+    // would have made the contact eligible for auto-refresh in real code.
+    await act(async () => {
+      initialFetch.resolve({ firstName: null })
+      await Promise.resolve()
+    })
+    let detail = container.querySelector('[data-testid="contact-detail"]')
+    expect(detail?.textContent).toBe("no-name")
+
+    const { setContactData, onProfileUpdated } = hookCalls.at(-1) ?? {}
+    expect(setContactData).toBeTypeOf("function")
+    expect(onProfileUpdated).toBeTypeOf("function")
+
+    const convergenceFetch = deferred<{ firstName: string | null }>()
+    getContactMock.mockReturnValueOnce(convergenceFetch.promise)
+
+    // Mirrors what the real (unmocked) hook does: patch `contactData`
+    // locally via `setContactData`, then call `onProfileUpdated` to kick
+    // off the convergence re-fetch.
+    act(() => {
+      setContactData?.((prev) => prev && { ...prev, firstName: "Jane" })
+      onProfileUpdated?.("contact-1")
+    })
+    expect(getContactMock).toHaveBeenCalledTimes(2)
+
+    detail = container.querySelector('[data-testid="contact-detail"]')
+    expect(detail?.textContent).toBe("Jane")
+
+    // The convergence re-fetch fails (network blip / RSC error) — the
+    // already-patched name must survive, not be wiped to null.
+    await act(async () => {
+      convergenceFetch.reject(new Error("network error"))
+      await Promise.resolve()
+    })
+    detail = container.querySelector('[data-testid="contact-detail"]')
+    expect(detail?.textContent).toBe("Jane")
+  })
+
+  test("initial fetch failure still clears the panel (pre-existing behaviour, unchanged)", async () => {
+    const initialFetch = deferred<{ firstName: string | null }>()
+    getContactMock.mockReturnValueOnce(initialFetch.promise)
+
+    render()
+    expect(getContactMock).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      initialFetch.reject(new Error("network error"))
+      await Promise.resolve()
+    })
+
+    const detail = container.querySelector('[data-testid="contact-detail"]')
+    expect(detail?.textContent).toBe("no-name")
   })
 })
