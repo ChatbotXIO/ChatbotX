@@ -10,8 +10,13 @@ import {
   isNotNull,
   isNull,
   type SQL,
+  sql,
 } from "@chatbotx.io/database/client"
 import {
+  type BroadcastScheduleType,
+  type BroadcastStatus,
+  type BroadcastTerminalStatus,
+  broadcastStatuses,
   type ChannelType,
   dmConversationUsesSourceId,
   requiresRecentInteractionWindow,
@@ -25,15 +30,23 @@ import {
   broadcastModel,
   contactInboxModel,
   contactModel,
+  contactsOnBroadcastsModel,
   conversationModel,
   integrationMessengerModel,
   integrationWhatsappModel,
   messengerMessageTemplateModel,
   whatsappMessageTemplateModel,
 } from "@chatbotx.io/database/schema"
-import { chunkById } from "@chatbotx.io/database/utils"
+import type {
+  BroadcastModel,
+  FlowModel,
+  IntegrationMessengerModel,
+  IntegrationWhatsappModel,
+} from "@chatbotx.io/database/types"
+import { chunkById, likeContains } from "@chatbotx.io/database/utils"
 import type { WaTemplateParams } from "@chatbotx.io/flow-config"
 import { BaseService } from "../base.service"
+import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
 import type {
   BroadcastAudienceInput,
@@ -43,6 +56,7 @@ import type {
 
 const DEFAULT_CHUNK_SIZE = 1000
 const OPTION_LIST_LIMIT = 500
+const CALENDAR_LIST_LIMIT = 500
 const DEFAULT_PREVIEW_PER_PAGE = 20
 const MAX_PREVIEW_PER_PAGE = 50
 
@@ -65,6 +79,17 @@ type BroadcastTemplateLookup = {
 type BroadcastTemplateLoader = (
   lookup: BroadcastTemplateLookup,
 ) => Promise<BroadcastTemplateDetail | null>
+
+export type BroadcastAwaitingFinalization = Pick<
+  BroadcastModel,
+  "id" | "workspaceId" | "contactCount"
+> & { handoffCompletedAt: Date }
+
+export type BroadcastCalendarRow = BroadcastModel & {
+  flow: Pick<FlowModel, "id" | "name"> | null
+  integrationWhatsapp: Pick<IntegrationWhatsappModel, "id" | "name"> | null
+  integrationMessenger: Pick<IntegrationMessengerModel, "id" | "name"> | null
+}
 
 class BroadcastService extends BaseService {
   async findByIdForResponse(input: {
@@ -115,6 +140,149 @@ class BroadcastService extends BaseService {
       )
       .orderBy(desc(broadcastModel.createdAt))
       .limit(OPTION_LIST_LIMIT)
+  }
+
+  /** `sending` broadcasts whose recipients were all handed off — the only ones finalizeBroadcasts may resolve. */
+  async listAwaitingFinalization(): Promise<BroadcastAwaitingFinalization[]> {
+    const rows = await db.query.broadcastModel.findMany({
+      where: {
+        status: broadcastStatuses.enum.sending,
+        handoffCompletedAt: { isNotNull: true },
+      },
+      columns: {
+        id: true,
+        workspaceId: true,
+        contactCount: true,
+        handoffCompletedAt: true,
+      },
+    })
+    return rows.filter(
+      (row): row is BroadcastAwaitingFinalization =>
+        row.handoffCompletedAt !== null,
+    )
+  }
+
+  /** Every recipient row has been handed to its channel send job. Idempotent. */
+  async markHandoffCompleted(input: { broadcastId: string }): Promise<boolean> {
+    const rows = await db
+      .update(broadcastModel)
+      .set({ handoffCompletedAt: new Date() })
+      .where(
+        and(
+          eq(broadcastModel.id, input.broadcastId),
+          eq(broadcastModel.status, broadcastStatuses.enum.sending),
+          isNull(broadcastModel.handoffCompletedAt),
+        ),
+      )
+      .returning({ id: broadcastModel.id })
+    return rows.length > 0
+  }
+
+  async countRecipientOutcomes(input: {
+    broadcastId: string
+  }): Promise<{ completed: number; failed: number }> {
+    const [row] = await db
+      .select({
+        completed:
+          sql<number>`count(*) filter (where ${contactsOnBroadcastsModel.deliveredAt} is not null or ${contactsOnBroadcastsModel.failedAt} is not null)`.mapWith(
+            Number,
+          ),
+        failed:
+          sql<number>`count(*) filter (where ${contactsOnBroadcastsModel.failedAt} is not null)`.mapWith(
+            Number,
+          ),
+      })
+      .from(contactsOnBroadcastsModel)
+      .where(eq(contactsOnBroadcastsModel.broadcastId, input.broadcastId))
+    return { completed: row?.completed ?? 0, failed: row?.failed ?? 0 }
+  }
+
+  /** Terminal transition; a lost race (no longer `sending`) or a missing hand-off is a no-op. */
+  async completeSending(input: {
+    broadcastId: string
+    status: BroadcastTerminalStatus
+  }): Promise<boolean> {
+    const rows = await db
+      .update(broadcastModel)
+      .set({ status: broadcastStatuses.enum[input.status] })
+      .where(
+        and(
+          eq(broadcastModel.id, input.broadcastId),
+          eq(broadcastModel.status, broadcastStatuses.enum.sending),
+          isNotNull(broadcastModel.handoffCompletedAt),
+        ),
+      )
+      .returning({ id: broadcastModel.id })
+    return rows.length > 0
+  }
+
+  /** Shared workspace + draft-status scope reused by scheduleDraft and deleteDraft. */
+  private draftScope(workspaceId: string, broadcastId: string) {
+    return and(
+      eq(broadcastModel.id, broadcastId),
+      eq(broadcastModel.workspaceId, workspaceId),
+      eq(broadcastModel.status, broadcastStatuses.enum.draft),
+    )
+  }
+
+  async scheduleDraft(input: {
+    workspaceId: string
+    broadcastId: string
+    schedulesType: BroadcastScheduleType
+    schedulesAt: Date
+  }): Promise<{ id: string }> {
+    const [row] = await db
+      .update(broadcastModel)
+      .set({
+        status: broadcastStatuses.enum.scheduled,
+        schedulesType: input.schedulesType,
+        schedulesAt: input.schedulesAt,
+      })
+      .where(this.draftScope(input.workspaceId, input.broadcastId))
+      .returning({ id: broadcastModel.id })
+
+    if (!row) {
+      throw new ChatbotXException("Broadcast is not a draft")
+    }
+    return row
+  }
+
+  async deleteDraft(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<void> {
+    const deleted = await db
+      .delete(broadcastModel)
+      .where(this.draftScope(input.workspaceId, input.broadcastId))
+      .returning({ id: broadcastModel.id })
+
+    if (deleted.length === 0) {
+      throw new ChatbotXException("Broadcast is not a draft")
+    }
+  }
+
+  async listForCalendar(input: {
+    workspaceId: string
+    from: Date
+    to: Date
+    status?: BroadcastStatus
+    name?: string
+  }): Promise<BroadcastCalendarRow[]> {
+    return await db.query.broadcastModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        schedulesAt: { gte: input.from, lte: input.to },
+        status: input.status,
+        name: input.name ? { ilike: likeContains(input.name) } : undefined,
+      },
+      with: {
+        flow: { columns: { id: true, name: true } },
+        integrationWhatsapp: { columns: { id: true, name: true } },
+        integrationMessenger: { columns: { id: true, name: true } },
+      },
+      orderBy: { schedulesAt: "asc" },
+      limit: CALENDAR_LIST_LIMIT,
+    })
   }
 
   private buildAudienceWhere(
