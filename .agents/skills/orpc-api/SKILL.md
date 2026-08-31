@@ -86,15 +86,15 @@ Each feature has `api/` directory with optional split:
 ```
 features/my-feature/
   api/
-    index.ts            → merges authenticated + workspace-token APIs
-    authenticated.ts    → session-based procedures
+    index.ts            → merges private (session) + workspace-token APIs
+    private.ts          → session-based procedures
     workspace-token.ts  → token-based procedures (for public API)
 ```
 
 ### api/index.ts
 
 ```typescript
-import { myFeatureAuthenticatedAPI } from "./authenticated"
+import { myFeatureAuthenticatedAPI } from "./private"
 import myFeatureWorkspaceTokenAPIs from "./workspace-token"
 
 export const myFeatureAPI = {
