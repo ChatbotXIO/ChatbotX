@@ -225,6 +225,39 @@ describe("refreshContactProfileAction — channel capability gate", () => {
   })
 })
 
+describe("refreshContactProfileAction — contactInbox forwarded to the service", () => {
+  test("forwards id, channel, contactId and the inbox's current language to contactProfileRefreshService.refresh", async () => {
+    mocks.findContactInboxByUncached.mockResolvedValueOnce({
+      id: "ci-1",
+      contactId: "contact-1",
+      channel: "messenger",
+      inboxId: "inbox-1",
+      sourceId: "source-1",
+      language: "en",
+    })
+    mocks.messengerFindByInboxIdForWorkspace.mockResolvedValueOnce({
+      id: "messenger-1",
+      auth: { accessToken: "tok" },
+    })
+    mocks.messengerRunChannelHandler.mockResolvedValueOnce({
+      firstName: "Jane",
+    })
+
+    await callAction({})
+
+    expect(mocks.refresh).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInbox: {
+          id: "ci-1",
+          channel: "messenger",
+          contactId: "contact-1",
+          language: "en",
+        },
+      }),
+    )
+  })
+})
+
 describe("refreshContactProfileAction — per-channel factory table", () => {
   test("findByInboxIdForWorkspace throwing (disconnected integration) returns failed, never thrown", async () => {
     mocks.findContactInboxByUncached.mockResolvedValueOnce({

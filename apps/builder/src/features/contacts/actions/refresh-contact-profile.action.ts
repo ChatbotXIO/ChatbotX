@@ -81,7 +81,12 @@ export const refreshContactProfileAction = workspaceActionClient
       const result = await contactProfileRefreshService.refresh({
         workspaceId,
         contactId,
-        contactInbox: { id: contactInbox.id, channel },
+        contactInbox: {
+          id: contactInbox.id,
+          channel,
+          contactId: contactInbox.contactId,
+          language: contactInbox.language,
+        },
         source: "channelApi",
         accessScope,
         fetchProfile,
