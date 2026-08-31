@@ -170,6 +170,50 @@ describe("checkApiRateLimit", () => {
 
     expect(results.at(-1)?.limited).toBe(true)
   })
+
+  test("expired fallback entries are evicted instead of accumulating forever", async () => {
+    const { memoryCounters } = await import(
+      "../src/lib/rate-limit/api-rate-limit"
+    )
+    const failingStore = {
+      setNumberIfNotExists: vi.fn().mockRejectedValue(new Error("redis down")),
+      incrementCounter: vi.fn().mockRejectedValue(new Error("redis down")),
+    }
+    // Far in the future so this test's clock outruns any sweep scheduled by
+    // earlier fallback tests (module-level state), letting the sweep run.
+    const base = Date.now() + 86_400_000
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(base)
+      await checkApiRateLimit({
+        scope: "channel-api-rate-limit",
+        key: "evict-old",
+        store: failingStore,
+        now: base,
+      })
+      expect(
+        [...memoryCounters.keys()].some((key) => key.includes("evict-old")),
+      ).toBe(true)
+
+      // Two windows later the first entry is expired; the next fallback hit
+      // must sweep it out rather than leave it behind for good.
+      vi.setSystemTime(base + 2 * WINDOW_MS)
+      await checkApiRateLimit({
+        scope: "channel-api-rate-limit",
+        key: "evict-new",
+        store: failingStore,
+        now: base + 2 * WINDOW_MS,
+      })
+      expect(
+        [...memoryCounters.keys()].some((key) => key.includes("evict-old")),
+      ).toBe(false)
+      expect(
+        [...memoryCounters.keys()].some((key) => key.includes("evict-new")),
+      ).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 describe("assertApiNotRateLimited", () => {

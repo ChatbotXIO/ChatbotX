@@ -1,5 +1,5 @@
-import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
-import { workspaceApiTokenModel } from "@chatbotx.io/database/schema"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { workspaceApiTokenRepository } from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { workspaceService } from "../workspace/service"
 
@@ -17,9 +17,7 @@ class WorkspaceApiTokenService extends BaseService {
   }) {
     const { tokenHash, tx = db } = props
 
-    const row = await tx.query.workspaceApiTokenModel.findFirst({
-      where: { tokenHash },
-    })
+    const row = await workspaceApiTokenRepository.findByTokenHash(tokenHash, tx)
     if (!row) {
       return
     }
@@ -33,11 +31,10 @@ class WorkspaceApiTokenService extends BaseService {
   }): Promise<boolean> {
     const { workspaceId, tx = db } = props
 
-    const row = await tx.query.workspaceApiTokenModel.findFirst({
-      where: { workspaceId },
-      columns: { id: true },
-    })
-    return row !== undefined
+    return await workspaceApiTokenRepository.existsByWorkspaceId(
+      workspaceId,
+      tx,
+    )
   }
 
   // Replace-write: single-token invariant until Track D adds scoped, named
@@ -51,12 +48,14 @@ class WorkspaceApiTokenService extends BaseService {
     const { workspaceId, tokenHash, tx = db } = props
 
     await tx.transaction(async (innerTx) => {
-      await innerTx
-        .delete(workspaceApiTokenModel)
-        .where(eq(workspaceApiTokenModel.workspaceId, workspaceId))
-      await innerTx
-        .insert(workspaceApiTokenModel)
-        .values({ workspaceId, tokenHash })
+      await workspaceApiTokenRepository.deleteByWorkspaceId(
+        workspaceId,
+        innerTx,
+      )
+      await workspaceApiTokenRepository.insert(
+        { workspaceId, tokenHash },
+        innerTx,
+      )
     })
 
     // Only when the transaction is service-owned — emitting inside a

@@ -5,16 +5,30 @@ import { logger } from "@/lib/log"
 const WINDOW_SECONDS = 10
 const REQUEST_LIMIT = 120
 const TOO_MANY_REQUESTS_STATUS = 429
-const memoryCounters = new Map<string, { count: number; expiresAt: number }>()
+// Exported for the eviction regression test only — never touch in app code.
+export const memoryCounters = new Map<
+  string,
+  { count: number; expiresAt: number }
+>()
 
 type RateLimitStore = Pick<
   typeof distributedStore,
   "incrementCounter" | "setNumberIfNotExists"
 >
 
+/**
+ * Closed set of rate-limit bucket names: the scope is joined verbatim into
+ * the store key, so a free-form string would let a typo silently split a
+ * bucket in two and disable the limit. Extend the union when adding a
+ * surface.
+ */
+export type ApiRateLimitScope =
+  | "channel-api-rate-limit"
+  | "workspace-token-rate-limit"
+  | "workspace-token-preauth-rate-limit"
+
 type ApiRateLimitInput = {
-  /** Rate-limit bucket name, e.g. "channel-api-rate-limit" or "workspace-token-rate-limit". */
-  scope: string
+  scope: ApiRateLimitScope
   /** The authenticated identity being limited (inbox id, workspace id, ...). */
   key: string
   /**
@@ -47,8 +61,28 @@ const secondsUntilNextWindow = (now: number, windowSeconds: number) => {
   return Math.ceil((windowMs - elapsed) / 1000)
 }
 
+// Expired fallback entries are never re-read (the window suffix is part of
+// the key), so without eviction a sustained store outage grows the map by
+// one entry per (scope, identity) per window — unbounded under an
+// unauthenticated flood. Sweep at most once per window to keep the cost of
+// a request bounded while capping the map at roughly the active key set.
+let nextMemorySweepAt = 0
+
+const sweepExpiredMemoryCounters = (now: number, windowSeconds: number) => {
+  if (now < nextMemorySweepAt) {
+    return
+  }
+  nextMemorySweepAt = now + windowSeconds * 1000
+  for (const [key, entry] of memoryCounters) {
+    if (entry.expiresAt <= now) {
+      memoryCounters.delete(key)
+    }
+  }
+}
+
 const incrementMemoryWindowCounter = (key: string, windowSeconds: number) => {
   const now = Date.now()
+  sweepExpiredMemoryCounters(now, windowSeconds)
   const current = memoryCounters.get(key)
   if (!current || current.expiresAt <= now) {
     memoryCounters.set(key, {

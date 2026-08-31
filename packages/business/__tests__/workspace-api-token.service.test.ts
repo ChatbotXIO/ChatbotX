@@ -1,30 +1,27 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const whereDelete = vi.fn(async () => undefined)
-const deleteFn = vi.fn(() => ({ where: whereDelete }))
-const valuesInsert = vi.fn(async () => undefined)
-const insert = vi.fn(() => ({ values: valuesInsert }))
-const findFirstApiToken = vi.fn(
-  async (): Promise<{ id: string; workspaceId: string } | undefined> =>
-    undefined,
+const findByTokenHash = vi.fn(
+  async (): Promise<{ id: string; workspaceId: string } | null> => null,
 )
+const existsByWorkspaceId = vi.fn(async (): Promise<boolean> => false)
+const deleteByWorkspaceId = vi.fn(async () => undefined)
+const insert = vi.fn(async () => undefined)
 
-const innerTx = { delete: deleteFn, insert }
-const transaction = vi.fn(
-  async (fn: (tx: typeof innerTx) => Promise<void>) => await fn(innerTx),
-)
-const db = {
-  transaction,
-  query: {
-    workspaceApiTokenModel: { findFirst: findFirstApiToken },
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  workspaceApiTokenRepository: {
+    findByTokenHash,
+    existsByWorkspaceId,
+    deleteByWorkspaceId,
+    insert,
   },
-}
+}))
+
+const transaction = vi.fn(
+  async (fn: (tx: typeof db) => Promise<void>) => await fn(db),
+)
+const db = { transaction }
 vi.mock("@chatbotx.io/database/client", () => ({
   db,
-  eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
-}))
-vi.mock("@chatbotx.io/database/schema", () => ({
-  workspaceApiTokenModel: { workspaceId: "workspaceId-column" },
 }))
 
 // BaseService pulls invalidateCacheByTags from the redis package; the token
@@ -50,21 +47,20 @@ const TOKEN_HASH = "a".repeat(64)
 
 beforeEach(() => {
   vi.clearAllMocks()
-  findFirstApiToken.mockResolvedValue(undefined)
+  findByTokenHash.mockResolvedValue(null)
+  existsByWorkspaceId.mockResolvedValue(false)
   workspaceService.findById.mockResolvedValue({ id: "ws-1", name: "Acme" })
 })
 
 describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
   test("resolves the workspace through the hash row", async () => {
-    findFirstApiToken.mockResolvedValue({ id: "t-1", workspaceId: "ws-1" })
+    findByTokenHash.mockResolvedValue({ id: "t-1", workspaceId: "ws-1" })
 
     const workspace = await workspaceApiTokenService.findWorkspaceByTokenHash({
       tokenHash: TOKEN_HASH,
     })
 
-    expect(findFirstApiToken).toHaveBeenCalledWith({
-      where: { tokenHash: TOKEN_HASH },
-    })
+    expect(findByTokenHash).toHaveBeenCalledWith(TOKEN_HASH, db)
     expect(workspaceService.findById).toHaveBeenCalledWith({
       id: "ws-1",
       tx: db,
@@ -84,12 +80,12 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
 
 describe("workspaceApiTokenService.hasToken", () => {
   test("true when a row exists, false otherwise", async () => {
-    findFirstApiToken.mockResolvedValueOnce({ id: "t-1", workspaceId: "ws-1" })
+    existsByWorkspaceId.mockResolvedValueOnce(true)
     await expect(
       workspaceApiTokenService.hasToken({ workspaceId: "ws-1" }),
     ).resolves.toBe(true)
 
-    findFirstApiToken.mockResolvedValueOnce(undefined)
+    existsByWorkspaceId.mockResolvedValueOnce(false)
     await expect(
       workspaceApiTokenService.hasToken({ workspaceId: "ws-1" }),
     ).resolves.toBe(false)
@@ -104,11 +100,14 @@ describe("workspaceApiTokenService.replaceToken", () => {
     })
 
     expect(transaction).toHaveBeenCalledTimes(1)
-    expect(deleteFn).toHaveBeenCalledTimes(1)
-    expect(valuesInsert).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      tokenHash: TOKEN_HASH,
-    })
+    expect(deleteByWorkspaceId).toHaveBeenCalledWith("ws-1", db)
+    expect(insert).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", tokenHash: TOKEN_HASH },
+      db,
+    )
+    expect(deleteByWorkspaceId.mock.invocationCallOrder[0]).toBeLessThan(
+      insert.mock.invocationCallOrder[0],
+    )
   })
 
   test("audits the rotation without leaking the digest", async () => {

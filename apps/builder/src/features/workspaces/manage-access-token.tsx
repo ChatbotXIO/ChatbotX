@@ -37,40 +37,41 @@ export default function ManageAccessTokenPage(
   const { workspaceId } = props
   const [hasToken, setHasToken] = useState(props.hasToken)
 
-  const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      updateWorkspaceTokenAction.bind(null, workspaceId),
-      zodResolver(updateWorkspaceTokenRequest),
-      {
-        actionProps: {
-          onSuccess: () => {
-            toast.success(
-              t("messages.updatedSuccess", {
-                feature: t("fields.developerAccessToken.label"),
-              }),
-            )
-            // Deliberately no form reset: the plaintext lives only in this
-            // form state now, so keep it on screen for the user to copy.
-            setHasToken(true)
-          },
-          onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError)
-            }
-
-            resetFormAndAction()
-          },
+  const { form, handleSubmitWithAction } = useHookFormAction(
+    updateWorkspaceTokenAction.bind(null, workspaceId),
+    zodResolver(updateWorkspaceTokenRequest),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success(
+            t("messages.updatedSuccess", {
+              feature: t("fields.developerAccessToken.label"),
+            }),
+          )
+          // Deliberately no form reset: the plaintext lives only in this
+          // form state now, so keep it on screen for the user to copy.
+          setHasToken(true)
         },
-        formProps: {
-          mode: "onChange",
-          defaultValues: {
-            token: "",
-          },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
+          // Deliberately no form reset here either: a transient save failure
+          // must not wipe the just-generated draft — the plaintext exists
+          // only in this form state, so clearing it would lose the token
+          // with no way to recover it. The user can retry the same draft.
         },
       },
-    )
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          token: "",
+        },
+      },
+    },
+  )
 
-  const { setValue, getValues } = form
+  const { setValue } = form
 
   const draftToken = form.watch("token")
 
@@ -84,9 +85,8 @@ export default function ManageAccessTokenPage(
 
   const [_, setCopied] = useCopyToClipboard()
   const onCopy = () => {
-    const token = getValues("token")
-    if (token) {
-      setCopied(token).then(() => {
+    if (draftToken) {
+      setCopied(draftToken).then(() => {
         toast.success(t("messages.copiedToClipboard"))
       })
     }
