@@ -19,6 +19,7 @@ import type { TagResource } from "../tags/schema/resource"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
+import { useAutoRefreshContactProfile } from "./hooks/use-auto-refresh-contact-profile"
 import type { GetContactResponse } from "./schema/query"
 
 type AccordionModule = {
@@ -37,15 +38,21 @@ export const ContactInboxPanel = ({
 
   const { conversations } = useChatStore((state) => state)
 
-  const storeContact = useMemo(
-    () =>
-      conversations.find((c) => c.id === activeConversationId)?.contact ?? null,
+  const activeConversation = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
   )
+  const storeContact = activeConversation?.contact ?? null
 
   const [contactData, setContactData] = useState<GetContactResponse | null>(
     null,
   )
+
+  useAutoRefreshContactProfile({
+    workspaceId,
+    conversation: activeConversation,
+    setContactData,
+  })
   const [coupons, setCoupons] = useState<
     Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>
   >([])

@@ -11,6 +11,7 @@ describe("contactInboxResource", () => {
       source: "inboundMessage",
       sourceId: "psid-1",
       language: "vi",
+      lastMessageAt: null,
       lastIncomingMessageAt: null,
       contactLastReadAt: null,
       inbox: { name: "Messenger Inbox" },

@@ -2,6 +2,7 @@ import { channelTypes, genderTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
+import type { ContactResource } from "./resource"
 
 export const contactPrefix = "sys"
 export const contactFieldPrefix = "cus"
@@ -109,3 +110,31 @@ export const getExportFileResponse = z.object({
   totalRecords: z.number().nullable(),
 })
 export type GetExportFileResponse = z.infer<typeof getExportFileResponse>
+
+export const refreshContactProfileRequest = z.object({
+  contactInboxId: zodBigintAsString(),
+})
+export type RefreshContactProfileRequest = z.infer<
+  typeof refreshContactProfileRequest
+>
+
+// Builder-level reasons a refresh produced no update. Mirrors
+// `ContactProfileRefreshResult["reason"]`
+// (`packages/business/src/contact/profile-refresh/service.ts`) plus
+// `channelNotCapable` — the one outcome the business service never produces
+// since `refresh()` never inspects the channel name.
+export const refreshContactProfileSkippedReasons = [
+  "profileComplete",
+  "coolingDown",
+  "channelNotCapable",
+] as const
+export type RefreshContactProfileSkippedReason =
+  (typeof refreshContactProfileSkippedReasons)[number]
+
+/** Client contract for `refreshContactProfileAction` — `failed` and
+ * `unavailable` are returned, never thrown. */
+export type RefreshContactProfileResult =
+  | { status: "updated"; contact: ContactResource }
+  | { status: "skipped"; reason: RefreshContactProfileSkippedReason }
+  | { status: "unavailable" }
+  | { status: "failed" }
