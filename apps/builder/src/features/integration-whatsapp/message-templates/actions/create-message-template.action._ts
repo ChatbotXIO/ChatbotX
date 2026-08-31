@@ -9,13 +9,13 @@ import slugify from "@sindresorhus/slugify"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { integrations } from "@/integration"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageTemplateRequest,
   createMessageTemplateRequest,
-} from "../schemas/create-message-templates-schema"
+} from "../schema/mutation"
 import { parseComponents } from "./utils"
 
 export const createMessageTemplateAction = workspaceActionClient
