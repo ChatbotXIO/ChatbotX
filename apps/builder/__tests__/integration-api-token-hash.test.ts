@@ -10,6 +10,17 @@ const LOWERCASE_HEX_PATTERN = /^[0-9a-f]+$/
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/
 
 describe("integration-api token hashing", () => {
+  test("pins the digest algorithm to plain SHA-256 hex", async () => {
+    // Known-answer fixture: sha256("ws-1.fixture"). Anchors hashToken() to
+    // the exact algorithm the create_workspace_api_token migration uses in
+    // SQL (encode(sha256(convert_to(token, 'UTF8')), 'hex')) — if either
+    // side ever drifts (salt, different digest, different encoding), every
+    // backfilled workspace token stops authenticating and this catches it.
+    await expect(hashToken("ws-1.fixture")).resolves.toBe(
+      "c398e4c2a5927596abf8442ec42853ef435b49bc5ce25aab22dcd7f8e1447ea9",
+    )
+  })
+
   test("stored tokenHash matches what the auth middleware computes for the token", async () => {
     // Arrange
     const { token, tokenHash } = await generateApiChannelToken()

@@ -24697,19 +24697,6 @@
       "table": "Workspace"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "token",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Workspace"
-    },
-    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,

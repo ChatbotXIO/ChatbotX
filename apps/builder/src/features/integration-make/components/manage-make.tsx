@@ -3,17 +3,18 @@
 import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { useTranslations } from "next-intl"
 import { SettingRow } from "@/components/setting-row"
-import { useClipboard } from "@/hooks/use-clipboard"
 
 export function ManageMake({
   inviteUrl,
-  workspaceToken,
+  hasWorkspaceToken,
 }: {
   inviteUrl?: string
-  workspaceToken?: string
+  // Tokens are stored hashed and shown once at generation, so this component
+  // can no longer read (or auto-copy) the plaintext — it only knows whether a
+  // token exists and points the user at the token section when it doesn't.
+  hasWorkspaceToken: boolean
 }) {
   const t = useTranslations()
-  const { handleCopy } = useClipboard()
 
   return (
     <SettingRow
@@ -25,17 +26,12 @@ export function ManageMake({
           <a
             className={buttonVariants({ size: "sm", variant: "secondary" })}
             href={inviteUrl}
-            onClick={() => {
-              if (workspaceToken) {
-                handleCopy(workspaceToken)
-              }
-            }}
             rel="noreferrer"
             target="_blank"
           >
             {t("actions.connect")}
           </a>
-          {!workspaceToken && (
+          {!hasWorkspaceToken && (
             <p className="text-muted-foreground text-xs">
               {t("make.setting.noWorkspaceToken")}
             </p>

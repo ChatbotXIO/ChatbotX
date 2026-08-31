@@ -1,5 +1,5 @@
 import { workspaceTokenAuthAPI } from "@/orpc"
-import { getWorkspacePublicResource } from "../schema/action"
+import { chatbotResource } from "../schema/resource"
 
 export const workspaceWorkspaceTokenAPIs = {
   getWorkspaceWorkspaceTokenAPI: workspaceTokenAuthAPI
@@ -9,7 +9,7 @@ export const workspaceWorkspaceTokenAPIs = {
       summary: "Get workspace",
       tags: ["Workspace"],
     })
-    .output(getWorkspacePublicResource)
+    .output(chatbotResource)
     .handler(({ context }) => context.workspace),
 }
 

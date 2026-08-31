@@ -7,26 +7,39 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { randomString } from "remeda"
+import { useState } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { SettingRow } from "@/components/setting-row"
+import { randomUrlSafeString } from "@/features/integration-api/lib/generate-credentials"
 import { updateWorkspaceTokenAction } from "./actions/update-workspace-token-action"
 import { updateWorkspaceTokenRequest } from "./schema/action"
-import type { WorkspaceResource } from "./schema/resource"
+
+// Not a translatable string — a visual mask standing in for the stored token,
+// which is hashed server-side and can never be displayed again.
+const STORED_TOKEN_MASK = "••••••••••••••••••••••••••••••••"
+
+// 32 CSPRNG bytes → 43 base64url chars; must satisfy the server-side
+// format check in update-workspace-token-action.ts.
+const TOKEN_SUFFIX_BYTES = 32
 
 type ManageAccessTokenPageProps = {
-  workspace: WorkspaceResource
+  workspaceId: string
+  // Only the SHA-256 digest is stored, so an existing token can never be
+  // re-displayed: the field starts empty (masked placeholder when a token
+  // exists) and a token is visible only right after client-side generation.
+  hasToken: boolean
 }
 export default function ManageAccessTokenPage(
   props: ManageAccessTokenPageProps,
 ) {
   const t = useTranslations()
-  const { workspace } = props
+  const { workspaceId } = props
+  const [hasToken, setHasToken] = useState(props.hasToken)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateWorkspaceTokenAction.bind(null, workspace.id),
+      updateWorkspaceTokenAction.bind(null, workspaceId),
       zodResolver(updateWorkspaceTokenRequest),
       {
         actionProps: {
@@ -36,7 +49,9 @@ export default function ManageAccessTokenPage(
                 feature: t("fields.developerAccessToken.label"),
               }),
             )
-            resetFormAndAction()
+            // Deliberately no form reset: the plaintext lives only in this
+            // form state now, so keep it on screen for the user to copy.
+            setHasToken(true)
           },
           onError: ({ error }) => {
             if (error.serverError) {
@@ -49,7 +64,7 @@ export default function ManageAccessTokenPage(
         formProps: {
           mode: "onChange",
           defaultValues: {
-            token: workspace.token || "",
+            token: "",
           },
         },
       },
@@ -57,8 +72,14 @@ export default function ManageAccessTokenPage(
 
   const { setValue, getValues } = form
 
+  const draftToken = form.watch("token")
+
   const onChangeToken = () => {
-    setValue("token", `${workspace.id}.${randomString(32)}`)
+    setValue(
+      "token",
+      `${workspaceId}.${randomUrlSafeString(TOKEN_SUFFIX_BYTES)}`,
+      { shouldValidate: true },
+    )
   }
 
   const [_, setCopied] = useCopyToClipboard()
@@ -79,9 +100,14 @@ export default function ManageAccessTokenPage(
       <Form {...form}>
         <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
           <div className="flex gap-2">
-            <InputField disabled name="token" />
+            <InputField
+              disabled
+              name="token"
+              placeholder={hasToken ? STORED_TOKEN_MASK : undefined}
+            />
 
             <Button
+              disabled={!draftToken}
               onClick={onCopy}
               size="icon"
               type="button"
@@ -91,6 +117,12 @@ export default function ManageAccessTokenPage(
             </Button>
           </div>
 
+          {draftToken ? (
+            <p className="text-muted-foreground text-xs">
+              {t("fields.api.tokenReveal.description")}
+            </p>
+          ) : null}
+
           <div className="flex justify-end">
             <Button
               onClick={onChangeToken}
@@ -98,9 +130,7 @@ export default function ManageAccessTokenPage(
               type="button"
               variant="secondary"
             >
-              {workspace.token
-                ? t("actions.regenerate")
-                : t("actions.generate")}
+              {hasToken ? t("actions.regenerate") : t("actions.generate")}
             </Button>
 
             <Button

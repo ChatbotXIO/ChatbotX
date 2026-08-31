@@ -74,12 +74,6 @@ export const workspaceModel = pgTable(
         onDelete: "restrict",
         onUpdate: "cascade",
       }),
-    // Deprecated: legacy plaintext token, superseded by `WorkspaceApiToken`.
-    // `workspaceTokenAuthMidddleware` falls back to this column only for rows
-    // created between deploying the hashing code and backfilling the new
-    // table — remove once that fallback's warn log has been silent for a
-    // release.
-    token: text(),
   },
   (table) => [
     index("Workspace_tenantId_idx").on(table.tenantId),

@@ -17,6 +17,12 @@ type ApiRateLimitInput = {
   scope: string
   /** The authenticated identity being limited (inbox id, workspace id, ...). */
   key: string
+  /**
+   * Requests allowed per window. Defaults to the per-identity limit; pass a
+   * higher ceiling for coarse pre-auth buckets (e.g. per-IP) that aggregate
+   * many identities behind one key.
+   */
+  limit?: number
   store?: RateLimitStore
   now?: number
 }
@@ -79,6 +85,7 @@ const incrementWindowCounter = async (
 export const checkApiRateLimit = async ({
   scope,
   key: identityKey,
+  limit = REQUEST_LIMIT,
   store = distributedStore,
   now = Date.now(),
 }: ApiRateLimitInput): Promise<ApiRateLimitResult> => {
@@ -88,14 +95,14 @@ export const checkApiRateLimit = async ({
 
   try {
     const count = await incrementWindowCounter(store, key, WINDOW_SECONDS)
-    return { limited: count > REQUEST_LIMIT, retryAfter }
+    return { limited: count > limit, retryAfter }
   } catch (error) {
     logger.warn(
       { err: error, scope, key: identityKey },
       "API rate limit store failed, using local fallback",
     )
     const count = incrementMemoryWindowCounter(key, WINDOW_SECONDS)
-    return { limited: count > REQUEST_LIMIT, retryAfter }
+    return { limited: count > limit, retryAfter }
   }
 }
 

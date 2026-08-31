@@ -1,3 +1,4 @@
+import { workspaceApiTokenService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import ManageAccessTokenPage from "@/features/workspaces/manage-access-token"
@@ -15,5 +16,7 @@ export default async function SettingsWorksaceTokenPage(props: {
     return notFound()
   }
 
-  return <ManageAccessTokenPage workspace={userAndWorkspace.targetWorkspace} />
+  const hasToken = await workspaceApiTokenService.hasToken({ workspaceId })
+
+  return <ManageAccessTokenPage hasToken={hasToken} workspaceId={workspaceId} />
 }

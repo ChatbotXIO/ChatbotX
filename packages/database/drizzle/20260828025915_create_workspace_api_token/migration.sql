@@ -17,4 +17,8 @@ SELECT
   ((EXTRACT(EPOCH FROM (clock_timestamp() - TIMESTAMPTZ '2004-02-01T00:00:00Z')) * 1000)::bigint << 22) + row_number() OVER (ORDER BY "id"),
   "id",
   encode(sha256(convert_to("token", 'UTF8')), 'hex'), now(), now()
-FROM "Workspace" WHERE "token" IS NOT NULL;
+FROM "Workspace" WHERE "token" IS NOT NULL;--> statement-breakpoint
+-- The hash table above is now the sole token store: dropping the plaintext
+-- column right after the backfill means a DB dump can no longer reveal any
+-- workspace API token. Tokens are shown exactly once, at generation time.
+ALTER TABLE "Workspace" DROP COLUMN "token";

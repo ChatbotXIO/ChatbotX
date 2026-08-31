@@ -3,12 +3,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockUpdate,
   mockReplaceToken,
   mockReturnValidationErrors,
   mockUpdateWorkspaceTokenRequest,
 } = vi.hoisted(() => ({
-  mockUpdate: vi.fn().mockResolvedValue(undefined),
   mockReplaceToken: vi.fn().mockResolvedValue(undefined),
   mockReturnValidationErrors: vi
     .fn()
@@ -25,7 +23,6 @@ vi.mock("@/lib/safe-action", () => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
-  workspaceService: { update: mockUpdate },
   workspaceApiTokenService: { replaceToken: mockReplaceToken },
 }))
 
@@ -57,28 +54,23 @@ type Handler = (args: {
 const callAction = updateWorkspaceTokenAction as unknown as Handler
 
 const WORKSPACE_ID = "ws-123"
+// 43 chars of base64url — what randomUrlSafeString(32) produces in the UI.
+const VALID_SUFFIX = "Ab1-_".repeat(8).padEnd(43, "Z").slice(0, 43)
 
 describe("updateWorkspaceTokenAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUpdate.mockResolvedValue(undefined)
     mockReplaceToken.mockResolvedValue(undefined)
     mockReturnValidationErrors.mockReturnValue({ __validationError: true })
   })
 
-  test("rotation writes Workspace.token and replace-writes the WorkspaceApiToken row", async () => {
-    const token = `${WORKSPACE_ID}_newtoken`
+  test("rotation persists only the token digest via replaceToken", async () => {
+    const token = `${WORKSPACE_ID}.${VALID_SUFFIX}`
     const expectedHash = await hashToken(token)
 
     await callAction({
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: { token },
-    })
-
-    expect(mockUpdate).toHaveBeenCalledTimes(1)
-    expect(mockUpdate).toHaveBeenCalledWith({
-      id: WORKSPACE_ID,
-      data: { token },
     })
 
     expect(mockReplaceToken).toHaveBeenCalledTimes(1)
@@ -89,14 +81,13 @@ describe("updateWorkspaceTokenAction", () => {
   })
 
   test("rejects a token that does not start with the workspace id and writes nothing", async () => {
-    const token = "other-prefix_token"
+    const token = `other-prefix.${VALID_SUFFIX}`
 
     await callAction({
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: { token },
     })
 
-    expect(mockUpdate).not.toHaveBeenCalled()
     expect(mockReplaceToken).not.toHaveBeenCalled()
     expect(mockReturnValidationErrors).toHaveBeenCalledTimes(1)
 
@@ -107,5 +98,25 @@ describe("updateWorkspaceTokenAction", () => {
     expect(schema).toBe(mockUpdateWorkspaceTokenRequest)
     expect(errors).toHaveProperty("_errors")
     expect(errors).toHaveProperty("token._errors")
+  })
+
+  test("rejects a short, brute-forceable suffix even with the right prefix", async () => {
+    await callAction({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: { token: `${WORKSPACE_ID}.1234` },
+    })
+
+    expect(mockReplaceToken).not.toHaveBeenCalled()
+    expect(mockReturnValidationErrors).toHaveBeenCalledTimes(1)
+  })
+
+  test("rejects a suffix with characters outside the base64url alphabet", async () => {
+    await callAction({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: { token: `${WORKSPACE_ID}.${"$".repeat(43)}` },
+    })
+
+    expect(mockReplaceToken).not.toHaveBeenCalled()
+    expect(mockReturnValidationErrors).toHaveBeenCalledTimes(1)
   })
 })

@@ -2,6 +2,8 @@ import { index, pgTable, text, unique } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { workspaceModel } from "./workspace"
 
+// Sole store for workspace API tokens — only the SHA-256 digest is persisted,
+// so a token is recoverable exactly once, at generation time in the browser.
 // One row per workspace today (replace-write on regeneration — see
 // `workspaceApiTokenService.replaceToken`). Track D adds `name`, `scopes`,
 // `prefix`, `expiresAt`, `createdBy`, `lastUsedAt` as additive columns and

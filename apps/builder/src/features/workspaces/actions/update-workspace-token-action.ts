@@ -1,9 +1,6 @@
 "use server"
 
-import {
-  workspaceApiTokenService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { workspaceApiTokenService } from "@chatbotx.io/business"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
@@ -16,6 +13,16 @@ import {
   updateWorkspaceTokenRequest,
 } from "../schema/action"
 
+// The browser mints the token (`${workspaceId}.` + 43 base64url chars from a
+// CSPRNG — see manage-access-token.tsx), so the server must enforce the shape
+// here: without a suffix floor, a caller invoking this action directly could
+// persist a short, brute-forceable value as a fully trusted API credential.
+const TOKEN_SUFFIX_PATTERN = /^[A-Za-z0-9_-]{32,}$/
+
+const isValidTokenFormat = (workspaceId: string, token: string): boolean =>
+  token.startsWith(`${workspaceId}.`) &&
+  TOKEN_SUFFIX_PATTERN.test(token.slice(workspaceId.length + 1))
+
 const updateWorkspaceToken = async ({
   workspaceId,
   token,
@@ -23,7 +30,7 @@ const updateWorkspaceToken = async ({
   workspaceId: string
   token: string
 }) => {
-  if (!token.startsWith(workspaceId)) {
+  if (!isValidTokenFormat(workspaceId, token)) {
     return returnValidationErrors(updateWorkspaceTokenRequest, {
       _errors: ["Validation Exception"],
       token: {
@@ -32,10 +39,8 @@ const updateWorkspaceToken = async ({
     })
   }
 
-  await workspaceService.update({
-    id: workspaceId,
-    data: { token },
-  })
+  // Only the digest is persisted — the plaintext token exists solely in the
+  // client that generated it, so this save is the user's one chance to copy it.
   await workspaceApiTokenService.replaceToken({
     workspaceId,
     tokenHash: await hashToken(token),

@@ -1,5 +1,6 @@
 import {
   platformCredentialService,
+  workspaceApiTokenService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
@@ -23,10 +24,14 @@ export default async function SettingIntegrationMakePage(props: {
       })
     : undefined
 
+  const hasWorkspaceToken = workspace
+    ? await workspaceApiTokenService.hasToken({ workspaceId })
+    : false
+
   return (
     <ManageMake
+      hasWorkspaceToken={hasWorkspaceToken}
       inviteUrl={credential?.config.inviteUrl}
-      workspaceToken={workspace?.token ?? undefined}
     />
   )
 }

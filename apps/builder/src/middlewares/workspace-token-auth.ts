@@ -1,12 +1,12 @@
 import {
   isWorkspaceScheduledForDeletion,
   workspaceApiTokenService,
-  workspaceService,
 } from "@chatbotx.io/business"
 import { ORPCError } from "@orpc/server"
 import { hashToken } from "@/features/integration-api/lib/token-hash"
 import { logger } from "@/lib/log"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
+import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
   checkWorkspaceOwnerAccess,
   isWorkspaceMutationMethod,
@@ -18,6 +18,19 @@ const assertNotRateLimited = (workspaceId: string): Promise<void> =>
   assertApiNotRateLimited({
     scope: "workspace-token-rate-limit",
     key: workspaceId,
+  })
+
+// Generous ceiling: this bucket aggregates every workspace behind one egress
+// IP, so it must sit well above the per-workspace limit — it only exists to
+// stop unauthenticated token-guessing floods, which the per-workspace
+// limiter below can never see (an invalid token resolves to no workspace).
+const PREAUTH_REQUEST_LIMIT = 600
+
+const assertPreAuthNotRateLimited = (headers: Headers): Promise<void> =>
+  assertApiNotRateLimited({
+    scope: "workspace-token-preauth-rate-limit",
+    key: getGuestClientIp(headers),
+    limit: PREAUTH_REQUEST_LIMIT,
   })
 
 export const workspaceTokenAuthMidddleware = base.middleware(
@@ -42,25 +55,20 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       )
     }
 
-    // Primary lookup is by hash, via the WorkspaceApiToken table. The
-    // plaintext fallback only exists for rows created between deploying this
-    // code and running the backfill migration (which populates the table for
-    // every existing token) — remove it, together with the `token` column,
-    // once the warn line below has been silent for a release.
+    // Best-effort IP-keyed gate BEFORE the lookup: requests with invalid
+    // tokens never reach the per-workspace limiter below, so without this a
+    // token-guessing flood gets unthrottled hash + DB lookups.
+    await assertPreAuthNotRateLimited(context.headers)
+
+    // Hash-only lookup: WorkspaceApiToken is the sole token store (the
+    // create_workspace_api_token migration backfills every legacy plaintext
+    // token and drops the column in the same run).
     const tokenHash = await hashToken(token)
-    const hashedLookup =
-      await workspaceApiTokenService.findWorkspaceByTokenHash({ tokenHash })
-    const workspace =
-      hashedLookup ?? (await workspaceService.find({ where: { token } }))
+    const workspace = await workspaceApiTokenService.findWorkspaceByTokenHash({
+      tokenHash,
+    })
     if (!workspace) {
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
-    }
-
-    if (!hashedLookup) {
-      logger.warn(
-        { workspaceId: workspace.id },
-        "Workspace authenticated via legacy plaintext token",
-      )
     }
 
     await assertNotRateLimited(workspace.id)

@@ -30,13 +30,22 @@ const randomBytes = (length: number): Uint8Array =>
   crypto.getRandomValues(new Uint8Array(length))
 
 /**
+ * URL-safe random string minted from CSPRNG bytes. The only sanctioned way to
+ * generate bearer-credential material in the builder — Math.random()-backed
+ * helpers (e.g. remeda's randomString) are predictable and must never be used
+ * for secrets. Also used by the workspace API token UI (manage-access-token).
+ */
+export const randomUrlSafeString = (byteLength: number): string =>
+  toBase64Url(randomBytes(byteLength))
+
+/**
  * Generates the raw bearer token shown once at creation/rotation time, plus
  * the values persisted instead of it: a SHA-256 hash for the auth lookup and
  * a short prefix for UI display.
  */
 export const generateApiChannelToken =
   async (): Promise<ApiChannelCredentials> => {
-    const token = `${TOKEN_PREFIX}${toBase64Url(randomBytes(TOKEN_BYTES))}`
+    const token = `${TOKEN_PREFIX}${randomUrlSafeString(TOKEN_BYTES)}`
     return {
       token,
       tokenHash: await hashToken(token),

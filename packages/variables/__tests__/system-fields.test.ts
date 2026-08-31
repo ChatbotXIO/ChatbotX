@@ -161,7 +161,6 @@ const workspace = {
   name: "Workspace One",
   logo: null,
   timezone: "UTC",
-  token: "workspace-token",
 } as WorkspaceModel
 
 const conversation = {
@@ -1479,9 +1478,11 @@ describe("getSystemFieldValue — workspace and account fields", () => {
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.account_name),
     ).resolves.toBe("Workspace One")
+    // Deprecated: tokens are stored hashed, so {{api_key}} always resolves
+    // to null now — even with a workspace present.
     await expect(
       getSystemFieldValue(context, systemFieldTypes.enum.api_key),
-    ).resolves.toBe("workspace-token")
+    ).resolves.toBeNull()
   })
 
   test("workspace-backed fields are null without a workspace, but ids survive", async () => {

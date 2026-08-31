@@ -5,14 +5,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   findWorkspaceByTokenHash,
-  find,
   isWorkspaceScheduledForDeletion,
   loggerWarn,
   checkWorkspaceOwnerAccess,
   assertApiNotRateLimited,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
-  find: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
   loggerWarn: vi.fn(),
   checkWorkspaceOwnerAccess: vi.fn().mockResolvedValue(null),
@@ -21,7 +19,6 @@ const {
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceApiTokenService: { findWorkspaceByTokenHash },
-  workspaceService: { find },
   isWorkspaceScheduledForDeletion,
 }))
 
@@ -31,6 +28,10 @@ vi.mock("@/lib/log", () => ({
 
 vi.mock("@/lib/rate-limit/api-rate-limit", () => ({
   assertApiNotRateLimited,
+}))
+
+vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
+  getGuestClientIp: () => "203.0.113.9",
 }))
 
 vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
@@ -76,7 +77,7 @@ beforeEach(() => {
 })
 
 describe("workspaceTokenAuthMidddleware", () => {
-  test("hash hit skips the plaintext lookup and does not warn", async () => {
+  test("hash hit authenticates the workspace and does not warn", async () => {
     const token = "ws1_abc"
     const tokenHash = await hashToken(token)
     findWorkspaceByTokenHash.mockImplementation(
@@ -90,38 +91,37 @@ describe("workspaceTokenAuthMidddleware", () => {
     await callMiddleware(headers, "GET")
 
     expect(findWorkspaceByTokenHash).toHaveBeenCalledTimes(1)
-    expect(find).not.toHaveBeenCalled()
     expect(loggerWarn).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalled()
+    // Coarse pre-auth IP bucket first, then the per-workspace bucket.
+    expect(assertApiNotRateLimited).toHaveBeenNthCalledWith(1, {
+      scope: "workspace-token-preauth-rate-limit",
+      key: "203.0.113.9",
+      limit: 600,
+    })
+    expect(assertApiNotRateLimited).toHaveBeenNthCalledWith(2, {
+      scope: "workspace-token-rate-limit",
+      key: "ws-1",
+    })
   })
 
-  test("hash miss falls back to plaintext lookup and warns", async () => {
-    const token = "ws1_abc"
+  test("hash miss → INVALID_CHATBOT_TOKEN (no plaintext fallback)", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(undefined)
-    find.mockImplementation(
-      async ({ where }: { where: Record<string, string> }) =>
-        where.token === token ? { id: "ws-1", ownerId: "owner-1" } : undefined,
-    )
-
-    const headers = new Headers({ Authorization: `Bearer ${token}` })
-    await callMiddleware(headers, "GET")
-
-    expect(findWorkspaceByTokenHash).toHaveBeenCalledTimes(1)
-    expect(find).toHaveBeenCalledTimes(1)
-    expect(loggerWarn).toHaveBeenCalledWith(
-      { workspaceId: "ws-1" },
-      "Workspace authenticated via legacy plaintext token",
-    )
-  })
-
-  test("both hash and plaintext miss → INVALID_CHATBOT_TOKEN", async () => {
-    findWorkspaceByTokenHash.mockResolvedValue(undefined)
-    find.mockResolvedValue(undefined)
 
     const headers = new Headers({ Authorization: "Bearer nope" })
 
     await expect(callMiddleware(headers, "GET")).rejects.toMatchObject({
       code: "INVALID_CHATBOT_TOKEN",
     })
+    expect(findWorkspaceByTokenHash).toHaveBeenCalledTimes(1)
+    // Invalid guesses never resolve a workspace, so only the pre-auth
+    // IP bucket throttles them — it must have been consulted.
+    expect(assertApiNotRateLimited).toHaveBeenCalledTimes(1)
+    expect(assertApiNotRateLimited).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "workspace-token-preauth-rate-limit",
+      }),
+    )
   })
 
   test("GET procedure with a blocked owner still passes", async () => {
