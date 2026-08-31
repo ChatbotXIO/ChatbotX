@@ -93,9 +93,9 @@ import {
   isInstagramViaFacebook,
 } from "../../services/integrations"
 import {
+  getProfileRefreshSource,
   isInboundConversationMessage,
   refreshExistingContactProfile,
-  shouldRefreshContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 
@@ -345,20 +345,17 @@ export const receiveMessage = async (
         ...systemFieldUpdates,
       })
 
-    // Best-effort backfill of a nameless existing contact's profile, for
-    // every channel. No `isNewMessage`/`isNewContact` gate (owner decision):
-    // every inbound message from a nameless contact is a candidate, and a
-    // duplicate webhook still gets a chance to fill in the name. Awaited
-    // here (before postback/quickReply/runRef enqueue below) so the first
-    // automated reply already sees `{{first_name}}`.
-    if (
-      shouldRefreshContactProfile({
-        channel: inbox.channel as ChannelType,
-        incomingMessage,
-        contact,
-      })
-    ) {
+    // Best-effort backfill of a nameless existing contact's profile. No
+    // isNewMessage/isNewContact gate; awaited before the flow-action enqueue
+    // below so the first automated reply already sees `{{first_name}}`.
+    const profileRefreshSource = getProfileRefreshSource({
+      channel: inbox.channel as ChannelType,
+      incomingMessage,
+      contact,
+    })
+    if (profileRefreshSource) {
       await refreshExistingContactProfile({
+        source: profileRefreshSource,
         inbox,
         contactInbox,
         incomingContact,
@@ -1455,22 +1452,12 @@ const createNewContactAndContactInbox = async (props: {
           "detectContactAndConversation: getProfile failed, creating contact without profile data",
         )
         // No `contactId` — the contact does not exist yet at this point.
-        // `recordProfileRefreshFailure` never throws by contract; the extra
-        // guard here matches this file's established best-effort pattern
-        // (§1.3: profile work can never reject the job) in case that
-        // contract is ever violated.
-        try {
-          await recordProfileRefreshFailure({
-            channel: inbox.channel,
-            workspaceId: inbox.workspaceId,
-            error,
-          })
-        } catch (recordError) {
-          logger.warn(
-            { error: recordError, channel: inbox.channel },
-            "detectContactAndConversation: recordProfileRefreshFailure failed",
-          )
-        }
+        // `recordProfileRefreshFailure` never throws by contract.
+        await recordProfileRefreshFailure({
+          channel: inbox.channel,
+          workspaceId: inbox.workspaceId,
+          error,
+        })
       }
     }
   }

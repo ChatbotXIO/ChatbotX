@@ -45,8 +45,9 @@ vi.mock("../src/lib/logger", () => ({
   },
 }))
 
-const { shouldRefreshContactProfile, refreshExistingContactProfile } =
-  await import("../src/integration/handlers/contact-profile-refresh")
+const { getProfileRefreshSource, refreshExistingContactProfile } = await import(
+  "../src/integration/handlers/contact-profile-refresh"
+)
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -102,88 +103,88 @@ beforeEach(() => {
 })
 
 // ---------------------------------------------------------------------------
-// shouldRefreshContactProfile — per-rule coverage
+// getProfileRefreshSource — per-rule coverage
 // ---------------------------------------------------------------------------
 
-describe("shouldRefreshContactProfile", () => {
-  test("all three rules pass → true", () => {
+describe("getProfileRefreshSource", () => {
+  test("all three rules pass → the resolved source", () => {
     expect(
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "messenger",
         incomingMessage: inboundTextMessage,
         contact: namelessContact,
       }),
-    ).toBe(true)
+    ).toBe("channelApi")
   })
 
-  test("rule 1 (capability): channel with inbound: null → false", () => {
+  test("rule 1 (capability): channel with inbound: null → null", () => {
     expect(
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "webchat",
         incomingMessage: inboundTextMessage,
         contact: namelessContact,
       }),
-    ).toBe(false)
+    ).toBeNull()
   })
 
-  test("rule 2 (inbound-only): outgoing echo → false", () => {
+  test("rule 2 (inbound-only): outgoing echo → null", () => {
     expect(
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "messenger",
         incomingMessage: { ...inboundTextMessage, messageType: "outgoing" },
         contact: namelessContact,
       }),
-    ).toBe(false)
+    ).toBeNull()
   })
 
-  test("rule 2 (inbound-only): activity-typed message (e.g. a reaction) → false", () => {
+  test("rule 2 (inbound-only): activity-typed message (e.g. a reaction) → null", () => {
     expect(
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "messenger",
         incomingMessage: { ...inboundTextMessage, type: "activity" },
         contact: namelessContact,
       }),
-    ).toBe(false)
+    ).toBeNull()
   })
 
-  test("rule 3 (name presence): firstName-only contact → false", () => {
+  test("rule 3 (name presence): firstName-only contact → null", () => {
     expect(
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "messenger",
         incomingMessage: inboundTextMessage,
         contact: { firstName: "Jane", lastName: null },
       }),
-    ).toBe(false)
+    ).toBeNull()
   })
 
-  test("rule 3 (name presence): lastName-only contact → false", () => {
+  test("rule 3 (name presence): lastName-only contact → null", () => {
     expect(
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "messenger",
         incomingMessage: inboundTextMessage,
         contact: { firstName: null, lastName: "Doe" },
       }),
-    ).toBe(false)
+    ).toBeNull()
   })
 
   // `vi.mock("@chatbotx.io/business", async (importOriginal) => ...)` above
   // is the REAL rules.ts, so this exercises the actual capability-table
   // null-safety fix, not a mirror.
-  test("rule 1 (capability): unknown/legacy channel string → false, never throws", () => {
+  test("rule 1 (capability): unknown/legacy channel string → null, never throws", () => {
     expect(() =>
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "legacy" as never,
         incomingMessage: inboundTextMessage,
         contact: namelessContact,
       }),
     ).not.toThrow()
     expect(
-      shouldRefreshContactProfile({
+      getProfileRefreshSource({
         channel: "legacy" as never,
         incomingMessage: inboundTextMessage,
         contact: namelessContact,
       }),
-    ).toBe(false)
+    ).toBeNull()
   })
 })
 
@@ -194,6 +195,7 @@ describe("shouldRefreshContactProfile", () => {
 describe("refreshExistingContactProfile", () => {
   test("channelApi source: lazily resolves the integration and calls getProfile with the contactInbox's sourceId", async () => {
     await refreshExistingContactProfile({
+      source: "channelApi",
       inbox: fakeInbox,
       contactInbox: fakeContactInbox,
       incomingContact: fakeIncomingContact,
@@ -230,6 +232,7 @@ describe("refreshExistingContactProfile", () => {
     const whatsappContactInbox = { ...fakeContactInbox, channel: "whatsapp" }
 
     await refreshExistingContactProfile({
+      source: "payload",
       inbox: whatsappInbox as typeof fakeInbox,
       contactInbox: whatsappContactInbox as typeof fakeContactInbox,
       incomingContact: fakeIncomingContact,
@@ -266,6 +269,7 @@ describe("refreshExistingContactProfile", () => {
     }
 
     await refreshExistingContactProfile({
+      source: "payload",
       inbox: apiInbox as typeof fakeInbox,
       contactInbox: apiContactInbox as typeof fakeContactInbox,
       incomingContact: rawIncomingContact,
@@ -283,23 +287,6 @@ describe("refreshExistingContactProfile", () => {
     })
   })
 
-  test("channel with no inbound source (e.g. webchat) → the service is never called", async () => {
-    const webchatInbox = { ...fakeInbox, channel: "webchat" }
-
-    await refreshExistingContactProfile({
-      inbox: webchatInbox as typeof fakeInbox,
-      contactInbox: {
-        ...fakeContactInbox,
-        channel: "webchat",
-      } as typeof fakeContactInbox,
-      incomingContact: fakeIncomingContact,
-      contactId: "contact-1",
-    })
-
-    expect(mockContactProfileRefresh).not.toHaveBeenCalled()
-    expect(mockResolveIntegrationContextFromContactInbox).not.toHaveBeenCalled()
-  })
-
   test("resolveIntegrationContextFromContactInbox throws (missing/disconnected integration) → never throws, logged at debug", async () => {
     mockResolveIntegrationContextFromContactInbox.mockRejectedValue(
       new Error("integration not found"),
@@ -307,6 +294,7 @@ describe("refreshExistingContactProfile", () => {
 
     await expect(
       refreshExistingContactProfile({
+        source: "channelApi",
         inbox: fakeInbox,
         contactInbox: fakeContactInbox,
         incomingContact: fakeIncomingContact,
@@ -325,6 +313,7 @@ describe("refreshExistingContactProfile", () => {
 
     await expect(
       refreshExistingContactProfile({
+        source: "channelApi",
         inbox: fakeInbox,
         contactInbox: fakeContactInbox,
         incomingContact: fakeIncomingContact,
@@ -344,6 +333,7 @@ describe("refreshExistingContactProfile", () => {
 
   test("successful refresh is logged at debug with the service result", async () => {
     await refreshExistingContactProfile({
+      source: "channelApi",
       inbox: fakeInbox,
       contactInbox: fakeContactInbox,
       incomingContact: fakeIncomingContact,

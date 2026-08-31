@@ -140,6 +140,7 @@ describe("refreshExistingContactProfile against the real contactProfileRefreshSe
 
     // --- Attempt 1: the channel-API fetch throws ---------------------------
     await refreshExistingContactProfile({
+      source: "channelApi",
       inbox: fakeInbox,
       contactInbox: fakeContactInbox,
       incomingContact: fakeIncomingContact,
@@ -171,6 +172,7 @@ describe("refreshExistingContactProfile against the real contactProfileRefreshSe
     setNumberMock.mockClear()
 
     await refreshExistingContactProfile({
+      source: "channelApi",
       inbox: fakeInbox,
       contactInbox: fakeContactInbox,
       incomingContact: fakeIncomingContact,
@@ -194,6 +196,7 @@ describe("refreshExistingContactProfile against the real contactProfileRefreshSe
     })
 
     await refreshExistingContactProfile({
+      source: "channelApi",
       inbox: fakeInbox,
       contactInbox: fakeContactInbox,
       incomingContact: fakeIncomingContact,
@@ -216,6 +219,7 @@ describe("refreshExistingContactProfile against the real contactProfileRefreshSe
 
     await expect(
       refreshExistingContactProfile({
+        source: "channelApi",
         inbox: fakeInbox,
         contactInbox: fakeContactInbox,
         incomingContact: fakeIncomingContact,

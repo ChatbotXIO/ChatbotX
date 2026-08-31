@@ -19,35 +19,35 @@ export type ProfileRefreshCandidate = {
 }
 
 // "Real inbound" = not an echo/outgoing send, and not a non-message row
-// (e.g. an `activity` reaction row) — owned here (not received-message.ts)
-// so this module's eligibility rule table below doesn't have to import from
-// received-message.ts, which itself imports this module's
-// `refreshExistingContactProfile`/`shouldRefreshContactProfile` (that cycle
-// used to only work because the binding was resolved lazily at call time).
-// received-message.ts imports this back for its own
-// `getMessageActivityTracking` so "inbound" means the same thing everywhere.
+// (e.g. an `activity` reaction row) — owned here so received-message.ts's
+// `getMessageActivityTracking` can import it back and mean the same thing.
 export const isInboundConversationMessage = (
   incomingMessage: IncomingMessage,
 ): boolean =>
   incomingMessage.messageType !== "outgoing" &&
   (incomingMessage.type ?? "message") === "message"
 
-// Declarative rule table — every branch is a single-purpose predicate over
-// values already in scope; adding/removing a rule never touches call sites.
-const profileRefreshRules: ReadonlyArray<
-  (candidate: ProfileRefreshCandidate) => boolean
-> = [
-  // The capability table says this channel can source a name at all.
-  (candidate) => resolveInboundProfileNameSource(candidate.channel) !== null,
-  // A real inbound message — not an echo/outgoing send, not an activity row.
-  (candidate) => isInboundConversationMessage(candidate.incomingMessage),
-  // Both firstName and lastName are blank.
-  (candidate) => hasEmptyProfileName(candidate.contact),
-]
-
-export const shouldRefreshContactProfile = (
+/**
+ * The channel/message/contact eligibility gate, collapsed to the source the
+ * caller needs: `null` when any check fails, otherwise the source to fetch
+ * with. Order matches the old rule table — capability, then real-inbound,
+ * then name-empty.
+ */
+export const getProfileRefreshSource = (
   candidate: ProfileRefreshCandidate,
-): boolean => profileRefreshRules.every((rule) => rule(candidate))
+): ContactProfileNameSource | null => {
+  const source = resolveInboundProfileNameSource(candidate.channel)
+  if (
+    !(
+      source &&
+      isInboundConversationMessage(candidate.incomingMessage) &&
+      hasEmptyProfileName(candidate.contact)
+    )
+  ) {
+    return null
+  }
+  return source
+}
 
 type InboundFetcherDeps = {
   inbox: InboxModel
@@ -112,6 +112,7 @@ const inboundProfileFetchers: Record<
 }
 
 export type RefreshExistingContactProfileInput = {
+  source: ContactProfileNameSource
   inbox: InboxModel
   contactInbox: ContactInboxModel
   incomingContact: IncomingContact
@@ -128,14 +129,7 @@ export type RefreshExistingContactProfileInput = {
 export const refreshExistingContactProfile = async (
   input: RefreshExistingContactProfileInput,
 ): Promise<void> => {
-  const { inbox, contactInbox, incomingContact, contactId } = input
-  const source = resolveInboundProfileNameSource(inbox.channel as ChannelType)
-  // Unreachable when the caller gates on `shouldRefreshContactProfile`
-  // first (it checks the same table row) — kept for type safety and as a
-  // last line of defence against a direct call.
-  if (!source) {
-    return
-  }
+  const { source, inbox, contactInbox, incomingContact, contactId } = input
 
   try {
     const fetchProfile = inboundProfileFetchers[source]({

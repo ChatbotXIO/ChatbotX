@@ -2343,52 +2343,6 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     )
   })
 
-  test("creation path: if recordProfileRefreshFailure itself rejects, the contact is still created", async () => {
-    mockFindContactInbox.mockResolvedValue(undefined)
-    mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
-    mockRunChannelHandler.mockImplementation(
-      (_domain: string, action: string) => {
-        if (action === "getProfile") {
-          return Promise.reject(new Error("consent required"))
-        }
-        return Promise.resolve({
-          message: { ...baseIncomingMessage, attachments: [] },
-          contact: { sourceId: "psid-123" },
-          postbackAction: null,
-          quickReplyAction: null,
-          ref: null,
-        })
-      },
-    )
-    mockRecordProfileRefreshFailure.mockRejectedValueOnce(
-      new Error("error-log stream down"),
-    )
-    mockCreateNewContactWithMac.mockResolvedValue({
-      ok: true,
-      value: {
-        newContact: {
-          id: "contact-new",
-          workspaceId: "ws-1",
-          firstName: null,
-          lastName: null,
-          phoneNumber: null,
-          email: null,
-          blockedAt: null,
-          createdAt: new Date("2026-06-21T00:00:00Z"),
-        },
-        contactInbox: {
-          ...fakeContactInbox,
-          id: "ci-new",
-          contactId: "contact-new",
-        },
-        conversation: fakeConversation,
-      },
-    })
-
-    await expect(receiveMessage(baseProps)).resolves.toBeDefined()
-    expect(mockCreateMessageRepository).toHaveBeenCalled()
-  })
-
   test("if the profile-refresh service throws unexpectedly, receiveMessage still resolves and a warning is logged", async () => {
     mockContactProfileRefresh.mockRejectedValue(new Error("boom"))
     mockRunChannelHandler.mockResolvedValue({
