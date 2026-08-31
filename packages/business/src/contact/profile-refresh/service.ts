@@ -89,12 +89,15 @@ const startCooldownIfApplicable = async (
 /**
  * Wraps `logProviderErrorForChannel` in its own `try/catch` + `logger.warn`
  * so an Error-Log write failure can never surface — every caller here is
- * already inside a `failed` branch.
+ * already inside a `failed` branch. Exported for the worker's creation-path
+ * fetch (`received-message.ts`), which has no `contactId` yet at the point
+ * of failure — the contact row does not exist until after `getProfile`
+ * would have populated it.
  */
-const recordProfileRefreshFailure = async (input: {
+export const recordProfileRefreshFailure = async (input: {
   channel: string
   workspaceId: string
-  contactId: string
+  contactId?: string
   error: unknown
 }): Promise<void> => {
   try {

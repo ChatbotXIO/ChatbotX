@@ -7,8 +7,10 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  hasOnDemandProfileApi,
   messageCleanupService,
   quotaEnforcementService,
+  recordProfileRefreshFailure,
   resolveTenantSettings,
   updateContactFromMessage,
   workspaceService,
@@ -18,9 +20,9 @@ import {
   finalizeContactProfile,
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
-import { logProviderErrorForChannel } from "@chatbotx.io/business/error-log"
 import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
+  type ChannelType,
   type ContactSource,
   contactSources,
   type IntegrationType,
@@ -90,6 +92,10 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
+import {
+  refreshExistingContactProfile,
+  shouldRefreshContactProfile,
+} from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 
 type ContactInboxTracking = ContactInboxTrackingData
@@ -337,6 +343,27 @@ export const receiveMessage = async (
         storageUrl,
         ...systemFieldUpdates,
       })
+
+    // Best-effort backfill of a nameless existing contact's profile, for
+    // every channel. No `isNewMessage`/`isNewContact` gate (owner decision):
+    // every inbound message from a nameless contact is a candidate, and a
+    // duplicate webhook still gets a chance to fill in the name. Awaited
+    // here (before postback/quickReply/runRef enqueue below) so the first
+    // automated reply already sees `{{first_name}}`.
+    if (
+      shouldRefreshContactProfile({
+        channel: inbox.channel as ChannelType,
+        incomingMessage,
+        contact,
+      })
+    ) {
+      await refreshExistingContactProfile({
+        inbox,
+        contactInbox,
+        incomingContact,
+        contactId: contact.id,
+      })
+    }
 
     if (isNewMessage) {
       createdMessage = newMessage
@@ -794,6 +821,16 @@ const persistNewMessageSideEffects = async (props: {
   }
 }
 
+// "Real inbound" = not an echo/outgoing send, and not a non-message row
+// (e.g. an `activity` reaction row) — reused by the profile-refresh
+// eligibility table (`contact-profile-refresh.ts`) so "inbound" means the
+// same thing everywhere.
+export const isInboundConversationMessage = (
+  incomingMessage: IncomingMessage,
+): boolean =>
+  incomingMessage.messageType !== "outgoing" &&
+  (incomingMessage.type ?? "message") === "message"
+
 const getMessageActivityTracking = (props: {
   incomingMessage: IncomingMessage
   message: MessageModel
@@ -810,10 +847,7 @@ const getMessageActivityTracking = (props: {
     tracking.lastCommentMessageAt = message.createdAt
   }
 
-  if (
-    incomingMessage.messageType !== "outgoing" &&
-    (incomingMessage.type ?? "message") === "message"
-  ) {
+  if (isInboundConversationMessage(incomingMessage)) {
     tracking.lastIncomingMessageAt = message.createdAt
     Object.assign(
       tracking,
@@ -1399,7 +1433,7 @@ const createNewContactAndContactInbox = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
-  if (canGetUserProfileIfNeeded(inbox.channel)) {
+  if (hasOnDemandProfileApi(inbox.channel as ChannelType)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
         ? "instagramFacebook"
@@ -1430,10 +1464,22 @@ const createNewContactAndContactInbox = async (props: {
           "detectContactAndConversation: getProfile failed, creating contact without profile data",
         )
         // No `contactId` — the contact does not exist yet at this point.
-        await logProviderErrorForChannel(inbox.channel, {
-          workspaceId: inbox.workspaceId,
-          error,
-        })
+        // `recordProfileRefreshFailure` never throws by contract; the extra
+        // guard here matches this file's established best-effort pattern
+        // (§1.3: profile work can never reject the job) in case that
+        // contract is ever violated.
+        try {
+          await recordProfileRefreshFailure({
+            channel: inbox.channel,
+            workspaceId: inbox.workspaceId,
+            error,
+          })
+        } catch (recordError) {
+          logger.warn(
+            { error: recordError, channel: inbox.channel },
+            "detectContactAndConversation: recordProfileRefreshFailure failed",
+          )
+        }
       }
     }
   }
@@ -1588,9 +1634,3 @@ const createNewContactAndContactInbox = async (props: {
 
   return { contactInbox, contact: newContact, conversation, isNewContact: true }
 }
-
-const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === "messenger" ||
-  integrationType === "instagram" ||
-  integrationType === "zalo" ||
-  integrationType === "telegram"
