@@ -2219,6 +2219,7 @@
       "sendFile": "Enviar archivo",
       "sendGif": "Enviar Gif",
       "sendImage": "Enviar imagen",
+      "sendMultipleImages": "Varias imágenes",
       "sendMessage": "Enviar mensaje",
       "sendNode": "Iniciar Another Node",
       "sendText": "Enviar texto",
@@ -2302,6 +2303,10 @@
       "addSlide": "Añadir tarjeta",
       "removeSlide": "Eliminar tarjeta",
       "whatsappLinkButtonIgnored": "En WhatsApp, el enlace de esta tarjeta no funcionará: una tarjeta con un botón de enlace no puede tener otros botones. Se enviará como respuesta en su lugar."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Eliminar imagen",
+      "selectImage": "Seleccionar imágenes"
     },
     "additionalSteps": "Pasos adicionales",
     "delayType": {
@@ -5503,7 +5508,8 @@
     "recent": "Recientes",
     "favourite": "Favoritos",
     "upload": "Subir",
-    "done": "Listo",
+    "select": "Seleccionar",
+    "bulkSelect": "Selección múltiple",
     "deleteFolder": "Eliminar carpeta",
     "renameFolder": "Renombrar carpeta",
     "noFiles": "No se encontraron archivos",

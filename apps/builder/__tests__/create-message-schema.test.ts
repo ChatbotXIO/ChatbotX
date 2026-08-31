@@ -28,6 +28,50 @@ describe("createMessageRequest", () => {
     }
   })
 
+  test("parses {text, mediaFileIds} and retains all ids — same silent-strip risk as mediaFileId above", () => {
+    const result = createMessageRequest.safeParse({
+      text: "hello",
+      mediaFileIds: ["123", "456"],
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toMatchObject({
+        text: "hello",
+        mediaFileIds: ["123", "456"],
+      })
+    }
+  })
+
+  test("parses {mediaFileIds} alone", () => {
+    const result = createMessageRequest.safeParse({
+      mediaFileIds: ["123", "456", "789"],
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toMatchObject({
+        mediaFileIds: ["123", "456", "789"],
+      })
+    }
+  })
+
+  test("rejects an empty {mediaFileIds: []}", () => {
+    const result = createMessageRequest.safeParse({
+      mediaFileIds: [],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects more than 10 mediaFileIds", () => {
+    const result = createMessageRequest.safeParse({
+      mediaFileIds: Array.from({ length: 11 }, (_, i) => String(i)),
+    })
+
+    expect(result.success).toBe(false)
+  })
+
   test("still parses the legacy {text, mediaFile} path-based shape", () => {
     const result = createMessageRequest.safeParse({
       text: "hello",

@@ -20,6 +20,11 @@ type MediaSection = "recent" | "favourite" | { folderId: string }
 type MediaLibraryTriggerProps = {
   workspaceId: string
   onSelect: (file: MediaFile) => void
+  // When set, the dialog opens in multi-select mode and "Done" confirms
+  // every checked file via `onSelectMultiple` instead of requiring exactly
+  // one file via `onSelect`.
+  multiple?: boolean
+  onSelectMultiple?: (files: MediaFile[]) => void
   // Base storage prefix new uploads made from this trigger are saved under.
   // Defaults to the shared media-library prefix inside MediaLibraryDialog.
   uploadPath?: string
@@ -31,6 +36,8 @@ type MediaLibraryTriggerProps = {
 export function MediaLibraryTrigger({
   workspaceId,
   onSelect,
+  multiple = false,
+  onSelectMultiple,
   uploadPath,
   children,
 }: MediaLibraryTriggerProps) {
@@ -141,6 +148,7 @@ export function MediaLibraryTrigger({
         hasMoreFiles={hasMoreFiles}
         isLoading={isPending}
         isLoadingMoreFiles={isLoadingMore}
+        multiple={multiple}
         onFavouriteToggled={(fileId, isFavourite) =>
           setFiles((current) => {
             const updated = current.map((f) =>
@@ -241,6 +249,10 @@ export function MediaLibraryTrigger({
         onSectionChange={(section) => loadSection(section)}
         onSelect={(file) => {
           onSelect(file)
+          setOpen(false)
+        }}
+        onSelectMultiple={(selectedFiles) => {
+          onSelectMultiple?.(selectedFiles)
           setOpen(false)
         }}
         open={open}

@@ -320,13 +320,75 @@ const RenderAttachments = (props: {
   message: MessageResourceWithRelations
 }) => {
   const { message } = props
+  const attachments = message.attachments ?? []
+  // Multiple images in one message render as a grid (album-style, matching
+  // how channels like Messenger/Instagram/Telegram deliver them); a single
+  // image keeps its own aspect-ratio-preserving layout. Non-image attachments
+  // (video/audio/file) are unaffected and keep stacking below.
+  const imageAttachments = attachments.filter(
+    (attachment) => attachment.fileType === "image",
+  )
+  const otherAttachments = attachments.filter(
+    (attachment) => attachment.fileType !== "image",
+  )
 
   return (
-    <div className="grid grid-cols-auto gap-2">
-      {(message.attachments ?? []).map((attachment) => (
+    <div className="flex flex-col gap-2">
+      {imageAttachments.length > 1 ? (
+        <div
+          className={cn(
+            "grid w-full max-w-80 gap-1",
+            // A 3-column grid with exactly 2 images leaves the last cell
+            // empty; 2 images look intentional as a 2-up grid instead.
+            imageAttachments.length === 2 ? "grid-cols-2" : "grid-cols-3",
+          )}
+          data-slot="attachment-image-grid"
+        >
+          {imageAttachments.map((attachment) => (
+            <RenderImageGridItem attachment={attachment} key={attachment.id} />
+          ))}
+        </div>
+      ) : (
+        imageAttachments.map((attachment) => (
+          <RenderAttachmentItem attachment={attachment} key={attachment.id} />
+        ))
+      )}
+      {otherAttachments.map((attachment) => (
         <RenderAttachmentItem attachment={attachment} key={attachment.id} />
       ))}
     </div>
+  )
+}
+
+const RenderImageGridItem = (props: { attachment: AttachmentResource }) => {
+  const { attachment } = props
+  const attachmentUrl = useAttachmentUrl(attachment)
+  const attachmentLabel =
+    attachment.name || attachment.originPath || "Attachment"
+
+  if (!attachmentUrl) {
+    // A chat bubble sizes to its own content, so with nothing else to size
+    // from (no image yet), this needs an explicit box — `aspect-square`
+    // alone has no width to derive a height from here and collapses to 0×0.
+    return (
+      <div className="flex size-24 items-center justify-center overflow-hidden rounded-lg bg-secondary">
+        <PaperclipIcon className="size-5 text-muted-foreground" />
+      </div>
+    )
+  }
+
+  return (
+    <Link href={attachmentUrl} target="_blank">
+      <div className="relative aspect-square overflow-hidden rounded-lg">
+        <Image
+          alt={attachmentLabel}
+          className="h-full w-full object-cover"
+          height={120}
+          src={attachmentUrl}
+          width={120}
+        />
+      </div>
+    </Link>
   )
 }
 
@@ -349,27 +411,31 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
     case "image": {
       if (!(attachment.width && attachment.height)) {
         return (
-          <div
-            className="relative max-w-80 overflow-hidden rounded-xl"
-            style={{ aspectRatio: "4/3" }}
-          >
-            <Image
-              alt={attachmentLabel}
-              className="object-contain"
-              fill
-              src={attachmentUrl}
-            />
-          </div>
+          <Link href={attachmentUrl} target="_blank">
+            <div
+              className="relative max-w-80 overflow-hidden rounded-xl"
+              style={{ aspectRatio: "4/3" }}
+            >
+              <Image
+                alt={attachmentLabel}
+                className="object-contain"
+                fill
+                src={attachmentUrl}
+              />
+            </div>
+          </Link>
         )
       }
       return (
-        <Image
-          alt={attachmentLabel}
-          className="max-w-80 rounded-xl"
-          height={attachment.height}
-          src={attachmentUrl}
-          width={attachment.width}
-        />
+        <Link href={attachmentUrl} target="_blank">
+          <Image
+            alt={attachmentLabel}
+            className="max-w-80 rounded-xl"
+            height={attachment.height}
+            src={attachmentUrl}
+            width={attachment.width}
+          />
+        </Link>
       )
     }
     case "video":

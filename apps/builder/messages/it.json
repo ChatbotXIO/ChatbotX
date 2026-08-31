@@ -2145,6 +2145,7 @@
       "sendFile": "Invia file",
       "sendGif": "Invia GIF",
       "sendImage": "Invia immagine",
+      "sendMultipleImages": "Immagini multiple",
       "sendMessage": "Invia messaggio",
       "sendNode": "Avvia un altro nodo",
       "sendText": "Invia testo",
@@ -2228,6 +2229,10 @@
       "addSlide": "Aggiungi scheda",
       "removeSlide": "Rimuovi scheda",
       "whatsappLinkButtonIgnored": "Su WhatsApp, il link di questa scheda non funzionerà: una scheda con un pulsante di collegamento non può avere altri pulsanti. Verrà inviata come risposta."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Rimuovi immagine",
+      "selectImage": "Seleziona immagini"
     },
     "additionalSteps": "Passaggi aggiuntivi",
     "delayType": {
@@ -5503,7 +5508,8 @@
     "recent": "Recenti",
     "favourite": "Preferiti",
     "upload": "Carica",
-    "done": "Fatto",
+    "select": "Seleziona",
+    "bulkSelect": "Selezione multipla",
     "deleteFolder": "Elimina cartella",
     "renameFolder": "Rinomina cartella",
     "noFiles": "Nessun file trovato",

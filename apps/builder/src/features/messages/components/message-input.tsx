@@ -60,12 +60,12 @@ const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
 const MESSENGER_HUMAN_AGENT_WINDOW_SECONDS = 7 * 24 * 60 * 60
 
 // Media Library selection metadata kept for preview purposes only. The form
-// field only carries `mediaFileId` (the DB id sent to the server) — the
+// field only carries `mediaFileIds` (the DB ids sent to the server) — the
 // action submits the resolver-parsed form values directly, so display-only
 // fields like url/name can't live on the form.
 type SelectedMediaFile = Pick<
   ListFilesResponse["data"][number],
-  "url" | "mimeType" | "name"
+  "id" | "url" | "mimeType" | "name"
 >
 
 export const MessageInput = () => {
@@ -74,8 +74,9 @@ export const MessageInput = () => {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
-  const [selectedMediaFile, setSelectedMediaFile] =
-    useState<SelectedMediaFile | null>(null)
+  const [selectedMediaFiles, setSelectedMediaFiles] = useState<
+    SelectedMediaFile[]
+  >([])
 
   const {
     appendMessage,
@@ -178,7 +179,7 @@ export const MessageInput = () => {
             }
 
             form.reset()
-            setSelectedMediaFile(null)
+            setSelectedMediaFiles([])
             textareaRef.current?.focus()
           },
           onSuccess: () => {
@@ -188,7 +189,7 @@ export const MessageInput = () => {
             setReplyToMessage(null)
             textareaRef.current?.focus()
             resetFormAndAction()
-            setSelectedMediaFile(null)
+            setSelectedMediaFiles([])
             form.setValue("clientId", createId())
           },
         },
@@ -196,7 +197,7 @@ export const MessageInput = () => {
           defaultValues: {
             text: "",
             files: [],
-            mediaFileId: undefined,
+            mediaFileIds: undefined,
             clientId: createId(),
             replyToMessageId: undefined,
             replyToMessageCreatedAt: undefined,
@@ -372,7 +373,7 @@ export const MessageInput = () => {
     name: "files",
   })
   const hasFiles =
-    Boolean(selectedMediaFile) || (Array.isArray(files) && files.length > 0)
+    selectedMediaFiles.length > 0 || (Array.isArray(files) && files.length > 0)
 
   // Early return if no active conversation
   if (!activeConversationId) {
@@ -466,14 +467,32 @@ export const MessageInput = () => {
           {!isInstagramPostComment && (
             <div className="px-2">
               <FileUploadPreview ref={fileUploadRef} />
-              {selectedMediaFile && (
-                <MediaFilePreview
-                  mediaFile={selectedMediaFile}
-                  onRemove={() => {
-                    setSelectedMediaFile(null)
-                    form.resetField("mediaFileId")
-                  }}
-                />
+              {selectedMediaFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedMediaFiles.map((mediaFile) => (
+                    <MediaFilePreview
+                      key={mediaFile.id}
+                      mediaFile={mediaFile}
+                      onRemove={() => {
+                        setSelectedMediaFiles((current) => {
+                          const next = current.filter(
+                            (f) => f.id !== mediaFile.id,
+                          )
+                          if (next.length > 0) {
+                            form.setValue(
+                              "mediaFileIds",
+                              next.map((f) => f.id),
+                              { shouldValidate: true },
+                            )
+                          } else {
+                            form.resetField("mediaFileIds")
+                          }
+                          return next
+                        })
+                      }}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
@@ -494,7 +513,7 @@ export const MessageInput = () => {
                   <Button
                     aria-label="Attach file"
                     className="px-2 py-1.5 [&_svg]:size-5"
-                    disabled={Boolean(selectedMediaFile)}
+                    disabled={selectedMediaFiles.length > 0}
                     onClick={onClickAttachment}
                     type="button"
                     variant="ghost"
@@ -502,15 +521,20 @@ export const MessageInput = () => {
                     <PaperclipIcon aria-hidden="true" />
                   </Button>
                   <MediaLibraryTrigger
+                    multiple={true}
                     onSelect={(file) => {
-                      form.setValue("mediaFileId", file.id, {
+                      setSelectedMediaFiles([file])
+                      form.setValue("mediaFileIds", [file.id], {
                         shouldValidate: true,
                       })
-                      setSelectedMediaFile({
-                        url: file.url,
-                        mimeType: file.mimeType,
-                        name: file.name,
-                      })
+                    }}
+                    onSelectMultiple={(pickedFiles) => {
+                      setSelectedMediaFiles(pickedFiles)
+                      form.setValue(
+                        "mediaFileIds",
+                        pickedFiles.map((file) => file.id),
+                        { shouldValidate: true },
+                      )
                     }}
                     workspaceId={conversation?.workspaceId ?? ""}
                   >

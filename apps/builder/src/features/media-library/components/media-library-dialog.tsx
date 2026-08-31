@@ -75,6 +75,10 @@ export type MediaLibraryDialogProps = Omit<
   // to keep a caller's uploads under its own feature-specific path.
   uploadPath?: string
   onSelect?: (file: MediaFile) => void
+  // When set, "Done" confirms every checked file via `onSelectMultiple`
+  // instead of requiring exactly one via `onSelect`.
+  multiple?: boolean
+  onSelectMultiple?: (files: MediaFile[]) => void
   onSectionChange?: (section: ActiveSection) => void
   onSearch?: (query: string) => void
   searchQuery?: string
@@ -139,6 +143,8 @@ export function MediaLibraryDialog({
   files,
   uploadPath,
   onSelect,
+  multiple = false,
+  onSelectMultiple,
   onSectionChange,
   onSearch,
   searchQuery = "",
@@ -170,6 +176,7 @@ export function MediaLibraryDialog({
   const [deleteFolderId, setDeleteFolderId] = useState<string | null>(null)
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null)
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set())
+  const [bulkSelectMode, setBulkSelectMode] = useState(false)
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false)
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
@@ -259,6 +266,7 @@ export function MediaLibraryDialog({
       onSuccess: ({ input }) => {
         onFilesMoved?.(input.fileIds, input.folderId ?? null)
         setSelectedFileIds(new Set())
+        setBulkSelectMode(false)
       },
       onError: () => toast.error(tActions("move")),
     },
@@ -285,20 +293,27 @@ export function MediaLibraryDialog({
   const handleSelectFile = (file: MediaFile) => {
     const isCurrentlySelected = selectedFileIds.has(file.id)
     setSelectedFileIds((current) => {
-      const next = new Set(current)
-      if (next.has(file.id)) {
-        next.delete(file.id)
-      } else {
-        next.add(file.id)
+      if (bulkSelectMode) {
+        const next = new Set(current)
+        if (next.has(file.id)) {
+          next.delete(file.id)
+        } else {
+          next.add(file.id)
+        }
+        return next
       }
-      return next
+
+      // Outside bulk select mode, clicking a file replaces the selection
+      // with just that file; clicking the selected file again deselects it.
+      if (current.size === 1 && current.has(file.id)) {
+        return new Set()
+      }
+      return new Set([file.id])
     })
     if (!isCurrentlySelected) {
       executeRecordAccess(file.id)
     }
   }
-
-  const handleUnselectAll = () => setSelectedFileIds(new Set())
 
   const handleMoveSelected = (folderId: string | null) => {
     executeMoveFiles({ fileIds: [...selectedFileIds], folderId })
@@ -322,11 +337,33 @@ export function MediaLibraryDialog({
     } finally {
       setIsBulkDeleting(false)
       setSelectedFileIds(new Set())
+      setBulkSelectMode(false)
       setBulkDeleteConfirmOpen(false)
     }
   }
 
-  const handleDone = () => {
+  const handleToggleBulkSelect = () => {
+    if (bulkSelectMode) {
+      // "Cancel": exit bulk select mode and clear every selection.
+      setBulkSelectMode(false)
+      setSelectedFileIds(new Set())
+    } else {
+      setBulkSelectMode(true)
+    }
+  }
+
+  const handleSelect = () => {
+    if (multiple) {
+      if (selectedFileIds.size === 0) {
+        return
+      }
+      onSelectMultiple?.(files.filter((f) => selectedFileIds.has(f.id)))
+      setSelectedFileIds(new Set())
+      setBulkSelectMode(false)
+      onOpenChange?.(false)
+      return
+    }
+
     if (selectedFileIds.size > 1) {
       toast.error(t("selectOnlyOneFile"))
       return
@@ -338,6 +375,13 @@ export function MediaLibraryDialog({
     }
     onOpenChange?.(false)
   }
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedFileIds(new Set())
+      setBulkSelectMode(false)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) {
@@ -601,11 +645,11 @@ export function MediaLibraryDialog({
                 {selectedFileIds.size > 0 && (
                   <div className="flex items-center gap-2">
                     <Button
-                      onClick={handleUnselectAll}
+                      onClick={handleToggleBulkSelect}
                       type="button"
                       variant="outline"
                     >
-                      {tActions("unselect")}
+                      {bulkSelectMode ? tActions("cancel") : t("bulkSelect")}
                     </Button>
 
                     <DropdownMenu>
@@ -779,7 +823,7 @@ export function MediaLibraryDialog({
                 >
                   {tActions("cancel")}
                 </Button>
-                <Button onClick={handleDone}>{t("done")}</Button>
+                <Button onClick={handleSelect}>{t("select")}</Button>
               </div>
             </div>
           </DialogFooter>

@@ -2145,6 +2145,7 @@
       "sendFile": "ファイルを送信",
       "sendGif": "GIFを送信",
       "sendImage": "画像を送信",
+      "sendMultipleImages": "複数画像",
       "sendMessage": "メッセージを送信",
       "sendNode": "別のノードを開始",
       "sendText": "テキストを送信",
@@ -2228,6 +2229,10 @@
       "addSlide": "スライドを追加",
       "removeSlide": "スライドを削除",
       "whatsappLinkButtonIgnored": "WhatsAppでは、このカードのリンクは機能しません。リンクボタンを含むカードには他のボタンを設定できません。代わりに返信として送信されます。"
+    },
+    "sendMultipleImages": {
+      "removeImage": "画像を削除",
+      "selectImage": "画像を選択"
     },
     "additionalSteps": "追加ステップ",
     "delayType": {
@@ -5503,7 +5508,8 @@
     "recent": "最近",
     "favourite": "お気に入り",
     "upload": "アップロード",
-    "done": "完了",
+    "select": "選択",
+    "bulkSelect": "一括選択",
     "deleteFolder": "フォルダを削除",
     "renameFolder": "フォルダ名を変更",
     "noFiles": "ファイルが見つかりません",

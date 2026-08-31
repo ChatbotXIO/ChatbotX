@@ -374,6 +374,9 @@ const facebookMessageTemplateSchema = z.object({
 export const facebookMessageSchema = z.object({
   text: z.string().optional(),
   attachment: facebookMessageAttachmentSchema.optional(),
+  // Multiple-attachments form (Send API "sending_multiple_attachments") — one
+  // message carrying several bare image attachments, no template/buttons.
+  attachments: z.array(facebookMessageAttachmentSchema).max(10).optional(),
   template: facebookMessageTemplateSchema.optional(),
   quick_replies: z.array(facebookQuickReplySchema).max(13).optional(),
   metadata: z.string().optional(),

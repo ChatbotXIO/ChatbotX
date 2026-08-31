@@ -2,6 +2,7 @@ import type {
   SendAudioStepSchema,
   SendFileStepSchema,
   SendImageStepSchema,
+  SendMultipleImagesStepSchema,
   SendVideoStepSchema,
 } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
@@ -10,6 +11,7 @@ import type {
   TelegramAuthValue,
   TelegramSendAudioRequest,
   TelegramSendDocumentRequest,
+  TelegramSendMediaGroupRequest,
   TelegramSendPhotoRequest,
   TelegramSendVideoRequest,
 } from "../../../schema"
@@ -116,6 +118,33 @@ export function* convertFlowStepAudio(
     chat_id: chatId,
     audio: step.url,
     reply_markup: keyboard,
+  }
+}
+
+export function* convertFlowStepMultipleImages(
+  props: Parameters<
+    MessageHandlers<
+      TelegramAuthValue,
+      SendMultipleImagesStepSchema
+    >["sendFlowStep"]
+  >[0],
+): Generator<TelegramSendMediaGroupRequest> {
+  const {
+    data: { step, contact },
+  } = props
+
+  const chatId = contact.sourceId
+  if (!chatId) {
+    return
+  }
+
+  // Telegram's sendMediaGroup does not support reply_markup/buttons.
+  yield {
+    chat_id: chatId,
+    media: step.images.map((image) => ({
+      type: "photo" as const,
+      media: image.url,
+    })),
   }
 }
 

@@ -9,6 +9,7 @@ import type {
   TelegramSendAudioRequest,
   TelegramSendChatActionRequest,
   TelegramSendDocumentRequest,
+  TelegramSendMediaGroupRequest,
   TelegramSendMessageRequest,
   TelegramSendPhotoRequest,
   TelegramSendVideoRequest,
@@ -36,6 +37,18 @@ export const sendTelegramPhoto = (
       TelegramApiResponse<{ message_id: number }>
     >("sendPhoto", { json: payload })
     return response.result.message_id
+  })
+
+export const sendTelegramMediaGroup = (
+  auth: TelegramAuthValue,
+  payload: TelegramSendMediaGroupRequest,
+): Promise<number[]> =>
+  rescue("sendMediaGroup", async () => {
+    const client = createTelegramClient(auth.secretText)
+    const response = await client.post<
+      TelegramApiResponse<Array<{ message_id: number }>>
+    >("sendMediaGroup", { json: payload })
+    return response.result.map((message) => message.message_id)
   })
 
 export const sendTelegramDocument = (

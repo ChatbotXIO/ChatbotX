@@ -75,6 +75,7 @@ const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendGif,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMessengerTemplateMessage,
+  stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendText,
   stepTypes.enum.sendVideo,
@@ -614,24 +615,36 @@ export async function sendFlowStep({
       ...(isPublicCommentReply ? { type: "comment" as const } : {}),
     }
 
-    // Upload file if exists
-    let attachmentInput:
-      | Parameters<typeof repository.createWithAttachments>[1][0]
-      | undefined
+    // Upload file(s) if any
+    const attachmentInputs: Parameters<
+      typeof repository.createWithAttachments
+    >[1][0][] = []
     if ("url" in stepWithSignedBookingLinks) {
       const uploadedFile = await uploadFileFromUrl(
         stepWithSignedBookingLinks.url,
         `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
       )
-      attachmentInput = {
+      attachmentInputs.push({
         ...uploadedFile,
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
+      })
+    } else if ("images" in stepWithSignedBookingLinks) {
+      for (const image of stepWithSignedBookingLinks.images) {
+        const uploadedFile = await uploadFileFromUrl(
+          image.url,
+          `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
+        )
+        attachmentInputs.push({
+          ...uploadedFile,
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+        })
       }
     }
 
-    message = attachmentInput
-      ? await repository.createWithAttachments(messageInput, [attachmentInput])
+    message = attachmentInputs.length
+      ? await repository.createWithAttachments(messageInput, attachmentInputs)
       : await repository.create(messageInput)
 
     // Add url to attachments for response

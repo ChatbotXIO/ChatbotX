@@ -125,6 +125,16 @@ const mapFlowStepToEnvelope = (
           ],
         },
       }
+    case stepTypes.enum.sendMultipleImages:
+      return {
+        text: null,
+        contentAttributes: {
+          attachments: step.images.map((image) => ({
+            url: image.url,
+            fileType: "image" as const,
+          })),
+        },
+      }
     case stepTypes.enum.sendQuickReply:
       return { text: step.message }
     case stepTypes.enum.sendCarousel:
