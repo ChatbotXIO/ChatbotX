@@ -3,7 +3,7 @@
 import type { Edge, Node } from "@xyflow/react"
 import { useTranslations } from "next-intl"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import type { FlowResource } from "../schemas/resource"
+import type { FlowResource } from "../schema/resource"
 import { FlowEditToolbar } from "./flow-edit-toolbar"
 
 export function FrameHeader({

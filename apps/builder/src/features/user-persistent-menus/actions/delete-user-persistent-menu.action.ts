@@ -4,7 +4,7 @@ import { deleteUserPersistentMenus } from "@chatbotx.io/database/repositories"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteUserPersistentMenuAction = workspaceActionClient

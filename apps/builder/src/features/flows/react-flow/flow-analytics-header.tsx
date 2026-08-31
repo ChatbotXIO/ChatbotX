@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import type { FlowResource } from "../schemas/resource"
+import type { FlowResource } from "../schema/resource"
 
 export function FlowAnalyticsHeader({ flow }: { flow: FlowResource }) {
   const t = useTranslations()

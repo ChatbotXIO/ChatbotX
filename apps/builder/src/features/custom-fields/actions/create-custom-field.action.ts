@@ -7,14 +7,14 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldRequest,
   createCustomFieldRequest,
-} from "../schemas/action"
-import type { CustomFieldResource } from "../schemas/resource"
+} from "../schema/action"
+import type { CustomFieldResource } from "../schema/resource"
 
 export const createCustomFieldAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

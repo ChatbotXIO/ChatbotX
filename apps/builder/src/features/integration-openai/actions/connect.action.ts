@@ -15,13 +15,13 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { authActionClient } from "@/lib/safe-action"
 import { verifyOpenAIApiKey } from "../lib"
 import {
   type ConnectOpenAISchema,
   connectOpenAISchema,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const connectOpenAIAction = authActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

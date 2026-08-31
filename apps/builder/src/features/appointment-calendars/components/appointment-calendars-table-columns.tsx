@@ -31,7 +31,7 @@ import type { Dispatch, SetStateAction } from "react"
 import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { updateAppointmentCalendarActiveAction } from "../actions/update-appointment-calendar-active.action"
-import type { AppointmentCalendarListItem } from "../schemas/resource"
+import type { AppointmentCalendarListItem } from "../schema/resource"
 
 type Props = {
   t: ReturnType<typeof useTranslations>

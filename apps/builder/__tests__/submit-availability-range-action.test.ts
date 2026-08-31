@@ -40,7 +40,7 @@ const { submitAvailabilityRange } = await import(
   "../src/app/booking/range-picker/actions/submit-availability-range.action"
 )
 const { submitAvailabilityRangeRequestSchema } = await import(
-  "../src/features/booking-webview/schemas/availability-range-action"
+  "../src/features/booking-webview/schema/availability-range-action"
 )
 
 describe("submitAvailabilityRangeAction", () => {

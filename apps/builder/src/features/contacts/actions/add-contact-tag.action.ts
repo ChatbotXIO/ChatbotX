@@ -14,14 +14,14 @@ import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type AddContactTagRequest,
   addContactTagRequest,
-} from "../schemas/contact-tag"
+} from "../schema/contact-tag"
 
 const CONTACT_CHUNK_SIZE = 200
 

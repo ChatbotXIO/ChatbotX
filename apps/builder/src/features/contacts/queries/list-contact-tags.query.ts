@@ -3,7 +3,7 @@ import { db } from "@chatbotx.io/database/client"
 import type {
   ListContactTagsRequest,
   ListContactTagsResponse,
-} from "../schemas/contact-tag"
+} from "../schema/contact-tag"
 
 export async function listContactTags(
   input: ListContactTagsRequest & { accessScope?: ContactAccessScope },

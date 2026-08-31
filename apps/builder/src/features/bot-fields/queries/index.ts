@@ -3,7 +3,7 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListBotFieldsRequest,
   ListBotFieldsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 /**
  * Documented hard cap for the Account Fields card on `/custom-fields`: the

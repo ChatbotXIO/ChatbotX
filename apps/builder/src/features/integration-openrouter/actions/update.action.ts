@@ -6,12 +6,12 @@ import { integrationOpenRouterService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateOpenRouterRequest,
   updateOpenRouterRequest,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const updateIntegrationOpenRouterAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

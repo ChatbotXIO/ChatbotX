@@ -80,7 +80,7 @@ vi.mock("@/features/fb-comments/queries", () => ({
   listFbComments: vi.fn(),
 }))
 
-await import("@/features/fb-comments/api/authenticated")
+await import("@/features/fb-comments/api/private")
 
 const facebookPostsHandler =
   mocks.state.handlers["/workspaces/{workspaceId}/fb-comments/facebook-posts"]

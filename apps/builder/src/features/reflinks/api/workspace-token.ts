@@ -3,7 +3,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceTokenAuthAPI } from "@/orpc"
 import { findReflink } from "../queries"
-import { reflinkResource } from "../schemas/resource"
+import { reflinkResource } from "../schema/resource"
 
 export const refLinksWorkspaceTokenAPIs = {
   getRefLinkWorkspaceTokenAPI: workspaceTokenAuthAPI

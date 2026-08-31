@@ -8,12 +8,12 @@ import { integrationClaudeModel } from "@chatbotx.io/database/schema"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateClaudeRequest,
   updateClaudeRequest,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const updateIntegrationClaudeAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

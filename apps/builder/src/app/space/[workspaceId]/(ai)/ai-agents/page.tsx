@@ -5,7 +5,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AIAgentsTable } from "@/features/ai-agents/ai-agent-table"
 import { listAIAgents } from "@/features/ai-agents/queries"
-import { listAIAgentsRequest } from "@/features/ai-agents/schemas/query"
+import { listAIAgentsRequest } from "@/features/ai-agents/schema/query"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 

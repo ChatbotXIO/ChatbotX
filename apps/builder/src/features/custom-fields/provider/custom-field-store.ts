@@ -1,10 +1,10 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ListBotFieldsResponse } from "@/features/bot-fields/schemas/query"
-import type { BotFieldResource } from "@/features/bot-fields/schemas/resource"
+import type { ListBotFieldsResponse } from "@/features/bot-fields/schema/query"
+import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { ListCustomFieldsResponse } from "../schemas/query"
-import type { CustomFieldResource } from "../schemas/resource"
+import type { ListCustomFieldsResponse } from "../schema/query"
+import type { CustomFieldResource } from "../schema/resource"
 
 export type CustomFieldState = {
   loading: boolean

@@ -19,7 +19,7 @@ import { createDynamicImageAction } from "./actions/create-dynamic-image.action"
 import { DynamicImageEditor } from "./components/dynamic-image-editor"
 import { DynamicImageTemplatePicker } from "./components/template-picker"
 import { DEFAULT_DYNAMIC_IMAGE_DOCUMENT } from "./constants"
-import { createDynamicImageRequest } from "./schemas/action"
+import { createDynamicImageRequest } from "./schema/action"
 
 export function CreateDynamicImageForm({
   workspaceId,

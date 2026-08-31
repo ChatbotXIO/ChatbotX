@@ -43,7 +43,7 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({ createId: () => "file-1" }))
 
-vi.mock("@/features/import/schemas/presign", () => ({
+vi.mock("@/features/import/schema/presign", () => ({
   presignImportUploadRequest: {
     parse: (value: unknown) => value,
   },

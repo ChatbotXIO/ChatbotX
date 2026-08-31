@@ -14,7 +14,7 @@ import { isRevokedTokenError } from "@chatbotx.io/integration-whatsapp"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { integrations } from "@/integration"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 

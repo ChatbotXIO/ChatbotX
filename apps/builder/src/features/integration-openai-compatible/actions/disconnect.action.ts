@@ -4,7 +4,7 @@ import { integrationOpenaiCompatibleService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const disconnectOpenaiCompatibleAction = workspaceActionClient

@@ -4,7 +4,7 @@ import { db } from "@chatbotx.io/database/client"
 import type { AIEmbeddingStatus } from "@chatbotx.io/database/partials"
 import { uploader } from "@chatbotx.io/filesystem"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListAIFilesRequest, ListAIFilesResponse } from "../schemas"
+import type { ListAIFilesRequest, ListAIFilesResponse } from "../schema"
 
 export async function listAIFiles(
   input: ListAIFilesRequest,

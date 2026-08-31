@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { authClient } from "@/lib/auth/auth-client"
 import { resolveSafeCallbackUrl } from "@/lib/safe-callback-url"
-import { type MagicLinkRequest, magicLinkRequest } from "../schemas/action"
+import { type MagicLinkRequest, magicLinkRequest } from "../schema/action"
 
 export const MagicLinkSignIn = () => {
   const t = useTranslations()

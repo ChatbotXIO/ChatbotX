@@ -41,7 +41,7 @@ import { AIFileProcessingStatus } from "./ai-file-processing-status"
 import { AIFilesCreate } from "./ai-files-create"
 import { DeleteAIFileDialog } from "./delete-ai-file-dialog"
 import type { listAIFiles } from "./queries"
-import type { AIFileWithProcessing } from "./schemas"
+import type { AIFileWithProcessing } from "./schema"
 
 type AIFilesTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listAIFiles>>]>

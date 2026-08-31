@@ -1,6 +1,6 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { userResource } from "@/features/users/schemas/resource"
+import { userResource } from "@/features/users/schema/resource"
 import { inboxTeamMemberResource } from "../../inbox-team-members/schema/resource"
 import { inboxTeamResource } from "./resource"
 

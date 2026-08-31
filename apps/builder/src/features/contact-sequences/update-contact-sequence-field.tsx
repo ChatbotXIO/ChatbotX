@@ -13,7 +13,7 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useWorkspaceId } from "@/hooks/routing"
-import type { ContactResource } from "../contacts/schemas/resource"
+import type { ContactResource } from "../contacts/schema/resource"
 import { updateContactSequenceAction } from "./actions/update-contact-sequence.action"
 import {
   type ContactOnSequenceWithRelations,

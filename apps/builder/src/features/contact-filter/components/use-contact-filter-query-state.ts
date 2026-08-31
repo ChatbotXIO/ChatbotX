@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react"
 import {
   type ContactFilterCriteria,
   contactFilterCriteriaSchema,
-} from "../schemas"
+} from "../schema"
 
 export const EMPTY_CONTACT_FILTER: ContactFilterCriteria = {
   operator: "and",

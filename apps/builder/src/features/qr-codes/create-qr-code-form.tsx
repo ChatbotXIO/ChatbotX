@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { createQrCodeAction } from "./actions/create-qr-code.action"
 import { QR_CODE_SIZE } from "./constants"
-import { createQrCodeRequest } from "./schemas/action"
+import { createQrCodeRequest } from "./schema/action"
 
 export function CreateQrCodeForm({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()

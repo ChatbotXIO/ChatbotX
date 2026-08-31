@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { disconnectGoogleCalendarAction } from "../actions/disconnect.action"
-import type { ExternalCalendarResource } from "../schemas/resource"
+import type { ExternalCalendarResource } from "../schema/resource"
 
 type Props = {
   workspaceId: string

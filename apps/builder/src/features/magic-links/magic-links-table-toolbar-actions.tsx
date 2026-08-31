@@ -3,7 +3,7 @@
 import type { Table } from "@tanstack/react-table"
 import { CreateMagicLinkDialog } from "./create-magic-link"
 import { DeleteMagicLinksDialog } from "./delete-magic-links"
-import type { ListMagicLinkItem } from "./schemas/query"
+import type { ListMagicLinkItem } from "./schema/query"
 
 type MagicLinksTableToolbarActionsProps = {
   table: Table<ListMagicLinkItem>

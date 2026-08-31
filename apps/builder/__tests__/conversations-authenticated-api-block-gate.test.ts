@@ -131,7 +131,7 @@ vi.mock("@/features/conversations/queries/list-conversations.query", () => ({
   listConversations: vi.fn(),
 }))
 
-await import("@/features/conversations/api/authenticated")
+await import("@/features/conversations/api/private")
 
 const ARCHIVE_PATH = "/workspaces/{workspaceId}/conversations/archive"
 

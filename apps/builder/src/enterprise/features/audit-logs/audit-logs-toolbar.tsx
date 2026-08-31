@@ -14,7 +14,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type FormEvent, useMemo, useState } from "react"
 import type { AuditLogAdminOption } from "./queries"
-import type { ListAuditLogsRequest } from "./schemas/query"
+import type { ListAuditLogsRequest } from "./schema/query"
 
 type AuditLogsToolbarProps = Pick<
   ListAuditLogsRequest,

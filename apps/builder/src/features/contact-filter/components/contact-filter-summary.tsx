@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import type { ContactFilterCriteria } from "../schemas"
+import type { ContactFilterCriteria } from "../schema"
 import {
   formatConditionValueDisplay,
   formatCtwaRetargetChipLabel,

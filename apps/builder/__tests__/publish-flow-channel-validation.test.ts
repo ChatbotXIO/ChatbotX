@@ -9,7 +9,7 @@ import {
   waitNodeDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
-import { publishFlowSchema } from "@/features/flows/schemas/action"
+import { publishFlowSchema } from "@/features/flows/schema/action"
 
 const makeReplyButton = (label: string) => buttonStepDefaultFn({ label })
 

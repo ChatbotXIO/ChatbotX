@@ -8,7 +8,7 @@ import {
   type WhatsappOAuthRelayResult,
 } from "../libs/embedded-signup"
 import { FORM_FIELDS } from "../libs/form-fields"
-import type { ConnectWhatsappSchema } from "../schemas"
+import type { ConnectWhatsappSchema } from "../schema"
 
 type UseEmbeddedSignupAutoConnectParams = {
   /** A failed connect hands the flow back to the user for a fresh signup. */

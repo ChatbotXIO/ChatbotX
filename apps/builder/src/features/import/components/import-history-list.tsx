@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useEffect } from "react"
 import type { listImports } from "../queries/list-imports.queries"
-import type { ListImportsItem } from "../schemas/query"
+import type { ListImportsItem } from "../schema/query"
 
 type ImportHistoryListProps = {
   promises: Promise<[Awaited<ReturnType<typeof listImports>>]>

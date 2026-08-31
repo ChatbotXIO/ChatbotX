@@ -45,8 +45,8 @@ import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custo
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
-import type { GetContactResponse } from "./schemas/query"
-import type { ContactEditableField } from "./schemas/resource"
+import type { GetContactResponse } from "./schema/query"
+import type { ContactEditableField } from "./schema/resource"
 import { useAvatarUrl } from "./utils"
 
 // Guards the ad source URL to navigable http(s) so a non-URL / `javascript:`

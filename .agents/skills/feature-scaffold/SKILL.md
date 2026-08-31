@@ -19,7 +19,7 @@ features/<feature-name>/
     delete-item-action.ts
   api/                  → oRPC route handlers
     index.ts
-    authenticated.ts
+    private.ts
     workspace-token.ts
   queries/              → Server-side DB queries
     index.ts

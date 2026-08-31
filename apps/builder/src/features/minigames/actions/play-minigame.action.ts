@@ -10,7 +10,7 @@ import { verifyMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-t
 import { getTranslations } from "next-intl/server"
 import { actionClient } from "@/lib/safe-action"
 import { MINIGAME_PLAY_SCREENS } from "../components/play/minigame-play-screen-registry"
-import { playMinigameRequest } from "../schemas/action"
+import { playMinigameRequest } from "../schema/action"
 
 export const playMinigameAction = actionClient
   .inputSchema(playMinigameRequest)

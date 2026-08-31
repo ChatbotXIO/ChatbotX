@@ -35,7 +35,7 @@ import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-fi
 import { useWorkspaceId } from "@/hooks/routing"
 import { getBrowserTimezone } from "../../contact-filter/lib/timezone"
 import { addContactCustomFieldAction } from "../actions/add-contact-custom-field.action"
-import { addContactCustomFieldRequest } from "../schemas/contact-custom-field"
+import { addContactCustomFieldRequest } from "../schema/contact-custom-field"
 
 type AddContactCustomFieldDialogProps = {
   trigger: ReactElement

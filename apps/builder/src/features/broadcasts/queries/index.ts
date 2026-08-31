@@ -9,10 +9,10 @@ import {
   likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { GetBroadcastsSchema } from "../schemas/query"
-import type { BroadcastResourceWithRelations } from "../schemas/resource"
+import type { GetBroadcastsSchema } from "../schema/query"
+import type { BroadcastResourceWithRelations } from "../schema/resource"
 
 export async function listBroadcasts(
   input: GetBroadcastsSchema,

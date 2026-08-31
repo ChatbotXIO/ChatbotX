@@ -40,7 +40,7 @@ vi.mock("@chatbotx.io/events", () => ({
   removeWebhookCache: mockRemoveWebhookCache,
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
   bulkUpdateIdsRequest: {},
 }))

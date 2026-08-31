@@ -39,7 +39,7 @@ import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
 import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-context"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
-import type { BroadcastResourceWithRelations } from "./schemas/resource"
+import type { BroadcastResourceWithRelations } from "./schema/resource"
 import { getEstimatedContactsDisplayState } from "./utils/estimated-contacts-display"
 
 type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"

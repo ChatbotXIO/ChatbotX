@@ -5,7 +5,7 @@ import { externalRequestFieldsSchema } from "@chatbotx.io/flow-config"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const testExternalRequestAction = workspaceActionClient

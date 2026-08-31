@@ -17,8 +17,8 @@ import type {
   FindFlowParams,
   ListFlowsRequest,
   ListFlowsResponse,
-} from "../schemas/query"
-import type { FlowResource } from "../schemas/resource"
+} from "../schema/query"
+import type { FlowResource } from "../schema/resource"
 
 export const listFlowsRSC = async (
   input: ListFlowsRequest & { workspaceId: string },

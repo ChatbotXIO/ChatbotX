@@ -6,7 +6,7 @@ import {
   facebookAdsAuthSchema,
   integration as facebookAdsIntegration,
 } from "@chatbotx.io/integration-facebook-ads"
-import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
+import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"

@@ -22,7 +22,7 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdAndIdRequestParams: [],
   workspaceIdrequestParams: [],
 }))

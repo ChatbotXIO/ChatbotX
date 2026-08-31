@@ -11,11 +11,11 @@ import {
   createCustomFieldRequest,
   createCustomFieldResponse,
   updateCustomFieldRequest,
-} from "../schemas/action"
+} from "../schema/action"
 import {
   listCustomFieldsRequest,
   listCustomFieldsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export const privateCustomFieldsAPI = {
   privateListCustomFieldsAPI: authorizedAPI

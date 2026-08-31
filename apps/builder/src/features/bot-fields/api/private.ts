@@ -2,7 +2,7 @@ import { botFieldService } from "@chatbotx.io/business"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { listBotFieldsRequest, listBotFieldsResponse } from "../schemas/query"
+import { listBotFieldsRequest, listBotFieldsResponse } from "../schema/query"
 
 export const privateBotFieldsAPI = {
   privateListBotFieldsAPI: authorizedAPI

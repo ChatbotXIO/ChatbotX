@@ -19,7 +19,7 @@ import {
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 import { ContactNameCell } from "@/features/contacts/components/contact-name-cell"
-import type { AppointmentManagementListItem } from "../schemas/resource"
+import type { AppointmentManagementListItem } from "../schema/resource"
 
 export type AppointmentRowAction = {
   row: Row<AppointmentManagementListItem>
