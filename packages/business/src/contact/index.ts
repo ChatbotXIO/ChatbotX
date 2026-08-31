@@ -1,5 +1,6 @@
 export * from "./contact-info-changes"
 export * from "./extract-contact"
+export * from "./profile-refresh"
 export * from "./service"
 export * from "./update-from-message"
 export * from "./utils"

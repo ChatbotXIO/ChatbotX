@@ -775,20 +775,21 @@ export const createChatStore = () => {
 
     updateContact: (contactId: string, data: Partial<ContactResource>) => {
       const { conversations } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.contactId === contactId,
-      )
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        if (updatedConversations[conversationIndex].contact) {
-          updatedConversations[conversationIndex].contact = {
-            ...updatedConversations[conversationIndex].contact,
-            ...data,
-          }
-        }
-
-        set({ conversations: updatedConversations })
+      const hasMatch = conversations.some((c) => c.contactId === contactId)
+      if (!hasMatch) {
+        return
       }
+
+      set({
+        conversations: conversations.map((conversation) =>
+          conversation.contactId === contactId && conversation.contact
+            ? {
+                ...conversation,
+                contact: { ...conversation.contact, ...data },
+              }
+            : conversation,
+        ),
+      })
     },
   }))
 }

@@ -41,6 +41,13 @@ class ZaloIntegrationService extends BaseService {
     })
   }
 
+  findByInboxIdForWorkspace(props: { inboxId: string; workspaceId: string }) {
+    return findOrFail({
+      table: integrationZaloModel,
+      where: { inboxId: props.inboxId, workspaceId: props.workspaceId },
+    })
+  }
+
   async updateAuth(
     id: string,
     auth: Record<string, unknown>,
