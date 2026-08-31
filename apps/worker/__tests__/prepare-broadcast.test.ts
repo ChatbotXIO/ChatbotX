@@ -39,7 +39,11 @@ vi.mock("@chatbotx.io/database/partials", async () =>
 )
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: { id: "Broadcast.id", __name: "broadcastModel" },
+  broadcastModel: {
+    id: "Broadcast.id",
+    status: "Broadcast.status",
+    __name: "broadcastModel",
+  },
   contactsOnBroadcastsModel: { __name: "contactsOnBroadcastsModel" },
 }))
 
@@ -74,6 +78,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     }),
   },
   eq: (left: unknown, right: unknown) => ({ __eq: [left, right] }),
+  and: (...args: unknown[]) => ({ __and: args }),
 }))
 
 vi.mock("../src/lib/logger", () => ({

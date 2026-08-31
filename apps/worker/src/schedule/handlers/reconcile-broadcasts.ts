@@ -16,7 +16,10 @@ export const reconcileBroadcasts = async () =>
     timeoutInSeconds: LOCK_TTL_SECONDS,
     fn: async () => {
       const broadcasts = await db.query.broadcastModel.findMany({
-        where: { status: broadcastStatuses.enum.sending },
+        where: {
+          status: broadcastStatuses.enum.sending,
+          handoffCompletedAt: { isNull: true },
+        },
       })
 
       for (const broadcast of broadcasts) {

@@ -1,70 +1,30 @@
+import { BROADCAST_OUTCOME_GRACE_MS } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ── db spies ──────────────────────────────────────────────────────────────────
-const findManyBroadcast = vi.fn()
-const dbCountMock = vi.fn()
-const returningSpy = vi.fn()
+const listAwaitingFinalization = vi.fn()
+const countRecipientOutcomes = vi.fn()
+const completeSending = vi.fn()
 const recordAuditLog = vi.fn()
-
-type UpdateCall = {
-  table: unknown
-  values: Record<string, unknown>
-  condition: unknown
-}
-const updateCalls: UpdateCall[] = []
-
-// ── distributed lock spy ──────────────────────────────────────────────────────
 const runExclusiveSpy = vi.fn()
-
-// ── logger spy ────────────────────────────────────────────────────────────────
 const loggerInfoSpy = vi.fn()
 
-// ── mocks ─────────────────────────────────────────────────────────────────────
+vi.mock("@chatbotx.io/business", () => ({
+  broadcastService: {
+    listAwaitingFinalization: (...args: unknown[]) =>
+      listAwaitingFinalization(...args),
+    countRecipientOutcomes: (...args: unknown[]) =>
+      countRecipientOutcomes(...args),
+    completeSending: (...args: unknown[]) => completeSending(...args),
+  },
+}))
+
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      broadcastModel: {
-        findMany: (...args: unknown[]) => findManyBroadcast(...args),
-      },
-    },
-    $count: (...args: unknown[]) => dbCountMock(...args),
-    update: (table: unknown) => ({
-      set: (values: Record<string, unknown>) => ({
-        where: (condition: unknown) => {
-          updateCalls.push({ table, values, condition })
-          return Object.assign(Promise.resolve(), {
-            returning: (...args: unknown[]) => returningSpy(...args),
-          })
-        },
-      }),
-    }),
-  },
-  and: (...args: unknown[]) => ({ __and: args }),
-  eq: (a: unknown, b: unknown) => ({ __eq: [a, b] }),
-  ne: (a: unknown, b: unknown) => ({ __ne: [a, b] }),
-  or: (...args: unknown[]) => ({ __or: args }),
-  isNotNull: (a: unknown) => ({ __isNotNull: a }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: { id: "broadcast.id", __name: "broadcastModel" },
-  contactsOnBroadcastsModel: {
-    broadcastId: "cob.broadcastId",
-    deliveredAt: "cob.deliveredAt",
-    failedAt: "cob.failedAt",
-    __name: "contactsOnBroadcastsModel",
-  },
-}))
-
-vi.mock("@chatbotx.io/database/partials", () => ({
-  broadcastStatuses: {
-    enum: { scheduled: "scheduled", sending: "sending", sent: "sent" },
-  },
-}))
+vi.mock("@chatbotx.io/database/partials", async () =>
+  vi.importActual("@chatbotx.io/database/partials"),
+)
 
 vi.mock("@chatbotx.io/redis", () => ({
   distributedLock: {
@@ -91,199 +51,181 @@ const { finalizeBroadcasts } = await import(
   "../src/schedule/handlers/finalize-broadcasts"
 )
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+const minutesAgo = (minutes: number) =>
+  new Date(Date.now() - minutes * 60 * 1000)
+
+// Grace-window fixtures are derived from the real BROADCAST_OUTCOME_GRACE_MS
+// (rather than a hardcoded literal) so they stay correct if the grace period
+// is ever tuned.
+const withinGraceWindowAgo = () =>
+  new Date(Date.now() - (BROADCAST_OUTCOME_GRACE_MS - 60 * 1000))
+const pastGraceWindowAgo = () =>
+  new Date(Date.now() - (BROADCAST_OUTCOME_GRACE_MS + 60 * 1000))
+
 const makeBroadcast = (
   id: string,
   contactCount: number | null,
-  overrides: Record<string, unknown> = {},
-) => ({
-  id,
-  name: "Broadcast",
-  workspaceId: "workspace-1",
-  status: "sending",
-  contactCount,
-  ...overrides,
-})
+  handoffCompletedAt: Date,
+) => ({ id, workspaceId: "ws-1", contactCount, handoffCompletedAt })
 
-// ── setup ─────────────────────────────────────────────────────────────────────
 beforeEach(() => {
-  updateCalls.length = 0
-  findManyBroadcast.mockResolvedValue([])
-  dbCountMock.mockResolvedValue(0)
-  returningSpy.mockResolvedValue([{ id: "b-1" }])
-  recordAuditLog.mockResolvedValue(undefined)
+  listAwaitingFinalization.mockReset().mockResolvedValue([])
+  countRecipientOutcomes
+    .mockReset()
+    .mockResolvedValue({ completed: 0, failed: 0 })
+  completeSending.mockReset().mockResolvedValue(true)
+  recordAuditLog.mockReset().mockResolvedValue(undefined)
 })
 
-// ── tests ─────────────────────────────────────────────────────────────────────
 describe("finalizeBroadcasts", () => {
-  describe("distributed lock", () => {
-    test("acquires lock with the expected key before executing", async () => {
-      findManyBroadcast.mockResolvedValue([])
-
-      await finalizeBroadcasts()
-
-      expect(runExclusiveSpy).toHaveBeenCalledTimes(1)
-      const [opts] = runExclusiveSpy.mock.calls[0] as [
-        { key: string; timeoutInSeconds: number },
-      ]
-      expect(opts.key).toBe("schedule:finalize-broadcasts")
-      expect(opts.timeoutInSeconds).toBe(55)
+  test("acquires the lock with the expected key", async () => {
+    await finalizeBroadcasts()
+    expect(runExclusiveSpy.mock.calls[0][0]).toMatchObject({
+      key: "schedule:finalize-broadcasts",
+      timeoutInSeconds: 55,
     })
   })
 
-  describe("no 'sending' broadcasts", () => {
-    test("returns { skipped: false, finalized: 0 } without any db updates", async () => {
-      findManyBroadcast.mockResolvedValue([])
+  test("returns zero counts when nothing awaits finalization", async () => {
+    expect(await finalizeBroadcasts()).toEqual({
+      skipped: false,
+      finalized: 0,
+      failed: 0,
+    })
+    expect(completeSending).not.toHaveBeenCalled()
+  })
 
-      const result = await finalizeBroadcasts()
+  test("marks null/zero-contact handed-off broadcasts sent without counting outcomes", async () => {
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", null, minutesAgo(1)),
+      makeBroadcast("b-2", 0, minutesAgo(1)),
+    ])
 
-      expect(result).toEqual({ skipped: false, finalized: 0 })
-      expect(updateCalls).toHaveLength(0)
+    const result = await finalizeBroadcasts()
+
+    expect(countRecipientOutcomes).not.toHaveBeenCalled()
+    expect(completeSending).toHaveBeenCalledWith({
+      broadcastId: "b-1",
+      status: "sent",
+    })
+    expect(completeSending).toHaveBeenCalledWith({
+      broadcastId: "b-2",
+      status: "sent",
+    })
+    expect(result).toEqual({ skipped: false, finalized: 2, failed: 0 })
+  })
+
+  test("marks sent when every recipient has an outcome and not all failed", async () => {
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", 10, minutesAgo(1)),
+    ])
+    countRecipientOutcomes.mockResolvedValue({ completed: 10, failed: 2 })
+
+    const result = await finalizeBroadcasts()
+
+    expect(completeSending).toHaveBeenCalledWith({
+      broadcastId: "b-1",
+      status: "sent",
+    })
+    expect(recordAuditLog).toHaveBeenCalledTimes(1)
+    expect(recordAuditLog).toHaveBeenCalledWith({
+      action: "broadcast_sent",
+      detail: "sent a broadcast (#b-1)",
+      workspaceId: "ws-1",
+      source: "schedule:finalizeBroadcasts",
+    })
+    expect(result).toEqual({ skipped: false, finalized: 1, failed: 0 })
+  })
+
+  test("marks failed when every recipient failed", async () => {
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", 10, minutesAgo(1)),
+    ])
+    countRecipientOutcomes.mockResolvedValue({ completed: 10, failed: 10 })
+
+    const result = await finalizeBroadcasts()
+
+    expect(completeSending).toHaveBeenCalledWith({
+      broadcastId: "b-1",
+      status: "failed",
+    })
+    expect(recordAuditLog).toHaveBeenCalledTimes(1)
+    expect(recordAuditLog).toHaveBeenCalledWith({
+      action: "broadcast_failed",
+      detail: "broadcast failed (#b-1)",
+      workspaceId: "ws-1",
+      source: "schedule:finalizeBroadcasts",
+    })
+    expect(result).toEqual({ skipped: false, finalized: 0, failed: 1 })
+  })
+
+  test("policy: Completed unless every targeted recipient failed (tolerance case is an intentional false-negative)", async () => {
+    // 1000 targeted, 950 completed (>1% missing → not within tolerance) — must wait.
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", 1000, minutesAgo(1)),
+    ])
+    countRecipientOutcomes.mockResolvedValue({ completed: 950, failed: 950 })
+    await finalizeBroadcasts()
+    expect(completeSending).not.toHaveBeenCalled()
+
+    // 1000 targeted, 995 completed, all of them failed → within tolerance; 995 < 1000 → sent (spec D5).
+    countRecipientOutcomes.mockResolvedValue({ completed: 995, failed: 995 })
+    await finalizeBroadcasts()
+    expect(completeSending).toHaveBeenCalledWith({
+      broadcastId: "b-1",
+      status: "sent",
     })
   })
 
-  describe("broadcast with null or zero contactCount", () => {
-    test("skips broadcast with contactCount null", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", null)])
+  test("waits inside the grace window when outcomes are incomplete", async () => {
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", 10, withinGraceWindowAgo()),
+    ])
+    countRecipientOutcomes.mockResolvedValue({ completed: 3, failed: 0 })
 
-      const result = await finalizeBroadcasts()
+    await finalizeBroadcasts()
 
-      expect(result).toEqual({ skipped: false, finalized: 0 })
-      expect(dbCountMock).not.toHaveBeenCalled()
-      expect(updateCalls).toHaveLength(0)
-    })
-
-    test("skips broadcast with contactCount 0", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 0)])
-
-      const result = await finalizeBroadcasts()
-
-      expect(result).toEqual({ skipped: false, finalized: 0 })
-      expect(dbCountMock).not.toHaveBeenCalled()
-    })
+    expect(completeSending).not.toHaveBeenCalled()
+    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 
-  describe("broadcast is complete (completed >= total)", () => {
-    test("updates broadcast status to 'sent' and increments finalized count", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 10)])
-      dbCountMock.mockResolvedValue(10) // completed === total
+  test("resolves with whatever is known once the grace window elapsed (later outcomes do not change status)", async () => {
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", 10, pastGraceWindowAgo()),
+    ])
+    countRecipientOutcomes.mockResolvedValue({ completed: 3, failed: 0 })
 
-      const result = await finalizeBroadcasts()
+    const result = await finalizeBroadcasts()
 
-      expect(result).toEqual({ skipped: false, finalized: 1 })
-      expect(updateCalls).toHaveLength(1)
-      expect(updateCalls[0].values).toMatchObject({ status: "sent" })
-      expect(recordAuditLog).toHaveBeenCalledWith({
-        action: "broadcast_sent",
-        detail: "sent a broadcast (#b-1)",
-        workspaceId: "workspace-1",
-        source: "schedule:finalizeBroadcasts",
-      })
+    expect(completeSending).toHaveBeenCalledWith({
+      broadcastId: "b-1",
+      status: "sent",
     })
-
-    test("does not emit broadcast_sent when process-broadcast-contacts already won the race (dedupe)", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 10)])
-      dbCountMock.mockResolvedValue(10)
-      returningSpy.mockResolvedValue([])
-
-      const result = await finalizeBroadcasts()
-
-      expect(result).toEqual({ skipped: false, finalized: 1 })
-      expect(recordAuditLog).not.toHaveBeenCalled()
-    })
-
-    test("completed > total also finalizes", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 5)])
-      dbCountMock.mockResolvedValue(7) // more completed than total (edge case)
-
-      const result = await finalizeBroadcasts()
-
-      expect(result).toEqual({ skipped: false, finalized: 1 })
-    })
+    expect(result).toEqual({ skipped: false, finalized: 1, failed: 0 })
   })
 
-  describe("broadcast is complete via missing threshold", () => {
-    test("finalizes broadcast when missing contacts are within 1% and at most 100", async () => {
-      // total = 20_000, completed = 19_900 -> missingCount = 100 (0.5%)
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 20_000)])
-      dbCountMock.mockResolvedValue(19_900)
+  test("keeps a broadcast for the next run when finalization transiently fails", async () => {
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", 10, minutesAgo(1)),
+    ])
+    countRecipientOutcomes.mockRejectedValueOnce(new Error("db timeout"))
 
-      const result = await finalizeBroadcasts()
+    await expect(finalizeBroadcasts()).rejects.toThrow("db timeout")
 
-      expect(result).toEqual({ skipped: false, finalized: 1 })
-    })
-
-    test("does not finalize when missing contacts are under 100 but over 1%", async () => {
-      // total = 200, completed = 198 -> missingCount = 2 (1%)
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 200)])
-      dbCountMock.mockResolvedValue(197)
-
-      const result = await finalizeBroadcasts()
-
-      expect(result).toEqual({ skipped: false, finalized: 0 })
-      expect(updateCalls).toHaveLength(0)
-    })
-
-    test("does not finalize when missing contacts are over 100 even if under 1%", async () => {
-      // total = 20_000, completed = 19_899 -> missingCount = 101 (0.505%)
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 20_000)])
-      dbCountMock.mockResolvedValue(19_899)
-
-      const result = await finalizeBroadcasts()
-
-      expect(result).toEqual({ skipped: false, finalized: 0 })
-      expect(updateCalls).toHaveLength(0)
-    })
+    // Nothing was written, so the row is still `sending` + handed off and is listed again next minute.
+    expect(completeSending).not.toHaveBeenCalled()
   })
 
-  describe("multiple broadcasts in one pass", () => {
-    test("finalizes completed broadcasts and skips incomplete ones", async () => {
-      findManyBroadcast.mockResolvedValue([
-        makeBroadcast("b-1", 10), // complete
-        makeBroadcast("b-2", 500), // incomplete (too many missing)
-        makeBroadcast("b-3", 50), // complete
-      ])
-      dbCountMock
-        .mockResolvedValueOnce(10) // b-1: completed >= total
-        .mockResolvedValueOnce(250) // b-2: 250 missing → not finalized
-        .mockResolvedValueOnce(50) // b-3: completed >= total
+  test("does not count a lost race", async () => {
+    listAwaitingFinalization.mockResolvedValue([
+      makeBroadcast("b-1", 10, minutesAgo(1)),
+    ])
+    countRecipientOutcomes.mockResolvedValue({ completed: 10, failed: 0 })
+    completeSending.mockResolvedValue(false)
 
-      const result = await finalizeBroadcasts()
+    const result = await finalizeBroadcasts()
 
-      expect(result).toEqual({ skipped: false, finalized: 2 })
-      expect(updateCalls).toHaveLength(2)
-    })
-  })
-
-  describe("$count query arguments", () => {
-    test("counts contactsOnBroadcastsModel rows filtered by broadcastId and deliveredAt/failedAt", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 5)])
-      dbCountMock.mockResolvedValue(5)
-
-      await finalizeBroadcasts()
-
-      expect(dbCountMock).toHaveBeenCalledTimes(1)
-      // First arg is the model table, second is the where condition
-      const [table, where] = dbCountMock.mock.calls[0] as [
-        { __name: string },
-        { __and: unknown[] },
-      ]
-      expect(table.__name).toBe("contactsOnBroadcastsModel")
-      expect(where.__and).toHaveLength(2)
-    })
-  })
-
-  describe("logger output", () => {
-    test("logs finalized count after completing the pass", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast("b-1", 3)])
-      dbCountMock.mockResolvedValue(3)
-
-      await finalizeBroadcasts()
-
-      expect(loggerInfoSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ finalized: 1 }),
-        "finalizeBroadcasts completed",
-      )
-    })
+    expect(result).toEqual({ skipped: false, finalized: 0, failed: 0 })
+    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 })

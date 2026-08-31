@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const findManyBroadcast = vi.fn()
 const findManyContactsOnBroadcasts = vi.fn()
 const updateWhereSpy = vi.fn()
-const returningSpy = vi.fn()
-const recordAuditLog = vi.fn()
 
 type UpdateCall = {
   table: unknown
@@ -22,16 +20,18 @@ const scheduleAddSpy = vi.fn()
 // ── logger spy ────────────────────────────────────────────────────────────────
 const loggerErrorSpy = vi.fn()
 
+// ── business service spies ───────────────────────────────────────────────────
+const markHandoffCompleted = vi.fn()
+
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock("@chatbotx.io/business", () => ({
   withBlockedOwnerGuard: async (
     _workspaceId: unknown,
     fn: () => Promise<unknown>,
   ) => fn(),
-}))
-
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
+  broadcastService: {
+    markHandoffCompleted: (...args: unknown[]) => markHandoffCompleted(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -48,20 +48,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
       set: (values: Record<string, unknown>) => ({
         where: (condition: unknown) => {
           updateCalls.push({ table, values, condition })
-          // `markBroadcastSent`'s dedupe check reads `.returning(...)`
-          // separately from the plain `contactsOnBroadcastsModel` updates
-          // below, which are awaited directly — kept on its own spy so each
-          // can be configured independently per test.
-          return Object.assign(Promise.resolve(updateWhereSpy()), {
-            returning: (...args: unknown[]) => returningSpy(...args),
-          })
+          return updateWhereSpy()
         },
       }),
     }),
   },
   and: (...args: unknown[]) => ({ __and: args }),
   eq: (a: unknown, b: unknown) => ({ __eq: [a, b] }),
-  ne: (a: unknown, b: unknown) => ({ __ne: [a, b] }),
   sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
     __sql: { strings: [...strings], values },
   }),
@@ -174,11 +167,11 @@ beforeEach(() => {
   findManyBroadcast.mockResolvedValue([])
   findManyContactsOnBroadcasts.mockResolvedValue([])
   updateWhereSpy.mockResolvedValue(undefined)
-  returningSpy.mockResolvedValue([{ id: BROADCAST_ID }])
-  recordAuditLog.mockResolvedValue(undefined)
   chatAddSpy.mockResolvedValue(undefined)
   integrationAddSpy.mockResolvedValue(undefined)
   scheduleAddSpy.mockResolvedValue(undefined)
+  markHandoffCompleted.mockReset()
+  markHandoffCompleted.mockResolvedValue(true)
 })
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -197,15 +190,17 @@ describe("processBroadcastContacts", () => {
   })
 
   describe("broadcast has no unsent contacts", () => {
-    test("updates broadcastModel status to 'sent' and returns processed: 0", async () => {
+    test("stamps hand-off completion instead of a terminal status and returns processed: 0", async () => {
       findManyBroadcast.mockResolvedValue([makeBroadcast()])
       findManyContactsOnBroadcasts.mockResolvedValue([])
 
       const result = await processBroadcastContacts(BROADCAST_ID)
 
       expect(result).toEqual({ processed: 0 })
-      expect(updateCalls).toHaveLength(1)
-      expect(updateCalls[0].values).toMatchObject({ status: "sent" })
+      expect(markHandoffCompleted).toHaveBeenCalledWith({
+        broadcastId: BROADCAST_ID,
+      })
+      expect(updateCalls).toHaveLength(0)
       expect(chatAddSpy).not.toHaveBeenCalled()
     })
   })
@@ -482,7 +477,7 @@ describe("processBroadcastContacts", () => {
       ).toBe(false)
     })
 
-    test("marks broadcast sent for a partial batch with no retryable error", async () => {
+    test("stamps hand-off completion for a partial batch with no retryable error", async () => {
       findManyBroadcast.mockResolvedValue([
         makeBroadcast({ templateId: "tmpl-1", channel: "whatsapp" }),
       ])
@@ -491,37 +486,16 @@ describe("processBroadcastContacts", () => {
       await processBroadcastContacts(BROADCAST_ID)
 
       expect(scheduleAddSpy).not.toHaveBeenCalled()
+      expect(markHandoffCompleted).toHaveBeenCalledWith({
+        broadcastId: BROADCAST_ID,
+      })
       expect(
         updateCalls.some(
           (call) =>
             (call.table as { __name?: string }).__name === "broadcastModel" &&
             call.values.status === "sent",
         ),
-      ).toBe(true)
-    })
-
-    test("emits a broadcast_sent audit row when the sent transition actually happens", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast({ name: "Sale" })])
-      findManyContactsOnBroadcasts.mockResolvedValue([])
-
-      await processBroadcastContacts(BROADCAST_ID)
-
-      expect(recordAuditLog).toHaveBeenCalledWith({
-        action: "broadcast_sent",
-        detail: `sent a broadcast (#${BROADCAST_ID})`,
-        workspaceId: WORKSPACE_ID,
-        source: "schedule:processBroadcastContacts",
-      })
-    })
-
-    test("does not emit broadcast_sent when the broadcast was already sent (dedupe)", async () => {
-      findManyBroadcast.mockResolvedValue([makeBroadcast()])
-      findManyContactsOnBroadcasts.mockResolvedValue([])
-      returningSpy.mockResolvedValue([])
-
-      await processBroadcastContacts(BROADCAST_ID)
-
-      expect(recordAuditLog).not.toHaveBeenCalled()
+      ).toBe(false)
     })
   })
 
@@ -723,6 +697,23 @@ describe("processBroadcastContacts", () => {
       for (const jobId of jobIds) {
         expect(jobId).not.toContain(":")
       }
+    })
+  })
+
+  describe("hand-off completion", () => {
+    test("does not stamp hand-off when a batch throws part-way (reconcile re-drives it)", async () => {
+      // Same fixture and queue spy as the existing "Retryable error" test in this file.
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({ templateId: "tmpl-1", channel: "whatsapp" }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([makeContactOnBroadcast()])
+      chatAddSpy.mockRejectedValueOnce(new Error("queue unavailable"))
+
+      await expect(processBroadcastContacts(BROADCAST_ID)).rejects.toThrow(
+        "queue unavailable",
+      )
+
+      expect(markHandoffCompleted).not.toHaveBeenCalled()
     })
   })
 })

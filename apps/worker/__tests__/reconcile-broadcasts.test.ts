@@ -80,7 +80,7 @@ describe("reconcileBroadcasts", () => {
 
     expect(result).toEqual({ reconciled: 2 })
     expect(findManyBroadcast).toHaveBeenCalledWith({
-      where: { status: "sending" },
+      where: { status: "sending", handoffCompletedAt: { isNull: true } },
     })
     expect(scheduleAddSpy).toHaveBeenCalledTimes(2)
     expect(scheduleAddSpy).toHaveBeenNthCalledWith(

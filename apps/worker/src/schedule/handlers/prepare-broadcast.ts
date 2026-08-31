@@ -1,5 +1,5 @@
 import { broadcastService, conversationService } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
+import { and, db, eq } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
   broadcastStatuses,
@@ -140,7 +140,12 @@ export const prepareBroadcast = async (broadcastId: string) => {
   await db
     .update(broadcastModel)
     .set({ status: broadcastStatus, contactCount })
-    .where(eq(broadcastModel.id, broadcastId))
+    .where(
+      and(
+        eq(broadcastModel.id, broadcastId),
+        eq(broadcastModel.status, broadcastStatuses.enum.scheduled),
+      ),
+    )
 
   if (broadcastStatus === broadcastStatuses.enum.sent) {
     return
