@@ -119,19 +119,41 @@ export type ApplyContactProfileInput = {
   contactId: string
   accessScope?: ContactAccessScope
   update: ContactProfileUpdate
+  /**
+   * `true` routes the write through `contactService.updateIfProfileNameEmpty`
+   * — a single atomic UPDATE that only lands if the contact's name is STILL
+   * empty at write time, closing the TOCTOU race between an earlier
+   * eligibility check and this write. Defaults to `false` (unconditional
+   * `contactService.update`) — the `updateMessengerContactData` flow step
+   * deliberately overwrites an existing name and must keep doing so.
+   */
+  onlyIfProfileNameEmpty?: boolean
 }
 
+export type ApplyContactProfileResult =
+  | { applied: true; contact: ContactModel }
+  // Only reachable with `onlyIfProfileNameEmpty: true` — the name was filled
+  // concurrently between the caller's eligibility check and this write, so
+  // the conditional UPDATE matched zero rows.
+  | { applied: false }
+
 /**
- * `contactService.update` (invalidates the contact cache and emits
- * `emitContactInfoChangeEvents`) plus managed-avatar compensation: capture
- * the previous avatar, write the new profile, then delete the superseded
- * managed object. Every `uploader.deleteObject` call is best-effort — logged,
- * never thrown.
+ * `contactService.update` / `updateIfProfileNameEmpty` (invalidates the
+ * contact cache and emits `emitContactInfoChangeEvents`) plus managed-avatar
+ * compensation: capture the previous avatar, write the new profile, then
+ * delete the superseded managed object. Every `uploader.deleteObject` call
+ * is best-effort — logged, never thrown.
  */
 export const applyContactProfile = async (
   input: ApplyContactProfileInput,
-): Promise<ContactModel> => {
-  const { workspaceId, contactId, accessScope, update } = input
+): Promise<ApplyContactProfileResult> => {
+  const {
+    workspaceId,
+    contactId,
+    accessScope,
+    update,
+    onlyIfProfileNameEmpty,
+  } = input
 
   // `getProfile` uploads the fetched picture to a fresh `avatars/<id>` object
   // on every run, so capture the current avatar first and delete it once the
@@ -147,10 +169,19 @@ export const applyContactProfile = async (
           })
         )?.avatar
 
-  const updated = await contactService.update(
-    { workspaceId, id: contactId, accessScope },
-    update,
-  )
+  const updated = onlyIfProfileNameEmpty
+    ? await contactService.updateIfProfileNameEmpty(
+        { workspaceId, id: contactId, accessScope },
+        update,
+      )
+    : await contactService.update(
+        { workspaceId, id: contactId, accessScope },
+        update,
+      )
+
+  if (!updated) {
+    return { applied: false }
+  }
 
   if (
     previousAvatar &&
@@ -167,7 +198,7 @@ export const applyContactProfile = async (
     }
   }
 
-  return updated
+  return { applied: true, contact: updated }
 }
 
 /**
@@ -233,29 +264,25 @@ const refresh = async (
     return { status: "unavailable" }
   }
 
-  // Re-check immediately before the write: an operator (or a concurrent
-  // refresh) may have filled the name while `fetchProfile` was in flight —
-  // the initial `hasEmptyProfileName` check at the top of this function is
-  // now stale. Skip the write rather than clobbering a newer name; no
-  // cooldown (this attempt never actually failed).
-  const contactBeforeWrite = await contactService.findById({
-    workspaceId,
-    id: contactId,
-    accessScope,
-  })
-  if (contactBeforeWrite && !hasEmptyProfileName(contactBeforeWrite)) {
-    await discardUploadedAvatar(update.avatar)
-    return { status: "skipped", reason: "profileComplete" }
-  }
-
   try {
-    const updatedContact = await applyContactProfile({
+    // `onlyIfProfileNameEmpty: true` folds the "name still empty" check
+    // into the write itself (a single atomic UPDATE) instead of a separate
+    // read before the write — an operator or a concurrent refresh filling
+    // the name while `fetchProfile` was in flight can no longer be
+    // clobbered: the write simply matches zero rows.
+    const applied = await applyContactProfile({
       workspaceId,
       contactId,
       accessScope,
       update,
+      onlyIfProfileNameEmpty: true,
     })
-    return { status: "updated", contact: updatedContact }
+    if (!applied.applied) {
+      // Raced, not failed — no cooldown.
+      await discardUploadedAvatar(update.avatar)
+      return { status: "skipped", reason: "profileComplete" }
+    }
+    return { status: "updated", contact: applied.contact }
   } catch (error) {
     await discardUploadedAvatar(update.avatar)
     await recordProfileRefreshFailure({

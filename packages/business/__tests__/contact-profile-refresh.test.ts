@@ -24,11 +24,13 @@ vi.mock("@chatbotx.io/redis", () => ({
 const findByIdOrFailMock = vi.fn()
 const findByIdMock = vi.fn()
 const updateMock = vi.fn()
+const updateIfProfileNameEmptyMock = vi.fn()
 vi.mock("../src/contact/service", () => ({
   contactService: {
     findByIdOrFail: findByIdOrFailMock,
     findById: findByIdMock,
     update: updateMock,
+    updateIfProfileNameEmpty: updateIfProfileNameEmptyMock,
   },
 }))
 
@@ -80,6 +82,11 @@ beforeEach(() => {
   findByIdOrFailMock.mockResolvedValue({ ...NAMELESS_CONTACT })
   findByIdMock.mockResolvedValue(undefined)
   updateMock.mockImplementation(async (ctx, data) => ({
+    id: ctx.id,
+    workspaceId: ctx.workspaceId,
+    ...data,
+  }))
+  updateIfProfileNameEmptyMock.mockImplementation(async (ctx, data) => ({
     id: ctx.id,
     workspaceId: ctx.workspaceId,
     ...data,
@@ -410,7 +417,7 @@ describe("contactProfileRefreshService.refresh", () => {
       expect.any(Number),
       300,
     )
-    expect(updateMock).not.toHaveBeenCalled()
+    expect(updateIfProfileNameEmptyMock).not.toHaveBeenCalled()
   })
 
   test("fetch returns null → unavailable, cooldown started, no write", async () => {
@@ -422,7 +429,7 @@ describe("contactProfileRefreshService.refresh", () => {
 
     expect(result).toEqual({ status: "unavailable" })
     expect(setNumberMock).toHaveBeenCalled()
-    expect(updateMock).not.toHaveBeenCalled()
+    expect(updateIfProfileNameEmptyMock).not.toHaveBeenCalled()
   })
 
   test("fetch returns undefined → unavailable, cooldown started, no write", async () => {
@@ -434,7 +441,7 @@ describe("contactProfileRefreshService.refresh", () => {
 
     expect(result).toEqual({ status: "unavailable" })
     expect(setNumberMock).toHaveBeenCalled()
-    expect(updateMock).not.toHaveBeenCalled()
+    expect(updateIfProfileNameEmptyMock).not.toHaveBeenCalled()
   })
 
   test("applyContactProfile throws → failed, cooldown started, new upload deleted (best-effort)", async () => {
@@ -442,7 +449,7 @@ describe("contactProfileRefreshService.refresh", () => {
       firstName: "Jane",
       avatar: "public/space/ws-1/avatars/new",
     }))
-    updateMock.mockRejectedValueOnce(new Error("db down"))
+    updateIfProfileNameEmptyMock.mockRejectedValueOnce(new Error("db down"))
 
     const result = await contactProfileRefreshService.refresh(
       refreshInput({ fetchProfile }),
@@ -461,7 +468,7 @@ describe("contactProfileRefreshService.refresh", () => {
       firstName: "Jane",
       avatar: "public/space/ws-1/avatars/new",
     }))
-    updateMock.mockRejectedValueOnce(new Error("db down"))
+    updateIfProfileNameEmptyMock.mockRejectedValueOnce(new Error("db down"))
     deleteObjectMock.mockRejectedValueOnce(new Error("s3 down"))
 
     const result = await contactProfileRefreshService.refresh(
@@ -495,7 +502,7 @@ describe("contactProfileRefreshService.refresh", () => {
     )
 
     expect(result).toEqual({ status: "unavailable" })
-    expect(updateMock).not.toHaveBeenCalled()
+    expect(updateIfProfileNameEmptyMock).not.toHaveBeenCalled()
     expect(deleteObjectMock).toHaveBeenCalledWith(
       "public/space/ws-1/avatars/orphan",
     )
@@ -526,7 +533,7 @@ describe("contactProfileRefreshService.refresh", () => {
     expect(deleteObjectMock).not.toHaveBeenCalled()
   })
 
-  test("happy path → updated, contactService.update called once with mapped data, no cooldown started", async () => {
+  test("happy path → updated, contactService.updateIfProfileNameEmpty called once with mapped data, no cooldown started", async () => {
     const fetchProfile = vi.fn(async () => ({
       firstName: "Jane",
       lastName: "Doe",
@@ -537,8 +544,8 @@ describe("contactProfileRefreshService.refresh", () => {
     )
 
     expect(result.status).toBe("updated")
-    expect(updateMock).toHaveBeenCalledTimes(1)
-    expect(updateMock).toHaveBeenCalledWith(
+    expect(updateIfProfileNameEmptyMock).toHaveBeenCalledTimes(1)
+    expect(updateIfProfileNameEmptyMock).toHaveBeenCalledWith(
       { workspaceId: "ws-1", id: "contact-1", accessScope: undefined },
       { firstName: "Jane", lastName: "Doe" },
     )
@@ -556,14 +563,16 @@ describe("contactProfileRefreshService.refresh", () => {
   })
 
   test("name filled between fetch and write → skipped/profileComplete, no update, uploaded avatar discarded, no cooldown", async () => {
-    // findByIdOrFailMock (top-of-function read) still sees the nameless
-    // contact from `beforeEach`; the re-check `findById` right before the
-    // write sees a name that landed WHILE `fetchProfile` was in flight (an
-    // operator edit, or a concurrent refresh).
-    findByIdMock.mockResolvedValueOnce({
-      firstName: "Jane",
-      lastName: "Doe",
-    })
+    // findByIdOrFailMock (top-of-function eligibility read) still sees the
+    // nameless contact from `beforeEach`. The ATOMIC conditional write
+    // (`contactService.updateIfProfileNameEmpty`) is what actually closes
+    // this race in production — simulated here by making it match zero
+    // rows, exactly as the real UPDATE would if a name landed WHILE
+    // `fetchProfile` was in flight (an operator edit, or a concurrent
+    // refresh): the WHERE clause's name-empty predicate simply no longer
+    // matches, so no row updates and `updateIfProfileNameEmpty` resolves
+    // `undefined`.
+    updateIfProfileNameEmptyMock.mockResolvedValueOnce(undefined)
     const fetchProfile = vi.fn(async () => ({
       firstName: "Jane",
       avatar: "public/space/ws-1/avatars/new",
@@ -574,7 +583,7 @@ describe("contactProfileRefreshService.refresh", () => {
     )
 
     expect(result).toEqual({ status: "skipped", reason: "profileComplete" })
-    expect(updateMock).not.toHaveBeenCalled()
+    expect(updateIfProfileNameEmptyMock).toHaveBeenCalledTimes(1)
     expect(deleteObjectMock).toHaveBeenCalledWith(
       "public/space/ws-1/avatars/new",
     )
@@ -689,5 +698,47 @@ describe("applyContactProfile", () => {
       expect.objectContaining({ accessScope }),
       expect.anything(),
     )
+  })
+
+  test("returns { applied: true, contact } on a successful unconditional write", async () => {
+    const result = await applyContactProfile({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      update: { firstName: "Jane" },
+    })
+
+    expect(result).toEqual({
+      applied: true,
+      contact: { id: "contact-1", workspaceId: "ws-1", firstName: "Jane" },
+    })
+  })
+
+  test("onlyIfProfileNameEmpty: true routes through contactService.updateIfProfileNameEmpty, not update", async () => {
+    await applyContactProfile({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      update: { firstName: "Jane" },
+      onlyIfProfileNameEmpty: true,
+    })
+
+    expect(updateIfProfileNameEmptyMock).toHaveBeenCalledTimes(1)
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  test("onlyIfProfileNameEmpty: true and zero rows matched → { applied: false }, no avatar cleanup (nothing was superseded)", async () => {
+    updateIfProfileNameEmptyMock.mockResolvedValueOnce(undefined)
+    findByIdMock.mockResolvedValueOnce({
+      avatar: "public/space/ws-1/avatars/old",
+    })
+
+    const result = await applyContactProfile({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      update: { avatar: "public/space/ws-1/avatars/new" },
+      onlyIfProfileNameEmpty: true,
+    })
+
+    expect(result).toEqual({ applied: false })
+    expect(deleteObjectMock).not.toHaveBeenCalled()
   })
 })

@@ -42,11 +42,13 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 const findByIdOrFailMock = vi.fn()
 const findByIdMock = vi.fn()
 const updateMock = vi.fn()
+const updateIfProfileNameEmptyMock = vi.fn()
 vi.mock("../../../packages/business/src/contact/service", () => ({
   contactService: {
     findByIdOrFail: findByIdOrFailMock,
     findById: findByIdMock,
     update: updateMock,
+    updateIfProfileNameEmpty: updateIfProfileNameEmptyMock,
   },
 }))
 
@@ -112,6 +114,14 @@ beforeEach(() => {
   findByIdOrFailMock.mockResolvedValue({ ...namelessContact })
   findByIdMock.mockResolvedValue(undefined)
   updateMock.mockImplementation(async (ctx, data) => ({
+    id: ctx.id,
+    workspaceId: ctx.workspaceId,
+    ...data,
+  }))
+  // `contactProfileRefreshService.refresh` writes through the atomic
+  // conditional method (`applyContactProfile({ onlyIfProfileNameEmpty: true
+  // })`), not the plain `update` above — see fix wave 3, item 2.
+  updateIfProfileNameEmptyMock.mockImplementation(async (ctx, data) => ({
     id: ctx.id,
     workspaceId: ctx.workspaceId,
     ...data,
