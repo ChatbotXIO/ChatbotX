@@ -67,6 +67,28 @@ export const COOLDOWN_BY_PROFILE_SOURCE = {
   channelApi: true,
 } as const satisfies Record<ContactProfileNameSource, boolean>
 
+/**
+ * The exact set of ECMAScript `WhiteSpace` + `LineTerminator` code points
+ * `String.prototype.trim()` strips (ECMA-262 `TrimString`) — the same set
+ * `hasEmptyProfileName`/`hasProfileName` below rely on via `.trim()`. Kept
+ * as one exported source of truth so `ContactService.updateIfProfileNameEmpty`
+ * (`packages/business/src/contact/service.ts`) can bind the identical
+ * character set into Postgres' `btrim(text, characters)` instead of
+ * drifting from JS's definition of "blank" — plain `btrim(text)` (no
+ * second argument) only strips ASCII space, which would let a
+ * tab-only/NBSP-only name (blank per `.trim()`) desync the SQL predicate
+ * from `hasEmptyProfileName` and silently stop backfilling forever.
+ *
+ * Written as explicit `\u` escapes (never literal characters) so the exact
+ * code points are auditable in source and immune to editor/encoding
+ * mangling: TAB, LF, VT, FF, CR, SPACE, NBSP, OGHAM SPACE MARK, EN QUAD..
+ * HAIR SPACE (U+2000-U+200A), LINE SEPARATOR, PARAGRAPH SEPARATOR, NARROW
+ * NO-BREAK SPACE, MEDIUM MATHEMATICAL SPACE, IDEOGRAPHIC SPACE, ZERO WIDTH
+ * NO-BREAK SPACE (BOM).
+ */
+export const PROFILE_NAME_BLANK_CHARACTERS =
+  "\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF"
+
 export type ContactProfileName = Pick<ContactModel, "firstName" | "lastName">
 /** Empty only when BOTH names are blank — either one present means "has a name". */
 export const hasEmptyProfileName = (contact: ContactProfileName): boolean =>

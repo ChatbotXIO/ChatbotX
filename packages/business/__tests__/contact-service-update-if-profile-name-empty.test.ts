@@ -83,6 +83,9 @@ const { contactService } = await import("../src/contact/service")
 const { and: andMock, eq: eqMock } = await import(
   "@chatbotx.io/database/client"
 )
+const { PROFILE_NAME_BLANK_CHARACTERS } = await import(
+  "../src/contact/profile-refresh/rules"
+)
 
 const buildUpdateClient = (returningResult: unknown[]) => {
   const returning = vi.fn().mockResolvedValue(returningResult)
@@ -123,7 +126,7 @@ describe("contactService.updateIfProfileNameEmpty", () => {
     expect(andMock.mock.calls[0]).toHaveLength(4)
   })
 
-  test("the name-empty predicate matches hasEmptyProfileName semantics (NULL-or-blank via btrim/coalesce) for both firstName and lastName", async () => {
+  test("the name-empty predicate matches hasEmptyProfileName semantics (NULL-or-blank via btrim(text, characters)/coalesce) for both firstName and lastName, bound to the shared PROFILE_NAME_BLANK_CHARACTERS constant", async () => {
     const dbUpdateClient = buildUpdateClient([{ id: "contact-1" }])
     mockDbUpdate.mockImplementation(dbUpdateClient.update)
     vi.spyOn(contactService, "findByIdOrFail").mockResolvedValue({} as never)
@@ -140,6 +143,14 @@ describe("contactService.updateIfProfileNameEmpty", () => {
       expect(text).toContain("btrim")
       expect(text).toContain("coalesce")
       expect(text).toContain("''")
+      // Two-argument btrim(text, characters) — Postgres' single-argument
+      // btrim only strips ASCII space, which would desync from JS's
+      // .trim() (tab/NBSP/ideographic-space/etc. — see
+      // PROFILE_NAME_BLANK_CHARACTERS in profile-refresh/rules.ts). The
+      // character set is a BOUND parameter (call.values), never
+      // interpolated into the SQL text itself.
+      expect(call.values).toHaveLength(2)
+      expect(call.values[1]).toBe(PROFILE_NAME_BLANK_CHARACTERS)
     }
   })
 

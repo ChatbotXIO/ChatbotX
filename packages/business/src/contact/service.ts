@@ -42,6 +42,7 @@ import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
+import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
 
 const NUMERIC_RE = /^\d+$/
 
@@ -279,8 +280,8 @@ class ContactService extends BaseService {
         and(
           eq(contactModel.id, ctx.id),
           eq(contactModel.workspaceId, ctx.workspaceId),
-          sql`btrim(coalesce(${contactModel.firstName}, '')) = ''`,
-          sql`btrim(coalesce(${contactModel.lastName}, '')) = ''`,
+          sql`btrim(coalesce(${contactModel.firstName}, ''), ${PROFILE_NAME_BLANK_CHARACTERS}) = ''`,
+          sql`btrim(coalesce(${contactModel.lastName}, ''), ${PROFILE_NAME_BLANK_CHARACTERS}) = ''`,
         ),
       )
       .returning()

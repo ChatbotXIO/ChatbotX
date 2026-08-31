@@ -54,6 +54,7 @@ const {
   hasOnDemandProfileApi,
   hasProfileName,
   isContactProfileRefreshCoolingDown,
+  PROFILE_NAME_BLANK_CHARACTERS,
   PROFILE_REFRESH_COOLDOWN_SECONDS,
   resolveInboundProfileNameSource,
   startContactProfileRefreshCooldown,
@@ -97,6 +98,34 @@ beforeEach(() => {
 
 // ─── rules.ts ────────────────────────────────────────────────────────────
 
+describe("PROFILE_NAME_BLANK_CHARACTERS", () => {
+  // The single source of truth ContactService.updateIfProfileNameEmpty
+  // binds into Postgres' btrim(text, characters) so the SQL predicate can
+  // never drift from what hasEmptyProfileName/hasProfileName (below) treat
+  // as blank via JS's own String.prototype.trim().
+  test("every character in the set is blank per String.prototype.trim() — agrees with hasEmptyProfileName's definition of blank", () => {
+    expect(PROFILE_NAME_BLANK_CHARACTERS.length).toBeGreaterThan(0)
+    for (const ch of PROFILE_NAME_BLANK_CHARACTERS) {
+      expect(ch.trim()).toBe("")
+      expect(`x${ch}`.trim()).toBe("x")
+    }
+  })
+
+  test("a non-whitespace character is not blank and is not in the set", () => {
+    expect("x".trim()).toBe("x")
+    expect(PROFILE_NAME_BLANK_CHARACTERS.includes("x")).toBe(false)
+  })
+
+  test("contains the ECMAScript WhiteSpace + LineTerminator code points the finding named (tab, newline, NBSP, ideographic space, BOM)", () => {
+    expect(PROFILE_NAME_BLANK_CHARACTERS.length).toBe(25)
+    expect(PROFILE_NAME_BLANK_CHARACTERS).toContain("\t")
+    expect(PROFILE_NAME_BLANK_CHARACTERS).toContain("\n")
+    expect(PROFILE_NAME_BLANK_CHARACTERS).toContain("\u00A0") // NBSP
+    expect(PROFILE_NAME_BLANK_CHARACTERS).toContain("\u3000") // ideographic space (U+3000)
+    expect(PROFILE_NAME_BLANK_CHARACTERS).toContain("\uFEFF") // BOM / ZWNBSP
+  })
+})
+
 describe("hasEmptyProfileName", () => {
   test("both blank → true", () => {
     expect(hasEmptyProfileName({ firstName: null, lastName: null })).toBe(true)
@@ -104,6 +133,16 @@ describe("hasEmptyProfileName", () => {
 
   test("both whitespace-only → true", () => {
     expect(hasEmptyProfileName({ firstName: "   ", lastName: "  " })).toBe(true)
+  })
+
+  test("tab-only firstName, newline-only lastName → true", () => {
+    expect(hasEmptyProfileName({ firstName: "\t", lastName: "\n" })).toBe(true)
+  })
+
+  test("NBSP-only firstName, ideographic-space-only lastName → true", () => {
+    expect(
+      hasEmptyProfileName({ firstName: "\u00A0", lastName: "\u3000" }),
+    ).toBe(true)
   })
 
   test("firstName only → false", () => {
@@ -126,6 +165,10 @@ describe("hasProfileName", () => {
 
   test("both whitespace-only → false", () => {
     expect(hasProfileName({ firstName: "   ", lastName: "  " })).toBe(false)
+  })
+
+  test("tab-only firstName and NBSP-only lastName → false", () => {
+    expect(hasProfileName({ firstName: "\t", lastName: "\u00A0" })).toBe(false)
   })
 
   test("firstName only → true", () => {
