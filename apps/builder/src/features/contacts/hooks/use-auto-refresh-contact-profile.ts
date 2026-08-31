@@ -5,7 +5,7 @@ import {
   hasOnDemandProfileApi,
 } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import { useEffect, useRef } from "react"
+import { type RefObject, useEffect, useRef } from "react"
 import type {
   ConversationContactInboxResource,
   ListConversationItemResource,
@@ -13,6 +13,7 @@ import type {
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { refreshContactProfileAction } from "../actions/refresh-contact-profile.action"
 import type { GetContactResponse } from "../schema/query"
+import type { ContactResource } from "../schema/resource"
 
 export type SetContactData = (
   updater: (prev: GetContactResponse | null) => GetContactResponse | null,
@@ -54,6 +55,75 @@ const selectOnDemandInbox = (
         new Date(b.lastMessageAt ?? 0).getTime() -
         new Date(a.lastMessageAt ?? 0).getTime(),
     )[0]
+
+type RefreshTarget = {
+  contactId: string
+  contactInboxId: string
+}
+
+/**
+ * Whether `conversation` is eligible for an auto-refresh attempt: a nameless
+ * contact with an on-demand-capable inbox, and if so, which inbox
+ * (`selectOnDemandInbox`'s newest-capable-inbox pick). Pure — does not
+ * consult `attemptedContactIds`; the effect still gates on that itself.
+ */
+const selectRefreshTarget = (
+  conversation: ListConversationItemResource | null | undefined,
+): RefreshTarget | null => {
+  if (!(conversation?.contact && conversation.contactId)) {
+    return null
+  }
+  if (!hasEmptyProfileName(conversation.contact)) {
+    return null
+  }
+  const contactInbox = selectOnDemandInbox(conversation.contactInboxes)
+  if (!contactInbox) {
+    return null
+  }
+  return { contactId: conversation.contactId, contactInboxId: contactInbox.id }
+}
+
+type ApplyRefreshResultDeps = {
+  isMountedRef: RefObject<boolean>
+  activeContactIdRef: RefObject<string | null>
+  updateContact: (contactId: string, data: Partial<ContactResource>) => void
+  setContactData: SetContactData
+  onProfileUpdated?: (contactId: string) => void
+}
+
+/**
+ * Applies a settled `refreshContactProfileAction` result: the store patch
+ * runs for any resolved contactId (the store is keyed by id, independent of
+ * what the panel currently shows); the panel-local patch and convergence
+ * callback only run while the panel is STILL showing this contact — an
+ * operator may have switched away before this attempt resolved. `isMounted`
+ * and `activeContactId` are read from the refs at call time, never captured,
+ * so they reflect state as of when the promise actually settles.
+ */
+const applyRefreshResult = (
+  contactId: string,
+  result: Awaited<ReturnType<typeof refreshContactProfileAction>>,
+  {
+    isMountedRef,
+    activeContactIdRef,
+    updateContact,
+    setContactData,
+    onProfileUpdated,
+  }: ApplyRefreshResultDeps,
+) => {
+  if (!isMountedRef.current) {
+    return
+  }
+  if (result?.data?.status !== "updated") {
+    return
+  }
+  const { contact: updatedContact } = result.data
+  updateContact(contactId, updatedContact)
+  if (activeContactIdRef.current === contactId) {
+    setContactData((prev) => prev && { ...prev, ...updatedContact })
+    onProfileUpdated?.(contactId)
+  }
+}
 
 /**
  * Fires `refreshContactProfileAction` at most once per `contactId` per mount
@@ -98,46 +168,26 @@ export function useAutoRefreshContactProfile(
     // never patch `setContactData` once the panel has moved on.
     activeContactIdRef.current = conversation?.contactId ?? null
 
-    if (!(conversation?.contact && conversation.contactId)) {
+    const target = selectRefreshTarget(conversation)
+    if (!target) {
       return
     }
-    const { contactId, contact } = conversation
+    const { contactId, contactInboxId } = target
     if (attemptedContactIds.current.has(contactId)) {
       return
     }
-    if (!hasEmptyProfileName(contact)) {
-      return
-    }
-
-    const contactInbox = selectOnDemandInbox(conversation.contactInboxes)
-    if (!contactInbox) {
-      return
-    }
-
     attemptedContactIds.current.add(contactId)
 
-    refreshContactProfileAction(workspaceId, contactId, {
-      contactInboxId: contactInbox.id,
-    })
-      .then((result) => {
-        if (!isMountedRef.current) {
-          return
-        }
-        if (result?.data?.status !== "updated") {
-          return
-        }
-        const { contact: updatedContact } = result.data
-        // Store patch: safe for any resolved contactId — the store is keyed
-        // by id, independent of what the panel currently shows.
-        updateContact(contactId, updatedContact)
-        // Panel-local patch: only if the panel is STILL showing this
-        // contact — an operator may have switched away before this attempt
-        // resolved (see the hook's doc comment on `activeContactIdRef`).
-        if (activeContactIdRef.current === contactId) {
-          setContactData((prev) => prev && { ...prev, ...updatedContact })
-          onProfileUpdated?.(contactId)
-        }
-      })
+    refreshContactProfileAction(workspaceId, contactId, { contactInboxId })
+      .then((result) =>
+        applyRefreshResult(contactId, result, {
+          isMountedRef,
+          activeContactIdRef,
+          updateContact,
+          setContactData,
+          onProfileUpdated,
+        }),
+      )
       .catch(() => undefined) // transport failure (network/RSC) — silent, no state update, no retry
   }, [
     conversation,

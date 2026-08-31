@@ -1,6 +1,8 @@
 import {
+  type BuildContextIntegrationRow,
   buildContext,
   type ContactProfileFetcher,
+  type IntegrationContext,
   instagramIntegrationService,
   messengerIntegrationService,
   type OnDemandProfileChannel,
@@ -11,6 +13,7 @@ import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram/sche
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { integrations } from "@/integration"
 
 export type ProfileFetcherFactoryInput = {
@@ -22,6 +25,44 @@ export type ProfileFetcherFactory = (
   input: ProfileFetcherFactoryInput,
 ) => ContactProfileFetcher
 
+type ChannelProfileRunner<TAuth extends AuthValue> = (
+  group: "contact",
+  name: "getProfile",
+  props: { ctx: IntegrationContext<TAuth>; data: { sourceId: string } },
+) => ReturnType<ContactProfileFetcher>
+
+/**
+ * Shared core behind every `profileFetcherFactories` entry: `buildContext`
+ * from the already-fetched integration row, then dispatch
+ * `contact.getProfile` through the caller's (already-bound)
+ * `runChannelHandler`. Per-channel closures below keep their own literal
+ * `integrationType`, auth cast, and registry lookup (instagram's
+ * facebook-vs-direct split) so `runChannelHandler` stays typed per channel.
+ */
+const fetchChannelProfile = async <TAuth extends AuthValue>({
+  workspaceId,
+  sourceId,
+  integrationType,
+  row,
+  runChannelHandler,
+}: {
+  workspaceId: string
+  sourceId: string
+  integrationType: OnDemandProfileChannel
+  row: BuildContextIntegrationRow<TAuth>
+  runChannelHandler: ChannelProfileRunner<TAuth>
+}): ReturnType<ContactProfileFetcher> => {
+  const ctx = await buildContext<TAuth>({
+    workspaceId,
+    integrationType,
+    integration: row,
+  })
+  return runChannelHandler("contact", "getProfile", {
+    ctx,
+    data: { sourceId },
+  })
+}
+
 /**
  * One lazy `ContactProfileFetcher` factory per on-demand-capable channel,
  * exhaustive over `OnDemandProfileChannel`. Each entry does ALL channel
@@ -29,8 +70,7 @@ export type ProfileFetcherFactory = (
  * inside the returned callback — a missing/disconnected integration
  * (`findByInboxIdForWorkspace` throws) surfaces inside
  * `contactProfileRefreshService.refresh` as `failed` + cooldown instead of an
- * action rejection. Every entry is written against its own literal registry
- * key so `runChannelHandler` stays typed per channel (no union widening).
+ * action rejection.
  */
 export const profileFetcherFactories: Record<
   OnDemandProfileChannel,
@@ -43,14 +83,13 @@ export const profileFetcherFactories: Record<
         inboxId,
         workspaceId,
       })
-      const ctx = await buildContext({
+      return fetchChannelProfile<MessengerAuthValue>({
         workspaceId,
+        sourceId,
         integrationType: "messenger",
-        integration: { ...row, auth: row.auth as MessengerAuthValue },
-      })
-      return integrations.messenger.runChannelHandler("contact", "getProfile", {
-        ctx,
-        data: { sourceId },
+        row: { ...row, auth: row.auth as MessengerAuthValue },
+        runChannelHandler: (group, name, props) =>
+          integrations.messenger.runChannelHandler(group, name, props),
       })
     },
   instagram:
@@ -60,19 +99,18 @@ export const profileFetcherFactories: Record<
         inboxId,
         workspaceId,
       })
-      const ctx = await buildContext({
-        workspaceId,
-        integrationType: "instagram",
-        integration: { ...row, auth: row.auth as InstagramAuthValue },
-      })
       // Mirrors apps/worker/src/services/integrations.ts (isInstagramViaFacebook).
       const registry =
         row.type === "facebook"
           ? integrations.instagramFacebook
           : integrations.instagram
-      return registry.runChannelHandler("contact", "getProfile", {
-        ctx,
-        data: { sourceId },
+      return fetchChannelProfile<InstagramAuthValue>({
+        workspaceId,
+        sourceId,
+        integrationType: "instagram",
+        row: { ...row, auth: row.auth as InstagramAuthValue },
+        runChannelHandler: (group, name, props) =>
+          registry.runChannelHandler(group, name, props),
       })
     },
   zalo:
@@ -82,14 +120,13 @@ export const profileFetcherFactories: Record<
         inboxId,
         workspaceId,
       })
-      const ctx = await buildContext({
+      return fetchChannelProfile<ZaloAuthValue>({
         workspaceId,
+        sourceId,
         integrationType: "zalo",
-        integration: { ...row, auth: row.auth as ZaloAuthValue },
-      })
-      return integrations.zalo.runChannelHandler("contact", "getProfile", {
-        ctx,
-        data: { sourceId },
+        row: { ...row, auth: row.auth as ZaloAuthValue },
+        runChannelHandler: (group, name, props) =>
+          integrations.zalo.runChannelHandler(group, name, props),
       })
     },
   telegram:
@@ -99,14 +136,13 @@ export const profileFetcherFactories: Record<
         inboxId,
         workspaceId,
       })
-      const ctx = await buildContext({
+      return fetchChannelProfile<TelegramAuthValue>({
         workspaceId,
+        sourceId,
         integrationType: "telegram",
-        integration: { ...row, auth: row.auth as TelegramAuthValue },
-      })
-      return integrations.telegram.runChannelHandler("contact", "getProfile", {
-        ctx,
-        data: { sourceId },
+        row: { ...row, auth: row.auth as TelegramAuthValue },
+        runChannelHandler: (group, name, props) =>
+          integrations.telegram.runChannelHandler(group, name, props),
       })
     },
 }
