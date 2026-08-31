@@ -52,9 +52,9 @@ vi.mock("../../../packages/business/src/contact/service", () => ({
   },
 }))
 
-const updateLanguageMock = vi.fn(async () => null)
+const updateLanguageIfEmptyMock = vi.fn(async () => undefined)
 vi.mock("../../../packages/business/src/contact-inbox/service", () => ({
-  contactInboxService: { updateLanguage: updateLanguageMock },
+  contactInboxService: { updateLanguageIfEmpty: updateLanguageIfEmptyMock },
 }))
 
 const logProviderErrorForChannelMock = vi.fn(async () => undefined)
@@ -132,7 +132,7 @@ beforeEach(() => {
     workspaceId: ctx.workspaceId,
     ...data,
   }))
-  updateLanguageMock.mockResolvedValue(null)
+  updateLanguageIfEmptyMock.mockResolvedValue({ id: "ci-1" })
 })
 
 describe("refreshExistingContactProfile against the real contactProfileRefreshService", () => {
@@ -274,7 +274,7 @@ describe("refreshExistingContactProfile against the real contactProfileRefreshSe
       expect.anything(),
       expect.objectContaining({ locale: "vi_VN" }),
     )
-    expect(updateLanguageMock).toHaveBeenCalledWith({
+    expect(updateLanguageIfEmptyMock).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "contact-1",
       contactInboxId: "ci-1",

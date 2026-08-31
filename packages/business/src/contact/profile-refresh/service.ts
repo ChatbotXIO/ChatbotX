@@ -5,7 +5,10 @@ import type {
 import { uploader } from "@chatbotx.io/filesystem"
 import type { IncomingContact } from "@chatbotx.io/sdk"
 import { contactInboxService } from "../../contact-inbox/service"
-import { finalizeContactProfile } from "../../contact-locale"
+import {
+  finalizeContactProfile,
+  normalizeStoredTimezone,
+} from "../../contact-locale"
 import { logProviderErrorForChannel } from "../../error-log/service"
 import { logger } from "../../logger"
 import type { ContactAccessScope } from "../service"
@@ -88,27 +91,46 @@ const discardUploadedAvatar = async (avatar: string | null | undefined) => {
  * fallback guess must never overwrite real stored data. Only `channelApi`
  * refreshes call this (invariant: `payload` stays name+avatar only — see
  * `PAYLOAD_NAME_FIELDS` in the worker's fetcher). Each field is normalized
- * independently: `locale`/`timezone` are only replaced in `update` when the
- * channel actually returned that field (existing mapper rule preserved), and
- * `language` is derived the same way creation derives it
- * (`finalizeContactProfile` → `languageFromLocale`) even when the channel
- * returned no locale at all (e.g. an explicit `language` field).
+ * independently, on the STRICT reading of "only fields the channel
+ * returned":
+ * - `locale` is only replaced when the channel returned a `locale`.
+ * - `timezone` is only replaced when the channel returned a `timezone` AND
+ *   that raw value itself normalizes (`normalizeStoredTimezone`) — a
+ *   blank/unnormalizable channel timezone must NOT be silently swapped for
+ *   a locale-region-derived one; `finalizeContactProfile` would otherwise
+ *   fall back to `timezoneFromLocaleRegion(locale)` for a blank timezone,
+ *   which is correct at contact-creation time but not here.
+ * - `language` is derived the same way creation derives it
+ *   (`finalizeContactProfile` → `languageFromLocale`) even when the channel
+ *   returned no locale at all (e.g. an explicit `language` field).
  */
 const normalizeChannelApiProfile = (
   profile: IncomingContact,
   update: ContactProfileUpdate,
 ): { update: ContactProfileUpdate; language: string | undefined } => {
+  const { locale: rawLocale, timezone: rawTimezone, ...restUpdate } = update
   const finalized = finalizeContactProfile({
-    locale: update.locale,
+    locale: rawLocale,
     language: profile.language,
-    timezone: update.timezone,
+    timezone: rawTimezone,
   })
+  // A channel timezone that was returned but is blank/unnormalizable must
+  // NOT fall back to `finalized.timezone` — `finalizeContactProfile` would
+  // otherwise derive one from the locale's region
+  // (`timezoneFromLocaleRegion`), which is correct at contact-creation time
+  // (no timezone at all yet) but not here: the channel DID answer the
+  // `timezone` field, it just didn't normalize to anything.
+  const channelTimezoneNormalizes =
+    rawTimezone !== undefined && normalizeStoredTimezone(rawTimezone) !== null
 
   return {
+    // Rebuilt from `restUpdate` (raw `locale`/`timezone` stripped out), not
+    // spread from `update` — a raw, unnormalized value must never leak
+    // through when its normalized counterpart is intentionally omitted.
     update: {
-      ...update,
-      ...(update.locale !== undefined && { locale: finalized.locale }),
-      ...(update.timezone !== undefined && { timezone: finalized.timezone }),
+      ...restUpdate,
+      ...(rawLocale !== undefined && { locale: finalized.locale }),
+      ...(channelTimezoneNormalizes && { timezone: finalized.timezone }),
     },
     language: finalized.language ?? undefined,
   }
@@ -118,9 +140,15 @@ const normalizeChannelApiProfile = (
  * Best-effort `ContactInbox.language` write, guarded so an operator- or
  * channel-set language can never be clobbered by a refresh: only writes when
  * the inbox's CURRENT language is empty/null (creation could set it
- * unconditionally only because the row was new). A failure here is logged at
- * `warn` and never changes the refresh result — the `updated` outcome and
- * the write to `Contact` already succeeded.
+ * unconditionally only because the row was new). The in-memory check below
+ * is only a fast path (skips the round trip in the common case) — the real
+ * guarantee against a language set concurrently between this snapshot and
+ * the write is `updateLanguageIfEmpty`'s WHERE-clause emptiness predicate
+ * (see `contact-inbox/service.ts`), which folds the same check into the
+ * UPDATE itself. A failure — or a lost race (zero rows matched) — is
+ * logged at `warn`/no-op respectively and never changes the refresh
+ * result — the `updated` outcome and the write to `Contact` already
+ * succeeded.
  */
 const writeContactInboxLanguageIfEmpty = async (props: {
   workspaceId: string
@@ -133,7 +161,7 @@ const writeContactInboxLanguageIfEmpty = async (props: {
   }
 
   try {
-    await contactInboxService.updateLanguage({
+    await contactInboxService.updateLanguageIfEmpty({
       workspaceId,
       contactId: contactInbox.contactId,
       contactInboxId: contactInbox.id,
