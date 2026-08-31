@@ -147,7 +147,7 @@ export const createBroadcastAction = workspaceActionClient
       broadcastName = templateBroadcastName
     }
 
-    const { buttons, ...insertValues } = parsedInput
+    const { buttons, saveAsDraft, ...insertValues } = parsedInput
     const contactFilter = pruneEmailPhoneFilterConditions(
       insertValues.contactFilter,
       canViewEmailAndPhone,
@@ -160,7 +160,7 @@ export const createBroadcastAction = workspaceActionClient
         contactFilter,
         name: broadcastName,
         workspaceId,
-        status: "scheduled",
+        status: saveAsDraft ? "draft" : "scheduled",
         schedulesAt: startOfMinute(
           new Date(parsedInput.schedulesAt ?? new Date()),
         ),
@@ -179,7 +179,9 @@ export const createBroadcastAction = workspaceActionClient
       detail: `created a new broadcast (#${broadcast.id})`,
     })
 
-    if (parsedInput.schedulesType === "now") {
+    // A draft is never launched — it only leaves `draft` through
+    // `scheduleBroadcastAction`, which records its own `launch` entry.
+    if (parsedInput.schedulesType === "now" && !saveAsDraft) {
       await auditService.record({
         workspaceId,
         action: "launch",

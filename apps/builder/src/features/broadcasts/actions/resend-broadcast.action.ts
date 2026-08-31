@@ -32,7 +32,7 @@ export const resendBroadcast = async (ctx: {
       workspaceId: ctx.workspaceId,
     },
   })
-  if (broadcast.status !== "sent") {
+  if (broadcast.status !== "sent" && broadcast.status !== "failed") {
     throw new ChatbotXException("Broadcast is not sent")
   }
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(

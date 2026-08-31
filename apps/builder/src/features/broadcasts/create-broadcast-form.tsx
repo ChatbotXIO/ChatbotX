@@ -121,10 +121,14 @@ export function CreateBroadcastForm({
     zodResolver(createBroadcastRequest),
     {
       actionProps: {
-        onSuccess: () => {
+        onSuccess: ({ data }) => {
           toast.success(
             t("messages.createdSuccess", {
-              feature: t("fields.broadcast.label"),
+              feature: t(
+                data?.status === "draft"
+                  ? "broadcasts.status.draft"
+                  : "fields.broadcast.label",
+              ),
             }),
           )
           router.push(`/space/${workspaceId}/broadcasts`)
@@ -146,6 +150,19 @@ export function CreateBroadcastForm({
       errorMapProps: {},
     },
   )
+
+  const handleSaveAsDraft = async (): Promise<void> => {
+    form.setValue("saveAsDraft", true, { shouldDirty: false })
+    try {
+      await handleSubmitWithAction()
+    } finally {
+      // If validation or the action itself fails, `saveAsDraft` must not
+      // stay `true` — otherwise a later Enter-key submit (which reuses this
+      // same form's onSubmit) would silently create a draft instead of
+      // sending.
+      form.setValue("saveAsDraft", false, { shouldDirty: false })
+    }
+  }
 
   const watchedSubAction = useWatch({
     control: form.control,
@@ -205,6 +222,7 @@ export function CreateBroadcastForm({
             <CreateBroadcastChooseFlow
               canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
+              onSaveAsDraft={handleSaveAsDraft}
               subaction={watchedSubAction}
             />
           )}
@@ -432,6 +450,7 @@ function BroadcastFlowTypeSelector({
 type CreateBroadcastChooseFlowProps = {
   canViewEmailAndPhone: boolean
   channel: ChannelType
+  onSaveAsDraft: () => Promise<void>
   subaction: BroadcastSubaction
 }
 
@@ -932,7 +951,19 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
           <Button
             disabled={!formState.isValid || formState.isSubmitting}
-            onClick={() => setConfirmOpen(true)}
+            onClick={() => props.onSaveAsDraft()}
+            type="button"
+            variant="secondary"
+          >
+            {t("actions.saveAsDraft")}
+          </Button>
+
+          <Button
+            disabled={!formState.isValid || formState.isSubmitting}
+            onClick={() => {
+              setValue("saveAsDraft", false, { shouldDirty: false })
+              setConfirmOpen(true)
+            }}
             type="button"
           >
             {formState.isSubmitting && <Loader2Icon className="animate-spin" />}

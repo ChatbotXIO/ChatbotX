@@ -130,8 +130,17 @@ describe("resendBroadcast", () => {
     ).rejects.toThrow("Broadcast is not sent")
   })
 
+  test("allows resending a 'failed' broadcast", async () => {
+    const failedBroadcast = { ...baseBroadcast, status: "failed" as const }
+    mockFindOrFail.mockResolvedValue(failedBroadcast)
+
+    await expect(
+      resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID }),
+    ).resolves.not.toThrow()
+  })
+
   test("throws ChatbotXException (not a generic Error) for non-sent status", async () => {
-    const draftBroadcast = { ...baseBroadcast, status: "failed" as const }
+    const draftBroadcast = { ...baseBroadcast, status: "draft" as const }
     mockFindOrFail.mockResolvedValue(draftBroadcast)
 
     await expect(
