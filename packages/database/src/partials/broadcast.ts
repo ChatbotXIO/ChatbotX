@@ -9,8 +9,37 @@ export const broadcastStatuses = z.enum([
   "sent",
   "sending",
   "cancelled",
+  "draft",
+  "failed",
 ])
 export type BroadcastStatus = z.infer<typeof broadcastStatuses>
+
+/** Share of targeted contacts that must have failed for the broadcast itself to be `failed`. */
+export const BROADCAST_FAILED_RATE_THRESHOLD = 1
+/** After hand-off, wait this long for delivery/failure outcomes before resolving the terminal status. */
+export const BROADCAST_OUTCOME_GRACE_MS = 10 * 60 * 1000
+
+export type BroadcastTerminalStatus = "sent" | "failed"
+
+export const resolveBroadcastTerminalStatus = (input: {
+  contactCount: number | null
+  failedCount: number
+}): BroadcastTerminalStatus => {
+  if (!input.contactCount || input.contactCount <= 0) {
+    return "sent"
+  }
+  return input.failedCount / input.contactCount >=
+    BROADCAST_FAILED_RATE_THRESHOLD
+    ? "failed"
+    : "sent"
+}
+
+export const isBroadcastOutcomeGraceElapsed = (input: {
+  handoffCompletedAt: Date
+  now: Date
+}): boolean =>
+  input.now.getTime() - input.handoffCompletedAt.getTime() >=
+  BROADCAST_OUTCOME_GRACE_MS
 
 export const broadcastSubactions = z.enum([
   "allContacts",

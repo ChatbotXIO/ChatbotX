@@ -1,10 +1,14 @@
 import { describe, expect, test } from "vitest"
 import {
+  BROADCAST_OUTCOME_GRACE_MS,
   broadcastChannelCapabilities,
+  broadcastStatuses,
   broadcastSubactionAudienceRules,
   broadcastSubactions,
   findBroadcastChannelCapability,
+  isBroadcastOutcomeGraceElapsed,
   requiresRecentInteractionWindow,
+  resolveBroadcastTerminalStatus,
 } from "../src/partials/broadcast"
 
 describe("requiresRecentInteractionWindow", () => {
@@ -100,5 +104,68 @@ describe("broadcastChannelCapabilities", () => {
     expect(
       findBroadcastChannelCapability("tiktok")?.supportsTemplateBroadcast,
     ).toBe(false)
+  })
+})
+
+describe("broadcastStatuses", () => {
+  test("includes draft and failed", () => {
+    expect(broadcastStatuses.options).toEqual(
+      expect.arrayContaining(["draft", "failed"]),
+    )
+  })
+})
+
+describe("resolveBroadcastTerminalStatus", () => {
+  test("is sent when no contact failed", () => {
+    expect(
+      resolveBroadcastTerminalStatus({ contactCount: 10, failedCount: 0 }),
+    ).toBe("sent")
+  })
+
+  test("is sent when only some contacts failed", () => {
+    expect(
+      resolveBroadcastTerminalStatus({ contactCount: 10, failedCount: 9 }),
+    ).toBe("sent")
+  })
+
+  test("is failed when every contact failed", () => {
+    expect(
+      resolveBroadcastTerminalStatus({ contactCount: 10, failedCount: 10 }),
+    ).toBe("failed")
+  })
+
+  test("is sent when contactCount is null or zero", () => {
+    expect(
+      resolveBroadcastTerminalStatus({ contactCount: null, failedCount: 3 }),
+    ).toBe("sent")
+    expect(
+      resolveBroadcastTerminalStatus({ contactCount: 0, failedCount: 0 }),
+    ).toBe("sent")
+  })
+})
+
+describe("isBroadcastOutcomeGraceElapsed", () => {
+  const now = new Date("2026-08-31T10:00:00Z")
+
+  test("is false inside the grace window", () => {
+    expect(
+      isBroadcastOutcomeGraceElapsed({
+        handoffCompletedAt: new Date(
+          now.getTime() - BROADCAST_OUTCOME_GRACE_MS + 1,
+        ),
+        now,
+      }),
+    ).toBe(false)
+  })
+
+  test("is true at or past the grace window", () => {
+    expect(
+      isBroadcastOutcomeGraceElapsed({
+        handoffCompletedAt: new Date(
+          now.getTime() - BROADCAST_OUTCOME_GRACE_MS,
+        ),
+        now,
+      }),
+    ).toBe(true)
   })
 })
