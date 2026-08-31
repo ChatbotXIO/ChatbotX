@@ -2,9 +2,7 @@
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
-import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,18 +15,9 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
-import {
-  EyeIcon,
-  Loader2Icon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  PlusIcon,
-  RotateCwIcon,
-} from "lucide-react"
-import Link from "next/link"
+import { Loader2Icon, MoreHorizontalIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
@@ -36,27 +25,38 @@ import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
 import { BroadcastDetailDialog } from "./broadcast-detail-dialog"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
+import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
+import { BroadcastsEmptyState } from "./components/broadcasts-empty-state"
+import { DeleteBroadcastDialog } from "./components/delete-broadcast-dialog"
+import { ScheduleBroadcastDialog } from "./components/schedule-broadcast-dialog"
+import {
+  type BroadcastRowActionVariant,
+  getBroadcastRowActions,
+  ROW_ACTION_ITEMS,
+} from "./lib/broadcast-row-actions"
 import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-context"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schema/resource"
+import { shouldShowBroadcastsEmptyState } from "./utils/empty-state"
 import { getEstimatedContactsDisplayState } from "./utils/estimated-contacts-display"
-
-type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"
-
-const BROADCAST_STATUS_VARIANTS: Partial<
-  Record<string, BroadcastStatusBadgeVariant>
-> = {
-  cancelled: "secondary",
-  scheduled: "outline",
-}
 
 type BroadcastsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listBroadcasts>>]>
+  filtered: boolean
 }
 
-export function BroadcastsTable({ promises }: BroadcastsTableProps) {
+type BroadcastRowAction = {
+  row: Row<BroadcastResourceWithRelations>
+  variant: BroadcastRowActionVariant
+}
+
+export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
+  const isEmpty = shouldShowBroadcastsEmptyState({
+    rowCount: data.length,
+    pageCount,
+  })
 
   const workspaceId = useWorkspaceId()
   const broadcastIds = useMemo(() => data.map((b) => b.id), [data])
@@ -64,8 +64,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
-  const [rowAction, setRowAction] =
-    useState<DataTableRowAction<BroadcastResourceWithRelations> | null>(null)
+  const [rowAction, setRowAction] = useState<BroadcastRowAction | null>(null)
 
   const columns = useMemo<ColumnDef<BroadcastResourceWithRelations>[]>(
     () => [
@@ -127,13 +126,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <Badge
-            variant={
-              BROADCAST_STATUS_VARIANTS[row.original.status] ?? "default"
-            }
-          >
-            {t(`broadcasts.status.${row.original.status}`)}
-          </Badge>
+          <BroadcastStatusBadge status={row.original.status} />
         ),
         enableSorting: false,
         enableHiding: false,
@@ -300,24 +293,18 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
               }
             />
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "view" })}
-              >
-                <EyeIcon className="me-2" />
-                {t("actions.view")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "rename" })}
-              >
-                <PencilIcon className="me-2" />
-                {t("actions.rename")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "resend" })}
-              >
-                <RotateCwIcon className="me-2" />
-                {t("actions.resend")}
-              </DropdownMenuItem>
+              {getBroadcastRowActions(row.original.status).map((variant) => {
+                const { icon: ActionIcon, labelKey } = ROW_ACTION_ITEMS[variant]
+                return (
+                  <DropdownMenuItem
+                    key={variant}
+                    onClick={() => setRowAction({ row, variant })}
+                  >
+                    <ActionIcon className="me-2" />
+                    {t(labelKey)}
+                  </DropdownMenuItem>
+                )
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -347,21 +334,13 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       broadcastIds={broadcastIds}
       workspaceId={workspaceId}
     >
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <div className="flex justify-end">
-            <Link
-              className={buttonVariants({ size: "sm" })}
-              href={`/space/${workspaceId}/broadcasts/create`}
-            >
-              <PlusIcon />
-              {t("actions.createFeature", {
-                feature: t("fields.broadcast.label"),
-              })}
-            </Link>
-          </div>
-        </DataTableToolbar>
-      </DataTable>
+      {isEmpty ? (
+        <BroadcastsEmptyState filtered={filtered} />
+      ) : (
+        <div className="flex flex-col gap-4 p-6">
+          <DataTable table={table} />
+        </div>
+      )}
 
       <RenameBroadcastDialog
         broadcast={rowAction?.row.original || null}
@@ -379,6 +358,24 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           router.refresh()
         }}
         open={rowAction?.variant === "resend"}
+      />
+
+      <ScheduleBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "schedule"}
+      />
+
+      <DeleteBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "delete"}
       />
 
       <BroadcastDetailDialog

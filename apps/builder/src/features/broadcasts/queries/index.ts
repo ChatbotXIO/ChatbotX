@@ -22,6 +22,7 @@ export async function listBroadcasts(
   const where = {
     workspaceId: input.workspaceId,
     name: input.name ? { ilike: likeContains(input.name) } : undefined,
+    status: input.status ?? undefined,
   }
 
   const pagination = getPaginationWithDefaults(input)
