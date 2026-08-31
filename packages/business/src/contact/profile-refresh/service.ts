@@ -119,41 +119,31 @@ export type ApplyContactProfileInput = {
   contactId: string
   accessScope?: ContactAccessScope
   update: ContactProfileUpdate
-  /**
-   * `true` routes the write through `contactService.updateIfProfileNameEmpty`
-   * — a single atomic UPDATE that only lands if the contact's name is STILL
-   * empty at write time, closing the TOCTOU race between an earlier
-   * eligibility check and this write. Defaults to `false` (unconditional
-   * `contactService.update`) — the `updateMessengerContactData` flow step
-   * deliberately overwrites an existing name and must keep doing so.
-   */
-  onlyIfProfileNameEmpty?: boolean
 }
 
-export type ApplyContactProfileResult =
-  | { applied: true; contact: ContactModel }
-  // Only reachable with `onlyIfProfileNameEmpty: true` — the name was filled
-  // concurrently between the caller's eligibility check and this write, so
-  // the conditional UPDATE matched zero rows.
-  | { applied: false }
+type ContactWriteContext = {
+  workspaceId: string
+  id: string
+  accessScope?: ContactAccessScope
+}
 
 /**
- * `contactService.update` / `updateIfProfileNameEmpty` (invalidates the
- * contact cache and emits `emitContactInfoChangeEvents`) plus managed-avatar
- * compensation: capture the previous avatar, write the new profile, then
- * delete the superseded managed object. Every `uploader.deleteObject` call
- * is best-effort — logged, never thrown.
+ * Shared core behind `applyContactProfile`/`applyContactProfileIfNameEmpty`:
+ * capture the previous avatar, run `write`, then best-effort delete the
+ * superseded managed avatar object. `write` is `contactService.update` for
+ * an unconditional write, `updateIfProfileNameEmpty` for a conditional one —
+ * its own `undefined` return (conditional write matched zero rows) is
+ * passed straight through. Every `uploader.deleteObject` call is
+ * best-effort — logged, never thrown.
  */
-export const applyContactProfile = async (
+const applyProfile = async (
   input: ApplyContactProfileInput,
-): Promise<ApplyContactProfileResult> => {
-  const {
-    workspaceId,
-    contactId,
-    accessScope,
-    update,
-    onlyIfProfileNameEmpty,
-  } = input
+  write: (
+    ctx: ContactWriteContext,
+    update: ContactProfileUpdate,
+  ) => Promise<ContactModel | undefined>,
+): Promise<ContactModel | undefined> => {
+  const { workspaceId, contactId, accessScope, update } = input
 
   // `getProfile` uploads the fetched picture to a fresh `avatars/<id>` object
   // on every run, so capture the current avatar first and delete it once the
@@ -169,18 +159,13 @@ export const applyContactProfile = async (
           })
         )?.avatar
 
-  const updated = onlyIfProfileNameEmpty
-    ? await contactService.updateIfProfileNameEmpty(
-        { workspaceId, id: contactId, accessScope },
-        update,
-      )
-    : await contactService.update(
-        { workspaceId, id: contactId, accessScope },
-        update,
-      )
+  const updated = await write(
+    { workspaceId, id: contactId, accessScope },
+    update,
+  )
 
   if (!updated) {
-    return { applied: false }
+    return
   }
 
   if (
@@ -193,13 +178,39 @@ export const applyContactProfile = async (
     } catch (error) {
       logger.warn(
         { error, path: previousAvatar },
-        "applyContactProfile: failed to delete superseded avatar",
+        "applyProfile: failed to delete superseded avatar",
       )
     }
   }
 
-  return { applied: true, contact: updated }
+  return updated
 }
+
+/**
+ * Unconditional write — `contactService.update` never returns falsy, so
+ * this always resolves. Used by the `updateMessengerContactData` flow step,
+ * which deliberately overwrites an existing name.
+ */
+export const applyContactProfile = async (
+  input: ApplyContactProfileInput,
+): Promise<ContactModel> =>
+  (await applyProfile(input, (ctx, update) =>
+    contactService.update(ctx, update),
+  )) as ContactModel
+
+/**
+ * Conditional write via `contactService.updateIfProfileNameEmpty` — a single
+ * atomic UPDATE that only lands if the contact's name is STILL empty at
+ * write time, closing the TOCTOU race between an earlier eligibility check
+ * and this write. Resolves `undefined` when the write matched zero rows
+ * (the name was filled concurrently).
+ */
+export const applyContactProfileIfNameEmpty = async (
+  input: ApplyContactProfileInput,
+): Promise<ContactModel | undefined> =>
+  await applyProfile(input, (ctx, update) =>
+    contactService.updateIfProfileNameEmpty(ctx, update),
+  )
 
 /**
  * Linear pipeline, each step returns early with a typed result. Channel
@@ -265,24 +276,23 @@ const refresh = async (
   }
 
   try {
-    // `onlyIfProfileNameEmpty: true` folds the "name still empty" check
-    // into the write itself (a single atomic UPDATE) instead of a separate
-    // read before the write — an operator or a concurrent refresh filling
-    // the name while `fetchProfile` was in flight can no longer be
-    // clobbered: the write simply matches zero rows.
-    const applied = await applyContactProfile({
+    // The atomic conditional write folds the "name still empty" check into
+    // the write itself instead of a separate read before the write — an
+    // operator or a concurrent refresh filling the name while `fetchProfile`
+    // was in flight can no longer be clobbered: the write simply matches
+    // zero rows, surfaced here as `undefined`.
+    const updatedContact = await applyContactProfileIfNameEmpty({
       workspaceId,
       contactId,
       accessScope,
       update,
-      onlyIfProfileNameEmpty: true,
     })
-    if (!applied.applied) {
+    if (!updatedContact) {
       // Raced, not failed — no cooldown.
       await discardUploadedAvatar(update.avatar)
       return { status: "skipped", reason: "profileComplete" }
     }
-    return { status: "updated", contact: applied.contact }
+    return { status: "updated", contact: updatedContact }
   } catch (error) {
     await discardUploadedAvatar(update.avatar)
     await recordProfileRefreshFailure({

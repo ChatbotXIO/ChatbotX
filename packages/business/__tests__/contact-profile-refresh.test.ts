@@ -46,6 +46,7 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 
 const {
   applyContactProfile,
+  applyContactProfileIfNameEmpty,
   buildContactProfileUpdate,
   contactProfileNameCapabilities,
   contactProfileRefreshService,
@@ -743,7 +744,7 @@ describe("applyContactProfile", () => {
     )
   })
 
-  test("returns { applied: true, contact } on a successful unconditional write", async () => {
+  test("returns the updated contact on a successful unconditional write", async () => {
     const result = await applyContactProfile({
       workspaceId: "ws-1",
       contactId: "contact-1",
@@ -751,37 +752,40 @@ describe("applyContactProfile", () => {
     })
 
     expect(result).toEqual({
-      applied: true,
-      contact: { id: "contact-1", workspaceId: "ws-1", firstName: "Jane" },
+      id: "contact-1",
+      workspaceId: "ws-1",
+      firstName: "Jane",
     })
   })
+})
 
-  test("onlyIfProfileNameEmpty: true routes through contactService.updateIfProfileNameEmpty, not update", async () => {
-    await applyContactProfile({
+// ─── service.ts: applyContactProfileIfNameEmpty ─────────────────────────
+
+describe("applyContactProfileIfNameEmpty", () => {
+  test("routes through contactService.updateIfProfileNameEmpty, not update", async () => {
+    await applyContactProfileIfNameEmpty({
       workspaceId: "ws-1",
       contactId: "contact-1",
       update: { firstName: "Jane" },
-      onlyIfProfileNameEmpty: true,
     })
 
     expect(updateIfProfileNameEmptyMock).toHaveBeenCalledTimes(1)
     expect(updateMock).not.toHaveBeenCalled()
   })
 
-  test("onlyIfProfileNameEmpty: true and zero rows matched → { applied: false }, no avatar cleanup (nothing was superseded)", async () => {
+  test("zero rows matched → undefined, no avatar cleanup (nothing was superseded)", async () => {
     updateIfProfileNameEmptyMock.mockResolvedValueOnce(undefined)
     findByIdMock.mockResolvedValueOnce({
       avatar: "public/space/ws-1/avatars/old",
     })
 
-    const result = await applyContactProfile({
+    const result = await applyContactProfileIfNameEmpty({
       workspaceId: "ws-1",
       contactId: "contact-1",
       update: { avatar: "public/space/ws-1/avatars/new" },
-      onlyIfProfileNameEmpty: true,
     })
 
-    expect(result).toEqual({ applied: false })
+    expect(result).toBeUndefined()
     expect(deleteObjectMock).not.toHaveBeenCalled()
   })
 })

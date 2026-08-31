@@ -69,22 +69,14 @@ export const COOLDOWN_BY_PROFILE_SOURCE = {
 
 /**
  * The exact set of ECMAScript `WhiteSpace` + `LineTerminator` code points
- * `String.prototype.trim()` strips (ECMA-262 `TrimString`) — the same set
- * `hasEmptyProfileName`/`hasProfileName` below rely on via `.trim()`. Kept
- * as one exported source of truth so `ContactService.updateIfProfileNameEmpty`
- * (`packages/business/src/contact/service.ts`) can bind the identical
- * character set into Postgres' `btrim(text, characters)` instead of
- * drifting from JS's definition of "blank" — plain `btrim(text)` (no
- * second argument) only strips ASCII space, which would let a
- * tab-only/NBSP-only name (blank per `.trim()`) desync the SQL predicate
- * from `hasEmptyProfileName` and silently stop backfilling forever.
- *
- * Written as explicit `\u` escapes (never literal characters) so the exact
- * code points are auditable in source and immune to editor/encoding
- * mangling: TAB, LF, VT, FF, CR, SPACE, NBSP, OGHAM SPACE MARK, EN QUAD..
- * HAIR SPACE (U+2000-U+200A), LINE SEPARATOR, PARAGRAPH SEPARATOR, NARROW
- * NO-BREAK SPACE, MEDIUM MATHEMATICAL SPACE, IDEOGRAPHIC SPACE, ZERO WIDTH
- * NO-BREAK SPACE (BOM).
+ * `String.prototype.trim()` strips — the same set `hasEmptyProfileName` /
+ * `hasProfileName` rely on. Exported as one source of truth so
+ * `ContactService.updateIfProfileNameEmpty` can bind it into Postgres'
+ * `btrim(text, characters)` instead of drifting from JS's "blank" (plain
+ * `btrim(text)` only strips ASCII space). Explicit `\u` escapes, not literal
+ * characters, so the code points stay auditable: TAB, LF, VT, FF, CR, SPACE,
+ * NBSP, OGHAM SPACE MARK, EN QUAD..HAIR SPACE (U+2000-U+200A), LINE/PARAGRAPH
+ * SEPARATOR, NARROW/MEDIUM MATH SPACE, IDEOGRAPHIC SPACE, BOM.
  */
 export const PROFILE_NAME_BLANK_CHARACTERS =
   "\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF"
@@ -103,45 +95,23 @@ export type ContactProfileUpdate = Partial<
 >
 
 /**
- * Per-column mapper table. `gender` is validated with the DB enum, not cast.
- * `undefined` values are dropped so a channel lacking `pages_user_locale` /
- * `timezone` / `gender` never clobbers existing data. Replaces `buildCandidate`
- * in `apps/worker/src/integration/handlers/messenger-contact-data.ts:26-49`.
- */
-const profileColumnMappers = {
-  firstName: (p) => p.firstName,
-  lastName: (p) => p.lastName,
-  avatar: (p) => p.avatar,
-  locale: (p) => p.locale,
-  timezone: (p) => p.timezone,
-  gender: (p) => genderTypes.safeParse(p.gender).data,
-} as const satisfies {
-  [K in keyof ContactProfileUpdate]-?: (
-    profile: IncomingContact,
-  ) => ContactProfileUpdate[K] | undefined
-}
-
-type ProfileColumn = keyof typeof profileColumnMappers
-const PROFILE_COLUMNS = Object.keys(
-  profileColumnMappers,
-) as readonly ProfileColumn[] // literal-union narrowing, not `any`
-
-/**
- * Typed accumulation over `PROFILE_COLUMNS` — no `Object.fromEntries` index
- * signature, and no per-iteration object-spread (avoids the O(n²) pattern on
- * an accumulator): the local `update` object is built once and returned.
+ * Six fixed columns, so a direct literal beats a mapper table + loop.
+ * `undefined` values are dropped (conditional spread) so a channel lacking
+ * `pages_user_locale`/`timezone`/`gender` never clobbers existing data.
+ * `gender` is validated with the DB enum, not cast.
  */
 export const buildContactProfileUpdate = (
   profile: IncomingContact,
 ): ContactProfileUpdate => {
-  const update: ContactProfileUpdate = {}
-  for (const column of PROFILE_COLUMNS) {
-    const value = profileColumnMappers[column](profile)
-    if (value !== undefined) {
-      update[column] = value
-    }
+  const gender = genderTypes.safeParse(profile.gender).data
+  return {
+    ...(profile.firstName !== undefined && { firstName: profile.firstName }),
+    ...(profile.lastName !== undefined && { lastName: profile.lastName }),
+    ...(profile.avatar !== undefined && { avatar: profile.avatar }),
+    ...(profile.locale !== undefined && { locale: profile.locale }),
+    ...(profile.timezone !== undefined && { timezone: profile.timezone }),
+    ...(gender !== undefined && { gender }),
   }
-  return update
 }
 
 /** A refresh only counts when the channel returned a usable name. */
