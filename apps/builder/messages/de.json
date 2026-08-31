@@ -2146,6 +2146,7 @@
       "sendFile": "Datei senden",
       "sendGif": "GIF senden",
       "sendImage": "Bild senden",
+      "sendMultipleImages": "Mehrere Bilder",
       "sendMessage": "Nachricht senden",
       "sendNode": "Anderen Knoten starten",
       "sendText": "Text senden",
@@ -2227,6 +2228,10 @@
       "addSlide": "Karte hinzufügen",
       "removeSlide": "Karte entfernen",
       "whatsappLinkButtonIgnored": "Bei WhatsApp funktioniert der Link dieser Karte nicht: Eine Karte mit einer Link-Schaltfläche darf keine weiteren Schaltflächen haben. Sie wird stattdessen als Antwort gesendet."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Bild entfernen",
+      "selectImage": "Bilder auswählen"
     },
     "additionalSteps": "Zusätzliche Schritte",
     "delayType": {
@@ -5500,7 +5505,8 @@
     "recent": "Zuletzt verwendet",
     "favourite": "Favorit",
     "upload": "Hochladen",
-    "done": "Fertig",
+    "select": "Auswählen",
+    "bulkSelect": "Mehrfachauswahl",
     "deleteFolder": "Ordner löschen",
     "renameFolder": "Ordner umbenennen",
     "noFiles": "Keine Dateien gefunden",

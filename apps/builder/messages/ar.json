@@ -2220,6 +2220,7 @@
       "sendFile": "إرسال ملف",
       "sendGif": "إرسال صورة متحركة",
       "sendImage": "إرسال صورة",
+      "sendMultipleImages": "عدة صور",
       "sendMessage": "إرسال رسالة",
       "sendNode": "بدء عقدة أخرى",
       "sendText": "إرسال نص",
@@ -2301,6 +2302,10 @@
       "addSlide": "إضافة بطاقة",
       "removeSlide": "إزالة البطاقة",
       "whatsappLinkButtonIgnored": "في واتساب، لن يعمل رابط هذه البطاقة: لا يمكن أن تحتوي البطاقة التي تتضمن زر رابط على أزرار أخرى. سيتم إرسال الزر كزر رد بدلًا من ذلك."
+    },
+    "sendMultipleImages": {
+      "removeImage": "إزالة صورة",
+      "selectImage": "اختيار الصور"
     },
     "additionalSteps": "خطوات إضافية",
     "delayType": {
@@ -5500,7 +5505,8 @@
     "recent": "الأحدث",
     "favourite": "المفضلة",
     "upload": "رفع",
-    "done": "تم",
+    "select": "تحديد",
+    "bulkSelect": "تحديد متعدد",
     "deleteFolder": "حذف المجلد",
     "renameFolder": "إعادة تسمية المجلد",
     "noFiles": "لا توجد ملفات",

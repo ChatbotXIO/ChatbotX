@@ -2146,6 +2146,7 @@
       "sendFile": "Lähetä tiedosto",
       "sendGif": "Lähetä GIF",
       "sendImage": "Lähetä kuva",
+      "sendMultipleImages": "Useita kuvia",
       "sendMessage": "Lähetä viesti",
       "sendNode": "Käynnistä toinen solmu",
       "sendText": "Lähetä teksti",
@@ -2227,6 +2228,10 @@
       "addSlide": "Lisää kortti",
       "removeSlide": "Poista kortti",
       "whatsappLinkButtonIgnored": "WhatsAppissa tämän kortin linkki ei toimi: linkkipainikkeen sisältävällä kortilla ei voi olla muita painikkeita. Se lähetetään sen sijaan vastauksena."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Poista kuva",
+      "selectImage": "Valitse kuvat"
     },
     "additionalSteps": "Lisävaiheet",
     "delayType": {
@@ -5500,7 +5505,8 @@
     "recent": "Viimeisimmät",
     "favourite": "Suosikki",
     "upload": "Lataa",
-    "done": "Valmis",
+    "select": "Valitse",
+    "bulkSelect": "Massavalinta",
     "deleteFolder": "Poista kansio",
     "renameFolder": "Nimeä kansio uudelleen",
     "noFiles": "Tiedostoja ei löytynyt",

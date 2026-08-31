@@ -93,6 +93,7 @@
       "sendFile": "Trimite un fișier",
       "sendGif": "Trimite un GIF",
       "sendImage": "Trimite o imagine",
+      "sendMultipleImages": "Imagini multiple",
       "sendMessage": "Trimite un mesaj",
       "sendNode": "Pornește alt nod",
       "sendText": "Trimite text",
@@ -174,6 +175,10 @@
       "addSlide": "Adaugă cardul",
       "removeSlide": "Elimină cardul",
       "whatsappLinkButtonIgnored": "Pe WhatsApp, linkul acestui card nu va funcționa: un card cu un buton de link nu poate avea alte butoane. Va fi trimis ca răspuns în schimb."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Elimină imagine",
+      "selectImage": "Selectează imagini"
     },
     "additionalSteps": "Pași suplimentari",
     "delayType": {
@@ -5500,7 +5505,8 @@
     "recent": "Recente",
     "favourite": "Favorit",
     "upload": "Încarcă",
-    "done": "Terminat",
+    "select": "Selectează",
+    "bulkSelect": "Selectare multiplă",
     "deleteFolder": "Șterge folderul",
     "renameFolder": "Redenumește folderul",
     "noFiles": "Niciun fișier găsit",

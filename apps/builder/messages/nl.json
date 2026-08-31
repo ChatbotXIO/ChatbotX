@@ -2146,6 +2146,7 @@
       "sendFile": "Bestand verzenden",
       "sendGif": "GIF verzenden",
       "sendImage": "Afbeelding verzenden",
+      "sendMultipleImages": "Meerdere afbeeldingen",
       "sendMessage": "Bericht verzenden",
       "sendNode": "Ander knooppunt starten",
       "sendText": "Tekst verzenden",
@@ -2227,6 +2228,10 @@
       "addSlide": "Kaart toevoegen",
       "removeSlide": "Kaart verwijderen",
       "whatsappLinkButtonIgnored": "Op WhatsApp werkt de link van deze kaart niet: een kaart met een linkknop mag geen andere knoppen hebben. Deze wordt in plaats daarvan als antwoord verzonden."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Afbeelding verwijderen",
+      "selectImage": "Afbeeldingen selecteren"
     },
     "additionalSteps": "Aanvullende stappen",
     "delayType": {
@@ -5500,7 +5505,8 @@
     "recent": "Recent",
     "favourite": "Favoriet",
     "upload": "Uploaden",
-    "done": "Klaar",
+    "select": "Selecteren",
+    "bulkSelect": "Meerdere selecteren",
     "deleteFolder": "Map verwijderen",
     "renameFolder": "Map hernoemen",
     "noFiles": "Geen bestanden gevonden",

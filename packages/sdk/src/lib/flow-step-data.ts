@@ -5,6 +5,7 @@ import type {
   SendGifStepSchema,
   SendImageStepSchema,
   SendMessengerTemplateMessageStepSchema,
+  SendMultipleImagesStepSchema,
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
@@ -16,6 +17,7 @@ import type {
 export type SendFlowStepData =
   | SendTextStepSchema
   | SendImageStepSchema
+  | SendMultipleImagesStepSchema
   | SendGifStepSchema
   | SendAudioStepSchema
   | SendVideoStepSchema

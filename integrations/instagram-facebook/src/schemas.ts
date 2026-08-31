@@ -239,6 +239,9 @@ export type InstagramMessageAttachment = z.infer<
 export const instagramSendMessageSchema = z.object({
   text: z.string().optional(),
   attachment: instagramMessageAttachmentSchema.optional(),
+  // Multiple-attachments form — one message carrying several bare image
+  // attachments, no template/buttons.
+  attachments: z.array(instagramMessageAttachmentSchema).max(10).optional(),
   quick_replies: z.array(instagramQuickReplySchema).max(13).optional(),
   metadata: z.string().optional(),
 })

@@ -2146,6 +2146,7 @@
       "sendFile": "Send Fil",
       "sendGif": "Send Gif",
       "sendImage": "Send Billede",
+      "sendMultipleImages": "Flere billeder",
       "sendMessage": "Send besked",
       "sendNode": "Start Another Node",
       "sendText": "Send Tekst",
@@ -2227,6 +2228,10 @@
       "addSlide": "Tilføj kort",
       "removeSlide": "Fjern kort",
       "whatsappLinkButtonIgnored": "På WhatsApp virker dette korts link ikke: et kort med en linkknap kan ikke have andre knapper. Det sendes i stedet som et svar."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Fjern billede",
+      "selectImage": "Vælg billeder"
     },
     "additionalSteps": "Additional trin",
     "delayType": {
@@ -5500,7 +5505,8 @@
     "recent": "Seneste",
     "favourite": "Favorit",
     "upload": "Upload",
-    "done": "Færdig",
+    "select": "Vælg",
+    "bulkSelect": "Massevalg",
     "deleteFolder": "Slet mappe",
     "renameFolder": "Omdøb mappe",
     "noFiles": "Ingen filer fundet",

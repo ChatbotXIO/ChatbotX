@@ -1,6 +1,7 @@
 import {
   type SendGifStepSchema,
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
@@ -80,5 +81,50 @@ export async function* convertFlowStepImage(
   } catch (error) {
     logger.error(error, "Error uploading media")
     throw error
+  }
+}
+
+/**
+ * Zalo OA's media template caps `elements` at 1 (schema-enforced in
+ * `schema/webhook.ts`) — no native multi-image message. Fall back to N
+ * sequential single-image template messages, one per URL.
+ */
+export async function* convertFlowStepMultipleImages(
+  props: SendFlowStepProps<ZaloAuthValue, SendMultipleImagesStepSchema>,
+): AsyncGenerator<MessageTemplate> {
+  const {
+    data: { step },
+  } = props
+
+  for (const image of step.images) {
+    try {
+      const {
+        data: { attachment_id, width, height },
+      } = await uploadAttachment(props.ctx.auth, "image", image.url)
+
+      if (!attachment_id) {
+        throw new Error("Failed to upload image: No attachment ID received")
+      }
+
+      yield {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "media",
+            elements: [
+              {
+                media_type: "image",
+                attachment_id,
+                width,
+                height,
+              },
+            ],
+          },
+        },
+      }
+    } catch (error) {
+      logger.error(error, "Error uploading media")
+      throw error
+    }
   }
 }
