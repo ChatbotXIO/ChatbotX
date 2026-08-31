@@ -1578,7 +1578,9 @@
     "clone": "Clona",
     "remove": "Rimuovi",
     "restore": "Ripristina",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule"
   },
   "errors": {
     "superAdminRequired": "Devi essere super admin dello spazio di lavoro per farlo."
@@ -1777,7 +1779,9 @@
       "scheduled": "Pianificato",
       "sent": "Inviato",
       "sending": "Invio in corso",
-      "cancelled": "Annullato"
+      "cancelled": "Annullato",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Inviato",
@@ -1863,6 +1867,37 @@
       "template": "Modello",
       "noTemplate": "Nessun modello",
       "integration": "Integrazione"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "Delete draft",
+      "description": "\"{name}\" will be permanently deleted."
+    },
+    "calendar": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "more": "+{count} more"
     }
   },
   "condition": {

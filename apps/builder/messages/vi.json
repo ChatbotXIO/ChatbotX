@@ -148,7 +148,9 @@
     "clone": "Nhân bản",
     "remove": "Xóa",
     "restore": "Khôi phục",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Lưu nháp",
+    "schedule": "Lên lịch"
   },
   "errors": {
     "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
@@ -345,9 +347,11 @@
     "title": "Phát sóng",
     "status": {
       "scheduled": "Đã lên lịch",
-      "sent": "Đã gửi",
+      "sent": "Hoàn thành",
       "sending": "Đang gửi",
-      "cancelled": "Đã huỷ"
+      "cancelled": "Đã huỷ",
+      "draft": "Nháp",
+      "failed": "Thất bại"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -433,6 +437,37 @@
       "template": "Template",
       "noTemplate": "Không có template",
       "integration": "Tích hợp"
+    },
+    "filters": {
+      "all": "Tất cả"
+    },
+    "views": {
+      "table": "Bảng",
+      "calendar": "Lịch"
+    },
+    "panel": {
+      "collapse": "Thu gọn bảng lọc",
+      "expand": "Mở bảng lọc"
+    },
+    "empty": {
+      "title": "Chưa có broadcast nào",
+      "description": "Tạo broadcast đầu tiên để gửi tới liên hệ của bạn.",
+      "filteredTitle": "Không có broadcast phù hợp",
+      "filteredDescription": "Thử trạng thái khác hoặc xoá từ khoá tìm kiếm."
+    },
+    "scheduleDialog": {
+      "title": "Lên lịch broadcast",
+      "description": "Chọn thời điểm gửi \"{name}\"."
+    },
+    "deleteDialog": {
+      "title": "Xoá bản nháp",
+      "description": "\"{name}\" sẽ bị xoá vĩnh viễn."
+    },
+    "calendar": {
+      "previousMonth": "Tháng trước",
+      "nextMonth": "Tháng sau",
+      "today": "Hôm nay",
+      "more": "+{count} nữa"
     }
   },
   "condition": {

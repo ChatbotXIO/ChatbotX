@@ -148,7 +148,9 @@
     "clone": "Klonla",
     "remove": "Kaldır",
     "restore": "Geri Yükle",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule"
   },
   "errors": {
     "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
@@ -347,7 +349,9 @@
       "scheduled": "Planlandı",
       "sent": "Gönderildi",
       "sending": "Gönderiliyor",
-      "cancelled": "İptal Edildi"
+      "cancelled": "İptal Edildi",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Gönderildi",
@@ -433,6 +437,37 @@
       "template": "Şablon",
       "noTemplate": "Şablon yok",
       "integration": "Entegrasyon"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "Delete draft",
+      "description": "\"{name}\" will be permanently deleted."
+    },
+    "calendar": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "more": "+{count} more"
     }
   },
   "condition": {

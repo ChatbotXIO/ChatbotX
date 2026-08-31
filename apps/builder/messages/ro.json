@@ -925,7 +925,9 @@
     "clone": "Clonează",
     "remove": "Elimină",
     "restore": "Restaurează",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule"
   },
   "errors": {
     "superAdminRequired": "Trebuie să fii superadministrator al spațiului de lucru pentru a face acest lucru."
@@ -1124,7 +1126,9 @@
       "scheduled": "Programată",
       "sent": "Trimisă",
       "sending": "Se trimite",
-      "cancelled": "Anulată"
+      "cancelled": "Anulată",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Trimis",
@@ -1210,6 +1214,37 @@
       "template": "Șablon",
       "noTemplate": "Niciun șablon",
       "integration": "Integrare"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "Delete draft",
+      "description": "\"{name}\" will be permanently deleted."
+    },
+    "calendar": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "more": "+{count} more"
     }
   },
   "condition": {

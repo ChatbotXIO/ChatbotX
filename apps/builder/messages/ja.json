@@ -148,7 +148,9 @@
     "clone": "複製",
     "remove": "削除",
     "restore": "復元",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule"
   },
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
@@ -347,7 +349,9 @@
       "scheduled": "予約済み",
       "sent": "送信済み",
       "sending": "送信中",
-      "cancelled": "キャンセル済み"
+      "cancelled": "キャンセル済み",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "送信済み",
@@ -433,6 +437,37 @@
       "template": "テンプレート",
       "noTemplate": "テンプレートなし",
       "integration": "連携"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "Delete draft",
+      "description": "\"{name}\" will be permanently deleted."
+    },
+    "calendar": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "more": "+{count} more"
     }
   },
   "condition": {

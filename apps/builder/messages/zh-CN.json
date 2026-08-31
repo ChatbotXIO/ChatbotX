@@ -152,7 +152,9 @@
     "view": "查看",
     "viewAnalytics": "查看分析",
     "wait": "等等",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule"
   },
   "activeCampaign": {
     "automations": {
@@ -734,7 +736,9 @@
       "cancelled": "已取消",
       "scheduled": "已安排",
       "sending": "正在发送",
-      "sent": "已发送"
+      "sent": "已发送",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "telegramAllContacts": {
       "description": "如果您想向您的Telegram 联系人发送广播，请使用此消息类型。",
@@ -752,6 +756,37 @@
     "whatsappWithin24Hours": {
       "description": "可能包含促销消息，并且只会发送给过去 24 小时内向您的机器人发送消息的用户。",
       "title": "24 小时内活跃联系人"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "Delete draft",
+      "description": "\"{name}\" will be permanently deleted."
+    },
+    "calendar": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "more": "+{count} more"
     }
   },
   "channels": {

@@ -148,7 +148,9 @@
     "clone": "Klonen",
     "remove": "Verwijderen",
     "restore": "Herstellen",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule"
   },
   "errors": {
     "superAdminRequired": "Je moet superbeheerder van de werkruimte zijn om dit te doen."
@@ -347,7 +349,9 @@
       "scheduled": "Gepland",
       "sent": "Verzonden",
       "sending": "Wordt verzonden",
-      "cancelled": "Geannuleerd"
+      "cancelled": "Geannuleerd",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Verzonden",
@@ -433,6 +437,37 @@
       "template": "Sjabloon",
       "noTemplate": "Geen sjabloon",
       "integration": "Integratie"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "Delete draft",
+      "description": "\"{name}\" will be permanently deleted."
+    },
+    "calendar": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today",
+      "more": "+{count} more"
     }
   },
   "fields": {
