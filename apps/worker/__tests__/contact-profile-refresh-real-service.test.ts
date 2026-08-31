@@ -52,6 +52,11 @@ vi.mock("../../../packages/business/src/contact/service", () => ({
   },
 }))
 
+const updateLanguageIfEmptyMock = vi.fn(async () => undefined)
+vi.mock("../../../packages/business/src/contact-inbox/service", () => ({
+  contactInboxService: { updateLanguageIfEmpty: updateLanguageIfEmptyMock },
+}))
+
 const logProviderErrorForChannelMock = vi.fn(async () => undefined)
 vi.mock("../../../packages/business/src/error-log/service", () => ({
   logProviderErrorForChannel: logProviderErrorForChannelMock,
@@ -99,6 +104,7 @@ const fakeContactInbox = {
   inboxId: "inbox-1",
   sourceId: "psid-123",
   channel: "messenger",
+  language: null,
 } as unknown as import("@chatbotx.io/database/types").ContactInboxModel
 
 const fakeIncomingContact = { sourceId: "psid-123", firstName: "Jane" }
@@ -126,6 +132,7 @@ beforeEach(() => {
     workspaceId: ctx.workspaceId,
     ...data,
   }))
+  updateLanguageIfEmptyMock.mockResolvedValue({ id: "ci-1" })
 })
 
 describe("refreshExistingContactProfile against the real contactProfileRefreshService", () => {
@@ -241,6 +248,42 @@ describe("refreshExistingContactProfile against the real contactProfileRefreshSe
     )
     expect(mockLoggerDebug).toHaveBeenCalledWith(
       expect.objectContaining({ result: { status: "failed" } }),
+      expect.any(String),
+    )
+  })
+
+  test("channelApi refresh persists the finalizeContactProfile-normalized locale and writes ContactInbox.language for an empty-language inbox", async () => {
+    const runChannelHandler = vi.fn().mockResolvedValue({
+      firstName: "Jane",
+      locale: "VI-vn",
+    })
+    mockResolveIntegrationContextFromContactInbox.mockResolvedValue({
+      integration: { runChannelHandler },
+      ctx: { workspaceId: "ws-1" },
+    })
+
+    await refreshExistingContactProfile({
+      source: "channelApi",
+      inbox: fakeInbox,
+      contactInbox: fakeContactInbox, // language: null, per the fixture above
+      incomingContact: fakeIncomingContact,
+      contactId: "contact-1",
+    })
+
+    expect(updateIfProfileNameEmptyMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ locale: "vi_VN" }),
+    )
+    expect(updateLanguageIfEmptyMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactInboxId: "ci-1",
+      language: "vi",
+    })
+    expect(mockLoggerDebug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        result: expect.objectContaining({ status: "updated" }),
+      }),
       expect.any(String),
     )
   })
