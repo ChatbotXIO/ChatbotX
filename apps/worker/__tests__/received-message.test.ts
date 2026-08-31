@@ -182,6 +182,16 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // re-implemented here rather than partially importing the real (heavy)
 // `@chatbotx.io/business` barrel, matching this file's existing convention
 // for `@chatbotx.io/sdk`'s pure helpers above.
+//
+// Tried switching to `vi.mock("@chatbotx.io/business", async (importOriginal)
+// => ...)` (as done in contact-profile-refresh.test.ts, which has no
+// `@chatbotx.io/database/schema` mock to conflict with) — it breaks here: the
+// real barrel's module graph reaches `ads-conversion/schema.ts`, which calls
+// `createSelectSchema` from `@chatbotx.io/database/schema` at import time,
+// and this file's `@chatbotx.io/database/schema` mock above is deliberately
+// minimal (a handful of table shapes) and has no such export. Keeping the
+// mirror here rather than widening that mock (and whatever else the real
+// barrel transitively touches) to stay a small, scoped fix.
 const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
   string,
   { inbound: "payload" | "channelApi" | null; onDemand: boolean }
@@ -2507,6 +2517,65 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "contact",
       "getProfile",
       expect.objectContaining({ data: { sourceId: "zalo-psid-1" } }),
+    )
+  })
+
+  test("telegram: a new contact creation still fetches getProfile at creation time via hasOnDemandProfileApi", async () => {
+    mockFindContactInbox.mockResolvedValue(undefined)
+    mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+    const telegramInbox = { ...fakeInbox, channel: "telegram" }
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: telegramInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockRunChannelHandler.mockImplementation(
+      (_domain: string, action: string) => {
+        if (action === "getProfile") {
+          return Promise.resolve({ firstName: "Telegram Contact" })
+        }
+        return Promise.resolve({
+          message: { ...baseIncomingMessage, attachments: [] },
+          contact: { sourceId: "telegram-chat-1" },
+          postbackAction: null,
+          quickReplyAction: null,
+          ref: null,
+        })
+      },
+    )
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: {
+        newContact: {
+          id: "contact-telegram-new",
+          workspaceId: "ws-1",
+          firstName: "Telegram Contact",
+          phoneNumber: null,
+          email: null,
+          blockedAt: null,
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+        contactInbox: {
+          ...fakeContactInbox,
+          id: "ci-telegram-new",
+          contactId: "contact-telegram-new",
+          channel: "telegram",
+        },
+        conversation: fakeConversation,
+      },
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, contactInboxId: "ci-telegram-new" },
+      isNew: true,
+    })
+
+    await receiveMessage({ ...baseProps, integrationType: "telegram" })
+
+    expect(mockRunChannelHandler).toHaveBeenCalledWith(
+      "contact",
+      "getProfile",
+      expect.objectContaining({ data: { sourceId: "telegram-chat-1" } }),
     )
   })
 
