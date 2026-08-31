@@ -3,7 +3,7 @@
 import {
   hasEmptyProfileName,
   hasOnDemandProfileApi,
-} from "@chatbotx.io/business"
+} from "@chatbotx.io/business/contact-profile-rules"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { type RefObject, useEffect, useRef } from "react"
 import type {

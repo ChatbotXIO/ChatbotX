@@ -30,7 +30,7 @@ vi.mock("@/features/contacts/actions/refresh-contact-profile.action", () => ({
     refreshContactProfileActionMock(...args),
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("@chatbotx.io/business/contact-profile-rules", () => ({
   hasEmptyProfileName: (contact: {
     firstName?: string | null
     lastName?: string | null
