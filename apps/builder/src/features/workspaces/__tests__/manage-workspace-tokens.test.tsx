@@ -114,8 +114,9 @@ describe("ManageWorkspaceTokens", () => {
   it("shows an empty state when there are no tokens", async () => {
     await render([])
 
-    expect(container.textContent).toContain("developerAccessToken.empty")
-    expect(container.querySelector("table")).toBeNull()
+    const emptyCell = container.querySelector("tbody td")
+    expect(emptyCell?.textContent).toContain("developerAccessToken.empty")
+    expect(container.querySelector("table")).not.toBeNull()
   })
 
   it("renders a row per token, masking legacy null-prefix tokens generically", async () => {
