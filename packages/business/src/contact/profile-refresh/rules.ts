@@ -32,6 +32,7 @@ export const contactProfileNameCapabilities = {
   telegram: { inbound: "channelApi", onDemand: true }, // getChat keyed by the contact's chat id — identity-safe (payload names a clicking user, not the chat)
   whatsapp: { inbound: "payload", onDemand: false }, // contacts[0].profile.name; no user-profile API
   tiktok: { inbound: null, onDemand: false }, // webhook carries ids only, no profile API
+  threads: { inbound: null, onDemand: false }, // comment-only channel: no message webhook parses an IncomingContact, and the integration exposes no contact.getProfile handler
   api: { inbound: "payload", onDemand: false },
   webchat: { inbound: null, onDemand: false },
   smtp: { inbound: null, onDemand: false },

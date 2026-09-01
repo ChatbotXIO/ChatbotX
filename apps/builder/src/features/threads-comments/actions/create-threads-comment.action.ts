@@ -4,7 +4,7 @@ import { fbCommentAutomationService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas/index"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateThreadsCommentRequest,
