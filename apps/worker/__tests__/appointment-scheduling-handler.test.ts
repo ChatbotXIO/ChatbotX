@@ -804,6 +804,34 @@ describe("appointmentScheduling handler", () => {
     expect(resolveFlowAIModel).not.toHaveBeenCalled()
   })
 
+  test("checkAvailabilityFromCustomField: uses stored UTC instants without re-anchoring to the calendar timezone", async () => {
+    findCalendarByOrFail.mockResolvedValueOnce({
+      id: "calendar-1",
+      name: "Cuiaba Calendar",
+      timezone: "America/Cuiaba",
+    })
+    findValue.mockResolvedValueOnce("2026-09-01T14:00:00.000Z")
+    findValue.mockResolvedValueOnce("2026-09-01T15:00:00.000Z")
+
+    const result = await appointmentScheduling({
+      ...baseProps,
+      step: checkAvailabilityFromCustomFieldStep,
+    } as never)
+
+    expect(checkAvailability).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      calendarId: "calendar-1",
+      contactId: "contact-1",
+      startDate: new Date("2026-09-01T14:00:00.000Z"),
+      endDate: new Date("2026-09-01T15:00:00.000Z"),
+    })
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: "success",
+      }),
+    )
+  })
+
   test("checkAvailabilityFromCustomField: writes availability text and succeeds", async () => {
     findValue.mockResolvedValueOnce("2026-08-10T09:00:00.000Z")
     findValue.mockResolvedValueOnce("2026-08-11T09:00:00.000Z")
