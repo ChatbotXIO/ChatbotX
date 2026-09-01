@@ -3,7 +3,7 @@
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { CalendarClockIcon } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
-import type { ContactAppointmentResource } from "@/features/appointments/schemas/resource"
+import type { ContactAppointmentResource } from "@/features/appointments/schema/resource"
 
 const statusVariant = (status: ContactAppointmentResource["status"]) =>
   status === "scheduled" ? "secondary" : "outline"

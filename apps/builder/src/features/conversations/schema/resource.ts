@@ -6,9 +6,9 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
-import { contactResource } from "@/features/contacts/schemas/resource"
+import { contactResource } from "@/features/contacts/schema/resource"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
-import { userResource } from "@/features/users/schemas/resource"
+import { userResource } from "@/features/users/schema/resource"
 
 export const conversationResource = createSelectSchema(conversationModel, {
   id: z.string(),
@@ -35,8 +35,17 @@ export const adReferralResource = z.object({
 // routes that nest `contactInboxResource`) are unaffected. Both conversation
 // query paths (`listConversations` and `findConversation`) must map to this
 // exact shape or oRPC output validation fails.
+//
+// `lastMessageAt` is conversation-only for the same reason: the auto-refresh
+// profile hook (`useAutoRefreshContactProfile`) picks the most recently
+// active on-demand-capable inbox among a contact's `contactInboxes`, mirroring
+// the worker's `resolveMessengerUserContext`
+// (apps/worker/src/integration/handlers/messenger-context.ts) — but that
+// selection has no reason to leak into the public/workspace-token contact
+// APIs that nest the shared `contactInboxResource`.
 export const conversationContactInboxResource = contactInboxResource.extend({
   adReferral: adReferralResource.nullable(),
+  lastMessageAt: z.date().nullable(),
 })
 export type ConversationContactInboxResource = z.infer<
   typeof conversationContactInboxResource

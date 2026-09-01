@@ -1364,7 +1364,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Sağlayıcı"
+      "label": "Sağlayıcı",
+      "placeholder": "Sağlayıcı seçin"
     },
     "prompt": {
       "label": "İstem",
@@ -2225,6 +2226,7 @@
       "sendFile": "Dosya Gönder",
       "sendGif": "GIF Gönder",
       "sendImage": "Görsel Gönder",
+      "sendMultipleImages": "Birden Fazla Resim",
       "sendMessage": "Mesaj Gönder",
       "sendNode": "Başka Bir Düğüm Başlat",
       "sendText": "Metin Gönder",
@@ -2306,6 +2308,10 @@
       "addSlide": "Kart ekle",
       "removeSlide": "Kartı kaldır",
       "whatsappLinkButtonIgnored": "WhatsApp'ta bu kartın bağlantısı çalışmayacaktır: bağlantı düğmesi olan bir kartta başka düğme bulunamaz. Bunun yerine yanıt olarak gönderilecektir."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Resmi kaldır",
+      "selectImage": "Görselleri seç"
     },
     "additionalSteps": "Ek adımlar",
     "delayType": {
@@ -3804,7 +3810,8 @@
     "at": "Şu anda"
   },
   "errorLogs": {
-    "title": "Hata Günlükleri"
+    "title": "Hata Günlükleri",
+    "unknownContact": "Bilinmeyen kişi"
   },
   "developerAccessToken": {
     "title": "API Erişim Token'ı",
@@ -5573,7 +5580,8 @@
     "recent": "Son kullanılanlar",
     "favourite": "Favori",
     "upload": "Yükle",
-    "done": "Bitti",
+    "select": "Seç",
+    "bulkSelect": "Toplu seçim",
     "deleteFolder": "Klasörü sil",
     "renameFolder": "Klasörü yeniden adlandır",
     "noFiles": "Dosya bulunamadı",

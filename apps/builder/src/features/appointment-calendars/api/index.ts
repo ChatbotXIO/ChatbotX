@@ -1,4 +1,4 @@
-import { appointmentCalendarsAuthenticatedAPI } from "./authenticated"
+import { appointmentCalendarsAuthenticatedAPI } from "./private"
 
 export const appointmentCalendarsAPI = {
   ...appointmentCalendarsAuthenticatedAPI,

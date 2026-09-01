@@ -2,7 +2,7 @@
 
 import { appointmentService } from "@chatbotx.io/business"
 import { verifyAppointmentCancelToken } from "@chatbotx.io/encryption"
-import { cancelBookingRequestSchema } from "@/features/booking-webview/schemas/action"
+import { cancelBookingRequestSchema } from "@/features/booking-webview/schema/action"
 import { actionClient } from "@/lib/safe-action"
 
 export const cancelBookingAction = actionClient

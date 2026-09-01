@@ -1,8 +1,8 @@
 import { db } from "@chatbotx.io/database/client"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListContactNotesRequest } from "../schemas/query"
-import type { ContactNoteResource } from "../schemas/resource"
+import type { ListContactNotesRequest } from "../schema/query"
+import type { ContactNoteResource } from "../schema/resource"
 
 export async function listContactNotes(
   input: ListContactNotesRequest,

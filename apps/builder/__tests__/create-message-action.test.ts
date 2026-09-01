@@ -88,7 +88,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   mediaLibraryFileModel: {},
   mediaLibraryFolderModel: {},
   // media-library/queries/files.ts (pulled in transitively via
-  // findMediaLibraryFileByPath) imports ../schemas, which calls
+  // findMediaLibraryFileByPath) imports ../schema, which calls
   // createSelectSchema(...).extend(...) at module scope.
   createSelectSchema: () => z.object({}),
 }))

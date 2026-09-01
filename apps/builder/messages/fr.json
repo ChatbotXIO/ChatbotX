@@ -1290,7 +1290,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Fournisseur"
+      "label": "Fournisseur",
+      "placeholder": "Sélectionner un fournisseur"
     },
     "prompt": {
       "label": "Invite",
@@ -2151,6 +2152,7 @@
       "sendFile": "Envoyer un fichier",
       "sendGif": "Envoyer un GIF",
       "sendImage": "Envoyer une image",
+      "sendMultipleImages": "Images multiples",
       "sendMessage": "Envoyer un message",
       "sendNode": "Démarrer un autre nœud",
       "sendText": "Envoyer du texte",
@@ -2232,6 +2234,10 @@
       "addSlide": "Ajouter une carte",
       "removeSlide": "Supprimer la carte",
       "whatsappLinkButtonIgnored": "Sur WhatsApp, le lien de cette carte ne fonctionnera pas : une carte avec un bouton de lien ne peut pas avoir d'autres boutons. Il sera envoyé comme réponse à la place."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Supprimer l'image",
+      "selectImage": "Sélectionner des images"
     },
     "additionalSteps": "Étapes supplémentaires",
     "delayType": {
@@ -3804,7 +3810,8 @@
     "at": "À"
   },
   "errorLogs": {
-    "title": "Journaux des erreurs"
+    "title": "Journaux des erreurs",
+    "unknownContact": "Contact inconnu"
   },
   "developerAccessToken": {
     "title": "Jeton d’accès API",
@@ -5573,7 +5580,8 @@
     "recent": "Récents",
     "favourite": "Favori",
     "upload": "Téléverser",
-    "done": "Terminé",
+    "select": "Sélectionner",
+    "bulkSelect": "Sélection multiple",
     "deleteFolder": "Supprimer le dossier",
     "renameFolder": "Renommer le dossier",
     "noFiles": "Aucun fichier trouvé",

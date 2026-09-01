@@ -1161,7 +1161,8 @@
     "title": "电子邮件主题"
   },
   "errorLogs": {
-    "title": "错误日志"
+    "title": "错误日志",
+    "unknownContact": "未知联系人"
   },
   "errors": {
     "superAdminRequired": "您必须是工作区超级管理员才能执行此操作。"
@@ -2297,7 +2298,8 @@
       "placeholder": "输入提示"
     },
     "provider": {
-      "label": "提供商"
+      "label": "提供商",
+      "placeholder": "选择提供商"
     },
     "publishableKey": {
       "label": "可发布密钥"
@@ -2856,6 +2858,7 @@
       "sendGif": "发送 GIF",
       "sendGridAddContact": "将联系人添加到 SendGrid",
       "sendImage": "发送影像",
+      "sendMultipleImages": "多张图片",
       "sendMessage": "发送消息",
       "sendNode": "启动另一个节点",
       "sendTemplateMessage": "范本消息",
@@ -2968,6 +2971,10 @@
       "addSlide": "添加幻灯片",
       "removeSlide": "移除幻灯片",
       "whatsappLinkButtonIgnored": "在WhatsApp上，此卡片的链接不起作用：带有链接按钮的卡片不能有其他按钮。它将作为回复发送。"
+    },
+    "sendMultipleImages": {
+      "removeImage": "删除图片",
+      "selectImage": "选择图片"
     },
     "setCustomField": {
       "temporalHint": "将其留空以保存目前日期/时间。"
@@ -5573,7 +5580,8 @@
     "recent": "最近",
     "favourite": "收藏",
     "upload": "上传",
-    "done": "完成",
+    "select": "选择",
+    "bulkSelect": "批量选择",
     "deleteFolder": "删除文件夹",
     "renameFolder": "重命名文件夹",
     "noFiles": "未找到文件",

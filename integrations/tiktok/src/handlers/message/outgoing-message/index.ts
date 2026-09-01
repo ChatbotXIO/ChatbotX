@@ -1,5 +1,6 @@
 import {
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
@@ -129,6 +130,24 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
           )
           if (messageId) {
             messageIds.push(messageId)
+          }
+          break
+        }
+        case stepTypes.enum.sendMultipleImages: {
+          for (const image of (step as SendMultipleImagesStepSchema).images) {
+            const payload = await uploadAndBuildImagePayload(
+              ctx.auth.tokens.accessToken,
+              businessId,
+              conversationId,
+              image.url,
+            )
+            const messageId = await sendTiktokMessage(
+              ctx.auth.tokens.accessToken,
+              payload,
+            )
+            if (messageId) {
+              messageIds.push(messageId)
+            }
           }
           break
         }

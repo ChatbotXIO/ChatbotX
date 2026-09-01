@@ -14,10 +14,7 @@ import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { getWorkspaceCacheTag } from "../queries"
-import {
-  type UpdateQrCodeRequest,
-  updateQrCodeRequest,
-} from "../schemas/action"
+import { type UpdateQrCodeRequest, updateQrCodeRequest } from "../schema/action"
 
 export const updateQrCodeAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

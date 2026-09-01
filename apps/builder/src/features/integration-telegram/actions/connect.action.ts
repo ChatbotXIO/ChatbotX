@@ -22,7 +22,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type ConnectTelegramRequest,
   connectTelegramRequest,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const connectTelegramAction = authActionClient
   .inputSchema(connectTelegramRequest)

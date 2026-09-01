@@ -6,7 +6,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateFacebookLeadAdAutomationRequest,
   updateFacebookLeadAdAutomationRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateFacebookLeadAdAutomationAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

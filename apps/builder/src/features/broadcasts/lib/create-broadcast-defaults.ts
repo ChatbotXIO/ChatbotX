@@ -4,7 +4,7 @@ import {
   type ChannelType,
   channelTypes,
 } from "@chatbotx.io/database/partials"
-import type { ContactFilterCriteria } from "@/features/contact-filter/schemas"
+import type { ContactFilterCriteria } from "@/features/contact-filter/schema"
 
 const EMPTY_CONTACT_FILTER: ContactFilterCriteria = {
   operator: "and",

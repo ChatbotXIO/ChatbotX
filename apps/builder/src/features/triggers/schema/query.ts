@@ -7,8 +7,8 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
-import { contactResource } from "@/features/contacts/schemas/resource"
-import { userResource } from "@/features/users/schemas/resource"
+import { contactResource } from "@/features/contacts/schema/resource"
+import { userResource } from "@/features/users/schema/resource"
 import { parseAsBigInt } from "@/lib/nuqs"
 import { triggerResource } from "./resource"
 

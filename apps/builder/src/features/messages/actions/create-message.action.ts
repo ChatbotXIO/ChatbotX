@@ -193,6 +193,24 @@ export const createMessage = async (props: {
         conversationId: targetConversation.id,
       }),
     ]
+  } else if ("mediaFileIds" in parsedInput && parsedInput.mediaFileIds) {
+    uploadedFiles = await Promise.all(
+      parsedInput.mediaFileIds.map(async (mediaFileId) => {
+        const mediaLibraryFile = await findMediaLibraryFileById({
+          workspaceId: conversation.workspaceId,
+          id: mediaFileId,
+        })
+        if (!mediaLibraryFile) {
+          throw new ChatbotXException("Media library file not found")
+        }
+
+        return copyMediaLibraryFileToConversationAttachment({
+          mediaLibraryFile,
+          workspaceId: conversation.workspaceId,
+          conversationId: targetConversation.id,
+        })
+      }),
+    )
   }
 
   const repository = await createMessageRepository()

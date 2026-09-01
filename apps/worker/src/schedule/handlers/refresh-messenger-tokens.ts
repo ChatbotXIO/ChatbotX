@@ -1,5 +1,6 @@
 import { messengerIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   integration as integrationMessenger,
   type MessengerAuthValue,
@@ -61,6 +62,11 @@ async function refreshOne(integration: {
               integration.id,
               error instanceof Error ? error.message : String(error),
             )
+            await logProviderError({
+              provider: "messenger",
+              workspaceId: integration.workspaceId,
+              error,
+            })
           }
         },
       }),

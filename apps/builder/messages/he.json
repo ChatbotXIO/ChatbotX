@@ -369,6 +369,7 @@
       "sendFile": "שליחת קובץ",
       "sendGif": "שליחת GIF",
       "sendImage": "שליחת תמונה",
+      "sendMultipleImages": "מספר תמונות",
       "sendMessage": "שליחת הודעה",
       "sendNode": "הפעלת צומת אחר",
       "sendText": "שליחת טקסט",
@@ -450,6 +451,10 @@
       "addSlide": "הוספת כרטיס",
       "removeSlide": "הסרת כרטיס",
       "whatsappLinkButtonIgnored": "בוואטסאפ, הקישור של כרטיס זה לא יעבוד: כרטיס עם כפתור קישור לא יכול לכלול כפתורים נוספים. הוא יישלח כתשובה במקום זאת."
+    },
+    "sendMultipleImages": {
+      "removeImage": "הסר תמונה",
+      "selectImage": "בחר תמונות"
     },
     "additionalSteps": "שלבים נוספים",
     "delayType": {
@@ -2022,7 +2027,8 @@
     "at": "בשעה"
   },
   "errorLogs": {
-    "title": "יומני שגיאות"
+    "title": "יומני שגיאות",
+    "unknownContact": "איש קשר לא ידוע"
   },
   "developerAccessToken": {
     "title": "אסימון גישה ל-API",
@@ -3953,7 +3959,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "ספק"
+      "label": "ספק",
+      "placeholder": "בחר ספק"
     },
     "prompt": {
       "label": "הנחיה",
@@ -5573,7 +5580,8 @@
     "recent": "אחרונים",
     "favourite": "מועדפים",
     "upload": "העלאה",
-    "done": "סיום",
+    "select": "בחירה",
+    "bulkSelect": "בחירה מרובה",
     "deleteFolder": "מחיקת תיקייה",
     "renameFolder": "שינוי שם תיקייה",
     "noFiles": "לא נמצאו קבצים",

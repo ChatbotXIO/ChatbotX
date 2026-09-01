@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createWebhookAction } from "./actions/create-webhook-action"
-import { createWebhookSchema } from "./schemas/create-webhook-schema"
+import { createWebhookSchema } from "./schema/create-webhook-schema"
 
 export function CreateWebhookDialog({
   workspaceId,

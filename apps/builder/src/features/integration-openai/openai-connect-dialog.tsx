@@ -27,7 +27,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { connectOpenAIAction } from "./actions/connect.action"
-import { connectOpenAISchema } from "./schemas/request"
+import { connectOpenAISchema } from "./schema/request"
 
 export const OpenAIConnectDialog = ({
   workspaceId,

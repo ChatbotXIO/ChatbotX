@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { useWorkspaceId } from "@/hooks/routing"
 import { connectGeminiAction } from "./actions/connect.action"
-import { connectGeminiRequest } from "./schemas/request"
+import { connectGeminiRequest } from "./schema/request"
 
 export const GeminiConnectDialog = () => {
   const [open, setOpen] = useState(false)

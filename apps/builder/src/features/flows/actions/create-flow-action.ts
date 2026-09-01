@@ -12,10 +12,10 @@ import { createId } from "@chatbotx.io/utils"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { type CreateFlowSchema, createFlowSchema } from "../schemas/action"
+import { type CreateFlowSchema, createFlowSchema } from "../schema/action"
 
 export const createFlowAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

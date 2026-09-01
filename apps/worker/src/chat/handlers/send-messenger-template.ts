@@ -39,7 +39,10 @@ import {
   validateMessengerTemplate,
 } from "../../integration/handlers/messenger-template-handler"
 import { logger } from "../../lib/logger"
-import { shouldSuppressRetryableChannelError } from "../utils/retry"
+import {
+  shouldSuppressRetryableChannelError,
+  willSendRetry,
+} from "../utils/retry"
 import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
 import { sendFlowStepToChannel } from "./send-message"
 
@@ -55,6 +58,12 @@ export interface ProcessMessengerTemplateParams {
   step?: SendMessengerTemplateMessageStepSchema
   template: SendMessengerTemplateMessageStepSchema["template"]
   trackingContext?: BotResponseTrackingContext
+  /**
+   * Whether a rethrow from here produces another `message:failed` for this same
+   * send — a BullMQ attempt still in hand. Defaults to terminal: the flow-step
+   * caller swallows the rethrow and never retries.
+   */
+  willRetryOnThrow?: boolean
 }
 
 export interface ProcessMessengerTemplateResult {
@@ -109,6 +118,7 @@ export async function processMessengerTemplate(
     step,
     trackingContext,
     metadata,
+    willRetryOnThrow = false,
   } = params
 
   const eventLogData = {
@@ -322,6 +332,11 @@ export async function processMessengerTemplate(
       },
       errorData,
       occurredAt: new Date(),
+      willRetry: willSendRetry({
+        error,
+        channel: contactInbox.channel,
+        willRetryOnThrow,
+      }),
     })
 
     throw error
@@ -330,6 +345,7 @@ export async function processMessengerTemplate(
 
 export async function sendMessengerTemplateMessage(
   data: ChatJobSendMessengerTemplateMessage["data"],
+  willRetryOnThrow = false,
 ): Promise<ProcessMessengerTemplateResult | undefined> {
   const {
     conversation,
@@ -373,6 +389,11 @@ export async function sendMessengerTemplateMessage(
         action: { messageId: "", flowId: "" },
         errorData: await parseSdkError(error),
         occurredAt: new Date(),
+        willRetry: willSendRetry({
+          error,
+          channel: contactInbox.channel,
+          willRetryOnThrow,
+        }),
       })
       throw error
     }
@@ -421,6 +442,7 @@ export async function sendMessengerTemplateMessage(
     const result = await processMessengerTemplate({
       conversation,
       contactInbox,
+      willRetryOnThrow,
       template: {
         id: template.id,
         name: template.name,

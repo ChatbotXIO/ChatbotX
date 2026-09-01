@@ -1,4 +1,4 @@
-import { workspaceMembersAuthenticatedAPI } from "./authenticated"
+import { workspaceMembersAuthenticatedAPI } from "./private"
 import workspaceMembersAPIs from "./workspace-token"
 
 export const workspaceMembersAPI = {

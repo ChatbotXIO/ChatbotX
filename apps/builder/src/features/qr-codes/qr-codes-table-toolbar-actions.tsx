@@ -6,7 +6,7 @@ import { PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { DeleteQrCodesDialog } from "./delete-qr-codes"
-import type { ListQrCodeItem } from "./schemas/query"
+import type { ListQrCodeItem } from "./schema/query"
 
 type QrCodesTableToolbarActionsProps = {
   table: Table<ListQrCodeItem>

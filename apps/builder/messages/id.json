@@ -1290,7 +1290,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Penyedia"
+      "label": "Penyedia",
+      "placeholder": "Pilih penyedia"
     },
     "prompt": {
       "label": "Prompt",
@@ -2151,6 +2152,7 @@
       "sendFile": "Kirim File",
       "sendGif": "Kirim GIF",
       "sendImage": "Kirim Gambar",
+      "sendMultipleImages": "Beberapa Gambar",
       "sendMessage": "Kirim Pesan",
       "sendNode": "Mulai Node Lain",
       "sendText": "Kirim Teks",
@@ -2232,6 +2234,10 @@
       "addSlide": "Tambah kartu",
       "removeSlide": "Hapus kartu",
       "whatsappLinkButtonIgnored": "Di WhatsApp, tautan kartu ini tidak akan berfungsi: kartu dengan tombol tautan tidak boleh memiliki tombol lain. Kartu ini akan dikirim sebagai balasan."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Hapus gambar",
+      "selectImage": "Pilih gambar"
     },
     "additionalSteps": "Langkah tambahan",
     "delayType": {
@@ -3804,7 +3810,8 @@
     "at": "Pada"
   },
   "errorLogs": {
-    "title": "Log Kesalahan"
+    "title": "Log Kesalahan",
+    "unknownContact": "Kontak tidak dikenal"
   },
   "developerAccessToken": {
     "title": "Token Akses API",
@@ -5573,7 +5580,8 @@
     "recent": "Terbaru",
     "favourite": "Favorit",
     "upload": "Unggah",
-    "done": "Selesai",
+    "select": "Pilih",
+    "bulkSelect": "Pilih massal",
     "deleteFolder": "Hapus folder",
     "renameFolder": "Ganti nama folder",
     "noFiles": "Tidak ada file ditemukan",

@@ -1290,7 +1290,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Provedor"
+      "label": "Provedor",
+      "placeholder": "Selecionar provedor"
     },
     "prompt": {
       "label": "Prompt",
@@ -2151,6 +2152,7 @@
       "sendFile": "Enviar arquivo",
       "sendGif": "Enviar GIF",
       "sendImage": "Enviar imagem",
+      "sendMultipleImages": "Várias imagens",
       "sendMessage": "Enviar mensagem",
       "sendNode": "Iniciar outro nó",
       "sendText": "Enviar texto",
@@ -2232,6 +2234,10 @@
       "addSlide": "Adicionar cartão",
       "removeSlide": "Remover cartão",
       "whatsappLinkButtonIgnored": "No WhatsApp, o link deste cartão não funcionará: um cartão com um botão de link não pode ter outros botões. Ele será enviado como resposta."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Remover imagem",
+      "selectImage": "Selecionar imagens"
     },
     "additionalSteps": "Etapas adicionais",
     "delayType": {
@@ -3697,7 +3703,8 @@
     "at": "Às"
   },
   "errorLogs": {
-    "title": "Logs de erros"
+    "title": "Logs de erros",
+    "unknownContact": "Contato desconhecido"
   },
   "developerAccessToken": {
     "title": "Token de acesso à API",
@@ -5573,7 +5580,8 @@
     "recent": "Recentes",
     "favourite": "Favorito",
     "upload": "Enviar",
-    "done": "Concluído",
+    "select": "Selecionar",
+    "bulkSelect": "Seleção em massa",
     "deleteFolder": "Excluir pasta",
     "renameFolder": "Renomear pasta",
     "noFiles": "Nenhum arquivo encontrado",

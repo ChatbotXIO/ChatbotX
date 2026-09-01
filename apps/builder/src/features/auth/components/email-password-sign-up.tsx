@@ -14,7 +14,7 @@ import { withCallbackUrlParam } from "@/lib/safe-callback-url"
 import {
   type EmailPasswordSignUpRequest,
   emailPasswordSignUpRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const EmailPasswordSignUp = () => {
   const t = useTranslations()

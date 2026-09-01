@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslations } from "next-intl"
 import { updateWhatsappProfileAction } from "./actions/update-whatsapp-profile.action"
-import { updateWhatsappProfileRequest } from "./schemas/update-whatsapp-profile.request"
+import { updateWhatsappProfileRequest } from "./schema/update-whatsapp-profile.request"
 
 export function UpdateWhatsappProfile({
   workspaceId,

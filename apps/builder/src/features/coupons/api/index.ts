@@ -1,4 +1,4 @@
-import { couponsAuthenticatedAPI } from "./authenticated"
+import { couponsAuthenticatedAPI } from "./private"
 
 export const couponsAPI = {
   ...couponsAuthenticatedAPI,

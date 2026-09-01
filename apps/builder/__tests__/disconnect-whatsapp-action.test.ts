@@ -63,7 +63,7 @@ vi.mock("@chatbotx.io/integration-whatsapp", () => ({
   isRevokedTokenError: mocks.isRevokedTokenError,
 }))
 
-vi.mock("@/features/common/schemas", () => ({
+vi.mock("@/features/common/schema", () => ({
   workspaceIdAndIdRequestParams: [],
 }))
 

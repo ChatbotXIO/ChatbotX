@@ -3,7 +3,7 @@ import {
   openaiCompatiblePresetConfigs,
 } from "@chatbotx.io/ai"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
-import type { IntegrationOpenaiCompatibleResource } from "./schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "./schema/resource"
 
 export function shouldUseCustomOpenaiCompatibleModelInput(
   config: OpenaiCompatiblePresetConfig | undefined,

@@ -10,8 +10,8 @@ import type {
   GetReflinkRequest,
   ListReflinksRequest,
   ListReflinksResponse,
-} from "../schemas/query"
-import type { ReflinkResource } from "../schemas/resource"
+} from "../schema/query"
+import type { ReflinkResource } from "../schema/resource"
 
 export async function listReflinks(
   input: ListReflinksRequest,

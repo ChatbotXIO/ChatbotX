@@ -7,7 +7,7 @@ Owner: TBD · Created: 2026-08-27
 
 The Ads analytics dashboard reports entirely in **UTC**, end to end:
 
-- `parseAnalyticsDateRange` (`apps/builder/src/features/ads/schemas/analytics.ts`)
+- `parseAnalyticsDateRange` (`apps/builder/src/features/ads/schema/analytics.ts`)
   anchors the `from`/`to` date-keys to UTC day boundaries
   (`${from}T00:00:00.000Z` … `${to}T23:59:59.999Z`).
 - The ads-conversion repository buckets the timeseries day with hardcoded UTC:

@@ -18,7 +18,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteFacebookLeadAdAutomationsAction } from "../actions/delete-facebook-lead-ad-automations.action"
-import type { FacebookLeadAdsAutomationResource } from "../schemas/resource"
+import type { FacebookLeadAdsAutomationResource } from "../schema/resource"
 
 type DeleteDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string

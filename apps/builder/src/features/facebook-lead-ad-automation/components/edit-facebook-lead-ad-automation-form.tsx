@@ -26,7 +26,7 @@ import { updateFacebookLeadAdAutomationAction } from "../actions/update-facebook
 import {
   type UpdateFacebookLeadAdAutomationRequest,
   updateFacebookLeadAdAutomationRequest,
-} from "../schemas/action"
+} from "../schema/action"
 import { LeadDataMapping } from "./lead-data-mapping"
 
 export type EditLeadAdInitialData = {

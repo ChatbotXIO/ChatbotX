@@ -4,7 +4,7 @@ import { aiAgentService } from "@chatbotx.io/business"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
 export const deleteAIAgentAction = workspaceActionClientAllowExpired

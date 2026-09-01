@@ -27,7 +27,7 @@ import type {
   CategorySelectionState,
   TemplateSelectionFormState,
 } from "../lib/selection"
-import { saveTemplateRequest } from "../schemas/mutation"
+import { saveTemplateRequest } from "../schema/mutation"
 import { TemplateContentsCard } from "./template-contents-card"
 import { TemplateImageUploadField } from "./template-image-upload-field"
 import { TemplateShareCard } from "./template-share-card"

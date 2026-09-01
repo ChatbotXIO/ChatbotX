@@ -667,7 +667,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "提供商"
+      "label": "提供商",
+      "placeholder": "選擇提供商"
     },
     "prompt": {
       "label": "提示",
@@ -2385,6 +2386,7 @@
       "sendFile": "傳送檔案",
       "sendGif": "傳送 GIF",
       "sendImage": "傳送影像",
+      "sendMultipleImages": "多張圖片",
       "sendMessage": "傳送訊息",
       "sendNode": "啟動另一個節點",
       "sendText": "傳送文字",
@@ -2466,6 +2468,10 @@
       "addSlide": "新增幻燈片",
       "removeSlide": "移除幻燈片",
       "whatsappLinkButtonIgnored": "在WhatsApp上，此卡片的連結不起作用：帶有連結按鈕的卡片不能有其他按鈕。它將作為回復傳送。"
+    },
+    "sendMultipleImages": {
+      "removeImage": "刪除圖片",
+      "selectImage": "選擇圖片"
     },
     "additionalSteps": "附加步驟",
     "delayType": {
@@ -3837,7 +3843,8 @@
     "at": "在"
   },
   "errorLogs": {
-    "title": "錯誤日誌"
+    "title": "錯誤日誌",
+    "unknownContact": "未知聯絡人"
   },
   "developerAccessToken": {
     "title": "API 存取權杖",
@@ -5573,7 +5580,8 @@
     "recent": "最近",
     "favourite": "收藏",
     "upload": "上傳",
-    "done": "完成",
+    "select": "選取",
+    "bulkSelect": "批次選取",
     "deleteFolder": "刪除資料夾",
     "renameFolder": "重新命名資料夾",
     "noFiles": "找不到檔案",

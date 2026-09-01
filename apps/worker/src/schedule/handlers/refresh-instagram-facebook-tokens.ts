@@ -1,5 +1,6 @@
 import { instagramIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   type InstagramAuthValue,
   integration as integrationInstagramFacebook,
@@ -63,6 +64,14 @@ async function refreshOne(integration: {
               integration.id,
               error instanceof Error ? error.message : String(error),
             )
+            await logProviderError({
+              // The Facebook-linked variant logs under the one `instagram` label,
+              // so a workspace filtering the Provider column sees every failure
+              // from this integration in one place.
+              provider: "instagram",
+              workspaceId: integration.workspaceId,
+              error,
+            })
           }
         },
       }),

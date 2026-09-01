@@ -1,4 +1,4 @@
-import { conversationsAuthenticatedAPI } from "./authenticated"
+import { conversationsAuthenticatedAPI } from "./private"
 import conversationWorkspaceTokenAPIs from "./workspace-token"
 
 export const conversationsAPI = {

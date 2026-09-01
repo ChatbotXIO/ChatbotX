@@ -1290,7 +1290,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Fornecedor"
+      "label": "Fornecedor",
+      "placeholder": "Selecionar fornecedor"
     },
     "prompt": {
       "label": "Prompt",
@@ -2151,6 +2152,7 @@
       "sendFile": "Enviar ficheiro",
       "sendGif": "Enviar GIF",
       "sendImage": "Enviar imagem",
+      "sendMultipleImages": "Várias imagens",
       "sendMessage": "Enviar mensagem",
       "sendNode": "Iniciar outro nó",
       "sendText": "Enviar texto",
@@ -2232,6 +2234,10 @@
       "addSlide": "Adicionar cartão",
       "removeSlide": "Remover cartão",
       "whatsappLinkButtonIgnored": "No WhatsApp, a ligação deste cartão não vai funcionar: um cartão com um botão de ligação não pode ter outros botões. Será enviado como resposta."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Remover imagem",
+      "selectImage": "Selecionar imagens"
     },
     "additionalSteps": "Passos adicionais",
     "delayType": {
@@ -3800,7 +3806,8 @@
     "at": "Às"
   },
   "errorLogs": {
-    "title": "Registos de erros"
+    "title": "Registos de erros",
+    "unknownContact": "Contacto desconhecido"
   },
   "developerAccessToken": {
     "title": "Token de acesso à API",
@@ -5573,7 +5580,8 @@
     "recent": "Recentes",
     "favourite": "Favorito",
     "upload": "Carregar",
-    "done": "Concluído",
+    "select": "Selecionar",
+    "bulkSelect": "Seleção em massa",
     "deleteFolder": "Eliminar pasta",
     "renameFolder": "Mudar nome da pasta",
     "noFiles": "Nenhum ficheiro encontrado",

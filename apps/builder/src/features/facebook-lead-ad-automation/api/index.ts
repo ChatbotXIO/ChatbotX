@@ -1,4 +1,4 @@
-import { facebookLeadAdsAuthenticatedAPI } from "./authenticated"
+import { facebookLeadAdsAuthenticatedAPI } from "./private"
 
 export const facebookLeadAdsAPI = {
   ...facebookLeadAdsAuthenticatedAPI,

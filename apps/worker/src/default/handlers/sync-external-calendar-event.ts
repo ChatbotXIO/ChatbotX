@@ -2,11 +2,14 @@ import {
   appointmentExternalCalendarService,
   appointmentService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   type JobSyncExternalCalendarEventData,
   jobSyncExternalCalendarEventDataSchema,
 } from "@chatbotx.io/worker-config"
+import type { Job } from "bullmq"
 import { normalizeError } from "universal-error-normalizer"
+import { isFinalAttempt } from "../../lib/job-attempts"
 import { logger } from "../../lib/logger"
 import {
   cancelGoogleCalendarEvent,
@@ -18,6 +21,7 @@ const appointmentSummary = (input: { calendarName: string }) =>
 
 export async function syncExternalCalendarEvent(
   rawData: JobSyncExternalCalendarEventData,
+  job: Job,
 ) {
   const data = jobSyncExternalCalendarEventDataSchema.parse(rawData)
   const appointment = await appointmentService.findByOrFail({
@@ -102,6 +106,16 @@ export async function syncExternalCalendarEvent(
       },
       "External calendar event sync failed",
     )
+    // Logged before the rethrow so BullMQ retry/dead-letter behaviour is
+    // unchanged, and only once the retries are spent so one logical failure
+    // does not write a row per attempt.
+    if (isFinalAttempt(job)) {
+      await logProviderError({
+        provider: "google-calendar",
+        workspaceId: data.workspaceId,
+        error,
+      })
+    }
     throw error
   }
 }

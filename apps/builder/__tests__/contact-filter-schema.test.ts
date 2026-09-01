@@ -12,9 +12,9 @@ import {
   couponTopicConditionSchema,
   customFieldConditionSchema,
   singleContactFilterConditionSchema,
-} from "@/features/contact-filter/schemas"
-import { staticFieldFilter } from "@/features/contact-filter/schemas/static-field-filter"
-import { listContactsRequest } from "@/features/contacts/schemas/query"
+} from "@/features/contact-filter/schema"
+import { staticFieldFilter } from "@/features/contact-filter/schema/static-field-filter"
+import { listContactsRequest } from "@/features/contacts/schema/query"
 
 describe("staticFieldFilter", () => {
   test("accepts enabled operators for text, dropdown, boolean, and date fields", () => {

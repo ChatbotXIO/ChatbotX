@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createAppointmentCalendarAction } from "../actions/create-appointment-calendar.action"
-import { createAppointmentCalendarRequest } from "../schemas/action"
+import { createAppointmentCalendarRequest } from "../schema/action"
 
 export function CreateAppointmentCalendarDialog({
   workspaceId,

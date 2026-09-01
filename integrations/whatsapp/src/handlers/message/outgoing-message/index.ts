@@ -1,6 +1,7 @@
 import {
   type SendCarouselStepSchema,
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
   type SendWaTemplateMessageStepSchema,
   stepTypes,
@@ -28,7 +29,10 @@ import {
 } from "../../../lib/recipient"
 import type { RawWhatsappMessage, WhatsappAuthValue } from "../../../schema"
 import { generateOutgoingMessages as convertFlowStepCarousel } from "./send-carousel"
-import { convertFlowStepImage } from "./send-image"
+import {
+  convertFlowStepImage,
+  convertFlowStepMultipleImages,
+} from "./send-image"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
 import { convertFlowStepWhatsappFlow } from "./whatsapp-flow"
@@ -83,6 +87,16 @@ function* convertFlowStepToWhatsappMessage(
           MessageHandlers<
             WhatsappAuthValue,
             SendImageStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
+    case stepTypes.enum.sendMultipleImages:
+      yield* convertFlowStepMultipleImages(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            SendMultipleImagesStepSchema
           >["sendFlowStep"]
         >[0],
       )

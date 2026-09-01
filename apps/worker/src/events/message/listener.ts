@@ -31,6 +31,7 @@ import type {
 import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { logger } from "../../lib/logger"
+import { recordProviderErrorLog } from "./handlers/record-provider-error-log"
 
 /**
  * Mirrors the per-workspace MAC deltas `macTrackingService.trackMessage{In,Out}`
@@ -303,6 +304,10 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "contact-inbox-send-failure",
       handler: recordContactInboxSendFailure,
+    },
+    {
+      name: "error-log",
+      handler: recordProviderErrorLog,
     },
   ],
   [messageEventTypeSchema.enum["message:delivered"]]: [

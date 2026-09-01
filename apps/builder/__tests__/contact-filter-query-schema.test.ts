@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, test } from "vitest"
-import { listContactsRequest } from "@/features/contacts/schemas/query"
+import { listContactsRequest } from "@/features/contacts/schema/query"
 
 describe("listContactsRequest contactFilter search param", () => {
   test("parses a JSON contactFilter query value", () => {

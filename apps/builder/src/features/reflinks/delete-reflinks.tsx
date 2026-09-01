@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteReflinksAction } from "./actions/delete-reflinks.action"
-import type { ReflinkResource } from "./schemas/resource"
+import type { ReflinkResource } from "./schema/resource"
 
 type DeleteReflinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string

@@ -7,7 +7,7 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FacebookLeadAdsTable } from "@/features/facebook-lead-ad-automation/components/facebook-lead-ads-table"
 import { listFacebookLeadAdsAutomations } from "@/features/facebook-lead-ad-automation/queries"
-import { listFacebookLeadAdsSearchParamsCache } from "@/features/facebook-lead-ad-automation/schemas/query"
+import { listFacebookLeadAdsSearchParamsCache } from "@/features/facebook-lead-ad-automation/schema/query"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 export default async function FacebookLeadAdsPage({

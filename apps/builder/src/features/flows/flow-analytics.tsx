@@ -7,7 +7,7 @@ import type { FlowVersionResource } from "../flow-versions/schema/resource"
 import type { SmartDelayNodeStats } from "./analytics/smart-delay-node-stats"
 import { FlowAnalyticsFrame } from "./react-flow/flow-analytics-frame"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
-import type { FlowResource } from "./schemas/resource"
+import type { FlowResource } from "./schema/resource"
 
 type FlowAnalyticsProps = {
   flow: FlowResource

@@ -29,7 +29,7 @@ import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
 import { updateWebhookSettingsAction } from "./actions/update-webhook-settings-action"
-import type { WebhookResource } from "./schemas"
+import type { WebhookResource } from "./schema"
 
 type GetColumnsProps = {
   workspaceId: string

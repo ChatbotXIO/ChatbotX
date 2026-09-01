@@ -9,7 +9,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateContactNoteRequest,
   updateContactNoteRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const editContactNoteAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

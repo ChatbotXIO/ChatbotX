@@ -1,9 +1,9 @@
 "use server"
 
 import { appointmentCalendarService } from "@chatbotx.io/business"
-import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
+import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { renameAppointmentCalendarRequest } from "../schemas/action"
+import { renameAppointmentCalendarRequest } from "../schema/action"
 
 export const renameAppointmentCalendarAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)

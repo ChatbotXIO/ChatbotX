@@ -19,8 +19,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateGoogleCalendarIdAction } from "../actions/update-calendar-id.action"
-import { updateExternalCalendarIdRequest } from "../schemas/action"
-import type { ExternalCalendarResource } from "../schemas/resource"
+import { updateExternalCalendarIdRequest } from "../schema/action"
+import type { ExternalCalendarResource } from "../schema/resource"
 
 type Props = {
   workspaceId: string

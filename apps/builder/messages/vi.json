@@ -1337,7 +1337,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Nhà cung cấp"
+      "label": "Nhà cung cấp",
+      "placeholder": "Chọn nhà cung cấp"
     },
     "prompt": {
       "label": "Prompt",
@@ -2227,6 +2228,7 @@
       "sendFile": "Gửi tệp",
       "sendGif": "Gửi Gif",
       "sendImage": "Gửi hình ảnh",
+      "sendMultipleImages": "Nhiều hình ảnh",
       "sendMessage": "Gửi tin nhắn",
       "sendNode": "Bắt đầu nút khác",
       "sendText": "Gửi văn bản",
@@ -2306,6 +2308,10 @@
       "addSlide": "Thêm thẻ",
       "removeSlide": "Xoá thẻ",
       "whatsappLinkButtonIgnored": "Với WhatsApp, liên kết của thẻ này sẽ không hoạt động: thẻ có nút mở liên kết thì không được có nút nào khác. Nút sẽ được gửi như một nút trả lời."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Xóa ảnh",
+      "selectImage": "Chọn ảnh"
     },
     "additionalSteps": "Các bước bổ sung",
     "delayType": {
@@ -3741,7 +3747,8 @@
     "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất."
   },
   "errorLogs": {
-    "title": "Nhật ký lỗi"
+    "title": "Nhật ký lỗi",
+    "unknownContact": "Liên hệ không xác định"
   },
   "auditLogs": {
     "title": "Nhật ký kiểm tra",
@@ -5573,7 +5580,8 @@
     "recent": "Gần đây",
     "favourite": "Yêu thích",
     "upload": "Tải lên",
-    "done": "Xong",
+    "select": "Chọn",
+    "bulkSelect": "Chọn nhiều",
     "deleteFolder": "Xoá thư mục",
     "renameFolder": "Đổi tên thư mục",
     "noFiles": "Không tìm thấy tệp",

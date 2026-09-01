@@ -3,6 +3,7 @@ import {
   type SendCarouselStepSchema,
   type SendFileStepSchema,
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendQuickReplyStepSchema,
   type SendTextStepSchema,
   type SendVideoStepSchema,
@@ -31,6 +32,7 @@ import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
+import { convertFlowStepMultipleImages } from "./send-multiple-images"
 import { convertCanonicalInstagramQuickReplies } from "./send-quick-replies"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
@@ -77,16 +79,35 @@ export function* convertMessageToInstagramMessage(
         text: message.text,
       }
     }
-    for (const attachment of message.attachments || []) {
+    // Multiple images in one outgoing message batch into a single Send API
+    // call via `attachments[]` (same mechanism the sendMultipleImages flow
+    // step uses), instead of one message per image; every other attachment
+    // type still sends as its own message.
+    const attachments = message.attachments || []
+    const imageAttachments = attachments.filter(
+      (attachment) => attachment.fileType === "image",
+    )
+    const otherAttachments = attachments.filter(
+      (attachment) => attachment.fileType !== "image",
+    )
+
+    if (imageAttachments.length > 1) {
+      yield {
+        attachments: imageAttachments.map((attachment) =>
+          getAttachmentTemplate(attachment.url as string, "image"),
+        ),
+      }
+    } else if (imageAttachments.length === 1) {
+      yield {
+        attachment: getAttachmentTemplate(
+          imageAttachments[0].url as string,
+          "image",
+        ),
+      }
+    }
+
+    for (const attachment of otherAttachments) {
       switch (attachment.fileType) {
-        case "image":
-          yield {
-            attachment: getAttachmentTemplate(
-              attachment.url as string,
-              "image",
-            ),
-          }
-          continue
         case "video":
           yield {
             attachment: getAttachmentTemplate(
@@ -158,6 +179,14 @@ export async function* convertFlowStepToInstagramMessage(
           SendImageStepSchema | SendVideoStepSchema
         >,
       ))
+      break
+    case stepTypes.enum.sendMultipleImages:
+      yield* convertFlowStepMultipleImages(
+        props as SendFlowStepProps<
+          InstagramAuthValue,
+          SendMultipleImagesStepSchema
+        >,
+      )
       break
     case stepTypes.enum.sendAudio:
     case stepTypes.enum.sendFile:

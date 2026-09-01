@@ -10,7 +10,7 @@ import {
   type StatsContactRow,
   StatsContactsDialog,
 } from "@/features/common/components/stats-contacts-dialog"
-import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
+import type { ContactFilterRequest } from "@/features/contacts/schema/query"
 import { client } from "@/lib/orpc/orpc"
 
 type BroadcastAudiencePreviewDialogProps = {

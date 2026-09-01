@@ -1,4 +1,4 @@
-import type { ConditionInput } from "./schemas"
+import type { ConditionInput } from "./schema"
 
 export const toConditionColumns = (condition: ConditionInput) => ({
   type: condition.type,

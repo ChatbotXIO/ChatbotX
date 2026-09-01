@@ -1,7 +1,7 @@
 import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
-import type { BotFieldResource } from "@/features/bot-fields/schemas/resource"
-import type { CustomFieldResource } from "../../schemas/resource"
+import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
+import type { CustomFieldResource } from "../../schema/resource"
 import { findFieldByReference } from "../find-field-by-reference"
 
 const customFields = [

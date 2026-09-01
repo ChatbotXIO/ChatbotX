@@ -9,7 +9,7 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListMagicLinksRequest,
   ListMagicLinksResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export async function listMagicLinks(
   input: ListMagicLinksRequest,

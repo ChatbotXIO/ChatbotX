@@ -12,9 +12,9 @@ import { workspaceTokenAuthAPI } from "@/orpc"
 import {
   createCustomFieldRequest,
   updateCustomFieldRequest,
-} from "../schemas/action"
-import { listPublicCustomFieldsResponse } from "../schemas/query"
-import { publicCustomFieldResource } from "../schemas/resource"
+} from "../schema/action"
+import { listPublicCustomFieldsResponse } from "../schema/query"
+import { publicCustomFieldResource } from "../schema/resource"
 
 const customFieldsWorkspaceTokenAPI = {
   listCustomFieldsWorkspaceTokenAPI: workspaceTokenAuthAPI

@@ -1373,7 +1373,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Provider"
+      "label": "Provider",
+      "placeholder": "Select provider"
     },
     "prompt": {
       "label": "Prompt",
@@ -2339,6 +2340,7 @@
       "sendFile": "Send File",
       "sendGif": "Send Gif",
       "sendImage": "Send Image",
+      "sendMultipleImages": "Multiple Images",
       "sendMessage": "Send Message",
       "sendNode": "Start Another Node",
       "sendText": "Send Text",
@@ -2417,6 +2419,10 @@
       "addSlide": "Add slide",
       "removeSlide": "Remove slide",
       "whatsappLinkButtonIgnored": "On WhatsApp, this card's link won't work: a card with a link button cannot have other buttons. It will be sent as a reply instead."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Remove image",
+      "selectImage": "Select Images"
     },
     "additionalSteps": "Additional steps",
     "delayType": {
@@ -3915,7 +3921,8 @@
     "at": "At"
   },
   "errorLogs": {
-    "title": "Error Logs"
+    "title": "Error Logs",
+    "unknownContact": "Unknown contact"
   },
   "developerAccessToken": {
     "title": "API Access Token",
@@ -5573,7 +5580,8 @@
     "recent": "Recent",
     "favourite": "Favourite",
     "upload": "Upload",
-    "done": "Done",
+    "select": "Select",
+    "bulkSelect": "Bulk select",
     "deleteFolder": "Delete folder",
     "renameFolder": "Rename folder",
     "noFiles": "No files found",

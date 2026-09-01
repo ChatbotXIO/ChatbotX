@@ -25,7 +25,7 @@ import { SettingRow } from "@/components/setting-row"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { connectSendGridAction } from "../actions/connect.action"
 import { disconnectSendGridAction } from "../actions/disconnect.action"
-import { connectSendGridSchema } from "../schemas"
+import { connectSendGridSchema } from "../schema"
 
 export function ManageSendGrid(props: {
   workspaceId: string

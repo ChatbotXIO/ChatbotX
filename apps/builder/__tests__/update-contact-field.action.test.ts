@@ -100,7 +100,7 @@ vi.mock("@/features/custom-fields/queries", () => ({
   listCustomFields: mocks.listCustomFields,
 }))
 
-vi.mock("@/features/custom-fields/schemas/query", () => ({
+vi.mock("@/features/custom-fields/schema/query", () => ({
   listCustomFieldsSearchParams: { parse: (value: unknown) => value },
 }))
 
@@ -118,7 +118,7 @@ vi.mock("../src/features/contacts/permissions", () => ({
   requireContactPermissionScope: vi.fn(),
 }))
 
-vi.mock("../src/features/contacts/schemas/action", () => ({
+vi.mock("../src/features/contacts/schema/action", () => ({
   updateContactFieldRequest: {},
 }))
 

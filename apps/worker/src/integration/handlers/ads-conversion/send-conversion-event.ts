@@ -13,6 +13,7 @@ import {
   withBlockedOwnerGuard,
   workspaceService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { adsConversionEventRepository } from "@chatbotx.io/database/repositories"
 import type { AdsConversionEventModel } from "@chatbotx.io/database/types"
 import {
@@ -26,15 +27,12 @@ import {
   ensureDataset as ensureWhatsappConversionsDataset,
   sendConversionEvent as sendWhatsappConversionEvent,
 } from "@chatbotx.io/integration-whatsapp/api/conversions"
+import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
 import type {
   HashedCapiUserData,
   PurchaseContentItem,
 } from "@chatbotx.io/utils/meta-capi"
-import {
-  type AdsConversionJobSendConversionEvent,
-  DefaultJobAction,
-  defaultQueue,
-} from "@chatbotx.io/worker-config"
+import type { AdsConversionJobSendConversionEvent } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import {
   datasetResourceType,
@@ -160,27 +158,27 @@ const metaChannelEventPayloadBuilders = {
 async function reportTerminalCapiFailure(input: {
   event: Pick<AdsConversionEventModel, "id" | "workspaceId">
   error: unknown
+  /**
+   * Both send branches funnel through here, but they call different third
+   * parties: the WhatsApp branch hits the WhatsApp Conversions API, the
+   * messenger/instagram branch hits Meta CAPI. Each passes its own provider so
+   * a workspace filtering the Provider column is not shown one label for two
+   * destinations.
+   */
+  provider: ErrorLogProvider
 }): Promise<void> {
-  const { event, error } = input
+  const { event, error, provider } = input
 
   await adsConversionEventRepository.updateCapiStatus({
     id: event.id,
     workspaceId: event.workspaceId,
     ...failedStatus,
   })
-  await defaultQueue.add(DefaultJobAction.sendErrorLog, {
-    type: DefaultJobAction.sendErrorLog,
-    data: {
-      workspaceId: event.workspaceId,
-      error: {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Meta Conversions API terminal failure",
-        stack: error instanceof Error ? error.stack : undefined,
-        httpCode: "400",
-      },
-    },
+  await logProviderError({
+    provider,
+    workspaceId: event.workspaceId,
+    error,
+    httpCode: "400",
   })
   logger.warn(
     {
@@ -332,7 +330,7 @@ async function handleSendWhatsappConversionEvent(
       throw error
     }
 
-    await reportTerminalCapiFailure({ event, error })
+    await reportTerminalCapiFailure({ event, error, provider: "whatsapp" })
     return
   }
 
@@ -533,7 +531,11 @@ async function handleSendMetaChannelConversionEvent(
       throw error
     }
 
-    await reportTerminalCapiFailure({ event, error })
+    await reportTerminalCapiFailure({
+      event,
+      error,
+      provider: "meta-conversions",
+    })
     return
   }
 

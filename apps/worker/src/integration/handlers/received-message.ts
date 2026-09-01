@@ -7,8 +7,10 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  hasOnDemandProfileApi,
   messageCleanupService,
   quotaEnforcementService,
+  recordProfileRefreshFailure,
   resolveTenantSettings,
   updateContactFromMessage,
   workspaceService,
@@ -20,6 +22,7 @@ import {
 } from "@chatbotx.io/business/contact-locale"
 import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
+  type ChannelType,
   type ContactSource,
   contactSources,
   type IntegrationType,
@@ -89,6 +92,11 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
+import {
+  getProfileRefreshSource,
+  isInboundConversationMessage,
+  refreshExistingContactProfile,
+} from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 
 type ContactInboxTracking = ContactInboxTrackingData
@@ -336,6 +344,24 @@ export const receiveMessage = async (
         storageUrl,
         ...systemFieldUpdates,
       })
+
+    // Best-effort backfill of a nameless existing contact's profile. No
+    // isNewMessage/isNewContact gate; awaited before the flow-action enqueue
+    // below so the first automated reply already sees `{{first_name}}`.
+    const profileRefreshSource = getProfileRefreshSource({
+      channel: inbox.channel as ChannelType,
+      incomingMessage,
+      contact,
+    })
+    if (profileRefreshSource) {
+      await refreshExistingContactProfile({
+        source: profileRefreshSource,
+        inbox,
+        contactInbox,
+        incomingContact,
+        contactId: contact.id,
+      })
+    }
 
     if (isNewMessage) {
       createdMessage = newMessage
@@ -809,10 +835,7 @@ const getMessageActivityTracking = (props: {
     tracking.lastCommentMessageAt = message.createdAt
   }
 
-  if (
-    incomingMessage.messageType !== "outgoing" &&
-    (incomingMessage.type ?? "message") === "message"
-  ) {
+  if (isInboundConversationMessage(incomingMessage)) {
     tracking.lastIncomingMessageAt = message.createdAt
     Object.assign(
       tracking,
@@ -1404,7 +1427,7 @@ const createNewContactAndContactInbox = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
-  if (canGetUserProfileIfNeeded(inbox.channel)) {
+  if (hasOnDemandProfileApi(inbox.channel as ChannelType)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
         ? "instagramFacebook"
@@ -1434,6 +1457,13 @@ const createNewContactAndContactInbox = async (props: {
           { error, sourceId: incomingContact.sourceId, channel: inbox.channel },
           "detectContactAndConversation: getProfile failed, creating contact without profile data",
         )
+        // No `contactId` — the contact does not exist yet at this point.
+        // `recordProfileRefreshFailure` never throws by contract.
+        await recordProfileRefreshFailure({
+          channel: inbox.channel,
+          workspaceId: inbox.workspaceId,
+          error,
+        })
       }
     }
   }
@@ -1588,9 +1618,3 @@ const createNewContactAndContactInbox = async (props: {
 
   return { contactInbox, contact: newContact, conversation, isNewContact: true }
 }
-
-const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === "messenger" ||
-  integrationType === "instagram" ||
-  integrationType === "zalo" ||
-  integrationType === "telegram"

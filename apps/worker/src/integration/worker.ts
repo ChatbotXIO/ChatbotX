@@ -315,7 +315,7 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.processLeadgen: {
-                await processLeadgen(job.data.data)
+                await processLeadgen(job.data.data, job)
                 return
               }
               case IntegrationJobAction.createMessage: {

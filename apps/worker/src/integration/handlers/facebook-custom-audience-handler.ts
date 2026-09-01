@@ -5,6 +5,7 @@ import {
   messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { FacebookCustomAudienceSchema } from "@chatbotx.io/flow-config"
 import {
@@ -102,5 +103,11 @@ export const handleFacebookCustomAudience = async (
       { ...logContext, err: normalizeError(error) },
       "Facebook custom audience step failed",
     )
+    await logProviderError({
+      provider: "facebook-ads",
+      workspaceId,
+      contactId: conversation.contactId,
+      error,
+    })
   }
 }

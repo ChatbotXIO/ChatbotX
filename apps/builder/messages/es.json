@@ -1364,7 +1364,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Proveedor"
+      "label": "Proveedor",
+      "placeholder": "Seleccionar proveedor"
     },
     "prompt": {
       "label": "Instrucción",
@@ -2225,6 +2226,7 @@
       "sendFile": "Enviar archivo",
       "sendGif": "Enviar Gif",
       "sendImage": "Enviar imagen",
+      "sendMultipleImages": "Varias imágenes",
       "sendMessage": "Enviar mensaje",
       "sendNode": "Iniciar Another Node",
       "sendText": "Enviar texto",
@@ -2306,6 +2308,10 @@
       "addSlide": "Añadir tarjeta",
       "removeSlide": "Eliminar tarjeta",
       "whatsappLinkButtonIgnored": "En WhatsApp, el enlace de esta tarjeta no funcionará: una tarjeta con un botón de enlace no puede tener otros botones. Se enviará como respuesta en su lugar."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Eliminar imagen",
+      "selectImage": "Seleccionar imágenes"
     },
     "additionalSteps": "Pasos adicionales",
     "delayType": {
@@ -3804,7 +3810,8 @@
     "at": "A las"
   },
   "errorLogs": {
-    "title": "Registros de errores"
+    "title": "Registros de errores",
+    "unknownContact": "Contacto desconocido"
   },
   "developerAccessToken": {
     "title": "Token de acceso a la API",
@@ -5573,7 +5580,8 @@
     "recent": "Recientes",
     "favourite": "Favoritos",
     "upload": "Subir",
-    "done": "Listo",
+    "select": "Seleccionar",
+    "bulkSelect": "Selección múltiple",
     "deleteFolder": "Eliminar carpeta",
     "renameFolder": "Renombrar carpeta",
     "noFiles": "No se encontraron archivos",

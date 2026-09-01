@@ -1,7 +1,7 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { ListFlowsResponse } from "../schemas/query"
+import type { ListFlowsResponse } from "../schema/query"
 
 type FlowStateFilter = { startType?: string; integrationWhatsappId?: string }
 

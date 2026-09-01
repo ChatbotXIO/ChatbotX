@@ -33,7 +33,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type SelectAccountRequest,
   selectAccountRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const selectAccountAction = authActionClient
   .inputSchema(selectAccountRequest)

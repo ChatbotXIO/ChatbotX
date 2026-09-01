@@ -92,7 +92,7 @@ vi.mock("../src/features/ads/queries/channel-ad-accounts", () => ({
   resolveChannelAdAccountSources: mocks.resolveChannelAdAccountSources,
 }))
 
-vi.mock("@/features/ads/schemas/conversion-rule", () => {
+vi.mock("@/features/ads/schema/conversion-rule", () => {
   const passthroughSchema = {}
   return {
     listAdsConversionRulesRequest: passthroughSchema,
@@ -100,7 +100,7 @@ vi.mock("@/features/ads/schemas/conversion-rule", () => {
   }
 })
 
-vi.mock("@/features/ads/schemas/channel-ad-accounts", () => {
+vi.mock("@/features/ads/schema/channel-ad-accounts", () => {
   const passthroughSchema = {}
   return {
     listChannelAdAccountsRequest: passthroughSchema,

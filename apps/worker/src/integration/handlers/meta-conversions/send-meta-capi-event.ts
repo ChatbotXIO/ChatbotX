@@ -9,6 +9,7 @@ import {
   withBlockedOwnerGuard,
   workspaceService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   buildDatasetName,
   ensureDataset,
@@ -16,11 +17,7 @@ import {
   sendConversionEvent,
 } from "@chatbotx.io/integration-meta-conversions"
 import type { HashedCapiUserData } from "@chatbotx.io/utils/meta-capi"
-import {
-  DefaultJobAction,
-  defaultQueue,
-  type IntegrationJobSendMetaCapiEvent,
-} from "@chatbotx.io/worker-config"
+import type { IntegrationJobSendMetaCapiEvent } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import {
   datasetResourceType,
@@ -370,19 +367,11 @@ export async function handleSendMetaCapiEvent(
             ? error.message
             : "Meta Conversions API terminal failure",
       })
-      await defaultQueue.add(DefaultJobAction.sendErrorLog, {
-        type: DefaultJobAction.sendErrorLog,
-        data: {
-          workspaceId: event.workspaceId,
-          error: {
-            message:
-              error instanceof Error
-                ? error.message
-                : "Meta Conversions API terminal failure",
-            stack: error instanceof Error ? error.stack : undefined,
-            httpCode: "400",
-          },
-        },
+      await logProviderError({
+        provider: "meta-conversions",
+        workspaceId: event.workspaceId,
+        error,
+        httpCode: "400",
       })
       logger.warn(
         {

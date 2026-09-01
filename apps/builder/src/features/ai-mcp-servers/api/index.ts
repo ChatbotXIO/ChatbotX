@@ -1,4 +1,4 @@
-import { aiMcpServersAuthenticatedAPI } from "./authenticated"
+import { aiMcpServersAuthenticatedAPI } from "./private"
 
 export const aiMcpServerAPIs = {
   ...aiMcpServersAuthenticatedAPI,

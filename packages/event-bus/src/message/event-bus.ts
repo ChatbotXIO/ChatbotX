@@ -13,7 +13,7 @@ const MAX_MESSAGE_EVENTS = 100_000
 export const messageEventBus = new BaseEventBus<
   MessageEventMap,
   MessageEventListener
->(getRedisConnection(), {
+>(() => getRedisConnection(), {
   streamKey: "events:message",
   consumerGroup: "message-events-group",
   maxLen: MAX_MESSAGE_EVENTS,

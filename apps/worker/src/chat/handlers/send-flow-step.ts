@@ -75,6 +75,7 @@ const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendGif,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMessengerTemplateMessage,
+  stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendText,
   stepTypes.enum.sendVideo,
@@ -614,24 +615,36 @@ export async function sendFlowStep({
       ...(isPublicCommentReply ? { type: "comment" as const } : {}),
     }
 
-    // Upload file if exists
-    let attachmentInput:
-      | Parameters<typeof repository.createWithAttachments>[1][0]
-      | undefined
+    // Upload file(s) if any
+    const attachmentInputs: Parameters<
+      typeof repository.createWithAttachments
+    >[1][0][] = []
     if ("url" in stepWithSignedBookingLinks) {
       const uploadedFile = await uploadFileFromUrl(
         stepWithSignedBookingLinks.url,
         `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
       )
-      attachmentInput = {
+      attachmentInputs.push({
         ...uploadedFile,
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
+      })
+    } else if ("images" in stepWithSignedBookingLinks) {
+      for (const image of stepWithSignedBookingLinks.images) {
+        const uploadedFile = await uploadFileFromUrl(
+          image.url,
+          `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
+        )
+        attachmentInputs.push({
+          ...uploadedFile,
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+        })
       }
     }
 
-    message = attachmentInput
-      ? await repository.createWithAttachments(messageInput, [attachmentInput])
+    message = attachmentInputs.length
+      ? await repository.createWithAttachments(messageInput, attachmentInputs)
       : await repository.create(messageInput)
 
     // Add url to attachments for response
@@ -676,14 +689,21 @@ export async function sendFlowStep({
     ])
 
     const channelSend = isPublicCommentReply
-      ? sendMessageToChannel({
-          conversation,
-          contactInbox: targetContactInbox,
-          message,
-          quickReplies: canonicalQuickReplies,
-          metadata,
-          sendFrom,
-        })
+      ? sendMessageToChannel(
+          {
+            conversation,
+            contactInbox: targetContactInbox,
+            message,
+            quickReplies: canonicalQuickReplies,
+            metadata,
+            sendFrom,
+          },
+          0,
+          // A rethrow from here lands in this function's own catch, which
+          // emits its own `message:failed` for the same send. Without this the
+          // failure would be recorded twice.
+          true,
+        )
       : sendFlowStepToChannel({
           conversation,
           contactInbox: targetContactInbox,
@@ -807,6 +827,9 @@ export async function sendFlowStep({
       },
       errorData: parsedError,
       occurredAt: new Date(),
+      // Always terminal: this catch swallows the error rather than rethrowing,
+      // so the step's BullMQ job completes and nothing re-attempts the send.
+      willRetry: false,
     })
 
     await recordMessageSendError(
@@ -847,6 +870,9 @@ export async function sendFlowStep({
 
 export const sendChatMessage = async (
   props: ChatJobSendChatMessage["data"],
+  // Forwarded from the chat worker: this function rethrows, so a BullMQ attempt
+  // still in hand means another `message:failed` is coming for the same send.
+  willRetryOnThrow = false,
 ) => {
   const {
     conversation,
@@ -977,13 +1003,17 @@ export const sendChatMessage = async (
         eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
-      sendMessageToChannel({
-        conversation,
-        contactInbox,
-        message,
-        quickReplies,
-        metadata,
-      }),
+      sendMessageToChannel(
+        {
+          conversation,
+          contactInbox,
+          message,
+          quickReplies,
+          metadata,
+        },
+        0,
+        willRetryOnThrow,
+      ),
     ]
 
     await Promise.all(promises)

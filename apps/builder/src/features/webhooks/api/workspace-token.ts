@@ -8,7 +8,7 @@ import {
   possibleErrorsOnListingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPI } from "@/orpc"
-import { conditionSchema } from "../../conditions/schemas"
+import { conditionSchema } from "../../conditions/schema"
 import { toConditionColumns } from "../../conditions/to-condition-columns"
 
 const webhookResource = createSelectSchema(webhookModel, {

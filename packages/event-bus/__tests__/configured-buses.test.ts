@@ -16,6 +16,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 }))
 
 import { dashboardEventBus } from "../src/dashboard/event-bus"
+import { errorLogEventBus } from "../src/error-log/event-bus"
 import { FlowEventBusByType, flowEventBus } from "../src/flow/event-bus"
 import {
   MessageEventBusByType,
@@ -39,12 +40,25 @@ describe("configured event buses", () => {
       maxLen: 500_000,
       streamKey: "events:analytics-dashboard",
     })
+    // Sized from a byte budget, not copied: entries survive acking until MAXLEN
+    // evicts them, and an error-log `detail` can be 8KB.
+    expect(errorLogEventBus.getConfig()).toMatchObject({
+      consumerGroup: "error-log-events-group",
+      maxLen: 50_000,
+      streamKey: "events:error-log",
+    })
   })
 
-  test("enables selective retry only for the idempotent analytics dashboard stream", () => {
+  test("enables selective retry only for the idempotent dashboard and error-log streams", () => {
     expect(dashboardEventBus.getConfig()).toMatchObject({
       deadLetterMaxLen: 100_000,
       deadLetterStreamKey: "events:analytics-dashboard:dead",
+      enableSelectiveRetry: true,
+      maxDeliveries: 5,
+    })
+    expect(errorLogEventBus.getConfig()).toMatchObject({
+      deadLetterMaxLen: 10_000,
+      deadLetterStreamKey: "events:error-log:dead",
       enableSelectiveRetry: true,
       maxDeliveries: 5,
     })

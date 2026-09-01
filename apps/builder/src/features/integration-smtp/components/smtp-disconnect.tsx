@@ -8,7 +8,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { deleteSmtpAction } from "../actions/delete-smtp.action"
-import type { IntegrationSmtpResource } from "../schemas/resource"
+import type { IntegrationSmtpResource } from "../schema/resource"
 
 type SmtpDisconnectProps = {
   readonly integrationSmtp: IntegrationSmtpResource

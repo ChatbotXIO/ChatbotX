@@ -71,9 +71,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     lastAccessedAt: "file.lastAccessedAt",
   },
   mediaLibraryFolderModel: {},
-  // ../schemas calls createSelectSchema(...).extend(...) at module scope, and
+  // ../schema calls createSelectSchema(...).extend(...) at module scope, and
   // files.ts imports a real value (MEDIA_LIBRARY_FILES_PAGE_SIZE) from
-  // ../schemas, so this mock must return something `.extend()`-able.
+  // ../schema, so this mock must return something `.extend()`-able.
   createSelectSchema: () => z.object({}),
 }))
 

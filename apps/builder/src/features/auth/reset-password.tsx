@@ -20,7 +20,7 @@ import { AuthHeader } from "./components/shared"
 import {
   type ResetPasswordRequest,
   resetPasswordRequest,
-} from "./schemas/action"
+} from "./schema/action"
 
 export const ResetPassword = () => {
   const t = useTranslations()

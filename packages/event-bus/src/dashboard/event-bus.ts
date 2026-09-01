@@ -13,7 +13,7 @@ const MAX_DASHBOARD_DLQ_EVENTS = 100_000
 export const dashboardEventBus = new BaseEventBus<
   AnalyticsDashboardEventMap,
   BaseEventListener<AnalyticsDashboardEvent>
->(getRedisConnection(), {
+>(() => getRedisConnection(), {
   streamKey: "events:analytics-dashboard",
   consumerGroup: "analytics-dashboard-events-group",
   deadLetterMaxLen: MAX_DASHBOARD_DLQ_EVENTS,

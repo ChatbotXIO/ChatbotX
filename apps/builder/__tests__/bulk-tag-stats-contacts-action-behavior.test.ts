@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import type { BulkTagStatsContactsRequest } from "@/features/contacts/schemas/contact-tag"
+import type { BulkTagStatsContactsRequest } from "@/features/contacts/schema/contact-tag"
 
 type CapturedActionArgs = {
   ctx: { user: { id: string } }

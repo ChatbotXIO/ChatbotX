@@ -23,6 +23,11 @@ const mocks = vi.hoisted(() => ({
   metaSendConversionEvent: vi.fn(),
   refreshCapiScopeCache: vi.fn(),
   findWorkspaceById: vi.fn(),
+  logProviderError: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: (...args: unknown[]) => mocks.logProviderError(...args),
 }))
 
 vi.mock("@chatbotx.io/business", async () => {
@@ -285,17 +290,13 @@ describe("handleSendConversionEvent", () => {
       from: "pending",
       to: "failed",
     })
-    expect(mocks.defaultQueueAdd).toHaveBeenCalledWith("sendErrorLog", {
-      type: "sendErrorLog",
-      data: {
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "whatsapp",
         workspaceId: "ws-1",
-        error: {
-          message: "invalid token",
-          stack: expect.any(String),
-          httpCode: "400",
-        },
-      },
-    })
+        httpCode: "400",
+      }),
+    )
   })
 
   test("Codex #7 regression: the terminal-failure log NEVER serializes the raw error object (only a sanitized message+code record)", async () => {

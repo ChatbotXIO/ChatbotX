@@ -31,6 +31,7 @@ export const ScheduleJobData = {
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeWorkspaces: "purgeWorkspaces",
   purgeAutomationThrottle: "purgeAutomationThrottle",
+  purgeErrorLogs: "purgeErrorLogs",
   refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
@@ -167,6 +168,11 @@ export type ScheduleJobPurgeAutomationThrottle = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeErrorLogs = {
+  type: typeof ScheduleJobData.purgeErrorLogs
+  data: Record<string, never>
+}
+
 export type ScheduleJobRefreshChannelTokens = {
   type: typeof ScheduleJobData.refreshChannelTokens
   // No `channels` = refresh every channel. The short-lived scheduler passes
@@ -206,6 +212,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
   | ScheduleJobPurgeAutomationThrottle
+  | ScheduleJobPurgeErrorLogs
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial

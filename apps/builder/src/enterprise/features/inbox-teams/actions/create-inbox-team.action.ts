@@ -1,7 +1,7 @@
 "use server"
 
 import { inboxTeamService } from "@chatbotx.io/business"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createInboxTeamRequest } from "../schema/action"
 

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationMoosendService } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { MoosendCreateContactSchema } from "@chatbotx.io/flow-config"
 import {
@@ -121,6 +122,12 @@ export const addOrUpdateMoosendContact = async (
       { ...logContext, ...provider, err: normalized },
       "Moosend contact sync failed",
     )
+    await logProviderError({
+      provider: "moosend",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error,
+    })
     return { status: "error", result: null, errorMessage: normalized.message }
   }
 }
