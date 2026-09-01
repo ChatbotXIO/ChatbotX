@@ -17,7 +17,9 @@ const heap = process.env.NEXT_BUILD_HEAP ?? "4096"
 process.env.NODE_OPTIONS = `--max-old-space-size=${heap}`
 process.env.SKIP_ENV_CHECK = "true"
 
-console.log(`[build-builder] next build con heap ${heap}MB (NODE_OPTIONS=${process.env.NODE_OPTIONS})`)
+console.log(
+  `[build-builder] next build con heap ${heap}MB (NODE_OPTIONS=${process.env.NODE_OPTIONS})`,
+)
 
 const child = spawn(
   "pnpm",
