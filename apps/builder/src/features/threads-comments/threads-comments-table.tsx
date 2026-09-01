@@ -3,7 +3,6 @@
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -11,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -102,20 +102,13 @@ export function ThreadsCommentsTable({
         ),
         cell: ({ row }) => (
           <div className="flex justify-center">
-            <button
-              className="cursor-pointer"
-              onClick={() => handleToggleStatus(row.original)}
-              type="button"
-            >
-              <Badge variant={row.original.isActive ? "default" : "secondary"}>
-                {row.original.isActive
-                  ? t("status.active")
-                  : t("status.inactive")}
-              </Badge>
-            </button>
+            <Switch
+              checked={row.original.isActive}
+              onCheckedChange={() => handleToggleStatus(row.original)}
+            />
           </div>
         ),
-        size: 120,
+        size: 100,
       },
       {
         accessorKey: "repliesCount",

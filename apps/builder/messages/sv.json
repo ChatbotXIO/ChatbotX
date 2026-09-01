@@ -1613,6 +1613,9 @@
     "appSecret": {
       "label": "Apphemlighet"
     },
+    "version": {
+      "label": "Version"
+    },
     "assignedId": {
       "label": "Tilldela till"
     },

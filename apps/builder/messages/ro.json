@@ -2720,6 +2720,9 @@
     "appSecret": {
       "label": "Secretul aplicației"
     },
+    "version": {
+      "label": "Versiune"
+    },
     "webhookVerifyToken": {
       "label": "Token de verificare webhook"
     },
