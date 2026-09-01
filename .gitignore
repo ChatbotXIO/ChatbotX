@@ -61,3 +61,6 @@ CLAUDE.md
 
 .pnpm-store/
 .plans/
+
+# Local editor config with machine-specific paths (codegraph --path)
+.cursor/mcp.json
