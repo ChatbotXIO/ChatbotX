@@ -1,0 +1,45 @@
+# ChatbotX — override PRODUCCIÓN (diferencias respecto al stack común)
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.apps.yml -f docker-compose.prod.yml up -d
+#
+# Este archivo solo declara lo que CAMBIA en prod respecto al stack base:
+# - migraciones sí, seed NO (no se siembran datos demo en producción)
+# - log level warn
+# - Caddy como reverse proxy (dominio + HTTPS automático)
+
+services:
+  builder:
+    environment:
+      - RUN_DB_MIGRATE=true
+      - LOG_LEVEL=warn
+
+  worker:
+    environment:
+      - LOG_LEVEL=warn
+
+  realtime:
+    environment:
+      - LOG_LEVEL=warn
+
+  # Reverse proxy: da HTTPS + dominio y reparte el tráfico a los servicios
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - builder
+      - realtime
+      - filesystem
+    networks:
+      - chatbotx-network
+
+volumes:
+  caddy-data:
+  caddy-config:
