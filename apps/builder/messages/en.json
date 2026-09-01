@@ -2180,6 +2180,11 @@
         "done": "Done"
       }
     },
+    "tokenPermission": {
+      "label": "Permission",
+      "full": "Full access",
+      "readOnly": "Read only"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3130,8 +3135,7 @@
     "setting": {
       "label": "Make",
       "description": "Connect your Make.com account to send events from your flows and receive contact data through Make scenarios. Your workspace's Developer Access Token is copied to your clipboard when you click Connect — paste it when creating the connection in Make.",
-      "notConfigured": "No Make invite link found. Please add one in Platform Settings.",
-      "noWorkspaceToken": "No Developer Access Token found for this workspace. Generate one in the Workspace token section above, then click Connect again."
+      "notConfigured": "No Make invite link found. Please add one in Platform Settings."
     }
   },
   "integrations": {
@@ -4059,7 +4063,10 @@
   },
   "developerAccessToken": {
     "title": "API Access Token",
-    "description": "Generate a token to allow your workspace to access the public APIs. Keep this token secret and do not share it with anyone."
+    "description": "Generate a token to allow your workspace to access the public APIs. Keep this token secret and do not share it with anyone.",
+    "createDialogTitle": "Create API token",
+    "namePlaceholder": "e.g. Zapier integration",
+    "empty": "No API tokens yet."
   },
   "contacts": {
     "title": "Contacts",

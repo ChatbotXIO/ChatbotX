@@ -325,5 +325,5 @@ describe("WorkspaceService.update — member cache invalidation", () => {
   })
 })
 
-// Token-regeneration auditing moved with the write: see
-// workspace-api-token.service.test.ts (workspaceApiTokenService.replaceToken).
+// Token-creation auditing moved with the write: see
+// workspace-api-token.service.test.ts (workspaceApiTokenService.createToken).

@@ -1,7 +1,7 @@
 import { workspaceMemberService } from "@chatbotx.io/business"
 import z from "zod"
 import { authorizedAPI } from "@/orpc"
-import { chatbotResource } from "../schema/resource"
+import { workspaceResource } from "../schema/resource"
 
 export const workspacesAuthenticatedAPI = {
   listMyWorkspacesAPI: authorizedAPI
@@ -12,7 +12,7 @@ export const workspacesAuthenticatedAPI = {
       tags: ["Workspaces"],
     })
     .input(z.object({}))
-    .output(z.object({ workspaces: z.array(chatbotResource) }))
+    .output(z.object({ workspaces: z.array(workspaceResource) }))
     .handler(async ({ context }) => {
       const members = await workspaceMemberService.listByUserId({
         userId: context.user.id,

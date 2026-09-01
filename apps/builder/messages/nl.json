@@ -1919,6 +1919,11 @@
         "done": "Klaar"
       }
     },
+    "tokenPermission": {
+      "label": "Machtiging",
+      "full": "Volledige toegang",
+      "readOnly": "Alleen-lezen"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2869,8 +2874,7 @@
     "setting": {
       "label": "Make",
       "description": "Koppel je Make.com-account om gebeurtenissen vanuit je flows te verzenden en contactgegevens via Make-scenario's te ontvangen. De Developer Access Token van je workspace wordt naar het klembord gekopieerd wanneer je op Verbinden klikt. Plak deze bij het maken van de verbinding in Make.",
-      "notConfigured": "Geen Make-uitnodigingslink gevonden. Voeg er een toe in Platforminstellingen.",
-      "noWorkspaceToken": "Geen Developer Access Token gevonden voor deze workspace. Genereer er een in het gedeelte voor workspacetokens hierboven en klik daarna opnieuw op Verbinden."
+      "notConfigured": "Geen Make-uitnodigingslink gevonden. Voeg er een toe in Platforminstellingen."
     }
   },
   "integrations": {
@@ -3872,7 +3876,10 @@
   },
   "developerAccessToken": {
     "title": "API-toegangstoken",
-    "description": "Genereer een token waarmee je workspace toegang krijgt tot de openbare API's. Houd dit token geheim en deel het met niemand."
+    "description": "Genereer een token waarmee je workspace toegang krijgt tot de openbare API's. Houd dit token geheim en deel het met niemand.",
+    "createDialogTitle": "API-token maken",
+    "namePlaceholder": "bijv. Zapier-integratie",
+    "empty": "Nog geen API-tokens."
   },
   "contacts": {
     "title": "Contacten",

@@ -752,8 +752,7 @@
     "setting": {
       "label": "Make",
       "description": "Conectați contul Make.com pentru a trimite evenimente din fluxuri și a primi date despre contacte prin scenarii Make. Tokenul de acces pentru dezvoltatori al spațiului de lucru este copiat în clipboard când apăsați pe Conectare — lipiți-l când creați conexiunea în Make.",
-      "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei.",
-      "noWorkspaceToken": "Nu a fost găsit niciun token de acces pentru dezvoltatori pentru acest spațiu de lucru. Generați unul în secțiunea pentru tokenul spațiului de lucru de mai sus, apoi apăsați din nou pe Conectare."
+      "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei."
     }
   },
   "integrations": {
@@ -2887,6 +2886,11 @@
         "done": "Finalizat"
       }
     },
+    "tokenPermission": {
+      "label": "Permisiune",
+      "full": "Acces complet",
+      "readOnly": "Doar citire"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3872,7 +3876,10 @@
   },
   "developerAccessToken": {
     "title": "Token de acces API",
-    "description": "Generează un token pentru a permite spațiului tău de lucru să acceseze API-urile publice. Păstrează acest token secret și nu-l distribui nimănui."
+    "description": "Generează un token pentru a permite spațiului tău de lucru să acceseze API-urile publice. Păstrează acest token secret și nu-l distribui nimănui.",
+    "createDialogTitle": "Creare token API",
+    "namePlaceholder": "ex. integrare Zapier",
+    "empty": "Niciun token API încă."
   },
   "contacts": {
     "title": "Contacte",

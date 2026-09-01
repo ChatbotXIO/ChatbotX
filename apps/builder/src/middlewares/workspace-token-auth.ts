@@ -64,12 +64,13 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     // create_workspace_api_token migration backfills every legacy plaintext
     // token and drops the column in the same run).
     const tokenHash = await hashToken(token)
-    const workspace = await workspaceApiTokenService.findWorkspaceByTokenHash({
+    const auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
       tokenHash,
     })
-    if (!workspace) {
+    if (!auth) {
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
+    const { workspace, apiToken } = auth
 
     await assertNotRateLimited(workspace.id)
 
@@ -79,10 +80,22 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       })
     }
 
+    const isMutation = isWorkspaceMutationMethod(
+      procedure["~orpc"].route.method,
+    )
+
+    // Read-only tokens are rejected on any mutation before the owner-quota
+    // gate below — no DB call needed to enforce this.
+    if (isMutation && apiToken.permission === "read_only") {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Read-only token cannot perform this operation",
+      })
+    }
+
     // Owner-quota/trial gate — mirrors workspaceActionClient in safe-action.ts.
     // Mutations only: an expired workspace must stay readable via the public
     // API just like it stays readable in the builder (invariant #14).
-    if (isWorkspaceMutationMethod(procedure["~orpc"].route.method)) {
+    if (isMutation) {
       const denialReason = await checkWorkspaceOwnerAccess({
         ownerId: workspace.ownerId,
       })

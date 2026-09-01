@@ -2106,6 +2106,11 @@
         "done": "Concluído"
       }
     },
+    "tokenPermission": {
+      "label": "Permissão",
+      "full": "Acesso total",
+      "readOnly": "Só leitura"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2869,8 +2874,7 @@
     "setting": {
       "label": "Make",
       "description": "Ligue a sua conta Make.com para enviar eventos a partir dos seus fluxos e receber dados de contactos através de cenários do Make. O token de acesso de programador do seu espaço de trabalho é copiado para a área de transferência quando clica em Ligar — cole-o ao criar a ligação no Make.",
-      "notConfigured": "Não foi encontrada nenhuma ligação de convite do Make. Adicione uma nas definições da plataforma.",
-      "noWorkspaceToken": "Não foi encontrado nenhum token de acesso de programador para este espaço de trabalho. Gere um na secção de tokens do espaço de trabalho acima e, em seguida, clique novamente em Ligar."
+      "notConfigured": "Não foi encontrada nenhuma ligação de convite do Make. Adicione uma nas definições da plataforma."
     }
   },
   "integrations": {
@@ -3868,7 +3872,10 @@
   },
   "developerAccessToken": {
     "title": "Token de acesso à API",
-    "description": "Gere um token para permitir que o seu espaço de trabalho aceda às APIs públicas. Mantenha este token secreto e não o partilhe com ninguém."
+    "description": "Gere um token para permitir que o seu espaço de trabalho aceda às APIs públicas. Mantenha este token secreto e não o partilhe com ninguém.",
+    "createDialogTitle": "Criar token de API",
+    "namePlaceholder": "ex.: integração Zapier",
+    "empty": "Ainda não existem tokens de API."
   },
   "contacts": {
     "title": "Contactos",

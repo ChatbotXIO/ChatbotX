@@ -987,7 +987,10 @@
   },
   "developerAccessToken": {
     "description": "Generera en token som ger din arbetsyta åtkomst till de offentliga API:erna. Håll denna token hemlig och dela den inte med någon.",
-    "title": "API-åtkomsttoken"
+    "title": "API-åtkomsttoken",
+    "createDialogTitle": "Skapa API-token",
+    "namePlaceholder": "t.ex. Zapier-integration",
+    "empty": "Inga API-token ännu."
   },
   "dialog": {
     "deleteConfirmation": "Är du helt säker?\nDen här åtgärden kan inte ångras.\nDetta tar permanent bort {feature} från våra servrar."
@@ -2830,6 +2833,11 @@
         "done": "Klart"
       }
     },
+    "tokenPermission": {
+      "label": "Behörighet",
+      "full": "Full åtkomst",
+      "readOnly": "Skrivskyddad"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3485,7 +3493,6 @@
     "setting": {
       "description": "Anslut ditt Make.com-konto för att skicka händelser från dina flöden och ta emot kontaktdata via Make-scenarier. Din arbetsytas åtkomsttoken för utvecklare kopieras till urklipp när du klickar på Anslut – klistra in den när du skapar anslutningen i Make.",
       "label": "Make",
-      "noWorkspaceToken": "Ingen åtkomsttoken för utvecklare hittades för den här arbetsytan. Generera en i avsnittet Arbetsytetoken ovan och klicka sedan på Anslut igen.",
       "notConfigured": "Ingen inbjudningslänk för Make hittades. Lägg till en i Plattformsinställningar."
     },
     "title": "Make"

@@ -2106,6 +2106,11 @@
         "done": "Valmis"
       }
     },
+    "tokenPermission": {
+      "label": "Käyttöoikeus",
+      "full": "Täysi käyttöoikeus",
+      "readOnly": "Vain luku"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2869,8 +2874,7 @@
     "setting": {
       "label": "Make",
       "description": "Yhdistä Make.com-tilisi lähettääksesi tapahtumia flow'istasi ja vastaanottaaksesi yhteystietoja Make-skenaarioiden kautta. Työtilasi kehittäjän käyttöoikeustunnus kopioidaan leikepöydälle, kun napsautat Yhdistä — liitä se luodessasi yhteyden Makessa.",
-      "notConfigured": "Make-kutsulinkkiä ei löytynyt. Lisää se alusta-asetuksissa.",
-      "noWorkspaceToken": "Tälle työtilalle ei löytynyt kehittäjän käyttöoikeustunnusta. Luo tunnus yllä olevassa Työtilan tunnus -osiossa ja napsauta sitten Yhdistä uudelleen."
+      "notConfigured": "Make-kutsulinkkiä ei löytynyt. Lisää se alusta-asetuksissa."
     }
   },
   "integrations": {
@@ -3872,7 +3876,10 @@
   },
   "developerAccessToken": {
     "title": "API-käyttöoikeustunnus",
-    "description": "Luo tunnus, jolla työtilasi voi käyttää julkisia API-rajapintoja. Pidä tunnus salassa äläkä jaa sitä kenellekään."
+    "description": "Luo tunnus, jolla työtilasi voi käyttää julkisia API-rajapintoja. Pidä tunnus salassa äläkä jaa sitä kenellekään.",
+    "createDialogTitle": "Luo API-tunnus",
+    "namePlaceholder": "esim. Zapier-integraatio",
+    "empty": "Ei vielä API-tunnuksia."
   },
   "contacts": {
     "title": "Yhteystiedot",

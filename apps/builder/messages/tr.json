@@ -2180,6 +2180,11 @@
         "done": "Tamamlandı"
       }
     },
+    "tokenPermission": {
+      "label": "İzin",
+      "full": "Tam erişim",
+      "readOnly": "Salt okunur"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2943,8 +2948,7 @@
     "setting": {
       "label": "Make",
       "description": "Akışlarınızdan olay göndermek ve Make senaryoları aracılığıyla kişi verileri almak için Make.com hesabınızı bağlayın. Bağlan'a tıkladığınızda çalışma alanınızın Geliştirici Erişim Belirteci panonuza kopyalanır — Make'te bağlantıyı oluştururken bu belirteci yapıştırın.",
-      "notConfigured": "Make davet bağlantısı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin.",
-      "noWorkspaceToken": "Bu çalışma alanı için Geliştirici Erişim Belirteci bulunamadı. Yukarıdaki Çalışma Alanı belirteci bölümünden bir tane oluşturun, ardından tekrar Bağlan'a tıklayın."
+      "notConfigured": "Make davet bağlantısı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin."
     }
   },
   "integrations": {
@@ -3872,7 +3876,10 @@
   },
   "developerAccessToken": {
     "title": "API Erişim Token'ı",
-    "description": "Çalışma alanınızın genel API'lere erişmesine izin vermek için bir token oluşturun. Bu token'ı gizli tutun ve kimseyle paylaşmayın."
+    "description": "Çalışma alanınızın genel API'lere erişmesine izin vermek için bir token oluşturun. Bu token'ı gizli tutun ve kimseyle paylaşmayın.",
+    "createDialogTitle": "API belirteci oluştur",
+    "namePlaceholder": "ör. Zapier entegrasyonu",
+    "empty": "Henüz API belirteci yok."
   },
   "contacts": {
     "title": "Kişiler",

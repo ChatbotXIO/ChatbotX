@@ -1,9 +1,13 @@
+CREATE TYPE "WorkspaceApiTokenPermission" AS ENUM('full', 'read_only');--> statement-breakpoint
 CREATE TABLE "WorkspaceApiToken" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"workspaceId" bigint NOT NULL,
-	"tokenHash" text NOT NULL CONSTRAINT "WorkspaceApiToken_tokenHash_key" UNIQUE
+	"name" text NOT NULL,
+	"permission" "WorkspaceApiTokenPermission" NOT NULL,
+	"tokenHash" text NOT NULL CONSTRAINT "WorkspaceApiToken_tokenHash_key" UNIQUE,
+	"tokenPrefix" text
 );
 --> statement-breakpoint
 CREATE INDEX "WorkspaceApiToken_workspaceId_idx" ON "WorkspaceApiToken" ("workspaceId");--> statement-breakpoint
@@ -15,10 +19,12 @@ ALTER TABLE "WorkspaceApiToken" ADD CONSTRAINT "WorkspaceApiToken_workspaceId_Wo
 -- place_id + 10-bit sequence), so these ids sort far above app-generated ids
 -- from the same instant and are NOT decodable via resolveId(); they are
 -- simply unique, ordered bigints that satisfy the primary key.
-INSERT INTO "WorkspaceApiToken" ("id", "workspaceId", "tokenHash", "createdAt", "updatedAt")
+INSERT INTO "WorkspaceApiToken" ("id", "workspaceId", "name", "permission", "tokenHash", "createdAt", "updatedAt")
 SELECT
   "id",
   "id",
+  'Default token',
+  'full',
   encode(sha256(convert_to("token", 'UTF8')), 'hex'), now(), now()
 FROM "Workspace" WHERE "token" IS NOT NULL;--> statement-breakpoint
 -- The hash table above is now the sole token store: dropping the plaintext

@@ -5,10 +5,10 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 
-export const chatbotResource = createSelectSchema(workspaceModel, {
+export const workspaceResource = createSelectSchema(workspaceModel, {
   id: zodBigintAsString(),
 })
-export type WorkspaceResource = z.infer<typeof chatbotResource>
+export type WorkspaceResource = z.infer<typeof workspaceResource>
 
 export const withWorkspaceIdSchema = z.object({
   workspaceId: zodBigintAsString(),
