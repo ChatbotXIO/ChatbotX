@@ -1823,6 +1823,9 @@
     "appSecret": {
       "label": "Segredo do aplicativo"
     },
+    "version": {
+      "label": "Versão"
+    },
     "webhookVerifyToken": {
       "label": "Token de verificação do webhook"
     },

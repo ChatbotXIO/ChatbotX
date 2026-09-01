@@ -4486,6 +4486,9 @@
     "appSecret": {
       "label": "סוד אפליקציה"
     },
+    "version": {
+      "label": "גרסה"
+    },
     "webhookVerifyToken": {
       "label": "אסימון אימות Webhook"
     },

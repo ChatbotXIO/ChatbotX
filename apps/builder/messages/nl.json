@@ -1636,6 +1636,9 @@
     "appSecret": {
       "label": "Appgeheim"
     },
+    "version": {
+      "label": "Versie"
+    },
     "webhookVerifyToken": {
       "label": "Verificatietoken voor webhook"
     },

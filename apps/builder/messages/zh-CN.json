@@ -1392,6 +1392,9 @@
     "appSecret": {
       "label": "应用程序秘密"
     },
+    "version": {
+      "label": "版本"
+    },
     "assignedId": {
       "label": "指派给"
     },

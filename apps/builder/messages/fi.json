@@ -1823,6 +1823,9 @@
     "appSecret": {
       "label": "Sovellussalaisuus"
     },
+    "version": {
+      "label": "Versio"
+    },
     "webhookVerifyToken": {
       "label": "Webhook-vahvistustunnus"
     },

@@ -1200,6 +1200,9 @@
     "appSecret": {
       "label": "應用程式秘密"
     },
+    "version": {
+      "label": "版本"
+    },
     "webhookVerifyToken": {
       "label": "Webhook 驗證權杖"
     },

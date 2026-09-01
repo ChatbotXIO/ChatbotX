@@ -1897,6 +1897,9 @@
     "appSecret": {
       "label": "Uygulama Gizli Anahtarı"
     },
+    "version": {
+      "label": "Sürüm"
+    },
     "webhookVerifyToken": {
       "label": "Webhook Doğrulama Anahtarı"
     },
