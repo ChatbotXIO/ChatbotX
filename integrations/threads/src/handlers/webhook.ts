@@ -18,16 +18,22 @@ const threadsReplyValueSchema = z.object({
   timestamp: z.string().optional(),
 })
 
+const threadsWebhookEntrySchema = z.object({
+  field: z.string().min(1),
+  value: threadsReplyValueSchema,
+})
+
 const threadsWebhookPayloadSchema = z.object({
   app_id: z.string().min(1),
   topic: z.string().min(1),
   target_id: z.string().min(1),
   time: z.number().int().nonnegative(),
   subscription_id: z.string().min(1),
-  values: z.object({
-    field: z.string().min(1),
-    value: threadsReplyValueSchema,
-  }),
+  // Meta sends `values` as an array on the wire, while the official docs
+  // document a single object. Accept both shapes and normalize to an array.
+  values: z
+    .union([z.array(threadsWebhookEntrySchema), threadsWebhookEntrySchema])
+    .transform((values) => (Array.isArray(values) ? values : [values])),
 })
 
 const verifyWebhookSignature = async (
@@ -59,6 +65,26 @@ const toEpochSeconds = (
 
   return Math.floor(parsed / 1000)
 }
+
+const describeType = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return "array"
+  }
+  if (value === null) {
+    return "null"
+  }
+  return typeof value
+}
+
+const asRecord = (value: unknown): Record<string, unknown> | undefined => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return
+  }
+  return value as Record<string, unknown>
+}
+
+const topLevelKeysOf = (value: unknown): string[] =>
+  Object.keys(asRecord(value) ?? {})
 
 const handleSubscriptionEvent = ({
   config,
@@ -107,9 +133,13 @@ const handleWebhookEvent = async (
   try {
     parsedJson = JSON.parse(body)
   } catch {
+    // Diagnostic path only: the raw body is logged when the payload cannot be
+    // understood, so the actual Meta wire format can be inspected. Recognized
+    // payloads never reach here and never have their body logged.
     logger.warn(
       {
         reason: "invalid_json",
+        rawBody: body,
       },
       "threads webhook payload unrecognized — skipping",
     )
@@ -118,6 +148,9 @@ const handleWebhookEvent = async (
 
   const parsedPayload = threadsWebhookPayloadSchema.safeParse(parsedJson)
   if (!parsedPayload.success) {
+    // Diagnostic path only: the raw body is logged when the payload cannot be
+    // understood, so the actual Meta wire format can be inspected. Recognized
+    // payloads never reach here and never have their body logged.
     logger.warn(
       {
         reason: "schema_mismatch",
@@ -125,6 +158,9 @@ const handleWebhookEvent = async (
           code,
           path,
         })),
+        rawBody: body,
+        payloadKeys: topLevelKeysOf(parsedJson),
+        valuesType: describeType(asRecord(parsedJson)?.values),
       },
       "threads webhook payload unrecognized — skipping",
     )
@@ -139,31 +175,36 @@ const handleWebhookEvent = async (
     )
   }
 
-  if (payload.topic !== "moderate" || payload.values.field !== "replies") {
+  if (payload.topic !== "moderate") {
     return
   }
 
-  const value = payload.values.value
-  if (value.username.toLowerCase() === value.root_post.username.toLowerCase()) {
-    return
-  }
+  const replies = payload.values.filter(
+    ({ field, value }) =>
+      field === "replies" &&
+      value.username.toLowerCase() !== value.root_post.username.toLowerCase(),
+  )
 
-  await queue.add("incomingComment", {
-    type: "incomingComment",
-    data: {
-      integrationType: "threads",
-      integrationIdentifier: value.root_post.owner_id,
-      commentData: {
-        commentId: value.id,
-        postId: value.root_post.id,
-        parentId: value.replied_to?.id,
-        fromId: value.username.toLowerCase(),
-        fromName: value.username,
-        message: value.text,
-        createdTime: toEpochSeconds(value.timestamp, payload.time),
-      },
-    },
-  })
+  await Promise.all(
+    replies.map(({ value }) =>
+      queue.add("incomingComment", {
+        type: "incomingComment",
+        data: {
+          integrationType: "threads",
+          integrationIdentifier: value.root_post.owner_id,
+          commentData: {
+            commentId: value.id,
+            postId: value.root_post.id,
+            parentId: value.replied_to?.id,
+            fromId: value.username.toLowerCase(),
+            fromName: value.username,
+            message: value.text,
+            createdTime: toEpochSeconds(value.timestamp, payload.time),
+          },
+        },
+      }),
+    ),
+  )
 }
 
 export const webhookHandler = async (
