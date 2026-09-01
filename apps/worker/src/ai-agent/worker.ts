@@ -1,21 +1,69 @@
+import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import {
   AIJobAction,
   type AIJobData,
+  type AIJobProcessAutomatedResponse,
+  aiJobDataSchema,
   defaultWorkerOptions,
   getRedisConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import { type Job, UnrecoverableError, Worker } from "bullmq"
+import { normalizeError } from "universal-error-normalizer"
+import { z } from "zod"
+import { env } from "../env"
+import { processAutomatedResponse } from "../integration/handlers/automated-response"
+import { processCommentAIReply } from "../integration/handlers/comment-automation/ai-reply"
+import { processStoryReplyAutomation } from "../integration/handlers/story-reply-automation"
+import { closeChatQueueEvents } from "../integration/utils/message"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import {
+  handleOrphanedIntegration,
+  IntegrationNotFoundError,
+} from "../services/orphaned-integration-cleanup"
 import { processAIFile } from "./handlers/process-ai-file"
 import { processConversationSource } from "./handlers/process-conversation-source"
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 import { handleSummarizeConversation } from "./handlers/summarize-conversation"
+
+async function processAutomatedResponseWithWebhookContext(
+  data: AIJobProcessAutomatedResponse["data"],
+): Promise<void> {
+  try {
+    await runWithWebhookExecutionContext({ source: "webhook" }, () =>
+      processAutomatedResponse(data),
+    )
+  } catch (err) {
+    if (err instanceof IntegrationNotFoundError) {
+      try {
+        await handleOrphanedIntegration(err)
+      } catch (cleanupError) {
+        logger.warn(
+          {
+            channel: err.channel,
+            identifier: err.identifier,
+            err: normalizeError(cleanupError),
+          },
+          "Orphaned integration cleanup threw before marking AI Agent job unrecoverable",
+        )
+      }
+      throw new UnrecoverableError(err.message)
+    }
+
+    throw err
+  }
+}
+
+const jobTypeSchema = z.object({ type: z.string() })
+
+function getRawJobType(data: unknown): string | undefined {
+  return jobTypeSchema.safeParse(data).data?.type
+}
 
 async function startAIAgentWorker() {
   try {
@@ -31,33 +79,48 @@ async function startAIAgentWorker() {
     async (job: Job<AIJobData>) => {
       logger.info(job.data, `Worker received job: ${job.id}`)
 
-      const workspaceId = await resolveWorkspaceId(job.data.data)
+      const jobData = aiJobDataSchema.parse(job.data)
+      const workspaceId = await resolveWorkspaceId(jobData.data)
       if (await isBlockedWorkspace(workspaceId)) {
         return
       }
 
       await runJobWithAuditContext(
-        { workspaceId, source: `ai-agent:${job.data.type}` },
+        { workspaceId, source: `ai-agent:${jobData.type}` },
         async () => {
-          switch (job.data.type) {
+          switch (jobData.type) {
             case AIJobAction.processAIFile:
-              await processAIFile(job.data.data)
+              await processAIFile(jobData.data)
               return
             case AIJobAction.processPendingEmbedding:
-              await processPendingEmbedding(job.data.data)
+              await processPendingEmbedding(jobData.data)
               return
             case AIJobAction.summarizeConversation:
-              await handleSummarizeConversation(job.data.data)
+              await handleSummarizeConversation(jobData.data)
               return
             case AIJobAction.processConversationSource:
-              await processConversationSource(job.data.data)
+              await processConversationSource(jobData.data)
               return
             case AIJobAction.processConversationSourceEmbedding:
-              await processConversationSourceEmbedding(job.data.data)
+              await processConversationSourceEmbedding(jobData.data)
               return
-            default:
-              logger.warn(`Unknown job name: ${job.name}`)
+            case AIJobAction.processAutomatedResponse:
+              await processAutomatedResponseWithWebhookContext(jobData.data)
               return
+            case AIJobAction.commentAIReply:
+              await processCommentAIReply(jobData.data)
+              return
+            case AIJobAction.processStoryReplyAutomation:
+              await processStoryReplyAutomation(jobData.data)
+              return
+            default: {
+              const _exhaustive: never = jobData
+              logger.warn(
+                { data: _exhaustive, jobName: job.name },
+                "Unhandled AI Agent job type",
+              )
+              return
+            }
           }
         },
       )
@@ -65,13 +128,55 @@ async function startAIAgentWorker() {
     {
       connection: getRedisConnection(),
       ...defaultWorkerOptions,
+      concurrency: env.AI_AGENT_WORKER_CONCURRENCY,
     },
   )
 
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
+  worker.on("failed", async (job, err) => {
+    if (!job) {
+      logger.error({ err }, "AI Agent job failed without job context")
+      return
     }
+
+    const parsedJobData = aiJobDataSchema.safeParse(job.data)
+    if (!parsedJobData.success) {
+      logger.error(
+        {
+          err,
+          jobId: job.id,
+          jobName: job.name,
+          jobType: getRawJobType(job.data),
+          validationError: normalizeError(parsedJobData.error),
+        },
+        "AI Agent job failed validation",
+      )
+      return
+    }
+
+    let workspaceId: string | undefined
+    let workspaceResolutionError: ReturnType<typeof normalizeError> | undefined
+    try {
+      workspaceId = await resolveWorkspaceId(parsedJobData.data.data)
+    } catch (resolutionError) {
+      workspaceResolutionError = normalizeError(resolutionError)
+    }
+
+    const conversationId =
+      "conversationId" in parsedJobData.data.data
+        ? parsedJobData.data.data.conversationId
+        : undefined
+
+    logger.error(
+      {
+        err,
+        conversationId,
+        jobId: job.id,
+        jobType: parsedJobData.data.type,
+        workspaceId,
+        workspaceResolutionError,
+      },
+      "AI Agent job failed",
+    )
   })
 
   let isShuttingDown = false
@@ -81,7 +186,7 @@ async function startAIAgentWorker() {
     }
     isShuttingDown = true
     try {
-      await worker.close()
+      await Promise.all([worker.close(), closeChatQueueEvents()])
       process.exit(0)
     } catch (err) {
       logger.error(err, "[AIAgentWorker] Error during shutdown")

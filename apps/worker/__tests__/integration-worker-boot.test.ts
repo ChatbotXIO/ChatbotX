@@ -12,17 +12,28 @@ import { describe, expect, test, vi } from "vitest"
 
 type CapturedWorker = {
   queueName: unknown
-  processor: (job: { data: unknown }) => Promise<unknown>
+  processor: (job: {
+    data: unknown
+    id?: string
+    name?: string
+  }) => Promise<unknown>
   options: Record<string, unknown>
 }
 
 const workerState = vi.hoisted(() => ({
+  aiAgentQueueAdd: vi.fn(async () => undefined),
   capturedWorkers: [] as CapturedWorker[],
   dispatchAdsConversionJob: vi.fn(async () => undefined),
   ensureBootstrapped: vi.fn(async () => undefined),
+  getStoryReply: vi.fn(),
+  receiveMessage: vi.fn(),
   workerClose: vi.fn(async () => undefined),
   workerOn: vi.fn(),
 }))
+
+const LEGACY_AUTOMATION_ID_PATTERN = /^legacy-[a-f0-9]{24}$/
+const LEGACY_COMMENT_JOB_ID_PATTERN =
+  /^comment-ai-reply-legacy-comment-1-public-[a-f0-9]{24}$/
 
 vi.mock("bullmq", () => {
   class WorkerMock {
@@ -42,6 +53,13 @@ vi.mock("bullmq", () => {
 })
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  AIJobAction: {
+    commentAIReply: "commentAIReply",
+    processAutomatedResponse: "processAutomatedResponse",
+    processStoryReplyAutomation: "processStoryReplyAutomation",
+  },
+  aiAgentQueue: { add: workerState.aiAgentQueueAdd },
+  closeIntegrationQueueEvents: vi.fn(async () => undefined),
   defaultWorkerOptions: {
     concurrency: 5,
     removeOnComplete: { count: 1000 },
@@ -49,6 +67,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   },
   getRedisConnection: () => ({}),
   IntegrationJobAction: {
+    incomingMessage: "incomingMessage",
+    processAutomatedResonse: "processAutomatedResponse",
+    commentAIReply: "commentAIReply",
+    processStoryReplyAutomation: "processStoryReplyAutomation",
     evaluateTemplateSent: "evaluateTemplateSent",
     evaluateConversionTrigger: "evaluateConversionTrigger",
     sendConversionEvent: "sendConversionEvent",
@@ -76,7 +98,7 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@chatbotx.io/sdk")>()),
-  getStoryReply: vi.fn(),
+  getStoryReply: workerState.getStoryReply,
 }))
 
 vi.mock("../src/env", () => ({
@@ -159,7 +181,7 @@ vi.mock("../src/integration/handlers/message-status", () => ({
 vi.mock("../src/integration/handlers/received-message", () => ({
   deleteIncomingComment: vi.fn(),
   receiveComment: vi.fn(),
-  receiveMessage: vi.fn(),
+  receiveMessage: workerState.receiveMessage,
   updateIncomingComment: vi.fn(),
 }))
 vi.mock("../src/integration/handlers/ref", () => ({
@@ -270,6 +292,148 @@ describe("ads-conversion actions route through the shared integration switch", (
 
     expect(capturedActor).toEqual(
       expect.objectContaining({ source: "integration:evaluateTemplateSent" }),
+    )
+  })
+})
+
+describe("Phase 1 AI reply compatibility forwarding", () => {
+  test("enqueues new story reply jobs directly on aiAgent", async () => {
+    workerState.aiAgentQueueAdd.mockClear()
+    workerState.getStoryReply.mockReturnValue({
+      id: "story-1",
+      url: "https://example.com/story",
+    })
+    workerState.receiveMessage.mockResolvedValue({
+      message: {
+        id: "message-1",
+        contactInboxId: "contact-inbox-1",
+        senderType: "contact",
+        contentType: "text",
+        attachments: [],
+        contentAttributes: {},
+        text: "hello",
+      },
+      conversation: { id: "conversation-1", workspaceId: "workspace-1" },
+      channelType: "instagram",
+    })
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      id: "incoming-message-job",
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "instagram",
+          integrationIdentifier: "ig-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(workerState.aiAgentQueueAdd).toHaveBeenCalledWith(
+      "processStoryReplyAutomation",
+      expect.objectContaining({
+        type: "processStoryReplyAutomation",
+        data: expect.objectContaining({ messageId: "message-1" }),
+      }),
+      { jobId: "story-reply-auto-message-1" },
+    )
+  })
+
+  test("normalizes legacy automated-response model references before forwarding", async () => {
+    workerState.aiAgentQueueAdd.mockClear()
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      id: "legacy-auto-response-job",
+      data: {
+        type: "processAutomatedResponse",
+        data: {
+          conversationId: { id: "conversation-1" },
+          contactInboxId: { id: "contact-inbox-1" },
+          messageId: "message-1",
+        },
+      },
+    })
+
+    expect(workerState.aiAgentQueueAdd).toHaveBeenCalledWith(
+      "processAutomatedResponse",
+      {
+        type: "processAutomatedResponse",
+        data: {
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          messageId: "message-1",
+        },
+      },
+      { jobId: "automated-response-message-1" },
+    )
+  })
+
+  test("gives legacy comment jobs a stable collision-safe fallback id", async () => {
+    workerState.aiAgentQueueAdd.mockClear()
+    const [integrationWorker] = workerState.capturedWorkers
+    const legacyJob = {
+      id: "legacy-comment-job",
+      data: {
+        type: "commentAIReply",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "page-1",
+          workspaceId: "workspace-1",
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          commentId: "comment-1",
+          agentId: "agent-1",
+          replyChannel: "public",
+          channelType: "messenger",
+          message: "hello",
+        },
+      },
+    }
+
+    await integrationWorker?.processor(legacyJob)
+    await integrationWorker?.processor(legacyJob)
+
+    const firstCall = workerState.aiAgentQueueAdd.mock.calls[0]
+    const secondCall = workerState.aiAgentQueueAdd.mock.calls[1]
+    expect(firstCall?.[0]).toBe("commentAIReply")
+    expect(firstCall?.[1]).toEqual(
+      expect.objectContaining({
+        type: "commentAIReply",
+        data: expect.objectContaining({
+          automationId: expect.stringMatching(LEGACY_AUTOMATION_ID_PATTERN),
+        }),
+      }),
+    )
+    expect(firstCall?.[2]?.jobId).toMatch(LEGACY_COMMENT_JOB_ID_PATTERN)
+    expect(secondCall?.[2]?.jobId).toBe(firstCall?.[2]?.jobId)
+    expect(firstCall?.[2]?.jobId).not.toContain(":")
+  })
+
+  test("forwards legacy story jobs with the producer job id", async () => {
+    workerState.aiAgentQueueAdd.mockClear()
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      id: "legacy-story-job",
+      data: {
+        type: "processStoryReplyAutomation",
+        data: {
+          workspaceId: "workspace-1",
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          messageId: "message-1",
+          storyId: "story-1",
+          channelType: "instagram",
+        },
+      },
+    })
+
+    expect(workerState.aiAgentQueueAdd).toHaveBeenCalledWith(
+      "processStoryReplyAutomation",
+      expect.objectContaining({ type: "processStoryReplyAutomation" }),
+      { jobId: "story-reply-auto-message-1" },
     )
   })
 })

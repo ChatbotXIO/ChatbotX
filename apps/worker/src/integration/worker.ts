@@ -1,8 +1,11 @@
+import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { conversationService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoryReply } from "@chatbotx.io/sdk"
 import {
+  AIJobAction,
+  aiAgentQueue,
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getRedisConnection,
@@ -20,7 +23,6 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
-import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
 import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
@@ -28,7 +30,6 @@ import { coexistMessengerSync } from "./handlers/coexist/messenger-sync"
 import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
 import { processCommentAutomation } from "./handlers/comment-automation"
-import { processCommentAIReply } from "./handlers/comment-automation/ai-reply"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
@@ -51,12 +52,22 @@ import {
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
-import { processStoryReplyAutomation } from "./handlers/story-reply-automation"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
+
+function normalizeToId(value: string | { id: string }): string {
+  return typeof value === "string" ? value : value.id
+}
+
+function hashLegacyPayload(payload: object): string {
+  return createHash("sha256")
+    .update(JSON.stringify(payload))
+    .digest("hex")
+    .slice(0, 24)
+}
 
 async function startIntegrationWorker() {
   try {
@@ -107,10 +118,10 @@ async function startIntegrationWorker() {
                 const storyReply = getStoryReply(message.contentAttributes)
 
                 if (isFromContact && storyReply) {
-                  await integrationQueue.add(
-                    IntegrationJobAction.processStoryReplyAutomation,
+                  await aiAgentQueue.add(
+                    AIJobAction.processStoryReplyAutomation,
                     {
-                      type: IntegrationJobAction.processStoryReplyAutomation,
+                      type: AIJobAction.processStoryReplyAutomation,
                       data: {
                         workspaceId: conversation.workspaceId,
                         conversationId: conversation.id,
@@ -224,7 +235,24 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.processAutomatedResonse: {
-                await processAutomatedResponse(job.data.data)
+                await aiAgentQueue.add(
+                  AIJobAction.processAutomatedResponse,
+                  {
+                    type: AIJobAction.processAutomatedResponse,
+                    data: {
+                      conversationId: normalizeToId(
+                        job.data.data.conversationId,
+                      ),
+                      contactInboxId: normalizeToId(
+                        job.data.data.contactInboxId,
+                      ),
+                      messageId: job.data.data.messageId,
+                    },
+                  },
+                  {
+                    jobId: `automated-response-${job.data.data.messageId}`,
+                  },
+                )
                 return
               }
               case IntegrationJobAction.agentMarkAsRead: {
@@ -303,11 +331,42 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.commentAIReply: {
-                await processCommentAIReply(job.data.data)
+                const payloadHash = hashLegacyPayload(job.data.data)
+                const automationId =
+                  "automationId" in job.data.data &&
+                  typeof job.data.data.automationId === "string" &&
+                  job.data.data.automationId.length > 0
+                    ? job.data.data.automationId
+                    : undefined
+
+                await aiAgentQueue.add(
+                  AIJobAction.commentAIReply,
+                  {
+                    type: AIJobAction.commentAIReply,
+                    data: {
+                      ...job.data.data,
+                      automationId: automationId ?? `legacy-${payloadHash}`,
+                    },
+                  },
+                  {
+                    jobId: automationId
+                      ? `comment-ai-reply-${automationId}-${job.data.data.commentId}-${job.data.data.replyChannel}`
+                      : `comment-ai-reply-legacy-${job.data.data.commentId}-${job.data.data.replyChannel}-${payloadHash}`,
+                  },
+                )
                 return
               }
               case IntegrationJobAction.processStoryReplyAutomation: {
-                await processStoryReplyAutomation(job.data.data)
+                await aiAgentQueue.add(
+                  AIJobAction.processStoryReplyAutomation,
+                  {
+                    type: AIJobAction.processStoryReplyAutomation,
+                    data: job.data.data,
+                  },
+                  {
+                    jobId: `story-reply-auto-${job.data.data.messageId}`,
+                  },
+                )
                 return
               }
               case IntegrationJobAction.captureTemplateFlowResponse: {

@@ -21,6 +21,12 @@ export const env = createEnv({
       .min(1)
       .max(200)
       .default(10),
+    AI_AGENT_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(200)
+      .default(5),
     // Bounds each chat-job wait (awaitChatJob). Capped below the integration
     // worker lockDuration (10 min) so a wait can never outlive the job lock —
     // otherwise BullMQ would treat the job as stalled and reprocess it (double

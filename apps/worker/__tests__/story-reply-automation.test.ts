@@ -1,3 +1,4 @@
+import type { AIJobProcessStoryReplyAutomation } from "@chatbotx.io/worker-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -100,7 +101,9 @@ function buildAutomation(reply: { type: string; value: string | null }) {
   }
 }
 
-function buildJobData(overrides: { message?: string } = {}) {
+function buildJobData(
+  overrides: { message?: string } = {},
+): AIJobProcessStoryReplyAutomation["data"] {
   return {
     workspaceId: "workspace-1",
     conversationId: "conversation-1",
@@ -137,7 +140,7 @@ describe("processStoryReplyAutomation text reply variable resolution", () => {
     ])
     mockContactVariableReplaceAll.mockResolvedValue("Hi Jane")
 
-    await processStoryReplyAutomation(buildJobData() as any)
+    await processStoryReplyAutomation(buildJobData())
 
     expect(mockContactVariableGetAll).toHaveBeenCalledWith({
       contactId: "contact-1",
@@ -163,7 +166,7 @@ describe("processStoryReplyAutomation text reply variable resolution", () => {
       buildAutomation({ type: "text", value: "Thanks for the reply!" }),
     ])
 
-    await processStoryReplyAutomation(buildJobData() as any)
+    await processStoryReplyAutomation(buildJobData())
 
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
       "sendChatMessage",
@@ -179,7 +182,7 @@ describe("processStoryReplyAutomation text reply variable resolution", () => {
     ])
     mockContactVariableReplaceAll.mockRejectedValue(new Error("db down"))
 
-    await processStoryReplyAutomation(buildJobData() as any)
+    await processStoryReplyAutomation(buildJobData())
 
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
       "sendChatMessage",
