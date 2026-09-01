@@ -1,20 +1,29 @@
-import { aiTimeouts, type systemFunctionNames } from "@chatbotx.io/ai"
+import { createHash } from "node:crypto"
+import type { systemFunctionNames } from "@chatbotx.io/ai"
 import type {
   ImageReaderInput,
   SystemToolExecutors,
 } from "@chatbotx.io/ai/server"
+import type { AIAgentModelConfig } from "@chatbotx.io/database/partials"
 import type { AttachmentModel } from "@chatbotx.io/database/types"
-import { uploader } from "@chatbotx.io/filesystem"
-import { generateText, type LanguageModel } from "ai"
+import {
+  getHeavyQueueEvents,
+  HeavyJobAction,
+  heavyAnalyzeImageResultSchema,
+  heavyQueue,
+} from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
+import { env } from "../../../../env"
+import { getProviderName } from "../../../../lib/ai/reply-model"
 import { logger } from "../../../../lib/logger"
 import { resolveImageAttachment } from "./context-sources/image-source"
 
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024
-const IMAGE_READER_MAX_OUTPUT_TOKENS = 800
-
 function getReadableImageTitle(attachment: AttachmentModel): string {
   return attachment.name?.trim() || "User uploaded image"
+}
+
+function hash(input: string): string {
+  return createHash("sha256").update(input).digest("hex").slice(0, 32)
 }
 
 function buildVisionPrompt(props: {
@@ -63,26 +72,11 @@ function formatToolOutput(props: {
   return output.join("\n")
 }
 
-async function loadImageBuffer(attachment: AttachmentModel): Promise<Buffer> {
-  if (attachment.size > MAX_IMAGE_BYTES) {
-    throw new Error("Image is too large for image reader")
-  }
-
-  const buffer = await uploader.getObject(attachment.originPath)
-
-  if (buffer.byteLength > MAX_IMAGE_BYTES) {
-    throw new Error("Image is too large for image reader")
-  }
-
-  return buffer
-}
-
 export function createImageReaderExecutor(options: {
   abortSignal?: AbortSignal
   fileOnlyTrigger: boolean
-  model: LanguageModel
   modelId: string
-  provider: string
+  providerInfo: AIAgentModelConfig
   triggerMessageId?: string
 }): NonNullable<SystemToolExecutors[typeof systemFunctionNames.imageReader]> {
   return async (args, context) => {
@@ -103,41 +97,41 @@ export function createImageReaderExecutor(options: {
         return "I couldn't find a supported image in this conversation yet."
       }
 
-      const image = await loadImageBuffer(attachment)
       const prompt = buildVisionPrompt({
         attachment,
         fileOnlyTrigger: options.fileOnlyTrigger,
         input: args,
       })
-
-      const result = await generateText({
-        model: options.model,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: prompt,
-              },
-              {
-                type: "image",
-                image,
-                mediaType: attachment.mimeType,
-              },
-            ],
+      const job = await heavyQueue.add(
+        HeavyJobAction.analyzeImage,
+        {
+          type: HeavyJobAction.analyzeImage,
+          data: {
+            workspaceId: context.workspaceId,
+            originPath: attachment.originPath,
+            mimeType: attachment.mimeType,
+            sizeBytes: attachment.size,
+            prompt,
+            providerInfo: options.providerInfo,
           },
-        ],
-        maxOutputTokens: IMAGE_READER_MAX_OUTPUT_TOKENS,
-        temperature: 0.2,
-        timeout: {
-          totalMs: aiTimeouts.aiStep,
-          stepMs: aiTimeouts.aiStep,
         },
-        abortSignal: options.abortSignal,
-      })
+        {
+          jobId: `heavy-image-reader-${context.conversationId}-${attachment.id}-${hash(args.query)}-${hash(JSON.stringify(options.providerInfo))}`,
+          removeOnComplete: { count: 200 },
+          removeOnFail: { count: 500 },
+        },
+      )
 
-      const analysis = result.text.trim()
+      if (!(job && typeof job === "object" && "waitUntilFinished" in job)) {
+        throw new Error("Heavy queue did not return a waitable image job")
+      }
+
+      const rawResult = await job.waitUntilFinished(
+        getHeavyQueueEvents(),
+        env.HEAVY_JOB_WAIT_TIMEOUT_MS,
+      )
+      const result = heavyAnalyzeImageResultSchema.parse(rawResult)
+      const analysis = result.analysis.trim()
       if (!analysis) {
         return "I found the image, but I couldn't extract a useful visual answer from it."
       }
@@ -154,7 +148,7 @@ export function createImageReaderExecutor(options: {
           error: normalizedError,
           conversationId: context.conversationId,
           workspaceId: context.workspaceId,
-          provider: options.provider,
+          provider: getProviderName(options.providerInfo),
           modelId: options.modelId,
         },
         "[image-reader] image tool execution failed",

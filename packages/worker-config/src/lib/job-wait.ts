@@ -12,6 +12,7 @@ import { queueNames } from "./types"
 const INTEGRATION_JOB_WAIT_TIMEOUT_MS = 10_000
 
 let integrationQueueEvents: QueueEvents | null = null
+let heavyQueueEvents: QueueEvents | null = null
 
 function getIntegrationQueueEvents(): QueueEvents {
   if (integrationQueueEvents) {
@@ -28,6 +29,24 @@ export async function closeIntegrationQueueEvents(): Promise<void> {
   if (integrationQueueEvents) {
     await integrationQueueEvents.close()
     integrationQueueEvents = null
+  }
+}
+
+export function getHeavyQueueEvents(): QueueEvents {
+  if (heavyQueueEvents) {
+    return heavyQueueEvents
+  }
+
+  heavyQueueEvents = new QueueEvents(queueNames.enum.heavy, {
+    connection: getRedisConnection().duplicate(),
+  })
+  return heavyQueueEvents
+}
+
+export async function closeHeavyQueueEvents(): Promise<void> {
+  if (heavyQueueEvents) {
+    await heavyQueueEvents.close()
+    heavyQueueEvents = null
   }
 }
 

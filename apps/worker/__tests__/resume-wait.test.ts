@@ -60,13 +60,16 @@ describe("runWaitResume", () => {
       id: "smart-delay-1",
       to: "completed",
     })
-    expect(runFlowNode).toHaveBeenCalledWith({
-      conversationId: "conversation-1",
-      contactInboxId: "contact-inbox-1",
-      flowId: "flow-1",
-      flowVersionId: "flow-version-1",
-      nodeId: "next-node",
-    })
+    expect(runFlowNode).toHaveBeenCalledWith(
+      {
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        flowId: "flow-1",
+        flowVersionId: "flow-version-1",
+        nodeId: "next-node",
+      },
+      { flowExecutionKey: undefined },
+    )
   })
 
   test("preserves broadcast metadata when resuming the connected node", async () => {
@@ -89,6 +92,7 @@ describe("runWaitResume", () => {
           contactInboxId: "contact-inbox-1",
         },
       }),
+      { flowExecutionKey: undefined },
     )
   })
 
@@ -104,6 +108,7 @@ describe("runWaitResume", () => {
       expect.objectContaining({
         appointmentId: "appointment-1",
       }),
+      { flowExecutionKey: undefined },
     )
   })
 

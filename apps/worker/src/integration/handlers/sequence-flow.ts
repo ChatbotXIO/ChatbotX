@@ -97,7 +97,10 @@ async function markDispatchFailed(
     )
 }
 
-async function runSendSequenceFlow(data: SendSequenceFlowData): Promise<void> {
+async function runSendSequenceFlow(
+  data: SendSequenceFlowData,
+  job: Job,
+): Promise<void> {
   const { dispatchId, workspaceId, stepId, bucket, contactId, sequenceId } =
     data
 
@@ -141,6 +144,7 @@ async function runSendSequenceFlow(data: SendSequenceFlowData): Promise<void> {
       workspaceId,
       contactId: data.contactId,
       metadata: data.metadata,
+      flowExecutionKey: job.id,
     })
 
     sentAt = new Date()
@@ -193,7 +197,7 @@ export async function handleSendSequenceFlow(
   job: Job,
 ): Promise<void> {
   try {
-    await runSendSequenceFlow(data)
+    await runSendSequenceFlow(data, job)
   } catch (err) {
     const finalAttempt = isFinalAttempt(job)
 

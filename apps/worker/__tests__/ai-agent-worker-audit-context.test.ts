@@ -3,11 +3,12 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   closeChatQueueEvents: vi.fn(),
+  closeHeavyQueueEvents: vi.fn(),
   ensureBootstrapped: vi.fn(),
   handleOrphanedIntegration: vi.fn(),
+  heavyQueueAdd: vi.fn(),
   isBlockedWorkspace: vi.fn(),
   processAutomatedResponse: vi.fn(),
-  processAIFile: vi.fn(),
   processCommentAIReply: vi.fn(),
   processJob: undefined as undefined | ((job: unknown) => Promise<void>),
   processStoryReplyAutomation: vi.fn(),
@@ -23,8 +24,11 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/worker-config")>()
   return {
     ...actual,
+    closeHeavyQueueEvents: mocks.closeHeavyQueueEvents,
     defaultWorkerOptions: {},
     getRedisConnection: vi.fn(),
+    HeavyJobAction: { processAIFile: "processAIFile" },
+    heavyQueue: { add: mocks.heavyQueueAdd },
     queueNames: { enum: { aiAgent: "aiAgent" } },
   }
 })
@@ -90,9 +94,6 @@ vi.mock("../src/services/orphaned-integration-cleanup", () => ({
   handleOrphanedIntegration: mocks.handleOrphanedIntegration,
   IntegrationNotFoundError: class IntegrationNotFoundError extends Error {},
 }))
-vi.mock("../src/ai-agent/handlers/process-ai-file", () => ({
-  processAIFile: (...args: unknown[]) => mocks.processAIFile(...args),
-}))
 vi.mock("../src/ai-agent/handlers/process-conversation-source", () => ({
   processConversationSource: vi.fn(),
 }))
@@ -125,9 +126,9 @@ beforeEach(() => {
 })
 
 describe("ai-agent worker audit context", () => {
-  test("populates the audit actor with the resolved workspace and job source", async () => {
+  test("forwards legacy AI file jobs to heavy within the audit context", async () => {
     let capturedActor: ReturnType<typeof getAuditActor>
-    mocks.processAIFile.mockImplementationOnce(() => {
+    mocks.heavyQueueAdd.mockImplementationOnce(() => {
       capturedActor = getAuditActor()
     })
 
@@ -142,9 +143,17 @@ describe("ai-agent worker audit context", () => {
         source: "ai-agent:processAIFile",
       }),
     )
+    expect(mocks.heavyQueueAdd).toHaveBeenCalledWith(
+      "processAIFile",
+      {
+        type: "processAIFile",
+        data: { aiFileId: "ai-file-1" },
+      },
+      { jobId: "heavy-ai-file-ai-file-1" },
+    )
   })
 
-  test("does not invoke the handler for a blocked workspace", async () => {
+  test("does not forward a job for a blocked workspace", async () => {
     mocks.isBlockedWorkspace.mockResolvedValue(true)
 
     await mocks.processJob?.({
@@ -152,7 +161,7 @@ describe("ai-agent worker audit context", () => {
       data: { type: "processAIFile", data: { aiFileId: "ai-file-1" } },
     })
 
-    expect(mocks.processAIFile).not.toHaveBeenCalled()
+    expect(mocks.heavyQueueAdd).not.toHaveBeenCalled()
   })
 
   test("uses the dedicated concurrency setting", () => {

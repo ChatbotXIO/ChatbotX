@@ -3,9 +3,11 @@ import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { conversationService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoryReply } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils"
 import {
   AIJobAction,
   aiAgentQueue,
+  closeHeavyQueueEvents,
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getRedisConnection,
@@ -67,6 +69,19 @@ function hashLegacyPayload(payload: object): string {
     .update(JSON.stringify(payload))
     .digest("hex")
     .slice(0, 24)
+}
+
+function getFlowExecutionKey(job: Job): string {
+  if (job.id) {
+    return job.id
+  }
+
+  const flowExecutionKey = `integration-job-${createId()}`
+  logger.warn(
+    { flowExecutionKey, jobName: job.name },
+    "Integration job is missing id; generated flow execution key",
+  )
+  return flowExecutionKey
 }
 
 async function startIntegrationWorker() {
@@ -219,7 +234,9 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.sendFlow: {
-                await runFlowNode(job.data.data)
+                await runFlowNode(job.data.data, {
+                  flowExecutionKey: getFlowExecutionKey(job),
+                })
                 return
               }
               case IntegrationJobAction.sendSequenceFlow: {
@@ -227,11 +244,15 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.runFlowPostback: {
-                await runFlowPostback(job.data.data)
+                await runFlowPostback(job.data.data, {
+                  flowExecutionKey: getFlowExecutionKey(job),
+                })
                 return
               }
               case IntegrationJobAction.runFlowQuickReply: {
-                await runFlowQuickReply(job.data.data)
+                await runFlowQuickReply(job.data.data, {
+                  flowExecutionKey: getFlowExecutionKey(job),
+                })
                 return
               }
               case IntegrationJobAction.processAutomatedResonse: {
@@ -272,7 +293,7 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.resumeWait: {
-                await runWaitResume(job.data.data)
+                await runWaitResume(job.data.data, job)
                 return
               }
               case IntegrationJobAction.resumeFollowUp: {
@@ -280,7 +301,7 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.messageStatus: {
-                await handleMessageStatus(job.data.data)
+                await handleMessageStatus(job.data.data, job)
                 return
               }
               case IntegrationJobAction.coexistWhatsappBuffer: {
@@ -424,10 +445,11 @@ async function startIntegrationWorker() {
     }
     isShuttingDown = true
     try {
+      await worker.close()
       await Promise.all([
-        worker.close(),
         closeChatQueueEvents(),
         closeIntegrationQueueEvents(),
+        closeHeavyQueueEvents(),
       ])
       process.exit(0)
     } catch (err) {

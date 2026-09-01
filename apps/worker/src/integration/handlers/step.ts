@@ -12,8 +12,10 @@ import {
   stepTypes,
   type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatJobSendFlowStep,
+  HeavyJobAction,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
@@ -40,20 +42,20 @@ import {
 import { markCouponUsed, setUpCoupon } from "./coupon"
 import { handleAIDeleteMessageHistory } from "./delete-message-history"
 import { subscribeDripSubscriber } from "./drip-handler"
-import { handleAIEditImage } from "./edit-image"
 import { handleAIExtractData } from "./extract-data/index"
 import { handleFacebookCustomAudience } from "./facebook-custom-audience-handler"
 import {
   type ExecuteStepProps,
   enqueueFlowStepMessage,
+  type HeavyStepProps,
   seekConnectedNode,
 } from "./flow-utils"
 import { handleFollowUp } from "./follow-up"
-import { handleAIGenerateImage } from "./generate-image"
 import { handleAIGenerateText } from "./generate-text"
 import { handleAIGenerateTextAgent } from "./generate-text-agent"
 import { addGetResponseContact } from "./get-response-handler"
 import { getUserData } from "./get-user-data"
+import { runViaHeavyWorker } from "./heavy-step-runner"
 import { syncKlaviyoProfile } from "./klaviyo-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { addMailerLiteSubscriber } from "./mailer-lite-handler"
@@ -71,7 +73,6 @@ import { questionnaires } from "./questionnaires"
 import { sendEmail } from "./send-email"
 import { addSendGridContact } from "./sendgrid-handler"
 import { scheduleSmartDelayResume } from "./smart-delay"
-import { handleAISpeechToText } from "./speech-to-text"
 
 import {
   clearSpreadsheetRow,
@@ -94,7 +95,6 @@ import {
   stepUnassignConversation,
   stepUnfollowConversation,
 } from "./step-handlers"
-import { handleAITextToSpeech } from "./text-to-speech"
 import {
   countCharacters,
   externalRequest,
@@ -355,6 +355,27 @@ export type ExecuteStepResult = {
   result: unknown
 }
 
+function toHeavyStepProps<T extends { id: string }>(
+  props: ExecuteStepProps<T>,
+): HeavyStepProps<T> {
+  if (props.flowExecutionKey) {
+    return { ...props, flowExecutionKey: props.flowExecutionKey }
+  }
+
+  const flowExecutionKey = `flow-inline-${createId()}`
+  logger.warn(
+    {
+      flowExecutionKey,
+      conversationId: props.conversation.id,
+      contactInboxId: props.contactInbox.id,
+      stepId: props.step.id,
+    },
+    "Flow step is missing flowExecutionKey; generated fallback key",
+  )
+
+  return { ...props, flowExecutionKey }
+}
+
 export const flowStepHandlers: Record<
   StepType,
   | ((
@@ -399,13 +420,17 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.openWebsite]: undefined,
   [stepTypes.enum.aiAnalyzeImage]: handleAIAnalyzeImage,
   [stepTypes.enum.aiDeleteMessageHistory]: handleAIDeleteMessageHistory,
-  [stepTypes.enum.aiEditImage]: handleAIEditImage,
-  [stepTypes.enum.aiGenerateImage]: handleAIGenerateImage,
+  [stepTypes.enum.aiEditImage]: (props) =>
+    runViaHeavyWorker(HeavyJobAction.aiEditImage, toHeavyStepProps(props)),
+  [stepTypes.enum.aiGenerateImage]: (props) =>
+    runViaHeavyWorker(HeavyJobAction.aiGenerateImage, toHeavyStepProps(props)),
   [stepTypes.enum.aiGenerateTextAgent]: handleAIGenerateTextAgent,
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
   [stepTypes.enum.aiExtractData]: handleAIExtractData,
-  [stepTypes.enum.aiSpeechToText]: handleAISpeechToText,
-  [stepTypes.enum.aiTextToSpeech]: handleAITextToSpeech,
+  [stepTypes.enum.aiSpeechToText]: (props) =>
+    runViaHeavyWorker(HeavyJobAction.aiSpeechToText, toHeavyStepProps(props)),
+  [stepTypes.enum.aiTextToSpeech]: (props) =>
+    runViaHeavyWorker(HeavyJobAction.aiTextToSpeech, toHeavyStepProps(props)),
   [stepTypes.enum.optInEmail]: optInEmail,
   [stepTypes.enum.optOutEmail]: optOutEmail,
   [stepTypes.enum.performAction]: undefined,

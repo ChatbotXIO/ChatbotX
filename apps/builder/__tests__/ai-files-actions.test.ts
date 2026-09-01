@@ -46,8 +46,8 @@ vi.mock("@chatbotx.io/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  AIJobAction: { processAIFile: "processAIFile" },
-  aiAgentQueue: { add: mocks.queueAdd },
+  HeavyJobAction: { processAIFile: "processAIFile" },
+  heavyQueue: { add: mocks.queueAdd },
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -117,6 +117,14 @@ describe("Knowledge tab audit messages", () => {
       action: "create",
       detail: "created a new Knowledge (#file-1)",
     })
+    expect(mocks.queueAdd).toHaveBeenCalledWith(
+      "processAIFile",
+      {
+        type: "processAIFile",
+        data: { aiFileId: "file-1" },
+      },
+      { jobId: "heavy-ai-file-file-1" },
+    )
   })
 
   test("deleteAIFile logs deleted a Knowledge by id", async () => {

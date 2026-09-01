@@ -57,7 +57,7 @@ vi.mock("@chatbotx.io/utils", () => {
       return () => proxy
     },
   })
-  return { zodBigintAsString: () => proxy }
+  return { zodBigintAsString: () => proxy, zodUrlWithVariables: () => proxy }
 })
 
 vi.mock("@/env", () => ({ isCloud }))

@@ -4,8 +4,11 @@ import {
   type AIJobData,
   type AIJobProcessAutomatedResponse,
   aiJobDataSchema,
+  closeHeavyQueueEvents,
   defaultWorkerOptions,
   getRedisConnection,
+  HeavyJobAction,
+  heavyQueue,
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, UnrecoverableError, Worker } from "bullmq"
@@ -25,7 +28,6 @@ import {
   handleOrphanedIntegration,
   IntegrationNotFoundError,
 } from "../services/orphaned-integration-cleanup"
-import { processAIFile } from "./handlers/process-ai-file"
 import { processConversationSource } from "./handlers/process-conversation-source"
 import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
@@ -90,7 +92,14 @@ async function startAIAgentWorker() {
         async () => {
           switch (jobData.type) {
             case AIJobAction.processAIFile:
-              await processAIFile(jobData.data)
+              await heavyQueue.add(
+                HeavyJobAction.processAIFile,
+                {
+                  type: HeavyJobAction.processAIFile,
+                  data: jobData.data,
+                },
+                { jobId: `heavy-ai-file-${jobData.data.aiFileId}` },
+              )
               return
             case AIJobAction.processPendingEmbedding:
               await processPendingEmbedding(jobData.data)
@@ -186,7 +195,8 @@ async function startAIAgentWorker() {
     }
     isShuttingDown = true
     try {
-      await Promise.all([worker.close(), closeChatQueueEvents()])
+      await worker.close()
+      await Promise.all([closeChatQueueEvents(), closeHeavyQueueEvents()])
       process.exit(0)
     } catch (err) {
       logger.error(err, "[AIAgentWorker] Error during shutdown")

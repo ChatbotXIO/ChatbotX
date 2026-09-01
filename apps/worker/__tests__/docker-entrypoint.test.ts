@@ -17,6 +17,7 @@ const STANDARD_WORKERS = [
   "events",
   "integration",
   "ai-agent",
+  "heavy",
   "default",
   "trigger",
   "webhook",
