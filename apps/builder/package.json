@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "SKIP_ENV_CHECK=true dotenv  -e ../../.env -- next build",
+    "build": "node scripts/build-builder.mjs",
     "check-types": "tsc --noEmit",
-    "dev": "dotenv -e .env -e ../../.env -- next dev -p 3123 | pino-pretty",
+    "dev": "node scripts/clean-next-cache.mjs && dotenv -e .env -e ../../.env -- next dev -p 3123 | pino-pretty",
     "https": "dotenv -e .env -e ../../.env -- next dev -p 3123 --experimental-https",
     "i18n:check": "i18n-check --source en --locales messages",
     "lint": "pnpm i18n:check",
-    "start": "next start",
+    "start": "node scripts/clean-next-cache.mjs && dotenv -e .env -e ../../.env -- next start -p 3123",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },

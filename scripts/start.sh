@@ -91,7 +91,10 @@ if [ "$MODE" = "dev" ]; then
   nohup pnpm --filter builder dev > /tmp/opencode/builder-dev.log 2>&1 &
 elif [ "$BUILD" = "1" ] || [ ! -f apps/builder/.next/BUILD_ID ]; then
   echo "Build del builder (tarda unos minutos la primera vez)..."
-  if ! pnpm exec turbo build --concurrency=2; then
+  # Build seguro: heap capado (el build del builder ya lo hace via
+  # scripts/build-builder.mjs) + baja prioridad + 4 cores, para que no congele
+  # la UI ni mate la máquina de 14GB cuando hay IDE/Docker abiertos.
+  if ! NODE_OPTIONS="--max-old-space-size=4096" nice -n 19 taskset -c 0-3 pnpm exec turbo build --concurrency=2; then
     echo ""
     echo "❌ El build FALLÓ. NO arranco el builder."
     echo "   (worker y realtime ya quedaron corriendo en background)"
