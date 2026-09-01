@@ -3,7 +3,7 @@
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 import { disconnectThreads } from "./disconnect"
 

@@ -95,6 +95,7 @@ export const errorLogProviderLabels = {
   smtp: "Email",
   telegram: "Telegram",
   instagram: "Instagram",
+  threads: "Threads",
   tiktok: "TikTok",
   api: "API",
   // meta platform surfaces
