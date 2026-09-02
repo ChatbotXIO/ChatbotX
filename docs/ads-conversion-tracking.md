@@ -16,7 +16,7 @@ against real chatbot outcomes.
 
 ## How conversions get produced
 
-Three independent producers write the same `AdsConversionEvent` table:
+Two independent producers write the same `AdsConversionEvent` table:
 
 1. **Meta Automatic Events** (`source: "automatic"`, WhatsApp only) — Meta detects
    leads/purchases in the conversation itself and reports them via webhook;
@@ -30,28 +30,22 @@ Three independent producers write the same `AdsConversionEvent` table:
    rows — matches on template sends, tag applications, keyword matches, or contact
    replies (`adsConversionService.evaluateConversionTriggerRule` /
    `evaluateAdReferralTriggerRule`, `packages/business/src/ads-conversion/service.ts`).
-3. **The Trigger automation actions `trackAdsLead` / `trackAdsPurchase`**
-   (`apps/worker/src/trigger/services/action-executor.ts`) — the customer-facing way
-   to configure this today, since the rule page is hidden. A Trigger with either
-   action calls `adsConversionService.recordTriggerConversion`
-   (`packages/business/src/ads-conversion/record-trigger-conversion.ts`), which
-   reuses the exact same attribution/dedup/delivery plumbing as the rule engine.
-   `trackAdsPurchase` accepts an optional **static** `value`/`currency` (no
-   custom-field variables) that flows into `AdsConversionEvent.value` — real Revenue
-   on the dashboard, unlike rule-produced purchases, which record $0.
 
-The rule and trigger producers share:
+There is no customer-facing Trigger or Flow-step action that records an
+`AdsConversionEvent` today — the rule engine (the hidden config page) is the
+only way to configure `source: "rule"` events. (A pair of Trigger automation
+actions, `trackAdsLead`/`trackAdsPurchase`, previously bridged this gap by
+calling into the same plumbing from `apps/worker/src/trigger/services/action-executor.ts`;
+they were removed as unused. `sendMetaCapiEvent` — see below — remains
+available and is unaffected.)
+
+The rule engine:
 
 - **Attribution gate**: no `ctwaClid` (WhatsApp) or ad-referral (`adId` +
   `source: "ADS"`, Messenger/Instagram) on the contact inbox → silent no-op. This is
   the single mechanism that keeps organic conversations out of the funnel.
 - **Dedup**: `insertIgnoreDuplicate` on a deterministic `sourceEventId`, one
-  conversion per mechanism per event type per contact-inbox per **UTC day**. For
-  triggers the key is `trigger-{triggerId}-{eventType}-inbox-{contactInboxId}-{utcDay}`
-  — `eventType` is part of the key specifically so a single Trigger carrying both
-  actions produces two distinct events instead of the second deduping against the
-  first. A workspace running both a legacy rule and a trigger for the same event
-  type will double-count by design (dedup is per-mechanism, not global).
+  conversion per event type per contact-inbox per **UTC day**.
 - **Delivery**: every insert enqueues the existing `sendConversionEvent` worker job
   (`apps/worker/src/integration/handlers/ads-conversion/send-conversion-event.ts`),
   keyed by the deterministic `ads-conversion-send-{eventId}` job id so retries are
@@ -63,9 +57,9 @@ The rule and trigger producers share:
 The Trigger action `sendMetaCapiEvent` and its `MetaCapiEvent` table are a
 **different, unconditional** pipeline: it sends a manual `LeadSubmitted` CAPI signal
 to Meta with no ad-attribution gate, and never writes `AdsConversionEvent`. Trigger
-workspaces that only used `sendMetaCapiEvent` see nothing on the Ads dashboard funnel
-— that gap is exactly what `trackAdsLead`/`trackAdsPurchase` close. The two pipelines
-share no tables or dedup state and are intentionally kept apart; do not merge them.
+workspaces that only use `sendMetaCapiEvent` see nothing on the Ads dashboard funnel.
+The two pipelines share no tables or dedup state and are intentionally kept apart;
+do not merge them.
 
 ## Where Ads dashboard metrics come from
 

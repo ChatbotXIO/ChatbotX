@@ -5,7 +5,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { FlowsTable } from "@/features/flows/flows-table"
 import { listFlowsRSC } from "@/features/flows/queries"
-import { listFlowsSearchParams } from "@/features/flows/schemas/query"
+import { listFlowsSearchParams } from "@/features/flows/schema/query"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 export default async function FlowsPage(props: {

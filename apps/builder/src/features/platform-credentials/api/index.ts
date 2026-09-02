@@ -1,4 +1,4 @@
-import { platformCredentialsAuthenticatedAPI } from "./authenticated"
+import { platformCredentialsAuthenticatedAPI } from "./private"
 
 export const platformCredentialsAPI = {
   ...platformCredentialsAuthenticatedAPI,

@@ -25,7 +25,7 @@ import { SettingRow } from "@/components/setting-row"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { connectDripAction } from "../actions/connect.action"
 import { disconnectDripAction } from "../actions/disconnect.action"
-import { connectDripSchema } from "../schemas"
+import { connectDripSchema } from "../schema"
 
 export function ManageDrip(props: {
   workspaceId: string

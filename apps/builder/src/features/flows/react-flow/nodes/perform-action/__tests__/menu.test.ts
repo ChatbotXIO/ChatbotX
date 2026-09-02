@@ -20,15 +20,13 @@ describe("perform action SendGrid registration", () => {
 })
 
 describe("perform action ads conversions menu", () => {
-  test("groups sendMetaCapiEvent, trackAdsLead, and trackAdsPurchase under the renamed Ads/Meta Conversions group", () => {
+  test("groups sendMetaCapiEvent under the renamed Ads/Meta Conversions group", () => {
     const adsConversions = performActionMenus(t).find(
       (item) => item.label === "flows.actions.adsConversions",
     )
 
     expect(adsConversions?.children?.map((child) => child.stepType)).toEqual([
       stepTypes.enum.sendMetaCapiEvent,
-      stepTypes.enum.trackAdsLead,
-      stepTypes.enum.trackAdsPurchase,
     ])
     // The old `metaConversions` group label no longer exists — it was
     // renamed, not duplicated alongside a new group.

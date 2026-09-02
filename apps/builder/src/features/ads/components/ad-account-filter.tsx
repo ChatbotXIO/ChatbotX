@@ -19,7 +19,7 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import useSWR from "swr"
 import { client } from "@/lib/orpc/orpc"
-import type { AdsAnalyticsSearchParams } from "../schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "../schema/analytics"
 
 type AdAccountsResponse = Awaited<
   ReturnType<typeof client.adsAPI.listChannelAdAccounts>

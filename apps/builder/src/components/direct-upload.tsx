@@ -29,14 +29,29 @@ import { usePromptVariableOptions } from "@/components/tiptap/use-prompt-variabl
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { useWorkspaceId } from "@/hooks/routing"
 
+// next/image's built-in optimizer rejects SVGs unless `dangerouslyAllowSVG`
+// is enabled (a global CSP trade-off we don't want just for this preview),
+// so render SVG preview sources unoptimized instead — safe since <img>/<Image>
+// never executes embedded scripts.
+const SVG_URL_PATTERN = /\.svg(?:$|\?)/i
+const isSvgUrl = (url: string) => SVG_URL_PATTERN.test(url)
+
 export function UrlVariablePicker({
   onSelect,
+  includeBotFieldVariables = false,
 }: {
   onSelect: (variableName: string) => void
+  // Media message URLs (send image/video/file/audio/card) are deep-resolved
+  // by the worker's `resolveContactVariablesDeep` before send, same as any
+  // other flow-deliverable step field — callers whose URL field actually
+  // ships through that path should opt in.
+  includeBotFieldVariables?: boolean
 }) {
   const t = useTranslations()
   const [isOpen, setIsOpen] = useState(false)
-  const promptVariableOptions = usePromptVariableOptions({})
+  const promptVariableOptions = usePromptVariableOptions({
+    includeBotFieldVariables,
+  })
 
   if (promptVariableOptions.length === 0) {
     return null
@@ -97,6 +112,7 @@ export function DirectUploadOrInsertLink({
   onSuccess,
   showVariablePicker = false,
   useMediaLibrary = false,
+  includeBotFieldVariables = false,
 }: {
   parentName: string
   fileType: FileType
@@ -107,6 +123,9 @@ export function DirectUploadOrInsertLink({
   // Pick an existing workspace file from the Media Library instead of only
   // uploading a new one from the device.
   useMediaLibrary?: boolean
+  // See `UrlVariablePicker`'s doc — only opt in when this URL field is
+  // actually resolved against contact/bot-field variables at send time.
+  includeBotFieldVariables?: boolean
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -269,6 +288,7 @@ export function DirectUploadOrInsertLink({
                     fill={true}
                     sizes="240px"
                     src={publicUrl}
+                    unoptimized={isSvgUrl(publicUrl)}
                   />
                 ) : (
                   <div className="flex w-full min-w-0 items-center gap-2 px-3">
@@ -352,7 +372,10 @@ export function DirectUploadOrInsertLink({
             placeholder={t("fields.url.placeholder")}
           />
           {showVariablePicker && (
-            <UrlVariablePicker onSelect={insertUrlVariable} />
+            <UrlVariablePicker
+              includeBotFieldVariables={includeBotFieldVariables}
+              onSelect={insertUrlVariable}
+            />
           )}
           {onSuccess && (
             <Button

@@ -1,5 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import type { IntegrationOpenAIResource } from "../schemas/request"
+import type { IntegrationOpenAIResource } from "../schema/request"
 
 export const findIntegrationOpenAI = async ({
   workspaceId,

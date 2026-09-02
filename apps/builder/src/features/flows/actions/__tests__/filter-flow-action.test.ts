@@ -1,6 +1,6 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
-import type { FlowWithVersionsResource } from "../../schemas/resource"
+import type { FlowWithVersionsResource } from "../../schema/resource"
 import {
   filterFlowsByStartStepType,
   filterFlowsByTemplateIds,

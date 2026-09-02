@@ -1,7 +1,7 @@
 "use server"
 
 import { z } from "zod"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createMediaLibraryFolder } from "../queries/mutations"
 

@@ -3,28 +3,22 @@
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { PaperclipIcon, XCircleIcon } from "lucide-react"
 import Image from "next/image"
-import { useFormContext, useWatch } from "react-hook-form"
 
-type MediaFileFieldValue = {
-  path: string
-  url?: string
+type MediaFilePreviewValue = {
+  url: string
   mimeType: string
-  name?: string | null
-  size: number
+  name: string
 }
 
-export const MediaFilePreview = () => {
-  const { control, setValue } = useFormContext()
+type MediaFilePreviewProps = {
+  mediaFile: MediaFilePreviewValue
+  onRemove: () => void
+}
 
-  const mediaFile: MediaFileFieldValue | undefined = useWatch({
-    control,
-    name: "mediaFile",
-  })
-
-  if (!mediaFile) {
-    return null
-  }
-
+export const MediaFilePreview = ({
+  mediaFile,
+  onRemove,
+}: MediaFilePreviewProps) => {
   const isImage = mediaFile.mimeType.startsWith("image")
 
   return (
@@ -33,7 +27,7 @@ export const MediaFilePreview = () => {
         <div className="max-w-36 overflow-hidden rounded-md">
           {isImage && mediaFile.url ? (
             <Image
-              alt={mediaFile.name ?? "file"}
+              alt={mediaFile.name}
               className="h-16 w-auto"
               height={64}
               src={mediaFile.url}
@@ -49,9 +43,7 @@ export const MediaFilePreview = () => {
 
         <Button
           className="absolute -end-2 -top-2 h-auto rounded-full bg-white p-0 px-0 dark:bg-neutral-600"
-          onClick={() =>
-            setValue("mediaFile", undefined, { shouldValidate: true })
-          }
+          onClick={onRemove}
           type="button"
           variant="ghost"
         >

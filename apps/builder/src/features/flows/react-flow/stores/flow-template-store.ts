@@ -5,9 +5,9 @@ import {
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListMessengerMessageTemplatesResponse } from "@/features/integration-messenger/message-templates/schema/query"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
-import type { ListMessengerPersonasResponse } from "@/features/personas/schemas/query"
+import type { ListMessengerPersonasResponse } from "@/features/personas/schema/query"
 import { client } from "@/lib/orpc/orpc"
 
 export type FlowTemplateState = {

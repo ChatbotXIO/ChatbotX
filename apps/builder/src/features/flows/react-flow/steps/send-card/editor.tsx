@@ -22,6 +22,7 @@ const SendCardStepEditor = ({ parentName }: SendCardStepEditorProps) => {
       <div className="relative flex flex-col gap-2 bg-secondary px-3 py-2">
         <MediaLibraryOrInsertLink
           fileType="image"
+          includeBotFieldVariables
           parentName={`${parentName}.image`}
           showVariablePicker
           uploadPath={`public/space/${params.workspaceId}/flows/${params.id}/steps/${stepId}`}

@@ -1,3 +1,4 @@
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   and,
   db,
@@ -940,6 +941,13 @@ export const coexistMessengerSync = async (
         ? error.message
         : "Unknown error during Messenger sync"
     logger.error(error, "[coexist] Messenger sync encountered fatal error")
+    // `messenger`, not `whatsapp`: coexist spans three channels and each sync
+    // entry point must report the channel it actually pulled from.
+    await logProviderError({
+      provider: "messenger",
+      workspaceId,
+      error,
+    })
   } finally {
     if (finalStatus !== null) {
       await db

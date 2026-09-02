@@ -61,8 +61,10 @@ function getAppointmentSchedulingCopy(input: {
     : APPOINTMENT_SCHEDULING_COPY.en
 }
 
-const toInstant = (dateTime: string, timezone: string) =>
+const parseCalendarLocalInstant = (dateTime: string, timezone: string) =>
   fromZonedTime(dateTime, timezone)
+
+const parseStoredInstant = (dateTime: string) => new Date(dateTime)
 
 type AvailabilityResponseStep = Extract<
   AppointmentSchedulingStepSchema,
@@ -305,10 +307,8 @@ export async function appointmentScheduling(
           }),
         ])
 
-        const startDate = startValue
-          ? toInstant(startValue, calendar.timezone)
-          : null
-        const endDate = endValue ? toInstant(endValue, calendar.timezone) : null
+        const startDate = startValue ? parseStoredInstant(startValue) : null
+        const endDate = endValue ? parseStoredInstant(endValue) : null
 
         if (
           !(startDate && endDate) ||
@@ -509,8 +509,14 @@ export async function appointmentScheduling(
           workspaceId: conversation.workspaceId,
           id: step.calendarId,
         })
-        const startDate = toInstant(metadata.startDate, calendar.timezone)
-        const endDate = toInstant(metadata.endDate, calendar.timezone)
+        const startDate = parseCalendarLocalInstant(
+          metadata.startDate,
+          calendar.timezone,
+        )
+        const endDate = parseCalendarLocalInstant(
+          metadata.endDate,
+          calendar.timezone,
+        )
 
         if (
           Number.isNaN(startDate.getTime()) ||

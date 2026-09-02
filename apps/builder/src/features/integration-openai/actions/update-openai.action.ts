@@ -8,7 +8,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateOpenAIRequest,
   updateOpenAIRequest,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const updateIntegrationOpenAIAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

@@ -5,6 +5,7 @@ import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { advanceEnrollment } from "@chatbotx.io/sequence-scheduler"
 import type { IntegrationJobSendSequenceFlow } from "@chatbotx.io/worker-config"
 import type { Job } from "bullmq"
+import { isFinalAttempt } from "../../lib/job-attempts"
 import { logger } from "../../lib/logger"
 import { StepExecutorService } from "../../sequence-scheduler/services/step-executor.service"
 import { sendFlowDirect } from "./send-flow-direct"
@@ -194,8 +195,7 @@ export async function handleSendSequenceFlow(
   try {
     await runSendSequenceFlow(data)
   } catch (err) {
-    const maxAttempts = job.opts.attempts ?? 1
-    const isFinalAttempt = job.attemptsMade + 1 >= maxAttempts
+    const finalAttempt = isFinalAttempt(job)
 
     logger.error(
       {
@@ -203,12 +203,12 @@ export async function handleSendSequenceFlow(
         dispatchId: data.dispatchId,
         jobId: job.id,
         attempt: job.attemptsMade + 1,
-        isFinalAttempt,
+        isFinalAttempt: finalAttempt,
       },
       "sendSequenceFlow handler failed",
     )
 
-    if (isFinalAttempt) {
+    if (finalAttempt) {
       await safeTerminalCleanup(data, err, job)
     }
 

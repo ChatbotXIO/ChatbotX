@@ -40,7 +40,7 @@ import {
   connectWhatsappSchema,
   type ManualOnboardingResult,
   type WhatsappPhoneNumberOption,
-} from "../schemas"
+} from "../schema"
 import { WhatsappPhoneVerificationPanel } from "../verification/whatsapp-phone-verification-panel"
 import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 

@@ -148,7 +148,12 @@
     "clone": "Klonla",
     "remove": "Kaldır",
     "restore": "Geri Yükle",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
@@ -347,7 +352,9 @@
       "scheduled": "Planlandı",
       "sent": "Gönderildi",
       "sending": "Gönderiliyor",
-      "cancelled": "İptal Edildi"
+      "cancelled": "İptal Edildi",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Gönderildi",
@@ -433,6 +440,63 @@
       "template": "Şablon",
       "noTemplate": "Şablon yok",
       "integration": "Entegrasyon"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "Sistem Alanları",
       "topicCoupon": "Kupon konusu",
       "customFields": "Özel Alanlar",
+      "botFields": "Bot Alanları",
       "email": "E-posta",
       "sms": "SMS",
       "ctwaAds": "Reklamlar"
@@ -974,7 +1039,10 @@
       "append": "Sona ekle",
       "prepend": "Başa ekle",
       "increase": "Şu kadar artır",
-      "decrease": "Şu kadar azalt"
+      "decrease": "Şu kadar azalt",
+      "groupSystemFields": "Sistem Alanları",
+      "groupCustomFields": "Özel Alanlar",
+      "groupAccountFields": "Bot Alanları"
     },
     "dataCollect": {
       "label": "Veri Toplama"
@@ -1077,8 +1145,8 @@
       "aiDeleteMessageHistory": "{aiName}: Mesaj Geçmişini Sil"
     },
     "steps": {
-      "label": "Adımlar",
-      "placeholder": "Adım seçin"
+      "label": "Düğüm",
+      "placeholder": "Düğüm seçin"
     },
     "folder": {
       "label": "Klasör"
@@ -1357,7 +1425,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Sağlayıcı"
+      "label": "Sağlayıcı",
+      "placeholder": "Sağlayıcı seçin"
     },
     "prompt": {
       "label": "İstem",
@@ -2217,6 +2286,7 @@
       "sendFile": "Dosya Gönder",
       "sendGif": "GIF Gönder",
       "sendImage": "Görsel Gönder",
+      "sendMultipleImages": "Birden Fazla Resim",
       "sendMessage": "Mesaj Gönder",
       "sendNode": "Başka Bir Düğüm Başlat",
       "sendText": "Metin Gönder",
@@ -2261,9 +2331,7 @@
       "export": "Dışa aktar",
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
       "importJsonOnly": "Yalnızca JSON dosyaları",
-      "adsConversions": "Reklamlar ve Meta Conversions",
-      "trackAdsLead": "Reklam potansiyel müşterisini izle",
-      "trackAdsPurchase": "Reklam satın alımını izle"
+      "adsConversions": "Reklamlar ve Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2300,6 +2368,10 @@
       "addSlide": "Kart ekle",
       "removeSlide": "Kartı kaldır",
       "whatsappLinkButtonIgnored": "WhatsApp'ta bu kartın bağlantısı çalışmayacaktır: bağlantı düğmesi olan bir kartta başka düğme bulunamaz. Bunun yerine yanıt olarak gönderilecektir."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Resmi kaldır",
+      "selectImage": "Görselleri seç"
     },
     "additionalSteps": "Ek adımlar",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "{feature} bağlantısını kesmek istediğinizden emin misiniz?",
     "disconnectSuccess": "{feature} bağlantısı başarıyla kesildi",
     "reply": "Yanıtla",
+    "privateReply": "Özel yanıt",
     "viewMessage": "Mesajı görüntüle",
     "changeLikeState": "Beğeni durumunu değiştir",
     "changeHideState": "Gizleme durumunu değiştir",
@@ -2969,6 +3042,9 @@
     "duplicatedSuccess": "{feature} başarıyla çoğaltıldı",
     "duplicateConfirmation": "Bu, {feature} öğenizin bir kopyasını oluşturacaktır.",
     "deleteFeature": "{feature} Sil",
+    "resetFeature": "{feature} sıfırla",
+    "resetConfirmation": "Bu, seçilen {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
+    "resetSuccess": "{feature} başarıyla sıfırlandı",
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir.",
     "addFeature": "{feature} Ekle",
     "signOutConfirmation": "Oturumu kapatmak istediğinizden emin misiniz?",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "{feature} başarıyla etkinleştirildi",
     "userInactive": "Kullanıcı 7 günden fazla süredir hareketsiz",
     "messagingWindowClosed": "İzin verilen pencere dışında mesaj gönderilemez",
-    "sendHumanAgentTag": "HUMAN_AGENT etiketiyle bir mesaj gönder",
-    "warning": "Uyarı!",
-    "humanAgentWarningDescription": "Bir kullanıcının mesajına, sorunun 24 saat içinde makul şekilde çözülemediği durumlarda 7 gün içinde yanıt verebilirsiniz. Örnekler arasında hafta sonları, tatiller veya tamamlanması bir günden fazla süren durumlar yer alır. Bu seçeneği başka herhangi bir nedenle kullanmayın; aksi takdirde Facebook Sayfanız veya Instagram hesabınız risk altına girebilir. Emin değilseniz devam etmeyin.",
     "humanAgentWindowExpired": "Mesajlaşma penceresinin süresi doldu. Görüşmenin yeniden açılabilmesi için kişinin önce mesaj göndermesi gerekir.",
     "restoreVersionSuccess": "Akış seçilen sürüme geri yüklendi",
     "revertToPublishedSuccess": "Taslak, yayınlanmış sürüme geri döndürüldü",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "Facebook Sayfası bulunamadı",
       "noPagesDescription": "Bir İşletme Yöneticisi içindeki sayfalar, bağlantı sırasında İşletme Yöneticisi erişimi gerektirir. Messenger'ı yeniden bağlayın ve istenen tüm izinleri verin.",
+      "noConnectablePagesTitle": "Bağlanabilecek Sayfa yok",
+      "noConnectablePagesDescription": "Bu Sayfanın yöneticisi değilsiniz",
       "bmLookupFailedTitle": "İşletme Yöneticisi sayfaları eksik olabilir",
       "bmLookupFailedDescription": "Bir İşletme Yöneticisi üzerinden yönetilen sayfaların listelenebilmesi için Messenger'ı yeniden bağlayın ve İşletme Yöneticisi erişimi verin.",
       "alreadyConnectedNote": "Bu sayfa zaten bağlı",
-      "notAdminNote": "Bağlanmak için sayfada tam yönetici izni gereklidir",
+      "notAdminNote": "Bu Sayfanın yöneticisi değilsiniz",
       "tryAgain": "Yeniden bağlanmayı dene"
     },
     "title": "Facebook Messenger",
@@ -3783,9 +3858,7 @@
       "startAnotherFlow": "Başka Bir Akış Başlat",
       "notifyAdmins": "Yöneticileri Bilgilendir",
       "transferConversationToHuman": "Görüşmeyi İnsana Aktar",
-      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder",
-      "trackAdsLead": "Reklam potansiyel müşterisini izle",
-      "trackAdsPurchase": "Reklam satın alımını izle"
+      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder"
     },
     "triggerGoesOff": "Tetikleyici devreye girer",
     "before": "Önce",
@@ -3797,7 +3870,8 @@
     "at": "Şu anda"
   },
   "errorLogs": {
-    "title": "Hata Günlükleri"
+    "title": "Hata Günlükleri",
+    "unknownContact": "Bilinmeyen kişi"
   },
   "developerAccessToken": {
     "title": "API Erişim Token'ı",
@@ -4325,6 +4399,21 @@
     "noEligiblePages": "Uygun sayfa yok. Potansiyel müşteri erişimi vermek için \"Yeni Ekle\"yi kullanın.",
     "duplicateError": "Bu sayfa ve form için zaten bir otomasyon mevcut.",
     "subscribeError": "Bu sayfa Facebook potansiyel müşteri bildirimlerine abone edilemediğinden otomasyon oluşturulamadı. Sayfayı \"Yeni Ekle\" ile yeniden bağlayıp tekrar deneyin."
+  },
+  "clickToMessageAds": {
+    "title": "Click-to-Message Reklamları",
+    "description": "Reklamlar, kişileri doğrudan Messenger, Instagram veya WhatsApp'taki bir konuşmaya yönlendirir.",
+    "empty": {
+      "title": "Bu kanal için bağlı bir hesap yok",
+      "description": "Önce bir kanal hesabı bağlayın, ardından reklam oluşturmak için buraya geri dönün.",
+      "cta": "Kanal ayarlarına git"
+    },
+    "movedNote": {
+      "title": "Reklamlar Araçlar'a taşındı",
+      "description": "Click-to-Message reklamlarını Click-to-Message Reklamları aracından oluşturun ve yönetin.",
+      "cta": "Click-to-Message Reklamları'nı aç"
+    },
+    "dashboardCta": "Reklamlar panosunda görüntüle"
   },
   "ecommerce": {
     "title": "E-ticaret",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Bağlan"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Yalnızca WhatsApp click-to-WhatsApp reklamı veya Meta reklam yönlendirmesi ile ilişkilendirilmiş kişiler için dönüşüm kaydeder. Diğer kişiler için etkisi yoktur."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Tüm olasılıkların toplamı: {value}%",
       "loseProbability": "Kaybetme olasılığı: {value}%",
       "winProbability": "Kazanma olasılığı: {value}%",
-      "newPrize": "Yeni Ödül"
+      "newPrize": "Yeni Ödül",
+      "prizeNameCustomFieldLabel": "Ödül adını Özel Alan'a kaydet"
     },
     "prizeItemDialog": {
       "prizeTitle": "Ödülü Düzenle",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Başlık",
       "loseImageDescription": "Önerilen boyut 120x120px",
       "quantityLabel": "Ödül Miktarı",
-      "quantityDescription": "Bu ödülün hâlâ kaç kez kazanılabileceği; her kazanımda 1 azalır. Sınırsız için boş bırakın.",
-      "sendMessage": "Oyuncu kazanamadığında bir mesaj gönder",
-      "sendWinMessage": "Ödülü kazanan kişiye mesaj gönder",
-      "messageMode": "Mesaj türü",
-      "messageModeText": "Metin",
-      "messageModeFlow": "Akış",
-      "messageText": "Mesaj"
+      "quantityDescription": "Bu ödülün hâlâ kaç kez kazanılabileceği; her kazanımda 1 azalır. Sınırsız için boş bırakın."
+    },
+    "outcomeMessage": {
+      "enableWin": "Ödülü kazanan kişiye mesaj gönder",
+      "enableLose": "Oyuncu kazanamadığında bir mesaj gönder",
+      "mode": "Mesaj türü",
+      "modeText": "Metin",
+      "modeFlow": "Akış",
+      "text": "Mesaj"
     },
     "winningMessageDialog": {
       "title": "Kazanma Mesajı Ayarları",
       "titleLabel": "Başlık",
+      "prizeNameHint": "Ödül adını eklemek için başlık ve açıklamada '{{prize_name}}' kullanabilirsiniz.",
       "acceptButtonText": "Kabul Et Buton Metni",
       "shareButtonText": "Paylaş Buton Metni",
       "shareButtonDescription": "Paylaş Buton Açıklaması"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Arkadaşlarla paylaş",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Bu oyun türü için ayrıntılı önizleme yakında sunulacak",
-      "rules": "Kurallar"
+      "luckyWheelHeader": "ŞANS ÇARKI",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Bu oyun türü için ayrıntılı önizleme yakında sunulacak"
     },
     "form": {
       "generalSettingsTitle": "Genel Ayar",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Ödül Ayarları"
     },
     "generalSettings": {
+      "showName": "Görünür",
       "playedAt": "Oynanma Zamanı",
       "rulesDescription": "Kural Açıklaması",
       "openerTags": "Oyun bağlantısını açan kişileri etiketle",
@@ -5494,7 +5586,8 @@
     "recent": "Son kullanılanlar",
     "favourite": "Favori",
     "upload": "Yükle",
-    "done": "Bitti",
+    "select": "Seç",
+    "bulkSelect": "Toplu seçim",
     "deleteFolder": "Klasörü sil",
     "renameFolder": "Klasörü yeniden adlandır",
     "noFiles": "Dosya bulunamadı",
@@ -5698,5 +5791,8 @@
         "last_7d": "Son 7 gün"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bot Alanları"
   }
 }

@@ -292,7 +292,10 @@
       "append": "追加到末尾",
       "prepend": "加入到開頭",
       "increase": "增加",
-      "decrease": "減少"
+      "decrease": "減少",
+      "groupSystemFields": "系統欄位",
+      "groupCustomFields": "自訂欄位",
+      "groupAccountFields": "機器人欄位"
     },
     "dataCollect": {
       "label": "資料收集"
@@ -389,8 +392,8 @@
       "aiDeleteMessageHistory": "{aiName}：刪除訊息歷史記錄"
     },
     "steps": {
-      "label": "步驟",
-      "placeholder": "選擇步驟"
+      "label": "節點",
+      "placeholder": "選擇節點"
     },
     "folder": {
       "label": "資料夾"
@@ -661,7 +664,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "提供商"
+      "label": "提供商",
+      "placeholder": "選擇提供商"
     },
     "prompt": {
       "label": "提示",
@@ -1453,6 +1457,7 @@
     "disconnectFeatureDescription": "您確定要中斷 {feature} 的連線嗎？",
     "disconnectSuccess": "{feature} 已中斷連線",
     "reply": "回覆",
+    "privateReply": "私訊回覆",
     "viewMessage": "檢視訊息",
     "changeLikeState": "更改類似狀態",
     "changeHideState": "更改隱藏狀態",
@@ -1494,6 +1499,9 @@
     "duplicatedSuccess": "{feature} 複製成功",
     "duplicateConfirmation": "這會建立 {feature} 的副本。",
     "deleteFeature": "刪除 {feature}",
+    "resetFeature": "重置{feature}",
+    "resetConfirmation": "這將清空所選{feature}的值。\n此操作無法復原。",
+    "resetSuccess": "{feature}重置成功",
     "deleteConfirmation": "您確定嗎？\n此操作無法復原。\n這將從我們的伺服器永久刪除您的 {feature}。",
     "addFeature": "新增 {feature}",
     "signOutConfirmation": "您確定要退出嗎？",
@@ -1528,9 +1536,6 @@
     "enableSuccess": "{feature} 啟用成功",
     "userInactive": "使用者已閒置超過 7 天",
     "messagingWindowClosed": "訊息無法在允許的視窗之外傳送",
-    "sendHumanAgentTag": "傳送一封帶有 HUMAN_AGENT 標籤的訊息",
-    "warning": "警告！",
-    "humanAgentWarningDescription": "只有在問題無法於 24 小時內合理解決時，您才可以在 7 天內回覆使用者的訊息。例如週末、假日，或需要超過一天才能完成的案例。請勿因其他原因使用此選項，否則可能讓您的 Facebook 粉專或 Instagram 帳號面臨風險。如果您不確定，請不要繼續。",
     "humanAgentWindowExpired": "訊息傳遞視窗已過期。聯絡人必須先傳送訊息才能重新開始對話。",
     "restoreVersionSuccess": "流程已還原為所選版本",
     "revertToPublishedSuccess": "草稿已還原為已發布版本",
@@ -1735,7 +1740,12 @@
     "clone": "複製",
     "remove": "移除",
     "restore": "還原",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "您需要是工作區的超級管理員才能執行此操作。"
@@ -1934,7 +1944,9 @@
       "scheduled": "已安排",
       "sent": "已傳送",
       "sending": "正在傳送",
-      "cancelled": "已取消"
+      "cancelled": "已取消",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "已傳送",
@@ -2020,6 +2032,63 @@
       "template": "範本",
       "noTemplate": "無範本",
       "integration": "整合"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -2159,6 +2228,7 @@
       "systemFields": "系統欄位",
       "topicCoupon": "主題優惠券",
       "customFields": "自訂欄位",
+      "botFields": "機器人欄位",
       "email": "電子郵件",
       "sms": "簡訊",
       "ctwaAds": "廣告"
@@ -2376,6 +2446,7 @@
       "sendFile": "傳送檔案",
       "sendGif": "傳送 GIF",
       "sendImage": "傳送影像",
+      "sendMultipleImages": "多張圖片",
       "sendMessage": "傳送訊息",
       "sendNode": "啟動另一個節點",
       "sendText": "傳送文字",
@@ -2420,9 +2491,7 @@
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
       "importJsonOnly": "僅限 JSON 檔案",
-      "adsConversions": "廣告與 Meta Conversions",
-      "trackAdsLead": "追蹤廣告名單",
-      "trackAdsPurchase": "追蹤廣告購買"
+      "adsConversions": "廣告與 Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2459,6 +2528,10 @@
       "addSlide": "新增幻燈片",
       "removeSlide": "移除幻燈片",
       "whatsappLinkButtonIgnored": "在WhatsApp上，此卡片的連結不起作用：帶有連結按鈕的卡片不能有其他按鈕。它將作為回復傳送。"
+    },
+    "sendMultipleImages": {
+      "removeImage": "刪除圖片",
+      "selectImage": "選擇圖片"
     },
     "additionalSteps": "附加步驟",
     "delayType": {
@@ -3120,10 +3193,12 @@
     "selectPage": {
       "noPagesTitle": "找不到Facebook 頁面",
       "noPagesDescription": "商務管理平台內的頁面需要在連線期間存取商務管理平台。重新連線Messenger並授予所有請求的權限。",
+      "noConnectablePagesTitle": "沒有可連結的頁面",
+      "noConnectablePagesDescription": "您不是此頁面的管理員",
       "bmLookupFailedTitle": "業務管理平台頁面可能遺失",
       "bmLookupFailedDescription": "重新連接Messenger 並授予商務管理平台存取權限，以便可以列出透過商務管理平台管理的頁面。",
       "alreadyConnectedNote": "該頁面已連接",
-      "notAdminNote": "需要頁面的完全管理員權限才能連接",
+      "notAdminNote": "您不是此頁面的管理員",
       "tryAgain": "嘗試重新連接"
     },
     "title": "Facebook Messenger",
@@ -3816,9 +3891,7 @@
       "startAnotherFlow": "開始另一個流程",
       "notifyAdmins": "通知管理員",
       "transferConversationToHuman": "將對話轉移給人類",
-      "sendMetaCapiEvent": "傳送 Meta CAPI 事件",
-      "trackAdsLead": "追蹤廣告名單",
-      "trackAdsPurchase": "追蹤廣告購買"
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
     },
     "triggerGoesOff": "觸發器熄滅",
     "before": "之前",
@@ -3830,7 +3903,8 @@
     "at": "在"
   },
   "errorLogs": {
-    "title": "錯誤日誌"
+    "title": "錯誤日誌",
+    "unknownContact": "未知聯絡人"
   },
   "developerAccessToken": {
     "title": "API 存取權杖",
@@ -4358,6 +4432,21 @@
     "noEligiblePages": "沒有符合條件的頁面。使用「新增新建」授予潛在客戶存取權限。",
     "duplicateError": "此頁面和表單已存在自動化。",
     "subscribeError": "無法將此頁面訂閱至 Facebook 潛在客戶通知，因此未建立自動化。使用「新增 New」重新連接頁面並重試。"
+  },
+  "clickToMessageAds": {
+    "title": "Click-to-Message廣告",
+    "description": "廣告會將使用者直接引導至 Messenger、Instagram 或 WhatsApp 上的對話。",
+    "empty": {
+      "title": "此頻道尚未連接帳號",
+      "description": "請先連接一個頻道帳號，然後回到這裡建立廣告。",
+      "cta": "前往頻道設定"
+    },
+    "movedNote": {
+      "title": "廣告已移至工具",
+      "description": "在 Click-to-Message廣告工具 中建立和管理 Click-to-Message 廣告。",
+      "cta": "開啟Click-to-Message廣告"
+    },
+    "dashboardCta": "在廣告儀表板中檢視"
   },
   "ecommerce": {
     "title": "電子商務",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "連接"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "僅會為具有 WhatsApp 點擊式 WhatsApp 廣告或 Meta 廣告推薦歸因的聯絡人記錄轉換。對其他聯絡人沒有影響。"
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "所有機率總和：{value}%",
       "loseProbability": "未中獎機率：{value}%",
       "winProbability": "中獎機率：{value}%",
-      "newPrize": "新增獎項"
+      "newPrize": "新增獎項",
+      "prizeNameCustomFieldLabel": "將獎品名稱儲存到自訂欄位"
     },
     "prizeItemDialog": {
       "prizeTitle": "編輯獎項",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "標題",
       "loseImageDescription": "建議尺寸 120x120px",
       "quantityLabel": "獎品數量",
-      "quantityDescription": "此獎品還可被中獎的次數；每次中獎減少 1。留空表示不限制。",
-      "sendMessage": "玩家未中獎時傳送訊息",
-      "sendWinMessage": "向獲得該獎品的中獎者傳送訊息",
-      "messageMode": "訊息類型",
-      "messageModeText": "文字",
-      "messageModeFlow": "流程",
-      "messageText": "訊息內容"
+      "quantityDescription": "此獎品還可被中獎的次數；每次中獎減少 1。留空表示不限制。"
+    },
+    "outcomeMessage": {
+      "enableWin": "向獲得該獎品的中獎者傳送訊息",
+      "enableLose": "玩家未中獎時傳送訊息",
+      "mode": "訊息類型",
+      "modeText": "文字",
+      "modeFlow": "流程",
+      "text": "訊息內容"
     },
     "winningMessageDialog": {
       "title": "中獎訊息設定",
       "titleLabel": "標題",
+      "prizeNameHint": "您可以在標題和說明中使用 '{{prize_name}}' 來插入獎品名稱。",
       "acceptButtonText": "接受按鈕文字",
       "shareButtonText": "分享按鈕文字",
       "shareButtonDescription": "分享按鈕說明"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "與朋友分享",
       "jackpotHeader": "拉霸機",
       "jackpotBanner": "拉霸機",
-      "comingSoon": "此遊戲類型的詳細預覽即將推出",
-      "rules": "規則"
+      "luckyWheelHeader": "幸運轉盤",
+      "gashaponHeader": "扭蛋",
+      "comingSoon": "此遊戲類型的詳細預覽即將推出"
     },
     "form": {
       "generalSettingsTitle": "一般設定",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "獎項設定"
     },
     "generalSettings": {
+      "showName": "可見",
       "playedAt": "遊玩時間",
       "rulesDescription": "規則說明",
       "openerTags": "為開啟遊戲連結的聯絡人加上標籤",
@@ -5494,7 +5586,8 @@
     "recent": "最近",
     "favourite": "收藏",
     "upload": "上傳",
-    "done": "完成",
+    "select": "選取",
+    "bulkSelect": "批次選取",
     "deleteFolder": "刪除資料夾",
     "renameFolder": "重新命名資料夾",
     "noFiles": "找不到檔案",
@@ -5698,5 +5791,8 @@
         "last_7d": "最近7天"
       }
     }
+  },
+  "accountFields": {
+    "title": "機器人欄位"
   }
 }

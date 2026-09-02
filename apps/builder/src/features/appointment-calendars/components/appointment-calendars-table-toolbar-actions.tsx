@@ -5,7 +5,7 @@ import type { Table } from "@tanstack/react-table"
 import { Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import type { AppointmentCalendarListItem } from "../schemas/resource"
+import type { AppointmentCalendarListItem } from "../schema/resource"
 import { CreateAppointmentCalendarDialog } from "./create-appointment-calendar-dialog"
 import { DeleteAppointmentCalendarsDialog } from "./delete-appointment-calendars-dialog"
 

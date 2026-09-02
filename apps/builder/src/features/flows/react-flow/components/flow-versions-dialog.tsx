@@ -15,7 +15,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import useSWR from "swr"
-import type { FlowResource } from "@/features/flows/schemas/resource"
+import type { FlowResource } from "@/features/flows/schema/resource"
 import { client } from "@/lib/orpc/orpc"
 import { restoreFlowVersionAction } from "../../actions/restore-flow-version-action"
 

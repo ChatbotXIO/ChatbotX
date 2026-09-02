@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   aiFindBy: vi.fn(),
+  logProviderError: vi.fn(async () => undefined),
   createAIModelInstance: vi.fn(),
   generateObject: vi.fn(),
   loggerError: vi.fn(),
@@ -11,6 +12,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@chatbotx.io/ai", () => ({
   aiTimeouts: { aiTotal: 30_000 },
+}))
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: mocks.logProviderError,
 }))
 vi.mock("@chatbotx.io/ai/server", () => ({
   aiIntegrationService: { findBy: mocks.aiFindBy },
@@ -50,7 +54,7 @@ const { handleAIExtractData } = await import(
   "../src/integration/handlers/extract-data/index"
 )
 
-const makeProps = () =>
+const makeProps = (provider = "openai") =>
   ({
     conversation: {
       id: "conv-1",
@@ -60,7 +64,7 @@ const makeProps = () =>
     step: {
       id: "step-1",
       stepType: "aiExtractData",
-      provider: "openai",
+      provider,
       model: "gpt-test",
       inputType: "text",
       inputFieldId: "message body",
@@ -117,5 +121,19 @@ describe("handleAIExtractData", () => {
       status: "error",
       result: null,
     })
+  })
+
+  // The step knows which vendor it ran against; recording every AI failure as
+  // OpenAI is the mis-attribution `ErrorLog` exists to avoid.
+  test("attributes the failure to the vendor the step actually ran against", async () => {
+    await handleAIExtractData(makeProps("claude"))
+
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "claude",
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      }),
+    )
   })
 })

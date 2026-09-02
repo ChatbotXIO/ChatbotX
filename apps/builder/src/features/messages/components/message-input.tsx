@@ -1,17 +1,6 @@
 "use client"
 
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
@@ -20,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
   ImageIcon,
+  LockIcon,
   PaperclipIcon,
   ReplyIcon,
   SendHorizonalIcon,
@@ -44,6 +34,7 @@ import {
 } from "@/features/conversations/utils/bot-state"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
+import type { ListFilesResponse } from "@/features/media-library/schema"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
@@ -68,12 +59,24 @@ const CHANNEL_WINDOW_SECONDS: Record<ChannelType, number> = {
 
 const MESSENGER_HUMAN_AGENT_WINDOW_SECONDS = 7 * 24 * 60 * 60
 
+// Media Library selection metadata kept for preview purposes only. The form
+// field only carries `mediaFileIds` (the DB ids sent to the server) — the
+// action submits the resolver-parsed form values directly, so display-only
+// fields like url/name can't live on the form.
+type SelectedMediaFile = Pick<
+  ListFilesResponse["data"][number],
+  "id" | "url" | "mimeType" | "name"
+>
+
 export const MessageInput = () => {
   const t = useTranslations()
   const session = authClient.useSession()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
+  const [selectedMediaFiles, setSelectedMediaFiles] = useState<
+    SelectedMediaFile[]
+  >([])
 
   const {
     appendMessage,
@@ -82,6 +85,7 @@ export const MessageInput = () => {
     updateConversation,
     replyToMessage,
     setReplyToMessage,
+    isPrivateReply,
     messages,
   } = useChatStore((state) => state)
 
@@ -136,12 +140,19 @@ export const MessageInput = () => {
       {
         actionProps: {
           onExecute: ({ input }: { input: unknown }) => {
-            // try to push raw message to store
+            // try to push raw message to store — skipped for a private
+            // reply, since that message belongs to the contact's DM
+            // conversation, not whichever post/comment conversation is
+            // currently open here.
             if (
               typeof input === "object" &&
               input !== null &&
               "text" in input &&
-              input.text
+              input.text &&
+              !(
+                "isPrivateReply" in input &&
+                (input as { isPrivateReply?: boolean }).isPrivateReply
+              )
             ) {
               const typedInput = input as { text: string; clientId: string }
               appendMessage({
@@ -168,6 +179,7 @@ export const MessageInput = () => {
             }
 
             form.reset()
+            setSelectedMediaFiles([])
             textareaRef.current?.focus()
           },
           onSuccess: () => {
@@ -177,6 +189,7 @@ export const MessageInput = () => {
             setReplyToMessage(null)
             textareaRef.current?.focus()
             resetFormAndAction()
+            setSelectedMediaFiles([])
             form.setValue("clientId", createId())
           },
         },
@@ -184,10 +197,11 @@ export const MessageInput = () => {
           defaultValues: {
             text: "",
             files: [],
-            mediaFile: undefined,
+            mediaFileIds: undefined,
             clientId: createId(),
             replyToMessageId: undefined,
             replyToMessageCreatedAt: undefined,
+            isPrivateReply: undefined,
           },
         },
         errorMapProps: {},
@@ -201,10 +215,11 @@ export const MessageInput = () => {
       "replyToMessageCreatedAt",
       replyToMessage?.createdAt ?? undefined,
     )
+    form.setValue("isPrivateReply", replyToMessage ? isPrivateReply : undefined)
     if (replyToMessage) {
       textareaRef.current?.focus()
     }
-  }, [form, replyToMessage])
+  }, [form, replyToMessage, isPrivateReply])
 
   // Memoize emoji selection handler
   const setContent = useCallback(
@@ -268,13 +283,6 @@ export const MessageInput = () => {
   const isInstagramPostComment =
     conversation?.contactInboxes[0]?.channel === "instagram" &&
     conversation?.sourceId != null
-
-  const [isHumanAgentUnlocked, setIsHumanAgentUnlocked] = useState(false)
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset unlock state when conversation changes
-  useEffect(() => {
-    setIsHumanAgentUnlocked(false)
-  }, [activeConversationId])
 
   const channel = conversation?.contactInboxes[0]?.channel
 
@@ -344,11 +352,6 @@ export const MessageInput = () => {
     return Date.now() - lastIncomingTs > windowSeconds * 1000
   }, [channel, lastIncomingTs, clockTick])
 
-  const isMessengerWindowClosed = useMemo(
-    () => isMetaDm && isWindowExpired,
-    [isMetaDm, isWindowExpired],
-  )
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick forces recompute at window boundary
   const isMessengerHumanAgentWindowExpired = useMemo(() => {
     if (!(isMetaDm && lastIncomingTs)) {
@@ -365,16 +368,12 @@ export const MessageInput = () => {
   )
 
   // Check if a media file (device upload or Media Library pick) is attached
-  const mediaFile = useWatch({
-    control: form.control,
-    name: "mediaFile",
-  })
   const files = useWatch({
     control: form.control,
     name: "files",
   })
   const hasFiles =
-    Boolean(mediaFile) || (Array.isArray(files) && files.length > 0)
+    selectedMediaFiles.length > 0 || (Array.isArray(files) && files.length > 0)
 
   // Early return if no active conversation
   if (!activeConversationId) {
@@ -388,43 +387,6 @@ export const MessageInput = () => {
           <p className="text-muted-foreground text-sm">
             {t("messages.humanAgentWindowExpired")}
           </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (isMessengerWindowClosed && !isHumanAgentUnlocked) {
-    return (
-      <div className="m-3 rounded-xl border pt-2">
-        <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            {t("messages.messagingWindowClosed")}
-          </p>
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button size="sm" variant="outline">
-                  {t("messages.sendHumanAgentTag")}
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("messages.warning")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("messages.humanAgentWarningDescription")}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => setIsHumanAgentUnlocked(true)}
-                >
-                  {t("actions.continue")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </div>
     )
@@ -455,8 +417,17 @@ export const MessageInput = () => {
         >
           {replyToMessage && (
             <div className="mx-2.5 mb-1 flex items-start gap-2 rounded-lg border-primary bg-muted px-3 py-2 text-sm">
-              <ReplyIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              {isPrivateReply ? (
+                <LockIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              ) : (
+                <ReplyIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              )}
               <span className="flex-1 truncate text-muted-foreground">
+                {isPrivateReply && (
+                  <span className="me-1 font-medium text-foreground">
+                    {t("messages.privateReply")}:
+                  </span>
+                )}
                 {replyToMessage.text || t("messages.facebookComment")}
               </span>
               <Button
@@ -496,7 +467,33 @@ export const MessageInput = () => {
           {!isInstagramPostComment && (
             <div className="px-2">
               <FileUploadPreview ref={fileUploadRef} />
-              <MediaFilePreview />
+              {selectedMediaFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedMediaFiles.map((mediaFile) => (
+                    <MediaFilePreview
+                      key={mediaFile.id}
+                      mediaFile={mediaFile}
+                      onRemove={() => {
+                        setSelectedMediaFiles((current) => {
+                          const next = current.filter(
+                            (f) => f.id !== mediaFile.id,
+                          )
+                          if (next.length > 0) {
+                            form.setValue(
+                              "mediaFileIds",
+                              next.map((f) => f.id),
+                              { shouldValidate: true },
+                            )
+                          } else {
+                            form.resetField("mediaFileIds")
+                          }
+                          return next
+                        })
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
           <div className="flex w-full items-center ps-2.5">
@@ -516,7 +513,7 @@ export const MessageInput = () => {
                   <Button
                     aria-label="Attach file"
                     className="px-2 py-1.5 [&_svg]:size-5"
-                    disabled={Boolean(mediaFile)}
+                    disabled={selectedMediaFiles.length > 0}
                     onClick={onClickAttachment}
                     type="button"
                     variant="ghost"
@@ -524,16 +521,18 @@ export const MessageInput = () => {
                     <PaperclipIcon aria-hidden="true" />
                   </Button>
                   <MediaLibraryTrigger
+                    multiple={true}
                     onSelect={(file) => {
+                      setSelectedMediaFiles([file])
+                      form.setValue("mediaFileIds", [file.id], {
+                        shouldValidate: true,
+                      })
+                    }}
+                    onSelectMultiple={(pickedFiles) => {
+                      setSelectedMediaFiles(pickedFiles)
                       form.setValue(
-                        "mediaFile",
-                        {
-                          path: file.path,
-                          url: file.url,
-                          mimeType: file.mimeType,
-                          name: file.name,
-                          size: file.size,
-                        },
+                        "mediaFileIds",
+                        pickedFiles.map((file) => file.id),
                         { shouldValidate: true },
                       )
                     }}

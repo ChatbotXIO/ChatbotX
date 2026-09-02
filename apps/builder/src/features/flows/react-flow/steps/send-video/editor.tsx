@@ -18,6 +18,7 @@ const SendVideoStepEditor = (props: SendVideoStepEditorProps) => {
       <div className="bg-secondary px-4 py-2 pt-3">
         <MediaLibraryOrInsertLink
           fileType="video"
+          includeBotFieldVariables
           parentName={parentName}
           showVariablePicker
           uploadPath={`public/space/${params.workspaceId}/flows/${params.id}/steps/${stepId}`}

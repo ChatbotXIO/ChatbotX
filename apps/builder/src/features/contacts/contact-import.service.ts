@@ -7,7 +7,7 @@ import { importModel } from "@chatbotx.io/database/schema"
 import { getImportEntry, inferImportFormat } from "@chatbotx.io/imports"
 import { createId } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
-import type { ImportContactsRequest } from "./schemas/contact-import"
+import type { ImportContactsRequest } from "./schema/contact-import"
 
 export const contactImportService = {
   async startImport(

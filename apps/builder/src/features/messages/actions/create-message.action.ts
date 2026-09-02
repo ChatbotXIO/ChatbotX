@@ -2,6 +2,7 @@
 
 import {
   contactInboxService,
+  conversationService,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -29,7 +30,10 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { findMediaLibraryFileByPath } from "@/features/media-library/queries/files"
+import {
+  findMediaLibraryFileById,
+  findMediaLibraryFileByPath,
+} from "@/features/media-library/queries/files"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageRequest,
@@ -76,6 +80,41 @@ export const createMessageAction = workspaceActionClient
     })
   })
 
+/**
+ * Copies a Media Library file into a conversation-scoped path instead of
+ * reusing the Media Library file's own S3 key: attachments must outlive the
+ * Media Library file they were picked from, since deleting that file (or its
+ * folder) later must not break an already-sent message.
+ */
+type CopyableMediaLibraryFile = {
+  path: string
+  name: string
+  mimeType: string
+  size: number
+}
+
+const copyMediaLibraryFileToConversationAttachment = async (props: {
+  mediaLibraryFile: CopyableMediaLibraryFile
+  workspaceId: string
+  conversationId: string
+}): Promise<UploadedFile> => {
+  const { mediaLibraryFile, workspaceId, conversationId } = props
+
+  const attachmentPath = pathJoin(
+    `public/space/${workspaceId}/conversations/${conversationId}`,
+    createId(),
+  )
+  await uploader.copyObject(mediaLibraryFile.path, attachmentPath)
+
+  return {
+    name: mediaLibraryFile.name,
+    mimeType: mediaLibraryFile.mimeType,
+    originPath: attachmentPath,
+    size: mediaLibraryFile.size,
+    fileType: guessFileTypeFromMimeType(mediaLibraryFile.mimeType),
+  }
+}
+
 export const createMessage = async (props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -102,13 +141,27 @@ export const createMessage = async (props: {
     workspaceId: conversation.workspaceId,
   })
 
+  // A private reply is a DM to the commenter, not a reply within the
+  // post/comment thread — Meta delivers it to the contact's inbox, not the
+  // post. Route the outgoing message row (and its conversation-scoped side
+  // effects below) to the contact's DM conversation instead of whichever
+  // conversation is currently open, creating it if this is their first DM.
+  const targetConversation = parsedInput.isPrivateReply
+    ? await conversationService.findOrCreate({
+        workspaceId: conversation.workspaceId,
+        contactId: contactInbox.contactId,
+        sourceId: null,
+      })
+    : conversation
+
   let uploadedFiles: UploadedFile[] = []
   if ("files" in parsedInput && parsedInput.files.length > 0) {
     uploadedFiles = await uploadMultipleFiles(
       parsedInput.files,
-      `public/space/${conversation.workspaceId}/conversations/${conversation.id}`,
+      `public/space/${conversation.workspaceId}/conversations/${targetConversation.id}`,
     )
   } else if ("mediaFile" in parsedInput && parsedInput.mediaFile) {
+    // Legacy path-based selection, still used by public oRPC APIs.
     const mediaLibraryFile = await findMediaLibraryFileByPath({
       workspaceId: conversation.workspaceId,
       path: parsedInput.mediaFile.path,
@@ -117,25 +170,47 @@ export const createMessage = async (props: {
       throw new ChatbotXException("Media library file not found")
     }
 
-    // Copy into a conversation-scoped path instead of reusing the Media
-    // Library file's own S3 key: attachments must outlive the Media Library
-    // file they were picked from, since deleting that file (or its folder)
-    // later must not break an already-sent message.
-    const attachmentPath = pathJoin(
-      `public/space/${conversation.workspaceId}/conversations/${conversation.id}`,
-      createId(),
-    )
-    await uploader.copyObject(mediaLibraryFile.path, attachmentPath)
+    uploadedFiles = [
+      await copyMediaLibraryFileToConversationAttachment({
+        mediaLibraryFile,
+        workspaceId: conversation.workspaceId,
+        conversationId: targetConversation.id,
+      }),
+    ]
+  } else if ("mediaFileId" in parsedInput && parsedInput.mediaFileId) {
+    const mediaLibraryFile = await findMediaLibraryFileById({
+      workspaceId: conversation.workspaceId,
+      id: parsedInput.mediaFileId,
+    })
+    if (!mediaLibraryFile) {
+      throw new ChatbotXException("Media library file not found")
+    }
 
     uploadedFiles = [
-      {
-        name: mediaLibraryFile.name,
-        mimeType: mediaLibraryFile.mimeType,
-        originPath: attachmentPath,
-        size: mediaLibraryFile.size,
-        fileType: guessFileTypeFromMimeType(mediaLibraryFile.mimeType),
-      },
+      await copyMediaLibraryFileToConversationAttachment({
+        mediaLibraryFile,
+        workspaceId: conversation.workspaceId,
+        conversationId: targetConversation.id,
+      }),
     ]
+  } else if ("mediaFileIds" in parsedInput && parsedInput.mediaFileIds) {
+    uploadedFiles = await Promise.all(
+      parsedInput.mediaFileIds.map(async (mediaFileId) => {
+        const mediaLibraryFile = await findMediaLibraryFileById({
+          workspaceId: conversation.workspaceId,
+          id: mediaFileId,
+        })
+        if (!mediaLibraryFile) {
+          throw new ChatbotXException("Media library file not found")
+        }
+
+        return copyMediaLibraryFileToConversationAttachment({
+          mediaLibraryFile,
+          workspaceId: conversation.workspaceId,
+          conversationId: targetConversation.id,
+        })
+      }),
+    )
   }
 
   const repository = await createMessageRepository()
@@ -147,7 +222,7 @@ export const createMessage = async (props: {
     text: "text" in parsedInput ? parsedInput.text : null,
     messageType: "outgoing" as const,
     workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
+    conversationId: targetConversation.id,
     senderType: user ? ("user" as const) : ("api" as const),
     senderId: user?.id ?? null,
     contactInboxId: contactInbox.id,
@@ -157,12 +232,14 @@ export const createMessage = async (props: {
       ? ("comment" as const)
       : ("message" as const),
     parentId,
-    contentAttributes: null,
+    contentAttributes: parsedInput.isPrivateReply
+      ? { isPrivateReply: true }
+      : null,
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({
     workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
+    conversationId: targetConversation.id,
     ...file,
   }))
 
@@ -178,7 +255,7 @@ export const createMessage = async (props: {
       lastActivityAt: now,
       adminRepliedAt: now,
     })
-    .where(eq(conversationModel.id, conversation.id))
+    .where(eq(conversationModel.id, targetConversation.id))
 
   await contactInboxService.updateTracking({
     contactInboxId: contactInbox.id,
@@ -219,7 +296,7 @@ export const createMessage = async (props: {
     chatQueue.add(ChatJobAction.sendChannelMessage, {
       type: ChatJobAction.sendChannelMessage,
       data: {
-        conversation,
+        conversation: targetConversation,
         contactInbox,
         message: {
           ...messageWithAttachments,
@@ -234,7 +311,7 @@ export const createMessage = async (props: {
           chatQueue.add(ChatJobAction.checkOutboundAutomatedResponse, {
             type: ChatJobAction.checkOutboundAutomatedResponse,
             data: {
-              conversation,
+              conversation: targetConversation,
               contactInbox,
               message: { id: message.id, text: messageInput.text },
             },

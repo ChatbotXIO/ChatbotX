@@ -7,8 +7,10 @@ import {
   contactInboxService,
   contactService,
   conversationService,
+  hasOnDemandProfileApi,
   messageCleanupService,
   quotaEnforcementService,
+  recordProfileRefreshFailure,
   resolveTenantSettings,
   updateContactFromMessage,
   workspaceService,
@@ -20,6 +22,7 @@ import {
 } from "@chatbotx.io/business/contact-locale"
 import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
+  type ChannelType,
   type ContactSource,
   contactSources,
   type IntegrationType,
@@ -72,6 +75,8 @@ import {
   chatQueue,
   IntegrationJobAction,
   type IntegrationJobDeleteIncomingComment,
+  type IntegrationJobDeleteIncomingMessage,
+  type IntegrationJobMessageReaction,
   type IntegrationJobReceiveComment,
   type IntegrationJobReceiveMessage,
   type IntegrationJobUpdateIncomingComment,
@@ -87,6 +92,11 @@ import {
   integrationService,
   isInstagramViaFacebook,
 } from "../../services/integrations"
+import {
+  getProfileRefreshSource,
+  isInboundConversationMessage,
+  refreshExistingContactProfile,
+} from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 
 type ContactInboxTracking = ContactInboxTrackingData
@@ -334,6 +344,24 @@ export const receiveMessage = async (
         storageUrl,
         ...systemFieldUpdates,
       })
+
+    // Best-effort backfill of a nameless existing contact's profile. No
+    // isNewMessage/isNewContact gate; awaited before the flow-action enqueue
+    // below so the first automated reply already sees `{{first_name}}`.
+    const profileRefreshSource = getProfileRefreshSource({
+      channel: inbox.channel as ChannelType,
+      incomingMessage,
+      contact,
+    })
+    if (profileRefreshSource) {
+      await refreshExistingContactProfile({
+        source: profileRefreshSource,
+        inbox,
+        contactInbox,
+        incomingContact,
+        contactId: contact.id,
+      })
+    }
 
     if (isNewMessage) {
       createdMessage = newMessage
@@ -807,10 +835,7 @@ const getMessageActivityTracking = (props: {
     tracking.lastCommentMessageAt = message.createdAt
   }
 
-  if (
-    incomingMessage.messageType !== "outgoing" &&
-    (incomingMessage.type ?? "message") === "message"
-  ) {
+  if (isInboundConversationMessage(incomingMessage)) {
     tracking.lastIncomingMessageAt = message.createdAt
     Object.assign(
       tracking,
@@ -1040,6 +1065,44 @@ export const deleteIncomingComment = async (
   }
 }
 
+// When a contact unsends a previously-sent DM, soft-delete it in the DB and
+// broadcast the deletion to the inbox — mirrors deleteIncomingComment, keyed
+// on the message's `mid` (already stored as Message.sourceId, see
+// saveAndBroadcastMessage above).
+export const deleteIncomingMessage = async (
+  props: IntegrationJobDeleteIncomingMessage["data"],
+): Promise<void> => {
+  const { integrationType, integrationIdentifier, messageId } = props
+
+  const { inbox } =
+    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+      integrationType as IntegrationType,
+      integrationIdentifier,
+    )
+
+  const repository = await createMessageRepository()
+  const deleted = await repository.deleteBySourceId(
+    messageId,
+    inbox.workspaceId,
+    new Date(),
+  )
+
+  if (deleted.length === 0) {
+    logger.warn({ messageId }, "deleteIncomingMessage: message not found")
+    return
+  }
+
+  const messageIds = deleted.map((row) => row.id)
+  try {
+    await broadcastToWorkspaceParty(inbox.workspaceId, {
+      eventType: RealtimeEventType.messageDeleted,
+      data: { messageIds },
+    })
+  } catch (error) {
+    logger.warn(error, "deleteIncomingMessage: unable to broadcast")
+  }
+}
+
 type ContactInboxWithContact = ContactInboxModel & { contact: ContactModel }
 
 type ContactInboxResolverProps = {
@@ -1061,6 +1124,117 @@ const resolveExistingContactInbox = async ({
       with: { contact: true },
     }),
   )
+
+// When a contact reacts (or removes a reaction) to a DM, record it as an
+// activity-type message in the conversation timeline. A reaction only ever
+// happens within an existing conversation, so — unlike a real inbound
+// message — a reaction from an unrecognized contact is skipped rather than
+// creating a new contact, and never consumes MAC quota.
+export const processMessageReaction = async (
+  props: IntegrationJobMessageReaction["data"],
+): Promise<void> => {
+  const {
+    integrationType,
+    integrationIdentifier,
+    messageId,
+    action,
+    emoji,
+    contactSourceId,
+  } = props
+
+  const { inbox } =
+    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+      integrationType as IntegrationType,
+      integrationIdentifier,
+    )
+
+  const existingContactInbox = await resolveExistingContactInbox({
+    inbox,
+    incomingContact: { sourceId: contactSourceId },
+  })
+  if (!existingContactInbox) {
+    logger.warn(
+      { contactSourceId, messageId },
+      "processMessageReaction: contact not found — skipping",
+    )
+    return
+  }
+
+  const conversation = await conversationService.findOrCreate({
+    workspaceId: inbox.workspaceId,
+    contactId: existingContactInbox.contactId,
+    sourceId: null,
+  })
+
+  // Deliberately bypasses saveAndBroadcastMessage: that helper treats any
+  // non-"outgoing" messageType as a genuine inbound message, which would
+  // refresh ContactInbox.lastIncomingMessageAt (corrupting the messaging-window
+  // check) and fire the unconditional message:received event that MAC billing
+  // and ads-conversion listeners consume with no way to exclude an activity
+  // row. A reaction only ever inserts/updates one lightweight activity
+  // message — persist + broadcast, nothing else.
+  const repository = await createMessageRepository()
+  // Stable (no wall-clock component) so a BullMQ retry of this same job
+  // upserts the same activity row instead of creating a duplicate. Must not
+  // reuse the reacted-to message's mid: that would collide with
+  // createOrUpdate's dedup-by-sourceId and corrupt the original message.
+  const reactionSourceId = `${messageId}-reaction-${action}`
+  const reactionText =
+    action === "react"
+      ? `Reacted${emoji ? ` ${emoji}` : ""}`
+      : "Removed a reaction"
+
+  const { message: reactionRow, isNew } = await repository.createOrUpdate({
+    id: createId(),
+    conversationId: conversation.id,
+    contactInboxId: existingContactInbox.id,
+    workspaceId: inbox.workspaceId,
+    senderType: "contact",
+    senderId: existingContactInbox.contactId,
+    sourceId: reactionSourceId,
+    messageType: messageTypes.enum.activity,
+    contentType: contentTypes.enum.text,
+    text: reactionText,
+    createdAt: new Date(),
+  })
+
+  if (isNew) {
+    try {
+      broadcastToWorkspaceParty(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: reactionRow,
+      })
+    } catch (error) {
+      logger.warn(error, "processMessageReaction: unable to broadcast")
+    }
+    return
+  }
+
+  // Same action reused within createOrUpdate's dedup window (e.g. a changed
+  // emoji) — update the existing row instead of silently ignoring it.
+  if (reactionRow.text !== reactionText) {
+    const updated = await repository.updateMessageText(
+      reactionRow.id,
+      inbox.workspaceId,
+      reactionText,
+      reactionRow.createdAt,
+    )
+    if (updated) {
+      try {
+        broadcastToWorkspaceParty(inbox.workspaceId, {
+          eventType: RealtimeEventType.messageUpdated,
+          data: {
+            messageId: updated.id,
+            newText: reactionText,
+            removedAttachment: false,
+          },
+        })
+      } catch (error) {
+        logger.warn(error, "processMessageReaction: unable to broadcast update")
+      }
+    }
+  }
+}
 
 // Shared by the direct-hit path and the unique-violation race recovery below
 // (D8): syncs newly-learned identity fields onto the matched row, then
@@ -1247,7 +1421,7 @@ const createNewContactAndContactInbox = async (props: {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
   }
-  if (canGetUserProfileIfNeeded(inbox.channel)) {
+  if (hasOnDemandProfileApi(inbox.channel as ChannelType)) {
     const integrationType =
       inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
         ? "instagramFacebook"
@@ -1277,6 +1451,13 @@ const createNewContactAndContactInbox = async (props: {
           { error, sourceId: incomingContact.sourceId, channel: inbox.channel },
           "detectContactAndConversation: getProfile failed, creating contact without profile data",
         )
+        // No `contactId` — the contact does not exist yet at this point.
+        // `recordProfileRefreshFailure` never throws by contract.
+        await recordProfileRefreshFailure({
+          channel: inbox.channel,
+          workspaceId: inbox.workspaceId,
+          error,
+        })
       }
     }
   }
@@ -1382,10 +1563,18 @@ const createNewContactAndContactInbox = async (props: {
     // The MAC (billing) cap is a deterministic business outcome, not a
     // transient failure: retrying never succeeds. Throw UnrecoverableError so
     // BullMQ fails the job once without retry/backoff instead of dead-lettering
-    // the inbound message after exhausting attempts. Logged at `warn` so the
-    // cap is observable without paging on expected behavior.
-    logger.warn(
-      { workspaceId: inbox.workspaceId, ownerId: ws.ownerId },
+    // the inbound message after exhausting attempts. Logged at `error` (with
+    // enough context to identify the dropped contact) so a brand-new
+    // contact's first-ever message being silently dropped is discoverable via
+    // alerting, not just the account-level MAC banner (which only reflects
+    // the aggregate cap, not this specific drop).
+    logger.error(
+      {
+        workspaceId: inbox.workspaceId,
+        ownerId: ws.ownerId,
+        channel: inbox.channel,
+        sourceId: incomingContact.sourceId,
+      },
       "Inbound new-contact rejected: MAC limit reached",
     )
     throw new UnrecoverableError("contact_mac_limit_reached")
@@ -1423,9 +1612,3 @@ const createNewContactAndContactInbox = async (props: {
 
   return { contactInbox, contact: newContact, conversation, isNewContact: true }
 }
-
-const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === "messenger" ||
-  integrationType === "instagram" ||
-  integrationType === "zalo" ||
-  integrationType === "telegram"

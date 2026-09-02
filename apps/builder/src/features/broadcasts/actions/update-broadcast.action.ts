@@ -8,7 +8,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateBroadcastSchema,
   updateBroadcastSchema,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateBroadcastAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -31,6 +31,7 @@ export const updateBroadcast = async (
     where: {
       id: ctx.id,
       workspaceId: ctx.workspaceId,
+      deletedAt: { isNull: true },
     },
   })
 

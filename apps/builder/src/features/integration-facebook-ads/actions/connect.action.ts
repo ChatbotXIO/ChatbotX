@@ -1,7 +1,7 @@
 "use server"
 
 import type { UserModel, WorkspaceModel } from "@chatbotx.io/database/types"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { buildFacebookAdsAuthRedirect } from "./connect-redirect"

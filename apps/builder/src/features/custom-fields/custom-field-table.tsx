@@ -41,7 +41,7 @@ import { CreateCustomFieldDialog } from "./create-custom-field"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
 import type { listCustomFieldsRSC } from "./queries"
-import type { CustomFieldResource } from "./schemas/resource"
+import type { CustomFieldResource } from "./schema/resource"
 import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
 
 type FieldsTableProps = {

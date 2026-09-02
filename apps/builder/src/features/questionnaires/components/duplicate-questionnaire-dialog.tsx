@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { duplicateQuestionnaireAction } from "../actions/duplicate-questionnaire.action"
-import type { QuestionnaireListItem } from "../schemas/resource"
+import type { QuestionnaireListItem } from "../schema/resource"
 
 type Props = {
   workspaceId: string

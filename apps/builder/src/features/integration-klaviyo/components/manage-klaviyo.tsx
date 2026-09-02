@@ -12,7 +12,7 @@ import { DisconnectIntegrationDialog } from "@/features/common/components/discon
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { connectKlaviyoAction } from "../actions/connect.action"
 import { disconnectKlaviyoAction } from "../actions/disconnect.action"
-import { connectKlaviyoSchema } from "../schemas"
+import { connectKlaviyoSchema } from "../schema"
 
 export function ManageKlaviyo(props: {
   workspaceId: string

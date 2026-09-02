@@ -148,7 +148,12 @@
     "clone": "Nhân bản",
     "remove": "Xóa",
     "restore": "Khôi phục",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Lưu nháp",
+    "schedule": "Lên lịch",
+    "moveToDraft": "Chuyển về nháp",
+    "stop": "Dừng",
+    "resume": "Tiếp tục"
   },
   "errors": {
     "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
@@ -345,9 +350,11 @@
     "title": "Phát sóng",
     "status": {
       "scheduled": "Đã lên lịch",
-      "sent": "Đã gửi",
+      "sent": "Hoàn thành",
       "sending": "Đang gửi",
-      "cancelled": "Đã huỷ"
+      "cancelled": "Đã huỷ",
+      "draft": "Nháp",
+      "failed": "Thất bại"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -433,6 +440,63 @@
       "template": "Template",
       "noTemplate": "Không có template",
       "integration": "Tích hợp"
+    },
+    "filters": {
+      "all": "Tất cả"
+    },
+    "views": {
+      "table": "Bảng",
+      "calendar": "Lịch"
+    },
+    "panel": {
+      "collapse": "Thu gọn bảng lọc",
+      "expand": "Mở bảng lọc"
+    },
+    "empty": {
+      "title": "Chưa có broadcast nào",
+      "description": "Tạo broadcast đầu tiên để gửi tới liên hệ của bạn.",
+      "filteredTitle": "Không có broadcast phù hợp",
+      "filteredDescription": "Thử trạng thái khác hoặc xoá từ khoá tìm kiếm."
+    },
+    "scheduleDialog": {
+      "title": "Lên lịch broadcast",
+      "description": "Chọn thời điểm gửi \"{name}\"."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Xoá broadcast} other {Xoá các broadcast}}",
+      "description": "{count, plural, one {\"{name}\" sẽ bị xoá. Dữ liệu sẽ được xoá ở nền.} other {# broadcast sẽ bị xoá. Dữ liệu của chúng sẽ được xoá ở nền.}}",
+      "partial": "Đã xoá {deleted}/{requested} — số còn lại đã đổi trạng thái"
+    },
+    "calendar": {
+      "today": "Hôm nay",
+      "apply": "Áp dụng",
+      "more": "+{count} nữa",
+      "ranges": {
+        "month": "Tháng",
+        "week": "Tuần",
+        "day": "Ngày",
+        "custom": "Tùy chỉnh"
+      },
+      "previous": "Trước",
+      "next": "Sau",
+      "emptyDay": "Không có broadcast nào trong ngày này",
+      "emptyRange": "Không có broadcast nào trong khoảng này",
+      "jumpToDate": "Đi tới ngày"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Chuyển về nháp",
+      "description": "\"{name}\" sẽ được hủy lịch và chuyển về mục nháp."
+    },
+    "stopDialog": {
+      "title": "Dừng broadcast",
+      "description": "Các tin nhắn còn lại của \"{name}\" sẽ dừng trong khoảng một phút. Một vài tin đã được chuyển cho kênh gửi có thể vẫn được gửi đi. Bạn có thể tiếp tục sau — chỉ những người chưa nhận sẽ nhận được tin."
+    },
+    "resumeDialog": {
+      "title": "Tiếp tục broadcast",
+      "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "Trường hệ thống",
       "topicCoupon": "Topic coupon",
       "customFields": "Trường tùy chỉnh",
+      "botFields": "Trường bot",
       "email": "Email",
       "sms": "SMS",
       "ctwaAds": "Quảng cáo"
@@ -809,7 +874,7 @@
       "label": "Token truy cập"
     },
     "botField": {
-      "label": "Trường tài khoản"
+      "label": "Trường bot"
     },
     "agent": {
       "label": "Đại lý"
@@ -975,7 +1040,10 @@
       "append": "Thêm vào cuối",
       "prepend": "Thêm vào đầu",
       "increase": "Tăng thêm",
-      "decrease": "Giảm đi"
+      "decrease": "Giảm đi",
+      "groupSystemFields": "Trường hệ thống",
+      "groupCustomFields": "Trường tùy chỉnh",
+      "groupAccountFields": "Trường bot"
     },
     "dataCollect": {
       "label": "Thu thập dữ liệu"
@@ -1078,8 +1146,8 @@
       "aiDeleteMessageHistory": "{aiName}: Xóa lịch sử tin nhắn"
     },
     "steps": {
-      "label": "Bước",
-      "placeholder": "Chọn bước"
+      "label": "Node",
+      "placeholder": "Chọn node"
     },
     "folder": {
       "label": "Thư mục"
@@ -1330,7 +1398,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Nhà cung cấp"
+      "label": "Nhà cung cấp",
+      "placeholder": "Chọn nhà cung cấp"
     },
     "prompt": {
       "label": "Prompt",
@@ -1732,7 +1801,7 @@
       "label": "Thẻ"
     },
     "botFields": {
-      "label": "Trường tài khoản"
+      "label": "Trường bot"
     },
     "ecommerce": {
       "label": "Thương mại điện tử"
@@ -2219,6 +2288,7 @@
       "sendFile": "Gửi tệp",
       "sendGif": "Gửi Gif",
       "sendImage": "Gửi hình ảnh",
+      "sendMultipleImages": "Nhiều hình ảnh",
       "sendMessage": "Gửi tin nhắn",
       "sendNode": "Bắt đầu nút khác",
       "sendText": "Gửi văn bản",
@@ -2261,9 +2331,7 @@
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
       "importJsonOnly": "Chỉ tệp JSON",
-      "adsConversions": "Quảng cáo và Meta Conversions",
-      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
-      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
+      "adsConversions": "Quảng cáo và Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2300,6 +2368,10 @@
       "addSlide": "Thêm thẻ",
       "removeSlide": "Xoá thẻ",
       "whatsappLinkButtonIgnored": "Với WhatsApp, liên kết của thẻ này sẽ không hoạt động: thẻ có nút mở liên kết thì không được có nút nào khác. Nút sẽ được gửi như một nút trả lời."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Xóa ảnh",
+      "selectImage": "Chọn ảnh"
     },
     "additionalSteps": "Các bước bổ sung",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "Bạn có chắc chắn muốn ngắt kết nối {feature}?",
     "disconnectSuccess": "Đã ngắt kết nối {feature} thành công",
     "reply": "Trả lời",
+    "privateReply": "Trả lời riêng tư",
     "viewMessage": "Xem tin nhắn",
     "changeLikeState": "Thay đổi trạng thái thích",
     "changeHideState": "Thay đổi trạng thái ẩn",
@@ -2968,6 +3041,9 @@
     "duplicatedSuccess": "Đã nhân bản {feature} thành công",
     "duplicateConfirmation": "Thao tác này sẽ tạo một bản sao {feature} của bạn.",
     "deleteFeature": "Xóa {feature}",
+    "resetFeature": "Đặt lại {feature}",
+    "resetConfirmation": "Thao tác này sẽ xóa giá trị của {feature} đã chọn về rỗng.\nHành động này không thể hoàn tác.",
+    "resetSuccess": "Đã đặt lại {feature} thành công",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
     "addFeature": "Thêm {feature}",
     "signOutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "Đã bật {feature} thành công",
     "userInactive": "Người dùng không hoạt động hơn 7 ngày",
     "messagingWindowClosed": "Không thể gửi tin nhắn ngoài cửa sổ thời gian cho phép",
-    "sendHumanAgentTag": "Gửi một tin nhắn với thẻ HUMAN_AGENT",
-    "warning": "Warning!",
-    "humanAgentWarningDescription": "Bạn chỉ có thể trả lời tin nhắn của người dùng trong vòng 7 ngày khi vấn đề không thể giải quyết trong vòng 24 giờ. Ví dụ: cuối tuần, ngày lễ, hoặc các trường hợp cần hơn một ngày để xử lý. Không sử dụng tùy chọn này cho bất kỳ lý do nào khác vì có thể ảnh hưởng đến Trang Facebook hoặc tài khoản Instagram của bạn. Nếu bạn không chắc chắn, đừng tiếp tục.",
     "humanAgentWindowExpired": "Cửa sổ nhắn tin đã hết hạn. Liên hệ phải nhắn tin trước để mở lại cuộc trò chuyện.",
     "restoreVersionSuccess": "Đã khôi phục luồng về phiên bản đã chọn",
     "revertToPublishedSuccess": "Đã hoàn nguyên bản nháp về phiên bản đã xuất bản",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "Không tìm thấy trang Facebook",
       "noPagesDescription": "Các trang nằm trong Business Manager cần được cấp quyền Business Manager khi kết nối. Hãy kết nối lại Messenger và cấp tất cả quyền được yêu cầu.",
+      "noConnectablePagesTitle": "Không có trang nào khả dụng để kết nối",
+      "noConnectablePagesDescription": "Bạn không phải là Admin của Page này",
       "bmLookupFailedTitle": "Có thể thiếu trang trong Business Manager",
       "bmLookupFailedDescription": "Hãy kết nối lại Messenger và cấp quyền Business Manager để liệt kê các trang được quản lý qua Business Manager.",
       "alreadyConnectedNote": "Trang này đã được kết nối",
-      "notAdminNote": "Cần quyền quản trị đầy đủ trên trang để kết nối",
+      "notAdminNote": "Bạn không phải là Admin của Page này",
       "tryAgain": "Kết nối lại"
     },
     "title": "Facebook Messenger",
@@ -3700,9 +3775,7 @@
       "startAnotherFlow": "Bắt đầu luồng khác",
       "notifyAdmins": "Thông báo quản trị viên",
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
-      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI",
-      "trackAdsLead": "Theo dõi khách tiềm năng từ quảng cáo",
-      "trackAdsPurchase": "Theo dõi giao dịch mua từ quảng cáo"
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
     },
     "triggerGoesOff": "Trigger kích hoạt",
     "before": "Trước",
@@ -3734,7 +3807,8 @@
     "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất."
   },
   "errorLogs": {
-    "title": "Nhật ký lỗi"
+    "title": "Nhật ký lỗi",
+    "unknownContact": "Liên hệ không xác định"
   },
   "auditLogs": {
     "title": "Nhật ký kiểm tra",
@@ -4364,6 +4438,21 @@
     "noEligiblePages": "Không có trang phù hợp. Dùng \"Thêm mới\" để cấp quyền truy cập lead.",
     "duplicateError": "Đã tồn tại một automation cho trang và biểu mẫu này.",
     "subscribeError": "Không thể đăng ký nhận thông báo lead từ Facebook cho trang này, nên automation chưa được tạo. Hãy kết nối lại trang bằng \"Thêm mới\" rồi thử lại."
+  },
+  "clickToMessageAds": {
+    "title": "Quảng cáo Click-to-Message",
+    "description": "Quảng cáo đưa mọi người trực tiếp vào một cuộc hội thoại trên Messenger, Instagram hoặc WhatsApp.",
+    "empty": {
+      "title": "Chưa có tài khoản nào được kết nối cho kênh này",
+      "description": "Hãy kết nối một tài khoản kênh trước, sau đó quay lại đây để tạo quảng cáo.",
+      "cta": "Đi đến cài đặt kênh"
+    },
+    "movedNote": {
+      "title": "Quảng cáo đã chuyển sang Công cụ",
+      "description": "Tạo và quản lý quảng cáo Click-to-Message từ công cụ Quảng cáo Click-to-Message.",
+      "cta": "Mở Quảng cáo Click-to-Message"
+    },
+    "dashboardCta": "Xem trên bảng điều khiển Quảng cáo"
   },
   "ecommerce": {
     "title": "Thương mại điện tử",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Kết nối"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Chỉ ghi nhận chuyển đổi cho các liên hệ có gán nhãn quảng cáo click-to-WhatsApp của WhatsApp hoặc giới thiệu quảng cáo Meta. Không ảnh hưởng đến các liên hệ khác."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Tổng tất cả tỷ lệ: {value}%",
       "loseProbability": "Tỷ lệ trượt thưởng: {value}%",
       "winProbability": "Tỷ lệ trúng thưởng: {value}%",
-      "newPrize": "Thêm giải thưởng"
+      "newPrize": "Thêm giải thưởng",
+      "prizeNameCustomFieldLabel": "Lưu tên phần thưởng vào Trường tùy chỉnh"
     },
     "prizeItemDialog": {
       "prizeTitle": "Chỉnh sửa giải thưởng",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Tiêu đề",
       "loseImageDescription": "Kích thước đề xuất 120x120px",
       "quantityLabel": "Số lượng giải thưởng",
-      "quantityDescription": "Số lần giải thưởng này còn có thể trúng; giảm 1 mỗi khi có người trúng. Để trống nếu không giới hạn.",
-      "sendMessage": "Gửi tin nhắn khi người chơi không trúng thưởng",
-      "sendWinMessage": "Gửi tin nhắn cho người trúng giải",
-      "messageMode": "Loại tin nhắn",
-      "messageModeText": "Văn bản",
-      "messageModeFlow": "Kịch bản",
-      "messageText": "Nội dung tin nhắn"
+      "quantityDescription": "Số lần giải thưởng này còn có thể trúng; giảm 1 mỗi khi có người trúng. Để trống nếu không giới hạn."
+    },
+    "outcomeMessage": {
+      "enableWin": "Gửi tin nhắn cho người trúng giải",
+      "enableLose": "Gửi tin nhắn khi người chơi không trúng thưởng",
+      "mode": "Loại tin nhắn",
+      "modeText": "Văn bản",
+      "modeFlow": "Kịch bản",
+      "text": "Nội dung tin nhắn"
     },
     "winningMessageDialog": {
       "title": "Thiết lập tin nhắn khi trúng thưởng",
       "titleLabel": "Tiêu đề",
+      "prizeNameHint": "Bạn có thể dùng '{{prize_name}}' trong tiêu đề và mô tả để chèn tên phần thưởng.",
       "acceptButtonText": "Nội dung nút Chấp nhận",
       "shareButtonText": "Nội dung nút Chia sẻ",
       "shareButtonDescription": "Mô tả nút Chia sẻ"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Chia sẻ với bạn bè",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Bản xem trước chi tiết cho loại trò chơi này sẽ sớm ra mắt",
-      "rules": "Luật chơi"
+      "luckyWheelHeader": "VÒNG QUAY MAY MẮN",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Bản xem trước chi tiết cho loại trò chơi này sẽ sớm ra mắt"
     },
     "form": {
       "generalSettingsTitle": "Thiết lập chung",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Thiết lập giải thưởng"
     },
     "generalSettings": {
+      "showName": "Hiển thị",
       "playedAt": "Thời gian diễn ra",
       "rulesDescription": "Mô tả thể lệ",
       "openerTags": "Gắn thẻ liên hệ mở link minigame",
@@ -5494,7 +5586,8 @@
     "recent": "Gần đây",
     "favourite": "Yêu thích",
     "upload": "Tải lên",
-    "done": "Xong",
+    "select": "Chọn",
+    "bulkSelect": "Chọn nhiều",
     "deleteFolder": "Xoá thư mục",
     "renameFolder": "Đổi tên thư mục",
     "noFiles": "Không tìm thấy tệp",
@@ -5698,5 +5791,8 @@
         "last_7d": "7 ngày qua"
       }
     }
+  },
+  "accountFields": {
+    "title": "Trường bot"
   }
 }

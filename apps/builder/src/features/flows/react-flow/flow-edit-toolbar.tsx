@@ -56,7 +56,7 @@ import { downloadFlowExport } from "../lib/download-flow-export"
 import {
   type PublishFlowSchema,
   updateFlowVersionSchema,
-} from "../schemas/action"
+} from "../schema/action"
 import AnalyticsFlow from "./components/analytics-flow"
 import { FlowVersionsDialog } from "./components/flow-versions-dialog"
 import { MessengerAdPayloadDialog } from "./components/messenger-ad-payload-dialog"

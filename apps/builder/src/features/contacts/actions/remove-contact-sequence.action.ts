@@ -5,13 +5,13 @@ import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type RemoveContactSequenceRequest,
   removeContactSequenceRequest,
-} from "../schemas/contact-sequence"
+} from "../schema/contact-sequence"
 
 const CHUNK_SIZE = 1000
 

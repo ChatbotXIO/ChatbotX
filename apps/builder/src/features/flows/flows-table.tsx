@@ -25,7 +25,7 @@ import { FlowsTableToolbarActions } from "./flows-table-toolbar-actions"
 import { ImportFlowDialog } from "./import-flow-dialog"
 import type { listFlowsRSC } from "./queries"
 import { RenameFlowDialog } from "./react-flow/components/rename-flow"
-import type { FlowResource } from "./schemas/resource"
+import type { FlowResource } from "./schema/resource"
 
 type FlowsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listFlowsRSC>>]>

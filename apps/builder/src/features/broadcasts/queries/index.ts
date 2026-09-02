@@ -9,10 +9,10 @@ import {
   likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { GetBroadcastsSchema } from "../schemas/query"
-import type { BroadcastResourceWithRelations } from "../schemas/resource"
+import type { GetBroadcastsSchema } from "../schema/query"
+import type { BroadcastResourceWithRelations } from "../schema/resource"
 
 export async function listBroadcasts(
   input: GetBroadcastsSchema,
@@ -22,6 +22,8 @@ export async function listBroadcasts(
   const where = {
     workspaceId: input.workspaceId,
     name: input.name ? { ilike: likeContains(input.name) } : undefined,
+    status: input.status ?? undefined,
+    deletedAt: { isNull: true as const },
   }
 
   const pagination = getPaginationWithDefaults(input)
@@ -71,6 +73,23 @@ export async function listBroadcastAudience(input: {
 }) {
   const { limit, offset } = getPaginationWithDefaults(input)
 
+  // Gate behind a non-deleted broadcast owned by this workspace — mirrors
+  // findByIdForResponse/listExistingIds so a soft-deleted (or foreign)
+  // broadcast never leaks its audience, even if a future caller skips the
+  // publicGetBroadcast lookup the current API handler happens to run first.
+  const broadcast = await db.query.broadcastModel.findFirst({
+    where: {
+      id: input.broadcastId,
+      workspaceId: input.workspaceId,
+      deletedAt: { isNull: true },
+    },
+    columns: { id: true },
+  })
+
+  if (!broadcast) {
+    throw notFoundException("Broadcast not found")
+  }
+
   const [rows, total] = await Promise.all([
     db.query.contactsOnBroadcastsModel.findMany({
       where: { broadcastId: input.broadcastId },
@@ -107,9 +126,12 @@ export async function publicGetBroadcast(
   workspaceId: string,
   idOrName: string,
 ) {
-  const where = NUMERIC_RE.test(idOrName)
-    ? { id: idOrName, workspaceId }
-    : { name: idOrName, workspaceId }
+  const where = {
+    ...(NUMERIC_RE.test(idOrName)
+      ? { id: idOrName, workspaceId }
+      : { name: idOrName, workspaceId }),
+    deletedAt: { isNull: true as const },
+  }
 
   const broadcast = await db.query.broadcastModel.findFirst({ where })
 

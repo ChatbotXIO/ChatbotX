@@ -11,14 +11,14 @@ import { getTranslations } from "next-intl/server"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_WEBHOOKS_PER_CHATBOT } from "../constants"
 import {
   type CreateWebhookSchema,
   createWebhookSchema,
-} from "../schemas/create-webhook-schema"
+} from "../schema/create-webhook-schema"
 
 export const createWebhookAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

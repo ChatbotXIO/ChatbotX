@@ -1,6 +1,6 @@
 import { aiAgentService } from "@chatbotx.io/business"
 import { workspaceTokenAuthAPI } from "@/orpc"
-import { listAIAgentsResponse } from "../schemas/query"
+import { listAIAgentsResponse } from "../schema/query"
 
 const listAIAgentsWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({

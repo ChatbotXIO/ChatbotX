@@ -1,6 +1,7 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
+import { zodFieldReference } from "../field-reference"
 import {
   errorStateDefaultFn,
   errorStateSchema,
@@ -87,7 +88,7 @@ export const aiExtractDataModels = {
 
 const extractFieldSchema = z.object({
   key: z.string().trim().min(1),
-  customFieldId: z.string().trim().min(1),
+  customFieldId: zodFieldReference(),
   description: z.string().trim().optional(),
 })
 

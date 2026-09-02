@@ -1,4 +1,4 @@
-import { mediaLibraryAuthenticatedAPI } from "./authenticated"
+import { mediaLibraryAuthenticatedAPI } from "./private"
 
 export const mediaLibraryAPI = {
   ...mediaLibraryAuthenticatedAPI,

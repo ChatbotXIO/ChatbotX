@@ -10,7 +10,7 @@ import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { getWebhooks } from "@/features/webhooks/queries"
-import { getWebhooksSearchParamsCache } from "@/features/webhooks/schemas/get-webhook-schema"
+import { getWebhooksSearchParamsCache } from "@/features/webhooks/schema/get-webhook-schema"
 import { WebhooksTable } from "@/features/webhooks/webhooks-table"
 
 export default async function WebhooksPage(props: {

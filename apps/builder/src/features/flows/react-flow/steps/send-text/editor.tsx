@@ -14,7 +14,11 @@ const SendTextStepEditor = (props: SendTextStepEditorProps) => {
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-secondary px-4 py-2">
-        <TiptapEditorField includeCouponVariables name={`${parentName}.text`} />
+        <TiptapEditorField
+          includeBotFieldVariables
+          includeCouponVariables
+          name={`${parentName}.text`}
+        />
         <TiktokTitleNotice parentName={parentName} />
       </div>
 

@@ -148,7 +148,12 @@
     "clone": "Klon",
     "remove": "Hapus",
     "restore": "Pulihkan",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "Anda harus menjadi super admin workspace untuk melakukan ini."
@@ -347,7 +352,9 @@
       "scheduled": "Dijadwalkan",
       "sent": "Terkirim",
       "sending": "Mengirim",
-      "cancelled": "Dibatalkan"
+      "cancelled": "Dibatalkan",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Terkirim",
@@ -433,6 +440,63 @@
       "template": "Template",
       "noTemplate": "Tanpa template",
       "integration": "Integrasi"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "Kolom Sistem",
       "topicCoupon": "Topik kupon",
       "customFields": "Kolom Kustom",
+      "botFields": "Kolom Bot",
       "email": "Email",
       "sms": "SMS",
       "ctwaAds": "Iklan"
@@ -900,7 +965,10 @@
       "append": "Append ke end",
       "prepend": "Prepend ke beginning",
       "increase": "Tambah sebesar",
-      "decrease": "Kurangi sebesar"
+      "decrease": "Kurangi sebesar",
+      "groupSystemFields": "Kolom Sistem",
+      "groupCustomFields": "Kolom Kustom",
+      "groupAccountFields": "Kolom Bot"
     },
     "dataCollect": {
       "label": "Pengumpulan Data"
@@ -1003,8 +1071,8 @@
       "aiDeleteMessageHistory": "{aiName}: Hapus Message History"
     },
     "steps": {
-      "label": "Langkah",
-      "placeholder": "Pilih step"
+      "label": "Node",
+      "placeholder": "Pilih node"
     },
     "folder": {
       "label": "Folder"
@@ -1283,7 +1351,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Penyedia"
+      "label": "Penyedia",
+      "placeholder": "Pilih penyedia"
     },
     "prompt": {
       "label": "Prompt",
@@ -1691,7 +1760,7 @@
       "label": "Nama Lengkap"
     },
     "botFields": {
-      "label": "Field Bot"
+      "label": "Kolom Bot"
     },
     "keyword": {
       "label": "Kata Kunci",
@@ -2143,6 +2212,7 @@
       "sendFile": "Kirim File",
       "sendGif": "Kirim GIF",
       "sendImage": "Kirim Gambar",
+      "sendMultipleImages": "Beberapa Gambar",
       "sendMessage": "Kirim Pesan",
       "sendNode": "Mulai Node Lain",
       "sendText": "Kirim Teks",
@@ -2187,9 +2257,7 @@
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
       "importJsonOnly": "Hanya file JSON",
-      "adsConversions": "Iklan & Meta Conversions",
-      "trackAdsLead": "Lacak Lead Iklan",
-      "trackAdsPurchase": "Lacak Pembelian Iklan"
+      "adsConversions": "Iklan & Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2226,6 +2294,10 @@
       "addSlide": "Tambah kartu",
       "removeSlide": "Hapus kartu",
       "whatsappLinkButtonIgnored": "Di WhatsApp, tautan kartu ini tidak akan berfungsi: kartu dengan tombol tautan tidak boleh memiliki tombol lain. Kartu ini akan dikirim sebagai balasan."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Hapus gambar",
+      "selectImage": "Pilih gambar"
     },
     "additionalSteps": "Langkah tambahan",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "Apakah Anda yakin ingin memutuskan {feature}?",
     "disconnectSuccess": "{feature} berhasil diputuskan",
     "reply": "Balas",
+    "privateReply": "Balasan pribadi",
     "viewMessage": "Lihat pesan",
     "changeLikeState": "Ubah status suka",
     "changeHideState": "Ubah status sembunyikan",
@@ -2969,6 +3042,9 @@
     "duplicatedSuccess": "{feature} berhasil diduplikat",
     "duplicateConfirmation": "Tindakan ini akan membuat salinan {feature} Anda.",
     "deleteFeature": "Hapus {feature}",
+    "resetFeature": "Atur ulang {feature}",
+    "resetConfirmation": "Tindakan ini akan mengosongkan nilai {feature} yang dipilih.\nTindakan ini tidak dapat dibatalkan.",
+    "resetSuccess": "{feature} berhasil diatur ulang",
     "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami.",
     "addFeature": "Tambah {feature}",
     "signOutConfirmation": "Apakah Anda yakin ingin keluar?",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "{feature} berhasil diaktifkan",
     "userInactive": "Pengguna tidak aktif selama lebih dari 7 hari",
     "messagingWindowClosed": "Pesan tidak dapat dikirim di luar jangka waktu yang diizinkan",
-    "sendHumanAgentTag": "Kirim satu pesan dengan tag HUMAN_AGENT",
-    "warning": "Peringatan!",
-    "humanAgentWarningDescription": "Anda hanya boleh menanggapi pesan pengguna dalam waktu 7 hari jika masalahnya tidak dapat diselesaikan secara wajar dalam 24 jam. Contohnya termasuk akhir pekan, hari libur, atau kasus yang memerlukan lebih dari satu hari untuk diselesaikan. Jangan gunakan opsi ini untuk alasan lain karena dapat membahayakan Halaman Facebook atau akun Instagram Anda. Jika tidak yakin, jangan lanjutkan.",
     "humanAgentWindowExpired": "Jangka waktu perpesanan telah berakhir. Kontak harus mengirim pesan terlebih dahulu untuk membuka kembali percakapan.",
     "restoreVersionSuccess": "Alur dipulihkan ke versi yang dipilih",
     "revertToPublishedSuccess": "Draf dikembalikan ke versi yang dipublikasikan",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "Tidak ada Halaman Facebook yang ditemukan",
       "noPagesDescription": "Halaman di dalam Business Manager memerlukan akses Business Manager saat dihubungkan. Hubungkan kembali Messenger dan berikan semua izin yang diminta.",
+      "noConnectablePagesTitle": "Tidak ada Halaman yang tersedia untuk dihubungkan",
+      "noConnectablePagesDescription": "Anda bukan admin Halaman ini",
       "bmLookupFailedTitle": "Halaman Business Manager mungkin tidak ditampilkan",
       "bmLookupFailedDescription": "Hubungkan kembali Messenger dan berikan akses Business Manager agar halaman yang dikelola melalui Business Manager dapat ditampilkan.",
       "alreadyConnectedNote": "Halaman ini sudah terhubung",
-      "notAdminNote": "Izin admin penuh pada halaman diperlukan untuk menghubungkannya",
+      "notAdminNote": "Anda bukan admin Halaman ini",
       "tryAgain": "Coba hubungkan kembali"
     },
     "title": "Facebook Messenger",
@@ -3783,9 +3858,7 @@
       "startAnotherFlow": "Mulai Alur Lain",
       "notifyAdmins": "Beri Tahu Admin",
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
-      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",
-      "trackAdsLead": "Lacak Lead Iklan",
-      "trackAdsPurchase": "Lacak Pembelian Iklan"
+      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI"
     },
     "triggerGoesOff": "Pemicu dijalankan",
     "before": "Sebelum",
@@ -3797,7 +3870,8 @@
     "at": "Pada"
   },
   "errorLogs": {
-    "title": "Log Kesalahan"
+    "title": "Log Kesalahan",
+    "unknownContact": "Kontak tidak dikenal"
   },
   "developerAccessToken": {
     "title": "Token Akses API",
@@ -4325,6 +4399,21 @@
     "noEligiblePages": "Tidak ada halaman yang memenuhi syarat. Gunakan \"Tambahkan Baru\" untuk memberikan akses prospek.",
     "duplicateError": "Otomatisasi untuk halaman dan formulir ini sudah ada.",
     "subscribeError": "Tidak dapat mendaftarkan halaman ini untuk notifikasi prospek Facebook, sehingga otomatisasi tidak dibuat. Hubungkan kembali halaman melalui \"Tambahkan Baru\" lalu coba lagi."
+  },
+  "clickToMessageAds": {
+    "title": "Iklan Click-to-Message",
+    "description": "Iklan mengirim orang langsung ke percakapan di Messenger, Instagram, atau WhatsApp.",
+    "empty": {
+      "title": "Tidak ada akun yang terhubung untuk channel ini",
+      "description": "Hubungkan akun channel terlebih dahulu, lalu kembali ke sini untuk membuat iklan.",
+      "cta": "Buka pengaturan channel"
+    },
+    "movedNote": {
+      "title": "Iklan telah dipindahkan ke Alat",
+      "description": "Buat dan kelola iklan Click-to-Message dari alat Iklan Click-to-Message.",
+      "cta": "Buka Iklan Click-to-Message"
+    },
+    "dashboardCta": "Lihat di dasbor Iklan"
   },
   "ecommerce": {
     "title": "E-commerce",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Hubungkan"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Hanya mencatat konversi untuk kontak dengan atribusi iklan click-to-WhatsApp WhatsApp atau rujukan iklan Meta. Tidak berpengaruh pada kontak lain."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Total semua probabilitas: {value}%",
       "loseProbability": "Probabilitas kalah: {value}%",
       "winProbability": "Probabilitas menang: {value}%",
-      "newPrize": "Hadiah Baru"
+      "newPrize": "Hadiah Baru",
+      "prizeNameCustomFieldLabel": "Simpan nama hadiah ke Kustom Field"
     },
     "prizeItemDialog": {
       "prizeTitle": "Edit Hadiah",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Judul",
       "loseImageDescription": "Ukuran yang disarankan 120x120px",
       "quantityLabel": "Jumlah Hadiah",
-      "quantityDescription": "Jumlah berapa kali hadiah ini masih bisa dimenangkan; berkurang 1 setiap kali dimenangkan. Biarkan kosong untuk tanpa batas.",
-      "sendMessage": "Kirim pesan saat pemain tidak menang",
-      "sendWinMessage": "Kirim pesan ke pemenang yang menerima hadiah",
-      "messageMode": "Jenis pesan",
-      "messageModeText": "Teks",
-      "messageModeFlow": "Flow",
-      "messageText": "Pesan"
+      "quantityDescription": "Jumlah berapa kali hadiah ini masih bisa dimenangkan; berkurang 1 setiap kali dimenangkan. Biarkan kosong untuk tanpa batas."
+    },
+    "outcomeMessage": {
+      "enableWin": "Kirim pesan ke pemenang yang menerima hadiah",
+      "enableLose": "Kirim pesan saat pemain tidak menang",
+      "mode": "Jenis pesan",
+      "modeText": "Teks",
+      "modeFlow": "Flow",
+      "text": "Pesan"
     },
     "winningMessageDialog": {
       "title": "Pengaturan Pesan Kemenangan",
       "titleLabel": "Judul",
+      "prizeNameHint": "Anda dapat menggunakan '{{prize_name}}' di judul dan deskripsi untuk menyisipkan nama hadiah.",
       "acceptButtonText": "Teks Tombol Terima",
       "shareButtonText": "Teks Tombol Bagikan",
       "shareButtonDescription": "Deskripsi Tombol Bagikan"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Bagikan ke teman",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Pratinjau detail akan segera hadir untuk jenis permainan ini",
-      "rules": "Aturan"
+      "luckyWheelHeader": "RODA KEBERUNTUNGAN",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Pratinjau detail akan segera hadir untuk jenis permainan ini"
     },
     "form": {
       "generalSettingsTitle": "Pengaturan Umum",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Pengaturan Hadiah"
     },
     "generalSettings": {
+      "showName": "Terlihat",
       "playedAt": "Dimainkan Pada",
       "rulesDescription": "Deskripsi Aturan",
       "openerTags": "Beri tag kontak yang membuka tautan permainan",
@@ -5494,7 +5586,8 @@
     "recent": "Terbaru",
     "favourite": "Favorit",
     "upload": "Unggah",
-    "done": "Selesai",
+    "select": "Pilih",
+    "bulkSelect": "Pilih massal",
     "deleteFolder": "Hapus folder",
     "renameFolder": "Ganti nama folder",
     "noFiles": "Tidak ada file ditemukan",
@@ -5698,5 +5791,8 @@
         "last_7d": "7 hari terakhir"
       }
     }
+  },
+  "accountFields": {
+    "title": "Kolom Bot"
   }
 }

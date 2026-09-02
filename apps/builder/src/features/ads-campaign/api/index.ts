@@ -1,4 +1,4 @@
-import { adsCampaignAuthenticatedAPI } from "./authenticated"
+import { adsCampaignAuthenticatedAPI } from "./private"
 
 export const adsCampaignAPI = {
   ...adsCampaignAuthenticatedAPI,

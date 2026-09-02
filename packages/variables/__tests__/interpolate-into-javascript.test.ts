@@ -1,6 +1,7 @@
 import type { ContactModel, WorkspaceModel } from "@chatbotx.io/database/types"
+import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import type { ContactCustomFieldValue } from "../src/schema"
+import type { BotFieldValue, ContactCustomFieldValue } from "../src/schema"
 
 const { mockResolveCouponVariable } = vi.hoisted(() => ({
   mockResolveCouponVariable: vi.fn(),
@@ -71,13 +72,28 @@ const createCustomFieldsMap = (
     ]),
   )
 
+const createBotFieldsMap = (
+  fields: Array<{ id: string; type?: string; value: string | null }>,
+) =>
+  new Map(
+    fields.map((field) => [
+      field.id,
+      {
+        type: field.type ?? "shortText",
+        value: field.value,
+      } as unknown as BotFieldValue,
+    ]),
+  )
+
 const createContext = (
   fields: Array<Partial<ContactCustomFieldValue> & { key: string }> = [],
   contactOverrides: Partial<ContactModel> = {},
+  botFields: Array<{ id: string; type?: string; value: string | null }> = [],
 ) => ({
   contact: { ...contact, ...contactOverrides },
   contactInbox: null,
   customFieldsMap: createCustomFieldsMap(fields),
+  botFieldsMap: createBotFieldsMap(botFields),
   workspace,
 })
 
@@ -335,6 +351,31 @@ describe("interpolateIntoJavascript + resolveJavascriptInput", () => {
       expect(input.notes).toBe("42")
       expect(input.contactEmail).toBe("a@b.com")
       expect(input.mobileNumber).toBe("+15551234567")
+    })
+  })
+
+  describe("bot field resolution", () => {
+    test("resolves a bot_field:<id> token to the workspace field's value, typed like a custom field", async () => {
+      const context = createContext([], {}, [
+        { id: "1", type: "number", value: "42" },
+      ])
+      const { rewritten, input } = await runInterpolation(
+        `return {{${formatBotFieldReference("1")}}} + 1;`,
+        context,
+      )
+      expect(input[formatBotFieldReference("1")]).toBe(42)
+      expect(execute(rewritten, input)).toBe(43)
+    })
+
+    test("omits an unknown/deleted bot field id from the resolved input, leaving its placeholder literal", async () => {
+      const context = createContext([], {}, [
+        { id: "1", type: "shortText", value: "known" },
+      ])
+      const resolved = await resolveJavascriptInput(
+        `return {{${formatBotFieldReference("999")}}};`,
+        context,
+      )
+      expect(resolved.has(formatBotFieldReference("999"))).toBe(false)
     })
   })
 

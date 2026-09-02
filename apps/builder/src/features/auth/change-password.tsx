@@ -19,7 +19,7 @@ import { AuthHeader } from "./components/shared"
 import {
   type ChangePasswordRequest,
   changePasswordRequest,
-} from "./schemas/action"
+} from "./schema/action"
 
 export const ChangePassword = () => {
   const t = useTranslations()

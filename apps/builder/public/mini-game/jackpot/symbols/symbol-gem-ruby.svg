@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="rubyG1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fda4af"/>
+      <stop offset="30%" stop-color="#f43f5e"/>
+      <stop offset="70%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#881337"/>
+    </linearGradient>
+    <filter id="gemSh"><feDropShadow dx="2" dy="6" stdDeviation="5" flood-opacity="0.6"/></filter>
+  </defs>
+
+  <g filter="url(#gemSh)">
+    <!-- Outer Contour Table -->
+    <polygon points="30,22 70,22 88,44 50,86 12,44" fill="url(#rubyG1)" stroke="#ffe4e6" stroke-width="2"/>
+
+    <!-- Facet Geometry -->
+    <polygon points="30,22 70,22 62,38 38,38" fill="#ffe4e6" opacity="0.65"/>
+    <polygon points="30,22 38,38 12,44" fill="#fb7185"/>
+    <polygon points="70,22 88,44 62,38" fill="#e11d48"/>
+    <polygon points="38,38 62,38 50,86" fill="#be123c"/>
+    <polygon points="12,44 38,38 50,86" fill="#9f1239"/>
+    <polygon points="88,44 62,38 50,86" fill="#4c0519"/>
+
+    <!-- Flare Glint -->
+    <polygon points="48,22 52,22 50,34" fill="#ffffff"/>
+    <circle cx="34" cy="30" r="2.5" fill="#ffffff"/>
+  </g>
+</svg>

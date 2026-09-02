@@ -1,5 +1,6 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
+  PURGE_BROADCASTS_INTERVAL_MINUTES,
   PURGE_WORKSPACES_INTERVAL_MINUTES,
   ScheduleJobData,
   scheduleQueue,
@@ -239,6 +240,22 @@ export const registerSchedules = async () => {
     },
   )
 
+  // Deliberately NOT in CLOUD_ONLY_SCHEDULERS — retention applies to every
+  // edition.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeErrorLogs,
+    {
+      pattern: "0 3 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeErrorLogs,
+      data: {
+        type: ScheduleJobData.purgeErrorLogs,
+        data: {},
+      },
+    },
+  )
+
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeWhatsappSignupSessions,
     {
@@ -262,6 +279,22 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.purgeWorkspaces,
       data: {
         type: ScheduleJobData.purgeWorkspaces,
+        data: {},
+      },
+    },
+  )
+
+  // Deliberately NOT in CLOUD_ONLY_SCHEDULERS — recipient-row retention
+  // applies to every edition.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeBroadcasts,
+    {
+      pattern: `*/${PURGE_BROADCASTS_INTERVAL_MINUTES} * * * *`,
+    },
+    {
+      name: ScheduleJobData.purgeBroadcasts,
+      data: {
+        type: ScheduleJobData.purgeBroadcasts,
         data: {},
       },
     },

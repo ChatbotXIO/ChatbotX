@@ -127,7 +127,7 @@ class InboxTeamService extends BaseService {
     if (teams.length > 0) {
       await this.audit(
         "delete",
-        `deleted team${teams.length > 1 ? "s" : ""} ${teams.map((team) => `#${team.id}`).join(", ")}`,
+        `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
       )
     }
   }

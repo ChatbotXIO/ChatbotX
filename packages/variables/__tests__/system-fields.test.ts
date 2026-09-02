@@ -688,6 +688,18 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBeNull()
   })
 
+  test("user_id resolves to the contact id even without a contact inbox", async () => {
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.user_id),
+    ).resolves.toBe("contact-1")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: null }),
+        systemFieldTypes.enum.user_id,
+      ),
+    ).resolves.toBe("contact-1")
+  })
+
   test("contact inbox passthrough fields resolve from context", async () => {
     const passthroughInbox = {
       ...contactInbox,
@@ -695,12 +707,6 @@ describe("getSystemFieldValue", () => {
       lastErrorLog: "(#551) This person isn't available right now.",
     } as ContactInboxModel
 
-    await expect(
-      getSystemFieldValue(
-        createContext({ contactInbox: passthroughInbox }),
-        systemFieldTypes.enum.user_id,
-      ),
-    ).resolves.toBe("source-1")
     await expect(
       getSystemFieldValue(
         createContext({ contactInbox: passthroughInbox }),
@@ -723,7 +729,6 @@ describe("getSystemFieldValue", () => {
 
   test("contact inbox passthrough fields return null without a contact inbox", async () => {
     for (const key of [
-      systemFieldTypes.enum.user_id,
       systemFieldTypes.enum.user_external_id,
       systemFieldTypes.enum.webchat_parent_url,
       systemFieldTypes.enum.last_error_log,

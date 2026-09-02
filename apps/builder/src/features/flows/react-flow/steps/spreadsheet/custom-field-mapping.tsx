@@ -123,11 +123,13 @@ export const SpreadsheetCustomFieldMapping = ({
               {direction === "sheetToContact" ? (
                 <CustomFieldSelect
                   clearable
+                  includeBotFields
                   label=""
                   name={getFieldName(`map.${index}.customFieldId`)}
                 />
               ) : (
                 <PlainTextEditorField
+                  includeBotFieldVariables
                   includeRawCustomFieldVariables
                   inline
                   label=""

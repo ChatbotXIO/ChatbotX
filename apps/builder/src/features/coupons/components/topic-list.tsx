@@ -43,7 +43,7 @@ import { useFormatter, useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useCouponTopicStore } from "@/features/coupons/provider/coupon-topic-store-context"
-import type { CouponTopicResource } from "@/features/coupons/schemas/resource"
+import type { CouponTopicResource } from "@/features/coupons/schema/resource"
 import { client } from "@/lib/orpc/orpc"
 import { TopicDialog } from "./topic-dialog"
 

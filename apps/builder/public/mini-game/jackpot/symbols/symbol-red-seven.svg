@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1752" height="1626" viewBox="0 0 1752 1626" fill="none">
+  <title>Số 7 phong cách jackpot</title>
+  <desc>Vector SVG nền trong suốt, gồm viền vàng, thân đỏ chuyển sắc, đường viền trắng và bóng đổ.</desc>
+  <defs>
+    <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="0" y1="55" x2="0" y2="1585">
+      <stop offset="0" stop-color="#F3B743"/>
+      <stop offset="0.32" stop-color="#D89B2D"/>
+      <stop offset="0.72" stop-color="#A56B10"/>
+      <stop offset="1" stop-color="#C78F29"/>
+    </linearGradient>
+    <linearGradient id="redFill" gradientUnits="userSpaceOnUse" x1="0" y1="80" x2="0" y2="1538">
+      <stop offset="0" stop-color="#E7D6D7"/>
+      <stop offset="0.20" stop-color="#D9B6B8"/>
+      <stop offset="0.40" stop-color="#D98589"/>
+      <stop offset="0.49" stop-color="#E85B60"/>
+      <stop offset="0.515" stop-color="#FF1010"/>
+      <stop offset="0.68" stop-color="#DD0000"/>
+      <stop offset="1" stop-color="#920000"/>
+    </linearGradient>
+    <linearGradient id="gloss" gradientUnits="userSpaceOnUse" x1="0" y1="90" x2="0" y2="840">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blurShadow" x="-20%" y="-20%" width="150%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <path id="seven" d="M 116 118 L 116 626 L 380 624 L 385 576 L 388 563 L 397 541 L 407 527 L 424 511 L 442 501 L 466 493 L 502 488 L 554 489 L 598 497 L 648 515 L 757 561 L 815 581 L 867 587 L 908 587 L 939 584 L 948 587 L 953 592 L 955 597 L 954 606 L 948 613 L 739 737 L 707 755 L 688 763 L 646 793 L 591 840 L 566 866 L 541 899 L 517 937 L 493 985 L 472 1038 L 455 1094 L 442 1152 L 432 1222 L 425 1295 L 419 1392 L 413 1535 L 954 1535 L 1141 1533 L 1211 1530 L 1200 1428 L 1183 1327 L 1175 1264 L 1169 1179 L 1169 1111 L 1173 1057 L 1183 996 L 1199 936 L 1222 871 L 1243 823 L 1257 795 L 1279 757 L 1305 720 L 1330 690 L 1340 670 L 1371 635 L 1442 566 L 1490 524 L 1546 482 L 1655 410 L 1672 396 L 1597 292 L 1503 167 L 1458 111 L 1456 111 L 1400 143 L 1347 170 L 1322 180 L 1298 187 L 1268 192 L 1236 194 L 1183 193 L 1144 190 L 1083 182 L 1023 169 L 941 144 L 902 129 L 840 108 L 794 96 L 748 88 L 723 86 L 685 86 L 652 89 L 607 96 L 570 104 L 544 112 L 517 122 L 484 137 L 427 167 L 378 195 L 368 198 L 359 195 L 354 190 L 352 185 L 352 146 L 350 135 L 345 127 L 332 121 L 298 118 Z"/>
+    <clipPath id="sevenClip">
+      <use xlink:href="#seven"/>
+    </clipPath>
+  </defs>
+
+  <g opacity="0.30" filter="url(#blurShadow)" transform="translate(9 14)">
+    <use xlink:href="#seven" fill="#000000" stroke="#000000" stroke-width="58"
+         stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <!-- Gold rim is drawn first; the body covers its inner half, leaving a clean outer border. -->
+    <use xlink:href="#seven" fill="none" stroke="url(#gold)" stroke-width="58"
+         stroke-linejoin="round" stroke-linecap="round"/>
+    <use xlink:href="#seven" fill="url(#redFill)" stroke="#C84F5B" stroke-width="7"
+         stroke-linejoin="round" stroke-linecap="round"/>
+    <use xlink:href="#seven" fill="url(#gloss)" clip-path="url(#sevenClip)"/>
+    <path d="M 140 142 L 140 602 L 359 600 L 361 576 L 364 561 L 373 535 L 385 516 L 404 496 L 420 485 L 432 479 L 452 472 L 476 467 L 502 464 L 554 465 L 576 468 L 608 475 L 658 493 L 767 539 L 821 558 L 867 563 L 908 563 L 939 560 L 954 563 L 964 569 L 971 576 L 977 587 L 979 597 L 977 613 L 974 620 L 964 631 L 751 758 L 719 776 L 700 784 L 675 801 L 627 840 L 593 872 L 572 897 L 545 937 L 521 982 L 501 1029 L 482 1086 L 468 1141 L 456 1222 L 449 1295 L 443 1392 L 438 1511 L 954 1511 L 1185 1508 L 1176 1428 L 1159 1327 L 1151 1264 L 1145 1179 L 1145 1111 L 1150 1049 L 1161 986 L 1177 926 L 1200 861 L 1221 813 L 1236 783 L 1258 745 L 1287 704 L 1309 678 L 1322 654 L 1353 619 L 1411 562 L 1474 506 L 1544 454 L 1639 391 L 1576 304 L 1485 183 L 1452 142 L 1450 142 L 1412 164 L 1357 192 L 1332 202 L 1308 209 L 1276 215 L 1236 218 L 1183 217 L 1144 214 L 1083 206 L 1013 191 L 931 166 L 892 151 L 830 130 L 784 118 L 737 111 L 685 110 L 652 113 L 607 120 L 580 126 L 554 134 L 527 144 L 494 159 L 384 219 L 368 222 L 353 219 L 347 216 L 333 202 L 328 185 L 328 146 L 325 144 L 298 142 Z" fill="none" stroke="#FFFFFF" stroke-width="14"
+          stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+</svg>

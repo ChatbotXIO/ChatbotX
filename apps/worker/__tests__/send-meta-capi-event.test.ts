@@ -27,6 +27,11 @@ const mocks = vi.hoisted(() => ({
   resolveCapiAccessToken: vi.fn(),
   defaultQueueAdd: vi.fn(),
   findWorkspaceById: vi.fn(),
+  logProviderError: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: (...args: unknown[]) => mocks.logProviderError(...args),
 }))
 
 vi.mock("@chatbotx.io/business", async () => {
@@ -416,17 +421,13 @@ describe("handleSendMetaCapiEvent", () => {
       to: "failed",
       capiError: "invalid token",
     })
-    expect(mocks.defaultQueueAdd).toHaveBeenCalledWith("sendErrorLog", {
-      type: "sendErrorLog",
-      data: {
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "meta-conversions",
         workspaceId: "ws-1",
-        error: {
-          message: "invalid token",
-          stack: expect.any(String),
-          httpCode: "400",
-        },
-      },
-    })
+        httpCode: "400",
+      }),
+    )
   })
 
   test("throws retryable failures so BullMQ retries", async () => {
@@ -488,7 +489,7 @@ describe("handleSendMetaCapiEvent", () => {
     })
     expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
     expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
-    expect(mocks.defaultQueueAdd).not.toHaveBeenCalled()
+    expect(mocks.logProviderError).not.toHaveBeenCalled()
   })
 
   test("missing contact inbox marks the event failed without sending", async () => {
@@ -505,7 +506,7 @@ describe("handleSendMetaCapiEvent", () => {
     })
     expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
     expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
-    expect(mocks.defaultQueueAdd).not.toHaveBeenCalled()
+    expect(mocks.logProviderError).not.toHaveBeenCalled()
   })
 
   test("marks failed when the contact inbox's contact belongs to a different workspace (Phase 0 guard)", async () => {

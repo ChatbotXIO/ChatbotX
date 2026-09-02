@@ -148,6 +148,7 @@ async function handleWebviewSelection(
         contactId: conversation.contactId,
         keyword: step.outputFieldId,
         value: metadata.selectedValue,
+        allowBotFields: true,
       })
     }
   } catch (error) {
@@ -271,6 +272,7 @@ async function handleSkipOrError(
         contactId: props.conversation.contactId,
         keyword: step.outputFieldId,
         value,
+        allowBotFields: true,
       })
     }
 

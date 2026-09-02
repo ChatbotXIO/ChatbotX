@@ -4,8 +4,8 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListDynamicImagesRequest,
   ListDynamicImagesResponse,
-} from "../schemas/query"
-import type { DynamicImageResource } from "../schemas/resource"
+} from "../schema/query"
+import type { DynamicImageResource } from "../schema/resource"
 
 export async function listDynamicImages(
   input: ListDynamicImagesRequest,

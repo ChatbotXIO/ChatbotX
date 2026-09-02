@@ -29,6 +29,20 @@ export const createMessageRequest = z
       text: z.string().trim().min(1).max(1000),
       mediaFile: mediaLibraryFileRequest,
     }),
+    // Media Library selection identified by DB id — must be listed before
+    // the text-only branch below, since z.object() strips unknown keys: if
+    // the text-only branch matched first, mediaFileId would be silently
+    // dropped and the message would send as plain text.
+    z.object({
+      text: z.string().trim().min(1).max(1000),
+      mediaFileId: zodBigintAsString(),
+    }),
+    // Multi-select Media Library variant — several images sent as one
+    // message. Same union-ordering constraint as mediaFileId above.
+    z.object({
+      text: z.string().trim().min(1).max(1000),
+      mediaFileIds: z.array(zodBigintAsString()).min(1).max(10),
+    }),
     z.object({
       text: z.string().trim().min(1).max(1000),
     }),
@@ -45,6 +59,12 @@ export const createMessageRequest = z
       mediaFile: mediaLibraryFileRequest,
     }),
     z.object({
+      mediaFileId: zodBigintAsString(),
+    }),
+    z.object({
+      mediaFileIds: z.array(zodBigintAsString()).min(1).max(10),
+    }),
+    z.object({
       flowId: zodBigintAsString(),
       nodeId: zodBigintAsString().optional(),
     }),
@@ -58,6 +78,9 @@ export const createMessageRequest = z
       clientId: zodBigintAsString().optional(),
       replyToMessageId: z.string().optional(),
       replyToMessageCreatedAt: z.coerce.date().optional(),
+      // When true, the outgoing comment is sent as a comment-anchored private
+      // reply DM instead of a public comment reply.
+      isPrivateReply: z.boolean().optional(),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>

@@ -1,6 +1,10 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import {
+  canonicalNumberLiteral,
+  coerceBooleanLiteral,
+} from "@chatbotx.io/utils/custom-field"
+import {
   currentTemporalLiteral,
   DEFAULT_FILTER_TIMEZONE,
   hasExplicitOffset,
@@ -12,8 +16,72 @@ import {
 } from "@chatbotx.io/utils/datetime"
 import { normalizeTemporalValueForStorage } from "@chatbotx.io/utils/temporal-input"
 import { normalizeStoredTimezone } from "../contact-locale"
+import { ChatbotXException } from "../errors"
 
 export type SourceTimezoneResolver = () => Promise<string>
+
+const MAX_ERROR_VALUE_LENGTH = 80
+
+const previewValue = (value: string): string =>
+  value.length > MAX_ERROR_VALUE_LENGTH
+    ? `${value.slice(0, MAX_ERROR_VALUE_LENGTH)}…`
+    : value
+
+const invalidNumberException = (value: string): ChatbotXException =>
+  new ChatbotXException(
+    `"${previewValue(value)}" is not a valid number value for this field.`,
+    "invalidCustomFieldValue",
+    400,
+  )
+
+type NonTemporalCustomFieldType = Exclude<
+  CustomFieldType,
+  TemporalCustomFieldType
+>
+
+/**
+ * Generous runtime coercion for every non-temporal type, applied at every
+ * WRITE chokepoint (contact custom fields, bot fields) so a flow/trigger/API
+ * write that carries arbitrary user text can never persist garbage:
+ * - `boolean` never throws (see `coerceBooleanLiteral`) — a chatbot flow must
+ *   not crash on unexpected text.
+ * - `number` throws a typed `ChatbotXException` on unparseable input (unlike
+ *   boolean, silently coercing a bad number would hide a real authoring bug)
+ *   — a blank string stays blank (means "unset", not "invalid").
+ * - `shortText`/`longText`/`email`/`phoneNumber` pass through byte-identical:
+ *   trimming/lowercasing here would change existing flow/tool/API behavior
+ *   for callers that bypass zod, which is explicitly out of scope this phase.
+ *
+ * Registry, not an if-else ladder, so a new type only means adding one row.
+ */
+const RUNTIME_COERCE_HANDLERS = {
+  // Blank means "unset" and stays blank (user-confirmed, symmetric with
+  // `number` below) — only a non-blank value is coerced to "true"/"false".
+  boolean: (value: string): string =>
+    value.trim().length === 0 ? "" : coerceBooleanLiteral(value),
+  number: (value: string): string => {
+    // Delegates to the shared `canonicalNumberLiteral` (its own trim covers
+    // " 1.5 " from free-text writes — flow {{variables}}, trigger actions —
+    // surrounding whitespace is never numerically meaningful). The explicit
+    // trim check here only distinguishes blank ("" -> unset, never throws)
+    // from genuinely unparseable input (throws).
+    if (value.trim().length === 0) {
+      return ""
+    }
+    const canonical = canonicalNumberLiteral(value)
+    if (canonical === null) {
+      throw invalidNumberException(value)
+    }
+    return canonical
+  },
+  shortText: (value: string): string => value,
+  longText: (value: string): string => value,
+  email: (value: string): string => value,
+  phoneNumber: (value: string): string => value,
+} as const satisfies Record<
+  NonTemporalCustomFieldType,
+  (value: string) => string
+>
 
 const TEMPORAL_SOURCE_TIMEZONE_REQUIRED = {
   date: () => true,
@@ -164,7 +232,7 @@ export const normalizeCustomFieldValueForStorage = async (input: {
   } = input
 
   if (!isTemporalCustomFieldType(type)) {
-    return value
+    return RUNTIME_COERCE_HANDLERS[type](value)
   }
 
   const isEmpty = value.length === 0

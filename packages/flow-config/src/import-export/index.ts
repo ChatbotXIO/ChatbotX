@@ -1,6 +1,8 @@
 export {
   collectCustomFieldReferences,
+  collectFieldReferences,
   collectFlowReferenceWarnings,
+  type FlowFieldReferenceIds,
   type FlowReferenceWarning,
   remapCustomFieldReferences,
 } from "./references"
@@ -15,9 +17,11 @@ export {
 export {
   FLOW_EXPORT_FORMAT_VERSION,
   type FlowExport,
+  type FlowExportBotField,
   type FlowExportCustomField,
   type FlowExportedFlow,
   type FlowExportParseResult,
+  flowExportBotFieldSchema,
   flowExportCustomFieldSchema,
   flowExportedFlowSchema,
   flowExportSchema,

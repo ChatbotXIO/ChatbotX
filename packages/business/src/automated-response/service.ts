@@ -290,7 +290,7 @@ class AutomatedResponseService extends BaseService {
     if (!tx && deleted.length > 0) {
       await this.audit(
         "delete",
-        `deleted keyword automation${deleted.length > 1 ? "s" : ""} ${deleted.map((row) => `#${row.id}`).join(", ")}`,
+        `deleted keyword automation${deleted.length > 1 ? "s" : ""} (${deleted.map((row) => `#${row.id}`).join(", ")})`,
       )
     }
   }

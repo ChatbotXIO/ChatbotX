@@ -14,7 +14,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateReflinkRequest,
   updateReflinkRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateReflinkAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

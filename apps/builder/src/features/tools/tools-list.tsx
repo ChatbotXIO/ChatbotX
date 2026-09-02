@@ -1,5 +1,6 @@
 "use client"
 
+import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { SiFacebook, SiInstagram } from "@icons-pack/react-simple-icons"
@@ -13,6 +14,7 @@ import {
   ImagesIcon,
   LinkIcon,
   MapIcon,
+  MegaphoneIcon,
   QrCodeIcon,
   TicketPercentIcon,
   UserCheck2Icon,
@@ -21,9 +23,15 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
+import { buildMessagingAdsToolPath } from "@/features/ads-campaign/lib/tool-path"
 import { useWorkspaceId } from "@/hooks/routing"
+import {
+  hasWorkspacePermission,
+  type WorkspacePermissionKey,
+} from "@/lib/auth/permission-routes"
 
-const TOOLS_CONFIG = [
+// Exported for tests (`__tests__/tools-list-config.test.ts`) only.
+export const TOOLS_CONFIG = [
   {
     id: "facebook-comment",
     labelKey: "facebookCommentAutomation.title",
@@ -51,6 +59,14 @@ const TOOLS_CONFIG = [
     descriptionKey: "facebookLeadAdsAutomation.description",
     icon: SiFacebook,
     getLink: (id: string) => `/space/${id}/fb-lead-ads`,
+  },
+  {
+    id: "click-to-message-ads",
+    labelKey: "clickToMessageAds.title",
+    descriptionKey: "clickToMessageAds.description",
+    icon: MegaphoneIcon,
+    permission: "superAdmin",
+    getLink: (id: string) => buildMessagingAdsToolPath({ workspaceId: id }),
   },
   {
     id: "reflinks",
@@ -149,14 +165,42 @@ const TOOLS_CONFIG = [
   // },
 ] as const
 
-export const ToolsList = () => {
+type ToolsListProps = {
+  /**
+   * The current member's permissions — may be a partial object (the jsonb
+   * column defaults to `{}`), which `hasWorkspacePermission` treats as
+   * fail-closed, exactly like the sidebar's nav filtering (`app-sidebar.tsx`).
+   */
+  permissions: WorkspaceMemberPermissions
+}
+
+/**
+ * A config entry declares the permission that gates its card (only
+ * `click-to-message-ads` today, `superAdmin`); entries without one are
+ * visible to everyone who can open the Tools page. Reuses the app-wide
+ * `hasWorkspacePermission` check rather than a local visibility table so a
+ * future gated card only needs a `permission` field, and an unknown flag
+ * hides the card instead of leaking it.
+ */
+export function canShowTool(
+  permission: WorkspacePermissionKey | undefined,
+  permissions: WorkspaceMemberPermissions,
+): boolean {
+  return !permission || hasWorkspacePermission(permissions, permission)
+}
+
+export const ToolsList = ({ permissions }: ToolsListProps) => {
   const workspaceId = useWorkspaceId()
   const t = useTranslations()
   const router = useRouter()
 
   const tools = useMemo(
     () =>
-      TOOLS_CONFIG.map((config) => ({
+      TOOLS_CONFIG.filter((config) => {
+        const permission =
+          "permission" in config ? config.permission : undefined
+        return canShowTool(permission, permissions)
+      }).map((config) => ({
         id: config.id,
         label: t(config.labelKey),
         description: t(config.descriptionKey),
@@ -166,7 +210,7 @@ export const ToolsList = () => {
             ? config.getLink(workspaceId.toString())
             : undefined,
       })),
-    [t, workspaceId],
+    [t, workspaceId, permissions],
   )
 
   const handleCardClick = useCallback(

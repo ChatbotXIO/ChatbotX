@@ -1,4 +1,5 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
+import { broadcastService } from "@chatbotx.io/business"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
@@ -12,7 +13,6 @@ import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
   type BaseStepSchema,
   BROADCAST_PAYLOAD_TYPE,
-  type BroadcastMetadataPayload,
   type ButtonStepProps,
   decodeButtonPayload,
   type EdgeSchema,
@@ -146,6 +146,55 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
     return
   }
 
+  // Stop/resume guard: a broadcast-dispatched flow job already in the queue
+  // when the broadcast was stopped (or resumed under a new epoch) must not
+  // continue running the flow.
+  //
+  // Accepted attribution-loss boundary — WEBVIEW re-entry: the webview
+  // submission actions (apps/builder/src/app/{booking,extensions}/**/actions)
+  // resume a flow mid-node but build a brand-new `metadata` payload of their
+  // own type (the webview token has no slot for broadcast metadata), so this
+  // guard's type check never matches and the flow remainder runs unguarded
+  // after that user-driven action. Never a duplicate (no marker → no reset).
+  // Flow-internal re-dispatches (next-node hops, button/quick-reply chains,
+  // split traffic) DO propagate `metadata`, so they stay guarded. Closing the
+  // webview gap would require threading broadcast metadata through the
+  // webview token schema — future round.
+  if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
+    const broadcastMeta = props.metadata
+    const sendable = await broadcastService.findSendableBroadcast(
+      broadcastMeta.broadcastId,
+    )
+
+    if (!sendable) {
+      // Reset only on the producer's own first dispatch. `initialBroadcastDispatch`
+      // is an EXPLICIT marker (see its doc comment in worker-config) — never
+      // inferred from job-data field absence. Every re-dispatch (splitTraffic,
+      // startAnotherNode, startExternalFlow/Node, condition routing,
+      // per-step continuation, smart-delay/wait resume, …) leaves it unset,
+      // so a missing marker always fails toward skip-without-reset
+      // (under-delivery, never a duplicate send) instead of replaying the
+      // flow head on Resume.
+      if (props.initialBroadcastDispatch === true) {
+        await broadcastService.resetContactForResume({
+          broadcastId: broadcastMeta.broadcastId,
+          contactKey: {
+            contactInboxId: getFlowJobEntityId(props.contactInboxId),
+          },
+        })
+      }
+
+      logger.debug(
+        {
+          broadcastId: broadcastMeta.broadcastId,
+          initialBroadcastDispatch: props.initialBroadcastDispatch === true,
+        },
+        "runFlowNode: broadcast no longer sendable, skipping",
+      )
+      return
+    }
+  }
+
   const { trackingContext, metadata, sendFrom, commentAnchor } = props
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
@@ -223,7 +272,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
-      const broadcastMeta = props.metadata as BroadcastMetadataPayload
+      const broadcastMeta = props.metadata
       await db
         .update(contactsOnBroadcastsModel)
         .set({ failedAt: new Date() })

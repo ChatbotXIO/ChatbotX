@@ -5,7 +5,7 @@ import type { Table } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import type { ListFacebookLeadAdItem } from "../schemas/query"
+import type { ListFacebookLeadAdItem } from "../schema/query"
 import { DeleteFacebookLeadAdAutomationsDialog } from "./delete-facebook-lead-ad-automations"
 
 type ToolbarActionsProps = {

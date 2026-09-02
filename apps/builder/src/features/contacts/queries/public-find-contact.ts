@@ -4,7 +4,7 @@ import type {
   ContactResponse,
   FindContactRequest,
   PublicListContactsByCustomFieldRequest,
-} from "../schemas/query"
+} from "../schema/query"
 
 const NUMERIC_RE = /^\d+$/
 

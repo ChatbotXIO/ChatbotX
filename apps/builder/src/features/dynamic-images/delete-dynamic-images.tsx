@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteDynamicImagesAction } from "./actions/delete-dynamic-images.action"
-import type { DynamicImageResource } from "./schemas/resource"
+import type { DynamicImageResource } from "./schema/resource"
 
 type DeleteDynamicImagesDialogProps = ComponentPropsWithoutRef<
   typeof Dialog

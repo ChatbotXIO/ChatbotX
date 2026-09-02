@@ -5,6 +5,7 @@ import {
   sendCarouselStepDefaultFn,
   sendImageStepDefaultFn,
   sendMessageNodeDefaultFn,
+  sendMultipleImagesStepDefaultFn,
   sendTextStepDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
@@ -172,6 +173,44 @@ describe("convertStartNodeToMessengerAdsJson", () => {
                 is_reusable: true,
               },
             },
+          },
+        },
+      ],
+    })
+  })
+
+  test("a sendMultipleImages step is allowed and emits a batched attachments[] message", () => {
+    const step = {
+      ...sendMultipleImagesStepDefaultFn(),
+      images: [
+        { id: "img-1", mode: "url", url: "https://cdn.example.com/a.jpg" },
+        { id: "img-2", mode: "url", url: "https://cdn.example.com/b.jpg" },
+      ],
+    }
+
+    const result = convert(makeStartNode([step]))
+
+    expect(result).toEqual({
+      status: "ok",
+      messages: [
+        {
+          message: {
+            attachments: [
+              {
+                type: "image",
+                payload: {
+                  url: "https://cdn.example.com/a.jpg",
+                  is_reusable: true,
+                },
+              },
+              {
+                type: "image",
+                payload: {
+                  url: "https://cdn.example.com/b.jpg",
+                  is_reusable: true,
+                },
+              },
+            ],
           },
         },
       ],

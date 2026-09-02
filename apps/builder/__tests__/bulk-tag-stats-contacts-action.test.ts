@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, test } from "vitest"
-import { bulkTagStatsContactsRequest } from "@/features/contacts/schemas/contact-tag"
+import { bulkTagStatsContactsRequest } from "@/features/contacts/schema/contact-tag"
 
 describe("bulkTagStatsContactsRequest schema", () => {
   test("accepts broadcast stats contacts with default exclusions", () => {

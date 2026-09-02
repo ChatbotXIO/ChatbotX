@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteMagicLinksAction } from "./actions/delete-magic-links.action"
-import type { MagicLinkResource } from "./schemas/resource"
+import type { MagicLinkResource } from "./schema/resource"
 
 type DeleteMagicLinksDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string

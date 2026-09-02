@@ -6,11 +6,11 @@ import {
   minigameContactService,
   minigameService,
 } from "@chatbotx.io/business/minigame"
-import { minigameTypes } from "@chatbotx.io/database/partials"
 import { verifyMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import { getTranslations } from "next-intl/server"
 import { actionClient } from "@/lib/safe-action"
-import { playMinigameRequest } from "../schemas/action"
+import { MINIGAME_PLAY_SCREENS } from "../components/play/minigame-play-screen-registry"
+import { playMinigameRequest } from "../schema/action"
 
 export const playMinigameAction = actionClient
   .inputSchema(playMinigameRequest)
@@ -23,7 +23,7 @@ export const playMinigameAction = actionClient
       throw new ChatbotXException(t("forbiddenDescription"), "notFound", 404)
     }
 
-    if (minigame.type !== minigameTypes.enum.jackpot) {
+    if (!Object.hasOwn(MINIGAME_PLAY_SCREENS, minigame.type)) {
       throw new ChatbotXException(
         t("comingSoonDescription"),
         "minigameNotPlayable",

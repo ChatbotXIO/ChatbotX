@@ -4,7 +4,7 @@ import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { AdAccountFilter } from "@/features/ads/components/ad-account-filter"
-import type { AdsAnalyticsSearchParams } from "@/features/ads/schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "@/features/ads/schema/analytics"
 
 const navigation = vi.hoisted(() => ({
   pathname: "/space/ws-1/dashboard/ads/messenger",

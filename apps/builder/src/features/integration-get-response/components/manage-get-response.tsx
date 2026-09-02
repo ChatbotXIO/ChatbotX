@@ -12,7 +12,7 @@ import { DisconnectIntegrationDialog } from "@/features/common/components/discon
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { connectGetResponseAction } from "../actions/connect.action"
 import { disconnectGetResponseAction } from "../actions/disconnect.action"
-import { connectGetResponseSchema } from "../schemas"
+import { connectGetResponseSchema } from "../schema"
 
 export function ManageGetResponse(props: {
   workspaceId: string

@@ -8,7 +8,7 @@ import { use, useMemo } from "react"
 import { getAuditColumns } from "./audit-logs-table-columns"
 import { AuditLogsToolbar } from "./audit-logs-toolbar"
 import type { listAuditLogAdmins, listAuditLogs } from "./queries"
-import type { ListAuditLogsRequest } from "./schemas/query"
+import type { ListAuditLogsRequest } from "./schema/query"
 
 type AuditLogsTableProps = {
   workspaceId: string

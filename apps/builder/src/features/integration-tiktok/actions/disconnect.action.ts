@@ -7,7 +7,7 @@ import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
 export const disconnectTiktokAction = workspaceActionClientAllowExpired

@@ -11,7 +11,6 @@ import type {
   TemplateComponent,
   WaTemplateParams,
 } from "@chatbotx.io/flow-config"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -23,22 +22,14 @@ import { format } from "date-fns"
 import { useFormatter, useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { ContactFilterSummary } from "@/features/contact-filter/components/contact-filter-summary"
-import { contactFilterCriteriaSchema } from "@/features/contact-filter/schemas"
+import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { MessengerTemplatePreview } from "@/features/integration-messenger/message-templates/components/template-preview"
 import { TemplatePreview } from "@/features/integration-whatsapp/message-templates/components/template-preview"
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
-import type { BroadcastResourceWithRelations } from "./schemas/resource"
-
-type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"
-
-const BROADCAST_STATUS_VARIANTS: Partial<
-  Record<string, BroadcastStatusBadgeVariant>
-> = {
-  cancelled: "secondary",
-  scheduled: "outline",
-}
+import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
+import type { BroadcastResourceWithRelations } from "./schema/resource"
 
 type BroadcastDetailDialogProps = {
   broadcast: BroadcastResourceWithRelations | null
@@ -166,15 +157,7 @@ export function BroadcastDetailDialog({
             />
             <DetailField
               label={t("fields.status.label")}
-              value={
-                <Badge
-                  variant={
-                    BROADCAST_STATUS_VARIANTS[broadcast.status] ?? "default"
-                  }
-                >
-                  {t(`broadcasts.status.${broadcast.status}`)}
-                </Badge>
-              }
+              value={<BroadcastStatusBadge status={broadcast.status} />}
             />
             <DetailField
               label={t("fields.schedule.label")}

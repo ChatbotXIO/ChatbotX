@@ -3,6 +3,7 @@ import {
   type SendCarouselStepSchema,
   type SendFileStepSchema,
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendQuickReplyStepSchema,
   type SendTextStepSchema,
   type SendVideoStepSchema,
@@ -16,6 +17,7 @@ import {
 import {
   sendTelegramAudio,
   sendTelegramDocument,
+  sendTelegramMediaGroup,
   sendTelegramMessage,
   sendTelegramPhoto,
   sendTelegramVideo,
@@ -28,6 +30,7 @@ import {
   convertFlowStepAudio,
   convertFlowStepFile,
   convertFlowStepImage,
+  convertFlowStepMultipleImages,
   convertFlowStepVideo,
 } from "./send-attachment"
 import {
@@ -64,16 +67,37 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
           messageIds.push(String(messageId))
         }
 
-        for (const attachment of message.attachments ?? []) {
+        // Multiple images in one outgoing message batch into a single
+        // sendMediaGroup call (same mechanism the sendMultipleImages flow
+        // step uses), instead of one sendPhoto call per image; every other
+        // attachment type still sends as its own message.
+        const attachments = message.attachments ?? []
+        const imageAttachments = attachments.filter(
+          (attachment) => attachment.fileType === "image",
+        )
+        const otherAttachments = attachments.filter(
+          (attachment) => attachment.fileType !== "image",
+        )
+
+        if (imageAttachments.length > 1) {
+          const ids = await sendTelegramMediaGroup(ctx.auth, {
+            chat_id: contact.sourceId,
+            media: imageAttachments.map((attachment) => ({
+              type: "photo" as const,
+              media: attachment.url as string,
+            })),
+          })
+          messageIds.push(...ids.map(String))
+        } else if (imageAttachments.length === 1) {
+          const messageId = await sendTelegramPhoto(ctx.auth, {
+            chat_id: contact.sourceId,
+            photo: imageAttachments[0].url as string,
+          })
+          messageIds.push(String(messageId))
+        }
+
+        for (const attachment of otherAttachments) {
           switch (attachment.fileType) {
-            case "image": {
-              const messageId = await sendTelegramPhoto(ctx.auth, {
-                chat_id: contact.sourceId,
-                photo: attachment.url as string,
-              })
-              messageIds.push(String(messageId))
-              break
-            }
             case "video": {
               const messageId = await sendTelegramVideo(ctx.auth, {
                 chat_id: contact.sourceId,
@@ -153,6 +177,20 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const messageId = await sendTelegramPhoto(ctx.auth, payload)
             messageIds.push(String(messageId))
+          }
+          break
+        }
+        case stepTypes.enum.sendMultipleImages: {
+          for (const payload of convertFlowStepMultipleImages(
+            props as Parameters<
+              MessageHandlers<
+                TelegramAuthValue,
+                SendMultipleImagesStepSchema
+              >["sendFlowStep"]
+            >[0],
+          )) {
+            const ids = await sendTelegramMediaGroup(ctx.auth, payload)
+            messageIds.push(...ids.map(String))
           }
           break
         }

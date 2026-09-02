@@ -36,7 +36,10 @@ describe("createAdSet", () => {
         pageId: "pg_1",
         whatsappPhoneNumber: "15550001234",
       }),
-      targeting: { geo_locations: { countries: ["US"] } },
+      targeting: {
+        geo_locations: { countries: ["US"] },
+        targeting_automation: { advantage_audience: 1 },
+      },
     })
 
     expect(result.id).toBe("adset_1")
@@ -50,8 +53,11 @@ describe("createAdSet", () => {
       page_id: "pg_1",
       whatsapp_phone_number: "15550001234",
     })
+    // v23.0 rejects ad set creates without an explicit advantage_audience
+    // (code 100) — the flag must survive serialization into the POST body.
     expect(capturedBody.targeting).toEqual({
       geo_locations: { countries: ["US"] },
+      targeting_automation: { advantage_audience: 1 },
     })
   })
 })

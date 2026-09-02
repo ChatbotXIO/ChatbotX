@@ -20,7 +20,7 @@ import {
   type InsightSpendRow,
   mergeAdsAnalytics,
 } from "../lib/merge-analytics"
-import { parseAnalyticsDateRange } from "../schemas/analytics"
+import { parseAnalyticsDateRange } from "../schema/analytics"
 import {
   type AdAccountSource,
   type ChannelAdAccount,
@@ -116,8 +116,9 @@ type SelectedAdAccounts = {
  *
  * Supersedes the retired Phase-6 "dashboard reads ONLY the workspace-wide
  * connection" contract: a workspace connected ONLY through a box (no
- * separate Facebook Ads integration) now yields spend too — see the box's
- * `adsCampaign.box.emptyDashboardNote` copy, updated to match.
+ * separate Facebook Ads integration) now yields spend too — see the
+ * `adsCampaign.box.emptyDashboardNote` copy, now shown as the dashboard hint
+ * on the Click to Message Ads tool page, updated to match.
  */
 async function resolveSelectedAdAccounts(input: {
   workspaceId: string

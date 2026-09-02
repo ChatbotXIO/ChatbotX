@@ -38,10 +38,6 @@ import {
   perChannelIntegrationIdsOrNull,
 } from "./channel-fields"
 import {
-  recordFlowStepConversion as recordFlowStepConversionImpl,
-  recordTriggerConversion as recordTriggerConversionImpl,
-} from "./record-ads-conversion"
-import {
   type AdsConversionRuleTriggerType,
   adsConversionRuleTriggerSchema,
   type CreateAdsConversionRuleInput,
@@ -63,8 +59,6 @@ import {
   listAdsConversionRulesInput,
   listAllChannelAdsExportRowsInput,
   listRetargetContactsInput,
-  type RecordFlowStepConversionInput,
-  type RecordTriggerConversionInput,
   type RemoveAdsConversionRuleInput,
   removeAdsConversionRuleInput,
   type ToggleAdsConversionRuleInput,
@@ -1061,41 +1055,6 @@ class AdsConversionService extends BaseService {
     channel: string | null | undefined,
   ): channel is AdsConversionChannel {
     return isAdsEligibleChannel(channel)
-  }
-
-  /**
-   * Backs the Trigger automation actions `trackAdsLead`/`trackAdsPurchase`
-   * (apps/worker/src/trigger/services/action-executor.ts). Implementation
-   * lives in `./record-ads-conversion` (colocated module, not inlined here)
-   * to keep this already-oversized file's growth minimal — see that
-   * module's doc comment for the full find-or-create + re-enqueue semantics
-   * it mirrors from `evaluateConversionTriggerRule`, and for how it shares
-   * its origin-aware core with `recordFlowStepConversion` below.
-   */
-  recordTriggerConversion(
-    input: RecordTriggerConversionInput,
-    tx?: DatabaseClient,
-  ): Promise<AdsConversionEventModel | null> {
-    return recordTriggerConversionImpl(input, tx)
-  }
-
-  /**
-   * Backs the Flow steps `trackAdsLead`/`trackAdsPurchase`
-   * (`packages/flow-config/src/steps/track-ads-{lead,purchase}.ts`,
-   * dispatched from
-   * `apps/worker/src/integration/handlers/meta-conversions/track-ads-step-handler.ts`).
-   * Same attribution gate / find-or-create / CAPI-enqueue semantics as
-   * `recordTriggerConversion` — the two share a private origin-aware core in
-   * `./record-ads-conversion` that only differs in the dedup-key namespace
-   * (`trigger-...` vs `flowstep-...`), so a Flow step recording the same
-   * eventType for the same contact/day as a Trigger action produces a
-   * separate event rather than deduping against it.
-   */
-  recordFlowStepConversion(
-    input: RecordFlowStepConversionInput,
-    tx?: DatabaseClient,
-  ): Promise<AdsConversionEventModel | null> {
-    return recordFlowStepConversionImpl(input, tx)
   }
 
   /**

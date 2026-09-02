@@ -32,16 +32,27 @@ const ConditionRow = ({
   const t = useTranslations()
 
   const isCustomField = condition.field === "customField"
-  const fieldConfig = configs.find((config) =>
-    isCustomField && condition.customFieldId !== undefined
-      ? String(config.customFieldId) === String(condition.customFieldId)
-      : config.name === condition.field,
-  )
+  const isBotField = condition.field === "botField"
+  const fieldConfig = configs.find((config) => {
+    if (isCustomField && condition.customFieldId !== undefined) {
+      return String(config.customFieldId) === String(condition.customFieldId)
+    }
+    if (isBotField && condition.botFieldId !== undefined) {
+      return String(config.botFieldId) === String(condition.botFieldId)
+    }
+    return config.name === condition.field
+  })
   const fieldLabel =
     fieldConfig?.label ??
-    (isCustomField
-      ? t("fields.customField.label")
-      : t(`condition.fields.${condition.field}`))
+    (() => {
+      if (isCustomField) {
+        return t("fields.customField.label")
+      }
+      if (isBotField) {
+        return t("fields.botField.label")
+      }
+      return t(`condition.fields.${condition.field}`)
+    })()
   const operatorLabel =
     operatorLabelByValue.get(condition.operator) ?? condition.operator
   const valueDisplay = formatConditionValueDisplay(
@@ -65,7 +76,10 @@ const ConditionRow = ({
 
 const ConditionStepViewerContent = ({ data }: ConditionStepViewerProps) => {
   const t = useTranslations()
-  const { configs, operatorLabelByValue } = useContactFilterConfigs()
+  const { configs, operatorLabelByValue } = useContactFilterConfigs(
+    undefined,
+    true,
+  )
 
   return (
     <div className="flex flex-col gap-3">
@@ -79,6 +93,7 @@ const ConditionStepViewerContent = ({ data }: ConditionStepViewerProps) => {
                 const baseKey = [
                   condition.field,
                   condition.customFieldId ?? "",
+                  condition.botFieldId ?? "",
                   condition.operator,
                   Array.isArray(condition.value)
                     ? condition.value.join(",")

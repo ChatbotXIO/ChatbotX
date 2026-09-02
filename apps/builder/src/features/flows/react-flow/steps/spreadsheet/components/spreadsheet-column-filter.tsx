@@ -70,6 +70,7 @@ export const SpreadsheetColumnFilter = ({
             name={getFieldName(`lookup.conditions.${idx}.operator`)}
           />
           <PlainTextEditorField
+            includeBotFieldVariables
             includeRawCustomFieldVariables
             inline
             label=""

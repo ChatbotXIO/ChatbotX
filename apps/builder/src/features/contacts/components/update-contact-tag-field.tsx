@@ -10,8 +10,8 @@ import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import type { TagResource } from "@/features/tags/schema/resource"
 import { updateContactTagAction } from "../actions/update-contact-tag.action"
-import { updateContactTagRequest } from "../schemas/contact-tag"
-import type { ContactResource } from "../schemas/resource"
+import { updateContactTagRequest } from "../schema/contact-tag"
+import type { ContactResource } from "../schema/resource"
 
 export default function UpdateContactTagField({
   workspaceId,

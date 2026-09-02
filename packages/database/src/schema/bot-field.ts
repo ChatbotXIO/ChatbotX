@@ -1,4 +1,5 @@
 import { pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import type { CustomFieldType } from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { customFieldType } from "./custom-field"
 import { folderModel } from "./folder"
@@ -9,7 +10,7 @@ export const botFieldModel = pgTable(
   {
     ...sharedColumns,
     name: text().notNull(),
-    type: customFieldType("type").notNull(),
+    type: customFieldType("type").$type<CustomFieldType>().notNull(),
     value: text(),
     description: text(),
     folderId: bigintAsString().references(() => folderModel.id, {

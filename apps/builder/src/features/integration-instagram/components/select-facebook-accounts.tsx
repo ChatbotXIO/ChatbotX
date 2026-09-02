@@ -15,7 +15,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { selectFacebookAccountAction } from "../actions/select-account-facebook.action"
-import { selectFacebookAccountRequest } from "../schemas/action-facebook"
+import { selectFacebookAccountRequest } from "../schema/action-facebook"
 
 type SelectFacebookAccountsProps = {
   accounts: InstagramAccount[]

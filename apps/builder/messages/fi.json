@@ -148,7 +148,12 @@
     "clone": "Kloonaa",
     "remove": "Poista",
     "restore": "Palauta",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "Sinun täytyy olla työtilan pääylläpitäjä tehdäksesi tämän."
@@ -347,7 +352,9 @@
       "scheduled": "Ajastettu",
       "sent": "Lähetetty",
       "sending": "Lähetetään",
-      "cancelled": "Peruutettu"
+      "cancelled": "Peruutettu",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Lähetetty",
@@ -433,6 +440,63 @@
       "template": "Malli",
       "noTemplate": "Ei mallia",
       "integration": "Integraatio"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "Järjestelmäkentät",
       "topicCoupon": "Kuponkiaihe",
       "customFields": "Mukautetut kentät",
+      "botFields": "Bottikentät",
       "email": "Sähköposti",
       "sms": "SMS",
       "ctwaAds": "Mainokset"
@@ -900,7 +965,10 @@
       "append": "Lisää loppuun",
       "prepend": "Lisää alkuun",
       "increase": "Kasvata määrällä",
-      "decrease": "Vähennä määrällä"
+      "decrease": "Vähennä määrällä",
+      "groupSystemFields": "Järjestelmäkentät",
+      "groupCustomFields": "Mukautetut kentät",
+      "groupAccountFields": "Bottikentät"
     },
     "dataCollect": {
       "label": "Tietojen keruu"
@@ -1003,8 +1071,8 @@
       "aiDeleteMessageHistory": "{aiName}: Poista viestihistoria"
     },
     "steps": {
-      "label": "Vaiheet",
-      "placeholder": "Valitse vaihe"
+      "label": "Solmu",
+      "placeholder": "Valitse solmu"
     },
     "folder": {
       "label": "Kansio"
@@ -1283,7 +1351,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Palveluntarjoaja"
+      "label": "Palveluntarjoaja",
+      "placeholder": "Valitse palveluntarjoaja"
     },
     "prompt": {
       "label": "Kehote",
@@ -2143,6 +2212,7 @@
       "sendFile": "Lähetä tiedosto",
       "sendGif": "Lähetä GIF",
       "sendImage": "Lähetä kuva",
+      "sendMultipleImages": "Useita kuvia",
       "sendMessage": "Lähetä viesti",
       "sendNode": "Käynnistä toinen solmu",
       "sendText": "Lähetä teksti",
@@ -2187,9 +2257,7 @@
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
       "importJsonOnly": "Vain JSON-tiedostot",
-      "adsConversions": "Mainokset ja Meta Conversions",
-      "trackAdsLead": "Seuraa mainoksen liidiä",
-      "trackAdsPurchase": "Seuraa mainoksen ostoa"
+      "adsConversions": "Mainokset ja Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2226,6 +2294,10 @@
       "addSlide": "Lisää kortti",
       "removeSlide": "Poista kortti",
       "whatsappLinkButtonIgnored": "WhatsAppissa tämän kortin linkki ei toimi: linkkipainikkeen sisältävällä kortilla ei voi olla muita painikkeita. Se lähetetään sen sijaan vastauksena."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Poista kuva",
+      "selectImage": "Valitse kuvat"
     },
     "additionalSteps": "Lisävaiheet",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "Haluatko varmasti katkaista kohteen {feature} yhteyden?",
     "disconnectSuccess": "Kohteen {feature} yhteys katkaistiin",
     "reply": "Vastaa",
+    "privateReply": "Yksityinen vastaus",
     "viewMessage": "Näytä viesti",
     "changeLikeState": "Vaihda tykkäystilaa",
     "changeHideState": "Vaihda piilotustilaa",
@@ -2969,6 +3042,9 @@
     "duplicatedSuccess": "{feature} monistettiin",
     "duplicateConfirmation": "Tämä luo kopion kohteesta {feature}.",
     "deleteFeature": "Poista {feature}",
+    "resetFeature": "Nollaa {feature}",
+    "resetConfirmation": "Tämä tyhjentää valittujen {feature} arvot.\nTätä toimintoa ei voi kumota.",
+    "resetSuccess": "{feature} nollattu onnistuneesti",
     "deleteConfirmation": "Oletko aivan varma?\nTätä toimintoa ei voi kumota.\nTämä poistaa kohteen {feature} pysyvästi palvelimiltamme.",
     "addFeature": "Lisää {feature}",
     "signOutConfirmation": "Haluatko varmasti kirjautua ulos?",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "{feature} otettiin käyttöön",
     "userInactive": "Käyttäjä on ollut passiivinen yli 7 päivää",
     "messagingWindowClosed": "Viestiä ei voi lähettää sallitun aikaikkunan ulkopuolella",
-    "sendHumanAgentTag": "Lähetä yksi viesti HUMAN_AGENT-tunnisteella",
-    "warning": "Varoitus!",
-    "humanAgentWarningDescription": "Voit vastata käyttäjän viestiin 7 päivän kuluessa vain, jos ongelmaa ei kohtuudella voi ratkaista 24 tunnissa. Esimerkkejä ovat viikonloput, pyhäpäivät tai tapaukset, joiden ratkaiseminen kestää yli päivän. Älä käytä tätä vaihtoehtoa muusta syystä, sillä se voi vaarantaa Facebook-sivusi tai Instagram-tilisi. Jos olet epävarma, älä jatka.",
     "humanAgentWindowExpired": "Viesti-ikkuna on vanhentunut. Yhteystiedon on lähetettävä ensin viesti keskustelun avaamiseksi uudelleen.",
     "restoreVersionSuccess": "Flow palautettiin valittuun versioon",
     "revertToPublishedSuccess": "Luonnos palautettiin julkaistuun versioon",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "Facebook-sivuja ei löytynyt",
       "noPagesDescription": "Business Managerin sivut edellyttävät Business Manager -käyttöoikeutta yhdistämisen aikana. Yhdistä Messenger uudelleen ja myönnä kaikki pyydetyt oikeudet.",
+      "noConnectablePagesTitle": "Ei yhdistettävissä olevia sivuja",
+      "noConnectablePagesDescription": "Et ole tämän sivun ylläpitäjä",
       "bmLookupFailedTitle": "Business Manager -sivuja saattaa puuttua",
       "bmLookupFailedDescription": "Yhdistä Messenger uudelleen ja myönnä Business Manager -käyttöoikeus, jotta Business Managerin kautta hallinnoidut sivut voidaan näyttää.",
       "alreadyConnectedNote": "Tämä sivu on jo yhdistetty",
-      "notAdminNote": "Yhdistäminen edellyttää sivun täysiä ylläpitäjän oikeuksia",
+      "notAdminNote": "Et ole tämän sivun ylläpitäjä",
       "tryAgain": "Yritä yhdistää uudelleen"
     },
     "title": "Facebook Messenger",
@@ -3783,9 +3858,7 @@
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
-      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
-      "trackAdsLead": "Seuraa mainoksen liidiä",
-      "trackAdsPurchase": "Seuraa mainoksen ostoa"
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -3797,7 +3870,8 @@
     "at": "Klo"
   },
   "errorLogs": {
-    "title": "Virhelokit"
+    "title": "Virhelokit",
+    "unknownContact": "Tuntematon yhteystieto"
   },
   "developerAccessToken": {
     "title": "API-käyttöoikeustunnus",
@@ -4325,6 +4399,21 @@
     "noEligiblePages": "Sopivia sivuja ei ole. Myönnä liidien käyttöoikeus valitsemalla Lisää uusi.",
     "duplicateError": "Tälle sivulle ja lomakkeelle on jo olemassa automaatio.",
     "subscribeError": "Tätä sivua ei voitu tilata Facebookin liidi-ilmoituksiin, joten automaatiota ei luotu. Yhdistä sivu uudelleen valitsemalla Lisää uusi ja yritä uudelleen."
+  },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-mainokset",
+    "description": "Mainokset ohjaavat ihmiset suoraan keskusteluun Messengerissä, Instagramissa tai WhatsAppissa.",
+    "empty": {
+      "title": "Tähän kanavaan ei ole yhdistetty tiliä",
+      "description": "Yhdistä ensin kanavatili ja palaa sitten tänne luomaan mainoksia.",
+      "cta": "Siirry kanava-asetuksiin"
+    },
+    "movedNote": {
+      "title": "Mainokset on siirretty Työkaluihin",
+      "description": "Luo ja hallitse Click-to-Message-mainoksia Click-to-Message-mainokset-työkalusta.",
+      "cta": "Avaa Click-to-Message-mainokset"
+    },
+    "dashboardCta": "Näytä mainostaulussa"
   },
   "ecommerce": {
     "title": "Verkkokauppa",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Yhdistä"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Tallentaa muunnoksen vain kontakteille, joilla on WhatsAppin click-to-WhatsApp- tai Metan mainosviittausattribuutio. Ei vaikuta muihin kontakteihin."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Kaikkien todennäköisyyksien summa: {value}%",
       "loseProbability": "Häviön todennäköisyys: {value}%",
       "winProbability": "Voiton todennäköisyys: {value}%",
-      "newPrize": "Uusi palkinto"
+      "newPrize": "Uusi palkinto",
+      "prizeNameCustomFieldLabel": "Tallenna palkinnon nimi mukautettuun kenttään"
     },
     "prizeItemDialog": {
       "prizeTitle": "Muokkaa palkintoa",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Otsikko",
       "loseImageDescription": "Suositeltu koko 120x120px",
       "quantityLabel": "Palkinnon määrä",
-      "quantityDescription": "Kuinka monta kertaa tämän palkinnon voi vielä voittaa; vähenee yhdellä joka voitolla. Jätä tyhjäksi rajoittamatonta varten.",
-      "sendMessage": "Lähetä viesti, kun pelaaja ei voita",
-      "sendWinMessage": "Lähetä viesti voittajalle, joka sai palkinnon",
-      "messageMode": "Viestin tyyppi",
-      "messageModeText": "Teksti",
-      "messageModeFlow": "Flow",
-      "messageText": "Viesti"
+      "quantityDescription": "Kuinka monta kertaa tämän palkinnon voi vielä voittaa; vähenee yhdellä joka voitolla. Jätä tyhjäksi rajoittamatonta varten."
+    },
+    "outcomeMessage": {
+      "enableWin": "Lähetä viesti voittajalle, joka sai palkinnon",
+      "enableLose": "Lähetä viesti, kun pelaaja ei voita",
+      "mode": "Viestin tyyppi",
+      "modeText": "Teksti",
+      "modeFlow": "Flow",
+      "text": "Viesti"
     },
     "winningMessageDialog": {
       "title": "Voittoviestin asetukset",
       "titleLabel": "Otsikko",
+      "prizeNameHint": "Voit käyttää muuttujaa '{{prize_name}}' otsikossa ja kuvauksessa lisätäksesi palkinnon nimen.",
       "acceptButtonText": "Hyväksy-painikkeen teksti",
       "shareButtonText": "Jaa-painikkeen teksti",
       "shareButtonDescription": "Jaa-painikkeen kuvaus"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Jaa ystäville",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Yksityiskohtainen esikatselu tälle pelityypille tulossa pian",
-      "rules": "Säännöt"
+      "luckyWheelHeader": "ONNENPYÖRÄ",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Yksityiskohtainen esikatselu tälle pelityypille tulossa pian"
     },
     "form": {
       "generalSettingsTitle": "Yleiset asetukset",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Palkintoasetukset"
     },
     "generalSettings": {
+      "showName": "Näkyvä",
       "playedAt": "Pelattu",
       "rulesDescription": "Sääntöjen kuvaus",
       "openerTags": "Merkitse kontaktit, jotka avaavat pelin linkin",
@@ -5494,7 +5586,8 @@
     "recent": "Viimeisimmät",
     "favourite": "Suosikki",
     "upload": "Lataa",
-    "done": "Valmis",
+    "select": "Valitse",
+    "bulkSelect": "Massavalinta",
     "deleteFolder": "Poista kansio",
     "renameFolder": "Nimeä kansio uudelleen",
     "noFiles": "Tiedostoja ei löytynyt",
@@ -5698,5 +5791,8 @@
         "last_7d": "Viimeiset 7 päivää"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bottikentät"
   }
 }

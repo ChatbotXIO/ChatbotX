@@ -2,6 +2,7 @@ import {
   type SendFileStepSchema,
   type SendGifStepSchema,
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
@@ -20,7 +21,10 @@ import type {
   ZaloSendMessageRequest,
 } from "../../../schema/webhook"
 import { convertFlowStepFile } from "./send-file"
-import { convertFlowStepImage } from "./send-image"
+import {
+  convertFlowStepImage,
+  convertFlowStepMultipleImages,
+} from "./send-image"
 import { convertFlowStepText } from "./send-text"
 
 export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
@@ -138,6 +142,11 @@ export async function* convertFlowStepToZaloMessage(
           ZaloAuthValue,
           SendImageStepSchema | SendGifStepSchema
         >,
+      )
+      break
+    case stepTypes.enum.sendMultipleImages:
+      yield* convertFlowStepMultipleImages(
+        props as SendFlowStepProps<ZaloAuthValue, SendMultipleImagesStepSchema>,
       )
       break
     case stepTypes.enum.sendFile:

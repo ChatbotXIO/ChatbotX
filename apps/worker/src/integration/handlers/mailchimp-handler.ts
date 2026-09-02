@@ -2,6 +2,7 @@ import {
   buildContext,
   integrationMailchimpService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { MailchimpAddMemberSchema } from "@chatbotx.io/flow-config"
 import {
@@ -222,6 +223,12 @@ export const addMailchimpMember = async (
       { ...logContext, error: normalized },
       "Mailchimp add-member step failed",
     )
+    await logProviderError({
+      provider: "mailchimp",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error,
+    })
     return {
       status: "error",
       errorMessage: normalized.message,

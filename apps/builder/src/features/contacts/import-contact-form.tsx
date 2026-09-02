@@ -34,7 +34,7 @@ import { useEffect, useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { toast } from "sonner"
 import { importContactsAction } from "@/features/contacts/actions/import-contacts.action"
-import { importContactsRequest } from "@/features/contacts/schemas/contact-import"
+import { importContactsRequest } from "@/features/contacts/schema/contact-import"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { ImportDropzone } from "@/features/import/components/import-dropzone"
 import {
@@ -355,6 +355,7 @@ function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
                   <ArrowRightIcon className="rtl:rotate-180" size={20} />
                   <div className="flex-1">
                     <CustomFieldSelect
+                      includeBotFields
                       label=""
                       name={`fieldMapping.${index}.customFieldId`}
                     />

@@ -8,7 +8,11 @@ export type ContactFilterConditionInput = {
   customFieldId?: string
   /** Precise custom-field type (`date` | `datetime`) driving temporal semantics. */
   customFieldType?: string
-  /** Form/value-input type of the custom field, used to cast the text value. */
+  /** Present for dynamic bot-field conditions (`field === "botField"`). */
+  botFieldId?: string
+  /** Precise bot-field type (`date` | `datetime`) driving temporal semantics. */
+  botFieldType?: string
+  /** Form/value-input type of the custom/bot field, used to cast the text value. */
   valueType?: string
   /** Present for dynamic coupon-topic conditions (`field === "couponTopic"`). */
   topicId?: string

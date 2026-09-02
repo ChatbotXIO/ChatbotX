@@ -7,8 +7,8 @@ import {
 } from "@chatbotx.io/database/utils"
 import { withCache } from "@chatbotx.io/redis"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListQrCodesRequest, ListQrCodesResponse } from "../schemas/query"
-import type { QrCodeResource } from "../schemas/resource"
+import type { ListQrCodesRequest, ListQrCodesResponse } from "../schema/query"
+import type { QrCodeResource } from "../schema/resource"
 
 const QR_CODES_CACHE_TTL_SECONDS = 60 * 60
 

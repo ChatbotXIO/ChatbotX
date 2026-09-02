@@ -40,4 +40,16 @@ describe("getEstimatedContactsDisplayState", () => {
       }),
     ).toBe("empty")
   })
+
+  test("shows empty for draft and failed rows without contactCount", () => {
+    expect(
+      getEstimatedContactsDisplayState({ contactCount: null, status: "draft" }),
+    ).toBe("empty")
+    expect(
+      getEstimatedContactsDisplayState({
+        contactCount: null,
+        status: "failed",
+      }),
+    ).toBe("empty")
+  })
 })

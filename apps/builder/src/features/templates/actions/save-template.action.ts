@@ -1,8 +1,8 @@
 "use server"
 
 import { templateService } from "@chatbotx.io/business"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { saveTemplateRequest } from "../schemas/mutation"
+import { workspaceIdrequestParams } from "@/features/common/schema"
+import { saveTemplateRequest } from "../schema/mutation"
 import { templateActionClient } from "./template-action-client"
 
 export const saveTemplateAction = templateActionClient

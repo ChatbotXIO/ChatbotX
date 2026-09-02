@@ -15,6 +15,7 @@ import type {
 import { createId } from "@chatbotx.io/utils"
 import { aiAgentService } from "../ai-agent/service"
 import { automatedResponseService } from "../automated-response/service"
+import { botFieldService } from "../bot-field/service"
 import { customFieldService } from "../custom-field/service"
 import { toPublicErrorMessage } from "../errors"
 import { folderService } from "../folder"
@@ -344,6 +345,11 @@ const runInstall = async (
 const invalidateAfterCommit = async (workspaceId: string): Promise<void> => {
   await Promise.all([
     customFieldService.invalidate({ workspaceId }),
+    // Bot fields created by the settings adapter invalidate inside the tx
+    // (botFieldService.create), which a concurrent reader can immediately
+    // repopulate from a pre-commit snapshot — re-invalidate after commit so
+    // the whole-workspace variable-map cache picks up the new fields.
+    botFieldService.invalidate({ workspaceId }),
     automatedResponseService.invalidateCache(workspaceId),
     updateTriggerCache(workspaceId),
     aiAgentService.invalidate({ workspaceId }),

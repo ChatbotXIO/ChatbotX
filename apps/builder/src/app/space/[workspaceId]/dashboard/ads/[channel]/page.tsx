@@ -14,7 +14,7 @@ import {
   getCapiDeliveryData,
 } from "@/features/ads/queries/analytics"
 import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
-import { adsAnalyticsSearchParamsCache } from "@/features/ads/schemas/analytics"
+import { adsAnalyticsSearchParamsCache } from "@/features/ads/schema/analytics"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
