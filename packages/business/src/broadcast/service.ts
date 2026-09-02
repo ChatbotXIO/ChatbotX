@@ -15,14 +15,17 @@ import {
 import {
   type BroadcastScheduleType,
   type BroadcastStatus,
+  type BroadcastSubaction,
   type BroadcastTerminalStatus,
   broadcastStatuses,
   type ChannelType,
   dmConversationUsesSourceId,
+  findBroadcastChannelCapability,
   requiresRecentInteractionWindow,
 } from "@chatbotx.io/database/partials"
 import {
   buildContactInboxContactFilterSQL,
+  type ContactFilterCriteriaInput,
   contactInboxInteractedWithin24hSQL,
   pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
@@ -45,6 +48,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { chunkById, likeContains } from "@chatbotx.io/database/utils"
 import type { WaTemplateParams } from "@chatbotx.io/flow-config"
+import { startOfMinute } from "date-fns"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
@@ -54,6 +58,7 @@ import type {
   BroadcastTemplateDetail,
 } from "./schema"
 
+const DEFAULT_BROADCAST_NAME = "Broadcast"
 const DEFAULT_CHUNK_SIZE = 1000
 const OPTION_LIST_LIMIT = 500
 const CALENDAR_LIST_LIMIT = 500
@@ -84,6 +89,33 @@ export type BroadcastAwaitingFinalization = Pick<
   BroadcastModel,
   "id" | "workspaceId" | "contactCount"
 > & { handoffCompletedAt: Date }
+
+/** Flow-button binding stored alongside a Messenger template's params. */
+export type BroadcastTemplateButton = {
+  id: string
+  label: string
+  flowId?: string
+}
+
+/**
+ * The validated create-broadcast payload, re-applied to an existing draft.
+ * Structurally identical to the builder's `createBroadcastRequest` output —
+ * declared here so the service stays independent of the app layer.
+ */
+export type UpdateDraftBroadcastData = {
+  channel: ChannelType
+  flowId?: string
+  templateId?: string
+  integrationWhatsappId?: string
+  integrationMessengerId?: string
+  templateData?: Record<string, unknown>
+  buttons?: BroadcastTemplateButton[]
+  subaction: BroadcastSubaction
+  schedulesType: BroadcastScheduleType
+  schedulesAt: string | null
+  contactFilter?: ContactFilterCriteriaInput | null
+  saveAsDraft?: boolean
+}
 
 export type BroadcastCalendarRow = BroadcastModel & {
   flow: Pick<FlowModel, "id" | "name"> | null
@@ -259,6 +291,201 @@ class BroadcastService extends BaseService {
     if (deleted.length === 0) {
       throw new ChatbotXException("Broadcast is not a draft")
     }
+  }
+
+  /** The editable form of a broadcast: only a `draft` row may be reopened. */
+  async findDraft(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<BroadcastModel | null> {
+    const row = await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        workspaceId: input.workspaceId,
+        status: broadcastStatuses.enum.draft,
+      },
+    })
+    return row ?? null
+  }
+
+  /**
+   * Re-applies a validated create payload to an existing draft. `saveAsDraft`
+   * decides whether the row stays a draft or becomes `scheduled`, mirroring
+   * `createBroadcastAction`. The conditional WHERE (`draftScope`) is the guard:
+   * a row that is no longer a draft — or belongs to another workspace — matches
+   * nothing and the update is rejected rather than silently applied.
+   */
+  async updateDraft(input: {
+    workspaceId: string
+    broadcastId: string
+    canViewEmailAndPhone: boolean
+    data: UpdateDraftBroadcastData
+  }): Promise<{ id: string; status: BroadcastStatus }> {
+    const { workspaceId, data } = input
+
+    this.assertDraftPayload(data)
+    await this.assertBroadcastIntegrationsOwned({
+      workspaceId,
+      integrationWhatsappId: data.integrationWhatsappId,
+      integrationMessengerId: data.integrationMessengerId,
+    })
+
+    const name = await this.resolveDraftBroadcastName({ workspaceId, data })
+    const status = data.saveAsDraft
+      ? broadcastStatuses.enum.draft
+      : broadcastStatuses.enum.scheduled
+
+    const [row] = await db
+      .update(broadcastModel)
+      .set({
+        channel: data.channel,
+        subaction: data.subaction,
+        flowId: data.flowId ?? null,
+        templateId: data.templateId ?? null,
+        integrationWhatsappId: data.integrationWhatsappId ?? null,
+        integrationMessengerId: data.integrationMessengerId ?? null,
+        name,
+        contactFilter:
+          pruneEmailPhoneFilterConditions(
+            data.contactFilter,
+            input.canViewEmailAndPhone,
+          ) ?? null,
+        schedulesType: data.schedulesType,
+        // Persist the minute-truncated time the schema validated against.
+        schedulesAt: startOfMinute(new Date(data.schedulesAt ?? new Date())),
+        templateData: data.templateData
+          ? { ...data.templateData, buttons: data.buttons ?? [] }
+          : null,
+        status,
+      })
+      .where(this.draftScope(workspaceId, input.broadcastId))
+      .returning({ id: broadcastModel.id })
+
+    if (!row) {
+      throw new ChatbotXException("Broadcast is not a draft")
+    }
+
+    // `status` is the value we just wrote, so it needs no unsafe narrowing of
+    // the `text`-widened enum column that `.returning()` would hand back.
+    return { id: row.id, status }
+  }
+
+  /**
+   * The channel/subaction/flow-or-template rules `createBroadcastAction`
+   * enforces, as an ordered rule list so the first violated rule wins.
+   */
+  private assertDraftPayload(data: UpdateDraftBroadcastData): void {
+    const capability = findBroadcastChannelCapability(data.channel)
+    const rules: readonly { violated: boolean; message: string }[] = [
+      { violated: !capability, message: "Unsupported broadcast channel" },
+      {
+        violated: !capability?.subactions.includes(data.subaction),
+        message: "Unsupported broadcast subaction",
+      },
+      {
+        violated: !(data.flowId || data.templateId),
+        message: "Either flow or template must be selected",
+      },
+      {
+        violated:
+          Boolean(data.templateId) && !capability?.supportsTemplateBroadcast,
+        message: "Template broadcasts are not supported for this channel",
+      },
+    ]
+
+    const failed = rules.find((rule) => rule.violated)
+    if (failed) {
+      throw new ChatbotXException(failed.message)
+    }
+  }
+
+  /**
+   * Integration ids scope the audience, so a foreign id would let a broadcast
+   * target another workspace's pages. Never trust them from the client.
+   */
+  private async assertBroadcastIntegrationsOwned(input: {
+    workspaceId: string
+    integrationWhatsappId?: string
+    integrationMessengerId?: string
+  }): Promise<void> {
+    const [messenger, whatsapp] = await Promise.all([
+      input.integrationMessengerId
+        ? db.query.integrationMessengerModel.findFirst({
+            where: {
+              id: input.integrationMessengerId,
+              workspaceId: input.workspaceId,
+            },
+            columns: { id: true },
+          })
+        : true,
+      input.integrationWhatsappId
+        ? db.query.integrationWhatsappModel.findFirst({
+            where: {
+              id: input.integrationWhatsappId,
+              workspaceId: input.workspaceId,
+            },
+            columns: { id: true },
+          })
+        : true,
+    ])
+
+    if (!(messenger && whatsapp)) {
+      throw new ChatbotXException("Integration not found")
+    }
+  }
+
+  /** Same derivation as create: template name wins, else the flow's name. */
+  private async resolveDraftBroadcastName(input: {
+    workspaceId: string
+    data: UpdateDraftBroadcastData
+  }): Promise<string> {
+    const { data, workspaceId } = input
+
+    const flowName = data.flowId
+      ? await this.requireFlowName(workspaceId, data.flowId)
+      : null
+
+    const templateName = data.templateId
+      ? await this.requireTemplateName({
+          workspaceId,
+          channel: data.channel,
+          templateId: data.templateId,
+          integrationWhatsappId: data.integrationWhatsappId,
+          integrationMessengerId: data.integrationMessengerId,
+        })
+      : null
+
+    return templateName ?? flowName ?? DEFAULT_BROADCAST_NAME
+  }
+
+  private async requireFlowName(
+    workspaceId: string,
+    flowId: string,
+  ): Promise<string> {
+    const flow = await db.query.flowModel.findFirst({
+      where: { workspaceId, id: flowId },
+      columns: { name: true },
+    })
+
+    if (!flow) {
+      throw new ChatbotXException("Flow not found")
+    }
+    return flow.name
+  }
+
+  private async requireTemplateName(input: {
+    workspaceId: string
+    channel: ChannelType
+    templateId: string
+    integrationWhatsappId?: string | null
+    integrationMessengerId?: string | null
+  }): Promise<string> {
+    const name = await this.resolveTemplateBroadcastName(input)
+
+    if (!name) {
+      throw new ChatbotXException("Template not found")
+    }
+    return name
   }
 
   async listForCalendar(input: {
