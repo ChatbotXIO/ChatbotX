@@ -2,11 +2,14 @@
 
 import {
   contactInboxService,
+  conversationService,
   messageCleanupService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
+import { buildContactInboxIdentityWhere } from "@chatbotx.io/business/contact-inbox"
 import {
   and,
+  type DatabaseClient,
   db,
   describeDatabaseError,
   eq,
@@ -124,6 +127,30 @@ export const decodeHistoricalId = (
   }
 }
 
+/** Keep the numerically larger of two message-id strings (null-safe). The
+ *  single "newest id wins" rule shared by `maxMessageId`, the per-conversation
+ *  merge below, and messenger-sync's per-page fold. */
+export const maxNumericId = (
+  a: string | null,
+  b: string | null,
+): string | null => {
+  if (a === null) {
+    return b
+  }
+  if (b === null) {
+    return a
+  }
+  return BigInt(a) < BigInt(b) ? b : a
+}
+
+/** Ids are time-ordered snowflakes (ORDER BY id ≡ ORDER BY createdAt), so the
+ *  max id over the rows bulkCreate actually inserted IS the newest
+ *  sync-inserted message — direction-agnostic (incoming and outgoing both
+ *  count). Duplicates skipped by onConflictDoNothing are absent from
+ *  insertedRows and never drive the marker. */
+const maxMessageId = (rows: ReadonlyArray<{ id: string }>): string | null =>
+  rows.reduce<string | null>((max, row) => maxNumericId(max, row.id), null)
+
 const isUniqueMessagePkViolation = (err: unknown): boolean => {
   // Drizzle wraps the pg error, so code/constraint live on `.cause` (sometimes
   // nested). Walk the cause chain. pg exposes the constraint as `constraint`
@@ -147,6 +174,121 @@ const isUniqueMessagePkViolation = (err: unknown): boolean => {
     current = e.cause
   }
   return false
+}
+
+/**
+ * Cap on how many times a single row's id is re-minted while probing past
+ * DB-occupied `(id, createdAt)` slots. Each attempt advances the factory's
+ * disambiguator; 64 is far beyond any realistic same-second slot occupancy, so
+ * exhausting it signals something genuinely wrong and is surfaced loudly.
+ */
+const MAX_PK_REMINT_ATTEMPTS = 64
+
+/**
+ * Insert a single row that PK-collided, re-minting its id until it lands in a
+ * free `(id, createdAt)` slot. Each `makeMessageId` call advances the factory's
+ * in-process `used` set, so successive attempts probe forward instead of
+ * re-emitting the colliding id. Genuine duplicates never reach here — they
+ * match the arbiter and are swallowed silently by `bulkCreate`.
+ */
+const remintRow = async (
+  repository: IMessageRepository,
+  row: CreateMessageInput,
+  makeMessageId: HistoricalIdFactory,
+  contactInboxId: string,
+  runId: string,
+): Promise<{ id: string; sourceId: string | null }[]> => {
+  for (let attempt = 0; attempt < MAX_PK_REMINT_ATTEMPTS; attempt++) {
+    const reminted: CreateMessageInput = {
+      ...row,
+      id: makeMessageId(
+        row.createdAt as Date,
+        row.sourceId ?? "",
+        contactInboxId,
+      ),
+    }
+    try {
+      return await repository.bulkCreate([reminted])
+    } catch (err) {
+      if (!isUniqueMessagePkViolation(err)) {
+        throw err
+      }
+      // Still colliding — loop; the next mint advances to another slot.
+    }
+  }
+  logger.error(
+    {
+      runId,
+      sourceId: row.sourceId,
+      createdAt: row.createdAt,
+      attempts: MAX_PK_REMINT_ATTEMPTS,
+    },
+    "[coexist] Message PK collision unresolved after re-minting — giving up on row",
+  )
+  throw new Error(
+    `[coexist] Message PK collision unresolved after ${MAX_PK_REMINT_ATTEMPTS} re-mints (sourceId=${row.sourceId})`,
+  )
+}
+
+/**
+ * Converge a batch that is KNOWN to contain at least one PK `(id, createdAt)`
+ * collision the repository's arbiter `(contactInboxId, sourceId, createdAt)`
+ * does not catch.
+ *
+ * A PK-thrown row is ALWAYS a distinct message: a genuine re-import matches the
+ * arbiter and is swallowed by `onConflictDoNothing`, never throwing. The clash
+ * is a rare 14-bit id-hash collision with a row already in the DB — invisible
+ * to `makeMessageId`'s in-process `used` set. We isolate the colliders by
+ * splitting the batch in halves (a half whose rows are all fine still inserts
+ * in one bulk call), and re-mint only the single rows that truly collide. This
+ * shifts only the offending rows and provably converges, unlike the previous
+ * whole-batch re-mint which just traded one collision for another.
+ *
+ * Re-minting is safe for idempotency: the stored id no longer equals the
+ * deterministic id, but a future re-import is deduped by the arbiter tuple, not
+ * the id.
+ */
+const convergePkCollisions = async (
+  repository: IMessageRepository,
+  inputs: CreateMessageInput[],
+  makeMessageId: HistoricalIdFactory,
+  contactInboxId: string,
+  runId: string,
+): Promise<{ id: string; sourceId: string | null }[]> => {
+  if (inputs.length === 1) {
+    return await remintRow(
+      repository,
+      inputs[0],
+      makeMessageId,
+      contactInboxId,
+      runId,
+    )
+  }
+
+  const mid = Math.floor(inputs.length / 2)
+  const halves = [inputs.slice(0, mid), inputs.slice(mid)]
+  const out: { id: string; sourceId: string | null }[] = []
+  // Sequential, not parallel: all rows share one factory `used` set, so
+  // concurrent minting would race on slot assignment.
+  for (const half of halves) {
+    try {
+      out.push(...(await repository.bulkCreate(half)))
+    } catch (err) {
+      if (!isUniqueMessagePkViolation(err)) {
+        throw err
+      }
+      out.push(
+        ...(await convergePkCollisions(
+          repository,
+          half,
+          makeMessageId,
+          contactInboxId,
+          runId,
+        )),
+      )
+    }
+  }
+  return out
 }
 
 export type HistoricalMessage = IncomingMessage & { createdAt?: Date }
@@ -184,115 +326,178 @@ export type BulkImportMessagesResult = {
   /** Newest API-provided incoming message createdAt in this call (null when
    *  none). Used only for ContactInbox.lastIncomingMessageAt. */
   newestIncomingMessageAt: Date | null
+  /** Id of the newest message actually inserted by this call, either
+   *  direction; null when nothing was inserted. Computed from ALL
+   *  `insertedRows`, independent of `newestMessageAt` — a message inserted
+   *  with `fallbackCreatedAt` (invalid/missing API timestamp) still counts
+   *  here even though it never counts toward `newestMessageAt`. */
+  newestMessageId: string | null
 }
 
-/** One contact's activity-timestamp bump, collected by a batching caller. */
+/** One contact's activity-timestamp bump, collected by a batching caller.
+ *  A whole batch belongs to one workspace — the caller passes `workspaceId`
+ *  to `applyCoexistActivityUpdates` instead of repeating it per row. */
 export type CoexistActivityUpdate = {
   contactInboxId: string
   contactId: string
-  workspaceId: string
   conversationId: string
+  /** Null when no message in this update carried a valid API timestamp
+   *  (e.g. all inserted with `fallbackCreatedAt`) — the row can still exist
+   *  purely to carry `aiMarkerMessageId` for the AI-context marker. */
+  newestMessageAt: Date | null
+  oldestMessageAt: Date | null
+  newestIncomingMessageAt: Date | null
+  /** Id of the newest sync-inserted message for this conversation (either
+   *  direction). Set by default so the AI ignores synced history; callers
+   *  null it out only when the integration opted into letting the AI read
+   *  synced history. Null = do not advance the marker. */
+  aiMarkerMessageId: string | null
+}
+
+type ContactInboxMerge = {
   newestMessageAt: Date
   oldestMessageAt: Date
   newestIncomingMessageAt: Date | null
+  contactId: string
+}
+
+type ConversationMerge = {
+  newestMessageAt: Date | null
+  aiMarkerMessageId: string | null
+}
+
+/** Fold one update into the per-ContactInbox tracking map. Rows without valid
+ *  API timestamps carry nothing for ContactInbox and are skipped. */
+const mergeContactInboxUpdate = (
+  map: Map<string, ContactInboxMerge>,
+  u: CoexistActivityUpdate,
+): void => {
+  if (u.newestMessageAt === null || u.oldestMessageAt === null) {
+    return
+  }
+  const existing = map.get(u.contactInboxId)
+  if (!existing) {
+    map.set(u.contactInboxId, {
+      contactId: u.contactId,
+      newestMessageAt: u.newestMessageAt,
+      oldestMessageAt: u.oldestMessageAt,
+      newestIncomingMessageAt: u.newestIncomingMessageAt,
+    })
+    return
+  }
+  if (existing.newestMessageAt < u.newestMessageAt) {
+    existing.newestMessageAt = u.newestMessageAt
+  }
+  if (existing.oldestMessageAt > u.oldestMessageAt) {
+    existing.oldestMessageAt = u.oldestMessageAt
+  }
+  if (
+    u.newestIncomingMessageAt &&
+    (!existing.newestIncomingMessageAt ||
+      existing.newestIncomingMessageAt < u.newestIncomingMessageAt)
+  ) {
+    existing.newestIncomingMessageAt = u.newestIncomingMessageAt
+  }
+}
+
+/** Fold one update into the per-Conversation map: newest timestamp and newest
+ *  marker id advance independently of each other. */
+const mergeConversationUpdate = (
+  map: Map<string, ConversationMerge>,
+  u: CoexistActivityUpdate,
+): void => {
+  const existing = map.get(u.conversationId)
+  if (!existing) {
+    map.set(u.conversationId, {
+      newestMessageAt: u.newestMessageAt,
+      aiMarkerMessageId: u.aiMarkerMessageId,
+    })
+    return
+  }
+  if (
+    u.newestMessageAt &&
+    (!existing.newestMessageAt || existing.newestMessageAt < u.newestMessageAt)
+  ) {
+    existing.newestMessageAt = u.newestMessageAt
+  }
+  existing.aiMarkerMessageId = maxNumericId(
+    existing.aiMarkerMessageId,
+    u.aiMarkerMessageId,
+  )
 }
 
 /**
- * Bump activity timestamps for a whole bulk in ONE statement per table (not two
- * queries per contact in the import loop). In coexist these columns must mirror
- * the newest API-provided message time, not the sync worker's wall clock:
+ * Bump activity timestamps (and the AI-context marker, when the caller set
+ * `aiMarkerMessageId` on its rows) for a whole bulk in ONE statement per
+ * table (not two+ queries per contact in the import loop). In coexist these
+ * columns must mirror the newest API-provided message time, not the sync
+ * worker's wall clock:
  *
  *   - ContactInbox.firstInteractionAt: set once from the oldest message.
  *   - ContactInbox.lastMessageAt: set from the newest message.
  *   - ContactInbox.lastIncomingMessageAt: advance from the newest incoming
  *     message only; outgoing history must not move this field.
  *   - Conversation.lastActivityAt: set from the newest message.
+ *   - Conversation.aiContextLastMessageId: advance to `aiMarkerMessageId`
+ *     (rows where the caller left it null leave the marker untouched).
  *
- * Each UPDATE joins a VALUES table of the deduped rows. This keeps the write
- * batched while avoiding pg array-parameter casting differences. Failures must
+ * Rows with a null `newestMessageAt`/`oldestMessageAt` (every message in that
+ * update used `fallbackCreatedAt`) skip the ContactInbox tracking bump — a
+ * row can exist purely to carry `aiMarkerMessageId` — but still reach the
+ * Conversation update so the marker still advances.
+ *
+ * The conversation UPDATE routes through `conversationService` (not raw
+ * `db.execute`) so it gets the same advance-only, NULL-guarded semantics for
+ * both columns plus the required cache invalidation. Failures must
  * propagate: otherwise a coexist run can be marked succeeded while these
  * denormalized activity columns remain null or stuck at row-creation time.
  */
 export const applyCoexistActivityUpdates = async (
   updates: CoexistActivityUpdate[],
+  options: { workspaceId: string },
 ): Promise<void> => {
   if (updates.length === 0) {
     return
   }
 
-  // Dedup by id, keeping the newest ts. ids are unique per contact within a
-  // batch, but a resumed/overlapping batch could repeat one — and a duplicate
-  // join key in VALUES would update the row twice with no defined winner.
-  const newestByContactInbox = new Map<
-    string,
-    {
-      newestMessageAt: Date
-      oldestMessageAt: Date
-      newestIncomingMessageAt: Date | null
-      contactId: string
-      workspaceId: string
-    }
-  >()
-  const newestByConversation = new Map<string, Date>()
+  // Dedup by id, keeping the newest ts (and newest marker id). ids are
+  // unique per contact within a batch, but a resumed/overlapping batch could
+  // repeat one — and a duplicate join key in VALUES would update the row
+  // twice with no defined winner.
+  const newestByContactInbox = new Map<string, ContactInboxMerge>()
+  const newestByConversation = new Map<string, ConversationMerge>()
   for (const u of updates) {
-    const ci = newestByContactInbox.get(u.contactInboxId)
-    if (ci) {
-      if (ci.newestMessageAt < u.newestMessageAt) {
-        ci.newestMessageAt = u.newestMessageAt
-      }
-      if (ci.oldestMessageAt > u.oldestMessageAt) {
-        ci.oldestMessageAt = u.oldestMessageAt
-      }
-      if (
-        u.newestIncomingMessageAt &&
-        (!ci.newestIncomingMessageAt ||
-          ci.newestIncomingMessageAt < u.newestIncomingMessageAt)
-      ) {
-        ci.newestIncomingMessageAt = u.newestIncomingMessageAt
-      }
-    } else {
-      newestByContactInbox.set(u.contactInboxId, {
-        contactId: u.contactId,
-        workspaceId: u.workspaceId,
-        newestMessageAt: u.newestMessageAt,
-        oldestMessageAt: u.oldestMessageAt,
-        newestIncomingMessageAt: u.newestIncomingMessageAt,
-      })
-    }
-    const cv = newestByConversation.get(u.conversationId)
-    if (!cv || cv < u.newestMessageAt) {
-      newestByConversation.set(u.conversationId, u.newestMessageAt)
-    }
+    mergeContactInboxUpdate(newestByContactInbox, u)
+    mergeConversationUpdate(newestByConversation, u)
   }
 
-  if (newestByContactInbox.size > 0) {
-    await contactInboxService.bulkUpdateTracking({
-      rows: [...newestByContactInbox.entries()].map(([id, update]) => ({
-        contactInboxId: id,
-        contactId: update.contactId,
-        workspaceId: update.workspaceId,
-        firstInteractionAt: update.oldestMessageAt,
-        lastMessageAt: update.newestMessageAt,
-        lastIncomingMessageAt: update.newestIncomingMessageAt,
-      })),
-    })
-  }
-
-  if (newestByConversation.size > 0) {
-    const conversationRows = [...newestByConversation.entries()].map(
-      ([id, ts]) => sql`(${id}::int8, ${ts}::timestamptz)`,
-    )
-
-    await db.execute(sql`
-      UPDATE "Conversation" AS t
-      SET "lastActivityAt" = CASE
-        WHEN t."lastActivityAt" IS NULL OR t."lastActivityAt" < u.ts THEN u.ts
-        ELSE t."lastActivityAt"
-      END
-      FROM (VALUES ${sql.join(conversationRows, sql`, `)}) AS u(id, ts)
-      WHERE t."id" = u.id
-    `)
-  }
+  // The two writes touch disjoint tables from disjoint maps — run in parallel.
+  await Promise.all([
+    newestByContactInbox.size > 0
+      ? contactInboxService.bulkUpdateTracking({
+          rows: [...newestByContactInbox.entries()].map(([id, update]) => ({
+            contactInboxId: id,
+            contactId: update.contactId,
+            workspaceId: options.workspaceId,
+            firstInteractionAt: update.oldestMessageAt,
+            lastMessageAt: update.newestMessageAt,
+            lastIncomingMessageAt: update.newestIncomingMessageAt,
+          })),
+        })
+      : Promise.resolve(),
+    newestByConversation.size > 0
+      ? conversationService.bulkAdvanceActivityAndAiContextMarker({
+          workspaceId: options.workspaceId,
+          rows: [...newestByConversation.entries()].map(
+            ([conversationId, v]) => ({
+              conversationId,
+              newestMessageAt: v.newestMessageAt,
+              aiMarkerMessageId: v.aiMarkerMessageId,
+            }),
+          ),
+        })
+      : Promise.resolve(),
+  ])
 }
 
 const isValidDate = (date: Date | undefined): date is Date =>
@@ -335,6 +540,65 @@ export type BulkImportHistoricalResult = {
  * created). Callers use this map to dispatch downstream avatar / message
  * fetches without an additional DB lookup.
  */
+type ContactInboxIdentityRow = {
+  id: string
+  sourceId: string
+  sourceUserId: string | null
+  contactId: string
+}
+
+const rowsBySourceUserId = <T extends { sourceUserId: string | null }>(
+  rows: readonly T[],
+): Map<string, T> =>
+  new Map(
+    rows.flatMap((row) =>
+      row.sourceUserId === null ? [] : [[row.sourceUserId, row] as const],
+    ),
+  )
+
+/**
+ * Resolves raced entries whose ContactInbox insert was skipped by the partial
+ * (inboxId, sourceUserId) unique index: finds the winner row owning each
+ * entry's scoped user id, keyed by the entry's own import sourceId so the
+ * caller can alias the import key to the winner's link.
+ */
+const resolveScopedIdRaceWinners = async (props: {
+  tx: DatabaseClient
+  inboxId: string
+  racedEntries: ReadonlyArray<readonly [string, string]>
+}): Promise<Map<string, ContactInboxIdentityRow>> => {
+  const { tx, inboxId, racedEntries } = props
+  if (racedEntries.length === 0) {
+    return new Map()
+  }
+  const winners = await tx
+    .select({
+      id: contactInboxModel.id,
+      sourceId: contactInboxModel.sourceId,
+      sourceUserId: contactInboxModel.sourceUserId,
+      contactId: contactInboxModel.contactId,
+    })
+    .from(contactInboxModel)
+    .where(
+      and(
+        eq(contactInboxModel.inboxId, inboxId),
+        inArray(
+          contactInboxModel.sourceUserId,
+          racedEntries.map(([, scopedId]) => scopedId),
+        ),
+      ),
+    )
+  const winnerByScopedId = rowsBySourceUserId(winners)
+  const aliases = new Map<string, ContactInboxIdentityRow>()
+  for (const [entrySourceId, scopedId] of racedEntries) {
+    const winner = winnerByScopedId.get(scopedId)
+    if (winner) {
+      aliases.set(entrySourceId, winner)
+    }
+  }
+  return aliases
+}
+
 export const bulkImportContacts = async (props: {
   inbox: InboxModel
   workspaceId: string
@@ -372,6 +636,8 @@ export const bulkImportContacts = async (props: {
       email: existing.email ?? entry.email,
       avatar: existing.avatar ?? entry.avatar,
       gender: existing.gender ?? entry.gender,
+      sourceUserId: existing.sourceUserId ?? entry.sourceUserId,
+      sourceUsername: existing.sourceUsername ?? entry.sourceUsername,
     })
   }
 
@@ -398,20 +664,30 @@ export const bulkImportContacts = async (props: {
   const failureReason: string | undefined = undefined
   const contactInboxIds = new Map<string, ContactImportLink>()
 
+  // A thread's scoped user id (e.g. a WhatsApp BSUID) may already belong to a
+  // row in this inbox under a different sourceId. Matching on it up front
+  // resolves the thread to that row instead of attempting an insert that
+  // would violate the partial unique index (inboxId, sourceUserId).
+  const sourceUserIds = [...dedup.values()].flatMap((entry) =>
+    entry.sourceUserId ? [entry.sourceUserId] : [],
+  )
+
   await db.transaction(async (tx) => {
-    // 1. Find existing ContactInbox rows.
+    // 1. Find existing ContactInbox rows — by sourceId or scoped user id.
     const existingRows = await tx
       .select({
         id: contactInboxModel.id,
         sourceId: contactInboxModel.sourceId,
+        sourceUserId: contactInboxModel.sourceUserId,
         contactId: contactInboxModel.contactId,
       })
       .from(contactInboxModel)
       .where(
-        and(
-          eq(contactInboxModel.inboxId, inbox.id),
-          inArray(contactInboxModel.sourceId, sourceIds),
-        ),
+        buildContactInboxIdentityWhere({
+          inboxId: inbox.id,
+          sourceIds,
+          sourceUserIds,
+        }),
       )
 
     const resolved = new Map<string, ContactImportLink>()
@@ -420,6 +696,23 @@ export const bulkImportContacts = async (props: {
     for (const row of existingRows) {
       existingContactIds.add(row.contactId)
       resolved.set(row.sourceId, {
+        contactInboxId: row.id,
+        contactId: row.contactId,
+        conversationId: "",
+      })
+    }
+
+    const existingBySourceUserId = rowsBySourceUserId(existingRows)
+    for (const [sourceId, entry] of dedup) {
+      if (resolved.has(sourceId) || !entry.sourceUserId) {
+        continue
+      }
+      const row = existingBySourceUserId.get(entry.sourceUserId)
+      if (!row) {
+        continue
+      }
+      existingContactIds.add(row.contactId)
+      resolved.set(sourceId, {
         contactInboxId: row.id,
         contactId: row.contactId,
         conversationId: "",
@@ -494,13 +787,15 @@ export const bulkImportContacts = async (props: {
 
       await tx.insert(contactModel).values(contactRows)
 
-      const contactInboxRows = acceptedNew.map(([sourceId], i) => ({
+      const contactInboxRows = acceptedNew.map(([sourceId, entry], i) => ({
         id: createId(),
         inboxId: inbox.id,
         contactId: contactRows[i]?.id,
         originalContactId: contactRows[i]?.id,
         source: contactSources.enum.inboundMessage,
         sourceId,
+        sourceUserId: entry.sourceUserId ?? null,
+        sourceUsername: entry.sourceUsername ?? null,
         channel: inbox.channel,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -512,12 +807,13 @@ export const bulkImportContacts = async (props: {
         contactId: contactRows[i]?.id,
       }))
 
+      // Targetless DO NOTHING: a concurrent import can win EITHER identity
+      // index — (inboxId, sourceId) or the partial (inboxId, sourceUserId) —
+      // and a targeted clause would let the second one abort the whole batch.
       const insertedInboxes = await tx
         .insert(contactInboxModel)
         .values(contactInboxRows)
-        .onConflictDoNothing({
-          target: [contactInboxModel.inboxId, contactInboxModel.sourceId],
-        })
+        .onConflictDoNothing()
         .returning({
           id: contactInboxModel.id,
           sourceId: contactInboxModel.sourceId,
@@ -531,6 +827,11 @@ export const bulkImportContacts = async (props: {
       const racedSourceIds = acceptedNew
         .map(([sourceId]) => sourceId)
         .filter((s) => !insertedSourceIds.has(s))
+
+      // Maps a raced entry's import key to the winner row that claimed its
+      // scoped user id under a DIFFERENT sourceId — the final link mapping is
+      // keyed by row.sourceId, so these aliases are re-keyed at the end.
+      let scopedWinnerAliases = new Map<string, ContactInboxIdentityRow>()
 
       if (racedSourceIds.length > 0) {
         const winners = await tx
@@ -549,6 +850,27 @@ export const bulkImportContacts = async (props: {
         for (const w of winners) {
           insertedInboxes.push(w)
           insertedSourceIds.add(w.sourceId)
+        }
+
+        // A raced row skipped on the scoped-user-id index has no winner under
+        // its own sourceId — resolve it through the row owning that scoped id.
+        scopedWinnerAliases = await resolveScopedIdRaceWinners({
+          tx,
+          inboxId: inbox.id,
+          racedEntries: racedSourceIds.flatMap((sourceId) => {
+            if (insertedSourceIds.has(sourceId)) {
+              return []
+            }
+            const scopedId = dedup.get(sourceId)?.sourceUserId
+            return scopedId ? [[sourceId, scopedId] as const] : []
+          }),
+        })
+        for (const winner of scopedWinnerAliases.values()) {
+          insertedInboxes.push({
+            id: winner.id,
+            sourceId: winner.sourceId,
+            contactId: winner.contactId,
+          })
         }
 
         const racedSet = new Set(racedSourceIds)
@@ -629,6 +951,16 @@ export const bulkImportContacts = async (props: {
           })
         }
       }
+
+      // Scoped-id winners resolve under their own sourceId above; alias the
+      // raced entry's import key to the same link so downstream message
+      // imports keyed by the entry's sourceId still find their contact.
+      for (const [entrySourceId, winner] of scopedWinnerAliases) {
+        const link = resolved.get(winner.sourceId)
+        if (link) {
+          resolved.set(entrySourceId, link)
+        }
+      }
     }
 
     for (const [sourceId, link] of resolved) {
@@ -644,6 +976,7 @@ export const bulkImportContacts = async (props: {
       ev.firstName,
       ev.phoneNumber,
       ev.email,
+      ev.contactInboxId,
     ).catch((error) => {
       logger.error(error, "[coexist] Failed to emit contactCreated event")
     })
@@ -737,6 +1070,7 @@ export const bulkImportMessages = async (props: {
     newestMessageAt: null,
     oldestMessageAt: null,
     newestIncomingMessageAt: null,
+    newestMessageId: null,
   }
 
   const hasEnrichment =
@@ -791,8 +1125,12 @@ export const bulkImportMessages = async (props: {
   })
 
   // Insert messages via repository — always shard-aware (ShardedMessageRepository).
-  // PK collision (snowflake id clash across runs) triggers a one-time retry with
-  // fresh IDs; the onConflictDoNothing inside bulkCreate handles sourceId dupes.
+  // A PK `(id, createdAt)` collision (a rare 14-bit id-hash clash with a row
+  // already in the DB) is NOT caught by bulkCreate's arbiter onConflictDoNothing
+  // on (contactInboxId, sourceId, createdAt), so it surfaces as 23505. It is
+  // resolved by `remintingBulkInsert`, which re-mints ONLY the colliding rows
+  // until they find a free slot; genuine duplicates are still swallowed by the
+  // arbiter.
   //
   // Atomicity trade-off: bulkCreate runs outside any transaction wrapping the
   // surrounding conversation/contactInbox updates. A crash mid-batch leaves
@@ -821,40 +1159,25 @@ export const bulkImportMessages = async (props: {
         )
         throw err
       }
-      // A PK collision is an anticipated, self-healing condition (rare 14-bit
-      // disambiguator clash with an existing row) — warn, then retry with
-      // re-minted ids. Only escalate to error if the retry also fails (below).
+      // A PK collision is an anticipated, self-healing condition. Converge by
+      // re-minting only the colliding rows (see remintingBulkInsert) instead of
+      // reshuffling the whole batch — the latter just traded one collision for
+      // another and never converged.
       logger.warn(
         {
           runId,
           total: messageInputs.length,
           dbCause: describeDatabaseError(err),
         },
-        "[coexist] Message PK collision — regenerating IDs and retrying",
+        "[coexist] Message PK collision — re-minting colliding rows and retrying",
       )
-      const retried = messageInputs.map((input) => ({
-        ...input,
-        // Re-call advances past the colliding slot via the factory's used-set.
-        id: makeMessageId(
-          input.createdAt as Date,
-          input.sourceId ?? "",
-          contactInboxId,
-        ),
-      }))
-      try {
-        insertedRows = await repository.bulkCreate(retried)
-      } catch (retryErr) {
-        logger.error(
-          {
-            runId,
-            total: retried.length,
-            dbCause: describeDatabaseError(retryErr),
-            sampleIds: retried.slice(0, 5).map((m) => m.id),
-          },
-          "[coexist] Message bulkCreate retry ALSO failed after re-minting IDs",
-        )
-        throw retryErr
-      }
+      insertedRows = await convergePkCollisions(
+        repository,
+        messageInputs,
+        makeMessageId,
+        contactInboxId,
+        runId,
+      )
     }
   }
 
@@ -953,6 +1276,11 @@ export const bulkImportMessages = async (props: {
     null,
   )
 
+  // Independent of `newestMessageAt` — computed from ALL insertedRows so a
+  // message inserted with `fallbackCreatedAt` (no valid API timestamp) still
+  // counts for the AI-context marker. See `maxMessageId` doc comment.
+  const newestMessageId = maxMessageId(insertedRows)
+
   return {
     importedMessages,
     skippedMessages,
@@ -960,6 +1288,7 @@ export const bulkImportMessages = async (props: {
     newestMessageAt,
     oldestMessageAt,
     newestIncomingMessageAt,
+    newestMessageId,
   }
 }
 
@@ -974,8 +1303,13 @@ export const bulkImportHistorical = async (props: {
   workspaceId: string
   runId: string
   batch: HistoricalContactMessages[]
+  /** `IntegrationWhatsapp.coexistAiReadsSyncedHistory` — when false (the
+   *  default), `Conversation.aiContextLastMessageId` is advanced to the newest
+   *  sync-inserted message id so the AI ignores this synced history; when
+   *  true, the marker is left untouched and the AI reads the history. */
+  aiReadsSyncedHistory: boolean
 }): Promise<BulkImportHistoricalResult> => {
-  const { inbox, workspaceId, runId, batch } = props
+  const { inbox, workspaceId, runId, batch, aiReadsSyncedHistory } = props
 
   const contactsResult = await bulkImportContacts({
     inbox,
@@ -1027,19 +1361,18 @@ export const bulkImportHistorical = async (props: {
           for (const id of res.insertedAttachmentIds) {
             insertedAttachmentIds.push(id)
           }
-          if (res.newestMessageAt) {
-            let oldestMessageAt = res.oldestMessageAt
-            if (!oldestMessageAt) {
-              oldestMessageAt = res.newestMessageAt
-            }
+          const aiMarkerMessageId = aiReadsSyncedHistory
+            ? null
+            : res.newestMessageId
+          if (res.newestMessageAt !== null || aiMarkerMessageId !== null) {
             activityUpdates.push({
               contactInboxId: link.contactInboxId,
               contactId: link.contactId,
-              workspaceId,
               conversationId: link.conversationId,
               newestMessageAt: res.newestMessageAt,
-              oldestMessageAt,
+              oldestMessageAt: res.oldestMessageAt ?? res.newestMessageAt,
               newestIncomingMessageAt: res.newestIncomingMessageAt,
+              aiMarkerMessageId,
             })
           }
         } catch (error) {
@@ -1054,7 +1387,7 @@ export const bulkImportHistorical = async (props: {
   )
 
   // One UPDATE per table for the whole bulk (not two per contact in the loop).
-  await applyCoexistActivityUpdates(activityUpdates)
+  await applyCoexistActivityUpdates(activityUpdates, { workspaceId })
 
   return {
     importedContacts: contactsResult.importedContacts,

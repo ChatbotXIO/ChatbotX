@@ -38,14 +38,19 @@ export async function sanitizeReferer(referer: string): Promise<string> {
 }
 
 /**
- * Social (Google/Facebook) and integration (TikTok/…) OAuth always land on the
- * fixed broker host — the only registered redirect_uri. When the flow originated
- * on a different domain (a reseller custom domain or the builder app URL), return
- * the URL to relay the callback to — same path + query, on the originating domain
- * — so the rest of the handler runs where the user's session cookie lives.
+ * OAuth redirect_uris are pinned per-credential: the broker host for
+ * inherited/platform credentials, or the reseller's own custom domain for a
+ * tenant-owned credential (see `lib/provider-origin.ts`). Either way, the
+ * callback can land on a host different from the one the flow originated on
+ * — e.g. a reseller on the platform host authorizes through their own app,
+ * whose registered redirect_uri is their custom domain. When the callback
+ * host differs from the originating `referer` host, return the URL to relay
+ * the callback to — same path + query, on the originating domain — so the
+ * rest of the handler runs where the user's session cookie lives.
  *
- * Returns `null` when no relay is needed: the callback already ran on the
- * originating domain, or the `referer` is not an origin we control.
+ * Returns `null` when no relay is needed: the callback already landed on the
+ * originating host (loop-safe — the relayed request has equal hosts and
+ * won't match again), or the `referer` is not an origin we control.
  */
 export async function resolveRelayTarget(
   url: URL,
@@ -58,9 +63,7 @@ export async function resolveRelayTarget(
     return null
   }
 
-  const brokerHost = new URL(getBrokerOrigin()).host
-  // Only relay from the broker host, and never to the broker itself.
-  if (url.host !== brokerHost || refererUrl.host === brokerHost) {
+  if (url.host === refererUrl.host) {
     return null
   }
 

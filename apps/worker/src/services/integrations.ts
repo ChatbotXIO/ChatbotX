@@ -11,7 +11,9 @@ import type {
   InboxModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { integration as integrationApi } from "@chatbotx.io/integration-api"
 import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
+import { integration as integrationGoogleCalendar } from "@chatbotx.io/integration-google-calendar"
 import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
@@ -37,7 +39,9 @@ export const allIntegrations: Record<
   // biome-ignore lint/suspicious/noExplicitAny: safe pass value
   Integration<IntegrationDefinition<any, any, any>> | undefined
 > = {
+  api: integrationApi,
   gemini: undefined,
+  googleCalendar: integrationGoogleCalendar,
   googleSheets: integrationGoogleSheets,
   messenger: integrationMessenger,
   openai: undefined,
@@ -118,6 +122,11 @@ export const integrationService = {
         columnName = "inboxId"
         break
       }
+      case "api": {
+        modelName = "IntegrationApi"
+        columnName = "inboxId"
+        break
+      }
       default:
         throw new Error(`Unsupported integration: ${integrationType}`)
     }
@@ -180,6 +189,9 @@ export const integrationService = {
         break
       case "instagram":
         integrationTable = "IntegrationInstagram"
+        break
+      case "api":
+        integrationTable = "IntegrationApi"
         break
       default:
         throw new ChannelError(

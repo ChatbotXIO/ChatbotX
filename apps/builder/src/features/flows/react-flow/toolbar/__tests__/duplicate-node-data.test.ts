@@ -14,7 +14,7 @@ import {
   whatsappOptionListStepDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
-import { updateFlowVersionSchema } from "../../../schemas/action"
+import { updateFlowVersionSchema } from "../../../schema/action"
 import {
   duplicateFlowNode,
   duplicateFlowNodeData,

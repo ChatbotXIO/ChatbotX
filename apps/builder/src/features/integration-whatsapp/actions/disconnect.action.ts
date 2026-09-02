@@ -1,6 +1,7 @@
 "use server"
 
 import { inboxService, workspaceService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -13,7 +14,7 @@ import { isRevokedTokenError } from "@chatbotx.io/integration-whatsapp"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { integrations } from "@/integration"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
@@ -97,6 +98,11 @@ export const disconnectWhatsappAction = workspaceActionClientAllowExpired
           workspaceId,
           tx,
         })
+      })
+
+      await auditService.record({
+        action: "disconnect",
+        detail: `disconnected the WhatsApp channel (#${integrationWhatsapp.id})`,
       })
     },
   )

@@ -1,5 +1,6 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { contactCustomFieldService } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { AIExtractDataSchema } from "@chatbotx.io/flow-config"
 import { contactVariableService } from "@chatbotx.io/variables"
 import { APICallError, generateObject } from "ai"
@@ -12,6 +13,7 @@ import {
   waitForChatJobCompletion,
 } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
 
@@ -200,12 +202,23 @@ ${schemaDescription}`
       content: userContent,
     } as const
 
+    // Scoped to the provider call itself. The surrounding `try` also covers
+    // our own reads and the custom-field writes below, and attributing one of
+    // those to the AI vendor would put a false provider on the row.
     const { object: extractedData } = await generateObject({
       model: resolvedModel.model,
       system: systemPrompt,
       messages: [userMessage],
       abortSignal: controller.signal,
       schema: dynamicSchema,
+    }).catch(async (error: unknown) => {
+      await logProviderError({
+        provider: aiErrorLogProvider(step.provider),
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        error,
+      })
+      throw error
     })
 
     await Promise.all(
@@ -220,6 +233,7 @@ ${schemaDescription}`
           customFieldId: mapping.customFieldId,
           fullText: stringifyFieldValue(value),
           workspaceId: conversation.workspaceId,
+          contactInboxId: contactInbox.id,
         })
       }),
     )

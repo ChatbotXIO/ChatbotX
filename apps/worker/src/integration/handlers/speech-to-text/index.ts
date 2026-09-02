@@ -1,5 +1,6 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiIntegrationService, getAIModel } from "@chatbotx.io/ai/server"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { AISpeechToTextSchema } from "@chatbotx.io/flow-config"
 import { experimental_transcribe as transcribe } from "ai"
 import ky from "ky"
@@ -11,6 +12,7 @@ import {
   saveResultToCustomField,
 } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import type { ExecuteStepResult } from "../step"
 
 const supportedAudioMimeTypes = z.enum([
@@ -26,6 +28,7 @@ const supportedAudioMimeTypes = z.enum([
 
 export async function handleAISpeechToText({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<AISpeechToTextSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
@@ -101,6 +104,7 @@ export async function handleAISpeechToText({
         customFieldId: step.outputFieldId,
         fullText: transcript.text,
         workspaceId: conversation.workspaceId,
+        contactInboxId: contactInbox.id,
       })
     }
 
@@ -108,6 +112,12 @@ export async function handleAISpeechToText({
   } catch (err) {
     const error = normalizeError(err)
     logger.error(error, "[ai-speech-to-text] Step failed")
+    await logProviderError({
+      provider: aiErrorLogProvider(step.provider),
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error: err,
+    })
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)

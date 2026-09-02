@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { sequenceModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
@@ -8,7 +9,7 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateSequenceRequest,
@@ -36,6 +37,12 @@ export const createSequenceAction = workspaceActionClient
           workspaceId,
           name: parsedInput.name,
           folderId: parsedInput.folderId || null,
+        })
+
+        await auditService.record({
+          workspaceId,
+          action: "create",
+          detail: `created a new sequence (#${sequenceId})`,
         })
 
         return { sequenceId }

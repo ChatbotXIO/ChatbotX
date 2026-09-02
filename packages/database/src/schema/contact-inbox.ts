@@ -40,6 +40,14 @@ export const lastUserInputTypeEnum = pgEnum(
   lastUserInputTypes.options as [string, ...string[]],
 )
 
+/**
+ * Identity unique-index names on ContactInbox, exported so unique-violation
+ * handlers can match the constraint without hardcoding the string.
+ */
+export const CONTACT_INBOX_SOURCE_ID_KEY = "ContactInbox_inboxId_sourceId_key"
+export const CONTACT_INBOX_SOURCE_USER_ID_KEY =
+  "ContactInbox_inboxId_sourceUserId_key"
+
 export const contactInboxModel = pgTable(
   "ContactInbox",
   {
@@ -80,13 +88,27 @@ export const contactInboxModel = pgTable(
     lastUserInput: text(),
     lastUserInputType: lastUserInputTypeEnum(),
     webchatParentUrl: text(),
+    // Alternate stable channel-scoped user id, independent of `sourceId`
+    // (e.g. WhatsApp Business-Scoped User ID). Channel-agnostic name — any
+    // channel with a secondary scoped identity reuses this column.
+    sourceUserId: text(),
+    // Channel handle/username for this contact (e.g. WhatsApp `@username`).
+    // Display-only, never used as a matching key.
+    sourceUsername: text(),
   },
   (table) => [
-    uniqueIndex("ContactInbox_inboxId_sourceId_key").using(
+    uniqueIndex(CONTACT_INBOX_SOURCE_ID_KEY).using(
       "btree",
       table.inboxId.asc().nullsLast(),
       table.sourceId.asc().nullsLast(),
     ),
+    uniqueIndex(CONTACT_INBOX_SOURCE_USER_ID_KEY)
+      .using(
+        "btree",
+        table.inboxId.asc().nullsLast(),
+        table.sourceUserId.asc().nullsLast(),
+      )
+      .where(sql`${table.sourceUserId} IS NOT NULL`),
     index("ContactInbox_contactId_lastIncomingMessageAt_idx").using(
       "btree",
       table.contactId.asc().nullsLast(),
@@ -100,5 +122,13 @@ export const contactInboxModel = pgTable(
     index("ContactInbox_referral_ctwaClid_idx")
       .using("btree", sql`(${table.referral}->>'ctwaClid')`)
       .where(sql`${table.referral}->>'ctwaClid' IS NOT NULL`),
+    // Superset covering CTM/CTID (Messenger/Instagram) ad-click attribution,
+    // which has no ctwa_clid equivalent — the attribution key is `adId`.
+    // Scoped to source="ADS" so ig.me SHORTLINK referrals are excluded.
+    index("ContactInbox_referral_adId_idx")
+      .using("btree", sql`(${table.referral}->>'adId')`)
+      .where(
+        sql`${table.referral}->>'adId' IS NOT NULL AND ${table.referral}->>'source' = 'ADS'`,
+      ),
   ],
 )

@@ -7,8 +7,30 @@ import {
   bulkUpdateIdsRequest,
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+
+export const enableBotForConversations = async (props: {
+  workspaceId: string
+  ids: string[]
+  userId: string
+}) => {
+  const conversations = await conversationService.findManyByIds({
+    workspaceId: props.workspaceId,
+    ids: props.ids,
+  })
+
+  await conversationService.enableBotState({
+    workspaceId: props.workspaceId,
+    conversations,
+    userId: props.userId,
+    triggerContext: {
+      triggerSource: "api",
+      triggerHandler: "enableBotAction",
+      triggerType: "conversation_transferred_to_bot",
+    },
+  })
+}
 
 export const enableBotAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -23,20 +45,10 @@ export const enableBotAction = workspaceActionClient
       parsedInput: BulkUpdateIdsRequest
       ctx: { user: UserModel }
     }) => {
-      const conversations = await conversationService.findManyByIds({
+      await enableBotForConversations({
         workspaceId,
         ids: parsedInput.ids,
-      })
-
-      await conversationService.enableBotState({
-        workspaceId,
-        conversations,
         userId: ctx.user.id,
-        triggerContext: {
-          triggerSource: "api",
-          triggerHandler: "enableBotAction",
-          triggerType: "conversation_transferred_to_bot",
-        },
       })
     },
   )

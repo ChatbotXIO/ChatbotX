@@ -50,6 +50,10 @@ vi.mock("@chatbotx.io/encryption", async () => {
 const { integrationWhatsappService } = await import(
   "../src/integration-whatsapp/service"
 )
+const { workspaceService } = await import("../src/workspace/service")
+const { platformCredentialService } = await import(
+  "../src/platform-credential/service"
+)
 const { ChannelError, ChannelErrorCategory } = await import("@chatbotx.io/sdk")
 
 describe("integrationWhatsappService signup sessions", () => {
@@ -63,6 +67,15 @@ describe("integrationWhatsappService signup sessions", () => {
     repositoryMock.updateDatasetIdIfNull.mockResolvedValue(null)
     repositoryMock.claimVerificationCodeSlot.mockResolvedValue(null)
     repositoryMock.findVerificationCodeRequestedAt.mockResolvedValue(null)
+    // Default: no agency system-user token, so dataset creation uses the connect
+    // token with no fallback. Individual tests override these spies.
+    vi.spyOn(workspaceService, "findById").mockResolvedValue({
+      ownerId: "owner-1",
+    } as never)
+    vi.spyOn(
+      platformCredentialService,
+      "resolveWhatsappSystemUserToken",
+    ).mockResolvedValue(null)
   })
 
   test("uses a fresh CAPI scope cache without calling the checker", async () => {
@@ -121,6 +134,7 @@ describe("integrationWhatsappService signup sessions", () => {
       id: "iw-1",
       workspaceId: "ws-1",
       wabaId: "waba-1",
+      name: "Acme WABA",
       datasetId: null,
       auth: {
         tokens: { accessToken: "token-1" },
@@ -142,12 +156,64 @@ describe("integrationWhatsappService signup sessions", () => {
     expect(result).toBe("dataset-new")
     expect(provision).toHaveBeenCalledWith({
       wabaId: "waba-1",
+      wabaName: "Acme WABA",
       accessToken: "token-1",
     })
     expect(repositoryMock.updateDatasetIdIfNull).toHaveBeenCalledWith({
       id: "iw-1",
       workspaceId: "ws-1",
       datasetId: "dataset-new",
+    })
+  })
+
+  test("retries dataset creation with the connect token when the system-user token is rejected", async () => {
+    repositoryMock.findByIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      name: "Acme WABA",
+      datasetId: null,
+      auth: {
+        tokens: { accessToken: "connect-token" },
+        metadata: { wabaId: "waba-1" },
+      },
+    })
+    repositoryMock.updateDatasetIdIfNull.mockResolvedValue({
+      id: "iw-1",
+      datasetId: "dataset-new",
+    })
+    // Owner has a system-user token, so it is tried first, then the connect
+    // token as fallback.
+    vi.spyOn(
+      platformCredentialService,
+      "resolveWhatsappSystemUserToken",
+    ).mockResolvedValue("sys-token")
+    const provision = vi
+      .fn()
+      .mockRejectedValueOnce(
+        Object.assign(new Error("(#100) Missing Permission"), {
+          code: 100,
+          httpStatusCode: 400,
+        }),
+      )
+      .mockResolvedValueOnce("dataset-new")
+
+    const result = await integrationWhatsappService.ensureDatasetId({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      provision,
+    })
+
+    expect(result).toBe("dataset-new")
+    expect(provision).toHaveBeenNthCalledWith(1, {
+      wabaId: "waba-1",
+      wabaName: "Acme WABA",
+      accessToken: "sys-token",
+    })
+    expect(provision).toHaveBeenNthCalledWith(2, {
+      wabaId: "waba-1",
+      wabaName: "Acme WABA",
+      accessToken: "connect-token",
     })
   })
 
@@ -181,6 +247,77 @@ describe("integrationWhatsappService signup sessions", () => {
     expect(result).toBe("dataset-race")
     expect(provision).toHaveBeenCalledTimes(1)
     expect(repositoryMock.findByIdForWorkspace).toHaveBeenCalledTimes(2)
+  })
+
+  describe("resolveDatasetCreationTokens", () => {
+    test("manual connection uses the connect token with no fallback and skips credential lookup", async () => {
+      const workspaceSpy = vi.spyOn(workspaceService, "findById")
+      const credentialSpy = vi.spyOn(
+        platformCredentialService,
+        "resolveWhatsappSystemUserToken",
+      )
+
+      const result =
+        await integrationWhatsappService.resolveDatasetCreationTokens({
+          integration: { auth: { metadata: { isManual: true } } },
+          workspaceId: "ws-1",
+          connectToken: "connect-token",
+        })
+
+      expect(result).toEqual({
+        primaryToken: "connect-token",
+        fallbackToken: null,
+      })
+      expect(workspaceSpy).not.toHaveBeenCalled()
+      expect(credentialSpy).not.toHaveBeenCalled()
+    })
+
+    test("embedded-signup prefers the system-user token with the connect token as fallback", async () => {
+      vi.spyOn(workspaceService, "findById").mockResolvedValue({
+        ownerId: "owner-1",
+      } as never)
+      vi.spyOn(
+        platformCredentialService,
+        "resolveWhatsappSystemUserToken",
+      ).mockResolvedValue("sys-token")
+
+      const result =
+        await integrationWhatsappService.resolveDatasetCreationTokens({
+          integration: { auth: { metadata: { wabaId: "waba-1" } } },
+          workspaceId: "ws-1",
+          connectToken: "connect-token",
+        })
+
+      expect(result).toEqual({
+        primaryToken: "sys-token",
+        fallbackToken: "connect-token",
+      })
+      expect(
+        platformCredentialService.resolveWhatsappSystemUserToken,
+      ).toHaveBeenCalledWith(expect.objectContaining({ ownerId: "owner-1" }))
+    })
+
+    test("uses the connect token with no fallback when the owner has no credential", async () => {
+      vi.spyOn(workspaceService, "findById").mockResolvedValue({
+        ownerId: "owner-1",
+      } as never)
+      vi.spyOn(
+        platformCredentialService,
+        "resolveWhatsappSystemUserToken",
+      ).mockResolvedValue(null)
+
+      const result =
+        await integrationWhatsappService.resolveDatasetCreationTokens({
+          integration: { auth: { metadata: { wabaId: "waba-1" } } },
+          workspaceId: "ws-1",
+          connectToken: "connect-token",
+        })
+
+      expect(result).toEqual({
+        primaryToken: "connect-token",
+        fallbackToken: null,
+      })
+    })
   })
 
   test("refreshes a stale CAPI scope cache and stores the result", async () => {

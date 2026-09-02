@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { broadcastModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -7,7 +8,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateBroadcastSchema,
   updateBroadcastSchema,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateBroadcastAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -37,4 +38,10 @@ export const updateBroadcast = async (
     .update(broadcastModel)
     .set(parsedInput)
     .where(eq(broadcastModel.id, broadcast.id))
+
+  await auditService.record({
+    workspaceId: ctx.workspaceId,
+    action: "update",
+    detail: `updated a broadcast (#${broadcast.id})`,
+  })
 }

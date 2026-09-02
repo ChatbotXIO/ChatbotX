@@ -10,7 +10,7 @@ import {
   deleteAdsConversionRuleRequest,
   toggleAdsConversionRuleRequest,
   updateAdsConversionRuleRequest,
-} from "../schemas/conversion-rule"
+} from "../schema/conversion-rule"
 
 export const createAdsConversionRuleAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString()])

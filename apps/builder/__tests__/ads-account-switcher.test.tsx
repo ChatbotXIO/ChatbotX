@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { AdsAccountSwitcher } from "@/features/ads/components/ads-account-switcher"
 
 const navigation = vi.hoisted(() => ({
-  pathname: "/space/ws-1/ads/analytics",
+  pathname: "/space/ws-1/dashboard/ads",
   replace: vi.fn(),
   searchParams: new URLSearchParams(),
 }))
@@ -107,6 +107,7 @@ describe("AdsAccountSwitcher", () => {
       root.render(
         <AdsAccountSwitcher
           integrations={integrations}
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           whatsappCredentialPublic={null}
           workspaceId="ws-1"
         />,
@@ -142,7 +143,7 @@ describe("AdsAccountSwitcher", () => {
     })
 
     expect(navigation.replace).toHaveBeenCalledWith(
-      "/space/ws-1/ads/analytics?from=2026-08-01&to=2026-08-10&account=iw-2",
+      "/space/ws-1/dashboard/ads?from=2026-08-01&to=2026-08-10&account=iw-2",
       { scroll: false },
     )
   })

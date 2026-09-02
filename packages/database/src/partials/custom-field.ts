@@ -1,16 +1,16 @@
 import z from "zod"
 
-export const customFieldTypes = z.enum([
-  "shortText",
-  "email",
-  "phoneNumber",
-  "number",
-  "date",
-  "datetime",
-  "boolean",
-  "longText",
-])
-export type CustomFieldType = z.infer<typeof customFieldTypes>
+/**
+ * `customFieldTypes` is defined in `@chatbotx.io/utils/custom-field` so
+ * packages that cannot depend on the database layer (notably
+ * `@chatbotx.io/flow-config`) can still use the enum. Re-exported here
+ * because this has long been the import site for the rest of the repo; both
+ * paths resolve to the same enum. Mirrors the `channelTypes` precedent.
+ */
+export {
+  type CustomFieldType,
+  customFieldTypes,
+} from "@chatbotx.io/utils/custom-field"
 
 export const operatorTypes = z.enum([
   "in",

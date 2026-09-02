@@ -1,0 +1,23 @@
+{
+  "name": "@chatbotx.io/javascript-sandbox",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "6.0.2",
+    "vitest": "^4.1.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

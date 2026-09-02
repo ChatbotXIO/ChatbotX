@@ -4,6 +4,7 @@ import {
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
 import { assertPublicUrl, resolveTenantSettings } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL,
@@ -23,6 +24,7 @@ import {
   saveResultToCustomField,
 } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
+import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import type { ExecuteStepResult } from "../step"
 import { editImageInputSchema } from "./schema"
 
@@ -231,6 +233,7 @@ export async function handleAIEditImage({
         customFieldId: step.outputFieldId,
         fullText: finalImageUrl,
         workspaceId: conversation.workspaceId,
+        contactInboxId: baseContactInbox.id,
       })
     }
 
@@ -246,6 +249,12 @@ export async function handleAIEditImage({
       },
       "[ai-edit-image] Step failed",
     )
+    await logProviderError({
+      provider: aiErrorLogProvider(step.provider),
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error: err,
+    })
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)

@@ -6,7 +6,7 @@ import { Suspense } from "react"
 import { AppTab } from "@/components/app-tab"
 import { ErrorLogsTable } from "@/features/error-logs/error-logs-table"
 import { listErrorLogs } from "@/features/error-logs/queries"
-import { listErrorLogsSearchParamsCache } from "@/features/error-logs/schemas/query"
+import { listErrorLogsSearchParamsCache } from "@/features/error-logs/schema/query"
 
 export default async function ErrorLogsPage(props: {
   params: Promise<{ workspaceId: string }>

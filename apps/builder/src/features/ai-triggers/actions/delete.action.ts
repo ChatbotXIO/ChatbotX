@@ -5,7 +5,7 @@ import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteAITriggerAction = workspaceActionClient

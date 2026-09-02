@@ -1,17 +1,18 @@
 "use server"
 
 import { broadcastService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db } from "@chatbotx.io/database/client"
 import { findBroadcastChannelCapability } from "@chatbotx.io/database/partials"
 import { pruneEmailPhoneFilterConditions } from "@chatbotx.io/database/queries/contact-filter/permission"
 import { broadcastModel } from "@chatbotx.io/database/schema"
 import { startOfMinute } from "date-fns"
 import { returnValidationErrors } from "next-safe-action"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createBroadcastRequest } from "../schemas/action"
+import { createBroadcastRequest } from "../schema/action"
 
 export const createBroadcastAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -171,6 +172,20 @@ export const createBroadcastAction = workspaceActionClient
           : null,
       })
       .returning()
+
+    await auditService.record({
+      workspaceId,
+      action: "create",
+      detail: `created a new broadcast (#${broadcast.id})`,
+    })
+
+    if (parsedInput.schedulesType === "now") {
+      await auditService.record({
+        workspaceId,
+        action: "launch",
+        detail: `launched a broadcast (#${broadcast.id})`,
+      })
+    }
 
     return broadcast
   })

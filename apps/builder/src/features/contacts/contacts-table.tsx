@@ -4,11 +4,6 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@chatbotx.io/ui/components/ui/avatar"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   Tooltip,
@@ -18,7 +13,6 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
-import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -31,15 +25,15 @@ import {
 } from "@/features/contact-filter"
 import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "@/features/contact-filter/lib/restricted-fields"
 import { client } from "@/lib/orpc/orpc"
-import { InboxIcon } from "../inboxes/components/inbox-icon"
-import { getUserName } from "../users/schemas/resource"
+import { getUserName } from "../users/schema/resource"
+import { ContactNameCell } from "./components/contact-name-cell"
 import { CONTACTS_DEFAULT_PER_PAGE } from "./constants"
 import { ContactListAction } from "./contacts-list-action"
 import type { listContacts } from "./queries/list-contacts.queries"
-import type { ExportContactsFilter } from "./schemas/action"
-import type { ListContactsResponse } from "./schemas/query"
-import type { ContactResource } from "./schemas/resource"
-import { getLatestContactLastReadAt, useAvatarUrl } from "./utils"
+import type { ExportContactsFilter } from "./schema/action"
+import type { ListContactsResponse } from "./schema/query"
+import type { ContactResource } from "./schema/resource"
+import { getLatestContactLastReadAt } from "./utils"
 
 const parseSortParam = (value: string | null) => {
   if (!value) {
@@ -59,65 +53,6 @@ const parseSortParam = (value: string | null) => {
   } catch {
     return []
   }
-}
-
-function NameCell({
-  contact,
-  workspaceId,
-}: {
-  contact: ListContactsResponse["data"][number]
-  workspaceId: string
-}) {
-  const avatarUrl = useAvatarUrl(contact)
-  const inboxHref = `/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`
-  const channel = contact.contactInboxes?.[0]?.channel as
-    | ChannelType
-    | undefined
-
-  return (
-    <div className="flex max-w-56 items-center gap-3">
-      <Link href={inboxHref} target="_blank">
-        <div className="relative">
-          <Avatar className="size-9 shrink-0">
-            <AvatarImage
-              alt={contact.fullName ?? ""}
-              className="object-cover"
-              src={avatarUrl}
-            />
-            <AvatarFallback className="bg-gray-300 text-sm dark:bg-zinc-100 dark:text-zinc-800">
-              {contact.fullName?.slice(0, 2) ?? "?"}
-            </AvatarFallback>
-          </Avatar>
-          {channel && (
-            <div className="absolute end-0 bottom-0 ltr:translate-x-1 rtl:-translate-x-1">
-              <InboxIcon
-                channel={channel}
-                iconClassName="size-3"
-                showLabel={false}
-                size="small"
-              />
-            </div>
-          )}
-        </div>
-      </Link>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Link
-              className="truncate font-medium leading-5"
-              href={inboxHref}
-              target="_blank"
-            >
-              {contact.fullName}
-            </Link>
-          }
-        />
-        <TooltipContent>
-          <p>{contact.fullName}</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  )
 }
 
 type ContactsTableProps = {
@@ -290,7 +225,17 @@ export function ContactsTable({
           />
         ),
         cell: ({ row }) => (
-          <NameCell contact={row.original} workspaceId={workspaceId} />
+          <ContactNameCell
+            avatarClassName="size-9"
+            channel={
+              row.original.contactInboxes?.[0]?.channel as
+                | ChannelType
+                | undefined
+            }
+            contact={row.original}
+            conversationId={row.original.conversation?.id}
+            workspaceId={workspaceId}
+          />
         ),
         meta: {
           label: t("fields.name.label"),

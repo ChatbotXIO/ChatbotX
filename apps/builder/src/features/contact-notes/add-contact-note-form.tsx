@@ -9,7 +9,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { createContactNoteAction } from "./actions/create-contact-note.action"
-import { addContactNoteRequest } from "./schemas/action"
+import { addContactNoteRequest } from "./schema/action"
 
 export function AddContactForm({
   workspaceId,

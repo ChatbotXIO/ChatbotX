@@ -43,3 +43,25 @@ sequenceDiagram
   Worker->>Drizzle: db query / update
   Worker-->>Redis: mark complete
 ```
+
+### Push Notifications (inbound message → Expo)
+
+```mermaid
+sequenceDiagram
+  participant Channel as Channel webhook
+  participant IntWorker as integration worker
+  participant NotifQueue as notification queue
+  participant NotifWorker as notification worker
+  participant Expo as Expo Push Service
+
+  Channel->>IntWorker: receiveMessage (webhook)
+  IntWorker->>NotifQueue: notificationQueue.add(notifyIncomingMessage)
+  NotifQueue-->>NotifWorker: dequeue job
+  NotifWorker->>Drizzle: resolve recipients + device tokens
+  NotifWorker->>Expo: sendPushNotificationsAsync(messages)
+  Expo-->>NotifWorker: delivery tickets
+  NotifWorker->>Drizzle: prune stale/invalid tokens
+```
+
+See `docs/push-notifications.md` for the full architecture, recipient
+resolution, and the `EXPO_PUSH_ENABLED` kill switch.

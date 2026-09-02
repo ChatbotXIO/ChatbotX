@@ -9,6 +9,8 @@ import {
   CardSimIcon,
   CircleQuestionMarkIcon,
   CopyIcon,
+  Gamepad2Icon,
+  ImagesIcon,
   LinkIcon,
   MapIcon,
   QrCodeIcon,
@@ -72,16 +74,25 @@ const TOOLS_CONFIG = [
     getLink: (id: string) => `/space/${id}/qr-codes`,
   },
   {
+    id: "dynamic-image",
+    labelKey: "dynamicImages.title",
+    descriptionKey: "dynamicImages.description",
+    icon: ImagesIcon,
+    getLink: (id: string) => `/space/${id}/dynamic-images`,
+  },
+  {
     id: "templates",
     labelKey: "templates.title",
     descriptionKey: "templates.description",
     icon: CopyIcon,
+    getLink: (id: string) => `/space/${id}/templates`,
   },
   {
     id: "appointment",
     labelKey: "appointmentScheduling.title",
     descriptionKey: "appointmentScheduling.description",
     icon: CalendarIcon,
+    getLink: (id: string) => `/space/${id}/appointment-calendars`,
   },
   {
     id: "questionnaires",
@@ -121,6 +132,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "coupons.description",
     icon: TicketPercentIcon,
     getLink: (id: string) => `/space/${id}/topic-coupons`,
+  },
+  {
+    id: "minigames",
+    labelKey: "minigames.title",
+    descriptionKey: "minigames.description",
+    icon: Gamepad2Icon,
+    getLink: (id: string) => `/space/${id}/minigames`,
   },
   // {
   //   id: "webhooks",

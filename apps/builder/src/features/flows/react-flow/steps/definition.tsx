@@ -1,7 +1,7 @@
+import type { StepValidator } from "@chatbotx.io/flow-config"
 import type { JSX } from "react"
 import type z from "zod"
 import type { ZodTypeAny } from "zod"
-import type { StepValidator } from "./channel-validator"
 
 type StepEditorProps = {
   parentName: string

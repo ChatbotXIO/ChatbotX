@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { useWorkspaceId } from "@/hooks/routing"
 import { connectOpenRouterAction } from "./actions/connect.action"
-import { connectOpenRouterSchema } from "./schemas/request"
+import { connectOpenRouterSchema } from "./schema/request"
 
 export const OpenRouterConnectDialog = () => {
   const [open, setOpen] = useState(false)

@@ -1,3 +1,4 @@
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import type { DefaultJobData } from "@chatbotx.io/worker-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -21,6 +22,7 @@ const workerState = vi.hoisted(() => ({
   loggerWarn: vi.fn(),
   processor: undefined as DefaultWorkerProcessor | undefined,
   resolveWorkspaceId: vi.fn(),
+  sendAppointmentReminder: vi.fn(),
   submitMetaCatalogSync: vi.fn(),
   workerClose: vi.fn(async () => undefined),
   workerOn: vi.fn(),
@@ -64,7 +66,8 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       importMetaCatalogProducts: "importMetaCatalogProducts",
       runImport: "runImport",
       sendAuditLog: "sendAuditLog",
-      sendErrorLog: "sendErrorLog",
+      sendAppointmentReminder: "sendAppointmentReminder",
+      syncExternalCalendarEvent: "syncExternalCalendarEvent",
       syncChannelLabels: "syncChannelLabels",
       syncTag: "syncTag",
       submitMetaCatalogSync: "submitMetaCatalogSync",
@@ -131,8 +134,13 @@ vi.mock("../src/default/handlers/send-audit-log", () => ({
   sendAuditLog: vi.fn(),
 }))
 
-vi.mock("../src/default/handlers/send-error-log", () => ({
-  sendErrorLog: vi.fn(),
+vi.mock("../src/default/handlers/send-appointment-reminder", () => ({
+  sendAppointmentReminder: (...args: unknown[]) =>
+    workerState.sendAppointmentReminder(...args),
+}))
+
+vi.mock("../src/default/handlers/sync-external-calendar-event", () => ({
+  syncExternalCalendarEvent: vi.fn(),
 }))
 
 vi.mock("../src/default/handlers/sync-channel-labels", () => ({
@@ -157,6 +165,28 @@ const buildBulkTagContactsJob = (): DefaultJobData => ({
     workspaceId: "workspace-1",
   },
 })
+
+type FailedListener = (
+  job: { data: DefaultJobData; id: string } | undefined,
+  err: Error,
+) => Promise<void> | void
+
+// Captured at module scope: `clearMocks: true` in the shared vitest config
+// wipes `workerOn.mock.calls` before each test, and the worker registers its
+// listeners once at import time.
+const failedListener = workerState.workerOn.mock.calls.find(
+  ([event]) => event === "failed",
+)?.[1] as FailedListener | undefined
+
+const triggerFailed = async (
+  job: { data: DefaultJobData; id: string } | undefined,
+  err: Error,
+): Promise<void> => {
+  if (!failedListener) {
+    throw new Error("Default worker never registered a `failed` listener")
+  }
+  await failedListener(job, err)
+}
 
 const processDefaultJob = async (
   data: DefaultJobData,
@@ -184,6 +214,7 @@ beforeEach(() => {
   workerState.loggerInfo.mockReset()
   workerState.loggerWarn.mockReset()
   workerState.resolveWorkspaceId.mockReset()
+  workerState.sendAppointmentReminder.mockReset()
   workerState.submitMetaCatalogSync.mockReset()
   workerState.resolveWorkspaceId.mockResolvedValue("workspace-1")
   workerState.isBlockedWorkspace.mockResolvedValue(false)
@@ -237,5 +268,57 @@ describe("default worker", () => {
     expect(workerState.submitMetaCatalogSync).not.toHaveBeenCalled()
     expect(workerState.checkMetaCatalogSync).not.toHaveBeenCalled()
     expect(workerState.importMetaCatalogProducts).not.toHaveBeenCalled()
+  })
+
+  test("runs appointment reminder jobs through the default worker", async () => {
+    const jobData = {
+      type: "sendAppointmentReminder",
+      data: {
+        workspaceId: "workspace-1",
+        appointmentId: "appointment-1",
+        reminderDispatchId: "dispatch-1",
+        reminderConfigId: "reminder-1",
+      },
+    } as DefaultJobData
+
+    await processDefaultJob(jobData)
+
+    expect(workerState.resolveWorkspaceId).toHaveBeenCalledWith(jobData.data)
+    expect(workerState.isBlockedWorkspace).toHaveBeenCalledWith("workspace-1")
+    expect(workerState.sendAppointmentReminder).toHaveBeenCalledWith(
+      jobData.data,
+    )
+  })
+
+  test("populates the audit actor with the resolved workspace and job source", async () => {
+    let capturedActor: ReturnType<typeof getAuditActor>
+    workerState.handleBulkTagContacts.mockImplementationOnce(() => {
+      capturedActor = getAuditActor()
+    })
+
+    await processDefaultJob(buildBulkTagContactsJob())
+
+    expect(capturedActor).toEqual(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        source: "default:bulkTagContacts",
+      }),
+    )
+  })
+
+  test("logs a failed job without recording a provider error", async () => {
+    // The catch-all does not record to ErrorLog: most default-queue jobs make
+    // no third-party calls, so a generic row would pollute a table that means
+    // "a third party failed". The six third-party jobs log explicitly instead.
+    const err = new Error("fetch failed")
+
+    // `bulkTagContacts` deliberately: it carries a `workspaceId`, which is
+    // exactly the condition the removed catch-all used to gate its write on.
+    await triggerFailed({ id: "job-1", data: buildBulkTagContactsJob() }, err)
+
+    expect(workerState.loggerError).toHaveBeenCalled()
+    // The error-log write now rides its own event bus, so the catch-all must
+    // not enqueue anything at all on the default queue.
+    expect(workerState.defaultQueueAdd).not.toHaveBeenCalled()
   })
 })

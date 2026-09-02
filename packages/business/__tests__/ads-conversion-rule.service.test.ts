@@ -6,13 +6,19 @@ const mocks = vi.hoisted(() => ({
   adsConversionQueueAdd: vi.fn(),
   findAttributionByContactInbox: vi.fn(),
   findAttributionByCtwaClid: vi.fn(),
+  findAttributionByAdReferral: vi.fn(),
   findBySourceEventId: vi.fn(),
   findWorkspaceRule: vi.fn(),
   findWorkspaceFacebookAdsIntegration: vi.fn(),
   findWorkspaceWhatsappIntegration: vi.fn(),
+  findWorkspaceMessengerIntegration: vi.fn(),
+  findWorkspaceInstagramIntegration: vi.fn(),
   findWorkspaceIntegrationByInboxId: vi.fn(),
+  findMessengerIntegrationByInboxId: vi.fn(),
+  findInstagramIntegrationByInboxId: vi.fn(),
   listWhatsappCtwaInboxesByContact: vi.fn(),
   listWhatsappCtwaInboxesByContacts: vi.fn(),
+  listAdEligibleInboxesByContacts: vi.fn(),
   insertIgnoreDuplicate: vi.fn(),
   listByWorkspace: vi.fn(),
   update: vi.fn(),
@@ -24,6 +30,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   adsConversionEventRepository: {
     findAttributionByContactInbox: mocks.findAttributionByContactInbox,
     findAttributionByCtwaClid: mocks.findAttributionByCtwaClid,
+    findAttributionByAdReferral: mocks.findAttributionByAdReferral,
     findBySourceEventId: mocks.findBySourceEventId,
     insertIgnoreDuplicate: mocks.insertIgnoreDuplicate,
   },
@@ -37,6 +44,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   contactInboxRepository: {
     listWhatsappCtwaInboxesByContact: mocks.listWhatsappCtwaInboxesByContact,
     listWhatsappCtwaInboxesByContacts: mocks.listWhatsappCtwaInboxesByContacts,
+    listAdEligibleInboxesByContacts: mocks.listAdEligibleInboxesByContacts,
   },
   integrationFacebookAdsRepository: {
     findWorkspaceIntegration: mocks.findWorkspaceFacebookAdsIntegration,
@@ -44,6 +52,14 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationWhatsappRepository: {
     findByIdForWorkspace: mocks.findWorkspaceWhatsappIntegration,
     findWorkspaceIntegrationByInboxId: mocks.findWorkspaceIntegrationByInboxId,
+  },
+  integrationMessengerRepository: {
+    findWorkspaceIntegration: mocks.findWorkspaceMessengerIntegration,
+    findWorkspaceIntegrationByInboxId: mocks.findMessengerIntegrationByInboxId,
+  },
+  integrationInstagramRepository: {
+    findWorkspaceIntegration: mocks.findWorkspaceInstagramIntegration,
+    findWorkspaceIntegrationByInboxId: mocks.findInstagramIntegrationByInboxId,
   },
 }))
 
@@ -67,6 +83,9 @@ vi.mock("@chatbotx.io/worker-config", async () => {
 })
 
 const { adsConversionService } = await import("../src/ads-conversion/service")
+
+const NOT_SUPPORTED_FOR_INSTAGRAM = /not supported for channel "instagram"/
+const NOT_SUPPORTED_FOR_FACEBOOK = /not supported for channel "facebook"/
 
 const validWhatsappInput = {
   workspaceId: "ws-1",
@@ -183,7 +202,8 @@ describe("AdsConversionService", () => {
     await expect(
       adsConversionService.evaluateTemplateSent({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         contactInboxId: "ci-1",
         templateId: "template-1",
       }),
@@ -205,7 +225,8 @@ describe("AdsConversionService", () => {
     await expect(
       adsConversionService.evaluateTemplateSent({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         contactInboxId: "ci-1",
         templateId: "template-1",
       }),
@@ -223,6 +244,7 @@ describe("AdsConversionService", () => {
     expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "ws-1",
+        channel: "whatsapp",
         integrationWhatsappId: "iw-1",
         wabaId: "waba-1",
         source: "rule",
@@ -253,6 +275,63 @@ describe("AdsConversionService", () => {
     )
   })
 
+  test("evaluateTemplateSent recovers a deduped still-pending event and re-enqueues its send", async () => {
+    // Insert deduped (a prior run already created the row), and the existing
+    // row is still `pending` — a previous enqueue-after-insert failure. The
+    // find-or-create recovery must re-enqueue instead of silently dropping
+    // the CAPI send.
+    mocks.insertIgnoreDuplicate.mockResolvedValueOnce(null)
+    mocks.findBySourceEventId.mockResolvedValueOnce({
+      id: "event-existing",
+      workspaceId: "ws-1",
+      capiStatus: "pending",
+    })
+
+    await adsConversionService.evaluateTemplateSent({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      integrationId: "iw-1",
+      contactInboxId: "ci-1",
+      templateId: "template-1",
+    })
+
+    expect(mocks.findBySourceEventId).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        integrationWhatsappId: "iw-1",
+        source: "rule",
+        sourceEventId: "rule-rule-1-inbox-ci-1-20260810",
+      },
+      undefined,
+    )
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      {
+        type: "sendConversionEvent",
+        data: { adsConversionEventId: "event-existing", workspaceId: "ws-1" },
+      },
+      { jobId: "ads-conversion-send-event-existing" },
+    )
+  })
+
+  test("evaluateTemplateSent does not re-enqueue a deduped already-sent event", async () => {
+    mocks.insertIgnoreDuplicate.mockResolvedValueOnce(null)
+    mocks.findBySourceEventId.mockResolvedValueOnce({
+      id: "event-existing",
+      workspaceId: "ws-1",
+      capiStatus: "sent",
+    })
+
+    await adsConversionService.evaluateTemplateSent({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      integrationId: "iw-1",
+      contactInboxId: "ci-1",
+      templateId: "template-1",
+    })
+
+    expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
+  })
+
   test("evaluateTemplateSent inserts purchase rule events without value", async () => {
     mocks.listByWorkspace.mockResolvedValue([
       {
@@ -274,7 +353,8 @@ describe("AdsConversionService", () => {
     await expect(
       adsConversionService.evaluateTemplateSent({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         contactInboxId: "ci-1",
         templateId: "template-1",
       }),
@@ -301,7 +381,8 @@ describe("AdsConversionService", () => {
   test("evaluateTemplateSent ignores non-matching template ids", async () => {
     await adsConversionService.evaluateTemplateSent({
       workspaceId: "ws-1",
-      integrationWhatsappId: "iw-1",
+      channel: "whatsapp",
+      integrationId: "iw-1",
       contactInboxId: "ci-1",
       templateId: "template-2",
     })
@@ -315,7 +396,8 @@ describe("AdsConversionService", () => {
 
     await adsConversionService.evaluateTemplateSent({
       workspaceId: "ws-1",
-      integrationWhatsappId: "iw-1",
+      channel: "whatsapp",
+      integrationId: "iw-1",
       contactInboxId: "ci-1",
       templateId: "template-1",
     })
@@ -334,7 +416,8 @@ describe("AdsConversionService", () => {
     await expect(
       adsConversionService.evaluateTemplateSent({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         contactInboxId: "ci-1",
         templateId: "template-1",
       }),
@@ -364,7 +447,8 @@ describe("AdsConversionService", () => {
 
     await adsConversionService.evaluateTemplateSent({
       workspaceId: "ws-1",
-      integrationWhatsappId: "iw-1",
+      channel: "whatsapp",
+      integrationId: "iw-1",
       contactInboxId: "ci-1",
       templateId: "template-1",
     })
@@ -679,7 +763,8 @@ describe("AdsConversionService.evaluateConversionTrigger", () => {
 
   const tagOccurrenceInput = {
     workspaceId: "ws-1",
-    integrationWhatsappId: "iw-1",
+    channel: "whatsapp" as const,
+    integrationId: "iw-1",
     contactInboxId: "ci-1",
     occurrence: { type: "tagApplied" as const, tagId: "tag-1" },
   }
@@ -703,6 +788,7 @@ describe("AdsConversionService.evaluateConversionTrigger", () => {
     expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "ws-1",
+        channel: "whatsapp",
         integrationWhatsappId: "iw-1",
         source: "rule",
         eventType: "lead",
@@ -753,7 +839,8 @@ describe("AdsConversionService.evaluateConversionTrigger", () => {
     await expect(
       adsConversionService.evaluateConversionTrigger({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         contactInboxId: "ci-1",
         occurrence: { type: "keywordMatched", automatedResponseId: "ar-1" },
       }),
@@ -781,7 +868,8 @@ describe("AdsConversionService.evaluateConversionTrigger", () => {
     await expect(
       adsConversionService.evaluateConversionTrigger({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         contactInboxId: "ci-1",
         occurrence: { type: "contactReplied", isFirstReply: false },
       }),
@@ -809,7 +897,8 @@ describe("AdsConversionService.evaluateConversionTrigger", () => {
     await expect(
       adsConversionService.evaluateConversionTrigger({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         contactInboxId: "ci-1",
         occurrence: { type: "contactReplied", isFirstReply: false },
       }),
@@ -872,16 +961,20 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
       id: "iw-1",
       wabaId: "waba-1",
     })
-    mocks.listWhatsappCtwaInboxesByContacts.mockResolvedValue([
+    mocks.findMessengerIntegrationByInboxId.mockResolvedValue({ id: "im-1" })
+    mocks.findInstagramIntegrationByInboxId.mockResolvedValue({ id: "ii-1" })
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([
       {
         contactId: "contact-1",
         contactInboxId: "ci-1",
-        integrationWhatsappId: "iw-1",
+        integrationId: "iw-1",
+        channel: "whatsapp",
       },
       {
         contactId: "contact-1",
         contactInboxId: "ci-2",
-        integrationWhatsappId: "iw-2",
+        integrationId: "iw-2",
+        channel: "whatsapp",
       },
     ])
     vi.useFakeTimers({ now: new Date("2026-08-10T12:34:56.000Z") })
@@ -891,14 +984,14 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     vi.useRealTimers()
   })
 
-  test("enqueueTagAppliedEvaluations fans out one job per WhatsApp-CTWA inbox of the contact", async () => {
+  test("enqueueTagAppliedEvaluations fans out one job per ad-eligible inbox of the contact", async () => {
     await adsConversionService.enqueueTagAppliedEvaluations({
       workspaceId: "ws-1",
       contactId: "contact-1",
       tagId: "tag-1",
     })
 
-    expect(mocks.listWhatsappCtwaInboxesByContacts).toHaveBeenCalledWith({
+    expect(mocks.listAdEligibleInboxesByContacts).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactIds: ["contact-1"],
     })
@@ -908,7 +1001,8 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
         type: "evaluateConversionTrigger",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-1",
+          channel: "whatsapp",
+          integrationId: "iw-1",
           contactInboxId: "ci-1",
           occurrence: { type: "tagApplied", tagId: "tag-1" },
         },
@@ -920,7 +1014,8 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
         type: "evaluateConversionTrigger",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-2",
+          channel: "whatsapp",
+          integrationId: "iw-2",
           contactInboxId: "ci-2",
           occurrence: { type: "tagApplied", tagId: "tag-1" },
         },
@@ -929,8 +1024,39 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     )
   })
 
-  test("enqueueTagAppliedEvaluations enqueues nothing when the contact has no WhatsApp-CTWA inbox", async () => {
-    mocks.listWhatsappCtwaInboxesByContacts.mockResolvedValue([])
+  test("enqueueTagAppliedEvaluations fans out to a messenger inbox using its own channel/integrationId", async () => {
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([
+      {
+        contactId: "contact-1",
+        contactInboxId: "ci-3",
+        integrationId: "im-1",
+        channel: "messenger",
+      },
+    ])
+
+    await adsConversionService.enqueueTagAppliedEvaluations({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      tagId: "tag-1",
+    })
+
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      {
+        type: "evaluateConversionTrigger",
+        data: {
+          workspaceId: "ws-1",
+          channel: "messenger",
+          integrationId: "im-1",
+          contactInboxId: "ci-3",
+          occurrence: { type: "tagApplied", tagId: "tag-1" },
+        },
+      },
+      { jobId: "ads-conversion-evaluate-tag-ci-3-tag-1-20260810" },
+    )
+  })
+
+  test("enqueueTagAppliedEvaluations enqueues nothing when the contact has no ad-eligible inbox", async () => {
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([])
 
     await adsConversionService.enqueueTagAppliedEvaluations({
       workspaceId: "ws-1",
@@ -956,6 +1082,7 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
   test("enqueueTagAppliedEvaluationForInbox resolves the integration then enqueues for that one inbox", async () => {
     await adsConversionService.enqueueTagAppliedEvaluationForInbox({
       workspaceId: "ws-1",
+      channel: "whatsapp",
       inboxId: "inbox-1",
       contactInboxId: "ci-1",
       tagId: "tag-1",
@@ -971,7 +1098,8 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
         type: "evaluateConversionTrigger",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-1",
+          channel: "whatsapp",
+          integrationId: "iw-1",
           contactInboxId: "ci-1",
           occurrence: { type: "tagApplied", tagId: "tag-1" },
         },
@@ -980,11 +1108,41 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     )
   })
 
+  test("enqueueTagAppliedEvaluationForInbox resolves a messenger inbox via the messenger resolver", async () => {
+    await adsConversionService.enqueueTagAppliedEvaluationForInbox({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      inboxId: "inbox-2",
+      contactInboxId: "ci-2",
+      tagId: "tag-1",
+    })
+
+    expect(mocks.findMessengerIntegrationByInboxId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "inbox-2",
+    })
+    expect(mocks.findWorkspaceIntegrationByInboxId).not.toHaveBeenCalled()
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      {
+        type: "evaluateConversionTrigger",
+        data: {
+          workspaceId: "ws-1",
+          channel: "messenger",
+          integrationId: "im-1",
+          contactInboxId: "ci-2",
+          occurrence: { type: "tagApplied", tagId: "tag-1" },
+        },
+      },
+      { jobId: "ads-conversion-evaluate-tag-ci-2-tag-1-20260810" },
+    )
+  })
+
   test("enqueueTagAppliedEvaluationForInbox is a no-op when the inbox has no WhatsApp integration", async () => {
     mocks.findWorkspaceIntegrationByInboxId.mockResolvedValue(null)
 
     await adsConversionService.enqueueTagAppliedEvaluationForInbox({
       workspaceId: "ws-1",
+      channel: "whatsapp",
       inboxId: "inbox-1",
       contactInboxId: "ci-1",
       tagId: "tag-1",
@@ -993,9 +1151,25 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
   })
 
+  test("enqueueTagAppliedEvaluationForInbox is a no-op for a non-ads-eligible channel (e.g. telegram)", async () => {
+    await adsConversionService.enqueueTagAppliedEvaluationForInbox({
+      workspaceId: "ws-1",
+      channel: "telegram" as never,
+      inboxId: "inbox-1",
+      contactInboxId: "ci-1",
+      tagId: "tag-1",
+    })
+
+    expect(mocks.findWorkspaceIntegrationByInboxId).not.toHaveBeenCalled()
+    expect(mocks.findMessengerIntegrationByInboxId).not.toHaveBeenCalled()
+    expect(mocks.findInstagramIntegrationByInboxId).not.toHaveBeenCalled()
+    expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
+  })
+
   test("enqueueKeywordMatchedEvaluation resolves the integration then enqueues", async () => {
     await adsConversionService.enqueueKeywordMatchedEvaluation({
       workspaceId: "ws-1",
+      channel: "whatsapp",
       inboxId: "inbox-1",
       contactInboxId: "ci-1",
       automatedResponseId: "ar-1",
@@ -1011,7 +1185,8 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
         type: "evaluateConversionTrigger",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-1",
+          channel: "whatsapp",
+          integrationId: "iw-1",
           contactInboxId: "ci-1",
           occurrence: { type: "keywordMatched", automatedResponseId: "ar-1" },
         },
@@ -1020,11 +1195,41 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     )
   })
 
+  test("enqueueKeywordMatchedEvaluation resolves an instagram inbox via the instagram resolver", async () => {
+    await adsConversionService.enqueueKeywordMatchedEvaluation({
+      workspaceId: "ws-1",
+      channel: "instagram",
+      inboxId: "inbox-3",
+      contactInboxId: "ci-3",
+      automatedResponseId: "ar-1",
+      messageId: "msg-3",
+    })
+
+    expect(mocks.findInstagramIntegrationByInboxId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "inbox-3",
+    })
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      {
+        type: "evaluateConversionTrigger",
+        data: {
+          workspaceId: "ws-1",
+          channel: "instagram",
+          integrationId: "ii-1",
+          contactInboxId: "ci-3",
+          occurrence: { type: "keywordMatched", automatedResponseId: "ar-1" },
+        },
+      },
+      { jobId: "ads-conversion-evaluate-keyword-msg-3" },
+    )
+  })
+
   test("enqueueKeywordMatchedEvaluation is a no-op when the inbox has no WhatsApp integration", async () => {
     mocks.findWorkspaceIntegrationByInboxId.mockResolvedValue(null)
 
     await adsConversionService.enqueueKeywordMatchedEvaluation({
       workspaceId: "ws-1",
+      channel: "whatsapp",
       inboxId: "inbox-1",
       contactInboxId: "ci-1",
       automatedResponseId: "ar-1",
@@ -1034,10 +1239,11 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
     expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
   })
 
-  test("enqueueContactRepliedEvaluation enqueues using the caller-supplied integrationWhatsappId directly", async () => {
+  test("enqueueContactRepliedEvaluation enqueues using the caller-supplied channel/integrationId directly", async () => {
     await adsConversionService.enqueueContactRepliedEvaluation({
       workspaceId: "ws-1",
-      integrationWhatsappId: "iw-1",
+      channel: "whatsapp",
+      integrationId: "iw-1",
       contactInboxId: "ci-1",
       isFirstReply: true,
       messageId: "msg-2",
@@ -1049,7 +1255,8 @@ describe("AdsConversionService tagApplied/keywordMatched/contactReplied enqueue 
         type: "evaluateConversionTrigger",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-1",
+          channel: "whatsapp",
+          integrationId: "iw-1",
           contactInboxId: "ci-1",
           occurrence: { type: "contactReplied", isFirstReply: true },
         },
@@ -1070,17 +1277,76 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
     vi.useRealTimers()
   })
 
-  test("resolves every contact's inboxes in one batch query and enqueues per inbox x tag", async () => {
-    mocks.listWhatsappCtwaInboxesByContacts.mockResolvedValue([
+  test("zero-rules workspace short-circuits before the inbox fan-out (no DB fan-out, no enqueue)", async () => {
+    mocks.listByWorkspace.mockResolvedValue([])
+
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId: "ws-1",
+      pairs: [{ contactId: "contact-1", tagId: "tag-1" }],
+    })
+
+    expect(mocks.listAdEligibleInboxesByContacts).not.toHaveBeenCalled()
+    expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a workspace with only non-tagApplied rules also short-circuits", async () => {
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "rule-1",
+        trigger: { type: "templateSent", templateIds: ["template-1"] },
+        enabled: true,
+      },
+    ])
+
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId: "ws-1",
+      pairs: [{ contactId: "contact-1", tagId: "tag-1" }],
+    })
+
+    expect(mocks.listAdEligibleInboxesByContacts).not.toHaveBeenCalled()
+    expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("gate failure fails OPEN: a rule-lookup error must never drop a conversion", async () => {
+    mocks.listByWorkspace.mockRejectedValue(new Error("redis/db down"))
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([
       {
         contactId: "contact-1",
         contactInboxId: "ci-1",
-        integrationWhatsappId: "iw-1",
+        integrationId: "iw-1",
+        channel: "whatsapp",
+      },
+    ])
+
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId: "ws-1",
+      pairs: [{ contactId: "contact-1", tagId: "tag-1" }],
+    })
+
+    expect(mocks.listAdEligibleInboxesByContacts).toHaveBeenCalledTimes(1)
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledTimes(1)
+  })
+
+  test("resolves every contact's inboxes in one batch query and enqueues per inbox x tag", async () => {
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "rule-1",
+        trigger: { type: "tagApplied", tagIds: [] },
+        enabled: true,
+      },
+    ])
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([
+      {
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        integrationId: "iw-1",
+        channel: "whatsapp",
       },
       {
         contactId: "contact-2",
         contactInboxId: "ci-2",
-        integrationWhatsappId: "iw-2",
+        integrationId: "iw-2",
+        channel: "whatsapp",
       },
     ])
 
@@ -1092,8 +1358,8 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
       ],
     })
 
-    expect(mocks.listWhatsappCtwaInboxesByContacts).toHaveBeenCalledTimes(1)
-    expect(mocks.listWhatsappCtwaInboxesByContacts).toHaveBeenCalledWith({
+    expect(mocks.listAdEligibleInboxesByContacts).toHaveBeenCalledTimes(1)
+    expect(mocks.listAdEligibleInboxesByContacts).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactIds: ["contact-1", "contact-2"],
     })
@@ -1103,7 +1369,8 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
         type: "evaluateConversionTrigger",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-1",
+          channel: "whatsapp",
+          integrationId: "iw-1",
           contactInboxId: "ci-1",
           occurrence: { type: "tagApplied", tagId: "tag-1" },
         },
@@ -1115,7 +1382,8 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
         type: "evaluateConversionTrigger",
         data: {
           workspaceId: "ws-1",
-          integrationWhatsappId: "iw-2",
+          channel: "whatsapp",
+          integrationId: "iw-2",
           contactInboxId: "ci-2",
           occurrence: { type: "tagApplied", tagId: "tag-2" },
         },
@@ -1124,12 +1392,57 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
     )
   })
 
-  test("deduplicates contactIds into a single batch query lookup key list", async () => {
-    mocks.listWhatsappCtwaInboxesByContacts.mockResolvedValue([
+  test("resolves a mix of whatsapp and messenger inboxes for the same batch", async () => {
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([
       {
         contactId: "contact-1",
         contactInboxId: "ci-1",
-        integrationWhatsappId: "iw-1",
+        integrationId: "iw-1",
+        channel: "whatsapp",
+      },
+      {
+        contactId: "contact-1",
+        contactInboxId: "ci-4",
+        integrationId: "im-1",
+        channel: "messenger",
+      },
+    ])
+
+    await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+      workspaceId: "ws-1",
+      pairs: [{ contactId: "contact-1", tagId: "tag-1" }],
+    })
+
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledTimes(2)
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          channel: "whatsapp",
+          integrationId: "iw-1",
+          contactInboxId: "ci-1",
+        }),
+      }),
+      expect.anything(),
+    )
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          channel: "messenger",
+          integrationId: "im-1",
+          contactInboxId: "ci-4",
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("deduplicates contactIds into a single batch query lookup key list", async () => {
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([
+      {
+        contactId: "contact-1",
+        contactInboxId: "ci-1",
+        integrationId: "iw-1",
+        channel: "whatsapp",
       },
     ])
 
@@ -1141,7 +1454,7 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
       ],
     })
 
-    expect(mocks.listWhatsappCtwaInboxesByContacts).toHaveBeenCalledWith({
+    expect(mocks.listAdEligibleInboxesByContacts).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactIds: ["contact-1"],
     })
@@ -1154,12 +1467,12 @@ describe("AdsConversionService.enqueueTagAppliedEvaluationsBulk", () => {
       pairs: [],
     })
 
-    expect(mocks.listWhatsappCtwaInboxesByContacts).not.toHaveBeenCalled()
+    expect(mocks.listAdEligibleInboxesByContacts).not.toHaveBeenCalled()
     expect(mocks.adsConversionQueueAdd).not.toHaveBeenCalled()
   })
 
-  test("produces no jobs for contacts with no WhatsApp-CTWA inbox", async () => {
-    mocks.listWhatsappCtwaInboxesByContacts.mockResolvedValue([])
+  test("produces no jobs for contacts with no ad-eligible inbox", async () => {
+    mocks.listAdEligibleInboxesByContacts.mockResolvedValue([])
 
     await adsConversionService.enqueueTagAppliedEvaluationsBulk({
       workspaceId: "ws-1",
@@ -1186,7 +1499,8 @@ describe("AdsConversionService.hasEnabledTriggerRule", () => {
     await expect(
       adsConversionService.hasEnabledTriggerRule({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         triggerType: "contactReplied",
       }),
     ).resolves.toBe(true)
@@ -1206,7 +1520,8 @@ describe("AdsConversionService.hasEnabledTriggerRule", () => {
     await expect(
       adsConversionService.hasEnabledTriggerRule({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         triggerType: "contactReplied",
       }),
     ).resolves.toBe(false)
@@ -1218,7 +1533,8 @@ describe("AdsConversionService.hasEnabledTriggerRule", () => {
     await expect(
       adsConversionService.hasEnabledTriggerRule({
         workspaceId: "ws-1",
-        integrationWhatsappId: "iw-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
         triggerType: "contactReplied",
       }),
     ).resolves.toBe(false)
@@ -1287,10 +1603,653 @@ describe("AdsConversionService cache invalidation on rule mutation", () => {
 })
 
 describe("AdsConversionService.isEligibleChannel", () => {
-  test("returns true only for whatsapp", () => {
+  test("returns true for whatsapp/messenger/instagram, false for other channels (Phase 3 flip)", () => {
     expect(adsConversionService.isEligibleChannel("whatsapp")).toBe(true)
-    expect(adsConversionService.isEligibleChannel("messenger")).toBe(false)
+    expect(adsConversionService.isEligibleChannel("messenger")).toBe(true)
+    expect(adsConversionService.isEligibleChannel("instagram")).toBe(true)
+    expect(adsConversionService.isEligibleChannel("facebook")).toBe(false)
+    expect(adsConversionService.isEligibleChannel("telegram")).toBe(false)
     expect(adsConversionService.isEligibleChannel(null)).toBe(false)
     expect(adsConversionService.isEligibleChannel(undefined)).toBe(false)
+  })
+})
+
+describe("AdsConversionService.evaluateConversionTrigger — messenger/instagram ad-referral attribution", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.insertIgnoreDuplicate.mockImplementation(async (values: unknown) => ({
+      id: "event-1",
+      capiStatus: "pending",
+      createdAt: new Date("2026-08-10T00:00:00.000Z"),
+      updatedAt: new Date("2026-08-10T00:00:00.000Z"),
+      ...values,
+    }))
+    mocks.findBySourceEventId.mockResolvedValue(null)
+    mocks.adsConversionQueueAdd.mockResolvedValue(undefined)
+    vi.useFakeTimers({ now: new Date("2026-08-10T12:34:56.000Z") })
+  })
+
+  const messengerTagOccurrenceInput = {
+    workspaceId: "ws-1",
+    channel: "messenger" as const,
+    integrationId: "im-1",
+    contactInboxId: "ci-1",
+    occurrence: { type: "tagApplied" as const, tagId: "tag-1" },
+  }
+
+  test("messenger: attributed contact matches a tagApplied rule, inserts the event, and enqueues CAPI send", async () => {
+    mocks.findAttributionByAdReferral.mockResolvedValue({
+      id: "ci-1",
+      referral: { adId: "ad-1", source: "ADS" },
+    })
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "rule-messenger",
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+        enabled: true,
+      },
+    ])
+
+    await expect(
+      adsConversionService.evaluateConversionTrigger(
+        messengerTagOccurrenceInput,
+      ),
+    ).resolves.toHaveLength(1)
+
+    expect(mocks.findAttributionByAdReferral).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        integrationInstagramId: undefined,
+        contactInboxId: "ci-1",
+      },
+      undefined,
+    )
+    expect(mocks.listByWorkspace).toHaveBeenCalledWith(
+      "ws-1",
+      {
+        channel: "messenger",
+        enabled: true,
+        integrationMessengerId: "im-1",
+        integrationInstagramId: undefined,
+      },
+      undefined,
+    )
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        source: "rule",
+        eventType: "lead",
+        adId: "ad-1",
+        contactInboxId: "ci-1",
+      }),
+      undefined,
+    )
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      {
+        type: "sendConversionEvent",
+        data: { adsConversionEventId: "event-1", workspaceId: "ws-1" },
+      },
+      { jobId: "ads-conversion-send-event-1" },
+    )
+  })
+
+  test("messenger: non-attributed contact (no ad-referral) → no event, rules never loaded", async () => {
+    mocks.findAttributionByAdReferral.mockResolvedValue(null)
+
+    await expect(
+      adsConversionService.evaluateConversionTrigger(
+        messengerTagOccurrenceInput,
+      ),
+    ).resolves.toEqual([])
+
+    expect(mocks.listByWorkspace).not.toHaveBeenCalled()
+    expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+  })
+
+  test("messenger: SHORTLINK (ig.me-style) referral never attributes — repository predicate excludes source !== 'ADS', service sees null", async () => {
+    // The `referral->>'source' = 'ADS'` predicate lives in the repository
+    // query itself (findAttributionByAdReferral) — from the service's
+    // perspective a SHORTLINK-referral contact is indistinguishable from a
+    // contact with no referral at all: both resolve null.
+    mocks.findAttributionByAdReferral.mockResolvedValue(null)
+
+    await expect(
+      adsConversionService.evaluateConversionTrigger(
+        messengerTagOccurrenceInput,
+      ),
+    ).resolves.toEqual([])
+
+    expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+  })
+
+  test("instagram: attributed contact matches a keywordMatched rule and inserts an event", async () => {
+    mocks.findAttributionByAdReferral.mockResolvedValue({
+      id: "ci-2",
+      referral: { adId: "ad-2", source: "ADS" },
+    })
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "rule-instagram",
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationInstagramId: "ig-1",
+        eventType: "lead",
+        trigger: { type: "keywordMatched", automatedResponseIds: ["ar-1"] },
+        enabled: true,
+      },
+    ])
+
+    await expect(
+      adsConversionService.evaluateConversionTrigger({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationId: "ig-1",
+        contactInboxId: "ci-2",
+        occurrence: { type: "keywordMatched", automatedResponseId: "ar-1" },
+      }),
+    ).resolves.toHaveLength(1)
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "instagram",
+        integrationInstagramId: "ig-1",
+        adId: "ad-2",
+        contactInboxId: "ci-2",
+      }),
+      undefined,
+    )
+  })
+
+  test("instagram: non-attributed contact → no event", async () => {
+    mocks.findAttributionByAdReferral.mockResolvedValue(null)
+
+    await expect(
+      adsConversionService.evaluateConversionTrigger({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationId: "ig-1",
+        contactInboxId: "ci-2",
+        occurrence: { type: "keywordMatched", automatedResponseId: "ar-1" },
+      }),
+    ).resolves.toEqual([])
+
+    expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+  })
+
+  test("facebook channel is a permanent no-op — dead channel, no AdsConversionEvent rows ever created for it", async () => {
+    await expect(
+      adsConversionService.evaluateConversionTrigger({
+        workspaceId: "ws-1",
+        channel: "facebook",
+        integrationId: "ifa-1",
+        contactInboxId: "ci-1",
+        occurrence: { type: "tagApplied", tagId: "tag-1" },
+      }),
+    ).resolves.toEqual([])
+
+    expect(mocks.findAttributionByContactInbox).not.toHaveBeenCalled()
+    expect(mocks.findAttributionByAdReferral).not.toHaveBeenCalled()
+  })
+})
+
+describe("AdsConversionService.evaluateTemplateSent — messenger/instagram (Amendment A1)", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.insertIgnoreDuplicate.mockImplementation(async (values: unknown) => ({
+      id: "event-1",
+      capiStatus: "pending",
+      createdAt: new Date("2026-08-10T00:00:00.000Z"),
+      updatedAt: new Date("2026-08-10T00:00:00.000Z"),
+      ...values,
+    }))
+    mocks.adsConversionQueueAdd.mockResolvedValue(undefined)
+    vi.useFakeTimers({ now: new Date("2026-08-10T12:34:56.000Z") })
+  })
+
+  test("messenger: attributed contact + matching template rule inserts an event and enqueues CAPI send", async () => {
+    mocks.findAttributionByAdReferral.mockResolvedValue({
+      id: "ci-1",
+      referral: { adId: "ad-1", source: "ADS" },
+    })
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "rule-messenger-template",
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        eventType: "lead",
+        trigger: { type: "templateSent", templateIds: ["mt-1"] },
+        enabled: true,
+      },
+    ])
+
+    await expect(
+      adsConversionService.evaluateTemplateSent({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationId: "im-1",
+        contactInboxId: "ci-1",
+        templateId: "mt-1",
+      }),
+    ).resolves.toHaveLength(1)
+
+    expect(mocks.findAttributionByAdReferral).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        contactInboxId: "ci-1",
+      },
+      undefined,
+    )
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        source: "rule",
+        eventType: "lead",
+        adId: "ad-1",
+        contactInboxId: "ci-1",
+      }),
+      undefined,
+    )
+    expect(mocks.adsConversionQueueAdd).toHaveBeenCalledWith(
+      {
+        type: "sendConversionEvent",
+        data: { adsConversionEventId: "event-1", workspaceId: "ws-1" },
+      },
+      { jobId: "ads-conversion-send-event-1" },
+    )
+  })
+
+  test("messenger: SHORTLINK-referral contact (non-attributed) → no event, rules never loaded", async () => {
+    mocks.findAttributionByAdReferral.mockResolvedValue(null)
+
+    await expect(
+      adsConversionService.evaluateTemplateSent({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationId: "im-1",
+        contactInboxId: "ci-1",
+        templateId: "mt-1",
+      }),
+    ).resolves.toEqual([])
+
+    expect(mocks.listByWorkspace).not.toHaveBeenCalled()
+    expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+  })
+
+  test("messenger: a rule with a cloned-template id on the wrong integration never matches", async () => {
+    mocks.findAttributionByAdReferral.mockResolvedValue({
+      id: "ci-1",
+      referral: { adId: "ad-1", source: "ADS" },
+    })
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "rule-messenger-template",
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        eventType: "lead",
+        trigger: {
+          type: "templateSent",
+          templateIds: ["mt-owned-by-integration-a"],
+        },
+        enabled: true,
+      },
+    ])
+
+    await adsConversionService.evaluateTemplateSent({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      integrationId: "im-1",
+      contactInboxId: "ci-1",
+      templateId: "mt-cloned-on-integration-b",
+    })
+
+    expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+  })
+
+  test("instagram: templateSent is rejected — no template entity/step exists for Instagram", async () => {
+    await expect(
+      adsConversionService.evaluateTemplateSent({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationId: "ig-1",
+        contactInboxId: "ci-1",
+        templateId: "mt-1",
+      }),
+    ).rejects.toThrow(NOT_SUPPORTED_FOR_INSTAGRAM)
+
+    expect(mocks.findAttributionByContactInbox).not.toHaveBeenCalled()
+    expect(mocks.findAttributionByAdReferral).not.toHaveBeenCalled()
+  })
+
+  test("facebook: templateSent is rejected (dead channel)", async () => {
+    await expect(
+      adsConversionService.evaluateTemplateSent({
+        workspaceId: "ws-1",
+        channel: "facebook",
+        integrationId: "ifa-1",
+        contactInboxId: "ci-1",
+        templateId: "mt-1",
+      }),
+    ).rejects.toThrow(NOT_SUPPORTED_FOR_FACEBOOK)
+  })
+
+  test("whatsapp regression: unchanged ctwaClid-gated behavior still works after the channel dispatch was added", async () => {
+    mocks.findAttributionByContactInbox.mockResolvedValue({
+      id: "ci-1",
+      referral: { adId: "ad-1", ctwaClid: "clid-1" },
+      wabaId: "waba-1",
+    })
+    mocks.listByWorkspace.mockResolvedValue([
+      {
+        id: "rule-wa-template",
+        workspaceId: "ws-1",
+        channel: "whatsapp",
+        integrationWhatsappId: "iw-1",
+        eventType: "lead",
+        trigger: { type: "templateSent", templateIds: ["template-1"] },
+        enabled: true,
+      },
+    ])
+
+    await expect(
+      adsConversionService.evaluateTemplateSent({
+        workspaceId: "ws-1",
+        channel: "whatsapp",
+        integrationId: "iw-1",
+        contactInboxId: "ci-1",
+        templateId: "template-1",
+      }),
+    ).resolves.toHaveLength(1)
+
+    expect(mocks.findAttributionByAdReferral).not.toHaveBeenCalled()
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "whatsapp",
+        integrationWhatsappId: "iw-1",
+        wabaId: "waba-1",
+        ctwaClid: "clid-1",
+      }),
+      undefined,
+    )
+  })
+})
+
+describe("channel validators (channelConsistencyValidators / channelOwnershipValidators) × 4 channels", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.create.mockImplementation(async (values: unknown) => ({
+      id: "rule-1",
+      createdAt: new Date("2026-08-10T00:00:00.000Z"),
+      updatedAt: new Date("2026-08-10T00:00:00.000Z"),
+      ...values,
+    }))
+    mocks.invalidateCacheByTags.mockResolvedValue(undefined)
+    mocks.findWorkspaceWhatsappIntegration.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+    })
+    mocks.findWorkspaceFacebookAdsIntegration.mockResolvedValue({
+      id: "ifa-1",
+      workspaceId: "ws-1",
+    })
+    mocks.findWorkspaceMessengerIntegration.mockResolvedValue({
+      id: "im-1",
+      workspaceId: "ws-1",
+    })
+    mocks.findWorkspaceInstagramIntegration.mockResolvedValue({
+      id: "ig-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("whatsapp: accepts integrationWhatsappId-only", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "whatsapp",
+        integrationWhatsappId: "iw-1",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).resolves.toMatchObject({ channel: "whatsapp" })
+  })
+
+  test("facebook: accepts integrationFacebookAdsId-only", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "facebook",
+        integrationFacebookAdsId: "ifa-1",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).resolves.toMatchObject({ channel: "facebook" })
+  })
+
+  test("messenger: accepts integrationMessengerId-only and checks workspace ownership", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).resolves.toMatchObject({ channel: "messenger" })
+
+    expect(mocks.findWorkspaceMessengerIntegration).toHaveBeenCalledWith(
+      { id: "im-1", workspaceId: "ws-1" },
+      undefined,
+    )
+  })
+
+  test("messenger: rejects when integrationMessengerId is missing", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).rejects.toThrow("integration must match")
+
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  test("messenger: rejects when integrationMessengerId isn't found in the workspace", async () => {
+    mocks.findWorkspaceMessengerIntegration.mockResolvedValue(null)
+
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "999",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).rejects.toThrow("integration was not found in this workspace")
+  })
+
+  test("instagram: accepts integrationInstagramId-only and checks workspace ownership", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationInstagramId: "ig-1",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).resolves.toMatchObject({ channel: "instagram" })
+
+    expect(mocks.findWorkspaceInstagramIntegration).toHaveBeenCalledWith(
+      { id: "ig-1", workspaceId: "ws-1" },
+      undefined,
+    )
+  })
+
+  test("instagram: rejects when integrationInstagramId isn't found in the workspace", async () => {
+    mocks.findWorkspaceInstagramIntegration.mockResolvedValue(null)
+
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationInstagramId: "999",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).rejects.toThrow("integration was not found in this workspace")
+  })
+
+  test("cross-channel FK leakage is rejected (messenger channel with a whatsapp FK also set)", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        integrationWhatsappId: "iw-1",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).rejects.toThrow("integration must match")
+
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+})
+
+describe("assertSupportedTrigger channel × trigger-type allowlist", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.create.mockImplementation(async (values: unknown) => ({
+      id: "rule-1",
+      createdAt: new Date("2026-08-10T00:00:00.000Z"),
+      updatedAt: new Date("2026-08-10T00:00:00.000Z"),
+      ...values,
+    }))
+    mocks.invalidateCacheByTags.mockResolvedValue(undefined)
+    mocks.findWorkspaceWhatsappIntegration.mockResolvedValue({
+      id: "iw-1",
+      workspaceId: "ws-1",
+    })
+    mocks.findWorkspaceMessengerIntegration.mockResolvedValue({
+      id: "im-1",
+      workspaceId: "ws-1",
+    })
+    mocks.findWorkspaceInstagramIntegration.mockResolvedValue({
+      id: "ig-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("whatsapp accepts templateSent", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "whatsapp",
+        integrationWhatsappId: "iw-1",
+        eventType: "lead",
+        trigger: { type: "templateSent", templateIds: ["t-1"] },
+      }),
+    ).resolves.toMatchObject({ channel: "whatsapp" })
+  })
+
+  test("messenger accepts templateSent (Amendment A1)", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "messenger",
+        integrationMessengerId: "im-1",
+        eventType: "lead",
+        trigger: { type: "templateSent", templateIds: ["mt-1"] },
+      }),
+    ).resolves.toMatchObject({ channel: "messenger" })
+  })
+
+  test("instagram rejects templateSent — no template entity exists for IG", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationInstagramId: "ig-1",
+        eventType: "lead",
+        trigger: { type: "templateSent", templateIds: ["t-1"] },
+      }),
+    ).rejects.toThrow(NOT_SUPPORTED_FOR_INSTAGRAM)
+
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  test("instagram accepts tagApplied/keywordMatched/contactReplied", async () => {
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationInstagramId: "ig-1",
+        eventType: "lead",
+        trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+      }),
+    ).resolves.toMatchObject({ channel: "instagram" })
+
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationInstagramId: "ig-1",
+        eventType: "lead",
+        trigger: {
+          type: "keywordMatched",
+          automatedResponseIds: ["ar-1"],
+        },
+      }),
+    ).resolves.toMatchObject({ channel: "instagram" })
+
+    await expect(
+      adsConversionService.create({
+        workspaceId: "ws-1",
+        channel: "instagram",
+        integrationInstagramId: "ig-1",
+        eventType: "lead",
+        trigger: { type: "contactReplied", firstReplyOnly: true },
+      }),
+    ).resolves.toMatchObject({ channel: "instagram" })
+  })
+
+  test("update: instagram rejects switching a rule's trigger to templateSent", async () => {
+    mocks.findWorkspaceRule.mockResolvedValue({
+      id: "rule-1",
+      workspaceId: "ws-1",
+      channel: "instagram",
+      integrationInstagramId: "ig-1",
+      trigger: { type: "tagApplied", tagIds: ["tag-1"] },
+    })
+
+    await expect(
+      adsConversionService.update({
+        id: "rule-1",
+        workspaceId: "ws-1",
+        trigger: { type: "templateSent", templateIds: ["t-1"] },
+      }),
+    ).rejects.toThrow(NOT_SUPPORTED_FOR_INSTAGRAM)
   })
 })

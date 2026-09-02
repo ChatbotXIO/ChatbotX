@@ -4,6 +4,7 @@ import {
   CreditCardIcon,
   ImageIcon,
   ImagePlayIcon,
+  ImagesIcon,
   KeyboardIcon,
   ListIcon,
   MessageSquareIcon,
@@ -36,6 +37,11 @@ const ALL_MENU_ITEMS = (
     label: t("flows.actions.sendImage"),
     icon: ImageIcon,
     stepType: stepTypes.enum.sendImage,
+  },
+  sendMultipleImages: {
+    label: t("flows.actions.sendMultipleImages"),
+    icon: ImagesIcon,
+    stepType: stepTypes.enum.sendMultipleImages,
   },
   sendCard: {
     label: t("flows.actions.sendCard"),
@@ -116,6 +122,7 @@ const ALL_MENU_ITEMS = (
 const BASE_MENU_ORDER = [
   "sendText",
   "sendImage",
+  "sendMultipleImages",
   "sendCard",
   "sendCarousel",
   "sendVideo",
@@ -129,6 +136,7 @@ const BASE_MENU_ORDER = [
 const WHATSAPP_MENU_ORDER = [
   "sendText",
   "sendImage",
+  "sendMultipleImages",
   "sendCard",
   "sendCarousel",
   "sendVideo",
@@ -145,6 +153,7 @@ const WHATSAPP_MENU_ORDER = [
 const MESSENGER_MENU_ORDER = [
   "sendText",
   "sendImage",
+  "sendMultipleImages",
   "sendCard",
   "sendCarousel",
   "sendVideo",
@@ -159,6 +168,7 @@ const MESSENGER_MENU_ORDER = [
 const TIKTOK_MENU_ORDER = [
   "sendText",
   "sendImage",
+  "sendMultipleImages",
   "getUserData",
   "typing",
   "actions",

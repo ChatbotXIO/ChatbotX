@@ -6,8 +6,11 @@ import {
   normalizeStoredTimezone,
   offsetFromStoredTimezone,
 } from "@chatbotx.io/business/contact-locale"
-import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import { customFieldTypes } from "@chatbotx.io/database/partials"
+import type {
+  ChannelType,
+  CustomFieldType,
+} from "@chatbotx.io/database/partials"
+import { channelTypes, customFieldTypes } from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
@@ -22,8 +25,11 @@ import {
 import {
   AtSignIcon,
   ClockIcon,
+  FingerprintIcon,
   IdCardIcon,
   LanguagesIcon,
+  type LucideIcon,
+  MegaphoneIcon,
   PhoneIcon,
   TextIcon,
   UserRoundIcon,
@@ -33,13 +39,50 @@ import { useEffect, useMemo, useState } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getBrowserTimezone } from "../contact-filter/lib/timezone"
+import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
+import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
-import type { GetContactResponse } from "./schemas/query"
-import type { ContactEditableField } from "./schemas/resource"
+import type { GetContactResponse } from "./schema/query"
+import type { ContactEditableField } from "./schema/resource"
 import { useAvatarUrl } from "./utils"
+
+// Guards the ad source URL to navigable http(s) so a non-URL / `javascript:`
+// referral value never becomes an anchor href.
+const HTTP_URL_RE = /^https?:\/\//
+
+const READ_ONLY_VALUE_CLASS =
+  "inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px]"
+
+// Read-only field value: an external link when the field carries an `href`
+// (e.g. the ad source URL), otherwise plain muted text.
+function ReadOnlyFieldValue({
+  href,
+  children,
+}: {
+  href?: string | null
+  children: React.ReactNode
+}) {
+  if (href) {
+    return (
+      <a
+        className={`${READ_ONLY_VALUE_CLASS} text-primary underline hover:text-primary/80`}
+        href={href}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {children}
+      </a>
+    )
+  }
+  return (
+    <div className={`${READ_ONLY_VALUE_CLASS} text-muted-foreground`}>
+      {children}
+    </div>
+  )
+}
 
 const formatGender = (
   gender: string | null | undefined,
@@ -91,6 +134,64 @@ const getLanguageLabel = (
   return option ? t(option.labelKey) : language
 }
 
+type ScopedIdentityRowConfig = {
+  key: "sourceUserId" | "sourceUsername"
+  icon: LucideIcon
+  labelKey: string
+}
+
+/**
+ * Per-channel display config for the channel-scoped identity columns on
+ * ContactInbox (`sourceUserId`/`sourceUsername`). Labels are channel-branded,
+ * so each channel that populates these columns declares its own rows here —
+ * adding a channel is one config entry, no branching.
+ */
+const scopedIdentityRowsByChannel: Partial<
+  Record<ChannelType, readonly ScopedIdentityRowConfig[]>
+> = {
+  [channelTypes.enum.whatsapp]: [
+    {
+      key: "sourceUserId",
+      icon: FingerprintIcon,
+      labelKey: "fields.waUserId.label",
+    },
+    {
+      key: "sourceUsername",
+      icon: AtSignIcon,
+      labelKey: "fields.waUserName.label",
+    },
+  ],
+}
+
+const buildScopedIdentityFields = (
+  contactInbox: ContactInboxResource | undefined,
+  t: (key: string) => string,
+): ContactEditableField[] => {
+  const parsedChannel = channelTypes.safeParse(contactInbox?.channel)
+  if (!(contactInbox && parsedChannel.success)) {
+    return []
+  }
+  const rows = scopedIdentityRowsByChannel[parsedChannel.data] ?? []
+  return rows.flatMap((row): ContactEditableField[] => {
+    const value = contactInbox[row.key]
+    // Skip absent values, and a value that IS the Contact ID shown above
+    // (a scoped-id-keyed contact) — no duplicate row.
+    if (!value || value === contactInbox.sourceId) {
+      return []
+    }
+    return [
+      {
+        key: row.key,
+        icon: row.icon,
+        label: t(row.labelKey),
+        value,
+        type: "shortText",
+        readOnly: true,
+      },
+    ]
+  })
+}
+
 export const ContactDetail = ({
   activeConversationId,
   contact,
@@ -135,7 +236,11 @@ export const ContactDetail = ({
     [t],
   )
 
-  const getContactFieldDisplayValue = (key: string, value: string) => {
+  const getContactFieldDisplayValue = (
+    key: string,
+    value: string,
+    type: CustomFieldType,
+  ) => {
     switch (key) {
       case "language":
         return getLanguageLabel(value, t)
@@ -144,7 +249,10 @@ export const ContactDetail = ({
       case "timezone":
         return formatTimezoneLabel(value)
       default:
-        return value
+        return formatCustomFieldDisplayValue(type, value, timezone, {
+          false: t("fields.boolean.false"),
+          true: t("fields.boolean.true"),
+        })
     }
   }
 
@@ -163,7 +271,7 @@ export const ContactDetail = ({
               formValue: value,
               value: isTemporalCustomFieldType(field.type)
                 ? formatCustomFieldValueInTimeZone(field.type, value, timezone)
-                : getContactFieldDisplayValue(fieldKey, value),
+                : getContactFieldDisplayValue(fieldKey, value, field.type),
             }
           : field,
       ),
@@ -211,6 +319,16 @@ export const ContactDetail = ({
       if (conversation?.contact) {
         const activeContactInbox = conversation.contactInboxes[0]
         const channelContactId = activeContactInbox?.sourceId
+        // The ad the contact clicked from (any ad-attributed inbox), shown as
+        // a link right under Contact ID. Guarded to http(s) so a non-navigable
+        // / `javascript:` referral value never becomes an anchor href.
+        const rawAdSourceUrl = conversation.contactInboxes.find(
+          (contactInbox) => contactInbox.adReferral?.sourceUrl,
+        )?.adReferral?.sourceUrl
+        const adSourceUrl =
+          rawAdSourceUrl && HTTP_URL_RE.test(rawAdSourceUrl)
+            ? rawAdSourceUrl
+            : null
         const tmpContactFields: ContactEditableField[] = [
           {
             key: "channelContactId",
@@ -220,6 +338,20 @@ export const ContactDetail = ({
             type: "shortText",
             readOnly: true,
           },
+          ...(adSourceUrl
+            ? [
+                {
+                  key: "adSource",
+                  icon: MegaphoneIcon,
+                  label: t("fields.adSource.label"),
+                  value: adSourceUrl,
+                  href: adSourceUrl,
+                  type: "shortText" as const,
+                  readOnly: true,
+                },
+              ]
+            : []),
+          ...buildScopedIdentityFields(activeContactInbox, t),
           {
             key: "language",
             icon: LanguagesIcon,
@@ -287,10 +419,14 @@ export const ContactDetail = ({
               key: contactCustomField.id,
               icon: customFieldIconsMap[targetCustomField.type],
               label: targetCustomField.name,
-              value: formatCustomFieldValueInTimeZone(
+              value: formatCustomFieldDisplayValue(
                 targetCustomField.type,
                 contactCustomField.value,
                 timezone,
+                {
+                  false: t("fields.boolean.false"),
+                  true: t("fields.boolean.true"),
+                },
               ),
               formValue: isTemporalCustomFieldType(targetCustomField.type)
                 ? resolveTemporalCustomFieldFormValue(
@@ -355,9 +491,9 @@ export const ContactDetail = ({
               </div>
 
               {editable.readOnly ? (
-                <div className="inline-flex h-8 flex-1 items-center justify-start truncate rounded-md px-3 text-[12px] text-muted-foreground">
+                <ReadOnlyFieldValue href={editable.href}>
                   {fieldValue}
-                </div>
+                </ReadOnlyFieldValue>
               ) : (
                 <Button
                   className="flex-1 justify-start truncate text-[12px]"

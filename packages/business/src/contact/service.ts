@@ -1,10 +1,12 @@
 import { macAnalyticsService } from "@chatbotx.io/analytics"
 import {
+  and,
   type DatabaseClient,
   db,
   eq,
   findOrFail,
   inArray,
+  sql,
 } from "@chatbotx.io/database/client"
 import {
   type ContactSource,
@@ -40,6 +42,7 @@ import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
+import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
 
 const NUMERIC_RE = /^\d+$/
 
@@ -154,7 +157,7 @@ class ContactService extends BaseService {
     const { workspaceId, contactId, contactFilter } = props
     if (
       contactFilter.conditions.length > 0 &&
-      !contactFilterHasPredicate(contactFilter)
+      !contactFilterHasPredicate(contactFilter, workspaceId)
     ) {
       return false
     }
@@ -227,6 +230,66 @@ class ContactService extends BaseService {
       .set(data)
       .where(eq(contactModel.id, ctx.id))
       .returning()
+    await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
+    if (ownsTransaction) {
+      await emitContactInfoChangeEvents(
+        ctx.workspaceId,
+        ctx.id,
+        existing,
+        updated,
+      )
+    }
+    return updated
+  }
+
+  /**
+   * Conditional write closing the TOCTOU race a plain read-then-`update`
+   * leaves open: checking `hasEmptyProfileName` and then calling `update`
+   * has a window between the two where a concurrent write (an operator
+   * edit, or another refresh attempt) can fill the name and get silently
+   * overwritten. This folds the "both firstName and lastName are still
+   * empty" predicate into the UPDATE's own WHERE clause — matching
+   * `hasEmptyProfileName`'s semantics exactly (NULL or whitespace-only
+   * counts as empty) — so the write only lands if the row still qualifies
+   * at the instant of the write. Returns `undefined` when zero rows matched
+   * (the name was filled concurrently) instead of throwing, so callers can
+   * distinguish "raced, skip" from "wrote".
+   *
+   * `accessScope` authorization is handled the same way `update()` handles
+   * it: via the `findByIdOrFail` read below, which throws if the contact is
+   * outside the caller's scope. Unlike the name predicate, accessScope has
+   * no race to close here, so it is not folded into the WHERE.
+   */
+  async updateIfProfileNameEmpty(
+    ctx: { workspaceId: string; id: string; accessScope?: ContactAccessScope },
+    data: ContactWriteData,
+    tx: DatabaseClient = db,
+  ): Promise<ContactModel | undefined> {
+    const ownsTransaction = tx === db
+    const existing = await this.findByIdOrFail({
+      workspaceId: ctx.workspaceId,
+      id: ctx.id,
+      accessScope: ctx.accessScope,
+      tx,
+    })
+
+    const [updated] = await tx
+      .update(contactModel)
+      .set(data)
+      .where(
+        and(
+          eq(contactModel.id, ctx.id),
+          eq(contactModel.workspaceId, ctx.workspaceId),
+          sql`btrim(coalesce(${contactModel.firstName}, ''), ${PROFILE_NAME_BLANK_CHARACTERS}) = ''`,
+          sql`btrim(coalesce(${contactModel.lastName}, ''), ${PROFILE_NAME_BLANK_CHARACTERS}) = ''`,
+        ),
+      )
+      .returning()
+
+    if (!updated) {
+      return
+    }
+
     await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
     if (ownsTransaction) {
       await emitContactInfoChangeEvents(
@@ -607,6 +670,7 @@ class ContactService extends BaseService {
       contact.firstName || undefined,
       contact.phoneNumber || undefined,
       contact.email || undefined,
+      contactInbox.id,
     )
 
     emit("analytics:dashboard", {

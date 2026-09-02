@@ -136,9 +136,13 @@ const data = {
       integrationWhatsappId: "iw-1",
     },
   ],
+  messengerIntegrations: [],
+  messengerTemplates: [],
+  instagramIntegrations: [],
   rules: [
     {
       id: "rule-1",
+      channel: "whatsapp",
       integrationWhatsappId: "iw-1",
       eventType: "lead",
       enabled: true,
@@ -146,6 +150,7 @@ const data = {
     },
     {
       id: "rule-2",
+      channel: "whatsapp",
       integrationWhatsappId: "iw-1",
       eventType: "purchase",
       enabled: true,
@@ -153,6 +158,7 @@ const data = {
     },
     {
       id: "rule-3",
+      channel: "whatsapp",
       integrationWhatsappId: "iw-1",
       eventType: "lead",
       enabled: true,
@@ -160,6 +166,7 @@ const data = {
     },
     {
       id: "rule-4",
+      channel: "whatsapp",
       integrationWhatsappId: "iw-1",
       eventType: "lead",
       enabled: true,
@@ -167,6 +174,7 @@ const data = {
     },
     {
       id: "rule-5",
+      channel: "whatsapp",
       integrationWhatsappId: "iw-1",
       eventType: "lead",
       enabled: true,
@@ -205,6 +213,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -236,6 +245,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -268,6 +278,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -311,6 +322,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}
@@ -353,6 +365,7 @@ describe("ConversionEventsView rule types", () => {
     await act(async () => {
       root.render(
         <ConversionEventsView
+          oauthCallbackUrl="https://broker.test/integrations/whatsapp/callback"
           promises={Promise.resolve([data])}
           selectedAccount={data.whatsappIntegrations[0]}
           switcherIntegrations={switcherIntegrations}

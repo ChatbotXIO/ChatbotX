@@ -27,17 +27,28 @@ export type InstagramActions = {
   }) => Promise<import("./apis/post").InstagramMediaDetails>
 }
 
-// Common attachment types — includes all types Instagram may send in a webhook
-const attachmentTypeSchema = z.enum([
-  "image",
-  "video",
-  "audio",
-  "file",
-  "sticker",
-  "location",
-  "share",
-  "fallback",
-])
+// Common attachment types — includes all types Instagram may send in a webhook.
+// `.catch("fallback")` is defense-in-depth: if Meta ships a type we haven't
+// enumerated yet, only this one field falls back to "fallback" instead of
+// failing validation for the entire webhook payload (which, after batching
+// multiple entries/messaging events per POST, could contain several unrelated
+// messages) and silently dropping every message in that batch.
+const attachmentTypeSchema = z
+  .enum([
+    "image",
+    "video",
+    "audio",
+    "file",
+    "sticker",
+    "location",
+    "share",
+    "fallback",
+    "story_mention",
+    "ig_reel",
+    "reel",
+    "template",
+  ])
+  .catch("fallback")
 
 // Base attachment payload — url optional because location/share have no url
 const baseAttachmentPayloadSchema = z.object({
@@ -59,6 +70,9 @@ export const instagramMessageSchema = z.object({
   mid: z.string(),
   text: z.string().optional(),
   is_echo: z.boolean().optional(),
+  // Set (with no other message fields besides `mid`) when the sender unsends
+  // a previously-sent DM.
+  is_deleted: z.boolean().optional(),
   attachments: z.array(instagramAttachmentSchema).optional(),
   metadata: z.string().optional(),
   quick_reply: z
@@ -87,18 +101,44 @@ export const instagramReadSchema = z.object({
   watermark: z.number(),
 })
 
+export const instagramReferralSchema = z.object({
+  // Meta only includes `ref` when the ad/link actually sets a ref param —
+  // most CTD ad referrals arrive without it.
+  ref: z.string().optional(),
+  source: z.string(),
+  type: z.string(),
+  ad_id: z.string().optional(),
+  source_url: z.string().optional(),
+  source_platform: z.string().optional(),
+  ads_context_data: z
+    .object({
+      ad_title: z.string().optional(),
+      post_id: z.string().optional(),
+      photo_url: z.string().optional(),
+      video_url: z.string().optional(),
+      product_id: z.string().optional(),
+      flow_id: z.string().optional(),
+    })
+    .optional(),
+})
+export type InstagramReferral = z.infer<typeof instagramReferralSchema>
+
 export const instagramPostbackSchema = z.object({
   mid: z.string(),
   title: z.string(),
   payload: z.string(),
+  referral: instagramReferralSchema.optional(),
 })
 
-export const instagramReferralSchema = z.object({
-  ref: z.string(),
-  source: z.string(),
-  type: z.string(),
+// Sent when a contact reacts (or removes a reaction) to a message we sent
+// them or they sent us. `mid` identifies the reacted-to message.
+export const instagramReactionSchema = z.object({
+  mid: z.string(),
+  action: z.enum(["react", "unreact"]),
+  reaction: z.string().optional(),
+  emoji: z.string().optional(),
 })
-export type InstagramReferral = z.infer<typeof instagramReferralSchema>
+export type InstagramReaction = z.infer<typeof instagramReactionSchema>
 
 export const instagramMessagingEventSchema = z.object({
   sender: idSchema,
@@ -108,6 +148,7 @@ export const instagramMessagingEventSchema = z.object({
   read: instagramReadSchema.optional(),
   postback: instagramPostbackSchema.optional(),
   referral: instagramReferralSchema.optional(),
+  reaction: instagramReactionSchema.optional(),
 })
 export type InstagramMessagingEvent = z.infer<
   typeof instagramMessagingEventSchema
@@ -198,6 +239,9 @@ export type InstagramMessageAttachment = z.infer<
 export const instagramSendMessageSchema = z.object({
   text: z.string().optional(),
   attachment: instagramMessageAttachmentSchema.optional(),
+  // Multiple-attachments form — one message carrying several bare image
+  // attachments, no template/buttons.
+  attachments: z.array(instagramMessageAttachmentSchema).max(10).optional(),
   quick_replies: z.array(instagramQuickReplySchema).max(13).optional(),
   metadata: z.string().optional(),
 })

@@ -2,7 +2,7 @@
 
 import { inboxTeamService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { bulkUpdateIdsRequest } from "@/features/common/schemas"
+import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteTeamMembersAction = workspaceActionClient

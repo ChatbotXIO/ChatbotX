@@ -1,6 +1,7 @@
 import { type ImportType, importTypes } from "@chatbotx.io/database/partials"
 import { handler as contactsHandler } from "./modules/contacts"
 import { handler as couponsHandler } from "./modules/coupons"
+import { handler as flowHandler } from "./modules/flow"
 import { handler as productsHandler } from "./modules/products"
 import type { ImportConfig, ImportEntry, ImportHandler } from "./types"
 
@@ -52,12 +53,28 @@ const configs: Record<ImportType, ImportConfig> = {
       storageUrl: "workspaces/:workspaceId/imports/products/:fileName",
     },
   },
+  [importTypes.enum.flow]: {
+    type: importTypes.enum.flow,
+    maxFileSizeMB: 5,
+    // A flow export is a single JSON document, not row data; maxRows is
+    // meaningless here and enforced instead by maxFileSizeMB.
+    maxRows: 1,
+    acceptedFormats: ["json"],
+    acceptedMimeTypes: ["application/json"],
+    acceptedExtensions: {
+      "application/json": [".json"],
+    },
+    paths: {
+      storageUrl: "workspaces/:workspaceId/imports/flows/:fileName",
+    },
+  },
 }
 
 const handlers: { [T in ImportType]: ImportHandler<T> } = {
   [importTypes.enum.contacts]: contactsHandler,
   [importTypes.enum.coupons]: couponsHandler,
   [importTypes.enum.products]: productsHandler,
+  [importTypes.enum.flow]: flowHandler,
 }
 
 export const importRegistry = {
@@ -72,6 +89,10 @@ export const importRegistry = {
   [importTypes.enum.products]: {
     config: configs[importTypes.enum.products],
     handler: handlers[importTypes.enum.products],
+  },
+  [importTypes.enum.flow]: {
+    config: configs[importTypes.enum.flow],
+    handler: handlers[importTypes.enum.flow],
   },
 } satisfies { [T in ImportType]: ImportEntry<T> }
 

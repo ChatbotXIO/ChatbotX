@@ -1,4 +1,5 @@
-import { flowService } from "@chatbotx.io/business"
+import { defaultReplyThrottleService, flowService } from "@chatbotx.io/business"
+import type { DefaultReplyFrequency } from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -11,23 +12,41 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 
+/**
+ * Result of {@link triggerDefaultReplyFlow}:
+ * - `triggered` — the flow was enqueued.
+ * - `throttled` — a flow is configured and valid, but the workspace's
+ *   activation-frequency window is still open for this contact/channel.
+ * - `skipped` — no flow is configured, or the configured flow is invalid /
+ *   inactive (never consumes a throttle window).
+ */
+export const defaultReplyTriggerResults = [
+  "triggered",
+  "throttled",
+  "skipped",
+] as const
+export type DefaultReplyTriggerResult =
+  (typeof defaultReplyTriggerResults)[number]
+
 export async function triggerDefaultReplyFlow(props: {
   workspaceId: string
   defaultReplyFlowId: string | null | undefined
+  defaultReplyFrequency: DefaultReplyFrequency
   conversation: ConversationModel
   contactInbox: ContactInboxModel
   trackingContext?: BotResponseTrackingContext
-}): Promise<boolean> {
+}): Promise<DefaultReplyTriggerResult> {
   const {
     workspaceId,
     defaultReplyFlowId,
+    defaultReplyFrequency,
     conversation,
     contactInbox,
     trackingContext,
   } = props
 
   if (!defaultReplyFlowId) {
-    return false
+    return "skipped"
   }
 
   const flow = await flowService.findBy({
@@ -40,19 +59,47 @@ export async function triggerDefaultReplyFlow(props: {
       { workspaceId, defaultReplyFlowId },
       "[default-reply] configured default reply flow is missing, inactive, or has no published version",
     )
-    return false
+    return "skipped"
   }
 
-  await integrationQueue.add(IntegrationJobAction.sendFlow, {
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      conversationId: conversation.id,
-      contactInboxId: contactInbox.id,
-      flowId: flow.id,
-      origin: webhookChannelOrigin(),
-      trackingContext,
-    },
+  const claim = await defaultReplyThrottleService.tryAcquire({
+    workspaceId,
+    contactInboxId: contactInbox.id,
+    frequency: defaultReplyFrequency,
   })
+  if (claim.result === "denied") {
+    logger.debug(
+      { workspaceId, contactInboxId: contactInbox.id, defaultReplyFrequency },
+      "[default-reply] throttled: activation window still open for this contact",
+    )
+    return "throttled"
+  }
 
-  return true
+  try {
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        flowId: flow.id,
+        origin: webhookChannelOrigin(),
+        trackingContext,
+      },
+    })
+  } catch (error) {
+    // Roll back only a claim we actually own — a `bypassed` claim (Postgres
+    // fail-open) has no row of ours, and releasing anyway could delete a window
+    // claimed by a concurrent worker.
+    if (claim.result === "acquired") {
+      await defaultReplyThrottleService.release({
+        workspaceId,
+        contactInboxId: contactInbox.id,
+        frequency: defaultReplyFrequency,
+        claimId: claim.claimId,
+      })
+    }
+    throw error
+  }
+
+  return "triggered"
 }

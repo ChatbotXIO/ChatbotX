@@ -109,4 +109,34 @@ describe("contactService.matchesContactFilter", () => {
       }),
     })
   })
+
+  test("queries the scoped contact for a workspace-level botField-only filter (regression: workspaceId must reach contactFilterHasPredicate)", async () => {
+    // `botField` conditions are workspace-scoped (not per-contact — see
+    // `packages/database/src/queries/contact-filter/bot-field-predicates.ts`)
+    // and their EXISTS predicate requires `workspaceId`. Before
+    // `contactFilterHasPredicate` forwarded `workspaceId`, a botField-only
+    // filter here would have short-circuited to `false` without ever
+    // querying, regardless of whether the condition actually matched.
+    findFirst.mockResolvedValue({ id: "contact-1" })
+
+    await expect(
+      contactService.matchesContactFilter({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        contactFilter: {
+          operator: "and",
+          conditions: [
+            {
+              field: "botField",
+              botFieldId: "bf-1",
+              valueType: "text",
+              operator: "isNotEmpty",
+            },
+          ],
+        },
+      }),
+    ).resolves.toBe(true)
+
+    expect(findFirst).toHaveBeenCalled()
+  })
 })

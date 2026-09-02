@@ -5,7 +5,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "fix": "ultracite fix --unsafe",
-    "lint": "pnpm check:agent-instructions && ultracite check",
+    "lint": "pnpm check:agent-instructions && turbo run lint && ultracite check",
     "sync:agent-instructions": "node scripts/sync-agent-instructions.mjs --write",
     "check:agent-instructions": "node scripts/sync-agent-instructions.mjs --check",
     "test": "turbo run test",

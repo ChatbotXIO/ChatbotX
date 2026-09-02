@@ -15,6 +15,7 @@ import type {
   SendGifStepSchema,
   SendImageStepSchema,
   SendMessengerTemplateMessageStepSchema,
+  SendMultipleImagesStepSchema,
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
@@ -27,6 +28,7 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
@@ -70,9 +72,11 @@ export type ChatJobSendFlowStep = {
     contactInboxId?: string
     flowId: string
     flowVersionId?: string
+    executedFlowVersionId?: string
     step:
       | SendTextStepSchema
       | SendImageStepSchema
+      | SendMultipleImagesStepSchema
       | SendGifStepSchema
       | SendFileStepSchema
       | SendVideoStepSchema
@@ -84,6 +88,7 @@ export type ChatJobSendFlowStep = {
       | SendMessengerTemplateMessageStepSchema
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    appointmentId?: string
     richResponse?: {
       executionId: string
       buttonPayloads: Record<string, DatabaseRichButtonPayloadEntry>
@@ -226,10 +231,9 @@ export type ChatJobData =
   | ChatJobChangeChannelMessageState
   | ChatJobCheckOutboundAutomatedResponse
 
-export const chatQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<ChatJobData>(queueNames.enum.chat, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const chatQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<ChatJobData>(queueNames.enum.chat, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })

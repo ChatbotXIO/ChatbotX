@@ -37,7 +37,7 @@ import {
   contactTagPrefix,
   type ExportContactsFilter,
   exportContactsRequest,
-} from "./schemas/action"
+} from "./schema/action"
 
 type ExportState = {
   fileId: string
@@ -95,6 +95,10 @@ export function ExportContactDialog({
         {
           label: t("fields.phoneNumber.label"),
           value: `${contactPrefix}:phoneNumber`,
+        },
+        {
+          label: t("fields.waUserId.label"),
+          value: `${contactPrefix}:sourceUserId`,
         },
       ],
     },

@@ -1,16 +1,17 @@
 "use server"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationGeminiModel } from "@chatbotx.io/database/schema"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateGeminiRequest,
   updateGeminiRequest,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const updateGeminiAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -35,5 +36,11 @@ export const updateGeminiAction = workspaceActionClient
         .where(eq(integrationGeminiModel.id, integrationGemini.id))
 
       await aiIntegrationService.invalidateCache(workspaceId, "gemini")
+
+      await auditService.record({
+        workspaceId,
+        action: "update",
+        detail: "updated the Gemini integration configuration",
+      })
     },
   )

@@ -1,5 +1,6 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
 import { folderTypes } from "@chatbotx.io/database/partials"
@@ -10,7 +11,7 @@ import { getTranslations } from "next-intl/server"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"
@@ -68,6 +69,12 @@ export const createTriggerAction = workspaceActionClient
         .then((rows) => rows[0])
 
       await updateTriggerCache(workspaceId)
+
+      await auditService.record({
+        workspaceId,
+        action: "create",
+        detail: `created a new trigger (#${result.id})`,
+      })
 
       return result
     },

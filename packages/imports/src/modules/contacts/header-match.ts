@@ -12,6 +12,14 @@ export const normalizeContactHeader = (raw: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
 
+/**
+ * The English header the contact export writes for the `sourceUserId` virtual
+ * column. Shared with `apps/worker/.../export-contacts.ts` so the export ↔
+ * import round-trip is enforced by one literal (and the test asserting this
+ * constant self-maps), not by two files agreeing by convention.
+ */
+export const SOURCE_USER_ID_EXPORT_HEADER = "WhatsApp User ID"
+
 // Candidate headers per field, covering English, Vietnamese, our downloadable
 // template labels, and common export column names. Values are matched after
 // `normalizeContactHeader`, so accents/separators/casing here are irrelevant.
@@ -31,6 +39,11 @@ const HEADER_CANDIDATES = {
   email: ["email", "emailaddress", "mail", "diachiemail"],
   firstName: ["firstname", "givenname", "ten"],
   lastName: ["lastname", "surname", "familyname", "ho"],
+  // Self-maps the exported "WhatsApp User ID" header (see export-contacts.ts)
+  // plus common variants — including the Vietnamese template label
+  // "ID người dùng WhatsApp" — so the export → import round-trip is
+  // self-describing in both template languages.
+  sourceUserId: ["whatsappuserid", "wauserid", "bsuid", "idnguoidungwhatsapp"],
 } as const satisfies Record<ContactImportField, readonly string[]>
 
 const normalizedCandidates = Object.fromEntries(

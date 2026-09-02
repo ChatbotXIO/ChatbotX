@@ -12,6 +12,7 @@ import {
   BellRingIcon,
   BotIcon,
   CalculatorIcon,
+  CalendarClockIcon,
   CircleCheckIcon,
   CircleEllipsisIcon,
   ClipboardListIcon,
@@ -529,6 +530,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     ],
   },
   {
+    label: t("flows.actions.appointmentScheduling"),
+    icon: CalendarClockIcon,
+    stepType: stepTypes.enum.appointmentScheduling,
+  },
+  {
     label: t("flows.actions.questionnaires"),
     icon: ClipboardListIcon,
     stepType: stepTypes.enum.questionnaires,
@@ -567,6 +573,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.callApi"),
         icon: GlobeIcon,
         stepType: stepTypes.enum.callApi,
+      },
+      {
+        label: t("flows.actions.executeJavascript"),
+        icon: CodeIcon,
+        stepType: stepTypes.enum.executeJavascript,
       },
     ],
   },
@@ -608,7 +619,7 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     ],
   },
   {
-    label: t("flows.actions.metaConversions"),
+    label: t("flows.actions.adsConversions"),
     icon: MegaphoneIcon,
     stepType: null,
     children: [

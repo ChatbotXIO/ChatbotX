@@ -1,5 +1,5 @@
 import { integrationOpenRouterService } from "@chatbotx.io/business"
-import type { IntegrationOpenrouterResource } from "../schemas/resource"
+import type { IntegrationOpenrouterResource } from "../schema/resource"
 
 export const findIntegrationOpenRouter = async ({
   workspaceId,

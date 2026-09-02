@@ -12,6 +12,7 @@ import { sendFileStepSchema } from "../steps/send-file"
 import { sendGifStepSchema } from "../steps/send-gif"
 import { sendImageStepSchema } from "../steps/send-image"
 import { sendMessengerTemplateMessageStepSchema } from "../steps/send-messenger-message-template"
+import { sendMultipleImagesStepSchema } from "../steps/send-multiple-images"
 import { MAX_QUICK_REPLIES } from "../steps/send-quick-reply"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
@@ -37,6 +38,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
           sendAudioStepSchema,
           sendFileStepSchema,
           sendImageStepSchema,
+          sendMultipleImagesStepSchema,
           sendTextStepSchema,
           sendVideoStepSchema,
           // sendCardStepSchema,
@@ -80,6 +82,14 @@ export const BROADCAST_PAYLOAD_TYPE = "broadcast"
 export const SEQUENCE_SCHEDULE_PAYLOAD_TYPE = "sequenceSchedule"
 export const UPDATE_STATUS_PAYLOAD_TYPE = "updateStatus"
 export const FLOW_NODE_PAYLOAD_TYPE = "flowNode"
+export const APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE =
+  "appointmentWebviewSelection"
+export const APPOINTMENT_AVAILABILITY_RANGE_SELECTION_PAYLOAD_TYPE =
+  "appointmentAvailabilityRangeSelection"
+export const APPOINTMENT_AVAILABILITY_RANGE_SKIPPED_PAYLOAD_TYPE =
+  "appointmentAvailabilityRangeSkipped"
+export const GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE =
+  "getUserDataWebviewSelection"
 
 export const baseMetadataPayload = z.object({
   stepId: z.string().optional(),
@@ -105,6 +115,34 @@ export const updateStatusPayload = baseMetadataPayload.extend({
   type: z.literal(UPDATE_STATUS_PAYLOAD_TYPE),
 })
 
+export const appointmentWebviewSelectionPayload = baseMetadataPayload.extend({
+  type: z.literal(APPOINTMENT_WEBVIEW_SELECTION_PAYLOAD_TYPE),
+  stepId: z.string(),
+  selectedStartAt: z.iso.datetime(),
+  appointmentId: z.string().optional(),
+})
+
+export const appointmentAvailabilityRangeSelectionPayload =
+  baseMetadataPayload.extend({
+    type: z.literal(APPOINTMENT_AVAILABILITY_RANGE_SELECTION_PAYLOAD_TYPE),
+    stepId: z.string(),
+    startDate: z.iso.datetime({ local: true }),
+    endDate: z.iso.datetime({ local: true }),
+  })
+
+export const appointmentAvailabilityRangeSkippedPayload =
+  baseMetadataPayload.extend({
+    type: z.literal(APPOINTMENT_AVAILABILITY_RANGE_SKIPPED_PAYLOAD_TYPE),
+    stepId: z.string(),
+  })
+
+export const getUserDataWebviewSelectionPayload = baseMetadataPayload.extend({
+  type: z.literal(GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE),
+  stepId: z.string(),
+  challengeId: z.string(),
+  selectedValue: z.iso.datetime(),
+})
+
 export type BroadcastMetadataPayload = z.infer<typeof broadcastMetadataPayload>
 
 export type SequenceScheduleMetadataPayload = z.infer<
@@ -115,6 +153,14 @@ export const metadataSchema = z.discriminatedUnion("type", [
   broadcastMetadataPayload,
   sequenceScheduleMetadataPayload,
   updateStatusPayload,
+  appointmentWebviewSelectionPayload,
+  appointmentAvailabilityRangeSelectionPayload,
+  appointmentAvailabilityRangeSkippedPayload,
+  getUserDataWebviewSelectionPayload,
 ])
 
 export type MetadataPayload = z.infer<typeof metadataSchema>
+
+export type GetUserDataWebviewSelectionPayload = z.infer<
+  typeof getUserDataWebviewSelectionPayload
+>

@@ -1,0 +1,192 @@
+"use client"
+
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import type { ColumnDef, Row } from "@tanstack/react-table"
+import {
+  BanIcon,
+  EllipsisVerticalIcon,
+  ExternalLinkIcon,
+  Trash2Icon,
+} from "lucide-react"
+import type { useTranslations } from "next-intl"
+import type { Dispatch, SetStateAction } from "react"
+import { ContactNameCell } from "@/features/contacts/components/contact-name-cell"
+import type { AppointmentManagementListItem } from "../schema/resource"
+
+export type AppointmentRowAction = {
+  row: Row<AppointmentManagementListItem>
+  variant: "cancel" | "delete"
+}
+
+type Props = {
+  t: ReturnType<typeof useTranslations>
+  setRowAction: Dispatch<SetStateAction<AppointmentRowAction | null>>
+  workspaceId: string
+}
+
+const statusLabelKey = {
+  scheduled: "appointmentManagement.statuses.scheduled",
+  cancelled: "appointmentManagement.statuses.cancelled",
+} as const satisfies Record<
+  AppointmentManagementListItem["status"],
+  | "appointmentManagement.statuses.scheduled"
+  | "appointmentManagement.statuses.cancelled"
+>
+
+function formatAppointmentDate(date: Date, timezone: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: timezone,
+  }).format(date)
+}
+
+export function getAppointmentColumns({
+  t,
+  setRowAction,
+  workspaceId,
+}: Props): ColumnDef<AppointmentManagementListItem>[] {
+  return [
+    {
+      id: "name",
+      accessorKey: "contactName",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("appointmentManagement.fields.name")}
+        />
+      ),
+      cell: ({ row }) => (
+        <ContactNameCell
+          avatarClassName="size-8"
+          contact={{
+            avatar: row.original.contactAvatar,
+            fullName: row.original.contactName,
+          }}
+          conversationId={row.original.conversationId}
+          maxWidthClassName="max-w-64"
+          unknownContactLabel={t("appointmentManagement.unknownContact")}
+          workspaceId={workspaceId}
+        />
+      ),
+      meta: {
+        label: t("appointmentManagement.fields.name"),
+        placeholder: t("appointmentManagement.searchPlaceholder"),
+        variant: "text",
+      },
+      enableColumnFilter: true,
+      enableSorting: false,
+    },
+    {
+      id: "date",
+      accessorKey: "startAt",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("appointmentManagement.fields.date")}
+        />
+      ),
+      cell: ({ row }) =>
+        formatAppointmentDate(
+          row.original.startAt,
+          row.original.inviteeTimezone,
+        ),
+      enableSorting: false,
+    },
+    {
+      id: "status",
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("appointmentManagement.fields.status")}
+        />
+      ),
+      cell: ({ row }) => (
+        <Badge
+          variant={
+            row.original.status === "cancelled" ? "destructive" : "secondary"
+          }
+        >
+          {t(statusLabelKey[row.original.status])}
+        </Badge>
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "calendar",
+      accessorKey: "calendarName",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("appointmentManagement.fields.calendar")}
+        />
+      ),
+      cell: ({ row }) => (
+        <span className="inline-block max-w-[260px] truncate">
+          {row.original.calendarName}
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t("actions.actions")} />
+      ),
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label={t("actions.openMenu")}
+                className="size-8 p-0"
+                variant="ghost"
+              >
+                <EllipsisVerticalIcon className="size-4" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() =>
+                window.open(row.original.scheduleUrl, "_blank", "noreferrer")
+              }
+            >
+              <ExternalLinkIcon />
+              {t("actions.view")}
+            </DropdownMenuItem>
+            {row.original.cancellable ? (
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "cancel" })}
+              >
+                <BanIcon />
+                {t("actions.cancel")}
+              </DropdownMenuItem>
+            ) : null}
+            {row.original.deletable ? (
+              <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "delete" })}
+                variant="destructive"
+              >
+                <Trash2Icon />
+                {t("actions.delete")}
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      size: 90,
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ]
+}

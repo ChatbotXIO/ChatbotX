@@ -184,6 +184,53 @@ describe("contact filter field config helpers", () => {
     )
   })
 
+  test("omits bot field configs by default (opt-in gating)", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+      botFields: [{ id: "bf-1", name: "Greeting", type: "shortText" }],
+    })
+
+    expect(
+      configs.find((config) => config.name === "botField:bf-1"),
+    ).toBeUndefined()
+  })
+
+  test("maps workspace bot fields to botField configs when includeBotFields is true", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [],
+      botFields: [
+        { id: "bf-1", name: "Greeting", type: "shortText" },
+        { id: "bf-2", name: "Order Count", type: "number" },
+      ],
+      includeBotFields: true,
+    })
+
+    expect(configs).toContainEqual(
+      expect.objectContaining({
+        name: "botField:bf-1",
+        botFieldId: "bf-1",
+        customFieldType: "shortText",
+        label: "Greeting",
+        formField: formFieldTypes.enum.text,
+        group: "botFields",
+      }),
+    )
+    expect(configs).toContainEqual(
+      expect.objectContaining({
+        name: "botField:bf-2",
+        formField: formFieldTypes.enum.number,
+      }),
+    )
+  })
+
   test("assigns supported static fields to their configured option groups", () => {
     const configs = getFieldConfigs({
       t,
@@ -477,6 +524,39 @@ describe("contact filter field config helpers", () => {
           {
             label: "Plan",
             value: "customField:cf-1",
+          },
+        ],
+      }),
+    )
+  })
+
+  test("renders the Bot Fields group immediately after Custom Fields", () => {
+    const configs = getFieldConfigs({
+      t,
+      tagOptions: [],
+      inboxOptions: [],
+      flowVersionOptions: [],
+      customFields: [{ id: "cf-1", name: "Plan", type: "shortText" }],
+      botFields: [{ id: "bf-1", name: "Greeting", type: "shortText" }],
+      includeBotFields: true,
+    })
+
+    const options = getFieldOptions(configs, t)
+    const groupOrder = options
+      .filter((opt) => opt.value.startsWith("group-"))
+      .map((opt) => opt.value)
+    const customFieldsIndex = groupOrder.indexOf("group-customFields")
+    const botFieldsIndex = groupOrder.indexOf("group-botFields")
+
+    expect(customFieldsIndex).toBeGreaterThanOrEqual(0)
+    expect(botFieldsIndex).toBe(customFieldsIndex + 1)
+    expect(options).toContainEqual(
+      expect.objectContaining({
+        value: "group-botFields",
+        children: [
+          {
+            label: "Greeting",
+            value: "botField:bf-1",
           },
         ],
       }),

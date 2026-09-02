@@ -1,5 +1,6 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { zodFieldReference } from "../field-reference"
 import {
   errorStateDefaultFn,
   errorStateSchema,
@@ -41,7 +42,7 @@ export const aiGenerateTextSchema = z
     model: z.string().trim(),
     system: z.string().trim().optional(),
     text: z.string().trim().min(1),
-    outputFieldId: z.string().trim().min(1),
+    outputFieldId: zodFieldReference(),
     tools: z.array(z.string()).optional(),
     remember: z.boolean(),
     temperature: z.number().min(0).max(2),

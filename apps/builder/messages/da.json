@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Prøv igen",
     "copy": "Kopiér",
     "copyUrl": "Kopiér URL",
     "actions": "Handlinger",
@@ -71,6 +72,7 @@
     "reset": "Nulstil",
     "save": "Gem",
     "selectAll": "Vælg alle",
+    "unselect": "Fravælg",
     "selectRow": "Vælg række",
     "sendFlow": "Send flow",
     "sendMessage": "Send besked",
@@ -145,7 +147,8 @@
     "onSuccess": "På succes",
     "clone": "Klon",
     "remove": "Fjern",
-    "restore": "Gendan"
+    "restore": "Gendan",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
@@ -156,7 +159,8 @@
     "skip": "Spring over"
   },
   "admins": {
-    "title": "Administratorer"
+    "title": "Administratorer",
+    "adminActivityLogs": "Administratoraktivitetslog"
   },
   "assignAdmin": {
     "assignConversation": "Tildel samtale",
@@ -540,8 +544,8 @@
       "blocked": "Blokeret",
       "noAdminReply": "Intet svar fra administrator",
       "contactCreatedAt": "Kontakt oprettet den",
-      "fromCtwaAd": "Fra Click to WhatsApp-annonce",
-      "ctwaConversion": "CTWA-konvertering",
+      "fromCtwaAd": "Fra annonce",
+      "ctwaConversion": "Annoncekonvertering",
       "lastUserInputTypes": {
         "text": "Tekst",
         "location": "Placering",
@@ -568,9 +572,10 @@
       "systemFields": "Systemfelter",
       "topicCoupon": "Emnekupon",
       "customFields": "Brugerdefinerede felter",
+      "botFields": "Bot Felter",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp Ads"
+      "ctwaAds": "Annoncer"
     },
     "languages": {
       "ar": "Arabisk",
@@ -609,9 +614,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA-samtalestartere",
-        "leads": "CTWA-kvalificerede leads",
-        "purchases": "CTWA-købere"
+        "conversations": "Annonce-samtalestartere",
+        "leads": "Annonce-kvalificerede leads",
+        "purchases": "Annonce-købere"
       },
       "adPrefix": "annonce",
       "allAds": "alle annoncer"
@@ -796,6 +801,12 @@
     "qrCode": {
       "label": "QR Kode"
     },
+    "dynamicImage": {
+      "label": "Dynamisk billede"
+    },
+    "minigame": {
+      "label": "Minispil"
+    },
     "savePayloadToCustomField": {
       "label": "Gem payload til brugerdefineret felt"
     },
@@ -890,7 +901,10 @@
       "append": "Append til den slut",
       "prepend": "Prepend til den beginning",
       "increase": "Increase by",
-      "decrease": "Decrease by"
+      "decrease": "Decrease by",
+      "groupSystemFields": "Systemfelter",
+      "groupCustomFields": "Brugerdefinerede Felter",
+      "groupAccountFields": "Bot Felter"
     },
     "dataCollect": {
       "label": "Data Collect"
@@ -898,6 +912,15 @@
     "defaultReply": {
       "description": "It er den standard svar that din arbejdsområde vil send til brugere når den arbejdsområde doesn't know how til respond til den bruger besked.",
       "label": "Standard Svar"
+    },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
     },
     "smartResponseDelaySeconds": {
       "description": "Set how long den bot waits før replying efter den bruger’s seneste besked. Hvis den bruger sends another besked, den timer resets og beskeder er queued into a single svar.",
@@ -984,8 +1007,8 @@
       "aiDeleteMessageHistory": "{aiName}: Slet Besked Historik"
     },
     "steps": {
-      "label": "Steps",
-      "placeholder": "Vælg trin"
+      "label": "Node",
+      "placeholder": "Vælg node"
     },
     "folder": {
       "label": "Mappe"
@@ -1146,6 +1169,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "System Function",
       "names": {
@@ -1193,6 +1219,11 @@
     },
     "outputCustomField": {
       "label": "Output Brugerdefineret Felt"
+    },
+    "javascriptCode": {
+      "label": "JavaScript-kode",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Brug ren JavaScript og returner en værdi. Netværk, filer, API'er og eksterne biblioteker er ikke tilgængelige. Kontakt- og systemdata er tilgængelige via `input`-objektet."
     },
     "httpMethod": {
       "label": "Method"
@@ -1256,7 +1287,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Udbyder"
+      "label": "Udbyder",
+      "placeholder": "Vælg udbyder"
     },
     "prompt": {
       "label": "Prompt",
@@ -1267,6 +1299,12 @@
     },
     "pageUserName": {
       "label": "Side Bruger Navn"
+    },
+    "waUserId": {
+      "label": "WhatsApp Bruger-ID"
+    },
+    "waUserName": {
+      "label": "WhatsApp Brugernavn"
     },
     "purpose": {
       "label": "Purpose",
@@ -1339,7 +1377,9 @@
       "label": "Status",
       "pending": "Pending",
       "processing": "Processing",
+      "installing": "Installing",
       "completed": "Completed",
+      "partial": "Partial",
       "failed": "Failed",
       "success": "Succes",
       "error": "Fejl"
@@ -1552,7 +1592,7 @@
       "superAdmin": "Super Admin",
       "analytics": "Analytics",
       "flows": "Flows",
-      "contacts": "Kontakter",
+      "contacts": "Kontakter / Inbox",
       "onlyAssignedContacts": "Kun Tildelt Kontakter",
       "emailAndPhone": "E-mail og Telefon",
       "broadcast": "Broadcast",
@@ -1965,13 +2005,58 @@
       "placeholder": "Type an event navn og press Indtast",
       "description": "Tilføj one eller mere event names. Når Make attaches a webhook for one af these events, data er sendt til it når denne trin runs."
     },
+    "bookingCalendar": {
+      "label": "Bookingkalender"
+    },
+    "bookingDate": {
+      "label": "Bookingdato"
+    },
+    "bookingLink": {
+      "label": "Bookinglink"
+    },
     "n8nEvents": {
       "label": "Hændelser",
       "placeholder": "Skriv et hændelsenavn og tryk på Enter",
       "description": "Tilføj et eller flere hændelsenavne. Når n8n tilføjer et webhook for en af disse hændelser, sendes data til det, når dette trin køres."
+    },
+    "enabled": {
+      "label": "Aktiveret"
+    },
+    "api": {
+      "label": "API",
+      "description": "Forbind enhver HTTP-kompatibel applikation som en kanal. Din app sender indgående beskeder til vores REST API, og vi leverer svar til din callback-URL.",
+      "callbackUrl": {
+        "label": "Callback-URL",
+        "description": "Vi sender udgående svar hertil med POST, signeret med din indbakkes eget hemmelige nøgle.",
+        "notSet": "Ikke angivet"
+      },
+      "token": "Token",
+      "rotateToken": "Rotér token",
+      "status": {
+        "enabled": "Aktiveret",
+        "disabled": "Deaktiveret"
+      },
+      "tokenReveal": {
+        "title": "Kopiér dit API-token",
+        "description": "Dette token vises kun én gang. Opbevar det sikkert — du vil ikke kunne se det igen.",
+        "done": "Færdig"
+      }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Denne flow er aldrig blevet offentliggjort. Udgiv den, før du eksporterer.",
+      "failed": "Eksport mislykkedes. Prøv igen."
+    },
     "title": "Flows",
     "quickReplies": {
       "limitReached": "Quick svar limit reached ({max})."
@@ -2015,11 +2100,11 @@
       "broadcastActions": "Broadcast Handlinger",
       "callApi": "External API Anmodning",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Triggers",
       "questionnaires": "Questionnaires",
       "setUpCoupon": "Set up Kupon",
       "markCouponUsed": "Mark Kupon used",
+      "executeJavascript": "Udfør JavaScript",
       "chooseChannel": "Vælg kanal",
       "clearCustomField": "Ryd brugerdefineret felt",
       "condition": "Betingelse",
@@ -2044,7 +2129,6 @@
       "getResponseAddContact": "Tilføj Kontakt til GetResponse",
       "sendGridAddContact": "Tilføj Kontakt til SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Åbn Websted",
       "optInEmail": "Opt I E-mail",
       "optOutEmail": "Opt Out E-mail",
@@ -2062,6 +2146,7 @@
       "sendFile": "Send Fil",
       "sendGif": "Send Gif",
       "sendImage": "Send Billede",
+      "sendMultipleImages": "Flere billeder",
       "sendMessage": "Send besked",
       "sendNode": "Start Another Node",
       "sendText": "Send Tekst",
@@ -2099,7 +2184,14 @@
       "splitTraffic": "Split Traffic",
       "aiEditImage": "AI Rediger Billede",
       "whatsappFlow": "WhatsApp Flow",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "Aftaleplanlægning",
+      "triggerN8n": "Trigger n8n",
+      "sendMetaCapiEvent": "Send Meta CAPI Event",
+      "import": "Importer flow",
+      "export": "Eksporter",
+      "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
+      "importJsonOnly": "Kun JSON-filer",
+      "adsConversions": "Annoncer og Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2136,6 +2228,10 @@
       "addSlide": "Tilføj kort",
       "removeSlide": "Fjern kort",
       "whatsappLinkButtonIgnored": "På WhatsApp virker dette korts link ikke: et kort med en linkknap kan ikke have andre knapper. Det sendes i stedet som et svar."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Fjern billede",
+      "selectImage": "Vælg billeder"
     },
     "additionalSteps": "Additional trin",
     "delayType": {
@@ -2203,7 +2299,11 @@
     },
     "setCustomField": {
       "temporalHint": "Leave it empty til gem den current dato/tid."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Når der er tilføjet knapper, sender TikTok kun de første 40 tegn af denne besked — resten bliver klippet væk."
+    },
+    "dataWasSaved": "Data blev gemt"
   },
   "folders": {
     "heading": {
@@ -2253,32 +2353,17 @@
   },
   "ads": {
     "title": "Annoncer",
-    "nav": {
-      "clickToWhatsappAds": "Click to WhatsApp Ads",
-      "clickToTiktokAds": "Click to TikTok Ads",
-      "connectAccounts": "Forbind konti",
-      "conversionEvents": "Konverteringshændelser",
-      "adsAnalytics": "Annonceanalyse",
-      "reporting": "Rapportering",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Kommer snart"
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp-annoncer",
+      "messenger": "Click-to-Messenger-annoncer",
+      "instagram": "Click-to-Instagram-annoncer"
     },
     "connectAccounts": {
-      "title": "Administrer alle dine annoncekonti",
-      "description": "Spor konverteringer og optimer dine click-to-WhatsApp-annoncekampagner.",
-      "learnMore": "Lær mere",
       "connectAdAccount": "Forbind annoncekonto",
       "adAccountName": "Annoncekontonavn",
-      "disconnect": "Afbryd",
-      "empty": "Ingen annoncekonto forbundet endnu.",
-      "adAccountsTitle": "Meta-annoncekonti",
-      "adAccountsDescription": "Forbind Facebook Ads for at indlæse de annoncekonti, der bruges til click-to-WhatsApp-kampagner.",
       "adAccountsReconnectBanner": "Din Meta-annoncekontos token er udløbet eller har mistet tilladelser. Forbind Facebook Ads igen for at bevare annonceapportering.",
       "adAccountsNotConnected": "Der er endnu ikke forbundet nogen Meta-annoncekonti.",
       "adAccountsEmpty": "Der blev ikke fundet nogen Meta-annoncekonti til denne Facebook Ads-forbindelse.",
-      "adAccountsNote": "Forbrug og retargeting-målgrupper kommer fra disse annoncekonti.",
-      "reconnectBanner": "Forbind din WhatsApp-konto igen for at aktivere afsendelse af konverteringshændelser til Meta.",
       "reconnect": "Forbind igen",
       "reconnectSuccess": "WhatsApp-kontoen er forbundet igen.",
       "selectAccountLabel": "WhatsApp-konto",
@@ -2288,22 +2373,9 @@
         "unverified": "Tilladelse ikke bekræftet"
       },
       "table": {
-        "name": "Navn",
-        "phoneNumber": "Telefonnummer",
-        "wabaId": "WABA-ID",
-        "permission": "Automatiske hændelser"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "WABA-ID"
       },
       "connectWhatsapp": {
-        "title": "Forbind først din WhatsApp-konto",
-        "description": "Click-to-WhatsApp-konverteringstracking kræver en forbundet WhatsApp-konto, før du kan tilknytte annoncekonti og oprette konverteringsdatasæt.",
-        "step1": "Forbind din WhatsApp Business-konto under Kanaler.",
-        "step2": "Kom tilbage hertil for at godkende Meta Ads og vælge din annoncekonto.",
-        "step3": "Vi opretter automatisk konverteringsdatasættet ved hjælp af din WhatsApp Business-konto.",
         "cta": "Forbind WhatsApp-konto"
       }
     },
@@ -2311,6 +2383,8 @@
       "title": "Konverteringshændelser",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Administrer annoncekonti",
@@ -2318,11 +2392,16 @@
       "selectAll": "Vælg alle",
       "whatsappAsset": "WhatsApp-aktiv",
       "selectWhatsappAsset": "Vælg WhatsApp-aktiv",
+      "selectIntegration": "Integration",
+      "selectIntegrationPlaceholder": "Vælg integration",
+      "noIntegrationsConnected": "Ingen tilsluttede integrationer for denne kanal endnu.",
+      "connectIntegration": "Tilslut en kanal",
       "templates": "Skabeloner",
       "selectTemplates": "Vælg skabeloner",
       "noTemplates": "Ingen godkendte skabeloner fundet.",
       "existingRules": "Eksisterende regler",
       "noRules": "Ingen konverteringsregler for dette WhatsApp-aktiv endnu.",
+      "noRulesGeneric": "Ingen konverteringsregler for denne integration endnu.",
       "toggleRule": "Aktivér eller deaktivér regel",
       "deleteRule": "Slet regel",
       "qualifyingTemplateMessageSent": "Kvalificerende skabelonbesked er sendt",
@@ -2362,24 +2441,26 @@
         "title": "Spor kvalificerede leads",
         "question": "På hvilket tidspunkt i samtalen vil du kvalificere en kontakt som lead?",
         "when": "Når",
-        "then": "Marker derefter CTWA-lead som"
+        "then": "Marker derefter CTWA-lead som",
+        "thenGeneric": "Marker derefter lead som"
       },
       "trackPurchases": {
         "title": "Spor køb",
         "question": "Hvilken skabelon bekræfter et køb?",
         "when": "Når",
         "then": "Så",
-        "noValueNote": "Et regelbaseret køb registrerer en Køb-konvertering uden en ordreværdi — det tæller med i køb, men tilføjer 0 til omsætningen. Ordreværdi registreres kun af Meta Automatiske hændelser."
+        "noValueNote": "Et regelbaseret køb registrerer en Køb-konvertering uden en ordreværdi — det tæller med i køb, men tilføjer 0 til omsætningen. Ordreværdi registreres kun af Meta Automatiske hændelser.",
+        "questionGeneric": "På hvilket tidspunkt i samtalen vil du registrere et køb?"
       }
     },
     "analytics": {
-      "title": "CTWA-analyse",
+      "title": "Annonceanalyse",
       "funnelOverview": "Trakteoverblik",
       "conversationsStarted": "Startede samtaler",
       "qualifiedLeads": "Kvalificerede leads",
       "purchases": "Køb",
       "adSpend": "Annonceforbrug",
-      "spendAccountLevelNote": "Forbrug rapporteres på Meta-annoncekontoniveau; når en WhatsApp-konto er valgt, skjules annoncer med kun forbrug og ingen trakteaktivitet for den konto.",
+      "spendAccountLevelNote": "Forbrug rapporteres på Meta-annoncekontoniveau; når en konto er valgt, skjules annoncer med kun forbrug og ingen trakteaktivitet for den konto.",
       "revenue": "Omsætning",
       "roas": "ROAS",
       "revenueCurrencyNote": "Omsætning antager en enkelt valuta (USD). Annoncekonti med blandet valuta aggregeres endnu ikke.",
@@ -2408,21 +2489,27 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
+        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne."
+      },
+      "channelFilter": {
+        "label": "Kanal",
+        "allAccounts": "Alle konti",
+        "allChannels": "Alle kanaler"
       },
       "retarget": "Retarget",
       "thoseWhoPurchased": "De, der har købt",
       "thoseWhoStartedConversation": "De, der har startet en samtale",
       "sendWhatsappBroadcast": "Send WhatsApp-broadcast",
+      "retargetOnChannel": "Retarget på {channel}",
       "from": "Fra",
       "to": "Til",
       "unattributed": "Ikke tilskrevet",
       "retargetDialog": {
-        "title": "Retarget CTWA-kontakter",
+        "title": "Retarget annoncekontakter",
         "createAudience": "Opret målgruppe",
         "useExistingAudience": "Brug eksisterende målgruppe",
         "audienceName": "Målgruppenavn",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Annoncer",
         "confirm": "Start synkronisering",
         "success": "Synkronisering af retarget-målgruppe er sat i kø.",
         "error": "Kunne ikke sætte synkronisering af retarget-målgruppe i kø."
@@ -2434,7 +2521,7 @@
         "failed": "Mislykkedes",
         "skippedNoScope": "Sprunget over (intet scope)",
         "skippedRegion": "Sprunget over (region)",
-        "noScopeWarning": "Nogle konverteringer blev ikke sendt, fordi denne WhatsApp-konto mangler tilladelsen til hændelser. Forbind den igen for at aktivere rapportering af Automatiske hændelser.",
+        "noScopeWarning": "Nogle konverteringer blev ikke sendt, fordi denne konto mangler tilladelsen til hændelser. Forbind den igen for at aktivere rapportering af Automatiske hændelser.",
         "reconnectCta": "Forbind konto igen",
         "empty": "Ingen konverteringshændelser i denne periode endnu."
       },
@@ -2447,7 +2534,8 @@
         "contactName": "Kontaktnavn",
         "phone": "Telefon",
         "adId": "Annonce-ID",
-        "occurredAt": "Fandt sted"
+        "occurredAt": "Fandt sted",
+        "channel": "Kanal"
       },
       "empty": "Ingen data endnu. Forbind en annoncekonto, og begynd at spore konverteringer."
     }
@@ -2738,6 +2826,11 @@
     "noWorkspaces": "Du don't have vilkårlig arbejdsområder yet.",
     "owner": "Owner"
   },
+  "notFound": {
+    "title": "Siden blev ikke fundet",
+    "description": "Den side, du leder efter, findes ikke eller er muligvis blevet flyttet.",
+    "backToHome": "Tilbage til forsiden"
+  },
   "editProfile": {
     "title": "Rediger profil"
   },
@@ -2840,6 +2933,7 @@
     "disconnectFeatureDescription": "Er du sikker du want til afbryd den {feature}?",
     "disconnectSuccess": "{feature} disconnected successfully",
     "reply": "Svar",
+    "privateReply": "Privat svar",
     "viewMessage": "Vis besked",
     "changeLikeState": "Change like state",
     "changeHideState": "Change hide state",
@@ -2857,6 +2951,8 @@
     "editMessagePlaceholder": "Rediger din besked...",
     "saveEdit": "Gem",
     "cancelEdit": "Annullér",
+    "replaceAttachment": "Udskift vedhæftning",
+    "addAttachment": "Tilføj vedhæftning",
     "failedToCopy": "Mislykkedes til kopiér",
     "failedToPreviewImage": "Mislykkedes til preview billede",
     "loadingData": "Indlæser data...",
@@ -2880,6 +2976,9 @@
     "duplicatedSuccess": "{feature} duplicated successfully",
     "duplicateConfirmation": "Denne vil opret a kopiér af din {feature}.",
     "deleteFeature": "Slet {feature}",
+    "resetFeature": "Nulstil {feature}",
+    "resetConfirmation": "Dette vil rydde værdierne for de valgte {feature}, så de bliver tomme.\nDenne handling kan ikke fortrydes.",
+    "resetSuccess": "{feature} nulstillet",
     "deleteConfirmation": "Er du absolutely sure?\nDenne action kan ikke være undone.\nDenne vil permanently slet din {feature} fra our servers.",
     "addFeature": "Tilføj {feature}",
     "signOutConfirmation": "Er du sikker du want til log out?",
@@ -2914,9 +3013,6 @@
     "enableSuccess": "{feature} aktiveret successfully",
     "userInactive": "Bruger har been inactive mere than 7 dage",
     "messagingWindowClosed": "Den besked kan ikke være send outside den allowed window",
-    "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
-    "warning": "Warning!",
-    "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt.",
     "humanAgentWindowExpired": "Messaging window udløbet. Den kontakt must besked første til reopen den samtale.",
     "restoreVersionSuccess": "Flow restored til selected version",
     "revertToPublishedSuccess": "Draft reverted til den published version",
@@ -2931,7 +3027,13 @@
     "deleteNodeError": "Could ikke slet den blokér. Prøv igen.",
     "redoHistoryCleared": "Gentag historik cleared",
     "historyDepth": "({count})",
-    "none": "Ingen"
+    "none": "Ingen",
+    "tiktokCardTitleTooLong": "TikTok vil forkorte denne besked: når der er tilføjet knapper, sendes kun de første 40 tegn. Forkort beskeden, eller fjern knapperne.",
+    "waTemplateMpmNoProducts": "Tilføj mindst ét produkt til denne multiprodukt-knap før udgivelse.",
+    "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
+    "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
+    "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
+    "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -2941,7 +3043,7 @@
     "reconnect": "Forbind igen",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
+      "generalSettings": "Generelt Indstillinger",
       "conversionsApi": "Ads Optimization"
     }
   },
@@ -2957,6 +3059,8 @@
     "toggleHelper": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen.",
     "toggleHelperMessenger": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen den Messenger page.",
     "toggleHelperWhatsapp": "Re-enabling kun works hvis Meta har buffered data (within 24 timer af onboarding). Otherwise afbryd og forbind igen den WhatsApp nummer.",
+    "aiReadsSyncedHistoryLabel": "AI læser synket historik",
+    "aiReadsSyncedHistoryHelper": "Når slået fra, ser AI kun nye beskeder.",
     "success": {
       "enabled": "Synkroniser started. Historical kontakter og beskeder vil appear shortly.",
       "disabled": "Synkroniser deaktiveret."
@@ -2990,10 +3094,12 @@
     "selectPage": {
       "noPagesTitle": "Ingen Facebook Pages found",
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during forbindelse. Forbind igen Messenger og grant alle requested tilladelser.",
+      "noConnectablePagesTitle": "Ingen sider tilgængelige til tilslutning",
+      "noConnectablePagesDescription": "Du er ikke administrator for denne side",
       "bmLookupFailedTitle": "Business Manager pages may være missing",
       "bmLookupFailedDescription": "Forbind igen Messenger og grant Business Manager access so pages managed through a Business Manager kan være listed.",
       "alreadyConnectedNote": "Denne page er allerede forbundet",
-      "notAdminNote": "Full administrator permission på den page er påkrævet til forbind",
+      "notAdminNote": "Du er ikke administrator for denne side",
       "tryAgain": "Try reconnecting"
     },
     "title": "Facebook Messenger",
@@ -3333,23 +3439,38 @@
       "params": {
         "couponCode": "Kupon Kode",
         "couponCodePlaceholder": "Indtast kupon kode",
-        "quickReplyPayload": "Quick Svar Payload",
-        "quickReplyPayloadPlaceholder": "Indtast payload (valgfri)",
         "flowToken": "Flow Token",
         "flowTokenPlaceholder": "Indtast flow token",
         "flowNotSynced": "Synkroniser WhatsApp-flows for at knytte indsendte felter.",
-        "catalogProductId": "Product ID",
-        "catalogProductIdPlaceholder": "Indtast product retailer ID",
+        "catalogProductId": "Katalogprodukt",
+        "catalogProductIdPlaceholder": "Søg efter produkter…",
         "carouselCard": "Card {index}",
         "limitedTimeOffer": "Offer Expiration Tid",
-        "limitedTimeOfferPlaceholder": "Indtast expiration tid i milliseconds",
-        "limitedTimeOfferHelp": "Unix timestamp i milliseconds når den offer expires",
+        "limitedTimeOfferPlaceholder": "Vælg udløbsdato og -tid",
+        "limitedTimeOfferHelp": "Udløbstidspunktet sendes præcis som valgt.",
         "location": "Placering",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Placering navn (valgfri)",
         "locationAddress": "Address (valgfri)",
-        "enterFormatUrl": "Indtast {format} URL"
+        "enterFormatUrl": "Indtast {format} URL",
+        "catalogUseDefault": "Brug kataloget standardminiature",
+        "catalogNotConnectedGuidance": "Tilslut et Meta-katalog for at vælge et produkt.",
+        "catalogSetupLink": "Gå til katalogindstillinger",
+        "catalogSelectedProductFallback": "Produkt: {retailerId}",
+        "limitedTimeOfferBadge": "Udløber {date}",
+        "limitedTimeOfferExpiredBadge": "Udløbet {date}",
+        "mpmSections": "Produkter",
+        "mpmSectionTitlePlaceholder": "Sektionstitel (valgfrit)",
+        "mpmAddSection": "Tilføj sektion",
+        "mpmRemoveSection": "Fjern sektion",
+        "mpmAddProduct": "Tilføj produkt",
+        "mpmRemoveProduct": "Fjern produkt",
+        "mpmNoProductsHelp": "Tilføj mindst ét produkt før udgivelse.",
+        "mpmSectionLimitReached": "Maks. 10 sektioner nået.",
+        "mpmProductLimitReached": "Maks. 30 produkter nået.",
+        "mpmProductsSummary": "{productCount} produkter i {sectionCount} sektioner",
+        "unsupportedButtonParam": "Denne knaptype understøttes endnu ikke."
       }
     },
     "sampleBodyCardContent": {
@@ -3375,7 +3496,8 @@
       "messageTemplates": "Besked Skabeloner",
       "profile": "Profil",
       "usefulLinks": "Useful Links",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Ads Optimization",
+      "settings": "Indstillinger"
     },
     "accountHealths": {
       "title": "Administrer din WhatsApp konto",
@@ -3505,11 +3627,17 @@
       "label": "Skabelon Overskrift"
     },
     "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
-    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen."
+    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatiske hændelser",
+        "description": "Send automatisk konverteringshændelser fra dette WhatsApp-nummer til Meta. Hvis tilladelsen mangler, skal du gentilslutte kontoen for at give den."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh tilladelser",
+    "reconnect": "Forbind igen",
     "duplicated": "Denne Zalo OA konto har allerede been forbundet til another arbejdsområde.",
     "tagSync": {
       "title": "Tag Synkroniser",
@@ -3543,8 +3671,69 @@
     "description": "Keyword links at start flows og capture ref payloads fra kanaler."
   },
   "qrCodes": {
-    "title": "QR Codes",
+    "title": "QR-koder",
     "description": "Opret QR codes at link til din chatbot flows."
+  },
+  "dynamicImages": {
+    "title": "Dynamiske billeder",
+    "description": "Generer personaliserede billeder pr. kontakt fra en baggrund og tekst-/billede-/QR-lag.",
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopiér og indsæt URL'en i dit flow, din udsendelse eller sekvens for at sende personaliserede billeder."
+    },
+    "editor": {
+      "addElement": "Tilføj element",
+      "addImage": "Tilføj billede",
+      "addText": "Tilføj tekst",
+      "addQrCode": "Tilføj QR-kode",
+      "template": "Skabelon",
+      "templateDialogTitle": "Vælg en skabelon",
+      "templateDialogDescription": "Valg af en skabelon udskifter alle nuværende lag.",
+      "layers": "Lag",
+      "noLayers": "Ingen lag endnu. Tilføj et element for at komme i gang.",
+      "deleteLayer": "Slet lag",
+      "layerNameImage": "Billede",
+      "layerNameText": "Tekst",
+      "layerNameQrCode": "QR-kode",
+      "editElement": "Rediger element",
+      "selectElementHint": "Vælg et element på canvasset for at redigere dets egenskaber.",
+      "width": "Bredde",
+      "height": "Højde",
+      "priority": "Prioritet",
+      "imageType": "Billedtype",
+      "imageTypeUrl": "Billed-URL",
+      "imageTypeAvatarUser": "Kontaktens profilbillede",
+      "imageTypeCustomField": "Brugerdefineret felt",
+      "imageUrl": "Billed-URL",
+      "uploadImage": "Upload billede",
+      "customField": "Brugerdefineret felt",
+      "imageStyle": "Billedstil",
+      "imageStyleSquare": "Kvadratisk",
+      "imageStyleCircle": "Cirkel",
+      "qrText": "QR-kodeindhold",
+      "qrSize": "Størrelse",
+      "qrColor": "Farve",
+      "qrLogo": "Logo",
+      "uploadLogo": "Upload logo",
+      "textContent": "Tekstindhold",
+      "fontSize": "Skriftstørrelse",
+      "fontFamily": "Skrifttype",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Justering",
+      "alignLeft": "Venstre",
+      "alignCenter": "Centreret",
+      "alignRight": "Højre",
+      "color": "Farve",
+      "bold": "Fed",
+      "italic": "Kursiv",
+      "uppercase": "Store bogstaver"
+    },
+    "preview": {
+      "error": "Kunne ikke indlæse det tilknyttede dynamiske billede. Det er muligvis blevet slettet."
+    }
   },
   "magicLinks": {
     "title": "Magic Links",
@@ -3615,7 +3804,8 @@
     "at": "På"
   },
   "errorLogs": {
-    "title": "Fejl Logfiler"
+    "title": "Fejl Logfiler",
+    "unknownContact": "Ukendt kontakt"
   },
   "developerAccessToken": {
     "title": "API Access Token",
@@ -3638,7 +3828,23 @@
     "exportTakingLongDescription": "Den eksportér er still processing. Du kan close denne dialog og check tilbage i a few minutter fra den eksportér historik."
   },
   "auditLogs": {
-    "title": "Audit Logfiler"
+    "title": "Audit Logfiler",
+    "columns": {
+      "user": "Bruger",
+      "action": "Handling",
+      "detail": "Detalje",
+      "ipAddress": "IP-adresse",
+      "date": "Dato"
+    },
+    "filters": {
+      "from": "Fra",
+      "to": "Til",
+      "user": "Bruger",
+      "userPlaceholder": "Bruger-id",
+      "keyword": "Nøgleord",
+      "keywordPlaceholder": "Handling eller detalje",
+      "allAdmins": "Alle administratorer"
+    }
   },
   "customFields": {
     "title": "Brugerdefineret Felter",
@@ -4133,12 +4339,86 @@
     "description": "Opret og administrer din e-handel butik."
   },
   "appointmentScheduling": {
-    "title": "Aftale Scheduling",
-    "description": "Opret og administrer din aftale scheduling."
+    "title": "Aftaleplanlægning",
+    "description": "Opret og administrer din aftaleplanlægning.",
+    "flowModes": {
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
+    },
+    "fields": {
+      "mode": "Tilstand",
+      "dateTimeFieldId": "Gem valgt dato til",
+      "dateTimeFieldIdSource": "Dato/tid-felt",
+      "startDateFieldId": "Startdatofelt",
+      "endDateFieldId": "Slutdatofelt",
+      "resultUsedByAI": "Brug resultat til AI",
+      "outputCustomFieldId": "Gem svar i et brugerdefineret felt",
+      "startDateFieldIdSelected": "Gem valgt startdato til",
+      "endDateFieldIdSelected": "Gem valgt slutdato til"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Vælg, hvordan dette flowtrin planlægger aftaler."
+    }
   },
   "templates": {
     "title": "Skabeloner",
-    "description": "Opret og administrer din skabeloner."
+    "description": "Opret og administrer dine skabeloner.",
+    "share": {
+      "label": "Del",
+      "enabled": "Delt",
+      "disabled": "Ikke delt",
+      "dialogTitle": "Del skabelon",
+      "dialogDescription": "Alle med dette link kan installere en kopi af denne skabelon i et arbejdsområde i din tenant.",
+      "enableLabel": "Aktivér dellink",
+      "linkLabel": "Dellink",
+      "description": "Alle med linket kan installere denne skabelon i deres eget arbejdsområde."
+    },
+    "installs": {
+      "title": "Installationer",
+      "resources": "Ressourcer",
+      "warnings": "Advarsler",
+      "completedAt": "Afsluttet",
+      "autoUpdate": "Automatisk opdatering"
+    },
+    "form": {
+      "contents": "Skabelonindhold",
+      "comingSoon": "Kommer snart",
+      "selectAll": "Vælg alle",
+      "selectedCount": "{count} valgt",
+      "details": "Detaljer",
+      "permissions": "Standardtilladelser",
+      "allowEdit": "Tillad redigering efter installation",
+      "allowDelete": "Tillad sletning efter installation",
+      "publisherName": "Udgivernavn",
+      "youtubeVideoId": "YouTube-video-id",
+      "youtubeVideoIdDescription": "Det 11-tegns id fra videoens URL, f.eks. \"dQw4w9WgXcQ\" i youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Testlink",
+      "imageUrl": "Forsidebillede",
+      "installBehavior": "Installationsadfærd",
+      "createInstallFolder": "Installer i en dedikeret mappe",
+      "createInstallFolderDescription": "Placer alle installerede ressourcer i én ny mappe opkaldt efter denne skabelon.",
+      "defaultAutoUpdate": "Markér installationer til opdatering som standard",
+      "defaultAutoUpdateDescription": "Nye installationer viser en besked om tilgængelig opdatering, hver gang du genudgiver denne skabelon."
+    },
+    "categories": {
+      "flows": "Flows",
+      "customFields": "Brugerdefinerede felter",
+      "tags": "Tags",
+      "products": "Produkter",
+      "productCategories": "Produktkategorier",
+      "aiFunctions": "AI-funktioner",
+      "aiAgents": "AI-agenter",
+      "calendars": "Aftalekalendere",
+      "webchats": "Webchats",
+      "keywords": "Nøgleord",
+      "entryPointLinks": "Entry Point Links",
+      "triggers": "Triggers",
+      "fbCommentAutomations": "Facebook-kommentarautomatiseringer",
+      "settings": "Indstillinger"
+    }
   },
   "qrCodeGenerator": {
     "title": "QR Kode Generator",
@@ -4253,6 +4533,19 @@
     "invalidDescription": "Denne link er ugyldig eller har udløbet.",
     "unavailableTitle": "Afmeld unavailable.",
     "unavailableDescription": "Denne arbejdsområde er ingen longer tilgængelig."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Dette link er ikke længere tilgængeligt.",
+    "invalidDescription": "Dette skabelon-dellink er ugyldigt, deaktiveret eller udløbet.",
+    "byPublisher": "Af {publisherName}",
+    "includes": "Denne skabelon indeholder",
+    "videoTitle": "Skabelonens forhåndsvisningsvideo",
+    "tryItOut": "Prøv den",
+    "signInToInstall": "Log ind for at installere",
+    "selectWorkspace": "Vælg et arbejdsområde",
+    "install": "Installer",
+    "installStarted": "Installation startet",
+    "noEligibleWorkspaces": "Du har ikke et arbejdsområde, der er egnet til at installere denne skabelon."
   },
   "extensionsMe": {
     "actions": {
@@ -4688,100 +4981,737 @@
       "iconSearchLink": "Browse Lucide icons →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Book aftale",
+    "badge": "Aftale",
+    "timezone": "Tidszone",
+    "empty": "Ingen ledige tidspunkter blev fundet.",
+    "noSelection": "Vælg et tidspunkt",
+    "actions": {
+      "book": "Book aftale",
+      "viewDetails": "Se detaljer"
+    },
+    "errors": {
+      "invalidTokenTitle": "Dette booking-link er ikke tilgængeligt.",
+      "invalidTokenDescription": "Linket kan være ugyldigt eller udløbet. Bed om et nyt booking-link.",
+      "staleSlot": "Dette tidspunkt er ikke længere ledigt. Vælg venligst et andet tidspunkt.",
+      "availabilityChanged": "Tilgængeligheden ændrede sig, mens du valgte tidspunkt. Vælg venligst igen.",
+      "submitFailed": "Vi kunne ikke gennemføre denne anmodning. Prøv venligst igen."
+    },
+    "success": {
+      "title": "Din aftale er booket.",
+      "description": "Aftaledetaljerne er klar."
+    },
+    "schedule": {
+      "metadataTitle": "Aftaledetaljer",
+      "defaultMessage": "Din aftale er blevet planlagt.",
+      "unknownInvitee": "Gæst",
+      "fields": {
+        "invitee": "Inviteret",
+        "time": "Tidspunkt",
+        "timezone": "Tidszone",
+        "location": "Placering"
+      },
+      "status": {
+        "scheduled": "Planlagt",
+        "cancelled": "Annulleret"
+      },
+      "locationTypes": {
+        "inPerson": "Personligt møde",
+        "phoneCall": "Telefonopkald",
+        "onlineMeeting": "Online møde"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Annuller aftale",
+      "title": "Annuller aftale",
+      "description": "Annuller {calendar} kl. {time}.",
+      "action": "Annuller aftale",
+      "cancelledTitle": "Aftale annulleret",
+      "cancelledDescription": "Denne aftale er blevet annulleret.",
+      "unavailableTitle": "Annullering ikke mulig",
+      "unavailableDescription": "Denne aftale er allerede annulleret, slettet eller ligger i fortiden."
+    },
+    "range": {
+      "metadataTitle": "Tjek tilgængelighed",
+      "empty": "Ikke valgt",
+      "successTitle": "Datointerval modtaget.",
+      "successDescription": "Vi tjekker tilgængelige aftaletidspunkter.",
+      "fields": {
+        "startDate": "Startdato",
+        "endDate": "Slutdato",
+        "startTime": "Starttidspunkt",
+        "endTime": "Sluttidspunkt"
+      },
+      "actions": {
+        "skip": "Spring over"
+      },
+      "errors": {
+        "invalidRange": "Slutdato skal være på eller efter startdato."
+      },
+      "timezoneHint": "Tidspunkter vises i {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Vælg dato",
+    "date": {
+      "title": "Vælg en dato"
+    },
+    "datetime": {
+      "title": "Vælg en dato og et klokkeslæt"
+    },
+    "noSelection": "Vælg en dato",
+    "actions": {
+      "submit": "Send"
+    },
+    "success": {
+      "title": "Data blev gemt",
+      "description": "Du kan lukke denne fane nu."
+    },
+    "errors": {
+      "invalidTokenTitle": "Dette link er ikke tilgængeligt.",
+      "invalidTokenDescription": "Linket kan være ugyldigt eller udløbet. Bed om et nyt link.",
+      "submitFailed": "Vi kunne ikke gennemføre denne anmodning. Prøv venligst igen."
+    },
+    "monthLabel": "Måned",
+    "yearLabel": "År"
+  },
+  "appointments": {
+    "title": "Aftaler",
+    "statuses": {
+      "scheduled": "Planlagt",
+      "cancelled": "Annulleret"
+    },
+    "messages": {
+      "empty": "Ingen aftaler endnu."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Aftaler",
+    "singular": "Aftale",
+    "unknownContact": "Ukendt kontakt",
+    "searchPlaceholder": "Søg efter navn...",
+    "tabs": {
+      "next": "Kommende",
+      "past": "Tidligere"
+    },
+    "fields": {
+      "name": "Navn",
+      "date": "Dato",
+      "status": "Status",
+      "calendar": "Kalender"
+    },
+    "statuses": {
+      "scheduled": "Planlagt",
+      "cancelled": "Annulleret"
+    },
+    "actions": {
+      "cancelAppointment": "Annuller aftale"
+    },
+    "dialogs": {
+      "cancelTitle": "Annuller aftale",
+      "cancelDescription": "Annuller denne aftale, og kør dens annulleringshandlinger.",
+      "deleteTitle": "Slet aftale",
+      "deleteDescription": "Slet denne aftale fra administrationslisten. Dette kører ikke annulleringsflowet."
+    },
+    "messages": {
+      "cancelled": "Aftale annulleret.",
+      "deleted": "Aftale slettet."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Aftalekalendere",
+    "singular": "Aftalekalender",
+    "addNew": "Tilføj ny",
+    "none": "Ingen",
+    "addReminder": "Tilføj påmindelse",
+    "reminderSummary": "Send påmindelse - {calendar} {timing}.",
+    "noExternalConnections": "Ingen eksterne kalenderforbindelser endnu",
+    "dialogDescriptions": {
+      "create": "Giv din aftalekalender et navn for at komme i gang.",
+      "rename": "Omdøb denne aftalekalender."
+    },
+    "tabs": {
+      "calendars": "Kalendere",
+      "appointments": "Aftaler",
+      "externalCalendars": "Eksterne kalendere"
+    },
+    "sections": {
+      "appointment": "Hvad er din aftale",
+      "availability": "Hvornår kan folk booke?",
+      "duration": "Hvor lang er din aftale?",
+      "location": "Hvor foregår aftalen?",
+      "notifications": "Notifikationer",
+      "restrictions": "Begrænsninger",
+      "externalCalendar": "Forbind Google Calendar"
+    },
+    "fields": {
+      "description": "Beskrivelse",
+      "timezone": "Tidszone",
+      "locationType": "Placeringstype",
+      "locationDetail": "Detalje",
+      "durationMinutes": "Aftalens varighed",
+      "bufferAfterMinutes": "Tilføj tid efter dine aftaler",
+      "scheduleWindowType": "Folk kan booke",
+      "rollingDays": "Rullende dage",
+      "minAdvanceDays": "Minimum antal dage i forvejen",
+      "startDate": "Startdato",
+      "endDate": "Slutdato",
+      "specificDate": "Dato",
+      "maxAppointmentsPerUser": "Maksimalt antal aftaler pr. bruger",
+      "maxAppointmentsUnlimited": "Ubegrænset",
+      "dailyLimitEnabled": "Daglig grænse",
+      "maxPerDay": "Maks. pr. dag",
+      "allowGroupMeeting": "Tillad gruppemøde",
+      "maxPerSlot": "Maks. pr. tidsrum",
+      "confirmationMessage": "Bekræftelsesbesked",
+      "confirmationFlowId": "Bekræftelsesflow",
+      "cancellationFlowId": "Annulleringsflow",
+      "externalConnectionId": "Ekstern kalender",
+      "reminders": "Påmindelser",
+      "reminderTimingValue": "Værdi",
+      "reminderTimingUnit": "Enhed"
+    },
+    "locationTypes": {
+      "inPerson": "Personligt møde",
+      "phoneCall": "Telefonopkald",
+      "onlineMeeting": "Online møde"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Inden for rullende dage i fremtiden",
+      "dateRange": "Inden for et datointerval",
+      "specificDay": "Én bestemt dag",
+      "anyFutureDate": "På en hvilken som helst fremtidig dato"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minutter før",
+      "hours": "Timer før",
+      "days": "Dage før"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minut før} other {# minutter før}}",
+      "hours": "{count, plural, one {en time før} other {# timer før}}",
+      "days": "{count, plural, one {en dag før} other {# dage før}}"
+    },
+    "weekdays": {
+      "0": "Søndag",
+      "1": "Mandag",
+      "2": "Tirsdag",
+      "3": "Onsdag",
+      "4": "Torsdag",
+      "5": "Fredag",
+      "6": "Lørdag"
+    },
+    "weekdayEditor": {
+      "description": "Angiv de tilgængelige tidsintervaller for denne dag.",
+      "unavailable": "Ikke tilgængelig",
+      "overlapWarning": "Nogle intervaller overlapper. Overlappende tid tælles ikke to gange.",
+      "addInterval": "Tilføj interval",
+      "startTime": "Starttidspunkt",
+      "endTime": "Sluttidspunkt"
+    },
+    "tooltips": {
+      "timezone": "Den tidszone, du opretter denne kalender i. Folk vil se tilgængelighed baseret på deres egen tidszone.",
+      "confirmationFlow": "Flowet, der sendes, når brugeren booker en aftale.",
+      "cancellationFlow": "Flowet, der sendes, når en aftale annulleres.",
+      "reminders": "Send påmindelser for at minde den inviterede om aftalen.",
+      "appointmentDuration": "Angiv, hvor lang din aftale skal være.",
+      "bufferAfterMinutes": "Giv dig selv lidt buffertid til at afslutte efter bookede aftaler.",
+      "peopleCanSchedule": "Angiv en periode med datoer, hvor du kan acceptere møder.",
+      "maxAppointmentsPerUser": "Det maksimale antal fremtidige aftaler, en bruger må booke.",
+      "rollingDays": "Tillad booking op til hvor mange dage ud i fremtiden",
+      "minAdvanceDays": "Kræv, at bookinger foretages mindst så mange dage i forvejen. Brug 0 for at tillade booking samme dag.",
+      "dailyLimit": "Det maksimale antal personer, der må booke pr. dag.",
+      "allowGroupMeeting": "Tillad flere personer at booke det samme tidsrum.",
+      "externalCalendar": "Forbind Google Calendar for at synkronisere dine aftaler."
+    },
+    "minutesLabel": "{count} minutter"
+  },
+  "externalCalendars": {
+    "title": "Eksterne kalendere",
+    "connectGoogle": "Forbind Google",
+    "emptyEmail": "Ingen e-mail",
+    "fields": {
+      "provider": "Udbyder",
+      "email": "E-mail",
+      "calendarId": "Kalender-ID",
+      "connected": "Forbundet",
+      "date": "Dato"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Rediger kalender-ID",
+      "editDescription": "Vælg det Google Calendar-ID, der skal tjekkes for konflikter, og som skal bruges til at oprette aftalebegivenheder.",
+      "deleteTitle": "Afbryd kalender",
+      "deleteDescription": "Afbryd denne Google Calendar fra aftaleplanlægning."
+    },
+    "messages": {
+      "connected": "Google Calendar forbundet.",
+      "connectFailed": "Kunne ikke forbinde Google Calendar. Tjek Google OAuth-indstillingerne og Calendar API-adgangen, og prøv igen.",
+      "calendarIdUpdated": "Kalender-ID opdateret.",
+      "disconnected": "Kalender afbrudt."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Booking",
+    "comingSoonTitle": "Bookingside kommer snart",
+    "comingSoonDescription": "Denne offentlige bookingside er ikke tilgængelig endnu."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Send LeadSubmitted-hændelser fra Messenger-, Instagram- og WhatsApp-samtaler til Meta.",
+    "datasetId": "Dataset-ID",
+    "reconnect": "Genopret tilladelser",
+    "connectViaFacebook": "Forbind via Facebook",
+    "unsupportedExplanation": "Denne Instagram-konto blev forbundet med Instagram Business Login. Forbind kontoen via Facebook for at bruge Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Sæt en LeadSubmitted-hændelse i kø til Messenger, Instagram eller WhatsApp.",
+      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Klar",
+      "missingPermission": "Tilladelse påkrævet",
+      "unverified": "Ikke bekræftet",
+      "unsupported": "Ikke understøttet",
+      "notConnected": "Ikke forbundet"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Denne integration har den nødvendige Meta-tilladelse til Conversions API-hændelser.",
+      "missingPermission": "Genopret forbindelsen til denne integration, og giv den ønskede Meta-tilladelse.",
+      "unverified": "Platformens appindstillinger er ikke tilgængelige, så CAPI-tilladelsen kan ikke bekræftes.",
+      "unsupported": "Meta Conversions API til Instagram kræver en konto forbundet via Facebook Login for Business.",
+      "notConnected": "Conversions API er et Meta Business Tool, der gør det muligt at dele data med Meta for at forbedre annoncernes performance."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Kunne ikke starte Meta CAPI-genoprettelse.",
+      "messengerNotFound": "Messenger-integration ikke fundet.",
+      "instagramNotFound": "Instagram-integration ikke fundet.",
+      "instagramRequiresFacebook": "Instagram CAPI kræver forbindelse via Facebook.",
+      "saveFailed": "Kunne ikke gemme. Prøv venligst igen.",
+      "datasetRequired": "Gem et Dataset-ID, før du tilføjer en adgangstoken.",
+      "invalidToken": "Denne token kunne ikke tilgå datasættet.",
+      "invalidDatasetId": "Indtast et gyldigt Dataset ID (kun tal).",
+      "whatsappNotFound": "WhatsApp-integration ikke fundet."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "label": "Hændelsestype",
+        "leadSubmitted": "Lead indsendt"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Værdi",
+      "valuePlaceholder": "f.eks. 250",
+      "currency": "Valuta",
+      "currencyPlaceholder": "f.eks. USD",
+      "contentCategory": "Indholdskategori",
+      "contentCategoryPlaceholder": "Kategorien for det indhold, der er knyttet til hændelsen",
+      "contentName": "Indholdsnavn",
+      "contentNamePlaceholder": "Navnet på siden eller produktet, der er knyttet til hændelsen",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Indsæt Dataset-ID fra Events Manager",
+    "saveDataset": "Gem",
+    "accessToken": "Adgangstoken (valgfrit)",
+    "accessTokenHint": "Indsæt en token fra Events Manager for at sende hændelser med din egen token i stedet for den forbundne sidetoken. Kræver et Dataset-ID.",
+    "accessTokenPlaceholder": "Events Manager-adgangstoken",
+    "saveToken": "Gem token",
+    "tokenSaved": "Token gemt",
+    "removeToken": "Fjern",
+    "saved": "Gemt",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Hændelser kan tage op til 40 minutter om at fremgå i Events Manager og vises som Meta Leads i Ads Manager."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Forbundet",
+    "disconnect": "Afbryd",
+    "openEventManager": "Åbn Event Manager",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
+        "title": "Forbind via Facebook",
+        "description": "Brug din sides eksisterende forbindelse, og vælg derefter et Dataset-ID.",
+        "connect": "Opret datasæt",
         "connectedLabel": "via Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Brugerdefineret forbindelse",
+        "description": "Brug et Dataset-ID og en adgangstoken fra Meta Events Manager.",
+        "start": "Opsæt brugerdefineret forbindelse",
+        "connect": "Forbind",
+        "connectedLabel": "Brugerdefineret"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
+        "title": "Forbind via WhatsApp",
+        "description": "Brug din WhatsApp-forbindelse, og vælg derefter et Dataset-ID.",
+        "connect": "Opret datasæt",
         "connectedLabel": "via WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Vælg et Dataset-ID",
+      "description": "Indtast et eksisterende Dataset-ID, eller lad det stå tomt for automatisk at oprette et.",
       "save": "Gem",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "createDataset": "Opret datasæt",
+      "caveat": "Et Dataset-ID, der ikke er knyttet til denne side eller Instagram-konto, tilskriver muligvis ikke hændelser korrekt. Lad dette felt stå tomt for automatisk at oprette et tilknyttet datasæt."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Forbind"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
+  },
+  "minigames": {
+    "title": "Gamification",
+    "description": "Opret og administrer lykkehjul-minispil til dine kunder.",
+    "types": {
+      "luckyWheel": "Lykkehjul",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Lodtrækning",
+      "scratchOff": "Skrabelod"
+    },
+    "createDialog": {
+      "title": "Vælg en minispiltype",
+      "comingSoon": "Kommer snart"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Sum af alle sandsynligheder: {value}%",
+      "loseProbability": "Sandsynlighed for tab: {value}%",
+      "winProbability": "Sandsynlighed for gevinst: {value}%",
+      "newPrize": "Ny gevinst",
+      "prizeNameCustomFieldLabel": "Gem præmienavn i Brugerdefineret Felt"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Rediger gevinst",
+      "nonWinningTitle": "Rediger ikke-vindende indstilling",
+      "prizeNameLabel": "Gevinstnavn",
+      "nonWinningTitleLabel": "Titel",
+      "loseImageDescription": "Anbefalet størrelse 120x120px",
+      "quantityLabel": "Præmieantal",
+      "quantityDescription": "Antal gange denne præmie stadig kan vindes; falder med 1 for hver gevinst. Lad stå tomt for ubegrænset."
+    },
+    "outcomeMessage": {
+      "enableWin": "Send besked til vinderen, der modtog præmien",
+      "enableLose": "Send en besked, når spilleren ikke vinder",
+      "mode": "Beskedtype",
+      "modeText": "Tekst",
+      "modeFlow": "Flow",
+      "text": "Besked"
+    },
+    "winningMessageDialog": {
+      "title": "Indstillinger for gevinstbesked",
+      "titleLabel": "Titel",
+      "prizeNameHint": "Du kan bruge '{{prize_name}}' i titlen og beskrivelsen for at indsætte præmienavnet.",
+      "acceptButtonText": "Tekst på accepter-knap",
+      "shareButtonText": "Tekst på del-knap",
+      "shareButtonDescription": "Beskrivelse af del-knap"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Indstillinger for ikke-vindende besked",
+      "titleLabel": "Titel",
+      "shareButtonText": "Tekst på del-knap",
+      "shareButtonDescription": "Beskrivelse af del-knap"
+    },
+    "preview": {
+      "start": "Start",
+      "shareWithFriends": "Del med venner",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "luckyWheelHeader": "LYKKEHJUL",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Detaljeret forhåndsvisning kommer snart for denne spiltype"
+    },
+    "form": {
+      "generalSettingsTitle": "Generelle indstillinger",
+      "appearanceTitle": "Udseende",
+      "playerSettingsTitle": "Spillerindstillinger",
+      "prizeSettingsTitle": "Gevinstindstillinger"
+    },
+    "generalSettings": {
+      "showName": "Synlig",
+      "playedAt": "Spillet den",
+      "rulesDescription": "Regelbeskrivelse",
+      "openerTags": "Tag kontakter, der åbner spillinket",
+      "playerTags": "Tag spillere",
+      "newFriendTags": "Tag nye venner",
+      "shareEnabled": "Tillad deling med venner",
+      "shareMessage": "Delingsbesked",
+      "shareMessageHint": "Brug '{{shareUrl}}' til at indsætte det faktiske spillink — fjern det venligst ikke."
+    },
+    "appearance": {
+      "backgroundColor": "Baggrundsfarve",
+      "machineColor": "Maskinfarve",
+      "decorativeColor": "Dekorativ farve",
+      "ruleTextColor": "Farve på regeltekst",
+      "backgroundImage": "Baggrundsbillede",
+      "backgroundImageDescription": "Anbefalet bredde: 1024px",
+      "prizeDescriptionImage": "Billede til gevinstbeskrivelse (valgfrit)",
+      "prizeDescriptionImageDescription": "Anbefalet bredde: 750px",
+      "startButtonImage": "Billede til start-knap",
+      "startButtonImageDescription": "Anbefalet størrelse: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Antal lykketræk pr. person",
+      "resetPolicyLabel": "Nulstil antal træk",
+      "resetNever": "Nulstil ikke antallet af træk",
+      "resetEveryNDays": "Nulstil antallet af træk hver",
+      "resetIntervalDaysSuffix": "dag(e)"
+    },
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopier og indsæt URL'en i dit flow, din broadcast eller sekvens for at dele dette minispil."
+    },
+    "play": {
+      "close": "Luk",
+      "drawsRemaining": "{count} forsøg tilbage",
+      "noDrawsLeft": "Du har ikke flere forsøg til dette minispil.",
+      "notStartedYet": "Dette minispil er ikke startet endnu.",
+      "ended": "Dette minispil er afsluttet.",
+      "forbiddenTitle": "Adgang nægtet",
+      "forbiddenDescription": "Dette link er ugyldigt eller udløbet.",
+      "comingSoonTitle": "Kommer snart",
+      "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles."
+    },
+    "history": {
+      "title": "Historik",
+      "played": "Spil",
+      "remaining": "Resterende træk",
+      "openedAt": "Først åbnet",
+      "lastPlayedAt": "Senest spillet",
+      "unknownContact": "Ukendt kontakt",
+      "record": "Optegnelse",
+      "recordDialog": {
+        "title": "Spiloptegnelse",
+        "win": "Vandt",
+        "lose": "Ingen præmie",
+        "empty": "Ingen spiloptegnelser endnu"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Mediebibliotek",
+    "searchPlaceholder": "Søg efter filer...",
+    "newFolder": "Ny mappe",
+    "recent": "Seneste",
+    "favourite": "Favorit",
+    "upload": "Upload",
+    "select": "Vælg",
+    "bulkSelect": "Massevalg",
+    "deleteFolder": "Slet mappe",
+    "renameFolder": "Omdøb mappe",
+    "noFiles": "Ingen filer fundet",
+    "noFolders": "Ingen mapper endnu",
+    "folderNamePlaceholder": "Mappenavn",
+    "confirmDeleteFolder": "Slet mappe og alle dens filer?",
+    "confirmDeleteFolderDescription": "Alle filer i denne mappe slettes permanent fra serveren. Denne handling kan ikke fortrydes.",
+    "confirmDeleteFile": "Slet fil?",
+    "confirmDeleteFileDescription": "Denne fil slettes permanent fra serveren.",
+    "addToFavourites": "Føj til favoritter",
+    "removeFromFavourites": "Fjern fra favoritter",
+    "deleteFile": "Slet fil",
+    "selectOnlyOneFile": "Du kan kun vælge 1 fil",
+    "confirmDeleteFiles": "{count, plural, =1 {Slet 1 fil?} other {Slet # filer?}}",
+    "confirmDeleteFilesDescription": "Disse filer slettes permanent fra serveren. Denne handling kan ikke fortrydes.",
+    "filesCount": "{count, plural, =0 {Ingen filer} =1 {1 fil} other {# filer}}",
+    "openMediaLibrary": "Åbn mediebibliotek",
+    "uploadFailed": "Kunne ikke uploade {name}"
+  },
+  "adsCampaign": {
+    "title": "Annoncer",
+    "createCta": "Opret annonce",
+    "prereq": {
+      "notConnected": "Tilslut Facebook Ads for at oprette besked-annoncer til denne kanal.",
+      "connectCta": "Tilslut Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Ingen",
+      "housing": "Bolig",
+      "employment": "Beskæftigelse",
+      "credit": "Kredit",
+      "issues": "Sociale spørgsmål, valg eller politik",
+      "financialProducts": "Finansielle produkter og tjenester",
+      "onlineGambling": "Onlinespil og -hasardspil"
+    },
+    "fields": {
+      "objective": {
+        "label": "Mål",
+        "value": "Engagement (beskeder)"
+      },
+      "specialAdCategory": {
+        "label": "Særlig annoncekategori",
+        "description": "Hvis du vælger en begrænset kategori, fjernes alder, køn og anden målretning, som Meta ikke tillader for den kategori.",
+        "restrictedNote": "Målretning efter alder og køn er deaktiveret, fordi en begrænset særlig annoncekategori er valgt."
+      },
+      "adAccount": {
+        "label": "Annoncekonto"
+      },
+      "whatsappPage": {
+        "label": "Facebook-side",
+        "description": "WhatsApp-annoncer kræver stadig en tilknyttet Facebook-side — vælg den forbundne side, der skal bruges."
+      },
+      "dailyBudget": {
+        "label": "Dagligt budget",
+        "placeholder": "f.eks. 2000",
+        "description": "Angiv beløbet i din annoncekontos mindste valutaenhed (f.eks. cent for USD)."
+      },
+      "countries": {
+        "label": "Lande"
+      },
+      "ageRange": {
+        "min": "Minimumsalder",
+        "max": "Maksimumsalder"
+      },
+      "gender": {
+        "label": "Køn",
+        "male": "Mand",
+        "female": "Kvinde"
+      },
+      "schedule": {
+        "start": "Starttidspunkt",
+        "end": "Sluttidspunkt"
+      },
+      "destination": {
+        "label": "Destination"
+      },
+      "callToAction": {
+        "label": "Opfordring til handling",
+        "derivedNote": "Knappen til opfordring til handling ({type}) udledes automatisk fra kanalen."
+      },
+      "specialAdCategoryCountry": {
+        "label": "Land for annoncekategori",
+        "description": "Kræves af Meta for kategorien sociale emner, valg eller politik — det land, du er godkendt til at køre disse annoncer i."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Velkomstbesked",
+      "label": "Velkomstbesked",
+      "description": "Sendes automatisk, når nogen starter en samtale fra denne annonce.",
+      "mode": {
+        "default": "Brug Metas standardbesked",
+        "single": "Enkelt besked",
+        "templates": "Test op til 5 beskedvarianter"
+      },
+      "messageLabel": "Besked",
+      "templateLabel": "Variant {index}",
+      "headingPlaceholder": "Overskrift (valgfri)",
+      "addTemplate": "Tilføj variant",
+      "templatesLimit": "Op til {max} varianter kan testes."
+    },
+    "creative": {
+      "mediaRequired": "Upload et billede eller en video for at fortsætte.",
+      "mediaType": {
+        "label": "Kreativt medie",
+        "orVideo": "eller video",
+        "selectAdAccountFirst": "Vælg en annoncekonto, før du uploader medier.",
+        "uploadImage": "Upload billede",
+        "uploadVideo": "Upload video"
+      },
+      "uploading": "Uploader...",
+      "imageUploadFailed": "Billedupload mislykkedes. Prøv igen.",
+      "videoProcessing": "Behandler video...",
+      "videoReady": "Video klar",
+      "videoProcessingFailed": "Videobehandling mislykkedes. Prøv en anden fil.",
+      "previewAlt": "Forhåndsvisning af kreativ",
+      "primaryText": "Primær tekst",
+      "headline": "Overskrift"
+    },
+    "wizard": {
+      "createDraft": "Opret som pauseret kladde",
+      "campaignStep": {
+        "title": "Kampagne",
+        "namePlaceholder": "Navngiv denne annonce"
+      },
+      "adSetStep": {
+        "title": "Annoncesæt"
+      },
+      "creativeStep": {
+        "title": "Annoncekreativ"
+      },
+      "preflightStep": {
+        "title": "Gennemgang"
+      },
+      "errors": {
+        "nameRequired": "Angiv et navn til denne annonce.",
+        "adAccountRequired": "Vælg en annoncekonto.",
+        "budgetRequired": "Angiv et dagligt budget.",
+        "countryRequired": "Vælg mindst ét land.",
+        "mediaRequired": "Upload et billede eller en video."
+      }
+    },
+    "preflight": {
+      "title": "Oversigt",
+      "pausedNote": "Denne annonce oprettes som en pauseret kladde. Intet går live, og der bruges ingen penge, før du udgiver den."
+    },
+    "publishConfirm": {
+      "title": "Udgiv denne annonce?",
+      "description": "Udgivelse aktiverer kampagnen, annoncesættet og annoncen i rækkefølge. Meta begynder at bruge dit budget, når leveringen starter.",
+      "confirm": "Udgiv"
+    },
+    "list": {
+      "viewOnMeta": "Vis på Meta",
+      "empty": "Ingen besked-annoncer endnu.",
+      "createState": "Kladdestatus",
+      "actions": "Handlinger",
+      "notPublishedYet": "Endnu ikke udgivet",
+      "draftReady": "Kladde klar",
+      "createFailed": "Oprettelse mislykkedes",
+      "creating": "Opretter...",
+      "publish": "Udgiv",
+      "pause": "Sæt på pause"
+    },
+    "messages": {
+      "created": "Annoncekladde oprettet.",
+      "actionSucceeded": "Udført."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Opret og administrer Click-to-WhatsApp-annoncer her."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Opret og administrer Click-to-Messenger-annoncer her."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Opret og administrer Click-to-Instagram-annoncer her."
+      },
+      "connectCta": "Tilslut Facebook Ads",
+      "reconnectCta": "Tilslut igen",
+      "reconnectNeeded": "Denne forbindelse skal genoprettes.",
+      "refresh": "Opdater",
+      "whatsappPageRequiredNote": "Click-to-WhatsApp-annoncer kræver stadig en tilknyttet Facebook-side (et Meta-krav) — du vælger den, når du opretter en annonce.",
+      "emptyDashboardNote": "Annoncer, der oprettes her, vises nu automatisk på denne kanals annoncepanel — vælg denne integration i filteret der for at se dens konti og forbrug."
+    },
+    "insights": {
+      "title": "Ydeevne",
+      "empty": "Ingen data endnu",
+      "impressions": "Visninger",
+      "reach": "Rækkevidde",
+      "spend": "Forbrug",
+      "clicks": "Klik",
+      "conversations": "Samtaler",
+      "costPerConversation": "Pris/samtale",
+      "costPerConversationTooltip": "Gennemsnitlig pris pr. påbegyndt beskedsamtale.",
+      "datePresetLabel": "Periode:",
+      "datePreset": {
+        "maximum": "Hele perioden",
+        "last_30d": "Sidste 30 dage",
+        "last_7d": "Sidste 7 dage"
+      }
+    }
+  },
+  "accountFields": {
+    "title": "Bot Felter"
   }
 }

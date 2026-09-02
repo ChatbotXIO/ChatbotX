@@ -362,11 +362,17 @@ export class CoexistSyncRunRepository {
     })
   }
 
+  /**
+   * `aiReadsSyncedHistory` is optional and only written when provided —
+   * `undefined` leaves `coexistAiReadsSyncedHistory` untouched (e.g. `disable`
+   * must never clear a previously-set value).
+   */
   setIntegrationCoexistEnabled(input: {
     channel: CoexistChannel
     workspaceId: string
     integrationId: string
     enabled: boolean
+    aiReadsSyncedHistory?: boolean
     tx?: DatabaseClient
   }): Promise<CoexistIntegrationRow | null> {
     const { tx = db } = input
@@ -376,6 +382,7 @@ export class CoexistSyncRunRepository {
       workspaceId: input.workspaceId,
       integrationId: input.integrationId,
       enabled: input.enabled,
+      aiReadsSyncedHistory: input.aiReadsSyncedHistory,
     })
   }
 }
@@ -388,6 +395,8 @@ type IntegrationAccessInput = {
 
 type IntegrationUpdateInput = IntegrationAccessInput & {
   enabled: boolean
+  /** Undefined = leave `coexistAiReadsSyncedHistory` untouched. */
+  aiReadsSyncedHistory?: boolean
 }
 
 const integrationLookups = {
@@ -435,10 +444,16 @@ const integrationUpdates = {
     workspaceId,
     integrationId,
     enabled,
+    aiReadsSyncedHistory,
   }: IntegrationUpdateInput): Promise<CoexistIntegrationRow | null> => {
     const [row] = await tx
       .update(integrationMessengerModel)
-      .set({ coexistEnabled: enabled })
+      .set({
+        coexistEnabled: enabled,
+        ...(aiReadsSyncedHistory === undefined
+          ? {}
+          : { coexistAiReadsSyncedHistory: aiReadsSyncedHistory }),
+      })
       .where(
         and(
           eq(integrationMessengerModel.id, integrationId),
@@ -453,10 +468,16 @@ const integrationUpdates = {
     workspaceId,
     integrationId,
     enabled,
+    aiReadsSyncedHistory,
   }: IntegrationUpdateInput): Promise<CoexistIntegrationRow | null> => {
     const [row] = await tx
       .update(integrationInstagramModel)
-      .set({ coexistEnabled: enabled })
+      .set({
+        coexistEnabled: enabled,
+        ...(aiReadsSyncedHistory === undefined
+          ? {}
+          : { coexistAiReadsSyncedHistory: aiReadsSyncedHistory }),
+      })
       .where(
         and(
           eq(integrationInstagramModel.id, integrationId),
@@ -471,10 +492,16 @@ const integrationUpdates = {
     workspaceId,
     integrationId,
     enabled,
+    aiReadsSyncedHistory,
   }: IntegrationUpdateInput): Promise<CoexistIntegrationRow | null> => {
     const [row] = await tx
       .update(integrationWhatsappModel)
-      .set({ coexistEnabled: enabled })
+      .set({
+        coexistEnabled: enabled,
+        ...(aiReadsSyncedHistory === undefined
+          ? {}
+          : { coexistAiReadsSyncedHistory: aiReadsSyncedHistory }),
+      })
       .where(
         and(
           eq(integrationWhatsappModel.id, integrationId),

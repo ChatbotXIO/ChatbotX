@@ -1,13 +1,15 @@
-# Facebook Comment Automation
+# Facebook & Instagram Comment Automation
 
-This document describes the Facebook/Messenger **comment automation** feature: how a
-comment on a Page post flows from the webhook to an automated reply, how each config
-option is matched and enforced, and the non-obvious pitfalls that have caused silent
-failures. It is the reference for anyone touching the comment-automation code.
+This document describes the **comment automation** feature: how a comment on a Facebook
+Page post or an Instagram post flows from the webhook to an automated reply, how each
+config option is matched and enforced, and the non-obvious pitfalls that have caused
+silent failures. It is the reference for anyone touching the comment-automation code.
 
-> Scope: **Facebook Pages via the Messenger integration.** Instagram comment automation
-> is not implemented — the builder always stores `type = "messenger"` (see
-> [Known gaps](#known-gaps--pitfalls)).
+> Scope: the three `CommentAutomationChannelType` values (`channel-type.ts`) —
+> `messenger` (Facebook Pages), `instagram` (Instagram Login) and `instagramFacebook`
+> (Instagram via Facebook Login). All three share one table, one worker loop and one set
+> of filters; the per-channel capability differences are listed under
+> [Known gaps](#known-gaps--pitfalls).
 
 ## Tables
 
@@ -22,8 +24,9 @@ Zod partials (option/reply/post/schedule shapes):
 ## End-to-end flow
 
 ```
-Facebook Page (comment added)
-  → webhook: integrations/messenger/src/handlers/webhook.ts   (field === "feed", verb === "add")
+Facebook Page / Instagram post (comment added)
+  → webhook: messenger (field === "feed", verb === "add")
+             instagram, instagram-facebook (field === "comments")
   → BullMQ "incomingComment" job
   → apps/worker/.../received-message.ts  receiveComment()      (save message, gate on active-hours)
   → BullMQ "processCommentAutomation" job (jobId = comment-auto-${commentId})
@@ -37,13 +40,14 @@ Key files:
 
 | Concern | File |
 |---|---|
-| Webhook parse + enqueue | [`integrations/messenger/src/handlers/webhook.ts`](../integrations/messenger/src/handlers/webhook.ts) |
-| Webhook value schema | [`integrations/messenger/src/schema.ts`](../integrations/messenger/src/schema.ts) (`messengerFeedCommentValueSchema`) |
+| Webhook parse + enqueue | [`integrations/messenger/src/handlers/webhook.ts`](../integrations/messenger/src/handlers/webhook.ts), [`integrations/instagram/src/handlers/webhook.ts`](../integrations/instagram/src/handlers/webhook.ts), [`integrations/instagram-facebook/src/handlers/webhook.ts`](../integrations/instagram-facebook/src/handlers/webhook.ts) |
+| Webhook value schema | [`integrations/messenger/src/schema.ts`](../integrations/messenger/src/schema.ts) (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schemas.ts` (`instagramCommentEventValueSchema`) |
 | Receive + enqueue automation | [`apps/worker/src/integration/handlers/received-message.ts`](../apps/worker/src/integration/handlers/received-message.ts) (`receiveComment`) |
 | Automation loop + filters + dispatch | [`apps/worker/src/integration/handlers/comment-automation/index.ts`](../apps/worker/src/integration/handlers/comment-automation/index.ts) |
+| Per-channel private DM dispatch | [`apps/worker/src/integration/handlers/comment-automation/private-reply.ts`](../apps/worker/src/integration/handlers/comment-automation/private-reply.ts) (`PRIVATE_REPLY_TEXT_SENDERS`) |
 | AI reply generation + delivery | [`apps/worker/src/integration/handlers/comment-automation/ai-reply.ts`](../apps/worker/src/integration/handlers/comment-automation/ai-reply.ts) |
 | DB queries (match/dedup/schedule) | [`packages/business/src/fb-comment-automation/service.ts`](../packages/business/src/fb-comment-automation/service.ts) |
-| Builder form + actions | [`apps/builder/src/features/fb-comments/`](../apps/builder/src/features/fb-comments/) |
+| Builder form + actions | [`apps/builder/src/features/fb-comments/`](../apps/builder/src/features/fb-comments/) (Facebook), [`apps/builder/src/features/ig-comments/`](../apps/builder/src/features/ig-comments/) (Instagram) |
 | Job types | [`packages/worker-config/src/queues/integration/index.ts`](../packages/worker-config/src/queues/integration/index.ts) |
 
 ## Facebook ID formats (critical)
@@ -64,6 +68,9 @@ silent failures:
   `{pageId}_{postId}`; **reels** store a bare video id; **manual entry** is whatever the
   user pastes. `matchPost` normalizes both sides on the trailing story id
   (`normalizePostId`) so all three match the webhook `post_id`.
+- **Instagram ids are not composite.** Its `comments` webhook carries a bare comment `id`
+  and a bare `media.id` (used as `postId`), and the `ig-comments` picker stores those same
+  bare media ids — `normalizePostId` is a no-op there.
 
 ## Config options — matching & enforcement
 
@@ -75,7 +82,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | Option / field | Meaning | Enforcement |
 |---|---|---|
 | `isActive` | Automation on/off | `findActiveAutomations` filters `isActive: true`. |
-| `type` | `messenger` \| `instagram` | `findActiveAutomations` filters `type === channelType`. Builder always writes `messenger`. |
+| `type` | `messenger` \| `instagram` \| `instagramFacebook` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
 | `post` (`all` / `postIds`) | Which posts | `matchPost` — `all` always true; `postIds` matches via normalized trailing id. |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId)` is true. |
@@ -102,8 +109,8 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | Type | `value` | Public reply behavior | Private reply behavior |
 |---|---|---|---|
 | `none` | — | no-op | no-op |
-| `text` | the text | Posts a public comment reply: message `type: "comment"` + `contentAttributes.replyToCommentId`, enqueued as `sendChannelMessage`. | `sendPrivateReply` (Messenger Send API DM). |
-| `flow` | flow id | Enqueues `sendFlow` with `flowId`. | Same. |
+| `text` | the text | Posts a public comment reply: message `type: "comment"` + `contentAttributes.replyToCommentId`, enqueued as `sendChannelMessage`. | `PRIVATE_REPLY_TEXT_SENDERS[channelType]` (`private-reply.ts`) → the channel's comment_id-anchored Send API DM. |
+| `flow` | flow id | Enqueues `sendFlow` with `flowId` and a `public` `commentAnchor`, so the flow's first step is posted as a comment reply. | Same job with a `private` anchor: the flow's **first** message is sent through the comment_id-anchored Send API (comment window, not the 24-hour messaging window); later messages take the normal window-gated path. |
 | `AIAgent` | **AI agent id** | Enqueues a delayed `commentAIReply` job → `processCommentAIReply` generates text with the **selected** agent (`generateAIReplyText`, tools/rich off) and posts it as a **public comment reply**. | Same job, `replyChannel: "private"` → generated text sent as a **DM**. |
 
 The `AIAgent` path deliberately does **not** reuse the DM auto-responder pipeline
@@ -118,9 +125,15 @@ send), and the comment handler owns the channel routing.
   comment when `ignoreCommentReplies` is on.)
 - **Post-id formats differ by picker tab.** Always compare via `normalizePostId`. Reels
   may still need verification that the stored `video_id` equals the webhook `story_id`.
-- **Instagram is not wired.** `type` is never set by the builder → always `messenger`.
-  Do not assume IG automations run. IG private-DM text replies are also out of scope
-  (no `private_replies` API).
+- **Capabilities differ per channel.** Private DM replies work on all three channels
+  (`PRIVATE_REPLY_TEXT_SENDERS`), but comment liking exists only on `messenger` and
+  `instagramFacebook` — Instagram Login has no like API, so its `likeComment` handler
+  is a logged no-op — and the attachment lookup behind `hideComments.hasImage` /
+  `hasVideo` is implemented only for `messenger` (`comment-attachment.ts`
+  short-circuits every other channel to "no attachment"). The `ig-comments` form gates
+  each toggle separately: the like switch renders only for `instagramFacebook`, while
+  `hasImage`/`hasVideo` are hidden for both Instagram variants. Keep that pattern —
+  hide an unsupported toggle rather than rendering a dead one.
 - **`options.trackUserTags` is defined but not implemented** — the toggle has no effect.
 - **`getPriorContactInboxCount` counts `ContactInbox` rows**, so a contact who DM'd via
   another inbox is treated as "not new."
@@ -134,7 +147,9 @@ send), and the comment handler owns the channel routing.
 [`apps/worker/__tests__/comment-automation.test.ts`](../apps/worker/__tests__/comment-automation.test.ts)
 covers: `isCommentReply`, reply filtering, `matchPost` normalization, the
 `replyToUsersWhoCommentedOnOtherPosts` gate, AIAgent enqueue (public/private), the
-`processCommentAIReply` delivery paths, and hide-keyword case-insensitivity. Run:
+`processCommentAIReply` delivery paths, per-channel private-reply routing (messenger /
+instagram / instagramFacebook) and flow-reply comment anchors, and hide-keyword
+case-insensitivity. Run:
 
 ```bash
 pnpm --filter worker vitest run __tests__/comment-automation.test.ts

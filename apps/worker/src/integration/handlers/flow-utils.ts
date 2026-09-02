@@ -44,6 +44,7 @@ export type ExecuteMultipleStepsProps = {
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
   commentAnchor?: CommentAnchor
+  appointmentId?: string
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
@@ -60,6 +61,7 @@ export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
 export const MESSAGE_PRODUCING_STEP_TYPES = new Set<StepType>([
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
+  stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendGif,
   stepTypes.enum.sendFile,
   stepTypes.enum.sendVideo,
@@ -116,6 +118,7 @@ export async function sendFlow(
         flowId: flowVersion.flowId,
         nodeId: connectedNodeId,
         metadata: props.metadata,
+        appointmentId: props.appointmentId,
         sendFrom: props.sendFrom,
         nodeVisits: props.nodeVisits,
         commentAnchor: props.commentAnchor,

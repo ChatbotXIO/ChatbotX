@@ -103,12 +103,21 @@ export const whatsappWebhookEventSchema = z.object({
   from: z.string(), // user phone number
   message: z.object().transform((data) => data as unknown as ServerMessage),
   name: z.string().optional(), // user name
+  // Full original webhook payload (whatsapp-api-js@6.2.1's `PostData`),
+  // carried through the job queue so `receiveMessage` can zod-safeParse
+  // BSUID/username fields not yet modeled by the library's typed shapes.
+  raw: z.unknown().optional(),
 })
 export type WhatsappWebhookEvent = z.infer<typeof whatsappWebhookEventSchema>
 
 export const whatsappStatusWebhookEventSchema = z.object({
   phoneID: z.string(),
   phone: z.string(),
+  // Business-Scoped User ID (BSUID) a delivery/read status targets when the
+  // message was sent via `recipient` instead of `to` (`phone`/`recipient_id`
+  // is empty in that case). Extracted from the raw payload at the webhook
+  // layer — see `lib/raw-identity.ts`.
+  recipientUserId: z.string().optional(),
   messageId: z.string(),
   status: z.string(),
   error: z

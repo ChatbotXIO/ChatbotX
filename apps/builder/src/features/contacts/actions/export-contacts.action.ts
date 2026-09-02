@@ -1,5 +1,6 @@
 "use server"
 
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import {
@@ -15,14 +16,14 @@ import { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { resolveContactPermissionScope } from "../permissions"
 import {
   type ExportContactsRequest,
   type ExportContactsResponse,
   exportContactsRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const exportContactsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -78,33 +79,26 @@ export const exportContactsAction = workspaceActionClient
         status: fileStatuses.enum.pending,
       })
 
-      await Promise.all([
-        defaultQueue.add(DefaultJobAction.exportContacts, {
-          type: DefaultJobAction.exportContacts,
-          data: {
-            workspaceId,
-            requestedUserId: user.id,
-            fileId,
-            fields,
-            canExportEmailAndPhone,
-            outputPath,
-            outputFormat: "csv",
-            ...(scope.restrictToAssignedUserId
-              ? { restrictToAssignedUserId: scope.restrictToAssignedUserId }
-              : {}),
-            ...(filter ? { filter } : { contactIds: contactIds ?? [] }),
-          },
-        }),
-        defaultQueue.add(DefaultJobAction.sendAuditLog, {
-          type: DefaultJobAction.sendAuditLog,
-          data: {
-            userId: user.id,
-            workspaceId,
-            action: "export",
-            detail: "Contacts",
-          },
-        }),
-      ])
+      const actor = getAuditActor()
+
+      await defaultQueue.add(DefaultJobAction.exportContacts, {
+        type: DefaultJobAction.exportContacts,
+        data: {
+          workspaceId,
+          requestedUserId: user.id,
+          fileId,
+          fields,
+          canExportEmailAndPhone,
+          outputPath,
+          outputFormat: "csv",
+          ipAddress: actor?.ipAddress,
+          userAgent: actor?.userAgent,
+          ...(scope.restrictToAssignedUserId
+            ? { restrictToAssignedUserId: scope.restrictToAssignedUserId }
+            : {}),
+          ...(filter ? { filter } : { contactIds: contactIds ?? [] }),
+        },
+      })
 
       return { fileId }
     },

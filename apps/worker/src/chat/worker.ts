@@ -12,8 +12,10 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
+import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
+import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
@@ -72,52 +74,67 @@ async function startChatWorker() {
         return
       }
 
-      switch (job.data.type) {
-        case ChatJobAction.sendChannelMessage:
-          await sendMessageToChannel(job.data.data, job.attemptsMade)
-          return
-        case ChatJobAction.sendFlowMessage:
-          await sendFlowStep(job.data.data)
-          return
-        case ChatJobAction.sendChatMessage:
-          await sendChatMessage(job.data.data)
-          return
-        case ChatJobAction.sendWhatsappTemplateMessage:
-          await sendWhatsappTemplateMessage(job.data.data)
-          return
-        case ChatJobAction.sendMessengerTemplateMessage:
-          await sendMessengerTemplateMessage(job.data.data)
-          return
-        case ChatJobAction.sendTyping:
-          await sendTypingToChannel(job.data.data)
-          return
-        case ChatJobAction.deleteChannelMessage:
-          await deleteMessageFromChannel(job.data.data)
-          return
-        case ChatJobAction.editChannelMessage:
-          await editMessageFromChannel(job.data.data)
-          return
-        case ChatJobAction.changeChannelMessageState:
-          await changeMessageStateOnChannel(job.data.data)
-          return
-        case ChatJobAction.notifyExportResult:
-          logger.warn(
-            { jobId: job.id },
-            "notifyExportResult job received but no handler is implemented",
-          )
-          return
-        case ChatJobAction.broadcastEvent:
-          await broadcastToWorkspaceParty(
-            job.data.data.workspaceId,
-            job.data.data.event as RealtimeEventData,
-          )
-          return
-        case ChatJobAction.checkOutboundAutomatedResponse:
-          await checkOutboundAutomatedResponse(job.data.data)
-          return
-        default:
-          throw new SdkException("ChatJobAction action is not defined")
-      }
+      await runJobWithAuditContext(
+        { workspaceId, source: `chat:${job.data.type}` },
+        async () => {
+          switch (job.data.type) {
+            case ChatJobAction.sendChannelMessage:
+              await sendMessageToChannel(
+                job.data.data,
+                job.attemptsMade,
+                !isFinalAttempt(job),
+              )
+              return
+            case ChatJobAction.sendFlowMessage:
+              await sendFlowStep(job.data.data)
+              return
+            case ChatJobAction.sendChatMessage:
+              await sendChatMessage(job.data.data, !isFinalAttempt(job))
+              return
+            case ChatJobAction.sendWhatsappTemplateMessage:
+              await sendWhatsappTemplateMessage(
+                job.data.data,
+                !isFinalAttempt(job),
+              )
+              return
+            case ChatJobAction.sendMessengerTemplateMessage:
+              await sendMessengerTemplateMessage(
+                job.data.data,
+                !isFinalAttempt(job),
+              )
+              return
+            case ChatJobAction.sendTyping:
+              await sendTypingToChannel(job.data.data)
+              return
+            case ChatJobAction.deleteChannelMessage:
+              await deleteMessageFromChannel(job.data.data)
+              return
+            case ChatJobAction.editChannelMessage:
+              await editMessageFromChannel(job.data.data)
+              return
+            case ChatJobAction.changeChannelMessageState:
+              await changeMessageStateOnChannel(job.data.data)
+              return
+            case ChatJobAction.notifyExportResult:
+              logger.warn(
+                { jobId: job.id },
+                "notifyExportResult job received but no handler is implemented",
+              )
+              return
+            case ChatJobAction.broadcastEvent:
+              await broadcastToWorkspaceParty(
+                job.data.data.workspaceId,
+                job.data.data.event as RealtimeEventData,
+              )
+              return
+            case ChatJobAction.checkOutboundAutomatedResponse:
+              await checkOutboundAutomatedResponse(job.data.data)
+              return
+            default:
+              throw new SdkException("ChatJobAction action is not defined")
+          }
+        },
+      )
     },
     {
       connection: getRedisConnection(),

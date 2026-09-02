@@ -5,8 +5,8 @@ import { generateAdsAuthUrl } from "@chatbotx.io/integration-facebook-ads"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 
 export async function buildFacebookAdsAuthRedirect({
   workspace,
@@ -31,7 +31,10 @@ export async function buildFacebookAdsAuthRedirect({
   // Ads token-storage dispatch in the callback handler; `referer` is the
   // page the user returns to on completion or cancel. Mirrors
   // `generateMessengerRedirectUri` in integration-messenger/libs/oauth.ts.
-  const redirectUrl = buildBrokerCallbackUrl("/integrations/messenger/callback")
+  const redirectUrl = await buildProviderCallbackUrl(
+    messengerCredential,
+    "/integrations/messenger/callback",
+  )
   const baseUrl = await getOriginUrlFromHeader()
   const referer = new URL(refererPath, baseUrl).toString()
 

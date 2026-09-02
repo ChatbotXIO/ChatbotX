@@ -9,6 +9,10 @@ describe("getRedisConnection during next build", () => {
     vi.resetModules()
     vi.stubEnv("SKIP_ENV_CHECK", "true")
     vi.stubEnv("REDIS_URL", DEAD_REDIS_URL)
+    // isNoRedisEnv() also treats VITEST=true as a no-dial env; stub it away
+    // per-case so the "outside the build phase" case still exercises the
+    // eager path this suite is named for.
+    vi.stubEnv("VITEST", "")
   })
 
   afterEach(() => {

@@ -40,19 +40,19 @@ import {
 import {
   createContactRequest,
   updateContactFieldRequest,
-} from "../schemas/action"
+} from "../schema/action"
 import {
   listPublicContactCustomFieldsResponse,
   publicContactCustomFieldResource,
-} from "../schemas/contact-custom-field"
-import { importContactsRequest } from "../schemas/contact-import"
+} from "../schema/contact-custom-field"
+import { importContactsRequest } from "../schema/contact-import"
 import {
   contactResponse,
   listContactsRequest,
   listContactsResponse,
   publicListContactsByCustomFieldRequest,
   publicListContactsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export const workspaceTokenAuthAPIs = {
   listContactsWorkspaceTokenAPI: workspaceTokenAuthAPI

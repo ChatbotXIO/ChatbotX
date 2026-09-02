@@ -26,6 +26,7 @@ export function PageElementBuilder({ type, parentName }: BuilderProps) {
     case pageElementTypes.enum.heading:
       return (
         <TiptapEditorField
+          includeBotFieldVariables
           name={`${parentName}.text`}
           placeholder={t("fields.heading.placeholder")}
         />
@@ -33,6 +34,7 @@ export function PageElementBuilder({ type, parentName }: BuilderProps) {
     case pageElementTypes.enum.text:
       return (
         <TiptapEditorField
+          includeBotFieldVariables
           name={`${parentName}.text`}
           placeholder={t("fields.text.placeholder")}
         />
@@ -54,6 +56,7 @@ export function PageElementBuilder({ type, parentName }: BuilderProps) {
     case pageElementTypes.enum.code:
       return (
         <TiptapEditorField
+          includeBotFieldVariables
           name={`${parentName}.text`}
           placeholder={t("fields.code.placeholder")}
         />

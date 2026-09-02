@@ -93,6 +93,7 @@ describe("sendFlowMessage", () => {
         contactInboxId: "ci-1",
         flowId: "flow-1",
         flowVersionId: "fv-1",
+        executedFlowVersionId: "fv-1",
         step: {
           id: "step-1",
           stepType: "sendText",
@@ -102,6 +103,8 @@ describe("sendFlowMessage", () => {
         metadata: { source: "test" },
         quickReplies: [{ id: "qr-1", label: "Yes" }],
         sendFrom: "inbox",
+        commentAnchor: undefined,
+        appointmentId: undefined,
       },
     })
   })

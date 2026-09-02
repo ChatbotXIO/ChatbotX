@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const loadServableWorkspace = vi.fn()
 const assertCurrentUserCanAccessChatbot = vi.fn()
+const assertWorkspaceSuperAdmin = vi.fn()
 const getPresignedUpload = vi.fn()
 const insertValues = vi.fn()
 
@@ -24,7 +25,14 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   fileContextTypes: { enum: { generic: "generic", import: "import" } },
   fileStatuses: { enum: { pending: "pending" } },
   importTypes: { options: ["contact"] },
-  uploadTypes: { options: ["import", "generic"] },
+  uploadTypes: {
+    enum: {
+      import: "import",
+      generic: "generic",
+      adsCampaignCreative: "adsCampaignCreative",
+    },
+    options: ["import", "generic", "adsCampaignCreative"],
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({ fileModel: {} }))
@@ -35,10 +43,14 @@ vi.mock("@chatbotx.io/filesystem", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({ createId: () => "file-1" }))
 
-vi.mock("@/features/import/schemas/presign", () => ({
+vi.mock("@/features/import/schema/presign", () => ({
   presignImportUploadRequest: {
     parse: (value: unknown) => value,
   },
+}))
+
+vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({
+  assertWorkspaceSuperAdmin,
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -96,6 +108,7 @@ describe("POST /api/presigned-upload", () => {
     })
     getPresignedUpload.mockResolvedValue("https://upload.example.com/signed")
     insertValues.mockResolvedValue(undefined)
+    assertWorkspaceSuperAdmin.mockResolvedValue(undefined)
   })
 
   test("mints a presigned url for a servable workspace", async () => {
@@ -133,5 +146,55 @@ describe("POST /api/presigned-upload", () => {
 
     expect(response.status).toBe(403)
     expect(getPresignedUpload).not.toHaveBeenCalled()
+  })
+
+  describe("adsCampaignCreative uploads — super-admin gated", () => {
+    const adsCreativeBody = {
+      ...validBody,
+      type: "adsCampaignCreative",
+      subType: "adsCampaignCreative",
+      path: "public/space/1/ads-campaign/creatives/abc123",
+    }
+
+    test("mints a presigned url when the caller is a workspace super-admin", async () => {
+      const response = await POST(asNextRequest(adsCreativeBody))
+
+      expect(assertWorkspaceSuperAdmin).toHaveBeenCalledWith("1")
+      expect(response.status).toBe(200)
+    })
+
+    test("rejects a workspace member who is not a super-admin", async () => {
+      assertWorkspaceSuperAdmin.mockRejectedValue(
+        new Error("Super admin permission required."),
+      )
+
+      await expect(POST(asNextRequest(adsCreativeBody))).rejects.toThrow(
+        "Super admin permission required.",
+      )
+      expect(getPresignedUpload).not.toHaveBeenCalled()
+    })
+
+    test("does not gate a plain generic upload on super-admin", async () => {
+      await POST(asNextRequest(validBody))
+
+      expect(assertWorkspaceSuperAdmin).not.toHaveBeenCalled()
+    })
+
+    test("gates on subType too — type:generic + subType:adsCampaignCreative still requires super-admin (authz-bypass guard)", async () => {
+      assertWorkspaceSuperAdmin.mockRejectedValue(
+        new Error("Super admin permission required."),
+      )
+
+      await expect(
+        POST(
+          asNextRequest({
+            ...validBody,
+            type: "generic",
+            subType: "adsCampaignCreative",
+          }),
+        ),
+      ).rejects.toThrow("Super admin permission required.")
+      expect(getPresignedUpload).not.toHaveBeenCalled()
+    })
   })
 })

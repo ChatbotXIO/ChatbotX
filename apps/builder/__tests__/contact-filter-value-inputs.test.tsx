@@ -221,6 +221,13 @@ const configs = {
     formField: formFieldTypes.enum.text,
     group: "topicCoupon",
   },
+  customBoolean: {
+    name: "customField:cf-1",
+    customFieldId: "cf-1",
+    customFieldType: "boolean",
+    formField: formFieldTypes.enum.boolean,
+    group: "customFields",
+  },
 } as const satisfies Record<string, FieldConfig>
 
 let container: HTMLDivElement
@@ -312,13 +319,68 @@ describe("ContactFilterConditionDialog value inputs", () => {
     expect(container.querySelector('[data-testid="input-value"]')).toBeNull()
   })
 
+  // Custom/bot boolean fields mirror the Set Custom Field step: free text
+  // input (picker opens on click) instead of the static-field select.
+  test("renders a free text input for a custom boolean field", () => {
+    renderDialog({ config: configs.customBoolean, value: "true" })
+
+    expect(
+      container.querySelector('[data-testid="input-value"]'),
+    ).not.toBeNull()
+    expect(container.querySelector('[data-testid="select-value"]')).toBeNull()
+  })
+
+  test("canonicalizes a typed boolean literal to true/false on submit", async () => {
+    const { onSubmit } = renderDialog({
+      config: configs.customBoolean,
+      value: "Yes",
+    })
+
+    act(() => {
+      container
+        .querySelector("form")
+        ?.dispatchEvent(
+          new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+        )
+    })
+
+    await vi.waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ value: "true" }),
+      )
+    })
+  })
+
+  test("disables save for an unrecognized boolean value", () => {
+    const { onSubmit } = renderDialog({
+      config: configs.customBoolean,
+      value: "maybe",
+    })
+
+    expect(
+      (
+        container.querySelector(
+          'button[type="submit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
+    ).toBe(true)
+    act(() => {
+      container
+        .querySelector("form")
+        ?.dispatchEvent(
+          new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+        )
+    })
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
   test("keeps boolean and option fields on select controls", () => {
     renderDialog({ config: configs.boolean, value: "true" })
     expect(
       container.querySelector('[data-testid="select-value"]'),
     ).not.toBeNull()
-    expect(container.textContent).toContain("Yes")
-    expect(container.textContent).toContain("No")
+    expect(container.textContent).toContain("fields.boolean.true")
+    expect(container.textContent).toContain("fields.boolean.false")
 
     renderDialog({ config: configs.select, value: "female" })
     expect(

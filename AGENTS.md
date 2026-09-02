@@ -22,6 +22,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 | `apps/realtime`   | Realtime server; builder exposes `NEXT_PUBLIC_REALTIME_URL` (e.g. `http://localhost:1999`).                             |
 | `apps/cli`        | Command-line client (`chatbotx-cli`).                                                                                   |
 | `apps/mcp-server` | MCP server exposing public API surfaces.                                                                                |
+| `apps/javascript-executor` | Internal HTTP service that executes flow-step JavaScript in isolated-vm.                                      |
 | `packages/*`      | Shared libraries: `database` (Drizzle + PostgreSQL), `ui`, `public-apis`, `sdk`, `worker-config`, `ai`, etc.            |
 | `integrations/*`  | Channel and vendor integrations (WhatsApp, Messenger, Telegram, Zalo, TikTok, webchat, SMTP, OpenAI, Google Sheets, …). |
 
@@ -38,8 +39,11 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 ```bash
 pnpm dev              # turbo dev — all dev tasks the repo wires up
 pnpm build            # turbo build
-pnpm lint             # ultracite lint
+pnpm lint             # check:agent-instructions → turbo run lint → ultracite check
 pnpm fix              # ultracite fix --unsafe
+pnpm test             # turbo run test (vitest, --passWithNoTests per workspace)
+pnpm test:coverage    # turbo run test -- --coverage
+pnpm sync:agent-instructions   # regenerate the .devin/ + .github/ invariant mirrors
 pnpm check:circular   # madge circular deps
 pnpm check:unused     # knip
 ```
@@ -126,7 +130,7 @@ For automatic context injection on every prompt, add the hook to your **own** `.
 
 ## Project-specific AI guidance
 
-- **Rules (always apply):** `.agents/rules/` — `data-access.md` (no direct `db` in app layer), `git.md` (commit/PR/staging), `no-dynamic-import.md` (dynamic `import()` breaks the tsdown build — applies to `packages/*`, `integrations/*`, `apps/{worker,cli,mcp-server}`; allowed in `apps/builder`).
+- **Rules (always apply):** `.agents/rules/` — `data-access.md` (no direct `db` in app layer), `git.md` (commit/PR/staging), `no-dynamic-import.md` (dynamic `import()` breaks the tsdown build — applies to `packages/*`, `integrations/*`, `apps/{worker,cli,mcp-server,javascript-executor}`; allowed in `apps/builder`).
 - **Per-tool rule mirrors:** `.devin/rules/chatbotx.md` and the ChatbotX section in `.github/copilot-instructions.md` receive generated copies of the shared invariants below. **This file (`AGENTS.md`) is canonical**; run `pnpm sync:agent-instructions` after changing them.
 - **Agent skills (detailed runbooks):** `.agents/skills/` — notably `turborepo-workflow`, `feature-scaffold`, `orpc-api`, `drizzle-database`, `integration-channel`, `worker-development`, `contact-filter`, plus `security-review`, `testing-workflow`, `reliability-concurrency`.
 - **Specialist subagents:** `.claude/agents/` — `invariant-guard` (post-edit invariant check), `rag-eval` (retrieval/tenant scoping), `incident-responder` (prod triage). General reviewers/planners come from the `~/.claude/` global set.
@@ -166,7 +170,7 @@ These are the most common mistakes — read before writing any code:
 
 14. **Trial-expired workspaces are read/delete-only, not redirected.** The persistent banner explains the state; use `workspaceActionClientAllowExpired` for delete, disconnect, cancel, and other actions that must remain available after expiry. `Workspace.scheduledDeletionAt` is the soft-delete convention: the hourly `purgeWorkspaces` cron disconnects integrations first, then hard-deletes after the 24-hour grace window.
 
-15. **Workspace-scoped workers must use `withBlockedOwnerGuard`.** A blocked owner is a safe no-op with a bare `return`, so the job does not retry or dead-letter and webhook requests remain HTTP-200-safe. Excluded system/quota/tenancy jobs are `sendAuditLog`, `sendErrorLog`, and all schedule cron jobs except the two broadcast handlers. The trial+7d `unsubscribeExpiredTrials` teardown is one-shot via `UserQuota.channelsTornDownAt`.
+15. **Workspace-scoped workers must use `withBlockedOwnerGuard`.** A blocked owner is a safe no-op with a bare `return`, so the job does not retry or dead-letter and webhook requests remain HTTP-200-safe. Excluded system/quota/tenancy work is `sendAuditLog`, the `error-log:recorded` event-bus listener that records third-party failures, and all schedule cron jobs except the two broadcast handlers. The trial+7d `unsubscribeExpiredTrials` teardown is one-shot via `UserQuota.channelsTornDownAt`.
 
 16. **New flow node type cascade — grep for every registration surface.** Adding a value to `nodeTypeSchema` (`packages/flow-config/src/nodes/base.ts`) requires registering the new node schema in ALL node maps, and most fail SILENTLY (no compile error — the node doesn't render, or publish fails with a generic "flowConfigIncomplete" toast). Run `grep -rn "waitNodeSchema\|nodeTypeSchema.enum.wait" apps/ packages/` and mirror every hit: the `flowVersionSchema` union (`packages/flow-config/src/nodes/index.ts`), `allNodesConfig` (`nodes/node-config.tsx`), `allSteps` (`steps/index.tsx`), `viewerNodeTypes` (`react-flow-wrapper.tsx`), and `analyticsNodeTypes` (`node-types-config.ts`). Never hand-list node schemas in a new zod union — reuse `flowVersionSchema`/`publishFlowSchema` so client and server validation cannot drift.
 
@@ -185,7 +189,9 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Tech stack details: `docs/tech-stack.md`
 - Request flow diagrams: `docs/request-workflow.md`
 - White-label tenancy model: `docs/tenancy.md`
+- Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI): `docs/ads-conversion-tracking.md`
 - Facebook comment automation: `docs/fb-comment-automation.md` (skill: `.agents/skills/fb-comment-automation/`)
+- Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.

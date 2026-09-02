@@ -38,6 +38,10 @@ vi.mock("@chatbotx.io/auth/tenant", () => ({
   resolveTenantOwnerId: mockResolveTenantOwnerId,
 }))
 
+vi.mock("@/lib/auth/on-user-created", () => ({
+  onUserCreated: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     findDecryptedPlatform: mockFindDecryptedPlatform,
@@ -57,6 +61,7 @@ vi.mock("@/lib/auth/upgrade-facebook-account", () => ({
 vi.mock("@/env", () => ({
   isCommunity: vi.fn(() => true),
   isCloud: vi.fn(() => false),
+  env: { NEXT_PUBLIC_BUILDER_URL: "https://app.example.com" },
 }))
 
 const credential = (clientId: string) => ({

@@ -1,5 +1,6 @@
 import type { PassThrough } from "node:stream"
 import { workspaceService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { normalizeStoredTimezone } from "@chatbotx.io/business/contact-locale"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import {
@@ -16,12 +17,14 @@ import {
 } from "@chatbotx.io/database/schema"
 import { chunkById } from "@chatbotx.io/database/utils"
 import { createUpload } from "@chatbotx.io/filesystem/node-upload"
+import { SOURCE_USER_ID_EXPORT_HEADER } from "@chatbotx.io/imports/modules/contacts"
 import { formatCustomFieldValueInTimeZone } from "@chatbotx.io/utils/datetime"
 import {
   type JobExportContacts,
   loopableItemsCount,
 } from "@chatbotx.io/worker-config"
 import { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
+import { runJobWithAuditContext } from "../../lib/run-job-with-audit-context"
 
 type ExportData = JobExportContacts["data"]
 
@@ -35,6 +38,11 @@ const tagPrefix = "tag:"
 // the Contact row, so renderCell resolves it from the contactInboxes relation.
 const contactIdField = "contactId"
 
+// Virtual contact column backed by the first contactInboxes row that carries a
+// non-null sourceUserId (channel-agnostic today; only whatsapp populates it —
+// see `resolveSourceUserId`). Not a column on the Contact row.
+const sourceUserIdField = "sourceUserId"
+
 // Human-readable headers for built-in contact columns.
 const headerNames: Record<string, string> = {
   contactId: "Contact ID",
@@ -47,6 +55,7 @@ const headerNames: Record<string, string> = {
   source: "Source",
   lastReadAt: "Last Read At",
   blockedAt: "Blocked At",
+  sourceUserId: SOURCE_USER_ID_EXPORT_HEADER,
 }
 
 export type SelectedField =
@@ -63,7 +72,7 @@ type ContactRow = {
   [key: string]: unknown
   contactCustomFields?: (typeof contactCustomFieldModel.$inferSelect)[]
   tags?: { id: string }[]
-  contactInboxes?: { sourceId: string }[]
+  contactInboxes?: { sourceId: string; sourceUserId: string | null }[]
 }
 
 // ── CSV serialization ─────────────────────────────────────────────────────────
@@ -87,6 +96,18 @@ export const escapeCsvValue = (value: string): string => {
   return `"${guarded.replace(/"/g, '""')}"`
 }
 
+/** Renders an optional identity value as a CSV cell (empty cell when absent). */
+const renderIdentityCell = (value: string | undefined): string =>
+  value ? escapeCsvValue(value) : '""'
+
+// Resolves the export's WhatsApp User ID column: the first contactInboxes row
+// that actually carries a sourceUserId — not blindly the earliest inbox
+// connection, since a multi-inbox contact's earliest row may belong to a
+// different channel that never populates it.
+const resolveSourceUserId = (contact: ContactRow): string | undefined =>
+  contact.contactInboxes?.find((inbox) => inbox.sourceUserId)?.sourceUserId ??
+  undefined
+
 /** Renders one selected field of one contact into a CSV cell. */
 const renderCell = (
   contact: ContactRow,
@@ -97,8 +118,10 @@ const renderCell = (
     // The Contact Id column is not stored on the Contact row — it comes from the
     // contact's first (earliest) inbox connection's platform-native sourceId.
     if (field.value === contactIdField) {
-      const sourceId = contact.contactInboxes?.[0]?.sourceId
-      return sourceId ? escapeCsvValue(sourceId) : '""'
+      return renderIdentityCell(contact.contactInboxes?.[0]?.sourceId)
+    }
+    if (field.value === sourceUserIdField) {
+      return renderIdentityCell(resolveSourceUserId(contact))
     }
     const rawValue = contact[field.value]
     if (rawValue instanceof Date) {
@@ -340,17 +363,22 @@ const writeToStream = (stream: PassThrough, chunk: string): Promise<void> =>
 const fetchContactPage = (
   baseWhere: Record<string, unknown>,
   lastId: string | null,
+  options: { includeSourceUserId: boolean },
 ) =>
   db.query.contactModel.findMany({
     where: lastId ? { AND: [baseWhere, { id: { gt: lastId } }] } : baseWhere,
     with: {
       contactCustomFields: true,
       tags: true,
-      // Only the earliest inbox connection is needed for the Contact Id column.
+      // The Contact Id column only needs the earliest row's sourceId. The
+      // WhatsApp User ID column must scan every inbox connection for the row
+      // that actually carries a sourceUserId (see `resolveSourceUserId`), so
+      // the earliest-row limit is lifted ONLY when that column is selected —
+      // ordinary exports keep the single-row load.
       contactInboxes: {
-        columns: { sourceId: true },
+        columns: { sourceId: true, sourceUserId: true },
         orderBy: { id: "asc" },
-        limit: 1,
+        ...(options.includeSourceUserId ? {} : { limit: 1 }),
       },
     },
     limit: loopableItemsCount,
@@ -379,7 +407,19 @@ const MAX_EXPORT_ROWS = 500_000
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-export const loopableExportContacts = async (data: ExportData) => {
+export const loopableExportContacts = async (data: ExportData) =>
+  runJobWithAuditContext(
+    {
+      requestedUserId: data.requestedUserId,
+      workspaceId: data.workspaceId,
+      source: "default:exportContacts",
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+    },
+    () => loopableExportContactsInner(data),
+  )
+
+const loopableExportContactsInner = async (data: ExportData) => {
   const { workspaceId, fileId, fields, outputPath, outputFormat } = data
   const fileIds = { fileId, workspaceId }
 
@@ -410,27 +450,34 @@ export const loopableExportContacts = async (data: ExportData) => {
     await writeToStream(stream, headerLine)
     totalBytes += Buffer.byteLength(headerLine)
 
+    const includeSourceUserId = selectedFields.some(
+      (field) => field.type === "contact" && field.value === sourceUserIdField,
+    )
+
     let hitRowCap = false
-    await chunkById((lastId) => fetchContactPage(baseWhere, lastId), {
-      chunkSize: loopableItemsCount,
-      callback: async (page): Promise<boolean | undefined> => {
-        const chunk = buildCsvChunk(page, selectedFields, workspaceTimezone)
-        await writeToStream(stream, chunk)
-        totalBytes += Buffer.byteLength(chunk)
-        totalRecords += page.length
+    await chunkById(
+      (lastId) => fetchContactPage(baseWhere, lastId, { includeSourceUserId }),
+      {
+        chunkSize: loopableItemsCount,
+        callback: async (page): Promise<boolean | undefined> => {
+          const chunk = buildCsvChunk(page, selectedFields, workspaceTimezone)
+          await writeToStream(stream, chunk)
+          totalBytes += Buffer.byteLength(chunk)
+          totalRecords += page.length
 
-        // Persist progress after each chunk so the File row reflects how many
-        // records have been written so far.
-        await updateExportFile(fileIds, { meta: { totalRecords } })
+          // Persist progress after each chunk so the File row reflects how many
+          // records have been written so far.
+          await updateExportFile(fileIds, { meta: { totalRecords } })
 
-        if (totalRecords >= MAX_EXPORT_ROWS) {
-          hitRowCap = true
-          return false
-        }
+          if (totalRecords >= MAX_EXPORT_ROWS) {
+            hitRowCap = true
+            return false
+          }
 
-        return
+          return
+        },
       },
-    })
+    )
 
     if (hitRowCap) {
       stream.end()
@@ -457,6 +504,16 @@ export const loopableExportContacts = async (data: ExportData) => {
       fileSize: String(totalBytes),
       meta: { totalRecords },
     })
+
+    if (finalStatus === fileStatuses.enum.uploaded) {
+      await auditService.record({
+        action: "export",
+        detail: "exported contacts",
+        userId: data.requestedUserId,
+        workspaceId: data.workspaceId,
+        source: "default:exportContacts",
+      })
+    }
   } catch (error) {
     // Destroy the source stream and wait for the multipart upload to settle so
     // lib-storage aborts the partial upload (default leavePartsOnError=false)

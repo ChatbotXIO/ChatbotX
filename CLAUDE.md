@@ -20,6 +20,7 @@
 | New channel integration | `integration-channel` |
 | Contact filter field/operator, filter SQL, or contact-based audience | `contact-filter` |
 | Facebook/Messenger comment automation (auto-reply/like/hide on Page post comments) | `fb-comment-automation` |
+| Minigame tool (Jackpot CRUD, prize draw, public play link/token, extending to a new minigame type) | `minigame` |
 | New flow step with states (success/error/skip routing) | `flow-step-development` |
 | Dev/build/lint commands | `turborepo-workflow` |
 | Approved implementation plan | `implement-plan` |
@@ -56,4 +57,4 @@ Default to the cheapest tier that fits the task; reserve the top tier for judgme
 - Do not skip `pnpm lint` — the CI will fail.
 - Do not hardcode user-facing strings — use `useTranslations()`.
 - Do not import `db` directly in `apps/` or `integrations/` — all DB access must go through a service (`@chatbotx.io/business`) or repository (`@chatbotx.io/database/repositories`). See `.agents/rules/data-access.md`.
-- Do not use dynamic `import()` in tsdown-built code (`packages/*`, `integrations/*`, `apps/worker`, `apps/cli`, `apps/mcp-server`) — it breaks the tsdown build. In `apps/builder/src` dynamic imports and `next/dynamic` are allowed (and preferred for heavy client islands). See `.agents/rules/no-dynamic-import.md`.
+- Do not use dynamic `import()` in tsdown-built code (`packages/*`, `integrations/*`, `apps/worker`, `apps/cli`, `apps/mcp-server`, `apps/javascript-executor`) — it breaks the tsdown build. In `apps/builder/src` dynamic imports and `next/dynamic` are allowed (and preferred for heavy client islands). See `.agents/rules/no-dynamic-import.md`.

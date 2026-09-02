@@ -26,6 +26,14 @@ vi.mock("@/components/base-handle", () => ({
   ),
 }))
 
+vi.mock("@/features/dynamic-images/hooks/use-dynamic-image-preview", () => ({
+  useDynamicImagePreview: () => ({ url: undefined, hasError: false }),
+}))
+
+vi.mock("@/features/dynamic-images/components/preview-placeholder", () => ({
+  DynamicImagePreviewPlaceholder: () => null,
+}))
+
 const HORIZONTAL_MARGIN_CLASS = /\bm[slrxe]-\d/
 const FIRST_CARD_FRAME_OFFSET = "me-4"
 

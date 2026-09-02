@@ -51,6 +51,7 @@ export function buildInboxLink(
       refValue,
     },
     smtp: undefined,
+    api: undefined,
     omnichannel: undefined,
   }
   const config = allLinkConfigs[inbox.channel as ChannelType]
@@ -95,6 +96,7 @@ export function buildPostLink(channel: ChannelType, postId: string): string {
     tiktok: "",
     webchat: "",
     smtp: "",
+    api: "",
     omnichannel: "",
   }
 
@@ -114,6 +116,7 @@ export function buildMessageLink(
     tiktok: "",
     webchat: "",
     smtp: "",
+    api: "",
     omnichannel: "",
   }
 

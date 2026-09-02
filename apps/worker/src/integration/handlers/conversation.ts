@@ -1,5 +1,8 @@
 import { contactInboxService, conversationService } from "@chatbotx.io/business"
-import type { IntegrationType } from "@chatbotx.io/database/partials"
+import type {
+  ChannelType,
+  IntegrationType,
+} from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type {
@@ -40,6 +43,7 @@ export const contactMarkAsRead = async (
   const conversation = await conversationService.findDMByContact({
     workspaceId: inbox.workspaceId,
     contactId: contactInbox.contactId,
+    channel: contactInbox.channel as ChannelType,
   })
   if (!conversation) {
     logger.warn(

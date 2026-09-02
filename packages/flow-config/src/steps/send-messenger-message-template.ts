@@ -2,7 +2,11 @@ import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { baseStepSchema } from "./base"
 import type { ButtonStepProps } from "./button"
-import { buttonStepDefaultFn, buttonStepSchema } from "./button"
+import {
+  buttonStepDefaultFn,
+  buttonStepSchema,
+  mergeTemplateButtonsWithExisting,
+} from "./button"
 import { stepTypes } from "./step-action"
 import type { ParameterInfo } from "./wa-template-utils"
 
@@ -276,16 +280,5 @@ export function mergeMessengerFlowButtonsWithExisting(
   templateButtons: ButtonStepProps[],
   existingButtons: ButtonStepProps[] = [],
 ): ButtonStepProps[] {
-  return templateButtons.map((templateButton, index) => {
-    const existingButton = existingButtons[index]
-
-    if (!existingButton) {
-      return templateButton
-    }
-
-    return {
-      ...existingButton,
-      label: templateButton.label,
-    }
-  })
+  return mergeTemplateButtonsWithExisting(templateButtons, existingButtons)
 }

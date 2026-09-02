@@ -66,6 +66,12 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   return { ...actual, createId: vi.fn(() => "generated-id") }
 })
 
+const loggerError = vi.fn()
+
+vi.mock("../src/lib/logger", () => ({
+  logger: { error: loggerError },
+}))
+
 // ---------------------------------------------------------------------------
 // Import handler under test (after all vi.mock calls)
 // ---------------------------------------------------------------------------
@@ -77,6 +83,7 @@ type Step = {
   inputFieldId: string
   value: string
   timezone?: string
+  operation?: string
 }
 
 function props(step: Step, workspaceId = "ws-1", contactId = "c-1") {
@@ -110,7 +117,24 @@ describe("setContactCustomField", () => {
       sourceTimezoneOverride: "Asia/Ho_Chi_Minh",
       temporalInputParsing: "lenient",
       fillEmptyTemporalWithNow: true,
+      contactInboxId: "ci-1",
+      allowBotFields: true,
+      operation: undefined,
     })
+  })
+
+  test("forwards the step's operation so bot-field appends/increments route correctly", async () => {
+    await setContactCustomField(
+      props({ inputFieldId: "bot_field:9", value: "1", operation: "O04" }),
+    )
+
+    expect(setValueByKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keyword: "bot_field:9",
+        allowBotFields: true,
+        operation: "O04",
+      }),
+    )
   })
 
   test("forwards a blank value so the service stamps 'now'", async () => {
@@ -142,6 +166,24 @@ describe("setContactCustomField", () => {
     expect(setValueByKey).toHaveBeenCalledWith(
       expect.objectContaining({ keyword: "greeting", value: "Hello Jane" }),
     )
+  })
+
+  // A bad value (e.g. "13a1" into a number field) makes the service throw a
+  // typed exception. Steps run one-per-BullMQ-job, and a thrown error kills
+  // the job BEFORE the next step is enqueued — so the handler must log and
+  // swallow the failure, letting the remaining steps in the node keep running.
+  test("logs and swallows a service rejection instead of throwing", async () => {
+    setValueByKey.mockRejectedValueOnce(
+      new Error("Invalid number value for bot field"),
+    )
+
+    await expect(
+      setContactCustomField(
+        props({ inputFieldId: "bot_field:2", value: "13a1", operation: "O01" }),
+      ),
+    ).resolves.toBeUndefined()
+
+    expect(loggerError).toHaveBeenCalledTimes(1)
   })
 
   test("passes an undefined timezone through for legacy steps (no regression)", async () => {

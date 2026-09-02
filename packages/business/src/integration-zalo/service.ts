@@ -41,10 +41,21 @@ class ZaloIntegrationService extends BaseService {
     })
   }
 
-  async updateAuth(id: string, auth: Record<string, unknown>): Promise<void> {
+  findByInboxIdForWorkspace(props: { inboxId: string; workspaceId: string }) {
+    return findOrFail({
+      table: integrationZaloModel,
+      where: { inboxId: props.inboxId, workspaceId: props.workspaceId },
+    })
+  }
+
+  async updateAuth(
+    id: string,
+    auth: Record<string, unknown>,
+    name?: string,
+  ): Promise<void> {
     await db
       .update(integrationZaloModel)
-      .set({ auth, tokenRefreshError: null })
+      .set({ auth, tokenRefreshError: null, ...(name ? { name } : {}) })
       .where(eq(integrationZaloModel.id, id))
   }
 

@@ -14,6 +14,8 @@
   </a>
 </p>
 
+<h3 align="center"><strong><a href="https://app.chatbotx.io/?ref=github">NEW: get 90 Days Free on ChatbotX Cloud! 🚀</a></strong></h3>
+
 <p align="center">
   <strong>Agentic chat marketing platform built for OpenClaw, Hermes, and Claude</strong>
   <br>
@@ -28,8 +30,6 @@
   <a href="https://chatbotx.io/docs" rel="dofollow">Docs</a>
   |
   <a href="https://discord.chatbotx.io/">Discord</a>
-  |
-  <a href="https://www.g2.com/products/chatbotx/take_survey" target="_blank" rel="dofollow">View G2 Reviews</a>
 </p>
 
 <p align="center">
@@ -74,6 +74,12 @@
 </p>
 
 <p align="center">
+  <a href="https://chatbotx.io/docs/integrations/n8n">N8N custom node</a>
+  ·
+  <a href="https://chatbotx.io/docs/integrations/make">Make.com integration</a>
+</p>
+
+<p align="center">
   <a href="https://www.youtube.com/watch?v=b1NUlA-fIzw" target="_blank">
     <img alt="ChatbotX Omnichannel" src=".github/assets/readme/chatbotx-hero.png?v=1786238500653">
   </a>
@@ -94,7 +100,7 @@
 - **A/B Testing:** Test and optimize different message flows
 - **Triggers:** Execute actions based on events within your bot
 - **Webhooks & HTTP:** Integrate external APIs directly into your flows
-- **Growth Tools:** Create engaging minigames and interactive experiences
+- **Growth Tools:** Generate conversation starter links for each platform
 - **Analytics:** Track performance metrics, user engagement, and campaign results
 - **APIs, CLI, and MCP:** Build advanced agent workflows with MCP-compatible clients
 
@@ -132,6 +138,8 @@
 ## Quick Start
 
 To have the project up and running, please follow the [Quick Start Guide](https://chatbotx.io/docs/quickstart).
+
+**Self-hosting ChatbotX without developing on it?** Use **[chatbotx-docker-compose](https://github.com/ChatbotXIO/chatbotx-docker-compose)** — a standalone repo that runs the pre-built `ghcr.io` images with `docker compose up`, no local checkout of this monorepo required. The compose files in this repository (`docker-compose.yml`, `docker-compose.dev.yml`) provision local infrastructure only and expect the apps to run from source via `pnpm dev`.
 
 ## Project Structure
 
@@ -218,9 +226,3 @@ We're also working hard to bring open-source mobile apps to **iOS and Android** 
 ## License
 
 ChatbotX' Community Edition is released as open source under the [MIT License](https://github.com/ChatbotXIO/ChatbotX/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/ChatbotXIO/ChatbotX/blob/main/apps/builder/src/enterprise/LICENSE)
-
-<br /><br /><br />
-
-<p align="center">
-  <a href="https://www.g2.com/products/chatbotx/take_survey" target="_blank" rel="dofollow"><img alt="g2" src="https://github.com/user-attachments/assets/892cb74c-0b49-4589-b2f5-fbdbf7a98f66" /></a>
-</p>

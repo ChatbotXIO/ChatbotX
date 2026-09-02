@@ -37,11 +37,82 @@ vi.mock("../src/integration/handlers/messenger-context", () => ({
 
 const update = vi.fn(async () => undefined)
 const findById = vi.fn(async () => state.currentContact)
+const deleteObject = vi.fn(async () => undefined)
+
+// `applyContactProfile` and `buildContactProfileUpdate` are the shared
+// helpers this handler now delegates to (see
+// packages/business/src/contact/profile-refresh) — unit-tested exhaustively
+// there. Here they are reproduced against this file's own `update`/
+// `findById`/`deleteObject` mocks so the assertions below (which target
+// those mocks directly) keep verifying the same observable behaviour.
+const EXTERNAL_URL_PATTERN = /^https?:\/\//
+function isManagedAvatarObject(avatar: string): boolean {
+  return !EXTERNAL_URL_PATTERN.test(avatar) && avatar.includes("/avatars/")
+}
+
+const PROFILE_FIELDS = [
+  "firstName",
+  "lastName",
+  "avatar",
+  "locale",
+  "timezone",
+  "gender",
+] as const
+
+const buildContactProfileUpdate = vi.fn((profile: Profile) => {
+  const update: Profile = {}
+  for (const field of PROFILE_FIELDS) {
+    if (profile[field] !== undefined) {
+      update[field] = profile[field]
+    }
+  }
+  return update
+})
+
+const loggerWarn = vi.fn()
+
+const applyContactProfile = vi.fn(
+  async (input: {
+    workspaceId: string
+    contactId: string
+    update: Profile
+  }) => {
+    const previousAvatar =
+      input.update.avatar === undefined
+        ? undefined
+        : (
+            await findById({
+              workspaceId: input.workspaceId,
+              id: input.contactId,
+            })
+          )?.avatar
+
+    const updated = await update(
+      { workspaceId: input.workspaceId, id: input.contactId },
+      input.update,
+    )
+
+    if (
+      previousAvatar &&
+      previousAvatar !== input.update.avatar &&
+      isManagedAvatarObject(previousAvatar)
+    ) {
+      try {
+        await deleteObject(previousAvatar)
+      } catch (error) {
+        loggerWarn(error)
+      }
+    }
+
+    return updated
+  },
+)
+
 vi.mock("@chatbotx.io/business", () => ({
-  contactService: { update, findById },
+  applyContactProfile,
+  buildContactProfileUpdate,
 }))
 
-const deleteObject = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/filesystem", () => ({
   uploader: { deleteObject },
 }))

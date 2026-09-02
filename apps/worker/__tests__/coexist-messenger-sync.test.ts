@@ -19,6 +19,7 @@ const {
   mockUpdate,
   mockQueueAdd,
   mockConcurrencyForUsage,
+  mockApplyCoexistActivityUpdates,
 } = vi.hoisted(() => ({
   mockFindFirstMessenger: vi.fn(),
   mockFindFirstWorkspace: vi.fn(),
@@ -34,6 +35,7 @@ const {
   mockUpdate: vi.fn(),
   mockQueueAdd: vi.fn(),
   mockConcurrencyForUsage: vi.fn(() => 5),
+  mockApplyCoexistActivityUpdates: vi.fn().mockResolvedValue(undefined),
 }))
 
 // ---------------------------------------------------------------------------
@@ -126,7 +128,21 @@ vi.mock("../src/integration/handlers/coexist/bulk-historical-import", () => ({
   bulkImportMessages: mockBulkImportMessages,
   bulkImportContacts: mockBulkImportContacts,
   createHistoricalIdFactory: mockCreateIdFactory,
-  applyCoexistActivityUpdates: vi.fn().mockResolvedValue(undefined),
+  applyCoexistActivityUpdates: mockApplyCoexistActivityUpdates,
+  // Real pure implementation (mirrors bulk-historical-import.ts) — the
+  // messenger-sync source under test imports this as a named export from
+  // this module to fold per-page `newestMessageId`s into a per-conversation
+  // `aiMarkerMessageId`, so it must behave exactly like production, not be
+  // a bare vi.fn().
+  maxNumericId: (a: string | null, b: string | null): string | null => {
+    if (a === null) {
+      return b
+    }
+    if (b === null) {
+      return a
+    }
+    return BigInt(a) < BigInt(b) ? b : a
+  },
 }))
 
 // Break the pino import chain that comes through @chatbotx.io/business →
@@ -155,6 +171,7 @@ const fakeIntegration = {
   workspaceId,
   pageId: PAGE_ID,
   coexistEnabled: true,
+  coexistAiReadsSyncedHistory: false,
   inboxId: "inbox-messenger-1",
   auth: {
     tokens: { accessToken: "access-token-abc" },
@@ -211,6 +228,10 @@ const emptyBulkMessagesResult = () => ({
   importedMessages: 0,
   skippedMessages: 0,
   insertedAttachmentIds: [],
+  newestMessageAt: null as Date | null,
+  oldestMessageAt: null as Date | null,
+  newestIncomingMessageAt: null as Date | null,
+  newestMessageId: null as string | null,
 })
 
 const emptyBulkContactsResult = () => ({
@@ -420,6 +441,77 @@ describe("coexistMessengerSync", () => {
     expect(bulkArgs.contactInboxId).toBe("ci-1")
     expect(bulkArgs.messages).toHaveLength(1)
     expect(bulkArgs.messages[0]?.sourceId).toBe("msg-xyz")
+  })
+
+  it("advances the AI marker by default (coexistAiReadsSyncedHistory off), carrying the newest message id", async () => {
+    mockFindFirstMessenger.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+
+    mockListConversations.mockResolvedValueOnce({
+      data: [makeConversation("conv-abc", "user-999")],
+      after: undefined,
+    })
+    mockListMessages.mockResolvedValueOnce({
+      data: [makeMessage("msg-xyz", "user-999")],
+      after: undefined,
+    })
+    mockBulkImportMessages.mockResolvedValueOnce({
+      importedMessages: 1,
+      skippedMessages: 0,
+      insertedAttachmentIds: [],
+      newestMessageAt: new Date(RECENT_TS),
+      oldestMessageAt: new Date(RECENT_TS),
+      newestIncomingMessageAt: new Date(RECENT_TS),
+      newestMessageId: "100000000000001",
+    })
+
+    await coexistMessengerSync({ runId, integrationId, workspaceId })
+
+    expect(mockApplyCoexistActivityUpdates).toHaveBeenCalledWith(
+      expect.any(Array),
+      { workspaceId: "ws-messenger-1" },
+    )
+    const [updates] = mockApplyCoexistActivityUpdates.mock.calls[0] as [
+      Array<{ aiMarkerMessageId: string | null }>,
+    ]
+    expect(updates[0]?.aiMarkerMessageId).toBe("100000000000001")
+  })
+
+  it("passes a null aiMarkerMessageId when coexistAiReadsSyncedHistory is on (AI reads synced history)", async () => {
+    mockFindFirstMessenger.mockResolvedValue({
+      ...fakeIntegration,
+      coexistAiReadsSyncedHistory: true,
+    })
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+
+    mockListConversations.mockResolvedValueOnce({
+      data: [makeConversation("conv-abc", "user-999")],
+      after: undefined,
+    })
+    mockListMessages.mockResolvedValueOnce({
+      data: [makeMessage("msg-xyz", "user-999")],
+      after: undefined,
+    })
+    mockBulkImportMessages.mockResolvedValueOnce({
+      importedMessages: 1,
+      skippedMessages: 0,
+      insertedAttachmentIds: [],
+      newestMessageAt: new Date(RECENT_TS),
+      oldestMessageAt: new Date(RECENT_TS),
+      newestIncomingMessageAt: new Date(RECENT_TS),
+      newestMessageId: "100000000000001",
+    })
+
+    await coexistMessengerSync({ runId, integrationId, workspaceId })
+
+    expect(mockApplyCoexistActivityUpdates).toHaveBeenCalledWith(
+      expect.any(Array),
+      { workspaceId: "ws-messenger-1" },
+    )
+    const [updates] = mockApplyCoexistActivityUpdates.mock.calls[0] as [
+      Array<{ aiMarkerMessageId: string | null }>,
+    ]
+    expect(updates[0]?.aiMarkerMessageId).toBeNull()
   })
 
   it("paginates messages within a conversation — flushes bulkImportMessages per message page", async () => {

@@ -1,6 +1,9 @@
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
-import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import {
+  hasContactsAccess,
+  hasWorkspacePermission,
+} from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 type Permissions = WorkspaceMemberPermissions | Record<string, unknown>
@@ -17,10 +20,7 @@ export function canViewContactEmailAndPhone(permissions: Permissions): boolean {
 }
 
 export function canAccessContactsSection(permissions: Permissions): boolean {
-  return (
-    hasWorkspacePermission(permissions, "contacts") ||
-    hasWorkspacePermission(permissions, "onlyAssignedContacts")
-  )
+  return hasContactsAccess(permissions)
 }
 
 export function getAssignedContactsUserId(input: {

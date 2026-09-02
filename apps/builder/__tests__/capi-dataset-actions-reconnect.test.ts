@@ -68,6 +68,8 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
   getDataset: mockGetDataset,
   ensureDataset: mockEnsureDataset,
+  buildDatasetName: (name: string) =>
+    name.trim() ? `${name.trim()} Event Data` : "Event Data",
 }))
 
 vi.mock("next-intl/server", () => ({

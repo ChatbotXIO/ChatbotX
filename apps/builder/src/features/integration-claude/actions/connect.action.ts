@@ -2,6 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationClaudeModel,
@@ -14,13 +15,13 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { verifyClaudeApiKey } from "../lib"
 import {
   type ConnectClaudeSchema,
   connectClaudeSchema,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const connectClaudeAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -93,6 +94,14 @@ export const connectClaudeAction = workspaceActionClient
         workspaceId,
         aiProviders.enum.claude,
       )
+
+      await auditService.record({
+        workspaceId,
+        action: integrationClaude ? "update" : "connect",
+        detail: integrationClaude
+          ? "updated the Claude integration configuration"
+          : "connected a new Claude integration",
+      })
 
       return
     },

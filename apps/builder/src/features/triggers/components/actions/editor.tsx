@@ -38,11 +38,17 @@ export const ActionEditor = ({
     case triggerActions.enum.setCustomField:
       return (
         <div className="flex flex-col gap-4">
-          <SetCustomField parentName={parentName} />
+          <SetCustomField includeBotFields parentName={parentName} />
         </div>
       )
     case triggerActions.enum.clearCustomField:
-      return <CustomFieldSelect label="" name={`${parentName}.customFieldId`} />
+      return (
+        <CustomFieldSelect
+          includeBotFields
+          label=""
+          name={`${parentName}.customFieldId`}
+        />
+      )
     case triggerActions.enum.startAnotherFlow:
       return (
         <ComboboxField

@@ -19,6 +19,12 @@ vi.mock("next/navigation", () => ({
   notFound: mockNotFound,
 }))
 
+vi.mock("@/lib/workspace/require-not-scheduled-for-deletion", () => ({
+  enforceWorkspaceNotScheduledForDeletionFromRequest: vi.fn(
+    async () => undefined,
+  ),
+}))
+
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }))
@@ -32,7 +38,7 @@ vi.mock("@/features/contacts/queries/list-contacts.queries", () => ({
   })),
 }))
 
-vi.mock("@/features/contacts/schemas/query", () => ({
+vi.mock("@/features/contacts/schema/query", () => ({
   listContactsRequest: {
     omit: () => ({
       safeParse: () => ({ data: {} }),
@@ -44,7 +50,7 @@ vi.mock("@/features/import/queries/list-imports.queries", () => ({
   listImports: vi.fn(async () => ({ data: [], pageCount: 0 })),
 }))
 
-vi.mock("@/features/import/schemas/query", () => ({
+vi.mock("@/features/import/schema/query", () => ({
   listImportsSearchParamsCache: {
     parse: () => ({}),
   },

@@ -39,6 +39,7 @@ Key components of the project's tech stack.
 
 - [BullMQ](https://bullmq.io/) backed by **Redis / Dragonfly**
 - **Kafka** for high-throughput sequence dispatch
+- Push notifications via the **Expo Push Service** (`notification` queue/worker)
 - Package: `packages/worker-config` (`@chatbotx.io/worker-config`)
 
 ### Realtime

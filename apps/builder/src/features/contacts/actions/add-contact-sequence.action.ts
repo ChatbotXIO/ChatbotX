@@ -6,14 +6,14 @@ import { enrollContactsInSequenceBulk } from "@chatbotx.io/sequence-scheduler"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { calculateNextRunAtBulk } from "@/features/contact-sequences/utils/calculate-next-run-at"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import {
   type AddContactSequenceRequest,
   addContactSequenceRequest,
-} from "../schemas/contact-sequence"
+} from "../schema/contact-sequence"
 
 const CHUNK_SIZE = 1000
 

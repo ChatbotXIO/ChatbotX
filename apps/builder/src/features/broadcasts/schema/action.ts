@@ -1,0 +1,72 @@
+import {
+  broadcastScheduleTypes,
+  broadcastSubactions,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
+import {
+  messengerTemplateParamsSchema,
+  validateWaTemplateSendParams,
+  type WaTemplateParams,
+  waTemplateParamsSchema,
+} from "@chatbotx.io/flow-config"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import { z } from "zod"
+import { contactFilterRequest } from "@/features/contact-filter/schema"
+
+export const createBroadcastRequest = z
+  .object({
+    channel: channelTypes,
+    flowId: zodBigintAsString().optional(),
+    templateId: zodBigintAsString().optional(),
+    integrationWhatsappId: zodBigintAsString().optional(),
+    integrationMessengerId: zodBigintAsString().optional(),
+    templateData: z
+      .union([waTemplateParamsSchema, messengerTemplateParamsSchema])
+      .optional(),
+    buttons: z
+      .array(
+        z.object({
+          id: z.string(),
+          label: z.string(),
+          flowId: z.string().optional(),
+        }),
+      )
+      .optional(),
+    subaction: broadcastSubactions,
+    schedulesType: broadcastScheduleTypes,
+    schedulesAt: z
+      .string()
+      .refine(
+        (value) => {
+          const date = new Date(value)
+          const currentDate = new Date()
+
+          return !Number.isNaN(date.getTime()) && date > currentDate
+        },
+        {
+          message: "Schedules must be after now.",
+        },
+      )
+      .nullable(),
+    contactFilter: contactFilterRequest.shape.contactFilter,
+  })
+  .refine((data) => !!(data.flowId || data.templateId), {
+    message: "Either flow or template must be selected",
+    path: ["flowId"],
+  })
+  // Send-blocking WhatsApp template rules (MPM sections, LTO expiration):
+  // the flow editor enforces them at publish, this refinement covers the
+  // broadcast surface with the same shared rule set.
+  .superRefine((data, ctx) => {
+    if (data.channel === channelTypes.enum.whatsapp && data.templateData) {
+      validateWaTemplateSendParams(data.templateData as WaTemplateParams, ctx, [
+        "templateData",
+      ])
+    }
+  })
+export type CreateBroadcastRequest = z.infer<typeof createBroadcastRequest>
+
+export const updateBroadcastSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+})
+export type UpdateBroadcastSchema = z.infer<typeof updateBroadcastSchema>

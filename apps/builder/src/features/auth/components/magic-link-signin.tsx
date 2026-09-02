@@ -10,12 +10,12 @@ import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { authClient } from "@/lib/auth/auth-client"
-import { type MagicLinkRequest, magicLinkRequest } from "../schemas/action"
+import { resolveSafeCallbackUrl } from "@/lib/safe-callback-url"
+import { type MagicLinkRequest, magicLinkRequest } from "../schema/action"
 
 export const MagicLinkSignIn = () => {
   const t = useTranslations()
   const searchParams = useSearchParams()
-  const callbackURL = searchParams.get("callbackURL")
 
   const magicLinkForm = useForm<MagicLinkRequest>({
     resolver: zodResolver(magicLinkRequest),
@@ -26,9 +26,13 @@ export const MagicLinkSignIn = () => {
   })
 
   const onSubmitMagicLinkForm = async (input: MagicLinkRequest) => {
+    const { origin } = window.location
     const { data, error } = await authClient.signIn.magicLink({
       email: input.email,
-      callbackURL: callbackURL ?? undefined,
+      callbackURL: new URL(
+        resolveSafeCallbackUrl(searchParams.get("callbackURL"), origin),
+        origin,
+      ).toString(),
     })
 
     if (data) {

@@ -32,11 +32,17 @@ type CustomFieldSelectProps = {
   placeholder?: string
   onValueChange?: (value: string) => void
   portal?: boolean
+  createDefaultType?: CustomFieldType
   /**
    * Adds a leading "none" option (value "") so the selection can be unset. Use
    * when the field is optional and picking nothing is a valid choice.
    */
   clearable?: boolean
+  /**
+   * Also offers Account Fields (bot fields) in a separate group. Allowlisted
+   * v1 surfaces only — see `useCustomFieldSelectOptions`.
+   */
+  includeBotFields?: boolean
 }
 
 // Language-neutral marker for the "no selection" option.
@@ -56,7 +62,9 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     placeholder,
     onValueChange,
     portal,
+    createDefaultType,
     clearable,
+    includeBotFields,
   } = props
 
   const workspaceId = useWorkspaceId()
@@ -65,6 +73,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     includeReserved,
     channels,
     reservedFieldIds,
+    includeBotFields,
   })
 
   const options = useMemo(
@@ -103,6 +112,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
 
           {allowCreate && (
             <CreateCustomFieldDialog
+              defaultType={createDefaultType}
               folderId={null}
               onSuccess={handleSuccess}
               triggerButton={

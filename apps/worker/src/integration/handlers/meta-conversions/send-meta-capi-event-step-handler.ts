@@ -39,7 +39,12 @@ export async function handleSendMetaCapiEventStep(
       contactInboxId: contactInbox.id,
       inboxId: contactInbox.inboxId,
       source: "flowStep",
-      sourceKey: `flow:${step.id}:${contactInbox.id}:${metaConversionsService.formatUtcDay(new Date())}`,
+      sourceKey: metaConversionsService.buildLeadSourceKey({
+        scope: "flow",
+        scopeId: step.id,
+        contactInboxId: contactInbox.id,
+        channel: contactInbox.channel,
+      }),
       value: step.value,
       currency: step.currency,
       contentCategory: step.contentCategory,

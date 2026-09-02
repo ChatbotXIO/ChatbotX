@@ -29,8 +29,8 @@ import { BotFieldValueInput } from "../bot-fields/account-field-value-input"
 import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import { deleteContactCustomFieldAction } from "./actions/delete-contact-custom-field.action"
 import { updateContactFieldAction } from "./actions/update-contact-field.action"
-import { updateContactFieldRequest } from "./schemas/action"
-import type { ContactEditableField } from "./schemas/resource"
+import { updateContactFieldRequest } from "./schema/action"
+import type { ContactEditableField } from "./schema/resource"
 
 type EditContactField = {
   workspaceId: string

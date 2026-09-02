@@ -1,5 +1,6 @@
 import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import { z } from "zod"
+import { integrationWhatsappService } from "../../integration-whatsapp/service"
 import { resolveCapiAccessToken } from "../token"
 import type { CapiReadinessAdapter } from "./types"
 
@@ -25,10 +26,23 @@ export const whatsappCapiReadinessAdapter: CapiReadinessAdapter<"whatsapp"> = {
   },
   async buildDatasetProvisionInput(integration) {
     const auth = await resolveCapiAccessToken(integration)
+    // Embedded-signup connections create the dataset with the agency System
+    // User token (Meta attributes the "Creator" to the business), falling back
+    // to the connect token if that system user cannot create it. Manual
+    // connections and missing credentials use the connect token with no
+    // fallback.
+    const { primaryToken, fallbackToken } =
+      await integrationWhatsappService.resolveDatasetCreationTokens({
+        integration,
+        workspaceId: integration.workspaceId,
+        connectToken: auth.accessToken,
+      })
 
     return {
-      accessToken: auth.accessToken,
+      accessToken: primaryToken,
+      fallbackAccessToken: fallbackToken,
       resourceId: integration.wabaId,
+      resourceName: integration.name,
     }
   },
   buildScopeCheckInput(integration) {

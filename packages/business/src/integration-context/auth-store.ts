@@ -6,11 +6,11 @@ import { type AuthStore, type AuthValue, SdkException } from "@chatbotx.io/sdk"
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
 
 const channelToIntegrationTable = (channel: string): string => {
-  const inboxName = channel
+  const integrationName = channel
     .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("")
-  return `Integration${inboxName}`
+  return `Integration${integrationName}`
 }
 
 /**
@@ -26,33 +26,40 @@ export type AuthStoreIntegrationRow = {
 }
 
 /**
- * Build an {@link AuthStore} bound to a specific `Integration<Channel>` row.
- * The store reads/writes the row's `auth` column, serializes concurrent
- * refreshes via the shared distributed lock, and (for inbox-bound channels)
- * flips `Inbox.status` to `disconnected` when refresh terminally fails.
+ * Build an {@link AuthStore} bound to an EXPLICIT table name — the shared
+ * implementation behind {@link makeAuthStore}. Exposed directly for auth
+ * tables that don't follow the `Integration<Channel>` naming convention
+ * `makeAuthStore` derives (e.g. `MessagingAdsConnection`, which is keyed to a
+ * channel integration but is not itself an `Integration<Channel>` row) —
+ * see `buildMessagingAdsContext` in
+ * `@chatbotx.io/business/messaging-ads-connection`, added per
+ * out/plan/ctwa-ctm-ctid-box-merge.md v3 correction #4 ("Auth-store
+ * coupling"): passing a `MessagingAdsConnection` row through `makeAuthStore`
+ * would read/write the WRONG table (`channelToIntegrationTable` would derive
+ * `IntegrationMessagingAdsConnection`, which does not exist).
  */
-export const makeAuthStore = <TAuth extends AuthValue = AuthValue>(
-  channel: string,
+export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
+  tableName: string,
+  lockKeyPrefix: string,
   integration: AuthStoreIntegrationRow,
 ): AuthStore<TAuth> => {
-  const integrationTable = channelToIntegrationTable(channel)
-  const lockKey = `auth:refresh:${channel}:${integration.id}`
+  const lockKey = `auth:refresh:${lockKeyPrefix}:${integration.id}`
 
   return {
     load: async () => {
       const result = await db.execute<{ auth: TAuth }>(
-        sql`SELECT auth FROM ${sql.identifier(integrationTable)} WHERE "id" = ${integration.id} LIMIT 1`,
+        sql`SELECT auth FROM ${sql.identifier(tableName)} WHERE "id" = ${integration.id} LIMIT 1`,
       )
       if (!result.rows[0]) {
         throw new SdkException(
-          `Unable to load auth for ${channel} integration ${integration.id}`,
+          `Unable to load auth for ${lockKeyPrefix} integration ${integration.id}`,
         )
       }
       return result.rows[0].auth
     },
     save: async (auth: TAuth) => {
       await db.execute(
-        sql`UPDATE ${sql.identifier(integrationTable)} SET auth = ${JSON.stringify(auth)}::jsonb WHERE "id" = ${integration.id}`,
+        sql`UPDATE ${sql.identifier(tableName)} SET auth = ${JSON.stringify(auth)}::jsonb WHERE "id" = ${integration.id}`,
       )
     },
     withLock: (fn) =>
@@ -72,4 +79,18 @@ export const makeAuthStore = <TAuth extends AuthValue = AuthValue>(
         .where(eq(inboxModel.id, integration.inboxId))
     },
   }
+}
+
+/**
+ * Build an {@link AuthStore} bound to a specific `Integration<Channel>` row.
+ * The store reads/writes the row's `auth` column, serializes concurrent
+ * refreshes via the shared distributed lock, and (for inbox-bound channels)
+ * flips `Inbox.status` to `disconnected` when refresh terminally fails.
+ */
+export const makeAuthStore = <TAuth extends AuthValue = AuthValue>(
+  channel: string,
+  integration: AuthStoreIntegrationRow,
+): AuthStore<TAuth> => {
+  const integrationTable = channelToIntegrationTable(channel)
+  return makeAuthStoreForTable<TAuth>(integrationTable, channel, integration)
 }

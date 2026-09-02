@@ -44,10 +44,10 @@ import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { BroadcastAudiencePreviewDialog } from "@/features/broadcasts/components/broadcast-audience-preview-dialog"
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
-import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
+import { createBroadcastRequest } from "@/features/broadcasts/schema/action"
 import { useWorkspaceId } from "@/hooks/routing"
 import { ContactFilter } from "../contact-filter"
-import type { ContactFilterCriteria } from "../contact-filter/schemas"
+import type { ContactFilterCriteria } from "../contact-filter/schema"
 import { useContactStore } from "../contacts/provider/contact-store-context"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { useFlowTemplate } from "../flows/react-flow/stores/flow-template-store-provider"
@@ -771,6 +771,9 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
                             selectedTemplate.components as TemplateComponent[]
                           }
                           headerParams={watchedTemplateData?.header || []}
+                          limitedTimeOfferParam={
+                            watchedTemplateData?.limited_time_offer
+                          }
                         />
                       </div>
                     </div>

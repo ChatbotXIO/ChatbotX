@@ -1,13 +1,12 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
+import { fbCommentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const bulkDeleteFbCommentsAction = workspaceActionClient
@@ -21,17 +20,9 @@ export const bulkDeleteFbCommentsAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: { ids: string[] }
     }) => {
-      if (parsedInput.ids.length === 0) {
-        return
-      }
-
-      await db
-        .delete(fbCommentAutomationModel)
-        .where(
-          and(
-            inArray(fbCommentAutomationModel.id, parsedInput.ids),
-            eq(fbCommentAutomationModel.workspaceId, workspaceId),
-          ),
-        )
+      await fbCommentAutomationService.deleteMany({
+        workspaceId,
+        ids: parsedInput.ids,
+      })
     },
   )

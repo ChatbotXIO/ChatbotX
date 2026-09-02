@@ -244,7 +244,7 @@ const WorkspacesList = async ({
         `account-rail.tsx`. `overscroll-contain` stops scroll-chaining into
         the document once the grid bottoms out.
       */}
-      <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pt-2">
         {hasWorkspaces || showCreateCard ? (
           <ul className="flex list-none flex-wrap gap-5 p-0 pb-1">
             {showCreateCard && (

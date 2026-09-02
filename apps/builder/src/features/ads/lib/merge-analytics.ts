@@ -8,11 +8,23 @@ export type FunnelTotals = {
 export type FunnelAdRow = FunnelTotals & {
   adId: string | null
   adName?: string | null
+  /**
+   * Distinct channel(s) this ad drove conversions/leads/purchases on — only
+   * populated under "All channels" aggregation. A PASSENGER label, not part
+   * of row identity: identity stays `adId` (see `CtwaFunnelAdRow`'s doc
+   * comment in the business layer — Facebook Insights spend is per-`adId`
+   * only, so identity must never split by channel). This merge stays
+   * `adId`-keyed and structurally unchanged; `channels` is carried straight
+   * through from the funnel row.
+   */
+  channels?: string[]
 }
 
 export type InsightSpendRow = {
   adId: string
   adName?: string | null
+  /** ISO currency of the ad account that produced this row's `spend`. */
+  currency?: string | null
   spend?: number | string | null
   impressions?: number | string | null
   clicks?: number | string | null
@@ -45,6 +57,13 @@ export type AdsAnalyticsData = {
     costPerConversation: number | null
   }
   perAd: AdsAnalyticsRow[]
+  /**
+   * The single ISO currency shared by every insight row's ad account, or
+   * `null` when the accounts disagree (mixed currencies) or no insights
+   * loaded. The UI must fall back to a bare-number rendering when `null` —
+   * stamping a currency symbol on a mixed-currency sum would be wrong.
+   */
+  spendCurrency: string | null
 }
 
 function parseNumeric(
@@ -115,6 +134,7 @@ export function mergeAdsAnalytics(input: {
       leads: row.leads,
       purchases: row.purchases,
       revenue: row.revenue,
+      channels: row.channels,
     })
   }
 
@@ -180,6 +200,20 @@ export function mergeAdsAnalytics(input: {
       )
     : input.funnel.totals
 
+  // One shared currency across every insight row, else null. A row with an
+  // UNKNOWN currency also forces null — labeling a partly-unknown sum with
+  // the known rows' symbol would be wrong.
+  const hasUnknownCurrency = input.insights.some((insight) => !insight.currency)
+  const distinctCurrencies = new Set(
+    input.insights
+      .map((insight) => insight.currency)
+      .filter((currency): currency is string => Boolean(currency)),
+  )
+  const spendCurrency =
+    !hasUnknownCurrency && distinctCurrencies.size === 1
+      ? [...distinctCurrencies][0]
+      : null
+
   return {
     totals: {
       ...totals,
@@ -195,5 +229,6 @@ export function mergeAdsAnalytics(input: {
       costPerConversation: divideCost(spend, totals.conversations),
     },
     perAd: perAd.sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0)),
+    spendCurrency: spendCurrency ?? null,
   }
 }

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationKlaviyoService } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { KlaviyoSyncProfileSchema } from "@chatbotx.io/flow-config"
@@ -136,6 +137,12 @@ export const syncKlaviyoProfile = async (
       { ...logContext, ...provider, err: normalized },
       "Klaviyo profile sync failed",
     )
+    await logProviderError({
+      provider: "klaviyo",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error,
+    })
     return { status: "error", result: null, errorMessage: normalized.message }
   }
 }

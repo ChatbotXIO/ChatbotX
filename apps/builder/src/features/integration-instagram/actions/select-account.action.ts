@@ -8,6 +8,7 @@ import {
   resolveTenantSettings,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
@@ -32,7 +33,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type SelectAccountRequest,
   selectAccountRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const selectAccountAction = authActionClient
   .inputSchema(selectAccountRequest)
@@ -61,8 +62,10 @@ export const selectAccountAction = authActionClient
         }
         const instagramSettings = instagramCredential.config
 
-        const { brandingCtx, integrationId } = await db.transaction(
-          async (tx) => {
+        const { brandingCtx, createdWorkspace, integrationId, wasCreated } =
+          await db.transaction(async (tx) => {
+            let createdWorkspace = false
+
             if (!workspaceId) {
               const workspace = await workspaceService.create({
                 tx,
@@ -74,6 +77,7 @@ export const selectAccountAction = authActionClient
                 },
               })
               workspaceId = workspace.id
+              createdWorkspace = true
             }
 
             const { appUrl } = await resolveTenantSettings({
@@ -103,7 +107,7 @@ export const selectAccountAction = authActionClient
               },
             }
 
-            const { integration: integrationRow } =
+            const { integration: integrationRow, wasCreated } =
               await connectChannelIntegration({
                 tx,
                 ownerId,
@@ -168,9 +172,13 @@ export const selectAccountAction = authActionClient
               )
             }
 
-            return { brandingCtx, integrationId: integrationRow.id }
-          },
-        )
+            return {
+              brandingCtx,
+              createdWorkspace,
+              integrationId: integrationRow.id,
+              wasCreated,
+            }
+          })
 
         // Best-effort: the connection is already live, so a failed user-info
         // write must never fail the action. Direct Instagram login
@@ -196,6 +204,23 @@ export const selectAccountAction = authActionClient
           integration: integrationInstagram,
           ctx: brandingCtx,
         })
+
+        if (createdWorkspace) {
+          await auditService.record({
+            userId: ctx.user.id,
+            workspaceId: workspaceId as string,
+            action: "create",
+            detail: `created the workspace (#${workspaceId})`,
+          })
+        }
+
+        if (wasCreated) {
+          await auditService.record({
+            workspaceId: workspaceId as string,
+            action: "connect",
+            detail: `connected a new Instagram channel (#${integrationId})`,
+          })
+        }
 
         return {
           integrationId,

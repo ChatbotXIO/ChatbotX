@@ -12,28 +12,31 @@ import {
 } from "vitest"
 import { useEmbeddedSignupAutoConnect } from "@/features/integration-whatsapp/hooks/use-embedded-signup-auto-connect"
 import { WA_OAUTH_RESULT } from "@/features/integration-whatsapp/libs/embedded-signup"
-import type { ConnectWhatsappSchema } from "@/features/integration-whatsapp/schemas"
+import type { ConnectWhatsappSchema } from "@/features/integration-whatsapp/schema"
 
 const BROKER_ORIGIN = "https://broker.test"
 const FOREIGN_ORIGIN = "https://evil.test"
 const OAUTH_CODE = "AQD-relayed-code"
 
-vi.mock("@/lib/oauth-broker", () => ({
-  getBrokerOrigin: () => BROKER_ORIGIN,
-}))
-
 type ProbeProps = {
   hasFailed: boolean
   onSubmit: () => void
   onRelayError: () => void
+  callbackOrigin?: string
 }
 
 /** Mirrors the hook's output into the DOM so assertions read one source. */
-function Probe({ hasFailed, onSubmit, onRelayError }: ProbeProps) {
+function Probe({
+  hasFailed,
+  onSubmit,
+  onRelayError,
+  callbackOrigin = BROKER_ORIGIN,
+}: ProbeProps) {
   const { isConnecting } = useEmbeddedSignupAutoConnect({
     hasFailed,
     onSubmit,
     onRelayError,
+    callbackOrigin,
   })
 
   return <output data-testid="is-connecting">{String(isConnecting)}</output>
@@ -82,11 +85,12 @@ describe("useEmbeddedSignupAutoConnect", () => {
     container.remove()
   })
 
-  const render = (hasFailed = false) => {
+  const render = (hasFailed = false, callbackOrigin = BROKER_ORIGIN) => {
     act(() => {
       root.render(
         <Harness>
           <Probe
+            callbackOrigin={callbackOrigin}
             hasFailed={hasFailed}
             onRelayError={onRelayError}
             onSubmit={onSubmit}
@@ -112,7 +116,7 @@ describe("useEmbeddedSignupAutoConnect", () => {
     container.querySelector<HTMLElement>("[data-testid='is-connecting']")
       ?.textContent
 
-  test("submits as soon as the broker relays a code", () => {
+  test("submits as soon as the callback origin relays a code", () => {
     render()
     expect(isConnecting()).toBe("false")
     expect(onSubmit).not.toHaveBeenCalled()
@@ -125,6 +129,21 @@ describe("useEmbeddedSignupAutoConnect", () => {
     // Still connecting afterwards: the button must stay frozen while the action
     // is in flight rather than flashing back to the launch state.
     expect(isConnecting()).toBe("true")
+  })
+
+  test("trusts a tenant's own custom-domain callback origin, not just the broker", () => {
+    const tenantOrigin = "https://reseller.example.com"
+    render(false, tenantOrigin)
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    // A message from the broker origin is no longer relevant once the
+    // credential is tenant-owned — only the registered custom-domain
+    // callback is trusted.
+    relay(successPayload(), BROKER_ORIGIN)
+    expect(onSubmit).not.toHaveBeenCalled()
+
+    relay(successPayload(), tenantOrigin)
+    expect(onSubmit).toHaveBeenCalledTimes(1)
   })
 
   test("submits once for one code, not on every re-render", () => {

@@ -29,6 +29,7 @@ export const instagramCapiReadinessAdapter: CapiReadinessAdapter<"instagram"> =
       return {
         accessToken: auth.accessToken,
         resourceId: integration.igId,
+        resourceName: integration.name,
       }
     },
     buildScopeCheckInput(integration) {

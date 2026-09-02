@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -41,19 +40,17 @@ import { updateTiktokSettingAction } from "./update-tiktok-settings.action"
 export function TiktokSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: TiktokCredentialPublic | null
   isInherited?: boolean
+  /** Origin to register with TikTok. See `MessengerSettings`' equivalent prop. */
+  callbackOrigin: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  // Both the webhook and OAuth callback must live on the fixed, provider-registered
-  // broker host (not the reseller's branded domain) — the provider cannot reach an
-  // unregistered custom domain. Resellers using their own TikTok app register these.
-  const webhookUrl = buildBrokerCallbackUrl("/integrations/tiktok/webhook")
-  const authCallbackUrl = buildBrokerCallbackUrl(
-    "/integrations/tiktok/callback",
-  )
+  const webhookUrl = `${callbackOrigin}/integrations/tiktok/webhook`
+  const authCallbackUrl = `${callbackOrigin}/integrations/tiktok/callback`
 
   return (
     <Card>

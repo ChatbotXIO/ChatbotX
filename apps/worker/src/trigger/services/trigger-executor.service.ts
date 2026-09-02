@@ -6,7 +6,7 @@ import {
 import { setTriggerExecutionContext } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
-import type { TriggerWithConditions } from "../types"
+import type { TriggerExecutionInput, TriggerWithConditions } from "../types"
 import { ActionExecutor } from "./action-executor"
 
 export class TriggerExecutorService {
@@ -18,9 +18,10 @@ export class TriggerExecutorService {
 
   async execute(
     trigger: TriggerWithConditions,
-    contactId: string,
+    input: TriggerExecutionInput,
   ): Promise<void> {
     const { id: triggerId, workspaceId, actions } = trigger
+    const { contactId, contactInboxId } = input
 
     try {
       setTriggerExecutionContext({ source: "worker" })
@@ -34,6 +35,7 @@ export class TriggerExecutorService {
             contactId,
             triggerId,
             workspaceId,
+            contactInboxId,
           })
         } catch (err) {
           logger.error(

@@ -1,14 +1,15 @@
 "use server"
 
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { aiFileModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
 import { getTranslations } from "next-intl/server"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createAIFileRequest } from "../schemas"
+import { createAIFileRequest } from "../schema"
 
 export const createAIFileAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -45,5 +46,11 @@ export const createAIFileAction = workspaceActionClient
       data: {
         aiFileId: created[0].id,
       },
+    })
+
+    await auditService.record({
+      workspaceId,
+      action: "create",
+      detail: `created a new Knowledge (#${created[0].id})`,
     })
   })

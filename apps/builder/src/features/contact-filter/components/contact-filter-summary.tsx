@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import type { ContactFilterCriteria } from "../schemas"
+import type { ContactFilterCriteria } from "../schema"
 import {
   formatConditionValueDisplay,
   formatCtwaRetargetChipLabel,
@@ -70,12 +70,16 @@ export function ContactFilterSummary({
           }
 
           const isCustomField = condition.field === "customField"
+          const isBotField = condition.field === "botField"
           const isCouponTopic = condition.field === "couponTopic"
           const fieldConfig = configs.find((config) => {
             if (isCustomField && "customFieldId" in condition) {
               return (
                 String(config.customFieldId) === String(condition.customFieldId)
               )
+            }
+            if (isBotField && "botFieldId" in condition) {
+              return String(config.botFieldId) === String(condition.botFieldId)
             }
             if (isCouponTopic && "topicId" in condition) {
               return String(config.topicId) === String(condition.topicId)
@@ -87,6 +91,9 @@ export function ContactFilterSummary({
             (() => {
               if (isCustomField) {
                 return t("fields.customField.label")
+              }
+              if (isBotField) {
+                return t("fields.botField.label")
               }
               if (isCouponTopic) {
                 return t("condition.fields.couponTopic")
@@ -102,6 +109,7 @@ export function ContactFilterSummary({
           const conditionKey = [
             condition.field,
             "customFieldId" in condition ? condition.customFieldId : "",
+            "botFieldId" in condition ? condition.botFieldId : "",
             "topicId" in condition ? condition.topicId : "",
             condition.operator,
             valueDisplay,

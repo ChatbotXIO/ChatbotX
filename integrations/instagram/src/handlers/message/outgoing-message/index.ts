@@ -3,6 +3,7 @@ import {
   type SendCarouselStepSchema,
   type SendFileStepSchema,
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendQuickReplyStepSchema,
   type SendTextStepSchema,
   type SendVideoStepSchema,
@@ -20,6 +21,7 @@ import {
   type OutgoingMessage,
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
+import { sendPrivateReplyMessage } from "../../../apis/comment"
 import { sendInstagramMessage } from "../../../apis/page"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
@@ -34,7 +36,10 @@ import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
-import { convertFlowStepMedia } from "./send-media"
+import {
+  convertFlowStepMedia,
+  convertFlowStepMultipleImages,
+} from "./send-media"
 import { convertCanonicalInstagramQuickReplies } from "./send-quick-replies"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
@@ -143,16 +148,35 @@ export function* convertMessageToInstagramMessage(
         text: message.text,
       }
     }
-    for (const attachment of message.attachments || []) {
+    // Multiple images in one outgoing message batch into a single Send API
+    // call via `attachments[]` (same mechanism the sendMultipleImages flow
+    // step uses), instead of one message per image; every other attachment
+    // type still sends as its own message.
+    const attachments = message.attachments || []
+    const imageAttachments = attachments.filter(
+      (attachment) => attachment.fileType === "image",
+    )
+    const otherAttachments = attachments.filter(
+      (attachment) => attachment.fileType !== "image",
+    )
+
+    if (imageAttachments.length > 1) {
+      yield {
+        attachments: imageAttachments.map((attachment) =>
+          getAttachmentTemplate(attachment.url as string, "image"),
+        ),
+      }
+    } else if (imageAttachments.length === 1) {
+      yield {
+        attachment: getAttachmentTemplate(
+          imageAttachments[0].url as string,
+          "image",
+        ),
+      }
+    }
+
+    for (const attachment of otherAttachments) {
       switch (attachment.fileType) {
-        case "image":
-          yield {
-            attachment: getAttachmentTemplate(
-              attachment.url as string,
-              "image",
-            ),
-          }
-          continue
         case "video":
           yield {
             attachment: getAttachmentTemplate(
@@ -227,6 +251,14 @@ export async function* convertFlowStepToInstagramMessage(
         >,
       )
       break
+    case stepTypes.enum.sendMultipleImages:
+      yield* convertFlowStepMultipleImages(
+        props as SendFlowStepProps<
+          InstagramAuthValue,
+          SendMultipleImagesStepSchema
+        >,
+      )
+      break
     case stepTypes.enum.sendAudio:
     case stepTypes.enum.sendFile:
       await (yield* convertFlowStepFile(
@@ -265,18 +297,43 @@ export const sendFlowStep = async (
 ) => {
   const {
     ctx,
-    data: { contact, sendFrom },
+    data: { contact, sendFrom, commentAnchor },
   } = props
   const messageIds: string[] = []
   try {
-    const policy = resolveInstagramMessagingPolicy({ contact, sendFrom })
+    // Resolved lazily (and at most once): an up-front resolve would throw
+    // `instagram_response_window_expired` and kill a comment-anchored first
+    // send, which is exempt from the 24-hour window (Meta's comment_id
+    // recipient uses the 7-day comment window instead).
+    let policy: InstagramMessagingPolicy | undefined
+    const getPolicy = () =>
+      (policy ??= resolveInstagramMessagingPolicy({ contact, sendFrom }))
+    // Consumed by the first Instagram message yielded below, if a private
+    // comment anchor is present — a single flow step can yield more than one
+    // message (e.g. text + attachments), so only the very first send uses the
+    // comment_id-anchored API; the rest use the normal window-gated path.
+    // A "public" anchor is never honored here — it's delivered via the
+    // comment channel's sendComment, not this message channel's sendFlowStep
+    // (see send-flow-step.ts). This check is defense-in-depth against a
+    // public anchor ever reaching this handler by mistake.
+    let anchorCommentId =
+      commentAnchor?.replyChannel === "private"
+        ? commentAnchor.commentId
+        : undefined
     for await (const instagramMessage of convertFlowStepToInstagramMessage(
       props,
     )) {
-      const response = await sendInstagramMessage(
-        ctx.auth,
-        buildMessagePayload(contact, instagramMessage, policy),
-      )
+      const response = anchorCommentId
+        ? await sendPrivateReplyMessage(
+            ctx.auth,
+            anchorCommentId,
+            instagramMessage,
+          )
+        : await sendInstagramMessage(
+            ctx.auth,
+            buildMessagePayload(contact, instagramMessage, getPolicy()),
+          )
+      anchorCommentId = undefined
       if (response.message_id) {
         messageIds.push(response.message_id)
       }

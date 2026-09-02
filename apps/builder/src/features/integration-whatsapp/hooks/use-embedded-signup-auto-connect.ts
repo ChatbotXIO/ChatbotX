@@ -3,13 +3,12 @@
 import { useCallbackRef } from "@chatbotx.io/ui/hooks/use-callback-ref"
 import { useEffect } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
-import { getBrokerOrigin } from "@/lib/oauth-broker"
 import {
   WA_OAUTH_RESULT,
   type WhatsappOAuthRelayResult,
 } from "../libs/embedded-signup"
 import { FORM_FIELDS } from "../libs/form-fields"
-import type { ConnectWhatsappSchema } from "../schemas"
+import type { ConnectWhatsappSchema } from "../schema"
 
 type UseEmbeddedSignupAutoConnectParams = {
   /** A failed connect hands the flow back to the user for a fresh signup. */
@@ -18,6 +17,12 @@ type UseEmbeddedSignupAutoConnectParams = {
   onSubmit: () => void
   /** The relay reported a failed signup; the caller owns the localized message. */
   onRelayError: () => void
+  /**
+   * The origin the OAuth callback route was registered on for this
+   * credential (broker or the reseller's own custom domain) — the only
+   * trusted `postMessage` sender. See `lib/provider-origin.ts`.
+   */
+  callbackOrigin: string
 }
 
 type EmbeddedSignupAutoConnect = {
@@ -45,6 +50,7 @@ export function useEmbeddedSignupAutoConnect({
   hasFailed,
   onSubmit,
   onRelayError,
+  callbackOrigin,
 }: UseEmbeddedSignupAutoConnectParams): EmbeddedSignupAutoConnect {
   const { control, setValue } = useFormContext<ConnectWhatsappSchema>()
   const code = useWatch({ control, name: FORM_FIELDS.CODE })
@@ -52,12 +58,11 @@ export function useEmbeddedSignupAutoConnect({
   const handleSubmit = useCallbackRef(onSubmit)
 
   useEffect(() => {
-    const brokerOrigin = getBrokerOrigin()
-
-    // Any window on the page can post here, so the broker origin is the only
-    // trusted sender — everything else is dropped without a word.
+    // Any window on the page can post here, so the registered callback
+    // origin is the only trusted sender — everything else is dropped
+    // without a word.
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== brokerOrigin) {
+      if (event.origin !== callbackOrigin) {
         return
       }
 
@@ -76,7 +81,7 @@ export function useEmbeddedSignupAutoConnect({
 
     window.addEventListener("message", handleMessage)
     return () => window.removeEventListener("message", handleMessage)
-  }, [handleRelayError, setValue])
+  }, [callbackOrigin, handleRelayError, setValue])
 
   useEffect(() => {
     if (!hasFailed) {

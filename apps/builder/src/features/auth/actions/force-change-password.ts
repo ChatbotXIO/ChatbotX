@@ -1,13 +1,13 @@
 "use server"
 
-import { clearMustChangePassword } from "@chatbotx.io/business"
+import { userService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { APIError } from "better-auth"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth/auth"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { actionClient } from "@/lib/safe-action"
-import { changePasswordRequest } from "../schemas/action"
+import { changePasswordRequest } from "../schema/action"
 
 /**
  * Change the caller's password and clear the forced-change gate in one
@@ -52,7 +52,7 @@ export const forceChangePasswordAction = actionClient
       throw error
     }
 
-    await clearMustChangePassword(userId)
+    await userService.clearMustChangePassword(userId)
 
     // Refresh the session cookie cache so the cleared flag is visible on the
     // very next request. `changePassword` rotated the session cookie using

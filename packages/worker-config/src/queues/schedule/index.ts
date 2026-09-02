@@ -1,8 +1,11 @@
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Queue } from "bullmq"
+import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
@@ -17,6 +20,7 @@ export const ScheduleJobData = {
   evaluateDateTimeWebhooks: "evaluateDateTimeWebhooks",
   cleanupWebhookExecutions: "cleanupWebhookExecutions",
   scanSmartDelay: "scanSmartDelay",
+  scanAppointmentReminders: "scanAppointmentReminders",
   syncUserQuota: "syncUserQuota",
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
@@ -26,6 +30,8 @@ export const ScheduleJobData = {
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeWorkspaces: "purgeWorkspaces",
+  purgeAutomationThrottle: "purgeAutomationThrottle",
+  purgeErrorLogs: "purgeErrorLogs",
   refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
@@ -104,6 +110,14 @@ export type ScheduleJobScanSmartDelay = {
   data: Record<string, never>
 }
 
+export const scheduleJobScanAppointmentRemindersDataSchema = z.object({
+  triggeredAt: z.string().optional(),
+})
+export type ScheduleJobScanAppointmentReminders = {
+  type: typeof ScheduleJobData.scanAppointmentReminders
+  data: z.infer<typeof scheduleJobScanAppointmentRemindersDataSchema>
+}
+
 export type ScheduleJobSyncUserQuota = {
   type: typeof ScheduleJobData.syncUserQuota
   data: Record<string, never>
@@ -149,9 +163,21 @@ export type ScheduleJobPurgeWorkspaces = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeAutomationThrottle = {
+  type: typeof ScheduleJobData.purgeAutomationThrottle
+  data: Record<string, never>
+}
+
+export type ScheduleJobPurgeErrorLogs = {
+  type: typeof ScheduleJobData.purgeErrorLogs
+  data: Record<string, never>
+}
+
 export type ScheduleJobRefreshChannelTokens = {
   type: typeof ScheduleJobData.refreshChannelTokens
-  data: Record<string, never>
+  // No `channels` = refresh every channel. The short-lived scheduler passes
+  // ["zalo", "tiktok"] for the extra midday run (see register-schedules.ts).
+  data: { channels?: ChannelType[] }
 }
 
 export type ScheduleJobUnsubscribeExpiredTrials = {
@@ -175,6 +201,7 @@ export type ScheduleJobData =
   | ScheduleJobEvaluateDateTimeWebhooks
   | ScheduleJobCleanupWebhookExecutions
   | ScheduleJobScanSmartDelay
+  | ScheduleJobScanAppointmentReminders
   | ScheduleJobSyncUserQuota
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac
@@ -184,14 +211,15 @@ export type ScheduleJobData =
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
+  | ScheduleJobPurgeAutomationThrottle
+  | ScheduleJobPurgeErrorLogs
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
 
-export const scheduleQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const scheduleQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })

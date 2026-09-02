@@ -18,12 +18,15 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./ai": "./src/ai.ts",
     "./channel": "./src/channel.ts",
     "./crypto": "./src/crypto.ts",
+    "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",
+    "./error-log": "./src/error-log.ts",
     "./id": "./src/id.ts",
+    "./meta-capi": "./src/meta-capi.ts",
     "./temporal-input": "./src/temporal-input/index.ts",
+    "./variables": "./src/variables.ts",
     "./zod": "./src/zod.ts"
   },
   "scripts": {

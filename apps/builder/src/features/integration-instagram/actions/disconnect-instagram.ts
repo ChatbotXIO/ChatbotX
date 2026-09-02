@@ -4,6 +4,7 @@ import {
   messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
@@ -100,5 +101,11 @@ export const disconnectInstagram = async (ctx: {
       workspaceId: ctx.workspaceId,
       tx,
     })
+  })
+
+  await auditService.record({
+    workspaceId: ctx.workspaceId,
+    action: "disconnect",
+    detail: `disconnected the Instagram channel (#${integrationInstagram.id})`,
   })
 }

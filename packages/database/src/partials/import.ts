@@ -1,10 +1,10 @@
 import { z } from "zod"
 import { channelTypes } from "./channel"
 
-export const importTypes = z.enum(["contacts", "coupons", "products"])
+export const importTypes = z.enum(["contacts", "coupons", "products", "flow"])
 export type ImportType = z.infer<typeof importTypes>
 
-export const importFormats = z.enum(["csv", "xlsx", "xls"])
+export const importFormats = z.enum(["csv", "xlsx", "xls", "json"])
 export type ImportFormat = z.infer<typeof importFormats>
 
 export const importStatuses = z.enum([
@@ -23,6 +23,7 @@ export const contactImportFields = z.enum([
   "email",
   "firstName",
   "lastName",
+  "sourceUserId",
 ])
 export type ContactImportField = z.infer<typeof contactImportFields>
 
@@ -33,16 +34,32 @@ export const contactImportColumnMapSchema = z
     email: z.string().optional(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
+    // Channel-agnostic column-map key mirroring `ContactInbox.sourceUserId`
+    // (e.g. a WhatsApp Business-Scoped User ID). Only whatsapp import extracts
+    // it today — see `extractRowData`.
+    sourceUserId: z.string().optional(),
   })
   .strip()
 export type ContactImportColumnMap = z.infer<
   typeof contactImportColumnMapSchema
 >
 
+/**
+ * Mapping target: a contact custom field id, or a workspace-level bot field
+ * (Account Field) reference in the `bot_field:<id>` token shape used by the
+ * combined field picker. A bot field holds ONE value per workspace, so the
+ * import applies its mapped column once after completion (last row wins)
+ * instead of writing per row.
+ */
+const contactImportFieldTargetSchema = z.union([
+  bigintAsStringSchema,
+  z.string().regex(/^bot_field:\d+$/),
+])
+
 export const contactImportFieldMappingSchema = z.array(
   z.object({
     column: z.string(),
-    customFieldId: bigintAsStringSchema,
+    customFieldId: contactImportFieldTargetSchema,
   }),
 )
 export type ContactImportFieldMapping = z.infer<
@@ -104,8 +121,14 @@ export const productImportMetaSchema = z.object({
 })
 export type ProductImportMeta = z.infer<typeof productImportMetaSchema>
 
+export const flowImportMetaSchema = z.object({
+  folderId: z.string().nullable().optional(),
+})
+export type FlowImportMeta = z.infer<typeof flowImportMetaSchema>
+
 export const importMetaByType = {
   contacts: contactImportMetaSchema,
   coupons: couponImportMetaSchema,
   products: productImportMetaSchema,
+  flow: flowImportMetaSchema,
 } as const satisfies Record<ImportType, z.ZodTypeAny>

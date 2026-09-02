@@ -5,8 +5,8 @@ import type {
 } from "@chatbotx.io/database/partials"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ContactFilterRequest } from "@/features/contact-filter/schemas"
-import type { ContactResource } from "@/features/contacts/schemas/resource"
+import type { ContactFilterRequest } from "@/features/contact-filter/schema"
+import type { ContactResource } from "@/features/contacts/schema/resource"
 import type { PostDetails } from "@/features/conversations/schema/query"
 import type {
   ConversationResource,
@@ -53,6 +53,9 @@ export type ChatState = {
 
   // message reply selection
   replyToMessage: MessageResourceWithRelations | null
+  // true when replyToMessage should be sent as a private-reply DM instead of
+  // a public comment reply
+  isPrivateReply: boolean
 
   // active facebook post (for comment conversations)
   activePost: PostDetails | null
@@ -113,7 +116,10 @@ export type ChatActions = {
   ) => void
   loadMoreMessages: (workspaceId: string, perPage: number) => Promise<void>
   handleNewMessage: (message: MessageResourceWithRelations) => void
-  setReplyToMessage: (message: MessageResourceWithRelations | null) => void
+  setReplyToMessage: (
+    message: MessageResourceWithRelations | null,
+    isPrivate?: boolean,
+  ) => void
 
   // Post actions
   loadActivePost: (workspaceId: string) => Promise<void>
@@ -169,6 +175,7 @@ export const createChatStore = () => {
     isLoadMoreMessage: false,
     hasNextMessagePage: true,
     replyToMessage: null,
+    isPrivateReply: false,
     activePost: null,
 
     prependConversation: (newConversation: ListConversationItemResource) =>
@@ -263,6 +270,11 @@ export const createChatStore = () => {
                 cursor: nextCursorConversation ?? "",
                 ...filters,
               },
+              // Default ky timeout (10s) is too tight for this endpoint: it
+              // fans out into per-conversation sharded message lookups, which
+              // can legitimately take longer under cold caches or dev-server
+              // recompiles, so a stricter timeout was tripping spuriously.
+              timeout: 30_000,
             },
           )
           .json()
@@ -309,6 +321,7 @@ export const createChatStore = () => {
           hasNextMessagePage: true,
           isLoadMoreMessage: false,
           replyToMessage: null,
+          isPrivateReply: false,
           activePost: null,
         })
       }
@@ -401,7 +414,11 @@ export const createChatStore = () => {
       }
     },
 
-    setReplyToMessage: (message) => set({ replyToMessage: message }),
+    setReplyToMessage: (message, isPrivate = false) =>
+      set({
+        replyToMessage: message,
+        isPrivateReply: message ? isPrivate : false,
+      }),
 
     appendMessage: (message: MessageResourceWithRelations) => {
       const { updateConversationViaMessage } = get()
@@ -758,20 +775,21 @@ export const createChatStore = () => {
 
     updateContact: (contactId: string, data: Partial<ContactResource>) => {
       const { conversations } = get()
-      const conversationIndex = conversations.findIndex(
-        (c) => c.contactId === contactId,
-      )
-      if (conversationIndex > -1) {
-        const updatedConversations = [...conversations]
-        if (updatedConversations[conversationIndex].contact) {
-          updatedConversations[conversationIndex].contact = {
-            ...updatedConversations[conversationIndex].contact,
-            ...data,
-          }
-        }
-
-        set({ conversations: updatedConversations })
+      const hasMatch = conversations.some((c) => c.contactId === contactId)
+      if (!hasMatch) {
+        return
       }
+
+      set({
+        conversations: conversations.map((conversation) =>
+          conversation.contactId === contactId && conversation.contact
+            ? {
+                ...conversation,
+                contact: { ...conversation.contact, ...data },
+              }
+            : conversation,
+        ),
+      })
     },
   }))
 }

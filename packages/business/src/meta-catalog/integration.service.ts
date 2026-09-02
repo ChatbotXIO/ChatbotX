@@ -8,6 +8,7 @@ import {
   isNull,
   notInArray,
 } from "@chatbotx.io/database/client"
+import { metaCatalogItemRepository } from "@chatbotx.io/database/repositories"
 import {
   integrationMetaCatalogModel,
   integrationModel,
@@ -63,6 +64,42 @@ class IntegrationMetaCatalogService extends BaseService {
       throw notFoundException("Meta Catalog integration not found")
     }
     return connection
+  }
+
+  /**
+   * Product options for the template button pickers (catalog thumbnail, MPM
+   * sections). `connected: false` (no active connection, or one bound to no
+   * catalog yet) is a normal, expected result — callers show setup guidance
+   * for it rather than treating it as an error.
+   */
+  async searchProductsForSend(input: {
+    workspaceId: string
+    keyword?: string
+    limit?: number
+  }): Promise<{
+    connected: boolean
+    items: Array<{ retailerId: string; name: string; imageUrl: string | null }>
+  }> {
+    const connection = await this.findByWorkspaceId(input.workspaceId)
+    if (!connection?.catalogId) {
+      return { connected: false, items: [] }
+    }
+
+    const items = await metaCatalogItemRepository.searchWithProductInfo({
+      integrationMetaCatalogId: connection.id,
+      catalogId: connection.catalogId,
+      keyword: input.keyword,
+      limit: input.limit,
+    })
+
+    return {
+      connected: true,
+      items: items.map((item) => ({
+        retailerId: item.retailerId,
+        name: item.name,
+        imageUrl: item.images?.[0]?.url ?? null,
+      })),
+    }
   }
 
   /**

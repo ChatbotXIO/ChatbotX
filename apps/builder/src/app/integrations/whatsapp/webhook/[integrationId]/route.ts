@@ -7,6 +7,7 @@ import {
 } from "@/features/integration-whatsapp/queries"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
+import { logWebhookRequestBody } from "@/lib/webhook-log"
 
 const SIGNATURE_HEADER = "x-hub-signature-256"
 const SIGNATURE_PREFIX = "sha256="
@@ -70,6 +71,10 @@ const handleGet = async (req: NextRequest, integrationId: string) => {
 }
 
 const handlePost = async (req: NextRequest, integrationId: string) => {
+  // Same "Webhook request body" log every other channel gets via the shared
+  // /integrations/[...integration] route — this dedicated route must match.
+  await logWebhookRequestBody("whatsapp", req)
+
   const result = await loadManualIntegration(integrationId)
   if (!result) {
     return json({ message: "Integration not found" }, 404)

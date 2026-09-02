@@ -1,6 +1,6 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ListQuestionnairesForFlowResponse } from "../schemas/query"
+import type { ListQuestionnairesForFlowResponse } from "../schema/query"
 
 export type QuestionnaireState = {
   loading: boolean

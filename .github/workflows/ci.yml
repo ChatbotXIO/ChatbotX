@@ -2,34 +2,48 @@ name: CI
 
 # Quality gate for type-checking, linting, and tests.
 #
-# This workflow is the ONLY type gate for apps/builder: `next build` runs with
-# `typescript.ignoreBuildErrors: true` (see apps/builder/next.config.ts), so
-# `turbo run check-types` here must stay green — never remove it without
+# The `check-types` job is the ONLY type gate for apps/builder: `next build`
+# runs with `typescript.ignoreBuildErrors: true` (see apps/builder/next.config.ts),
+# so `turbo run check-types` here must stay green — never remove it without
 # re-enabling type-checking inside the build.
+#
+# The three phases run as separate jobs rather than one `turbo run` invocation.
+# They are independent, so splitting gives each its own 4-vCPU runner (~3x the
+# total CPU) and makes wall clock the slowest phase instead of their sum. It
+# also lets each pick its own concurrency: tsc is single-threaded and CPU-bound,
+# while vitest parallelizes internally and must stay within the vCPU budget.
 
 on:
   pull_request:
   push:
     branches: [main]
 
+# Read-only: these jobs only check out, install, and run local scripts —
+# none of them need to write contents, packages, or PR/issue state.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Types, lint, tests
+  check-types:
+    name: Types
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
+      # Must stay BEFORE actions/setup-node so its `cache: pnpm` can resolve
+      # the pnpm binary to locate the store. v6 drops the deprecated Node 20
+      # runtime; the version itself comes from `packageManager` in package.json.
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6.0.10
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -42,8 +56,78 @@ jobs:
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
 
-      # --concurrency=4 matches the runner's vCPU count: tsc and vitest tasks
-      # are all CPU-bound, so turbo's default of 10 concurrent tasks only adds
-      # contention (and test timeouts) on a 4-core box.
-      - name: Type-check, lint, and test
-        run: pnpm turbo run check-types lint test --concurrency=4
+      # 56 independent `tsc --noEmit` runs (no `composite`/`references` in this
+      # repo, so turbo.json declares no `dependsOn` — see the comment there).
+      # Each is single-threaded, so concurrency can fill all 4 vCPUs.
+      - name: Type-check
+        run: pnpm turbo run check-types --concurrency=4
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.0.10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Turbo cache
+        uses: rharkor/caching-for-turbo@v2.5.1
+
+      # Root `pnpm lint` runs cheapest-first: check:agent-instructions, then
+      # `turbo run lint` (apps/builder's i18n key-parity check plus 57
+      # <NONEXISTENT> placeholders), then the slowest step — repo-wide Biome
+      # (biome.json globs apps/**, packages/**, integrations/**). One script
+      # covers everything; no separate turbo invocation needed.
+      - name: Lint
+        run: pnpm lint
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.0.10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Turbo cache
+        uses: rharkor/caching-for-turbo@v2.5.1
+
+      # Turbo does not parallelize *within* a suite, so wall clock is bounded
+      # by the slowest single suite — builder (248 files), which is ~40% of
+      # total test CPU and scales to 4 vitest workers (see the measurements in
+      # packages/vitest-config/src/node.ts). The preset gives each suite 4
+      # workers on the `threads` pool.
+      #
+      # concurrency=2 slightly oversubscribes the 4 vCPUs by design: the 55
+      # other suites are small and mostly I/O- and import-bound, so letting one
+      # overlap builder fills the box while builder still gets the cores it
+      # needs. Measured end-to-end on the full 56-suite run: concurrency=1
+      # 170s, =2 123s, =4 101s (on a 12-core box, so CI compresses these) —
+      # =1 serializes 55 small suites to help only builder, while =4 would
+      # contend with builder's own workers on a 4-vCPU runner.
+      - name: Test
+        run: pnpm turbo run test --concurrency=2

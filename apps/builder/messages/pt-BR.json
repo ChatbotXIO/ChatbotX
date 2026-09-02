@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "Tentar novamente",
     "copy": "Copiar",
     "copyUrl": "Copiar URL",
     "actions": "Ações",
@@ -71,6 +72,7 @@
     "reset": "Redefinir",
     "save": "Salvar",
     "selectAll": "Selecionar tudo",
+    "unselect": "Desmarcar",
     "selectRow": "Selecionar linha",
     "sendFlow": "Enviar fluxo",
     "sendMessage": "Enviar mensagem",
@@ -145,7 +147,8 @@
     "onSuccess": "Em caso de sucesso",
     "clone": "Clonar",
     "remove": "Remover",
-    "restore": "Restaurar"
+    "restore": "Restaurar",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "Você precisa ser um superadministrador do espaço de trabalho para fazer isso."
@@ -156,7 +159,8 @@
     "skip": "Ignorado"
   },
   "admins": {
-    "title": "Administradores"
+    "title": "Administradores",
+    "adminActivityLogs": "Log de atividades do administrador"
   },
   "assignAdmin": {
     "assignConversation": "Atribuir conversa",
@@ -540,8 +544,8 @@
       "blocked": "Bloqueada",
       "noAdminReply": "Sem resposta do administrador",
       "contactCreatedAt": "Contato criado em",
-      "fromCtwaAd": "De anúncio Click to WhatsApp",
-      "ctwaConversion": "Conversão CTWA",
+      "fromCtwaAd": "De anúncio",
+      "ctwaConversion": "Conversão de anúncio",
       "lastUserInputTypes": {
         "text": "Texto",
         "location": "Localização",
@@ -568,9 +572,10 @@
       "systemFields": "Campos do sistema",
       "topicCoupon": "Tópico de cupom",
       "customFields": "Campos personalizados",
+      "botFields": "Campos do bot",
       "email": "E-mail",
       "sms": "SMS",
-      "ctwaAds": "Anúncios Click to WhatsApp"
+      "ctwaAds": "Anúncios"
     },
     "languages": {
       "ar": "Árabe",
@@ -609,9 +614,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "Iniciadores de conversa CTWA",
-        "leads": "Leads qualificados CTWA",
-        "purchases": "Compradores CTWA"
+        "conversations": "Iniciadores de conversa de anúncio",
+        "leads": "Leads qualificados de anúncio",
+        "purchases": "Compradores de anúncio"
       },
       "adPrefix": "anúncio",
       "allAds": "todos os anúncios"
@@ -796,6 +801,12 @@
     "qrCode": {
       "label": "Código QR"
     },
+    "dynamicImage": {
+      "label": "Imagem Dinâmica"
+    },
+    "minigame": {
+      "label": "Minijogo"
+    },
     "savePayloadToCustomField": {
       "label": "Salvar payload no campo personalizado"
     },
@@ -890,7 +901,10 @@
       "append": "Adicionar ao final",
       "prepend": "Adicionar ao início",
       "increase": "Aumentar em",
-      "decrease": "Diminuir em"
+      "decrease": "Diminuir em",
+      "groupSystemFields": "Campos do sistema",
+      "groupCustomFields": "Campos personalizados",
+      "groupAccountFields": "Campos do bot"
     },
     "dataCollect": {
       "label": "Coleta de dados"
@@ -898,6 +912,15 @@
     "defaultReply": {
       "description": "É a resposta padrão que seu espaço de trabalho enviará aos usuários quando não souber como responder à mensagem recebida.",
       "label": "Resposta padrão"
+    },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
     },
     "smartResponseDelaySeconds": {
       "description": "Defina quanto tempo o bot aguarda antes de responder após a última mensagem do usuário. Se o usuário enviar outra mensagem, o cronômetro será reiniciado e as mensagens serão agrupadas em uma única resposta.",
@@ -984,8 +1007,8 @@
       "aiDeleteMessageHistory": "{aiName}: excluir histórico de mensagens"
     },
     "steps": {
-      "label": "Etapas",
-      "placeholder": "Selecione a etapa"
+      "label": "Nó",
+      "placeholder": "Selecione o nó"
     },
     "folder": {
       "label": "Pasta"
@@ -1146,6 +1169,9 @@
     "mcpServer": {
       "label": "Servidor MCP"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "Função do sistema",
       "names": {
@@ -1193,6 +1219,11 @@
     },
     "outputCustomField": {
       "label": "Campo personalizado de saída"
+    },
+    "javascriptCode": {
+      "label": "Código JavaScript",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "Use JavaScript puro e retorne um valor. Rede, arquivos, APIs e bibliotecas externas não estão disponíveis. Os dados do contato e do sistema estão disponíveis no objeto `input`."
     },
     "httpMethod": {
       "label": "Método"
@@ -1256,7 +1287,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Provedor"
+      "label": "Provedor",
+      "placeholder": "Selecionar provedor"
     },
     "prompt": {
       "label": "Prompt",
@@ -1267,6 +1299,12 @@
     },
     "pageUserName": {
       "label": "Nome do usuário da página"
+    },
+    "waUserId": {
+      "label": "ID de usuário do WhatsApp"
+    },
+    "waUserName": {
+      "label": "Nome de usuário do WhatsApp"
     },
     "purpose": {
       "label": "Finalidade",
@@ -1339,7 +1377,9 @@
       "label": "Status",
       "pending": "Pendente",
       "processing": "Processando",
+      "installing": "Installing",
       "completed": "Concluído",
+      "partial": "Partial",
       "failed": "Falhou",
       "success": "Sucesso",
       "error": "Erro"
@@ -1552,7 +1592,7 @@
       "superAdmin": "Superadministrador",
       "analytics": "Análises",
       "flows": "Fluxos",
-      "contacts": "Contatos",
+      "contacts": "Contatos / Caixa de entrada",
       "onlyAssignedContacts": "Somente contatos atribuídos",
       "emailAndPhone": "E-mail e telefone",
       "broadcast": "Transmissão",
@@ -1965,13 +2005,58 @@
       "placeholder": "Digite o nome de um evento e pressione Enter",
       "description": "Adicione um ou mais nomes de eventos. Quando o Make vincula um webhook a um desses eventos, os dados são enviados a ele quando esta etapa é executada."
     },
+    "bookingCalendar": {
+      "label": "Calendário de agendamento"
+    },
+    "bookingDate": {
+      "label": "Data de agendamento"
+    },
+    "bookingLink": {
+      "label": "Link de agendamento"
+    },
     "n8nEvents": {
       "label": "Eventos",
       "placeholder": "Digite o nome de um evento e pressione Enter",
       "description": "Adicione um ou mais nomes de eventos. Quando o n8n vincula um webhook a um desses eventos, os dados são enviados a ele quando esta etapa é executada."
+    },
+    "enabled": {
+      "label": "Ativado"
+    },
+    "api": {
+      "label": "API",
+      "description": "Conecte qualquer aplicativo compatível com HTTP como canal. Seu aplicativo envia mensagens recebidas para nossa API REST e nós entregamos as respostas para sua URL de callback.",
+      "callbackUrl": {
+        "label": "URL de callback",
+        "description": "Enviamos as respostas de saída aqui via POST, assinadas com o segredo exclusivo da sua caixa de entrada.",
+        "notSet": "Não definido"
+      },
+      "token": "Token",
+      "rotateToken": "Renovar token",
+      "status": {
+        "enabled": "Ativado",
+        "disabled": "Desativada"
+      },
+      "tokenReveal": {
+        "title": "Copiar seu token da API",
+        "description": "Este token é exibido apenas uma vez. Guarde-o com segurança — você não poderá visualizá-lo novamente.",
+        "done": "Concluído"
+      }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "Este fluxo nunca foi publicado. Publique-o antes de exportar.",
+      "failed": "Falha na exportação. Tente novamente."
+    },
     "title": "Fluxos",
     "quickReplies": {
       "limitReached": "O limite de respostas rápidas foi atingido ({max})."
@@ -2015,11 +2100,11 @@
       "broadcastActions": "Ações de transmissão",
       "callApi": "Solicitação de API externa",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "Gatilhos",
       "questionnaires": "Questionários",
       "setUpCoupon": "Configurar cupom",
       "markCouponUsed": "Marcar cupom como usado",
+      "executeJavascript": "Executar JavaScript",
       "chooseChannel": "Escolher canal",
       "clearCustomField": "Limpar campo personalizado",
       "condition": "Condição",
@@ -2044,7 +2129,6 @@
       "getResponseAddContact": "Adicionar contato ao GetResponse",
       "sendGridAddContact": "Adicionar contato ao SendGrid",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Abrir site",
       "optInEmail": "Aceitar e-mails",
       "optOutEmail": "Recusar e-mails",
@@ -2062,6 +2146,7 @@
       "sendFile": "Enviar arquivo",
       "sendGif": "Enviar GIF",
       "sendImage": "Enviar imagem",
+      "sendMultipleImages": "Várias imagens",
       "sendMessage": "Enviar mensagem",
       "sendNode": "Iniciar outro nó",
       "sendText": "Enviar texto",
@@ -2099,7 +2184,14 @@
       "splitTraffic": "Dividir tráfego",
       "aiEditImage": "Editar imagem com IA",
       "whatsappFlow": "Fluxo do WhatsApp",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "Agendamento de compromissos",
+      "triggerN8n": "Acionar n8n",
+      "sendMetaCapiEvent": "Enviar evento Meta CAPI",
+      "import": "Importar fluxo",
+      "export": "Exportar",
+      "importStarted": "O fluxo está sendo importado. Verifique o histórico de importações para ver os resultados.",
+      "importJsonOnly": "Somente arquivos JSON",
+      "adsConversions": "Anúncios e Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "A soma total deve ser igual a 100%.",
@@ -2136,6 +2228,10 @@
       "addSlide": "Adicionar cartão",
       "removeSlide": "Remover cartão",
       "whatsappLinkButtonIgnored": "No WhatsApp, o link deste cartão não funcionará: um cartão com um botão de link não pode ter outros botões. Ele será enviado como resposta."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Remover imagem",
+      "selectImage": "Selecionar imagens"
     },
     "additionalSteps": "Etapas adicionais",
     "delayType": {
@@ -2203,7 +2299,11 @@
     },
     "setCustomField": {
       "temporalHint": "Deixe em branco para salvar a data/hora atual."
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "Quando há botões anexados, o TikTok envia apenas os primeiros 40 caracteres desta mensagem — o restante será cortado."
+    },
+    "dataWasSaved": "Dados salvos"
   },
   "folders": {
     "heading": {
@@ -2253,32 +2353,17 @@
   },
   "ads": {
     "title": "Anúncios",
-    "nav": {
-      "clickToWhatsappAds": "Anúncios Click to WhatsApp",
-      "clickToTiktokAds": "Anúncios Click to TikTok",
-      "connectAccounts": "Conectar contas",
-      "conversionEvents": "Eventos de conversão",
-      "adsAnalytics": "Análise de anúncios",
-      "reporting": "Relatórios",
-      "ctwa": "CTWA",
-      "googleAds": "Google Ads",
-      "comingSoon": "Em breve"
+    "dashboardNav": {
+      "whatsapp": "Anúncios Click-to-WhatsApp",
+      "messenger": "Anúncios Click-to-Messenger",
+      "instagram": "Anúncios Click-to-Instagram"
     },
     "connectAccounts": {
-      "title": "Gerencie todas as suas contas de anúncios",
-      "description": "Acompanhe conversões e otimize suas campanhas de anúncios click-to-WhatsApp.",
-      "learnMore": "Saiba mais",
       "connectAdAccount": "Conectar conta de anúncios",
       "adAccountName": "Nome da conta de anúncios",
-      "disconnect": "Desconectar",
-      "empty": "Nenhuma conta de anúncios conectada ainda.",
-      "adAccountsTitle": "Contas de anúncios da Meta",
-      "adAccountsDescription": "Conecte o Facebook Ads para carregar as contas de anúncios usadas nas campanhas click-to-WhatsApp.",
       "adAccountsReconnectBanner": "O token da sua conta de anúncios da Meta expirou ou perdeu permissões. Reconecte o Facebook Ads para manter os relatórios de anúncios disponíveis.",
       "adAccountsNotConnected": "Ainda não há contas de anúncios da Meta conectadas.",
       "adAccountsEmpty": "Nenhuma conta de anúncios da Meta foi encontrada para esta conexão do Facebook Ads.",
-      "adAccountsNote": "O investimento e os públicos de retargeting vêm dessas contas de anúncios.",
-      "reconnectBanner": "Reconecte sua conta do WhatsApp para permitir o envio de eventos de conversão para a Meta.",
       "reconnect": "Reconectar",
       "reconnectSuccess": "Conta do WhatsApp reconectada.",
       "selectAccountLabel": "Conta do WhatsApp",
@@ -2288,22 +2373,9 @@
         "unverified": "Permissão não verificada"
       },
       "table": {
-        "name": "Nome",
-        "phoneNumber": "Número de telefone",
-        "wabaId": "ID da WABA",
-        "permission": "Eventos Automáticos"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google Ads",
-        "tiktok": "TikTok"
+        "wabaId": "ID da WABA"
       },
       "connectWhatsapp": {
-        "title": "Conecte sua conta do WhatsApp primeiro",
-        "description": "O rastreamento de conversão Click-to-WhatsApp precisa de uma conta do WhatsApp conectada antes que você possa vincular contas de anúncios e criar conjuntos de dados de conversão.",
-        "step1": "Conecte sua conta do WhatsApp Business em Canais.",
-        "step2": "Volte aqui para autorizar o Meta Ads e selecionar sua conta de anúncios.",
-        "step3": "Criaremos automaticamente o conjunto de dados de conversão usando sua conta do WhatsApp Business.",
         "cta": "Conectar conta do WhatsApp"
       }
     },
@@ -2311,6 +2383,8 @@
       "title": "Eventos de conversão",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "Gerenciar contas de anúncios",
@@ -2318,11 +2392,16 @@
       "selectAll": "Selecionar tudo",
       "whatsappAsset": "Ativo do WhatsApp",
       "selectWhatsappAsset": "Selecionar ativo do WhatsApp",
+      "selectIntegration": "Integração",
+      "selectIntegrationPlaceholder": "Selecionar integração",
+      "noIntegrationsConnected": "Ainda não há integrações conectadas para este canal.",
+      "connectIntegration": "Conectar um canal",
       "templates": "Modelos",
       "selectTemplates": "Selecionar modelos",
       "noTemplates": "Nenhum modelo aprovado encontrado.",
       "existingRules": "Regras existentes",
       "noRules": "Ainda não há regras de conversão para este ativo do WhatsApp.",
+      "noRulesGeneric": "Ainda não há regras de conversão para esta integração.",
       "toggleRule": "Ativar ou desativar regra",
       "deleteRule": "Excluir regra",
       "qualifyingTemplateMessageSent": "A mensagem de modelo qualificadora é enviada",
@@ -2362,24 +2441,26 @@
         "title": "Rastrear leads qualificados",
         "question": "Em que ponto da conversa você quer qualificar um contato como lead?",
         "when": "Quando",
-        "then": "Então marcar lead CTWA como"
+        "then": "Então marcar lead CTWA como",
+        "thenGeneric": "Então marcar lead como"
       },
       "trackPurchases": {
         "title": "Rastrear compras",
         "question": "Qual modelo confirma uma compra?",
         "when": "Quando",
         "then": "Então",
-        "noValueNote": "Uma compra baseada em regra registra uma conversão de Compra sem um valor de pedido — ela conta para as compras, mas adiciona 0 à receita. O valor do pedido só é capturado pelos Eventos Automáticos da Meta."
+        "noValueNote": "Uma compra baseada em regra registra uma conversão de Compra sem um valor de pedido — ela conta para as compras, mas adiciona 0 à receita. O valor do pedido só é capturado pelos Eventos Automáticos da Meta.",
+        "questionGeneric": "Em que ponto da conversa você deseja registrar uma compra?"
       }
     },
     "analytics": {
-      "title": "Análise de CTWA",
+      "title": "Análise de anúncios",
       "funnelOverview": "Visão geral do funil",
       "conversationsStarted": "Conversas iniciadas",
       "qualifiedLeads": "Leads qualificados",
       "purchases": "Compras",
       "adSpend": "Investimento em anúncios",
-      "spendAccountLevelNote": "O investimento é reportado no nível da conta de anúncios da Meta; com uma conta do WhatsApp selecionada, anúncios com apenas investimento e sem atividade no funil para essa conta ficam ocultos.",
+      "spendAccountLevelNote": "O investimento é reportado no nível da conta de anúncios da Meta; com uma conta selecionada, anúncios com apenas investimento e sem atividade no funil para essa conta ficam ocultos.",
       "revenue": "Receita",
       "roas": "ROAS",
       "revenueCurrencyNote": "A receita assume uma única moeda (USD). Contas de anúncios com moedas mistas ainda não são agregadas.",
@@ -2408,21 +2489,27 @@
       "adAccountFilter": {
         "all": "Todas as contas de anúncios",
         "label": "Conta de anúncios",
-        "note": "Anúncios com conversões, mas com investimento zero ou entrega zero no período selecionado, ficam ocultos ao filtrar por conta de anúncios."
+        "unavailable": "Não foi possível carregar as contas de anúncios — verifique a conexão de Ads desta integração, ou a conexão do Facebook Ads do workspace, nas configurações."
+      },
+      "channelFilter": {
+        "label": "Canal",
+        "allAccounts": "Todas as contas",
+        "allChannels": "Todos os canais"
       },
       "retarget": "Retargeting",
       "thoseWhoPurchased": "Quem comprou",
       "thoseWhoStartedConversation": "Quem iniciou uma conversa",
       "sendWhatsappBroadcast": "Enviar transmissão do WhatsApp",
+      "retargetOnChannel": "Retargeting no {channel}",
       "from": "De",
       "to": "Até",
       "unattributed": "Não atribuído",
       "retargetDialog": {
-        "title": "Fazer retargeting de contatos CTWA",
+        "title": "Fazer retargeting de contatos de anúncios",
         "createAudience": "Criar público",
         "useExistingAudience": "Usar público existente",
         "audienceName": "Nome do público",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "Anúncios",
         "confirm": "Iniciar sincronização",
         "success": "Sincronização do público de retargeting adicionada à fila.",
         "error": "Falha ao adicionar a sincronização do público de retargeting à fila."
@@ -2434,7 +2521,7 @@
         "failed": "Falhou",
         "skippedNoScope": "Ignorado (sem escopo)",
         "skippedRegion": "Ignorado (região)",
-        "noScopeWarning": "Algumas conversões não foram enviadas porque esta conta do WhatsApp não tem a permissão de eventos. Reconecte-a para ativar os relatórios de Eventos Automáticos.",
+        "noScopeWarning": "Algumas conversões não foram enviadas porque esta conta não tem a permissão de eventos. Reconecte-a para ativar os relatórios de Eventos Automáticos.",
         "reconnectCta": "Reconectar conta",
         "empty": "Ainda não há eventos de conversão neste período."
       },
@@ -2447,7 +2534,8 @@
         "contactName": "Nome do contato",
         "phone": "Telefone",
         "adId": "ID do anúncio",
-        "occurredAt": "Ocorreu em"
+        "occurredAt": "Ocorreu em",
+        "channel": "Canal"
       },
       "empty": "Ainda não há dados. Conecte uma conta de anúncios e comece a rastrear conversões."
     }
@@ -2824,6 +2912,7 @@
     "disconnectFeatureDescription": "Tem certeza de que deseja desconectar {feature}?",
     "disconnectSuccess": "{feature} desconectado com sucesso",
     "reply": "Responder",
+    "privateReply": "Resposta privada",
     "viewMessage": "Ver mensagem",
     "changeLikeState": "Alterar estado da curtida",
     "changeHideState": "Alterar estado de ocultação",
@@ -2841,6 +2930,8 @@
     "editMessagePlaceholder": "Edite sua mensagem...",
     "saveEdit": "Salvar",
     "cancelEdit": "Cancelar",
+    "replaceAttachment": "Substituir anexo",
+    "addAttachment": "Adicionar anexo",
     "failedToCopy": "Falha ao copiar",
     "failedToPreviewImage": "Falha ao visualizar a imagem",
     "loadingData": "Carregando dados...",
@@ -2864,6 +2955,9 @@
     "duplicatedSuccess": "{feature} duplicado com sucesso",
     "duplicateConfirmation": "Isso criará uma cópia de {feature}.",
     "deleteFeature": "Excluir {feature}",
+    "resetFeature": "Redefinir {feature}",
+    "resetConfirmation": "Isso limpará os valores dos {feature} selecionados.\nEsta ação não pode ser desfeita.",
+    "resetSuccess": "{feature} redefinido com sucesso",
     "deleteConfirmation": "Você tem certeza absoluta?\nEsta ação não pode ser desfeita.\nIsso excluirá permanentemente {feature} dos nossos servidores.",
     "addFeature": "Adicionar {feature}",
     "signOutConfirmation": "Tem certeza de que deseja sair?",
@@ -2898,9 +2992,6 @@
     "enableSuccess": "{feature} ativado com sucesso",
     "userInactive": "O usuário está inativo há mais de 7 dias",
     "messagingWindowClosed": "A mensagem não pode ser enviada fora da janela permitida",
-    "sendHumanAgentTag": "Enviar uma mensagem com a tag HUMAN_AGENT",
-    "warning": "Atenção!",
-    "humanAgentWarningDescription": "Você só pode responder à mensagem de um usuário dentro de 7 dias quando o problema não puder ser resolvido de forma razoável em até 24 horas. Alguns exemplos são fins de semana, feriados ou casos que exigem mais de um dia para serem concluídos. Não use esta opção por nenhum outro motivo, pois isso pode colocar sua Página do Facebook ou conta do Instagram em risco. Em caso de dúvida, não continue.",
     "humanAgentWindowExpired": "A janela de mensagens expirou. O contato precisa enviar uma mensagem primeiro para reabrir a conversa.",
     "restoreVersionSuccess": "Fluxo restaurado para a versão selecionada",
     "revertToPublishedSuccess": "O rascunho foi revertido para a versão publicada",
@@ -2915,7 +3006,13 @@
     "deleteNodeError": "Não foi possível excluir o bloco. Tente novamente.",
     "redoHistoryCleared": "Histórico de refazer limpo",
     "historyDepth": "({count})",
-    "none": "Nenhum"
+    "none": "Nenhum",
+    "tiktokCardTitleTooLong": "O TikTok vai cortar esta mensagem: com botões anexados, apenas os primeiros 40 caracteres são enviados. Encurte a mensagem ou remova os botões.",
+    "waTemplateMpmNoProducts": "Adicione pelo menos um produto a este botão multiproduto antes de publicar.",
+    "waTemplateMpmTooManySections": "Um botão multiproduto pode ter no máximo 10 seções. Remova algumas seções antes de publicar.",
+    "waTemplateMpmTooManyProducts": "Um botão multiproduto pode ter no máximo 30 produtos no total. Remova alguns produtos antes de publicar.",
+    "waTemplateLtoExpirationRequired": "Escolha uma data de expiração para a oferta por tempo limitado antes de enviar.",
+    "waTemplateMpmIncompleteProducts": "Cada seção precisa de pelo menos um produto selecionado — remova linhas vazias ou escolha um produto."
   },
   "instagram": {
     "description": "Esta integração permite criar bots do Instagram.",
@@ -2925,8 +3022,8 @@
     "reconnect": "Reconectar",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "Configurações gerais",
+      "conversionsApi": "Otimização de anúncios"
     }
   },
   "coexist": {
@@ -2941,6 +3038,8 @@
     "toggleHelper": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte.",
     "toggleHelperMessenger": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte a página do Messenger.",
     "toggleHelperWhatsapp": "A reativação só funciona se a Meta tiver dados armazenados em buffer (dentro de 24 horas após a integração). Caso contrário, desconecte e reconecte o número do WhatsApp.",
+    "aiReadsSyncedHistoryLabel": "A IA lê o histórico sincronizado",
+    "aiReadsSyncedHistoryHelper": "Quando desativado, a IA vê apenas mensagens novas.",
     "success": {
       "enabled": "Sincronização iniciada. Os contatos e as mensagens do histórico aparecerão em breve.",
       "disabled": "Sincronização desativada."
@@ -2974,17 +3073,19 @@
     "selectPage": {
       "noPagesTitle": "Nenhuma Página do Facebook encontrada",
       "noPagesDescription": "Páginas dentro de um Gerenciador de Negócios exigem acesso a ele durante a conexão. Reconecte o Messenger e conceda todas as permissões solicitadas.",
+      "noConnectablePagesTitle": "Nenhuma Página disponível para conectar",
+      "noConnectablePagesDescription": "Você não é administrador desta Página",
       "bmLookupFailedTitle": "Algumas páginas do Gerenciador de Negócios podem não aparecer",
       "bmLookupFailedDescription": "Reconecte o Messenger e conceda acesso ao Gerenciador de Negócios para que as páginas gerenciadas por ele possam ser listadas.",
       "alreadyConnectedNote": "Esta página já está conectada",
-      "notAdminNote": "É necessária permissão total de administrador na página para conectá-la",
+      "notAdminNote": "Você não é administrador desta Página",
       "tryAgain": "Tentar reconectar"
     },
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "Configurações gerais",
       "messageTemplates": "Modelos de mensagem",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Otimização de anúncios"
     },
     "messageTemplate": {
       "params": {
@@ -3317,23 +3418,38 @@
       "params": {
         "couponCode": "Código do cupom",
         "couponCodePlaceholder": "Insira o código do cupom",
-        "quickReplyPayload": "Carga útil da resposta rápida",
-        "quickReplyPayloadPlaceholder": "Insira a carga útil (opcional)",
         "flowToken": "Token do fluxo",
         "flowTokenPlaceholder": "Insira o token do fluxo",
         "flowNotSynced": "Sincronize os fluxos do WhatsApp para mapear os campos enviados.",
-        "catalogProductId": "ID do produto",
-        "catalogProductIdPlaceholder": "Insira o ID do produto no varejista",
+        "catalogProductId": "Produto do catálogo",
+        "catalogProductIdPlaceholder": "Pesquisar produtos…",
         "carouselCard": "Cartão {index}",
         "limitedTimeOffer": "Horário de expiração da oferta",
-        "limitedTimeOfferPlaceholder": "Insira o horário de expiração em milissegundos",
-        "limitedTimeOfferHelp": "Timestamp Unix em milissegundos no qual a oferta expira",
+        "limitedTimeOfferPlaceholder": "Escolher data e hora de expiração",
+        "limitedTimeOfferHelp": "O horário de expiração é enviado exatamente como escolhido.",
         "location": "Localização",
         "latitude": "Latitude",
         "longitude": "Longitude",
         "locationName": "Nome do local (opcional)",
         "locationAddress": "Endereço (opcional)",
-        "enterFormatUrl": "Insira a URL de {format}"
+        "enterFormatUrl": "Insira a URL de {format}",
+        "catalogUseDefault": "Usar miniatura padrão do catálogo",
+        "catalogNotConnectedGuidance": "Conecte um Catálogo da Meta para selecionar um produto.",
+        "catalogSetupLink": "Ir para as configurações do Catálogo",
+        "catalogSelectedProductFallback": "Produto: {retailerId}",
+        "limitedTimeOfferBadge": "Expira em {date}",
+        "limitedTimeOfferExpiredBadge": "Expirou em {date}",
+        "mpmSections": "Produtos",
+        "mpmSectionTitlePlaceholder": "Título da seção (opcional)",
+        "mpmAddSection": "Adicionar seção",
+        "mpmRemoveSection": "Remover seção",
+        "mpmAddProduct": "Adicionar produto",
+        "mpmRemoveProduct": "Remover produto",
+        "mpmNoProductsHelp": "Adicione pelo menos um produto antes de publicar.",
+        "mpmSectionLimitReached": "Máximo de 10 seções atingido.",
+        "mpmProductLimitReached": "Máximo de 30 produtos atingido.",
+        "mpmProductsSummary": "{productCount} produtos em {sectionCount} seções",
+        "unsupportedButtonParam": "Este tipo de botão ainda não é compatível."
       }
     },
     "sampleBodyCardContent": {
@@ -3359,7 +3475,8 @@
       "messageTemplates": "Modelos de mensagem",
       "profile": "Perfil",
       "usefulLinks": "Links úteis",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "Otimização de anúncios",
+      "settings": "Configurações"
     },
     "accountHealths": {
       "title": "Gerencie sua conta do WhatsApp",
@@ -3489,11 +3606,17 @@
       "label": "Cabeçalho do modelo"
     },
     "transferPhoneNumber": "Transferir telefone de outro provedor do WhatsApp",
-    "signupSessionExpired": "Sua sessão de cadastro do WhatsApp expirou. Inicie a conexão novamente."
+    "signupSessionExpired": "Sua sessão de cadastro do WhatsApp expirou. Inicie a conexão novamente.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Eventos Automáticos",
+        "description": "Envie automaticamente eventos de conversão deste número do WhatsApp para a Meta. Se a permissão estiver faltando, reconecte a conta para concedê-la."
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Atualizar permissões",
+    "reconnect": "Reconectar",
     "duplicated": "Esta conta do Zalo OA já foi conectada a outro espaço de trabalho.",
     "tagSync": {
       "title": "Sincronização de tags",
@@ -3562,7 +3685,7 @@
       "startAnotherFlow": "Iniciar outro fluxo",
       "notifyAdmins": "Notificar administradores",
       "transferConversationToHuman": "Transferir conversa para um atendente",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Enviar evento Meta CAPI"
     },
     "triggerGoesOff": "O gatilho é acionado",
     "before": "Antes",
@@ -3574,7 +3697,8 @@
     "at": "Às"
   },
   "errorLogs": {
-    "title": "Logs de erros"
+    "title": "Logs de erros",
+    "unknownContact": "Contato desconhecido"
   },
   "developerAccessToken": {
     "title": "Token de acesso à API",
@@ -3597,7 +3721,23 @@
     "exportTakingLongDescription": "A exportação ainda está sendo processada. Você pode fechar esta caixa de diálogo e verificar novamente em alguns minutos no histórico de exportações."
   },
   "auditLogs": {
-    "title": "Logs de auditoria"
+    "title": "Logs de auditoria",
+    "columns": {
+      "user": "Usuário",
+      "action": "Ação",
+      "detail": "Detalhe",
+      "ipAddress": "Endereço IP",
+      "date": "Data"
+    },
+    "filters": {
+      "from": "De",
+      "to": "Até",
+      "user": "Usuário",
+      "userPlaceholder": "ID do usuário",
+      "keyword": "Palavra-chave",
+      "keywordPlaceholder": "Ação ou detalhe",
+      "allAdmins": "Todos os admins"
+    }
   },
   "customFields": {
     "title": "Campos personalizados",
@@ -4104,6 +4244,67 @@
     "title": "Códigos QR",
     "description": "Crie códigos QR que direcionam aos fluxos do seu chatbot."
   },
+  "dynamicImages": {
+    "title": "Imagens Dinâmicas",
+    "description": "Gere imagens personalizadas por contato a partir de um fundo e camadas de texto/imagem/QR.",
+    "publicUrl": {
+      "label": "URL pública",
+      "hint": "Copie e cole a URL no seu fluxo, transmissão ou sequência para enviar imagens personalizadas."
+    },
+    "editor": {
+      "addElement": "Adicionar elemento",
+      "addImage": "Adicionar imagem",
+      "addText": "Adicionar texto",
+      "addQrCode": "Adicionar código QR",
+      "template": "Modelo",
+      "templateDialogTitle": "Escolher um modelo",
+      "templateDialogDescription": "Selecionar um modelo substitui todas as camadas atuais.",
+      "layers": "Camadas",
+      "noLayers": "Ainda não há camadas. Adicione um elemento para começar.",
+      "deleteLayer": "Excluir camada",
+      "layerNameImage": "Imagem",
+      "layerNameText": "Texto",
+      "layerNameQrCode": "Código QR",
+      "editElement": "Editar elemento",
+      "selectElementHint": "Selecione um elemento na tela para editar suas propriedades.",
+      "width": "Largura",
+      "height": "Altura",
+      "priority": "Prioridade",
+      "imageType": "Tipo de imagem",
+      "imageTypeUrl": "URL da imagem",
+      "imageTypeAvatarUser": "Avatar do contato",
+      "imageTypeCustomField": "Campo personalizado",
+      "imageUrl": "URL da imagem",
+      "uploadImage": "Enviar imagem",
+      "customField": "Campo personalizado",
+      "imageStyle": "Estilo da imagem",
+      "imageStyleSquare": "Quadrado",
+      "imageStyleCircle": "Círculo",
+      "qrText": "Conteúdo do código QR",
+      "qrSize": "Tamanho",
+      "qrColor": "Cor",
+      "qrLogo": "Logotipo",
+      "uploadLogo": "Enviar logotipo",
+      "textContent": "Conteúdo do texto",
+      "fontSize": "Tamanho da fonte",
+      "fontFamily": "Família da fonte",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "Alinhamento",
+      "alignLeft": "Esquerda",
+      "alignCenter": "Centro",
+      "alignRight": "Direita",
+      "color": "Cor",
+      "bold": "Negrito",
+      "italic": "Itálico",
+      "uppercase": "Maiúsculas"
+    },
+    "preview": {
+      "error": "Falha ao carregar a imagem dinâmica vinculada. Ela pode ter sido excluída."
+    }
+  },
   "magicLinks": {
     "title": "Links mágicos",
     "description": "Crie links diretos que redirecionam para sua URL com parâmetros de consulta."
@@ -4125,6 +4326,11 @@
     "noWorkspaces": "Você ainda não tem nenhum espaço de trabalho.",
     "owner": "Proprietário"
   },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "A página que você procura não existe ou pode ter sido movida.",
+    "backToHome": "Voltar para a página inicial"
+  },
   "editProfile": {
     "title": "Editar perfil"
   },
@@ -4134,11 +4340,85 @@
   },
   "appointmentScheduling": {
     "title": "Agendamento de compromissos",
-    "description": "Crie e gerencie seus agendamentos de compromissos."
+    "description": "Crie e gerencie seus agendamentos de compromissos.",
+    "flowModes": {
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
+    },
+    "fields": {
+      "mode": "Modo",
+      "dateTimeFieldId": "Salvar data selecionada em",
+      "dateTimeFieldIdSource": "Campo de data/hora",
+      "startDateFieldId": "Campo de data de início",
+      "endDateFieldId": "Campo de data de término",
+      "resultUsedByAI": "Usar resultado para IA",
+      "outputCustomFieldId": "Salvar resposta em um campo personalizado",
+      "startDateFieldIdSelected": "Salvar data de início selecionada em",
+      "endDateFieldIdSelected": "Salvar data de término selecionada em"
+    },
+    "dialogDescriptions": {
+      "flowStep": "Escolha como esta etapa do fluxo agenda compromissos."
+    }
   },
   "templates": {
     "title": "Modelos",
-    "description": "Crie e gerencie seus modelos."
+    "description": "Crie e gerencie seus modelos.",
+    "share": {
+      "label": "Compartilhar",
+      "enabled": "Compartilhado",
+      "disabled": "Não compartilhado",
+      "dialogTitle": "Compartilhar modelo",
+      "dialogDescription": "Qualquer pessoa com este link pode instalar uma cópia deste modelo em um espaço de trabalho da sua organização.",
+      "enableLabel": "Ativar link de compartilhamento",
+      "linkLabel": "Link de compartilhamento",
+      "description": "Qualquer pessoa com o link pode instalar este modelo em seu próprio espaço de trabalho."
+    },
+    "installs": {
+      "title": "Instalações",
+      "resources": "Recursos",
+      "warnings": "Avisos",
+      "completedAt": "Concluído em",
+      "autoUpdate": "Atualização automática"
+    },
+    "form": {
+      "contents": "Conteúdo do modelo",
+      "comingSoon": "Em breve",
+      "selectAll": "Selecionar tudo",
+      "selectedCount": "{count} selecionado(s)",
+      "details": "Detalhes",
+      "permissions": "Permissões padrão",
+      "allowEdit": "Permitir edição após a instalação",
+      "allowDelete": "Permitir exclusão após a instalação",
+      "publisherName": "Nome do publicador",
+      "youtubeVideoId": "ID do vídeo do YouTube",
+      "youtubeVideoIdDescription": "O ID de 11 caracteres da URL do vídeo, ex.: \"dQw4w9WgXcQ\" em youtube.com/watch?v=dQw4w9WgXcQ",
+      "testLink": "Link de teste",
+      "imageUrl": "Imagem de capa",
+      "installBehavior": "Comportamento de instalação",
+      "createInstallFolder": "Instalar em uma pasta dedicada",
+      "createInstallFolderDescription": "Agrupa todos os recursos instalados em uma nova pasta com o nome deste modelo.",
+      "defaultAutoUpdate": "Marcar instalações para atualização por padrão",
+      "defaultAutoUpdateDescription": "Novas instalações mostrarão um aviso de atualização disponível sempre que você republicar este modelo."
+    },
+    "categories": {
+      "flows": "Fluxos",
+      "customFields": "Campos personalizados",
+      "tags": "Tags",
+      "products": "Produtos",
+      "productCategories": "Categorias de produtos",
+      "aiFunctions": "Funções de IA",
+      "aiAgents": "Agentes de IA",
+      "calendars": "Calendários de compromissos",
+      "webchats": "Webchats",
+      "keywords": "Palavras-chave",
+      "entryPointLinks": "Links de ponto de entrada",
+      "triggers": "Gatilhos",
+      "fbCommentAutomations": "Automações de comentários do Facebook",
+      "settings": "Configurações"
+    }
   },
   "qrCodeGenerator": {
     "title": "Gerador de códigos QR",
@@ -4253,6 +4533,19 @@
     "invalidDescription": "Este link é inválido ou expirou.",
     "unavailableTitle": "Cancelamento de inscrição indisponível.",
     "unavailableDescription": "Este espaço de trabalho não está mais disponível."
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "Este link não está mais disponível.",
+    "invalidDescription": "Este link de compartilhamento do modelo é inválido, está desativado ou expirou.",
+    "byPublisher": "Por {publisherName}",
+    "includes": "Este modelo inclui",
+    "videoTitle": "Vídeo de prévia do modelo",
+    "tryItOut": "Experimente",
+    "signInToInstall": "Faça login para instalar",
+    "selectWorkspace": "Selecione um espaço de trabalho",
+    "install": "Instalar",
+    "installStarted": "Instalação iniciada",
+    "noEligibleWorkspaces": "Você não tem um espaço de trabalho elegível para instalar este modelo."
   },
   "extensionsMe": {
     "actions": {
@@ -4688,100 +4981,737 @@
       "iconSearchLink": "Explorar ícones do Lucide →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "Agendar compromisso",
+    "badge": "Compromisso",
+    "timezone": "Fuso horário",
+    "empty": "Nenhum horário disponível foi encontrado.",
+    "noSelection": "Escolha um horário",
+    "actions": {
+      "book": "Agendar compromisso",
+      "viewDetails": "Ver detalhes"
+    },
+    "errors": {
+      "invalidTokenTitle": "Este link de agendamento está indisponível.",
+      "invalidTokenDescription": "O link pode estar inválido ou expirado. Solicite um novo link de agendamento.",
+      "staleSlot": "Este horário não está mais disponível. Escolha outro horário.",
+      "availabilityChanged": "A disponibilidade mudou enquanto você escolhia um horário. Escolha novamente.",
+      "submitFailed": "Não foi possível concluir esta solicitação. Tente novamente."
+    },
+    "success": {
+      "title": "Seu compromisso foi agendado.",
+      "description": "Os detalhes do compromisso estão prontos."
+    },
+    "schedule": {
+      "metadataTitle": "Detalhes do compromisso",
+      "defaultMessage": "Seu compromisso foi agendado.",
+      "unknownInvitee": "Convidado",
+      "fields": {
+        "invitee": "Convidado",
+        "time": "Horário",
+        "timezone": "Fuso horário",
+        "location": "Local"
+      },
+      "status": {
+        "scheduled": "Agendado",
+        "cancelled": "Cancelado"
+      },
+      "locationTypes": {
+        "inPerson": "Reunião presencial",
+        "phoneCall": "Ligação telefônica",
+        "onlineMeeting": "Reunião on-line"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "Cancelar compromisso",
+      "title": "Cancelar compromisso",
+      "description": "Cancelar {calendar} às {time}.",
+      "action": "Cancelar compromisso",
+      "cancelledTitle": "Compromisso cancelado",
+      "cancelledDescription": "Este compromisso foi cancelado.",
+      "unavailableTitle": "Cancelamento indisponível",
+      "unavailableDescription": "Este compromisso já está cancelado, excluído ou no passado."
+    },
+    "range": {
+      "metadataTitle": "Verificar disponibilidade",
+      "empty": "Não selecionado",
+      "successTitle": "Intervalo de datas recebido.",
+      "successDescription": "Estamos verificando os horários disponíveis para o compromisso.",
+      "fields": {
+        "startDate": "Data de início",
+        "endDate": "Data de término",
+        "startTime": "Horário de início",
+        "endTime": "Horário de término"
+      },
+      "actions": {
+        "skip": "Pular"
+      },
+      "errors": {
+        "invalidRange": "A data de término deve ser igual ou posterior à data de início."
+      },
+      "timezoneHint": "Os horários são exibidos em {timezone}."
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "Selecionar data",
+    "date": {
+      "title": "Selecione uma data"
+    },
+    "datetime": {
+      "title": "Selecione uma data e hora"
+    },
+    "noSelection": "Escolha uma data",
+    "actions": {
+      "submit": "Enviar"
+    },
+    "success": {
+      "title": "Dados salvos",
+      "description": "Você já pode fechar esta aba."
+    },
+    "errors": {
+      "invalidTokenTitle": "Este link está indisponível.",
+      "invalidTokenDescription": "O link pode estar inválido ou expirado. Solicite um novo link.",
+      "submitFailed": "Não foi possível concluir esta solicitação. Tente novamente."
+    },
+    "monthLabel": "Mês",
+    "yearLabel": "Ano"
+  },
+  "appointments": {
+    "title": "Compromissos",
+    "statuses": {
+      "scheduled": "Agendado",
+      "cancelled": "Cancelado"
+    },
+    "messages": {
+      "empty": "Ainda não há compromissos."
+    }
+  },
+  "appointmentManagement": {
+    "title": "Compromissos",
+    "singular": "Compromisso",
+    "unknownContact": "Contato desconhecido",
+    "searchPlaceholder": "Pesquisar por nome...",
+    "tabs": {
+      "next": "Próximos",
+      "past": "Anteriores"
+    },
+    "fields": {
+      "name": "Nome",
+      "date": "Data",
+      "status": "Status",
+      "calendar": "Calendário"
+    },
+    "statuses": {
+      "scheduled": "Agendado",
+      "cancelled": "Cancelado"
+    },
+    "actions": {
+      "cancelAppointment": "Cancelar compromisso"
+    },
+    "dialogs": {
+      "cancelTitle": "Cancelar compromisso",
+      "cancelDescription": "Cancele este compromisso e execute os efeitos colaterais do cancelamento.",
+      "deleteTitle": "Excluir compromisso",
+      "deleteDescription": "Exclua este compromisso da lista de gerenciamento. Isso não executará o fluxo de cancelamento."
+    },
+    "messages": {
+      "cancelled": "Compromisso cancelado.",
+      "deleted": "Compromisso excluído."
+    }
+  },
+  "appointmentCalendars": {
+    "title": "Calendários de compromissos",
+    "singular": "Calendário de compromissos",
+    "addNew": "Adicionar novo",
+    "none": "Nenhum",
+    "addReminder": "Adicionar lembrete",
+    "reminderSummary": "Enviar lembrete - {calendar} {timing}.",
+    "noExternalConnections": "Ainda não há conexões com calendários externos",
+    "dialogDescriptions": {
+      "create": "Dê um nome ao seu calendário de compromissos para começar.",
+      "rename": "Renomeie este calendário de compromissos."
+    },
+    "tabs": {
+      "calendars": "Calendários",
+      "appointments": "Compromissos",
+      "externalCalendars": "Calendários externos"
+    },
+    "sections": {
+      "appointment": "Qual é o seu compromisso",
+      "availability": "Quando as pessoas podem agendar?",
+      "duration": "Quanto tempo dura o seu compromisso?",
+      "location": "Onde o compromisso vai acontecer?",
+      "notifications": "Notificações",
+      "restrictions": "Restrições",
+      "externalCalendar": "Conectar o Google Calendar"
+    },
+    "fields": {
+      "description": "Descrição",
+      "timezone": "Fuso horário",
+      "locationType": "Tipo de local",
+      "locationDetail": "Detalhe",
+      "durationMinutes": "Duração do compromisso",
+      "bufferAfterMinutes": "Adicionar tempo após os seus compromissos",
+      "scheduleWindowType": "As pessoas podem agendar",
+      "rollingDays": "Dias contínuos",
+      "minAdvanceDays": "Mínimo de dias de antecedência",
+      "startDate": "Data de início",
+      "endDate": "Data de término",
+      "specificDate": "Data",
+      "maxAppointmentsPerUser": "Máximo de compromissos por usuário",
+      "maxAppointmentsUnlimited": "Ilimitado",
+      "dailyLimitEnabled": "Limite diário",
+      "maxPerDay": "Máximo por dia",
+      "allowGroupMeeting": "Permitir reunião em grupo",
+      "maxPerSlot": "Máximo por horário",
+      "confirmationMessage": "Mensagem de confirmação",
+      "confirmationFlowId": "Fluxo de confirmação",
+      "cancellationFlowId": "Fluxo de cancelamento",
+      "externalConnectionId": "Calendário externo",
+      "reminders": "Lembretes",
+      "reminderTimingValue": "Valor",
+      "reminderTimingUnit": "Unidade"
+    },
+    "locationTypes": {
+      "inPerson": "Reunião presencial",
+      "phoneCall": "Ligação telefônica",
+      "onlineMeeting": "Reunião on-line"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "Dentro de um número contínuo de dias no futuro",
+      "dateRange": "Dentro de um intervalo de datas",
+      "specificDay": "Um dia específico",
+      "anyFutureDate": "Em qualquer data futura"
+    },
+    "reminderTimingUnits": {
+      "minutes": "Minutos antes",
+      "hours": "Horas antes",
+      "days": "Dias antes"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {# minuto antes} other {# minutos antes}}",
+      "hours": "{count, plural, one {uma hora antes} other {# horas antes}}",
+      "days": "{count, plural, one {um dia antes} other {# dias antes}}"
+    },
+    "weekdays": {
+      "0": "Domingo",
+      "1": "Segunda-feira",
+      "2": "Terça-feira",
+      "3": "Quarta-feira",
+      "4": "Quinta-feira",
+      "5": "Sexta-feira",
+      "6": "Sábado"
+    },
+    "weekdayEditor": {
+      "description": "Defina os intervalos de horário disponíveis para este dia.",
+      "unavailable": "Indisponível",
+      "overlapWarning": "Alguns intervalos se sobrepõem. O tempo sobreposto não é contado duas vezes.",
+      "addInterval": "Adicionar intervalo",
+      "startTime": "Horário de início",
+      "endTime": "Horário de término"
+    },
+    "tooltips": {
+      "timezone": "O fuso horário em que você está criando este calendário. As pessoas verão a disponibilidade com base no fuso horário delas.",
+      "confirmationFlow": "O fluxo que é enviado quando o usuário agenda um compromisso.",
+      "cancellationFlow": "O fluxo que é enviado quando um compromisso é cancelado.",
+      "reminders": "Envie lembretes para relembrar o convidado sobre o compromisso.",
+      "appointmentDuration": "Defina quanto tempo o seu compromisso vai durar.",
+      "bufferAfterMinutes": "Dê a si mesmo um tempo extra para finalizar os compromissos agendados.",
+      "peopleCanSchedule": "Defina um intervalo de datas em que você pode aceitar reuniões.",
+      "maxAppointmentsPerUser": "O número máximo de compromissos futuros que um usuário pode agendar.",
+      "rollingDays": "Permitir agendamento com até quantos dias no futuro",
+      "minAdvanceDays": "Exija que os agendamentos sejam feitos com pelo menos esse número de dias de antecedência. Use 0 para permitir agendamentos no mesmo dia.",
+      "dailyLimit": "O número máximo de pessoas que podem agendar por dia.",
+      "allowGroupMeeting": "Permita que várias pessoas agendem no mesmo horário.",
+      "externalCalendar": "Conecte o Google Calendar para sincronizar seus compromissos."
+    },
+    "minutesLabel": "{count} minutos"
+  },
+  "externalCalendars": {
+    "title": "Calendários externos",
+    "connectGoogle": "Conectar Google",
+    "emptyEmail": "Sem e-mail",
+    "fields": {
+      "provider": "Provedor",
+      "email": "E-mail",
+      "calendarId": "ID do calendário",
+      "connected": "Conectado",
+      "date": "Data"
+    },
+    "providers": {
+      "googleCalendar": "Google Calendar"
+    },
+    "dialogs": {
+      "editTitle": "Editar ID do calendário",
+      "editDescription": "Escolha o ID do Google Calendar para verificar conflitos e criar eventos de compromissos.",
+      "deleteTitle": "Desconectar calendário",
+      "deleteDescription": "Desconecte este Google Calendar do agendamento de compromissos."
+    },
+    "messages": {
+      "connected": "Google Calendar conectado.",
+      "connectFailed": "Não foi possível conectar o Google Calendar. Verifique as configurações do OAuth do Google e o acesso à API do Calendar e tente novamente.",
+      "calendarIdUpdated": "ID do calendário atualizado.",
+      "disconnected": "Calendário desconectado."
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "Agendamento",
+    "comingSoonTitle": "Página de agendamento em breve",
+    "comingSoonDescription": "Esta página pública de agendamento ainda não está disponível."
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Envie eventos LeadSubmitted de conversas do Messenger, Instagram e WhatsApp para a Meta.",
+    "datasetId": "ID do conjunto de dados",
+    "reconnect": "Reconectar permissões",
+    "connectViaFacebook": "Conectar via Facebook",
+    "unsupportedExplanation": "Esta conta do Instagram foi conectada com o Instagram Business Login. Conecte a conta via Facebook para usar a Meta Conversions API.",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Enfileire um evento LeadSubmitted para Messenger, Instagram ou WhatsApp.",
+      "whatsappNote": "Os eventos do WhatsApp são enviados apenas para conversas iniciadas a partir de um anúncio click-to-WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "Pronto",
+      "missingPermission": "Permissão necessária",
+      "unverified": "Não verificado",
+      "unsupported": "Não compatível",
+      "notConnected": "Não conectado"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "Esta integração tem a permissão da Meta necessária para eventos da Conversions API.",
+      "missingPermission": "Reconecte esta integração e conceda a permissão da Meta solicitada.",
+      "unverified": "As configurações do aplicativo da plataforma não estão disponíveis, portanto a permissão da CAPI não pode ser verificada.",
+      "unsupported": "A Meta Conversions API para Instagram exige uma conta conectada por meio do Facebook Login for Business.",
+      "notConnected": "A Conversions API é uma ferramenta empresarial da Meta que permite compartilhar dados com a Meta para melhorar o desempenho dos anúncios."
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Falha ao iniciar a reconexão da Meta CAPI.",
+      "messengerNotFound": "Integração do Messenger não encontrada.",
+      "instagramNotFound": "Integração do Instagram não encontrada.",
+      "instagramRequiresFacebook": "A CAPI do Instagram exige conexão via Facebook.",
+      "saveFailed": "Não foi possível salvar. Tente novamente.",
+      "datasetRequired": "Salve um ID do conjunto de dados antes de adicionar um token de acesso.",
+      "invalidToken": "Este token não conseguiu acessar o conjunto de dados.",
+      "invalidDatasetId": "Insira um Dataset ID válido (apenas números).",
+      "whatsappNotFound": "Integração do WhatsApp não encontrada."
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
+        "label": "Tipo de evento",
         "leadSubmitted": "Lead Submitted"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "Valor",
+      "valuePlaceholder": "por exemplo, 250",
+      "currency": "Moeda",
+      "currencyPlaceholder": "por exemplo, USD",
+      "contentCategory": "Categoria do conteúdo",
+      "contentCategoryPlaceholder": "A categoria do conteúdo associado ao evento",
+      "contentName": "Nome do conteúdo",
+      "contentNamePlaceholder": "O nome da página ou produto associado ao evento",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Cole o ID do conjunto de dados do Gerenciador de Eventos",
+    "saveDataset": "Salvar",
+    "accessToken": "Token de acesso (opcional)",
+    "accessTokenHint": "Cole um token do Gerenciador de Eventos para enviar eventos com seu próprio token em vez do token da página conectada. Requer um ID do conjunto de dados.",
+    "accessTokenPlaceholder": "Token de acesso do Gerenciador de Eventos",
+    "saveToken": "Salvar token",
+    "tokenSaved": "Token salvo",
+    "removeToken": "Remover",
+    "saved": "Salvo",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "Os eventos podem levar até 40 minutos para aparecer no Gerenciador de Eventos e serem exibidos como Meta Leads no Gerenciador de Anúncios."
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "Conectado",
+    "disconnect": "Desconectar",
+    "openEventManager": "Abrir Gerenciador de Eventos",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
+        "title": "Conectar via Facebook",
+        "description": "Use a conexão existente da sua página e, em seguida, escolha um ID do conjunto de dados.",
+        "connect": "Criar conjunto de dados",
         "connectedLabel": "via Facebook"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "Conexão personalizada",
+        "description": "Use um ID do conjunto de dados e um token de acesso do Meta Gerenciador de Eventos.",
+        "start": "Configurar conexão personalizada",
+        "connect": "Conectar",
+        "connectedLabel": "Personalizada"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
+        "title": "Conectar via WhatsApp",
+        "description": "Use sua conexão do WhatsApp e, em seguida, escolha um ID do conjunto de dados.",
+        "connect": "Criar conjunto de dados",
         "connectedLabel": "via WhatsApp"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "Escolha um ID do conjunto de dados",
+      "description": "Informe um ID do conjunto de dados existente ou deixe em branco para criar um automaticamente.",
       "save": "Salvar",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "createDataset": "Criar conjunto de dados",
+      "caveat": "Um ID do conjunto de dados que não está vinculado a esta Página ou conta do Instagram pode não atribuir os eventos corretamente. Deixe este campo em branco para criar um conjunto de dados vinculado automaticamente."
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "Conectar"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
+  },
+  "minigames": {
+    "title": "Gamificação",
+    "description": "Crie e gerencie minijogos de sorteio para seus clientes.",
+    "types": {
+      "luckyWheel": "Roleta da Sorte",
+      "jackpot": "Jackpot",
+      "gashapon": "Gashapon",
+      "drawLots": "Sorteio de Papeletas",
+      "scratchOff": "Raspadinha"
+    },
+    "createDialog": {
+      "title": "Escolha um tipo de minijogo",
+      "comingSoon": "Em breve"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "Soma de todas as probabilidades: {value}%",
+      "loseProbability": "Probabilidade de perder: {value}%",
+      "winProbability": "Probabilidade de ganhar: {value}%",
+      "newPrize": "Novo Prêmio",
+      "prizeNameCustomFieldLabel": "Salvar o nome do prêmio no Campo personalizado"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "Editar Prêmio",
+      "nonWinningTitle": "Editar Configuração de Não Premiado",
+      "prizeNameLabel": "Nome do Prêmio",
+      "nonWinningTitleLabel": "Título",
+      "loseImageDescription": "Tamanho recomendado 120x120px",
+      "quantityLabel": "Quantidade do prêmio",
+      "quantityDescription": "Número de vezes que esse prêmio ainda pode ser ganho; diminui em 1 a cada vitória. Deixe em branco para ilimitado."
+    },
+    "outcomeMessage": {
+      "enableWin": "Enviar mensagem ao ganhador que recebeu o prêmio",
+      "enableLose": "Enviar uma mensagem quando o jogador não ganhar",
+      "mode": "Tipo de mensagem",
+      "modeText": "Texto",
+      "modeFlow": "Fluxo",
+      "text": "Mensagem"
+    },
+    "winningMessageDialog": {
+      "title": "Configurações da Mensagem de Vitória",
+      "titleLabel": "Título",
+      "prizeNameHint": "Você pode usar '{{prize_name}}' no título e na descrição para inserir o nome do prêmio.",
+      "acceptButtonText": "Texto do Botão Aceitar",
+      "shareButtonText": "Texto do Botão Compartilhar",
+      "shareButtonDescription": "Descrição do Botão Compartilhar"
+    },
+    "nonWinningMessageDialog": {
+      "title": "Configurações da Mensagem de Não Premiado",
+      "titleLabel": "Título",
+      "shareButtonText": "Texto do Botão Compartilhar",
+      "shareButtonDescription": "Descrição do Botão Compartilhar"
+    },
+    "preview": {
+      "start": "Iniciar",
+      "shareWithFriends": "Compartilhar com amigos",
+      "jackpotHeader": "JACKPOT",
+      "jackpotBanner": "Jackpot",
+      "luckyWheelHeader": "ROLETA DA SORTE",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Prévia detalhada em breve para este tipo de jogo"
+    },
+    "form": {
+      "generalSettingsTitle": "Configuração Geral",
+      "appearanceTitle": "Aparência",
+      "playerSettingsTitle": "Configurações do jogador",
+      "prizeSettingsTitle": "Configurações de Prêmios"
+    },
+    "generalSettings": {
+      "showName": "Visível",
+      "playedAt": "Jogado em",
+      "rulesDescription": "Descrição das Regras",
+      "openerTags": "Marcar contatos que abrirem o link do jogo",
+      "playerTags": "Marcar jogadores",
+      "newFriendTags": "Marcar novos amigos",
+      "shareEnabled": "Permitir compartilhamento com amigos",
+      "shareMessage": "Mensagem de Compartilhamento",
+      "shareMessageHint": "Use '{{shareUrl}}' para inserir o link real do jogo — não o remova."
+    },
+    "appearance": {
+      "backgroundColor": "Cor de Fundo",
+      "machineColor": "Cor da Máquina",
+      "decorativeColor": "Cor Decorativa",
+      "ruleTextColor": "Cor do Texto de Regras",
+      "backgroundImage": "Imagem de Fundo",
+      "backgroundImageDescription": "Largura recomendada: 1024px",
+      "prizeDescriptionImage": "Imagem de Descrição do Prêmio (Opcional)",
+      "prizeDescriptionImageDescription": "Largura recomendada: 750px",
+      "startButtonImage": "Imagem do Botão Iniciar",
+      "startButtonImageDescription": "Tamanho recomendado: 360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "Número de chances de sorteio por pessoa",
+      "resetPolicyLabel": "Redefinir sorteios",
+      "resetNever": "Não redefinir o número de sorteios",
+      "resetEveryNDays": "Redefinir o número de sorteios a cada",
+      "resetIntervalDaysSuffix": "dia(s)"
+    },
+    "publicUrl": {
+      "label": "URL Pública",
+      "hint": "Copie e cole a URL no seu fluxo, transmissão ou sequência para compartilhar este minijogo."
+    },
+    "play": {
+      "close": "Fechar",
+      "drawsRemaining": "{count} tentativas restantes",
+      "noDrawsLeft": "Você não tem mais tentativas para este minigame.",
+      "notStartedYet": "Este minigame ainda não começou.",
+      "ended": "Este minigame terminou.",
+      "forbiddenTitle": "Acesso negado",
+      "forbiddenDescription": "Este link é inválido ou expirou.",
+      "comingSoonTitle": "Em breve",
+      "comingSoonDescription": "Este tipo de minigame ainda não pode ser jogado."
+    },
+    "history": {
+      "title": "Histórico",
+      "played": "Jogadas",
+      "remaining": "Sorteios restantes",
+      "openedAt": "Primeira abertura",
+      "lastPlayedAt": "Última jogada",
+      "unknownContact": "Contato desconhecido",
+      "record": "Registro",
+      "recordDialog": {
+        "title": "Registro de jogadas",
+        "win": "Ganhou",
+        "lose": "Sem prêmio",
+        "empty": "Ainda não há registros de jogadas"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "Biblioteca de mídia",
+    "searchPlaceholder": "Buscar arquivos...",
+    "newFolder": "Nova pasta",
+    "recent": "Recentes",
+    "favourite": "Favorito",
+    "upload": "Enviar",
+    "select": "Selecionar",
+    "bulkSelect": "Seleção em massa",
+    "deleteFolder": "Excluir pasta",
+    "renameFolder": "Renomear pasta",
+    "noFiles": "Nenhum arquivo encontrado",
+    "noFolders": "Ainda não há pastas",
+    "folderNamePlaceholder": "Nome da pasta",
+    "confirmDeleteFolder": "Excluir a pasta e todos os seus arquivos?",
+    "confirmDeleteFolderDescription": "Todos os arquivos desta pasta serão excluídos permanentemente do servidor. Esta ação não pode ser desfeita.",
+    "confirmDeleteFile": "Excluir arquivo?",
+    "confirmDeleteFileDescription": "Este arquivo será excluído permanentemente do servidor.",
+    "addToFavourites": "Adicionar aos favoritos",
+    "removeFromFavourites": "Remover dos favoritos",
+    "deleteFile": "Excluir arquivo",
+    "selectOnlyOneFile": "Você só pode selecionar 1 arquivo",
+    "confirmDeleteFiles": "{count, plural, =1 {Excluir 1 arquivo?} other {Excluir # arquivos?}}",
+    "confirmDeleteFilesDescription": "Esses arquivos serão excluídos permanentemente do servidor. Esta ação não pode ser desfeita.",
+    "filesCount": "{count, plural, =0 {Nenhum arquivo} =1 {1 arquivo} other {# arquivos}}",
+    "openMediaLibrary": "Abrir biblioteca de mídia",
+    "uploadFailed": "Falha ao enviar {name}"
+  },
+  "adsCampaign": {
+    "title": "Anúncios",
+    "createCta": "Criar anúncio",
+    "prereq": {
+      "notConnected": "Conecte o Facebook Ads para criar anúncios de mensagens para este canal.",
+      "connectCta": "Conectar Facebook Ads"
+    },
+    "specialAdCategory": {
+      "none": "Nenhuma",
+      "housing": "Habitação",
+      "employment": "Emprego",
+      "credit": "Crédito",
+      "issues": "Questões sociais, eleições ou política",
+      "financialProducts": "Produtos e serviços financeiros",
+      "onlineGambling": "Jogos e apostas online"
+    },
+    "fields": {
+      "objective": {
+        "label": "Objetivo",
+        "value": "Engajamento (mensagens)"
+      },
+      "specialAdCategory": {
+        "label": "Categoria especial de anúncio",
+        "description": "Selecionar uma categoria restrita remove idade, gênero e outras opções de segmentação que a Meta não permite para essa categoria.",
+        "restrictedNote": "A segmentação por idade e gênero está desativada porque uma categoria especial de anúncio restrita foi selecionada."
+      },
+      "adAccount": {
+        "label": "Conta de anúncios"
+      },
+      "whatsappPage": {
+        "label": "Página do Facebook",
+        "description": "Anúncios do WhatsApp ainda exigem uma Página do Facebook vinculada — selecione a Página conectada a ser usada."
+      },
+      "dailyBudget": {
+        "label": "Orçamento diário",
+        "placeholder": "ex.: 2000",
+        "description": "Informe o valor na menor unidade monetária da sua conta de anúncios (ex.: centavos para USD)."
+      },
+      "countries": {
+        "label": "Países"
+      },
+      "ageRange": {
+        "min": "Idade mínima",
+        "max": "Idade máxima"
+      },
+      "gender": {
+        "label": "Gênero",
+        "male": "Masculino",
+        "female": "Feminino"
+      },
+      "schedule": {
+        "start": "Horário de início",
+        "end": "Horário de término"
+      },
+      "destination": {
+        "label": "Destino"
+      },
+      "callToAction": {
+        "label": "Chamada para ação",
+        "derivedNote": "O botão de chamada para ação ({type}) é derivado automaticamente do canal."
+      },
+      "specialAdCategoryCountry": {
+        "label": "País da categoria de anúncio",
+        "description": "Exigido pela Meta para a categoria de questões sociais, eleições ou política — o país em que você tem autorização para veicular esses anúncios."
+      }
+    },
+    "welcomeMessage": {
+      "title": "Mensagem de boas-vindas",
+      "label": "Mensagem de boas-vindas",
+      "description": "Enviada automaticamente quando alguém inicia uma conversa a partir deste anúncio.",
+      "mode": {
+        "default": "Usar a mensagem padrão da Meta",
+        "single": "Mensagem única",
+        "templates": "Testar até 5 variações de mensagem"
+      },
+      "messageLabel": "Mensagem",
+      "templateLabel": "Variação {index}",
+      "headingPlaceholder": "Título (opcional)",
+      "addTemplate": "Adicionar variação",
+      "templatesLimit": "É possível testar até {max} variações."
+    },
+    "creative": {
+      "mediaRequired": "Envie uma imagem ou vídeo para continuar.",
+      "mediaType": {
+        "label": "Mídia do criativo",
+        "orVideo": "ou vídeo",
+        "selectAdAccountFirst": "Selecione uma conta de anúncios antes de enviar mídia.",
+        "uploadImage": "Enviar imagem",
+        "uploadVideo": "Enviar vídeo"
+      },
+      "uploading": "Enviando...",
+      "imageUploadFailed": "Falha ao enviar a imagem. Tente novamente.",
+      "videoProcessing": "Processando vídeo...",
+      "videoReady": "Vídeo pronto",
+      "videoProcessingFailed": "Falha ao processar o vídeo. Tente um arquivo diferente.",
+      "previewAlt": "Prévia do criativo",
+      "primaryText": "Texto principal",
+      "headline": "Título"
+    },
+    "wizard": {
+      "createDraft": "Criar como rascunho pausado",
+      "campaignStep": {
+        "title": "Campanha",
+        "namePlaceholder": "Dê um nome a este anúncio"
+      },
+      "adSetStep": {
+        "title": "Conjunto de anúncios"
+      },
+      "creativeStep": {
+        "title": "Criativo do anúncio"
+      },
+      "preflightStep": {
+        "title": "Revisão"
+      },
+      "errors": {
+        "nameRequired": "Informe um nome para este anúncio.",
+        "adAccountRequired": "Selecione uma conta de anúncios.",
+        "budgetRequired": "Informe um orçamento diário.",
+        "countryRequired": "Selecione pelo menos um país.",
+        "mediaRequired": "Envie uma imagem ou um vídeo."
+      }
+    },
+    "preflight": {
+      "title": "Resumo",
+      "pausedNote": "Este anúncio é criado como rascunho pausado. Nada entra no ar, e nenhum valor é gasto, até que você o publique."
+    },
+    "publishConfirm": {
+      "title": "Publicar este anúncio?",
+      "description": "Publicar ativa a campanha, o conjunto de anúncios e o anúncio, nessa ordem. A Meta começará a gastar seu orçamento assim que a entrega for iniciada.",
+      "confirm": "Publicar"
+    },
+    "list": {
+      "viewOnMeta": "Ver no Meta",
+      "empty": "Ainda não há anúncios de mensagens.",
+      "createState": "Status do rascunho",
+      "actions": "Ações",
+      "notPublishedYet": "Ainda não publicado",
+      "draftReady": "Rascunho pronto",
+      "createFailed": "Falha na criação",
+      "creating": "Criando...",
+      "publish": "Publicar",
+      "pause": "Pausar"
+    },
+    "messages": {
+      "created": "Rascunho de anúncio criado.",
+      "actionSucceeded": "Concluído."
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Crie e gerencie anúncios Click-to-WhatsApp aqui."
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Crie e gerencie anúncios Click-to-Messenger aqui."
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Crie e gerencie anúncios Click-to-Instagram aqui."
+      },
+      "connectCta": "Conectar Facebook Ads",
+      "reconnectCta": "Reconectar",
+      "reconnectNeeded": "Esta conexão precisa ser reconectada.",
+      "refresh": "Atualizar",
+      "whatsappPageRequiredNote": "Anúncios de clique para o WhatsApp ainda exigem uma Página do Facebook vinculada (exigência da Meta) — você a escolherá ao criar um anúncio.",
+      "emptyDashboardNote": "Os anúncios criados aqui agora aparecem automaticamente no painel de Anúncios deste canal — selecione esta integração no filtro de lá para ver suas contas e gastos."
+    },
+    "insights": {
+      "title": "Desempenho",
+      "empty": "Ainda sem dados",
+      "impressions": "Impressões",
+      "reach": "Alcance",
+      "spend": "Gasto",
+      "clicks": "Cliques",
+      "conversations": "Conversas",
+      "costPerConversation": "Custo/conv.",
+      "costPerConversationTooltip": "Custo médio por conversa de mensagem iniciada.",
+      "datePresetLabel": "Período:",
+      "datePreset": {
+        "maximum": "Todo o período",
+        "last_30d": "Últimos 30 dias",
+        "last_7d": "Últimos 7 dias"
+      }
+    }
+  },
+  "accountFields": {
+    "title": "Campos do bot"
   }
 }

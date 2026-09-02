@@ -1,5 +1,6 @@
 import { messengerIntegrationService } from "@chatbotx.io/business"
 import { getUserPages } from "@chatbotx.io/integration-messenger"
+import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { PickerFacebookPage } from "@/features/integration-messenger/components/messenger-pages"
@@ -13,15 +14,36 @@ import {
 export const dynamic = "force-dynamic"
 
 /**
- * Picker ordering: selectable pages first, then pages already connected
- * elsewhere. Unconnected pages without connect permission are hidden.
+ * Picker ordering: selectable pages first, then non-admin pages, then pages
+ * already connected elsewhere (matches `getPageOptionNote`'s precedence in
+ * messenger-pages.tsx). Nothing is hidden any more — non-admin pages render
+ * disabled with a note instead of disappearing — so every page needs a rank.
+ * Array.prototype.sort is stable, so Meta's own order survives within a rank.
  */
 function rankPickerPage(page: PickerFacebookPage): number {
-  return page.isAlreadyConnected ? 1 : 0
+  if (page.isAlreadyConnected) {
+    return 2
+  }
+  return page.isConnectable ? 0 : 1
 }
 
-function shouldShowPickerPage(page: PickerFacebookPage): boolean {
-  return page.isConnectable || page.isAlreadyConnected
+/**
+ * A page is only selectable when the user has full admin permission on it
+ * and it isn't already connected elsewhere. Every other page is rendered
+ * disabled, so its access_token must never reach the client.
+ */
+function toPickerPage(
+  page: ConnectableFacebookPage,
+  connectedPageIds: ReadonlySet<string>,
+): PickerFacebookPage {
+  const isAlreadyConnected = connectedPageIds.has(page.id)
+  const selectable = page.isConnectable && !isAlreadyConnected
+
+  return {
+    ...page,
+    isAlreadyConnected,
+    access_token: selectable ? page.access_token : undefined,
+  }
 }
 
 export default async function MessengerSelectPage() {
@@ -44,11 +66,7 @@ export default async function MessengerSelectPage() {
     ),
   )
   const pickerPages: PickerFacebookPage[] = pages
-    .map((page) => ({
-      ...page,
-      isAlreadyConnected: connectedPageIds.has(page.id),
-    }))
-    .filter(shouldShowPickerPage)
+    .map((page) => toPickerPage(page, connectedPageIds))
     .sort((current, next) => rankPickerPage(current) - rankPickerPage(next))
 
   return (

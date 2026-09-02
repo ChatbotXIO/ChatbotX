@@ -12,18 +12,20 @@ import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { authClient } from "@/lib/auth/auth-client"
+import { resolveSafeCallbackUrl } from "@/lib/safe-callback-url"
 import {
   type EmailPasswordSignInRequest,
   emailPasswordSignInRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const EmailPasswordSignIn = () => {
   const t = useTranslations()
+  const searchParams = useSearchParams()
 
   const emailPasswordForm = useForm<EmailPasswordSignInRequest>({
     resolver: zodResolver(emailPasswordSignInRequest),
@@ -45,7 +47,14 @@ export const EmailPasswordSignIn = () => {
 
     if (data) {
       toast.success("Signed in successfully")
-      redirect("/")
+      // Full reload (not router.push) so a fresh session re-renders
+      // layout/sidebar state that depends on auth.
+      window.location.assign(
+        resolveSafeCallbackUrl(
+          searchParams.get("callbackURL"),
+          window.location.origin,
+        ),
+      )
     } else {
       toast.error(error.message)
     }

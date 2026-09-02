@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   invalidateCacheByTags: vi.fn(),
   dbTransaction: vi.fn(),
   purgeWorkspaceHeavyData: vi.fn(),
+  dispatchAuditRecord: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -55,9 +56,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
-  workspaceMemberRoles: { enum: { owner: "owner" } },
-}))
+vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/partials")>()
+  return {
+    ...actual,
+    workspaceMemberRoles: { enum: { owner: "owner" } },
+  }
+})
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID: "1",
@@ -72,6 +78,10 @@ vi.mock("@chatbotx.io/redis", () => ({
     runExclusive: vi.fn(async ({ fn }: { fn: () => unknown }) => fn()),
   },
   createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
+}))
+
+vi.mock("@chatbotx.io/worker-config", () => ({
+  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))
 
 // These suites exercise the quota-driven create path; the community
@@ -113,6 +123,10 @@ vi.mock("../../workspace-lifecycle/service", () => ({
   },
 }))
 
+vi.mock("../../audit/dispatcher", () => ({
+  dispatchAuditRecord: mocks.dispatchAuditRecord,
+}))
+
 vi.mock("../../workspace-member/service", () => ({
   workspaceMemberCacheTag: vi.fn((userId: string) => `member:${userId}`),
   workspaceMemberService: {
@@ -137,6 +151,7 @@ beforeEach(() => {
   mocks.dbTransaction.mockReset()
   mocks.purgeWorkspaceHeavyData.mockReset()
   mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
+  mocks.dispatchAuditRecord.mockReset()
 
   mocks.workspaceInsert.mockReturnValue({
     values: mocks.workspaceInsertValues.mockReturnValue({
@@ -178,6 +193,45 @@ describe("WorkspaceService.create", () => {
     expect(result).toEqual({ id: "new-workspace" })
     expect(mocks.workspaceInsert).toHaveBeenCalledTimes(1)
     expect(mocks.createMember).toHaveBeenCalledTimes(1)
+  })
+
+  test("records a create audit event with the explicit workspaceId override when no tx is passed", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: true })
+    mocks.workspaceInsertValues.mockReturnValueOnce({
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "new-workspace", name: "Acme" }]),
+    })
+
+    await workspaceService.create({
+      data: { name: "Acme", tenantId: "1" } as never,
+      createdBy: "owner-1",
+    })
+
+    expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith({
+      userId: "owner-1",
+      workspaceId: "new-workspace",
+      action: "create",
+      detail: "created the workspace (#new-workspace)",
+    })
+  })
+
+  test("skips the create audit event when the caller passed its own transaction", async () => {
+    mocks.tryConsume.mockResolvedValue({ ok: true })
+    mocks.workspaceInsertValues.mockReturnValueOnce({
+      returning: vi
+        .fn()
+        .mockResolvedValue([{ id: "new-workspace", name: "Acme" }]),
+    })
+    const tx = { insert: mocks.workspaceInsert } as never
+
+    await workspaceService.create({
+      data: { name: "Acme", tenantId: "1" } as never,
+      createdBy: "owner-1",
+      tx,
+    })
+
+    expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
   })
 })
 

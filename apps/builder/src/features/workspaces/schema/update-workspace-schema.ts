@@ -1,4 +1,7 @@
-import { isSmartResponseDelayOption } from "@chatbotx.io/database/partials"
+import {
+  defaultReplyFrequencies,
+  isSmartResponseDelayOption,
+} from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { allCountryCodes, allLanguageCodes, allTimezoneCodes } from "./types"
 
@@ -41,11 +44,21 @@ export type UpdateWorkspaceBasicRequest = z.infer<
 
 export const updateWorkspaceAdvancedRequest = z.object({
   defaultReply: z.string().nullish(),
+  // Optional so a stale client (form rendered before this field shipped) can
+  // still submit; `undefined` is skipped by Drizzle's `.set()`, leaving the
+  // stored frequency untouched. Never default to a concrete value here — that
+  // would silently reset a workspace's configured frequency.
+  defaultReplyFrequency: defaultReplyFrequencies.optional(),
   targetCountry: z.enum(allCountryCodes as [string, ...string[]]),
   language: z.enum(allLanguageCodes as [string, ...string[]]),
   timezone: z.enum(allTimezoneCodes as [string, ...string[]]),
   brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   developmentMode: z.boolean(),
+  // Meta Conversions API Limited Data Use (plan #3) — optional so a stale
+  // client (form rendered before this field shipped) can still submit;
+  // `undefined` is skipped by Drizzle's `.set()`, leaving the stored value
+  // untouched, mirroring `defaultReplyFrequency` above. Default off.
+  capiLimitedDataUse: z.boolean().optional(),
 })
 export type UpdateWorkspaceAdvancedRequest = z.infer<
   typeof updateWorkspaceAdvancedRequest

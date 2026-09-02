@@ -14,6 +14,10 @@ export type ContactRow = {
   email?: string
   firstName?: string
   lastName?: string
+  // Alternate stable channel-scoped user id (e.g. a WhatsApp BSUID), carried
+  // from the mapped column. Only populated for whatsapp — see
+  // `resolveContactIdentity`.
+  sourceUserId?: string
   customFields: Array<{ customFieldId: string; value: string }>
 }
 
@@ -60,6 +64,15 @@ const pick = (
   column: string | undefined,
 ): unknown => (column ? row[column] : undefined)
 
+/**
+ * Reads one mapped column's cleaned value exactly the way the custom-field
+ * mapping does — used by the handler to collect bot-field-mapped values.
+ */
+export const readMappedColumnValue = (
+  row: Record<string, unknown>,
+  column: string,
+): string | undefined => cleanText(row[column], MAX_FIELD_LENGTH)
+
 const collectCustomFields = (
   row: Record<string, unknown>,
   fieldMapping: ContactImportFieldMapping | undefined,
@@ -73,6 +86,50 @@ const collectCustomFields = (
   }
   return result
 }
+
+type ContactIdentity = {
+  externalId: string | undefined
+  sourceUserId: string | undefined
+}
+
+// WhatsApp identity ladder, mirroring the live-webhook fallback rule: the
+// stripped phone is the primary externalId; the mapped scoped user id (e.g. a
+// WhatsApp BSUID) is the fallback identity when the phone is absent or
+// invalid, and is always carried on the row so a phone-keyed contact can be
+// backfilled with it at creation.
+const resolveWhatsappIdentity = (
+  row: Record<string, unknown>,
+  columnMap: ContactImportColumnMap,
+  phoneNumber: string | undefined,
+): ContactIdentity => {
+  const sourceUserId = cleanText(pick(row, columnMap.sourceUserId))
+  return {
+    externalId: stripPlus(phoneNumber) ?? sourceUserId,
+    sourceUserId,
+  }
+}
+
+// Non-whatsapp channels keep today's behavior: externalId comes from the
+// mapped contactId column, and sourceUserId is never extracted — the partial
+// unique index (inboxId, sourceUserId) would let arbitrary mapped data
+// silently dedup distinct contacts on channels with no scoped-id concept.
+const resolveDefaultIdentity = (
+  row: Record<string, unknown>,
+  columnMap: ContactImportColumnMap,
+): ContactIdentity => ({
+  externalId: cleanText(pick(row, columnMap.contactId)),
+  sourceUserId: undefined,
+})
+
+const resolveContactIdentity = (
+  row: Record<string, unknown>,
+  columnMap: ContactImportColumnMap,
+  phoneNumber: string | undefined,
+  channel: string | undefined,
+): ContactIdentity =>
+  channel === channelTypes.enum.whatsapp
+    ? resolveWhatsappIdentity(row, columnMap, phoneNumber)
+    : resolveDefaultIdentity(row, columnMap)
 
 export const extractRowData = (
   row: Record<string, unknown>,
@@ -88,10 +145,12 @@ export const extractRowData = (
     options?.countryCode,
   )
 
-  const externalId =
-    options?.channel === channelTypes.enum.whatsapp
-      ? stripPlus(phoneNumber)
-      : cleanText(pick(row, columnMap.contactId))
+  const { externalId, sourceUserId } = resolveContactIdentity(
+    row,
+    columnMap,
+    phoneNumber,
+    options?.channel,
+  )
 
   if (!(phoneNumber || email || externalId)) {
     return null
@@ -103,6 +162,7 @@ export const extractRowData = (
     email,
     firstName,
     lastName,
+    sourceUserId,
     customFields: collectCustomFields(row, fieldMapping),
   }
 }

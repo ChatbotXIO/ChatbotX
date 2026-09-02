@@ -37,6 +37,7 @@ import { enrollContactInSequence } from "@chatbotx.io/sequence-scheduler"
 import { createId } from "@chatbotx.io/utils"
 import { TemporalInputParsing } from "@chatbotx.io/utils/datetime"
 import { contactVariableService } from "@chatbotx.io/variables"
+import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
@@ -44,43 +45,66 @@ export async function setContactCustomField({
   contactInbox,
   step,
 }: ExecuteStepProps<SetCustomFieldStepSchema>) {
-  // The value can contain {{variable}} tokens inserted via the editor (contact
-  // fields, coupons, etc.); resolve them against this contact before persisting.
-  // Unresolvable tokens are left as-is, and a value that resolves to empty still
-  // falls through to the temporal "now" handling below.
-  const variables = await contactVariableService.getAll({
-    contactId: conversation.contactId,
-    contactInbox,
-    conversation,
-  })
-  const resolvedValue = await contactVariableService.replaceAll({
-    text: step.value,
-    variables,
-  })
+  try {
+    // The value can contain {{variable}} tokens inserted via the editor (contact
+    // fields, coupons, etc.); resolve them against this contact before persisting.
+    // Unresolvable tokens are left as-is, and a value that resolves to empty still
+    // falls through to the temporal "now" handling below.
+    const variables = await contactVariableService.getAll({
+      contactId: conversation.contactId,
+      contactInbox,
+      conversation,
+    })
+    const resolvedValue = await contactVariableService.replaceAll({
+      text: step.value,
+      variables,
+    })
 
-  await contactCustomFieldService.setValueByKey({
-    workspaceId: conversation.workspaceId,
-    contactId: conversation.contactId,
-    keyword: step.inputFieldId,
-    value: resolvedValue,
-    // The editor captured its browser zone at save time; anchor naive
-    // date/datetime values to it (worker has no browser context). Lenient
-    // parsing accepts flexible user input (unix ts, "23/07/2026", ...), and a
-    // blank value stamps "now" in that zone.
-    sourceTimezoneOverride: step.timezone,
-    temporalInputParsing: TemporalInputParsing.Lenient,
-    fillEmptyTemporalWithNow: true,
-  })
+    await contactCustomFieldService.setValueByKey({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      keyword: step.inputFieldId,
+      value: resolvedValue,
+      // The editor captured its browser zone at save time; anchor naive
+      // date/datetime values to it (worker has no browser context). Lenient
+      // parsing accepts flexible user input (unix ts, "23/07/2026", ...), and a
+      // blank value stamps "now" in that zone.
+      sourceTimezoneOverride: step.timezone,
+      temporalInputParsing: TemporalInputParsing.Lenient,
+      fillEmptyTemporalWithNow: true,
+      contactInboxId: contactInbox.id,
+      allowBotFields: true,
+      operation: step.operation,
+    })
+  } catch (error: unknown) {
+    // Steps run one-per-BullMQ-job and the next step is only enqueued after
+    // this one returns — a thrown error (e.g. an invalid number value) would
+    // kill the job and silently drop every remaining step in the node. Log
+    // and swallow so the flow keeps going.
+    logger.error(
+      {
+        err: error,
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        stepId: step.id,
+        inputFieldId: step.inputFieldId,
+      },
+      "Set custom field step failed; continuing with the remaining steps",
+    )
+  }
 }
 
 export async function clearContactCustomField({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<ClearCustomFieldStepSchema>) {
   await contactCustomFieldService.deleteByKey({
     workspaceId: conversation.workspaceId,
     contactId: conversation.contactId,
     keyword: step.inputFieldId,
+    contactInboxId: contactInbox.id,
+    allowBotFields: true,
   })
 }
 
@@ -219,7 +243,7 @@ export async function attachTagsByNames(
 
   await Promise.all(
     newlyLinkedTagIds.map((tagId) =>
-      emitTagApplied(workspaceId, contactId, tagId),
+      emitTagApplied(workspaceId, contactId, tagId, contactInbox?.id),
     ),
   )
 
@@ -234,6 +258,7 @@ export async function attachTagsByNames(
   ) {
     await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
       workspaceId,
+      channel: contactInbox.channel,
       inboxId: contactInbox.inboxId,
       contactInboxId: contactInbox.id,
       tagIds: newlyLinkedTagIds,
@@ -243,12 +268,14 @@ export async function attachTagsByNames(
 
 export async function removeContactTag({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<AddContactTagStepSchema>) {
   await detachTagsByNames(
     conversation.workspaceId,
     conversation.contactId,
     step.tags,
+    contactInbox,
   )
 }
 
@@ -256,6 +283,7 @@ export async function detachTagsByNames(
   workspaceId: string,
   contactId: string,
   tagNames: string[],
+  contactInbox?: TagAttachContactInbox,
 ): Promise<void> {
   if (tagNames.length === 0) {
     return
@@ -297,7 +325,9 @@ export async function detachTagsByNames(
   }
 
   await Promise.all(
-    tags.map((tag) => emitTagRemoved(workspaceId, contactId, tag.id)),
+    tags.map((tag) =>
+      emitTagRemoved(workspaceId, contactId, tag.id, contactInbox?.id),
+    ),
   )
 }
 
@@ -338,6 +368,7 @@ export async function deleteContact({
 
 export async function addContactSequence({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<SubscribeSequenceStepSchema>) {
   if (!step.sequenceId) {
@@ -399,11 +430,13 @@ export async function addContactSequence({
     conversation.contactId,
     step.sequenceId,
     sequence?.name ?? "",
+    contactInbox.id,
   )
 }
 
 export async function removeContactSequence({
   conversation,
+  contactInbox,
   step,
 }: ExecuteStepProps<UnsubscribeSequenceStepSchema>) {
   if (!step.sequenceId) {
@@ -415,6 +448,7 @@ export async function removeContactSequence({
     contactId: conversation.contactId,
     sequenceIds: [step.sequenceId],
     reason: "unsubscribed_via_flow",
+    contactInboxId: contactInbox.id,
   })
 }
 
@@ -435,6 +469,7 @@ export async function subscribeBroadcast({
 
 export async function unsubscribeBroadcast({
   conversation,
+  contactInbox,
 }: ExecuteStepProps<UnsubscribeBroadcastStepSchema>) {
   await db
     .update(contactModel)
@@ -449,5 +484,6 @@ export async function unsubscribeBroadcast({
   await emitContactUnsubscribed(
     conversation.workspaceId,
     conversation.contactId,
+    contactInbox.id,
   )
 }

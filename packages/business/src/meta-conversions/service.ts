@@ -1,6 +1,7 @@
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import type { MetaCapiEventModel } from "@chatbotx.io/database/types"
 import { encryptUtils } from "@chatbotx.io/encryption"
+import { createId } from "@chatbotx.io/utils"
 import {
   enqueueIntegrationJob,
   IntegrationJobAction,
@@ -15,6 +16,7 @@ import { instagramCapiReadinessAdapter } from "./adapters/instagram"
 import { messengerCapiReadinessAdapter } from "./adapters/messenger"
 import type { CapiReadinessAdapter, CapiSendAdapter } from "./adapters/types"
 import { whatsappCapiReadinessAdapter } from "./adapters/whatsapp"
+import { createDatasetWithFallback } from "./dataset-fallback"
 import {
   type CapiConnectChannel,
   type ClearCapiAccessTokenInput,
@@ -121,6 +123,25 @@ async function enqueueSendMetaCapiEvent(
 class MetaConversionsService extends BaseService {
   formatUtcDay(date: Date): string {
     return formatUtcDay(date)
+  }
+
+  /**
+   * The dedup identity for a lead event, also sent to Meta as `event_id`.
+   *
+   * WhatsApp is capped by Meta at one CAPI event per click-to-WhatsApp ad, so
+   * it dedups per contact per UTC day. Messenger/Instagram have no such cap —
+   * every fire is a distinct conversion, so a unique id is used (BullMQ retries
+   * of the same stored event still reuse its key, so Meta collapses retries).
+   */
+  buildLeadSourceKey(input: {
+    scope: "flow" | "trigger"
+    scopeId: string
+    contactInboxId: string
+    channel: MetaConversionsChannel
+  }): string {
+    const dedupSegment =
+      input.channel === "whatsapp" ? formatUtcDay(new Date()) : createId()
+    return `${input.scope}:${input.scopeId}:${input.contactInboxId}:${dedupSegment}`
   }
 
   async enqueueLeadEvent(
@@ -260,9 +281,18 @@ class MetaConversionsService extends BaseService {
       id: input.integration.id,
       workspaceId: input.integration.workspaceId,
     }
-    const datasetId = await input.provisionDataset(
-      await adapter.buildDatasetProvisionInput(input.integration),
+    // The adapter picks the create token(s); the retry stays channel-agnostic —
+    // it fires only when the adapter supplied a distinct `fallbackAccessToken`
+    // (currently WhatsApp's connect-token fallback for its System User token).
+    const provisionInput = await adapter.buildDatasetProvisionInput(
+      input.integration,
     )
+    const datasetId = await createDatasetWithFallback({
+      primaryToken: provisionInput.accessToken,
+      fallbackToken: provisionInput.fallbackAccessToken ?? null,
+      create: (accessToken) =>
+        input.provisionDataset({ ...provisionInput, accessToken }),
+    })
     const updated = await adapter.updateDatasetIdIfNull({
       ...ref,
       datasetId,

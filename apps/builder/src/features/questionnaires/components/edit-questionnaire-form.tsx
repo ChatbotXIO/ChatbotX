@@ -41,7 +41,7 @@ import {
   noQuestionnaireTriggerFlowValue,
   type UpdateQuestionnaireRequest,
   updateQuestionnaireRequest,
-} from "../schemas/action"
+} from "../schema/action"
 import {
   getCustomFieldSelectionReset,
   getQuestionFieldMappingReset,
@@ -290,6 +290,7 @@ export function EditQuestionnaireForm({
                         fileType="image"
                         parentName={`questions.${index}.image`}
                         uploadPath={`public/space/${workspaceId}/questionnaires/${questionnaire.id}/questions/${field.id}`}
+                        useMediaLibrary
                       />
                     </div>
                     <SwitchField

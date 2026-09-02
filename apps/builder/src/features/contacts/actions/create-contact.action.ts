@@ -7,6 +7,7 @@ import {
   quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
@@ -28,13 +29,13 @@ import { randomString } from "remeda"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateContactRequest,
   type CreateContactResponse,
   createContactRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 type CreateContactValidationField =
   | "contactId"
@@ -246,12 +247,19 @@ export const createContact = async ({
       },
     })
 
+  await auditService.record({
+    workspaceId,
+    action: "create",
+    detail: `created a new contact (#${contact.id})`,
+  })
+
   await emitContactCreated(
     workspaceId,
     contact.id,
     contact.firstName || undefined,
     contact.phoneNumber || undefined,
     contact.email || undefined,
+    contactInbox.id,
   )
 
   if (contactInbox.sourceId) {

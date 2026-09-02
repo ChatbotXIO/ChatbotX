@@ -3,7 +3,7 @@
 import type { Table } from "@tanstack/react-table"
 import { CreateReflinkDialog } from "./create-reflink"
 import { DeleteReflinksDialog } from "./delete-reflinks"
-import type { ListReflinkItem } from "./schemas/query"
+import type { ListReflinkItem } from "./schema/query"
 
 type ReflinksTableToolbarActionsProps = {
   table: Table<ListReflinkItem>

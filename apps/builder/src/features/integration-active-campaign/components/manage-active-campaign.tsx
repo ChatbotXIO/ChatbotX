@@ -25,7 +25,7 @@ import { SettingRow } from "@/components/setting-row"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { connectActiveCampaignAction } from "../actions/connect.action"
 import { disconnectActiveCampaignAction } from "../actions/disconnect.action"
-import { connectActiveCampaignSchema } from "../schemas"
+import { connectActiveCampaignSchema } from "../schema"
 
 export function ManageActiveCampaign(props: {
   workspaceId: string

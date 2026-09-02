@@ -366,6 +366,67 @@ describe("buildCsvChunk", () => {
     expect(result).toBe('""\n""\n')
   })
 
+  test("renders the WhatsApp User ID from the first contactInbox row that carries one", () => {
+    // Arrange
+    const fields: SelectedField[] = [
+      { type: "contact", value: "sourceUserId", header: "WhatsApp User ID" },
+    ]
+    const contacts = [
+      {
+        id: "1",
+        contactInboxes: [{ sourceId: "wa-1", sourceUserId: "user.937292738" }],
+      },
+    ]
+
+    // Act
+    const result = buildCsvChunk(contacts, fields)
+
+    // Assert
+    expect(result).toBe('"user.937292738"\n')
+  })
+
+  test("skips the earliest inbox row when it has no sourceUserId, picking the next one that does (multi-inbox)", () => {
+    // Arrange — earliest connection is Messenger (no sourceUserId); a later
+    // WhatsApp connection carries it. Contact Id still resolves the earliest
+    // row's sourceId (unaffected), while WhatsApp User ID must skip past it.
+    const fields: SelectedField[] = [
+      { type: "contact", value: "contactId", header: "Contact ID" },
+      { type: "contact", value: "sourceUserId", header: "WhatsApp User ID" },
+    ]
+    const contacts = [
+      {
+        id: "1",
+        contactInboxes: [
+          { sourceId: "psid-1", sourceUserId: null },
+          { sourceId: "84912345678", sourceUserId: "user.937292738" },
+        ],
+      },
+    ]
+
+    // Act
+    const result = buildCsvChunk(contacts, fields)
+
+    // Assert
+    expect(result).toBe('"psid-1","user.937292738"\n')
+  })
+
+  test("renders an empty string for WhatsApp User ID when no contactInbox carries one", () => {
+    // Arrange
+    const fields: SelectedField[] = [
+      { type: "contact", value: "sourceUserId", header: "WhatsApp User ID" },
+    ]
+    const contacts = [
+      { id: "1", contactInboxes: [{ sourceId: "psid-1", sourceUserId: null }] },
+      { id: "2", contactInboxes: [] },
+    ]
+
+    // Act
+    const result = buildCsvChunk(contacts, fields)
+
+    // Assert
+    expect(result).toBe('""\n""\n')
+  })
+
   test("produces multiple rows separated by newlines for multiple contacts", () => {
     // Arrange
     const fields: SelectedField[] = [

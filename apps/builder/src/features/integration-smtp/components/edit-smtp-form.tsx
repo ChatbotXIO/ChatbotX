@@ -17,9 +17,9 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { toast } from "sonner"
 import { updateSmtpAction } from "../actions/update-smtp.action"
-import { updateSmtpRequest } from "../schemas/mutation"
-import type { IntegrationSmtpResource } from "../schemas/resource"
-import { smtpProviderLabels } from "../schemas/resource"
+import { updateSmtpRequest } from "../schema/mutation"
+import type { IntegrationSmtpResource } from "../schema/resource"
+import { smtpProviderLabels } from "../schema/resource"
 
 type EditSmtpFormProps = {
   readonly workspaceId: string

@@ -312,6 +312,54 @@ describe("tenant-scoped adapter", () => {
     )
   })
 
+  test("stamps ROOT_TENANT_ID on an account insert linking to the bound tenant's owner", async () => {
+    const { scoped, create } = buildScoped()
+    tenantFindById.mockResolvedValueOnce({ ownerId: "200" })
+
+    await withTenant("42", () =>
+      scoped.create({
+        model: "account",
+        data: { accountId: "g-1", providerId: "google", userId: "200" },
+      }),
+    )
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "account",
+        data: {
+          accountId: "g-1",
+          providerId: "google",
+          userId: "200",
+          tenantId: ROOT,
+        },
+      }),
+    )
+  })
+
+  test("stamps the bound tenant on an account insert for a non-owner userId", async () => {
+    const { scoped, create } = buildScoped()
+    tenantFindById.mockResolvedValueOnce({ ownerId: "200" })
+
+    await withTenant("42", () =>
+      scoped.create({
+        model: "account",
+        data: { accountId: "g-2", providerId: "google", userId: "7" },
+      }),
+    )
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "account",
+        data: {
+          accountId: "g-2",
+          providerId: "google",
+          userId: "7",
+          tenantId: "42",
+        },
+      }),
+    )
+  })
+
   test("does not touch inserts for non-user/account models", async () => {
     const { scoped, create } = buildScoped()
 
@@ -405,28 +453,47 @@ describe("tenant-scoped adapter", () => {
     expect(result).toEqual({ id: "200" })
     const secondWhere = (findOne.mock.calls[1]?.[0] as AdapterCall).where
     expect(secondWhere).toContainEqual({ field: "id", value: "200" })
-    expect(secondWhere?.some((c) => c.field === "tenantId")).toBe(false)
+    // The fallback resolves only the owner's ROOT-tenant account.
+    expect(secondWhere).toContainEqual({ field: "tenantId", value: ROOT })
   })
 
-  test("suppresses the owner fallback under strict scope (OAuth social path)", async () => {
+  test("owner fallback misses when the owner row is not in the root tenant", async () => {
     const { scoped, findOne } = buildScoped()
-    findOne.mockResolvedValueOnce(null)
+    // Scoped lookup misses; the root-constrained owner retry misses too (the
+    // owner row is parked in some non-root tenant — data drift).
+    findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
+    tenantFindById.mockResolvedValueOnce({ ownerId: "200" })
 
-    const result = await withTenant(
-      "400",
-      () =>
-        scoped.findOne({
-          model: "user",
-          where: [{ field: "email", value: "owner@b.com" }],
-        }),
-      { strictScope: true },
+    const result = await withTenant("400", () =>
+      scoped.findOne({
+        model: "user",
+        where: [{ field: "email", value: "owner@b.com" }],
+      }),
     )
 
-    // Only the scoped lookup ran; the owner fallback is disabled so the owner's
-    // root-tenant account is never matched and a tenant-scoped user is created.
     expect(result).toBeNull()
-    expect(findOne).toHaveBeenCalledTimes(1)
-    expect(tenantFindById).not.toHaveBeenCalled()
+    const secondWhere = (findOne.mock.calls[1]?.[0] as AdapterCall).where
+    expect(secondWhere).toContainEqual({ field: "tenantId", value: ROOT })
+  })
+
+  test("applies the owner fallback on the OAuth social path too", async () => {
+    const { scoped, findOne } = buildScoped()
+    findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: "200" })
+    tenantFindById.mockResolvedValueOnce({ ownerId: "200" })
+
+    const result = await withTenant("400", () =>
+      scoped.findOne({
+        model: "user",
+        where: [{ field: "email", value: "owner@b.com" }],
+      }),
+    )
+
+    // A social sign-in with the owner's email resolves the owner's existing
+    // root-tenant account instead of creating a tenant-scoped duplicate.
+    expect(result).toEqual({ id: "200" })
+    const secondWhere = (findOne.mock.calls[1]?.[0] as AdapterCall).where
+    expect(secondWhere).toContainEqual({ field: "id", value: "200" })
+    expect(secondWhere).toContainEqual({ field: "tenantId", value: ROOT })
   })
 
   test("does not fall back on the root tenant (no owner)", async () => {

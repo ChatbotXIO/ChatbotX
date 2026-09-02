@@ -3,6 +3,7 @@ import {
   metaCatalogImportService,
   metaCatalogSyncRunService,
 } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   getCatalogProductsPage,
   isInvalidMetaTokenError,
@@ -291,6 +292,11 @@ export async function importMetaCatalogProducts(
     await Promise.all([
       integrationMetaCatalogService.failImport(connection.id, error),
       runId ? metaCatalogSyncRunService.fail(runId, error) : null,
+      logProviderError({
+        provider: "meta-catalog",
+        workspaceId: data.workspaceId,
+        error,
+      }),
     ])
   }
 }

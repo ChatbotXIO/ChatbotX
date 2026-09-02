@@ -9,6 +9,7 @@ export const stepTypes = z.enum([
   // Send Messages (S_)
   "sendText",
   "sendImage",
+  "sendMultipleImages",
   "sendCard",
   "sendCarousel",
   "sendVideo",
@@ -35,6 +36,7 @@ export const stepTypes = z.enum([
   "setCustomField",
   "clearCustomField",
   "cancelContactInput",
+  "appointmentScheduling",
   "questionnaires",
   "setUpCoupon",
   "markCouponUsed",
@@ -75,6 +77,7 @@ export const stepTypes = z.enum([
   "countCharacters",
   "performAction",
   "callApi",
+  "executeJavascript",
   "splitTraffic",
   "make",
   "triggerN8n",

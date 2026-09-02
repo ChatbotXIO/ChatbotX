@@ -8,7 +8,7 @@ import {
   useRef,
 } from "react"
 import { useStore } from "zustand"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 import {
   createFlowTemplateStore,
   type FlowTemplateStore,

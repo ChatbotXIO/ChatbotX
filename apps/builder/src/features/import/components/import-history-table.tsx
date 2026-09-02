@@ -19,7 +19,7 @@ import { format } from "date-fns"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import type { listImports } from "../queries/list-imports.queries"
-import type { ListImportsItem } from "../schemas/query"
+import type { ListImportsItem } from "../schema/query"
 
 type ImportHistoryTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listImports>>]>
@@ -40,12 +40,24 @@ function ImportErrorSampleButton({ item }: { item: ListImportsItem }) {
   if (item.errorSample.length === 0) {
     return <span className="text-red-600 tabular-nums">{item.failedCount}</span>
   }
+  // A completed import can carry warnings (e.g. unresolved flow references)
+  // with failedCount at 0 — showing "0" here would look like nothing to see,
+  // so a warning-only sample gets its own amber count instead of the failure
+  // count.
+  const isWarningOnly = item.failedCount === 0
   return (
     <Dialog>
       <DialogTrigger
         render={
-          <Button className="h-auto p-0 text-red-600" variant="link">
-            {item.failedCount}
+          <Button
+            className={
+              isWarningOnly
+                ? "h-auto p-0 text-amber-600"
+                : "h-auto p-0 text-red-600"
+            }
+            variant="link"
+          >
+            {isWarningOnly ? item.errorSample.length : item.failedCount}
           </Button>
         }
       />
@@ -97,7 +109,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
           placeholder: t("fields.name.searchPlaceholder"),
           variant: "text",
         },
-        enableColumnFilter: true,
+        enableColumnFilter: false,
         enableSorting: false,
         enableHiding: false,
       },

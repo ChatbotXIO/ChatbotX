@@ -18,6 +18,7 @@ import type { FacebookMessage, FacebookQuickReply } from "./schema"
 const ALLOWED_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
+  stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendCarousel,
   stepTypes.enum.sendVideo,
   stepTypes.enum.sendAudio,
@@ -154,6 +155,18 @@ export function convertStartNodeToMessengerAdsJson(props: {
             attachment: getAttachmentTemplate(
               step.url,
               mediaType(step.stepType),
+            ),
+          },
+        })
+        break
+      }
+      case stepTypes.enum.sendMultipleImages: {
+        // Schema caps this step at 10 images (same as Facebook's attachments[]
+        // limit), so unlike sendCarousel's cards this never needs chunking.
+        messages.push({
+          message: {
+            attachments: step.images.map((image) =>
+              getAttachmentTemplate(image.url, "image"),
             ),
           },
         })

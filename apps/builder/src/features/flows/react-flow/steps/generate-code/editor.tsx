@@ -156,6 +156,7 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
 
             <CustomFieldSelect
               allowCreate={true}
+              includeBotFields
               label={t("fields.customField.label")}
               name="outputFieldId"
               required

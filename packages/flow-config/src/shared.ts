@@ -10,6 +10,7 @@ import { aiGenerateTextSchema } from "./steps/ai-generate-text"
 import { aiGenerateTextAgentSchema } from "./steps/ai-generate-text-agent"
 import { aiSpeechToTextSchema } from "./steps/ai-speech-to-text"
 import { aiTextToSpeechSchema } from "./steps/ai-text-to-speech"
+import { appointmentSchedulingStepSchema } from "./steps/appointment-scheduling"
 import { archiveConversationStepSchema } from "./steps/archive-conversation"
 import { assignConversationStepSchema } from "./steps/assign-conversation"
 import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversation"
@@ -23,6 +24,7 @@ import { disableMessengerComposerStepSchema } from "./steps/disable-messenger-co
 import { dripSubscribeSubscriberSchema } from "./steps/drip-subscribe-subscriber"
 import { enableBotStepSchema } from "./steps/enable-bot"
 import { enableMessengerComposerStepSchema } from "./steps/enable-messenger-composer"
+import { executeJavascriptStepSchema } from "./steps/execute-javascript"
 import { externalRequestStepSchema } from "./steps/external-request"
 import { facebookCustomAudienceSchema } from "./steps/facebook-custom-audience"
 import { followConversationStepSchema } from "./steps/follow-conversation"
@@ -83,6 +85,7 @@ const contactSteps = [
   setCustomFieldStepSchema,
   clearCustomFieldStepSchema,
   deleteContactStepSchema,
+  appointmentSchedulingStepSchema,
   questionnairesStepSchema,
   setUpCouponStepSchema,
   markCouponUsedStepSchema,
@@ -104,6 +107,7 @@ const toolSteps = [
   generateCodeStepSchema,
   countCharactersStepSchema,
   externalRequestStepSchema,
+  executeJavascriptStepSchema,
 ]
 
 const triggerSteps = [makeStepSchema, triggerN8nStepSchema]

@@ -42,8 +42,12 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }))
 
-vi.mock("@chatbotx.io/analytics-nextjs/components/base-dashboard", () => ({
-  BaseDashboard: () => null,
+vi.mock("@chatbotx.io/analytics-nextjs/components/contacts-dashboard", () => ({
+  ContactsDashboard: () => null,
+}))
+
+vi.mock("@/features/analytics/components/analytics-nav", () => ({
+  AnalyticsNav: () => null,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -216,8 +220,8 @@ vi.mock(
 const { default: CreateChannelPage } = await import(
   "../src/app/(no-sidebar)/channels/create/page"
 )
-const { default: DashboardPage } = await import(
-  "../src/app/space/[workspaceId]/dashboard/page"
+const { default: DashboardLayout } = await import(
+  "../src/app/space/[workspaceId]/dashboard/layout"
 )
 const { default: MessengerLayout } = await import(
   "../src/app/space/[workspaceId]/messengers/[id]/layout"
@@ -292,7 +296,8 @@ describe("channel route guards", () => {
       },
     })
 
-    const dashboardTree = await DashboardPage({
+    const dashboardTree = await DashboardLayout({
+      children: null,
       params: Promise.resolve({ workspaceId: "ws-1" }),
     })
     renderToStaticMarkup(dashboardTree)
@@ -318,7 +323,8 @@ describe("channel route guards", () => {
       },
     })
 
-    const dashboardTree = await DashboardPage({
+    const dashboardTree = await DashboardLayout({
+      children: null,
       params: Promise.resolve({ workspaceId: "ws-1" }),
     })
     renderToStaticMarkup(dashboardTree)

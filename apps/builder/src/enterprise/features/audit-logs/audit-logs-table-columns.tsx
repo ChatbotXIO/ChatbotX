@@ -13,8 +13,11 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
+import type { useTranslations } from "next-intl"
 import { useUserAvatarUrl } from "@/lib/auth/avatar"
-import type { AuditLogResource } from "./schemas"
+import type { AuditLogResource } from "./schema"
+
+type TranslationFn = ReturnType<typeof useTranslations>
 
 function AuditUserCell({
   user,
@@ -45,12 +48,17 @@ function AuditUserCell({
   )
 }
 
-export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
+export function getAuditColumns(
+  t: TranslationFn,
+): ColumnDef<AuditLogResource>[] {
   return [
     {
       accessorKey: "userId",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="User" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("auditLogs.columns.user")}
+        />
       ),
       cell: ({ row }) => (
         <div>
@@ -59,50 +67,67 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
           ) : null}
         </div>
       ),
-      size: 150,
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "action",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Action" />
-      ),
-      cell: ({ row }) => <div>{row.original.action}</div>,
-      size: 50,
+      size: 160,
       enableSorting: false,
       enableHiding: false,
     },
     {
       accessorKey: "detail",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Data" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("auditLogs.columns.detail")}
+        />
       ),
       cell: ({ row }) => (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <div className="inline-block max-w-[300px] truncate">
-                {row.original.detail}
-              </div>
-            }
-          />
-          <TooltipContent>
-            <p>{row.original.detail}</p>
-          </TooltipContent>
-        </Tooltip>
+        <div className="whitespace-normal break-words">
+          {row.original.detail}
+        </div>
       ),
-      size: 400,
+      size: 640,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "ipAddress",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("auditLogs.columns.ipAddress")}
+        />
+      ),
+      cell: ({ row }) => {
+        const ipAddress = row.original.ipAddress || "-"
+
+        return (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <div className="max-w-[300px] truncate font-mono text-xs">
+                  {ipAddress}
+                </div>
+              }
+            />
+            <TooltipContent>
+              <p>{ipAddress}</p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      },
+      size: 300,
       enableSorting: false,
       enableHiding: false,
     },
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Date" />
+        <DataTableColumnHeader
+          column={column}
+          title={t("auditLogs.columns.date")}
+        />
       ),
       cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd HH:mm"),
-      size: 100,
+      size: 130,
       enableSorting: true,
       enableHiding: false,
     },

@@ -1,3 +1,4 @@
+import { getAuditActor } from "@chatbotx.io/business/audit"
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -169,6 +170,10 @@ describe("chat worker bot message quota gate", () => {
 
     await mocks.processJob?.({
       id: "job-1",
+      // `attemptsMade`/`opts` are what `isFinalAttempt` reads to tell the send
+      // whether a retry is still coming — a real BullMQ job always carries both.
+      attemptsMade: 0,
+      opts: { attempts: 2 },
       data: {
         type: "sendChannelMessage",
         data: { message: { senderType: "user" } },
@@ -176,6 +181,31 @@ describe("chat worker bot message quota gate", () => {
     })
 
     expect(mocks.isBotMessageQuotaReached).not.toHaveBeenCalled()
-    expect(mocks.sendMessageToChannel).toHaveBeenCalledOnce()
+    // `attemptsMade: 0` of `attempts: 2` leaves a retry in hand, so this
+    // emission is not the send's last word.
+    expect(mocks.sendMessageToChannel).toHaveBeenCalledWith(
+      { message: { senderType: "user" } },
+      0,
+      true,
+    )
+  })
+
+  test("populates the audit actor with the resolved workspace and job source before invoking the handler", async () => {
+    let capturedActor: ReturnType<typeof getAuditActor>
+    mocks.sendFlowStep.mockImplementationOnce(() => {
+      capturedActor = getAuditActor()
+    })
+
+    await mocks.processJob?.({
+      id: "job-1",
+      data: { type: "sendFlowMessage", data: {} },
+    })
+
+    expect(capturedActor).toEqual(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        source: "chat:sendFlowMessage",
+      }),
+    )
   })
 })

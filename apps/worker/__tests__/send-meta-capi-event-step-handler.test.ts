@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   enqueueLeadEvent: vi.fn(),
-  formatUtcDay: vi.fn(() => "20260814"),
+  buildLeadSourceKey: vi.fn(() => "flow:step-1:ci-1:key"),
 }))
 
 vi.mock("@chatbotx.io/business", async () => {
@@ -22,7 +22,7 @@ vi.mock("@chatbotx.io/business", async () => {
     ...actual,
     metaConversionsService: {
       enqueueLeadEvent: mocks.enqueueLeadEvent,
-      formatUtcDay: mocks.formatUtcDay,
+      buildLeadSourceKey: mocks.buildLeadSourceKey,
     },
   }
 })
@@ -56,7 +56,7 @@ function props(channel: string, step: typeof baseStep = baseStep) {
 describe("handleSendMetaCapiEventStep", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.formatUtcDay.mockReturnValue("20260814")
+    mocks.buildLeadSourceKey.mockReturnValue("flow:step-1:ci-1:key")
     mocks.enqueueLeadEvent.mockResolvedValue({ id: "mce-1" })
   })
 
@@ -64,16 +64,22 @@ describe("handleSendMetaCapiEventStep", () => {
     "messenger",
     "instagram",
     "whatsapp",
-  ])("enqueues a lead event for supported channel %s with a per-step/day source key", async (channel) => {
+  ])("enqueues a lead event for supported channel %s with a channel-aware source key", async (channel) => {
     const result = await handleSendMetaCapiEventStep(props(channel))
 
+    expect(mocks.buildLeadSourceKey).toHaveBeenCalledWith({
+      scope: "flow",
+      scopeId: "step-1",
+      contactInboxId: "ci-1",
+      channel,
+    })
     expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channel,
       contactInboxId: "ci-1",
       inboxId: "inbox-1",
       source: "flowStep",
-      sourceKey: "flow:step-1:ci-1:20260814",
+      sourceKey: "flow:step-1:ci-1:key",
       value: undefined,
       currency: undefined,
       contentCategory: undefined,

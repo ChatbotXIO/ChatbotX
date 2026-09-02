@@ -14,7 +14,7 @@ import { createId } from "@chatbotx.io/utils"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import type { TagResource } from "@/features/tags/schema/resource"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -22,7 +22,7 @@ import { requireContactPermissionScope } from "../permissions"
 import {
   type UpdateContactTagRequest,
   updateContactTagRequest,
-} from "../schemas/contact-tag"
+} from "../schema/contact-tag"
 
 export const updateContactTagAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

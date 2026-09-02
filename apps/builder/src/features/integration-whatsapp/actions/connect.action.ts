@@ -7,6 +7,7 @@ import {
   platformCredentialService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   db,
@@ -48,8 +49,8 @@ import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { logger } from "@/lib/log"
-import { buildBrokerCallbackUrl, getBrokerOrigin } from "@/lib/oauth-broker"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
+import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
 import { authActionClient } from "@/lib/safe-action"
 import { hasWhatsappCapiScope } from "../libs/capi-scope"
 import {
@@ -63,12 +64,13 @@ import {
   type ConnectWhatsappSchema,
   connectWhatsappSchema,
   type WhatsappPhoneNumberOption,
-} from "../schemas"
+} from "../schema"
 import { buildAuthValue, buildWebhookConfig } from "./webhook-url"
 
 async function resolveAccessToken(
   input: ConnectWhatsappSchema,
   whatsappSettings: WhatsappCredential,
+  originUrl: string,
   messages: ConnectErrorMessages,
 ): Promise<string> {
   if (input.accessToken) {
@@ -79,7 +81,7 @@ async function resolveAccessToken(
     const exchangeResult = await exchangeAccessToken(
       whatsappSettings,
       input.code,
-      buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH),
+      new URL(WHATSAPP_OAUTH_CALLBACK_PATH, originUrl).toString(),
     )
     return exchangeResult.access_token
   }
@@ -370,11 +372,13 @@ type PreparedConnectInput =
 async function prepareConnectInput(params: {
   input: ConnectWhatsappSchema
   whatsappSettings: WhatsappCredential
+  originUrl: string
   ownerId: string
   userId: string
   messages: ConnectErrorMessages
 }): Promise<PreparedConnectInput> {
-  const { input, whatsappSettings, ownerId, userId, messages } = params
+  const { input, whatsappSettings, originUrl, ownerId, userId, messages } =
+    params
 
   if (input.signupSessionId) {
     const signupSessionClaim: SignupSessionClaim = {
@@ -414,6 +418,7 @@ async function prepareConnectInput(params: {
   const accessToken = await resolveAccessToken(
     input,
     whatsappSettings,
+    originUrl,
     messages,
   )
 
@@ -538,6 +543,7 @@ async function persistIntegration(params: {
   workspaceId: string
   createdWorkspace: boolean
   integrationRow: IntegrationWhatsappModel
+  wasCreated: boolean
 }> {
   const {
     tx,
@@ -578,7 +584,7 @@ async function persistIntegration(params: {
 
   let integrationRow: IntegrationWhatsappModel | undefined
 
-  await connectChannelIntegration({
+  const { wasCreated } = await connectChannelIntegration({
     tx,
     ownerId,
     inboxData: {
@@ -628,6 +634,7 @@ async function persistIntegration(params: {
     workspaceId: resolvedWorkspaceId,
     createdWorkspace,
     integrationRow,
+    wasCreated,
   }
 }
 
@@ -785,9 +792,18 @@ export const connectWhatsappAction = authActionClient
 
         const isManual = parsedInput.manualConnect
 
+        // Provider-facing URLs (the webhook override_callback_uri sent to Meta on
+        // manual connect, and the stored OAuth redirectUrl) must live on a host
+        // registered with Meta: the reseller's own custom domain for a
+        // tenant-owned credential (their own app), otherwise the broker. Mirrors
+        // the pattern used by messenger/instagram (lib/provider-origin.ts).
+        const originUrl =
+          await resolveProviderOriginForCredential(whatsappCredential)
+
         const preparedInput = await prepareConnectInput({
           input: parsedInput,
           whatsappSettings,
+          originUrl,
           ownerId,
           userId: ctx.user.id,
           messages,
@@ -799,12 +815,6 @@ export const connectWhatsappAction = authActionClient
         const { accessToken, wabaId, businessId, phoneNumber } = preparedInput
         await ensurePhoneNumberNotConnected(phoneNumber.id, messages)
 
-        // Provider-facing URLs (the webhook override_callback_uri sent to Meta on
-        // manual connect, and the stored OAuth redirectUrl) must live on the fixed
-        // broker / canonical host registered with Meta — never the white-label
-        // custom domain the request arrived on, which Meta cannot reach or trust.
-        // Mirrors the broker pattern used by messenger/instagram (lib/oauth-broker.ts).
-        const originUrl = getBrokerOrigin()
         const integrationId = createId()
 
         const { webhookUrl, verifyToken } = buildWebhookConfig({
@@ -862,20 +872,38 @@ export const connectWhatsappAction = authActionClient
           }
         }
 
-        const { workspaceId, integrationRow } = await connectInTransaction({
-          signupSessionClaim: preparedInput.signupSessionClaim,
-          messages,
-          ownerId,
-          userId: ctx.user.id,
-          workspaceId: parsedInput.workspaceId,
-          integrationId,
-          phoneNumber,
-          wabaId,
-          businessId,
-          auth,
-          isCoexist,
-          platformType,
-        })
+        const { workspaceId, createdWorkspace, integrationRow, wasCreated } =
+          await connectInTransaction({
+            signupSessionClaim: preparedInput.signupSessionClaim,
+            messages,
+            ownerId,
+            userId: ctx.user.id,
+            workspaceId: parsedInput.workspaceId,
+            integrationId,
+            phoneNumber,
+            wabaId,
+            businessId,
+            auth,
+            isCoexist,
+            platformType,
+          })
+
+        if (createdWorkspace) {
+          await auditService.record({
+            userId: ctx.user.id,
+            workspaceId,
+            action: "create",
+            detail: `created the workspace (#${workspaceId})`,
+          })
+        }
+
+        if (wasCreated) {
+          await auditService.record({
+            workspaceId,
+            action: "connect",
+            detail: `connected a new WhatsApp channel (#${integrationRow.id})`,
+          })
+        }
 
         await integrationWhatsappService.refreshCapiScopeCache({
           id: integrationRow.id,

@@ -2,6 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationDeepseekModel,
@@ -14,13 +15,13 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { verifyDeepSeekApiKey } from "../lib"
 import {
   type ConnectDeepSeekSchema,
   connectDeepSeekSchema,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const connectDeepSeekAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -92,6 +93,14 @@ export const connectDeepSeekAction = workspaceActionClient
         workspaceId,
         aiProviders.enum.deepseek,
       )
+
+      await auditService.record({
+        workspaceId,
+        action: integrationDeepseek ? "update" : "connect",
+        detail: integrationDeepseek
+          ? "updated the DeepSeek integration configuration"
+          : "connected a new DeepSeek integration",
+      })
 
       return
     },

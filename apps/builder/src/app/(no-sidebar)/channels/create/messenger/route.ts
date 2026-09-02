@@ -2,6 +2,7 @@ import {
   platformCredentialService,
   workspaceService,
 } from "@chatbotx.io/business"
+import "@chatbotx.io/business/audit"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
@@ -87,9 +88,6 @@ export async function GET(req: NextRequest) {
     redirect("/channels/messenger/select")
   }
 
-  const redirectUri = await generateMessengerRedirectUri(
-    messenger.publicConfig,
-    workspaceId,
-  )
+  const redirectUri = await generateMessengerRedirectUri(messenger, workspaceId)
   redirect(redirectUri)
 }

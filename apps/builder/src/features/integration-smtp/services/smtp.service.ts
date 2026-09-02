@@ -3,6 +3,7 @@ import {
   inboxService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { auditService, isSameJsonValue } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -12,7 +13,7 @@ import { smtpHostMap } from "@chatbotx.io/integration-smtp"
 import { createSmtpTransporter } from "@chatbotx.io/mail/transport"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
-import type { CreateSmtpRequest, UpdateSmtpRequest } from "../schemas/mutation"
+import type { CreateSmtpRequest, UpdateSmtpRequest } from "../schema/mutation"
 
 export async function verifySmtpConnection(input: CreateSmtpRequest) {
   const t = await getTranslations()
@@ -56,11 +57,11 @@ export async function createSmtp(
     throw new ChatbotXException("Workspace not found")
   }
 
-  return db.transaction(async (tx) => {
+  const { inbox, wasCreated } = await db.transaction(async (tx) => {
     const smtpId = createId()
     const name = input.username
 
-    const { inbox } = await connectChannelIntegration({
+    return await connectChannelIntegration({
       tx,
       ownerId: workspace.ownerId,
       inboxData: {
@@ -86,9 +87,17 @@ export async function createSmtp(
         })
       },
     })
-
-    return inbox
   })
+
+  if (wasCreated) {
+    await auditService.record({
+      workspaceId,
+      action: "connect",
+      detail: `connected a new SMTP channel (#${inbox.id})`,
+    })
+  }
+
+  return inbox
 }
 
 export async function updateSmtp(
@@ -127,12 +136,31 @@ export async function updateSmtp(
 
   const name = input.username ?? integration.name
 
-  return db
+  const updated = await db
     .update(integrationSmtpModel)
     .set({ auth: updatedAuth, name, fromAddress: input.fromAddress })
     .where(eq(integrationSmtpModel.id, integration.id))
     .returning()
     .then((result) => result[0])
+
+  const hasChanged = !isSameJsonValue(
+    { auth: updatedAuth, name, fromAddress: input.fromAddress },
+    {
+      auth: currentAuth,
+      name: integration.name,
+      fromAddress: integration.fromAddress,
+    },
+  )
+
+  if (hasChanged) {
+    await auditService.record({
+      workspaceId,
+      action: "update",
+      detail: "updated the SMTP channel configuration",
+    })
+  }
+
+  return updated
 }
 
 export async function deleteSmtp(workspaceId: string, id: string) {
@@ -159,5 +187,11 @@ export async function deleteSmtp(workspaceId: string, id: string) {
       workspaceId,
       tx,
     })
+  })
+
+  await auditService.record({
+    workspaceId,
+    action: "disconnect",
+    detail: `disconnected the SMTP channel (#${integration.id})`,
   })
 }

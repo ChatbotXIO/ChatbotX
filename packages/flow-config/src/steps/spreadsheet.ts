@@ -1,5 +1,6 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { isBotFieldReference } from "../field-reference"
 import {
   errorStateDefaultFn,
   errorStateSchema,
@@ -59,8 +60,18 @@ export const spreadsheetDefaultFn = (): SpreadsheetSchema => ({
   states: [successStateDefaultFn(), errorStateDefaultFn()],
 })
 
+/**
+ * Accepts a `ContactCustomField` numeric id, a `bot_field:<id>` reference
+ * token (Account Fields), or "" (clearable / legacy unset). Mirrors the
+ * `zodFieldReference()` contract used by other save-target step fields, but
+ * stays anchored to a numeric id (not a name) to preserve this schema's
+ * existing strictness.
+ */
 const optionalCustomFieldIdSchema = z.union([
   zodBigintAsString(),
+  z.string().refine(isBotFieldReference, {
+    message: "Must be a valid bot field reference",
+  }),
   z.literal(""),
 ])
 

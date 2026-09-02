@@ -7,13 +7,14 @@ import {
 } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import {
+  botFieldConditionSchema,
   contactFilterCriteriaSchema,
   couponTopicConditionSchema,
   customFieldConditionSchema,
   singleContactFilterConditionSchema,
-} from "@/features/contact-filter/schemas"
-import { staticFieldFilter } from "@/features/contact-filter/schemas/static-field-filter"
-import { listContactsRequest } from "@/features/contacts/schemas/query"
+} from "@/features/contact-filter/schema"
+import { staticFieldFilter } from "@/features/contact-filter/schema/static-field-filter"
+import { listContactsRequest } from "@/features/contacts/schema/query"
 
 describe("staticFieldFilter", () => {
   test("accepts enabled operators for text, dropdown, boolean, and date fields", () => {
@@ -424,6 +425,89 @@ describe("customFieldConditionSchema", () => {
   })
 })
 
+describe("botFieldConditionSchema", () => {
+  test.each([
+    [
+      "short text search",
+      {
+        botFieldType: customFieldTypes.enum.shortText,
+        valueType: formFieldTypes.enum.text,
+        operator: operatorTypes.enum.contains,
+        value: "vip",
+      },
+      true,
+    ],
+    [
+      "number range",
+      {
+        botFieldType: customFieldTypes.enum.number,
+        valueType: formFieldTypes.enum.number,
+        operator: operatorTypes.enum.isBetween,
+        value: ["1", "10"],
+      },
+      true,
+    ],
+    [
+      "datetime range",
+      {
+        botFieldType: customFieldTypes.enum.datetime,
+        valueType: formFieldTypes.enum.datetime,
+        operator: operatorTypes.enum.isBetween,
+        value: ["2026-05-01T00:00:00Z", "2026-05-31T23:59:59Z"],
+      },
+      true,
+    ],
+    [
+      "boolean valueless",
+      {
+        botFieldType: customFieldTypes.enum.boolean,
+        valueType: formFieldTypes.enum.boolean,
+        operator: operatorTypes.enum.isNotEmpty,
+      },
+      true,
+    ],
+    [
+      "long text search disabled",
+      {
+        botFieldType: customFieldTypes.enum.longText,
+        valueType: formFieldTypes.enum.text,
+        operator: operatorTypes.enum.contains,
+        value: "vip",
+      },
+      false,
+    ],
+  ])("validates %s", (_name, values, expected) => {
+    const result = botFieldConditionSchema.safeParse({
+      field: "botField",
+      botFieldId: "bf-1",
+      ...values,
+    })
+
+    expect(result.success).toBe(expected)
+  })
+
+  test("requires botFieldId and two values for interval operators", () => {
+    expect(
+      botFieldConditionSchema.safeParse({
+        field: "botField",
+        valueType: formFieldTypes.enum.text,
+        operator: operatorTypes.enum.eq,
+        value: "vip",
+      }).success,
+    ).toBe(false)
+
+    expect(
+      botFieldConditionSchema.safeParse({
+        field: "botField",
+        botFieldId: "bf-1",
+        valueType: formFieldTypes.enum.number,
+        operator: operatorTypes.enum.isBetween,
+        value: ["1"],
+      }).success,
+    ).toBe(false)
+  })
+})
+
 describe("contact filter union schemas", () => {
   test("accepts static and custom field conditions", () => {
     expect(
@@ -438,6 +522,18 @@ describe("contact filter union schemas", () => {
       singleContactFilterConditionSchema.safeParse({
         field: "customField",
         customFieldId: "cf-1",
+        valueType: formFieldTypes.enum.text,
+        operator: operatorTypes.enum.eq,
+        value: "vip",
+      }).success,
+    ).toBe(true)
+  })
+
+  test("accepts bot field conditions", () => {
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "botField",
+        botFieldId: "bf-1",
         valueType: formFieldTypes.enum.text,
         operator: operatorTypes.enum.eq,
         value: "vip",

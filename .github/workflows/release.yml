@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
@@ -21,28 +19,36 @@ env:
   BUILD_PLATFORMS: linux/amd64 #,linux/arm64
   DOCKER_REGISTRY: ghcr.io
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # `next build` runs with `typescript.ignoreBuildErrors: true` and the Docker
   # build never runs `check-types`, so without this gate a `v*` tag (or a
   # workflow_dispatch on any branch) could push an image that never
-  # type-checked — ci.yml only runs on pull_request and push-to-main, and
-  # nothing forces a tag to point at a commit that passed it. This job makes
-  # the quality gate travel with the artifact rather than with the ref.
+  # type-checked. This workflow no longer triggers on `pull_request` at all —
+  # ci.yml already runs lint/check-types/test on every PR and push-to-main,
+  # and a Docker build was the only thing this workflow added on a PR, which
+  # duplicated ci.yml's build-buildability signal for no benefit once ci.yml
+  # covers it. So this job only needs to re-run for events ci.yml does not
+  # cover: a version tag or a manual dispatch.
   check:
     name: Type-check, lint, test
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6.0.10
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -53,14 +59,23 @@ jobs:
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
 
-      - name: Type-check, lint, and test
-        run: pnpm turbo run check-types lint test
+      # `pnpm lint` covers everything, cheapest-first: check:agent-instructions,
+      # `turbo run lint` for apps/builder's i18n check, then repo-wide Biome
+      # last (slowest). Type-check and test are separate turbo tasks with no
+      # lint overlap, so they run standalone here instead of double-running
+      # lint via a combined `turbo run check-types lint test`.
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check and test
+        run: pnpm turbo run check-types test
 
   prepare-metadata:
     runs-on: ubuntu-latest
+    # Only checks out and computes tag/label strings via docker/metadata-
+    # action — never touches the registry, so packages: write is unneeded.
     permissions:
       contents: read
-      packages: write
     environment: ${{ github.event.inputs.environment || 'dev' }}
     outputs:
       version: ${{ steps.meta.outputs.version }}
@@ -68,7 +83,7 @@ jobs:
       image_namespace: ${{ steps.image_namespace.outputs.owner_lc }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set image namespace (GHCR requires lowercase)
         id: image_namespace
@@ -76,97 +91,106 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-builder
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-worker
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-realtime
             ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-mcp
+            ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-javascript-executor
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-
 
   build-image:
     name: Build ${{ matrix.label }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     needs:
       - prepare-metadata
       - check
+    # `check` deliberately does not run on push-to-main (see its `if:` above —
+    # this workflow no longer triggers on `pull_request` at all; ci.yml covers
+    # PRs). A skipped `needs` job skips its dependents by default, which
+    # silently stopped every merge to main from publishing an image between
+    # 2026-08-19 and this fix. This condition lets the build proceed when
+    # `check` is skipped, while still blocking it when `check` actually fails
+    # (tags / workflow_dispatch). NOT `always()` — that would ship images
+    # whose quality gate failed.
+    #
+    # Note for any future job-level `if:` edit here: `jobs.<job_id>.if` only
+    # has access to the `github`, `needs`, `vars`, and `inputs` contexts —
+    # `matrix` isn't expanded yet at that point, so a job-level
+    # `if: matrix.label == 'builder'` is invalid YAML that fails workflow
+    # validation for every trigger, not just this job (this broke the whole
+    # file for several hours — see git blame / incident notes before adding
+    # a `matrix` reference here). `runs-on` above CAN see `matrix` because
+    # it's evaluated after matrix expansion; step-level `if` can too.
+    if: >-
+      !cancelled()
+      && needs.prepare-metadata.result == 'success'
+      && needs.check.result != 'failure'
     strategy:
       fail-fast: false
       matrix:
         include:
+          # The builder compile is CPU-bound and `next build` only ever reports
+          # 3 workers on a 4-vCPU runner, so a bigger runner is the cheapest
+          # remaining win — but it needs one that actually exists. GitHub does
+          # NOT publish an `ubuntu-latest-N-cores` label: larger runners are an
+          # org-level feature that an admin must create and name, and
+          # `ubuntu-latest-4-cores` in GitHub's docs is only an example name.
+          # A public repo makes larger-runner minutes free, not the runners
+          # themselves. An unmatched label does not fail the job — it queues
+          # until it times out — so this stays on `ubuntu-latest` until a real
+          # provisioned label is confirmed (`gh api /orgs/ChatbotXIO/actions/
+          # runner-groups` needs admin:org). Then it is a one-word change here.
           - label: builder
             image: chatbotx-builder
             dockerfile: ./apps/builder/docker/Dockerfile
+            runner: ubuntu-latest
           - label: worker
             image: chatbotx-worker
             dockerfile: ./apps/worker/docker/Dockerfile
+            runner: ubuntu-latest
           - label: realtime
             image: chatbotx-realtime
             dockerfile: ./apps/realtime/docker/Dockerfile
+            runner: ubuntu-latest
           - label: mcp-server
             image: chatbotx-mcp
             dockerfile: ./apps/mcp-server/docker/Dockerfile
+            runner: ubuntu-latest
+          - label: javascript-executor
+            image: chatbotx-javascript-executor
+            dockerfile: ./apps/javascript-executor/docker/Dockerfile
+            runner: ubuntu-latest
+    # Baseline builder leg was ~16 min and the others ~1-2 min. Bounds a hung
+    # build, and an unprovisioned `runner` label, against the 24-hour default.
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: write
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # `type=gha` layer cache does NOT persist RUN cache mounts (pnpm store,
-      # .next/cache). buildkit-cache-dance injects/extracts them through the
-      # regular actions cache. Builder image only — its Dockerfile declares the
-      # matching mount ids.
-      - name: Restore BuildKit cache-mount contents
-        if: matrix.label == 'builder'
-        id: buildkit-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            buildkit-cache/pnpm-store
-            buildkit-cache/builder-next-cache
-          key: buildkit-cache-${{ matrix.label }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            buildkit-cache-${{ matrix.label }}-${{ github.ref_name }}-
-            buildkit-cache-${{ matrix.label }}-
-
-      - name: Inject cache mounts into the Docker build
-        if: matrix.label == 'builder'
-        uses: reproducible-containers/buildkit-cache-dance@v3
-        with:
-          cache-map: |
-            {
-              "buildkit-cache/pnpm-store": {
-                "target": "/pnpm/store",
-                "id": "pnpm-store"
-              },
-              "buildkit-cache/builder-next-cache": {
-                "target": "/app/apps/builder/.next/cache",
-                "id": "builder-next-cache"
-              }
-            }
-          skip-extraction: ${{ steps.buildkit-cache.outputs.cache-hit }}
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push main image
-        if: github.event_name != 'pull_request' && github.ref_name == 'main'
-        uses: docker/build-push-action@v6
+        if: github.ref_name == 'main'
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -174,19 +198,28 @@ jobs:
           tags: |
             ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:main
           labels: ${{ needs.prepare-metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Per-leg scope: the five matrix legs otherwise share one unscoped GHA
+          # cache namespace and evict each other against the 10GB LRU budget.
+          # mode=min (not max): `max` exports every intermediate layer of every
+          # stage — "preparing build cache for export" alone cost 236.8s of a
+          # 340.3s export — while a same-SHA rebuild still ran `pnpm install`
+          # cold and `next build` in full, so the intermediate layers were never
+          # usefully restored. See the phase table in the plan for measurements.
+          cache-from: type=gha,scope=${{ matrix.label }}
+          cache-to: type=gha,scope=${{ matrix.label }},mode=min
           platforms: ${{ env.BUILD_PLATFORMS }}
-          # Optional Turbo remote cache (self-hosted turborepo-remote-cache).
-          # Unset repo secrets resolve to empty strings → remote cache disabled.
-          secrets: |
-            TURBO_API=${{ secrets.TURBO_API }}
-            TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-            TURBO_TEAM=${{ secrets.TURBO_TEAM }}
+          # Turbo remote cache: deliberately NOT passed. buildx rejects an
+          # empty-valued secret outright, so passing the partial set that exists
+          # (TURBO_TOKEN/TURBO_TEAM, no TURBO_API) dropped TURBO_API and left
+          # turbo stalling on its built-in Vercel default —
+          # `Remote caching unavailable (Could not connect to vercel.com/api)`.
+          # The Dockerfile's --mount=type=secret lines are optional-safe, so
+          # restoring these three lines together is all it takes once a
+          # turborepo-remote-cache is provisioned and TURBO_API is set.
 
       - name: Build and push version image
-        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
-        uses: docker/build-push-action@v6
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -195,51 +228,44 @@ jobs:
             ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:${{ needs.prepare-metadata.outputs.version }}
             ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:latest
           labels: ${{ needs.prepare-metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Per-leg scope: the five matrix legs otherwise share one unscoped GHA
+          # cache namespace and evict each other against the 10GB LRU budget.
+          # mode=min (not max): `max` exports every intermediate layer of every
+          # stage — "preparing build cache for export" alone cost 236.8s of a
+          # 340.3s export — while a same-SHA rebuild still ran `pnpm install`
+          # cold and `next build` in full, so the intermediate layers were never
+          # usefully restored. See the phase table in the plan for measurements.
+          cache-from: type=gha,scope=${{ matrix.label }}
+          cache-to: type=gha,scope=${{ matrix.label }},mode=min
           platforms: ${{ env.BUILD_PLATFORMS }}
-          secrets: |
-            TURBO_API=${{ secrets.TURBO_API }}
-            TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-            TURBO_TEAM=${{ secrets.TURBO_TEAM }}
-
-      - name: Build image for pull request
-        if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: false
-          labels: ${{ needs.prepare-metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: ${{ env.BUILD_PLATFORMS }}
-          secrets: |
-            TURBO_API=${{ secrets.TURBO_API }}
-            TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-            TURBO_TEAM=${{ secrets.TURBO_TEAM }}
+          # Turbo remote cache secrets omitted — see "Build and push main image".
 
   output-image-urls:
     runs-on: ubuntu-latest
     needs:
       - prepare-metadata
       - build-image
-    if: github.event_name != 'pull_request'
+    # Requiring build-image to have succeeded (not just skipped/cancelled)
+    # keeps this job from announcing image URLs for a build that didn't run.
+    if: >-
+      !cancelled()
+      && needs.build-image.result == 'success'
+    # Only prints strings computed from `needs` outputs — no registry call.
     permissions:
       contents: read
-      packages: write
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Output image URLs
         run: |
           VERSION="${{ needs.prepare-metadata.outputs.version }}"
           REGISTRY="${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}"
-          if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "ghcr" ]]; then
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
             printf '%s\n' \
               "Builder image (main): ${REGISTRY}/chatbotx-builder:main" \
               "Worker image (main): ${REGISTRY}/chatbotx-worker:main" \
               "Realtime image (main): ${REGISTRY}/chatbotx-realtime:main" \
-              "MCP Server image (main): ${REGISTRY}/chatbotx-mcp:main"
+              "MCP Server image (main): ${REGISTRY}/chatbotx-mcp:main" \
+              "JavaScript Executor image (main): ${REGISTRY}/chatbotx-javascript-executor:main"
           elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             printf '%s\n' \
               "Builder image (version): ${REGISTRY}/chatbotx-builder:${VERSION}" \
@@ -249,7 +275,9 @@ jobs:
               "Realtime image (version): ${REGISTRY}/chatbotx-realtime:${VERSION}" \
               "Realtime image (latest): ${REGISTRY}/chatbotx-realtime:latest" \
               "MCP Server image (version): ${REGISTRY}/chatbotx-mcp:${VERSION}" \
-              "MCP Server image (latest): ${REGISTRY}/chatbotx-mcp:latest"
+              "MCP Server image (latest): ${REGISTRY}/chatbotx-mcp:latest" \
+              "JavaScript Executor image (version): ${REGISTRY}/chatbotx-javascript-executor:${VERSION}" \
+              "JavaScript Executor image (latest): ${REGISTRY}/chatbotx-javascript-executor:latest"
           else
             echo "No publish tags for ref ${GITHUB_REF}."
           fi

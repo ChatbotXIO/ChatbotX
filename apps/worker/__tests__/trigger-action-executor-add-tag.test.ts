@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   conversationFindFirst: vi.fn(),
-  contactInboxFindFirst: vi.fn(),
+  findByIdForContact: vi.fn(),
+  findMostRecentByContact: vi.fn(),
   tagFindMany: vi.fn(),
   insertReturning: vi.fn(),
   enqueueAttach: vi.fn(),
   enqueueTagAppliedEvaluations: vi.fn(),
   enqueueLeadEvent: vi.fn(),
-  formatUtcDay: vi.fn(),
+  buildLeadSourceKey: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -16,9 +17,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       conversationModel: {
         findFirst: (...args: unknown[]) => mocks.conversationFindFirst(...args),
-      },
-      contactInboxModel: {
-        findFirst: (...args: unknown[]) => mocks.contactInboxFindFirst(...args),
       },
       tagModel: {
         findMany: (...args: unknown[]) => mocks.tagFindMany(...args),
@@ -43,6 +41,21 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     contactId: "contactsToTagsModel.contactId",
     tagId: "contactsToTagsModel.tagId",
   },
+  metaCapiEventChannelSchema: {
+    safeParse: (value: unknown) =>
+      value === "messenger" || value === "instagram" || value === "whatsapp"
+        ? { success: true as const, data: value }
+        : { success: false as const },
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxRepository: {
+    findByIdForContact: (...args: unknown[]) =>
+      mocks.findByIdForContact(...args),
+    findMostRecentByContact: (...args: unknown[]) =>
+      mocks.findMostRecentByContact(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -57,7 +70,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   metaConversionsService: {
     enqueueLeadEvent: (...args: unknown[]) => mocks.enqueueLeadEvent(...args),
-    formatUtcDay: (...args: unknown[]) => mocks.formatUtcDay(...args),
+    buildLeadSourceKey: (...args: unknown[]) =>
+      mocks.buildLeadSourceKey(...args),
   },
 }))
 
@@ -94,13 +108,12 @@ describe("ActionExecutor addTag", () => {
       contactId: "contact-1",
       workspaceId: "ws-1",
     })
-    mocks.contactInboxFindFirst.mockResolvedValue({
+    mocks.findMostRecentByContact.mockResolvedValue({
       id: "ci-1",
       inboxId: "inbox-1",
-      contactId: "contact-1",
       channel: "messenger",
     })
-    mocks.formatUtcDay.mockReturnValue("20260810")
+    mocks.buildLeadSourceKey.mockReturnValue("trigger:trigger-1:ci-1:key")
   })
 
   test("enqueues tag sync and ads conversion tagApplied evaluation for newly-linked tags", async () => {
@@ -167,13 +180,19 @@ describe("ActionExecutor addTag", () => {
       workspaceId: "ws-1",
     })
 
+    expect(mocks.buildLeadSourceKey).toHaveBeenCalledWith({
+      scope: "trigger",
+      scopeId: "trigger-1",
+      contactInboxId: "ci-1",
+      channel: "messenger",
+    })
     expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channel: "messenger",
       contactInboxId: "ci-1",
       inboxId: "inbox-1",
       source: "triggerAction",
-      sourceKey: "trigger:trigger-1:ci-1:20260810",
+      sourceKey: "trigger:trigger-1:ci-1:key",
     })
   })
 })

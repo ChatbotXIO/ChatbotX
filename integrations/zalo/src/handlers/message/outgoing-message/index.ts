@@ -2,6 +2,7 @@ import {
   type SendFileStepSchema,
   type SendGifStepSchema,
   type SendImageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
@@ -20,7 +21,10 @@ import type {
   ZaloSendMessageRequest,
 } from "../../../schema/webhook"
 import { convertFlowStepFile } from "./send-file"
-import { convertFlowStepImage } from "./send-image"
+import {
+  convertFlowStepImage,
+  convertFlowStepMultipleImages,
+} from "./send-image"
 import { convertFlowStepText } from "./send-text"
 
 export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
@@ -29,13 +33,17 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       ctx,
       data: { contact, message },
     } = props
+    const messageIds: string[] = []
     try {
       for await (const zaloMessage of convertMessageToZaloMessage(
         ctx.auth,
         message,
       )) {
         const payload = buildMessagePayload(contact, zaloMessage)
-        await sendMessageToZaloOA(ctx.auth, payload)
+        const response = await sendMessageToZaloOA(ctx.auth, payload)
+        if (response.data?.message_id) {
+          messageIds.push(response.data.message_id)
+        }
         logger.info(`Message sent for Zalo OA UID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -43,8 +51,10 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
+    // Returning the provider ids lets the worker backfill the row's sourceId,
+    // so the oa_send_* webhook echo dedups instead of inserting a duplicate.
     return {
-      messageIds: [],
+      messageIds,
     }
   }
 
@@ -134,6 +144,11 @@ export async function* convertFlowStepToZaloMessage(
         >,
       )
       break
+    case stepTypes.enum.sendMultipleImages:
+      yield* convertFlowStepMultipleImages(
+        props as SendFlowStepProps<ZaloAuthValue, SendMultipleImagesStepSchema>,
+      )
+      break
     case stepTypes.enum.sendFile:
       yield* await convertFlowStepFile(
         props as SendFlowStepProps<ZaloAuthValue, SendFileStepSchema>,
@@ -150,12 +165,16 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
       ctx,
       data: { contact },
     } = props
+    const messageIds: string[] = []
     try {
       for await (const zaloMessage of convertFlowStepToZaloMessage(props)) {
-        await sendMessageToZaloOA(
+        const response = await sendMessageToZaloOA(
           ctx.auth,
           buildMessagePayload(contact, zaloMessage),
         )
+        if (response.data?.message_id) {
+          messageIds.push(response.data.message_id)
+        }
         logger.info(`Message sent for ID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -164,6 +183,6 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
     }
 
     return {
-      messageIds: [],
+      messageIds,
     }
   }

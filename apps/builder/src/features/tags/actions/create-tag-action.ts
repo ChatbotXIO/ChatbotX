@@ -8,7 +8,7 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type CreateTagRequest, createTagRequest } from "../schema/action"

@@ -68,7 +68,16 @@ export const rescue = async <T>(
   try {
     return await fn()
   } catch (error) {
-    facebookAdsLogger.error(error, `Facebook Ads API call failed: ${endpoint}`)
+    // Never pass Ky's raw HTTPError to Pino: its enumerable options can include
+    // the JSON request body and therefore the Meta access token. Log only the
+    // safe, structured fields below.
+    facebookAdsLogger.error(
+      {
+        endpoint,
+        status: isHTTPError(error) ? error.response.status : undefined,
+      },
+      "Facebook Ads API call failed",
+    )
 
     if (error instanceof FacebookAdsException) {
       throw error
@@ -82,7 +91,6 @@ export const rescue = async <T>(
         err?.code ?? "facebookAdsError",
         err?.error_subcode,
         err?.type,
-        error,
       )
     }
 
@@ -92,7 +100,6 @@ export const rescue = async <T>(
       "facebookAdsError",
       undefined,
       undefined,
-      error,
     )
   }
 }

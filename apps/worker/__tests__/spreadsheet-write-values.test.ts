@@ -4,11 +4,15 @@ const mocks = vi.hoisted(() => ({
   listValues: vi.fn(),
   getAll: vi.fn(),
   replaceAll: vi.fn(),
+  findManyByIds: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   contactCustomFieldService: {
     listValues: mocks.listValues,
+  },
+  botFieldService: {
+    findManyByIds: mocks.findManyByIds,
   },
 }))
 
@@ -44,6 +48,7 @@ describe("spreadsheet write values", () => {
     mocks.replaceAll.mockImplementation(async ({ text }: { text: string }) =>
       text.replace("{{raw:Name}}", "Ada"),
     )
+    mocks.findManyByIds.mockResolvedValue([])
   })
 
   test("resolves missing version as v1 with one custom-field query", async () => {
@@ -76,6 +81,95 @@ describe("spreadsheet write values", () => {
         },
       } as Parameters<typeof buildSpreadsheetWriteData>[0]),
     ).resolves.toEqual(["", ""])
+  })
+
+  // Regression for the P2 finding: a v1 Contact→Sheet mapping accepts a
+  // `bot_field:<id>` token (schema already allows it), but `resolveFromCustomFields`
+  // only queried ContactCustomField values — a bot token silently wrote a
+  // blank cell. Consistent with Sheet→Contact, which already supports it.
+  test("resolves a bot_field mapping to the bot field's value, not blank", async () => {
+    mocks.findManyByIds.mockResolvedValue([{ id: "9", value: "Gold Tier" }])
+
+    await expect(
+      buildSpreadsheetWriteData({
+        ...baseProps,
+        step: {
+          map: [
+            { header: "Name", customFieldId: "cf-name" },
+            { header: "Tier", customFieldId: "bot_field:9" },
+          ],
+        },
+      } as Parameters<typeof buildSpreadsheetWriteData>[0]),
+    ).resolves.toEqual(["Ada", "Gold Tier"])
+
+    expect(mocks.findManyByIds).toHaveBeenCalledTimes(1)
+    expect(mocks.findManyByIds).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["9"],
+    })
+  })
+
+  test("resolves a blank/unset bot field to an empty string, not a lookup miss", async () => {
+    mocks.findManyByIds.mockResolvedValue([{ id: "9", value: null }])
+
+    await expect(
+      buildSpreadsheetWriteData({
+        ...baseProps,
+        step: {
+          map: [{ header: "Tier", customFieldId: "bot_field:9" }],
+        },
+      } as Parameters<typeof buildSpreadsheetWriteData>[0]),
+    ).resolves.toEqual([""])
+  })
+
+  test("resolves a bot field whose id no longer exists to an empty string", async () => {
+    mocks.findManyByIds.mockResolvedValue([])
+
+    await expect(
+      buildSpreadsheetWriteData({
+        ...baseProps,
+        step: {
+          map: [{ header: "Tier", customFieldId: "bot_field:404" }],
+        },
+      } as Parameters<typeof buildSpreadsheetWriteData>[0]),
+    ).resolves.toEqual([""])
+  })
+
+  test("batches distinct bot field ids in a single lookup, not per mapping", async () => {
+    mocks.findManyByIds.mockResolvedValue([
+      { id: "9", value: "Gold" },
+      { id: "10", value: "42" },
+    ])
+
+    await expect(
+      buildSpreadsheetWriteData({
+        ...baseProps,
+        step: {
+          map: [
+            { header: "Tier", customFieldId: "bot_field:9" },
+            { header: "Score", customFieldId: "bot_field:10" },
+            { header: "Tier again", customFieldId: "bot_field:9" },
+          ],
+        },
+      } as Parameters<typeof buildSpreadsheetWriteData>[0]),
+    ).resolves.toEqual(["Gold", "42", "Gold"])
+
+    expect(mocks.findManyByIds).toHaveBeenCalledTimes(1)
+    expect(mocks.findManyByIds).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["9", "10"],
+    })
+  })
+
+  test("skips the bot field lookup entirely when no mapping references one", async () => {
+    await buildSpreadsheetWriteData({
+      ...baseProps,
+      step: {
+        map: [{ header: "Name", customFieldId: "cf-name" }],
+      },
+    } as Parameters<typeof buildSpreadsheetWriteData>[0])
+
+    expect(mocks.findManyByIds).not.toHaveBeenCalled()
   })
 
   test("resolves v2 values through variable templates", async () => {

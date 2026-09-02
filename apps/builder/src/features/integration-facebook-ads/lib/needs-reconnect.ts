@@ -1,4 +1,4 @@
-import type { IntegrationFacebookAdsResource } from "../schemas"
+import type { IntegrationFacebookAdsResource } from "../schema"
 
 export function needsFacebookAdsReconnect(
   integration: IntegrationFacebookAdsResource,

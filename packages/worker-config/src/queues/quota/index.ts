@@ -3,6 +3,7 @@ import {
   defaultJobOptions,
   fakeQueue,
   getRedisConnection,
+  isNoRedisEnv,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 
@@ -47,10 +48,9 @@ export type QuotaJobData =
   | QuotaJobBackfillDefaultPlan
   | QuotaJobBackfillTenantDefaultPlan
 
-export const quotaQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<QuotaJobData>(queueNames.enum.quota, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const quotaQueue = isNoRedisEnv()
+  ? fakeQueue
+  : new Queue<QuotaJobData>(queueNames.enum.quota, {
+      connection: getRedisConnection(),
+      defaultJobOptions,
+    })

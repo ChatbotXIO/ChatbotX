@@ -2,6 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
+import { auditService } from "@chatbotx.io/business/audit"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationModel,
@@ -14,13 +15,13 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { authActionClient } from "@/lib/safe-action"
 import { verifyOpenAIApiKey } from "../lib"
 import {
   type ConnectOpenAISchema,
   connectOpenAISchema,
-} from "../schemas/request"
+} from "../schema/request"
 
 export const connectOpenAIAction = authActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -95,6 +96,14 @@ export const connectOpenAIAction = authActionClient
         workspaceId,
         aiProviders.enum.openai,
       )
+
+      await auditService.record({
+        workspaceId,
+        action: integrationOpenAI ? "update" : "connect",
+        detail: integrationOpenAI
+          ? "updated the OpenAI integration configuration"
+          : "connected a new OpenAI integration",
+      })
 
       return
     },

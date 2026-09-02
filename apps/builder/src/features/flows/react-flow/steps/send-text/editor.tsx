@@ -2,6 +2,7 @@
 
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { ButtonGroupEditor } from "../button/editor"
+import { TiktokTitleNotice } from "./tiktok-title-notice"
 
 type SendTextStepEditorProps = {
   parentName: string
@@ -13,7 +14,12 @@ const SendTextStepEditor = (props: SendTextStepEditorProps) => {
   return (
     <div className="items-center justify-center overflow-hidden rounded-lg">
       <div className="bg-secondary px-4 py-2">
-        <TiptapEditorField includeCouponVariables name={`${parentName}.text`} />
+        <TiptapEditorField
+          includeBotFieldVariables
+          includeCouponVariables
+          name={`${parentName}.text`}
+        />
+        <TiktokTitleNotice parentName={parentName} />
       </div>
 
       <div className="bg-slate-200 px-3 py-2 dark:bg-neutral-900">

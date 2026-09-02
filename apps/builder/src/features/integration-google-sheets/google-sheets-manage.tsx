@@ -12,7 +12,7 @@ import { SettingRow } from "@/components/setting-row"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { connectGoogleSheets } from "./actions/connect.action"
 import { disconnectGoogleSheetsAction } from "./actions/disconnect.action"
-import type { IntegrationGoogleSheetsResource } from "./schemas"
+import type { IntegrationGoogleSheetsResource } from "./schema"
 
 type GoogleSheetsConnectProps = {
   workspaceId: string
@@ -58,7 +58,10 @@ export function GoogleSheetsManage({
       {integrationGoogleSheets ? (
         <div className="flex flex-col gap-2">
           <Button size="sm" variant="secondary">
-            <Link className="w-full" href="../google-sheets">
+            <Link
+              className="w-full"
+              href={`/space/${workspaceId}/google-sheets`}
+            >
               {t("actions.manage")}
             </Link>
           </Button>

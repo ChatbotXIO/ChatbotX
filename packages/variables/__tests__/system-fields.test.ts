@@ -22,6 +22,8 @@ const {
   mockSignMeLink,
   mockMessengerGetUserInboxLink,
   mockMessengerGetPostDetails,
+  mockAppointmentFindBy,
+  mockAppointmentFindLatestForContact,
   testEncryptionKey,
 } = vi.hoisted(() => ({
   mockConversationFindBy: vi.fn().mockResolvedValue({
@@ -42,11 +44,22 @@ const {
   mockSignMeLink: vi.fn(),
   mockMessengerGetUserInboxLink: vi.fn(),
   mockMessengerGetPostDetails: vi.fn(),
+  mockAppointmentFindBy: vi.fn(),
+  mockAppointmentFindLatestForContact: vi.fn(),
   testEncryptionKey:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  appointmentService: {
+    findBy: mockAppointmentFindBy,
+    findLatestForContact: mockAppointmentFindLatestForContact,
+  },
+  buildAppointmentUrl: (appUrl: string, pathname: string, token: string) => {
+    const url = new URL(pathname, appUrl)
+    url.searchParams.set("token", token)
+    return url.toString()
+  },
   contactInboxService: {
     findRecentByContactId: mockFindRecentByContactId,
   },
@@ -84,6 +97,9 @@ vi.mock("@chatbotx.io/business/system-field", () => ({
 vi.mock("@chatbotx.io/encryption/link-signature", () => ({
   signMeLink: mockSignMeLink,
 }))
+
+const BOOKING_SCHEDULE_URL_RE =
+  /^https:\/\/app\.example\.test\/booking\/schedule\?token=.+/
 
 const cache = new Map<string, unknown>()
 vi.mock("@chatbotx.io/redis", () => ({
@@ -158,6 +174,7 @@ const createContext = (overrides?: {
   contact?: ContactModel
   contactInbox?: ContactInboxModel | null
   conversation?: ConversationModel | null
+  appointmentId?: string
   workspace?: WorkspaceModel | null
 }) => ({
   contact: overrides?.contact ?? contact,
@@ -169,6 +186,7 @@ const createContext = (overrides?: {
     overrides && "conversation" in overrides
       ? overrides.conversation
       : conversation,
+  appointmentId: overrides?.appointmentId,
   workspace:
     overrides && "workspace" in overrides ? overrides.workspace : workspace,
 })
@@ -371,6 +389,74 @@ describe("getSystemFieldValue", () => {
 
     await expect(
       getSystemFieldValue(createContext(), systemFieldTypes.enum.ig_verified),
+    ).resolves.toBeNull()
+  })
+
+  // wa_user_id / wa_user_name (D9, the BSUID plan): unlike ig_*, these read the
+  // STORED ContactInbox columns directly — Meta offers no BSUID→profile
+  // endpoint, so there is no API call and no cache to exercise here.
+  test("wa_user_id / wa_user_name resolve from the stored ContactInbox columns", async () => {
+    mockFindWithIntegrationsById.mockResolvedValue({
+      integrationWhatsapp: { id: "whatsapp-integration-1" },
+    })
+    const whatsappInbox = {
+      ...contactInbox,
+      channel: "whatsapp",
+      sourceId: "user.9373001",
+      sourceUserId: "user.9373001",
+      sourceUsername: "@handle",
+    } as ContactInboxModel
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_id,
+      ),
+    ).resolves.toBe("user.9373001")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_name,
+      ),
+    ).resolves.toBe("@handle")
+  })
+
+  test("wa_user_id / wa_user_name resolve to null when absent (phone-keyed contact, no adopted username)", async () => {
+    mockFindWithIntegrationsById.mockResolvedValue({
+      integrationWhatsapp: { id: "whatsapp-integration-1" },
+    })
+    const whatsappInbox = {
+      ...contactInbox,
+      channel: "whatsapp",
+      sourceId: "84901234567",
+      sourceUserId: null,
+      sourceUsername: null,
+    } as ContactInboxModel
+
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_id,
+      ),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: whatsappInbox }),
+        systemFieldTypes.enum.wa_user_name,
+      ),
+    ).resolves.toBeNull()
+  })
+
+  test("wa_user_id / wa_user_name resolve to null on a non-WhatsApp inbox (channel guard)", async () => {
+    mockFindWithIntegrationsById.mockResolvedValue({
+      integrationInstagram: { id: "instagram-integration-1" },
+    })
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.wa_user_id),
+    ).resolves.toBeNull()
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.wa_user_name),
     ).resolves.toBeNull()
   })
 
@@ -602,6 +688,18 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBeNull()
   })
 
+  test("user_id resolves to the contact id even without a contact inbox", async () => {
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.user_id),
+    ).resolves.toBe("contact-1")
+    await expect(
+      getSystemFieldValue(
+        createContext({ contactInbox: null }),
+        systemFieldTypes.enum.user_id,
+      ),
+    ).resolves.toBe("contact-1")
+  })
+
   test("contact inbox passthrough fields resolve from context", async () => {
     const passthroughInbox = {
       ...contactInbox,
@@ -609,12 +707,6 @@ describe("getSystemFieldValue", () => {
       lastErrorLog: "(#551) This person isn't available right now.",
     } as ContactInboxModel
 
-    await expect(
-      getSystemFieldValue(
-        createContext({ contactInbox: passthroughInbox }),
-        systemFieldTypes.enum.user_id,
-      ),
-    ).resolves.toBe("source-1")
     await expect(
       getSystemFieldValue(
         createContext({ contactInbox: passthroughInbox }),
@@ -637,7 +729,6 @@ describe("getSystemFieldValue", () => {
 
   test("contact inbox passthrough fields return null without a contact inbox", async () => {
     for (const key of [
-      systemFieldTypes.enum.user_id,
       systemFieldTypes.enum.user_external_id,
       systemFieldTypes.enum.webchat_parent_url,
       systemFieldTypes.enum.last_error_log,
@@ -1460,6 +1551,127 @@ describe("getSystemFieldValue — clock fields", () => {
         systemFieldTypes.enum.current_time,
       ),
     ).resolves.toBe("2026-01-02 03:04:05")
+  })
+})
+
+describe("getSystemFieldValue — appointment fields", () => {
+  beforeEach(() => {
+    cache.clear()
+    vi.clearAllMocks()
+  })
+
+  test("booking fields resolve from explicit appointment context", async () => {
+    mockAppointmentFindBy.mockResolvedValue({
+      id: "appointment-1",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    const context = createContext({ appointmentId: "appointment-1" })
+
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_calendar),
+    ).resolves.toBe("Discovery Call")
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_date),
+    ).resolves.toBe("2026-01-02 10:04:05")
+
+    expect(mockAppointmentFindBy).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "appointment-1",
+    })
+    expect(mockAppointmentFindLatestForContact).not.toHaveBeenCalled()
+  })
+
+  test("booking fields fall back to the contact's latest appointment without explicit appointment context", async () => {
+    mockAppointmentFindLatestForContact.mockResolvedValue({
+      id: "appointment-2",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    const context = createContext()
+
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_calendar),
+    ).resolves.toBe("Discovery Call")
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_date),
+    ).resolves.toBe("2026-01-02 10:04:05")
+
+    expect(mockAppointmentFindBy).not.toHaveBeenCalled()
+    expect(mockAppointmentFindLatestForContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+  })
+
+  test("booking_link resolves null without any appointment for the contact", async () => {
+    mockAppointmentFindLatestForContact.mockResolvedValue(null)
+
+    await expect(
+      getSystemFieldValue(createContext(), systemFieldTypes.enum.booking_link),
+    ).resolves.toBeNull()
+
+    expect(mockAppointmentFindBy).not.toHaveBeenCalled()
+    expect(mockAppointmentFindLatestForContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+  })
+
+  test("booking_link resolves a schedule URL with an appointmentId", async () => {
+    mockAppointmentFindBy.mockResolvedValue({
+      id: "appointment-1",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      conversationId: "conversation-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    mockResolveTenantSettings.mockResolvedValue({
+      appUrl: "https://app.example.test",
+    })
+    const context = createContext({ appointmentId: "appointment-1" })
+
+    const value = await getSystemFieldValue(
+      context,
+      systemFieldTypes.enum.booking_link,
+    )
+
+    expect(value).toMatch(BOOKING_SCHEDULE_URL_RE)
+    expect(mockAppointmentFindLatestForContact).not.toHaveBeenCalled()
+  })
+
+  test("explicit appointmentId takes priority over the contact's latest appointment", async () => {
+    mockAppointmentFindBy.mockResolvedValue({
+      id: "appointment-1",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-01-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Discovery Call" },
+    })
+    mockAppointmentFindLatestForContact.mockResolvedValue({
+      id: "appointment-2",
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      startAt: new Date("2026-02-02T03:04:05.000Z"),
+      inviteeTimezone: "Asia/Ho_Chi_Minh",
+      calendar: { name: "Newer Calendar" },
+    })
+    const context = createContext({ appointmentId: "appointment-1" })
+
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.booking_calendar),
+    ).resolves.toBe("Discovery Call")
+
+    expect(mockAppointmentFindLatestForContact).not.toHaveBeenCalled()
   })
 })
 

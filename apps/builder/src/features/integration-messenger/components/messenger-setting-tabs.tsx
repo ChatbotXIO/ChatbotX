@@ -20,7 +20,7 @@ const TAB_CONFIGS: readonly TabConfig[] = [
     translationKey: "messenger.tabs.messageTemplates",
   },
   {
-    value: "capi",
+    value: "ads",
     translationKey: "messenger.tabs.conversionsApi",
   },
 ] as const

@@ -55,6 +55,32 @@ export const integrationInstagramRepository = {
     return row ?? null
   },
 
+  /**
+   * Instagram counterpart to
+   * `integrationWhatsappRepository.findWorkspaceIntegrationByInboxId` (Phase
+   * 3 channel-aware ads-conversion gate call sites): resolves the Instagram
+   * integration that owns a given `Inbox.id`. Backs both the native
+   * Instagram-login and Instagram-via-Facebook-Page integrations — both
+   * persist to this same table.
+   */
+  async findWorkspaceIntegrationByInboxId(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string } | null> {
+    const [row] = await tx
+      .select({ id: integrationInstagramModel.id })
+      .from(integrationInstagramModel)
+      .where(
+        and(
+          eq(integrationInstagramModel.inboxId, input.inboxId),
+          eq(integrationInstagramModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  },
+
   async updateCapiScopeCache(
     input: UpdateInstagramCapiScopeCacheInput,
     tx: DatabaseClient = db,

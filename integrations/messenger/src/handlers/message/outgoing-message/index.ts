@@ -4,6 +4,7 @@ import {
   type SendFileStepSchema,
   type SendImageStepSchema,
   type SendMessengerTemplateMessageStepSchema,
+  type SendMultipleImagesStepSchema,
   type SendQuickReplyStepSchema,
   type SendTextStepSchema,
   type SendVideoStepSchema,
@@ -13,8 +14,11 @@ import {
   ChannelError,
   ChannelErrorCategory,
   contentTypes,
+  getCanonicalReplyPayload,
+  MESSENGER_NATIVE_QUICK_REPLY,
   META_HUMAN_AGENT_WINDOW_MS,
   META_RESPONSE_WINDOW_MS,
+  type MessageButtonTemplate,
   type MessageHandlers,
   normalizeLastIncomingMessageAt,
   type OutgoingContact,
@@ -23,9 +27,11 @@ import {
 } from "@chatbotx.io/sdk"
 import { sendPrivateReplyMessage } from "../../../apis/comment"
 import { sendPageMessage } from "../../../apis/message"
+import { ensureMessengerWhitelistedDomain } from "../../../apis/page"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import {
+  type FacebookButton,
   type FacebookMessage,
   type FacebookMessageAttachmentPayload,
   type FacebookSendMessageRequest,
@@ -40,6 +46,7 @@ import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
 import { convertFlowStepMedia } from "./send-media"
 import { buildMessengerTemplateSendRequest } from "./send-messenger-template"
+import { convertFlowStepMultipleImages } from "./send-multiple-images"
 import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
@@ -47,6 +54,75 @@ import { convertFlowStepText } from "./send-text"
 type MessengerMessagingPolicy = {
   messagingType: "MESSAGE_TAG" | "RESPONSE"
   tag?: FacebookSendMessageRequest["tag"]
+}
+
+const MESSENGER_EXTENSION_DOMAIN_NOT_WHITELISTED_SUBCODE = 2_018_062
+const ensuredMessengerExtensionDomains = new Set<string>()
+
+const isMessengerExtensionDomainNotWhitelistedError = (error: unknown) =>
+  mapToChannelError(error).subCode ===
+  MESSENGER_EXTENSION_DOMAIN_NOT_WHITELISTED_SUBCODE
+
+const getMessengerExtensionUrl = (
+  payload: FacebookSendMessageRequest,
+): string | undefined => {
+  const attachmentPayload = payload.message?.attachment?.payload
+  const button = attachmentPayload?.buttons?.find(
+    (button) => button.messenger_extensions && button.url,
+  )
+  if (button?.url) {
+    return button.url
+  }
+
+  for (const element of attachmentPayload?.elements ?? []) {
+    const elementButton = element.buttons?.find(
+      (button) => button.messenger_extensions && button.url,
+    )
+    if (elementButton?.url) {
+      return elementButton.url
+    }
+  }
+}
+
+const ensureMessengerExtensionUrlDomain = async (
+  ctx: SendFlowStepProps<MessengerAuthValue>["ctx"],
+  url?: string,
+) => {
+  if (!url) {
+    return
+  }
+
+  const domain = new URL(url).origin
+  const cacheKey = `${ctx.auth.metadata.pageId}:${domain}`
+  if (ensuredMessengerExtensionDomains.has(cacheKey)) {
+    return
+  }
+
+  await ensureMessengerWhitelistedDomain({ ctx, appUrl: url })
+  ensuredMessengerExtensionDomains.add(cacheKey)
+}
+
+const sendPageMessageWithMessengerExtensionWhitelistRetry = async (
+  ctx: SendFlowStepProps<MessengerAuthValue>["ctx"],
+  payload: FacebookSendMessageRequest,
+) => {
+  const messengerExtensionUrl = getMessengerExtensionUrl(payload)
+  await ensureMessengerExtensionUrlDomain(ctx, messengerExtensionUrl)
+
+  try {
+    return await sendPageMessage(ctx.auth, payload)
+  } catch (error) {
+    if (!isMessengerExtensionDomainNotWhitelistedError(error)) {
+      throw error
+    }
+    if (messengerExtensionUrl) {
+      ensuredMessengerExtensionDomains.delete(
+        `${ctx.auth.metadata.pageId}:${new URL(messengerExtensionUrl).origin}`,
+      )
+    }
+    await ensureMessengerExtensionUrlDomain(ctx, messengerExtensionUrl)
+    return await sendPageMessage(ctx.auth, payload)
+  }
 }
 
 export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
@@ -61,9 +137,12 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
       const facebookMessages = [...convertMessageToFacebookMessage(message)]
       const lastMessage = facebookMessages.at(-1)
-      if (lastMessage && quickReplies && quickReplies.length > 0) {
+      const nativeQuickReplies = (quickReplies ?? []).filter(
+        (button) => button.buttonType !== "url",
+      )
+      if (lastMessage && nativeQuickReplies.length > 0) {
         lastMessage.quick_replies =
-          convertCanonicalFacebookQuickReplies(quickReplies)
+          convertCanonicalFacebookQuickReplies(nativeQuickReplies)
       }
       for (const facebookMessage of facebookMessages) {
         const payload = buildMessagePayload({
@@ -75,7 +154,11 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
             contact,
           ),
         })
-        const response = await sendPageMessage(ctx.auth, payload)
+        const response =
+          await sendPageMessageWithMessengerExtensionWhitelistRetry(
+            ctx,
+            payload,
+          )
         if (response.message_id) {
           messageIds.push(response.message_id)
         }
@@ -115,7 +198,11 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
             SendMessengerTemplateMessageStepSchema
           >,
         )
-        const response = await sendPageMessage(ctx.auth, payload)
+        const response =
+          await sendPageMessageWithMessengerExtensionWhitelistRetry(
+            ctx,
+            payload,
+          )
         logger.info(`Messenger template sent for PSID: ${contact.sourceId}`)
         return {
           messageIds: response.message_id ? [response.message_id] : [],
@@ -150,8 +237,8 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
               facebookMessage,
               personaId,
             )
-          : await sendPageMessage(
-              ctx.auth,
+          : await sendPageMessageWithMessengerExtensionWhitelistRetry(
+              ctx,
               buildMessagePayload({
                 contact,
                 message: facebookMessage,
@@ -177,25 +264,57 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
     }
   }
 
-function* convertMessageToFacebookMessage(
+export function* convertMessageToFacebookMessage(
   message: OutgoingMessage,
 ): Generator<FacebookMessage> {
   if (message.contentType === contentTypes.enum.text) {
-    if (message.text) {
+    const templateButtons = getButtonTemplate(message)
+    if (message.text && templateButtons.length > 0) {
+      yield {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "button",
+            text: message.text,
+            buttons: templateButtons,
+          },
+        },
+      }
+    } else if (message.text) {
       yield {
         text: message.text,
       }
     }
-    for (const attachment of message.attachments || []) {
+    // Multiple images in one outgoing message batch into a single Send API
+    // call via `attachments[]` (Meta's "sending_multiple_attachments" form —
+    // same mechanism the sendMultipleImages flow step uses), instead of one
+    // Send API message per image; every other attachment type still sends as
+    // its own message, since Meta has no equivalent batching for them.
+    const attachments = message.attachments || []
+    const imageAttachments = attachments.filter(
+      (attachment) => attachment.fileType === "image",
+    )
+    const otherAttachments = attachments.filter(
+      (attachment) => attachment.fileType !== "image",
+    )
+
+    if (imageAttachments.length > 1) {
+      yield {
+        attachments: imageAttachments.map((attachment) =>
+          getAttachmentTemplate(attachment.url as string, "image"),
+        ),
+      }
+    } else if (imageAttachments.length === 1) {
+      yield {
+        attachment: getAttachmentTemplate(
+          imageAttachments[0].url as string,
+          "image",
+        ),
+      }
+    }
+
+    for (const attachment of otherAttachments) {
       switch (attachment.fileType) {
-        case "image":
-          yield {
-            attachment: getAttachmentTemplate(
-              attachment.url as string,
-              "image",
-            ),
-          }
-          continue
         case "video":
           yield {
             attachment: getAttachmentTemplate(
@@ -223,6 +342,84 @@ function* convertMessageToFacebookMessage(
     yield {
       text: message.text ?? "not handled yet",
     }
+  }
+}
+
+const getButtonTemplate = (message: OutgoingMessage): FacebookButton[] => {
+  const attrs = message.contentAttributes
+  if (!(attrs && typeof attrs === "object")) {
+    return []
+  }
+  const record = attrs as {
+    type?: unknown
+    payload?: { templateType?: unknown; buttons?: unknown }
+  }
+  if (
+    record.type !== "template" ||
+    record.payload?.templateType !== "button" ||
+    !Array.isArray(record.payload.buttons)
+  ) {
+    return []
+  }
+
+  const buttons = record.payload.buttons.filter(isMessageButtonTemplate)
+  if (!buttons.some((button) => button.buttonType === "url")) {
+    return []
+  }
+
+  return buttons
+    .map(toFacebookButton)
+    .filter((button): button is FacebookButton => Boolean(button))
+}
+
+const isMessageButtonTemplate = (
+  value: unknown,
+): value is MessageButtonTemplate => {
+  if (!(value && typeof value === "object")) {
+    return false
+  }
+  const button = value as Partial<MessageButtonTemplate>
+  if (!(typeof button.id === "string" && typeof button.label === "string")) {
+    return false
+  }
+  if (button.buttonType === "url") {
+    return typeof button.url === "string"
+  }
+  if (
+    !(button.buttonType === "postback" && typeof button.postback === "string")
+  ) {
+    return false
+  }
+  return !isMessengerNativeQuickReply(button as MessageButtonTemplate)
+}
+
+const messengerNativeQuickReplyPayloads = new Set<string>(
+  Object.values(MESSENGER_NATIVE_QUICK_REPLY),
+)
+
+const isMessengerNativeQuickReply = (button: MessageButtonTemplate): boolean =>
+  messengerNativeQuickReplyPayloads.has(getCanonicalReplyPayload(button))
+
+const toFacebookButton = (
+  button: MessageButtonTemplate,
+): FacebookButton | null => {
+  if (button.buttonType === "url") {
+    return {
+      type: "web_url",
+      title: button.label,
+      url: button.url,
+      ...(button.messengerExtensions
+        ? {
+            messenger_extensions: true,
+            webview_height_ratio: "full" as const,
+          }
+        : {}),
+    }
+  }
+  return {
+    type: "postback",
+    title: button.label,
+    payload: button.postback,
   }
 }
 
@@ -310,6 +507,14 @@ async function* convertFlowStepToFacebookMessage(
           SendImageStepSchema | SendVideoStepSchema
         >,
       ))
+      break
+    case stepTypes.enum.sendMultipleImages:
+      yield* convertFlowStepMultipleImages(
+        props as SendFlowStepProps<
+          MessengerAuthValue,
+          SendMultipleImagesStepSchema
+        >,
+      )
       break
     case stepTypes.enum.sendAudio:
     case stepTypes.enum.sendFile:

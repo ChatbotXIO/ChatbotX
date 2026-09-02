@@ -13,6 +13,7 @@ import {
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { MessagingAdsBox } from "@/features/ads-campaign/components/messaging-ads-box"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
 import {
@@ -38,6 +39,7 @@ type InstagramCapiTabProps = {
   hasManualCapiAccessToken: boolean
   capiDisconnected: boolean
   credentialAvailable: boolean
+  messagingAdsConnectionState: { connected: boolean; reconnectNeeded: boolean }
 }
 
 const statusDescriptionKey = {
@@ -85,6 +87,7 @@ export function InstagramCapiTab({
   hasManualCapiAccessToken,
   capiDisconnected,
   credentialAvailable,
+  messagingAdsConnectionState,
 }: InstagramCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -147,6 +150,14 @@ export function InstagramCapiTab({
           )}
         </CardContent>
       </Card>
+      {supported && (
+        <MessagingAdsBox
+          channel="instagram"
+          initialConnectionState={messagingAdsConnectionState}
+          integrationId={integrationInstagram.id}
+          workspaceId={workspaceId}
+        />
+      )}
     </div>
   )
 }

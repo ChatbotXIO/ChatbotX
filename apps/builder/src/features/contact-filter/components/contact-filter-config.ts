@@ -29,7 +29,7 @@ import {
   type ContactFilterSchemaKind,
   type CtwaRetargetCondition,
   type CtwaRetargetSegment,
-} from "../schemas"
+} from "../schema"
 
 export type ConditionOption = {
   value: OperatorType
@@ -38,12 +38,18 @@ export type ConditionOption = {
 }
 
 export type FieldConfig = {
-  /** `ContactFilterField` for static fields, `customField:<id>` for custom fields, `couponTopic:<id>` for coupon topics. */
+  /** `ContactFilterField` for static fields, `customField:<id>` for custom fields, `botField:<id>` for bot fields, `couponTopic:<id>` for coupon topics. */
   name: string
   /** Set for dynamic custom-field configs; identifies the workspace custom field. */
   customFieldId?: string
-  /** Raw custom field type from the workspace, used for custom-field operator rules. */
+  /**
+   * Raw custom/bot field type from the workspace, used for operator rules —
+   * shared by `customField` and `botField` configs (`custom-field-filter-config.ts`
+   * only ever reads this by value, not by which dynamic kind set it).
+   */
   customFieldType?: string
+  /** Set for dynamic bot-field configs; identifies the workspace bot field. */
+  botFieldId?: string
   /** Set for dynamic coupon-topic configs; identifies the workspace coupon topic. */
   topicId?: string
   /** Display label override (custom field / coupon topic name); static fields fall back to i18n. */
@@ -76,6 +82,7 @@ export type ContactFilterFieldGroup =
   | "systemFields"
   | "topicCoupon"
   | "customFields"
+  | "botFields"
   | "ctwaAds"
 
 type GroupedContactFilterFieldGroup = Exclude<
@@ -366,6 +373,12 @@ const CONTACT_FILTER_GROUP_FIELDS = {
   // group "topicCoupon" set directly (see couponTopicConfigs below).
   topicCoupon: [],
   customFields: ["customFields"],
+  // Populated dynamically (opt-in only — see `getFieldConfigs`'s
+  // `includeBotFields`) — each workspace bot field gets its own FieldConfig
+  // with group "botFields" set directly (see botFieldConfigs below). Listed
+  // right after `customFields` so the picker renders "Bot Fields" immediately
+  // after "Custom Fields" (`Object.keys` iteration order drives render order).
+  botFields: [],
 } as const satisfies Record<
   GroupedContactFilterFieldGroup,
   readonly ContactFilterField[]
@@ -400,6 +413,8 @@ export const getFieldConfigs = ({
   reflinkOptions = [],
   assigneeOptions = [],
   couponTopicOptions = [],
+  botFields = [],
+  includeBotFields = false,
 }: {
   t: (key: string) => string
   tagOptions: SelectOption[]
@@ -411,6 +426,17 @@ export const getFieldConfigs = ({
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
   couponTopicOptions?: SelectOption[]
+  /** Workspace bot (account) fields — only read when `includeBotFields` is true. */
+  botFields?: CustomFieldFilterOption[]
+  /**
+   * Opt-in: also offers Bot Fields as an "Add Condition" group after Custom
+   * Fields. Allowlisted v1 surface only — the flow Condition node's
+   * `ContactFilter` (see `flows/react-flow/steps/condition/editor.tsx`).
+   * Defaults to false so the ~4 other contact-filter surfaces (contacts
+   * list, conversations, broadcasts) never offer/render workspace-level
+   * fields alongside per-contact ones.
+   */
+  includeBotFields?: boolean
 }): FieldConfig[] => {
   const channelOptions = getChannelMultiSelectOptions(t)
 
@@ -458,7 +484,27 @@ export const getFieldConfigs = ({
     group: "topicCoupon",
   }))
 
-  return [...staticConfigs, ...customFieldConfigs, ...couponTopicConfigs]
+  // Each workspace bot field becomes its own filter field, same shape as a
+  // custom-field config (`customFieldType` carries the raw type either way —
+  // see the `FieldConfig` doc comment) so the row/dialog UI can reuse the
+  // custom-field condition logic unchanged. Opt-in only (`includeBotFields`).
+  const botFieldConfigs: FieldConfig[] = includeBotFields
+    ? botFields.map((field) => ({
+        name: `botField:${field.id}`,
+        botFieldId: field.id,
+        customFieldType: field.type,
+        label: field.name,
+        formField: convertCustomFieldTypeToConditionType(field.type),
+        group: "botFields",
+      }))
+    : []
+
+  return [
+    ...staticConfigs,
+    ...customFieldConfigs,
+    ...botFieldConfigs,
+    ...couponTopicConfigs,
+  ]
 }
 
 export const getFieldOptions = (

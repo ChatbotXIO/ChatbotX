@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 105" width="360" height="105">
+  <defs>
+    <linearGradient id="rBtnGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="25%" stop-color="#fde047"/>
+      <stop offset="60%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+    <linearGradient id="rBtnRuby" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="40%" stop-color="#e11d48"/>
+      <stop offset="80%" stop-color="#be123c"/>
+      <stop offset="100%" stop-color="#881337"/>
+    </linearGradient>
+    <filter id="rBtnShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <rect x="6" y="6" width="348" height="93" rx="20" fill="url(#rBtnGold)" stroke="#78350f" stroke-width="2.5" filter="url(#rBtnShadow)"/>
+  
+  <g id="royal-btn-face">
+    <rect x="14" y="16" width="332" height="74" rx="14" fill="#4c0519"/>
+    <rect x="14" y="10" width="332" height="74" rx="14" fill="url(#rBtnRuby)" stroke="url(#rBtnGold)" stroke-width="2.5"/>
+    <path d="M 24,14 L 336,14 Q 342,14 342,22 L 342,32 Q 330,22 270,22 L 90,22 Q 30,22 18,32 L 18,22 Q 18,14 24,14 Z" fill="#ffffff" opacity="0.45"/>
+    <text x="180" y="58" text-anchor="middle" font-family="'Impact', 'Arial Black', sans-serif" font-size="38" font-weight="900" fill="url(#rBtnGold)" letter-spacing="4" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.9));">PLAY NOW</text>
+  </g>
+</svg>

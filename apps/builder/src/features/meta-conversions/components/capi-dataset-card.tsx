@@ -32,6 +32,11 @@ type CapiDatasetCardProps = {
   actions: CapiDatasetCardActions
 }
 
+// A Meta Dataset ID is a numeric string (mirrors the server's dataset-id
+// schema). Validate the format on the client so a typo gets a clear message
+// instead of a misleading "token could not access the dataset" from the server.
+const DATASET_ID_PATTERN = /^\d+$/
+
 export function CapiDatasetCard({
   workspaceId,
   integrationId,
@@ -60,12 +65,20 @@ export function CapiDatasetCard({
 
   const isPending = setDataset.isPending || provision.isPending
 
-  // One Save button: a pasted Dataset ID is validated and used as-is; an empty
-  // field falls back to auto-creating a linked dataset (the old logic).
+  // A pasted Dataset ID is validated and saved as-is ("Save"); an empty field
+  // auto-creates a linked dataset ("Create Dataset"). The label mirrors which
+  // action the button will run.
+  const trimmedDatasetId = datasetInput.trim()
+  const hasDatasetId = trimmedDatasetId.length > 0
+  const isDatasetIdInvalid =
+    hasDatasetId && !DATASET_ID_PATTERN.test(trimmedDatasetId)
+
   const onSave = () => {
-    const datasetId = datasetInput.trim()
-    if (datasetId.length > 0) {
-      setDataset.execute({ datasetId })
+    if (hasDatasetId) {
+      if (isDatasetIdInvalid) {
+        return
+      }
+      setDataset.execute({ datasetId: trimmedDatasetId })
       return
     }
     provision.execute()
@@ -83,15 +96,29 @@ export function CapiDatasetCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Input
+          aria-invalid={isDatasetIdInvalid}
           className="font-mono"
           onChange={(event) => setDatasetInput(event.target.value)}
           placeholder={t("metaConversions.datasetIdPlaceholder")}
           value={datasetInput}
         />
+        {isDatasetIdInvalid ? (
+          <p className="text-destructive text-xs">
+            {t("metaConversions.errors.invalidDatasetId")}
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2">
-          <Button disabled={isPending} onClick={onSave} type="button">
+          <Button
+            disabled={isPending || isDatasetIdInvalid}
+            onClick={onSave}
+            type="button"
+          >
             {isPending ? <Loader2Icon className="animate-spin" /> : null}
-            {t("metaConversions.finalize.save")}
+            {t(
+              hasDatasetId
+                ? "metaConversions.finalize.save"
+                : "metaConversions.finalize.createDataset",
+            )}
           </Button>
         </div>
         <p className="text-muted-foreground text-xs">

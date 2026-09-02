@@ -36,11 +36,22 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx.io/events"
+import {
+  type RealtimeEventConversationUpdatedChanges,
+  RealtimeEventType,
+} from "@chatbotx.io/partysocket-config"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
+import {
+  ChatJobAction,
+  chatQueue,
+  NotificationJobAction,
+  notificationQueue,
+} from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException } from "../errors"
+import { logger } from "../logger"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
 
@@ -118,16 +129,18 @@ class ConversationService extends BaseService {
   async findDMByContact(props: {
     workspaceId: string
     contactId: string
+    channel?: ChannelType | null
     tx?: DatabaseClient
   }): Promise<ConversationModel | undefined> {
-    const { tx = db, workspaceId, contactId } = props
+    const { tx = db, workspaceId, contactId, channel } = props
     // Read receipts always target the DM conversation (sourceId IS NULL). Only
     // TikTok and Facebook comment conversations have a non-null sourceId.
+    const usesSourceId = dmConversationUsesSourceId(channel)
     return await tx.query.conversationModel.findFirst({
       where: {
         workspaceId,
         contactId,
-        sourceId: { isNull: true },
+        sourceId: usesSourceId ? { isNotNull: true } : { isNull: true },
       },
     })
   }
@@ -188,6 +201,70 @@ class ConversationService extends BaseService {
     if (!row) {
       throw notFoundException("Conversation not found")
     }
+  }
+
+  /**
+   * Atomic compare-and-clear claim on the conversation's `challenge` jsonb
+   * attribute. Used by webview-submission handlers (e.g. getUserData's
+   * date/datetime picker) to guard against double-submit / stale-token
+   * replay: two concurrent submissions racing to clear the same challenge
+   * must not both "win" — only the row matching the current stepId AND
+   * challengeId is cleared, and only one caller can ever observe a returned
+   * row for a given challengeId. See `.agents/skills/reliability-concurrency`.
+   */
+  async consumeChallenge(props: {
+    workspaceId: string
+    conversationId: string
+    stepId: string
+    challengeId: string
+  }): Promise<boolean> {
+    const { workspaceId, conversationId, stepId, challengeId } = props
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`${conversationModel.additionalAttributes} - 'challenge'`,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+          sql`${conversationModel.additionalAttributes}->'challenge'->'data'->>'stepId' = ${stepId}`,
+          sql`${conversationModel.additionalAttributes}->'challenge'->'data'->>'challengeId' = ${challengeId}`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
+  }
+
+  /**
+   * Compensating write for a failed post-claim side effect: puts a consumed
+   * challenge back so the contact can retry, but ONLY while no challenge
+   * exists on the conversation. Unconditional restore could overwrite a
+   * newer challenge started between the claim and the restore, silently
+   * invalidating that newer cycle's token. Returns false when a challenge
+   * already exists (restore skipped).
+   */
+  async restoreChallengeIfAbsent(props: {
+    workspaceId: string
+    conversationId: string
+    challenge: NonNullable<ConversationAttributes["challenge"]>
+  }): Promise<boolean> {
+    const rows = await db
+      .update(conversationModel)
+      .set({
+        additionalAttributes: sql`jsonb_set(COALESCE(${conversationModel.additionalAttributes}, '{}'::jsonb), '{challenge}', ${JSON.stringify(props.challenge)}::jsonb, true)`,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, props.conversationId),
+          eq(conversationModel.workspaceId, props.workspaceId),
+          sql`(${conversationModel.additionalAttributes} IS NULL OR NOT jsonb_exists(${conversationModel.additionalAttributes}, 'challenge'))`,
+        ),
+      )
+      .returning({ id: conversationModel.id })
+
+    return rows.length > 0
   }
 
   async findByContactWithInboxes(props: {
@@ -372,6 +449,12 @@ class ConversationService extends BaseService {
     if (!created) {
       throw new Error("Conversation not found")
     }
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationCreated,
+      data: created,
+    })
+
     return created
   }
 
@@ -401,6 +484,14 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: ids,
+        changes: { archivedAt: archivedAt?.toISOString() ?? null },
+      },
+    })
 
     const eventType = archivedAt
       ? "conversation:archived"
@@ -452,6 +543,38 @@ class ConversationService extends BaseService {
       .where(inArray(conversationModel.id, ids))
       .returning()
     await this.invalidate({ workspaceId, ids })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: ids,
+        changes: { assignedUserId, assignedInboxTeamId },
+      },
+    })
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationAssigned,
+      data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
+    })
+
+    if (assignedUserId && assignedUserId !== props.assignedBy) {
+      try {
+        await notificationQueue.addBulk(
+          conversations.map((conv) => ({
+            name: NotificationJobAction.notifyConversationAssigned,
+            data: {
+              type: NotificationJobAction.notifyConversationAssigned,
+              data: { workspaceId, conversationId: conv.id, assignedUserId },
+            },
+            opts: { jobId: `notify-assigned-${conv.id}-${assignedUserId}` },
+          })),
+        )
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, conversationIds: ids },
+          "conversation-assigned notification bulk enqueue failed",
+        )
+      }
+    }
 
     const assignedTo = assignedUserId || assignedInboxTeamId
     for (const conv of conversations) {
@@ -517,6 +640,11 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: { conversationIds: ids, changes: { botEnabled } },
+    })
   }
 
   async updateFollowed(props: {
@@ -546,6 +674,11 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: { conversationIds: [id], changes: { followed } },
+    })
 
     if (followed) {
       await emitConversationFollowUp(workspaceId, contactId, id, props.userId)
@@ -577,6 +710,14 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [id] })
+
+    await this.broadcastConversationEvent(workspaceId, {
+      eventType: RealtimeEventType.conversationUpdated,
+      data: {
+        conversationIds: [id],
+        changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
+      },
+    })
   }
 
   /**
@@ -637,6 +778,61 @@ class ConversationService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId, ids: [conversationId] })
+  }
+
+  /**
+   * Batched activity + AI-context-marker advance for coexist sync writes.
+   * ONE VALUES-join UPDATE for the whole bulk (mirrors the pre-existing
+   * `lastActivityAt`-only UPDATE in `applyCoexistActivityUpdates`), extended
+   * to also advance `aiContextLastMessageId`.
+   *
+   * Both columns are advance-only and NULL-guarded per row: a null
+   * `newestMessageAt` leaves `lastActivityAt` untouched, and a null
+   * `aiMarkerMessageId` leaves `aiContextLastMessageId` untouched. The marker
+   * only ever moves FORWARD to a message id actually inserted by a coexist
+   * sync for that conversation (either direction) — never backwards, and
+   * never to an arbitrary id — so a stale/replayed batch can never regress
+   * it. Callers dedup rows by `conversationId` before calling this.
+   */
+  async bulkAdvanceActivityAndAiContextMarker(props: {
+    workspaceId: string
+    rows: Array<{
+      conversationId: string
+      newestMessageAt: Date | null
+      /** Id of the newest sync-inserted message (either direction); null = leave marker untouched. */
+      aiMarkerMessageId: string | null
+    }>
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, rows, tx = db } = props
+    if (rows.length === 0) {
+      return
+    }
+
+    const valueRows = rows.map(
+      (row) => sql`(
+        ${row.conversationId}::int8,
+        ${row.newestMessageAt}::timestamptz,
+        ${row.aiMarkerMessageId}::int8
+      )`,
+    )
+
+    await tx.execute(sql`
+      UPDATE "Conversation" AS t
+      SET "lastActivityAt" = CASE
+            WHEN u.ts IS NOT NULL AND (t."lastActivityAt" IS NULL OR t."lastActivityAt" < u.ts) THEN u.ts
+            ELSE t."lastActivityAt" END,
+          "aiContextLastMessageId" = CASE
+            WHEN u.marker IS NOT NULL AND (t."aiContextLastMessageId" IS NULL OR t."aiContextLastMessageId" < u.marker) THEN u.marker
+            ELSE t."aiContextLastMessageId" END
+      FROM (VALUES ${sql.join(valueRows, sql`, `)}) AS u(id, ts, marker)
+      WHERE t."id" = u.id AND t."workspaceId" = ${workspaceId}::int8
+    `)
+
+    await this.invalidate({
+      workspaceId,
+      ids: rows.map((row) => row.conversationId),
+    })
   }
 
   async updateFlowStepState(props: {
@@ -773,6 +969,49 @@ class ConversationService extends BaseService {
     })
 
     return true
+  }
+
+  // ─── Realtime ────────────────────────────────────────────────────────────
+
+  /**
+   * Best-effort realtime broadcast via the chat queue (same path used by
+   * message create/edit/delete). Never blocks or fails the caller's mutation
+   * — errors are logged and swallowed.
+   */
+  private async broadcastConversationEvent(
+    workspaceId: string,
+    event:
+      | {
+          eventType: typeof RealtimeEventType.conversationCreated
+          data: unknown
+        }
+      | {
+          eventType: typeof RealtimeEventType.conversationUpdated
+          data: {
+            conversationIds: string[]
+            changes: RealtimeEventConversationUpdatedChanges
+          }
+        }
+      | {
+          eventType: typeof RealtimeEventType.conversationAssigned
+          data: {
+            conversationIds: string[]
+            assignedUserId: string | null
+            assignedInboxTeamId: string | null
+          }
+        },
+  ): Promise<void> {
+    try {
+      await chatQueue.add(ChatJobAction.broadcastEvent, {
+        type: ChatJobAction.broadcastEvent,
+        data: { workspaceId, event },
+      })
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId, eventType: event.eventType },
+        "conversation realtime broadcast enqueue failed",
+      )
+    }
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────

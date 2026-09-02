@@ -1,4 +1,10 @@
-import { conversationService, messageService } from "@chatbotx.io/business"
+import {
+  appointmentService,
+  buildAppointmentUrl,
+  conversationService,
+  messageService,
+  resolveTenantSettings,
+} from "@chatbotx.io/business"
 import {
   languageFromLocale,
   normalizeStoredTimezone,
@@ -7,12 +13,15 @@ import {
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import {
+  type ChannelType,
   type ContactSource,
   contactSources,
   type SystemFieldType,
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
+import { signAppointmentScheduleToken } from "@chatbotx.io/encryption"
+import { signMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
 import {
   DATE_FORMAT,
@@ -21,6 +30,7 @@ import {
   formatCustomFieldValueInTimeZone,
   formatWithFallback,
 } from "@chatbotx.io/utils/datetime"
+import { VARIABLE_PLACEHOLDER_SOURCE } from "@chatbotx.io/utils/variables"
 import {
   getAssignedTeamName,
   resolveAssigneeEmail,
@@ -48,8 +58,14 @@ import { logger } from "./logger"
 import type { ContactVariableContext } from "./schema"
 
 const LOCALE_SEPARATOR_RE = /[-_]/
-const VARIABLE_PLACEHOLDER_REGEX =
-  /\{\{([\w.]+|coupon:[^{}\n]+|raw:[^{}\n]+)\}\}/g
+// Exported so javascript-interpolation.ts scans the same placeholder syntax as
+// the message-text path. Built (global, for `matchAll`/`replace`) from the
+// shared canonical grammar in `@chatbotx.io/utils` — the single source of truth,
+// so both resolvers and the flow-builder validators can't drift.
+export const VARIABLE_PLACEHOLDER_REGEX = new RegExp(
+  VARIABLE_PLACEHOLDER_SOURCE,
+  "g",
+)
 // `{{gender}}` renders a salutation ("Anh" / "anh"), so its case depends on
 // where the placeholder sits — a call the position-independent mapping can't
 // make. resolveGenderLabel returns the opening form; inside a sentence it is
@@ -123,6 +139,21 @@ export const interpolate = (
         : value.toLowerCase()
     },
   )
+
+// Canonical definition — contact-variable.ts and javascript-interpolation.ts
+// both import this instead of redefining it, so the `raw:` prefix can't
+// drift between the message-text resolver and the JS-code resolver.
+export const RAW_CUSTOM_FIELD_VARIABLE_PREFIX = "raw:"
+
+// Canonical definition — contact-variable.ts and javascript-interpolation.ts
+// both import this instead of redefining it, so the `raw:` prefix and
+// name-stripping logic can't drift between the message-text resolver and the
+// JS-code resolver. Matches custom-field names exactly (no trimming): the
+// map is keyed by the raw `customField.name`, and the token is built from
+// that same name, so any normalisation here would break names with
+// meaningful surrounding whitespace.
+export const toRawCustomFieldName = (variable: string): string =>
+  variable.slice(RAW_CUSTOM_FIELD_VARIABLE_PREFIX.length)
 
 const getTimezone = ({
   contact,
@@ -204,6 +235,7 @@ const getFlowStepValue = async (
   const conversation = await conversationService.findDMByContact({
     workspaceId: context.contact.workspaceId,
     contactId: context.contact.id,
+    channel: context.contactInbox?.channel as ChannelType | undefined,
   })
   return conversation?.[key] ?? null
 }
@@ -248,6 +280,28 @@ const getContactLanguage = (
 ): string | undefined =>
   languageFromLocale(context.contactInbox?.language) ??
   languageFromLocale(context.contact.locale)
+
+const getAppointment = async (
+  context: ContactVariableContext,
+): Promise<Awaited<ReturnType<typeof appointmentService.findBy>> | null> => {
+  if (context.appointmentId) {
+    const appointment = await appointmentService.findBy({
+      workspaceId: context.contact.workspaceId,
+      id: context.appointmentId,
+    })
+
+    return appointment && appointment.contactId === context.contact.id
+      ? appointment
+      : null
+  }
+
+  const latest = await appointmentService.findLatestForContact({
+    workspaceId: context.contact.workspaceId,
+    contactId: context.contact.id,
+  })
+
+  return latest ?? null
+}
 
 export const getSystemFieldValue = async (
   context: ContactVariableContext,
@@ -296,7 +350,7 @@ export const getSystemFieldValue = async (
         contactInbox?.language ?? languageFromLocale(contact.locale) ?? null
       )
     case systemFieldTypes.enum.user_id:
-      return contactInbox?.sourceId ?? null
+      return contact.id
     case systemFieldTypes.enum.subscribed_date:
       return formatDate(contactInbox?.createdAt, contactTimezone)
     case systemFieldTypes.enum.last_seen:
@@ -317,6 +371,16 @@ export const getSystemFieldValue = async (
       }
       return await signUserHash({
         sourceId: contactInbox.sourceId,
+        contactInboxId: contactInbox.id,
+      })
+    }
+    case systemFieldTypes.enum.minigame_play_token: {
+      if (!contactInbox) {
+        return null
+      }
+      return await signMinigamePlayToken({
+        workspaceId: contact.workspaceId,
+        contactId: contact.id,
         contactInboxId: contactInbox.id,
       })
     }
@@ -373,6 +437,8 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.fb_chat_link:
     case systemFieldTypes.enum.user_code:
     case systemFieldTypes.enum.webchat:
+    case systemFieldTypes.enum.wa_user_id:
+    case systemFieldTypes.enum.wa_user_name:
       return await getIntegrationField(
         contact,
         key,
@@ -451,8 +517,33 @@ export const getSystemFieldValue = async (
       return await getFlowStepValue(context, "lastStep")
     case systemFieldTypes.enum.current_step:
       return await getFlowStepValue(context, "currentStep")
+    case systemFieldTypes.enum.booking_calendar:
+      return (await getAppointment(context))?.calendar.name ?? null
+    case systemFieldTypes.enum.booking_date: {
+      const appointment = await getAppointment(context)
+      return formatDateTime(
+        appointment?.startAt,
+        appointment?.inviteeTimezone ?? contactTimezone,
+      )
+    }
     case systemFieldTypes.enum.last_input_failure:
       return contactInbox?.lastInputFailure ?? null
+    case systemFieldTypes.enum.booking_link: {
+      const appointment = await getAppointment(context)
+      if (!appointment) {
+        return null
+      }
+      const { appUrl } = await resolveTenantSettings({
+        workspaceId: contact.workspaceId,
+      })
+      const token = await signAppointmentScheduleToken({
+        appointmentId: appointment.id,
+        workspaceId: appointment.workspaceId,
+        contactId: appointment.contactId,
+        conversationId: appointment.conversationId ?? undefined,
+      })
+      return buildAppointmentUrl(appUrl, "/booking/schedule", token)
+    }
     default: {
       // Adding a systemFieldTypes value without a case above fails to compile
       // here. If one ever reaches runtime it must not take a message down, so

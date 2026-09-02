@@ -14,6 +14,7 @@ import {
   whatsappAutomaticEventsValueSchema,
 } from "../lib/automatic-events"
 import { logger } from "../lib/logger"
+import { extractWhatsappStatusRecipientUserId } from "../lib/raw-identity"
 import type { WhatsappConfig } from "../schema"
 
 /** One buffered Coexistence history slice keyed by its phone number. */
@@ -387,6 +388,9 @@ const dispatchWebhookResult = async (
           payload: {
             phoneID: result.data.phoneID,
             phone: result.data.phone,
+            recipientUserId: extractWhatsappStatusRecipientUserId(
+              result.data.raw,
+            ),
             messageId: statusData.id,
             status: statusData.status,
             timestamp: statusData.timestamp,

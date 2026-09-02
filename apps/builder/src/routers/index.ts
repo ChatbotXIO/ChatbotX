@@ -12,6 +12,21 @@ export const router = {
   adsAPI: lazy(() =>
     import("@/features/ads/api").then((m) => ({ default: m.adsAPI })),
   ),
+  adsCampaignAPI: lazy(() =>
+    import("@/features/ads-campaign/api").then((m) => ({
+      default: m.adsCampaignAPI,
+    })),
+  ),
+  appointmentCalendarsAPI: lazy(() =>
+    import("@/features/appointment-calendars/api").then((m) => ({
+      default: m.appointmentCalendarsAPI,
+    })),
+  ),
+  appointmentsAPI: lazy(() =>
+    import("@/features/appointments/api").then((m) => ({
+      default: m.appointmentsAPI,
+    })),
+  ),
   aiMcpServerAPIs: lazy(() =>
     import("@/features/ai-mcp-servers/api").then((m) => ({
       default: m.aiMcpServerAPIs,
@@ -27,6 +42,11 @@ export const router = {
       default: m.broadcastAPIs,
     })),
   ),
+  channelApiAPIs: lazy(() =>
+    import("@/features/integration-api/api").then((m) => ({
+      default: m.channelApiAPIs,
+    })),
+  ),
   conversationsAPI: lazy(() =>
     import("@/features/conversations/api").then((m) => ({
       default: m.conversationsAPI,
@@ -34,6 +54,16 @@ export const router = {
   ),
   couponsAPI: lazy(() =>
     import("@/features/coupons/api").then((m) => ({ default: m.couponsAPI })),
+  ),
+  deviceTokensAPI: lazy(() =>
+    import("@/features/device-tokens/api").then((m) => ({
+      default: m.deviceTokensAPI,
+    })),
+  ),
+  dynamicImagesAPI: lazy(() =>
+    import("@/features/dynamic-images/api").then((m) => ({
+      default: m.dynamicImagesAPI,
+    })),
   ),
   emailTopicsAPI: lazy(() =>
     import("@/features/email-topics/api").then((m) => ({
@@ -265,8 +295,18 @@ export const router = {
   webhooksAPI: lazy(() =>
     import("@/features/webhooks/api").then((m) => ({ default: m.webhooksAPI })),
   ),
+  templatesAPI: lazy(() =>
+    import("@/features/templates/api").then((m) => ({
+      default: m.templatesAPI,
+    })),
+  ),
   analyticsRoutes: authorizedAPI
     // @ts-expect-error
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .router(analyticsRoutes),
+  mediaLibraryAPI: lazy(() =>
+    import("@/features/media-library/api").then((m) => ({
+      default: m.mediaLibraryAPI,
+    })),
+  ),
 }

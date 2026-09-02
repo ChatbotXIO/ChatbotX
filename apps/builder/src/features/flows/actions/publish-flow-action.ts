@@ -1,12 +1,13 @@
 "use server"
 
 import { flowVersionService } from "@chatbotx.io/business"
+import { auditService } from "@chatbotx.io/business/audit"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { type PublishFlowSchema, publishFlowSchema } from "../schemas/action"
+import { type PublishFlowSchema, publishFlowSchema } from "../schema/action"
 
 export const publishFlowAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -87,4 +88,10 @@ export const publishFlow = async (
   })
 
   await flowVersionService.invalidateList(flow.id)
+
+  await auditService.record({
+    workspaceId: ctx.workspaceId,
+    action: "publish",
+    detail: `published a flow (#${flow.id})`,
+  })
 }

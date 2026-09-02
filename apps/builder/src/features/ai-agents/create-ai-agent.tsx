@@ -41,9 +41,9 @@ import { getAiProviderLabelKey } from "@/features/ai-agents/lib/ai-provider-labe
 import {
   type CreateAIAgentRequest,
   createAIAgentRequest,
-} from "@/features/ai-agents/schemas/action"
+} from "@/features/ai-agents/schema/action"
 import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 import { WebSearchAuthorizedDomainsField } from "./components/web-search-authorized-domains-field"
 import {
   buildOpenaiCompatibleAgentModels,
@@ -285,7 +285,7 @@ export function CreateAIAgentDialog({
                 </Popover>
               </div>
 
-              <PlainTextEditorField name="prompt" />
+              <PlainTextEditorField includeBotFieldVariables name="prompt" />
             </div>
 
             <div className="flex flex-col gap-3">
@@ -305,6 +305,9 @@ export function CreateAIAgentDialog({
                     />
                   </div>
                   <div className="ps-3 pe-12 pt-14 pb-3">
+                    {/* No bot-field variables here: the runner interpolates
+                        only `prompt` — configured messages reach the model
+                        verbatim, so a token would never resolve. */}
                     <PlainTextEditorField name={`messages.${index}.content`} />
                   </div>
                   <Button

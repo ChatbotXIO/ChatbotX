@@ -1,5 +1,6 @@
 {
   "actions": {
+    "retry": "再試行",
     "copy": "コピー",
     "copyUrl": "URLをコピー",
     "actions": "操作",
@@ -71,6 +72,7 @@
     "reset": "リセット",
     "save": "保存",
     "selectAll": "すべて選択",
+    "unselect": "選択解除",
     "selectRow": "行を選択",
     "sendFlow": "フローを送信",
     "sendMessage": "メッセージを送信",
@@ -145,7 +147,8 @@
     "onSuccess": "成功時",
     "clone": "複製",
     "remove": "削除",
-    "restore": "復元"
+    "restore": "復元",
+    "loadMore": "Load more"
   },
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
@@ -156,7 +159,8 @@
     "skip": "スキップ"
   },
   "admins": {
-    "title": "管理者"
+    "title": "管理者",
+    "adminActivityLogs": "管理者アクティビティログ"
   },
   "assignAdmin": {
     "assignConversation": "会話を割り当て",
@@ -540,8 +544,8 @@
       "blocked": "ブロック済み",
       "noAdminReply": "管理者からの返信なし",
       "contactCreatedAt": "連絡先の作成日時",
-      "fromCtwaAd": "Click to WhatsApp広告経由",
-      "ctwaConversion": "CTWAコンバージョン",
+      "fromCtwaAd": "広告経由",
+      "ctwaConversion": "広告コンバージョン",
       "lastUserInputTypes": {
         "text": "テキスト",
         "location": "位置情報",
@@ -568,9 +572,10 @@
       "systemFields": "システムフィールド",
       "topicCoupon": "クーポントピック",
       "customFields": "カスタムフィールド",
+      "botFields": "ボットフィールド",
       "email": "メール",
       "sms": "SMS",
-      "ctwaAds": "Click to WhatsApp広告"
+      "ctwaAds": "広告"
     },
     "languages": {
       "ar": "アラビア語",
@@ -609,9 +614,9 @@
     },
     "ctwaRetarget": {
       "segments": {
-        "conversations": "CTWA会話開始者",
-        "leads": "CTWA有効リード",
-        "purchases": "CTWA購入者"
+        "conversations": "広告会話開始者",
+        "leads": "広告有効リード",
+        "purchases": "広告購入者"
       },
       "adPrefix": "広告",
       "allAds": "すべての広告"
@@ -796,6 +801,12 @@
     "qrCode": {
       "label": "QRコード"
     },
+    "dynamicImage": {
+      "label": "ダイナミック画像"
+    },
+    "minigame": {
+      "label": "ミニゲーム"
+    },
     "savePayloadToCustomField": {
       "label": "ペイロードをカスタムフィールドに保存"
     },
@@ -890,7 +901,10 @@
       "append": "末尾に追加",
       "prepend": "先頭に追加",
       "increase": "次の値だけ増やす",
-      "decrease": "次の値だけ減らす"
+      "decrease": "次の値だけ減らす",
+      "groupSystemFields": "システムフィールド",
+      "groupCustomFields": "カスタムフィールド",
+      "groupAccountFields": "ボットフィールド"
     },
     "dataCollect": {
       "label": "データ収集"
@@ -898,6 +912,15 @@
     "defaultReply": {
       "description": "ユーザーのメッセージへの応答方法がワークスペースで判別できない場合に送信するデフォルトの応答です。",
       "label": "デフォルト返信"
+    },
+    "defaultReplyFrequency": {
+      "description": "Controls how often the Default Reply flow may fire for the same contact on a channel.",
+      "label": "Default Reply activation frequency",
+      "options": {
+        "allTime": "All time",
+        "oncePerHour": "Once per 1h",
+        "oncePerDay": "Once per 24h"
+      }
     },
     "smartResponseDelaySeconds": {
       "description": "ユーザーの最後のメッセージからボットが返信するまでの待機時間を設定します。ユーザーが別のメッセージを送信するとタイマーがリセットされ、メッセージが1つの応答にまとめられます。",
@@ -984,8 +1007,8 @@
       "aiDeleteMessageHistory": "{aiName}：メッセージ履歴を削除"
     },
     "steps": {
-      "label": "ステップ",
-      "placeholder": "ステップを選択"
+      "label": "ノード",
+      "placeholder": "ノードを選択"
     },
     "folder": {
       "label": "フォルダー"
@@ -1146,6 +1169,9 @@
     "mcpServer": {
       "label": "MCPサーバー"
     },
+    "template": {
+      "label": "Template"
+    },
     "systemFunction": {
       "label": "システム関数",
       "names": {
@@ -1193,6 +1219,11 @@
     },
     "outputCustomField": {
       "label": "出力カスタムフィールド"
+    },
+    "javascriptCode": {
+      "label": "JavaScriptコード",
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "description": "純粋なJavaScriptを使用して値を返してください。ネットワーク、ファイル、API、外部ライブラリは利用できません。連絡先およびシステムデータは `input` オブジェクトから利用できます。"
     },
     "httpMethod": {
       "label": "メソッド"
@@ -1256,7 +1287,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "プロバイダー"
+      "label": "プロバイダー",
+      "placeholder": "プロバイダーを選択"
     },
     "prompt": {
       "label": "プロンプト",
@@ -1267,6 +1299,12 @@
     },
     "pageUserName": {
       "label": "ページユーザー名"
+    },
+    "waUserId": {
+      "label": "WhatsAppユーザーID"
+    },
+    "waUserName": {
+      "label": "WhatsAppユーザー名"
     },
     "purpose": {
       "label": "目的",
@@ -1339,7 +1377,9 @@
       "label": "ステータス",
       "pending": "保留中",
       "processing": "処理中",
+      "installing": "Installing",
       "completed": "完了",
+      "partial": "Partial",
       "failed": "失敗",
       "success": "成功",
       "error": "エラー"
@@ -1552,7 +1592,7 @@
       "superAdmin": "スーパー管理者",
       "analytics": "分析",
       "flows": "フロー",
-      "contacts": "連絡先",
+      "contacts": "連絡先 / 受信トレイ",
       "onlyAssignedContacts": "割り当てられた連絡先のみ",
       "emailAndPhone": "メールと電話番号",
       "broadcast": "一斉配信",
@@ -1965,13 +2005,58 @@
       "placeholder": "イベント名を入力してEnterキーを押してください",
       "description": "1つ以上のイベント名を追加します。MakeがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
     },
+    "bookingCalendar": {
+      "label": "予約カレンダー"
+    },
+    "bookingDate": {
+      "label": "予約日"
+    },
+    "bookingLink": {
+      "label": "予約リンク"
+    },
     "n8nEvents": {
       "label": "イベント",
       "placeholder": "イベント名を入力してEnterキーを押してください",
       "description": "1つ以上のイベント名を追加します。n8nがこれらのイベントのいずれかにWebhookを関連付けると、このステップの実行時にデータが送信されます。"
+    },
+    "enabled": {
+      "label": "有効"
+    },
+    "api": {
+      "label": "API",
+      "description": "HTTPに対応した任意のアプリケーションをチャネルとして接続します。アプリからの受信メッセージは弊社のREST APIに送信され、返信はお客様のcallback URLに配信されます。",
+      "callbackUrl": {
+        "label": "Callback URL",
+        "description": "送信する返信はこちらにPOSTされ、受信箱ごとのシークレットで署名されます。",
+        "notSet": "未設定"
+      },
+      "token": "トークン",
+      "rotateToken": "トークンを再発行",
+      "status": {
+        "enabled": "有効",
+        "disabled": "無効"
+      },
+      "tokenReveal": {
+        "title": "APIトークンをコピー",
+        "description": "このトークンは一度だけ表示されます。安全に保管してください。再度表示することはできません。",
+        "done": "完了"
+      }
+    },
+    "adReferral": {
+      "label": "Ads",
+      "ctwa": "CTWA",
+      "ctm": "CTM",
+      "ctid": "CTID"
+    },
+    "adSource": {
+      "label": "Ad source"
     }
   },
   "flows": {
+    "export": {
+      "notPublished": "このフローはまだ公開されていません。エクスポートする前に公開してください。",
+      "failed": "エクスポートに失敗しました。もう一度お試しください。"
+    },
     "title": "フロー",
     "quickReplies": {
       "limitReached": "クイック返信の上限（{max}件）に達しました。"
@@ -2015,11 +2100,11 @@
       "broadcastActions": "一斉配信アクション",
       "callApi": "外部APIリクエスト",
       "make": "Make",
-      "triggerN8n": "Trigger n8n",
       "triggers": "トリガー",
       "questionnaires": "アンケート",
       "setUpCoupon": "クーポンを設定",
       "markCouponUsed": "クーポンを使用済みにする",
+      "executeJavascript": "JavaScriptを実行",
       "chooseChannel": "チャネルを選択",
       "clearCustomField": "カスタムフィールドをクリア",
       "condition": "条件",
@@ -2044,7 +2129,6 @@
       "getResponseAddContact": "連絡先をGetResponseに追加",
       "sendGridAddContact": "連絡先をSendGridに追加",
       "messenger": "Messenger",
-      "metaConversions": "Meta Conversions API",
       "openWebsite": "Webサイトを開く",
       "optInEmail": "メール配信に登録",
       "optOutEmail": "メール配信を解除",
@@ -2062,6 +2146,7 @@
       "sendFile": "ファイルを送信",
       "sendGif": "GIFを送信",
       "sendImage": "画像を送信",
+      "sendMultipleImages": "複数画像",
       "sendMessage": "メッセージを送信",
       "sendNode": "別のノードを開始",
       "sendText": "テキストを送信",
@@ -2099,7 +2184,14 @@
       "splitTraffic": "トラフィックを分割",
       "aiEditImage": "AIで画像を編集",
       "whatsappFlow": "WhatsAppフロー",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "appointmentScheduling": "予約スケジュール",
+      "triggerN8n": "n8n をトリガー",
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信",
+      "import": "フローをインポート",
+      "export": "エクスポート",
+      "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
+      "importJsonOnly": "JSONファイルのみ",
+      "adsConversions": "広告とMeta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2136,6 +2228,10 @@
       "addSlide": "スライドを追加",
       "removeSlide": "スライドを削除",
       "whatsappLinkButtonIgnored": "WhatsAppでは、このカードのリンクは機能しません。リンクボタンを含むカードには他のボタンを設定できません。代わりに返信として送信されます。"
+    },
+    "sendMultipleImages": {
+      "removeImage": "画像を削除",
+      "selectImage": "画像を選択"
     },
     "additionalSteps": "追加ステップ",
     "delayType": {
@@ -2203,7 +2299,11 @@
     },
     "setCustomField": {
       "temporalHint": "空のままにすると、現在の日時が保存されます。"
-    }
+    },
+    "sendText": {
+      "tiktokTitleTruncated": "ボタンを追加すると、TikTokはこのメッセージの最初の40文字までしか送信しません。残りは切り捨てられます。"
+    },
+    "dataWasSaved": "データが保存されました"
   },
   "folders": {
     "heading": {
@@ -2253,32 +2353,17 @@
   },
   "ads": {
     "title": "広告",
-    "nav": {
-      "clickToWhatsappAds": "Click to WhatsApp広告",
-      "clickToTiktokAds": "Click to TikTok広告",
-      "connectAccounts": "アカウントを接続",
-      "conversionEvents": "コンバージョンイベント",
-      "adsAnalytics": "広告分析",
-      "reporting": "レポート",
-      "ctwa": "CTWA",
-      "googleAds": "Google広告",
-      "comingSoon": "近日公開"
+    "dashboardNav": {
+      "whatsapp": "Click-to-WhatsApp広告",
+      "messenger": "Click-to-Messenger広告",
+      "instagram": "Click-to-Instagram広告"
     },
     "connectAccounts": {
-      "title": "すべての広告アカウントを管理",
-      "description": "コンバージョンを追跡し、Click to WhatsApp広告キャンペーンを最適化しましょう。",
-      "learnMore": "詳しくはこちら",
       "connectAdAccount": "広告アカウントを接続",
       "adAccountName": "広告アカウント名",
-      "disconnect": "接続解除",
-      "empty": "広告アカウントはまだ接続されていません。",
-      "adAccountsTitle": "Meta広告アカウント",
-      "adAccountsDescription": "Facebook広告を接続して、Click to WhatsAppキャンペーンで使用する広告アカウントを読み込みます。",
       "adAccountsReconnectBanner": "Meta広告アカウントのトークンが期限切れ、または権限が失われました。広告レポートを利用できる状態に保つには、Facebook広告を再接続してください。",
       "adAccountsNotConnected": "Meta広告アカウントはまだ接続されていません。",
       "adAccountsEmpty": "このFacebook広告の接続では、Meta広告アカウントが見つかりませんでした。",
-      "adAccountsNote": "広告費とリターゲティングオーディエンスは、これらの広告アカウントから取得されます。",
-      "reconnectBanner": "コンバージョンイベントをMetaに送信できるようにするには、WhatsAppアカウントを再接続してください。",
       "reconnect": "再接続",
       "reconnectSuccess": "WhatsAppアカウントを再接続しました。",
       "selectAccountLabel": "WhatsAppアカウント",
@@ -2288,22 +2373,9 @@
         "unverified": "権限が未確認です"
       },
       "table": {
-        "name": "名前",
-        "phoneNumber": "電話番号",
-        "wabaId": "WABA ID",
-        "permission": "自動イベント"
-      },
-      "providers": {
-        "meta": "Meta",
-        "googleAds": "Google広告",
-        "tiktok": "TikTok"
+        "wabaId": "WABA ID"
       },
       "connectWhatsapp": {
-        "title": "まずWhatsAppアカウントを接続してください",
-        "description": "Click to WhatsAppのコンバージョン追跡を行うには、広告アカウントを連携してコンバージョンデータセットを作成する前に、WhatsAppアカウントを接続しておく必要があります。",
-        "step1": "「チャネル」でWhatsApp Businessアカウントを接続します。",
-        "step2": "ここに戻ってMeta広告を承認し、広告アカウントを選択します。",
-        "step3": "お使いのWhatsApp Businessアカウントを使用して、コンバージョンデータセットを自動的に作成します。",
         "cta": "WhatsAppアカウントを接続"
       }
     },
@@ -2311,6 +2383,8 @@
       "title": "コンバージョンイベント",
       "tabs": {
         "facebook": "Facebook",
+        "instagram": "Instagram",
+        "messenger": "Messenger",
         "whatsapp": "WhatsApp"
       },
       "manageAdsAccounts": "広告アカウントを管理",
@@ -2318,11 +2392,16 @@
       "selectAll": "すべて選択",
       "whatsappAsset": "WhatsAppアセット",
       "selectWhatsappAsset": "WhatsAppアセットを選択",
+      "selectIntegration": "連携",
+      "selectIntegrationPlaceholder": "連携を選択",
+      "noIntegrationsConnected": "このチャネルにはまだ接続済みの連携がありません。",
+      "connectIntegration": "チャネルを接続",
       "templates": "テンプレート",
       "selectTemplates": "テンプレートを選択",
       "noTemplates": "承認済みのテンプレートが見つかりません。",
       "existingRules": "既存のルール",
       "noRules": "このWhatsAppアセットのコンバージョンルールはまだありません。",
+      "noRulesGeneric": "この連携のコンバージョンルールはまだありません。",
       "toggleRule": "ルールを有効化・無効化",
       "deleteRule": "ルールを削除",
       "qualifyingTemplateMessageSent": "対象のテンプレートメッセージが送信されたとき",
@@ -2362,24 +2441,26 @@
         "title": "有効リードを追跡",
         "question": "会話のどの時点で、連絡先をリードとして認定しますか？",
         "when": "条件",
-        "then": "CTWAリードのマーク方法"
+        "then": "CTWAリードのマーク方法",
+        "thenGeneric": "リードのマーク方法"
       },
       "trackPurchases": {
         "title": "購入を追跡",
         "question": "どのテンプレートで購入を確認しますか？",
         "when": "条件",
         "then": "アクション",
-        "noValueNote": "ルールベースの購入は、注文金額なしで購入コンバージョンとして記録されます。購入件数には反映されますが、売上には0として加算されます。注文金額はMetaの自動イベントでのみ取得されます。"
+        "noValueNote": "ルールベースの購入は、注文金額なしで購入コンバージョンとして記録されます。購入件数には反映されますが、売上には0として加算されます。注文金額はMetaの自動イベントでのみ取得されます。",
+        "questionGeneric": "会話のどの時点で購入を記録しますか？"
       }
     },
     "analytics": {
-      "title": "CTWA分析",
+      "title": "広告分析",
       "funnelOverview": "ファネル概要",
       "conversationsStarted": "開始された会話",
       "qualifiedLeads": "有効リード",
       "purchases": "購入",
       "adSpend": "広告費",
-      "spendAccountLevelNote": "広告費はMeta広告アカウント単位で集計されます。WhatsAppアカウントを選択している場合、そのアカウントでファネル上の動きがなく広告費のみ発生した広告は非表示になります。",
+      "spendAccountLevelNote": "広告費はMeta広告アカウント単位で集計されます。アカウントを選択している場合、そのアカウントでファネル上の動きがなく広告費のみ発生した広告は非表示になります。",
       "revenue": "収益",
       "roas": "ROAS",
       "revenueCurrencyNote": "収益は単一通貨（USD）を前提としています。複数通貨の広告アカウントはまだ集計対象外です。",
@@ -2408,21 +2489,27 @@
       "adAccountFilter": {
         "all": "すべての広告アカウント",
         "label": "広告アカウント",
-        "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。"
+        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。"
+      },
+      "channelFilter": {
+        "label": "チャネル",
+        "allAccounts": "すべてのアカウント",
+        "allChannels": "すべてのチャネル"
       },
       "retarget": "リターゲット",
       "thoseWhoPurchased": "購入したユーザー",
       "thoseWhoStartedConversation": "会話を開始したユーザー",
       "sendWhatsappBroadcast": "WhatsApp一斉配信を送信",
+      "retargetOnChannel": "{channel}でリターゲット",
       "from": "開始",
       "to": "終了",
       "unattributed": "帰属先不明",
       "retargetDialog": {
-        "title": "CTWA連絡先をリターゲット",
+        "title": "広告連絡先をリターゲット",
         "createAudience": "オーディエンスを作成",
         "useExistingAudience": "既存のオーディエンスを使用",
         "audienceName": "オーディエンス名",
-        "audiencePrefix": "CTWA",
+        "audiencePrefix": "広告",
         "confirm": "同期を開始",
         "success": "リターゲットオーディエンスの同期をキューに追加しました。",
         "error": "リターゲットオーディエンスの同期をキューに追加できませんでした。"
@@ -2434,7 +2521,7 @@
         "failed": "失敗",
         "skippedNoScope": "スキップ（権限なし）",
         "skippedRegion": "スキップ（地域）",
-        "noScopeWarning": "このWhatsAppアカウントにイベント権限がないため、一部のコンバージョンが送信されませんでした。自動イベントレポートを有効にするには、再接続してください。",
+        "noScopeWarning": "このアカウントにイベント権限がないため、一部のコンバージョンが送信されませんでした。自動イベントレポートを有効にするには、再接続してください。",
         "reconnectCta": "アカウントを再接続",
         "empty": "この期間のコンバージョンイベントはまだありません。"
       },
@@ -2447,7 +2534,8 @@
         "contactName": "連絡先名",
         "phone": "電話番号",
         "adId": "広告ID",
-        "occurredAt": "発生日時"
+        "occurredAt": "発生日時",
+        "channel": "チャネル"
       },
       "empty": "データはまだありません。広告アカウントを接続してコンバージョンの追跡を開始しましょう。"
     }
@@ -2824,6 +2912,7 @@
     "disconnectFeatureDescription": "{feature}を切断してもよろしいですか？",
     "disconnectSuccess": "{feature}を切断しました",
     "reply": "返信",
+    "privateReply": "プライベート返信",
     "viewMessage": "メッセージを表示",
     "changeLikeState": "「いいね！」の状態を変更",
     "changeHideState": "非表示状態を変更",
@@ -2841,6 +2930,8 @@
     "editMessagePlaceholder": "メッセージを編集...",
     "saveEdit": "保存",
     "cancelEdit": "キャンセル",
+    "replaceAttachment": "添付ファイルを置き換える",
+    "addAttachment": "添付ファイルを追加",
     "failedToCopy": "コピーに失敗しました",
     "failedToPreviewImage": "画像のプレビューに失敗しました",
     "loadingData": "データを読み込んでいます...",
@@ -2864,6 +2955,9 @@
     "duplicatedSuccess": "{feature}を複製しました",
     "duplicateConfirmation": "{feature}のコピーが作成されます。",
     "deleteFeature": "{feature}を削除",
+    "resetFeature": "{feature}をリセット",
+    "resetConfirmation": "選択した{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
+    "resetSuccess": "{feature}をリセットしました",
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。",
     "addFeature": "{feature}を追加",
     "signOutConfirmation": "サインアウトしてもよろしいですか？",
@@ -2898,9 +2992,6 @@
     "enableSuccess": "{feature}を有効にしました",
     "userInactive": "ユーザーは7日以上利用していません",
     "messagingWindowClosed": "許可された時間枠外ではメッセージを送信できません",
-    "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
-    "warning": "警告！",
-    "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。",
     "humanAgentWindowExpired": "メッセージ送信可能期間が終了しました。会話を再開するには、連絡先から先にメッセージを送る必要があります。",
     "restoreVersionSuccess": "選択したバージョンにフローを復元しました",
     "revertToPublishedSuccess": "下書きを公開済みバージョンに戻しました",
@@ -2915,7 +3006,13 @@
     "deleteNodeError": "ブロックを削除できませんでした。もう一度お試しください。",
     "redoHistoryCleared": "やり直し履歴を消去しました",
     "historyDepth": "（{count}）",
-    "none": "なし"
+    "none": "なし",
+    "tiktokCardTitleTooLong": "TikTokはこのメッセージを短縮します。ボタンが付いている場合、最初の40文字のみ送信されます。メッセージを短くするか、ボタンを削除してください。",
+    "waTemplateMpmNoProducts": "公開前に、このマルチ商品ボタンに少なくとも1つの商品を追加してください。",
+    "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
+    "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
+    "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
+    "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -2925,8 +3022,8 @@
     "reconnect": "再接続",
     "title": "Instagram",
     "tabs": {
-      "generalSettings": "General Settings",
-      "conversionsApi": "Ads Optimization"
+      "generalSettings": "一般設定",
+      "conversionsApi": "広告最適化"
     }
   },
   "coexist": {
@@ -2941,6 +3038,8 @@
     "toggleHelper": "再有効化できるのは、Metaにバッファーデータが残っている場合（オンボーディング後24時間以内）のみです。それ以外の場合は切断して再接続してください。",
     "toggleHelperMessenger": "再有効化できるのは、Metaにバッファーデータが残っている場合（オンボーディング後24時間以内）のみです。それ以外の場合はMessengerページを切断して再接続してください。",
     "toggleHelperWhatsapp": "再有効化できるのは、Metaにバッファーデータが残っている場合（オンボーディング後24時間以内）のみです。それ以外の場合はWhatsApp番号を切断して再接続してください。",
+    "aiReadsSyncedHistoryLabel": "AIが同期履歴を読む",
+    "aiReadsSyncedHistoryHelper": "オフの場合、AIは新しいメッセージのみを見ます。",
     "success": {
       "enabled": "同期を開始しました。過去の連絡先とメッセージはまもなく表示されます。",
       "disabled": "同期を無効にしました。"
@@ -2974,17 +3073,19 @@
     "selectPage": {
       "noPagesTitle": "Facebookページが見つかりません",
       "noPagesDescription": "ビジネスマネージャ内のページに接続するには、ビジネスマネージャへのアクセス権が必要です。Messengerを再接続し、要求されたすべての権限を許可してください。",
+      "noConnectablePagesTitle": "接続できるページがありません",
+      "noConnectablePagesDescription": "あなたはこのページの管理者ではありません",
       "bmLookupFailedTitle": "ビジネスマネージャのページが一部表示されていない可能性があります",
       "bmLookupFailedDescription": "Messengerを再接続し、ビジネスマネージャへのアクセスを許可すると、ビジネスマネージャで管理されているページを一覧表示できます。",
       "alreadyConnectedNote": "このページはすでに接続されています",
-      "notAdminNote": "接続するにはページの完全な管理者権限が必要です",
+      "notAdminNote": "あなたはこのページの管理者ではありません",
       "tryAgain": "再接続を試す"
     },
     "title": "Facebook Messenger",
     "tabs": {
       "generalSettings": "一般設定",
       "messageTemplates": "メッセージテンプレート",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "広告最適化"
     },
     "messageTemplate": {
       "params": {
@@ -3317,23 +3418,38 @@
       "params": {
         "couponCode": "クーポンコード",
         "couponCodePlaceholder": "クーポンコードを入力",
-        "quickReplyPayload": "クイック返信のペイロード",
-        "quickReplyPayloadPlaceholder": "ペイロードを入力（任意）",
         "flowToken": "フロートークン",
         "flowTokenPlaceholder": "フロートークンを入力",
         "flowNotSynced": "送信されたフィールドをマッピングするには、WhatsAppフローを同期してください。",
-        "catalogProductId": "商品ID",
-        "catalogProductIdPlaceholder": "小売業者の商品IDを入力",
+        "catalogProductId": "カタログ商品",
+        "catalogProductIdPlaceholder": "商品を検索…",
         "carouselCard": "カード{index}",
         "limitedTimeOffer": "オファーの有効期限",
-        "limitedTimeOfferPlaceholder": "有効期限をミリ秒単位で入力",
-        "limitedTimeOfferHelp": "オファーが期限切れになる時刻のUnixタイムスタンプ（ミリ秒）",
+        "limitedTimeOfferPlaceholder": "有効期限の日時を選択",
+        "limitedTimeOfferHelp": "有効期限は選択した通りに送信されます。",
         "location": "位置情報",
         "latitude": "緯度",
         "longitude": "経度",
         "locationName": "場所名（任意）",
         "locationAddress": "住所（任意）",
-        "enterFormatUrl": "{format}のURLを入力"
+        "enterFormatUrl": "{format}のURLを入力",
+        "catalogUseDefault": "カタログのデフォルトサムネイルを使用",
+        "catalogNotConnectedGuidance": "商品を選択するにはMetaカタログを接続してください。",
+        "catalogSetupLink": "カタログ設定に移動",
+        "catalogSelectedProductFallback": "商品: {retailerId}",
+        "limitedTimeOfferBadge": "{date}に期限切れ",
+        "limitedTimeOfferExpiredBadge": "{date}に期限切れ済み",
+        "mpmSections": "商品",
+        "mpmSectionTitlePlaceholder": "セクションタイトル（任意）",
+        "mpmAddSection": "セクションを追加",
+        "mpmRemoveSection": "セクションを削除",
+        "mpmAddProduct": "商品を追加",
+        "mpmRemoveProduct": "商品を削除",
+        "mpmNoProductsHelp": "公開前に少なくとも1つの商品を追加してください。",
+        "mpmSectionLimitReached": "セクションの上限（10個）に達しました。",
+        "mpmProductLimitReached": "商品の上限（30個）に達しました。",
+        "mpmProductsSummary": "{sectionCount}個のセクションに{productCount}個の商品",
+        "unsupportedButtonParam": "このボタンタイプはまだサポートされていません。"
       }
     },
     "sampleBodyCardContent": {
@@ -3359,7 +3475,8 @@
       "messageTemplates": "メッセージテンプレート",
       "profile": "プロフィール",
       "usefulLinks": "便利なリンク",
-      "conversionsApi": "Ads Optimization"
+      "conversionsApi": "広告最適化",
+      "settings": "設定"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3489,11 +3606,17 @@
       "label": "テンプレートのヘッダー"
     },
     "transferPhoneNumber": "別のWhatsAppプロバイダーから電話番号を移行",
-    "signupSessionExpired": "WhatsApp登録セッションの有効期限が切れました。接続を最初からやり直してください。"
+    "signupSessionExpired": "WhatsApp登録セッションの有効期限が切れました。接続を最初からやり直してください。",
+    "capi": {
+      "automaticEvents": {
+        "title": "自動イベント",
+        "description": "この WhatsApp 番号からコンバージョンイベントを Meta に自動送信します。権限がない場合は、アカウントを再接続して付与してください。"
+      }
+    }
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "権限を更新",
+    "reconnect": "再接続",
     "duplicated": "このZalo OAアカウントはすでに別のワークスペースに接続されています。",
     "tagSync": {
       "title": "タグ同期",
@@ -3529,6 +3652,67 @@
   "qrCodes": {
     "title": "QRコード",
     "description": "チャットボットのフローにリンクするQRコードを作成します。"
+  },
+  "dynamicImages": {
+    "title": "ダイナミック画像",
+    "description": "背景とテキスト/画像/QRコードのレイヤーから、コンタクトごとにパーソナライズされた画像を生成します。",
+    "publicUrl": {
+      "label": "公開URL",
+      "hint": "URLをコピーして、フロー、一斉配信、またはシーケンスに貼り付けると、パーソナライズされた画像を送信できます。"
+    },
+    "editor": {
+      "addElement": "要素を追加",
+      "addImage": "画像を追加",
+      "addText": "テキストを追加",
+      "addQrCode": "QRコードを追加",
+      "template": "テンプレート",
+      "templateDialogTitle": "テンプレートを選択",
+      "templateDialogDescription": "テンプレートを選択すると、現在のすべてのレイヤーが置き換えられます。",
+      "layers": "レイヤー",
+      "noLayers": "まだレイヤーがありません。要素を追加して開始してください。",
+      "deleteLayer": "レイヤーを削除",
+      "layerNameImage": "画像",
+      "layerNameText": "テキスト",
+      "layerNameQrCode": "QRコード",
+      "editElement": "要素を編集",
+      "selectElementHint": "キャンバス上の要素を選択してプロパティを編集します。",
+      "width": "幅",
+      "height": "高さ",
+      "priority": "優先度",
+      "imageType": "画像タイプ",
+      "imageTypeUrl": "画像URL",
+      "imageTypeAvatarUser": "コンタクトのアバター",
+      "imageTypeCustomField": "カスタムフィールド",
+      "imageUrl": "画像URL",
+      "uploadImage": "画像をアップロード",
+      "customField": "カスタムフィールド",
+      "imageStyle": "画像スタイル",
+      "imageStyleSquare": "正方形",
+      "imageStyleCircle": "円形",
+      "qrText": "QRコードの内容",
+      "qrSize": "サイズ",
+      "qrColor": "色",
+      "qrLogo": "ロゴ",
+      "uploadLogo": "ロゴをアップロード",
+      "textContent": "テキスト内容",
+      "fontSize": "フォントサイズ",
+      "fontFamily": "フォント",
+      "fontFamilyArial": "Arial",
+      "fontFamilySerif": "Serif",
+      "fontFamilyRoboto": "Roboto",
+      "fontFamilyGreatVibes": "Great Vibes",
+      "align": "配置",
+      "alignLeft": "左",
+      "alignCenter": "中央",
+      "alignRight": "右",
+      "color": "色",
+      "bold": "太字",
+      "italic": "斜体",
+      "uppercase": "大文字"
+    },
+    "preview": {
+      "error": "リンクされたダイナミック画像を読み込めませんでした。削除された可能性があります。"
+    }
   },
   "magicLinks": {
     "title": "マジックリンク",
@@ -3587,7 +3771,7 @@
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
       "transferConversationToHuman": "会話を担当者に転送",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -3599,7 +3783,8 @@
     "at": "時刻"
   },
   "errorLogs": {
-    "title": "エラーログ"
+    "title": "エラーログ",
+    "unknownContact": "不明な連絡先"
   },
   "developerAccessToken": {
     "title": "APIアクセストークン",
@@ -3622,7 +3807,23 @@
     "exportTakingLongDescription": "エクスポートは引き続き処理中です。このダイアログを閉じ、数分後にエクスポート履歴から確認できます。"
   },
   "auditLogs": {
-    "title": "監査ログ"
+    "title": "監査ログ",
+    "columns": {
+      "user": "ユーザー",
+      "action": "アクション",
+      "detail": "詳細",
+      "ipAddress": "IPアドレス",
+      "date": "日付"
+    },
+    "filters": {
+      "from": "開始日",
+      "to": "終了日",
+      "user": "ユーザー",
+      "userPlaceholder": "ユーザーID",
+      "keyword": "キーワード",
+      "keywordPlaceholder": "アクションまたは詳細",
+      "allAdmins": "すべての管理者"
+    }
   },
   "customFields": {
     "title": "カスタムフィールド",
@@ -4125,6 +4326,11 @@
     "noWorkspaces": "ワークスペースはまだありません。",
     "owner": "所有者"
   },
+  "notFound": {
+    "title": "ページが見つかりません",
+    "description": "お探しのページは存在しないか、移動された可能性があります。",
+    "backToHome": "ホームに戻る"
+  },
   "editProfile": {
     "title": "プロフィールを編集"
   },
@@ -4134,11 +4340,85 @@
   },
   "appointmentScheduling": {
     "title": "予約スケジュール",
-    "description": "予約スケジュールを作成・管理します。"
+    "description": "予約スケジュールを作成・管理します。",
+    "flowModes": {
+      "bookFromCustomField": "Book appointment",
+      "checkAvailabilityFromCustomField": "Check availability",
+      "book": "Open booking page",
+      "checkAvailability": "Open availability page",
+      "cancel": "Cancel appointment"
+    },
+    "fields": {
+      "mode": "モード",
+      "dateTimeFieldId": "予約日時",
+      "dateTimeFieldIdSource": "日時フィールド",
+      "startDateFieldId": "開始日フィールド",
+      "endDateFieldId": "終了日フィールド",
+      "resultUsedByAI": "AIで結果を使用",
+      "outputCustomFieldId": "結果の保存先",
+      "startDateFieldIdSelected": "選択した開始日の保存先",
+      "endDateFieldIdSelected": "選択した終了日の保存先"
+    },
+    "dialogDescriptions": {
+      "flowStep": "このフローステップで予約をどのようにスケジュールするかを選択します。"
+    }
   },
   "templates": {
     "title": "テンプレート",
-    "description": "テンプレートを作成・管理します。"
+    "description": "テンプレートを作成・管理します。",
+    "share": {
+      "label": "共有",
+      "enabled": "共有中",
+      "disabled": "未共有",
+      "dialogTitle": "テンプレートを共有",
+      "dialogDescription": "このリンクを持つ人は誰でも、あなたのテナント内のワークスペースにこのテンプレートのコピーをインストールできます。",
+      "enableLabel": "共有リンクを有効にする",
+      "linkLabel": "共有リンク",
+      "description": "リンクを持つ人は誰でも、このテンプレートを自分のワークスペースにインストールできます。"
+    },
+    "installs": {
+      "title": "インストール",
+      "resources": "リソース",
+      "warnings": "警告",
+      "completedAt": "完了日時",
+      "autoUpdate": "自動更新"
+    },
+    "form": {
+      "contents": "テンプレートの内容",
+      "comingSoon": "近日公開",
+      "selectAll": "すべて選択",
+      "selectedCount": "{count}件選択中",
+      "details": "詳細",
+      "permissions": "デフォルトの権限",
+      "allowEdit": "インストール後の編集を許可",
+      "allowDelete": "インストール後の削除を許可",
+      "publisherName": "公開者名",
+      "youtubeVideoId": "YouTube動画ID",
+      "youtubeVideoIdDescription": "動画URLに含まれる11文字のID（例: youtube.com/watch?v=dQw4w9WgXcQ の \"dQw4w9WgXcQ\"）",
+      "testLink": "テストリンク",
+      "imageUrl": "カバー画像",
+      "installBehavior": "インストール時の動作",
+      "createInstallFolder": "専用フォルダーにインストールする",
+      "createInstallFolderDescription": "インストールされたすべてのリソースを、このテンプレートの名前を付けた新しい1つのフォルダーにまとめます。",
+      "defaultAutoUpdate": "インストールをデフォルトで更新対象としてマークする",
+      "defaultAutoUpdateDescription": "このテンプレートを再公開するたびに、新規インストールに更新通知が表示されます。"
+    },
+    "categories": {
+      "flows": "フロー",
+      "customFields": "カスタムフィールド",
+      "tags": "タグ",
+      "products": "商品",
+      "productCategories": "商品カテゴリー",
+      "aiFunctions": "AI関数",
+      "aiAgents": "AIエージェント",
+      "calendars": "予約カレンダー",
+      "webchats": "Webチャット",
+      "keywords": "キーワード",
+      "entryPointLinks": "エントリーポイントリンク",
+      "triggers": "トリガー",
+      "fbCommentAutomations": "Facebookコメント自動化",
+      "settings": "設定"
+    }
   },
   "qrCodeGenerator": {
     "title": "QRコード生成",
@@ -4253,6 +4533,19 @@
     "invalidDescription": "このリンクは無効か、有効期限が切れています。",
     "unavailableTitle": "配信を停止できません。",
     "unavailableDescription": "このワークスペースは利用できなくなりました。"
+  },
+  "templatesPublicPage": {
+    "invalidTitle": "このリンクはご利用いただけません。",
+    "invalidDescription": "このテンプレート共有リンクは無効、無効化済み、または期限切れです。",
+    "byPublisher": "{publisherName}による",
+    "includes": "このテンプレートに含まれるもの",
+    "videoTitle": "テンプレートのプレビュー動画",
+    "tryItOut": "試してみる",
+    "signInToInstall": "サインインしてインストール",
+    "selectWorkspace": "ワークスペースを選択",
+    "install": "インストール",
+    "installStarted": "インストールを開始しました",
+    "noEligibleWorkspaces": "このテンプレートをインストールできるワークスペースがありません。"
   },
   "extensionsMe": {
     "actions": {
@@ -4688,100 +4981,737 @@
       "iconSearchLink": "Lucideアイコンを探す →"
     }
   },
+  "bookingWebview": {
+    "metadataTitle": "予約を作成",
+    "badge": "予約",
+    "timezone": "タイムゾーン",
+    "empty": "利用可能な時間が見つかりませんでした。",
+    "noSelection": "時間を選択してください",
+    "actions": {
+      "book": "予約を作成",
+      "viewDetails": "詳細を表示"
+    },
+    "errors": {
+      "invalidTokenTitle": "この予約リンクはご利用いただけません。",
+      "invalidTokenDescription": "リンクが無効か、有効期限が切れている可能性があります。新しい予約リンクをご請求ください。",
+      "staleSlot": "この時間はすでに利用できません。別の時間を選択してください。",
+      "availabilityChanged": "時間を選択している間に空き状況が変わりました。もう一度選択してください。",
+      "submitFailed": "リクエストを完了できませんでした。もう一度お試しください。"
+    },
+    "success": {
+      "title": "予約が完了しました。",
+      "description": "予約の詳細が準備できました。"
+    },
+    "schedule": {
+      "metadataTitle": "予約の詳細",
+      "defaultMessage": "予約が確定しました。",
+      "unknownInvitee": "ゲスト",
+      "fields": {
+        "invitee": "招待者",
+        "time": "時間",
+        "timezone": "タイムゾーン",
+        "location": "場所"
+      },
+      "status": {
+        "scheduled": "予約済み",
+        "cancelled": "キャンセル済み"
+      },
+      "locationTypes": {
+        "inPerson": "対面ミーティング",
+        "phoneCall": "電話",
+        "onlineMeeting": "オンラインミーティング"
+      }
+    },
+    "cancel": {
+      "metadataTitle": "予約をキャンセル",
+      "title": "予約をキャンセル",
+      "description": "{calendar}({time})をキャンセルします。",
+      "action": "予約をキャンセル",
+      "cancelledTitle": "予約をキャンセルしました",
+      "cancelledDescription": "この予約はキャンセルされました。",
+      "unavailableTitle": "キャンセルできません",
+      "unavailableDescription": "この予約はすでにキャンセル済み、削除済み、または過去の日時のものです。"
+    },
+    "range": {
+      "metadataTitle": "空き状況を確認",
+      "empty": "未選択",
+      "successTitle": "日付範囲を受け付けました。",
+      "successDescription": "予約可能な時間を確認しています。",
+      "fields": {
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "startTime": "開始時刻",
+        "endTime": "終了時刻"
+      },
+      "actions": {
+        "skip": "スキップ"
+      },
+      "errors": {
+        "invalidRange": "終了日は開始日以降の日付にしてください。"
+      },
+      "timezoneHint": "時間は {timezone} で表示されています。"
+    }
+  },
+  "userDataWebview": {
+    "metadataTitle": "日付を選択",
+    "date": {
+      "title": "日付を選択してください"
+    },
+    "datetime": {
+      "title": "日付と時刻を選択してください"
+    },
+    "noSelection": "日付を選択",
+    "actions": {
+      "submit": "送信"
+    },
+    "success": {
+      "title": "データが保存されました",
+      "description": "このタブを閉じていただいて構いません。"
+    },
+    "errors": {
+      "invalidTokenTitle": "このリンクはご利用いただけません。",
+      "invalidTokenDescription": "リンクが無効か、有効期限が切れている可能性があります。新しいリンクをご請求ください。",
+      "submitFailed": "リクエストを完了できませんでした。もう一度お試しください。"
+    },
+    "monthLabel": "月",
+    "yearLabel": "年"
+  },
+  "appointments": {
+    "title": "予約",
+    "statuses": {
+      "scheduled": "予約済み",
+      "cancelled": "キャンセル済み"
+    },
+    "messages": {
+      "empty": "まだ予約がありません。"
+    }
+  },
+  "appointmentManagement": {
+    "title": "予約",
+    "singular": "予約",
+    "unknownContact": "不明な連絡先",
+    "searchPlaceholder": "名前で検索...",
+    "tabs": {
+      "next": "今後の予約",
+      "past": "過去の予約"
+    },
+    "fields": {
+      "name": "名前",
+      "date": "日付",
+      "status": "ステータス",
+      "calendar": "カレンダー"
+    },
+    "statuses": {
+      "scheduled": "予約済み",
+      "cancelled": "キャンセル済み"
+    },
+    "actions": {
+      "cancelAppointment": "予約をキャンセル"
+    },
+    "dialogs": {
+      "cancelTitle": "予約をキャンセル",
+      "cancelDescription": "この予約をキャンセルし、キャンセル時の後続処理を実行します。",
+      "deleteTitle": "予約を削除",
+      "deleteDescription": "この予約を管理リストから削除します。キャンセルフローは実行されません。"
+    },
+    "messages": {
+      "cancelled": "予約をキャンセルしました。",
+      "deleted": "予約を削除しました。"
+    }
+  },
+  "appointmentCalendars": {
+    "title": "予約カレンダー",
+    "singular": "予約カレンダー",
+    "addNew": "新規追加",
+    "none": "なし",
+    "addReminder": "リマインダーを追加",
+    "reminderSummary": "リマインダーを送信 - {calendar} {timing}。",
+    "noExternalConnections": "外部カレンダーとの連携はまだありません",
+    "dialogDescriptions": {
+      "create": "予約カレンダーの名前を入力して開始します。",
+      "rename": "この予約カレンダーの名前を変更します。"
+    },
+    "tabs": {
+      "calendars": "カレンダー",
+      "appointments": "予約",
+      "externalCalendars": "外部カレンダー"
+    },
+    "sections": {
+      "appointment": "予約の内容",
+      "availability": "いつ予約を受け付けますか?",
+      "duration": "予約の所要時間は?",
+      "location": "予約はどこで行われますか?",
+      "notifications": "通知",
+      "restrictions": "制限",
+      "externalCalendar": "Google カレンダーを連携"
+    },
+    "fields": {
+      "description": "説明",
+      "timezone": "タイムゾーン",
+      "locationType": "場所の種類",
+      "locationDetail": "詳細",
+      "durationMinutes": "予約の所要時間",
+      "bufferAfterMinutes": "予約後にバッファ時間を追加",
+      "scheduleWindowType": "予約可能な期間",
+      "rollingDays": "ローリング日数",
+      "minAdvanceDays": "最短予約可能日数",
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "specificDate": "日付",
+      "maxAppointmentsPerUser": "1ユーザーあたりの最大予約数",
+      "maxAppointmentsUnlimited": "無制限",
+      "dailyLimitEnabled": "1日の上限",
+      "maxPerDay": "1日あたりの最大件数",
+      "allowGroupMeeting": "グループミーティングを許可",
+      "maxPerSlot": "1枠あたりの最大件数",
+      "confirmationMessage": "確認メッセージ",
+      "confirmationFlowId": "確認フロー",
+      "cancellationFlowId": "キャンセルフロー",
+      "externalConnectionId": "外部カレンダー",
+      "reminders": "リマインダー",
+      "reminderTimingValue": "値",
+      "reminderTimingUnit": "単位"
+    },
+    "locationTypes": {
+      "inPerson": "対面ミーティング",
+      "phoneCall": "電話",
+      "onlineMeeting": "オンラインミーティング"
+    },
+    "scheduleWindowTypes": {
+      "rollingDays": "今後のローリング日数以内",
+      "dateRange": "日付範囲内",
+      "specificDay": "特定の1日のみ",
+      "anyFutureDate": "今後の任意の日付"
+    },
+    "reminderTimingUnits": {
+      "minutes": "分前",
+      "hours": "時間前",
+      "days": "日前"
+    },
+    "reminderTimingLabels": {
+      "minutes": "{count, plural, one {#分前} other {#分前}}",
+      "hours": "{count, plural, one {1時間前} other {#時間前}}",
+      "days": "{count, plural, one {1日前} other {#日前}}"
+    },
+    "weekdays": {
+      "0": "日曜日",
+      "1": "月曜日",
+      "2": "火曜日",
+      "3": "水曜日",
+      "4": "木曜日",
+      "5": "金曜日",
+      "6": "土曜日"
+    },
+    "weekdayEditor": {
+      "description": "この曜日の利用可能な時間帯を設定します。",
+      "unavailable": "利用不可",
+      "overlapWarning": "一部の時間帯が重複しています。重複した時間は二重にカウントされません。",
+      "addInterval": "時間帯を追加",
+      "startTime": "開始時刻",
+      "endTime": "終了時刻"
+    },
+    "tooltips": {
+      "timezone": "このカレンダーを作成するタイムゾーンです。予約者には各自のタイムゾーンに基づいて空き状況が表示されます。",
+      "confirmationFlow": "ユーザーが予約を完了した際に送信されるフローです。",
+      "cancellationFlow": "予約がキャンセルされた際に送信されるフローです。",
+      "reminders": "予約について招待者に思い出してもらうためのリマインダーを送信します。",
+      "appointmentDuration": "予約の所要時間を設定します。",
+      "bufferAfterMinutes": "予約後に片付けなどのためのバッファ時間を確保します。",
+      "peopleCanSchedule": "ミーティングを受け付ける日付の範囲を設定します。",
+      "maxAppointmentsPerUser": "1人のユーザーが予約できる今後の予約の最大件数です。",
+      "rollingDays": "今後何日先まで予約を許可するかを設定します",
+      "minAdvanceDays": "予約に必要な最短の事前日数です。0を指定すると当日予約を許可します。",
+      "dailyLimit": "1日あたりに予約できる人数の上限です。",
+      "allowGroupMeeting": "同じ時間枠に複数人の予約を許可します。",
+      "externalCalendar": "Google カレンダーと連携して予約を同期します。"
+    },
+    "minutesLabel": "{count}分"
+  },
+  "externalCalendars": {
+    "title": "外部カレンダー",
+    "connectGoogle": "Google と連携",
+    "emptyEmail": "メールアドレスなし",
+    "fields": {
+      "provider": "プロバイダー",
+      "email": "メールアドレス",
+      "calendarId": "カレンダーID",
+      "connected": "連携済み",
+      "date": "日付"
+    },
+    "providers": {
+      "googleCalendar": "Google カレンダー"
+    },
+    "dialogs": {
+      "editTitle": "カレンダーIDを編集",
+      "editDescription": "競合を確認し、予約イベントを作成する Google カレンダーIDを選択します。",
+      "deleteTitle": "カレンダーの連携を解除",
+      "deleteDescription": "この Google カレンダーと予約スケジュールとの連携を解除します。"
+    },
+    "messages": {
+      "connected": "Google カレンダーと連携しました。",
+      "connectFailed": "Google カレンダーと連携できませんでした。Google OAuth の設定と Calendar API のアクセス権を確認し、再度お試しください。",
+      "calendarIdUpdated": "カレンダーIDを更新しました。",
+      "disconnected": "カレンダーの連携を解除しました。"
+    }
+  },
+  "bookingPage": {
+    "metadataTitle": "予約",
+    "comingSoonTitle": "予約ページは近日公開予定です",
+    "comingSoonDescription": "この公開予約ページはまだご利用いただけません。"
+  },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
-    "datasetId": "Dataset ID",
-    "reconnect": "Reconnect permissions",
-    "connectViaFacebook": "Connect via Facebook",
-    "unsupportedExplanation": "This Instagram account was connected with Instagram Business Login. Connect the account via Facebook to use Meta Conversions API.",
+    "description": "Messenger、Instagram、WhatsApp の会話から LeadSubmitted イベントを Meta に送信します。",
+    "datasetId": "データセットID",
+    "reconnect": "権限を再連携",
+    "connectViaFacebook": "Facebook 経由で連携",
+    "unsupportedExplanation": "この Instagram アカウントは Instagram ビジネスログインで連携されています。Meta Conversions API を利用するには、Facebook 経由でアカウントを連携してください。",
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
-      "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
+      "description": "Messenger、Instagram、WhatsApp 向けに LeadSubmitted イベントをキューに追加します。",
+      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。"
     },
     "status": {
       "title": "Meta Conversions API",
-      "ready": "Ready",
-      "missingPermission": "Permission needed",
-      "unverified": "Unverified",
-      "unsupported": "Unsupported",
-      "notConnected": "Not connected"
+      "ready": "準備完了",
+      "missingPermission": "権限が必要です",
+      "unverified": "未検証",
+      "unsupported": "非対応",
+      "notConnected": "未連携"
     },
     "statusDescriptions": {
-      "ready": "This integration has the required Meta permission for Conversions API events.",
-      "missingPermission": "Reconnect this integration and grant the requested Meta permission.",
-      "unverified": "Platform app settings are not available, so the CAPI permission cannot be verified.",
-      "unsupported": "Meta Conversions API for Instagram requires an account connected through Facebook Login for Business.",
-      "notConnected": "The Conversions API is a Meta Business Tool that allows you to share data with Meta to enhance the performance of ads."
+      "ready": "この連携には Conversions API イベントに必要な Meta の権限があります。",
+      "missingPermission": "この連携を再接続し、要求された Meta の権限を付与してください。",
+      "unverified": "プラットフォームのアプリ設定が利用できないため、CAPI の権限を検証できません。",
+      "unsupported": "Instagram 向け Meta Conversions API には、Facebook ログイン(ビジネス向け)で連携したアカウントが必要です。",
+      "notConnected": "Conversions API は、広告のパフォーマンスを向上させるために Meta とデータを共有できる Meta ビジネスツールです。"
     },
     "errors": {
-      "reconnect": "Failed to start Meta CAPI reconnect.",
-      "messengerNotFound": "Messenger integration not found.",
-      "instagramNotFound": "Instagram integration not found.",
-      "instagramRequiresFacebook": "Instagram CAPI requires connecting via Facebook.",
-      "saveFailed": "Could not save. Please try again.",
-      "datasetRequired": "Save a Dataset ID before adding an access token.",
-      "invalidToken": "This token could not access the dataset.",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "reconnect": "Meta CAPI の再連携を開始できませんでした。",
+      "messengerNotFound": "Messenger の連携が見つかりません。",
+      "instagramNotFound": "Instagram の連携が見つかりません。",
+      "instagramRequiresFacebook": "Instagram の CAPI には Facebook 経由の連携が必要です。",
+      "saveFailed": "保存できませんでした。もう一度お試しください。",
+      "datasetRequired": "アクセストークンを追加する前にデータセットIDを保存してください。",
+      "invalidToken": "このトークンではデータセットにアクセスできませんでした。",
+      "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
+      "whatsappNotFound": "WhatsApp の連携が見つかりません。"
     },
     "fields": {
       "eventType": {
-        "label": "Event type",
+        "label": "イベントタイプ",
         "leadSubmitted": "Lead Submitted"
       },
-      "value": "Value",
-      "valuePlaceholder": "e.g. 250",
-      "currency": "Currency",
-      "currencyPlaceholder": "e.g. USD",
-      "contentCategory": "Content Category",
-      "contentCategoryPlaceholder": "The category of the content associated with the event",
-      "contentName": "Content Name",
-      "contentNamePlaceholder": "The name of the page or product associated with the event"
+      "value": "値",
+      "valuePlaceholder": "例: 250",
+      "currency": "通貨",
+      "currencyPlaceholder": "例: USD",
+      "contentCategory": "コンテンツカテゴリ",
+      "contentCategoryPlaceholder": "イベントに関連付けられたコンテンツのカテゴリ",
+      "contentName": "コンテンツ名",
+      "contentNamePlaceholder": "イベントに関連付けられたページまたは商品の名前",
+      "orderId": "Order ID",
+      "orderIdPlaceholder": "e.g. ORDER-12345",
+      "contents": {
+        "label": "Line items",
+        "item": "line item",
+        "id": "Product ID",
+        "quantity": "Quantity",
+        "itemPrice": "Item price"
+      }
     },
-    "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
-    "saveDataset": "Save",
-    "accessToken": "Access Token (optional)",
-    "accessTokenHint": "Paste a token from Events Manager to send events with your own token instead of the connected page token. Requires a Dataset ID.",
-    "accessTokenPlaceholder": "Events Manager access token",
-    "saveToken": "Save token",
-    "tokenSaved": "Token saved",
-    "removeToken": "Remove",
-    "saved": "Saved",
+    "datasetIdPlaceholder": "Events Manager からデータセットIDを貼り付けてください",
+    "saveDataset": "保存",
+    "accessToken": "アクセストークン(任意)",
+    "accessTokenHint": "連携済みのページトークンの代わりに、ご自身のトークンでイベントを送信するには、Events Manager から取得したトークンを貼り付けてください。データセットIDが必要です。",
+    "accessTokenPlaceholder": "Events Manager のアクセストークン",
+    "saveToken": "トークンを保存",
+    "tokenSaved": "トークンを保存しました",
+    "removeToken": "削除",
+    "saved": "保存しました",
     "help": {
-      "delay": "Events may take up to 40 minutes to appear in Events Manager and show as Meta Leads in Ads Manager."
+      "delay": "イベントが Events Manager に表示され、Ads Manager で Meta リードとして表示されるまで最大40分かかる場合があります。"
     },
-    "connected": "Connected",
-    "disconnect": "Disconnect",
-    "openEventManager": "Open Event Manager",
+    "connected": "連携済み",
+    "disconnect": "連携を解除",
+    "openEventManager": "Event Manager を開く",
     "methods": {
       "oauth": {
-        "title": "Connect via Facebook",
-        "description": "Use your page's existing connection, then choose a Dataset ID.",
-        "connect": "Connect via Facebook",
-        "connectedLabel": "via Facebook"
+        "title": "Facebook 経由で連携",
+        "description": "既存のページの連携を利用し、データセットIDを選択します。",
+        "connect": "データセットを作成",
+        "connectedLabel": "Facebook 経由"
       },
       "custom": {
-        "title": "Custom connection",
-        "description": "Use a Dataset ID and an access token from Meta Events Manager.",
-        "start": "Set up custom connection",
-        "connect": "Connect",
-        "connectedLabel": "Custom"
+        "title": "カスタム連携",
+        "description": "Meta Events Manager のデータセットIDとアクセストークンを利用します。",
+        "start": "カスタム連携を設定",
+        "connect": "連携",
+        "connectedLabel": "カスタム"
       },
       "whatsapp": {
-        "title": "Connect via WhatsApp",
-        "description": "Use your WhatsApp connection, then choose a Dataset ID.",
-        "connect": "Connect via WhatsApp",
-        "connectedLabel": "via WhatsApp"
+        "title": "WhatsApp 経由で連携",
+        "description": "既存の WhatsApp 連携を利用し、データセットIDを選択します。",
+        "connect": "データセットを作成",
+        "connectedLabel": "WhatsApp 経由"
       }
     },
     "finalize": {
-      "title": "Choose a Dataset ID",
-      "description": "Enter an existing Dataset ID, or leave it empty to create one automatically.",
+      "title": "データセットIDを選択",
+      "description": "既存のデータセットIDを入力するか、空欄のままにすると自動的に作成されます。",
       "save": "保存",
-      "caveat": "A Dataset ID that isn't linked to this Page or Instagram account may not attribute events correctly. Leave this field empty to create a linked dataset automatically."
+      "createDataset": "データセットを作成",
+      "caveat": "このページまたは Instagram アカウントに紐付いていないデータセットIDでは、イベントが正しく属性付けされない場合があります。このフィールドを空欄にすると、紐付いたデータセットが自動的に作成されます。"
     },
     "whatsapp": {
-      "connect": "Connect"
+      "connect": "連携"
+    },
+    "limitedDataUse": {
+      "label": "Limited Data Use (US privacy)",
+      "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
     }
+  },
+  "minigames": {
+    "title": "ゲーミフィケーション",
+    "description": "顧客向けに抽選ミニゲームを作成・管理します。",
+    "types": {
+      "luckyWheel": "ラッキーホイール",
+      "jackpot": "ジャックポット",
+      "gashapon": "ガシャポン",
+      "drawLots": "くじ引き",
+      "scratchOff": "スクラッチくじ"
+    },
+    "createDialog": {
+      "title": "ミニゲームの種類を選択",
+      "comingSoon": "近日公開"
+    },
+    "prizeSettings": {
+      "sumOfProbabilities": "全確率の合計：{value}%",
+      "loseProbability": "はずれ確率：{value}%",
+      "winProbability": "当選確率：{value}%",
+      "newPrize": "新しい景品",
+      "prizeNameCustomFieldLabel": "景品名をカスタムフィールドに保存"
+    },
+    "prizeItemDialog": {
+      "prizeTitle": "景品を編集",
+      "nonWinningTitle": "はずれ設定を編集",
+      "prizeNameLabel": "景品名",
+      "nonWinningTitleLabel": "タイトル",
+      "loseImageDescription": "推奨サイズ 120x120px",
+      "quantityLabel": "景品数量",
+      "quantityDescription": "この景品があと何回当選できるかを示します。当選するたびに1減ります。無制限にする場合は空欄のままにしてください。"
+    },
+    "outcomeMessage": {
+      "enableWin": "景品を獲得した当選者にメッセージを送信する",
+      "enableLose": "はずれた場合にメッセージを送信する",
+      "mode": "メッセージタイプ",
+      "modeText": "テキスト",
+      "modeFlow": "フロー",
+      "text": "メッセージ"
+    },
+    "winningMessageDialog": {
+      "title": "当選メッセージの設定",
+      "titleLabel": "タイトル",
+      "prizeNameHint": "タイトルと説明で '{{prize_name}}' を使用すると、景品名を挿入できます。",
+      "acceptButtonText": "承諾ボタンのテキスト",
+      "shareButtonText": "シェアボタンのテキスト",
+      "shareButtonDescription": "シェアボタンの説明"
+    },
+    "nonWinningMessageDialog": {
+      "title": "はずれメッセージの設定",
+      "titleLabel": "タイトル",
+      "shareButtonText": "シェアボタンのテキスト",
+      "shareButtonDescription": "シェアボタンの説明"
+    },
+    "preview": {
+      "start": "開始",
+      "shareWithFriends": "友達にシェア",
+      "jackpotHeader": "ジャックポット",
+      "jackpotBanner": "ジャックポット",
+      "luckyWheelHeader": "ラッキーホイール",
+      "gashaponHeader": "ガシャポン",
+      "comingSoon": "このゲームタイプの詳細プレビューは近日公開予定です"
+    },
+    "form": {
+      "generalSettingsTitle": "一般設定",
+      "appearanceTitle": "デザイン",
+      "playerSettingsTitle": "プレイヤー設定",
+      "prizeSettingsTitle": "景品設定"
+    },
+    "generalSettings": {
+      "showName": "表示",
+      "playedAt": "プレイ日時",
+      "rulesDescription": "ルールの説明",
+      "openerTags": "ゲームリンクを開いた人にタグを付ける",
+      "playerTags": "プレイヤーにタグを付ける",
+      "newFriendTags": "新しい友達にタグを付ける",
+      "shareEnabled": "友達へのシェアを許可する",
+      "shareMessage": "シェアメッセージ",
+      "shareMessageHint": "実際のゲームリンクを挿入するには '{{shareUrl}}' を使用してください。削除しないでください。"
+    },
+    "appearance": {
+      "backgroundColor": "背景色",
+      "machineColor": "マシンの色",
+      "decorativeColor": "装飾の色",
+      "ruleTextColor": "ルールテキストの色",
+      "backgroundImage": "背景画像",
+      "backgroundImageDescription": "推奨幅：1024px",
+      "prizeDescriptionImage": "景品説明画像（任意）",
+      "prizeDescriptionImageDescription": "推奨幅：750px",
+      "startButtonImage": "スタートボタン画像",
+      "startButtonImageDescription": "推奨サイズ：360x105px"
+    },
+    "playerSettings": {
+      "drawsPerPerson": "1人あたりの抽選回数",
+      "resetPolicyLabel": "抽選回数のリセット",
+      "resetNever": "抽選回数をリセットしない",
+      "resetEveryNDays": "抽選回数を次の日数ごとにリセットする",
+      "resetIntervalDaysSuffix": "日"
+    },
+    "publicUrl": {
+      "label": "公開URL",
+      "hint": "このURLをフロー、配信、またはシーケンスにコピー＆ペーストして、このミニゲームを共有してください。"
+    },
+    "play": {
+      "close": "閉じる",
+      "drawsRemaining": "残り{count}回",
+      "noDrawsLeft": "このミニゲームの残り回数がありません。",
+      "notStartedYet": "このミニゲームはまだ開始していません。",
+      "ended": "このミニゲームは終了しました。",
+      "forbiddenTitle": "アクセスが拒否されました",
+      "forbiddenDescription": "このリンクは無効か、期限切れです。",
+      "comingSoonTitle": "近日公開",
+      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。"
+    },
+    "history": {
+      "title": "履歴",
+      "played": "プレイ回数",
+      "remaining": "残り回数",
+      "openedAt": "初回オープン",
+      "lastPlayedAt": "最終プレイ",
+      "unknownContact": "不明な連絡先",
+      "record": "記録",
+      "recordDialog": {
+        "title": "プレイ記録",
+        "win": "当選",
+        "lose": "ハズレ",
+        "empty": "プレイ記録はまだありません"
+      }
+    }
+  },
+  "mediaLibrary": {
+    "title": "メディアライブラリ",
+    "searchPlaceholder": "ファイルを検索...",
+    "newFolder": "新しいフォルダ",
+    "recent": "最近",
+    "favourite": "お気に入り",
+    "upload": "アップロード",
+    "select": "選択",
+    "bulkSelect": "一括選択",
+    "deleteFolder": "フォルダを削除",
+    "renameFolder": "フォルダ名を変更",
+    "noFiles": "ファイルが見つかりません",
+    "noFolders": "フォルダがまだありません",
+    "folderNamePlaceholder": "フォルダ名",
+    "confirmDeleteFolder": "フォルダとすべてのファイルを削除しますか？",
+    "confirmDeleteFolderDescription": "このフォルダ内のすべてのファイルはサーバーから完全に削除されます。この操作は元に戻せません。",
+    "confirmDeleteFile": "ファイルを削除しますか？",
+    "confirmDeleteFileDescription": "このファイルはサーバーから完全に削除されます。",
+    "addToFavourites": "お気に入りに追加",
+    "removeFromFavourites": "お気に入りから削除",
+    "deleteFile": "ファイルを削除",
+    "selectOnlyOneFile": "選択できるファイルは1つだけです",
+    "confirmDeleteFiles": "{count, plural, =1 {1件のファイルを削除しますか？} other {#件のファイルを削除しますか？}}",
+    "confirmDeleteFilesDescription": "これらのファイルはサーバーから完全に削除されます。この操作は元に戻せません。",
+    "filesCount": "{count, plural, =0 {ファイルなし} =1 {1件のファイル} other {#件のファイル}}",
+    "openMediaLibrary": "メディアライブラリを開く",
+    "uploadFailed": "{name} のアップロードに失敗しました"
+  },
+  "adsCampaign": {
+    "title": "広告",
+    "createCta": "広告を作成",
+    "prereq": {
+      "notConnected": "このチャネルでメッセージ広告を作成するには、Facebook Adsを連携してください。",
+      "connectCta": "Facebook Adsを連携"
+    },
+    "specialAdCategory": {
+      "none": "なし",
+      "housing": "住宅",
+      "employment": "雇用",
+      "credit": "信用",
+      "issues": "社会問題、選挙、政治",
+      "financialProducts": "金融商品とサービス",
+      "onlineGambling": "オンラインギャンブルとゲーム"
+    },
+    "fields": {
+      "objective": {
+        "label": "目的",
+        "value": "エンゲージメント（メッセージ）"
+      },
+      "specialAdCategory": {
+        "label": "特別な広告カテゴリ",
+        "description": "制限付きカテゴリを選択すると、Metaがそのカテゴリで許可していない年齢、性別などのターゲティングが解除されます。",
+        "restrictedNote": "制限付きの特別な広告カテゴリが選択されているため、年齢と性別のターゲティングは無効になっています。"
+      },
+      "adAccount": {
+        "label": "広告アカウント"
+      },
+      "whatsappPage": {
+        "label": "Facebookページ",
+        "description": "WhatsApp広告でもリンクされたFacebookページが必要です。使用する連携済みのページを選択してください。"
+      },
+      "dailyBudget": {
+        "label": "1日の予算",
+        "placeholder": "例：2000",
+        "description": "広告アカウントの最小通貨単位（USDの場合はセントなど）で金額を入力してください。"
+      },
+      "countries": {
+        "label": "国"
+      },
+      "ageRange": {
+        "min": "最低年齢",
+        "max": "最高年齢"
+      },
+      "gender": {
+        "label": "性別",
+        "male": "男性",
+        "female": "女性"
+      },
+      "schedule": {
+        "start": "開始日時",
+        "end": "終了日時"
+      },
+      "destination": {
+        "label": "遷移先"
+      },
+      "callToAction": {
+        "label": "行動を促すボタン",
+        "derivedNote": "行動を促すボタン（{type}）はチャネルから自動的に決定されます。"
+      },
+      "specialAdCategoryCountry": {
+        "label": "広告カテゴリの国",
+        "description": "社会問題、選挙、政治のカテゴリでMetaが必須とします — これらの広告を配信する許可がある国です。"
+      }
+    },
+    "welcomeMessage": {
+      "title": "ウェルカムメッセージ",
+      "label": "ウェルカムメッセージ",
+      "description": "この広告から会話が開始されると自動的に送信されます。",
+      "mode": {
+        "default": "Metaのデフォルトメッセージを使用",
+        "single": "単一のメッセージ",
+        "templates": "最大5つのメッセージパターンをテスト"
+      },
+      "messageLabel": "メッセージ",
+      "templateLabel": "バリエーション{index}",
+      "headingPlaceholder": "見出し（任意）",
+      "addTemplate": "バリエーションを追加",
+      "templatesLimit": "最大{max}件のバリエーションをテストできます。"
+    },
+    "creative": {
+      "mediaRequired": "続行するには画像または動画をアップロードしてください。",
+      "mediaType": {
+        "label": "クリエイティブメディア",
+        "orVideo": "または動画",
+        "selectAdAccountFirst": "メディアをアップロードする前に広告アカウントを選択してください。",
+        "uploadImage": "画像をアップロード",
+        "uploadVideo": "動画をアップロード"
+      },
+      "uploading": "アップロード中...",
+      "imageUploadFailed": "画像のアップロードに失敗しました。もう一度お試しください。",
+      "videoProcessing": "動画を処理中...",
+      "videoReady": "動画の準備ができました",
+      "videoProcessingFailed": "動画の処理に失敗しました。別のファイルをお試しください。",
+      "previewAlt": "クリエイティブのプレビュー",
+      "primaryText": "メインテキスト",
+      "headline": "見出し"
+    },
+    "wizard": {
+      "createDraft": "一時停止した下書きとして作成",
+      "campaignStep": {
+        "title": "キャンペーン",
+        "namePlaceholder": "この広告の名前を入力"
+      },
+      "adSetStep": {
+        "title": "広告セット"
+      },
+      "creativeStep": {
+        "title": "広告クリエイティブ"
+      },
+      "preflightStep": {
+        "title": "確認"
+      },
+      "errors": {
+        "nameRequired": "この広告の名前を入力してください。",
+        "adAccountRequired": "広告アカウントを選択してください。",
+        "budgetRequired": "1日の予算を入力してください。",
+        "countryRequired": "少なくとも1つの国を選択してください。",
+        "mediaRequired": "画像または動画をアップロードしてください。"
+      }
+    },
+    "preflight": {
+      "title": "概要",
+      "pausedNote": "この広告は一時停止した下書きとして作成されます。公開するまでは配信されず、費用も発生しません。"
+    },
+    "publishConfirm": {
+      "title": "この広告を公開しますか？",
+      "description": "公開すると、キャンペーン、広告セット、広告が順番に有効化されます。配信が始まると、Metaは予算の消化を開始します。",
+      "confirm": "公開"
+    },
+    "list": {
+      "viewOnMeta": "Metaで表示",
+      "empty": "メッセージ広告はまだありません。",
+      "createState": "下書きのステータス",
+      "actions": "操作",
+      "notPublishedYet": "未公開",
+      "draftReady": "下書きの準備ができました",
+      "createFailed": "作成に失敗しました",
+      "creating": "作成中...",
+      "publish": "公開",
+      "pause": "一時停止"
+    },
+    "messages": {
+      "created": "広告の下書きを作成しました。",
+      "actionSucceeded": "完了しました。"
+    },
+    "box": {
+      "ctwa": {
+        "title": "CTWA",
+        "description": "Click-to-WhatsApp広告をここで作成・管理します。"
+      },
+      "ctm": {
+        "title": "CTM",
+        "description": "Click-to-Messenger広告をここで作成・管理します。"
+      },
+      "ctid": {
+        "title": "CTID",
+        "description": "Click-to-Instagram広告をここで作成・管理します。"
+      },
+      "connectCta": "Facebook Adsを連携",
+      "reconnectCta": "再連携",
+      "reconnectNeeded": "この連携は再接続が必要です。",
+      "refresh": "更新",
+      "whatsappPageRequiredNote": "クリック・トゥ・WhatsApp広告には（Metaの要件として）リンクされたFacebookページが必要です。広告作成時に選択します。",
+      "emptyDashboardNote": "ここで作成した広告は、このチャネルの広告ダッシュボードに自動的に表示されるようになりました。アカウントと費用を確認するには、そこのフィルターでこの連携を選択してください。"
+    },
+    "insights": {
+      "title": "パフォーマンス",
+      "empty": "データはまだありません",
+      "impressions": "インプレッション",
+      "reach": "リーチ",
+      "spend": "消化金額",
+      "clicks": "クリック",
+      "conversations": "会話数",
+      "costPerConversation": "会話あたり単価",
+      "costPerConversationTooltip": "開始されたメッセージ会話あたりの平均コスト。",
+      "datePresetLabel": "期間:",
+      "datePreset": {
+        "maximum": "全期間",
+        "last_30d": "過去30日間",
+        "last_7d": "過去7日間"
+      }
+    }
+  },
+  "accountFields": {
+    "title": "ボットフィールド"
   }
 }

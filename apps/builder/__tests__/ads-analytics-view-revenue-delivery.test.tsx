@@ -7,10 +7,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
 import type { AdsAnalyticsData } from "@/features/ads/lib/merge-analytics"
 import type { AdsAnalyticsTimeseriesRow } from "@/features/ads/queries/analytics"
-import type { AdsAnalyticsSearchParams } from "@/features/ads/schemas/analytics"
+import type { AdsAnalyticsSearchParams } from "@/features/ads/schema/analytics"
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/space/ws-1/ads/analytics",
+  usePathname: () => "/space/ws-1/dashboard/ads",
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }))
@@ -68,6 +68,7 @@ vi.mock("@chatbotx.io/ui/components/ui/dialog", () => ({
 vi.mock("@chatbotx.io/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => children,
   DropdownMenuContent: ({ children }: { children: ReactNode }) => children,
+  DropdownMenuGroup: ({ children }: { children: ReactNode }) => children,
   DropdownMenuItem: ({ children }: { children: ReactNode }) => children,
   DropdownMenuPortal: ({ children }: { children: ReactNode }) => children,
   DropdownMenuSub: ({ children }: { children: ReactNode }) => children,
@@ -139,6 +140,7 @@ const analyticsData = {
       costPerConversation: 10,
     },
   ],
+  spendCurrency: "USD",
 } satisfies AdsAnalyticsData
 
 const deliverySummary = {
@@ -156,7 +158,10 @@ const timeseries = [
 const range = {
   from: "2026-08-01",
   to: "2026-08-10",
+  tz: "",
   account: "",
+  channel: "whatsapp",
+  channelAccount: "",
   adAccount: "",
 } as AdsAnalyticsSearchParams
 
@@ -182,15 +187,16 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     await act(async () => {
       root.render(
         <AdsAnalyticsView
+          channel="whatsapp"
+          channelIntegrations={[]}
           promises={Promise.resolve([
             analyticsData,
             deliverySummary,
             timeseries,
           ])}
           range={range}
-          selectedIntegrationWhatsappId="iw-1"
-          switcherIntegrations={[]}
-          whatsappCredentialPublic={null}
+          selectedChannelIntegrationId="iw-1"
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
           workspaceId="ws-1"
         />,
       )
@@ -222,11 +228,66 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     )
     expect(
       Array.from(container.querySelectorAll("a")).some((anchor) =>
-        anchor.href.includes("/ads/connect-accounts"),
+        anchor.href.includes("/whatsapps/iw-1/ads"),
       ),
     ).toBe(true)
     expect(container.textContent).not.toContain(
       "ads.analytics.delivery.skippedRegion",
     )
+  })
+
+  test("omits the reconnect CTA link in the aggregate (no account) view", async () => {
+    await act(async () => {
+      root.render(
+        <AdsAnalyticsView
+          channel="whatsapp"
+          channelIntegrations={[]}
+          promises={Promise.resolve([
+            analyticsData,
+            deliverySummary,
+            timeseries,
+          ])}
+          range={range}
+          selectedChannelIntegrationId={null}
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+          workspaceId="ws-1"
+        />,
+      )
+      await Promise.resolve()
+    })
+
+    expect(container.textContent).toContain(
+      "ads.analytics.delivery.noScopeWarning",
+    )
+    expect(container.textContent).not.toContain(
+      "ads.analytics.delivery.reconnectCta",
+    )
+  })
+
+  test("shows a messenger-channel reconnect CTA linked to the messenger ads settings page", async () => {
+    await act(async () => {
+      root.render(
+        <AdsAnalyticsView
+          channel="messenger"
+          channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
+          promises={Promise.resolve([
+            analyticsData,
+            deliverySummary,
+            timeseries,
+          ])}
+          range={{ ...range, channelAccount: "msg-1" }}
+          selectedChannelIntegrationId="msg-1"
+          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+          workspaceId="ws-1"
+        />,
+      )
+      await Promise.resolve()
+    })
+
+    expect(
+      Array.from(container.querySelectorAll("a")).some((anchor) =>
+        anchor.href.includes("/messengers/msg-1/ads"),
+      ),
+    ).toBe(true)
   })
 })

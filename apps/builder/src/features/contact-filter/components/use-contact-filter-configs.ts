@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
@@ -30,15 +30,29 @@ type UseContactFilterConfigsResult = {
  * Centralizes all option/config wiring needed by one contact-filter surface.
  * Parent filter components pass the resolved configs into child rows/forms so
  * the underlying option hooks are not duplicated inside the same surface.
+ *
+ * `includeBotFields` is an opt-in (default off) — only the flow Condition
+ * node's `ContactFilter` passes it. Every other surface (contacts list,
+ * conversations, broadcasts) keeps its current behavior byte-identical.
  */
 export const useContactFilterConfigs = (
   inboxChannel?: string,
+  includeBotFields = false,
 ): UseContactFilterConfigsResult => {
   const t = useTranslations()
 
   const tagOptions = useTagSelectOptions()
   const inboxOptions = useInboxOptionsByChannel(inboxChannel)
   const customFields = useCustomFieldStore((state) => state.customFields)
+  const botFields = useCustomFieldStore((state) => state.botFields)
+  const ensureBotFieldsLoaded = useCustomFieldStore(
+    (state) => state.ensureBotFieldsLoaded,
+  )
+  useEffect(() => {
+    if (includeBotFields) {
+      ensureBotFieldsLoaded()
+    }
+  }, [includeBotFields, ensureBotFieldsLoaded])
   const flowVersionOptions = useFlowSelectOptions()
   const broadcastOptions = useBroadcastSelectOptions()
   const sequences = useSequenceOptions()
@@ -69,6 +83,8 @@ export const useContactFilterConfigs = (
         reflinkOptions,
         assigneeOptions,
         couponTopicOptions,
+        botFields,
+        includeBotFields,
       }),
     [
       t,
@@ -81,6 +97,8 @@ export const useContactFilterConfigs = (
       reflinkOptions,
       assigneeOptions,
       couponTopicOptions,
+      botFields,
+      includeBotFields,
     ],
   )
 

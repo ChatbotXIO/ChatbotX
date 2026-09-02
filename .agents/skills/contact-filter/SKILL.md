@@ -26,16 +26,16 @@ Lives in two packages:
 ```
 contactFilterFields enum (partials/contact.ts)     ← the field "universe" (~90)
         │
-CONTACT_FILTER_FIELD_DEFINITIONS (schemas/definitions.ts)  ← 22 ACTIVE fields = single source of truth
+CONTACT_FILTER_FIELD_DEFINITIONS (schema/definitions.ts)  ← 22 ACTIVE fields = single source of truth
         │  (each: { field, schemaKind, optionSource })
-        ├──► Zod condition schemas  (schemas/*.ts, via staticFieldFilter)
+        ├──► Zod condition schemas  (schema/*.ts, via staticFieldFilter)
         └──► UI FieldConfig[]        (components/contact-filter-config.ts, getFieldConfigs)
 
 Filter object → API `contactFilter` param → buildContactWhere / buildContactInboxContactFilterSQL
              → applyContactFilter → buildConditionWhere (switch per field) → Drizzle where / SQL
 ```
 
-**Filter shape** (`schemas/index.ts`):
+**Filter shape** (`schema/index.ts`):
 
 ```ts
 contactFilterCriteriaSchema = { operator: "and" | "or", conditions: ContactFilterCondition[] }
@@ -52,12 +52,12 @@ Operators + form-field types: `packages/database/src/partials/custom-field.ts`
 1. **Enum** — add the field key to `contactFilterFields` in
    `packages/database/src/partials/contact.ts`.
 2. **Definition** — add one entry to `CONTACT_FILTER_FIELD_DEFINITIONS`
-   (`schemas/definitions.ts`) with `schemaKind`
+   (`schema/definitions.ts`) with `schemaKind`
    (`boolean|text|multiSelect|select|datetime|number`) and `optionSource`
    (`none|languages|countries|continents|gender|contactSources|channels|inboxes|tags|flows`).
    This one entry auto-generates **both** the Zod condition schema and the UI config.
 3. **Operator rules — TWO places (CRITICAL, must match):**
-   - Zod validation: `STATIC_OPERATOR_RULES` in `schemas/static-field-filter.ts`
+   - Zod validation: `STATIC_OPERATOR_RULES` in `schema/static-field-filter.ts`
    - UI enablement: `staticFieldRules` in `components/static-field-filter-config.ts`
 4. **Backend SQL** — add a `case` to `buildConditionWhere`
    (`packages/database/src/queries/contact-filter.ts`). Without it the field

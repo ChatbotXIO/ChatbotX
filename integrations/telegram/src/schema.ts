@@ -128,6 +128,11 @@ export type TelegramSendPhotoRequest = {
   reply_markup?: TelegramInlineKeyboardMarkup
 }
 
+export type TelegramSendMediaGroupRequest = {
+  chat_id: number | string
+  media: Array<{ type: "photo"; media: string }>
+}
+
 export type TelegramSendDocumentRequest = {
   chat_id: number | string
   document: string

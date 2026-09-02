@@ -6,7 +6,7 @@ import { createStore } from "zustand/vanilla"
 import type { CreateWebchatMessageRequest } from "@/features/messages/schema/mutation"
 import type { ListMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
-import type { UserResource } from "@/features/users/schemas/resource"
+import type { UserResource } from "@/features/users/schema/resource"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
 import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
 import {

@@ -20,11 +20,29 @@ const sendMessageAndWaitMock = vi.hoisted(() => vi.fn(async () => undefined))
 const appendHistoryMock = vi.hoisted(() => vi.fn(async () => undefined))
 const warnMock = vi.hoisted(() => vi.fn())
 const errorMock = vi.hoisted(() => vi.fn())
+// Defaults to "acquired" so existing (non-throttle-focused) tests keep
+// enqueuing without needing to opt in explicitly.
+type DefaultReplyThrottleClaim =
+  | { result: "acquired"; claimId: string; remainingSeconds: number }
+  | { result: "denied" }
+  | { result: "bypassed" }
+const tryAcquireMock = vi.hoisted(() =>
+  vi.fn<() => Promise<DefaultReplyThrottleClaim>>(async () => ({
+    result: "acquired",
+    claimId: "claim-1",
+    remainingSeconds: 3600,
+  })),
+)
+const releaseMock = vi.hoisted(() => vi.fn(async () => undefined))
 
 vi.mock("@chatbotx.io/business", () => ({
   flowService: { findBy: findByFlowMock },
   integrationOpenaiCompatibleService: {
     findByWorkspaceIdAndId: vi.fn(),
+  },
+  defaultReplyThrottleService: {
+    tryAcquire: tryAcquireMock,
+    release: releaseMock,
   },
 }))
 
@@ -43,7 +61,7 @@ vi.mock("@chatbotx.io/events/context", () => ({
 }))
 
 vi.mock("../src/lib/logger", () => ({
-  logger: { warn: warnMock, error: errorMock, info: vi.fn() },
+  logger: { warn: warnMock, error: errorMock, info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/ai", () => ({
@@ -214,6 +232,7 @@ const baseProps = {
   messages: [] as ModelMessage[],
   fileOnlyTrigger: false,
   triggerMessageId: "msg-trigger-1",
+  defaultReplyFrequency: "allTime" as const,
 }
 
 beforeEach(() => {
@@ -224,6 +243,12 @@ beforeEach(() => {
   appendHistoryMock.mockClear()
   warnMock.mockClear()
   errorMock.mockClear()
+  tryAcquireMock.mockReset().mockResolvedValue({
+    result: "acquired",
+    claimId: "claim-1",
+    remainingSeconds: 3600,
+  })
+  releaseMock.mockReset().mockResolvedValue(undefined)
   vi.mocked(streamText).mockClear()
   vi.mocked(contactVariableService.replaceAll).mockClear()
 })
@@ -235,35 +260,40 @@ beforeEach(() => {
 describe("triggerDefaultReplyFlow", () => {
   const conversation = makeConversation()
 
-  test("returns false and does not enqueue when no flow id is configured", async () => {
+  test("returns 'skipped' and does not enqueue when no flow id is configured", async () => {
     const result = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
       defaultReplyFlowId: null,
+      defaultReplyFrequency: "allTime",
       conversation,
       contactInbox,
     })
 
-    expect(result).toBe(false)
+    expect(result).toBe("skipped")
     expect(findByFlowMock).not.toHaveBeenCalled()
     expect(integrationQueueAddMock).not.toHaveBeenCalled()
+    // No flow to gate on → the throttle window is never consumed.
+    expect(tryAcquireMock).not.toHaveBeenCalled()
   })
 
-  test("returns false when the configured flow no longer exists", async () => {
+  test("returns 'skipped' when the configured flow no longer exists", async () => {
     findByFlowMock.mockResolvedValueOnce(undefined)
 
     const result = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
       defaultReplyFlowId: "flow-missing",
+      defaultReplyFrequency: "allTime",
       conversation,
       contactInbox,
     })
 
-    expect(result).toBe(false)
+    expect(result).toBe("skipped")
     expect(integrationQueueAddMock).not.toHaveBeenCalled()
     expect(warnMock).toHaveBeenCalled()
+    expect(tryAcquireMock).not.toHaveBeenCalled()
   })
 
-  test("returns false when the configured flow is inactive", async () => {
+  test("returns 'skipped' when the configured flow is inactive", async () => {
     findByFlowMock.mockResolvedValueOnce({
       id: "flow-1",
       active: false,
@@ -273,15 +303,17 @@ describe("triggerDefaultReplyFlow", () => {
     const result = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
       defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "allTime",
       conversation,
       contactInbox,
     })
 
-    expect(result).toBe(false)
+    expect(result).toBe("skipped")
     expect(integrationQueueAddMock).not.toHaveBeenCalled()
+    expect(tryAcquireMock).not.toHaveBeenCalled()
   })
 
-  test("returns false when the configured flow has no published version", async () => {
+  test("returns 'skipped' when the configured flow has no published version", async () => {
     findByFlowMock.mockResolvedValueOnce({
       id: "flow-1",
       active: true,
@@ -291,15 +323,17 @@ describe("triggerDefaultReplyFlow", () => {
     const result = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
       defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "allTime",
       conversation,
       contactInbox,
     })
 
-    expect(result).toBe(false)
+    expect(result).toBe("skipped")
     expect(integrationQueueAddMock).not.toHaveBeenCalled()
+    expect(tryAcquireMock).not.toHaveBeenCalled()
   })
 
-  test("enqueues a sendFlow job and returns true when the flow is valid", async () => {
+  test("enqueues a sendFlow job and returns 'triggered' when the flow is valid and the throttle allows it", async () => {
     findByFlowMock.mockResolvedValueOnce({
       id: "flow-1",
       active: true,
@@ -309,11 +343,17 @@ describe("triggerDefaultReplyFlow", () => {
     const result = await triggerDefaultReplyFlow({
       workspaceId: "ws-1",
       defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "allTime",
       conversation,
       contactInbox,
     })
 
-    expect(result).toBe(true)
+    expect(result).toBe("triggered")
+    expect(tryAcquireMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInboxId: contactInbox.id,
+      frequency: "allTime",
+    })
     expect(integrationQueueAddMock).toHaveBeenCalledWith(
       "sendFlow",
       expect.objectContaining({
@@ -325,6 +365,166 @@ describe("triggerDefaultReplyFlow", () => {
         }),
       }),
     )
+  })
+
+  test("triggers on every call when frequency is 'allTime', regardless of prior calls", async () => {
+    findByFlowMock.mockResolvedValue({
+      id: "flow-1",
+      active: true,
+      currentVersionId: "v1",
+    })
+
+    const first = await triggerDefaultReplyFlow({
+      workspaceId: "ws-1",
+      defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "allTime",
+      conversation,
+      contactInbox,
+    })
+    const second = await triggerDefaultReplyFlow({
+      workspaceId: "ws-1",
+      defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "allTime",
+      conversation,
+      contactInbox,
+    })
+
+    expect(first).toBe("triggered")
+    expect(second).toBe("triggered")
+    expect(integrationQueueAddMock).toHaveBeenCalledTimes(2)
+  })
+
+  test("returns 'throttled' and does not enqueue when the throttle service denies the claim", async () => {
+    findByFlowMock.mockResolvedValueOnce({
+      id: "flow-1",
+      active: true,
+      currentVersionId: "v1",
+    })
+    tryAcquireMock.mockResolvedValueOnce({ result: "denied" })
+
+    const result = await triggerDefaultReplyFlow({
+      workspaceId: "ws-1",
+      defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "oncePerHour",
+      conversation,
+      contactInbox,
+    })
+
+    expect(result).toBe("throttled")
+    expect(integrationQueueAddMock).not.toHaveBeenCalled()
+  })
+
+  test("first call within a throttled frequency triggers, second call (denied by the throttle) does not enqueue", async () => {
+    findByFlowMock.mockResolvedValue({
+      id: "flow-1",
+      active: true,
+      currentVersionId: "v1",
+    })
+    tryAcquireMock
+      .mockResolvedValueOnce({
+        result: "acquired",
+        claimId: "claim-1",
+        remainingSeconds: 86_400,
+      })
+      .mockResolvedValueOnce({ result: "denied" })
+
+    const first = await triggerDefaultReplyFlow({
+      workspaceId: "ws-1",
+      defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "oncePerDay",
+      conversation,
+      contactInbox,
+    })
+    const second = await triggerDefaultReplyFlow({
+      workspaceId: "ws-1",
+      defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "oncePerDay",
+      conversation,
+      contactInbox,
+    })
+
+    expect(first).toBe("triggered")
+    expect(second).toBe("throttled")
+    expect(integrationQueueAddMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("releases the throttle claim and rethrows when enqueueing fails", async () => {
+    findByFlowMock.mockResolvedValueOnce({
+      id: "flow-1",
+      active: true,
+      currentVersionId: "v1",
+    })
+    const enqueueError = new Error("queue unavailable")
+    integrationQueueAddMock.mockRejectedValueOnce(enqueueError)
+
+    await expect(
+      triggerDefaultReplyFlow({
+        workspaceId: "ws-1",
+        defaultReplyFlowId: "flow-1",
+        defaultReplyFrequency: "oncePerHour",
+        conversation,
+        contactInbox,
+      }),
+    ).rejects.toThrow("queue unavailable")
+
+    expect(releaseMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInboxId: contactInbox.id,
+      frequency: "oncePerHour",
+      claimId: "claim-1",
+    })
+  })
+
+  test("does NOT release on enqueue failure when the claim was 'bypassed' (fail-open owns no claim)", async () => {
+    // If tryAcquire failed open (Postgres error → "bypassed"), no claim of
+    // ours exists — releasing would delete a window a concurrent worker may
+    // have legitimately claimed once Postgres recovered.
+    findByFlowMock.mockResolvedValueOnce({
+      id: "flow-1",
+      active: true,
+      currentVersionId: "v1",
+    })
+    tryAcquireMock.mockResolvedValueOnce({ result: "bypassed" })
+    integrationQueueAddMock.mockRejectedValueOnce(
+      new Error("queue unavailable"),
+    )
+
+    await expect(
+      triggerDefaultReplyFlow({
+        workspaceId: "ws-1",
+        defaultReplyFlowId: "flow-1",
+        defaultReplyFrequency: "oncePerHour",
+        conversation,
+        contactInbox,
+      }),
+    ).rejects.toThrow("queue unavailable")
+
+    expect(releaseMock).not.toHaveBeenCalled()
+  })
+
+  test("fails open (still triggers, no claim owned) when the throttle service reports 'bypassed' after an internal Postgres error", async () => {
+    // `defaultReplyThrottleService.tryAcquire` fails open internally (logs +
+    // resolves "bypassed") rather than rejecting — see the business-layer
+    // test suite for the direct fail-open assertion against a throwing
+    // Postgres client. Here we confirm the worker still enqueues on
+    // "bypassed".
+    findByFlowMock.mockResolvedValueOnce({
+      id: "flow-1",
+      active: true,
+      currentVersionId: "v1",
+    })
+    tryAcquireMock.mockResolvedValueOnce({ result: "bypassed" })
+
+    const result = await triggerDefaultReplyFlow({
+      workspaceId: "ws-1",
+      defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "oncePerHour",
+      conversation,
+      contactInbox,
+    })
+
+    expect(result).toBe("triggered")
+    expect(integrationQueueAddMock).toHaveBeenCalled()
   })
 })
 
@@ -401,5 +601,29 @@ describe("replyByAI — default reply flow fallback", () => {
       baseProps.conversation.id,
       expect.stringContaining("I've found some data"),
     )
+  })
+
+  test("suppresses the canned fallback text (stays silent) when the default reply flow is throttled", async () => {
+    findByFlowMock.mockResolvedValueOnce({
+      id: "flow-1",
+      active: true,
+      currentVersionId: "v1",
+    })
+    tryAcquireMock.mockResolvedValueOnce({ result: "denied" })
+
+    const result = await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent(),
+      defaultReplyFlowId: "flow-1",
+      defaultReplyFrequency: "oncePerHour",
+    })
+
+    expect(result?.usedFallbackText).toBe(true)
+    expect(result?.responded).toBe(true)
+    expect(integrationQueueAddMock).not.toHaveBeenCalled()
+    // Throttled → no flow enqueued AND no canned text either (silence within
+    // the activation window), unlike the `skipped` (no/invalid flow) case
+    // above which still sends the canned fallback text.
+    expect(sendMessageWithRenderMock).not.toHaveBeenCalled()
   })
 })

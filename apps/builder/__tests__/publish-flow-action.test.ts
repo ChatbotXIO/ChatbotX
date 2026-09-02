@@ -13,6 +13,7 @@ const {
   mockTxWhere,
   mockInvalidateList,
   mockCreateId,
+  mockAuditRecord,
 } = vi.hoisted(() => {
   const mockTxInsertValues = vi.fn().mockResolvedValue(undefined)
   const mockTxInsert = vi.fn().mockReturnValue({ values: mockTxInsertValues })
@@ -30,6 +31,7 @@ const {
     mockTxWhere,
     mockInvalidateList: vi.fn().mockResolvedValue(undefined),
     mockCreateId: vi.fn(),
+    mockAuditRecord: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -47,6 +49,10 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   notFoundException: (message: string) => new Error(message),
+}))
+
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: mockAuditRecord },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({

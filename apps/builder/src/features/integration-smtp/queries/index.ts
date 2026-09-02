@@ -4,7 +4,7 @@ import { db, findOrFail } from "@chatbotx.io/database/client"
 import { integrationSmtpModel } from "@chatbotx.io/database/schema"
 import type { IntegrationSmtpModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { IntegrationSmtpResource } from "../schemas/resource"
+import type { IntegrationSmtpResource } from "../schema/resource"
 
 export const findIntegrationSmtp = async (
   input: Partial<Pick<IntegrationSmtpModel, "id" | "workspaceId">>,
