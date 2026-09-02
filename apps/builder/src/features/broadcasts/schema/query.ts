@@ -20,7 +20,7 @@ type ParsedBroadcastsSearchParams = Awaited<
 
 export type GetBroadcastsSchema = Omit<
   ParsedBroadcastsSearchParams,
-  "view" | "month" | "status"
+  "view" | "range" | "date" | "status"
 > & {
   workspaceId: string
   status?: BroadcastFilterStatus | null

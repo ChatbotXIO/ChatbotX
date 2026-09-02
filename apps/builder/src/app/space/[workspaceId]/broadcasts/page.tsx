@@ -7,7 +7,7 @@ import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
 import { BroadcastsCalendar } from "@/features/broadcasts/components/broadcasts-calendar"
 import { BroadcastsListShell } from "@/features/broadcasts/components/broadcasts-list-shell"
 import { BROADCASTS_PANEL_COOKIE } from "@/features/broadcasts/lib/broadcast-status"
-import { resolveMonthParam } from "@/features/broadcasts/lib/calendar-grid"
+import { resolveDateParam } from "@/features/broadcasts/lib/calendar-grid"
 import { listBroadcasts } from "@/features/broadcasts/queries"
 import { listBroadcastsForCalendar } from "@/features/broadcasts/queries/list-broadcasts-for-calendar"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schema/query"
@@ -27,16 +27,21 @@ export default async function BroadcastsPage(props: {
   const filtered = Boolean(search.name || search.status)
 
   if (search.view === "calendar") {
-    const calendarMonth = resolveMonthParam(search.month)
+    const calendarDate = resolveDateParam(search.date)
     const broadcasts = await listBroadcastsForCalendar({
       workspaceId,
-      month: calendarMonth,
+      range: search.range,
+      date: calendarDate,
       status: search.status,
       name: search.name,
     })
     return (
       <BroadcastsListShell defaultPanelOpen={panelOpen}>
-        <BroadcastsCalendar broadcasts={broadcasts} month={calendarMonth} />
+        <BroadcastsCalendar
+          broadcasts={broadcasts}
+          date={calendarDate}
+          range={search.range}
+        />
       </BroadcastsListShell>
     )
   }

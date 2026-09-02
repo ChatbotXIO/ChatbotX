@@ -3,6 +3,7 @@ import {
   BROADCAST_FILTER_STATUSES,
   BROADCAST_VIEWS,
 } from "../lib/broadcast-status"
+import { CALENDAR_RANGES } from "../lib/calendar-grid"
 
 /**
  * Single source of truth for the broadcasts list URL params shared between
@@ -17,5 +18,6 @@ export const broadcastsSearchParsers = {
   name: parseAsString,
   status: parseAsStringEnum([...BROADCAST_FILTER_STATUSES]),
   view: parseAsStringEnum([...BROADCAST_VIEWS]).withDefault("table"),
-  month: parseAsString,
+  range: parseAsStringEnum([...CALENDAR_RANGES]).withDefault("month"),
+  date: parseAsString,
 }
