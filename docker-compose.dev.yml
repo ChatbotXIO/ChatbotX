@@ -1,107 +1,23 @@
-name: chatbotx
-
-include:
-  - docker-compose.yml
-
-x-service-common: &service-common
-  platform: linux/amd64
-  restart: unless-stopped
-  env_file:
-    - ./.env
-  extra_hosts:
-    - "host.docker.internal:host-gateway"
-  networks:
-    - chatbotx-network
-
-x-worker-common: &worker-common
-  <<: *service-common
-  build:
-    context: .
-    dockerfile: apps/worker/docker/Dockerfile
+# ChatbotX — override DEV (diferencias respecto al stack común)
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.apps.yml -f docker-compose.dev.yml up -d
+#
+# Este archivo solo declara lo que CAMBIA en dev respecto al stack base:
+# - seed de datos demo al arrancar
+# - log level debug
 
 services:
   builder:
-    <<: *service-common
-    # image: chatbotx-builder:latest
-    build:
-      context: .
-      dockerfile: apps/builder/docker/Dockerfile
-    ports:
-      - "3123:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      filesystem:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     environment:
       - RUN_DB_MIGRATE=true
       - RUN_DB_SEED=true
+      - LOG_LEVEL=debug
 
-  # BullMQ Worker
   worker:
-    <<: *worker-common
-    networks:
-      - chatbotx-network
-      - javascript-executor-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      filesystem:
-        condition: service_healthy
-      javascript-executor:
-        condition: service_healthy
     environment:
-      - JAVASCRIPT_EXECUTOR_URL=http://javascript-executor:3210
-
-  javascript-executor:
-    platform: linux/amd64
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: apps/javascript-executor/docker/Dockerfile
-    environment:
-      JAVASCRIPT_EXECUTOR_TOKEN: ${JAVASCRIPT_EXECUTOR_TOKEN:-change-me-in-production-at-least-32-chars}
-      MAX_CONCURRENCY: ${MAX_CONCURRENCY:-2}
-    networks:
-      - javascript-executor-network
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp:size=16m,noexec,nosuid,nodev
-    pids_limit: 128
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 512M
-          pids: 128
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3210/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - LOG_LEVEL=debug
 
   realtime:
-    <<: *service-common
-    build:
-      context: .
-      dockerfile: apps/realtime/docker/Dockerfile
-    ports:
-      - "1999:1999"
-
-networks:
-  javascript-executor-network:
-    driver: bridge
-    internal: true
+    environment:
+      - LOG_LEVEL=debug

@@ -38,12 +38,23 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "20mb",
     },
+    // Cap page-data workers at 2. Without an explicit count Next scales them off
+    // free RAM (`floor(freemem/1GB)`, min 4) — on a 14GB dev box with an IDE +
+    // Docker open that meant 11 workers × ~600MB each, and `next build` died at
+    // the final bundling phase (empty `.next/server`, no BUILD_ID). 2 workers is
+    // slower to collect page data but the build actually finishes.
+    cpus: 2,
     // Additive to Next's built-in default list, which already covers
     // lucide-react. `@chatbotx.io/ui` doesn't belong here: it's imported via
     // per-file subpaths and its root export is not a re-export barrel, so
     // there is nothing for this optimization to rewrite.
     optimizePackageImports: ["@icons-pack/react-simple-icons"],
     // turbopackServerFastRefresh: false,
+    // Dev: the persistent Turbopack filesystem cache (`.next/dev/cache/turbopack`)
+    // balloons to many GB on a long-lived dev machine and, on a 14GB-RAM box,
+    // drags the dev server into swap thrash (builds stall, page hangs). We keep
+    // the in-memory cache (fast during a session) but never persist to disk.
+    turbopackFileSystemCacheForDev: false,
     // The Docker build starts from a clean layer and `.next/cache` is not
     // persisted across CI runs, so this cache is written and never read.
     turbopackFileSystemCacheForBuild: false,

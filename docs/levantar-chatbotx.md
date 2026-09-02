@@ -89,6 +89,26 @@ pnpm --filter realtime dev     # WebSockets → http://localhost:1999
 > ⚠️ La variable de entorno va SIEMPRE al principio (antes de `nice`/`taskset`):
 > `NODE_OPTIONS="--max-old-space-size=4096" nice -n 19 taskset -c 0-3 pnpm --filter builder build`
 
+### Cache de Next.js (ya no explota la RAM)
+
+El `dev` del builder corre `node scripts/clean-next-cache.mjs` **antes** de arrancar:
+borra `.next/cache` (restos de build vieja de webpack) y `.next/dev/cache` (cache
+persistente de Turbopack), que con el tiempo crecían a **varios GB** y colgaban la
+máquina de 14GB de RAM (swap thrash → "se traba y no carga nada").
+
+Además, `apps/builder/next.config.ts` tiene `turbopackFileSystemCacheForDev: false`,
+así que el cache de dev ya **no se escribe a disco**: solo cache en memoria durante
+la sesión. No deberías volver a ver el problema.
+
+- Si tenés un `.next` gigante **viejo** (previo al fix): `rm -rf apps/builder/.next` una vez.
+- **Build que moría al final** (imprimía la tabla de rutas y no generaba `BUILD_ID`): era
+  Next abriendo **11 workers** de page-data (escala según RAM libre, mínimo 4) y el pico
+  de memoria mataba el build en una máquina de 14GB. Fijado con `experimental.cpus: 2`
+  en `next.config.ts` → 2 workers, el build termina. Más lento pero completo.
+- OJO: en `scripts/start.sh` el modo **prod** llama a `next start` directo (no al
+  script npm `start`), así que el auto-clean no corre ahí — pero `next start` **no
+  genera cache**, así que da igual. El modo `--dev` sí pasa por el script npm `dev` → hook activo.
+
 ### Matar las apps (antes de rebuild)
 
 `pkill` acepta un solo patrón por vez, por eso van separados. No matar Docker ni ngrok.

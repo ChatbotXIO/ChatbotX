@@ -1,0 +1,104 @@
+# Deploy devel — ChatbotX (adaptado de sysbrazo, sin GitHub secrets)
+#
+# Corre en push a main (después de merge de PR).
+# workflow_dispatch manual:
+#   maintenance_on  — maintenance sin deploy
+#   maintenance_off — restaura tráfico
+#
+# SIN GitHub Secrets: usa la key SSH que ya tiene el runner self-hosted
+# (~/.ssh configurado en el runner de sysbrazo) y el .env que ya existe
+# en el server (no se re-escribe desde el CI).
+
+name: Deploy Devel
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Manual maintenance action
+        type: choice
+        required: true
+        options:
+          - maintenance_on
+          - maintenance_off
+
+concurrency:
+  group: chatbotx-devel
+  cancel-in-progress: false
+
+env:
+  WORKSPACE: /var/www/chatbotx-dev   # ← path del repo en el server dev (ajustar)
+  SERVER: dev-chatbotx.fibrazo.com.co  # ← hostname/IP del server dev (ajustar)
+  SSH_USER: ubuntu                     # ← usuario SSH (ajustar)
+
+jobs:
+  maintenance_on:
+    name: Maintenance on
+    if: |
+      always() &&
+      (
+        (github.event_name == 'push') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_on')
+      )
+    runs-on: [self-hosted, sysbrazo]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable maintenance
+        run: |
+          ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SERVER} \
+            "touch ${WORKSPACE}/.maintenance"
+
+  deploy:
+    name: Deploy + smoke
+    needs: [maintenance_on]
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      needs.maintenance_on.result == 'success'
+    runs-on: [self-hosted, sysbrazo]
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy por SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SERVER} \
+            "cd ${WORKSPACE} && \
+            git pull --ff-only && \
+            docker compose -f docker-compose.yml -f docker-compose.apps.yml -f docker-compose.dev.yml up -d --build"
+
+      - name: Smoke test
+        run: |
+          sleep 15
+          curl -sf -o /dev/null -w "HTTP %{http_code}\n" \
+            http://${SERVER}:3123/api/health || echo "⚠ smoke falló — revisar logs"
+
+  maintenance_off:
+    name: Maintenance off
+    needs: [deploy]
+    if: |
+      always() &&
+      (
+        (github.event_name == 'push' && needs.deploy.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_off')
+      )
+    runs-on: [self-hosted, sysbrazo]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Disable maintenance
+        run: |
+          ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SERVER} \
+            "rm -f ${WORKSPACE}/.maintenance"
