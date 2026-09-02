@@ -17,7 +17,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteAIFileAction } from "./actions/delete-ai-file.action"
-import type { AIFileWithProcessing } from "./schemas"
+import type { AIFileWithProcessing } from "./schema"
 
 type DeleteAIFileDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   aiFile: AIFileWithProcessing

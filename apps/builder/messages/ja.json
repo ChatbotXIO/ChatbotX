@@ -148,7 +148,12 @@
     "clone": "複製",
     "remove": "削除",
     "restore": "復元",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
@@ -347,7 +352,9 @@
       "scheduled": "予約済み",
       "sent": "送信済み",
       "sending": "送信中",
-      "cancelled": "キャンセル済み"
+      "cancelled": "キャンセル済み",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "送信済み",
@@ -433,6 +440,63 @@
       "template": "テンプレート",
       "noTemplate": "テンプレートなし",
       "integration": "連携"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "システムフィールド",
       "topicCoupon": "クーポントピック",
       "customFields": "カスタムフィールド",
+      "botFields": "ボットフィールド",
       "email": "メール",
       "sms": "SMS",
       "ctwaAds": "広告"
@@ -900,7 +965,10 @@
       "append": "末尾に追加",
       "prepend": "先頭に追加",
       "increase": "次の値だけ増やす",
-      "decrease": "次の値だけ減らす"
+      "decrease": "次の値だけ減らす",
+      "groupSystemFields": "システムフィールド",
+      "groupCustomFields": "カスタムフィールド",
+      "groupAccountFields": "ボットフィールド"
     },
     "dataCollect": {
       "label": "データ収集"
@@ -1003,8 +1071,8 @@
       "aiDeleteMessageHistory": "{aiName}：メッセージ履歴を削除"
     },
     "steps": {
-      "label": "ステップ",
-      "placeholder": "ステップを選択"
+      "label": "ノード",
+      "placeholder": "ノードを選択"
     },
     "folder": {
       "label": "フォルダー"
@@ -1283,7 +1351,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "プロバイダー"
+      "label": "プロバイダー",
+      "placeholder": "プロバイダーを選択"
     },
     "prompt": {
       "label": "プロンプト",
@@ -2143,6 +2212,7 @@
       "sendFile": "ファイルを送信",
       "sendGif": "GIFを送信",
       "sendImage": "画像を送信",
+      "sendMultipleImages": "複数画像",
       "sendMessage": "メッセージを送信",
       "sendNode": "別のノードを開始",
       "sendText": "テキストを送信",
@@ -2187,9 +2257,7 @@
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
       "importJsonOnly": "JSONファイルのみ",
-      "adsConversions": "広告とMeta Conversions",
-      "trackAdsLead": "広告リードを記録",
-      "trackAdsPurchase": "広告購入を記録"
+      "adsConversions": "広告とMeta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2226,6 +2294,10 @@
       "addSlide": "スライドを追加",
       "removeSlide": "スライドを削除",
       "whatsappLinkButtonIgnored": "WhatsAppでは、このカードのリンクは機能しません。リンクボタンを含むカードには他のボタンを設定できません。代わりに返信として送信されます。"
+    },
+    "sendMultipleImages": {
+      "removeImage": "画像を削除",
+      "selectImage": "画像を選択"
     },
     "additionalSteps": "追加ステップ",
     "delayType": {
@@ -2906,6 +2978,7 @@
     "disconnectFeatureDescription": "{feature}を切断してもよろしいですか？",
     "disconnectSuccess": "{feature}を切断しました",
     "reply": "返信",
+    "privateReply": "プライベート返信",
     "viewMessage": "メッセージを表示",
     "changeLikeState": "「いいね！」の状態を変更",
     "changeHideState": "非表示状態を変更",
@@ -2948,6 +3021,9 @@
     "duplicatedSuccess": "{feature}を複製しました",
     "duplicateConfirmation": "{feature}のコピーが作成されます。",
     "deleteFeature": "{feature}を削除",
+    "resetFeature": "{feature}をリセット",
+    "resetConfirmation": "選択した{feature}の値が空にリセットされます。\nこの操作は元に戻せません。",
+    "resetSuccess": "{feature}をリセットしました",
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。",
     "addFeature": "{feature}を追加",
     "signOutConfirmation": "サインアウトしてもよろしいですか？",
@@ -2982,9 +3058,6 @@
     "enableSuccess": "{feature}を有効にしました",
     "userInactive": "ユーザーは7日以上利用していません",
     "messagingWindowClosed": "許可された時間枠外ではメッセージを送信できません",
-    "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
-    "warning": "警告！",
-    "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。",
     "humanAgentWindowExpired": "メッセージ送信可能期間が終了しました。会話を再開するには、連絡先から先にメッセージを送る必要があります。",
     "restoreVersionSuccess": "選択したバージョンにフローを復元しました",
     "revertToPublishedSuccess": "下書きを公開済みバージョンに戻しました",
@@ -3066,10 +3139,12 @@
     "selectPage": {
       "noPagesTitle": "Facebookページが見つかりません",
       "noPagesDescription": "ビジネスマネージャ内のページに接続するには、ビジネスマネージャへのアクセス権が必要です。Messengerを再接続し、要求されたすべての権限を許可してください。",
+      "noConnectablePagesTitle": "接続できるページがありません",
+      "noConnectablePagesDescription": "あなたはこのページの管理者ではありません",
       "bmLookupFailedTitle": "ビジネスマネージャのページが一部表示されていない可能性があります",
       "bmLookupFailedDescription": "Messengerを再接続し、ビジネスマネージャへのアクセスを許可すると、ビジネスマネージャで管理されているページを一覧表示できます。",
       "alreadyConnectedNote": "このページはすでに接続されています",
-      "notAdminNote": "接続するにはページの完全な管理者権限が必要です",
+      "notAdminNote": "あなたはこのページの管理者ではありません",
       "tryAgain": "再接続を試す"
     },
     "title": "Facebook Messenger",
@@ -3762,9 +3837,7 @@
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
       "transferConversationToHuman": "会話を担当者に転送",
-      "sendMetaCapiEvent": "Meta CAPI イベントを送信",
-      "trackAdsLead": "広告リードを記録",
-      "trackAdsPurchase": "広告購入を記録"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -3776,7 +3849,8 @@
     "at": "時刻"
   },
   "errorLogs": {
-    "title": "エラーログ"
+    "title": "エラーログ",
+    "unknownContact": "不明な連絡先"
   },
   "developerAccessToken": {
     "title": "APIアクセストークン",
@@ -4304,6 +4378,21 @@
     "noEligiblePages": "利用可能なページがありません。「新規追加」からリードへのアクセスを許可してください。",
     "duplicateError": "このページとフォームの自動化はすでに存在します。",
     "subscribeError": "このページをFacebookのリード通知に登録できなかったため、自動化は作成されませんでした。「新規追加」からページを再接続して、もう一度お試しください。"
+  },
+  "clickToMessageAds": {
+    "title": "Click-to-Message広告",
+    "description": "広告は、Messenger、Instagram、WhatsAppの会話にユーザーを直接誘導します。",
+    "empty": {
+      "title": "このチャネルに接続されたアカウントがありません",
+      "description": "まずチャネルアカウントを接続してから、ここに戻って広告を作成してください。",
+      "cta": "チャネル設定に移動"
+    },
+    "movedNote": {
+      "title": "広告はツールに移動しました",
+      "description": "Click-to-Message広告ツールからClick-to-Message広告を作成・管理できます。",
+      "cta": "Click-to-Message広告を開く"
+    },
+    "dashboardCta": "広告ダッシュボードで表示"
   },
   "platformSettings": {
     "title": "プラットフォーム設定",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "連携"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "WhatsApp のクリックして WhatsApp 広告、または Meta 広告リファラルの帰属があるコンタクトに対してのみコンバージョンを記録します。他のコンタクトには影響しません。"
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "全確率の合計：{value}%",
       "loseProbability": "はずれ確率：{value}%",
       "winProbability": "当選確率：{value}%",
-      "newPrize": "新しい景品"
+      "newPrize": "新しい景品",
+      "prizeNameCustomFieldLabel": "景品名をカスタムフィールドに保存"
     },
     "prizeItemDialog": {
       "prizeTitle": "景品を編集",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "タイトル",
       "loseImageDescription": "推奨サイズ 120x120px",
       "quantityLabel": "景品数量",
-      "quantityDescription": "この景品があと何回当選できるかを示します。当選するたびに1減ります。無制限にする場合は空欄のままにしてください。",
-      "sendMessage": "はずれた場合にメッセージを送信する",
-      "sendWinMessage": "景品を獲得した当選者にメッセージを送信する",
-      "messageMode": "メッセージタイプ",
-      "messageModeText": "テキスト",
-      "messageModeFlow": "フロー",
-      "messageText": "メッセージ"
+      "quantityDescription": "この景品があと何回当選できるかを示します。当選するたびに1減ります。無制限にする場合は空欄のままにしてください。"
+    },
+    "outcomeMessage": {
+      "enableWin": "景品を獲得した当選者にメッセージを送信する",
+      "enableLose": "はずれた場合にメッセージを送信する",
+      "mode": "メッセージタイプ",
+      "modeText": "テキスト",
+      "modeFlow": "フロー",
+      "text": "メッセージ"
     },
     "winningMessageDialog": {
       "title": "当選メッセージの設定",
       "titleLabel": "タイトル",
+      "prizeNameHint": "タイトルと説明で '{{prize_name}}' を使用すると、景品名を挿入できます。",
       "acceptButtonText": "承諾ボタンのテキスト",
       "shareButtonText": "シェアボタンのテキスト",
       "shareButtonDescription": "シェアボタンの説明"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "友達にシェア",
       "jackpotHeader": "ジャックポット",
       "jackpotBanner": "ジャックポット",
-      "comingSoon": "このゲームタイプの詳細プレビューは近日公開予定です",
-      "rules": "ルール"
+      "luckyWheelHeader": "ラッキーホイール",
+      "gashaponHeader": "ガシャポン",
+      "comingSoon": "このゲームタイプの詳細プレビューは近日公開予定です"
     },
     "form": {
       "generalSettingsTitle": "一般設定",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "景品設定"
     },
     "generalSettings": {
+      "showName": "表示",
       "playedAt": "プレイ日時",
       "rulesDescription": "ルールの説明",
       "openerTags": "ゲームリンクを開いた人にタグを付ける",
@@ -5494,7 +5586,8 @@
     "recent": "最近",
     "favourite": "お気に入り",
     "upload": "アップロード",
-    "done": "完了",
+    "select": "選択",
+    "bulkSelect": "一括選択",
     "deleteFolder": "フォルダを削除",
     "renameFolder": "フォルダ名を変更",
     "noFiles": "ファイルが見つかりません",
@@ -5698,5 +5791,8 @@
         "last_7d": "過去7日間"
       }
     }
+  },
+  "accountFields": {
+    "title": "ボットフィールド"
   }
 }

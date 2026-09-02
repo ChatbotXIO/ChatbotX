@@ -4,35 +4,10 @@ import {
   adsConversionRuleModel,
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
-import {
-  assertPurchaseValueMatchesContents,
-  metaCapiContentsSchema,
-  metaCapiCurrencySchema,
-  metaCapiOrderIdSchema,
-  metaCapiValueSchema,
-} from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 const nonEmptyStringArray = z.array(z.string().trim().min(1)).min(1)
-
-/**
- * Richer Purchase data (plan #4) — `orderId`/`contents` are Purchase-only;
- * a Lead event carrying either is a caller bug, rejected here rather than
- * silently dropped (Codex #4). Shared by `recordTriggerConversionInput` and
- * `recordFlowStepConversionInput` (the Trigger action / flow-step bridges
- * into `recordAdsConversion`) so the rule can't drift between the two.
- */
-function rejectPurchaseFieldsOnNonPurchase(input: {
-  eventType: string
-  orderId?: string
-  contents?: unknown[]
-}): boolean {
-  if (input.eventType === "purchase") {
-    return true
-  }
-  return !(input.orderId || input.contents)
-}
 
 export const adsConversionRuleTriggerSchema = z.discriminatedUnion("type", [
   z.object({
@@ -350,75 +325,6 @@ export const listAllChannelAdsExportRowsInput = withOrderedDateRange(
 )
 export type ListAllChannelAdsExportRowsInput = z.input<
   typeof listAllChannelAdsExportRowsInput
->
-
-/**
- * Input for `adsConversionService.recordTriggerConversion` — the Trigger
- * automation actions `trackAdsLead`/`trackAdsPurchase`
- * (apps/worker/src/trigger/services/action-executor.ts). Deliberately takes
- * a bare `contactInboxId` (not `channel`/`inboxId` the way the tagApplied/
- * keywordMatched hook points do): the service loads the contact inbox itself
- * so a non-ads-eligible-channel contact inbox is a cheap one-indexed-lookup
- * no-op without the caller having to pre-resolve the channel.
- * `value`/`currency` are STATIC config only (same as `sendMetaCapiEvent`) —
- * no custom-field variable resolution.
- */
-export const recordTriggerConversionInput = z
-  .object({
-    workspaceId: zodBigintAsString(),
-    contactInboxId: zodBigintAsString(),
-    triggerId: zodBigintAsString(),
-    eventType: adsConversionEventTypeSchema,
-    value: metaCapiValueSchema,
-    currency: metaCapiCurrencySchema,
-    orderId: metaCapiOrderIdSchema,
-    contents: metaCapiContentsSchema,
-  })
-  .refine(rejectPurchaseFieldsOnNonPurchase, {
-    message: "orderId/contents are only valid for purchase events",
-    path: ["orderId"],
-  })
-  .refine(assertPurchaseValueMatchesContents, {
-    message: "value must equal the sum of contents (quantity × item_price)",
-    path: ["value"],
-  })
-export type RecordTriggerConversionInput = z.infer<
-  typeof recordTriggerConversionInput
->
-
-/**
- * Input for `adsConversionService.recordFlowStepConversion` — the Flow steps
- * `trackAdsLead`/`trackAdsPurchase`
- * (`packages/flow-config/src/steps/track-ads-{lead,purchase}.ts`). Mirrors
- * `recordTriggerConversionInput` field-for-field except `flowNodeId` replaces
- * `triggerId` — both are normalized into the same origin-aware core
- * (`recordAdsConversion` in `./record-ads-conversion`), which namespaces the
- * dedup key by origin kind (`trigger-...` vs `flowstep-...`) so the two never
- * collide. `value`/`currency` are STATIC config only (same as
- * `sendMetaCapiEvent`/`recordTriggerConversion`) — no custom-field variable
- * resolution.
- */
-export const recordFlowStepConversionInput = z
-  .object({
-    workspaceId: zodBigintAsString(),
-    contactInboxId: zodBigintAsString(),
-    flowNodeId: zodBigintAsString(),
-    eventType: adsConversionEventTypeSchema,
-    value: metaCapiValueSchema,
-    currency: metaCapiCurrencySchema,
-    orderId: metaCapiOrderIdSchema,
-    contents: metaCapiContentsSchema,
-  })
-  .refine(rejectPurchaseFieldsOnNonPurchase, {
-    message: "orderId/contents are only valid for purchase events",
-    path: ["orderId"],
-  })
-  .refine(assertPurchaseValueMatchesContents, {
-    message: "value must equal the sum of contents (quantity × item_price)",
-    path: ["value"],
-  })
-export type RecordFlowStepConversionInput = z.infer<
-  typeof recordFlowStepConversionInput
 >
 
 export const retargetAdInput = z

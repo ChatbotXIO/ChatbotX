@@ -68,6 +68,23 @@ const baseMessagePayloadSchema = z.object({
 export const sentPayloadSchema = baseMessagePayloadSchema.extend({})
 export const failedPayloadSchema = baseMessagePayloadSchema.extend({
   errorData: z.unknown(),
+  /**
+   * Whether another `message:failed` for this same send is still to come — a
+   * BullMQ attempt still in hand, or a caller that catches and re-emits.
+   *
+   * One send can emit this event several times, so a listener that reacts only
+   * to its final outcome — `recordProviderErrorLog` — needs to know which
+   * emission ends it, or it records the failure twice or not at all. Only the
+   * emitter can tell: `errorData.isRetryable` describes the provider's error,
+   * not what the worker will do with it, and the two disagree exactly where it
+   * matters (`shouldSuppressRetryableChannelError` abandons a retryable send on
+   * its first attempt).
+   *
+   * Optional: emitters with nothing following them (a provider's async delivery
+   * status) leave it unset, and listeners fall back to the error's own
+   * retryability.
+   */
+  willRetry: z.boolean().optional(),
 })
 export const deliveredPayloadSchema = baseMessagePayloadSchema.extend({})
 export const seenPayloadSchema = baseMessagePayloadSchema.extend({})

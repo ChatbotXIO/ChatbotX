@@ -8,7 +8,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import QRCode from "react-qr-code"
 import { useClipboard } from "@/hooks/use-clipboard"
-import type { ManualOnboardingResult } from "../schemas"
+import type { ManualOnboardingResult } from "../schema"
 
 type WhatsappOnboardingResultProps = {
   result: ManualOnboardingResult

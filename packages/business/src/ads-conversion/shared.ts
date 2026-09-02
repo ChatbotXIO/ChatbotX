@@ -13,14 +13,9 @@ import {
 } from "@chatbotx.io/worker-config"
 
 /**
- * Shared plumbing used by both `service.ts` (rule-based evaluators) and
- * `record-ads-conversion.ts` (Trigger actions `trackAdsLead`/
- * `trackAdsPurchase` and Flow steps `trackAdsLead`/`trackAdsPurchase`).
- * Split into its own module so neither of those two files has to import the
- * other — `service.ts` importing `record-ads-conversion.ts` (for
- * `recordTriggerConversion`/`recordFlowStepConversion`) while
- * `record-ads-conversion.ts` imports `service.ts` (for these helpers) would
- * be a circular dependency (`pnpm check:circular`).
+ * Shared plumbing used by `service.ts` (rule-based evaluators). Kept in its
+ * own module so the helpers here stay independent of any single evaluator's
+ * imports.
  */
 
 /**
@@ -28,10 +23,8 @@ import {
  * (Phase 3): mirrors the resolver-map pattern used for CAPI sends
  * (`apps/worker/.../meta-conversions/send-meta-capi-event.ts`). Shared by
  * `enqueueTagAppliedEvaluationsForInbox`/`enqueueKeywordMatchedEvaluation`
- * (service.ts) and `recordAdsConversion` (the core behind
- * `recordTriggerConversion`/`recordFlowStepConversion`) — all resolve+enqueue
- * for a single, already-known contactInbox instead of fanning out to every
- * ad-eligible inbox the contact has.
+ * (service.ts) — resolve+enqueue for a single, already-known contactInbox
+ * instead of fanning out to every ad-eligible inbox the contact has.
  */
 export const integrationByInboxResolvers: Record<
   AdEligibleInboxChannel,
@@ -51,9 +44,8 @@ export const integrationByInboxResolvers: Record<
 /**
  * Enqueues the CAPI send job for a `pending` `AdsConversionEvent` row, keyed
  * by the deterministic `ads-conversion-send-${event.id}` jobId so re-enqueues
- * (the find-or-create recovery path in `evaluateConversionTriggerRule`,
- * `evaluateAdReferralTriggerRule`, and `recordTriggerConversion`) are
- * idempotent at the queue layer.
+ * (the find-or-create recovery path in `evaluateConversionTriggerRule` and
+ * `evaluateAdReferralTriggerRule`) are idempotent at the queue layer.
  */
 export async function enqueueSendConversionEvent(
   event: Pick<AdsConversionEventModel, "id" | "workspaceId">,
@@ -74,14 +66,12 @@ export async function enqueueSendConversionEvent(
 
 /**
  * Shared find-or-create + re-enqueue-if-still-pending control flow used by
- * every conversion-trigger insert path (rule evaluators, templateSent
- * evaluators, and the Trigger/Flow-step recorders):
- * `evaluateConversionTriggerRule`/`evaluateAdReferralTriggerRule` (service.ts)
- * and `recordWhatsappAdsConversion`/`recordAdReferralAdsConversion`
- * (record-ads-conversion.ts). Callers build the channel-specific insert
- * and lookup value objects; this helper owns only the insert →
- * enqueue-or-recover control flow so a fix to the recovery semantics (e.g.
- * the "enqueue failed after insert succeeded" gap) only has to change once.
+ * every conversion-trigger insert path (rule evaluators and templateSent
+ * evaluators): `evaluateConversionTriggerRule`/`evaluateAdReferralTriggerRule`
+ * (service.ts). Callers build the channel-specific insert and lookup value
+ * objects; this helper owns only the insert → enqueue-or-recover control flow
+ * so a fix to the recovery semantics (e.g. the "enqueue failed after insert
+ * succeeded" gap) only has to change once.
  */
 export async function insertConversionEventOrRecover(
   insertValues: Parameters<

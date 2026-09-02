@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { changePasswordRequest } from "@/features/auth/schemas/action"
+import { changePasswordRequest } from "@/features/auth/schema/action"
 
 describe("changePasswordRequest", () => {
   const base = {

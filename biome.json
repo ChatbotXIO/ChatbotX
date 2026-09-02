@@ -12,6 +12,8 @@
       "packages/**",
       "integrations/**",
       "!**/.next",
+      "!**/next-env.d.ts",
+      "!**/messages/*.d.json.ts",
       "!**/.turbo",
       "!**/packages/ui/src/components/data-table",
       "!**/packages/ui/src/components/ui",

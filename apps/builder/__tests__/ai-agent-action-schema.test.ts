@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   createAIAgentRequest,
   updateAIAgentRequest,
-} from "@/features/ai-agents/schemas/action"
+} from "@/features/ai-agents/schema/action"
 
 describe("AI agent action schemas", () => {
   test("defaults rich response on create", () => {

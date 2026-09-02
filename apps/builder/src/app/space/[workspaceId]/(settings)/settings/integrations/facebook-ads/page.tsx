@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import { AdAccountsSection } from "@/features/integration-facebook-ads/components/ad-accounts-section"
 import { FacebookAdsManage } from "@/features/integration-facebook-ads/facebook-ads-manage"
 import { needsFacebookAdsReconnect } from "@/features/integration-facebook-ads/lib/needs-reconnect"
-import { integrationFacebookAdsResource } from "@/features/integration-facebook-ads/schemas"
+import { integrationFacebookAdsResource } from "@/features/integration-facebook-ads/schema"
 
 export default async function SettingIntegrationFacebookAdsPage(props: {
   params: Promise<{ workspaceId: string }>

@@ -9,7 +9,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateDynamicImageRequest,
   updateDynamicImageRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateDynamicImageAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

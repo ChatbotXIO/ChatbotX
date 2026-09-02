@@ -21,7 +21,7 @@ import {
   getDefaultStaticFieldValue,
   getStaticFieldConditionOptions,
 } from "@/features/contact-filter/components/static-field-filter-config"
-import type { ContactFilterCondition } from "@/features/contact-filter/schemas"
+import type { ContactFilterCondition } from "@/features/contact-filter/schema"
 
 const t = (key: string) => key
 const conditionOptions = getConditionOptions(t)
@@ -79,6 +79,14 @@ const booleanCustomFieldConfig: FieldConfig = {
   customFieldType: "boolean",
   formField: formFieldTypes.enum.boolean,
   group: "customFields",
+}
+
+const numberBotFieldConfig: FieldConfig = {
+  name: "botField:bf-1",
+  botFieldId: "bf-1",
+  customFieldType: "number",
+  formField: formFieldTypes.enum.number,
+  group: "botFields",
 }
 
 const couponTopicConfig: FieldConfig = {
@@ -139,6 +147,26 @@ describe("buildConditionDraft", () => {
       field: "customField",
       customFieldId: "cf-1",
       customFieldType: "number",
+      valueType: formFieldTypes.enum.number,
+      operator: operatorTypes.enum.gt,
+      value: "10",
+    })
+  })
+
+  test("maps bot field config to dynamic botField condition shape", () => {
+    expect(
+      buildConditionDraft(
+        {
+          field: "botField:bf-1",
+          operator: operatorTypes.enum.gt,
+          value: "10",
+        },
+        numberBotFieldConfig,
+      ),
+    ).toEqual({
+      field: "botField",
+      botFieldId: "bf-1",
+      botFieldType: "number",
       valueType: formFieldTypes.enum.number,
       operator: operatorTypes.enum.gt,
       value: "10",
@@ -345,6 +373,21 @@ describe("round-trip editing", () => {
       condition,
     )
   })
+
+  test("keeps a bot field comparison unchanged", () => {
+    const condition: ContactFilterCondition = {
+      field: "botField",
+      botFieldId: "bf-1",
+      botFieldType: "number",
+      valueType: formFieldTypes.enum.number,
+      operator: operatorTypes.enum.gt,
+      value: "10",
+    }
+
+    expect(roundTripCondition(condition, numberBotFieldConfig)).toEqual(
+      condition,
+    )
+  })
 })
 
 describe("getResetDraftForField", () => {
@@ -432,6 +475,21 @@ describe("getConditionOptionsForConfig", () => {
     )
   })
 
+  test("routes bot-field configs through the SAME custom-field condition options helper (reused, not forked)", () => {
+    expect(
+      getConditionOptionsForConfig(numberBotFieldConfig, conditionOptions),
+    ).toEqual(
+      getCustomFieldConditionOptions(numberBotFieldConfig, conditionOptions),
+    )
+    // Bot field and custom field of the same underlying type produce
+    // identical operator availability.
+    expect(
+      getConditionOptionsForConfig(numberBotFieldConfig, conditionOptions),
+    ).toEqual(
+      getConditionOptionsForConfig(numberCustomFieldConfig, conditionOptions),
+    )
+  })
+
   test("returns no operator options without a selected field", () => {
     expect(getConditionOptionsForConfig(undefined, conditionOptions)).toEqual(
       [],
@@ -463,6 +521,14 @@ describe("getDefaultConditionValue", () => {
         datetimeCustomFieldConfig,
         operatorTypes.enum.isBetween,
       ),
+    )
+  })
+
+  test("routes bot-field default values through the SAME custom-field defaults helper (reused, not forked)", () => {
+    expect(
+      getDefaultConditionValue(numberBotFieldConfig, operatorTypes.enum.gt),
+    ).toEqual(
+      getDefaultCustomFieldValue(numberBotFieldConfig, operatorTypes.enum.gt),
     )
   })
 })

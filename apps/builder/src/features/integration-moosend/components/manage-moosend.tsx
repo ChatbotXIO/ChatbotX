@@ -12,7 +12,7 @@ import { DisconnectIntegrationDialog } from "@/features/common/components/discon
 import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { connectMoosendAction } from "../actions/connect.action"
 import { disconnectMoosendAction } from "../actions/disconnect.action"
-import { connectMoosendSchema } from "../schemas"
+import { connectMoosendSchema } from "../schema"
 
 export function ManageMoosend(props: {
   workspaceId: string

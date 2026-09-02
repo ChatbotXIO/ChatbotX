@@ -36,7 +36,7 @@ type TemplateBotFieldEntry = {
  */
 export const settingsAdapter: ResourceAdapter = {
   category: "settings",
-  providesKinds: [],
+  providesKinds: ["botField"],
   consumesKinds: ["folder"],
   deferredKinds: [],
 
@@ -81,6 +81,13 @@ export const settingsAdapter: ResourceAdapter = {
         },
         tx: ctx.tx,
       })
+      // `flowsAdapter` (and any other consumer) resolves `bot_field:<id>`
+      // tokens against this map — populate it here, the moment the row
+      // exists, exactly like every other `providesKinds` entry.
+      if (!ctx.idMaps.botField) {
+        ctx.idMaps.botField = new Map()
+      }
+      ctx.idMaps.botField.set(entry.sourceId, created.id)
       ctx.track({
         category: "settings",
         resourceKind: "botField",

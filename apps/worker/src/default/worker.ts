@@ -1,7 +1,6 @@
 import {
   DefaultJobAction,
   type DefaultJobData,
-  defaultQueue,
   defaultWorkerOptions,
   getRedisConnection,
   queueNames,
@@ -22,7 +21,6 @@ import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
 import { runImport } from "./handlers/run-import"
 import { sendAppointmentReminder } from "./handlers/send-appointment-reminder"
 import { sendAuditLog } from "./handlers/send-audit-log"
-import { sendErrorLog } from "./handlers/send-error-log"
 import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
 import { syncExternalCalendarEvent } from "./handlers/sync-external-calendar-event"
 import { handleSyncTag } from "./handlers/sync-tag"
@@ -61,9 +59,6 @@ async function startDefaultWorker() {
       switch (job.data.type) {
         case DefaultJobAction.sendAuditLog:
           await sendAuditLog(job.data.data)
-          return
-        case DefaultJobAction.sendErrorLog:
-          await sendErrorLog(job.data.data)
           return
         case DefaultJobAction.exportContacts: {
           const { type, data } = job.data
@@ -143,7 +138,7 @@ async function startDefaultWorker() {
         case DefaultJobAction.syncExternalCalendarEvent: {
           const { type, data } = job.data
           await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
-            syncExternalCalendarEvent(data),
+            syncExternalCalendarEvent(data, job),
           )
           return
         }
@@ -172,36 +167,17 @@ async function startDefaultWorker() {
     },
   )
 
-  worker.on("failed", async (job, err) => {
+  worker.on("failed", (job, err) => {
     if (!job) {
       return
     }
+    // Logged only. This used to write an `ErrorLog` row for every failed job,
+    // but `ErrorLog` records third-party API failures and most default-queue
+    // jobs (exportContacts, runImport, installTemplate, …) never call one. The
+    // six jobs that do call a third party log explicitly in their own handlers,
+    // where the provider is actually knowable — `syncTag` alone hits both
+    // Messenger and Zalo, which no single catch-all label could attribute.
     logger.error(err, `Job ${job.id} has failed`)
-    if (job.data.type === DefaultJobAction.sendErrorLog) {
-      return
-    }
-
-    const workspaceId =
-      "workspaceId" in job.data.data ? job.data.data.workspaceId : undefined
-    if (!workspaceId) {
-      return
-    }
-
-    try {
-      await defaultQueue.add(DefaultJobAction.sendErrorLog, {
-        type: DefaultJobAction.sendErrorLog,
-        data: {
-          workspaceId,
-          error: {
-            message: err.message,
-            stack: err.stack,
-            httpCode: "500",
-          },
-        },
-      })
-    } catch (error) {
-      logger.error(error, `Error sending error log for job ${job.id}`)
-    }
   })
 
   let isShuttingDown = false

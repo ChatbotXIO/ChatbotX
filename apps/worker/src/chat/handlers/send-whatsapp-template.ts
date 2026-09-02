@@ -41,7 +41,11 @@ import {
   validateWhatsappTemplate,
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
-import { shouldSuppressRetryableChannelError } from "../utils/retry"
+import { skipIfBroadcastNotSendable } from "../utils/broadcast-sendable-guard"
+import {
+  shouldSuppressRetryableChannelError,
+  willSendRetry,
+} from "../utils/retry"
 import { enqueueTemplateSentEvaluation } from "./enqueue-template-sent-evaluation"
 import { convertButtonsToTemplate } from "./send-flow-step"
 import { sendFlowStepToChannel } from "./send-message"
@@ -90,6 +94,12 @@ export interface ProcessWhatsappTemplateParams {
   step?: SendWaTemplateMessageStepSchema
   template: SendWaTemplateMessageStepSchema["template"]
   trackingContext?: BotResponseTrackingContext
+  /**
+   * Whether a rethrow from here produces another `message:failed` for this same
+   * send — a BullMQ attempt still in hand. Defaults to terminal: the flow-step
+   * caller swallows the rethrow and never retries.
+   */
+  willRetryOnThrow?: boolean
 }
 
 export interface ProcessWhatsappTemplateResult {
@@ -171,6 +181,7 @@ export async function processWhatsappTemplate(
     step,
     trackingContext,
     metadata,
+    willRetryOnThrow = false,
   } = params
 
   const eventLogData = {
@@ -415,6 +426,11 @@ export async function processWhatsappTemplate(
       },
       errorData,
       occurredAt: new Date(),
+      willRetry: willSendRetry({
+        error,
+        channel: contactInbox.channel,
+        willRetryOnThrow,
+      }),
     })
 
     throw error
@@ -423,6 +439,7 @@ export async function processWhatsappTemplate(
 
 export async function sendWhatsappTemplateMessage(
   data: ChatJobSendWhatsappTemplateMessage["data"],
+  willRetryOnThrow = false,
 ): Promise<ProcessWhatsappTemplateResult | undefined> {
   const {
     conversation,
@@ -432,6 +449,16 @@ export async function sendWhatsappTemplateMessage(
     contactInbox,
     metadata,
   } = data
+
+  if (
+    await skipIfBroadcastNotSendable({
+      broadcastId,
+      contactId: conversation.contactId,
+      handler: "sendWhatsappTemplateMessage",
+    })
+  ) {
+    return
+  }
 
   const eventLogData = {
     context: {
@@ -465,6 +492,11 @@ export async function sendWhatsappTemplateMessage(
         action: { messageId: "", flowId: "" },
         errorData: await parseSdkError(error),
         occurredAt: new Date(),
+        willRetry: willSendRetry({
+          error,
+          channel: contactInbox.channel,
+          willRetryOnThrow,
+        }),
       })
       throw error
     }
@@ -477,6 +509,7 @@ export async function sendWhatsappTemplateMessage(
     const result = await processWhatsappTemplate({
       conversation,
       contactInbox,
+      willRetryOnThrow,
       template: {
         id: template.id,
         name: template.name,

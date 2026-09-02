@@ -8,7 +8,7 @@ import {
 import type {
   AITriggerCollection,
   ListAITriggersRequest,
-} from "@/features/ai-triggers/schemas/query"
+} from "@/features/ai-triggers/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export const listAITriggers = async (

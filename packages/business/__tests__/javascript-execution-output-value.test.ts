@@ -90,14 +90,10 @@ describe("toValidatedCustomFieldValue", () => {
       ).toBe("false")
     })
 
-    test("rejects a non-boolean-like string", () => {
-      expect(() =>
+    test("coerces a non-boolean-like string to true (generous coercion policy)", () => {
+      expect(
         validate({ value: "garbage", type: "boolean", fieldName: "Active" }),
-      ).toThrowError(
-        expect.objectContaining<Partial<ChatbotXException>>({
-          code: "javascriptOutputTypeMismatch",
-        }),
-      )
+      ).toBe("true")
     })
   })
 

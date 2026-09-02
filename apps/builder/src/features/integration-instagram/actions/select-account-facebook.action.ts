@@ -37,7 +37,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type SelectFacebookAccountRequest,
   selectFacebookAccountRequest,
-} from "../schemas/action-facebook"
+} from "../schema/action-facebook"
 
 export const selectFacebookAccountAction = authActionClient
   .inputSchema(selectFacebookAccountRequest)

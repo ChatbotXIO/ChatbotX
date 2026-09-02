@@ -11,7 +11,6 @@ const mockQueueAdd = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/worker-config", () => ({
   DefaultJobAction: {
     exportContacts: "exportContacts",
-    sendErrorLog: "sendErrorLog",
     sendAuditLog: "sendAuditLog",
     syncTag: "syncTag",
     syncChannelLabels: "syncChannelLabels",

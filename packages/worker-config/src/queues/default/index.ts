@@ -31,7 +31,6 @@ export const DefaultJobAction = {
   exportCoupons: "exportCoupons",
   bulkTagContacts: "bulkTagContacts",
   runImport: "runImport",
-  sendErrorLog: "sendErrorLog",
   sendAuditLog: "sendAuditLog",
   syncTag: "syncTag",
   syncChannelLabels: "syncChannelLabels",
@@ -127,18 +126,6 @@ export type JobRunImport = {
     importId: string
     ipAddress?: string
     userAgent?: string
-  }
-}
-
-export type JobSendErrorLog = {
-  type: typeof DefaultJobAction.sendErrorLog
-  data: {
-    workspaceId: string
-    error: {
-      message: string
-      stack?: string
-      httpCode: string
-    }
   }
 }
 
@@ -273,7 +260,6 @@ export type DefaultJobData =
   | JobExportCoupons
   | JobBulkTagContacts
   | JobRunImport
-  | JobSendErrorLog
   | JobSendAuditLog
   | JobSyncTag
   | JobSyncChannelLabels

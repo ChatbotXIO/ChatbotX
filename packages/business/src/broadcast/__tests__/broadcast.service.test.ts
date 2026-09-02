@@ -35,6 +35,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     workspaceId: "Broadcast.workspaceId",
     channel: "Broadcast.channel",
     createdAt: "Broadcast.createdAt",
+    deletedAt: "Broadcast.deletedAt",
   },
   contactInboxModel: {
     id: "ContactInbox.id",
@@ -147,6 +148,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: (left: unknown, right: unknown) => ({ __inArray: [left, right] }),
   isNull: (value: unknown) => ({ __isNull: value }),
   isNotNull: (value: unknown) => ({ __isNotNull: value }),
+  ne: (left: unknown, right: unknown) => ({ __ne: [left, right] }),
 }))
 
 vi.mock("@chatbotx.io/database/queries", () => ({
@@ -222,6 +224,7 @@ describe("broadcastService.listOptions", () => {
       __and: [
         { __eq: ["Broadcast.workspaceId", "ws-1"] },
         { __eq: ["Broadcast.channel", "whatsapp"] },
+        { __isNull: "Broadcast.deletedAt" },
       ],
     })
     expect(mocks.selectOrderBy).toHaveBeenCalledWith({

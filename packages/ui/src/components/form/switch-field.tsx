@@ -36,7 +36,7 @@ export function SwitchField<T extends FieldValues>(props: SwitchFieldProps<T>) {
     >
       {(field) => (
         <Switch
-          checked={field.value}
+          checked={field.value ?? false}
           onCheckedChange={field.onChange}
           {...rest}
           {...field}

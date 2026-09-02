@@ -33,7 +33,7 @@ import {
 } from "react"
 import { toast } from "sonner"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
-import type { UpdateDraftFlowVersionSchema } from "../schemas/action"
+import type { UpdateDraftFlowVersionSchema } from "../schema/action"
 import {
   createDeleteNode,
   type DeleteSaveResult,

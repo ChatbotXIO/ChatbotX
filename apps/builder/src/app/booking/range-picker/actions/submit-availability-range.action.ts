@@ -13,7 +13,7 @@ import { normalizeError } from "universal-error-normalizer"
 import {
   type SubmitAvailabilityRangeInput,
   submitAvailabilityRangeRequestSchema,
-} from "@/features/booking-webview/schemas/availability-range-action"
+} from "@/features/booking-webview/schema/availability-range-action"
 import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
 

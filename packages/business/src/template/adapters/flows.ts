@@ -5,18 +5,23 @@ import type {
   FlowExportedFlow,
   TemplateFlowEntry,
 } from "@chatbotx.io/flow-config"
-import { remapFlowGraphReferences } from "@chatbotx.io/flow-config"
+import {
+  collectFieldReferences,
+  remapFlowGraphReferences,
+} from "@chatbotx.io/flow-config"
 import { flowService } from "../../flow"
 import { flowVersionService } from "../../flow-version"
 import type {
   PatchTask,
   ResourceAdapter,
   ResourceCollector,
+  TemplateHardDependency,
   TemplateInstallContext,
 } from "./types"
 
 const FLOW_INSERT_KINDS = [
   "customField",
+  "botField",
   "sequence",
   "aiAgent",
   "integration",
@@ -209,11 +214,36 @@ export const flowsAdapter: ResourceAdapter = {
         flow.folderId ? [flow.folderId] : [],
       )
 
+      // A flow may reference an Account Field (`bot_field:<id>` token) that
+      // was never explicitly selected for this template — same save-time
+      // "hard dependency" rule `entryPointLinks` uses for its NOT NULL
+      // `flowId`, just for a nullable/jsonb soft reference instead of a FK.
+      // `botField` rows are provided by the `settings` category (see
+      // `settingsAdapter.providesKinds`), so every referenced source id is
+      // reported there — `buildTemplateSnapshot` folds this into
+      // `idsByCategory.settings` and re-collects it before the payload is
+      // assembled, resolving the reference by construction instead of
+      // installing with a silently dropped/warned token.
+      const botFieldSourceIds = new Set<string>()
+      for (const rawEntry of entries) {
+        const entry = rawEntry as unknown as TemplateFlowEntry
+        const { botFieldIds } = collectFieldReferences({
+          nodes: entry.nodes,
+          edges: entry.edges,
+        })
+        for (const sourceId of botFieldIds) {
+          botFieldSourceIds.add(sourceId)
+        }
+      }
+      const hardDependencies: TemplateHardDependency[] = [
+        ...botFieldSourceIds,
+      ].map((sourceId) => ({ category: "settings", sourceId }))
+
       return {
         entries,
         folderIds,
         productCategoryIds: [],
-        hardDependencies: [],
+        hardDependencies,
       }
     },
   } satisfies ResourceCollector,

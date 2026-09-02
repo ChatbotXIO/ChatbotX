@@ -97,6 +97,13 @@ export function requiresSpecialAdCategoryCountry(
  * bidding — which requires NO `bid_amount` (docs: `bid_amount` is required only
  * for `*_BID_CAP`/`COST_CAP` strategies). This is the ONE place to change the
  * default if the desired optimization ever changes.
+ *
+ * NOTE (v23.0 enforcement, observed live): ad set CREATE additionally requires
+ * an explicit `targeting.targeting_automation.advantage_audience` (0|1) or
+ * Meta rejects with code 100 "Advantage Audience Flag Required" — even for
+ * countries-only targeting. The flag is set in `mapTargeting`
+ * (`@chatbotx.io/business` messaging-ads mappers), typed required on
+ * `MessagingAdTargeting`.
  */
 export const MESSAGING_AD_SET_OPTIMIZATION_GOAL = "CONVERSATIONS" as const
 export const MESSAGING_AD_SET_BILLING_EVENT = "IMPRESSIONS" as const

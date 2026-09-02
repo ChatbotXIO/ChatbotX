@@ -21,8 +21,8 @@ import { toast } from "sonner"
 import { CustomFieldSelect } from "../custom-fields/custom-field-select"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateReflinkAction } from "./actions/update-reflink.action"
-import { updateReflinkRequest } from "./schemas/action"
-import type { ReflinkResource } from "./schemas/resource"
+import { updateReflinkRequest } from "./schema/action"
+import type { ReflinkResource } from "./schema/resource"
 
 type UpdateReflinkFormProps = {
   workspaceId: string

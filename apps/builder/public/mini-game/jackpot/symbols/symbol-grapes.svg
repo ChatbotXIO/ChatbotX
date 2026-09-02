@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <radialGradient id="grapeG" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#e879f9"/>
+      <stop offset="40%" stop-color="#c026d3"/>
+      <stop offset="80%" stop-color="#86198f"/>
+      <stop offset="100%" stop-color="#4a044e"/>
+    </radialGradient>
+    <filter id="shGrapes"><feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.45"/></filter>
+  </defs>
+  <g filter="url(#shGrapes)">
+    <!-- Vine & Leaf -->
+    <path d="M 50,15 Q 50,28 42,32" stroke="#15803d" stroke-width="3" fill="none"/>
+    <path d="M 50,18 Q 68,14 74,24 Q 64,30 50,18 Z" fill="#22c55e" stroke="#15803d" stroke-width="1"/>
+    <!-- Grapes Layer 1 (Top) -->
+    <circle cx="34" cy="38" r="11" fill="url(#grapeG)"/>
+    <circle cx="50" cy="36" r="11" fill="url(#grapeG)"/>
+    <circle cx="66" cy="38" r="11" fill="url(#grapeG)"/>
+    <!-- Grapes Layer 2 (Mid) -->
+    <circle cx="28" cy="54" r="11" fill="url(#grapeG)"/>
+    <circle cx="44" cy="52" r="11" fill="url(#grapeG)"/>
+    <circle cx="60" cy="52" r="11" fill="url(#grapeG)"/>
+    <circle cx="72" cy="54" r="11" fill="url(#grapeG)"/>
+    <!-- Grapes Layer 3 (Low) -->
+    <circle cx="38" cy="68" r="10" fill="url(#grapeG)"/>
+    <circle cx="54" cy="68" r="10" fill="url(#grapeG)"/>
+    <circle cx="66" cy="68" r="10" fill="url(#grapeG)"/>
+    <!-- Bottom Grape -->
+    <circle cx="50" cy="82" r="9" fill="url(#grapeG)"/>
+  </g>
+</svg>

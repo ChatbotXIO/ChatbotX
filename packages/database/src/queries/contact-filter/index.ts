@@ -16,6 +16,7 @@ import {
   questionnaireSubmissionModel,
 } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
+import { buildBotFieldWhere } from "./bot-field-predicates"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import {
@@ -103,9 +104,17 @@ const CTWA_RETARGET_CHANNELS: ReadonlySet<string> = new Set(
   adsEligibleChannelTypes.options,
 )
 
+/**
+ * `workspaceId` is optional for backward compat but should always be passed
+ * when available — without it, a criteria whose only condition is `botField`
+ * (workspace-scoped, requires `workspaceId` to build its EXISTS predicate)
+ * would be reported as "no predicate" even though `buildContactWhere` /
+ * `applyContactFilter` (which DO receive `workspaceId`) resolve a real one.
+ */
 export const contactFilterHasPredicate = (
   criteria: FilterCriteriaInput,
-): boolean => hasWhereParts(applyContactFilter(criteria))
+  workspaceId?: string,
+): boolean => hasWhereParts(applyContactFilter(criteria, workspaceId))
 
 type ContactFilterContext = {
   timezone: string
@@ -353,7 +362,7 @@ export const buildContactInboxContactFilterSQL = ({
     return sql`TRUE`
   }
 
-  if (!contactFilterHasPredicate(contactFilter)) {
+  if (!contactFilterHasPredicate(contactFilter, workspaceId)) {
     return sql`FALSE`
   }
 
@@ -613,6 +622,13 @@ function buildConditionWhere(
 
     case "customField":
       return buildCustomFieldWhere({ ...condition, timezone })
+
+    case "botField":
+      return buildBotFieldWhere({
+        ...condition,
+        timezone,
+        workspaceId: context.workspaceId,
+      })
 
     case "archived":
       return buildExistsBooleanWhere(

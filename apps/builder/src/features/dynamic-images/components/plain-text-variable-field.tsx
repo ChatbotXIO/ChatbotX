@@ -42,6 +42,7 @@ export function DynamicImageVariableTextField(
   return (
     <FormProvider {...form}>
       <PlainTextEditorField
+        includeBotFieldVariables
         includeRawCustomFieldVariables
         label={label}
         name="text"

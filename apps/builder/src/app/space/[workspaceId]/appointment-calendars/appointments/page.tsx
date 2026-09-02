@@ -9,7 +9,7 @@ import { listAppointments } from "@/features/appointment-management/queries"
 import {
   listAppointmentsSearchParamsCache,
   normalizeAppointmentManagementTab,
-} from "@/features/appointment-management/schemas/query"
+} from "@/features/appointment-management/schema/query"
 
 export default async function AppointmentsPage({
   params,

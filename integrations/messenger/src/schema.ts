@@ -84,18 +84,25 @@ export type MessengerActions<
   >
 }
 
-// Common attachment types — includes all types Facebook may send in a webhook
-const attachmentTypeSchema = z.enum([
-  "image",
-  "video",
-  "audio",
-  "file",
-  "template",
-  "sticker",
-  "location",
-  "share",
-  "fallback",
-])
+// Common attachment types — includes all types Facebook may send in a webhook.
+// `.catch("fallback")` is defense-in-depth: if Meta ships a type we haven't
+// enumerated yet, only this one field falls back to "fallback" instead of
+// failing validation for the entire webhook payload (which, after batching
+// multiple entries/messaging events per POST, could contain several unrelated
+// messages) and silently dropping every message in that batch.
+const attachmentTypeSchema = z
+  .enum([
+    "image",
+    "video",
+    "audio",
+    "file",
+    "template",
+    "sticker",
+    "location",
+    "share",
+    "fallback",
+  ])
+  .catch("fallback")
 
 // Base attachment payload — url optional because template attachments have no url
 const baseAttachmentPayloadSchema = z.object({
@@ -125,6 +132,9 @@ export const messengerMessageSchema = z.object({
   mid: z.string(),
   text: z.string().optional(),
   is_echo: z.boolean().optional(),
+  // Set (with no other message fields besides `mid`) when the sender unsends
+  // a previously-sent DM.
+  is_deleted: z.boolean().optional(),
   attachments: z.array(messengerAttachmentSchema).optional(),
   metadata: z.string().optional(),
   quick_reply: z
@@ -174,6 +184,16 @@ export const messengerPostbackSchema = z.object({
   referral: messengerReferralSchema.optional(),
 })
 
+// Sent when a contact reacts (or removes a reaction) to a message we sent
+// them or they sent us. `mid` identifies the reacted-to message.
+export const messengerReactionSchema = z.object({
+  mid: z.string(),
+  action: z.enum(["react", "unreact"]),
+  reaction: z.string().optional(),
+  emoji: z.string().optional(),
+})
+export type MessengerReaction = z.infer<typeof messengerReactionSchema>
+
 export const messengerMessagingEventSchema = z.object({
   sender: idSchema,
   recipient: idSchema,
@@ -183,6 +203,7 @@ export const messengerMessagingEventSchema = z.object({
   read: messengerReadSchema.optional(),
   postback: messengerPostbackSchema.optional(),
   referral: messengerReferralSchema.optional(),
+  reaction: messengerReactionSchema.optional(),
 })
 export type MessengerMessagingEvent = z.infer<
   typeof messengerMessagingEventSchema
@@ -353,6 +374,9 @@ const facebookMessageTemplateSchema = z.object({
 export const facebookMessageSchema = z.object({
   text: z.string().optional(),
   attachment: facebookMessageAttachmentSchema.optional(),
+  // Multiple-attachments form (Send API "sending_multiple_attachments") — one
+  // message carrying several bare image attachments, no template/buttons.
+  attachments: z.array(facebookMessageAttachmentSchema).max(10).optional(),
   template: facebookMessageTemplateSchema.optional(),
   quick_replies: z.array(facebookQuickReplySchema).max(13).optional(),
   metadata: z.string().optional(),

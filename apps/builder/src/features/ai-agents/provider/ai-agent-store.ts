@@ -1,6 +1,6 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ListAIAgentsResponse } from "@/features/ai-agents/schemas/query"
+import type { ListAIAgentsResponse } from "@/features/ai-agents/schema/query"
 import { maxPerPageString } from "@/lib/shared-request"
 
 export type AIAgentState = {

@@ -1,4 +1,8 @@
 import { buildContext } from "@chatbotx.io/business"
+import {
+  logProviderError,
+  logProviderErrorForChannel,
+} from "@chatbotx.io/business/error-log"
 import { and, db, eq, inArray, isNotNull } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -86,6 +90,14 @@ async function syncTagCreate(props: {
         { integrationId: integration.id, tagId, error },
         "syncTag(create): messenger label create failed",
       )
+      // `messenger` because this is the Messenger pass. The Zalo pass below
+      // makes no API call, so it has nothing to attribute — this is exactly
+      // the per-loop attribution the removed catch-all could not express.
+      await logProviderError({
+        provider: "messenger",
+        workspaceId,
+        error,
+      })
     }
   }
 
@@ -408,6 +420,11 @@ async function syncTagDetach(props: {
         { row, error },
         "syncTag(detach): skip per-row unassign error",
       )
+      await logProviderErrorForChannel(row.channelType, {
+        workspaceId,
+        contactId,
+        error,
+      })
     }
     // Delete the local mapping regardless of sync state / API outcome.
     await db
@@ -526,6 +543,10 @@ async function deleteTagOnChannel(props: {
         { tagId, channel, error },
         "syncTag(delete): skip per-channel API error",
       )
+      await logProviderErrorForChannel(channel.channelType, {
+        workspaceId,
+        error,
+      })
     }
   }
 

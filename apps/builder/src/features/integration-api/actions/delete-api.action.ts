@@ -6,7 +6,7 @@ import { integration as integrationApi } from "@chatbotx.io/integration-api"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { findIntegrationApiByWorkspaceAndId } from "@/features/integration-api/queries"
 import { logger } from "@/lib/log"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"

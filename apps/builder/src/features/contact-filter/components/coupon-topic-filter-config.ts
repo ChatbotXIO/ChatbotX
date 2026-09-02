@@ -2,7 +2,7 @@ import {
   type OperatorType,
   operatorTypes,
 } from "@chatbotx.io/database/partials"
-import { COUPON_TOPIC_OPERATORS } from "../schemas/coupon-topic-filter"
+import { COUPON_TOPIC_OPERATORS } from "../schema/coupon-topic-filter"
 import type { ConditionOption, FieldConfig } from "./contact-filter-config"
 import type { CustomFieldValueInputConfig } from "./custom-field-filter-config"
 

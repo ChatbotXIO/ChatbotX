@@ -1,7 +1,7 @@
 import type { AIAgentProviderModels } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import { buildOpenaiCompatibleAgentModels } from "@/features/ai-agents/openai-compatible-models"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 
 function createIntegration(
   overrides: Partial<IntegrationOpenaiCompatibleResource> = {},

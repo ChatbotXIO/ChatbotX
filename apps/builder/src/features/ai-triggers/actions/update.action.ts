@@ -6,7 +6,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   type UpdateAITriggerRequest,
   updateAITriggerRequest,
-} from "@/features/ai-triggers/schemas/action"
+} from "@/features/ai-triggers/schema/action"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const updateAITriggerAction = workspaceActionClient

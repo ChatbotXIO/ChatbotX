@@ -21,6 +21,18 @@ export const conditionFilterConditionSchema = z.object({
    * date conditions are silently mis-evaluated.
    */
   customFieldType: z.string().optional(),
+  /**
+   * Runtime bot field (account field) id for dynamic bot-field filter rows —
+   * workspace-scoped, mirrors `customFieldId` for the `customField` branch.
+   */
+  botFieldId: zodBigintAsString().optional(),
+  /**
+   * Precise bot-field type (`date` | `datetime` | ...), mirroring
+   * `customFieldType`. Kept alongside `valueType` so the runtime filter
+   * compares a date field by wall clock rather than the zone-aware datetime
+   * path.
+   */
+  botFieldType: z.string().optional(),
   valueType: z.string().optional(),
 })
 

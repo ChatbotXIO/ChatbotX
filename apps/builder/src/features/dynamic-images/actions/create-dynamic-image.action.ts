@@ -7,12 +7,12 @@ import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateDynamicImageRequest,
   createDynamicImageRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const createDynamicImageAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

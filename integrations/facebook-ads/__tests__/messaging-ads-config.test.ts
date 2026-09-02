@@ -69,6 +69,7 @@ describe("special ad category enforcement", () => {
     expect(isRestrictedSpecialAdCategory(["NONE"])).toBe(false)
     const targeting = {
       geo_locations: { countries: ["US"] },
+      targeting_automation: { advantage_audience: 0 as const },
       age_min: 21,
       age_max: 45,
       genders: [1] as MessagingAdGender[],
@@ -86,12 +87,18 @@ describe("special ad category enforcement", () => {
     expect(isRestrictedSpecialAdCategory([category])).toBe(true)
     const targeting = {
       geo_locations: { countries: ["US"] },
+      targeting_automation: { advantage_audience: 0 as const },
       age_min: 21,
       age_max: 45,
       genders: [1, 2] as MessagingAdGender[],
     }
     const result = enforceSpecialAdCategoryTargeting(targeting, [category])
-    expect(result).toEqual({ geo_locations: { countries: ["US"] } })
+    // The stripped result must keep the advantage_audience flag — dropping it
+    // would reintroduce Meta's code-100 rejection for special-category ads.
+    expect(result).toEqual({
+      geo_locations: { countries: ["US"] },
+      targeting_automation: { advantage_audience: 0 },
+    })
     expect(result).not.toHaveProperty("age_min")
     expect(result).not.toHaveProperty("age_max")
     expect(result).not.toHaveProperty("genders")

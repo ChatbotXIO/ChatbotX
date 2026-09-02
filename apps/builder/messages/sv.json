@@ -152,7 +152,12 @@
     "view": "Visa",
     "viewAnalytics": "Visa analys",
     "wait": "Vänta",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "Du måste vara superadministratör för arbetsytan för att göra detta."
@@ -548,7 +553,9 @@
       "cancelled": "Avbrutet",
       "scheduled": "Schemalagt",
       "sending": "Skickar",
-      "sent": "Skickat"
+      "sent": "Skickat",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "telegramAllContacts": {
       "description": "Använd den här meddelandetypen om du vill skicka ett utskick till dina Telegram-kontakter.",
@@ -566,6 +573,63 @@
     "whatsappWithin24Hours": {
       "description": "Kan innehålla kampanjer och skickas endast till användare som har skickat meddelanden till din bot under de senaste 24 timmarna.",
       "title": "Aktiva kontakter inom 24 timmar"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "channels": {
@@ -645,6 +709,7 @@
       "analytics": "Analys",
       "broadcastWhatsapp": "Utskick (WhatsApp)",
       "customFields": "Anpassade fält",
+      "botFields": "Botfält",
       "ecommerce": "E-handel",
       "email": "E-post",
       "facebookInstagramComment": "Facebook-/Instagram-kommentar",
@@ -971,7 +1036,8 @@
     "title": "E-postämnen"
   },
   "errorLogs": {
-    "title": "Felloggar"
+    "title": "Felloggar",
+    "unknownContact": "Okänd kontakt"
   },
   "extensionsMe": {
     "actions": {
@@ -1334,6 +1400,21 @@
     "title": "Automatisering av Facebook-leadannonser",
     "whatFlow": "Vilket flöde utlöses"
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-annonser",
+    "description": "Annonser skickar personer direkt till en konversation på Messenger, Instagram eller WhatsApp.",
+    "empty": {
+      "title": "Inget konto anslutet för den här kanalen",
+      "description": "Anslut ett kanalkonto först och kom sedan tillbaka hit för att skapa annonser.",
+      "cta": "Gå till kanalinställningar"
+    },
+    "movedNote": {
+      "title": "Annonser har flyttats till Verktyg",
+      "description": "Skapa och hantera Click-to-Message-annonser från verktyget Click-to-Message-annonser.",
+      "cta": "Öppna Click-to-Message-annonser"
+    },
+    "dashboardCta": "Visa i annonspanelen"
+  },
   "fields": {
     "accessToken": {
       "label": "Åtkomsttoken"
@@ -1578,7 +1659,10 @@
       "label": "Anpassat fält",
       "prepend": "Lägg till i början",
       "savePayloadTo": "Spara svar i anpassat fält",
-      "set_value": "Ange värde"
+      "set_value": "Ange värde",
+      "groupSystemFields": "Systemfält",
+      "groupCustomFields": "Anpassade fält",
+      "groupAccountFields": "Botfält"
     },
     "customFields": {
       "label": "Anpassade fält"
@@ -2284,7 +2368,8 @@
       "placeholder": "Ange prompt"
     },
     "provider": {
-      "label": "Leverantör"
+      "label": "Leverantör",
+      "placeholder": "Välj leverantör"
     },
     "publishableKey": {
       "label": "Publicerbar nyckel"
@@ -2464,8 +2549,8 @@
       "label": "Statuskod"
     },
     "steps": {
-      "label": "Steg",
-      "placeholder": "Välj steg"
+      "label": "Nod",
+      "placeholder": "Välj nod"
     },
     "subject": {
       "label": "Ämne"
@@ -2845,6 +2930,7 @@
       "sendGif": "Skicka GIF",
       "sendGridAddContact": "Lägg till kontakt i SendGrid",
       "sendImage": "Skicka bild",
+      "sendMultipleImages": "Flera bilder",
       "sendMessage": "Skicka meddelande",
       "sendNode": "Starta en annan nod",
       "sendTemplateMessage": "Mallmeddelande",
@@ -2887,14 +2973,16 @@
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
       "importJsonOnly": "Endast JSON-filer",
-      "adsConversions": "Annonser och Meta Conversions",
-      "trackAdsLead": "Spåra annonslead",
-      "trackAdsPurchase": "Spåra annonsköp"
+      "adsConversions": "Annonser och Meta Conversions"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
       "removeSlide": "Ta bort kort",
       "whatsappLinkButtonIgnored": "På WhatsApp fungerar inte det här kortets länk: ett kort med en länkknapp kan inte ha andra knappar. Det skickas som ett svar istället."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Ta bort bild",
+      "selectImage": "Välj bilder"
     },
     "additionalSteps": "Ytterligare steg",
     "aiAnalyzeImage": {
@@ -3452,6 +3540,9 @@
     "deleteConfirmation": "Är du helt säker?\nDen här åtgärden kan inte ångras.\nDetta tar permanent bort {feature} från våra servrar.",
     "deleteFailed": "Det gick inte att ta bort {feature}",
     "deleteFeature": "Ta bort {feature}",
+    "resetFeature": "Återställ {feature}",
+    "resetConfirmation": "Detta rensar värdena för de valda {feature}.\nDenna åtgärd kan inte ångras.",
+    "resetSuccess": "{feature} återställdes",
     "deleteFileComingSoon": "Funktionen för att ta bort filer kommer snart",
     "deleteMessageSuccess": "Meddelandet har tagits bort",
     "deleteNodeError": "Det gick inte att ta bort blocket. Försök igen.",
@@ -3485,7 +3576,6 @@
     "whatsappCarouselButtonsMismatch": "På WhatsApp måste ett karusellkort ha samma knappar på varje kort: antingen en enda länkknapp på varje kort, eller samma antal svarsknappar på varje kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan ett karusellkort med en länkknapp inte ha några andra knappar. Ta bort de andra knapparna på det kortet, eller ändra länkknappen till en annan åtgärd.",
     "historyDepth": "({count})",
-    "humanAgentWarningDescription": "Du får endast svara på en användares meddelande inom 7 dagar när problemet rimligen inte kan lösas inom 24 timmar. Exempel är helger, högtider eller ärenden som kräver mer än en dag. Använd inte detta alternativ av någon annan anledning, eftersom det kan utsätta din Facebook-sida eller ditt Instagram-konto för risk. Fortsätt inte om du är osäker.",
     "humanAgentWindowExpired": "Meddelandeperioden har löpt ut. Kontakten måste skicka ett meddelande först för att öppna konversationen igen.",
     "leaveEmptyToKeepSecret": "Lämna tomt för att behålla den nuvarande hemligheten",
     "loadingData": "Läser in data...",
@@ -3511,6 +3601,7 @@
     "noVersionsFound": "Inga publicerade versioner hittades",
     "poweredBy": "Drivs av {name}",
     "publishVersionSuccess": "En ny version har publicerats",
+    "privateReply": "Privat svar",
     "redoHistoryCleared": "Historiken för Gör om har rensats",
     "refreshTokenSuccessfully": "Token för {feature} har uppdaterats",
     "repliedToStory": "Svarade på din story",
@@ -3528,7 +3619,6 @@
     "selectConversationContactTitle": "Ingen kontakt vald",
     "selectConversationDescription": "Välj en konversation i listan till vänster för att visa meddelanden och börja chatta.",
     "selectConversationTitle": "Välj en konversation",
-    "sendHumanAgentTag": "Skicka ett meddelande med taggen HUMAN_AGENT",
     "sentAttachments": "Skickade {count, plural, one {1 bilaga} other {# bilagor}}",
     "signOutConfirmation": "Är du säker på att du vill logga ut?",
     "success": "Lyckades",
@@ -3541,7 +3631,6 @@
     "videoError": "Videofel",
     "viewMessage": "Visa meddelande",
     "viewPost": "Visa inlägg",
-    "warning": "Varning!",
     "none": "Ingen",
     "tiktokCardTitleTooLong": "TikTok kommer att korta ner det här meddelandet: med knappar kopplade skickas bara de första 40 tecknen. Korta ner meddelandet eller ta bort knapparna.",
     "waTemplateMpmNoProducts": "Lägg till minst en produkt i den här flerproduktsknappen innan publicering.",
@@ -3610,9 +3699,11 @@
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
       "bmLookupFailedDescription": "Återanslut Messenger och bevilja åtkomst till Business Manager så att sidor som hanteras där kan visas.",
       "bmLookupFailedTitle": "Business Manager-sidor kan saknas",
+      "noConnectablePagesDescription": "Du är inte administratör för den här sidan",
+      "noConnectablePagesTitle": "Inga sidor tillgängliga att ansluta",
       "noPagesDescription": "Sidor i Business Manager kräver åtkomst till Business Manager under anslutningen. Återanslut Messenger och bevilja alla begärda behörigheter.",
       "noPagesTitle": "Inga Facebook-sidor hittades",
-      "notAdminNote": "Fullständig administratörsbehörighet på sidan krävs för att ansluta",
+      "notAdminNote": "Du är inte administratör för den här sidan",
       "tryAgain": "Försök återansluta"
     },
     "tabs": {
@@ -4503,9 +4594,7 @@
       "setCustomField": "Ange anpassat fält",
       "startAnotherFlow": "Starta ett annat flöde",
       "transferConversationToHuman": "Överför konversationen till en människa",
-      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse",
-      "trackAdsLead": "Spåra annonslead",
-      "trackAdsPurchase": "Spåra annonsköp"
+      "sendMetaCapiEvent": "Skicka Meta CAPI-händelse"
     },
     "after": "Efter",
     "at": "Kl.",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Anslut"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Registrerar bara en konvertering för kontakter med attribuering från en klicka-till-WhatsApp-annons eller Meta-annonshänvisning. Har ingen effekt för andra kontakter."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Summan av alla sannolikheter: {value}%",
       "loseProbability": "Förlustsannolikhet: {value}%",
       "winProbability": "Vinstsannolikhet: {value}%",
-      "newPrize": "Nytt pris"
+      "newPrize": "Nytt pris",
+      "prizeNameCustomFieldLabel": "Spara prisnamn i Anpassat fält"
     },
     "prizeItemDialog": {
       "prizeTitle": "Redigera pris",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Rekommenderad storlek 120x120px",
       "quantityLabel": "Antal vinster",
-      "quantityDescription": "Antal gånger detta pris fortfarande kan vinnas; minskar med 1 för varje vinst. Lämna tomt för obegränsat.",
-      "sendMessage": "Skicka ett meddelande när spelaren inte vinner",
-      "sendWinMessage": "Skicka meddelande till vinnaren som fick priset",
-      "messageMode": "Meddelandetyp",
-      "messageModeText": "Text",
-      "messageModeFlow": "Flöde",
-      "messageText": "Meddelande"
+      "quantityDescription": "Antal gånger detta pris fortfarande kan vinnas; minskar med 1 för varje vinst. Lämna tomt för obegränsat."
+    },
+    "outcomeMessage": {
+      "enableWin": "Skicka meddelande till vinnaren som fick priset",
+      "enableLose": "Skicka ett meddelande när spelaren inte vinner",
+      "mode": "Meddelandetyp",
+      "modeText": "Text",
+      "modeFlow": "Flöde",
+      "text": "Meddelande"
     },
     "winningMessageDialog": {
       "title": "Inställningar för vinstmeddelande",
       "titleLabel": "Titel",
+      "prizeNameHint": "Du kan använda '{{prize_name}}' i titeln och beskrivningen för att infoga prisnamnet.",
       "acceptButtonText": "Text för Acceptera-knapp",
       "shareButtonText": "Text för Dela-knapp",
       "shareButtonDescription": "Beskrivning för Dela-knapp"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Dela med vänner",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Detaljerad förhandsvisning kommer snart för den här speltypen",
-      "rules": "Regler"
+      "luckyWheelHeader": "LYCKOHJUL",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Detaljerad förhandsvisning kommer snart för den här speltypen"
     },
     "form": {
       "generalSettingsTitle": "Allmänna inställningar",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Prisinställningar"
     },
     "generalSettings": {
+      "showName": "Synlig",
       "playedAt": "Spelad",
       "rulesDescription": "Regelbeskrivning",
       "openerTags": "Tagga kontakter som öppnar spellänken",
@@ -5494,7 +5586,8 @@
     "recent": "Senaste",
     "favourite": "Favorit",
     "upload": "Ladda upp",
-    "done": "Klar",
+    "select": "Välj",
+    "bulkSelect": "Massmarkering",
     "deleteFolder": "Ta bort mapp",
     "renameFolder": "Byt namn på mapp",
     "noFiles": "Inga filer hittades",
@@ -5698,5 +5791,8 @@
         "last_7d": "Senaste 7 dagarna"
       }
     }
+  },
+  "accountFields": {
+    "title": "Botfält"
   }
 }

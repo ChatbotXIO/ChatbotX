@@ -148,7 +148,12 @@
     "clone": "استنساخ",
     "remove": "إزالة",
     "restore": "استعادة",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "يجب أن تكون مسؤولًا فائقًا لمساحة العمل للقيام بذلك."
@@ -347,7 +352,9 @@
       "scheduled": "مجدول",
       "sent": "مُرسَل",
       "sending": "قيد الإرسال",
-      "cancelled": "ملغى"
+      "cancelled": "ملغى",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "مُرسَل",
@@ -433,6 +440,63 @@
       "template": "القالب",
       "noTemplate": "لا يوجد قالب",
       "integration": "التكامل"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "حقول النظام",
       "topicCoupon": "موضوع الكوبون",
       "customFields": "الحقول المخصصة",
+      "botFields": "حقول البوت",
       "email": "البريد الإلكتروني",
       "sms": "الرسائل النصية",
       "ctwaAds": "الإعلانات"
@@ -974,7 +1039,10 @@
       "append": "إضافة في النهاية",
       "prepend": "إضافة إلى البداية",
       "increase": "زيادة بمقدار",
-      "decrease": "خفض بمقدار"
+      "decrease": "خفض بمقدار",
+      "groupSystemFields": "حقول النظام",
+      "groupCustomFields": "الحقول المخصصة",
+      "groupAccountFields": "حقول البوت"
     },
     "dataCollect": {
       "label": "جمع البيانات"
@@ -1077,8 +1145,8 @@
       "aiDeleteMessageHistory": "{aiName}: حذف سجل الرسائل"
     },
     "steps": {
-      "label": "الخطوات",
-      "placeholder": "اختر خطوة"
+      "label": "عقدة",
+      "placeholder": "اختر عقدة"
     },
     "folder": {
       "label": "المجلد"
@@ -1357,7 +1425,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "المزوّد"
+      "label": "المزوّد",
+      "placeholder": "اختر المزوّد"
     },
     "prompt": {
       "label": "الموجّه",
@@ -2217,6 +2286,7 @@
       "sendFile": "إرسال ملف",
       "sendGif": "إرسال صورة متحركة",
       "sendImage": "إرسال صورة",
+      "sendMultipleImages": "عدة صور",
       "sendMessage": "إرسال رسالة",
       "sendNode": "بدء عقدة أخرى",
       "sendText": "إرسال نص",
@@ -2261,9 +2331,7 @@
       "export": "تصدير",
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
       "importJsonOnly": "ملفات JSON فقط",
-      "adsConversions": "الإعلانات وتحويلات Meta",
-      "trackAdsLead": "تتبع عميل محتمل من الإعلانات",
-      "trackAdsPurchase": "تتبع عملية شراء من الإعلانات"
+      "adsConversions": "الإعلانات وتحويلات Meta"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2300,6 +2368,10 @@
       "addSlide": "إضافة بطاقة",
       "removeSlide": "إزالة البطاقة",
       "whatsappLinkButtonIgnored": "في واتساب، لن يعمل رابط هذه البطاقة: لا يمكن أن تحتوي البطاقة التي تتضمن زر رابط على أزرار أخرى. سيتم إرسال الزر كزر رد بدلًا من ذلك."
+    },
+    "sendMultipleImages": {
+      "removeImage": "إزالة صورة",
+      "selectImage": "اختيار الصور"
     },
     "additionalSteps": "خطوات إضافية",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "هل أنت متأكد من رغبتك في قطع اتصال {feature}؟",
     "disconnectSuccess": "تم قطع اتصال {feature} بنجاح",
     "reply": "رد",
+    "privateReply": "رد خاص",
     "viewMessage": "عرض الرسالة",
     "changeLikeState": "تغيير حالة الإعجاب",
     "changeHideState": "تغيير حالة الإخفاء",
@@ -2969,6 +3042,9 @@
     "duplicatedSuccess": "تم تكرار {feature} بنجاح",
     "duplicateConfirmation": "سيؤدي هذا إلى إنشاء نسخة من {feature}.",
     "deleteFeature": "حذف {feature}",
+    "resetFeature": "إعادة تعيين {feature}",
+    "resetConfirmation": "سيؤدي هذا إلى مسح قيم {feature} المحددة وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
+    "resetSuccess": "تمت إعادة تعيين {feature} بنجاح",
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا.",
     "addFeature": "إضافة {feature}",
     "signOutConfirmation": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "تم تفعيل {feature} بنجاح",
     "userInactive": "لم يكن المستخدم نشطًا منذ أكثر من 7 أيام",
     "messagingWindowClosed": "لا يمكن إرسال الرسالة خارج النافذة الزمنية المسموح بها",
-    "sendHumanAgentTag": "إرسال رسالة واحدة باستخدام وسم HUMAN_AGENT",
-    "warning": "تحذير!",
-    "humanAgentWarningDescription": "لا يجوز لك الرد على رسالة المستخدم خلال 7 أيام إلا عندما يتعذر حل المشكلة بشكل معقول خلال 24 ساعة. تشمل الأمثلة عطلات نهاية الأسبوع والعطلات الرسمية والحالات التي تتطلب أكثر من يوم لإكمالها. لا تستخدم هذا الخيار لأي سبب آخر، فقد يعرّض صفحة Facebook أو حساب Instagram الخاص بك للخطر. إذا لم تكن متأكدًا، فلا تتابع.",
     "humanAgentWindowExpired": "انتهت نافذة المراسلة. يجب أن ترسل جهة الاتصال رسالة أولًا لإعادة فتح المحادثة.",
     "restoreVersionSuccess": "تمت استعادة المسار إلى الإصدار المحدد",
     "revertToPublishedSuccess": "تمت إعادة المسودة إلى الإصدار المنشور",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "لم يتم العثور على صفحات Facebook",
       "noPagesDescription": "تتطلب الصفحات الموجودة داخل مدير الأعمال منح صلاحية الوصول إليه أثناء الاتصال. أعد ربط Messenger وامنح جميع الأذونات المطلوبة.",
+      "noConnectablePagesTitle": "لا توجد صفحات متاحة للربط",
+      "noConnectablePagesDescription": "أنت لست مسؤولاً عن هذه الصفحة",
       "bmLookupFailedTitle": "قد تكون بعض صفحات مدير الأعمال غير ظاهرة",
       "bmLookupFailedDescription": "أعد ربط Messenger وامنح صلاحية الوصول إلى مدير الأعمال حتى يمكن عرض الصفحات المُدارة من خلاله.",
       "alreadyConnectedNote": "هذه الصفحة مرتبطة بالفعل",
-      "notAdminNote": "يلزم امتلاك صلاحية مسؤول كاملة على الصفحة للربط",
+      "notAdminNote": "أنت لست مسؤولاً عن هذه الصفحة",
       "tryAgain": "محاولة إعادة الاتصال"
     },
     "title": "Facebook Messenger",
@@ -3783,9 +3858,7 @@
       "startAnotherFlow": "بدء مسار آخر",
       "notifyAdmins": "إشعار المسؤولين",
       "transferConversationToHuman": "نقل المحادثة إلى موظف",
-      "sendMetaCapiEvent": "إرسال حدث Meta CAPI",
-      "trackAdsLead": "تتبع عميل محتمل من الإعلانات",
-      "trackAdsPurchase": "تتبع عملية شراء من الإعلانات"
+      "sendMetaCapiEvent": "إرسال حدث Meta CAPI"
     },
     "triggerGoesOff": "يتم تشغيل المشغّل",
     "before": "قبل",
@@ -3797,7 +3870,8 @@
     "at": "عند"
   },
   "errorLogs": {
-    "title": "سجلات الأخطاء"
+    "title": "سجلات الأخطاء",
+    "unknownContact": "جهة اتصال غير معروفة"
   },
   "developerAccessToken": {
     "title": "رمز الوصول إلى ChatbotX API",
@@ -4160,6 +4234,21 @@
     "noEligiblePages": "لا توجد صفحات مؤهلة. استخدم «إضافة جديد» لمنح صلاحية الوصول إلى العملاء المحتملين.",
     "duplicateError": "توجد أتمتة بالفعل لهذه الصفحة وهذا النموذج.",
     "subscribeError": "تعذّر الاشتراك في إشعارات العملاء المحتملين من Facebook لهذه الصفحة، لذلك لم يتم إنشاء الأتمتة. أعد ربط الصفحة باستخدام «إضافة جديد» ثم حاول مرة أخرى."
+  },
+  "clickToMessageAds": {
+    "title": "إعلانات Click-to-Message",
+    "description": "ترسل الإعلانات الأشخاص مباشرة إلى محادثة على Messenger أو Instagram أو WhatsApp.",
+    "empty": {
+      "title": "لا يوجد حساب متصل بهذه القناة",
+      "description": "قم بتوصيل حساب القناة أولاً، ثم عد إلى هنا لإنشاء الإعلانات.",
+      "cta": "الانتقال إلى إعدادات القناة"
+    },
+    "movedNote": {
+      "title": "انتقلت الإعلانات إلى الأدوات",
+      "description": "أنشئ وأدر إعلانات Click-to-Message من أداة إعلانات Click-to-Message.",
+      "cta": "فتح إعلانات Click-to-Message"
+    },
+    "dashboardCta": "عرض على لوحة معلومات الإعلانات"
   },
   "ecommerce": {
     "title": "التجارة الإلكترونية",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "ربط"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "يسجّل التحويل فقط للمخاطبين الذين لديهم إسناد من إعلان WhatsApp للنقر للمحادثة أو إحالة إعلان من Meta. لا يوجد تأثير على المخاطبين الآخرين."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "مجموع جميع الاحتمالات: {value}%",
       "loseProbability": "احتمال الخسارة: {value}%",
       "winProbability": "احتمال الفوز: {value}%",
-      "newPrize": "جائزة جديدة"
+      "newPrize": "جائزة جديدة",
+      "prizeNameCustomFieldLabel": "حفظ اسم الجائزة في الحقل المخصص"
     },
     "prizeItemDialog": {
       "prizeTitle": "تعديل الجائزة",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "العنوان",
       "loseImageDescription": "الحجم الموصى به 120×120 بكسل",
       "quantityLabel": "كمية الجائزة",
-      "quantityDescription": "عدد المرات المتبقية التي يمكن فيها الفوز بهذه الجائزة؛ ينقص بمقدار 1 مع كل فوز. اتركه فارغًا لعدد غير محدود.",
-      "sendMessage": "إرسال رسالة عند عدم فوز اللاعب",
-      "sendWinMessage": "إرسال رسالة إلى الفائز الذي حصل على الجائزة",
-      "messageMode": "نوع الرسالة",
-      "messageModeText": "نص",
-      "messageModeFlow": "تدفق",
-      "messageText": "نص الرسالة"
+      "quantityDescription": "عدد المرات المتبقية التي يمكن فيها الفوز بهذه الجائزة؛ ينقص بمقدار 1 مع كل فوز. اتركه فارغًا لعدد غير محدود."
+    },
+    "outcomeMessage": {
+      "enableWin": "إرسال رسالة إلى الفائز الذي حصل على الجائزة",
+      "enableLose": "إرسال رسالة عند عدم فوز اللاعب",
+      "mode": "نوع الرسالة",
+      "modeText": "نص",
+      "modeFlow": "تدفق",
+      "text": "نص الرسالة"
     },
     "winningMessageDialog": {
       "title": "إعدادات رسالة الفوز",
       "titleLabel": "العنوان",
+      "prizeNameHint": "يمكنك استخدام '{{prize_name}}' في العنوان والوصف لإدراج اسم الجائزة.",
       "acceptButtonText": "نص زر القبول",
       "shareButtonText": "نص زر المشاركة",
       "shareButtonDescription": "وصف زر المشاركة"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "مشاركة مع الأصدقاء",
       "jackpotHeader": "جاكبوت",
       "jackpotBanner": "جاكبوت",
-      "comingSoon": "المعاينة التفصيلية لهذا النوع من الألعاب قريبًا",
-      "rules": "القواعد"
+      "luckyWheelHeader": "عجلة الحظ",
+      "gashaponHeader": "جاشابون",
+      "comingSoon": "المعاينة التفصيلية لهذا النوع من الألعاب قريبًا"
     },
     "form": {
       "generalSettingsTitle": "الإعدادات العامة",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "إعدادات الجوائز"
     },
     "generalSettings": {
+      "showName": "مرئي",
       "playedAt": "وقت اللعب",
       "rulesDescription": "وصف القواعد",
       "openerTags": "وسم جهات الاتصال التي تفتح رابط اللعبة",
@@ -5494,7 +5586,8 @@
     "recent": "الأحدث",
     "favourite": "المفضلة",
     "upload": "رفع",
-    "done": "تم",
+    "select": "تحديد",
+    "bulkSelect": "تحديد متعدد",
     "deleteFolder": "حذف المجلد",
     "renameFolder": "إعادة تسمية المجلد",
     "noFiles": "لا توجد ملفات",
@@ -5698,5 +5791,8 @@
         "last_7d": "آخر 7 أيام"
       }
     }
+  },
+  "accountFields": {
+    "title": "حقول البوت"
   }
 }

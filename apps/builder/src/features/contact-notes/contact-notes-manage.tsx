@@ -7,12 +7,12 @@ import { useEffect, useState } from "react"
 import { z } from "zod"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import type { ContactResource } from "../contacts/schemas/resource"
+import type { ContactResource } from "../contacts/schema/resource"
 import { AddContactForm } from "./add-contact-note-form"
 import { ContactNoteList } from "./contact-notes-list"
 import { DeleteContactNoteDialog } from "./delete-contact-note-dialog"
 import { EditContactForm } from "./edit-contact-note-form"
-import type { ContactNoteResource } from "./schemas/resource"
+import type { ContactNoteResource } from "./schema/resource"
 
 const contactNoteModes = z.enum(["list", "add", "edit", "delete"])
 type ContactNoteMode = z.infer<typeof contactNoteModes>

@@ -11,7 +11,7 @@ import { BaseEventBus } from "../event-bus"
 const MAX_MESSAGE_EVENTS = 100_000
 
 export const flowEventBus = new BaseEventBus<FlowEventMap, FlowEventListener>(
-  getRedisConnection(),
+  () => getRedisConnection(),
   {
     streamKey: "flow:events",
     consumerGroup: "flow-events-group",

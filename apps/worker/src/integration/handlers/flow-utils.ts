@@ -61,6 +61,7 @@ export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
 export const MESSAGE_PRODUCING_STEP_TYPES = new Set<StepType>([
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
+  stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendGif,
   stepTypes.enum.sendFile,
   stepTypes.enum.sendVideo,

@@ -3,7 +3,7 @@ import { selectRegisteredPersonas } from "@chatbotx.io/integration-messenger"
 import type {
   ListMessengerPersonasRequest,
   ListMessengerPersonasResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 /**
  * List the workspace's Messenger personas for the "Set Persona" picker.

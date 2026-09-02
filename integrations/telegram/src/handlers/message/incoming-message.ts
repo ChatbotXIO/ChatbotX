@@ -131,6 +131,7 @@ const getMessageAttachments = async (
         ctx,
         largestPhoto.file_id,
         "image/jpeg",
+        { width: largestPhoto.width, height: largestPhoto.height },
       )
       if (attachment) {
         attachments.push(attachment)
@@ -189,6 +190,7 @@ const downloadAndUploadFile = async (
   ctx: Context<TelegramAuthValue>,
   fileId: string,
   mimeType: string,
+  dimensions?: { width: number; height: number },
 ): Promise<IncomingAttachment | null> => {
   try {
     const fileUrl = await getTelegramFileUrl(ctx.auth, fileId)
@@ -198,7 +200,9 @@ const downloadAndUploadFile = async (
 
     const response = await fetch(fileUrl)
     if (!(response.ok && response.body)) {
-      return null
+      throw new TelegramException(
+        `Failed to download attachment (status ${response.status} ${response.statusText}): ${fileUrl}`,
+      )
     }
 
     const bytes = await response.arrayBuffer()
@@ -215,10 +219,14 @@ const downloadAndUploadFile = async (
       fileType: guessFileTypeFromMimeType(mimeType),
       mimeType,
       size: bytes.byteLength,
+      ...dimensions,
     }
   } catch (error) {
-    logger.error(error, "downloadAndUploadFile error")
-    return null
+    logger.error(
+      { err: error, fileId, mimeType },
+      "downloadAndUploadFile error",
+    )
+    throw error
   }
 }
 

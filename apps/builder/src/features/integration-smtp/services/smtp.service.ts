@@ -13,7 +13,7 @@ import { smtpHostMap } from "@chatbotx.io/integration-smtp"
 import { createSmtpTransporter } from "@chatbotx.io/mail/transport"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
-import type { CreateSmtpRequest, UpdateSmtpRequest } from "../schemas/mutation"
+import type { CreateSmtpRequest, UpdateSmtpRequest } from "../schema/mutation"
 
 export async function verifySmtpConnection(input: CreateSmtpRequest) {
   const t = await getTranslations()

@@ -1,4 +1,5 @@
 import { coexistService } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type {
   InboxModel,
   IntegrationInstagramModel,
@@ -442,6 +443,11 @@ const runInstagramCoexistPull = async <
       err instanceof Error ? err.message : "Unknown Instagram sync error",
     )
     logger.error({ err }, "[coexist] Instagram sync encountered fatal error")
+    await logProviderError({
+      provider: "instagram",
+      workspaceId,
+      error: err,
+    })
   }
 }
 

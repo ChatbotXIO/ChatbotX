@@ -2,27 +2,22 @@
 
 import type { MessagingAdChannel } from "@chatbotx.io/database/partials"
 import type { UserModel, WorkspaceModel } from "@chatbotx.io/database/types"
-import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
+import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { buildMessagingAdsToolPath } from "../lib/tool-path"
 import { buildMessagingAdsConnectRedirect } from "./connect-redirect"
 import { connectMessagingAdsRequest } from "./schema"
 
-const CHANNEL_ROUTE_SEGMENT: Record<MessagingAdChannel, string> = {
-  whatsapp: "whatsapps",
-  messenger: "messengers",
-  instagram: "instagrams",
-}
-
-function refererPathFor(
-  channel: MessagingAdChannel,
-  workspaceId: string,
-  integrationId: string,
-): string {
-  return `/space/${workspaceId}/${CHANNEL_ROUTE_SEGMENT[channel]}/${integrationId}/ads`
-}
-
-/** `bindArgsParsedInputs`: `[workspaceId, integrationId]` — `channel` is a regular action input since it isn't part of the URL the box lives on. */
+/**
+ * `bindArgsParsedInputs`: `[workspaceId, integrationId]` — `channel` stays a
+ * regular action input even though the Click to Message Ads tool page now
+ * encodes it in the URL (`buildMessagingAdsToolPath`), because the bound
+ * args are fixed to `[workspaceId, integrationId]` and can't grow a third
+ * positional value. The referer built below targets that same tool page +
+ * channel + integration, so Meta's OAuth round-trip lands the user back on
+ * the exact tab and integration they clicked Connect from.
+ */
 export const connectMessagingAdsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .inputSchema(connectMessagingAdsRequest)
@@ -45,11 +40,11 @@ export const connectMessagingAdsAction = workspaceActionClient
         workspace: ctx.workspace,
         channel: parsedInput.channel,
         integrationId,
-        refererPath: refererPathFor(
-          parsedInput.channel,
+        refererPath: buildMessagingAdsToolPath({
           workspaceId,
+          channel: parsedInput.channel,
           integrationId,
-        ),
+        }),
       })
     },
   )

@@ -1,9 +1,9 @@
 import { systemFunctionCatalog } from "@chatbotx.io/ai"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ListAIFilesResponse } from "@/features/ai-files/schemas"
-import type { ListAIFunctionsResponse } from "@/features/ai-functions/schemas"
-import type { ListAIMcpServersResponse } from "@/features/ai-mcp-servers/schemas"
+import type { ListAIFilesResponse } from "@/features/ai-files/schema"
+import type { ListAIFunctionsResponse } from "@/features/ai-functions/schema"
+import type { ListAIMcpServersResponse } from "@/features/ai-mcp-servers/schema"
 
 type AIToolsState = {
   loadingAIFiles: boolean

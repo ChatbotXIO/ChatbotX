@@ -19,8 +19,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { renameQuestionnaireAction } from "../actions/rename-questionnaire.action"
-import { renameQuestionnaireRequest } from "../schemas/action"
-import type { QuestionnaireListItem } from "../schemas/resource"
+import { renameQuestionnaireRequest } from "../schema/action"
+import type { QuestionnaireListItem } from "../schema/resource"
 
 type Props = {
   workspaceId: string

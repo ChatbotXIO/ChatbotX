@@ -13,6 +13,7 @@ import {
   sendImageStepDefaultFn,
   sendMessageNodeDefaultFn,
   sendMessageNodeSchema,
+  sendMultipleImagesStepDefaultFn,
   sendQuickReplyStepDefaultFn,
   sendTextStepDefaultFn,
   sendVideoStepDefaultFn,
@@ -70,6 +71,7 @@ describe("sendMessage quick replies", () => {
       url: "https://example.com/anim.gif",
     }
     const carouselStep = sendCarouselStepDefaultFn()
+    const multipleImagesStep = sendMultipleImagesStepDefaultFn()
 
     expect(isQuickReplyCarrierStep("telegram", textStep)).toBe(true)
     expect(isQuickReplyCarrierStep("telegram", imageStep)).toBe(true)
@@ -77,6 +79,10 @@ describe("sendMessage quick replies", () => {
     expect(isQuickReplyCarrierStep("telegram", audioStep)).toBe(true)
     expect(isQuickReplyCarrierStep("telegram", fileStep)).toBe(true)
     expect(isQuickReplyCarrierStep("telegram", gifStep)).toBe(true)
+    // Telegram's sendMediaGroup has no reply_markup/buttons support, unlike
+    // Instagram/Messenger's attachments[] — so it must NOT be picked as a
+    // carrier here (choosing it would silently drop the quick replies).
+    expect(isQuickReplyCarrierStep("telegram", multipleImagesStep)).toBe(false)
 
     expect(isQuickReplyCarrierStep("whatsapp", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("whatsapp", carouselStep)).toBe(true)
@@ -86,6 +92,8 @@ describe("sendMessage quick replies", () => {
     expect(isQuickReplyCarrierStep("tiktok", imageStep)).toBe(false)
     expect(isQuickReplyCarrierStep("messenger", textStep)).toBe(true)
     expect(isQuickReplyCarrierStep("messenger", textWithButtonsStep)).toBe(true)
+    expect(isQuickReplyCarrierStep("messenger", multipleImagesStep)).toBe(true)
+    expect(isQuickReplyCarrierStep("instagram", multipleImagesStep)).toBe(true)
   })
 
   test("enforces quick reply label and count limits", () => {

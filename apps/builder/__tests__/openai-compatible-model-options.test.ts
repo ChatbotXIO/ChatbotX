@@ -4,7 +4,7 @@ import {
   buildOpenaiCompatibleModelOptions,
   shouldUseCustomOpenaiCompatibleModelInput,
 } from "@/features/integration-openai-compatible/model-options"
-import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schemas/resource"
+import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 
 function createIntegration(
   overrides: Partial<IntegrationOpenaiCompatibleResource> = {},

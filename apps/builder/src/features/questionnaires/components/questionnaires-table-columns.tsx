@@ -26,7 +26,7 @@ import {
 import Link from "next/link"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
-import type { QuestionnaireListItem } from "../schemas/resource"
+import type { QuestionnaireListItem } from "../schema/resource"
 
 type Props = {
   t: ReturnType<typeof useTranslations>

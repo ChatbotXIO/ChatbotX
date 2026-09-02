@@ -1,3 +1,4 @@
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   and,
   db,
@@ -1269,6 +1270,11 @@ export const coexistWhatsappFlush = async (
     finalError =
       error instanceof Error ? error.message : "Unknown error during flush"
     logger.error(error, "[coexist] WhatsApp flush encountered fatal error")
+    await logProviderError({
+      provider: "whatsapp",
+      workspaceId: integration.workspaceId,
+      error,
+    })
   } finally {
     if (finalStatus !== null) {
       await db

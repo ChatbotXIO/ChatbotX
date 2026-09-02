@@ -21,6 +21,8 @@ const {
   mockRecordSendFailure,
   mockDbSet,
   mockEnqueueIntegrationJob,
+  mockFindSendableBroadcast,
+  mockResetContactForResume,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -84,6 +86,8 @@ const {
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
     mockEnqueueIntegrationJob: vi.fn().mockResolvedValue(undefined),
+    mockFindSendableBroadcast: vi.fn().mockResolvedValue({ id: "broadcast-1" }),
+    mockResetContactForResume: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -133,6 +137,10 @@ vi.mock("@chatbotx.io/business", () => ({
     recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     recordSendFailure: mockRecordSendFailure,
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
+  },
+  broadcastService: {
+    findSendableBroadcast: mockFindSendableBroadcast,
+    resetContactForResume: mockResetContactForResume,
   },
 }))
 
@@ -531,6 +539,56 @@ describe("processWhatsappTemplate", () => {
         }),
       }),
     )
+  })
+})
+
+describe("sendWhatsappTemplateMessage — stop/resume guard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindSendableBroadcast.mockResolvedValue({ id: "broadcast-1" })
+    mockResetContactForResume.mockResolvedValue(undefined)
+    mockValidateTemplate.mockResolvedValue({
+      inbox: { integrationWhatsapp: { id: "iw-1" } },
+      template: {
+        id: "tmpl-wa-1",
+        name: "wa-template",
+        language: "en",
+        components: [],
+      },
+    })
+    mockReplaceVariables.mockResolvedValue([])
+    mockContactVariables.mockResolvedValue([])
+    mockSendFlowStep.mockResolvedValue({ messageIds: ["provider-wa-1"] })
+    mockEmit.mockResolvedValue(undefined)
+  })
+
+  test("checks findSendableBroadcast before doing anything else", async () => {
+    await sendWhatsappTemplateMessage(broadcastTemplateJobData)
+
+    expect(mockFindSendableBroadcast).toHaveBeenCalledWith("broadcast-1")
+  })
+
+  test("skips the send and resets the recipient when the broadcast is no longer sendable", async () => {
+    mockFindSendableBroadcast.mockResolvedValue(null)
+
+    const result = await sendWhatsappTemplateMessage(broadcastTemplateJobData)
+
+    expect(result).toBeUndefined()
+    expect(mockValidateTemplate).not.toHaveBeenCalled()
+    expect(mockSendFlowStep).not.toHaveBeenCalled()
+    expect(mockResetContactForResume).toHaveBeenCalledWith({
+      broadcastId: "broadcast-1",
+      contactKey: { contactId: "contact-1" },
+    })
+  })
+
+  test("proceeds with the send when the broadcast is still sendable", async () => {
+    mockFindSendableBroadcast.mockResolvedValue({ id: "broadcast-1" })
+
+    await sendWhatsappTemplateMessage(broadcastTemplateJobData)
+
+    expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
+    expect(mockResetContactForResume).not.toHaveBeenCalled()
   })
 })
 

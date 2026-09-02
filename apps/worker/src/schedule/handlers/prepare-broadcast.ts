@@ -1,5 +1,5 @@
 import { broadcastService, conversationService } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
+import { and, db, eq, isNull } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
   broadcastStatuses,
@@ -7,6 +7,7 @@ import {
   channelTypes,
 } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
+import { purgeBroadcastRecipients } from "@chatbotx.io/database/repositories"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
@@ -19,11 +20,18 @@ import {
 import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
 
+// Purge tuning for the stale-recipient cleanup at the start of a prepare run.
+// Normally 0 rows (nothing to clean up), so a generous budget is cheap.
+const PREPARE_PURGE_CHUNK_SIZE = 1000
+const PREPARE_PURGE_INTER_CHUNK_DELAY_MS = 50
+const PREPARE_PURGE_MAX_RUN_DURATION_MS = 60_000
+
 export const prepareBroadcast = async (broadcastId: string) => {
   const broadcast = await db.query.broadcastModel.findFirst({
     where: {
       id: broadcastId,
       status: "scheduled",
+      deletedAt: { isNull: true },
     },
   })
 
@@ -35,6 +43,23 @@ export const prepareBroadcast = async (broadcastId: string) => {
   if (await isBlockedWorkspace(broadcast.workspaceId)) {
     return
   }
+
+  // A prior prepare run may have left stale `ContactOnBroadcast` rows behind
+  // (e.g. a moveToDraft → re-schedule race). Clearing them before rebuilding
+  // the audience stops a later re-schedule from leaking old recipients.
+  // Normally a no-op — 0 rows removed.
+  await purgeBroadcastRecipients({
+    broadcastId,
+    chunkSize: PREPARE_PURGE_CHUNK_SIZE,
+    interChunkDelayMs: PREPARE_PURGE_INTER_CHUNK_DELAY_MS,
+    maxRunDurationMs: PREPARE_PURGE_MAX_RUN_DURATION_MS,
+  })
+
+  // The dispatch epoch read at the start of this run. `moveToDraft` bumps
+  // `resumeCount`, so pinning the promotion UPDATE below to this value
+  // defeats a stale prepare (running behind a moveToDraft → re-schedule
+  // round-trip) from wrongly promoting the NEW schedule's row.
+  const promotionEpoch = broadcast.resumeCount
 
   const parsedChannel = channelTypes.safeParse(broadcast.channel)
   const parsedSubaction = broadcastSubactions.safeParse(broadcast.subaction)
@@ -137,10 +162,30 @@ export const prepareBroadcast = async (broadcastId: string) => {
     ? broadcastStatuses.enum.sending
     : broadcastStatuses.enum.sent
 
-  await db
+  const [promoted] = await db
     .update(broadcastModel)
     .set({ status: broadcastStatus, contactCount })
-    .where(eq(broadcastModel.id, broadcastId))
+    .where(
+      and(
+        eq(broadcastModel.id, broadcastId),
+        eq(broadcastModel.status, broadcastStatuses.enum.scheduled),
+        isNull(broadcastModel.deletedAt),
+        eq(broadcastModel.resumeCount, promotionEpoch),
+      ),
+    )
+    .returning({ id: broadcastModel.id })
+
+  if (!promoted) {
+    // Lost the promotion race — a moveToDraft (or delete) bumped the epoch
+    // or moved the row off `scheduled` since this run started. The audience
+    // rows this run just inserted belong to a stale schedule; the next
+    // prepare (or the cleanup at the top of this function) removes them.
+    logger.warn(
+      { broadcastId, promotionEpoch },
+      "prepareBroadcast: lost the promotion race, skipping sendBroadcast enqueue",
+    )
+    return
+  }
 
   if (broadcastStatus === broadcastStatuses.enum.sent) {
     return

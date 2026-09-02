@@ -1,6 +1,81 @@
 import type { MessagingAdCreativeMediaInput } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
-import { mapCreativeMedia } from "../mappers"
+import { mapCreativeMedia, mapTargeting } from "../mappers"
+
+// ---------------------------------------------------------------------------
+// mapTargeting — Graph v23.0 requires an explicit
+// `targeting_automation.advantage_audience` on ad set CREATE (error code 100
+// "Advantage Audience Flag Required" otherwise). `1` (opt in) is only valid
+// for the default countries-only setup: Meta rejects `age_max` and caps
+// `age_min` at 25 when opted in, so any custom age/gender must send `0`.
+// ---------------------------------------------------------------------------
+
+describe("mapTargeting — advantage_audience flag", () => {
+  test("countries-only default setup opts in (advantage_audience: 1)", () => {
+    const result = mapTargeting({ countries: ["VN"] }, ["NONE"])
+
+    expect(result).toEqual({
+      geo_locations: { countries: ["VN"] },
+      targeting_automation: { advantage_audience: 1 },
+    })
+  })
+
+  test("custom age range opts out (advantage_audience: 0) and keeps the ages", () => {
+    const result = mapTargeting({ countries: ["VN"], ageMin: 30, ageMax: 50 }, [
+      "NONE",
+    ])
+
+    expect(result).toEqual({
+      geo_locations: { countries: ["VN"] },
+      targeting_automation: { advantage_audience: 0 },
+      age_min: 30,
+      age_max: 50,
+    })
+  })
+
+  test("gender targeting alone opts out (advantage_audience: 0)", () => {
+    const result = mapTargeting({ countries: ["VN"], genders: [2] }, ["NONE"])
+
+    expect(result).toEqual({
+      geo_locations: { countries: ["VN"] },
+      targeting_automation: { advantage_audience: 0 },
+      genders: [2],
+    })
+  })
+
+  test("locales opt out (advantage_audience: 0) — 1+locales is unverified live, so stay conservative", () => {
+    const result = mapTargeting({ countries: ["VN"], locales: [1033] }, [
+      "NONE",
+    ])
+
+    expect(result).toEqual({
+      geo_locations: { countries: ["VN"] },
+      targeting_automation: { advantage_audience: 0 },
+      locales: [1033],
+    })
+  })
+
+  test("restricted special ad category opts out AND strips age/gender, keeping the flag", () => {
+    const result = mapTargeting(
+      { countries: ["US"], ageMin: 30, ageMax: 50, genders: [1] },
+      ["HOUSING"],
+    )
+
+    expect(result).toEqual({
+      geo_locations: { countries: ["US"] },
+      targeting_automation: { advantage_audience: 0 },
+    })
+  })
+
+  test("restricted special ad category opts out even with default demographics", () => {
+    const result = mapTargeting({ countries: ["US"] }, ["EMPLOYMENT"])
+
+    expect(result).toEqual({
+      geo_locations: { countries: ["US"] },
+      targeting_automation: { advantage_audience: 0 },
+    })
+  })
+})
 
 const REQUIRES_RESOLVED_HASH_ERROR = /requires a resolved image_hash/
 

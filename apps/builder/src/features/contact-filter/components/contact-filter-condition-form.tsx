@@ -4,7 +4,7 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useState } from "react"
-import type { ContactFilterCondition } from "../schemas"
+import type { ContactFilterCondition } from "../schema"
 import {
   ContactFilterConditionDialog,
   getResetDraftForField,

@@ -36,6 +36,7 @@ type PlainTextTiptapEditorProps = {
   channels?: ChannelType[]
   includeCouponVariables?: boolean
   includeRawCustomFieldVariables?: boolean
+  includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
   /** Single-line height with the variable picker rendered inside on the right. */
   inline?: boolean
@@ -47,6 +48,7 @@ export const PlainTextTiptapEditor = ({
   channels,
   includeCouponVariables = false,
   includeRawCustomFieldVariables = false,
+  includeBotFieldVariables = false,
   placeholder = "Type a message...",
   showEmojiPicker = true,
   inline = false,
@@ -58,6 +60,7 @@ export const PlainTextTiptapEditor = ({
     channels,
     includeCouponVariables,
     includeRawCustomFieldVariables,
+    includeBotFieldVariables,
   })
   const promptVariableOptionsRef = useRef(promptVariableOptions)
 
@@ -167,6 +170,26 @@ export const PlainTextTiptapEditor = ({
       )
     }
   }, [tiptapEditor, initValue, plainTextToParagraphHtml])
+
+  // Variable options load lazily (custom/bot fields, coupons), so the initial
+  // hydration above may have escaped known tokens as plain text. Once options
+  // arrive, upgrade them to labeled mention chips — but only while the
+  // document still equals `initValue` and the editor is not focused, so a
+  // user's in-progress edit is never clobbered.
+  useEffect(() => {
+    if (!(tiptapEditor && initValue) || tiptapEditor.isFocused) {
+      return
+    }
+    if (tiptapEditor.getText({ blockSeparator: "\n" }) !== initValue) {
+      return
+    }
+    tiptapEditor.commands.setContent(
+      plainTextToParagraphHtmlWithVariableMentions(
+        initValue,
+        promptVariableOptions,
+      ),
+    )
+  }, [tiptapEditor, initValue, promptVariableOptions])
 
   // Inline (filter value) keeps the picker inside the box on the right and always
   // visible; the default hangs it below the editor and reveals it on focus.

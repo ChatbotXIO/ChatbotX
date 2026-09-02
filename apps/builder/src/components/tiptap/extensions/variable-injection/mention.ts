@@ -13,10 +13,18 @@ const LINE_BREAK_REGEX = /\r\n?|\n/
 const VARIABLE_TOKEN_REGEX = /\{\{([^{}\n]+)\}\}/g
 const COUPON_VARIABLE_TOKEN_REGEX = /\{\{coupon:([^{}\n]+)\}\}/g
 const COUPON_VARIABLE_ID_PREFIX = "coupon:"
+// Boundary-safe: lookarounds skip a token wrapped in extra braces
+// (`{{{{bot_field:1}}}}`) — malformed text stays verbatim in the preview
+// rather than being half-relabeled into something even more confusing.
+const BOT_FIELD_VARIABLE_TOKEN_REGEX = /(?<!\{)\{\{bot_field:(\d+)\}\}(?!\})/g
+const BOT_FIELD_VARIABLE_ID_PREFIX = "bot_field:"
 const TRAILING_DOUBLE_BRACE_REGEX = /\}\}$/
 
 const isCouponMentionId = (id: unknown) =>
   typeof id === "string" && id.startsWith(COUPON_VARIABLE_ID_PREFIX)
+
+const isBotFieldMentionId = (id: unknown) =>
+  typeof id === "string" && id.startsWith(BOT_FIELD_VARIABLE_ID_PREFIX)
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -41,6 +49,10 @@ export const toVariableMentionAttrs = (
 export const renderVariableMentionText: MentionRenderText = ({ node }) =>
   variableText(node.attrs.id)
 
+// Coupon and bot-field mentions carry an OPAQUE id (`coupon:<topicId>`,
+// `bot_field:<id>`) — the chip must display the human label instead; a
+// custom-field mention's id IS its name, so it displays as-is. Serialization
+// (`renderVariableMentionText` above) always keeps the id-based token.
 export const renderVariableMentionHTML: MentionRenderHTML = ({
   options,
   node,
@@ -49,7 +61,7 @@ export const renderVariableMentionHTML: MentionRenderHTML = ({
     "span",
     options.HTMLAttributes,
     variableText(
-      isCouponMentionId(node.attrs.id)
+      isCouponMentionId(node.attrs.id) || isBotFieldMentionId(node.attrs.id)
         ? (node.attrs.label ?? node.attrs.id)
         : node.attrs.id,
     ),
@@ -108,5 +120,19 @@ export const replaceCouponVariableTokensWithLabels = (
 ) =>
   value.replace(COUPON_VARIABLE_TOKEN_REGEX, (match, topicId: string) => {
     const label = labelById.get(topicId.trim())
+    return label ? `{{${label}}}` : match
+  })
+
+/**
+ * Read-only preview substitution for the node viewers on the canvas —
+ * mirrors `replaceCouponVariableTokensWithLabels`. An unknown id (deleted
+ * field, labels not loaded yet) keeps the raw token.
+ */
+export const replaceBotFieldVariableTokensWithLabels = (
+  value: string,
+  labelById: Map<string, string>,
+) =>
+  value.replace(BOT_FIELD_VARIABLE_TOKEN_REGEX, (match, botFieldId: string) => {
+    const label = labelById.get(botFieldId)
     return label ? `{{${label}}}` : match
   })

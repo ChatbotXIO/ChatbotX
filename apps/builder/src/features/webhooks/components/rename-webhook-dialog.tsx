@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateWebhookSettingsAction } from "../actions/update-webhook-settings-action"
-import { updateWebhookSettingsRequest } from "../schemas/update-webhook-schema"
+import { updateWebhookSettingsRequest } from "../schema/update-webhook-schema"
 
 export function RenameWebhookDialog({
   webhook,

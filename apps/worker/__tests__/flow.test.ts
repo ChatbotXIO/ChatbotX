@@ -7,6 +7,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import { SdkException } from "@chatbotx.io/sdk"
+import type { IntegrationJobRunFlowNode } from "@chatbotx.io/worker-config"
 import { beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 
 // --- mocks ---
@@ -15,6 +16,17 @@ const integrationQueueAdd = vi.fn(async () => undefined)
 const chatQueueAdd = vi.fn(async () => undefined)
 const detectConversationAndContactInbox = vi.fn()
 const detectFlowVersion = vi.fn()
+const findSendableBroadcast = vi.fn()
+const resetContactForResume = vi.fn()
+
+vi.mock("@chatbotx.io/business", () => ({
+  broadcastService: {
+    findSendableBroadcast: (...args: unknown[]) =>
+      findSendableBroadcast(...args),
+    resetContactForResume: (...args: unknown[]) =>
+      resetContactForResume(...args),
+  },
+}))
 
 vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
   const actual =
@@ -80,6 +92,7 @@ vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
 const {
   executeMultipleSteps,
   MAX_NODE_EXECUTIONS,
+  runFlowNode,
   runFlowPostback,
   runFlowQuickReply,
   seekConnectedNode,
@@ -1812,7 +1825,7 @@ describe("runStepsAndQuickReplies — node execution loop guard", () => {
     expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
   })
 
-  test("propagates the incremented count across a splitTraffic jump", async () => {
+  test("propagates the incremented count across a splitTraffic jump, and forwards metadata (fix round 1, P0)", async () => {
     const step = {
       id: "split-1",
       stepType: "splitTraffic",
@@ -1830,21 +1843,38 @@ describe("runStepsAndQuickReplies — node execution loop guard", () => {
         },
       ],
     )
+    const metadata = {
+      type: "broadcast",
+      broadcastId: "broadcast-1",
+      contactInboxId: "ci-1",
+    }
     const props = {
       ...makeBaseProps(flowVersion),
       details: { steps: [step] },
       triggerNextNode: false,
       nodeVisits: { "node-1": 1 },
+      metadata,
     }
 
     await runStepsAndQuickReplies(props)
 
     const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
       string,
-      { data: { nodeId: string; nodeVisits: Record<string, number> } },
+      {
+        data: {
+          nodeId: string
+          nodeVisits: Record<string, number>
+          metadata: unknown
+        }
+      },
     ]
     expect(job.data.nodeId).toBe("node-2")
     expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+    // Regression (fix round 1, P0): splitTraffic previously dropped
+    // `metadata` entirely, so a broadcast flow crossing a Split Traffic step
+    // lost its `broadcastId` attribution and the stop/resume guard in
+    // `runFlowNode` never fired for the branch taken here.
+    expect(job.data.metadata).toEqual(metadata)
   })
 
   test("seeds the count on the first entry", async () => {
@@ -2007,5 +2037,135 @@ describe("runStepsAndQuickReplies — node execution loop guard", () => {
     ]
     expect(job.data.flowId).toBe("external-flow")
     expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
+})
+
+describe("runFlowNode — stop/resume guard", () => {
+  beforeEach(() => {
+    findSendableBroadcast.mockReset()
+    resetContactForResume.mockReset().mockResolvedValue(undefined)
+    detectConversationAndContactInbox.mockReset()
+    detectFlowVersion.mockReset()
+  })
+
+  // Mirrors what `process-broadcast-contacts.ts`'s enqueueBroadcastContact
+  // sends for the INITIAL flow dispatch: `initialBroadcastDispatch: true` is
+  // the ONE explicit marker the guard trusts (fix round 1 — replaces the old
+  // nodeId/startFromStepId/targetId field-absence heuristic, which
+  // misclassified startExternalFlow-shaped continuation jobs as "initial").
+  const initialDispatchJobData: IntegrationJobRunFlowNode["data"] = {
+    flowId: "flow-1",
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    initialBroadcastDispatch: true,
+    metadata: {
+      type: "broadcast",
+      broadcastId: "broadcast-1",
+      contactInboxId: "ci-1",
+    },
+  }
+
+  test("checks findSendableBroadcast before touching the conversation/flow when metadata carries a broadcastId", async () => {
+    findSendableBroadcast.mockResolvedValue({ id: "broadcast-1" })
+    const sentinel = new Error("sentinel: proceeded past guard")
+    detectConversationAndContactInbox.mockRejectedValueOnce(sentinel)
+
+    await expect(runFlowNode(initialDispatchJobData)).rejects.toBe(sentinel)
+
+    expect(findSendableBroadcast).toHaveBeenCalledWith("broadcast-1")
+    expect(detectConversationAndContactInbox).toHaveBeenCalledWith({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+    })
+    expect(resetContactForResume).not.toHaveBeenCalled()
+  })
+
+  test("initialBroadcastDispatch: true — skips the flow and resets the recipient via contactInboxId", async () => {
+    findSendableBroadcast.mockResolvedValue(null)
+
+    const result = await runFlowNode(initialDispatchJobData)
+
+    expect(result).toBeUndefined()
+    expect(detectConversationAndContactInbox).not.toHaveBeenCalled()
+    expect(detectFlowVersion).not.toHaveBeenCalled()
+    expect(resetContactForResume).toHaveBeenCalledWith({
+      broadcastId: "broadcast-1",
+      contactKey: { contactInboxId: "ci-1" },
+    })
+  })
+
+  test("continuation job (nodeId present, marker unset — e.g. splitTraffic/startAnotherNode/condition routing): skips WITHOUT resetting", async () => {
+    findSendableBroadcast.mockResolvedValue(null)
+
+    const result = await runFlowNode({
+      ...initialDispatchJobData,
+      initialBroadcastDispatch: undefined,
+      nodeId: "node-2",
+    })
+
+    expect(result).toBeUndefined()
+    expect(detectConversationAndContactInbox).not.toHaveBeenCalled()
+    expect(resetContactForResume).not.toHaveBeenCalled()
+  })
+
+  test("regression (P1): startExternalFlow-shaped job — metadata present, no nodeId/startFromStepId/targetId, no marker (step.ts:297) — skips WITHOUT resetting", async () => {
+    // Under the old field-absence heuristic this shape was indistinguishable
+    // from the initial dispatch and got incorrectly reset, replaying the
+    // flow head on Resume (duplicate delivery). The explicit marker fixes
+    // this without needing to special-case startExternalFlow's job shape.
+    findSendableBroadcast.mockResolvedValue(null)
+
+    const result = await runFlowNode({
+      flowId: "flow-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      metadata: {
+        type: "broadcast",
+        broadcastId: "broadcast-1",
+        contactInboxId: "ci-1",
+      },
+    })
+
+    expect(result).toBeUndefined()
+    expect(detectConversationAndContactInbox).not.toHaveBeenCalled()
+    expect(resetContactForResume).not.toHaveBeenCalled()
+  })
+
+  test("initialBroadcastDispatch: false is treated the same as absent — skips WITHOUT resetting", async () => {
+    findSendableBroadcast.mockResolvedValue(null)
+
+    const result = await runFlowNode({
+      ...initialDispatchJobData,
+      initialBroadcastDispatch: false,
+    })
+
+    expect(result).toBeUndefined()
+    expect(resetContactForResume).not.toHaveBeenCalled()
+  })
+
+  test("does not guard a non-broadcast dispatch (metadata.type !== 'broadcast')", async () => {
+    const sentinel = new Error("sentinel: proceeded without a guard check")
+    detectConversationAndContactInbox.mockRejectedValueOnce(sentinel)
+
+    await expect(
+      runFlowNode({
+        flowId: "flow-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+      }),
+    ).rejects.toBe(sentinel)
+
+    expect(findSendableBroadcast).not.toHaveBeenCalled()
+    expect(resetContactForResume).not.toHaveBeenCalled()
+  })
+
+  test("initialBroadcastDispatch: true is ignored when the broadcast is still sendable (no reset, no skip)", async () => {
+    findSendableBroadcast.mockResolvedValue({ id: "broadcast-1" })
+    const sentinel = new Error("sentinel: proceeded past guard")
+    detectConversationAndContactInbox.mockRejectedValueOnce(sentinel)
+
+    await expect(runFlowNode(initialDispatchJobData)).rejects.toBe(sentinel)
+
+    expect(resetContactForResume).not.toHaveBeenCalled()
   })
 })

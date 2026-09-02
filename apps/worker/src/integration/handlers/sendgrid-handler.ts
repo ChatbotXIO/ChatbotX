@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationSendGridService } from "@chatbotx.io/business"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { SendGridAddContactSchema } from "@chatbotx.io/flow-config"
@@ -214,6 +215,12 @@ export const addSendGridContact = async (
       },
       "SendGrid add-contact step failed",
     )
+    await logProviderError({
+      provider: "sendgrid",
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      error,
+    })
     return { status: "error", errorMessage: normalized.message, result: null }
   }
 }

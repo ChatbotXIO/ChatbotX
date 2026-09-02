@@ -278,7 +278,10 @@
       "append": "Aggiungi alla fine",
       "prepend": "Aggiungi all'inizio",
       "increase": "Aumenta di",
-      "decrease": "Diminuisci di"
+      "decrease": "Diminuisci di",
+      "groupSystemFields": "Campi di sistema",
+      "groupCustomFields": "Campi personalizzati",
+      "groupAccountFields": "Campi del bot"
     },
     "dataCollect": {
       "label": "Raccolta dati"
@@ -381,8 +384,8 @@
       "aiDeleteMessageHistory": "{aiName}: Elimina cronologia messaggi"
     },
     "steps": {
-      "label": "Passaggi",
-      "placeholder": "Seleziona passaggio"
+      "label": "Nodo",
+      "placeholder": "Seleziona nodo"
     },
     "folder": {
       "label": "Cartella"
@@ -661,7 +664,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Provider"
+      "label": "Provider",
+      "placeholder": "Seleziona provider"
     },
     "prompt": {
       "label": "Prompt",
@@ -1576,7 +1580,12 @@
     "clone": "Clona",
     "remove": "Rimuovi",
     "restore": "Ripristina",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "Devi essere super admin dello spazio di lavoro per farlo."
@@ -1775,7 +1784,9 @@
       "scheduled": "Pianificato",
       "sent": "Inviato",
       "sending": "Invio in corso",
-      "cancelled": "Annullato"
+      "cancelled": "Annullato",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Inviato",
@@ -1861,6 +1872,63 @@
       "template": "Modello",
       "noTemplate": "Nessun modello",
       "integration": "Integrazione"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -2000,6 +2068,7 @@
       "systemFields": "Campi di sistema",
       "topicCoupon": "Argomento coupon",
       "customFields": "Campi personalizzati",
+      "botFields": "Campi del bot",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Inserzioni"
@@ -2143,6 +2212,7 @@
       "sendFile": "Invia file",
       "sendGif": "Invia GIF",
       "sendImage": "Invia immagine",
+      "sendMultipleImages": "Immagini multiple",
       "sendMessage": "Invia messaggio",
       "sendNode": "Avvia un altro nodo",
       "sendText": "Invia testo",
@@ -2187,9 +2257,7 @@
       "export": "Esporta",
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
       "importJsonOnly": "Solo file JSON",
-      "adsConversions": "Annunci e Meta Conversions",
-      "trackAdsLead": "Traccia lead pubblicitario",
-      "trackAdsPurchase": "Traccia acquisto pubblicitario"
+      "adsConversions": "Annunci e Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -2226,6 +2294,10 @@
       "addSlide": "Aggiungi scheda",
       "removeSlide": "Rimuovi scheda",
       "whatsappLinkButtonIgnored": "Su WhatsApp, il link di questa scheda non funzionerà: una scheda con un pulsante di collegamento non può avere altri pulsanti. Verrà inviata come risposta."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Rimuovi immagine",
+      "selectImage": "Seleziona immagini"
     },
     "additionalSteps": "Passaggi aggiuntivi",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "Vuoi davvero disconnettere {feature}?",
     "disconnectSuccess": "{feature} disconnesso correttamente",
     "reply": "Rispondi",
+    "privateReply": "Risposta privata",
     "viewMessage": "Visualizza messaggio",
     "changeLikeState": "Cambia stato del Mi piace",
     "changeHideState": "Cambia stato di visibilità",
@@ -2969,6 +3042,9 @@
     "duplicatedSuccess": "{feature} duplicato correttamente",
     "duplicateConfirmation": "Verrà creata una copia di {feature}.",
     "deleteFeature": "Elimina {feature}",
+    "resetFeature": "Reimposta {feature}",
+    "resetConfirmation": "Questo cancellerà i valori dei {feature} selezionati.\nQuesta azione non può essere annullata.",
+    "resetSuccess": "{feature} reimpostato con successo",
     "deleteConfirmation": "Sei assolutamente sicuro?\nQuesta azione non può essere annullata.\nIl tuo {feature} verrà eliminato definitivamente dai nostri server.",
     "addFeature": "Aggiungi {feature}",
     "signOutConfirmation": "Vuoi davvero uscire?",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "{feature} attivato correttamente",
     "userInactive": "L'utente è inattivo da più di 7 giorni",
     "messagingWindowClosed": "Il messaggio non può essere inviato al di fuori della finestra consentita",
-    "sendHumanAgentTag": "Invia un messaggio con il tag HUMAN_AGENT",
-    "warning": "Attenzione!",
-    "humanAgentWarningDescription": "Puoi rispondere al messaggio di un utente entro 7 giorni solo quando non è ragionevolmente possibile risolvere il problema entro 24 ore. Ad esempio durante fine settimana e festività o nei casi che richiedono più di un giorno. Non usare questa opzione per altri motivi, poiché potresti mettere a rischio la tua Pagina Facebook o il tuo account Instagram. Se hai dubbi, non continuare.",
     "humanAgentWindowExpired": "La finestra di messaggistica è scaduta. Il contatto deve inviare per primo un messaggio per riaprire la conversazione.",
     "restoreVersionSuccess": "Flusso ripristinato alla versione selezionata",
     "revertToPublishedSuccess": "Bozza ripristinata alla versione pubblicata",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "Nessuna Pagina Facebook trovata",
       "noPagesDescription": "Le Pagine in un Business Manager richiedono l'accesso a Business Manager durante la connessione. Ricollega Messenger e concedi tutte le autorizzazioni richieste.",
+      "noConnectablePagesTitle": "Nessuna Pagina disponibile da collegare",
+      "noConnectablePagesDescription": "Non sei amministratore di questa Pagina",
       "bmLookupFailedTitle": "Alcune Pagine di Business Manager potrebbero non essere disponibili",
       "bmLookupFailedDescription": "Ricollega Messenger e concedi l'accesso a Business Manager affinché possano essere elencate le Pagine gestite tramite Business Manager.",
       "alreadyConnectedNote": "Questa Pagina è già collegata",
-      "notAdminNote": "Per collegarsi è necessaria l'autorizzazione completa di amministratore della Pagina",
+      "notAdminNote": "Non sei amministratore di questa Pagina",
       "tryAgain": "Prova a ricollegarti"
     },
     "title": "Facebook Messenger",
@@ -3783,9 +3858,7 @@
       "startAnotherFlow": "Avvia un altro flusso",
       "notifyAdmins": "Notifica gli amministratori",
       "transferConversationToHuman": "Trasferisci la conversazione a un operatore",
-      "sendMetaCapiEvent": "Invia evento Meta CAPI",
-      "trackAdsLead": "Traccia lead pubblicitario",
-      "trackAdsPurchase": "Traccia acquisto pubblicitario"
+      "sendMetaCapiEvent": "Invia evento Meta CAPI"
     },
     "triggerGoesOff": "Il trigger si attiva",
     "before": "Prima",
@@ -3797,7 +3870,8 @@
     "at": "Alle"
   },
   "errorLogs": {
-    "title": "Registri degli errori"
+    "title": "Registri degli errori",
+    "unknownContact": "Contatto sconosciuto"
   },
   "developerAccessToken": {
     "title": "Token di accesso API",
@@ -4325,6 +4399,21 @@
     "noEligiblePages": "Nessuna pagina idonea. Usa \"Aggiungi\" per concedere l'accesso ai contatti acquisiti.",
     "duplicateError": "Esiste già un'automazione per questa pagina e questo modulo.",
     "subscribeError": "Non è stato possibile iscrivere questa pagina alle notifiche di Facebook sui contatti acquisiti, pertanto l'automazione non è stata creata. Ricollega la pagina con \"Aggiungi\" e riprova."
+  },
+  "clickToMessageAds": {
+    "title": "Annunci Click-to-Message",
+    "description": "Gli annunci indirizzano le persone direttamente a una conversazione su Messenger, Instagram o WhatsApp.",
+    "empty": {
+      "title": "Nessun account collegato per questo canale",
+      "description": "Collega prima un account del canale, poi torna qui per creare annunci.",
+      "cta": "Vai alle impostazioni del canale"
+    },
+    "movedNote": {
+      "title": "Gli annunci sono stati spostati in Strumenti",
+      "description": "Crea e gestisci gli annunci Click-to-Message dallo strumento Annunci Click-to-Message.",
+      "cta": "Apri Annunci Click-to-Message"
+    },
+    "dashboardCta": "Visualizza sulla dashboard Annunci"
   },
   "ecommerce": {
     "title": "E-commerce",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Connetti"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Registra una conversione solo per i contatti con attribuzione a un annuncio click-to-WhatsApp o a un referral pubblicitario Meta. Non ha effetto sugli altri contatti."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Somma di tutte le probabilità: {value}%",
       "loseProbability": "Probabilità di perdita: {value}%",
       "winProbability": "Probabilità di vincita: {value}%",
-      "newPrize": "Nuovo premio"
+      "newPrize": "Nuovo premio",
+      "prizeNameCustomFieldLabel": "Salva il nome del premio nel Campo personalizzato"
     },
     "prizeItemDialog": {
       "prizeTitle": "Modifica premio",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Titolo",
       "loseImageDescription": "Dimensione consigliata 120x120px",
       "quantityLabel": "Quantità del premio",
-      "quantityDescription": "Numero di volte in cui questo premio può ancora essere vinto; diminuisce di 1 a ogni vincita. Lascia vuoto per illimitato.",
-      "sendMessage": "Invia un messaggio quando il giocatore non vince",
-      "sendWinMessage": "Invia un messaggio al vincitore che ha ricevuto il premio",
-      "messageMode": "Tipo di messaggio",
-      "messageModeText": "Testo",
-      "messageModeFlow": "Flow",
-      "messageText": "Messaggio"
+      "quantityDescription": "Numero di volte in cui questo premio può ancora essere vinto; diminuisce di 1 a ogni vincita. Lascia vuoto per illimitato."
+    },
+    "outcomeMessage": {
+      "enableWin": "Invia un messaggio al vincitore che ha ricevuto il premio",
+      "enableLose": "Invia un messaggio quando il giocatore non vince",
+      "mode": "Tipo di messaggio",
+      "modeText": "Testo",
+      "modeFlow": "Flow",
+      "text": "Messaggio"
     },
     "winningMessageDialog": {
       "title": "Impostazioni messaggio di vincita",
       "titleLabel": "Titolo",
+      "prizeNameHint": "Puoi usare '{{prize_name}}' nel titolo e nella descrizione per inserire il nome del premio.",
       "acceptButtonText": "Testo del pulsante di accettazione",
       "shareButtonText": "Testo del pulsante di condivisione",
       "shareButtonDescription": "Descrizione del pulsante di condivisione"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Condividi con gli amici",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "L’anteprima dettagliata per questo tipo di gioco sarà disponibile a breve",
-      "rules": "Regole"
+      "luckyWheelHeader": "RUOTA DELLA FORTUNA",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "L’anteprima dettagliata per questo tipo di gioco sarà disponibile a breve"
     },
     "form": {
       "generalSettingsTitle": "Impostazioni generali",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Impostazioni premi"
     },
     "generalSettings": {
+      "showName": "Visibile",
       "playedAt": "Giocato il",
       "rulesDescription": "Descrizione delle regole",
       "openerTags": "Assegna un tag ai contatti che aprono il link del gioco",
@@ -5494,7 +5586,8 @@
     "recent": "Recenti",
     "favourite": "Preferiti",
     "upload": "Carica",
-    "done": "Fatto",
+    "select": "Seleziona",
+    "bulkSelect": "Selezione multipla",
     "deleteFolder": "Elimina cartella",
     "renameFolder": "Rinomina cartella",
     "noFiles": "Nessun file trovato",
@@ -5698,5 +5791,8 @@
         "last_7d": "Ultimi 7 giorni"
       }
     }
+  },
+  "accountFields": {
+    "title": "Campi del bot"
   }
 }

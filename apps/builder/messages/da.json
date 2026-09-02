@@ -148,7 +148,12 @@
     "clone": "Klon",
     "remove": "Fjern",
     "restore": "Gendan",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
@@ -347,7 +352,9 @@
       "scheduled": "Planlagt",
       "sent": "Sendt",
       "sending": "Sender",
-      "cancelled": "Annulleret"
+      "cancelled": "Annulleret",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Sendt",
@@ -433,6 +440,63 @@
       "template": "Skabelon",
       "noTemplate": "Ingen skabelon",
       "integration": "Integration"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "Systemfelter",
       "topicCoupon": "Emnekupon",
       "customFields": "Brugerdefinerede felter",
+      "botFields": "Bot Felter",
       "email": "E-mail",
       "sms": "SMS",
       "ctwaAds": "Annoncer"
@@ -900,7 +965,10 @@
       "append": "Append til den slut",
       "prepend": "Prepend til den beginning",
       "increase": "Increase by",
-      "decrease": "Decrease by"
+      "decrease": "Decrease by",
+      "groupSystemFields": "Systemfelter",
+      "groupCustomFields": "Brugerdefinerede Felter",
+      "groupAccountFields": "Bot Felter"
     },
     "dataCollect": {
       "label": "Data Collect"
@@ -1003,8 +1071,8 @@
       "aiDeleteMessageHistory": "{aiName}: Slet Besked Historik"
     },
     "steps": {
-      "label": "Steps",
-      "placeholder": "Vælg trin"
+      "label": "Node",
+      "placeholder": "Vælg node"
     },
     "folder": {
       "label": "Mappe"
@@ -1283,7 +1351,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Udbyder"
+      "label": "Udbyder",
+      "placeholder": "Vælg udbyder"
     },
     "prompt": {
       "label": "Prompt",
@@ -2143,6 +2212,7 @@
       "sendFile": "Send Fil",
       "sendGif": "Send Gif",
       "sendImage": "Send Billede",
+      "sendMultipleImages": "Flere billeder",
       "sendMessage": "Send besked",
       "sendNode": "Start Another Node",
       "sendText": "Send Tekst",
@@ -2187,9 +2257,7 @@
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
       "importJsonOnly": "Kun JSON-filer",
-      "adsConversions": "Annoncer og Meta Conversions",
-      "trackAdsLead": "Spor annonce-lead",
-      "trackAdsPurchase": "Spor annonce-køb"
+      "adsConversions": "Annoncer og Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2226,6 +2294,10 @@
       "addSlide": "Tilføj kort",
       "removeSlide": "Fjern kort",
       "whatsappLinkButtonIgnored": "På WhatsApp virker dette korts link ikke: et kort med en linkknap kan ikke have andre knapper. Det sendes i stedet som et svar."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Fjern billede",
+      "selectImage": "Vælg billeder"
     },
     "additionalSteps": "Additional trin",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "Er du sikker du want til afbryd den {feature}?",
     "disconnectSuccess": "{feature} disconnected successfully",
     "reply": "Svar",
+    "privateReply": "Privat svar",
     "viewMessage": "Vis besked",
     "changeLikeState": "Change like state",
     "changeHideState": "Change hide state",
@@ -2969,6 +3042,9 @@
     "duplicatedSuccess": "{feature} duplicated successfully",
     "duplicateConfirmation": "Denne vil opret a kopiér af din {feature}.",
     "deleteFeature": "Slet {feature}",
+    "resetFeature": "Nulstil {feature}",
+    "resetConfirmation": "Dette vil rydde værdierne for de valgte {feature}, så de bliver tomme.\nDenne handling kan ikke fortrydes.",
+    "resetSuccess": "{feature} nulstillet",
     "deleteConfirmation": "Er du absolutely sure?\nDenne action kan ikke være undone.\nDenne vil permanently slet din {feature} fra our servers.",
     "addFeature": "Tilføj {feature}",
     "signOutConfirmation": "Er du sikker du want til log out?",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "{feature} aktiveret successfully",
     "userInactive": "Bruger har been inactive mere than 7 dage",
     "messagingWindowClosed": "Den besked kan ikke være send outside den allowed window",
-    "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
-    "warning": "Warning!",
-    "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt.",
     "humanAgentWindowExpired": "Messaging window udløbet. Den kontakt must besked første til reopen den samtale.",
     "restoreVersionSuccess": "Flow restored til selected version",
     "revertToPublishedSuccess": "Draft reverted til den published version",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "Ingen Facebook Pages found",
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during forbindelse. Forbind igen Messenger og grant alle requested tilladelser.",
+      "noConnectablePagesTitle": "Ingen sider tilgængelige til tilslutning",
+      "noConnectablePagesDescription": "Du er ikke administrator for denne side",
       "bmLookupFailedTitle": "Business Manager pages may være missing",
       "bmLookupFailedDescription": "Forbind igen Messenger og grant Business Manager access so pages managed through a Business Manager kan være listed.",
       "alreadyConnectedNote": "Denne page er allerede forbundet",
-      "notAdminNote": "Full administrator permission på den page er påkrævet til forbind",
+      "notAdminNote": "Du er ikke administrator for denne side",
       "tryAgain": "Try reconnecting"
     },
     "title": "Facebook Messenger",
@@ -3783,9 +3858,7 @@
       "startAnotherFlow": "Start Another Flow",
       "notifyAdmins": "Notify Administratorer",
       "transferConversationToHuman": "Transfer Samtale til Menneskelig",
-      "sendMetaCapiEvent": "Send Meta CAPI Event",
-      "trackAdsLead": "Spor annonce-lead",
-      "trackAdsPurchase": "Spor annonce-køb"
+      "sendMetaCapiEvent": "Send Meta CAPI Event"
     },
     "triggerGoesOff": "Udløser goes off",
     "before": "Før",
@@ -3797,7 +3870,8 @@
     "at": "På"
   },
   "errorLogs": {
-    "title": "Fejl Logfiler"
+    "title": "Fejl Logfiler",
+    "unknownContact": "Ukendt kontakt"
   },
   "developerAccessToken": {
     "title": "API Access Token",
@@ -4325,6 +4399,21 @@
     "noEligiblePages": "Ingen eligible sider. Use \"Tilføj Ny\" til grant lead access.",
     "duplicateError": "An automatisering already exists for denne side og form.",
     "subscribeError": "Could ikke subscribe denne side til Facebook lead notifications, so den automatisering var ikke oprettet. Forbind igen den side med \"Tilføj Ny\" og try igen."
+  },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-annoncer",
+    "description": "Annoncer sender folk direkte ind i en samtale på Messenger, Instagram eller WhatsApp.",
+    "empty": {
+      "title": "Ingen konto tilsluttet denne kanal",
+      "description": "Tilslut en kanalkonto først, og kom derefter tilbage hertil for at oprette annoncer.",
+      "cta": "Gå til kanalindstillinger"
+    },
+    "movedNote": {
+      "title": "Annoncer er flyttet til Værktøjer",
+      "description": "Opret og administrer Click-to-Message-annoncer fra værktøjet Click-to-Message-annoncer.",
+      "cta": "Åbn Click-to-Message-annoncer"
+    },
+    "dashboardCta": "Se på annoncepanelet"
   },
   "ecommerce": {
     "title": "E-handel",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Forbind"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Registrerer kun en konvertering for kontakter med WhatsApp click-to-WhatsApp- eller Meta-annoncehenvisningsattribuering. Har ingen effekt for andre kontakter."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Sum af alle sandsynligheder: {value}%",
       "loseProbability": "Sandsynlighed for tab: {value}%",
       "winProbability": "Sandsynlighed for gevinst: {value}%",
-      "newPrize": "Ny gevinst"
+      "newPrize": "Ny gevinst",
+      "prizeNameCustomFieldLabel": "Gem præmienavn i Brugerdefineret Felt"
     },
     "prizeItemDialog": {
       "prizeTitle": "Rediger gevinst",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Anbefalet størrelse 120x120px",
       "quantityLabel": "Præmieantal",
-      "quantityDescription": "Antal gange denne præmie stadig kan vindes; falder med 1 for hver gevinst. Lad stå tomt for ubegrænset.",
-      "sendMessage": "Send en besked, når spilleren ikke vinder",
-      "sendWinMessage": "Send besked til vinderen, der modtog præmien",
-      "messageMode": "Beskedtype",
-      "messageModeText": "Tekst",
-      "messageModeFlow": "Flow",
-      "messageText": "Besked"
+      "quantityDescription": "Antal gange denne præmie stadig kan vindes; falder med 1 for hver gevinst. Lad stå tomt for ubegrænset."
+    },
+    "outcomeMessage": {
+      "enableWin": "Send besked til vinderen, der modtog præmien",
+      "enableLose": "Send en besked, når spilleren ikke vinder",
+      "mode": "Beskedtype",
+      "modeText": "Tekst",
+      "modeFlow": "Flow",
+      "text": "Besked"
     },
     "winningMessageDialog": {
       "title": "Indstillinger for gevinstbesked",
       "titleLabel": "Titel",
+      "prizeNameHint": "Du kan bruge '{{prize_name}}' i titlen og beskrivelsen for at indsætte præmienavnet.",
       "acceptButtonText": "Tekst på accepter-knap",
       "shareButtonText": "Tekst på del-knap",
       "shareButtonDescription": "Beskrivelse af del-knap"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Del med venner",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Detaljeret forhåndsvisning kommer snart for denne spiltype",
-      "rules": "Regler"
+      "luckyWheelHeader": "LYKKEHJUL",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Detaljeret forhåndsvisning kommer snart for denne spiltype"
     },
     "form": {
       "generalSettingsTitle": "Generelle indstillinger",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Gevinstindstillinger"
     },
     "generalSettings": {
+      "showName": "Synlig",
       "playedAt": "Spillet den",
       "rulesDescription": "Regelbeskrivelse",
       "openerTags": "Tag kontakter, der åbner spillinket",
@@ -5494,7 +5586,8 @@
     "recent": "Seneste",
     "favourite": "Favorit",
     "upload": "Upload",
-    "done": "Færdig",
+    "select": "Vælg",
+    "bulkSelect": "Massevalg",
     "deleteFolder": "Slet mappe",
     "renameFolder": "Omdøb mappe",
     "noFiles": "Ingen filer fundet",
@@ -5698,5 +5791,8 @@
         "last_7d": "Sidste 7 dage"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bot Felter"
   }
 }

@@ -288,23 +288,23 @@ describe("javascriptExecutionService", () => {
       )
     })
 
-    test("rejects an arbitrary string into a boolean field", async () => {
+    test("coerces an arbitrary string into a boolean field to true", async () => {
       withOutputField({ type: "boolean" })
       respondWithValue("garbage")
 
-      await expect(
-        javascriptExecutionService.executeAndMap({
-          workspaceId: "workspace-1",
-          contactId: "contact-1",
-          code: 'return "garbage"',
-          input: {},
-          customFieldId: "field-name",
-        }),
-      ).rejects.toMatchObject<Partial<ChatbotXException>>({
-        code: "javascriptOutputTypeMismatch",
+      await javascriptExecutionService.executeAndMap({
+        workspaceId: "workspace-1",
+        contactId: "contact-1",
+        code: 'return "garbage"',
+        input: {},
+        customFieldId: "field-name",
       })
 
-      expect(mocks.setValues).not.toHaveBeenCalled()
+      expect(mocks.setValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fields: [{ customFieldId: "field-name", value: "true" }],
+        }),
+      )
     })
 
     test("normalizes a valid email into an email field", async () => {

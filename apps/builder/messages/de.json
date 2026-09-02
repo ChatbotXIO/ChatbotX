@@ -148,7 +148,12 @@
     "clone": "Klonen",
     "remove": "Entfernen",
     "restore": "Wiederherstellen",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "Sie müssen Super-Administrator des Arbeitsbereichs sein, um dies zu tun."
@@ -347,7 +352,9 @@
       "scheduled": "Geplant",
       "sent": "Gesendet",
       "sending": "Wird gesendet",
-      "cancelled": "Abgebrochen"
+      "cancelled": "Abgebrochen",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "Gesendet",
@@ -433,6 +440,63 @@
       "template": "Vorlage",
       "noTemplate": "Keine Vorlage",
       "integration": "Integration"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -572,6 +636,7 @@
       "systemFields": "Systemfelder",
       "topicCoupon": "Thema Gutschein",
       "customFields": "Benutzerdefinierte Felder",
+      "botFields": "Bot-Felder",
       "email": "E-Mail",
       "sms": "SMS",
       "ctwaAds": "Anzeigen"
@@ -900,7 +965,10 @@
       "append": "Am Ende anhängen",
       "prepend": "Am Anfang voranstellen",
       "increase": "Erhöhen um",
-      "decrease": "Verringern um"
+      "decrease": "Verringern um",
+      "groupSystemFields": "Systemfelder",
+      "groupCustomFields": "Benutzerdefinierte Felder",
+      "groupAccountFields": "Bot-Felder"
     },
     "dataCollect": {
       "label": "Datenerfassung"
@@ -1003,8 +1071,8 @@
       "aiDeleteMessageHistory": "{aiName}: Nachrichtenverlauf löschen"
     },
     "steps": {
-      "label": "Schritte",
-      "placeholder": "Schritt auswählen"
+      "label": "Node",
+      "placeholder": "Node auswählen"
     },
     "folder": {
       "label": "Ordner"
@@ -1283,7 +1351,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "Anbieter"
+      "label": "Anbieter",
+      "placeholder": "Anbieter auswählen"
     },
     "prompt": {
       "label": "Prompt",
@@ -2143,6 +2212,7 @@
       "sendFile": "Datei senden",
       "sendGif": "GIF senden",
       "sendImage": "Bild senden",
+      "sendMultipleImages": "Mehrere Bilder",
       "sendMessage": "Nachricht senden",
       "sendNode": "Anderen Knoten starten",
       "sendText": "Text senden",
@@ -2187,9 +2257,7 @@
       "export": "Exportieren",
       "importStarted": "Der Flow wird importiert. Ergebnisse im Importverlauf prüfen.",
       "importJsonOnly": "Nur JSON-Dateien",
-      "adsConversions": "Anzeigen & Meta Conversions",
-      "trackAdsLead": "Anzeigen-Lead verfolgen",
-      "trackAdsPurchase": "Anzeigen-Kauf verfolgen"
+      "adsConversions": "Anzeigen & Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",
@@ -2226,6 +2294,10 @@
       "addSlide": "Karte hinzufügen",
       "removeSlide": "Karte entfernen",
       "whatsappLinkButtonIgnored": "Bei WhatsApp funktioniert der Link dieser Karte nicht: Eine Karte mit einer Link-Schaltfläche darf keine weiteren Schaltflächen haben. Sie wird stattdessen als Antwort gesendet."
+    },
+    "sendMultipleImages": {
+      "removeImage": "Bild entfernen",
+      "selectImage": "Bilder auswählen"
     },
     "additionalSteps": "Zusätzliche Schritte",
     "delayType": {
@@ -2927,6 +2999,7 @@
     "disconnectFeatureDescription": "Möchten Sie die Verbindung mit {feature} wirklich trennen?",
     "disconnectSuccess": "Verbindung mit {feature} erfolgreich getrennt",
     "reply": "Antworten",
+    "privateReply": "Private Antwort",
     "viewMessage": "Nachricht anzeigen",
     "changeLikeState": "Gefällt-mir-Status ändern",
     "changeHideState": "Sichtbarkeitsstatus ändern",
@@ -2969,6 +3042,9 @@
     "duplicatedSuccess": "{feature} erfolgreich dupliziert",
     "duplicateConfirmation": "Dadurch wird eine Kopie von {feature} erstellt.",
     "deleteFeature": "{feature} löschen",
+    "resetFeature": "{feature} zurücksetzen",
+    "resetConfirmation": "Dadurch werden die Werte der ausgewählten {feature} geleert.\nDiese Aktion kann nicht rückgängig gemacht werden.",
+    "resetSuccess": "{feature} erfolgreich zurückgesetzt",
     "deleteConfirmation": "Sind Sie sich ganz sicher?\nDiese Aktion kann nicht rückgängig gemacht werden.\nDadurch wird {feature} dauerhaft von unseren Servern gelöscht.",
     "addFeature": "{feature} hinzufügen",
     "signOutConfirmation": "Möchten Sie sich wirklich abmelden?",
@@ -3003,9 +3079,6 @@
     "enableSuccess": "{feature} erfolgreich aktiviert",
     "userInactive": "Benutzer war länger als 7 Tage inaktiv",
     "messagingWindowClosed": "Die Nachricht kann nicht außerhalb des erlaubten Zeitfensters gesendet werden",
-    "sendHumanAgentTag": "Eine Nachricht mit dem Tag HUMAN_AGENT senden",
-    "warning": "Warnung!",
-    "humanAgentWarningDescription": "Sie dürfen nur dann innerhalb von 7 Tagen auf die Nachricht eines Benutzers antworten, wenn das Problem nicht sinnvoll innerhalb von 24 Stunden gelöst werden kann. Beispiele sind Wochenenden, Feiertage oder Fälle, deren Bearbeitung mehr als einen Tag erfordert. Verwenden Sie diese Option aus keinem anderen Grund, da dies Ihre Facebook-Seite oder Ihr Instagram-Konto gefährden könnte. Fahren Sie im Zweifelsfall nicht fort.",
     "humanAgentWindowExpired": "Das Nachrichtenfenster ist abgelaufen. Der Kontakt muss zuerst eine Nachricht senden, um die Unterhaltung wieder zu öffnen.",
     "restoreVersionSuccess": "Flow auf die ausgewählte Version zurückgesetzt",
     "revertToPublishedSuccess": "Entwurf auf die veröffentlichte Version zurückgesetzt",
@@ -3087,10 +3160,12 @@
     "selectPage": {
       "noPagesTitle": "Keine Facebook-Seiten gefunden",
       "noPagesDescription": "Seiten in einem Business Manager erfordern während der Verbindung Zugriff auf den Business Manager. Verbinden Sie Messenger erneut und erteilen Sie alle angeforderten Berechtigungen.",
+      "noConnectablePagesTitle": "Keine Seiten zum Verbinden verfügbar",
+      "noConnectablePagesDescription": "Sie sind kein Administrator dieser Seite",
       "bmLookupFailedTitle": "Business-Manager-Seiten fehlen möglicherweise",
       "bmLookupFailedDescription": "Verbinden Sie Messenger erneut und gewähren Sie Zugriff auf den Business Manager, damit über ihn verwaltete Seiten aufgelistet werden können.",
       "alreadyConnectedNote": "Diese Seite ist bereits verbunden",
-      "notAdminNote": "Zum Verbinden ist die vollständige Admin-Berechtigung für die Seite erforderlich",
+      "notAdminNote": "Sie sind kein Administrator dieser Seite",
       "tryAgain": "Erneute Verbindung versuchen"
     },
     "title": "Facebook Messenger",
@@ -3783,9 +3858,7 @@
       "startAnotherFlow": "Anderen Flow starten",
       "notifyAdmins": "Admins benachrichtigen",
       "transferConversationToHuman": "Unterhaltung an Mitarbeiter übergeben",
-      "sendMetaCapiEvent": "Meta-CAPI-Ereignis senden",
-      "trackAdsLead": "Anzeigen-Lead verfolgen",
-      "trackAdsPurchase": "Anzeigen-Kauf verfolgen"
+      "sendMetaCapiEvent": "Meta-CAPI-Ereignis senden"
     },
     "triggerGoesOff": "Trigger wird ausgelöst",
     "before": "Vor",
@@ -3797,7 +3870,8 @@
     "at": "Um"
   },
   "errorLogs": {
-    "title": "Fehlerprotokolle"
+    "title": "Fehlerprotokolle",
+    "unknownContact": "Unbekannter Kontakt"
   },
   "developerAccessToken": {
     "title": "API-Zugriffstoken",
@@ -4325,6 +4399,21 @@
     "noEligiblePages": "Keine berechtigten Seiten. Verwenden Sie „Neu hinzufügen“, um Lead-Zugriff zu gewähren.",
     "duplicateError": "Für diese Seite und dieses Formular ist bereits eine Automatisierung vorhanden.",
     "subscribeError": "Diese Seite konnte nicht für Facebook-Lead-Benachrichtigungen abonniert werden, daher wurde die Automatisierung nicht erstellt. Verbinden Sie die Seite über „Neu hinzufügen“ erneut und versuchen Sie es noch einmal."
+  },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-Anzeigen",
+    "description": "Anzeigen leiten Personen direkt in eine Unterhaltung auf Messenger, Instagram oder WhatsApp.",
+    "empty": {
+      "title": "Für diesen Kanal ist kein Konto verbunden",
+      "description": "Verbinden Sie zuerst ein Kanalkonto und kommen Sie dann hierher zurück, um Anzeigen zu erstellen.",
+      "cta": "Zu den Kanaleinstellungen"
+    },
+    "movedNote": {
+      "title": "Anzeigen wurden zu Tools verschoben",
+      "description": "Erstellen und verwalten Sie Click-to-Message-Anzeigen über das Tool Click-to-Message-Anzeigen.",
+      "cta": "Click-to-Message-Anzeigen öffnen"
+    },
+    "dashboardCta": "Im Anzeigen-Dashboard ansehen"
   },
   "ecommerce": {
     "title": "E-Commerce",
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "Verbinden"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "Erfasst eine Conversion nur für Kontakte mit WhatsApp-Click-to-WhatsApp- oder Meta-Anzeigenverweis-Zuordnung. Hat keine Auswirkung auf andere Kontakte."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "Summe aller Wahrscheinlichkeiten: {value}%",
       "loseProbability": "Verlustwahrscheinlichkeit: {value}%",
       "winProbability": "Gewinnwahrscheinlichkeit: {value}%",
-      "newPrize": "Neuer Gewinn"
+      "newPrize": "Neuer Gewinn",
+      "prizeNameCustomFieldLabel": "Preisname in Benutzerdefiniertes Feld speichern"
     },
     "prizeItemDialog": {
       "prizeTitle": "Gewinn bearbeiten",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "Titel",
       "loseImageDescription": "Empfohlene Größe 120x120px",
       "quantityLabel": "Preismenge",
-      "quantityDescription": "Anzahl, wie oft dieser Preis noch gewonnen werden kann; verringert sich bei jedem Gewinn um 1. Leer lassen für unbegrenzt.",
-      "sendMessage": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
-      "sendWinMessage": "Nachricht an den Gewinner senden, der den Preis erhalten hat",
-      "messageMode": "Nachrichtentyp",
-      "messageModeText": "Text",
-      "messageModeFlow": "Flow",
-      "messageText": "Nachricht"
+      "quantityDescription": "Anzahl, wie oft dieser Preis noch gewonnen werden kann; verringert sich bei jedem Gewinn um 1. Leer lassen für unbegrenzt."
+    },
+    "outcomeMessage": {
+      "enableWin": "Nachricht an den Gewinner senden, der den Preis erhalten hat",
+      "enableLose": "Eine Nachricht senden, wenn der Spieler nicht gewinnt",
+      "mode": "Nachrichtentyp",
+      "modeText": "Text",
+      "modeFlow": "Flow",
+      "text": "Nachricht"
     },
     "winningMessageDialog": {
       "title": "Einstellungen für Gewinnnachricht",
       "titleLabel": "Titel",
+      "prizeNameHint": "Sie können '{{prize_name}}' im Titel und in der Beschreibung verwenden, um den Preisnamen einzufügen.",
       "acceptButtonText": "Text der Bestätigungsschaltfläche",
       "shareButtonText": "Text der Teilen-Schaltfläche",
       "shareButtonDescription": "Beschreibung der Teilen-Schaltfläche"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "Mit Freunden teilen",
       "jackpotHeader": "JACKPOT",
       "jackpotBanner": "Jackpot",
-      "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze",
-      "rules": "Regeln"
+      "luckyWheelHeader": "GLÜCKSRAD",
+      "gashaponHeader": "GASHAPON",
+      "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze"
     },
     "form": {
       "generalSettingsTitle": "Allgemeine Einstellungen",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "Gewinneinstellungen"
     },
     "generalSettings": {
+      "showName": "Sichtbar",
       "playedAt": "Gespielt am",
       "rulesDescription": "Regelbeschreibung",
       "openerTags": "Kontakte markieren, die den Spiellink öffnen",
@@ -5494,7 +5586,8 @@
     "recent": "Zuletzt verwendet",
     "favourite": "Favorit",
     "upload": "Hochladen",
-    "done": "Fertig",
+    "select": "Auswählen",
+    "bulkSelect": "Mehrfachauswahl",
     "deleteFolder": "Ordner löschen",
     "renameFolder": "Ordner umbenennen",
     "noFiles": "Keine Dateien gefunden",
@@ -5698,5 +5791,8 @@
         "last_7d": "Letzte 7 Tage"
       }
     }
+  },
+  "accountFields": {
+    "title": "Bot-Felder"
   }
 }

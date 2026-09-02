@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 105" width="360" height="105">
+  <defs>
+    <linearGradient id="gashaponBtnFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff8fc0"/>
+      <stop offset="45%" stop-color="#ff5fa2"/>
+      <stop offset="100%" stop-color="#d43d80"/>
+    </linearGradient>
+    <linearGradient id="gashaponBtnRim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff6cf"/>
+      <stop offset="50%" stop-color="#ffd23f"/>
+      <stop offset="100%" stop-color="#c98f00"/>
+    </linearGradient>
+    <filter height="140%" id="gashaponBtnShadow" width="120%" x="-10%" y="-15%">
+      <feDropShadow dx="0" dy="6" flood-opacity="0.45" stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <rect
+    fill="url(#gashaponBtnRim)"
+    filter="url(#gashaponBtnShadow)"
+    height="93"
+    rx="46"
+    stroke="#a9670a"
+    stroke-width="2"
+    width="348"
+    x="6"
+    y="6"
+  />
+  <rect
+    fill="url(#gashaponBtnFace)"
+    height="70"
+    rx="35"
+    stroke="url(#gashaponBtnRim)"
+    stroke-width="3"
+    width="326"
+    x="17"
+    y="17"
+  />
+  <path
+    d="M32 30Q140 12 300 26Q310 34 296 40Q160 26 40 42Q28 38 32 30Z"
+    fill="#ffffff"
+    opacity="0.45"
+  />
+  <text
+    fill="#ffffff"
+    font-family="'Arial Black', Arial, sans-serif"
+    font-size="34"
+    font-weight="900"
+    letter-spacing="3"
+    text-anchor="middle"
+    x="180"
+    y="65"
+  >PLAY</text>
+</svg>

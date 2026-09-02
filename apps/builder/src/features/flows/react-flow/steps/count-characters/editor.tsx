@@ -80,6 +80,7 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
+              includeBotFields
               label={t("fields.inputFieldId.label")}
               name="inputFieldId"
               required
@@ -88,6 +89,7 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
             <CustomFieldSelect
               allowCreate={true}
               customFieldTypes={["number"]}
+              includeBotFields
               label={t("fields.outputFieldId.label")}
               name="outputFieldId"
               required

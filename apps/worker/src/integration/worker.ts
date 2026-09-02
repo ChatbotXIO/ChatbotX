@@ -43,6 +43,8 @@ import { handleMessageStatus } from "./handlers/message-status"
 import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
 import {
   deleteIncomingComment,
+  deleteIncomingMessage,
+  processMessageReaction,
   receiveComment,
   receiveMessage,
   updateIncomingComment,
@@ -197,6 +199,14 @@ async function startIntegrationWorker() {
                 await deleteIncomingComment(job.data.data)
                 return
               }
+              case IntegrationJobAction.deleteIncomingMessage: {
+                await deleteIncomingMessage(job.data.data)
+                return
+              }
+              case IntegrationJobAction.messageReaction: {
+                await processMessageReaction(job.data.data)
+                return
+              }
               case IntegrationJobAction.sendFlow: {
                 await runFlowNode(job.data.data)
                 return
@@ -305,7 +315,7 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.processLeadgen: {
-                await processLeadgen(job.data.data)
+                await processLeadgen(job.data.data, job)
                 return
               }
               case IntegrationJobAction.createMessage: {

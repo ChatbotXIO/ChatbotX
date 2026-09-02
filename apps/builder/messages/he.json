@@ -148,7 +148,12 @@
     "clone": "שכפול",
     "remove": "הסרה",
     "restore": "שחזור",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Save as draft",
+    "schedule": "Schedule",
+    "moveToDraft": "Move to draft",
+    "stop": "Stop",
+    "resume": "Resume"
   },
   "errors": {
     "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
@@ -369,6 +374,7 @@
       "sendFile": "שליחת קובץ",
       "sendGif": "שליחת GIF",
       "sendImage": "שליחת תמונה",
+      "sendMultipleImages": "מספר תמונות",
       "sendMessage": "שליחת הודעה",
       "sendNode": "הפעלת צומת אחר",
       "sendText": "שליחת טקסט",
@@ -413,9 +419,7 @@
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
       "importJsonOnly": "קבצי JSON בלבד",
-      "adsConversions": "מודעות ו-Meta Conversions",
-      "trackAdsLead": "מעקב אחר ליד ממודעות",
-      "trackAdsPurchase": "מעקב אחר רכישה ממודעות"
+      "adsConversions": "מודעות ו-Meta Conversions"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -452,6 +456,10 @@
       "addSlide": "הוספת כרטיס",
       "removeSlide": "הסרת כרטיס",
       "whatsappLinkButtonIgnored": "בוואטסאפ, הקישור של כרטיס זה לא יעבוד: כרטיס עם כפתור קישור לא יכול לכלול כפתורים נוספים. הוא יישלח כתשובה במקום זאת."
+    },
+    "sendMultipleImages": {
+      "removeImage": "הסר תמונה",
+      "selectImage": "בחר תמונות"
     },
     "additionalSteps": "שלבים נוספים",
     "delayType": {
@@ -1153,6 +1161,7 @@
     "disconnectFeatureDescription": "האם לנתק את {feature}?",
     "disconnectSuccess": "{feature} נותק בהצלחה",
     "reply": "תשובה",
+    "privateReply": "תגובה פרטית",
     "viewMessage": "הצגת הודעה",
     "changeLikeState": "שינוי מצב לייק",
     "changeHideState": "שינוי מצב הסתרה",
@@ -1195,6 +1204,9 @@
     "duplicatedSuccess": "{feature} שוכפל בהצלחה",
     "duplicateConfirmation": "פעולה זו תיצור עותק של {feature}.",
     "deleteFeature": "מחיקת {feature}",
+    "resetFeature": "איפוס {feature}",
+    "resetConfirmation": "פעולה זו תנקה את הערכים של {feature} שנבחרו.\nלא ניתן לבטל פעולה זו.",
+    "resetSuccess": "{feature} אופס בהצלחה",
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו.",
     "addFeature": "הוספת {feature}",
     "signOutConfirmation": "האם לצאת מהחשבון?",
@@ -1229,9 +1241,6 @@
     "enableSuccess": "{feature} הופעל בהצלחה",
     "userInactive": "המשתמש לא היה פעיל יותר מ-7 ימים",
     "messagingWindowClosed": "לא ניתן לשלוח את ההודעה מחוץ לחלון המותר",
-    "sendHumanAgentTag": "שליחת הודעה אחת עם תגית HUMAN_AGENT",
-    "warning": "אזהרה!",
-    "humanAgentWarningDescription": "ניתן להשיב להודעת משתמש בתוך 7 ימים רק כאשר לא ניתן לפתור את הבעיה באופן סביר בתוך 24 שעות. דוגמאות כוללות סופי שבוע, חגים או מקרים שדורשים יותר מיום אחד להשלמה. אל תשתמשו באפשרות זו מסיבה אחרת, משום שהיא עלולה לסכן את דף Facebook או חשבון Instagram שלכם. אם אינכם בטוחים, אל תמשיכו.",
     "humanAgentWindowExpired": "חלון שליחת ההודעות פג. איש הקשר חייב לשלוח הודעה תחילה כדי לפתוח מחדש את השיחה.",
     "restoreVersionSuccess": "התהליך שוחזר לגרסה שנבחרה",
     "revertToPublishedSuccess": "הטיוטה הוחזרה לגרסה שפורסמה",
@@ -1287,10 +1296,12 @@
     "selectPage": {
       "noPagesTitle": "לא נמצאו דפי Facebook",
       "noPagesDescription": "דפים בתוך Business Manager דורשים גישה ל-Business Manager במהלך החיבור. חברו מחדש את Messenger והעניקו את כל ההרשאות המבוקשות.",
+      "noConnectablePagesTitle": "אין דפים זמינים לחיבור",
+      "noConnectablePagesDescription": "אינך מנהל של דף זה",
       "bmLookupFailedTitle": "ייתכן שחסרים דפי Business Manager",
       "bmLookupFailedDescription": "חברו מחדש את Messenger והעניקו גישה ל-Business Manager כדי שניתן יהיה להציג דפים המנוהלים דרכו.",
       "alreadyConnectedNote": "דף זה כבר מחובר",
-      "notAdminNote": "נדרשת הרשאת מנהל מלאה בדף כדי להתחבר",
+      "notAdminNote": "אינך מנהל של דף זה",
       "tryAgain": "ניסיון חיבור מחדש"
     },
     "title": "Facebook Messenger",
@@ -2009,9 +2020,7 @@
       "startAnotherFlow": "הפעלת תהליך אחר",
       "notifyAdmins": "יידוע מנהלי מערכת",
       "transferConversationToHuman": "העברת השיחה לנציג אנושי",
-      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
-      "trackAdsLead": "מעקב אחר ליד ממודעות",
-      "trackAdsPurchase": "מעקב אחר רכישה ממודעות"
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
     },
     "triggerGoesOff": "הגורם המפעיל מופעל",
     "before": "לפני",
@@ -2023,7 +2032,8 @@
     "at": "בשעה"
   },
   "errorLogs": {
-    "title": "יומני שגיאות"
+    "title": "יומני שגיאות",
+    "unknownContact": "איש קשר לא ידוע"
   },
   "developerAccessToken": {
     "title": "אסימון גישה ל-API",
@@ -2551,6 +2561,21 @@
     "noEligiblePages": "אין דפים זכאים. השתמשו ב\"הוספת חדש\" כדי להעניק גישה ללידים.",
     "duplicateError": "כבר קיימת אוטומציה עבור דף וטופס אלה.",
     "subscribeError": "לא ניתן היה לרשום דף זה להתראות לידים של Facebook, ולכן האוטומציה לא נוצרה. חברו מחדש את הדף באמצעות \"הוספת חדש\" ונסו שוב."
+  },
+  "clickToMessageAds": {
+    "title": "מודעות Click-to-Message",
+    "description": "המודעות שולחות אנשים ישירות לשיחה ב-Messenger, Instagram או WhatsApp.",
+    "empty": {
+      "title": "לא מחובר חשבון לערוץ הזה",
+      "description": "חברו תחילה חשבון ערוץ, ולאחר מכן חזרו לכאן כדי ליצור מודעות.",
+      "cta": "מעבר להגדרות הערוץ"
+    },
+    "movedNote": {
+      "title": "המודעות עברו לכלים",
+      "description": "צרו ונהלו מודעות Click-to-Message מתוך כלי מודעות Click-to-Message.",
+      "cta": "פתיחת מודעות Click-to-Message"
+    },
+    "dashboardCta": "צפייה בלוח הבקרה של המודעות"
   },
   "ecommerce": {
     "title": "מסחר אלקטרוני",
@@ -3496,7 +3521,10 @@
       "append": "הוספה לסוף",
       "prepend": "הוספה להתחלה",
       "increase": "הגדלה ב-",
-      "decrease": "הקטנה ב-"
+      "decrease": "הקטנה ב-",
+      "groupSystemFields": "שדות מערכת",
+      "groupCustomFields": "שדות מותאמים אישית",
+      "groupAccountFields": "שדות בוט"
     },
     "dataCollect": {
       "label": "איסוף נתונים"
@@ -3599,8 +3627,8 @@
       "aiDeleteMessageHistory": "{aiName}: מחיקת היסטוריית הודעות"
     },
     "steps": {
-      "label": "שלבים",
-      "placeholder": "בחירת שלב"
+      "label": "צומת",
+      "placeholder": "בחירת צומת"
     },
     "folder": {
       "label": "תיקייה"
@@ -3879,7 +3907,8 @@
       "placeholder": "587"
     },
     "provider": {
-      "label": "ספק"
+      "label": "ספק",
+      "placeholder": "בחר ספק"
     },
     "prompt": {
       "label": "הנחיה",
@@ -4699,7 +4728,9 @@
       "scheduled": "מתוזמן",
       "sent": "נשלח",
       "sending": "נשלח כעת",
-      "cancelled": "בוטל"
+      "cancelled": "בוטל",
+      "draft": "Draft",
+      "failed": "Failed"
     },
     "stats": {
       "sent": "נשלח",
@@ -4785,6 +4816,63 @@
       "template": "תבנית",
       "noTemplate": "ללא תבנית",
       "integration": "שילוב"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "views": {
+      "table": "Table",
+      "calendar": "Calendar"
+    },
+    "panel": {
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "empty": {
+      "title": "No broadcasts yet",
+      "description": "Create your first broadcast to reach your contacts.",
+      "filteredTitle": "No broadcasts match",
+      "filteredDescription": "Try another status or clear the search."
+    },
+    "scheduleDialog": {
+      "title": "Schedule broadcast",
+      "description": "Choose when \"{name}\" should be sent."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Delete broadcast} other {Delete broadcasts}}",
+      "description": "{count, plural, one {\"{name}\" will be removed. Its data is deleted in the background.} other {# broadcasts will be removed. Their data is deleted in the background.}}",
+      "partial": "{deleted} of {requested} deleted — the rest changed status"
+    },
+    "calendar": {
+      "today": "Today",
+      "apply": "Apply",
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "custom": "Custom"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "emptyRange": "No broadcasts in this range",
+      "jumpToDate": "Jump to date"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Move to draft",
+      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+    },
+    "stopDialog": {
+      "title": "Stop broadcast",
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+    },
+    "resumeDialog": {
+      "title": "Resume broadcast",
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
   "condition": {
@@ -4924,6 +5012,7 @@
       "systemFields": "שדות מערכת",
       "topicCoupon": "נושא קופון",
       "customFields": "שדות מותאמים אישית",
+      "botFields": "שדות בוט",
       "email": "דוא\"ל",
       "sms": "SMS",
       "ctwaAds": "מודעות"
@@ -5357,9 +5446,6 @@
     "whatsapp": {
       "connect": "חיבור"
     },
-    "trackAdsFlowStep": {
-      "helpNote": "רושם המרה רק עבור אנשי קשר עם ייחוס למודעת click-to-WhatsApp או הפניית מודעה של Meta. אין השפעה על אנשי קשר אחרים."
-    },
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
@@ -5383,7 +5469,8 @@
       "sumOfProbabilities": "סכום כל ההסתברויות: {value}%",
       "loseProbability": "הסתברות הפסד: {value}%",
       "winProbability": "הסתברות זכייה: {value}%",
-      "newPrize": "פרס חדש"
+      "newPrize": "פרס חדש",
+      "prizeNameCustomFieldLabel": "שמירת שם הפרס בשדה מותאם אישית"
     },
     "prizeItemDialog": {
       "prizeTitle": "עריכת פרס",
@@ -5392,17 +5479,20 @@
       "nonWinningTitleLabel": "כותרת",
       "loseImageDescription": "גודל מומלץ 120x120 פיקסלים",
       "quantityLabel": "כמות הפרס",
-      "quantityDescription": "מספר הפעמים שניתן עדיין לזכות בפרס זה; יורד ב-1 בכל זכייה. השאירו ריק ללא הגבלה.",
-      "sendMessage": "שליחת הודעה כאשר השחקן לא זוכה",
-      "sendWinMessage": "שליחת הודעה לזוכה שקיבל את הפרס",
-      "messageMode": "סוג הודעה",
-      "messageModeText": "טקסט",
-      "messageModeFlow": "פלואו",
-      "messageText": "הודעה"
+      "quantityDescription": "מספר הפעמים שניתן עדיין לזכות בפרס זה; יורד ב-1 בכל זכייה. השאירו ריק ללא הגבלה."
+    },
+    "outcomeMessage": {
+      "enableWin": "שליחת הודעה לזוכה שקיבל את הפרס",
+      "enableLose": "שליחת הודעה כאשר השחקן לא זוכה",
+      "mode": "סוג הודעה",
+      "modeText": "טקסט",
+      "modeFlow": "פלואו",
+      "text": "הודעה"
     },
     "winningMessageDialog": {
       "title": "הגדרות הודעת זכייה",
       "titleLabel": "כותרת",
+      "prizeNameHint": "ניתן להשתמש ב-'{{prize_name}}' בכותרת ובתיאור כדי להוסיף את שם הפרס.",
       "acceptButtonText": "טקסט כפתור אישור",
       "shareButtonText": "טקסט כפתור שיתוף",
       "shareButtonDescription": "תיאור כפתור שיתוף"
@@ -5418,8 +5508,9 @@
       "shareWithFriends": "שיתוף עם חברים",
       "jackpotHeader": "ג'קפוט",
       "jackpotBanner": "ג'קפוט",
-      "comingSoon": "תצוגה מקדימה מפורטת תגיע בקרוב עבור סוג משחק זה",
-      "rules": "חוקים"
+      "luckyWheelHeader": "גלגל המזל",
+      "gashaponHeader": "גשאפון",
+      "comingSoon": "תצוגה מקדימה מפורטת תגיע בקרוב עבור סוג משחק זה"
     },
     "form": {
       "generalSettingsTitle": "הגדרות כלליות",
@@ -5428,6 +5519,7 @@
       "prizeSettingsTitle": "הגדרות פרסים"
     },
     "generalSettings": {
+      "showName": "גלוי",
       "playedAt": "שוחק בתאריך",
       "rulesDescription": "תיאור החוקים",
       "openerTags": "תיוג אנשי קשר שפותחים את קישור המשחק",
@@ -5494,7 +5586,8 @@
     "recent": "אחרונים",
     "favourite": "מועדפים",
     "upload": "העלאה",
-    "done": "סיום",
+    "select": "בחירה",
+    "bulkSelect": "בחירה מרובה",
     "deleteFolder": "מחיקת תיקייה",
     "renameFolder": "שינוי שם תיקייה",
     "noFiles": "לא נמצאו קבצים",
@@ -5698,5 +5791,8 @@
         "last_7d": "7 הימים האחרונים"
       }
     }
+  },
+  "accountFields": {
+    "title": "שדות בוט"
   }
 }

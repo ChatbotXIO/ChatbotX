@@ -123,7 +123,7 @@ const INSIGHTS_PATH =
   "/workspaces/{workspaceId}/ads-campaign/messaging-ads/insights"
 
 const { adsCampaignAuthenticatedAPI } = await import(
-  "@/features/ads-campaign/api/authenticated"
+  "@/features/ads-campaign/api/private"
 )
 
 const baseInput: InsightsInput = {

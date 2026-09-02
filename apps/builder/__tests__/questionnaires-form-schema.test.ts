@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { updateQuestionnaireRequest } from "../src/features/questionnaires/schemas/action"
+import { updateQuestionnaireRequest } from "../src/features/questionnaires/schema/action"
 import {
   getCustomFieldSelectionReset,
   getQuestionFieldMappingReset,

@@ -127,10 +127,6 @@ export const BaseEditor = ({
         return t("trigger.actions.sendMetaCapiEvent")
       case triggerActions.enum.runGoogleSheet:
         return "Google Sheets"
-      case triggerActions.enum.trackAdsLead:
-        return t("trigger.actions.trackAdsLead")
-      case triggerActions.enum.trackAdsPurchase:
-        return t("trigger.actions.trackAdsPurchase")
       default:
         break
     }

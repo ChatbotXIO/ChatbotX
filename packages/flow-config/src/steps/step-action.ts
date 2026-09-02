@@ -9,6 +9,7 @@ export const stepTypes = z.enum([
   // Send Messages (S_)
   "sendText",
   "sendImage",
+  "sendMultipleImages",
   "sendCard",
   "sendCarousel",
   "sendVideo",
@@ -128,8 +129,6 @@ export const stepTypes = z.enum([
   // Messenger Operations (N_)
   "facebookCustomAudience",
   "sendMetaCapiEvent",
-  "trackAdsLead",
-  "trackAdsPurchase",
   "setMessengerUserPersistentMenu",
   "enableMessengerComposer",
   "disableMessengerComposer",

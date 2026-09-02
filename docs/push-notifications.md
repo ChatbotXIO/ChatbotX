@@ -25,7 +25,7 @@ See `docs/request-workflow.md` for the sequence diagram.
 
 ## `UserDeviceToken` lifecycle
 
-- **Register** — `PUT /users/me/device-tokens` (`apps/builder/src/features/device-tokens/api/authenticated.ts`).
+- **Register** — `PUT /users/me/device-tokens` (`apps/builder/src/features/device-tokens/api/private.ts`).
   Upserts on `token` (globally unique — a token moves between users across
   re-logins on the same device, so it is not scoped per-user at the DB level).
   Requires workspace membership when `workspaceId` is provided (403 otherwise).

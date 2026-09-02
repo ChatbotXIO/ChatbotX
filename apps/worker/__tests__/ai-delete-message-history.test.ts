@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   cacheDelete: vi.fn(),
   createMessageRepository: vi.fn(),
   findLastByConversation: vi.fn(),
+  findDMByContact: vi.fn(),
   loggerError: vi.fn(),
   runExclusive: vi.fn(),
   updateMarker: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("@chatbotx.io/ai/server", () => ({
 }))
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
+    findDMByContact: mocks.findDMByContact,
     updateAIContextLastMessageId: mocks.updateMarker,
   },
 }))
@@ -36,8 +38,14 @@ const { handleAIDeleteMessageHistory } = await import(
 )
 
 const props = {
-  conversation: { id: "conv-1", workspaceId: "ws-1" },
+  conversation: {
+    id: "conv-1",
+    workspaceId: "ws-1",
+    contactId: "contact-1",
+    sourceId: null,
+  },
   contactInbox: {
+    channel: "instagram",
     lastMessageAt: new Date("2026-06-01T01:00:00.000Z"),
   },
 } as never
@@ -52,6 +60,7 @@ describe("handleAIDeleteMessageHistory", () => {
       (_conversationId: string, fn: () => Promise<unknown>) => fn(),
     )
     mocks.cacheDelete.mockResolvedValue(undefined)
+    mocks.findDMByContact.mockResolvedValue(undefined)
     mocks.updateMarker.mockResolvedValue(undefined)
   })
 
@@ -119,6 +128,59 @@ describe("handleAIDeleteMessageHistory", () => {
     await handleAIDeleteMessageHistory(props)
 
     expect(mocks.findLastByConversation).toHaveBeenCalledTimes(1)
+  })
+
+  test("also resets the canonical DM conversation from a comment conversation", async () => {
+    mocks.findLastByConversation
+      .mockResolvedValueOnce([{ id: "comment-last" }])
+      .mockResolvedValueOnce([{ id: "dm-last" }])
+    mocks.findDMByContact.mockResolvedValue({
+      id: "dm-conv-1",
+      workspaceId: "ws-1",
+    })
+
+    await expect(
+      handleAIDeleteMessageHistory({
+        ...props,
+        conversation: {
+          id: "comment-conv-1",
+          workspaceId: "ws-1",
+          contactId: "contact-1",
+          sourceId: "post-1",
+        },
+      } as never),
+    ).resolves.toEqual({
+      status: "success",
+      result: null,
+    })
+
+    expect(mocks.findDMByContact).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      channel: "instagram",
+    })
+    expect(mocks.runExclusive).toHaveBeenNthCalledWith(
+      1,
+      "comment-conv-1",
+      expect.any(Function),
+    )
+    expect(mocks.runExclusive).toHaveBeenNthCalledWith(
+      2,
+      "dm-conv-1",
+      expect.any(Function),
+    )
+    expect(mocks.cacheDelete).toHaveBeenNthCalledWith(1, "comment-conv-1")
+    expect(mocks.cacheDelete).toHaveBeenNthCalledWith(2, "dm-conv-1")
+    expect(mocks.updateMarker).toHaveBeenNthCalledWith(1, {
+      workspaceId: "ws-1",
+      conversationId: "comment-conv-1",
+      messageId: "comment-last",
+    })
+    expect(mocks.updateMarker).toHaveBeenNthCalledWith(2, {
+      workspaceId: "ws-1",
+      conversationId: "dm-conv-1",
+      messageId: "dm-last",
+    })
   })
 
   test("returns the error route when marker mutation fails after deleting the cache", async () => {

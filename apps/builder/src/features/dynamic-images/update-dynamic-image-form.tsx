@@ -25,8 +25,8 @@ import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/c
 import { updateDynamicImageAction } from "./actions/update-dynamic-image.action"
 import { DynamicImageEditor } from "./components/dynamic-image-editor"
 import { DynamicImageTemplatePicker } from "./components/template-picker"
-import { updateDynamicImageRequest } from "./schemas/action"
-import type { DynamicImageResource } from "./schemas/resource"
+import { updateDynamicImageRequest } from "./schema/action"
+import type { DynamicImageResource } from "./schema/resource"
 
 function PublicUrlSection({ publicUrl }: { publicUrl: string }) {
   const t = useTranslations()

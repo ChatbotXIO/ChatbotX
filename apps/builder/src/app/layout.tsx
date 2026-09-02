@@ -5,11 +5,13 @@ import { getLocale } from "next-intl/server"
 import type { ReactNode } from "react"
 import { PublicEnvScript } from "@/components/public-env-script"
 import { SupportChatScript } from "@/components/support-chat-script"
+import { TimezoneSync } from "@/components/timezone-sync"
 import { env } from "@/env"
 import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getDirection } from "@/i18n/direction"
 import { getDomainFromHeader } from "@/lib/domain"
+import { getUserTimezone } from "@/lib/timezone"
 import "./globals.css"
 import "./themes.css"
 import { DirectionProvider } from "@chatbotx.io/ui/components/ui/direction"
@@ -44,6 +46,7 @@ export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
   const dir = getDirection(locale)
   const tenantSettings = await getTenantSettings()
+  const timezone = await getUserTimezone()
   const domain = await getDomainFromHeader()
   const isBuilderDomain =
     domain === new URL(env.NEXT_PUBLIC_BUILDER_URL).hostname
@@ -68,7 +71,10 @@ export default async function RootLayout({ children }: Props) {
         <TenantProvider settings={tenantSettings}>
           <DirectionProvider direction={dir}>
             <UiProvider>
-              <NextIntlClientProvider>{children}</NextIntlClientProvider>
+              <NextIntlClientProvider>
+                <TimezoneSync timezone={timezone} />
+                {children}
+              </NextIntlClientProvider>
             </UiProvider>
           </DirectionProvider>
         </TenantProvider>

@@ -19,8 +19,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { renameAppointmentCalendarAction } from "../actions/rename-appointment-calendar.action"
-import { renameAppointmentCalendarRequest } from "../schemas/action"
-import type { AppointmentCalendarListItem } from "../schemas/resource"
+import { renameAppointmentCalendarRequest } from "../schema/action"
+import type { AppointmentCalendarListItem } from "../schema/resource"
 
 type Props = {
   workspaceId: string

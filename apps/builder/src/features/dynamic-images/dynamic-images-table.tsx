@@ -37,8 +37,8 @@ import { useTenantSettings } from "@/features/tenant"
 import { enableDynamicImageAction } from "./actions/enable-dynamic-image.action"
 import { DeleteDynamicImagesDialog } from "./delete-dynamic-images"
 import { DynamicImagesTableToolbarActions } from "./dynamic-images-table-toolbar-actions"
-import type { ListDynamicImagesResponse } from "./schemas/query"
-import type { DynamicImageResource } from "./schemas/resource"
+import type { ListDynamicImagesResponse } from "./schema/query"
+import type { DynamicImageResource } from "./schema/resource"
 
 type DynamicImagesTableProps = {
   workspaceId: string

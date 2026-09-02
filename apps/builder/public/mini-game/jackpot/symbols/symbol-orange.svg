@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <radialGradient id="orG" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fdba74"/>
+      <stop offset="35%" stop-color="#fb923c"/>
+      <stop offset="75%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#9a3412"/>
+    </radialGradient>
+    <filter id="shOr"><feDropShadow dx="2" dy="5" stdDeviation="4" flood-opacity="0.45"/></filter>
+  </defs>
+  <g filter="url(#shOr)">
+    <!-- Green Leaf -->
+    <path d="M 50,22 Q 68,14 74,25 Q 60,30 50,22 Z" fill="#22c55e" stroke="#15803d" stroke-width="1"/>
+    <!-- Orange Sphere -->
+    <circle cx="50" cy="55" r="36" fill="url(#orG)" stroke="#9a3412" stroke-width="2"/>
+    <ellipse cx="40" cy="40" rx="10" ry="6" fill="#ffffff" opacity="0.65"/>
+    <circle cx="50" cy="22" r="3.5" fill="#15803d"/>
+  </g>
+</svg>

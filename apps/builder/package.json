@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-builder.mjs",
-    "check-types": "tsc --noEmit",
+    "check-types": "NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit",
     "dev": "node scripts/clean-next-cache.mjs && dotenv -e .env -e ../../.env -- next dev -p 3123 | pino-pretty",
     "https": "dotenv -e .env -e ../../.env -- next dev -p 3123 --experimental-https",
     "i18n:check": "i18n-check --source en --locales messages",
@@ -15,7 +15,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ai-sdk/mcp": "^1.0.37",
+    "@ai-sdk/mcp": "^2.0.32",
     "@base-ui/react": "^1.6.0",
     "@bull-board/api": "^8.1.2",
     "@bull-board/hono": "^8.1.2",

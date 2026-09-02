@@ -7,7 +7,7 @@ import {
   listAuditLogAdmins,
   listAuditLogs,
 } from "@/enterprise/features/audit-logs/queries"
-import { listAuditLogsSearchParamsCache } from "@/enterprise/features/audit-logs/schemas/query"
+import { listAuditLogsSearchParamsCache } from "@/enterprise/features/audit-logs/schema/query"
 
 export default async function AuditLogsPage(props: {
   params: Promise<{ workspaceId: string }>

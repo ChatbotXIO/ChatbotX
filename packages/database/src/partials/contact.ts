@@ -194,6 +194,7 @@ export const contactFilterFields = z.enum([
   "keywordsReceived",
   "customFields",
   "customField",
+  "botField",
   "executedFlow",
   "executedStep",
   "consecutiveAiFailures",

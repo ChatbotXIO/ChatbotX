@@ -98,6 +98,7 @@ export const AIEditImageDialog = ({ parentName }: AIEditImageDialogProps) => {
 
               <CustomFieldSelect
                 allowCreate={true}
+                includeBotFields
                 includeReserved={false}
                 label={t("fields.outputFieldId.label")}
                 name="outputFieldId"

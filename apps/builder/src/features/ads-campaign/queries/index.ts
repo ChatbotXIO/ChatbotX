@@ -10,11 +10,12 @@ import { logger } from "@/lib/log"
  * per-integration (out/plan/ctwa-ctm-ctid-box-merge.md "Auth =
  * per-integration"), not workspace-wide.
  *
- * Fail-soft: this is rendered as ONE box inside the shared "Ads Optimization"
- * (CAPI) page, which also hosts conversion tracking. A failure resolving the
- * box's connection (e.g. the connection table not yet migrated, or a transient
- * DB error) must degrade the box to its "not connected" state, never take down
- * the whole page.
+ * Fail-soft: this is rendered on the Click to Message Ads tool page
+ * (`/space/{ws}/messaging-ads/{channel}`), separate from the channel's
+ * "Ads Optimization" (CAPI) page. A failure resolving the box's connection
+ * (e.g. the connection table not yet migrated, or a transient DB error) must
+ * degrade the box to its "not connected" state, never take down the whole
+ * page.
  */
 export async function checkMessagingAdsConnectionState(input: {
   workspaceId: string

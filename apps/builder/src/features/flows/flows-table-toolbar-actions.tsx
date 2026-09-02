@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl"
 import { type Dispatch, type SetStateAction, useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
-import type { FlowResource } from "./schemas/resource"
+import type { FlowResource } from "./schema/resource"
 
 type FlowsTableToolbarActionsProps = {
   table: Table<FlowResource>

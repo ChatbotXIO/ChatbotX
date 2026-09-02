@@ -5,7 +5,7 @@ import { useTenantSettings } from "@/features/tenant"
 import { useWorkspaceId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
 import { extractDynamicImageId } from "../lib/dynamic-image-url"
-import type { DynamicImageResource } from "../schemas/resource"
+import type { DynamicImageResource } from "../schema/resource"
 
 export type DynamicImagePreview = {
   url: string | undefined

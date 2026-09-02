@@ -100,9 +100,8 @@ export type ContactInboxWorkspaceRow = Pick<
 export const contactInboxRepository = {
   /**
    * Single-row, workspace-scoped load of a contact inbox by id — the cheap
-   * "does this contact inbox even exist / what channel is it" lookup that
-   * `recordTriggerConversion` (ads-conversion trigger actions) starts with,
-   * so a non-eligible-channel contact inbox costs exactly one indexed lookup
+   * "does this contact inbox even exist / what channel is it" lookup, so a
+   * non-eligible-channel contact inbox costs exactly one indexed lookup
    * (primary key join to Inbox for workspace scoping) before returning.
    * `channel` is returned as the raw `text()` column value — callers narrow
    * it with `isAdsEligibleChannel`.

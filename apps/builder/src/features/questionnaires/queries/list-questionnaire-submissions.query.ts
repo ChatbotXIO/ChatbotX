@@ -1,6 +1,6 @@
 import { questionnaireSubmissionService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListQuestionnaireSubmissionsRequest } from "../schemas/query"
+import type { ListQuestionnaireSubmissionsRequest } from "../schema/query"
 
 export async function listQuestionnaireSubmissions(
   input: ListQuestionnaireSubmissionsRequest,

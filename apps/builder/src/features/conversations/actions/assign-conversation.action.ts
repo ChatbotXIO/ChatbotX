@@ -10,7 +10,7 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import {
   type AssignConversationSchema,
   assignConversationSchema,

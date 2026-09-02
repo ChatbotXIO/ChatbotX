@@ -3,9 +3,14 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { AccountFieldsCard } from "@/features/bot-fields/account-fields-card"
+import {
+  ACCOUNT_FIELDS_HARD_CAP,
+  listBotFieldsRSC,
+} from "@/features/bot-fields/queries"
 import { CustomFieldsTable } from "@/features/custom-fields/custom-field-table"
 import { listCustomFieldsRSC } from "@/features/custom-fields/queries"
-import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
+import { listCustomFieldsSearchParams } from "@/features/custom-fields/schema/query"
 
 export default async function CustomFieldsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -20,7 +25,7 @@ export default async function CustomFieldsPage(props: {
   const search = await listCustomFieldsSearchParams.parse(searchParams)
   const folderId = search.folderId ?? rootFolderId
 
-  const promises = Promise.all([
+  const customFieldsPromises = Promise.all([
     listCustomFieldsRSC({
       ...search,
       workspaceId,
@@ -28,13 +33,31 @@ export default async function CustomFieldsPage(props: {
     }),
   ])
 
+  const botFieldsPromises = Promise.all([
+    listBotFieldsRSC({
+      workspaceId,
+      folderId,
+      page: 1,
+      perPage: ACCOUNT_FIELDS_HARD_CAP,
+    }),
+  ])
+
   return (
-    <Suspense>
-      <CustomFieldsTable
-        folderId={folderId}
-        promises={promises}
-        workspaceId={workspaceId}
-      />
-    </Suspense>
+    <div className="flex flex-col gap-6">
+      <Suspense>
+        <CustomFieldsTable
+          folderId={folderId}
+          promises={customFieldsPromises}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+      <Suspense>
+        <AccountFieldsCard
+          folderId={folderId}
+          promises={botFieldsPromises}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+    </div>
   )
 }

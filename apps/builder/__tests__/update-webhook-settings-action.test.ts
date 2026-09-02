@@ -56,7 +56,7 @@ vi.mock("@chatbotx.io/events", () => ({
   updateWebhookCache: mockUpdateWebhookCache,
 }))
 
-vi.mock("../src/features/webhooks/schemas/update-webhook-schema", () => ({
+vi.mock("../src/features/webhooks/schema/update-webhook-schema", () => ({
   updateWebhookSettingsRequest: {},
 }))
 

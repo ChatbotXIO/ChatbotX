@@ -1,3 +1,9 @@
+import {
+  BOOLEAN_FALSY_LITERALS,
+  BOOLEAN_LITERAL_PATTERN_SOURCE,
+  BOOLEAN_TRUTHY_LITERALS,
+  canonicalBooleanLiteral,
+} from "@chatbotx.io/utils/custom-field"
 import { relationsFilterToSQL, type SQL } from "drizzle-orm"
 import { alias, PgDialect } from "drizzle-orm/pg-core"
 import { describe, expect, test } from "vitest"
@@ -182,6 +188,27 @@ describe("applyContactFilter", () => {
     expect(applyContactFilter(unknownOnlyFilter)).toEqual({})
     expect(contactFilterHasPredicate(unknownOnlyFilter)).toBe(false)
     expect(contactFilterHasPredicate(validFilter)).toBe(true)
+  })
+
+  test("threads workspaceId through so a botField-only criteria reports a real predicate", () => {
+    // Regression guard: `botField` is workspace-scoped (see the "bot fields"
+    // describe block below), so `contactFilterHasPredicate` must forward
+    // `workspaceId` to `applyContactFilter` — omitting it must not silently
+    // report "no predicate" for an otherwise-valid criteria.
+    const botFieldOnlyFilter = {
+      operator: "and" as const,
+      conditions: [
+        {
+          field: "botField",
+          botFieldId: "bf-1",
+          valueType: "text",
+          operator: operatorTypes.enum.isNotEmpty,
+        },
+      ],
+    }
+
+    expect(contactFilterHasPredicate(botFieldOnlyFilter)).toBe(false)
+    expect(contactFilterHasPredicate(botFieldOnlyFilter, "ws-1")).toBe(true)
   })
 
   test("maps inbox filters to an EXISTS ContactInbox.inboxId subquery", () => {
@@ -3212,7 +3239,6 @@ describe("applyContactFilter — custom fields", () => {
   })
 
   test.each([
-    "boolean",
     "select",
     "text",
   ])("renders %s custom-field eq as a plain value comparison", (valueType) => {
@@ -3223,6 +3249,176 @@ describe("applyContactFilter — custom fields", () => {
     expect(query.sql).not.toContain("NOT EXISTS")
     expect(query.sql).toContain('"ContactCustomField"."value" =')
     expect(query.params).toContain("yes")
+  })
+})
+
+describe("applyContactFilter — boolean custom fields", () => {
+  const booleanField = (operator: string, value?: unknown) => {
+    const condition =
+      value === undefined
+        ? {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType: "boolean",
+            operator,
+          }
+        : {
+            field: "customField",
+            customFieldId: "cf-1",
+            valueType: "boolean",
+            operator,
+            value,
+          }
+
+    return applyContactFilter({
+      operator: "and",
+      conditions: [condition],
+    })
+  }
+
+  /**
+   * The predicate only ever guards/casts the STORED column value at query
+   * time — a real Postgres is needed to prove a given stored string actually
+   * matches. This package's contact-filter tests never run against a live
+   * DB (they assert rendered SQL text/params only, see `renderContactWhere`
+   * above); a live-Postgres integration test that would prove this against a
+   * real `::boolean` cast is therefore out of scope for this render-based
+   * harness.
+   *
+   * Short of that, this table is a HAND-WRITTEN truth table reasoned
+   * independently from Postgres's own documented boolean literal semantics
+   * (case-insensitive, whitespace-trimmed `true/yes/on/1/t/y` and
+   * `false/no/off/0/f/n`) — it deliberately does NOT derive its expectations
+   * by calling `canonicalBooleanLiteral` (the earlier version of this test
+   * did exactly that, which is circular: `canonicalBooleanLiteral` is the
+   * SAME source `BOOLEAN_LITERAL_PATTERN_SOURCE`/the SQL guard regex is
+   * generated from, so a bug in that shared literal set would silently pass
+   * both the implementation and the "expectation"). Only the ASSERTION below
+   * exercises the real implementation, so this table can actually catch a
+   * regression in it.
+   */
+  test.each([
+    { stored: "TRUE", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: " TRUE ", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "true", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "1", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "0", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "FALSE", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "f", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "yes", eqTrueMatches: true, eqFalseMatches: false },
+    { stored: "off", eqTrueMatches: false, eqFalseMatches: true },
+    { stored: "", eqTrueMatches: false, eqFalseMatches: false },
+    { stored: "12313", eqTrueMatches: false, eqFalseMatches: false },
+  ])("stored $stored -> eq true matches:$eqTrueMatches, eq false matches:$eqFalseMatches (hand-written oracle, whitespace/case-tolerant)", ({
+    stored,
+    eqTrueMatches,
+    eqFalseMatches,
+  }) => {
+    expect(canonicalBooleanLiteral(stored) === "true").toBe(eqTrueMatches)
+    expect(canonicalBooleanLiteral(stored) === "false").toBe(eqFalseMatches)
+  })
+
+  test("drift guard: every canonical boolean literal passes the SQL guard regex and maps to the same boolean", () => {
+    const guardRegex = new RegExp(BOOLEAN_LITERAL_PATTERN_SOURCE)
+
+    for (const literal of BOOLEAN_TRUTHY_LITERALS) {
+      expect(guardRegex.test(literal)).toBe(true)
+      expect(canonicalBooleanLiteral(literal)).toBe("true")
+    }
+    for (const literal of BOOLEAN_FALSY_LITERALS) {
+      expect(guardRegex.test(literal)).toBe(true)
+      expect(canonicalBooleanLiteral(literal)).toBe("false")
+    }
+    // Garbage never passes the guard, so it can never reach the cast.
+    expect(guardRegex.test("12313")).toBe(false)
+    expect(canonicalBooleanLiteral("12313")).toBeNull()
+  })
+
+  test("renders eq true with a whitespace/case-tolerant guard and boolean cast", () => {
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.eq, "true"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
+    expect(query.sql).toContain("lower(btrim(")
+    expect(query.sql).toContain("::boolean")
+    expect(query.params).toContain(true)
+  })
+
+  test("renders eq false comparing against a literal false parameter", () => {
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.eq, "false"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
+    expect(query.params).toContain(false)
+  })
+
+  test("isEmpty/isNotEmpty for boolean fields only treat '' as empty (unchanged)", () => {
+    const isEmptyQuery = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.isEmpty),
+    )
+    const isNotEmptyQuery = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.isNotEmpty),
+    )
+
+    expect(isEmptyQuery.sql).toContain("NOT EXISTS (")
+    expect(isEmptyQuery.sql).toContain("IS NOT NULL")
+    expect(isEmptyQuery.sql).toContain("<> ''")
+    expect(isNotEmptyQuery.sql).toContain("EXISTS (")
+    expect(isNotEmptyQuery.sql).not.toContain("NOT EXISTS")
+    expect(isNotEmptyQuery.sql).toContain("IS NOT NULL")
+    expect(isNotEmptyQuery.sql).toContain("<> ''")
+  })
+
+  test("drops a boolean custom-field condition with a blank eq value", () => {
+    expect(booleanField(operatorTypes.enum.eq, "")).toEqual({})
+  })
+
+  // The OPERAND goes through the same literal registry as stored values, so
+  // a filter saved with "Yes"/"TRUE"/"1" compares as true — previously the
+  // raw `value === "true"` JS check silently flipped these to false.
+  test("canonicalizes a non-canonical truthy operand (Yes) to a true comparison", () => {
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.eq, "Yes"),
+    )
+
+    expect(query.sql).toContain("::boolean")
+    expect(query.params).toContain(true)
+    expect(query.params).not.toContain(false)
+  })
+
+  test("an unrecognized eq operand matches nothing (FALSE predicate)", () => {
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.eq, "maybe"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).toContain("FALSE")
+    expect(query.sql).not.toContain("::boolean")
+  })
+
+  test("ne with an unrecognized operand matches every row (NOT EXISTS FALSE)", () => {
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.ne, "maybe"),
+    )
+
+    expect(query.sql).toContain("NOT EXISTS (")
+    expect(query.sql).toContain("FALSE")
+  })
+
+  test("negates eq via NOT EXISTS if ne is ever received for a boolean field", () => {
+    // The UI never offers `ne` for boolean, but NEGATION_TO_POSITIVE maps it
+    // to `eq` + an outer negate, mirroring how `number`/`text` handle it.
+    const query = renderFirstRawCondition(
+      booleanField(operatorTypes.enum.ne, "true"),
+    )
+
+    expect(query.sql).toContain("NOT EXISTS (")
+    expect(query.sql).toContain("::boolean")
+    expect(query.params).toContain(true)
   })
 })
 
@@ -3348,6 +3544,204 @@ describe("applyContactFilter — couponTopic (dynamic per-topic field)", () => {
         ],
       }),
     ).toEqual({})
+  })
+})
+
+describe("applyContactFilter — bot fields (workspace-level, not per-contact)", () => {
+  const WORKSPACE_ID = "ws-1"
+
+  const botField = (
+    valueType: string,
+    operator: string,
+    value?: unknown,
+    botFieldType?: string,
+    workspaceId: string | undefined = WORKSPACE_ID,
+  ) => {
+    const condition =
+      value === undefined
+        ? {
+            field: "botField",
+            botFieldId: "bf-1",
+            valueType,
+            botFieldType,
+            operator,
+          }
+        : {
+            field: "botField",
+            botFieldId: "bf-1",
+            valueType,
+            botFieldType,
+            operator,
+            value,
+          }
+
+    return applyContactFilter(
+      { operator: "and", conditions: [condition] },
+      workspaceId,
+    )
+  }
+
+  test("renders a positive comparison as an EXISTS over BotField scoped by workspaceId + botFieldId", () => {
+    const query = renderFirstRawCondition(
+      botField("text", operatorTypes.enum.eq, "vip"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
+    expect(query.sql).toContain('"BotField"')
+    expect(query.sql).toContain('"BotField"."workspaceId"')
+    expect(query.sql).toContain('"BotField"."id"')
+    expect(query.sql).toContain('"BotField"."value" =')
+    // Not a per-contact table — no correlation on the contact id at all.
+    expect(query.sql).not.toContain("ContactCustomField")
+    expect(query.sql).not.toContain('"contactId"')
+    expect(query.params).toContain(WORKSPACE_ID)
+    expect(query.params).toContain("bf-1")
+    expect(query.params).toContain("vip")
+  })
+
+  test("renders ne as NOT EXISTS over a positive eq predicate (three-valued negation)", () => {
+    const query = renderFirstRawCondition(
+      botField("text", operatorTypes.enum.ne, "vip"),
+    )
+
+    expect(query.sql).toContain("NOT EXISTS (")
+    expect(query.sql).toContain('"BotField"."value" =')
+  })
+
+  test("isEmpty / isNotEmpty only treat NULL or '' as empty", () => {
+    const isEmptyQuery = renderFirstRawCondition(
+      botField("text", operatorTypes.enum.isEmpty),
+    )
+    const isNotEmptyQuery = renderFirstRawCondition(
+      botField("text", operatorTypes.enum.isNotEmpty),
+    )
+
+    expect(isEmptyQuery.sql).toContain("NOT EXISTS (")
+    expect(isEmptyQuery.sql).toContain("IS NOT NULL")
+    expect(isEmptyQuery.sql).toContain("<> ''")
+    expect(isNotEmptyQuery.sql).toContain("EXISTS (")
+    expect(isNotEmptyQuery.sql).not.toContain("NOT EXISTS")
+  })
+
+  test.each([
+    ["number", operatorTypes.enum.gt, "12", ["::numeric", ">"]],
+    ["number", operatorTypes.enum.gte, "12", ["::numeric", ">="]],
+    [
+      "number",
+      operatorTypes.enum.isBetween,
+      ["10", "20"],
+      ["::numeric", ">=", "<="],
+    ],
+    ["text", operatorTypes.enum.contains, "vip", ["ILIKE"]],
+    ["text", operatorTypes.enum.startsWith, "vip", ["ILIKE"]],
+  ])("renders positive bot-field %s %s as EXISTS", (valueType, operator, value, contains) => {
+    const query = renderFirstRawCondition(botField(valueType, operator, value))
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).not.toContain("NOT EXISTS")
+    for (const token of contains) {
+      expect(query.sql).toContain(token)
+    }
+  })
+
+  test("renders boolean eq with the same whitespace/case-tolerant guard as custom fields", () => {
+    const query = renderFirstRawCondition(
+      botField("boolean", operatorTypes.enum.eq, "true"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).toContain("lower(btrim(")
+    expect(query.sql).toContain("::boolean")
+    expect(query.params).toContain(true)
+  })
+
+  test("renders a `date`-typed datetime condition as a wall-clock day comparison (no ::timestamptz)", () => {
+    const query = renderFirstRawCondition(
+      botField("datetime", operatorTypes.enum.eq, "2026-07-22", "date"),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).toContain("left(")
+    expect(query.sql).not.toContain("::timestamptz")
+    expect(query.params).toContain("2026-07-22")
+  })
+
+  test("renders a `datetime`-typed condition as a zone-aware instant window", () => {
+    const query = renderFirstRawCondition(
+      botField(
+        "datetime",
+        operatorTypes.enum.eq,
+        "2026-05-19T10:00:00Z",
+        "datetime",
+      ),
+    )
+
+    expect(query.sql).toContain("EXISTS (")
+    expect(query.sql).toContain("::timestamptz")
+    expect(query.params).toContain("2026-05-19T10:00:00.000Z")
+  })
+
+  test("drops a datetime condition when botFieldType is omitted (no legacy fallback for bot fields)", () => {
+    expect(
+      botField("datetime", operatorTypes.enum.eq, "2026-05-19T10:00:00Z"),
+    ).toEqual({})
+  })
+
+  test("no-ops without botFieldId", () => {
+    const where = applyContactFilter(
+      {
+        operator: "and",
+        conditions: [
+          { field: "botField", operator: operatorTypes.enum.isNotEmpty },
+        ],
+      },
+      WORKSPACE_ID,
+    )
+    expect(where).toEqual({})
+  })
+
+  test("no-ops without a workspaceId scope, even with a valid condition", () => {
+    // Called through `applyContactFilter` directly (not the `botField` helper,
+    // whose `workspaceId` parameter defaults `undefined` right back to
+    // `WORKSPACE_ID` per normal JS default-parameter semantics) to exercise
+    // the true no-workspaceId call shape.
+    const where = applyContactFilter({
+      operator: "and",
+      conditions: [
+        {
+          field: "botField",
+          botFieldId: "bf-1",
+          valueType: "text",
+          operator: operatorTypes.enum.isNotEmpty,
+        },
+      ],
+    })
+    expect(where).toEqual({})
+  })
+
+  test("scopes strictly by workspaceId — different workspace ids render different params", () => {
+    const queryA = renderFirstRawCondition(
+      botField(
+        "text",
+        operatorTypes.enum.isNotEmpty,
+        undefined,
+        undefined,
+        "ws-a",
+      ),
+    )
+    const queryB = renderFirstRawCondition(
+      botField(
+        "text",
+        operatorTypes.enum.isNotEmpty,
+        undefined,
+        undefined,
+        "ws-b",
+      ),
+    )
+
+    expect(queryA.params).toContain("ws-a")
+    expect(queryB.params).toContain("ws-b")
+    expect(queryA.params).not.toContain("ws-b")
   })
 })
 

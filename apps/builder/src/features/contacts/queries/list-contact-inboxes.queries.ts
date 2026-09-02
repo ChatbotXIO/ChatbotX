@@ -4,7 +4,7 @@ import type { ContactPermissionScope } from "../permissions"
 import type {
   ListContactInboxesAudiencePreviewRequest,
   ListContactsRequest,
-} from "../schemas/query"
+} from "../schema/query"
 
 export async function countContactInboxes(
   input: ListContactsRequest,

@@ -9,7 +9,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ImportHistoryTable } from "@/features/import/components/import-history-table"
 import { listImports } from "@/features/import/queries/list-imports.queries"
-import { listImportsSearchParamsCache } from "@/features/import/schemas/query"
+import { listImportsSearchParamsCache } from "@/features/import/schema/query"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 
 export default async function ImportContactsHistoriesPage(props: {

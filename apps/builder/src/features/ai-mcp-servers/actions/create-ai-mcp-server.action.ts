@@ -3,9 +3,9 @@
 import { aiMcpServerService } from "@chatbotx.io/business"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createAIMcpServerRequest } from "../schemas/action"
+import { createAIMcpServerRequest } from "../schema/action"
 
 export const createAIMcpServerAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

@@ -4,7 +4,7 @@ import "@xyflow/react/dist/style.css"
 import type { FlowNodeStatsResponse } from "@chatbotx.io/analytics/schemas"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import type { SmartDelayNodeStats } from "../analytics/smart-delay-node-stats"
-import type { FlowResource } from "../schemas/resource"
+import type { FlowResource } from "../schema/resource"
 import { FlowAnalyticsHeader } from "./flow-analytics-header"
 import { ReactFlowAnalyticsWrapper } from "./react-flow-analysis-wrapper"
 

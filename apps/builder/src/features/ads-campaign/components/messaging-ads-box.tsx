@@ -20,11 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
-import { AlertTriangleIcon, Loader2Icon, PlusIcon } from "lucide-react"
+import {
+  AlertTriangleIcon,
+  Loader2Icon,
+  PlusIcon,
+  UnplugIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useMemo, useState } from "react"
+import { type ReactNode, useMemo, useState } from "react"
 import { toast } from "sonner"
 import useSWR from "swr"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
@@ -100,8 +105,16 @@ type Props = {
   workspaceId: string
   channel: WizardMessagingAdChannel
   integrationId: string
-  /** Server-fetched initial connection state — mirrors how CAPI connection state is passed to `*-capi-tab.tsx` today. */
+  /** Server-fetched initial connection state — resolved by the Click to Message Ads tool page (`messaging-ads/[channel]/page.tsx`). */
   initialConnectionState: ConnectionState
+  /**
+   * Optional control rendered on the box's toolbar row (left, opposite the
+   * insights date range) — the tool page injects its integration select
+   * here so switching Page / account / number happens inside the box it
+   * drives. A slot (not a channel-aware prop) keeps this box agnostic of how
+   * its host picks an integration.
+   */
+  integrationSelector?: ReactNode
 }
 
 const CHANNEL_LABEL_KEY: Record<
@@ -127,6 +140,7 @@ export function MessagingAdsBox({
   channel,
   integrationId,
   initialConnectionState,
+  integrationSelector,
 }: Props) {
   const t = useTranslations()
   const router = useRouter()
@@ -229,6 +243,10 @@ export function MessagingAdsBox({
   // read as "always loading". Data otherwise refreshes itself: SWR revalidates
   // on focus and after every create/publish/pause/delete (`list.mutate()`).
   const isLoading = list.isLoading || insights.isLoading
+  // The insights date range only means something once at least one ad
+  // exists on Meta (same gate as the insights SWR above).
+  const showDatePreset =
+    initialConnectionState.connected && insightGroups.length > 0
 
   return (
     <Card>
@@ -242,7 +260,7 @@ export function MessagingAdsBox({
             <div className="flex items-center gap-2">
               {isLoading && (
                 <Loader2Icon
-                  aria-label={t("messages.loading")}
+                  aria-label={t("actions.loading")}
                   className="size-4 animate-spin text-muted-foreground"
                   role="status"
                 />
@@ -262,7 +280,8 @@ export function MessagingAdsBox({
                 onOpenChange={setDisconnectOpen}
                 open={disconnectOpen}
                 trigger={
-                  <Button size="sm" type="button" variant="ghost">
+                  <Button size="sm" type="button" variant="destructive">
+                    <UnplugIcon className="size-4" />
                     {t("actions.disconnect")}
                   </Button>
                 }
@@ -272,49 +291,15 @@ export function MessagingAdsBox({
         </div>
       </CardHeader>
 
-      <CardContent>
-        {initialConnectionState.reconnectNeeded && (
-          <Alert variant="warning">
-            <AlertTriangleIcon />
-            <AlertTitle>{t("adsCampaign.box.reconnectNeeded")}</AlertTitle>
-            <AlertDescription>
-              <Button
-                disabled={isConnecting}
-                onClick={async (event) => {
-                  event.preventDefault()
-                  await onConnect({ channel })
-                }}
-                size="sm"
-                variant="secondary"
-              >
-                {isConnecting && <Loader2Icon className="animate-spin" />}
-                {t("adsCampaign.box.reconnectCta")}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {!(
-          initialConnectionState.connected ||
-          initialConnectionState.reconnectNeeded
-        ) && (
-          <Button
-            disabled={isConnecting}
-            onClick={async (event) => {
-              event.preventDefault()
-              await onConnect({ channel })
-            }}
-            type="button"
-          >
-            {isConnecting && <Loader2Icon className="animate-spin" />}
-            {t("adsCampaign.box.connectCta")}
-          </Button>
-        )}
-
-        {initialConnectionState.connected && (
-          <div className="flex flex-col gap-3">
-            {insightGroups.length > 0 && (
-              <div className="flex items-center justify-end gap-2">
+      <CardContent className="flex flex-col gap-4">
+        {/* Toolbar: which integration this box drives (left) and, once ads
+            exist on Meta, the insights date range (right) — mirrors the Ads
+            dashboard's filter row rather than crowding the header. */}
+        {(integrationSelector || showDatePreset) && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>{integrationSelector}</div>
+            {showDatePreset && (
+              <div className="flex items-center gap-2">
                 <span className="text-muted-foreground text-xs">
                   {t("adsCampaign.insights.datePresetLabel")}
                 </span>
@@ -341,14 +326,56 @@ export function MessagingAdsBox({
                 </Select>
               </div>
             )}
-            <CampaignListTable
-              insightsByAdId={insights.data}
-              insightsLoading={insights.isLoading}
-              onChanged={() => list.mutate()}
-              rows={list.data?.data ?? []}
-              workspaceId={workspaceId}
-            />
           </div>
+        )}
+
+        {initialConnectionState.reconnectNeeded && (
+          <Alert variant="warning">
+            <AlertTriangleIcon />
+            <AlertTitle>{t("adsCampaign.box.reconnectNeeded")}</AlertTitle>
+            <AlertDescription>
+              <Button
+                disabled={isConnecting}
+                onClick={async (event) => {
+                  event.preventDefault()
+                  await onConnect({ channel })
+                }}
+                size="sm"
+                variant="secondary"
+              >
+                {isConnecting && <Loader2Icon className="animate-spin" />}
+                {t("adsCampaign.box.reconnectCta")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!(
+          initialConnectionState.connected ||
+          initialConnectionState.reconnectNeeded
+        ) && (
+          <Button
+            className="self-start"
+            disabled={isConnecting}
+            onClick={async (event) => {
+              event.preventDefault()
+              await onConnect({ channel })
+            }}
+            type="button"
+          >
+            {isConnecting && <Loader2Icon className="animate-spin" />}
+            {t("adsCampaign.box.connectCta")}
+          </Button>
+        )}
+
+        {initialConnectionState.connected && (
+          <CampaignListTable
+            insightsByAdId={insights.data}
+            insightsLoading={insights.isLoading}
+            onChanged={() => list.mutate()}
+            rows={list.data?.data ?? []}
+            workspaceId={workspaceId}
+          />
         )}
       </CardContent>
 

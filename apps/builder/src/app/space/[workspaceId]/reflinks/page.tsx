@@ -9,7 +9,7 @@ import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { listReflinks } from "@/features/reflinks/queries"
 import { ReflinksTable } from "@/features/reflinks/reflinks-table"
-import { listReflinksSearchParamsCache } from "@/features/reflinks/schemas/query"
+import { listReflinksSearchParamsCache } from "@/features/reflinks/schema/query"
 
 export default async function ReflinksPage({
   params,

@@ -3,7 +3,7 @@
 import { count, db, eq } from "@chatbotx.io/database/client"
 import { mediaLibraryFileModel } from "@chatbotx.io/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListFoldersRequest, ListFoldersResponse } from "../schemas"
+import type { ListFoldersRequest, ListFoldersResponse } from "../schema"
 
 export async function listMediaLibraryFolders(
   input: ListFoldersRequest,

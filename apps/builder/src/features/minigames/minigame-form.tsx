@@ -10,6 +10,7 @@ import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-f
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -51,8 +52,8 @@ import {
   getDefaultMinigamePrizeSettings,
   getDefaultMinigameWinningMessageSettings,
 } from "./constants"
-import { createMinigameRequest, updateMinigameRequest } from "./schemas/action"
-import type { MinigameResource } from "./schemas/resource"
+import { createMinigameRequest, updateMinigameRequest } from "./schema/action"
+import type { MinigameResource } from "./schema/resource"
 
 type MinigameFormProps =
   | { mode: "create"; type: MinigameType; workspaceId: string }
@@ -62,28 +63,6 @@ type MinigameFormProps =
       workspaceId: string
       publicUrl: string
     }
-
-// `winMessage` was added to `MinigamePrizeItem` after some minigames were
-// already saved, so their persisted `prizeSettings` JSON may be missing it.
-// Passing `undefined` as a form default makes the bound Switch/RadioGroup
-// start uncontrolled, then flip to controlled the moment RHF resolves a
-// value — backfill so every prize always has one. `quantity` is left as-is:
-// `undefined` (unlimited) is a real, permanent value, not a missing one.
-function normalizeMinigamePrizeSettings(
-  prizeSettings: MinigamePrizeSettings,
-): MinigamePrizeSettings {
-  return {
-    ...prizeSettings,
-    prizes: prizeSettings.prizes.map((prize) => ({
-      ...prize,
-      winMessage: prize.winMessage ?? {
-        enabled: false,
-        mode: "text",
-        text: "",
-      },
-    })),
-  }
-}
 
 function PublicUrlSection({ publicUrl }: { publicUrl: string }) {
   const t = useTranslations()
@@ -160,9 +139,7 @@ export function MinigameForm(props: MinigameFormProps) {
         generalSettings: props.minigame.generalSettings,
         appearance: props.minigame.appearance,
         playerSettings: props.minigame.playerSettings,
-        prizeSettings: normalizeMinigamePrizeSettings(
-          props.minigame.prizeSettings,
-        ),
+        prizeSettings: props.minigame.prizeSettings,
         winningMessageSettings: props.minigame.winningMessageSettings,
         nonWinningMessageSettings: props.minigame.nonWinningMessageSettings,
       }
@@ -261,11 +238,10 @@ export function MinigameForm(props: MinigameFormProps) {
   // preview needs the fully-resolved DB shape, so fill in the same fallbacks
   // the Zod schema itself defaults to. Can't just call
   // `minigamePrizeSettingsSchema.parse(prizeSettings ?? {})` here instead —
-  // `minigamePrizeItemSchema`'s `name`/`winRate`/`id` and the win/lose
-  // message discriminated unions are required with no `.default()` (that's
-  // real validation for the persisted data, not something to weaken for
-  // preview's sake), so `.parse()` throws on the partial shape mid-edit
-  // (e.g. a newly appended prize row with no name yet).
+  // `minigamePrizeItemSchema`'s `name`/`winRate`/`id` are required with no
+  // `.default()` (that's real validation for the persisted data, not
+  // something to weaken for preview's sake), so `.parse()` throws on the
+  // partial shape mid-edit (e.g. a newly appended prize row with no name yet).
   const appearanceForPreview: MinigameAppearance = {
     backgroundColor: appearance?.backgroundColor ?? "#F5A623",
     machineColor: appearance?.machineColor ?? "#4A90D9",
@@ -294,18 +270,6 @@ export function MinigameForm(props: MinigameFormProps) {
       },
       winRate: prize.winRate ?? 0,
       quantity: prize.quantity,
-      winMessage:
-        prize.winMessage?.mode === "flow"
-          ? {
-              enabled: prize.winMessage.enabled ?? false,
-              mode: "flow" as const,
-              flowId: prize.winMessage.flowId ?? null,
-            }
-          : {
-              enabled: prize.winMessage?.enabled ?? false,
-              mode: "text" as const,
-              text: prize.winMessage?.text ?? "",
-            },
     })),
     nonWinning: {
       title: prizeSettings?.nonWinning?.title ?? "",
@@ -314,19 +278,8 @@ export function MinigameForm(props: MinigameFormProps) {
         mode: prizeSettings?.nonWinning?.loseImage?.mode ?? "file",
         url: prizeSettings?.nonWinning?.loseImage?.url ?? "",
       },
-      loseMessage:
-        prizeSettings?.nonWinning?.loseMessage?.mode === "flow"
-          ? {
-              enabled: prizeSettings.nonWinning.loseMessage.enabled ?? false,
-              mode: "flow" as const,
-              flowId: prizeSettings.nonWinning.loseMessage.flowId ?? null,
-            }
-          : {
-              enabled: prizeSettings?.nonWinning?.loseMessage?.enabled ?? false,
-              mode: "text" as const,
-              text: prizeSettings?.nonWinning?.loseMessage?.text ?? "",
-            },
     },
+    prizeNameCustomFieldId: prizeSettings?.prizeNameCustomFieldId ?? null,
   }
 
   const onSubmit = form.handleSubmit((values) => action.execute(values))
@@ -372,11 +325,20 @@ export function MinigameForm(props: MinigameFormProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <InputField
-                  label={t("fields.name.label")}
-                  name="generalSettings.name"
-                  required
-                />
+                <div className="flex gap-3">
+                  <InputField
+                    formItemClassName="flex-1"
+                    label={t("fields.name.label")}
+                    name="generalSettings.name"
+                    required
+                  />
+                  <SwitchField
+                    formItemClassName="w-max"
+                    label={t("minigames.generalSettings.showName")}
+                    name="generalSettings.showName"
+                    required
+                  />
+                </div>
                 <DateTimeRangeField
                   fromName="generalSettings.playedAtFrom"
                   label={t("minigames.generalSettings.playedAt")}
@@ -422,18 +384,22 @@ export function MinigameForm(props: MinigameFormProps) {
                   <ColorPickerField
                     label={t("minigames.appearance.backgroundColor")}
                     name="appearance.backgroundColor"
+                    required
                   />
                   <ColorPickerField
                     label={t("minigames.appearance.machineColor")}
                     name="appearance.machineColor"
+                    required
                   />
                   <ColorPickerField
                     label={t("minigames.appearance.decorativeColor")}
                     name="appearance.decorativeColor"
+                    required
                   />
                   <ColorPickerField
                     label={t("minigames.appearance.ruleTextColor")}
                     name="appearance.ruleTextColor"
+                    required
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -502,6 +468,7 @@ export function MinigameForm(props: MinigameFormProps) {
                   label={t("minigames.playerSettings.drawsPerPerson")}
                   min={1}
                   name="playerSettings.drawsPerPerson"
+                  required
                 />
 
                 <div className="flex flex-col gap-3">
@@ -578,7 +545,9 @@ export function MinigameForm(props: MinigameFormProps) {
               appearance={appearanceForPreview}
               name={generalSettings?.name ?? ""}
               prizeSettings={prizeSettingsForPreview}
+              rulesDescription={generalSettings?.rulesDescription ?? ""}
               shareEnabled={false}
+              showName={generalSettings?.showName ?? true}
               type={type}
             />
           </div>

@@ -1,5 +1,6 @@
 import { instagramIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
   type InstagramAuthValue,
   integration as integrationInstagram,
@@ -61,6 +62,11 @@ async function refreshOne(integration: {
               integration.id,
               error instanceof Error ? error.message : String(error),
             )
+            await logProviderError({
+              provider: "instagram",
+              workspaceId: integration.workspaceId,
+              error,
+            })
           }
         },
       }),

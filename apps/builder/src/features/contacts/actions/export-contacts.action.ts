@@ -16,14 +16,14 @@ import { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
-} from "@/features/common/schemas"
+} from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { resolveContactPermissionScope } from "../permissions"
 import {
   type ExportContactsRequest,
   type ExportContactsResponse,
   exportContactsRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const exportContactsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

@@ -5,7 +5,7 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel, WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
 import { redirect } from "next/navigation"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { integrations } from "@/integration"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
@@ -14,7 +14,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ConnectGoogleSheetsSchema,
   connectGoogleSheetsSchema,
-} from "../schemas"
+} from "../schema"
 
 export const connectGoogleSheets = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { pruneExcludedConditions } from "../lib/prune-conditions"
 import { getBrowserTimezone } from "../lib/timezone"
-import type { ContactFilterCondition } from "../schemas"
+import type { ContactFilterCondition } from "../schema"
 import { ContactFilterConditionEditDialog } from "./contact-filter-condition-dialog"
 import { ContactFilterConditionForm } from "./contact-filter-condition-form"
 import { ContactFilterConditionRow } from "./contact-filter-condition-row"
@@ -19,6 +19,11 @@ type ContactFilterProps = {
   excludeFields?: ContactFilterField[]
   inboxChannel?: string
   enableVariables?: boolean
+  /**
+   * Opt-in: also offers Bot Fields in the "Add Condition" picker. Allowlisted
+   * v1 surface only — see `useContactFilterConfigs`. Defaults to false.
+   */
+  includeBotFields?: boolean
 }
 
 const EMPTY_EXCLUDE_FIELDS: ContactFilterField[] = []
@@ -28,6 +33,7 @@ export const ContactFilter = ({
   excludeFields = EMPTY_EXCLUDE_FIELDS,
   inboxChannel,
   enableVariables = false,
+  includeBotFields = false,
 }: ContactFilterProps) => {
   const t = useTranslations()
   const { control, getValues, setValue } = useFormContext()
@@ -49,7 +55,7 @@ export const ContactFilter = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   const { configs, conditionOptions, operatorLabelByValue } =
-    useContactFilterConfigs(inboxChannel)
+    useContactFilterConfigs(inboxChannel, includeBotFields)
   const filteredConfigs = useMemo(
     () =>
       configs.filter(
