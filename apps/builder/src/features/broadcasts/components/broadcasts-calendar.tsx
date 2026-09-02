@@ -13,7 +13,7 @@ import {
   ToggleGroupItem,
 } from "@chatbotx.io/ui/components/ui/toggle-group"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { format, isSameMonth, isToday } from "date-fns"
+import { addYears, format, isSameMonth, isToday, subYears } from "date-fns"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import { useQueryStates } from "nuqs"
@@ -40,8 +40,39 @@ import { broadcastsSearchParsers } from "../schema/search-parsers"
 const MAX_CHIPS_PER_DAY = 3
 const TIME_FORMAT_OPTIONS = { hour: "2-digit", minute: "2-digit" } as const
 
+/** How far the jump picker's month/year navigation reaches from today — a future-scheduling calendar needs more forward reach than back reach. */
+const JUMP_PICKER_PAST_YEARS = 2
+const JUMP_PICKER_FUTURE_YEARS = 3
+
+type Formatter = ReturnType<typeof useFormatter>
+
 const isCalendarRange = (value: string | undefined): value is CalendarRange =>
   (CALENDAR_RANGES as readonly string[]).includes(value ?? "")
+
+// Map-driven title formatting — one formatter per range, keyed by `range`
+// itself, instead of an if/else chain.
+const TITLE_FORMATTERS: Record<
+  CalendarRange,
+  (anchor: Date, formatter: Formatter) => string
+> = {
+  month: (anchor, formatter) =>
+    formatter.dateTime(anchor, { month: "long", year: "numeric" }),
+  week: (anchor, formatter) => {
+    const { from, to } = calendarRangeConfig.week.getVisibleInterval(anchor)
+    return formatter.dateTimeRange(from, to, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+  },
+  day: (anchor, formatter) =>
+    formatter.dateTime(anchor, {
+      day: "numeric",
+      month: "long",
+      weekday: "long",
+      year: "numeric",
+    }),
+}
 
 function StatusDot({ status }: { status: string }) {
   const parsedStatus = parseBroadcastStatus(status)
@@ -88,25 +119,17 @@ export function BroadcastsCalendar({
     })
   }
 
-  const title = useMemo(() => {
-    if (range === "month") {
-      return formatter.dateTime(anchor, { month: "long", year: "numeric" })
-    }
-    if (range === "week") {
-      const { from, to } = calendarRangeConfig.week.getVisibleInterval(anchor)
-      return formatter.dateTimeRange(from, to, {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    }
-    return formatter.dateTime(anchor, {
-      day: "numeric",
-      month: "long",
-      weekday: "long",
-      year: "numeric",
-    })
-  }, [range, anchor, formatter])
+  const title = useMemo(
+    () => TITLE_FORMATTERS[range](anchor, formatter),
+    [range, anchor, formatter],
+  )
+
+  // Computed once per render from `new Date()` (not `anchor`, which can
+  // itself already be years away) so the jump picker's dropdown/navigation
+  // bounds always reach a consistent window around *today*.
+  const anchorToday = new Date()
+  const jumpPickerStartMonth = subYears(anchorToday, JUMP_PICKER_PAST_YEARS)
+  const jumpPickerEndMonth = addYears(anchorToday, JUMP_PICKER_FUTURE_YEARS)
 
   const renderChip = (row: BroadcastCalendarRow, showTime: boolean) => (
     <button
@@ -194,7 +217,7 @@ export function BroadcastsCalendar({
             const rows = sortBySchedulesAt(byDay.get(dayKey(day)) ?? [])
             return (
               <div
-                className="flex min-h-96 flex-col gap-1 overflow-y-auto border-e border-b p-1.5"
+                className="flex h-96 flex-col gap-1 overflow-y-auto border-e border-b p-1.5"
                 key={dayKey(day)}
               >
                 {renderDayNumber(day)}
@@ -255,6 +278,7 @@ export function BroadcastsCalendar({
           <PopoverContent align="start" className="w-auto p-0">
             <Calendar
               captionLayout="dropdown"
+              endMonth={jumpPickerEndMonth}
               mode="single"
               onSelect={(day) => {
                 if (!day) {
@@ -264,6 +288,7 @@ export function BroadcastsCalendar({
                 setJumpOpen(false)
               }}
               selected={anchor}
+              startMonth={jumpPickerStartMonth}
             />
           </PopoverContent>
         </Popover>

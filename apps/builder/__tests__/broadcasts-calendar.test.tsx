@@ -41,18 +41,84 @@ vi.mock("@/features/broadcasts/broadcast-detail-dialog", () => ({
 }))
 
 vi.mock("@chatbotx.io/ui/components/ui/calendar", () => ({
-  Calendar: () => <div data-testid="jump-calendar" />,
+  Calendar: (props: {
+    endMonth?: Date
+    onSelect?: (date: Date) => void
+    startMonth?: Date
+  }) => (
+    <div
+      data-end-month={props.endMonth?.toISOString()}
+      data-start-month={props.startMonth?.toISOString()}
+      data-testid="jump-calendar"
+    >
+      <button
+        data-testid="jump-day"
+        onClick={() => props.onSelect?.(new Date("2027-01-15T00:00:00"))}
+        type="button"
+      >
+        pick date
+      </button>
+    </div>
+  ),
 }))
 
-vi.mock("@chatbotx.io/ui/components/ui/popover", () => ({
-  Popover: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PopoverTrigger: ({ render }: { render: React.ReactElement }) => render,
-  PopoverContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}))
+// Stands in for the real Base UI popover primitives (portal + positioning
+// logic that would otherwise make this test depend on real DOM measurement
+// and animation timing). Mirrors the contract `BroadcastsCalendar` relies
+// on: a controlled `open`/`onOpenChange` pair on `Popover`, a trigger whose
+// click *requests* an open, and content that only renders while open — so
+// the "closes the popover after a pick" assertion is meaningful.
+type PopoverContextValue = {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+vi.mock("@chatbotx.io/ui/components/ui/popover", async () => {
+  const React = await import("react")
+  const PopoverContext = React.createContext<PopoverContextValue>({
+    open: false,
+    onOpenChange: () => {
+      // no-op default
+    },
+  })
+
+  function Popover({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode
+    open: boolean
+    onOpenChange: (open: boolean) => void
+  }) {
+    return (
+      <PopoverContext.Provider value={{ open, onOpenChange }}>
+        {children}
+      </PopoverContext.Provider>
+    )
+  }
+
+  function PopoverTrigger({
+    render,
+  }: {
+    render: React.ReactElement<{ onClick?: (event: unknown) => void }>
+  }) {
+    const { onOpenChange } = React.useContext(PopoverContext)
+    return React.cloneElement(render, {
+      onClick: (event: unknown) => {
+        render.props.onClick?.(event)
+        onOpenChange(true)
+      },
+    })
+  }
+
+  function PopoverContent({ children }: { children: React.ReactNode }) {
+    const { open } = React.useContext(PopoverContext)
+    return open ? <div data-testid="popover-content">{children}</div> : null
+  }
+
+  return { Popover, PopoverTrigger, PopoverContent }
+})
 
 vi.mock("@chatbotx.io/ui/components/ui/toggle-group", async () => {
   const React = await import("react")
@@ -250,6 +316,54 @@ describe("BroadcastsCalendar month view", () => {
     const chip = cell.querySelector("button") as HTMLButtonElement
     expect(chip).toBeTruthy()
     expect(chip.querySelector("[aria-hidden]")).toBeNull()
+  })
+})
+
+describe("BroadcastsCalendar jump picker", () => {
+  test("picking a day writes setQuery({ date }) and closes the popover", () => {
+    const el = renderCalendar(
+      <BroadcastsCalendar broadcasts={[]} date="2026-08-01" range="month" />,
+    )
+
+    const trigger = el.querySelector(
+      '[aria-label="broadcasts.calendar.jumpToDate"]',
+    ) as HTMLButtonElement
+    act(() => {
+      trigger.click()
+    })
+    expect(el.querySelector('[data-testid="popover-content"]')).not.toBeNull()
+
+    const jumpDay = el.querySelector(
+      '[data-testid="jump-day"]',
+    ) as HTMLButtonElement
+    act(() => {
+      jumpDay.click()
+    })
+
+    expect(setQuery).toHaveBeenCalledWith({ date: "2027-01-15" })
+    expect(el.querySelector('[data-testid="popover-content"]')).toBeNull()
+  })
+
+  test("the jump picker's endMonth reaches at least 3 years into the future", () => {
+    const el = renderCalendar(
+      <BroadcastsCalendar broadcasts={[]} date="2026-08-01" range="month" />,
+    )
+
+    const trigger = el.querySelector(
+      '[aria-label="broadcasts.calendar.jumpToDate"]',
+    ) as HTMLButtonElement
+    act(() => {
+      trigger.click()
+    })
+
+    const calendar = el.querySelector(
+      '[data-testid="jump-calendar"]',
+    ) as HTMLElement
+    const endMonthAttr = calendar.getAttribute("data-end-month")
+    expect(endMonthAttr).toBeTruthy()
+    const endMonth = new Date(endMonthAttr as string)
+    const now = new Date()
+    expect(endMonth.getFullYear()).toBeGreaterThanOrEqual(now.getFullYear() + 3)
   })
 })
 
