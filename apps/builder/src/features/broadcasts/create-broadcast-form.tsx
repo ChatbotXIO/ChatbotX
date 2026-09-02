@@ -65,19 +65,7 @@ import {
   buildCreateBroadcastDefaultValues,
   type EditBroadcastDraft,
 } from "./lib/create-broadcast-defaults"
-
-/**
- * Returns a getter that reports `initial` on its first call and `false` after,
- * so a mount-only effect can opt out exactly once without re-running on change.
- */
-function useOneShotFlag(initial: boolean): () => boolean {
-  const ref = useRef(initial)
-  return useCallback(() => {
-    const value = ref.current
-    ref.current = false
-    return value
-  }, [])
-}
+import { resolveTemplateHydration } from "./lib/template-hydration"
 
 type BroadcastConfig = {
   value: ChannelType
@@ -255,7 +243,13 @@ export function CreateBroadcastForm({
             <CreateBroadcastChooseFlow
               canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
-              isEditing={isEditing}
+              hydrated={
+                editDraft && {
+                  templateId: editDraft.defaultValues.templateId,
+                  integrationWhatsappId:
+                    editDraft.defaultValues.integrationWhatsappId,
+                }
+              }
               onSaveAsDraft={handleSaveAsDraft}
               subaction={watchedSubAction}
             />
@@ -427,6 +421,9 @@ function BroadcastFlowTypeSelector({
 
       if (type === broadcastFlowTypes.enum.flow) {
         setValue("templateId", undefined)
+        // Leaving `templateData` behind would persist a template payload on a
+        // flow broadcast; the service nulls it too, this keeps the form honest.
+        setValue("templateData", undefined)
         setValue("buttons", [])
       } else {
         setValue("flowId", undefined)
@@ -487,8 +484,11 @@ function BroadcastFlowTypeSelector({
 type CreateBroadcastChooseFlowProps = {
   canViewEmailAndPhone: boolean
   channel: ChannelType
-  /** Suppresses the one-shot "clear stale template selection" mount effects. */
-  isEditing: boolean
+  /**
+   * Ids an edited draft was hydrated with, so the template effects can tell a
+   * still-hydrated selection from one the user changed. Absent when creating.
+   */
+  hydrated?: { templateId?: string; integrationWhatsappId?: string }
   onSaveAsDraft: () => Promise<void>
   subaction: BroadcastSubaction
 }
@@ -683,30 +683,34 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     }
   }, [props.channel, props.subaction, t])
 
-  // In edit mode the prefilled integration and template arrive together on the
-  // very first render, so the "clear stale selection" and "seed blank params"
-  // effects below would wipe the draft's own template before the user touches
-  // anything. Each is skipped exactly once, then behaves as it does on create.
-  const keepPrefilledIntegration = useOneShotFlag(props.isEditing)
-  const keepPrefilledTemplateData = useOneShotFlag(props.isEditing)
+  // Pinned at mount: an edited draft's own ids. Comparing against these values
+  // (rather than flipping a one-shot "first run" flag) is what lets the effects
+  // below tell a still-hydrated selection from one the user just changed.
+  const hydratedTemplateIdRef = useRef(props.hydrated?.templateId)
+
+  // The template selection is stale only when the integration actually changed,
+  // so this tracks the previous id instead of firing on every run. Seeded with
+  // the edited draft's integration, which is why reopening a draft no longer
+  // clears its own template.
+  const lastIntegrationIdRef = useRef(props.hydrated?.integrationWhatsappId)
 
   useEffect(() => {
     if (watchedIntegrationWhatsappId) {
       setIntegrationWhatsappId(watchedIntegrationWhatsappId)
-      if (keepPrefilledIntegration()) {
+
+      const changedIntegration =
+        lastIntegrationIdRef.current !== watchedIntegrationWhatsappId
+      lastIntegrationIdRef.current = watchedIntegrationWhatsappId
+      if (!changedIntegration) {
         return
       }
+
       // Clear stale template selection from previous integration
       setValue("templateId", undefined)
       setValue("templateData", undefined)
       setSelectedTemplate(null)
     }
-  }, [
-    watchedIntegrationWhatsappId,
-    setIntegrationWhatsappId,
-    setValue,
-    keepPrefilledIntegration,
-  ])
+  }, [watchedIntegrationWhatsappId, setIntegrationWhatsappId, setValue])
 
   useEffect(() => {
     latestReceiversCountQueryKeyRef.current = receiversCountQueryKey
@@ -715,52 +719,75 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   }, [fetchReceiversCount, receiversCountParams, receiversCountQueryKey])
 
   useEffect(() => {
-    if (watchedTemplateId && whatsappTemplates.length > 0) {
-      const template = whatsappTemplates.find(
-        (t) => t.id === watchedTemplateId,
-      ) as MessageTemplateWithComponents | undefined
-      if (template) {
-        setSelectedTemplate(template)
-        if (!keepPrefilledTemplateData()) {
-          const initialParams = extractTemplateParams(
-            template.components as TemplateComponent[],
-          )
-          setValue("templateData", initialParams)
-        }
-      } else {
-        setSelectedTemplate(null)
-        setValue("templateData", undefined)
-      }
+    const decision = resolveTemplateHydration({
+      effectSubaction: broadcastSubactions.enum.whatsappTemplateMessage,
+      subaction: props.subaction,
+      watchedTemplateId,
+      hydratedTemplateId: hydratedTemplateIdRef.current,
+    })
+    if (decision === "skip" || whatsappTemplates.length === 0) {
+      return
     }
-  }, [
-    watchedTemplateId,
-    whatsappTemplates,
-    setValue,
-    keepPrefilledTemplateData,
-  ])
+
+    const template = whatsappTemplates.find(
+      (t) => t.id === watchedTemplateId,
+    ) as MessageTemplateWithComponents | undefined
+
+    if (!template) {
+      // A hydrated draft keeps its stored params even while its template is
+      // missing from the list — the list may simply not have loaded yet.
+      if (decision === "preserve") {
+        return
+      }
+      setSelectedTemplate(null)
+      setValue("templateData", undefined)
+      return
+    }
+
+    setSelectedTemplate(template)
+    if (decision === "seed") {
+      setValue(
+        "templateData",
+        extractTemplateParams(template.components as TemplateComponent[]),
+      )
+    }
+  }, [props.subaction, watchedTemplateId, whatsappTemplates, setValue])
 
   useEffect(() => {
-    if (
-      props.subaction !== broadcastSubactions.enum.messengerTemplateMessage ||
-      !watchedTemplateId ||
-      messengerTemplatesData.length === 0
-    ) {
+    const decision = resolveTemplateHydration({
+      effectSubaction: broadcastSubactions.enum.messengerTemplateMessage,
+      subaction: props.subaction,
+      watchedTemplateId,
+      hydratedTemplateId: hydratedTemplateIdRef.current,
+    })
+    if (decision === "skip" || messengerTemplatesData.length === 0) {
       return
     }
 
     const template = messengerTemplatesData.find(
       (t) => t.id === watchedTemplateId,
     )
-    if (template) {
-      setSelectedMessengerTemplate(template)
-      if (keepPrefilledTemplateData()) {
+
+    if (!template) {
+      // See the WhatsApp effect: never clear a hydrated draft's own params.
+      if (decision === "preserve") {
         return
       }
-      const initialParams = extractMessengerTemplateParams(
-        template.components as MessengerTemplateComponent[],
-        template.parameterFormat as "POSITIONAL" | "NAMED",
+      setSelectedMessengerTemplate(null)
+      setValue("templateData", undefined)
+      setValue("buttons", []) // clear buttons
+      return
+    }
+
+    setSelectedMessengerTemplate(template)
+    if (decision === "seed") {
+      setValue(
+        "templateData",
+        extractMessengerTemplateParams(
+          template.components as MessengerTemplateComponent[],
+          template.parameterFormat as "POSITIONAL" | "NAMED",
+        ),
       )
-      setValue("templateData", initialParams)
       // seed flow buttons from template
       setValue(
         "buttons",
@@ -768,18 +795,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           template.components as MessengerTemplateComponent[],
         ).map((b) => ({ id: b.id, label: b.label, flowId: "" })),
       )
-    } else {
-      setSelectedMessengerTemplate(null)
-      setValue("templateData", undefined)
-      setValue("buttons", []) // clear buttons
     }
-  }, [
-    props.subaction,
-    watchedTemplateId,
-    messengerTemplatesData,
-    setValue,
-    keepPrefilledTemplateData,
-  ])
+  }, [props.subaction, watchedTemplateId, messengerTemplatesData, setValue])
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">

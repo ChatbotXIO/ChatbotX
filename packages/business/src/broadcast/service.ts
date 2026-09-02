@@ -353,9 +353,13 @@ class BroadcastService extends BaseService {
         schedulesType: data.schedulesType,
         // Persist the minute-truncated time the schema validated against.
         schedulesAt: startOfMinute(new Date(data.schedulesAt ?? new Date())),
-        templateData: data.templateData
-          ? { ...data.templateData, buttons: data.buttons ?? [] }
-          : null,
+        // Only a template broadcast stores params. Without a templateId the
+        // payload is a flow send, so a `templateData` the form left behind
+        // (switching template -> flow) must not survive the edit.
+        templateData:
+          data.templateId && data.templateData
+            ? { ...data.templateData, buttons: data.buttons ?? [] }
+            : null,
         status,
       })
       .where(this.draftScope(workspaceId, input.broadcastId))

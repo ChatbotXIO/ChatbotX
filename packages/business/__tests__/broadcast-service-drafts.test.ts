@@ -379,3 +379,32 @@ describe("broadcastService.updateDraft", () => {
     ).rejects.toThrow("Broadcast is not a draft")
   })
 })
+
+describe("broadcastService.updateDraft template data integrity", () => {
+  test("clears templateData when the edit switched the draft back to a flow", async () => {
+    // The form's flow/template toggle can leave a stale `templateData` behind;
+    // without a templateId the broadcast is not a template send, so the column
+    // must be nulled rather than persisted.
+    findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.updateDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      canViewEmailAndPhone: true,
+      data: {
+        channel: "whatsapp",
+        flowId: "flow-9",
+        subaction: "whatsappTemplateMessage",
+        schedulesType: "now",
+        schedulesAt: null,
+        contactFilter: { operator: "and", conditions: [] },
+        saveAsDraft: true,
+        templateData: { body: [{ text: "stale" }] },
+        buttons: [{ id: "btn-1", label: "Shop" }],
+      },
+    })
+
+    expect(updateReturning.mock.calls[0][0].values.templateData).toBeNull()
+  })
+})
