@@ -4398,6 +4398,21 @@
     "duplicateError": "Esiste già un'automazione per questa pagina e questo modulo.",
     "subscribeError": "Non è stato possibile iscrivere questa pagina alle notifiche di Facebook sui contatti acquisiti, pertanto l'automazione non è stata creata. Ricollega la pagina con \"Aggiungi\" e riprova."
   },
+  "clickToMessageAds": {
+    "title": "Annunci Click-to-Message",
+    "description": "Gli annunci indirizzano le persone direttamente a una conversazione su Messenger, Instagram o WhatsApp.",
+    "empty": {
+      "title": "Nessun account collegato per questo canale",
+      "description": "Collega prima un account del canale, poi torna qui per creare annunci.",
+      "cta": "Vai alle impostazioni del canale"
+    },
+    "movedNote": {
+      "title": "Gli annunci sono stati spostati in Strumenti",
+      "description": "Crea e gestisci gli annunci Click-to-Message dallo strumento Annunci Click-to-Message.",
+      "cta": "Apri Annunci Click-to-Message"
+    },
+    "dashboardCta": "Visualizza sulla dashboard Annunci"
+  },
   "ecommerce": {
     "title": "E-commerce",
     "description": "Crea e gestisci il tuo negozio e-commerce."

@@ -4398,6 +4398,21 @@
     "duplicateError": "Bu sayfa ve form için zaten bir otomasyon mevcut.",
     "subscribeError": "Bu sayfa Facebook potansiyel müşteri bildirimlerine abone edilemediğinden otomasyon oluşturulamadı. Sayfayı \"Yeni Ekle\" ile yeniden bağlayıp tekrar deneyin."
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message Reklamları",
+    "description": "Reklamlar, kişileri doğrudan Messenger, Instagram veya WhatsApp'taki bir konuşmaya yönlendirir.",
+    "empty": {
+      "title": "Bu kanal için bağlı bir hesap yok",
+      "description": "Önce bir kanal hesabı bağlayın, ardından reklam oluşturmak için buraya geri dönün.",
+      "cta": "Kanal ayarlarına git"
+    },
+    "movedNote": {
+      "title": "Reklamlar Araçlar'a taşındı",
+      "description": "Click-to-Message reklamlarını Click-to-Message Reklamları aracından oluşturun ve yönetin.",
+      "cta": "Click-to-Message Reklamları'nı aç"
+    },
+    "dashboardCta": "Reklamlar panosunda görüntüle"
+  },
   "ecommerce": {
     "title": "E-ticaret",
     "description": "E-ticaret mağazanızı oluşturun ve yönetin."

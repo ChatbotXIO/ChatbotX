@@ -30,13 +30,27 @@ describe("parseDateParam", () => {
 
 describe("resolveDateParam", () => {
   test("returns the yyyy-MM-dd string for a valid param", () => {
-    expect(resolveDateParam("2026-08-31")).toBe("2026-08-31")
+    expect(resolveDateParam("2026-08-31", "UTC")).toBe("2026-08-31")
   })
 
-  test("falls back to today's string for invalid or missing input", () => {
-    const now = new Date("2026-08-31T10:00:00")
-    expect(resolveDateParam(null, now)).toBe("2026-08-31")
-    expect(resolveDateParam("nope", now)).toBe("2026-08-31")
+  test("returns a valid param untouched whatever the timezone", () => {
+    expect(resolveDateParam("2026-08-31", "Asia/Tokyo")).toBe("2026-08-31")
+  })
+
+  test("resolves 'today' in the given timezone for invalid or missing input", () => {
+    // 18:30 UTC is already the next day east of UTC+5:30, still the same day west of it.
+    const now = new Date("2026-09-02T18:30:00Z")
+    expect(resolveDateParam(null, "Asia/Ho_Chi_Minh", now)).toBe("2026-09-03")
+    expect(resolveDateParam("nope", "Asia/Ho_Chi_Minh", now)).toBe("2026-09-03")
+    expect(resolveDateParam(null, "UTC", now)).toBe("2026-09-02")
+    expect(resolveDateParam(null, "America/Los_Angeles", now)).toBe(
+      "2026-09-02",
+    )
+  })
+
+  test("falls back to UTC for an unusable timezone", () => {
+    const now = new Date("2026-09-02T18:30:00Z")
+    expect(resolveDateParam(null, "Not/AZone", now)).toBe("2026-09-02")
   })
 })
 
@@ -280,59 +294,60 @@ describe("calendarRangeConfig", () => {
 describe("getCalendarQueryRange", () => {
   const endAnchorPlaceholder = new Date("2026-08-01T00:00:00")
 
-  test("pads the month grid by two days on each side", () => {
+  test("custom range covers the anchor's start of day through the endAnchor's end of day in the user's zone", () => {
     const { from, to } = getCalendarQueryRange(
-      "month",
-      new Date("2026-08-01T00:00:00"),
-      endAnchorPlaceholder,
-    )
-    expect(dayKey(from)).toBe("2026-07-25")
-    expect(dayKey(to)).toBe("2026-09-08")
-  })
-
-  test("pads the week range by two days on each side", () => {
-    const { from, to } = getCalendarQueryRange(
-      "week",
+      "custom",
       new Date("2026-09-02T00:00:00"),
-      endAnchorPlaceholder,
+      new Date("2026-09-08T00:00:00"),
+      "Asia/Ho_Chi_Minh",
     )
-    expect(dayKey(from)).toBe("2026-08-29")
-    expect(dayKey(to)).toBe("2026-09-08")
+    expect(from.toISOString()).toBe("2026-09-01T17:00:00.000Z")
+    expect(to.toISOString()).toBe("2026-09-08T16:59:59.999Z")
   })
 
-  test("pads the day range by two days on each side", () => {
+  test("day range is exactly that day in the user's zone", () => {
     const { from, to } = getCalendarQueryRange(
       "day",
       new Date("2026-09-02T00:00:00"),
       endAnchorPlaceholder,
+      "UTC",
     )
-    expect(dayKey(from)).toBe("2026-08-31")
-    expect(dayKey(to)).toBe("2026-09-04")
+    expect(from.toISOString()).toBe("2026-09-02T00:00:00.000Z")
+    expect(to.toISOString()).toBe("2026-09-02T23:59:59.999Z")
   })
 
-  test("pads the custom range by two days on each side", () => {
+  test("week range spans Monday through Sunday in a UTC+14 zone", () => {
     const { from, to } = getCalendarQueryRange(
-      "custom",
-      new Date("2026-08-31T00:00:00"),
-      new Date("2026-09-06T00:00:00"),
+      "week",
+      new Date("2026-09-02T00:00:00"),
+      endAnchorPlaceholder,
+      "Pacific/Kiritimati",
     )
-    expect(dayKey(from)).toBe("2026-08-29")
-    expect(dayKey(to)).toBe("2026-09-08")
+    expect(from.toISOString()).toBe("2026-08-30T10:00:00.000Z")
+    expect(to.toISOString()).toBe("2026-09-06T09:59:59.999Z")
   })
 
-  test("padded month range includes grid-edge instants from the most extreme browser zones, whatever this process's zone", () => {
+  test("month range spans the visible grid in a DST-observing zone", () => {
     const { from, to } = getCalendarQueryRange(
       "month",
       new Date("2026-08-01T00:00:00"),
       endAnchorPlaceholder,
+      "America/New_York",
     )
-    // 00:30 on the first visible day for a UTC+14 browser, 23:30 on the last visible day for a UTC-12 browser.
-    const firstDayInKiritimati = new Date("2026-07-27T00:30:00+14:00")
-    const lastDayInBakerIsland = new Date("2026-09-06T23:30:00-12:00")
-    expect(firstDayInKiritimati.getTime()).toBeGreaterThanOrEqual(
-      from.getTime(),
+    // EDT is UTC-4 for the whole grid (Jul 27 – Sep 6).
+    expect(from.toISOString()).toBe("2026-07-27T04:00:00.000Z")
+    expect(to.toISOString()).toBe("2026-09-07T03:59:59.999Z")
+  })
+
+  test("falls back to UTC for an unusable timezone", () => {
+    const { from, to } = getCalendarQueryRange(
+      "day",
+      new Date("2026-09-02T00:00:00"),
+      endAnchorPlaceholder,
+      "Not/AZone",
     )
-    expect(lastDayInBakerIsland.getTime()).toBeLessThanOrEqual(to.getTime())
+    expect(from.toISOString()).toBe("2026-09-02T00:00:00.000Z")
+    expect(to.toISOString()).toBe("2026-09-02T23:59:59.999Z")
   })
 })
 

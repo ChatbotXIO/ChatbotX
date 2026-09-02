@@ -11,7 +11,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
-import { MessagingAdsBox } from "@/features/ads-campaign/components/messaging-ads-box"
+import { MessagingAdsMovedAlert } from "@/features/ads-campaign/components/messaging-ads-moved-alert"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
 import {
@@ -37,7 +37,6 @@ type MessengerCapiTabProps = {
   hasManualCapiAccessToken: boolean
   capiDisconnected: boolean
   credentialAvailable: boolean
-  messagingAdsConnectionState: { connected: boolean; reconnectNeeded: boolean }
 }
 
 const statusDescriptionKey = {
@@ -85,7 +84,6 @@ export function MessengerCapiTab({
   hasManualCapiAccessToken,
   capiDisconnected,
   credentialAvailable,
-  messagingAdsConnectionState,
 }: MessengerCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -130,9 +128,8 @@ export function MessengerCapiTab({
           })}
         </CardContent>
       </Card>
-      <MessagingAdsBox
+      <MessagingAdsMovedAlert
         channel="messenger"
-        initialConnectionState={messagingAdsConnectionState}
         integrationId={integrationMessenger.id}
         workspaceId={workspaceId}
       />

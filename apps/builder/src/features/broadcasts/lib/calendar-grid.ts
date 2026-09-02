@@ -1,3 +1,4 @@
+import { resolveFilterTimezone } from "@chatbotx.io/utils/datetime"
 import {
   addDays,
   addMonths,
@@ -17,18 +18,19 @@ import {
   subMonths,
   subWeeks,
 } from "date-fns"
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 
 export const CALENDAR_RANGES = ["month", "week", "day", "custom"] as const
 export type CalendarRange = (typeof CALENDAR_RANGES)[number]
 
 export const DATE_PARAM_FORMAT = "yyyy-MM-dd"
-/** > 26 h (largest offset difference between two zones), so the padded range holds in any server zone. */
-export const CALENDAR_RANGE_PADDING_DAYS = 2
 /** Span (in days, inclusive) a fresh "custom" range starts with when no `endDate` param is present or valid. */
 export const DEFAULT_CUSTOM_RANGE_DAYS = 7
 /** Upper bound (in days, inclusive) on how far `endDate` can sit past the anchor — bounds the query span. */
 export const MAX_CUSTOM_RANGE_DAYS = 92
 const DAY_KEY_FORMAT = "yyyy-MM-dd"
+/** Zone-less wall clock, the input `fromZonedTime` reinterprets in a named zone. */
+const WALL_CLOCK_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 const WEEK_STARTS_ON = 1 as const
 
 export function parseDateParam(value: string | null, now = new Date()): Date {
@@ -47,13 +49,25 @@ export function parseDateParam(value: string | null, now = new Date()): Date {
  * `parseDateParam(null)` for the "today" default — around a day boundary,
  * distant time zones can disagree on what "now" is, so the grid (client) and
  * the fetched rows (server) could end up describing different days. Resolve
- * here and thread the result down as a concrete value.
+ * here, in the user's `timezone` ("today" is a per-zone notion: 18:30 UTC is
+ * already tomorrow in Saigon), and thread the result down as a concrete value.
  */
 export function resolveDateParam(
   value: string | null,
+  timezone: string,
   now = new Date(),
 ): string {
-  return format(parseDateParam(value, now), DATE_PARAM_FORMAT)
+  if (value) {
+    const parsed = parse(value, DATE_PARAM_FORMAT, now)
+    if (isValid(parsed)) {
+      return format(parsed, DATE_PARAM_FORMAT)
+    }
+  }
+  return formatInTimeZone(
+    now,
+    resolveFilterTimezone(timezone),
+    DATE_PARAM_FORMAT,
+  )
 }
 
 /**
@@ -174,19 +188,35 @@ export const calendarRangeConfig: Record<
   },
 }
 
-/** Server-side query range: the visible range padded so no row is lost across the timezone edge. */
+/**
+ * The instant at which `wallClock`'s calendar date + time of day occurs in
+ * `timezone`. `wallClock` is read by its local getters only, so the process
+ * zone never leaks into the result.
+ */
+function wallClockToInstant(wallClock: Date, timezone: string): Date {
+  return fromZonedTime(format(wallClock, WALL_CLOCK_FORMAT), timezone)
+}
+
+/**
+ * Server-side query range: the visible interval's day boundaries as they
+ * fall in the user's `timezone`, so the fetched rows are exactly the ones the
+ * client grid (which groups by browser-local day) will show. An unusable
+ * zone degrades to UTC.
+ */
 export function getCalendarQueryRange(
   range: CalendarRange,
   anchor: Date,
   endAnchor: Date,
+  timezone: string,
 ): { from: Date; to: Date } {
   const { from, to } = calendarRangeConfig[range].getVisibleInterval(
     anchor,
     endAnchor,
   )
+  const zone = resolveFilterTimezone(timezone)
   return {
-    from: subDays(from, CALENDAR_RANGE_PADDING_DAYS),
-    to: addDays(to, CALENDAR_RANGE_PADDING_DAYS),
+    from: wallClockToInstant(from, zone),
+    to: wallClockToInstant(to, zone),
   }
 }
 

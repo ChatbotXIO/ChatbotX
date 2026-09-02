@@ -1400,6 +1400,21 @@
     "title": "Automatisering av Facebook-leadannonser",
     "whatFlow": "Vilket flöde utlöses"
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-annonser",
+    "description": "Annonser skickar personer direkt till en konversation på Messenger, Instagram eller WhatsApp.",
+    "empty": {
+      "title": "Inget konto anslutet för den här kanalen",
+      "description": "Anslut ett kanalkonto först och kom sedan tillbaka hit för att skapa annonser.",
+      "cta": "Gå till kanalinställningar"
+    },
+    "movedNote": {
+      "title": "Annonser har flyttats till Verktyg",
+      "description": "Skapa och hantera Click-to-Message-annonser från verktyget Click-to-Message-annonser.",
+      "cta": "Öppna Click-to-Message-annonser"
+    },
+    "dashboardCta": "Visa i annonspanelen"
+  },
   "fields": {
     "accessToken": {
       "label": "Åtkomsttoken"

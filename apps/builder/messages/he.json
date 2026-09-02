@@ -2562,6 +2562,21 @@
     "duplicateError": "כבר קיימת אוטומציה עבור דף וטופס אלה.",
     "subscribeError": "לא ניתן היה לרשום דף זה להתראות לידים של Facebook, ולכן האוטומציה לא נוצרה. חברו מחדש את הדף באמצעות \"הוספת חדש\" ונסו שוב."
   },
+  "clickToMessageAds": {
+    "title": "מודעות Click-to-Message",
+    "description": "המודעות שולחות אנשים ישירות לשיחה ב-Messenger, Instagram או WhatsApp.",
+    "empty": {
+      "title": "לא מחובר חשבון לערוץ הזה",
+      "description": "חברו תחילה חשבון ערוץ, ולאחר מכן חזרו לכאן כדי ליצור מודעות.",
+      "cta": "מעבר להגדרות הערוץ"
+    },
+    "movedNote": {
+      "title": "המודעות עברו לכלים",
+      "description": "צרו ונהלו מודעות Click-to-Message מתוך כלי מודעות Click-to-Message.",
+      "cta": "פתיחת מודעות Click-to-Message"
+    },
+    "dashboardCta": "צפייה בלוח הבקרה של המודעות"
+  },
   "ecommerce": {
     "title": "מסחר אלקטרוני",
     "description": "יצירה וניהול של חנות המסחר האלקטרוני שלכם."

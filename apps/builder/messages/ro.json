@@ -4352,6 +4352,21 @@
     "title": "Automatizare reclame pentru lead-uri Facebook",
     "whatFlow": "Ce flux este declanșat"
   },
+  "clickToMessageAds": {
+    "title": "Reclame Click-to-Message",
+    "description": "Reclamele trimit oamenii direct într-o conversație pe Messenger, Instagram sau WhatsApp.",
+    "empty": {
+      "title": "Niciun cont conectat pentru acest canal",
+      "description": "Conectează mai întâi un cont de canal, apoi revino aici pentru a crea reclame.",
+      "cta": "Mergi la setările canalului"
+    },
+    "movedNote": {
+      "title": "Reclamele s-au mutat în Instrumente",
+      "description": "Creează și gestionează reclamele Click-to-Message din instrumentul Reclame Click-to-Message.",
+      "cta": "Deschide Reclame Click-to-Message"
+    },
+    "dashboardCta": "Vezi în panoul de control Reclame"
+  },
   "helpItems": {
     "addButton": "Adaugă link",
     "addTitle": "Adaugă link de ajutor",

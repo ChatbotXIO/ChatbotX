@@ -4398,6 +4398,21 @@
     "duplicateError": "Une automatisation existe déjà pour cette Page et ce formulaire.",
     "subscribeError": "Impossible d’abonner cette Page aux notifications de prospects Facebook ; l’automatisation n’a donc pas été créée. Reconnectez la Page avec « Ajouter », puis réessayez."
   },
+  "clickToMessageAds": {
+    "title": "Publicités Click-to-Message",
+    "description": "Les publicités envoient les internautes directement dans une conversation sur Messenger, Instagram ou WhatsApp.",
+    "empty": {
+      "title": "Aucun compte connecté pour ce canal",
+      "description": "Connectez d'abord un compte de canal, puis revenez ici pour créer des publicités.",
+      "cta": "Accéder aux paramètres du canal"
+    },
+    "movedNote": {
+      "title": "Les publicités ont été déplacées vers Outils",
+      "description": "Créez et gérez les publicités Click-to-Message depuis l'outil Publicités Click-to-Message.",
+      "cta": "Ouvrir Publicités Click-to-Message"
+    },
+    "dashboardCta": "Voir sur le tableau de bord Publicités"
+  },
   "ecommerce": {
     "title": "E-commerce",
     "description": "Créez et gérez votre boutique en ligne."

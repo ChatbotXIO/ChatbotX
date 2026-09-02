@@ -4398,6 +4398,21 @@
     "duplicateError": "Für diese Seite und dieses Formular ist bereits eine Automatisierung vorhanden.",
     "subscribeError": "Diese Seite konnte nicht für Facebook-Lead-Benachrichtigungen abonniert werden, daher wurde die Automatisierung nicht erstellt. Verbinden Sie die Seite über „Neu hinzufügen“ erneut und versuchen Sie es noch einmal."
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-Anzeigen",
+    "description": "Anzeigen leiten Personen direkt in eine Unterhaltung auf Messenger, Instagram oder WhatsApp.",
+    "empty": {
+      "title": "Für diesen Kanal ist kein Konto verbunden",
+      "description": "Verbinden Sie zuerst ein Kanalkonto und kommen Sie dann hierher zurück, um Anzeigen zu erstellen.",
+      "cta": "Zu den Kanaleinstellungen"
+    },
+    "movedNote": {
+      "title": "Anzeigen wurden zu Tools verschoben",
+      "description": "Erstellen und verwalten Sie Click-to-Message-Anzeigen über das Tool Click-to-Message-Anzeigen.",
+      "cta": "Click-to-Message-Anzeigen öffnen"
+    },
+    "dashboardCta": "Im Anzeigen-Dashboard ansehen"
+  },
   "ecommerce": {
     "title": "E-Commerce",
     "description": "Erstellen und verwalten Sie Ihren E-Commerce-Shop."

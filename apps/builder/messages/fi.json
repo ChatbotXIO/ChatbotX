@@ -4398,6 +4398,21 @@
     "duplicateError": "Tälle sivulle ja lomakkeelle on jo olemassa automaatio.",
     "subscribeError": "Tätä sivua ei voitu tilata Facebookin liidi-ilmoituksiin, joten automaatiota ei luotu. Yhdistä sivu uudelleen valitsemalla Lisää uusi ja yritä uudelleen."
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-mainokset",
+    "description": "Mainokset ohjaavat ihmiset suoraan keskusteluun Messengerissä, Instagramissa tai WhatsAppissa.",
+    "empty": {
+      "title": "Tähän kanavaan ei ole yhdistetty tiliä",
+      "description": "Yhdistä ensin kanavatili ja palaa sitten tänne luomaan mainoksia.",
+      "cta": "Siirry kanava-asetuksiin"
+    },
+    "movedNote": {
+      "title": "Mainokset on siirretty Työkaluihin",
+      "description": "Luo ja hallitse Click-to-Message-mainoksia Click-to-Message-mainokset-työkalusta.",
+      "cta": "Avaa Click-to-Message-mainokset"
+    },
+    "dashboardCta": "Näytä mainostaulussa"
+  },
   "ecommerce": {
     "title": "Verkkokauppa",
     "description": "Luo ja hallitse verkkokauppaasi."
