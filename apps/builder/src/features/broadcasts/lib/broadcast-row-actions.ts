@@ -5,6 +5,7 @@ import {
   type LucideIcon,
   PencilIcon,
   RotateCwIcon,
+  SquarePenIcon,
   Trash2Icon,
 } from "lucide-react"
 import { parseBroadcastStatus } from "./broadcast-status"
@@ -12,6 +13,7 @@ import { parseBroadcastStatus } from "./broadcast-status"
 export const BROADCAST_ROW_ACTION_VARIANTS = [
   "view",
   "rename",
+  "edit",
   "resend",
   "schedule",
   "delete",
@@ -35,6 +37,7 @@ export const ROW_ACTION_ITEMS: Record<
 > = {
   view: { icon: EyeIcon, labelKey: "actions.view" },
   rename: { icon: PencilIcon, labelKey: "actions.rename" },
+  edit: { icon: SquarePenIcon, labelKey: "actions.edit" },
   resend: { icon: RotateCwIcon, labelKey: "actions.resend" },
   schedule: { icon: CalendarClockIcon, labelKey: "actions.schedule" },
   delete: { icon: Trash2Icon, labelKey: "actions.delete" },
@@ -48,13 +51,15 @@ const DEFAULT_ROW_ACTIONS: readonly BroadcastRowActionVariant[] = [
 /**
  * Which row-action variants are available per broadcast status. Every
  * status lists `view` and `rename`; `sent`/`failed` add `resend`; `draft`
- * adds `schedule` and `delete`.
+ * adds `edit`, `schedule` and `delete`. `edit` reopens the create form on the
+ * stored payload, so only a `draft` — the one status the service will still
+ * update — may offer it.
  */
 export const ROW_ACTIONS_BY_STATUS: Record<
   BroadcastStatus,
   readonly BroadcastRowActionVariant[]
 > = {
-  draft: [...DEFAULT_ROW_ACTIONS, "schedule", "delete"],
+  draft: [...DEFAULT_ROW_ACTIONS, "edit", "schedule", "delete"],
   scheduled: DEFAULT_ROW_ACTIONS,
   sending: DEFAULT_ROW_ACTIONS,
   sent: [...DEFAULT_ROW_ACTIONS, "resend"],

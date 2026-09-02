@@ -29,6 +29,21 @@ const isFutureScheduleTime = (value: string): boolean => {
 
 const FUTURE_SCHEDULE_MESSAGE = "Schedules must be after now."
 
+/** Template params as stored/sent for either template-capable channel. */
+export const broadcastTemplateDataSchema = z.union([
+  waTemplateParamsSchema,
+  messengerTemplateParamsSchema,
+])
+
+/** Flow bindings for a Messenger template's buttons. */
+export const broadcastTemplateButtonsSchema = z.array(
+  z.object({
+    id: z.string(),
+    label: z.string(),
+    flowId: z.string().optional(),
+  }),
+)
+
 export const createBroadcastRequest = z
   .object({
     channel: channelTypes,
@@ -36,18 +51,8 @@ export const createBroadcastRequest = z
     templateId: zodBigintAsString().optional(),
     integrationWhatsappId: zodBigintAsString().optional(),
     integrationMessengerId: zodBigintAsString().optional(),
-    templateData: z
-      .union([waTemplateParamsSchema, messengerTemplateParamsSchema])
-      .optional(),
-    buttons: z
-      .array(
-        z.object({
-          id: z.string(),
-          label: z.string(),
-          flowId: z.string().optional(),
-        }),
-      )
-      .optional(),
+    templateData: broadcastTemplateDataSchema.optional(),
+    buttons: broadcastTemplateButtonsSchema.optional(),
     subaction: broadcastSubactions,
     schedulesType: broadcastScheduleTypes,
     schedulesAt: z

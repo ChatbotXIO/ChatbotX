@@ -298,7 +298,14 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
                 return (
                   <DropdownMenuItem
                     key={variant}
-                    onClick={() => setRowAction({ row, variant })}
+                    onClick={() =>
+                      // Edit is a full-page form, not a dialog.
+                      variant === "edit"
+                        ? router.push(
+                            `/space/${workspaceId}/broadcasts/${row.original.id}/edit`,
+                          )
+                        : setRowAction({ row, variant })
+                    }
                   >
                     <ActionIcon className="me-2" />
                     {t(labelKey)}
@@ -313,7 +320,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         enableHiding: false,
       },
     ],
-    [t],
+    [t, router, workspaceId],
   )
 
   const { table } = useDataTable({

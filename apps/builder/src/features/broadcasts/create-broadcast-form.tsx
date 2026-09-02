@@ -42,6 +42,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
+import { updateDraftBroadcastAction } from "@/features/broadcasts/actions/update-draft-broadcast.action"
 import { BroadcastAudiencePreviewDialog } from "@/features/broadcasts/components/broadcast-audience-preview-dialog"
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { createBroadcastRequest } from "@/features/broadcasts/schema/action"
@@ -60,7 +61,23 @@ import type { MessageTemplateWithComponents } from "../integration-whatsapp/mess
 import { useIntegrationStore } from "../integration-whatsapp/provider/integration-store-context"
 import { MessengerBroadcastFlowButtons } from "./components/messenger-broadcast-flow-buttons"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
-import { buildCreateBroadcastDefaultValues } from "./lib/create-broadcast-defaults"
+import {
+  buildCreateBroadcastDefaultValues,
+  type EditBroadcastDraft,
+} from "./lib/create-broadcast-defaults"
+
+/**
+ * Returns a getter that reports `initial` on its first call and `false` after,
+ * so a mount-only effect can opt out exactly once without re-running on change.
+ */
+function useOneShotFlag(initial: boolean): () => boolean {
+  const ref = useRef(initial)
+  return useCallback(() => {
+    const value = ref.current
+    ref.current = false
+    return value
+  }, [])
+}
 
 type BroadcastConfig = {
   value: ChannelType
@@ -100,6 +117,12 @@ type CreateBroadcastFormProps = {
   initialChannel?: ChannelType
   initialIntegrationWhatsappId?: string
   initialContactFilter?: ContactFilterCriteria
+  /**
+   * Edit mode: an existing `draft` reopened from the list. The same schema and
+   * footer apply — "Save as draft" keeps it a draft, "Confirm" schedules it —
+   * only the bound action and the success toast differ.
+   */
+  editDraft?: EditBroadcastDraft
 }
 
 export function CreateBroadcastForm({
@@ -108,6 +131,7 @@ export function CreateBroadcastForm({
   initialChannel,
   initialIntegrationWhatsappId,
   initialContactFilter,
+  editDraft,
 }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -116,20 +140,27 @@ export function CreateBroadcastForm({
     (state) => state,
   )
 
+  const isEditing = Boolean(editDraft)
+
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createBroadcastAction.bind(null, workspaceId),
+    editDraft
+      ? updateDraftBroadcastAction.bind(null, workspaceId, editDraft.id)
+      : createBroadcastAction.bind(null, workspaceId),
     zodResolver(createBroadcastRequest),
     {
       actionProps: {
         onSuccess: ({ data }) => {
           toast.success(
-            t("messages.createdSuccess", {
-              feature: t(
-                data?.status === "draft"
-                  ? "broadcasts.status.draft"
-                  : "fields.broadcast.label",
-              ),
-            }),
+            t(
+              isEditing ? "messages.updatedSuccess" : "messages.createdSuccess",
+              {
+                feature: t(
+                  data?.status === "draft"
+                    ? "broadcasts.status.draft"
+                    : "fields.broadcast.label",
+                ),
+              },
+            ),
           )
           router.push(`/space/${workspaceId}/broadcasts`)
         },
@@ -141,11 +172,13 @@ export function CreateBroadcastForm({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: buildCreateBroadcastDefaultValues({
-          initialChannel,
-          initialIntegrationWhatsappId,
-          initialContactFilter,
-        }),
+        defaultValues:
+          editDraft?.defaultValues ??
+          buildCreateBroadcastDefaultValues({
+            initialChannel,
+            initialIntegrationWhatsappId,
+            initialContactFilter,
+          }),
       },
       errorMapProps: {},
     },
@@ -222,6 +255,7 @@ export function CreateBroadcastForm({
             <CreateBroadcastChooseFlow
               canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
+              isEditing={isEditing}
               onSaveAsDraft={handleSaveAsDraft}
               subaction={watchedSubAction}
             />
@@ -361,7 +395,7 @@ function BroadcastFlowTypeSelector({
   subaction: BroadcastSubaction | null
 }) {
   const t = useTranslations()
-  const { setValue } = useFormContext()
+  const { setValue, getValues } = useFormContext()
   const flowTypes: Array<{
     value: BroadcastFlowType
     label: string
@@ -379,9 +413,12 @@ function BroadcastFlowTypeSelector({
     },
   ]
 
-  const [selectedType, setSelectedType] = useState<BroadcastFlowType>(
-    broadcastFlowTypes.enum.flow,
-  )
+  // Seeded from the form so an edited draft opens on the half it was built
+  // with; a create form has no `templateType` yet and falls back to `flow`.
+  const [selectedType, setSelectedType] = useState<BroadcastFlowType>(() => {
+    const prefilled = broadcastFlowTypes.safeParse(getValues("templateType"))
+    return prefilled.success ? prefilled.data : broadcastFlowTypes.enum.flow
+  })
 
   const handleTypeChange = useCallback(
     (type: BroadcastFlowType) => {
@@ -450,6 +487,8 @@ function BroadcastFlowTypeSelector({
 type CreateBroadcastChooseFlowProps = {
   canViewEmailAndPhone: boolean
   channel: ChannelType
+  /** Suppresses the one-shot "clear stale template selection" mount effects. */
+  isEditing: boolean
   onSaveAsDraft: () => Promise<void>
   subaction: BroadcastSubaction
 }
@@ -644,15 +683,30 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     }
   }, [props.channel, props.subaction, t])
 
+  // In edit mode the prefilled integration and template arrive together on the
+  // very first render, so the "clear stale selection" and "seed blank params"
+  // effects below would wipe the draft's own template before the user touches
+  // anything. Each is skipped exactly once, then behaves as it does on create.
+  const keepPrefilledIntegration = useOneShotFlag(props.isEditing)
+  const keepPrefilledTemplateData = useOneShotFlag(props.isEditing)
+
   useEffect(() => {
     if (watchedIntegrationWhatsappId) {
       setIntegrationWhatsappId(watchedIntegrationWhatsappId)
+      if (keepPrefilledIntegration()) {
+        return
+      }
       // Clear stale template selection from previous integration
       setValue("templateId", undefined)
       setValue("templateData", undefined)
       setSelectedTemplate(null)
     }
-  }, [watchedIntegrationWhatsappId, setIntegrationWhatsappId, setValue])
+  }, [
+    watchedIntegrationWhatsappId,
+    setIntegrationWhatsappId,
+    setValue,
+    keepPrefilledIntegration,
+  ])
 
   useEffect(() => {
     latestReceiversCountQueryKeyRef.current = receiversCountQueryKey
@@ -667,16 +721,23 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
       ) as MessageTemplateWithComponents | undefined
       if (template) {
         setSelectedTemplate(template)
-        const initialParams = extractTemplateParams(
-          template.components as TemplateComponent[],
-        )
-        setValue("templateData", initialParams)
+        if (!keepPrefilledTemplateData()) {
+          const initialParams = extractTemplateParams(
+            template.components as TemplateComponent[],
+          )
+          setValue("templateData", initialParams)
+        }
       } else {
         setSelectedTemplate(null)
         setValue("templateData", undefined)
       }
     }
-  }, [watchedTemplateId, whatsappTemplates, setValue])
+  }, [
+    watchedTemplateId,
+    whatsappTemplates,
+    setValue,
+    keepPrefilledTemplateData,
+  ])
 
   useEffect(() => {
     if (
@@ -692,6 +753,9 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     )
     if (template) {
       setSelectedMessengerTemplate(template)
+      if (keepPrefilledTemplateData()) {
+        return
+      }
       const initialParams = extractMessengerTemplateParams(
         template.components as MessengerTemplateComponent[],
         template.parameterFormat as "POSITIONAL" | "NAMED",
@@ -709,7 +773,13 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
       setValue("templateData", undefined)
       setValue("buttons", []) // clear buttons
     }
-  }, [props.subaction, watchedTemplateId, messengerTemplatesData, setValue])
+  }, [
+    props.subaction,
+    watchedTemplateId,
+    messengerTemplatesData,
+    setValue,
+    keepPrefilledTemplateData,
+  ])
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">

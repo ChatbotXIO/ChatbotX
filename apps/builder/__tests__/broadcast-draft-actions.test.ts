@@ -34,10 +34,20 @@ function makeChainSpy(client: CapturedAction["client"]) {
 const workspaceActionClientChain = makeChainSpy("normal")
 const workspaceActionClientAllowExpiredChain = makeChainSpy("allowExpired")
 
-const { scheduleDraft, deleteDraft, recordAuditLog } = vi.hoisted(() => ({
+const {
+  scheduleDraft,
+  deleteDraft,
+  updateDraft,
+  recordAuditLog,
+  getCurrentUserAndTargetWorkspace,
+  canViewContactEmailAndPhone,
+} = vi.hoisted(() => ({
   scheduleDraft: vi.fn(),
   deleteDraft: vi.fn(),
+  updateDraft: vi.fn(),
   recordAuditLog: vi.fn(),
+  getCurrentUserAndTargetWorkspace: vi.fn(),
+  canViewContactEmailAndPhone: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => ({
@@ -45,17 +55,23 @@ vi.mock("@/lib/safe-action", () => ({
   workspaceActionClientAllowExpired: workspaceActionClientAllowExpiredChain,
 }))
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastService: { scheduleDraft, deleteDraft },
+  broadcastService: { scheduleDraft, deleteDraft, updateDraft },
 }))
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
 }))
+vi.mock("@/lib/auth/utils", () => ({ getCurrentUserAndTargetWorkspace }))
+vi.mock("@/features/contacts/permissions", () => ({
+  canViewContactEmailAndPhone,
+}))
 
 await import("@/features/broadcasts/actions/schedule-broadcast.action")
 await import("@/features/broadcasts/actions/delete-broadcast.action")
+await import("@/features/broadcasts/actions/update-draft-broadcast.action")
 const [
   { handler: scheduleHandler },
   { client: deleteActionClient, handler: deleteHandler },
+  { handler: updateHandler },
 ] = capturedActions
 const { scheduleBroadcastSchema } = await import(
   "@/features/broadcasts/schema/action"
@@ -64,7 +80,12 @@ const { scheduleBroadcastSchema } = await import(
 beforeEach(() => {
   scheduleDraft.mockReset()
   deleteDraft.mockReset()
+  updateDraft.mockReset()
   recordAuditLog.mockReset().mockResolvedValue(undefined)
+  getCurrentUserAndTargetWorkspace
+    .mockReset()
+    .mockResolvedValue({ targetWorkspaceMember: { permissions: [] } })
+  canViewContactEmailAndPhone.mockReset().mockReturnValue(true)
 })
 
 describe("scheduleBroadcastSchema", () => {
@@ -183,5 +204,88 @@ describe("deleteBroadcastAction", () => {
       workspaceId: "ws-1",
       broadcastId: "b-1",
     })
+  })
+})
+
+describe("updateDraftBroadcastAction", () => {
+  const parsedInput = {
+    channel: "whatsapp",
+    flowId: "flow-9",
+    subaction: "whatsappTemplateMessage",
+    schedulesType: "now",
+    schedulesAt: null,
+    contactFilter: { operator: "and", conditions: [] },
+    saveAsDraft: true,
+  }
+
+  test("delegates to broadcastService.updateDraft with the bound ids and the member's contact-info permission", async () => {
+    updateDraft.mockResolvedValue({ id: "b-1", status: "draft" })
+
+    const result = await updateHandler({
+      bindArgsParsedInputs: ["ws-1", "b-1"],
+      parsedInput,
+    })
+
+    expect(updateDraft).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      canViewEmailAndPhone: true,
+      data: parsedInput,
+    })
+    expect(result).toEqual({ id: "b-1", status: "draft" })
+  })
+
+  test("records a launch audit entry when the edit sends the broadcast now", async () => {
+    updateDraft.mockResolvedValue({ id: "b-1", status: "scheduled" })
+
+    await updateHandler({
+      bindArgsParsedInputs: ["ws-1", "b-1"],
+      parsedInput: { ...parsedInput, saveAsDraft: false },
+    })
+
+    expect(recordAuditLog).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      action: "launch",
+      detail: "launched a broadcast (#b-1)",
+    })
+  })
+
+  test("does not record a launch when the broadcast stays a draft", async () => {
+    updateDraft.mockResolvedValue({ id: "b-1", status: "draft" })
+
+    await updateHandler({
+      bindArgsParsedInputs: ["ws-1", "b-1"],
+      parsedInput,
+    })
+
+    expect(recordAuditLog).not.toHaveBeenCalled()
+  })
+
+  test("does not record a launch for a future schedule — the send has not happened", async () => {
+    updateDraft.mockResolvedValue({ id: "b-1", status: "scheduled" })
+
+    await updateHandler({
+      bindArgsParsedInputs: ["ws-1", "b-1"],
+      parsedInput: {
+        ...parsedInput,
+        saveAsDraft: false,
+        schedulesType: "future",
+        schedulesAt: "2030-01-01T09:30:00.000Z",
+      },
+    })
+
+    expect(recordAuditLog).not.toHaveBeenCalled()
+  })
+
+  test("treats a member without contact-info permission as canViewEmailAndPhone false", async () => {
+    updateDraft.mockResolvedValue({ id: "b-1", status: "draft" })
+    canViewContactEmailAndPhone.mockReturnValue(false)
+
+    await updateHandler({
+      bindArgsParsedInputs: ["ws-1", "b-1"],
+      parsedInput,
+    })
+
+    expect(updateDraft.mock.calls[0][0].canViewEmailAndPhone).toBe(false)
   })
 })

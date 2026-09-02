@@ -16,11 +16,20 @@ describe("ROW_ACTIONS_BY_STATUS", () => {
     }
   })
 
-  test("draft offers schedule and delete but not resend", () => {
+  test("draft offers edit, schedule and delete but not resend", () => {
     expect(ROW_ACTIONS_BY_STATUS.draft).toEqual(
-      expect.arrayContaining(["schedule", "delete"]),
+      expect.arrayContaining(["edit", "schedule", "delete"]),
     )
     expect(ROW_ACTIONS_BY_STATUS.draft).not.toContain("resend")
+  })
+
+  test("only a draft is editable", () => {
+    for (const status of broadcastStatuses.options) {
+      if (status === "draft") {
+        continue
+      }
+      expect(ROW_ACTIONS_BY_STATUS[status]).not.toContain("edit")
+    }
   })
 
   test("sent and failed offer resend but not schedule or delete", () => {
