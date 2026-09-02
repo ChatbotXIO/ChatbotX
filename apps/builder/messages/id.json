@@ -4398,6 +4398,21 @@
     "duplicateError": "Otomatisasi untuk halaman dan formulir ini sudah ada.",
     "subscribeError": "Tidak dapat mendaftarkan halaman ini untuk notifikasi prospek Facebook, sehingga otomatisasi tidak dibuat. Hubungkan kembali halaman melalui \"Tambahkan Baru\" lalu coba lagi."
   },
+  "clickToMessageAds": {
+    "title": "Iklan Click-to-Message",
+    "description": "Iklan mengirim orang langsung ke percakapan di Messenger, Instagram, atau WhatsApp.",
+    "empty": {
+      "title": "Tidak ada akun yang terhubung untuk channel ini",
+      "description": "Hubungkan akun channel terlebih dahulu, lalu kembali ke sini untuk membuat iklan.",
+      "cta": "Buka pengaturan channel"
+    },
+    "movedNote": {
+      "title": "Iklan telah dipindahkan ke Alat",
+      "description": "Buat dan kelola iklan Click-to-Message dari alat Iklan Click-to-Message.",
+      "cta": "Buka Iklan Click-to-Message"
+    },
+    "dashboardCta": "Lihat di dasbor Iklan"
+  },
   "ecommerce": {
     "title": "E-commerce",
     "description": "Buat dan kelola toko e-commerce Anda."

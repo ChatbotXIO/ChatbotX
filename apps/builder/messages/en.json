@@ -4552,6 +4552,21 @@
     "duplicateError": "An automation already exists for this page and form.",
     "subscribeError": "Could not subscribe this page to Facebook lead notifications, so the automation was not created. Reconnect the page with \"Add New\" and try again."
   },
+  "clickToMessageAds": {
+    "title": "Click to Message Ads",
+    "description": "Ads send people directly into a conversation on Messenger, Instagram, or WhatsApp.",
+    "empty": {
+      "title": "No account connected for this channel",
+      "description": "Connect a channel account first, then come back here to create ads.",
+      "cta": "Go to channel settings"
+    },
+    "movedNote": {
+      "title": "Ads have moved to Tools",
+      "description": "Create and manage Click to Message ads from the Click to Message Ads tool.",
+      "cta": "Open Click to Message Ads"
+    },
+    "dashboardCta": "View on Ads dashboard"
+  },
   "ecommerce": {
     "title": "Ecommerce",
     "description": "Create and manage your ecommerce store."

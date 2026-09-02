@@ -4291,6 +4291,21 @@
     "duplicateError": "Já existe uma automação para esta página e formulário.",
     "subscribeError": "Não foi possível inscrever esta página nas notificações de cadastros do Facebook, portanto a automação não foi criada. Reconecte a página com \"Adicionar nova\" e tente novamente."
   },
+  "clickToMessageAds": {
+    "title": "Anúncios Click-to-Message",
+    "description": "Os anúncios enviam as pessoas diretamente para uma conversa no Messenger, Instagram ou WhatsApp.",
+    "empty": {
+      "title": "Nenhuma conta conectada para este canal",
+      "description": "Conecte uma conta do canal primeiro e depois volte aqui para criar anúncios.",
+      "cta": "Ir para as configurações do canal"
+    },
+    "movedNote": {
+      "title": "Os anúncios foram movidos para Ferramentas",
+      "description": "Crie e gerencie os anúncios Click-to-Message na ferramenta Anúncios Click-to-Message.",
+      "cta": "Abrir Anúncios Click-to-Message"
+    },
+    "dashboardCta": "Ver no painel de Anúncios"
+  },
   "inboxTeams": {
     "title": "Equipes da caixa de entrada"
   },

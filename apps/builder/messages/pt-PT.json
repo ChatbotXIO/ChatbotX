@@ -4394,6 +4394,21 @@
     "duplicateError": "Já existe uma automatização para esta página e este formulário.",
     "subscribeError": "Não foi possível subscrever esta página nas notificações de leads do Facebook, pelo que a automatização não foi criada. Volte a ligar a página através de «Adicionar novo» e tente novamente."
   },
+  "clickToMessageAds": {
+    "title": "Anúncios Click-to-Message",
+    "description": "Os anúncios enviam as pessoas diretamente para uma conversa no Messenger, Instagram ou WhatsApp.",
+    "empty": {
+      "title": "Nenhuma conta ligada para este canal",
+      "description": "Ligue primeiro uma conta do canal e depois volte aqui para criar anúncios.",
+      "cta": "Ir para as definições do canal"
+    },
+    "movedNote": {
+      "title": "Os anúncios foram movidos para Ferramentas",
+      "description": "Crie e faça a gestão dos anúncios Click-to-Message a partir da ferramenta Anúncios Click-to-Message.",
+      "cta": "Abrir Anúncios Click-to-Message"
+    },
+    "dashboardCta": "Ver no painel de Anúncios"
+  },
   "QRCode": {
     "title": "Código QR",
     "description": "Partilhe este código para que as pessoas abram a sua ligação de acompanhamento."

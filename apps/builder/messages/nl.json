@@ -4398,6 +4398,21 @@
     "duplicateError": "Er bestaat al een automatisering voor deze pagina en dit formulier.",
     "subscribeError": "Deze pagina kon niet worden geabonneerd op Facebook-leadmeldingen, waardoor de automatisering niet is gemaakt. Koppel de pagina opnieuw via 'Nieuwe toevoegen' en probeer het opnieuw."
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-advertenties",
+    "description": "Advertenties sturen mensen rechtstreeks naar een gesprek op Messenger, Instagram of WhatsApp.",
+    "empty": {
+      "title": "Geen account gekoppeld voor dit kanaal",
+      "description": "Koppel eerst een kanaalaccount en kom daarna hier terug om advertenties te maken.",
+      "cta": "Ga naar kanaalinstellingen"
+    },
+    "movedNote": {
+      "title": "Advertenties zijn verplaatst naar Hulpmiddelen",
+      "description": "Maak en beheer Click-to-Message-advertenties vanuit de tool Click-to-Message-advertenties.",
+      "cta": "Click-to-Message-advertenties openen"
+    },
+    "dashboardCta": "Bekijk in het advertentiedashboard"
+  },
   "ecommerce": {
     "title": "E-commerce",
     "description": "Maak en beheer je webwinkel."

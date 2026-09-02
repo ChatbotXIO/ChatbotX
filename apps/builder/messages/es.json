@@ -4398,6 +4398,21 @@
     "duplicateError": "An automatización ya existe para este página y form.",
     "subscribeError": "Could not suscribir este página un Facebook lead notifications, so el automatización was not creado. ReConectar el página con \"Añadir Nuevo\" y try again."
   },
+  "clickToMessageAds": {
+    "title": "Anuncios Click-to-Message",
+    "description": "Los anuncios envían a las personas directamente a una conversación en Messenger, Instagram o WhatsApp.",
+    "empty": {
+      "title": "No hay ninguna cuenta conectada para este canal",
+      "description": "Conecta primero una cuenta de canal y luego vuelve aquí para crear anuncios.",
+      "cta": "Ir a la configuración del canal"
+    },
+    "movedNote": {
+      "title": "Los anuncios se han movido a Herramientas",
+      "description": "Crea y gestiona los anuncios Click-to-Message desde la herramienta Anuncios Click-to-Message.",
+      "cta": "Abrir Anuncios Click-to-Message"
+    },
+    "dashboardCta": "Ver en el panel de anuncios"
+  },
   "ecommerce": {
     "title": "Comercio electrónico",
     "description": "Crear y Gestionar tu ecommerce store."

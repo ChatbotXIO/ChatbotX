@@ -1,4 +1,5 @@
 import type { AdsEligibleChannelType } from "@chatbotx.io/utils/channel"
+import { formatWhatsappIntegrationLabel } from "@/features/integration-whatsapp/libs/integration-label"
 import type {
   AdsSwitcherChannelIntegration,
   AdsSwitcherData,
@@ -6,9 +7,9 @@ import type {
 
 /** Integrations for one concrete ads-eligible channel — populates the
  * account/integration select on the per-channel Ads dashboard page
- * (`/dashboard/ads/[channel]`). WhatsApp rows are labeled "name — phone"
- * (matching the old account switcher's display) since a workspace commonly
- * connects several numbers under similar names. */
+ * (`/dashboard/ads/[channel]`). WhatsApp rows are labeled via
+ * `formatWhatsappIntegrationLabel` ("name — phone"), the same label the
+ * Click to Message Ads tool shows. */
 export function resolveChannelIntegrations(
   channel: AdsEligibleChannelType,
   switcherData: AdsSwitcherData,
@@ -20,9 +21,7 @@ export function resolveChannelIntegrations(
     whatsapp: () =>
       switcherData.integrations.map((integration) => ({
         id: integration.id,
-        name: integration.displayPhoneNumber
-          ? `${integration.name} — ${integration.displayPhoneNumber}`
-          : integration.name,
+        name: formatWhatsappIntegrationLabel(integration),
       })),
     messenger: () => switcherData.messengerIntegrations,
     instagram: () => switcherData.instagramIntegrations,

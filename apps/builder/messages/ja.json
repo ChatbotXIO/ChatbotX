@@ -4377,6 +4377,21 @@
     "duplicateError": "このページとフォームの自動化はすでに存在します。",
     "subscribeError": "このページをFacebookのリード通知に登録できなかったため、自動化は作成されませんでした。「新規追加」からページを再接続して、もう一度お試しください。"
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message広告",
+    "description": "広告は、Messenger、Instagram、WhatsAppの会話にユーザーを直接誘導します。",
+    "empty": {
+      "title": "このチャネルに接続されたアカウントがありません",
+      "description": "まずチャネルアカウントを接続してから、ここに戻って広告を作成してください。",
+      "cta": "チャネル設定に移動"
+    },
+    "movedNote": {
+      "title": "広告はツールに移動しました",
+      "description": "Click-to-Message広告ツールからClick-to-Message広告を作成・管理できます。",
+      "cta": "Click-to-Message広告を開く"
+    },
+    "dashboardCta": "広告ダッシュボードで表示"
+  },
   "platformSettings": {
     "title": "プラットフォーム設定",
     "errors": {

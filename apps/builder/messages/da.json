@@ -4398,6 +4398,21 @@
     "duplicateError": "An automatisering already exists for denne side og form.",
     "subscribeError": "Could ikke subscribe denne side til Facebook lead notifications, so den automatisering var ikke oprettet. Forbind igen den side med \"Tilføj Ny\" og try igen."
   },
+  "clickToMessageAds": {
+    "title": "Click-to-Message-annoncer",
+    "description": "Annoncer sender folk direkte ind i en samtale på Messenger, Instagram eller WhatsApp.",
+    "empty": {
+      "title": "Ingen konto tilsluttet denne kanal",
+      "description": "Tilslut en kanalkonto først, og kom derefter tilbage hertil for at oprette annoncer.",
+      "cta": "Gå til kanalindstillinger"
+    },
+    "movedNote": {
+      "title": "Annoncer er flyttet til Værktøjer",
+      "description": "Opret og administrer Click-to-Message-annoncer fra værktøjet Click-to-Message-annoncer.",
+      "cta": "Åbn Click-to-Message-annoncer"
+    },
+    "dashboardCta": "Se på annoncepanelet"
+  },
   "ecommerce": {
     "title": "E-handel",
     "description": "Opret og administrer din e-handel butik."
