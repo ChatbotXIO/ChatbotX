@@ -1,0 +1,34 @@
+# Specification Template
+
+## Ticket
+- **URL**: INSERT_TICKET_URL_HERE
+- **Tracker**: Feature/Bug/Hotfix/Chore/Spike
+- **Priority**: Low/Medium/High
+- **Goal**: Brief description of the feature/fix
+
+## Problem
+Describe the problem or requested feature in detail.
+
+## Acceptance Criteria
+- [ ] Criteria 1
+- [ ] Criteria 2
+- [ ] Criteria 3
+
+## Skills & Rules
+Load these skills (comma-separated, e.g. "feature-scaffold,orpc-api"):
+INSERT_SKILLS_HERE
+
+## Do's and Don'ts
+List project-specific invariants and rules to follow. Reference invariant numbers from .agents/rules/ if applicable.
+
+Example:
+- Follow invariant #3 (ChannelType cascade) - new ChannelType values require fixing all Record<ChannelType, ...> hits
+- Use useTranslations() for all user-facing strings
+- Don't import db directly in app layer - use services/repositories
+
+## Docs to Update
+List docs files to update when this iteration closes, targeting docs/context/{domain}/{topic}.md format.
+
+Example:
+- docs/context/feature/feature-name.md
+- docs/tenancy.md (if tenant scoping changes)

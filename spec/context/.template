@@ -1,0 +1,33 @@
+# Context Template (Iteration Close)
+
+## Summary
+Summary of what was done vs. the plan. Note any deviations.
+
+## Files Changed
+List all files changed during this iteration:
+
+1. INSERT_PATH - Brief description of change
+2. INSERT_PATH - Brief description of change
+
+## Tests Run
+- pnpm lint: PASSED/FAILED
+- pnpm typecheck: PASSED/FAILED
+- pnpm test: PASSED/FAILED (list test command)
+- vitest coverage: XX%
+
+## Deviations from Plan
+List any deviations from the original plan.md. Explain why they occurred and what was changed.
+
+## Subagents Executed
+List all subagents that were executed with brief summaries of their work.
+
+Example:
+- database-schema: Created migration XX and updated schema
+- feature-integration: Implemented API endpoint and UI component
+- debug-specialist: Fixed issue with flow node registration
+
+## Next Steps / Blockers
+List any next steps or blockers for future work.
+
+## How to Test
+Instructions for manual and automated testing of the changes.

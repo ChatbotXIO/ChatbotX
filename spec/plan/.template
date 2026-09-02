@@ -1,0 +1,26 @@
+# Plan Template
+
+## Approach
+Describe the approach to implement this feature/fix. Include:
+- High-level architecture changes
+- Key components involved
+- Any new dependencies or packages needed
+
+## Files Affected
+List all files that will be changed, with brief description of changes:
+
+1. Path: INSERT_PATH - Description of change
+2. Path: INSERT_PATH - Description of change
+
+## Risk Assessment
+- **Low**: Minor changes, limited scope
+- **Medium**: Moderate changes, some existing functionality affected
+- **High**: Major changes, risk to multiple systems or data integrity
+
+## Open Questions & Approval Status
+- List any open questions that need resolution
+- Approval status: pending / approved / rejected
+
+## Approval Gate
+**REQUIRED**: Explicit user approval needed before proceeding to tasks.
+Type "aprobado" or "approved" to confirm.

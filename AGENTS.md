@@ -137,6 +137,159 @@ For automatic context injection on every prompt, add the hook to your **own** `.
 - **Test placement:** use `<workspace>/__tests__/` for app/package/integration-level tests, especially tests covering actions, routes, API behavior, cache behavior, worker behavior, or multiple feature boundaries (e.g. `apps/builder/__tests__`, `apps/worker/__tests__`, `packages/sdk/__tests__`, `integrations/messenger/__tests__`). Use colocated `src/**/__tests__` only for narrow unit/component tests clearly owned by that module.
 - **Quality bar:** Run `pnpm lint` (and typecheck scripts for touched packages) before considering work done. Keep changes scoped to the requested behavior.
 
+## Spec-Driven Development (SDD) Flow
+
+This project adapts the sysbrazo SDD methodology for the ChatbotX-fibrazo Turborepo/Node ecosystem. All SDD artifacts live under the `spec/` directory at the repo root.
+
+### Directory Structure
+
+```
+spec/
+├── README.md              # SDD rules and workflow overview
+├── feature/               # Feature changes (ticket-based)
+│   └── {ticket_id}/       # e.g., spec/feature/14100/
+│       ├── spec.md        # Requirements, acceptance criteria
+│       ├── plan.md        # Approach, files affected, risk
+│       ├── task.md        # Checklist with Owners
+│       └── context.md     # Summary, tests, deviations
+├── hotfix/                # Critical production bugs (no-ticket)
+├── bug/                   # Isolated bugs without ticket
+├── chore/                 # Technical debt/cleanup
+└── spike/                 # Research/investigation
+```
+
+### Artifact Format (Markdown)
+
+#### `spec.md` - Specification
+- Ticket info (URL, tracker, priority, goal)
+- Problem description and acceptance criteria
+- **Skills & rules to load** (which `.agents/skills/` and `.agents/rules/` apply)
+- **Do** / **Don't** constraints (project-specific invariants)
+- Settings & flags to configure
+- Docs to update (target: `docs/context/{domain}/{topic}.md`)
+
+#### `plan.md` - Plan (requires explicit user approval)
+- Approach section
+- Files affected list with change details
+- Risk assessment (low/medium/high)
+- **Approval gate rules** - each step needs explicit approval
+- Open questions and approval status
+
+#### `task.md` - Tasks (checklist format)
+- Ordered checklist items
+- Each item has **Owner** (`parent`, `database-schema`, `feature-integration`, `debug-specialist`, `refactoring-specialist`)
+- References to `plan.md` and `spec.md` sections
+
+#### `context.md` - Context (written when iteration closes)
+- Summary of what was done vs. plan
+- Files changed list
+- Tests run (`pnpm lint`, typecheck, tests)
+- Deviations from plan
+- Subagents executed with summaries
+- Next steps/blockers
+- How to test (automated + manual QA)
+
+### SDD Workflow & Approval Gates
+
+| Phase | Action | Approval Required |
+|-------|--------|-------------------|
+| **Spec → Plan** | Write `spec.md` → Present | Explicit "ok"/"aprobado"/"approved" |
+| **Plan → Tasks** | Write `plan.md` → Present | Explicit approval before coding |
+| **Tasks → Implement** | Proceed after plan approval | Binding - no turning back |
+| **Implement → Validate** | Run `pnpm lint` + typecheck + tests | Quality gate |
+| **Validate → Context** | Write `context.md` and close | Mandatory |
+
+**Key constraints:**
+- Feedback ≠ approval ("I like it" doesn't count)
+- Partial approval ≠ full approval
+- Must update `docs/context/{domain}/{topic}.md` when closing
+- SDD files in English; conversation matches user's language
+- Artifacts committed with code changes
+
+### Getting Started with SDD
+
+1. **Create a ticket/issue** in your tracking system
+2. **Run**: `pnpm sd:init <ticket_id>` (or manually create `spec/feature/{ticket_id}/`)
+3. **Write `spec.md`** following the template
+4. **Present to user** for spec approval
+5. **Write `plan.md`** and get plan approval
+6. **Proceed with implementation** using subagents with explicit Owners
+7. **Validate** with `pnpm lint` and tests
+8. **Write `context.md`** and close the iteration
+
+### Example: Creating a New Feature SDD
+
+```bash
+mkdir -p spec/feature/14100
+
+# Create spec.md from template
+cat > spec/feature/14100/spec.md << 'EOF'
+# Specification: FEATURE_NAME
+
+## Ticket
+- **URL**: https://redmine.example.com/issues/14100
+- **Tracker**: Feature
+- **Priority**: High
+- **Goal**: Brief description
+
+## Problem
+Describe the problem or requested feature.
+
+## Acceptance Criteria
+- [ ] Criteria 1
+- [ ] Criteria 2
+- [ ] Criteria 3
+
+## Skills & Rules
+Load these skills:
+- agents/skills/feature-scaffold
+- agents/skills/orpc-api (if adding API)
+
+## Do's and Don'ts
+- Follow invariant #3 (ChannelType cascade)
+- Use useTranslations() for all strings
+- Don't import db directly in app layer
+
+## Docs to Update
+- docs/context/feature/feature-name.md
+EOF
+
+# Present spec to user for approval
+# After approval, create plan.md
+# After plan approval, proceed with tasks
+```
+
+### SDD Artifacts Already Created
+
+The following files/directories were created under `spec/`:
+- `spec/README.md` - SDD rules and workflow overview
+- `spec/feature/.template` - spec.md template
+- `spec/plan/.template` - plan.md template
+- `spec/task/.template` - task.md checklist template
+- `spec/context/.template` - context.md iteration close template
+- `spec/feature/`, `hotfix/`, `bug/`, `chore/`, `spike/` - Empty subdirectories ready for use
+
+### Integration with Existing Project Patterns
+
+The SDD flow integrates with ChatbotX-fibrazo's existing patterns:
+- **Invariants**: Reference project invariants from `.agents/rules/` in your `spec.md` Do's/Don'ts
+- **Data access**: Use service/repository pattern (no direct `db` import in app layer)
+- **i18n**: All user-facing strings must use `useTranslations()`
+- **Channel types**: Adding new `ChannelType` values requires fixing all `Record<ChannelType, ...>` hits
+- **Flow nodes**: New node types must register in ALL node maps
+- **Folder scoping**: `changeFolder` needs extra checks for shared tables across FolderTypes
+
+### SDD Scripts (recommended addition)
+
+Consider adding these `pnpm` scripts to `package.json` for SDD workflow automation:
+
+```json
+"sd:init": "echo 'Create spec/feature/{ticket_id}/ directory manually'",
+"sd:spec": "echo 'Open spec/{feature,bug,hotfix,chore,spike}/{ticket_id}/spec.md for editing'",
+"sd:plan": "echo 'Open spec/{feature,bug,hotfix,chore,spike}/{ticket_id}/plan.md for editing'",
+"sd:context": "echo 'Write context.md when iteration closes and update docs/context/{domain}/{topic}.md'"
+```
+
 ## Key invariants for AI agents
 
 These are the most common mistakes — read before writing any code:
