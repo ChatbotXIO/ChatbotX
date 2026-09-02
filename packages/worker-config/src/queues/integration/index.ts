@@ -174,6 +174,20 @@ export type IntegrationJobRunFlowNode = {
     nodeVisits?: NodeVisits
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    /**
+     * The flow stop/resume guard's ONE authoritative "initial broadcast
+     * dispatch" signal (`runFlowNode` in `apps/worker/src/integration/handlers/flow.ts`).
+     * Set to `true` ONLY by `process-broadcast-contacts.ts`'s very first
+     * `sendFlow` enqueue for a broadcast recipient — every re-dispatch
+     * (splitTraffic, startAnotherNode, startExternalFlow/Node, condition
+     * routing, per-step continuation, smart-delay/wait resume, …) must leave
+     * this unset. The guard resets the recipient for Resume only when this
+     * is `true`; a continuation that forgets to omit it would incorrectly
+     * replay the flow head, so every non-producer enqueue site must never
+     * set it. Omitting it fails toward skip-without-reset (under-delivery,
+     * never a duplicate send).
+     */
+    initialBroadcastDispatch?: boolean
     appointmentId?: string
     sendFrom?: "inbox"
     origin?: "channel"

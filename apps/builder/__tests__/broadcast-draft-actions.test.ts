@@ -36,14 +36,14 @@ const workspaceActionClientAllowExpiredChain = makeChainSpy("allowExpired")
 
 const {
   scheduleDraft,
-  deleteDraft,
+  softDeleteBroadcasts,
   updateDraft,
   recordAuditLog,
   getCurrentUserAndTargetWorkspace,
   canViewContactEmailAndPhone,
 } = vi.hoisted(() => ({
   scheduleDraft: vi.fn(),
-  deleteDraft: vi.fn(),
+  softDeleteBroadcasts: vi.fn(),
   updateDraft: vi.fn(),
   recordAuditLog: vi.fn(),
   getCurrentUserAndTargetWorkspace: vi.fn(),
@@ -55,7 +55,7 @@ vi.mock("@/lib/safe-action", () => ({
   workspaceActionClientAllowExpired: workspaceActionClientAllowExpiredChain,
 }))
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastService: { scheduleDraft, deleteDraft, updateDraft },
+  broadcastService: { scheduleDraft, softDeleteBroadcasts, updateDraft },
 }))
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
@@ -79,7 +79,7 @@ const { scheduleBroadcastSchema } = await import(
 
 beforeEach(() => {
   scheduleDraft.mockReset()
-  deleteDraft.mockReset()
+  softDeleteBroadcasts.mockReset()
   updateDraft.mockReset()
   recordAuditLog.mockReset().mockResolvedValue(undefined)
   getCurrentUserAndTargetWorkspace
@@ -197,12 +197,15 @@ describe("deleteBroadcastAction", () => {
     expect(deleteActionClient).toBe("allowExpired")
   })
 
-  test("delegates to broadcastService.deleteDraft with the bound ids", async () => {
-    deleteDraft.mockResolvedValue(undefined)
+  test("delegates to broadcastService.softDeleteBroadcasts with the bound ids", async () => {
+    softDeleteBroadcasts.mockResolvedValue({
+      deletedCount: 1,
+      requestedCount: 1,
+    })
     await deleteHandler({ bindArgsParsedInputs: ["ws-1", "b-1"] })
-    expect(deleteDraft).toHaveBeenCalledWith({
+    expect(softDeleteBroadcasts).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      broadcastId: "b-1",
+      ids: ["b-1"],
     })
   })
 })

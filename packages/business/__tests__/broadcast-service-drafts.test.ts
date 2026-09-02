@@ -6,7 +6,6 @@ const findFirstFlow = vi.fn()
 const findFirstIntegrationWhatsapp = vi.fn()
 const findFirstIntegrationMessenger = vi.fn()
 const updateReturning = vi.fn()
-const deleteReturning = vi.fn()
 const pruneFilter = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -35,11 +34,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
         }),
       }),
     }),
-    delete: () => ({
-      where: (condition: unknown) => ({
-        returning: () => deleteReturning({ condition }),
-      }),
-    }),
   },
   and: (...args: unknown[]) => ({ __and: args }),
   asc: vi.fn(),
@@ -59,6 +53,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     workspaceId: "broadcast.workspaceId",
     status: "broadcast.status",
     handoffCompletedAt: "broadcast.handoffCompletedAt",
+    deletedAt: "broadcast.deletedAt",
   },
   flowModel: {},
   contactsOnBroadcastsModel: {
@@ -108,7 +103,6 @@ beforeEach(() => {
   findFirstIntegrationWhatsapp.mockReset()
   findFirstIntegrationMessenger.mockReset()
   updateReturning.mockReset()
-  deleteReturning.mockReset()
   pruneFilter.mockReset().mockImplementation((filter: unknown) => filter)
 })
 
@@ -135,6 +129,7 @@ describe("broadcastService.scheduleDraft", () => {
       { __eq: ["broadcast.id", "b-1"] },
       { __eq: ["broadcast.workspaceId", "ws-1"] },
       { __eq: ["broadcast.status", "draft"] },
+      { __isNull: "broadcast.deletedAt" },
     ])
   })
 
@@ -147,30 +142,6 @@ describe("broadcastService.scheduleDraft", () => {
         schedulesType: "now",
         schedulesAt: new Date(),
       }),
-    ).rejects.toThrow("Broadcast is not a draft")
-  })
-})
-
-describe("broadcastService.deleteDraft", () => {
-  test("deletes a draft scoped to the workspace", async () => {
-    deleteReturning.mockResolvedValue([{ id: "b-1" }])
-
-    await broadcastService.deleteDraft({
-      workspaceId: "ws-1",
-      broadcastId: "b-1",
-    })
-
-    expect(flatten(deleteReturning.mock.calls[0][0].condition)).toEqual([
-      { __eq: ["broadcast.id", "b-1"] },
-      { __eq: ["broadcast.workspaceId", "ws-1"] },
-      { __eq: ["broadcast.status", "draft"] },
-    ])
-  })
-
-  test("throws when nothing was deleted", async () => {
-    deleteReturning.mockResolvedValue([])
-    await expect(
-      broadcastService.deleteDraft({ workspaceId: "ws-1", broadcastId: "b-1" }),
     ).rejects.toThrow("Broadcast is not a draft")
   })
 })
@@ -195,6 +166,7 @@ describe("broadcastService.listForCalendar", () => {
       schedulesAt: { gte: from, lte: to },
       status: "scheduled",
       name: { ilike: "%sale%" },
+      deletedAt: { isNull: true },
     })
     expect(args.limit).toBe(500)
     expect(args.orderBy).toEqual({ schedulesAt: "asc" })
@@ -215,6 +187,7 @@ describe("broadcastService.findDraft", () => {
       id: "b-1",
       workspaceId: "ws-1",
       status: "draft",
+      deletedAt: { isNull: true },
     })
   })
 
@@ -274,6 +247,7 @@ describe("broadcastService.updateDraft", () => {
       { __eq: ["broadcast.id", "b-1"] },
       { __eq: ["broadcast.workspaceId", "ws-1"] },
       { __eq: ["broadcast.status", "draft"] },
+      { __isNull: "broadcast.deletedAt" },
     ])
   })
 

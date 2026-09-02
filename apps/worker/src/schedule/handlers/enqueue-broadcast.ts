@@ -12,6 +12,7 @@ export const enqueueBroadcast = async () => {
         lte: startTime,
       },
       status: "scheduled",
+      deletedAt: { isNull: true },
     },
   })
 

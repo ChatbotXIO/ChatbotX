@@ -20,4 +20,5 @@ export const broadcastsSearchParsers = {
   view: parseAsStringEnum([...BROADCAST_VIEWS]).withDefault("table"),
   range: parseAsStringEnum([...CALENDAR_RANGES]).withDefault("month"),
   date: parseAsString,
+  endDate: parseAsString,
 }

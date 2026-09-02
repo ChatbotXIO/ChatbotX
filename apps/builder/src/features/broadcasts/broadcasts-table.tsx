@@ -3,6 +3,7 @@
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,20 +18,27 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Loader2Icon, MoreHorizontalIcon } from "lucide-react"
+import { CopyIcon, Loader2Icon, MoreHorizontalIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import React, { useMemo, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { useCopyToClipboard } from "usehooks-ts"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
 import { BroadcastDetailDialog } from "./broadcast-detail-dialog"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
 import { BroadcastsEmptyState } from "./components/broadcasts-empty-state"
+import { BroadcastsTableToolbarActions } from "./components/broadcasts-table-toolbar-actions"
 import { DeleteBroadcastDialog } from "./components/delete-broadcast-dialog"
+import { MoveBroadcastToDraftDialog } from "./components/move-broadcast-to-draft-dialog"
+import { ResumeBroadcastDialog } from "./components/resume-broadcast-dialog"
 import { ScheduleBroadcastDialog } from "./components/schedule-broadcast-dialog"
+import { StopBroadcastDialog } from "./components/stop-broadcast-dialog"
 import {
   type BroadcastRowActionVariant,
+  filterBroadcastRowActions,
   getBroadcastRowActions,
   ROW_ACTION_ITEMS,
 } from "./lib/broadcast-row-actions"
@@ -66,8 +74,70 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
 
   const [rowAction, setRowAction] = useState<BroadcastRowAction | null>(null)
 
+  const [, copyToClipboard] = useCopyToClipboard()
+  const handleCopyId = useCallback(
+    (id: string) => {
+      copyToClipboard(id).then(() => {
+        toast.success(t("messages.copiedToClipboard"))
+      })
+    },
+    [copyToClipboard, t],
+  )
+
   const columns = useMemo<ColumnDef<BroadcastResourceWithRelations>[]>(
     () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            aria-label={t("actions.selectAll")}
+            checked={table.getIsAllPageRowsSelected()}
+            className="translate-y-0.5"
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(Boolean(value))
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label={t("actions.selectRow")}
+            checked={row.getIsSelected()}
+            className="translate-y-0.5"
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          />
+        ),
+        size: 20,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "id",
+        accessorKey: "id",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.fields.id")}
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <span className="max-w-[100px] truncate font-mono text-xs">
+              {row.original.id}
+            </span>
+            <Button
+              aria-label={t("actions.copy")}
+              className="size-6 shrink-0"
+              onClick={() => handleCopyId(row.original.id)}
+              size="icon"
+              variant="ghost"
+            >
+              <CopyIcon className="size-3" />
+            </Button>
+          </div>
+        ),
+        enableSorting: false,
+      },
       {
         id: "name",
         accessorKey: "name",
@@ -281,19 +351,22 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
       },
       {
         id: "actions",
-        header: "Actions",
+        header: t("actions.actions"),
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
                 <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">{t("actions.openMenu")}</span>
                 </Button>
               }
             />
             <DropdownMenuContent align="end">
-              {getBroadcastRowActions(row.original.status).map((variant) => {
+              {filterBroadcastRowActions(
+                getBroadcastRowActions(row.original.status),
+                { contactCount: row.original.contactCount },
+              ).map((variant) => {
                 const { icon: ActionIcon, labelKey } = ROW_ACTION_ITEMS[variant]
                 return (
                   <DropdownMenuItem
@@ -320,7 +393,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         enableHiding: false,
       },
     ],
-    [t, router, workspaceId],
+    [t, router, workspaceId, handleCopyId],
   )
 
   const { table } = useDataTable({
@@ -345,12 +418,19 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         <BroadcastsEmptyState filtered={filtered} />
       ) : (
         <div className="flex flex-col gap-4 p-6">
-          <DataTable table={table} />
+          <DataTable table={table}>
+            <div className="flex items-center justify-end p-1">
+              <BroadcastsTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </div>
+          </DataTable>
         </div>
       )}
 
       <RenameBroadcastDialog
-        broadcast={rowAction?.row.original || null}
+        broadcast={rowAction?.row.original ?? null}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
           router.refresh()
@@ -359,7 +439,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
       />
 
       <ResendBroadcastDialog
-        broadcast={rowAction?.row.original || null}
+        broadcast={rowAction?.row.original ?? null}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
           router.refresh()
@@ -376,13 +456,41 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         open={rowAction?.variant === "schedule"}
       />
 
-      <DeleteBroadcastDialog
+      <MoveBroadcastToDraftDialog
         broadcast={rowAction?.row.original ?? null}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
           router.refresh()
         }}
+        open={rowAction?.variant === "moveToDraft"}
+      />
+
+      <StopBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "stop"}
+      />
+
+      <ResumeBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "resume"}
+      />
+
+      <DeleteBroadcastDialog
+        broadcasts={rowAction?.row.original ? [rowAction.row.original] : []}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
         open={rowAction?.variant === "delete"}
+        workspaceId={workspaceId}
       />
 
       <BroadcastDetailDialog

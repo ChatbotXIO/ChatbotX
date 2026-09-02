@@ -19,6 +19,7 @@ export const reconcileBroadcasts = async () =>
         where: {
           status: broadcastStatuses.enum.sending,
           handoffCompletedAt: { isNull: true },
+          deletedAt: { isNull: true },
         },
       })
 

@@ -7,6 +7,7 @@ const forEachAudienceChunk = vi.fn()
 const scheduleAddSpy = vi.fn()
 const loggerInfoSpy = vi.fn()
 const loggerWarnSpy = vi.fn()
+const purgeBroadcastRecipientsSpy = vi.fn()
 const blockedWorkspaceIds = new Set<string>()
 
 type UpdateCall = {
@@ -20,6 +21,11 @@ type InsertCall = { table: unknown; values: unknown }
 const insertCalls: InsertCall[] = []
 
 const onConflictSpy = vi.fn()
+
+// Rows returned by the promotion UPDATE's `.returning()`. Defaults to a
+// match (promotion succeeded) so existing enqueue-path tests keep passing;
+// individual tests override this to simulate a lost promotion race.
+let promotionReturningRows: Array<{ id: string }> = [{ id: "broadcast-1" }]
 
 vi.mock("@chatbotx.io/business", () => ({
   withBlockedOwnerGuard: async (
@@ -42,9 +48,16 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {
     id: "Broadcast.id",
     status: "Broadcast.status",
+    deletedAt: "Broadcast.deletedAt",
+    resumeCount: "Broadcast.resumeCount",
     __name: "broadcastModel",
   },
   contactsOnBroadcastsModel: { __name: "contactsOnBroadcastsModel" },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  purgeBroadcastRecipients: (...args: unknown[]) =>
+    purgeBroadcastRecipientsSpy(...args),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -61,7 +74,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
       set: (values: Record<string, unknown>) => ({
         where: (condition: unknown) => {
           updateCalls.push({ table, values, condition })
-          return Promise.resolve()
+          return {
+            returning: () => Promise.resolve(promotionReturningRows),
+          }
         },
       }),
     }),
@@ -79,6 +94,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: (left: unknown, right: unknown) => ({ __eq: [left, right] }),
   and: (...args: unknown[]) => ({ __and: args }),
+  isNull: (value: unknown) => ({ __isNull: value }),
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -118,6 +134,7 @@ const baseBroadcast = () => ({
   subaction: null as string | null,
   contactFilter: null as unknown,
   templateId: null as string | null,
+  resumeCount: 0,
 })
 
 beforeEach(() => {
@@ -131,6 +148,12 @@ beforeEach(() => {
   loggerInfoSpy.mockReset()
   loggerWarnSpy.mockReset()
   onConflictSpy.mockReset()
+  purgeBroadcastRecipientsSpy.mockReset()
+  purgeBroadcastRecipientsSpy.mockResolvedValue({
+    deleted: 0,
+    stopReason: "drained",
+  })
+  promotionReturningRows = [{ id: BROADCAST_ID }]
   blockedWorkspaceIds.clear()
 })
 
@@ -411,5 +434,103 @@ describe("prepareBroadcast", () => {
       contactCount: 0,
     })
     expect(scheduleAddSpy).not.toHaveBeenCalled()
+  })
+
+  describe("stale recipient cleanup", () => {
+    test("purges any existing ContactOnBroadcast rows before rebuilding the audience", async () => {
+      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+      forEachAudienceChunk.mockResolvedValue(undefined)
+
+      await prepareBroadcast(BROADCAST_ID)
+
+      expect(purgeBroadcastRecipientsSpy).toHaveBeenCalledTimes(1)
+      expect(purgeBroadcastRecipientsSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ broadcastId: BROADCAST_ID }),
+      )
+      // Cleanup happens before the audience is rebuilt.
+      expect(
+        purgeBroadcastRecipientsSpy.mock.invocationCallOrder[0],
+      ).toBeLessThan(forEachAudienceChunk.mock.invocationCallOrder[0])
+    })
+
+    test("does not purge when the broadcast is missing or the workspace is blocked", async () => {
+      findFirstBroadcast.mockResolvedValue(undefined)
+      await prepareBroadcast(BROADCAST_ID)
+      expect(purgeBroadcastRecipientsSpy).not.toHaveBeenCalled()
+
+      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+      blockedWorkspaceIds.add(WORKSPACE_ID)
+      await prepareBroadcast(BROADCAST_ID)
+      expect(purgeBroadcastRecipientsSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("promotion-epoch pin", () => {
+    test("pins the promotion UPDATE to id, status, deletedAt, and the resumeCount read at the start of the run", async () => {
+      findFirstBroadcast.mockResolvedValue({
+        ...baseBroadcast(),
+        resumeCount: 3,
+      })
+      forEachAudienceChunk.mockResolvedValue(undefined)
+
+      await prepareBroadcast(BROADCAST_ID)
+
+      expect(updateCalls[0].condition).toEqual({
+        __and: [
+          { __eq: ["Broadcast.id", BROADCAST_ID] },
+          { __eq: ["Broadcast.status", "scheduled"] },
+          { __isNull: "Broadcast.deletedAt" },
+          { __eq: ["Broadcast.resumeCount", 3] },
+        ],
+      })
+    })
+
+    test("skips the sendBroadcast enqueue when the promotion UPDATE matches 0 rows (lost the race)", async () => {
+      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+      findDMByContactIds.mockResolvedValue([
+        { id: "conv-1", contactId: "contact-1" },
+      ])
+      forEachAudienceChunk.mockImplementation(
+        async (
+          _input: unknown,
+          onChunk: (
+            rows: Array<{ id: string; contactId: string }>,
+          ) => Promise<unknown>,
+        ) => {
+          await onChunk([{ id: "ci-1", contactId: "contact-1" }])
+        },
+      )
+      promotionReturningRows = []
+
+      await prepareBroadcast(BROADCAST_ID)
+
+      expect(scheduleAddSpy).not.toHaveBeenCalled()
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ broadcastId: BROADCAST_ID }),
+        expect.stringContaining("lost the promotion race"),
+      )
+    })
+
+    test("still enqueues sendBroadcast when the promotion UPDATE matches", async () => {
+      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+      findDMByContactIds.mockResolvedValue([
+        { id: "conv-1", contactId: "contact-1" },
+      ])
+      forEachAudienceChunk.mockImplementation(
+        async (
+          _input: unknown,
+          onChunk: (
+            rows: Array<{ id: string; contactId: string }>,
+          ) => Promise<unknown>,
+        ) => {
+          await onChunk([{ id: "ci-1", contactId: "contact-1" }])
+        },
+      )
+      promotionReturningRows = [{ id: BROADCAST_ID }]
+
+      await prepareBroadcast(BROADCAST_ID)
+
+      expect(scheduleAddSpy).toHaveBeenCalledTimes(1)
+    })
   })
 })

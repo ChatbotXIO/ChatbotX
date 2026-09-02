@@ -22,6 +22,7 @@ const loggerErrorSpy = vi.fn()
 
 // ── business service spies ───────────────────────────────────────────────────
 const markHandoffCompleted = vi.fn()
+const markContactSentIfSending = vi.fn()
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock("@chatbotx.io/business", () => ({
@@ -31,6 +32,8 @@ vi.mock("@chatbotx.io/business", () => ({
   ) => fn(),
   broadcastService: {
     markHandoffCompleted: (...args: unknown[]) => markHandoffCompleted(...args),
+    markContactSentIfSending: (...args: unknown[]) =>
+      markContactSentIfSending(...args),
   },
 }))
 
@@ -157,6 +160,7 @@ const makeBroadcast = (overrides: Record<string, unknown> = {}) => ({
   templateId: null as string | null,
   channel: null as string | null,
   templateData: null as unknown,
+  resumeCount: 0,
   ...overrides,
 })
 
@@ -172,6 +176,8 @@ beforeEach(() => {
   scheduleAddSpy.mockResolvedValue(undefined)
   markHandoffCompleted.mockReset()
   markHandoffCompleted.mockResolvedValue(true)
+  markContactSentIfSending.mockReset()
+  markContactSentIfSending.mockResolvedValue(undefined)
 })
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -221,6 +227,9 @@ describe("processBroadcastContacts", () => {
             flowId: "flow-1",
             conversationId: "conv-1",
             contactInboxId: "ci-1",
+            // The flow stop/resume guard's ONE authoritative marker (fix
+            // round 1) — only this, the producer's first dispatch, may set it.
+            initialBroadcastDispatch: true,
             metadata: expect.objectContaining({
               type: "broadcast",
               broadcastId: BROADCAST_ID,
@@ -228,7 +237,7 @@ describe("processBroadcastContacts", () => {
           }),
         }),
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -299,7 +308,7 @@ describe("processBroadcastContacts", () => {
           }),
         }),
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-template",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -324,7 +333,7 @@ describe("processBroadcastContacts", () => {
         "sendMessengerTemplateMessage",
         expect.objectContaining({ type: "sendMessengerTemplateMessage" }),
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-template",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -382,6 +391,7 @@ describe("processBroadcastContacts", () => {
         where: {
           id: "broadcast-filter",
           status: "sending",
+          deletedAt: { isNull: true },
         },
       })
     })
@@ -405,7 +415,7 @@ describe("processBroadcastContacts", () => {
       })
     })
 
-    test("marks contactOnBroadcast as sent=true after queue add", async () => {
+    test("marks contactOnBroadcast sent via markContactSentIfSending after queue add (guard-vs-producer race: the service's own EXISTS guard — not a caller-side status check — is what keeps a stopped broadcast's row from resurrecting)", async () => {
       findManyBroadcast.mockResolvedValue([
         makeBroadcast({ templateId: "tmpl-1", channel: "whatsapp" }),
       ])
@@ -414,20 +424,19 @@ describe("processBroadcastContacts", () => {
       const result = await processBroadcastContacts(BROADCAST_ID)
 
       expect(result).toEqual({ processed: 1 })
-      // update to contactsOnBroadcastsModel
-      const cobUpdate = updateCalls.find(
-        (c) =>
-          (c.table as { __name?: string }).__name ===
-          "contactsOnBroadcastsModel",
-      )
-      expect(cobUpdate).toBeDefined()
-      expect(cobUpdate?.values).toMatchObject({ sent: true })
-      expect(cobUpdate?.condition).toEqual({
-        __and: [
-          { __eq: ["cob.broadcastId", BROADCAST_ID] },
-          { __eq: ["cob.contactId", "contact-1"] },
-        ],
+      expect(markContactSentIfSending).toHaveBeenCalledWith({
+        broadcastId: BROADCAST_ID,
+        contactId: "contact-1",
       })
+      // No raw db.update for the sent flag anymore — it goes through the
+      // conditional service call above.
+      expect(
+        updateCalls.some(
+          (c) =>
+            (c.table as { __name?: string }).__name ===
+              "contactsOnBroadcastsModel" && c.values.sent === true,
+        ),
+      ).toBe(false)
     })
 
     test("processes multiple contacts in the scoped broadcast and returns total count", async () => {
@@ -521,13 +530,15 @@ describe("processBroadcastContacts", () => {
       )
     })
 
-    test("throws when sent=true update fails after enqueue and does not mark failedAt", async () => {
+    test("throws when markContactSentIfSending fails after enqueue and does not mark failedAt", async () => {
       findManyBroadcast.mockResolvedValue([
         makeBroadcast({ templateId: "tmpl-1", channel: "whatsapp" }),
       ])
       findManyContactsOnBroadcasts.mockResolvedValue([makeContactOnBroadcast()])
 
-      updateWhereSpy.mockRejectedValueOnce(new Error("database unavailable"))
+      markContactSentIfSending.mockRejectedValueOnce(
+        new Error("database unavailable"),
+      )
 
       await expect(processBroadcastContacts(BROADCAST_ID)).rejects.toThrow(
         "database unavailable",
@@ -620,7 +631,7 @@ describe("processBroadcastContacts", () => {
         "sendFlow",
         expect.anything(),
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -628,7 +639,7 @@ describe("processBroadcastContacts", () => {
         "sendWhatsappTemplateMessage",
         expect.anything(),
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-template",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       )
@@ -643,7 +654,7 @@ describe("processBroadcastContacts", () => {
         }),
       ])
       findManyContactsOnBroadcasts.mockResolvedValue([makeContactOnBroadcast()])
-      updateWhereSpy
+      markContactSentIfSending
         .mockRejectedValueOnce(new Error("database unavailable"))
         .mockResolvedValue(undefined)
 
@@ -656,21 +667,21 @@ describe("processBroadcastContacts", () => {
       expect(chatAddSpy).toHaveBeenCalledTimes(2)
       expect(integrationAddSpy.mock.calls.map((call) => call[2])).toEqual([
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       ])
       expect(chatAddSpy.mock.calls.map((call) => call[2])).toEqual([
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-template",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
         {
-          jobId: "broadcast-send-contact-broadcast-1-contact-1-template",
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r0",
           removeOnComplete: { age: 3600, count: 100_000 },
         },
       ])
@@ -714,6 +725,67 @@ describe("processBroadcastContacts", () => {
       )
 
       expect(markHandoffCompleted).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("stop/resume protocol: epoch-suffixed jobIds", () => {
+    // Protocol case "stop -> resume before hand-off": resumeSending bumps
+    // resumeCount, so the resumed run's downstream jobIds use a new epoch
+    // and never collide with a completed job from the pre-stop epoch that
+    // may still be sitting in the queue's 1h removeOnComplete retention
+    // window (see broadcastContactSendJobId's comment in the source file).
+    test("suffixes downstream jobIds with the broadcast row's resumeCount", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          flowId: "flow-1",
+          templateId: "tmpl-1",
+          channel: "whatsapp",
+          resumeCount: 2,
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([makeContactOnBroadcast()])
+
+      await processBroadcastContacts(BROADCAST_ID)
+
+      expect(integrationAddSpy).toHaveBeenCalledWith(
+        "sendFlow",
+        expect.anything(),
+        expect.objectContaining({
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-flow-r2",
+        }),
+      )
+      expect(chatAddSpy).toHaveBeenCalledWith(
+        "sendWhatsappTemplateMessage",
+        expect.anything(),
+        expect.objectContaining({
+          jobId: "broadcast-send-contact-broadcast-1-contact-1-template-r2",
+        }),
+      )
+    })
+
+    test("a second resume (resumeCount goes 0 -> 1 -> 2) produces a third, still-distinct jobId epoch", async () => {
+      findManyContactsOnBroadcasts.mockResolvedValue([makeContactOnBroadcast()])
+
+      for (const resumeCount of [0, 1, 2]) {
+        findManyBroadcast.mockResolvedValue([
+          makeBroadcast({
+            templateId: "tmpl-1",
+            channel: "whatsapp",
+            resumeCount,
+          }),
+        ])
+        await processBroadcastContacts(BROADCAST_ID)
+      }
+
+      const jobIds = chatAddSpy.mock.calls.map(
+        (call) => (call[2] as { jobId: string }).jobId,
+      )
+      expect(jobIds).toEqual([
+        "broadcast-send-contact-broadcast-1-contact-1-template-r0",
+        "broadcast-send-contact-broadcast-1-contact-1-template-r1",
+        "broadcast-send-contact-broadcast-1-contact-1-template-r2",
+      ])
+      expect(new Set(jobIds).size).toBe(3)
     })
   })
 })

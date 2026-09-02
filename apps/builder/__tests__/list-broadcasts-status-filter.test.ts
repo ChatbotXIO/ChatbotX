@@ -66,6 +66,7 @@ describe("listBroadcasts status filter", () => {
       workspaceId: "ws-1",
       name: undefined,
       status: "failed",
+      deletedAt: { isNull: true },
     })
   })
 

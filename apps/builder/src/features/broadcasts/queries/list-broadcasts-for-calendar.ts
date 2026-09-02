@@ -8,20 +8,21 @@ import {
   type CalendarRange,
   getCalendarQueryRange,
   parseDateParam,
+  parseEndDateParam,
 } from "../lib/calendar-grid"
 
 export async function listBroadcastsForCalendar(input: {
   workspaceId: string
   range: CalendarRange
   date: string
+  endDate: string
   status: BroadcastStatus | null
   name: string | null
 }): Promise<BroadcastCalendarRow[]> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
-  const { from, to } = getCalendarQueryRange(
-    input.range,
-    parseDateParam(input.date),
-  )
+  const anchor = parseDateParam(input.date)
+  const endAnchor = parseEndDateParam(input.endDate, anchor)
+  const { from, to } = getCalendarQueryRange(input.range, anchor, endAnchor)
   return broadcastService.listForCalendar({
     workspaceId: input.workspaceId,
     from,

@@ -9,6 +9,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  ne,
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
@@ -136,6 +137,7 @@ class BroadcastService extends BaseService {
       where: {
         id: input.broadcastId,
         workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
       },
       columns: {
         id: true,
@@ -168,10 +170,58 @@ class BroadcastService extends BaseService {
         and(
           eq(broadcastModel.workspaceId, input.workspaceId),
           eq(broadcastModel.channel, input.channel),
+          isNull(broadcastModel.deletedAt),
         ),
       )
       .orderBy(desc(broadcastModel.createdAt))
       .limit(OPTION_LIST_LIMIT)
+  }
+
+  /**
+   * Existing (not soft-deleted) broadcast ids from `ids`, scoped to the
+   * workspace. Gates stats/contact-statistics lookups so a soft-deleted
+   * broadcast reads as "not found" rather than resurfacing stale analytics.
+   */
+  async listExistingIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<string[]> {
+    if (input.ids.length === 0) {
+      return []
+    }
+
+    const rows = await db
+      .select({ id: broadcastModel.id })
+      .from(broadcastModel)
+      .where(
+        and(
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          inArray(broadcastModel.id, input.ids),
+          isNull(broadcastModel.deletedAt),
+        ),
+      )
+    return rows.map((row) => row.id)
+  }
+
+  /**
+   * Read-only send-path guard: is `broadcastId` still eligible to receive
+   * sends right now? The template send handlers and the flow dispatch guard
+   * call this before delivering — a stopped/cancelled/deleted broadcast
+   * returns null so the caller skips the send instead of delivering into a
+   * stopped run.
+   */
+  async findSendableBroadcast(
+    broadcastId: string,
+  ): Promise<{ id: string } | null> {
+    const row = await db.query.broadcastModel.findFirst({
+      where: {
+        id: broadcastId,
+        status: broadcastStatuses.enum.sending,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+    return row ?? null
   }
 
   /** `sending` broadcasts whose recipients were all handed off — the only ones finalizeBroadcasts may resolve. */
@@ -248,12 +298,32 @@ class BroadcastService extends BaseService {
     return rows.length > 0
   }
 
-  /** Shared workspace + draft-status scope reused by scheduleDraft and deleteDraft. */
+  /** Shared workspace + draft-status scope reused by scheduleDraft and updateDraft. */
   private draftScope(workspaceId: string, broadcastId: string) {
     return and(
       eq(broadcastModel.id, broadcastId),
       eq(broadcastModel.workspaceId, workspaceId),
       eq(broadcastModel.status, broadcastStatuses.enum.draft),
+      isNull(broadcastModel.deletedAt),
+    )
+  }
+
+  /**
+   * Shared workspace + current-status + not-deleted scope reused by every
+   * status transition (moveToDraft, stopSending, resumeSending). Pinning the
+   * `fromStatus` here is what makes each transition a single conditional
+   * UPDATE rather than a read-then-write.
+   */
+  private transitionScope(
+    workspaceId: string,
+    broadcastId: string,
+    fromStatus: BroadcastStatus,
+  ) {
+    return and(
+      eq(broadcastModel.id, broadcastId),
+      eq(broadcastModel.workspaceId, workspaceId),
+      eq(broadcastModel.status, broadcastStatuses.enum[fromStatus]),
+      isNull(broadcastModel.deletedAt),
     )
   }
 
@@ -279,18 +349,180 @@ class BroadcastService extends BaseService {
     return row
   }
 
-  async deleteDraft(input: {
+  /**
+   * `scheduled` -> `draft`. Bumps `resumeCount` (the dispatch epoch) so a
+   * still-running stale `prepareBroadcast` for the old schedule loses its
+   * pinned promotion UPDATE if this round-trips back through `scheduleDraft`.
+   */
+  async moveToDraft(input: {
     workspaceId: string
     broadcastId: string
-  }): Promise<void> {
-    const deleted = await db
-      .delete(broadcastModel)
-      .where(this.draftScope(input.workspaceId, input.broadcastId))
+  }): Promise<{ id: string }> {
+    const [row] = await db
+      .update(broadcastModel)
+      .set({
+        status: broadcastStatuses.enum.draft,
+        contactCount: null,
+        handoffCompletedAt: null,
+        resumeCount: sql`${broadcastModel.resumeCount} + 1`,
+      })
+      .where(
+        this.transitionScope(input.workspaceId, input.broadcastId, "scheduled"),
+      )
       .returning({ id: broadcastModel.id })
 
-    if (deleted.length === 0) {
-      throw new ChatbotXException("Broadcast is not a draft")
+    if (!row) {
+      throw new ChatbotXException("Broadcast is no longer scheduled")
     }
+    return row
+  }
+
+  /** `sending` -> `cancelled`. */
+  async stopSending(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<{ id: string }> {
+    const [row] = await db
+      .update(broadcastModel)
+      .set({ status: broadcastStatuses.enum.cancelled })
+      .where(
+        this.transitionScope(input.workspaceId, input.broadcastId, "sending"),
+      )
+      .returning({ id: broadcastModel.id })
+
+    if (!row) {
+      throw new ChatbotXException("Broadcast is not in progress")
+    }
+    return row
+  }
+
+  /**
+   * `cancelled` -> `sending`, in a single pinned UPDATE. Clearing
+   * `handoffCompletedAt` here (rather than a separate statement) closes both
+   * the stop-after-handoff hole and the finalize race: `completeSending`
+   * requires `handoffCompletedAt IS NOT NULL`, so a stale finalize read that
+   * ran before this UPDATE loses.
+   *
+   * `contactCount IS NOT NULL` excludes never-prepared cancelled rows —
+   * e.g. a `scheduled` broadcast cancelled by workspace teardown
+   * (`campaign-cleanup.ts`) before `prepareBroadcast` ever ran. Those rows
+   * have no `ContactOnBroadcast` recipients, so resuming them would flip
+   * straight to `sent` with zero deliveries. `contactCount` survives
+   * `stopSending` and is only cleared by `moveToDraft`, so it reliably
+   * distinguishes "was actually sending" from "never prepared".
+   */
+  async resumeSending(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<{ id: string }> {
+    const [row] = await db
+      .update(broadcastModel)
+      .set({
+        status: broadcastStatuses.enum.sending,
+        handoffCompletedAt: null,
+        resumeCount: sql`${broadcastModel.resumeCount} + 1`,
+      })
+      .where(
+        and(
+          this.transitionScope(
+            input.workspaceId,
+            input.broadcastId,
+            "cancelled",
+          ),
+          isNotNull(broadcastModel.contactCount),
+        ),
+      )
+      .returning({ id: broadcastModel.id })
+
+    if (!row) {
+      throw new ChatbotXException("Broadcast is not stopped")
+    }
+    return row
+  }
+
+  /**
+   * Soft-deletes broadcasts by stamping `deletedAt`. A `sending` broadcast
+   * can never be soft-deleted (the `purgeBroadcasts` hard-delete path assumes
+   * recipients are no longer being actively dispatched), so it is silently
+   * excluded rather than erroring — `deletedCount < requestedCount` tells the
+   * caller some ids were skipped (already deleted, foreign, or sending).
+   */
+  async softDeleteBroadcasts(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<{ deletedCount: number; requestedCount: number }> {
+    const requestedCount = input.ids.length
+    if (requestedCount === 0) {
+      return { deletedCount: 0, requestedCount: 0 }
+    }
+
+    const rows = await db
+      .update(broadcastModel)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          inArray(broadcastModel.id, input.ids),
+          ne(broadcastModel.status, broadcastStatuses.enum.sending),
+          isNull(broadcastModel.deletedAt),
+        ),
+      )
+      .returning({ id: broadcastModel.id })
+
+    return { deletedCount: rows.length, requestedCount }
+  }
+
+  /**
+   * Re-arms one recipient row for a resumed broadcast so `processBroadcastContacts`
+   * picks it up again. A row that already `failedAt` stays failed — resume
+   * only replays rows that were merely in-flight, not ones that terminally
+   * failed. `contactKey` supports both callers: template send handlers know
+   * `contactId`; the flow guard's job data only carries `contactInboxId`.
+   */
+  async resetContactForResume(input: {
+    broadcastId: string
+    contactKey: { contactId: string } | { contactInboxId: string }
+  }): Promise<void> {
+    const keyCondition =
+      "contactId" in input.contactKey
+        ? eq(contactsOnBroadcastsModel.contactId, input.contactKey.contactId)
+        : eq(
+            contactsOnBroadcastsModel.contactInboxId,
+            input.contactKey.contactInboxId,
+          )
+
+    await db
+      .update(contactsOnBroadcastsModel)
+      .set({ sent: false })
+      .where(
+        and(
+          eq(contactsOnBroadcastsModel.broadcastId, input.broadcastId),
+          keyCondition,
+          isNull(contactsOnBroadcastsModel.failedAt),
+        ),
+      )
+  }
+
+  /**
+   * Marks a recipient sent only while its broadcast is still `sending` —
+   * replaces an unconditional mark so a contact processed by a stale job
+   * (after `stopSending`/`moveToDraft` already moved the broadcast on)
+   * cannot resurrect a row that resume/cleanup has since reset or purged.
+   */
+  async markContactSentIfSending(input: {
+    broadcastId: string
+    contactId: string
+  }): Promise<void> {
+    await db
+      .update(contactsOnBroadcastsModel)
+      .set({ sent: true })
+      .where(
+        and(
+          eq(contactsOnBroadcastsModel.broadcastId, input.broadcastId),
+          eq(contactsOnBroadcastsModel.contactId, input.contactId),
+          sql`EXISTS (SELECT 1 FROM "Broadcast" b WHERE b.id = ${input.broadcastId} AND b.status = ${broadcastStatuses.enum.sending})`,
+        ),
+      )
   }
 
   /** The editable form of a broadcast: only a `draft` row may be reopened. */
@@ -303,6 +535,7 @@ class BroadcastService extends BaseService {
         id: input.broadcastId,
         workspaceId: input.workspaceId,
         status: broadcastStatuses.enum.draft,
+        deletedAt: { isNull: true },
       },
     })
     return row ?? null
@@ -505,6 +738,7 @@ class BroadcastService extends BaseService {
         schedulesAt: { gte: input.from, lte: input.to },
         status: input.status,
         name: input.name ? { ilike: likeContains(input.name) } : undefined,
+        deletedAt: { isNull: true },
       },
       with: {
         flow: { columns: { id: true, name: true } },
@@ -767,6 +1001,7 @@ class BroadcastService extends BaseService {
       where: {
         id: input.broadcastId,
         workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
       },
       columns: {
         templateId: true,

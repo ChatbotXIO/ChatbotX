@@ -3,13 +3,14 @@ import {
   broadcastStatuses,
 } from "@chatbotx.io/database/partials"
 
-/** Order of the left-panel filters (design). `cancelled` intentionally has no filter. */
+/** Order of the left-panel filters (design). */
 export const BROADCAST_FILTER_STATUSES = [
   "draft",
   "scheduled",
   "sending",
   "sent",
   "failed",
+  "cancelled",
 ] as const
 export type BroadcastFilterStatus = (typeof BROADCAST_FILTER_STATUSES)[number]
 

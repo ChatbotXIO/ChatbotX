@@ -7,7 +7,10 @@ import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
 import { BroadcastsCalendar } from "@/features/broadcasts/components/broadcasts-calendar"
 import { BroadcastsListShell } from "@/features/broadcasts/components/broadcasts-list-shell"
 import { BROADCASTS_PANEL_COOKIE } from "@/features/broadcasts/lib/broadcast-status"
-import { resolveDateParam } from "@/features/broadcasts/lib/calendar-grid"
+import {
+  resolveDateParam,
+  resolveEndDateParam,
+} from "@/features/broadcasts/lib/calendar-grid"
 import { listBroadcasts } from "@/features/broadcasts/queries"
 import { listBroadcastsForCalendar } from "@/features/broadcasts/queries/list-broadcasts-for-calendar"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schema/query"
@@ -28,10 +31,12 @@ export default async function BroadcastsPage(props: {
 
   if (search.view === "calendar") {
     const calendarDate = resolveDateParam(search.date)
+    const calendarEndDate = resolveEndDateParam(search.endDate, calendarDate)
     const broadcasts = await listBroadcastsForCalendar({
       workspaceId,
       range: search.range,
       date: calendarDate,
+      endDate: calendarEndDate,
       status: search.status,
       name: search.name,
     })
@@ -40,6 +45,7 @@ export default async function BroadcastsPage(props: {
         <BroadcastsCalendar
           broadcasts={broadcasts}
           date={calendarDate}
+          endDate={calendarEndDate}
           range={search.range}
         />
       </BroadcastsListShell>

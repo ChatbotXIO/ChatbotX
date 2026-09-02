@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   integer,
@@ -67,6 +68,10 @@ export const broadcastModel = pgTable(
     contactCount: integer(),
     /** Set once every recipient row has been handed to its channel send job; terminal status is resolved after this. */
     handoffCompletedAt: timestamp(timestampConfig),
+    /** Soft-delete stamp; purgeBroadcasts hard-deletes after chunked recipient teardown + zero-remaining verification. EVERY Broadcast reader must filter deletedAt IS NULL (see Task 3 checklist). */
+    deletedAt: timestamp(timestampConfig),
+    /** Dispatch epoch, incremented by resumeSending AND moveToDraft. Suffixes every downstream PER-CONTACT send jobId (defeats BullMQ's 1-hour completed-job dedup on resume) and pins prepare's promotion UPDATE (defeats stale-prepare re-promotion after a moveToDraft → re-schedule round-trip). The sendBroadcast DRIVER jobId (broadcastSendJobId) deliberately stays epoch-FREE — it enforces the single-driver invariant and its removeOnComplete/Fail: true frees the key at terminal state. */
+    resumeCount: integer().notNull().default(0),
   },
   (table) => [
     index("Broadcast_workspaceId_idx").using(
@@ -89,5 +94,8 @@ export const broadcastModel = pgTable(
       "btree",
       table.status.asc().nullsLast(),
     ),
+    index("Broadcast_deletedAt_idx")
+      .using("btree", table.deletedAt.asc().nullsLast())
+      .where(sql`"deletedAt" IS NOT NULL`),
   ],
 )

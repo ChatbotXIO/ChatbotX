@@ -1,12 +1,15 @@
 import type { BroadcastStatus } from "@chatbotx.io/database/partials"
 import {
   CalendarClockIcon,
+  CircleStopIcon,
   EyeIcon,
   type LucideIcon,
   PencilIcon,
+  PlayIcon,
   RotateCwIcon,
   SquarePenIcon,
   Trash2Icon,
+  UndoIcon,
 } from "lucide-react"
 import { parseBroadcastStatus } from "./broadcast-status"
 
@@ -16,6 +19,9 @@ export const BROADCAST_ROW_ACTION_VARIANTS = [
   "edit",
   "resend",
   "schedule",
+  "moveToDraft",
+  "stop",
+  "resume",
   "delete",
 ] as const
 export type BroadcastRowActionVariant =
@@ -40,6 +46,9 @@ export const ROW_ACTION_ITEMS: Record<
   edit: { icon: SquarePenIcon, labelKey: "actions.edit" },
   resend: { icon: RotateCwIcon, labelKey: "actions.resend" },
   schedule: { icon: CalendarClockIcon, labelKey: "actions.schedule" },
+  moveToDraft: { icon: UndoIcon, labelKey: "actions.moveToDraft" },
+  stop: { icon: CircleStopIcon, labelKey: "actions.stop" },
+  resume: { icon: PlayIcon, labelKey: "actions.resume" },
   delete: { icon: Trash2Icon, labelKey: "actions.delete" },
 }
 
@@ -50,21 +59,23 @@ const DEFAULT_ROW_ACTIONS: readonly BroadcastRowActionVariant[] = [
 
 /**
  * Which row-action variants are available per broadcast status. Every
- * status lists `view` and `rename`; `sent`/`failed` add `resend`; `draft`
- * adds `edit`, `schedule` and `delete`. `edit` reopens the create form on the
+ * status lists `view` and `rename`. `edit` reopens the create form on the
  * stored payload, so only a `draft` — the one status the service will still
- * update — may offer it.
+ * update — may offer it. `sending` intentionally has no `delete` (the
+ * service refuses to soft-delete an in-flight broadcast — stop it first);
+ * `cancelled` intentionally has no `edit` (it isn't a draft) but can
+ * `resume`. `scheduled` moves back to draft instead of deleting outright.
  */
 export const ROW_ACTIONS_BY_STATUS: Record<
   BroadcastStatus,
   readonly BroadcastRowActionVariant[]
 > = {
   draft: [...DEFAULT_ROW_ACTIONS, "edit", "schedule", "delete"],
-  scheduled: DEFAULT_ROW_ACTIONS,
-  sending: DEFAULT_ROW_ACTIONS,
-  sent: [...DEFAULT_ROW_ACTIONS, "resend"],
-  failed: [...DEFAULT_ROW_ACTIONS, "resend"],
-  cancelled: DEFAULT_ROW_ACTIONS,
+  scheduled: [...DEFAULT_ROW_ACTIONS, "moveToDraft", "delete"],
+  sending: [...DEFAULT_ROW_ACTIONS, "stop"],
+  cancelled: [...DEFAULT_ROW_ACTIONS, "resume", "delete"],
+  sent: [...DEFAULT_ROW_ACTIONS, "resend", "delete"],
+  failed: [...DEFAULT_ROW_ACTIONS, "resend", "delete"],
 }
 
 /**
@@ -78,3 +89,41 @@ export const getBroadcastRowActions = (
   const parsed = parseBroadcastStatus(status)
   return parsed ? ROW_ACTIONS_BY_STATUS[parsed] : DEFAULT_ROW_ACTIONS
 }
+
+/** The subset of a broadcast row a `ROW_ACTION_GUARDS` predicate needs. */
+export type BroadcastRowActionGuardRow = {
+  contactCount: number | null
+}
+
+/**
+ * Per-variant guard predicates that further restrict a row-action beyond
+ * its status eligibility (`ROW_ACTIONS_BY_STATUS`). A variant with no entry
+ * here is always shown once its status allows it. Keyed by variant so
+ * `filterBroadcastRowActions` can look guards up without inline
+ * if/else branching.
+ *
+ * `resume`: a `cancelled` broadcast with `contactCount === null` was
+ * cancelled before `prepareBroadcast` ever ran (e.g. workspace-teardown
+ * cleanup of a `scheduled` broadcast) and has no recipients to resume —
+ * mirrors the `contactCount IS NOT NULL` guard in
+ * `broadcastService.resumeSending`.
+ */
+export const ROW_ACTION_GUARDS: Partial<
+  Record<
+    BroadcastRowActionVariant,
+    (row: BroadcastRowActionGuardRow) => boolean
+  >
+> = {
+  resume: (row) => row.contactCount !== null,
+}
+
+/**
+ * Filters row-action variants against their `ROW_ACTION_GUARDS` predicate
+ * (when one exists) for the given row. Consumers should pass the result of
+ * `getBroadcastRowActions` through this before rendering the dropdown.
+ */
+export const filterBroadcastRowActions = (
+  actions: readonly BroadcastRowActionVariant[],
+  row: BroadcastRowActionGuardRow,
+): readonly BroadcastRowActionVariant[] =>
+  actions.filter((variant) => (ROW_ACTION_GUARDS[variant] ?? (() => true))(row))

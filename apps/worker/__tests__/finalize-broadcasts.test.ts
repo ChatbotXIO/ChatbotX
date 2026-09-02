@@ -217,6 +217,17 @@ describe("finalizeBroadcasts", () => {
   })
 
   test("does not count a lost race", async () => {
+    // Protocol case "stop after markHandoffCompleted -> resume": this run's
+    // `listAwaitingFinalization` read is stale relative to a concurrent
+    // stopSending/resumeSending round-trip. `resumeSending` clears
+    // handoffCompletedAt in the same UPDATE that flips status back to
+    // "sending" (broadcast-service-transitions.test.ts), so by the time this
+    // run's completeSending() fires, its WHERE clause (status='sending' AND
+    // handoffCompletedAt IS NOT NULL — broadcast-service-lifecycle.test.ts)
+    // no longer matches: 0 rows. finalize must not count that as a finalize,
+    // leaving reconcileBroadcasts (which re-enqueues on handoffCompletedAt
+    // IS NULL — reconcile-broadcasts.test.ts) as the one driving the
+    // resumed run.
     listAwaitingFinalization.mockResolvedValue([
       makeBroadcast("b-1", 10, minutesAgo(1)),
     ])

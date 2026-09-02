@@ -143,6 +143,7 @@ async function splitTraffic({
   step,
   targetId,
   useLatestFlowVersion,
+  metadata,
   sendFrom,
   nodeVisits,
   commentAnchor,
@@ -177,6 +178,11 @@ async function splitTraffic({
         flowId: flowVersion.flowId,
         flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: connectedEdge.target,
+        // Forward the current job's metadata across the split — without
+        // this, a broadcast-dispatched flow crossing a Split Traffic step
+        // lost its `broadcastId` attribution and the stop/resume guard in
+        // `runFlowNode` never fired for the branch taken here (fix round 1).
+        metadata,
         sendFrom,
         nodeVisits,
         commentAnchor,
@@ -195,6 +201,25 @@ async function splitTraffic({
 // the anchor: private falls back to the normal (messaging-window-gated) DM
 // send, public falls back to a normal flow DM instead of a comment reply.
 // Fixing this needs a schema change; out of scope for now.
+//
+// Accepted residual (fix round 1, stop/resume guard): `metadata` itself DOES
+// survive a wait pause — `ContactOnSmartDelay.metadata` is a real column and
+// `buildSendFlowResumeJob` (smart-delay.ts) reads it back, so the broadcast
+// stop/resume guard in `runFlowNode` still fires correctly on the resumed
+// job. What is intentionally NOT carried is `initialBroadcastDispatch`:
+// `SmartDelayResumeJobExtras` has no such field, by design — a wait-resume
+// is a continuation, not the producer's first dispatch, so replaying it
+// would duplicate the flow head. The consequence: a broadcast recipient
+// parked on a Wait step whose broadcast gets stopped is skipped without a
+// `sent` reset when the wait timer eventually fires (correct — no
+// duplicate), but that also means a later broadcast Resume never re-targets
+// this recipient (nothing ever reset its row), so its delivery is
+// permanently truncated at the wait boundary unless the timer happens to
+// fire while the broadcast is independently sendable again. Do not "fix" this
+// by threading `initialBroadcastDispatch` through the resume path — that
+// would reintroduce the same duplicate-delivery bug this guard exists to
+// prevent.
+//
 async function handleWait({
   conversation,
   flowVersion,

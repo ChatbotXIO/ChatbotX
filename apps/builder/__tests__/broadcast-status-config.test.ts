@@ -21,13 +21,14 @@ describe("broadcastStatusConfig", () => {
     }
   })
 
-  test("filter list matches the design order and excludes cancelled", () => {
+  test("filter list matches the design order, including cancelled", () => {
     expect(BROADCAST_FILTER_STATUSES).toEqual([
       "draft",
       "scheduled",
       "sending",
       "sent",
       "failed",
+      "cancelled",
     ])
   })
 })

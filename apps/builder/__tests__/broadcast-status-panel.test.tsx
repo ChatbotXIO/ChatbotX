@@ -43,7 +43,7 @@ afterEach(() => {
 })
 
 describe("BroadcastStatusPanel", () => {
-  test("renders All plus the five design filters in order", () => {
+  test("renders All plus the six design filters in order", () => {
     const el = renderPanel(<BroadcastStatusPanel onOpenChange={vi.fn()} open />)
     const labels = Array.from(el.querySelectorAll("nav button")).map((b) =>
       b.textContent?.trim(),
@@ -55,6 +55,7 @@ describe("BroadcastStatusPanel", () => {
       "broadcasts.status.sending",
       "broadcasts.status.sent",
       "broadcasts.status.failed",
+      "broadcasts.status.cancelled",
     ])
   })
 

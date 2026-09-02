@@ -2,6 +2,7 @@ import {
   addDays,
   addMonths,
   addWeeks,
+  differenceInCalendarDays,
   eachWeekOfInterval,
   endOfDay,
   endOfMonth,
@@ -17,12 +18,16 @@ import {
   subWeeks,
 } from "date-fns"
 
-export const CALENDAR_RANGES = ["month", "week", "day"] as const
+export const CALENDAR_RANGES = ["month", "week", "day", "custom"] as const
 export type CalendarRange = (typeof CALENDAR_RANGES)[number]
 
 export const DATE_PARAM_FORMAT = "yyyy-MM-dd"
 /** > 26 h (largest offset difference between two zones), so the padded range holds in any server zone. */
 export const CALENDAR_RANGE_PADDING_DAYS = 2
+/** Span (in days, inclusive) a fresh "custom" range starts with when no `endDate` param is present or valid. */
+export const DEFAULT_CUSTOM_RANGE_DAYS = 7
+/** Upper bound (in days, inclusive) on how far `endDate` can sit past the anchor — bounds the query span. */
+export const MAX_CUSTOM_RANGE_DAYS = 92
 const DAY_KEY_FORMAT = "yyyy-MM-dd"
 const WEEK_STARTS_ON = 1 as const
 
@@ -51,6 +56,45 @@ export function resolveDateParam(
   return format(parseDateParam(value, now), DATE_PARAM_FORMAT)
 }
 
+/**
+ * Parses the `?endDate=` param for the "custom" range. Falls back to
+ * `anchor + (DEFAULT_CUSTOM_RANGE_DAYS - 1)` when the value is missing,
+ * unparsable, or sits before the anchor (an end date can't precede its
+ * start), and clamps a too-distant end date to
+ * `anchor + (MAX_CUSTOM_RANGE_DAYS - 1)` so the query span stays bounded.
+ */
+export function parseEndDateParam(value: string | null, anchor: Date): Date {
+  const fallback = addDays(anchor, DEFAULT_CUSTOM_RANGE_DAYS - 1)
+  if (!value) {
+    return fallback
+  }
+  const parsed = parse(value, DATE_PARAM_FORMAT, anchor)
+  if (!isValid(parsed)) {
+    return fallback
+  }
+  const parsedDay = startOfDay(parsed)
+  if (parsedDay.getTime() < startOfDay(anchor).getTime()) {
+    return fallback
+  }
+  const maxEnd = addDays(anchor, MAX_CUSTOM_RANGE_DAYS - 1)
+  return parsedDay.getTime() > maxEnd.getTime() ? maxEnd : parsedDay
+}
+
+/**
+ * Resolves the `?endDate=` param to a concrete `yyyy-MM-dd` string once, on
+ * the server — mirrors `resolveDateParam`'s single-resolution rationale so
+ * the server-rendered grid and the fetched rows never disagree.
+ */
+export function resolveEndDateParam(
+  value: string | null,
+  anchorValue: string,
+): string {
+  return format(
+    parseEndDateParam(value, parseDateParam(anchorValue)),
+    DATE_PARAM_FORMAT,
+  )
+}
+
 function getMonthInterval(anchor: Date): { from: Date; to: Date } {
   return {
     from: startOfWeek(startOfMonth(anchor), { weekStartsOn: WEEK_STARTS_ON }),
@@ -69,9 +113,21 @@ function getDayInterval(anchor: Date): { from: Date; to: Date } {
   return { from: startOfDay(anchor), to: endOfDay(anchor) }
 }
 
+function getCustomInterval(
+  anchor: Date,
+  endAnchor: Date,
+): { from: Date; to: Date } {
+  return { from: startOfDay(anchor), to: endOfDay(endAnchor) }
+}
+
+type CalendarStepResult = { date: Date; endDate: Date | null }
+
 type CalendarRangeConfigEntry = {
-  getVisibleInterval: (anchor: Date) => { from: Date; to: Date }
-  step: (anchor: Date, direction: 1 | -1) => Date
+  getVisibleInterval: (
+    anchor: Date,
+    endAnchor: Date,
+  ) => { from: Date; to: Date }
+  step: (anchor: Date, endAnchor: Date, direction: 1 | -1) => CalendarStepResult
   labelKey: `broadcasts.calendar.ranges.${CalendarRange}`
 }
 
@@ -82,21 +138,39 @@ export const calendarRangeConfig: Record<
 > = {
   month: {
     getVisibleInterval: getMonthInterval,
-    step: (anchor, direction) =>
-      direction === 1 ? addMonths(anchor, 1) : subMonths(anchor, 1),
+    step: (anchor, _endAnchor, direction) => ({
+      date: direction === 1 ? addMonths(anchor, 1) : subMonths(anchor, 1),
+      endDate: null,
+    }),
     labelKey: "broadcasts.calendar.ranges.month",
   },
   week: {
     getVisibleInterval: getWeekInterval,
-    step: (anchor, direction) =>
-      direction === 1 ? addWeeks(anchor, 1) : subWeeks(anchor, 1),
+    step: (anchor, _endAnchor, direction) => ({
+      date: direction === 1 ? addWeeks(anchor, 1) : subWeeks(anchor, 1),
+      endDate: null,
+    }),
     labelKey: "broadcasts.calendar.ranges.week",
   },
   day: {
     getVisibleInterval: getDayInterval,
-    step: (anchor, direction) =>
-      direction === 1 ? addDays(anchor, 1) : subDays(anchor, 1),
+    step: (anchor, _endAnchor, direction) => ({
+      date: direction === 1 ? addDays(anchor, 1) : subDays(anchor, 1),
+      endDate: null,
+    }),
     labelKey: "broadcasts.calendar.ranges.day",
+  },
+  custom: {
+    getVisibleInterval: getCustomInterval,
+    step: (anchor, endAnchor, direction) => {
+      const spanDays = differenceInCalendarDays(endAnchor, anchor) + 1
+      const shift = direction === 1 ? spanDays : -spanDays
+      return {
+        date: addDays(anchor, shift),
+        endDate: addDays(endAnchor, shift),
+      }
+    },
+    labelKey: "broadcasts.calendar.ranges.custom",
   },
 }
 
@@ -104,8 +178,12 @@ export const calendarRangeConfig: Record<
 export function getCalendarQueryRange(
   range: CalendarRange,
   anchor: Date,
+  endAnchor: Date,
 ): { from: Date; to: Date } {
-  const { from, to } = calendarRangeConfig[range].getVisibleInterval(anchor)
+  const { from, to } = calendarRangeConfig[range].getVisibleInterval(
+    anchor,
+    endAnchor,
+  )
   return {
     from: subDays(from, CALENDAR_RANGE_PADDING_DAYS),
     to: addDays(to, CALENDAR_RANGE_PADDING_DAYS),
@@ -125,6 +203,12 @@ export function buildMonthGrid(anchor: Date): Date[][] {
 export function buildWeekDays(anchor: Date): Date[] {
   const { from } = getWeekInterval(anchor)
   return Array.from({ length: 7 }, (_, i) => addDays(from, i))
+}
+
+/** Inclusive list of days from `anchor` through `endAnchor`, for the "custom" range's agenda body. */
+export function buildRangeDays(anchor: Date, endAnchor: Date): Date[] {
+  const spanDays = differenceInCalendarDays(endAnchor, anchor) + 1
+  return Array.from({ length: spanDays }, (_, i) => addDays(anchor, i))
 }
 
 export function dayKey(date: Date): string {
