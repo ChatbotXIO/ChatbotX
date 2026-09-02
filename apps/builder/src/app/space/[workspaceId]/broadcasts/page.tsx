@@ -14,6 +14,7 @@ import {
 import { listBroadcasts } from "@/features/broadcasts/queries"
 import { listBroadcastsForCalendar } from "@/features/broadcasts/queries/list-broadcasts-for-calendar"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schema/query"
+import { getUserTimezone } from "@/lib/timezone"
 
 export default async function BroadcastsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -30,7 +31,8 @@ export default async function BroadcastsPage(props: {
   const filtered = Boolean(search.name || search.status)
 
   if (search.view === "calendar") {
-    const calendarDate = resolveDateParam(search.date)
+    const timezone = await getUserTimezone()
+    const calendarDate = resolveDateParam(search.date, timezone)
     const calendarEndDate = resolveEndDateParam(search.endDate, calendarDate)
     const broadcasts = await listBroadcastsForCalendar({
       workspaceId,
@@ -39,6 +41,7 @@ export default async function BroadcastsPage(props: {
       endDate: calendarEndDate,
       status: search.status,
       name: search.name,
+      timezone,
     })
     return (
       <BroadcastsListShell defaultPanelOpen={panelOpen}>

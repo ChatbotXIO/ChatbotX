@@ -18,11 +18,18 @@ export async function listBroadcastsForCalendar(input: {
   endDate: string
   status: BroadcastStatus | null
   name: string | null
+  /** The user's IANA zone — day boundaries are computed in it, not the server zone. */
+  timezone: string
 }): Promise<BroadcastCalendarRow[]> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
   const anchor = parseDateParam(input.date)
   const endAnchor = parseEndDateParam(input.endDate, anchor)
-  const { from, to } = getCalendarQueryRange(input.range, anchor, endAnchor)
+  const { from, to } = getCalendarQueryRange(
+    input.range,
+    anchor,
+    endAnchor,
+    input.timezone,
+  )
   return broadcastService.listForCalendar({
     workspaceId: input.workspaceId,
     from,
