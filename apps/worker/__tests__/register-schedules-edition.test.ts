@@ -20,6 +20,7 @@ vi.mock("bullmq", () => ({ Queue: FakeQueue }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   PURGE_WORKSPACES_INTERVAL_MINUTES: 10,
+  PURGE_BROADCASTS_INTERVAL_MINUTES: 5,
   ScheduleJobData: {
     enqueueBroadcast: "enqueueBroadcast",
     finalizeBroadcasts: "finalizeBroadcasts",
@@ -37,6 +38,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     purgeCoexistStaging: "purgeCoexistStaging",
     purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
     purgeWorkspaces: "purgeWorkspaces",
+    purgeBroadcasts: "purgeBroadcasts",
     purgeAutomationThrottle: "purgeAutomationThrottle",
     refreshChannelTokens: "refreshChannelTokens",
     unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
@@ -58,6 +60,11 @@ const CLOUD_ONLY = [
 
 const upsertedNames = () =>
   mockUpsertJobScheduler.mock.calls.map((call) => call[0] as string)
+
+const upsertedRepeatOptionsFor = (name: string) =>
+  mockUpsertJobScheduler.mock.calls.find((call) => call[0] === name)?.[1] as
+    | { pattern?: string; every?: number }
+    | undefined
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -101,7 +108,21 @@ describe("registerSchedules — edition gating", () => {
 
     const names = upsertedNames()
     expect(names).toContain("purgeWorkspaces")
+    expect(names).toContain("purgeBroadcasts")
     expect(names).toContain("maintainMacPartitions")
     expect(names).toContain("enqueueBroadcast")
+  })
+
+  // Derived-const typo protection: the cron pattern must actually track
+  // PURGE_BROADCASTS_INTERVAL_MINUTES (mocked as 5 above), not a hardcoded
+  // literal that could silently drift from it.
+  test("purgeBroadcasts registers with a pattern derived from PURGE_BROADCASTS_INTERVAL_MINUTES", async () => {
+    envState.NEXT_PUBLIC_EDITION = "community"
+
+    await registerSchedules()
+
+    expect(upsertedRepeatOptionsFor("purgeBroadcasts")?.pattern).toBe(
+      "*/5 * * * *",
+    )
   })
 })

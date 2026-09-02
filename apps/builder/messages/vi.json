@@ -148,7 +148,12 @@
     "clone": "Nhân bản",
     "remove": "Xóa",
     "restore": "Khôi phục",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "saveAsDraft": "Lưu nháp",
+    "schedule": "Lên lịch",
+    "moveToDraft": "Chuyển về nháp",
+    "stop": "Dừng",
+    "resume": "Tiếp tục"
   },
   "errors": {
     "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
@@ -345,9 +350,11 @@
     "title": "Phát sóng",
     "status": {
       "scheduled": "Đã lên lịch",
-      "sent": "Đã gửi",
+      "sent": "Hoàn thành",
       "sending": "Đang gửi",
-      "cancelled": "Đã huỷ"
+      "cancelled": "Đã huỷ",
+      "draft": "Nháp",
+      "failed": "Thất bại"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -433,6 +440,63 @@
       "template": "Template",
       "noTemplate": "Không có template",
       "integration": "Tích hợp"
+    },
+    "filters": {
+      "all": "Tất cả"
+    },
+    "views": {
+      "table": "Bảng",
+      "calendar": "Lịch"
+    },
+    "panel": {
+      "collapse": "Thu gọn bảng lọc",
+      "expand": "Mở bảng lọc"
+    },
+    "empty": {
+      "title": "Chưa có broadcast nào",
+      "description": "Tạo broadcast đầu tiên để gửi tới liên hệ của bạn.",
+      "filteredTitle": "Không có broadcast phù hợp",
+      "filteredDescription": "Thử trạng thái khác hoặc xoá từ khoá tìm kiếm."
+    },
+    "scheduleDialog": {
+      "title": "Lên lịch broadcast",
+      "description": "Chọn thời điểm gửi \"{name}\"."
+    },
+    "deleteDialog": {
+      "title": "{count, plural, one {Xoá broadcast} other {Xoá các broadcast}}",
+      "description": "{count, plural, one {\"{name}\" sẽ bị xoá. Dữ liệu sẽ được xoá ở nền.} other {# broadcast sẽ bị xoá. Dữ liệu của chúng sẽ được xoá ở nền.}}",
+      "partial": "Đã xoá {deleted}/{requested} — số còn lại đã đổi trạng thái"
+    },
+    "calendar": {
+      "today": "Hôm nay",
+      "apply": "Áp dụng",
+      "more": "+{count} nữa",
+      "ranges": {
+        "month": "Tháng",
+        "week": "Tuần",
+        "day": "Ngày",
+        "custom": "Tùy chỉnh"
+      },
+      "previous": "Trước",
+      "next": "Sau",
+      "emptyDay": "Không có broadcast nào trong ngày này",
+      "emptyRange": "Không có broadcast nào trong khoảng này",
+      "jumpToDate": "Đi tới ngày"
+    },
+    "fields": {
+      "id": "ID"
+    },
+    "moveToDraftDialog": {
+      "title": "Chuyển về nháp",
+      "description": "\"{name}\" sẽ được hủy lịch và chuyển về mục nháp."
+    },
+    "stopDialog": {
+      "title": "Dừng broadcast",
+      "description": "Các tin nhắn còn lại của \"{name}\" sẽ dừng trong khoảng một phút. Một vài tin đã được chuyển cho kênh gửi có thể vẫn được gửi đi. Bạn có thể tiếp tục sau — chỉ những người chưa nhận sẽ nhận được tin."
+    },
+    "resumeDialog": {
+      "title": "Tiếp tục broadcast",
+      "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin."
     }
   },
   "condition": {

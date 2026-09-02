@@ -1,10 +1,18 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
+import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
-import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { BroadcastsTable } from "@/features/broadcasts/broadcasts-table"
+import { BroadcastsCalendar } from "@/features/broadcasts/components/broadcasts-calendar"
+import { BroadcastsListShell } from "@/features/broadcasts/components/broadcasts-list-shell"
+import { BROADCASTS_PANEL_COOKIE } from "@/features/broadcasts/lib/broadcast-status"
+import {
+  resolveDateParam,
+  resolveEndDateParam,
+} from "@/features/broadcasts/lib/calendar-grid"
 import { listBroadcasts } from "@/features/broadcasts/queries"
+import { listBroadcastsForCalendar } from "@/features/broadcasts/queries/list-broadcasts-for-calendar"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schema/query"
 
 export default async function BroadcastsPage(props: {
@@ -16,23 +24,40 @@ export default async function BroadcastsPage(props: {
     return notFound()
   }
 
-  const searchParams = await props.searchParams
-  const search = getBroadcastsSearchParamsCache.parse(searchParams)
-  const t = await getTranslations()
+  const search = getBroadcastsSearchParamsCache.parse(await props.searchParams)
+  const panelOpen =
+    (await cookies()).get(BROADCASTS_PANEL_COOKIE)?.value !== "false"
+  const filtered = Boolean(search.name || search.status)
 
-  const promises = Promise.all([
-    listBroadcasts({
-      ...search,
+  if (search.view === "calendar") {
+    const calendarDate = resolveDateParam(search.date)
+    const calendarEndDate = resolveEndDateParam(search.endDate, calendarDate)
+    const broadcasts = await listBroadcastsForCalendar({
       workspaceId,
-    }),
-  ])
+      range: search.range,
+      date: calendarDate,
+      endDate: calendarEndDate,
+      status: search.status,
+      name: search.name,
+    })
+    return (
+      <BroadcastsListShell defaultPanelOpen={panelOpen}>
+        <BroadcastsCalendar
+          broadcasts={broadcasts}
+          date={calendarDate}
+          endDate={calendarEndDate}
+          range={search.range}
+        />
+      </BroadcastsListShell>
+    )
+  }
 
+  const promises = Promise.all([listBroadcasts({ ...search, workspaceId })])
   return (
-    <div className="space-y-4">
-      <h3 className="font-bold text-lg sm:text-xl">{t("broadcasts.title")}</h3>
+    <BroadcastsListShell defaultPanelOpen={panelOpen}>
       <Suspense>
-        <BroadcastsTable promises={promises} />
+        <BroadcastsTable filtered={filtered} promises={promises} />
       </Suspense>
-    </div>
+    </BroadcastsListShell>
   )
 }

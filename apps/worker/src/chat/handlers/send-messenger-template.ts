@@ -39,6 +39,7 @@ import {
   validateMessengerTemplate,
 } from "../../integration/handlers/messenger-template-handler"
 import { logger } from "../../lib/logger"
+import { skipIfBroadcastNotSendable } from "../utils/broadcast-sendable-guard"
 import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
@@ -356,6 +357,16 @@ export async function sendMessengerTemplateMessage(
     contactInbox,
     metadata,
   } = data
+
+  if (
+    await skipIfBroadcastNotSendable({
+      broadcastId,
+      contactId: conversation.contactId,
+      handler: "sendMessengerTemplateMessage",
+    })
+  ) {
+    return
+  }
 
   const eventLogData = {
     context: {

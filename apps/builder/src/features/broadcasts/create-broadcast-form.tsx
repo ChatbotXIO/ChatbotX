@@ -42,6 +42,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
+import { updateDraftBroadcastAction } from "@/features/broadcasts/actions/update-draft-broadcast.action"
 import { BroadcastAudiencePreviewDialog } from "@/features/broadcasts/components/broadcast-audience-preview-dialog"
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { createBroadcastRequest } from "@/features/broadcasts/schema/action"
@@ -60,7 +61,11 @@ import type { MessageTemplateWithComponents } from "../integration-whatsapp/mess
 import { useIntegrationStore } from "../integration-whatsapp/provider/integration-store-context"
 import { MessengerBroadcastFlowButtons } from "./components/messenger-broadcast-flow-buttons"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
-import { buildCreateBroadcastDefaultValues } from "./lib/create-broadcast-defaults"
+import {
+  buildCreateBroadcastDefaultValues,
+  type EditBroadcastDraft,
+} from "./lib/create-broadcast-defaults"
+import { resolveTemplateHydration } from "./lib/template-hydration"
 
 type BroadcastConfig = {
   value: ChannelType
@@ -100,6 +105,12 @@ type CreateBroadcastFormProps = {
   initialChannel?: ChannelType
   initialIntegrationWhatsappId?: string
   initialContactFilter?: ContactFilterCriteria
+  /**
+   * Edit mode: an existing `draft` reopened from the list. The same schema and
+   * footer apply — "Save as draft" keeps it a draft, "Confirm" schedules it —
+   * only the bound action and the success toast differ.
+   */
+  editDraft?: EditBroadcastDraft
 }
 
 export function CreateBroadcastForm({
@@ -108,6 +119,7 @@ export function CreateBroadcastForm({
   initialChannel,
   initialIntegrationWhatsappId,
   initialContactFilter,
+  editDraft,
 }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -116,16 +128,27 @@ export function CreateBroadcastForm({
     (state) => state,
   )
 
+  const isEditing = Boolean(editDraft)
+
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createBroadcastAction.bind(null, workspaceId),
+    editDraft
+      ? updateDraftBroadcastAction.bind(null, workspaceId, editDraft.id)
+      : createBroadcastAction.bind(null, workspaceId),
     zodResolver(createBroadcastRequest),
     {
       actionProps: {
-        onSuccess: () => {
+        onSuccess: ({ data }) => {
           toast.success(
-            t("messages.createdSuccess", {
-              feature: t("fields.broadcast.label"),
-            }),
+            t(
+              isEditing ? "messages.updatedSuccess" : "messages.createdSuccess",
+              {
+                feature: t(
+                  data?.status === "draft"
+                    ? "broadcasts.status.draft"
+                    : "fields.broadcast.label",
+                ),
+              },
+            ),
           )
           router.push(`/space/${workspaceId}/broadcasts`)
         },
@@ -137,15 +160,30 @@ export function CreateBroadcastForm({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: buildCreateBroadcastDefaultValues({
-          initialChannel,
-          initialIntegrationWhatsappId,
-          initialContactFilter,
-        }),
+        defaultValues:
+          editDraft?.defaultValues ??
+          buildCreateBroadcastDefaultValues({
+            initialChannel,
+            initialIntegrationWhatsappId,
+            initialContactFilter,
+          }),
       },
       errorMapProps: {},
     },
   )
+
+  const handleSaveAsDraft = async (): Promise<void> => {
+    form.setValue("saveAsDraft", true, { shouldDirty: false })
+    try {
+      await handleSubmitWithAction()
+    } finally {
+      // If validation or the action itself fails, `saveAsDraft` must not
+      // stay `true` — otherwise a later Enter-key submit (which reuses this
+      // same form's onSubmit) would silently create a draft instead of
+      // sending.
+      form.setValue("saveAsDraft", false, { shouldDirty: false })
+    }
+  }
 
   const watchedSubAction = useWatch({
     control: form.control,
@@ -205,6 +243,14 @@ export function CreateBroadcastForm({
             <CreateBroadcastChooseFlow
               canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
+              hydrated={
+                editDraft && {
+                  templateId: editDraft.defaultValues.templateId,
+                  integrationWhatsappId:
+                    editDraft.defaultValues.integrationWhatsappId,
+                }
+              }
+              onSaveAsDraft={handleSaveAsDraft}
               subaction={watchedSubAction}
             />
           )}
@@ -343,7 +389,7 @@ function BroadcastFlowTypeSelector({
   subaction: BroadcastSubaction | null
 }) {
   const t = useTranslations()
-  const { setValue } = useFormContext()
+  const { setValue, getValues } = useFormContext()
   const flowTypes: Array<{
     value: BroadcastFlowType
     label: string
@@ -361,9 +407,12 @@ function BroadcastFlowTypeSelector({
     },
   ]
 
-  const [selectedType, setSelectedType] = useState<BroadcastFlowType>(
-    broadcastFlowTypes.enum.flow,
-  )
+  // Seeded from the form so an edited draft opens on the half it was built
+  // with; a create form has no `templateType` yet and falls back to `flow`.
+  const [selectedType, setSelectedType] = useState<BroadcastFlowType>(() => {
+    const prefilled = broadcastFlowTypes.safeParse(getValues("templateType"))
+    return prefilled.success ? prefilled.data : broadcastFlowTypes.enum.flow
+  })
 
   const handleTypeChange = useCallback(
     (type: BroadcastFlowType) => {
@@ -372,6 +421,9 @@ function BroadcastFlowTypeSelector({
 
       if (type === broadcastFlowTypes.enum.flow) {
         setValue("templateId", undefined)
+        // Leaving `templateData` behind would persist a template payload on a
+        // flow broadcast; the service nulls it too, this keeps the form honest.
+        setValue("templateData", undefined)
         setValue("buttons", [])
       } else {
         setValue("flowId", undefined)
@@ -432,6 +484,12 @@ function BroadcastFlowTypeSelector({
 type CreateBroadcastChooseFlowProps = {
   canViewEmailAndPhone: boolean
   channel: ChannelType
+  /**
+   * Ids an edited draft was hydrated with, so the template effects can tell a
+   * still-hydrated selection from one the user changed. Absent when creating.
+   */
+  hydrated?: { templateId?: string; integrationWhatsappId?: string }
+  onSaveAsDraft: () => Promise<void>
   subaction: BroadcastSubaction
 }
 
@@ -625,9 +683,28 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     }
   }, [props.channel, props.subaction, t])
 
+  // Pinned at mount: an edited draft's own ids. Comparing against these values
+  // (rather than flipping a one-shot "first run" flag) is what lets the effects
+  // below tell a still-hydrated selection from one the user just changed.
+  const hydratedTemplateIdRef = useRef(props.hydrated?.templateId)
+
+  // The template selection is stale only when the integration actually changed,
+  // so this tracks the previous id instead of firing on every run. Seeded with
+  // the edited draft's integration, which is why reopening a draft no longer
+  // clears its own template.
+  const lastIntegrationIdRef = useRef(props.hydrated?.integrationWhatsappId)
+
   useEffect(() => {
     if (watchedIntegrationWhatsappId) {
       setIntegrationWhatsappId(watchedIntegrationWhatsappId)
+
+      const changedIntegration =
+        lastIntegrationIdRef.current !== watchedIntegrationWhatsappId
+      lastIntegrationIdRef.current = watchedIntegrationWhatsappId
+      if (!changedIntegration) {
+        return
+      }
+
       // Clear stale template selection from previous integration
       setValue("templateId", undefined)
       setValue("templateData", undefined)
@@ -642,42 +719,75 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   }, [fetchReceiversCount, receiversCountParams, receiversCountQueryKey])
 
   useEffect(() => {
-    if (watchedTemplateId && whatsappTemplates.length > 0) {
-      const template = whatsappTemplates.find(
-        (t) => t.id === watchedTemplateId,
-      ) as MessageTemplateWithComponents | undefined
-      if (template) {
-        setSelectedTemplate(template)
-        const initialParams = extractTemplateParams(
-          template.components as TemplateComponent[],
-        )
-        setValue("templateData", initialParams)
-      } else {
-        setSelectedTemplate(null)
-        setValue("templateData", undefined)
-      }
+    const decision = resolveTemplateHydration({
+      effectSubaction: broadcastSubactions.enum.whatsappTemplateMessage,
+      subaction: props.subaction,
+      watchedTemplateId,
+      hydratedTemplateId: hydratedTemplateIdRef.current,
+    })
+    if (decision === "skip" || whatsappTemplates.length === 0) {
+      return
     }
-  }, [watchedTemplateId, whatsappTemplates, setValue])
+
+    const template = whatsappTemplates.find(
+      (t) => t.id === watchedTemplateId,
+    ) as MessageTemplateWithComponents | undefined
+
+    if (!template) {
+      // A hydrated draft keeps its stored params even while its template is
+      // missing from the list — the list may simply not have loaded yet.
+      if (decision === "preserve") {
+        return
+      }
+      setSelectedTemplate(null)
+      setValue("templateData", undefined)
+      return
+    }
+
+    setSelectedTemplate(template)
+    if (decision === "seed") {
+      setValue(
+        "templateData",
+        extractTemplateParams(template.components as TemplateComponent[]),
+      )
+    }
+  }, [props.subaction, watchedTemplateId, whatsappTemplates, setValue])
 
   useEffect(() => {
-    if (
-      props.subaction !== broadcastSubactions.enum.messengerTemplateMessage ||
-      !watchedTemplateId ||
-      messengerTemplatesData.length === 0
-    ) {
+    const decision = resolveTemplateHydration({
+      effectSubaction: broadcastSubactions.enum.messengerTemplateMessage,
+      subaction: props.subaction,
+      watchedTemplateId,
+      hydratedTemplateId: hydratedTemplateIdRef.current,
+    })
+    if (decision === "skip" || messengerTemplatesData.length === 0) {
       return
     }
 
     const template = messengerTemplatesData.find(
       (t) => t.id === watchedTemplateId,
     )
-    if (template) {
-      setSelectedMessengerTemplate(template)
-      const initialParams = extractMessengerTemplateParams(
-        template.components as MessengerTemplateComponent[],
-        template.parameterFormat as "POSITIONAL" | "NAMED",
+
+    if (!template) {
+      // See the WhatsApp effect: never clear a hydrated draft's own params.
+      if (decision === "preserve") {
+        return
+      }
+      setSelectedMessengerTemplate(null)
+      setValue("templateData", undefined)
+      setValue("buttons", []) // clear buttons
+      return
+    }
+
+    setSelectedMessengerTemplate(template)
+    if (decision === "seed") {
+      setValue(
+        "templateData",
+        extractMessengerTemplateParams(
+          template.components as MessengerTemplateComponent[],
+          template.parameterFormat as "POSITIONAL" | "NAMED",
+        ),
       )
-      setValue("templateData", initialParams)
       // seed flow buttons from template
       setValue(
         "buttons",
@@ -685,10 +795,6 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           template.components as MessengerTemplateComponent[],
         ).map((b) => ({ id: b.id, label: b.label, flowId: "" })),
       )
-    } else {
-      setSelectedMessengerTemplate(null)
-      setValue("templateData", undefined)
-      setValue("buttons", []) // clear buttons
     }
   }, [props.subaction, watchedTemplateId, messengerTemplatesData, setValue])
 
@@ -932,7 +1038,19 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
           <Button
             disabled={!formState.isValid || formState.isSubmitting}
-            onClick={() => setConfirmOpen(true)}
+            onClick={() => props.onSaveAsDraft()}
+            type="button"
+            variant="secondary"
+          >
+            {t("actions.saveAsDraft")}
+          </Button>
+
+          <Button
+            disabled={!formState.isValid || formState.isSubmitting}
+            onClick={() => {
+              setValue("saveAsDraft", false, { shouldDirty: false })
+              setConfirmOpen(true)
+            }}
             type="button"
           >
             {formState.isSubmitting && <Loader2Icon className="animate-spin" />}

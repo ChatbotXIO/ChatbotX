@@ -356,6 +356,34 @@ describe("createBroadcastAction — happy path insert", () => {
     )
   })
 
+  test("records only the create audit when saving as draft", async () => {
+    const mockBroadcast = { id: "bc-draft", name: "Broadcast" }
+    mockInsertReturning.mockResolvedValue([mockBroadcast])
+
+    await (createBroadcastAction as (props: unknown) => Promise<unknown>)({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        flowId: "flow-1",
+        schedulesType: "now",
+        saveAsDraft: true,
+      },
+    })
+
+    const insertedValues = mockInsertValues.mock.calls[0]?.[0] as {
+      status: string
+    }
+    expect(insertedValues.status).toBe("draft")
+    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      action: "create",
+      detail: "created a new broadcast (#bc-draft)",
+    })
+    expect(mockRecordAuditLog).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: "launch" }),
+    )
+  })
+
   test("persists integrationMessengerId so audience scoping matches the preview", async () => {
     const mockBroadcast = { id: "bc-5", name: "Broadcast" }
     mockInsertReturning.mockResolvedValue([mockBroadcast])

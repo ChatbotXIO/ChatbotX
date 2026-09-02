@@ -58,5 +58,11 @@ export const contactsOnBroadcastsModel = pgTable(
     }),
     index("idx_contact_on_broadcast_contact_id").on(table.contactId),
     index("idx_contact_on_broadcast_is_read").on(table.isRead),
+    // Speeds up the per-batch unsent-recipient scan
+    // (broadcastId + sent=false + failedAt IS NULL) so it doesn't walk an
+    // ever-growing sent prefix on million-row broadcasts.
+    index("ContactOnBroadcast_unsent_idx")
+      .on(table.broadcastId)
+      .where(sql`"sent" = false AND "failedAt" IS NULL`),
   ],
 )

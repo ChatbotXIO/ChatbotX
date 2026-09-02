@@ -41,6 +41,7 @@ import {
   validateWhatsappTemplate,
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
+import { skipIfBroadcastNotSendable } from "../utils/broadcast-sendable-guard"
 import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
@@ -448,6 +449,16 @@ export async function sendWhatsappTemplateMessage(
     contactInbox,
     metadata,
   } = data
+
+  if (
+    await skipIfBroadcastNotSendable({
+      broadcastId,
+      contactId: conversation.contactId,
+      handler: "sendWhatsappTemplateMessage",
+    })
+  ) {
+    return
+  }
 
   const eventLogData = {
     context: {

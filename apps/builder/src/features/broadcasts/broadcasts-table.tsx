@@ -2,9 +2,8 @@
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
-import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,46 +16,55 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
-import {
-  EyeIcon,
-  Loader2Icon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  PlusIcon,
-  RotateCwIcon,
-} from "lucide-react"
-import Link from "next/link"
+import { CopyIcon, Loader2Icon, MoreHorizontalIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import React, { useMemo, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { useCopyToClipboard } from "usehooks-ts"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
 import { BroadcastDetailDialog } from "./broadcast-detail-dialog"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
+import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
+import { BroadcastsEmptyState } from "./components/broadcasts-empty-state"
+import { BroadcastsTableToolbarActions } from "./components/broadcasts-table-toolbar-actions"
+import { DeleteBroadcastDialog } from "./components/delete-broadcast-dialog"
+import { MoveBroadcastToDraftDialog } from "./components/move-broadcast-to-draft-dialog"
+import { ResumeBroadcastDialog } from "./components/resume-broadcast-dialog"
+import { ScheduleBroadcastDialog } from "./components/schedule-broadcast-dialog"
+import { StopBroadcastDialog } from "./components/stop-broadcast-dialog"
+import {
+  type BroadcastRowActionVariant,
+  filterBroadcastRowActions,
+  getBroadcastRowActions,
+  ROW_ACTION_ITEMS,
+} from "./lib/broadcast-row-actions"
 import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-context"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schema/resource"
+import { shouldShowBroadcastsEmptyState } from "./utils/empty-state"
 import { getEstimatedContactsDisplayState } from "./utils/estimated-contacts-display"
-
-type BroadcastStatusBadgeVariant = "default" | "outline" | "secondary"
-
-const BROADCAST_STATUS_VARIANTS: Partial<
-  Record<string, BroadcastStatusBadgeVariant>
-> = {
-  cancelled: "secondary",
-  scheduled: "outline",
-}
 
 type BroadcastsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listBroadcasts>>]>
+  filtered: boolean
 }
 
-export function BroadcastsTable({ promises }: BroadcastsTableProps) {
+type BroadcastRowAction = {
+  row: Row<BroadcastResourceWithRelations>
+  variant: BroadcastRowActionVariant
+}
+
+export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
+  const isEmpty = shouldShowBroadcastsEmptyState({
+    rowCount: data.length,
+    pageCount,
+  })
 
   const workspaceId = useWorkspaceId()
   const broadcastIds = useMemo(() => data.map((b) => b.id), [data])
@@ -64,11 +72,72 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
-  const [rowAction, setRowAction] =
-    useState<DataTableRowAction<BroadcastResourceWithRelations> | null>(null)
+  const [rowAction, setRowAction] = useState<BroadcastRowAction | null>(null)
+
+  const [, copyToClipboard] = useCopyToClipboard()
+  const handleCopyId = useCallback(
+    (id: string) => {
+      copyToClipboard(id).then(() => {
+        toast.success(t("messages.copiedToClipboard"))
+      })
+    },
+    [copyToClipboard, t],
+  )
 
   const columns = useMemo<ColumnDef<BroadcastResourceWithRelations>[]>(
     () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            aria-label={t("actions.selectAll")}
+            checked={table.getIsAllPageRowsSelected()}
+            className="translate-y-0.5"
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(Boolean(value))
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label={t("actions.selectRow")}
+            checked={row.getIsSelected()}
+            className="translate-y-0.5"
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          />
+        ),
+        size: 20,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "id",
+        accessorKey: "id",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.fields.id")}
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <span className="max-w-[100px] truncate font-mono text-xs">
+              {row.original.id}
+            </span>
+            <Button
+              aria-label={t("actions.copy")}
+              className="size-6 shrink-0"
+              onClick={() => handleCopyId(row.original.id)}
+              size="icon"
+              variant="ghost"
+            >
+              <CopyIcon className="size-3" />
+            </Button>
+          </div>
+        ),
+        enableSorting: false,
+      },
       {
         id: "name",
         accessorKey: "name",
@@ -127,13 +196,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <Badge
-            variant={
-              BROADCAST_STATUS_VARIANTS[row.original.status] ?? "default"
-            }
-          >
-            {t(`broadcasts.status.${row.original.status}`)}
-          </Badge>
+          <BroadcastStatusBadge status={row.original.status} />
         ),
         enableSorting: false,
         enableHiding: false,
@@ -288,36 +351,40 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       },
       {
         id: "actions",
-        header: "Actions",
+        header: t("actions.actions"),
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
                 <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">{t("actions.openMenu")}</span>
                 </Button>
               }
             />
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "view" })}
-              >
-                <EyeIcon className="me-2" />
-                {t("actions.view")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "rename" })}
-              >
-                <PencilIcon className="me-2" />
-                {t("actions.rename")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "resend" })}
-              >
-                <RotateCwIcon className="me-2" />
-                {t("actions.resend")}
-              </DropdownMenuItem>
+              {filterBroadcastRowActions(
+                getBroadcastRowActions(row.original.status),
+                { contactCount: row.original.contactCount },
+              ).map((variant) => {
+                const { icon: ActionIcon, labelKey } = ROW_ACTION_ITEMS[variant]
+                return (
+                  <DropdownMenuItem
+                    key={variant}
+                    onClick={() =>
+                      // Edit is a full-page form, not a dialog.
+                      variant === "edit"
+                        ? router.push(
+                            `/space/${workspaceId}/broadcasts/${row.original.id}/edit`,
+                          )
+                        : setRowAction({ row, variant })
+                    }
+                  >
+                    <ActionIcon className="me-2" />
+                    {t(labelKey)}
+                  </DropdownMenuItem>
+                )
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -326,7 +393,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         enableHiding: false,
       },
     ],
-    [t],
+    [t, router, workspaceId, handleCopyId],
   )
 
   const { table } = useDataTable({
@@ -347,24 +414,23 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       broadcastIds={broadcastIds}
       workspaceId={workspaceId}
     >
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <div className="flex justify-end">
-            <Link
-              className={buttonVariants({ size: "sm" })}
-              href={`/space/${workspaceId}/broadcasts/create`}
-            >
-              <PlusIcon />
-              {t("actions.createFeature", {
-                feature: t("fields.broadcast.label"),
-              })}
-            </Link>
-          </div>
-        </DataTableToolbar>
-      </DataTable>
+      {isEmpty ? (
+        <BroadcastsEmptyState filtered={filtered} />
+      ) : (
+        <div className="flex flex-col gap-4 p-6">
+          <DataTable table={table}>
+            <div className="flex items-center justify-end p-1">
+              <BroadcastsTableToolbarActions
+                table={table}
+                workspaceId={workspaceId}
+              />
+            </div>
+          </DataTable>
+        </div>
+      )}
 
       <RenameBroadcastDialog
-        broadcast={rowAction?.row.original || null}
+        broadcast={rowAction?.row.original ?? null}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
           router.refresh()
@@ -373,12 +439,58 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       />
 
       <ResendBroadcastDialog
-        broadcast={rowAction?.row.original || null}
+        broadcast={rowAction?.row.original ?? null}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
           router.refresh()
         }}
         open={rowAction?.variant === "resend"}
+      />
+
+      <ScheduleBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "schedule"}
+      />
+
+      <MoveBroadcastToDraftDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "moveToDraft"}
+      />
+
+      <StopBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "stop"}
+      />
+
+      <ResumeBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "resume"}
+      />
+
+      <DeleteBroadcastDialog
+        broadcasts={rowAction?.row.original ? [rowAction.row.original] : []}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "delete"}
+        workspaceId={workspaceId}
       />
 
       <BroadcastDetailDialog

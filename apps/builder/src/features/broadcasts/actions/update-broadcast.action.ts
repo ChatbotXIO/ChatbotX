@@ -31,6 +31,7 @@ export const updateBroadcast = async (
     where: {
       id: ctx.id,
       workspaceId: ctx.workspaceId,
+      deletedAt: { isNull: true },
     },
   })
 

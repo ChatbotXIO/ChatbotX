@@ -5,6 +5,7 @@ import {
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import { broadcastService, contactInboxService } from "@chatbotx.io/business"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
@@ -90,13 +91,18 @@ export const broadcastPrivateAPIs = {
     .input(getBatchBroadcastStatsRequest)
     .output(getBatchBroadcastStatsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(
-      async ({ input }) =>
-        await broadcastAnalyticsService.getBatchStats({
-          workspaceId: input.workspaceId,
-          broadcastIds: input.broadcastIds,
-        }),
-    ),
+    .handler(async ({ input }) => {
+      // A soft-deleted broadcast reads as "not found": its id is silently
+      // dropped rather than surfacing stale stats.
+      const existingIds = await broadcastService.listExistingIds({
+        workspaceId: input.workspaceId,
+        ids: input.broadcastIds,
+      })
+      return await broadcastAnalyticsService.getBatchStats({
+        workspaceId: input.workspaceId,
+        broadcastIds: existingIds,
+      })
+    }),
 
   privateGetBroadcastTemplateDetailAPI: authorizedAPI
     .route({
@@ -126,6 +132,14 @@ export const broadcastPrivateAPIs = {
       const { workspaceId, broadcastId, eventType, total, page, perPage } =
         input
       const totalValue = total ?? 0
+
+      const broadcast = await broadcastService.findByIdForResponse({
+        workspaceId,
+        broadcastId,
+      })
+      if (!broadcast) {
+        throw notFoundException("Broadcast not found")
+      }
 
       if (!eventType) {
         return { data: [], total: totalValue, page, pageCount: 0 }
