@@ -464,10 +464,17 @@
       "description": "\"{name}\" sẽ bị xoá vĩnh viễn."
     },
     "calendar": {
-      "previousMonth": "Tháng trước",
-      "nextMonth": "Tháng sau",
       "today": "Hôm nay",
-      "more": "+{count} nữa"
+      "more": "+{count} nữa",
+      "ranges": {
+        "month": "Tháng",
+        "week": "Tuần",
+        "day": "Ngày"
+      },
+      "previous": "Trước",
+      "next": "Sau",
+      "emptyDay": "Không có broadcast nào trong ngày này",
+      "jumpToDate": "Đi tới ngày"
     }
   },
   "condition": {

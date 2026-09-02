@@ -464,10 +464,17 @@
       "description": "\"{name}\" will be permanently deleted."
     },
     "calendar": {
-      "previousMonth": "Previous month",
-      "nextMonth": "Next month",
       "today": "Today",
-      "more": "+{count} more"
+      "more": "+{count} more",
+      "ranges": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "emptyDay": "No broadcasts on this day",
+      "jumpToDate": "Jump to date"
     }
   },
   "condition": {
