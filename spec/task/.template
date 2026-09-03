@@ -1,0 +1,24 @@
+# Task Checklist Template
+
+## Owner Values
+Valid values for Owner field:
+- parent - SDD orchestration (parent agent)
+- database-schema - Database schema changes
+- feature-integration - Feature/api integration
+- debug-specialist - Bug debugging and fix
+- refactoring-specialist - Code refactoring
+
+## Task Checklist
+ ordered list
+   li(Owner: database-schema) Run database schema migration if needed. Reference plan.md section X.
+   li(Owner: feature-integration) Implement the feature/core changes. Reference spec.md section X.
+   li(Owner: debug-specialist) Fix any bugs found during implementation. Reference spec.md section X.
+   li(Owner: refactoring-specialist) Refactor existing code to improve quality. Reference spec.md section X.
+ ordered end list
+
+## Completion Criteria
+- [ ] All checklist items marked done
+- [ ] pnpm lint passed
+- [ ] Type check passed (pnpm typecheck if applicable)
+- [ ] Tests passed (pnpm test or vitest)
+- [ ] Documentation updated (if applicable)
