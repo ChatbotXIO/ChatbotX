@@ -14,34 +14,15 @@ import {
   defaultMetaCapiActionSource,
   metaCapiActionSourceSchema,
   metaCapiContentTypeSchema,
+  metaCapiCurrencySchema,
   metaCapiEventNameSchema,
+  metaCapiValueSchema,
 } from "@chatbotx.io/utils/meta-capi"
 import { z } from "zod"
 import { splitContentIds } from "./event-input"
 
 const capiDatasetIdSchema = z.string().trim().regex(/^\d+$/)
 const capiAccessTokenSchema = z.string().trim().min(1)
-// Value must already be canonical `\d+(\.\d+)?` after `trim()` — no
-// destructive normalization (no comma/dot stripping: "12,50" is ambiguous
-// between 12.50 and 1250). An unresolved `{{...}}` template that leaked past
-// the worker's variable resolution is rejected here, not persisted.
-const capiEventValueSchema = z
-  .string()
-  .trim()
-  .regex(/^\d+(\.\d+)?$/, "Value must be a plain number such as 19.99")
-const capiEventCurrencySchema = z
-  .string()
-  .trim()
-  .toUpperCase()
-  .pipe(
-    z
-      .string()
-      .regex(
-        /^[A-Z]{3}$/,
-        "Currency must be a 3-letter ISO 4217 code such as USD",
-      ),
-  )
-
 /**
  * Business-boundary input for enqueuing a Meta CAPI event, shared by the
  * flow-step handler and the trigger executor — both resolve any
@@ -69,8 +50,8 @@ export const enqueueEventInput = withMetaCapiEventRefinements(
       splitContentIds,
       z.array(z.string().min(1)).min(1).optional(),
     ),
-    value: capiEventValueSchema.optional(),
-    currency: capiEventCurrencySchema.optional(),
+    value: metaCapiValueSchema.optional(),
+    currency: metaCapiCurrencySchema.optional(),
     contentCategory: z.string().trim().min(1).max(200).optional(),
     contentName: z.string().trim().min(1).max(200).optional(),
     occurredAt: z.date().optional(),

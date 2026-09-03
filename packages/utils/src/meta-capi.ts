@@ -156,6 +156,38 @@ export type MetaCapiActionSource = z.infer<typeof metaCapiActionSourceSchema>
 export const defaultMetaCapiActionSource: MetaCapiActionSource =
   "business_messaging"
 
+const PLAIN_DECIMAL_PATTERN = /^\d+(\.\d+)?$/
+const ISO_4217_PATTERN = /^[A-Z]{3}$/
+
+/**
+ * Meta CAPI `custom_data.value`: a canonical plain decimal, already trimmed,
+ * with no locale normalisation ("12,50" is ambiguous between 12.50 and 1250)
+ * and small enough to survive `Number()` exactly — a digit string long
+ * enough to overflow to `Infinity` would otherwise serialise as `null`.
+ */
+export const metaCapiValueSchema = z
+  .string()
+  .trim()
+  .regex(PLAIN_DECIMAL_PATTERN, "Value must be a plain number such as 19.99")
+  .refine(
+    (value) => Number(value) <= Number.MAX_SAFE_INTEGER,
+    "Value is too large",
+  )
+
+/** Meta CAPI `custom_data.currency`: a 3-letter ISO 4217 code, upper-cased. */
+export const metaCapiCurrencySchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .pipe(
+    z
+      .string()
+      .regex(
+        ISO_4217_PATTERN,
+        "Currency must be a 3-letter ISO 4217 code such as USD",
+      ),
+  )
+
 /**
  * Meta CAPI `custom_data.content_type` values
  * (https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/custom-data).

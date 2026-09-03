@@ -5,7 +5,9 @@ import {
   metaCapiActionSourceValues,
   metaCapiBusinessMessagingEventNames,
   metaCapiContentTypeValues,
+  metaCapiCurrencySchema,
   metaCapiEventNameSchema,
+  metaCapiValueSchema,
   metaPixelStandardEventNames,
 } from "../src/meta-capi"
 
@@ -68,5 +70,42 @@ describe("metaCapiEventNameSchema", () => {
 describe("metaCapiContentTypeValues", () => {
   test("only offers Meta's two documented content types", () => {
     expect(metaCapiContentTypeValues).toEqual(["product", "product_group"])
+  })
+})
+
+describe("metaCapiValueSchema / metaCapiCurrencySchema", () => {
+  test.each([
+    "19.99",
+    " 250 ",
+    "0",
+    "9007199254740991",
+  ])("accepts plain decimal %j", (input) => {
+    expect(metaCapiValueSchema.safeParse(input).success).toBe(true)
+  })
+
+  test.each([
+    "12,50",
+    "1e5",
+    "-5",
+    "abc",
+    "{{amount}}",
+    "",
+    "1.",
+    ".5",
+  ])("rejects non-canonical value %j", (input) => {
+    expect(metaCapiValueSchema.safeParse(input).success).toBe(false)
+  })
+
+  test("rejects a value that would not survive Number() intact", () => {
+    expect(metaCapiValueSchema.safeParse("9007199254740992").success).toBe(
+      false,
+    )
+    expect(metaCapiValueSchema.safeParse("1".repeat(400)).success).toBe(false)
+  })
+
+  test("currency is upper-cased and must be a 3-letter code", () => {
+    expect(metaCapiCurrencySchema.parse(" usd ")).toBe("USD")
+    expect(metaCapiCurrencySchema.safeParse("US").success).toBe(false)
+    expect(metaCapiCurrencySchema.safeParse("USDT").success).toBe(false)
   })
 })

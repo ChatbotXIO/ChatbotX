@@ -7,7 +7,9 @@ import {
   metaCapiActionSourceSchema,
   metaCapiBusinessMessagingEventNames,
   metaCapiContentTypeSchema,
+  metaCapiCurrencySchema,
   metaCapiEventNameSchema,
+  metaCapiValueSchema,
 } from "@chatbotx.io/utils/meta-capi"
 import { containsVariablePlaceholder } from "@chatbotx.io/utils/variables"
 import { z } from "zod"
@@ -50,17 +52,6 @@ export const templateOrStatic = <TOutput>(
     return z.NEVER
   })
 
-const metaCapiValueStaticSchema = z
-  .string()
-  .trim()
-  .regex(/^\d+(\.\d+)?$/)
-
-const metaCapiCurrencyStaticSchema = z
-  .string()
-  .trim()
-  .toUpperCase()
-  .pipe(z.string().regex(/^[A-Z]{3}$/))
-
 const metaCapiContentIdsStaticSchema = z.string().trim().min(1)
 
 /**
@@ -72,10 +63,10 @@ const optionalTemplateOrStatic = <TOutput>(
   staticSchema: z.ZodType<TOutput, string>,
 ) => z.preprocess(blankToUndefined, templateOrStatic(staticSchema).optional())
 
-const metaCapiValueSchema = optionalTemplateOrStatic(metaCapiValueStaticSchema)
+const metaCapiValueFieldSchema = optionalTemplateOrStatic(metaCapiValueSchema)
 
-const metaCapiCurrencySchema = optionalTemplateOrStatic(
-  metaCapiCurrencyStaticSchema,
+const metaCapiCurrencyFieldSchema = optionalTemplateOrStatic(
+  metaCapiCurrencySchema,
 )
 
 // Comma-separated Meta `content_ids` (e.g. "123,456" or "{{a}},{{b}}"); split
@@ -198,8 +189,8 @@ export const metaCapiEventFieldsSchema = z.object({
   actionSource: metaCapiActionSourceSchema.default(defaultMetaCapiActionSource),
   contentType: metaCapiContentTypeSchema.optional(),
   contentIds: metaCapiContentIdsSchema,
-  value: metaCapiValueSchema,
-  currency: metaCapiCurrencySchema,
+  value: metaCapiValueFieldSchema,
+  currency: metaCapiCurrencyFieldSchema,
   contentCategory: metaCapiContentTextSchema,
   contentName: metaCapiContentTextSchema,
 })
