@@ -12,7 +12,7 @@ type PurchaseNumberFieldProps = {
 }
 
 /**
- * Numeric `contents[].quantity`/`contents[].itemPrice` field (plan #4) — the
+ * Numeric `contents[].quantity`/`contents[].itemPrice` field — the
  * shared `InputField` stores whatever string the user typed, but the
  * `contents[]` zod shape (`metaCapiPurchaseContentItemSchema`) requires real
  * `number`s, so this parses on change instead of leaving that to zod

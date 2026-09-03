@@ -68,8 +68,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   conversationService: {},
   metaConversionsService: {
-    enqueueLeadEvent: vi.fn(),
-    buildLeadSourceKey: vi.fn(),
+    enqueueEvent: vi.fn(),
+    buildSourceKey: vi.fn(),
   },
   tagSyncService: { enqueueAttach: vi.fn(), enqueueDetach: vi.fn() },
 }))
@@ -80,6 +80,24 @@ vi.mock("@chatbotx.io/events/context", () => ({
 
 vi.mock("@chatbotx.io/logger", () => ({
   default: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  getChildLogger: () => ({
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  }),
+}))
+
+// This suite exercises the trigger-action switch with placeholder-free
+// actions only — no template resolution is under test here (see
+// send-meta-capi-event-step-handler.test.ts / trigger-action-executor-send-
+// meta-capi-event.test.ts for that). Mocked as a passthrough so importing
+// action-executor.ts does not pull in `@chatbotx.io/variables`'s real
+// dependency chain (contact/custom-field/business-subpath modules this file
+// does not otherwise mock).
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: async (_contactId: string, value: unknown) =>
+    value,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({

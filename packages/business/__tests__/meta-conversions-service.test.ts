@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   messengerUpdateCapiScopeCache: vi.fn(),
   messengerUpdateDatasetIdIfNull: vi.fn(),
   messengerUpdateDatasetId: vi.fn(),
+  messengerUpdateCapiTestEventCode: vi.fn(),
+  findMostRecentByInbox: vi.fn(),
   messengerUpdateCapiAccessToken: vi.fn(),
   messengerClearCapiAccessToken: vi.fn(),
   instagramFindWorkspaceIntegration: vi.fn(),
@@ -52,7 +54,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     insertIgnoreDuplicate: mocks.insertIgnoreDuplicate,
     updateCapiStatus: mocks.metaCapiUpdateCapiStatus,
   },
+  contactInboxRepository: {
+    findMostRecentByInbox: mocks.findMostRecentByInbox,
+  },
   integrationMessengerRepository: {
+    updateCapiTestEventCode: mocks.messengerUpdateCapiTestEventCode,
     findWorkspaceIntegration: mocks.messengerFindWorkspaceIntegration,
     claimCapiScopeCacheRefresh: mocks.messengerClaimCapiScopeCacheRefresh,
     updateCapiScopeCache: mocks.messengerUpdateCapiScopeCache,
@@ -171,6 +177,9 @@ const whatsappIntegration = {
   hasCapiScope: true,
   capiAccessToken: null,
 }
+
+// `test:<fresh id>:<contactInboxId>:<dedup segment>` — see `buildSourceKey`.
+const TEST_SOURCE_KEY_PATTERN = /^test:[^:]+:ci-9:/
 
 describe("MetaConversionsService", () => {
   beforeEach(() => {
@@ -309,7 +318,7 @@ describe("MetaConversionsService", () => {
     })
 
     await expect(
-      metaConversionsService.enqueueLeadEvent({
+      metaConversionsService.enqueueEvent({
         workspaceId: "ws-1",
         channel: "messenger",
         contactInboxId: "ci-1",
@@ -344,7 +353,7 @@ describe("MetaConversionsService", () => {
 
   test("inserts a new event and enqueues one send job", async () => {
     await expect(
-      metaConversionsService.enqueueLeadEvent({
+      metaConversionsService.enqueueEvent({
         workspaceId: "ws-1",
         channel: "messenger",
         contactInboxId: "ci-1",
@@ -377,7 +386,7 @@ describe("MetaConversionsService", () => {
   })
 
   test("persists optional value and normalized currency on inserted events", async () => {
-    await metaConversionsService.enqueueLeadEvent({
+    await metaConversionsService.enqueueEvent({
       workspaceId: "ws-1",
       channel: "messenger",
       contactInboxId: "ci-1",
@@ -397,11 +406,59 @@ describe("MetaConversionsService", () => {
     )
   })
 
+  test("defaults eventName and actionSource on the inserted row when omitted", async () => {
+    await metaConversionsService.enqueueEvent({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      contactInboxId: "ci-1",
+      inboxId: "inbox-1",
+      sourceKey: "flow:step-1:ci-1:20260810",
+      source: "flowStep",
+      occurredAt: new Date("2026-08-10T12:00:00.000Z"),
+    })
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "LeadSubmitted",
+        actionSource: "business_messaging",
+        contentType: null,
+        contentIds: null,
+      }),
+    )
+  })
+
+  test("writes actionSource, contentType, and contentIds on the inserted row", async () => {
+    await metaConversionsService.enqueueEvent({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      contactInboxId: "ci-1",
+      inboxId: "inbox-1",
+      sourceKey: "flow:step-1:ci-1:20260810",
+      source: "flowStep",
+      eventName: "Purchase",
+      actionSource: "email",
+      contentType: "product",
+      contentIds: "sku-1, sku-2",
+      value: "19.99",
+      currency: "usd",
+      occurredAt: new Date("2026-08-10T12:00:00.000Z"),
+    })
+
+    expect(mocks.insertIgnoreDuplicate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "Purchase",
+        actionSource: "email",
+        contentType: "product",
+        contentIds: ["sku-1", "sku-2"],
+      }),
+    )
+  })
+
   test("does not enqueue when an existing event is no longer pending", async () => {
     mocks.insertIgnoreDuplicate.mockResolvedValueOnce(null)
     mocks.findPendingBySourceKey.mockResolvedValueOnce(null)
 
-    await metaConversionsService.enqueueLeadEvent({
+    await metaConversionsService.enqueueEvent({
       workspaceId: "ws-1",
       channel: "messenger",
       contactInboxId: "ci-1",
@@ -419,7 +476,7 @@ describe("MetaConversionsService", () => {
     )
 
     await expect(
-      metaConversionsService.enqueueLeadEvent({
+      metaConversionsService.enqueueEvent({
         workspaceId: "ws-other",
         channel: "messenger",
         contactInboxId: "ci-1",
@@ -609,7 +666,7 @@ describe("MetaConversionsService", () => {
 
   test("resolves the whatsapp integration by inbox when enqueuing a lead event", async () => {
     await expect(
-      metaConversionsService.enqueueLeadEvent({
+      metaConversionsService.enqueueEvent({
         workspaceId: "ws-1",
         channel: "whatsapp",
         contactInboxId: "ci-1",
@@ -936,15 +993,278 @@ describe("MetaConversionsService", () => {
     )
   })
 
-  describe("buildLeadSourceKey", () => {
+  describe("provisionDatasetNow", () => {
+    test("overwrites a stale stored dataset id when Meta returns a different one", async () => {
+      mocks.messengerUpdateDatasetId.mockResolvedValueOnce({
+        ...messengerIntegration,
+        datasetId: "new",
+      })
+      const provisionDataset = vi.fn().mockResolvedValue("new")
+
+      await expect(
+        metaConversionsService.provisionDatasetNow({
+          channel: "messenger",
+          integration: { ...messengerIntegration, datasetId: "old" },
+          provisionDataset,
+        }),
+      ).resolves.toBe("new")
+
+      expect(mocks.messengerUpdateDatasetId).toHaveBeenCalledWith(
+        {
+          id: "im-1",
+          workspaceId: "ws-1",
+          datasetId: "new",
+        },
+        undefined,
+      )
+      expect(mocks.messengerUpdateDatasetIdIfNull).not.toHaveBeenCalled()
+    })
+
+    test("does not write when Meta returns the same dataset id already stored", async () => {
+      const provisionDataset = vi.fn().mockResolvedValue("same")
+
+      await expect(
+        metaConversionsService.provisionDatasetNow({
+          channel: "messenger",
+          integration: { ...messengerIntegration, datasetId: "same" },
+          provisionDataset,
+        }),
+      ).resolves.toBe("same")
+
+      // Meta is always asked — a stored id alone must never short-circuit this path.
+      expect(provisionDataset).toHaveBeenCalledTimes(1)
+      expect(mocks.messengerUpdateDatasetId).not.toHaveBeenCalled()
+      expect(mocks.messengerUpdateDatasetIdIfNull).not.toHaveBeenCalled()
+    })
+
+    test("provisions a dataset when none is stored yet", async () => {
+      mocks.messengerUpdateDatasetId.mockResolvedValueOnce({
+        ...messengerIntegration,
+        datasetId: "fresh",
+      })
+      const provisionDataset = vi.fn().mockResolvedValue("fresh")
+
+      await expect(
+        metaConversionsService.provisionDatasetNow({
+          channel: "messenger",
+          integration: messengerIntegration,
+          provisionDataset,
+        }),
+      ).resolves.toBe("fresh")
+
+      expect(mocks.messengerUpdateDatasetId).toHaveBeenCalledWith(
+        {
+          id: "im-1",
+          workspaceId: "ws-1",
+          datasetId: "fresh",
+        },
+        undefined,
+      )
+    })
+
+    test("propagates a Meta error without writing the dataset id", async () => {
+      const provisionDataset = vi
+        .fn()
+        .mockRejectedValue(new Error("dataset create failed"))
+
+      await expect(
+        metaConversionsService.provisionDatasetNow({
+          channel: "messenger",
+          integration: { ...messengerIntegration, datasetId: "old" },
+          provisionDataset,
+        }),
+      ).rejects.toThrow("dataset create failed")
+
+      expect(mocks.messengerUpdateDatasetId).not.toHaveBeenCalled()
+      expect(mocks.messengerUpdateDatasetIdIfNull).not.toHaveBeenCalled()
+    })
+
+    test("retries whatsapp dataset provisioning with the fallback token on an auth error", async () => {
+      mocks.whatsappUpdateDatasetId.mockResolvedValueOnce({
+        ...whatsappIntegration,
+        datasetId: "dataset-waba-2",
+      })
+      mocks.whatsappResolveDatasetCreationTokens.mockResolvedValue({
+        primaryToken: "wa-system-token",
+        fallbackToken: "whatsapp-token",
+      })
+      // The System User token is rejected (#100), so the create is retried
+      // with the connect token — the "Create Dataset" path shares the same
+      // fallback mechanics as the lazy send-path provisioning.
+      const provisionDataset = vi
+        .fn()
+        .mockRejectedValueOnce(
+          Object.assign(new Error("(#100) Missing Permission"), {
+            code: 100,
+            httpStatusCode: 400,
+          }),
+        )
+        .mockResolvedValueOnce("dataset-waba-2")
+
+      await expect(
+        metaConversionsService.provisionDatasetNow({
+          channel: "whatsapp",
+          integration: { ...whatsappIntegration, datasetId: "old-waba" },
+          provisionDataset,
+        }),
+      ).resolves.toBe("dataset-waba-2")
+
+      expect(provisionDataset).toHaveBeenNthCalledWith(1, {
+        accessToken: "wa-system-token",
+        fallbackAccessToken: "whatsapp-token",
+        resourceId: "waba-1",
+        resourceName: "Acme WABA",
+      })
+      expect(provisionDataset).toHaveBeenNthCalledWith(2, {
+        accessToken: "whatsapp-token",
+        fallbackAccessToken: "whatsapp-token",
+        resourceId: "waba-1",
+        resourceName: "Acme WABA",
+      })
+      expect(mocks.whatsappUpdateDatasetId).toHaveBeenCalledWith(
+        {
+          id: "wa-1",
+          workspaceId: "ws-1",
+          datasetId: "dataset-waba-2",
+        },
+        undefined,
+      )
+    })
+  })
+
+  describe("test events", () => {
+    test("saveCapiTestEventCode trims and stores the code", async () => {
+      mocks.messengerUpdateCapiTestEventCode.mockResolvedValue({
+        ...messengerIntegration,
+        capiTestEventCode: "TEST33520",
+      })
+
+      await expect(
+        metaConversionsService.saveCapiTestEventCode({
+          channel: "messenger",
+          integration: messengerIntegration,
+          testEventCode: "  TEST33520 ",
+        }),
+      ).resolves.toEqual(
+        expect.objectContaining({ capiTestEventCode: "TEST33520" }),
+      )
+      expect(mocks.messengerUpdateCapiTestEventCode).toHaveBeenCalledWith(
+        { id: "im-1", workspaceId: "ws-1", capiTestEventCode: "TEST33520" },
+        undefined,
+      )
+    })
+
+    test("saveCapiTestEventCode with null clears the code", async () => {
+      mocks.messengerUpdateCapiTestEventCode.mockResolvedValue(
+        messengerIntegration,
+      )
+
+      await metaConversionsService.saveCapiTestEventCode({
+        channel: "messenger",
+        integration: messengerIntegration,
+        testEventCode: null,
+      })
+
+      expect(mocks.messengerUpdateCapiTestEventCode).toHaveBeenCalledWith(
+        { id: "im-1", workspaceId: "ws-1", capiTestEventCode: null },
+        undefined,
+      )
+    })
+
+    test("saveCapiTestEventCode rejects a code with unexpected characters", async () => {
+      await expect(
+        metaConversionsService.saveCapiTestEventCode({
+          channel: "messenger",
+          integration: messengerIntegration,
+          testEventCode: "TEST 123;",
+        }),
+      ).rejects.toThrow()
+      expect(mocks.messengerUpdateCapiTestEventCode).not.toHaveBeenCalled()
+    })
+
+    test("enqueueTestEvent refuses to run without a saved test code", async () => {
+      await expect(
+        metaConversionsService.enqueueTestEvent({
+          channel: "messenger",
+          integration: messengerIntegration,
+        }),
+      ).rejects.toMatchObject({
+        name: "CapiTestEventError",
+        reason: "testEventCodeRequired",
+      })
+      expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+    })
+
+    test("enqueueTestEvent fails clearly when the inbox has no contact yet", async () => {
+      mocks.findMostRecentByInbox.mockResolvedValue(null)
+
+      await expect(
+        metaConversionsService.enqueueTestEvent({
+          channel: "messenger",
+          integration: { ...messengerIntegration, capiTestEventCode: "TEST1" },
+        }),
+      ).rejects.toMatchObject({ reason: "noContactForTest" })
+      expect(mocks.insertIgnoreDuplicate).not.toHaveBeenCalled()
+    })
+
+    test("enqueueTestEvent queues one sample Purchase for the inbox's most recent contact", async () => {
+      mocks.findMostRecentByInbox.mockResolvedValue({
+        id: "ci-9",
+        channel: "messenger",
+        inboxId: "inbox-1",
+      })
+
+      const event = await metaConversionsService.enqueueTestEvent({
+        channel: "messenger",
+        integration: { ...messengerIntegration, capiTestEventCode: "TEST1" },
+      })
+
+      expect(mocks.findMostRecentByInbox).toHaveBeenCalledWith({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        requireCtwaClid: false,
+      })
+      expect(event).toEqual(
+        expect.objectContaining({
+          source: "manualTest",
+          contactInboxId: "ci-9",
+          eventName: "Purchase",
+          actionSource: "business_messaging",
+          value: "100",
+          currency: "USD",
+        }),
+      )
+      expect(event?.sourceKey).toMatch(TEST_SOURCE_KEY_PATTERN)
+      expect(mocks.enqueueIntegrationJob).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe("test events on WhatsApp", () => {
+    test("enqueueTestEvent only considers click-to-WhatsApp-attributed contacts", async () => {
+      mocks.findMostRecentByInbox.mockResolvedValue(null)
+
+      await expect(
+        metaConversionsService.enqueueTestEvent({
+          channel: "whatsapp",
+          integration: { ...whatsappIntegration, capiTestEventCode: "TEST1" },
+        }),
+      ).rejects.toMatchObject({ reason: "noContactForTest" })
+
+      expect(mocks.findMostRecentByInbox).toHaveBeenCalledWith(
+        expect.objectContaining({ requireCtwaClid: true }),
+      )
+    })
+  })
+
+  describe("buildSourceKey", () => {
     test("whatsapp dedups per contact per UTC day (identical key within a day)", () => {
-      const first = metaConversionsService.buildLeadSourceKey({
+      const first = metaConversionsService.buildSourceKey({
         scope: "flow",
         scopeId: "s1",
         contactInboxId: "c1",
         channel: "whatsapp",
       })
-      const second = metaConversionsService.buildLeadSourceKey({
+      const second = metaConversionsService.buildSourceKey({
         scope: "flow",
         scopeId: "s1",
         contactInboxId: "c1",
@@ -955,20 +1275,57 @@ describe("MetaConversionsService", () => {
       expect(first).toMatch(WHATSAPP_FLOW_SOURCE_KEY_PATTERN)
     })
 
+    test("whatsapp under a non-messaging action source never dedups (hashed identity, no CTWA cap)", () => {
+      const first = metaConversionsService.buildSourceKey({
+        scope: "flow",
+        scopeId: "s1",
+        contactInboxId: "c1",
+        channel: "whatsapp",
+        actionSource: "email",
+      })
+      const second = metaConversionsService.buildSourceKey({
+        scope: "flow",
+        scopeId: "s1",
+        contactInboxId: "c1",
+        channel: "whatsapp",
+        actionSource: "email",
+      })
+
+      expect(first).not.toBe(second)
+    })
+
+    test("whatsapp with an explicit business_messaging action source dedups like the default", () => {
+      const explicit = metaConversionsService.buildSourceKey({
+        scope: "flow",
+        scopeId: "s1",
+        contactInboxId: "c1",
+        channel: "whatsapp",
+        actionSource: "business_messaging",
+      })
+      const implicit = metaConversionsService.buildSourceKey({
+        scope: "flow",
+        scopeId: "s1",
+        contactInboxId: "c1",
+        channel: "whatsapp",
+      })
+
+      expect(explicit).toBe(implicit)
+    })
+
     test("messenger and instagram never dedup (a unique key per fire)", () => {
-      const messengerFirst = metaConversionsService.buildLeadSourceKey({
+      const messengerFirst = metaConversionsService.buildSourceKey({
         scope: "trigger",
         scopeId: "t1",
         contactInboxId: "c1",
         channel: "messenger",
       })
-      const messengerSecond = metaConversionsService.buildLeadSourceKey({
+      const messengerSecond = metaConversionsService.buildSourceKey({
         scope: "trigger",
         scopeId: "t1",
         contactInboxId: "c1",
         channel: "messenger",
       })
-      const instagram = metaConversionsService.buildLeadSourceKey({
+      const instagram = metaConversionsService.buildSourceKey({
         scope: "flow",
         scopeId: "s1",
         contactInboxId: "c1",

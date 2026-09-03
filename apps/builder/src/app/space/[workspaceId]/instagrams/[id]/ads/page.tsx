@@ -71,6 +71,7 @@ export default async function InstagramAdsPage(props: {
         type: resolved.type,
         hasCapiScope: resolved.hasCapiScope,
         datasetId: resolved.datasetId,
+        capiTestEventCode: resolved.capiTestEventCode,
       }}
     />
   )

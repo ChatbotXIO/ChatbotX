@@ -1,5 +1,7 @@
 import type {
   HashedCapiUserData,
+  MetaCapiActionSource,
+  MetaCapiContentType,
   PurchaseContentItem,
 } from "@chatbotx.io/utils/meta-capi"
 import { z } from "zod"
@@ -14,70 +16,100 @@ import {
 } from "../lib/http-client"
 import type { MetaCapiEventName, MetaMessagingChannel } from "../schemas"
 
-// Shared enrichment fields (plan #1/#3/#4) duplicated per channel-variant
-// literal below, mirroring this file's pre-existing pattern of duplicating
-// currency/value/contentCategory/contentName across the three variants
-// rather than a common base type.
-type MetaCapiEnrichmentFields = {
-  /** Hashed customer-info (plan #1) — merged into the channel's `user_data`. */
+// Fields shared by every action source. `contentType`/`contentIds` are new;
+// the rest carry over unchanged from the previous per-variant literals.
+type MetaCapiEventCommon = {
+  eventName: MetaCapiEventName
+  occurredAt: Date
+  eventId: string
+  currency?: string | null
+  value?: string | number | null
+  contentCategory?: string | null
+  contentName?: string | null
+  /** `custom_data.content_type` — explicit value wins over the
+   * `contents[]`-derived `"product"` default (see `buildCustomData`). */
+  contentType?: MetaCapiContentType | null
+  /** `custom_data.content_ids`. */
+  contentIds?: string[] | null
+  /** Hashed customer-info. For a business-messaging event it is merged into
+   * `user_data` alongside the channel identity keys; for a non-messaging
+   * event it IS `user_data` (identity keys don't exist there). */
   userData?: HashedCapiUserData
-  /** Limited Data Use (plan #3) — emits the fixed top-level LDU triple. */
+  /** Limited Data Use — emits the fixed top-level LDU triple. */
   limitedDataUse?: boolean
-  /** Purchase order id (plan #4) — `custom_data.order_id`. */
+  /** Purchase order id — `custom_data.order_id`. */
   orderId?: string | null
-  /** Purchase line items (plan #4) — `custom_data.contents[]`. */
+  /** Purchase line items — `custom_data.contents[]`. */
   contents?: PurchaseContentItem[] | null
 }
 
-type MessengerEventInput = {
-  eventName: MetaCapiEventName
-  occurredAt: Date
-  eventId: string
-  messagingChannel: "messenger"
-  pageId: string
-  pageScopedUserId: string
-  currency?: string | null
-  value?: string | number | null
-  contentCategory?: string | null
-  contentName?: string | null
-} & MetaCapiEnrichmentFields
+// The three channel-identity shapes business-messaging events can carry.
+// `actionSource` is OPTIONAL and fixed to `"business_messaging"` here so the
+// ads-conversion sender (`apps/worker/.../ads-conversion/send-conversion-
+// event.ts`, which never sets it) and every existing test keep compiling
+// unchanged.
+type BusinessMessagingIdentity = {
+  actionSource?: "business_messaging"
+} & (
+  | {
+      messagingChannel: "messenger"
+      pageId: string
+      pageScopedUserId: string
+    }
+  | {
+      messagingChannel: "instagram"
+      instagramBusinessAccountId: string
+      igSid: string
+    }
+  | {
+      messagingChannel: "whatsapp"
+      wabaId: string
+      ctwaClid: string
+    }
+)
 
-type InstagramEventInput = {
-  eventName: MetaCapiEventName
-  occurredAt: Date
-  eventId: string
-  messagingChannel: "instagram"
-  instagramBusinessAccountId: string
-  igSid: string
-  currency?: string | null
-  value?: string | number | null
-  contentCategory?: string | null
-  contentName?: string | null
-} & MetaCapiEnrichmentFields
+// Every other action source: no messaging channel, no channel identity keys
+// — Meta rejects `page_scoped_user_id`/`ig_sid`/`ctwa_clid` on a non-
+// messaging event, so the union makes that combination unrepresentable.
+// `userData` is REQUIRED here (unlike the business-messaging arm, which
+// identifies the person via its channel identity keys and treats hashed
+// customer info as an optional supplement): a non-messaging event has no
+// other identity to send, so it must never type-check without one.
+type NonMessagingIdentity = {
+  actionSource: Exclude<MetaCapiActionSource, "business_messaging">
+  userData: HashedCapiUserData
+}
 
-type WhatsappEventInput = {
-  eventName: MetaCapiEventName
-  occurredAt: Date
-  eventId: string
-  messagingChannel: "whatsapp"
-  wabaId: string
-  ctwaClid: string
-  currency?: string | null
-  value?: string | number | null
-  contentCategory?: string | null
-  contentName?: string | null
-} & MetaCapiEnrichmentFields
+export type MetaConversionEventInput = MetaCapiEventCommon &
+  (BusinessMessagingIdentity | NonMessagingIdentity)
 
-export type MetaConversionEventInput =
-  | MessengerEventInput
-  | InstagramEventInput
-  | WhatsappEventInput
+// The business-messaging arm of `MetaConversionEventInput`, distributed over
+// `messagingChannel` — used by `channelUserDataBuilders` and its dispatcher.
+type MetaMessagingEventInput = MetaCapiEventCommon & BusinessMessagingIdentity
+type MessengerEventInput = Extract<
+  MetaMessagingEventInput,
+  { messagingChannel: "messenger" }
+>
+type InstagramEventInput = Extract<
+  MetaMessagingEventInput,
+  { messagingChannel: "instagram" }
+>
+type WhatsappEventInput = Extract<
+  MetaMessagingEventInput,
+  { messagingChannel: "whatsapp" }
+>
 
 type SendConversionEventInput = {
   datasetId: string
   accessToken: string
   version?: string
   event: MetaConversionEventInput
+  /**
+   * Meta's `test_event_code` (Events Manager → Test events). When set, the
+   * event is routed to the dataset's Test Events view instead of production
+   * reporting, where its full payload is shown.
+   */
+  testEventCode?: string
 }
 
 const conversionEventsResponseSchema = z.object({}).passthrough()
@@ -92,37 +124,55 @@ const conversionEventsResponseSchema = z.object({}).passthrough()
 // requires `ig_account_id` even though the public doc example still shows
 // `instagram_business_account_id` — see the instagram builder below.
 const channelUserDataBuilders = {
-  messenger: (event: MetaConversionEventInput) => ({
-    page_id: (event as MessengerEventInput).pageId,
-    page_scoped_user_id: (event as MessengerEventInput).pageScopedUserId,
+  messenger: (event: MessengerEventInput) => ({
+    page_id: event.pageId,
+    page_scoped_user_id: event.pageScopedUserId,
   }),
-  instagram: (event: MetaConversionEventInput) => ({
+  instagram: (event: InstagramEventInput) => ({
     // Live business_messaging endpoint requires `ig_account_id`; it rejects the
     // event as "Missing IG account ID parameter" (error_subcode 2804079) when
     // only `instagram_business_account_id` is sent, even though the public doc
     // example still lists the latter. We send BOTH (same value): the live API
     // requires `ig_account_id` and tolerates the doc-named key as unknown, so
     // this stays correct whichever name Meta consolidates on.
-    ig_account_id: (event as InstagramEventInput).instagramBusinessAccountId,
-    instagram_business_account_id: (event as InstagramEventInput)
-      .instagramBusinessAccountId,
-    ig_sid: (event as InstagramEventInput).igSid,
+    ig_account_id: event.instagramBusinessAccountId,
+    instagram_business_account_id: event.instagramBusinessAccountId,
+    ig_sid: event.igSid,
   }),
-  whatsapp: (event: MetaConversionEventInput) => ({
-    whatsapp_business_account_id: (event as WhatsappEventInput).wabaId,
-    ctwa_clid: (event as WhatsappEventInput).ctwaClid,
+  whatsapp: (event: WhatsappEventInput) => ({
+    whatsapp_business_account_id: event.wabaId,
+    ctwa_clid: event.ctwaClid,
   }),
 } as const satisfies {
   [Channel in MetaMessagingChannel]: (
-    event: MetaConversionEventInput,
+    event: Extract<MetaMessagingEventInput, { messagingChannel: Channel }>,
   ) => Record<string, string>
 }
 
-// Purchase `content_type`/`num_items`/`contents[]` (plan #4). `num_items` is
+// Indexing `channelUserDataBuilders` by `event.messagingChannel` (a union
+// key) narrows each builder's parameter to the INTERSECTION of all three
+// channels' identity fields — a shape no single event value can satisfy
+// structurally, even though the `messagingChannel` tag guarantees the match
+// is safe at runtime. This is the ONE documented cast in this file,
+// replacing the three per-variant `as MessengerEventInput` /
+// `as InstagramEventInput` / `as WhatsappEventInput` casts that used to live
+// inside each builder body.
+const byMessagingChannel = (
+  event: MetaMessagingEventInput,
+  builders: typeof channelUserDataBuilders,
+): Record<string, string> => {
+  const builder = builders[event.messagingChannel] as (
+    event: MetaMessagingEventInput,
+  ) => Record<string, string>
+  return builder(event)
+}
+
+// Purchase `content_type`/`num_items`/`contents[]`. `num_items` is
 // the SUM of each line item's quantity — NOT the array length, per Meta's
 // spec (a line item can itself represent multiple units of the same SKU).
+// `content_type` itself is resolved by `buildCustomData` (explicit value
+// wins over this default), not hard-coded here.
 const buildContentsData = (contents: PurchaseContentItem[]) => ({
-  content_type: "product",
   num_items: contents.reduce((total, item) => total + item.quantity, 0),
   contents: contents.map((item) => ({
     id: item.id,
@@ -134,13 +184,19 @@ const buildContentsData = (contents: PurchaseContentItem[]) => ({
 const buildCustomData = (event: MetaConversionEventInput) => {
   const hasValue = event.value !== null && event.value !== undefined
   const hasContents = Boolean(event.contents && event.contents.length > 0)
+  const hasContentIds = Boolean(event.contentIds && event.contentIds.length > 0)
+  // Explicit `contentType` wins over the `contents[]`-derived "product"
+  // default.
+  const contentType = event.contentType ?? (hasContents ? "product" : undefined)
   const hasAny =
     event.currency ||
     hasValue ||
     event.contentCategory ||
     event.contentName ||
     event.orderId ||
-    hasContents
+    hasContents ||
+    hasContentIds ||
+    contentType
   return hasAny
     ? {
         custom_data: {
@@ -151,6 +207,8 @@ const buildCustomData = (event: MetaConversionEventInput) => {
             : {}),
           ...(event.contentName ? { content_name: event.contentName } : {}),
           ...(event.orderId ? { order_id: event.orderId } : {}),
+          ...(contentType ? { content_type: contentType } : {}),
+          ...(hasContentIds ? { content_ids: event.contentIds } : {}),
           ...(hasContents && event.contents
             ? buildContentsData(event.contents)
             : {}),
@@ -162,12 +220,12 @@ const buildCustomData = (event: MetaConversionEventInput) => {
 // Identity keys first, then hashed customer-info fields — the two never
 // collide (channel identity keys are page_id/ig_sid/etc, hashed fields are
 // em/ph/fn/ln/external_id).
-const buildChannelUserData = (event: MetaConversionEventInput) => ({
-  ...channelUserDataBuilders[event.messagingChannel](event),
+const buildChannelUserData = (event: MetaMessagingEventInput) => ({
+  ...byMessagingChannel(event, channelUserDataBuilders),
   ...(event.userData ?? {}),
 })
 
-// Limited Data Use (plan #3): a FIXED top-level triple, never arbitrary
+// Limited Data Use: a FIXED top-level triple, never arbitrary
 // caller-supplied processing options — Meta auto-geolocates from this,
 // restricting only US-state users covered by state privacy law.
 const buildDataProcessingOptions = (event: MetaConversionEventInput) =>
@@ -179,13 +237,38 @@ const buildDataProcessingOptions = (event: MetaConversionEventInput) =>
       }
     : {}
 
+// Structural discriminant: `actionSource` is optional on
+// `BusinessMessagingIdentity`, so a `Record<MetaCapiActionSource, handler>`
+// cannot narrow it — `messagingChannel` presence is the reliable tag.
+function isBusinessMessagingEvent(
+  event: MetaConversionEventInput,
+): event is MetaMessagingEventInput {
+  return "messagingChannel" in event
+}
+
+const businessMessagingIdentityPayload = (event: MetaMessagingEventInput) => ({
+  action_source: "business_messaging" as const,
+  messaging_channel: event.messagingChannel,
+  user_data: buildChannelUserData(event),
+})
+
+// Non-messaging `user_data` is hashed customer info only — it can never be
+// empty because the business layer always emits `external_id`, which Meta
+// lists among the parameters satisfying its "at least one of" rule.
+const nonMessagingIdentityPayload = (
+  event: MetaCapiEventCommon & NonMessagingIdentity,
+) => ({
+  action_source: event.actionSource,
+  user_data: event.userData,
+})
+
 const buildConversionEventPayload = (event: MetaConversionEventInput) => ({
   event_name: event.eventName,
   event_time: Math.floor(event.occurredAt.getTime() / 1000),
   event_id: event.eventId,
-  action_source: "business_messaging",
-  messaging_channel: event.messagingChannel,
-  user_data: buildChannelUserData(event),
+  ...(isBusinessMessagingEvent(event)
+    ? businessMessagingIdentityPayload(event)
+    : nonMessagingIdentityPayload(event)),
   ...buildCustomData(event),
   ...buildDataProcessingOptions(event),
 })
@@ -195,6 +278,7 @@ export const sendConversionEvent = ({
   accessToken,
   version = DEFAULT_API_VERSION,
   event,
+  testEventCode,
 }: SendConversionEventInput): Promise<void> =>
   rescueMetaConversions(async () => {
     const response = await metaConversionsGraphClient.post<unknown>(
@@ -204,6 +288,7 @@ export const sendConversionEvent = ({
         json: {
           data: [buildConversionEventPayload(event)],
           partner_agent: META_CONVERSIONS_PARTNER_AGENT,
+          ...(testEventCode ? { test_event_code: testEventCode } : {}),
         },
       },
     )

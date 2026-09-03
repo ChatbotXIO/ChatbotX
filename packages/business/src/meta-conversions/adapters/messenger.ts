@@ -41,6 +41,8 @@ export const messengerCapiReadinessAdapter: CapiReadinessAdapter<"messenger"> =
       integrationMessengerRepository.updateDatasetIdIfNull(input, tx),
     updateDatasetId: (input, tx) =>
       integrationMessengerRepository.updateDatasetId(input, tx),
+    updateCapiTestEventCode: (input, tx) =>
+      integrationMessengerRepository.updateCapiTestEventCode(input, tx),
     updateCapiAccessToken: (input, tx) =>
       integrationMessengerRepository.updateCapiAccessToken(input, tx),
     connectCustomCapi: (input, tx) =>

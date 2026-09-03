@@ -137,8 +137,7 @@
       "import": "Importă fluxul",
       "export": "Exportă",
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
-      "importJsonOnly": "Doar fișiere JSON",
-      "adsConversions": "Reclame și Meta Conversions"
+      "importJsonOnly": "Doar fișiere JSON"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -4360,11 +4359,6 @@
       "description": "Conectează mai întâi un cont de canal, apoi revino aici pentru a crea reclame.",
       "cta": "Mergi la setările canalului"
     },
-    "movedNote": {
-      "title": "Reclamele s-au mutat în Instrumente",
-      "description": "Creează și gestionează reclamele Click-to-Message din instrumentul Reclame Click-to-Message.",
-      "cta": "Deschide Reclame Click-to-Message"
-    },
     "dashboardCta": "Vezi în panoul de control Reclame"
   },
   "helpItems": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Trimite evenimente LeadSubmitted din conversațiile Messenger, Instagram și WhatsApp către Meta.",
+    "description": "Trimite evenimente de conversie din conversațiile Messenger, Instagram și WhatsApp către Meta.",
     "datasetId": "ID set de date",
     "reconnect": "Reconectează permisiunile",
     "connectViaFacebook": "Conectează prin Facebook",
     "unsupportedExplanation": "Acest cont Instagram a fost conectat cu Instagram Business Login. Conectează contul prin Facebook pentru a folosi Meta Conversions API.",
     "flowStep": {
-      "description": "Pune în coadă un eveniment LeadSubmitted pentru Messenger, Instagram sau WhatsApp.",
       "whatsappNote": "Evenimentele WhatsApp sunt trimise doar pentru conversațiile care au început dintr-un anunț click-to-WhatsApp."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Salvează un ID set de date înainte de a adăuga un token de acces.",
       "invalidToken": "Acest token nu a putut accesa setul de date.",
       "invalidDatasetId": "Introdu un Dataset ID valid (doar cifre).",
-      "whatsappNotFound": "Integrarea WhatsApp nu a fost găsită."
+      "whatsappNotFound": "Integrarea WhatsApp nu a fost găsită.",
+      "testEventCodeRequired": "Salvează un cod de eveniment de test înainte de a trimite un eveniment de test.",
+      "noContactForTest": "Încă nu există un contact eligibil pe acest canal. Un eveniment de test are nevoie de un contact real căruia să i se atribuie (pentru WhatsApp, unul provenit dintr-o reclamă click-to-WhatsApp).",
+      "invalidTestEventCode": "Codul evenimentului de test poate conține doar litere, cifre, cratime sau underscore-uri (max. 64)."
     },
     "fields": {
       "eventType": {
         "label": "Tip de eveniment",
-        "leadSubmitted": "Lead trimis"
+        "leadSubmitted": "Lead trimis",
+        "purchase": "Cumpărare",
+        "initiateCheckout": "Inițiere finalizare comandă",
+        "addToCart": "Adaugă în coș",
+        "viewContent": "Vizualizare conținut",
+        "orderCreated": "Comandă creată",
+        "orderShipped": "Comandă expediată",
+        "orderDelivered": "Comandă livrată",
+        "orderCanceled": "Comandă anulată",
+        "orderReturned": "Comandă returnată",
+        "cartAbandoned": "Coș abandonat",
+        "qualifiedLead": "Client potențial calificat",
+        "ratingProvided": "Evaluare furnizată",
+        "reviewProvided": "Recenzie furnizată",
+        "addPaymentInfo": "Adăugare informații de plată",
+        "addToWishlist": "Adăugare la lista de dorințe",
+        "completeRegistration": "Înregistrare finalizată",
+        "contact": "Contact",
+        "customizeProduct": "Personalizare produs",
+        "donate": "Donează",
+        "findLocation": "Găsire locație",
+        "lead": "Client potențial",
+        "schedule": "Programare",
+        "search": "Căutare",
+        "startTrial": "Începe perioada de probă",
+        "submitApplication": "Trimitere cerere",
+        "subscribe": "Abonare",
+        "custom": "Eveniment personalizat…",
+        "groups": {
+          "commerce": "Comerț",
+          "leads": "Clienți potențiali",
+          "orders": "Comenzi",
+          "feedback": "Feedback",
+          "leadsAndSignups": "Clienți potențiali și înregistrări",
+          "other": "Altele"
+        }
       },
       "value": "Valoare",
       "valuePlaceholder": "de ex. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Numele evenimentului personalizat",
+      "customEventNamePlaceholder": "ex. MyCustomEvent",
+      "contentType": {
+        "label": "Tip de conținut",
+        "product": "Produs",
+        "product_group": "Grup de produse"
+      },
+      "contentIds": "ID-uri de conținut",
+      "contentIdsPlaceholder": "ex. 123,456"
     },
     "datasetIdPlaceholder": "Lipește ID-ul setului de date din Events Manager",
     "saveDataset": "Salvează",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Sursa acțiunii",
+      "help": "Unde a avut loc acest eveniment. Consultați documentația Meta despre sursa acțiunii.",
+      "business_messaging": "Mesagerie business",
+      "email": "E-mail",
+      "phone_call": "Apel telefonic",
+      "chat": "Chat",
+      "physical_store": "Magazin fizic",
+      "system_generated": "Generat de sistem",
+      "other": "Altele"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Avansat"
+    },
+    "testEvents": {
+      "title": "Evenimente de test",
+      "description": "Lipește test_event_code din Events Manager → Test events. Cât timp este setat, fiecare eveniment de pe acest canal este direcționat către vizualizarea Test events cu payload-ul complet (valoare, monedă, ID-uri de conținut) și nu este contorizat în rapoarte. Șterge-l când ai terminat.",
+      "codeLabel": "Cod eveniment de test",
+      "codePlaceholder": "ex. TEST12345",
+      "save": "Salvează codul",
+      "clear": "Șterge",
+      "saved": "Codul evenimentului de test a fost salvat.",
+      "cleared": "Codul evenimentului de test a fost șters. Evenimentele sunt din nou live.",
+      "send": "Trimite eveniment de test",
+      "sent": "Evenimentul de test a fost pus în coadă. Apare în Test events din Events Manager în decurs de un minut.",
+      "sendHint": "Trimite un exemplu de Purchase (100 USD) către cel mai recent contact de pe acest canal.",
+      "activeNotice": "Modul de test este activ: evenimentele de pe acest canal nu sunt contorizate în rapoarte până când codul este șters.",
+      "openTestEvents": "Deschide Test events"
     }
   },
   "minigames": {

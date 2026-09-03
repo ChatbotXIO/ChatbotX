@@ -2254,8 +2254,7 @@
       "import": "Importer le flux",
       "export": "Exporter",
       "importStarted": "Le flux est en cours d'importation. Consultez l'historique des imports pour voir les résultats.",
-      "importJsonOnly": "Fichiers JSON uniquement",
-      "adsConversions": "Publicités et Meta Conversions"
+      "importJsonOnly": "Fichiers JSON uniquement"
     },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
@@ -4406,11 +4405,6 @@
       "description": "Connectez d'abord un compte de canal, puis revenez ici pour créer des publicités.",
       "cta": "Accéder aux paramètres du canal"
     },
-    "movedNote": {
-      "title": "Les publicités ont été déplacées vers Outils",
-      "description": "Créez et gérez les publicités Click-to-Message depuis l'outil Publicités Click-to-Message.",
-      "cta": "Ouvrir Publicités Click-to-Message"
-    },
     "dashboardCta": "Voir sur le tableau de bord Publicités"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Envoyez des événements LeadSubmitted depuis les conversations Messenger, Instagram et WhatsApp vers Meta.",
+    "description": "Envoyez des événements de conversion depuis les conversations Messenger, Instagram et WhatsApp vers Meta.",
     "datasetId": "ID de l’ensemble de données",
     "reconnect": "Reconnecter les autorisations",
     "connectViaFacebook": "Connecter via Facebook",
     "unsupportedExplanation": "Ce compte Instagram a été connecté avec Instagram Business Login. Connectez le compte via Facebook pour utiliser Meta Conversions API.",
     "flowStep": {
-      "description": "Mettez en file d’attente un événement LeadSubmitted pour Messenger, Instagram ou WhatsApp.",
       "whatsappNote": "Les événements WhatsApp ne sont envoyés que pour les conversations démarrées à partir d’une publicité click-to-WhatsApp."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Enregistrez un ID d’ensemble de données avant d’ajouter un jeton d’accès.",
       "invalidToken": "Ce jeton n’a pas pu accéder à l’ensemble de données.",
       "invalidDatasetId": "Saisissez un Dataset ID valide (chiffres uniquement).",
-      "whatsappNotFound": "Intégration WhatsApp introuvable."
+      "whatsappNotFound": "Intégration WhatsApp introuvable.",
+      "testEventCodeRequired": "Enregistrez un code d'événement de test avant d'envoyer un événement de test.",
+      "noContactForTest": "Aucun contact éligible sur ce canal pour l'instant. Un événement de test doit être attribué à un contact réel (pour WhatsApp, un contact issu d'une publicité click-to-WhatsApp).",
+      "invalidTestEventCode": "Le code d'événement de test ne peut contenir que des lettres, des chiffres, des tirets ou des tirets bas (64 caractères max)."
     },
     "fields": {
       "eventType": {
         "label": "Type d’événement",
-        "leadSubmitted": "Prospect soumis"
+        "leadSubmitted": "Prospect soumis",
+        "purchase": "Achat",
+        "initiateCheckout": "Démarrage du paiement",
+        "addToCart": "Ajouter au panier",
+        "viewContent": "Consultation de contenu",
+        "orderCreated": "Commande créée",
+        "orderShipped": "Commande expédiée",
+        "orderDelivered": "Commande livrée",
+        "orderCanceled": "Commande annulée",
+        "orderReturned": "Commande retournée",
+        "cartAbandoned": "Panier abandonné",
+        "qualifiedLead": "Prospect qualifié",
+        "ratingProvided": "Note fournie",
+        "reviewProvided": "Avis fourni",
+        "addPaymentInfo": "Ajout d'informations de paiement",
+        "addToWishlist": "Ajouter à la liste de souhaits",
+        "completeRegistration": "Inscription terminée",
+        "contact": "Contact",
+        "customizeProduct": "Personnalisation du produit",
+        "donate": "Faire un don",
+        "findLocation": "Recherche d'emplacement",
+        "lead": "Prospect",
+        "schedule": "Prise de rendez-vous",
+        "search": "Recherche",
+        "startTrial": "Démarrer l'essai",
+        "submitApplication": "Envoi de candidature",
+        "subscribe": "S'abonner",
+        "custom": "Événement personnalisé…",
+        "groups": {
+          "commerce": "Commerce",
+          "leads": "Prospects",
+          "orders": "Commandes",
+          "feedback": "Avis",
+          "leadsAndSignups": "Prospects et inscriptions",
+          "other": "Autres"
+        }
       },
       "value": "Valeur",
       "valuePlaceholder": "p. ex. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Nom de l'événement personnalisé",
+      "customEventNamePlaceholder": "p. ex. MyCustomEvent",
+      "contentType": {
+        "label": "Type de contenu",
+        "product": "Produit",
+        "product_group": "Groupe de produits"
+      },
+      "contentIds": "ID de contenu",
+      "contentIdsPlaceholder": "p. ex. 123,456"
     },
     "datasetIdPlaceholder": "Collez l’ID de l’ensemble de données depuis Events Manager",
     "saveDataset": "Enregistrer",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Source de l'action",
+      "help": "Où cet événement a eu lieu. Consultez la documentation Meta sur la source de l'action.",
+      "business_messaging": "Messagerie professionnelle",
+      "email": "E-mail",
+      "phone_call": "Appel téléphonique",
+      "chat": "Chat",
+      "physical_store": "Magasin physique",
+      "system_generated": "Généré par le système",
+      "other": "Autres"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Avancé"
+    },
+    "testEvents": {
+      "title": "Événements de test",
+      "description": "Collez le test_event_code depuis Events Manager → Test events. Tant qu'il est défini, chaque événement de ce canal est acheminé vers la vue Test events avec sa charge utile complète (valeur, devise, ID de contenu) et n'est pas comptabilisé dans les rapports. Effacez-le une fois terminé.",
+      "codeLabel": "Code d'événement de test",
+      "codePlaceholder": "ex. TEST12345",
+      "save": "Enregistrer le code",
+      "clear": "Effacer",
+      "saved": "Code d'événement de test enregistré.",
+      "cleared": "Code d'événement de test effacé. Les événements sont de nouveau en direct.",
+      "send": "Envoyer un événement de test",
+      "sent": "Événement de test mis en file d'attente. Il apparaît sous Test events dans Events Manager en moins d'une minute.",
+      "sendHint": "Envoie un exemple de Purchase (100 USD) au contact le plus récent de ce canal.",
+      "activeNotice": "Le mode test est activé : les événements de ce canal ne sont pas comptabilisés dans les rapports tant que le code n'est pas effacé.",
+      "openTestEvents": "Ouvrir Test events"
     }
   },
   "minigames": {

@@ -1408,11 +1408,6 @@
       "description": "Anslut ett kanalkonto först och kom sedan tillbaka hit för att skapa annonser.",
       "cta": "Gå till kanalinställningar"
     },
-    "movedNote": {
-      "title": "Annonser har flyttats till Verktyg",
-      "description": "Skapa och hantera Click-to-Message-annonser från verktyget Click-to-Message-annonser.",
-      "cta": "Öppna Click-to-Message-annonser"
-    },
     "dashboardCta": "Visa i annonspanelen"
   },
   "fields": {
@@ -2970,8 +2965,7 @@
       "import": "Importera flöde",
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
-      "importJsonOnly": "Endast JSON-filer",
-      "adsConversions": "Annonser och Meta Conversions"
+      "importJsonOnly": "Endast JSON-filer"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Skicka LeadSubmitted-händelser från Messenger-, Instagram- och WhatsApp-konversationer till Meta.",
+    "description": "Skicka konverteringshändelser från Messenger-, Instagram- och WhatsApp-konversationer till Meta.",
     "datasetId": "Dataset-ID",
     "reconnect": "Återanslut behörigheter",
     "connectViaFacebook": "Anslut via Facebook",
     "unsupportedExplanation": "Det här Instagram-kontot anslöts med Instagram Business Login. Anslut kontot via Facebook för att använda Meta Conversions API.",
     "flowStep": {
-      "description": "Köa en LeadSubmitted-händelse för Messenger, Instagram eller WhatsApp.",
       "whatsappNote": "WhatsApp-händelser skickas endast för konversationer som startade från en klicka-till-WhatsApp-annons."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Spara ett Dataset-ID innan du lägger till en åtkomsttoken.",
       "invalidToken": "Den här token kunde inte komma åt datasetet.",
       "invalidDatasetId": "Ange ett giltigt Dataset ID (endast siffror).",
-      "whatsappNotFound": "WhatsApp-integrationen hittades inte."
+      "whatsappNotFound": "WhatsApp-integrationen hittades inte.",
+      "testEventCodeRequired": "Spara en testhändelsekod innan du skickar en testhändelse.",
+      "noContactForTest": "Ingen lämplig kontakt på den här kanalen än. En testhändelse behöver en riktig kontakt att kopplas till (för WhatsApp en som kom från en click-to-WhatsApp-annons).",
+      "invalidTestEventCode": "Testhändelsekoden får bara innehålla bokstäver, siffror, bindestreck eller understreck (max 64)."
     },
     "fields": {
       "eventType": {
         "label": "Händelsetyp",
-        "leadSubmitted": "Lead Submitted"
+        "leadSubmitted": "Lead Submitted",
+        "purchase": "Köp",
+        "initiateCheckout": "Påbörja kassan",
+        "addToCart": "Lägg i varukorgen",
+        "viewContent": "Visa innehåll",
+        "orderCreated": "Order skapad",
+        "orderShipped": "Order skickad",
+        "orderDelivered": "Order levererad",
+        "orderCanceled": "Order avbruten",
+        "orderReturned": "Order returnerad",
+        "cartAbandoned": "Övergiven varukorg",
+        "qualifiedLead": "Kvalificerad lead",
+        "ratingProvided": "Betyg angivet",
+        "reviewProvided": "Recension angiven",
+        "addPaymentInfo": "Lägg till betalningsinfo",
+        "addToWishlist": "Lägg till i önskelistan",
+        "completeRegistration": "Fullföljd registrering",
+        "contact": "Kontakt",
+        "customizeProduct": "Anpassa produkt",
+        "donate": "Donera",
+        "findLocation": "Hitta plats",
+        "lead": "Lead",
+        "schedule": "Boka tid",
+        "search": "Sökning",
+        "startTrial": "Starta provperiod",
+        "submitApplication": "Skicka ansökan",
+        "subscribe": "Prenumerera",
+        "custom": "Anpassad händelse…",
+        "groups": {
+          "commerce": "Handel",
+          "leads": "Leads",
+          "orders": "Ordrar",
+          "feedback": "Feedback",
+          "leadsAndSignups": "Leads och registreringar",
+          "other": "Övrigt"
+        }
       },
       "value": "Värde",
       "valuePlaceholder": "t.ex. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Namn på anpassad händelse",
+      "customEventNamePlaceholder": "t.ex. MyCustomEvent",
+      "contentType": {
+        "label": "Innehållstyp",
+        "product": "Produkt",
+        "product_group": "Produktgrupp"
+      },
+      "contentIds": "Innehålls-ID",
+      "contentIdsPlaceholder": "t.ex. 123,456"
     },
     "datasetIdPlaceholder": "Klistra in Dataset-ID från Events Manager",
     "saveDataset": "Spara",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Åtgärdskälla",
+      "help": "Var denna händelse ägde rum. Se Metas dokumentation om åtgärdskälla.",
+      "business_messaging": "Företagsmeddelanden",
+      "email": "E-post",
+      "phone_call": "Telefonsamtal",
+      "chat": "Chatt",
+      "physical_store": "Fysisk butik",
+      "system_generated": "Systemgenererad",
+      "other": "Övrigt"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Avancerat"
+    },
+    "testEvents": {
+      "title": "Testhändelser",
+      "description": "Klistra in test_event_code från Events Manager → Test events. Medan den är inställd dirigeras varje händelse från den här kanalen till vyn Test events med hela nyttolasten (värde, valuta, innehålls-ID) och räknas inte i rapporter. Rensa den när du är klar.",
+      "codeLabel": "Testhändelsekod",
+      "codePlaceholder": "t.ex. TEST12345",
+      "save": "Spara kod",
+      "clear": "Rensa",
+      "saved": "Testhändelsekod sparad.",
+      "cleared": "Testhändelsekod rensad. Händelser är live igen.",
+      "send": "Skicka testhändelse",
+      "sent": "Testhändelse i kö. Den visas under Test events i Events Manager inom en minut.",
+      "sendHint": "Skickar en exempel-Purchase (100 USD) till kanalens senaste kontakt.",
+      "activeNotice": "Testläge är på: händelser från den här kanalen räknas inte i rapporter förrän koden rensas.",
+      "openTestEvents": "Öppna Test events"
     }
   },
   "minigames": {

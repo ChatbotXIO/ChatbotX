@@ -30,8 +30,7 @@ export type DefaultReplyThrottleClaimResult = AutomationThrottleClaim["result"]
 
 /**
  * Thin default-reply-facing facade over the generic
- * {@link automationThrottleService} (see
- * `docs/plans/default-reply-throttle-hybrid.md`). Pins `throttleType:
+ * {@link automationThrottleService}. Pins `throttleType:
  * "defaultReply"` and `subjectId: "0"`, and translates the workspace's
  * configured {@link DefaultReplyFrequency} into `windowSeconds` (`allTime` → the
  * unbounded `0` window) — keeping the worker call site frequency-based.

@@ -23,6 +23,10 @@ type UpdateDatasetIdIfNullInput = WorkspaceIntegrationRef & {
   datasetId: string
 }
 
+type UpdateCapiTestEventCodeInput = WorkspaceIntegrationRef & {
+  capiTestEventCode: string | null
+}
+
 type UpdateCapiAccessTokenInput = WorkspaceIntegrationRef & {
   capiAccessToken: EncryptedData
 }
@@ -137,6 +141,18 @@ export const integrationInstagramRepository = {
     const [row] = await tx
       .update(integrationInstagramModel)
       .set({ datasetId: input.datasetId })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  },
+  async updateCapiTestEventCode(
+    input: UpdateCapiTestEventCodeInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationInstagramModel | null> {
+    const [row] = await tx
+      .update(integrationInstagramModel)
+      .set({ capiTestEventCode: input.capiTestEventCode })
       .where(workspaceIntegrationFilter(input))
       .returning()
 

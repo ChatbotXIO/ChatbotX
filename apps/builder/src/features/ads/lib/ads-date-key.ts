@@ -14,8 +14,7 @@
  * `fromZonedTime`, and the ads-conversion repository's day-bucketing
  * (`AT TIME ZONE`) is parameterized on that same timezone. A viewer's picked
  * calendar day now queries the matching window regardless of their UTC
- * offset. See `docs/plans/2026-08-27-ads-timezone-migration.md` for the
- * completed migration record.
+ * offset.
  *
  * RESIDUAL SEAM (by design, not a bug): Meta Graph API's `insights` endpoint
  * interprets `since`/`until` date-keys in the AD ACCOUNT's own reporting

@@ -1,4 +1,5 @@
 import {
+  capiEventRequiresCtwaClid,
   contactInboxService,
   contactService,
   hashContactUserData,
@@ -10,13 +11,19 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
+import type { MetaCapiEventModel } from "@chatbotx.io/database/types"
 import {
   buildDatasetName,
   ensureDataset,
   type MetaCapiEventName,
   sendConversionEvent,
 } from "@chatbotx.io/integration-meta-conversions"
-import type { HashedCapiUserData } from "@chatbotx.io/utils/meta-capi"
+import {
+  type HashedCapiUserData,
+  type MetaCapiActionSource,
+  type MetaCapiContentType,
+  metaCapiActionSourcePolicy,
+} from "@chatbotx.io/utils/meta-capi"
 import type { IntegrationJobSendMetaCapiEvent } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import {
@@ -39,7 +46,12 @@ const skippedDisconnectedStatus = {
 
 // WhatsApp business-messaging CAPI requires a ctwa_clid (click-to-WhatsApp ad
 // identifier), which only exists for contacts that arrived via a CTWA ad —
-// this is a Meta constraint, not a transient failure.
+// this is a Meta constraint, not a transient failure. Only relevant when the
+// event's action source actually uses the messaging identity
+// (`metaCapiActionSourcePolicy[actionSource].usesMessagingIdentity`) — a
+// WhatsApp event sent with a non-messaging action source (e.g. `email`)
+// identifies the person via hashed customer info instead and never needs a
+// ctwa_clid.
 const skippedNoIdentityStatus = {
   from: "pending",
   to: "skipped_no_identity",
@@ -55,14 +67,82 @@ const sentStatus = {
   to: "sent",
 } as const
 
+// The only channel-aware code left in this file. Each builder returns
+// exactly the business-messaging identity keys Meta's endpoint requires for
+// that channel; everything else below (custom data, LDU, hashed user data)
+// is shared/channel-agnostic. Used only when
+// `metaCapiActionSourcePolicy[actionSource].usesMessagingIdentity` is true.
+type ChannelIdentityInput = {
+  sourceId: string
+  ctwaClid?: string | null
+}
+
+const channelIdentityBuilders = {
+  messenger: (
+    integration: MetaConversionsIntegrationByChannel["messenger"],
+    contactInbox: ChannelIdentityInput,
+  ) => ({
+    messagingChannel: "messenger" as const,
+    pageId: integration.pageId,
+    pageScopedUserId: contactInbox.sourceId,
+  }),
+  instagram: (
+    integration: MetaConversionsIntegrationByChannel["instagram"],
+    contactInbox: ChannelIdentityInput,
+  ) => ({
+    messagingChannel: "instagram" as const,
+    instagramBusinessAccountId: integration.igId,
+    igSid: contactInbox.sourceId,
+  }),
+  whatsapp: (
+    integration: MetaConversionsIntegrationByChannel["whatsapp"],
+    contactInbox: ChannelIdentityInput,
+  ) => {
+    if (!contactInbox.ctwaClid) {
+      // Defensive: the handler already gates on this via `skipped_no_identity`
+      // before calling `sendConversionEvent` — this should be unreachable.
+      throw new Error("Missing ctwa_clid for WhatsApp Meta CAPI event")
+    }
+    return {
+      messagingChannel: "whatsapp" as const,
+      wabaId: integration.wabaId,
+      ctwaClid: contactInbox.ctwaClid,
+    }
+  },
+} satisfies {
+  [TChannel in MetaConversionsChannel]: (
+    integration: MetaConversionsIntegrationByChannel[TChannel],
+    contactInbox: ChannelIdentityInput,
+  ) => Record<string, unknown>
+}
+
+// Indexing `channelIdentityBuilders` by a generic `TChannel` narrows the
+// integration parameter to the INTERSECTION of all three channels' shapes —
+// a shape no single value can satisfy structurally, even though the caller's
+// channel tag guarantees the match is safe at runtime. This is the ONE
+// documented cast in this file, mirroring `byMessagingChannel` in
+// `integrations/meta-conversions/src/apis/events.ts`.
+function buildChannelIdentity<TChannel extends MetaConversionsChannel>(
+  channel: TChannel,
+  integration: MetaConversionsIntegrationByChannel[TChannel],
+  contactInbox: ChannelIdentityInput,
+): ReturnType<(typeof channelIdentityBuilders)[TChannel]> {
+  const builder = channelIdentityBuilders[channel] as unknown as (
+    integration: MetaConversionsIntegrationByChannel[TChannel],
+    contactInbox: ChannelIdentityInput,
+  ) => ReturnType<(typeof channelIdentityBuilders)[TChannel]>
+  return builder(integration, contactInbox)
+}
+
 function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
   channel: TChannel
   accessToken: string
   datasetId: string
-  // Widened to MetaCapiEventName (Phase 1 schema change) so this payload
-  // builder compiles against the DB row's type; actually sending "Purchase"
-  // events is Phase 3 work, not implemented here.
+  // Any Meta event name allowed by the row's action-source event catalog
+  // (business-messaging's 14 documented events, or a Pixel standard/custom
+  // name) — validated upstream by `requireEventNameAllowedForActionSource`.
   eventName: MetaCapiEventName
+  actionSource: MetaCapiActionSource
   occurredAt: Date
   eventId: string
   contactInboxSourceId: string
@@ -71,71 +151,37 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
   currency?: string | null
   contentCategory?: string | null
   contentName?: string | null
-  userData?: HashedCapiUserData
+  contentType?: MetaCapiContentType | null
+  contentIds?: string[] | null
+  // Always populated by the caller (`hashContactUserData` always emits at
+  // least `external_id`) — required so a non-messaging identity can never be
+  // built without hashed customer info to identify the person by.
+  userData: HashedCapiUserData
   limitedDataUse?: boolean
   integration: MetaConversionsIntegrationByChannel[TChannel]
 }) {
-  if (input.channel === "messenger") {
-    const integration =
-      input.integration as MetaConversionsIntegrationByChannel["messenger"]
-    return {
-      datasetId: input.datasetId,
-      accessToken: input.accessToken,
-      event: {
-        eventName: input.eventName,
-        occurredAt: input.occurredAt,
-        eventId: input.eventId,
-        messagingChannel: "messenger" as const,
-        pageId: integration.pageId,
-        pageScopedUserId: input.contactInboxSourceId,
-        ...(input.value ? { value: input.value } : {}),
-        ...(input.currency ? { currency: input.currency } : {}),
-        ...(input.contentCategory
-          ? { contentCategory: input.contentCategory }
-          : {}),
-        ...(input.contentName ? { contentName: input.contentName } : {}),
-        ...(input.userData ? { userData: input.userData } : {}),
-        ...(input.limitedDataUse
-          ? { limitedDataUse: input.limitedDataUse }
-          : {}),
-      },
-    }
-  }
+  const policy = metaCapiActionSourcePolicy[input.actionSource]
 
-  if (input.channel === "whatsapp") {
-    const integration =
-      input.integration as MetaConversionsIntegrationByChannel["whatsapp"]
-    if (!input.ctwaClid) {
-      // Defensive: the handler already gates on this via `skipped_no_identity`
-      // before calling `sendConversionEvent` — this should be unreachable.
-      throw new Error("Missing ctwa_clid for WhatsApp Meta CAPI event")
-    }
-    return {
-      datasetId: input.datasetId,
-      accessToken: input.accessToken,
-      event: {
-        eventName: input.eventName,
-        occurredAt: input.occurredAt,
-        eventId: input.eventId,
-        messagingChannel: "whatsapp" as const,
-        wabaId: integration.wabaId,
+  // Only `business_messaging` identifies the person by their per-channel
+  // messaging id (page-scoped id / IG sid / ctwa_clid); every other action
+  // source identifies them via hashed customer info only (`userData` below)
+  // — `NonMessagingIdentity` on the integration side.
+  const identity = policy.usesMessagingIdentity
+    ? buildChannelIdentity(input.channel, input.integration, {
+        sourceId: input.contactInboxSourceId,
         ctwaClid: input.ctwaClid,
-        ...(input.value ? { value: input.value } : {}),
-        ...(input.currency ? { currency: input.currency } : {}),
-        ...(input.contentCategory
-          ? { contentCategory: input.contentCategory }
-          : {}),
-        ...(input.contentName ? { contentName: input.contentName } : {}),
-        ...(input.userData ? { userData: input.userData } : {}),
-        ...(input.limitedDataUse
-          ? { limitedDataUse: input.limitedDataUse }
-          : {}),
-      },
-    }
-  }
+      })
+    : {
+        // Structurally safe even though TS can't derive it from the boolean
+        // lookup: `usesMessagingIdentity` is true only for
+        // `business_messaging` (see `metaCapiActionSourcePolicy`), so this
+        // branch's `actionSource` is never `business_messaging`.
+        actionSource: input.actionSource as Exclude<
+          MetaCapiActionSource,
+          "business_messaging"
+        >,
+      }
 
-  const integration =
-    input.integration as MetaConversionsIntegrationByChannel["instagram"]
   return {
     datasetId: input.datasetId,
     accessToken: input.accessToken,
@@ -143,19 +189,47 @@ function buildEventPayload<TChannel extends MetaConversionsChannel>(input: {
       eventName: input.eventName,
       occurredAt: input.occurredAt,
       eventId: input.eventId,
-      messagingChannel: "instagram" as const,
-      instagramBusinessAccountId: integration.igId,
-      igSid: input.contactInboxSourceId,
+      ...identity,
+      // Hashed customer info rides along for every action source; for a
+      // non-messaging source it is the only identity Meta receives.
+      userData: input.userData,
       ...(input.value ? { value: input.value } : {}),
       ...(input.currency ? { currency: input.currency } : {}),
       ...(input.contentCategory
         ? { contentCategory: input.contentCategory }
         : {}),
       ...(input.contentName ? { contentName: input.contentName } : {}),
-      ...(input.userData ? { userData: input.userData } : {}),
+      ...(input.contentType ? { contentType: input.contentType } : {}),
+      ...(input.contentIds && input.contentIds.length > 0
+        ? { contentIds: input.contentIds }
+        : {}),
       ...(input.limitedDataUse ? { limitedDataUse: input.limitedDataUse } : {}),
     },
   }
+}
+
+/**
+ * The Events Manager `test_event_code` to send with this event, if any. A
+ * "Send test event" must never reach production reporting, so for a
+ * `manualTest` event the integration row is re-read right here — after all
+ * other pre-send work — so a clear that raced the job is honoured; every
+ * other event uses the row already loaded for the send.
+ */
+async function resolveTestEventCode(
+  event: Pick<
+    MetaCapiEventModel,
+    "source" | "channel" | "integrationId" | "workspaceId"
+  >,
+  integration: { capiTestEventCode: string | null },
+): Promise<string | undefined> {
+  if (event.source !== "manualTest") {
+    return integration.capiTestEventCode ?? undefined
+  }
+  const latest = await findEventIntegration(event.channel, {
+    integrationId: event.integrationId,
+    workspaceId: event.workspaceId,
+  })
+  return latest?.capiTestEventCode ?? undefined
 }
 
 export async function handleSendMetaCapiEvent(
@@ -204,7 +278,7 @@ export async function handleSendMetaCapiEvent(
       return
     }
 
-    // Limited Data Use (plan #3): read once per event, OUTSIDE the try/catch
+    // Limited Data Use: read once per event, OUTSIDE the try/catch
     // below so a read failure (DB/Redis blip, workspace gone) throws and
     // propagates out of `withBlockedOwnerGuard` for a BullMQ retry instead of
     // being caught and silently sent with the wrong LDU state.
@@ -234,7 +308,7 @@ export async function handleSendMetaCapiEvent(
         return
       }
 
-      // Defense-in-depth identity check (Phase 0 — Codex CRITICAL#1): mirrors
+      // Defense-in-depth identity check: mirrors
       // `handleSendMetaChannelConversionEvent`'s guard in
       // `send-conversion-event.ts`. `contactInbox` above is looked up by id
       // alone (no workspace/inbox scoping in the query itself), and it powers
@@ -274,11 +348,14 @@ export async function handleSendMetaCapiEvent(
         return
       }
 
-      // WhatsApp business-messaging CAPI cannot send without a ctwa_clid, so
-      // gate BEFORE any token/scope/dataset work: an unsendable event is
-      // terminally skipped_no_identity (never skipped_no_scope), and we avoid a
-      // wasted debug-token round-trip when scope also happens to be missing.
-      if (event.channel === "whatsapp" && !contactInbox.referral?.ctwaClid) {
+      // A channel whose messaging identity is keyed to an ad click cannot
+      // send without the click id, so gate BEFORE any token/scope/dataset
+      // work: an unsendable event is terminally skipped_no_identity (never
+      // skipped_no_scope), and no debug-token round-trip is wasted.
+      if (
+        capiEventRequiresCtwaClid(event.channel, event.actionSource) &&
+        !contactInbox.referral?.ctwaClid
+      ) {
         await metaConversionsService.updateCapiStatus({
           id: event.id,
           workspaceId: event.workspaceId,
@@ -311,6 +388,20 @@ export async function handleSendMetaCapiEvent(
         return
       }
 
+      const testEventCode = await resolveTestEventCode(
+        event,
+        integrationForSend,
+      )
+      if (event.source === "manualTest" && !testEventCode) {
+        await metaConversionsService.updateCapiStatus({
+          id: event.id,
+          workspaceId: event.workspaceId,
+          ...failedStatus,
+          capiError: "testEventCodeMissing",
+        })
+        return
+      }
+
       const datasetId =
         auth.source === "manual" && integrationForSend.datasetId
           ? integrationForSend.datasetId
@@ -329,17 +420,19 @@ export async function handleSendMetaCapiEvent(
                 }),
             })
 
-      // Customer-info matching (plan #1) — `contactInboxContact` was already
+      // Customer-info matching — `contactInboxContact` was already
       // resolved and workspace/inbox-validated by the Phase 0 guard above, so
       // it is safe to hash and send.
       const userData = await hashContactUserData(contactInboxContact)
 
-      await sendConversionEvent(
-        buildEventPayload({
+      await sendConversionEvent({
+        testEventCode,
+        ...buildEventPayload({
           channel: event.channel,
           accessToken: auth.accessToken,
           datasetId,
           eventName: event.eventName,
+          actionSource: event.actionSource,
           occurredAt: event.occurredAt,
           eventId: event.sourceKey,
           contactInboxSourceId: contactInbox.sourceId,
@@ -348,11 +441,13 @@ export async function handleSendMetaCapiEvent(
           currency: event.currency,
           contentCategory: event.contentCategory,
           contentName: event.contentName,
+          contentType: event.contentType,
+          contentIds: event.contentIds,
           userData,
           limitedDataUse: workspace.capiLimitedDataUse,
           integration: integrationForSend,
         }),
-      )
+      })
     } catch (error) {
       if (error instanceof Error && "retryable" in error && error.retryable) {
         throw error

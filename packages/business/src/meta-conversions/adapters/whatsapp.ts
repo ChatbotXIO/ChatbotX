@@ -61,6 +61,8 @@ export const whatsappCapiReadinessAdapter: CapiReadinessAdapter<"whatsapp"> = {
     integrationWhatsappRepository.updateCapiScopeCache(input, tx),
   updateDatasetId: (input, tx) =>
     integrationWhatsappRepository.updateDatasetId(input, tx),
+  updateCapiTestEventCode: (input, tx) =>
+    integrationWhatsappRepository.updateCapiTestEventCode(input, tx),
   updateDatasetIdIfNull: (input, tx) =>
     integrationWhatsappRepository.updateDatasetIdIfNull(input, tx),
   updateCapiAccessToken: (input, tx) =>

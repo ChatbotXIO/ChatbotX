@@ -340,8 +340,7 @@ export function adReferralPredicate(): SQL {
  * Ads Analytics "Retarget → Send WhatsApp broadcast" deep link
  * (`buildWhatsappRetargetHref`) hands this function the SAME `from`/`to`
  * date keys as the dashboard's own `parseAnalyticsDateRange`, which now
- * anchors to the VIEWER's timezone (see
- * `docs/plans/2026-08-27-ads-timezone-migration.md`). This function was not
+ * anchors to the VIEWER's timezone. This function was not
  * threaded the same way: `ctwaRetargetDateRange` sits behind the generic
  * contact-filter condition dispatcher (`buildWhereFromCondition` in
  * `queries/contact-filter/index.ts`), shared by every filter type across

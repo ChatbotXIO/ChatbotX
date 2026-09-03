@@ -162,7 +162,7 @@ describe("updateTriggerAction", () => {
     expect(tx.delete).not.toHaveBeenCalled()
     expect(tx.insert).not.toHaveBeenCalled()
     // Cache invalidation must not be gated on the diff result — only the
-    // audit record should be. See docs/plans/pr-1033-audit-log-fix-groups-1-4-5.md.
+    // audit record should be.
     expect(mocks.updateTriggerCache).toHaveBeenCalledWith("workspace-1")
     expect(mocks.auditRecord).not.toHaveBeenCalled()
   })

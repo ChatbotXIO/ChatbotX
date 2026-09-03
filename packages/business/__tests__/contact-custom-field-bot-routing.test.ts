@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // is true AND the keyword is a well-formed `bot_field:<id>` token does the
 // call delegate to `botFieldService`; every other combination (flag off, or
 // a plain id/name even with the flag on) must run the EXISTING contact-scoped
-// path untouched. See docs/plans/2026-08-28-account-fields-custom-fields-page.md §3.2.
+// path untouched.
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({

@@ -20,8 +20,8 @@ const mocks = vi.hoisted(() => ({
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
   insertReturning: vi.fn(),
-  enqueueLeadEvent: vi.fn(),
-  buildLeadSourceKey: vi.fn(),
+  enqueueEvent: vi.fn(),
+  buildSourceKey: vi.fn(),
   setValues: vi.fn(),
   deleteByCustomFieldId: vi.fn(),
   updateArchived: vi.fn(),
@@ -112,9 +112,8 @@ vi.mock("@chatbotx.io/business", () => ({
       mocks.enqueueTagAppliedEvaluations(...args),
   },
   metaConversionsService: {
-    enqueueLeadEvent: (...args: unknown[]) => mocks.enqueueLeadEvent(...args),
-    buildLeadSourceKey: (...args: unknown[]) =>
-      mocks.buildLeadSourceKey(...args),
+    enqueueEvent: (...args: unknown[]) => mocks.enqueueEvent(...args),
+    buildSourceKey: (...args: unknown[]) => mocks.buildSourceKey(...args),
   },
 }))
 
@@ -124,6 +123,24 @@ vi.mock("@chatbotx.io/events/context", () => ({
 
 vi.mock("@chatbotx.io/logger", () => ({
   default: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  getChildLogger: () => ({
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  }),
+}))
+
+// This suite exercises the trigger-action switch with placeholder-free
+// actions only — no template resolution is under test here (see
+// send-meta-capi-event-step-handler.test.ts / trigger-action-executor-send-
+// meta-capi-event.test.ts for that). Mocked as a passthrough so importing
+// action-executor.ts does not pull in `@chatbotx.io/variables`'s real
+// dependency chain (contact/custom-field/business-subpath modules this file
+// does not otherwise mock).
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: async (_contactId: string, value: unknown) =>
+    value,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -174,7 +191,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       // must win.
       mocks.findByIdForContact.mockResolvedValue(WHATSAPP_INBOX)
       mocks.findMostRecentByContact.mockResolvedValue(MESSENGER_INBOX)
-      mocks.buildLeadSourceKey.mockReturnValue("source-key")
+      mocks.buildSourceKey.mockReturnValue("source-key")
       mocks.flowFindFirst.mockResolvedValue({
         id: "flow-1",
         currentVersionId: "fv-1",
@@ -191,7 +208,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         contactInboxId: "ci-whatsapp",
       })
 
-      expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith(
+      expect(mocks.enqueueEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           channel: "whatsapp",
           contactInboxId: "ci-whatsapp",
@@ -222,7 +239,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
   describe("fallback — no threaded contactInboxId", () => {
     test("sendMetaCapiEvent falls back to the most-recently-active inbox", async () => {
       mocks.findMostRecentByContact.mockResolvedValue(WHATSAPP_INBOX)
-      mocks.buildLeadSourceKey.mockReturnValue("source-key")
+      mocks.buildSourceKey.mockReturnValue("source-key")
 
       const executor = new ActionExecutor()
       await executor.execute({
@@ -237,7 +254,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         contactId: "contact-1",
         workspaceId: "ws-1",
       })
-      expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith(
+      expect(mocks.enqueueEvent).toHaveBeenCalledWith(
         expect.objectContaining({ contactInboxId: "ci-whatsapp" }),
       )
     })
@@ -247,7 +264,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
     test("sendMetaCapiEvent falls back when the threaded contactInboxId doesn't resolve for this contact/workspace", async () => {
       mocks.findByIdForContact.mockResolvedValue(null)
       mocks.findMostRecentByContact.mockResolvedValue(MESSENGER_INBOX)
-      mocks.buildLeadSourceKey.mockReturnValue("source-key")
+      mocks.buildSourceKey.mockReturnValue("source-key")
 
       const executor = new ActionExecutor()
       await executor.execute({
@@ -258,7 +275,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         contactInboxId: "ci-stale",
       })
 
-      expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith(
+      expect(mocks.enqueueEvent).toHaveBeenCalledWith(
         expect.objectContaining({ contactInboxId: "ci-messenger" }),
       )
     })
@@ -292,7 +309,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         }),
       ).resolves.toBeUndefined()
 
-      expect(mocks.enqueueLeadEvent).not.toHaveBeenCalled()
+      expect(mocks.enqueueEvent).not.toHaveBeenCalled()
       expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
       expect(mocks.getSpreadsheetRow).not.toHaveBeenCalled()
       expect(baseLogger.warn).toHaveBeenCalled()

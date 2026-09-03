@@ -418,8 +418,7 @@
       "import": "ייבוא זרימה",
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
-      "importJsonOnly": "קבצי JSON בלבד",
-      "adsConversions": "מודעות ו-Meta Conversions"
+      "importJsonOnly": "קבצי JSON בלבד"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -2569,11 +2568,6 @@
       "title": "לא מחובר חשבון לערוץ הזה",
       "description": "חברו תחילה חשבון ערוץ, ולאחר מכן חזרו לכאן כדי ליצור מודעות.",
       "cta": "מעבר להגדרות הערוץ"
-    },
-    "movedNote": {
-      "title": "המודעות עברו לכלים",
-      "description": "צרו ונהלו מודעות Click-to-Message מתוך כלי מודעות Click-to-Message.",
-      "cta": "פתיחת מודעות Click-to-Message"
     },
     "dashboardCta": "צפייה בלוח הבקרה של המודעות"
   },
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "שליחת אירועי LeadSubmitted משיחות Messenger, Instagram ו-WhatsApp אל Meta.",
+    "description": "שליחת אירועי המרה משיחות Messenger, Instagram ו-WhatsApp אל Meta.",
     "datasetId": "מזהה Dataset",
     "reconnect": "חיבור מחדש להרשאות",
     "connectViaFacebook": "חיבור דרך Facebook",
     "unsupportedExplanation": "חשבון Instagram זה חובר באמצעות Instagram Business Login. חברו את החשבון דרך Facebook כדי להשתמש ב-Meta Conversions API.",
     "flowStep": {
-      "description": "הוסיפו לתור אירוע LeadSubmitted עבור Messenger, Instagram או WhatsApp.",
       "whatsappNote": "אירועי WhatsApp נשלחים רק עבור שיחות שהתחילו ממודעת click-to-WhatsApp."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "שמרו מזהה Dataset לפני הוספת אסימון גישה.",
       "invalidToken": "האסימון הזה לא הצליח לגשת למאגר הנתונים.",
       "invalidDatasetId": "הזן Dataset ID תקין (ספרות בלבד).",
-      "whatsappNotFound": "שילוב WhatsApp לא נמצא."
+      "whatsappNotFound": "שילוב WhatsApp לא נמצא.",
+      "testEventCodeRequired": "שמור קוד אירוע בדיקה לפני שליחת אירוע בדיקה.",
+      "noContactForTest": "אין עדיין איש קשר מתאים בערוץ זה. אירוע בדיקה זקוק לאיש קשר אמיתי לשיוך (ב-WhatsApp, כזה שהגיע ממודעת click-to-WhatsApp).",
+      "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים)."
     },
     "fields": {
       "eventType": {
         "label": "סוג אירוע",
-        "leadSubmitted": "ליד נשלח"
+        "leadSubmitted": "ליד נשלח",
+        "purchase": "רכישה",
+        "initiateCheckout": "התחלת תשלום",
+        "addToCart": "הוספה לעגלה",
+        "viewContent": "צפייה בתוכן",
+        "orderCreated": "הזמנה נוצרה",
+        "orderShipped": "ההזמנה נשלחה",
+        "orderDelivered": "ההזמנה נמסרה",
+        "orderCanceled": "ההזמנה בוטלה",
+        "orderReturned": "ההזמנה הוחזרה",
+        "cartAbandoned": "עגלה ננטשה",
+        "qualifiedLead": "ליד מוסמך",
+        "ratingProvided": "דירוג ניתן",
+        "reviewProvided": "ביקורת ניתנה",
+        "addPaymentInfo": "הוספת פרטי תשלום",
+        "addToWishlist": "הוספה לרשימת המשאלות",
+        "completeRegistration": "השלמת הרשמה",
+        "contact": "יצירת קשר",
+        "customizeProduct": "התאמה אישית של מוצר",
+        "donate": "תרומה",
+        "findLocation": "איתור מיקום",
+        "lead": "ליד",
+        "schedule": "קביעת פגישה",
+        "search": "חיפוש",
+        "startTrial": "התחלת ניסיון",
+        "submitApplication": "הגשת בקשה",
+        "subscribe": "הרשמה למנוי",
+        "custom": "אירוע מותאם אישית…",
+        "groups": {
+          "commerce": "מסחר",
+          "leads": "לידים",
+          "orders": "הזמנות",
+          "feedback": "משוב",
+          "leadsAndSignups": "לידים והרשמות",
+          "other": "אחר"
+        }
       },
       "value": "ערך",
       "valuePlaceholder": "לדוגמה: 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "שם האירוע המותאם אישית",
+      "customEventNamePlaceholder": "לדוגמה: MyCustomEvent",
+      "contentType": {
+        "label": "סוג תוכן",
+        "product": "מוצר",
+        "product_group": "קבוצת מוצרים"
+      },
+      "contentIds": "מזהי תוכן",
+      "contentIdsPlaceholder": "לדוגמה: 123,456"
     },
     "datasetIdPlaceholder": "הדביקו את מזהה ה-Dataset מ-Events Manager",
     "saveDataset": "שמור",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "מקור הפעולה",
+      "help": "היכן התרחש האירוע. עיינו בתיעוד של Meta בנושא מקור הפעולה.",
+      "business_messaging": "הודעות עסקיות",
+      "email": "אימייל",
+      "phone_call": "שיחת טלפון",
+      "chat": "צ'אט",
+      "physical_store": "חנות פיזית",
+      "system_generated": "נוצר על ידי המערכת",
+      "other": "אחר"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "מתקדם"
+    },
+    "testEvents": {
+      "title": "אירועי בדיקה",
+      "description": "הדבק את test_event_code מתוך Events Manager ← Test events. כל עוד הוא מוגדר, כל אירוע מהערוץ הזה מנותב אל תצוגת Test events עם כל המטען שלו (ערך, מטבע, מזהי תוכן) ואינו נספר בדוחות. נקה אותו כשתסיים.",
+      "codeLabel": "קוד אירוע בדיקה",
+      "codePlaceholder": "למשל: TEST12345",
+      "save": "שמור קוד",
+      "clear": "נקה",
+      "saved": "קוד אירוע הבדיקה נשמר.",
+      "cleared": "קוד אירוע הבדיקה נוקה. האירועים חזרו להיות פעילים.",
+      "send": "שלח אירוע בדיקה",
+      "sent": "אירוע הבדיקה נכנס לתור. הוא יופיע תחת Test events ב-Events Manager תוך דקה.",
+      "sendHint": "שולח אירוע Purchase לדוגמה אחד (100 USD) לאיש הקשר האחרון בערוץ זה.",
+      "activeNotice": "מצב בדיקה פעיל: אירועים מהערוץ הזה לא נספרים בדוחות עד שהקוד ינוקה.",
+      "openTestEvents": "פתח את Test events"
     }
   },
   "minigames": {

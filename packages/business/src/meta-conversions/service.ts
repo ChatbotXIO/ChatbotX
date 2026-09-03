@@ -1,7 +1,14 @@
-import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
+import {
+  contactInboxRepository,
+  metaCapiEventRepository,
+} from "@chatbotx.io/database/repositories"
 import type { MetaCapiEventModel } from "@chatbotx.io/database/types"
 import { encryptUtils } from "@chatbotx.io/encryption"
 import { createId } from "@chatbotx.io/utils"
+import {
+  defaultMetaCapiActionSource,
+  type MetaCapiActionSource,
+} from "@chatbotx.io/utils/meta-capi"
 import {
   enqueueIntegrationJob,
   IntegrationJobAction,
@@ -16,22 +23,28 @@ import { instagramCapiReadinessAdapter } from "./adapters/instagram"
 import { messengerCapiReadinessAdapter } from "./adapters/messenger"
 import type { CapiReadinessAdapter, CapiSendAdapter } from "./adapters/types"
 import { whatsappCapiReadinessAdapter } from "./adapters/whatsapp"
+import {
+  capiEventDedupsPerUtcDay,
+  capiEventRequiresCtwaClid,
+} from "./channel-policy"
 import { createDatasetWithFallback } from "./dataset-fallback"
 import {
   type CapiConnectChannel,
   type ClearCapiAccessTokenInput,
-  type EnqueueLeadEventInput,
+  type EnqueueEventInput,
+  type EnqueueTestEventInput,
   type EnsureDatasetIdInput,
-  enqueueLeadEventInput,
+  enqueueEventInput,
   type FindWorkspaceEventInput,
   type MetaConversionsChannel,
   type MetaConversionsIntegrationByChannel,
-  metaCapiEventName,
   type ProvisionDatasetNowInput,
   type RefreshCapiScopeCacheInput,
   type SaveCapiAccessTokenInput,
+  type SaveCapiTestEventCodeInput,
   type SaveDatasetIdInput,
   saveCapiAccessTokenInput,
+  saveCapiTestEventCodeInput,
   saveDatasetIdInput,
   type UpdateCapiStatusInput,
   updateCapiStatusInput,
@@ -48,6 +61,29 @@ export class CapiScopeRefreshError extends Error {
     this.name = "CapiScopeRefreshError"
   }
 }
+
+/** A "Send test event" precondition the CAPI settings tab must surface. */
+export type CapiTestEventErrorReason =
+  | "testEventCodeRequired"
+  | "noContactForTest"
+
+export class CapiTestEventError extends Error {
+  readonly reason: CapiTestEventErrorReason
+
+  constructor(reason: CapiTestEventErrorReason, options?: ErrorOptions) {
+    super(reason, options)
+    this.name = "CapiTestEventError"
+    this.reason = reason
+  }
+}
+
+/** Fixed sample event for "Send test event": what Meta's own Test Events sample uses. */
+const capiTestEventSample = {
+  eventName: "Purchase",
+  actionSource: defaultMetaCapiActionSource,
+  value: "100",
+  currency: "USD",
+} as const
 
 // Send-path adapters: all 3 channels. Used by every method that runs on the
 // worker send path or the lazy scope-refresh/dataset-provisioning paths.
@@ -126,28 +162,35 @@ class MetaConversionsService extends BaseService {
   }
 
   /**
-   * The dedup identity for a lead event, also sent to Meta as `event_id`.
+   * The dedup identity for a Meta CAPI event, also sent to Meta as
+   * `event_id`. Channels whose messaging identity is keyed to an ad click
+   * (see `channel-policy.ts`) dedup per contact per UTC day; every other
+   * combination gets a unique id per fire — a distinct conversion each time
+   * (BullMQ retries of the same stored event still reuse its key, so Meta
+   * collapses retries).
    *
-   * WhatsApp is capped by Meta at one CAPI event per click-to-WhatsApp ad, so
-   * it dedups per contact per UTC day. Messenger/Instagram have no such cap —
-   * every fire is a distinct conversion, so a unique id is used (BullMQ retries
-   * of the same stored event still reuse its key, so Meta collapses retries).
+   * `actionSource` is optional only for stored steps that predate the field;
+   * they read as the default, exactly as `enqueueEvent` treats them.
    */
-  buildLeadSourceKey(input: {
-    scope: "flow" | "trigger"
+  buildSourceKey(input: {
+    scope: "flow" | "trigger" | "test"
     scopeId: string
     contactInboxId: string
     channel: MetaConversionsChannel
+    actionSource?: MetaCapiActionSource
   }): string {
-    const dedupSegment =
-      input.channel === "whatsapp" ? formatUtcDay(new Date()) : createId()
+    const dedupsPerDay = capiEventDedupsPerUtcDay(
+      input.channel,
+      input.actionSource ?? defaultMetaCapiActionSource,
+    )
+    const dedupSegment = dedupsPerDay ? formatUtcDay(new Date()) : createId()
     return `${input.scope}:${input.scopeId}:${input.contactInboxId}:${dedupSegment}`
   }
 
-  async enqueueLeadEvent(
-    input: EnqueueLeadEventInput,
+  async enqueueEvent(
+    input: EnqueueEventInput,
   ): Promise<MetaCapiEventModel | null> {
-    const parsed = enqueueLeadEventInput.parse(input)
+    const parsed = enqueueEventInput.parse(input)
     const occurredAt = parsed.occurredAt ?? new Date()
     const integration = await resolveIntegrationForChannel(parsed.channel, {
       inboxId: parsed.inboxId,
@@ -160,7 +203,10 @@ class MetaConversionsService extends BaseService {
       channel: parsed.channel,
       integrationId: integration.id,
       contactInboxId: parsed.contactInboxId,
-      eventName: metaCapiEventName,
+      eventName: parsed.eventName,
+      actionSource: parsed.actionSource,
+      contentType: parsed.contentType ?? null,
+      contentIds: parsed.contentIds ?? null,
       currency: parsed.currency ?? null,
       contentCategory: parsed.contentCategory ?? null,
       contentName: parsed.contentName ?? null,
@@ -267,6 +313,34 @@ class MetaConversionsService extends BaseService {
     })
   }
 
+  /**
+   * Asks Meta to provision (or hand back the already-linked) dataset for the
+   * resource, via the adapter-selected create token(s). The `dataset` edge is
+   * idempotent — it returns the dataset currently linked to the page/IG
+   * user/WABA, creating and linking a new one only when nothing is linked.
+   * Shared by `ensureDatasetId` (lazy, stored-id-first) and
+   * `provisionDatasetNow` (always asks Meta), so the Meta-side mechanics never
+   * drift between the two callers.
+   */
+  private async provisionDatasetViaMeta<
+    TChannel extends MetaConversionsChannel,
+  >(
+    adapter: CapiSendAdapter<TChannel>,
+    integration: MetaConversionsIntegrationByChannel[TChannel],
+    provisionDataset: EnsureDatasetIdInput<TChannel>["provisionDataset"],
+  ): Promise<string> {
+    // The adapter picks the create token(s); the retry stays channel-agnostic —
+    // it fires only when the adapter supplied a distinct `fallbackAccessToken`
+    // (currently WhatsApp's connect-token fallback for its System User token).
+    const provisionInput = await adapter.buildDatasetProvisionInput(integration)
+    return createDatasetWithFallback({
+      primaryToken: provisionInput.accessToken,
+      fallbackToken: provisionInput.fallbackAccessToken ?? null,
+      create: (accessToken) =>
+        provisionDataset({ ...provisionInput, accessToken }),
+    })
+  }
+
   async ensureDatasetId<TChannel extends MetaConversionsChannel>(
     input: EnsureDatasetIdInput<TChannel>,
   ): Promise<string> {
@@ -281,18 +355,11 @@ class MetaConversionsService extends BaseService {
       id: input.integration.id,
       workspaceId: input.integration.workspaceId,
     }
-    // The adapter picks the create token(s); the retry stays channel-agnostic —
-    // it fires only when the adapter supplied a distinct `fallbackAccessToken`
-    // (currently WhatsApp's connect-token fallback for its System User token).
-    const provisionInput = await adapter.buildDatasetProvisionInput(
+    const datasetId = await this.provisionDatasetViaMeta(
+      adapter,
       input.integration,
+      input.provisionDataset,
     )
-    const datasetId = await createDatasetWithFallback({
-      primaryToken: provisionInput.accessToken,
-      fallbackToken: provisionInput.fallbackAccessToken ?? null,
-      create: (accessToken) =>
-        input.provisionDataset({ ...provisionInput, accessToken }),
-    })
     const updated = await adapter.updateDatasetIdIfNull({
       ...ref,
       datasetId,
@@ -329,10 +396,109 @@ class MetaConversionsService extends BaseService {
     })
   }
 
-  provisionDatasetNow<TChannel extends MetaConversionsChannel>(
+  /**
+   * User-initiated "Create Dataset": always re-asks Meta, unlike the lazy
+   * `ensureDatasetId` send-path helper. A dataset unlinked in Meta Events
+   * Manager leaves a stale id in the DB that `ensureDatasetId`'s
+   * stored-id-first check would keep returning forever — the send path can
+   * tolerate that (it only needs *a* dataset for the next event), but a user
+   * clicking "Create Dataset" needs the DB to reflect what Meta actually has
+   * linked right now, so this path never trusts the stored id and only writes
+   * when Meta's answer actually changed it.
+   */
+  async provisionDatasetNow<TChannel extends MetaConversionsChannel>(
     input: ProvisionDatasetNowInput<TChannel>,
   ): Promise<string> {
-    return this.ensureDatasetId(input)
+    const adapter = sendAdapterFor(input.channel)
+    adapter.assertSupported(input.integration)
+
+    const datasetId = await this.provisionDatasetViaMeta(
+      adapter,
+      input.integration,
+      input.provisionDataset,
+    )
+
+    if (datasetId === input.integration.datasetId) {
+      return datasetId
+    }
+
+    await adapter.updateDatasetId({
+      id: input.integration.id,
+      workspaceId: input.integration.workspaceId,
+      datasetId,
+    })
+
+    return datasetId
+  }
+
+  /**
+   * Set or clear the Events Manager `test_event_code`. While set, the worker
+   * sends it with every CAPI event of this integration, so Meta shows the
+   * full payload under Test Events instead of counting the event in
+   * production reporting.
+   */
+  async saveCapiTestEventCode<TChannel extends MetaConversionsChannel>(
+    input: SaveCapiTestEventCodeInput<TChannel>,
+  ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
+    const parsed = saveCapiTestEventCodeInput.parse({
+      testEventCode: input.testEventCode,
+    })
+    const adapter = sendAdapterFor(input.channel)
+    adapter.assertSupported(input.integration)
+
+    return await adapter.updateCapiTestEventCode({
+      id: input.integration.id,
+      workspaceId: input.integration.workspaceId,
+      capiTestEventCode: parsed.testEventCode,
+    })
+  }
+
+  /**
+   * "Send test event": queues one sample Purchase through the real send
+   * pipeline, attributed to the inbox's most recent contact (Meta needs a
+   * real messaging identity even for test events). Refuses to run without a
+   * saved test_event_code so a test can never become a production event;
+   * the worker re-checks the code at send time for the same reason.
+   */
+  async enqueueTestEvent<TChannel extends MetaConversionsChannel>(
+    input: EnqueueTestEventInput<TChannel>,
+  ): Promise<MetaCapiEventModel | null> {
+    if (!input.integration.capiTestEventCode) {
+      throw new CapiTestEventError("testEventCodeRequired")
+    }
+    // Same gate the worker applies to real sends: pick a contact the channel
+    // can actually send for instead of queuing an event Meta would reject.
+    // Derived from the sample's action source, so this lookup and the
+    // `buildSourceKey` call below always agree on the identity rules.
+    const contactInbox = await contactInboxRepository.findMostRecentByInbox({
+      inboxId: input.integration.inboxId,
+      workspaceId: input.integration.workspaceId,
+      requireCtwaClid: capiEventRequiresCtwaClid(
+        input.channel,
+        capiTestEventSample.actionSource,
+      ),
+    })
+    if (!contactInbox) {
+      throw new CapiTestEventError("noContactForTest")
+    }
+
+    return this.enqueueEvent({
+      workspaceId: input.integration.workspaceId,
+      channel: input.channel,
+      contactInboxId: contactInbox.id,
+      inboxId: input.integration.inboxId,
+      source: "manualTest",
+      // A fresh scopeId per click so a WhatsApp per-day dedup never swallows
+      // a second test on the same day.
+      sourceKey: this.buildSourceKey({
+        scope: "test",
+        scopeId: createId(),
+        contactInboxId: contactInbox.id,
+        channel: input.channel,
+        actionSource: capiTestEventSample.actionSource,
+      }),
+      ...capiTestEventSample,
+    })
   }
 
   async saveCapiAccessToken<TChannel extends CapiConnectChannel>(

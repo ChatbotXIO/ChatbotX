@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // automation-throttle repository — atomic claim/release/purge against the
 // AutomationThrottle table. Mocks `db` at the module boundary (query builder
 // chain) and asserts the CAS/`onConflictDoUpdate` shape without touching a
-// real database. See docs/plans/default-reply-throttle-hybrid.md §4/§5.
+// real database.
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({

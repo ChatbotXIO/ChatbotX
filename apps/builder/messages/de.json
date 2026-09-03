@@ -2254,8 +2254,7 @@
       "import": "Flow importieren",
       "export": "Exportieren",
       "importStarted": "Der Flow wird importiert. Ergebnisse im Importverlauf prüfen.",
-      "importJsonOnly": "Nur JSON-Dateien",
-      "adsConversions": "Anzeigen & Meta Conversions"
+      "importJsonOnly": "Nur JSON-Dateien"
     },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",
@@ -4406,11 +4405,6 @@
       "description": "Verbinden Sie zuerst ein Kanalkonto und kommen Sie dann hierher zurück, um Anzeigen zu erstellen.",
       "cta": "Zu den Kanaleinstellungen"
     },
-    "movedNote": {
-      "title": "Anzeigen wurden zu Tools verschoben",
-      "description": "Erstellen und verwalten Sie Click-to-Message-Anzeigen über das Tool Click-to-Message-Anzeigen.",
-      "cta": "Click-to-Message-Anzeigen öffnen"
-    },
     "dashboardCta": "Im Anzeigen-Dashboard ansehen"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Senden Sie LeadSubmitted-Ereignisse aus Messenger-, Instagram- und WhatsApp-Unterhaltungen an Meta.",
+    "description": "Senden Sie Conversion-Ereignisse aus Messenger-, Instagram- und WhatsApp-Unterhaltungen an Meta.",
     "datasetId": "Dataset-ID",
     "reconnect": "Berechtigungen erneuern",
     "connectViaFacebook": "Über Facebook verbinden",
     "unsupportedExplanation": "Dieses Instagram-Konto wurde mit Instagram Business Login verbunden. Verbinden Sie das Konto über Facebook, um die Meta Conversions API zu nutzen.",
     "flowStep": {
-      "description": "Stellt ein LeadSubmitted-Ereignis für Messenger, Instagram oder WhatsApp in die Warteschlange.",
       "whatsappNote": "WhatsApp-Ereignisse werden nur für Unterhaltungen gesendet, die über eine Click-to-WhatsApp-Anzeige gestartet wurden."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Speichern Sie eine Dataset-ID, bevor Sie ein Zugriffstoken hinzufügen.",
       "invalidToken": "Mit diesem Token konnte nicht auf das Dataset zugegriffen werden.",
       "invalidDatasetId": "Gib eine gültige Dataset-ID ein (nur Zahlen).",
-      "whatsappNotFound": "WhatsApp-Integration nicht gefunden."
+      "whatsappNotFound": "WhatsApp-Integration nicht gefunden.",
+      "testEventCodeRequired": "Speichere einen Testereignis-Code, bevor du ein Testereignis sendest.",
+      "noContactForTest": "Noch kein geeigneter Kontakt in diesem Kanal. Ein Testereignis braucht einen echten Kontakt zur Zuordnung (bei WhatsApp einen aus einer Click-to-WhatsApp-Anzeige).",
+      "invalidTestEventCode": "Der Testereignis-Code darf nur Buchstaben, Ziffern, Bindestriche oder Unterstriche enthalten (max. 64)."
     },
     "fields": {
       "eventType": {
         "label": "Ereignistyp",
-        "leadSubmitted": "Lead übermittelt"
+        "leadSubmitted": "Lead übermittelt",
+        "purchase": "Kauf",
+        "initiateCheckout": "Bezahlvorgang gestartet",
+        "addToCart": "In den Warenkorb",
+        "viewContent": "Inhalt ansehen",
+        "orderCreated": "Bestellung erstellt",
+        "orderShipped": "Bestellung versendet",
+        "orderDelivered": "Bestellung zugestellt",
+        "orderCanceled": "Bestellung storniert",
+        "orderReturned": "Bestellung zurückgesendet",
+        "cartAbandoned": "Warenkorbabbruch",
+        "qualifiedLead": "Qualifizierter Lead",
+        "ratingProvided": "Bewertung abgegeben",
+        "reviewProvided": "Rezension abgegeben",
+        "addPaymentInfo": "Zahlungsinfo hinzugefügt",
+        "addToWishlist": "Zur Wunschliste hinzufügen",
+        "completeRegistration": "Registrierung abgeschlossen",
+        "contact": "Kontakt",
+        "customizeProduct": "Produkt anpassen",
+        "donate": "Spenden",
+        "findLocation": "Standort finden",
+        "lead": "Lead",
+        "schedule": "Termin buchen",
+        "search": "Suche",
+        "startTrial": "Testphase starten",
+        "submitApplication": "Bewerbung einreichen",
+        "subscribe": "Abonnieren",
+        "custom": "Benutzerdefiniertes Ereignis…",
+        "groups": {
+          "commerce": "Handel",
+          "leads": "Leads",
+          "orders": "Bestellungen",
+          "feedback": "Feedback",
+          "leadsAndSignups": "Leads & Anmeldungen",
+          "other": "Sonstige"
+        }
       },
       "value": "Wert",
       "valuePlaceholder": "z. B. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Name des benutzerdefinierten Ereignisses",
+      "customEventNamePlaceholder": "z. B. MyCustomEvent",
+      "contentType": {
+        "label": "Inhaltstyp",
+        "product": "Produkt",
+        "product_group": "Produktgruppe"
+      },
+      "contentIds": "Inhalts-IDs",
+      "contentIdsPlaceholder": "z. B. 123,456"
     },
     "datasetIdPlaceholder": "Dataset-ID aus dem Events Manager einfügen",
     "saveDataset": "Speichern",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Aktionsquelle",
+      "help": "Wo dieses Ereignis stattgefunden hat. Siehe Metas Dokumentation zur Aktionsquelle.",
+      "business_messaging": "Business Messaging",
+      "email": "E-Mail",
+      "phone_call": "Telefonanruf",
+      "chat": "Chat",
+      "physical_store": "Ladengeschäft",
+      "system_generated": "Systemgeneriert",
+      "other": "Sonstige"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Erweitert"
+    },
+    "testEvents": {
+      "title": "Testereignisse",
+      "description": "Füge den test_event_code aus Events Manager → Test events ein. Solange er gesetzt ist, wird jedes Ereignis dieses Kanals mit vollständiger Nutzlast (Wert, Währung, Inhalts-IDs) an die Test events-Ansicht weitergeleitet und nicht in Berichten gezählt. Lösche ihn, wenn du fertig bist.",
+      "codeLabel": "Testereignis-Code",
+      "codePlaceholder": "z. B. TEST12345",
+      "save": "Code speichern",
+      "clear": "Löschen",
+      "saved": "Testereignis-Code gespeichert.",
+      "cleared": "Testereignis-Code gelöscht. Ereignisse sind wieder live.",
+      "send": "Testereignis senden",
+      "sent": "Testereignis wurde eingereiht. Es erscheint innerhalb einer Minute unter Test events im Events Manager.",
+      "sendHint": "Sendet einen Beispiel-Purchase (100 USD) an den letzten Kontakt dieses Kanals.",
+      "activeNotice": "Testmodus ist aktiv: Ereignisse dieses Kanals werden erst wieder in Berichten gezählt, wenn der Code gelöscht wird.",
+      "openTestEvents": "Test events öffnen"
     }
   },
   "minigames": {

@@ -3,7 +3,6 @@ import {
   and,
   type DatabaseClient,
   db,
-  desc,
   eq,
   inArray,
   type SQL,
@@ -72,13 +71,18 @@ type AdEligibleInboxChannelConfig = {
  * reference) so a mocked `@chatbotx.io/database/schema` missing one of the
  * three tables in tests doesn't fail to import this module.
  */
+const ctwaReferralCondition = (): SQL =>
+  sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL`
+
+/** Most recent first; rows that never had a message sort last. */
+const mostRecentMessageFirst = (): SQL =>
+  sql`${contactInboxModel.lastMessageAt} DESC NULLS LAST`
+
 const adEligibleInboxChannelConfigs = {
   whatsapp: {
     model: () => integrationWhatsappModel,
     channel: "whatsapp",
-    referralConditions: () => [
-      sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL`,
-    ],
+    referralConditions: () => [ctwaReferralCondition()],
   },
   messenger: {
     model: () => integrationMessengerModel,
@@ -173,11 +177,11 @@ export const contactInboxRepository = {
    * Workspace-scoped "most recently active inbox" for a contact — the
    * fallback `resolveActionContactInbox` uses when no producer threaded a
    * `contactInboxId` (schema-precludes-attribution events like
-   * `dateTimeBasedTrigger`, or a stale/foreign threaded id). Mirrors the
-   * ordering of the `db.query.contactInboxModel.findFirst({ orderBy:
-   * { lastMessageAt: "desc" } })` call it replaces (NULLS LAST is Postgres's
-   * default `desc` behavior, so ties/no-messages-yet inboxes sort last, same
-   * as before).
+   * `dateTimeBasedTrigger`, or a stale/foreign threaded id). Replaces a
+   * `db.query.contactInboxModel.findFirst({ orderBy: { lastMessageAt:
+   * "desc" } })` call; `NULLS LAST` is explicit because Postgres sorts nulls
+   * FIRST on `DESC` by default, which would prefer an inbox that never had a
+   * message.
    */
   async findMostRecentByContact(
     input: { contactId: string; workspaceId: string },
@@ -198,7 +202,44 @@ export const contactInboxRepository = {
         ),
       )
       .where(eq(contactInboxModel.contactId, input.contactId))
-      .orderBy(desc(contactInboxModel.lastMessageAt))
+      .orderBy(mostRecentMessageFirst())
+      .limit(1)
+
+    return row ?? null
+  },
+
+  /**
+   * The most recently active contact-inbox in one inbox — the recipient a
+   * "Send test event" CAPI check is attributed to, since Meta requires a real
+   * page-scoped id / phone number even for test events. `requireCtwaClid`
+   * narrows to click-to-WhatsApp-attributed rows, the only ones Meta accepts
+   * for a WhatsApp business-messaging event.
+   */
+  async findMostRecentByInbox(
+    input: { inboxId: string; workspaceId: string; requireCtwaClid?: boolean },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxWorkspaceRow | null> {
+    const [row] = await tx
+      .select({
+        id: contactInboxModel.id,
+        channel: contactInboxModel.channel,
+        inboxId: contactInboxModel.inboxId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(
+        and(
+          eq(contactInboxModel.inboxId, input.inboxId),
+          input.requireCtwaClid ? ctwaReferralCondition() : undefined,
+        ),
+      )
+      .orderBy(mostRecentMessageFirst())
       .limit(1)
 
     return row ?? null

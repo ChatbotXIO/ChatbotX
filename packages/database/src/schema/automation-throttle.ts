@@ -17,8 +17,8 @@ export const automationThrottleType = pgEnum(
 )
 
 /**
- * Postgres source of truth for the hybrid automation throttle (see
- * `docs/plans/default-reply-throttle-hybrid.md`). This model is **typing
+ * Postgres source of truth for the hybrid automation throttle. This model is
+ * **typing
  * only** — the physical table is hash-partitioned by `workspaceId` (×32) via
  * a hand-written migration (`drizzle-database` skill: partitioned tables
  * cannot be expressed through `pgTable`/`make:migration`), mirroring

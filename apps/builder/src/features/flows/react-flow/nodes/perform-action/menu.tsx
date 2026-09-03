@@ -619,16 +619,9 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     ],
   },
   {
-    label: t("flows.actions.adsConversions"),
+    label: t("flows.actions.sendMetaCapiEvent"),
     icon: MegaphoneIcon,
-    stepType: null,
-    children: [
-      {
-        label: t("flows.actions.sendMetaCapiEvent"),
-        icon: MegaphoneIcon,
-        stepType: stepTypes.enum.sendMetaCapiEvent,
-      },
-    ],
+    stepType: stepTypes.enum.sendMetaCapiEvent,
   },
   {
     label: t("flows.actions.triggers"),

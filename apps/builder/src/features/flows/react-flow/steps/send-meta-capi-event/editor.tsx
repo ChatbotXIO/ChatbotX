@@ -2,7 +2,7 @@
 
 import { MegaphoneIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { CapiEventFields } from "@/features/meta-conversions/components/capi-event-fields"
+import { MetaCapiEventDialog } from "@/features/meta-conversions/components/meta-capi-event-dialog"
 import { BaseStepEditor } from "../base/editor"
 
 type SendMetaCapiEventEditorProps = {
@@ -19,15 +19,7 @@ export const SendMetaCapiEventEditor = ({
       icon={MegaphoneIcon}
       title={t("flows.actions.sendMetaCapiEvent")}
     >
-      <div className="flex flex-col gap-2">
-        <p className="text-muted-foreground text-sm">
-          {t("metaConversions.flowStep.description")}
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {t("metaConversions.flowStep.whatsappNote")}
-        </p>
-        <CapiEventFields parentName={parentName} />
-      </div>
+      <MetaCapiEventDialog parentName={parentName} />
     </BaseStepEditor>
   )
 }

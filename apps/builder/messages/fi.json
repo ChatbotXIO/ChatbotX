@@ -2254,8 +2254,7 @@
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot",
-      "adsConversions": "Mainokset ja Meta Conversions"
+      "importJsonOnly": "Vain JSON-tiedostot"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -4406,11 +4405,6 @@
       "description": "Yhdistä ensin kanavatili ja palaa sitten tänne luomaan mainoksia.",
       "cta": "Siirry kanava-asetuksiin"
     },
-    "movedNote": {
-      "title": "Mainokset on siirretty Työkaluihin",
-      "description": "Luo ja hallitse Click-to-Message-mainoksia Click-to-Message-mainokset-työkalusta.",
-      "cta": "Avaa Click-to-Message-mainokset"
-    },
     "dashboardCta": "Näytä mainostaulussa"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Lähetä LeadSubmitted-tapahtumia Messenger-, Instagram- ja WhatsApp-keskusteluista Metalle.",
+    "description": "Lähetä konversiotapahtumia Messenger-, Instagram- ja WhatsApp-keskusteluista Metalle.",
     "datasetId": "Tietojoukon tunnus",
     "reconnect": "Uusi käyttöoikeudet",
     "connectViaFacebook": "Yhdistä Facebookin kautta",
     "unsupportedExplanation": "Tämä Instagram-tili yhdistettiin Instagram Business -kirjautumisella. Yhdistä tili Facebookin kautta käyttääksesi Meta Conversions API:a.",
     "flowStep": {
-      "description": "Jonota LeadSubmitted-tapahtuma Messengerille, Instagramille tai WhatsAppille.",
       "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Tallenna tietojoukon tunnus ennen käyttöoikeustunnuksen lisäämistä.",
       "invalidToken": "Tämä tunnus ei päässyt käsiksi tietojoukkoon.",
       "invalidDatasetId": "Anna kelvollinen Dataset ID (vain numeroita).",
-      "whatsappNotFound": "WhatsApp-integraatiota ei löytynyt."
+      "whatsappNotFound": "WhatsApp-integraatiota ei löytynyt.",
+      "testEventCodeRequired": "Tallenna testitapahtuman koodi ennen testitapahtuman lähettämistä.",
+      "noContactForTest": "Tällä kanavalla ei ole vielä sopivaa kontaktia. Testitapahtuma tarvitsee todellisen kontaktin (WhatsAppissa sellaisen, joka tuli click-to-WhatsApp-mainoksesta).",
+      "invalidTestEventCode": "Testitapahtuman koodi saa sisältää vain kirjaimia, numeroita, väliviivoja tai alaviivoja (enintään 64)."
     },
     "fields": {
       "eventType": {
         "label": "Tapahtuman tyyppi",
-        "leadSubmitted": "Liidi lähetetty"
+        "leadSubmitted": "Liidi lähetetty",
+        "purchase": "Osto",
+        "initiateCheckout": "Kassalle siirtyminen",
+        "addToCart": "Lisää ostoskoriin",
+        "viewContent": "Sisällön katselu",
+        "orderCreated": "Tilaus luotu",
+        "orderShipped": "Tilaus lähetetty",
+        "orderDelivered": "Tilaus toimitettu",
+        "orderCanceled": "Tilaus peruutettu",
+        "orderReturned": "Tilaus palautettu",
+        "cartAbandoned": "Ostoskori hylätty",
+        "qualifiedLead": "Pätevä liidi",
+        "ratingProvided": "Arvio annettu",
+        "reviewProvided": "Arvostelu annettu",
+        "addPaymentInfo": "Lisää maksutiedot",
+        "addToWishlist": "Lisää toivelistalle",
+        "completeRegistration": "Rekisteröinti valmis",
+        "contact": "Yhteydenotto",
+        "customizeProduct": "Tuotteen mukauttaminen",
+        "donate": "Lahjoita",
+        "findLocation": "Etsi sijainti",
+        "lead": "Liidi",
+        "schedule": "Ajanvaraus",
+        "search": "Haku",
+        "startTrial": "Aloita kokeilu",
+        "submitApplication": "Lähetä hakemus",
+        "subscribe": "Tilaa",
+        "custom": "Mukautettu tapahtuma…",
+        "groups": {
+          "commerce": "Kauppa",
+          "leads": "Liidit",
+          "orders": "Tilaukset",
+          "feedback": "Palaute",
+          "leadsAndSignups": "Liidit ja rekisteröitymiset",
+          "other": "Muut"
+        }
       },
       "value": "Arvo",
       "valuePlaceholder": "esim. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Mukautetun tapahtuman nimi",
+      "customEventNamePlaceholder": "esim. MyCustomEvent",
+      "contentType": {
+        "label": "Sisältötyyppi",
+        "product": "Tuote",
+        "product_group": "Tuoteryhmä"
+      },
+      "contentIds": "Sisältötunnukset",
+      "contentIdsPlaceholder": "esim. 123,456"
     },
     "datasetIdPlaceholder": "Liitä tietojoukon tunnus Events Managerista",
     "saveDataset": "Tallenna",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Toiminnon lähde",
+      "help": "Missä tämä tapahtuma tapahtui. Katso Metan toiminnon lähteen dokumentaatio.",
+      "business_messaging": "Yritysviestintä",
+      "email": "Sähköposti",
+      "phone_call": "Puhelinsoitto",
+      "chat": "Chat",
+      "physical_store": "Fyysinen myymälä",
+      "system_generated": "Järjestelmän luoma",
+      "other": "Muut"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Lisäasetukset"
+    },
+    "testEvents": {
+      "title": "Testitapahtumat",
+      "description": "Liitä test_event_code kohteesta Events Manager → Test events. Kun se on asetettu, jokainen tämän kanavan tapahtuma ohjataan Test events -näkymään koko hyötykuormineen (arvo, valuutta, sisältötunnisteet) eikä sitä lasketa raportteihin. Poista se, kun olet valmis.",
+      "codeLabel": "Testitapahtuman koodi",
+      "codePlaceholder": "esim. TEST12345",
+      "save": "Tallenna koodi",
+      "clear": "Tyhjennä",
+      "saved": "Testitapahtuman koodi tallennettu.",
+      "cleared": "Testitapahtuman koodi tyhjennetty. Tapahtumat ovat taas live-tilassa.",
+      "send": "Lähetä testitapahtuma",
+      "sent": "Testitapahtuma lisätty jonoon. Se näkyy Test events -kohdassa Events Managerissa minuutin sisällä.",
+      "sendHint": "Lähettää yhden esimerkki-Purchase-tapahtuman (100 USD) tämän kanavan viimeisimmälle yhteystiedolle.",
+      "activeNotice": "Testitila on päällä: tämän kanavan tapahtumia ei lasketa raportteihin ennen kuin koodi poistetaan.",
+      "openTestEvents": "Avaa Test events"
     }
   },
   "minigames": {

@@ -1,7 +1,12 @@
 "use client"
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { ExternalLinkIcon, Loader2Icon, UnplugIcon } from "lucide-react"
+import {
+  ExternalLinkIcon,
+  Loader2Icon,
+  TriangleAlertIcon,
+  UnplugIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -16,6 +21,10 @@ type CapiConnectedCardProps = {
   // Messenger/Instagram/WhatsApp disconnect actions share one signature; the
   // Messenger action type stands in as the shared contract for every tab.
   disconnectAction: typeof disconnectMessengerCapiAction
+  // Amber warning line shown between the dataset id and the buttons, e.g.
+  // when the dataset is saved but the Meta scope needed to send events is
+  // missing (awaitingScope).
+  notice?: string
 }
 
 export function CapiConnectedCard({
@@ -23,6 +32,7 @@ export function CapiConnectedCard({
   integrationId,
   datasetId,
   disconnectAction,
+  notice,
 }: CapiConnectedCardProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -50,6 +60,12 @@ export function CapiConnectedCard({
           </div>
         </div>
       </div>
+      {notice ? (
+        <p className="flex items-center gap-1.5 text-amber-600 text-xs dark:text-amber-400">
+          <TriangleAlertIcon className="size-3.5 shrink-0" />
+          {notice}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center gap-2">
         <Button
           disabled={disconnect.isPending}

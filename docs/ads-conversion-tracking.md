@@ -54,12 +54,76 @@ The rule engine:
 
 ## Separate from the `sendMetaCapiEvent` / `MetaCapiEvent` pipeline
 
-The Trigger action `sendMetaCapiEvent` and its `MetaCapiEvent` table are a
-**different, unconditional** pipeline: it sends a manual `LeadSubmitted` CAPI signal
-to Meta with no ad-attribution gate, and never writes `AdsConversionEvent`. Trigger
-workspaces that only use `sendMetaCapiEvent` see nothing on the Ads dashboard funnel.
-The two pipelines share no tables or dedup state and are intentionally kept apart;
-do not merge them.
+The flow step and Trigger action `sendMetaCapiEvent` — sharing one field
+schema, `metaCapiEventFieldsSchema`
+(`packages/flow-config/src/steps/send-meta-capi-event.ts`) — and the
+`MetaCapiEvent` table (`packages/database/src/schema/meta-capi-event.ts`) are a
+**different, unconditional** pipeline: it sends a configurable CAPI event to
+Meta with no ad-attribution gate, and never writes `AdsConversionEvent`.
+Trigger/flow workspaces that only use `sendMetaCapiEvent` see nothing on the
+Ads dashboard funnel. The two pipelines share no tables or dedup state and are
+intentionally kept apart; do not merge them.
+
+### What the step/action sends
+
+| Field | CAPI parameter | Notes |
+|-------|-----------------|-------|
+| `eventName` | `event_name` | Defaults to `LeadSubmitted`; which names are valid depends on `actionSource` (see below). |
+| `actionSource` | `action_source` | Defaults to `business_messaging`; one of `business_messaging`, `email`, `phone_call`, `chat`, `physical_store`, `system_generated`, `other`. |
+| `value` / `currency` | `custom_data.value` / `custom_data.currency` | Required for `Purchase`, optional for every other event; both accept a `{{variable}}` template. |
+| `contentType` | `custom_data.content_type` | `product` or `product_group`. |
+| `contentIds` | `custom_data.content_ids` | Comma-separated in the field, split into an array at the business boundary (`splitContentIds`); accepts a `{{variable}}` template. |
+| `contentCategory` / `contentName` | `custom_data.content_category` / `custom_data.content_name` | Free text, up to 200 characters. |
+| Contact identity | channel identity or `user_data` | See action-source paragraph below. |
+
+`eventName` is validated against one of two catalogs
+(`packages/utils/src/meta-capi.ts`): `business_messaging` only offers its 14
+documented Business Messaging events (`metaCapiBusinessMessagingEventNames`,
+e.g. `LeadSubmitted`, `Purchase`, `QualifiedLead`) and no custom names; every
+other action source offers the 17 Meta Pixel standard events
+(`metaPixelStandardEventNames`, e.g. `Lead`, `Purchase`, `Contact`) plus a
+custom name up to 50 characters — a custom name can never reuse a
+business-messaging event name, since that name is reserved for the other
+catalog.
+
+`business_messaging` is the default action source and identifies the contact
+by their per-channel messaging id — Messenger page-scoped id, Instagram IGSID,
+or WhatsApp `wa_id` plus `ctwa_clid`
+(`apps/worker/src/integration/handlers/meta-conversions/send-meta-capi-event.ts`).
+The WhatsApp `ctwa_clid` gate (`skipped_no_identity`) only applies to this
+action source. Picking any other action source sends a non-messaging
+conversion: it loses Meta's click-to-message ad attribution entirely and
+identifies the person only via hashed customer information (`em`/`ph`/`fn`/`ln`/
+`external_id`, produced by `packages/business/src/meta-conversions/hash-user-data.ts`).
+`website` and `app` are intentionally not offered as action sources — Meta
+requires `event_source_url` + `client_user_agent` for website events and
+`app_data` for app events, none of which a messaging-driven flow/trigger step
+can supply.
+
+### Dedup, invalid templates, and Test events
+
+- **Dedup / `event_id`**: `metaConversionsService.buildSourceKey` is the
+  `MetaCapiEvent.sourceKey` and is sent to Meta as `event_id`. Only WhatsApp
+  `business_messaging` events dedup per contact per UTC day (Meta caps CAPI at
+  one event per click-to-WhatsApp ad); every other channel / action source gets
+  a unique id per fire, so two Purchases on the same day are two conversions.
+- **Invalid resolved templates**: a `{{variable}}` that resolves to something
+  the business schema rejects (e.g. `value` → `"250abc"`) is recorded in the
+  workspace **Error Log** (provider `meta-conversions`, with the resolved
+  values) and the flow step takes its error branch. This is the user's
+  configuration problem, so it is surfaced next to Meta-side send failures
+  rather than only in worker logs.
+- **Test events**: each channel's CAPI tab has a *Test events* card. Saving a
+  Meta `test_event_code` (Events Manager → Test events) stores it on the
+  integration row (`capiTestEventCode`); while set, the worker sends it with
+  every event of that integration, so Meta shows the full payload under Test
+  events and does not count the events in reporting. *Send test event* queues
+  one sample `Purchase` (100 USD) through the real pipeline as
+  `MetaCapiEvent.source = "manualTest"`, attributed to the inbox's most recent
+  contact. Both the business layer and the worker refuse to send a
+  `manualTest` event without a saved code, so a test can never become a
+  production conversion. Meta's Test events view lists only `_eventName` and
+  `_valueToSum`; `content_*` parameters show up under *Sampled activities*.
 
 ## Where Ads dashboard metrics come from
 

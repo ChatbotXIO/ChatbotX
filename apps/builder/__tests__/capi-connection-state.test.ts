@@ -78,4 +78,37 @@ describe("getCapiConnectionState", () => {
       }),
     ).toBe("disconnected")
   })
+
+  test("dataset saved but scope missing and no manual token awaits scope", () => {
+    expect(
+      getCapiConnectionState({
+        capiDisconnected: false,
+        hasManualCapiAccessToken: false,
+        hasCapiScope: false,
+        hasDatasetId: true,
+      }),
+    ).toBe("awaitingScope")
+  })
+
+  test("user disconnect overrides an awaiting-scope dataset", () => {
+    expect(
+      getCapiConnectionState({
+        capiDisconnected: true,
+        hasManualCapiAccessToken: false,
+        hasCapiScope: false,
+        hasDatasetId: true,
+      }),
+    ).toBe("disconnected")
+  })
+
+  test("manual token with dataset stays connectedCustom even without scope", () => {
+    expect(
+      getCapiConnectionState({
+        capiDisconnected: false,
+        hasManualCapiAccessToken: true,
+        hasCapiScope: false,
+        hasDatasetId: true,
+      }),
+    ).toBe("connectedCustom")
+  })
 })

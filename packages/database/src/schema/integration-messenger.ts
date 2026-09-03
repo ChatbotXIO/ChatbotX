@@ -49,6 +49,9 @@ export const integrationMessengerModel = pgTable(
     datasetId: text(),
     capiAccessToken: jsonb().$type<EncryptedData>(),
     capiDisconnectedAt: timestamp(timestampConfig),
+    // Meta Events Manager "test_event_code": while set, every CAPI event for
+    // this integration is routed to the dataset's Test Events view.
+    capiTestEventCode: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

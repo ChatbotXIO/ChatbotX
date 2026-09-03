@@ -2254,8 +2254,7 @@
       "import": "Importer flow",
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
-      "importJsonOnly": "Kun JSON-filer",
-      "adsConversions": "Annoncer og Meta Conversions"
+      "importJsonOnly": "Kun JSON-filer"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -4406,11 +4405,6 @@
       "description": "Tilslut en kanalkonto først, og kom derefter tilbage hertil for at oprette annoncer.",
       "cta": "Gå til kanalindstillinger"
     },
-    "movedNote": {
-      "title": "Annoncer er flyttet til Værktøjer",
-      "description": "Opret og administrer Click-to-Message-annoncer fra værktøjet Click-to-Message-annoncer.",
-      "cta": "Åbn Click-to-Message-annoncer"
-    },
     "dashboardCta": "Se på annoncepanelet"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Send LeadSubmitted-hændelser fra Messenger-, Instagram- og WhatsApp-samtaler til Meta.",
+    "description": "Send konverteringshændelser fra Messenger-, Instagram- og WhatsApp-samtaler til Meta.",
     "datasetId": "Dataset-ID",
     "reconnect": "Genopret tilladelser",
     "connectViaFacebook": "Forbind via Facebook",
     "unsupportedExplanation": "Denne Instagram-konto blev forbundet med Instagram Business Login. Forbind kontoen via Facebook for at bruge Meta Conversions API.",
     "flowStep": {
-      "description": "Sæt en LeadSubmitted-hændelse i kø til Messenger, Instagram eller WhatsApp.",
       "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Gem et Dataset-ID, før du tilføjer en adgangstoken.",
       "invalidToken": "Denne token kunne ikke tilgå datasættet.",
       "invalidDatasetId": "Indtast et gyldigt Dataset ID (kun tal).",
-      "whatsappNotFound": "WhatsApp-integration ikke fundet."
+      "whatsappNotFound": "WhatsApp-integration ikke fundet.",
+      "testEventCodeRequired": "Gem en testhændelseskode, før du sender en testhændelse.",
+      "noContactForTest": "Ingen egnet kontakt på denne kanal endnu. En testhændelse kræver en rigtig kontakt at tilknytte (for WhatsApp en, der kom fra en click-to-WhatsApp-annonce).",
+      "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64)."
     },
     "fields": {
       "eventType": {
         "label": "Hændelsestype",
-        "leadSubmitted": "Lead indsendt"
+        "leadSubmitted": "Lead indsendt",
+        "purchase": "Køb",
+        "initiateCheckout": "Start af betaling",
+        "addToCart": "Læg i kurv",
+        "viewContent": "Vis indhold",
+        "orderCreated": "Ordre oprettet",
+        "orderShipped": "Ordre afsendt",
+        "orderDelivered": "Ordre leveret",
+        "orderCanceled": "Ordre annulleret",
+        "orderReturned": "Ordre returneret",
+        "cartAbandoned": "Kurv opgivet",
+        "qualifiedLead": "Kvalificeret lead",
+        "ratingProvided": "Bedømmelse angivet",
+        "reviewProvided": "Anmeldelse angivet",
+        "addPaymentInfo": "Tilføj betalingsoplysninger",
+        "addToWishlist": "Føj til ønskeliste",
+        "completeRegistration": "Gennemført registrering",
+        "contact": "Kontakt",
+        "customizeProduct": "Tilpas produkt",
+        "donate": "Donér",
+        "findLocation": "Find placering",
+        "lead": "Lead",
+        "schedule": "Book tid",
+        "search": "Søgning",
+        "startTrial": "Start prøveperiode",
+        "submitApplication": "Indsend ansøgning",
+        "subscribe": "Abonnér",
+        "custom": "Brugerdefineret hændelse…",
+        "groups": {
+          "commerce": "Handel",
+          "leads": "Leads",
+          "orders": "Ordrer",
+          "feedback": "Feedback",
+          "leadsAndSignups": "Leads og tilmeldinger",
+          "other": "Andet"
+        }
       },
       "value": "Værdi",
       "valuePlaceholder": "f.eks. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Navn på brugerdefineret hændelse",
+      "customEventNamePlaceholder": "fx MyCustomEvent",
+      "contentType": {
+        "label": "Indholdstype",
+        "product": "Produkt",
+        "product_group": "Produktgruppe"
+      },
+      "contentIds": "Indholds-ID'er",
+      "contentIdsPlaceholder": "fx 123,456"
     },
     "datasetIdPlaceholder": "Indsæt Dataset-ID fra Events Manager",
     "saveDataset": "Gem",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Handlingskilde",
+      "help": "Hvor denne hændelse fandt sted. Se Metas dokumentation om handlingskilder.",
+      "business_messaging": "Virksomhedsbeskeder",
+      "email": "E-mail",
+      "phone_call": "Telefonopkald",
+      "chat": "Chat",
+      "physical_store": "Fysisk butik",
+      "system_generated": "Systemgenereret",
+      "other": "Andet"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Avanceret"
+    },
+    "testEvents": {
+      "title": "Testhændelser",
+      "description": "Indsæt test_event_code fra Events Manager → Test events. Mens den er angivet, dirigeres alle hændelser fra denne kanal til Test events-visningen med den fulde nyttelast (værdi, valuta, indholds-id'er) og tælles ikke med i rapporter. Ryd den, når du er færdig.",
+      "codeLabel": "Testhændelseskode",
+      "codePlaceholder": "f.eks. TEST12345",
+      "save": "Gem kode",
+      "clear": "Ryd",
+      "saved": "Testhændelseskode gemt.",
+      "cleared": "Testhændelseskode ryddet. Hændelser er live igen.",
+      "send": "Send testhændelse",
+      "sent": "Testhændelse sat i kø. Den vises under Test events i Events Manager inden for et minut.",
+      "sendHint": "Sender ét eksempel på Purchase (100 USD) til denne kanals seneste kontakt.",
+      "activeNotice": "Testtilstand er slået til: hændelser fra denne kanal tælles ikke med i rapporter, før koden ryddes.",
+      "openTestEvents": "Åbn Test events"
     }
   },
   "minigames": {

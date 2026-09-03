@@ -2,7 +2,7 @@ import { and, db, eq, sql } from "../../client"
 import type { AutomationThrottleType } from "../../partials"
 import { automationThrottleModel } from "../../schema"
 
-/** Retention window for `purgeStaleAutomationThrottles` — see `docs/plans/default-reply-throttle-hybrid.md`. */
+/** Retention window for `purgeStaleAutomationThrottles`. */
 const STALE_RETENTION_HOURS = 48
 
 type ThrottleSubject = {

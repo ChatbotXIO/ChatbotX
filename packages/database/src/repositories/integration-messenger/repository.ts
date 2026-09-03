@@ -23,6 +23,10 @@ type UpdateDatasetIdIfNullInput = WorkspaceIntegrationRef & {
   datasetId: string
 }
 
+type UpdateCapiTestEventCodeInput = WorkspaceIntegrationRef & {
+  capiTestEventCode: string | null
+}
+
 type UpdateCapiAccessTokenInput = WorkspaceIntegrationRef & {
   capiAccessToken: EncryptedData
 }
@@ -157,6 +161,18 @@ export const integrationMessengerRepository = {
     const [row] = await tx
       .update(integrationMessengerModel)
       .set({ datasetId: input.datasetId })
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
+  },
+  async updateCapiTestEventCode(
+    input: UpdateCapiTestEventCodeInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel | null> {
+    const [row] = await tx
+      .update(integrationMessengerModel)
+      .set({ capiTestEventCode: input.capiTestEventCode })
       .where(workspaceIntegrationFilter(input))
       .returning()
 

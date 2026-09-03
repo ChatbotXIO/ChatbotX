@@ -8,8 +8,8 @@ const mocks = vi.hoisted(() => ({
   insertReturning: vi.fn(),
   enqueueAttach: vi.fn(),
   enqueueTagAppliedEvaluations: vi.fn(),
-  enqueueLeadEvent: vi.fn(),
-  buildLeadSourceKey: vi.fn(),
+  enqueueEvent: vi.fn(),
+  buildSourceKey: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -69,9 +69,8 @@ vi.mock("@chatbotx.io/business", () => ({
       mocks.enqueueTagAppliedEvaluations(...args),
   },
   metaConversionsService: {
-    enqueueLeadEvent: (...args: unknown[]) => mocks.enqueueLeadEvent(...args),
-    buildLeadSourceKey: (...args: unknown[]) =>
-      mocks.buildLeadSourceKey(...args),
+    enqueueEvent: (...args: unknown[]) => mocks.enqueueEvent(...args),
+    buildSourceKey: (...args: unknown[]) => mocks.buildSourceKey(...args),
   },
 }))
 
@@ -81,6 +80,24 @@ vi.mock("@chatbotx.io/events/context", () => ({
 
 vi.mock("@chatbotx.io/logger", () => ({
   default: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  getChildLogger: () => ({
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  }),
+}))
+
+// This suite exercises the trigger-action switch with placeholder-free
+// actions only — no template resolution is under test here (see
+// send-meta-capi-event-step-handler.test.ts / trigger-action-executor-send-
+// meta-capi-event.test.ts for that). Mocked as a passthrough so importing
+// action-executor.ts does not pull in `@chatbotx.io/variables`'s real
+// dependency chain (contact/custom-field/business-subpath modules this file
+// does not otherwise mock).
+vi.mock("@chatbotx.io/variables", () => ({
+  resolveContactVariablesDeep: async (_contactId: string, value: unknown) =>
+    value,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -113,7 +130,7 @@ describe("ActionExecutor addTag", () => {
       inboxId: "inbox-1",
       channel: "messenger",
     })
-    mocks.buildLeadSourceKey.mockReturnValue("trigger:trigger-1:ci-1:key")
+    mocks.buildSourceKey.mockReturnValue("trigger:trigger-1:ci-1:key")
   })
 
   test("enqueues tag sync and ads conversion tagApplied evaluation for newly-linked tags", async () => {
@@ -170,29 +187,8 @@ describe("ActionExecutor addTag", () => {
     expect(mocks.enqueueTagAppliedEvaluations).not.toHaveBeenCalled()
   })
 
-  test("enqueues Meta CAPI trigger events with contact inbox source key and inbox id", async () => {
-    const executor = new ActionExecutor()
-
-    await executor.execute({
-      action: { type: "sendMetaCapiEvent" },
-      contactId: "contact-1",
-      triggerId: "trigger-1",
-      workspaceId: "ws-1",
-    })
-
-    expect(mocks.buildLeadSourceKey).toHaveBeenCalledWith({
-      scope: "trigger",
-      scopeId: "trigger-1",
-      contactInboxId: "ci-1",
-      channel: "messenger",
-    })
-    expect(mocks.enqueueLeadEvent).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      channel: "messenger",
-      contactInboxId: "ci-1",
-      inboxId: "inbox-1",
-      source: "triggerAction",
-      sourceKey: "trigger:trigger-1:ci-1:key",
-    })
-  })
+  // Meta CAPI trigger-action coverage lives in
+  // trigger-action-executor-send-meta-capi-event.test.ts — it needs its own
+  // mocks for `@chatbotx.io/flow-config` (metaCapiEventFieldsSchema) and
+  // `@chatbotx.io/variables` (resolveContactVariablesDeep).
 })

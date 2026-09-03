@@ -2488,8 +2488,7 @@
       "import": "匯入流程",
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
-      "importJsonOnly": "僅限 JSON 檔案",
-      "adsConversions": "廣告與 Meta Conversions"
+      "importJsonOnly": "僅限 JSON 檔案"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -4439,11 +4438,6 @@
       "description": "請先連接一個頻道帳號，然後回到這裡建立廣告。",
       "cta": "前往頻道設定"
     },
-    "movedNote": {
-      "title": "廣告已移至工具",
-      "description": "在 Click-to-Message廣告工具 中建立和管理 Click-to-Message 廣告。",
-      "cta": "開啟Click-to-Message廣告"
-    },
     "dashboardCta": "在廣告儀表板中檢視"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "將 Messenger、Instagram 和 WhatsApp 對話中的 LeadSubmitted 事件傳送給 Meta。",
+    "description": "將 Messenger、Instagram 和 WhatsApp 對話中的轉換事件傳送給 Meta。",
     "datasetId": "資料集 ID",
     "reconnect": "重新連接權限",
     "connectViaFacebook": "透過 Facebook 連接",
     "unsupportedExplanation": "此 Instagram 帳戶是透過 Instagram Business Login 連接的。請透過 Facebook 連接該帳戶，以使用 Meta Conversions API。",
     "flowStep": {
-      "description": "為 Messenger、Instagram 或 WhatsApp 排入一筆 LeadSubmitted 事件。",
       "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。"
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "請先儲存資料集 ID，再新增存取權杖。",
       "invalidToken": "此權杖無法存取該資料集。",
       "invalidDatasetId": "請輸入有效的 Dataset ID（僅數字）。",
-      "whatsappNotFound": "找不到 WhatsApp 整合。"
+      "whatsappNotFound": "找不到 WhatsApp 整合。",
+      "testEventCodeRequired": "傳送測試事件前,請先儲存測試事件代碼。",
+      "noContactForTest": "此渠道尚無符合條件的聯絡人。測試事件需要歸因到真實聯絡人（WhatsApp 需為來自 click-to-WhatsApp 廣告的聯絡人）。",
+      "invalidTestEventCode": "測試事件代碼只能包含字母、數字、連字號或底線(最多 64 個字元)。"
     },
     "fields": {
       "eventType": {
         "label": "事件類型",
-        "leadSubmitted": "已提交名單"
+        "leadSubmitted": "已提交名單",
+        "purchase": "購買",
+        "initiateCheckout": "開始結帳",
+        "addToCart": "加入購物車",
+        "viewContent": "檢視內容",
+        "orderCreated": "訂單已建立",
+        "orderShipped": "訂單已出貨",
+        "orderDelivered": "訂單已送達",
+        "orderCanceled": "訂單已取消",
+        "orderReturned": "訂單已退貨",
+        "cartAbandoned": "放棄購物車",
+        "qualifiedLead": "合格潛在客戶",
+        "ratingProvided": "已提供評分",
+        "reviewProvided": "已提供評論",
+        "addPaymentInfo": "新增付款資訊",
+        "addToWishlist": "加入願望清單",
+        "completeRegistration": "完成註冊",
+        "contact": "聯絡",
+        "customizeProduct": "客製化商品",
+        "donate": "捐款",
+        "findLocation": "尋找地點",
+        "lead": "潛在客戶",
+        "schedule": "預約",
+        "search": "搜尋",
+        "startTrial": "開始試用",
+        "submitApplication": "提交申請",
+        "subscribe": "訂閱",
+        "custom": "自訂事件…",
+        "groups": {
+          "commerce": "商務",
+          "leads": "潛在客戶",
+          "orders": "訂單",
+          "feedback": "意見回饋",
+          "leadsAndSignups": "潛在客戶與註冊",
+          "other": "其他"
+        }
       },
       "value": "價值",
       "valuePlaceholder": "例如 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "自訂事件名稱",
+      "customEventNamePlaceholder": "例如 MyCustomEvent",
+      "contentType": {
+        "label": "內容類型",
+        "product": "產品",
+        "product_group": "產品群組"
+      },
+      "contentIds": "內容 ID",
+      "contentIdsPlaceholder": "例如 123,456"
     },
     "datasetIdPlaceholder": "貼上來自 Events Manager 的資料集 ID",
     "saveDataset": "儲存",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "動作來源",
+      "help": "此事件發生的位置。請參閱 Meta 的動作來源文件。",
+      "business_messaging": "商業訊息",
+      "email": "電子郵件",
+      "phone_call": "電話",
+      "chat": "聊天",
+      "physical_store": "實體店",
+      "system_generated": "系統產生",
+      "other": "其他"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "進階"
+    },
+    "testEvents": {
+      "title": "測試事件",
+      "description": "貼上來自 Events Manager → Test events 的 test_event_code。設定期間,此頻道的每個事件都會連同完整資料(價值、貨幣、內容 ID)一併導向 Test events 檢視畫面,且不會計入報表。完成後請清除。",
+      "codeLabel": "測試事件代碼",
+      "codePlaceholder": "例如：TEST12345",
+      "save": "儲存代碼",
+      "clear": "清除",
+      "saved": "測試事件代碼已儲存。",
+      "cleared": "測試事件代碼已清除。事件已恢復正常上報。",
+      "send": "傳送測試事件",
+      "sent": "測試事件已加入佇列,一分鐘內會出現在 Events Manager 的 Test events 中。",
+      "sendHint": "向此頻道最近的聯絡人傳送一個範例 Purchase 事件(100 USD)。",
+      "activeNotice": "測試模式已開啟:在清除代碼之前,此頻道的事件不會計入報表。",
+      "openTestEvents": "開啟 Test events"
     }
   },
   "minigames": {

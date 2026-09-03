@@ -2,8 +2,7 @@
 
 > Research notes gathered while scoping a new "Multiple images" flow step (send several
 > images in one outbound message, instead of today's one-image-per-`sendImage`-step
-> limit). This is **research, not a plan** — it feeds the implementation plan under
-> `docs/plans/`. All channels below are now confirmed either way.
+> limit). This is **research, not a plan**. All channels below are now confirmed either way.
 
 ## Current state
 
@@ -32,8 +31,7 @@ one image per call. No channel handler currently builds a multi-item payload.
 2. **Carousel** (Messenger/Instagram Generic Template `elements[]`) — horizontally
    swipeable cards, each **requires a `title`**. Structurally different UX and payload
    shape; would need its own step type if we ever want carousel-with-buttons, separate
-   from a plain multi-image step. (This codebase already has that step: `sendCarousel` —
-   see `docs/plans/` / `.plans/send-multiple-images-step.md` for how the two relate.)
+   from a plain multi-image step. (This codebase already has that step: `sendCarousel`.)
 
 For the "Multiple images" step being scoped, shape (1) is the target.
 

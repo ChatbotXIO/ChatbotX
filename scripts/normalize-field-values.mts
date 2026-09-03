@@ -1,5 +1,5 @@
 /**
- * Phase 5 backfill for docs/plans/2026-08-28-custom-field-value-normalization.md.
+ * Backfill for the custom/bot field value normalization.
  *
  * Legacy `ContactCustomField.value` / `BotField.value` rows written before the
  * write-side normalizer (packages/business/src/contact-custom-field/normalize.ts)
