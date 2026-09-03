@@ -32,7 +32,7 @@ on:
           - maintenance_off
 
 concurrency:
-  group: chatbotx-production-v2
+  group: chatbotx-production
   cancel-in-progress: true
 
 env:
