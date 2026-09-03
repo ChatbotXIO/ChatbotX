@@ -1,13 +1,13 @@
-# Deploy devel — ChatbotX (adaptado de sysbrazo, sin GitHub secrets)
+# Deploy devel — ChatbotX (estilo sysbrazo)
 #
 # Corre en push a main (después de merge de PR).
 # workflow_dispatch manual:
 #   maintenance_on  — maintenance sin deploy
 #   maintenance_off — restaura tráfico
 #
-# SIN GitHub Secrets: usa la key SSH que ya tiene el runner self-hosted
-# (~/.ssh configurado en el runner de sysbrazo) y el .env que ya existe
-# en el server (no se re-escribe desde el CI).
+# El deploy real lo hace el script deploy-devel.sh que vive EN EL SERVER
+# (como deploy-v3.sh de sysbrazo). El workflow solo se conecta y lo ejecuta.
+# Las credenciales de AWS las tiene la instancia EC2 (IAM role).
 
 name: Deploy Devel
 
@@ -33,9 +33,11 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  WORKSPACE: /var/www/chatbotx-dev   # ← path del repo en el server dev (ajustar)
-  SERVER: dev-chatbotx.fibrazo.com.co  # ← hostname/IP del server dev (ajustar)
-  SSH_USER: ubuntu                     # ← usuario SSH (ajustar)
+  ENV: devel
+  WORKSPACE: /var/www/chatbotx-dev
+  SERVER: ip-10-6-3-11.us-west-2.compute.internal
+  SSH_USER: sysbrazo
+  HUSKY: "0"
 
 jobs:
   maintenance_on:
@@ -46,7 +48,7 @@ jobs:
         (github.event_name == 'push') ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_on')
       )
-    runs-on: [self-hosted, sysbrazo]
+    runs-on: [self-hosted, gl-runner01]
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -64,24 +66,21 @@ jobs:
       always() &&
       github.event_name == 'push' &&
       needs.maintenance_on.result == 'success'
-    runs-on: [self-hosted, sysbrazo]
+    runs-on: [self-hosted, gl-runner01]
     timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy por SSH
+      - name: Deploy
         run: |
           ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SERVER} \
-            "cd ${WORKSPACE} && \
-            git pull --ff-only && \
-            docker compose -f docker-compose.yml -f docker-compose.apps.yml -f docker-compose.dev.yml up -d --build"
+            "cd ${WORKSPACE} && git pull --ff-only && ./scripts/deployment/deploy-devel.sh"
 
       - name: Smoke test
         run: |
-          sleep 15
-          curl -sf -o /dev/null -w "HTTP %{http_code}\n" \
-            http://${SERVER}:3123/api/health || echo "⚠ smoke falló — revisar logs"
+          ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SERVER} \
+            "curl -sf -o /dev/null -w 'HTTP %{http_code}\n' http://localhost:3123/api/health"
 
   maintenance_off:
     name: Maintenance off
@@ -92,7 +91,7 @@ jobs:
         (github.event_name == 'push' && needs.deploy.result == 'success') ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_off')
       )
-    runs-on: [self-hosted, sysbrazo]
+    runs-on: [self-hosted, gl-runner01]
     timeout-minutes: 15
     steps:
       - name: Checkout
