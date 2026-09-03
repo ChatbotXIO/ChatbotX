@@ -20,5 +20,9 @@ export const minigameContactRelations = defineRelationsPart(schema, (r) => ({
       to: r.contactModel.id,
       alias: "minigameContact_referrerContact",
     }),
+    contactInbox: r.one.contactInboxModel({
+      from: r.minigameContactModel.contactInboxId,
+      to: r.contactInboxModel.id,
+    }),
   },
 }))

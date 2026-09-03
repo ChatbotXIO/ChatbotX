@@ -5508,6 +5508,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "ŞANS ÇARKI",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "KURA ÇEKİMİ",
+      "scratchOffHeader": "KAZI KAZAN",
+      "scratchOffCardTitle": "Şanslı yıldız kazı kazan biletleri",
       "comingSoon": "Bu oyun türü için ayrıntılı önizleme yakında sunulacak"
     },
     "form": {
@@ -5561,6 +5564,11 @@
       "comingSoonTitle": "Çok yakında",
       "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor."
     },
+    "list": {
+      "gamesPlayed": "Oynanan oyunlar",
+      "participants": "Katılımcılar",
+      "winners": "Kazananlar"
+    },
     "history": {
       "title": "Geçmiş",
       "played": "Oynama sayısı",
@@ -5568,6 +5576,8 @@
       "openedAt": "İlk açılış",
       "lastPlayedAt": "Son oynama",
       "unknownContact": "Bilinmeyen kişi",
+      "conversationNotFound": "Bu kişi için görüşme bulunamadı",
+      "popupBlocked": "Lütfen bu site için açılır pencerelere izin verin, ardından tekrar deneyin.",
       "record": "Kayıt",
       "recordDialog": {
         "title": "Oyun kaydı",

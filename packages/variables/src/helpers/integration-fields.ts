@@ -224,6 +224,7 @@ export const getIntegrationField = async (
   let contactInbox = contextContactInbox
   if (contactInbox == null) {
     contactInbox = await contactInboxService.findRecentByContactId({
+      workspaceId: contact.workspaceId,
       contactId: contact.id,
     })
   }

@@ -5508,6 +5508,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "RODA KEBERUNTUNGAN",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "KOCOK UNDIAN",
+      "scratchOffHeader": "GOSOK & MENANG",
+      "scratchOffCardTitle": "Tiket gosok bintang keberuntungan",
       "comingSoon": "Pratinjau detail akan segera hadir untuk jenis permainan ini"
     },
     "form": {
@@ -5561,6 +5564,11 @@
       "comingSoonTitle": "Segera hadir",
       "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan."
     },
+    "list": {
+      "gamesPlayed": "Permainan dimainkan",
+      "participants": "Peserta",
+      "winners": "Pemenang"
+    },
     "history": {
       "title": "Riwayat",
       "played": "Jumlah main",
@@ -5568,6 +5576,8 @@
       "openedAt": "Pertama dibuka",
       "lastPlayedAt": "Terakhir dimainkan",
       "unknownContact": "Kontak tidak dikenal",
+      "conversationNotFound": "Tidak ada percakapan yang ditemukan untuk kontak ini",
+      "popupBlocked": "Izinkan pop-up untuk situs ini, lalu coba lagi.",
       "record": "Catatan",
       "recordDialog": {
         "title": "Catatan permainan",

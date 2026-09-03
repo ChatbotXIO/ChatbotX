@@ -81,6 +81,7 @@ export const messagesAuthenticatedAPI = {
             where: { contactId: conversation.contactId, inboxId },
           })
         : await contactInboxService.findRecentByContactId({
+            workspaceId: input.workspaceId,
             contactId: conversation.contactId,
           })
       if (!contactInbox) {

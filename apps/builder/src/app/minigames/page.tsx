@@ -1,4 +1,4 @@
-import { tagService } from "@chatbotx.io/business"
+import { contactInboxService, tagService } from "@chatbotx.io/business"
 import {
   minigameContactService,
   minigameService,
@@ -88,11 +88,15 @@ export default async function MinigamePage(props: MinigamePageProps) {
   }
 
   const { contactId } = payload
+  const contactInbox = await contactInboxService.findBy({
+    where: { id: payload.contactInboxId },
+  })
 
-  const contactState = await minigameContactService.resolvePlayState({
+  const contactState = await minigameContactService.resolveOpenerPlayState({
     minigameId: minigame.id,
     contactId,
     playerSettings: minigame.playerSettings,
+    contactInboxId: contactInbox?.id,
   })
 
   await tagService.attachToContact({
