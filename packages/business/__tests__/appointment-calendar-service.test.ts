@@ -241,6 +241,48 @@ describe("overlaps", () => {
 })
 
 describe("appointmentCalendarService.generateAvailableSlots", () => {
+  test("expands single-instant external busy lookups by the calendar duration", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
+    vi.spyOn(appointmentCalendarService, "findByOrFail").mockResolvedValue({
+      id: "calendar-1",
+      workspaceId: "workspace-1",
+      active: true,
+      timezone: "UTC",
+      scheduleWindowType: "rollingDays",
+      scheduleWindowConfig: {
+        rollingDays: 30,
+        minAdvanceDays: 0,
+      },
+      durationMinutes: 30,
+      externalConnectionId: "integration-1",
+      updatedAt: new Date("2026-08-01T00:00:00.000Z"),
+    } as never)
+    mocks.getBusyIntervalsForAppointmentCalendar.mockResolvedValue([])
+
+    await expect(
+      appointmentCalendarService.prepareAvailabilityContext({
+        workspaceId: "workspace-1",
+        calendarId: "calendar-1",
+        startDate: new Date("2026-08-12T09:00:00.000Z"),
+        endDate: new Date("2026-08-12T09:00:00.000Z"),
+        failurePolicy: "throw",
+      }),
+    ).resolves.toMatchObject({
+      listingEmpty: false,
+      externalBusyIntervals: [],
+    })
+
+    expect(mocks.getBusyIntervalsForAppointmentCalendar).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationId: "integration-1",
+      timeMin: "2026-08-12T09:00:00.000Z",
+      timeMax: "2026-08-12T09:30:00.000Z",
+      timeZone: "UTC",
+      timeoutMs: 5000,
+    })
+  })
+
   test("filters slots that overlap external busy intervals", async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
