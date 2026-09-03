@@ -12,8 +12,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 // requests can settle out of order (the initial one is often slower — it
 // races the Graph/Telegram round trip the refresh triggers) — whichever
 // request was issued LAST must win, never whichever RESOLVES last.
-// See docs/plans/2026-08-31-messenger-ctm-profile-backfill.md, fix wave 2
-// finding 3.
 // ---------------------------------------------------------------------------
 
 vi.mock("next-intl", () => ({

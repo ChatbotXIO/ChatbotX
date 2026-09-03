@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
 // defaultReplyThrottleService — thin default-reply-facing facade over the
-// generic automationThrottleService (docs/plans/default-reply-throttle-hybrid.md).
+// generic automationThrottleService.
 // Verifies: the frequency->window map (`allTime` -> 0, the unbounded
 // record-and-allow window), delegation to the generic service with the fixed
 // throttleType/subjectId pinned by the wrapper, and `release` threading both

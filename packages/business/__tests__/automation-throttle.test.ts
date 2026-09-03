@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
 // automationThrottleService — generic Redis fast-path + Postgres
-// source-of-truth throttle claim (docs/plans/default-reply-throttle-hybrid.md).
+// source-of-truth throttle claim.
 // Verifies: acquired/denied/bypassed, DB-computed remaining incl. the denied
 // branch, window-in-key setting changes, Redis-down → DB, DB-down → fail
 // open, release delete-by-claimId + Redis best-effort delete, and

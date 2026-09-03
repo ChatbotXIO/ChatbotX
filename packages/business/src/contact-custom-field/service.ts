@@ -98,7 +98,7 @@ type DeleteByKeyInput = {
    * `bot_field:<id>` reference token, delegate to `botFieldService` instead
    * of the contact-scoped lookup below. Default-false keeps every existing
    * caller (including the public workspace-token contact endpoints) unable
-   * to reach Account Fields — see `docs/plans/2026-08-28-account-fields-custom-fields-page.md` §3.2.
+   * to reach Account Fields.
    */
   allowBotFields?: boolean
 }

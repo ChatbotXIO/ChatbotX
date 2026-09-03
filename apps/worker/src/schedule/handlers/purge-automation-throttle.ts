@@ -10,8 +10,7 @@ const LOCK_TTL_SECONDS = 55 * 60
 
 /**
  * Drops `AutomationThrottle` rows whose `lastTriggeredAt` is old enough that
- * they can no longer affect a live claim (retention window documented in
- * `docs/plans/default-reply-throttle-hybrid.md`). These rows are cheap
+ * they can no longer affect a live claim. These rows are cheap
  * per-subject state, not an audit log, so a hard delete (no soft-delete
  * convention) is correct here.
  */

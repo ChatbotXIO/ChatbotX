@@ -10,8 +10,7 @@ import { logger } from "../logger"
 /**
  * Redis fast-path marker TTL cap (seconds). Postgres remains the source of
  * truth for the real window; this only bounds how long a stale marker can
- * live before it self-expires and the next lookup re-consults Postgres. See
- * `docs/plans/default-reply-throttle-hybrid.md`.
+ * live before it self-expires and the next lookup re-consults Postgres.
  */
 export const AUTOMATION_THROTTLE_FASTPATH_TTL_SECONDS = 300
 
