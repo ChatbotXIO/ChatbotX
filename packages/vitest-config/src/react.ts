@@ -13,7 +13,8 @@ const setupDomPath = fileURLToPath(new URL("./setup-dom.ts", import.meta.url))
  *
  * `setupFiles` is appended to the base preset's list (mergeConfig concatenates
  * arrays), so the node setup still runs first and `setup-dom` only fills the
- * DOM gaps jsdom leaves — `window.matchMedia` and `ResizeObserver` today.
+ * DOM gaps jsdom leaves — `window.matchMedia`, `ResizeObserver` and
+ * `Element.getAnimations` today.
  */
 const config: ViteUserConfig = mergeConfig(nodeConfig, {
   plugins: [react()],

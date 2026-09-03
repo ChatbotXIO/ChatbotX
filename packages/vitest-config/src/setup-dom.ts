@@ -172,6 +172,31 @@ if (
   })
 }
 
+/**
+ * jsdom implements no Web Animations API, so `Element.getAnimations` is
+ * missing. Base UI's `ScrollAreaViewport` only reaches for it *after* the
+ * `ResizeObserver` stub above lets its layout effect through: it schedules
+ * `viewport.getAnimations({ subtree: true })` on a 0ms timeout to recompute
+ * thumb geometry once transform animations settle. A suite driving fake timers
+ * fires that timeout and the missing method throws outside any `act` boundary,
+ * failing the whole file. Reporting "nothing is animating" is both truthful
+ * under jsdom — which runs no animations — and the branch Base UI short-
+ * circuits on, so no `Animation` object ever has to be faked.
+ *
+ * A fresh array per call keeps a caller that mutates the result from poisoning
+ * the next one.
+ */
+if (
+  typeof Element !== "undefined" &&
+  typeof Element.prototype.getAnimations !== "function"
+) {
+  Object.defineProperty(Element.prototype, "getAnimations", {
+    configurable: true,
+    writable: true,
+    value: (): Animation[] => [],
+  })
+}
+
 if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
