@@ -67,6 +67,7 @@ export default async function MessengerAdsPage(props: {
         id: resolved.id,
         hasCapiScope: resolved.hasCapiScope,
         datasetId: resolved.datasetId,
+        capiTestEventCode: resolved.capiTestEventCode,
       }}
     />
   )

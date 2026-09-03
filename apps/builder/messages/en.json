@@ -2192,11 +2192,10 @@
   },
   "metaConversions": {
     "flowStep": {
-      "description": "Queue a LeadSubmitted event for Messenger, Instagram, or WhatsApp.",
       "whatsappNote": "WhatsApp events only send for conversations that started from a click-to-WhatsApp ad."
     },
     "title": "Conversions API",
-    "description": "Send LeadSubmitted events from Messenger, Instagram, and WhatsApp conversations to Meta.",
+    "description": "Send conversion events from Messenger, Instagram, and WhatsApp conversations to Meta.",
     "datasetId": "Dataset ID",
     "reconnect": "Reconnect permissions",
     "connectViaFacebook": "Connect via Facebook",
@@ -2225,12 +2224,50 @@
       "datasetRequired": "Save a Dataset ID before adding an access token.",
       "invalidToken": "This token could not access the dataset.",
       "invalidDatasetId": "Enter a valid Dataset ID (numbers only).",
-      "whatsappNotFound": "WhatsApp integration not found."
+      "whatsappNotFound": "WhatsApp integration not found.",
+      "testEventCodeRequired": "Save a test event code before sending a test event.",
+      "noContactForTest": "No eligible contact on this channel yet. A test event needs a real contact to attribute to (for WhatsApp, one that came from a click-to-WhatsApp ad).",
+      "invalidTestEventCode": "Test event code may only contain letters, digits, dashes or underscores (max 64)."
     },
     "fields": {
       "eventType": {
         "label": "Event type",
-        "leadSubmitted": "Lead Submitted"
+        "leadSubmitted": "Lead Submitted",
+        "purchase": "Purchase",
+        "initiateCheckout": "Initiate Checkout",
+        "addToCart": "Add To Cart",
+        "viewContent": "View Content",
+        "orderCreated": "Order Created",
+        "orderShipped": "Order Shipped",
+        "orderDelivered": "Order Delivered",
+        "orderCanceled": "Order Canceled",
+        "orderReturned": "Order Returned",
+        "cartAbandoned": "Cart Abandoned",
+        "qualifiedLead": "Qualified Lead",
+        "ratingProvided": "Rating Provided",
+        "reviewProvided": "Review Provided",
+        "addPaymentInfo": "Add Payment Info",
+        "addToWishlist": "Add To Wishlist",
+        "completeRegistration": "Complete Registration",
+        "contact": "Contact",
+        "customizeProduct": "Customize Product",
+        "donate": "Donate",
+        "findLocation": "Find Location",
+        "lead": "Lead",
+        "schedule": "Schedule",
+        "search": "Search",
+        "startTrial": "Start Trial",
+        "submitApplication": "Submit Application",
+        "subscribe": "Subscribe",
+        "custom": "Custom event…",
+        "groups": {
+          "commerce": "Commerce",
+          "leads": "Leads",
+          "orders": "Orders",
+          "feedback": "Feedback",
+          "leadsAndSignups": "Leads & Sign-ups",
+          "other": "Other"
+        }
       },
       "value": "Value",
       "valuePlaceholder": "e.g. 250",
@@ -2248,7 +2285,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Custom event name",
+      "customEventNamePlaceholder": "e.g. MyCustomEvent",
+      "contentType": {
+        "label": "Content type",
+        "product": "Product",
+        "product_group": "Product Group"
+      },
+      "contentIds": "Content IDs",
+      "contentIdsPlaceholder": "e.g. 123,456"
     },
     "datasetIdPlaceholder": "Paste Dataset ID from Events Manager",
     "saveDataset": "Save",
@@ -2299,6 +2345,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Action source",
+      "help": "Where this event took place. See Meta's action source documentation.",
+      "business_messaging": "Business Messaging",
+      "email": "Email",
+      "phone_call": "Phone Call",
+      "chat": "Chat",
+      "physical_store": "Physical Store",
+      "system_generated": "System Generated",
+      "other": "Other"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Advanced"
+    },
+    "testEvents": {
+      "title": "Test events",
+      "description": "Paste the test_event_code from Events Manager → Test events. While it is set, every event from this channel is routed to the Test events view with its full payload (value, currency, content IDs) and is not counted in reports. Clear it when you are done.",
+      "codeLabel": "Test event code",
+      "codePlaceholder": "e.g. TEST12345",
+      "save": "Save code",
+      "clear": "Clear",
+      "saved": "Test event code saved.",
+      "cleared": "Test event code cleared. Events are live again.",
+      "send": "Send test event",
+      "sent": "Test event queued. It appears under Test events in Events Manager within a minute.",
+      "sendHint": "Sends one sample Purchase (100 USD) to this channel's most recent contact.",
+      "activeNotice": "Test mode is on: events from this channel are not counted in reports until the code is cleared.",
+      "openTestEvents": "Open Test events"
     }
   },
   "flows": {
@@ -2439,8 +2515,7 @@
       "import": "Import Flow",
       "export": "Export",
       "importStarted": "Flow is importing. Check the import history for results.",
-      "importJsonOnly": "JSON files only",
-      "adsConversions": "Ads & Meta Conversions"
+      "importJsonOnly": "JSON files only"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -4559,11 +4634,6 @@
       "title": "No account connected for this channel",
       "description": "Connect a channel account first, then come back here to create ads.",
       "cta": "Go to channel settings"
-    },
-    "movedNote": {
-      "title": "Ads have moved to Tools",
-      "description": "Create and manage Click to Message ads from the Click to Message Ads tool.",
-      "cta": "Open Click to Message Ads"
     },
     "dashboardCta": "View on Ads dashboard"
   },

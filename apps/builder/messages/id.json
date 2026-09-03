@@ -2254,8 +2254,7 @@
       "import": "Impor Alur",
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
-      "importJsonOnly": "Hanya file JSON",
-      "adsConversions": "Iklan & Meta Conversions"
+      "importJsonOnly": "Hanya file JSON"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -4406,11 +4405,6 @@
       "description": "Hubungkan akun channel terlebih dahulu, lalu kembali ke sini untuk membuat iklan.",
       "cta": "Buka pengaturan channel"
     },
-    "movedNote": {
-      "title": "Iklan telah dipindahkan ke Alat",
-      "description": "Buat dan kelola iklan Click-to-Message dari alat Iklan Click-to-Message.",
-      "cta": "Buka Iklan Click-to-Message"
-    },
     "dashboardCta": "Lihat di dasbor Iklan"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Kirim peristiwa LeadSubmitted dari percakapan Messenger, Instagram, dan WhatsApp ke Meta.",
+    "description": "Kirim peristiwa konversi dari percakapan Messenger, Instagram, dan WhatsApp ke Meta.",
     "datasetId": "Dataset ID",
     "reconnect": "Sambungkan ulang izin",
     "connectViaFacebook": "Hubungkan via Facebook",
     "unsupportedExplanation": "Akun Instagram ini terhubung menggunakan Instagram Business Login. Hubungkan akun melalui Facebook untuk menggunakan Meta Conversions API.",
     "flowStep": {
-      "description": "Antrekan peristiwa LeadSubmitted untuk Messenger, Instagram, atau WhatsApp.",
       "whatsappNote": "Peristiwa WhatsApp hanya dikirim untuk percakapan yang dimulai dari iklan click-to-WhatsApp."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Simpan Dataset ID sebelum menambahkan token akses.",
       "invalidToken": "Token ini tidak dapat mengakses dataset.",
       "invalidDatasetId": "Masukkan Dataset ID yang valid (hanya angka).",
-      "whatsappNotFound": "Integrasi WhatsApp tidak ditemukan."
+      "whatsappNotFound": "Integrasi WhatsApp tidak ditemukan.",
+      "testEventCodeRequired": "Simpan kode peristiwa uji sebelum mengirim peristiwa uji.",
+      "noContactForTest": "Belum ada kontak yang memenuhi syarat di saluran ini. Peristiwa uji memerlukan kontak nyata untuk dikaitkan (untuk WhatsApp, kontak yang berasal dari iklan click-to-WhatsApp).",
+      "invalidTestEventCode": "Kode peristiwa uji hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 64)."
     },
     "fields": {
       "eventType": {
         "label": "Jenis peristiwa",
-        "leadSubmitted": "Lead Submitted"
+        "leadSubmitted": "Lead Submitted",
+        "purchase": "Pembelian",
+        "initiateCheckout": "Mulai Checkout",
+        "addToCart": "Tambah ke Keranjang",
+        "viewContent": "Lihat Konten",
+        "orderCreated": "Pesanan Dibuat",
+        "orderShipped": "Pesanan Dikirim",
+        "orderDelivered": "Pesanan Terkirim",
+        "orderCanceled": "Pesanan Dibatalkan",
+        "orderReturned": "Pesanan Dikembalikan",
+        "cartAbandoned": "Keranjang Ditinggalkan",
+        "qualifiedLead": "Prospek Berkualitas",
+        "ratingProvided": "Penilaian Diberikan",
+        "reviewProvided": "Ulasan Diberikan",
+        "addPaymentInfo": "Tambah Info Pembayaran",
+        "addToWishlist": "Tambah ke Wishlist",
+        "completeRegistration": "Selesaikan Pendaftaran",
+        "contact": "Kontak",
+        "customizeProduct": "Kustomisasi Produk",
+        "donate": "Donasi",
+        "findLocation": "Cari Lokasi",
+        "lead": "Prospek",
+        "schedule": "Jadwalkan",
+        "search": "Pencarian",
+        "startTrial": "Mulai Uji Coba",
+        "submitApplication": "Kirim Aplikasi",
+        "subscribe": "Berlangganan",
+        "custom": "Peristiwa khusus…",
+        "groups": {
+          "commerce": "Perdagangan",
+          "leads": "Prospek",
+          "orders": "Pesanan",
+          "feedback": "Umpan Balik",
+          "leadsAndSignups": "Prospek & Pendaftaran",
+          "other": "Lainnya"
+        }
       },
       "value": "Nilai",
       "valuePlaceholder": "misalnya 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Nama peristiwa khusus",
+      "customEventNamePlaceholder": "mis. MyCustomEvent",
+      "contentType": {
+        "label": "Jenis konten",
+        "product": "Produk",
+        "product_group": "Grup Produk"
+      },
+      "contentIds": "ID Konten",
+      "contentIdsPlaceholder": "mis. 123,456"
     },
     "datasetIdPlaceholder": "Tempel Dataset ID dari Events Manager",
     "saveDataset": "Simpan",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Sumber tindakan",
+      "help": "Tempat peristiwa ini terjadi. Lihat dokumentasi sumber tindakan Meta.",
+      "business_messaging": "Pesan Bisnis",
+      "email": "Email",
+      "phone_call": "Panggilan Telepon",
+      "chat": "Obrolan",
+      "physical_store": "Toko Fisik",
+      "system_generated": "Dihasilkan Sistem",
+      "other": "Lainnya"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Lanjutan"
+    },
+    "testEvents": {
+      "title": "Peristiwa uji",
+      "description": "Tempel test_event_code dari Events Manager → Test events. Selama diatur, setiap peristiwa dari saluran ini dialihkan ke tampilan Test events beserta payload lengkapnya (nilai, mata uang, ID konten) dan tidak dihitung dalam laporan. Hapus setelah selesai.",
+      "codeLabel": "Kode peristiwa uji",
+      "codePlaceholder": "mis. TEST12345",
+      "save": "Simpan kode",
+      "clear": "Hapus",
+      "saved": "Kode peristiwa uji tersimpan.",
+      "cleared": "Kode peristiwa uji dihapus. Peristiwa aktif kembali.",
+      "send": "Kirim peristiwa uji",
+      "sent": "Peristiwa uji masuk antrean. Peristiwa ini akan muncul di Test events pada Events Manager dalam waktu satu menit.",
+      "sendHint": "Mengirim satu contoh Purchase (100 USD) ke kontak terbaru pada saluran ini.",
+      "activeNotice": "Mode uji aktif: peristiwa dari saluran ini tidak dihitung dalam laporan sampai kode dihapus.",
+      "openTestEvents": "Buka Test events"
     }
   },
   "minigames": {

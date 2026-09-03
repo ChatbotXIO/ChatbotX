@@ -2254,8 +2254,7 @@
       "import": "Flow importeren",
       "export": "Exporteren",
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
-      "importJsonOnly": "Alleen JSON-bestanden",
-      "adsConversions": "Advertenties en Meta Conversions"
+      "importJsonOnly": "Alleen JSON-bestanden"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -4406,11 +4405,6 @@
       "description": "Koppel eerst een kanaalaccount en kom daarna hier terug om advertenties te maken.",
       "cta": "Ga naar kanaalinstellingen"
     },
-    "movedNote": {
-      "title": "Advertenties zijn verplaatst naar Hulpmiddelen",
-      "description": "Maak en beheer Click-to-Message-advertenties vanuit de tool Click-to-Message-advertenties.",
-      "cta": "Click-to-Message-advertenties openen"
-    },
     "dashboardCta": "Bekijk in het advertentiedashboard"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Verstuur LeadSubmitted-gebeurtenissen vanuit Messenger-, Instagram- en WhatsApp-gesprekken naar Meta.",
+    "description": "Verstuur conversiegebeurtenissen vanuit Messenger-, Instagram- en WhatsApp-gesprekken naar Meta.",
     "datasetId": "Dataset-ID",
     "reconnect": "Machtigingen opnieuw koppelen",
     "connectViaFacebook": "Koppelen via Facebook",
     "unsupportedExplanation": "Dit Instagram-account is gekoppeld met Instagram Business Login. Koppel het account via Facebook om Meta Conversions API te kunnen gebruiken.",
     "flowStep": {
-      "description": "Plaats een LeadSubmitted-gebeurtenis in de wachtrij voor Messenger, Instagram of WhatsApp.",
       "whatsappNote": "WhatsApp-gebeurtenissen worden alleen verzonden voor gesprekken die zijn gestart vanuit een click-to-WhatsApp-advertentie."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Sla een Dataset-ID op voordat je een toegangstoken toevoegt.",
       "invalidToken": "Dit token kreeg geen toegang tot de dataset.",
       "invalidDatasetId": "Voer een geldig Dataset ID in (alleen cijfers).",
-      "whatsappNotFound": "WhatsApp-integratie niet gevonden."
+      "whatsappNotFound": "WhatsApp-integratie niet gevonden.",
+      "testEventCodeRequired": "Sla een testgebeurteniscode op voordat je een testgebeurtenis verzendt.",
+      "noContactForTest": "Nog geen geschikt contact op dit kanaal. Een testgebeurtenis heeft een echt contact nodig om aan toe te wijzen (voor WhatsApp een contact uit een click-to-WhatsApp-advertentie).",
+      "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64)."
     },
     "fields": {
       "eventType": {
         "label": "Gebeurtenistype",
-        "leadSubmitted": "Lead ingediend"
+        "leadSubmitted": "Lead ingediend",
+        "purchase": "Aankoop",
+        "initiateCheckout": "Afrekenen gestart",
+        "addToCart": "In winkelwagen",
+        "viewContent": "Inhoud bekijken",
+        "orderCreated": "Bestelling aangemaakt",
+        "orderShipped": "Bestelling verzonden",
+        "orderDelivered": "Bestelling afgeleverd",
+        "orderCanceled": "Bestelling geannuleerd",
+        "orderReturned": "Bestelling geretourneerd",
+        "cartAbandoned": "Winkelwagen verlaten",
+        "qualifiedLead": "Gekwalificeerde lead",
+        "ratingProvided": "Beoordeling gegeven",
+        "reviewProvided": "Recensie gegeven",
+        "addPaymentInfo": "Betaalgegevens toevoegen",
+        "addToWishlist": "Toevoegen aan verlanglijst",
+        "completeRegistration": "Registratie voltooid",
+        "contact": "Contact",
+        "customizeProduct": "Product aanpassen",
+        "donate": "Doneren",
+        "findLocation": "Locatie zoeken",
+        "lead": "Lead",
+        "schedule": "Afspraak plannen",
+        "search": "Zoeken",
+        "startTrial": "Proefperiode starten",
+        "submitApplication": "Aanvraag indienen",
+        "subscribe": "Abonneren",
+        "custom": "Aangepaste gebeurtenis…",
+        "groups": {
+          "commerce": "Commercie",
+          "leads": "Leads",
+          "orders": "Bestellingen",
+          "feedback": "Feedback",
+          "leadsAndSignups": "Leads & aanmeldingen",
+          "other": "Overig"
+        }
       },
       "value": "Waarde",
       "valuePlaceholder": "bijv. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Naam van aangepaste gebeurtenis",
+      "customEventNamePlaceholder": "bijv. MyCustomEvent",
+      "contentType": {
+        "label": "Inhoudstype",
+        "product": "Product",
+        "product_group": "Productgroep"
+      },
+      "contentIds": "Content-ID's",
+      "contentIdsPlaceholder": "bijv. 123,456"
     },
     "datasetIdPlaceholder": "Plak de Dataset-ID uit Events Manager",
     "saveDataset": "Opslaan",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Actiebron",
+      "help": "Waar deze gebeurtenis plaatsvond. Zie de Meta-documentatie over actiebronnen.",
+      "business_messaging": "Zakelijke berichten",
+      "email": "E-mail",
+      "phone_call": "Telefoongesprek",
+      "chat": "Chat",
+      "physical_store": "Fysieke winkel",
+      "system_generated": "Door systeem gegenereerd",
+      "other": "Overig"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Geavanceerd"
+    },
+    "testEvents": {
+      "title": "Testgebeurtenissen",
+      "description": "Plak de test_event_code uit Events Manager → Test events. Zolang deze is ingesteld, wordt elke gebeurtenis van dit kanaal naar de Test events-weergave geleid met de volledige payload (waarde, valuta, content-ID's) en niet meegeteld in rapporten. Wis de code wanneer je klaar bent.",
+      "codeLabel": "Testgebeurteniscode",
+      "codePlaceholder": "bijv. TEST12345",
+      "save": "Code opslaan",
+      "clear": "Wissen",
+      "saved": "Testgebeurteniscode opgeslagen.",
+      "cleared": "Testgebeurteniscode gewist. Gebeurtenissen zijn weer live.",
+      "send": "Testgebeurtenis verzenden",
+      "sent": "Testgebeurtenis in wachtrij geplaatst. Deze verschijnt binnen een minuut onder Test events in Events Manager.",
+      "sendHint": "Verstuurt één voorbeeld-Purchase (100 USD) naar het meest recente contact van dit kanaal.",
+      "activeNotice": "Testmodus staat aan: gebeurtenissen van dit kanaal worden pas weer meegeteld in rapporten zodra de code is gewist.",
+      "openTestEvents": "Test events openen"
     }
   },
   "minigames": {

@@ -12,9 +12,9 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
-import { MessagingAdsMovedAlert } from "@/features/ads-campaign/components/messaging-ads-moved-alert"
 import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
 import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
+import { CapiTestEventCard } from "@/features/meta-conversions/components/capi-test-event-card"
 import {
   type CapiConnectionState,
   getCapiConnectionState,
@@ -40,6 +40,7 @@ type WhatsappCapiTabProps = {
     | "wabaId"
     | "hasCapiScope"
     | "datasetId"
+    | "capiTestEventCode"
   >
   hasManualCapiAccessToken: boolean
   capiDisconnected: boolean
@@ -51,6 +52,7 @@ type WhatsappCapiTabProps = {
 const statusDescriptionKey = {
   ready: "metaConversions.statusDescriptions.ready",
   notConnected: "metaConversions.statusDescriptions.notConnected",
+  missingPermission: "metaConversions.statusDescriptions.missingPermission",
   unverified: "metaConversions.statusDescriptions.unverified",
   unsupported: "metaConversions.statusDescriptions.unsupported",
 } as const satisfies Record<CapiStatus, string>
@@ -59,10 +61,12 @@ function renderConnectionContent({
   connectionState,
   integrationWhatsapp,
   workspaceId,
+  notice,
 }: {
   connectionState: CapiConnectionState
   integrationWhatsapp: WhatsappCapiTabProps["integrationWhatsapp"]
   workspaceId: string
+  notice: string
 }) {
   if (connectionState === "disconnected") {
     return (
@@ -80,12 +84,26 @@ function renderConnectionContent({
     )
   }
   return (
-    <CapiConnectedCard
-      datasetId={integrationWhatsapp.datasetId}
-      disconnectAction={disconnectWhatsappCapiAction}
-      integrationId={integrationWhatsapp.id}
-      workspaceId={workspaceId}
-    />
+    <>
+      <CapiConnectedCard
+        datasetId={integrationWhatsapp.datasetId}
+        disconnectAction={disconnectWhatsappCapiAction}
+        integrationId={integrationWhatsapp.id}
+        notice={connectionState === "awaitingScope" ? notice : undefined}
+        workspaceId={workspaceId}
+      />
+      {/* Sending needs the Meta scope or a manual token; while the scope is
+          still missing a test would only be skipped, so hide the card. */}
+      {connectionState === "awaitingScope" ? null : (
+        <CapiTestEventCard
+          channel="whatsapp"
+          datasetId={integrationWhatsapp.datasetId}
+          integrationId={integrationWhatsapp.id}
+          testEventCode={integrationWhatsapp.capiTestEventCode}
+          workspaceId={workspaceId}
+        />
+      )}
+    </>
   )
 }
 
@@ -106,7 +124,8 @@ export function WhatsappCapiTab({
     hasDatasetId: Boolean(integrationWhatsapp.datasetId),
   })
   const status = getCapiStatus({
-    hasCapiScope: !capiDisconnected && integrationWhatsapp.hasCapiScope,
+    hasCapiScope: integrationWhatsapp.hasCapiScope,
+    capiDisconnected,
     hasManualCapiAccessToken,
     hasDatasetId: Boolean(integrationWhatsapp.datasetId),
     credentialAvailable,
@@ -137,6 +156,7 @@ export function WhatsappCapiTab({
             connectionState,
             integrationWhatsapp,
             workspaceId,
+            notice: t("metaConversions.statusDescriptions.missingPermission"),
           })}
           <p className="text-muted-foreground text-xs">
             {t("metaConversions.flowStep.whatsappNote")}
@@ -147,11 +167,6 @@ export function WhatsappCapiTab({
         integrationWhatsapp={integrationWhatsapp}
         oauthCallbackUrl={oauthCallbackUrl}
         whatsappCredentialPublic={whatsappCredentialPublic}
-        workspaceId={workspaceId}
-      />
-      <MessagingAdsMovedAlert
-        channel="whatsapp"
-        integrationId={integrationWhatsapp.id}
         workspaceId={workspaceId}
       />
     </div>

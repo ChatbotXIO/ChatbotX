@@ -2328,8 +2328,7 @@
       "import": "Nhập luồng",
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
-      "importJsonOnly": "Chỉ tệp JSON",
-      "adsConversions": "Quảng cáo và Meta Conversions"
+      "importJsonOnly": "Chỉ tệp JSON"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -4445,11 +4444,6 @@
       "description": "Hãy kết nối một tài khoản kênh trước, sau đó quay lại đây để tạo quảng cáo.",
       "cta": "Đi đến cài đặt kênh"
     },
-    "movedNote": {
-      "title": "Quảng cáo đã chuyển sang Công cụ",
-      "description": "Tạo và quản lý quảng cáo Click-to-Message từ công cụ Quảng cáo Click-to-Message.",
-      "cta": "Mở Quảng cáo Click-to-Message"
-    },
     "dashboardCta": "Xem trên bảng điều khiển Quảng cáo"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Gửi sự kiện LeadSubmitted từ hội thoại Messenger, Instagram và WhatsApp đến Meta.",
+    "description": "Gửi các sự kiện chuyển đổi từ hội thoại Messenger, Instagram và WhatsApp đến Meta.",
     "datasetId": "ID dataset",
     "reconnect": "Kết nối lại quyền",
     "connectViaFacebook": "Kết nối qua Facebook",
     "unsupportedExplanation": "Tài khoản Instagram này được kết nối bằng Instagram Business Login. Hãy kết nối tài khoản qua Facebook để dùng Meta Conversions API.",
     "flowStep": {
-      "description": "Đưa sự kiện LeadSubmitted cho Messenger, Instagram hoặc WhatsApp vào hàng đợi.",
       "whatsappNote": "Sự kiện WhatsApp chỉ được gửi cho các hội thoại bắt đầu từ quảng cáo click-to-WhatsApp."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Hãy lưu Dataset ID trước khi thêm access token.",
       "invalidToken": "Token này không truy cập được dataset.",
       "invalidDatasetId": "Nhập Dataset ID hợp lệ (chỉ gồm chữ số).",
-      "whatsappNotFound": "Không tìm thấy tích hợp WhatsApp."
+      "whatsappNotFound": "Không tìm thấy tích hợp WhatsApp.",
+      "testEventCodeRequired": "Hãy lưu mã sự kiện thử trước khi gửi sự kiện thử.",
+      "noContactForTest": "Kênh này chưa có liên hệ phù hợp. Sự kiện thử cần một liên hệ thật để gán vào (với WhatsApp, liên hệ phải đến từ quảng cáo click-to-WhatsApp).",
+      "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự)."
     },
     "fields": {
       "eventType": {
         "label": "Loại sự kiện",
-        "leadSubmitted": "Gửi thông tin (Lead)"
+        "leadSubmitted": "Gửi thông tin (Lead)",
+        "purchase": "Mua hàng",
+        "initiateCheckout": "Bắt đầu thanh toán",
+        "addToCart": "Thêm vào giỏ hàng",
+        "viewContent": "Xem nội dung",
+        "orderCreated": "Đơn hàng được tạo",
+        "orderShipped": "Đơn hàng đã gửi",
+        "orderDelivered": "Đơn hàng đã giao",
+        "orderCanceled": "Đơn hàng đã huỷ",
+        "orderReturned": "Đơn hàng đã trả lại",
+        "cartAbandoned": "Bỏ giỏ hàng",
+        "qualifiedLead": "Lead hợp lệ",
+        "ratingProvided": "Đã đánh giá",
+        "reviewProvided": "Đã nhận xét",
+        "addPaymentInfo": "Thêm thông tin thanh toán",
+        "addToWishlist": "Thêm vào yêu thích",
+        "completeRegistration": "Hoàn tất đăng ký",
+        "contact": "Liên hệ",
+        "customizeProduct": "Tuỳ chỉnh sản phẩm",
+        "donate": "Quyên góp",
+        "findLocation": "Tìm địa điểm",
+        "lead": "Lead",
+        "schedule": "Đặt lịch",
+        "search": "Tìm kiếm",
+        "startTrial": "Bắt đầu dùng thử",
+        "submitApplication": "Gửi đơn đăng ký",
+        "subscribe": "Đăng ký",
+        "custom": "Sự kiện tuỳ chỉnh…",
+        "groups": {
+          "commerce": "Thương mại",
+          "leads": "Lead",
+          "orders": "Đơn hàng",
+          "feedback": "Phản hồi",
+          "leadsAndSignups": "Lead & Đăng ký",
+          "other": "Khác"
+        }
       },
       "value": "Giá trị",
       "valuePlaceholder": "vd: 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Tên sự kiện tuỳ chỉnh",
+      "customEventNamePlaceholder": "vd: MyCustomEvent",
+      "contentType": {
+        "label": "Loại nội dung",
+        "product": "Sản phẩm",
+        "product_group": "Nhóm sản phẩm"
+      },
+      "contentIds": "Mã nội dung",
+      "contentIdsPlaceholder": "vd: 123,456"
     },
     "datasetIdPlaceholder": "Dán Dataset ID từ Events Manager",
     "saveDataset": "Lưu",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Nguồn hành động",
+      "help": "Sự kiện này diễn ra ở đâu. Xem tài liệu về nguồn hành động của Meta.",
+      "business_messaging": "Nhắn tin doanh nghiệp",
+      "email": "Email",
+      "phone_call": "Cuộc gọi",
+      "chat": "Trò chuyện",
+      "physical_store": "Cửa hàng thực tế",
+      "system_generated": "Do hệ thống tạo",
+      "other": "Khác"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Nâng cao"
+    },
+    "testEvents": {
+      "title": "Sự kiện thử",
+      "description": "Dán test_event_code lấy từ Events Manager → Test events. Khi đang đặt mã, mọi sự kiện của kênh này được đưa vào màn Test events kèm đầy đủ dữ liệu (giá trị, tiền tệ, mã nội dung) và không được tính vào báo cáo. Xoá mã khi kiểm tra xong.",
+      "codeLabel": "Mã sự kiện thử",
+      "codePlaceholder": "vd: TEST12345",
+      "save": "Lưu mã",
+      "clear": "Xoá",
+      "saved": "Đã lưu mã sự kiện thử.",
+      "cleared": "Đã xoá mã sự kiện thử. Sự kiện gửi thật trở lại.",
+      "send": "Gửi sự kiện thử",
+      "sent": "Đã xếp hàng sự kiện thử. Nó sẽ hiện trong Test events của Events Manager trong khoảng một phút.",
+      "sendHint": "Gửi một sự kiện Purchase mẫu (100 USD) tới liên hệ gần nhất của kênh này.",
+      "activeNotice": "Đang ở chế độ thử: sự kiện của kênh này không được tính vào báo cáo cho tới khi xoá mã.",
+      "openTestEvents": "Mở Test events"
     }
   },
   "minigames": {

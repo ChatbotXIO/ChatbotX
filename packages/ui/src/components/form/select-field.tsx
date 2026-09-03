@@ -33,6 +33,7 @@ export type SelectFieldProps<T extends FieldValues> = React.ComponentProps<
   placeholder?: string
   description?: string
   descriptionType?: "inline" | "tooltip"
+  descriptionHref?: string
   options?: SelectOption[]
   fetchOptionsUrl?: string
   formItemClassName?: string
@@ -62,6 +63,7 @@ export const SelectField = <T extends FieldValues>(
     placeholder,
     description,
     descriptionType = "inline",
+    descriptionHref,
     options = [],
     fetchOptionsUrl,
     formItemClassName,
@@ -150,6 +152,7 @@ export const SelectField = <T extends FieldValues>(
   return (
     <FormFieldWrapper<T>
       description={description}
+      descriptionHref={descriptionHref}
       descriptionType={descriptionType}
       formItemClassName={formItemClassName}
       label={label}

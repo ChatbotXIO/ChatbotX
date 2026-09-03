@@ -1,7 +1,13 @@
+import type {
+  MetaCapiActionSource,
+  MetaCapiContentType,
+  MetaCapiEventName,
+} from "@chatbotx.io/utils/meta-capi"
 import { sql } from "drizzle-orm"
 import {
   check,
   index,
+  jsonb,
   numeric,
   pgTable,
   text,
@@ -17,13 +23,29 @@ import {
 import { contactInboxModel } from "./contact-inbox"
 import { workspaceModel } from "./workspace"
 
+export {
+  type MetaCapiActionSource,
+  type MetaCapiContentType,
+  type MetaCapiEventName,
+  metaCapiActionSourceSchema,
+  metaCapiActionSourceValues,
+  metaCapiContentTypeSchema,
+  metaCapiContentTypeValues,
+  metaCapiEventNameSchema,
+} from "@chatbotx.io/utils/meta-capi"
+
 export const metaCapiEventChannelValues = [
   "messenger",
   "instagram",
   "whatsapp",
 ] as const
-export const metaCapiEventNameValues = ["LeadSubmitted", "Purchase"] as const
-export const metaCapiEventSourceValues = ["flowStep", "triggerAction"] as const
+export const metaCapiEventSourceValues = [
+  "flowStep",
+  "triggerAction",
+  // "Send test event" from the CAPI settings tab — only ever sent with a
+  // test_event_code, never as a production event.
+  "manualTest",
+] as const
 export const metaCapiStatusValues = [
   "pending",
   "sent",
@@ -38,9 +60,6 @@ export const metaCapiStatusValues = [
 
 export const metaCapiEventChannelSchema = z.enum(metaCapiEventChannelValues)
 export type MetaCapiEventChannel = z.infer<typeof metaCapiEventChannelSchema>
-
-export const metaCapiEventNameSchema = z.enum(metaCapiEventNameValues)
-export type MetaCapiEventName = z.infer<typeof metaCapiEventNameSchema>
 
 export const metaCapiEventSourceSchema = z.enum(metaCapiEventSourceValues)
 export type MetaCapiEventSource = z.infer<typeof metaCapiEventSourceSchema>
@@ -75,6 +94,16 @@ export const metaCapiEventModel = pgTable(
     contentCategory: text(),
     contentName: text(),
     value: numeric(),
+    // Meta CAPI `action_source` — see `metaCapiActionSourcePolicy` in
+    // `@chatbotx.io/utils/meta-capi` for how each value drives identity and
+    // event-catalog selection. Defaulted so existing rows (and existing
+    // steps/actions parsing through zod `.default()`) stay `business_messaging`.
+    actionSource: text()
+      .$type<MetaCapiActionSource>()
+      .notNull()
+      .default("business_messaging"),
+    contentType: text().$type<MetaCapiContentType>(),
+    contentIds: jsonb().$type<string[]>(),
     source: text().$type<MetaCapiEventSource>().notNull(),
     sourceKey: text().notNull(),
     occurredAt: timestamp(timestampConfig).notNull(),
@@ -100,6 +129,14 @@ export const metaCapiEventModel = pgTable(
     check(
       "MetaCapiEvent_channel_check",
       sql`"channel" IN ('messenger', 'instagram', 'whatsapp')`,
+    ),
+    check(
+      "MetaCapiEvent_actionSource_check",
+      sql`"actionSource" IN ('business_messaging', 'email', 'phone_call', 'chat', 'physical_store', 'system_generated', 'other')`,
+    ),
+    check(
+      "MetaCapiEvent_contentType_check",
+      sql`"contentType" IN ('product', 'product_group')`,
     ),
   ],
 )

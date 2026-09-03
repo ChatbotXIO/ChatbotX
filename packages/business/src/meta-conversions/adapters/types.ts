@@ -28,6 +28,10 @@ type DatasetIdUpdate = WorkspaceIntegrationRef & {
   datasetId: string
 }
 
+type CapiTestEventCodeUpdate = WorkspaceIntegrationRef & {
+  capiTestEventCode: string | null
+}
+
 type CapiCustomConnect = WorkspaceIntegrationRef & {
   datasetId: string
   capiAccessToken: EncryptedData
@@ -71,6 +75,11 @@ export interface CapiSendAdapter<
   /** Compare-and-swap write, safe to call from the concurrent send path. */
   updateCapiScopeCache(
     input: CapiScopeCacheUpdate,
+    tx?: DatabaseClient,
+  ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null>
+  /** Set or clear (null) the Events Manager test_event_code. */
+  updateCapiTestEventCode(
+    input: CapiTestEventCodeUpdate,
     tx?: DatabaseClient,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null>
   /**

@@ -2328,8 +2328,7 @@
       "import": "Akışı içe aktar",
       "export": "Dışa aktar",
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
-      "importJsonOnly": "Yalnızca JSON dosyaları",
-      "adsConversions": "Reklamlar ve Meta Conversions"
+      "importJsonOnly": "Yalnızca JSON dosyaları"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -4406,11 +4405,6 @@
       "description": "Önce bir kanal hesabı bağlayın, ardından reklam oluşturmak için buraya geri dönün.",
       "cta": "Kanal ayarlarına git"
     },
-    "movedNote": {
-      "title": "Reklamlar Araçlar'a taşındı",
-      "description": "Click-to-Message reklamlarını Click-to-Message Reklamları aracından oluşturun ve yönetin.",
-      "cta": "Click-to-Message Reklamları'nı aç"
-    },
     "dashboardCta": "Reklamlar panosunda görüntüle"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Messenger, Instagram ve WhatsApp konuşmalarından LeadSubmitted etkinliklerini Meta'ya gönderin.",
+    "description": "Messenger, Instagram ve WhatsApp konuşmalarından dönüşüm etkinliklerini Meta'ya gönderin.",
     "datasetId": "Veri Kümesi ID",
     "reconnect": "İzinleri yeniden bağla",
     "connectViaFacebook": "Facebook üzerinden bağlan",
     "unsupportedExplanation": "Bu Instagram hesabı Instagram Business Girişi ile bağlandı. Meta Conversions API'yi kullanmak için hesabı Facebook üzerinden bağlayın.",
     "flowStep": {
-      "description": "Messenger, Instagram veya WhatsApp için bir LeadSubmitted etkinliği kuyruğa alın.",
       "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "Erişim jetonu eklemeden önce bir Veri Kümesi ID'si kaydedin.",
       "invalidToken": "Bu jeton veri kümesine erişemedi.",
       "invalidDatasetId": "Geçerli bir Dataset ID girin (yalnızca rakamlar).",
-      "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı."
+      "whatsappNotFound": "WhatsApp entegrasyonu bulunamadı.",
+      "testEventCodeRequired": "Bir test etkinliği göndermeden önce test etkinliği kodunu kaydedin.",
+      "noContactForTest": "Bu kanalda henüz uygun bir kişi yok. Test etkinliği, ilişkilendirilecek gerçek bir kişi gerektirir (WhatsApp için click-to-WhatsApp reklamından gelen bir kişi).",
+      "invalidTestEventCode": "Test etkinliği kodu yalnızca harf, rakam, tire veya alt çizgi içerebilir (en fazla 64)."
     },
     "fields": {
       "eventType": {
         "label": "Etkinlik Türü",
-        "leadSubmitted": "Potansiyel Müşteri Gönderildi"
+        "leadSubmitted": "Potansiyel Müşteri Gönderildi",
+        "purchase": "Satın Alma",
+        "initiateCheckout": "Ödemeyi Başlat",
+        "addToCart": "Sepete Ekle",
+        "viewContent": "İçeriği Görüntüle",
+        "orderCreated": "Sipariş Oluşturuldu",
+        "orderShipped": "Sipariş Kargoya Verildi",
+        "orderDelivered": "Sipariş Teslim Edildi",
+        "orderCanceled": "Sipariş İptal Edildi",
+        "orderReturned": "Sipariş İade Edildi",
+        "cartAbandoned": "Sepet Terk Edildi",
+        "qualifiedLead": "Nitelikli Potansiyel Müşteri",
+        "ratingProvided": "Değerlendirme Verildi",
+        "reviewProvided": "İnceleme Verildi",
+        "addPaymentInfo": "Ödeme Bilgisi Ekle",
+        "addToWishlist": "İstek Listesine Ekle",
+        "completeRegistration": "Kaydı Tamamla",
+        "contact": "İletişim",
+        "customizeProduct": "Ürünü Özelleştir",
+        "donate": "Bağış Yap",
+        "findLocation": "Konum Bul",
+        "lead": "Potansiyel Müşteri",
+        "schedule": "Randevu Al",
+        "search": "Arama",
+        "startTrial": "Denemeyi Başlat",
+        "submitApplication": "Başvuru Gönder",
+        "subscribe": "Abone Ol",
+        "custom": "Özel etkinlik…",
+        "groups": {
+          "commerce": "Ticaret",
+          "leads": "Potansiyel Müşteriler",
+          "orders": "Siparişler",
+          "feedback": "Geri Bildirim",
+          "leadsAndSignups": "Potansiyel Müşteriler ve Kayıtlar",
+          "other": "Diğer"
+        }
       },
       "value": "Değer",
       "valuePlaceholder": "ör. 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "Özel etkinlik adı",
+      "customEventNamePlaceholder": "örn. MyCustomEvent",
+      "contentType": {
+        "label": "İçerik türü",
+        "product": "Ürün",
+        "product_group": "Ürün Grubu"
+      },
+      "contentIds": "İçerik Kimlikleri",
+      "contentIdsPlaceholder": "örn. 123,456"
     },
     "datasetIdPlaceholder": "Etkinlik Yöneticisi'nden Veri Kümesi ID'sini yapıştırın",
     "saveDataset": "Kaydet",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "Eylem kaynağı",
+      "help": "Bu etkinliğin nerede gerçekleştiği. Meta'nın eylem kaynağı belgelerine bakın.",
+      "business_messaging": "İşletme Mesajlaşması",
+      "email": "E-posta",
+      "phone_call": "Telefon Görüşmesi",
+      "chat": "Sohbet",
+      "physical_store": "Fiziksel Mağaza",
+      "system_generated": "Sistem Tarafından Oluşturuldu",
+      "other": "Diğer"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "Gelişmiş"
+    },
+    "testEvents": {
+      "title": "Test etkinlikleri",
+      "description": "Events Manager → Test events üzerinden test_event_code değerini yapıştırın. Ayarlı olduğu sürece bu kanaldaki her etkinlik, tam yüküyle (değer, para birimi, içerik kimlikleri) Test events görünümüne yönlendirilir ve raporlarda sayılmaz. İşiniz bitince temizleyin.",
+      "codeLabel": "Test etkinliği kodu",
+      "codePlaceholder": "örn. TEST12345",
+      "save": "Kodu kaydet",
+      "clear": "Temizle",
+      "saved": "Test etkinliği kodu kaydedildi.",
+      "cleared": "Test etkinliği kodu temizlendi. Etkinlikler tekrar canlı.",
+      "send": "Test etkinliği gönder",
+      "sent": "Test etkinliği sıraya alındı. Bir dakika içinde Events Manager içindeki Test events altında görünür.",
+      "sendHint": "Bu kanalın en son kişisine örnek bir Purchase (100 USD) gönderir.",
+      "activeNotice": "Test modu açık: kod temizlenene kadar bu kanaldaki etkinlikler raporlarda sayılmaz.",
+      "openTestEvents": "Test events'i aç"
     }
   },
   "minigames": {

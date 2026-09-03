@@ -23,6 +23,10 @@ type FormFieldWrapperProps<T extends FieldValues> = {
   required?: boolean
   description?: string
   descriptionType?: "inline" | "tooltip"
+  /** When set, the tooltip info icon also links to this URL (opens in a new tab). */
+  descriptionHref?: string
+  /** Suppress the inline error message (e.g. when a sibling control bound to the same field already shows it). */
+  hideMessage?: boolean
   formItemClassName?: string
   children: (
     field: {
@@ -40,6 +44,8 @@ export function FormFieldWrapper<T extends FieldValues>({
   required,
   description,
   descriptionType = "inline",
+  descriptionHref,
+  hideMessage = false,
   formItemClassName,
   children,
 }: FormFieldWrapperProps<T>) {
@@ -63,11 +69,36 @@ export function FormFieldWrapper<T extends FieldValues>({
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                      descriptionHref ? (
+                        <a
+                          aria-label={description}
+                          href={descriptionHref}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          <InfoIcon
+                            aria-hidden="true"
+                            className="size-3.5 cursor-help text-muted-foreground"
+                          />
+                        </a>
+                      ) : (
+                        <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
+                      )
                     }
                   />
                   <TooltipContent className="max-w-sm">
-                    {description}
+                    {descriptionHref ? (
+                      <a
+                        className="underline decoration-dotted underline-offset-2"
+                        href={descriptionHref}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {description}
+                      </a>
+                    ) : (
+                      description
+                    )}
                   </TooltipContent>
                 </Tooltip>
               ) : null}
@@ -77,7 +108,7 @@ export function FormFieldWrapper<T extends FieldValues>({
           {description && descriptionType === "inline" ? (
             <FormDescription>{description}</FormDescription>
           ) : null}
-          <FormMessage />
+          {hideMessage ? null : <FormMessage />}
         </FormItem>
       )}
     />

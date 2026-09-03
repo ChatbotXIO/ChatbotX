@@ -2328,8 +2328,7 @@
       "import": "استيراد التدفق",
       "export": "تصدير",
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
-      "importJsonOnly": "ملفات JSON فقط",
-      "adsConversions": "الإعلانات وتحويلات Meta"
+      "importJsonOnly": "ملفات JSON فقط"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -4241,11 +4240,6 @@
       "description": "قم بتوصيل حساب القناة أولاً، ثم عد إلى هنا لإنشاء الإعلانات.",
       "cta": "الانتقال إلى إعدادات القناة"
     },
-    "movedNote": {
-      "title": "انتقلت الإعلانات إلى الأدوات",
-      "description": "أنشئ وأدر إعلانات Click-to-Message من أداة إعلانات Click-to-Message.",
-      "cta": "فتح إعلانات Click-to-Message"
-    },
     "dashboardCta": "عرض على لوحة معلومات الإعلانات"
   },
   "ecommerce": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "إرسال أحداث LeadSubmitted من محادثات Messenger وInstagram وWhatsApp إلى Meta.",
+    "description": "إرسال أحداث تحويل من محادثات Messenger وInstagram وWhatsApp إلى Meta.",
     "datasetId": "معرف Dataset",
     "reconnect": "إعادة ربط الصلاحيات",
     "connectViaFacebook": "ربط عبر Facebook",
     "unsupportedExplanation": "تم ربط حساب Instagram هذا باستخدام تسجيل دخول Instagram للأعمال. اربط الحساب عبر Facebook لاستخدام Meta Conversions API.",
     "flowStep": {
-      "description": "إضافة حدث LeadSubmitted إلى قائمة الانتظار لـ Messenger أو Instagram أو WhatsApp.",
       "whatsappNote": "تُرسل أحداث WhatsApp فقط للمحادثات التي بدأت من إعلان النقر للمحادثة عبر WhatsApp."
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "احفظ معرف Dataset قبل إضافة رمز وصول.",
       "invalidToken": "تعذّر على هذا الرمز الوصول إلى Dataset.",
       "invalidDatasetId": "أدخل معرّف مجموعة بيانات صالحًا (أرقام فقط).",
-      "whatsappNotFound": "لم يتم العثور على اتصال WhatsApp."
+      "whatsappNotFound": "لم يتم العثور على اتصال WhatsApp.",
+      "testEventCodeRequired": "احفظ رمز حدث اختبار قبل إرسال حدث اختبار.",
+      "noContactForTest": "لا توجد جهة اتصال مؤهلة على هذه القناة بعد. يحتاج الحدث التجريبي إلى جهة اتصال حقيقية لربطه بها (في WhatsApp، يجب أن تأتي من إعلان click-to-WhatsApp).",
+      "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64)."
     },
     "fields": {
       "eventType": {
         "label": "نوع الحدث",
-        "leadSubmitted": "تم إرسال عميل محتمل"
+        "leadSubmitted": "تم إرسال عميل محتمل",
+        "purchase": "شراء",
+        "initiateCheckout": "بدء الدفع",
+        "addToCart": "إضافة إلى السلة",
+        "viewContent": "عرض المحتوى",
+        "orderCreated": "تم إنشاء الطلب",
+        "orderShipped": "تم شحن الطلب",
+        "orderDelivered": "تم توصيل الطلب",
+        "orderCanceled": "تم إلغاء الطلب",
+        "orderReturned": "تم إرجاع الطلب",
+        "cartAbandoned": "التخلي عن السلة",
+        "qualifiedLead": "عميل محتمل مؤهل",
+        "ratingProvided": "تم تقديم تقييم",
+        "reviewProvided": "تم تقديم مراجعة",
+        "addPaymentInfo": "إضافة معلومات الدفع",
+        "addToWishlist": "إضافة إلى المفضلة",
+        "completeRegistration": "إتمام التسجيل",
+        "contact": "تواصل",
+        "customizeProduct": "تخصيص المنتج",
+        "donate": "تبرع",
+        "findLocation": "البحث عن موقع",
+        "lead": "عميل محتمل",
+        "schedule": "جدولة موعد",
+        "search": "بحث",
+        "startTrial": "بدء الفترة التجريبية",
+        "submitApplication": "تقديم الطلب",
+        "subscribe": "اشتراك",
+        "custom": "حدث مخصص…",
+        "groups": {
+          "commerce": "التجارة",
+          "leads": "العملاء المحتملون",
+          "orders": "الطلبات",
+          "feedback": "الملاحظات",
+          "leadsAndSignups": "العملاء المحتملون والتسجيلات",
+          "other": "أخرى"
+        }
       },
       "value": "القيمة",
       "valuePlaceholder": "مثال: 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "اسم الحدث المخصص",
+      "customEventNamePlaceholder": "مثال: MyCustomEvent",
+      "contentType": {
+        "label": "نوع المحتوى",
+        "product": "منتج",
+        "product_group": "مجموعة منتجات"
+      },
+      "contentIds": "معرّفات المحتوى",
+      "contentIdsPlaceholder": "مثال: 123,456"
     },
     "datasetIdPlaceholder": "الصق معرف Dataset من Events Manager",
     "saveDataset": "حفظ",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "مصدر الإجراء",
+      "help": "أين حدث هذا الحدث. راجع وثائق مصدر الإجراء من Meta.",
+      "business_messaging": "مراسلة الأعمال",
+      "email": "البريد الإلكتروني",
+      "phone_call": "مكالمة هاتفية",
+      "chat": "محادثة",
+      "physical_store": "متجر فعلي",
+      "system_generated": "تم إنشاؤه بواسطة النظام",
+      "other": "أخرى"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "خيارات متقدمة"
+    },
+    "testEvents": {
+      "title": "اختبار الأحداث",
+      "description": "الصق test_event_code من Events Manager ← Test events. أثناء ضبطه، يتم توجيه كل حدث من هذه القناة إلى عرض Test events مع كامل بياناته (القيمة، العملة، معرّفات المحتوى) ولا يُحتسب في التقارير. امسحه عند الانتهاء.",
+      "codeLabel": "رمز حدث الاختبار",
+      "codePlaceholder": "مثال: TEST12345",
+      "save": "حفظ الرمز",
+      "clear": "مسح",
+      "saved": "تم حفظ رمز حدث الاختبار.",
+      "cleared": "تم مسح رمز حدث الاختبار. الأحداث نشطة مجددًا.",
+      "send": "إرسال حدث اختبار",
+      "sent": "تم إدراج حدث الاختبار في قائمة الانتظار. سيظهر ضمن Test events في Events Manager خلال دقيقة.",
+      "sendHint": "يرسل حدث Purchase تجريبيًا واحدًا (100 USD) إلى أحدث جهة اتصال في هذه القناة.",
+      "activeNotice": "وضع الاختبار مفعّل: لا تُحتسب أحداث هذه القناة في التقارير حتى يتم مسح الرمز.",
+      "openTestEvents": "فتح Test events"
     }
   },
   "minigames": {

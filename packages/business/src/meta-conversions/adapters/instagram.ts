@@ -51,6 +51,8 @@ export const instagramCapiReadinessAdapter: CapiReadinessAdapter<"instagram"> =
       integrationInstagramRepository.updateDatasetIdIfNull(input, tx),
     updateDatasetId: (input, tx) =>
       integrationInstagramRepository.updateDatasetId(input, tx),
+    updateCapiTestEventCode: (input, tx) =>
+      integrationInstagramRepository.updateCapiTestEventCode(input, tx),
     updateCapiAccessToken: (input, tx) =>
       integrationInstagramRepository.updateCapiAccessToken(input, tx),
     connectCustomCapi: (input, tx) =>

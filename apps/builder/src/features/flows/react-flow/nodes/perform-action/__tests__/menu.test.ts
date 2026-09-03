@@ -19,20 +19,22 @@ describe("perform action SendGrid registration", () => {
   })
 })
 
-describe("perform action ads conversions menu", () => {
-  test("groups sendMetaCapiEvent under the renamed Ads/Meta Conversions group", () => {
-    const adsConversions = performActionMenus(t).find(
-      (item) => item.label === "flows.actions.adsConversions",
-    )
+describe("perform action Meta CAPI menu", () => {
+  test("exposes sendMetaCapiEvent as a top-level entry, not inside a group", () => {
+    const menus = performActionMenus(t)
 
-    expect(adsConversions?.children?.map((child) => child.stepType)).toEqual([
-      stepTypes.enum.sendMetaCapiEvent,
-    ])
-    // The old `metaConversions` group label no longer exists — it was
-    // renamed, not duplicated alongside a new group.
+    expect(menus).toContainEqual(
+      expect.objectContaining({
+        label: "flows.actions.sendMetaCapiEvent",
+        stepType: stepTypes.enum.sendMetaCapiEvent,
+      }),
+    )
     expect(
-      performActionMenus(t).some(
-        (item) => item.label === "flows.actions.metaConversions",
+      menus.some((item) =>
+        [
+          "flows.actions.adsConversions",
+          "flows.actions.metaConversions",
+        ].includes(item.label),
       ),
     ).toBe(false)
   })

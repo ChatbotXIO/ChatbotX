@@ -2254,8 +2254,7 @@
       "import": "フローをインポート",
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
-      "importJsonOnly": "JSONファイルのみ",
-      "adsConversions": "広告とMeta Conversions"
+      "importJsonOnly": "JSONファイルのみ"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -4385,11 +4384,6 @@
       "description": "まずチャネルアカウントを接続してから、ここに戻って広告を作成してください。",
       "cta": "チャネル設定に移動"
     },
-    "movedNote": {
-      "title": "広告はツールに移動しました",
-      "description": "Click-to-Message広告ツールからClick-to-Message広告を作成・管理できます。",
-      "cta": "Click-to-Message広告を開く"
-    },
     "dashboardCta": "広告ダッシュボードで表示"
   },
   "platformSettings": {
@@ -5340,13 +5334,12 @@
   },
   "metaConversions": {
     "title": "Conversions API",
-    "description": "Messenger、Instagram、WhatsApp の会話から LeadSubmitted イベントを Meta に送信します。",
+    "description": "Messenger、Instagram、WhatsApp の会話からコンバージョンイベントを Meta に送信します。",
     "datasetId": "データセットID",
     "reconnect": "権限を再連携",
     "connectViaFacebook": "Facebook 経由で連携",
     "unsupportedExplanation": "この Instagram アカウントは Instagram ビジネスログインで連携されています。Meta Conversions API を利用するには、Facebook 経由でアカウントを連携してください。",
     "flowStep": {
-      "description": "Messenger、Instagram、WhatsApp 向けに LeadSubmitted イベントをキューに追加します。",
       "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。"
     },
     "status": {
@@ -5373,12 +5366,50 @@
       "datasetRequired": "アクセストークンを追加する前にデータセットIDを保存してください。",
       "invalidToken": "このトークンではデータセットにアクセスできませんでした。",
       "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
-      "whatsappNotFound": "WhatsApp の連携が見つかりません。"
+      "whatsappNotFound": "WhatsApp の連携が見つかりません。",
+      "testEventCodeRequired": "テストイベントを送信する前にテストイベントコードを保存してください。",
+      "noContactForTest": "このチャネルにはまだ対象となる連絡先がありません。テストイベントには紐付け先となる実際の連絡先が必要です（WhatsApp の場合は click-to-WhatsApp 広告経由の連絡先）。",
+      "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。"
     },
     "fields": {
       "eventType": {
         "label": "イベントタイプ",
-        "leadSubmitted": "Lead Submitted"
+        "leadSubmitted": "Lead Submitted",
+        "purchase": "購入",
+        "initiateCheckout": "購入手続き開始",
+        "addToCart": "カートに追加",
+        "viewContent": "コンテンツ閲覧",
+        "orderCreated": "注文作成",
+        "orderShipped": "注文発送",
+        "orderDelivered": "注文配達完了",
+        "orderCanceled": "注文キャンセル",
+        "orderReturned": "注文返品",
+        "cartAbandoned": "カート放棄",
+        "qualifiedLead": "有望見込み客",
+        "ratingProvided": "評価送信",
+        "reviewProvided": "レビュー送信",
+        "addPaymentInfo": "支払い情報追加",
+        "addToWishlist": "ウィッシュリストに追加",
+        "completeRegistration": "登録完了",
+        "contact": "お問い合わせ",
+        "customizeProduct": "商品カスタマイズ",
+        "donate": "寄付",
+        "findLocation": "店舗検索",
+        "lead": "見込み客",
+        "schedule": "予約",
+        "search": "検索",
+        "startTrial": "無料体験開始",
+        "submitApplication": "申し込み送信",
+        "subscribe": "登録",
+        "custom": "カスタムイベント…",
+        "groups": {
+          "commerce": "コマース",
+          "leads": "見込み客",
+          "orders": "注文",
+          "feedback": "フィードバック",
+          "leadsAndSignups": "見込み客と登録",
+          "other": "その他"
+        }
       },
       "value": "値",
       "valuePlaceholder": "例: 250",
@@ -5396,7 +5427,16 @@
         "id": "Product ID",
         "quantity": "Quantity",
         "itemPrice": "Item price"
-      }
+      },
+      "customEventName": "カスタムイベント名",
+      "customEventNamePlaceholder": "例: MyCustomEvent",
+      "contentType": {
+        "label": "コンテンツタイプ",
+        "product": "商品",
+        "product_group": "商品グループ"
+      },
+      "contentIds": "コンテンツID",
+      "contentIdsPlaceholder": "例: 123,456"
     },
     "datasetIdPlaceholder": "Events Manager からデータセットIDを貼り付けてください",
     "saveDataset": "保存",
@@ -5447,6 +5487,36 @@
     "limitedDataUse": {
       "label": "Limited Data Use (US privacy)",
       "description": "Restrict Meta's use of event data for users in applicable US states. Meta auto-detects the user's location from this event; no location data is sent by ChatbotX."
+    },
+    "actionSource": {
+      "label": "アクションのソース",
+      "help": "このイベントが発生した場所です。Metaのアクションソースのドキュメントをご覧ください。",
+      "business_messaging": "ビジネスメッセージ",
+      "email": "メール",
+      "phone_call": "電話",
+      "chat": "チャット",
+      "physical_store": "実店舗",
+      "system_generated": "システム生成",
+      "other": "その他"
+    },
+    "dialog": {
+      "title": "Meta CAPI",
+      "advanced": "詳細設定"
+    },
+    "testEvents": {
+      "title": "テストイベント",
+      "description": "Events Manager → Test events から test_event_code を貼り付けます。設定されている間、このチャネルのすべてのイベントは完全なペイロード（値、通貨、コンテンツID）とともに Test events ビューに振り分けられ、レポートにはカウントされません。完了したらクリアしてください。",
+      "codeLabel": "テストイベントコード",
+      "codePlaceholder": "例: TEST12345",
+      "save": "コードを保存",
+      "clear": "クリア",
+      "saved": "テストイベントコードを保存しました。",
+      "cleared": "テストイベントコードをクリアしました。イベントは再びライブになります。",
+      "send": "テストイベントを送信",
+      "sent": "テストイベントをキューに追加しました。1分以内に Events Manager の Test events に表示されます。",
+      "sendHint": "このチャネルの最新の連絡先にサンプルの Purchase（100 USD）を1件送信します。",
+      "activeNotice": "テストモードが有効です。コードをクリアするまで、このチャネルのイベントはレポートにカウントされません。",
+      "openTestEvents": "Test events を開く"
     }
   },
   "minigames": {

@@ -64,6 +64,7 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   emptyText?: string
   description?: string
   descriptionType?: "inline" | "tooltip"
+  hideMessage?: boolean
   formItemClassName?: string
   options: SelectOption[]
   className?: string
@@ -88,6 +89,7 @@ export function ComboboxField<T extends FieldValues>({
   emptyText,
   description,
   descriptionType = "inline",
+  hideMessage,
   formItemClassName,
   options,
   side,
@@ -116,6 +118,7 @@ export function ComboboxField<T extends FieldValues>({
       description={description}
       descriptionType={descriptionType}
       formItemClassName={formItemClassName}
+      hideMessage={hideMessage}
       label={label}
       name={name}
       required={required}

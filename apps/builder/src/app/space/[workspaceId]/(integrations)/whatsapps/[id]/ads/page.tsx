@@ -73,6 +73,7 @@ export default async function WhatsappAdsPage(props: {
         wabaId: resolved.wabaId,
         hasCapiScope: resolved.hasCapiScope,
         datasetId: resolved.datasetId,
+        capiTestEventCode: resolved.capiTestEventCode,
       }}
       oauthCallbackUrl={new URL(
         WHATSAPP_OAUTH_CALLBACK_PATH,
