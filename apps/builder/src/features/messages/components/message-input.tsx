@@ -496,7 +496,7 @@ export const MessageInput = () => {
               )}
             </div>
           )}
-          <div className="flex w-full items-center gap-2 overflow-x-auto ps-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto ps-2.5">
             <div className="min-w-0 flex-1">
               <InboxIcon
                 channel={

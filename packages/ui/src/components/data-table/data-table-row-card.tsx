@@ -31,10 +31,7 @@ export function DataTableRowCard<TData>({
   const fields = cells.filter((cell) => !CHROME_COLUMN_IDS.has(cell.column.id))
 
   return (
-    <div
-      className={cn("flex flex-col gap-2 rounded-md border p-3", className)}
-      data-state={row.getIsSelected() && "selected"}
-    >
+    <div className={cn("flex flex-col gap-2 rounded-md border p-3", className)}>
       {chrome.length > 0 && (
         <div className="flex items-center justify-between gap-2">
           {chrome.map((cell) => (

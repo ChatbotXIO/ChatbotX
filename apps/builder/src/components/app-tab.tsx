@@ -46,7 +46,7 @@ export function AppTab({ tabs }: AppTabProps) {
         sits directly under a card edge, where a persistent bar reads as a
         rendering artefact; touch scrolling needs no visible track.
       */}
-      <CardContent className="flex flex-nowrap items-center gap-4 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-8 md:px-8 [&::-webkit-scrollbar]:hidden">
+      <CardContent className="scrollbar-hide flex flex-nowrap items-center gap-4 overflow-x-auto px-4 md:gap-8 md:px-8">
         {tabs.map((tab) =>
           tab.disabled ? (
             <Tooltip key={tab.href}>

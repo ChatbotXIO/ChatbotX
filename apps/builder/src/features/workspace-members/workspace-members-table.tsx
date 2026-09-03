@@ -275,7 +275,7 @@ export function WorkspaceMembersTable({
 
   return (
     <>
-      <DataTable scrollable table={table}>
+      <DataTable table={table}>
         <DataTableToolbar table={table}>
           <InviteWorkspaceMemberDialog atLimit={teamMembersAtLimit} />
         </DataTableToolbar>

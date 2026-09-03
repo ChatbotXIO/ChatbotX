@@ -28,7 +28,7 @@ export default function MessageHead({
 }: {
   onBack?: () => void
   onOpenContact?: () => void
-} = {}) {
+}) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
 

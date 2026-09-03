@@ -25,15 +25,6 @@ interface DataTableProps<TData> extends React.ComponentProps<"div"> {
     noResults?: string
   }
   /**
-   * Whether the bordered table region scrolls horizontally when its columns
-   * exceed the available width.
-   *
-   * Defaults to `true`. Clipping is only ever right for a table whose columns
-   * are guaranteed to fit; every other table loses its rightmost columns with
-   * no way to reach them, which on a phone is most of the row.
-   */
-  scrollable?: boolean
-  /**
    * Renders one row as a card for narrow viewports.
    *
    * When supplied, the card list replaces the table below `md` and the table
@@ -53,7 +44,6 @@ export function DataTable<TData>({
   table,
   actionBar,
   labels,
-  scrollable = true,
   mobileCard,
   children,
   className,
@@ -90,8 +80,7 @@ export function DataTable<TData>({
       )}
       <div
         className={cn(
-          "rounded-md border",
-          scrollable ? "overflow-x-auto" : "overflow-hidden",
+          "overflow-x-auto rounded-md border",
           mobileCard && "hidden md:block",
         )}
       >

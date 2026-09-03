@@ -3,6 +3,20 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/**
+ * Hides the scrollbar on an element that still scrolls via touch/wheel input.
+ * For horizontally-scrolling strips (tab bars, nav rails) where a persistent
+ * track reads as a rendering artefact rather than an affordance.
+ */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

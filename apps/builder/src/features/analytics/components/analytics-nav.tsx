@@ -49,7 +49,7 @@ export function AnalyticsNav({
       aria-label={t("fields.analytics.label")}
       className="w-full md:w-56 md:shrink-0"
     >
-      <ul className="flex flex-row gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:flex-col md:overflow-visible [&::-webkit-scrollbar]:hidden">
+      <ul className="scrollbar-hide flex flex-row gap-1 overflow-x-auto md:flex-col md:overflow-visible">
         {links.map((link) => {
           const href = `${base}/${link.segment}`
           const isActive = pathname.startsWith(href)

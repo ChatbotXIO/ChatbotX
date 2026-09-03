@@ -20,8 +20,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   // `cover` lets the page paint under the notch/home indicator so
-  // `env(safe-area-inset-*)` reports real values. Sticky mobile chrome
-  // (the workspace header, the inbox composer) relies on those insets.
+  // `env(safe-area-inset-*)` reports real values. Fixed mobile chrome
+  // (the sidebar's edge handle, the inbox composer) relies on those insets.
   viewportFit: "cover",
 }
 

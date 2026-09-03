@@ -23,11 +23,9 @@ const COLUMNS = [
 
 function Harness({
   data = ROWS,
-  scrollable,
   withCards = false,
 }: {
   data?: Contact[]
-  scrollable?: boolean
   withCards?: boolean
 }) {
   const table = useReactTable({
@@ -44,7 +42,6 @@ function Harness({
           ? (row) => <span data-testid="card">{row.original.name}</span>
           : undefined
       }
-      scrollable={scrollable}
       table={table}
     />
   )
@@ -80,18 +77,11 @@ describe("DataTable", () => {
     container.remove()
   })
 
-  test("scrolls horizontally by default instead of clipping columns", () => {
+  test("scrolls horizontally instead of clipping columns", () => {
     render()
 
     expect(tableRegion()?.className).toContain("overflow-x-auto")
     expect(tableRegion()?.className).not.toContain("overflow-hidden")
-  })
-
-  test("still allows a caller to opt into clipping", () => {
-    render({ scrollable: false })
-
-    expect(tableRegion()?.className).toContain("overflow-hidden")
-    expect(tableRegion()?.className).not.toContain("overflow-x-auto")
   })
 
   test("renders only the table when no mobileCard is supplied", () => {

@@ -106,9 +106,9 @@ describe("SidebarMobileHandle", () => {
   })
 
   test("hides itself from md up, so the shell only has to render it", () => {
-    // The shell no longer wraps this in an `md:hidden` header — the review on
-    // PR #970 asked for the whole viewport to go to page content — so the
-    // control has to carry its own breakpoint.
+    // The shell renders this unconditionally, with no `md:hidden` wrapper of
+    // its own — the whole viewport belongs to page content, so the control
+    // carries its own breakpoint instead.
     setViewportWidth(1440)
     renderShell()
 

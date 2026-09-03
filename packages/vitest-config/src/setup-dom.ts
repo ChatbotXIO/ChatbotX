@@ -46,10 +46,7 @@ function evaluateQuery(media: string): boolean {
   const width = window.innerWidth
   let sawFeature = false
 
-  WIDTH_FEATURE.lastIndex = 0
-  let match = WIDTH_FEATURE.exec(media)
-
-  while (match !== null) {
+  for (const match of media.matchAll(WIDTH_FEATURE)) {
     sawFeature = true
     const isMin = match[1]?.toLowerCase() === "min"
     const bound = Number.parseFloat(match[2] ?? "")
@@ -60,8 +57,6 @@ function evaluateQuery(media: string): boolean {
     if (isMin ? width < bound : width > bound) {
       return false
     }
-
-    match = WIDTH_FEATURE.exec(media)
   }
 
   return sawFeature
