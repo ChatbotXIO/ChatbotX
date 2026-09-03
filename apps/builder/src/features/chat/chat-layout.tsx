@@ -17,11 +17,13 @@ import { useIsMobileState } from "@chatbotx.io/ui/hooks/use-mobile"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
 import {
   ContactDetailPane,
   ConversationListPane,
   MessageThreadPane,
+  type PaneState,
 } from "./chat-panes"
 import { ChatRealtime } from "./chat-realtime"
 import { useChatStore } from "./store/chat-store-provider"
@@ -52,6 +54,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   const [activeConversation, setActiveConversation] =
     useState<ConversationResource | null>(null)
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false)
+  const conversationIdParam = useConversationIdParam()
 
   // The inbox mounts three heavy, self-fetching panes. Choosing the layout in
   // CSS would mount all of them in both arrangements, so the choice is made in
@@ -81,9 +84,13 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     } else {
       setActiveConversation(null)
     }
+    // Closes the mobile contact sheet left over from a previous conversation:
+    // without this, going back and selecting a different thread could reopen
+    // it bound to the wrong contact.
+    setIsContactSheetOpen(false)
   }, [activeConversationId, conversations])
 
-  const paneState = {
+  const paneState: PaneState = {
     activeConversation,
     isResolvingConversation,
     shouldShowEmptyState,
@@ -108,13 +115,17 @@ export const ChatLayout = (props: ChatLayoutProps) => {
           {activeConversationId ? (
             <MessageThreadPane
               {...paneState}
-              onBack={() => setActiveConversationId(null)}
+              onBack={() => {
+                conversationIdParam.clear()
+                setActiveConversationId(null)
+              }}
               onOpenContact={() => setIsContactSheetOpen(true)}
               workspaceId={workspaceId}
             />
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               <ConversationListPane
+                autoSelectFirstConversation={false}
                 canViewEmailAndPhone={canViewEmailAndPhone}
                 workspaceId={workspaceId}
               />

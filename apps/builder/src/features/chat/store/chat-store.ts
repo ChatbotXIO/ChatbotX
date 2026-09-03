@@ -32,6 +32,15 @@ export type ConversationFilters = {
 
 type LoadMoreConversationsOptions = {
   respectUrlConversationId?: boolean
+  /**
+   * Whether an empty selection may be filled in with the first loaded
+   * conversation.
+   *
+   * Defaults to `true`. The mobile single-pane inbox passes `false`: on that
+   * layout a remount of the conversation list (returning from the thread via
+   * the back control) must land back on the list, not re-select a thread.
+   */
+  autoSelectFirst?: boolean
 }
 
 export type ChatState = {
@@ -258,6 +267,7 @@ export const createChatStore = () => {
       const { nextCursorConversation, activeConversationId, filters } = get()
       const shouldRespectUrlConversationId =
         options.respectUrlConversationId ?? true
+      const autoSelectFirst = options.autoSelectFirst ?? true
       set({ isLoadingConversation: true })
 
       try {
@@ -281,13 +291,15 @@ export const createChatStore = () => {
 
         const hasUrlConversationId =
           shouldRespectUrlConversationId && hasConversationIdInUrl()
-        const firstConversationToOpen = shouldAutoSelectConversation({
-          activeConversationId,
-          hasUrlConversationId,
-          conversations: newConversations,
-        })
-          ? newConversations[0]
-          : null
+        const firstConversationToOpen =
+          autoSelectFirst &&
+          shouldAutoSelectConversation({
+            activeConversationId,
+            hasUrlConversationId,
+            conversations: newConversations,
+          })
+            ? newConversations[0]
+            : null
 
         set((state) => ({
           conversations: appendUniqueConversations(

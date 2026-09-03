@@ -11,8 +11,25 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
+const mockRouterReplace = vi.fn()
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/space/w1/inbox",
+  useRouter: () => ({ replace: mockRouterReplace }),
+  useSearchParams: () => new URLSearchParams("conversationId=c1"),
+}))
+
 vi.mock("@/features/chat/chat-panes", () => ({
-  ConversationListPane: () => <div data-testid="list-pane" />,
+  ConversationListPane: ({
+    autoSelectFirstConversation,
+  }: {
+    autoSelectFirstConversation?: boolean
+  }) => (
+    <div
+      data-auto-select={String(autoSelectFirstConversation)}
+      data-testid="list-pane"
+    />
+  ),
   MessageThreadPane: ({
     onBack,
     onOpenContact,
@@ -86,6 +103,7 @@ describe("ChatLayout", () => {
     })
     container.remove()
     setViewportWidth(1024)
+    mockRouterReplace.mockClear()
   })
 
   test("shows only the conversation list on mobile with nothing selected", () => {
@@ -98,15 +116,20 @@ describe("ChatLayout", () => {
     expect(container.querySelector("[data-panel-group]")).toBeNull()
   })
 
-  test("fills the viewport, with no shell header height to subtract", () => {
+  test("fills the viewport, with the pane owning the whole screen", () => {
     setViewportWidth(375)
     render()
 
-    // This used to be `calc(100dvh - 3rem)`, a copy of the shell's `h-12`
-    // mobile header. The review on #970 removed that header, so the pane owns
-    // the whole viewport and no longer tracks a value from another module.
+    // The mobile shell has no top bar to subtract height for.
     const pane = find("list-pane")?.closest("div.flex")
     expect(pane?.className).toContain("h-[100dvh]")
+  })
+
+  test("does not auto-select a conversation on mobile", () => {
+    setViewportWidth(375)
+    render()
+
+    expect(find("list-pane")?.getAttribute("data-auto-select")).toBe("false")
   })
 
   test("shows the thread with a back control once a conversation is active", () => {
@@ -131,6 +154,20 @@ describe("ChatLayout", () => {
     })
 
     expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
+  })
+
+  test("back also clears the conversationId URL param, so a remount cannot resurrect it", () => {
+    storeState.activeConversationId = "c1"
+    setViewportWidth(375)
+    render()
+
+    act(() => {
+      find("back")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      )
+    })
+
+    expect(mockRouterReplace).toHaveBeenCalledWith("/space/w1/inbox")
   })
 
   test("offers the contact panel behind a control instead of a third column", () => {

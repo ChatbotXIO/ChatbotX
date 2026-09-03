@@ -31,7 +31,7 @@ import { useChatStore } from "./store/chat-store-provider"
  * know nothing about which arrangement they are in.
  */
 
-type PaneState = {
+export type PaneState = {
   activeConversation: ConversationResource | null
   isResolvingConversation: boolean
   shouldShowEmptyState: boolean
@@ -65,12 +65,15 @@ function PaneEmptyState({
 export function ConversationListPane({
   canViewEmailAndPhone,
   workspaceId,
+  autoSelectFirstConversation,
 }: {
   canViewEmailAndPhone: boolean
   workspaceId: string
+  autoSelectFirstConversation?: boolean
 }) {
   return (
     <ConversationList
+      autoSelectFirstConversation={autoSelectFirstConversation}
       canViewEmailAndPhone={canViewEmailAndPhone}
       workspaceId={workspaceId}
     />
