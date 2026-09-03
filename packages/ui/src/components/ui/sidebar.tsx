@@ -292,6 +292,49 @@ function SidebarTrigger({
   )
 }
 
+/**
+ * Pull handle for the mobile layout, where `Sidebar` renders as a `Sheet`.
+ *
+ * `SidebarTrigger` is a rail-collapse affordance: a small chevron that only
+ * reads as "collapse this column" next to a visible sidebar. Below the mobile
+ * breakpoint there is no column to collapse — and no top bar to host a menu
+ * button, because the shells hand the whole viewport to page content. So the
+ * control lives on the screen's inline-start edge as a drawer handle: `fixed`,
+ * so it reserves no space in the document flow, and half-clipped by the edge,
+ * so a thumb sliding in from off-screen lands on it.
+ *
+ * It hides itself from `md` up — the caller only has to render it.
+ */
+function SidebarMobileHandle({
+  className,
+  onClick,
+  ...props
+}: React.ComponentProps<"button">) {
+  const { toggleSidebar } = useSidebar()
+
+  return (
+    <button
+      className={cn(
+        "fixed start-0 top-1/2 z-30 flex h-16 w-6 -translate-y-1/2 items-center justify-center rounded-e-full border border-s-0 bg-background/95 text-muted-foreground shadow-sm backdrop-blur md:hidden",
+        // Clears the notch when the phone is held in landscape.
+        "ms-[env(safe-area-inset-left)] rtl:ms-[env(safe-area-inset-right)]",
+        className,
+      )}
+      data-sidebar="mobile-handle"
+      data-slot="sidebar-mobile-handle"
+      onClick={(event) => {
+        onClick?.(event)
+        toggleSidebar()
+      }}
+      type="button"
+      {...props}
+    >
+      <ChevronRightIcon className="size-4 rtl:rotate-180" />
+      <span className="sr-only">Toggle Sidebar</span>
+    </button>
+  )
+}
+
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   const { toggleSidebar } = useSidebar()
 
@@ -739,6 +782,7 @@ export {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarMobileHandle,
   SidebarProvider,
   SidebarRail,
   SidebarSeparator,

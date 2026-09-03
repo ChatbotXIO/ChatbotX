@@ -2,6 +2,7 @@
 
 import {
   SidebarInset,
+  SidebarMobileHandle,
   SidebarProvider,
   SidebarTrigger,
 } from "@chatbotx.io/ui/components/ui/sidebar"
@@ -49,7 +50,13 @@ export function ManageLayout({ children, sidebar }: ManageLayoutProps) {
     >
       {sidebar}
       <SidebarInset>
-        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 border" />
+        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 hidden border md:inline-flex" />
+        {/*
+          Mirrors the workspace shell: below `md` the sidebar is a Sheet, the
+          trigger above is hidden, and no top bar takes height away from the
+          page. See `app/space/[workspaceId]/layout.tsx`.
+        */}
+        <SidebarMobileHandle />
         <main className="p-4 pb-24 sm:px-6 sm:pt-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>

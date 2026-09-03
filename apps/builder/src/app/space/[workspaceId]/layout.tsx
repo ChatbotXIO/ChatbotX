@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/business"
 import {
   SidebarInset,
+  SidebarMobileHandle,
   SidebarProvider,
   SidebarTrigger,
 } from "@chatbotx.io/ui/components/ui/sidebar"
@@ -121,7 +122,7 @@ export default async function WorkspaceLayout({
         workspaceId={workspaceId}
       />
       <SidebarInset>
-        <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+        <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
           <WorkspaceDeletionTabSync
             scheduledForDeletion={scheduledForDeletion}
             workspaceId={workspaceId}
@@ -142,7 +143,14 @@ export default async function WorkspaceLayout({
             {children}
           </CouponTopicStoreProvider>
         </main>
-        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 border" />
+        <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 hidden border md:inline-flex" />
+        {/*
+          Below `md` the sidebar collapses into a Sheet and `SidebarTrigger`
+          above is hidden, so this handle is the only way in on a phone. It
+          floats on the screen edge rather than sitting in a top bar: the
+          viewport belongs to the page content.
+        */}
+        <SidebarMobileHandle />
       </SidebarInset>
     </SidebarProvider>
   )

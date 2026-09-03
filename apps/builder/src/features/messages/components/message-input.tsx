@@ -496,7 +496,7 @@ export const MessageInput = () => {
               )}
             </div>
           )}
-          <div className="flex w-full items-center ps-2.5">
+          <div className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto ps-2.5">
             <div className="min-w-0 flex-1">
               <InboxIcon
                 channel={
@@ -506,7 +506,7 @@ export const MessageInput = () => {
               />
             </div>
 
-            <div className="message-toolbar flex items-center gap-2">
+            <div className="message-toolbar flex shrink-0 items-center gap-2">
               {!hasFiles && <InputMenu setContent={setContent} />}
               {!isInstagramPostComment && (
                 <>

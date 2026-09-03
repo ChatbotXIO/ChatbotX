@@ -1,4 +1,8 @@
-import { flexRender, type Table as TanstackTable } from "@tanstack/react-table"
+import {
+  flexRender,
+  type Row,
+  type Table as TanstackTable,
+} from "@tanstack/react-table"
 import type * as React from "react"
 
 import { DataTablePagination } from "@chatbotx.io/ui/components/data-table/data-table-pagination"
@@ -20,28 +24,64 @@ interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   labels?: DataTablePaginationLabels & {
     noResults?: string
   }
-  scrollable?: boolean
+  /**
+   * Renders one row as a card for narrow viewports.
+   *
+   * When supplied, the card list replaces the table below `md` and the table
+   * takes over from `md` up — a wide table reduced to horizontal scrolling is
+   * readable but miserable to work through on a phone. Toolbar and pagination
+   * are shared by both.
+   *
+   * The switch is CSS, not a media-query hook, so the correct layout is present
+   * in the first paint instead of flipping after hydration. Both trees are in
+   * the DOM, which is why this is opt-in: pay the duplication only where the
+   * card view earns it.
+   */
+  mobileCard?: (row: Row<TData>) => React.ReactNode
 }
 
 export function DataTable<TData>({
   table,
   actionBar,
   labels,
-  scrollable = false,
+  mobileCard,
   children,
   className,
   ...props
 }: DataTableProps<TData>) {
+  const rows = table.getRowModel().rows
+  const noResults = labels?.noResults ?? "No results."
+
   return (
     <div
       className={cn("flex w-full flex-col gap-2.5 overflow-auto", className)}
       {...props}
     >
       {children}
+      {mobileCard && (
+        <div
+          className="flex flex-col gap-2 md:hidden"
+          data-slot="data-table-cards"
+        >
+          {rows.length ? (
+            rows.map((row) => (
+              <div
+                data-slot="data-table-card"
+                data-state={row.getIsSelected() && "selected"}
+                key={row.id}
+              >
+                {mobileCard(row)}
+              </div>
+            ))
+          ) : (
+            <div className="rounded-md border p-6 text-center">{noResults}</div>
+          )}
+        </div>
+      )}
       <div
         className={cn(
-          "rounded-md border",
-          scrollable ? "overflow-x-auto" : "overflow-hidden",
+          "overflow-x-auto rounded-md border",
+          mobileCard && "hidden md:block",
         )}
       >
         <Table>
@@ -72,8 +112,8 @@ export function DataTable<TData>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+            {rows.length ? (
+              rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
@@ -89,10 +129,7 @@ export function DataTable<TData>({
                             : cell.column.getSize(),
                       }}
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -103,7 +140,7 @@ export function DataTable<TData>({
                   colSpan={table.getAllColumns().length}
                   className="h-24 text-center"
                 >
-                  {labels?.noResults ?? "No results."}
+                  {noResults}
                 </TableCell>
               </TableRow>
             )}

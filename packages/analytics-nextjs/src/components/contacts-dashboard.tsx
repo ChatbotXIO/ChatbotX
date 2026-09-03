@@ -27,12 +27,12 @@ export function ContactsDashboard({
         workspaceCreatedAt={workspaceCreatedAt}
       />
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:gap-6">
         {nav}
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           <InboxStatsList />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <ContactCountsChart />
             <NewContactCountsChart />
             <AllContactsByChannelChart />

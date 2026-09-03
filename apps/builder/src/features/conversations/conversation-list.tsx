@@ -11,7 +11,6 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { SearchIcon, UserPlusIcon } from "lucide-react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -23,18 +22,27 @@ import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
 import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
+import { useConversationIdParam } from "./hooks/use-conversation-id-param"
 
 export default function ConversationList({
   canViewEmailAndPhone = true,
   workspaceId,
+  autoSelectFirstConversation = true,
 }: {
   canViewEmailAndPhone?: boolean
   workspaceId: string
+  /**
+   * Whether an empty selection may be filled in with the first conversation
+   * once the list loads.
+   *
+   * The mobile inbox passes `false`: there the list remounts every time the
+   * user returns from the thread via the back control, and auto-selecting
+   * would immediately reopen a thread instead of showing the list.
+   */
+  autoSelectFirstConversation?: boolean
 }) {
   const t = useTranslations()
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const conversationIdParam = useConversationIdParam()
   const {
     conversations,
     loadMoreConversations,
@@ -53,13 +61,14 @@ export default function ConversationList({
   const hasNextPage =
     conversations.length === 0 || nextCursorConversation !== null
 
-  const [page, setPage] = useState(1)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: wip
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount; a remount (e.g. the mobile back control) must not refetch or re-auto-select
   useEffect(() => {
-    loadMoreConversations(workspaceId).catch(() => {
+    loadMoreConversations(workspaceId, {
+      autoSelectFirst: autoSelectFirstConversation,
+    }).catch(() => {
       toast.error(t("messages.errorLoadingData"))
     })
-  }, [page])
+  }, [])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount to resolve deep-linked conversation
   useEffect(() => {
@@ -69,26 +78,20 @@ export default function ConversationList({
   // Load more items when reaching the end of the list
   const loadMoreItems = () => {
     if (!isLoadingConversation && hasNextPage) {
-      setPage((prev) => prev + 1)
+      loadMoreConversations(workspaceId, {
+        autoSelectFirst: autoSelectFirstConversation,
+      }).catch(() => {
+        toast.error(t("messages.errorLoadingData"))
+      })
     }
-  }
-
-  const removeConversationIdFromUrl = () => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (!params.has("conversationId")) {
-      return
-    }
-
-    params.delete("conversationId")
-    const queryString = params.toString()
-    router.replace(queryString ? `?${queryString}` : pathname)
   }
 
   const handleChange = useDebouncedCallback(() => {
-    removeConversationIdFromUrl()
+    conversationIdParam.clear()
     resetState()
     loadMoreConversations(workspaceId, {
       respectUrlConversationId: false,
+      autoSelectFirst: autoSelectFirstConversation,
     }).catch(() => {
       toast.error(t("messages.errorLoadingData"))
     })
@@ -178,9 +181,7 @@ export default function ConversationList({
               <ConversationItem
                 conversation={item}
                 onSelect={() => {
-                  const params = new URLSearchParams(searchParams.toString())
-                  params.set("conversationId", item.id.toString())
-                  router.replace(`?${params.toString()}`)
+                  conversationIdParam.set(item.id.toString())
                   setActiveConversationId(item.id)
                 }}
               />

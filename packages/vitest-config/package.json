@@ -10,6 +10,7 @@
     "./nextjs": "./src/nextjs.ts",
     "./msw": "./src/msw.ts",
     "./setup-env": "./src/setup-env.ts",
+    "./setup-dom": "./src/setup-dom.ts",
     "./setup-msw": "./src/setup-msw.ts"
   },
   "scripts": {
