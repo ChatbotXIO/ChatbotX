@@ -8,7 +8,7 @@ export function useTimeRangeState(
     sendTimeStart?: string | null
     sendTimeEnd?: string | null
     sendDays?: string[]
-  }) => Promise<void>,
+  }) => Promise<boolean>,
 ) {
   const [timeOption, setTimeOption] = useState<"anytime" | "between">(
     step?.anytime === false ? "between" : "anytime",

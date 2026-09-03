@@ -4,8 +4,8 @@ import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
 import { deleteSequenceStepAction } from "../actions/delete-sequence-step.action"
 import { upsertSequenceStepAction } from "../actions/upsert-sequence-step.action"
-
-type DelayUnit = "immediate" | "minutes" | "hours" | "days" | "specificTime"
+import type { DelayChange, DelayUnit } from "../lib/delay"
+import { delayViewToStored } from "../lib/delay"
 
 type SavePayload = {
   stepId?: string
@@ -14,7 +14,7 @@ type SavePayload = {
   delayDays?: number
   delayMinutes?: number
   delayUnit?: DelayUnit
-  specificDateTime?: string
+  specificDateTime?: string | null
   flowId?: string
   isActive?: boolean
   anytime?: boolean
@@ -57,8 +57,42 @@ type UseSequenceStepProps = {
   isFirst?: boolean
   previousStepTime?: Date
   onSaved?: () => void
-  currentDelayUnit: DelayUnit
-  currentDelayValue: number
+}
+
+type PassthroughFields = Pick<
+  SavePayload,
+  | "flowId"
+  | "isActive"
+  | "anytime"
+  | "sendTimeStart"
+  | "sendTimeEnd"
+  | "sendDays"
+>
+
+type ChangedFields = PassthroughFields & {
+  delay?: DelayChange
+}
+
+type StepOrderContext = {
+  isFirst: boolean
+  previousStepTime?: Date
+}
+
+function resolveSpecificDateTime(delay?: DelayChange): Date | null {
+  return delay?.unit === "specificTime" && delay.specificDateTime
+    ? new Date(delay.specificDateTime)
+    : null
+}
+
+function isSpecificDateTimeAllowed(
+  dateTime: Date,
+  { isFirst, previousStepTime }: StepOrderContext,
+): boolean {
+  const isInFuture = dateTime > new Date()
+  const isAfterPreviousStep =
+    isFirst || !previousStepTime || dateTime > previousStepTime
+
+  return isInFuture && isAfterPreviousStep
 }
 
 export function useSequenceStep({
@@ -69,146 +103,106 @@ export function useSequenceStep({
   isFirst = false,
   previousStepTime,
   onSaved,
-  currentDelayUnit,
-  currentDelayValue,
 }: UseSequenceStepProps) {
   const t = useTranslations()
   const router = useRouter()
-  const isSavingRef = useRef(false)
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const pendingSavesRef = useRef(0)
+  // FIFO save queue: a payload built before the CREATE step's response comes
+  // back has no stepId. This ref carries that id forward to every queued
+  // payload after it so a second save updates the created row instead of
+  // creating a duplicate.
+  const createdStepIdRef = useRef<string | undefined>(step?.id)
 
   const [isSaving, setIsSaving] = useState(false)
   const [showFlowError, setShowFlowError] = useState(false)
 
-  const handleSave = useCallback(
-    async (changedFields: {
-      flowId?: string
-      delayUnit?: DelayUnit
-      delayValue?: number
-      specificDateTime?: string
-      isActive?: boolean
-      anytime?: boolean
-      sendTimeStart?: string | null
-      sendTimeEnd?: string | null
-      sendDays?: string[]
-    }) => {
-      if (isSavingRef.current) {
-        return
-      }
-
-      if (
-        changedFields.delayUnit === "specificTime" &&
-        changedFields.specificDateTime
-      ) {
-        const currentStepTime = new Date(changedFields.specificDateTime)
-        const now = new Date()
-
-        if (currentStepTime <= now) {
-          toast.error(t("sequences.timeValidation"))
-          return
-        }
-
-        if (
-          !isFirst &&
-          previousStepTime &&
-          currentStepTime <= previousStepTime
-        ) {
-          toast.error(t("sequences.timeValidation"))
-          return
-        }
-      }
-
-      isSavingRef.current = true
-      setIsSaving(true)
+  const performSave = useCallback(
+    async (payload: SavePayload): Promise<boolean> => {
+      const isCreate = payload.stepId === undefined
+      const resolvedPayload = isCreate
+        ? { ...payload, stepId: createdStepIdRef.current }
+        : payload
 
       try {
-        const payload: SavePayload = {
-          stepId: step?.id,
-          sequenceId,
-          order: stepNumber - 1,
-        }
-
-        if (changedFields.flowId !== undefined) {
-          payload.flowId = changedFields.flowId
-        }
-
-        if (changedFields.isActive !== undefined) {
-          payload.isActive = changedFields.isActive
-        }
-
-        if (
-          changedFields.delayUnit !== undefined ||
-          changedFields.delayValue !== undefined
-        ) {
-          const unit = changedFields.delayUnit ?? currentDelayUnit
-          const value = changedFields.delayValue ?? currentDelayValue
-          let delayDays = 0
-          let delayMinutes = 0
-
-          if (unit === "days") {
-            delayDays = value
-          } else if (unit === "hours") {
-            delayMinutes = value * 60
-          } else if (unit === "minutes") {
-            delayMinutes = value
-          }
-
-          payload.delayDays = delayDays
-          payload.delayMinutes = delayMinutes
-          payload.delayUnit = unit
-        }
-
-        if (changedFields.specificDateTime !== undefined) {
-          const localDate = new Date(changedFields.specificDateTime)
-          payload.specificDateTime = localDate.toISOString()
-          payload.delayDays = 0
-          payload.delayMinutes = 0
-          payload.delayUnit = "specificTime"
-        }
-
-        if (changedFields.anytime !== undefined) {
-          payload.anytime = changedFields.anytime
-        }
-
-        if (changedFields.sendTimeStart !== undefined) {
-          payload.sendTimeStart = changedFields.sendTimeStart
-        }
-
-        if (changedFields.sendTimeEnd !== undefined) {
-          payload.sendTimeEnd = changedFields.sendTimeEnd
-        }
-
-        if (changedFields.sendDays !== undefined) {
-          payload.sendDays = changedFields.sendDays
-        }
-
-        const result = await upsertSequenceStepAction(workspaceId, payload)
+        const result = await upsertSequenceStepAction(
+          workspaceId,
+          resolvedPayload,
+        )
 
         if (result?.data) {
+          if (isCreate) {
+            createdStepIdRef.current = result.data.stepId
+          }
           onSaved?.()
-          router.refresh()
-        } else {
-          toast.error(t("messages.unknownError"))
+          return true
         }
+
+        toast.error(t("messages.unknownError"))
+        return false
       } catch (error) {
         console.error("Error saving step:", error)
         toast.error(t("messages.unknownError"))
-      } finally {
-        setIsSaving(false)
-        isSavingRef.current = false
+        return false
       }
+    },
+    [workspaceId, onSaved, t],
+  )
+
+  // Deliberately not `async`: validation and payload building run
+  // synchronously so every queued item carries the values it was called with.
+  const handleSave = useCallback(
+    ({ delay, ...passthrough }: ChangedFields): Promise<boolean> => {
+      const specificDateTime = resolveSpecificDateTime(delay)
+
+      if (
+        specificDateTime &&
+        !isSpecificDateTimeAllowed(specificDateTime, {
+          isFirst,
+          previousStepTime,
+        })
+      ) {
+        toast.error(t("sequences.timeValidation"))
+        return Promise.resolve(false)
+      }
+
+      const payload: SavePayload = {
+        stepId: step?.id,
+        sequenceId,
+        order: stepNumber - 1,
+        ...passthrough,
+        ...(delay &&
+          delayViewToStored({
+            unit: delay.unit,
+            value: delay.value,
+            specificDateTimeIso: specificDateTime?.toISOString() ?? null,
+          })),
+      }
+
+      pendingSavesRef.current += 1
+      setIsSaving(true)
+
+      const savePromise = saveQueueRef.current.then(() => performSave(payload))
+
+      saveQueueRef.current = savePromise.then(() => {
+        pendingSavesRef.current -= 1
+        if (pendingSavesRef.current === 0) {
+          setIsSaving(false)
+          router.refresh()
+        }
+      })
+
+      return savePromise
     },
     [
       step?.id,
       t,
       isFirst,
       previousStepTime,
-      workspaceId,
       sequenceId,
       stepNumber,
-      onSaved,
+      performSave,
       router,
-      currentDelayUnit,
-      currentDelayValue,
     ],
   )
 
@@ -273,5 +267,5 @@ export function useSequenceStep({
   }
 }
 
-export type { DelayUnit, Step }
+export type { Step }
 export { WEEKDAY_ORDER }

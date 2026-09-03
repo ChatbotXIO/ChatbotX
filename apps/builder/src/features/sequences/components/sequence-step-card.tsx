@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 import { useDelayState } from "../hooks/use-delay-state"
-import { type DelayUnit, useSequenceStep } from "../hooks/use-sequence-step"
+import { useSequenceStep } from "../hooks/use-sequence-step"
 import { useTimeRangeState } from "../hooks/use-time-range-state"
 
 import { DelaySelector } from "./delay-selector"
@@ -73,8 +73,6 @@ export function SequenceStepCard({
     isFirst,
     previousStepTime,
     onSaved,
-    currentDelayUnit: (step?.delayUnit as DelayUnit) || "days",
-    currentDelayValue: step?.delayDays || step?.delayMinutes || 1,
   })
 
   const {
@@ -191,6 +189,7 @@ export function SequenceStepCard({
               }`}
             >
               <TimeRangeSelector
+                disabled={isSaving}
                 endTime={endTime}
                 onEndTimeChange={handleEndTimeChange}
                 onSelectedDaysChange={handleSelectedDaysChange}

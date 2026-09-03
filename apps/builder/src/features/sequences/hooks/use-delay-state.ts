@@ -1,126 +1,128 @@
-import { useCallback, useState } from "react"
-import type { DelayUnit, Step } from "./use-sequence-step"
+import { useCallback, useEffect, useRef, useState } from "react"
+import {
+  type DelayChange,
+  type DelayUnit,
+  type DelayView,
+  oneHourFromNowLocal,
+  type StoredDelayFields,
+  stepToDelayView,
+} from "../lib/delay"
+import type { Step } from "./use-sequence-step"
 
-function getOneHourFromNowLocal() {
-  const now = new Date()
-  now.setHours(now.getHours() + 1)
-  const year = now.getFullYear()
-  const month = `${now.getMonth() + 1}`.padStart(2, "0")
-  const day = `${now.getDate()}`.padStart(2, "0")
-  const hour = `${now.getHours()}`.padStart(2, "0")
-  const minute = `${now.getMinutes()}`.padStart(2, "0")
-  return `${year}-${month}-${day}T${hour}:${minute}`
-}
+type OnSave = (fields: { delay: DelayChange }) => Promise<boolean>
 
-function getInitialDelayUnit(step?: Step): DelayUnit {
-  if (!step) {
-    return "days"
-  }
-  if (step.delayUnit === "specificTime") {
-    return "specificTime"
-  }
-  if (step.delayUnit === "immediate") {
-    return "immediate"
-  }
-  if (step.delayDays > 0) {
-    return "days"
-  }
-  if (step.delayMinutes >= 60) {
-    return "hours"
-  }
-  if (step.delayMinutes > 0) {
-    return "minutes"
-  }
-  return "immediate"
-}
-
-function getInitialDelayValue(step?: Step): number {
-  if (!step) {
-    return 1
-  }
-  if (step.delayDays > 0) {
-    return step.delayDays
-  }
-  if (step.delayMinutes >= 60) {
-    return Math.floor(step.delayMinutes / 60)
-  }
-  if (step.delayMinutes > 0) {
-    return step.delayMinutes
-  }
-  return 1
-}
-
-function getInitialSpecificDateTime(step?: Step): string {
-  if (step?.specificDateTime) {
-    const date = new Date(step.specificDateTime)
-    const year = date.getFullYear()
-    const month = `${date.getMonth() + 1}`.padStart(2, "0")
-    const day = `${date.getDate()}`.padStart(2, "0")
-    const hour = `${date.getHours()}`.padStart(2, "0")
-    const minute = `${date.getMinutes()}`.padStart(2, "0")
-    return `${year}-${month}-${day}T${hour}:${minute}`
-  }
-  return ""
-}
-
-export function useDelayState(
-  step: Step | undefined,
-  onSave: (fields: {
-    delayUnit?: DelayUnit
-    delayValue?: number
-    specificDateTime?: string
-  }) => Promise<void>,
-) {
-  const [delayUnit, setDelayUnit] = useState<DelayUnit>(() =>
-    getInitialDelayUnit(step),
+function isSameView(a: DelayView, b: DelayView): boolean {
+  return (
+    a.unit === b.unit &&
+    a.value === b.value &&
+    a.specificDateTime === b.specificDateTime
   )
-  const [delayValue, setDelayValue] = useState<number>(() =>
-    getInitialDelayValue(step),
-  )
-  const [specificDateTime, setSpecificDateTime] = useState<string>(() =>
-    getInitialSpecificDateTime(step),
+}
+
+export function useDelayState(step: Step | undefined, onSave: OnSave) {
+  const [view, setView] = useState<DelayView>(() => stepToDelayView(step))
+  // Only the first render's `view` seeds the ref; later renders ignore the arg.
+  const persistedViewRef = useRef<DelayView>(view)
+
+  const stepId = step?.id
+  const delayDays = step?.delayDays
+  const delayMinutes = step?.delayMinutes
+  const delayUnit = step?.delayUnit
+  const specificDateTimeMs = step?.specificDateTime?.getTime()
+
+  // Re-derive the view from the raw stored delay fields — not `step` object
+  // identity — so a server refresh that returns unchanged delay data does
+  // not clobber a pending local edit.
+  useEffect(() => {
+    const storedFields: StoredDelayFields | undefined =
+      stepId === undefined
+        ? undefined
+        : {
+            delayDays: delayDays ?? 0,
+            delayMinutes: delayMinutes ?? 0,
+            delayUnit,
+            specificDateTime:
+              specificDateTimeMs === undefined
+                ? null
+                : new Date(specificDateTimeMs),
+          }
+
+    const nextView = stepToDelayView(storedFields)
+    persistedViewRef.current = nextView
+
+    setView((current) => (isSameView(current, nextView) ? current : nextView))
+  }, [stepId, delayDays, delayMinutes, delayUnit, specificDateTimeMs])
+
+  // Optimistically shows `nextView`, then persists it. On success, records
+  // it as the last-persisted view. On failure, reverts — but only if no
+  // newer optimistic change has since replaced it (an older failed save
+  // must never clobber a newer in-flight or already-applied edit).
+  const commitView = useCallback(
+    async (nextView: DelayView) => {
+      setView(nextView)
+
+      const saved = await onSave({
+        delay: {
+          unit: nextView.unit,
+          value: nextView.value,
+          specificDateTime: nextView.specificDateTime || undefined,
+        },
+      })
+
+      if (saved) {
+        persistedViewRef.current = nextView
+      } else {
+        setView((current) =>
+          current === nextView ? persistedViewRef.current : current,
+        )
+      }
+    },
+    [onSave],
   )
 
   const handleDelayUnitChange = useCallback(
     (unit: DelayUnit) => {
-      setDelayUnit(unit)
+      const specificDateTime =
+        unit === "specificTime" && !view.specificDateTime
+          ? oneHourFromNowLocal()
+          : view.specificDateTime
+      const nextView: DelayView = { ...view, unit, specificDateTime }
 
-      if (unit === "specificTime") {
-        const newDateTime = specificDateTime || getOneHourFromNowLocal()
-        setSpecificDateTime(newDateTime)
-        onSave({
-          delayUnit: unit,
-          specificDateTime: newDateTime,
-        })
-      } else {
-        onSave({ delayUnit: unit })
-      }
+      commitView(nextView)
     },
-    [specificDateTime, onSave],
+    [view, commitView],
   )
 
   const handleDelayValueChange = useCallback(
     (value: number) => {
-      setDelayValue(value)
-      onSave({ delayValue: value })
+      const nextView: DelayView = { ...view, value }
+
+      commitView(nextView)
     },
-    [onSave],
+    [view, commitView],
   )
 
   const handleSpecificDateTimeChange = useCallback(
     (dateTime: string) => {
-      setSpecificDateTime(dateTime)
+      const nextView: DelayView = {
+        ...view,
+        unit: "specificTime",
+        specificDateTime: dateTime,
+      }
+
       if (dateTime) {
-        onSave({ specificDateTime: dateTime })
+        commitView(nextView)
+      } else {
+        setView(nextView)
       }
     },
-    [onSave],
+    [view, commitView],
   )
 
   return {
-    delayUnit,
-    delayValue,
-    specificDateTime,
+    delayUnit: view.unit,
+    delayValue: view.value,
+    specificDateTime: view.specificDateTime,
     handleDelayUnitChange,
     handleDelayValueChange,
     handleSpecificDateTimeChange,
