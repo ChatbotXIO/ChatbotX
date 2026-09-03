@@ -4,8 +4,10 @@ import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
 import { deleteSequenceStepAction } from "../actions/delete-sequence-step.action"
 import { upsertSequenceStepAction } from "../actions/upsert-sequence-step.action"
+import type { DelayUnit } from "../lib/delay"
+import { delayViewToStored } from "../lib/delay"
 
-type DelayUnit = "immediate" | "minutes" | "hours" | "days" | "specificTime"
+export type { DelayUnit } from "../lib/delay"
 
 type SavePayload = {
   stepId?: string
@@ -14,7 +16,7 @@ type SavePayload = {
   delayDays?: number
   delayMinutes?: number
   delayUnit?: DelayUnit
-  specificDateTime?: string
+  specificDateTime?: string | null
   flowId?: string
   isActive?: boolean
   anytime?: boolean
@@ -57,8 +59,16 @@ type UseSequenceStepProps = {
   isFirst?: boolean
   previousStepTime?: Date
   onSaved?: () => void
-  currentDelayUnit: DelayUnit
-  currentDelayValue: number
+}
+
+type ChangedFields = {
+  flowId?: string
+  delay?: { unit: DelayUnit; value: number; specificDateTime?: string }
+  isActive?: boolean
+  anytime?: boolean
+  sendTimeStart?: string | null
+  sendTimeEnd?: string | null
+  sendDays?: string[]
 }
 
 export function useSequenceStep({
@@ -69,42 +79,47 @@ export function useSequenceStep({
   isFirst = false,
   previousStepTime,
   onSaved,
-  currentDelayUnit,
-  currentDelayValue,
 }: UseSequenceStepProps) {
   const t = useTranslations()
   const router = useRouter()
-  const isSavingRef = useRef(false)
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const pendingSavesRef = useRef(0)
 
   const [isSaving, setIsSaving] = useState(false)
   const [showFlowError, setShowFlowError] = useState(false)
 
-  const handleSave = useCallback(
-    async (changedFields: {
-      flowId?: string
-      delayUnit?: DelayUnit
-      delayValue?: number
-      specificDateTime?: string
-      isActive?: boolean
-      anytime?: boolean
-      sendTimeStart?: string | null
-      sendTimeEnd?: string | null
-      sendDays?: string[]
-    }) => {
-      if (isSavingRef.current) {
-        return
-      }
+  const performSave = useCallback(
+    async (payload: SavePayload): Promise<boolean> => {
+      try {
+        const result = await upsertSequenceStepAction(workspaceId, payload)
 
-      if (
-        changedFields.delayUnit === "specificTime" &&
-        changedFields.specificDateTime
-      ) {
-        const currentStepTime = new Date(changedFields.specificDateTime)
+        if (result?.data) {
+          onSaved?.()
+          return true
+        }
+
+        toast.error(t("messages.unknownError"))
+        return false
+      } catch (error) {
+        console.error("Error saving step:", error)
+        toast.error(t("messages.unknownError"))
+        return false
+      }
+    },
+    [workspaceId, onSaved, t],
+  )
+
+  const handleSave = useCallback(
+    (changedFields: ChangedFields): Promise<boolean> => {
+      const { delay } = changedFields
+
+      if (delay?.unit === "specificTime" && delay.specificDateTime) {
+        const currentStepTime = new Date(delay.specificDateTime)
         const now = new Date()
 
         if (currentStepTime <= now) {
           toast.error(t("sequences.timeValidation"))
-          return
+          return Promise.resolve(false)
         }
 
         if (
@@ -113,102 +128,82 @@ export function useSequenceStep({
           currentStepTime <= previousStepTime
         ) {
           toast.error(t("sequences.timeValidation"))
-          return
+          return Promise.resolve(false)
         }
       }
 
-      isSavingRef.current = true
+      const payload: SavePayload = {
+        stepId: step?.id,
+        sequenceId,
+        order: stepNumber - 1,
+      }
+
+      if (changedFields.flowId !== undefined) {
+        payload.flowId = changedFields.flowId
+      }
+
+      if (changedFields.isActive !== undefined) {
+        payload.isActive = changedFields.isActive
+      }
+
+      if (delay !== undefined) {
+        const specificDateTimeIso =
+          delay.unit === "specificTime" && delay.specificDateTime
+            ? new Date(delay.specificDateTime).toISOString()
+            : null
+
+        const stored = delayViewToStored({
+          unit: delay.unit,
+          value: delay.value,
+          specificDateTimeIso,
+        })
+
+        payload.delayDays = stored.delayDays
+        payload.delayMinutes = stored.delayMinutes
+        payload.delayUnit = stored.delayUnit
+        payload.specificDateTime = stored.specificDateTime
+      }
+
+      if (changedFields.anytime !== undefined) {
+        payload.anytime = changedFields.anytime
+      }
+
+      if (changedFields.sendTimeStart !== undefined) {
+        payload.sendTimeStart = changedFields.sendTimeStart
+      }
+
+      if (changedFields.sendTimeEnd !== undefined) {
+        payload.sendTimeEnd = changedFields.sendTimeEnd
+      }
+
+      if (changedFields.sendDays !== undefined) {
+        payload.sendDays = changedFields.sendDays
+      }
+
+      pendingSavesRef.current += 1
       setIsSaving(true)
 
-      try {
-        const payload: SavePayload = {
-          stepId: step?.id,
-          sequenceId,
-          order: stepNumber - 1,
-        }
+      const savePromise = saveQueueRef.current.then(() => performSave(payload))
 
-        if (changedFields.flowId !== undefined) {
-          payload.flowId = changedFields.flowId
-        }
-
-        if (changedFields.isActive !== undefined) {
-          payload.isActive = changedFields.isActive
-        }
-
-        if (
-          changedFields.delayUnit !== undefined ||
-          changedFields.delayValue !== undefined
-        ) {
-          const unit = changedFields.delayUnit ?? currentDelayUnit
-          const value = changedFields.delayValue ?? currentDelayValue
-          let delayDays = 0
-          let delayMinutes = 0
-
-          if (unit === "days") {
-            delayDays = value
-          } else if (unit === "hours") {
-            delayMinutes = value * 60
-          } else if (unit === "minutes") {
-            delayMinutes = value
-          }
-
-          payload.delayDays = delayDays
-          payload.delayMinutes = delayMinutes
-          payload.delayUnit = unit
-        }
-
-        if (changedFields.specificDateTime !== undefined) {
-          const localDate = new Date(changedFields.specificDateTime)
-          payload.specificDateTime = localDate.toISOString()
-          payload.delayDays = 0
-          payload.delayMinutes = 0
-          payload.delayUnit = "specificTime"
-        }
-
-        if (changedFields.anytime !== undefined) {
-          payload.anytime = changedFields.anytime
-        }
-
-        if (changedFields.sendTimeStart !== undefined) {
-          payload.sendTimeStart = changedFields.sendTimeStart
-        }
-
-        if (changedFields.sendTimeEnd !== undefined) {
-          payload.sendTimeEnd = changedFields.sendTimeEnd
-        }
-
-        if (changedFields.sendDays !== undefined) {
-          payload.sendDays = changedFields.sendDays
-        }
-
-        const result = await upsertSequenceStepAction(workspaceId, payload)
-
-        if (result?.data) {
-          onSaved?.()
+      saveQueueRef.current = savePromise.then(() => {
+        pendingSavesRef.current -= 1
+        if (pendingSavesRef.current === 0) {
+          setIsSaving(false)
           router.refresh()
-        } else {
-          toast.error(t("messages.unknownError"))
         }
-      } catch (error) {
-        console.error("Error saving step:", error)
-        toast.error(t("messages.unknownError"))
-      } finally {
-        setIsSaving(false)
-        isSavingRef.current = false
-      }
+      })
+
+      return savePromise
     },
     [
       step?.id,
       t,
       isFirst,
       previousStepTime,
-      workspaceId,
       sequenceId,
       stepNumber,
-      onSaved,
+      performSave,
       router,
-      currentDelayUnit,
-      currentDelayValue,
     ],
   )
 
@@ -273,5 +268,5 @@ export function useSequenceStep({
   }
 }
 
-export type { DelayUnit, Step }
+export type { Step }
 export { WEEKDAY_ORDER }

@@ -10,6 +10,7 @@ import {
 import z from "zod"
 import { parseAsBigInt } from "@/lib/nuqs"
 import { basePaginationRequest } from "@/lib/pagination"
+import { DELAY_UNITS, isStoredDelayConsistent } from "../lib/delay"
 import { sequenceResource } from "./resource"
 
 export const listSequencesRequest = basePaginationRequest.and(
@@ -60,23 +61,50 @@ export const updateSequenceSchema = z
   .partial()
 export type UpdateSequenceSchema = z.infer<typeof updateSequenceSchema>
 
-export const upsertSequenceStepRequest = z.object({
-  stepId: zodBigintAsString().optional(),
-  sequenceId: zodBigintAsString(),
-  order: z.number().int().min(0),
-  delayDays: z.number().int().min(0).optional(),
-  delayMinutes: z.number().int().min(0).optional(),
-  delayUnit: z
-    .enum(["immediate", "minutes", "hours", "days", "specificTime"])
-    .optional(),
-  specificDateTime: z.iso.datetime().optional(),
-  flowId: zodBigintAsString().optional(),
-  isActive: z.boolean().optional(),
-  anytime: z.boolean().optional(),
-  sendTimeStart: z.string().nullable().optional(),
-  sendTimeEnd: z.string().nullable().optional(),
-  sendDays: z.array(z.string()).optional(),
-})
+export const upsertSequenceStepRequest = z
+  .object({
+    stepId: zodBigintAsString().optional(),
+    sequenceId: zodBigintAsString(),
+    order: z.number().int().min(0),
+    delayDays: z.number().int().min(0).optional(),
+    delayMinutes: z.number().int().min(0).optional(),
+    delayUnit: z.enum(DELAY_UNITS).optional(),
+    specificDateTime: z.iso.datetime().nullable().optional(),
+    flowId: zodBigintAsString().optional(),
+    isActive: z.boolean().optional(),
+    anytime: z.boolean().optional(),
+    sendTimeStart: z.string().nullable().optional(),
+    sendTimeEnd: z.string().nullable().optional(),
+    sendDays: z.array(z.string()).optional(),
+  })
+  .superRefine((data, ctx) => {
+    const { delayUnit, delayDays, delayMinutes, specificDateTime } = data
+
+    if (
+      delayUnit === undefined ||
+      delayDays === undefined ||
+      delayMinutes === undefined
+    ) {
+      return
+    }
+
+    if (!isStoredDelayConsistent({ delayUnit, delayDays, delayMinutes })) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["delayUnit"],
+        message: "delayUnit does not match delayDays/delayMinutes",
+      })
+      return
+    }
+
+    if (delayUnit === "specificTime" && typeof specificDateTime !== "string") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["specificDateTime"],
+        message: "specificDateTime is required for delayUnit specificTime",
+      })
+    }
+  })
 
 export type UpsertSequenceStepRequest = z.infer<
   typeof upsertSequenceStepRequest
