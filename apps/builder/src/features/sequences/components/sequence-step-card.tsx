@@ -5,7 +5,7 @@ import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { ChevronDownIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useCallback, useState } from "react"
+import { useState } from "react"
 
 import { useDelayState } from "../hooks/use-delay-state"
 import { useSequenceStep } from "../hooks/use-sequence-step"
@@ -84,16 +84,6 @@ export function SequenceStepCard({
     handleSpecificDateTimeChange,
   } = useDelayState(step, handleSave)
 
-  // useTimeRangeState expects an onSave that resolves Promise<void>;
-  // handleSave resolves Promise<boolean> so callers can react to save
-  // success. Adapt here rather than changing handleSave's contract.
-  const handleSaveIgnoringResult = useCallback(
-    async (fields: Parameters<typeof handleSave>[0]) => {
-      await handleSave(fields)
-    },
-    [handleSave],
-  )
-
   const {
     timeOption,
     startTime,
@@ -103,7 +93,7 @@ export function SequenceStepCard({
     handleStartTimeChange,
     handleEndTimeChange,
     handleSelectedDaysChange,
-  } = useTimeRangeState(step, handleSaveIgnoringResult)
+  } = useTimeRangeState(step, handleSave)
 
   return (
     <div className="grid">

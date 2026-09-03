@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   type DelayUnit,
   type DelayView,
@@ -12,8 +12,18 @@ type OnSave = (fields: {
   delay: { unit: DelayUnit; value: number; specificDateTime?: string }
 }) => Promise<boolean>
 
+function isSameView(a: DelayView, b: DelayView): boolean {
+  return (
+    a.unit === b.unit &&
+    a.value === b.value &&
+    a.specificDateTime === b.specificDateTime
+  )
+}
+
 export function useDelayState(step: Step | undefined, onSave: OnSave) {
-  const [view, setView] = useState<DelayView>(() => stepToDelayView(step))
+  const initialView = stepToDelayView(step)
+  const [view, setView] = useState<DelayView>(initialView)
+  const persistedViewRef = useRef<DelayView>(initialView)
 
   const stepId = step?.id
   const delayDays = step?.delayDays
@@ -38,12 +48,21 @@ export function useDelayState(step: Step | undefined, onSave: OnSave) {
                 : new Date(specificDateTimeMs),
           }
 
-    setView(stepToDelayView(storedFields))
+    const nextView = stepToDelayView(storedFields)
+    persistedViewRef.current = nextView
+
+    setView((current) => (isSameView(current, nextView) ? current : nextView))
   }, [stepId, delayDays, delayMinutes, delayUnit, specificDateTimeMs])
 
-  const saveView = useCallback(
-    async (nextView: DelayView, previousView: DelayView) => {
-      const success = await onSave({
+  // Optimistically shows `nextView`, then persists it. On success, records
+  // it as the last-persisted view. On failure, reverts — but only if no
+  // newer optimistic change has since replaced it (an older failed save
+  // must never clobber a newer in-flight or already-applied edit).
+  const commitView = useCallback(
+    async (nextView: DelayView) => {
+      setView(nextView)
+
+      const saved = await onSave({
         delay: {
           unit: nextView.unit,
           value: nextView.value,
@@ -51,8 +70,12 @@ export function useDelayState(step: Step | undefined, onSave: OnSave) {
         },
       })
 
-      if (!success) {
-        setView(previousView)
+      if (saved) {
+        persistedViewRef.current = nextView
+      } else {
+        setView((current) =>
+          current === nextView ? persistedViewRef.current : current,
+        )
       }
     },
     [onSave],
@@ -60,46 +83,41 @@ export function useDelayState(step: Step | undefined, onSave: OnSave) {
 
   const handleDelayUnitChange = useCallback(
     (unit: DelayUnit) => {
-      const previousView = view
       const specificDateTime =
         unit === "specificTime" && !view.specificDateTime
           ? oneHourFromNowLocal()
           : view.specificDateTime
       const nextView: DelayView = { ...view, unit, specificDateTime }
 
-      setView(nextView)
-      saveView(nextView, previousView)
+      commitView(nextView)
     },
-    [view, saveView],
+    [view, commitView],
   )
 
   const handleDelayValueChange = useCallback(
     (value: number) => {
-      const previousView = view
       const nextView: DelayView = { ...view, value }
 
-      setView(nextView)
-      saveView(nextView, previousView)
+      commitView(nextView)
     },
-    [view, saveView],
+    [view, commitView],
   )
 
   const handleSpecificDateTimeChange = useCallback(
     (dateTime: string) => {
-      const previousView = view
       const nextView: DelayView = {
         ...view,
         unit: "specificTime",
         specificDateTime: dateTime,
       }
 
-      setView(nextView)
-
       if (dateTime) {
-        saveView(nextView, previousView)
+        commitView(nextView)
+      } else {
+        setView(nextView)
       }
     },
-    [view, saveView],
+    [view, commitView],
   )
 
   return {

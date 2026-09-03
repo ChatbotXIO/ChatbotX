@@ -3,7 +3,7 @@ import { DELAY_UNITS } from "../src/features/sequences/lib/delay"
 import { upsertSequenceStepRequest } from "../src/features/sequences/schema/action"
 
 const BASE = {
-  sequenceId: "seq-1",
+  sequenceId: "1",
   order: 0,
 }
 
