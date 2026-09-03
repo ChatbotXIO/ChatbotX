@@ -4,10 +4,8 @@ import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
 import { deleteSequenceStepAction } from "../actions/delete-sequence-step.action"
 import { upsertSequenceStepAction } from "../actions/upsert-sequence-step.action"
-import type { DelayUnit } from "../lib/delay"
+import type { DelayChange, DelayUnit } from "../lib/delay"
 import { delayViewToStored } from "../lib/delay"
-
-export type { DelayUnit } from "../lib/delay"
 
 type SavePayload = {
   stepId?: string
@@ -63,7 +61,7 @@ type UseSequenceStepProps = {
 
 type ChangedFields = {
   flowId?: string
-  delay?: { unit: DelayUnit; value: number; specificDateTime?: string }
+  delay?: DelayChange
   isActive?: boolean
   anytime?: boolean
   sendTimeStart?: string | null
@@ -84,16 +82,32 @@ export function useSequenceStep({
   const router = useRouter()
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
   const pendingSavesRef = useRef(0)
+  // FIFO save queue: a payload built before the CREATE step's response comes
+  // back has no stepId. This ref carries that id forward to every queued
+  // payload after it so a second save updates the created row instead of
+  // creating a duplicate.
+  const createdStepIdRef = useRef<string | undefined>(step?.id)
 
   const [isSaving, setIsSaving] = useState(false)
   const [showFlowError, setShowFlowError] = useState(false)
 
   const performSave = useCallback(
     async (payload: SavePayload): Promise<boolean> => {
+      const isCreate = payload.stepId === undefined
+      const resolvedPayload = isCreate
+        ? { ...payload, stepId: createdStepIdRef.current }
+        : payload
+
       try {
-        const result = await upsertSequenceStepAction(workspaceId, payload)
+        const result = await upsertSequenceStepAction(
+          workspaceId,
+          resolvedPayload,
+        )
 
         if (result?.data) {
+          if (isCreate) {
+            createdStepIdRef.current = result.data.stepId
+          }
           onSaved?.()
           return true
         }

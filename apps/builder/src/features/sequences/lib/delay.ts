@@ -33,6 +33,12 @@ export type StoredDelay = {
   specificDateTime: string | null
 }
 
+export type DelayChange = {
+  unit: DelayUnit
+  value: number
+  specificDateTime?: string
+}
+
 export function isDelayUnit(value: unknown): value is DelayUnit {
   return (
     typeof value === "string" &&
@@ -55,10 +61,12 @@ const CONSISTENCY_PREDICATES: Record<
   (fields: RelativeFields) => boolean
 > = {
   immediate: (fields) => fields.delayDays === 0 && fields.delayMinutes === 0,
-  minutes: (fields) => fields.delayDays === 0,
+  minutes: (fields) => fields.delayDays === 0 && fields.delayMinutes > 0,
   hours: (fields) =>
-    fields.delayDays === 0 && fields.delayMinutes % MINUTES_PER_HOUR === 0,
-  days: (fields) => fields.delayMinutes === 0,
+    fields.delayDays === 0 &&
+    fields.delayMinutes > 0 &&
+    fields.delayMinutes % MINUTES_PER_HOUR === 0,
+  days: (fields) => fields.delayMinutes === 0 && fields.delayDays > 0,
   specificTime: (fields) => fields.delayDays === 0 && fields.delayMinutes === 0,
 }
 
@@ -68,9 +76,6 @@ export function isStoredDelayConsistent(
   return CONSISTENCY_PREDICATES[fields.delayUnit](fields)
 }
 
-// immediate/specificTime always return 1 here, so the `> 0` acceptance
-// check below never rejects them — only the relative units (days/hours/
-// minutes) can compute a non-positive value from stored fields.
 const STORED_VALUE_CALCULATORS: Record<
   DelayUnit,
   (fields: RelativeFields) => number
@@ -90,13 +95,7 @@ function isStoredUnitAccepted(
     return false
   }
 
-  if (unit === "specificTime" && !step.specificDateTime) {
-    return false
-  }
-
-  // A stored relative value must be strictly positive (not just non-zero) —
-  // rejects negative and NaN values, which the DB column does not prevent.
-  return STORED_VALUE_CALCULATORS[unit](step) > 0
+  return unit === "specificTime" ? Boolean(step.specificDateTime) : true
 }
 
 type InferenceRule = {

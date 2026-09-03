@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
+  type DelayChange,
   type DelayUnit,
   type DelayView,
   oneHourFromNowLocal,
@@ -8,9 +9,7 @@ import {
 } from "../lib/delay"
 import type { Step } from "./use-sequence-step"
 
-type OnSave = (fields: {
-  delay: { unit: DelayUnit; value: number; specificDateTime?: string }
-}) => Promise<boolean>
+type OnSave = (fields: { delay: DelayChange }) => Promise<boolean>
 
 function isSameView(a: DelayView, b: DelayView): boolean {
   return (

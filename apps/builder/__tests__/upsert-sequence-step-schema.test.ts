@@ -100,6 +100,39 @@ describe("upsertSequenceStepRequest", () => {
     }
   })
 
+  test("fails for hours/0/0 (zero relative value is not consistent)", () => {
+    const result = upsertSequenceStepRequest.safeParse({
+      ...BASE,
+      delayUnit: "hours",
+      delayDays: 0,
+      delayMinutes: 0,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  test("fails for days/0/0 (zero relative value is not consistent)", () => {
+    const result = upsertSequenceStepRequest.safeParse({
+      ...BASE,
+      delayUnit: "days",
+      delayDays: 0,
+      delayMinutes: 0,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  test("fails for minutes/0/0 (zero relative value is not consistent)", () => {
+    const result = upsertSequenceStepRequest.safeParse({
+      ...BASE,
+      delayUnit: "minutes",
+      delayDays: 0,
+      delayMinutes: 0,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
   test("passes for a partial payload with only delayDays", () => {
     const result = upsertSequenceStepRequest.safeParse({
       ...BASE,

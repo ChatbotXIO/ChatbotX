@@ -67,9 +67,10 @@ export const DelaySelector = memo(function DelaySelector({
           <Input
             disabled={isSaving}
             min={oneHourFromNowLocal()}
-            onBlur={() => {
-              if (specificDateTime) {
-                onSpecificDateTimeChange(specificDateTime)
+            onBlur={(e) => {
+              const value = e.target.value
+              if (value && value !== specificDateTime) {
+                onSpecificDateTimeChange(value)
               }
             }}
             onChange={(e) => onSpecificDateTimeChange(e.target.value)}
@@ -78,6 +79,7 @@ export const DelaySelector = memo(function DelaySelector({
           />
           <Button
             className="h-7 w-7 hover:bg-muted hover:text-primary"
+            disabled={isSaving}
             onClick={() => onDelayUnitChange("days")}
             size="icon"
             type="button"
@@ -101,6 +103,9 @@ export const DelaySelector = memo(function DelaySelector({
                   return
                 }
                 setShowDelayValueError(false)
+                if (localValue === delayValue) {
+                  return
+                }
                 onDelayValueChange(localValue)
               }}
               onChange={(e) => {
@@ -118,6 +123,7 @@ export const DelaySelector = memo(function DelaySelector({
                   onDelayValueChange(localValue)
                 }
               }}
+              step={1}
               type="number"
               value={localValue}
             />

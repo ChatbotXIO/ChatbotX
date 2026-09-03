@@ -87,7 +87,7 @@ describe("isStoredDelayConsistent", () => {
     ).toBe(false)
   })
 
-  test("minutes: days = 0 with any minutes is consistent", () => {
+  test("minutes: days = 0 and minutes > 0 is consistent", () => {
     expect(
       isStoredDelayConsistent({
         delayDays: 0,
@@ -95,13 +95,26 @@ describe("isStoredDelayConsistent", () => {
         delayUnit: "minutes",
       }),
     ).toBe(true)
+  })
+
+  test("minutes: zero minutes is inconsistent", () => {
     expect(
       isStoredDelayConsistent({
         delayDays: 0,
         delayMinutes: 0,
         delayUnit: "minutes",
       }),
-    ).toBe(true)
+    ).toBe(false)
+  })
+
+  test("minutes: negative minutes is inconsistent", () => {
+    expect(
+      isStoredDelayConsistent({
+        delayDays: 0,
+        delayMinutes: -30,
+        delayUnit: "minutes",
+      }),
+    ).toBe(false)
   })
 
   test("minutes: nonzero days is inconsistent", () => {
@@ -124,6 +137,16 @@ describe("isStoredDelayConsistent", () => {
     ).toBe(true)
   })
 
+  test("hours: zero minutes is inconsistent", () => {
+    expect(
+      isStoredDelayConsistent({
+        delayDays: 0,
+        delayMinutes: 0,
+        delayUnit: "hours",
+      }),
+    ).toBe(false)
+  })
+
   test("hours: minutes not a multiple of 60 is inconsistent", () => {
     expect(
       isStoredDelayConsistent({
@@ -144,7 +167,7 @@ describe("isStoredDelayConsistent", () => {
     ).toBe(false)
   })
 
-  test("days: minutes = 0 is consistent regardless of days", () => {
+  test("days: minutes = 0 and days > 0 is consistent", () => {
     expect(
       isStoredDelayConsistent({
         delayDays: 120,
@@ -152,6 +175,26 @@ describe("isStoredDelayConsistent", () => {
         delayUnit: "days",
       }),
     ).toBe(true)
+  })
+
+  test("days: zero days is inconsistent", () => {
+    expect(
+      isStoredDelayConsistent({
+        delayDays: 0,
+        delayMinutes: 0,
+        delayUnit: "days",
+      }),
+    ).toBe(false)
+  })
+
+  test("days: negative days is inconsistent", () => {
+    expect(
+      isStoredDelayConsistent({
+        delayDays: -1,
+        delayMinutes: 0,
+        delayUnit: "days",
+      }),
+    ).toBe(false)
   })
 
   test("days: nonzero minutes is inconsistent", () => {
