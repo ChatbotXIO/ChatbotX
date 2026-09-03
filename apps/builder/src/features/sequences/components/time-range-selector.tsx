@@ -39,6 +39,7 @@ type TimeRangeSelectorProps = {
   startTime: string
   endTime: string
   selectedDays: string[]
+  disabled?: boolean
   onTimeOptionChange: (option: "anytime" | "between") => void
   onStartTimeChange: (time: string) => void
   onEndTimeChange: (time: string) => void
@@ -54,6 +55,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
   startTime,
   endTime,
   selectedDays,
+  disabled = false,
   onTimeOptionChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -121,6 +123,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
       <div className="mb-2 flex items-center space-x-2">
         <Checkbox
           checked={timeOption === "between"}
+          disabled={disabled}
           id={`time-option-${stepId || "new"}`}
           onCheckedChange={(checked) =>
             onTimeOptionChange(checked ? "between" : "anytime")
@@ -138,6 +141,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
         <div className="gap-2">
           <div className="flex items-center gap-2">
             <Select
+              disabled={disabled}
               onValueChange={(value) => handleStartTimeChange(value as string)}
               value={startTime}
             >
@@ -156,6 +160,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
             <span className="text-muted-foreground">-</span>
 
             <Select
+              disabled={disabled}
               onValueChange={(value) => handleEndTimeChange(value as string)}
               value={endTime}
             >
@@ -178,6 +183,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
                 render={
                   <Button
                     className="w-full justify-start font-normal"
+                    disabled={disabled}
                     variant="outline"
                   >
                     {getDaysLabel()}
@@ -191,6 +197,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
                       <div className="flex items-center space-x-2" key={day}>
                         <Checkbox
                           checked={selectedDays.includes(day)}
+                          disabled={disabled}
                           id={`day-${day}`}
                           onCheckedChange={(checked) =>
                             handleDayToggle(day, !!checked)
@@ -207,6 +214,7 @@ export const TimeRangeSelector = memo(function TimeRangeSelector({
                   </div>
                   <Button
                     className="w-full"
+                    disabled={disabled}
                     onClick={handleToggleAllDays}
                     variant="outline"
                   >

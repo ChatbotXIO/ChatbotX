@@ -189,6 +189,7 @@ export function SequenceStepCard({
               }`}
             >
               <TimeRangeSelector
+                disabled={isSaving}
                 endTime={endTime}
                 onEndTimeChange={handleEndTimeChange}
                 onSelectedDaysChange={handleSelectedDaysChange}

@@ -11,9 +11,16 @@ import {
 } from "@chatbotx.io/ui/components/ui/select"
 import { RotateCcwIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { memo, useState } from "react"
+import { memo, useEffect, useState } from "react"
 
-type DelayUnit = "immediate" | "minutes" | "hours" | "days" | "specificTime"
+import {
+  DELAY_UNITS,
+  type DelayUnit,
+  isDelayValueInRange,
+  MAX_DELAY_VALUE,
+  MIN_DELAY_VALUE,
+  oneHourFromNowLocal,
+} from "../lib/delay"
 
 type DelaySelectorProps = {
   delayUnit: DelayUnit
@@ -23,17 +30,6 @@ type DelaySelectorProps = {
   onDelayUnitChange: (unit: DelayUnit) => void
   onDelayValueChange: (value: number) => void
   onSpecificDateTimeChange: (dateTime: string) => void
-}
-
-function getOneHourFromNowLocal() {
-  const now = new Date()
-  now.setHours(now.getHours() + 1)
-  const year = now.getFullYear()
-  const month = `${now.getMonth() + 1}`.padStart(2, "0")
-  const day = `${now.getDate()}`.padStart(2, "0")
-  const hour = `${now.getHours()}`.padStart(2, "0")
-  const minute = `${now.getMinutes()}`.padStart(2, "0")
-  return `${year}-${month}-${day}T${hour}:${minute}`
 }
 
 export const DelaySelector = memo(function DelaySelector({
@@ -49,13 +45,17 @@ export const DelaySelector = memo(function DelaySelector({
   const [showDelayValueError, setShowDelayValueError] = useState(false)
   const [localValue, setLocalValue] = useState(delayValue)
 
-  const delayUnitItems: { label: string; value: DelayUnit }[] = [
-    { label: t("sequences.delayUnits.immediate"), value: "immediate" },
-    { label: t("sequences.delayUnits.minutes"), value: "minutes" },
-    { label: t("sequences.delayUnits.hours"), value: "hours" },
-    { label: t("sequences.delayUnits.days"), value: "days" },
-    { label: t("sequences.delayUnits.specificTime"), value: "specificTime" },
-  ]
+  useEffect(() => {
+    setLocalValue(delayValue)
+    setShowDelayValueError(false)
+  }, [delayValue])
+
+  const delayUnitItems: { label: string; value: DelayUnit }[] = DELAY_UNITS.map(
+    (unit) => ({
+      label: t(`sequences.delayUnits.${unit}`),
+      value: unit,
+    }),
+  )
 
   return (
     <div className="flex w-70 items-center gap-2">
@@ -66,7 +66,7 @@ export const DelaySelector = memo(function DelaySelector({
         <div className="flex w-full items-center gap-1">
           <Input
             disabled={isSaving}
-            min={getOneHourFromNowLocal()}
+            min={oneHourFromNowLocal()}
             onBlur={() => {
               if (specificDateTime) {
                 onSpecificDateTimeChange(specificDateTime)
@@ -92,10 +92,10 @@ export const DelaySelector = memo(function DelaySelector({
             <Input
               className={`w-20 ${showDelayValueError ? "border-destructive" : ""}`}
               disabled={isSaving}
-              max={99_999}
-              min={1}
+              max={MAX_DELAY_VALUE}
+              min={MIN_DELAY_VALUE}
               onBlur={() => {
-                if (!localValue || localValue < 1 || localValue > 99_999) {
+                if (!isDelayValueInRange(localValue)) {
                   setShowDelayValueError(true)
                   setLocalValue(delayValue)
                   return
@@ -106,15 +106,11 @@ export const DelaySelector = memo(function DelaySelector({
               onChange={(e) => {
                 const value = Number(e.target.value)
                 setLocalValue(value)
-                if (value >= 1 && value <= 99_999) {
-                  setShowDelayValueError(false)
-                } else {
-                  setShowDelayValueError(true)
-                }
+                setShowDelayValueError(!isDelayValueInRange(value))
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  if (!localValue || localValue < 1 || localValue > 99_999) {
+                  if (!isDelayValueInRange(localValue)) {
                     setShowDelayValueError(true)
                     return
                   }
