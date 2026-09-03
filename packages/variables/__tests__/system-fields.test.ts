@@ -235,6 +235,7 @@ describe("getSystemFieldValue", () => {
       ),
     ).resolves.toBe("Webchat")
     expect(mockFindRecentByContactId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
       contactId: "contact-1",
     })
   })

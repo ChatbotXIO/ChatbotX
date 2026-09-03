@@ -35,3 +35,11 @@ export const getMinigamePlaysRequest = z.object({
   contactId: zodBigintAsString(),
 })
 export type GetMinigamePlaysRequest = z.infer<typeof getMinigamePlaysRequest>
+
+export const findContactConversationRequest = z.object({
+  contactId: zodBigintAsString(),
+  contactInboxId: zodBigintAsString().nullable(),
+})
+export type FindContactConversationRequest = z.infer<
+  typeof findContactConversationRequest
+>

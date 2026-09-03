@@ -176,6 +176,34 @@ class ConversationService extends BaseService {
     return conversations
   }
 
+  /**
+   * Resolves the conversation for a specific ContactInbox by looking up its
+   * channel and delegating to `findDMByContact` — use when the caller already
+   * knows which ContactInbox a contact used, instead of guessing the channel.
+   */
+  async findDMByContactInbox(props: {
+    workspaceId: string
+    contactId: string
+    contactInboxId: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel | undefined> {
+    const { tx = db, workspaceId, contactId, contactInboxId } = props
+    const contactInbox = await contactInboxService.findBy({
+      where: { id: contactInboxId },
+      tx,
+    })
+    if (!contactInbox) {
+      return
+    }
+
+    return await this.findDMByContact({
+      workspaceId,
+      contactId,
+      channel: contactInbox.channel as ChannelType,
+      tx,
+    })
+  }
+
   async updateChallenge(props: {
     workspaceId: string
     conversationId: string

@@ -5429,6 +5429,9 @@
       "jackpotBanner": "جاكبوت",
       "luckyWheelHeader": "عجلة الحظ",
       "gashaponHeader": "جاشابون",
+      "drawLotsHeader": "سحب القرعة",
+      "scratchOffHeader": "اكشط واربح",
+      "scratchOffCardTitle": "بطاقات كشط النجمة المحظوظة",
       "comingSoon": "المعاينة التفصيلية لهذا النوع من الألعاب قريبًا"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "قريباً",
       "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد."
     },
+    "list": {
+      "gamesPlayed": "عدد مرات اللعب",
+      "participants": "المشاركون",
+      "winners": "الفائزون"
+    },
     "history": {
       "title": "السجل",
       "played": "عدد مرات اللعب",
@@ -5489,6 +5497,8 @@
       "openedAt": "أول فتح",
       "lastPlayedAt": "آخر لعب",
       "unknownContact": "جهة اتصال غير معروفة",
+      "conversationNotFound": "لم يتم العثور على محادثة لجهة الاتصال هذه",
+      "popupBlocked": "يُرجى السماح بالنوافذ المنبثقة لهذا الموقع ثم المحاولة مرة أخرى.",
       "record": "السجل",
       "recordDialog": {
         "title": "سجل اللعب",

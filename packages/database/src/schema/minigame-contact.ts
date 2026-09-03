@@ -11,6 +11,7 @@ import {
   timestampConfig,
 } from "../partials/shared"
 import { contactModel } from "./contact"
+import { contactInboxModel } from "./contact-inbox"
 import { minigameModel } from "./minigame"
 
 /**
@@ -40,6 +41,16 @@ export const minigameContactModel = pgTable(
     played: integer().default(0).notNull(),
     remaining: integer().default(0).notNull(),
     referrerContactId: bigintAsString().references(() => contactModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    // The specific ContactInbox the contact used to open/play this minigame,
+    // known exactly from the play token payload — lets conversation lookups
+    // (e.g. jumping to this player's chat from the history table) target the
+    // exact conversation via Message.contactInboxId instead of guessing by
+    // channel, which is ambiguous for channels that key non-DM conversations
+    // (comment threads) with the same non-null sourceId convention.
+    contactInboxId: bigintAsString().references(() => contactInboxModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
     }),

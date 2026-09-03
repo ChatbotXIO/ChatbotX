@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "LUCKY WHEEL",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "DRAW LOTS",
+      "scratchOffHeader": "SCRATCH & WIN",
+      "scratchOffCardTitle": "Lucky star scratch-off tickets",
       "comingSoon": "Detailed preview coming soon for this game type"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "Coming soon",
       "comingSoonDescription": "This minigame type is not playable yet."
     },
+    "list": {
+      "gamesPlayed": "Games played",
+      "participants": "Participants",
+      "winners": "Winners"
+    },
     "history": {
       "title": "History",
       "played": "Plays",
@@ -5489,6 +5497,8 @@
       "openedAt": "First opened",
       "lastPlayedAt": "Last played",
       "unknownContact": "Unknown contact",
+      "conversationNotFound": "No conversation found for this contact",
+      "popupBlocked": "Please allow pop-ups for this site, then try again.",
       "record": "Record",
       "recordDialog": {
         "title": "Play record",

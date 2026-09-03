@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "VÒNG QUAY MAY MẮN",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "RÚT THĂM",
+      "scratchOffHeader": "CÀO TRÚNG THƯỞNG",
+      "scratchOffCardTitle": "Vé cào ngôi sao may mắn",
       "comingSoon": "Bản xem trước chi tiết cho loại trò chơi này sẽ sớm ra mắt"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "Sắp ra mắt",
       "comingSoonDescription": "Loại minigame này chưa thể chơi được."
     },
+    "list": {
+      "gamesPlayed": "Lượt chơi",
+      "participants": "Người tham gia",
+      "winners": "Người thắng cuộc"
+    },
     "history": {
       "title": "Lịch sử",
       "played": "Lượt đã chơi",
@@ -5489,6 +5497,8 @@
       "openedAt": "Mở lần đầu",
       "lastPlayedAt": "Chơi gần nhất",
       "unknownContact": "Liên hệ không xác định",
+      "conversationNotFound": "Không tìm thấy cuộc trò chuyện nào cho liên hệ này",
+      "popupBlocked": "Vui lòng cho phép cửa sổ bật lên cho trang này rồi thử lại.",
       "record": "Bản ghi",
       "recordDialog": {
         "title": "Bản ghi lượt chơi",

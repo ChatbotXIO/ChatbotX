@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -48,6 +49,9 @@ export const minigameModel = pgTable(
     nonWinningMessageSettings: jsonb()
       .$type<MinigameNonWinningMessageSettings>()
       .notNull(),
+    playsCount: integer().default(0).notNull(),
+    participantsCount: integer().default(0).notNull(),
+    winnersCount: integer().default(0).notNull(),
   },
   (table) => [
     index("Minigame_workspaceId_idx").using(

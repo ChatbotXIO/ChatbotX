@@ -26,7 +26,10 @@ export async function resolveMessengerUserContext(
     baseContactInbox?.channel === "messenger"
       ? baseContactInbox
       : await contactInboxService
-          .listByContactId({ contactId: conversation.contactId })
+          .listByContactId({
+            workspaceId: conversation.workspaceId,
+            contactId: conversation.contactId,
+          })
           .then(
             (inboxes) =>
               inboxes

@@ -15,8 +15,10 @@ export const listContactTagsString = async (
 
 export const findPrimaryContactChannel = async (
   contactId: string,
+  workspaceId: string,
 ): Promise<string | null> => {
   const contactInbox = await contactInboxService.findRecentByContactId({
+    workspaceId,
     contactId,
   })
   if (!contactInbox) {

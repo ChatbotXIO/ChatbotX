@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "ROUE DE LA CHANCE",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "TIRAGE AU SORT",
+      "scratchOffHeader": "GRATTEZ & GAGNEZ",
+      "scratchOffCardTitle": "Cartes à gratter étoile porte-bonheur",
       "comingSoon": "Aperçu détaillé bientôt disponible pour ce type de jeu"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "Bientôt disponible",
       "comingSoonDescription": "Ce type de minijeu n'est pas encore jouable."
     },
+    "list": {
+      "gamesPlayed": "Parties jouées",
+      "participants": "Participants",
+      "winners": "Gagnants"
+    },
     "history": {
       "title": "Historique",
       "played": "Parties jouées",
@@ -5489,6 +5497,8 @@
       "openedAt": "Première ouverture",
       "lastPlayedAt": "Dernière partie",
       "unknownContact": "Contact inconnu",
+      "conversationNotFound": "Aucune conversation trouvée pour ce contact",
+      "popupBlocked": "Autorisez les fenêtres contextuelles pour ce site, puis réessayez.",
       "record": "Registre",
       "recordDialog": {
         "title": "Registre des parties",

@@ -5405,6 +5405,9 @@
       "jackpotBanner": "老虎机",
       "luckyWheelHeader": "幸运转盘",
       "gashaponHeader": "扭蛋",
+      "drawLotsHeader": "抽签",
+      "scratchOffHeader": "刮刮乐",
+      "scratchOffCardTitle": "幸运星刮刮卡",
       "comingSoon": "该游戏类型的详细预览即将推出"
     },
     "form": {
@@ -5458,6 +5461,11 @@
       "comingSoonTitle": "即将推出",
       "comingSoonDescription": "此类型的小游戏暂时无法玩。"
     },
+    "list": {
+      "gamesPlayed": "游戏次数",
+      "participants": "参与人数",
+      "winners": "中奖人数"
+    },
     "history": {
       "title": "历史记录",
       "played": "已玩次数",
@@ -5465,6 +5473,8 @@
       "openedAt": "首次打开",
       "lastPlayedAt": "最近游玩",
       "unknownContact": "未知联系人",
+      "conversationNotFound": "未找到该联系人的会话",
+      "popupBlocked": "请允许此网站弹出窗口，然后再试一次。",
       "record": "记录",
       "recordDialog": {
         "title": "游戏记录",

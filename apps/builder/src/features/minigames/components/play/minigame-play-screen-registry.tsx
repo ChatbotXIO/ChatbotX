@@ -4,9 +4,11 @@ import type {
   MinigameModel,
 } from "@chatbotx.io/database/types"
 import type { ComponentType } from "react"
+import { DrawLotsPlayScreen } from "./draw-lots-play-screen"
 import { GashaponPlayScreen } from "./gashapon-play-screen"
 import { JackpotPlayScreen } from "./jackpot-play-screen"
 import { LuckyWheelPlayScreen } from "./lucky-wheel-play-screen"
+import { ScratchOffPlayScreen } from "./scratch-off-play-screen"
 
 export type MinigamePlayScreenProps = {
   minigame: MinigameModel
@@ -20,4 +22,6 @@ export const MINIGAME_PLAY_SCREENS: Partial<
   jackpot: JackpotPlayScreen,
   luckyWheel: LuckyWheelPlayScreen,
   gashapon: GashaponPlayScreen,
+  drawLots: DrawLotsPlayScreen,
+  scratchOff: ScratchOffPlayScreen,
 }

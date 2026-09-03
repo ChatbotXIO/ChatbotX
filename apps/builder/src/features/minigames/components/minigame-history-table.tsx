@@ -24,11 +24,13 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { formatDate } from "@chatbotx.io/ui/lib/format"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EllipsisVerticalIcon, ScrollTextIcon } from "lucide-react"
+import { EllipsisVerticalIcon, Loader, ScrollTextIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { use, useMemo, useState } from "react"
+import { use, useMemo, useRef, useState } from "react"
+import { toast } from "sonner"
 import { useAvatarUrl } from "@/features/contacts/utils"
+import { findContactConversationAction } from "../actions/find-contact-conversation.action"
 import { getMinigamePlaysAction } from "../actions/get-minigame-plays.action"
 import type { listMinigameHistory } from "../queries"
 import { MinigamePlayRecordDialog } from "./minigame-play-record-dialog"
@@ -45,21 +47,73 @@ type Props = {
   promises: Promise<[ListResult]>
 }
 
-function PlayerAvatarCell({
+function PlayerNameCell({
   contact,
+  contactId,
+  contactInboxId,
   unknownContactLabel,
+  conversationNotFoundLabel,
+  popupBlockedLabel,
+  workspaceId,
 }: {
   contact: Pick<PlayerRow["contact"], "avatar" | "fullName">
+  contactId: string
+  contactInboxId: string | null
   unknownContactLabel: string
+  conversationNotFoundLabel: string
+  popupBlockedLabel: string
+  workspaceId: string
 }) {
   const avatarUrl = useAvatarUrl(contact as Parameters<typeof useAvatarUrl>[0])
   const name = contact.fullName ?? unknownContactLabel
+  const openedTabRef = useRef<Window | null>(null)
+  // A stable, per-row window name: opening it again with the same name later
+  // (in onSuccess) just navigates this already-open tab instead of creating a
+  // new one, so it isn't subject to popup-blocker rules.
+  const conversationTabName = `minigame-conversation-${contactId}`
+  const boundFindContactConversationAction = useMemo(
+    () => findContactConversationAction.bind(null, workspaceId),
+    [workspaceId],
+  )
+  const { execute, isExecuting } = useAction(
+    boundFindContactConversationAction,
+    {
+      onSuccess: ({ data }) => {
+        if (data?.conversationId) {
+          window.open(
+            `/space/${workspaceId}/inbox?conversationId=${data.conversationId}`,
+            conversationTabName,
+          )
+        } else {
+          openedTabRef.current?.close()
+          toast.info(conversationNotFoundLabel)
+        }
+      },
+      onError: () => {
+        openedTabRef.current?.close()
+        toast.error(popupBlockedLabel)
+      },
+    },
+  )
 
   return (
-    <Avatar className="size-8">
-      <AvatarImage alt={name} className="object-cover" src={avatarUrl} />
-      <AvatarFallback>{name.slice(0, 2)}</AvatarFallback>
-    </Avatar>
+    <Button
+      className="h-auto justify-start gap-2 px-2 py-1"
+      disabled={isExecuting}
+      onClick={() => {
+        execute({ contactId, contactInboxId })
+      }}
+      variant="ghost"
+    >
+      <Avatar className="size-8">
+        <AvatarImage alt={name} className="object-cover" src={avatarUrl} />
+        <AvatarFallback>{name.slice(0, 2)}</AvatarFallback>
+      </Avatar>
+      <span className="font-medium">{name}</span>
+      {isExecuting && (
+        <Loader aria-hidden="true" className="size-4 animate-spin" />
+      )}
+    </Button>
   )
 }
 
@@ -103,16 +157,17 @@ export function MinigameHistoryTable({
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <PlayerAvatarCell
-              contact={row.original.contact}
-              unknownContactLabel={t("minigames.history.unknownContact")}
-            />
-            <span className="font-medium">
-              {row.original.contact.fullName ??
-                t("minigames.history.unknownContact")}
-            </span>
-          </div>
+          <PlayerNameCell
+            contact={row.original.contact}
+            contactId={row.original.contactId}
+            contactInboxId={row.original.contactInboxId}
+            conversationNotFoundLabel={t(
+              "minigames.history.conversationNotFound",
+            )}
+            popupBlockedLabel={t("minigames.history.popupBlocked")}
+            unknownContactLabel={t("minigames.history.unknownContact")}
+            workspaceId={workspaceId}
+          />
         ),
         meta: {
           label: t("fields.name.label"),
@@ -202,7 +257,7 @@ export function MinigameHistoryTable({
         enableColumnFilter: false,
       },
     ],
-    [loadPlays, locale, minigameId, t],
+    [loadPlays, locale, minigameId, t, workspaceId],
   )
   const { table } = useDataTable({
     data,

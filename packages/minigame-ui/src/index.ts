@@ -1,5 +1,7 @@
+export * from "./components/draw-lots-art"
 export * from "./components/gashapon-machine-art"
 export * from "./components/jackpot-machine-art"
 export * from "./components/jackpot-start-button"
 export * from "./components/lucky-wheel-art"
+export * from "./components/scratch-off-art"
 export * from "./lib/lucky-wheel-rotation"

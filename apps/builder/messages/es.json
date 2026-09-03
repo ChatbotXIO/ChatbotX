@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "RULETA DE LA SUERTE",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "SORTEO",
+      "scratchOffHeader": "RASCA Y GANA",
+      "scratchOffCardTitle": "Boletos rasca y gana de la estrella de la suerte",
       "comingSoon": "La vista previa detallada de este tipo de juego estará disponible próximamente"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "Próximamente",
       "comingSoonDescription": "Este tipo de minijuego aún no está disponible."
     },
+    "list": {
+      "gamesPlayed": "Partidas jugadas",
+      "participants": "Participantes",
+      "winners": "Ganadores"
+    },
     "history": {
       "title": "Historial",
       "played": "Jugadas",
@@ -5489,6 +5497,8 @@
       "openedAt": "Primera apertura",
       "lastPlayedAt": "Última jugada",
       "unknownContact": "Contacto desconocido",
+      "conversationNotFound": "No se encontró ninguna conversación para este contacto",
+      "popupBlocked": "Por favor, todosow pop-ups para este site, then try again.",
       "record": "Registro",
       "recordDialog": {
         "title": "Registro de jugadas",

@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "ONNENPYÖRÄ",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "ARVONTA",
+      "scratchOffHeader": "RAAPUTA JA VOITA",
+      "scratchOffCardTitle": "Onnentähden raaputusarvat",
       "comingSoon": "Yksityiskohtainen esikatselu tälle pelityypille tulossa pian"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "Tulossa pian",
       "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata."
     },
+    "list": {
+      "gamesPlayed": "Pelatut pelit",
+      "participants": "Osallistujat",
+      "winners": "Voittajat"
+    },
     "history": {
       "title": "Historia",
       "played": "Pelikerrat",
@@ -5489,6 +5497,8 @@
       "openedAt": "Avattu ensimmäisen kerran",
       "lastPlayedAt": "Viimeksi pelattu",
       "unknownContact": "Tuntematon kontakti",
+      "conversationNotFound": "Tälle yhteystiedolle ei löytynyt keskustelua",
+      "popupBlocked": "Salli tämän sivuston ponnahdusikkunat ja yritä uudelleen.",
       "record": "Tapahtumat",
       "recordDialog": {
         "title": "Pelitapahtumat",

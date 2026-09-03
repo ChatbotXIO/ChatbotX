@@ -161,6 +161,42 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
         enableColumnFilter: true,
       },
       {
+        id: "playsCount",
+        accessorKey: "playsCount",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("minigames.list.gamesPlayed")}
+          />
+        ),
+        cell: ({ row }) => <span>{row.original.playsCount}</span>,
+        enableSorting: true,
+      },
+      {
+        id: "participantsCount",
+        accessorKey: "participantsCount",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("minigames.list.participants")}
+          />
+        ),
+        cell: ({ row }) => <span>{row.original.participantsCount}</span>,
+        enableSorting: true,
+      },
+      {
+        id: "winnersCount",
+        accessorKey: "winnersCount",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("minigames.list.winners")}
+          />
+        ),
+        cell: ({ row }) => <span>{row.original.winnersCount}</span>,
+        enableSorting: true,
+      },
+      {
         id: "enabled",
         accessorKey: "enabled",
         size: 10,

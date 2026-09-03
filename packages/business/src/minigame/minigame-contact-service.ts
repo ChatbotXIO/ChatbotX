@@ -7,6 +7,7 @@ import {
   desc,
   eq,
   ilike,
+  sql,
 } from "@chatbotx.io/database/client"
 import type {
   ChannelType,
@@ -107,6 +108,7 @@ class MinigameContactService extends BaseService {
     minigameId: string
     contactId: string
     playerSettings: MinigamePlayerSettings
+    contactInboxId?: string
     tx?: DatabaseClient
     forUpdate?: boolean
   }): Promise<MinigameContactModel> {
@@ -114,6 +116,7 @@ class MinigameContactService extends BaseService {
       minigameId,
       contactId,
       playerSettings,
+      contactInboxId,
       tx = db,
       forUpdate = false,
     } = props
@@ -154,6 +157,7 @@ class MinigameContactService extends BaseService {
         .values({
           minigameId,
           contactId,
+          contactInboxId,
           openedAt: new Date(),
           remaining: playerSettings.drawsPerPerson,
           played: 0,
@@ -162,6 +166,12 @@ class MinigameContactService extends BaseService {
         .returning()
 
       if (created) {
+        await tx
+          .update(minigameModel)
+          .set({
+            participantsCount: sql`${minigameModel.participantsCount} + 1`,
+          })
+          .where(eq(minigameModel.id, minigameId))
         return created
       }
 
@@ -210,6 +220,26 @@ class MinigameContactService extends BaseService {
     }
 
     return existing
+  }
+
+  /**
+   * Wraps `resolvePlayState` in its own transaction so the opener-tracking
+   * path (the public play page render, which has no surrounding transaction
+   * of its own) can't leave the `MinigameContact` insert and the
+   * `participantsCount` increment as two separately-committed statements —
+   * a crash between them would otherwise under-report `participantsCount`
+   * with no way to recover, since `onConflictDoNothing` makes the insert a
+   * no-op on every later visit.
+   */
+  async resolveOpenerPlayState(props: {
+    minigameId: string
+    contactId: string
+    playerSettings: MinigamePlayerSettings
+    contactInboxId?: string
+  }): Promise<MinigameContactModel> {
+    return await db.transaction(
+      async (tx) => await this.resolvePlayState({ ...props, tx }),
+    )
   }
 
   /**
@@ -268,12 +298,13 @@ class MinigameContactService extends BaseService {
   async recordPlay(props: {
     minigameId: string
     contactId: string
+    contactInboxId: string
     minigame: MinigameModel
   }): Promise<{
     contactState: MinigameContactModel
     result: MinigamePlayResult
   }> {
-    const { minigameId, contactId, minigame } = props
+    const { minigameId, contactId, contactInboxId, minigame } = props
     const now = new Date()
     const { playedAtFrom, playedAtTo } = minigame.generalSettings
 
@@ -290,6 +321,7 @@ class MinigameContactService extends BaseService {
         minigameId,
         contactId,
         playerSettings: minigame.playerSettings,
+        contactInboxId,
         tx,
         forUpdate: true,
       })
@@ -323,6 +355,16 @@ class MinigameContactService extends BaseService {
           })
           .where(eq(minigameModel.id, minigameId))
       }
+
+      await tx
+        .update(minigameModel)
+        .set({
+          playsCount: sql`${minigameModel.playsCount} + 1`,
+          ...(result.type === "prize"
+            ? { winnersCount: sql`${minigameModel.winnersCount} + 1` }
+            : {}),
+        })
+        .where(eq(minigameModel.id, minigameId))
 
       const [contactState] = await tx
         .update(minigameContactModel)
@@ -369,6 +411,7 @@ class MinigameContactService extends BaseService {
     const { contactState, result } = await this.recordPlay({
       minigameId,
       contactId,
+      contactInboxId: contactInbox.id,
       minigame,
     })
 
@@ -466,6 +509,7 @@ class MinigameContactService extends BaseService {
         .select({
           id: minigameContactModel.id,
           contactId: minigameContactModel.contactId,
+          contactInboxId: minigameContactModel.contactInboxId,
           played: minigameContactModel.played,
           remaining: minigameContactModel.remaining,
           openedAt: minigameContactModel.openedAt,

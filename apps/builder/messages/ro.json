@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "ROATA NOROCULUI",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "TRAGERE LA SORȚI",
+      "scratchOffHeader": "RĂZUIEȘTE ȘI CÂȘTIGĂ",
+      "scratchOffCardTitle": "Bilete răzuibile steaua norocoasă",
       "comingSoon": "Previzualizarea detaliată pentru acest tip de joc va fi disponibilă în curând"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "În curând",
       "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă."
     },
+    "list": {
+      "gamesPlayed": "Jocuri jucate",
+      "participants": "Participanți",
+      "winners": "Câștigători"
+    },
     "history": {
       "title": "Istoric",
       "played": "Jocuri",
@@ -5489,6 +5497,8 @@
       "openedAt": "Prima deschidere",
       "lastPlayedAt": "Ultimul joc",
       "unknownContact": "Contact necunoscut",
+      "conversationNotFound": "Nu s-a găsit nicio conversație pentru acest contact",
+      "popupBlocked": "Te rugăm să permiți ferestrele pop-up pentru acest site, apoi încearcă din nou.",
       "record": "Înregistrare",
       "recordDialog": {
         "title": "Înregistrări de joc",

@@ -298,6 +298,7 @@ describe("contactInboxService timestamp helpers", () => {
       .mockResolvedValue(cachedContactInboxes as never)
 
     const result = await contactInboxService.findRecentByContactId({
+      workspaceId: "workspace-1",
       contactId: "contact-1",
     })
 

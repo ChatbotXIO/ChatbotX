@@ -79,6 +79,7 @@ export const listMessages = async (
           },
         })
       : await contactInboxService.findRecentByContactId({
+          workspaceId: input.workspaceId,
           contactId: conversation.contactId,
         })
   }

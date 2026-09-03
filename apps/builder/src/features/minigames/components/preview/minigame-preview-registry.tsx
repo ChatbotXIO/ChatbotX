@@ -6,16 +6,20 @@ import type {
   MinigameType,
 } from "@chatbotx.io/database/partials"
 import {
+  DrawLotsArt,
   GashaponMachineArt,
   JackpotMachineArt,
   LuckyWheelArt,
   type LuckyWheelSegment,
+  ScratchOffArt,
 } from "@chatbotx.io/minigame-ui"
 import type { ComponentType, ReactNode } from "react"
 import { getDefaultMinigameAppearance } from "../../constants"
+import { DrawLotsPreview } from "./draw-lots-preview"
 import { GashaponPreview } from "./gashapon-preview"
 import { JackpotPreview } from "./jackpot-preview"
 import { LuckyWheelPreview } from "./lucky-wheel-preview"
+import { ScratchOffPreview } from "./scratch-off-preview"
 
 export type MinigamePreviewProps = {
   type: MinigameType
@@ -34,6 +38,8 @@ export const MINIGAME_PREVIEW_COMPONENTS: Partial<
   jackpot: JackpotPreview,
   luckyWheel: LuckyWheelPreview,
   gashapon: GashaponPreview,
+  drawLots: DrawLotsPreview,
+  scratchOff: ScratchOffPreview,
 }
 
 type MinigameTypeCardArt = {
@@ -46,6 +52,9 @@ const JACKPOT_PREVIEW_APPEARANCE = getDefaultMinigameAppearance("jackpot")
 const LUCKY_WHEEL_PREVIEW_APPEARANCE =
   getDefaultMinigameAppearance("luckyWheel")
 const GASHAPON_PREVIEW_APPEARANCE = getDefaultMinigameAppearance("gashapon")
+const DRAW_LOTS_PREVIEW_APPEARANCE = getDefaultMinigameAppearance("drawLots")
+const SCRATCH_OFF_PREVIEW_APPEARANCE =
+  getDefaultMinigameAppearance("scratchOff")
 
 const LUCKY_WHEEL_PREVIEW_SEGMENT_COUNT = 6
 const LUCKY_WHEEL_PREVIEW_SEGMENTS: LuckyWheelSegment[] = Array.from(
@@ -89,6 +98,27 @@ export const MINIGAME_TYPE_CARD_ART: Partial<
         decorativeColor={GASHAPON_PREVIEW_APPEARANCE.decorativeColor}
         machineColor={GASHAPON_PREVIEW_APPEARANCE.machineColor}
         phase="idle"
+      />
+    ),
+  },
+  drawLots: {
+    backgroundColor: DRAW_LOTS_PREVIEW_APPEARANCE.backgroundColor,
+    backgroundImageUrl: DRAW_LOTS_PREVIEW_APPEARANCE.backgroundImage.url,
+    art: (
+      <DrawLotsArt
+        decorativeColor={DRAW_LOTS_PREVIEW_APPEARANCE.decorativeColor}
+        machineColor={DRAW_LOTS_PREVIEW_APPEARANCE.machineColor}
+        phase="idle"
+      />
+    ),
+  },
+  scratchOff: {
+    backgroundColor: SCRATCH_OFF_PREVIEW_APPEARANCE.backgroundColor,
+    backgroundImageUrl: SCRATCH_OFF_PREVIEW_APPEARANCE.backgroundImage.url,
+    art: (
+      <ScratchOffArt
+        decorativeColor={SCRATCH_OFF_PREVIEW_APPEARANCE.decorativeColor}
+        machineColor={SCRATCH_OFF_PREVIEW_APPEARANCE.machineColor}
       />
     ),
   },

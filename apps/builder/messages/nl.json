@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "GELUKSWIEL",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "LOTEN TREKKEN",
+      "scratchOffHeader": "KRAS & WIN",
+      "scratchOffCardTitle": "Geluksster kraslotjes",
       "comingSoon": "Gedetailleerde voorvertoning voor dit speltype volgt binnenkort"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "Binnenkort beschikbaar",
       "comingSoonDescription": "Dit type minispel is nog niet speelbaar."
     },
+    "list": {
+      "gamesPlayed": "Gespeelde spellen",
+      "participants": "Deelnemers",
+      "winners": "Winnaars"
+    },
     "history": {
       "title": "Geschiedenis",
       "played": "Gespeeld",
@@ -5489,6 +5497,8 @@
       "openedAt": "Eerst geopend",
       "lastPlayedAt": "Laatst gespeeld",
       "unknownContact": "Onbekend contact",
+      "conversationNotFound": "Geen gesprek gevonden voor dit contact",
+      "popupBlocked": "Sta pop-ups voor deze site toe en probeer het opnieuw.",
       "record": "Logboek",
       "recordDialog": {
         "title": "Speellogboek",

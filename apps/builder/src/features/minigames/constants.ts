@@ -37,11 +37,12 @@ export const MINIGAME_TYPE_CONFIGS: {
   },
 ]
 
-/** Only Jackpot, Lucky Wheel, and Gashapon have a working gameplay experience so far; the rest are disabled in the type picker. */
 export const MINIGAME_TYPES_ENABLED_FOR_CREATION: MinigameType[] = [
   "jackpot",
   "luckyWheel",
   "gashapon",
+  "drawLots",
+  "scratchOff",
 ]
 
 export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
@@ -70,6 +71,14 @@ const LUCKY_WHEEL_DEFAULT_START_BUTTON_IMAGE_URL =
 const GASHAPON_DEFAULT_BACKGROUND_IMAGE_URL =
   "/mini-game/gashapon/background.svg"
 const GASHAPON_DEFAULT_START_BUTTON_IMAGE_URL = "/mini-game/gashapon/button.svg"
+const DRAW_LOTS_DEFAULT_BACKGROUND_IMAGE_URL =
+  "/mini-game/draw-lots/background.png"
+const DRAW_LOTS_DEFAULT_START_BUTTON_IMAGE_URL =
+  "/mini-game/draw-lots/button.png"
+const SCRATCH_OFF_DEFAULT_BACKGROUND_IMAGE_URL =
+  "/mini-game/scratch-off/background.png"
+const SCRATCH_OFF_DEFAULT_START_BUTTON_IMAGE_URL =
+  "/mini-game/scratch-off/button.png"
 
 export function getDefaultMinigameAppearance(
   type?: MinigameType,
@@ -124,6 +133,42 @@ export function getDefaultMinigameAppearance(
       startButtonImage: {
         mode: "file",
         url: GASHAPON_DEFAULT_START_BUTTON_IMAGE_URL,
+      },
+    }
+  }
+
+  if (type === "drawLots") {
+    return {
+      backgroundColor: "#E8D9B5",
+      machineColor: "#F5F564",
+      decorativeColor: "#C9302C",
+      ruleTextColor: "#FFFFFF",
+      backgroundImage: {
+        mode: "file",
+        url: DRAW_LOTS_DEFAULT_BACKGROUND_IMAGE_URL,
+      },
+      prizeDescriptionImage: { mode: "file", url: "" },
+      startButtonImage: {
+        mode: "file",
+        url: DRAW_LOTS_DEFAULT_START_BUTTON_IMAGE_URL,
+      },
+    }
+  }
+
+  if (type === "scratchOff") {
+    return {
+      backgroundColor: "#2F5FBF",
+      machineColor: "#FFE629",
+      decorativeColor: "#BD2000",
+      ruleTextColor: "#FFFFFF",
+      backgroundImage: {
+        mode: "file",
+        url: SCRATCH_OFF_DEFAULT_BACKGROUND_IMAGE_URL,
+      },
+      prizeDescriptionImage: { mode: "file", url: "" },
+      startButtonImage: {
+        mode: "file",
+        url: SCRATCH_OFF_DEFAULT_START_BUTTON_IMAGE_URL,
       },
     }
   }

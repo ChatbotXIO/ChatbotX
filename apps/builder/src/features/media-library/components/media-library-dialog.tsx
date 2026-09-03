@@ -191,9 +191,8 @@ export function MediaLibraryDialog({
     [onSectionChange],
   )
 
-  const { execute: executeCreateFolder } = useAction(
-    createMediaLibraryFolderAction.bind(null, workspaceId),
-    {
+  const { execute: executeCreateFolder, isPending: isCreatingFolder } =
+    useAction(createMediaLibraryFolderAction.bind(null, workspaceId), {
       onSuccess: ({ data }) => {
         setNewFolderMode(false)
         setNewFolderName("")
@@ -202,8 +201,7 @@ export function MediaLibraryDialog({
         }
       },
       onError: () => toast.error(t("newFolder")),
-    },
-  )
+    })
 
   const { execute: executeRenameFolder } = useAction(
     renameMediaLibraryFolderAction.bind(null, workspaceId),
@@ -277,7 +275,7 @@ export function MediaLibraryDialog({
   )
 
   const handleCreateFolder = () => {
-    if (!newFolderName.trim()) {
+    if (!newFolderName.trim() || isCreatingFolder) {
       return
     }
     executeCreateFolder({ name: newFolderName.trim() })

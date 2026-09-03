@@ -5429,6 +5429,9 @@
       "jackpotBanner": "Jackpot",
       "luckyWheelHeader": "GLÜCKSRAD",
       "gashaponHeader": "GASHAPON",
+      "drawLotsHeader": "LOSZIEHUNG",
+      "scratchOffHeader": "RUBBELN & GEWINNEN",
+      "scratchOffCardTitle": "Glücksstern-Rubbellose",
       "comingSoon": "Detaillierte Vorschau für diesen Spieltyp folgt in Kürze"
     },
     "form": {
@@ -5482,6 +5485,11 @@
       "comingSoonTitle": "Demnächst verfügbar",
       "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar."
     },
+    "list": {
+      "gamesPlayed": "Gespielte Spiele",
+      "participants": "Teilnehmer",
+      "winners": "Gewinner"
+    },
     "history": {
       "title": "Verlauf",
       "played": "Spiele",
@@ -5489,6 +5497,8 @@
       "openedAt": "Zuerst geöffnet",
       "lastPlayedAt": "Zuletzt gespielt",
       "unknownContact": "Unbekannter Kontakt",
+      "conversationNotFound": "Keine Unterhaltung für diesen Kontakt gefunden",
+      "popupBlocked": "Erlauben Sie Pop-ups für diese Website und versuchen Sie es erneut.",
       "record": "Protokoll",
       "recordDialog": {
         "title": "Spielprotokoll",

@@ -361,7 +361,8 @@ export const getSystemFieldValue = async (
       return await getContactLastInputType(contact.id)
     case systemFieldTypes.enum.user_channel:
       return capitalizeFirstLetter(
-        contactInbox?.channel ?? (await findPrimaryContactChannel(contact.id)),
+        contactInbox?.channel ??
+          (await findPrimaryContactChannel(contact.id, contact.workspaceId)),
       )
     case systemFieldTypes.enum.user_tags:
       return await listContactTagsString(contact.id)
