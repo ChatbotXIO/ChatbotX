@@ -1,9 +1,9 @@
 name: Build and Push Docker Images
 
 on:
-  push:
-    branches: [main]
-    tags: ["v*"]
+  # Disabled: this workflow is not used for ChatbotX deploys (we build on the
+  # server via docker compose, not via ghcr.io images). Kept for reference;
+  # can be re-enabled by restoring the push triggers.
   workflow_dispatch:
     inputs:
       environment:

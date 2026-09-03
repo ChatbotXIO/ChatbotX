@@ -52,7 +52,7 @@ jobs:
         (github.event_name == 'push') ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_on')
       )
-    runs-on: [self-hosted, gl-runner01]
+    runs-on: [self-hosted, chatbotx]
     timeout-minutes: 15
     environment:
       name: devel
@@ -85,7 +85,7 @@ jobs:
       always() &&
       github.event_name == 'push' &&
       needs.maintenance_on.result == 'success'
-    runs-on: [self-hosted, gl-runner01]
+    runs-on: [self-hosted, chatbotx]
     timeout-minutes: 60
     environment:
       name: devel
@@ -125,7 +125,7 @@ jobs:
         (github.event_name == 'push' && needs.deploy.result == 'success') ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_off')
       )
-    runs-on: [self-hosted, gl-runner01]
+    runs-on: [self-hosted, chatbotx]
     timeout-minutes: 15
     environment:
       name: devel
