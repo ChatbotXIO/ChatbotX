@@ -33,7 +33,7 @@ on:
 
 concurrency:
   group: chatbotx-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   ENV: production

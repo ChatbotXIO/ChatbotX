@@ -32,7 +32,7 @@ on:
 
 concurrency:
   group: chatbotx-devel
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   ENV: devel
