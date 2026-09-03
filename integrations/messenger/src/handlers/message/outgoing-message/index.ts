@@ -44,7 +44,7 @@ import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
 import { convertFlowStepGif } from "./send-gif"
-import { convertFlowStepMedia } from "./send-media"
+import { convertFlowStepMediaV2 } from "./send-media-v2"
 import { buildMessengerTemplateSendRequest } from "./send-messenger-template"
 import { convertFlowStepMultipleImages } from "./send-multiple-images"
 import { convertCanonicalFacebookQuickReplies } from "./send-quick-replies"
@@ -501,7 +501,7 @@ async function* convertFlowStepToFacebookMessage(
       break
     case stepTypes.enum.sendImage:
     case stepTypes.enum.sendVideo:
-      await (yield* convertFlowStepMedia(
+      await (yield* convertFlowStepMediaV2(
         props as SendFlowStepProps<
           MessengerAuthValue,
           SendImageStepSchema | SendVideoStepSchema
