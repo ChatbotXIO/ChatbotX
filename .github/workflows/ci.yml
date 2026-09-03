@@ -32,6 +32,8 @@ jobs:
     name: Types
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      NODE_OPTIONS: --max-old-space-size=2048
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -62,7 +64,7 @@ jobs:
       # repo, so turbo.json declares no `dependsOn` — see the comment there).
       # Each is single-threaded, so concurrency can fill all 4 vCPUs.
       - name: Type-check
-        run: pnpm turbo run check-types --concurrency=4
+        run: pnpm turbo run check-types --concurrency=2
 
   lint:
     name: Lint
