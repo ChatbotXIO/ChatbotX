@@ -58,6 +58,8 @@ jobs:
 
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
+        with:
+          server-port: 0
 
       # `pnpm lint` covers everything, cheapest-first: check:agent-instructions,
       # `turbo run lint` for apps/builder's i18n check, then repo-wide Biome
