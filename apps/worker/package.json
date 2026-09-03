@@ -76,7 +76,7 @@
     "@chatbotx.io/utils": "workspace:*",
     "@chatbotx.io/variables": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
-    "@faker-js/faker": "^10.4.0",
+    "@faker-js/faker": "^10.5.0",
     "@mozilla/readability": "^0.6.0",
     "@platformatic/kafka": "^1.34.0",
     "@t3-oss/env-core": "^0.13.11",
