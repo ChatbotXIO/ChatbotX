@@ -1,7 +1,7 @@
-# Deploy devel — ChatbotX (patrón sysbrazo)
+# Deploy production — ChatbotX (patrón sysbrazo)
 #
-# Corre en push a main (después de merge de PR).
-# Enforce PR-only merges via branch protection on main (no direct pushes).
+# Corre en push de tags (igual que sysbrazo: crear tags desde main, ej.:
+#   git tag 4.1.19 && git push origin 4.1.19
 #
 # workflow_dispatch (manual):
 #   maintenance_on  — maintenance sin deploy
@@ -10,16 +10,17 @@
 # Los scripts viven en el repo (scripts/deployment/*.sh) y corren desde el
 # runner, igual que sysbrazo (deploy-v3.sh). Las credenciales de AWS las
 # tiene la instancia EC2 (IAM role). El runner se autentica con SSH_PRIVATE_KEY.
+# Requiere GitHub environment `production` con SSH_PRIVATE_KEY secret.
 
-name: Deploy Devel
+name: Deploy Production
 
 permissions:
   contents: read
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "*"
   workflow_dispatch:
     inputs:
       job:
@@ -31,16 +32,16 @@ on:
           - maintenance_off
 
 concurrency:
-  group: chatbotx-devel
+  group: chatbotx-production
   cancel-in-progress: false
 
 env:
-  ENV: devel
-  WORKSPACE: /var/www/chatbotx-dev
-  SERVER: ip-10-6-3-11.us-west-2.compute.internal
+  ENV: production
+  WORKSPACE: /var/www/chatbotx-prod
+  SERVER: <SERVER-PROD-PENDIENTE>
   SSH_USER: sysbrazo
-  SECRET_NAME: dev/chatbotx/all-secret
-  COMPOSE_FILES: "-f docker-compose.yml -f docker-compose.apps.yml -f docker-compose.dev.yml"
+  SECRET_NAME: prod/chatbotx/all-secret
+  COMPOSE_FILES: "-f docker-compose.yml -f docker-compose.apps.yml -f docker-compose.prod.yml"
   HUSKY: "0"
 
 jobs:
@@ -49,17 +50,19 @@ jobs:
     if: |
       always() &&
       (
-        (github.event_name == 'push') ||
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_on')
       )
     runs-on: [self-hosted, gl-runner01]
     timeout-minutes: 15
     environment:
-      name: devel
-      url: https://dev-chatbotx.fibrazo.com.co/
+      name: production
+      url: https://chatbotx.fibrazo.com.co/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
 
       - name: Init SSH
         shell: bash
@@ -84,12 +87,13 @@ jobs:
     if: |
       always() &&
       github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/') &&
       needs.maintenance_on.result == 'success'
     runs-on: [self-hosted, gl-runner01]
     timeout-minutes: 60
     environment:
-      name: devel
-      url: https://dev-chatbotx.fibrazo.com.co/
+      name: production
+      url: https://chatbotx.fibrazo.com.co/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -122,17 +126,19 @@ jobs:
     if: |
       always() &&
       (
-        (github.event_name == 'push' && needs.deploy.result == 'success') ||
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && needs.deploy.result == 'success') ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'maintenance_off')
       )
     runs-on: [self-hosted, gl-runner01]
     timeout-minutes: 15
     environment:
-      name: devel
-      url: https://dev-chatbotx.fibrazo.com.co/
+      name: production
+      url: https://chatbotx.fibrazo.com.co/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
 
       - name: Init SSH
         shell: bash
