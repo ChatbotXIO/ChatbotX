@@ -335,6 +335,32 @@ describe("stepToDelayView", () => {
     ).toEqual({ unit: "immediate", value: 1, specificDateTime: "" })
   })
 
+  test("stored {-1, 0, 'days'} (negative, consistent but non-positive value) falls back to immediate/1", () => {
+    expect(
+      stepToDelayView({ delayDays: -1, delayMinutes: 0, delayUnit: "days" }),
+    ).toEqual({ unit: "immediate", value: 1, specificDateTime: "" })
+  })
+
+  test("stored {0, -30, 'minutes'} (negative, consistent but non-positive value) falls back to immediate/1", () => {
+    expect(
+      stepToDelayView({
+        delayDays: 0,
+        delayMinutes: -30,
+        delayUnit: "minutes",
+      }),
+    ).toEqual({ unit: "immediate", value: 1, specificDateTime: "" })
+  })
+
+  test("stored {0, NaN, 'minutes'} (consistent but NaN value) falls back to immediate/1", () => {
+    expect(
+      stepToDelayView({
+        delayDays: 0,
+        delayMinutes: Number.NaN,
+        delayUnit: "minutes",
+      }),
+    ).toEqual({ unit: "immediate", value: 1, specificDateTime: "" })
+  })
+
   test("previously chosen specificDateTime is shown even when unit is not specificTime", () => {
     const specificDateTime = new Date(2026, 2, 1, 12, 0)
     expect(

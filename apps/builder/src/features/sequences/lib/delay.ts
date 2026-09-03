@@ -68,6 +68,9 @@ export function isStoredDelayConsistent(
   return CONSISTENCY_PREDICATES[fields.delayUnit](fields)
 }
 
+// immediate/specificTime always return 1 here, so the `> 0` acceptance
+// check below never rejects them — only the relative units (days/hours/
+// minutes) can compute a non-positive value from stored fields.
 const STORED_VALUE_CALCULATORS: Record<
   DelayUnit,
   (fields: RelativeFields) => number
@@ -83,12 +86,7 @@ function isStoredUnitAccepted(
   step: StoredDelayFields,
   unit: DelayUnit,
 ): boolean {
-  const fields: RelativeFields = {
-    delayDays: step.delayDays,
-    delayMinutes: step.delayMinutes,
-  }
-
-  if (!isStoredDelayConsistent({ ...fields, delayUnit: unit })) {
+  if (!isStoredDelayConsistent({ ...step, delayUnit: unit })) {
     return false
   }
 
@@ -96,13 +94,21 @@ function isStoredUnitAccepted(
     return false
   }
 
-  return STORED_VALUE_CALCULATORS[unit](fields) !== 0
+  // A stored relative value must be strictly positive (not just non-zero) —
+  // rejects negative and NaN values, which the DB column does not prevent.
+  return STORED_VALUE_CALCULATORS[unit](step) > 0
 }
 
 type InferenceRule = {
   unit: DelayUnit
   matches: (days: number, minutes: number) => boolean
   value: (days: number, minutes: number) => number
+}
+
+const IMMEDIATE_RULE: InferenceRule = {
+  unit: "immediate",
+  matches: () => true,
+  value: () => 1,
 }
 
 const INFERENCE_RULES: InferenceRule[] = [
@@ -127,11 +133,7 @@ const INFERENCE_RULES: InferenceRule[] = [
     matches: (_days, minutes) => minutes > 0,
     value: (_days, minutes) => minutes,
   },
-  {
-    unit: "immediate",
-    matches: () => true,
-    value: () => 1,
-  },
+  IMMEDIATE_RULE,
 ]
 
 function inferDelayView(
@@ -140,10 +142,9 @@ function inferDelayView(
 ): { unit: DelayUnit; value: number } {
   const rule =
     INFERENCE_RULES.find((candidate) => candidate.matches(days, minutes)) ??
-    INFERENCE_RULES.at(-1)
+    IMMEDIATE_RULE
 
-  const matchedRule = rule as InferenceRule
-  return { unit: matchedRule.unit, value: matchedRule.value(days, minutes) }
+  return { unit: rule.unit, value: rule.value(days, minutes) }
 }
 
 export function stepToDelayView(
@@ -161,10 +162,7 @@ export function stepToDelayView(
   if (isDelayUnit(storedUnit) && isStoredUnitAccepted(step, storedUnit)) {
     return {
       unit: storedUnit,
-      value: STORED_VALUE_CALCULATORS[storedUnit]({
-        delayDays: step.delayDays,
-        delayMinutes: step.delayMinutes,
-      }),
+      value: STORED_VALUE_CALCULATORS[storedUnit](step),
       specificDateTime,
     }
   }
