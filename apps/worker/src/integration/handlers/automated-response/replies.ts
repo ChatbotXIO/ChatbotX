@@ -406,6 +406,12 @@ function openAIModelSupportsWebSearchFilter(modelId: string): boolean {
   return !OPENAI_MODELS_WITHOUT_SEARCH_FILTER.has(modelId)
 }
 
+type NativeWebSearchOptions = {
+  externalWebAccess: true
+  filters?: { allowedDomains: string[] }
+  searchContextSize: "medium"
+}
+
 function createNativeWebSearchTool(options: {
   aiAgent: AIAgentModel
   conversation: ConversationModel
@@ -465,6 +471,9 @@ function createNativeWebSearchTool(options: {
     const providerTools = options.providerInstance.tools
 
     if ("webSearch" in providerTools) {
+      const webSearchTools = providerTools as {
+        webSearch: (input: NativeWebSearchOptions) => ToolSet[string]
+      }
       const filters =
         authorizedDomains.length > 0 && modelSupportsDomainFilter
           ? { allowedDomains: authorizedDomains }
@@ -484,11 +493,11 @@ function createNativeWebSearchTool(options: {
       )
 
       return {
-        tool: providerTools.webSearch({
+        tool: webSearchTools.webSearch({
           externalWebAccess: true,
           filters,
           searchContextSize: "medium",
-        }) as ToolSet[string],
+        }),
       }
     }
   }

@@ -721,6 +721,11 @@ export class AppointmentCalendarService extends BaseService {
       }
     }
 
+    const externalLookupEnd =
+      bounds.start < bounds.end
+        ? bounds.end
+        : new Date(bounds.start.getTime() + calendar.durationMinutes * 60_000)
+
     try {
       const externalBusyIntervals =
         await appointmentExternalCalendarService.getBusyIntervalsForAppointmentCalendar(
@@ -728,7 +733,7 @@ export class AppointmentCalendarService extends BaseService {
             workspaceId: input.workspaceId,
             integrationId: calendar.externalConnectionId,
             timeMin: bounds.start.toISOString(),
-            timeMax: bounds.end.toISOString(),
+            timeMax: externalLookupEnd.toISOString(),
             timeZone: calendarTimezone,
             timeoutMs:
               input.failurePolicy === "empty"
