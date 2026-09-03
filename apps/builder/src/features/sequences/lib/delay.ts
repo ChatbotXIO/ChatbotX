@@ -76,7 +76,7 @@ export function isStoredDelayConsistent(
   return CONSISTENCY_PREDICATES[fields.delayUnit](fields)
 }
 
-const STORED_VALUE_CALCULATORS: Record<
+const DISPLAY_VALUE_BY_UNIT: Record<
   DelayUnit,
   (fields: RelativeFields) => number
 > = {
@@ -161,7 +161,7 @@ export function stepToDelayView(
   if (isDelayUnit(storedUnit) && isStoredUnitAccepted(step, storedUnit)) {
     return {
       unit: storedUnit,
-      value: STORED_VALUE_CALCULATORS[storedUnit](step),
+      value: DISPLAY_VALUE_BY_UNIT[storedUnit](step),
       specificDateTime,
     }
   }
@@ -170,7 +170,7 @@ export function stepToDelayView(
   return { ...inferred, specificDateTime }
 }
 
-const RELATIVE_MINUTES_CALCULATORS: Record<
+const STORED_FIELDS_BY_UNIT: Record<
   DelayUnit,
   (value: number) => RelativeFields
 > = {
@@ -186,7 +186,7 @@ export function delayViewToStored(view: {
   value: number
   specificDateTimeIso?: string | null
 }): StoredDelay {
-  const { delayDays, delayMinutes } = RELATIVE_MINUTES_CALCULATORS[view.unit](
+  const { delayDays, delayMinutes } = STORED_FIELDS_BY_UNIT[view.unit](
     view.value,
   )
 

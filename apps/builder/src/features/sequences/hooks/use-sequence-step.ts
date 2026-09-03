@@ -59,14 +59,40 @@ type UseSequenceStepProps = {
   onSaved?: () => void
 }
 
-type ChangedFields = {
-  flowId?: string
+type PassthroughFields = Pick<
+  SavePayload,
+  | "flowId"
+  | "isActive"
+  | "anytime"
+  | "sendTimeStart"
+  | "sendTimeEnd"
+  | "sendDays"
+>
+
+type ChangedFields = PassthroughFields & {
   delay?: DelayChange
-  isActive?: boolean
-  anytime?: boolean
-  sendTimeStart?: string | null
-  sendTimeEnd?: string | null
-  sendDays?: string[]
+}
+
+type StepOrderContext = {
+  isFirst: boolean
+  previousStepTime?: Date
+}
+
+function resolveSpecificDateTime(delay?: DelayChange): Date | null {
+  return delay?.unit === "specificTime" && delay.specificDateTime
+    ? new Date(delay.specificDateTime)
+    : null
+}
+
+function isSpecificDateTimeAllowed(
+  dateTime: Date,
+  { isFirst, previousStepTime }: StepOrderContext,
+): boolean {
+  const isInFuture = dateTime > new Date()
+  const isAfterPreviousStep =
+    isFirst || !previousStepTime || dateTime > previousStepTime
+
+  return isInFuture && isAfterPreviousStep
 }
 
 export function useSequenceStep({
@@ -123,75 +149,34 @@ export function useSequenceStep({
     [workspaceId, onSaved, t],
   )
 
+  // Deliberately not `async`: validation and payload building run
+  // synchronously so every queued item carries the values it was called with.
   const handleSave = useCallback(
-    (changedFields: ChangedFields): Promise<boolean> => {
-      const { delay } = changedFields
+    ({ delay, ...passthrough }: ChangedFields): Promise<boolean> => {
+      const specificDateTime = resolveSpecificDateTime(delay)
 
-      if (delay?.unit === "specificTime" && delay.specificDateTime) {
-        const currentStepTime = new Date(delay.specificDateTime)
-        const now = new Date()
-
-        if (currentStepTime <= now) {
-          toast.error(t("sequences.timeValidation"))
-          return Promise.resolve(false)
-        }
-
-        if (
-          !isFirst &&
-          previousStepTime &&
-          currentStepTime <= previousStepTime
-        ) {
-          toast.error(t("sequences.timeValidation"))
-          return Promise.resolve(false)
-        }
+      if (
+        specificDateTime &&
+        !isSpecificDateTimeAllowed(specificDateTime, {
+          isFirst,
+          previousStepTime,
+        })
+      ) {
+        toast.error(t("sequences.timeValidation"))
+        return Promise.resolve(false)
       }
 
       const payload: SavePayload = {
         stepId: step?.id,
         sequenceId,
         order: stepNumber - 1,
-      }
-
-      if (changedFields.flowId !== undefined) {
-        payload.flowId = changedFields.flowId
-      }
-
-      if (changedFields.isActive !== undefined) {
-        payload.isActive = changedFields.isActive
-      }
-
-      if (delay !== undefined) {
-        const specificDateTimeIso =
-          delay.unit === "specificTime" && delay.specificDateTime
-            ? new Date(delay.specificDateTime).toISOString()
-            : null
-
-        const stored = delayViewToStored({
-          unit: delay.unit,
-          value: delay.value,
-          specificDateTimeIso,
-        })
-
-        payload.delayDays = stored.delayDays
-        payload.delayMinutes = stored.delayMinutes
-        payload.delayUnit = stored.delayUnit
-        payload.specificDateTime = stored.specificDateTime
-      }
-
-      if (changedFields.anytime !== undefined) {
-        payload.anytime = changedFields.anytime
-      }
-
-      if (changedFields.sendTimeStart !== undefined) {
-        payload.sendTimeStart = changedFields.sendTimeStart
-      }
-
-      if (changedFields.sendTimeEnd !== undefined) {
-        payload.sendTimeEnd = changedFields.sendTimeEnd
-      }
-
-      if (changedFields.sendDays !== undefined) {
-        payload.sendDays = changedFields.sendDays
+        ...passthrough,
+        ...(delay &&
+          delayViewToStored({
+            unit: delay.unit,
+            value: delay.value,
+            specificDateTimeIso: specificDateTime?.toISOString() ?? null,
+          })),
       }
 
       pendingSavesRef.current += 1

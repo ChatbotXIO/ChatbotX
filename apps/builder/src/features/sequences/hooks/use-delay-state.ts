@@ -20,9 +20,9 @@ function isSameView(a: DelayView, b: DelayView): boolean {
 }
 
 export function useDelayState(step: Step | undefined, onSave: OnSave) {
-  const initialView = stepToDelayView(step)
-  const [view, setView] = useState<DelayView>(initialView)
-  const persistedViewRef = useRef<DelayView>(initialView)
+  const [view, setView] = useState<DelayView>(() => stepToDelayView(step))
+  // Only the first render's `view` seeds the ref; later renders ignore the arg.
+  const persistedViewRef = useRef<DelayView>(view)
 
   const stepId = step?.id
   const delayDays = step?.delayDays

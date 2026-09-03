@@ -16,6 +16,7 @@ import { memo, useEffect, useState } from "react"
 import {
   DELAY_UNITS,
   type DelayUnit,
+  isDelayUnit,
   isDelayValueInRange,
   MAX_DELAY_VALUE,
   MIN_DELAY_VALUE,
@@ -50,12 +51,22 @@ export const DelaySelector = memo(function DelaySelector({
     setShowDelayValueError(false)
   }, [delayValue])
 
-  const delayUnitItems: { label: string; value: DelayUnit }[] = DELAY_UNITS.map(
-    (unit) => ({
-      label: t(`sequences.delayUnits.${unit}`),
-      value: unit,
-    }),
-  )
+  const delayUnitItems = DELAY_UNITS.map((unit) => ({
+    label: t(`sequences.delayUnits.${unit}`),
+    value: unit,
+  }))
+
+  /** Validates the typed number and saves it when it differs from the committed value. Returns whether it was valid. */
+  const commitLocalValue = (): boolean => {
+    const isValid = isDelayValueInRange(localValue)
+    setShowDelayValueError(!isValid)
+
+    if (isValid && localValue !== delayValue) {
+      onDelayValueChange(localValue)
+    }
+
+    return isValid
+  }
 
   return (
     <div className="flex w-70 items-center gap-2">
@@ -67,12 +78,6 @@ export const DelaySelector = memo(function DelaySelector({
           <Input
             disabled={isSaving}
             min={oneHourFromNowLocal()}
-            onBlur={(e) => {
-              const value = e.target.value
-              if (value && value !== specificDateTime) {
-                onSpecificDateTimeChange(value)
-              }
-            }}
             onChange={(e) => onSpecificDateTimeChange(e.target.value)}
             type="datetime-local"
             value={specificDateTime}
@@ -97,16 +102,9 @@ export const DelaySelector = memo(function DelaySelector({
               max={MAX_DELAY_VALUE}
               min={MIN_DELAY_VALUE}
               onBlur={() => {
-                if (!isDelayValueInRange(localValue)) {
-                  setShowDelayValueError(true)
+                if (!commitLocalValue()) {
                   setLocalValue(delayValue)
-                  return
                 }
-                setShowDelayValueError(false)
-                if (localValue === delayValue) {
-                  return
-                }
-                onDelayValueChange(localValue)
               }}
               onChange={(e) => {
                 const value = Number(e.target.value)
@@ -115,12 +113,7 @@ export const DelaySelector = memo(function DelaySelector({
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  if (!isDelayValueInRange(localValue)) {
-                    setShowDelayValueError(true)
-                    return
-                  }
-                  setShowDelayValueError(false)
-                  onDelayValueChange(localValue)
+                  commitLocalValue()
                 }
               }}
               step={1}
@@ -131,7 +124,11 @@ export const DelaySelector = memo(function DelaySelector({
           <Select
             disabled={isSaving}
             items={delayUnitItems}
-            onValueChange={(value) => onDelayUnitChange(value as DelayUnit)}
+            onValueChange={(value) => {
+              if (isDelayUnit(value)) {
+                onDelayUnitChange(value)
+              }
+            }}
             value={delayUnit}
           >
             <SelectTrigger className="w-35">
