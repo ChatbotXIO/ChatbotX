@@ -81,6 +81,16 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(async () => false),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
+  resolveWorkspaceAccess: vi.fn(({ realMember, workspaceId }) => {
+    if (!realMember) {
+      return
+    }
+    return {
+      workspace: realMember.workspace ?? { id: workspaceId },
+      member: realMember,
+      isSupportSession: false,
+    }
+  }),
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
