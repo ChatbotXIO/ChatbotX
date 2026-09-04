@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "38767d21-101a-4fe5-add0-74f7bfd68813",
-  "prevIds": ["f40180a7-aff9-4f16-9af0-f8a08c7947c2"],
+  "id": "33aa6972-b637-43ef-b7fe-758fbb0c6004",
+  "prevIds": ["98af0348-8a2e-4edd-9a89-5af9ab84fc10"],
   "ddl": [
     {
       "values": [
@@ -195,7 +195,14 @@
       "schema": "public"
     },
     {
-      "values": ["scheduled", "sent", "sending", "cancelled"],
+      "values": [
+        "scheduled",
+        "sent",
+        "sending",
+        "cancelled",
+        "draft",
+        "failed"
+      ],
       "name": "broadcastStatus",
       "entityType": "enums",
       "schema": "public"
@@ -523,6 +530,12 @@
     {
       "values": ["allTime", "oncePerHour", "oncePerDay"],
       "name": "defaultReplyFrequency",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["full", "read_only"],
+      "name": "WorkspaceApiTokenPermission",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1513,6 +1526,12 @@
     {
       "isRlsEnabled": false,
       "name": "Workspace",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WorkspaceApiToken",
       "entityType": "tables",
       "schema": "public"
     },
@@ -7075,6 +7094,45 @@
       "generated": null,
       "identity": null,
       "name": "contactCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "handoffCompletedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "resumeCount",
       "entityType": "columns",
       "schema": "public",
       "table": "Broadcast"
@@ -14899,6 +14957,19 @@
       "table": "IntegrationInstagram"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiTestEventCode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
@@ -15453,6 +15524,19 @@
       "generated": null,
       "identity": null,
       "name": "capiDisconnectedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiTestEventCode",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -17343,6 +17427,19 @@
       "table": "IntegrationWhatsapp"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "capiTestEventCode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
       "type": "whatsappRegistrationStatus",
       "typeSchema": "public",
       "notNull": true,
@@ -19041,6 +19138,45 @@
       "generated": null,
       "identity": null,
       "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'business_messaging'",
+      "generated": null,
+      "identity": null,
+      "name": "actionSource",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contentType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contentIds",
       "entityType": "columns",
       "schema": "public",
       "table": "MetaCapiEvent"
@@ -25185,6 +25321,97 @@
       "table": "Workspace"
     },
     {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "WorkspaceApiTokenPermission",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "permission",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -25192,10 +25419,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "token",
+      "name": "tokenPrefix",
       "entityType": "columns",
       "schema": "public",
-      "table": "Workspace"
+      "table": "WorkspaceApiToken"
     },
     {
       "type": "bigint",
@@ -27505,6 +27732,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "deletedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"deletedAt\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Broadcast_deletedAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -28048,6 +28296,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "idx_contact_on_broadcast_is_read",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "broadcastId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"sent\" = false AND \"failedAt\" IS NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactOnBroadcast_unsent_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactOnBroadcast"
@@ -34766,6 +35035,27 @@
       "table": "Workspace"
     },
     {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceApiToken_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
       "nameExplicit": false,
       "columns": ["shardId"],
       "schemaTo": "public",
@@ -38985,6 +39275,19 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "WorkspaceApiToken_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "WorkspaceMac_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -40327,6 +40630,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "WorkspaceApiToken_pkey",
+      "schema": "public",
+      "table": "WorkspaceApiToken",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "WorkspaceMac_pkey",
       "schema": "public",
       "table": "WorkspaceMac",
@@ -40366,6 +40677,15 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "UserDeviceToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["tokenHash"],
+      "nullsNotDistinct": false,
+      "name": "WorkspaceApiToken_tokenHash_key",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
     },
     {
       "nameExplicit": true,
@@ -40425,6 +40745,20 @@
     {
       "value": "\"channel\" IN ('messenger', 'instagram', 'whatsapp')",
       "name": "MetaCapiEvent_channel_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "value": "\"actionSource\" IN ('business_messaging', 'email', 'phone_call', 'chat', 'physical_store', 'system_generated', 'other')",
+      "name": "MetaCapiEvent_actionSource_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "MetaCapiEvent"
+    },
+    {
+      "value": "\"contentType\" IN ('product', 'product_group')",
+      "name": "MetaCapiEvent_contentType_check",
       "entityType": "checks",
       "schema": "public",
       "table": "MetaCapiEvent"
