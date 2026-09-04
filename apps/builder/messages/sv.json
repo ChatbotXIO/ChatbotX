@@ -3947,6 +3947,17 @@
     },
     "queues": {
       "title": "Köer"
+    },
+    "workspaces": {
+      "title": "Arbetsytor",
+      "description": "Arbetsytor vars ägare har aktiverat plattformens supportåtkomst kan öppnas här.",
+      "owner": "Ägare",
+      "tenant": "Hyresgäst",
+      "supportStatus": "Supportstatus",
+      "openAsSupport": "Öppna som support",
+      "supportEnabledUntil": "Aktiverad till {time}",
+      "supportOff": "Av",
+      "searchPlaceholder": "Sök efter namn, ägarens e-post eller ID"
     }
   },
   "platformBranding": {
@@ -5056,6 +5067,17 @@
       "startTime": "Starttid",
       "timeRequired": "Välj både start- och sluttid",
       "title": "Ange aktiva tider"
+    },
+    "supportAccess": {
+      "bannerTitle": "Plattformssupportsession",
+      "bannerDescription": "En plattformssupportagent har tillfällig åtkomst till denna arbetsyta fram till {time}.",
+      "cardTitle": "Plattformens supportåtkomst",
+      "cardDescription": "Låt plattformens supportteam öppna denna arbetsyta med full åtkomst i 7 dagar. Du kan stänga av det när som helst.",
+      "enabledUntil": "Aktiverad till {time}",
+      "permissionRequired": "Du måste vara superadministratör för att ändra plattformens supportåtkomst.",
+      "enabledToast": "Plattformens supportåtkomst aktiverad.",
+      "disabledToast": "Plattformens supportåtkomst inaktiverad.",
+      "toggleError": "Något gick fel. Försök igen."
     }
   },
   "workspaceToken": {

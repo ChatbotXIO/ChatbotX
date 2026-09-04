@@ -1,5 +1,6 @@
 import {
   isWorkspaceScheduledForDeletion,
+  resolveWorkspaceAccess,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { withAuditContext } from "@chatbotx.io/business/audit"
@@ -48,16 +49,24 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       throw new ORPCError("UNAUTHORIZED")
     }
 
-    const workspaceMember = await workspaceMemberService.findMembership({
+    const realMembership = await workspaceMemberService.findMembership({
       workspaceId,
       userId: context.user.id,
     })
 
-    if (!workspaceMember) {
+    const access = await resolveWorkspaceAccess({
+      realMember: realMembership,
+      workspaceId,
+      user: context.user,
+    })
+
+    if (!access) {
       throw new ORPCError("UNAUTHORIZED")
     }
 
-    if (isWorkspaceScheduledForDeletion(workspaceMember.workspace)) {
+    const { workspace } = access
+
+    if (isWorkspaceScheduledForDeletion(workspace)) {
       throw new ORPCError("FORBIDDEN", {
         message: "Workspace deletion scheduled",
       })
@@ -66,7 +75,7 @@ export const workspaceAuthorizedMidddleware = base.middleware(
     return withAuditContext(
       {
         userId: context.user.id,
-        workspaceId: workspaceMember.workspace.id,
+        workspaceId: workspace.id,
         ipAddress:
           context.session?.ipAddress ?? getGuestClientIp(context.headers),
         userAgent:
@@ -77,7 +86,7 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       () =>
         next({
           context: {
-            workspace: workspaceMember.workspace,
+            workspace,
           },
         }),
     )

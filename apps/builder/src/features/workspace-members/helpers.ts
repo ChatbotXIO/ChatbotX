@@ -1,19 +1,11 @@
+import { FULL_WORKSPACE_MEMBER_PERMISSIONS } from "@chatbotx.io/business/workspace-member/permissions"
 import type {
   WorkspaceMemberNotificationTypes,
   WorkspaceMemberPermissions,
 } from "@chatbotx.io/database/partials"
 
 export function getSuperAdminPermissions(): WorkspaceMemberPermissions {
-  return {
-    superAdmin: true,
-    analytics: true,
-    flows: true,
-    contacts: true,
-    onlyAssignedContacts: true,
-    emailAndPhone: true,
-    broadcast: true,
-    ecommerce: true,
-  }
+  return { ...FULL_WORKSPACE_MEMBER_PERMISSIONS }
 }
 
 export function normalizeContactsPermissions(

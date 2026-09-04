@@ -2,6 +2,7 @@ import {
   isPlatformAdmin,
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
+  resolveWorkspaceAccess,
 } from "@chatbotx.io/business"
 import { getAuditActor, withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -103,14 +104,20 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
       throw new Error("Workspace not found")
     }
 
-    const { workspaceMembers, workspaces } = await getAllWorkspaceMembers(
-      user.id,
+    const { workspaceMembers } = await getAllWorkspaceMembers(user.id)
+    const realMember = workspaceMembers.find(
+      (m) => m.workspaceId === workspaceId,
     )
-    const workspace = workspaces.find((c) => c.id === workspaceId)
-    const member = workspaceMembers.find((m) => m.workspaceId === workspaceId)
-    if (!(workspace && member)) {
+
+    const access = await resolveWorkspaceAccess({
+      realMember,
+      workspaceId,
+      user,
+    })
+    if (!access) {
       throw new Error("Workspace not found")
     }
+    const { workspace, member, isSupportSession } = access
 
     // `permissions` is exposed so actions can gate on it (e.g. superAdmin)
     // without a second user+member round-trip — the same rows are already
@@ -124,6 +131,7 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
             workspaceId: workspace.id,
             workspace,
             workspaceMemberPermissions: member.permissions,
+            isSupportSession,
           },
         }),
     )

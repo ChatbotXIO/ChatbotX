@@ -28,7 +28,7 @@ const {
   mockUpsertMessagingAdsConnection,
   mockFindActiveCustomDomain,
   mockResolveForOwner,
-  mockIsMember,
+  mockHasWorkspaceAccess,
   mockFindWorkspaceById,
   mockExchangeMessengerCode,
   mockGetMessengerFacebookUser,
@@ -42,7 +42,7 @@ const {
   mockExchangeAndVerifyGoogleCalendar,
   mockCreateGoogleFromOAuthCallback,
   mockResolveOwnerForWorkspace,
-  mockGetCurrentUserId,
+  mockGetCurrentUser,
   mockEncryptAuth,
   mockCookieSet,
   mockNotFound,
@@ -57,7 +57,7 @@ const {
   mockUpsertMessagingAdsConnection: vi.fn(),
   mockFindActiveCustomDomain: vi.fn(async () => null),
   mockResolveForOwner: vi.fn(),
-  mockIsMember: vi.fn(),
+  mockHasWorkspaceAccess: vi.fn(),
   mockFindWorkspaceById: vi.fn(),
   mockExchangeMessengerCode: vi.fn(),
   mockGetMessengerFacebookUser: vi.fn(),
@@ -71,7 +71,7 @@ const {
   mockExchangeAndVerifyGoogleCalendar: vi.fn(),
   mockCreateGoogleFromOAuthCallback: vi.fn(),
   mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
-  mockGetCurrentUserId: vi.fn(),
+  mockGetCurrentUser: vi.fn(),
   mockEncryptAuth: vi.fn(async () => "encrypted-token"),
   mockCookieSet: vi.fn(),
   mockNotFound: vi.fn(() => {
@@ -119,7 +119,7 @@ vi.mock("@chatbotx.io/business", () => ({
   // accidentally allowed.
   customDomainService: { findActiveByDomain: mockFindActiveCustomDomain },
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
-  workspaceMemberService: { isMember: mockIsMember },
+  hasWorkspaceAccess: mockHasWorkspaceAccess,
   workspaceService: {
     findById: mockFindWorkspaceById,
     create: vi.fn(),
@@ -230,7 +230,7 @@ vi.mock("@/lib/platform-credential-owner", () => ({
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
-  getCurrentUserId: mockGetCurrentUserId,
+  getCurrentUser: mockGetCurrentUser,
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -277,7 +277,7 @@ describe("messaging-ads OAuth referer round-trip", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFindActiveCustomDomain.mockResolvedValue(null)
-    mockGetCurrentUserId.mockResolvedValue("user-1")
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1" })
     mockGetMessengerFacebookUser.mockResolvedValue({
       id: "fb-user-1",
       name: "FB User",
@@ -288,7 +288,7 @@ describe("messaging-ads OAuth referer round-trip", () => {
       ownerId: "owner-1",
       tenantId: "1",
     })
-    mockIsMember.mockResolvedValue(true)
+    mockHasWorkspaceAccess.mockResolvedValue(true)
     mockResolveOwnerForWorkspace.mockResolvedValue("platform-owner-1")
     mockResolveForOwner.mockResolvedValue({
       config: {

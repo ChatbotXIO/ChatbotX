@@ -747,6 +747,17 @@
       "pendingBlockedToast": "This espacio de trabajo es scheduled para deletion. Contacto un espacio de trabajo admin un restore access.",
       "navDisabledTooltip": "Undisponible while espacio de trabajo deletion es scheduled",
       "badge": "Eliminación programada"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sesión de soporte de la plataforma",
+      "bannerDescription": "Un agente de soporte de la plataforma tiene acceso temporal a este espacio de trabajo hasta las {time}.",
+      "cardTitle": "Acceso de soporte de la plataforma",
+      "cardDescription": "Permite que el equipo de soporte de la plataforma abra este espacio de trabajo con acceso completo durante 7 días. Puedes desactivarlo en cualquier momento.",
+      "enabledUntil": "Habilitado hasta {time}",
+      "permissionRequired": "Debes ser superadministrador para cambiar el acceso de soporte de la plataforma.",
+      "enabledToast": "Acceso de soporte de la plataforma habilitado.",
+      "disabledToast": "Acceso de soporte de la plataforma deshabilitado.",
+      "toggleError": "Algo salió mal. Por favor, inténtalo de nuevo."
     }
   },
   "workspaces": {
@@ -4532,6 +4543,17 @@
     },
     "queues": {
       "title": "Colas"
+    },
+    "workspaces": {
+      "title": "Espacios de trabajo",
+      "description": "Aquí se pueden abrir los espacios de trabajo cuyo propietario haya habilitado el acceso de soporte de la plataforma.",
+      "owner": "Propietario",
+      "tenant": "Inquilino",
+      "supportStatus": "Estado de soporte",
+      "openAsSupport": "Abrir como soporte",
+      "supportEnabledUntil": "Habilitado hasta {time}",
+      "supportOff": "Desactivado",
+      "searchPlaceholder": "Buscar por nombre, correo del propietario o ID"
     }
   },
   "platformCredentials": {

@@ -4,6 +4,7 @@ import {
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
+  resolveWorkspaceAccess,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import {
@@ -20,6 +21,7 @@ import { ExpiredBanner } from "@/components/expired-banner"
 import type { QuotaSummary } from "@/components/nav-usage"
 import { RefreshOnNavigation } from "@/components/refresh-on-navigation"
 import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
+import { SupportAccessBanner } from "@/components/support-access-banner"
 import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
 import { isCloud } from "@/env"
@@ -62,22 +64,28 @@ export default async function WorkspaceLayout({
       getTenantSettings(),
       isPlatformAdmin(user),
     ])
-  const targetWorkspaceMember = allWorkspaceMembers.find(
+  const realMember = allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspace.id === workspaceId,
   )
-  if (!targetWorkspaceMember) {
+  const access = await resolveWorkspaceAccess({ realMember, workspaceId, user })
+  if (!access) {
     return notFound()
   }
+  const {
+    workspace: targetWorkspace,
+    member: targetWorkspaceMember,
+    isSupportSession,
+  } = access
 
   const [
     { blocked, blockReason, quota, trialEndsAt },
     usage,
     tokenRefreshErrors,
   ] = await Promise.all([
-    resolveWorkspaceBlockState(targetWorkspaceMember.workspace.ownerId),
+    resolveWorkspaceBlockState(targetWorkspace.ownerId),
     cloud
       ? quotaEnforcementService.getWorkspaceUsageSummary({
-          userId: targetWorkspaceMember.workspace.ownerId,
+          userId: targetWorkspace.ownerId,
           workspaceId,
         })
       : null,
@@ -85,16 +93,26 @@ export default async function WorkspaceLayout({
   ])
 
   await enforceWorkspaceNotScheduledForDeletionFromRequest(
-    targetWorkspaceMember.workspace,
+    targetWorkspace,
     hasWorkspacePermission(targetWorkspaceMember.permissions, "superAdmin"),
   )
 
-  const allWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
+  const resolveLogoUrl = (logo: string | null) =>
+    logo ? new URL(logo, storageUrl).toString() : null
+
+  const memberWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
     ...workspaceMember.workspace,
-    logo: workspaceMember.workspace.logo
-      ? new URL(workspaceMember.workspace.logo, storageUrl).toString()
-      : null,
+    logo: resolveLogoUrl(workspaceMember.workspace.logo),
   }))
+  // A support session's workspace has no real membership row, so it is never
+  // in `allWorkspaceMembers` — append it so the sidebar switcher still shows
+  // the workspace currently being viewed.
+  const allWorkspaces = isSupportSession
+    ? [
+        ...memberWorkspaces,
+        { ...targetWorkspace, logo: resolveLogoUrl(targetWorkspace.logo) },
+      ]
+    : memberWorkspaces
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
@@ -106,9 +124,7 @@ export default async function WorkspaceLayout({
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 
-  const scheduledForDeletion = isWorkspaceScheduledForDeletion(
-    targetWorkspaceMember.workspace,
-  )
+  const scheduledForDeletion = isWorkspaceScheduledForDeletion(targetWorkspace)
 
   return (
     // `has-data-full-bleed:h-svh` caps the shell at the viewport for pages
@@ -143,6 +159,11 @@ export default async function WorkspaceLayout({
             workspaceId={workspaceId}
           />
           <ScheduledDeletionBanner scheduled={scheduledForDeletion} />
+          {isSupportSession && targetWorkspace.supportAccessUntil && (
+            <SupportAccessBanner
+              supportAccessUntil={targetWorkspace.supportAccessUntil}
+            />
+          )}
           {!scheduledForDeletion && (
             <RefreshOnNavigation workspaceId={workspaceId} />
           )}

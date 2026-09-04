@@ -1,5 +1,6 @@
 import {
   appointmentExternalCalendarService,
+  hasWorkspaceAccess,
   instagramIntegrationService,
   integrationFacebookAdsService,
   integrationMetaCatalogService,
@@ -7,7 +8,6 @@ import {
   messagingAdsConnectionService,
   messengerIntegrationService,
   platformCredentialService,
-  workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
@@ -65,7 +65,7 @@ import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-
 import { reconnectZaloHandler } from "@/features/integration-zalo/actions/reconnect-callback"
 import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
-import { getCurrentUserId } from "@/lib/auth/utils"
+import { getCurrentUser } from "@/lib/auth/utils"
 import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
 import {
   encryptAuth,
@@ -310,10 +310,11 @@ export const handleCallback = async (
     return redirect(cancelReferer)
   }
 
-  const userId = await getCurrentUserId()
-  if (!userId) {
+  const user = await getCurrentUser()
+  if (!user) {
     return notFound()
   }
+  const userId = user.id
 
   const workspace = stateParams.workspaceId
     ? await workspaceService.findById({ id: stateParams.workspaceId })
@@ -327,9 +328,9 @@ export const handleCallback = async (
 
   if (
     stateParams.workspaceId &&
-    !(await workspaceMemberService.isMember({
+    !(await hasWorkspaceAccess({
       workspaceId: stateParams.workspaceId,
-      userId,
+      user,
     }))
   ) {
     logger.info(

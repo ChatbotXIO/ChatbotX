@@ -2977,6 +2977,17 @@
       "pendingBlockedToast": "Denne arbejdsområde er planlagt for deletion. Kontakt a arbejdsområde administrator til gendan access.",
       "navDisabledTooltip": "Unavailable while arbejdsområde deletion er planlagt",
       "badge": "Deletion planlagt"
+    },
+    "supportAccess": {
+      "bannerTitle": "Platformssupportsession",
+      "bannerDescription": "En platformssupportmedarbejder har midlertidig adgang til dette arbejdsområde indtil {time}.",
+      "cardTitle": "Platformssupportadgang",
+      "cardDescription": "Lad platformssupportteamet åbne dette arbejdsområde med fuld adgang i 7 dage. Du kan slå det fra når som helst.",
+      "enabledUntil": "Aktiveret indtil {time}",
+      "permissionRequired": "Du skal være superadministrator for at ændre platformssupportadgang.",
+      "enabledToast": "Platformssupportadgang aktiveret.",
+      "disabledToast": "Platformssupportadgang deaktiveret.",
+      "toggleError": "Der opstod en fejl. Prøv venligst igen."
     }
   },
   "workspaces": {
@@ -4532,6 +4543,17 @@
     },
     "queues": {
       "title": "Queues"
+    },
+    "workspaces": {
+      "title": "Arbejdsområder",
+      "description": "Arbejdsområder, hvor ejeren har aktiveret platformssupportadgang, kan åbnes her.",
+      "owner": "Ejer",
+      "tenant": "Lejer",
+      "supportStatus": "Supportstatus",
+      "openAsSupport": "Åbn som support",
+      "supportEnabledUntil": "Aktiveret indtil {time}",
+      "supportOff": "Fra",
+      "searchPlaceholder": "Søg efter navn, ejerens e-mail eller id"
     }
   },
   "platformCredentials": {

@@ -2977,6 +2977,17 @@
       "pendingBlockedToast": "L'eliminazione di questa area di lavoro è pianificata. Contatta un amministratore dell'area di lavoro per ripristinare l'accesso.",
       "navDisabledTooltip": "Non disponibile mentre è pianificata l'eliminazione dell'area di lavoro",
       "badge": "Eliminazione pianificata"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sessione di supporto della piattaforma",
+      "bannerDescription": "Un agente di supporto della piattaforma ha accesso temporaneo a questo spazio di lavoro fino alle {time}.",
+      "cardTitle": "Accesso al supporto della piattaforma",
+      "cardDescription": "Consenti al team di supporto della piattaforma di aprire questo spazio di lavoro con accesso completo per 7 giorni. Puoi disattivarlo in qualsiasi momento.",
+      "enabledUntil": "Abilitato fino al {time}",
+      "permissionRequired": "Devi essere un super amministratore per modificare l'accesso al supporto della piattaforma.",
+      "enabledToast": "Accesso al supporto della piattaforma abilitato.",
+      "disabledToast": "Accesso al supporto della piattaforma disabilitato.",
+      "toggleError": "Qualcosa è andato storto. Riprova."
     }
   },
   "workspaces": {
@@ -4532,6 +4543,17 @@
     },
     "queues": {
       "title": "Code"
+    },
+    "workspaces": {
+      "title": "Spazi di lavoro",
+      "description": "Gli spazi di lavoro il cui proprietario ha abilitato l'accesso al supporto della piattaforma possono essere aperti qui.",
+      "owner": "Proprietario",
+      "tenant": "Tenant",
+      "supportStatus": "Stato del supporto",
+      "openAsSupport": "Apri come supporto",
+      "supportEnabledUntil": "Abilitato fino al {time}",
+      "supportOff": "Disattivato",
+      "searchPlaceholder": "Cerca per nome, email del proprietario o ID"
     }
   },
   "platformCredentials": {
