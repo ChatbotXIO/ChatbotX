@@ -18,6 +18,7 @@ import {
   getPaginationWithDefaults,
   likeContains,
 } from "@chatbotx.io/database/utils"
+import { addDays } from "date-fns"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
@@ -72,9 +73,7 @@ export class WorkspaceSupportAccessService extends BaseService {
   }): Promise<void> {
     const { workspaceId, actorUserId } = props
 
-    const supportAccessUntil = new Date(
-      Date.now() + SUPPORT_ACCESS_WINDOW_DAYS * 24 * 60 * 60 * 1000,
-    )
+    const supportAccessUntil = addDays(new Date(), SUPPORT_ACCESS_WINDOW_DAYS)
 
     const [updated] = await db
       .update(workspaceModel)

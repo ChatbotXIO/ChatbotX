@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "16684f04-62dd-4abc-9d05-5df2a1d611bb",
-  "prevIds": ["870acbe5-d301-4764-9842-fce0af654c20"],
+  "id": "0077ec9d-def3-4dfe-ba8d-b6fcae0b9570",
+  "prevIds": ["33aa6972-b637-43ef-b7fe-758fbb0c6004"],
   "ddl": [
     {
       "values": [
@@ -25698,19 +25698,6 @@
       "table": "WorkspaceMember"
     },
     {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "supportExpiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceMember"
-    },
-    {
       "nameExplicit": true,
       "columns": [
         {
@@ -35116,6 +35103,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "supportAccessUntil",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Workspace_supportAccessUntil_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Workspace"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -35153,55 +35161,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "WorkspaceApiToken"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "supportExpiresAt",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": "\"supportExpiresAt\" IS NOT NULL",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "WorkspaceMember_supportExpiresAt_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "WorkspaceMember"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "userId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": "\"supportExpiresAt\" IS NOT NULL",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "WorkspaceMember_support_workspaceId_userId_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "WorkspaceMember"
     },
     {
       "nameExplicit": false,

@@ -21,10 +21,12 @@ export default async function GeneralPage(props: {
   return (
     <FlowStoreProvider workspaceId={workspaceId}>
       <UpdateWorkspaceForm
-        canManageSupportAccess={hasWorkspacePermission(
-          userAndWorkspace.targetWorkspaceMember.permissions,
-          "superAdmin",
-        )}
+        canManageSupportAccess={
+          hasWorkspacePermission(
+            userAndWorkspace.targetWorkspaceMember.permissions,
+            "superAdmin",
+          ) && !userAndWorkspace.isSupportSession
+        }
         workspace={userAndWorkspace.targetWorkspace}
       />
     </FlowStoreProvider>

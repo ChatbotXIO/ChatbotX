@@ -11,7 +11,7 @@ import { isSupportAccessEnabled } from "./predicates"
 const SUPPORT_MEMBER_ID_PREFIX = "support-access"
 
 /** Deterministic, never persisted — lets a synthetic row still key React lists etc. */
-export const supportMemberId = (workspaceId: string, userId: string) =>
+const supportMemberId = (workspaceId: string, userId: string) =>
   `${SUPPORT_MEMBER_ID_PREFIX}:${workspaceId}:${userId}`
 
 /**

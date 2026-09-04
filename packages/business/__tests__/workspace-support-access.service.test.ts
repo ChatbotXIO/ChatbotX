@@ -80,6 +80,7 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   likeContains: (keyword: string) => `%${keyword}%`,
 }))
 
+const { addDays } = await import("date-fns")
 const { workspaceSupportAccessService, SUPPORT_ACCESS_WINDOW_DAYS } =
   await import("../src/workspace-support-access/service")
 
@@ -90,20 +91,19 @@ beforeEach(() => {
 
 describe("enable", () => {
   test("sets supportAccessUntil to now + SUPPORT_ACCESS_WINDOW_DAYS", async () => {
-    const before = Date.now()
+    const before = new Date()
     await workspaceSupportAccessService.enable({
       workspaceId: "workspace-1",
       actorUserId: "owner-1",
     })
-    const after = Date.now()
+    const after = new Date()
 
     expect(mocks.updateSet).toHaveBeenCalledTimes(1)
     const setArg = mocks.updateSet.mock.calls[0][0] as {
       supportAccessUntil: Date
     }
-    const expectedMin =
-      before + SUPPORT_ACCESS_WINDOW_DAYS * 24 * 60 * 60 * 1000
-    const expectedMax = after + SUPPORT_ACCESS_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    const expectedMin = addDays(before, SUPPORT_ACCESS_WINDOW_DAYS).getTime()
+    const expectedMax = addDays(after, SUPPORT_ACCESS_WINDOW_DAYS).getTime()
     expect(setArg.supportAccessUntil.getTime()).toBeGreaterThanOrEqual(
       expectedMin,
     )
@@ -265,8 +265,11 @@ describe("listWorkspaces", () => {
     await workspaceSupportAccessService.listWorkspaces({ page: 1, perPage: 20 })
 
     const dataChain = mocks.select.mock.results[0].value
-    expect(dataChain.orderBy).toHaveBeenCalledWith(expect.anything(), {
-      desc: ["workspace.createdAt"],
-    })
+    const [orderByFragment, orderBySecondary] = dataChain.orderBy.mock.calls[0]
+    expect(orderByFragment.strings.join("")).toContain(
+      "> now()) DESC NULLS LAST",
+    )
+    expect(orderByFragment.args[0]).toBe("workspace.supportAccessUntil")
+    expect(orderBySecondary).toEqual({ desc: ["workspace.createdAt"] })
   })
 })

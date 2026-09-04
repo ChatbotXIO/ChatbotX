@@ -40,8 +40,9 @@ of "who currently has support access"), not to enforce expiry. Instead,
 `resolveWorkspaceAccess` (`packages/business/src/workspace-support-access/resolve-access.ts`)
 is the single async entry point every auth gate calls to resolve a caller's
 access to a workspace: it loads the workspace (from the real member's
-attached row, or a direct fetch otherwise) and delegates the membership
-decision to `resolveWorkspaceMembership`
+attached row, or a direct fetch otherwise — read uncached so `disable()` ends
+a session on the very next request even if cache invalidation failed) and
+delegates the membership decision to `resolveWorkspaceMembership`
 (`packages/business/src/workspace-member/synthetic.ts`):
 
 1. If a real `WorkspaceMember` row exists for `(workspaceId, userId)`, use it.
@@ -143,3 +144,9 @@ installs still get a log-level trail even without a persisted `AuditLog` row.
   layout does this for its own sidebar switcher, other listings do not.
 - Community edition persists no audit rows for support-access events; the
   service logs instead (see "Audit trail" above).
+- `PUT /users/me/device-tokens`
+  (`apps/builder/src/features/device-tokens/api/private.ts`) intentionally
+  stays gated on `workspaceMemberService.isMember` (real rows only) rather
+  than routing through `resolveWorkspaceAccess`/`hasWorkspaceAccess` — a
+  support agent's push device must never be bound to a customer workspace
+  past the end of the session.

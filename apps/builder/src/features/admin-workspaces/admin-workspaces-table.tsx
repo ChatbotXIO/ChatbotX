@@ -21,6 +21,15 @@ type AdminWorkspacesTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listAdminWorkspaces>>]>
 }
 
+function activeSupportUntil(
+  row: ListAdminWorkspacesResponse["data"][number],
+): Date | null {
+  const { supportAccessUntil } = row
+  return supportAccessUntil && isSupportAccessEnabled({ supportAccessUntil })
+    ? supportAccessUntil
+    : null
+}
+
 function OwnerCell({
   row,
 }: {
@@ -104,15 +113,12 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
           />
         ),
         cell: ({ row }) => {
-          const { supportAccessUntil } = row.original
-          if (
-            supportAccessUntil &&
-            isSupportAccessEnabled({ supportAccessUntil })
-          ) {
+          const activeUntil = activeSupportUntil(row.original)
+          if (activeUntil) {
             return (
               <Badge variant="secondary">
                 {t("platformAdmin.workspaces.supportEnabledUntil", {
-                  time: format(supportAccessUntil, "PPp"),
+                  time: format(activeUntil, "PPp"),
                 })}
               </Badge>
             )
@@ -129,19 +135,13 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
       {
         id: "actions",
         cell: ({ row }) => {
-          const { supportAccessUntil, id } = row.original
-          if (
-            !(
-              supportAccessUntil &&
-              isSupportAccessEnabled({ supportAccessUntil })
-            )
-          ) {
+          if (!activeSupportUntil(row.original)) {
             return null
           }
 
           return (
             <Button
-              render={<Link href={`/space/${id}`} />}
+              render={<Link href={`/space/${row.original.id}`} />}
               size="sm"
               variant="outline"
             >
