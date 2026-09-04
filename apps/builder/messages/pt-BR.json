@@ -2956,6 +2956,16 @@
       "pendingBlockedToast": "A exclusão deste espaço de trabalho está agendada. Entre em contato com um administrador do espaço de trabalho para restaurar o acesso.",
       "navDisabledTooltip": "Indisponível enquanto a exclusão do espaço de trabalho estiver agendada",
       "badge": "Exclusão agendada"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sessão de suporte da plataforma",
+      "bannerDescription": "Um agente de suporte da plataforma tem acesso temporário a este espaço de trabalho até {time}.",
+      "cardTitle": "Acesso de suporte da plataforma",
+      "cardDescription": "Permita que a equipe de suporte da plataforma abra este espaço de trabalho com acesso total por 7 dias. Você pode desativar isso a qualquer momento.",
+      "enabledUntil": "Ativado até {time}",
+      "permissionRequired": "Você precisa ser superadministrador para alterar o acesso de suporte da plataforma.",
+      "enabledToast": "Acesso de suporte da plataforma ativado.",
+      "disabledToast": "Acesso de suporte da plataforma desativado."
     }
   },
   "workspaces": {
@@ -4532,6 +4542,16 @@
     },
     "queues": {
       "title": "Filas"
+    },
+    "workspaces": {
+      "title": "Espaços de trabalho",
+      "description": "Espaços de trabalho cujo proprietário ativou o acesso de suporte da plataforma podem ser abertos aqui.",
+      "owner": "Proprietário",
+      "tenant": "Inquilino",
+      "supportStatus": "Status de suporte",
+      "openAsSupport": "Abrir como suporte",
+      "supportEnabledUntil": "Ativado até {time}",
+      "supportOff": "Desativado"
     }
   },
   "platformCredentials": {

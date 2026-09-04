@@ -4,7 +4,9 @@ import {
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
+  resolveWorkspaceMembership,
   workspaceMemberService,
+  workspaceService,
 } from "@chatbotx.io/business"
 import {
   SidebarInset,
@@ -20,6 +22,7 @@ import { ExpiredBanner } from "@/components/expired-banner"
 import type { QuotaSummary } from "@/components/nav-usage"
 import { RefreshOnNavigation } from "@/components/refresh-on-navigation"
 import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
+import { SupportAccessBanner } from "@/components/support-access-banner"
 import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
 import { isCloud } from "@/env"
@@ -62,9 +65,23 @@ export default async function WorkspaceLayout({
       getTenantSettings(),
       isPlatformAdmin(user),
     ])
-  const targetWorkspaceMember = allWorkspaceMembers.find(
+  const realMember = allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspace.id === workspaceId,
   )
+  // A platform-support caller has no real membership row, so the workspace
+  // must be fetched directly to check `isSupportAccessEnabled` — it won't be
+  // present in the user's cached `listByUserId` result.
+  const targetWorkspace =
+    realMember?.workspace ??
+    (await workspaceService.find({ where: { id: workspaceId } }))
+  if (!targetWorkspace) {
+    return notFound()
+  }
+  const targetWorkspaceMember = resolveWorkspaceMembership({
+    realMember,
+    workspace: targetWorkspace,
+    user,
+  })
   if (!targetWorkspaceMember) {
     return notFound()
   }
@@ -74,10 +91,10 @@ export default async function WorkspaceLayout({
     usage,
     tokenRefreshErrors,
   ] = await Promise.all([
-    resolveWorkspaceBlockState(targetWorkspaceMember.workspace.ownerId),
+    resolveWorkspaceBlockState(targetWorkspace.ownerId),
     cloud
       ? quotaEnforcementService.getWorkspaceUsageSummary({
-          userId: targetWorkspaceMember.workspace.ownerId,
+          userId: targetWorkspace.ownerId,
           workspaceId,
         })
       : null,
@@ -85,16 +102,28 @@ export default async function WorkspaceLayout({
   ])
 
   await enforceWorkspaceNotScheduledForDeletionFromRequest(
-    targetWorkspaceMember.workspace,
+    targetWorkspace,
     hasWorkspacePermission(targetWorkspaceMember.permissions, "superAdmin"),
   )
 
-  const allWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
-    ...workspaceMember.workspace,
-    logo: workspaceMember.workspace.logo
-      ? new URL(workspaceMember.workspace.logo, storageUrl).toString()
-      : null,
-  }))
+  const resolveLogoUrl = (logo: string | null) =>
+    logo ? new URL(logo, storageUrl).toString() : null
+
+  const allWorkspaces = realMember
+    ? allWorkspaceMembers.map((workspaceMember) => ({
+        ...workspaceMember.workspace,
+        logo: resolveLogoUrl(workspaceMember.workspace.logo),
+      }))
+    : // A support session's workspace has no real membership row, so it is
+      // never in `allWorkspaceMembers` — append it so the sidebar switcher
+      // still shows the workspace currently being viewed.
+      [
+        ...allWorkspaceMembers.map((workspaceMember) => ({
+          ...workspaceMember.workspace,
+          logo: resolveLogoUrl(workspaceMember.workspace.logo),
+        })),
+        { ...targetWorkspace, logo: resolveLogoUrl(targetWorkspace.logo) },
+      ]
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
@@ -106,9 +135,7 @@ export default async function WorkspaceLayout({
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 
-  const scheduledForDeletion = isWorkspaceScheduledForDeletion(
-    targetWorkspaceMember.workspace,
-  )
+  const scheduledForDeletion = isWorkspaceScheduledForDeletion(targetWorkspace)
 
   return (
     // `has-data-full-bleed:h-svh` caps the shell at the viewport for pages
@@ -143,6 +170,11 @@ export default async function WorkspaceLayout({
             workspaceId={workspaceId}
           />
           <ScheduledDeletionBanner scheduled={scheduledForDeletion} />
+          {!realMember && (
+            <SupportAccessBanner
+              supportAccessUntil={targetWorkspace.supportAccessUntil}
+            />
+          )}
           {!scheduledForDeletion && (
             <RefreshOnNavigation workspaceId={workspaceId} />
           )}

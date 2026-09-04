@@ -2,6 +2,8 @@ import {
   isPlatformAdmin,
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
+  resolveWorkspaceMembership,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { getAuditActor, withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -106,9 +108,20 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
     const { workspaceMembers, workspaces } = await getAllWorkspaceMembers(
       user.id,
     )
-    const workspace = workspaces.find((c) => c.id === workspaceId)
-    const member = workspaceMembers.find((m) => m.workspaceId === workspaceId)
-    if (!(workspace && member)) {
+    const realMember = workspaceMembers.find(
+      (m) => m.workspaceId === workspaceId,
+    )
+    // A platform-support caller has no real membership row, so the workspace
+    // must be fetched directly to check `isSupportAccessEnabled` — it won't
+    // be present in the user's real `getAllWorkspaceMembers` result.
+    const workspace =
+      workspaces.find((c) => c.id === workspaceId) ??
+      (await workspaceService.find({ where: { id: workspaceId } }))
+    if (!workspace) {
+      throw new Error("Workspace not found")
+    }
+    const member = resolveWorkspaceMembership({ realMember, workspace, user })
+    if (!member) {
       throw new Error("Workspace not found")
     }
 

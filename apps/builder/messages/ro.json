@@ -2977,6 +2977,16 @@
       "pendingBlockedToast": "Acest spațiu de lucru este programat pentru ștergere. Contactează un administrator al spațiului de lucru pentru a restaura accesul.",
       "navDisabledTooltip": "Indisponibil cât timp ștergerea spațiului de lucru este programată",
       "badge": "Ștergere programată"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sesiune de suport a platformei",
+      "bannerDescription": "Un agent de suport al platformei are acces temporar la acest spațiu de lucru până la {time}.",
+      "cardTitle": "Acces de suport al platformei",
+      "cardDescription": "Permite echipei de suport a platformei să deschidă acest spațiu de lucru cu acces complet timp de 7 zile. Poți dezactiva acest lucru oricând.",
+      "enabledUntil": "Activat până la {time}",
+      "permissionRequired": "Trebuie să fii super administrator pentru a modifica accesul de suport al platformei.",
+      "enabledToast": "Accesul de suport al platformei a fost activat.",
+      "disabledToast": "Accesul de suport al platformei a fost dezactivat."
     }
   },
   "workspaces": {
@@ -4718,6 +4728,16 @@
     },
     "queues": {
       "title": "Cozi"
+    },
+    "workspaces": {
+      "title": "Spații de lucru",
+      "description": "Spațiile de lucru al căror proprietar a activat accesul de suport al platformei pot fi deschise aici.",
+      "owner": "Proprietar",
+      "tenant": "Chiriaș",
+      "supportStatus": "Stare suport",
+      "openAsSupport": "Deschide ca suport",
+      "supportEnabledUntil": "Activat până la {time}",
+      "supportOff": "Dezactivat"
     }
   },
   "platformBranding": {

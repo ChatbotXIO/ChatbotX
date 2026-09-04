@@ -2977,6 +2977,16 @@
       "pendingBlockedToast": "Ruang kerja ini dijadwalkan untuk dihapus. Hubungi admin ruang kerja untuk memulihkan akses.",
       "navDisabledTooltip": "Tidak tersedia saat penghapusan ruang kerja dijadwalkan",
       "badge": "Penghapusan dijadwalkan"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sesi dukungan platform",
+      "bannerDescription": "Agen dukungan platform memiliki akses sementara ke ruang kerja ini hingga {time}.",
+      "cardTitle": "Akses dukungan platform",
+      "cardDescription": "Izinkan tim dukungan platform membuka ruang kerja ini dengan akses penuh selama 7 hari. Anda dapat menonaktifkannya kapan saja.",
+      "enabledUntil": "Diaktifkan hingga {time}",
+      "permissionRequired": "Anda harus menjadi super admin untuk mengubah akses dukungan platform.",
+      "enabledToast": "Akses dukungan platform diaktifkan.",
+      "disabledToast": "Akses dukungan platform dinonaktifkan."
     }
   },
   "workspaces": {
@@ -4532,6 +4542,16 @@
     },
     "queues": {
       "title": "Antrean"
+    },
+    "workspaces": {
+      "title": "Ruang kerja",
+      "description": "Ruang kerja yang pemiliknya telah mengaktifkan akses dukungan platform dapat dibuka di sini.",
+      "owner": "Pemilik",
+      "tenant": "Penyewa",
+      "supportStatus": "Status dukungan",
+      "openAsSupport": "Buka sebagai dukungan",
+      "supportEnabledUntil": "Diaktifkan hingga {time}",
+      "supportOff": "Nonaktif"
     }
   },
   "platformCredentials": {

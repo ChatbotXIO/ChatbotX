@@ -2977,6 +2977,16 @@
       "pendingBlockedToast": "Tämä työtila on ajastettu poistettavaksi. Pyydä työtilan ylläpitäjää palauttamaan käyttöoikeus.",
       "navDisabledTooltip": "Ei käytettävissä, kun työtilan poistaminen on ajastettu",
       "badge": "Poistaminen ajastettu"
+    },
+    "supportAccess": {
+      "bannerTitle": "Alustan tukisessio",
+      "bannerDescription": "Alustan tukiagentilla on väliaikainen pääsy tähän työtilaan {time} asti.",
+      "cardTitle": "Alustan tukipääsy",
+      "cardDescription": "Anna alustan tukitiimin avata tämä työtila täysin oikeuksin 7 päivän ajaksi. Voit poistaa tämän käytöstä milloin tahansa.",
+      "enabledUntil": "Käytössä {time} asti",
+      "permissionRequired": "Sinun on oltava pääylläpitäjä muuttaaksesi alustan tukipääsyä.",
+      "enabledToast": "Alustan tukipääsy otettu käyttöön.",
+      "disabledToast": "Alustan tukipääsy poistettu käytöstä."
     }
   },
   "workspaces": {
@@ -4532,6 +4542,16 @@
     },
     "queues": {
       "title": "Jonot"
+    },
+    "workspaces": {
+      "title": "Työtilat",
+      "description": "Työtilat, joiden omistaja on ottanut käyttöön alustan tukipääsyn, voidaan avata täältä.",
+      "owner": "Omistaja",
+      "tenant": "Vuokralainen",
+      "supportStatus": "Tuen tila",
+      "openAsSupport": "Avaa tukena",
+      "supportEnabledUntil": "Käytössä {time} asti",
+      "supportOff": "Pois"
     }
   },
   "platformCredentials": {

@@ -1121,6 +1121,16 @@
       "pendingBlockedToast": "סביבת עבודה זו מתוזמנת למחיקה. פנו למנהל סביבת העבודה כדי לשחזר את הגישה.",
       "navDisabledTooltip": "לא זמין כאשר מחיקת סביבת העבודה מתוזמנת",
       "badge": "מחיקה מתוזמנת"
+    },
+    "supportAccess": {
+      "bannerTitle": "הפעלת תמיכה של הפלטפורמה",
+      "bannerDescription": "לנציג תמיכה של הפלטפורמה יש גישה זמנית לסביבת עבודה זו עד {time}.",
+      "cardTitle": "גישת תמיכה של הפלטפורמה",
+      "cardDescription": "אפשר לצוות התמיכה של הפלטפורמה לפתוח סביבת עבודה זו עם גישה מלאה למשך 7 ימים. ניתן לכבות זאת בכל עת.",
+      "enabledUntil": "מופעל עד {time}",
+      "permissionRequired": "עליך להיות מנהל-על כדי לשנות את גישת התמיכה של הפלטפורמה.",
+      "enabledToast": "גישת תמיכה של הפלטפורמה הופעלה.",
+      "disabledToast": "גישת תמיכה של הפלטפורמה כובתה."
     }
   },
   "workspaces": {
@@ -2676,6 +2686,16 @@
     },
     "queues": {
       "title": "תורים"
+    },
+    "workspaces": {
+      "title": "סביבות עבודה",
+      "description": "ניתן לפתוח כאן סביבות עבודה שהבעלים שלהן הפעיל גישת תמיכה של הפלטפורמה.",
+      "owner": "בעלים",
+      "tenant": "שוכר",
+      "supportStatus": "סטטוס תמיכה",
+      "openAsSupport": "פתח כתמיכה",
+      "supportEnabledUntil": "מופעל עד {time}",
+      "supportOff": "כבוי"
     }
   },
   "platformCredentials": {

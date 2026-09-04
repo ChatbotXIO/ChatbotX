@@ -41,6 +41,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   countDistinct,
   eq,
   gt: vi.fn(),
+  isNull: vi.fn(),
   lte: vi.fn(),
   ne: vi.fn(),
   sql: Object.assign(

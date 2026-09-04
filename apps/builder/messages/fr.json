@@ -2977,6 +2977,16 @@
       "pendingBlockedToast": "La suppression de cet espace de travail est planifiée. Contactez un administrateur pour restaurer l’accès.",
       "navDisabledTooltip": "Indisponible tant que la suppression est planifiée",
       "badge": "Suppression planifiée"
+    },
+    "supportAccess": {
+      "bannerTitle": "Session de support de la plateforme",
+      "bannerDescription": "Un agent de support de la plateforme a un accès temporaire à cet espace de travail jusqu'à {time}.",
+      "cardTitle": "Accès au support de la plateforme",
+      "cardDescription": "Autorisez l'équipe de support de la plateforme à ouvrir cet espace de travail avec un accès complet pendant 7 jours. Vous pouvez le désactiver à tout moment.",
+      "enabledUntil": "Activé jusqu'à {time}",
+      "permissionRequired": "Vous devez être super administrateur pour modifier l'accès au support de la plateforme.",
+      "enabledToast": "Accès au support de la plateforme activé.",
+      "disabledToast": "Accès au support de la plateforme désactivé."
     }
   },
   "workspaces": {
@@ -4532,6 +4542,16 @@
     },
     "queues": {
       "title": "Files d’attente"
+    },
+    "workspaces": {
+      "title": "Espaces de travail",
+      "description": "Les espaces de travail dont le propriétaire a activé l'accès au support de la plateforme peuvent être ouverts ici.",
+      "owner": "Propriétaire",
+      "tenant": "Locataire",
+      "supportStatus": "Statut du support",
+      "openAsSupport": "Ouvrir en tant que support",
+      "supportEnabledUntil": "Activé jusqu'à {time}",
+      "supportOff": "Désactivé"
     }
   },
   "platformCredentials": {

@@ -557,11 +557,14 @@ class UserQuotaService extends BaseService {
    * Current distinct humans across an owner's workspaces or a reseller's
    * tenant. `teamMembers` is intentionally read from its source tables: its
    * counter is only a reconcile snapshot and can be stale between syncs.
+   * Platform support access is a synthetic membership resolved at read time
+   * from `Workspace.supportAccessUntil` — it never creates a `WorkspaceMember`
+   * row, so it's never counted here to begin with.
    */
   private async countDistinctTeamMembers(
     scope: { ownerId: string } | { tenantId: string },
   ): Promise<number> {
-    const where =
+    const scopeWhere =
       "ownerId" in scope
         ? eq(workspaceModel.ownerId, scope.ownerId)
         : eq(workspaceModel.tenantId, scope.tenantId)
@@ -572,7 +575,7 @@ class UserQuotaService extends BaseService {
         workspaceModel,
         eq(workspaceMemberModel.workspaceId, workspaceModel.id),
       )
-      .where(where)
+      .where(scopeWhere)
     return rows[0]?.count ?? 0
   }
 

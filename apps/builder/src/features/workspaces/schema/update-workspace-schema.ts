@@ -90,3 +90,10 @@ export const updateWorkspaceStatusRequest = z
 export type UpdateWorkspaceStatusRequest = z.infer<
   typeof updateWorkspaceStatusRequest
 >
+
+export const toggleSupportAccessRequest = z.object({
+  enabled: z.boolean(),
+})
+export type ToggleSupportAccessRequest = z.infer<
+  typeof toggleSupportAccessRequest
+>

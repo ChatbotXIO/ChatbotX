@@ -747,6 +747,16 @@
       "pendingBlockedToast": "Workspace này đã được lên lịch xóa. Hãy liên hệ quản trị viên workspace để khôi phục quyền truy cập.",
       "navDisabledTooltip": "Không khả dụng khi workspace đã được lên lịch xóa",
       "badge": "Đã lên lịch xóa"
+    },
+    "supportAccess": {
+      "bannerTitle": "Phiên hỗ trợ nền tảng",
+      "bannerDescription": "Một nhân viên hỗ trợ nền tảng có quyền truy cập tạm thời vào không gian làm việc này cho đến {time}.",
+      "cardTitle": "Quyền truy cập hỗ trợ nền tảng",
+      "cardDescription": "Cho phép nhóm hỗ trợ nền tảng mở không gian làm việc này với quyền truy cập đầy đủ trong 7 ngày. Bạn có thể tắt tính năng này bất cứ lúc nào.",
+      "enabledUntil": "Đã bật đến {time}",
+      "permissionRequired": "Bạn cần là quản trị viên cấp cao để thay đổi quyền truy cập hỗ trợ nền tảng.",
+      "enabledToast": "Đã bật quyền truy cập hỗ trợ nền tảng.",
+      "disabledToast": "Đã tắt quyền truy cập hỗ trợ nền tảng."
     }
   },
   "workspaces": {
@@ -4710,6 +4720,16 @@
     },
     "queues": {
       "title": "Hàng chờ"
+    },
+    "workspaces": {
+      "title": "Không gian làm việc",
+      "description": "Các không gian làm việc mà chủ sở hữu đã bật quyền truy cập hỗ trợ nền tảng có thể được mở tại đây.",
+      "owner": "Chủ sở hữu",
+      "tenant": "Người thuê",
+      "supportStatus": "Trạng thái hỗ trợ",
+      "openAsSupport": "Mở với vai trò hỗ trợ",
+      "supportEnabledUntil": "Đã bật đến {time}",
+      "supportOff": "Tắt"
     }
   },
   "platformCredentials": {

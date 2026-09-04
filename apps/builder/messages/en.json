@@ -747,6 +747,16 @@
       "pendingBlockedToast": "This workspace is scheduled for deletion. Contact a workspace admin to restore access.",
       "navDisabledTooltip": "Unavailable while workspace deletion is scheduled",
       "badge": "Deletion scheduled"
+    },
+    "supportAccess": {
+      "bannerTitle": "Platform support session",
+      "bannerDescription": "A platform support agent has temporary access to this workspace until {time}.",
+      "cardTitle": "Platform support access",
+      "cardDescription": "Let the platform support team open this workspace with full access for 7 days. You can turn it off at any time.",
+      "enabledUntil": "Enabled until {time}",
+      "permissionRequired": "You need to be a super admin to change platform support access.",
+      "enabledToast": "Platform support access enabled.",
+      "disabledToast": "Platform support access disabled."
     }
   },
   "workspaces": {
@@ -4897,6 +4907,16 @@
     },
     "queues": {
       "title": "Queues"
+    },
+    "workspaces": {
+      "title": "Workspaces",
+      "description": "Workspaces whose owner enabled platform support access can be opened here.",
+      "owner": "Owner",
+      "tenant": "Tenant",
+      "supportStatus": "Support status",
+      "openAsSupport": "Open as support",
+      "supportEnabledUntil": "Enabled until {time}",
+      "supportOff": "Off"
     }
   },
   "platformCredentials": {

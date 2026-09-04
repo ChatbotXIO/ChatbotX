@@ -1,6 +1,8 @@
 import {
   isWorkspaceScheduledForDeletion,
+  resolveWorkspaceMembership,
   workspaceMemberService,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ORPCError } from "@orpc/server"
@@ -48,16 +50,33 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       throw new ORPCError("UNAUTHORIZED")
     }
 
-    const workspaceMember = await workspaceMemberService.findMembership({
+    const realMembership = await workspaceMemberService.findMembership({
       workspaceId,
       userId: context.user.id,
+    })
+
+    // A real membership's workspace comes attached; a platform-support
+    // caller has no row, so the workspace must be fetched separately to
+    // check `isSupportAccessEnabled`.
+    const workspace =
+      realMembership?.workspace ??
+      (await workspaceService.find({ where: { id: workspaceId } }))
+
+    if (!workspace) {
+      throw new ORPCError("UNAUTHORIZED")
+    }
+
+    const workspaceMember = resolveWorkspaceMembership({
+      realMember: realMembership,
+      workspace,
+      user: context.user,
     })
 
     if (!workspaceMember) {
       throw new ORPCError("UNAUTHORIZED")
     }
 
-    if (isWorkspaceScheduledForDeletion(workspaceMember.workspace)) {
+    if (isWorkspaceScheduledForDeletion(workspace)) {
       throw new ORPCError("FORBIDDEN", {
         message: "Workspace deletion scheduled",
       })
@@ -66,7 +85,7 @@ export const workspaceAuthorizedMidddleware = base.middleware(
     return withAuditContext(
       {
         userId: context.user.id,
-        workspaceId: workspaceMember.workspace.id,
+        workspaceId: workspace.id,
         ipAddress:
           context.session?.ipAddress ?? getGuestClientIp(context.headers),
         userAgent:
@@ -77,7 +96,7 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       () =>
         next({
           context: {
-            workspace: workspaceMember.workspace,
+            workspace,
           },
         }),
     )

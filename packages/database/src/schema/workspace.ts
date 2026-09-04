@@ -51,6 +51,13 @@ export const workspaceModel = pgTable(
     endTime: text(),
     logo: text(),
     scheduledDeletionAt: timestamp(timestampConfig),
+    // Owner opt-in for platform support access. Non-null and in the future
+    // means the owner has consented to the super admin opening this
+    // workspace — `isSupportAccessEnabled` is the read-time check every gate
+    // uses to synthesize the super admin's membership; there is no separate
+    // grant row. Set by the Settings → General toggle, cleared by the owner
+    // or after the fixed 7-day window.
+    supportAccessUntil: timestamp(timestampConfig),
     // Meta Conversions API Limited Data Use (plan #3) — a workspace-level
     // toggle only; there is no per-contact opt_out in v1 (needs a dedicated,
     // auditable ads-consent field/policy first — `Contact.blockedAt` is a
