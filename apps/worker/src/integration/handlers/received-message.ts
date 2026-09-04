@@ -471,6 +471,43 @@ export const receiveMessage = async (
           )
         }
       }
+
+      // Message echoes (agent replying from the channel's own native UI,
+      // e.g. Meta Business Suite, rather than the ChatbotX inbox) never go
+      // through `create-message.action.ts`, so "Page" keyword automation
+      // must be checked here too — mirrors the enqueue in that action,
+      // including its `user &&` gate (see isEchoOfOwnSend).
+      if (
+        isWorkspaceActive &&
+        incomingMessage.messageType === "outgoing" &&
+        incomingMessage.text
+      ) {
+        try {
+          if (
+            !(await isEchoOfOwnSend({ conversation, message: createdMessage }))
+          ) {
+            await chatQueue.add(ChatJobAction.checkOutboundAutomatedResponse, {
+              type: ChatJobAction.checkOutboundAutomatedResponse,
+              data: {
+                conversation,
+                contactInbox,
+                message: { id: createdMessage.id, text: incomingMessage.text },
+              },
+            })
+          }
+        } catch (error) {
+          // Deliberately fail closed: a failed self-send check must not let a
+          // bot echo through, or an outbound rule can match its own reply.
+          logger.warn(
+            {
+              err: normalizeError(error),
+              conversationId: conversation.id,
+              contactInboxId: contactInbox.id,
+            },
+            "Skipped outbound automated response check after an error",
+          )
+        }
+      }
     }
   }
 
@@ -612,6 +649,59 @@ async function sendAppointmentCancelFeedback(input: {
       "Failed to send appointment cancel feedback",
     )
   }
+}
+
+/**
+ * How far back to look for the ChatbotX-side row an echo may be duplicating.
+ * The race it covers is sub-second — `updateSourceId` runs right after the
+ * channel send returns — so this only needs to be generous, not wide: a
+ * longer window would start suppressing genuine agent replies that happen to
+ * repeat something the bot said.
+ */
+const SELF_SENT_ECHO_WINDOW_MS = 2 * 60 * 1000
+
+/** Outgoing rows to compare against — enough to cover a multi-message reply. */
+const SELF_SENT_ECHO_LOOKBACK = 10
+
+/**
+ * Mirrors the `user &&` gate on the inbox call site
+ * (`apps/builder/src/features/messages/actions/create-message.action.ts`):
+ * only a message a human agent actually typed may trigger "Page" keyword
+ * automation.
+ *
+ * Echoes are stamped `senderType: "user"` whatever their origin, so a bot send
+ * is otherwise indistinguishable from an agent one. Normally the echo is
+ * deduped by `sourceId` and never reaches this code, but `updateSourceId`
+ * only runs after the channel send returns (`chat/handlers/send-message.ts`)
+ * and swallows its errors, so a fast webhook can insert a second row first. On
+ * such a miss the bot would run keyword automation over its own text — and,
+ * because an outbound rule replies through the same channel, that reply echoes
+ * back and can match itself in a loop.
+ *
+ * Every ChatbotX send persists its Message row *before* hitting the channel,
+ * so a recent outgoing row carrying the same text is our own send, not an
+ * agent's.
+ */
+const isEchoOfOwnSend = async (props: {
+  conversation: ConversationModel
+  message: MessageModel
+}): Promise<boolean> => {
+  const { conversation, message } = props
+  const repository = await createMessageRepository()
+  const recentOutgoing = await repository.findLastByConversation(
+    conversation.id,
+    {
+      limit: SELF_SENT_ECHO_LOOKBACK,
+      messageTypes: ["outgoing"],
+      sinceTime: new Date(Date.now() - SELF_SENT_ECHO_WINDOW_MS),
+      workspaceId: conversation.workspaceId,
+    },
+  )
+
+  return recentOutgoing.some(
+    (candidate) =>
+      candidate.id !== message.id && candidate.text === message.text,
+  )
 }
 
 // Creates or updates the message row (deduplicates webhook retries via sourceId),
