@@ -19,9 +19,9 @@ export function needsAttachmentInfo(
 /**
  * Returns a memoized resolver that fetches a comment's attachment type at
  * most once per incoming comment, regardless of how many active automations
- * need it. Instagram has no attachment-lookup API yet, so non-messenger
- * channels short-circuit to "no attachment" — unrelated to which channels
- * support private replies.
+ * need it. Neither Instagram nor Threads has an attachment-lookup API yet, so
+ * non-messenger channels short-circuit to "no attachment" — unrelated to which
+ * channels support private replies.
  */
 export function createAttachmentInfoResolver(params: {
   channelType: CommentAutomationChannelType

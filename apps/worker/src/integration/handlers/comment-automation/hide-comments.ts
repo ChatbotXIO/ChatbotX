@@ -4,6 +4,42 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
+import type { CommentAutomationChannelType } from "./channel-type"
+
+/**
+ * Whether the channel can hide (and later unhide) a comment.
+ *
+ * Hiding maps to Meta's `POST /{comment-id}?is_hidden=true`, available for
+ * Facebook and Instagram comments. The Threads API exposes no moderation
+ * endpoint, so a Threads automation configured to hide comments logs an
+ * unsupported-capability line rather than enqueuing a state change the channel
+ * would reject.
+ */
+export function supportsHideComments(
+  channelType: CommentAutomationChannelType,
+): boolean {
+  return channelType !== "threads"
+}
+
+/**
+ * Whether the automation's hide settings ask for anything at all. Lets the
+ * orchestrator skip the whole hide path (including the attachment lookup) for
+ * an all-defaults config, and lets it report the unsupported capability only
+ * when the user actually configured one.
+ */
+export function hasHideCommentAction(
+  hideComments: FBCommentHideComments,
+): boolean {
+  return (
+    hideComments.all ||
+    hideComments.hasPhoneNumber ||
+    hideComments.hasImage ||
+    hideComments.hasVideo ||
+    hideComments.hasLink ||
+    hideComments.hasKeywords ||
+    hideComments.showCommentsAfter !== "none"
+  )
+}
 
 const PHONE_RE = /\+?\d[\d\s\-().]{7,}/
 // `http(s)://`/`www.` links match case-insensitively — the scheme itself is

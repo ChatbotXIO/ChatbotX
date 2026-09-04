@@ -136,6 +136,8 @@ const getChannelIntegrationId = (
       return inbox.integrationZalo?.id ?? null
     case channelTypes.enum.tiktok:
       return inbox.integrationTiktok?.id ?? null
+    case channelTypes.enum.threads:
+      return inbox.integrationThreads?.id ?? null
     case channelTypes.enum.telegram:
       return inbox.integrationTelegram?.id ?? null
     case channelTypes.enum.webchat:
@@ -255,6 +257,8 @@ export const getIntegrationField = async (
           return inbox.integrationZalo?.name ?? null
         case channelTypes.enum.tiktok:
           return inbox.integrationTiktok?.name ?? null
+        case channelTypes.enum.threads:
+          return inbox.integrationThreads?.name ?? null
         case channelTypes.enum.telegram:
           return inbox.integrationTelegram?.name ?? null
         case channelTypes.enum.webchat:

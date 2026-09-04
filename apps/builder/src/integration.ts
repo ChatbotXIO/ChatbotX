@@ -16,6 +16,7 @@ import { integration as integrationMoosend } from "@chatbotx.io/integration-moos
 import { integration as integrationSendGrid } from "@chatbotx.io/integration-sendgrid"
 import { integration as integrationSmtp } from "@chatbotx.io/integration-smtp"
 import { integration as integrationTelegram } from "@chatbotx.io/integration-telegram"
+import { integration as integrationThreads } from "@chatbotx.io/integration-threads"
 import { integration as integrationTiktok } from "@chatbotx.io/integration-tiktok"
 import { integration as integrationWebchat } from "@chatbotx.io/integration-webchat"
 import { integration as integrationWhatsapp } from "@chatbotx.io/integration-whatsapp"
@@ -27,6 +28,7 @@ export const integrations = {
   messenger: integrationMessenger,
   instagram: integrationInstagram,
   instagramFacebook: integrationInstagramFacebook,
+  threads: integrationThreads,
   activeCampaign: integrationActiveCampaign,
   drip: integrationDrip,
   getResponse: integrationGetResponse,

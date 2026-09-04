@@ -133,6 +133,7 @@ const contactInbox = {
   id: "ci-1",
   inboxId: "inbox-1",
   contactId: "contact-1",
+  channel: "messenger",
 }
 
 describe("createMessage", () => {
@@ -197,5 +198,53 @@ describe("createMessage", () => {
         lastMessageAt: messageInput.createdAt,
       },
     })
+  })
+
+  test("uses attempts=1 for manual Threads comment replies", async () => {
+    await createMessage({
+      conversation: conversation as never,
+      contactInbox: { ...contactInbox, channel: "threads" } as never,
+      parsedInput: {
+        text: "hello",
+        replyToMessageId: "parent-1",
+        replyToMessageCreatedAt: new Date("2026-08-12T00:00:00Z"),
+      },
+      user: { id: "user-1" } as never,
+    })
+
+    expect(mockChatQueueAdd).toHaveBeenNthCalledWith(
+      2,
+      "sendChannelMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          message: expect.objectContaining({ type: "comment" }),
+        }),
+      }),
+      { attempts: 1 },
+    )
+  })
+
+  test("keeps default queue options for non-Threads manual comment replies", async () => {
+    await createMessage({
+      conversation: conversation as never,
+      contactInbox: { ...contactInbox, channel: "messenger" } as never,
+      parsedInput: {
+        text: "hello",
+        replyToMessageId: "parent-1",
+        replyToMessageCreatedAt: new Date("2026-08-12T00:00:00Z"),
+      },
+      user: { id: "user-1" } as never,
+    })
+
+    expect(mockChatQueueAdd).toHaveBeenNthCalledWith(
+      2,
+      "sendChannelMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          message: expect.objectContaining({ type: "comment" }),
+        }),
+      }),
+    )
+    expect(mockChatQueueAdd.mock.calls[1]).toHaveLength(2)
   })
 })

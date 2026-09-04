@@ -50,6 +50,9 @@
       "cloneFromMessenger": "從 Messenger 複製",
       "clonedFromMessenger": "已從 Messenger 複製"
     },
+    "threads": {
+      "label": "Threads"
+    },
     "zalo": {
       "label": "ZaloOA"
     },
@@ -1197,6 +1200,9 @@
     },
     "appSecret": {
       "label": "應用程式秘密"
+    },
+    "version": {
+      "label": "版本"
     },
     "webhookVerifyToken": {
       "label": "Webhook 驗證權杖"
@@ -4352,6 +4358,75 @@
       "instagramDescription": "使用 Instagram Login 連接。支援公開回覆、私訊回覆與隱藏留言，不支援對留言按讚。",
       "instagramFacebookTitle": "使用 Facebook 登入的 Instagram",
       "instagramFacebookDescription": "透過 Facebook 粉絲專頁連接的 Instagram。支援公開回覆、私訊回覆、隱藏留言與對留言按讚。"
+    }
+  },
+  "threadsCommentAutomation": {
+    "title": "Threads 留言自動化",
+    "description": "自動處理聯絡人在 Threads 貼文下的公開留言回覆。",
+    "create": "建立自動化",
+    "replies": "回覆",
+    "empty": "尚未建立 Threads 留言自動化。",
+    "publicOnlyNote": "Threads 目前僅支援公開回覆。",
+    "trackCommentsOn": "追蹤留言的對象",
+    "publicReply": "公開回覆留言",
+    "publicReplyDescription": "對符合條件的 Threads 留言發表公開回覆。",
+    "replyMessage": "回覆訊息",
+    "replyFlow": "回覆流程",
+    "replyAIAgent": "回覆 AI Agent",
+    "includeKeywordsType": "回覆對象",
+    "includeKeywords": "要比對的關鍵字",
+    "excludeKeywords": "排除包含這些關鍵字的留言",
+    "keywordsPlaceholder": "輸入後按 Enter...",
+    "replyAfter": "回覆時間",
+    "replyAfterValue": "時間值",
+    "specificPostIds": "指定貼文 ID",
+    "postIdPlaceholder": "輸入貼文 ID 後按 Enter...",
+    "card": {
+      "targeting": "目標與回覆",
+      "filters": "篩選條件與選項",
+      "replyTiming": "回覆時機"
+    },
+    "postType": {
+      "all": "所有貼文",
+      "specificPosts": "指定貼文"
+    },
+    "replyType": {
+      "text": "文字訊息",
+      "flow": "流程",
+      "AIAgent": "AI Agent",
+      "none": "不回覆"
+    },
+    "keywordsType": {
+      "all": "所有留言",
+      "equal": "完全符合",
+      "contain": "包含"
+    },
+    "replyAfterType": {
+      "immediately": "立即",
+      "seconds": "X 秒後",
+      "minutes": "X 分鐘後",
+      "hours": "X 小時後",
+      "randomWithin3Minutes": "3 分鐘內隨機",
+      "randomWithin5Minutes": "5 分鐘內隨機",
+      "randomWithin10Minutes": "10 分鐘內隨機",
+      "randomWithin20Minutes": "20 分鐘內隨機",
+      "randomWithin30Minutes": "30 分鐘內隨機",
+      "randomWithin60Minutes": "60 分鐘內隨機"
+    },
+    "options": {
+      "replyToNewContactsOnly": "僅回覆新聯絡人",
+      "replyOncePerUserPerPost": "每則貼文對每位使用者只回覆一次",
+      "replyToUsersWhoCommentedOnOtherPosts": "回覆曾在其他貼文留言的使用者",
+      "ignoreCommentReplies": "忽略留言底下的回覆"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "選擇所有貼文時，貼文 ID 必須留空。",
+      "postIdsRequired": "選擇指定貼文時，請至少填入一個貼文 ID。",
+      "keywordsMustBeEmptyForAll": "比對所有留言時，關鍵字必須留空。",
+      "keywordsRequired": "請為所選的比對方式至少輸入一個關鍵字。",
+      "delayMustBePositive": "延遲時間必須大於零。",
+      "delayMustBeZero": "所選的時機選項不支援延遲時間，請設為零。",
+      "atLeastOneFieldRequired": "請至少填寫一個欄位。"
     }
   },
   "instagramStoryAutomation": {

@@ -1,6 +1,8 @@
 import {
   buildContext,
   type IntegrationContext,
+  inboxService,
+  integrationThreadsService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { db, findOrFail, sql } from "@chatbotx.io/database/client"
@@ -20,6 +22,7 @@ import { integration as integrationInstagramFacebook } from "@chatbotx.io/integr
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
 import { integration as integrationSmtp } from "@chatbotx.io/integration-smtp"
 import { integration as integrationTelegram } from "@chatbotx.io/integration-telegram"
+import { integration as integrationThreads } from "@chatbotx.io/integration-threads"
 import { integration as integrationTiktok } from "@chatbotx.io/integration-tiktok"
 import { integration as integrationWebchat } from "@chatbotx.io/integration-webchat"
 import { integration as integrationWhatsapp } from "@chatbotx.io/integration-whatsapp"
@@ -54,6 +57,7 @@ export const allIntegrations: Record<
   smtp: integrationSmtp,
   instagram: integrationInstagram,
   instagramFacebook: integrationInstagramFacebook,
+  threads: integrationThreads,
 }
 
 export type IntegrationRow = {
@@ -77,6 +81,43 @@ export const integrationService = {
     inbox: InboxModel
     integrationRow: IntegrationRow
   }> => {
+    if (integrationType === "threads") {
+      const integrationRow =
+        await integrationThreadsService.findByThreadsUserId(
+          integrationIdentifier,
+        )
+
+      if (!integrationRow) {
+        throw new IntegrationNotFoundError(
+          integrationType,
+          integrationIdentifier,
+        )
+      }
+
+      const [workspace, inbox] = await Promise.all([
+        workspaceService.findById({
+          id: integrationRow.workspaceId,
+        }),
+        inboxService.find({ where: { id: integrationRow.inboxId } }),
+      ])
+
+      if (!inbox) {
+        throw new IntegrationNotFoundError(
+          integrationType,
+          integrationIdentifier,
+        )
+      }
+
+      return {
+        integrationRow: {
+          ...integrationRow,
+          auth: integrationRow.auth as AuthValue,
+        },
+        workspace,
+        inbox,
+      }
+    }
+
     let modelName: string | null = null
     let columnName: string | null = null
 
@@ -164,6 +205,25 @@ export const integrationService = {
   getIntegrationFromContactInbox: async (
     contactInbox: ContactInboxModel,
   ): Promise<IntegrationRow> => {
+    if (contactInbox.channel === "threads") {
+      const integrationRow = await integrationThreadsService.findByInboxId(
+        contactInbox.inboxId,
+      )
+
+      if (!integrationRow) {
+        throw new ChannelError(
+          `Unable to find integration auth for channel: ${contactInbox.channel}`,
+          ChannelErrorCategory.AUTH_FAILED,
+          { code: "integration_auth_missing" },
+        )
+      }
+
+      return {
+        ...integrationRow,
+        auth: integrationRow.auth as AuthValue,
+      }
+    }
+
     let integrationTable: string
     switch (contactInbox.channel) {
       case "messenger":

@@ -52,6 +52,7 @@
     "@chatbotx.io/integration-google-sheets": "workspace:*",
     "@chatbotx.io/integration-instagram": "workspace:*",
     "@chatbotx.io/integration-instagram-facebook": "workspace:*",
+    "@chatbotx.io/integration-threads": "workspace:*",
     "@chatbotx.io/integration-klaviyo": "workspace:*",
     "@chatbotx.io/integration-mailchimp": "workspace:*",
     "@chatbotx.io/integration-mailer-lite": "workspace:*",

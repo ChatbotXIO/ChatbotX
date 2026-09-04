@@ -266,6 +266,7 @@ describe("capability table", () => {
       whatsapp: "payload",
       api: "payload",
       tiktok: null,
+      threads: null,
       webchat: null,
       smtp: null,
       omnichannel: null,

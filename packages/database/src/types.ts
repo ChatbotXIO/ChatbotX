@@ -163,6 +163,8 @@ export type MinigamePlayModel = typeof schema.minigamePlayModel.$inferSelect
 export type MagicLinkModel = typeof schema.magicLinkModel.$inferSelect
 export type IntegrationInstagramModel =
   typeof schema.integrationInstagramModel.$inferSelect
+export type IntegrationThreadsModel =
+  typeof schema.integrationThreadsModel.$inferSelect
 export type WhatsappMessageTemplateModel =
   typeof schema.whatsappMessageTemplateModel.$inferSelect
 export type WhatsappFlowModel = typeof schema.whatsappFlowModel.$inferSelect
@@ -180,6 +182,7 @@ export type WhatsappSignupSessionModel =
 export type InboxWithIntegrations = InboxModel & {
   integrationApi?: IntegrationApiModel | null
   integrationInstagram?: IntegrationInstagramModel | null
+  integrationThreads?: IntegrationThreadsModel | null
   integrationMessenger?: IntegrationMessengerModel | null
   integrationTelegram?: IntegrationTelegramModel | null
   integrationWebchat?: IntegrationWebchatModel | null

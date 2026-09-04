@@ -15,6 +15,7 @@ import {
   integrationMessengerModel,
   integrationSmtpModel,
   integrationTelegramModel,
+  integrationThreadsModel,
   integrationTiktokModel,
   integrationWebchatModel,
   integrationWhatsappModel,
@@ -611,6 +612,15 @@ class WorkspaceLifecycleService extends BaseService {
         await finish(integrations?.tiktok)
         return
       }
+      case channelTypes.enum.threads: {
+        if (removeIntegrationRow && inbox.integrationThreads) {
+          await tx
+            .delete(integrationThreadsModel)
+            .where(eq(integrationThreadsModel.id, inbox.integrationThreads.id))
+        }
+        await finish(integrations?.threads)
+        return
+      }
       case channelTypes.enum.webchat: {
         if (removeIntegrationRow && inbox.integrationWebchat) {
           await tx
@@ -653,6 +663,8 @@ const inboxToAuth = (inbox: InboxWithIntegrations): unknown => {
       return inbox.integrationSmtp?.auth
     case channelTypes.enum.instagram:
       return inbox.integrationInstagram?.auth
+    case channelTypes.enum.threads:
+      return inbox.integrationThreads?.auth
     default:
       return null
   }

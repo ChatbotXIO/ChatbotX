@@ -148,6 +148,7 @@ describe("channels/create — platform owner fan-out", () => {
         "instagram",
         "instagramFacebook",
         "messenger",
+        "threads",
         "tiktok",
         "whatsapp",
         "zalo",

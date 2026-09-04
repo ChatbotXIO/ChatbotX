@@ -9,6 +9,7 @@ import {
 import { db, eq } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
 import { inboxModel } from "@chatbotx.io/database/schema"
+import { getSafeErrorDetails } from "@chatbotx.io/integration-threads"
 import type {
   TiktokAuthValue,
   TiktokConfig,
@@ -26,6 +27,47 @@ import { logWebhookRequestBody } from "@/lib/webhook-log"
 type CredentialType = Parameters<
   typeof platformCredentialService.resolveForOwner
 >[0]["type"]
+
+const WEBHOOK_PUBLIC_ERROR_HEADERS = {
+  "Content-Type": "application/json",
+} as const
+
+const THREADS_BAD_REQUEST_MESSAGES = new Set([
+  "Empty webhook payload",
+  "Invalid webhook signature",
+  "Invalid webhook verification parameters",
+  "Missing webhook signature",
+  "Webhook app_id does not match configured clientId",
+])
+
+const createThreadsErrorResponse = (error: unknown) => {
+  const safeError = getSafeErrorDetails(error)
+
+  let status = safeError.httpStatusCode
+
+  if (status === undefined) {
+    if (safeError.message.startsWith("Unsupported HTTP method:")) {
+      status = 405
+    } else if (THREADS_BAD_REQUEST_MESSAGES.has(safeError.message)) {
+      status = 400
+    } else {
+      status = 500
+    }
+  }
+
+  if (status < 400 || status > 599) {
+    status = 500
+  }
+
+  const isClientError = status >= 400 && status < 500
+  return {
+    publicMessage: isClientError
+      ? "Invalid Threads webhook request"
+      : "Failed to process Threads webhook",
+    safeError,
+    status,
+  }
+}
 
 /**
  * Per-bot/per-account channels (telegram, tiktok) reach their integration
@@ -57,6 +99,10 @@ export const handleWebhook = async (
   integrationType: string,
   req: NextRequest,
 ) => {
+  if (integrationType === "threads") {
+    return handleThreadsWebhook(req)
+  }
+
   await logWebhookRequestBody(integrationType, req)
 
   // Telegram uses per-bot config (not org-level settings)
@@ -179,6 +225,78 @@ export const handleWebhook = async (
     return new Response(JSON.stringify({ message }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
+const handleThreadsWebhook = async (req: NextRequest) => {
+  const appId = req.nextUrl.searchParams.get("appId")?.trim()
+
+  if (!appId) {
+    return new Response(
+      JSON.stringify({ message: "Integration is not configured" }),
+      { status: 404, headers: { "Content-Type": "application/json" } },
+    )
+  }
+
+  const integration = integrations.threads
+  if (!integration?.handleRequest) {
+    return new Response(
+      JSON.stringify({ message: "Method is not implemented" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    )
+  }
+
+  const credential =
+    await platformCredentialService.findDecryptedThreadsByClientId({
+      clientId: appId,
+    })
+
+  if (!credential) {
+    logger.debug(
+      { appId, integrationType: "threads" },
+      "No configured Threads credential for webhook appId",
+    )
+    return new Response(
+      JSON.stringify({ message: "Integration is not configured" }),
+      { status: 404, headers: { "Content-Type": "application/json" } },
+    )
+  }
+
+  const redirectUrl = new URL(
+    `/integrations/${integration.name}/callback`,
+    req.nextUrl,
+  ).toString()
+
+  try {
+    const result = await integration.handleRequest({
+      config: {
+        ...credential.config,
+        redirectUrl,
+        stateParams: {
+          workspaceId: req.nextUrl.searchParams.get("workspaceId") ?? "",
+          referer: req.nextUrl.toString(),
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+      } as any,
+      req,
+      queue: integrationQueue,
+    })
+
+    return new Response(result as BodyInit)
+  } catch (e: unknown) {
+    const { publicMessage, safeError, status } = createThreadsErrorResponse(e)
+    logger.error(
+      {
+        error: safeError,
+        integrationType: "threads",
+        status,
+      },
+      "Threads handleRequest failed",
+    )
+    return new Response(JSON.stringify({ message: publicMessage }), {
+      status,
+      headers: WEBHOOK_PUBLIC_ERROR_HEADERS,
     })
   }
 }

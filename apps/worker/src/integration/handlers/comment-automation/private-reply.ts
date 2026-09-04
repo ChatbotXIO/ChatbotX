@@ -26,9 +26,21 @@ export type PrivateReplyAuth =
   | InstagramAuthValue
   | InstagramFacebookAuthValue
 
+export type PrivateReplyTextSender = (
+  auth: PrivateReplyAuth,
+  commentId: string,
+  text: string,
+) => Promise<unknown>
+
+/**
+ * How each channel delivers the private (DM) half of a comment automation.
+ * `null` means the channel has no private-reply API at all — the single source
+ * of truth for `supportsPrivateReply`, so a channel can never be "supported"
+ * without a sender to back it.
+ */
 export const PRIVATE_REPLY_TEXT_SENDERS: Record<
   CommentAutomationChannelType,
-  (auth: PrivateReplyAuth, commentId: string, text: string) => Promise<unknown>
+  PrivateReplyTextSender | null
 > = {
   messenger: (auth, commentId, text) =>
     sendPrivateReply(auth as MessengerAuthValue, commentId, text),
@@ -45,6 +57,17 @@ export const PRIVATE_REPLY_TEXT_SENDERS: Record<
       commentId,
       text,
     ),
+  // The Threads API has no `private_replies` (or any DM) endpoint: a Threads
+  // comment can only be answered publicly. Every private-reply path — text,
+  // flow and AIAgent alike — therefore skips on Threads.
+  threads: null,
+}
+
+/** Whether the channel can answer a comment with a private DM. */
+export function supportsPrivateReply(
+  channelType: CommentAutomationChannelType,
+): boolean {
+  return PRIVATE_REPLY_TEXT_SENDERS[channelType] !== null
 }
 
 export async function executePrivateReply(
@@ -67,6 +90,14 @@ export async function executePrivateReply(
     return
   }
 
+  const sendText = PRIVATE_REPLY_TEXT_SENDERS[ctx.channelType]
+  if (!sendText) {
+    // Channel has no private-reply API (Threads). Callers log the skip with
+    // the automation id; this guard keeps flow/AIAgent dispatch from enqueuing
+    // a job whose reply could never be delivered.
+    return
+  }
+
   if (privateReply.type === "text" && privateReply.value) {
     let text = privateReply.value
     try {
@@ -85,11 +116,7 @@ export async function executePrivateReply(
       )
     }
 
-    await PRIVATE_REPLY_TEXT_SENDERS[ctx.channelType](
-      ctx.auth,
-      ctx.commentId,
-      text,
-    )
+    await sendText(ctx.auth, ctx.commentId, text)
     return
   }
 
