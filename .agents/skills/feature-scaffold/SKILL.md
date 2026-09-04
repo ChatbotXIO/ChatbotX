@@ -427,7 +427,7 @@ Wrap with React context provider (`provider/item-store-provider.tsx`).
 | Database | `@chatbotx.io/database/client`, `@chatbotx.io/database/schema` |
 | Types | `@chatbotx.io/database/types` |
 | oRPC client | `@/lib/orpc/orpc` |
-| oRPC stacks | `@/orpc` (for `authorizedAPI`, `workspaceTokenAuthAPI`) |
+| oRPC stacks | `@/orpc` (for `authorizedAPI`, `workspaceTokenAuthAPIForScope`) |
 | Auth middleware | `@/middlewares/auth` |
 | Safe action clients | `@/lib/safe-action` |
 

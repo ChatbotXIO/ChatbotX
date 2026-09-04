@@ -142,10 +142,16 @@ old or malformed jobs from failing open.
 
 ## Workspace-token APIs
 
-Workspace-token APIs authenticate by workspace token, not by the current
+Workspace-token APIs authenticate by workspace API token, not by the current
 workspace member. Do not assume member-scoped contact permissions apply there.
 When adding a workspace-token surface that returns contacts or contact-derived
 data, make the intended scope explicit in the API contract and tests.
+
+Tokens carry their own two authorization axes — a `permission` level
+(`full` / `read_only`) and a resource-area `scopes` allow-list enforced via
+`workspaceTokenAuthAPIForScope("<scope>")`. Managing tokens (create/revoke)
+requires the caller to be a workspace `superAdmin`. See
+[workspace-api-tokens.md](./workspace-api-tokens.md) for the full model.
 
 ## Change checklist
 

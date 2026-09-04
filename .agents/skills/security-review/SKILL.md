@@ -22,7 +22,14 @@ The per-member permission jsonb (`WorkspaceMemberPermissions`: `superAdmin`, `an
 - **Nav filter:** `app-sidebar.tsx` hides items via `hasWorkspacePermission` (and `canAccessContactsSection` for the compound contacts gate).
 - **Data scope:** contacts queries thread `resolveContactPermissionScope` → `onlyAssignedContacts` row filter (via `conversation.assignedUserId`) + `emailAndPhone` PII masking. The CSV export mirrors this in the worker; `canExportEmailAndPhone` is a **required** job field so it can never fail open.
 
-Invariants: `hasWorkspacePermission` treats missing jsonb keys as **denied** (fail-closed) and `superAdmin` bypasses every gate. `isCommunity()` normalizes stored permissions to full `getSuperAdminPermissions()` (no granular control in CE). `invite`/`update`/`delete` member actions require caller `superAdmin`. The workspace-token contacts surface (`listContactsForAPI`) is intentionally **unscoped** — verify new token surfaces don't leak member-scoped data.
+Invariants: `hasWorkspacePermission` treats missing jsonb keys as **denied** (fail-closed) and `superAdmin` bypasses every gate. `isCommunity()` normalizes stored permissions to full `getSuperAdminPermissions()` (no granular control in CE). `invite`/`update`/`delete` member actions require caller `superAdmin`. The workspace-token contacts surface (`listContactsForAPI`) is intentionally **unscoped** by member permissions — verify new token surfaces don't leak member-scoped data.
+
+## 1c. Workspace API tokens (`docs/developer/workspace-api-tokens.md`)
+
+- Tokens are stored **hash-only** (SHA-256 `tokenHash` in `WorkspaceApiToken`); the sole plaintext-recoverable row is the `isDefault` token backing `{{api_key}}` (AES-GCM `encryptedToken`, AAD-bound to its workspace). Never persist, cache, or log a raw token or its hash — handler context only ever sees the projected `RequestApiToken`.
+- Every workspace-token endpoint MUST use `workspaceTokenAuthAPIForScope("<scope>")` — there is no unscoped stack export. `permission: "read_only"` tokens are limited to GET/HEAD in the middleware; mutations additionally pass the owner-quota gate.
+- All bearer-credential material comes from `@chatbotx.io/business/workspace-api-token/credentials` (CSPRNG). Flag any token/secret minted from `Math.random()`-backed helpers.
+- Minting/revoking tokens requires workspace `superAdmin` (`requireWorkspaceTokenSuperAdmin`) — a granular member must not escalate via a `full` token.
 
 ## 2. Prompt injection (untrusted channel content → agent context)
 
