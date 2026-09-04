@@ -48,7 +48,9 @@ vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
 const { workspaceTokenAuthMidddleware } = await import(
   "@/middlewares/workspace-token-auth"
 )
-const { hashToken } = await import("@/features/integration-api/lib/token-hash")
+const { hashToken } = await import(
+  "@chatbotx.io/business/workspace-api-token/credentials"
+)
 
 const next = vi.fn(async (opts?: { context: Record<string, unknown> }) => ({
   output: "ok",

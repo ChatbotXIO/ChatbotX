@@ -18,12 +18,11 @@ export const workspaceApiTokenScopeRegistry: Record<
   analytics: { labelKey: "fields.tokenScopes.analytics", order: 4 },
   ecommerce: { labelKey: "fields.tokenScopes.ecommerce", order: 5 },
   integrations: { labelKey: "fields.tokenScopes.integrations", order: 6 },
-  members: { labelKey: "fields.tokenScopes.members", order: 7 },
-  channels: { labelKey: "fields.tokenScopes.channels", order: 8 },
-  minigames: { labelKey: "fields.tokenScopes.minigames", order: 9 },
-  appointments: { labelKey: "fields.tokenScopes.appointments", order: 10 },
-  media: { labelKey: "fields.tokenScopes.media", order: 11 },
-  ads: { labelKey: "fields.tokenScopes.ads", order: 12 },
+  channels: { labelKey: "fields.tokenScopes.channels", order: 7 },
+  minigames: { labelKey: "fields.tokenScopes.minigames", order: 8 },
+  appointments: { labelKey: "fields.tokenScopes.appointments", order: 9 },
+  media: { labelKey: "fields.tokenScopes.media", order: 10 },
+  ads: { labelKey: "fields.tokenScopes.ads", order: 11 },
 }
 
 export const orderedWorkspaceApiTokenScopes = (

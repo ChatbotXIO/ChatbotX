@@ -1,11 +1,11 @@
 "use server"
 
 import { workspaceApiTokenService } from "@chatbotx.io/business"
+import { generateWorkspaceToken } from "@chatbotx.io/business/workspace-api-token/credentials"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
-import { generateWorkspaceToken } from "@/features/integration-api/lib/generate-credentials"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireWorkspaceTokenSuperAdmin } from "../lib/require-workspace-token-super-admin"
 import {

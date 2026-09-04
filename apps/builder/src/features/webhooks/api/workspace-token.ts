@@ -9,10 +9,10 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
-
 import { conditionSchema } from "../../conditions/schema"
 import { toConditionColumns } from "../../conditions/to-condition-columns"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
 
 const webhookResource = createSelectSchema(webhookModel, {
   id: z.string(),

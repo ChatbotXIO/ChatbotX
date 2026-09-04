@@ -8,10 +8,10 @@ import { contactFilterCriteriaSchema } from "@/features/contact-filter"
 import { cursorPaginationRequest } from "@/lib/pagination"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
-
 import { listConversations } from "../queries/list-conversations.query"
 import { listConversationsResponse } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
 function jsonQueryParam<T>(schema: z.ZodType<T>) {
   return z.preprocess((val) => {

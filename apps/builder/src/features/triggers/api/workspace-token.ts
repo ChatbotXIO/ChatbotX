@@ -2,9 +2,9 @@ import { triggerService } from "@chatbotx.io/business"
 import z from "zod"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
-
 import { triggerResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 const listTriggersWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({

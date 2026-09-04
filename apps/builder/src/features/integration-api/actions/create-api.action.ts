@@ -5,12 +5,12 @@ import {
   integrationApiService,
   workspaceService,
 } from "@chatbotx.io/business"
-import type { ApiAuthValue } from "@chatbotx.io/integration-api"
-import { authActionClient } from "@/lib/safe-action"
 import {
   generateApiChannelToken,
   generateSigningSecret,
-} from "../lib/generate-credentials"
+} from "@chatbotx.io/business/workspace-api-token/credentials"
+import type { ApiAuthValue } from "@chatbotx.io/integration-api"
+import { authActionClient } from "@/lib/safe-action"
 import { createApiRequest } from "../schema/mutation"
 
 export const createApiAction = authActionClient

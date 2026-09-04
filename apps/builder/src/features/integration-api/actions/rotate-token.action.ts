@@ -1,6 +1,7 @@
 "use server"
 
 import { auditService } from "@chatbotx.io/business/audit"
+import { generateApiChannelToken } from "@chatbotx.io/business/workspace-api-token/credentials"
 import { integrationApiRepository } from "@chatbotx.io/database/repositories"
 import {
   type WorkspaceIdAndIdRequestParams,
@@ -8,7 +9,6 @@ import {
 } from "@/features/common/schema"
 import { findIntegrationApiByWorkspaceAndId } from "@/features/integration-api/queries"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { generateApiChannelToken } from "../lib/generate-credentials"
 
 export const rotateApiTokenAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)

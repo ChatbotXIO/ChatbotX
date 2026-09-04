@@ -31,7 +31,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("../src/features/integration-api/lib/generate-credentials", () => ({
+vi.mock("@chatbotx.io/business/workspace-api-token/credentials", () => ({
   generateApiChannelToken: mocks.generateApiChannelToken,
   generateSigningSecret: mocks.generateSigningSecret,
 }))

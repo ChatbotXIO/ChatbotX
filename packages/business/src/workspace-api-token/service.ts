@@ -96,9 +96,13 @@ class WorkspaceApiTokenService extends BaseService {
       tx,
     } = props
 
-    // Count-then-insert must share one transaction: without it, two
-    // concurrent creates can both read count=9 and both commit, breaching the
-    // cap. When the caller already owns a tx, reuse it instead of nesting.
+    // A bare transaction does not serialize count-then-insert under READ
+    // COMMITTED — two concurrent creates can both read count=9 and both
+    // commit, breaching the cap. The per-workspace advisory lock, taken
+    // before the count, is what actually closes the race: the second
+    // transaction blocks until the first commits or rolls back, so it always
+    // counts the first's insert. When the caller already owns a tx, reuse it
+    // instead of nesting.
     const runInTx = tx
       ? (fn: (txClient: DatabaseClient) => Promise<WorkspaceApiTokenModel>) =>
           fn(tx)
@@ -106,6 +110,11 @@ class WorkspaceApiTokenService extends BaseService {
           db.transaction(fn)
 
     const token = await runInTx(async (txClient) => {
+      await workspaceApiTokenRepository.lockWorkspaceTokens(
+        workspaceId,
+        txClient,
+      )
+
       const count = await workspaceApiTokenRepository.countByWorkspaceId(
         workspaceId,
         txClient,

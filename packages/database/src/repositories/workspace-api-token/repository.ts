@@ -64,6 +64,23 @@ class WorkspaceApiTokenRepository {
     )
   }
 
+  /**
+   * Serializes concurrent creates for one workspace so the count-then-insert
+   * in `createToken` can't let two callers both read under-cap and both
+   * commit. Must be called inside the same transaction that does the count,
+   * before the count — matching the `meta-catalog-item` and `appointment`
+   * repositories' `pg_advisory_xact_lock` precedent.
+   */
+  async lockWorkspaceTokens(
+    workspaceId: string,
+    tx: DatabaseClient,
+  ): Promise<void> {
+    const lockKey = `workspace-api-tokens:${workspaceId}`
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`,
+    )
+  }
+
   async deleteByIdForWorkspace(
     input: { id: string; workspaceId: string },
     tx: DatabaseClient = db,

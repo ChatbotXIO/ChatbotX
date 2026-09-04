@@ -1,10 +1,10 @@
 import { z } from "zod"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
-
 import { listSavedReplies } from "../queries"
 import { listSavedReplyResponse } from "../schema/mutation"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
 export const savedReplyWorkspaceTokenAPIs = {
   listSavedRepliesWorkspaceTokenAPI: workspaceTokenAuthAPI

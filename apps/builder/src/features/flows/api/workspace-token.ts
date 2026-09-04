@@ -1,10 +1,10 @@
 import z from "zod"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
-
 import { listFlows } from "../queries"
 import { flowResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 const flowWorkspaceTokenAPIs = {
   listFlowsWorkspaceTokenAPI: workspaceTokenAuthAPI

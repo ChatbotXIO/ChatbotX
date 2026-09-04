@@ -10,14 +10,14 @@ import {
 import { maxPerPage } from "@/lib/shared-request"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
-
 import {
   createCustomFieldRequest,
   updateCustomFieldRequest,
 } from "../schema/action"
 import { listPublicCustomFieldsResponse } from "../schema/query"
 import { publicCustomFieldResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
 const customFieldsWorkspaceTokenAPI = {
   listCustomFieldsWorkspaceTokenAPI: workspaceTokenAuthAPI

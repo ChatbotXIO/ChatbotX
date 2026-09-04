@@ -1509,6 +1509,17 @@ describe("getSystemFieldValue — workspace and account fields", () => {
     expect(mockResolveDefaultTokenPlaintext).not.toHaveBeenCalled()
   })
 
+  test("api_key resolves null when resolveDefaultTokenPlaintext throws, instead of failing the render", async () => {
+    mockResolveDefaultTokenPlaintext.mockRejectedValue(
+      new Error("decrypt failed: AAD mismatch"),
+    )
+    const context = createContext()
+
+    await expect(
+      getSystemFieldValue(context, systemFieldTypes.enum.api_key),
+    ).resolves.toBeNull()
+  })
+
   test("workspace-backed fields are null without a workspace, but ids and api_key survive", async () => {
     mockResolveDefaultTokenPlaintext.mockResolvedValue("cbx_ws_plaintext")
     const context = createContext({ workspace: null })

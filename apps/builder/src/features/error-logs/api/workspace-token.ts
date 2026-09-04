@@ -1,12 +1,12 @@
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("analytics")
-
 import { listErrorLogs } from "../queries"
 import {
   listErrorLogsRequest,
   publicListErrorLogsResponse,
 } from "../schema/query"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("analytics")
 
 export const errorLogsWorkspaceTokenAPIs = {
   listErrorLogsWorkspaceTokenAPI: workspaceTokenAuthAPI

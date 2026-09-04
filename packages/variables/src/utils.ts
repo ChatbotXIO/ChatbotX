@@ -493,9 +493,20 @@ export const getSystemFieldValue = async (
       if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
         return null
       }
-      return await workspaceApiTokenService.resolveDefaultTokenPlaintext({
-        workspaceId: contact.workspaceId,
-      })
+      // Mirrors the `default:` branch below: a decrypt failure (rotated
+      // ENCRYPTION_KEY_PREV, corrupted blob, AAD mismatch) must degrade this
+      // field to null instead of failing the whole message render.
+      try {
+        return await workspaceApiTokenService.resolveDefaultTokenPlaintext({
+          workspaceId: contact.workspaceId,
+        })
+      } catch (err) {
+        logger.error(
+          { err, workspaceId: contact.workspaceId },
+          "Failed to resolve {{api_key}} default token plaintext",
+        )
+        return null
+      }
     case systemFieldTypes.enum.last_ad:
       return getReferralValue(contactInbox, "adId")
     case systemFieldTypes.enum.last_ctwa:

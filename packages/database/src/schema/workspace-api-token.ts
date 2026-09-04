@@ -57,7 +57,7 @@ export const workspaceApiTokenModel = pgTable(
     name: text().notNull(),
     permission: workspaceApiTokenPermission().notNull(),
     // SHA-256 hex digest of the workspace API token (`hashToken()` from
-    // `apps/builder/src/features/integration-api/lib/token-hash.ts`).
+    // `@chatbotx.io/business/workspace-api-token/credentials`).
     tokenHash: text().notNull(),
     // First 12 display characters of the plaintext token, null for legacy
     // rows minted before this column existed.

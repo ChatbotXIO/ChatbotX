@@ -3,10 +3,10 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
-
 import { findReflink } from "../queries"
 import { reflinkResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 export const refLinksWorkspaceTokenAPIs = {
   getRefLinkWorkspaceTokenAPI: workspaceTokenAuthAPI

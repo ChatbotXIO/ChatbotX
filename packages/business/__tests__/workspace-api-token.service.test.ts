@@ -12,6 +12,7 @@ const findByTokenHash = vi.fn(
 )
 const listByWorkspaceId = vi.fn(async () => [] as unknown[])
 const countByWorkspaceId = vi.fn(async (): Promise<number> => 0)
+const lockWorkspaceTokens = vi.fn(async (): Promise<void> => undefined)
 const deleteByIdForWorkspace = vi.fn(async (): Promise<boolean> => false)
 const insert = vi.fn(async () => ({
   id: "t-1",
@@ -30,6 +31,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findByTokenHash,
     listByWorkspaceId,
     countByWorkspaceId,
+    lockWorkspaceTokens,
     deleteByIdForWorkspace,
     insert,
     findDefaultByWorkspaceId,
@@ -104,6 +106,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   findByTokenHash.mockResolvedValue(null)
   countByWorkspaceId.mockResolvedValue(0)
+  lockWorkspaceTokens.mockResolvedValue(undefined)
   deleteByIdForWorkspace.mockResolvedValue(false)
   workspaceService.findById.mockResolvedValue({
     id: "ws-1",
@@ -301,7 +304,7 @@ describe("workspaceApiTokenService.createToken", () => {
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })
 
-  test("runs the count-then-insert cap check under one transaction to close the TOCTOU race", async () => {
+  test("takes the per-workspace advisory lock inside the transaction, before the count, to close the TOCTOU race", async () => {
     await workspaceApiTokenService.createToken({
       workspaceId: "ws-1",
       name: "My token",
@@ -311,9 +314,16 @@ describe("workspaceApiTokenService.createToken", () => {
     })
 
     expect(transaction).toHaveBeenCalledTimes(1)
-    // Both reads/writes must happen with the tx client returned by
-    // db.transaction, not the outer db — otherwise they run outside the tx.
+    // Lock, count, and insert must all happen with the tx client returned by
+    // db.transaction, not the outer db — otherwise they run outside the tx
+    // and the lock cannot serialize concurrent callers.
+    expect(lockWorkspaceTokens).toHaveBeenCalledWith("ws-1", db)
     expect(countByWorkspaceId).toHaveBeenCalledWith("ws-1", db)
+    // The lock must be taken before the count — a lock acquired after
+    // reading the count does nothing to prevent the TOCTOU race.
+    expect(countByWorkspaceId.mock.invocationCallOrder[0]).toBeGreaterThan(
+      lockWorkspaceTokens.mock.invocationCallOrder[0],
+    )
     expect(insert.mock.invocationCallOrder[0]).toBeGreaterThan(
       countByWorkspaceId.mock.invocationCallOrder[0],
     )

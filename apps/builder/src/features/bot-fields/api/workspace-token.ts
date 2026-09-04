@@ -8,11 +8,11 @@ import {
 import { maxPerPage } from "@/lib/shared-request"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
-
 import { createBotFieldRequest } from "../schema/action"
 import { publicListBotFieldsResponse } from "../schema/query"
 import { publicBotFieldResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 const botFieldWorkspaceTokenAPIs = {
   listBotFieldsWorkspaceTokenAPI: workspaceTokenAuthAPI

@@ -1,6 +1,8 @@
+import {
+  generateApiChannelToken,
+  hashToken,
+} from "@chatbotx.io/business/workspace-api-token/credentials"
 import { describe, expect, test } from "vitest"
-import { generateApiChannelToken } from "@/features/integration-api/lib/generate-credentials"
-import { hashToken } from "@/features/integration-api/lib/token-hash"
 
 const TOKEN_PREFIX = "cbx_api_"
 const SHA256_HEX_LENGTH = 64

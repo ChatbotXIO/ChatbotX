@@ -3,8 +3,8 @@ import {
   workspaceApiTokenService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { hashToken } from "@chatbotx.io/business/workspace-api-token/credentials"
 import { ORPCError } from "@orpc/server"
-import { hashToken } from "@/features/integration-api/lib/token-hash"
 import { logger } from "@/lib/log"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -14,7 +14,7 @@ import {
   isWorkspaceMutationMethod,
   workspaceAccessDenialOrpcError,
 } from "@/lib/workspace/authorize-workspace-access"
-import { base } from "./context"
+import { base, type RequestApiToken } from "./context"
 
 const assertNotRateLimited = (workspaceId: string): Promise<void> =>
   assertApiNotRateLimited({
@@ -79,6 +79,10 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       // service's findById then throws notFound instead of returning. That's
       // an auth failure from the caller's perspective, not a server error.
       if (error instanceof ChatbotXException && error.code === "notFound") {
+        logger.warn(
+          { err: error, tokenHash },
+          "Workspace token cache pointed at a purged workspace",
+        )
         throw new ORPCError("INVALID_CHATBOT_TOKEN")
       }
       throw error
@@ -124,10 +128,18 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       }
     }
 
+    const requestApiToken: RequestApiToken = {
+      id: apiToken.id,
+      workspaceId: apiToken.workspaceId,
+      permission: apiToken.permission,
+      scopes: apiToken.scopes,
+      isDefault: apiToken.isDefault,
+    }
+
     return await next({
       context: {
         workspace,
-        apiToken,
+        apiToken: requestApiToken,
       },
     })
   },
