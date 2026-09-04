@@ -27,6 +27,17 @@ const READ_OR_DELETE_METHODS = new Set(["GET", "HEAD", "DELETE"])
 export const isWorkspaceMutationMethod = (method: string | undefined) =>
   !READ_OR_DELETE_METHODS.has(method ?? "POST")
 
+const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set(["GET", "HEAD"])
+
+/**
+ * Distinct from `isWorkspaceMutationMethod`: that predicate treats DELETE as
+ * non-mutation for the trial-expired invariant above, but a read_only
+ * WorkspaceApiToken must never be allowed to delete data. Keep the two
+ * predicates separate rather than reusing one for both call sites.
+ */
+export const isReadOnlyTokenAllowedMethod = (method: string | undefined) =>
+  READ_ONLY_TOKEN_ALLOWED_METHODS.has(method ?? "POST")
+
 async function getWorkspaceOwnerAccessState(ownerId: string) {
   const accessState = await userQuotaService.getAccessState(ownerId)
   if (accessState.blocked) {

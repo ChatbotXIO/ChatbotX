@@ -1,11 +1,14 @@
 import { and, type DatabaseClient, db, eq } from "../../client"
-import type { WorkspaceApiTokenPermission } from "../../partials/workspace-api-token"
+import type {
+  TokenHash,
+  WorkspaceApiTokenPermission,
+} from "../../partials/workspace-api-token"
 import { workspaceApiTokenModel } from "../../schema"
 import type { WorkspaceApiTokenModel } from "../../types"
 
 type InsertWorkspaceApiTokenInput = {
   workspaceId: string
-  tokenHash: string
+  tokenHash: TokenHash
   name: string
   permission: WorkspaceApiTokenPermission
   tokenPrefix: string
@@ -13,7 +16,7 @@ type InsertWorkspaceApiTokenInput = {
 
 class WorkspaceApiTokenRepository {
   async findByTokenHash(
-    tokenHash: string,
+    tokenHash: TokenHash,
     tx: DatabaseClient = db,
   ): Promise<WorkspaceApiTokenModel | null> {
     const row = await tx.query.workspaceApiTokenModel.findFirst({

@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Conecte sua conta do Make.com para enviar eventos dos seus fluxos e receber dados de contatos por meio de cenários do Make. O token de acesso do desenvolvedor do seu espaço de trabalho será copiado para a área de transferência quando você clicar em Conectar — cole-o ao criar a conexão no Make.",
+      "description": "Conecte sua conta do Make.com para enviar eventos dos seus fluxos e receber dados de contatos por meio de cenários do Make.",
       "notConfigured": "Nenhum link de convite do Make foi encontrado. Adicione um nas Configurações da plataforma."
     }
   },

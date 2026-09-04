@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Verbinden Sie Ihr Make.com-Konto, um Ereignisse aus Ihren Flows zu senden und Kontaktdaten über Make-Szenarien zu empfangen. Das Entwickler-Zugriffstoken Ihres Arbeitsbereichs wird beim Klicken auf „Verbinden“ in die Zwischenablage kopiert — fügen Sie es beim Erstellen der Verbindung in Make ein.",
+      "description": "Verbinden Sie Ihr Make.com-Konto, um Ereignisse aus Ihren Flows zu senden und Kontaktdaten über Make-Szenarien zu empfangen.",
       "notConfigured": "Kein Make-Einladungslink gefunden. Fügen Sie einen in den Plattformeinstellungen hinzu."
     }
   },

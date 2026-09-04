@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Yhdistä Make.com-tilisi lähettääksesi tapahtumia flow'istasi ja vastaanottaaksesi yhteystietoja Make-skenaarioiden kautta. Työtilasi kehittäjän käyttöoikeustunnus kopioidaan leikepöydälle, kun napsautat Yhdistä — liitä se luodessasi yhteyden Makessa.",
+      "description": "Yhdistä Make.com-tilisi lähettääksesi tapahtumia flow'istasi ja vastaanottaaksesi yhteystietoja Make-skenaarioiden kautta.",
       "notConfigured": "Make-kutsulinkkiä ei löytynyt. Lisää se alusta-asetuksissa."
     }
   },

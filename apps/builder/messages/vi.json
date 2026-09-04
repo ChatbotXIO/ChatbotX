@@ -2947,7 +2947,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Kết nối tài khoản Make.com để gửi sự kiện từ flow của bạn và nhận dữ liệu contact qua scenario của Make. Developer Access Token của workspace sẽ được tự động sao chép vào clipboard khi bạn bấm Connect — dán vào lúc tạo connection trong Make.",
+      "description": "Kết nối tài khoản Make.com để gửi sự kiện từ flow của bạn và nhận dữ liệu contact qua scenario của Make.",
       "notConfigured": "Chưa tìm thấy link mời Make. Vui lòng thêm trong Cài đặt Nền tảng."
     }
   },

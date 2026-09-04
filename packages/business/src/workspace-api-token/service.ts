@@ -1,5 +1,8 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
-import type { WorkspaceApiTokenPermission } from "@chatbotx.io/database/partials"
+import type {
+  TokenHash,
+  WorkspaceApiTokenPermission,
+} from "@chatbotx.io/database/partials"
 import { workspaceApiTokenRepository } from "@chatbotx.io/database/repositories"
 import type {
   WorkspaceApiTokenModel,
@@ -26,7 +29,7 @@ export const workspaceApiTokenCacheTag = (workspaceId: string) =>
 
 class WorkspaceApiTokenService extends BaseService {
   async findWorkspaceByTokenHash(props: {
-    tokenHash: string
+    tokenHash: TokenHash
     tx?: DatabaseClient
   }): Promise<
     { workspace: WorkspaceModel; apiToken: WorkspaceApiTokenModel } | undefined
@@ -74,44 +77,56 @@ class WorkspaceApiTokenService extends BaseService {
     workspaceId: string
     name: string
     permission: WorkspaceApiTokenPermission
-    tokenHash: string
+    tokenHash: TokenHash
     tokenPrefix: string
     tx?: DatabaseClient
   }): Promise<WorkspaceApiTokenModel> {
-    const {
-      workspaceId,
-      name,
-      permission,
-      tokenHash,
-      tokenPrefix,
-      tx = db,
-    } = props
+    const { workspaceId, name, permission, tokenHash, tokenPrefix, tx } = props
 
-    const count = await workspaceApiTokenRepository.countByWorkspaceId(
-      workspaceId,
-      tx,
-    )
-    if (count >= MAX_WORKSPACE_API_TOKENS) {
-      throw new ChatbotXException(
-        `Workspace has reached the maximum of ${MAX_WORKSPACE_API_TOKENS} API tokens`,
-        "workspaceApiTokenLimitReached",
+    // Count-then-insert must share one transaction: without it, two
+    // concurrent creates can both read count=9 and both commit, breaching the
+    // cap. When the caller already owns a tx, reuse it instead of nesting.
+    const runInTx = tx
+      ? (fn: (txClient: DatabaseClient) => Promise<WorkspaceApiTokenModel>) =>
+          fn(tx)
+      : (fn: (txClient: DatabaseClient) => Promise<WorkspaceApiTokenModel>) =>
+          db.transaction(fn)
+
+    const token = await runInTx(async (txClient) => {
+      const count = await workspaceApiTokenRepository.countByWorkspaceId(
+        workspaceId,
+        txClient,
       )
-    }
+      if (count >= MAX_WORKSPACE_API_TOKENS) {
+        throw new ChatbotXException(
+          `Workspace has reached the maximum of ${MAX_WORKSPACE_API_TOKENS} API tokens`,
+          "workspaceApiTokenLimitReached",
+        )
+      }
 
-    const token = await workspaceApiTokenRepository.insert(
-      { workspaceId, tokenHash, name, permission, tokenPrefix },
-      tx,
-    )
+      return await workspaceApiTokenRepository.insert(
+        { workspaceId, tokenHash, name, permission, tokenPrefix },
+        txClient,
+      )
+    })
 
     // Only when the transaction is service-owned — emitting inside a
     // caller-owned tx would enqueue an audit row for a write that might still
     // roll back (same rule as workspaceService.update). Never the raw token
-    // or hash.
+    // or hash. Best-effort: an audit failure must not turn an already
+    // committed create into a user-visible error.
     if (!props.tx) {
-      await this.audit(
-        "create",
-        `created workspace API token "${name}" (${permission})`,
-      )
+      try {
+        await this.audit(
+          "create",
+          `created workspace API token "${name}" (${permission})`,
+        )
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, tokenId: token.id },
+          "Failed to record audit log for workspace API token creation",
+        )
+      }
     }
 
     return token
@@ -144,7 +159,17 @@ class WorkspaceApiTokenService extends BaseService {
     }
 
     if (deleted && !props.tx) {
-      await this.audit("delete", `deleted workspace API token "${id}"`)
+      // Best-effort, same rationale as the cache invalidation above: an audit
+      // failure must not turn an already committed delete into a
+      // user-visible error.
+      try {
+        await this.audit("delete", `deleted workspace API token "${id}"`)
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, id },
+          "Failed to record audit log for workspace API token deletion",
+        )
+      }
     }
 
     return deleted

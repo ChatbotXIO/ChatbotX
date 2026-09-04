@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import type { WorkspaceApiTokenModel } from "@chatbotx.io/database/types"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import type { WorkspaceApiTokenDto } from "../schema/workspace-token-dto"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
@@ -33,11 +33,21 @@ vi.mock("../actions/create-workspace-token-action", () => ({
 
 let deleteExecute = vi.fn()
 let deleteIsPending = false
+type DeleteActionProps = {
+  onSuccess?: () => void
+  onError?: (payload: {
+    error: { serverError?: string; validationErrors?: { _errors?: string[] } }
+  }) => void
+}
+let capturedDeleteProps: DeleteActionProps = {}
 vi.mock("../actions/delete-workspace-token-action", () => ({
   deleteWorkspaceTokenAction: { bind: () => vi.fn() },
 }))
 vi.mock("next-safe-action/hooks", () => ({
-  useAction: () => ({ execute: deleteExecute, isPending: deleteIsPending }),
+  useAction: (_action: unknown, options: DeleteActionProps) => {
+    capturedDeleteProps = options
+    return { execute: deleteExecute, isPending: deleteIsPending }
+  },
 }))
 
 type CreateActionProps = {
@@ -71,15 +81,12 @@ vi.mock("@next-safe-action/adapter-react-hook-form/hooks", async () => {
 
 const WORKSPACE_ID = "ws-123"
 
-const baseToken: WorkspaceApiTokenModel = {
+const baseToken: WorkspaceApiTokenDto = {
   id: "token-1",
-  workspaceId: WORKSPACE_ID,
   name: "My token",
   permission: "full",
-  tokenHash: "hash",
   tokenPrefix: "cbx_ws_abcd",
   createdAt: new Date("2026-01-01T00:00:00Z"),
-  updatedAt: new Date("2026-01-01T00:00:00Z"),
 }
 
 describe("ManageWorkspaceTokens", () => {
@@ -90,6 +97,7 @@ describe("ManageWorkspaceTokens", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
     capturedCreateProps = {}
+    capturedDeleteProps = {}
     deleteExecute = vi.fn()
     deleteIsPending = false
     container = document.createElement("div")
@@ -102,7 +110,7 @@ describe("ManageWorkspaceTokens", () => {
     container.remove()
   })
 
-  async function render(tokens: WorkspaceApiTokenModel[]) {
+  async function render(tokens: WorkspaceApiTokenDto[]) {
     const { ManageWorkspaceTokens } = await import("../manage-workspace-tokens")
     act(() => {
       root.render(
@@ -133,6 +141,8 @@ describe("ManageWorkspaceTokens", () => {
     expect(container.textContent).toContain("cbx_ws_abcd••••••••")
     expect(container.textContent).toContain("••••••••••••")
     expect(container.textContent).not.toContain("null")
+    // The DTO passed in must never carry a hash for the page to leak.
+    expect(container.innerHTML).not.toContain("tokenHash")
   })
 
   it("create success reveals the returned token exactly once", async () => {
@@ -192,5 +202,19 @@ describe("ManageWorkspaceTokens", () => {
     })
 
     expect(deleteExecute).toHaveBeenCalledWith({ id: baseToken.id })
+  })
+
+  it("surfaces a validation error and refreshes when the token is already gone", async () => {
+    await render([baseToken])
+
+    await act(async () => {
+      capturedDeleteProps.onError?.({
+        error: { validationErrors: { _errors: ["Token no longer exists"] } },
+      })
+      await Promise.resolve()
+    })
+
+    expect(toastError).toHaveBeenCalledWith("Token no longer exists")
+    expect(routerRefresh).toHaveBeenCalled()
   })
 })

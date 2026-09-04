@@ -3134,7 +3134,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Connect your Make.com account to send events from your flows and receive contact data through Make scenarios. Your workspace's Developer Access Token is copied to your clipboard when you click Connect — paste it when creating the connection in Make.",
+      "description": "Connect your Make.com account to send events from your flows and receive contact data through Make scenarios.",
       "notConfigured": "No Make invite link found. Please add one in Platform Settings."
     }
   },

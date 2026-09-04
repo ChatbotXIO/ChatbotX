@@ -751,7 +751,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Conectați contul Make.com pentru a trimite evenimente din fluxuri și a primi date despre contacte prin scenarii Make. Tokenul de acces pentru dezvoltatori al spațiului de lucru este copiat în clipboard când apăsați pe Conectare — lipiți-l când creați conexiunea în Make.",
+      "description": "Conectați contul Make.com pentru a trimite evenimente din fluxuri și a primi date despre contacte prin scenarii Make.",
       "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei."
     }
   },

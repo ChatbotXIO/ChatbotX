@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Forbind din Make.com konto til send hændelser fra din flows og modtag kontakt data through Make scenarios. Din workspace's Developer Access Token er copied til din clipboard when du click Forbind — paste it when creating den connection i Make.",
+      "description": "Forbind din Make.com konto til send hændelser fra din flows og modtag kontakt data through Make scenarios.",
       "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger."
     }
   },

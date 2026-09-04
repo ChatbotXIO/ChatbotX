@@ -3491,7 +3491,7 @@
   },
   "make": {
     "setting": {
-      "description": "连接您的 Make.com 帐户，以便从流程发送事件，并通过 Make 情境接收联系人数据。当您点击「连接」时，系统会将此工作区的开发人员访问权杖拷贝到剪贴板，请在 Make 创建连接时粘贴。",
+      "description": "连接您的 Make.com 帐户，以便从流程发送事件，并通过 Make 情境接收联系人数据。",
       "label": "Make.com",
       "notConfigured": "找不到邀请链接。请在平台设置添加一个。"
     },

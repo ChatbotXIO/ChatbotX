@@ -7,6 +7,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { requireWorkspaceTokenSuperAdmin } from "../lib/require-workspace-token-super-admin"
 import {
   type DeleteWorkspaceTokenRequest,
   deleteWorkspaceTokenRequest,
@@ -23,6 +24,8 @@ export const deleteWorkspaceTokenAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: DeleteWorkspaceTokenRequest
     }) => {
+      await requireWorkspaceTokenSuperAdmin(workspaceId)
+
       const deleted = await workspaceApiTokenService.deleteToken({
         workspaceId,
         id: parsedInput.id,

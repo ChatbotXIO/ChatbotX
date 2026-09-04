@@ -2947,7 +2947,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Akışlarınızdan olay göndermek ve Make senaryoları aracılığıyla kişi verileri almak için Make.com hesabınızı bağlayın. Bağlan'a tıkladığınızda çalışma alanınızın Geliştirici Erişim Belirteci panonuza kopyalanır — Make'te bağlantıyı oluştururken bu belirteci yapıştırın.",
+      "description": "Akışlarınızdan olay göndermek ve Make senaryoları aracılığıyla kişi verileri almak için Make.com hesabınızı bağlayın.",
       "notConfigured": "Make davet bağlantısı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin."
     }
   },

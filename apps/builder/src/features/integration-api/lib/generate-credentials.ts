@@ -1,3 +1,4 @@
+import type { TokenHash } from "@chatbotx.io/database/partials"
 import { hashToken } from "./token-hash"
 
 const API_TOKEN_PREFIX = "cbx_api_"
@@ -10,7 +11,7 @@ const TOKEN_PREFIX_DISPLAY_LENGTH = 12
 
 export type ApiChannelCredentials = {
   token: string
-  tokenHash: string
+  tokenHash: TokenHash
   tokenPrefix: string
 }
 
@@ -36,7 +37,7 @@ const randomBytes = (length: number): Uint8Array =>
  * helpers (e.g. remeda's randomString) are predictable and must never be used
  * for secrets.
  */
-export const randomUrlSafeString = (byteLength: number): string =>
+const randomUrlSafeString = (byteLength: number): string =>
   toBase64Url(randomBytes(byteLength))
 
 /**

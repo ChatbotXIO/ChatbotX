@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "f9fd1f14-46b4-4af3-accc-2a3e0c31715b",
-  "prevIds": ["dcb73ba7-1b65-4579-8231-7fc4d19f4895"],
+  "id": "bb2c7346-6a91-428a-afd1-92a8aac4b5d5",
+  "prevIds": ["f9fd1f14-46b4-4af3-accc-2a3e0c31715b"],
   "ddl": [
     {
       "values": [
@@ -388,6 +388,40 @@
       "schema": "public"
     },
     {
+      "values": ["whatsapp", "messenger", "instagram"],
+      "name": "messagingAdChannel",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "pending",
+        "campaignCreated",
+        "adSetCreated",
+        "creativeCreated",
+        "adCreated",
+        "failed"
+      ],
+      "name": "messagingAdCreateState",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "draft",
+        "publishing",
+        "published",
+        "pausing",
+        "paused",
+        "deleting",
+        "deleted",
+        "publishFailed"
+      ],
+      "name": "messagingAdPublishState",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["push", "import"],
       "name": "metaCatalogItemDirection",
       "entityType": "enums",
@@ -489,6 +523,12 @@
     {
       "values": ["allTime", "oncePerHour", "oncePerDay"],
       "name": "defaultReplyFrequency",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["full", "read_only"],
+      "name": "WorkspaceApiTokenPermission",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1208,6 +1248,18 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "MessagingAdOperation",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MessagingAdsConnection",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "MessengerMessageTemplate",
       "entityType": "tables",
       "schema": "public"
@@ -1467,6 +1519,12 @@
     {
       "isRlsEnabled": false,
       "name": "Workspace",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WorkspaceApiToken",
       "entityType": "tables",
       "schema": "public"
     },
@@ -18321,6 +18379,396 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "messagingAdChannel",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationWhatsappId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationMessengerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationInstagramId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adAccountId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "messagingAdCreateState",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "createState",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "messagingAdPublishState",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'draft'",
+      "generated": null,
+      "identity": null,
+      "name": "publishState",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metaCampaignId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metaAdSetId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metaAdCreativeId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metaAdId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "input",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cleanupError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "createdBy",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "messagingAdChannel",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationWhatsappId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationMessengerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationInstagramId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'active'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "MessengerMessageTemplate"
     },
     {
@@ -24707,6 +25155,110 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "WorkspaceApiTokenPermission",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "permission",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenPrefix",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "WorkspaceMac"
     },
     {
@@ -28787,6 +29339,76 @@
           "opclass": null
         },
         {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": true,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ErrorLog_workspaceId_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ErrorLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ErrorLog_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ErrorLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ErrorLog_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ErrorLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
           "value": "event",
           "isExpression": false,
           "asc": true,
@@ -31351,6 +31973,174 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "MessageCleanup"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdOperation_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationWhatsappId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdOperation_integrationWhatsappId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationMessengerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdOperation_integrationMessengerId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationInstagramId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdOperation_integrationInstagramId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdsConnection_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationWhatsappId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdsConnection_integrationWhatsappId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationMessengerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdsConnection_integrationMessengerId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationInstagramId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessagingAdsConnection_integrationInstagramId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
     },
     {
       "nameExplicit": true,
@@ -34025,6 +34815,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Workspace"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceApiToken_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
     },
     {
       "nameExplicit": false,
@@ -36927,6 +37738,123 @@
     },
     {
       "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdOperation_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationWhatsappId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationWhatsapp",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdOperation_D2X0VlACjh0B_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationMessengerId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationMessenger",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdOperation_DlCmuyYqclNt_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationInstagramId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationInstagram",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdOperation_LwL2ykeZegup_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["createdBy"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "MessagingAdOperation_createdBy_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdsConnection_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationWhatsappId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationWhatsapp",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdsConnection_Q2FrBLiP3QqD_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationMessengerId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationMessenger",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdsConnection_tLZC78O5pMBb_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["integrationInstagramId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationInstagram",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessagingAdsConnection_4ubezEjd9jQX_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
+    },
+    {
+      "nameExplicit": false,
       "columns": ["integrationMessengerId"],
       "schemaTo": "public",
       "tableTo": "IntegrationMessenger",
@@ -38116,6 +39044,19 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "WorkspaceApiToken_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "WorkspaceMac_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -39114,6 +40055,22 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "MessagingAdOperation_pkey",
+      "schema": "public",
+      "table": "MessagingAdOperation",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "MessagingAdsConnection_pkey",
+      "schema": "public",
+      "table": "MessagingAdsConnection",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "MessengerMessageTemplate_pkey",
       "schema": "public",
       "table": "MessengerMessageTemplate",
@@ -39442,6 +40399,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "WorkspaceApiToken_pkey",
+      "schema": "public",
+      "table": "WorkspaceApiToken",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "WorkspaceMac_pkey",
       "schema": "public",
       "table": "WorkspaceMac",
@@ -39481,119 +40446,6 @@
       "entityType": "uniques",
       "schema": "public",
       "table": "UserDeviceToken"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "WorkspaceApiToken",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceApiToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceApiToken"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceApiToken"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceApiToken"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "tokenHash",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceApiToken"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "WorkspaceApiToken_workspaceId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "WorkspaceApiToken"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["workspaceId"],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "WorkspaceApiToken_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "WorkspaceApiToken"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "WorkspaceApiToken_pkey",
-      "schema": "public",
-      "table": "WorkspaceApiToken",
-      "entityType": "pks"
     },
     {
       "nameExplicit": true,
@@ -39644,6 +40496,20 @@
       "entityType": "checks",
       "schema": "public",
       "table": "IntegrationWhatsapp"
+    },
+    {
+      "value": "(\"channel\" = 'whatsapp' AND \"integrationWhatsappId\" IS NOT NULL AND \"integrationMessengerId\" IS NULL AND \"integrationInstagramId\" IS NULL) OR (\"channel\" = 'messenger' AND \"integrationMessengerId\" IS NOT NULL AND \"integrationWhatsappId\" IS NULL AND \"integrationInstagramId\" IS NULL) OR (\"channel\" = 'instagram' AND \"integrationInstagramId\" IS NOT NULL AND \"integrationWhatsappId\" IS NULL AND \"integrationMessengerId\" IS NULL)",
+      "name": "MessagingAdOperation_channel_integration_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "MessagingAdOperation"
+    },
+    {
+      "value": "(\"channel\" = 'whatsapp' AND \"integrationWhatsappId\" IS NOT NULL AND \"integrationMessengerId\" IS NULL AND \"integrationInstagramId\" IS NULL) OR (\"channel\" = 'messenger' AND \"integrationMessengerId\" IS NOT NULL AND \"integrationWhatsappId\" IS NULL AND \"integrationInstagramId\" IS NULL) OR (\"channel\" = 'instagram' AND \"integrationInstagramId\" IS NOT NULL AND \"integrationWhatsappId\" IS NULL AND \"integrationMessengerId\" IS NULL)",
+      "name": "MessagingAdsConnection_channel_integration_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "MessagingAdsConnection"
     },
     {
       "value": "\"channel\" IN ('messenger', 'instagram', 'whatsapp')",

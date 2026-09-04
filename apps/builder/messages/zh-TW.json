@@ -3107,7 +3107,7 @@
     "title": "Make.com",
     "setting": {
       "label": "Make.com",
-      "description": "連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。當您點擊「連接」時，系統會將此工作區的開發人員存取權杖複製到剪貼簿，請在 Make 建立連線時貼上。",
+      "description": "連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。",
       "notConfigured": "找不到邀請連結。請在平台設定新增一個。"
     }
   },

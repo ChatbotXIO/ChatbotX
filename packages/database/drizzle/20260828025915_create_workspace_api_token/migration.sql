@@ -12,13 +12,10 @@ CREATE TABLE "WorkspaceApiToken" (
 --> statement-breakpoint
 CREATE INDEX "WorkspaceApiToken_workspaceId_idx" ON "WorkspaceApiToken" ("workspaceId");--> statement-breakpoint
 ALTER TABLE "WorkspaceApiToken" ADD CONSTRAINT "WorkspaceApiToken_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
--- Snowflake-shaped id: a time-ordered bigint using the same 2004-02-01 epoch
--- as the app's createId() (uuniq), with row_number() in the low bits as a
--- disambiguator — same technique as 20260614163529_add_tenant_tables. Note
--- the << 22 shift is deliberately wider than uuniq's 14 low bits (4-bit
--- place_id + 10-bit sequence), so these ids sort far above app-generated ids
--- from the same instant and are NOT decodable via resolveId(); they are
--- simply unique, ordered bigints that satisfy the primary key.
+-- Backfill: reuses each Workspace's own "id" as the new token row's "id"
+-- (and as "workspaceId"), not a computed snowflake id — safe because every
+-- legacy workspace had at most one plaintext token, so "id" is already
+-- unique across the backfilled rows.
 INSERT INTO "WorkspaceApiToken" ("id", "workspaceId", "name", "permission", "tokenHash", "createdAt", "updatedAt")
 SELECT
   "id",

@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Koppel je Make.com-account om gebeurtenissen vanuit je flows te verzenden en contactgegevens via Make-scenario's te ontvangen. De Developer Access Token van je workspace wordt naar het klembord gekopieerd wanneer je op Verbinden klikt. Plak deze bij het maken van de verbinding in Make.",
+      "description": "Koppel je Make.com-account om gebeurtenissen vanuit je flows te verzenden en contactgegevens via Make-scenario's te ontvangen.",
       "notConfigured": "Geen Make-uitnodigingslink gevonden. Voeg er een toe in Platforminstellingen."
     }
   },

@@ -1,6 +1,5 @@
 "use client"
 
-import type { WorkspaceApiTokenModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import {
@@ -46,10 +45,11 @@ import { TokenRevealDialog } from "@/features/integration-api/components/token-r
 import { createWorkspaceTokenAction } from "./actions/create-workspace-token-action"
 import { deleteWorkspaceTokenAction } from "./actions/delete-workspace-token-action"
 import { createWorkspaceTokenRequest } from "./schema/action"
+import type { WorkspaceApiTokenDto } from "./schema/workspace-token-dto"
 
 type ManageWorkspaceTokensProps = {
   workspaceId: string
-  tokens: WorkspaceApiTokenModel[]
+  tokens: WorkspaceApiTokenDto[]
 }
 
 export function ManageWorkspaceTokens({
@@ -63,7 +63,7 @@ export function ManageWorkspaceTokens({
   const [createOpen, setCreateOpen] = useState(false)
   const [revealedToken, setRevealedToken] = useState<string | null>(null)
   const [deletingToken, setDeletingToken] =
-    useState<WorkspaceApiTokenModel | null>(null)
+    useState<WorkspaceApiTokenDto | null>(null)
 
   const boundCreate = useMemo(
     () => createWorkspaceTokenAction.bind(null, workspaceId),
@@ -116,16 +116,24 @@ export function ManageWorkspaceTokens({
       },
       onError: ({ error }) => {
         setDeletingToken(null)
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
+        const message =
+          error.serverError ?? error.validationErrors?._errors?.[0]
+        toast.error(message ?? t("messages.unknownError"))
+        // A validation error here means the row is already gone server-side
+        // (e.g. "Token no longer exists") — refresh so the stale row drops.
+        router.refresh()
       },
     },
   )
 
+  const permissionLabel = (permission: WorkspaceApiTokenDto["permission"]) =>
+    permission === "full"
+      ? t("fields.tokenPermission.full")
+      : t("fields.tokenPermission.readOnly")
+
   const permissionOptions = [
-    { value: "full", label: t("fields.tokenPermission.full") },
-    { value: "read_only", label: t("fields.tokenPermission.readOnly") },
+    { value: "full", label: permissionLabel("full") },
+    { value: "read_only", label: permissionLabel("read_only") },
   ]
 
   return (
@@ -236,9 +244,7 @@ export function ManageWorkspaceTokens({
                         token.permission === "full" ? "default" : "secondary"
                       }
                     >
-                      {token.permission === "full"
-                        ? t("fields.tokenPermission.full")
-                        : t("fields.tokenPermission.readOnly")}
+                      {permissionLabel(token.permission)}
                     </Badge>
                   </TableCell>
                   <TableCell>

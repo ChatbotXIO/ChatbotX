@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Collega il tuo account Make.com per inviare eventi dai flussi e ricevere dati dei contatti tramite gli scenari Make. Il token di accesso per sviluppatori dell'area di lavoro viene copiato negli appunti quando fai clic su Collega: incollalo durante la creazione della connessione in Make.",
+      "description": "Collega il tuo account Make.com per inviare eventi dai flussi e ricevere dati dei contatti tramite gli scenari Make.",
       "notConfigured": "Nessun link di invito Make trovato. Aggiungine uno nelle impostazioni della piattaforma."
     }
   },

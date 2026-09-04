@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Hubungkan akun Make.com Anda untuk mengirim peristiwa dari alur dan menerima data kontak melalui skenario Make. Token Akses Developer ruang kerja Anda disalin ke papan klip saat Anda mengeklik Hubungkan — tempelkan saat membuat koneksi di Make.",
+      "description": "Hubungkan akun Make.com Anda untuk mengirim peristiwa dari alur dan menerima data kontak melalui skenario Make.",
       "notConfigured": "Tautan undangan Make tidak ditemukan. Tambahkan tautan di Pengaturan Platform."
     }
   },

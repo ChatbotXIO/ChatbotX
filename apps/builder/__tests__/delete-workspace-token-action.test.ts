@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const SUPER_ADMIN_ERROR_PATTERN = /super admin/
+
 const mocks = vi.hoisted(() => ({
   deleteToken: vi.fn(),
+  requireWorkspaceTokenSuperAdmin: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -25,6 +28,13 @@ vi.mock("@/lib/safe-action", () => ({
   },
 }))
 
+vi.mock(
+  "../src/features/workspaces/lib/require-workspace-token-super-admin",
+  () => ({
+    requireWorkspaceTokenSuperAdmin: mocks.requireWorkspaceTokenSuperAdmin,
+  }),
+)
+
 vi.mock("../src/features/workspaces/schema/action", () => ({
   deleteWorkspaceTokenRequest: {},
 }))
@@ -46,6 +56,7 @@ const callAction = (workspaceId: string, id: string) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.requireWorkspaceTokenSuperAdmin.mockResolvedValue(undefined)
 })
 
 describe("deleteWorkspaceTokenAction", () => {
@@ -67,5 +78,16 @@ describe("deleteWorkspaceTokenAction", () => {
     await callAction("ws-1", "stale-token")
 
     expect(returnValidationErrors).toHaveBeenCalledTimes(1)
+  })
+
+  test("rejects a non-superAdmin member before deleting a token", async () => {
+    mocks.requireWorkspaceTokenSuperAdmin.mockRejectedValue(
+      new Error("You need to be a super admin to manage workspace API tokens"),
+    )
+
+    await expect(callAction("ws-1", "token-1")).rejects.toThrow(
+      SUPER_ADMIN_ERROR_PATTERN,
+    )
+    expect(mocks.deleteToken).not.toHaveBeenCalled()
   })
 })

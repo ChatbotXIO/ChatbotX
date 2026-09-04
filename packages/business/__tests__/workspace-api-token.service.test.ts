@@ -31,7 +31,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 
-const db = {}
+const db: { transaction?: (fn: (tx: unknown) => unknown) => unknown } = {}
+const transaction = vi.fn(async (fn: (tx: unknown) => unknown) => await fn(db))
+db.transaction = transaction
 vi.mock("@chatbotx.io/database/client", () => ({
   db,
 }))
@@ -228,6 +230,52 @@ describe("workspaceApiTokenService.createToken", () => {
 
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })
+
+  test("runs the count-then-insert cap check under one transaction to close the TOCTOU race", async () => {
+    await workspaceApiTokenService.createToken({
+      workspaceId: "ws-1",
+      name: "My token",
+      permission: "full",
+      tokenHash: TOKEN_HASH,
+      tokenPrefix: "cbx_ws_abcd",
+    })
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    // Both reads/writes must happen with the tx client returned by
+    // db.transaction, not the outer db — otherwise they run outside the tx.
+    expect(countByWorkspaceId).toHaveBeenCalledWith("ws-1", db)
+    expect(insert.mock.invocationCallOrder[0]).toBeGreaterThan(
+      countByWorkspaceId.mock.invocationCallOrder[0],
+    )
+  })
+
+  test("does not open a nested transaction when a caller-owned tx is supplied", async () => {
+    await workspaceApiTokenService.createToken({
+      workspaceId: "ws-1",
+      name: "My token",
+      permission: "full",
+      tokenHash: TOKEN_HASH,
+      tokenPrefix: "cbx_ws_abcd",
+      tx: db as never,
+    })
+
+    expect(transaction).not.toHaveBeenCalled()
+  })
+
+  test("does not throw when the audit call fails, and the token is still returned", async () => {
+    dispatchAuditRecord.mockRejectedValueOnce(new Error("audit sink down"))
+
+    await expect(
+      workspaceApiTokenService.createToken({
+        workspaceId: "ws-1",
+        name: "My token",
+        permission: "full",
+        tokenHash: TOKEN_HASH,
+        tokenPrefix: "cbx_ws_abcd",
+      }),
+    ).resolves.toMatchObject({ id: "t-1" })
+    expect(logger.warn).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("workspaceApiTokenService.deleteToken", () => {
@@ -272,5 +320,15 @@ describe("workspaceApiTokenService.deleteToken", () => {
       action: "delete",
       detail: 'deleted workspace API token "t-1"',
     })
+  })
+
+  test("does not throw when the audit call fails, and the delete still resolves", async () => {
+    deleteByIdForWorkspace.mockResolvedValue(true)
+    dispatchAuditRecord.mockRejectedValueOnce(new Error("audit sink down"))
+
+    await expect(
+      workspaceApiTokenService.deleteToken({ workspaceId: "ws-1", id: "t-1" }),
+    ).resolves.toBe(true)
+    expect(logger.warn).toHaveBeenCalledTimes(1)
   })
 })

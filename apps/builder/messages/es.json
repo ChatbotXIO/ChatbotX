@@ -2947,7 +2947,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Conectar tu Make.com cuenta un Enviar eventoos desde tu flujos y receive contacto datos through Make scenarios. tu espacio de trabajo's Developer Access Token es copied un tu clipboard cuando tú click Conectar — paste it cuando creating el connection en Make.",
+      "description": "Conectar tu Make.com cuenta un Enviar eventoos desde tu flujos y receive contacto datos through Make scenarios.",
       "notConfigured": "No Make invite enlace found. Por favor, Añadir one en Plataforma Ajustes."
     }
   },

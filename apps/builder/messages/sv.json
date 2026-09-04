@@ -3491,7 +3491,7 @@
   },
   "make": {
     "setting": {
-      "description": "Anslut ditt Make.com-konto för att skicka händelser från dina flöden och ta emot kontaktdata via Make-scenarier. Din arbetsytas åtkomsttoken för utvecklare kopieras till urklipp när du klickar på Anslut – klistra in den när du skapar anslutningen i Make.",
+      "description": "Anslut ditt Make.com-konto för att skicka händelser från dina flöden och ta emot kontaktdata via Make-scenarier.",
       "label": "Make",
       "notConfigured": "Ingen inbjudningslänk för Make hittades. Lägg till en i Plattformsinställningar."
     },

@@ -2873,7 +2873,7 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Connectez votre compte Make.com pour envoyer des événements depuis vos flux et recevoir des données de contact par l’intermédiaire de scénarios Make. Le jeton d’accès développeur de votre espace de travail est copié dans le presse-papiers lorsque vous cliquez sur Connecter : collez-le lors de la création de la connexion dans Make.",
+      "description": "Connectez votre compte Make.com pour envoyer des événements depuis vos flux et recevoir des données de contact par l’intermédiaire de scénarios Make.",
       "notConfigured": "Aucun lien d’invitation Make trouvé. Ajoutez-en un dans les paramètres de la plateforme."
     }
   },

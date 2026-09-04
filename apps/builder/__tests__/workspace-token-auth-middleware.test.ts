@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { ORPCError } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -38,6 +39,8 @@ vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
   checkWorkspaceOwnerAccess,
   isWorkspaceMutationMethod: (method: string | undefined) =>
     !["GET", "HEAD", "DELETE"].includes(method ?? "POST"),
+  isReadOnlyTokenAllowedMethod: (method: string | undefined) =>
+    ["GET", "HEAD"].includes(method ?? "POST"),
   workspaceAccessDenialOrpcError: (reason: string) =>
     new ORPCError(reason, { status: 403 }),
 }))
@@ -105,6 +108,18 @@ describe("workspaceTokenAuthMidddleware", () => {
     expect(assertApiNotRateLimited).toHaveBeenNthCalledWith(2, {
       scope: "workspace-token-rate-limit",
       key: "ws-1",
+    })
+  })
+
+  test("stale cached token pointing at a purged workspace → INVALID_CHATBOT_TOKEN, not a raw notFound", async () => {
+    findWorkspaceByTokenHash.mockRejectedValue(
+      new ChatbotXException("Workspace not found", "notFound"),
+    )
+
+    const headers = new Headers({ Authorization: "Bearer ws1_abc" })
+
+    await expect(callMiddleware(headers, "GET")).rejects.toMatchObject({
+      code: "INVALID_CHATBOT_TOKEN",
     })
   })
 
@@ -228,6 +243,18 @@ describe("workspaceTokenAuthMidddleware", () => {
     await callMiddleware(headers, "GET")
 
     expect(next).toHaveBeenCalled()
+    expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+  })
+
+  test("read_only token on a DELETE request is rejected with FORBIDDEN", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult("read_only"))
+
+    const headers = new Headers({ Authorization: "Bearer ws1_abc" })
+
+    await expect(callMiddleware(headers, "DELETE")).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Read-only token cannot perform this operation",
+    })
     expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
   })
 

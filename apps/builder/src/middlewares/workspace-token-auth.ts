@@ -2,6 +2,7 @@ import {
   isWorkspaceScheduledForDeletion,
   workspaceApiTokenService,
 } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { ORPCError } from "@orpc/server"
 import { hashToken } from "@/features/integration-api/lib/token-hash"
 import { logger } from "@/lib/log"
@@ -9,6 +10,7 @@ import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
   checkWorkspaceOwnerAccess,
+  isReadOnlyTokenAllowedMethod,
   isWorkspaceMutationMethod,
   workspaceAccessDenialOrpcError,
 } from "@/lib/workspace/authorize-workspace-access"
@@ -64,9 +66,23 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     // create_workspace_api_token migration backfills every legacy plaintext
     // token and drops the column in the same run).
     const tokenHash = await hashToken(token)
-    const auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
-      tokenHash,
-    })
+    let auth: Awaited<
+      ReturnType<typeof workspaceApiTokenService.findWorkspaceByTokenHash>
+    >
+    try {
+      auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
+        tokenHash,
+      })
+    } catch (error) {
+      // The token-row cache (up to 300s TTL) can outlive the workspace it
+      // points at if a purge runs before the tag is invalidated — the
+      // service's findById then throws notFound instead of returning. That's
+      // an auth failure from the caller's perspective, not a server error.
+      if (error instanceof ChatbotXException && error.code === "notFound") {
+        throw new ORPCError("INVALID_CHATBOT_TOKEN")
+      }
+      throw error
+    }
     if (!auth) {
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
@@ -80,13 +96,17 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       })
     }
 
-    const isMutation = isWorkspaceMutationMethod(
-      procedure["~orpc"].route.method,
-    )
+    const method = procedure["~orpc"].route.method
+    const isMutation = isWorkspaceMutationMethod(method)
 
-    // Read-only tokens are rejected on any mutation before the owner-quota
-    // gate below — no DB call needed to enforce this.
-    if (isMutation && apiToken.permission === "read_only") {
+    // Read-only tokens may only GET/HEAD — unlike isWorkspaceMutationMethod
+    // above, DELETE is not exempt here: a read_only token must not be able to
+    // delete data. Checked before the owner-quota gate below — no DB call
+    // needed to enforce this.
+    if (
+      apiToken.permission === "read_only" &&
+      !isReadOnlyTokenAllowedMethod(method)
+    ) {
       throw new ORPCError("FORBIDDEN", {
         message: "Read-only token cannot perform this operation",
       })
