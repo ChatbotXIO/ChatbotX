@@ -1,6 +1,7 @@
 import type { ListIntegrationWhatsappResponse } from "@chatbotx.io/business"
-import ky from "ky"
 import { createStore } from "zustand/vanilla"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 
 export type IntegrationWhatsapp = {
   id: string
@@ -44,10 +45,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
         await get().getAllIntegrations()
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch integrations",
+          error: getClientErrorMessage(error, "Failed to fetch integrations"),
         })
       } finally {
         set({ initialized: true })
@@ -64,17 +62,15 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
       try {
         set({ loading: true, error: null })
 
-        const integrations = await ky
-          .get(`/api/workspaces/${workspaceId}/integrations/whatsapp`)
-          .json<ListIntegrationWhatsappResponse>()
+        const integrations =
+          await client.integrationWhatsappAPIs.listIntegrationWhatsappInternalAPI(
+            { workspaceId },
+          )
 
         set({ integrations })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch integrations",
+          error: getClientErrorMessage(error, "Failed to fetch integrations"),
           integrations: [],
         })
       } finally {

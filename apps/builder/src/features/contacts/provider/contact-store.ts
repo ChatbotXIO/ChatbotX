@@ -2,8 +2,8 @@ import type {
   BroadcastSubaction,
   ChannelType,
 } from "@chatbotx.io/database/partials"
-import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
 import { client } from "@/lib/orpc/orpc"
 import type { ContactFilterRequest } from "../schema/query"
 
@@ -76,10 +76,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
         set({ count: total, loadingCounts: false })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch contacts count",
+          error: getClientErrorMessage(error, "Failed to fetch contacts count"),
         })
       } finally {
         set({ loadingCounts: false })
@@ -123,10 +120,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
         }
 
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch contacts count",
+          error: getClientErrorMessage(error, "Failed to fetch contacts count"),
           loadingInboxesCount: false,
         })
       } finally {

@@ -1,16 +1,15 @@
 "use client"
 
 import type {
-  GetSequenceStepStatsRequest,
   GetSequenceStepStatsResponse,
   SequenceStepEventType,
 } from "@chatbotx.io/analytics/schemas"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import ky from "ky"
 import { useParams } from "next/navigation"
 import { useFormatter, useTranslations } from "next-intl"
 import { memo, useEffect, useState } from "react"
+import { client } from "@/lib/orpc/orpc"
 import { SequenceStepContactsDialog } from "./sequence-step-contacts-dialog"
 
 type Props = {
@@ -41,13 +40,14 @@ export const SequenceStepStats = memo(function SequenceStepStats({
 
     let isMounted = true
 
-    async function fetchStats() {
+    async function fetchStats(currentStepId: string) {
       try {
-        const result = await ky
-          .get<GetSequenceStepStatsRequest>(
-            `/api/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/stats`,
-          )
-          .json<GetSequenceStepStatsResponse>()
+        const result: GetSequenceStepStatsResponse =
+          await client.sequencesAPI.privateGetSequenceStepStatsAPI({
+            workspaceId,
+            sequenceId,
+            stepId: currentStepId,
+          })
 
         if (isMounted) {
           setStats(result)
@@ -69,7 +69,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
       }
     }
 
-    fetchStats()
+    fetchStats(stepId)
 
     return () => {
       isMounted = false

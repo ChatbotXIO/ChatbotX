@@ -4,11 +4,7 @@ import {
   type SendGridAddContactSchema,
   sendGridAddContactSchema,
 } from "@chatbotx.io/flow-config"
-import type {
-  SendGridCustomField,
-  SendGridList,
-  SendGridListPage,
-} from "@chatbotx.io/integration-sendgrid"
+import type { SendGridList } from "@chatbotx.io/integration-sendgrid"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -22,7 +18,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import ky from "ky"
 import {
   ArrowRightIcon,
   CircleHelpIcon,
@@ -36,7 +31,8 @@ import { useFieldArray, useForm, useFormContext } from "react-hook-form"
 import useSWRImmutable from "swr/immutable"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
+import { useClientQuery } from "@/lib/swr"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -84,13 +80,11 @@ const SendGridDialog = ({ parentName }: { parentName: string }) => {
       const seen = new Set<string>()
       let pageToken: string | undefined
       for (let page = 0; page < 10; page++) {
-        const params = new URLSearchParams({ pageSize: "1000" })
-        if (pageToken) {
-          params.set("pageToken", pageToken)
-        }
-        const data = await ky
-          .get(`/api/workspaces/${workspaceId}/sendgrid/lists?${params}`)
-          .json<SendGridListPage>()
+        const data = await client.integrationSendGridAPI.listLists({
+          workspaceId,
+          pageSize: 1000,
+          pageToken,
+        })
         for (const item of data.data) {
           if (!seen.has(item.id)) {
             seen.add(item.id)
@@ -105,8 +99,9 @@ const SendGridDialog = ({ parentName }: { parentName: string }) => {
       return all
     },
   )
-  const customFields = callAPI<{ data: SendGridCustomField[] }>(
-    `/api/workspaces/${workspaceId}/sendgrid/custom-fields`,
+  const customFields = useClientQuery(
+    ["integrationSendGridAPI.listCustomFields", workspaceId] as const,
+    () => client.integrationSendGridAPI.listCustomFields({ workspaceId }),
   )
   const listOptions = useMemo(
     () =>

@@ -1,7 +1,8 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListAIAgentsResponse } from "@/features/ai-agents/schema/query"
-import { maxPerPageString } from "@/lib/shared-request"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
+import { maxPerPage } from "@/lib/shared-request"
 
 export type AIAgentState = {
   loading: boolean
@@ -61,22 +62,15 @@ export const createAIAgentStore = (props: Partial<AIAgentState>) => {
       set({ loading: true, error: null })
 
       try {
-        const searchParams = new URLSearchParams({
-          perPage: maxPerPageString,
+        const { data } = await client.aiAgentsAPI.listAIAgentsAPI({
+          workspaceId,
+          perPage: maxPerPage,
         })
-        const { data } = await ky
-          .get<ListAIAgentsResponse>(
-            `/api/workspaces/${workspaceId}/ai-agents?${searchParams.toString()}`,
-          )
-          .json()
 
         set({ aiAgents: data })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch AI agents",
+          error: getClientErrorMessage(error, "Failed to fetch AI agents"),
         })
       } finally {
         set({ loading: false })

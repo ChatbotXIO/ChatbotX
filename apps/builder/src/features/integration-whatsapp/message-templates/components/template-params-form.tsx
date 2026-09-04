@@ -19,7 +19,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import ky from "ky"
 import { Pencil } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
@@ -35,11 +34,9 @@ import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { useWhatsappFlow } from "@/features/flows/react-flow/stores/whatsapp-flow-store-provider"
-import type {
-  GetWhatsappFlowScreensResponse,
-  WhatsappFlowScreenResource,
-} from "@/features/integration-whatsapp/flows/schema/query"
+import type { WhatsappFlowScreenResource } from "@/features/integration-whatsapp/flows/schema/query"
 import { useWorkspaceId } from "@/hooks/routing"
+import { client } from "@/lib/orpc/orpc"
 import { buildFlowFieldMappings } from "../lib/build-flow-field-mappings"
 import {
   type MetaCatalogProductOption,
@@ -245,11 +242,11 @@ function TemplateFlowFieldMappings({
       setLoadingScreens(true)
       setScreenError(false)
       try {
-        const data = await ky
-          .get<GetWhatsappFlowScreensResponse>(
-            `/api/workspaces/${workspaceId}/whatsapp-flows/${flow.id}/screens`,
-          )
-          .json()
+        const data =
+          await client.whatsappFlowAPIs.getWhatsappFlowScreensInternalAPI({
+            workspaceId,
+            flowId: flow.id,
+          })
         setScreens(data.screens ?? [])
       } catch {
         setScreens([])

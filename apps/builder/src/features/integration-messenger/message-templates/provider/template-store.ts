@@ -1,5 +1,6 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 import type { MessengerMessageTemplateResource } from "../schema/resource"
 
 export type MessengerTemplateState = {
@@ -44,10 +45,7 @@ export const createMessengerTemplateStore = (
         await get().getAllTemplates()
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch templates",
+          error: getClientErrorMessage(error, "Failed to fetch templates"),
         })
       } finally {
         set({ initialized: true })
@@ -67,24 +65,19 @@ export const createMessengerTemplateStore = (
       try {
         set({ loading: true, error: null })
 
-        const url = `/api/workspaces/${workspaceId}/messenger-message-templates`
-
-        const templates = await ky
-          .get(url, {
-            searchParams: {
+        const templates =
+          await client.messengerMessageTemplateAPIs.listMessengerMessageTemplatesInternalAPI(
+            {
+              workspaceId,
               integrationMessengerId,
               status: "APPROVED",
             },
-          })
-          .json<MessengerMessageTemplateResource[]>()
+          )
 
         set({ templates })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch templates",
+          error: getClientErrorMessage(error, "Failed to fetch templates"),
           templates: [],
         })
       } finally {

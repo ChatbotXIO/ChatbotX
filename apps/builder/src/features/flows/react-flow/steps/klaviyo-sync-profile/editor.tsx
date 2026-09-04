@@ -23,7 +23,6 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
-import ky from "ky"
 import { ArrowRightIcon, MailIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
@@ -36,37 +35,41 @@ import {
 import useSWRInfinite from "swr/infinite"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
+import { client } from "@/lib/orpc/orpc"
 import { BaseStepEditor } from "../base/editor"
 
-type KlaviyoEditorPage<T> = {
-  data: T[]
+type KlaviyoEditorPage = {
+  data: KlaviyoList[]
   nextCursor: string | null
 }
 
-export const getKlaviyoPageKey =
-  (baseUrl: string | null) =>
-  <T,>(
-    _pageIndex: number,
-    previousPage: KlaviyoEditorPage<T> | null,
-  ): string | null => {
-    if (!(baseUrl && (!previousPage || previousPage.nextCursor))) {
-      return null
-    }
-    return previousPage?.nextCursor
-      ? `${baseUrl}&cursor=${encodeURIComponent(previousPage.nextCursor)}`
-      : baseUrl
-  }
-
-const useAllKlaviyoPages = <T,>(baseUrl: string | null) => {
+const useAllKlaviyoLists = (workspaceId: string | undefined, open: boolean) => {
   const {
     data: pages,
     error,
     isValidating,
     setSize,
     size,
-  } = useSWRInfinite<KlaviyoEditorPage<T>>(
-    getKlaviyoPageKey(baseUrl),
-    (url: string) => ky.get(url).json(),
+  } = useSWRInfinite<KlaviyoEditorPage>(
+    (_pageIndex, previousPage: KlaviyoEditorPage | null) => {
+      if (!(workspaceId && open)) {
+        return null
+      }
+      if (previousPage && !previousPage.nextCursor) {
+        return null
+      }
+      return [
+        "integrationKlaviyoAPI.listLists",
+        workspaceId,
+        previousPage?.nextCursor ?? null,
+      ] as const
+    },
+    ([, id, cursor]: readonly [string, string, string | null]) =>
+      client.integrationKlaviyoAPI.listLists({
+        workspaceId: id,
+        cursor: cursor ?? undefined,
+        size: KLAVIYO_LIST_PAGE_SIZE,
+      }),
   )
   const nextCursor = pages?.at(-1)?.nextCursor
   useEffect(() => {
@@ -96,11 +99,7 @@ const KlaviyoDialog = ({ parentName }: { parentName: string }) => {
   })
   const mappedFields =
     useWatch({ control: form.control, name: "mergeFields" }) ?? []
-  const baseUrl =
-    workspaceId && open ? `/api/workspaces/${workspaceId}/klaviyo` : null
-  const lists = useAllKlaviyoPages<KlaviyoList>(
-    baseUrl ? `${baseUrl}/lists?size=${KLAVIYO_LIST_PAGE_SIZE}` : null,
-  )
+  const lists = useAllKlaviyoLists(workspaceId, open)
   const listOptions = useMemo(
     () => lists.data.map(({ id, name }) => ({ label: name, value: id })),
     [lists.data],

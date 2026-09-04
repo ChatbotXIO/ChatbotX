@@ -2,12 +2,12 @@ import {
   messengerTemplateStatusSchema,
   whatsappTemplateStatusSchema,
 } from "@chatbotx.io/database/partials"
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListMessengerMessageTemplatesResponse } from "@/features/integration-messenger/message-templates/schema/query"
 import type { IntegrationOpenaiCompatibleResource } from "@/features/integration-openai-compatible/schema/resource"
 import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
 import type { ListMessengerPersonasResponse } from "@/features/personas/schema/query"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
 import { client } from "@/lib/orpc/orpc"
 
 export type FlowTemplateState = {
@@ -105,23 +105,19 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
 
       set({ loadingWhatsappTemplates: true, error: null })
       try {
-        const searchParams: Record<string, string> = {
-          status: whatsappTemplateStatusSchema.enum.APPROVED,
-        }
-        if (integrationWhatsappId) {
-          searchParams.integrationWhatsappId = integrationWhatsappId
-        }
-
-        const templates = await ky
-          .get<ListWhatsappMessageTemplatesResponse>(
-            `/api/workspaces/${workspaceId}/whatsapp-message-templates`,
-            { searchParams, signal },
+        const templates =
+          await client.whatsappMessageTemplateAPIs.listWhatsappMessageTemplatesInternalAPI(
+            {
+              workspaceId,
+              status: whatsappTemplateStatusSchema.enum.APPROVED,
+              integrationWhatsappId,
+            },
+            { signal },
           )
-          .json()
 
         set({ whatsappTemplates: templates, loadingWhatsappTemplates: false })
       } catch (error: unknown) {
-        if (error instanceof Error && error.name === "AbortError") {
+        if (error instanceof DOMException && error.name === "AbortError") {
           // A newer fetch superseded this one. Only clear loading if no newer
           // fetch has since taken over (e.g. store abandoned on unmount).
           if (waFetchController === controller) {
@@ -130,10 +126,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
           return
         }
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch WA templates",
+          error: getClientErrorMessage(error, "Failed to fetch WA templates"),
           whatsappTemplates: [],
           loadingWhatsappTemplates: false,
         })
@@ -150,26 +143,23 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
       messengerFetching = true
       set({ loadingMessengerTemplates: true, error: null })
       try {
-        const templates = await ky
-          .get<ListMessengerMessageTemplatesResponse>(
-            `/api/workspaces/${workspaceId}/messenger-message-templates`,
+        const templates =
+          await client.messengerMessageTemplateAPIs.listMessengerMessageTemplatesInternalAPI(
             {
-              searchParams: {
-                status: messengerTemplateStatusSchema.enum.APPROVED,
-              },
+              workspaceId,
+              status: messengerTemplateStatusSchema.enum.APPROVED,
             },
           )
-          .json()
 
         set({
           messengerTemplates: templates,
         })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch Messenger templates",
+          error: getClientErrorMessage(
+            error,
+            "Failed to fetch Messenger templates",
+          ),
         })
       } finally {
         messengerFetching = false
@@ -195,10 +185,10 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
         set({ messengerPersonas: data })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch Messenger personas",
+          error: getClientErrorMessage(
+            error,
+            "Failed to fetch Messenger personas",
+          ),
         })
       } finally {
         messengerPersonasFetching = false

@@ -1,6 +1,7 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { maxPerPageString } from "@/lib/shared-request"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
+import { maxPerPage } from "@/lib/shared-request"
 import type { ListSequencesResponse } from "../schema/action"
 
 export type SequenceState = {
@@ -45,32 +46,19 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
           initialized: true,
         })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({
-            error: error.message,
-            loading: false,
-          })
-        } else {
-          set({
-            error: "Failed to fetch sequences",
-            loading: false,
-          })
-        }
+        set({
+          error: getClientErrorMessage(error, "Failed to fetch sequences"),
+          loading: false,
+        })
       }
     },
 
     getAllActiveSequences: async (workspaceId: string) => {
-      const { data } = await ky
-        .get<ListSequencesResponse>(
-          `/api/workspaces/${workspaceId}/sequences`,
-          {
-            searchParams: {
-              perPage: maxPerPageString,
-              active: "true",
-            },
-          },
-        )
-        .json()
+      const { data } = await client.sequencesAPI.listSequencesWorkspaceAuthAPI({
+        workspaceId,
+        perPage: maxPerPage,
+        active: true,
+      })
 
       set({ sequences: data })
     },

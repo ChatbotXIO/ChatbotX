@@ -8,7 +8,8 @@
     "./components/*": "./src/components/*.tsx",
     "./routes": "./src/routes/index.ts",
     "./provider/analysis-store-context": "./src/provider/analysis-store-context.tsx",
-    "./provider/analysis-store": "./src/provider/analysis-store.ts"
+    "./provider/analysis-store": "./src/provider/analysis-store.ts",
+    "./provider/analytics-api-context": "./src/provider/analytics-api-context.tsx"
   },
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",
@@ -17,10 +18,10 @@
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
+    "@orpc/client": "^1.14.0",
     "@orpc/server": "^1.14.0",
     "@t3-oss/env-nextjs": "^0.13.11",
     "date-fns": "^4.1.0",
-    "ky": "^2.0.2",
     "lucide-react": "^1.14.0",
     "next-intl": "^4.11.0",
     "react": "19.2.5",

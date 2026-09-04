@@ -21,7 +21,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import ky from "ky"
 import { MailIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
@@ -29,6 +28,7 @@ import { useForm, useFormContext } from "react-hook-form"
 import useSWRInfinite from "swr/infinite"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
+import { client } from "@/lib/orpc/orpc"
 import { BaseStepEditor } from "../base/editor"
 
 const MoosendDialog = ({ parentName }: { parentName: string }) => {
@@ -47,18 +47,25 @@ const MoosendDialog = ({ parentName }: { parentName: string }) => {
     isLoading: listsLoading,
     setSize,
   } = useSWRInfinite<MoosendMailingListPage>(
-    (pageIndex, previousPage) => {
+    (pageIndex, previousPage: MoosendMailingListPage | null) => {
       if (!workspaceId) {
         return null
       }
       if (previousPage && pageIndex >= previousPage.meta.totalPageCount) {
         return null
       }
-      return `/api/workspaces/${workspaceId}/moosend/mailing-lists?page=${
-        pageIndex + 1
-      }&pageSize=${MOOSEND_EDITOR_PAGE_SIZE}`
+      return [
+        "integrationMoosendAPI.listMailingLists",
+        workspaceId,
+        pageIndex + 1,
+      ] as const
     },
-    (url: string) => ky.get(url).json(),
+    ([, id, page]: readonly [string, string, number]) =>
+      client.integrationMoosendAPI.listMailingLists({
+        workspaceId: id,
+        page,
+        pageSize: MOOSEND_EDITOR_PAGE_SIZE,
+      }),
   )
   const totalPageCount = pages?.[0]?.meta.totalPageCount ?? 0
 

@@ -4,10 +4,6 @@ import {
   type DripSubscribeSubscriberSchema,
   dripSubscribeSubscriberSchema,
 } from "@chatbotx.io/flow-config"
-import type {
-  DripAccount,
-  DripCustomField,
-} from "@chatbotx.io/integration-drip"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -39,7 +35,8 @@ import {
 } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
+import { useClientQuery } from "@/lib/swr"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -88,27 +85,35 @@ const DripDialog = ({ parentName }: { parentName: string }) => {
     data: accountsResponse,
     error: accountsError,
     isLoading: accountsLoading,
-  } = callAPI<{ data: DripAccount[] }>(
-    `/api/workspaces/${workspaceId}/drip/accounts`,
+  } = useClientQuery(
+    ["integrationDripAPI.listAccounts", workspaceId] as const,
+    () => client.integrationDripAPI.listAccounts({ workspaceId }),
   )
   const {
     data: tagsResponse,
     error: tagsError,
     isLoading: tagsLoading,
-  } = callAPI<{ data: string[] }>(
+  } = useClientQuery(
     accountId
-      ? `/api/workspaces/${workspaceId}/drip/tags?accountId=${encodeURIComponent(accountId)}`
+      ? (["integrationDripAPI.listTags", workspaceId, accountId] as const)
       : null,
+    () => client.integrationDripAPI.listTags({ workspaceId, accountId }),
   )
 
   const {
     data: customFieldsResponse,
     error: customFieldsError,
     isLoading: customFieldsLoading,
-  } = callAPI<{ data: DripCustomField[] }>(
+  } = useClientQuery(
     accountId
-      ? `/api/workspaces/${workspaceId}/drip/custom-fields?accountId=${encodeURIComponent(accountId)}`
+      ? ([
+          "integrationDripAPI.listCustomFields",
+          workspaceId,
+          accountId,
+        ] as const)
       : null,
+    () =>
+      client.integrationDripAPI.listCustomFields({ workspaceId, accountId }),
   )
 
   const accountOptions = useMemo(

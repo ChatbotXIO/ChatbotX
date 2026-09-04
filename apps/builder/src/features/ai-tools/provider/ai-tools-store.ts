@@ -1,9 +1,10 @@
 import { systemFunctionCatalog } from "@chatbotx.io/ai"
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListAIFilesResponse } from "@/features/ai-files/schema"
 import type { ListAIFunctionsResponse } from "@/features/ai-functions/schema"
 import type { ListAIMcpServersResponse } from "@/features/ai-mcp-servers/schema"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 
 type AIToolsState = {
   loadingAIFiles: boolean
@@ -69,17 +70,14 @@ export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
       set({ loadingAIFiles: true, error: null })
 
       try {
-        const { data } = await ky
-          .get<ListAIFilesResponse>(`/api/workspaces/${workspaceId}/ai-files`)
-          .json()
+        const { data } = await client.aiFilesAPI.listAIFilesAuthenticatedAPI({
+          workspaceId,
+        })
 
         set({ files: data })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch AI files",
+          error: getClientErrorMessage(error, "Failed to fetch AI files"),
         })
       } finally {
         set({ loadingAIFiles: false })
@@ -96,19 +94,15 @@ export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
       set({ loadingAIFunctions: true, error: null })
 
       try {
-        const { data } = await ky
-          .get<ListAIFunctionsResponse>(
-            `/api/workspaces/${workspaceId}/ai-functions`,
-          )
-          .json()
+        const { data } =
+          await client.aiFunctionsAPI.listAIFunctionsAuthenticatedAPI({
+            workspaceId,
+          })
 
         set({ functions: data })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch AI functions",
+          error: getClientErrorMessage(error, "Failed to fetch AI functions"),
         })
       } finally {
         set({ loadingAIFunctions: false })
@@ -125,19 +119,15 @@ export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
       set({ loadingAIMCPServer: true, error: null })
 
       try {
-        const { data } = await ky
-          .get<ListAIMcpServersResponse>(
-            `/api/workspaces/${workspaceId}/ai-mcp-servers`,
-          )
-          .json()
+        const { data } =
+          await client.aiMcpServerAPIs.listAIMcpServersAuthenticatedAPI({
+            workspaceId,
+          })
 
         set({ mcpServers: data })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch AI MCP servers",
+          error: getClientErrorMessage(error, "Failed to fetch AI MCP servers"),
         })
       } finally {
         set({ loadingAIMCPServer: false })

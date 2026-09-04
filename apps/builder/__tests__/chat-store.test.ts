@@ -1,21 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockFindConversationAuthenticatedAPI, mockKyPost } = vi.hoisted(() => ({
+const {
+  mockFindConversationAuthenticatedAPI,
+  mockListConversationsByPOSTAuthenticatedAPI,
+} = vi.hoisted(() => ({
   mockFindConversationAuthenticatedAPI: vi.fn(),
-  mockKyPost: vi.fn(),
+  mockListConversationsByPOSTAuthenticatedAPI: vi.fn(),
 }))
 
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
     conversationsAPI: {
       findConversationAuthenticatedAPI: mockFindConversationAuthenticatedAPI,
+      listConversationsByPOSTAuthenticatedAPI:
+        mockListConversationsByPOSTAuthenticatedAPI,
     },
-  },
-}))
-
-vi.mock("ky", () => ({
-  default: {
-    post: mockKyPost,
   },
 }))
 
@@ -70,11 +69,9 @@ const mockConversationPage = (
   conversations: TestConversation[],
   nextCursor: string | null = null,
 ) => {
-  mockKyPost.mockReturnValue({
-    json: vi.fn().mockResolvedValue({
-      data: conversations,
-      nextCursor,
-    }),
+  mockListConversationsByPOSTAuthenticatedAPI.mockResolvedValue({
+    data: conversations,
+    nextCursor,
   })
 }
 
@@ -245,9 +242,7 @@ describe("chat store conversation updates", () => {
       resolvePage = resolve
     })
     setConversationUrl("conv-deep-link")
-    mockKyPost.mockReturnValue({
-      json: vi.fn().mockReturnValue(pageResponse),
-    })
+    mockListConversationsByPOSTAuthenticatedAPI.mockReturnValue(pageResponse)
 
     const loadPromise = store.getState().loadMoreConversations("ws-1")
     const bootstrapPromise = store
@@ -268,9 +263,9 @@ describe("chat store conversation updates", () => {
       new Date("2026-01-01T01:00:00Z"),
     )
     setConversationUrl("conv-deep-link")
-    mockKyPost.mockReturnValue({
-      json: vi.fn().mockRejectedValue(new Error("list failed")),
-    })
+    mockListConversationsByPOSTAuthenticatedAPI.mockRejectedValue(
+      new Error("list failed"),
+    )
     mockFindConversationAuthenticatedAPI.mockResolvedValue({ data: deepLinked })
 
     const loadPromise = store
@@ -312,9 +307,7 @@ describe("chat store conversation updates", () => {
     const pageResponse = new Promise<PageResponse>((resolve) => {
       resolvePage = resolve
     })
-    mockKyPost.mockReturnValue({
-      json: vi.fn().mockReturnValue(pageResponse),
-    })
+    mockListConversationsByPOSTAuthenticatedAPI.mockReturnValue(pageResponse)
 
     const loadPromise = store.getState().loadMoreConversations("ws-1")
     store.getState().prependConversation(deepLinked as never)

@@ -2,10 +2,7 @@
 
 import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
-import type {
-  WhatsappPhoneNumber,
-  WhatsappPhoneNumberResponse,
-} from "@chatbotx.io/integration-whatsapp/api/phone-number"
+import type { WhatsappPhoneNumber } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
@@ -20,7 +17,6 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -30,6 +26,7 @@ import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
+import { client } from "@/lib/orpc/orpc"
 import { connectWhatsappAction } from "../actions/connect.action"
 import { useEmbeddedSignupAutoConnect } from "../hooks/use-embedded-signup-auto-connect"
 import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
@@ -45,7 +42,6 @@ import { WhatsappPhoneVerificationPanel } from "../verification/whatsapp-phone-v
 import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
 // Constants
-const API_ENDPOINT = "/api/whatsapp/phone-numbers/list"
 const MAX_CARD_WIDTH = "max-w-md"
 const CARD_MARGIN = "mx-auto mt-40"
 
@@ -265,7 +261,12 @@ export default function WhatsappCreate({
     }
 
     if (watchManualConnect) {
-      return <ManualConnectSection watchManualConnect={watchManualConnect} />
+      return (
+        <ManualConnectSection
+          watchManualConnect={watchManualConnect}
+          workspaceId={workspaceId}
+        />
+      )
     }
 
     return (
@@ -276,6 +277,7 @@ export default function WhatsappCreate({
         settings={settings}
         visibility={visibility}
         watchManualConnect={watchManualConnect}
+        workspaceId={workspaceId}
       />
     )
   }
@@ -341,6 +343,7 @@ type SdkConnectSectionProps = {
   hasFailed: boolean
   /** Absolute callback URL registered with Meta for this credential. */
   oauthCallbackUrl: string
+  workspaceId?: string | null
 }
 
 const LAUNCH_BUTTON_CLASS =
@@ -356,6 +359,7 @@ function SdkConnectSection({
   onAutoSubmit,
   hasFailed,
   oauthCallbackUrl,
+  workspaceId,
 }: SdkConnectSectionProps) {
   const t = useTranslations()
   const { control } = useFormContext<ConnectWhatsappSchema>()
@@ -429,7 +433,10 @@ function SdkConnectSection({
       )}
 
       {visibility.manualConnect && (
-        <ManualConnectSection watchManualConnect={watchManualConnect} />
+        <ManualConnectSection
+          watchManualConnect={watchManualConnect}
+          workspaceId={workspaceId}
+        />
       )}
 
       <div className="flex items-center justify-end gap-2">
@@ -520,10 +527,12 @@ function PhoneNumberSelectionSection({
 
 type ManualConnectSectionProps = {
   watchManualConnect: boolean
+  workspaceId?: string | null
 }
 
 function ManualConnectSection({
   watchManualConnect,
+  workspaceId,
 }: ManualConnectSectionProps) {
   const t = useTranslations()
   const { setValue, getValues, formState } = useFormContext()
@@ -556,14 +565,14 @@ function ManualConnectSection({
     startTransitionPhoneNumbers(async () => {
       try {
         const formData = getValues()
-        const response = await ky
-          .post<WhatsappPhoneNumberResponse>(API_ENDPOINT, {
-            json: {
+        const response =
+          await client.integrationWhatsappAPIs.listWhatsappPhoneNumbersInternalAPI(
+            {
               wabaId: formData.wabaId ?? "",
               accessToken: formData.accessToken ?? "",
+              workspaceId: workspaceId ?? undefined,
             },
-          })
-          .json()
+          )
 
         setPhoneNumbers(response.data)
 
@@ -574,7 +583,7 @@ function ManualConnectSection({
         await clientErrorHandler(error)
       }
     })
-  }, [getValues, startTransitionPhoneNumbers, setPhoneNumbers, t])
+  }, [getValues, startTransitionPhoneNumbers, setPhoneNumbers, t, workspaceId])
 
   return (
     <>

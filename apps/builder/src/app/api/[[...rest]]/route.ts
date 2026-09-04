@@ -5,10 +5,9 @@ import "@/polyfill"
 // Runtime boundary intentionally matches the spec boundary: this handler
 // only ever serves `publicRouter` (workspace-token / channel-token auth),
 // the same router `public-spec.json` documents. Private, session-authed
-// procedures live on the full router only, mirrored dev-only at
-// /api-internal (see app/api-internal/[[...rest]]/route.ts) — a procedure
-// absent from publicRouter now 404s instead of silently answering to a
-// session cookie. See __tests__/public-router-boundary.test.ts.
+// procedures live on the full router and are reachable only via /rpc — a
+// procedure absent from publicRouter now 404s here instead of silently
+// answering to a session cookie. See __tests__/public-router-boundary.test.ts.
 const openAPIHandler = createOpenAPIHandler(publicRouter, {
   title: "ChatbotX",
   logLabel: "OpenAPI handler",

@@ -8,9 +8,6 @@ import {
 import {
   GET_RESPONSE_CAMPAIGNS_PAGE_SIZE,
   GET_RESPONSE_TAGS_PAGE_SIZE,
-  type GetResponseCampaign,
-  type GetResponsePageMeta,
-  type GetResponseTag,
 } from "@chatbotx.io/integration-get-response"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -34,13 +31,9 @@ import { useForm, useFormContext } from "react-hook-form"
 import type { z } from "zod"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
+import { useClientQuery } from "@/lib/swr"
 import { BaseStepEditor } from "../base/editor"
-
-type GetResponsePage<T> = {
-  data: T[]
-  meta: GetResponsePageMeta
-}
 
 const FieldLabel = (props: {
   label: string
@@ -85,19 +78,31 @@ const GetResponseDialog = ({ parentName }: { parentName: string }) => {
     data: campaignsResponse,
     error: campaignsError,
     isLoading: campaignsLoading,
-  } = callAPI<GetResponsePage<GetResponseCampaign>>(
+  } = useClientQuery(
     open
-      ? `/api/workspaces/${workspaceId}/get-response/campaigns?page=1&perPage=${GET_RESPONSE_CAMPAIGNS_PAGE_SIZE}`
+      ? (["integrationGetResponseAPI.listCampaigns", workspaceId] as const)
       : null,
+    () =>
+      client.integrationGetResponseAPI.listCampaigns({
+        workspaceId,
+        page: 1,
+        perPage: GET_RESPONSE_CAMPAIGNS_PAGE_SIZE,
+      }),
   )
   const {
     data: tagsResponse,
     error: tagsError,
     isLoading: tagsLoading,
-  } = callAPI<GetResponsePage<GetResponseTag>>(
+  } = useClientQuery(
     open
-      ? `/api/workspaces/${workspaceId}/get-response/tags?page=1&perPage=${GET_RESPONSE_TAGS_PAGE_SIZE}`
+      ? (["integrationGetResponseAPI.listTags", workspaceId] as const)
       : null,
+    () =>
+      client.integrationGetResponseAPI.listTags({
+        workspaceId,
+        page: 1,
+        perPage: GET_RESPONSE_TAGS_PAGE_SIZE,
+      }),
   )
 
   const campaignOptions = useMemo(

@@ -46,8 +46,8 @@ export function logUnexpectedOrpcErrorCallback(label: string) {
 }
 
 /**
- * One OpenAPI handler per REST surface (`/api` public, `/api-internal` dev
- * full-router). Build it once per module — instantiating per request is
+ * One OpenAPI handler per REST surface (currently just `/api`, the public
+ * router). Build it once per module — instantiating per request is
  * expensive (rebuilds plugins every call). `OpenAPIReferencePlugin` also
  * serves a Scalar docs page at `${prefix}/` and the spec at
  * `${prefix}/spec.json`, so no separate docs route is needed.

@@ -4,11 +4,6 @@ import {
   type MailchimpAddMemberSchema,
   mailchimpAddMemberSchema,
 } from "@chatbotx.io/flow-config"
-import type {
-  MailchimpAudience,
-  MailchimpMergeField,
-  MailchimpTag,
-} from "@chatbotx.io/integration-mailchimp"
 import { isSupportedMailchimpMergeFieldType } from "@chatbotx.io/integration-mailchimp"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -43,7 +38,8 @@ import {
 } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
+import { useClientQuery } from "@/lib/swr"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -94,20 +90,29 @@ const MailchimpDialog = ({ parentName }: { parentName: string }) => {
     () => form.getValues("mergeFields").length > 0,
   )
 
-  const { data: audiencesResponse, error: audiencesError } = callAPI<{
-    data: MailchimpAudience[]
-  }>(`/api/workspaces/${workspaceId}/mailchimp/audiences`)
-  const { data: tagsResponse } = callAPI<{ data: MailchimpTag[] }>(
-    listId
-      ? `/api/workspaces/${workspaceId}/mailchimp/tags?listId=${encodeURIComponent(listId)}`
-      : null,
+  const { data: audiencesResponse, error: audiencesError } = useClientQuery(
+    ["integrationMailchimpAPI.listAudiences", workspaceId] as const,
+    () => client.integrationMailchimpAPI.listAudiences({ workspaceId }),
   )
-  const { data: mergeFieldsResponse, error: mergeFieldsError } = callAPI<{
-    data: MailchimpMergeField[]
-  }>(
+  const { data: tagsResponse } = useClientQuery(
     listId
-      ? `/api/workspaces/${workspaceId}/mailchimp/merge-fields?listId=${encodeURIComponent(listId)}`
+      ? (["integrationMailchimpAPI.listTags", workspaceId, listId] as const)
       : null,
+    () => client.integrationMailchimpAPI.listTags({ workspaceId, listId }),
+  )
+  const { data: mergeFieldsResponse, error: mergeFieldsError } = useClientQuery(
+    listId
+      ? ([
+          "integrationMailchimpAPI.listMergeFields",
+          workspaceId,
+          listId,
+        ] as const)
+      : null,
+    () =>
+      client.integrationMailchimpAPI.listMergeFields({
+        workspaceId,
+        listId,
+      }),
   )
 
   useEffect(() => {

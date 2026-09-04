@@ -25,6 +25,7 @@ import { SupportAccessBanner } from "@/components/support-access-banner"
 import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
 import { isCloud } from "@/env"
+import { AnalyticsApiProvider } from "@/features/analytics/components/analytics-api-provider"
 import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -172,12 +173,14 @@ export default async function WorkspaceLayout({
             errors={tokenRefreshErrors}
             workspaceId={workspaceId}
           />
-          <CouponTopicStoreProvider
-            autoInitialize={false}
-            workspaceId={workspaceId}
-          >
-            {children}
-          </CouponTopicStoreProvider>
+          <AnalyticsApiProvider>
+            <CouponTopicStoreProvider
+              autoInitialize={false}
+              workspaceId={workspaceId}
+            >
+              {children}
+            </CouponTopicStoreProvider>
+          </AnalyticsApiProvider>
         </main>
         <SidebarTrigger className="absolute -inset-s-2 top-3 z-10 hidden border md:inline-flex" />
         {/*

@@ -1,6 +1,7 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { maxPerPageString } from "@/lib/shared-request"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
+import { maxPerPage } from "@/lib/shared-request"
 import type { ListFlowsResponse } from "../schema/query"
 
 type FlowStateFilter = { startType?: string; integrationWhatsappId?: string }
@@ -46,10 +47,7 @@ export const createFlowStore = (props: Partial<FlowState>) =>
         await get().getAllActiveFlows()
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch flows",
+          error: getClientErrorMessage(error, "Failed to fetch flows"),
         })
       } finally {
         set({ initialized: true })
@@ -75,24 +73,17 @@ export const createFlowStore = (props: Partial<FlowState>) =>
       try {
         set({ loading: true, error: null })
 
-        const { data } = await ky
-          .get<ListFlowsResponse>(`/api/workspaces/${workspaceId}/flows`, {
-            searchParams: {
-              perPage: maxPerPageString,
-              active: "true",
-              ...filter,
-              integrationWhatsappId: filter.integrationWhatsappId?.toString(),
-            },
-          })
-          .json()
+        const { data } = await client.flowsAPI.privateListFlowsAPI({
+          workspaceId,
+          perPage: maxPerPage,
+          active: true,
+          ...filter,
+        })
 
         set({ flows: data })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch flows",
+          error: getClientErrorMessage(error, "Failed to fetch flows"),
         })
       } finally {
         set({ loading: false })

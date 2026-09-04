@@ -12,7 +12,8 @@ import { useFormContext, useWatch } from "react-hook-form"
 import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
+import { useClientQuery } from "@/lib/swr"
 
 type SpreadsheetMappingDirection = "sheetToContact" | "contactToSheet"
 
@@ -57,8 +58,22 @@ export const SpreadsheetCustomFieldMapping = ({
   const mapValue: SpreadsheetMappingEntry[] =
     useWatch({ control, name: getFieldName("map") }) ?? []
 
-  const worksheetHeadersUrl = `/api/workspaces/${workspaceId}/worksheets/${spreadsheetId}/headers?sheetName=${sheetName}`
-  const { data: headersData } = callAPI<{ data: string[] }>(worksheetHeadersUrl)
+  const { data: headersData } = useClientQuery(
+    spreadsheetId && sheetName
+      ? ([
+          "spreadsheetsAPI.listWorksheetHeadersAuthenticatedAPI",
+          workspaceId,
+          spreadsheetId,
+          sheetName,
+        ] as const)
+      : null,
+    () =>
+      client.spreadsheetsAPI.listWorksheetHeadersAuthenticatedAPI({
+        workspaceId,
+        spreadsheetId,
+        sheetName,
+      }),
+  )
   const headers = headersData?.data ?? []
   // Only trust the "header missing" signal once the live headers have loaded,
   // otherwise the saved mappings would flash a red border before data arrives.

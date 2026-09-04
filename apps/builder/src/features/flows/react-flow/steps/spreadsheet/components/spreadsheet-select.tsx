@@ -3,7 +3,8 @@
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { useTranslations } from "next-intl"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
+import { useClientQuery } from "@/lib/swr"
 
 type SpreadsheetSelectProps = {
   name: string
@@ -21,8 +22,14 @@ export const SpreadsheetSelect = ({
   const workspaceId = useWorkspaceId()
   const t = useTranslations()
 
-  const url = `/api/workspaces/${workspaceId}/spreadsheets?perPage=9999`
-  const { data } = callAPI<{ data: { id: string; name: string }[] }>(url)
+  const { data } = useClientQuery(
+    ["spreadsheetsAPI.listSpreadsheetsAuthenticatedAPI", workspaceId] as const,
+    () =>
+      client.spreadsheetsAPI.listSpreadsheetsAuthenticatedAPI({
+        workspaceId,
+        perPage: 9999,
+      }),
+  )
   const options = (data?.data ?? []).map((spreadsheet) => ({
     label: spreadsheet.name,
     value: spreadsheet.id,

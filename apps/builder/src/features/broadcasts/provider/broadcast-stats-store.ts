@@ -1,6 +1,7 @@
 import type { GetBatchBroadcastStatsResponse } from "@chatbotx.io/analytics/schemas"
-import ky from "ky"
 import { createStore } from "zustand/vanilla"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 
 export type BroadcastStatsState = {
   stats: GetBatchBroadcastStatsResponse
@@ -45,17 +46,11 @@ export function createBroadcastStatsStore(props: BroadcastStatsStoreProps) {
       set({ isLoading: true, error: null })
 
       try {
-        const result = await ky
-          .post<GetBatchBroadcastStatsResponse>(
-            `/api/workspaces/${props.workspaceId}/broadcasts/stats`,
-            {
-              json: {
-                workspaceId: props.workspaceId,
-                broadcastIds: newBroadcastIds,
-              },
-            },
-          )
-          .json<GetBatchBroadcastStatsResponse>()
+        const result: GetBatchBroadcastStatsResponse =
+          await client.broadcastAPIs.privateGetBatchBroadcastStatsAPI({
+            workspaceId: props.workspaceId,
+            broadcastIds: newBroadcastIds,
+          })
 
         const newFetchedIds = new Set(fetchedBroadcastIds)
         for (const id of newBroadcastIds) {
@@ -70,8 +65,7 @@ export function createBroadcastStatsStore(props: BroadcastStatsStoreProps) {
       } catch (error) {
         set({
           isLoading: false,
-          error:
-            error instanceof Error ? error.message : "Failed to fetch stats",
+          error: getClientErrorMessage(error, "Failed to fetch stats"),
         })
       }
     },
