@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Số lượt quay may mắn mỗi người",
+      "maxSharesPerPerson": "Số lượt thưởng tối đa từ giới thiệu",
+      "maxSharesPerPersonHint": "Mỗi người bạn tham gia qua link mời của người chơi này và có chơi sẽ giúp họ nhận thêm 1 lượt, tối đa bằng giới hạn này. Đặt 0 để tắt thưởng giới thiệu. Lượt thưởng phải dùng trước lần đặt lại kế tiếp.",
       "resetPolicyLabel": "Đặt lại lượt quay",
       "resetNever": "Không đặt lại số lượt quay",
       "resetEveryNDays": "Đặt lại số lượt quay mỗi",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Không có quyền truy cập",
       "forbiddenDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
       "comingSoonTitle": "Sắp ra mắt",
-      "comingSoonDescription": "Loại minigame này chưa thể chơi được."
+      "comingSoonDescription": "Loại minigame này chưa thể chơi được.",
+      "inviteTitle": "Bạn được mời!",
+      "inviteDescription": "Hãy nhắn tin với chúng tôi để nhận link riêng và chơi {name}.",
+      "inviteExpiredTitle": "Lời mời không khả dụng",
+      "inviteExpiredDescription": "Link mời này không hợp lệ hoặc đã hết hạn."
     },
     "list": {
       "gamesPlayed": "Lượt chơi",
       "participants": "Người tham gia",
-      "winners": "Người thắng cuộc"
+      "winners": "Người thắng cuộc",
+      "shares": "Lượt giới thiệu"
     },
     "history": {
       "title": "Lịch sử",
       "played": "Lượt đã chơi",
       "remaining": "Lượt còn lại",
+      "shares": "Lượt giới thiệu",
       "openedAt": "Mở lần đầu",
       "lastPlayedAt": "Chơi gần nhất",
       "unknownContact": "Liên hệ không xác định",

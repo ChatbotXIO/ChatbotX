@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Numero di tentativi per persona",
+      "maxSharesPerPerson": "Estrazioni bonus max. da referral",
+      "maxSharesPerPersonHint": "Ogni amico che si iscrive tramite il link di invito di questo giocatore e gioca gli fa guadagnare 1 estrazione extra, fino a questo limite. Imposta 0 per disattivare i bonus referral. Le estrazioni bonus vanno usate prima del prossimo azzeramento.",
       "resetPolicyLabel": "Reimposta tentativi",
       "resetNever": "Non reimpostare il numero di tentativi",
       "resetEveryNDays": "Reimposta il numero di tentativi ogni",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Accesso negato",
       "forbiddenDescription": "Questo link non è valido o è scaduto.",
       "comingSoonTitle": "Prossimamente",
-      "comingSoonDescription": "Questo tipo di minigioco non è ancora giocabile."
+      "comingSoonDescription": "Questo tipo di minigioco non è ancora giocabile.",
+      "inviteTitle": "Sei stato invitato!",
+      "inviteDescription": "Scrivici per ottenere il tuo link e giocare a {name}.",
+      "inviteExpiredTitle": "Invito non disponibile",
+      "inviteExpiredDescription": "Questo link di invito non è valido o è scaduto."
     },
     "list": {
       "gamesPlayed": "Partite giocate",
       "participants": "Partecipanti",
-      "winners": "Vincitori"
+      "winners": "Vincitori",
+      "shares": "Referral"
     },
     "history": {
       "title": "Cronologia",
       "played": "Partite",
       "remaining": "Estrazioni rimanenti",
+      "shares": "Referral",
       "openedAt": "Prima apertura",
       "lastPlayedAt": "Ultima partita",
       "unknownContact": "Contatto sconosciuto",

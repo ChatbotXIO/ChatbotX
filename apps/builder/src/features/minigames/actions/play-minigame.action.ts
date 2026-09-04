@@ -7,9 +7,18 @@ import {
   minigameService,
 } from "@chatbotx.io/business/minigame"
 import { verifyMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
+import { cookies, headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
+import {
+  checkGuestRateLimit,
+  getGuestClientIp,
+} from "@/lib/rate-limit/guest-rate-limit"
 import { actionClient } from "@/lib/safe-action"
 import { MINIGAME_PLAY_SCREENS } from "../components/play/minigame-play-screen-registry"
+import {
+  minigameReferralCookieName,
+  readMinigameReferrerContactId,
+} from "../lib/referral-cookie"
 import { playMinigameRequest } from "../schema/action"
 
 export const playMinigameAction = actionClient
@@ -46,6 +55,26 @@ export const playMinigameAction = actionClient
     }
     const contactId = contactInbox.contactId
 
+    // The per-contact `remaining` counter used to be the only throttle on this
+    // unauthenticated endpoint; referral bonuses make it worth abusing, so
+    // meter it by IP too. `webchatId` is just the key namespace despite its
+    // name — prefixing keeps minigame buckets off webchat's.
+    const rateLimit = await checkGuestRateLimit({
+      webchatId: `minigame:${minigame.id}`,
+      clientIp: getGuestClientIp(await headers()),
+    })
+    if (rateLimit.limited) {
+      throw new ChatbotXException(t("forbiddenDescription"), "rateLimited", 429)
+    }
+
+    // Covers the case where a client calls the action before the page render
+    // has created this contact's play-state row; `resolvePlayState` still
+    // only stamps it on insert.
+    const referrerContactId = await readMinigameReferrerContactId({
+      minigameId: minigame.id,
+      workspaceId: minigame.workspaceId,
+    })
+
     let contactState: Awaited<
       ReturnType<typeof minigameContactService.recordPlayAndDispatch>
     >["contactState"]
@@ -59,6 +88,7 @@ export const playMinigameAction = actionClient
           contactId,
           contactInbox,
           minigame,
+          referrerContactId: referrerContactId ?? undefined,
         }))
     } catch (error) {
       if (
@@ -82,6 +112,12 @@ export const playMinigameAction = actionClient
         )
       }
       throw error
+    }
+
+    // The invite has done its job once this contact has played — clearing it
+    // is hygiene only, since the grant is already one-per-invitee-for-life.
+    if (referrerContactId) {
+      ;(await cookies()).delete(minigameReferralCookieName(minigame.id))
     }
 
     return { result, remaining: contactState.remaining }

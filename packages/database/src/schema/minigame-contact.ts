@@ -17,9 +17,13 @@ import { minigameModel } from "./minigame"
 /**
  * Tracks each contact's remaining plays for a minigame. Reading/writing
  * `remaining`/`played` and applying `playerSettings.resetPolicy` lives in
- * `MinigameContactService` (`packages/business/src/minigame`). Granting
- * bonus plays when `referrerContactId` shares successfully is still
- * unimplemented — deferred pending per-channel referral webhook support.
+ * `MinigameContactService` (`packages/business/src/minigame`).
+ *
+ * `referrerContactId` is stamped once, on this row's INSERT, from a signed
+ * referral token the invitee carried in a cookie — that "only on insert"
+ * rule is what enforces "the invitee had never played this minigame before".
+ * The referrer is credited on the invitee's first successful play; see
+ * `MinigameContactService.grantReferralBonus`.
  */
 export const minigameContactModel = pgTable(
   "MinigameContact",
@@ -40,6 +44,17 @@ export const minigameContactModel = pgTable(
     openedAt: timestamp(timestampConfig).notNull(),
     played: integer().default(0).notNull(),
     remaining: integer().default(0).notNull(),
+    // Qualified referrals credited to this contact for this minigame: a
+    // friend who arrived via this contact's invite link, became a Contact,
+    // and made their first successful play. Doubles as the bonus-draw
+    // ledger — each credit grants +1 `remaining`, and under
+    // `resetPolicy: "never"` the derivation in `resolvePlayState` treats
+    // `drawsPerPerson + min(sharesCount, cap) - played` as the live
+    // remaining, which is what keeps a granted bonus from being re-derived
+    // away. Never incremented past `playerSettings.maxSharesPerPerson`, so
+    // this is *credited* referrals; the raw per-edge ledger is
+    // `referrerContactId` on the invitees' own rows.
+    sharesCount: integer().default(0).notNull(),
     referrerContactId: bigintAsString().references(() => contactModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",

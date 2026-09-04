@@ -16,6 +16,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { playMinigameAction } from "../../actions/play-minigame.action"
+import type { MinigameShare } from "../../lib/minigame-share"
 import { MinigamePlayLayout } from "./minigame-play-layout"
 import { ResultDialog } from "./result-dialog"
 
@@ -23,6 +24,7 @@ type ScratchOffPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  share: MinigameShare | null
 }
 
 const REVEAL_DURATION_MS = 550
@@ -44,6 +46,7 @@ export function ScratchOffPlayScreen({
   minigame,
   contactState,
   token,
+  share,
 }: ScratchOffPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -135,6 +138,7 @@ export function ScratchOffPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
+      share={share}
       showName={generalSettings.showName ?? true}
       status={
         <>

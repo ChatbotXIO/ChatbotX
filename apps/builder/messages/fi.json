@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Arvontakertojen määrä per henkilö",
+      "maxSharesPerPerson": "Suosituksista saatavien bonusarvontojen enimmäismäärä",
+      "maxSharesPerPersonHint": "Jokainen ystävä, joka liittyy tämän pelaajan kutsulinkin kautta ja pelaa, tuo hänelle 1 lisäarvonnan tähän rajaan asti. Aseta 0 poistaaksesi suositusbonukset käytöstä. Bonusarvonnat on käytettävä ennen seuraavaa nollausta.",
       "resetPolicyLabel": "Nollaa arvonnat",
       "resetNever": "Älä nollaa arvontojen määrää",
       "resetEveryNDays": "Nollaa arvontojen määrä joka",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Pääsy evätty",
       "forbiddenDescription": "Tämä linkki on virheellinen tai vanhentunut.",
       "comingSoonTitle": "Tulossa pian",
-      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata."
+      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata.",
+      "inviteTitle": "Sinut on kutsuttu!",
+      "inviteDescription": "Ota meihin yhteyttä saadaksesi oman linkkisi ja pelataksesi peliä {name}.",
+      "inviteExpiredTitle": "Kutsu ei ole käytettävissä",
+      "inviteExpiredDescription": "Tämä kutsulinkki on virheellinen tai vanhentunut."
     },
     "list": {
       "gamesPlayed": "Pelatut pelit",
       "participants": "Osallistujat",
-      "winners": "Voittajat"
+      "winners": "Voittajat",
+      "shares": "Suositukset"
     },
     "history": {
       "title": "Historia",
       "played": "Pelikerrat",
       "remaining": "Jäljellä olevat arvonnat",
+      "shares": "Suositukset",
       "openedAt": "Avattu ensimmäisen kerran",
       "lastPlayedAt": "Viimeksi pelattu",
       "unknownContact": "Tuntematon kontakti",

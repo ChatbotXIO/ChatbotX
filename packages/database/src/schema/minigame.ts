@@ -52,6 +52,12 @@ export const minigameModel = pgTable(
     playsCount: integer().default(0).notNull(),
     participantsCount: integer().default(0).notNull(),
     winnersCount: integer().default(0).notNull(),
+    // Qualified referrals across the whole minigame. Only bumped when a
+    // per-contact credit actually lands (see `MinigameContact.sharesCount`),
+    // so `Minigame.sharesCount == SUM(MinigameContact.sharesCount)` always
+    // holds and the two admin tables add up. Referrals beyond a sharer's
+    // `playerSettings.maxSharesPerPerson` are deliberately uncounted here.
+    sharesCount: integer().default(0).notNull(),
   },
   (table) => [
     index("Minigame_workspaceId_idx").using(

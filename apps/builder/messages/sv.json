@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Antal lyckodragningar per person",
+      "maxSharesPerPerson": "Max antal bonusdragningar från hänvisningar",
+      "maxSharesPerPersonHint": "Varje vän som går med via den här spelarens inbjudningslänk och spelar ger spelaren 1 extra dragning, upp till den här gränsen. Ange 0 för att stänga av hänvisningsbonusar. Bonusdragningar måste användas före nästa återställning.",
       "resetPolicyLabel": "Återställ dragningar",
       "resetNever": "Återställ inte antalet dragningar",
       "resetEveryNDays": "Återställ antalet dragningar var",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Åtkomst nekad",
       "forbiddenDescription": "Den här länken är ogiltig eller har gått ut.",
       "comingSoonTitle": "Kommer snart",
-      "comingSoonDescription": "Den här typen av minispel går inte att spela än."
+      "comingSoonDescription": "Den här typen av minispel går inte att spela än.",
+      "inviteTitle": "Du är inbjuden!",
+      "inviteDescription": "Chatta med oss för att få din egen länk och spela {name}.",
+      "inviteExpiredTitle": "Inbjudan är inte tillgänglig",
+      "inviteExpiredDescription": "Den här inbjudningslänken är ogiltig eller har upphört att gälla."
     },
     "list": {
       "gamesPlayed": "Spelade spel",
       "participants": "Deltagare",
-      "winners": "Vinnare"
+      "winners": "Vinnare",
+      "shares": "Hänvisningar"
     },
     "history": {
       "title": "Historik",
       "played": "Spelade",
       "remaining": "Återstående dragningar",
+      "shares": "Hänvisningar",
       "openedAt": "Först öppnad",
       "lastPlayedAt": "Senast spelad",
       "unknownContact": "Okänd kontakt",

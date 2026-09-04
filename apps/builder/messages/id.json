@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Jumlah kesempatan undian per orang",
+      "maxSharesPerPerson": "Maks. putaran bonus dari referral",
+      "maxSharesPerPersonHint": "Setiap teman yang bergabung lewat tautan undangan pemain ini dan ikut bermain memberinya 1 putaran tambahan, hingga batas ini. Setel 0 untuk mematikan bonus referral. Putaran bonus harus dipakai sebelum reset berikutnya.",
       "resetPolicyLabel": "Reset undian",
       "resetNever": "Jangan reset jumlah undian",
       "resetEveryNDays": "Reset jumlah undian setiap",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Akses ditolak",
       "forbiddenDescription": "Tautan ini tidak valid atau telah kedaluwarsa.",
       "comingSoonTitle": "Segera hadir",
-      "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan."
+      "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan.",
+      "inviteTitle": "Kamu diundang!",
+      "inviteDescription": "Chat dengan kami untuk mendapatkan tautanmu sendiri dan memainkan {name}.",
+      "inviteExpiredTitle": "Undangan tidak tersedia",
+      "inviteExpiredDescription": "Tautan undangan ini tidak valid atau sudah kedaluwarsa."
     },
     "list": {
       "gamesPlayed": "Permainan dimainkan",
       "participants": "Peserta",
-      "winners": "Pemenang"
+      "winners": "Pemenang",
+      "shares": "Referral"
     },
     "history": {
       "title": "Riwayat",
       "played": "Jumlah main",
       "remaining": "Sisa undian",
+      "shares": "Referral",
       "openedAt": "Pertama dibuka",
       "lastPlayedAt": "Terakhir dimainkan",
       "unknownContact": "Kontak tidak dikenal",

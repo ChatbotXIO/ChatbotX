@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Antal lykketræk pr. person",
+      "maxSharesPerPerson": "Maks. bonustrækninger fra henvisninger",
+      "maxSharesPerPersonHint": "Hver ven, der tilmelder sig via denne spillers invitationslink og spiller, giver spilleren 1 ekstra trækning op til denne grænse. Sæt 0 for at slå henvisningsbonusser fra. Bonustrækninger skal bruges før næste nulstilling.",
       "resetPolicyLabel": "Nulstil antal træk",
       "resetNever": "Nulstil ikke antallet af træk",
       "resetEveryNDays": "Nulstil antallet af træk hver",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Adgang nægtet",
       "forbiddenDescription": "Dette link er ugyldigt eller udløbet.",
       "comingSoonTitle": "Kommer snart",
-      "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles."
+      "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles.",
+      "inviteTitle": "Du er inviteret!",
+      "inviteDescription": "Chat med os for at få dit eget link og spille {name}.",
+      "inviteExpiredTitle": "Invitation utilgængelig",
+      "inviteExpiredDescription": "Dette invitationslink er ugyldigt eller udløbet."
     },
     "list": {
       "gamesPlayed": "Spillede spil",
       "participants": "Deltagere",
-      "winners": "Vindere"
+      "winners": "Vindere",
+      "shares": "Henvisninger"
     },
     "history": {
       "title": "Historik",
       "played": "Spil",
       "remaining": "Resterende træk",
+      "shares": "Henvisninger",
       "openedAt": "Først åbnet",
       "lastPlayedAt": "Senest spillet",
       "unknownContact": "Ukendt kontakt",

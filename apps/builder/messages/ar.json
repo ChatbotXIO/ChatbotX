@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "عدد فرص السحب لكل شخص",
+      "maxSharesPerPerson": "الحد الأقصى للسحوبات الإضافية من الإحالات",
+      "maxSharesPerPersonHint": "كل صديق ينضم عبر رابط دعوة هذا اللاعب ويلعب يمنحه سحبة إضافية واحدة، حتى هذا الحد. اضبط 0 لإيقاف مكافآت الإحالة. يجب استخدام السحوبات الإضافية قبل إعادة التعيين التالية.",
       "resetPolicyLabel": "إعادة تعيين مرات السحب",
       "resetNever": "عدم إعادة تعيين عدد مرات السحب",
       "resetEveryNDays": "إعادة تعيين عدد مرات السحب كل",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "تم رفض الوصول",
       "forbiddenDescription": "هذا الرابط غير صالح أو منتهي الصلاحية.",
       "comingSoonTitle": "قريباً",
-      "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد."
+      "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد.",
+      "inviteTitle": "أنت مدعو!",
+      "inviteDescription": "تحدث معنا للحصول على رابطك الخاص ولعب {name}.",
+      "inviteExpiredTitle": "الدعوة غير متاحة",
+      "inviteExpiredDescription": "رابط الدعوة هذا غير صالح أو منتهي الصلاحية."
     },
     "list": {
       "gamesPlayed": "عدد مرات اللعب",
       "participants": "المشاركون",
-      "winners": "الفائزون"
+      "winners": "الفائزون",
+      "shares": "الإحالات"
     },
     "history": {
       "title": "السجل",
       "played": "عدد مرات اللعب",
       "remaining": "السحوبات المتبقية",
+      "shares": "الإحالات",
       "openedAt": "أول فتح",
       "lastPlayedAt": "آخر لعب",
       "unknownContact": "جهة اتصال غير معروفة",

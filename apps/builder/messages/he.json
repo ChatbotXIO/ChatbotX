@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "מספר הזדמנויות הגרלה לכל אדם",
+      "maxSharesPerPerson": "מקסימום הגרלות בונוס מהפניות",
+      "maxSharesPerPersonHint": "כל חבר שמצטרף דרך קישור ההזמנה של השחקן הזה ומשחק מזכה אותו בהגרלה נוספת אחת, עד למגבלה זו. הגדר 0 כדי לכבות בונוסי הפניה. יש להשתמש בהגרלות הבונוס לפני האיפוס הבא.",
       "resetPolicyLabel": "איפוס הגרלות",
       "resetNever": "אין לאפס את מספר ההגרלות",
       "resetEveryNDays": "איפוס מספר ההגרלות כל",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "הגישה נדחתה",
       "forbiddenDescription": "קישור זה אינו תקף או שפג תוקפו.",
       "comingSoonTitle": "בקרוב",
-      "comingSoonDescription": "לא ניתן עדיין לשחק בסוג מיני-משחק זה."
+      "comingSoonDescription": "לא ניתן עדיין לשחק בסוג מיני-משחק זה.",
+      "inviteTitle": "הוזמנת!",
+      "inviteDescription": "שוחח איתנו כדי לקבל קישור משלך ולשחק ב-{name}.",
+      "inviteExpiredTitle": "ההזמנה אינה זמינה",
+      "inviteExpiredDescription": "קישור ההזמנה אינו תקין או שפג תוקפו."
     },
     "list": {
       "gamesPlayed": "משחקים ששוחקו",
       "participants": "משתתפים",
-      "winners": "זוכים"
+      "winners": "זוכים",
+      "shares": "הפניות"
     },
     "history": {
       "title": "היסטוריה",
       "played": "משחקים",
       "remaining": "הגרלות שנותרו",
+      "shares": "הפניות",
       "openedAt": "נפתח לראשונה",
       "lastPlayedAt": "שוחק לאחרונה",
       "unknownContact": "איש קשר לא ידוע",

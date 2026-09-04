@@ -16,6 +16,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { playMinigameAction } from "../../actions/play-minigame.action"
+import type { MinigameShare } from "../../lib/minigame-share"
 import { MinigamePlayLayout } from "./minigame-play-layout"
 import { ResultDialog } from "./result-dialog"
 
@@ -23,6 +24,7 @@ type JackpotPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  share: MinigameShare | null
 }
 
 const SPIN_INTERVAL_MS = 100
@@ -62,6 +64,7 @@ export function JackpotPlayScreen({
   minigame,
   contactState,
   token,
+  share,
 }: JackpotPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -175,6 +178,7 @@ export function JackpotPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
+      share={share}
       showName={generalSettings.showName ?? true}
       status={
         <>

@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "1人あたりの抽選回数",
+      "maxSharesPerPerson": "紹介によるボーナス抽選の上限",
+      "maxSharesPerPersonHint": "このプレイヤーの招待リンクから参加してプレイした友だち1人につき抽選が1回増え、この上限まで加算されます。0 にすると紹介ボーナスを無効にします。ボーナス抽選は次回リセットまでに使用してください。",
       "resetPolicyLabel": "抽選回数のリセット",
       "resetNever": "抽選回数をリセットしない",
       "resetEveryNDays": "抽選回数を次の日数ごとにリセットする",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "アクセスが拒否されました",
       "forbiddenDescription": "このリンクは無効か、期限切れです。",
       "comingSoonTitle": "近日公開",
-      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。"
+      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。",
+      "inviteTitle": "招待されました！",
+      "inviteDescription": "チャットでご連絡いただくと専用リンクをお送りします。{name} をプレイしましょう。",
+      "inviteExpiredTitle": "招待を利用できません",
+      "inviteExpiredDescription": "この招待リンクは無効か、有効期限が切れています。"
     },
     "list": {
       "gamesPlayed": "プレイ回数",
       "participants": "参加者数",
-      "winners": "当選者数"
+      "winners": "当選者数",
+      "shares": "紹介数"
     },
     "history": {
       "title": "履歴",
       "played": "プレイ回数",
       "remaining": "残り回数",
+      "shares": "紹介数",
       "openedAt": "初回オープン",
       "lastPlayedAt": "最終プレイ",
       "unknownContact": "不明な連絡先",

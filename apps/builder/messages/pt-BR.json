@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Número de chances de sorteio por pessoa",
+      "maxSharesPerPerson": "Máx. de sorteios bônus por indicação",
+      "maxSharesPerPersonHint": "Cada amigo que entrar pelo link de convite deste jogador e jogar garante a ele 1 sorteio extra, até este limite. Defina 0 para desativar os bônus por indicação. Os sorteios bônus devem ser usados antes da próxima reinicialização.",
       "resetPolicyLabel": "Redefinir sorteios",
       "resetNever": "Não redefinir o número de sorteios",
       "resetEveryNDays": "Redefinir o número de sorteios a cada",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Acesso negado",
       "forbiddenDescription": "Este link é inválido ou expirou.",
       "comingSoonTitle": "Em breve",
-      "comingSoonDescription": "Este tipo de minigame ainda não pode ser jogado."
+      "comingSoonDescription": "Este tipo de minigame ainda não pode ser jogado.",
+      "inviteTitle": "Você foi convidado!",
+      "inviteDescription": "Fale com a gente para receber seu próprio link e jogar {name}.",
+      "inviteExpiredTitle": "Convite indisponível",
+      "inviteExpiredDescription": "Este link de convite é inválido ou expirou."
     },
     "list": {
       "gamesPlayed": "Jogos jogados",
       "participants": "Participantes",
-      "winners": "Ganhadores"
+      "winners": "Ganhadores",
+      "shares": "Indicações"
     },
     "history": {
       "title": "Histórico",
       "played": "Jogadas",
       "remaining": "Sorteios restantes",
+      "shares": "Indicações",
       "openedAt": "Primeira abertura",
       "lastPlayedAt": "Última jogada",
       "unknownContact": "Contato desconhecido",

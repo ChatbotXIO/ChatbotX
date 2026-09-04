@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Nombre de chances de tirage par personne",
+      "maxSharesPerPerson": "Tirages bonus max. par parrainage",
+      "maxSharesPerPersonHint": "Chaque ami qui rejoint via le lien d'invitation de ce joueur et joue lui rapporte 1 tirage supplémentaire, dans la limite indiquée. Mettez 0 pour désactiver les bonus de parrainage. Les tirages bonus doivent être utilisés avant la prochaine réinitialisation.",
       "resetPolicyLabel": "Réinitialiser les tirages",
       "resetNever": "Ne jamais réinitialiser le nombre de tirages",
       "resetEveryNDays": "Réinitialiser le nombre de tirages tous les",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Accès refusé",
       "forbiddenDescription": "Ce lien est invalide ou a expiré.",
       "comingSoonTitle": "Bientôt disponible",
-      "comingSoonDescription": "Ce type de minijeu n'est pas encore jouable."
+      "comingSoonDescription": "Ce type de minijeu n'est pas encore jouable.",
+      "inviteTitle": "Vous êtes invité !",
+      "inviteDescription": "Écrivez-nous pour obtenir votre propre lien et jouer à {name}.",
+      "inviteExpiredTitle": "Invitation indisponible",
+      "inviteExpiredDescription": "Ce lien d'invitation est invalide ou a expiré."
     },
     "list": {
       "gamesPlayed": "Parties jouées",
       "participants": "Participants",
-      "winners": "Gagnants"
+      "winners": "Gagnants",
+      "shares": "Parrainages"
     },
     "history": {
       "title": "Historique",
       "played": "Parties jouées",
       "remaining": "Tirages restants",
+      "shares": "Parrainages",
       "openedAt": "Première ouverture",
       "lastPlayedAt": "Dernière partie",
       "unknownContact": "Contact inconnu",

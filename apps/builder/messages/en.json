@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Number of lucky draw chances per person",
+      "maxSharesPerPerson": "Max bonus draws from referrals",
+      "maxSharesPerPersonHint": "Each friend who joins through this player's invite link and plays gets them 1 extra draw, up to this limit. Set 0 to turn referral bonuses off. Bonus draws must be used before the next reset.",
       "resetPolicyLabel": "Reset draws",
       "resetNever": "Do not reset the number of draws",
       "resetEveryNDays": "Reset the number of draws every",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Access denied",
       "forbiddenDescription": "This link is invalid or has expired.",
       "comingSoonTitle": "Coming soon",
-      "comingSoonDescription": "This minigame type is not playable yet."
+      "comingSoonDescription": "This minigame type is not playable yet.",
+      "inviteTitle": "You're invited!",
+      "inviteDescription": "Chat with us to get your own link and play {name}.",
+      "inviteExpiredTitle": "Invite unavailable",
+      "inviteExpiredDescription": "This invite link is invalid or has expired."
     },
     "list": {
       "gamesPlayed": "Games played",
       "participants": "Participants",
-      "winners": "Winners"
+      "winners": "Winners",
+      "shares": "Referrals"
     },
     "history": {
       "title": "History",
       "played": "Plays",
       "remaining": "Remaining draws",
+      "shares": "Referrals",
       "openedAt": "First opened",
       "lastPlayedAt": "Last played",
       "unknownContact": "Unknown contact",

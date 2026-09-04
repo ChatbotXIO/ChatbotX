@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Numărul de șanse de tragere norocoasă per persoană",
+      "maxSharesPerPerson": "Nr. maxim de extrageri bonus din recomandări",
+      "maxSharesPerPersonHint": "Fiecare prieten care se alătură prin linkul de invitație al acestui jucător și joacă îi aduce 1 extragere în plus, până la această limită. Setează 0 pentru a dezactiva bonusurile din recomandări. Extragerile bonus trebuie folosite înainte de următoarea resetare.",
       "resetPolicyLabel": "Resetare trageri",
       "resetNever": "Nu reseta numărul de trageri",
       "resetEveryNDays": "Resetează numărul de trageri la fiecare",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Acces refuzat",
       "forbiddenDescription": "Acest link este invalid sau a expirat.",
       "comingSoonTitle": "În curând",
-      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă."
+      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă.",
+      "inviteTitle": "Ai fost invitat!",
+      "inviteDescription": "Scrie-ne pentru a primi propriul link și a juca {name}.",
+      "inviteExpiredTitle": "Invitație indisponibilă",
+      "inviteExpiredDescription": "Acest link de invitație este invalid sau a expirat."
     },
     "list": {
       "gamesPlayed": "Jocuri jucate",
       "participants": "Participanți",
-      "winners": "Câștigători"
+      "winners": "Câștigători",
+      "shares": "Recomandări"
     },
     "history": {
       "title": "Istoric",
       "played": "Jocuri",
       "remaining": "Extrageri rămase",
+      "shares": "Recomandări",
       "openedAt": "Prima deschidere",
       "lastPlayedAt": "Ultimul joc",
       "unknownContact": "Contact necunoscut",

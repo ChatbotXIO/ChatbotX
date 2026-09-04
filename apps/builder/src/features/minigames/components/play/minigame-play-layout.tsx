@@ -2,6 +2,8 @@
 
 import type { MinigameAppearance } from "@chatbotx.io/database/partials"
 import type { ReactNode } from "react"
+import type { MinigameShare } from "../../lib/minigame-share"
+import { MinigameShareButton } from "./minigame-share-button"
 
 type MinigamePlayLayoutProps = {
   appearance: MinigameAppearance
@@ -12,6 +14,7 @@ type MinigamePlayLayoutProps = {
   art: ReactNode
   status: ReactNode
   dialog: ReactNode
+  share?: MinigameShare | null
 }
 
 /**
@@ -20,6 +23,10 @@ type MinigamePlayLayoutProps = {
  * name is shown (the name floats as an overlay instead of taking flow space,
  * so toggling it never shifts the art). New types add gameplay by supplying
  * `art`/`status`/`dialog`, not by re-implementing this layout.
+ *
+ * The share button lives here rather than inside each type's `status` slot so
+ * it stays visible in the out-of-draws / not-started / ended states too —
+ * out of draws is precisely when a player has a reason to invite someone.
  */
 export function MinigamePlayLayout({
   appearance,
@@ -30,6 +37,7 @@ export function MinigamePlayLayout({
   art,
   status,
   dialog,
+  share,
 }: MinigamePlayLayoutProps) {
   return (
     <div
@@ -53,6 +61,9 @@ export function MinigamePlayLayout({
       <div className="flex w-full flex-1 flex-col items-center justify-center gap-6">
         <div className="w-full max-w-xs">{art}</div>
         {status}
+        {share && (
+          <MinigameShareButton color={appearance.ruleTextColor} share={share} />
+        )}
       </div>
 
       {rulesDescription && (

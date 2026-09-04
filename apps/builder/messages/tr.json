@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Kişi başına şans çekiliş hakkı sayısı",
+      "maxSharesPerPerson": "Davetlerden kazanılabilecek en fazla bonus çekiliş",
+      "maxSharesPerPersonHint": "Bu oyuncunun davet bağlantısıyla katılıp oynayan her arkadaş, bu sınıra kadar ona 1 ek çekiliş kazandırır. Davet bonuslarını kapatmak için 0 girin. Bonus çekilişlerin bir sonraki sıfırlamadan önce kullanılması gerekir.",
       "resetPolicyLabel": "Çekilişleri sıfırla",
       "resetNever": "Çekiliş sayısını sıfırlama",
       "resetEveryNDays": "Çekiliş sayısını her şu kadar günde bir sıfırla",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Erişim reddedildi",
       "forbiddenDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
       "comingSoonTitle": "Çok yakında",
-      "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor."
+      "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor.",
+      "inviteTitle": "Davet edildiniz!",
+      "inviteDescription": "Kendi bağlantınızı almak ve {name} oynamak için bizimle sohbet edin.",
+      "inviteExpiredTitle": "Davet kullanılamıyor",
+      "inviteExpiredDescription": "Bu davet bağlantısı geçersiz veya süresi dolmuş."
     },
     "list": {
       "gamesPlayed": "Oynanan oyunlar",
       "participants": "Katılımcılar",
-      "winners": "Kazananlar"
+      "winners": "Kazananlar",
+      "shares": "Davetler"
     },
     "history": {
       "title": "Geçmiş",
       "played": "Oynama sayısı",
       "remaining": "Kalan çekiliş",
+      "shares": "Davetler",
       "openedAt": "İlk açılış",
       "lastPlayedAt": "Son oynama",
       "unknownContact": "Bilinmeyen kişi",

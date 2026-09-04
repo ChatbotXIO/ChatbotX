@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Aantal trekkingskansen per persoon",
+      "maxSharesPerPerson": "Max. bonustrekkingen uit verwijzingen",
+      "maxSharesPerPersonHint": "Elke vriend die via de uitnodigingslink van deze speler meedoet en speelt, levert 1 extra trekking op, tot aan deze limiet. Zet op 0 om verwijzingsbonussen uit te schakelen. Bonustrekkingen moeten voor de volgende reset worden gebruikt.",
       "resetPolicyLabel": "Trekkingen resetten",
       "resetNever": "Aantal trekkingen niet resetten",
       "resetEveryNDays": "Reset het aantal trekkingen elke",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Toegang geweigerd",
       "forbiddenDescription": "Deze link is ongeldig of verlopen.",
       "comingSoonTitle": "Binnenkort beschikbaar",
-      "comingSoonDescription": "Dit type minispel is nog niet speelbaar."
+      "comingSoonDescription": "Dit type minispel is nog niet speelbaar.",
+      "inviteTitle": "Je bent uitgenodigd!",
+      "inviteDescription": "Chat met ons voor je eigen link en speel {name}.",
+      "inviteExpiredTitle": "Uitnodiging niet beschikbaar",
+      "inviteExpiredDescription": "Deze uitnodigingslink is ongeldig of verlopen."
     },
     "list": {
       "gamesPlayed": "Gespeelde spellen",
       "participants": "Deelnemers",
-      "winners": "Winnaars"
+      "winners": "Winnaars",
+      "shares": "Verwijzingen"
     },
     "history": {
       "title": "Geschiedenis",
       "played": "Gespeeld",
       "remaining": "Resterende trekkingen",
+      "shares": "Verwijzingen",
       "openedAt": "Eerst geopend",
       "lastPlayedAt": "Laatst gespeeld",
       "unknownContact": "Onbekend contact",

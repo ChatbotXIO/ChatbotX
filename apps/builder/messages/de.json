@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Anzahl der Gewinnspielversuche pro Person",
+      "maxSharesPerPerson": "Max. Bonusziehungen durch Empfehlungen",
+      "maxSharesPerPersonHint": "Jeder Freund, der über den Einladungslink dieses Spielers teilnimmt und spielt, bringt ihm 1 zusätzliche Ziehung, bis zu diesem Limit. Auf 0 setzen, um Empfehlungsboni zu deaktivieren. Bonusziehungen müssen vor dem nächsten Zurücksetzen genutzt werden.",
       "resetPolicyLabel": "Versuche zurücksetzen",
       "resetNever": "Anzahl der Versuche nicht zurücksetzen",
       "resetEveryNDays": "Anzahl der Versuche zurücksetzen alle",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Zugriff verweigert",
       "forbiddenDescription": "Dieser Link ist ungültig oder abgelaufen.",
       "comingSoonTitle": "Demnächst verfügbar",
-      "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar."
+      "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar.",
+      "inviteTitle": "Du bist eingeladen!",
+      "inviteDescription": "Schreib uns, um deinen eigenen Link zu erhalten und {name} zu spielen.",
+      "inviteExpiredTitle": "Einladung nicht verfügbar",
+      "inviteExpiredDescription": "Dieser Einladungslink ist ungültig oder abgelaufen."
     },
     "list": {
       "gamesPlayed": "Gespielte Spiele",
       "participants": "Teilnehmer",
-      "winners": "Gewinner"
+      "winners": "Gewinner",
+      "shares": "Empfehlungen"
     },
     "history": {
       "title": "Verlauf",
       "played": "Spiele",
       "remaining": "Verbleibende Versuche",
+      "shares": "Empfehlungen",
       "openedAt": "Zuerst geöffnet",
       "lastPlayedAt": "Zuletzt gespielt",
       "unknownContact": "Unbekannter Kontakt",

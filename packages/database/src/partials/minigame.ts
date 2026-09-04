@@ -55,15 +55,34 @@ export const minigameAppearanceSchema = z.object({
 })
 export type MinigameAppearance = z.infer<typeof minigameAppearanceSchema>
 
+/**
+ * Shared across both reset policies. Extended (not intersected) into each
+ * branch because `z.discriminatedUnion` requires every option to be a
+ * `ZodObject`, and `.and()` produces a `ZodIntersection`.
+ */
+const minigamePlayerSettingsBase = z.object({
+  drawsPerPerson: z.number().int().min(1).default(1),
+  /**
+   * Cap on bonus draws one player can earn by referring friends to this
+   * minigame (see `MinigameContact.sharesCount`). `0` disables referral
+   * bonuses. Lifetime, not per reset cycle: under `everyNDays` the cap keeps
+   * counting across cycles while unused bonus draws expire with the cycle.
+   *
+   * `playerSettings` is stored as unvalidated jsonb and is never parsed on
+   * read, so rows written before this field existed have no key at all —
+   * every consumer must read it as `maxSharesPerPerson ?? 0`, which also
+   * keeps referral bonuses off for minigames created before the feature.
+   */
+  maxSharesPerPerson: z.number().int().min(0).max(100).default(0),
+})
+
 export const minigamePlayerSettingsSchema = z.discriminatedUnion(
   "resetPolicy",
   [
-    z.object({
-      drawsPerPerson: z.number().int().min(1).default(1),
+    minigamePlayerSettingsBase.extend({
       resetPolicy: z.literal("never"),
     }),
-    z.object({
-      drawsPerPerson: z.number().int().min(1).default(1),
+    minigamePlayerSettingsBase.extend({
       resetPolicy: z.literal("everyNDays"),
       resetIntervalDays: z.number().int().min(1).default(1),
     }),

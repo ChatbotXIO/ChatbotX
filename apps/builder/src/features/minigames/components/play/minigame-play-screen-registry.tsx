@@ -4,6 +4,7 @@ import type {
   MinigameModel,
 } from "@chatbotx.io/database/types"
 import type { ComponentType } from "react"
+import type { MinigameShare } from "../../lib/minigame-share"
 import { DrawLotsPlayScreen } from "./draw-lots-play-screen"
 import { GashaponPlayScreen } from "./gashapon-play-screen"
 import { JackpotPlayScreen } from "./jackpot-play-screen"
@@ -14,6 +15,8 @@ export type MinigamePlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  /** `null` when the workspace turned sharing off for this minigame. */
+  share: MinigameShare | null
 }
 
 export const MINIGAME_PLAY_SCREENS: Partial<

@@ -224,12 +224,23 @@ export function MinigameForm(props: MinigameFormProps) {
   })
 
   const handleResetPolicyChange = (value: "never" | "everyNDays") => {
+    // Rebuilds the whole discriminated-union value, so every field shared by
+    // both branches has to be carried over explicitly — dropping one here
+    // silently loses the setting and does NOT fail typecheck, because the
+    // narrower object literal still satisfies the branch.
     const drawsPerPerson = form.getValues("playerSettings.drawsPerPerson") ?? 1
+    const maxSharesPerPerson =
+      form.getValues("playerSettings.maxSharesPerPerson") ?? 0
     form.setValue(
       "playerSettings",
       value === "never"
-        ? { drawsPerPerson, resetPolicy: "never" }
-        : { drawsPerPerson, resetPolicy: "everyNDays", resetIntervalDays: 1 },
+        ? { drawsPerPerson, maxSharesPerPerson, resetPolicy: "never" }
+        : {
+            drawsPerPerson,
+            maxSharesPerPerson,
+            resetPolicy: "everyNDays",
+            resetIntervalDays: 1,
+          },
       { shouldDirty: true, shouldValidate: true },
     )
   }
@@ -361,15 +372,26 @@ export function MinigameForm(props: MinigameFormProps) {
                   options={tagOptions}
                   placeholder={t("actions.pleaseSelect")}
                 />
-                {/* Referral feature temporarily hidden — `newFriendTagIds`
-                    is not yet applied by any service (no referral link
-                    param, no referrerContactId population). Restore this
-                    MultiSelectField (generalSettings.newFriendTagIds) once
-                    the backend wiring exists, so admins don't configure tags
-                    that silently never get applied. */}
-                {/* Share feature temporarily hidden — restore SwitchField
-                    (generalSettings.shareEnabled) + TextareaField
-                    (generalSettings.shareMessage) here to re-enable. */}
+                <MultiSelectField
+                  label={t("minigames.generalSettings.newFriendTags")}
+                  name="generalSettings.newFriendTagIds"
+                  options={tagOptions}
+                  placeholder={t("actions.pleaseSelect")}
+                />
+                <SwitchField
+                  formItemClassName="w-max"
+                  label={t("minigames.generalSettings.shareEnabled")}
+                  name="generalSettings.shareEnabled"
+                />
+                {generalSettings?.shareEnabled !== false && (
+                  <TextareaField
+                    description={t(
+                      "minigames.generalSettings.shareMessageHint",
+                    )}
+                    label={t("minigames.generalSettings.shareMessage")}
+                    name="generalSettings.shareMessage"
+                  />
+                )}
               </CardContent>
             </Card>
 
@@ -471,6 +493,15 @@ export function MinigameForm(props: MinigameFormProps) {
                   required
                 />
 
+                <InputNumberField
+                  description={t(
+                    "minigames.playerSettings.maxSharesPerPersonHint",
+                  )}
+                  label={t("minigames.playerSettings.maxSharesPerPerson")}
+                  min={0}
+                  name="playerSettings.maxSharesPerPerson"
+                />
+
                 <div className="flex flex-col gap-3">
                   <Label>
                     {t("minigames.playerSettings.resetPolicyLabel")}
@@ -546,7 +577,7 @@ export function MinigameForm(props: MinigameFormProps) {
               name={generalSettings?.name ?? ""}
               prizeSettings={prizeSettingsForPreview}
               rulesDescription={generalSettings?.rulesDescription ?? ""}
-              shareEnabled={false}
+              shareEnabled={generalSettings?.shareEnabled ?? true}
               showName={generalSettings?.showName ?? true}
               type={type}
             />

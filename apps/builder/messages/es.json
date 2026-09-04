@@ -5638,6 +5638,8 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Número de intentos de sorteo por persona",
+      "maxSharesPerPerson": "Máx. tiradas extra por referidos",
+      "maxSharesPerPersonHint": "Cada amigo que se una mediante el enlace de invitación de este jugador y juegue le otorga 1 tirada extra, hasta este límite. Pon 0 para desactivar las bonificaciones por referidos. Las tiradas extra deben usarse antes del siguiente reinicio.",
       "resetPolicyLabel": "Reiniciar intentos",
       "resetNever": "No reiniciar el número de intentos",
       "resetEveryNDays": "Reiniciar el número de intentos cada",
@@ -5656,17 +5658,23 @@
       "forbiddenTitle": "Acceso denegado",
       "forbiddenDescription": "Este enlace no es válido o ha caducado.",
       "comingSoonTitle": "Próximamente",
-      "comingSoonDescription": "Este tipo de minijuego aún no está disponible."
+      "comingSoonDescription": "Este tipo de minijuego aún no está disponible.",
+      "inviteTitle": "¡Te han invitado!",
+      "inviteDescription": "Escríbenos para obtener tu propio enlace y jugar a {name}.",
+      "inviteExpiredTitle": "Invitación no disponible",
+      "inviteExpiredDescription": "Este enlace de invitación no es válido o ha caducado."
     },
     "list": {
       "gamesPlayed": "Partidas jugadas",
       "participants": "Participantes",
-      "winners": "Ganadores"
+      "winners": "Ganadores",
+      "shares": "Referidos"
     },
     "history": {
       "title": "Historial",
       "played": "Jugadas",
       "remaining": "Tiradas restantes",
+      "shares": "Referidos",
       "openedAt": "Primera apertura",
       "lastPlayedAt": "Última jugada",
       "unknownContact": "Contacto desconocido",
