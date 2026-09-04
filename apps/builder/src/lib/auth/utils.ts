@@ -1,9 +1,6 @@
 "use server"
 
-import {
-  resolveWorkspaceMembership,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { resolveWorkspaceAccess } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type {
@@ -109,6 +106,7 @@ export const getCurrentUserAndTargetWorkspace = async (
   user: SessionUser
   targetWorkspace: WorkspaceModel
   targetWorkspaceMember: WorkspaceMemberModel
+  isSupportSession: boolean
   allWorkspaces: WorkspaceModel[]
   allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
 } | null> => {
@@ -121,28 +119,19 @@ export const getCurrentUserAndTargetWorkspace = async (
     (workspaceMember) => workspaceMember.workspaceId === workspaceId,
   )
 
-  // A platform-support caller has no real membership row, so the workspace
-  // must be fetched directly to check `isSupportAccessEnabled` — it won't be
-  // present in the user's real, cached `allWorkspaceMembers` list.
-  const targetWorkspace =
-    realMember?.workspace ??
-    (await workspaceService.find({ where: { id: workspaceId } }))
-  if (!targetWorkspace) {
-    return null
-  }
-
-  const targetWorkspaceMember = resolveWorkspaceMembership({
+  const access = await resolveWorkspaceAccess({
     realMember,
-    workspace: targetWorkspace,
+    workspaceId,
     user: userAndWorkspaces.user,
   })
-  if (!targetWorkspaceMember) {
+  if (!access) {
     return null
   }
 
   return {
     ...userAndWorkspaces,
-    targetWorkspace,
-    targetWorkspaceMember,
+    targetWorkspace: access.workspace,
+    targetWorkspaceMember: access.member,
+    isSupportSession: access.isSupportSession,
   }
 }

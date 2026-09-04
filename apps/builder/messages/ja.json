@@ -2965,7 +2965,8 @@
       "enabledUntil": "{time} まで有効",
       "permissionRequired": "プラットフォームサポートアクセスを変更するにはスーパー管理者である必要があります。",
       "enabledToast": "プラットフォームサポートアクセスを有効にしました。",
-      "disabledToast": "プラットフォームサポートアクセスを無効にしました。"
+      "disabledToast": "プラットフォームサポートアクセスを無効にしました。",
+      "toggleError": "問題が発生しました。もう一度お試しください。"
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "サポート状況",
       "openAsSupport": "サポートとして開く",
       "supportEnabledUntil": "{time} まで有効",
-      "supportOff": "オフ"
+      "supportOff": "オフ",
+      "searchPlaceholder": "名前、オーナーのメール、IDで検索"
     }
   },
   "platformCredentials": {

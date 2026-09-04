@@ -1,6 +1,6 @@
 "use client"
 
-import { isSupportAccessEnabled } from "@chatbotx.io/business"
+import { isSupportAccessEnabled } from "@chatbotx.io/business/workspace-member/predicates"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import {
@@ -12,10 +12,8 @@ import { formatDate } from "@chatbotx.io/ui/lib/format"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
-import { safeActionErrorHandler } from "@/lib/errors/safe-action-error-handler"
 import { toggleSupportAccessAction } from "../actions/toggle-support-access.action"
 
 export function SupportAccessCard({
@@ -24,7 +22,7 @@ export function SupportAccessCard({
 }: {
   workspace: {
     id: string
-    supportAccessUntil: Date | string | null
+    supportAccessUntil: string | Date | null
   }
   canManage: boolean
 }) {
@@ -32,29 +30,15 @@ export function SupportAccessCard({
   const locale = useLocale()
   const router = useRouter()
 
-  const [enabled, setEnabled] = useState(() =>
-    isSupportAccessEnabled({
-      supportAccessUntil: workspace.supportAccessUntil
-        ? new Date(workspace.supportAccessUntil)
-        : null,
-    }),
-  )
-
-  useEffect(() => {
-    setEnabled(
-      isSupportAccessEnabled({
-        supportAccessUntil: workspace.supportAccessUntil
-          ? new Date(workspace.supportAccessUntil)
-          : null,
-      }),
-    )
-  }, [workspace.supportAccessUntil])
+  const supportAccessUntil = workspace.supportAccessUntil
+    ? new Date(workspace.supportAccessUntil)
+    : null
+  const enabled = isSupportAccessEnabled({ supportAccessUntil })
 
   const { execute, isPending } = useAction(
     toggleSupportAccessAction.bind(null, workspace.id),
     {
       onSuccess: ({ input }) => {
-        setEnabled(input.enabled)
         toast.success(
           input.enabled
             ? t("workspace.supportAccess.enabledToast")
@@ -62,19 +46,23 @@ export function SupportAccessCard({
         )
         router.refresh()
       },
-      onError: safeActionErrorHandler,
+      onError: ({ error }) =>
+        toast.error(
+          error.serverError ?? t("workspace.supportAccess.toggleError"),
+        ),
     },
   )
 
-  const enabledUntilText = workspace.supportAccessUntil
-    ? t("workspace.supportAccess.enabledUntil", {
-        time: formatDate(workspace.supportAccessUntil, {
-          hour: "numeric",
-          minute: "numeric",
-          locale,
-        }),
-      })
-    : null
+  const enabledUntilText =
+    enabled && supportAccessUntil
+      ? t("workspace.supportAccess.enabledUntil", {
+          time: formatDate(supportAccessUntil, {
+            hour: "numeric",
+            minute: "numeric",
+            locale,
+          }),
+        })
+      : null
 
   const switchElement = (
     <Switch
@@ -91,7 +79,7 @@ export function SupportAccessCard({
           description={
             <>
               <p>{t("workspace.supportAccess.cardDescription")}</p>
-              {enabled && enabledUntilText && <p>{enabledUntilText}</p>}
+              {enabledUntilText && <p>{enabledUntilText}</p>}
             </>
           }
           label={t("workspace.supportAccess.cardTitle")}

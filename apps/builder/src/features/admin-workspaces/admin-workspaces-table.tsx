@@ -1,26 +1,21 @@
 "use client"
 
-import { isSupportAccessEnabled } from "@chatbotx.io/business"
+import { isSupportAccessEnabled } from "@chatbotx.io/business/workspace-member/predicates"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { MoreHorizontalIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
-import type { listAdminWorkspaces } from "./queries"
-import type { ListAdminWorkspacesResponse } from "./schema/query"
+import type {
+  ListAdminWorkspacesResponse,
+  listAdminWorkspaces,
+} from "./queries"
 
 type AdminWorkspacesTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listAdminWorkspaces>>]>
@@ -42,7 +37,6 @@ function OwnerCell({
 export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
   const [{ data, pageCount }] = use(promises)
   const t = useTranslations()
-  const router = useRouter()
 
   const columns = useMemo<
     ColumnDef<ListAdminWorkspacesResponse["data"][number]>[]
@@ -57,6 +51,14 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
           />
         ),
         cell: ({ row }) => row.original.name,
+        meta: {
+          label: t("fields.name.label"),
+          placeholder: t("platformAdmin.workspaces.searchPlaceholder"),
+          variant: "text",
+          filterKey: "keyword",
+        },
+        enableColumnFilter: true,
+        enableSorting: false,
         enableHiding: false,
       },
       {
@@ -68,6 +70,7 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
           />
         ),
         cell: ({ row }) => <OwnerCell row={row.original} />,
+        enableSorting: false,
         enableHiding: false,
       },
       {
@@ -79,6 +82,7 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
           />
         ),
         cell: ({ row }) => row.original.tenantName ?? "—",
+        enableSorting: false,
       },
       {
         id: "createdAt",
@@ -89,6 +93,7 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
           />
         ),
         cell: ({ row }) => format(row.original.createdAt, "PP"),
+        enableSorting: false,
       },
       {
         id: "supportStatus",
@@ -100,11 +105,14 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
         ),
         cell: ({ row }) => {
           const { supportAccessUntil } = row.original
-          if (isSupportAccessEnabled({ supportAccessUntil })) {
+          if (
+            supportAccessUntil &&
+            isSupportAccessEnabled({ supportAccessUntil })
+          ) {
             return (
               <Badge variant="secondary">
                 {t("platformAdmin.workspaces.supportEnabledUntil", {
-                  time: format(supportAccessUntil as Date, "PPp"),
+                  time: format(supportAccessUntil, "PPp"),
                 })}
               </Badge>
             )
@@ -116,40 +124,35 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
             </span>
           )
         },
+        enableSorting: false,
       },
       {
         id: "actions",
         cell: ({ row }) => {
-          const canOpenAsSupport = isSupportAccessEnabled({
-            supportAccessUntil: row.original.supportAccessUntil,
-          })
+          const { supportAccessUntil, id } = row.original
+          if (
+            !(
+              supportAccessUntil &&
+              isSupportAccessEnabled({ supportAccessUntil })
+            )
+          ) {
+            return null
+          }
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button size="icon" variant="ghost">
-                    <MoreHorizontalIcon className="h-4 w-4" />
-                    <span className="sr-only">{t("actions.openMenu")}</span>
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end">
-                {canOpenAsSupport && (
-                  <DropdownMenuItem
-                    onClick={() => router.push(`/space/${row.original.id}`)}
-                  >
-                    {t("platformAdmin.workspaces.openAsSupport")}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              render={<Link href={`/space/${id}`} />}
+              size="sm"
+              variant="outline"
+            >
+              {t("platformAdmin.workspaces.openAsSupport")}
+            </Button>
           )
         },
         enableHiding: false,
       },
     ],
-    [t, router],
+    [t],
   )
 
   const { table } = useDataTable({
@@ -157,7 +160,6 @@ export function AdminWorkspacesTable({ promises }: AdminWorkspacesTableProps) {
     columns,
     pageCount,
     initialState: {
-      sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
     getRowId: (originalRow) => originalRow.id,

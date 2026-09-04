@@ -2986,7 +2986,8 @@
       "enabledUntil": "Activat până la {time}",
       "permissionRequired": "Trebuie să fii super administrator pentru a modifica accesul de suport al platformei.",
       "enabledToast": "Accesul de suport al platformei a fost activat.",
-      "disabledToast": "Accesul de suport al platformei a fost dezactivat."
+      "disabledToast": "Accesul de suport al platformei a fost dezactivat.",
+      "toggleError": "Ceva nu a mers bine. Vă rugăm să încercați din nou."
     }
   },
   "workspaces": {
@@ -4737,7 +4738,8 @@
       "supportStatus": "Stare suport",
       "openAsSupport": "Deschide ca suport",
       "supportEnabledUntil": "Activat până la {time}",
-      "supportOff": "Dezactivat"
+      "supportOff": "Dezactivat",
+      "searchPlaceholder": "Căutați după nume, e-mailul proprietarului sau ID"
     }
   },
   "platformBranding": {

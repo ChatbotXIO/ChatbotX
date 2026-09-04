@@ -756,7 +756,8 @@
       "enabledUntil": "Habilitado hasta {time}",
       "permissionRequired": "Debes ser superadministrador para cambiar el acceso de soporte de la plataforma.",
       "enabledToast": "Acceso de soporte de la plataforma habilitado.",
-      "disabledToast": "Acceso de soporte de la plataforma deshabilitado."
+      "disabledToast": "Acceso de soporte de la plataforma deshabilitado.",
+      "toggleError": "Algo salió mal. Por favor, inténtalo de nuevo."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Estado de soporte",
       "openAsSupport": "Abrir como soporte",
       "supportEnabledUntil": "Habilitado hasta {time}",
-      "supportOff": "Desactivado"
+      "supportOff": "Desactivado",
+      "searchPlaceholder": "Buscar por nombre, correo del propietario o ID"
     }
   },
   "platformCredentials": {

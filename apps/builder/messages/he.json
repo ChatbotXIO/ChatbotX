@@ -1130,7 +1130,8 @@
       "enabledUntil": "מופעל עד {time}",
       "permissionRequired": "עליך להיות מנהל-על כדי לשנות את גישת התמיכה של הפלטפורמה.",
       "enabledToast": "גישת תמיכה של הפלטפורמה הופעלה.",
-      "disabledToast": "גישת תמיכה של הפלטפורמה כובתה."
+      "disabledToast": "גישת תמיכה של הפלטפורמה כובתה.",
+      "toggleError": "משהו השתבש. נסה שוב."
     }
   },
   "workspaces": {
@@ -2695,7 +2696,8 @@
       "supportStatus": "סטטוס תמיכה",
       "openAsSupport": "פתח כתמיכה",
       "supportEnabledUntil": "מופעל עד {time}",
-      "supportOff": "כבוי"
+      "supportOff": "כבוי",
+      "searchPlaceholder": "חפש לפי שם, אימייל של הבעלים או מזהה"
     }
   },
   "platformCredentials": {

@@ -2986,7 +2986,8 @@
       "enabledUntil": "Käytössä {time} asti",
       "permissionRequired": "Sinun on oltava pääylläpitäjä muuttaaksesi alustan tukipääsyä.",
       "enabledToast": "Alustan tukipääsy otettu käyttöön.",
-      "disabledToast": "Alustan tukipääsy poistettu käytöstä."
+      "disabledToast": "Alustan tukipääsy poistettu käytöstä.",
+      "toggleError": "Jokin meni pieleen. Yritä uudelleen."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Tuen tila",
       "openAsSupport": "Avaa tukena",
       "supportEnabledUntil": "Käytössä {time} asti",
-      "supportOff": "Pois"
+      "supportOff": "Pois",
+      "searchPlaceholder": "Hae nimen, omistajan sähköpostin tai tunnuksen perusteella"
     }
   },
   "platformCredentials": {

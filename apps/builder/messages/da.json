@@ -2986,7 +2986,8 @@
       "enabledUntil": "Aktiveret indtil {time}",
       "permissionRequired": "Du skal være superadministrator for at ændre platformssupportadgang.",
       "enabledToast": "Platformssupportadgang aktiveret.",
-      "disabledToast": "Platformssupportadgang deaktiveret."
+      "disabledToast": "Platformssupportadgang deaktiveret.",
+      "toggleError": "Der opstod en fejl. Prøv venligst igen."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Supportstatus",
       "openAsSupport": "Åbn som support",
       "supportEnabledUntil": "Aktiveret indtil {time}",
-      "supportOff": "Fra"
+      "supportOff": "Fra",
+      "searchPlaceholder": "Søg efter navn, ejerens e-mail eller id"
     }
   },
   "platformCredentials": {

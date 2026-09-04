@@ -756,7 +756,8 @@
       "enabledUntil": "{time} tarihine kadar etkin",
       "permissionRequired": "Platform destek erişimini değiştirmek için süper yönetici olmanız gerekir.",
       "enabledToast": "Platform destek erişimi etkinleştirildi.",
-      "disabledToast": "Platform destek erişimi devre dışı bırakıldı."
+      "disabledToast": "Platform destek erişimi devre dışı bırakıldı.",
+      "toggleError": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Destek durumu",
       "openAsSupport": "Destek olarak aç",
       "supportEnabledUntil": "{time} tarihine kadar etkin",
-      "supportOff": "Kapalı"
+      "supportOff": "Kapalı",
+      "searchPlaceholder": "Ada, sahibinin e-postasına veya kimliğe göre ara"
     }
   },
   "platformCredentials": {

@@ -3956,7 +3956,8 @@
       "supportStatus": "Supportstatus",
       "openAsSupport": "Öppna som support",
       "supportEnabledUntil": "Aktiverad till {time}",
-      "supportOff": "Av"
+      "supportOff": "Av",
+      "searchPlaceholder": "Sök efter namn, ägarens e-post eller ID"
     }
   },
   "platformBranding": {
@@ -5075,7 +5076,8 @@
       "enabledUntil": "Aktiverad till {time}",
       "permissionRequired": "Du måste vara superadministratör för att ändra plattformens supportåtkomst.",
       "enabledToast": "Plattformens supportåtkomst aktiverad.",
-      "disabledToast": "Plattformens supportåtkomst inaktiverad."
+      "disabledToast": "Plattformens supportåtkomst inaktiverad.",
+      "toggleError": "Något gick fel. Försök igen."
     }
   },
   "workspaceToken": {

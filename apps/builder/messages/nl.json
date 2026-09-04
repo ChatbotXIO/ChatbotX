@@ -2986,7 +2986,8 @@
       "enabledUntil": "Ingeschakeld tot {time}",
       "permissionRequired": "Je moet superbeheerder zijn om platformondersteuningstoegang te wijzigen.",
       "enabledToast": "Platformondersteuningstoegang ingeschakeld.",
-      "disabledToast": "Platformondersteuningstoegang uitgeschakeld."
+      "disabledToast": "Platformondersteuningstoegang uitgeschakeld.",
+      "toggleError": "Er is iets misgegaan. Probeer het opnieuw."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Ondersteuningsstatus",
       "openAsSupport": "Openen als ondersteuning",
       "supportEnabledUntil": "Ingeschakeld tot {time}",
-      "supportOff": "Uit"
+      "supportOff": "Uit",
+      "searchPlaceholder": "Zoeken op naam, e-mailadres eigenaar of ID"
     }
   },
   "platformCredentials": {

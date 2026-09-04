@@ -3,16 +3,24 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@chatbotx.io/ui/components/ui/alert"
+import { formatDate } from "@chatbotx.io/ui/lib/format"
 import { ShieldCheckIcon } from "lucide-react"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 export async function SupportAccessBanner({
   supportAccessUntil,
 }: {
-  supportAccessUntil: Date | null
+  supportAccessUntil: Date
 }) {
-  const t = await getTranslations("workspace.supportAccess")
-  const time = supportAccessUntil?.toLocaleString() ?? ""
+  const [t, locale] = await Promise.all([
+    getTranslations("workspace.supportAccess"),
+    getLocale(),
+  ])
+  const time = formatDate(supportAccessUntil, {
+    hour: "numeric",
+    minute: "numeric",
+    locale,
+  })
 
   return (
     <Alert variant="default">

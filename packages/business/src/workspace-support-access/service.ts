@@ -1,4 +1,14 @@
-import { db, eq, ilike, or, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  desc,
+  eq,
+  ilike,
+  isNotNull,
+  lt,
+  or,
+  sql,
+} from "@chatbotx.io/database/client"
 import {
   tenantModel,
   userModel,
@@ -10,8 +20,9 @@ import {
 } from "@chatbotx.io/database/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
 import { logger } from "../logger"
-import { workspaceService } from "../workspace/service"
+import type { PaginatedResult } from "../types"
 
 export const SUPPORT_ACCESS_WINDOW_DAYS = 7
 
@@ -61,16 +72,18 @@ export class WorkspaceSupportAccessService extends BaseService {
   }): Promise<void> {
     const { workspaceId, actorUserId } = props
 
-    await workspaceService.findOrFail({ where: { id: workspaceId } })
-
     const supportAccessUntil = new Date(
       Date.now() + SUPPORT_ACCESS_WINDOW_DAYS * 24 * 60 * 60 * 1000,
     )
 
-    await db
+    const [updated] = await db
       .update(workspaceModel)
       .set({ supportAccessUntil })
       .where(eq(workspaceModel.id, workspaceId))
+      .returning({ id: workspaceModel.id })
+    if (!updated) {
+      throw notFoundException("Workspace not found")
+    }
 
     await this.invalidateCacheTags([`workspaces:${workspaceId}`])
 
@@ -94,10 +107,14 @@ export class WorkspaceSupportAccessService extends BaseService {
   }): Promise<void> {
     const { workspaceId, actorUserId } = props
 
-    await db
+    const [updated] = await db
       .update(workspaceModel)
       .set({ supportAccessUntil: null })
       .where(eq(workspaceModel.id, workspaceId))
+      .returning({ id: workspaceModel.id })
+    if (!updated) {
+      throw notFoundException("Workspace not found")
+    }
 
     await this.invalidateCacheTags([`workspaces:${workspaceId}`])
 
@@ -109,9 +126,32 @@ export class WorkspaceSupportAccessService extends BaseService {
     })
   }
 
+  /**
+   * Sweeps every workspace whose `supportAccessUntil` window has passed and
+   * clears it back to null. Access is already gated by comparing
+   * `supportAccessUntil > now()` on every read (`isSupportAccessEnabled`),
+   * so this does not change what is authorized — it only tidies the stale
+   * timestamp for display/reporting (e.g. the admin workspaces list). No
+   * audit record: this is not a security-relevant transition, just cleanup.
+   */
+  async clearExpired(): Promise<number> {
+    const updated = await db
+      .update(workspaceModel)
+      .set({ supportAccessUntil: null })
+      .where(
+        and(
+          isNotNull(workspaceModel.supportAccessUntil),
+          lt(workspaceModel.supportAccessUntil, new Date()),
+        ),
+      )
+      .returning({ id: workspaceModel.id })
+
+    return updated.length
+  }
+
   async listWorkspaces(
     input: ListWorkspacesInput,
-  ): Promise<{ data: ListWorkspacesRow[]; pageCount: number }> {
+  ): Promise<PaginatedResult<ListWorkspacesRow>> {
     const { keyword } = input
     const pagination = getPaginationWithDefaults(input)
 
@@ -142,7 +182,7 @@ export class WorkspaceSupportAccessService extends BaseService {
         .where(keywordFilter)
         .orderBy(
           sql`(${workspaceModel.supportAccessUntil} > now()) DESC NULLS LAST`,
-          workspaceModel.createdAt,
+          desc(workspaceModel.createdAt),
         )
         .limit(pagination.limit)
         .offset(pagination.offset),
@@ -150,7 +190,6 @@ export class WorkspaceSupportAccessService extends BaseService {
         .select({ count: sql<number>`count(*)::int` })
         .from(workspaceModel)
         .innerJoin(userModel, eq(workspaceModel.ownerId, userModel.id))
-        .innerJoin(tenantModel, eq(workspaceModel.tenantId, tenantModel.id))
         .where(keywordFilter),
     ])
 

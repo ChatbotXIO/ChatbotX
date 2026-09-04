@@ -2986,7 +2986,8 @@
       "enabledUntil": "Aktiviert bis {time}",
       "permissionRequired": "Du musst Super-Administrator sein, um den Plattform-Support-Zugriff zu ändern.",
       "enabledToast": "Plattform-Support-Zugriff aktiviert.",
-      "disabledToast": "Plattform-Support-Zugriff deaktiviert."
+      "disabledToast": "Plattform-Support-Zugriff deaktiviert.",
+      "toggleError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Support-Status",
       "openAsSupport": "Als Support öffnen",
       "supportEnabledUntil": "Aktiviert bis {time}",
-      "supportOff": "Aus"
+      "supportOff": "Aus",
+      "searchPlaceholder": "Suche nach Name, Besitzer-E-Mail oder ID"
     }
   },
   "platformCredentials": {

@@ -30,6 +30,7 @@ export const ScheduleJobData = {
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
   purgeWorkspaces: "purgeWorkspaces",
+  clearExpiredSupportAccess: "clearExpiredSupportAccess",
   purgeBroadcasts: "purgeBroadcasts",
   purgeAutomationThrottle: "purgeAutomationThrottle",
   purgeErrorLogs: "purgeErrorLogs",
@@ -182,6 +183,11 @@ export type ScheduleJobPurgeWorkspaces = {
   data: Record<string, never>
 }
 
+export type ScheduleJobClearExpiredSupportAccess = {
+  type: typeof ScheduleJobData.clearExpiredSupportAccess
+  data: Record<string, never>
+}
+
 export type ScheduleJobPurgeBroadcasts = {
   type: typeof ScheduleJobData.purgeBroadcasts
   data: Record<string, never>
@@ -235,6 +241,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions
   | ScheduleJobPurgeWorkspaces
+  | ScheduleJobClearExpiredSupportAccess
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobPurgeErrorLogs

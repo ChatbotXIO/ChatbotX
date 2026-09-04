@@ -55,8 +55,11 @@ export const workspaceModel = pgTable(
     // means the owner has consented to the super admin opening this
     // workspace — `isSupportAccessEnabled` is the read-time check every gate
     // uses to synthesize the super admin's membership; there is no separate
-    // grant row. Set by the Settings → General toggle, cleared by the owner
-    // or after the fixed 7-day window.
+    // grant row, and access is never gated by whether this column has been
+    // cleared. Set by the Settings → General toggle; cleared immediately by
+    // the owner turning it off, or by the daily `clearExpiredSupportAccess`
+    // cron once the window passes (that cron is cleanup only — it doesn't
+    // change what's authorized, since reads already ignore a past date).
     supportAccessUntil: timestamp(timestampConfig),
     // Meta Conversions API Limited Data Use (plan #3) — a workspace-level
     // toggle only; there is no per-contact opt_out in v1 (needs a dedicated,
@@ -91,5 +94,6 @@ export const workspaceModel = pgTable(
   (table) => [
     index("Workspace_tenantId_idx").on(table.tenantId),
     index("Workspace_scheduledDeletionAt_idx").on(table.scheduledDeletionAt),
+    index("Workspace_supportAccessUntil_idx").on(table.supportAccessUntil),
   ],
 )

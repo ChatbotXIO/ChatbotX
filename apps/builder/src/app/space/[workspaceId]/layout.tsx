@@ -4,9 +4,8 @@ import {
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
-  resolveWorkspaceMembership,
+  resolveWorkspaceAccess,
   workspaceMemberService,
-  workspaceService,
 } from "@chatbotx.io/business"
 import {
   SidebarInset,
@@ -68,23 +67,15 @@ export default async function WorkspaceLayout({
   const realMember = allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspace.id === workspaceId,
   )
-  // A platform-support caller has no real membership row, so the workspace
-  // must be fetched directly to check `isSupportAccessEnabled` — it won't be
-  // present in the user's cached `listByUserId` result.
-  const targetWorkspace =
-    realMember?.workspace ??
-    (await workspaceService.find({ where: { id: workspaceId } }))
-  if (!targetWorkspace) {
+  const access = await resolveWorkspaceAccess({ realMember, workspaceId, user })
+  if (!access) {
     return notFound()
   }
-  const targetWorkspaceMember = resolveWorkspaceMembership({
-    realMember,
+  const {
     workspace: targetWorkspace,
-    user,
-  })
-  if (!targetWorkspaceMember) {
-    return notFound()
-  }
+    member: targetWorkspaceMember,
+    isSupportSession,
+  } = access
 
   const [
     { blocked, blockReason, quota, trialEndsAt },
@@ -109,21 +100,19 @@ export default async function WorkspaceLayout({
   const resolveLogoUrl = (logo: string | null) =>
     logo ? new URL(logo, storageUrl).toString() : null
 
-  const allWorkspaces = realMember
-    ? allWorkspaceMembers.map((workspaceMember) => ({
-        ...workspaceMember.workspace,
-        logo: resolveLogoUrl(workspaceMember.workspace.logo),
-      }))
-    : // A support session's workspace has no real membership row, so it is
-      // never in `allWorkspaceMembers` — append it so the sidebar switcher
-      // still shows the workspace currently being viewed.
-      [
-        ...allWorkspaceMembers.map((workspaceMember) => ({
-          ...workspaceMember.workspace,
-          logo: resolveLogoUrl(workspaceMember.workspace.logo),
-        })),
+  const memberWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
+    ...workspaceMember.workspace,
+    logo: resolveLogoUrl(workspaceMember.workspace.logo),
+  }))
+  // A support session's workspace has no real membership row, so it is never
+  // in `allWorkspaceMembers` — append it so the sidebar switcher still shows
+  // the workspace currently being viewed.
+  const allWorkspaces = isSupportSession
+    ? [
+        ...memberWorkspaces,
         { ...targetWorkspace, logo: resolveLogoUrl(targetWorkspace.logo) },
       ]
+    : memberWorkspaces
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
@@ -170,7 +159,7 @@ export default async function WorkspaceLayout({
             workspaceId={workspaceId}
           />
           <ScheduledDeletionBanner scheduled={scheduledForDeletion} />
-          {!realMember && (
+          {isSupportSession && targetWorkspace.supportAccessUntil && (
             <SupportAccessBanner
               supportAccessUntil={targetWorkspace.supportAccessUntil}
             />

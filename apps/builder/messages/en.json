@@ -756,7 +756,8 @@
       "enabledUntil": "Enabled until {time}",
       "permissionRequired": "You need to be a super admin to change platform support access.",
       "enabledToast": "Platform support access enabled.",
-      "disabledToast": "Platform support access disabled."
+      "disabledToast": "Platform support access disabled.",
+      "toggleError": "Something went wrong. Please try again."
     }
   },
   "workspaces": {
@@ -4916,7 +4917,8 @@
       "supportStatus": "Support status",
       "openAsSupport": "Open as support",
       "supportEnabledUntil": "Enabled until {time}",
-      "supportOff": "Off"
+      "supportOff": "Off",
+      "searchPlaceholder": "Search by name, owner email or ID"
     }
   },
   "platformCredentials": {

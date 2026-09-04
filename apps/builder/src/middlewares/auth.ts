@@ -1,8 +1,7 @@
 import {
   isWorkspaceScheduledForDeletion,
-  resolveWorkspaceMembership,
+  resolveWorkspaceAccess,
   workspaceMemberService,
-  workspaceService,
 } from "@chatbotx.io/business"
 import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ORPCError } from "@orpc/server"
@@ -55,26 +54,17 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       userId: context.user.id,
     })
 
-    // A real membership's workspace comes attached; a platform-support
-    // caller has no row, so the workspace must be fetched separately to
-    // check `isSupportAccessEnabled`.
-    const workspace =
-      realMembership?.workspace ??
-      (await workspaceService.find({ where: { id: workspaceId } }))
-
-    if (!workspace) {
-      throw new ORPCError("UNAUTHORIZED")
-    }
-
-    const workspaceMember = resolveWorkspaceMembership({
+    const access = await resolveWorkspaceAccess({
       realMember: realMembership,
-      workspace,
+      workspaceId,
       user: context.user,
     })
 
-    if (!workspaceMember) {
+    if (!access) {
       throw new ORPCError("UNAUTHORIZED")
     }
+
+    const { workspace } = access
 
     if (isWorkspaceScheduledForDeletion(workspace)) {
       throw new ORPCError("FORBIDDEN", {

@@ -2986,7 +2986,8 @@
       "enabledUntil": "Activé jusqu'à {time}",
       "permissionRequired": "Vous devez être super administrateur pour modifier l'accès au support de la plateforme.",
       "enabledToast": "Accès au support de la plateforme activé.",
-      "disabledToast": "Accès au support de la plateforme désactivé."
+      "disabledToast": "Accès au support de la plateforme désactivé.",
+      "toggleError": "Une erreur s'est produite. Veuillez réessayer."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Statut du support",
       "openAsSupport": "Ouvrir en tant que support",
       "supportEnabledUntil": "Activé jusqu'à {time}",
-      "supportOff": "Désactivé"
+      "supportOff": "Désactivé",
+      "searchPlaceholder": "Rechercher par nom, e-mail du propriétaire ou ID"
     }
   },
   "platformCredentials": {

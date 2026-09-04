@@ -284,6 +284,23 @@ export const registerSchedules = async () => {
     },
   )
 
+  // Access is already gated by comparing `supportAccessUntil > now()` on
+  // every read, so this cron only tidies the stale timestamp for
+  // display/reporting hygiene — daily is plenty.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.clearExpiredSupportAccess,
+    {
+      pattern: "0 3 * * *",
+    },
+    {
+      name: ScheduleJobData.clearExpiredSupportAccess,
+      data: {
+        type: ScheduleJobData.clearExpiredSupportAccess,
+        data: {},
+      },
+    },
+  )
+
   // Deliberately NOT in CLOUD_ONLY_SCHEDULERS — recipient-row retention
   // applies to every edition.
   await scheduleQueue.upsertJobScheduler(

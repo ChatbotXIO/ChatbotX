@@ -55,7 +55,11 @@ describe("buildSupportMembership", () => {
 
 describe("resolveWorkspaceMembership", () => {
   test("returns the real member when one exists, without checking super admin", () => {
-    const realMember = { userId: "user-1", role: "owner" as const }
+    const realMember = {
+      userId: "user-1",
+      role: "owner" as const,
+      permissions: { superAdmin: true } as never,
+    }
 
     const result = resolveWorkspaceMembership({
       realMember,

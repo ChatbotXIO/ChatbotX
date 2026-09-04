@@ -2986,7 +2986,8 @@
       "enabledUntil": "Diaktifkan hingga {time}",
       "permissionRequired": "Anda harus menjadi super admin untuk mengubah akses dukungan platform.",
       "enabledToast": "Akses dukungan platform diaktifkan.",
-      "disabledToast": "Akses dukungan platform dinonaktifkan."
+      "disabledToast": "Akses dukungan platform dinonaktifkan.",
+      "toggleError": "Terjadi kesalahan. Silakan coba lagi."
     }
   },
   "workspaces": {
@@ -4551,7 +4552,8 @@
       "supportStatus": "Status dukungan",
       "openAsSupport": "Buka sebagai dukungan",
       "supportEnabledUntil": "Diaktifkan hingga {time}",
-      "supportOff": "Nonaktif"
+      "supportOff": "Nonaktif",
+      "searchPlaceholder": "Cari berdasarkan nama, email pemilik, atau ID"
     }
   },
   "platformCredentials": {

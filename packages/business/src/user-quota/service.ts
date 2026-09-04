@@ -564,7 +564,7 @@ class UserQuotaService extends BaseService {
   private async countDistinctTeamMembers(
     scope: { ownerId: string } | { tenantId: string },
   ): Promise<number> {
-    const scopeWhere =
+    const where =
       "ownerId" in scope
         ? eq(workspaceModel.ownerId, scope.ownerId)
         : eq(workspaceModel.tenantId, scope.tenantId)
@@ -575,7 +575,7 @@ class UserQuotaService extends BaseService {
         workspaceModel,
         eq(workspaceMemberModel.workspaceId, workspaceModel.id),
       )
-      .where(scopeWhere)
+      .where(where)
     return rows[0]?.count ?? 0
   }
 

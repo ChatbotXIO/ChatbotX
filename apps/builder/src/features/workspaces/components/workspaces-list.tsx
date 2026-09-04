@@ -121,7 +121,6 @@ const WorkspaceCard = ({
   canManageStatus,
   t,
 }: WorkspaceCardProps) => {
-  const badgeLabel = ownerLabel ?? ""
   const firstLetter = workspace.name?.[0]?.toUpperCase() ?? ""
   const name = workspace.name ?? ""
   const href = `/space/${workspace.id}`
@@ -137,9 +136,9 @@ const WorkspaceCard = ({
   return (
     <Card className={cn(CARD_STYLES, "relative")}>
       <CardContent className="px-0">
-        {badgeLabel ? (
+        {ownerLabel ? (
           <span className="absolute end-3 top-3 z-10 rounded-full bg-secondary px-2 py-0.5 font-medium text-[10px] text-secondary-foreground uppercase tracking-wide">
-            {badgeLabel}
+            {ownerLabel}
           </span>
         ) : null}
         <WorkspaceStatusSwitch

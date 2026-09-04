@@ -3956,7 +3956,8 @@
       "supportStatus": "支持状态",
       "openAsSupport": "以支持身份打开",
       "supportEnabledUntil": "已启用，至 {time}",
-      "supportOff": "已关闭"
+      "supportOff": "已关闭",
+      "searchPlaceholder": "按名称、所有者邮箱或 ID 搜索"
     }
   },
   "platformBranding": {
@@ -5075,7 +5076,8 @@
       "enabledUntil": "已启用，至 {time}",
       "permissionRequired": "您需要是超级管理员才能更改平台支持访问权限。",
       "enabledToast": "已启用平台支持访问。",
-      "disabledToast": "已禁用平台支持访问。"
+      "disabledToast": "已禁用平台支持访问。",
+      "toggleError": "出现问题，请重试。"
     }
   },
   "workspaceToken": {

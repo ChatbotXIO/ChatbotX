@@ -756,7 +756,8 @@
       "enabledUntil": "مفعّل حتى {time}",
       "permissionRequired": "يجب أن تكون مسؤولاً فائقاً لتغيير وصول دعم المنصة.",
       "enabledToast": "تم تفعيل وصول دعم المنصة.",
-      "disabledToast": "تم إيقاف وصول دعم المنصة."
+      "disabledToast": "تم إيقاف وصول دعم المنصة.",
+      "toggleError": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
     }
   },
   "workspaces": {
@@ -4386,7 +4387,8 @@
       "supportStatus": "حالة الدعم",
       "openAsSupport": "فتح كدعم",
       "supportEnabledUntil": "مفعّل حتى {time}",
-      "supportOff": "متوقف"
+      "supportOff": "متوقف",
+      "searchPlaceholder": "ابحث بالاسم أو بريد المالك الإلكتروني أو المعرف"
     }
   },
   "platformCredentials": {

@@ -2366,7 +2366,8 @@
       "enabledUntil": "已啟用，至 {time}",
       "permissionRequired": "您需要是超級管理員才能變更平台支援存取權限。",
       "enabledToast": "已啟用平台支援存取。",
-      "disabledToast": "已停用平台支援存取。"
+      "disabledToast": "已停用平台支援存取。",
+      "toggleError": "發生錯誤，請重試。"
     }
   },
   "workspaces": {
@@ -4584,7 +4585,8 @@
       "supportStatus": "支援狀態",
       "openAsSupport": "以支援身分開啟",
       "supportEnabledUntil": "已啟用，至 {time}",
-      "supportOff": "已關閉"
+      "supportOff": "已關閉",
+      "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋"
     }
   },
   "platformCredentials": {

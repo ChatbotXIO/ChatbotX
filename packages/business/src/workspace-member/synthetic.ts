@@ -5,23 +5,8 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { isSuperAdmin } from "../user/utils"
+import { FULL_WORKSPACE_MEMBER_PERMISSIONS } from "./permissions"
 import { isSupportAccessEnabled } from "./predicates"
-
-// Mirrors `getSuperAdminPermissions()` in
-// apps/builder/src/features/workspace-members/helpers.ts — duplicated here
-// because that helper lives in the app layer and packages/business cannot
-// import from apps/. A support session always gets full workspace access —
-// no read-only mode (see docs/support-access.md for why).
-export const SUPPORT_ACCESS_PERMISSIONS: WorkspaceMemberPermissions = {
-  superAdmin: true,
-  analytics: true,
-  flows: true,
-  contacts: true,
-  onlyAssignedContacts: true,
-  emailAndPhone: true,
-  broadcast: true,
-  ecommerce: true,
-}
 
 const SUPPORT_MEMBER_ID_PREFIX = "support-access"
 
@@ -60,7 +45,7 @@ export function buildSupportMembership(props: {
       newMessageToHuman: false,
       newOrder: false,
     },
-    permissions: SUPPORT_ACCESS_PERMISSIONS,
+    permissions: FULL_WORKSPACE_MEMBER_PERMISSIONS,
   }
 }
 
@@ -69,13 +54,15 @@ export function buildSupportMembership(props: {
  * membership: a real row if one exists, otherwise a synthetic support
  * membership if the caller is the platform super admin and the workspace
  * owner has opted in (`isSupportAccessEnabled`). Returns `undefined` when
- * neither applies — the caller has no access to this workspace.
+ * neither applies — the caller has no access to this workspace. Only needs
+ * `id`/`supportAccessUntil` off `workspace` — callers already have the full
+ * row in hand, but the signature shouldn't imply more is required.
  */
 export function resolveWorkspaceMembership<
-  TMember extends { userId: string },
+  TMember extends { userId: string; permissions: WorkspaceMemberPermissions },
 >(props: {
   realMember: TMember | undefined
-  workspace: WorkspaceModel
+  workspace: Pick<WorkspaceModel, "id" | "supportAccessUntil">
   user: Pick<UserModel, "id" | "email">
 }): TMember | WorkspaceMemberModel | undefined {
   const { realMember, workspace, user } = props

@@ -756,7 +756,8 @@
       "enabledUntil": "Đã bật đến {time}",
       "permissionRequired": "Bạn cần là quản trị viên cấp cao để thay đổi quyền truy cập hỗ trợ nền tảng.",
       "enabledToast": "Đã bật quyền truy cập hỗ trợ nền tảng.",
-      "disabledToast": "Đã tắt quyền truy cập hỗ trợ nền tảng."
+      "disabledToast": "Đã tắt quyền truy cập hỗ trợ nền tảng.",
+      "toggleError": "Đã xảy ra lỗi. Vui lòng thử lại."
     }
   },
   "workspaces": {
@@ -4729,7 +4730,8 @@
       "supportStatus": "Trạng thái hỗ trợ",
       "openAsSupport": "Mở với vai trò hỗ trợ",
       "supportEnabledUntil": "Đã bật đến {time}",
-      "supportOff": "Tắt"
+      "supportOff": "Tắt",
+      "searchPlaceholder": "Tìm kiếm theo tên, email chủ sở hữu hoặc ID"
     }
   },
   "platformCredentials": {
