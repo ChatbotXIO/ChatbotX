@@ -2185,6 +2185,22 @@
       "full": "Acceso completo",
       "readOnly": "Solo lectura"
     },
+    "tokenScopes": {
+      "label": "Ámbitos",
+      "contacts": "Contactos",
+      "inbox": "Bandeja de entrada",
+      "automation": "Automatización",
+      "broadcasts": "Difusiones",
+      "analytics": "Analítica",
+      "ecommerce": "Comercio electrónico",
+      "integrations": "Integraciones",
+      "members": "Miembros",
+      "channels": "Canales",
+      "minigames": "Minijuegos",
+      "appointments": "Citas",
+      "media": "Medios",
+      "ads": "Anuncios"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Generate un token un todosow tu workspace un access el public APIs. Keep este token secret y hacer not share it con cualquierone.",
     "createDialogTitle": "Crear token de API",
     "namePlaceholder": "p. ej. integración de Zapier",
-    "empty": "Aún no hay tokens de API."
+    "empty": "Aún no hay tokens de API.",
+    "defaultBadge": "Predeterminado",
+    "allScopes": "Todos los ámbitos"
   },
   "contacts": {
     "title": "Contactos",

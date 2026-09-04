@@ -62,9 +62,9 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     // token-guessing flood gets unthrottled hash + DB lookups.
     await assertPreAuthNotRateLimited(context.headers)
 
-    // Hash-only lookup: WorkspaceApiToken is the sole token store (the
-    // create_workspace_api_token migration backfills every legacy plaintext
-    // token and drops the column in the same run).
+    // Hash-only lookup: WorkspaceApiToken.tokenHash is authoritative for
+    // auth. The deprecated Workspace.token column (kept read-only for
+    // {{api_key}}) is never consulted here.
     const tokenHash = await hashToken(token)
     let auth: Awaited<
       ReturnType<typeof workspaceApiTokenService.findWorkspaceByTokenHash>
@@ -127,6 +127,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     return await next({
       context: {
         workspace,
+        apiToken,
       },
     })
   },

@@ -34,6 +34,7 @@ export const createWorkspaceTokenAction = workspaceActionClient
         permission: parsedInput.permission,
         tokenHash,
         tokenPrefix,
+        scopes: parsedInput.allScopes ? null : parsedInput.scopes,
       })
 
       // Plaintext exists only in this return value — never persisted.

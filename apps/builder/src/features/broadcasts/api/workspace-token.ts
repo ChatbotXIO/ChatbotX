@@ -1,5 +1,8 @@
 import z from "zod"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
+
 import {
   listBroadcastAudience,
   listBroadcasts,

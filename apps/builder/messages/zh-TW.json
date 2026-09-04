@@ -1424,6 +1424,22 @@
       "full": "完整存取權",
       "readOnly": "唯讀"
     },
+    "tokenScopes": {
+      "label": "範圍",
+      "contacts": "聯絡人",
+      "inbox": "收件匣",
+      "automation": "自動化",
+      "broadcasts": "群發",
+      "analytics": "分析",
+      "ecommerce": "電子商務",
+      "integrations": "整合",
+      "members": "成員",
+      "channels": "頻道",
+      "minigames": "小遊戲",
+      "appointments": "預約",
+      "media": "媒體",
+      "ads": "廣告"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3912,7 +3928,9 @@
     "description": "產生權杖以允許您的工作區存取公共 API。請將此權杖保密，不要與任何人共享。",
     "createDialogTitle": "建立 API 權杖",
     "namePlaceholder": "例如：Zapier 整合",
-    "empty": "尚無 API 權杖。"
+    "empty": "尚無 API 權杖。",
+    "defaultBadge": "預設",
+    "allScopes": "所有範圍"
   },
   "contacts": {
     "title": "聯絡人",

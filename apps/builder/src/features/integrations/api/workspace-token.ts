@@ -4,7 +4,9 @@ import {
   integrationModel,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
 
 const integrationResource = createSelectSchema(integrationModel, {
   id: z.string(),

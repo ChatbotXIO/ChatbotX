@@ -13,7 +13,7 @@ type CapturedProcedure = {
   handler?: (...args: any[]) => any
 }
 
-const { workspaceTokenAuthAPI, capturedProcedures } = vi.hoisted(() => {
+const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
   const capturedProcedures: CapturedProcedure[] = []
 
   const makeProcedure = (route: RouteConfig) => {
@@ -32,15 +32,17 @@ const { workspaceTokenAuthAPI, capturedProcedures } = vi.hoisted(() => {
     return chain
   }
 
+  const workspaceTokenAuthAPI = {
+    route: vi.fn((config: RouteConfig) => makeProcedure(config)),
+  }
+
   return {
-    workspaceTokenAuthAPI: {
-      route: vi.fn((config: RouteConfig) => makeProcedure(config)),
-    },
+    workspaceTokenAuthAPIForScope: vi.fn(() => workspaceTokenAuthAPI),
     capturedProcedures,
   }
 })
 
-vi.mock("@/orpc", () => ({ workspaceTokenAuthAPI }))
+vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const webhookService = {
   listByWorkspaceId: vi.fn(),

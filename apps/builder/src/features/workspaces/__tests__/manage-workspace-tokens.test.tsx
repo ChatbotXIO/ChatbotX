@@ -5,6 +5,29 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { WorkspaceApiTokenDto } from "../schema/workspace-token-dto"
 
+// jsdom has no PointerEvent constructor; Base UI's Checkbox reads pointer
+// event fields (`pointerType`) inside its own click handler, so a plain
+// MouseEvent/`.click()` throws there. Polyfill with MouseEvent's fields,
+// matching the common jsdom + Base UI test workaround (see
+// apps/builder/__tests__/category-resource-list-selection.test.tsx).
+class PointerEventPolyfill extends MouseEvent {
+  pointerType: string
+  constructor(type: string, params: PointerEventInit = {}) {
+    super(type, params)
+    this.pointerType = params.pointerType ?? "mouse"
+  }
+}
+;(
+  window as unknown as { PointerEvent: typeof PointerEventPolyfill }
+).PointerEvent ??= PointerEventPolyfill
+
+const clickCheckbox = async (node: Element) => {
+  await act(async () => {
+    node.dispatchEvent(new window.PointerEvent("click", { bubbles: true }))
+    await Promise.resolve()
+  })
+}
+
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
     values ? `${key}:${JSON.stringify(values)}` : key,
@@ -86,7 +109,9 @@ const baseToken: WorkspaceApiTokenDto = {
   name: "My token",
   permission: "full",
   tokenPrefix: "cbx_ws_abcd",
+  isDefault: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),
+  scopes: null,
 }
 
 describe("ManageWorkspaceTokens", () => {
@@ -127,7 +152,7 @@ describe("ManageWorkspaceTokens", () => {
     expect(container.querySelector("table")).not.toBeNull()
   })
 
-  it("renders a row per token, masking legacy null-prefix tokens generically", async () => {
+  it("renders a row per token, masking legacy null-tokenPrefix tokens generically", async () => {
     const legacyToken = {
       ...baseToken,
       id: "token-2",
@@ -139,10 +164,67 @@ describe("ManageWorkspaceTokens", () => {
     const rows = container.querySelectorAll("tbody tr")
     expect(rows).toHaveLength(2)
     expect(container.textContent).toContain("cbx_ws_abcd••••••••")
-    expect(container.textContent).toContain("••••••••••••")
+    expect(container.textContent).toContain("••••••••")
     expect(container.textContent).not.toContain("null")
-    // The DTO passed in must never carry a hash for the page to leak.
+    // The DTO passed in must never carry a hash or the encrypted blob for
+    // the page to leak.
     expect(container.innerHTML).not.toContain("tokenHash")
+    expect(container.innerHTML).not.toContain("encryptedToken")
+  })
+
+  it("shows a default badge next to the workspace's default token", async () => {
+    const defaultToken = {
+      ...baseToken,
+      id: "token-3",
+      name: "Default token",
+      isDefault: true,
+    }
+    await render([baseToken, defaultToken])
+
+    expect(container.textContent).toContain("developerAccessToken.defaultBadge")
+  })
+
+  it("shows an 'All scopes' badge for a null-scopes token", async () => {
+    await render([baseToken])
+
+    expect(container.textContent).toContain("developerAccessToken.allScopes")
+  })
+
+  it("shows scope labels for a scoped token", async () => {
+    const scopedToken: WorkspaceApiTokenDto = {
+      ...baseToken,
+      id: "token-4",
+      scopes: ["contacts", "inbox"],
+    }
+    await render([scopedToken])
+
+    expect(container.textContent).toContain("fields.tokenScopes.contacts")
+    expect(container.textContent).toContain("fields.tokenScopes.inbox")
+  })
+
+  it("hides the scope checkbox group while 'All scopes' is checked, and shows it once unchecked", async () => {
+    await render([])
+
+    const createTriggerButton = Array.from(
+      container.querySelectorAll("button"),
+    ).find((button) => button.textContent?.includes("actions.create"))
+    await act(async () => {
+      createTriggerButton?.click()
+      await Promise.resolve()
+    })
+
+    const allScopesCheckbox =
+      document.body.querySelector<HTMLElement>('[role="checkbox"]')
+    expect(allScopesCheckbox).not.toBeNull()
+    expect(document.body.textContent).not.toContain(
+      "fields.tokenScopes.contacts",
+    )
+
+    if (allScopesCheckbox) {
+      await clickCheckbox(allScopesCheckbox)
+    }
+
+    expect(document.body.textContent).toContain("fields.tokenScopes.contacts")
   })
 
   it("create success reveals the returned token exactly once", async () => {

@@ -2185,6 +2185,22 @@
       "full": "Toàn quyền truy cập",
       "readOnly": "Chỉ đọc"
     },
+    "tokenScopes": {
+      "label": "Phạm vi",
+      "contacts": "Liên hệ",
+      "inbox": "Hộp thư đến",
+      "automation": "Tự động hóa",
+      "broadcasts": "Phát sóng",
+      "analytics": "Phân tích",
+      "ecommerce": "Thương mại điện tử",
+      "integrations": "Tích hợp",
+      "members": "Thành viên",
+      "channels": "Kênh",
+      "minigames": "Minigame",
+      "appointments": "Lịch hẹn",
+      "media": "Phương tiện",
+      "ads": "Quảng cáo"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3792,7 +3808,9 @@
     "description": "Tạo token để cho phép workspace của bạn truy cập API công khai. Giữ token này bí mật và không chia sẻ với ai.",
     "createDialogTitle": "Tạo mã API",
     "namePlaceholder": "vd: tích hợp Zapier",
-    "empty": "Chưa có mã API nào."
+    "empty": "Chưa có mã API nào.",
+    "defaultBadge": "Mặc định",
+    "allScopes": "Tất cả phạm vi"
   },
   "contacts": {
     "title": "Liên hệ",

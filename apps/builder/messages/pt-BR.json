@@ -2111,6 +2111,22 @@
       "full": "Acesso total",
       "readOnly": "Somente leitura"
     },
+    "tokenScopes": {
+      "label": "Escopos",
+      "contacts": "Contatos",
+      "inbox": "Caixa de entrada",
+      "automation": "Automação",
+      "broadcasts": "Transmissões",
+      "analytics": "Análises",
+      "ecommerce": "E-commerce",
+      "integrations": "Integrações",
+      "members": "Membros",
+      "channels": "Canais",
+      "minigames": "Minijogos",
+      "appointments": "Agendamentos",
+      "media": "Mídia",
+      "ads": "Anúncios"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3772,7 +3788,9 @@
     "description": "Gere um token para permitir que seu espaço de trabalho acesse as APIs públicas. Mantenha este token em segredo e não o compartilhe com ninguém.",
     "createDialogTitle": "Criar token de API",
     "namePlaceholder": "ex.: integração com Zapier",
-    "empty": "Ainda não há tokens de API."
+    "empty": "Ainda não há tokens de API.",
+    "defaultBadge": "Padrão",
+    "allScopes": "Todos os escopos"
   },
   "contacts": {
     "title": "Contatos",

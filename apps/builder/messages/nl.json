@@ -1924,6 +1924,22 @@
       "full": "Volledige toegang",
       "readOnly": "Alleen-lezen"
     },
+    "tokenScopes": {
+      "label": "Bereiken",
+      "contacts": "Contacten",
+      "inbox": "Inbox",
+      "automation": "Automatisering",
+      "broadcasts": "Uitzendingen",
+      "analytics": "Analyse",
+      "ecommerce": "E-commerce",
+      "integrations": "Integraties",
+      "members": "Leden",
+      "channels": "Kanalen",
+      "minigames": "Minigames",
+      "appointments": "Afspraken",
+      "media": "Media",
+      "ads": "Advertenties"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Genereer een token waarmee je workspace toegang krijgt tot de openbare API's. Houd dit token geheim en deel het met niemand.",
     "createDialogTitle": "API-token maken",
     "namePlaceholder": "bijv. Zapier-integratie",
-    "empty": "Nog geen API-tokens."
+    "empty": "Nog geen API-tokens.",
+    "defaultBadge": "Standaard",
+    "allScopes": "Alle bereiken"
   },
   "contacts": {
     "title": "Contacten",

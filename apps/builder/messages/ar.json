@@ -2185,6 +2185,22 @@
       "full": "وصول كامل",
       "readOnly": "قراءة فقط"
     },
+    "tokenScopes": {
+      "label": "النطاقات",
+      "contacts": "جهات الاتصال",
+      "inbox": "صندوق الوارد",
+      "automation": "الأتمتة",
+      "broadcasts": "البث",
+      "analytics": "التحليلات",
+      "ecommerce": "التجارة الإلكترونية",
+      "integrations": "التكاملات",
+      "members": "الأعضاء",
+      "channels": "القنوات",
+      "minigames": "الألعاب المصغرة",
+      "appointments": "المواعيد",
+      "media": "الوسائط",
+      "ads": "الإعلانات"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "أنشئ رمزًا للسماح لمساحة عملك بالوصول إلى واجهات ChatbotX API. احتفظ بسرية هذا الرمز ولا تشاركه مع أي شخص.",
     "createDialogTitle": "إنشاء رمز API",
     "namePlaceholder": "مثال: تكامل Zapier",
-    "empty": "لا توجد رموز API حتى الآن."
+    "empty": "لا توجد رموز API حتى الآن.",
+    "defaultBadge": "افتراضي",
+    "allScopes": "جميع النطاقات"
   },
   "contacts": {
     "title": "جهات الاتصال",

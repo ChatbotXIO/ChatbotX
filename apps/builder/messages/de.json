@@ -2111,6 +2111,22 @@
       "full": "Vollzugriff",
       "readOnly": "Nur Lesen"
     },
+    "tokenScopes": {
+      "label": "Bereiche",
+      "contacts": "Kontakte",
+      "inbox": "Posteingang",
+      "automation": "Automatisierung",
+      "broadcasts": "Broadcasts",
+      "analytics": "Analysen",
+      "ecommerce": "E-Commerce",
+      "integrations": "Integrationen",
+      "members": "Mitglieder",
+      "channels": "Kanäle",
+      "minigames": "Minispiele",
+      "appointments": "Termine",
+      "media": "Medien",
+      "ads": "Anzeigen"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Generieren Sie ein Token, damit Ihr Arbeitsbereich auf die öffentlichen APIs zugreifen kann. Halten Sie dieses Token geheim und geben Sie es nicht weiter.",
     "createDialogTitle": "API-Token erstellen",
     "namePlaceholder": "z. B. Zapier-Integration",
-    "empty": "Noch keine API-Tokens."
+    "empty": "Noch keine API-Tokens.",
+    "defaultBadge": "Standard",
+    "allScopes": "Alle Bereiche"
   },
   "contacts": {
     "title": "Kontakte",

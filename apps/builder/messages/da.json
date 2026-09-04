@@ -2111,6 +2111,22 @@
       "full": "Fuld adgang",
       "readOnly": "Skrivebeskyttet"
     },
+    "tokenScopes": {
+      "label": "Scopes",
+      "contacts": "Kontakter",
+      "inbox": "Indbakke",
+      "automation": "Automatisering",
+      "broadcasts": "Udsendelser",
+      "analytics": "Analyse",
+      "ecommerce": "E-handel",
+      "integrations": "Integrationer",
+      "members": "Medlemmer",
+      "channels": "Kanaler",
+      "minigames": "Minispil",
+      "appointments": "Aftaler",
+      "media": "Medier",
+      "ads": "Annoncer"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Generér a token til allow din arbejdsområde til access den public APIs. Keep denne token secret og do ikke share it med anyone.",
     "createDialogTitle": "Opret API-token",
     "namePlaceholder": "f.eks. Zapier-integration",
-    "empty": "Ingen API-tokens endnu."
+    "empty": "Ingen API-tokens endnu.",
+    "defaultBadge": "Standard",
+    "allScopes": "Alle scopes"
   },
   "contacts": {
     "title": "Kontakter",

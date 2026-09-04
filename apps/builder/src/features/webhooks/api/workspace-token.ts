@@ -7,7 +7,10 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
+
 import { conditionSchema } from "../../conditions/schema"
 import { toConditionColumns } from "../../conditions/to-condition-columns"
 

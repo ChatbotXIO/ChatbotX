@@ -2111,6 +2111,22 @@
       "full": "Täysi käyttöoikeus",
       "readOnly": "Vain luku"
     },
+    "tokenScopes": {
+      "label": "Käyttöoikeudet",
+      "contacts": "Yhteystiedot",
+      "inbox": "Saapuneet",
+      "automation": "Automaatio",
+      "broadcasts": "Joukkoviestit",
+      "analytics": "Analytiikka",
+      "ecommerce": "Verkkokauppa",
+      "integrations": "Integraatiot",
+      "members": "Jäsenet",
+      "channels": "Kanavat",
+      "minigames": "Minipelit",
+      "appointments": "Tapaamiset",
+      "media": "Media",
+      "ads": "Mainokset"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Luo tunnus, jolla työtilasi voi käyttää julkisia API-rajapintoja. Pidä tunnus salassa äläkä jaa sitä kenellekään.",
     "createDialogTitle": "Luo API-tunnus",
     "namePlaceholder": "esim. Zapier-integraatio",
-    "empty": "Ei vielä API-tunnuksia."
+    "empty": "Ei vielä API-tunnuksia.",
+    "defaultBadge": "Oletus",
+    "allScopes": "Kaikki käyttöoikeudet"
   },
   "contacts": {
     "title": "Yhteystiedot",

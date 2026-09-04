@@ -1,5 +1,6 @@
 "use client"
 
+import { CheckboxGroupField } from "@chatbotx.io/ui/components/form/checkbox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import {
@@ -14,6 +15,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   Dialog,
   DialogClose,
@@ -25,6 +27,7 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import {
   Table,
   TableBody,
@@ -44,6 +47,10 @@ import { toast } from "sonner"
 import { TokenRevealDialog } from "@/features/integration-api/components/token-reveal-dialog"
 import { createWorkspaceTokenAction } from "./actions/create-workspace-token-action"
 import { deleteWorkspaceTokenAction } from "./actions/delete-workspace-token-action"
+import {
+  orderedWorkspaceApiTokenScopes,
+  workspaceApiTokenScopeRegistry,
+} from "./lib/workspace-token-scopes"
 import { createWorkspaceTokenRequest } from "./schema/action"
 import type { WorkspaceApiTokenDto } from "./schema/workspace-token-dto"
 
@@ -97,10 +104,14 @@ export function ManageWorkspaceTokens({
         defaultValues: {
           name: "",
           permission: "full",
+          allScopes: true,
+          scopes: [],
         },
       },
     },
   )
+
+  const allScopes = form.watch("allScopes")
 
   const { execute: executeDelete, isPending: isDeleting } = useAction(
     boundDelete,
@@ -135,6 +146,20 @@ export function ManageWorkspaceTokens({
     { value: "full", label: permissionLabel("full") },
     { value: "read_only", label: permissionLabel("read_only") },
   ]
+
+  const scopeOptions = orderedWorkspaceApiTokenScopes.map((scope) => ({
+    value: scope,
+    label: t(workspaceApiTokenScopeRegistry[scope].labelKey),
+  }))
+
+  const scopeBadgeLabel = (scopes: WorkspaceApiTokenDto["scopes"]) => {
+    if (!scopes) {
+      return t("developerAccessToken.allScopes")
+    }
+    return scopes
+      .map((scope) => t(workspaceApiTokenScopeRegistry[scope].labelKey))
+      .join(", ")
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -177,6 +202,36 @@ export function ManageWorkspaceTokens({
                   orientation="horizontal"
                   required
                 />
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={allScopes}
+                      id="allScopes"
+                      onCheckedChange={(checked) => {
+                        const nextAllScopes = checked === true
+                        form.setValue("allScopes", nextAllScopes, {
+                          shouldValidate: true,
+                        })
+                        if (nextAllScopes) {
+                          form.setValue("scopes", [], {
+                            shouldValidate: true,
+                          })
+                        }
+                      }}
+                    />
+                    <Label className="font-normal" htmlFor="allScopes">
+                      {t("developerAccessToken.allScopes")}
+                    </Label>
+                  </div>
+                  {!allScopes && (
+                    <CheckboxGroupField
+                      label={t("fields.tokenScopes.label")}
+                      name="scopes"
+                      options={scopeOptions}
+                      required
+                    />
+                  )}
+                </div>
                 <DialogFooter>
                   <DialogClose
                     render={
@@ -210,6 +265,7 @@ export function ManageWorkspaceTokens({
               <TableHead>{t("fields.name.label")}</TableHead>
               <TableHead>{t("fields.api.token")}</TableHead>
               <TableHead>{t("fields.tokenPermission.label")}</TableHead>
+              <TableHead>{t("fields.tokenScopes.label")}</TableHead>
               <TableHead>{t("fields.createdAt.label")}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
@@ -219,7 +275,7 @@ export function ManageWorkspaceTokens({
               <TableRow>
                 <TableCell
                   className="text-muted-foreground text-sm"
-                  colSpan={5}
+                  colSpan={6}
                 >
                   {t("developerAccessToken.empty")}
                 </TableCell>
@@ -230,12 +286,17 @@ export function ManageWorkspaceTokens({
 
               return (
                 <TableRow key={token.id}>
-                  <TableCell className="font-medium">{token.name}</TableCell>
+                  <TableCell className="flex items-center gap-2 font-medium">
+                    {token.name}
+                    {token.isDefault && (
+                      <Badge variant="outline">
+                        {t("developerAccessToken.defaultBadge")}
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <code className="text-muted-foreground text-sm">
-                      {token.tokenPrefix
-                        ? `${token.tokenPrefix}••••••••`
-                        : "••••••••••••"}
+                      {token.tokenPrefix ?? ""}••••••••
                     </code>
                   </TableCell>
                   <TableCell>
@@ -245,6 +306,11 @@ export function ManageWorkspaceTokens({
                       }
                     >
                       {permissionLabel(token.permission)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={token.scopes ? "secondary" : "default"}>
+                      {scopeBadgeLabel(token.scopes)}
                     </Badge>
                   </TableCell>
                   <TableCell>

@@ -2111,6 +2111,22 @@
       "full": "フルアクセス",
       "readOnly": "読み取り専用"
     },
+    "tokenScopes": {
+      "label": "スコープ",
+      "contacts": "連絡先",
+      "inbox": "受信箱",
+      "automation": "自動化",
+      "broadcasts": "配信",
+      "analytics": "アナリティクス",
+      "ecommerce": "eコマース",
+      "integrations": "連携",
+      "members": "メンバー",
+      "channels": "チャネル",
+      "minigames": "ミニゲーム",
+      "appointments": "予約",
+      "media": "メディア",
+      "ads": "広告"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3858,7 +3874,9 @@
     "description": "ワークスペースから公開APIにアクセスするためのトークンを生成します。このトークンは秘密にし、誰とも共有しないでください。",
     "createDialogTitle": "APIトークンを作成",
     "namePlaceholder": "例: Zapier連携",
-    "empty": "APIトークンはまだありません。"
+    "empty": "APIトークンはまだありません。",
+    "defaultBadge": "デフォルト",
+    "allScopes": "すべてのスコープ"
   },
   "contacts": {
     "title": "連絡先",

@@ -2038,7 +2038,9 @@
     "description": "צרו אסימון שיאפשר לסביבת העבודה לגשת לממשקי ה-API הציבוריים. שמרו את האסימון בסוד ואל תשתפו אותו עם אף אחד.",
     "createDialogTitle": "יצירת אסימון API",
     "namePlaceholder": "לדוגמה: אינטגרציית Zapier",
-    "empty": "אין עדיין אסימוני API."
+    "empty": "אין עדיין אסימוני API.",
+    "defaultBadge": "ברירת מחדל",
+    "allScopes": "כל ההיקפים"
   },
   "contacts": {
     "title": "אנשי קשר",
@@ -4662,6 +4664,22 @@
       "label": "הרשאה",
       "full": "גישה מלאה",
       "readOnly": "קריאה בלבד"
+    },
+    "tokenScopes": {
+      "label": "היקפים",
+      "contacts": "אנשי קשר",
+      "inbox": "תיבת דואר נכנס",
+      "automation": "אוטומציה",
+      "broadcasts": "שידורים",
+      "analytics": "אנליטיקה",
+      "ecommerce": "מסחר אלקטרוני",
+      "integrations": "אינטגרציות",
+      "members": "חברים",
+      "channels": "ערוצים",
+      "minigames": "משחונים",
+      "appointments": "פגישות",
+      "media": "מדיה",
+      "ads": "מודעות"
     },
     "adReferral": {
       "label": "Ads",

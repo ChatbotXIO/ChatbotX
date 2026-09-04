@@ -1,4 +1,7 @@
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type {
+  WorkspaceApiTokenModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import { os } from "@orpc/server"
 import type { SessionUser } from "@/lib/auth/utils"
 
@@ -11,4 +14,5 @@ export const base = os.$context<{
   }
   user?: SessionUser
   workspace?: WorkspaceModel
+  apiToken?: WorkspaceApiTokenModel
 }>()

@@ -1,4 +1,7 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
+
 import { listInboxes } from "../queries"
 import {
   publicListInboxesResponse,

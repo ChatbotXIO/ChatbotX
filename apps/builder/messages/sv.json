@@ -990,7 +990,9 @@
     "title": "API-åtkomsttoken",
     "createDialogTitle": "Skapa API-token",
     "namePlaceholder": "t.ex. Zapier-integration",
-    "empty": "Inga API-token ännu."
+    "empty": "Inga API-token ännu.",
+    "defaultBadge": "Standard",
+    "allScopes": "Alla omfång"
   },
   "dialog": {
     "deleteConfirmation": "Är du helt säker?\nDen här åtgärden kan inte ångras.\nDetta tar permanent bort {feature} från våra servrar."
@@ -2837,6 +2839,22 @@
       "label": "Behörighet",
       "full": "Full åtkomst",
       "readOnly": "Skrivskyddad"
+    },
+    "tokenScopes": {
+      "label": "Omfång",
+      "contacts": "Kontakter",
+      "inbox": "Inkorg",
+      "automation": "Automatisering",
+      "broadcasts": "Utskick",
+      "analytics": "Analys",
+      "ecommerce": "E-handel",
+      "integrations": "Integrationer",
+      "members": "Medlemmar",
+      "channels": "Kanaler",
+      "minigames": "Minispel",
+      "appointments": "Bokningar",
+      "media": "Media",
+      "ads": "Annonser"
     },
     "adReferral": {
       "label": "Ads",

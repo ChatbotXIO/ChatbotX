@@ -68,6 +68,9 @@ vi.mock("@chatbotx.io/business", () => ({
       contentAttributes: { postId: "post-1" },
     }),
   },
+  workspaceApiTokenService: {
+    resolveDefaultTokenPlaintext: vi.fn().mockResolvedValue("cbx_ws_plaintext"),
+  },
 }))
 
 vi.mock("@chatbotx.io/business/system-field", () => ({
@@ -191,11 +194,8 @@ const emptyContext = {
   workspace: null,
 }
 
-// Fields the resolver intentionally has no data source for yet — plus
-// api_key, deprecated for good: workspace API tokens are stored hashed, so
-// the plaintext can never be injected into a flow again.
+// Fields the resolver intentionally has no data source for yet.
 const ALWAYS_NULL: readonly string[] = [
-  systemFieldTypes.enum.api_key,
   systemFieldTypes.enum.last_order,
   systemFieldTypes.enum.total_new_tagged,
   systemFieldTypes.enum.total_tagged,

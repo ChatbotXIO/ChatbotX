@@ -2,17 +2,20 @@ import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type {
   TokenHash,
   WorkspaceApiTokenPermission,
+  WorkspaceApiTokenScope,
 } from "@chatbotx.io/database/partials"
 import { workspaceApiTokenRepository } from "@chatbotx.io/database/repositories"
 import type {
   WorkspaceApiTokenModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { encryptUtils } from "@chatbotx.io/encryption"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { logger } from "../logger"
 import { workspaceService } from "../workspace/service"
+import { generateWorkspaceToken } from "./credentials"
 
 export const MAX_WORKSPACE_API_TOKENS = 10
 
@@ -79,9 +82,19 @@ class WorkspaceApiTokenService extends BaseService {
     permission: WorkspaceApiTokenPermission
     tokenHash: TokenHash
     tokenPrefix: string
+    // NULL/undefined = unrestricted ("All scopes"); see schema doc.
+    scopes?: WorkspaceApiTokenScope[] | null
     tx?: DatabaseClient
   }): Promise<WorkspaceApiTokenModel> {
-    const { workspaceId, name, permission, tokenHash, tokenPrefix, tx } = props
+    const {
+      workspaceId,
+      name,
+      permission,
+      tokenHash,
+      tokenPrefix,
+      scopes,
+      tx,
+    } = props
 
     // Count-then-insert must share one transaction: without it, two
     // concurrent creates can both read count=9 and both commit, breaching the
@@ -105,7 +118,7 @@ class WorkspaceApiTokenService extends BaseService {
       }
 
       return await workspaceApiTokenRepository.insert(
-        { workspaceId, tokenHash, name, permission, tokenPrefix },
+        { workspaceId, tokenHash, name, permission, tokenPrefix, scopes },
         txClient,
       )
     })
@@ -117,9 +130,11 @@ class WorkspaceApiTokenService extends BaseService {
     // committed create into a user-visible error.
     if (!props.tx) {
       try {
+        const scopeSummary =
+          scopes && scopes.length > 0 ? scopes.join(",") : "all"
         await this.audit(
           "create",
-          `created workspace API token "${name}" (${permission})`,
+          `created workspace API token "${name}" (${permission}, scopes: ${scopeSummary})`,
         )
       } catch (err) {
         logger.warn(
@@ -174,6 +189,108 @@ class WorkspaceApiTokenService extends BaseService {
 
     return deleted
   }
+
+  /**
+   * Resolves the plaintext of a workspace's default API token, minting one
+   * lazily on first use. Backs the `{{api_key}}` system field — the only
+   * caller allowed to recover a workspace API token's plaintext after
+   * creation, mirroring Stripe's "only the default key is ever shown again"
+   * model. Bypasses `MAX_WORKSPACE_API_TOKENS`: this is a system-managed
+   * token, so a workspace already at the user-token cap must not lose
+   * `{{api_key}}`.
+   */
+  async resolveDefaultTokenPlaintext(props: {
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<string | null> {
+    const { workspaceId, tx = db } = props
+
+    const existing = await workspaceApiTokenRepository.findDefaultByWorkspaceId(
+      workspaceId,
+      tx,
+    )
+    if (existing) {
+      return await this.decryptOrUpgradeDefaultToken(existing, tx)
+    }
+
+    const { token, tokenHash, tokenPrefix } = await generateWorkspaceToken()
+    const encryptedToken = await encryptUtils.encryptText(
+      token,
+      defaultTokenAad(workspaceId),
+    )
+    const inserted = await workspaceApiTokenRepository.insertDefault(
+      {
+        workspaceId,
+        tokenHash,
+        name: "Default token",
+        tokenPrefix,
+        encryptedToken,
+      },
+      tx,
+    )
+    if (inserted) {
+      return token
+    }
+
+    // Lost the race to mint the default row — another caller's insert won.
+    // Re-select and resolve from it instead of erroring.
+    const winner = await workspaceApiTokenRepository.findDefaultByWorkspaceId(
+      workspaceId,
+      tx,
+    )
+    if (!winner) {
+      logger.warn(
+        { workspaceId },
+        "Default workspace API token insert conflicted but no row found on re-select",
+      )
+      return null
+    }
+    return await this.decryptOrUpgradeDefaultToken(winner, tx)
+  }
+
+  private async decryptOrUpgradeDefaultToken(
+    row: WorkspaceApiTokenModel,
+    tx: DatabaseClient,
+  ): Promise<string | null> {
+    if (row.encryptedToken) {
+      return await encryptUtils.decryptText(
+        row.encryptedToken,
+        defaultTokenAad(row.workspaceId),
+      )
+    }
+
+    // Legacy default row backfilled from Workspace.token before
+    // `encryptedToken` existed — recover the plaintext from the deprecated
+    // column, then lazily upgrade this row so future resolves skip this
+    // path. Workspace.token itself is never modified.
+    const workspace = await workspaceService.findById({
+      id: row.workspaceId,
+      tx,
+    })
+    if (!workspace.token) {
+      logger.warn(
+        { workspaceId: row.workspaceId, tokenId: row.id },
+        "Default workspace API token has no encryptedToken and Workspace.token is empty",
+      )
+      return null
+    }
+
+    const encryptedToken = await encryptUtils.encryptText(
+      workspace.token,
+      defaultTokenAad(row.workspaceId),
+    )
+    await workspaceApiTokenRepository.setEncryptedToken(
+      { id: row.id, workspaceId: row.workspaceId, encryptedToken },
+      tx,
+    )
+
+    return workspace.token
+  }
 }
+
+// Binds an encrypted default-token blob to its workspace so it can never be
+// decrypted under the wrong workspace, even if a row were ever copied.
+const defaultTokenAad = (workspaceId: string) =>
+  `workspace-api-token:${workspaceId}`
 
 export const workspaceApiTokenService = new WorkspaceApiTokenService()

@@ -1,4 +1,7 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
+
 import { whatsappMessageTemplateService } from "../queries"
 import {
   listWhatsappMessageTemplatesRequest,

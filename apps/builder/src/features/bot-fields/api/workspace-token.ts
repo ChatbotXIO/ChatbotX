@@ -6,7 +6,10 @@ import {
   possibleErrorsOnFindingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+
 import { createBotFieldRequest } from "../schema/action"
 import { publicListBotFieldsResponse } from "../schema/query"
 import { publicBotFieldResource } from "../schema/resource"

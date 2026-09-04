@@ -269,4 +269,16 @@ describe("workspaceTokenAuthMidddleware", () => {
     })
     expect(next).toHaveBeenCalled()
   })
+
+  test("forwards apiToken into context alongside workspace, for scope enforcement downstream", async () => {
+    const auth = authResult("full")
+    findWorkspaceByTokenHash.mockResolvedValue(auth)
+
+    const headers = new Headers({ Authorization: "Bearer ws1_abc" })
+    await callMiddleware(headers, "GET")
+
+    expect(next).toHaveBeenCalledWith({
+      context: { workspace: auth.workspace, apiToken: auth.apiToken },
+    })
+  })
 })

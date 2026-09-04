@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "bb2c7346-6a91-428a-afd1-92a8aac4b5d5",
+  "id": "9ea70abf-c60d-4c97-8430-7ee9760afb38",
   "prevIds": ["ede34905-41cd-49ee-a7e7-51814ba8f192"],
   "ddl": [
     {
@@ -25119,6 +25119,19 @@
       "table": "Workspace"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "token",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Workspace"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -25244,6 +25257,45 @@
       "generated": null,
       "identity": null,
       "name": "tokenPrefix",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isDefault",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "encryptedToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scopes",
       "entityType": "columns",
       "schema": "public",
       "table": "WorkspaceApiToken"
@@ -34833,6 +34885,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "WorkspaceApiToken_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WorkspaceApiToken"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"isDefault\"",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WorkspaceApiToken_workspaceId_default_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "WorkspaceApiToken"

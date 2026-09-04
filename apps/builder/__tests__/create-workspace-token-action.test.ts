@@ -52,16 +52,30 @@ beforeEach(() => {
   })
 })
 
+type CreateWorkspaceTokenActionInput = {
+  bindArgsParsedInputs: [string]
+  parsedInput: {
+    name: string
+    permission: "full" | "read_only"
+    allScopes: boolean
+    scopes: string[]
+  }
+}
+
 describe("createWorkspaceTokenAction", () => {
   test("mints a cbx_ws_ token, hashes it, and never returns the hash", async () => {
     const result = await (
-      createWorkspaceTokenAction as unknown as (input: {
-        bindArgsParsedInputs: [string]
-        parsedInput: { name: string; permission: "full" | "read_only" }
-      }) => Promise<{ token: string }>
+      createWorkspaceTokenAction as unknown as (
+        input: CreateWorkspaceTokenActionInput,
+      ) => Promise<{ token: string }>
     )({
       bindArgsParsedInputs: ["ws-1"],
-      parsedInput: { name: "My token", permission: "full" },
+      parsedInput: {
+        name: "My token",
+        permission: "full",
+        allScopes: true,
+        scopes: [],
+      },
     })
 
     expect(result.token).toMatch(WORKSPACE_TOKEN_PREFIX_PATTERN)
@@ -77,6 +91,44 @@ describe("createWorkspaceTokenAction", () => {
     expect(JSON.stringify(result)).not.toContain(call.tokenHash)
   })
 
+  test("allScopes: true persists null scopes", async () => {
+    await (
+      createWorkspaceTokenAction as unknown as (
+        input: CreateWorkspaceTokenActionInput,
+      ) => Promise<{ token: string }>
+    )({
+      bindArgsParsedInputs: ["ws-1"],
+      parsedInput: {
+        name: "Unrestricted token",
+        permission: "full",
+        allScopes: true,
+        scopes: ["contacts"],
+      },
+    })
+
+    const call = mocks.createToken.mock.calls[0][0]
+    expect(call.scopes).toBeNull()
+  })
+
+  test("allScopes: false persists the explicit scopes array", async () => {
+    await (
+      createWorkspaceTokenAction as unknown as (
+        input: CreateWorkspaceTokenActionInput,
+      ) => Promise<{ token: string }>
+    )({
+      bindArgsParsedInputs: ["ws-1"],
+      parsedInput: {
+        name: "Scoped token",
+        permission: "full",
+        allScopes: false,
+        scopes: ["contacts", "inbox"],
+      },
+    })
+
+    const call = mocks.createToken.mock.calls[0][0]
+    expect(call.scopes).toEqual(["contacts", "inbox"])
+  })
+
   test("rejects a non-superAdmin member before minting a token", async () => {
     mocks.requireWorkspaceTokenSuperAdmin.mockRejectedValue(
       new Error("You need to be a super admin to manage workspace API tokens"),
@@ -84,13 +136,17 @@ describe("createWorkspaceTokenAction", () => {
 
     await expect(
       (
-        createWorkspaceTokenAction as unknown as (input: {
-          bindArgsParsedInputs: [string]
-          parsedInput: { name: string; permission: "full" | "read_only" }
-        }) => Promise<unknown>
+        createWorkspaceTokenAction as unknown as (
+          input: CreateWorkspaceTokenActionInput,
+        ) => Promise<unknown>
       )({
         bindArgsParsedInputs: ["ws-1"],
-        parsedInput: { name: "My token", permission: "full" },
+        parsedInput: {
+          name: "My token",
+          permission: "full",
+          allScopes: true,
+          scopes: [],
+        },
       }),
     ).rejects.toThrow(SUPER_ADMIN_ERROR_PATTERN)
     expect(mocks.createToken).not.toHaveBeenCalled()
@@ -103,14 +159,37 @@ describe("createWorkspaceTokenAction", () => {
 
     await expect(
       (
-        createWorkspaceTokenAction as unknown as (input: {
-          bindArgsParsedInputs: [string]
-          parsedInput: { name: string; permission: "full" | "read_only" }
-        }) => Promise<unknown>
+        createWorkspaceTokenAction as unknown as (
+          input: CreateWorkspaceTokenActionInput,
+        ) => Promise<unknown>
       )({
         bindArgsParsedInputs: ["ws-1"],
-        parsedInput: { name: "Overflow", permission: "full" },
+        parsedInput: {
+          name: "Overflow",
+          permission: "full",
+          allScopes: true,
+          scopes: [],
+        },
       }),
     ).rejects.toThrow(TOKEN_CAP_ERROR_PATTERN)
+  })
+
+  test("allScopes: false persists a newly named resource-area scope", async () => {
+    await (
+      createWorkspaceTokenAction as unknown as (
+        input: CreateWorkspaceTokenActionInput,
+      ) => Promise<{ token: string }>
+    )({
+      bindArgsParsedInputs: ["ws-1"],
+      parsedInput: {
+        name: "Members-scoped token",
+        permission: "full",
+        allScopes: false,
+        scopes: ["members"],
+      },
+    })
+
+    const call = mocks.createToken.mock.calls[0][0]
+    expect(call.scopes).toEqual(["members"])
   })
 })

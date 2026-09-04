@@ -1,4 +1,7 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("analytics")
+
 import { listErrorLogs } from "../queries"
 import {
   listErrorLogsRequest,

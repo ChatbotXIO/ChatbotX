@@ -8,7 +8,10 @@ import {
   possibleErrorsOnUpdatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
+
 import {
   createCustomFieldRequest,
   updateCustomFieldRequest,

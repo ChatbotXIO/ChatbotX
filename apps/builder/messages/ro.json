@@ -2891,6 +2891,22 @@
       "full": "Acces complet",
       "readOnly": "Doar citire"
     },
+    "tokenScopes": {
+      "label": "Domenii",
+      "contacts": "Contacte",
+      "inbox": "Inbox",
+      "automation": "Automatizare",
+      "broadcasts": "Difuzări",
+      "analytics": "Analitice",
+      "ecommerce": "Comerț electronic",
+      "integrations": "Integrări",
+      "members": "Membri",
+      "channels": "Canale",
+      "minigames": "Minijocuri",
+      "appointments": "Programări",
+      "media": "Media",
+      "ads": "Reclame"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Generează un token pentru a permite spațiului tău de lucru să acceseze API-urile publice. Păstrează acest token secret și nu-l distribui nimănui.",
     "createDialogTitle": "Creare token API",
     "namePlaceholder": "ex. integrare Zapier",
-    "empty": "Niciun token API încă."
+    "empty": "Niciun token API încă.",
+    "defaultBadge": "Implicit",
+    "allScopes": "Toate domeniile"
   },
   "contacts": {
     "title": "Contacte",

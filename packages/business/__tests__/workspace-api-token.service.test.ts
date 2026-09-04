@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const TOKEN_CAP_ERROR_PATTERN = /maximum/
+const ENCRYPTED_TEXT_PATTERN = /^enc\((.*)\)$/
 
 const findByTokenHash = vi.fn(
   async (): Promise<{
@@ -20,6 +21,9 @@ const insert = vi.fn(async () => ({
   tokenHash: "hash",
   tokenPrefix: "cbx_ws_abcd",
 }))
+const findDefaultByWorkspaceId = vi.fn(async (): Promise<unknown> => null)
+const insertDefault = vi.fn(async (): Promise<unknown> => null)
+const setEncryptedToken = vi.fn(async (): Promise<void> => undefined)
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   workspaceApiTokenRepository: {
@@ -28,7 +32,32 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     countByWorkspaceId,
     deleteByIdForWorkspace,
     insert,
+    findDefaultByWorkspaceId,
+    insertDefault,
+    setEncryptedToken,
   },
+}))
+
+const encryptText = vi.fn(async (text: string) => ({
+  v: 1,
+  iv: "iv",
+  text: `enc(${text})`,
+  tag: "tag",
+}))
+const decryptText = vi.fn(async (blob: { text: string }) =>
+  blob.text.replace(ENCRYPTED_TEXT_PATTERN, "$1"),
+)
+vi.mock("@chatbotx.io/encryption", () => ({
+  encryptUtils: { encryptText, decryptText },
+}))
+
+const generateWorkspaceToken = vi.fn(async () => ({
+  token: "cbx_ws_newplaintext",
+  tokenHash: "new-hash",
+  tokenPrefix: "cbx_ws_newp",
+}))
+vi.mock("../src/workspace-api-token/credentials", () => ({
+  generateWorkspaceToken,
 }))
 
 const db: { transaction?: (fn: (tx: unknown) => unknown) => unknown } = {}
@@ -59,7 +88,7 @@ const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
 vi.mock("../src/logger", () => ({ logger }))
 
 const workspaceService = {
-  findById: vi.fn(async () => ({ id: "ws-1", name: "Acme" })),
+  findById: vi.fn(async () => ({ id: "ws-1", name: "Acme", token: null })),
 }
 vi.mock("../src/workspace/service", () => ({ workspaceService }))
 
@@ -76,11 +105,23 @@ beforeEach(() => {
   findByTokenHash.mockResolvedValue(null)
   countByWorkspaceId.mockResolvedValue(0)
   deleteByIdForWorkspace.mockResolvedValue(false)
-  workspaceService.findById.mockResolvedValue({ id: "ws-1", name: "Acme" })
+  workspaceService.findById.mockResolvedValue({
+    id: "ws-1",
+    name: "Acme",
+    token: null,
+  })
   invalidateCacheByTags.mockResolvedValue(undefined)
   withCache.mockImplementation(
     async (_key: string, fn: () => unknown, _options?: unknown) => fn(),
   )
+  findDefaultByWorkspaceId.mockResolvedValue(null)
+  insertDefault.mockResolvedValue(null)
+  setEncryptedToken.mockResolvedValue(undefined)
+  generateWorkspaceToken.mockResolvedValue({
+    token: "cbx_ws_newplaintext",
+    tokenHash: "new-hash",
+    tokenPrefix: "cbx_ws_newp",
+  })
 })
 
 describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
@@ -101,7 +142,7 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
       tx: db,
     })
     expect(auth).toEqual({
-      workspace: { id: "ws-1", name: "Acme" },
+      workspace: { id: "ws-1", name: "Acme", token: null },
       apiToken: { id: "t-1", workspaceId: "ws-1", permission: "full" },
     })
   })
@@ -190,17 +231,46 @@ describe("workspaceApiTokenService.createToken", () => {
         name: "My token",
         permission: "full",
         tokenPrefix: "cbx_ws_abcd",
+        scopes: undefined,
       },
       db,
     )
     expect(result.id).toBe("t-1")
     expect(dispatchAuditRecord).toHaveBeenCalledWith({
       action: "create",
-      detail: 'created workspace API token "My token" (full)',
+      detail: 'created workspace API token "My token" (full, scopes: all)',
     })
     expect(JSON.stringify(dispatchAuditRecord.mock.calls)).not.toContain(
       TOKEN_HASH,
     )
+  })
+
+  test("passes explicit scopes through to the repository insert and audit line", async () => {
+    await workspaceApiTokenService.createToken({
+      workspaceId: "ws-1",
+      name: "Scoped token",
+      permission: "full",
+      tokenHash: TOKEN_HASH,
+      tokenPrefix: "cbx_ws_abcd",
+      scopes: ["contacts", "inbox"],
+    })
+
+    expect(insert).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        tokenHash: TOKEN_HASH,
+        name: "Scoped token",
+        permission: "full",
+        tokenPrefix: "cbx_ws_abcd",
+        scopes: ["contacts", "inbox"],
+      },
+      db,
+    )
+    expect(dispatchAuditRecord).toHaveBeenCalledWith({
+      action: "create",
+      detail:
+        'created workspace API token "Scoped token" (full, scopes: contacts,inbox)',
+    })
   })
 
   test("throws when the workspace is at the token cap", async () => {
@@ -330,5 +400,164 @@ describe("workspaceApiTokenService.deleteToken", () => {
       workspaceApiTokenService.deleteToken({ workspaceId: "ws-1", id: "t-1" }),
     ).resolves.toBe(true)
     expect(logger.warn).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("workspaceApiTokenService.resolveDefaultTokenPlaintext", () => {
+  test("decrypts the plaintext when the default row already has an encryptedToken", async () => {
+    findDefaultByWorkspaceId.mockResolvedValue({
+      id: "t-default",
+      workspaceId: "ws-1",
+      encryptedToken: {
+        v: 1,
+        iv: "iv",
+        text: "enc(cbx_ws_existing)",
+        tag: "t",
+      },
+    })
+
+    await expect(
+      workspaceApiTokenService.resolveDefaultTokenPlaintext({
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe("cbx_ws_existing")
+
+    expect(decryptText).toHaveBeenCalledWith(
+      { v: 1, iv: "iv", text: "enc(cbx_ws_existing)", tag: "t" },
+      "workspace-api-token:ws-1",
+    )
+    expect(insertDefault).not.toHaveBeenCalled()
+    expect(setEncryptedToken).not.toHaveBeenCalled()
+  })
+
+  test("migrates a legacy default row from Workspace.token without mutating it", async () => {
+    findDefaultByWorkspaceId.mockResolvedValue({
+      id: "t-legacy",
+      workspaceId: "ws-1",
+      encryptedToken: null,
+    })
+    workspaceService.findById.mockResolvedValue({
+      id: "ws-1",
+      name: "Acme",
+      token: "legacy-plaintext-token",
+    })
+
+    await expect(
+      workspaceApiTokenService.resolveDefaultTokenPlaintext({
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe("legacy-plaintext-token")
+
+    expect(encryptText).toHaveBeenCalledWith(
+      "legacy-plaintext-token",
+      "workspace-api-token:ws-1",
+    )
+    expect(setEncryptedToken).toHaveBeenCalledWith(
+      {
+        id: "t-legacy",
+        workspaceId: "ws-1",
+        encryptedToken: expect.objectContaining({
+          text: "enc(legacy-plaintext-token)",
+        }),
+      },
+      db,
+    )
+    // Workspace.token itself is never written back to.
+    expect(JSON.stringify(setEncryptedToken.mock.calls)).not.toContain(
+      '"token"',
+    )
+  })
+
+  test("returns null when the legacy default row has no Workspace.token either", async () => {
+    findDefaultByWorkspaceId.mockResolvedValue({
+      id: "t-legacy",
+      workspaceId: "ws-1",
+      encryptedToken: null,
+    })
+    workspaceService.findById.mockResolvedValue({
+      id: "ws-1",
+      name: "Acme",
+      token: null,
+    })
+
+    await expect(
+      workspaceApiTokenService.resolveDefaultTokenPlaintext({
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBeNull()
+    expect(setEncryptedToken).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledTimes(1)
+  })
+
+  test("mints a new full-permission default token when none exists", async () => {
+    findDefaultByWorkspaceId.mockResolvedValue(null)
+    insertDefault.mockResolvedValue({
+      id: "t-new",
+      workspaceId: "ws-1",
+      encryptedToken: {
+        v: 1,
+        iv: "iv",
+        text: "enc(cbx_ws_newplaintext)",
+        tag: "t",
+      },
+    })
+
+    await expect(
+      workspaceApiTokenService.resolveDefaultTokenPlaintext({
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe("cbx_ws_newplaintext")
+
+    expect(insertDefault).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        tokenHash: "new-hash",
+        name: "Default token",
+        tokenPrefix: "cbx_ws_newp",
+        encryptedToken: expect.objectContaining({
+          text: "enc(cbx_ws_newplaintext)",
+        }),
+      },
+      db,
+    )
+  })
+
+  test("re-selects the winning row when it loses the race to mint the default token", async () => {
+    findDefaultByWorkspaceId.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: "t-winner",
+      workspaceId: "ws-1",
+      encryptedToken: { v: 1, iv: "iv", text: "enc(cbx_ws_winner)", tag: "t" },
+    })
+    insertDefault.mockResolvedValue(null)
+
+    await expect(
+      workspaceApiTokenService.resolveDefaultTokenPlaintext({
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe("cbx_ws_winner")
+    expect(findDefaultByWorkspaceId).toHaveBeenCalledTimes(2)
+  })
+
+  test("mints the default token even when the workspace is already at the user-token cap", async () => {
+    countByWorkspaceId.mockResolvedValue(MAX_WORKSPACE_API_TOKENS)
+    findDefaultByWorkspaceId.mockResolvedValue(null)
+    insertDefault.mockResolvedValue({
+      id: "t-new",
+      workspaceId: "ws-1",
+      encryptedToken: {
+        v: 1,
+        iv: "iv",
+        text: "enc(cbx_ws_newplaintext)",
+        tag: "t",
+      },
+    })
+
+    await expect(
+      workspaceApiTokenService.resolveDefaultTokenPlaintext({
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe("cbx_ws_newplaintext")
+    // No cap check gates the default-token mint path.
+    expect(insertDefault).toHaveBeenCalledTimes(1)
   })
 })

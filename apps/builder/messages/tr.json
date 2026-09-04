@@ -2185,6 +2185,22 @@
       "full": "Tam erişim",
       "readOnly": "Salt okunur"
     },
+    "tokenScopes": {
+      "label": "Kapsamlar",
+      "contacts": "Kişiler",
+      "inbox": "Gelen Kutusu",
+      "automation": "Otomasyon",
+      "broadcasts": "Yayınlar",
+      "analytics": "Analitik",
+      "ecommerce": "E-ticaret",
+      "integrations": "Entegrasyonlar",
+      "members": "Üyeler",
+      "channels": "Kanallar",
+      "minigames": "Mini Oyunlar",
+      "appointments": "Randevular",
+      "media": "Medya",
+      "ads": "Reklamlar"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Çalışma alanınızın genel API'lere erişmesine izin vermek için bir token oluşturun. Bu token'ı gizli tutun ve kimseyle paylaşmayın.",
     "createDialogTitle": "API belirteci oluştur",
     "namePlaceholder": "ör. Zapier entegrasyonu",
-    "empty": "Henüz API belirteci yok."
+    "empty": "Henüz API belirteci yok.",
+    "defaultBadge": "Varsayılan",
+    "allScopes": "Tüm kapsamlar"
   },
   "contacts": {
     "title": "Kişiler",

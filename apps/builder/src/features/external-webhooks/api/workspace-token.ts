@@ -6,7 +6,9 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
 
 const externalWebhookResource = z.object({
   id: z.string(),

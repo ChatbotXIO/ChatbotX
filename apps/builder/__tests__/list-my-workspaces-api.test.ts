@@ -53,13 +53,16 @@ vi.mock("@chatbotx.io/business", () => ({
 
 // A minimal stand-in for `createSelectSchema(workspaceModel)` — a real zod
 // object schema (not just `{}`) so the output schema is genuinely parsed
-// below. The model carries no secrets: workspace API tokens live hashed in
-// WorkspaceApiToken, never as a Workspace column.
+// below. Includes `token` (the deprecated, read-only legacy plaintext
+// {{api_key}} source) so this suite can prove `workspaceResource`'s
+// `.omit({ token: true })` actually strips it before it ever reaches this
+// public API response.
 vi.mock("@chatbotx.io/database/schema", () => ({
   createSelectSchema: () =>
     z.object({
       id: z.string(),
       name: z.string(),
+      token: z.string().nullable(),
     }),
   workspaceModel: {},
 }))
@@ -90,6 +93,17 @@ describe("GET /users/me/workspaces", () => {
 
     expect(parsed.workspaces[0]).toEqual({ id: "ws-1", name: "Acme" })
     expect(Object.keys(parsed.workspaces[0]).sort()).toEqual(["id", "name"])
+  })
+
+  test("output schema strips the deprecated Workspace.token column", () => {
+    const parsed = procedure.outputSchema?.parse({
+      workspaces: [
+        { id: "ws-1", name: "Acme", token: "legacy-plaintext-token" },
+      ],
+    }) as { workspaces: Record<string, unknown>[] }
+
+    expect(parsed.workspaces[0]).not.toHaveProperty("token")
+    expect(JSON.stringify(parsed)).not.toContain("legacy-plaintext-token")
   })
 
   test("delegates to workspaceMemberService.listByUserId and unwraps member.workspace", async () => {

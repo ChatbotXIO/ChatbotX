@@ -2111,6 +2111,22 @@
       "full": "Accès complet",
       "readOnly": "Lecture seule"
     },
+    "tokenScopes": {
+      "label": "Portées",
+      "contacts": "Contacts",
+      "inbox": "Boîte de réception",
+      "automation": "Automatisation",
+      "broadcasts": "Diffusions",
+      "analytics": "Analytique",
+      "ecommerce": "E-commerce",
+      "integrations": "Intégrations",
+      "members": "Membres",
+      "channels": "Canaux",
+      "minigames": "Mini-jeux",
+      "appointments": "Rendez-vous",
+      "media": "Médias",
+      "ads": "Publicités"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3879,7 +3895,9 @@
     "description": "Générez un jeton pour permettre à votre espace de travail d’accéder aux API publiques. Gardez ce jeton secret et ne le partagez avec personne.",
     "createDialogTitle": "Créer un jeton API",
     "namePlaceholder": "ex. intégration Zapier",
-    "empty": "Aucun jeton API pour le moment."
+    "empty": "Aucun jeton API pour le moment.",
+    "defaultBadge": "Par défaut",
+    "allScopes": "Toutes les portées"
   },
   "contacts": {
     "title": "Contacts",

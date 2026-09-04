@@ -4,6 +4,7 @@ import {
   conversationService,
   messageService,
   resolveTenantSettings,
+  workspaceApiTokenService,
 } from "@chatbotx.io/business"
 import {
   languageFromLocale,
@@ -479,12 +480,22 @@ export const getSystemFieldValue = async (
       return contactInbox?.sourceId ?? null
     case systemFieldTypes.enum.webchat_parent_url:
       return contactInbox?.webchatParentUrl ?? null
-    // Deprecated: workspace API tokens are stored hashed (WorkspaceApiToken)
-    // and shown exactly once at generation, so the plaintext can no longer be
-    // injected into flows. The enum value stays so stored flow configs that
-    // reference {{api_key}} keep parsing; they now resolve to null.
+    // User-created workspace API tokens are hash-only and shown exactly once
+    // at generation, so they can never back this field. `{{api_key}}`
+    // resolves instead to the workspace's system-managed default token
+    // (WorkspaceApiToken.isDefault), which additionally carries an
+    // AES-GCM-encrypted copy recoverable server-side — see
+    // workspaceApiTokenService.resolveDefaultTokenPlaintext. A workspace
+    // that predates this model gets its default token lazily minted (or its
+    // legacy plaintext migrated forward from the deprecated
+    // Workspace.token) on first resolve.
     case systemFieldTypes.enum.api_key:
-      return null
+      if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
+        return null
+      }
+      return await workspaceApiTokenService.resolveDefaultTokenPlaintext({
+        workspaceId: contact.workspaceId,
+      })
     case systemFieldTypes.enum.last_ad:
       return getReferralValue(contactInbox, "adId")
     case systemFieldTypes.enum.last_ctwa:
