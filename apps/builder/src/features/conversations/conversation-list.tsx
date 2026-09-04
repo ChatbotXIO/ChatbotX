@@ -121,8 +121,8 @@ export default function ConversationList({
 
   return (
     <Form {...form}>
-      <form className="flex h-full flex-col">
-        <div className="mb-2 flex items-center gap-1">
+      <form className="flex h-full min-h-0 flex-col">
+        <div className="mb-2 flex shrink-0 items-center gap-1">
           <SelectField
             name="botCategory"
             options={[
@@ -156,21 +156,28 @@ export default function ConversationList({
           <ConversationFilter canViewEmailAndPhone={canViewEmailAndPhone} />
         </div>
 
-        <div className="flex-1">
-          {showSearchInput && (
-            <InputField
-              className="mb-2"
-              name="keyword"
-              placeholder={t("actions.search")}
-              {...{
-                onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault()
-                  }
-                },
-              }}
-            />
-          )}
+        {/* A sibling of the scroller, not a child of it: inside the `flex-1`
+            block this would stack on top of Virtuoso's `height: 100%` scroller
+            and overflow the pane by its own height. */}
+        {showSearchInput && (
+          <InputField
+            formItemClassName="mb-2 shrink-0"
+            name="keyword"
+            placeholder={t("actions.search")}
+            {...{
+              onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                }
+              },
+            }}
+          />
+        )}
+
+        {/* `min-h-0` for the same reason as the message list: Virtuoso's
+            scroller is `height: 100%` and would otherwise floor this item at
+            the full list height. */}
+        <div className="min-h-0 flex-1">
           <Virtuoso
             components={{
               List: ConversationListList,

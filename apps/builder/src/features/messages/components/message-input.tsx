@@ -382,7 +382,7 @@ export const MessageInput = () => {
 
   if (isMessengerHumanAgentWindowExpired) {
     return (
-      <div className="m-3 rounded-xl border pt-2">
+      <div className="m-3 shrink-0 rounded-xl border pt-2">
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
           <p className="text-muted-foreground text-sm">
             {t("messages.humanAgentWindowExpired")}
@@ -394,7 +394,7 @@ export const MessageInput = () => {
 
   if (isDirectChannelWindowClosed) {
     return (
-      <div className="m-3 rounded-xl border pt-2">
+      <div className="m-3 shrink-0 rounded-xl border pt-2">
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-6 text-center">
           <p className="text-muted-foreground text-sm">
             {t("messages.messagingWindowClosed")}
@@ -405,7 +405,7 @@ export const MessageInput = () => {
   }
 
   return (
-    <div className="m-3 rounded-xl border pt-2">
+    <div className="m-3 shrink-0 rounded-xl border pt-2">
       <Form {...form}>
         <form
           aria-label="Message input form"
