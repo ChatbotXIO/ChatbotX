@@ -34,6 +34,8 @@ sequenceDiagram
   NextServer-->>Browser: JSON
 ```
 
+`GET /api/...` reaches only `publicRouter`; private, session-authed procedures are reachable via `/rpc` or, in development, the full-router mirror at `/api-internal`.
+
 ### Background Jobs (BullMQ)
 
 ```mermaid

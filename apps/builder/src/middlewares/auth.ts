@@ -7,11 +7,7 @@ import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ORPCError } from "@orpc/server"
 import { auth } from "@/lib/auth/auth"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
-import {
-  checkWorkspaceOwnerAccess,
-  isWorkspaceMutationMethod,
-  workspaceAccessDenialOrpcError,
-} from "@/lib/workspace/authorize-workspace-access"
+import { assertWorkspaceOwnerAccessForMethod } from "@/lib/workspace/authorize-workspace-access"
 import { base } from "./context"
 
 export const authMiddleware = base.middleware(async ({ context, next }) => {
@@ -78,17 +74,11 @@ export const workspaceAuthorizedMidddleware = base.middleware(
     }
 
     // Owner-quota/trial gate — mirrors workspaceActionClient in safe-action.ts.
-    // Without this, an oRPC mutation could bypass the same gate a server
-    // action enforces for the identical operation. Reads and deletes stay open
-    // so an expired workspace keeps its read/delete-only mode (invariant #14).
-    if (isWorkspaceMutationMethod(procedure["~orpc"].route.method)) {
-      const denialReason = await checkWorkspaceOwnerAccess({
-        ownerId: workspaceMember.workspace.ownerId,
-      })
-      if (denialReason) {
-        throw workspaceAccessDenialOrpcError(denialReason)
-      }
-    }
+    // Reads and deletes stay open (invariant #14).
+    await assertWorkspaceOwnerAccessForMethod({
+      method: procedure["~orpc"].route.method,
+      ownerId: workspaceMember.workspace.ownerId,
+    })
 
     return withAuditContext(
       {

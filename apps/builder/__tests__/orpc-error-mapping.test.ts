@@ -30,46 +30,38 @@ vi.mock("@chatbotx.io/business/errors", () => ({
       this.httpStatusCode = httpStatusCode
     }
   },
+  toPublicErrorMessage: (error: Error, fallback: string) =>
+    error.message || fallback,
 }))
 
 vi.mock("@chatbotx.io/database/errors", () => ({
   ModelNotfoundException: class ModelNotfoundException extends Error {},
 }))
 
-// Captures the callback passed to `onError(...)` so the test can invoke it
-// directly, without needing a full oRPC procedure/handler pipeline.
-const { onErrorCallbacks } = vi.hoisted(() => ({
-  onErrorCallbacks: [] as ((error: unknown) => void)[],
+vi.mock("@chatbotx.io/sdk", () => ({
+  SdkException: class SdkException extends Error {
+    httpStatusCode?: number
+    constructor(message: string, httpStatusCode?: number) {
+      super(message)
+      this.name = "SdkException"
+      this.httpStatusCode = httpStatusCode
+    }
+  },
 }))
-
-vi.mock("@orpc/server", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@orpc/server")>()
-  return {
-    ...actual,
-    onError: (fn: (error: unknown) => void) => {
-      onErrorCallbacks.push(fn)
-      return actual.onError(fn)
-    },
-  }
-})
 
 const { ChatbotXException } = await import("@chatbotx.io/business/errors")
 const { ModelNotfoundException } = await import("@chatbotx.io/database/errors")
+const { SdkException } = await import("@chatbotx.io/sdk")
 const { ActionValidationError } = await import("next-safe-action")
+const { ORPCError } = await import("@orpc/server")
 
-await import("@/orpc")
+const { mapKnownOrpcErrors } = await import("@/orpc")
 
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe("oRPC error mapping", () => {
-  const onErrorCallback = () => {
-    const fn = onErrorCallbacks.at(0)
-    expect(fn).toBeDefined()
-    return fn as (error: unknown) => void
-  }
-
+describe("mapKnownOrpcErrors", () => {
   test("maps a ChatbotXException subclass via instanceof, not error.name", () => {
     class SlotUnavailableException extends ChatbotXException {
       constructor() {
@@ -78,7 +70,7 @@ describe("oRPC error mapping", () => {
       }
     }
 
-    expect(() => onErrorCallback()(new SlotUnavailableException())).toThrow(
+    expect(() => mapKnownOrpcErrors(new SlotUnavailableException())).toThrow(
       expect.objectContaining({ code: "slotUnavailable", status: 409 }),
     )
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
@@ -87,25 +79,46 @@ describe("oRPC error mapping", () => {
 
   test("maps ModelNotfoundException to a 404 notFound", () => {
     expect(() =>
-      onErrorCallback()(new ModelNotfoundException("Flow not found")),
+      mapKnownOrpcErrors(new ModelNotfoundException("Flow not found")),
     ).toThrow(expect.objectContaining({ code: "notFound", status: 404 }))
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
+  })
+
+  test("maps SdkException to a 400 BAD_REQUEST using the provider's public message", () => {
+    const error = new SdkException("(#100) Invalid parameter", 400)
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({
+        code: "BAD_REQUEST",
+        status: 400,
+        message: "(#100) Invalid parameter",
+      }),
+    )
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
   })
 
   test("maps ActionValidationError to a 422 invalidRequestData", () => {
     const error = new ActionValidationError({ name: { _errors: ["bad"] } })
 
-    expect(() => onErrorCallback()(error)).toThrow(
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
       expect.objectContaining({ code: "invalidRequestData", status: 422 }),
     )
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
   })
 
-  test("logs an unknown error at error level and does not map/throw", () => {
+  test("leaves a plain ORPCError untouched and does not log", () => {
+    const error = new ORPCError("UNAUTHORIZED")
+
+    expect(() => mapKnownOrpcErrors(error)).not.toThrow()
+    expect(mockLoggerWarn).not.toHaveBeenCalled()
+    expect(mockLoggerError).not.toHaveBeenCalled()
+  })
+
+  test("does not throw or log for an unknown error — left for the route's logUnexpectedOrpcError", () => {
     const error = new Error("unexpected")
 
-    expect(() => onErrorCallback()(error)).not.toThrow()
-    expect(mockLoggerError).toHaveBeenCalledTimes(1)
+    expect(() => mapKnownOrpcErrors(error)).not.toThrow()
+    expect(mockLoggerError).not.toHaveBeenCalled()
     expect(mockLoggerWarn).not.toHaveBeenCalled()
   })
 })

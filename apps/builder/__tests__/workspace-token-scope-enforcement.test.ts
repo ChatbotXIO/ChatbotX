@@ -5,18 +5,22 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   findWorkspaceByTokenHash,
   isWorkspaceScheduledForDeletion,
-  checkWorkspaceOwnerAccess,
+  getAccessState,
+  isAtLimit,
   assertApiNotRateLimited,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
-  checkWorkspaceOwnerAccess: vi.fn().mockResolvedValue(null),
+  getAccessState: vi.fn().mockResolvedValue({ blocked: false }),
+  isAtLimit: vi.fn().mockResolvedValue(false),
   assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceApiTokenService: { findWorkspaceByTokenHash },
   isWorkspaceScheduledForDeletion,
+  userQuotaService: { getAccessState },
+  quotaEnforcementService: { isAtLimit },
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -31,14 +35,7 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
   getGuestClientIp: () => "203.0.113.9",
 }))
 
-vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
-  checkWorkspaceOwnerAccess,
-  isWorkspaceMutationMethod: (method: string | undefined) =>
-    !["GET", "HEAD", "DELETE"].includes(method ?? "POST"),
-  isReadOnlyTokenAllowedMethod: (method: string | undefined) =>
-    ["GET", "HEAD"].includes(method ?? "POST"),
-  workspaceAccessDenialOrpcError: (reason: string) => new Error(reason),
-}))
+vi.mock("@/env", () => ({ isCloud: () => true }))
 
 // `@/orpc` also exports `authorizedAPI`, which pulls in the full better-auth
 // stack via `authMiddleware` — irrelevant to workspace-token scope
@@ -89,7 +86,8 @@ const invoke = (
 beforeEach(() => {
   vi.clearAllMocks()
   isWorkspaceScheduledForDeletion.mockReturnValue(false)
-  checkWorkspaceOwnerAccess.mockResolvedValue(null)
+  getAccessState.mockResolvedValue({ blocked: false })
+  isAtLimit.mockResolvedValue(false)
   assertApiNotRateLimited.mockResolvedValue(undefined)
 })
 

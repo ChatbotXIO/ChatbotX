@@ -16,8 +16,7 @@ const publicRoutes = [
   "/dynamic-images",
   "/minigames",
   "/auth",
-  "/api",
-  "/api-internal",
+  "/api", // also covers /api-internal (startsWith match below)
   "/ws",
   "/storage",
   "/checkout",

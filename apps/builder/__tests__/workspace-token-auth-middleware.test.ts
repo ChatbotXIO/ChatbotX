@@ -1,26 +1,29 @@
 // @vitest-environment node
 
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { ORPCError } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   findWorkspaceByTokenHash,
   isWorkspaceScheduledForDeletion,
   loggerWarn,
-  checkWorkspaceOwnerAccess,
+  getAccessState,
+  isAtLimit,
   assertApiNotRateLimited,
 } = vi.hoisted(() => ({
   findWorkspaceByTokenHash: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
   loggerWarn: vi.fn(),
-  checkWorkspaceOwnerAccess: vi.fn().mockResolvedValue(null),
+  getAccessState: vi.fn().mockResolvedValue({ blocked: false }),
+  isAtLimit: vi.fn().mockResolvedValue(false),
   assertApiNotRateLimited: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceApiTokenService: { findWorkspaceByTokenHash },
   isWorkspaceScheduledForDeletion,
+  userQuotaService: { getAccessState },
+  quotaEnforcementService: { isAtLimit },
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -35,15 +38,7 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
   getGuestClientIp: () => "203.0.113.9",
 }))
 
-vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
-  checkWorkspaceOwnerAccess,
-  isWorkspaceMutationMethod: (method: string | undefined) =>
-    !["GET", "HEAD", "DELETE"].includes(method ?? "POST"),
-  isReadOnlyTokenAllowedMethod: (method: string | undefined) =>
-    ["GET", "HEAD"].includes(method ?? "POST"),
-  workspaceAccessDenialOrpcError: (reason: string) =>
-    new ORPCError(reason, { status: 403 }),
-}))
+vi.mock("@/env", () => ({ isCloud: () => true }))
 
 const { workspaceTokenAuthMidddleware } = await import(
   "@/middlewares/workspace-token-auth"
@@ -82,7 +77,8 @@ const authResult = (permission: "full" | "read_only" = "full") => ({
 beforeEach(() => {
   vi.clearAllMocks()
   isWorkspaceScheduledForDeletion.mockReturnValue(false)
-  checkWorkspaceOwnerAccess.mockResolvedValue(null)
+  getAccessState.mockResolvedValue({ blocked: false })
+  isAtLimit.mockResolvedValue(false)
   assertApiNotRateLimited.mockResolvedValue(undefined)
 })
 
@@ -146,7 +142,7 @@ describe("workspaceTokenAuthMidddleware", () => {
 
   test("GET procedure with a blocked owner still passes", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult())
-    checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
     await callMiddleware(headers, "GET")
@@ -156,7 +152,7 @@ describe("workspaceTokenAuthMidddleware", () => {
 
   test("POST procedure with a blocked owner is rejected with trialExpired 403", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult())
-    checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
 
@@ -168,13 +164,13 @@ describe("workspaceTokenAuthMidddleware", () => {
 
   test("DELETE procedure with a blocked owner still passes (invariant #14)", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult())
-    checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
 
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
     await callMiddleware(headers, "DELETE")
 
     expect(next).toHaveBeenCalled()
-    expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+    expect(getAccessState).not.toHaveBeenCalled()
   })
 
   test("scheduled-deletion workspace is rejected with FORBIDDEN", async () => {
@@ -202,7 +198,7 @@ describe("workspaceTokenAuthMidddleware", () => {
     await expect(callMiddleware(headers, "GET")).rejects.toMatchObject({
       code: "tooManyRequests",
     })
-    expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+    expect(getAccessState).not.toHaveBeenCalled()
   })
 
   test("query-param token warns about the deprecated ?token= usage", async () => {
@@ -235,7 +231,7 @@ describe("workspaceTokenAuthMidddleware", () => {
       code: "FORBIDDEN",
       message: "Read-only token cannot perform this operation",
     })
-    expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+    expect(getAccessState).not.toHaveBeenCalled()
   })
 
   test("read_only token on a GET request passes", async () => {
@@ -245,7 +241,7 @@ describe("workspaceTokenAuthMidddleware", () => {
     await callMiddleware(headers, "GET")
 
     expect(next).toHaveBeenCalled()
-    expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+    expect(getAccessState).not.toHaveBeenCalled()
   })
 
   test("read_only token on a DELETE request is rejected with FORBIDDEN", async () => {
@@ -257,7 +253,7 @@ describe("workspaceTokenAuthMidddleware", () => {
       code: "FORBIDDEN",
       message: "Read-only token cannot perform this operation",
     })
-    expect(checkWorkspaceOwnerAccess).not.toHaveBeenCalled()
+    expect(getAccessState).not.toHaveBeenCalled()
   })
 
   test("full-permission token on a mutation reaches the owner-quota gate", async () => {
@@ -266,9 +262,7 @@ describe("workspaceTokenAuthMidddleware", () => {
     const headers = new Headers({ Authorization: "Bearer ws1_abc" })
     await callMiddleware(headers, "POST")
 
-    expect(checkWorkspaceOwnerAccess).toHaveBeenCalledWith({
-      ownerId: "owner-1",
-    })
+    expect(getAccessState).toHaveBeenCalledWith("owner-1")
     expect(next).toHaveBeenCalled()
   })
 

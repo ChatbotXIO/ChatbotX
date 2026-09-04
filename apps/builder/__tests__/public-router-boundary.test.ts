@@ -10,7 +10,7 @@ const TS_EXTENSION_PATTERN = /\.ts$/
 
 // A feature "publishes" a public, workspace-token-authed surface via this
 // conventional filename.
-const WORKSPACE_TOKEN_API_FILENAMES = new Set(["workspace-token.ts"])
+const WORKSPACE_TOKEN_API_FILENAME = "workspace-token.ts"
 
 function collectWorkspaceTokenApiFiles(dir: string, results: string[] = []) {
   for (const entry of readdirSync(dir)) {
@@ -23,7 +23,7 @@ function collectWorkspaceTokenApiFiles(dir: string, results: string[] = []) {
 
     if (stat.isDirectory()) {
       collectWorkspaceTokenApiFiles(fullPath, results)
-    } else if (WORKSPACE_TOKEN_API_FILENAMES.has(entry)) {
+    } else if (entry === WORKSPACE_TOKEN_API_FILENAME) {
       results.push(fullPath)
     }
   }

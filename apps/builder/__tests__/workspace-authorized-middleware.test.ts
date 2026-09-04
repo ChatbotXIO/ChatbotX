@@ -1,34 +1,31 @@
 // @vitest-environment node
 
-import { ORPCError } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   findMembership,
   isWorkspaceScheduledForDeletion,
-  checkWorkspaceOwnerAccess,
+  getAccessState,
+  isAtLimit,
 } = vi.hoisted(() => ({
   findMembership: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
-  checkWorkspaceOwnerAccess: vi.fn().mockResolvedValue(null),
+  getAccessState: vi.fn().mockResolvedValue({ blocked: false }),
+  isAtLimit: vi.fn().mockResolvedValue(false),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberService: { findMembership },
   isWorkspaceScheduledForDeletion,
+  userQuotaService: { getAccessState },
+  quotaEnforcementService: { isAtLimit },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
   withAuditContext: (_actor: unknown, fn: () => unknown) => fn(),
 }))
 
-vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
-  checkWorkspaceOwnerAccess,
-  isWorkspaceMutationMethod: (method: string | undefined) =>
-    !["GET", "HEAD", "DELETE"].includes(method ?? "POST"),
-  workspaceAccessDenialOrpcError: (reason: string) =>
-    new ORPCError(reason, { status: 403 }),
-}))
+vi.mock("@/env", () => ({ isCloud: () => true }))
 
 vi.mock("@/lib/auth/auth", () => ({
   auth: { api: { getSession: vi.fn() } },
@@ -75,13 +72,14 @@ const membership = {
 beforeEach(() => {
   vi.clearAllMocks()
   isWorkspaceScheduledForDeletion.mockReturnValue(false)
-  checkWorkspaceOwnerAccess.mockResolvedValue(null)
+  getAccessState.mockResolvedValue({ blocked: false })
+  isAtLimit.mockResolvedValue(false)
   findMembership.mockResolvedValue(membership)
 })
 
 describe("workspaceAuthorizedMidddleware", () => {
   test("GET procedure with a blocked owner still passes", async () => {
-    checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
 
     await callMiddleware("GET")
 
@@ -89,7 +87,7 @@ describe("workspaceAuthorizedMidddleware", () => {
   })
 
   test("POST procedure with a blocked owner is rejected with trialExpired 403", async () => {
-    checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
 
     await expect(callMiddleware("POST")).rejects.toMatchObject({
       code: "trialExpired",
@@ -104,5 +102,43 @@ describe("workspaceAuthorizedMidddleware", () => {
     await expect(callMiddleware("GET")).rejects.toMatchObject({
       code: "UNAUTHORIZED",
     })
+  })
+
+  test("DELETE procedure with a blocked owner still passes (invariant #14)", async () => {
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await callMiddleware("DELETE")
+
+    expect(next).toHaveBeenCalled()
+    expect(getAccessState).not.toHaveBeenCalled()
+  })
+
+  test("undefined method with a blocked owner is rejected (undeclared routes default to mutation)", async () => {
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(callMiddleware(undefined)).rejects.toMatchObject({
+      code: "trialExpired",
+      status: 403,
+    })
+  })
+
+  test("scheduled-deletion workspace is rejected with FORBIDDEN and never reaches the owner-access gate", async () => {
+    isWorkspaceScheduledForDeletion.mockReturnValue(true)
+
+    await expect(callMiddleware("GET")).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Workspace deletion scheduled",
+    })
+    expect(getAccessState).not.toHaveBeenCalled()
+  })
+
+  test("next is called with the membership's workspace in context", async () => {
+    await callMiddleware("GET")
+
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: { workspace: membership.workspace },
+      }),
+    )
   })
 })

@@ -11,6 +11,7 @@ description: >-
 ## Architecture
 
 - **oRPC** serves both **RPC** (`/rpc`) and **OpenAPI** (`/api`) endpoints
+- `/api` serves **only** `publicRouter` (workspace-token / channel-token authed procedures). Private, session-authed procedures are reachable via `/rpc` (from the builder) and, in development only, the full-router mirror at `/api-internal` (Scalar docs at `GET /api-internal`, spec at `/api-internal/spec.json`)
 - Base context: `{ headers, url?, user?, workspace?, apiToken? }`
 - Two auth stacks: `authorizedAPI` (session) and `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token)
 - Routers are plain objects of procedures, composed via object spreading
@@ -209,7 +210,7 @@ const data = await client.myFeatureAPI.listMyFeatureAPI({ workspaceId })
 
 ## Error Handling
 
-Throw `ChatbotXException` or `ModelNotfoundException` — they are auto-mapped to oRPC errors in the global `onError` interceptor:
+Throw `ChatbotXException` or `ModelNotfoundException` — they are auto-mapped to oRPC errors by `mapKnownOrpcErrors` (`apps/builder/src/orpc.ts`), the middleware-level `onError` interceptor shared by all three auth stacks: it warn-logs and remaps known errors, leaving anything else untouched. Unknown errors are logged exactly once at error level by `logUnexpectedOrpcErrorCallback` (`apps/builder/src/lib/orpc/handlers.ts`), the route-level interceptor used by the `/api`, `/api-internal`, and `/rpc` handlers:
 
 ```typescript
 import { ChatbotXException, notFoundException } from "@chatbotx.io/sdk"

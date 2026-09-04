@@ -1,3 +1,4 @@
+import type { HTTPMethod } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { getAccessState, isAtLimit, isCloud } = vi.hoisted(() => ({
@@ -113,7 +114,7 @@ describe("checkWorkspaceOwnerAccess", () => {
 })
 
 describe("isWorkspaceMutationMethod", () => {
-  test.each([
+  test.each<[HTTPMethod | undefined, boolean]>([
     ["GET", false],
     ["HEAD", false],
     ["DELETE", false],

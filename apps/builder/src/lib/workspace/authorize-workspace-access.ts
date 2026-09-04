@@ -3,6 +3,7 @@ import {
   userQuotaService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
 import { isCloud } from "@/env"
 
@@ -22,12 +23,12 @@ const DENIAL_HTTP_STATUS = 403
  * POST/PUT/PATCH are gated. A procedure with no declared method is treated as
  * a mutation (oRPC defaults undeclared routes to POST).
  */
-const READ_OR_DELETE_METHODS = new Set(["GET", "HEAD", "DELETE"])
+const READ_OR_DELETE_METHODS = new Set<HTTPMethod>(["GET", "HEAD", "DELETE"])
 
-export const isWorkspaceMutationMethod = (method: string | undefined) =>
+export const isWorkspaceMutationMethod = (method: HTTPMethod | undefined) =>
   !READ_OR_DELETE_METHODS.has(method ?? "POST")
 
-const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set(["GET", "HEAD"])
+const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
 
 /**
  * Distinct from `isWorkspaceMutationMethod`: that predicate treats DELETE as
@@ -35,7 +36,7 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set(["GET", "HEAD"])
  * WorkspaceApiToken must never be allowed to delete data. Keep the two
  * predicates separate rather than reusing one for both call sites.
  */
-export const isReadOnlyTokenAllowedMethod = (method: string | undefined) =>
+export const isReadOnlyTokenAllowedMethod = (method: HTTPMethod | undefined) =>
   READ_ONLY_TOKEN_ALLOWED_METHODS.has(method ?? "POST")
 
 async function getWorkspaceOwnerAccessState(ownerId: string) {
@@ -65,10 +66,10 @@ async function getWorkspaceOwnerAccessState(ownerId: string) {
 
 /**
  * Owner-quota/trial gate shared by every workspace-scoped entry point: server
- * actions (`workspaceActionClient` in safe-action.ts) and oRPC workspace-token
- * auth today; oRPC session auth (`workspaceAuthorizedMidddleware`) is a
- * pending follow-up. Cloud-only — the self-hosted edition has no quota row
- * and stays unrestricted. Deletion is checked separately by each caller via
+ * actions (`workspaceActionClient` in safe-action.ts), oRPC workspace-token
+ * auth, and oRPC session auth (`workspaceAuthorizedMidddleware`) all wire
+ * this in. Cloud-only — the self-hosted edition has no quota row and stays
+ * unrestricted. Deletion is checked separately by each caller via
  * `isWorkspaceScheduledForDeletion` because it's a distinct, terminal concern
  * that must be evaluated even when quota lookups are skipped (self-hosted, or
  * "allow expired" call sites).
@@ -101,3 +102,24 @@ export const workspaceAccessDenialOrpcError = (
     message: DENIAL_MESSAGES[reason],
     status: DENIAL_HTTP_STATUS,
   })
+
+/**
+ * Shared by the session (`workspaceAuthorizedMidddleware`) and workspace-token
+ * oRPC gates: reads and deletes stay open (invariant #14) while mutations are
+ * checked against the owner's quota/trial state.
+ */
+export async function assertWorkspaceOwnerAccessForMethod(props: {
+  method: HTTPMethod | undefined
+  ownerId: string
+}): Promise<void> {
+  if (!isWorkspaceMutationMethod(props.method)) {
+    return
+  }
+
+  const denialReason = await checkWorkspaceOwnerAccess({
+    ownerId: props.ownerId,
+  })
+  if (denialReason) {
+    throw workspaceAccessDenialOrpcError(denialReason)
+  }
+}

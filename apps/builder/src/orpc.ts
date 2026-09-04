@@ -13,8 +13,6 @@ import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-
 import { base } from "./middlewares/context"
 import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-auth"
 
-export type { BaseContext } from "./middlewares/context"
-
 const CHANNEL_ERROR_FALLBACK = "The provider rejected the request."
 
 /**
@@ -33,7 +31,7 @@ function toKnownOrpcError(
   if (error instanceof ChatbotXException) {
     return new ORPCError(error.code, {
       message: error.message,
-      status: error.httpStatusCode || 400,
+      status: error.httpStatusCode ?? 400,
     })
   }
 
@@ -44,7 +42,7 @@ function toKnownOrpcError(
   if (error instanceof SdkException) {
     return new ORPCError("BAD_REQUEST", {
       message: toPublicErrorMessage(error, CHANNEL_ERROR_FALLBACK),
-      status: error.httpStatusCode || 400,
+      status: error.httpStatusCode ?? 400,
     })
   }
 
@@ -62,36 +60,22 @@ function toKnownOrpcError(
 }
 
 /**
- * Shared with `packages/api-contract`-based implementations: a contract
- * router is implemented via
- * `implement(contract).$context<BaseContext>().use(onError(logAndMapKnownOrpcErrors)).use(workspaceTokenAuthMidddleware)`
- * (from `@/middlewares/workspace-token-auth`) so its wire-level behavior
- * (error shapes, workspace-token auth) never drifts from
- * `workspaceTokenAuthAPI`. Exported as a plain function (not a pre-composed
- * builder) because `implement()` needs the concrete contract object at the
- * `.use()` call site — threading it through a generic helper defeats oRPC's
- * per-procedure type inference (`AnyContractRouter`'s procedure-or-router
- * union makes `.use()`'s overloads unresolvable against a still-generic type
- * parameter).
+ * `onError` interceptor shared by all three auth stacks below. A known error
+ * is warn-logged and remapped to its client-facing `ORPCError`; anything
+ * else is left alone (not logged here) so it falls through to the route
+ * handler's `logUnexpectedOrpcErrorCallback` interceptor, which is the single place
+ * unknown errors get logged at error level.
  */
-export function logAndMapKnownOrpcErrors(error: unknown) {
+export function mapKnownOrpcErrors(error: unknown) {
   const mapped = toKnownOrpcError(error)
   if (mapped) {
     // Expected client-facing 4xx — keep it out of error-level alerting.
     logger.warn({ err: error }, "oRPC handler rejected request")
     throw mapped
   }
-
-  logger.error(
-    {
-      err: error,
-      cause: JSON.stringify(error instanceof Error ? error.cause : undefined),
-    },
-    "Error in oRPC handler",
-  )
 }
 
-const withErrorMapping = base.use(onError(logAndMapKnownOrpcErrors))
+const withErrorMapping = base.use(onError(mapKnownOrpcErrors))
 
 export const authorizedAPI = withErrorMapping.use(authMiddleware)
 
