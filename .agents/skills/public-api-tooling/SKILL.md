@@ -60,7 +60,9 @@ OpenAPI types before adjusting typed clients.
 1. Use `orpc-api` to add/update the builder oRPC procedure and OpenAPI metadata.
 2. Make sure the procedure uses the correct auth stack:
    - session APIs: `authorizedAPI`
-   - workspace token APIs: `workspaceTokenAuthAPI`
+   - workspace token APIs: `workspaceTokenAuthAPIForScope("<scope>")` — every
+     workspace-token endpoint must declare its resource scope (see
+     `docs/developer/workspace-api-tokens.md`)
 3. Refresh generated OpenAPI types if the workflow requires it.
 4. Update `packages/public-apis/src/apis/<domain>.ts` schemas and functions.
 5. Update CLI/MCP tests or smoke tests if dynamic discovery/args changed.

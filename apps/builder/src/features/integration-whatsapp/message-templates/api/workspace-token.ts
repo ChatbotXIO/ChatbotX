@@ -1,9 +1,12 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
 import { whatsappMessageTemplateService } from "../queries"
 import {
   listWhatsappMessageTemplatesRequest,
   listWhatsappMessageTemplatesResponse,
 } from "../schema/query"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 
 export const whatsappMessageTemplateWorkspaceTokenAPIs = {
   listTemplateMessagesWorkspaceTokenAPI: workspaceTokenAuthAPI

@@ -2106,6 +2106,26 @@
         "done": "Færdig"
       }
     },
+    "tokenPermission": {
+      "label": "Tilladelse",
+      "full": "Fuld adgang",
+      "readOnly": "Skrivebeskyttet"
+    },
+    "tokenScopes": {
+      "label": "Scopes",
+      "contacts": "Kontakter",
+      "inbox": "Indbakke",
+      "automation": "Automatisering",
+      "broadcasts": "Udsendelser",
+      "analytics": "Analyse",
+      "ecommerce": "E-handel",
+      "integrations": "Integrationer",
+      "channels": "Kanaler",
+      "minigames": "Minispil",
+      "appointments": "Aftaler",
+      "media": "Medier",
+      "ads": "Annoncer"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2868,9 +2888,8 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Forbind din Make.com konto til send hændelser fra din flows og modtag kontakt data through Make scenarios. Din workspace's Developer Access Token er copied til din clipboard when du click Forbind — paste it when creating den connection i Make.",
-      "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger.",
-      "noWorkspaceToken": "Nej Developer Access Token found for denne arbejdsområde. Generér one i den Arbejdsområde token section above, then click Forbind again."
+      "description": "Forbind din Make.com konto til send hændelser fra din flows og modtag kontakt data through Make scenarios.",
+      "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger."
     }
   },
   "integrations": {
@@ -3872,7 +3891,12 @@
   },
   "developerAccessToken": {
     "title": "API Access Token",
-    "description": "Generér a token til allow din arbejdsområde til access den public APIs. Keep denne token secret og do ikke share it med anyone."
+    "description": "Generér a token til allow din arbejdsområde til access den public APIs. Keep denne token secret og do ikke share it med anyone.",
+    "createDialogTitle": "Opret API-token",
+    "namePlaceholder": "f.eks. Zapier-integration",
+    "empty": "Ingen API-tokens endnu.",
+    "defaultBadge": "Standard",
+    "allScopes": "Alle scopes"
   },
   "contacts": {
     "title": "Kontakter",

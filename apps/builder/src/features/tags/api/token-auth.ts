@@ -8,7 +8,7 @@ import {
   possibleErrorsOnUpdatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { createTag } from "../actions/create-tag-action"
 import { deleteTag } from "../actions/delete-tag-action"
 import { updateTag } from "../actions/update-tag-action"
@@ -16,6 +16,8 @@ import { listTags } from "../queries"
 import { createTagRequest } from "../schema/action"
 import { publicListTagsResponse } from "../schema/query"
 import { publicTagResource, tagResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
 const listTagsWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({

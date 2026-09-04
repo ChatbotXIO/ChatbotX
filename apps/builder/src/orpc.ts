@@ -3,6 +3,7 @@ import {
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
 import { ModelNotfoundException } from "@chatbotx.io/database/errors"
+import type { WorkspaceApiTokenScope } from "@chatbotx.io/database/partials"
 import { SdkException } from "@chatbotx.io/sdk"
 import { ORPCError, onError } from "@orpc/server"
 import { logger } from "./lib/log"
@@ -52,9 +53,41 @@ export const authorizedAPI = base
   )
   .use(authMiddleware)
 
-export const workspaceTokenAuthAPI = base
-  .use(onError(throwMappedError))
-  .use(workspaceTokenAuthMidddleware)
+/**
+ * Enforces the resource-area axis on top of `workspaceTokenAuthMidddleware`.
+ * `apiToken.scopes === null` means unrestricted ("All scopes") — every
+ * existing and system-default token — so it always passes. A non-null array
+ * is an explicit allow-list denied for anything outside it, including a
+ * scope that ships after the token was created (least privilege; see the
+ * WorkspaceApiToken.scopes doc).
+ */
+const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
+  base.middleware(async ({ context, next }) => {
+    // apiToken is always set here in practice — this middleware is only ever
+    // chained after workspaceTokenAuthMidddleware via
+    // workspaceTokenAuthAPIForScope below — but the base context type marks
+    // it optional (shared with authorizedAPI, which never sets it).
+    const scopes = context.apiToken?.scopes
+    if (scopes !== null && scopes !== undefined && !scopes.includes(scope)) {
+      throw new ORPCError("FORBIDDEN", {
+        message: `Token is not authorized for the '${scope}' scope`,
+      })
+    }
+    return await next()
+  })
+
+/**
+ * Every workspace-token endpoint must declare its resource scope — there is
+ * no unscoped variant. This is deliberate: removing a bare
+ * `workspaceTokenAuthAPI` export makes every current and future endpoint
+ * fail to compile until it picks a scope, turning the compile error itself
+ * into the router-sweep checklist.
+ */
+export const workspaceTokenAuthAPIForScope = (scope: WorkspaceApiTokenScope) =>
+  base
+    .use(onError(throwMappedError))
+    .use(workspaceTokenAuthMidddleware)
+    .use(requireTokenScope(scope))
 
 export const channelApiTokenAPI = base
   .use(onError(throwMappedError))

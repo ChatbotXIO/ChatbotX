@@ -1419,6 +1419,26 @@
         "done": "完成"
       }
     },
+    "tokenPermission": {
+      "label": "權限",
+      "full": "完整存取權",
+      "readOnly": "唯讀"
+    },
+    "tokenScopes": {
+      "label": "範圍",
+      "contacts": "聯絡人",
+      "inbox": "收件匣",
+      "automation": "自動化",
+      "broadcasts": "群發",
+      "analytics": "分析",
+      "ecommerce": "電子商務",
+      "integrations": "整合",
+      "channels": "頻道",
+      "minigames": "小遊戲",
+      "appointments": "預約",
+      "media": "媒體",
+      "ads": "廣告"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3102,9 +3122,8 @@
     "title": "Make.com",
     "setting": {
       "label": "Make.com",
-      "description": "連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。當您點擊「連接」時，系統會將此工作區的開發人員存取權杖複製到剪貼簿，請在 Make 建立連線時貼上。",
-      "notConfigured": "找不到邀請連結。請在平台設定新增一個。",
-      "noWorkspaceToken": "找不到此工作區的開發人員存取權杖。在上面的工作區權杖部分產生一個，然後再按一下連接。"
+      "description": "連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。",
+      "notConfigured": "找不到邀請連結。請在平台設定新增一個。"
     }
   },
   "integrations": {
@@ -3905,7 +3924,12 @@
   },
   "developerAccessToken": {
     "title": "API 存取權杖",
-    "description": "產生權杖以允許您的工作區存取公共 API。請將此權杖保密，不要與任何人共享。"
+    "description": "產生權杖以允許您的工作區存取公共 API。請將此權杖保密，不要與任何人共享。",
+    "createDialogTitle": "建立 API 權杖",
+    "namePlaceholder": "例如：Zapier 整合",
+    "empty": "尚無 API 權杖。",
+    "defaultBadge": "預設",
+    "allScopes": "所有範圍"
   },
   "contacts": {
     "title": "聯絡人",

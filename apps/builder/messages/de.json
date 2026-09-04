@@ -2106,6 +2106,26 @@
         "done": "Fertig"
       }
     },
+    "tokenPermission": {
+      "label": "Berechtigung",
+      "full": "Vollzugriff",
+      "readOnly": "Nur Lesen"
+    },
+    "tokenScopes": {
+      "label": "Bereiche",
+      "contacts": "Kontakte",
+      "inbox": "Posteingang",
+      "automation": "Automatisierung",
+      "broadcasts": "Broadcasts",
+      "analytics": "Analysen",
+      "ecommerce": "E-Commerce",
+      "integrations": "Integrationen",
+      "channels": "Kanäle",
+      "minigames": "Minispiele",
+      "appointments": "Termine",
+      "media": "Medien",
+      "ads": "Anzeigen"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2868,9 +2888,8 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Verbinden Sie Ihr Make.com-Konto, um Ereignisse aus Ihren Flows zu senden und Kontaktdaten über Make-Szenarien zu empfangen. Das Entwickler-Zugriffstoken Ihres Arbeitsbereichs wird beim Klicken auf „Verbinden“ in die Zwischenablage kopiert — fügen Sie es beim Erstellen der Verbindung in Make ein.",
-      "notConfigured": "Kein Make-Einladungslink gefunden. Fügen Sie einen in den Plattformeinstellungen hinzu.",
-      "noWorkspaceToken": "Für diesen Arbeitsbereich wurde kein Entwickler-Zugriffstoken gefunden. Generieren Sie eines im Abschnitt für Arbeitsbereichstoken oben und klicken Sie dann erneut auf „Verbinden“."
+      "description": "Verbinden Sie Ihr Make.com-Konto, um Ereignisse aus Ihren Flows zu senden und Kontaktdaten über Make-Szenarien zu empfangen.",
+      "notConfigured": "Kein Make-Einladungslink gefunden. Fügen Sie einen in den Plattformeinstellungen hinzu."
     }
   },
   "integrations": {
@@ -3872,7 +3891,12 @@
   },
   "developerAccessToken": {
     "title": "API-Zugriffstoken",
-    "description": "Generieren Sie ein Token, damit Ihr Arbeitsbereich auf die öffentlichen APIs zugreifen kann. Halten Sie dieses Token geheim und geben Sie es nicht weiter."
+    "description": "Generieren Sie ein Token, damit Ihr Arbeitsbereich auf die öffentlichen APIs zugreifen kann. Halten Sie dieses Token geheim und geben Sie es nicht weiter.",
+    "createDialogTitle": "API-Token erstellen",
+    "namePlaceholder": "z. B. Zapier-Integration",
+    "empty": "Noch keine API-Tokens.",
+    "defaultBadge": "Standard",
+    "allScopes": "Alle Bereiche"
   },
   "contacts": {
     "title": "Kontakte",

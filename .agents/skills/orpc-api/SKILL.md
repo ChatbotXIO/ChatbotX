@@ -11,8 +11,8 @@ description: >-
 ## Architecture
 
 - **oRPC** serves both **RPC** (`/rpc`) and **OpenAPI** (`/api`) endpoints
-- Base context: `{ headers, user?, workspace? }`
-- Two auth stacks: `authorizedAPI` (session) and `workspaceTokenAuthAPI` (header token)
+- Base context: `{ headers, url?, user?, workspace?, apiToken? }`
+- Two auth stacks: `authorizedAPI` (session) and `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token)
 - Routers are plain objects of procedures, composed via object spreading
 
 ## Auth Stacks
@@ -20,7 +20,8 @@ description: >-
 Defined in `apps/builder/src/orpc.ts`:
 
 - **`authorizedAPI`**: `base` → error mapping → `authMiddleware` (session/cookie auth)
-- **`workspaceTokenAuthAPI`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header)
+- **`workspaceTokenAuthAPIForScope(scope)`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header) → `requireTokenScope(scope)`. There is deliberately no unscoped variant — every workspace-token endpoint must declare its resource scope. The middleware sets `context.workspace` plus a projected `context.apiToken` (`id`, `workspaceId`, `permission`, `scopes`, `isDefault` — never `tokenHash`/`encryptedToken`). See `docs/developer/workspace-api-tokens.md`.
+- **`channelApiTokenAPI`**: `base` → error mapping → `channelApiTokenAuthMidddleware` (API-channel token)
 
 Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per-procedure.
 
@@ -106,7 +107,11 @@ export const myFeatureAPI = {
 ### Workspace-token procedures (public API)
 
 ```typescript
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+// Pick the resource-area scope this feature belongs to
+// (workspaceApiTokenScopes in packages/database/src/partials/workspace-api-token.ts)
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 const workspaceTokenAPIs = {
   findMyFeaturePublicAPI: workspaceTokenAuthAPI

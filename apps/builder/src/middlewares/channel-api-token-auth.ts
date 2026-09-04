@@ -3,8 +3,8 @@ import {
   isWorkspaceScheduledForDeletion,
   workspaceService,
 } from "@chatbotx.io/business"
+import { hashToken } from "@chatbotx.io/business/workspace-api-token/credentials"
 import { ORPCError } from "@orpc/server"
-import { hashToken } from "@/features/integration-api/lib/token-hash"
 import { findIntegrationApiByTokenHash } from "@/features/integration-api/queries/find-by-token-hash"
 import { base } from "./context"
 

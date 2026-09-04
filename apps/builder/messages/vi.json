@@ -2180,6 +2180,26 @@
         "done": "Xong"
       }
     },
+    "tokenPermission": {
+      "label": "Quyền",
+      "full": "Toàn quyền truy cập",
+      "readOnly": "Chỉ đọc"
+    },
+    "tokenScopes": {
+      "label": "Phạm vi",
+      "contacts": "Liên hệ",
+      "inbox": "Hộp thư đến",
+      "automation": "Tự động hóa",
+      "broadcasts": "Phát sóng",
+      "analytics": "Phân tích",
+      "ecommerce": "Thương mại điện tử",
+      "integrations": "Tích hợp",
+      "channels": "Kênh",
+      "minigames": "Minigame",
+      "appointments": "Lịch hẹn",
+      "media": "Phương tiện",
+      "ads": "Quảng cáo"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2942,9 +2962,8 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Kết nối tài khoản Make.com để gửi sự kiện từ flow của bạn và nhận dữ liệu contact qua scenario của Make. Developer Access Token của workspace sẽ được tự động sao chép vào clipboard khi bạn bấm Connect — dán vào lúc tạo connection trong Make.",
-      "notConfigured": "Chưa tìm thấy link mời Make. Vui lòng thêm trong Cài đặt Nền tảng.",
-      "noWorkspaceToken": "Workspace này chưa có Developer Access Token. Hãy tạo token ở mục Workspace token phía trên rồi bấm Connect lại."
+      "description": "Kết nối tài khoản Make.com để gửi sự kiện từ flow của bạn và nhận dữ liệu contact qua scenario của Make.",
+      "notConfigured": "Chưa tìm thấy link mời Make. Vui lòng thêm trong Cài đặt Nền tảng."
     }
   },
   "integrations": {
@@ -3785,7 +3804,12 @@
   },
   "developerAccessToken": {
     "title": "Token truy cập API",
-    "description": "Tạo token để cho phép workspace của bạn truy cập API công khai. Giữ token này bí mật và không chia sẻ với ai."
+    "description": "Tạo token để cho phép workspace của bạn truy cập API công khai. Giữ token này bí mật và không chia sẻ với ai.",
+    "createDialogTitle": "Tạo mã API",
+    "namePlaceholder": "vd: tích hợp Zapier",
+    "empty": "Chưa có mã API nào.",
+    "defaultBadge": "Mặc định",
+    "allScopes": "Tất cả phạm vi"
   },
   "contacts": {
     "title": "Liên hệ",

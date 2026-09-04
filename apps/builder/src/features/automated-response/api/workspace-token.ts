@@ -5,7 +5,9 @@ import {
 } from "@chatbotx.io/database/schema"
 import z from "zod"
 import { maxPerPage } from "@/lib/shared-request"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 const keywordResource = createSelectSchema(automatedResponseModel, {
   id: z.string(),

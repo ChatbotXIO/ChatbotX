@@ -4,6 +4,7 @@ import {
   conversationService,
   messageService,
   resolveTenantSettings,
+  workspaceApiTokenService,
 } from "@chatbotx.io/business"
 import {
   languageFromLocale,
@@ -479,8 +480,33 @@ export const getSystemFieldValue = async (
       return contactInbox?.sourceId ?? null
     case systemFieldTypes.enum.webchat_parent_url:
       return contactInbox?.webchatParentUrl ?? null
+    // User-created workspace API tokens are hash-only and shown exactly once
+    // at generation, so they can never back this field. `{{api_key}}`
+    // resolves instead to the workspace's system-managed default token
+    // (WorkspaceApiToken.isDefault), which additionally carries an
+    // AES-GCM-encrypted copy recoverable server-side — see
+    // workspaceApiTokenService.resolveDefaultTokenPlaintext. A workspace
+    // that predates this model gets its default token lazily minted (or its
+    // legacy plaintext migrated forward from the deprecated
+    // Workspace.token) on first resolve.
     case systemFieldTypes.enum.api_key:
-      return workspace?.token ?? null
+      if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
+        return null
+      }
+      // Mirrors the `default:` branch below: a decrypt failure (rotated
+      // ENCRYPTION_KEY_PREV, corrupted blob, AAD mismatch) must degrade this
+      // field to null instead of failing the whole message render.
+      try {
+        return await workspaceApiTokenService.resolveDefaultTokenPlaintext({
+          workspaceId: contact.workspaceId,
+        })
+      } catch (err) {
+        logger.error(
+          { err, workspaceId: contact.workspaceId },
+          "Failed to resolve {{api_key}} default token plaintext",
+        )
+        return null
+      }
     case systemFieldTypes.enum.last_ad:
       return getReferralValue(contactInbox, "adId")
     case systemFieldTypes.enum.last_ctwa:

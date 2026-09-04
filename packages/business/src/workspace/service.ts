@@ -34,7 +34,7 @@ import {
 } from "../workspace-member/service"
 import { nextScheduledDeletionAt } from "./deletion-schedule"
 
-type WorkspaceWhere = Partial<{ id: string; ownerId: string; token: string }>
+type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
 type DueWorkspace = Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
 
 const stableKey = (where: WorkspaceWhere) =>
@@ -150,16 +150,12 @@ class WorkspaceService extends BaseService {
       changedKeys.length === 1 && changedKeys[0] === "scheduledDeletionAt"
     if (!props.tx && changedKeys.length > 0 && !onlyScheduledDeletionChanged) {
       const nameChanged = data.name !== undefined && data.name !== previousName
-      let detail: string
-      if (data.token !== undefined) {
-        // Never include the raw token value in the audit trail.
-        detail = "created/regenerated workspace API key"
-      } else if (nameChanged) {
-        detail = "changed the workspace name"
-      } else {
-        detail = "updated the workspace configuration"
-      }
-      await this.audit("update", detail)
+      await this.audit(
+        "update",
+        nameChanged
+          ? "changed the workspace name"
+          : "updated the workspace configuration",
+      )
     }
 
     return updated

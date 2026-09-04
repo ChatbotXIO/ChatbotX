@@ -2106,6 +2106,26 @@
         "done": "Selesai"
       }
     },
+    "tokenPermission": {
+      "label": "Izin",
+      "full": "Akses penuh",
+      "readOnly": "Hanya baca"
+    },
+    "tokenScopes": {
+      "label": "Cakupan",
+      "contacts": "Kontak",
+      "inbox": "Kotak Masuk",
+      "automation": "Otomasi",
+      "broadcasts": "Siaran",
+      "analytics": "Analitik",
+      "ecommerce": "E-commerce",
+      "integrations": "Integrasi",
+      "channels": "Saluran",
+      "minigames": "Minigame",
+      "appointments": "Janji Temu",
+      "media": "Media",
+      "ads": "Iklan"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2868,9 +2888,8 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Hubungkan akun Make.com Anda untuk mengirim peristiwa dari alur dan menerima data kontak melalui skenario Make. Token Akses Developer ruang kerja Anda disalin ke papan klip saat Anda mengeklik Hubungkan — tempelkan saat membuat koneksi di Make.",
-      "notConfigured": "Tautan undangan Make tidak ditemukan. Tambahkan tautan di Pengaturan Platform.",
-      "noWorkspaceToken": "Token Akses Developer tidak ditemukan untuk ruang kerja ini. Buat token di bagian token Ruang Kerja di atas, lalu klik Hubungkan lagi."
+      "description": "Hubungkan akun Make.com Anda untuk mengirim peristiwa dari alur dan menerima data kontak melalui skenario Make.",
+      "notConfigured": "Tautan undangan Make tidak ditemukan. Tambahkan tautan di Pengaturan Platform."
     }
   },
   "integrations": {
@@ -3872,7 +3891,12 @@
   },
   "developerAccessToken": {
     "title": "Token Akses API",
-    "description": "Buat token agar ruang kerja Anda dapat mengakses API publik. Jaga kerahasiaan token ini dan jangan bagikan kepada siapa pun."
+    "description": "Buat token agar ruang kerja Anda dapat mengakses API publik. Jaga kerahasiaan token ini dan jangan bagikan kepada siapa pun.",
+    "createDialogTitle": "Buat token API",
+    "namePlaceholder": "mis. integrasi Zapier",
+    "empty": "Belum ada token API.",
+    "defaultBadge": "Default",
+    "allScopes": "Semua cakupan"
   },
   "contacts": {
     "title": "Kontak",

@@ -1173,7 +1173,12 @@
   },
   "developerAccessToken": {
     "description": "产生权杖以允许您的工作区访问公共 API。请将此权杖保密，不要与任何人共享。",
-    "title": "API 访问权杖"
+    "title": "API 访问权杖",
+    "createDialogTitle": "创建 API 令牌",
+    "namePlaceholder": "例如：Zapier 集成",
+    "empty": "暂无 API 令牌。",
+    "defaultBadge": "默认",
+    "allScopes": "所有作用域"
   },
   "dialog": {
     "deleteConfirmation": "你确定吗？\n此操作无法撤销。\n这将从我们的服务器中永久删除您的 {feature}。"
@@ -2833,6 +2838,26 @@
         "done": "完成"
       }
     },
+    "tokenPermission": {
+      "label": "权限",
+      "full": "完全访问",
+      "readOnly": "只读"
+    },
+    "tokenScopes": {
+      "label": "作用域",
+      "contacts": "联系人",
+      "inbox": "收件箱",
+      "automation": "自动化",
+      "broadcasts": "群发",
+      "analytics": "分析",
+      "ecommerce": "电子商务",
+      "integrations": "集成",
+      "channels": "渠道",
+      "minigames": "小游戏",
+      "appointments": "预约",
+      "media": "媒体",
+      "ads": "广告"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -3483,9 +3508,8 @@
   },
   "make": {
     "setting": {
-      "description": "连接您的 Make.com 帐户，以便从流程发送事件，并通过 Make 情境接收联系人数据。当您点击「连接」时，系统会将此工作区的开发人员访问权杖拷贝到剪贴板，请在 Make 创建连接时粘贴。",
+      "description": "连接您的 Make.com 帐户，以便从流程发送事件，并通过 Make 情境接收联系人数据。",
       "label": "Make.com",
-      "noWorkspaceToken": "找不到此工作区的开发人员访问权杖。在上面的工作区权杖部分产生一个，然后再按一下连接。",
       "notConfigured": "找不到邀请链接。请在平台设置添加一个。"
     },
     "title": "Make.com"

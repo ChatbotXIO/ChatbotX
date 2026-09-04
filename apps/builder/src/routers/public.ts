@@ -18,10 +18,8 @@ import { tagWorkspaceTokenAPIs } from "@/features/tags/api/token-auth"
 import triggersWorkspaceTokenAPIs from "@/features/triggers/api/workspace-token"
 import webhooksWorkspaceTokenAPIs from "@/features/webhooks/api/workspace-token"
 import workspaceMembersAPIs from "@/features/workspace-members/api/workspace-token"
-import workspaceAPIs from "@/features/workspaces/api/workspace-token"
 
 export const publicRouter = {
-  ...workspaceAPIs,
   ...inboxWorkspaceTokenAPIs,
   ...workspaceMembersAPIs,
   ...conversationWorkspaceTokenAPIs,

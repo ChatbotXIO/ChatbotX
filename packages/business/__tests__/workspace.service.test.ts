@@ -325,24 +325,5 @@ describe("WorkspaceService.update — member cache invalidation", () => {
   })
 })
 
-describe("WorkspaceService.update — API token regeneration audit", () => {
-  beforeEach(() => {
-    workspaceMemberService.listUserIdsByWorkspaceId.mockResolvedValue([])
-  })
-
-  test("audits a token regeneration without leaking the raw token value", async () => {
-    await workspaceService.update({
-      id: "ws-1",
-      data: { token: "ws-1_super-secret-token" },
-    })
-
-    expect(dispatchAuditRecord).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "update",
-        detail: "created/regenerated workspace API key",
-      }),
-    )
-    const [call] = dispatchAuditRecord.mock.calls
-    expect(JSON.stringify(call)).not.toContain("super-secret-token")
-  })
-})
+// Token-creation auditing moved with the write: see
+// workspace-api-token.service.test.ts (workspaceApiTokenService.createToken).

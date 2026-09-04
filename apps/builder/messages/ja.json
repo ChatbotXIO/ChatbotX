@@ -2106,6 +2106,26 @@
         "done": "完了"
       }
     },
+    "tokenPermission": {
+      "label": "権限",
+      "full": "フルアクセス",
+      "readOnly": "読み取り専用"
+    },
+    "tokenScopes": {
+      "label": "スコープ",
+      "contacts": "連絡先",
+      "inbox": "受信箱",
+      "automation": "自動化",
+      "broadcasts": "配信",
+      "analytics": "アナリティクス",
+      "ecommerce": "eコマース",
+      "integrations": "連携",
+      "channels": "チャネル",
+      "minigames": "ミニゲーム",
+      "appointments": "予約",
+      "media": "メディア",
+      "ads": "広告"
+    },
     "adReferral": {
       "label": "Ads",
       "ctwa": "CTWA",
@@ -2868,9 +2888,8 @@
     "title": "Make",
     "setting": {
       "label": "Make",
-      "description": "Make.comアカウントを接続すると、フローからイベントを送信し、Makeシナリオを通じて連絡先データを受信できます。「接続」をクリックすると、ワークスペースの開発者アクセストークンがクリップボードにコピーされます。Makeで接続を作成する際に貼り付けてください。",
-      "notConfigured": "Makeの招待リンクが見つかりません。プラットフォーム設定で追加してください。",
-      "noWorkspaceToken": "このワークスペースの開発者アクセストークンが見つかりません。上のワークスペーストークン欄で生成してから、もう一度「接続」をクリックしてください。"
+      "description": "Make.comアカウントを接続すると、フローからイベントを送信し、Makeシナリオを通じて連絡先データを受信できます。",
+      "notConfigured": "Makeの招待リンクが見つかりません。プラットフォーム設定で追加してください。"
     }
   },
   "integrations": {
@@ -3851,7 +3870,12 @@
   },
   "developerAccessToken": {
     "title": "APIアクセストークン",
-    "description": "ワークスペースから公開APIにアクセスするためのトークンを生成します。このトークンは秘密にし、誰とも共有しないでください。"
+    "description": "ワークスペースから公開APIにアクセスするためのトークンを生成します。このトークンは秘密にし、誰とも共有しないでください。",
+    "createDialogTitle": "APIトークンを作成",
+    "namePlaceholder": "例: Zapier連携",
+    "empty": "APIトークンはまだありません。",
+    "defaultBadge": "デフォルト",
+    "allScopes": "すべてのスコープ"
   },
   "contacts": {
     "title": "連絡先",

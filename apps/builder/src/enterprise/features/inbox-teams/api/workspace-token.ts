@@ -1,6 +1,8 @@
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxTeams } from "../queries"
 import { listInboxTeamsResponse } from "../schema/action"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
 export const inboxTeamsWorkspaceTokenAPIs = {
   listTeamsWorkspaceTokenAPI: workspaceTokenAuthAPI

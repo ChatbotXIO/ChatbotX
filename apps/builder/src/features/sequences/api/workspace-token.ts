@@ -1,9 +1,12 @@
 import z from "zod"
 import { basePaginationRequest } from "@/lib/pagination"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
 import { getSequence, listSequences } from "../queries"
 import { listSequencesResponse } from "../schema/action"
 import { sequenceResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 
 export const sequencesWorkspaceTokenAPIs = {
   listSequencesWorkspaceTokenAPI: workspaceTokenAuthAPI

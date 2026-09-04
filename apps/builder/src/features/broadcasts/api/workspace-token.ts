@@ -1,5 +1,6 @@
 import z from "zod"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
 import {
   listBroadcastAudience,
   listBroadcasts,
@@ -10,6 +11,8 @@ import {
   publicListBroadcastsResponse,
 } from "../schema/query"
 import { publicBroadcastResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 
 export const broadcastWorkspaceTokenAPIs = {
   listBroadcastsWorkspaceTokenAPI: workspaceTokenAuthAPI

@@ -58,6 +58,12 @@ export const workspaceModel = pgTable(
     // `workspaceService` in both CAPI send handlers; default off so existing
     // workspaces are unaffected until a user opts in.
     capiLimitedDataUse: boolean().default(false).notNull(),
+    // @deprecated legacy plaintext {{api_key}} source. Auth never reads this
+    // column and nothing writes it anymore — WorkspaceApiToken (hash +
+    // encrypted default token) is authoritative. Kept only so existing
+    // workspaces' {{api_key}} value can be migrated forward; drop once every
+    // workspace has an `encryptedToken` default row.
+    token: text(),
     ownerId: bigintAsString()
       .notNull()
       .references(() => userModel.id, {
@@ -74,7 +80,6 @@ export const workspaceModel = pgTable(
         onDelete: "restrict",
         onUpdate: "cascade",
       }),
-    token: text(),
   },
   (table) => [
     index("Workspace_tenantId_idx").on(table.tenantId),

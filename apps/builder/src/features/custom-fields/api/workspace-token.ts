@@ -8,13 +8,16 @@ import {
   possibleErrorsOnUpdatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
 import {
   createCustomFieldRequest,
   updateCustomFieldRequest,
 } from "../schema/action"
 import { listPublicCustomFieldsResponse } from "../schema/query"
 import { publicCustomFieldResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
 const customFieldsWorkspaceTokenAPI = {
   listCustomFieldsWorkspaceTokenAPI: workspaceTokenAuthAPI

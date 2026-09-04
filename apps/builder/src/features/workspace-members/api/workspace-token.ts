@@ -1,5 +1,6 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
 import { getWorkspaceMember, listWorkspaceMembers } from "../queries"
 import {
   getWorkspaceMemberRequest,
@@ -7,6 +8,8 @@ import {
   listWorkspaceMembersRequest,
   listWorkspaceMembersResponse,
 } from "../schema/query"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
 export const workspaceMembersAPIs = {
   listMembersWorkspaceTokenAPI: workspaceTokenAuthAPI

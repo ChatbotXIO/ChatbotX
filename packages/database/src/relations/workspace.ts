@@ -20,5 +20,9 @@ export const workspaceRelations = defineRelationsPart(schema, (r) => ({
       from: r.workspaceModel.id,
       to: r.magicLinkModel.workspaceId,
     }),
+    workspaceApiTokens: r.many.workspaceApiTokenModel({
+      from: r.workspaceModel.id,
+      to: r.workspaceApiTokenModel.workspaceId,
+    }),
   },
 }))

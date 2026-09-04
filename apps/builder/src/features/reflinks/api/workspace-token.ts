@@ -1,9 +1,12 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+
 import { findReflink } from "../queries"
 import { reflinkResource } from "../schema/resource"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 export const refLinksWorkspaceTokenAPIs = {
   getRefLinkWorkspaceTokenAPI: workspaceTokenAuthAPI

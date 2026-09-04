@@ -23,10 +23,5 @@ export default async function SettingIntegrationMakePage(props: {
       })
     : undefined
 
-  return (
-    <ManageMake
-      inviteUrl={credential?.config.inviteUrl}
-      workspaceToken={workspace?.token ?? undefined}
-    />
-  )
+  return <ManageMake inviteUrl={credential?.config.inviteUrl} />
 }

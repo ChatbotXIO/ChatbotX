@@ -13,7 +13,7 @@ type CapturedProcedure = {
   handler?: (...args: any[]) => any
 }
 
-const { workspaceTokenAuthAPI, capturedProcedures } = vi.hoisted(() => {
+const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
   const capturedProcedures: CapturedProcedure[] = []
 
   const makeProcedure = (route: RouteConfig) => {
@@ -32,15 +32,19 @@ const { workspaceTokenAuthAPI, capturedProcedures } = vi.hoisted(() => {
     return chain
   }
 
+  const workspaceTokenAuthAPI = {
+    route: vi.fn((config: RouteConfig) => makeProcedure(config)),
+  }
+
   return {
-    workspaceTokenAuthAPI: {
-      route: vi.fn((config: RouteConfig) => makeProcedure(config)),
-    },
+    workspaceTokenAuthAPIForScope: vi.fn(
+      (_scope: string) => workspaceTokenAuthAPI,
+    ),
     capturedProcedures,
   }
 })
 
-vi.mock("@/orpc", () => ({ workspaceTokenAuthAPI }))
+vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const webhookService = {
   listByWorkspaceId: vi.fn(),
@@ -66,8 +70,18 @@ const findProcedure = (method: string, path: string) => {
   return found
 }
 
+// Captured before the first beforeEach's clearAllMocks() erases the
+// import-time call record — the router calls
+// workspaceTokenAuthAPIForScope("integrations") exactly once, at module load
+// (line 59 above), never again during the test run.
+const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
+
 beforeEach(() => {
   vi.clearAllMocks()
+})
+
+test("registers the webhooks workspace-token router under the integrations scope", () => {
+  expect(scopeArgAtImport).toBe("integrations")
 })
 
 describe("GET /v1/webhooks", () => {

@@ -68,6 +68,9 @@ vi.mock("@chatbotx.io/business", () => ({
       contentAttributes: { postId: "post-1" },
     }),
   },
+  workspaceApiTokenService: {
+    resolveDefaultTokenPlaintext: vi.fn().mockResolvedValue("cbx_ws_plaintext"),
+  },
 }))
 
 vi.mock("@chatbotx.io/business/system-field", () => ({

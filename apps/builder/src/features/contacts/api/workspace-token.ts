@@ -18,7 +18,7 @@ import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
 import { publicListTagsResponse } from "@/features/tags/schema/query"
-import { workspaceTokenAuthAPI } from "@/orpc"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
 import { blockContact } from "../actions/block-contact.action"
 import { createContact } from "../actions/create-contact.action"
@@ -53,6 +53,15 @@ import {
   publicListContactsByCustomFieldRequest,
   publicListContactsResponse,
 } from "../schema/query"
+
+// This router mixes scopes per-procedure: CRM ops (create/read/update/tags/
+// custom-fields/block/import) are `contacts`, but sending/reading messages,
+// auto-replies, and flows for a contact are conversation/automation
+// operations even though they hang off `/v1/contacts/{identifier}/...` —
+// see the endpoint-to-scope table in the scopes plan.
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
+const inboxScopedTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
+const automationScopedTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
 export const workspaceTokenAuthAPIs = {
   listContactsWorkspaceTokenAPI: workspaceTokenAuthAPI
@@ -405,7 +414,7 @@ export const workspaceTokenAuthAPIs = {
       })
     }),
 
-  sendMessageWorkspaceTokenAPI: workspaceTokenAuthAPI
+  sendMessageWorkspaceTokenAPI: inboxScopedTokenAuthAPI
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/messages",
@@ -447,7 +456,7 @@ export const workspaceTokenAuthAPIs = {
       })
     }),
 
-  listContactMessagesWorkspaceTokenAPI: workspaceTokenAuthAPI
+  listContactMessagesWorkspaceTokenAPI: inboxScopedTokenAuthAPI
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/messages",
@@ -482,7 +491,7 @@ export const workspaceTokenAuthAPIs = {
       })
     }),
 
-  getContactMessageWorkspaceTokenAPI: workspaceTokenAuthAPI
+  getContactMessageWorkspaceTokenAPI: inboxScopedTokenAuthAPI
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/messages/{messageId}",
@@ -515,7 +524,7 @@ export const workspaceTokenAuthAPIs = {
       })
     }),
 
-  triggerAutoReplyWorkspaceTokenAPI: workspaceTokenAuthAPI
+  triggerAutoReplyWorkspaceTokenAPI: automationScopedTokenAuthAPI
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/auto-replies",
@@ -565,7 +574,7 @@ export const workspaceTokenAuthAPIs = {
       await createMessage({ conversation, contactInbox, parsedInput })
     }),
 
-  sendContactFlowWorkspaceTokenAPI: workspaceTokenAuthAPI
+  sendContactFlowWorkspaceTokenAPI: automationScopedTokenAuthAPI
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/flows",
