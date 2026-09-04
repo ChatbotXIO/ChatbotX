@@ -104,14 +104,14 @@ export const ChatLayout = (props: ChatLayoutProps) => {
       */}
       <ChatRealtime />
       {isMobile === undefined && (
-        <div className="flex h-64 items-center justify-center">
+        <div className="flex min-h-0 flex-1 items-center justify-center">
           <Loader2Icon className="animate-spin" />
         </div>
       )}
       {isMobile === true && (
-        // The shell has no mobile top bar to subtract: the page owns the
-        // whole viewport. `dvh` for the same reason as the desktop group.
-        <div className="flex h-[100dvh] flex-col">
+        // Fills the height `FullBleed` derives from the shell rather than
+        // naming a viewport unit of its own — see the desktop group below.
+        <div className="flex min-h-0 flex-1 flex-col">
           {activeConversationId ? (
             <MessageThreadPane
               {...paneState}
@@ -149,10 +149,12 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         </div>
       )}
       {isMobile === false && (
-        // `dvh` rather than `vh`: the panel group is the page's full-height
-        // element, and `vh` overshoots the visible area while mobile browser
-        // chrome is showing.
-        <ResizablePanelGroup className="h-[100dvh] items-stretch">
+        // Height comes from `flex-1`, never a `height` class: `PanelGroup`
+        // hard-codes an inline `height: 100%`, which beats any stylesheet rule,
+        // so `h-[100dvh]`/`h-full` here are silently dead and the group
+        // collapses to its panes' content height — a short inbox with dead
+        // space under it on a tall viewport.
+        <ResizablePanelGroup className="min-h-0 flex-1 items-stretch">
           {/* CONVERSATION LIST */}
           <ResizablePanel
             className="p-3"

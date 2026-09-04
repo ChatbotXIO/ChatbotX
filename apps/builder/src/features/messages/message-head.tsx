@@ -64,7 +64,7 @@ export default function MessageHead({
 
   return (
     activeConversation && (
-      <div className="flex items-center gap-2 border-b px-3 pb-3">
+      <div className="flex shrink-0 items-center gap-2 border-b px-3 pb-3">
         {onBack && (
           <Button
             aria-label={t("actions.back")}

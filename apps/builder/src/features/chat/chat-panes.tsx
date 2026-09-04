@@ -124,7 +124,7 @@ export function MessageThreadPane({
           <MessageHead onBack={onBack} onOpenContact={onOpenContact} />
           {isConversationActive(activeConversation) && (
             <Button
-              className="rounded-none"
+              className="shrink-0 rounded-none"
               disabled={isDisablingBot}
               onClick={() => {
                 disableBot({ ids: [activeConversation.id] })

@@ -1,11 +1,7 @@
 "use client"
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@chatbotx.io/ui/components/ui/popover"
+import { Popover, PopoverContent } from "@chatbotx.io/ui/components/ui/popover"
 import { useTranslations } from "next-intl"
 import {
   type ReactElement,
@@ -32,6 +28,7 @@ export const QuickRepliesPopover = ({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
+  const anchorRef = useRef<HTMLDivElement>(null)
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
   const {
     savedReplies,
@@ -140,11 +137,16 @@ export const QuickRepliesPopover = ({
   )
 
   return (
-    <div onKeyDownCapture={onKeyDownCapture}>
+    // The popover is driven entirely by the input's value (a leading "/"), so
+    // it needs an anchor, not a trigger: `Popover.Trigger` would apply Base UI's
+    // non-native button keyboard handling to the textarea and swallow every
+    // Space keypress (and stamp it with `role="button"`).
+    <div onKeyDownCapture={onKeyDownCapture} ref={anchorRef}>
       <Popover onOpenChange={setOpen} open={open && shouldShow}>
-        <PopoverTrigger nativeButton={false} render={children} />
+        {children}
         <PopoverContent
           align="start"
+          anchor={anchorRef}
           className="max-h-75 w-[min(100vw-2rem,25rem)] overflow-y-auto p-0"
           initialFocus={false}
           side="top"

@@ -111,7 +111,17 @@ export default async function WorkspaceLayout({
   )
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
+    // `has-data-full-bleed:h-svh` caps the shell at the viewport for pages
+    // that own the whole screen (the inbox — see `components/full-bleed.tsx`).
+    // The wrapper's own `min-h-svh` is only a floor, so without this a
+    // full-bleed page's `flex-1` has no definite height to resolve against and
+    // grows with its content instead: the inbox composer ends up below the fold
+    // on a short viewport. Scoping it to `:has()` keeps every ordinary page
+    // scrolling the body exactly as before.
+    <SidebarProvider
+      className="has-data-full-bleed:h-svh"
+      defaultOpen={defaultOpen}
+    >
       <AppSidebar
         allWorkspaces={allWorkspaces}
         isPlatformAdmin={platformAdmin}
@@ -122,7 +132,12 @@ export default async function WorkspaceLayout({
         workspaceId={workspaceId}
       />
       <SidebarInset>
-        <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
+        {/*
+          `min-h-0` lets this column shrink to the capped shell above instead of
+          being floored at its content height — without it the cap is inert and
+          a full-bleed page still overflows.
+        */}
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
           <WorkspaceDeletionTabSync
             scheduledForDeletion={scheduledForDeletion}
             workspaceId={workspaceId}

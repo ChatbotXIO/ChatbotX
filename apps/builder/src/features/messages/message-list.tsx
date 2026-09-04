@@ -236,7 +236,10 @@ export function MessageList() {
   }
 
   return (
-    <div className="flex flex-1 flex-col px-3">
+    // `min-h-0`: Virtuoso's scroller is `height: 100%`, so without it this item
+    // is floored at the full list height and pushes the composer below the fold
+    // instead of scrolling inside itself.
+    <div className="flex min-h-0 flex-1 flex-col px-3">
       <Virtuoso
         alignToBottom={true}
         components={{

@@ -75,6 +75,14 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
 
 const { ChatLayout } = await import("@/features/chat/chat-layout")
 
+/**
+ * Any `height` class on an inbox container is a bug, not a style choice: the
+ * height belongs to the shell (`FullBleed` grows to it), and on the desktop
+ * group a `height` class is outright dead — `PanelGroup` sets an inline
+ * `height: 100%` that no stylesheet rule can beat.
+ */
+const HEIGHT_CLASS = /(?:^|\s)h-/
+
 describe("ChatLayout", () => {
   let container: HTMLDivElement
   let root: Root
@@ -113,16 +121,21 @@ describe("ChatLayout", () => {
     expect(find("list-pane")).not.toBeNull()
     expect(find("thread-pane")).toBeNull()
     // The three-column group must not mount on a phone.
-    expect(container.querySelector("[data-panel-group]")).toBeNull()
+    expect(
+      container.querySelector('[data-slot="resizable-panel-group"]'),
+    ).toBeNull()
   })
 
   test("fills the viewport, with the pane owning the whole screen", () => {
     setViewportWidth(375)
     render()
 
-    // The mobile shell has no top bar to subtract height for.
+    // The height is derived from the shell (`FullBleed` is a grown flex item),
+    // never hand-copied as a viewport unit: a `dvh` here ignores whatever else
+    // shares the shell's column, such as the trial banner.
     const pane = find("list-pane")?.closest("div.flex")
-    expect(pane?.className).toContain("h-[100dvh]")
+    expect(pane?.className).toContain("flex-1")
+    expect(pane?.className).not.toMatch(HEIGHT_CLASS)
   })
 
   test("does not auto-select a conversation on mobile", () => {
@@ -191,6 +204,18 @@ describe("ChatLayout", () => {
     // No mobile-only affordances leak into the desktop layout.
     expect(find("back")).toBeNull()
     expect(find("open-contact")).toBeNull()
+  })
+
+  test("grows the desktop group instead of giving it a dead height class", () => {
+    storeState.activeConversationId = "c1"
+    setViewportWidth(1440)
+    render()
+
+    const group = container.querySelector<HTMLElement>(
+      '[data-slot="resizable-panel-group"]',
+    )
+    expect(group?.className).toContain("flex-1")
+    expect(group?.className).not.toMatch(HEIGHT_CLASS)
   })
 
   test("keeps the realtime socket mounted in every layout", () => {
