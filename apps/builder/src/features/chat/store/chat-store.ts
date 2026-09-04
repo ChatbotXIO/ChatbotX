@@ -570,19 +570,26 @@ export const createChatStore = () => {
       const { nextCursorMessage, messages, activeConversationId } = get()
       set({ isLoadMoreMessage: true })
 
-      const { data, nextCursor } =
-        await client.messagesAPI.listMessagesAuthenticatedAPI({
-          workspaceId,
-          perPage,
-          cursor: nextCursorMessage ?? "",
-          conversationId: activeConversationId ?? undefined,
+      try {
+        const { data, nextCursor } =
+          await client.messagesAPI.listMessagesAuthenticatedAPI({
+            workspaceId,
+            perPage,
+            cursor: nextCursorMessage ?? "",
+            conversationId: activeConversationId ?? undefined,
+          })
+        set({
+          messages: [...data.reverse(), ...messages],
+          nextCursorMessage: nextCursor,
+          hasNextMessagePage: nextCursor !== null,
+          isLoadMoreMessage: false,
         })
-      set({
-        messages: [...data.reverse(), ...messages],
-        nextCursorMessage: nextCursor,
-        hasNextMessagePage: nextCursor !== null,
-        isLoadMoreMessage: false,
-      })
+      } catch (error) {
+        // Reset the in-flight flag or the `isLoadMoreMessage` guard above
+        // would block every later scroll-up load for this store instance.
+        set({ isLoadMoreMessage: false })
+        throw error
+      }
     },
 
     updateConversationViaMessage: async (message: MessageResource) => {

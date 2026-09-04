@@ -70,11 +70,9 @@ export const SelectField = <T extends FieldValues>(
     ...rest
   } = props
 
-  const normalizedOptions = options
-
   const optionItems = useMemo(
     () =>
-      normalizedOptions.map((option) => (
+      options.map((option) => (
         <SelectItem
           disabled={option.disabled ?? disableValues?.includes(option.value)}
           key={option.value}
@@ -88,11 +86,11 @@ export const SelectField = <T extends FieldValues>(
           {option.label}
         </SelectItem>
       )),
-    [normalizedOptions, disableValues],
+    [options, disableValues],
   )
 
   const items = useMemo(() => {
-    const mappedItems = normalizedOptions.map((option) => ({
+    const mappedItems = options.map((option) => ({
       label: option.label,
       value: option.value,
     }))
@@ -105,7 +103,7 @@ export const SelectField = <T extends FieldValues>(
     }
 
     return mappedItems
-  }, [normalizedOptions, allowClear, clearLabel])
+  }, [options, allowClear, clearLabel])
 
   return (
     <FormFieldWrapper<T>

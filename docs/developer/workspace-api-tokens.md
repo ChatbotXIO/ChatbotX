@@ -100,7 +100,7 @@ Per-feature workspace-token procedures live in
 `apps/builder/src/features/broadcasts/api/workspace-token.ts` for the
 pattern). Register the feature router as a lazy branch in
 `apps/builder/src/routers/index.ts` and eagerly in
-`apps/builder/src/routers/public.ts` (feeds `/api/public-spec.json`).
+`apps/builder/src/routers/public.ts` (feeds `/api/spec.json`).
 
 Workspace-token APIs authenticate the workspace, not a member — member
 permission scoping (e.g. `onlyAssignedContacts`, `emailAndPhone`) does NOT

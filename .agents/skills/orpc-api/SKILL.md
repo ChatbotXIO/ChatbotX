@@ -13,7 +13,7 @@ description: >-
 - **oRPC** serves both **RPC** (`/rpc`) and **OpenAPI** (`/api`) endpoints
 - `/api` serves **only** `publicRouter` (workspace-token / channel-token authed procedures). Private, session-authed procedures are reachable via `/rpc` (from the builder) only — there is no full-router HTTP mirror. `OpenAPIReferencePlugin` serves Scalar docs at `GET /api` and the spec at `/api/spec.json` for the public router.
 - Base context: `{ headers, url?, user?, workspace?, apiToken? }`
-- Two auth stacks: `authorizedAPI` (session) and `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token)
+- Three auth stacks: `authorizedAPI` (session), `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token) and `channelApiTokenAPI` (Bearer channel API token)
 - Routers are plain objects of procedures, composed via object spreading
 
 ## Auth Stacks
@@ -164,7 +164,7 @@ at build time. Dynamic `import()` is allowed here because `apps/builder` is
 Next.js-built (see `.agents/rules/no-dynamic-import.md`).
 
 For public API (workspace-token), also add to `apps/builder/src/routers/public.ts` —
-that router stays **eager** (plain imports); it feeds `/api/public-spec.json`.
+that router stays **eager** (plain imports); it feeds `/api/spec.json`.
 
 ## Schema Patterns
 

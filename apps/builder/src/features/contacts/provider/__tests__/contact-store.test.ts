@@ -2,6 +2,7 @@ import {
   broadcastSubactions,
   channelTypes,
 } from "@chatbotx.io/database/partials"
+import { ORPCError } from "@orpc/client"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { createContactStore } from "../contact-store"
 
@@ -116,5 +117,33 @@ describe("contact store getContactInboxesCount", () => {
       subaction: undefined,
     })
     expect(store.getState().contactInboxesCount).toBe(0)
+  })
+})
+
+describe("contact store error state", () => {
+  test("surfaces the server message when the count API rejects with an ORPCError", async () => {
+    mocks.countContactsAuthenticatedAPI.mockRejectedValue(
+      new ORPCError("FORBIDDEN", { message: "Workspace is read-only" }),
+    )
+
+    const store = createContactStore({ workspaceId: "ws-1" })
+
+    await store.getState().getContactsCount()
+
+    expect(store.getState().error).toBe("Workspace is read-only")
+    expect(store.getState().loadingCounts).toBe(false)
+  })
+
+  test("falls back to a generic message for non-ORPC failures", async () => {
+    mocks.countContactInboxesAuthenticatedAPI.mockRejectedValue(
+      new TypeError("Failed to fetch"),
+    )
+
+    const store = createContactStore({ workspaceId: "ws-1" })
+
+    await store.getState().getContactInboxesCount()
+
+    expect(store.getState().error).toBe("Failed to fetch contacts count")
+    expect(store.getState().loadingInboxesCount).toBe(false)
   })
 })

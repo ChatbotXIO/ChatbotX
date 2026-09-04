@@ -2,7 +2,7 @@ import type { ListInboxesResponse } from "@chatbotx.io/business"
 import { createStore } from "zustand/vanilla"
 import { getClientErrorMessage } from "@/lib/orpc/client-error"
 import { client } from "@/lib/orpc/orpc"
-import { maxPerPageString } from "@/lib/shared-request"
+import { maxPerPage } from "@/lib/shared-request"
 
 export type InboxState = {
   error: string | null
@@ -62,7 +62,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
         const { data } = await client.inboxesAPI.listInboxesAuthenticatedAPI({
           workspaceId,
           includes: ["integration"],
-          perPage: maxPerPageString,
+          perPage: maxPerPage,
         })
 
         set({ inboxes: data })

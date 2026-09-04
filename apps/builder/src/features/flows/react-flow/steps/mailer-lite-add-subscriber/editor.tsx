@@ -45,25 +45,34 @@ type MailerLiteEditorPage<T> = {
 
 type MailerLiteResource = "groups" | "fields"
 
-const fetchMailerLitePage = <T,>(
-  resource: MailerLiteResource,
+type MailerLitePageFetcher<T> = (
   workspaceId: string,
   page: number,
-): Promise<MailerLiteEditorPage<T>> =>
-  (resource === "groups"
-    ? client.integrationMailerLiteAPI.listGroups({
-        workspaceId,
-        page,
-        limit: MAILER_LITE_EDITOR_PAGE_SIZE,
-      })
-    : client.integrationMailerLiteAPI.listFields({
-        workspaceId,
-        page,
-        limit: MAILER_LITE_EDITOR_PAGE_SIZE,
-      })) as unknown as Promise<MailerLiteEditorPage<T>>
+) => Promise<MailerLiteEditorPage<T>>
+
+const fetchGroupsPage: MailerLitePageFetcher<MailerLiteGroup> = (
+  workspaceId,
+  page,
+) =>
+  client.integrationMailerLiteAPI.listGroups({
+    workspaceId,
+    page,
+    limit: MAILER_LITE_EDITOR_PAGE_SIZE,
+  })
+
+const fetchFieldsPage: MailerLitePageFetcher<MailerLiteField> = (
+  workspaceId,
+  page,
+) =>
+  client.integrationMailerLiteAPI.listFields({
+    workspaceId,
+    page,
+    limit: MAILER_LITE_EDITOR_PAGE_SIZE,
+  })
 
 const useAllMailerLitePages = <T,>(
   resource: MailerLiteResource,
+  fetchPage: MailerLitePageFetcher<T>,
   workspaceId: string | undefined,
 ) => {
   const {
@@ -85,12 +94,8 @@ const useAllMailerLitePages = <T,>(
         pageIndex + 1,
       ] as const
     },
-    ([, res, id, page]: readonly [
-      string,
-      MailerLiteResource,
-      string,
-      number,
-    ]) => fetchMailerLitePage<T>(res, id, page),
+    ([, , id, page]: readonly [string, MailerLiteResource, string, number]) =>
+      fetchPage(id, page),
   )
   const lastPage = pages?.[0]?.meta.lastPage ?? 1
 
@@ -122,9 +127,10 @@ const MailerLiteDialog = ({ parentName }: { parentName: string }) => {
   })
   const mappedFields =
     useWatch({ control: form.control, name: "mergeFields" }) ?? []
-  const groups = useAllMailerLitePages<MailerLiteGroup>("groups", workspaceId)
-  const providerFields = useAllMailerLitePages<MailerLiteField>(
+  const groups = useAllMailerLitePages("groups", fetchGroupsPage, workspaceId)
+  const providerFields = useAllMailerLitePages(
     "fields",
+    fetchFieldsPage,
     workspaceId,
   )
   const groupOptions = useMemo(

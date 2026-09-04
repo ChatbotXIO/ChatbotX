@@ -4,8 +4,7 @@ import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
-import { useClientQuery } from "@/lib/swr"
+import { useWorksheetHeaders } from "./use-worksheet-headers"
 
 type IWorksheetColumnSelectProps = {
   parentName?: string
@@ -37,21 +36,10 @@ export const WorksheetColumnSelect = ({
     name: getFieldName("sheetName"),
   })
 
-  const { data: headersData } = useClientQuery(
-    spreadsheetId && sheetName
-      ? ([
-          "spreadsheetsAPI.listWorksheetHeadersAuthenticatedAPI",
-          workspaceId,
-          spreadsheetId,
-          sheetName,
-        ] as const)
-      : null,
-    () =>
-      client.spreadsheetsAPI.listWorksheetHeadersAuthenticatedAPI({
-        workspaceId,
-        spreadsheetId,
-        sheetName,
-      }),
+  const { data: headersData } = useWorksheetHeaders(
+    workspaceId,
+    spreadsheetId,
+    sheetName,
   )
   const headers = (headersData?.data ?? []).map((h) => ({
     label: h,

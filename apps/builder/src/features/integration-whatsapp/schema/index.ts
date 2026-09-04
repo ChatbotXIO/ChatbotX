@@ -125,7 +125,6 @@ export const listPhoneNumbersRequest = z.object({
   wabaId: z.string(),
   accessToken: z.string(),
 })
-export type ListPhoneNumbersRequest = z.infer<typeof listPhoneNumbersRequest>
 
 const whatsappPhoneNumberResource = z.object({
   verified_name: z.string(),
@@ -149,4 +148,3 @@ export const listPhoneNumbersResponse = z.object({
     next: z.string().optional(),
   }),
 })
-export type ListPhoneNumbersResponse = z.infer<typeof listPhoneNumbersResponse>
