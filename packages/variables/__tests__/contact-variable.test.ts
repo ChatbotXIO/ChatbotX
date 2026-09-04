@@ -424,7 +424,7 @@ describe("contactVariableService.replaceAll gender casing", () => {
 
 describe("contactVariableService.replaceAll gender language", () => {
   const render = (input: {
-    workspaceLanguage: string
+    workspaceLanguage: string | null
     contactLocale?: string | null
     inboxLanguage?: string | null
   }) =>
@@ -448,45 +448,36 @@ describe("contactVariableService.replaceAll gender language", () => {
       },
     })
 
-  test("prefers the contact channel language over the workspace language", async () => {
-    await expect(
-      render({ inboxLanguage: "vi", workspaceLanguage: "en" }),
-    ).resolves.toBe("Chị")
-  })
-
-  test("falls back to the language read from the contact locale", async () => {
-    await expect(
-      render({ contactLocale: "vi_VN", workspaceLanguage: "en" }),
-    ).resolves.toBe("Chị")
-  })
-
-  test("prefers the channel language over the contact locale", async () => {
-    await expect(
-      render({
-        contactLocale: "vi_VN",
-        inboxLanguage: "en",
-        workspaceLanguage: "vi",
-      }),
-    ).resolves.toBe("Female")
-  })
-
-  test("falls back to the workspace language when the contact has none", async () => {
+  test("renders Vietnamese for a Vietnamese workspace", async () => {
     await expect(render({ workspaceLanguage: "vi" })).resolves.toBe("Chị")
   })
 
-  test("treats a blank contact language as unknown so the workspace wins", async () => {
+  test("renders English for any non-Vietnamese workspace", async () => {
+    await expect(render({ workspaceLanguage: "en" })).resolves.toBe("Female")
+    await expect(render({ workspaceLanguage: "de" })).resolves.toBe("Female")
+  })
+
+  test("ignores the contact channel language", async () => {
     await expect(
-      render({
-        contactLocale: "",
-        inboxLanguage: "",
-        workspaceLanguage: "vi",
-      }),
+      render({ inboxLanguage: "vi", workspaceLanguage: "en" }),
+    ).resolves.toBe("Female")
+    await expect(
+      render({ inboxLanguage: "en", workspaceLanguage: "vi" }),
     ).resolves.toBe("Chị")
   })
 
-  test("keeps the contact language even when it differs from the workspace", async () => {
+  test("ignores the contact locale", async () => {
+    await expect(
+      render({ contactLocale: "vi_VN", workspaceLanguage: "en" }),
+    ).resolves.toBe("Female")
     await expect(
       render({ contactLocale: "en_US", workspaceLanguage: "vi" }),
+    ).resolves.toBe("Chị")
+  })
+
+  test("falls back to English when the workspace has no language", async () => {
+    await expect(
+      render({ contactLocale: "vi_VN", workspaceLanguage: null }),
     ).resolves.toBe("Female")
   })
 })
