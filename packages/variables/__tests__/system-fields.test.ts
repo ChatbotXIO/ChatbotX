@@ -1384,13 +1384,17 @@ describe("getSystemFieldValue — contact profile columns", () => {
     ).resolves.toBe("")
   })
 
-  test("gender is localised through the workspace language", async () => {
+  test("gender is localised through the workspace language even when the contact speaks another", async () => {
     mockResolveGenderLabel.mockReturnValue("Chị")
 
     await expect(
       getSystemFieldValue(
         createContext({
-          contact: profileContact,
+          contact: { ...profileContact, locale: "en_US" } as ContactModel,
+          contactInbox: {
+            ...contactInbox,
+            language: "en",
+          } as ContactInboxModel,
           workspace: { ...workspace, language: "vi" } as WorkspaceModel,
         }),
         systemFieldTypes.enum.gender,
@@ -1400,14 +1404,21 @@ describe("getSystemFieldValue — contact profile columns", () => {
   })
 
   test("gender passes an undefined language when there is no workspace", async () => {
-    mockResolveGenderLabel.mockReturnValue("Anh/Chị")
+    mockResolveGenderLabel.mockReturnValue("Male/Female")
 
     await expect(
       getSystemFieldValue(
-        createContext({ contact: profileContact, workspace: null }),
+        createContext({
+          contact: { ...profileContact, locale: "vi_VN" } as ContactModel,
+          contactInbox: {
+            ...contactInbox,
+            language: "vi",
+          } as ContactInboxModel,
+          workspace: null,
+        }),
         systemFieldTypes.enum.gender,
       ),
-    ).resolves.toBe("Anh/Chị")
+    ).resolves.toBe("Male/Female")
     expect(mockResolveGenderLabel).toHaveBeenCalledWith(undefined, "female")
   })
 

@@ -271,16 +271,6 @@ const getCommentMessagePostId = (
   return typeof postId === "string" ? postId : null
 }
 
-// The contact's own language, in the order the platform learns it: the channel
-// language we recorded, then the locale their profile reports. Undefined when
-// the contact never told us, so the caller picks the fallback. Blank values
-// normalise away here rather than shadowing that fallback.
-const getContactLanguage = (
-  context: ContactVariableContext,
-): string | undefined =>
-  languageFromLocale(context.contactInbox?.language) ??
-  languageFromLocale(context.contact.locale)
-
 const getAppointment = async (
   context: ContactVariableContext,
 ): Promise<Awaited<ReturnType<typeof appointmentService.findBy>> | null> => {
@@ -329,10 +319,10 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.profile_pic:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.gender:
-      return resolveGenderLabel(
-        getContactLanguage(context) ?? workspace?.language,
-        contact.gender,
-      )
+      // Salutation follows the workspace language, not the contact's own
+      // locale: a Vietnamese workspace greets every contact as Anh/Chị, and
+      // everything else renders English (see resolveGenderLabel).
+      return resolveGenderLabel(workspace?.language, contact.gender)
     case systemFieldTypes.enum.user_country:
       return contact.country
     case systemFieldTypes.enum.user_state:
