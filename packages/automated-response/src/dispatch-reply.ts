@@ -1,6 +1,7 @@
 import { trackingResponseTypes } from "@chatbotx.io/analytics"
 import { adsConversionService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
+import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import type {
   AutomatedResponseModel,
   ContactInboxModel,
@@ -14,7 +15,10 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { keywordMatchesText } from "./keyword-match"
+import {
+  keywordMatchesText,
+  keywordMatchModeByAutomatedResponseType,
+} from "./keyword-match"
 
 export const dispatchAutomatedResponseReply = async (props: {
   conversation: ConversationModel
@@ -32,7 +36,16 @@ export const dispatchAutomatedResponseReply = async (props: {
   const lowerCaseText = text.toLowerCase()
 
   for (const rule of rules) {
-    const matched = keywordMatchesText(rule.keywords, lowerCaseText)
+    // Match mode is derived from `rule.type` — see the Contact/Page
+    // distinction documented at automated-response.ts's
+    // `automatedResponseFolderTypeByType`.
+    const matched = keywordMatchesText(
+      rule.keywords,
+      lowerCaseText,
+      keywordMatchModeByAutomatedResponseType[
+        rule.type as AutomatedResponseType
+      ],
+    )
 
     if (!matched) {
       continue
