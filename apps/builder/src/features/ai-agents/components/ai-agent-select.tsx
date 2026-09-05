@@ -2,7 +2,8 @@
 
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
-import { useAIAgentStore } from "../provider/ai-agent-store-context"
+import { useWorkspaceId } from "@/hooks/routing"
+import { useAIAgentSelectOptions, useAIAgents } from "../hooks/use-ai-agents"
 
 type AIAgentSelectProps = {
   name: string
@@ -12,17 +13,13 @@ type AIAgentSelectProps = {
 export function AIAgentSelect(props: AIAgentSelectProps) {
   const t = useTranslations()
 
-  const aiAgents = useAIAgentStore((state) => state.aiAgents)
-  const loading = useAIAgentStore((state) => state.loading)
-
-  const options = aiAgents.map((agent) => ({
-    value: agent.id as string,
-    label: agent.name as string,
-  }))
+  const workspaceId = useWorkspaceId()
+  const { isPending } = useAIAgents(workspaceId)
+  const options = useAIAgentSelectOptions(workspaceId)
 
   return (
     <SelectField
-      disabled={loading}
+      disabled={isPending}
       label={t("fields.aiAgent.label")}
       options={options}
       {...props}

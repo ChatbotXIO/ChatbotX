@@ -77,7 +77,7 @@ export const workspaceAuthorizedMidddleware = base.middleware(
     // Reads and deletes stay open (invariant #14).
     await assertWorkspaceOwnerAccessForMethod({
       method: procedure["~orpc"].route.method,
-      ownerId: workspaceMember.workspace.ownerId,
+      ownerId: workspace.ownerId,
     })
 
     return withAuditContext(

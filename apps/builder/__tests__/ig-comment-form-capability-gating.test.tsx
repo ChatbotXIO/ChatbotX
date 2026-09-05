@@ -17,8 +17,12 @@ vi.mock("@/features/flows/provider/flow-hook", () => ({
   useFlowSelectOptions: () => [],
 }))
 
-vi.mock("@/features/ai-agents/provider/ai-agent-store-context", () => ({
-  useAIAgentStore: () => [],
+vi.mock("@/features/ai-agents/hooks/use-ai-agents", () => ({
+  useAIAgentSelectOptions: () => [],
+}))
+
+vi.mock("@/hooks/routing", () => ({
+  useWorkspaceId: () => "ws-1",
 }))
 
 // The rich-text body isn't under test here (only capability gating is);

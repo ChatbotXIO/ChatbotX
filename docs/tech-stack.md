@@ -25,6 +25,7 @@ Key components of the project's tech stack.
 ### API Layer
 
 - [oRPC](https://orpc.unnoq.com/) — RPC + OpenAPI, serves `/rpc` and `/api` endpoints
+- [TanStack Query](https://tanstack.com/query) + [`@orpc/tanstack-query`](https://orpc.unnoq.com/docs/integrations/tanstack-query) — client-side cache for oRPC list/detail reads; zustand is reserved for client-only state
 
 ### Database
 

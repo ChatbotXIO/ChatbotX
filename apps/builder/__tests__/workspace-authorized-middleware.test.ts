@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   findMembership,
+  resolveWorkspaceAccess,
   isWorkspaceScheduledForDeletion,
   getAccessState,
   isAtLimit,
 } = vi.hoisted(() => ({
   findMembership: vi.fn(),
+  resolveWorkspaceAccess: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn().mockReturnValue(false),
   getAccessState: vi.fn().mockResolvedValue({ blocked: false }),
   isAtLimit: vi.fn().mockResolvedValue(false),
@@ -16,6 +18,7 @@ const {
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberService: { findMembership },
+  resolveWorkspaceAccess,
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
@@ -75,6 +78,18 @@ beforeEach(() => {
   getAccessState.mockResolvedValue({ blocked: false })
   isAtLimit.mockResolvedValue(false)
   findMembership.mockResolvedValue(membership)
+  resolveWorkspaceAccess.mockImplementation(
+    ({ realMember }: { realMember: typeof membership | undefined }) =>
+      Promise.resolve(
+        realMember
+          ? {
+              workspace: realMember.workspace,
+              member: realMember,
+              isSupportSession: false,
+            }
+          : undefined,
+      ),
+  )
 })
 
 describe("workspaceAuthorizedMidddleware", () => {

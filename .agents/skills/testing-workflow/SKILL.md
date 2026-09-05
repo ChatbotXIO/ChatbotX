@@ -26,6 +26,16 @@ The verification gate every change passes before it is "done". CI currently does
 - Test the boundary that matters: actions, routes, repositories, worker handlers, channel send/receive.
 - Mock the database client for unit tests; use the repository/service layer, never `db` directly.
 
+## Testing TanStack Query hooks
+
+Mock `@/lib/orpc/orpc` (`vi.hoisted` + `vi.mock`, same pattern as
+`chat-store.test.ts`) so the hook's underlying `client.*` call is a spy, then
+wrap the component under test in a fresh `QueryClientProvider` per test
+(`new QueryClient({ defaultOptions: { queries: { retry: false } } })`) so
+query state doesn't leak between tests. See `__tests__/use-ai-agents.test.tsx`
+for the reference: dedup across two readers, `enabled` guard on missing input,
+error surfacing without throwing, and invalidation triggering a refetch.
+
 ## What to test first (highest signal in this repo)
 
 - New oRPC route / server action → its happy path + auth-scoping + one failure path.

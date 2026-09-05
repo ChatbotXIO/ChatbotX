@@ -193,7 +193,38 @@ import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 
 ## Client Usage
 
-### Browser (client components)
+### React components (TanStack Query)
+
+Rendering a list/detail read in a client component goes through TanStack
+Query, not a bare `client.*()` call — it dedupes concurrent reads app-wide,
+caches per query key, and lets any mutation invalidate every reader. See
+`feature-scaffold` skill's "Server data (TanStack Query)" section for the full
+hook shape (`features/ai-agents/hooks/use-ai-agents.ts` is the reference
+implementation):
+
+```typescript
+import { useQuery } from "@tanstack/react-query"
+import { orpc } from "@/lib/orpc/query"
+
+const { data, isPending } = useQuery(
+  orpc.myFeatureAPI.listMyFeatureAPI.queryOptions({
+    input: { workspaceId },
+    enabled: Boolean(workspaceId),
+  }),
+)
+```
+
+Invalidate after a mutation with `.key()`:
+
+```typescript
+import { useQueryClient } from "@tanstack/react-query"
+import { orpc } from "@/lib/orpc/query"
+
+const queryClient = useQueryClient()
+queryClient.invalidateQueries({ queryKey: orpc.myFeatureAPI.key() })
+```
+
+### Imperative calls (event handlers, non-React code)
 
 ```typescript
 import { client } from "@/lib/orpc/orpc"

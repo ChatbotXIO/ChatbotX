@@ -31,8 +31,9 @@ import { useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
-import { useAIAgentStore } from "@/features/ai-agents/provider/ai-agent-store-context"
+import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateFbCommentRequest } from "../schema/action"
 import { SelectFacebookPostsDialog } from "./select-facebook-posts-dialog"
 
@@ -55,11 +56,7 @@ export function FbCommentForm({
 }: FbCommentFormProps) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
-  const aiAgents = useAIAgentStore((state) => state.aiAgents)
-  const aiAgentOptions = aiAgents.map((agent) => ({
-    label: agent.name,
-    value: String(agent.id),
-  }))
+  const aiAgentOptions = useAIAgentSelectOptions(useWorkspaceId())
 
   const [selectPostsOpen, setSelectPostsOpen] = useState(false)
 

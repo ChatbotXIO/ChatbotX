@@ -266,12 +266,18 @@ importers:
       '@orpc/server':
         specifier: ^1.14.0
         version: 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/tanstack-query':
+        specifier: 1.14.5
+        version: 1.14.5(@opentelemetry/api@1.9.1)(@orpc/client@1.14.5(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)
       '@orpc/zod':
         specifier: ^1.14.0
         version: 1.14.5(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.5(@opentelemetry/api@1.9.1))(@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+      '@tanstack/react-query':
+        specifier: ^5.102.8
+        version: 5.102.8(react@19.2.5)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -5348,6 +5354,12 @@ packages:
   '@orpc/standard-server@1.14.5':
     resolution: {integrity: sha512-bCd1BkShxknFjIDixUEjOj3fvP4hxN0IIV/hvTdtk6sdWApadBjw3UuK3iprkECgoBt/31zTOKwgHB/wnnUfhw==}
 
+  '@orpc/tanstack-query@1.14.5':
+    resolution: {integrity: sha512-EFZtCrI7Y+H7sg3C2asvju8wtz4g/sdfWvl2XWC+O9qo0xmjCLLPx1t3mohBY45icTiLi+hMDV1fxINvmBHSEg==}
+    peerDependencies:
+      '@orpc/client': 1.14.5
+      '@tanstack/query-core': '>=5.80.2'
+
   '@orpc/zod@1.14.5':
     resolution: {integrity: sha512-Al0Tim0CxO7o4UkZCmIPWJyNXnB0f0qL2YzB/MA0E65ss7qJydBmvyPUES9b3z8GeXgPQAmIOYl/Jq2jtx8DfQ==}
     peerDependencies:
@@ -6346,6 +6358,14 @@ packages:
 
   '@tailwindcss/postcss@4.3.2':
     resolution: {integrity: sha512-rjVWYCa7Ngbi5AarT6k8TkxUG3Wl1QKzHdIZVsjZSzf36Jmo2IKZt/NHRAwly8oDkbBOH0YTu+CHuf9jPxMc+g==}
+
+  '@tanstack/query-core@5.102.8':
+    resolution: {integrity: sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg==}
+
+  '@tanstack/react-query@5.102.8':
+    resolution: {integrity: sha512-TYBea4OuXWD7MhaSHq069TWbFe7rcwWN6kzT7JF0OKi1K6c1gTv2IzD6A6ExJsCMozdkqBWeuIUZmu4KQg0O5A==}
+    peerDependencies:
+      react: ^18 || ^19
 
   '@tanstack/react-table@8.21.3':
     resolution: {integrity: sha512-5nNMTSETP4ykGegmVkhjcS8tTLW6Vl4axfEGQN3v0zdHYbK4UfoqfPChclTrJ4EoK9QynqAu9oUf8VEmrpZ5Ww==}
@@ -13554,6 +13574,14 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
+  '@orpc/tanstack-query@1.14.5(@opentelemetry/api@1.9.1)(@orpc/client@1.14.5(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)':
+    dependencies:
+      '@orpc/client': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
+      '@tanstack/query-core': 5.102.8
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
   '@orpc/zod@1.14.5(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.5(@opentelemetry/api@1.9.1))(@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)':
     dependencies:
       '@orpc/contract': 1.14.5(@opentelemetry/api@1.9.1)
@@ -14211,6 +14239,13 @@ snapshots:
       '@tailwindcss/oxide': 4.3.2
       postcss: 8.5.16
       tailwindcss: 4.3.2
+
+  '@tanstack/query-core@5.102.8': {}
+
+  '@tanstack/react-query@5.102.8(react@19.2.5)':
+    dependencies:
+      '@tanstack/query-core': 5.102.8
+      react: 19.2.5
 
   '@tanstack/react-table@8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:

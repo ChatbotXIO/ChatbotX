@@ -27,11 +27,12 @@ features/<feature-name>/
     query.ts            → List/filter params
     action.ts           → Mutation inputs
     resource.ts         → Response shapes
-  provider/             → Zustand store + context (if needed)
+  provider/             → Zustand store + context (client-only state, if needed)
     item-store.ts
     item-store-provider.tsx
   components/           → UI components (if many)
-  hooks/                → Feature-specific hooks (if needed)
+  hooks/                → Feature-specific hooks (if needed);
+                          use-<items>.ts → TanStack Query hooks for server lists
   item-table.tsx        → Root-level components (if few)
   create-item-dialog.tsx
 ```
@@ -388,16 +389,49 @@ const { execute } = useAction(
 execute()
 ```
 
-## State Management (Zustand)
+## Server data (TanStack Query)
 
-For features needing client-side state:
+Fetched lists/detail reads (anything backed by an oRPC procedure) go through
+TanStack Query, not a zustand store. See `orpc-api` skill's "React components
+(TanStack Query)" subsection for the client-side call pattern. Shape
+(`features/ai-agents/hooks/use-ai-agents.ts` is the reference implementation):
+
+```typescript
+// hooks/use-items.ts
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { orpc } from "@/lib/orpc/query"
+
+export const useItems = (workspaceId: string | undefined) =>
+  useQuery(
+    orpc.<router>.<listProcedure>.queryOptions({
+      input: { workspaceId: workspaceId ?? "" },
+      enabled: Boolean(workspaceId),
+      select: (res) => res.data,
+    }),
+  )
+
+/** Call after create/update/delete so every reader refetches. */
+export const useInvalidateItems = () => {
+  const queryClient = useQueryClient()
+  return () => queryClient.invalidateQueries({ queryKey: orpc.<router>.key() })
+}
+```
+
+Use `useWorkspaceId()` (`@/hooks/routing`) to scope the query to the current
+workspace. Never put a fetched list, `loading`, or `error` in a zustand store —
+TanStack Query already dedupes concurrent reads app-wide, caches per query key,
+and lets any mutation invalidate every reader.
+
+## Client-only state (Zustand)
+
+For features needing client-only state (selection, open/closed dialogs,
+in-progress form state — never a fetched list):
 
 ```typescript
 // provider/item-store.ts
 import { createStore } from "zustand/vanilla"
 
 type ItemState = {
-  items: Item[]
   selectedId: string | null
 }
 
@@ -409,7 +443,6 @@ export type ItemStore = ItemState & ItemActions
 
 export const createItemStore = (initial: Partial<ItemState> = {}) =>
   createStore<ItemStore>((set) => ({
-    items: [],
     selectedId: null,
     ...initial,
     setSelectedId: (id) => set({ selectedId: id }),
@@ -635,7 +668,7 @@ Business logic services (DB queries, domain mutations, cache management) **MUST 
 - `actions/` — next-safe-action handlers that call business services
 - `api/` — oRPC handlers
 - `schema/` — Zod validation schemas (NOT imported by business package)
-- `components/`, `hooks/`, `provider/` — UI concerns
+- `components/`, `hooks/`, `provider/` — UI concerns (`hooks/` = TanStack Query + derived hooks; `provider/` = client-only zustand)
 
 **Never** create a `*.service.ts` inside a feature folder for new work. If one already exists, move it to `@chatbotx.io/business` before extending it.
 
