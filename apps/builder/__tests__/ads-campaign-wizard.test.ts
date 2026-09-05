@@ -12,7 +12,7 @@ const baseValues = {
   dailyBudgetMinorUnits: 2000,
   countries: ["US"],
   mediaKind: "image" as const,
-  imageKey: "public/space/ws_1/ads-campaign/creatives/abc123",
+  imageKey: "public/space/1/ads-campaign/creatives/abc123",
   fileId: "file_1",
   imageMimeType: "image/png",
   imageFileName: "photo.png",
@@ -111,7 +111,7 @@ describe("buildCreateMessagingAdRequest", () => {
     })
     expect(request.creative.media).toEqual({
       kind: "image",
-      imageKey: "public/space/ws_1/ads-campaign/creatives/abc123",
+      imageKey: "public/space/1/ads-campaign/creatives/abc123",
       fileId: "file_1",
       imageMimeType: "image/png",
       imageFileName: "photo.png",
