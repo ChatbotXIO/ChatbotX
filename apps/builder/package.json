@@ -136,7 +136,6 @@
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "stripe": "^22.1.0",
-    "swr": "^2.4.1",
     "tippy.js": "^6.3.7",
     "universal-error-normalizer": "^1.0.0",
     "use-debounce": "^10.1.1",

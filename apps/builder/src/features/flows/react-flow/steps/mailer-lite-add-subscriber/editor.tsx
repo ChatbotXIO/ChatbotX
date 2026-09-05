@@ -23,32 +23,31 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import { ArrowRightIcon, Loader2Icon, MailIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   useFieldArray,
   useForm,
   useFormContext,
   useWatch,
 } from "react-hook-form"
-import useSWRInfinite from "swr/infinite"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
+import { fetchAllPages } from "@/lib/query/fetch-all-pages"
 import { BaseStepEditor } from "../base/editor"
 
-type MailerLiteEditorPage<T> = {
-  data: T[]
-  meta: { lastPage: number }
-}
+const MAILER_LITE_ALL_PAGES_MAX = 20
 
 type MailerLiteResource = "groups" | "fields"
 
 type MailerLitePageFetcher<T> = (
   workspaceId: string,
   page: number,
-) => Promise<MailerLiteEditorPage<T>>
+) => Promise<{ data: T[]; meta: { lastPage: number } }>
 
 const fetchGroupsPage: MailerLitePageFetcher<MailerLiteGroup> = (
   workspaceId,
@@ -70,45 +69,38 @@ const fetchFieldsPage: MailerLitePageFetcher<MailerLiteField> = (
     limit: MAILER_LITE_EDITOR_PAGE_SIZE,
   })
 
+const mailerLiteResourceKeys: Record<MailerLiteResource, readonly unknown[]> = {
+  groups: orpc.integrationMailerLiteAPI.listGroups.key(),
+  fields: orpc.integrationMailerLiteAPI.listFields.key(),
+}
+
 const useAllMailerLitePages = <T,>(
   resource: MailerLiteResource,
   fetchPage: MailerLitePageFetcher<T>,
   workspaceId: string | undefined,
 ) => {
-  const {
-    data: pages,
-    isLoading,
-    setSize,
-  } = useSWRInfinite<MailerLiteEditorPage<T>>(
-    (pageIndex, previousPage: MailerLiteEditorPage<T> | null) => {
-      if (!workspaceId) {
-        return null
-      }
-      if (previousPage && pageIndex >= previousPage.meta.lastPage) {
-        return null
-      }
-      return [
-        "integrationMailerLiteAPI",
-        resource,
-        workspaceId,
-        pageIndex + 1,
-      ] as const
-    },
-    ([, , id, page]: readonly [string, MailerLiteResource, string, number]) =>
-      fetchPage(id, page),
-  )
-  const lastPage = pages?.[0]?.meta.lastPage ?? 1
+  const { data = [], isLoading } = useQuery({
+    queryKey: [
+      ...mailerLiteResourceKeys[resource],
+      "all-pages",
+      { workspaceId },
+    ],
+    queryFn: () =>
+      fetchAllPages<number, T>({
+        initialPageParam: 1,
+        maxPages: MAILER_LITE_ALL_PAGES_MAX,
+        fetchPage: async (page) => {
+          const result = await fetchPage(workspaceId ?? "", page)
+          return {
+            items: result.data,
+            nextPageParam: page < result.meta.lastPage ? page + 1 : undefined,
+          }
+        },
+      }),
+    enabled: Boolean(workspaceId),
+  })
 
-  useEffect(() => {
-    if (pages && pages.length < lastPage) {
-      setSize(lastPage)
-    }
-  }, [lastPage, pages, setSize])
-
-  return {
-    data: pages?.flatMap((page) => page.data) ?? [],
-    isLoading,
-  }
+  return { data, isLoading }
 }
 
 const MailerLiteDialog = ({ parentName }: { parentName: string }) => {

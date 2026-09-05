@@ -10,13 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
+import { useQuery } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ReactNode } from "react"
 import { toast } from "sonner"
-import useSWR from "swr"
-import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 import { connectFacebookAds } from "../actions/connect.action"
 
 type FacebookAdsStatus = {
@@ -26,10 +26,6 @@ type FacebookAdsStatus = {
 
 type AdAccountsState = "notConnected" | "needsReconnect" | "connected"
 type AdAccountsListState = "loading" | "error" | "empty" | "ready"
-
-type AdAccountsResponse = Awaited<
-  ReturnType<typeof client.integrationFacebookAdsAPI.listAdAccounts>
->
 
 function ConnectFacebookAdsButton({
   isPending,
@@ -57,9 +53,10 @@ function ConnectFacebookAdsButton({
 
 function ConnectedAdAccounts({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
-  const adAccounts = useSWR<AdAccountsResponse>(
-    ["facebook-ads-ad-accounts", workspaceId] as const,
-    () => client.integrationFacebookAdsAPI.listAdAccounts({ workspaceId }),
+  const adAccounts = useQuery(
+    orpc.integrationFacebookAdsAPI.listAdAccounts.queryOptions({
+      input: { workspaceId },
+    }),
   )
   const listStateOrder = [
     "loading",
@@ -69,7 +66,7 @@ function ConnectedAdAccounts({ workspaceId }: { workspaceId: string }) {
   ] as const satisfies readonly AdAccountsListState[]
   const listStateMatches = {
     loading: adAccounts.isLoading,
-    error: Boolean(adAccounts.error),
+    error: adAccounts.isError,
     empty: (adAccounts.data?.data ?? []).length === 0,
     ready: true,
   } satisfies Record<AdAccountsListState, boolean>

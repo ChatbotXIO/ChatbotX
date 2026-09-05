@@ -15,6 +15,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import type { MultiSelectGroup } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
+import { useQuery } from "@tanstack/react-query"
 import {
   AlertCircle,
   CheckCircle2,
@@ -25,9 +26,9 @@ import {
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import useSWR from "swr"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
+import { pollUntilSettled } from "@/lib/query/poll-until-settled"
 import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
 import { useTagSelectOptions } from "../tags/provider/tag-hook"
 import { exportContactsAction } from "./actions/export-contacts.action"
@@ -37,6 +38,7 @@ import {
   contactTagPrefix,
   type ExportContactsFilter,
   exportContactsRequest,
+  type GetExportFileResponse,
 } from "./schema/action"
 
 type ExportState = {
@@ -142,25 +144,26 @@ export function ExportContactDialog({
     )
 
   const fileId = exportState?.fileId
-  const { data: exportFile } = useSWR(
-    fileId ? (["contact-export-file", workspaceId, fileId] as const) : null,
-    ([, ws, id]) =>
-      client.contactsAPIs.getExportFileAuthenticatedAPI({
-        workspaceId: ws,
-        fileId: id,
-      }),
-    {
-      refreshInterval: (latest) => {
-        if (latest?.status === "uploaded" || latest?.status === "failed") {
-          return 0
+  const pollExportFile = pollUntilSettled<GetExportFileResponse>([
+    "uploaded",
+    "failed",
+  ])
+  const { data: exportFile } = useQuery(
+    orpc.contactsAPIs.getExportFileAuthenticatedAPI.queryOptions({
+      input: { workspaceId, fileId: fileId ?? "" },
+      enabled: Boolean(fileId),
+      refetchInterval: (query) => {
+        const interval = pollExportFile(query)
+        if (interval === false) {
+          return false
         }
         if (pollCount >= POLL_TIMEOUT_COUNT) {
-          return 0
+          return false
         }
         setPollCount((n) => n + 1)
-        return 5000
+        return interval
       },
-    },
+    }),
   )
 
   const resetDialog = () => {

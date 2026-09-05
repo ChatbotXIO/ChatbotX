@@ -4,10 +4,7 @@ import {
   type MoosendCreateContactSchema,
   moosendCreateContactSchema,
 } from "@chatbotx.io/flow-config"
-import {
-  MOOSEND_EDITOR_PAGE_SIZE,
-  type MoosendMailingListPage,
-} from "@chatbotx.io/integration-moosend"
+import { MOOSEND_EDITOR_PAGE_SIZE } from "@chatbotx.io/integration-moosend"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -21,15 +18,19 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import { MailIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useForm, useFormContext } from "react-hook-form"
-import useSWRInfinite from "swr/infinite"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
+import { fetchAllPages } from "@/lib/query/fetch-all-pages"
 import { BaseStepEditor } from "../base/editor"
+
+const MOOSEND_ALL_LISTS_MAX_PAGES = 20
 
 const MoosendDialog = ({ parentName }: { parentName: string }) => {
   const [open, setOpen] = useState(false)
@@ -42,40 +43,34 @@ const MoosendDialog = ({ parentName }: { parentName: string }) => {
     mode: "onChange",
   })
   const {
-    data: pages,
-    error: listsError,
+    data: mailingLists = [],
+    isError: listsError,
     isLoading: listsLoading,
-    setSize,
-  } = useSWRInfinite<MoosendMailingListPage>(
-    (pageIndex, previousPage: MoosendMailingListPage | null) => {
-      if (!workspaceId) {
-        return null
-      }
-      if (previousPage && pageIndex >= previousPage.meta.totalPageCount) {
-        return null
-      }
-      return [
-        "integrationMoosendAPI.listMailingLists",
-        workspaceId,
-        pageIndex + 1,
-      ] as const
-    },
-    ([, id, page]: readonly [string, string, number]) =>
-      client.integrationMoosendAPI.listMailingLists({
-        workspaceId: id,
-        page,
-        pageSize: MOOSEND_EDITOR_PAGE_SIZE,
+  } = useQuery({
+    queryKey: [
+      ...orpc.integrationMoosendAPI.listMailingLists.key(),
+      "all-pages",
+      { workspaceId },
+    ],
+    queryFn: () =>
+      fetchAllPages({
+        initialPageParam: 1,
+        maxPages: MOOSEND_ALL_LISTS_MAX_PAGES,
+        fetchPage: async (page) => {
+          const data = await client.integrationMoosendAPI.listMailingLists({
+            workspaceId,
+            page,
+            pageSize: MOOSEND_EDITOR_PAGE_SIZE,
+          })
+          return {
+            items: data.data,
+            nextPageParam:
+              page < data.meta.totalPageCount ? page + 1 : undefined,
+          }
+        },
       }),
-  )
-  const totalPageCount = pages?.[0]?.meta.totalPageCount ?? 0
-
-  useEffect(() => {
-    if (pages && pages.length < totalPageCount) {
-      setSize(totalPageCount)
-    }
-  }, [pages, setSize, totalPageCount])
-
-  const mailingLists = pages?.flatMap((page) => page.data) ?? []
+    enabled: open && Boolean(workspaceId),
+  })
   const listOptions = useMemo(
     () =>
       mailingLists.map((list) => ({

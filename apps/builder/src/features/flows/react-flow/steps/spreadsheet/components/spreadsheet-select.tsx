@@ -1,10 +1,10 @@
 "use client"
 
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
-import { useClientQuery } from "@/lib/swr"
+import { orpc } from "@/lib/orpc/query"
 
 type SpreadsheetSelectProps = {
   name: string
@@ -22,13 +22,10 @@ export const SpreadsheetSelect = ({
   const workspaceId = useWorkspaceId()
   const t = useTranslations()
 
-  const { data } = useClientQuery(
-    ["spreadsheetsAPI.listSpreadsheetsAuthenticatedAPI", workspaceId] as const,
-    () =>
-      client.spreadsheetsAPI.listSpreadsheetsAuthenticatedAPI({
-        workspaceId,
-        perPage: 9999,
-      }),
+  const { data } = useQuery(
+    orpc.spreadsheetsAPI.listSpreadsheetsAuthenticatedAPI.queryOptions({
+      input: { workspaceId, perPage: 9999 },
+    }),
   )
   const options = (data?.data ?? []).map((spreadsheet) => ({
     label: spreadsheet.name,

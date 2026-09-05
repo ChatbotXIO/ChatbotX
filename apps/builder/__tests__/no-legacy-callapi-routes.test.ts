@@ -8,12 +8,13 @@ const APP_ROOT = join(import.meta.dirname, "..")
 const SRC_ROOT = join(APP_ROOT, "src")
 const TS_LIKE_EXTENSION_PATTERN = /\.(ts|tsx)$/
 
-// `callAPI` (apps/builder/src/lib/swr.ts) was the legacy fetch-based SWR
-// helper used before flow-step editors and stores were migrated to
-// `useClientQuery` + the typed oRPC `client`. It was removed once every
+// `callAPI` (formerly apps/builder/src/lib/swr.ts) was the legacy fetch-based
+// SWR helper used before flow-step editors and stores were migrated to
+// TanStack Query + the typed oRPC `client`. It was removed once every
 // consumer was ported (see git history around the oRPC error-mapping
 // refactor) — this guards against a new consumer quietly reintroducing it
-// (or the export itself) instead of using the oRPC client.
+// (or the export itself, or the `swr` package) instead of using the oRPC
+// client with TanStack Query.
 function collectSourceFiles(dir: string, results: string[] = []) {
   for (const entry of readdirSync(dir)) {
     if (entry === "node_modules" || entry === "__tests__") {
@@ -42,12 +43,16 @@ describe("legacy callAPI removal", () => {
     expect(offenders).toEqual([])
   })
 
-  test("lib/swr.ts only exports useClientQuery", () => {
-    const swrSource = readFileSync(join(SRC_ROOT, "lib", "swr.ts"), "utf8")
+  test("lib/swr.ts does not exist", () => {
+    expect(existsSync(join(SRC_ROOT, "lib", "swr.ts"))).toBe(false)
+  })
 
-    expect(swrSource).toContain("useClientQuery")
-    expect(swrSource).not.toContain("export const callAPI")
-    expect(swrSource).not.toContain("export function callAPI")
+  test("no source file imports swr", () => {
+    const offenders = collectSourceFiles(SRC_ROOT).filter((filePath) =>
+      readFileSync(filePath, "utf8").includes('from "swr'),
+    )
+
+    expect(offenders).toEqual([])
   })
 })
 

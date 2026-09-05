@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import { ArrowRightIcon, CircleHelpIcon, MailIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
@@ -38,8 +39,7 @@ import {
 } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
-import { useClientQuery } from "@/lib/swr"
+import { orpc } from "@/lib/orpc/query"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -90,29 +90,22 @@ const MailchimpDialog = ({ parentName }: { parentName: string }) => {
     () => form.getValues("mergeFields").length > 0,
   )
 
-  const { data: audiencesResponse, error: audiencesError } = useClientQuery(
-    ["integrationMailchimpAPI.listAudiences", workspaceId] as const,
-    () => client.integrationMailchimpAPI.listAudiences({ workspaceId }),
+  const { data: audiencesResponse, isError: audiencesError } = useQuery(
+    orpc.integrationMailchimpAPI.listAudiences.queryOptions({
+      input: { workspaceId },
+    }),
   )
-  const { data: tagsResponse } = useClientQuery(
-    listId
-      ? (["integrationMailchimpAPI.listTags", workspaceId, listId] as const)
-      : null,
-    () => client.integrationMailchimpAPI.listTags({ workspaceId, listId }),
+  const { data: tagsResponse } = useQuery(
+    orpc.integrationMailchimpAPI.listTags.queryOptions({
+      input: { workspaceId, listId: listId ?? "" },
+      enabled: Boolean(listId),
+    }),
   )
-  const { data: mergeFieldsResponse, error: mergeFieldsError } = useClientQuery(
-    listId
-      ? ([
-          "integrationMailchimpAPI.listMergeFields",
-          workspaceId,
-          listId,
-        ] as const)
-      : null,
-    () =>
-      client.integrationMailchimpAPI.listMergeFields({
-        workspaceId,
-        listId,
-      }),
+  const { data: mergeFieldsResponse, isError: mergeFieldsError } = useQuery(
+    orpc.integrationMailchimpAPI.listMergeFields.queryOptions({
+      input: { workspaceId, listId: listId ?? "" },
+      enabled: Boolean(listId),
+    }),
   )
 
   useEffect(() => {

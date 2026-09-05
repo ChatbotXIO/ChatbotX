@@ -13,17 +13,13 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import type { AdsEligibleChannelType } from "@chatbotx.io/utils/channel"
+import { useQuery } from "@tanstack/react-query"
 import { InfoIcon } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import useSWR from "swr"
-import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 import type { AdsAnalyticsSearchParams } from "../schema/analytics"
-
-type AdAccountsResponse = Awaited<
-  ReturnType<typeof client.adsAPI.listChannelAdAccounts>
->
 
 export function AdAccountFilter({
   channel,
@@ -44,19 +40,14 @@ export function AdAccountFilter({
   const router = useRouter()
   const searchParams = useSearchParams()
   const t = useTranslations()
-  const adAccounts = useSWR<AdAccountsResponse>(
-    [
-      "ads-channel-ad-accounts",
-      workspaceId,
-      channel,
-      selectedChannelIntegrationId ?? "",
-    ] as const,
-    () =>
-      client.adsAPI.listChannelAdAccounts({
+  const adAccounts = useQuery(
+    orpc.adsAPI.listChannelAdAccounts.queryOptions({
+      input: {
         workspaceId,
         channel,
         integrationId: selectedChannelIntegrationId ?? undefined,
-      }),
+      },
+    }),
   )
   const accounts = adAccounts.data?.data ?? []
   // The previously selected ad account may not exist in a newly narrowed
@@ -89,7 +80,7 @@ export function AdAccountFilter({
   if (adAccounts.isLoading) {
     return null
   }
-  const isUnavailable = Boolean(adAccounts.error) || !adAccounts.data
+  const isUnavailable = adAccounts.isError || !adAccounts.data
 
   return (
     <div className="flex items-center gap-1.5">

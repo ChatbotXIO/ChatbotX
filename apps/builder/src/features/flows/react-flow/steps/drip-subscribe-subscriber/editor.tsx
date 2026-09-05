@@ -18,6 +18,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import {
   ArrowRightIcon,
   CircleHelpIcon,
@@ -35,8 +36,7 @@ import {
 } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
-import { useClientQuery } from "@/lib/swr"
+import { orpc } from "@/lib/orpc/query"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -83,37 +83,33 @@ const DripDialog = ({ parentName }: { parentName: string }) => {
 
   const {
     data: accountsResponse,
-    error: accountsError,
+    isError: accountsError,
     isLoading: accountsLoading,
-  } = useClientQuery(
-    ["integrationDripAPI.listAccounts", workspaceId] as const,
-    () => client.integrationDripAPI.listAccounts({ workspaceId }),
+  } = useQuery(
+    orpc.integrationDripAPI.listAccounts.queryOptions({
+      input: { workspaceId },
+    }),
   )
   const {
     data: tagsResponse,
-    error: tagsError,
+    isError: tagsError,
     isLoading: tagsLoading,
-  } = useClientQuery(
-    accountId
-      ? (["integrationDripAPI.listTags", workspaceId, accountId] as const)
-      : null,
-    () => client.integrationDripAPI.listTags({ workspaceId, accountId }),
+  } = useQuery(
+    orpc.integrationDripAPI.listTags.queryOptions({
+      input: { workspaceId, accountId: accountId ?? "" },
+      enabled: Boolean(accountId),
+    }),
   )
 
   const {
     data: customFieldsResponse,
-    error: customFieldsError,
+    isError: customFieldsError,
     isLoading: customFieldsLoading,
-  } = useClientQuery(
-    accountId
-      ? ([
-          "integrationDripAPI.listCustomFields",
-          workspaceId,
-          accountId,
-        ] as const)
-      : null,
-    () =>
-      client.integrationDripAPI.listCustomFields({ workspaceId, accountId }),
+  } = useQuery(
+    orpc.integrationDripAPI.listCustomFields.queryOptions({
+      input: { workspaceId, accountId: accountId ?? "" },
+      enabled: Boolean(accountId),
+    }),
   )
 
   const accountOptions = useMemo(

@@ -4,10 +4,7 @@ import {
   type KlaviyoSyncProfileSchema,
   klaviyoSyncProfileSchema,
 } from "@chatbotx.io/flow-config"
-import {
-  KLAVIYO_LIST_PAGE_SIZE,
-  type KlaviyoList,
-} from "@chatbotx.io/integration-klaviyo"
+import { KLAVIYO_LIST_PAGE_SIZE } from "@chatbotx.io/integration-klaviyo"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -23,64 +20,51 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import { ArrowRightIcon, MailIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   useFieldArray,
   useForm,
   useFormContext,
   useWatch,
 } from "react-hook-form"
-import useSWRInfinite from "swr/infinite"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
+import { fetchAllPages } from "@/lib/query/fetch-all-pages"
 import { BaseStepEditor } from "../base/editor"
 
-type KlaviyoEditorPage = {
-  data: KlaviyoList[]
-  nextCursor: string | null
-}
+const KLAVIYO_ALL_LISTS_MAX_PAGES = 20
 
 const useAllKlaviyoLists = (workspaceId: string | undefined, open: boolean) => {
-  const {
-    data: pages,
-    error,
-    isValidating,
-    setSize,
-    size,
-  } = useSWRInfinite<KlaviyoEditorPage>(
-    (_pageIndex, previousPage: KlaviyoEditorPage | null) => {
-      if (!(workspaceId && open)) {
-        return null
-      }
-      if (previousPage && !previousPage.nextCursor) {
-        return null
-      }
-      return [
-        "integrationKlaviyoAPI.listLists",
-        workspaceId,
-        previousPage?.nextCursor ?? null,
-      ] as const
-    },
-    ([, id, cursor]: readonly [string, string, string | null]) =>
-      client.integrationKlaviyoAPI.listLists({
-        workspaceId: id,
-        cursor: cursor ?? undefined,
-        size: KLAVIYO_LIST_PAGE_SIZE,
+  const { data = [], isError } = useQuery({
+    queryKey: [
+      ...orpc.integrationKlaviyoAPI.listLists.key(),
+      "all-pages",
+      { workspaceId },
+    ],
+    queryFn: () =>
+      fetchAllPages({
+        initialPageParam: undefined as string | undefined,
+        maxPages: KLAVIYO_ALL_LISTS_MAX_PAGES,
+        fetchPage: async (cursor) => {
+          const page = await client.integrationKlaviyoAPI.listLists({
+            workspaceId: workspaceId ?? "",
+            cursor,
+            size: KLAVIYO_LIST_PAGE_SIZE,
+          })
+          return {
+            items: page.data,
+            nextPageParam: page.nextCursor ?? undefined,
+          }
+        },
       }),
-  )
-  const nextCursor = pages?.at(-1)?.nextCursor
-  useEffect(() => {
-    if (nextCursor && !isValidating && size === pages?.length) {
-      setSize(size + 1)
-    }
-  }, [isValidating, nextCursor, pages?.length, setSize, size])
-  return {
-    data: pages?.flatMap((page) => page.data) ?? [],
-    error,
-  }
+    enabled: Boolean(workspaceId) && open,
+  })
+  return { data, error: isError }
 }
 
 const KlaviyoDialog = ({ parentName }: { parentName: string }) => {

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { CapiDeliverySummary } from "@chatbotx.io/business"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -40,24 +41,21 @@ vi.mock("next-safe-action/hooks", () => ({
 // Supplies an ad account so the retarget dialog's `adAccountId` auto-selects
 // (mirrors the real `useEffect` that reads `adAccounts.data.data[0]`),
 // letting the confirm button reach an enabled state in these tests.
-vi.mock("swr", () => ({
-  default: (key: unknown) => {
-    if (Array.isArray(key) && key[0] === "facebook-ads-ad-accounts") {
-      return {
-        data: { data: [{ id: "act_1", name: "Ad Account" }] },
-        error: undefined,
-        isLoading: false,
-      }
-    }
-    return { data: undefined, error: undefined, isLoading: false }
-  },
-}))
+const listAdAccounts = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ data: [{ id: "act_1", name: "Ad Account" }] }),
+)
+const listCustomAudiences = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ data: [] }),
+)
 
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
     integrationFacebookAdsAPI: {
-      listAdAccounts: vi.fn(),
-      listCustomAudiences: vi.fn(),
+      listAdAccounts,
+      listCustomAudiences,
+    },
+    adsAPI: {
+      listChannelAdAccounts: vi.fn().mockResolvedValue({ data: [] }),
     },
   },
 }))
@@ -200,11 +198,17 @@ async function flush() {
 describe("AdsAnalyticsView — single-channel retarget row actions", () => {
   let container: HTMLDivElement
   let root: Root
+  let queryClient: QueryClient
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     mockExecute.mockClear()
     mockPush.mockClear()
+    listAdAccounts.mockClear()
+    listCustomAudiences.mockClear()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -226,15 +230,17 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
 
     await act(async () => {
       root.render(
-        <AdsAnalyticsView
-          channel="whatsapp"
-          channelIntegrations={[]}
-          promises={Promise.resolve([data, deliverySummary, timeseries])}
-          range={{ ...baseRange }}
-          selectedChannelIntegrationId={null}
-          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
-          workspaceId="ws-1"
-        />,
+        <QueryClientProvider client={queryClient}>
+          <AdsAnalyticsView
+            channel="whatsapp"
+            channelIntegrations={[]}
+            promises={Promise.resolve([data, deliverySummary, timeseries])}
+            range={{ ...baseRange }}
+            selectedChannelIntegrationId={null}
+            workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+            workspaceId="ws-1"
+          />
+        </QueryClientProvider>,
       )
       await flush()
     })
@@ -255,15 +261,17 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
 
     await act(async () => {
       root.render(
-        <AdsAnalyticsView
-          channel="whatsapp"
-          channelIntegrations={[]}
-          promises={Promise.resolve([data, deliverySummary, timeseries])}
-          range={{ ...baseRange }}
-          selectedChannelIntegrationId="iw-1"
-          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
-          workspaceId="ws-1"
-        />,
+        <QueryClientProvider client={queryClient}>
+          <AdsAnalyticsView
+            channel="whatsapp"
+            channelIntegrations={[]}
+            promises={Promise.resolve([data, deliverySummary, timeseries])}
+            range={{ ...baseRange }}
+            selectedChannelIntegrationId="iw-1"
+            workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+            workspaceId="ws-1"
+          />
+        </QueryClientProvider>,
       )
       await flush()
     })

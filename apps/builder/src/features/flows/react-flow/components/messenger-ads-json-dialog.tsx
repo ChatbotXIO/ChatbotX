@@ -19,11 +19,11 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
+import { useQuery } from "@tanstack/react-query"
 import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import useSWR from "swr"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 
 type MessengerAdsJsonDialogProps = {
   workspaceId: string
@@ -48,17 +48,17 @@ export function MessengerAdsJsonDialog({
   const t = useTranslations()
   const { handleCopy } = useClipboard()
 
-  const { data, isValidating, error } = useSWR(
-    open ? (["messenger-ads-json", workspaceId, flowId] as const) : null,
-    ([, ws, id]) =>
-      client.flowsAPI.privateGetMessengerAdsJsonAPI({
-        workspaceId: ws,
-        flowId: id,
-      }),
-    // The starting step may have changed since the last open, so always
-    // revalidate on open and never surface a stale cached value. Focus/reconnect
-    // revalidation is disabled so an open dialog's content can't blank out.
-    { revalidateOnFocus: false, revalidateOnReconnect: false },
+  const { data, isFetching, error } = useQuery(
+    orpc.flowsAPI.privateGetMessengerAdsJsonAPI.queryOptions({
+      input: { workspaceId, flowId },
+      enabled: open,
+      // The starting step may have changed since the last open, so always
+      // refetch on open and never surface a stale cached value. Focus/reconnect
+      // refetch is disabled so an open dialog's content can't blank out.
+      staleTime: 0,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    }),
   )
 
   const renderError = (message: string) => (
@@ -81,8 +81,8 @@ export function MessengerAdsJsonDialog({
 
   // Wait for the in-flight fetch to settle before rendering anything: a loading
   // dialog never flashes open, and a reopen never shows the previous (possibly
-  // stale) cached JSON while it revalidates.
-  if (!open || isValidating) {
+  // stale) cached JSON while it refetches.
+  if (!open || isFetching) {
     return null
   }
 

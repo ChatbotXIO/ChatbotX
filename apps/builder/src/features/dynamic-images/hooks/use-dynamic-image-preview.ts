@@ -1,10 +1,10 @@
 "use client"
 
 import { getPublicFileUrl } from "@chatbotx.io/utils"
+import { useQuery } from "@tanstack/react-query"
 import { useTenantSettings } from "@/features/tenant"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
-import { useClientQuery } from "@/lib/swr"
+import { orpc } from "@/lib/orpc/query"
 import { extractDynamicImageId } from "../lib/dynamic-image-url"
 
 export type DynamicImagePreview = {
@@ -18,19 +18,11 @@ export const useDynamicImagePreview = (
   const workspaceId = useWorkspaceId()
   const { storageUrl } = useTenantSettings()
   const dynamicImageId = extractDynamicImageId(url)
-  const { data, error } = useClientQuery(
-    dynamicImageId
-      ? ([
-          "dynamicImagesAPI.getDynamicImageAPI",
-          workspaceId,
-          dynamicImageId,
-        ] as const)
-      : null,
-    () =>
-      client.dynamicImagesAPI.getDynamicImageAPI({
-        workspaceId,
-        id: dynamicImageId as string,
-      }),
+  const { data, isError } = useQuery(
+    orpc.dynamicImagesAPI.getDynamicImageAPI.queryOptions({
+      input: { workspaceId, id: dynamicImageId ?? "" },
+      enabled: Boolean(dynamicImageId),
+    }),
   )
 
   if (dynamicImageId) {
@@ -38,7 +30,7 @@ export const useDynamicImagePreview = (
       url: data?.backgroundUrl
         ? getPublicFileUrl(data.backgroundUrl, storageUrl)
         : undefined,
-      hasError: Boolean(error),
+      hasError: isError,
     }
   }
 

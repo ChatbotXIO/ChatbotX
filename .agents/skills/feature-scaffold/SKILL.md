@@ -422,6 +422,24 @@ workspace. Never put a fetched list, `loading`, or `error` in a zustand store �
 TanStack Query already dedupes concurrent reads app-wide, caches per query key,
 and lets any mutation invalidate every reader.
 
+TanStack Query is the **only** client data-fetching layer — `lib/swr.ts` and
+the `swr` package were removed once every `useClientQuery`/`useSWR*` consumer
+was migrated. For less common shapes, reuse the shared helpers instead of
+hand-rolling them again:
+
+- **Search-as-you-type**: pass `placeholderData: keepPreviousData` (import the
+  *function* from `@tanstack/react-query`, not `true`) plus
+  `refetchOnWindowFocus: false` so the previous results stay on screen while a
+  new keyword is in flight (`meta-catalog-product-select.tsx`).
+- **Polling until a job settles** (export files, async worker results):
+  `@/lib/query/poll-until-settled`'s `pollUntilSettled(settledStatuses)`
+  returns a `refetchInterval` callback — TanStack passes it the `Query` (not
+  the data), so it reads `query.state.data?.status`.
+- **Fetching every page of a paginated list upfront** (not
+  `useInfiniteQuery`'s incremental `fetchNextPage`):
+  `@/lib/query/fetch-all-pages`'s `fetchAllPages({ fetchPage, initialPageParam,
+  maxPages })` loops and flattens every page in one `queryFn`.
+
 ## Client-only state (Zustand)
 
 For features needing client-only state (selection, open/closed dialogs,
