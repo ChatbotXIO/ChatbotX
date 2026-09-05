@@ -13,7 +13,6 @@ const mocks = vi.hoisted(() => {
     createMessageRepository: vi.fn().mockResolvedValue(repo),
     findManyQuery: vi.fn().mockResolvedValue([]),
     findWithFullRelations: vi.fn().mockResolvedValue(null),
-    getCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue(null),
     // Identity mock: resolveLastMessageSinceTime's output becomes exactly the
     // anchor it was given, so assertions can compare sinceTime straight
     // against each conversation's own lastActivityAt.
@@ -41,7 +40,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@/lib/auth/utils", () => ({
   assertCurrentUserCanAccessChatbot: mocks.assertCurrentUserCanAccessChatbot,
-  getCurrentUserAndTargetWorkspace: mocks.getCurrentUserAndTargetWorkspace,
 }))
 
 vi.mock(
@@ -60,7 +58,6 @@ describe("listConversations / findConversation last-message sinceTime", () => {
     vi.clearAllMocks()
     mocks.createMessageRepository.mockResolvedValue(mocks.repo)
     mocks.repo.findLastByConversation.mockResolvedValue([])
-    mocks.getCurrentUserAndTargetWorkspace.mockResolvedValue(null)
     mocks.buildConversationWhere.mockReturnValue({})
   })
 
@@ -97,7 +94,10 @@ describe("listConversations / findConversation last-message sinceTime", () => {
       newerDmConversation,
     ])
 
-    await listConversations({ workspaceId: "ws-1" })
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
 
     expect(mocks.repo.findLastByConversation).toHaveBeenCalledWith(
       "conv-comment",
@@ -145,7 +145,6 @@ describe("listConversations / findConversation attachment count", () => {
     vi.clearAllMocks()
     mocks.createMessageRepository.mockResolvedValue(mocks.repo)
     mocks.repo.findLastByConversation.mockResolvedValue([])
-    mocks.getCurrentUserAndTargetWorkspace.mockResolvedValue(null)
     mocks.buildConversationWhere.mockReturnValue({})
   })
 
@@ -161,7 +160,10 @@ describe("listConversations / findConversation attachment count", () => {
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
-    await listConversations({ workspaceId: "ws-1" })
+    await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
 
     expect(mocks.repo.findLastByConversation).toHaveBeenCalledWith(
       "conv-1",
@@ -210,7 +212,10 @@ describe("listConversations / findConversation attachment count", () => {
       { id: "msg-1", text: "", attachmentCount: 2, attachments: [] },
     ])
 
-    const result = await listConversations({ workspaceId: "ws-1" })
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
 
     expect(result.data[0]?.messages[0]?.attachmentCount).toBe(2)
   })

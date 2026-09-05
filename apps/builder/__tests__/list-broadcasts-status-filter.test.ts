@@ -37,10 +37,6 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   parseOrderByAsObject: () => undefined,
 }))
 
-vi.mock("@/lib/auth/utils", () => ({
-  assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
-}))
-
 const { listBroadcasts } = await import(
   "../src/features/broadcasts/queries/index"
 )

@@ -10,15 +10,12 @@ import {
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetBroadcastsSchema } from "../schema/query"
 import type { BroadcastResourceWithRelations } from "../schema/resource"
 
 export async function listBroadcasts(
   input: GetBroadcastsSchema,
 ): Promise<PaginatedResponse<BroadcastResourceWithRelations>> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   const where = {
     workspaceId: input.workspaceId,
     name: input.name ? { ilike: likeContains(input.name) } : undefined,

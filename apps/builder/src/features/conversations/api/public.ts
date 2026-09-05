@@ -64,9 +64,14 @@ export const conversationsPublicRouter = {
     .output(listConversationsResponse)
     .handler(
       async ({ context, input }) =>
-        await listConversations({
-          ...input,
-          workspaceId: context.workspace.id,
-        }),
+        await listConversations(
+          {
+            ...input,
+            workspaceId: context.workspace.id,
+          },
+          // Workspace tokens are workspace-level, not member-scoped — see
+          // docs/developer/workspace-api-tokens.md.
+          { includeEmailAndPhone: true },
+        ),
     ),
 }

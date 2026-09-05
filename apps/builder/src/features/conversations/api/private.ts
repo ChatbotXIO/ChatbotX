@@ -3,6 +3,8 @@ import { channelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { bulkUpdateIdsRequest, successResponse } from "@/features/common/schema"
+import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -32,6 +34,15 @@ const workspaceIdAndIdRequest = z.object({
   id: zodBigintAsString(),
 })
 
+const resolveIncludeEmailAndPhone = async (workspaceId: string) => {
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  return userAndWorkspace
+    ? canViewContactEmailAndPhone(
+        userAndWorkspace.targetWorkspaceMember.permissions,
+      )
+    : false
+}
+
 const postDetailsSchema = z.object({
   text: z.string().optional(),
   picture: z.string().optional(),
@@ -51,7 +62,14 @@ export const conversationsAuthenticatedAPI = {
     .input(listConversationsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
-    .handler(async ({ input }) => await listConversations(input)),
+    .handler(
+      async ({ input }) =>
+        await listConversations(input, {
+          includeEmailAndPhone: await resolveIncludeEmailAndPhone(
+            input.workspaceId,
+          ),
+        }),
+    ),
 
   listConversationsByPOSTAuthenticatedAPI: authorizedAPI
     .route({
@@ -63,7 +81,14 @@ export const conversationsAuthenticatedAPI = {
     .input(listConversationsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
-    .handler(async ({ input }) => await listConversations(input)),
+    .handler(
+      async ({ input }) =>
+        await listConversations(input, {
+          includeEmailAndPhone: await resolveIncludeEmailAndPhone(
+            input.workspaceId,
+          ),
+        }),
+    ),
 
   findConversationAuthenticatedAPI: authorizedAPI
     .route({
