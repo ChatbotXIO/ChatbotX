@@ -53,10 +53,17 @@ const webhookService = {
 }
 vi.mock("@chatbotx.io/business", () => ({ webhookService }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  createSelectSchema: vi.fn(() => ({})),
-  webhookModel: {},
-}))
+vi.mock("@chatbotx.io/database/schema", () => {
+  const schema = {
+    pick: vi.fn(() => schema),
+    extend: vi.fn(() => schema),
+    omit: vi.fn(() => schema),
+  }
+  return {
+    createSelectSchema: vi.fn(() => schema),
+    webhookModel: {},
+  }
+})
 
 await import("@/features/webhooks/api/public")
 
@@ -99,8 +106,11 @@ describe("GET /v1/webhooks", () => {
     ])
 
     await expect(
-      procedure.handler?.({ context: { workspace: { id: "workspace-1" } } }),
-    ).resolves.toEqual({ data: [{ id: "webhook-1" }] })
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { page: 1, perPage: 50 },
+      }),
+    ).resolves.toEqual({ data: [{ id: "webhook-1" }], pageCount: 1 })
 
     expect(webhookService.listByWorkspaceId).toHaveBeenCalledWith("workspace-1")
   })

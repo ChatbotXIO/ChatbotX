@@ -1,5 +1,4 @@
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { listInboxes } from "../queries"
 import {
   publicListInboxesResponse,
@@ -34,6 +33,9 @@ export const inboxesPublicRouter = {
       method: "GET",
       path: "/v1/channels",
       summary: "List channels",
+      description:
+        "Deprecated — use `inboxes.list` instead. Kept for backward compatibility; hidden from MCP/CLI tool listings.",
+      deprecated: true,
       tags: ["Channels"],
     })
     .input(publishInboxesRequest)

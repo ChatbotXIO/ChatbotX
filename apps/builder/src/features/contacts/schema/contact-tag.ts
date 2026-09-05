@@ -58,9 +58,3 @@ export const listContactTagsResponse = z.object({
   data: z.array(tagResource),
 })
 export type ListContactTagsResponse = z.infer<typeof listContactTagsResponse>
-
-export const removeContactTagRequest = z.object({
-  contactId: zodBigintAsString(),
-  tagId: zodBigintAsString(),
-})
-export type RemoveContactTagRequest = z.infer<typeof removeContactTagRequest>

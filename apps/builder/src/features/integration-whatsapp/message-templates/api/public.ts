@@ -1,5 +1,4 @@
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { whatsappMessageTemplateService } from "../queries"
 import {
   listWhatsappMessageTemplatesRequest,
