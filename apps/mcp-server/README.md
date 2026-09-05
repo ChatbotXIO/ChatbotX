@@ -4,172 +4,182 @@
 
 ## How it works
 
-On startup the server fetches `{CHATBOTX_API_URL}/api/public-spec.json` and registers one MCP tool per API operation. Adding a new API endpoint in ChatbotX automatically makes it available as a tool on the next server restart — no code changes required.
+On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and registers one MCP tool per API operation. `CHATBOTX_API_URL` is the origin **including** the `/api` path prefix (e.g. `https://app.chatbotx.io/api`). Adding a new API endpoint in ChatbotX automatically makes it available as a tool on the next server restart — no code changes required. Tool names are cached in-process for the server's lifetime, so a renamed operation requires a restart to pick up.
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case`. The current set of tools:
-
-### Workspace
-
-| Tool | Description |
-|---|---|
-| `get_workspace` | Get workspace |
-
-### Channels
-
-| Tool | Description |
-|---|---|
-| `list_channels` | List channels |
-
-### Members
-
-| Tool | Description |
-|---|---|
-| `list_members` | List workspace members |
-| `get_member` | Get workspace member by id |
-
-### Teams
-
-| Tool | Description |
-|---|---|
-| `list_teams` | List teams |
-
-### Tags
-
-| Tool | Description |
-|---|---|
-| `list_tags` | Get all tags |
-| `create_tag` | Create a new tag |
-| `get_tag` | Get tag by id or name |
-| `update_tag` | Update tag |
-| `delete_tag` | Delete tag |
-
-### Custom Fields
-
-| Tool | Description |
-|---|---|
-| `list_custom_fields` | Get all custom fields |
-| `create_custom_field` | Create a custom field |
-| `get_custom_field` | Get custom field by id or name |
-| `update_custom_field` | Update custom field |
-| `delete_custom_field` | Delete custom field |
-
-### Bot Fields
-
-| Tool | Description |
-|---|---|
-| `list_bot_fields` | Get all bot fields |
-| `create_bot_field` | Create a new bot field |
-| `set_bot_fields` | Set multiple bot field values |
-| `bulk_update_bot_fields` | Bulk update bot field values by id or name |
-| `get_bot_field` | Get bot field by id or name |
-| `set_bot_field` | Set bot field value by id or name |
-| `delete_bot_fields` | Unset the value of the bot field by id or name |
-
-### Contacts
-
-| Tool | Description |
-|---|---|
-| `list_contacts` | List contacts |
-| `create_contact` | Create a contact |
-| `get_contact` | Get contact by contact id |
-| `upsert_contact` | Upsert a contact by identifier (insert if not found, update if found) |
-| `update_contact` | Update contact fields |
-| `delete_contact` | Delete a contact |
-| `filter_contacts` | List contacts by custom field |
-| `import_contacts` | Import contacts from a file |
-| `list_contact_tags` | Get all tags added to this contact |
-| `add_contact_tags` | Add tags to the contact |
-| `remove_contact_tags` | Remove tags from the contact |
-| `list_contact_custom_fields` | Get all custom fields from a contact |
-| `set_contact_custom_fields` | Set multiple custom field values for a contact |
-| `clear_contact_custom_fields` | Clear all custom fields from a contact |
-| `get_contact_custom_field` | Get contact custom field value |
-| `set_contact_custom_field` | Set contact custom field value |
-| `clear_contact_custom_field` | Delete contact custom field by id or name |
-| `block_contact` | Block a contact |
-| `unblock_contact` | Unblock a contact |
-| `list_contact_messages` | List messages for contact |
-| `get_contact_message` | Get a message by ID for a contact |
-| `send_message` | Send message to contact |
-| `send_contact_flow` | Send flow to contact |
-| `trigger_auto_reply` | Trigger auto reply for contact |
-
-### Conversations
-
-| Tool | Description |
-|---|---|
-| `list_conversations` | List conversations |
-
-### Broadcasts
-
-| Tool | Description |
-|---|---|
-| `list_broadcasts` | Get all broadcasts |
-| `get_broadcast` | Get broadcast by id or name |
-| `get_broadcast_audience` | Get broadcast audience (contacts with delivery status) |
-
-### Flows
-
-| Tool | Description |
-|---|---|
-| `list_flows` | Get all flows |
-
-### Sequences
-
-| Tool | Description |
-|---|---|
-| `list_sequences` | List sequences |
-| `get_sequence` | Get sequence details |
-
-### Saved Replies
-
-| Tool | Description |
-|---|---|
-| `list_saved_replies` | List saved replies |
-
-### Template Messages
-
-| Tool | Description |
-|---|---|
-| `list_template_messages` | List template messages |
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). Operations under `/v1/channels/api/*` (channel-token-authed) and deprecated operations (e.g. `inboxes.listChannels`) are excluded — they require a different token type or are kept only for backward compatibility. The current set of 66 tools:
 
 ### AI Agents
 
 | Tool | Description |
 |---|---|
-| `list_aiagents` | List AI agents |
+| `ai_agents_list` | List AI agents |
 
-### Integrations
-
-| Tool | Description |
-|---|---|
-| `list_integrations` | List integrations |
-
-### Keywords
+### Bot Fields
 
 | Tool | Description |
 |---|---|
-| `list_keywords` | List keywords (automated responses) |
+| `bot_fields_list` | Get all bot fields |
+| `bot_fields_create` | Create a new bot field |
+| `bot_fields_set_many` | Set multiple bot field values |
+| `bot_fields_bulk_update` | Bulk update bot field values by id or name |
+| `bot_fields_get` | Get bot field by id or name |
+| `bot_fields_set` | Set bot field value by id or name |
+| `bot_fields_delete` | Unset the value of the bot field by id or name |
 
-### Triggers
+### Broadcasts
 
 | Tool | Description |
 |---|---|
-| `list_triggers` | List triggers |
+| `broadcasts_list` | Get all broadcasts |
+| `broadcasts_get` | Get broadcast by id or name |
+| `broadcasts_get_audience` | Get broadcast audience |
 
-### Webhooks
+### Contacts
 
 | Tool | Description |
 |---|---|
-| `list_webhooks` | List webhooks |
+| `contacts_list` | List contacts |
+| `contacts_create` | Create a contact |
+| `contacts_get` | Get contact by identifier (id:123, email:user@example.com, phone:+84...) |
+| `contacts_upsert` | Upsert a contact by identifier |
+| `contacts_update` | Update contact fields |
+| `contacts_delete` | Delete a contact |
+| `contacts_find_by_custom_field` | List contacts by custom field |
+| `contacts_import` | Import contacts from a file |
+| `contacts_list_tags` | Get all tags added to this contact |
+| `contacts_add_tags` | Add tags to the contact |
+| `contacts_remove_tags` | Remove tags from the contact |
+| `contacts_list_custom_fields` | Get all custom fields from a contact |
+| `contacts_set_custom_fields` | Set multiple custom field values for a contact |
+| `contacts_clear_custom_fields` | Clear all custom fields from a contact |
+| `contacts_get_custom_field` | Get contact custom field value |
+| `contacts_set_custom_field` | Set contact custom field value |
+| `contacts_clear_custom_field` | Delete contact custom field by id or name |
+| `contacts_block` | Block a contact |
+| `contacts_unblock` | Unblock a contact |
+| `contacts_list_messages` | List messages for contact |
+| `contacts_get_message` | Get a message by ID for a contact |
+| `contacts_send_message` | Send message to contact |
+| `contacts_send_flow` | Send flow to contact |
+| `contacts_trigger_auto_reply` | Trigger auto reply for contact |
+
+### Conversations
+
+| Tool | Description |
+|---|---|
+| `conversations_list` | List conversations |
+
+### Custom Fields
+
+| Tool | Description |
+|---|---|
+| `custom_fields_list` | Get all custom fields |
+| `custom_fields_create` | Create a custom field |
+| `custom_fields_get` | Get custom field by id or name |
+| `custom_fields_update` | Update custom field |
+| `custom_fields_delete` | Delete custom field |
 
 ### Error Logs
 
 | Tool | Description |
 |---|---|
-| `list_error_logs` | List error logs |
+| `error_logs_list` | List error logs |
+
+### External Webhooks
+
+| Tool | Description |
+|---|---|
+| `external_webhooks_list` | List external webhooks |
+| `external_webhooks_create` | Register an external webhook |
+| `external_webhooks_delete` | Unregister an external webhook |
+
+### Flows
+
+| Tool | Description |
+|---|---|
+| `flows_list` | Get all flows |
+
+### Inboxes
+
+| Tool | Description |
+|---|---|
+| `inboxes_list` | List inboxes |
+
+### Teams
+
+| Tool | Description |
+|---|---|
+| `inbox_teams_list` | List teams |
+
+### Integrations
+
+| Tool | Description |
+|---|---|
+| `integrations_list` | List integrations |
+
+### Keywords
+
+| Tool | Description |
+|---|---|
+| `keywords_list` | List keywords (automated responses) |
+
+### Ref Links
+
+| Tool | Description |
+|---|---|
+| `reflinks_get` | Get a specific ref link |
+
+### Saved Replies
+
+| Tool | Description |
+|---|---|
+| `saved_replies_list` | List saved replies |
+
+### Sequences
+
+| Tool | Description |
+|---|---|
+| `sequences_list` | List sequences |
+| `sequences_get` | Get sequence details |
+
+### Tags
+
+| Tool | Description |
+|---|---|
+| `tags_list` | Get all tags |
+| `tags_create` | Create a new tag |
+| `tags_get` | Get tag by id or name |
+| `tags_update` | Update tag |
+| `tags_delete` | Delete tag |
+
+### Template Messages
+
+| Tool | Description |
+|---|---|
+| `template_messages_list` | List template messages |
+
+### Triggers
+
+| Tool | Description |
+|---|---|
+| `triggers_list` | List triggers |
+
+### Webhooks
+
+| Tool | Description |
+|---|---|
+| `webhooks_list` | List webhooks |
+| `webhooks_create` | Register a webhook |
+| `webhooks_delete` | Unregister a webhook |
+
+### Members
+
+| Tool | Description |
+|---|---|
+| `workspace_members_list` | List workspace members |
+| `workspace_members_get` | Get workspace member by id |
 
 ## Prerequisites
 
@@ -186,7 +196,7 @@ Claude spawns the server process on demand. No server needs to be running. The w
 ```bash
 claude mcp add chatbotx \
   -e CHATBOTX_API_KEY=<your-token> \
-  -e CHATBOTX_API_URL=https://your-instance.com \
+  -e CHATBOTX_API_URL=https://your-instance.com/api \
   -e CHATBOTX_MCP_TRANSPORT=stdio \
   -s user \
   -- node /path/to/dist/index.mjs
@@ -201,7 +211,7 @@ claude mcp add chatbotx \
       "args": ["/path/to/dist/index.mjs"],
       "env": {
         "CHATBOTX_API_KEY": "<your-token>",
-        "CHATBOTX_API_URL": "https://your-instance.com",
+        "CHATBOTX_API_URL": "https://your-instance.com/api",
         "CHATBOTX_MCP_TRANSPORT": "stdio"
       }
     }
@@ -273,7 +283,7 @@ cp .env.example .env
 | Variable | Description | Default | Required |
 |---|---|---|---|
 | `CHATBOTX_API_KEY` | Workspace token (stdio) | — | Yes (stdio) |
-| `CHATBOTX_API_URL` | ChatbotX instance URL | `https://api.chatbotx.io` | Yes |
+| `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://api.chatbotx.io` | Yes |
 | `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Disable TLS verification (`true`/`false`) | — | No |
 | `CHATBOTX_MCP_TRANSPORT` | `stdio` \| `sse` \| `both` | `both` | No |
 | `CHATBOTX_MCP_HOST` | SSE server host | `0.0.0.0` | No |
@@ -319,7 +329,8 @@ src/
 ## Troubleshooting
 
 **Tools not showing up**
-- Check that `CHATBOTX_API_URL` is reachable and `{CHATBOTX_API_URL}/api/public-spec.json` returns a valid OpenAPI spec.
+- Check that `CHATBOTX_API_URL` is reachable and `{CHATBOTX_API_URL}/public-spec.json` returns a valid OpenAPI spec.
+- Tool names are cached in-process for the server's lifetime — restart the server after a tool rename or a public API change.
 - Check stderr output on startup — the server logs `Loaded N tools from OpenAPI spec`.
 
 **Port already in use**
