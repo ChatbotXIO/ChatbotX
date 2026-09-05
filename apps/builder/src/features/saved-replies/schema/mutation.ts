@@ -25,3 +25,8 @@ export const listSavedReplyResponse = z.object({
   data: z.array(savedReplyResource),
 })
 export type ListSavedReplyResponse = z.infer<typeof listSavedReplyResponse>
+
+export const publicListSavedReplyResponse = z.object({
+  data: z.array(savedReplyResource),
+  pageCount: z.number().int(),
+})

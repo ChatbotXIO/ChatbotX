@@ -130,6 +130,12 @@ vi.mock("@/features/conversations/queries/list-conversations.query", () => ({
   findConversation: vi.fn(),
   listConversations: vi.fn(),
 }))
+vi.mock("@/features/contacts/permissions", () => ({
+  canViewContactEmailAndPhone: vi.fn(),
+}))
+vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue(null),
+}))
 
 await import("@/features/conversations/api/private")
 

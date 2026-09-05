@@ -1,47 +1,47 @@
-import { inboxTeamsWorkspaceTokenAPIs } from "@/enterprise/features/inbox-teams/api/workspace-token"
-import aiAgentsWorkspaceTokenAPIs from "@/features/ai-agents/api/workspace-token"
-import keywordsWorkspaceTokenAPIs from "@/features/automated-response/api/workspace-token"
-import botFieldWorkspaceTokenAPIs from "@/features/bot-fields/api/workspace-token"
-import { broadcastWorkspaceTokenAPIs } from "@/features/broadcasts/api/workspace-token"
-import contactWorkspaceTokenAPIs from "@/features/contacts/api/workspace-token"
-import conversationWorkspaceTokenAPIs from "@/features/conversations/api/workspace-token"
-import customFieldWorkspaceTokenAPIs from "@/features/custom-fields/api/workspace-token"
-import errorLogWorkspaceTokenAPIs from "@/features/error-logs/api/workspace-token"
-import { externalWebhooksWorkspaceTokenAPIs } from "@/features/external-webhooks/api/workspace-token"
-import flowWorkspaceTokenAPIs from "@/features/flows/api/workspace-token"
-import inboxWorkspaceTokenAPIs from "@/features/inboxes/api/workspace-token"
-import { channelApiAPIs } from "@/features/integration-api/api"
-import whatsappMessageTemplateWorkspaceTokenAPIs from "@/features/integration-whatsapp/message-templates/api/workspace-token"
-import integrationsWorkspaceTokenAPIs from "@/features/integrations/api/workspace-token"
-import { refLinksWorkspaceTokenAPIs } from "@/features/reflinks/api/workspace-token"
-import savedReplyWorkspaceTokenAPIs from "@/features/saved-replies/api/workspace-token"
-import { sequencesWorkspaceTokenAPIs } from "@/features/sequences/api/workspace-token"
-import { tagWorkspaceTokenAPIs } from "@/features/tags/api/token-auth"
-import triggersWorkspaceTokenAPIs from "@/features/triggers/api/workspace-token"
-import webhooksWorkspaceTokenAPIs from "@/features/webhooks/api/workspace-token"
-import workspaceMembersAPIs from "@/features/workspace-members/api/workspace-token"
+import { inboxTeamsPublicRouter } from "@/enterprise/features/inbox-teams/api/public"
+import { aiAgentsPublicRouter } from "@/features/ai-agents/api/public"
+import { keywordsPublicRouter } from "@/features/automated-response/api/public"
+import { botFieldsPublicRouter } from "@/features/bot-fields/api/public"
+import { broadcastsPublicRouter } from "@/features/broadcasts/api/public"
+import { contactsPublicRouter } from "@/features/contacts/api/public"
+import { conversationsPublicRouter } from "@/features/conversations/api/public"
+import { customFieldsPublicRouter } from "@/features/custom-fields/api/public"
+import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
+import { externalWebhooksPublicRouter } from "@/features/external-webhooks/api/public"
+import { flowsPublicRouter } from "@/features/flows/api/public"
+import { inboxesPublicRouter } from "@/features/inboxes/api/public"
+import { channelsPublicRouter } from "@/features/integration-api/api/public"
+import { templateMessagesPublicRouter } from "@/features/integration-whatsapp/message-templates/api/public"
+import { integrationsPublicRouter } from "@/features/integrations/api/public"
+import { reflinksPublicRouter } from "@/features/reflinks/api/public"
+import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
+import { sequencesPublicRouter } from "@/features/sequences/api/public"
+import { tagsPublicRouter } from "@/features/tags/api/public"
+import { triggersPublicRouter } from "@/features/triggers/api/public"
+import { webhooksPublicRouter } from "@/features/webhooks/api/public"
+import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
 
 export const publicRouter = {
-  ...inboxWorkspaceTokenAPIs,
-  ...workspaceMembersAPIs,
-  ...conversationWorkspaceTokenAPIs,
-  ...savedReplyWorkspaceTokenAPIs,
-  ...flowWorkspaceTokenAPIs,
-  ...tagWorkspaceTokenAPIs,
-  ...botFieldWorkspaceTokenAPIs,
-  ...customFieldWorkspaceTokenAPIs,
-  ...errorLogWorkspaceTokenAPIs,
-  ...contactWorkspaceTokenAPIs,
-  ...broadcastWorkspaceTokenAPIs,
-  ...sequencesWorkspaceTokenAPIs,
-  ...inboxTeamsWorkspaceTokenAPIs,
-  ...whatsappMessageTemplateWorkspaceTokenAPIs,
-  ...triggersWorkspaceTokenAPIs,
-  ...webhooksWorkspaceTokenAPIs,
-  ...aiAgentsWorkspaceTokenAPIs,
-  ...keywordsWorkspaceTokenAPIs,
-  ...integrationsWorkspaceTokenAPIs,
-  ...channelApiAPIs,
-  ...externalWebhooksWorkspaceTokenAPIs,
-  ...refLinksWorkspaceTokenAPIs,
+  aiAgents: aiAgentsPublicRouter,
+  botFields: botFieldsPublicRouter,
+  broadcasts: broadcastsPublicRouter,
+  channels: channelsPublicRouter,
+  contacts: contactsPublicRouter,
+  conversations: conversationsPublicRouter,
+  customFields: customFieldsPublicRouter,
+  errorLogs: errorLogsPublicRouter,
+  externalWebhooks: externalWebhooksPublicRouter,
+  flows: flowsPublicRouter,
+  inboxTeams: inboxTeamsPublicRouter,
+  inboxes: inboxesPublicRouter,
+  integrations: integrationsPublicRouter,
+  keywords: keywordsPublicRouter,
+  reflinks: reflinksPublicRouter,
+  savedReplies: savedRepliesPublicRouter,
+  sequences: sequencesPublicRouter,
+  tags: tagsPublicRouter,
+  templateMessages: templateMessagesPublicRouter,
+  triggers: triggersPublicRouter,
+  webhooks: webhooksPublicRouter,
+  workspaceMembers: workspaceMembersPublicRouter,
 }

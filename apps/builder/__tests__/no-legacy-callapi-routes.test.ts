@@ -57,14 +57,14 @@ describe("legacy callAPI removal", () => {
 })
 
 describe("dev-only OpenAPI mirror routes stay removed", () => {
-  // /api-internal (full-router, dev-only Scalar mirror) and /api/scalar-ui
-  // (a hand-rolled docs page superseded by OpenAPIReferencePlugin's built-in
-  // Scalar UI at `${prefix}/`) were both deleted as redundant surface area
-  // once the public `/api` OpenAPI handler grew its own docs page. Guard
-  // against either reappearing.
+  // /api-internal (full-router, dev-only Scalar mirror) was deleted as
+  // redundant surface area once the public `/api` OpenAPI handler grew its
+  // own docs page. Guard against it reappearing. `/api/scalar-ui` was
+  // deleted for the same reason but was later restored as a stable, fixed
+  // debug entrypoint against `/api/public-spec.json` — it is intentionally
+  // no longer covered by this guard.
   test.each([
     ["api-internal", join(SRC_ROOT, "app", "api-internal")],
-    ["api/scalar-ui", join(SRC_ROOT, "app", "api", "scalar-ui")],
   ])("%s route directory does not exist", (_label, routeDir) => {
     expect(existsSync(routeDir)).toBe(false)
   })

@@ -20,8 +20,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       workspaceMemberModel: {
         findFirst: vi.fn(async () => ({
-          workspace: { id: "ws-1" },
-          workspaceId: "ws-1",
+          workspace: { id: "123" },
+          workspaceId: "123",
           userId: "user-1",
         })),
       },
@@ -118,8 +118,8 @@ describe("integrationSendGridAPI", () => {
     ;(
       db.query.workspaceMemberModel.findFirst as ReturnType<typeof vi.fn>
     ).mockResolvedValue({
-      workspace: { id: "ws-1" },
-      workspaceId: "ws-1",
+      workspace: { id: "123" },
+      workspaceId: "123",
       userId: "user-1",
     })
     mockGetSendGridContext.mockResolvedValue(stubSendGridCtx)
@@ -134,7 +134,7 @@ describe("integrationSendGridAPI", () => {
       })
       const result = await call(
         integrationSendGridAPI.listLists,
-        { workspaceId: "ws-1" },
+        { workspaceId: "123" },
         { context: stubCtx },
       )
       expect(result.data).toHaveLength(1)
@@ -152,7 +152,7 @@ describe("integrationSendGridAPI", () => {
       })
       await call(
         integrationSendGridAPI.listLists,
-        { workspaceId: "ws-1", pageToken: "tok-abc" },
+        { workspaceId: "123", pageToken: "tok-abc" },
         { context: stubCtx },
       )
       expect(mockRunAction).toHaveBeenCalledWith(
@@ -170,7 +170,7 @@ describe("integrationSendGridAPI", () => {
       await expect(
         call(
           integrationSendGridAPI.listLists,
-          { workspaceId: "ws-1" },
+          { workspaceId: "123" },
           { context: stubCtx },
         ),
       ).rejects.toMatchObject({ code: "TOO_MANY_REQUESTS" })
@@ -183,7 +183,7 @@ describe("integrationSendGridAPI", () => {
       await expect(
         call(
           integrationSendGridAPI.listLists,
-          { workspaceId: "ws-1" },
+          { workspaceId: "123" },
           { context: stubCtx },
         ),
       ).rejects.toThrow("server error")
@@ -196,7 +196,7 @@ describe("integrationSendGridAPI", () => {
       await expect(
         call(
           integrationSendGridAPI.listLists,
-          { workspaceId: "ws-1" },
+          { workspaceId: "123" },
           { context: stubCtx },
         ),
       ).rejects.toThrow("SendGrid integration not found")
@@ -210,7 +210,7 @@ describe("integrationSendGridAPI", () => {
       ])
       const result = await call(
         integrationSendGridAPI.listCustomFields,
-        { workspaceId: "ws-1" },
+        { workspaceId: "123" },
         { context: stubCtx },
       )
       expect(result.data).toEqual([
@@ -225,7 +225,7 @@ describe("integrationSendGridAPI", () => {
       await expect(
         call(
           integrationSendGridAPI.listCustomFields,
-          { workspaceId: "ws-1" },
+          { workspaceId: "123" },
           { context: stubCtx },
         ),
       ).rejects.toMatchObject({ code: "TOO_MANY_REQUESTS" })
@@ -238,7 +238,7 @@ describe("integrationSendGridAPI", () => {
       await expect(
         call(
           integrationSendGridAPI.listCustomFields,
-          { workspaceId: "ws-1" },
+          { workspaceId: "123" },
           { context: stubCtx },
         ),
       ).rejects.toThrow("SendGrid integration not found")

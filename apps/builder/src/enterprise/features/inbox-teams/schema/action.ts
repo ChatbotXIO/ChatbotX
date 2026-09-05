@@ -39,3 +39,7 @@ export const listInboxTeamsResponse = z.object({
   ),
 })
 export type ListInboxTeamsResponse = z.infer<typeof listInboxTeamsResponse>
+
+export const publicListInboxTeamsResponse = listInboxTeamsResponse.extend({
+  pageCount: z.number().int(),
+})

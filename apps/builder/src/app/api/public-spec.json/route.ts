@@ -3,6 +3,10 @@ import { OpenAPIGenerator } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import "@/polyfill"
 import { getTenantSettings } from "@/features/tenant/utils"
+import {
+  publicSpecGenerateOptions,
+  withChannelApiTokenSecurity,
+} from "@/lib/orpc/public-spec"
 import { publicRouter } from "@/routers/public"
 
 const openAPIGenerator = new OpenAPIGenerator({
@@ -13,35 +17,14 @@ async function handleRequest(request: Request) {
   const { name } = await getTenantSettings()
 
   const spec = await openAPIGenerator.generate(publicRouter, {
-    info: {
-      title: name,
-      version: "0.0.1",
-    },
-
-    commonSchemas: {
-      UndefinedError: { error: "UndefinedError" },
-    },
-    security: [{ developerAccessToken: [] }, { tokenInSearchParams: [] }],
-    components: {
-      securitySchemes: {
-        developerAccessToken: {
-          type: "http",
-          scheme: "bearer",
-        },
-        tokenInSearchParams: {
-          type: "apiKey",
-          in: "query",
-          name: "token",
-        },
-      },
-    },
+    ...publicSpecGenerateOptions(name),
     servers: [
       {
         url: new URL("/api", getPublicOriginFromRequest(request)).toString(),
       },
     ],
     filter: ({ contract }) => {
-      const searchParams = new URLSearchParams(request.url.split("?")[1])
+      const searchParams = new URL(request.url).searchParams
       const filter = searchParams.get("filter")
 
       if (filter && contract["~orpc"].route.path) {
@@ -51,7 +34,11 @@ async function handleRequest(request: Request) {
     },
   })
 
-  return spec ? Response.json(spec) : new Response("Not found", { status: 404 })
+  const document = spec ? withChannelApiTokenSecurity(spec) : spec
+
+  return document
+    ? Response.json(document)
+    : new Response("Not found", { status: 404 })
 }
 
 export const HEAD = handleRequest

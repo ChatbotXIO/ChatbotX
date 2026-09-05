@@ -138,7 +138,7 @@ const setTextareaValue = (textarea: HTMLTextAreaElement, value: string) => {
 
 const emptyStep = {
   ...executeJavascriptStepDefaultFn(),
-  id: "step-1",
+  id: "1",
 }
 
 function Harness() {

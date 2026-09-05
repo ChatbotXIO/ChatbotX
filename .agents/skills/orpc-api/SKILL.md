@@ -88,24 +88,37 @@ Each feature has `api/` directory with optional split:
 ```
 features/my-feature/
   api/
-    index.ts            → merges private (session) + workspace-token APIs
-    private.ts          → session-based procedures
-    workspace-token.ts  → token-based procedures (for public API)
+    index.ts    → private (session) API only — public procedures are NOT
+                  spread in here; they're mounted separately in
+                  routers/public.ts (see below)
+    private.ts  → session-based procedures (private naming: see below)
+    public.ts   → token-based procedures (for public API)
 ```
 
-### api/index.ts
+If a feature has no private procedures at all, it has no `api/index.ts` and
+is not mounted in `routers/index.ts` — only `api/public.ts`, wired into
+`routers/public.ts`.
+
+### api/index.ts (private only)
 
 ```typescript
 import { myFeatureAuthenticatedAPI } from "./private"
-import myFeatureWorkspaceTokenAPIs from "./workspace-token"
 
 export const myFeatureAPI = {
-  ...myFeatureWorkspaceTokenAPIs,
   ...myFeatureAuthenticatedAPI,
 }
 ```
 
-### Workspace-token procedures (public API)
+### Public procedures (`api/public.ts`)
+
+Key naming: CRUD resources use plain `list`, `get`, `create`, `update`,
+`delete`; anything else is a verb + secondary noun (`listOptions`,
+`getStats`, `upsert`, `block`, `sendMessage`). Never prefix keys with the
+resource name or an auth suffix (no `WorkspaceTokenAPI`, no
+`listMyFeature`) — the resource name already comes from the router nesting
+in `routers/public.ts`, and the key becomes the last segment of the
+generated `operationId` (`myFeature.get`), which the MCP server turns into
+the tool name (`my_feature_get`).
 
 ```typescript
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -114,8 +127,8 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 // (workspaceApiTokenScopes in packages/database/src/partials/workspace-api-token.ts)
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
-const workspaceTokenAPIs = {
-  findMyFeaturePublicAPI: workspaceTokenAuthAPI
+export const myFeaturePublicRouter = {
+  get: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/v1/my-feature/{id}",
@@ -132,8 +145,18 @@ const workspaceTokenAPIs = {
       })
     }),
 }
+```
 
-export default workspaceTokenAPIs
+Register it in `apps/builder/src/routers/public.ts`, nested under the
+resource name:
+
+```typescript
+import { myFeaturePublicRouter } from "@/features/my-feature/api/public"
+
+export const publicRouter = {
+  // ...existing resources
+  myFeature: myFeaturePublicRouter,
+}
 ```
 
 ## Registering the Router
@@ -163,8 +186,12 @@ name must match the module's actual export — a mismatch produces
 at build time. Dynamic `import()` is allowed here because `apps/builder` is
 Next.js-built (see `.agents/rules/no-dynamic-import.md`).
 
-For public API (workspace-token), also add to `apps/builder/src/routers/public.ts` —
-that router stays **eager** (plain imports); it feeds `/api/spec.json`.
+For public API (`api/public.ts`), don't add the feature to `routers/index.ts`
+at all if it has no private procedures — register it only in
+`apps/builder/src/routers/public.ts` (see above), nested under the resource
+name. That router stays **eager** (plain imports); it feeds `/api/spec.json`,
+and its `operationId`s (`resource.key`) are what the MCP server turns into
+tool names.
 
 ## Schema Patterns
 

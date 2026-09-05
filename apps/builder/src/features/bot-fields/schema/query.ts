@@ -32,6 +32,7 @@ export type ListBotFieldsSearchParams = Awaited<
 
 export const publicListBotFieldsResponse = z.object({
   data: z.array(publicBotFieldResource),
+  pageCount: z.number().int(),
 })
 
 export const listBotFieldsRequest = basePaginationRequest.extend({

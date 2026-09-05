@@ -2,13 +2,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  assertCurrentUserCanAccessChatbot: vi.fn(),
   findMany: vi.fn(),
   count: vi.fn(),
-}))
-
-vi.mock("@/lib/auth/utils", () => ({
-  assertCurrentUserCanAccessChatbot: mocks.assertCurrentUserCanAccessChatbot,
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -32,7 +27,6 @@ const whereClause = () => mocks.findMany.mock.calls[0]?.[0]?.where
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
   mocks.findMany.mockResolvedValue([])
   mocks.count.mockResolvedValue(0)
 })
@@ -60,6 +54,5 @@ describe("listErrorLogs", () => {
     await listErrorLogs({ workspaceId: "ws-1" })
 
     expect(whereClause()).toEqual({ workspaceId: "ws-1" })
-    expect(mocks.assertCurrentUserCanAccessChatbot).toHaveBeenCalledWith("ws-1")
   })
 })

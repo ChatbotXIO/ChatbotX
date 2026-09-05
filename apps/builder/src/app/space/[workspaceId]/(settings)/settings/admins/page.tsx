@@ -17,6 +17,7 @@ import { isCommunity } from "@/env"
 import { listWorkspaceMembers } from "@/features/workspace-members/queries"
 import { getWorkspaceMembersSearchParamsCache } from "@/features/workspace-members/schema/query"
 import { WorkspaceMembersTable } from "@/features/workspace-members/workspace-members-table"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export default async function SettingsAdminPage({
   params,
@@ -29,6 +30,8 @@ export default async function SettingsAdminPage({
   }
 
   const t = await getTranslations()
+
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const promises = Promise.all([
     listWorkspaceMembers({

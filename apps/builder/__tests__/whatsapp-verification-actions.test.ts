@@ -145,7 +145,7 @@ const auth = {
 }
 
 const integration = {
-  id: "integration-1",
+  id: "1",
   workspaceId: "workspace-1",
   phoneNumberId: "phone-1",
   auth,
@@ -184,7 +184,7 @@ describe("Whatsapp verification actions", () => {
     const result = await requestCodeAction({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {
-        integrationId: "integration-1",
+        integrationId: "1",
         codeMethod: "SMS",
       },
     })
@@ -210,7 +210,7 @@ describe("Whatsapp verification actions", () => {
       requestCodeAction({
         bindArgsParsedInputs: ["workspace-1"],
         parsedInput: {
-          integrationId: "integration-1",
+          integrationId: "1",
           codeMethod: "SMS",
         },
       }),
@@ -228,7 +228,7 @@ describe("Whatsapp verification actions", () => {
     const result = await requestCodeAction({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {
-        integrationId: "integration-1",
+        integrationId: "1",
         codeMethod: "VOICE",
       },
     })
@@ -257,7 +257,7 @@ describe("Whatsapp verification actions", () => {
       requestCodeAction({
         bindArgsParsedInputs: ["workspace-1"],
         parsedInput: {
-          integrationId: "integration-1",
+          integrationId: "1",
           codeMethod: "SMS",
         },
       }),
@@ -282,7 +282,7 @@ describe("Whatsapp verification actions", () => {
       requestCodeAction({
         bindArgsParsedInputs: ["workspace-1"],
         parsedInput: {
-          integrationId: "integration-1",
+          integrationId: "1",
           codeMethod: "SMS",
         },
       }),
@@ -296,7 +296,7 @@ describe("Whatsapp verification actions", () => {
       requestCodeAction({
         bindArgsParsedInputs: ["workspace-1"],
         parsedInput: {
-          integrationId: "integration-1",
+          integrationId: "1",
           codeMethod: "SMS",
         },
       }),
@@ -305,7 +305,7 @@ describe("Whatsapp verification actions", () => {
     // Without this the operator would wait out a full cooldown for a code that
     // was never delivered, so the retry has to be immediate.
     expect(releaseVerificationCodeSlotMock).toHaveBeenCalledWith({
-      id: "integration-1",
+      id: "1",
       workspaceId: "workspace-1",
       claimedAt: new Date("2026-07-27T08:00:00.000Z"),
     })
@@ -323,14 +323,14 @@ describe("Whatsapp verification actions", () => {
       requestCodeAction({
         bindArgsParsedInputs: ["workspace-1"],
         parsedInput: {
-          integrationId: "integration-1",
+          integrationId: "1",
           codeMethod: "SMS",
         },
       }),
     ).rejects.toThrow("This number cannot receive SMS.")
 
     expect(loggerErrorMock).toHaveBeenCalledWith(
-      expect.objectContaining({ integrationId: "integration-1" }),
+      expect.objectContaining({ integrationId: "1" }),
       "Failed to release WhatsApp verification code slot",
     )
   })
@@ -339,7 +339,7 @@ describe("Whatsapp verification actions", () => {
     await requestCodeAction({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {
-        integrationId: "integration-1",
+        integrationId: "1",
         codeMethod: "SMS",
       },
     })
@@ -351,7 +351,7 @@ describe("Whatsapp verification actions", () => {
     const result = await verifyPhoneCodeAction({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {
-        integrationId: "integration-1",
+        integrationId: "1",
         code: "123456",
       },
     })
@@ -367,15 +367,15 @@ describe("Whatsapp verification actions", () => {
       phoneNumberId: "phone-1",
     })
     expect(recordRegistrationOutcomeMock).toHaveBeenCalledWith({
-      id: "integration-1",
+      id: "1",
       workspaceId: "workspace-1",
       outcome: { status: "registered" },
     })
     expect(revalidatePathMock).toHaveBeenCalledWith(
-      "/space/workspace-1/whatsapps/integration-1",
+      "/space/workspace-1/whatsapps/1",
     )
     expect(revalidatePathMock).toHaveBeenCalledWith(
-      "/space/workspace-1/whatsapps/integration-1/account-healths",
+      "/space/workspace-1/whatsapps/1/account-healths",
     )
   })
 
@@ -399,7 +399,7 @@ describe("Whatsapp verification actions", () => {
       verifyPhoneCodeAction({
         bindArgsParsedInputs: ["workspace-1"],
         parsedInput: {
-          integrationId: "integration-1",
+          integrationId: "1",
           code: "123456",
         },
       }),
@@ -416,14 +416,14 @@ describe("Whatsapp verification actions", () => {
     await verifyPhoneCodeAction({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {
-        integrationId: "integration-1",
+        integrationId: "1",
         code: "123456",
       },
     })
 
     expect(registerPhoneNumberMock).not.toHaveBeenCalled()
     expect(recordRegistrationOutcomeMock).toHaveBeenCalledWith({
-      id: "integration-1",
+      id: "1",
       workspaceId: "workspace-1",
       outcome: { status: "registered" },
     })
@@ -451,7 +451,7 @@ describe("Whatsapp verification actions", () => {
       verifyPhoneCodeAction({
         bindArgsParsedInputs: ["workspace-1"],
         parsedInput: {
-          integrationId: "integration-1",
+          integrationId: "1",
           code: "123456",
         },
       }),
@@ -461,19 +461,19 @@ describe("Whatsapp verification actions", () => {
   test("requires a six-digit numeric OTP", () => {
     expect(
       verifyWhatsappPhoneCodeSchema.safeParse({
-        integrationId: "integration-1",
+        integrationId: "1",
         code: "123456",
       }).success,
     ).toBe(true)
     expect(
       verifyWhatsappPhoneCodeSchema.safeParse({
-        integrationId: "integration-1",
+        integrationId: "1",
         code: "abcdef",
       }).success,
     ).toBe(false)
     expect(
       verifyWhatsappPhoneCodeSchema.safeParse({
-        integrationId: "integration-1",
+        integrationId: "1",
         code: "12345",
       }).success,
     ).toBe(false)

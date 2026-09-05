@@ -19,8 +19,6 @@ import type {
 export async function listSequences(
   input: ListSequencesRequest,
 ): Promise<ListSequencesResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   let folderIdFilter: string | { isNull: true } | undefined
   if (input.folderId) {
     folderIdFilter =

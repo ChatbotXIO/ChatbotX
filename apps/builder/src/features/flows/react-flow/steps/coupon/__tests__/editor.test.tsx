@@ -214,7 +214,7 @@ const render = (ui: ReactElement) => {
 
 function Harness({
   defaultStep = {
-    id: "step-1",
+    id: "1",
     stepType: stepTypes.enum.setUpCoupon,
     topicId: "topic-issueable",
   },
@@ -235,7 +235,7 @@ function Harness({
 let readCouponStep: (() => CouponStepSchema) | null = null
 
 const invalidCouponStep = {
-  id: "step-1",
+  id: "1",
   stepType: stepTypes.enum.setUpCoupon,
   topicId: "",
 } as CouponStepSchema
@@ -312,7 +312,7 @@ describe("CouponActionEditor", () => {
       container.querySelector('[data-testid="outer-valid"]')?.textContent,
     ).toBe("true")
     expect(readCouponStep?.()).toEqual({
-      id: "step-1",
+      id: "1",
       stepType: stepTypes.enum.setUpCoupon,
       topicId: "1",
     })

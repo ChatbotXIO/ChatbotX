@@ -28,6 +28,7 @@ export type GetBroadcastsSchema = Omit<
 
 export const publicListBroadcastsResponse = z.object({
   data: z.array(publicBroadcastResource),
+  pageCount: z.number().int(),
 })
 
 export const broadcastAudienceContactResource = z.object({

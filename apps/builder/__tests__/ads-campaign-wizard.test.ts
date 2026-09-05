@@ -12,7 +12,7 @@ const baseValues = {
   dailyBudgetMinorUnits: 2000,
   countries: ["US"],
   mediaKind: "image" as const,
-  imageKey: "public/space/ws_1/ads-campaign/creatives/abc123",
+  imageKey: "public/space/1/ads-campaign/creatives/abc123",
   fileId: "file_1",
   imageMimeType: "image/png",
   imageFileName: "photo.png",
@@ -105,13 +105,13 @@ describe("wizardFormSchema", () => {
 describe("buildCreateMessagingAdRequest", () => {
   test("maps an image creative", () => {
     const request = buildCreateMessagingAdRequest(baseValues, {
-      workspaceId: "ws_1",
+      workspaceId: "1",
       channel: "messenger",
-      integrationId: "im_1",
+      integrationId: "2",
     })
     expect(request.creative.media).toEqual({
       kind: "image",
-      imageKey: "public/space/ws_1/ads-campaign/creatives/abc123",
+      imageKey: "public/space/1/ads-campaign/creatives/abc123",
       fileId: "file_1",
       imageMimeType: "image/png",
       imageFileName: "photo.png",
@@ -133,7 +133,7 @@ describe("buildCreateMessagingAdRequest", () => {
         videoReady: true,
         videoTitle: "Great deal",
       },
-      { workspaceId: "ws_1", channel: "messenger", integrationId: "im_1" },
+      { workspaceId: "1", channel: "messenger", integrationId: "2" },
     )
     expect(request.creative.media).toEqual({
       kind: "video",
@@ -147,9 +147,9 @@ describe("buildCreateMessagingAdRequest", () => {
 
   test("defaults special ad categories to NONE when nothing is selected", () => {
     const request = buildCreateMessagingAdRequest(baseValues, {
-      workspaceId: "ws_1",
+      workspaceId: "1",
       channel: "messenger",
-      integrationId: "im_1",
+      integrationId: "2",
     })
     expect(request.campaign.specialAdCategories).toEqual(["NONE"])
   })
@@ -157,7 +157,7 @@ describe("buildCreateMessagingAdRequest", () => {
   test("passes the selected special ad categories through", () => {
     const request = buildCreateMessagingAdRequest(
       { ...baseValues, specialAdCategories: ["HOUSING", "EMPLOYMENT"] },
-      { workspaceId: "ws_1", channel: "messenger", integrationId: "im_1" },
+      { workspaceId: "1", channel: "messenger", integrationId: "2" },
     )
     expect(request.campaign.specialAdCategories).toEqual([
       "HOUSING",
@@ -168,7 +168,7 @@ describe("buildCreateMessagingAdRequest", () => {
   test("includes whatsappPageIntegrationId only for the whatsapp channel", () => {
     const request = buildCreateMessagingAdRequest(
       { ...baseValues, whatsappPageIntegrationId: "im_page_1" },
-      { workspaceId: "ws_1", channel: "whatsapp", integrationId: "wa_1" },
+      { workspaceId: "1", channel: "whatsapp", integrationId: "3" },
     )
     expect(request.whatsappPageIntegrationId).toBe("im_page_1")
   })
@@ -176,7 +176,7 @@ describe("buildCreateMessagingAdRequest", () => {
   test("converts select-backed age strings to numbers", () => {
     const request = buildCreateMessagingAdRequest(
       { ...baseValues, ageMin: "18", ageMax: "35" },
-      { workspaceId: "ws_1", channel: "messenger", integrationId: "im_1" },
+      { workspaceId: "1", channel: "messenger", integrationId: "2" },
     )
     expect(request.adSet.targeting.ageMin).toBe(18)
     expect(request.adSet.targeting.ageMax).toBe(35)
@@ -192,7 +192,7 @@ describe("buildCreateMessagingAdRequest", () => {
           { heading: "", message: "Need help?" },
         ],
       },
-      { workspaceId: "ws_1", channel: "messenger", integrationId: "im_1" },
+      { workspaceId: "1", channel: "messenger", integrationId: "2" },
     )
     expect(request.creative.welcomeMessage).toEqual({
       type: "templates",
@@ -208,7 +208,7 @@ describe("createMessagingAdRequest — special ad categories", () => {
   const buildFor = (categories: string[]) =>
     buildCreateMessagingAdRequest(
       { ...baseValues, specialAdCategories: categories },
-      { workspaceId: "ws_1", channel: "messenger", integrationId: "im_1" },
+      { workspaceId: "1", channel: "messenger", integrationId: "2" },
     )
 
   test("rejects deprecated CREDIT on create (read-only enum value)", async () => {

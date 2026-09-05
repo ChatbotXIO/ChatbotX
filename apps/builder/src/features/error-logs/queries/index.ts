@@ -6,7 +6,6 @@ import {
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { errorLogProvidersMatchingLabel } from "@chatbotx.io/utils/error-log"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListErrorLogsRequest,
   ListErrorLogsResponse,
@@ -15,8 +14,6 @@ import type {
 export async function listErrorLogs(
   input: ListErrorLogsRequest,
 ): Promise<ListErrorLogsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   // `action` stores the provider slug (`smtp`, `meta-catalog`) while the Type
   // column renders its label ("Email", "Meta catalog"), so an `ilike` on the
   // column alone cannot match what the user is looking at. Searching the labels

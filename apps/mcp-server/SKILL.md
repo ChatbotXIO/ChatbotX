@@ -224,35 +224,36 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 
 ## MCP Tools (for AI agents)
 
-Tool names are the OpenAPI `operationId` converted to `snake_case`.
+Tool names are the OpenAPI `operationId` converted to `snake_case` (66 tools total). Channel-token operations (`/v1/channels/api/*`) and deprecated operations (e.g. `inboxes.listChannels`) are excluded from this surface.
 
 | Category | Tool |
 |---|---|
-| Workspace | `get_workspace` |
-| Channels | `list_channels` |
-| Members | `list_members`, `get_member` |
-| Teams | `list_teams` |
-| Tags | `list_tags`, `create_tag`, `get_tag`, `update_tag`, `delete_tag` |
-| Custom Fields | `list_custom_fields`, `create_custom_field`, `get_custom_field`, `update_custom_field`, `delete_custom_field` |
-| Bot Fields | `list_bot_fields`, `create_bot_field`, `set_bot_fields`, `bulk_update_bot_fields`, `get_bot_field`, `set_bot_field`, `delete_bot_fields` |
-| Contacts | `list_contacts`, `create_contact`, `get_contact`, `upsert_contact`, `update_contact`, `delete_contact`, `filter_contacts`, `import_contacts` |
-| Contact Tags | `list_contact_tags`, `add_contact_tags`, `remove_contact_tags` |
-| Contact Custom Fields | `list_contact_custom_fields`, `set_contact_custom_fields`, `clear_contact_custom_fields`, `get_contact_custom_field`, `set_contact_custom_field`, `clear_contact_custom_field` |
-| Contact Actions | `block_contact`, `unblock_contact`, `list_contact_messages`, `get_contact_message`, `send_message`, `send_contact_flow`, `trigger_auto_reply` |
-| Conversations | `list_conversations` |
-| Broadcasts | `list_broadcasts`, `get_broadcast`, `get_broadcast_audience` |
-| Flows | `list_flows` |
-| Sequences | `list_sequences`, `get_sequence` |
-| Saved Replies | `list_saved_replies` |
-| Template Messages | `list_template_messages` |
-| AI Agents | `list_aiagents` |
-| Integrations | `list_integrations` |
-| Keywords | `list_keywords` |
-| Triggers | `list_triggers` |
-| Webhooks | `list_webhooks` |
-| Error Logs | `list_error_logs` |
+| AI Agents | `ai_agents_list` |
+| Bot Fields | `bot_fields_list`, `bot_fields_create`, `bot_fields_set_many`, `bot_fields_bulk_update`, `bot_fields_get`, `bot_fields_set`, `bot_fields_delete` |
+| Broadcasts | `broadcasts_list`, `broadcasts_get`, `broadcasts_get_audience` |
+| Contacts | `contacts_list`, `contacts_create`, `contacts_get`, `contacts_upsert`, `contacts_update`, `contacts_delete`, `contacts_find_by_custom_field`, `contacts_import` |
+| Contact Tags | `contacts_list_tags`, `contacts_add_tags`, `contacts_remove_tags` |
+| Contact Custom Fields | `contacts_list_custom_fields`, `contacts_set_custom_fields`, `contacts_clear_custom_fields`, `contacts_get_custom_field`, `contacts_set_custom_field`, `contacts_clear_custom_field` |
+| Contact Actions | `contacts_block`, `contacts_unblock`, `contacts_list_messages`, `contacts_get_message`, `contacts_send_message`, `contacts_send_flow`, `contacts_trigger_auto_reply` |
+| Conversations | `conversations_list` |
+| Custom Fields | `custom_fields_list`, `custom_fields_create`, `custom_fields_get`, `custom_fields_update`, `custom_fields_delete` |
+| Error Logs | `error_logs_list` |
+| External Webhooks | `external_webhooks_list`, `external_webhooks_create`, `external_webhooks_delete` |
+| Flows | `flows_list` |
+| Inboxes | `inboxes_list` |
+| Teams | `inbox_teams_list` |
+| Integrations | `integrations_list` |
+| Keywords | `keywords_list` |
+| Ref Links | `reflinks_get` |
+| Saved Replies | `saved_replies_list` |
+| Sequences | `sequences_list`, `sequences_get` |
+| Tags | `tags_list`, `tags_create`, `tags_get`, `tags_update`, `tags_delete` |
+| Template Messages | `template_messages_list` |
+| Triggers | `triggers_list` |
+| Webhooks | `webhooks_list`, `webhooks_create`, `webhooks_delete` |
+| Members | `workspace_members_list`, `workspace_members_get` |
 
-Tools are auto-generated from the OpenAPI spec — new API endpoints appear automatically on server restart.
+Tools are auto-generated from the OpenAPI spec — new API endpoints appear automatically on server restart. Tool names are cached in-process for the server's lifetime, so a rename requires a restart.
 
 ---
 

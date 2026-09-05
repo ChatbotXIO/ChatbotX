@@ -51,7 +51,7 @@ describe("flow export route", () => {
       targetWorkspaceMember: { permissions: {} },
     })
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(404)
     expect(mockFindBy).not.toHaveBeenCalled()
@@ -60,7 +60,7 @@ describe("flow export route", () => {
   test("returns 404 when the flow does not exist", async () => {
     mockFindBy.mockResolvedValue(undefined)
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(404)
     expect(mockFindPublished).not.toHaveBeenCalled()
@@ -68,13 +68,13 @@ describe("flow export route", () => {
 
   test("returns a distinct notPublished error instead of a blank 404", async () => {
     mockFindBy.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
+      id: "2",
+      workspaceId: "1",
       name: "Onboarding",
     })
     mockFindPublished.mockResolvedValue(undefined)
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(409)
     await expect(response.json()).resolves.toEqual({ code: "notPublished" })
@@ -82,8 +82,8 @@ describe("flow export route", () => {
 
   test("exports the published version, not the draft, after a post-publish edit", async () => {
     mockFindBy.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
+      id: "2",
+      workspaceId: "1",
       name: "Onboarding",
       active: true,
       enableInInbox: true,
@@ -96,7 +96,7 @@ describe("flow export route", () => {
     }
     mockFindPublished.mockResolvedValue(publishedVersion)
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(200)
     const body = await response.json()
@@ -106,15 +106,15 @@ describe("flow export route", () => {
     expect(body.customFields).toEqual({})
     expect(body.botFields).toEqual({})
     expect(mockFindPublished).toHaveBeenCalledWith({
-      flowId: "flow-1",
-      workspaceId: "ws-1",
+      flowId: "2",
+      workspaceId: "1",
     })
   })
 
   test("emits a customFields manifest for referenced ids only, scoped to the flow's workspace", async () => {
     mockFindBy.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
+      id: "2",
+      workspaceId: "1",
       name: "Onboarding",
       active: true,
       enableInInbox: true,
@@ -129,13 +129,13 @@ describe("flow export route", () => {
         isStartNode: true,
         details: {
           beforeStep: {
-            id: "b1",
+            id: "31",
             stepType: "chooseChannel",
             channel: "omnichannel",
           },
           steps: [
             {
-              id: "s1",
+              id: "32",
               stepType: "setCustomField",
               inputFieldId: "42",
               operation: "O01",
@@ -155,7 +155,7 @@ describe("flow export route", () => {
       { id: "42", name: "Birthday", type: "date" },
     ])
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(200)
     const body = await response.json()
@@ -163,15 +163,15 @@ describe("flow export route", () => {
       "42": { name: "Birthday", type: "date" },
     })
     expect(mockFindManyByIds).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
+      workspaceId: "1",
       ids: ["42"],
     })
   })
 
   test("omits an id that resolves to nothing (already-deleted field) and still returns 200", async () => {
     mockFindBy.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
+      id: "2",
+      workspaceId: "1",
       name: "Onboarding",
       active: true,
       enableInInbox: true,
@@ -186,13 +186,13 @@ describe("flow export route", () => {
         isStartNode: true,
         details: {
           beforeStep: {
-            id: "b1",
+            id: "31",
             stepType: "chooseChannel",
             channel: "omnichannel",
           },
           steps: [
             {
-              id: "s1",
+              id: "32",
               stepType: "setCustomField",
               inputFieldId: "42",
               operation: "O01",
@@ -210,7 +210,7 @@ describe("flow export route", () => {
     })
     mockFindManyByIds.mockResolvedValue([])
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(200)
     const body = await response.json()
@@ -219,8 +219,8 @@ describe("flow export route", () => {
 
   test("emits a botFields manifest for a bot_field token, scoped to the flow's workspace", async () => {
     mockFindBy.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
+      id: "2",
+      workspaceId: "1",
       name: "Onboarding",
       active: true,
       enableInInbox: true,
@@ -235,13 +235,13 @@ describe("flow export route", () => {
         isStartNode: true,
         details: {
           beforeStep: {
-            id: "b1",
+            id: "31",
             stepType: "chooseChannel",
             channel: "omnichannel",
           },
           steps: [
             {
-              id: "s1",
+              id: "32",
               stepType: "setCustomField",
               inputFieldId: "bot_field:7",
               operation: "O01",
@@ -261,7 +261,7 @@ describe("flow export route", () => {
       { id: "7", name: "Loyalty Points", type: "number" },
     ])
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(200)
     const body = await response.json()
@@ -270,15 +270,15 @@ describe("flow export route", () => {
       "7": { name: "Loyalty Points", type: "number" },
     })
     expect(mockBotFieldFindManyByIds).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
+      workspaceId: "1",
       ids: ["7"],
     })
   })
 
   test("keeps customField and botField manifests separate for tokens found in the same flow", async () => {
     mockFindBy.mockResolvedValue({
-      id: "flow-1",
-      workspaceId: "ws-1",
+      id: "2",
+      workspaceId: "1",
       name: "Onboarding",
       active: true,
       enableInInbox: true,
@@ -293,20 +293,20 @@ describe("flow export route", () => {
         isStartNode: true,
         details: {
           beforeStep: {
-            id: "b1",
+            id: "31",
             stepType: "chooseChannel",
             channel: "omnichannel",
           },
           steps: [
             {
-              id: "s1",
+              id: "32",
               stepType: "setCustomField",
               inputFieldId: "42",
               operation: "O01",
               value: "hi",
             },
             {
-              id: "s2",
+              id: "33",
               stepType: "setCustomField",
               inputFieldId: "bot_field:7",
               operation: "O01",
@@ -329,7 +329,7 @@ describe("flow export route", () => {
       { id: "7", name: "Loyalty Points", type: "number" },
     ])
 
-    const response = await callRoute("ws-1", "flow-1")
+    const response = await callRoute("1", "2")
 
     expect(response.status).toBe(200)
     const body = await response.json()
@@ -340,11 +340,11 @@ describe("flow export route", () => {
       "7": { name: "Loyalty Points", type: "number" },
     })
     expect(mockFindManyByIds).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
+      workspaceId: "1",
       ids: ["42"],
     })
     expect(mockBotFieldFindManyByIds).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
+      workspaceId: "1",
       ids: ["7"],
     })
   })
