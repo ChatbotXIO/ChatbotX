@@ -4,14 +4,7 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins"
 import { type AnyRouter, ORPCError, onError } from "@orpc/server"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { logger } from "@/lib/log"
-
-const SPEC_VERSION = "0.0.1"
-
-const SECURITY_SCHEMES = {
-  bearerAuth: { type: "http", scheme: "bearer" },
-  developerAccessToken: { type: "http", scheme: "bearer" },
-  tokenInSearchParams: { type: "apiKey", in: "query", name: "token" },
-} as const
+import { publicSpecGenerateOptions } from "./public-spec"
 
 const DOCS_AUTHENTICATION = {
   securitySchemes: {
@@ -64,18 +57,7 @@ export function createOpenAPIHandler<T extends AnyRouter>(
       }),
       new OpenAPIReferencePlugin({
         schemaConverters: [new ZodToJsonSchemaConverter()],
-        specGenerateOptions: {
-          info: { title: options.title, version: SPEC_VERSION },
-          commonSchemas: {
-            UndefinedError: { error: "UndefinedError" },
-          },
-          security: [
-            { bearerAuth: [] },
-            { developerAccessToken: [] },
-            { tokenInSearchParams: [] },
-          ],
-          components: { securitySchemes: SECURITY_SCHEMES },
-        },
+        specGenerateOptions: publicSpecGenerateOptions(options.title),
         docsConfig: { authentication: DOCS_AUTHENTICATION },
       }),
     ],

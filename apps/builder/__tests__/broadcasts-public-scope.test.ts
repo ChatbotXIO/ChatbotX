@@ -97,10 +97,14 @@ describe("real router: broadcasts public API scope wiring", () => {
     const { listBroadcasts } = await import(
       "../src/features/broadcasts/queries"
     )
-    vi.mocked(listBroadcasts).mockResolvedValue({ data: [] } as never)
+    vi.mocked(listBroadcasts).mockResolvedValue({
+      data: [],
+      pageCount: 1,
+    } as never)
 
     await expect(invoke(broadcastsPublicRouter.list)).resolves.toMatchObject({
       data: [],
+      pageCount: 1,
     })
   })
 })
