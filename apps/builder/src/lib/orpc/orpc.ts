@@ -33,13 +33,24 @@ export const UNBATCHED_PROCEDURE_PATHS: ReadonlySet<ProcedurePath> =
     "whatsappMessageTemplateAPIs.listWhatsappMessageTemplatesInternalAPI",
   ])
 
+/**
+ * `BatchLinkPlugin`'s `exclude` predicate: true for every SSE procedure (SSE
+ * cannot be batched) and every `UNBATCHED_PROCEDURE_PATHS` entry above, false
+ * for everything else. Exported so its branching can be unit-tested without
+ * standing up the real `RPCLink`.
+ */
+export function isUnbatchedProcedure({ path }: { path: readonly string[] }) {
+  return (
+    path[0] === "sse" ||
+    UNBATCHED_PROCEDURE_PATHS.has(path.join(".") as ProcedurePath)
+  )
+}
+
 const link = new RPCLink({
   url: `${typeof window === "undefined" ? "http://localhost:3123" : window.location.origin}/rpc`,
   plugins: [
     new BatchLinkPlugin({
-      exclude: ({ path }) =>
-        path[0] === "sse" ||
-        UNBATCHED_PROCEDURE_PATHS.has(path.join(".") as ProcedurePath),
+      exclude: isUnbatchedProcedure,
       groups: [
         {
           condition: () => true,

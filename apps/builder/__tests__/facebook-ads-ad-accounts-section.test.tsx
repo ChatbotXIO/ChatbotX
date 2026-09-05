@@ -110,7 +110,9 @@ describe("AdAccountsSection", () => {
 
     await renderSection({ connected: true, needsReconnect: false })
 
-    expect(container.textContent).toContain("Acme Ads")
+    await vi.waitFor(() => {
+      expect(container.textContent).toContain("Acme Ads")
+    })
     expect(container.textContent).toContain("act_1")
     expect(container.textContent).not.toContain(
       "ads.connectAccounts.adAccountsReconnectBanner",
@@ -122,8 +124,10 @@ describe("AdAccountsSection", () => {
 
     await renderSection({ connected: true, needsReconnect: false })
 
-    expect(container.textContent).toContain(
-      "ads.connectAccounts.adAccountsEmpty",
-    )
+    await vi.waitFor(() => {
+      expect(container.textContent).toContain(
+        "ads.connectAccounts.adAccountsEmpty",
+      )
+    })
   })
 })
