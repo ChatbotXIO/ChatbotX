@@ -54,8 +54,8 @@ vi.mock("../src/features/broadcasts/queries", () => ({
 }))
 
 const { call } = await import("@orpc/server")
-const { broadcastWorkspaceTokenAPIs } = await import(
-  "../src/features/broadcasts/api/workspace-token"
+const { broadcastsPublicRouter } = await import(
+  "../src/features/broadcasts/api/public"
 )
 
 const TOKEN = "cbx_ws_fixture"
@@ -65,9 +65,7 @@ const authResult = (scopes: string[] | null) => ({
   apiToken: { id: "token-1", permission: "full" as const, scopes },
 })
 
-const invoke = (
-  procedure: typeof broadcastWorkspaceTokenAPIs.listBroadcastsWorkspaceTokenAPI,
-) =>
+const invoke = (procedure: typeof broadcastsPublicRouter.list) =>
   call(
     procedure,
     {},
@@ -84,13 +82,11 @@ beforeEach(() => {
   assertApiNotRateLimited.mockResolvedValue(undefined)
 })
 
-describe("real router: broadcasts workspace-token API scope wiring", () => {
+describe("real router: broadcasts public API scope wiring", () => {
   test("a contacts-scoped token is denied the real GET /v1/broadcasts route with FORBIDDEN", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["contacts"]))
 
-    await expect(
-      invoke(broadcastWorkspaceTokenAPIs.listBroadcastsWorkspaceTokenAPI),
-    ).rejects.toMatchObject({
+    await expect(invoke(broadcastsPublicRouter.list)).rejects.toMatchObject({
       code: "FORBIDDEN",
       message: "Token is not authorized for the 'broadcasts' scope",
     })
@@ -103,8 +99,8 @@ describe("real router: broadcasts workspace-token API scope wiring", () => {
     )
     vi.mocked(listBroadcasts).mockResolvedValue({ data: [] } as never)
 
-    await expect(
-      invoke(broadcastWorkspaceTokenAPIs.listBroadcastsWorkspaceTokenAPI),
-    ).resolves.toMatchObject({ data: [] })
+    await expect(invoke(broadcastsPublicRouter.list)).resolves.toMatchObject({
+      data: [],
+    })
   })
 })

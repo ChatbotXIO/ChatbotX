@@ -8,8 +8,8 @@ import { channelApiTokenAPI } from "@/orpc"
 const assertNotRateLimited = (inboxId: string): Promise<void> =>
   assertApiNotRateLimited({ scope: "channel-api-rate-limit", key: inboxId })
 
-export const channelApiAPIs = {
-  createChannelApiMessage: channelApiTokenAPI
+export const channelsPublicRouter = {
+  sendMessage: channelApiTokenAPI
     .route({
       method: "POST",
       path: "/v1/channels/api/messages",
@@ -41,7 +41,7 @@ export const channelApiAPIs = {
       return { accepted: true, messageSourceId: input.message.sourceId }
     }),
 
-  channelApiTyping: channelApiTokenAPI
+  typing: channelApiTokenAPI
     .route({
       method: "POST",
       path: "/v1/channels/api/typing",
@@ -68,7 +68,7 @@ export const channelApiAPIs = {
       )
     }),
 
-  channelApiContactRead: channelApiTokenAPI
+  markRead: channelApiTokenAPI
     .route({
       method: "POST",
       path: "/v1/channels/api/read",
@@ -95,7 +95,7 @@ export const channelApiAPIs = {
       })
     }),
 
-  channelApiDeliveryStatus: channelApiTokenAPI
+  deliveryStatus: channelApiTokenAPI
     .route({
       method: "POST",
       path: "/v1/channels/api/delivery-status",
@@ -126,7 +126,7 @@ export const channelApiAPIs = {
       })
     }),
 
-  getChannelApiMe: channelApiTokenAPI
+  me: channelApiTokenAPI
     .route({
       method: "GET",
       path: "/v1/channels/api/me",
@@ -146,5 +146,3 @@ export const channelApiAPIs = {
       workspaceId: context.workspace.id,
     })),
 }
-
-export default channelApiAPIs

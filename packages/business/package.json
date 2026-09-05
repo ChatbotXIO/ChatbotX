@@ -17,8 +17,6 @@
     "./dynamic-image": "./src/dynamic-image/index.ts",
     "./error-log": "./src/error-log/index.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
-    "./inbox/schema": "./src/inbox/schema.ts",
-    "./integration-whatsapp/schema": "./src/integration-whatsapp/schema.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",
     "./minigame": "./src/minigame/index.ts",

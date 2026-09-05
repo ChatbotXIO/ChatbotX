@@ -80,9 +80,6 @@ importers:
       '@chatbotx.io/analytics-nextjs':
         specifier: workspace:*
         version: link:../../packages/analytics-nextjs
-      '@chatbotx.io/api-contract':
-        specifier: workspace:*
-        version: link:../../packages/api-contract
       '@chatbotx.io/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -259,9 +256,6 @@ importers:
         version: 2.0.6(@hookform/resolvers@5.4.0(react-hook-form@7.77.0(react@19.2.5)))(next-safe-action@8.5.3(next@16.3.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.0(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react-hook-form@7.77.0(react@19.2.5))(react@19.2.5)
       '@orpc/client':
         specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)
-      '@orpc/contract':
-        specifier: ^1.14.5
         version: 1.14.5(@opentelemetry/api@1.9.1)
       '@orpc/json-schema':
         specifier: ^1.14.0
@@ -2049,40 +2043,6 @@ importers:
       tsx:
         specifier: ^4.23.0
         version: 4.23.0
-      vitest:
-        specifier: ^4.1.0
-        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
-
-  packages/api-contract:
-    dependencies:
-      '@chatbotx.io/business':
-        specifier: workspace:*
-        version: link:../business
-      '@chatbotx.io/database':
-        specifier: workspace:*
-        version: link:../database
-      '@chatbotx.io/flow-config':
-        specifier: workspace:*
-        version: link:../flow-config
-      '@chatbotx.io/utils':
-        specifier: workspace:*
-        version: link:../utils
-      '@orpc/contract':
-        specifier: ^1.14.0
-        version: 1.14.5(@opentelemetry/api@1.9.1)
-      zod:
-        specifier: ^4.3.6
-        version: 4.4.3
-    devDependencies:
-      '@chatbotx.io/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@chatbotx.io/vitest-config':
-        specifier: workspace:*
-        version: link:../vitest-config
-      '@types/node':
-        specifier: 24.x
-        version: 24.13.1
       vitest:
         specifier: ^4.1.0
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))

@@ -42,11 +42,6 @@ export const router = {
       default: m.broadcastAPIs,
     })),
   ),
-  channelApiAPIs: lazy(() =>
-    import("@/features/integration-api/api").then((m) => ({
-      default: m.channelApiAPIs,
-    })),
-  ),
   conversationsAPI: lazy(() =>
     import("@/features/conversations/api").then((m) => ({
       default: m.conversationsAPI,
@@ -233,16 +228,6 @@ export const router = {
       default: m.personasAPIs,
     })),
   ),
-  errorLogsAPI: lazy(() =>
-    import("@/features/error-logs/api").then((m) => ({
-      default: m.errorLogsAPI,
-    })),
-  ),
-  externalWebhooksAPI: lazy(() =>
-    import("@/features/external-webhooks/api").then((m) => ({
-      default: m.externalWebhooksAPI,
-    })),
-  ),
   workspacesAPI: lazy(() =>
     import("@/features/workspaces/api").then((m) => ({
       default: m.workspacesAPI,
@@ -274,26 +259,10 @@ export const router = {
   refLinksAPI: lazy(() =>
     import("@/features/reflinks/api").then((m) => ({ default: m.refLinksAPI })),
   ),
-  keywordsAPI: lazy(() =>
-    import("@/features/automated-response/api").then((m) => ({
-      default: m.keywordsAPI,
-    })),
-  ),
-  integrationsAPI: lazy(() =>
-    import("@/features/integrations/api").then((m) => ({
-      default: m.integrationsAPI,
-    })),
-  ),
-  triggersAPI: lazy(() =>
-    import("@/features/triggers/api").then((m) => ({ default: m.triggersAPI })),
-  ),
   userPersistentMenusAPI: lazy(() =>
     import("@/features/user-persistent-menus/api").then((m) => ({
       default: m.userPersistentMenusAPI,
     })),
-  ),
-  webhooksAPI: lazy(() =>
-    import("@/features/webhooks/api").then((m) => ({ default: m.webhooksAPI })),
   ),
   templatesAPI: lazy(() =>
     import("@/features/templates/api").then((m) => ({

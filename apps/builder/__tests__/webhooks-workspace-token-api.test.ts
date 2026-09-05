@@ -58,7 +58,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   webhookModel: {},
 }))
 
-await import("@/features/webhooks/api/workspace-token")
+await import("@/features/webhooks/api/public")
 
 const findProcedure = (method: string, path: string) => {
   const found = capturedProcedures.find(
@@ -80,7 +80,7 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-test("registers the webhooks workspace-token router under the integrations scope", () => {
+test("registers the webhooks public router under the integrations scope", () => {
   expect(scopeArgAtImport).toBe("integrations")
 })
 
