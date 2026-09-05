@@ -1429,7 +1429,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI-agent"
+      "label": "AI-agent",
+      "loadError": "Det gick inte att läsa in AI-agenter. Försök igen."
     },
     "aiEditImage": {
       "inputFieldId": {

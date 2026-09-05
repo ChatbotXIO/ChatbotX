@@ -811,7 +811,8 @@
       "label": "Agente"
     },
     "aiAgent": {
-      "label": "Agente de IA"
+      "label": "Agente de IA",
+      "loadError": "Falha ao carregar agentes de IA. Tente novamente."
     },
     "aiQueuedMessages": {
       "label": "Mensagens de IA em fila"

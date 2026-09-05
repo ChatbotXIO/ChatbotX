@@ -18,7 +18,7 @@ vi.mock("@/features/flows/provider/flow-hook", () => ({
 }))
 
 vi.mock("@/features/ai-agents/hooks/use-ai-agents", () => ({
-  useAIAgentSelectOptions: () => [],
+  useAIAgentSelectOptions: () => ({ options: [], isError: false }),
 }))
 
 vi.mock("@/hooks/routing", () => ({

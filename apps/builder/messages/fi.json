@@ -811,7 +811,8 @@
       "label": "Agentti"
     },
     "aiAgent": {
-      "label": "AI-agentti"
+      "label": "AI-agentti",
+      "loadError": "AI-agenttien lataaminen epäonnistui. Yritä uudelleen."
     },
     "aiQueuedMessages": {
       "label": "AI:n jonossa olevat viestit"

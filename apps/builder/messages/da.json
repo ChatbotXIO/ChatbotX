@@ -811,7 +811,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "Kunne ikke indlæse AI-agenter. Prøv igen."
     },
     "aiQueuedMessages": {
       "label": "AI Queued Beskeder"

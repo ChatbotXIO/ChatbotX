@@ -891,7 +891,8 @@
       "label": "Đại lý"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "Không thể tải danh sách AI Agent. Vui lòng thử lại."
     },
     "aiQueuedMessages": {
       "label": "Tin nhắn chờ AI"

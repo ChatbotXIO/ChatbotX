@@ -40,10 +40,10 @@ function AIAgentsProbe({ onRender }: { onRender: (data: unknown) => void }) {
 function SelectOptionsProbe({
   onRender,
 }: {
-  onRender: (options: unknown) => void
+  onRender: (result: { options: unknown[]; isError: boolean }) => void
 }) {
-  const options = useAIAgentSelectOptions("ws1")
-  onRender(options)
+  const result = useAIAgentSelectOptions("ws1")
+  onRender(result)
   return null
 }
 
@@ -87,11 +87,9 @@ describe("useAIAgents", () => {
         </QueryClientProvider>,
       )
     })
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
+    await vi.waitFor(() => {
+      expect(mockListAIAgentsAPI).toHaveBeenCalledTimes(1)
     })
-
-    expect(mockListAIAgentsAPI).toHaveBeenCalledTimes(1)
   })
 
   test("does not call the API when workspaceId is undefined", () => {
@@ -122,10 +120,10 @@ describe("useAIAgents", () => {
         </QueryClientProvider>,
       )
     })
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
 
+    await vi.waitFor(() => {
+      expect(mockListAIAgentsAPI).toHaveBeenCalledTimes(1)
+    })
     expect(latestData).toBeUndefined()
   })
 
@@ -164,23 +162,45 @@ describe("useAIAgents", () => {
       pageCount: 1,
     })
 
-    let latestOptions: unknown = []
+    let latestResult: { options: unknown[]; isError: boolean } = {
+      options: [],
+      isError: false,
+    }
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <SelectOptionsProbe
-            onRender={(options) => (latestOptions = options)}
-          />
+          <SelectOptionsProbe onRender={(result) => (latestResult = result)} />
         </QueryClientProvider>,
       )
     })
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
+
+    await vi.waitFor(() => {
+      expect(latestResult.options).toEqual([
+        { value: "1", label: "Agent One" },
+        { value: "2", label: "Agent Two" },
+      ])
+    })
+    expect(latestResult.isError).toBe(false)
+  })
+
+  test("useAIAgentSelectOptions surfaces isError on a rejected request", async () => {
+    mockListAIAgentsAPI.mockRejectedValue(new Error("boom"))
+
+    let latestResult: { options: unknown[]; isError: boolean } = {
+      options: [],
+      isError: false,
+    }
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <SelectOptionsProbe onRender={(result) => (latestResult = result)} />
+        </QueryClientProvider>,
+      )
     })
 
-    expect(latestOptions).toEqual([
-      { value: "1", label: "Agent One" },
-      { value: "2", label: "Agent Two" },
-    ])
+    await vi.waitFor(() => {
+      expect(latestResult.isError).toBe(true)
+    })
+    expect(latestResult.options).toEqual([])
   })
 })

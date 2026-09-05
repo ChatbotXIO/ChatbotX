@@ -3387,7 +3387,8 @@
       "label": "סוכן"
     },
     "aiAgent": {
-      "label": "סוכן AI"
+      "label": "סוכן AI",
+      "loadError": "טעינת סוכני ה-AI נכשלה. אנא נסה שוב."
     },
     "aiQueuedMessages": {
       "label": "הודעות AI בתור"

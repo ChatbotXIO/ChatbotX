@@ -811,7 +811,8 @@
       "label": "エージェント"
     },
     "aiAgent": {
-      "label": "AIエージェント"
+      "label": "AIエージェント",
+      "loadError": "AIエージェントの読み込みに失敗しました。もう一度お試しください。"
     },
     "aiQueuedMessages": {
       "label": "AI待機中メッセージ"

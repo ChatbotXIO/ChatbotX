@@ -662,8 +662,9 @@ export const createAnalysisStore = (
 
     // `linkId`/`timezone` are only present in `defaultSearchParams` when the
     // reflink dashboard mounted the store (see `ReflinkAnalytics`), the only
-    // place these two actions are wired up — the `!` reflects that runtime
-    // contract, which the shared `defaultSearchParams` type can't express.
+    // place these two actions are wired up — the `as string` assertions
+    // below reflect that runtime contract, which the shared
+    // `defaultSearchParams` type can't express.
     getRefLinkStats: async () => {
       const { api, defaultSearchParams, from, to } = get()
 
@@ -682,6 +683,8 @@ export const createAnalysisStore = (
       }
     },
 
+    // Same reflink-only runtime contract as `getRefLinkStats` above — the
+    // `as string` assertion on `linkId` reflects that, not a type gap.
     getReflinkContacts: async () => {
       const { api, defaultSearchParams, reflinkContactsPage, from, to } = get()
 
@@ -713,9 +716,9 @@ export const createAnalysisStore = (
 
     // `linkId`/`timezone` are only present in `defaultSearchParams` when the
     // magic-link dashboard mounted the store (see `MagicLinkAnalytics`), the
-    // only place these two actions are wired up — the `!` reflects that
-    // runtime contract, which the shared `defaultSearchParams` type can't
-    // express.
+    // only place these two actions are wired up — the `as string` assertions
+    // below reflect that runtime contract, which the shared
+    // `defaultSearchParams` type can't express.
     getMagicLinkStats: async () => {
       const { api, defaultSearchParams, from, to } = get()
 

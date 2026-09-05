@@ -811,7 +811,8 @@
       "label": "Agen"
     },
     "aiAgent": {
-      "label": "Agen AI"
+      "label": "Agen AI",
+      "loadError": "Gagal memuat agen AI. Silakan coba lagi."
     },
     "aiQueuedMessages": {
       "label": "Pesan AI dalam Antrean"

@@ -124,7 +124,8 @@
       "label": "Agente"
     },
     "aiAgent": {
-      "label": "Agente IA"
+      "label": "Agente IA",
+      "loadError": "Impossibile caricare gli agenti IA. Riprova."
     },
     "aiQueuedMessages": {
       "label": "Messaggi IA in coda"

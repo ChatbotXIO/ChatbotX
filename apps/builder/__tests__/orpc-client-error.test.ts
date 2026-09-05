@@ -22,4 +22,10 @@ describe("getClientErrorMessage", () => {
     expect(getClientErrorMessage("string error", "x")).toBe("x")
     expect(getClientErrorMessage(undefined, "x")).toBe("x")
   })
+
+  test("uses the status-derived default message for an ORPCError constructed without one", () => {
+    const error = new ORPCError("BAD_REQUEST")
+
+    expect(getClientErrorMessage(error, "x")).toBe("Bad Request")
+  })
 })

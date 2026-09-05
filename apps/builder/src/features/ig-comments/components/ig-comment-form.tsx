@@ -27,9 +27,10 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
+import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
@@ -58,7 +59,14 @@ export function IgCommentForm({
 }: IgCommentFormProps) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
-  const aiAgentOptions = useAIAgentSelectOptions(useWorkspaceId())
+  const { options: aiAgentOptions, isError: isAIAgentsError } =
+    useAIAgentSelectOptions(useWorkspaceId())
+
+  useEffect(() => {
+    if (isAIAgentsError) {
+      toast.error(t("fields.aiAgent.loadError"))
+    }
+  }, [isAIAgentsError, t])
 
   const [selectPostsOpen, setSelectPostsOpen] = useState(false)
 

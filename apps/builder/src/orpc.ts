@@ -59,18 +59,24 @@ function toKnownOrpcError(
   return
 }
 
+const SERVER_ERROR_STATUS_THRESHOLD = 500
+
 /**
  * `onError` interceptor shared by all three auth stacks below. A known error
- * is warn-logged and remapped to its client-facing `ORPCError`; anything
- * else is left alone (not logged here) so it falls through to the route
- * handler's `logUnexpectedOrpcErrorCallback` interceptor, which is the single place
- * unknown errors get logged at error level.
+ * is remapped to its client-facing `ORPCError`; anything else is left alone
+ * (not logged here) so it falls through to the route handler's
+ * `logUnexpectedOrpcErrorCallback` interceptor, which is the single place
+ * unknown errors get logged at error level. A mapped 4xx is warn-logged here;
+ * a mapped 5xx is left for that same route-level callback to error-log once,
+ * instead of being warn-logged here too.
  */
 export function mapKnownOrpcErrors(error: unknown) {
   const mapped = toKnownOrpcError(error)
   if (mapped) {
-    // Expected client-facing 4xx — keep it out of error-level alerting.
-    logger.warn({ err: error }, "oRPC handler rejected request")
+    if (mapped.status < SERVER_ERROR_STATUS_THRESHOLD) {
+      // Expected client-facing 4xx — keep it out of error-level alerting.
+      logger.warn({ err: error }, "oRPC handler rejected request")
+    }
     throw mapped
   }
 }

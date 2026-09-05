@@ -207,7 +207,7 @@ Available defined fields:
 | `InputField` | `form/input-field` | Text inputs |
 | `InputNumberField` | `form/input-number-field` | Numeric inputs (stepper UI) |
 | `TextareaField` | `form/textarea-field` | Multi-line text |
-| `SelectField` | `form/select-field` | Dropdowns; supports `allowClear`, `options`, `fetchOptionsUrl` |
+| `SelectField` | `form/select-field` | Dropdowns; supports `allowClear`, `options` |
 | `ComboboxField` | `form/combobox-field` | Searchable single-select |
 | `MultiSelectField` | `form/multi-select-field` | Multi-select |
 | `CheckboxField` | `form/checkbox-field` | Boolean checkbox |

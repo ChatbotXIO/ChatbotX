@@ -14,9 +14,9 @@ export const useAIAgents = (workspaceId: string | undefined) =>
 
 /** `{value,label}` pairs — the shape all consumers build by hand. */
 export const useAIAgentSelectOptions = (workspaceId: string | undefined) => {
-  const { data } = useAIAgents(workspaceId)
+  const { data, isError } = useAIAgents(workspaceId)
 
-  return useMemo(
+  const options = useMemo(
     () =>
       (data ?? []).map((agent) => ({
         // `id` is a drizzle-zod custom-type column (bigintAsString) that
@@ -26,6 +26,8 @@ export const useAIAgentSelectOptions = (workspaceId: string | undefined) => {
       })),
     [data],
   )
+
+  return { options, isError }
 }
 
 /** Call after create/update/delete/change-default so every reader refetches. */

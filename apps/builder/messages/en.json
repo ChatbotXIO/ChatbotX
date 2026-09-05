@@ -896,7 +896,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "Failed to load AI agents. Please try again."
     },
     "aiQueuedMessages": {
       "label": "AI Queued Messages"

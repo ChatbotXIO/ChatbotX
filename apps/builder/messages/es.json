@@ -896,7 +896,8 @@
       "label": "Agente"
     },
     "aiAgent": {
-      "label": "Agente de IA"
+      "label": "Agente de IA",
+      "loadError": "No se pudieron cargar los agentes de IA. Inténtalo de nuevo."
     },
     "aiQueuedMessages": {
       "label": "Mensajes de IA en cola"

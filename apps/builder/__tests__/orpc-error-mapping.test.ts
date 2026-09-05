@@ -106,6 +106,16 @@ describe("mapKnownOrpcErrors", () => {
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
   })
 
+  test("maps a 5xx ChatbotXException without warn-logging — the route callback logs it once", () => {
+    const error = new ChatbotXException("boom", "upstream", 502)
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({ code: "upstream", status: 502 }),
+    )
+    expect(mockLoggerWarn).not.toHaveBeenCalled()
+    expect(mockLoggerError).not.toHaveBeenCalled()
+  })
+
   test("leaves a plain ORPCError untouched and does not log", () => {
     const error = new ORPCError("UNAUTHORIZED")
 
