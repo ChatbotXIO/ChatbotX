@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { CapiDeliverySummary } from "@chatbotx.io/business"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -24,15 +25,14 @@ vi.mock("next-safe-action/hooks", () => ({
   useAction: () => ({ execute: vi.fn(), isPending: false }),
 }))
 
-vi.mock("swr", () => ({
-  default: () => ({ data: undefined, error: undefined, isLoading: false }),
-}))
-
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
     integrationFacebookAdsAPI: {
-      listAdAccounts: vi.fn(),
-      listCustomAudiences: vi.fn(),
+      listAdAccounts: vi.fn().mockResolvedValue({ data: [] }),
+      listCustomAudiences: vi.fn().mockResolvedValue({ data: [] }),
+    },
+    adsAPI: {
+      listChannelAdAccounts: vi.fn().mockResolvedValue({ data: [] }),
     },
   },
 }))
@@ -168,9 +168,13 @@ const range = {
 describe("AdsAnalyticsView revenue and delivery", () => {
   let container: HTMLDivElement
   let root: Root
+  let queryClient: QueryClient
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -186,19 +190,21 @@ describe("AdsAnalyticsView revenue and delivery", () => {
   test("renders revenue, ROAS, and delivery status details", async () => {
     await act(async () => {
       root.render(
-        <AdsAnalyticsView
-          channel="whatsapp"
-          channelIntegrations={[]}
-          promises={Promise.resolve([
-            analyticsData,
-            deliverySummary,
-            timeseries,
-          ])}
-          range={range}
-          selectedChannelIntegrationId="iw-1"
-          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
-          workspaceId="ws-1"
-        />,
+        <QueryClientProvider client={queryClient}>
+          <AdsAnalyticsView
+            channel="whatsapp"
+            channelIntegrations={[]}
+            promises={Promise.resolve([
+              analyticsData,
+              deliverySummary,
+              timeseries,
+            ])}
+            range={range}
+            selectedChannelIntegrationId="iw-1"
+            workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+            workspaceId="ws-1"
+          />
+        </QueryClientProvider>,
       )
       await Promise.resolve()
     })
@@ -239,19 +245,21 @@ describe("AdsAnalyticsView revenue and delivery", () => {
   test("omits the reconnect CTA link in the aggregate (no account) view", async () => {
     await act(async () => {
       root.render(
-        <AdsAnalyticsView
-          channel="whatsapp"
-          channelIntegrations={[]}
-          promises={Promise.resolve([
-            analyticsData,
-            deliverySummary,
-            timeseries,
-          ])}
-          range={range}
-          selectedChannelIntegrationId={null}
-          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
-          workspaceId="ws-1"
-        />,
+        <QueryClientProvider client={queryClient}>
+          <AdsAnalyticsView
+            channel="whatsapp"
+            channelIntegrations={[]}
+            promises={Promise.resolve([
+              analyticsData,
+              deliverySummary,
+              timeseries,
+            ])}
+            range={range}
+            selectedChannelIntegrationId={null}
+            workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+            workspaceId="ws-1"
+          />
+        </QueryClientProvider>,
       )
       await Promise.resolve()
     })
@@ -267,19 +275,21 @@ describe("AdsAnalyticsView revenue and delivery", () => {
   test("shows a messenger-channel reconnect CTA linked to the messenger ads settings page", async () => {
     await act(async () => {
       root.render(
-        <AdsAnalyticsView
-          channel="messenger"
-          channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
-          promises={Promise.resolve([
-            analyticsData,
-            deliverySummary,
-            timeseries,
-          ])}
-          range={{ ...range, channelAccount: "msg-1" }}
-          selectedChannelIntegrationId="msg-1"
-          workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
-          workspaceId="ws-1"
-        />,
+        <QueryClientProvider client={queryClient}>
+          <AdsAnalyticsView
+            channel="messenger"
+            channelIntegrations={[{ id: "msg-1", name: "My Page" }]}
+            promises={Promise.resolve([
+              analyticsData,
+              deliverySummary,
+              timeseries,
+            ])}
+            range={{ ...range, channelAccount: "msg-1" }}
+            selectedChannelIntegrationId="msg-1"
+            workspaceCreatedAt={new Date("2024-01-01T00:00:00.000Z")}
+            workspaceId="ws-1"
+          />
+        </QueryClientProvider>,
       )
       await Promise.resolve()
     })

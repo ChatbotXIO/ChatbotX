@@ -125,6 +125,5 @@ export const config = {
   matcher: [
     "/((?!zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json|dynamic-image/|mini-game/).*)",
     "/api/presigned-upload",
-    "/api/whatsapp/:path*",
   ],
 }

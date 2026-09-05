@@ -29,8 +29,8 @@ describe("Klaviyo API registration", () => {
   })
 
   test("loads provider pages sequentially without blocking the inputs", () => {
-    expect(editorSource).toContain("size === pages?.length")
-    expect(editorSource).toContain("!isValidating")
+    expect(editorSource).toContain("fetchAllPages")
+    expect(editorSource).toContain("nextPageParam: page.nextCursor")
     expect(editorSource).not.toContain('t("klaviyo.lists.loading")')
     expect(editorSource).not.toContain('name="tagIds"')
   })

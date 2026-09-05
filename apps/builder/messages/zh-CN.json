@@ -1432,7 +1432,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "加载 AI 代理失败，请重试。"
     },
     "aiEditImage": {
       "inputFieldId": {

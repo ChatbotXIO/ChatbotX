@@ -266,12 +266,18 @@ importers:
       '@orpc/server':
         specifier: ^1.14.0
         version: 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
+      '@orpc/tanstack-query':
+        specifier: 1.14.5
+        version: 1.14.5(@opentelemetry/api@1.9.1)(@orpc/client@1.14.5(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)
       '@orpc/zod':
         specifier: ^1.14.0
         version: 1.14.5(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.5(@opentelemetry/api@1.9.1))(@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+      '@tanstack/react-query':
+        specifier: ^5.102.8
+        version: 5.102.8(react@19.2.5)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -413,9 +419,6 @@ importers:
       stripe:
         specifier: ^22.1.0
         version: 22.2.0(@types/node@24.13.1)
-      swr:
-        specifier: ^2.4.1
-        version: 2.4.1(react@19.2.5)
       tippy.js:
         specifier: ^6.3.7
         version: 6.3.7
@@ -1988,6 +1991,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.4.0(react-hook-form@7.77.0(react@19.2.5))
+      '@orpc/client':
+        specifier: ^1.14.0
+        version: 1.14.5(@opentelemetry/api@1.9.1)
       '@orpc/server':
         specifier: ^1.14.0
         version: 1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0)
@@ -1997,9 +2003,6 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
-      ky:
-        specifier: ^2.0.2
-        version: 2.0.2
       lucide-react:
         specifier: ^1.14.0
         version: 1.17.0(react@19.2.5)
@@ -2407,9 +2410,6 @@ importers:
       '@aws-sdk/lib-storage':
         specifier: ^3.1039.0
         version: 3.1063.0(@aws-sdk/client-s3@3.1063.0)
-      '@aws-sdk/s3-presigned-post':
-        specifier: ^3.1039.0
-        version: 3.1063.0
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
@@ -2426,9 +2426,6 @@ importers:
         specifier: ^1.0.20
         version: 1.0.20
       image-size:
-        specifier: ^2.0.2
-        version: 2.0.2
-      ky:
         specifier: ^2.0.2
         version: 2.0.2
       probe-image-size:
@@ -2897,9 +2894,6 @@ importers:
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      ky:
-        specifier: ^2.0.2
-        version: 2.0.2
       lucide-react:
         specifier: ^1.14.0
         version: 1.17.0(react@19.2.5)
@@ -3328,10 +3322,6 @@ packages:
 
   '@aws-sdk/nested-clients@3.997.17':
     resolution: {integrity: sha512-lDRgraoTfKRawUyc176Ow93mrNrOho/x+EoK4C+lKU+vKkHWhNhzvSMVAx0WEJUJoeQxxDN5ZdKMfiGEyNejig==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/s3-presigned-post@3.1063.0':
-    resolution: {integrity: sha512-5iASs4kaN6OXTzryNQEVAqogDqdD7b1DsqSd6hcUC73Izj2vpSBK6RCDSiHmSNe7HQQIF8B72XBi+NtCixop2A==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/signature-v4-multi-region@3.996.32':
@@ -5354,6 +5344,12 @@ packages:
   '@orpc/standard-server@1.14.5':
     resolution: {integrity: sha512-bCd1BkShxknFjIDixUEjOj3fvP4hxN0IIV/hvTdtk6sdWApadBjw3UuK3iprkECgoBt/31zTOKwgHB/wnnUfhw==}
 
+  '@orpc/tanstack-query@1.14.5':
+    resolution: {integrity: sha512-EFZtCrI7Y+H7sg3C2asvju8wtz4g/sdfWvl2XWC+O9qo0xmjCLLPx1t3mohBY45icTiLi+hMDV1fxINvmBHSEg==}
+    peerDependencies:
+      '@orpc/client': 1.14.5
+      '@tanstack/query-core': '>=5.80.2'
+
   '@orpc/zod@1.14.5':
     resolution: {integrity: sha512-Al0Tim0CxO7o4UkZCmIPWJyNXnB0f0qL2YzB/MA0E65ss7qJydBmvyPUES9b3z8GeXgPQAmIOYl/Jq2jtx8DfQ==}
     peerDependencies:
@@ -6352,6 +6348,14 @@ packages:
 
   '@tailwindcss/postcss@4.3.2':
     resolution: {integrity: sha512-rjVWYCa7Ngbi5AarT6k8TkxUG3Wl1QKzHdIZVsjZSzf36Jmo2IKZt/NHRAwly8oDkbBOH0YTu+CHuf9jPxMc+g==}
+
+  '@tanstack/query-core@5.102.8':
+    resolution: {integrity: sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg==}
+
+  '@tanstack/react-query@5.102.8':
+    resolution: {integrity: sha512-TYBea4OuXWD7MhaSHq069TWbFe7rcwWN6kzT7JF0OKi1K6c1gTv2IzD6A6ExJsCMozdkqBWeuIUZmu4KQg0O5A==}
+    peerDependencies:
+      react: ^18 || ^19
 
   '@tanstack/react-table@8.21.3':
     resolution: {integrity: sha512-5nNMTSETP4ykGegmVkhjcS8tTLW6Vl4axfEGQN3v0zdHYbK4UfoqfPChclTrJ4EoK9QynqAu9oUf8VEmrpZ5Ww==}
@@ -7705,10 +7709,6 @@ packages:
     resolution: {integrity: sha512-L4GLuAvmXevWnPCIaFfOz6eD92c+yY+pDgVqgufrLDnW3xYA799CSZQlly2r2N13nhAlnZY6VzY7Rx5pHNvk2w==}
     engines: {node: ^20.12||^22||>=24}
     hasBin: true
-
-  dequal@2.0.3:
-    resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
-    engines: {node: '>=6'}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -10804,11 +10804,6 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  swr@2.4.1:
-    resolution: {integrity: sha512-2CC6CiKQtEwaEeNiqWTAw9PGykW8SR5zZX8MZk6TeAvEAnVS7Visz8WzphqgtQ8v2xz/4Q5K+j+SeMaKXeeQIA==}
-    peerDependencies:
-      react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
@@ -11838,16 +11833,6 @@ snapshots:
       '@smithy/core': 3.24.6
       '@smithy/fetch-http-handler': 5.4.6
       '@smithy/node-http-handler': 4.7.7
-      '@smithy/types': 4.14.3
-      tslib: 2.8.1
-
-  '@aws-sdk/s3-presigned-post@3.1063.0':
-    dependencies:
-      '@aws-sdk/client-s3': 3.1063.0
-      '@aws-sdk/core': 3.974.18
-      '@aws-sdk/types': 3.973.11
-      '@smithy/core': 3.24.6
-      '@smithy/signature-v4': 5.4.6
       '@smithy/types': 4.14.3
       tslib: 2.8.1
 
@@ -13560,6 +13545,14 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
+  '@orpc/tanstack-query@1.14.5(@opentelemetry/api@1.9.1)(@orpc/client@1.14.5(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.102.8)':
+    dependencies:
+      '@orpc/client': 1.14.5(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.14.5(@opentelemetry/api@1.9.1)
+      '@tanstack/query-core': 5.102.8
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
   '@orpc/zod@1.14.5(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.5(@opentelemetry/api@1.9.1))(@orpc/server@1.14.5(@opentelemetry/api@1.9.1)(ws@8.21.0))(ws@8.21.0)(zod@4.4.3)':
     dependencies:
       '@orpc/contract': 1.14.5(@opentelemetry/api@1.9.1)
@@ -14217,6 +14210,13 @@ snapshots:
       '@tailwindcss/oxide': 4.3.2
       postcss: 8.5.16
       tailwindcss: 4.3.2
+
+  '@tanstack/query-core@5.102.8': {}
+
+  '@tanstack/react-query@5.102.8(react@19.2.5)':
+    dependencies:
+      '@tanstack/query-core': 5.102.8
+      react: 19.2.5
 
   '@tanstack/react-table@8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
@@ -15647,8 +15647,6 @@ snapshots:
       semver: 7.8.1
       tsconfig-paths-webpack-plugin: 4.2.0
       watskeburt: 5.0.3
-
-  dequal@2.0.3: {}
 
   detect-libc@2.1.2: {}
 
@@ -19172,12 +19170,6 @@ snapshots:
       csso: 5.0.5
       picocolors: 1.1.1
       sax: 1.6.0
-
-  swr@2.4.1(react@19.2.5):
-    dependencies:
-      dequal: 2.0.3
-      react: 19.2.5
-      use-sync-external-store: 1.6.0(react@19.2.5)
 
   symbol-tree@3.2.4: {}
 

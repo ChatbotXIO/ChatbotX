@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 // Mocks
 // ---------------------------------------------------------------------------
 
-const { mockKyPost } = vi.hoisted(() => ({
-  mockKyPost: vi.fn(),
+const { mockSetCoexistWhatsappAPI } = vi.hoisted(() => ({
+  mockSetCoexistWhatsappAPI: vi.fn(),
 }))
 
 /** Echoes the key back so assertions never depend on the English copy. */
@@ -16,8 +16,12 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
-vi.mock("ky", () => ({
-  default: { post: mockKyPost },
+vi.mock("@/lib/orpc/orpc", () => ({
+  client: {
+    integrationWhatsappAPIs: {
+      setCoexistWhatsappAPI: mockSetCoexistWhatsappAPI,
+    },
+  },
 }))
 
 vi.mock("sonner", () => ({
@@ -82,9 +86,7 @@ describe("CoexistPopup", () => {
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
-    mockKyPost.mockReturnValue({
-      json: vi.fn().mockResolvedValue({ success: true }),
-    })
+    mockSetCoexistWhatsappAPI.mockResolvedValue({ success: true })
 
     act(() => {
       root.render(
@@ -127,15 +129,12 @@ describe("CoexistPopup", () => {
       await Promise.resolve()
     })
 
-    expect(mockKyPost).toHaveBeenCalledWith(
-      expect.any(String),
+    expect(mockSetCoexistWhatsappAPI).toHaveBeenCalledWith(
       expect.objectContaining({
-        json: expect.objectContaining({
-          workspaceId: "ws-1",
-          integrationId: "int-1",
-          enabled: true,
-          aiReadsSyncedHistory: false,
-        }),
+        workspaceId: "ws-1",
+        integrationId: "int-1",
+        enabled: true,
+        aiReadsSyncedHistory: false,
       }),
     )
   })
@@ -151,11 +150,8 @@ describe("CoexistPopup", () => {
       await Promise.resolve()
     })
 
-    expect(mockKyPost).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        json: expect.objectContaining({ aiReadsSyncedHistory: true }),
-      }),
+    expect(mockSetCoexistWhatsappAPI).toHaveBeenCalledWith(
+      expect.objectContaining({ aiReadsSyncedHistory: true }),
     )
   })
 
@@ -169,13 +165,10 @@ describe("CoexistPopup", () => {
       await Promise.resolve()
     })
 
-    expect(mockKyPost).toHaveBeenCalledWith(
-      expect.any(String),
+    expect(mockSetCoexistWhatsappAPI).toHaveBeenCalledWith(
       expect.objectContaining({
-        json: expect.objectContaining({
-          enabled: false,
-          aiReadsSyncedHistory: true,
-        }),
+        enabled: false,
+        aiReadsSyncedHistory: true,
       }),
     )
   })

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import type { AnalysisStoreProviderProps } from "../provider/analysis-store-context"
 import { AnalysisStoreProvider } from "../provider/analysis-store-context"
 import { AdminsAnalysis } from "./charts/admins-analysis"
 import { ArchivedConversationChart } from "./charts/archived-conversation-chart"
@@ -17,7 +18,7 @@ export function ConversationsDashboard({
   workspaceCreatedAt,
   nav,
 }: {
-  defaultSearchParams: { [x: string]: string }
+  defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
   workspaceCreatedAt?: Date
   /** Optional side navigation, rendered one row below the filter bar. */
   nav?: ReactNode

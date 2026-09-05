@@ -1,44 +1,40 @@
+import { ORPCError } from "@orpc/client"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { MockHTTPError, mockKyGet } = vi.hoisted(() => {
-  class MockHTTPError extends Error {
-    constructor(message = "HTTP error") {
-      super(message)
-    }
-  }
+const mocks = vi.hoisted(() => ({
+  privateListBotFieldsAPI: vi.fn(),
+  privateListCustomFieldsAPI: vi.fn(),
+}))
 
-  return {
-    MockHTTPError,
-    mockKyGet: vi.fn(),
-  }
-})
-
-vi.mock("ky", () => ({
-  default: {
-    get: mockKyGet,
+vi.mock("@/lib/orpc/orpc", () => ({
+  client: {
+    botFieldAPIs: {
+      privateListBotFieldsAPI: mocks.privateListBotFieldsAPI,
+    },
+    customFieldsAPI: {
+      privateListCustomFieldsAPI: mocks.privateListCustomFieldsAPI,
+    },
   },
-  HTTPError: MockHTTPError,
 }))
 
 const { createCustomFieldStore } = await import("../custom-field-store")
 
 beforeEach(() => {
-  mockKyGet.mockReset()
+  mocks.privateListBotFieldsAPI.mockReset()
+  mocks.privateListCustomFieldsAPI.mockReset()
 })
 
 describe("ensureBotFieldsLoaded", () => {
   test("loads bot fields and marks the store initialized on success", async () => {
-    mockKyGet.mockReturnValueOnce({
-      json: vi.fn().mockResolvedValue({
-        data: [{ id: "1", name: "Loyalty Points", type: "number" }],
-      }),
+    mocks.privateListBotFieldsAPI.mockResolvedValueOnce({
+      data: [{ id: "1", name: "Loyalty Points", type: "number" }],
     })
 
     const store = createCustomFieldStore({ workspaceId: "workspace-1" })
 
     await store.getState().ensureBotFieldsLoaded()
 
-    expect(mockKyGet).toHaveBeenCalledTimes(1)
+    expect(mocks.privateListBotFieldsAPI).toHaveBeenCalledTimes(1)
     expect(store.getState().botFields).toEqual([
       { id: "1", name: "Loyalty Points", type: "number" },
     ])
@@ -48,22 +44,20 @@ describe("ensureBotFieldsLoaded", () => {
   })
 
   test("does not fetch again once already initialized", async () => {
-    mockKyGet.mockReturnValue({
-      json: vi.fn().mockResolvedValue({ data: [] }),
-    })
+    mocks.privateListBotFieldsAPI.mockResolvedValue({ data: [] })
 
     const store = createCustomFieldStore({ workspaceId: "workspace-1" })
 
     await store.getState().ensureBotFieldsLoaded()
     await store.getState().ensureBotFieldsLoaded()
 
-    expect(mockKyGet).toHaveBeenCalledTimes(1)
+    expect(mocks.privateListBotFieldsAPI).toHaveBeenCalledTimes(1)
   })
 
   test("keeps botFieldsInitialized false on a fetch failure so a later mount retries", async () => {
-    mockKyGet.mockReturnValueOnce({
-      json: vi.fn().mockRejectedValue(new MockHTTPError("HTTP 500")),
-    })
+    mocks.privateListBotFieldsAPI.mockRejectedValueOnce(
+      new ORPCError("INTERNAL_SERVER_ERROR", { message: "HTTP 500" }),
+    )
 
     const store = createCustomFieldStore({ workspaceId: "workspace-1" })
 
@@ -76,15 +70,13 @@ describe("ensureBotFieldsLoaded", () => {
     // A later picker mount must retry instead of being stuck with an empty
     // list forever (the bug: `botFieldsInitialized` was set true even on
     // error, poisoning the dedupe guard).
-    mockKyGet.mockReturnValueOnce({
-      json: vi.fn().mockResolvedValue({
-        data: [{ id: "1", name: "Loyalty Points", type: "number" }],
-      }),
+    mocks.privateListBotFieldsAPI.mockResolvedValueOnce({
+      data: [{ id: "1", name: "Loyalty Points", type: "number" }],
     })
 
     await store.getState().ensureBotFieldsLoaded()
 
-    expect(mockKyGet).toHaveBeenCalledTimes(2)
+    expect(mocks.privateListBotFieldsAPI).toHaveBeenCalledTimes(2)
     expect(store.getState().botFieldsInitialized).toBe(true)
     expect(store.getState().botFields).toEqual([
       { id: "1", name: "Loyalty Points", type: "number" },
@@ -96,20 +88,120 @@ describe("ensureBotFieldsLoaded", () => {
     const pending = new Promise<{ data: unknown[] }>((resolve) => {
       resolveFetch = resolve
     })
-    mockKyGet.mockReturnValueOnce({
-      json: vi.fn().mockReturnValue(pending),
-    })
+    mocks.privateListBotFieldsAPI.mockReturnValueOnce(pending)
 
     const store = createCustomFieldStore({ workspaceId: "workspace-1" })
 
     const first = store.getState().ensureBotFieldsLoaded()
     const second = store.getState().ensureBotFieldsLoaded()
 
-    expect(mockKyGet).toHaveBeenCalledTimes(1)
+    expect(mocks.privateListBotFieldsAPI).toHaveBeenCalledTimes(1)
 
     resolveFetch({ data: [] })
     await Promise.all([first, second])
 
     expect(store.getState().botFieldsInitialized).toBe(true)
+  })
+})
+
+describe("getAllCustomFields", () => {
+  test("fetches custom fields for the store's workspaceId with maxPerPage", async () => {
+    mocks.privateListCustomFieldsAPI.mockResolvedValueOnce({
+      data: [{ id: "1", name: "Loyalty Points" }],
+    })
+
+    const store = createCustomFieldStore({ workspaceId: "workspace-1" })
+
+    await store.getState().getAllCustomFields()
+
+    expect(mocks.privateListCustomFieldsAPI).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      perPage: 999_999_999,
+    })
+    expect(store.getState().customFields).toEqual([
+      { id: "1", name: "Loyalty Points" },
+    ])
+    expect(store.getState().error).toBeNull()
+    expect(store.getState().loading).toBe(false)
+  })
+
+  test("is a no-op when workspaceId is empty", async () => {
+    const store = createCustomFieldStore({ workspaceId: "" })
+
+    await store.getState().getAllCustomFields()
+
+    expect(mocks.privateListCustomFieldsAPI).not.toHaveBeenCalled()
+  })
+
+  test("is a no-op while a fetch is already in flight", async () => {
+    let resolveFetch!: (value: { data: unknown[] }) => void
+    const pending = new Promise<{ data: unknown[] }>((resolve) => {
+      resolveFetch = resolve
+    })
+    mocks.privateListCustomFieldsAPI.mockReturnValueOnce(pending)
+
+    const store = createCustomFieldStore({ workspaceId: "workspace-1" })
+
+    const first = store.getState().getAllCustomFields()
+    await store.getState().getAllCustomFields()
+
+    expect(mocks.privateListCustomFieldsAPI).toHaveBeenCalledTimes(1)
+
+    resolveFetch({ data: [] })
+    await first
+  })
+
+  test("sets error on a rejected request", async () => {
+    mocks.privateListCustomFieldsAPI.mockRejectedValueOnce(
+      new ORPCError("INTERNAL_SERVER_ERROR", { message: "HTTP 500" }),
+    )
+
+    const store = createCustomFieldStore({ workspaceId: "workspace-1" })
+
+    await store.getState().getAllCustomFields()
+
+    expect(store.getState().error).toBe("HTTP 500")
+    expect(store.getState().loading).toBe(false)
+  })
+})
+
+describe("initialize", () => {
+  test("calls getAllCustomFields once and marks the store initialized", async () => {
+    mocks.privateListCustomFieldsAPI.mockResolvedValueOnce({
+      data: [{ id: "1", name: "Loyalty Points" }],
+    })
+
+    const store = createCustomFieldStore({ workspaceId: "workspace-1" })
+
+    await store.getState().initialize()
+
+    expect(mocks.privateListCustomFieldsAPI).toHaveBeenCalledTimes(1)
+    expect(store.getState().customFields).toEqual([
+      { id: "1", name: "Loyalty Points" },
+    ])
+    expect(store.getState().initialized).toBe(true)
+  })
+
+  test("does not fetch again once already initialized", async () => {
+    mocks.privateListCustomFieldsAPI.mockResolvedValue({ data: [] })
+
+    const store = createCustomFieldStore({ workspaceId: "workspace-1" })
+
+    await store.getState().initialize()
+    await store.getState().initialize()
+
+    expect(mocks.privateListCustomFieldsAPI).toHaveBeenCalledTimes(1)
+  })
+
+  test("still marks the store initialized when getAllCustomFields fails", async () => {
+    mocks.privateListCustomFieldsAPI.mockRejectedValueOnce(
+      new ORPCError("INTERNAL_SERVER_ERROR", { message: "HTTP 500" }),
+    )
+
+    const store = createCustomFieldStore({ workspaceId: "workspace-1" })
+
+    await store.getState().initialize()
+
+    expect(store.getState().initialized).toBe(true)
   })
 })

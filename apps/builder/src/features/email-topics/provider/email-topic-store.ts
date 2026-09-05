@@ -1,7 +1,7 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { maxPerPageString } from "@/lib/shared-request"
-import type { ListEmailTopicsResponse } from "../schema/query"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
+import { maxPerPage } from "@/lib/shared-request"
 import type { EmailTopicResource } from "../schema/resource"
 
 export type EmailTopicState = {
@@ -48,20 +48,16 @@ export const createEmailTopicStore = (props: Partial<EmailTopicState>) =>
       set({ loading: true, error: null })
 
       try {
-        const { data } = await ky
-          .get<ListEmailTopicsResponse>(
-            `/api/workspaces/${workspaceId}/email-topics`,
-            { searchParams: { perPage: maxPerPageString } },
-          )
-          .json()
+        const { data } =
+          await client.emailTopicsAPI.privateListWorkspaceEmailTopicsAPI({
+            workspaceId,
+            perPage: maxPerPage,
+          })
 
         set({ emailTopics: data, loading: false })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch email topics",
+          error: getClientErrorMessage(error, "Failed to fetch email topics"),
         })
       } finally {
         set({ loading: false })

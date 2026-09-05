@@ -17,12 +17,12 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import ky from "ky"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { client } from "@/lib/orpc/orpc"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
 import { updateAIMcpServerAction } from "./actions/update-ai-mcp-server.action"
 import { createAIMcpServerRequest } from "./schema/action"
@@ -169,15 +169,11 @@ export function AIMcpServersCreate({
   const validateMcpServer = async () => {
     try {
       setIsMcpServerValidating(true)
-      const data = await ky
-        .post<Record<string, { description?: string }>>(
-          `/api/workspaces/${workspaceId}/ai-mcp-servers/validate`,
-          {
-            json: form.getValues(),
-            timeout: 15_000,
-          },
-        )
-        .json()
+      const data =
+        (await client.aiMcpServerAPIs.validateAIMcpServerAuthenticatedAPI(
+          { ...form.getValues(), workspaceId },
+          { signal: AbortSignal.timeout(15_000) },
+        )) as Record<string, { description?: string }>
 
       const toolInfos = Object.keys(data).map((key) => ({
         name: key,

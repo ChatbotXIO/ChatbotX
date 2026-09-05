@@ -1,5 +1,6 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 import type { ListUserPersistentMenusResponse } from "../schema/action"
 
 export type UserPersistentMenuState = {
@@ -44,23 +45,21 @@ export const createUserPersistentMenuStore = (
         await get().getAll(workspaceId)
         set({ loading: false, initialized: true })
       } catch (error: unknown) {
-        if (error instanceof HTTPError) {
-          set({ error: error.message, loading: false })
-        } else {
-          set({
-            error: "Failed to fetch user persistent menus",
-            loading: false,
-          })
-        }
+        set({
+          error: getClientErrorMessage(
+            error,
+            "Failed to fetch user persistent menus",
+          ),
+          loading: false,
+        })
       }
     },
 
     getAll: async (workspaceId: string) => {
-      const { data } = await ky
-        .get<ListUserPersistentMenusResponse>(
-          `/api/workspaces/${workspaceId}/user-persistent-menus`,
+      const { data } =
+        await client.userPersistentMenusAPI.listUserPersistentMenusAuthenticatedAPI(
+          { workspaceId },
         )
-        .json()
 
       set({ menus: data })
     },

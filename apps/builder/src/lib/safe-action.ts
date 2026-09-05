@@ -155,7 +155,9 @@ export const workspaceActionClient = workspaceActionClientAllowExpired.use(
     // blocked read/delete mode, but a stale session could still POST a
     // create/change action directly. Shared with oRPC's workspace-token
     // middleware via checkWorkspaceOwnerAccess (cloud-only; self-hosted stays
-    // unrestricted).
+    // unrestricted). A workspace's owner quota row is the tenant pool
+    // (AGENTS.md invariant #12), so members must never be gated by their
+    // unrelated personal quota.
     const denialReason = await checkWorkspaceOwnerAccess({
       ownerId: ctx.workspace.ownerId,
     })

@@ -1,3 +1,4 @@
+import type { AnalysisStoreProviderProps } from "../provider/analysis-store-context"
 import { AnalysisStoreProvider } from "../provider/analysis-store-context"
 import { MagicLinkContactsTable } from "./charts/magic-link-contacts-table"
 import { MagicLinkStatsChart } from "./charts/magic-link-stats-chart"
@@ -7,7 +8,7 @@ import AnalysisFilterForm from "./filter-form"
 export function MagicLinkAnalytics({
   defaultSearchParams,
 }: {
-  defaultSearchParams: { [x: string]: string }
+  defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
 }) {
   return (
     <AnalysisStoreProvider

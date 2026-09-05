@@ -7,6 +7,7 @@ import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ORPCError } from "@orpc/server"
 import { auth } from "@/lib/auth/auth"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
+import { assertWorkspaceOwnerAccessForMethod } from "@/lib/workspace/authorize-workspace-access"
 import { base } from "./context"
 
 export const authMiddleware = base.middleware(async ({ context, next }) => {
@@ -44,7 +45,7 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
 })
 
 export const workspaceAuthorizedMidddleware = base.middleware(
-  async ({ context, next }, workspaceId: string) => {
+  async ({ context, next, procedure }, workspaceId: string) => {
     if (!context.user) {
       throw new ORPCError("UNAUTHORIZED")
     }
@@ -71,6 +72,13 @@ export const workspaceAuthorizedMidddleware = base.middleware(
         message: "Workspace deletion scheduled",
       })
     }
+
+    // Owner-quota/trial gate — mirrors workspaceActionClient in safe-action.ts.
+    // Reads and deletes stay open (invariant #14).
+    await assertWorkspaceOwnerAccessForMethod({
+      method: procedure["~orpc"].route.method,
+      ownerId: workspace.ownerId,
+    })
 
     return withAuditContext(
       {

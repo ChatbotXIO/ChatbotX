@@ -1,6 +1,5 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { AIAgentStoreProvider } from "@/features/ai-agents/provider/ai-agent-store-context"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
@@ -19,9 +18,7 @@ export default async function IgCommentsLayout({
   return (
     <CustomFieldStoreProvider workspaceId={workspaceId}>
       <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-        <AIAgentStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-          {children}
-        </AIAgentStoreProvider>
+        {children}
       </FlowStoreProvider>
     </CustomFieldStoreProvider>
   )

@@ -8,9 +8,6 @@ import {
 import {
   GET_RESPONSE_CAMPAIGNS_PAGE_SIZE,
   GET_RESPONSE_TAGS_PAGE_SIZE,
-  type GetResponseCampaign,
-  type GetResponsePageMeta,
-  type GetResponseTag,
 } from "@chatbotx.io/integration-get-response"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -27,6 +24,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import { CircleHelpIcon, MailIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
@@ -34,13 +32,8 @@ import { useForm, useFormContext } from "react-hook-form"
 import type { z } from "zod"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { orpc } from "@/lib/orpc/query"
 import { BaseStepEditor } from "../base/editor"
-
-type GetResponsePage<T> = {
-  data: T[]
-  meta: GetResponsePageMeta
-}
 
 const FieldLabel = (props: {
   label: string
@@ -83,21 +76,31 @@ const GetResponseDialog = ({ parentName }: { parentName: string }) => {
 
   const {
     data: campaignsResponse,
-    error: campaignsError,
+    isError: campaignsError,
     isLoading: campaignsLoading,
-  } = callAPI<GetResponsePage<GetResponseCampaign>>(
-    open
-      ? `/api/workspaces/${workspaceId}/get-response/campaigns?page=1&perPage=${GET_RESPONSE_CAMPAIGNS_PAGE_SIZE}`
-      : null,
+  } = useQuery(
+    orpc.integrationGetResponseAPI.listCampaigns.queryOptions({
+      input: {
+        workspaceId,
+        page: 1,
+        perPage: GET_RESPONSE_CAMPAIGNS_PAGE_SIZE,
+      },
+      enabled: open,
+    }),
   )
   const {
     data: tagsResponse,
-    error: tagsError,
+    isError: tagsError,
     isLoading: tagsLoading,
-  } = callAPI<GetResponsePage<GetResponseTag>>(
-    open
-      ? `/api/workspaces/${workspaceId}/get-response/tags?page=1&perPage=${GET_RESPONSE_TAGS_PAGE_SIZE}`
-      : null,
+  } = useQuery(
+    orpc.integrationGetResponseAPI.listTags.queryOptions({
+      input: {
+        workspaceId,
+        page: 1,
+        perPage: GET_RESPONSE_TAGS_PAGE_SIZE,
+      },
+      enabled: open,
+    }),
   )
 
   const campaignOptions = useMemo(

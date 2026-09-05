@@ -11,6 +11,7 @@ import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getDirection } from "@/i18n/direction"
 import { getDomainFromHeader } from "@/lib/domain"
+import { QueryProvider } from "@/lib/query/query-provider"
 import { getUserTimezone } from "@/lib/timezone"
 import "./globals.css"
 import "./themes.css"
@@ -81,8 +82,10 @@ export default async function RootLayout({ children }: Props) {
           <DirectionProvider direction={dir}>
             <UiProvider>
               <NextIntlClientProvider>
-                <TimezoneSync timezone={timezone} />
-                {children}
+                <QueryProvider>
+                  <TimezoneSync timezone={timezone} />
+                  {children}
+                </QueryProvider>
               </NextIntlClientProvider>
             </UiProvider>
           </DirectionProvider>

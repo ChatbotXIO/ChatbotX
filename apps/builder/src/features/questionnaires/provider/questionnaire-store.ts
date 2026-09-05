@@ -1,5 +1,6 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 import type { ListQuestionnairesForFlowResponse } from "../schema/query"
 
 export type QuestionnaireState = {
@@ -49,19 +50,15 @@ export const createQuestionnaireStore = (props: Partial<QuestionnaireState>) =>
       set({ loading: true, error: null })
 
       try {
-        const questionnaires = await ky
-          .get<ListQuestionnairesForFlowResponse>(
-            `/api/workspaces/${workspaceId}/questionnaires/for-flow`,
-          )
-          .json()
+        const questionnaires =
+          await client.questionnairesAPI.listQuestionnairesForFlowAPI({
+            workspaceId,
+          })
 
         set({ questionnaires, loading: false })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch questionnaires",
+          error: getClientErrorMessage(error, "Failed to fetch questionnaires"),
         })
       } finally {
         set({ loading: false })

@@ -896,7 +896,8 @@
       "label": "Temsilci"
     },
     "aiAgent": {
-      "label": "Yapay Zekâ Temsilcisi"
+      "label": "Yapay Zekâ Temsilcisi",
+      "loadError": "Yapay zeka temsilcileri yüklenemedi. Lütfen tekrar deneyin."
     },
     "aiQueuedMessages": {
       "label": "Kuyruğa Alınmış Yapay Zekâ Mesajları"

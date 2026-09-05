@@ -624,7 +624,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI-agent"
+      "label": "AI-agent",
+      "loadError": "AI-agenten laden mislukt. Probeer het opnieuw."
     },
     "aiQueuedMessages": {
       "label": "AI-berichten in wachtrij"

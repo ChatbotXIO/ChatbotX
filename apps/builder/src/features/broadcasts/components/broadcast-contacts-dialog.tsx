@@ -1,11 +1,6 @@
 "use client"
 
-import type {
-  BroadcastEventType,
-  ListBroadcastContactsRequest,
-  ListBroadcastContactsResponse,
-} from "@chatbotx.io/analytics/schemas"
-import ky from "ky"
+import type { BroadcastEventType } from "@chatbotx.io/analytics/schemas"
 import { useTranslations } from "next-intl"
 import { memo, useCallback } from "react"
 import {
@@ -14,6 +9,7 @@ import {
 } from "@/features/common/components/stats-contacts-dialog"
 import { addContactTagAction } from "@/features/contacts/actions/add-contact-tag.action"
 import { bulkTagStatsContactsAction } from "@/features/contacts/actions/bulk-tag-stats-contacts.action"
+import { client } from "@/lib/orpc/orpc"
 
 const eventTypeToLabel: Record<BroadcastEventType, string> = {
   "message:sent": "sent",
@@ -46,19 +42,16 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
 
   const fetchPage = useCallback(
     async (page: number, perPage: number): Promise<StatsContactRow[]> => {
-      const result = await ky
-        .get<ListBroadcastContactsRequest>(
-          `/api/workspaces/${workspaceId}/broadcasts/${broadcastId}/contacts`,
-          {
-            searchParams: {
-              eventType,
-              total,
-              page,
-              perPage,
-            },
-          },
-        )
-        .json<ListBroadcastContactsResponse>()
+      const result = await client.broadcastAPIs.privateListBroadcastContactsAPI(
+        {
+          workspaceId,
+          broadcastId,
+          eventType,
+          total,
+          page,
+          perPage,
+        },
+      )
 
       return result.data
     },

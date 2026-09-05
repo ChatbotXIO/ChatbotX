@@ -1,3 +1,4 @@
+import type { AnalysisStoreProviderProps } from "../provider/analysis-store-context"
 import { AnalysisStoreProvider } from "../provider/analysis-store-context"
 import { ReflinkContactsTable } from "./charts/reflink-contacts-table"
 import { ReflinkStatsChart } from "./charts/reflink-stats-chart"
@@ -7,7 +8,7 @@ import AnalysisFilterForm from "./filter-form"
 export function ReflinkAnalytics({
   defaultSearchParams,
 }: {
-  defaultSearchParams: { [x: string]: string }
+  defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
 }) {
   return (
     <AnalysisStoreProvider

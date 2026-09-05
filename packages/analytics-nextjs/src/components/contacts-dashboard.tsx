@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import type { AnalysisStoreProviderProps } from "../provider/analysis-store-context"
 import { AnalysisStoreProvider } from "../provider/analysis-store-context"
 import { AllContactsByChannelChart } from "./charts/all-contacts-by-channel-chart"
 import { BlockedContactsChart } from "./charts/blocked-contacts-chart"
@@ -15,7 +16,7 @@ export function ContactsDashboard({
   workspaceCreatedAt,
   nav,
 }: {
-  defaultSearchParams: { [x: string]: string }
+  defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
   workspaceCreatedAt?: Date
   /** Optional side navigation, rendered one row below the filter bar. */
   nav?: ReactNode

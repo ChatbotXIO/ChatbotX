@@ -2,13 +2,13 @@
 
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useQuery } from "@tanstack/react-query"
 import { MegaphoneIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
-import useSWR from "swr"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 import { BaseStepEditor } from "../base/editor"
 
 type FacebookCustomAudienceStepEditorProps = {
@@ -26,26 +26,23 @@ const FacebookCustomAudienceStepEditor = ({
 
   const {
     data: adAccountsResponse,
-    error: adAccountsError,
+    isError: adAccountsError,
     isLoading: adAccountsLoading,
-  } = useSWR(
-    workspaceId ? (["facebook-ads-ad-accounts", workspaceId] as const) : null,
-    ([, ws]) =>
-      client.integrationFacebookAdsAPI.listAdAccounts({ workspaceId: ws }),
+  } = useQuery(
+    orpc.integrationFacebookAdsAPI.listAdAccounts.queryOptions({
+      input: { workspaceId },
+      enabled: Boolean(workspaceId),
+    }),
   )
   const {
     data: audiencesResponse,
-    error: audiencesError,
+    isError: audiencesError,
     isLoading: audiencesLoading,
-  } = useSWR(
-    workspaceId && adAccountId
-      ? (["facebook-ads-custom-audiences", workspaceId, adAccountId] as const)
-      : null,
-    ([, ws, adAccount]) =>
-      client.integrationFacebookAdsAPI.listCustomAudiences({
-        workspaceId: ws,
-        adAccountId: adAccount,
-      }),
+  } = useQuery(
+    orpc.integrationFacebookAdsAPI.listCustomAudiences.queryOptions({
+      input: { workspaceId, adAccountId: adAccountId ?? "" },
+      enabled: Boolean(workspaceId && adAccountId),
+    }),
   )
 
   const operationOptions = useMemo(

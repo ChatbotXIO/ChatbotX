@@ -106,6 +106,7 @@ For automatic context injection on every prompt, add the hook to your **own** `.
 - **Pages:** `apps/builder/src/app/...` — async Server Components; `params` / `searchParams` are **Promises** (Next.js 16 / React 19 style).
 - **oRPC:** RPC + OpenAPI from the builder; auth stacks and middleware live around `apps/builder/src/orpc.ts` and `apps/builder/src/middlewares/`. Feature APIs often colocate under each feature’s `api/` folder.
 - **Public / unauthenticated routes:** implement as route handlers under `app/`, and register prefixes in `apps/builder/src/proxy.ts` (`publicRoutes`) so middleware does not force sign-in.
+- **Client-side server data:** TanStack Query via `@/lib/orpc/query` (`orpc.<router>.<proc>.queryOptions()`); zustand `provider/` stores are for client-only state. See `feature-scaffold` skill.
 
 ### API surface
 
