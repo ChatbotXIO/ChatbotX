@@ -12,7 +12,7 @@ const {
   mockRedirect,
   mockInboxCardList,
 } = vi.hoisted(() => ({
-  mockResolveGuardedWorkspaceId: vi.fn(async () => "ws-1"),
+  mockResolveGuardedWorkspaceId: vi.fn(async () => "1"),
   mockRequireWorkspacePermission: vi.fn(async () => undefined),
   mockGetCurrentUserAndTargetWorkspace: vi.fn(),
   mockGetCurrentUserId: vi.fn(),
@@ -261,13 +261,13 @@ describe("channel route guards", () => {
       CreateChannelPage({
         searchParams: Promise.resolve({
           channel: "whatsapp",
-          workspaceId: "ws-1",
+          workspaceId: "1",
         }),
       }),
     ).resolves.toBeDefined()
 
     expect(mockRequireWorkspacePermission).toHaveBeenCalledWith(
-      "ws-1",
+      "1",
       "superAdmin",
     )
   })
@@ -298,14 +298,14 @@ describe("channel route guards", () => {
 
     const dashboardTree = await DashboardLayout({
       children: null,
-      params: Promise.resolve({ workspaceId: "ws-1" }),
+      params: Promise.resolve({ workspaceId: "1" }),
     })
     renderToStaticMarkup(dashboardTree)
 
     expect(mockInboxCardList).toHaveBeenCalledWith(
       expect.objectContaining({
         allowAddNew: false,
-        workspaceId: "ws-1",
+        workspaceId: "1",
       }),
       undefined,
     )
@@ -325,14 +325,14 @@ describe("channel route guards", () => {
 
     const dashboardTree = await DashboardLayout({
       children: null,
-      params: Promise.resolve({ workspaceId: "ws-1" }),
+      params: Promise.resolve({ workspaceId: "1" }),
     })
     renderToStaticMarkup(dashboardTree)
 
     expect(mockInboxCardList).toHaveBeenCalledWith(
       expect.objectContaining({
         allowAddNew: true,
-        workspaceId: "ws-1",
+        workspaceId: "1",
       }),
       undefined,
     )
@@ -342,28 +342,28 @@ describe("channel route guards", () => {
     await expect(
       MessengerLayout({
         children: null,
-        params: Promise.resolve({ workspaceId: "ws-1", id: "msg-1" }),
+        params: Promise.resolve({ workspaceId: "1", id: "11" }),
       }),
     ).resolves.toBeDefined()
     await expect(
       UpdateInstagramPage({
-        params: Promise.resolve({ workspaceId: "ws-1", id: "ig-1" }),
+        params: Promise.resolve({ workspaceId: "1", id: "12" }),
       }),
     ).resolves.toBeDefined()
     await expect(
       WebchatEditPage({
-        params: Promise.resolve({ workspaceId: "ws-1", id: "wc-1" }),
+        params: Promise.resolve({ workspaceId: "1", id: "13" }),
       }),
     ).resolves.toBeDefined()
     await expect(
       CreateWebchatPage({
-        params: Promise.resolve({ workspaceId: "ws-1" }),
+        params: Promise.resolve({ workspaceId: "1" }),
       }),
     ).resolves.toBeDefined()
     await expect(
       WhatsappLayout({
         children: null,
-        params: Promise.resolve({ workspaceId: "ws-1", id: "wa-1" }),
+        params: Promise.resolve({ workspaceId: "1", id: "14" }),
       }),
     ).resolves.toBeDefined()
 
@@ -372,7 +372,7 @@ describe("channel route guards", () => {
       "superAdmin",
     )
     expect(mockRequireWorkspacePermission).toHaveBeenCalledWith(
-      "ws-1",
+      "1",
       "superAdmin",
     )
   })

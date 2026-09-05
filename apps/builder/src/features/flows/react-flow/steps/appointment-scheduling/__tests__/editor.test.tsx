@@ -183,12 +183,12 @@ const openDialogAndGetSubmitButton = async () => {
 describe("AppointmentSchedulingStepEditor", () => {
   test("Continue is enabled for an already-saved book step (regression: shouldUnregister dropped id/stepType/states)", async () => {
     const savedStep: AppointmentSchedulingStepSchema = {
-      id: "step-1",
+      id: "1",
       stepType: stepTypes.enum.appointmentScheduling,
       calendarId: "456",
       states: [
-        { id: "s1", stateType: "success" },
-        { id: "s2", stateType: "error" },
+        { id: "11", stateType: "success" },
+        { id: "12", stateType: "error" },
       ],
       mode: "book",
     }
@@ -204,12 +204,12 @@ describe("AppointmentSchedulingStepEditor", () => {
 
   test("Continue is enabled for an already-saved checkAvailability step", async () => {
     const savedStep: AppointmentSchedulingStepSchema = {
-      id: "step-2",
+      id: "2",
       stepType: stepTypes.enum.appointmentScheduling,
       calendarId: "456",
       states: [
-        { id: "s1", stateType: "success" },
-        { id: "s2", stateType: "error" },
+        { id: "21", stateType: "success" },
+        { id: "22", stateType: "error" },
       ],
       mode: "checkAvailability",
       resultUsedByAI: false,

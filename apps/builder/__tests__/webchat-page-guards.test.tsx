@@ -109,14 +109,14 @@ const { default: WebchatPage } = await import(
 )
 
 const targetWebchat = {
-  id: "webchat-1",
-  workspaceId: "ws-1",
+  id: "2",
+  workspaceId: "1",
   authorizedDomains: ["allowed.example"],
 }
 
 const searchParams = {
-  workspaceId: "ws-1",
-  webchatId: "webchat-1",
+  workspaceId: "1",
+  webchatId: "2",
 }
 
 const setReferer = (referer: string | null) => {

@@ -185,7 +185,7 @@ afterEach(() => {
 })
 
 const invalidStep: SetCustomFieldStepSchema = {
-  id: "step-1",
+  id: "1",
   stepType: stepTypes.enum.setCustomField,
   inputFieldId: "",
   operation: FieldOperationType.set,
@@ -278,7 +278,7 @@ describe("SetCustomFieldStepEditor", () => {
     // Every edited field must land on the parent step, and id/stepType are
     // preserved.
     expect(formApi?.getValues("step")).toEqual({
-      id: "step-1",
+      id: "1",
       stepType: stepTypes.enum.setCustomField,
       inputFieldId: "field-1",
       operation: FieldOperationType.append,

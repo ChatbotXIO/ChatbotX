@@ -25,7 +25,7 @@ const {
   mockDistinctConnectedChannels: vi.fn(async (): Promise<string[]> => []),
   mockResolveVisibleChannels: vi.fn(),
   mockWorkspaceServiceFind: vi.fn(async () => ({
-    id: "ws-1",
+    id: "1",
     ownerId: "owner-1",
   })),
 }))
@@ -125,7 +125,7 @@ describe("channels settings Add-button gating", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockWorkspaceServiceFind.mockResolvedValue({
-      id: "ws-1",
+      id: "1",
       ownerId: "owner-1",
     })
     mockDistinctConnectedChannels.mockResolvedValue([])
@@ -136,7 +136,7 @@ describe("channels settings Add-button gating", () => {
     mockDistinctConnectedChannels.mockResolvedValue(["zalo"])
 
     const result = await SettingChannelZaloPage({
-      params: Promise.resolve({ workspaceId: "ws-1" }),
+      params: Promise.resolve({ workspaceId: "1" }),
     })
 
     expect((result as { props: { canCreate: boolean } }).props.canCreate).toBe(
@@ -148,7 +148,7 @@ describe("channels settings Add-button gating", () => {
     mockResolveVisibleChannels.mockResolvedValue(["zalo", "whatsapp"])
 
     const result = await SettingChannelZaloPage({
-      params: Promise.resolve({ workspaceId: "ws-1" }),
+      params: Promise.resolve({ workspaceId: "1" }),
     })
 
     expect((result as { props: { canCreate: boolean } }).props.canCreate).toBe(
@@ -160,7 +160,7 @@ describe("channels settings Add-button gating", () => {
     mockResolveVisibleChannels.mockResolvedValue([])
 
     const result = await SettingChannelSmtpPage({
-      params: Promise.resolve({ workspaceId: "ws-1" }),
+      params: Promise.resolve({ workspaceId: "1" }),
     })
 
     expect(result as { props: object }).not.toHaveProperty("props.canCreate")
@@ -169,7 +169,7 @@ describe("channels settings Add-button gating", () => {
   test("resolveChannelCreatable exempts smtp from policy even when nothing is visible", async () => {
     mockResolveVisibleChannels.mockResolvedValue([])
 
-    await expect(resolveChannelCreatable("ws-1", "smtp")).resolves.toBe(true)
+    await expect(resolveChannelCreatable("1", "smtp")).resolves.toBe(true)
   })
 
   test("telegram — historically the bypass-prone channel — gets canCreate=false when hidden", async () => {
@@ -177,7 +177,7 @@ describe("channels settings Add-button gating", () => {
     mockDistinctConnectedChannels.mockResolvedValue(["telegram"])
 
     const result = await SettingChannelTelegramPage({
-      params: Promise.resolve({ workspaceId: "ws-1" }),
+      params: Promise.resolve({ workspaceId: "1" }),
     })
 
     expect((result as { props: { canCreate: boolean } }).props.canCreate).toBe(
@@ -193,7 +193,7 @@ describe("channels settings Add-button gating", () => {
     mockDistinctConnectedChannels.mockResolvedValue(["webchat"])
 
     const result = await SettingChannelWebchatPage({
-      params: Promise.resolve({ workspaceId: "ws-1" }),
+      params: Promise.resolve({ workspaceId: "1" }),
       searchParams: Promise.resolve({}),
     })
 
