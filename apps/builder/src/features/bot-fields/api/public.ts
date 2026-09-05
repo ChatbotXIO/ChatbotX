@@ -5,7 +5,7 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { maxPerPage } from "@/lib/shared-request"
+import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import { createBotFieldRequest } from "../schema/action"
@@ -22,19 +22,18 @@ export const botFieldsPublicRouter = {
       summary: "Get all bot fields",
       tags: ["Bot Fields"],
     })
-    .input(z.object({}))
+    .input(publicListRequest)
     .output(publicListBotFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
-    .handler(async ({ context }) => {
+    .handler(async ({ context, input }) => {
       const result = await botFieldService.list({
         workspaceId: context.workspace.id,
-        page: 1,
-        perPage: maxPerPage,
+        ...input,
         sort: [{ id: "createdAt", desc: true }],
         name: null,
         folderId: null,
       })
-      return { data: result.data }
+      return result
     }),
 
   create: workspaceTokenAuthAPI

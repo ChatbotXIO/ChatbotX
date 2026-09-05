@@ -1,6 +1,5 @@
-import z from "zod"
+import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { listFlows } from "../queries"
 import { flowResource } from "../schema/resource"
 
@@ -14,12 +13,8 @@ export const flowsPublicRouter = {
       summary: "Get all flows",
       tags: ["Flows"],
     })
-    .input(z.object({}))
-    .output(
-      z.object({
-        data: z.array(flowResource.pick({ id: true, name: true })),
-      }),
-    )
+    .input(publicListRequest)
+    .output(publicListResponse(flowResource.pick({ id: true, name: true })))
     .handler(
       async ({ context, input }) =>
         await listFlows({

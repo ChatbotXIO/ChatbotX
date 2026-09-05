@@ -1,17 +1,13 @@
 import { integrationService } from "@chatbotx.io/business"
 import {
-  createSelectSchema,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
-import z from "zod"
+  paginateInMemory,
+  publicListRequest,
+  publicListResponse,
+} from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { publicIntegrationResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
-
-const integrationResource = createSelectSchema(integrationModel, {
-  id: z.string(),
-  workspaceId: z.string(),
-})
 
 export const integrationsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -21,11 +17,12 @@ export const integrationsPublicRouter = {
       summary: "List integrations",
       tags: ["Integrations"],
     })
-    .output(z.object({ data: z.array(integrationResource) }))
-    .handler(async ({ context }) => {
+    .input(publicListRequest)
+    .output(publicListResponse(publicIntegrationResource))
+    .handler(async ({ context, input }) => {
       const data = await integrationService.listByWorkspaceId(
         context.workspace.id,
       )
-      return { data }
+      return paginateInMemory(data, input)
     }),
 }

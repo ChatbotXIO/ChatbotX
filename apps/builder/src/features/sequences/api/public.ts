@@ -1,7 +1,6 @@
 import z from "zod"
-import { basePaginationRequest } from "@/lib/pagination"
+import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { getSequence, listSequences } from "../queries"
 import { listSequencesResponse } from "../schema/action"
 import { sequenceResource } from "../schema/resource"
@@ -16,7 +15,7 @@ export const sequencesPublicRouter = {
       summary: "List sequences",
       tags: ["Sequences"],
     })
-    .input(basePaginationRequest)
+    .input(publicListRequest)
     .output(listSequencesResponse)
     .handler(
       async ({ context, input }) =>

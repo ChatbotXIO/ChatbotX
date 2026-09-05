@@ -7,7 +7,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnUpdatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { maxPerPage } from "@/lib/shared-request"
+import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import {
@@ -27,15 +27,15 @@ export const customFieldsPublicRouter = {
       summary: "Get all custom fields",
       tags: ["Custom Fields"],
     })
-    .input(z.object({}))
+    .input(publicListRequest)
     .output(listPublicCustomFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
-    .handler(async ({ context }) => {
+    .handler(async ({ context, input }) => {
       const result = await customFieldService.list({
         workspaceId: context.workspace.id,
-        perPage: maxPerPage,
+        ...input,
       })
-      return { data: result.data }
+      return result
     }),
 
   create: workspaceTokenAuthAPI

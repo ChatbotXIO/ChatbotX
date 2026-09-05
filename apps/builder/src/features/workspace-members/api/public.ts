@@ -1,6 +1,6 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { getWorkspaceMember, listWorkspaceMembers } from "../queries"
 import {
   getWorkspaceMemberRequest,
@@ -19,11 +19,14 @@ export const workspaceMembersPublicRouter = {
       summary: "List workspace members",
       tags: ["Members"],
     })
-    .input(listWorkspaceMembersRequest.omit({ workspaceId: true }))
+    .input(
+      withPublicPaging(listWorkspaceMembersRequest.omit({ workspaceId: true })),
+    )
     .output(listWorkspaceMembersResponse)
     .handler(
       async ({ context, input }) =>
         await listWorkspaceMembers({
+          keyword: null,
           ...input,
           workspaceId: context.workspace.id,
         }),

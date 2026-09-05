@@ -17,7 +17,7 @@ import {
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
-import { publicListTagsResponse } from "@/features/tags/schema/query"
+import { publicTagResource } from "@/features/tags/schema/resource"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
 import { blockContact } from "../actions/block-contact.action"
@@ -157,7 +157,7 @@ export const contactsPublicRouter = {
       tags: ["Contacts"],
     })
     .input(z.object({ identifier: z.string().min(1) }))
-    .output(publicListTagsResponse)
+    .output(z.object({ data: z.array(publicTagResource) }))
     .handler(async ({ context, input }) => {
       const contactId = await resolveContactId({
         identifier: input.identifier,

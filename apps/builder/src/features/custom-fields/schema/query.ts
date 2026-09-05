@@ -57,6 +57,7 @@ export type FindCustomFieldByKeyRequest = z.infer<
 
 export const listPublicCustomFieldsResponse = z.object({
   data: z.array(publicCustomFieldResource),
+  pageCount: z.number().int(),
 })
 export type ListPublicCustomFieldsResponse = z.infer<
   typeof listPublicCustomFieldsResponse

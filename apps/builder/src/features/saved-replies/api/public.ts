@@ -1,8 +1,7 @@
-import { z } from "zod"
+import { paginateInMemory, publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { listSavedReplies } from "../queries"
-import { listSavedReplyResponse } from "../schema/mutation"
+import { publicListSavedReplyResponse } from "../schema/mutation"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
@@ -14,10 +13,12 @@ export const savedRepliesPublicRouter = {
       summary: "List saved replies",
       tags: ["Saved Replies"],
     })
-    .input(z.object({}))
-    .output(listSavedReplyResponse)
-    .handler(
-      async ({ context }) =>
-        await listSavedReplies({ workspaceId: context.workspace.id }),
-    ),
+    .input(publicListRequest)
+    .output(publicListSavedReplyResponse)
+    .handler(async ({ context, input }) => {
+      const { data } = await listSavedReplies({
+        workspaceId: context.workspace.id,
+      })
+      return paginateInMemory(data, input)
+    }),
 }

@@ -1,6 +1,7 @@
+import { paginateInMemory, publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxTeams } from "../queries"
-import { listInboxTeamsResponse } from "../schema/action"
+import { publicListInboxTeamsResponse } from "../schema/action"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("inbox")
 
@@ -12,9 +13,12 @@ export const inboxTeamsPublicRouter = {
       summary: "List teams",
       tags: ["Teams"],
     })
-    .output(listInboxTeamsResponse)
-    .handler(
-      async ({ context }) =>
-        await listInboxTeams({ workspaceId: context.workspace.id }),
-    ),
+    .input(publicListRequest)
+    .output(publicListInboxTeamsResponse)
+    .handler(async ({ context, input }) => {
+      const { data } = await listInboxTeams({
+        workspaceId: context.workspace.id,
+      })
+      return paginateInMemory(data, input)
+    }),
 }

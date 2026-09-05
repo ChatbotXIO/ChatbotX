@@ -5,9 +5,10 @@ import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
+  possibleErrorsOnListingResource,
   possibleErrorsOnUpdatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { maxPerPage } from "@/lib/shared-request"
+import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { createTag } from "../actions/create-tag-action"
 import { deleteTag } from "../actions/delete-tag-action"
@@ -27,16 +28,15 @@ export const tagsPublicRouter = {
       summary: "Get all tags",
       tags: ["Tags"],
     })
-    .input(z.object({}))
+    .input(publicListRequest)
     .output(publicListTagsResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listTags({
           ...input,
           workspaceId: context.workspace.id,
           sort: [{ id: "createdAt", desc: true }],
-          perPage: maxPerPage,
         }),
     ),
 

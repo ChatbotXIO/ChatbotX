@@ -6,6 +6,11 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import {
+  paginateInMemory,
+  publicListRequest,
+  publicListResponse,
+} from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
@@ -27,13 +32,14 @@ export const externalWebhooksPublicRouter = {
         "List webhooks registered by external automation platforms (e.g. Make) for this workspace.",
       tags: ["External Webhooks"],
     })
-    .output(z.object({ data: z.array(externalWebhookResource) }))
+    .input(publicListRequest)
+    .output(publicListResponse(externalWebhookResource))
     .errors(possibleErrorsOnListingResource)
-    .handler(async ({ context }) => {
+    .handler(async ({ context, input }) => {
       const data = await externalWebhookService.listByWorkspaceId(
         context.workspace.id,
       )
-      return { data }
+      return paginateInMemory(data, input)
     }),
 
   create: workspaceTokenAuthAPI

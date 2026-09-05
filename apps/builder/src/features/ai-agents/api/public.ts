@@ -1,6 +1,6 @@
 import { aiAgentService } from "@chatbotx.io/business"
+import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { listAIAgentsResponse } from "../schema/query"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
@@ -13,13 +13,13 @@ export const aiAgentsPublicRouter = {
       summary: "List AI agents",
       tags: ["AI Agents"],
     })
+    .input(publicListRequest)
     .output(listAIAgentsResponse)
     .handler(
-      async ({ context }) =>
+      async ({ context, input }) =>
         await aiAgentService.listAIAgents({
           workspaceId: context.workspace.id,
-          page: 1,
-          perPage: 100,
+          ...input,
           sort: [{ id: "createdAt", desc: true }],
         }),
     ),

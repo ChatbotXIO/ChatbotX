@@ -1,5 +1,9 @@
 import { triggerService } from "@chatbotx.io/business"
-import z from "zod"
+import {
+  paginateInMemory,
+  publicListRequest,
+  publicListResponse,
+} from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import { triggerResource } from "../schema/resource"
@@ -14,17 +18,19 @@ export const triggersPublicRouter = {
       summary: "List triggers",
       tags: ["Triggers"],
     })
-    .output(z.object({ data: z.array(triggerResource) }))
-    .handler(async ({ context }) => {
+    .input(publicListRequest)
+    .output(publicListResponse(triggerResource))
+    .handler(async ({ context, input }) => {
       const triggers = await triggerService.listByWorkspaceId(
         context.workspace.id,
       )
-      return {
-        data: triggers.map((trigger) => ({
+      return paginateInMemory(
+        triggers.map((trigger) => ({
           ...trigger,
           conditions: [],
           actions: [],
         })),
-      }
+        input,
+      )
     }),
 }

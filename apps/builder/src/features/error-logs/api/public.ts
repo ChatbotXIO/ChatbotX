@@ -1,5 +1,5 @@
+import { withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import { listErrorLogs } from "../queries"
 import {
   listErrorLogsRequest,
@@ -16,7 +16,7 @@ export const errorLogsPublicRouter = {
       summary: "List error logs",
       tags: ["Error Logs"],
     })
-    .input(listErrorLogsRequest.omit({ workspaceId: true }))
+    .input(withPublicPaging(listErrorLogsRequest.omit({ workspaceId: true })))
     .output(publicListErrorLogsResponse)
     .handler(
       async ({ context, input }) =>

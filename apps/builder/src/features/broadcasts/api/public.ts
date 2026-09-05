@@ -1,6 +1,6 @@
 import z from "zod"
+import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-
 import {
   listBroadcastAudience,
   listBroadcasts,
@@ -22,18 +22,17 @@ export const broadcastsPublicRouter = {
       summary: "Get all broadcasts",
       tags: ["Broadcasts"],
     })
+    .input(publicListRequest)
     .output(publicListBroadcastsResponse)
-    .handler(async ({ context }) => {
-      const { data } = await listBroadcasts({
-        workspaceId: context.workspace.id,
-        page: 1,
-        perPage: 100,
-        sort: [{ id: "createdAt", desc: true }],
-        name: null,
-      })
-
-      return { data }
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listBroadcasts({
+          workspaceId: context.workspace.id,
+          ...input,
+          sort: [{ id: "createdAt", desc: true }],
+          name: null,
+        }),
+    ),
 
   get: workspaceTokenAuthAPI
     .route({
