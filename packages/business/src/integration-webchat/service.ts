@@ -1,12 +1,32 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import {
+  db,
+  eq,
+  findOrFail,
+  relationsFilterToSQL,
+} from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import { parsePagination } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { workspaceService } from "../workspace"
+
+export type UpdateWebchatData = Partial<{
+  name: string
+  enable: boolean
+  authorizedDomains: string[]
+  conversationStarters: unknown[]
+  persistentMenus: unknown[]
+  brandColor: string
+  hideHeader: boolean
+  showLogo: boolean
+  hideMessageInput: boolean
+  customCss: string | null
+  welcomeFlowId: string | null
+}>
 
 export type CreateWebchatRequest = {
   name: string
@@ -88,56 +108,6 @@ class IntegrationWebchatService extends BaseService {
     return created
   }
 
-  findByWorkspaceIdAndId(where: { id: string; workspaceId: string }) {
-    return findOrFail({
-      table: integrationWebchatModel,
-      where,
-      message: "Integration webchat not found",
-    })
-  }
-
-  listByWorkspaceId(props: {
-    workspaceId: string
-    pagination?: { limit: number; offset: number } | null
-  }) {
-    const where = { workspaceId: props.workspaceId }
-    return Promise.all([
-      db.query.integrationWebchatModel.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        ...props.pagination,
-      }),
-      props.pagination?.limit
-        ? db.$count(
-            integrationWebchatModel,
-            eq(integrationWebchatModel.workspaceId, props.workspaceId),
-          )
-        : Promise.resolve(1),
-    ])
-  }
-
-  async update(
-    where: { workspaceId: string; id: string },
-    data: UpdateWebchatRequest & {
-      welcomeFlowId?: string | null
-      authorizedDomains?: string[]
-    },
-  ): Promise<void> {
-    const existing = await this.findByWorkspaceIdAndId(where)
-
-    await db.transaction(async (tx) => {
-      await tx
-        .update(integrationWebchatModel)
-        .set({
-          ...data,
-          conversationStarters: data.conversationStarters as never,
-          persistentMenus: data.persistentMenus as never,
-          workspaceId: where.workspaceId,
-        })
-        .where(eq(integrationWebchatModel.id, existing.id))
-    })
-  }
-
   async delete(input: { workspaceId: string; id: string }): Promise<void> {
     const [integrationWebchat, workspace] = await Promise.all([
       findOrFail({
@@ -172,6 +142,125 @@ class IntegrationWebchatService extends BaseService {
       "disconnect",
       `disconnected the Webchat channel (#${integrationWebchat.id})`,
     )
+  }
+
+  /**
+   * Optionally provisions a workspace, then reuses `create` (above) inside
+   * the same transaction to insert the Inbox + IntegrationWebchat row.
+   */
+  async createWithWorkspace(input: {
+    workspaceId?: string
+    createdBy: string
+    workspaceName: string
+    data: CreateWebchatRequest
+  }): Promise<{
+    workspaceId: string
+    createdWorkspace: boolean
+    webchatId: string
+  }> {
+    const { createdBy, workspaceName, data } = input
+    let ownerId = createdBy
+
+    const result = await db.transaction(async (tx) => {
+      let workspaceId = input.workspaceId
+      let createdWorkspace = false
+
+      if (workspaceId) {
+        const workspace = await workspaceService.findOrFail({
+          where: { id: workspaceId },
+        })
+        ownerId = workspace.ownerId
+      } else {
+        const newWorkspace = await workspaceService.create({
+          tx,
+          createdBy,
+          data: {
+            name: workspaceName,
+            timezone: "UTC",
+            ownerId,
+          },
+        })
+        workspaceId = newWorkspace.id
+        createdWorkspace = true
+      }
+
+      const created = await this.create({ workspaceId, ownerId, data }, tx)
+
+      return { workspaceId, createdWorkspace, webchatId: created.id }
+    })
+
+    return result
+  }
+
+  async findByIdForWorkspaceOrNull(props: {
+    id: string
+    workspaceId: string
+  }): Promise<IntegrationWebchatModel | undefined> {
+    return await db.query.integrationWebchatModel.findFirst({
+      where: { id: props.id, workspaceId: props.workspaceId },
+    })
+  }
+
+  async findByIdForWorkspace(props: {
+    id: string
+    workspaceId: string
+  }): Promise<IntegrationWebchatModel> {
+    return await findOrFail({
+      table: integrationWebchatModel,
+      where: { id: props.id, workspaceId: props.workspaceId },
+      message: "Webchat integration not found",
+    })
+  }
+
+  async list(input: {
+    workspaceId: string
+    page?: number
+    perPage?: number
+  }): Promise<{ data: IntegrationWebchatModel[]; pageCount: number }> {
+    const where = {
+      workspaceId: input.workspaceId,
+    }
+
+    const pagination = parsePagination(input)
+    const [data, totalRows] = await Promise.all([
+      db.query.integrationWebchatModel.findMany({
+        where,
+        orderBy: {
+          createdAt: "desc",
+        },
+        ...pagination,
+      }),
+      pagination?.limit
+        ? db.$count(
+            integrationWebchatModel,
+            relationsFilterToSQL(integrationWebchatModel, where),
+          )
+        : Promise.resolve(1),
+    ])
+
+    const pageCount = pagination?.limit
+      ? Math.ceil(totalRows / pagination.limit)
+      : 1
+    return { data, pageCount }
+  }
+
+  async update(input: {
+    workspaceId: string
+    id: string
+    data: UpdateWebchatData
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, id, data, tx = db } = input
+
+    await tx
+      .update(integrationWebchatModel)
+      .set({
+        ...data,
+        workspaceId,
+        conversationStarters: data.conversationStarters as never,
+        persistentMenus: data.persistentMenus as never,
+      })
+      .where(eq(integrationWebchatModel.id, id))
   }
 }
 

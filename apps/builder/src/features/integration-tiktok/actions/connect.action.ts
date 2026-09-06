@@ -4,7 +4,6 @@ import {
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import type { TiktokCredential } from "@chatbotx.io/database/partials"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { redirect } from "next/navigation"
@@ -34,21 +33,19 @@ export async function connectTiktokHandler({
 
   const openId = authValue.metadata.openId
   const displayName = authValue.metadata.displayName
+  const username = authValue.metadata.username
 
   const { ownerId } = await workspaceService.findById({ id: workspaceId })
 
   try {
-    const { wasCreated, integration } = await db.transaction(async (tx) =>
-      tiktokIntegrationService.connect({
-        tx,
-        ownerId,
-        workspaceId,
-        openId,
-        username: authValue.metadata.username,
-        displayName,
-        auth: authValue,
-      }),
-    )
+    const { wasCreated, integration } = await tiktokIntegrationService.connect({
+      workspaceId,
+      ownerId,
+      openId,
+      username,
+      displayName,
+      auth: authValue,
+    })
 
     if (!integration) {
       return

@@ -2,7 +2,6 @@
 
 import { integrationWebchatService } from "@chatbotx.io/business"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
-import { parsePagination } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListIntegrationWebchatsRequest } from "../schema/query"
 
@@ -11,20 +10,18 @@ export const listIntegrationWebchats = async (
 ) => {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const pagination = parsePagination(input)
-  const [data, totalRows] = await integrationWebchatService.listByWorkspaceId({
+  return await integrationWebchatService.list({
     workspaceId: input.workspaceId,
-    pagination,
+    page: input.page,
+    perPage: input.perPage,
   })
-
-  const pageCount = pagination?.limit
-    ? Math.ceil(totalRows / pagination.limit)
-    : 1
-  return { data, pageCount }
 }
 
 export async function findIntegrationWebchat(
   where: Pick<IntegrationWebchatModel, "id" | "workspaceId">,
 ) {
-  return await integrationWebchatService.findByWorkspaceIdAndId(where)
+  return await integrationWebchatService.findByIdForWorkspace({
+    id: where.id,
+    workspaceId: where.workspaceId,
+  })
 }

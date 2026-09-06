@@ -20,7 +20,7 @@ export const listIntegrationZalo = async ({
 }: {
   where: Partial<Pick<IntegrationZaloModel, "workspaceId" | "id">>
 }): Promise<{ data: IntegrationZaloModel[] }> => {
-  const data = await zaloIntegrationService.listByWorkspaceId(where)
+  const data = await zaloIntegrationService.listByWorkspace(where)
 
   return { data }
 }

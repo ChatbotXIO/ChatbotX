@@ -1,12 +1,7 @@
 "use server"
 
-import {
-  inboxService,
-  workspaceService,
-  zaloIntegrationService,
-} from "@chatbotx.io/business"
+import { workspaceService, zaloIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { db } from "@chatbotx.io/database/client"
 import {
   isRevokedTokenError,
   type ZaloAuthValue,
@@ -40,15 +35,11 @@ export const disconnectZaloAction = workspaceActionClientAllowExpired
       }
     }
 
-    await db.transaction(async (tx) => {
-      await zaloIntegrationService.disconnect({ id: integrationZalo.id, tx })
-      await inboxService.disconnect({
-        inboxId: integrationZalo.inboxId,
-        ownerId: workspace.ownerId,
-        workspaceId,
-        reason: "manual",
-        tx,
-      })
+    await zaloIntegrationService.disconnect({
+      workspaceId,
+      id: integrationZalo.id,
+      inboxId: integrationZalo.inboxId,
+      ownerId: workspace.ownerId,
     })
 
     await auditService.record({

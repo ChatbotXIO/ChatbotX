@@ -3,7 +3,7 @@
 import { beforeEach, expect, test, vi } from "vitest"
 
 const mockHasWorkspacePermission = vi.fn()
-const mockFindByWorkspaceIdAndId = vi.fn()
+const mockFindByIdForWorkspace = vi.fn()
 const mockUpdate = vi.fn()
 const mockIsCommunity = vi.fn(() => false)
 const SUPER_ADMIN_ERROR_RE = /super admin/i
@@ -32,7 +32,7 @@ vi.mock("@/lib/auth/permission-routes", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   integrationWebchatService: {
-    findByWorkspaceIdAndId: mockFindByWorkspaceIdAndId,
+    findByIdForWorkspace: mockFindByIdForWorkspace,
     update: mockUpdate,
   },
 }))
@@ -62,6 +62,7 @@ const makeInput = (permissions: Record<string, unknown>) => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockFindByIdForWorkspace.mockResolvedValue({ id: "webchat-1" })
   mockUpdate.mockResolvedValue(undefined)
 })
 
@@ -77,6 +78,7 @@ test("rejects a workspace member without superAdmin permission", async () => {
   // The permission check must short-circuit before any write is attempted —
   // this is the guard that closes the bypass of the edit page's
   // requireWorkspacePermission(workspaceId, "superAdmin") gate.
+  expect(mockFindByIdForWorkspace).not.toHaveBeenCalled()
   expect(mockUpdate).not.toHaveBeenCalled()
 })
 
@@ -103,8 +105,9 @@ test("proceeds to update when the caller is a superAdmin", async () => {
     makeInput({ superAdmin: true }),
   )
 
-  expect(mockUpdate).toHaveBeenCalledWith(
-    { workspaceId: "workspace-1", id: "webchat-1" },
-    expect.objectContaining({ name: "Support" }),
-  )
+  expect(mockFindByIdForWorkspace).toHaveBeenCalledWith({
+    id: "webchat-1",
+    workspaceId: "workspace-1",
+  })
+  expect(mockUpdate).toHaveBeenCalled()
 })
