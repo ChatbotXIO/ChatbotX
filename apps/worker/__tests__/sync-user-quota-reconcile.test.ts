@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockCountDistinct } = vi.hoisted(() => ({
-  mockCountDistinct: vi.fn((column: unknown) => ({ countDistinct: column })),
-}))
-
 // ---------------------------------------------------------------------------
 // Regression: the Redis→DB reconcile must write the *current* authoritative
 // COUNT(*) for contacts/workspaces/channels and COUNT(DISTINCT userId) for
@@ -15,55 +11,19 @@ const { mockCountDistinct } = vi.hoisted(() => ({
 // ---------------------------------------------------------------------------
 
 const state = {
-  // Dequeued by each terminal `.where()` — order:
-  // [contactsCount, teamMembersCount, workspacesCount, channelsCount].
-  countResults: [] as number[],
+  // Markers reconcileUserSelfUsage reports back to the handler. The counts and
+  // the direct-assignment upsert itself now live inside the service — see
+  // packages/business/__tests__/user-quota-reconcile-self.test.ts.
   stored: null as Record<string, unknown> | null,
-  capturedSets: [] as Record<string, unknown>[],
+  // Every macUsed value the handler persisted, in order.
+  persistedMac: [] as number[],
+  // Truthy once reconcileUserSelfUsage ran for a user (the self-count path).
+  selfReconciledUsers: [] as string[],
   hsetCalls: [] as unknown[][],
   hmgetResult: [null, null] as (string | null)[],
   // Owner MAC count returned by the (mocked) ContactActiveMonthly ledger.
   ledgerMac: 0,
 }
-
-function makeSelectChain() {
-  const chain: Record<string, unknown> = {}
-  chain.from = vi.fn(() => chain)
-  chain.innerJoin = vi.fn(() => chain)
-  chain.where = vi.fn(() =>
-    Promise.resolve([{ count: state.countResults.shift() ?? 0 }]),
-  )
-  return chain
-}
-
-function makeInsertChain() {
-  const chain: Record<string, unknown> = {}
-  chain.values = vi.fn(() => chain)
-  chain.onConflictDoUpdate = vi.fn((arg: { set: Record<string, unknown> }) => {
-    state.capturedSets.push(arg.set)
-    return Promise.resolve()
-  })
-  return chain
-}
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    select: vi.fn(() => makeSelectChain()),
-    insert: vi.fn(() => makeInsertChain()),
-    query: {
-      userQuotaModel: { findFirst: vi.fn(async () => state.stored) },
-    },
-  },
-  and: vi.fn((...a: unknown[]) => ({ and: a })),
-  count: vi.fn(() => ({ count: true })),
-  countDistinct: mockCountDistinct,
-  eq: vi.fn((a: unknown, b: unknown) => ({ eq: [a, b] })),
-  ne: vi.fn((a: unknown, b: unknown) => ({ ne: [a, b] })),
-  sql: (strings: TemplateStringsArray, ...vals: unknown[]) => ({
-    __sql: strings.join("?"),
-    vals,
-  }),
-}))
 
 // The handler imports a few lightweight helpers from `@chatbotx.io/business`.
 // Mock them directly rather than loading the whole service+integration graph
@@ -80,9 +40,27 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: {
     invalidate: vi.fn(async () => undefined),
     reconcileOwnerPoolUsage: vi.fn(async () => undefined),
-    countDistinctTeamMembersForOwner: vi.fn(
-      async () => state.countResults.shift() ?? 0,
-    ),
+    // The authoritative self-count + direct-assignment upsert moved here from
+    // the handler; the handler now only consumes the four billing markers.
+    reconcileUserSelfUsage: vi.fn((userId: string) => {
+      state.selfReconciledUsers.push(userId)
+      return Promise.resolve({
+        macUsed: (state.stored?.macUsed as number | undefined) ?? 0,
+        periodStart:
+          (state.stored?.periodStart as Date | null | undefined) ?? null,
+        periodEnd: (state.stored?.periodEnd as Date | null | undefined) ?? null,
+        monthlyBotMessagesPeriodStart:
+          (state.stored?.monthlyBotMessagesPeriodStart as
+            | Date
+            | null
+            | undefined) ?? null,
+      })
+    }),
+    persistMacUsed: vi.fn((_userId: string, value: number) => {
+      state.persistedMac.push(value)
+      return Promise.resolve()
+    }),
+    applyMonthlyBotMessagesReset: vi.fn(async () => undefined),
   },
   // Non-reseller users: `findByOwner` returns nothing, so reconcileUser keeps
   // the per-user self-count path these tests exercise.
@@ -97,25 +75,6 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/utils", () => ({
   USER_QUOTA_LABEL: "user-quota",
   liveKeyFor: (label: string, id: string) => `${label}-live:${id}`,
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactModel: { workspaceId: "contact.workspaceId" },
-  inboxModel: { workspaceId: "inbox.workspaceId" },
-  userQuotaModel: {
-    userId: "userQuota.userId",
-    contactsUsed: "userQuota.contactsUsed",
-    teamMembersUsed: "userQuota.teamMembersUsed",
-    workspacesUsed: "userQuota.workspacesUsed",
-    channelsUsed: "userQuota.channelsUsed",
-    macUsed: "userQuota.macUsed",
-  },
-  workspaceMemberModel: {
-    workspaceId: "wm.workspaceId",
-    userId: "wm.userId",
-    role: "wm.role",
-  },
-  workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
 }))
 
 const redisClient = {
@@ -156,15 +115,16 @@ const { tenantService, userQuotaService } = (await import(
   }
   userQuotaService: {
     reconcileOwnerPoolUsage: ReturnType<typeof vi.fn>
-    countDistinctTeamMembersForOwner: ReturnType<typeof vi.fn>
+    reconcileUserSelfUsage: ReturnType<typeof vi.fn>
+    persistMacUsed: ReturnType<typeof vi.fn>
   }
 }
 
-describe("reconcileUser — contacts/teamMembers reflect the current count", () => {
+describe("reconcileUser — the non-reseller path delegates the self-count", () => {
   beforeEach(() => {
-    state.countResults = []
     state.stored = null
-    state.capturedSets = []
+    state.persistedMac = []
+    state.selfReconciledUsers = []
     state.hsetCalls = []
     state.hmgetResult = [null, null]
     state.ledgerMac = 0
@@ -172,74 +132,26 @@ describe("reconcileUser — contacts/teamMembers reflect the current count", () 
     countActiveContactsForOwner.mockClear()
   })
 
-  test("writes the recomputed count even when LOWER than the stored value (deletions free slots)", async () => {
-    // Source-of-truth counts after deletions. Team members are distinct humans:
-    // [contacts, teamMembers, workspaces, channels].
-    state.countResults = [3, 1, 2, 4]
-    // DB previously stored a higher (high-water) value.
+  // The authoritative COUNT(*) reads, the direct-assignment (never GREATEST)
+  // upsert, and the live-counter mirror all moved into
+  // userQuotaService.reconcileUserSelfUsage — pinned in
+  // packages/business/__tests__/user-quota-reconcile-self.test.ts. What the
+  // handler still owns is *calling* it for the right user, exactly once.
+  test("reconciles the user's own usage exactly once for a non-reseller", async () => {
     state.stored = {
-      contactsUsed: 10,
-      teamMembersUsed: 5,
-      workspacesUsed: 8,
-      channelsUsed: 9,
       macUsed: 0,
       periodStart: null,
+      periodEnd: null,
+      monthlyBotMessagesPeriodStart: null,
     }
 
     await reconcileUser("user-1")
 
-    // The reconcile upsert must persist the exact current count, not GREATEST.
-    const set = state.capturedSets[0]
-    expect(set.contactsUsed).toBe(3)
-    expect(set.teamMembersUsed).toBe(1)
-    expect(set.workspacesUsed).toBe(2)
-    expect(set.channelsUsed).toBe(4)
-
-    // The live Redis counter must mirror the current count, not the stale values.
-    expect(state.hsetCalls[0]).toEqual([
-      "user-quota-live:user-1",
-      "contacts",
-      "3",
-      "teamMembers",
-      "1",
-      "workspaces",
-      "2",
-      "channels",
-      "4",
-    ])
-  })
-
-  test("counts a human shared across workspaces once", async () => {
-    // Two workspaces with the owner and one shared teammate produce four
-    // membership rows but only two distinct people.
-    state.countResults = [0, 2, 2, 0]
-
-    await reconcileUser("user-1")
-
-    expect(
-      userQuotaService.countDistinctTeamMembersForOwner,
-    ).toHaveBeenCalledWith("user-1")
-    expect(state.capturedSets[0].teamMembersUsed).toBe(2)
-  })
-
-  test("writes increases too (count grew since last sync)", async () => {
-    state.countResults = [42, 7, 3, 5]
-    state.stored = {
-      contactsUsed: 40,
-      teamMembersUsed: 6,
-      workspacesUsed: 2,
-      channelsUsed: 4,
-      macUsed: 0,
-      periodStart: null,
-    }
-
-    await reconcileUser("user-2")
-
-    const set = state.capturedSets[0]
-    expect(set.contactsUsed).toBe(42)
-    expect(set.teamMembersUsed).toBe(7)
-    expect(set.workspacesUsed).toBe(3)
-    expect(set.channelsUsed).toBe(5)
+    expect(userQuotaService.reconcileUserSelfUsage).toHaveBeenCalledTimes(1)
+    expect(userQuotaService.reconcileUserSelfUsage).toHaveBeenCalledWith(
+      "user-1",
+    )
+    expect(state.selfReconciledUsers).toEqual(["user-1"])
   })
 })
 
@@ -247,8 +159,8 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
   const PERIOD = "2026-06-01T00:00:00.000Z"
 
   beforeEach(() => {
-    state.countResults = [0, 0, 0, 0]
-    state.capturedSets = []
+    state.persistedMac = []
+    state.selfReconciledUsers = []
     state.hsetCalls = []
     redisClient.hset.mockClear()
     countActiveContactsForOwner.mockClear()
@@ -260,13 +172,10 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
     state.hmgetResult = ["3", PERIOD]
     state.ledgerMac = 7
     state.stored = {
-      contactsUsed: 0,
-      teamMembersUsed: 0,
-      workspacesUsed: 0,
-      channelsUsed: 0,
       macUsed: 5,
       periodStart: new Date(PERIOD),
       periodEnd: new Date("2026-07-01T00:00:00.000Z"),
+      monthlyBotMessagesPeriodStart: null,
     }
 
     await reconcileUser("user-1")
@@ -283,34 +192,31 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
       PERIOD,
     ])
     // macUsed is persisted to the ledger count (self-heals the drift).
-    expect(state.capturedSets.some((set) => set.macUsed === 7)).toBe(true)
+    expect(state.persistedMac).toContain(7)
   })
 
   test("lifetime plan (no periodEnd) keeps the accumulate path, not the ledger", async () => {
     state.hmgetResult = ["10", PERIOD]
     state.ledgerMac = 4
     state.stored = {
-      contactsUsed: 0,
-      teamMembersUsed: 0,
-      workspacesUsed: 0,
-      channelsUsed: 0,
       macUsed: 10,
       periodStart: new Date(PERIOD),
       periodEnd: null,
+      monthlyBotMessagesPeriodStart: null,
     }
 
     await reconcileUser("user-1")
 
     expect(countActiveContactsForOwner).not.toHaveBeenCalled()
     // No mac drift to persist (live === DB within the stable lifetime period).
-    expect(state.capturedSets.some((set) => "macUsed" in set)).toBe(false)
+    expect(state.persistedMac).toHaveLength(0)
   })
 })
 
 describe("reconcileUser — reseller owner reconciles the tenant pool", () => {
   beforeEach(() => {
-    state.countResults = []
-    state.capturedSets = []
+    state.persistedMac = []
+    state.selfReconciledUsers = []
     state.hsetCalls = []
     tenantService.findByOwner.mockReset()
     tenantService.findByOwner.mockResolvedValue(undefined)
@@ -331,8 +237,9 @@ describe("reconcileUser — reseller owner reconciles the tenant pool", () => {
       "owner-1",
       "tenant-1",
     )
-    // ...so the per-user self-count upsert never runs for the owner.
-    expect(state.capturedSets).toHaveLength(0)
+    // ...so the per-user self-count never runs for the owner.
+    expect(userQuotaService.reconcileUserSelfUsage).not.toHaveBeenCalled()
+    expect(state.selfReconciledUsers).toHaveLength(0)
   })
 
   test("a suspended tenant falls through to the per-user self-count", async () => {
@@ -341,27 +248,24 @@ describe("reconcileUser — reseller owner reconciles the tenant pool", () => {
       ownerId: "owner-1",
       status: "suspended",
     })
-    state.countResults = [1, 2, 3, 4]
     state.stored = {
-      contactsUsed: 0,
-      teamMembersUsed: 0,
-      workspacesUsed: 0,
-      channelsUsed: 0,
       macUsed: 0,
       periodStart: null,
+      periodEnd: null,
+      monthlyBotMessagesPeriodStart: null,
     }
 
     await reconcileUser("owner-1")
 
     expect(userQuotaService.reconcileOwnerPoolUsage).not.toHaveBeenCalled()
-    expect(state.capturedSets.length).toBeGreaterThan(0)
+    expect(state.selfReconciledUsers).toEqual(["owner-1"])
   })
 })
 
 describe("syncUserQuota — cold reseller owners are included via DB fallback", () => {
   beforeEach(() => {
-    state.countResults = []
-    state.capturedSets = []
+    state.persistedMac = []
+    state.selfReconciledUsers = []
     state.hsetCalls = []
     redisClient.scan.mockReset()
     // Simulate empty Redis: no live keys for any user
@@ -416,6 +320,6 @@ describe("syncUserQuota — cold reseller owners are included via DB fallback", 
     await syncUserQuota()
 
     expect(userQuotaService.reconcileOwnerPoolUsage).not.toHaveBeenCalled()
-    expect(state.capturedSets).toHaveLength(0)
+    expect(state.selfReconciledUsers).toHaveLength(0)
   })
 })

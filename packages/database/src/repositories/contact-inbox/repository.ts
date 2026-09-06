@@ -376,4 +376,57 @@ export const contactInboxRepository = {
 
     return perChannelRows.flat()
   },
+
+  /**
+   * `sync-channel-labels.ts` scan page: every contact inbox on one inbox,
+   * keyset-paginated by id. Returns full rows (the handler reads `sourceId`,
+   * `contactId`, etc. off the whole model when scanning).
+   */
+  async listByInboxPage(
+    input: { inboxId: string; afterId?: string; limit: number },
+    tx: DatabaseClient = db,
+  ) {
+    return await tx.query.contactInboxModel.findMany({
+      where: {
+        inboxId: input.inboxId,
+        ...(input.afterId ? { id: { gt: input.afterId } } : {}),
+      },
+      orderBy: { id: "asc" },
+      limit: input.limit,
+    })
+  },
+
+  /**
+   * `sync-tag.ts` delete path: resolves the distinct contact ids owning a
+   * page of contact-inbox ids, so the caller can prune `ContactsToTags` rows
+   * for exactly those contacts.
+   */
+  async listContactIdsByIds(
+    input: { ids: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<{ contactId: string }[]> {
+    if (input.ids.length === 0) {
+      return []
+    }
+    return await tx.query.contactInboxModel.findMany({
+      where: { id: { in: input.ids } },
+      columns: { contactId: true },
+    })
+  },
+
+  /**
+   * `sync-tag.ts` attach path: every contact-inbox for a contact, with no
+   * `workspaceId` filter (the caller has only a `contactId` in scope at this
+   * point). Distinct from `contactInboxService.listByContactId`, which
+   * requires `workspaceId` and is cached — this is an uncached, unscoped
+   * full-row read.
+   */
+  async listByContactId(
+    input: { contactId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel[]> {
+    return await tx.query.contactInboxModel.findMany({
+      where: { contactId: input.contactId },
+    })
+  },
 }

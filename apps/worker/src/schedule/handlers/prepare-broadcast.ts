@@ -1,5 +1,4 @@
 import { broadcastService, conversationService } from "@chatbotx.io/business"
-import { and, db, eq, isNull } from "@chatbotx.io/database/client"
 import {
   type BroadcastStatus,
   broadcastStatuses,
@@ -8,10 +7,6 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 import { purgeBroadcastRecipients } from "@chatbotx.io/database/repositories"
-import {
-  broadcastModel,
-  contactsOnBroadcastsModel,
-} from "@chatbotx.io/database/schema"
 import {
   broadcastSendJobId,
   ScheduleJobData,
@@ -27,12 +22,8 @@ const PREPARE_PURGE_INTER_CHUNK_DELAY_MS = 50
 const PREPARE_PURGE_MAX_RUN_DURATION_MS = 60_000
 
 export const prepareBroadcast = async (broadcastId: string) => {
-  const broadcast = await db.query.broadcastModel.findFirst({
-    where: {
-      id: broadcastId,
-      status: "scheduled",
-      deletedAt: { isNull: true },
-    },
+  const broadcast = await broadcastService.findScheduledForPrepare({
+    broadcastId,
   })
 
   if (!broadcast) {
@@ -76,14 +67,11 @@ export const prepareBroadcast = async (broadcastId: string) => {
       broadcastSubactions.enum.messengerTemplateMessage &&
     broadcast.templateId
   ) {
-    const template = await db.query.messengerMessageTemplateModel.findFirst({
-      where: {
-        id: broadcast.templateId,
-        integrationMessenger: { workspaceId: broadcast.workspaceId },
-      },
-      columns: { integrationMessengerId: true },
-    })
-    integrationMessengerId = template?.integrationMessengerId ?? null
+    integrationMessengerId =
+      await broadcastService.resolveTemplateIntegrationMessengerId({
+        workspaceId: broadcast.workspaceId,
+        templateId: broadcast.templateId,
+      })
   }
 
   let hasContactOnBroadcast = false
@@ -147,10 +135,7 @@ export const prepareBroadcast = async (broadcastId: string) => {
 
       hasContactOnBroadcast = true
 
-      await db
-        .insert(contactsOnBroadcastsModel)
-        .values(recipients)
-        .onConflictDoNothing()
+      await broadcastService.insertRecipients({ recipients })
 
       contactCount += recipients.length
 
@@ -162,18 +147,12 @@ export const prepareBroadcast = async (broadcastId: string) => {
     ? broadcastStatuses.enum.sending
     : broadcastStatuses.enum.sent
 
-  const [promoted] = await db
-    .update(broadcastModel)
-    .set({ status: broadcastStatus, contactCount })
-    .where(
-      and(
-        eq(broadcastModel.id, broadcastId),
-        eq(broadcastModel.status, broadcastStatuses.enum.scheduled),
-        isNull(broadcastModel.deletedAt),
-        eq(broadcastModel.resumeCount, promotionEpoch),
-      ),
-    )
-    .returning({ id: broadcastModel.id })
+  const promoted = await broadcastService.promoteAfterPrepare({
+    broadcastId,
+    status: broadcastStatus,
+    contactCount,
+    promotionEpoch,
+  })
 
   if (!promoted) {
     // Lost the promotion race — a moveToDraft (or delete) bumped the epoch

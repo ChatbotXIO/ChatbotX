@@ -1,46 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  conversationFindFirst: vi.fn(),
+  findLatestCreatedByContact: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
-  tagFindMany: vi.fn(),
-  insertReturning: vi.fn(),
+  attachExistingToContactForTrigger: vi.fn(),
   enqueueAttach: vi.fn(),
   enqueueTagAppliedEvaluations: vi.fn(),
   enqueueEvent: vi.fn(),
   buildSourceKey: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      conversationModel: {
-        findFirst: (...args: unknown[]) => mocks.conversationFindFirst(...args),
-      },
-      tagModel: {
-        findMany: (...args: unknown[]) => mocks.tagFindMany(...args),
-      },
-    },
-    insert: () => ({
-      values: () => ({
-        onConflictDoNothing: () => ({
-          returning: (...args: unknown[]) => mocks.insertReturning(...args),
-        }),
-      }),
-    }),
-    delete: () => ({ where: vi.fn() }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactsToTagsModel: {
-    contactId: "contactsToTagsModel.contactId",
-    tagId: "contactsToTagsModel.tagId",
-  },
   metaCapiEventChannelSchema: {
     safeParse: (value: unknown) =>
       value === "messenger" || value === "instagram" || value === "whatsapp"
@@ -60,7 +31,18 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   contactCustomFieldService: {},
-  conversationService: {},
+  conversationService: {
+    findLatestCreatedByContact: (...args: unknown[]) =>
+      mocks.findLatestCreatedByContact(...args),
+  },
+  tagService: {
+    attachExistingToContactForTrigger: (...args: unknown[]) =>
+      mocks.attachExistingToContactForTrigger(...args),
+    detachFromContactForTrigger: vi.fn(),
+  },
+  flowService: {},
+  workspaceMemberService: {},
+  inboxService: {},
   tagSyncService: {
     enqueueAttach: (...args: unknown[]) => mocks.enqueueAttach(...args),
   },
@@ -120,7 +102,7 @@ const { ActionExecutor } = await import(
 describe("ActionExecutor addTag", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.conversationFindFirst.mockResolvedValue({
+    mocks.findLatestCreatedByContact.mockResolvedValue({
       id: "conv-1",
       contactId: "contact-1",
       workspaceId: "ws-1",
@@ -134,8 +116,9 @@ describe("ActionExecutor addTag", () => {
   })
 
   test("enqueues tag sync and ads conversion tagApplied evaluation for newly-linked tags", async () => {
-    mocks.tagFindMany.mockResolvedValue([{ id: "tag-1" }, { id: "tag-2" }])
-    mocks.insertReturning.mockResolvedValue([{ tagId: "tag-1" }])
+    mocks.attachExistingToContactForTrigger.mockResolvedValue([
+      { tagId: "tag-1" },
+    ])
 
     const executor = new ActionExecutor()
     await executor.execute({
@@ -159,8 +142,7 @@ describe("ActionExecutor addTag", () => {
   })
 
   test("does not enqueue when no tags were newly linked", async () => {
-    mocks.tagFindMany.mockResolvedValue([{ id: "tag-1" }])
-    mocks.insertReturning.mockResolvedValue([])
+    mocks.attachExistingToContactForTrigger.mockResolvedValue([])
 
     const executor = new ActionExecutor()
     await executor.execute({
@@ -174,7 +156,7 @@ describe("ActionExecutor addTag", () => {
   })
 
   test("skips entirely when no conversation is found for the contact", async () => {
-    mocks.conversationFindFirst.mockResolvedValue(null)
+    mocks.findLatestCreatedByContact.mockResolvedValue(null)
 
     const executor = new ActionExecutor()
     await executor.execute({
@@ -183,7 +165,7 @@ describe("ActionExecutor addTag", () => {
       workspaceId: "ws-1",
     })
 
-    expect(mocks.tagFindMany).not.toHaveBeenCalled()
+    expect(mocks.attachExistingToContactForTrigger).not.toHaveBeenCalled()
     expect(mocks.enqueueTagAppliedEvaluations).not.toHaveBeenCalled()
   })
 

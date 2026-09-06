@@ -3,137 +3,143 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const UNKNOWN_ACTION_RE = /unknown action/
 
 // ---------------------------------------------------------------------------
-// DB mock — chainable builder pattern (see contact-analytics.service.test.ts)
+// Repository / service mocks — the handler now calls repository + business
+// service methods instead of `db.*` directly.
 // ---------------------------------------------------------------------------
 
-type ChainBuilder = Record<string, unknown>
-
-// Shared result holders mutated by individual tests
 const queryResults = {
-  tagModelFindFirst: null as unknown,
-  integrationMessengerFindMany: [] as unknown[],
-  integrationZaloFindMany: [] as unknown[],
-  tagChannelFindFirst: null as unknown,
-  tagChannelFindMany: [] as unknown[],
-  integrationMessengerFindFirst: null as unknown,
-  integrationZaloFindFirst: null as unknown,
-  contactInboxFindMany: [] as unknown[],
-  contactToTagChannelFindMany: [] as unknown[],
-  contactsToTagsFindMany: [] as unknown[],
-  selectRows: [] as unknown[],
+  tag: null as unknown,
+  messengerIntegrations: [] as unknown[],
+  zaloIntegrations: [] as unknown[],
+  tagChannel: null as unknown,
+  tagChannelList: [] as unknown[],
+  messengerIntegration: null as unknown,
+  zaloIntegration: null as unknown,
+  contactInboxes: [] as unknown[],
+  contactTagChannelRows: [] as unknown[],
+  contactInboxIdsForChannelPage: [] as unknown[],
+  contactIdsByIds: [] as unknown[],
+  taggedContactIdsPage: [] as unknown[],
 }
 
-const insertReturning = { current: [] as unknown[] }
-const updateReturning = { current: [] as unknown[] }
+const tagServiceFindById = vi.fn(async () => queryResults.tag)
+const tagServiceHardDeleteSoftDeleted = vi.fn(async () => undefined)
 
-// Generic chainable builder factory
-function makeChain(terminalFn?: () => Promise<unknown>): ChainBuilder {
-  const builder: ChainBuilder = {}
-  const noop = () => builder
-  builder.set = vi.fn(noop)
-  builder.where = vi.fn(noop)
-  builder.returning = vi.fn(async () => insertReturning.current)
-  builder.onConflictDoNothing = vi.fn(noop)
-  builder.onConflictDoUpdate = vi.fn(noop)
-  builder.values = vi.fn(noop)
-  builder.innerJoin = vi.fn(noop)
-  builder.from = vi.fn(noop)
-  // terminal
-  if (terminalFn) {
-    // biome-ignore lint/suspicious/noThenProperty: intentional thenable for await support in tests
-    builder.then = vi.fn((resolve: (v: unknown) => unknown) =>
-      Promise.resolve(terminalFn()).then(resolve),
-    )
-  }
-  return builder
-}
-
-const insertChain = makeChain()
-const updateChain = makeChain(async () => updateReturning.current)
-const deleteChain = makeChain()
-const selectChain = makeChain(async () => queryResults.selectRows)
-
-// Make insert().values().onConflictDoNothing().returning() work
-insertChain.values = vi.fn(() => insertChain)
-insertChain.onConflictDoNothing = vi.fn(() => insertChain)
-insertChain.onConflictDoUpdate = vi.fn(() => insertChain)
-insertChain.returning = vi.fn(async () => insertReturning.current)
-
-// Make update().set().where() chain
-updateChain.set = vi.fn(() => updateChain)
-updateChain.where = vi.fn(() => updateChain)
-
-// Make delete().where() chain
-deleteChain.where = vi.fn(() => deleteChain)
-// No returning needed for delete
-
-// Make select().from().innerJoin().where() chain
-selectChain.from = vi.fn(() => selectChain)
-selectChain.innerJoin = vi.fn(() => selectChain)
-selectChain.where = vi.fn(async () => queryResults.selectRows)
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      tagModel: {
-        findFirst: vi.fn(async () => queryResults.tagModelFindFirst),
-      },
-      tagChannelModel: {
-        findFirst: vi.fn(async () => queryResults.tagChannelFindFirst),
-        findMany: vi.fn(async () => queryResults.tagChannelFindMany),
-      },
-      integrationMessengerModel: {
-        findFirst: vi.fn(
-          async () => queryResults.integrationMessengerFindFirst,
-        ),
-        findMany: vi.fn(async () => queryResults.integrationMessengerFindMany),
-      },
-      integrationZaloModel: {
-        findFirst: vi.fn(async () => queryResults.integrationZaloFindFirst),
-        findMany: vi.fn(async () => queryResults.integrationZaloFindMany),
-      },
-      contactInboxModel: {
-        findMany: vi.fn(async () => queryResults.contactInboxFindMany),
-      },
-      contactToTagChannelModel: {
-        findMany: vi.fn(async () => queryResults.contactToTagChannelFindMany),
-      },
-      contactsToTagsModel: {
-        findMany: vi.fn(async () => queryResults.contactsToTagsFindMany),
-      },
-    },
-    insert: vi.fn(() => insertChain),
-    update: vi.fn(() => updateChain),
-    delete: vi.fn(() => deleteChain),
-    select: vi.fn(() => selectChain),
+vi.mock("@chatbotx.io/business", () => ({
+  buildContext: vi.fn(async () => fakeCtx),
+  tagService: {
+    findById: (...args: unknown[]) => tagServiceFindById(...args),
+    hardDeleteSoftDeleted: (...args: unknown[]) =>
+      tagServiceHardDeleteSoftDeleted(...args),
   },
-  and: (...args: unknown[]) => args,
-  eq: (...args: unknown[]) => args,
-  inArray: (...args: unknown[]) => args,
-  isNotNull: (...args: unknown[]) => args,
+  zaloIntegrationService: {
+    listByWorkspace: (...args: unknown[]) => zaloListByWorkspace(...args),
+    findByInboxId: (...args: unknown[]) => zaloFindByInboxId(...args),
+    findByIdUnscoped: (...args: unknown[]) => zaloFindByIdUnscoped(...args),
+  },
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  tagModel: { id: "id", workspaceId: "workspaceId", deletedAt: "deletedAt" },
-  contactsToTagsModel: {
-    contactId: "contactId",
-    tagId: "tagId",
+const zaloListByWorkspace = vi.fn(async () => queryResults.zaloIntegrations)
+const zaloFindByInboxId = vi.fn(async () => queryResults.zaloIntegration)
+const zaloFindByIdUnscoped = vi.fn(async () => queryResults.zaloIntegration)
+
+const tagChannelInsertIfAbsent = vi.fn(async () => undefined)
+const tagChannelFindByTagAndIntegration = vi.fn(
+  async () => queryResults.tagChannel,
+)
+const tagChannelUpdateExternalLabelId = vi.fn(async () => undefined)
+const tagChannelInsertOrFetch = vi.fn(async () => queryResults.tagChannel)
+const tagChannelUpsertByTagAndIntegration = vi.fn(
+  async () => queryResults.tagChannel,
+)
+const tagChannelLinkContactInbox = vi.fn(async () => undefined)
+const tagChannelUnlinkContactInbox = vi.fn(async () => undefined)
+const tagChannelListContactTagChannelRows = vi.fn(
+  async () => queryResults.contactTagChannelRows,
+)
+const tagChannelListByTag = vi.fn(async () => queryResults.tagChannelList)
+const tagChannelDeleteById = vi.fn(async () => undefined)
+const tagChannelListContactInboxIdsForChannelPage = vi.fn(
+  async () => queryResults.contactInboxIdsForChannelPage,
+)
+const tagChannelDeleteLinksForChannel = vi.fn(async () => undefined)
+const tagChannelDeleteContactTagsForContacts = vi.fn(async () => undefined)
+const tagChannelListTaggedContactIdsPage = vi.fn(
+  async () => queryResults.taggedContactIdsPage,
+)
+
+const contactInboxListByContactId = vi.fn(
+  async () => queryResults.contactInboxes,
+)
+const contactInboxListContactIdsByIds = vi.fn(
+  async () => queryResults.contactIdsByIds,
+)
+
+const integrationMessengerListByWorkspace = vi.fn(
+  async () => queryResults.messengerIntegrations,
+)
+const integrationMessengerFindByInboxId = vi.fn(
+  async () => queryResults.messengerIntegration,
+)
+const integrationMessengerFindById = vi.fn(
+  async () => queryResults.messengerIntegration,
+)
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  tagChannelRepository: {
+    insertIfAbsent: (...args: unknown[]) => tagChannelInsertIfAbsent(...args),
+    findByTagAndIntegration: (...args: unknown[]) =>
+      tagChannelFindByTagAndIntegration(...args),
+    updateExternalLabelId: (...args: unknown[]) =>
+      tagChannelUpdateExternalLabelId(...args),
+    insertOrFetch: (...args: unknown[]) => tagChannelInsertOrFetch(...args),
+    upsertByTagAndIntegration: (...args: unknown[]) =>
+      tagChannelUpsertByTagAndIntegration(...args),
+    linkContactInbox: (...args: unknown[]) =>
+      tagChannelLinkContactInbox(...args),
+    unlinkContactInbox: (...args: unknown[]) =>
+      tagChannelUnlinkContactInbox(...args),
+    listContactTagChannelRows: (...args: unknown[]) =>
+      tagChannelListContactTagChannelRows(...args),
+    listByTag: (...args: unknown[]) => tagChannelListByTag(...args),
+    deleteById: (...args: unknown[]) => tagChannelDeleteById(...args),
+    listContactInboxIdsForChannelPage: (...args: unknown[]) =>
+      tagChannelListContactInboxIdsForChannelPage(...args),
+    deleteLinksForChannel: (...args: unknown[]) =>
+      tagChannelDeleteLinksForChannel(...args),
+    deleteContactTagsForContacts: (...args: unknown[]) =>
+      tagChannelDeleteContactTagsForContacts(...args),
+    listTaggedContactIdsPage: (...args: unknown[]) =>
+      tagChannelListTaggedContactIdsPage(...args),
   },
-  tagChannelModel: {
-    id: "id",
-    tagId: "tagId",
-    channelType: "channelType",
-    integrationId: "integrationId",
-    workspaceId: "workspaceId",
+  contactInboxRepository: {
+    listByContactId: (...args: unknown[]) =>
+      contactInboxListByContactId(...args),
+    listContactIdsByIds: (...args: unknown[]) =>
+      contactInboxListContactIdsByIds(...args),
   },
-  contactToTagChannelModel: {
-    tagChannelId: "tagChannelId",
-    contactInboxId: "contactInboxId",
-    tagId: "tagId",
+  integrationMessengerRepository: {
+    listByWorkspace: (...args: unknown[]) =>
+      integrationMessengerListByWorkspace(...args),
+    findByInboxId: (...args: unknown[]) =>
+      integrationMessengerFindByInboxId(...args),
+    findById: (...args: unknown[]) => integrationMessengerFindById(...args),
   },
-  contactInboxModel: { id: "id", contactId: "contactId" },
-  integrationMessengerModel: { id: "id" },
-  integrationZaloModel: { id: "id" },
+}))
+
+// `chunkById` — single-chunk default: run the query once, invoke the
+// callback if there are rows, then stop (mirrors the shared repo test
+// helper pattern used elsewhere in this suite).
+vi.mock("@chatbotx.io/database/utils", () => ({
+  chunkById: async (
+    queryBuilder: (lastId: string | null) => Promise<{ id: string }[]>,
+    options: { callback: (rows: { id: string }[]) => Promise<unknown> },
+  ) => {
+    const rows = await queryBuilder(null)
+    if (rows.length > 0) {
+      await options.callback(rows)
+    }
+  },
 }))
 
 // ---------------------------------------------------------------------------
@@ -151,6 +157,18 @@ vi.mock("@chatbotx.io/integration-zalo", () => ({
 }))
 
 // ---------------------------------------------------------------------------
+// error-log — spy only, never throws
+// ---------------------------------------------------------------------------
+
+const logProviderError = vi.fn(async () => undefined)
+const logProviderErrorForChannel = vi.fn(async () => undefined)
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: (...args: unknown[]) => logProviderError(...args),
+  logProviderErrorForChannel: (...args: unknown[]) =>
+    logProviderErrorForChannel(...args),
+}))
+
+// ---------------------------------------------------------------------------
 // Redis distributedLock — execute fn immediately (no real lock)
 // ---------------------------------------------------------------------------
 
@@ -162,27 +180,10 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Business buildContext
+// Business buildContext (shared fake ctx, re-used across mock factories above)
 // ---------------------------------------------------------------------------
 
 const fakeCtx = { _brand: "ctx" }
-const buildContext = vi.fn(async () => fakeCtx)
-vi.mock("@chatbotx.io/business", () => ({
-  buildContext,
-}))
-
-// ---------------------------------------------------------------------------
-// Utils createId — use importOriginal to preserve other named exports
-// ---------------------------------------------------------------------------
-
-const createId = vi.fn(() => "generated-id")
-vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
-  return {
-    ...actual,
-    createId,
-  }
-})
 
 // ---------------------------------------------------------------------------
 // Logger — silence / spy
@@ -202,7 +203,6 @@ vi.mock("../src/lib/logger", () => ({
 
 const { handleSyncTag } = await import("../src/default/handlers/sync-tag")
 const { logger } = await import("../src/lib/logger")
-const { db } = await import("@chatbotx.io/database/client")
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -259,22 +259,20 @@ function makeContactInbox(overrides: Record<string, unknown> = {}) {
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  queryResults.tagModelFindFirst = null
-  queryResults.integrationMessengerFindMany = []
-  queryResults.integrationZaloFindMany = []
-  queryResults.tagChannelFindFirst = null
-  queryResults.tagChannelFindMany = []
-  queryResults.integrationMessengerFindFirst = null
-  queryResults.integrationZaloFindFirst = null
-  queryResults.contactInboxFindMany = []
-  queryResults.contactToTagChannelFindMany = []
-  queryResults.contactsToTagsFindMany = []
-  queryResults.selectRows = []
-  insertReturning.current = []
-  updateReturning.current = []
+  queryResults.tag = null
+  queryResults.messengerIntegrations = []
+  queryResults.zaloIntegrations = []
+  queryResults.tagChannel = null
+  queryResults.tagChannelList = []
+  queryResults.messengerIntegration = null
+  queryResults.zaloIntegration = null
+  queryResults.contactInboxes = []
+  queryResults.contactTagChannelRows = []
+  queryResults.contactInboxIdsForChannelPage = []
+  queryResults.contactIdsByIds = []
+  queryResults.taggedContactIdsPage = []
 
-  // Reset all mock call counts — vi clears between tests via clearMocks:true
-  // in vitest config, but reset result holders manually above
+  vi.clearAllMocks()
 })
 
 // ===========================================================================
@@ -304,7 +302,7 @@ describe("handleSyncTag — dispatch", () => {
 
 describe("syncTagCreate", () => {
   test("tag not found → early return, no SDK calls", async () => {
-    queryResults.tagModelFindFirst = null
+    queryResults.tag = null
 
     await handleSyncTag({
       action: "create",
@@ -314,15 +312,15 @@ describe("syncTagCreate", () => {
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
     expect(zaloRunAction).not.toHaveBeenCalled()
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(tagChannelInsertIfAbsent).not.toHaveBeenCalled()
   })
 
   test("messenger integration with syncTagEnabledAt=null is skipped", async () => {
-    queryResults.tagModelFindFirst = { id: "tag-1", name: "VIP" }
-    queryResults.integrationMessengerFindMany = [
+    queryResults.tag = { id: "tag-1", name: "VIP" }
+    queryResults.messengerIntegrations = [
       makeMessengerIntegration({ syncTagEnabledAt: null }),
     ]
-    queryResults.integrationZaloFindMany = []
+    queryResults.zaloIntegrations = []
 
     await handleSyncTag({
       action: "create",
@@ -337,11 +335,10 @@ describe("syncTagCreate", () => {
   test("messenger sync-enabled → createLabel called under distributedLock with pageId and name", async () => {
     const tag = { id: "tag-1", name: "VIP" }
     const integration = makeMessengerIntegration()
-    queryResults.tagModelFindFirst = tag
-    queryResults.integrationMessengerFindMany = [integration]
-    queryResults.integrationZaloFindMany = []
-    queryResults.tagChannelFindFirst = null // no existing tagChannel
-    insertReturning.current = []
+    queryResults.tag = tag
+    queryResults.messengerIntegrations = [integration]
+    queryResults.zaloIntegrations = []
+    queryResults.tagChannel = null // no existing tagChannel
 
     await handleSyncTag({
       action: "create",
@@ -373,10 +370,10 @@ describe("syncTagCreate", () => {
     const tag = { id: "tag-1", name: "VIP" }
     const integration = makeMessengerIntegration()
     const existing = makeTagChannel()
-    queryResults.tagModelFindFirst = tag
-    queryResults.integrationMessengerFindMany = [integration]
-    queryResults.integrationZaloFindMany = []
-    queryResults.tagChannelFindFirst = existing
+    queryResults.tag = tag
+    queryResults.messengerIntegrations = [integration]
+    queryResults.zaloIntegrations = []
+    queryResults.tagChannel = existing
 
     messengerRunChannelHandler.mockResolvedValueOnce({ id: "label-new-456" })
 
@@ -386,15 +383,18 @@ describe("syncTagCreate", () => {
       tagId: "tag-1",
     })
 
-    expect(db.update).toHaveBeenCalled()
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(tagChannelUpdateExternalLabelId).toHaveBeenCalledWith({
+      id: existing.id,
+      externalLabelId: "label-new-456",
+    })
+    expect(tagChannelInsertIfAbsent).not.toHaveBeenCalled()
   })
 
   test("messenger createLabel failure is caught; warn logged; no throw", async () => {
     const tag = { id: "tag-1", name: "VIP" }
-    queryResults.tagModelFindFirst = tag
-    queryResults.integrationMessengerFindMany = [makeMessengerIntegration()]
-    queryResults.integrationZaloFindMany = []
+    queryResults.tag = tag
+    queryResults.messengerIntegrations = [makeMessengerIntegration()]
+    queryResults.zaloIntegrations = []
     // Make the lock fn throw (simulates createLabel failure propagating)
     runExclusive.mockRejectedValueOnce(new Error("FB 500"))
 
@@ -403,14 +403,17 @@ describe("syncTagCreate", () => {
     ).resolves.toBeUndefined()
 
     expect(logger.warn).toHaveBeenCalled()
+    expect(logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "messenger", workspaceId: "ws-1" }),
+    )
   })
 
-  test("zalo sync-enabled → insert tagChannel with onConflictDoNothing and correct externalLabelId=tag.name", async () => {
+  test("zalo sync-enabled → insertIfAbsent called with correct externalLabelId=tag.name", async () => {
     const tag = { id: "tag-1", name: "VIP" }
     const integration = makeZaloIntegration()
-    queryResults.tagModelFindFirst = tag
-    queryResults.integrationMessengerFindMany = []
-    queryResults.integrationZaloFindMany = [integration]
+    queryResults.tag = tag
+    queryResults.messengerIntegrations = []
+    queryResults.zaloIntegrations = [integration]
 
     await handleSyncTag({
       action: "create",
@@ -418,26 +421,21 @@ describe("syncTagCreate", () => {
       tagId: "tag-1",
     })
 
-    expect(db.insert).toHaveBeenCalled()
-    const insertValuesCall = (insertChain.values as ReturnType<typeof vi.fn>)
-      .mock.calls[0]?.[0]
-    expect(insertValuesCall).toMatchObject({
+    expect(tagChannelInsertIfAbsent).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       tagId: tag.id,
       channelType: "zalo",
       integrationId: integration.id,
       externalLabelId: tag.name,
     })
-    // onConflictDoNothing must be called
-    expect(insertChain.onConflictDoNothing).toHaveBeenCalled()
     // No real Zalo API called (no create-empty-tag API)
     expect(zaloRunAction).not.toHaveBeenCalled()
   })
 
   test("zalo sync disabled → skip insert", async () => {
-    queryResults.tagModelFindFirst = { id: "tag-1", name: "VIP" }
-    queryResults.integrationMessengerFindMany = []
-    queryResults.integrationZaloFindMany = [
+    queryResults.tag = { id: "tag-1", name: "VIP" }
+    queryResults.messengerIntegrations = []
+    queryResults.zaloIntegrations = [
       makeZaloIntegration({ syncTagEnabledAt: null }),
     ]
 
@@ -447,7 +445,7 @@ describe("syncTagCreate", () => {
       tagId: "tag-1",
     })
 
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(tagChannelInsertIfAbsent).not.toHaveBeenCalled()
   })
 })
 
@@ -457,7 +455,7 @@ describe("syncTagCreate", () => {
 
 describe("syncTagAttach", () => {
   test("tag not found → early return, no SDK calls", async () => {
-    queryResults.tagModelFindFirst = null
+    queryResults.tag = null
 
     await handleSyncTag({
       action: "attach",
@@ -478,11 +476,10 @@ describe("syncTagAttach", () => {
       externalLabelId: "label-ext-123",
     })
 
-    queryResults.tagModelFindFirst = tag
-    queryResults.contactInboxFindMany = [contactInbox]
-    queryResults.integrationMessengerFindFirst = integration
-    queryResults.tagChannelFindFirst = existingTagChannel
-    insertReturning.current = []
+    queryResults.tag = tag
+    queryResults.contactInboxes = [contactInbox]
+    queryResults.messengerIntegration = integration
+    queryResults.tagChannel = existingTagChannel
 
     await handleSyncTag({
       action: "attach",
@@ -516,11 +513,11 @@ describe("syncTagAttach", () => {
     const integration = makeMessengerIntegration()
     const newTagChannel = makeTagChannel({ id: "tc-new" })
 
-    queryResults.tagModelFindFirst = tag
-    queryResults.contactInboxFindMany = [contactInbox]
-    queryResults.integrationMessengerFindFirst = integration
-    queryResults.tagChannelFindFirst = null
-    insertReturning.current = [newTagChannel]
+    queryResults.tag = tag
+    queryResults.contactInboxes = [contactInbox]
+    queryResults.messengerIntegration = integration
+    queryResults.tagChannel = null
+    tagChannelInsertOrFetch.mockResolvedValueOnce(newTagChannel)
 
     messengerRunChannelHandler.mockResolvedValueOnce({ id: "label-new-789" })
 
@@ -550,9 +547,9 @@ describe("syncTagAttach", () => {
     const tag = { id: "tag-1", name: "VIP", workspaceId: "ws-1" }
     const contactInbox = makeContactInbox()
 
-    queryResults.tagModelFindFirst = tag
-    queryResults.contactInboxFindMany = [contactInbox]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration({
+    queryResults.tag = tag
+    queryResults.contactInboxes = [contactInbox]
+    queryResults.messengerIntegration = makeMessengerIntegration({
       syncTagEnabledAt: null,
     })
 
@@ -580,10 +577,10 @@ describe("syncTagAttach", () => {
       externalLabelId: "VIP",
     })
 
-    queryResults.tagModelFindFirst = tag
-    queryResults.contactInboxFindMany = [contactInbox]
-    queryResults.integrationZaloFindFirst = integration
-    insertReturning.current = [newTagChannel]
+    queryResults.tag = tag
+    queryResults.contactInboxes = [contactInbox]
+    queryResults.zaloIntegration = integration
+    tagChannelUpsertByTagAndIntegration.mockResolvedValueOnce(newTagChannel)
 
     await handleSyncTag({
       action: "attach",
@@ -602,7 +599,7 @@ describe("syncTagAttach", () => {
     )
   })
 
-  test("zalo channel — onConflictDoUpdate upserts tagChannel", async () => {
+  test("zalo channel — upsertByTagAndIntegration called with correct externalLabelId (tag.name)", async () => {
     const tag = { id: "tag-1", name: "VIP", workspaceId: "ws-1" }
     const contactInbox = makeContactInbox({
       channel: "zalo",
@@ -616,10 +613,10 @@ describe("syncTagAttach", () => {
       externalLabelId: "VIP",
     })
 
-    queryResults.tagModelFindFirst = tag
-    queryResults.contactInboxFindMany = [contactInbox]
-    queryResults.integrationZaloFindFirst = integration
-    insertReturning.current = [tagChannel]
+    queryResults.tag = tag
+    queryResults.contactInboxes = [contactInbox]
+    queryResults.zaloIntegration = integration
+    tagChannelUpsertByTagAndIntegration.mockResolvedValueOnce(tagChannel)
 
     await handleSyncTag({
       action: "attach",
@@ -628,7 +625,13 @@ describe("syncTagAttach", () => {
       tagId: "tag-1",
     })
 
-    expect(insertChain.onConflictDoUpdate).toHaveBeenCalled()
+    expect(tagChannelUpsertByTagAndIntegration).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      tagId: tag.id,
+      channelType: "zalo",
+      integrationId: integration.id,
+      externalLabelId: tag.name,
+    })
   })
 
   test("zalo integration with syncTagEnabledAt=null → skip tagFollower", async () => {
@@ -639,9 +642,9 @@ describe("syncTagAttach", () => {
       sourceId: "zalo-user-999",
     })
 
-    queryResults.tagModelFindFirst = tag
-    queryResults.contactInboxFindMany = [contactInbox]
-    queryResults.integrationZaloFindFirst = makeZaloIntegration({
+    queryResults.tag = tag
+    queryResults.contactInboxes = [contactInbox]
+    queryResults.zaloIntegration = makeZaloIntegration({
       syncTagEnabledAt: null,
     })
 
@@ -657,10 +660,8 @@ describe("syncTagAttach", () => {
 
   test("contactInbox not on messenger or zalo channel → no SDK calls", async () => {
     const tag = { id: "tag-1", name: "VIP", workspaceId: "ws-1" }
-    queryResults.tagModelFindFirst = tag
-    queryResults.contactInboxFindMany = [
-      makeContactInbox({ channel: "webchat" }),
-    ]
+    queryResults.tag = tag
+    queryResults.contactInboxes = [makeContactInbox({ channel: "webchat" })]
 
     await handleSyncTag({
       action: "attach",
@@ -688,8 +689,8 @@ describe("syncTagDetach", () => {
       externalLabelId: "label-ext-123",
       sourceId: "psid-abc",
     }
-    queryResults.selectRows = [row]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration()
+    queryResults.contactTagChannelRows = [row]
+    queryResults.messengerIntegration = makeMessengerIntegration()
 
     await handleSyncTag({
       action: "detach",
@@ -720,8 +721,8 @@ describe("syncTagDetach", () => {
       externalLabelId: "VIP",
       sourceId: "zalo-user-777",
     }
-    queryResults.selectRows = [row]
-    queryResults.integrationZaloFindFirst = makeZaloIntegration()
+    queryResults.contactTagChannelRows = [row]
+    queryResults.zaloIntegration = makeZaloIntegration()
 
     await handleSyncTag({
       action: "detach",
@@ -740,7 +741,7 @@ describe("syncTagDetach", () => {
     )
   })
 
-  test("local ContactToTagChannel row deleted even when API call throws", async () => {
+  test("local ContactToTagChannel row unlinked even when API call throws", async () => {
     const row = {
       tagChannelId: "tc-1",
       contactInboxId: "ci-1",
@@ -749,8 +750,8 @@ describe("syncTagDetach", () => {
       externalLabelId: "label-ext-123",
       sourceId: "psid-abc",
     }
-    queryResults.selectRows = [row]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration()
+    queryResults.contactTagChannelRows = [row]
+    queryResults.messengerIntegration = makeMessengerIntegration()
 
     // Make removeLabel throw
     messengerRunChannelHandler.mockRejectedValueOnce(new Error("FB offline"))
@@ -764,9 +765,16 @@ describe("syncTagDetach", () => {
       }),
     ).resolves.toBeUndefined()
 
-    // Local delete still called
-    expect(db.delete).toHaveBeenCalled()
+    // Local unlink still called
+    expect(tagChannelUnlinkContactInbox).toHaveBeenCalledWith({
+      tagChannelId: row.tagChannelId,
+      contactInboxId: row.contactInboxId,
+    })
     expect(logger.warn).toHaveBeenCalled()
+    expect(logProviderErrorForChannel).toHaveBeenCalledWith(
+      row.channelType,
+      expect.objectContaining({ workspaceId: "ws-1", contactId: "contact-1" }),
+    )
   })
 
   test("error isolation — first row API failure does not abort second row", async () => {
@@ -786,8 +794,8 @@ describe("syncTagDetach", () => {
       externalLabelId: "label-2",
       sourceId: "psid-2",
     }
-    queryResults.selectRows = [row1, row2]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration()
+    queryResults.contactTagChannelRows = [row1, row2]
+    queryResults.messengerIntegration = makeMessengerIntegration()
 
     // First API call fails, second should succeed
     messengerRunChannelHandler
@@ -803,13 +811,13 @@ describe("syncTagDetach", () => {
       }),
     ).resolves.toBeUndefined()
 
-    // Both rows should have had delete called (2 times)
-    expect(db.delete).toHaveBeenCalledTimes(2)
+    // Both rows should have had unlink called (2 times)
+    expect(tagChannelUnlinkContactInbox).toHaveBeenCalledTimes(2)
     // Second row's removeLabel was still attempted
     expect(messengerRunChannelHandler).toHaveBeenCalledTimes(2)
   })
 
-  test("sync-disabled context (integration.syncTagEnabledAt=null) → no API call but local row still deleted", async () => {
+  test("sync-disabled context (integration.syncTagEnabledAt=null) → no API call but local row still unlinked", async () => {
     const row = {
       tagChannelId: "tc-1",
       contactInboxId: "ci-1",
@@ -818,9 +826,9 @@ describe("syncTagDetach", () => {
       externalLabelId: "label-ext-123",
       sourceId: "psid-abc",
     }
-    queryResults.selectRows = [row]
+    queryResults.contactTagChannelRows = [row]
     // Sync disabled
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration({
+    queryResults.messengerIntegration = makeMessengerIntegration({
       syncTagEnabledAt: null,
     })
 
@@ -832,12 +840,12 @@ describe("syncTagDetach", () => {
     })
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
-    // Local delete still runs
-    expect(db.delete).toHaveBeenCalled()
+    // Local unlink still runs
+    expect(tagChannelUnlinkContactInbox).toHaveBeenCalled()
   })
 
-  test("empty rows → no delete, no API", async () => {
-    queryResults.selectRows = []
+  test("empty rows → no unlink, no API", async () => {
+    queryResults.contactTagChannelRows = []
 
     await handleSyncTag({
       action: "detach",
@@ -848,7 +856,7 @@ describe("syncTagDetach", () => {
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
     expect(zaloRunAction).not.toHaveBeenCalled()
-    expect(db.delete).not.toHaveBeenCalled()
+    expect(tagChannelUnlinkContactInbox).not.toHaveBeenCalled()
   })
 })
 
@@ -859,12 +867,13 @@ describe("syncTagDetach", () => {
 describe("syncTagDelete", () => {
   test("messenger channel → label API NOT called (temporarily disabled), tag deleted", async () => {
     const channel = {
+      id: "tc-1",
       channelType: "messenger",
       integrationId: "intg-msg-1",
       externalLabelId: "label-ext-123",
     }
-    queryResults.tagChannelFindMany = [channel]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration()
+    queryResults.tagChannelList = [channel]
+    queryResults.messengerIntegration = makeMessengerIntegration()
 
     await handleSyncTag({
       action: "delete",
@@ -874,17 +883,21 @@ describe("syncTagDelete", () => {
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
     // tag row deleted
-    expect(db.delete).toHaveBeenCalled()
+    expect(tagServiceHardDeleteSoftDeleted).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      tagId: "tag-1",
+    })
   })
 
   test("zalo channel → label API NOT called (temporarily disabled), tag deleted", async () => {
     const channel = {
+      id: "tc-2",
       channelType: "zalo",
       integrationId: "intg-zalo-1",
       externalLabelId: "VIP",
     }
-    queryResults.tagChannelFindMany = [channel]
-    queryResults.integrationZaloFindFirst = makeZaloIntegration()
+    queryResults.tagChannelList = [channel]
+    queryResults.zaloIntegration = makeZaloIntegration()
 
     await handleSyncTag({
       action: "delete",
@@ -893,22 +906,24 @@ describe("syncTagDelete", () => {
     })
 
     expect(zaloRunAction).not.toHaveBeenCalled()
-    expect(db.delete).toHaveBeenCalled()
+    expect(tagServiceHardDeleteSoftDeleted).toHaveBeenCalled()
   })
 
   test("processes every channel then deletes the tag row", async () => {
     const ch1 = {
+      id: "tc-1",
       channelType: "messenger",
       integrationId: "intg-msg-1",
       externalLabelId: "label-1",
     }
     const ch2 = {
+      id: "tc-2",
       channelType: "messenger",
       integrationId: "intg-msg-2",
       externalLabelId: "label-2",
     }
-    queryResults.tagChannelFindMany = [ch1, ch2]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration()
+    queryResults.tagChannelList = [ch1, ch2]
+    queryResults.messengerIntegration = makeMessengerIntegration()
 
     await expect(
       handleSyncTag({
@@ -919,17 +934,19 @@ describe("syncTagDelete", () => {
     ).resolves.toBeUndefined()
 
     // Tag row delete still called
-    expect(db.delete).toHaveBeenCalled()
+    expect(tagServiceHardDeleteSoftDeleted).toHaveBeenCalled()
+    expect(tagChannelDeleteById).toHaveBeenCalledTimes(2)
   })
 
   test("sync-disabled context (syncTagEnabledAt=null) → skip API but still delete tag row", async () => {
     const channel = {
+      id: "tc-1",
       channelType: "messenger",
       integrationId: "intg-msg-1",
       externalLabelId: "label-ext-123",
     }
-    queryResults.tagChannelFindMany = [channel]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration({
+    queryResults.tagChannelList = [channel]
+    queryResults.messengerIntegration = makeMessengerIntegration({
       syncTagEnabledAt: null,
     })
 
@@ -941,11 +958,11 @@ describe("syncTagDelete", () => {
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
     // Tag row still deleted
-    expect(db.delete).toHaveBeenCalled()
+    expect(tagServiceHardDeleteSoftDeleted).toHaveBeenCalled()
   })
 
   test("no channels → only tag row deleted", async () => {
-    queryResults.tagChannelFindMany = []
+    queryResults.tagChannelList = []
 
     await handleSyncTag({
       action: "delete",
@@ -955,23 +972,25 @@ describe("syncTagDelete", () => {
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
     expect(zaloRunAction).not.toHaveBeenCalled()
-    expect(db.delete).toHaveBeenCalled()
+    expect(tagServiceHardDeleteSoftDeleted).toHaveBeenCalled()
   })
 
   test("multiple channels (messenger + zalo) → no API calls, tag deleted", async () => {
     const messengerChannel = {
+      id: "tc-1",
       channelType: "messenger",
       integrationId: "intg-msg-1",
       externalLabelId: "label-ext-123",
     }
     const zaloChannel = {
+      id: "tc-2",
       channelType: "zalo",
       integrationId: "intg-zalo-1",
       externalLabelId: "VIP",
     }
-    queryResults.tagChannelFindMany = [messengerChannel, zaloChannel]
-    queryResults.integrationMessengerFindFirst = makeMessengerIntegration()
-    queryResults.integrationZaloFindFirst = makeZaloIntegration()
+    queryResults.tagChannelList = [messengerChannel, zaloChannel]
+    queryResults.messengerIntegration = makeMessengerIntegration()
+    queryResults.zaloIntegration = makeZaloIntegration()
 
     await handleSyncTag({
       action: "delete",
@@ -981,15 +1000,15 @@ describe("syncTagDelete", () => {
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
     expect(zaloRunAction).not.toHaveBeenCalled()
-    expect(db.delete).toHaveBeenCalled()
+    expect(tagServiceHardDeleteSoftDeleted).toHaveBeenCalled()
   })
 
   // ── channel-scoped delete (inbound webhook) ──────────────────────────────
 
   test("channel-scoped → deletes only this channel's rows + contacts, keeps Tag, no channel API", async () => {
-    queryResults.tagChannelFindMany = [makeTagChannel()] // id tc-1, messenger
-    queryResults.contactToTagChannelFindMany = [{ contactInboxId: "ci-1" }]
-    queryResults.contactInboxFindMany = [{ contactId: "contact-1" }]
+    queryResults.tagChannelList = [makeTagChannel()] // id tc-1, messenger
+    queryResults.contactInboxIdsForChannelPage = [{ contactInboxId: "ci-1" }]
+    queryResults.contactIdsByIds = [{ contactId: "contact-1" }]
 
     await handleSyncTag({
       action: "delete",
@@ -1002,16 +1021,23 @@ describe("syncTagDelete", () => {
     // Inbound webhook: the channel already removed the label → no API call.
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
     // chunkById paged the channel's contact assignments
-    expect(
-      db.query.contactToTagChannelModel.findMany as ReturnType<typeof vi.fn>,
-    ).toHaveBeenCalled()
-    // exactly 3 deletes: contactToTagChannel + contactsToTags + tagChannel.
-    // The Tag row is NOT deleted (workspace delete = 4).
-    expect(db.delete).toHaveBeenCalledTimes(3)
+    expect(tagChannelListContactInboxIdsForChannelPage).toHaveBeenCalled()
+    // per-channel + contact cleanup happens; the Tag row is NOT deleted
+    // (workspace delete calls hardDeleteSoftDeleted; scoped delete does not).
+    expect(tagChannelDeleteLinksForChannel).toHaveBeenCalledWith({
+      tagChannelId: "tc-1",
+      contactInboxIds: ["ci-1"],
+    })
+    expect(tagChannelDeleteContactTagsForContacts).toHaveBeenCalledWith({
+      tagId: "tag-1",
+      contactIds: ["contact-1"],
+    })
+    expect(tagChannelDeleteById).toHaveBeenCalledWith({ id: "tc-1" })
+    expect(tagServiceHardDeleteSoftDeleted).not.toHaveBeenCalled()
   })
 
   test("channel-scoped → no-op when the tag is not mapped on that channel", async () => {
-    queryResults.tagChannelFindMany = []
+    queryResults.tagChannelList = []
 
     await handleSyncTag({
       action: "delete",
@@ -1022,6 +1048,7 @@ describe("syncTagDelete", () => {
     })
 
     expect(messengerRunChannelHandler).not.toHaveBeenCalled()
-    expect(db.delete).not.toHaveBeenCalled()
+    expect(tagChannelDeleteById).not.toHaveBeenCalled()
+    expect(tagServiceHardDeleteSoftDeleted).not.toHaveBeenCalled()
   })
 })

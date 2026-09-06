@@ -391,6 +391,18 @@ class FlowService extends BaseService {
       `deleted flow${flows.length > 1 ? "s" : ""} (${flows.map((flow) => `#${flow.id}`).join(", ")})`,
     )
   }
+
+  /** `trigger/services/action-executor.ts` startAnotherFlow: an active flow by id, workspace-scoped. */
+  async findActiveById(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }): Promise<FlowModel | undefined> {
+    const { workspaceId, id, tx = db } = props
+    return await tx.query.flowModel.findFirst({
+      where: { id, workspaceId, active: true },
+    })
+  }
 }
 
 export const flowService = new FlowService()

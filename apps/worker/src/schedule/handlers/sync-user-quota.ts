@@ -6,15 +6,6 @@ import {
   WORKSPACE_USAGE_LABEL,
   workspaceUsageService,
 } from "@chatbotx.io/business"
-import { count, db, eq, sql } from "@chatbotx.io/database/client"
-import {
-  contactModel,
-  inboxModel,
-  userQuotaModel,
-  workspaceMemberModel,
-  workspaceModel,
-  workspaceUsageModel,
-} from "@chatbotx.io/database/schema"
 import { cacheConnections } from "@chatbotx.io/redis"
 import { liveKeyFor, USER_QUOTA_LABEL } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
@@ -92,68 +83,36 @@ export const reconcileWorkspaceUsage = async (
   client: CacheClient,
 ): Promise<void> => {
   try {
-    const [workspaces, contactCounts, channelCounts, memberCounts, macCounts] =
-      await Promise.all([
-        db.select({ id: workspaceModel.id }).from(workspaceModel),
-        db
-          .select({ workspaceId: contactModel.workspaceId, used: count() })
-          .from(contactModel)
-          .groupBy(contactModel.workspaceId),
-        db
-          .select({ workspaceId: inboxModel.workspaceId, used: count() })
-          .from(inboxModel)
-          .groupBy(inboxModel.workspaceId),
-        db
-          .select({
-            workspaceId: workspaceMemberModel.workspaceId,
-            used: count(),
-          })
-          .from(workspaceMemberModel)
-          .groupBy(workspaceMemberModel.workspaceId),
-        macRepository.getActiveContactCountsByWorkspaceIds(),
-      ])
-
-    const contactsByWorkspace = new Map(
-      contactCounts.map((row) => [row.workspaceId, row.used]),
-    )
-    const channelsByWorkspace = new Map(
-      channelCounts.map((row) => [row.workspaceId, row.used]),
-    )
-    const membersByWorkspace = new Map(
-      memberCounts.map((row) => [row.workspaceId, row.used]),
-    )
+    const [
+      {
+        workspaceIds,
+        contactsByWorkspace,
+        channelsByWorkspace,
+        membersByWorkspace,
+      },
+      macCounts,
+    ] = await Promise.all([
+      workspaceUsageService.loadReconcileCounts(),
+      macRepository.getActiveContactCountsByWorkspaceIds(),
+    ])
 
     const BATCH_SIZE = 50
-    for (let i = 0; i < workspaces.length; i += BATCH_SIZE) {
-      const batch = workspaces.slice(i, i + BATCH_SIZE)
+    for (let i = 0; i < workspaceIds.length; i += BATCH_SIZE) {
+      const batch = workspaceIds.slice(i, i + BATCH_SIZE)
       await Promise.all(
-        batch.map(async ({ id: workspaceId }) => {
+        batch.map(async (workspaceId) => {
           const contactsUsed = contactsByWorkspace.get(workspaceId) ?? 0
           const channelsUsed = channelsByWorkspace.get(workspaceId) ?? 0
           const teamMembersUsed = membersByWorkspace.get(workspaceId) ?? 0
           const macUsed = macCounts.get(workspaceId) ?? 0
 
-          await db
-            .insert(workspaceUsageModel)
-            .values({
-              workspaceId,
-              contactsUsed,
-              channelsUsed,
-              teamMembersUsed,
-              macUsed,
-              syncedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: workspaceUsageModel.workspaceId,
-              set: {
-                contactsUsed,
-                channelsUsed,
-                teamMembersUsed,
-                macUsed,
-                syncedAt: new Date(),
-                updatedAt: sql`CURRENT_TIMESTAMP`,
-              },
-            })
+          await workspaceUsageService.upsertReconciled({
+            workspaceId,
+            contactsUsed,
+            channelsUsed,
+            teamMembersUsed,
+            macUsed,
+          })
 
           await client.hset(
             liveKeyFor(WORKSPACE_USAGE_LABEL, workspaceId),
@@ -190,109 +149,25 @@ export const reconcileUser = async (userId: string): Promise<void> => {
 
     const client = await cacheConnections.useExisting()
 
-    const [
-      [contactsResult],
-      teamMembersUsed,
-      [workspacesResult],
-      [channelsResult],
-    ] = await Promise.all([
-      db
-        .select({ count: count() })
-        .from(contactModel)
-        .innerJoin(
-          workspaceModel,
-          eq(contactModel.workspaceId, workspaceModel.id),
-        )
-        .where(eq(workspaceModel.ownerId, userId)),
-
-      userQuotaService.countDistinctTeamMembersForOwner(userId),
-
-      db
-        .select({ count: count() })
-        .from(workspaceModel)
-        .where(eq(workspaceModel.ownerId, userId)),
-
-      db
-        .select({ count: count() })
-        .from(inboxModel)
-        .innerJoin(
-          workspaceModel,
-          eq(inboxModel.workspaceId, workspaceModel.id),
-        )
-        .where(eq(workspaceModel.ownerId, userId)),
-    ])
-
-    const contactsUsed = contactsResult?.count ?? 0
-    const workspacesUsed = workspacesResult?.count ?? 0
-    const channelsUsed = channelsResult?.count ?? 0
-
-    await db
-      .insert(userQuotaModel)
-      .values({
-        userId,
-        contactsUsed,
-        teamMembersUsed,
-        workspacesUsed,
-        channelsUsed,
-        syncedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: userQuotaModel.userId,
-        set: {
-          // Authoritative current count from the source tables (already reflects
-          // deletions). Assigned directly — NOT GREATEST — so removing contacts,
-          // team members, workspaces, or channels frees quota. A transiently-low
-          // COUNT racing an in-flight insert self-corrects on the next sync; that
-          // brief window is far better than a high-water max that never decreases.
-          contactsUsed,
-          teamMembersUsed,
-          workspacesUsed,
-          channelsUsed,
-          syncedAt: new Date(),
-          updatedAt: sql`CURRENT_TIMESTAMP`,
-        },
-      })
-
-    // Mirror the live counters to the same authoritative current counts.
-    await client.hset(
-      liveKeyFor(USER_QUOTA_LABEL, userId),
-      "contacts",
-      String(contactsUsed),
-      "teamMembers",
-      String(teamMembersUsed),
-      "workspaces",
-      String(workspacesUsed),
-      "channels",
-      String(channelsUsed),
-    )
-
-    // mac is monotonic-within-period and lives only on the quota row, so read it
-    // back (alongside the billing period) for the separate mac reconcile.
-    // `periodEnd === null` marks a lifetime plan, which never resets.
-    const stored = await db.query.userQuotaModel.findFirst({
-      where: { userId },
-      columns: {
-        macUsed: true,
-        periodStart: true,
-        periodEnd: true,
-        monthlyBotMessagesPeriodStart: true,
-      },
-    })
-    const isLifetime = stored?.periodEnd == null
+    // Authoritative current counts assigned directly (not GREATEST) so
+    // removing contacts/team members/workspaces/channels frees quota, and
+    // the four billing markers read back in one round-trip.
+    const stored = await userQuotaService.reconcileUserSelfUsage(userId)
+    const isLifetime = stored.periodEnd == null
 
     await reconcileMac(
       userId,
       client,
-      stored?.macUsed ?? 0,
-      stored?.periodStart?.toISOString() ?? "",
+      stored.macUsed,
+      stored.periodStart?.toISOString() ?? "",
       isLifetime,
     )
 
     await reconcileMonthlyBotMessages(
       userId,
       client,
-      stored?.monthlyBotMessagesPeriodStart ?? null,
-      stored?.periodStart ?? null,
+      stored.monthlyBotMessagesPeriodStart,
+      stored.periodStart,
       isLifetime,
     )
 
@@ -396,16 +271,7 @@ const reconcileMac = async (
 
 /** Upsert `UserQuota.macUsed` to an absolute value. */
 const persistMacUsed = async (userId: string, value: number): Promise<void> => {
-  await db
-    .insert(userQuotaModel)
-    .values({ userId, macUsed: value, syncedAt: new Date() })
-    .onConflictDoUpdate({
-      target: userQuotaModel.userId,
-      set: {
-        macUsed: value,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      },
-    })
+  await userQuotaService.persistMacUsed(userId, value)
 }
 
 /** Live-counter hash field holding the running monthly-bot-messages count. */
@@ -487,46 +353,23 @@ const reconcileMonthlyBotMessages = async (
     return
   }
 
+  // Ordering is load-bearing: the DB counter is zeroed BEFORE the live Redis
+  // field, so `applyMonthlyBotMessagesReset` (which writes the DB row) is
+  // awaited first, and the live `hset` for the reset branch stays here,
+  // after it — fail-closed if a crash lands between the two.
+  await userQuotaService.applyMonthlyBotMessagesReset({
+    userId,
+    periodStart,
+    reset: action.reset,
+  })
+
   if (action.reset) {
-    await db
-      .insert(userQuotaModel)
-      .values({
-        userId,
-        monthlyBotMessagesUsed: 0,
-        monthlyBotMessagesPeriodStart: periodStart,
-        syncedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: userQuotaModel.userId,
-        set: {
-          monthlyBotMessagesUsed: 0,
-          monthlyBotMessagesPeriodStart: periodStart,
-          updatedAt: sql`CURRENT_TIMESTAMP`,
-        },
-      })
     await client.hset(
       liveKeyFor(USER_QUOTA_LABEL, userId),
       MONTHLY_BOT_MESSAGES_FIELD,
       "0",
     )
-    return
   }
-
-  // Unstamped row: adopt into the current period without touching the counter.
-  await db
-    .insert(userQuotaModel)
-    .values({
-      userId,
-      monthlyBotMessagesPeriodStart: periodStart,
-      syncedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: userQuotaModel.userId,
-      set: {
-        monthlyBotMessagesPeriodStart: periodStart,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      },
-    })
 }
 
 /** What `reconcileMac` should write, derived purely from the current state. */

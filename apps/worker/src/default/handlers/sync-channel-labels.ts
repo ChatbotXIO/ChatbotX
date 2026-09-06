@@ -1,13 +1,11 @@
-import { buildContext } from "@chatbotx.io/business"
+import { buildContext, zaloIntegrationService } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
-import { db, isNull, sql } from "@chatbotx.io/database/client"
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import {
-  contactsToTagsModel,
-  contactToTagChannelModel,
-  tagChannelModel,
-  tagModel,
-} from "@chatbotx.io/database/schema"
+  contactInboxRepository,
+  integrationMessengerRepository,
+  tagChannelRepository,
+} from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
   IntegrationMessengerModel,
@@ -18,7 +16,6 @@ import { integration as integrationMessenger } from "@chatbotx.io/integration-me
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
-import { createId } from "@chatbotx.io/utils"
 import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
 import type { JobSyncChannelLabels } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
@@ -42,8 +39,8 @@ export async function handleSyncChannelLabels(
   const { workspaceId, channelType, integrationId } = data
 
   if (channelType === channelTypes.enum.messenger) {
-    const integration = await db.query.integrationMessengerModel.findFirst({
-      where: { id: integrationId },
+    const integration = await integrationMessengerRepository.findById({
+      id: integrationId,
     })
 
     if (!integration) {
@@ -55,8 +52,8 @@ export async function handleSyncChannelLabels(
   }
 
   if (channelType === channelTypes.enum.zalo) {
-    const integration = await db.query.integrationZaloModel.findFirst({
-      where: { id: integrationId },
+    const integration = await zaloIntegrationService.findByIdUnscoped({
+      id: integrationId,
     })
 
     if (!integration) {
@@ -168,12 +165,9 @@ async function scanContactInboxes(
 
   await chunkById(
     (lastId) =>
-      db.query.contactInboxModel.findMany({
-        where: {
-          inboxId,
-          ...(lastId ? { id: { gt: lastId } } : {}),
-        },
-        orderBy: { id: "asc" },
+      contactInboxRepository.listByInboxPage({
+        inboxId,
+        afterId: lastId ?? undefined,
         limit: BATCH_SIZE,
       }),
     {
@@ -224,54 +218,14 @@ async function upsertLabelMapping(props: {
   label: NormalizedLabel
   contactInbox: ContactInboxModel
 }): Promise<void> {
-  const { workspaceId, channelType, integrationId, label, contactInbox } = props
-
-  const [tag] = await db
-    .insert(tagModel)
-    .values({ id: createId(), name: label.name, workspaceId })
-    .onConflictDoUpdate({
-      target: [tagModel.workspaceId, tagModel.name],
-      targetWhere: isNull(tagModel.deletedAt),
-      set: { name: sql`EXCLUDED.name` },
-    })
-    .returning({ id: tagModel.id })
-  if (!tag) {
-    return
-  }
-
-  const [tagChannel] = await db
-    .insert(tagChannelModel)
-    .values({
-      id: createId(),
-      workspaceId,
-      tagId: tag.id,
-      channelType,
-      integrationId,
-      externalLabelId: label.externalLabelId,
-    })
-    .onConflictDoUpdate({
-      target: [
-        tagChannelModel.tagId,
-        tagChannelModel.channelType,
-        tagChannelModel.integrationId,
-      ],
-      set: { externalLabelId: sql`EXCLUDED."externalLabelId"` },
-    })
-    .returning({ id: tagChannelModel.id })
-  if (!tagChannel) {
-    return
-  }
-
-  await db
-    .insert(contactsToTagsModel)
-    .values({ contactId: contactInbox.contactId, tagId: tag.id })
-    .onConflictDoNothing()
-  await db
-    .insert(contactToTagChannelModel)
-    .values({
-      tagId: tag.id,
-      tagChannelId: tagChannel.id,
-      contactInboxId: contactInbox.id,
-    })
-    .onConflictDoNothing()
+  await tagChannelRepository.upsertLabelMapping({
+    workspaceId: props.workspaceId,
+    channelType: props.channelType,
+    integrationId: props.integrationId,
+    label: props.label,
+    contactInbox: {
+      id: props.contactInbox.id,
+      contactId: props.contactInbox.contactId,
+    },
+  })
 }

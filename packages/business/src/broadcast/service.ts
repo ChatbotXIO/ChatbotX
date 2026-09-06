@@ -43,6 +43,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import type {
   BroadcastModel,
+  ConversationModel,
   FlowModel,
   IntegrationMessengerModel,
   IntegrationWhatsappModel,
@@ -1071,6 +1072,178 @@ class BroadcastService extends BaseService {
       { chunkSize, callback: onChunk },
     )
   }
+
+  /** `enqueue-broadcast.ts`: scheduled broadcasts due to fan out into prepareBroadcast jobs. */
+  async listDueScheduled(input: { dueAt: Date }): Promise<{ id: string }[]> {
+    return await db.query.broadcastModel.findMany({
+      where: {
+        schedulesAt: { lte: input.dueAt },
+        status: broadcastStatuses.enum.scheduled,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+  }
+
+  /** `reconcile-broadcasts.ts`: sending broadcasts still awaiting handoff completion. */
+  async listSendingAwaitingHandoff(): Promise<{ id: string }[]> {
+    return await db.query.broadcastModel.findMany({
+      where: {
+        status: broadcastStatuses.enum.sending,
+        handoffCompletedAt: { isNull: true },
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+  }
+
+  /** `prepare-broadcast.ts`: the full row for the broadcast this prepare run is dispatching. */
+  async findScheduledForPrepare(input: {
+    broadcastId: string
+  }): Promise<BroadcastModel | undefined> {
+    return await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        status: broadcastStatuses.enum.scheduled,
+        deletedAt: { isNull: true },
+      },
+    })
+  }
+
+  /**
+   * `prepare-broadcast.ts`: resolves the page a Messenger template belongs
+   * to, scoped to the workspace via the nested `integrationMessenger`
+   * relation filter — that nested filter IS the tenant scope, keep it
+   * verbatim.
+   */
+  async resolveTemplateIntegrationMessengerId(input: {
+    workspaceId: string
+    templateId: string
+  }): Promise<string | null> {
+    const template = await db.query.messengerMessageTemplateModel.findFirst({
+      where: {
+        id: input.templateId,
+        integrationMessenger: { workspaceId: input.workspaceId },
+      },
+      columns: { integrationMessengerId: true },
+    })
+    return template?.integrationMessengerId ?? null
+  }
+
+  /** `prepare-broadcast.ts`: bulk-insert the resolved audience's recipient rows. */
+  async insertRecipients(input: {
+    recipients: {
+      broadcastId: string
+      contactId: string
+      contactInboxId: string
+      conversationId: string
+    }[]
+  }): Promise<void> {
+    if (input.recipients.length === 0) {
+      return
+    }
+    await db
+      .insert(contactsOnBroadcastsModel)
+      .values(input.recipients)
+      .onConflictDoNothing()
+  }
+
+  /**
+   * `prepare-broadcast.ts`: the CAS promotion out of `scheduled` once the
+   * audience has been built. `eq(resumeCount, promotionEpoch)` is the only
+   * guard against a stale prepare run (behind a moveToDraft → re-schedule
+   * round-trip) wrongly promoting a newer schedule's row — never drop it.
+   */
+  async promoteAfterPrepare(input: {
+    broadcastId: string
+    status: BroadcastStatus
+    contactCount: number
+    promotionEpoch: number
+  }): Promise<boolean> {
+    const rows = await db
+      .update(broadcastModel)
+      .set({
+        status: broadcastStatuses.enum[input.status],
+        contactCount: input.contactCount,
+      })
+      .where(
+        and(
+          eq(broadcastModel.id, input.broadcastId),
+          eq(broadcastModel.status, broadcastStatuses.enum.scheduled),
+          isNull(broadcastModel.deletedAt),
+          eq(broadcastModel.resumeCount, input.promotionEpoch),
+        ),
+      )
+      .returning({ id: broadcastModel.id })
+    return rows.length > 0
+  }
+
+  /**
+   * `process-broadcast-contacts.ts`: every `sending` row for one broadcast —
+   * returns an array (the handler checks `.length === 0`), distinct from
+   * `findSendableBroadcast` which returns a single `{id}` row.
+   */
+  async listSendableById(input: {
+    broadcastId: string
+  }): Promise<BroadcastForSend[]> {
+    return await db.query.broadcastModel.findMany({
+      where: {
+        id: input.broadcastId,
+        status: broadcastStatuses.enum.sending,
+        deletedAt: { isNull: true },
+      },
+    })
+  }
+
+  /** `process-broadcast-contacts.ts`: the next page of unsent, unfailed recipients. */
+  async listPendingRecipients(input: {
+    broadcastId: string
+    limit: number
+  }): Promise<BroadcastRecipientForSend[]> {
+    return (await db.query.contactsOnBroadcastsModel.findMany({
+      where: {
+        broadcastId: input.broadcastId,
+        sent: false,
+        failedAt: { isNull: true },
+      },
+      with: {
+        conversation: true,
+        contactInbox: true,
+      },
+      limit: input.limit,
+    })) as BroadcastRecipientForSend[]
+  }
+
+  /** `process-broadcast-contacts.ts`: marks one recipient failed with a reason. */
+  async markContactFailed(input: {
+    broadcastId: string
+    contactId: string
+    reason: string
+  }): Promise<void> {
+    await db
+      .update(contactsOnBroadcastsModel)
+      .set({
+        failedAt: sql`CURRENT_TIMESTAMP`,
+        errorContent: input.reason,
+      })
+      .where(
+        and(
+          eq(contactsOnBroadcastsModel.broadcastId, input.broadcastId),
+          eq(contactsOnBroadcastsModel.contactId, input.contactId),
+        ),
+      )
+  }
 }
 
 export const broadcastService = new BroadcastService()
+
+export type BroadcastForSend = Awaited<
+  ReturnType<(typeof db.query.broadcastModel)["findMany"]>
+>[number]
+
+export type BroadcastRecipientForSend = Awaited<
+  ReturnType<(typeof db.query.contactsOnBroadcastsModel)["findMany"]>
+>[number] & {
+  conversation?: ConversationModel | null
+  contactInbox?: ContactInboxRow | null
+}

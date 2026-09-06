@@ -1,4 +1,7 @@
-import { db } from "@chatbotx.io/database/client"
+import {
+  contactCustomFieldService,
+  customFieldService,
+} from "@chatbotx.io/business"
 import {
   type OperatorType,
   triggerEventTypes,
@@ -94,20 +97,14 @@ export class ConditionEvaluator {
     if (customFieldId === actualCustomFieldId) {
       actualValue = metadata.newValue
     } else {
-      const contactCustomField =
-        await db.query.contactCustomFieldModel.findFirst({
-          where: {
-            contactId,
-            customFieldId,
-          },
-          columns: { value: true },
-        })
-      actualValue = contactCustomField?.value
+      actualValue = await contactCustomFieldService.findValue({
+        contactId,
+        customFieldId,
+      })
     }
 
-    const customField = await db.query.customFieldModel.findFirst({
+    const customField = await customFieldService.findBy({
       where: { id: customFieldId },
-      columns: { type: true },
     })
 
     if (!operator) {
@@ -391,21 +388,14 @@ export class ConditionEvaluator {
       return false
     }
 
-    const contactCustomField = await db.query.contactCustomFieldModel.findFirst(
-      {
-        where: {
-          contactId,
-          customFieldId,
-        },
-        columns: { value: true },
-      },
-    )
+    const customFieldValue = await contactCustomFieldService.findValue({
+      contactId,
+      customFieldId,
+    })
 
-    if (!contactCustomField?.value) {
+    if (!customFieldValue) {
       return false
     }
-
-    const customFieldValue = contactCustomField.value as string
 
     const config = triggerConfig as {
       triggerType?: string
