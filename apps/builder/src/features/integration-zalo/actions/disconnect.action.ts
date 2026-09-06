@@ -1,13 +1,7 @@
 "use server"
 
-import { inboxService, workspaceService } from "@chatbotx.io/business"
+import { workspaceService, zaloIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
-import {
-  integrationZaloModel,
-  tagChannelModel,
-} from "@chatbotx.io/database/schema"
 import {
   isRevokedTokenError,
   type ZaloAuthValue,
@@ -24,14 +18,7 @@ export const disconnectZaloAction = workspaceActionClientAllowExpired
       bindArgsParsedInputs: [workspaceId, id],
     } = props
     const [integrationZalo, workspace] = await Promise.all([
-      findOrFail({
-        table: integrationZaloModel,
-        where: {
-          workspaceId,
-          id,
-        },
-        message: "Integration Zalo OA not found",
-      }),
+      zaloIntegrationService.findById({ id, workspaceId }),
       workspaceService.findById({ id: workspaceId }),
     ])
 
@@ -48,25 +35,11 @@ export const disconnectZaloAction = workspaceActionClientAllowExpired
       }
     }
 
-    await db.transaction(async (tx) => {
-      // Polymorphic FK cleanup — no DB-level cascade for TagChannel.integrationId
-      await tx
-        .delete(tagChannelModel)
-        .where(
-          and(
-            eq(tagChannelModel.channelType, channelTypes.enum.zalo),
-            eq(tagChannelModel.integrationId, integrationZalo.id),
-          ),
-        )
-      await tx
-        .delete(integrationZaloModel)
-        .where(eq(integrationZaloModel.id, integrationZalo.id))
-      await inboxService.disconnect({
-        inboxId: integrationZalo.inboxId,
-        ownerId: workspace.ownerId,
-        workspaceId,
-        tx,
-      })
+    await zaloIntegrationService.disconnect({
+      workspaceId,
+      id: integrationZalo.id,
+      inboxId: integrationZalo.inboxId,
+      ownerId: workspace.ownerId,
     })
 
     await auditService.record({

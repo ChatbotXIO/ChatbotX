@@ -38,15 +38,8 @@ vi.mock("@chatbotx.io/business", () => ({
       | null
       | undefined,
   ) => Boolean(workspace?.scheduledDeletionAt),
+  integrationWebchatService: { findByIdForWorkspaceOrNull: mockFindFirst },
   workspaceService: { find: mockWorkspaceFind },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      integrationWebchatModel: { findFirst: mockFindFirst },
-    },
-  },
 }))
 
 vi.mock("@/lib/domain", () => ({
