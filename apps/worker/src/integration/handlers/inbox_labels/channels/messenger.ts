@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { messengerIntegrationService } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { messengerWebhookEventSchema } from "@chatbotx.io/integration-messenger/schema"
 import type { Channel } from "../types"
@@ -12,8 +12,8 @@ import type { Channel } from "../types"
  */
 export const messengerChannel: Channel = {
   async loadContext(pageId) {
-    const integration = await db.query.integrationMessengerModel.findFirst({
-      where: { pageId },
+    const integration = await messengerIntegrationService.findByPageIdUnscoped({
+      pageId,
     })
     if (!integration?.syncTagEnabledAt) {
       return null

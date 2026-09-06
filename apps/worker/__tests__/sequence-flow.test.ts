@@ -1,45 +1,9 @@
 import type { Job } from "bullmq"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ---------- db chain spies ----------
-const dbFindFirstSpy = vi.fn()
-const dbUpdateSpy = vi.fn()
-const dbSetSpy = vi.fn()
-const dbWhereSpy = vi.fn()
-const dbWhereResolveSpy = vi.fn()
-
+// ---------- db client stub (source passes `db` through as dbClient) ----------
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      sequenceDispatchModel: {
-        findFirst: (...args: unknown[]) => dbFindFirstSpy(...args),
-      },
-    },
-    update: (table: unknown) => {
-      dbUpdateSpy(table)
-      return {
-        set: (values: unknown) => {
-          dbSetSpy(values)
-          return {
-            where: (...args: unknown[]) => {
-              dbWhereSpy(...args)
-              return dbWhereResolveSpy(...args)
-            },
-          }
-        },
-      }
-    },
-  },
-  and: (...args: unknown[]) => ({ __and: args }),
-  eq: (col: unknown, val: unknown) => ({ __eq: [col, val] }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  sequenceDispatchModel: {
-    id: { __col: "id" },
-    workspaceId: { __col: "workspaceId" },
-    status: { __col: "status" },
-  },
+  db: {},
 }))
 
 // ---------- scheduler / redis spies ----------
@@ -60,10 +24,22 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 // ---------- sequence-scheduler spies ----------
+// sequence-flow.ts now delegates all dispatch persistence to
+// sequenceDispatchUtils.{findRunning,markCompleted,markCanceled,markFailed}.
 const advanceEnrollmentSpy = vi.fn()
+const findRunningSpy = vi.fn()
+const markCompletedSpy = vi.fn()
+const markCanceledSpy = vi.fn()
+const markFailedSpy = vi.fn()
 
 vi.mock("@chatbotx.io/sequence-scheduler", () => ({
   advanceEnrollment: (...args: unknown[]) => advanceEnrollmentSpy(...args),
+  sequenceDispatchUtils: {
+    findRunning: (...args: unknown[]) => findRunningSpy(...args),
+    markCompleted: (...args: unknown[]) => markCompletedSpy(...args),
+    markCanceled: (...args: unknown[]) => markCanceledSpy(...args),
+    markFailed: (...args: unknown[]) => markFailedSpy(...args),
+  },
 }))
 
 // ---------- step executor spy (module-level singleton in source) ----------
@@ -152,9 +128,11 @@ function makeStep(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  // db defaults
-  dbFindFirstSpy.mockResolvedValue(makeDispatch())
-  dbWhereResolveSpy.mockResolvedValue(undefined)
+  // sequence-scheduler defaults
+  findRunningSpy.mockResolvedValue(makeDispatch())
+  markCompletedSpy.mockResolvedValue(undefined)
+  markCanceledSpy.mockResolvedValue(undefined)
+  markFailedSpy.mockResolvedValue(undefined)
 
   // scheduler defaults
   removeFromScheduleSpy.mockResolvedValue(undefined)
@@ -185,11 +163,13 @@ describe("handleSendSequenceFlow", () => {
           contactId: "contact-1",
         }),
       )
-      const setArg = dbSetSpy.mock.calls.find(
-        (c: unknown[]) =>
-          (c[0] as Record<string, unknown>).status === "completed",
+      expect(markCompletedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dispatchId: "dispatch-1",
+          workspaceId: "ws-1",
+          sentAt: expect.any(Date),
+        }),
       )
-      expect(setArg).toBeDefined()
     })
 
     test("calls advanceEnrollment with correct enrollment + step info", async () => {
@@ -222,7 +202,7 @@ describe("handleSendSequenceFlow", () => {
     test("skips sendFlowDirect and reuses the existing sentAt", async () => {
       // Arrange
       const completedAt = new Date("2025-01-01T10:00:00Z")
-      dbFindFirstSpy.mockResolvedValue(makeDispatch({ completedAt }))
+      findRunningSpy.mockResolvedValue(makeDispatch({ completedAt }))
 
       // Act
       await handleSendSequenceFlow(makeData(), makeJob())
@@ -238,13 +218,15 @@ describe("handleSendSequenceFlow", () => {
   describe("dispatch not found", () => {
     test("returns early without touching db, scheduler, or advanceEnrollment", async () => {
       // Arrange
-      dbFindFirstSpy.mockResolvedValue(undefined)
+      findRunningSpy.mockResolvedValue(undefined)
 
       // Act
       await handleSendSequenceFlow(makeData(), makeJob())
 
       // Assert
-      expect(dbUpdateSpy).not.toHaveBeenCalled()
+      expect(markCompletedSpy).not.toHaveBeenCalled()
+      expect(markCanceledSpy).not.toHaveBeenCalled()
+      expect(markFailedSpy).not.toHaveBeenCalled()
       expect(sendFlowDirectSpy).not.toHaveBeenCalled()
       expect(advanceEnrollmentSpy).not.toHaveBeenCalled()
       expect(removeFromScheduleSpy).not.toHaveBeenCalled()
@@ -263,15 +245,13 @@ describe("handleSendSequenceFlow", () => {
       await handleSendSequenceFlow(makeData(), makeJob())
 
       // Assert
-      const canceledSet = dbSetSpy.mock.calls.find(
-        (c: unknown[]) =>
-          (c[0] as Record<string, unknown>).status === "canceled",
+      expect(markCanceledSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dispatchId: "dispatch-1",
+          workspaceId: "ws-1",
+          reason: "step_inactive",
+        }),
       )
-      expect(canceledSet).toBeDefined()
-      expect((canceledSet as unknown[])[0]).toMatchObject({
-        status: "canceled",
-        lastError: "step_inactive",
-      })
     })
 
     test("still calls advanceEnrollment so enrollment progresses past the dead step", async () => {
@@ -313,11 +293,13 @@ describe("handleSendSequenceFlow", () => {
       await handleSendSequenceFlow(makeData(), makeJob())
 
       // Assert
-      const canceledSet = dbSetSpy.mock.calls.find(
-        (c: unknown[]) =>
-          (c[0] as Record<string, unknown>).status === "canceled",
+      expect(markCanceledSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dispatchId: "dispatch-1",
+          workspaceId: "ws-1",
+          reason: "step_not_found",
+        }),
       )
-      expect(canceledSet).toBeDefined()
     })
 
     test("does NOT call advanceEnrollment — no step to advance past", async () => {
@@ -352,14 +334,13 @@ describe("handleSendSequenceFlow", () => {
       )
 
       // Assert
-      const failedSet = dbSetSpy.mock.calls.find(
-        (c: unknown[]) => (c[0] as Record<string, unknown>).status === "failed",
+      expect(markFailedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dispatchId: "dispatch-1",
+          workspaceId: "ws-1",
+          errorMessage: "send failed",
+        }),
       )
-      expect(failedSet).toBeDefined()
-      expect((failedSet as unknown[])[0]).toMatchObject({
-        status: "failed",
-        lastError: "send failed",
-      })
     })
 
     test("removes dispatch from schedule during terminal cleanup", async () => {
@@ -399,10 +380,7 @@ describe("handleSendSequenceFlow", () => {
       )
 
       // Assert — no terminal cleanup
-      const failedSet = dbSetSpy.mock.calls.find(
-        (c: unknown[]) => (c[0] as Record<string, unknown>).status === "failed",
-      )
-      expect(failedSet).toBeUndefined()
+      expect(markFailedSpy).not.toHaveBeenCalled()
     })
 
     test("logs the error with attempt and isFinalAttempt info", async () => {

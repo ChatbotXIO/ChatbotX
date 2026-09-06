@@ -184,6 +184,50 @@ class CoexistService extends BaseService {
   createRun(input: CoexistRunCreateInput): Promise<CoexistSyncRunModel> {
     return coexistSyncRunRepository.createRun(input)
   }
+
+  findLastSyncedAt(input: {
+    runId: string
+  }): ReturnType<typeof coexistSyncRunRepository.findLastSyncedAt> {
+    return coexistSyncRunRepository.findLastSyncedAt(input)
+  }
+
+  incrementProgress(
+    input: Parameters<typeof coexistSyncRunRepository.incrementProgress>[0],
+  ): Promise<void> {
+    return coexistSyncRunRepository.incrementProgress(input)
+  }
+
+  findInitState(input: {
+    runId: string
+  }): ReturnType<typeof coexistSyncRunRepository.findInitState> {
+    return coexistSyncRunRepository.findInitState(input)
+  }
+
+  claimRunForSync(input: {
+    runId: string
+    touchUpdatedAt: boolean
+  }): Promise<CoexistSyncRunModel | null> {
+    return coexistSyncRunRepository.claimRunForSync(input)
+  }
+
+  findTerminalCounters(input: {
+    runId: string
+  }): ReturnType<typeof coexistSyncRunRepository.findTerminalCounters> {
+    return coexistSyncRunRepository.findTerminalCounters(input)
+  }
+
+  findNewestLiveRunId(input: {
+    integrationId: string
+    channel: CoexistChannel
+  }): Promise<string | null> {
+    return coexistSyncRunRepository.findNewestLiveRunId(input)
+  }
+
+  findFlushResumeState(input: {
+    runId: string
+  }): ReturnType<typeof coexistSyncRunRepository.findFlushResumeState> {
+    return coexistSyncRunRepository.findFlushResumeState(input)
+  }
 }
 
 export const coexistService = new CoexistService()

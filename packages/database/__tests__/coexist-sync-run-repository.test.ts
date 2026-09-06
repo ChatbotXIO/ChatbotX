@@ -37,6 +37,11 @@ vi.mock("../src/schema", () => ({
     attempts: "attempts",
     integrationId: "integrationId",
     channel: "channel",
+    currentScan: "currentScan",
+    importedContactCount: "importedContactCount",
+    importedMessageCount: "importedMessageCount",
+    skippedCount: "skippedCount",
+    failedCount: "failedCount",
   },
   integrationInstagramModel: {
     id: "instagramId",
@@ -200,5 +205,122 @@ describe("CoexistSyncRunRepository", () => {
       type: "facebook",
       channel: "instagram",
     })
+  })
+
+  // --- Regression guards for the worker data-access refactor -------------
+  // `claimRunForSync` is deliberately NOT `claimRun`: the coexist sync claim
+  // omits the `status IN ('init','running')` filter so a retry can reclaim a
+  // `failed`/`partial` run. Re-adding that filter silently breaks retry
+  // recovery, so assert its absence explicitly.
+
+  test("claimRunForSync does NOT filter status IN ('init','running')", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "run-1" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    const update = vi.fn(() => ({ set }))
+    const repository = new CoexistSyncRunRepository()
+
+    await expect(
+      repository.claimRunForSync({
+        runId: "run-1",
+        touchUpdatedAt: true,
+        tx: { update } as never,
+      }),
+    ).resolves.toEqual({ id: "run-1" })
+
+    expect(mocks.inArray).not.toHaveBeenCalled()
+    // The stale-heartbeat fallback is the whole point of the claim: either the
+    // run is not currently running, or its heartbeat has gone stale.
+    expect(mocks.ne).toHaveBeenCalledWith("status", "running")
+    expect(mocks.lt).toHaveBeenCalledWith("lastHeartbeatAt", expect.anything())
+    expect(where).toHaveBeenCalledWith(
+      expect.objectContaining({
+        and: expect.arrayContaining([{ eq: ["runId", "run-1"] }]),
+      }),
+    )
+  })
+
+  test("claimRunForSync touches updatedAt only when asked (messenger-sync yes, whatsapp-flush no)", async () => {
+    const repository = new CoexistSyncRunRepository()
+
+    const makeTx = () => {
+      const returning = vi.fn().mockResolvedValue([{ id: "run-1" }])
+      const where = vi.fn(() => ({ returning }))
+      const set = vi.fn(() => ({ where }))
+      return { set, tx: { update: vi.fn(() => ({ set })) } as never }
+    }
+
+    const touched = makeTx()
+    await repository.claimRunForSync({
+      runId: "run-1",
+      touchUpdatedAt: true,
+      tx: touched.tx,
+    })
+    expect(touched.set.mock.calls[0]?.[0]).toHaveProperty("updatedAt")
+
+    const untouched = makeTx()
+    await repository.claimRunForSync({
+      runId: "run-1",
+      touchUpdatedAt: false,
+      tx: untouched.tx,
+    })
+    expect(untouched.set.mock.calls[0]?.[0]).not.toHaveProperty("updatedAt")
+  })
+
+  test("incrementProgress uses an atomic `col + N` expression, never a read-modify-write", async () => {
+    const where = vi.fn().mockResolvedValue(undefined)
+    const set = vi.fn(() => ({ where }))
+    const update = vi.fn(() => ({ set }))
+    const select = vi.fn()
+    const findFirst = vi.fn()
+    const repository = new CoexistSyncRunRepository()
+
+    await repository.incrementProgress({
+      runId: "run-1",
+      increments: { importedMessageCount: 5, skippedCount: 2 },
+      fields: { currentStep: "importing" },
+      tx: {
+        update,
+        select,
+        query: { coexistSyncRunModel: { findFirst } },
+      } as never,
+    })
+
+    // No prior read: a read-modify-write would reintroduce a lost update
+    // across the two concurrent coexist phase workers.
+    expect(select).not.toHaveBeenCalled()
+    expect(findFirst).not.toHaveBeenCalled()
+
+    const setArg = set.mock.calls[0]?.[0] as Record<string, unknown>
+    // Each counter is a `sql` template of the form `<column> + <amount>`.
+    expect(setArg.importedMessageCount).toEqual({
+      sql: [expect.anything(), ["importedMessageCount", 5]],
+    })
+    expect(setArg.skippedCount).toEqual({
+      sql: [expect.anything(), ["skippedCount", 2]],
+    })
+    const [strings] = (
+      setArg.importedMessageCount as { sql: [string[], unknown[]] }
+    ).sql
+    expect(strings.join("")).toContain("+")
+    // Plain-value fields ride along untouched.
+    expect(setArg.currentStep).toBe("importing")
+    expect(where).toHaveBeenCalledWith({ eq: ["runId", "run-1"] })
+  })
+
+  test("incrementProgress skips counters whose increment is undefined", async () => {
+    const where = vi.fn().mockResolvedValue(undefined)
+    const set = vi.fn(() => ({ where }))
+    const repository = new CoexistSyncRunRepository()
+
+    await repository.incrementProgress({
+      runId: "run-1",
+      increments: { currentScan: 1, failedCount: undefined },
+      tx: { update: vi.fn(() => ({ set })) } as never,
+    })
+
+    const setArg = set.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(setArg).toHaveProperty("currentScan")
+    expect(setArg).not.toHaveProperty("failedCount")
   })
 })

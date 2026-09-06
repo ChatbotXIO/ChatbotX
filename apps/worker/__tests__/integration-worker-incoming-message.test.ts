@@ -233,6 +233,9 @@ vi.mock("../src/integration/handlers/wait-resume", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
+  contactInboxRepository: {
+    findWithContact: mockFindContactInbox,
+  },
 }))
 
 vi.mock("@chatbotx.io/automated-response", () => ({
@@ -320,6 +323,9 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findOrCreate: mockConversationFindOrCreate,
     ensureActive: vi.fn().mockResolvedValue(true),
+    recordInboundActivity: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
   },
   workspaceService: {
     find: vi.fn(),

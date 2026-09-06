@@ -1,5 +1,8 @@
-import { db } from "@chatbotx.io/database/client"
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
+import { inboxService, integrationWhatsappService } from "@chatbotx.io/business"
+import type {
+  IntegrationWhatsappModel,
+  WhatsappMessageTemplateModel,
+} from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
   type SendWaTemplateMessageStepSchema,
@@ -75,35 +78,30 @@ export async function replaceWhatsappTemplateVariables(props: {
 
 export type ValidatedWhatsappTemplate = {
   inbox: NonNullable<
-    Awaited<ReturnType<typeof db.query.inboxModel.findFirst>>
+    Awaited<ReturnType<typeof inboxService.findWithIntegrationWhatsappById>>
   > & {
     integrationWhatsapp: IntegrationWhatsappModel
   }
-  template: NonNullable<
-    Awaited<ReturnType<typeof db.query.whatsappMessageTemplateModel.findFirst>>
-  >
+  template: WhatsappMessageTemplateModel
 }
 
 export async function validateWhatsappTemplate(
   templateId: string,
   inboxId: string,
 ): Promise<ValidatedWhatsappTemplate | null> {
-  const inbox = await db.query.inboxModel.findFirst({
-    where: { id: inboxId },
-    with: { integrationWhatsapp: true },
+  const inbox = await inboxService.findWithIntegrationWhatsappById({
+    id: inboxId,
   })
 
   if (!inbox?.integrationWhatsapp) {
     return null
   }
 
-  const template = await db.query.whatsappMessageTemplateModel.findFirst({
-    where: {
+  const template =
+    await integrationWhatsappService.findApprovedWhatsappTemplate({
       id: templateId,
       integrationWhatsappId: inbox.integrationWhatsapp.id,
-      status: "APPROVED",
-    },
-  })
+    })
 
   if (!template) {
     return null

@@ -253,4 +253,33 @@ export const integrationMessengerRepository = {
 
     return row ?? null
   },
+
+  /**
+   * Load a Messenger integration by id with NO workspace scope. Callers that
+   * have an id sourced from a workspace-scoped record elsewhere (e.g. a
+   * coexist sync run) must independently compare `workspaceId` themselves —
+   * do not treat this as a substitute for a workspace-scoped lookup.
+   */
+  findById(
+    props: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel | undefined> {
+    return tx.query.integrationMessengerModel.findFirst({
+      where: { id: props.id },
+    })
+  },
+
+  /**
+   * Load a Messenger integration by Facebook page id with NO workspace scope
+   * — used by inbound webhooks (e.g. inbox-label sync) that only have the
+   * page id and have not yet resolved a workspace.
+   */
+  findByPageIdUnscoped(
+    props: { pageId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel | undefined> {
+    return tx.query.integrationMessengerModel.findFirst({
+      where: { pageId: props.pageId },
+    })
+  },
 }

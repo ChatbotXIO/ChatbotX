@@ -1,8 +1,10 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
+import { db } from "@chatbotx.io/database/client"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
-import { advanceEnrollment } from "@chatbotx.io/sequence-scheduler"
+import {
+  advanceEnrollment,
+  sequenceDispatchUtils,
+} from "@chatbotx.io/sequence-scheduler"
 import type { IntegrationJobSendSequenceFlow } from "@chatbotx.io/worker-config"
 import type { Job } from "bullmq"
 import { isFinalAttempt } from "../../lib/job-attempts"
@@ -24,12 +26,10 @@ async function getSchedulerClient(): Promise<SchedulerClient> {
 }
 
 async function fetchDispatch(dispatchId: string, workspaceId: string) {
-  return await db.query.sequenceDispatchModel.findFirst({
-    where: {
-      id: dispatchId,
-      workspaceId,
-      status: "running",
-    },
+  return await sequenceDispatchUtils.findRunning({
+    dbClient: db,
+    dispatchId,
+    workspaceId,
   })
 }
 
@@ -38,20 +38,12 @@ async function markDispatchCompleted(
   workspaceId: string,
   sentAt: Date,
 ): Promise<void> {
-  await db
-    .update(sequenceDispatchModel)
-    .set({
-      status: "completed",
-      completedAt: sentAt,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(sequenceDispatchModel.id, dispatchId),
-        eq(sequenceDispatchModel.workspaceId, workspaceId),
-        eq(sequenceDispatchModel.status, "running"),
-      ),
-    )
+  await sequenceDispatchUtils.markCompleted({
+    dbClient: db,
+    dispatchId,
+    workspaceId,
+    sentAt,
+  })
 }
 
 async function markDispatchCanceled(
@@ -59,20 +51,12 @@ async function markDispatchCanceled(
   workspaceId: string,
   reason: string,
 ): Promise<void> {
-  await db
-    .update(sequenceDispatchModel)
-    .set({
-      status: "canceled",
-      lastError: reason,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(sequenceDispatchModel.id, dispatchId),
-        eq(sequenceDispatchModel.workspaceId, workspaceId),
-        eq(sequenceDispatchModel.status, "running"),
-      ),
-    )
+  await sequenceDispatchUtils.markCanceled({
+    dbClient: db,
+    dispatchId,
+    workspaceId,
+    reason,
+  })
 }
 
 async function markDispatchFailed(
@@ -80,21 +64,12 @@ async function markDispatchFailed(
   workspaceId: string,
   errorMessage: string,
 ): Promise<void> {
-  await db
-    .update(sequenceDispatchModel)
-    .set({
-      status: "failed",
-      lastError: errorMessage,
-      failedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(sequenceDispatchModel.id, dispatchId),
-        eq(sequenceDispatchModel.workspaceId, workspaceId),
-        eq(sequenceDispatchModel.status, "running"),
-      ),
-    )
+  await sequenceDispatchUtils.markFailed({
+    dbClient: db,
+    dispatchId,
+    workspaceId,
+    errorMessage,
+  })
 }
 
 async function runSendSequenceFlow(data: SendSequenceFlowData): Promise<void> {

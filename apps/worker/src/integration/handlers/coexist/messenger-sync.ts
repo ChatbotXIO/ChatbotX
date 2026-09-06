@@ -1,21 +1,12 @@
+import {
+  coexistImportService,
+  coexistService,
+  messengerIntegrationService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
-import {
-  and,
-  db,
-  eq,
-  findOrFail,
-  inArray,
-  lt,
-  ne,
-  or,
-  sql,
-} from "@chatbotx.io/database/client"
-import {
-  coexistSyncRunModel,
-  contactInboxModel,
-  conversationModel,
-  inboxModel,
-} from "@chatbotx.io/database/schema"
+import { findOrFail } from "@chatbotx.io/database/client"
+import { inboxModel } from "@chatbotx.io/database/schema"
 import {
   listConversations,
   type MessengerConversation,
@@ -67,33 +58,6 @@ const DEFAULT_CONCURRENCY = 5
  * either hot-chains a continuation enqueue or yields to the scheduler.
  */
 const CHUNK_BUDGET_MS = 4 * 60 * 1000
-
-/**
- * Resolves the per-integration resume ceiling from the most recent prior
- * `CoexistSyncRun` row. See bulk-historical-import for full semantics.
- */
-async function fetchPriorRunCeiling(
-  integrationId: string,
-  currentRunId: string,
-): Promise<Date | null> {
-  const priorRun = await db.query.coexistSyncRunModel.findFirst({
-    where: {
-      integrationId,
-      channel: "messenger",
-      status: { in: ["succeeded", "partial"] },
-      id: { ne: currentRunId },
-    },
-    orderBy: { startedAt: "desc" },
-    columns: { startedAt: true, lastSyncedAt: true, status: true },
-  })
-  if (!priorRun) {
-    return null
-  }
-  if (priorRun.status === "succeeded") {
-    return priorRun.startedAt ?? null
-  }
-  return priorRun.lastSyncedAt ?? priorRun.startedAt ?? null
-}
 
 type ConvFilter = {
   convsToProcess: MessengerConversation[]
@@ -237,14 +201,13 @@ async function walkConversationsPages(
     // final page and the loop will exit without a subsequent respectPause().
     await ctx.respectPause()
 
-    await db
-      .update(coexistSyncRunModel)
-      .set({
+    await coexistService.updateProgress({
+      runId,
+      fields: {
         currentStep: `phase=${phaseName} page ${pageNumber} — ${conversations.data.length} conversations`,
         lastHeartbeatAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(coexistSyncRunModel.id, runId))
+      },
+    })
 
     const filtered = filterConversations(
       conversations.data,
@@ -275,11 +238,7 @@ async function walkConversationsPages(
 async function runContactsPhase(ctx: SyncContext): Promise<PhaseResult> {
   const { runId, workspaceId, pageId, inbox } = ctx
 
-  const [runRow] = await db
-    .select({ lastSyncedAt: coexistSyncRunModel.lastSyncedAt })
-    .from(coexistSyncRunModel)
-    .where(eq(coexistSyncRunModel.id, runId))
-    .limit(1)
+  const runRow = await coexistService.findLastSyncedAt({ runId })
 
   if (!runRow) {
     return { done: true, oldestConvProcessed: null, pageNumber: 0 }
@@ -362,19 +321,20 @@ async function runContactsPhase(ctx: SyncContext): Promise<PhaseResult> {
         ctx.errorRef.current = `phase=contacts page ${pageNumber}: ${pageResult.failureReason}`
       }
 
-      await db
-        .update(coexistSyncRunModel)
-        .set({
-          currentScan: sql`${coexistSyncRunModel.currentScan} + ${filtered.convsToProcess.length}`,
-          importedContactCount: sql`${coexistSyncRunModel.importedContactCount} + ${pageResult.importedContacts}`,
-          skippedCount: sql`${coexistSyncRunModel.skippedCount} + ${pageResult.skippedContacts}`,
+      await coexistService.incrementProgress({
+        runId,
+        increments: {
+          currentScan: filtered.convsToProcess.length,
+          importedContactCount: pageResult.importedContacts,
+          skippedCount: pageResult.skippedContacts,
+        },
+        fields: {
           lastSyncedAt: filtered.oldestConvProcessed,
           currentStep: `phase=contacts page ${pageNumber} processed`,
           currentError: ctx.errorRef.current ?? null,
           lastHeartbeatAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(coexistSyncRunModel.id, runId))
+        },
+      })
 
       return filtered.oldestConvProcessed
     },
@@ -390,11 +350,7 @@ async function runContactsPhase(ctx: SyncContext): Promise<PhaseResult> {
 async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
   const { runId, workspaceId, pageId, inbox } = ctx
 
-  const [runRow] = await db
-    .select({ lastSyncedAt: coexistSyncRunModel.lastSyncedAt })
-    .from(coexistSyncRunModel)
-    .where(eq(coexistSyncRunModel.id, runId))
-    .limit(1)
+  const runRow = await coexistService.findLastSyncedAt({ runId })
 
   if (!runRow) {
     return { done: true, oldestConvProcessed: null, pageNumber: 0 }
@@ -426,24 +382,10 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
       // Single JOIN resolves ContactInbox + Conversation in one round trip.
       const linkBySource = new Map<string, ContactImportLink>()
       if (sourceIds.length > 0) {
-        const rows = await db
-          .select({
-            sourceId: contactInboxModel.sourceId,
-            contactInboxId: contactInboxModel.id,
-            contactId: contactInboxModel.contactId,
-            conversationId: conversationModel.id,
-          })
-          .from(contactInboxModel)
-          .leftJoin(
-            conversationModel,
-            eq(conversationModel.contactId, contactInboxModel.contactId),
-          )
-          .where(
-            and(
-              eq(contactInboxModel.inboxId, inbox.id),
-              inArray(contactInboxModel.sourceId, sourceIds),
-            ),
-          )
+        const rows = await coexistImportService.listContactLinksBySourceIds({
+          inboxId: inbox.id,
+          sourceIds,
+        })
         for (const r of rows) {
           if (!r.conversationId) {
             continue
@@ -615,19 +557,20 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
         }
       }
 
-      await db
-        .update(coexistSyncRunModel)
-        .set({
-          importedMessageCount: sql`${coexistSyncRunModel.importedMessageCount} + ${pageImported}`,
-          skippedCount: sql`${coexistSyncRunModel.skippedCount} + ${pageSkipped}`,
-          failedCount: sql`${coexistSyncRunModel.failedCount} + ${pageFailed}`,
+      await coexistService.incrementProgress({
+        runId,
+        increments: {
+          importedMessageCount: pageImported,
+          skippedCount: pageSkipped,
+          failedCount: pageFailed,
+        },
+        fields: {
           lastSyncedAt: pageOldest,
           currentStep: `phase=messages page ${pageNumber} processed`,
           currentError: ctx.errorRef.current ?? null,
           lastHeartbeatAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(coexistSyncRunModel.id, runId))
+        },
+      })
 
       return pageOldest
     },
@@ -656,19 +599,14 @@ export const coexistMessengerSync = async (
   const jobStart = Date.now()
 
   const failRun = async (currentError: string): Promise<void> => {
-    await db
-      .update(coexistSyncRunModel)
-      .set({
-        status: "failed",
-        currentError,
-        finishedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(coexistSyncRunModel.id, runId))
+    await coexistService.markFailed({ runId, currentError })
   }
 
-  const integration = await db.query.integrationMessengerModel.findFirst({
-    where: { id: integrationId },
+  // NO workspace scope — the mismatch branch below deliberately distinguishes
+  // "not found" from "workspaceId mismatch" (do NOT substitute a
+  // workspace-scoped lookup here, which would collapse that distinction).
+  const integration = await messengerIntegrationService.findById({
+    id: integrationId,
   })
   if (!integration) {
     logger.warn({ integrationId }, "[coexist] Messenger integration gone")
@@ -711,54 +649,30 @@ export const coexistMessengerSync = async (
     message: "Inbox not found",
   })
 
-  const workspace = await db.query.workspaceModel.findFirst({
-    where: { id: workspaceId },
-    columns: { targetCountry: true },
-  })
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
   const defaultCountry = workspace?.targetCountry ?? null
 
-  const [initRow] = await db
-    .select({
-      attempts: coexistSyncRunModel.attempts,
-      currentError: coexistSyncRunModel.currentError,
-      messengerSyncPhase: coexistSyncRunModel.messengerSyncPhase,
-    })
-    .from(coexistSyncRunModel)
-    .where(eq(coexistSyncRunModel.id, runId))
-    .limit(1)
+  const initRow = await coexistService.findInitState({ runId })
 
   if (!initRow) {
     logger.warn({ runId }, "[coexist] CoexistSyncRun row gone — abandoning")
     return
   }
 
-  const ceiling = await fetchPriorRunCeiling(integrationId, runId)
+  const ceiling = await coexistService.findResumeCeiling({
+    integrationId,
+    channel: "messenger",
+    currentRunId: runId,
+  })
   const attempts = initRow.attempts
 
   // Optimistic claim: only one worker may flip status→running at a time.
-  const claimed = await db
-    .update(coexistSyncRunModel)
-    .set({
-      status: "running",
-      startedAt: sql`COALESCE(${coexistSyncRunModel.startedAt}, NOW())`,
-      lastHeartbeatAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(coexistSyncRunModel.id, runId),
-        or(
-          ne(coexistSyncRunModel.status, "running"),
-          lt(
-            coexistSyncRunModel.lastHeartbeatAt,
-            sql`NOW() - INTERVAL '10 minutes'`,
-          ),
-        ),
-      ),
-    )
-    .returning({ id: coexistSyncRunModel.id })
+  const claimedRun = await coexistService.claimRunForSync({
+    runId,
+    touchUpdatedAt: true,
+  })
 
-  if (claimed.length === 0) {
+  if (!claimedRun) {
     logger.warn(
       { runId, integrationId },
       "[coexist] Messenger run already claimed by another worker — abandoning",
@@ -853,16 +767,15 @@ export const coexistMessengerSync = async (
           break
         }
         // Transition to phase 2 — reset frontier so messages walks from newest.
-        await db
-          .update(coexistSyncRunModel)
-          .set({
+        await coexistService.updateProgress({
+          runId,
+          fields: {
             messengerSyncPhase: "messages",
             lastSyncedAt: null,
             currentStep: "contacts done — start message phase",
             lastHeartbeatAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(coexistSyncRunModel.id, runId))
+          },
+        })
         currentPhase = "messages"
         continue
       }
@@ -876,23 +789,15 @@ export const coexistMessengerSync = async (
       }
 
       // Both phases complete — derive terminal status from counters.
-      const [terminal] = await db
-        .select({
-          importedMessages: coexistSyncRunModel.importedMessageCount,
-          skipped: coexistSyncRunModel.skippedCount,
-          failed: coexistSyncRunModel.failedCount,
-        })
-        .from(coexistSyncRunModel)
-        .where(eq(coexistSyncRunModel.id, runId))
-        .limit(1)
+      const terminal = await coexistService.findTerminalCounters({ runId })
 
       if (
         terminal &&
-        terminal.failed > 0 &&
-        (terminal.importedMessages > 0 || terminal.skipped > 0)
+        terminal.failedCount > 0 &&
+        (terminal.importedMessageCount > 0 || terminal.skippedCount > 0)
       ) {
         finalStatus = "partial"
-      } else if (terminal && terminal.failed > 0) {
+      } else if (terminal && terminal.failedCount > 0) {
         finalStatus = "failed"
       } else {
         finalStatus = "succeeded"
@@ -924,14 +829,10 @@ export const coexistMessengerSync = async (
           { error, runId },
           "[coexist] Messenger continuation enqueue failed — fallback to scheduler",
         )
-        await db
-          .update(coexistSyncRunModel)
-          .set({
-            status: "init",
-            lastHeartbeatAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(coexistSyncRunModel.id, runId))
+        await coexistService.updateProgress({
+          runId,
+          fields: { status: "init", lastHeartbeatAt: new Date() },
+        })
       }
     }
   } catch (error) {
@@ -950,17 +851,16 @@ export const coexistMessengerSync = async (
     })
   } finally {
     if (finalStatus !== null) {
-      await db
-        .update(coexistSyncRunModel)
-        .set({
+      await coexistService.updateProgress({
+        runId,
+        fields: {
           status: finalStatus,
           finishedAt: new Date(),
           lastHeartbeatAt: new Date(),
           currentStep: "done",
           currentError: errorRef.current ?? null,
-          updatedAt: new Date(),
-        })
-        .where(eq(coexistSyncRunModel.id, runId))
+        },
+      })
     }
   }
 

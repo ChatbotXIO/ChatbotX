@@ -22,7 +22,10 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  customFieldService: { findBy: vi.fn() },
+  customFieldService: {
+    findBy: vi.fn(),
+    findManyByIds: mocks.customFieldFindMany,
+  },
   contactCustomFieldService: {
     setValues: mocks.setValues,
     setValueByKey: mocks.setValueByKey,
@@ -37,17 +40,6 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/business/contact-custom-field", () => ({
   createSourceTimezoneResolver: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      customFieldModel: {
-        findFirst: vi.fn(),
-        findMany: mocks.customFieldFindMany,
-      },
-    },
-  },
 }))
 
 vi.mock("@chatbotx.io/variables", () => ({

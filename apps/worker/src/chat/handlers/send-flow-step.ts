@@ -13,7 +13,6 @@ import {
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db, eq } from "@chatbotx.io/database/client"
 import {
   channelTypes,
   contentTypes,
@@ -24,10 +23,7 @@ import {
   createMessageRepository,
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
-import {
-  conversationModel,
-  type messageModel,
-} from "@chatbotx.io/database/schema"
+import type { messageModel } from "@chatbotx.io/database/schema"
 import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
@@ -109,29 +105,21 @@ const extractBookingPublicLinkSlug = (url: string): string | null => {
 }
 
 const findTargetContactInbox = ({
+  workspaceId,
   contactId,
   contactInboxId,
 }: {
+  workspaceId: string
   contactId: string
   contactInboxId?: string
 }) => {
   if (contactInboxId) {
-    return db.query.contactInboxModel.findFirst({
-      where: {
-        id: contactInboxId,
-        contactId,
-      },
+    return contactInboxService.findByUncached({
+      where: { id: contactInboxId, contactId },
     })
   }
 
-  return db.query.contactInboxModel.findFirst({
-    where: {
-      contactId,
-    },
-    orderBy: {
-      lastMessageAt: "desc",
-    },
-  })
+  return contactInboxService.findRecentByContactId({ workspaceId, contactId })
 }
 
 export const convertButtonsToTemplate = (props: {
@@ -338,15 +326,15 @@ export async function sendFlowStep({
   commentAnchor,
   appointmentId,
 }: ChatJobSendFlowStep["data"]) {
-  const conversation = await db.query.conversationModel.findFirst({
-    where: { id: conversationId },
-    with: { contact: true },
+  const conversation = await conversationService.findByIdWithContact({
+    id: conversationId,
   })
   if (!conversation) {
     return
   }
 
   const targetContactInbox = await findTargetContactInbox({
+    workspaceId: conversation.workspaceId,
     contactId: conversation.contactId,
     contactInboxId,
   })
@@ -657,27 +645,16 @@ export async function sendFlowStep({
     }
 
     const createdMessage = message
-    const trackingInvalidation = await db.transaction(async (tx) => {
-      const invalidation =
-        await contactInboxService.recordOutboundMessageCreated({
-          tx,
-          contactInboxId: targetContactInbox.id,
-          contactId: targetContactInbox.contactId,
-          workspaceId: conversation.workspaceId,
-          at: createdMessage.createdAt,
-        })
-
-      await conversationService.updateFlowStepState({
-        tx,
+    const trackingInvalidation =
+      await conversationService.recordOutboundFlowStep({
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
-        lastActivityAt: createdMessage.createdAt,
+        contactInboxId: targetContactInbox.id,
+        contactId: targetContactInbox.contactId,
+        at: createdMessage.createdAt,
         lastStep: conversation.currentStep,
         currentStep: resolvedStep.id,
       })
-
-      return invalidation
-    })
     await Promise.all([
       trackingInvalidation
         ? contactInboxService.invalidateTracking(trackingInvalidation)
@@ -886,13 +863,9 @@ export const sendChatMessage = async (
 
   const contactInbox =
     targetContactInbox ??
-    (await db.query.contactInboxModel.findFirst({
-      where: {
-        contactId: conversation.contactId,
-      },
-      orderBy: {
-        lastMessageAt: "desc",
-      },
+    (await contactInboxService.findRecentByContactId({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
     }))
   if (!contactInbox) {
     throw new IntegrationException(
@@ -977,23 +950,14 @@ export const sendChatMessage = async (
         }))
     }
 
-    const trackingInvalidation = await db.transaction(async (tx) => {
-      const invalidation =
-        await contactInboxService.recordOutboundMessageCreated({
-          tx,
-          contactInboxId: contactInbox.id,
-          contactId: contactInbox.contactId,
-          workspaceId: conversation.workspaceId,
-          at: message.createdAt,
-        })
-
-      await tx
-        .update(conversationModel)
-        .set({ lastActivityAt: message.createdAt })
-        .where(eq(conversationModel.id, conversation.id))
-
-      return invalidation
-    })
+    const trackingInvalidation =
+      await conversationService.recordOutboundMessageActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        contactId: contactInbox.contactId,
+        at: message.createdAt,
+      })
     if (trackingInvalidation) {
       await contactInboxService.invalidateTracking(trackingInvalidation)
     }

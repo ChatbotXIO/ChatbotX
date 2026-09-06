@@ -1,6 +1,6 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { aiEmbeddingModel, aiFileModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { findOrFail } from "@chatbotx.io/database/client"
+import { aiEmbeddingRepository } from "@chatbotx.io/database/repositories"
+import { aiFileModel } from "@chatbotx.io/database/schema"
 import {
   AIJobAction,
   type AIJobProcessFile,
@@ -65,24 +65,14 @@ export async function processAIFile(
     overlapSize,
   ).map((c) => ({ content: c.content }))
 
-  await db.insert(aiEmbeddingModel).values(
-    chunks.map((c) => ({
-      id: createId(),
-      content: c.content,
-      workspaceId: aiFile.workspaceId,
-      aiFileId: aiFile.id,
-      status: "pending",
-    })),
-  )
-
-  const embeddings = await db.query.aiEmbeddingModel.findMany({
-    where: {
-      aiFileId: aiFile.id,
-    },
+  const inserted = await aiEmbeddingRepository.bulkCreatePending({
+    aiFileId: aiFile.id,
+    workspaceId: aiFile.workspaceId,
+    chunks,
   })
 
   await aiAgentQueue.addBulk(
-    embeddings.map((e) => ({
+    inserted.map((e) => ({
       name: AIJobAction.processPendingEmbedding,
       data: {
         type: AIJobAction.processPendingEmbedding,

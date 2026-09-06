@@ -8,8 +8,6 @@ const {
   mockRepositoryCreate,
   mockRepositoryUpdateSourceId,
   mockCreateMessageRepository,
-  mockDbInsert,
-  mockDbUpdate,
   mockBroadcast,
   mockEmit,
   mockValidateTemplate,
@@ -17,24 +15,13 @@ const {
   mockContactVariables,
   mockSendFlowStep,
   mockRecordSendFailure,
-  mockDbSet,
+  mockRecordOutboundMessageActivity,
+  mockInvalidateTracking,
+  mockFindAnyActiveFlow,
   mockEnqueueIntegrationJob,
   mockFindSendableBroadcast,
   mockResetContactForResume,
 } = vi.hoisted(() => {
-  const insertChain = {
-    values: vi.fn(),
-    returning: vi.fn().mockResolvedValue([]),
-  }
-  insertChain.values.mockReturnValue(insertChain)
-  const mockDbInsert = vi.fn().mockReturnValue(insertChain)
-
-  const mockDbSet = vi.fn()
-  const updateChain = { set: mockDbSet, where: vi.fn() }
-  updateChain.set.mockReturnValue(updateChain)
-  updateChain.where.mockResolvedValue(undefined)
-  const mockDbUpdate = vi.fn().mockReturnValue(updateChain)
-
   const mockRepositoryCreate = vi.fn().mockResolvedValue({
     id: "msg-created",
     contactInboxId: "ci-1",
@@ -60,8 +47,6 @@ const {
     mockRepositoryCreate,
     mockRepositoryUpdateSourceId,
     mockCreateMessageRepository,
-    mockDbInsert,
-    mockDbUpdate,
     mockBroadcast: vi.fn(),
     mockEmit: vi.fn().mockResolvedValue(undefined),
     mockValidateTemplate: vi.fn().mockResolvedValue({
@@ -81,7 +66,11 @@ const {
       .fn()
       .mockResolvedValue({ messageIds: ["provider-msg-1"] }),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
-    mockDbSet,
+    mockRecordOutboundMessageActivity: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
+    mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
+    mockFindAnyActiveFlow: vi.fn().mockResolvedValue(null),
     mockFindSendableBroadcast: vi.fn().mockResolvedValue({ id: "broadcast-1" }),
     mockResetContactForResume: vi.fn().mockResolvedValue(undefined),
   }
@@ -95,22 +84,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    insert: mockDbInsert,
-    update: mockDbUpdate,
-    transaction: vi
-      .fn()
-      .mockImplementation((fn: (tx: unknown) => unknown) =>
-        fn({ update: mockDbUpdate }),
-      ),
-    query: {
-      flowModel: { findFirst: vi.fn().mockResolvedValue(null) },
-    },
-  },
-  eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
   messageModel: { id: "id", sourceId: "sourceId" },
   contactInboxModel: { id: "id" },
@@ -120,12 +93,14 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
   contactInboxService: {
-    recordOutboundMessageCreated: vi
-      .fn()
-      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
-    recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     recordSendFailure: mockRecordSendFailure,
-    invalidateTracking: vi.fn().mockResolvedValue(undefined),
+    invalidateTracking: mockInvalidateTracking,
+  },
+  conversationService: {
+    recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
+  },
+  flowService: {
+    findAnyActive: mockFindAnyActiveFlow,
   },
   broadcastService: {
     findSendableBroadcast: mockFindSendableBroadcast,
@@ -304,18 +279,14 @@ describe("processMessengerTemplate", () => {
     )
   })
 
-  test("does NOT call db.insert directly for message creation", async () => {
+  test("does NOT call db.insert directly for message creation — goes through the message repository", async () => {
     await processMessengerTemplate({
       conversation: fakeConversation,
       contactInbox: fakeContactInbox,
       template: fakeTemplate,
     })
 
-    const messageModelMock = (await import("@chatbotx.io/database/schema"))
-      .messageModel
-    for (const call of mockDbInsert.mock.calls) {
-      expect(call[0]).not.toBe(messageModelMock)
-    }
+    expect(mockRepositoryCreate).toHaveBeenCalledTimes(1)
   })
 
   test("broadcasts realtime event after message created", async () => {
@@ -347,8 +318,16 @@ describe("processMessengerTemplate", () => {
       "ws-1",
       createdAt,
     )
-    expect(mockDbUpdate).toHaveBeenCalledTimes(1)
-    expect(mockDbSet).toHaveBeenCalledWith({ lastActivityAt: createdAt })
+    expect(mockRecordOutboundMessageActivity).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contactId: undefined,
+      at: createdAt,
+    })
+    expect(mockInvalidateTracking).toHaveBeenCalledWith({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
+    })
   })
 
   test("does not rethrow when persisting sourceId fails after a successful send", async () => {

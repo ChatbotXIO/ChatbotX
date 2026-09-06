@@ -1,13 +1,6 @@
-import { tagSyncService } from "@chatbotx.io/business"
-import { and, db, eq, inArray, isNull } from "@chatbotx.io/database/client"
-import {
-  contactsToTagsModel,
-  contactToTagChannelModel,
-  tagChannelModel,
-  tagModel,
-} from "@chatbotx.io/database/schema"
+import { tagService, tagSyncService } from "@chatbotx.io/business"
+import { contactInboxRepository } from "@chatbotx.io/database/repositories"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
-import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../../lib/logger"
 import type { LabelContext, LabelEvent } from "./types"
 
@@ -50,28 +43,17 @@ async function assignLabel(
 
   // Link the workspace tag to the contacts; capture the newly-linked ones so we
   // emit "tag applied" exactly once per new pair (same as add-contact-tag).
-  const linked = await db
-    .insert(contactsToTagsModel)
-    .values(
-      inboxes.map((inbox) => ({
-        contactId: inbox.contactId,
-        tagId: mapping.tagId,
-      })),
-    )
-    .onConflictDoNothing()
-    .returning({ contactId: contactsToTagsModel.contactId })
+  const linked = await tagService.linkTagToContactsReturningNew({
+    tagId: mapping.tagId,
+    contactIds: inboxes.map((inbox) => inbox.contactId),
+  })
 
   // Record the per-channel assignment (used for reconciliation / detach).
-  await db
-    .insert(contactToTagChannelModel)
-    .values(
-      inboxes.map((inbox) => ({
-        tagId: mapping.tagId,
-        tagChannelId: mapping.tagChannelId,
-        contactInboxId: inbox.id,
-      })),
-    )
-    .onConflictDoNothing()
+  await tagService.recordTagChannelAssignments({
+    tagId: mapping.tagId,
+    tagChannelId: mapping.tagChannelId,
+    contactInboxIds: inboxes.map((inbox) => inbox.id),
+  })
 
   // Per-contact contactInboxId map, keyed off the same `inboxes` list used to
   // build the insert above — each newly-linked contact attributes to the
@@ -111,26 +93,17 @@ async function unassignLabel(
   }
 
   // Remove the per-channel assignment record.
-  await db.delete(contactToTagChannelModel).where(
-    and(
-      eq(contactToTagChannelModel.tagChannelId, tagChannel.id),
-      inArray(
-        contactToTagChannelModel.contactInboxId,
-        inboxes.map((inbox) => inbox.id),
-      ),
-    ),
-  )
+  await tagService.deleteTagChannelAssignments({
+    tagChannelId: tagChannel.id,
+    contactInboxIds: inboxes.map((inbox) => inbox.id),
+  })
 
   // Remove the workspace tag from those contacts — same as remove-contact-tag.
   const contactIds = inboxes.map((inbox) => inbox.contactId)
-  await db
-    .delete(contactsToTagsModel)
-    .where(
-      and(
-        eq(contactsToTagsModel.tagId, tagChannel.tagId),
-        inArray(contactsToTagsModel.contactId, contactIds),
-      ),
-    )
+  await tagService.detachTagFromContacts({
+    tagId: tagChannel.tagId,
+    contactIds,
+  })
 
   await emitForContacts(
     ctx.workspaceId,
@@ -188,21 +161,18 @@ async function removeLabel(
 // ── DB helpers ──────────────────────────────────────────
 
 function findInboxes(inboxId: string, sourceIds: string[]) {
-  return db.query.contactInboxModel.findMany({
-    where: { inboxId, sourceId: { in: sourceIds } },
-    columns: { id: true, contactId: true },
+  return contactInboxRepository.listIdsByInboxAndSourceIds({
+    inboxId,
+    sourceIds,
   })
 }
 
 function findTagChannel(ctx: LabelContext, externalLabelId: string) {
-  return db.query.tagChannelModel.findFirst({
-    where: {
-      workspaceId: ctx.workspaceId,
-      channelType: ctx.channelType,
-      integrationId: ctx.integrationId,
-      externalLabelId,
-    },
-    columns: { id: true, tagId: true },
+  return tagService.findTagChannel({
+    workspaceId: ctx.workspaceId,
+    channelType: ctx.channelType,
+    integrationId: ctx.integrationId,
+    externalLabelId,
   })
 }
 
@@ -220,85 +190,20 @@ async function ensureTagChannel(
     return // cannot create a tag without a name
   }
 
-  const tagId = await ensureTag(ctx.workspaceId, name)
+  const tagId = await tagService.ensureTagByName({
+    workspaceId: ctx.workspaceId,
+    name,
+  })
   if (!tagId) {
     return
   }
 
-  const tagChannelId = await ensureChannel(ctx, tagId, externalLabelId)
+  const tagChannelId = await tagService.ensureTagChannel({
+    workspaceId: ctx.workspaceId,
+    tagId,
+    channelType: ctx.channelType,
+    integrationId: ctx.integrationId,
+    externalLabelId,
+  })
   return tagChannelId ? { tagId, tagChannelId } : undefined
-}
-
-async function ensureTag(
-  workspaceId: string,
-  name: string,
-): Promise<string | undefined> {
-  const where = { workspaceId, name, deletedAt: { isNull: true as const } }
-
-  const found = await db.query.tagModel.findFirst({
-    where,
-    columns: { id: true },
-  })
-  if (found) {
-    return found.id
-  }
-
-  const [created] = await db
-    .insert(tagModel)
-    .values({ id: createId(), workspaceId, name })
-    .onConflictDoNothing({
-      // Tag_workspaceId_name_key is a partial unique index (deletedAt IS NULL).
-      target: [tagModel.workspaceId, tagModel.name],
-      where: isNull(tagModel.deletedAt),
-    })
-    .returning({ id: tagModel.id })
-  if (created) {
-    return created.id
-  }
-
-  // Lost a race against a concurrent insert — read the winner back.
-  const retry = await db.query.tagModel.findFirst({
-    where,
-    columns: { id: true },
-  })
-  return retry?.id
-}
-
-async function ensureChannel(
-  ctx: LabelContext,
-  tagId: string,
-  externalLabelId: string,
-): Promise<string | undefined> {
-  const [created] = await db
-    .insert(tagChannelModel)
-    .values({
-      id: createId(),
-      workspaceId: ctx.workspaceId,
-      tagId,
-      channelType: ctx.channelType,
-      integrationId: ctx.integrationId,
-      externalLabelId,
-    })
-    .onConflictDoNothing({
-      target: [
-        tagChannelModel.tagId,
-        tagChannelModel.channelType,
-        tagChannelModel.integrationId,
-      ],
-    })
-    .returning({ id: tagChannelModel.id })
-  if (created) {
-    return created.id
-  }
-
-  const retry = await db.query.tagChannelModel.findFirst({
-    where: {
-      tagId,
-      workspaceId: ctx.workspaceId,
-      channelType: ctx.channelType,
-      integrationId: ctx.integrationId,
-    },
-    columns: { id: true },
-  })
-  return retry?.id
 }

@@ -65,6 +65,17 @@ class ZaloIntegrationService extends BaseService {
       .set({ tokenRefreshError: error })
       .where(eq(integrationZaloModel.id, id))
   }
+
+  /**
+   * Load a Zalo integration by OA id with NO workspace scope — used by
+   * inbound webhooks (e.g. inbox-label sync) that only have the OA id and
+   * have not yet resolved a workspace.
+   */
+  findByOaId(props: { oaId: string }) {
+    return db.query.integrationZaloModel.findFirst({
+      where: { oaId: props.oaId },
+    })
+  }
 }
 
 export const zaloIntegrationService = new ZaloIntegrationService()

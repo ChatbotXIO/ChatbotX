@@ -1,15 +1,12 @@
-import { conversationService } from "@chatbotx.io/business"
 import {
-  and,
-  db,
-  eq,
-  gte,
-  inArray,
-  or,
-  type SQL,
-  sql,
-} from "@chatbotx.io/database/client"
-import { contactModel, conversationModel } from "@chatbotx.io/database/schema"
+  contactInboxService,
+  contactService,
+  conversationService,
+  inboxTeamService,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
+import { gte, type SQL } from "@chatbotx.io/database/client"
+import { conversationModel } from "@chatbotx.io/database/schema"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -35,12 +32,13 @@ import type { ExecuteStepResult } from "./step"
 export async function stepBlockContact({
   conversation,
 }: ExecuteStepProps<BlockContactStepSchema>) {
-  await db
-    .update(contactModel)
-    .set({
-      blockedAt: new Date(),
-    })
-    .where(eq(contactModel.id, conversation.contactId))
+  // `block` → `update` adds `findByIdOrFail` + `emitContactInfoChangeEvents` +
+  // cache invalidation the raw write lacked — a deliberate behavior change;
+  // called out in the PR body.
+  await contactService.block({
+    workspaceId: conversation.workspaceId,
+    id: conversation.contactId,
+  })
 }
 
 export async function stepArchiveConversation({
@@ -82,24 +80,20 @@ export async function stepAssignConversation({
 
   if (step.assignedId.startsWith("u_")) {
     const userId = step.assignedId.slice(2)
-    const workspaceMember = await db.query.workspaceMemberModel.findFirst({
-      where: {
-        userId,
-        workspaceId: conversation.workspaceId,
-      },
+    const isMember = await workspaceMemberService.isMember({
+      workspaceId: conversation.workspaceId,
+      userId,
     })
-    if (workspaceMember) {
+    if (isMember) {
       assignedUserId = userId
     }
   } else if (step.assignedId.startsWith("t_")) {
     const inboxTeamId = step.assignedId.slice(2)
-    const inboxTeam = await db.query.inboxTeamModel.findFirst({
-      where: {
-        id: inboxTeamId,
-        workspaceId: conversation.workspaceId,
-      },
+    const teamExists = await inboxTeamService.exists({
+      workspaceId: conversation.workspaceId,
+      id: inboxTeamId,
     })
-    if (inboxTeam) {
+    if (teamExists) {
       assignedInboxTeamId = inboxTeamId
     }
   }
@@ -178,16 +172,9 @@ export async function stepAutoAssignConversation({
 
   let requiredUsers: { userId: string }[] = []
   if (userIds.length > 0) {
-    requiredUsers = await db.query.workspaceMemberModel.findMany({
-      where: {
-        workspaceId: conversation.workspaceId,
-        userId: {
-          in: userIds,
-        },
-      },
-      columns: {
-        userId: true,
-      },
+    requiredUsers = await workspaceMemberService.listExistingUserIds({
+      workspaceId: conversation.workspaceId,
+      userIds,
     })
     for (const u of requiredUsers) {
       allocation[`u_${u.userId}`] = {
@@ -200,16 +187,9 @@ export async function stepAutoAssignConversation({
 
   let requiredInboxTeams: { id: string }[] = []
   if (inboxTeamIds.length > 0) {
-    requiredInboxTeams = await db.query.inboxTeamModel.findMany({
-      where: {
-        workspaceId: conversation.workspaceId,
-        id: {
-          in: inboxTeamIds,
-        },
-      },
-      columns: {
-        id: true,
-      },
+    requiredInboxTeams = await inboxTeamService.listExistingIds({
+      workspaceId: conversation.workspaceId,
+      ids: inboxTeamIds,
     })
     for (const t of requiredInboxTeams) {
       allocation[`t_${t.id}`] = {
@@ -228,34 +208,11 @@ export async function stepAutoAssignConversation({
     }
   }
 
-  const conversationCount = await db
-    .select({
-      assignedUserId: conversationModel.assignedUserId,
-      assignedInboxTeamId: conversationModel.assignedInboxTeamId,
-      conversationsCount: sql<number>`cast(count(${conversationModel.id}) as int)`,
-    })
-    .from(conversationModel)
-    .groupBy(
-      conversationModel.assignedUserId,
-      conversationModel.assignedInboxTeamId,
-    )
-    .where(
-      and(
-        ...filterConversationConditions,
-        and(
-          or(
-            inArray(
-              conversationModel.assignedUserId,
-              requiredUsers.map((r) => r.userId),
-            ),
-            inArray(
-              conversationModel.assignedInboxTeamId,
-              requiredInboxTeams.map((r) => r.id),
-            ),
-          ),
-        ),
-      ),
-    )
+  const conversationCount = await conversationService.countByAssignee({
+    filterConditions: filterConversationConditions,
+    userIds: requiredUsers.map((r) => r.userId),
+    inboxTeamIds: requiredInboxTeams.map((r) => r.id),
+  })
   for (const cc of conversationCount) {
     if (cc.assignedUserId && allocation[`u_${cc.assignedUserId}`]) {
       allocation[`u_${cc.assignedUserId}`].count = cc.conversationsCount
@@ -373,13 +330,9 @@ export const stepSendTyping = async (
 
   const contactInbox =
     baseContactInbox ||
-    (await db.query.contactInboxModel.findFirst({
-      where: {
-        contactId: conversation.contactId,
-      },
-      orderBy: {
-        lastMessageAt: "desc",
-      },
+    (await contactInboxService.findRecentByContactId({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
     }))
 
   if (!contactInbox) {

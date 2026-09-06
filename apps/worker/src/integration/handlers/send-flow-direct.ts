@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { contactInboxService, conversationService } from "@chatbotx.io/business"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import { runFlowNode } from "./flow"
 
@@ -14,21 +14,17 @@ export async function sendFlowDirect(
 ): Promise<Date> {
   const { flowId, workspaceId, contactId, metadata } = params
 
-  const conversation = await db.query.conversationModel.findFirst({
-    where: {
-      contactId,
-      workspaceId,
-    },
+  const conversation = await conversationService.findBy({
+    where: { contactId, workspaceId },
   })
 
   if (!conversation) {
     throw new Error(`Conversation not found for contact ${contactId}`)
   }
 
-  const allContactInboxes = await db.query.contactInboxModel.findMany({
-    where: {
-      contactId,
-    },
+  const allContactInboxes = await contactInboxService.listByContactId({
+    workspaceId,
+    contactId,
   })
 
   await Promise.all(
