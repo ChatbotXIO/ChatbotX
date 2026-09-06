@@ -179,6 +179,25 @@ class IntegrationService extends BaseService {
       })),
     ]
   }
+
+  /**
+   * Boolean gate for whether a workspace has any integration whose type is
+   * in `integrationTypes` (e.g. an AI provider). The caller supplies the
+   * type list — business does not depend on `@chatbotx.io/ai`.
+   */
+  async hasIntegrationOfTypes(props: {
+    workspaceId: string
+    integrationTypes: string[]
+  }): Promise<boolean> {
+    const existing = await db.query.integrationModel.findFirst({
+      where: {
+        integrationType: { in: props.integrationTypes },
+        workspaceId: props.workspaceId,
+      },
+    })
+
+    return !!existing
+  }
 }
 
 export const integrationService = new IntegrationService()

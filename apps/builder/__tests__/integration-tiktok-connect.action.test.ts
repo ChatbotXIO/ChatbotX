@@ -3,21 +3,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  connectChannelIntegration: vi.fn(),
+  connect: vi.fn(),
   findWorkspaceById: vi.fn(),
-  transaction: vi.fn(),
-  insert: vi.fn(),
-  values: vi.fn(),
-  onConflictDoUpdate: vi.fn(),
-  returning: vi.fn(),
   auditRecord: vi.fn(),
   handleRequest: vi.fn(),
-  createId: vi.fn(() => "generated-integration-id"),
   redirect: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  connectChannelIntegration: mocks.connectChannelIntegration,
+  tiktokIntegrationService: { connect: mocks.connect },
   workspaceService: { findById: mocks.findWorkspaceById },
 }))
 
@@ -34,18 +28,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
       this.code = code
     }
   },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: mocks.transaction },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationTiktokModel: { id: "id", openId: "openId" },
-}))
-
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: mocks.createId,
 }))
 
 vi.mock("next/navigation", () => ({
@@ -73,26 +55,13 @@ describe("connectTiktokHandler", () => {
         username: "shop_1",
       },
     })
-    mocks.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
-      fn({
-        insert: mocks.insert,
-      }),
-    )
-    mocks.insert.mockReturnValue({ values: mocks.values })
-    mocks.values.mockReturnValue({
-      onConflictDoUpdate: mocks.onConflictDoUpdate,
-    })
-    mocks.onConflictDoUpdate.mockReturnValue({ returning: mocks.returning })
-    mocks.returning.mockResolvedValue([{ id: "existing-integration-id" }])
   })
 
   test("records reconnect audit with the persisted TikTok integration id on conflict", async () => {
-    mocks.connectChannelIntegration.mockImplementation(
-      async ({ insertIntegration }) => {
-        const integration = await insertIntegration("inbox-1", false)
-        return { wasCreated: false, integration }
-      },
-    )
+    mocks.connect.mockResolvedValue({
+      wasCreated: false,
+      integration: { id: "existing-integration-id" },
+    })
 
     await connectTiktokHandler({
       tiktokSettings: { clientId: "client", clientSecret: "secret" },
@@ -102,15 +71,16 @@ describe("connectTiktokHandler", () => {
       redirectUrl: "https://app.example.com/integrations/tiktok/callback",
     })
 
-    expect(mocks.values).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "generated-integration-id",
-        inboxId: "inbox-1",
-        workspaceId: "workspace-1",
-        openId: "open-id-1",
+    expect(mocks.connect).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+      openId: "open-id-1",
+      username: "shop_1",
+      displayName: "TikTok Shop",
+      auth: expect.objectContaining({
+        metadata: expect.objectContaining({ openId: "open-id-1" }),
       }),
-    )
-    expect(mocks.returning).toHaveBeenCalledWith({ id: "id" })
+    })
     expect(mocks.auditRecord).toHaveBeenCalledTimes(1)
     expect(mocks.auditRecord).toHaveBeenCalledWith({
       userId: "admin-1",

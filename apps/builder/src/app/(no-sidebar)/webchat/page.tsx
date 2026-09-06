@@ -1,9 +1,9 @@
 import {
+  integrationWebchatService,
   isWorkspaceScheduledForDeletion,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ensureBrandingMenuEntry } from "@chatbotx.io/business/branding"
-import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { SearchParams } from "next/dist/server/request/search-params"
 import { headers } from "next/headers"
@@ -65,12 +65,11 @@ export default async function WebchatPage(props: WebchatPageProps) {
     return notFound()
   }
 
-  const targetWebchat = await db.query.integrationWebchatModel.findFirst({
-    where: {
+  const targetWebchat =
+    await integrationWebchatService.findByIdForWorkspaceOrNull({
       id: data.webchatId,
       workspaceId: data.workspaceId,
-    },
-  })
+    })
 
   if (!targetWebchat) {
     return notFound()

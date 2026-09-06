@@ -1,11 +1,7 @@
 "use server"
 
+import { integrationGoogleSheetService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import {
-  integrationGoogleSheetsModel,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
 import {
   type GoogleSheetsAuthValue,
   integration as integrationGoogleSheets,
@@ -25,13 +21,8 @@ export const disconnectGoogleSheetsAction = authActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      const googleSheets = await findOrFail({
-        table: integrationGoogleSheetsModel,
-        where: {
-          workspaceId,
-        },
-        message: "Integration Google Sheets not found",
-      })
+      const googleSheets =
+        await integrationGoogleSheetService.findByWorkspaceIdOrFail(workspaceId)
       try {
         await integrationGoogleSheets.disconnect?.(
           googleSheets.auth as GoogleSheetsAuthValue,
@@ -43,10 +34,9 @@ export const disconnectGoogleSheetsAction = authActionClient
         )
       }
 
-      await db.transaction(async (tx) => {
-        await tx
-          .delete(integrationModel)
-          .where(eq(integrationModel.id, googleSheets.integrationId))
+      await integrationGoogleSheetService.disconnect({
+        workspaceId,
+        integrationId: googleSheets.integrationId,
       })
 
       await auditService.record({

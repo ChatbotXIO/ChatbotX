@@ -1,8 +1,7 @@
 "use server"
 
+import { integrationWebchatService } from "@chatbotx.io/business"
 import { ensureBrandingMenuEntry } from "@chatbotx.io/business/branding"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { isCommunity } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
@@ -32,13 +31,9 @@ export const updateWebchatAction = workspaceActionClient
       throw new Error("You need to be a super admin to update this webchat")
     }
 
-    const integration = await findOrFail({
-      table: integrationWebchatModel,
-      where: {
-        id,
-        workspaceId,
-      },
-      message: "Webchat integration not found",
+    const integration = await integrationWebchatService.findByIdForWorkspace({
+      id,
+      workspaceId,
     })
 
     // Community keeps the "Built with" branding entry; silently re-add it
@@ -51,18 +46,16 @@ export const updateWebchatAction = workspaceActionClient
           })
         : rest.persistentMenus
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(integrationWebchatModel)
-        .set({
-          ...rest,
-          persistentMenus,
-          workspaceId,
-          welcomeFlowId: welcomeFlowId?.length ? welcomeFlowId : null,
-          authorizedDomains: authorizedDomains
-            ? authorizedDomains.map((domain) => domain.value)
-            : undefined,
-        })
-        .where(eq(integrationWebchatModel.id, integration.id))
+    await integrationWebchatService.update({
+      workspaceId,
+      id: integration.id,
+      data: {
+        ...rest,
+        persistentMenus,
+        welcomeFlowId: welcomeFlowId?.length ? welcomeFlowId : null,
+        authorizedDomains: authorizedDomains
+          ? authorizedDomains.map((domain) => domain.value)
+          : undefined,
+      },
     })
   })

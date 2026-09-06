@@ -13,12 +13,44 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const findOrFailMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
+  db: {
+    transaction: vi.fn(),
+  },
+  eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   findOrFail: findOrFailMock,
+  isDatabaseError: vi.fn(() => false),
+}))
+
+vi.mock("@chatbotx.io/database/partials", () => ({
+  channelTypes: { enum: { zalo: "zalo" } },
+  integrationTypes: { enum: { telegram: "telegram" } },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationZaloModel: { __table: "IntegrationZalo" },
   integrationTelegramModel: { __table: "IntegrationTelegram" },
+  tagChannelModel: { __table: "TagChannel" },
+}))
+
+// These new imports (added alongside `connect`/`disconnect` on both
+// services) pull in real modules transitively — mock them at the boundary
+// so this narrow lookup test doesn't have to satisfy their own dependency
+// graphs (e.g. `@chatbotx.io/analytics`'s schema requirements).
+vi.mock("../src/inbox/connect-channel", () => ({
+  connectChannelIntegration: vi.fn(),
+}))
+
+vi.mock("../src/inbox/service", () => ({
+  inboxService: { disconnect: vi.fn() },
+}))
+
+vi.mock("../src/tag/sync.service", () => ({
+  tagSyncService: { enqueueChannelScan: vi.fn() },
+}))
+
+vi.mock("../src/workspace", () => ({
+  workspaceService: { create: vi.fn() },
 }))
 
 beforeEach(() => {

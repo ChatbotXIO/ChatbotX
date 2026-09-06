@@ -1,18 +1,8 @@
-import {
-  connectChannelIntegration,
-  tagSyncService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { workspaceService, zaloIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
-import {
-  channelTypes,
-  type ZaloCredential,
-} from "@chatbotx.io/database/partials"
-import { integrationZaloModel } from "@chatbotx.io/database/schema"
+import type { ZaloCredential } from "@chatbotx.io/database/partials"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { redirect } from "next/navigation"
 import { integrations } from "@/integration"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -44,39 +34,14 @@ export async function connectZaloHandler({
 
   const { ownerId } = await workspaceService.findById({ id: workspaceId })
 
-  let connectedIntegrationId: string | undefined
-  let channelWasCreated = false
+  let result: { integrationId: string | undefined; wasCreated: boolean }
   try {
-    await db.transaction(async (tx) => {
-      const { wasCreated } = await connectChannelIntegration({
-        tx,
-        ownerId,
-        inboxData: {
-          workspaceId,
-          name: authValue.metadata.oaName,
-          channel: "zalo",
-          sourceId: authValue.oaId,
-        },
-        insertIntegration: async (inboxId, insertWasCreated) => {
-          if (!insertWasCreated) {
-            redirect(
-              `/space/${workspaceId}/settings/channels?channel=zalo&error=duplicated`,
-            )
-          }
-          const [row] = await tx
-            .insert(integrationZaloModel)
-            .values({
-              inboxId,
-              workspaceId,
-              oaId: authValue.oaId,
-              auth: authValue,
-              name: authValue.metadata.oaName,
-            })
-            .returning({ id: integrationZaloModel.id })
-          connectedIntegrationId = row?.id
-        },
-      })
-      channelWasCreated = wasCreated
+    result = await zaloIntegrationService.connect({
+      workspaceId,
+      ownerId,
+      oaId: authValue.oaId,
+      name: authValue.metadata.oaName,
+      auth: authValue,
     })
   } catch (error) {
     if (
@@ -90,25 +55,14 @@ export async function connectZaloHandler({
     throw error
   }
 
-  if (channelWasCreated) {
+  if (result.wasCreated) {
     await auditService.record({
       userId,
       workspaceId,
       action: "connect",
-      detail: `connected a new Zalo channel (#${connectedIntegrationId})`,
+      detail: `connected a new Zalo channel (#${result.integrationId})`,
       ipAddress: getGuestClientIp(req.headers),
       userAgent: req.headers.get("user-agent") ?? undefined,
-    })
-  }
-
-  await invalidateCacheByTags([`workspaces:${workspaceId}#zalos`])
-
-  // Import any tags already on the OA into local tags + mappings.
-  if (connectedIntegrationId) {
-    await tagSyncService.enqueueChannelScan({
-      workspaceId,
-      channelType: channelTypes.enum.zalo,
-      integrationId: connectedIntegrationId,
     })
   }
 }

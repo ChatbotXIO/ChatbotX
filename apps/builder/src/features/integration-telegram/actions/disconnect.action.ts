@@ -1,9 +1,10 @@
 "use server"
 
-import { inboxService, workspaceService } from "@chatbotx.io/business"
+import {
+  telegramIntegrationService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationTelegramModel } from "@chatbotx.io/database/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import {
   type WorkspaceIdAndIdRequestParams,
@@ -22,11 +23,7 @@ export const disconnectTelegramAction = workspaceActionClientAllowExpired
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
       const [integrationTelegram, workspace] = await Promise.all([
-        findOrFail({
-          table: integrationTelegramModel,
-          where: { workspaceId, id },
-          message: "Integration Telegram not found",
-        }),
+        telegramIntegrationService.findByIdForWorkspace({ id, workspaceId }),
         workspaceService.findById({ id: workspaceId }),
       ])
 
@@ -41,16 +38,11 @@ export const disconnectTelegramAction = workspaceActionClientAllowExpired
         )
       }
 
-      await db.transaction(async (tx) => {
-        await tx
-          .delete(integrationTelegramModel)
-          .where(eq(integrationTelegramModel.id, integrationTelegram.id))
-        await inboxService.disconnect({
-          inboxId: integrationTelegram.inboxId,
-          ownerId: workspace.ownerId,
-          workspaceId,
-          tx,
-        })
+      await telegramIntegrationService.disconnect({
+        workspaceId,
+        id: integrationTelegram.id,
+        inboxId: integrationTelegram.inboxId,
+        ownerId: workspace.ownerId,
       })
 
       await auditService.record({
