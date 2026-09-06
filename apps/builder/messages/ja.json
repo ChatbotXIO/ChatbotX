@@ -5619,10 +5619,7 @@
       "rulesDescription": "ルールの説明",
       "openerTags": "ゲームリンクを開いた人にタグを付ける",
       "playerTags": "プレイヤーにタグを付ける",
-      "newFriendTags": "新しい友達にタグを付ける",
-      "shareEnabled": "友達へのシェアを許可する",
-      "shareMessage": "シェアメッセージ",
-      "shareMessageHint": "実際のゲームリンクを挿入するには '{{shareUrl}}' を使用してください。削除しないでください。"
+      "newFriendTags": "新しい友達にタグを付ける"
     },
     "appearance": {
       "backgroundColor": "背景色",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "1人あたりの抽選回数",
       "maxSharesPerPerson": "紹介によるボーナス抽選の上限",
-      "maxSharesPerPersonHint": "このプレイヤーの招待リンクから参加してプレイした友だち1人につき抽選が1回増え、この上限まで加算されます。0 にすると紹介ボーナスを無効にします。ボーナス抽選は次回リセットまでに使用してください。",
+      "maxSharesPerPersonHint": "このプレイヤーの招待リンクから参加してメッセージを送った友だち1人につき、抽選回数が1回追加されます（この上限まで）。0 に設定すると紹介ボーナスを無効にします。ボーナス回数は次回リセットまでに使用する必要があります。",
+      "sharingNode": "共有ステップ",
+      "sharingNodeHint": "友だちがこのプレイヤーの共有リンクを開いたときに実行されるフローのステップです。空欄にすると共有ボタンを非表示にします。",
       "resetPolicyLabel": "抽選回数のリセット",
       "resetNever": "抽選回数をリセットしない",
       "resetEveryNDays": "抽選回数を次の日数ごとにリセットする",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "このリンクは無効か、期限切れです。",
       "comingSoonTitle": "近日公開",
       "comingSoonDescription": "このミニゲームの種類はまだプレイできません。",
-      "inviteTitle": "招待されました！",
-      "inviteDescription": "チャットでご連絡いただくと専用リンクをお送りします。{name} をプレイしましょう。",
-      "inviteExpiredTitle": "招待を利用できません",
-      "inviteExpiredDescription": "この招待リンクは無効か、有効期限が切れています。"
+      "rateLimited": "リクエストが多すぎます。しばらく待ってからもう一度お試しください。"
     },
     "list": {
       "gamesPlayed": "プレイ回数",

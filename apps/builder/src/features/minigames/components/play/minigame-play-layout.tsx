@@ -2,7 +2,6 @@
 
 import type { MinigameAppearance } from "@chatbotx.io/database/partials"
 import type { ReactNode } from "react"
-import type { MinigameShare } from "../../lib/minigame-share"
 import { MinigameShareButton } from "./minigame-share-button"
 
 type MinigamePlayLayoutProps = {
@@ -14,7 +13,7 @@ type MinigamePlayLayoutProps = {
   art: ReactNode
   status: ReactNode
   dialog: ReactNode
-  share?: MinigameShare | null
+  shareUrl?: string | null
 }
 
 /**
@@ -37,7 +36,7 @@ export function MinigamePlayLayout({
   art,
   status,
   dialog,
-  share,
+  shareUrl,
 }: MinigamePlayLayoutProps) {
   return (
     <div
@@ -61,8 +60,11 @@ export function MinigamePlayLayout({
       <div className="flex w-full flex-1 flex-col items-center justify-center gap-6">
         <div className="w-full max-w-xs">{art}</div>
         {status}
-        {share && (
-          <MinigameShareButton color={appearance.ruleTextColor} share={share} />
+        {shareUrl && (
+          <MinigameShareButton
+            color={appearance.ruleTextColor}
+            shareUrl={shareUrl}
+          />
         )}
       </div>
 

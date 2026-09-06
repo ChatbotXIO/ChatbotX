@@ -5619,10 +5619,7 @@
       "rulesDescription": "Deskripsi Aturan",
       "openerTags": "Beri tag kontak yang membuka tautan permainan",
       "playerTags": "Beri tag pemain",
-      "newFriendTags": "Beri tag teman baru",
-      "shareEnabled": "Izinkan berbagi ke teman",
-      "shareMessage": "Pesan Berbagi",
-      "shareMessageHint": "Gunakan '{{shareUrl}}' untuk menyisipkan tautan permainan yang sebenarnya — mohon jangan menghapusnya."
+      "newFriendTags": "Beri tag teman baru"
     },
     "appearance": {
       "backgroundColor": "Warna Latar Belakang",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Jumlah kesempatan undian per orang",
       "maxSharesPerPerson": "Maks. putaran bonus dari referral",
-      "maxSharesPerPersonHint": "Setiap teman yang bergabung lewat tautan undangan pemain ini dan ikut bermain memberinya 1 putaran tambahan, hingga batas ini. Setel 0 untuk mematikan bonus referral. Putaran bonus harus dipakai sebelum reset berikutnya.",
+      "maxSharesPerPersonHint": "Setiap teman yang bergabung melalui tautan undangan pemain ini dan mengirim pesan kepada Anda memberinya 1 undian tambahan, hingga batas ini. Setel 0 untuk menonaktifkan bonus referral. Undian bonus harus digunakan sebelum reset berikutnya.",
+      "sharingNode": "Langkah berbagi",
+      "sharingNodeHint": "Langkah flow yang berjalan saat seorang teman membuka tautan berbagi pemain ini. Kosongkan untuk menyembunyikan tombol Bagikan.",
       "resetPolicyLabel": "Reset undian",
       "resetNever": "Jangan reset jumlah undian",
       "resetEveryNDays": "Reset jumlah undian setiap",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Tautan ini tidak valid atau telah kedaluwarsa.",
       "comingSoonTitle": "Segera hadir",
       "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan.",
-      "inviteTitle": "Kamu diundang!",
-      "inviteDescription": "Chat dengan kami untuk mendapatkan tautanmu sendiri dan memainkan {name}.",
-      "inviteExpiredTitle": "Undangan tidak tersedia",
-      "inviteExpiredDescription": "Tautan undangan ini tidak valid atau sudah kedaluwarsa."
+      "rateLimited": "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
     },
     "list": {
       "gamesPlayed": "Permainan dimainkan",

@@ -6,11 +6,10 @@ import {
 import { verifyMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import type { Metadata } from "next"
 import type { SearchParams } from "next/dist/server/request/search-params"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { MINIGAME_PLAY_SCREENS } from "@/features/minigames/components/play/minigame-play-screen-registry"
-import { buildMinigameShare } from "@/features/minigames/lib/minigame-share"
-import { readMinigameReferrerContactId } from "@/features/minigames/lib/referral-cookie"
+import { buildMinigameShareUrl } from "@/features/minigames/lib/minigame-share"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 export const dynamic = "force-dynamic"
@@ -47,20 +46,9 @@ export default async function MinigamePage(props: MinigamePageProps) {
   const searchParams = await props.searchParams
   const minigameId = getParam(searchParams.minigameId)
   const token = getParam(searchParams.token)
-  const ref = getParam(searchParams.ref)
-  const invited = getParam(searchParams.invited)
 
   if (!minigameId) {
     notFound()
-  }
-
-  // Compatibility alias for a hand-built `?ref=` invite link: the cookie can
-  // only be written from a route handler, so bounce there. `redirect()` is
-  // legal during a Server Component render; a cookie write is not.
-  if (ref && !token) {
-    redirect(
-      `/minigames/invite?minigameId=${minigameId}&ref=${encodeURIComponent(ref)}`,
-    )
   }
 
   const minigame = await minigameService.findUnscoped(minigameId)
@@ -92,30 +80,6 @@ export default async function MinigamePage(props: MinigamePageProps) {
 
   if (!(token && payload) || payload.workspaceId !== minigame.workspaceId) {
     const t = await getTranslations("minigames.play")
-
-    // Someone who arrived from an invite link has no play token yet — they
-    // are not a contact. Tell them how to get one instead of showing the
-    // generic "access denied" a tampered link would get.
-    if (invited === "1") {
-      return (
-        <MinigameNotice
-          description={t("inviteDescription", {
-            name: minigame.generalSettings.name,
-          })}
-          title={t("inviteTitle")}
-        />
-      )
-    }
-
-    if (invited === "expired") {
-      return (
-        <MinigameNotice
-          description={t("inviteExpiredDescription")}
-          title={t("inviteExpiredTitle")}
-        />
-      )
-    }
-
     return (
       <MinigameNotice
         description={t("forbiddenDescription")}
@@ -129,20 +93,13 @@ export default async function MinigamePage(props: MinigamePageProps) {
     where: { id: payload.contactInboxId },
   })
 
-  // A pending invite only binds when this render CREATES the play-state row,
-  // i.e. when this contact has never played the minigame before.
-  const referrerContactId = await readMinigameReferrerContactId({
-    minigameId: minigame.id,
-    workspaceId: minigame.workspaceId,
-  })
-
-  const contactState = await minigameContactService.resolveOpenerPlayState({
-    minigameId: minigame.id,
-    contactId,
-    playerSettings: minigame.playerSettings,
-    contactInboxId: contactInbox?.id,
-    referrerContactId: referrerContactId ?? undefined,
-  })
+  const { state: contactState } =
+    await minigameContactService.resolveOpenerPlayState({
+      minigameId: minigame.id,
+      contactId,
+      playerSettings: minigame.playerSettings,
+      contactInboxId: contactInbox?.id,
+    })
 
   await tagService.attachToContact({
     workspaceId: minigame.workspaceId,
@@ -150,15 +107,17 @@ export default async function MinigamePage(props: MinigamePageProps) {
     tagIds: minigame.generalSettings.openerTagIds,
   })
 
-  const share = minigame.generalSettings.shareEnabled
-    ? await buildMinigameShare({ minigame, contactId })
-    : null
+  const shareUrl = await buildMinigameShareUrl({
+    minigame,
+    contactId,
+    contactInbox,
+  })
 
   return (
     <PlayScreen
       contactState={contactState}
       minigame={minigame}
-      share={share}
+      shareUrl={shareUrl}
       token={token}
     />
   )

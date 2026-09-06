@@ -5619,10 +5619,7 @@
       "rulesDescription": "Descrição das Regras",
       "openerTags": "Marcar contatos que abrirem o link do jogo",
       "playerTags": "Marcar jogadores",
-      "newFriendTags": "Marcar novos amigos",
-      "shareEnabled": "Permitir compartilhamento com amigos",
-      "shareMessage": "Mensagem de Compartilhamento",
-      "shareMessageHint": "Use '{{shareUrl}}' para inserir o link real do jogo — não o remova."
+      "newFriendTags": "Marcar novos amigos"
     },
     "appearance": {
       "backgroundColor": "Cor de Fundo",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Número de chances de sorteio por pessoa",
       "maxSharesPerPerson": "Máx. de sorteios bônus por indicação",
-      "maxSharesPerPersonHint": "Cada amigo que entrar pelo link de convite deste jogador e jogar garante a ele 1 sorteio extra, até este limite. Defina 0 para desativar os bônus por indicação. Os sorteios bônus devem ser usados antes da próxima reinicialização.",
+      "maxSharesPerPersonHint": "Cada amigo que entrar pelo link de convite deste jogador e enviar uma mensagem para você lhe dá 1 giro extra, até este limite. Defina 0 para desativar os bônus de indicação. Os giros bônus precisam ser usados antes da próxima redefinição.",
+      "sharingNode": "Etapa de compartilhamento",
+      "sharingNodeHint": "A etapa do fluxo executada quando um amigo abre o link de compartilhamento deste jogador. Deixe vazio para ocultar o botão Compartilhar.",
       "resetPolicyLabel": "Redefinir sorteios",
       "resetNever": "Não redefinir o número de sorteios",
       "resetEveryNDays": "Redefinir o número de sorteios a cada",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Este link é inválido ou expirou.",
       "comingSoonTitle": "Em breve",
       "comingSoonDescription": "Este tipo de minigame ainda não pode ser jogado.",
-      "inviteTitle": "Você foi convidado!",
-      "inviteDescription": "Fale com a gente para receber seu próprio link e jogar {name}.",
-      "inviteExpiredTitle": "Convite indisponível",
-      "inviteExpiredDescription": "Este link de convite é inválido ou expirou."
+      "rateLimited": "Muitas solicitações. Aguarde um momento e tente novamente."
     },
     "list": {
       "gamesPlayed": "Jogos jogados",

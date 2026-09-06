@@ -20,7 +20,6 @@ import {
   buildLuckyWheelSegments,
   getLuckyWheelTargetSegmentIndex,
 } from "../../lib/lucky-wheel-segments"
-import type { MinigameShare } from "../../lib/minigame-share"
 import { MinigamePlayLayout } from "./minigame-play-layout"
 import { ResultDialog } from "./result-dialog"
 
@@ -28,7 +27,7 @@ type LuckyWheelPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
-  share: MinigameShare | null
+  shareUrl: string | null
 }
 
 const FAST_SPIN_TURNS = 2
@@ -44,7 +43,7 @@ export function LuckyWheelPlayScreen({
   minigame,
   contactState,
   token,
-  share,
+  shareUrl,
 }: LuckyWheelPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings, prizeSettings } = minigame
@@ -175,7 +174,7 @@ export function LuckyWheelPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
-      share={share}
+      shareUrl={shareUrl}
       showName={generalSettings.showName ?? true}
       status={
         <>

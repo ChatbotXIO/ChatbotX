@@ -5619,10 +5619,7 @@
       "rulesDescription": "Regelbeskrivelse",
       "openerTags": "Tag kontakter, der åbner spillinket",
       "playerTags": "Tag spillere",
-      "newFriendTags": "Tag nye venner",
-      "shareEnabled": "Tillad deling med venner",
-      "shareMessage": "Delingsbesked",
-      "shareMessageHint": "Brug '{{shareUrl}}' til at indsætte det faktiske spillink — fjern det venligst ikke."
+      "newFriendTags": "Tag nye venner"
     },
     "appearance": {
       "backgroundColor": "Baggrundsfarve",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Antal lykketræk pr. person",
       "maxSharesPerPerson": "Maks. bonustrækninger fra henvisninger",
-      "maxSharesPerPersonHint": "Hver ven, der tilmelder sig via denne spillers invitationslink og spiller, giver spilleren 1 ekstra trækning op til denne grænse. Sæt 0 for at slå henvisningsbonusser fra. Bonustrækninger skal bruges før næste nulstilling.",
+      "maxSharesPerPersonHint": "Hver ven, der tilmelder sig via denne spillers invitationslink og skriver til dig, giver spilleren 1 ekstra spin, op til denne grænse. Sæt 0 for at slå henvisningsbonusser fra. Bonusspin skal bruges inden næste nulstilling.",
+      "sharingNode": "Delingstrin",
+      "sharingNodeHint": "Det flow-trin, der kører, når en ven åbner denne spillers delingslink. Lad feltet stå tomt for at skjule Del-knappen.",
       "resetPolicyLabel": "Nulstil antal træk",
       "resetNever": "Nulstil ikke antallet af træk",
       "resetEveryNDays": "Nulstil antallet af træk hver",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Dette link er ugyldigt eller udløbet.",
       "comingSoonTitle": "Kommer snart",
       "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles.",
-      "inviteTitle": "Du er inviteret!",
-      "inviteDescription": "Chat med os for at få dit eget link og spille {name}.",
-      "inviteExpiredTitle": "Invitation utilgængelig",
-      "inviteExpiredDescription": "Dette invitationslink er ugyldigt eller udløbet."
+      "rateLimited": "For mange forsøg. Vent et øjeblik, og prøv igen."
     },
     "list": {
       "gamesPlayed": "Spillede spil",

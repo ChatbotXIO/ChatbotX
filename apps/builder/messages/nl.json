@@ -5619,10 +5619,7 @@
       "rulesDescription": "Spelregels",
       "openerTags": "Tag contacten die de spellink openen",
       "playerTags": "Tag spelers",
-      "newFriendTags": "Tag nieuwe vrienden",
-      "shareEnabled": "Delen met vrienden toestaan",
-      "shareMessage": "Deelbericht",
-      "shareMessageHint": "Gebruik '{{shareUrl}}' om de daadwerkelijke spellink in te voegen — verwijder dit niet."
+      "newFriendTags": "Tag nieuwe vrienden"
     },
     "appearance": {
       "backgroundColor": "Achtergrondkleur",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Aantal trekkingskansen per persoon",
       "maxSharesPerPerson": "Max. bonustrekkingen uit verwijzingen",
-      "maxSharesPerPersonHint": "Elke vriend die via de uitnodigingslink van deze speler meedoet en speelt, levert 1 extra trekking op, tot aan deze limiet. Zet op 0 om verwijzingsbonussen uit te schakelen. Bonustrekkingen moeten voor de volgende reset worden gebruikt.",
+      "maxSharesPerPersonHint": "Elke vriend die via de uitnodigingslink van deze speler binnenkomt en jou een bericht stuurt, levert hem 1 extra trekking op, tot deze limiet. Zet op 0 om verwijzingsbonussen uit te schakelen. Bonustrekkingen moeten vóór de volgende reset worden gebruikt.",
+      "sharingNode": "Deelstap",
+      "sharingNodeHint": "De flow-stap die wordt uitgevoerd wanneer een vriend de deellink van deze speler opent. Laat leeg om de knop Delen te verbergen.",
       "resetPolicyLabel": "Trekkingen resetten",
       "resetNever": "Aantal trekkingen niet resetten",
       "resetEveryNDays": "Reset het aantal trekkingen elke",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Deze link is ongeldig of verlopen.",
       "comingSoonTitle": "Binnenkort beschikbaar",
       "comingSoonDescription": "Dit type minispel is nog niet speelbaar.",
-      "inviteTitle": "Je bent uitgenodigd!",
-      "inviteDescription": "Chat met ons voor je eigen link en speel {name}.",
-      "inviteExpiredTitle": "Uitnodiging niet beschikbaar",
-      "inviteExpiredDescription": "Deze uitnodigingslink is ongeldig of verlopen."
+      "rateLimited": "Te veel verzoeken. Wacht even en probeer het opnieuw."
     },
     "list": {
       "gamesPlayed": "Gespeelde spellen",

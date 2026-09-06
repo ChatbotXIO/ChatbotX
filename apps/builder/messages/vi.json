@@ -5619,10 +5619,7 @@
       "rulesDescription": "Mô tả thể lệ",
       "openerTags": "Gắn thẻ liên hệ mở link minigame",
       "playerTags": "Gắn thẻ người chơi",
-      "newFriendTags": "Gắn thẻ bạn bè mới",
-      "shareEnabled": "Cho phép chia sẻ với bạn bè",
-      "shareMessage": "Nội dung chia sẻ",
-      "shareMessageHint": "Sử dụng '{{shareUrl}}' để chèn link minigame thực tế — vui lòng không xóa nó."
+      "newFriendTags": "Gắn thẻ bạn bè mới"
     },
     "appearance": {
       "backgroundColor": "Màu nền",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Số lượt quay may mắn mỗi người",
       "maxSharesPerPerson": "Số lượt thưởng tối đa từ giới thiệu",
-      "maxSharesPerPersonHint": "Mỗi người bạn tham gia qua link mời của người chơi này và có chơi sẽ giúp họ nhận thêm 1 lượt, tối đa bằng giới hạn này. Đặt 0 để tắt thưởng giới thiệu. Lượt thưởng phải dùng trước lần đặt lại kế tiếp.",
+      "maxSharesPerPersonHint": "Mỗi người bạn tham gia qua link mời của người chơi này và nhắn tin cho bạn sẽ giúp họ nhận thêm 1 lượt, tối đa bằng giới hạn này. Đặt 0 để tắt thưởng giới thiệu. Lượt thưởng phải dùng trước lần đặt lại kế tiếp.",
+      "sharingNode": "Bước chia sẻ",
+      "sharingNodeHint": "Bước flow sẽ chạy khi một người bạn mở link chia sẻ của người chơi này. Để trống để ẩn nút Chia sẻ.",
       "resetPolicyLabel": "Đặt lại lượt quay",
       "resetNever": "Không đặt lại số lượt quay",
       "resetEveryNDays": "Đặt lại số lượt quay mỗi",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
       "comingSoonTitle": "Sắp ra mắt",
       "comingSoonDescription": "Loại minigame này chưa thể chơi được.",
-      "inviteTitle": "Bạn được mời!",
-      "inviteDescription": "Hãy nhắn tin với chúng tôi để nhận link riêng và chơi {name}.",
-      "inviteExpiredTitle": "Lời mời không khả dụng",
-      "inviteExpiredDescription": "Link mời này không hợp lệ hoặc đã hết hạn."
+      "rateLimited": "Bạn thao tác quá nhanh. Vui lòng đợi một lát rồi thử lại."
     },
     "list": {
       "gamesPlayed": "Lượt chơi",

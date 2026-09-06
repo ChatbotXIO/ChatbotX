@@ -15,7 +15,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { playMinigameAction } from "../../actions/play-minigame.action"
-import type { MinigameShare } from "../../lib/minigame-share"
 import { MinigamePlayLayout } from "./minigame-play-layout"
 import { ResultDialog } from "./result-dialog"
 
@@ -23,7 +22,7 @@ type DrawLotsPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
-  share: MinigameShare | null
+  shareUrl: string | null
 }
 
 const SHUFFLE_DURATION_MS = 1200
@@ -33,7 +32,7 @@ export function DrawLotsPlayScreen({
   minigame,
   contactState,
   token,
-  share,
+  shareUrl,
 }: DrawLotsPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -126,7 +125,7 @@ export function DrawLotsPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
-      share={share}
+      shareUrl={shareUrl}
       showName={generalSettings.showName ?? true}
       status={
         <>

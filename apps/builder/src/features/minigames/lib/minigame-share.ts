@@ -1,51 +1,66 @@
 import "server-only"
-import type { MinigameModel } from "@chatbotx.io/database/types"
-import { signMinigameReferralToken } from "@chatbotx.io/encryption/minigame-referral-token"
-import { getOriginFromHeader } from "@/lib/domain"
-
-const SHARE_URL_PLACEHOLDER = "{{shareUrl}}"
-
-export type MinigameShare = {
-  inviteUrl: string
-  message: string
-}
+import { inboxService, resolveTenantSettings } from "@chatbotx.io/business"
+import { buildInboxLink, canShareMinigame } from "@chatbotx.io/business/utils"
+import type { ChannelType } from "@chatbotx.io/database/partials"
+import type {
+  ContactInboxModel,
+  MinigameModel,
+} from "@chatbotx.io/database/types"
 
 /**
- * Builds what the play screen's Share button copies: an invite link carrying
- * a freshly-signed *referral* token (never the player's own play token,
- * which would let the recipient play as them), wrapped in the workspace's
- * configured share message.
+ * The URL the play screen's Share button copies: a ref link for the very
+ * channel this player is playing on, e.g.
+ * `https://m.me/<pageId>?ref=mg_<minigameId>_<contactId>`. A friend who taps
+ * it opens that same channel, its webhook extracts the ref, and `runRef`
+ * both runs the minigame's Sharing Node and credits this player.
  *
- * Must run on the server: the token needs the server signing key, and an
- * origin taken from the browser would be attacker-controllable inside the
- * copied text.
+ * Returns `null` (hiding the button) in four cases, each for its own reason:
+ *  - no Sharing Node configured  → sharing is switched off
+ *  - no contact inbox            → nothing identifies the player's channel
+ *  - the channel can't be shared → it drops refs (the link would look right
+ *    but never credit), or it is `webchat`, whose anonymous visitors make
+ *    the link self-farmable — see `MINIGAME_SHARE_CHANNELS`
+ *  - no link could be built      → the channel has no deep link (smtp/api)
+ *
+ * Server-only: the ref must be minted here, and `buildInboxLink` needs the
+ * workspace's own `appUrl` rather than anything the browser could supply.
  */
-export async function buildMinigameShare(props: {
+export async function buildMinigameShareUrl(props: {
   minigame: MinigameModel
   contactId: string
-}): Promise<MinigameShare> {
-  const referralToken = await signMinigameReferralToken({
-    workspaceId: props.minigame.workspaceId,
-    minigameId: props.minigame.id,
-    referrerContactId: props.contactId,
-  })
+  contactInbox: ContactInboxModel | undefined
+}): Promise<string | null> {
+  const { minigame, contactId, contactInbox } = props
 
-  // The current request's public origin, not `getBrokerOrigin()`: the player
-  // may be on a tenant's custom domain, and the invite has to be same-origin
-  // with this page or the referral cookie's path/domain won't line up.
-  const origin = await getOriginFromHeader()
-  const inviteUrl = `${origin}/minigames/invite?minigameId=${props.minigame.id}&ref=${referralToken}`
-
-  const template = props.minigame.generalSettings.shareMessage?.trim()
-  if (!template) {
-    return { inviteUrl, message: inviteUrl }
+  // Legacy `playerSettings` jsonb has no such key despite the drizzle `$type`.
+  if (!(minigame.playerSettings.sharingNodeId && contactInbox)) {
+    return null
   }
 
-  // A workspace can save a share message that dropped the placeholder; append
-  // the link rather than handing the player text with no link in it at all.
-  const message = template.includes(SHARE_URL_PLACEHOLDER)
-    ? template.replaceAll(SHARE_URL_PLACEHOLDER, inviteUrl)
-    : `${template}\n${inviteUrl}`
+  if (!canShareMinigame(contactInbox.channel as ChannelType)) {
+    return null
+  }
 
-  return { inviteUrl, message }
+  const inbox = await inboxService.findWithIntegrationsById({
+    id: contactInbox.inboxId,
+  })
+  // `findWithIntegrationsById` is not workspace-scoped. The `inboxId` comes
+  // from an already-verified play token so it is trusted, but cross-check it
+  // anyway rather than relying on that one step upstream.
+  if (!inbox || inbox.workspaceId !== minigame.workspaceId) {
+    return null
+  }
+
+  // `appUrl` is only consumed by `buildInboxLink`'s webchat branch.
+  const { appUrl } = await resolveTenantSettings({
+    workspaceId: minigame.workspaceId,
+  })
+
+  return (
+    buildInboxLink(appUrl, inbox, {
+      type: "minigame-share",
+      minigameId: minigame.id,
+      referrerContactId: contactId,
+    }) ?? null
+  )
 }

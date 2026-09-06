@@ -5619,10 +5619,7 @@
       "rulesDescription": "Descripción de las reglas",
       "openerTags": "Etiquetar a los contactos que abren el enlace del juego",
       "playerTags": "Etiquetar a los jugadores",
-      "newFriendTags": "Etiquetar a los nuevos amigos",
-      "shareEnabled": "Permitir compartir con amigos",
-      "shareMessage": "Mensaje para compartir",
-      "shareMessageHint": "Usa '{{shareUrl}}' para insertar el enlace real del juego — por favor, no lo elimines."
+      "newFriendTags": "Etiquetar a los nuevos amigos"
     },
     "appearance": {
       "backgroundColor": "Color de fondo",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Número de intentos de sorteo por persona",
       "maxSharesPerPerson": "Máx. tiradas extra por referidos",
-      "maxSharesPerPersonHint": "Cada amigo que se una mediante el enlace de invitación de este jugador y juegue le otorga 1 tirada extra, hasta este límite. Pon 0 para desactivar las bonificaciones por referidos. Las tiradas extra deben usarse antes del siguiente reinicio.",
+      "maxSharesPerPersonHint": "Cada amigo que se una mediante el enlace de invitación de este jugador y te escriba le da 1 tirada extra, hasta este límite. Pon 0 para desactivar las bonificaciones por recomendación. Las tiradas extra deben usarse antes del siguiente reinicio.",
+      "sharingNode": "Paso de compartir",
+      "sharingNodeHint": "El paso del flujo que se ejecuta cuando un amigo abre el enlace para compartir de este jugador. Déjalo vacío para ocultar el botón Compartir.",
       "resetPolicyLabel": "Reiniciar intentos",
       "resetNever": "No reiniciar el número de intentos",
       "resetEveryNDays": "Reiniciar el número de intentos cada",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Este enlace no es válido o ha caducado.",
       "comingSoonTitle": "Próximamente",
       "comingSoonDescription": "Este tipo de minijuego aún no está disponible.",
-      "inviteTitle": "¡Te han invitado!",
-      "inviteDescription": "Escríbenos para obtener tu propio enlace y jugar a {name}.",
-      "inviteExpiredTitle": "Invitación no disponible",
-      "inviteExpiredDescription": "Este enlace de invitación no es válido o ha caducado."
+      "rateLimited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo."
     },
     "list": {
       "gamesPlayed": "Partidas jugadas",

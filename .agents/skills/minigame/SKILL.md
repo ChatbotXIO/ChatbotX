@@ -24,11 +24,13 @@ description: >-
 | Prize draw math | `packages/business/src/minigame/resolve-prize.ts` (`resolveMinigamePrize`) |
 | Play state, draw, dispatch (concurrency-critical) | `packages/business/src/minigame/minigame-contact-service.ts` (`minigameContactService`) |
 | Play token sign/verify (24h TTL) | `packages/encryption/src/minigame-play-token.ts` |
-| Referral (invite) token sign/verify (30d TTL) | `packages/encryption/src/minigame-referral-token.ts` |
-| Invite landing hop (sets the ref cookie) | `apps/builder/src/app/minigames/invite/route.ts` |
-| Ref cookie name/TTL/read helper | `apps/builder/src/features/minigames/lib/referral-cookie.ts` |
-| Invite URL + `{{shareUrl}}` substitution | `apps/builder/src/features/minigames/lib/minigame-share.ts` |
+| `minigame-share` ref encode/decode | `packages/business/src/referral/utils.ts` (`RefConfig`) |
+| Ref-capable channel list (which channels actually deliver a ref) | `packages/business/src/inbox/utils.ts` (`REF_CAPABLE_CHANNELS`, `canReceiveRef`) |
+| Share-link builder (ref link for the player's own channel) | `apps/builder/src/features/minigames/lib/minigame-share.ts` |
 | Share button (rendered once, in the play layout) | `apps/builder/src/features/minigames/components/play/minigame-share-button.tsx` |
+| Sharing Node picker | `apps/builder/src/features/minigames/components/sharing-node-field.tsx` |
+| Reset-policy rebuild (carries every shared `playerSettings` field) | `apps/builder/src/features/minigames/lib/player-settings.ts` |
+| Ref handler that runs the Sharing Node + credits the referrer | `apps/worker/src/integration/handlers/ref.ts` (`minigame-share` branch) |
 | `{{minigame_play_token}}` system variable | `packages/variables/src/utils.ts` (`systemFieldTypes.enum.minigame_play_token`), enum in `packages/database/src/partials/contact.ts` |
 | Builder feature (admin CRUD, form, dialogs) | `apps/builder/src/features/minigames/` |
 | Type picker dialog | `apps/builder/src/features/minigames/components/create-minigame-type-dialog.tsx` |
@@ -38,7 +40,7 @@ description: >-
 | Jackpot SVG art + start button | `packages/minigame-ui/` (`JackpotMachineArt`, `JackpotStartButton`) |
 | Admin/type-picker previews | `apps/builder/src/features/minigames/components/preview/` (`MinigamePreview` dispatches jackpot → `JackpotPreview`, else `GenericMinigamePreview`) |
 | Default settings + type config | `apps/builder/src/features/minigames/constants.ts` |
-| Tests | `packages/business/__tests__/{minigame-service-update,resolve-minigame-prize,minigame-referral-bonus}.test.ts`, `packages/encryption/__tests__/minigame-{play,referral}-token.test.ts`, `apps/builder/__tests__/minigame-invite-route.test.ts` |
+| Tests | `packages/business/__tests__/{minigame-service-update,resolve-minigame-prize,minigame-referral-bonus,referral-ref-encoding}.test.ts`, `packages/encryption/__tests__/minigame-play-token.test.ts`, `apps/worker/__tests__/run-ref-minigame-share.test.ts`, `apps/builder/__tests__/minigame-{share-url,player-settings-reset-policy}.test.ts` |
 
 No worker/queue code exists for minigames — grep confirms zero hits in `apps/worker`/`packages/worker-config`. Everything runs synchronously in builder server actions/pages; outcome messages are dispatched via the pre-existing `chatQueue`/`integrationQueue` from inside `recordPlayAndDispatch`, not a dedicated queue.
 
@@ -46,7 +48,7 @@ No worker/queue code exists for minigames — grep confirms zero hits in `apps/w
 
 `create/edit minigame (builder) → {{minigame_play_token}} resolved into a shared link at message-send time → public /minigames?minigameId&token page → verify token → resolvePlayState → <type>PlayScreen → playMinigameAction → recordPlayAndDispatch (draw prize, decrement stock, send outcome message)`.
 
-Referral loop: `player taps Share (copies shareMessage with {{shareUrl}} → /minigames/invite?minigameId&ref=<referral token>) → invitee opens it → route handler sets the mg_ref_<id> cookie → invitee becomes a Contact and opens their OWN play link → resolvePlayState stamps referrerContactId on INSERT → invitee's first play → grantReferralBonus credits the referrer (+1 sharesCount, +1 remaining, capped)`.
+Referral loop: `player taps Share (copies a ref link for the channel they are playing on, e.g. m.me/<pageId>?ref=mg_<minigameId>_<contactId>) → friend taps it, messages that channel → webhook extracts the ref → runRef's minigame-share branch reads playerSettings.sharingNodeId and enqueues sendFlow{flowId,nodeId} → creditSharedLinkReferral creates the invitee's MinigameContact with referrerContactId stamped; only if THAT call created the row does grantReferralBonus credit the referrer (+1 sharesCount, +1 remaining, capped)`.
 
 ## The traps (read before editing)
 
@@ -62,13 +64,14 @@ Referral loop: `player taps Share (copies shareMessage with {{shareUrl}} → /mi
 
 6. **`minigameService.update`'s quantity reconciliation only protects the same prize `id` across the load-then-save window** (compares submitted quantity against a client-captured `originalPrizeQuantities` baseline; if unchanged since load, the current — possibly play-decremented — DB value wins). Deleting a prize row in the form and adding a new one (new `createId()`) has no cross-id reconciliation — the old prize's decremented stock is simply dropped.
 
-7. **The referral flow has ONE consistent lock order: `player row → Minigame row`. Do not fold the referral grant into `recordPlay`'s transaction.** A share credits a *different* `MinigameContact` row (the referrer's) than the one `recordPlay` already holds `FOR UPDATE`. Granting inside that transaction makes its order `invitee row → Minigame → referrer row`, which deadlocks (ABBA) against a concurrent play by the referrer themselves, who holds their own row and waits on the Minigame row. So `recordPlay` only *reports* a qualified referral (`pendingReferral`), and `recordPlayAndDispatch` calls `grantReferralBonus` in its own short transaction afterwards. The narrow crash window can only under-credit, never over-credit. Related invariants that are easy to break:
+7. **The referral flow has ONE consistent lock order: `player row → Minigame row`. Do not fold the referral grant into the transaction that creates the invitee's row.** A share credits a *different* `MinigameContact` row (the referrer's) than the one being created. Granting inside that transaction makes its order `invitee row → Minigame → referrer row`, which deadlocks (ABBA) against a concurrent play by the referrer themselves, who holds their own row and waits on the Minigame row. So `creditSharedLinkReferral` calls `resolveOpenerPlayState` first, then `grantReferralBonus` in its own short transaction. The narrow crash window can only under-credit, never over-credit. Related invariants that are easy to break:
+   - `resolvePlayState` returns `{ state, created }`. **`created` is the whole qualification test**: it means both "one bonus per invitee, ever" and "the invitee had never played this minigame". Never re-derive either from a separate read.
    - The cap lives **inside** the grant UPDATE's `WHERE` (`lt(sharesCount, cap)`), never as a read-then-write.
-   - The grant self-assigns `updatedAt: sql\`${col}\`` to defeat `$onUpdate` — this table overloads `updatedAt` as *both* the `everyNDays` cycle marker and the admin table's `lastPlayedAt`.
-   - `referrerContactId` is stamped **only on the INSERT path** of `resolvePlayState`; that is what enforces "the invitee never played before".
-   - `state.played === 0` under the row lock is the "one bonus per invitee, ever" guard — there is no separate flag column.
+   - The grant self-assigns `updatedAt: sql`${col}`` to defeat `$onUpdate` — this table overloads `updatedAt` as *both* the `everyNDays` cycle marker and the admin table's `lastPlayedAt`.
+   - `referrerContactId` is stamped **only on the INSERT path** of `resolvePlayState`.
    - Under `resetPolicy: "never"`, `remaining` is *derived* (`deriveRemaining`), so a bonus must move `sharesCount` and `remaining` together or the next `resolvePlayState` wipes it. Under `everyNDays`, unused bonus draws deliberately expire with the cycle while the cap stays lifetime.
-   - `playerSettings.maxSharesPerPerson` is missing entirely from legacy jsonb rows — always read it as `?? 0`.
+   - `playerSettings.maxSharesPerPerson`, `sharingFlowId` and `sharingNodeId` are all missing entirely from legacy jsonb rows — always read them as `?? 0` / `?? null`. The drizzle `$type<>` lies about them being present.
+   - `minigame-form.tsx`'s `handleResetPolicyChange` rebuilds the whole `playerSettings` union value, so **every** shared field has to be carried across. A narrower object literal still satisfies the branch type, so typecheck will NOT catch an omission — that is why the rebuild lives in `lib/player-settings.ts` behind a unit test.
 
 8. **`{{minigame_play_token}}` is minted at message/broadcast-send time, not at click time**, with a 24h TTL (`DEFAULT_TOKEN_TTL_MS` in `minigame-play-token.ts`). An old saved/forwarded link fails `verifyMinigamePlayToken` and renders the same generic "forbidden" notice as an unauthorized request — there's no distinct "link expired" UX today.
 

@@ -79,7 +79,7 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
         {fields.map((field, index) => (
           <div className="flex items-center gap-3" key={field.id}>
             <Badge
-              className="cursor-pointer gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300"
+              className="w-40 cursor-pointer gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300"
               render={
                 <button
                   onClick={() => setEditTarget({ variant: "prize", index })}
@@ -115,13 +115,13 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
 
         <div className="flex items-center gap-3">
           <Badge
-            className="cursor-pointer gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-800"
+            className="w-40 cursor-pointer gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-800"
             render={
               <button
                 onClick={() => setEditTarget({ variant: "nonWinning" })}
                 type="button"
               >
-                <span className="max-w-32 truncate">
+                <span className="w-32 truncate">
                   {prizeSettings.nonWinning?.title ||
                     t("minigames.prizeItemDialog.nonWinningTitleLabel")}
                 </span>

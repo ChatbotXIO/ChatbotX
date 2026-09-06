@@ -5619,10 +5619,7 @@
       "rulesDescription": "Kural Açıklaması",
       "openerTags": "Oyun bağlantısını açan kişileri etiketle",
       "playerTags": "Oyuncuları etiketle",
-      "newFriendTags": "Yeni arkadaşları etiketle",
-      "shareEnabled": "Arkadaşlarla paylaşmaya izin ver",
-      "shareMessage": "Paylaşım Mesajı",
-      "shareMessageHint": "Gerçek oyun bağlantısını eklemek için '{{shareUrl}}' kullanın — lütfen kaldırmayın."
+      "newFriendTags": "Yeni arkadaşları etiketle"
     },
     "appearance": {
       "backgroundColor": "Arka Plan Rengi",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Kişi başına şans çekiliş hakkı sayısı",
       "maxSharesPerPerson": "Davetlerden kazanılabilecek en fazla bonus çekiliş",
-      "maxSharesPerPersonHint": "Bu oyuncunun davet bağlantısıyla katılıp oynayan her arkadaş, bu sınıra kadar ona 1 ek çekiliş kazandırır. Davet bonuslarını kapatmak için 0 girin. Bonus çekilişlerin bir sonraki sıfırlamadan önce kullanılması gerekir.",
+      "maxSharesPerPersonHint": "Bu oyuncunun davet bağlantısıyla katılıp size mesaj gönderen her arkadaş, bu sınıra kadar ona 1 ek çekiliş hakkı kazandırır. Yönlendirme bonuslarını kapatmak için 0 girin. Bonus haklar bir sonraki sıfırlamadan önce kullanılmalıdır.",
+      "sharingNode": "Paylaşım adımı",
+      "sharingNodeHint": "Bir arkadaş bu oyuncunun paylaşım bağlantısını açtığında çalışan akış adımı. Paylaş düğmesini gizlemek için boş bırakın.",
       "resetPolicyLabel": "Çekilişleri sıfırla",
       "resetNever": "Çekiliş sayısını sıfırlama",
       "resetEveryNDays": "Çekiliş sayısını her şu kadar günde bir sıfırla",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
       "comingSoonTitle": "Çok yakında",
       "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor.",
-      "inviteTitle": "Davet edildiniz!",
-      "inviteDescription": "Kendi bağlantınızı almak ve {name} oynamak için bizimle sohbet edin.",
-      "inviteExpiredTitle": "Davet kullanılamıyor",
-      "inviteExpiredDescription": "Bu davet bağlantısı geçersiz veya süresi dolmuş."
+      "rateLimited": "Çok fazla istek. Lütfen biraz bekleyip tekrar deneyin."
     },
     "list": {
       "gamesPlayed": "Oynanan oyunlar",

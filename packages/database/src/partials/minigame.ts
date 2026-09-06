@@ -33,8 +33,6 @@ export const minigameGeneralSettingsSchema = z
     openerTagIds: z.array(zodBigintAsString()).default([]),
     playerTagIds: z.array(zodBigintAsString()).default([]),
     newFriendTagIds: z.array(zodBigintAsString()).default([]),
-    shareEnabled: z.boolean().default(true),
-    shareMessage: z.string().max(1000).default("{{shareUrl}}"),
   })
   .refine((data) => data.playedAtTo >= data.playedAtFrom, {
     message: "playedAtTo must be on or after playedAtFrom",
@@ -74,6 +72,22 @@ const minigamePlayerSettingsBase = z.object({
    * keeps referral bonuses off for minigames created before the feature.
    */
   maxSharesPerPerson: z.number().int().min(0).max(100).default(0),
+  /**
+   * The flow step run for a friend who arrives through a player's share link
+   * (the `minigame-share` `RefConfig` variant, handled in
+   * `apps/worker/src/integration/handlers/ref.ts`). `sharingNodeId === null`
+   * is the ONLY switch that hides the play screen's Share button.
+   *
+   * Resolved at click time rather than baked into the link, so changing the
+   * node here repairs every already-shared link instead of stranding them.
+   *
+   * Same unvalidated-jsonb caveat as `maxSharesPerPerson`: rows written
+   * before these fields existed have no key at all, so every server-side
+   * consumer must read them as `?? null` — the `$type<MinigamePlayerSettings>()`
+   * on the column will claim `string | null` for a value that is `undefined`.
+   */
+  sharingFlowId: zodBigintAsString().nullable().default(null),
+  sharingNodeId: zodBigintAsString().nullable().default(null),
 })
 
 export const minigamePlayerSettingsSchema = z.discriminatedUnion(

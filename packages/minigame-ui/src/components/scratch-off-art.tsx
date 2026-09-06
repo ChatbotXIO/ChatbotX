@@ -27,7 +27,6 @@ function shade(hex: string, amount: number): string {
 }
 
 const REVEAL_FADE_DURATION_MS = 550
-const SCRATCH_STROKE_WIDTH_PX = 30
 /** Y position of the ticket-stub perforation line — just above the scratch panel (which starts at y=130). */
 const SCRATCH_OFF_PERFORATION_Y = 120
 
@@ -96,21 +95,65 @@ function buildScratchOffCardPath(): string {
 
 const SCRATCH_OFF_CARD_PATH = buildScratchOffCardPath()
 
-const SCRATCH_STROKE_COUNT = 6
-const SCRATCH_STROKE_DX = 40
-const SCRATCH_STROKE_SPACING = 32
-const SCRATCH_STROKE_START_X = 30
-const SCRATCH_STROKE_TOP_Y = 145
-const SCRATCH_STROKE_BOTTOM_Y = 215
-const SCRATCH_STROKE_DRAW_DURATION_MS = 380
-const SCRATCH_STROKE_GAP_MS = 300
-/** Each pass fully finishes drawing before the next one starts — not overlapping. */
-const SCRATCH_STROKE_DELAY_STEP_MS =
-  SCRATCH_STROKE_DRAW_DURATION_MS + SCRATCH_STROKE_GAP_MS
-/** Total time for every stroke to finish, exported so the play screen can size its "scratching" phase to match. */
+const PANEL_X = 40
+const PANEL_Y = 130
+const PANEL_WIDTH = 200
+const PANEL_HEIGHT = 100
+const PANEL_BOTTOM = PANEL_Y + PANEL_HEIGHT
+const PANEL_RIGHT = PANEL_X + PANEL_WIDTH
+
+const SCRATCH_BAND_COUNT = 6
+/**
+ * Where the bands sit. Unlike the strokes these replaced, the bands ARE the
+ * silver — so together they must cover every pixel of the panel, or the
+ * uncovered wedge shows the prize art before the first scratch. Because the
+ * bands lean, the binding cases are the two opposite corners: at the panel's
+ * top edge the leftmost band has already leaned right (so its anchor has to
+ * start left of the panel), and at the bottom edge the rightmost one has
+ * leaned back left (so its anchor has to end right of the panel). Between
+ * them the spacing must stay under `2 * BAND_HALF_WIDTH_X` so neighbours
+ * overlap instead of leaving a silver thread.
+ */
+const SCRATCH_BAND_SPACING = 45
+const SCRATCH_BAND_ANCHOR_X = 4
+const SCRATCH_BAND_ANCHOR_Y = 215
+/** Perpendicular width of one band — wide enough that the bands overlap at `SCRATCH_BAND_SPACING`. */
+const SCRATCH_BAND_WIDTH_PX = 42
+/** Segments each band is cut into, so it clears progressively along the diagonal instead of blinking out in one piece. */
+const SCRATCH_SEGMENTS_PER_BAND = 5
+const SCRATCH_SEGMENT_FADE_MS = 150
+const SCRATCH_SEGMENT_STEP_MS = 70
+/** Vertical overlap between neighbouring segments, hiding the anti-aliased seam while both are still opaque. */
+const SCRATCH_SEGMENT_OVERLAP_Y = 1
+
+/** The rake direction, as a rise/run pair: "7 o'clock → 1 o'clock". */
+const RAKE_RUN = 40
+const RAKE_RISE = 70
+const RAKE_LENGTH = Math.hypot(RAKE_RUN, RAKE_RISE)
+/** How far a point on the rake line travels horizontally per unit of height. */
+const RAKE_X_PER_Y = RAKE_RUN / RAKE_RISE
+/**
+ * Half-width of a band measured horizontally rather than perpendicular: a
+ * leaning band slices a wider horizontal span than its own width. Comes out
+ * just over half `SCRATCH_BAND_SPACING`, which is what makes neighbours
+ * overlap.
+ */
+const BAND_HALF_WIDTH_X =
+  ((SCRATCH_BAND_WIDTH_PX / 2) *
+    (RAKE_RISE + (RAKE_RUN * RAKE_RUN) / RAKE_RISE)) /
+  RAKE_LENGTH
+
+const SCRATCH_BAND_DRAW_DURATION_MS =
+  (SCRATCH_SEGMENTS_PER_BAND - 1) * SCRATCH_SEGMENT_STEP_MS +
+  SCRATCH_SEGMENT_FADE_MS
+const SCRATCH_BAND_GAP_MS = 250
+/** Each pass fully finishes before the next one starts — not overlapping. */
+const SCRATCH_BAND_DELAY_STEP_MS =
+  SCRATCH_BAND_DRAW_DURATION_MS + SCRATCH_BAND_GAP_MS
+/** Total time for every band to clear, exported so the play screen can size its "scratching" phase to match. */
 export const SCRATCH_OFF_ANIMATION_DURATION_MS =
-  (SCRATCH_STROKE_COUNT - 1) * SCRATCH_STROKE_DELAY_STEP_MS +
-  SCRATCH_STROKE_DRAW_DURATION_MS
+  (SCRATCH_BAND_COUNT - 1) * SCRATCH_BAND_DELAY_STEP_MS +
+  SCRATCH_BAND_DRAW_DURATION_MS
 
 /**
  * Decorative "$" marks scattered on the card's open white space — placed
@@ -132,45 +175,85 @@ const DOLLAR_MARKS = [
   { x: 256, y: 220, rotationDeg: -10, fontSize: 18 },
 ] as const
 
+/** Horizontal centre of band `index`'s diagonal at height `y`. */
+function bandCenterX(index: number, y: number): number {
+  const anchorX = SCRATCH_BAND_ANCHOR_X + index * SCRATCH_BAND_SPACING
+  return anchorX + (SCRATCH_BAND_ANCHOR_Y - y) * RAKE_X_PER_Y
+}
+
+/** One segment of a band, as a parallelogram spanning `yTop` to `yBottom`. */
+function bandSegmentPath(index: number, yTop: number, yBottom: number): string {
+  const topX = bandCenterX(index, yTop)
+  const bottomX = bandCenterX(index, yBottom)
+  return [
+    `M${topX - BAND_HALF_WIDTH_X},${yTop}`,
+    `L${topX + BAND_HALF_WIDTH_X},${yTop}`,
+    `L${bottomX + BAND_HALF_WIDTH_X},${yBottom}`,
+    `L${bottomX - BAND_HALF_WIDTH_X},${yBottom}`,
+    "Z",
+  ].join(" ")
+}
+
 /**
- * A row of parallel scratch strokes — all on the same "7 o'clock ↔ 1
- * o'clock" diagonal, never a zigzag — appearing one after another from left
- * to right. The 1st pass draws 7→1 o'clock, the 2nd draws 1→7 o'clock, the
- * 3rd draws 7→1 again, and so on: the animated tip alternately climbs then
- * descends the same diagonal as it moves across, the way a hand actually
- * rakes a coin back and forth rather than always lifting from one corner.
+ * The silver panel, cut into parallel diagonal bands — all on the same "7
+ * o'clock ↔ 1 o'clock" line, never a zigzag — that clear one after another
+ * from left to right. Each band is itself sliced into segments that go one
+ * at a time along the diagonal, so the band wipes away progressively instead
+ * of blinking out whole: pass 1 clears 7→1 o'clock, pass 2 clears 1→7
+ * o'clock, pass 3 clears 7→1 again, the way a hand rakes a coin back and
+ * forth rather than always lifting from one corner.
+ *
+ * These are ordinary rendered `<path>`s that simply fade out, NOT strokes
+ * animated inside an SVG `<mask>`. The mask version rendered correctly in
+ * desktop browsers and in webchat but broke in Messenger's in-app WebView,
+ * which painted round dots across the untouched panel — a class of bug this
+ * shape avoids entirely, since nothing here depends on dash arrays,
+ * `pathLength` normalization, line caps, or a mask re-rasterizing while its
+ * contents animate.
  */
-const SCRATCH_STROKES = Array.from(
-  { length: SCRATCH_STROKE_COUNT },
-  (_, index) => {
-    const x = SCRATCH_STROKE_START_X + index * SCRATCH_STROKE_SPACING
-    const lowerLeft = `${x},${SCRATCH_STROKE_BOTTOM_Y}`
-    const upperRight = `${x + SCRATCH_STROKE_DX},${SCRATCH_STROKE_TOP_Y}`
-    // Same "/" line (7 o'clock ↔ 1 o'clock) every time — only the M/L order
-    // swaps, so the animated tip retraces it from the opposite end instead
-    // of drawing a different, mirrored "\" diagonal.
-    const drawsUpward = index % 2 === 0
-    const d = drawsUpward
-      ? `M${lowerLeft} L${upperRight}`
-      : `M${upperRight} L${lowerLeft}`
-    return { d, delayMs: index * SCRATCH_STROKE_DELAY_STEP_MS }
-  },
-)
+const SCRATCH_BANDS = Array.from({ length: SCRATCH_BAND_COUNT }, (_, index) => {
+  const segmentHeight = PANEL_HEIGHT / SCRATCH_SEGMENTS_PER_BAND
+  // Even passes rake upward (bottom segment first), odd passes come back
+  // down the same diagonal.
+  const clearsUpward = index % 2 === 0
+
+  const segments = Array.from(
+    { length: SCRATCH_SEGMENTS_PER_BAND },
+    (__, order) => {
+      const fromBottom = clearsUpward
+        ? order
+        : SCRATCH_SEGMENTS_PER_BAND - 1 - order
+      const yBottom = PANEL_BOTTOM - fromBottom * segmentHeight
+      const yTop = yBottom - segmentHeight
+      return {
+        // Overlap into the neighbour that clears later, so no hairline of
+        // silver survives between two segments.
+        d: bandSegmentPath(
+          index,
+          Math.max(PANEL_Y, yTop - SCRATCH_SEGMENT_OVERLAP_Y),
+          Math.min(PANEL_BOTTOM, yBottom + SCRATCH_SEGMENT_OVERLAP_Y),
+        ),
+        delayMs:
+          index * SCRATCH_BAND_DELAY_STEP_MS + order * SCRATCH_SEGMENT_STEP_MS,
+      }
+    },
+  )
+
+  return segments
+}).flat()
 
 /**
  * Static ticket-card chrome for the scratch-off game plus a `phase`-driven
- * self-scratching animation: while "scratching", several parallel strokes —
- * all running along the same "7 o'clock → 1 o'clock" diagonal, not a
- * zigzag — draw themselves through the silver panel one after another from
- * left to right, via an SVG luminance mask animated with
- * `stroke-dashoffset` (normalized by `pathLength="1"` so the timing is
- * independent of each path's actual geometry). This mimics a coin raked
- * repeatedly in the same direction across a real scratch card, revealing
+ * self-scratching animation: the silver panel is built from parallel
+ * diagonal bands — all on the same "7 o'clock → 1 o'clock" line, not a
+ * zigzag — and while "scratching" they clear one after another from left to
+ * right, each one wiping away segment by segment along its own diagonal.
+ * This mimics a coin raked repeatedly across a real scratch card, revealing
  * the prize/lose art underneath as it goes, rather than a single
- * wipe/shimmer. "revealed" then fades the remaining silver away entirely
- * before the result dialog opens. There is no manual drag-to-scratch
- * interaction; the reveal is fully automatic, driven by the play screen's
- * phase state. `machineColor` recolors the card body (used as-is, not
+ * wipe/shimmer. "revealed" then fades the panel's remaining silver and
+ * border away before the result dialog opens. There is no manual
+ * drag-to-scratch interaction; the reveal is fully automatic, driven by the
+ * play screen's phase state. `machineColor` recolors the card body (used as-is, not
  * shaded, so the configured color shows accurately) and its border (a
  * slightly darker shade), `decorativeColor` recolors the gift box/ribbon.
  */
@@ -206,7 +289,20 @@ export function ScratchOffArt({
       <title id="scratchOffTitle">Scratch-off ticket</title>
       {/** biome-ignore-start lint/style/noMagicNumbers: hand-authored illustration layout constants */}
       <defs>
-        <linearGradient id="scratchOffSilver" x1="0" x2="1" y1="0" y2="1">
+        {/*
+          User-space coordinates, not the default object bounding box: the
+          silver is painted by many band segments, and a per-object gradient
+          would restart the sheen inside every one of them. Anchored to the
+          panel so each segment samples the single gradient that spans it.
+        */}
+        <linearGradient
+          gradientUnits="userSpaceOnUse"
+          id="scratchOffSilver"
+          x1={PANEL_X}
+          x2={PANEL_RIGHT}
+          y1={PANEL_Y}
+          y2={PANEL_BOTTOM}
+        >
           <stop offset="0" stopColor="#e6e7ea" />
           <stop offset="0.5" stopColor="#b9bbc2" />
           <stop offset="1" stopColor="#e6e7ea" />
@@ -242,35 +338,15 @@ export function ScratchOffArt({
         <clipPath id="scratchOffCardClip">
           <path d={SCRATCH_OFF_CARD_PATH} />
         </clipPath>
-        <mask id="scratchOffMask" maskUnits="userSpaceOnUse">
-          <rect fill="#fff" height="100" width="200" x="40" y="130" />
-          {isScratching &&
-            SCRATCH_STROKES.map((stroke) => (
-              <path
-                className="scratch-off-stroke"
-                d={stroke.d}
-                fill="none"
-                key={stroke.d}
-                pathLength="1"
-                stroke="#000"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={SCRATCH_STROKE_WIDTH_PX}
-                style={{ animationDelay: `${stroke.delayMs}ms` }}
-              />
-            ))}
-        </mask>
       </defs>
       <style>
         {`
-          @keyframes scratchOffStrokeDraw {
-            from { stroke-dashoffset: 1; }
-            to { stroke-dashoffset: 0; }
+          @keyframes scratchOffBandClear {
+            from { opacity: 1; }
+            to { opacity: 0; }
           }
-          .scratch-off-stroke {
-            stroke-dasharray: 1;
-            stroke-dashoffset: 1;
-            animation: scratchOffStrokeDraw ${SCRATCH_STROKE_DRAW_DURATION_MS}ms ease-out forwards;
+          .scratch-off-band {
+            animation: scratchOffBandClear ${SCRATCH_SEGMENT_FADE_MS}ms ease-out forwards;
           }
           @keyframes scratchOffReveal {
             0% { opacity: 1; }
@@ -371,18 +447,41 @@ export function ScratchOffArt({
           )}
         </g>
       )}
-      <rect
-        className={isRevealed ? "scratch-off-reveal" : undefined}
-        fill="url(#scratchOffSilver)"
-        height="100"
-        mask={isScratching ? "url(#scratchOffMask)" : undefined}
-        rx="10"
-        stroke={borderColor}
-        strokeWidth="2"
-        width="200"
-        x="40"
-        y="130"
-      />
+      <g className={isRevealed ? "scratch-off-reveal" : undefined}>
+        <g clipPath="url(#scratchOffPanelClip)">
+          {SCRATCH_BANDS.map((segment) => (
+            // The class stays applied through "revealed" as well as
+            // "scratching": dropping it would end the animation and snap
+            // every cleared segment back to full opacity just as the panel
+            // starts fading out.
+            <path
+              className={showRevealContent ? "scratch-off-band" : undefined}
+              d={segment.d}
+              fill="url(#scratchOffSilver)"
+              key={segment.d}
+              // A band segment abuts its neighbours exactly; without a stroke
+              // of its own fill color the seam shows as a lighter hairline.
+              stroke="url(#scratchOffSilver)"
+              strokeWidth="0.5"
+              style={
+                showRevealContent
+                  ? { animationDelay: `${segment.delayMs}ms` }
+                  : undefined
+              }
+            />
+          ))}
+        </g>
+        <rect
+          fill="none"
+          height={PANEL_HEIGHT}
+          rx="10"
+          stroke={borderColor}
+          strokeWidth="2"
+          width={PANEL_WIDTH}
+          x={PANEL_X}
+          y={PANEL_Y}
+        />
+      </g>
       {/** biome-ignore-end lint/style/noMagicNumbers: hand-authored illustration layout constants */}
     </svg>
   )

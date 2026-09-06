@@ -25,7 +25,6 @@
     "./appointment-webview-token": "./src/appointment-webview-token.ts",
     "./keys": "./src/keys.ts",
     "./minigame-play-token": "./src/minigame-play-token.ts",
-    "./minigame-referral-token": "./src/minigame-referral-token.ts",
     "./link-signature": "./src/link-signature.ts",
     "./user-data-webview-token": "./src/user-data-webview-token.ts",
     "./user-hash": "./src/user-hash.ts"

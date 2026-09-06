@@ -43,6 +43,7 @@ import { DateTimeRangeField } from "./components/date-time-range-field"
 import { NonWinningMessageEditDialog } from "./components/non-winning-message-edit-dialog"
 import { MinigamePreview } from "./components/preview/minigame-preview"
 import { PrizeListEditor } from "./components/prize-list-editor"
+import { SharingNodeField } from "./components/sharing-node-field"
 import { WinningMessageEditDialog } from "./components/winning-message-edit-dialog"
 import {
   getDefaultMinigameAppearance,
@@ -52,6 +53,7 @@ import {
   getDefaultMinigamePrizeSettings,
   getDefaultMinigameWinningMessageSettings,
 } from "./constants"
+import { buildPlayerSettingsForResetPolicy } from "./lib/player-settings"
 import { createMinigameRequest, updateMinigameRequest } from "./schema/action"
 import type { MinigameResource } from "./schema/resource"
 
@@ -210,10 +212,11 @@ export function MinigameForm(props: MinigameFormProps) {
     control: form.control,
     name: "prizeSettings",
   })
-  const resetPolicy = useWatch({
+  const playerSettings = useWatch({
     control: form.control,
-    name: "playerSettings.resetPolicy",
+    name: "playerSettings",
   })
+  const resetPolicy = playerSettings?.resetPolicy
   const winningMessageSettings = useWatch({
     control: form.control,
     name: "winningMessageSettings",
@@ -228,19 +231,12 @@ export function MinigameForm(props: MinigameFormProps) {
     // both branches has to be carried over explicitly — dropping one here
     // silently loses the setting and does NOT fail typecheck, because the
     // narrower object literal still satisfies the branch.
-    const drawsPerPerson = form.getValues("playerSettings.drawsPerPerson") ?? 1
-    const maxSharesPerPerson =
-      form.getValues("playerSettings.maxSharesPerPerson") ?? 0
     form.setValue(
       "playerSettings",
-      value === "never"
-        ? { drawsPerPerson, maxSharesPerPerson, resetPolicy: "never" }
-        : {
-            drawsPerPerson,
-            maxSharesPerPerson,
-            resetPolicy: "everyNDays",
-            resetIntervalDays: 1,
-          },
+      buildPlayerSettingsForResetPolicy(
+        form.getValues("playerSettings"),
+        value,
+      ),
       { shouldDirty: true, shouldValidate: true },
     )
   }
@@ -378,20 +374,6 @@ export function MinigameForm(props: MinigameFormProps) {
                   options={tagOptions}
                   placeholder={t("actions.pleaseSelect")}
                 />
-                <SwitchField
-                  formItemClassName="w-max"
-                  label={t("minigames.generalSettings.shareEnabled")}
-                  name="generalSettings.shareEnabled"
-                />
-                {generalSettings?.shareEnabled !== false && (
-                  <TextareaField
-                    description={t(
-                      "minigames.generalSettings.shareMessageHint",
-                    )}
-                    label={t("minigames.generalSettings.shareMessage")}
-                    name="generalSettings.shareMessage"
-                  />
-                )}
               </CardContent>
             </Card>
 
@@ -502,6 +484,8 @@ export function MinigameForm(props: MinigameFormProps) {
                   name="playerSettings.maxSharesPerPerson"
                 />
 
+                <SharingNodeField />
+
                 <div className="flex flex-col gap-3">
                   <Label>
                     {t("minigames.playerSettings.resetPolicyLabel")}
@@ -577,7 +561,7 @@ export function MinigameForm(props: MinigameFormProps) {
               name={generalSettings?.name ?? ""}
               prizeSettings={prizeSettingsForPreview}
               rulesDescription={generalSettings?.rulesDescription ?? ""}
-              shareEnabled={generalSettings?.shareEnabled ?? true}
+              shareEnabled={Boolean(playerSettings?.sharingNodeId)}
               showName={generalSettings?.showName ?? true}
               type={type}
             />

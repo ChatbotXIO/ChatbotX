@@ -5619,10 +5619,7 @@
       "rulesDescription": "Description des règles",
       "openerTags": "Étiqueter les contacts qui ouvrent le lien du jeu",
       "playerTags": "Étiqueter les joueurs",
-      "newFriendTags": "Étiqueter les nouveaux amis",
-      "shareEnabled": "Autoriser le partage avec des amis",
-      "shareMessage": "Message de partage",
-      "shareMessageHint": "Utilisez '{{shareUrl}}' pour insérer le lien réel du jeu — merci de ne pas le supprimer."
+      "newFriendTags": "Étiqueter les nouveaux amis"
     },
     "appearance": {
       "backgroundColor": "Couleur de fond",
@@ -5639,7 +5636,9 @@
     "playerSettings": {
       "drawsPerPerson": "Nombre de chances de tirage par personne",
       "maxSharesPerPerson": "Tirages bonus max. par parrainage",
-      "maxSharesPerPersonHint": "Chaque ami qui rejoint via le lien d'invitation de ce joueur et joue lui rapporte 1 tirage supplémentaire, dans la limite indiquée. Mettez 0 pour désactiver les bonus de parrainage. Les tirages bonus doivent être utilisés avant la prochaine réinitialisation.",
+      "maxSharesPerPersonHint": "Chaque ami qui rejoint via le lien d'invitation de ce joueur et vous envoie un message lui rapporte 1 tirage supplémentaire, dans la limite indiquée. Mettez 0 pour désactiver les bonus de parrainage. Les tirages bonus doivent être utilisés avant la prochaine réinitialisation.",
+      "sharingNode": "Étape de partage",
+      "sharingNodeHint": "L'étape du flux exécutée lorsqu'un ami ouvre le lien de partage de ce joueur. Laissez vide pour masquer le bouton Partager.",
       "resetPolicyLabel": "Réinitialiser les tirages",
       "resetNever": "Ne jamais réinitialiser le nombre de tirages",
       "resetEveryNDays": "Réinitialiser le nombre de tirages tous les",
@@ -5659,10 +5658,7 @@
       "forbiddenDescription": "Ce lien est invalide ou a expiré.",
       "comingSoonTitle": "Bientôt disponible",
       "comingSoonDescription": "Ce type de minijeu n'est pas encore jouable.",
-      "inviteTitle": "Vous êtes invité !",
-      "inviteDescription": "Écrivez-nous pour obtenir votre propre lien et jouer à {name}.",
-      "inviteExpiredTitle": "Invitation indisponible",
-      "inviteExpiredDescription": "Ce lien d'invitation est invalide ou a expiré."
+      "rateLimited": "Trop de requêtes. Patientez un instant, puis réessayez."
     },
     "list": {
       "gamesPlayed": "Parties jouées",

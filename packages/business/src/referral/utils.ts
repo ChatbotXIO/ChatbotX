@@ -13,6 +13,11 @@ const configs = z.discriminatedUnion("type", [
     flowId: z.string(),
   }),
   z.object({
+    type: z.literal("minigame-share"),
+    minigameId: z.string(),
+    referrerContactId: z.string(),
+  }),
+  z.object({
     type: z.literal("qr-code"),
     name: z.string(),
   }),
@@ -31,6 +36,9 @@ export function encodeRef(params: RefConfig): string {
     case "draft": {
       const { flowId } = params
       return `d_${encodeBase62(flowId)}`
+    }
+    case "minigame-share": {
+      return `mg_${encodeBase62(params.minigameId)}_${encodeBase62(params.referrerContactId)}`
     }
     case "qr-code": {
       return `qr_${params.name}`
@@ -56,6 +64,22 @@ export function decodeRef(ref: string): RefConfig | undefined {
 
     if (ref.startsWith("d_")) {
       return { type: "draft", flowId: decodeBase62(ref.slice(2)) }
+    }
+
+    if (ref.startsWith("mg_")) {
+      const [minigameId, referrerContactId] = ref.slice(3).split("_")
+      // `decodeBase62("")` returns "0" WITHOUT throwing (the loop never runs,
+      // so `0n.toString()` falls out), which would silently resolve "mg__x"
+      // to minigame "0". The `f_` branch above has the same latent bug — do
+      // not copy it here.
+      if (!(minigameId && referrerContactId)) {
+        return
+      }
+      return {
+        type: "minigame-share",
+        minigameId: decodeBase62(minigameId),
+        referrerContactId: decodeBase62(referrerContactId),
+      }
     }
 
     if (ref.startsWith("qr_")) {

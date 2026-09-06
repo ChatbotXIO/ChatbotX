@@ -5595,10 +5595,7 @@
       "rulesDescription": "规则说明",
       "openerTags": "为打开游戏链接的联系人打标签",
       "playerTags": "为参与者打标签",
-      "newFriendTags": "为新好友打标签",
-      "shareEnabled": "允许与好友分享",
-      "shareMessage": "分享消息",
-      "shareMessageHint": "使用 '{{shareUrl}}' 插入实际的游戏链接，请勿删除。"
+      "newFriendTags": "为新好友打标签"
     },
     "appearance": {
       "backgroundColor": "背景颜色",
@@ -5615,7 +5612,9 @@
     "playerSettings": {
       "drawsPerPerson": "每人可抽奖次数",
       "maxSharesPerPerson": "推荐可获得的最多奖励次数",
-      "maxSharesPerPersonHint": "每有一位好友通过该玩家的邀请链接参与并游戏，该玩家即可获得 1 次额外抽奖机会，最多不超过此上限。设为 0 可关闭推荐奖励。奖励次数需在下次重置前使用。",
+      "maxSharesPerPersonHint": "每有一位好友通过该玩家的邀请链接加入并给你发消息，该玩家就多获得 1 次抽奖机会，最多不超过此上限。设为 0 可关闭推荐奖励。奖励次数须在下次重置前使用。",
+      "sharingNode": "分享步骤",
+      "sharingNodeHint": "好友打开该玩家的分享链接时运行的流程步骤。留空则隐藏分享按钮。",
       "resetPolicyLabel": "重置抽奖次数",
       "resetNever": "不重置抽奖次数",
       "resetEveryNDays": "每隔以下天数重置抽奖次数",
@@ -5635,10 +5634,7 @@
       "forbiddenDescription": "此链接无效或已过期。",
       "comingSoonTitle": "即将推出",
       "comingSoonDescription": "此类型的小游戏暂时无法玩。",
-      "inviteTitle": "您受邀了！",
-      "inviteDescription": "与我们聊天即可获取您的专属链接，畅玩 {name}。",
-      "inviteExpiredTitle": "邀请不可用",
-      "inviteExpiredDescription": "此邀请链接无效或已过期。"
+      "rateLimited": "请求过于频繁，请稍候再试。"
     },
     "list": {
       "gamesPlayed": "游戏次数",

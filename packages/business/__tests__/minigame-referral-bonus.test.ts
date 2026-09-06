@@ -91,8 +91,11 @@ vi.mock("../src/contact-inbox/service", () => ({
 vi.mock("../src/conversation/service", () => ({
   conversationService: { findDMByContact: vi.fn() },
 }))
+const { mockAttachToContact } = vi.hoisted(() => ({
+  mockAttachToContact: vi.fn(),
+}))
 vi.mock("../src/tag/service", () => ({
-  tagService: { attachToContact: vi.fn() },
+  tagService: { attachToContact: mockAttachToContact },
 }))
 vi.mock("../src/minigame/service", () => ({
   minigameService: { find: vi.fn() },
@@ -369,5 +372,163 @@ describe("MinigameContactService.resolvePlayState — referral binding", () => {
     for (const call of mockUpdateSet.mock.calls) {
       expect(call[0]).not.toHaveProperty("referrerContactId")
     }
+  })
+})
+
+describe("MinigameContactService.creditSharedLinkReferral", () => {
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+  const minigame = (
+    playerSettings: MinigamePlayerSettings,
+    generalSettings: Record<string, unknown> = {},
+  ) =>
+    ({
+      id: "minigame-1",
+      workspaceId: "workspace-1",
+      playerSettings,
+      generalSettings: {
+        newFriendTagIds: ["tag-1"],
+        playedAtFrom: new Date(Date.now() - ONE_DAY_MS).toISOString(),
+        playedAtTo: new Date(Date.now() + ONE_DAY_MS).toISOString(),
+        ...generalSettings,
+      },
+    }) as never
+
+  const stubResolveOpenerPlayState = (
+    result: { state: unknown; created: boolean } | Error,
+  ) =>
+    vi
+      .spyOn(minigameContactService, "resolveOpenerPlayState")
+      .mockImplementation(
+        result instanceof Error
+          ? () => Promise.reject(result)
+          : () => Promise.resolve(result as never),
+      )
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.clearAllMocks()
+    mockUpdateReturning.mockResolvedValue([{ id: "minigame-contact-1" }])
+  })
+
+  test("credits when this call created the invitee's row", async () => {
+    stubResolveOpenerPlayState({
+      state: { id: "row-1", referrerContactId: "referrer-1" },
+      created: true,
+    })
+
+    await expect(
+      minigameContactService.creditSharedLinkReferral({
+        minigame: minigame(neverPolicy({ maxSharesPerPerson: 3 })),
+        contactId: "invitee-1",
+        referrerContactId: "referrer-1",
+      }),
+    ).resolves.toBe(true)
+
+    // Per-contact credit, then the minigame-wide total.
+    expect(mockUpdateSet).toHaveBeenCalledTimes(2)
+    expect(mockAttachToContact).toHaveBeenCalledWith(
+      expect.objectContaining({ tagIds: ["tag-1"], contactId: "invitee-1" }),
+    )
+  })
+
+  // An existing row means the invitee has opened or played this minigame
+  // before, which is exactly the condition that disqualifies the referral.
+  test("never credits when the invitee already had a row", async () => {
+    stubResolveOpenerPlayState({
+      state: { id: "row-1", referrerContactId: "referrer-1" },
+      created: false,
+    })
+
+    await expect(
+      minigameContactService.creditSharedLinkReferral({
+        minigame: minigame(neverPolicy({ maxSharesPerPerson: 3 })),
+        contactId: "invitee-1",
+        referrerContactId: "referrer-1",
+      }),
+    ).resolves.toBe(false)
+
+    expect(mockUpdateSet).not.toHaveBeenCalled()
+    expect(mockAttachToContact).not.toHaveBeenCalled()
+  })
+
+  test("returns early on self-referral without touching the database", async () => {
+    const spy = stubResolveOpenerPlayState({ state: {}, created: true })
+
+    await expect(
+      minigameContactService.creditSharedLinkReferral({
+        minigame: minigame(neverPolicy({ maxSharesPerPerson: 3 })),
+        contactId: "same-contact",
+        referrerContactId: "same-contact",
+      }),
+    ).resolves.toBe(false)
+
+    expect(spy).not.toHaveBeenCalled()
+    expect(dbTransactionSpy).not.toHaveBeenCalled()
+  })
+
+  // Tagging is about the friend arriving, not about whether the referrer
+  // still had cap left — otherwise every friend after the cap is silently
+  // never tagged.
+  test("still tags the invitee when the referrer was already at the cap", async () => {
+    stubResolveOpenerPlayState({
+      state: { id: "row-1", referrerContactId: "referrer-1" },
+      created: true,
+    })
+    // The capped UPDATE matches no row.
+    mockUpdateReturning.mockResolvedValue([])
+
+    await expect(
+      minigameContactService.creditSharedLinkReferral({
+        minigame: minigame(neverPolicy({ maxSharesPerPerson: 3 })),
+        contactId: "invitee-1",
+        referrerContactId: "referrer-1",
+      }),
+    ).resolves.toBe(false)
+
+    expect(mockAttachToContact).toHaveBeenCalledWith(
+      expect.objectContaining({ tagIds: ["tag-1"], contactId: "invitee-1" }),
+    )
+  })
+
+  // `enabled` stays true after a campaign ends, so the window is what stops a
+  // stale share link from creating rows, inflating `participantsCount` and
+  // handing out bonus draws `recordPlay` would refuse to spend.
+  test("never credits outside the configured play window", async () => {
+    const spy = stubResolveOpenerPlayState({
+      state: { id: "row-1", referrerContactId: "referrer-1" },
+      created: true,
+    })
+
+    await expect(
+      minigameContactService.creditSharedLinkReferral({
+        minigame: minigame(neverPolicy({ maxSharesPerPerson: 3 }), {
+          playedAtTo: new Date(Date.now() - ONE_DAY_MS).toISOString(),
+        }),
+        contactId: "invitee-1",
+        referrerContactId: "referrer-1",
+      }),
+    ).resolves.toBe(false)
+
+    expect(spy).not.toHaveBeenCalled()
+    expect(mockAttachToContact).not.toHaveBeenCalled()
+    expect(dbTransactionSpy).not.toHaveBeenCalled()
+  })
+
+  // The grant must commit separately from the row-creating transaction, or it
+  // deadlocks against a concurrent play by the referrer themselves.
+  test("grants in a transaction of its own, not the caller's", async () => {
+    stubResolveOpenerPlayState({
+      state: { id: "row-1", referrerContactId: "referrer-1" },
+      created: true,
+    })
+
+    await minigameContactService.creditSharedLinkReferral({
+      minigame: minigame(neverPolicy({ maxSharesPerPerson: 3 })),
+      contactId: "invitee-1",
+      referrerContactId: "referrer-1",
+    })
+
+    expect(dbTransactionSpy).toHaveBeenCalledTimes(1)
   })
 })
