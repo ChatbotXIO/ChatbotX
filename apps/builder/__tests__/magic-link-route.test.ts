@@ -20,17 +20,13 @@ const findForButtonPayload = vi.fn()
 const emit = vi.fn()
 const loadServableWorkspace = vi.fn()
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      magicLinkModel: { findFirst: findMagicLink },
-      contactInboxModel: { findFirst: findContactInbox },
-    },
-  },
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxRepository: { findByIdWithConversation: findContactInbox },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   flowVersionService: { findForButtonPayload },
+  magicLinkService: { findByName: findMagicLink },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({ emit }))

@@ -25,6 +25,15 @@ class UserService extends BaseService {
     }
     return user
   }
+
+  async findNameAndEmail(
+    userId: string,
+  ): Promise<{ name: string | null; email: string | null } | undefined> {
+    return await db.query.userModel.findFirst({
+      where: { id: userId },
+      columns: { name: true, email: true },
+    })
+  }
 }
 
 export const userService = new UserService()

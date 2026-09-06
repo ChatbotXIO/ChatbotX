@@ -1,4 +1,10 @@
-import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  relationsFilterToSQL,
+} from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import type {
@@ -6,10 +12,29 @@ import type {
   WorkspaceMemberModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import {
+  getPaginationWithDefaults,
+  likeContains,
+} from "@chatbotx.io/database/utils"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
 import { logger } from "../logger"
 import { workspaceUsageService } from "../workspace-usage/service"
+
+type ListWorkspaceMembersInput = {
+  workspaceId: string
+  page?: number | null
+  perPage?: number | null
+  keyword?: string | null
+}
+
+type WorkspaceMemberListRow = WorkspaceMemberModel & { user: UserModel }
+
+type ListWorkspaceMembersResult = {
+  data: WorkspaceMemberListRow[]
+  pageCount: number
+}
 
 type WorkspaceMemberWithWorkspace = WorkspaceMemberModel & {
   workspace: WorkspaceModel
@@ -245,6 +270,99 @@ export class WorkspaceMemberService extends BaseService {
       where: {
         workspaceId,
         userId,
+      },
+      with: {
+        user: true,
+      },
+    })
+  }
+
+  async findByIdOrFail(input: {
+    tx?: DatabaseClient
+    id: string
+    workspaceId: string
+  }): Promise<WorkspaceMemberModel> {
+    const { tx = db, id, workspaceId } = input
+    const member = await tx.query.workspaceMemberModel.findFirst({
+      where: { id, workspaceId },
+    })
+    if (!member) {
+      throw notFoundException("Workspace member not found")
+    }
+    return member
+  }
+
+  async update(input: {
+    tx?: DatabaseClient
+    id: string
+    workspaceId: string
+    data: Partial<typeof workspaceMemberModel.$inferInsert>
+  }): Promise<{ id: string } | undefined> {
+    const { tx = db, id, data } = input
+
+    const updated = await tx
+      .update(workspaceMemberModel)
+      .set(data)
+      .where(eq(workspaceMemberModel.id, id))
+      .returning({
+        id: workspaceMemberModel.id,
+        userId: workspaceMemberModel.userId,
+      })
+
+    const [row] = updated
+    if (!row) {
+      return
+    }
+
+    // The member's permissions/nav are served from the cached
+    // `listByUserId` result; bust it so the change takes effect immediately.
+    await this.invalidateCacheTags(workspaceMemberCacheTag(row.userId))
+
+    return { id: row.id }
+  }
+
+  async listPaginated(
+    input: ListWorkspaceMembersInput,
+  ): Promise<ListWorkspaceMembersResult> {
+    const pagination = getPaginationWithDefaults(input)
+
+    const where = {
+      workspaceId: input.workspaceId,
+      user: input.keyword
+        ? {
+            name: {
+              ilike: likeContains(input.keyword),
+            },
+          }
+        : undefined,
+    }
+
+    const [data, totalRows] = await Promise.all([
+      db.query.workspaceMemberModel.findMany({
+        ...pagination,
+        where,
+        with: {
+          user: true,
+        },
+      }),
+      db.$count(
+        workspaceMemberModel,
+        relationsFilterToSQL(workspaceMemberModel, where),
+      ),
+    ])
+    const pageCount = Math.ceil(totalRows / pagination.limit)
+
+    return { data, pageCount }
+  }
+
+  async findByIdWithUser(input: {
+    id: string
+    workspaceId: string
+  }): Promise<WorkspaceMemberListRow | undefined> {
+    return await db.query.workspaceMemberModel.findFirst({
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
       },
       with: {
         user: true,

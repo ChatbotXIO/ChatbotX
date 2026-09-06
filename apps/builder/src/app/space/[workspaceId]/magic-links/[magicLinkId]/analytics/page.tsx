@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { magicLinkService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
@@ -25,11 +25,9 @@ export default async function MagicLinkAnalyticsPage({ params }: Props) {
     return redirect("/")
   }
 
-  const magicLink = await db.query.magicLinkModel.findFirst({
-    where: {
-      id: data.magicLinkId,
-      workspaceId: data.workspaceId,
-    },
+  const magicLink = await magicLinkService.findByWorkspace({
+    workspaceId: data.workspaceId,
+    id: data.magicLinkId,
   })
   if (!magicLink) {
     return notFound()

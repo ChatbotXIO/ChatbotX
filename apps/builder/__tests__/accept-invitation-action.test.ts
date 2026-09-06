@@ -9,28 +9,16 @@ vi.mock("@/lib/safe-action", () => ({
   },
 }))
 
-const findOrFail = vi.fn()
+const findByCodeOrFail = vi.fn()
 const workspaceMemberFindFirst = vi.fn()
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      workspaceMemberModel: {
-        findFirst: (...args: unknown[]) => workspaceMemberFindFirst(...args),
-      },
-    },
-  },
-  findOrFail: (...args: unknown[]) => findOrFail(...args),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  invitationModel: {},
-  workspaceMemberModel: {},
-}))
 
 const hasReachedLimit = vi.fn()
 const workspaceServiceFind = vi.fn()
 const workspaceMemberServiceCreate = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
+  invitationService: {
+    findByCodeOrFail: (...args: unknown[]) => findByCodeOrFail(...args),
+  },
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }
@@ -42,6 +30,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   workspaceMemberService: {
     create: (...args: unknown[]) => workspaceMemberServiceCreate(...args),
+    findByWorkspaceIdAndUserId: (...args: unknown[]) =>
+      workspaceMemberFindFirst(...args),
   },
   workspaceService: {
     find: (...args: unknown[]) => workspaceServiceFind(...args),
@@ -122,7 +112,7 @@ describe("acceptInvitationAction", () => {
     workspaceMemberFindFirst.mockResolvedValue(undefined)
     workspaceServiceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
     hasReachedLimit.mockResolvedValue(false)
-    findOrFail.mockResolvedValue({
+    findByCodeOrFail.mockResolvedValue({
       code: "abc123",
       workspaceId: "ws-1",
       expiresAt: futureDate(),
@@ -176,7 +166,7 @@ describe("acceptInvitationAction", () => {
   })
 
   test("throws and does not insert or invalidate cache when invitation has expired", async () => {
-    findOrFail.mockResolvedValue({
+    findByCodeOrFail.mockResolvedValue({
       code: "abc123",
       workspaceId: "ws-1",
       expiresAt: pastDate(),

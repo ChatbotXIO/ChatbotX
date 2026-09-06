@@ -1,8 +1,10 @@
 "use server"
 
-import { resolveWorkspaceAccess } from "@chatbotx.io/business"
+import {
+  resolveWorkspaceAccess,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import type {
   UserModel,
   WorkspaceMemberModel,
@@ -65,14 +67,7 @@ const getCachedCurrentUserAndAllLinkedWorkspaces = cache(
     }
 
     const [workspaceMembers, { storageUrl }] = await Promise.all([
-      db.query.workspaceMemberModel.findMany({
-        where: {
-          userId: user.id,
-        },
-        with: {
-          workspace: true,
-        },
-      }),
+      workspaceMemberService.listByUserIdUncached({ userId: user.id }),
       getTenantSettings(),
     ])
 

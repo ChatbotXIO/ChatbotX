@@ -112,6 +112,7 @@ export const toPublicErrorMessage = (
 }
 
 export class ChatbotXException extends Error {
+  field?: string
   code = "systemError"
   httpStatusCode = 400
 
@@ -134,6 +135,22 @@ export class ChatbotXException extends Error {
 
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
+
+/**
+ * Carries a single field-level validation failure (e.g. a unique-constraint
+ * violation surfaced as "this name is already taken") from a service back up
+ * to the `next-safe-action` app layer, which is the only place allowed to call
+ * `returnValidationErrors` — see `.agents/rules/data-access.md` and
+ * AGENTS.md's "next-safe-action stays in the app layer" convention. The action
+ * catches `error.code === "validation"` and maps `field`/`message` onto the
+ * form schema's field-error shape so inline errors are preserved without a
+ * service ever importing `next-safe-action` itself.
+ */
+export const validationException = (field: string, message: string) => {
+  const error = new ChatbotXException(message, "validation", 400)
+  error.field = field
+  return error
+}
 
 export const channelDuplicatedException = () =>
   new ChatbotXException(

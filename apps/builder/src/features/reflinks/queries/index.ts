@@ -1,9 +1,8 @@
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { reflinkModel } from "@chatbotx.io/database/schema"
+import { reflinkService } from "@chatbotx.io/business"
+import { reflinkRepository } from "@chatbotx.io/database/repositories"
 import {
   getPaginationWithDefaults,
   likeContains,
-  parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
@@ -25,19 +24,15 @@ export async function listReflinks(
   }
 
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(reflinkModel, input)
 
   const [data, totalRows] = await Promise.all([
-    db.query.reflinkModel.findMany({
+    reflinkRepository.listWithRelations({
       where,
-      orderBy,
-      ...pagination,
-      with: {
-        flow: true,
-        customField: true,
-      },
+      limit: pagination.limit,
+      offset: pagination.offset,
+      sort: input.sort,
     }),
-    db.$count(reflinkModel, relationsFilterToSQL(reflinkModel, where)),
+    reflinkRepository.count({ where }),
   ])
 
   const pageCount = Math.ceil(totalRows / input.perPage)
@@ -48,7 +43,8 @@ export async function listReflinks(
 export async function findReflink(
   where: GetReflinkRequest,
 ): Promise<ReflinkResource | undefined> {
-  return await db.query.reflinkModel.findFirst({
-    where: { ...where, type: "refLink" },
+  return await reflinkService.findRefLink({
+    workspaceId: where.workspaceId,
+    id: where.id,
   })
 }

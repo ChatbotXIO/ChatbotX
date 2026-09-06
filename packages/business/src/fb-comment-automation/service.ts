@@ -1,13 +1,58 @@
-import { and, db, eq, inArray, ne, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  eq,
+  inArray,
+  ne,
+  relationsFilterToSQL,
+  sql,
+} from "@chatbotx.io/database/client"
+import {
+  fbCommentAutomationTypes,
+  igCommentAutomationTypes,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   fbCommentAutomationModel,
   fbCommentAutomationReplyModel,
 } from "@chatbotx.io/database/schema"
+import type { FBCommentAutomationModel } from "@chatbotx.io/database/types"
+import {
+  getPaginationWithDefaults,
+  likeContains,
+  parseOrderByAsObject,
+} from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
 import { assertDeletable } from "../template/installed-resource.service"
+
+type ListFbCommentsInput = {
+  workspaceId: string
+  page?: number | null
+  perPage?: number | null
+  sort?: { id: string; desc: boolean }[] | null
+  folderId?: string | null
+  name?: string | null
+  isActive?: boolean | null
+}
+
+type ListFbCommentsResult = {
+  data: FBCommentAutomationModel[]
+  pageCount: number
+}
+
+function resolveFolderIdFilter(
+  folderId?: string | null,
+): string | { isNull: true } {
+  return !folderId || folderId === rootFolderId ? { isNull: true } : folderId
+}
+
+function resolveIsActiveFilter(isActive?: boolean | null): boolean | undefined {
+  return isActive !== undefined && isActive !== null ? isActive : undefined
+}
 
 class FbCommentAutomationService extends BaseService {
   findActiveAutomations(props: {
@@ -121,6 +166,109 @@ class FbCommentAutomationService extends BaseService {
           inArray(fbCommentAutomationModel.id, input.ids),
         ),
       )
+  }
+
+  async list(input: ListFbCommentsInput): Promise<ListFbCommentsResult> {
+    // No folderId in the URL means the root view, which must scope to unfiled
+    // automations only — treating it the same as "not filtered at all" (the
+    // previous behaviour) surfaced every automation regardless of which folder
+    // it had been moved into.
+    const where = {
+      workspaceId: input.workspaceId,
+      type: fbCommentAutomationTypes.enum.messenger,
+      folderId: resolveFolderIdFilter(input.folderId),
+      name: input.name ? { ilike: likeContains(input.name) } : undefined,
+      isActive: resolveIsActiveFilter(input.isActive),
+    }
+
+    const pagination = getPaginationWithDefaults(input)
+    const orderBy = parseOrderByAsObject(fbCommentAutomationModel, input)
+
+    const [data, total] = await Promise.all([
+      db.query.fbCommentAutomationModel.findMany({
+        where,
+        orderBy,
+        ...pagination,
+      }),
+      db.$count(
+        fbCommentAutomationModel,
+        relationsFilterToSQL(fbCommentAutomationModel, where),
+      ),
+    ])
+
+    const pageCount = Math.ceil(total / pagination.limit)
+
+    return { data, pageCount }
+  }
+
+  async findMessengerOrFail(input: {
+    workspaceId: string
+    id: string
+  }): Promise<FBCommentAutomationModel> {
+    const record = await db.query.fbCommentAutomationModel.findFirst({
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        type: fbCommentAutomationTypes.enum.messenger,
+      },
+    })
+
+    if (!record) {
+      throw notFoundException("FB Comment Automation not found")
+    }
+
+    return record
+  }
+
+  async listIgComments(
+    input: ListFbCommentsInput,
+  ): Promise<ListFbCommentsResult> {
+    // Same root-folder handling as `list` (mirrors ig-stories' listIgStories).
+    const where = {
+      workspaceId: input.workspaceId,
+      type: { in: [...igCommentAutomationTypes.options] },
+      folderId: resolveFolderIdFilter(input.folderId),
+      name: input.name ? { ilike: likeContains(input.name) } : undefined,
+      isActive: resolveIsActiveFilter(input.isActive),
+    }
+
+    const pagination = getPaginationWithDefaults(input)
+    const orderBy = parseOrderByAsObject(fbCommentAutomationModel, input)
+
+    const [data, total] = await Promise.all([
+      db.query.fbCommentAutomationModel.findMany({
+        where,
+        orderBy,
+        ...pagination,
+      }),
+      db.$count(
+        fbCommentAutomationModel,
+        relationsFilterToSQL(fbCommentAutomationModel, where),
+      ),
+    ])
+
+    const pageCount = Math.ceil(total / pagination.limit)
+
+    return { data, pageCount }
+  }
+
+  async findInstagramOrFail(input: {
+    workspaceId: string
+    id: string
+  }): Promise<FBCommentAutomationModel> {
+    const record = await db.query.fbCommentAutomationModel.findFirst({
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        type: { in: [...igCommentAutomationTypes.options] },
+      },
+    })
+
+    if (!record) {
+      throw notFoundException("Instagram Comment Automation not found")
+    }
+
+    return record
   }
 }
 

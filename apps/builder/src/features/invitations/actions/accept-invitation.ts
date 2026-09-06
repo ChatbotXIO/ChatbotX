@@ -1,14 +1,13 @@
 "use server"
 
 import {
+  invitationService,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
   workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { invitationModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
@@ -26,13 +25,7 @@ export const acceptInvitationAction = authActionClient
   .action(async ({ ctx, parsedInput }) => {
     const { code } = parsedInput
 
-    const invitation = await findOrFail({
-      table: invitationModel,
-      where: {
-        code,
-      },
-      message: "Invitation not found",
-    })
+    const invitation = await invitationService.findByCodeOrFail(code)
 
     if (invitation.expiresAt < new Date()) {
       throw new ChatbotXException("Invitation expired")
@@ -42,12 +35,11 @@ export const acceptInvitationAction = authActionClient
       throw new ChatbotXException("Invalid invitation: no workspace associated")
     }
 
-    const existingMember = await db.query.workspaceMemberModel.findFirst({
-      where: {
+    const existingMember =
+      await workspaceMemberService.findByWorkspaceIdAndUserId({
         workspaceId: invitation.workspaceId,
         userId: ctx.user.id,
-      },
-    })
+      })
     if (existingMember) {
       throw new ChatbotXException("You are already a member of this workspace")
     }
