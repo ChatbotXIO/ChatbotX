@@ -2,13 +2,7 @@ import {
   assertEnterpriseFeatures,
   workspaceMemberService,
 } from "@chatbotx.io/business"
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { auditLogModel } from "@chatbotx.io/database/schema"
-import {
-  getPaginationWithDefaults,
-  likeContains,
-  parseOrderByAsObject,
-} from "@chatbotx.io/database/utils"
+import { listAuditLogs as listAuditLogsService } from "@chatbotx.io/business/audit"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import type { AuditLogResource } from "../schema"
@@ -32,42 +26,15 @@ export async function listAuditLogs(
 
   const dateRange = parseAuditLogsDateRange(input)
 
-  const where = {
+  return await listAuditLogsService({
     workspaceId: input.workspaceId,
-    createdAt: { gte: dateRange.start, lte: dateRange.end },
-    userId: input.userId || undefined,
-    ...(input.keyword
-      ? {
-          OR: [
-            { action: { ilike: likeContains(input.keyword) } },
-            { detail: { ilike: likeContains(input.keyword) } },
-            { ipAddress: { ilike: likeContains(input.keyword) } },
-          ],
-        }
-      : {}),
-  }
-
-  const pagination = getPaginationWithDefaults(input)
-  const orderBy = {
-    ...parseOrderByAsObject(auditLogModel, input),
-    id: "desc" as const,
-  }
-
-  const [data, totalRows] = await Promise.all([
-    db.query.auditLogModel.findMany({
-      where,
-      ...pagination,
-      orderBy,
-      with: {
-        user: true,
-      },
-    }),
-    db.$count(auditLogModel, relationsFilterToSQL(auditLogModel, where)),
-  ])
-
-  const pageCount = Math.ceil(totalRows / pagination.limit)
-
-  return { data, pageCount }
+    page: input.page,
+    perPage: input.perPage,
+    sort: input.sort,
+    keyword: input.keyword,
+    userId: input.userId,
+    dateRange: { start: dateRange.start, end: dateRange.end },
+  })
 }
 
 export async function listAuditLogAdmins(

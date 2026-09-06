@@ -1,8 +1,6 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { spreadsheetModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { spreadsheetService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -30,11 +28,10 @@ export const createSpreadsheetAction = workspaceActionClient
         parsedInput.url,
       )
 
-      await db.insert(spreadsheetModel).values({
-        ...parsedInput,
-        id: createId(),
+      await spreadsheetService.create({
         workspaceId,
         spreadsheetId,
+        data: parsedInput,
       })
     },
   )

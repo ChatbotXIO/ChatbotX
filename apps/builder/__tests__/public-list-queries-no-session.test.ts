@@ -31,6 +31,10 @@ const mocks = vi.hoisted(() => ({
     id: "seq-1",
     sequenceSteps: [],
   }),
+  listWorkspaceMembersPaginated: vi
+    .fn()
+    .mockResolvedValue({ data: [], pageCount: 0 }),
+  listErrorLogsService: vi.fn().mockResolvedValue({ data: [], pageCount: 0 }),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -69,6 +73,7 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 }))
 
 vi.mock("@chatbotx.io/utils/error-log", () => ({
+  errorLogProviders: { safeParse: () => ({ success: false }) },
   errorLogProvidersMatchingLabel: () => [],
 }))
 
@@ -92,6 +97,9 @@ vi.mock("@chatbotx.io/business", () => ({
       return { data, pageCount: Math.ceil(total / pagination.limit) }
     },
   },
+  workspaceMemberService: {
+    listPaginated: mocks.listWorkspaceMembersPaginated,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/sequence", () => ({
@@ -109,6 +117,10 @@ vi.mock("@chatbotx.io/business/sequence", () => ({
       return { data, pageCount: Math.ceil(total / pagination.limit) }
     },
   },
+}))
+
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  listErrorLogs: mocks.listErrorLogsService,
 }))
 
 vi.mock("@chatbotx.io/business/ads-conversion/channel-fields", () => ({
@@ -163,6 +175,11 @@ beforeEach(() => {
     id: "seq-1",
     sequenceSteps: [],
   })
+  mocks.listWorkspaceMembersPaginated.mockResolvedValue({
+    data: [],
+    pageCount: 0,
+  })
+  mocks.listErrorLogsService.mockResolvedValue({ data: [], pageCount: 0 })
 })
 
 describe("public list queries never depend on a session", () => {

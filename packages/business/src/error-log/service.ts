@@ -1,12 +1,42 @@
+import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { errorLogModel } from "@chatbotx.io/database/schema"
+import type { ContactModel, ErrorLogModel } from "@chatbotx.io/database/types"
+import {
+  getPaginationWithDefaults,
+  likeContains,
+  parseOrderByAsObject,
+} from "@chatbotx.io/database/utils"
 import type { ErrorLogRecordedPayload } from "@chatbotx.io/event-bus"
 import { emit } from "@chatbotx.io/event-bus"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ErrorLogProvider,
   errorLogProviders,
+  errorLogProvidersMatchingLabel,
 } from "@chatbotx.io/utils/error-log"
 import { isNoRedisEnv } from "@chatbotx.io/worker-config"
 import { logger } from "../logger"
+
+type ListErrorLogsInput = {
+  workspaceId: string
+  page?: number | null
+  perPage?: number | null
+  sort?: { id: string; desc: boolean }[] | null
+  keyword?: string | null
+}
+
+type ErrorLogWithContactRow = ErrorLogModel & {
+  contact:
+    | (ContactModel & {
+        conversation: { id: string } | null
+      })
+    | null
+}
+
+type ListErrorLogsResult = {
+  data: ErrorLogWithContactRow[]
+  pageCount: number
+}
 
 export type LogProviderErrorInput = {
   /** Which third party failed. Written verbatim to `ErrorLog.action`. */
@@ -237,4 +267,59 @@ export const logProviderErrorForChannel = async (
     return
   }
   await logProviderError({ ...input, provider: provider.data })
+}
+
+/**
+ * `action` stores the provider slug (`smtp`, `meta-catalog`) while the Type
+ * column renders its label ("Email", "Meta catalog"), so an `ilike` on the
+ * column alone cannot match what the user is looking at. Searching the labels
+ * too keeps the visible value searchable.
+ */
+export const listErrorLogs = async (
+  input: ListErrorLogsInput,
+): Promise<ListErrorLogsResult> => {
+  const providersByLabel = input.keyword
+    ? errorLogProvidersMatchingLabel(input.keyword)
+    : []
+
+  const where = {
+    workspaceId: input.workspaceId,
+    ...(input.keyword
+      ? {
+          OR: [
+            { action: { ilike: likeContains(input.keyword) } },
+            { detail: { ilike: likeContains(input.keyword) } },
+            ...(providersByLabel.length > 0
+              ? [{ action: { in: providersByLabel } }]
+              : []),
+          ],
+        }
+      : {}),
+  }
+
+  const pagination = getPaginationWithDefaults(input)
+  const orderBy = parseOrderByAsObject(errorLogModel, input)
+
+  const [data, totalRows] = await Promise.all([
+    db.query.errorLogModel.findMany({
+      where,
+      ...pagination,
+      orderBy,
+      with: {
+        contact: {
+          with: {
+            // `ErrorLog` stores no conversationId and gains no columns, so the
+            // live-chat link target is resolved through the contact. Only `id`
+            // is read, by the row's live-chat link.
+            conversation: { columns: { id: true } },
+          },
+        },
+      },
+    }),
+    db.$count(errorLogModel, relationsFilterToSQL(errorLogModel, where)),
+  ])
+
+  const pageCount = Math.ceil(totalRows / pagination.limit)
+
+  return { data, pageCount }
 }

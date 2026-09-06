@@ -4,93 +4,50 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ── Shared mutable state (hoisted so it's available to vi.mock factories) ────
 
-const mocks = vi.hoisted(() => {
-  const insertReturning: { current: unknown[] } = { current: [] }
-  const insertBuilder = {
-    values: vi.fn(),
-    returning: vi.fn(),
-  }
-
-  const updateWhere = vi.fn().mockResolvedValue(undefined)
-  const updateBuilder = {
-    set: vi.fn(),
-    where: updateWhere,
-  }
-
-  const deleteWhere = vi.fn().mockResolvedValue(undefined)
-  const deleteBuilder = { where: deleteWhere }
-
-  const txDeleteWhere = vi.fn().mockResolvedValue(undefined)
-  const txDeleteBuilder = { where: txDeleteWhere }
-  const txDelete = vi.fn(() => txDeleteBuilder)
-
-  return {
-    insertBuilder,
-    insertReturning,
-    updateBuilder,
-    updateWhere,
-    deleteBuilder,
-    deleteWhere,
-    txDelete,
-    txDeleteBuilder,
-    txDeleteWhere,
-    findManyFiles: vi.fn().mockResolvedValue([]),
-    findOrFail: vi.fn(),
-    deleteObject: vi.fn().mockResolvedValue(undefined),
-    createIdFn: vi.fn(() => "generated-id"),
-    loggerWarn: vi.fn(),
-    sqlFn: vi.fn((strings: TemplateStringsArray) => ({
-      __sql: strings.join(""),
-    })),
-  }
-})
-
-function wireInsertBuilder() {
-  mocks.insertBuilder.values.mockImplementation(() => mocks.insertBuilder)
-  mocks.insertBuilder.returning.mockImplementation(() =>
-    Promise.resolve(mocks.insertReturning.current),
-  )
-}
-wireInsertBuilder()
-
-function wireUpdateBuilder() {
-  mocks.updateBuilder.set.mockImplementation(() => mocks.updateBuilder)
-}
-wireUpdateBuilder()
+const mocks = vi.hoisted(() => ({
+  // media-library-folder repository
+  folderCreate: vi.fn(),
+  folderRename: vi.fn().mockResolvedValue(undefined),
+  folderDeleteById: vi.fn().mockResolvedValue(undefined),
+  // media-library-file repository
+  fileListByFolder: vi.fn().mockResolvedValue([]),
+  fileDeleteByFolder: vi.fn().mockResolvedValue(undefined),
+  fileCreate: vi.fn(),
+  fileFindById: vi.fn(),
+  fileDeleteById: vi.fn().mockResolvedValue(undefined),
+  fileMoveToFolder: vi.fn().mockResolvedValue(undefined),
+  fileSetFavourite: vi.fn().mockResolvedValue(undefined),
+  fileTouchLastAccessedAt: vi.fn().mockResolvedValue(undefined),
+  // filesystem / misc
+  deleteObject: vi.fn().mockResolvedValue(undefined),
+  createIdFn: vi.fn(() => "generated-id"),
+  loggerWarn: vi.fn(),
+  transaction: vi.fn(async (cb: (tx: unknown) => Promise<void>) => cb({})),
+}))
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    query: {
-      mediaLibraryFileModel: { findMany: mocks.findManyFiles },
-    },
-    insert: vi.fn(() => mocks.insertBuilder),
-    update: vi.fn(() => mocks.updateBuilder),
-    delete: vi.fn(() => mocks.deleteBuilder),
-    transaction: vi.fn(async (cb: (tx: unknown) => Promise<void>) =>
-      cb({ delete: mocks.txDelete }),
-    ),
+    transaction: mocks.transaction,
   },
-  and: (...args: unknown[]) => args,
-  eq: (...args: unknown[]) => args,
-  inArray: (...args: unknown[]) => args,
-  findOrFail: mocks.findOrFail,
-  sql: mocks.sqlFn,
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  mediaLibraryFileModel: {
-    id: "file.id",
-    workspaceId: "file.workspaceId",
-    folderId: "file.folderId",
-    isFavourite: "file.isFavourite",
-    lastAccessedAt: "file.lastAccessedAt",
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  mediaLibraryFileRepository: {
+    listByFolder: mocks.fileListByFolder,
+    deleteByFolder: mocks.fileDeleteByFolder,
+    create: mocks.fileCreate,
+    findById: mocks.fileFindById,
+    deleteById: mocks.fileDeleteById,
+    moveToFolder: mocks.fileMoveToFolder,
+    setFavourite: mocks.fileSetFavourite,
+    touchLastAccessedAt: mocks.fileTouchLastAccessedAt,
   },
-  mediaLibraryFolderModel: {
-    id: "folder.id",
-    workspaceId: "folder.workspaceId",
-    name: "folder.name",
+  mediaLibraryFolderRepository: {
+    create: mocks.folderCreate,
+    rename: mocks.folderRename,
+    deleteById: mocks.folderDeleteById,
   },
 }))
 
@@ -102,8 +59,101 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: mocks.createIdFn,
 }))
 
-vi.mock("@/lib/log", () => ({
-  logger: { warn: mocks.loggerWarn },
+// The Media Library mutations query file delegates its side-effecting
+// mutations (folder delete with S3 cleanup, file create/delete/favourite
+// toggle) to `mediaLibraryService`. This mock mirrors the real service's
+// logic (see packages/business/src/media-library/service.ts, unit-tested on
+// its own in packages/business/__tests__/media-library.service.test.ts) but
+// calls straight through to the repository/uploader mocks already declared
+// above, so this file can keep asserting the same repository-boundary
+// behavior (invalid-path rejection, S3-failure-still-deletes-both-tables,
+// favourite flip, notFound propagation) without re-mocking the service's own
+// transitive dependencies.
+vi.mock("@chatbotx.io/business", () => ({
+  mediaLibraryService: {
+    async deleteFolder(input: { workspaceId: string; folderId: string }) {
+      const files = await mocks.fileListByFolder({
+        workspaceId: input.workspaceId,
+        folderId: input.folderId,
+      })
+      await mocks.transaction(async (tx: unknown) => {
+        for (const file of files as { path: string }[]) {
+          try {
+            await mocks.deleteObject(file.path)
+          } catch (error) {
+            mocks.loggerWarn(
+              error,
+              "deleteMediaLibraryFolder: S3 delete failed",
+            )
+          }
+        }
+        await mocks.fileDeleteByFolder(
+          { workspaceId: input.workspaceId, folderId: input.folderId },
+          tx,
+        )
+        await mocks.folderDeleteById(
+          { folderId: input.folderId, workspaceId: input.workspaceId },
+          tx,
+        )
+      })
+    },
+    async createFile(input: {
+      workspaceId: string
+      folderId?: string | null
+      name: string
+      path: string
+      mimeType: string
+      size: number
+    }) {
+      const isWorkspaceScopedPath =
+        input.path.startsWith(`workspaces/${input.workspaceId}/`) ||
+        input.path.startsWith(`public/space/${input.workspaceId}/`)
+      if (!isWorkspaceScopedPath) {
+        const error = new Error("Invalid file path") as Error & {
+          code: string
+        }
+        error.code = "invalidPath"
+        throw error
+      }
+      return await mocks.fileCreate({
+        id: mocks.createIdFn(),
+        workspaceId: input.workspaceId,
+        folderId: input.folderId ?? null,
+        name: input.name,
+        path: input.path,
+        mimeType: input.mimeType,
+        size: input.size,
+      })
+    },
+    async deleteFile(input: { workspaceId: string; fileId: string }) {
+      const file = await mocks.fileFindById({
+        id: input.fileId,
+        workspaceId: input.workspaceId,
+      })
+      if (!file) {
+        throw new Error(`MediaLibraryFile ${input.fileId} not found`)
+      }
+      try {
+        await mocks.deleteObject(file.path)
+      } catch (error) {
+        mocks.loggerWarn(error, "deleteMediaLibraryFile: S3 delete failed")
+      }
+      await mocks.fileDeleteById({ id: input.fileId })
+    },
+    async toggleFavourite(input: { workspaceId: string; fileId: string }) {
+      const file = await mocks.fileFindById({
+        id: input.fileId,
+        workspaceId: input.workspaceId,
+      })
+      if (!file) {
+        throw new Error(`MediaLibraryFile ${input.fileId} not found`)
+      }
+      await mocks.fileSetFavourite({
+        id: input.fileId,
+        isFavourite: !file.isFavourite,
+      })
+    },
+  },
 }))
 
 // ── Lazy imports (after vi.mock) ──────────────────────────────────────────────
@@ -123,24 +173,31 @@ const WS = "workspace-1"
 const OTHER_WS = "workspace-2"
 
 function resetAll() {
-  wireInsertBuilder()
-  wireUpdateBuilder()
-  mocks.insertReturning.current = []
-  mocks.updateWhere.mockClear()
-  mocks.updateWhere.mockResolvedValue(undefined)
-  mocks.deleteWhere.mockClear()
-  mocks.deleteWhere.mockResolvedValue(undefined)
-  mocks.txDelete.mockClear()
-  mocks.txDeleteWhere.mockClear()
-  mocks.txDeleteWhere.mockResolvedValue(undefined)
-  mocks.findManyFiles.mockClear()
-  mocks.findManyFiles.mockResolvedValue([])
-  mocks.findOrFail.mockReset()
+  mocks.folderCreate.mockReset()
+  mocks.folderRename.mockClear()
+  mocks.folderRename.mockResolvedValue(undefined)
+  mocks.folderDeleteById.mockClear()
+  mocks.folderDeleteById.mockResolvedValue(undefined)
+  mocks.fileListByFolder.mockClear()
+  mocks.fileListByFolder.mockResolvedValue([])
+  mocks.fileDeleteByFolder.mockClear()
+  mocks.fileDeleteByFolder.mockResolvedValue(undefined)
+  mocks.fileCreate.mockReset()
+  mocks.fileFindById.mockReset()
+  mocks.fileDeleteById.mockClear()
+  mocks.fileDeleteById.mockResolvedValue(undefined)
+  mocks.fileMoveToFolder.mockClear()
+  mocks.fileMoveToFolder.mockResolvedValue(undefined)
+  mocks.fileSetFavourite.mockClear()
+  mocks.fileSetFavourite.mockResolvedValue(undefined)
+  mocks.fileTouchLastAccessedAt.mockClear()
+  mocks.fileTouchLastAccessedAt.mockResolvedValue(undefined)
   mocks.deleteObject.mockClear()
   mocks.deleteObject.mockResolvedValue(undefined)
   mocks.createIdFn.mockClear()
   mocks.createIdFn.mockReturnValue("generated-id")
   mocks.loggerWarn.mockClear()
+  mocks.transaction.mockClear()
 }
 
 // ── createMediaLibraryFolder ───────────────────────────────────────────────────
@@ -150,14 +207,14 @@ describe("createMediaLibraryFolder", () => {
 
   test("inserts a folder with a generated id and returns the created row", async () => {
     const created = { id: "generated-id", name: "Marketing", workspaceId: WS }
-    mocks.insertReturning.current = [created]
+    mocks.folderCreate.mockResolvedValue(created)
 
     const result = await createMediaLibraryFolder({
       workspaceId: WS,
       name: "Marketing",
     })
 
-    expect(mocks.insertBuilder.values).toHaveBeenCalledWith({
+    expect(mocks.folderCreate).toHaveBeenCalledWith({
       id: "generated-id",
       name: "Marketing",
       workspaceId: WS,
@@ -178,23 +235,11 @@ describe("renameMediaLibraryFolder", () => {
       name: "Renamed",
     })
 
-    expect(mocks.updateBuilder.set).toHaveBeenCalledWith({ name: "Renamed" })
-  })
-
-  test("scopes the update to both folderId and workspaceId", async () => {
-    await renameMediaLibraryFolder({
-      workspaceId: WS,
+    expect(mocks.folderRename).toHaveBeenCalledWith({
       folderId: "folder-1",
+      workspaceId: WS,
       name: "Renamed",
     })
-
-    // and(eq(id, folderId), eq(workspaceId, workspaceId)) with the passthrough
-    // eq/and mocks: whereArg === [[idCol, folderId], [workspaceIdCol, WS]]
-    const whereArg = mocks.updateWhere.mock.calls[0]?.[0] as unknown[][]
-    expect(whereArg).toEqual([
-      ["folder.id", "folder-1"],
-      ["folder.workspaceId", WS],
-    ])
   })
 
   test("does not let a folderId from one workspace be renamed via another workspace's id", async () => {
@@ -204,11 +249,11 @@ describe("renameMediaLibraryFolder", () => {
       name: "Hijacked",
     })
 
-    const whereArg = mocks.updateWhere.mock.calls[0]?.[0] as unknown[][]
-    // The workspaceId condition is present and reflects the CALLER's
-    // workspace, not just the folderId — so a mismatched workspace can never
-    // match the row at the SQL layer.
-    expect(whereArg).toContainEqual(["folder.workspaceId", OTHER_WS])
+    // The repository call carries the CALLER's workspace, not just the
+    // folderId — so a mismatched workspace can never match the row.
+    expect(mocks.folderRename).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: OTHER_WS }),
+    )
   })
 })
 
@@ -218,18 +263,18 @@ describe("deleteMediaLibraryFolder", () => {
   beforeEach(resetAll)
 
   test("looks up files scoped to folderId and workspaceId before deleting", async () => {
-    mocks.findManyFiles.mockResolvedValue([])
+    mocks.fileListByFolder.mockResolvedValue([])
 
     await deleteMediaLibraryFolder({ workspaceId: WS, folderId: "folder-1" })
 
-    expect(mocks.findManyFiles).toHaveBeenCalledWith({
-      where: { folderId: "folder-1", workspaceId: WS },
-      columns: { id: true, path: true },
+    expect(mocks.fileListByFolder).toHaveBeenCalledWith({
+      workspaceId: WS,
+      folderId: "folder-1",
     })
   })
 
   test("deletes every file's S3 object, then the file rows, then the folder row", async () => {
-    mocks.findManyFiles.mockResolvedValue([
+    mocks.fileListByFolder.mockResolvedValue([
       { id: "file-1", path: "ws/1/a.png" },
       { id: "file-2", path: "ws/1/b.png" },
     ])
@@ -240,44 +285,39 @@ describe("deleteMediaLibraryFolder", () => {
     expect(mocks.deleteObject).toHaveBeenNthCalledWith(1, "ws/1/a.png")
     expect(mocks.deleteObject).toHaveBeenNthCalledWith(2, "ws/1/b.png")
 
-    expect(mocks.txDelete).toHaveBeenCalledTimes(2)
-    // First tx.delete(...) call is the file rows, second is the folder row.
-    // Each is scoped by BOTH the folder/file id and the caller's workspaceId
-    // — see the cross-workspace test below for why the workspaceId condition
-    // matters.
-    expect(mocks.txDeleteWhere).toHaveBeenNthCalledWith(1, [
-      ["file.folderId", "folder-1"],
-      ["file.workspaceId", WS],
-    ])
-    expect(mocks.txDeleteWhere).toHaveBeenNthCalledWith(2, [
-      ["folder.id", "folder-1"],
-      ["folder.workspaceId", WS],
-    ])
+    // Both deletes happen inside the same transaction, scoped by BOTH the
+    // folder/file id and the caller's workspaceId — see the cross-workspace
+    // test below for why the workspaceId condition matters.
+    expect(mocks.fileDeleteByFolder).toHaveBeenCalledWith(
+      { workspaceId: WS, folderId: "folder-1" },
+      expect.anything(),
+    )
+    expect(mocks.folderDeleteById).toHaveBeenCalledWith(
+      { folderId: "folder-1", workspaceId: WS },
+      expect.anything(),
+    )
   })
 
   test("does not let a folderId from one workspace be deleted via another workspace's id", async () => {
-    mocks.findManyFiles.mockResolvedValue([])
+    mocks.fileListByFolder.mockResolvedValue([])
 
     await deleteMediaLibraryFolder({
       workspaceId: OTHER_WS,
       folderId: "folder-owned-by-ws1",
     })
 
-    // The workspaceId condition is present on BOTH deletes and reflects the
-    // CALLER's workspace, not just the folderId — so a mismatched workspace
-    // can never match the row at the SQL layer.
-    expect(mocks.txDeleteWhere).toHaveBeenNthCalledWith(1, [
-      ["file.folderId", "folder-owned-by-ws1"],
-      ["file.workspaceId", OTHER_WS],
-    ])
-    expect(mocks.txDeleteWhere).toHaveBeenNthCalledWith(2, [
-      ["folder.id", "folder-owned-by-ws1"],
-      ["folder.workspaceId", OTHER_WS],
-    ])
+    expect(mocks.fileDeleteByFolder).toHaveBeenCalledWith(
+      { workspaceId: OTHER_WS, folderId: "folder-owned-by-ws1" },
+      expect.anything(),
+    )
+    expect(mocks.folderDeleteById).toHaveBeenCalledWith(
+      { folderId: "folder-owned-by-ws1", workspaceId: OTHER_WS },
+      expect.anything(),
+    )
   })
 
   test("continues deleting remaining files and the DB rows when an S3 delete fails", async () => {
-    mocks.findManyFiles.mockResolvedValue([
+    mocks.fileListByFolder.mockResolvedValue([
       { id: "file-1", path: "ws/1/a.png" },
       { id: "file-2", path: "ws/1/b.png" },
     ])
@@ -289,11 +329,12 @@ describe("deleteMediaLibraryFolder", () => {
 
     expect(mocks.deleteObject).toHaveBeenCalledTimes(2)
     expect(mocks.loggerWarn).toHaveBeenCalledTimes(1)
-    expect(mocks.txDelete).toHaveBeenCalledTimes(2)
+    expect(mocks.fileDeleteByFolder).toHaveBeenCalled()
+    expect(mocks.folderDeleteById).toHaveBeenCalled()
   })
 
   test("deletes the folder row even when it has no files", async () => {
-    mocks.findManyFiles.mockResolvedValue([])
+    mocks.fileListByFolder.mockResolvedValue([])
 
     await deleteMediaLibraryFolder({
       workspaceId: WS,
@@ -301,7 +342,8 @@ describe("deleteMediaLibraryFolder", () => {
     })
 
     expect(mocks.deleteObject).not.toHaveBeenCalled()
-    expect(mocks.txDelete).toHaveBeenCalledTimes(2)
+    expect(mocks.fileDeleteByFolder).toHaveBeenCalled()
+    expect(mocks.folderDeleteById).toHaveBeenCalled()
   })
 })
 
@@ -320,7 +362,7 @@ describe("createMediaLibraryFile", () => {
       mimeType: "image/png",
       size: 1024,
     }
-    mocks.insertReturning.current = [created]
+    mocks.fileCreate.mockResolvedValue(created)
 
     const result = await createMediaLibraryFile({
       workspaceId: WS,
@@ -330,7 +372,7 @@ describe("createMediaLibraryFile", () => {
       size: 1024,
     })
 
-    expect(mocks.insertBuilder.values).toHaveBeenCalledWith({
+    expect(mocks.fileCreate).toHaveBeenCalledWith({
       id: "generated-id",
       workspaceId: WS,
       folderId: null,
@@ -343,7 +385,7 @@ describe("createMediaLibraryFile", () => {
   })
 
   test("defaults a nullish folderId to null", async () => {
-    mocks.insertReturning.current = [{}]
+    mocks.fileCreate.mockResolvedValue({})
 
     await createMediaLibraryFile({
       workspaceId: WS,
@@ -354,7 +396,7 @@ describe("createMediaLibraryFile", () => {
       size: 1024,
     })
 
-    const valuesArg = mocks.insertBuilder.values.mock.calls[0]?.[0] as Record<
+    const valuesArg = mocks.fileCreate.mock.calls[0]?.[0] as Record<
       string,
       unknown
     >
@@ -362,7 +404,7 @@ describe("createMediaLibraryFile", () => {
   })
 
   test("preserves an explicit folderId", async () => {
-    mocks.insertReturning.current = [{}]
+    mocks.fileCreate.mockResolvedValue({})
 
     await createMediaLibraryFile({
       workspaceId: WS,
@@ -373,7 +415,7 @@ describe("createMediaLibraryFile", () => {
       size: 1024,
     })
 
-    const valuesArg = mocks.insertBuilder.values.mock.calls[0]?.[0] as Record<
+    const valuesArg = mocks.fileCreate.mock.calls[0]?.[0] as Record<
       string,
       unknown
     >
@@ -391,7 +433,7 @@ describe("createMediaLibraryFile", () => {
       }),
     ).rejects.toThrow("Invalid file path")
 
-    expect(mocks.insertBuilder.values).not.toHaveBeenCalled()
+    expect(mocks.fileCreate).not.toHaveBeenCalled()
   })
 
   test("rejects a path that belongs to another workspace's storage prefix", async () => {
@@ -405,11 +447,11 @@ describe("createMediaLibraryFile", () => {
       }),
     ).rejects.toThrow("Invalid file path")
 
-    expect(mocks.insertBuilder.values).not.toHaveBeenCalled()
+    expect(mocks.fileCreate).not.toHaveBeenCalled()
   })
 
   test("accepts a legacy workspaces/{workspaceId}/ path prefix", async () => {
-    mocks.insertReturning.current = [{}]
+    mocks.fileCreate.mockResolvedValue({})
 
     await createMediaLibraryFile({
       workspaceId: WS,
@@ -419,7 +461,7 @@ describe("createMediaLibraryFile", () => {
       size: 1024,
     })
 
-    expect(mocks.insertBuilder.values).toHaveBeenCalled()
+    expect(mocks.fileCreate).toHaveBeenCalled()
   })
 })
 
@@ -429,28 +471,27 @@ describe("deleteMediaLibraryFile", () => {
   beforeEach(resetAll)
 
   test("finds the file scoped to workspaceId before deleting anything", async () => {
-    mocks.findOrFail.mockResolvedValue({ id: "file-1", path: "ws/1/a.png" })
+    mocks.fileFindById.mockResolvedValue({ id: "file-1", path: "ws/1/a.png" })
 
     await deleteMediaLibraryFile({ workspaceId: WS, fileId: "file-1" })
 
-    expect(mocks.findOrFail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "file-1", workspaceId: WS },
-      }),
-    )
+    expect(mocks.fileFindById).toHaveBeenCalledWith({
+      id: "file-1",
+      workspaceId: WS,
+    })
   })
 
   test("deletes the S3 object then the DB row on success", async () => {
-    mocks.findOrFail.mockResolvedValue({ id: "file-1", path: "ws/1/a.png" })
+    mocks.fileFindById.mockResolvedValue({ id: "file-1", path: "ws/1/a.png" })
 
     await deleteMediaLibraryFile({ workspaceId: WS, fileId: "file-1" })
 
     expect(mocks.deleteObject).toHaveBeenCalledWith("ws/1/a.png")
-    expect(mocks.deleteWhere).toHaveBeenCalledWith(["file.id", "file-1"])
+    expect(mocks.fileDeleteById).toHaveBeenCalledWith({ id: "file-1" })
   })
 
   test("still deletes the DB row when the S3 delete fails", async () => {
-    mocks.findOrFail.mockResolvedValue({ id: "file-1", path: "ws/1/a.png" })
+    mocks.fileFindById.mockResolvedValue({ id: "file-1", path: "ws/1/a.png" })
     mocks.deleteObject.mockRejectedValueOnce(new Error("S3 unreachable"))
 
     await expect(
@@ -458,20 +499,18 @@ describe("deleteMediaLibraryFile", () => {
     ).resolves.toBeUndefined()
 
     expect(mocks.loggerWarn).toHaveBeenCalledTimes(1)
-    expect(mocks.deleteWhere).toHaveBeenCalledWith(["file.id", "file-1"])
+    expect(mocks.fileDeleteById).toHaveBeenCalledWith({ id: "file-1" })
   })
 
   test("propagates and does not attempt any delete when the file is not found in this workspace", async () => {
-    mocks.findOrFail.mockRejectedValue(
-      new Error("MediaLibraryFile file-1 not found"),
-    )
+    mocks.fileFindById.mockResolvedValue(null)
 
     await expect(
       deleteMediaLibraryFile({ workspaceId: WS, fileId: "file-1" }),
     ).rejects.toThrow("not found")
 
     expect(mocks.deleteObject).not.toHaveBeenCalled()
-    expect(mocks.deleteWhere).not.toHaveBeenCalled()
+    expect(mocks.fileDeleteById).not.toHaveBeenCalled()
   })
 })
 
@@ -487,13 +526,11 @@ describe("moveMediaLibraryFiles", () => {
       folderId: "folder-9",
     })
 
-    expect(mocks.updateBuilder.set).toHaveBeenCalledWith({
+    expect(mocks.fileMoveToFolder).toHaveBeenCalledWith({
+      workspaceId: WS,
+      fileIds: ["file-1", "file-2"],
       folderId: "folder-9",
     })
-    expect(mocks.updateWhere).toHaveBeenCalledWith([
-      ["file.workspaceId", WS],
-      ["file.id", ["file-1", "file-2"]],
-    ])
   })
 
   test("moves files to the root (no folder) when folderId is nullish", async () => {
@@ -503,7 +540,9 @@ describe("moveMediaLibraryFiles", () => {
       folderId: undefined,
     })
 
-    expect(mocks.updateBuilder.set).toHaveBeenCalledWith({ folderId: null })
+    expect(mocks.fileMoveToFolder).toHaveBeenCalledWith(
+      expect.objectContaining({ folderId: null }),
+    )
   })
 })
 
@@ -513,41 +552,46 @@ describe("toggleMediaLibraryFavourite", () => {
   beforeEach(resetAll)
 
   test("flips isFavourite from false to true", async () => {
-    mocks.findOrFail.mockResolvedValue({ id: "file-1", isFavourite: false })
+    mocks.fileFindById.mockResolvedValue({ id: "file-1", isFavourite: false })
 
     await toggleMediaLibraryFavourite({ workspaceId: WS, fileId: "file-1" })
 
-    expect(mocks.updateBuilder.set).toHaveBeenCalledWith({ isFavourite: true })
+    expect(mocks.fileSetFavourite).toHaveBeenCalledWith({
+      id: "file-1",
+      isFavourite: true,
+    })
   })
 
   test("flips isFavourite from true to false", async () => {
-    mocks.findOrFail.mockResolvedValue({ id: "file-1", isFavourite: true })
+    mocks.fileFindById.mockResolvedValue({ id: "file-1", isFavourite: true })
 
     await toggleMediaLibraryFavourite({ workspaceId: WS, fileId: "file-1" })
 
-    expect(mocks.updateBuilder.set).toHaveBeenCalledWith({ isFavourite: false })
+    expect(mocks.fileSetFavourite).toHaveBeenCalledWith({
+      id: "file-1",
+      isFavourite: false,
+    })
   })
 
   test("looks up the file scoped to workspaceId before toggling", async () => {
-    mocks.findOrFail.mockResolvedValue({ id: "file-1", isFavourite: false })
+    mocks.fileFindById.mockResolvedValue({ id: "file-1", isFavourite: false })
 
     await toggleMediaLibraryFavourite({ workspaceId: WS, fileId: "file-1" })
 
-    expect(mocks.findOrFail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "file-1", workspaceId: WS },
-      }),
-    )
+    expect(mocks.fileFindById).toHaveBeenCalledWith({
+      id: "file-1",
+      workspaceId: WS,
+    })
   })
 
   test("propagates without updating when the file is not found in this workspace", async () => {
-    mocks.findOrFail.mockRejectedValue(new Error("not found"))
+    mocks.fileFindById.mockResolvedValue(null)
 
     await expect(
       toggleMediaLibraryFavourite({ workspaceId: WS, fileId: "file-1" }),
     ).rejects.toThrow("not found")
 
-    expect(mocks.updateBuilder.set).not.toHaveBeenCalled()
+    expect(mocks.fileSetFavourite).not.toHaveBeenCalled()
   })
 })
 
@@ -556,22 +600,13 @@ describe("toggleMediaLibraryFavourite", () => {
 describe("recordMediaLibraryFileAccess", () => {
   beforeEach(resetAll)
 
-  test("sets lastAccessedAt to CURRENT_TIMESTAMP", async () => {
+  test("touches lastAccessedAt scoped to both fileId and workspaceId", async () => {
     await recordMediaLibraryFileAccess({ workspaceId: WS, fileId: "file-1" })
 
-    expect(mocks.updateBuilder.set).toHaveBeenCalledWith({
-      lastAccessedAt: { __sql: "CURRENT_TIMESTAMP" },
+    expect(mocks.fileTouchLastAccessedAt).toHaveBeenCalledWith({
+      workspaceId: WS,
+      fileId: "file-1",
     })
-  })
-
-  test("scopes the update to both fileId and workspaceId", async () => {
-    await recordMediaLibraryFileAccess({ workspaceId: WS, fileId: "file-1" })
-
-    const whereArg = mocks.updateWhere.mock.calls[0]?.[0] as unknown[][]
-    expect(whereArg).toEqual([
-      ["file.id", "file-1"],
-      ["file.workspaceId", WS],
-    ])
   })
 
   test("does not let a fileId from another workspace be touched", async () => {
@@ -580,7 +615,8 @@ describe("recordMediaLibraryFileAccess", () => {
       fileId: "file-owned-by-ws1",
     })
 
-    const whereArg = mocks.updateWhere.mock.calls[0]?.[0] as unknown[][]
-    expect(whereArg).toContainEqual(["file.workspaceId", OTHER_WS])
+    expect(mocks.fileTouchLastAccessedAt).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: OTHER_WS }),
+    )
   })
 })

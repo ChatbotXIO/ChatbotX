@@ -1,5 +1,7 @@
-import { buildContext } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import {
+  buildContext,
+  integrationGoogleSheetService,
+} from "@chatbotx.io/business"
 import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { returnValidationErrors } from "next-safe-action"
 import { integrations } from "@/integration"
@@ -12,16 +14,9 @@ export async function verifyGoogleSheetsUrl(
   workspaceId: string,
   url: string,
 ): Promise<string> {
-  const dbIntegration = await db.query.integrationModel.findFirst({
-    where: {
-      workspaceId,
-      integrationType: "googleSheets",
-    },
-    with: {
-      integrationGoogleSheet: true,
-    },
-  })
-  if (!dbIntegration?.integrationGoogleSheet) {
+  const sheetIntegration =
+    await integrationGoogleSheetService.findByWorkspaceId(workspaceId)
+  if (!sheetIntegration) {
     returnValidationErrors(createSpreadsheetRequest, {
       url: {
         _errors: ["You need to setup google sheets first."],
@@ -45,9 +40,8 @@ export async function verifyGoogleSheetsUrl(
       workspaceId,
       integrationType: "googleSheets",
       integration: {
-        ...dbIntegration.integrationGoogleSheet,
-        auth: dbIntegration.integrationGoogleSheet
-          .auth as GoogleSheetsAuthValue,
+        ...sheetIntegration,
+        auth: sheetIntegration.auth as GoogleSheetsAuthValue,
       },
     })
     await integrations.googleSheets.runAction("listSheetNames", {

@@ -3,13 +3,12 @@ import {
   resolveTenantSettings,
   resolveTenantSettingsByDomain,
 } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
 import {
   fileContextTypes,
   fileStatuses,
   uploadTypes,
 } from "@chatbotx.io/database/partials"
-import { fileModel } from "@chatbotx.io/database/schema"
+import { fileRepository } from "@chatbotx.io/database/repositories"
 import { uploader } from "@chatbotx.io/filesystem"
 import { createId } from "@chatbotx.io/utils"
 import { type NextRequest, NextResponse } from "next/server"
@@ -116,7 +115,7 @@ export async function POST(req: NextRequest) {
     const publicUrl = new URL(path, storageUrl).toString()
 
     const fileId = createId()
-    await db.insert(fileModel).values({
+    await fileRepository.create({
       id: fileId,
       workspaceId: input.workspaceId ?? null,
       userId,

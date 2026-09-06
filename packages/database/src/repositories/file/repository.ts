@@ -3,10 +3,6 @@ import { fileModel } from "../../schema"
 import type { FileModel } from "../../types"
 
 export const fileRepository = {
-  async create(values: typeof fileModel.$inferInsert, tx: DatabaseClient = db) {
-    const [file] = await tx.insert(fileModel).values(values).returning()
-    return file
-  },
   /**
    * Ownership proof for a presigned-upload `File` row — scoped to
    * `(id, workspaceId)` so a caller can never probe another workspace's
@@ -31,5 +27,13 @@ export const fileRepository = {
       )
       .limit(1)
     return row ?? null
+  },
+
+  async create(
+    values: typeof fileModel.$inferInsert,
+    tx: DatabaseClient = db,
+  ): Promise<FileModel> {
+    const [row] = await tx.insert(fileModel).values(values).returning()
+    return row
   },
 }

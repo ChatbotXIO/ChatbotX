@@ -2,57 +2,33 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  findMany: vi.fn(),
-  count: vi.fn(),
+  listErrorLogs: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: { errorLogModel: { findMany: mocks.findMany } },
-    $count: mocks.count,
-  },
-  relationsFilterToSQL: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  errorLogModel: { _: "ErrorLog" },
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  listErrorLogs: mocks.listErrorLogs,
 }))
 
 const { listErrorLogs } = await import(
   "../src/features/error-logs/queries/index"
 )
 
-/** The `where` the query handed to drizzle. */
-const whereClause = () => mocks.findMany.mock.calls[0]?.[0]?.where
-
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.findMany.mockResolvedValue([])
-  mocks.count.mockResolvedValue(0)
+  mocks.listErrorLogs.mockResolvedValue({ data: [], pageCount: 0 })
 })
 
 describe("listErrorLogs", () => {
-  // The Type column renders "Email" while `action` stores `smtp`, so an `ilike`
-  // on the column alone finds nothing for the value the user is looking at.
-  test("matches a provider by the label the table shows, not just the stored slug", async () => {
-    await listErrorLogs({ workspaceId: "ws-1", keyword: "Email" })
+  // The where-shape / provider-label behavior now lives in
+  // packages/business/__tests__/error-log.list.test.ts, alongside the
+  // service the query file delegates to. This test only proves the
+  // delegation itself.
+  test("delegates to the business listErrorLogs service with the given input", async () => {
+    const input = { workspaceId: "ws-1", keyword: "timeout" }
 
-    expect(whereClause().OR).toContainEqual({ action: { in: ["smtp"] } })
-  })
+    const result = await listErrorLogs(input)
 
-  test("keeps the free-text search over action and detail", async () => {
-    await listErrorLogs({ workspaceId: "ws-1", keyword: "timeout" })
-
-    const or = whereClause().OR
-    expect(or).toContainEqual({ action: { ilike: "%timeout%" } })
-    expect(or).toContainEqual({ detail: { ilike: "%timeout%" } })
-    // Nothing is labelled "timeout", so no provider term is added.
-    expect(or).toHaveLength(2)
-  })
-
-  test("applies no search terms without a keyword", async () => {
-    await listErrorLogs({ workspaceId: "ws-1" })
-
-    expect(whereClause()).toEqual({ workspaceId: "ws-1" })
+    expect(mocks.listErrorLogs).toHaveBeenCalledWith(input)
+    expect(result).toEqual({ data: [], pageCount: 0 })
   })
 })

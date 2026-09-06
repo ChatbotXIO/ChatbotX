@@ -8,15 +8,9 @@ const mocks = vi.hoisted(() => ({
   listWorkspaceMembers: vi.fn(
     async (_input: unknown): Promise<unknown[]> => [],
   ),
-  findMany: vi.fn(async (_args: unknown) => []),
-  count: vi.fn(async (_model: unknown, _where: unknown) => 0),
-  relationsFilterToSQL: vi.fn((_model: unknown, where: unknown) => where),
-  getPaginationWithDefaults: vi.fn((_input: unknown) => ({
-    limit: 10,
-    offset: 0,
-  })),
-  parseOrderByAsObject: vi.fn((_model: unknown, _input: unknown) => ({
-    createdAt: "desc",
+  listAuditLogsService: vi.fn(async (_input: unknown) => ({
+    data: [],
+    pageCount: 0,
   })),
 }))
 
@@ -27,34 +21,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  auditLogModel: { id: "id", createdAt: "createdAt" },
+vi.mock("@chatbotx.io/business/audit", () => ({
+  listAuditLogs: (input: unknown) => mocks.listAuditLogsService(input),
 }))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      auditLogModel: {
-        findMany: (args: unknown) => mocks.findMany(args),
-      },
-    },
-    $count: (model: unknown, where: unknown) => mocks.count(model, where),
-  },
-  relationsFilterToSQL: (model: unknown, where: unknown) =>
-    mocks.relationsFilterToSQL(model, where),
-}))
-
-vi.mock("@chatbotx.io/database/utils", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@chatbotx.io/database/utils")>()
-  return {
-    ...actual,
-    getPaginationWithDefaults: (input: unknown) =>
-      mocks.getPaginationWithDefaults(input),
-    parseOrderByAsObject: (model: unknown, input: unknown) =>
-      mocks.parseOrderByAsObject(model, input),
-  }
-})
 
 vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({
   assertWorkspaceSuperAdmin: (workspaceId: string) =>
@@ -73,8 +42,7 @@ beforeEach(() => {
   mocks.assertEnterpriseFeatures.mockResolvedValue(undefined)
   mocks.assertWorkspaceSuperAdmin.mockResolvedValue(undefined)
   mocks.listWorkspaceMembers.mockResolvedValue([])
-  mocks.findMany.mockResolvedValue([])
-  mocks.count.mockResolvedValue(0)
+  mocks.listAuditLogsService.mockResolvedValue({ data: [], pageCount: 0 })
 })
 
 describe("listAuditLogAdmins", () => {
@@ -203,7 +171,12 @@ describe("listAuditLogs", () => {
     expect(mocks.assertWorkspaceSuperAdmin).toHaveBeenCalledWith("workspace-1")
   })
 
-  test("queries audit logs by workspace, bounded date range, user, and keyword", async () => {
+  // The where/orderBy-shape assertions moved to
+  // packages/business/__tests__/audit-log-query.test.ts alongside the
+  // `listAuditLogs` service this query file now delegates to. This test only
+  // proves the delegation itself, plus the date-range parsing this query
+  // file still owns.
+  test("delegates to the business listAuditLogs service with the parsed date range", async () => {
     await listAuditLogs({
       workspaceId: "workspace-1",
       page: 1,
@@ -215,29 +188,15 @@ describe("listAuditLogs", () => {
       sort: [{ id: "createdAt", desc: true }],
     })
 
-    expect(mocks.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          workspaceId: "workspace-1",
-          userId: "user-1",
-          createdAt: {
-            gte: new Date("2026-05-19T00:00:00.000Z"),
-            lte: new Date("2026-08-16T23:59:59.999Z"),
-          },
-          OR: [
-            { action: { ilike: "%member%" } },
-            { detail: { ilike: "%member%" } },
-            { ipAddress: { ilike: "%member%" } },
-          ],
-        }),
-        orderBy: { createdAt: "desc", id: "desc" },
-      }),
-    )
-    expect(mocks.relationsFilterToSQL).toHaveBeenCalledWith(
-      { id: "id", createdAt: "createdAt" },
+    expect(mocks.listAuditLogsService).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "workspace-1",
         userId: "user-1",
+        keyword: "member",
+        dateRange: {
+          start: new Date("2026-05-19T00:00:00.000Z"),
+          end: new Date("2026-08-16T23:59:59.999Z"),
+        },
       }),
     )
   })

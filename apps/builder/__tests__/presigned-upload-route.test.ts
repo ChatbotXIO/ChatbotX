@@ -5,7 +5,7 @@ const loadServableWorkspace = vi.fn()
 const assertCurrentUserCanAccessChatbot = vi.fn()
 const assertWorkspaceSuperAdmin = vi.fn()
 const getPresignedUpload = vi.fn()
-const insertValues = vi.fn()
+const createFile = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(),
@@ -17,8 +17,8 @@ vi.mock("@chatbotx.io/business", () => ({
   })),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { insert: () => ({ values: insertValues }) },
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  fileRepository: { create: createFile },
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -107,7 +107,7 @@ describe("POST /api/presigned-upload", () => {
       workspace: { id: "1" },
     })
     getPresignedUpload.mockResolvedValue("https://upload.example.com/signed")
-    insertValues.mockResolvedValue(undefined)
+    createFile.mockResolvedValue(undefined)
     assertWorkspaceSuperAdmin.mockResolvedValue(undefined)
   })
 
@@ -133,7 +133,7 @@ describe("POST /api/presigned-upload", () => {
 
     expect(response.status).toBe(403)
     expect(getPresignedUpload).not.toHaveBeenCalled()
-    expect(insertValues).not.toHaveBeenCalled()
+    expect(createFile).not.toHaveBeenCalled()
   })
 
   test("rejects the upload when the workspace row no longer exists", async () => {
