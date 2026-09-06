@@ -8,7 +8,9 @@ import {
   ne,
   or,
 } from "@chatbotx.io/database/client"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
+  integrationGoogleSheetsModel,
   integrationInstagramModel,
   integrationMessengerModel,
   integrationMetaCatalogModel,
@@ -18,6 +20,8 @@ import {
   integrationZaloModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationModel } from "@chatbotx.io/database/types"
+import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 
 export type TokenRefreshErrorChannel =
@@ -178,6 +182,38 @@ class IntegrationService extends BaseService {
         error: row.error as string,
       })),
     ]
+  }
+
+  /**
+   * Writes the generic `Integration` row created by an OAuth callback, plus
+   * the type-specific row for Google Sheets (the only callback-created
+   * integration type with one today). One transaction covers both branches,
+   * exactly as the callback did before this moved out of the app layer.
+   */
+  async createFromOAuthCallback(input: {
+    workspaceId: string
+    integrationType: IntegrationType
+    googleSheetsAuth?: Oauth2AuthValue | null
+  }): Promise<{ integrationId: string }> {
+    const integrationId = createId()
+
+    await db.transaction(async (tx) => {
+      await tx.insert(integrationModel).values({
+        id: integrationId,
+        workspaceId: input.workspaceId,
+        integrationType: input.integrationType,
+      })
+
+      if (input.integrationType === "googleSheets" && input.googleSheetsAuth) {
+        await tx.insert(integrationGoogleSheetsModel).values({
+          workspaceId: input.workspaceId,
+          integrationId,
+          auth: input.googleSheetsAuth,
+        })
+      }
+    })
+
+    return { integrationId }
   }
 }
 

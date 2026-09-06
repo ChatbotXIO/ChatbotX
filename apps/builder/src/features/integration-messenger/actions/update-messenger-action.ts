@@ -1,11 +1,12 @@
 "use server"
 
-import { buildContext, type IntegrationContext } from "@chatbotx.io/business"
+import {
+  buildContext,
+  messengerIntegrationService,
+} from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq } from "@chatbotx.io/database/client"
 import type { MessengerPersona } from "@chatbotx.io/database/partials"
-import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type {
   IntegrationMessengerModel,
   WorkspaceModel,
@@ -24,7 +25,6 @@ import { normalizeError } from "universal-error-normalizer"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { findIntegrationMessenger } from "../queries"
 import {
   type UpdateMessengerRequest,
   updateMessengerRequest,
@@ -57,63 +57,63 @@ export const updateMessenger = async (
   parsedInput: UpdateMessengerRequest,
 ) => {
   try {
-    let botContext: IntegrationContext<MessengerAuthValue> | undefined
-    let fieldsToDelete: string[] = []
-    let profileParams: MessengerProfileRequest = {}
-
-    await db.transaction(async (tx) => {
-      const integrationMessengerData = await findIntegrationMessenger({
+    const integrationMessengerData =
+      await messengerIntegrationService.findByIdForWorkspace({
         workspaceId: ctx.workspace.id,
         id: ctx.id,
       })
-      const syncedPersonas = await syncMessengerPersonas(
-        ctx.workspace,
-        integrationMessengerData,
-        parsedInput.personas,
+    if (!integrationMessengerData) {
+      throw new Error("Messenger integration not found")
+    }
+
+    const syncedPersonas = await syncMessengerPersonas(
+      ctx.workspace,
+      integrationMessengerData,
+      parsedInput.personas,
+    )
+    const defaultPersona = syncedPersonas.find((persona) => persona.isDefault)
+
+    // A default persona that failed to register with Facebook has no
+    // facebookPersonaId. Persisting personaId: null here would silently drop
+    // the page's persona identity from every outbound message, so surface the
+    // failure — checked before the write (moved out of the tx: this guard
+    // previously ran before a `tx.update` in the same transaction; now the
+    // write is a separate business call, so the guard must run first to get
+    // the same "never partially persist" behavior) — instead of degrading to
+    // the generic page.
+    if (defaultPersona && !isRegisteredPersona(defaultPersona)) {
+      throw new ChatbotXException(
+        "Couldn't register the default persona with Facebook. Please try saving again.",
       )
-      const defaultPersona = syncedPersonas.find((persona) => persona.isDefault)
+    }
 
-      // A default persona that failed to register with Facebook has no
-      // facebookPersonaId. Persisting personaId: null here would silently drop
-      // the page's persona identity from every outbound message, so surface the
-      // failure (rolls back the tx) instead of degrading to the generic page.
-      if (defaultPersona && !isRegisteredPersona(defaultPersona)) {
-        throw new ChatbotXException(
-          "Couldn't register the default persona with Facebook. Please try saving again.",
-        )
-      }
-
-      await tx
-        .update(integrationMessengerModel)
-        .set({
-          ...parsedInput,
-          personas: syncedPersonas,
-          personaId: defaultPersona?.facebookPersonaId ?? null,
-        })
-        .where(eq(integrationMessengerModel.id, ctx.id))
-
-      botContext = await buildContext({
-        workspaceId: ctx.workspace.id,
-        integrationType: "messenger",
-        integration: {
-          ...integrationMessengerData,
-          auth: integrationMessengerData.auth as MessengerAuthValue,
-        },
-      })
-
-      fieldsToDelete = getFieldsToDelete(parsedInput)
-      profileParams = getMessengerProfileParams(
-        {
-          ...integrationMessengerData,
-          ...parsedInput,
-        },
-        botContext.platform.appUrl,
-      )
+    await messengerIntegrationService.updateSettings({
+      workspaceId: ctx.workspace.id,
+      id: ctx.id,
+      values: {
+        ...parsedInput,
+        personas: syncedPersonas,
+        personaId: defaultPersona?.facebookPersonaId ?? null,
+      },
     })
 
-    if (!botContext) {
-      return
-    }
+    const botContext = await buildContext({
+      workspaceId: ctx.workspace.id,
+      integrationType: "messenger",
+      integration: {
+        ...integrationMessengerData,
+        auth: integrationMessengerData.auth as MessengerAuthValue,
+      },
+    })
+
+    const fieldsToDelete = getFieldsToDelete(parsedInput)
+    const profileParams = getMessengerProfileParams(
+      {
+        ...integrationMessengerData,
+        ...parsedInput,
+      },
+      botContext.platform.appUrl,
+    )
 
     if (fieldsToDelete.length > 0) {
       await integrationMessenger

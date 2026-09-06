@@ -1,18 +1,18 @@
 "use server"
 
-import { buildContext } from "@chatbotx.io/business"
+import {
+  buildContext,
+  instagramIntegrationService,
+} from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import {
   type InstagramConversationStarter,
   type InstagramPersistentMenu,
   instagramPersistentMenuTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  flowVersionModel,
-  integrationInstagramModel,
-} from "@chatbotx.io/database/schema"
+import { flowVersionModel } from "@chatbotx.io/database/schema"
 import type {
   IntegrationInstagramModel,
   WorkspaceModel,
@@ -33,7 +33,6 @@ import {
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { findIntegrationInstagram } from "../queries"
 import {
   type UpdateInstagramRequest,
   updateInstagramRequest,
@@ -53,72 +52,68 @@ export const updateInstagramAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
       try {
-        await db.transaction(async (tx) => {
-          const integrationInstagramData = await findIntegrationInstagram({
+        const integrationInstagramData =
+          await instagramIntegrationService.findByIdForWorkspace({
             workspaceId: ctx.workspace.id,
             id,
           })
 
-          await tx
-            .update(integrationInstagramModel)
-            .set({
-              welcomeFlowId: parsedInput.welcomeFlowId,
-              conversationStarters: parsedInput.conversationStarters,
-              persistentMenus: parsedInput.persistentMenus,
-            })
-            .where(eq(integrationInstagramModel.id, id))
-
-          if (integrationInstagramData) {
-            const auth = integrationInstagramData.auth as InstagramAuthValue
-            const isFacebook = integrationInstagramData.type === "facebook"
-            const channelIntegration = isFacebook
-              ? integrationInstagramFacebook
-              : integrationInstagram
-            const botContext = await buildContext({
-              workspaceId: ctx.workspace.id,
-              integrationType: isFacebook ? "instagramFacebook" : "instagram",
-              integration: { ...integrationInstagramData, auth },
-            })
-
-            const fieldsToDelete = getInstagramFieldsToDelete(parsedInput)
-            if (fieldsToDelete.length > 0) {
-              await channelIntegration.runChannelHandler(
-                "bot",
-                "deleteProfileFields",
-                {
-                  ctx: botContext,
-                  fields: fieldsToDelete,
-                },
-              )
-            }
-
-            const profileData: Partial<InstagramProfileRequest> = {}
-
-            if (parsedInput.conversationStarters.length) {
-              profileData.ice_breakers = await buildIceBreakersParams(
-                parsedInput.conversationStarters,
-              )
-            }
-
-            if (parsedInput.persistentMenus.length) {
-              profileData.persistent_menu = await buildPersistentMenuParams(
-                parsedInput.persistentMenus,
-                botContext.platform.appUrl,
-              )
-            }
-
-            if (Object.keys(profileData).length > 0) {
-              await channelIntegration.runChannelHandler(
-                "bot",
-                "updateProfile",
-                {
-                  ctx: botContext,
-                  data: profileData as InstagramProfileRequest,
-                },
-              )
-            }
-          }
+        await instagramIntegrationService.updateSettings({
+          workspaceId: ctx.workspace.id,
+          id,
+          values: {
+            welcomeFlowId: parsedInput.welcomeFlowId,
+            conversationStarters: parsedInput.conversationStarters,
+            persistentMenus: parsedInput.persistentMenus,
+          },
         })
+
+        if (integrationInstagramData) {
+          const auth = integrationInstagramData.auth as InstagramAuthValue
+          const isFacebook = integrationInstagramData.type === "facebook"
+          const channelIntegration = isFacebook
+            ? integrationInstagramFacebook
+            : integrationInstagram
+          const botContext = await buildContext({
+            workspaceId: ctx.workspace.id,
+            integrationType: isFacebook ? "instagramFacebook" : "instagram",
+            integration: { ...integrationInstagramData, auth },
+          })
+
+          const fieldsToDelete = getInstagramFieldsToDelete(parsedInput)
+          if (fieldsToDelete.length > 0) {
+            await channelIntegration.runChannelHandler(
+              "bot",
+              "deleteProfileFields",
+              {
+                ctx: botContext,
+                fields: fieldsToDelete,
+              },
+            )
+          }
+
+          const profileData: Partial<InstagramProfileRequest> = {}
+
+          if (parsedInput.conversationStarters.length) {
+            profileData.ice_breakers = await buildIceBreakersParams(
+              parsedInput.conversationStarters,
+            )
+          }
+
+          if (parsedInput.persistentMenus.length) {
+            profileData.persistent_menu = await buildPersistentMenuParams(
+              parsedInput.persistentMenus,
+              botContext.platform.appUrl,
+            )
+          }
+
+          if (Object.keys(profileData).length > 0) {
+            await channelIntegration.runChannelHandler("bot", "updateProfile", {
+              ctx: botContext,
+              data: profileData as InstagramProfileRequest,
+            })
+          }
+        }
       } catch (error) {
         logger.error({ err: error }, "Failed to update Instagram integration")
         throw new ChatbotXException("Failed to update Instagram integration")

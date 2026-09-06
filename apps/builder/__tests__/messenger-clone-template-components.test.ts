@@ -7,14 +7,12 @@ vi.mock("@chatbotx.io/integration-messenger/apis/upload", () => ({
   resumableUploadImage,
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {},
-  inArray: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationMessengerModel: {},
-  messengerMessageTemplateModel: {},
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  integrationMessengerRepository: {
+    findMessageTemplateForClone: vi.fn(),
+    findPageIdById: vi.fn(),
+    listByIds: vi.fn(),
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/message-templates", () => ({

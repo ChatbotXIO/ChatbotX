@@ -7,8 +7,23 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
-import { integrationMessengerModel } from "@chatbotx.io/database/schema"
+import { integrationMessengerRepository } from "@chatbotx.io/database/repositories"
+import {
+  integrationMessengerModel,
+  messengerMessageTemplateModel,
+} from "@chatbotx.io/database/schema"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+
+type MetaMessageTemplate = {
+  id: string
+  name: string
+  language: string
+  category: string
+  status: string
+  parameter_format?: string
+  components: unknown
+}
 
 class MessengerIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -159,6 +174,104 @@ class MessengerIntegrationService extends BaseService {
       .limit(1)
 
     return rows.length > 0
+  }
+
+  async updateSettings(input: {
+    workspaceId: string
+    id: string
+    values: Partial<typeof integrationMessengerModel.$inferInsert>
+  }): Promise<void> {
+    await db
+      .update(integrationMessengerModel)
+      .set(input.values)
+      .where(
+        and(
+          eq(integrationMessengerModel.id, input.id),
+          eq(integrationMessengerModel.workspaceId, input.workspaceId),
+        ),
+      )
+  }
+
+  listForWorkspace(input: { workspaceId: string; id?: string }) {
+    return integrationMessengerRepository.listForWorkspace(input)
+  }
+
+  /**
+   * Reconciles the locally-cached Messenger message templates for an
+   * integration against Meta's list: full sync deletes rows no longer
+   * present upstream; partial sync (a single created/cloned template) never
+   * deletes.
+   */
+  async syncMessageTemplates(input: {
+    integrationMessengerId: string
+    templates: MetaMessageTemplate[]
+    isPartialSync: boolean
+  }): Promise<void> {
+    await db.transaction(async (tx) => {
+      if (!input.isPartialSync) {
+        const existingTemplates = await tx
+          .select({
+            id: messengerMessageTemplateModel.id,
+            sourceId: messengerMessageTemplateModel.sourceId,
+          })
+          .from(messengerMessageTemplateModel)
+          .where(
+            eq(
+              messengerMessageTemplateModel.integrationMessengerId,
+              input.integrationMessengerId,
+            ),
+          )
+
+        const incomingSourceIds = new Set(
+          input.templates.map((template) => template.id),
+        )
+
+        const templatesToDelete = existingTemplates.filter(
+          (template) => !incomingSourceIds.has(template.sourceId),
+        )
+
+        if (templatesToDelete.length > 0) {
+          await tx.delete(messengerMessageTemplateModel).where(
+            inArray(
+              messengerMessageTemplateModel.id,
+              templatesToDelete.map((template) => template.id),
+            ),
+          )
+        }
+      }
+
+      for (const template of input.templates) {
+        await tx
+          .insert(messengerMessageTemplateModel)
+          .values([
+            {
+              id: createId(),
+              name: template.name,
+              integrationMessengerId: input.integrationMessengerId,
+              language: template.language,
+              category: template.category,
+              status: template.status,
+              parameterFormat: template.parameter_format ?? "POSITIONAL",
+              sourceId: template.id,
+              components: template.components,
+            },
+          ])
+          .onConflictDoUpdate({
+            target: [
+              messengerMessageTemplateModel.integrationMessengerId,
+              messengerMessageTemplateModel.sourceId,
+            ],
+            set: {
+              name: template.name,
+              language: template.language,
+              category: template.category,
+              status: template.status,
+              parameterFormat: template.parameter_format ?? "POSITIONAL",
+              components: template.components,
+            },
+          })
+      }
+    })
   }
 }
 

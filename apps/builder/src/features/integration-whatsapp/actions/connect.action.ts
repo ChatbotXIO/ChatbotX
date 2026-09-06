@@ -2,24 +2,12 @@
 
 import {
   buildContext,
-  connectChannelIntegration,
   integrationWhatsappService,
   platformCredentialService,
-  workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import {
-  db,
-  eq,
-  isUniqueViolationError,
-  type Transaction,
-} from "@chatbotx.io/database/client"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
-import {
-  integrationWhatsappModel,
-  WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT,
-} from "@chatbotx.io/database/schema"
 import type {
   IntegrationWhatsappModel,
   UserModel,
@@ -193,32 +181,6 @@ async function ensurePhoneNumberNotConnected(
 
   if (connectedPhoneNumberIds.has(phoneNumberId)) {
     throw new ChatbotXException(messages.phoneNumberAlreadyConnected)
-  }
-}
-
-/**
- * Spends the signup session inside the connect transaction, so the session and
- * the integration it authorizes commit together.
- *
- * Losing the race here means a concurrent request already connected this
- * number; rolling back leaves nothing half-written.
- */
-async function spendSignupSession(
-  claim: SignupSessionClaim | undefined,
-  tx: Transaction,
-  messages: ConnectErrorMessages,
-): Promise<void> {
-  if (!claim) {
-    return
-  }
-
-  const consumed = await integrationWhatsappService.consumeSignupSession({
-    ...claim,
-    tx,
-  })
-
-  if (!consumed) {
-    throw new ChatbotXException(messages.signupSessionExpired)
   }
 }
 
@@ -526,8 +488,17 @@ async function setupOAuthResources(
   }
 }
 
-async function persistIntegration(params: {
-  tx: Transaction
+/**
+ * Writes the integration and spends the signup session as one unit
+ * (`integrationWhatsappService.connectPhoneNumber`).
+ *
+ * `ensurePhoneNumberNotConnected` ran several network calls ago, so a
+ * concurrent connect can still reach the insert first. The service maps the
+ * resulting unique-constraint violation to a typed exception; this wrapper
+ * maps that typed code back onto the already-translated message.
+ */
+async function connectInTransaction(params: {
+  signupSessionClaim?: SignupSessionClaim
   ownerId: string
   userId: string
   workspaceId: string | null | undefined
@@ -545,124 +516,38 @@ async function persistIntegration(params: {
   integrationRow: IntegrationWhatsappModel
   wasCreated: boolean
 }> {
-  const {
-    tx,
-    ownerId,
-    userId,
-    workspaceId,
-    integrationId,
-    phoneNumber,
-    wabaId,
-    businessId,
-    auth,
-    isCoexist,
-    platformType,
-    messages,
-  } = params
-
-  let resolvedWorkspaceId = workspaceId
-  let createdWorkspace = false
-
-  if (!resolvedWorkspaceId) {
-    const workspace = await workspaceService.create({
-      tx,
-      createdBy: userId,
-      data: {
-        name: phoneNumber.verified_name,
-        timezone: "UTC",
-        ownerId: userId,
-      },
-    })
-    resolvedWorkspaceId = workspace.id
-    createdWorkspace = true
-  }
+  const { messages, ...connectParams } = params
 
   const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
-    phoneNumber.display_phone_number,
+    connectParams.phoneNumber.display_phone_number,
   )
-  const phoneName = phoneNumber.verified_name.trim() || displayPhoneNumber
-
-  let integrationRow: IntegrationWhatsappModel | undefined
-
-  const { wasCreated } = await connectChannelIntegration({
-    tx,
-    ownerId,
-    inboxData: {
-      id: createId(),
-      workspaceId: resolvedWorkspaceId,
-      channel: "whatsapp",
-      sourceId: phoneNumber.id,
-      name: phoneName,
-    },
-    insertIntegration: async (inboxId) => {
-      const [row] = await tx
-        .insert(integrationWhatsappModel)
-        .values({
-          id: integrationId,
-          workspaceId: resolvedWorkspaceId as string,
-          inboxId,
-          auth,
-          phoneNumberId: phoneNumber.id,
-          wabaId,
-          businessId,
-          name: phoneName,
-          displayPhoneNumber,
-          isCoexist,
-          platformType,
-          registrationStatus: "pending_verification",
-        })
-        .onConflictDoUpdate({
-          target: [integrationWhatsappModel.inboxId],
-          set: {
-            name: phoneName,
-            displayPhoneNumber,
-            isCoexist,
-            platformType,
-            updatedAt: new Date(),
-          },
-        })
-        .returning()
-      integrationRow = row
-    },
-  })
-
-  if (!integrationRow) {
-    throw new ChatbotXException(messages.failedToPersistIntegration)
-  }
-
-  return {
-    workspaceId: resolvedWorkspaceId,
-    createdWorkspace,
-    integrationRow,
-    wasCreated,
-  }
-}
-
-/**
- * Writes the integration and spends the signup session as one unit.
- *
- * `ensurePhoneNumberNotConnected` ran several network calls ago, so a
- * concurrent connect can still reach the insert first. The unique index turns
- * that into a constraint violation, which is the same user-visible situation
- * the pre-flight check reports.
- */
-async function connectInTransaction(
-  params: Omit<Parameters<typeof persistIntegration>[0], "tx" | "messages"> & {
-    signupSessionClaim?: SignupSessionClaim
-    messages: ConnectErrorMessages
-  },
-): Promise<Awaited<ReturnType<typeof persistIntegration>>> {
-  const { signupSessionClaim, messages, ...persistParams } = params
+  const phoneName =
+    connectParams.phoneNumber.verified_name.trim() || displayPhoneNumber
 
   try {
-    return await db.transaction(async (tx) => {
-      await spendSignupSession(signupSessionClaim, tx, messages)
-
-      return persistIntegration({ tx, ...persistParams, messages })
+    return await integrationWhatsappService.connectPhoneNumber({
+      ...connectParams,
+      displayPhoneNumber,
+      phoneName,
     })
   } catch (err) {
-    if (isUniqueViolationError(err, WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT)) {
+    if (
+      err instanceof ChatbotXException &&
+      err.code === "whatsappSignupSessionExpired"
+    ) {
+      throw new ChatbotXException(messages.signupSessionExpired)
+    }
+    if (
+      err instanceof ChatbotXException &&
+      err.code === "whatsappPhoneNumberAlreadyConnected"
+    ) {
       throw new ChatbotXException(messages.phoneNumberAlreadyConnected)
+    }
+    if (
+      err instanceof ChatbotXException &&
+      err.code === "whatsappFailedToPersistIntegration"
+    ) {
+      throw new ChatbotXException(messages.failedToPersistIntegration)
     }
 
     throw err
@@ -676,15 +561,10 @@ async function subscribeManualWebhook(
   try {
     await subscribeWebhook({ auth, overrideCallbackUrl: true })
 
-    await db
-      .update(integrationWhatsappModel)
-      .set({
-        auth: {
-          ...auth,
-          metadata: { ...auth.metadata, subscribeOverrideOk: true },
-        },
-      })
-      .where(eq(integrationWhatsappModel.id, integrationId))
+    await integrationWhatsappService.markWebhookOverrideOk({
+      id: integrationId,
+      auth,
+    })
 
     logger.info("subscribeWebhook")
   } catch (err) {
