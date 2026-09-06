@@ -1,4 +1,8 @@
-import { db } from "@chatbotx.io/database/client"
+import {
+  inboxService,
+  messengerIntegrationService,
+} from "@chatbotx.io/business"
+import type { MessengerMessageTemplateModel } from "@chatbotx.io/database/types"
 import type { MessengerTemplateParams } from "@chatbotx.io/flow-config"
 import {
   contactVariableService,
@@ -45,19 +49,8 @@ export async function replaceMessengerTemplateVariables(props: {
   return replacedParams
 }
 
-// `typeof db.query.inboxModel.findFirst` alone (no call) resolves to the
-// no-`with` overload, which drops `integrationMessenger` from the inferred
-// return type — wrapping the actual call (with its `with` config) in a
-// function lets `ReturnType` capture the relation instead.
-function queryInboxWithIntegrationMessenger(inboxId: string) {
-  return db.query.inboxModel.findFirst({
-    where: { id: inboxId },
-    with: { integrationMessenger: true },
-  })
-}
-
 type InboxWithIntegrationMessenger = NonNullable<
-  Awaited<ReturnType<typeof queryInboxWithIntegrationMessenger>>
+  Awaited<ReturnType<typeof inboxService.findWithIntegrationMessengerById>>
 >
 
 export type ValidatedMessengerTemplate = {
@@ -71,9 +64,7 @@ export type ValidatedMessengerTemplate = {
       InboxWithIntegrationMessenger["integrationMessenger"]
     >
   }
-  template: NonNullable<
-    Awaited<ReturnType<typeof db.query.messengerMessageTemplateModel.findFirst>>
-  >
+  template: MessengerMessageTemplateModel
 }
 
 // Accepts templateId string — returns fetched entities so caller avoids re-querying.
@@ -82,19 +73,19 @@ export async function validateMessengerTemplate(
   templateId: string,
   inboxId: string,
 ): Promise<ValidatedMessengerTemplate | null> {
-  const inbox = await queryInboxWithIntegrationMessenger(inboxId)
+  const inbox = await inboxService.findWithIntegrationMessengerById({
+    id: inboxId,
+  })
 
   if (!inbox?.integrationMessenger) {
     return null
   }
 
-  const template = await db.query.messengerMessageTemplateModel.findFirst({
-    where: {
+  const template =
+    await messengerIntegrationService.findApprovedMessengerTemplate({
       id: templateId,
       integrationMessengerId: inbox.integrationMessenger.id,
-      status: "APPROVED",
-    },
-  })
+    })
 
   if (!template) {
     return null

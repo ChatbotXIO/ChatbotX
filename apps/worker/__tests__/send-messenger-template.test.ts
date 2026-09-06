@@ -85,12 +85,13 @@ vi.mock("@chatbotx.io/variables", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn(),
   contactInboxService: {
-    recordOutboundMessageCreated: vi
-      .fn()
-      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
-    recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     recordSendFailure: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
+  },
+  conversationService: {
+    recordOutboundMessageActivity: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
   },
 }))
 
@@ -211,10 +212,7 @@ describe("processMessengerTemplate — sourceId persistence", () => {
       template: TEMPLATE,
     })
 
-    const setCall = mockDbUpdate.mock.results[0].value.set
-    expect(setCall).not.toHaveBeenCalledWith(
-      expect.objectContaining({ sourceId: expect.any(String) }),
-    )
+    expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 })
 

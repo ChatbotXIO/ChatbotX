@@ -695,6 +695,140 @@ export class CoexistSyncRunRepository {
       aiReadsSyncedHistory: input.aiReadsSyncedHistory,
     })
   }
+
+  /** Read `lastSyncedAt` for phase resume. */
+  async findLastSyncedAt(input: {
+    runId: string
+    tx?: DatabaseClient
+  }): Promise<{ lastSyncedAt: Date | null } | null> {
+    const { tx = db } = input
+    return (
+      (await tx.query.coexistSyncRunModel.findFirst({
+        where: { id: input.runId },
+        columns: { lastSyncedAt: true },
+      })) ?? null
+    )
+  }
+
+  /**
+   * Atomically increments the given counters (`sql\`col + N\`` — NOT a
+   * read-modify-write, which would reintroduce a lost-update race across the
+   * two concurrent phase workers) while also setting the given plain-value
+   * fields.
+   */
+  async incrementProgress(input: {
+    runId: string
+    increments: Partial<
+      Record<
+        | "currentScan"
+        | "importedContactCount"
+        | "importedMessageCount"
+        | "skippedCount"
+        | "failedCount",
+        number
+      >
+    >
+    fields?: CoexistRunProgressInput["fields"]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tx = db, runId, increments, fields } = input
+    const incrementSet: Record<string, unknown> = {}
+    for (const [key, amount] of Object.entries(increments)) {
+      if (amount === undefined) {
+        continue
+      }
+      const column =
+        coexistSyncRunModel[key as keyof typeof coexistSyncRunModel]
+      incrementSet[key] = sql`${column} + ${amount}`
+    }
+
+    await tx
+      .update(coexistSyncRunModel)
+      .set({ ...incrementSet, ...fields, updatedAt: new Date() })
+      .where(eq(coexistSyncRunModel.id, runId))
+  }
+
+  /** Init-row read (attempts/currentError/messengerSyncPhase) before claim. */
+  async findInitState(input: {
+    runId: string
+    tx?: DatabaseClient
+  }): Promise<Pick<
+    CoexistSyncRunModel,
+    "attempts" | "currentError" | "messengerSyncPhase"
+  > | null> {
+    const { tx = db } = input
+    return (
+      (await tx.query.coexistSyncRunModel.findFirst({
+        where: { id: input.runId },
+        columns: {
+          attempts: true,
+          currentError: true,
+          messengerSyncPhase: true,
+        },
+      })) ?? null
+    )
+  }
+
+  /**
+   * Optimistic claim with a stale-heartbeat fallback, used by
+   * `messenger-sync.ts` and `whatsapp-flush.ts`. Deliberately does NOT
+   * include `claimRun`'s `inArray(status, ["init","running"])` guard — both
+   * callers reclaim `failed`/`partial` runs on retry, so adding that guard
+   * would silently break retry recovery. `touchUpdatedAt` distinguishes the
+   * two callers' SET clauses (messenger-sync also bumps `updatedAt`;
+   * whatsapp-flush does not) — do not unify beyond this flag.
+   */
+  async claimRunForSync(input: {
+    runId: string
+    touchUpdatedAt: boolean
+    tx?: DatabaseClient
+  }): Promise<CoexistSyncRunModel | null> {
+    const { tx = db, runId, touchUpdatedAt } = input
+    const [run] = await tx
+      .update(coexistSyncRunModel)
+      .set({
+        status: "running",
+        startedAt: sql`COALESCE(${coexistSyncRunModel.startedAt}, NOW())`,
+        lastHeartbeatAt: new Date(),
+        ...(touchUpdatedAt ? { updatedAt: new Date() } : {}),
+      })
+      .where(
+        and(
+          eq(coexistSyncRunModel.id, runId),
+          or(
+            ne(coexistSyncRunModel.status, "running"),
+            lt(
+              coexistSyncRunModel.lastHeartbeatAt,
+              sql`NOW() - INTERVAL '10 minutes'`,
+            ),
+          ),
+        ),
+      )
+      .returning()
+
+    return run ?? null
+  }
+
+  /** Terminal-status derivation counters (importedMessages/skipped/failed). */
+  async findTerminalCounters(input: {
+    runId: string
+    tx?: DatabaseClient
+  }): Promise<Pick<
+    CoexistSyncRunModel,
+    "importedMessageCount" | "skippedCount" | "failedCount"
+  > | null> {
+    const { tx = db } = input
+    return (
+      (await tx.query.coexistSyncRunModel.findFirst({
+        where: { id: input.runId },
+        columns: {
+          importedMessageCount: true,
+          skippedCount: true,
+          failedCount: true,
+        },
+      })) ?? null
+    )
+  }
 }
 
 export const coexistSyncRunRepository = new CoexistSyncRunRepository()

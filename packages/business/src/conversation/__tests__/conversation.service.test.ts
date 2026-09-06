@@ -18,12 +18,35 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: vi.fn(),
 }))
 
+// Plain object stubs only — importing the real schema opens a database
+// connection through the sharding client. The extra models come from
+// `contactService`, now in `conversationService`'s import chain.
 vi.mock("@chatbotx.io/database/schema", () => ({
+  contactInboxModel: {},
+  workspaceUsageModel: {},
+  userQuotaModel: {},
+  questionnaireSubmissionModel: {},
+  adsConversionEventModel: {},
+  refLinkStatModel: {},
+  contactsOnSequenceModel: {},
+  contactsOnBroadcastsModel: {},
+  contactsToTagsModel: {},
+  contactModel: {},
   conversationModel: {},
+  inboxModel: {},
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
+}))
+
+// `conversationService` now imports `contactService` (for the location write
+// inside `recordInboundActivity`), which pulls the analytics package into the
+// import chain; its MAC tracking service reads `bloomFilter` off
+// `@chatbotx.io/redis` at module scope. Stub analytics rather than partially
+// mocking redis — matches the contact-service tests' convention.
+vi.mock("@chatbotx.io/analytics", () => ({
+  macAnalyticsService: {},
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

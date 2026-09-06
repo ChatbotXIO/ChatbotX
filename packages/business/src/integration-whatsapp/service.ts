@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
 import {
   integrationWhatsappRepository,
@@ -7,6 +7,7 @@ import {
 import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
 import type {
   IntegrationWhatsappModel,
+  WhatsappMessageTemplateModel,
   WhatsappSignupSessionModel,
 } from "@chatbotx.io/database/types"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
@@ -611,6 +612,25 @@ class IntegrationWhatsappService extends BaseService {
    */
   setCoexist(input: SetCoexistInput): Promise<SetCoexistResult> {
     return setCoexist(input)
+  }
+
+  /** Mark that the operator declined the coexist history-import prompt. */
+  markHistoryDeclined(props: { id: string }): Promise<void> {
+    return integrationWhatsappRepository.markHistoryDeclined(props)
+  }
+
+  /** Approved WhatsApp message template lookup for outbound template sends. */
+  findApprovedWhatsappTemplate(props: {
+    id: string
+    integrationWhatsappId: string
+  }): Promise<WhatsappMessageTemplateModel | undefined> {
+    return db.query.whatsappMessageTemplateModel.findFirst({
+      where: {
+        id: props.id,
+        integrationWhatsappId: props.integrationWhatsappId,
+        status: "APPROVED",
+      },
+    })
   }
 }
 

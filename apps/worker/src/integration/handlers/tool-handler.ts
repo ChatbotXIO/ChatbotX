@@ -6,7 +6,6 @@ import {
 } from "@chatbotx.io/business"
 import { createSourceTimezoneResolver } from "@chatbotx.io/business/contact-custom-field"
 import { javascriptExecutionService } from "@chatbotx.io/business/javascript-execution"
-import { db } from "@chatbotx.io/database/client"
 import {
   type CustomFieldType,
   type SystemFieldType,
@@ -358,16 +357,9 @@ export async function getDataFromJSON({
   // Custom-field outputs: unchanged behavior — batched existence lookup then
   // a single `setValues` call (transactional persistence + change events).
   if (customFieldMapping.length > 0) {
-    const validCustomFields = await db.query.customFieldModel.findMany({
-      where: {
-        workspaceId,
-        id: {
-          in: customFieldMapping.map((entry) => entry.outputFieldId),
-        },
-      },
-      columns: {
-        id: true,
-      },
+    const validCustomFields = await customFieldService.findManyByIds({
+      workspaceId,
+      ids: customFieldMapping.map((entry) => entry.outputFieldId),
     })
     const validCustomFieldIds = new Set(validCustomFields.map((v) => v.id))
 

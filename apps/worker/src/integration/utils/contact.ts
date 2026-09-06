@@ -1,6 +1,8 @@
-import { contactCustomFieldService } from "@chatbotx.io/business"
+import {
+  contactCustomFieldService,
+  contactInboxService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import { logger } from "../../lib/logger"
@@ -15,13 +17,9 @@ export async function getIntegrationContext(props: {
 
   const contactInbox =
     baseContactInbox ||
-    (await db.query.contactInboxModel.findFirst({
-      where: {
-        contactId,
-      },
-      orderBy: {
-        lastMessageAt: "desc",
-      },
+    (await contactInboxService.findRecentByContactId({
+      workspaceId,
+      contactId,
     }))
 
   if (!contactInbox) {
@@ -46,14 +44,7 @@ export async function readCustomFieldValue(props: {
 }): Promise<string | null> {
   const { contactId, customFieldId } = props
 
-  const existing = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId,
-      customFieldId,
-    },
-  })
-
-  return existing?.value ?? null
+  return await contactCustomFieldService.findValue({ contactId, customFieldId })
 }
 
 export async function saveResultToCustomField(props: {

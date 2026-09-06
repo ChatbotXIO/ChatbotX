@@ -8,8 +8,6 @@ const {
   mockRepositoryCreate,
   mockRepositoryCreateWithAttachments,
   mockCreateMessageRepository,
-  mockDbInsert,
-  mockDbUpdate,
   mockFindConversation,
   mockFindContactInbox,
   mockBroadcast,
@@ -21,28 +19,14 @@ const {
   mockSendMessageToChannel,
   mockProcessWhatsappTemplate,
   mockProcessMessengerTemplate,
-  mockDbSet,
-  mockRecordOutboundMessage,
+  mockRecordOutboundFlowStep,
+  mockRecordOutboundMessageActivity,
   mockRecordSendFailure,
   mockInvalidateTracking,
   mockConversationInvalidate,
-  mockUpdateFlowStepState,
   mockFindAppointmentCalendarBySlug,
   mockSignAppointmentWebviewToken,
 } = vi.hoisted(() => {
-  const mockDbSet = vi.fn()
-  const updateChain = { set: mockDbSet, where: vi.fn() }
-  updateChain.set.mockReturnValue(updateChain)
-  updateChain.where.mockResolvedValue(undefined)
-  const mockDbUpdate = vi.fn().mockReturnValue(updateChain)
-
-  const insertChain = {
-    values: vi.fn(),
-    returning: vi.fn().mockResolvedValue([]),
-  }
-  insertChain.values.mockReturnValue(insertChain)
-  const mockDbInsert = vi.fn().mockReturnValue(insertChain)
-
   const mockFindConversation = vi.fn()
   const mockFindContactInbox = vi.fn()
 
@@ -86,8 +70,6 @@ const {
     mockRepositoryCreate,
     mockRepositoryCreateWithAttachments,
     mockCreateMessageRepository,
-    mockDbInsert,
-    mockDbUpdate,
     mockFindConversation,
     mockFindContactInbox,
     mockBroadcast: vi.fn(),
@@ -119,14 +101,15 @@ const {
     mockProcessMessengerTemplate: vi
       .fn()
       .mockResolvedValue({ messageId: "msg-ms" }),
-    mockDbSet,
-    mockRecordOutboundMessage: vi
+    mockRecordOutboundFlowStep: vi
+      .fn()
+      .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
+    mockRecordOutboundMessageActivity: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockInvalidateTracking: vi.fn().mockResolvedValue(undefined),
     mockConversationInvalidate: vi.fn().mockResolvedValue(undefined),
-    mockUpdateFlowStepState: vi.fn().mockResolvedValue(undefined),
     mockFindAppointmentCalendarBySlug: vi.fn(),
     mockSignAppointmentWebviewToken: vi.fn().mockResolvedValue("webview-token"),
   }
@@ -163,23 +146,6 @@ vi.mock("@chatbotx.io/analytics", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    insert: mockDbInsert,
-    update: mockDbUpdate,
-    transaction: vi
-      .fn()
-      .mockImplementation((fn: (tx: unknown) => unknown) =>
-        fn({ update: mockDbUpdate }),
-      ),
-    query: {
-      conversationModel: { findFirst: mockFindConversation },
-      contactInboxModel: { findFirst: mockFindContactInbox },
-    },
-  },
-  eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
   messageModel: { id: "id", sourceId: "sourceId" },
   contactInboxModel: { id: "id" },
@@ -193,14 +159,16 @@ vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
   broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
   contactInboxService: {
-    recordOutboundMessageCreated: mockRecordOutboundMessage,
-    recordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
+    findByUncached: mockFindContactInbox,
+    findRecentByContactId: mockFindContactInbox,
     recordSendFailure: mockRecordSendFailure,
     invalidateTracking: mockInvalidateTracking,
   },
   conversationService: {
+    findByIdWithContact: mockFindConversation,
     invalidate: mockConversationInvalidate,
-    updateFlowStepState: mockUpdateFlowStepState,
+    recordOutboundFlowStep: mockRecordOutboundFlowStep,
+    recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
   },
   resolveTenantSettings: mockresolveTenantSettings,
 }))
@@ -1000,33 +968,22 @@ describe("sendFlowStep", () => {
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
   })
 
-  test("does NOT call db.insert directly for message creation", async () => {
+  test("does NOT call db.insert directly for message creation — goes through the message repository", async () => {
     await sendFlowStep({ ...baseParams, step: sendTextStep })
 
-    const { messageModel: messageModelMock } = await import(
-      "@chatbotx.io/database/schema"
-    )
-    for (const call of mockDbInsert.mock.calls) {
-      expect(call[0]).not.toBe(messageModelMock)
-    }
+    expect(mockRepositoryCreate).toHaveBeenCalledTimes(1)
   })
 
   test("updates contact inbox lastMessageAt and conversation lastActivityAt after creating a flow message", async () => {
     await sendFlowStep({ ...baseParams, step: sendTextStep })
 
     const createdMessage = await mockRepositoryCreate.mock.results[0]?.value
-    expect(mockRecordOutboundMessage).toHaveBeenCalledWith({
-      tx: expect.any(Object),
-      contactInboxId: "ci-1",
-      contactId: "contact-1",
-      workspaceId: "ws-1",
-      at: createdMessage.createdAt,
-    })
-    expect(mockUpdateFlowStepState).toHaveBeenCalledWith({
-      tx: expect.any(Object),
+    expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       conversationId: "conv-1",
-      lastActivityAt: createdMessage.createdAt,
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      at: createdMessage.createdAt,
       lastStep: undefined,
       currentStep: "step-1",
     })
@@ -1216,15 +1173,15 @@ describe("sendChatMessage", () => {
     })
 
     const createdMessage = await mockRepositoryCreate.mock.results[0]?.value
-    expect(mockRecordOutboundMessage).toHaveBeenCalledWith({
-      tx: expect.any(Object),
+    expect(mockRecordOutboundMessageActivity).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
       contactInboxId: "ci-1",
       contactId: "contact-1",
-      workspaceId: "ws-1",
       at: createdMessage.createdAt,
     })
-    expect(mockDbSet).toHaveBeenCalledWith({
-      lastActivityAt: createdMessage.createdAt,
+    expect(mockInvalidateTracking).toHaveBeenCalledWith({
+      cacheTags: ["contacts:contact-1:contact-inboxes"],
     })
   })
 

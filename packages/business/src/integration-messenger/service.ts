@@ -12,7 +12,10 @@ import type {
 } from "@chatbotx.io/database/partials"
 import { integrationMessengerRepository } from "@chatbotx.io/database/repositories"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
-import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import type {
+  IntegrationMessengerModel,
+  MessengerMessageTemplateModel,
+} from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import {
@@ -238,6 +241,38 @@ class MessengerIntegrationService extends BaseService {
       .limit(1)
 
     return rows.length > 0
+  }
+
+  /**
+   * Load by id with NO workspace scope — delegates to the repository.
+   * Callers that separately have a `workspaceId` must compare it themselves
+   * (see `coexist/messenger-sync.ts`'s explicit-mismatch branch); this must
+   * NOT be used as a substitute for `findByIdForWorkspace`.
+   */
+  findById(props: { id: string }) {
+    return integrationMessengerRepository.findById(props)
+  }
+
+  /**
+   * Load by Facebook page id with NO workspace scope — for inbound webhooks
+   * that have not yet resolved a workspace (e.g. inbox-label sync).
+   */
+  findByPageIdUnscoped(props: { pageId: string }) {
+    return integrationMessengerRepository.findByPageIdUnscoped(props)
+  }
+
+  /** Approved Messenger message template lookup for outbound template sends. */
+  findApprovedMessengerTemplate(props: {
+    id: string
+    integrationMessengerId: string
+  }): Promise<MessengerMessageTemplateModel | undefined> {
+    return db.query.messengerMessageTemplateModel.findFirst({
+      where: {
+        id: props.id,
+        integrationMessengerId: props.integrationMessengerId,
+        status: "APPROVED",
+      },
+    })
   }
 }
 

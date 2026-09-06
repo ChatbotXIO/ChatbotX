@@ -251,6 +251,25 @@ export class WorkspaceMemberService extends BaseService {
       },
     })
   }
+
+  /**
+   * Bulk membership validation for round-robin allocation — returns just the
+   * user ids from `userIds` that are actually members of the workspace.
+   */
+  async listExistingUserIds(props: {
+    workspaceId: string
+    userIds: string[]
+    tx?: DatabaseClient
+  }): Promise<{ userId: string }[]> {
+    const { workspaceId, userIds, tx = db } = props
+    if (userIds.length === 0) {
+      return []
+    }
+    return await tx.query.workspaceMemberModel.findMany({
+      where: { workspaceId, userId: { in: userIds } },
+      columns: { userId: true },
+    })
+  }
 }
 
 export const workspaceMemberService = new WorkspaceMemberService()

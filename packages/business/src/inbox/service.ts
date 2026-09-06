@@ -16,6 +16,8 @@ import { inboxModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
   InboxWithIntegrations,
+  IntegrationMessengerModel,
+  IntegrationWhatsappModel,
 } from "@chatbotx.io/database/types"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
@@ -302,6 +304,42 @@ class InboxService extends BaseService {
       )
       .limit(1)
     return !!row
+  }
+
+  /**
+   * Inbox + `integrationMessenger` relation, with an explicit return type so
+   * the relation survives inference (a bare `typeof db.query.inboxModel
+   * .findFirst` with no call resolves to the no-`with` overload and drops
+   * the relation — see `messenger-template-handler.ts`'s prior local
+   * workaround).
+   */
+  async findWithIntegrationMessengerById(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<
+    | (InboxModel & { integrationMessenger: IntegrationMessengerModel | null })
+    | undefined
+  > {
+    const { id, tx = db } = props
+    return await tx.query.inboxModel.findFirst({
+      where: { id },
+      with: { integrationMessenger: true },
+    })
+  }
+
+  /** Inbox + `integrationWhatsapp` relation — same explicit-return-type reasoning as above. */
+  async findWithIntegrationWhatsappById(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<
+    | (InboxModel & { integrationWhatsapp: IntegrationWhatsappModel | null })
+    | undefined
+  > {
+    const { id, tx = db } = props
+    return await tx.query.inboxModel.findFirst({
+      where: { id },
+      with: { integrationWhatsapp: true },
+    })
   }
 }
 export const inboxService = new InboxService()

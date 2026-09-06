@@ -41,6 +41,22 @@ const pendingFilter = (phoneNumberId: string) =>
   )
 
 export const whatsappCoexistStagingRepository = {
+  /** Idempotent staging insert keyed on `(phoneNumberId, payloadHash)` — keep untargeted `onConflictDoNothing()`. */
+  async stagePayload(
+    props: {
+      id: string
+      phoneNumberId: string
+      payload: unknown
+      payloadHash: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .insert(whatsappCoexistStagingModel)
+      .values(props)
+      .onConflictDoNothing()
+  },
+
   /**
    * Oldest-first page of staging rows still awaiting import for one phone
    * number. Always bounded by `limit` — the flush drains in chunks, and the

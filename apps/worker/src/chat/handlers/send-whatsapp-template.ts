@@ -1,13 +1,10 @@
 import {
   broadcastToWorkspaceParty,
   contactInboxService,
+  conversationService,
 } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import {
-  conversationModel,
-  type messageModel,
-} from "@chatbotx.io/database/schema"
+import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -298,23 +295,14 @@ export async function processWhatsappTemplate(
     }
     const createdMessage = newMessage
 
-    const trackingInvalidation = await db.transaction(async (tx) => {
-      const invalidation =
-        await contactInboxService.recordOutboundMessageCreated({
-          tx,
-          contactInboxId: contactInbox.id,
-          contactId: contactInbox.contactId,
-          workspaceId: conversation.workspaceId,
-          at: createdMessage.createdAt,
-        })
-
-      await tx
-        .update(conversationModel)
-        .set({ lastActivityAt: createdMessage.createdAt })
-        .where(eq(conversationModel.id, conversation.id))
-
-      return invalidation
-    })
+    const trackingInvalidation =
+      await conversationService.recordOutboundMessageActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        contactId: contactInbox.contactId,
+        at: createdMessage.createdAt,
+      })
     if (trackingInvalidation) {
       await contactInboxService.invalidateTracking(trackingInvalidation)
     }

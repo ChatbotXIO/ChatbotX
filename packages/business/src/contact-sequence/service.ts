@@ -20,6 +20,7 @@ import {
   enrollContactInSequence,
   enrollContactsInSequenceBulk,
   removeDispatchesFromSchedule,
+  sequenceDispatchUtils,
 } from "@chatbotx.io/sequence-scheduler"
 import { BaseService } from "../base.service"
 import { type ContactAccessScope, contactService } from "../contact/service"
@@ -673,6 +674,80 @@ class ContactSequenceService extends BaseService {
     callback: (tx: Transaction) => Promise<T>,
   ): Promise<T> {
     return await db.transaction(callback)
+  }
+
+  /** Already-enrolled guard for the "Subscribe to Sequence" flow step. */
+  async isEnrolled(props: {
+    workspaceId: string
+    contactId: string
+    sequenceId: string
+    tx?: DrizzleClient
+  }): Promise<boolean> {
+    const { workspaceId, contactId, sequenceId, tx = db } = props
+    const existing = await tx.query.contactsOnSequenceModel.findFirst({
+      where: { contactId, sequenceId, workspaceId },
+      columns: { id: true },
+    })
+    return Boolean(existing)
+  }
+
+  /** First active step (order 0) — used to compute `nextRunAt` on enroll. */
+  async findFirstActiveStep(props: {
+    sequenceId: string
+    tx?: DrizzleClient
+  }): Promise<
+    { id: string; delayDays: number; delayMinutes: number } | undefined
+  > {
+    const { sequenceId, tx = db } = props
+    return await tx.query.sequenceStepModel.findFirst({
+      where: { sequenceId, order: 0, isActive: true },
+      columns: { id: true, delayDays: true, delayMinutes: true },
+    })
+  }
+
+  /** Sequence name for the `sequenceSubscribed` emit. */
+  async findSequenceName(props: {
+    sequenceId: string
+    tx?: DrizzleClient
+  }): Promise<string | undefined> {
+    const { sequenceId, tx = db } = props
+    const sequence = await tx.query.sequenceModel.findFirst({
+      where: { id: sequenceId },
+      columns: { name: true },
+    })
+    return sequence?.name
+  }
+
+  /** Load a running dispatch for the sequence-flow worker handler. */
+  findRunningDispatch(props: { dispatchId: string; workspaceId: string }) {
+    return sequenceDispatchUtils.findRunning({ dbClient: db, ...props })
+  }
+
+  /** Mark a dispatch completed — keeps the `status = 'running'` idempotency guard. */
+  markDispatchCompleted(props: {
+    dispatchId: string
+    workspaceId: string
+    sentAt: Date
+  }): Promise<void> {
+    return sequenceDispatchUtils.markCompleted({ dbClient: db, ...props })
+  }
+
+  /** Mark a dispatch canceled — keeps the `status = 'running'` idempotency guard. */
+  markDispatchCanceled(props: {
+    dispatchId: string
+    workspaceId: string
+    reason: string
+  }): Promise<void> {
+    return sequenceDispatchUtils.markCanceled({ dbClient: db, ...props })
+  }
+
+  /** Mark a dispatch failed — keeps the `status = 'running'` idempotency guard. */
+  markDispatchFailed(props: {
+    dispatchId: string
+    workspaceId: string
+    errorMessage: string
+  }): Promise<void> {
+    return sequenceDispatchUtils.markFailed({ dbClient: db, ...props })
   }
 }
 
