@@ -5642,10 +5642,7 @@
       "rulesDescription": "Regelbeschreibung",
       "openerTags": "Kontakte markieren, die den Spiellink öffnen",
       "playerTags": "Spieler markieren",
-      "newFriendTags": "Neue Freunde markieren",
-      "shareEnabled": "Teilen mit Freunden erlauben",
-      "shareMessage": "Freigabenachricht",
-      "shareMessageHint": "Verwenden Sie '{{shareUrl}}', um den tatsächlichen Spiellink einzufügen — bitte nicht entfernen."
+      "newFriendTags": "Neue Freunde markieren"
     },
     "appearance": {
       "backgroundColor": "Hintergrundfarbe",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Anzahl der Gewinnspielversuche pro Person",
+      "maxSharesPerPerson": "Max. Bonusziehungen durch Empfehlungen",
+      "maxSharesPerPersonHint": "Jeder Freund, der über den Einladungslink dieses Spielers beitritt und dir schreibt, bringt ihm 1 zusätzliche Ziehung, bis zu diesem Limit. Setze 0, um Empfehlungsboni zu deaktivieren. Bonus-Ziehungen müssen vor dem nächsten Zurücksetzen genutzt werden.",
+      "sharingNode": "Freigabe-Schritt",
+      "sharingNodeHint": "Der Flow-Schritt, der ausgeführt wird, wenn ein Freund den Teilen-Link dieses Spielers öffnet. Leer lassen, um die Teilen-Schaltfläche auszublenden.",
       "resetPolicyLabel": "Versuche zurücksetzen",
       "resetNever": "Anzahl der Versuche nicht zurücksetzen",
       "resetEveryNDays": "Anzahl der Versuche zurücksetzen alle",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "Zugriff verweigert",
       "forbiddenDescription": "Dieser Link ist ungültig oder abgelaufen.",
       "comingSoonTitle": "Demnächst verfügbar",
-      "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar."
+      "comingSoonDescription": "Dieser Minispieltyp ist noch nicht spielbar.",
+      "rateLimited": "Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut."
     },
     "list": {
       "gamesPlayed": "Gespielte Spiele",
       "participants": "Teilnehmer",
-      "winners": "Gewinner"
+      "winners": "Gewinner",
+      "shares": "Empfehlungen"
     },
     "history": {
       "title": "Verlauf",
       "played": "Spiele",
       "remaining": "Verbleibende Versuche",
+      "shares": "Empfehlungen",
       "openedAt": "Zuerst geöffnet",
       "lastPlayedAt": "Zuletzt gespielt",
       "unknownContact": "Unbekannter Kontakt",

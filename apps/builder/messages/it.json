@@ -5642,10 +5642,7 @@
       "rulesDescription": "Descrizione delle regole",
       "openerTags": "Assegna un tag ai contatti che aprono il link del gioco",
       "playerTags": "Assegna un tag ai giocatori",
-      "newFriendTags": "Assegna un tag ai nuovi amici",
-      "shareEnabled": "Consenti la condivisione con gli amici",
-      "shareMessage": "Messaggio di condivisione",
-      "shareMessageHint": "Usa '{{shareUrl}}' per inserire il link effettivo del gioco — non rimuoverlo."
+      "newFriendTags": "Assegna un tag ai nuovi amici"
     },
     "appearance": {
       "backgroundColor": "Colore di sfondo",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Numero di tentativi per persona",
+      "maxSharesPerPerson": "Estrazioni bonus max. da referral",
+      "maxSharesPerPersonHint": "Ogni amico che si unisce tramite il link di invito di questo giocatore e ti scrive gli fa guadagnare 1 estrazione extra, fino a questo limite. Imposta 0 per disattivare i bonus da referral. Le estrazioni bonus vanno usate prima del prossimo azzeramento.",
+      "sharingNode": "Passo di condivisione",
+      "sharingNodeHint": "Il passo del flusso eseguito quando un amico apre il link di condivisione di questo giocatore. Lascia vuoto per nascondere il pulsante Condividi.",
       "resetPolicyLabel": "Reimposta tentativi",
       "resetNever": "Non reimpostare il numero di tentativi",
       "resetEveryNDays": "Reimposta il numero di tentativi ogni",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "Accesso negato",
       "forbiddenDescription": "Questo link non è valido o è scaduto.",
       "comingSoonTitle": "Prossimamente",
-      "comingSoonDescription": "Questo tipo di minigioco non è ancora giocabile."
+      "comingSoonDescription": "Questo tipo di minigioco non è ancora giocabile.",
+      "rateLimited": "Troppe richieste. Attendi un momento e riprova."
     },
     "list": {
       "gamesPlayed": "Partite giocate",
       "participants": "Partecipanti",
-      "winners": "Vincitori"
+      "winners": "Vincitori",
+      "shares": "Referral"
     },
     "history": {
       "title": "Cronologia",
       "played": "Partite",
       "remaining": "Estrazioni rimanenti",
+      "shares": "Referral",
       "openedAt": "Prima apertura",
       "lastPlayedAt": "Ultima partita",
       "unknownContact": "Contatto sconosciuto",

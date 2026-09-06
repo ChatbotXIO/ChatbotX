@@ -22,6 +22,7 @@ type GashaponPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  shareUrl: string | null
 }
 
 const WIND_UP_DURATION_MS = 1200
@@ -34,6 +35,7 @@ export function GashaponPlayScreen({
   minigame,
   contactState,
   token,
+  shareUrl,
 }: GashaponPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -132,6 +134,7 @@ export function GashaponPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
+      shareUrl={shareUrl}
       showName={generalSettings.showName ?? true}
       status={
         <>

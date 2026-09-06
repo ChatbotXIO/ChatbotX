@@ -7,6 +7,13 @@ vi.mock("@chatbotx.io/business", () => ({
   encodeRef,
 }))
 
+// `ref.ts` imports this for its `minigame-share` branch. Left unmocked it
+// pulls the whole business barrel in and the suite fails to import at all.
+vi.mock("@chatbotx.io/business/minigame", () => ({
+  minigameService: { findUnscoped: vi.fn() },
+  minigameContactService: { creditSharedLinkReferral: vi.fn() },
+}))
+
 const findOrFail = vi.fn()
 vi.mock("@chatbotx.io/database/client", () => ({
   findOrFail,

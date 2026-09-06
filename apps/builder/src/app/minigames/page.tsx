@@ -9,6 +9,7 @@ import type { SearchParams } from "next/dist/server/request/search-params"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { MINIGAME_PLAY_SCREENS } from "@/features/minigames/components/play/minigame-play-screen-registry"
+import { buildMinigameShareUrl } from "@/features/minigames/lib/minigame-share"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 export const dynamic = "force-dynamic"
@@ -92,12 +93,13 @@ export default async function MinigamePage(props: MinigamePageProps) {
     where: { id: payload.contactInboxId },
   })
 
-  const contactState = await minigameContactService.resolveOpenerPlayState({
-    minigameId: minigame.id,
-    contactId,
-    playerSettings: minigame.playerSettings,
-    contactInboxId: contactInbox?.id,
-  })
+  const { state: contactState } =
+    await minigameContactService.resolveOpenerPlayState({
+      minigameId: minigame.id,
+      contactId,
+      playerSettings: minigame.playerSettings,
+      contactInboxId: contactInbox?.id,
+    })
 
   await tagService.attachToContact({
     workspaceId: minigame.workspaceId,
@@ -105,7 +107,18 @@ export default async function MinigamePage(props: MinigamePageProps) {
     tagIds: minigame.generalSettings.openerTagIds,
   })
 
+  const shareUrl = await buildMinigameShareUrl({
+    minigame,
+    contactId,
+    contactInbox,
+  })
+
   return (
-    <PlayScreen contactState={contactState} minigame={minigame} token={token} />
+    <PlayScreen
+      contactState={contactState}
+      minigame={minigame}
+      shareUrl={shareUrl}
+      token={token}
+    />
   )
 }

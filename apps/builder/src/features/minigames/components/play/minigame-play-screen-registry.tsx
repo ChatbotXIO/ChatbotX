@@ -14,6 +14,8 @@ export type MinigamePlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  /** `null` when no Sharing Node is configured, or the player's channel cannot carry a ref. */
+  shareUrl: string | null
 }
 
 export const MINIGAME_PLAY_SCREENS: Partial<

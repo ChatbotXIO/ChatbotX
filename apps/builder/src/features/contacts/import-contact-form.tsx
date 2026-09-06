@@ -294,7 +294,7 @@ function HeaderConnectField({
             change out from under it). */}
         <SelectField
           allowClear={allowClear}
-          key={csvHeaders.join("")}
+          key={csvHeaders.join("\u0001")}
           name={name}
           options={csvHeaders.map((col) => ({ label: col, value: col }))}
         />

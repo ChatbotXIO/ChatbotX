@@ -23,6 +23,7 @@ type JackpotPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  shareUrl: string | null
 }
 
 const SPIN_INTERVAL_MS = 100
@@ -62,6 +63,7 @@ export function JackpotPlayScreen({
   minigame,
   contactState,
   token,
+  shareUrl,
 }: JackpotPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -175,6 +177,7 @@ export function JackpotPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
+      shareUrl={shareUrl}
       showName={generalSettings.showName ?? true}
       status={
         <>

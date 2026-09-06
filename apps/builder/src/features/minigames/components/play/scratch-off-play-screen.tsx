@@ -23,6 +23,7 @@ type ScratchOffPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  shareUrl: string | null
 }
 
 const REVEAL_DURATION_MS = 550
@@ -44,6 +45,7 @@ export function ScratchOffPlayScreen({
   minigame,
   contactState,
   token,
+  shareUrl,
 }: ScratchOffPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -135,6 +137,7 @@ export function ScratchOffPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
+      shareUrl={shareUrl}
       showName={generalSettings.showName ?? true}
       status={
         <>

@@ -5642,10 +5642,7 @@
       "rulesDescription": "وصف القواعد",
       "openerTags": "وسم جهات الاتصال التي تفتح رابط اللعبة",
       "playerTags": "وسم اللاعبين",
-      "newFriendTags": "وسم الأصدقاء الجدد",
-      "shareEnabled": "السماح بالمشاركة مع الأصدقاء",
-      "shareMessage": "رسالة المشاركة",
-      "shareMessageHint": "استخدم '{{shareUrl}}' لإدراج رابط اللعبة الفعلي — يُرجى عدم إزالته."
+      "newFriendTags": "وسم الأصدقاء الجدد"
     },
     "appearance": {
       "backgroundColor": "لون الخلفية",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "عدد فرص السحب لكل شخص",
+      "maxSharesPerPerson": "الحد الأقصى للسحوبات الإضافية من الإحالات",
+      "maxSharesPerPersonHint": "كل صديق ينضم عبر رابط دعوة هذا اللاعب ويراسلك يمنحه سحبة إضافية واحدة، بحد أقصى هذا الحد. اضبط 0 لإيقاف مكافآت الإحالة. يجب استخدام السحبات الإضافية قبل إعادة التعيين التالية.",
+      "sharingNode": "خطوة المشاركة",
+      "sharingNodeHint": "خطوة المسار التي تعمل عندما يفتح صديق رابط المشاركة الخاص بهذا اللاعب. اتركه فارغًا لإخفاء زر المشاركة.",
       "resetPolicyLabel": "إعادة تعيين مرات السحب",
       "resetNever": "عدم إعادة تعيين عدد مرات السحب",
       "resetEveryNDays": "إعادة تعيين عدد مرات السحب كل",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "تم رفض الوصول",
       "forbiddenDescription": "هذا الرابط غير صالح أو منتهي الصلاحية.",
       "comingSoonTitle": "قريباً",
-      "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد."
+      "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد.",
+      "rateLimited": "طلبات كثيرة جدًا. يُرجى الانتظار لحظة ثم المحاولة مرة أخرى."
     },
     "list": {
       "gamesPlayed": "عدد مرات اللعب",
       "participants": "المشاركون",
-      "winners": "الفائزون"
+      "winners": "الفائزون",
+      "shares": "الإحالات"
     },
     "history": {
       "title": "السجل",
       "played": "عدد مرات اللعب",
       "remaining": "السحوبات المتبقية",
+      "shares": "الإحالات",
       "openedAt": "أول فتح",
       "lastPlayedAt": "آخر لعب",
       "unknownContact": "جهة اتصال غير معروفة",

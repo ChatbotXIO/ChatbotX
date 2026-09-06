@@ -22,6 +22,7 @@ type DrawLotsPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  shareUrl: string | null
 }
 
 const SHUFFLE_DURATION_MS = 1200
@@ -31,6 +32,7 @@ export function DrawLotsPlayScreen({
   minigame,
   contactState,
   token,
+  shareUrl,
 }: DrawLotsPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings } = minigame
@@ -123,6 +125,7 @@ export function DrawLotsPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
+      shareUrl={shareUrl}
       showName={generalSettings.showName ?? true}
       status={
         <>

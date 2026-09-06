@@ -5642,10 +5642,7 @@
       "rulesDescription": "Deskripsi Aturan",
       "openerTags": "Beri tag kontak yang membuka tautan permainan",
       "playerTags": "Beri tag pemain",
-      "newFriendTags": "Beri tag teman baru",
-      "shareEnabled": "Izinkan berbagi ke teman",
-      "shareMessage": "Pesan Berbagi",
-      "shareMessageHint": "Gunakan '{{shareUrl}}' untuk menyisipkan tautan permainan yang sebenarnya — mohon jangan menghapusnya."
+      "newFriendTags": "Beri tag teman baru"
     },
     "appearance": {
       "backgroundColor": "Warna Latar Belakang",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Jumlah kesempatan undian per orang",
+      "maxSharesPerPerson": "Maks. putaran bonus dari referral",
+      "maxSharesPerPersonHint": "Setiap teman yang bergabung melalui tautan undangan pemain ini dan mengirim pesan kepada Anda memberinya 1 undian tambahan, hingga batas ini. Setel 0 untuk menonaktifkan bonus referral. Undian bonus harus digunakan sebelum reset berikutnya.",
+      "sharingNode": "Langkah berbagi",
+      "sharingNodeHint": "Langkah flow yang berjalan saat seorang teman membuka tautan berbagi pemain ini. Kosongkan untuk menyembunyikan tombol Bagikan.",
       "resetPolicyLabel": "Reset undian",
       "resetNever": "Jangan reset jumlah undian",
       "resetEveryNDays": "Reset jumlah undian setiap",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "Akses ditolak",
       "forbiddenDescription": "Tautan ini tidak valid atau telah kedaluwarsa.",
       "comingSoonTitle": "Segera hadir",
-      "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan."
+      "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan.",
+      "rateLimited": "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
     },
     "list": {
       "gamesPlayed": "Permainan dimainkan",
       "participants": "Peserta",
-      "winners": "Pemenang"
+      "winners": "Pemenang",
+      "shares": "Referral"
     },
     "history": {
       "title": "Riwayat",
       "played": "Jumlah main",
       "remaining": "Sisa undian",
+      "shares": "Referral",
       "openedAt": "Pertama dibuka",
       "lastPlayedAt": "Terakhir dimainkan",
       "unknownContact": "Kontak tidak dikenal",

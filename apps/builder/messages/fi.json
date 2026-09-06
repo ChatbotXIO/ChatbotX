@@ -5642,10 +5642,7 @@
       "rulesDescription": "Sääntöjen kuvaus",
       "openerTags": "Merkitse kontaktit, jotka avaavat pelin linkin",
       "playerTags": "Merkitse pelaajat",
-      "newFriendTags": "Merkitse uudet ystävät",
-      "shareEnabled": "Salli jakaminen ystävien kanssa",
-      "shareMessage": "Jakoviesti",
-      "shareMessageHint": "Käytä merkintää '{{shareUrl}}' lisätäksesi todellisen pelilinkin — älä poista sitä."
+      "newFriendTags": "Merkitse uudet ystävät"
     },
     "appearance": {
       "backgroundColor": "Taustaväri",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Arvontakertojen määrä per henkilö",
+      "maxSharesPerPerson": "Suosituksista saatavien bonusarvontojen enimmäismäärä",
+      "maxSharesPerPersonHint": "Jokainen ystävä, joka liittyy tämän pelaajan kutsulinkin kautta ja lähettää sinulle viestin, tuo hänelle 1 lisäarvonnan, tähän rajaan asti. Aseta 0 poistaaksesi suositusbonukset käytöstä. Bonusarvonnat on käytettävä ennen seuraavaa nollausta.",
+      "sharingNode": "Jakamisen vaihe",
+      "sharingNodeHint": "Flow-vaihe, joka suoritetaan kun ystävä avaa tämän pelaajan jakolinkin. Jätä tyhjäksi piilottaaksesi Jaa-painikkeen.",
       "resetPolicyLabel": "Nollaa arvonnat",
       "resetNever": "Älä nollaa arvontojen määrää",
       "resetEveryNDays": "Nollaa arvontojen määrä joka",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "Pääsy evätty",
       "forbiddenDescription": "Tämä linkki on virheellinen tai vanhentunut.",
       "comingSoonTitle": "Tulossa pian",
-      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata."
+      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata.",
+      "rateLimited": "Liian monta pyyntöä. Odota hetki ja yritä uudelleen."
     },
     "list": {
       "gamesPlayed": "Pelatut pelit",
       "participants": "Osallistujat",
-      "winners": "Voittajat"
+      "winners": "Voittajat",
+      "shares": "Suositukset"
     },
     "history": {
       "title": "Historia",
       "played": "Pelikerrat",
       "remaining": "Jäljellä olevat arvonnat",
+      "shares": "Suositukset",
       "openedAt": "Avattu ensimmäisen kerran",
       "lastPlayedAt": "Viimeksi pelattu",
       "unknownContact": "Tuntematon kontakti",

@@ -14,6 +14,7 @@
       "!**/.next",
       "!**/next-env.d.ts",
       "!**/messages/*.d.json.ts",
+      "!**/packages/database/drizzle",
       "!**/.turbo",
       "!**/packages/ui/src/components/data-table",
       "!**/packages/ui/src/components/ui",

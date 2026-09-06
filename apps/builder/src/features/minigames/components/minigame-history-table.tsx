@@ -199,6 +199,17 @@ export function MinigameHistoryTable({
         cell: ({ row }) => row.original.remaining,
       },
       {
+        id: "sharesCount",
+        accessorKey: "sharesCount",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("minigames.history.shares")}
+          />
+        ),
+        cell: ({ row }) => row.original.sharesCount,
+      },
+      {
         id: "openedAt",
         accessorKey: "openedAt",
         header: ({ column }) => (

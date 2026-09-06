@@ -5642,10 +5642,7 @@
       "rulesDescription": "Descrierea regulilor",
       "openerTags": "Etichetează contactele care deschid linkul jocului",
       "playerTags": "Etichetează jucătorii",
-      "newFriendTags": "Etichetează prietenii noi",
-      "shareEnabled": "Permite distribuirea către prieteni",
-      "shareMessage": "Mesaj de distribuire",
-      "shareMessageHint": "Folosește '{{shareUrl}}' pentru a introduce linkul real al jocului — te rugăm să nu îl elimini."
+      "newFriendTags": "Etichetează prietenii noi"
     },
     "appearance": {
       "backgroundColor": "Culoare fundal",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Numărul de șanse de tragere norocoasă per persoană",
+      "maxSharesPerPerson": "Nr. maxim de extrageri bonus din recomandări",
+      "maxSharesPerPersonHint": "Fiecare prieten care se alătură prin linkul de invitație al acestui jucător și îți trimite un mesaj îi aduce 1 extragere în plus, până la această limită. Setează 0 pentru a dezactiva bonusurile de recomandare. Extragerile bonus trebuie folosite înainte de următoarea resetare.",
+      "sharingNode": "Pas de partajare",
+      "sharingNodeHint": "Pasul din flux care rulează atunci când un prieten deschide linkul de partajare al acestui jucător. Lasă gol pentru a ascunde butonul Partajează.",
       "resetPolicyLabel": "Resetare trageri",
       "resetNever": "Nu reseta numărul de trageri",
       "resetEveryNDays": "Resetează numărul de trageri la fiecare",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "Acces refuzat",
       "forbiddenDescription": "Acest link este invalid sau a expirat.",
       "comingSoonTitle": "În curând",
-      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă."
+      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă.",
+      "rateLimited": "Prea multe cereri. Așteaptă un moment și încearcă din nou."
     },
     "list": {
       "gamesPlayed": "Jocuri jucate",
       "participants": "Participanți",
-      "winners": "Câștigători"
+      "winners": "Câștigători",
+      "shares": "Recomandări"
     },
     "history": {
       "title": "Istoric",
       "played": "Jocuri",
       "remaining": "Extrageri rămase",
+      "shares": "Recomandări",
       "openedAt": "Prima deschidere",
       "lastPlayedAt": "Ultimul joc",
       "unknownContact": "Contact necunoscut",

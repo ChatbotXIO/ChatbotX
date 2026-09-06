@@ -57,8 +57,6 @@ export function getDefaultMinigameGeneralSettings(): MinigameGeneralSettings {
     openerTagIds: [],
     playerTagIds: [],
     newFriendTagIds: [],
-    shareEnabled: true,
-    shareMessage: "{{shareUrl}}",
   }
 }
 
@@ -187,6 +185,14 @@ export function getDefaultMinigameAppearance(
 export function getDefaultMinigamePlayerSettings(): MinigamePlayerSettings {
   return {
     drawsPerPerson: 1,
+    // Newly created minigames get referral bonuses on by default. The Zod
+    // default is deliberately `0` instead, so minigames saved before this
+    // field existed stay opt-out rather than silently handing out draws.
+    maxSharesPerPerson: 3,
+    // Sharing is off until an admin picks a node — there is no sensible
+    // default flow step to guess at.
+    sharingFlowId: null,
+    sharingNodeId: null,
     resetPolicy: "never",
   }
 }

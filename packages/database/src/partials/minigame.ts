@@ -33,8 +33,6 @@ export const minigameGeneralSettingsSchema = z
     openerTagIds: z.array(zodBigintAsString()).default([]),
     playerTagIds: z.array(zodBigintAsString()).default([]),
     newFriendTagIds: z.array(zodBigintAsString()).default([]),
-    shareEnabled: z.boolean().default(true),
-    shareMessage: z.string().max(1000).default("{{shareUrl}}"),
   })
   .refine((data) => data.playedAtTo >= data.playedAtFrom, {
     message: "playedAtTo must be on or after playedAtFrom",
@@ -55,15 +53,50 @@ export const minigameAppearanceSchema = z.object({
 })
 export type MinigameAppearance = z.infer<typeof minigameAppearanceSchema>
 
+/**
+ * Shared across both reset policies. Extended (not intersected) into each
+ * branch because `z.discriminatedUnion` requires every option to be a
+ * `ZodObject`, and `.and()` produces a `ZodIntersection`.
+ */
+const minigamePlayerSettingsBase = z.object({
+  drawsPerPerson: z.number().int().min(1).default(1),
+  /**
+   * Cap on bonus draws one player can earn by referring friends to this
+   * minigame (see `MinigameContact.sharesCount`). `0` disables referral
+   * bonuses. Lifetime, not per reset cycle: under `everyNDays` the cap keeps
+   * counting across cycles while unused bonus draws expire with the cycle.
+   *
+   * `playerSettings` is stored as unvalidated jsonb and is never parsed on
+   * read, so rows written before this field existed have no key at all —
+   * every consumer must read it as `maxSharesPerPerson ?? 0`, which also
+   * keeps referral bonuses off for minigames created before the feature.
+   */
+  maxSharesPerPerson: z.number().int().min(0).max(100).default(0),
+  /**
+   * The flow step run for a friend who arrives through a player's share link
+   * (the `minigame-share` `RefConfig` variant, handled in
+   * `apps/worker/src/integration/handlers/ref.ts`). `sharingNodeId === null`
+   * is the ONLY switch that hides the play screen's Share button.
+   *
+   * Resolved at click time rather than baked into the link, so changing the
+   * node here repairs every already-shared link instead of stranding them.
+   *
+   * Same unvalidated-jsonb caveat as `maxSharesPerPerson`: rows written
+   * before these fields existed have no key at all, so every server-side
+   * consumer must read them as `?? null` — the `$type<MinigamePlayerSettings>()`
+   * on the column will claim `string | null` for a value that is `undefined`.
+   */
+  sharingFlowId: zodBigintAsString().nullable().default(null),
+  sharingNodeId: zodBigintAsString().nullable().default(null),
+})
+
 export const minigamePlayerSettingsSchema = z.discriminatedUnion(
   "resetPolicy",
   [
-    z.object({
-      drawsPerPerson: z.number().int().min(1).default(1),
+    minigamePlayerSettingsBase.extend({
       resetPolicy: z.literal("never"),
     }),
-    z.object({
-      drawsPerPerson: z.number().int().min(1).default(1),
+    minigamePlayerSettingsBase.extend({
       resetPolicy: z.literal("everyNDays"),
       resetIntervalDays: z.number().int().min(1).default(1),
     }),

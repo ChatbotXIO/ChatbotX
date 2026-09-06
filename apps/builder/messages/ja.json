@@ -5642,10 +5642,7 @@
       "rulesDescription": "ルールの説明",
       "openerTags": "ゲームリンクを開いた人にタグを付ける",
       "playerTags": "プレイヤーにタグを付ける",
-      "newFriendTags": "新しい友達にタグを付ける",
-      "shareEnabled": "友達へのシェアを許可する",
-      "shareMessage": "シェアメッセージ",
-      "shareMessageHint": "実際のゲームリンクを挿入するには '{{shareUrl}}' を使用してください。削除しないでください。"
+      "newFriendTags": "新しい友達にタグを付ける"
     },
     "appearance": {
       "backgroundColor": "背景色",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "1人あたりの抽選回数",
+      "maxSharesPerPerson": "紹介によるボーナス抽選の上限",
+      "maxSharesPerPersonHint": "このプレイヤーの招待リンクから参加してメッセージを送った友だち1人につき、抽選回数が1回追加されます（この上限まで）。0 に設定すると紹介ボーナスを無効にします。ボーナス回数は次回リセットまでに使用する必要があります。",
+      "sharingNode": "共有ステップ",
+      "sharingNodeHint": "友だちがこのプレイヤーの共有リンクを開いたときに実行されるフローのステップです。空欄にすると共有ボタンを非表示にします。",
       "resetPolicyLabel": "抽選回数のリセット",
       "resetNever": "抽選回数をリセットしない",
       "resetEveryNDays": "抽選回数を次の日数ごとにリセットする",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "アクセスが拒否されました",
       "forbiddenDescription": "このリンクは無効か、期限切れです。",
       "comingSoonTitle": "近日公開",
-      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。"
+      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。",
+      "rateLimited": "リクエストが多すぎます。しばらく待ってからもう一度お試しください。"
     },
     "list": {
       "gamesPlayed": "プレイ回数",
       "participants": "参加者数",
-      "winners": "当選者数"
+      "winners": "当選者数",
+      "shares": "紹介数"
     },
     "history": {
       "title": "履歴",
       "played": "プレイ回数",
       "remaining": "残り回数",
+      "shares": "紹介数",
       "openedAt": "初回オープン",
       "lastPlayedAt": "最終プレイ",
       "unknownContact": "不明な連絡先",

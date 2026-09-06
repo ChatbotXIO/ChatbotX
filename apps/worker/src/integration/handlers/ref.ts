@@ -1,4 +1,9 @@
 import { decodeRef, encodeRef, type RefConfig } from "@chatbotx.io/business"
+import {
+  isMinigameWithinPlayWindow,
+  minigameContactService,
+  minigameService,
+} from "@chatbotx.io/business/minigame"
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
   flowModel,
@@ -145,6 +150,91 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
         },
       })
       emitSuccess()
+      return
+    }
+
+    if (refData.type === "minigame-share") {
+      logger.debug(`Minigame share ref: ${ref} (isNewContact=${isNewContact})`)
+      const { minigameId, referrerContactId } = refData
+
+      // `findUnscoped`, not `findOrFail`: a link for a deleted or disabled
+      // minigame is a normal end-of-life condition, and throwing here would
+      // turn every stale click into a permanently retrying BullMQ job.
+      const minigame = await minigameService.findUnscoped(minigameId)
+      if (!minigame) {
+        logger.warn(`Minigame share ref: minigame ${minigameId} not found`)
+        return
+      }
+      // Cross-tenant guard: the ref is fully attacker-controllable, so a
+      // crafted `mg_` could otherwise run another workspace's flow.
+      if (minigame.workspaceId !== conversation.workspaceId) {
+        logger.warn(`Minigame share ref: workspace mismatch for ${minigameId}`)
+        return
+      }
+      if (!minigame.enabled) {
+        logger.warn(`Minigame share ref: minigame ${minigameId} is disabled`)
+        return
+      }
+      // `enabled` stays true forever after a campaign ends, so the window is
+      // a separate gate: past it, neither the Sharing Node nor the referral
+      // credit should run — the bonus draw would be unspendable anyway.
+      if (!isMinigameWithinPlayWindow(minigame)) {
+        logger.warn(
+          `Minigame share ref: minigame ${minigameId} is outside its play window`,
+        )
+        return
+      }
+
+      // Legacy `playerSettings` jsonb predates these keys entirely — the
+      // drizzle `$type<>` lies about them being present.
+      const sharingFlowId = minigame.playerSettings.sharingFlowId ?? null
+      const sharingNodeId = minigame.playerSettings.sharingNodeId ?? null
+
+      let dispatched = false
+      if (sharingFlowId && sharingNodeId) {
+        try {
+          const sharingFlow = await findOrFail({
+            table: flowModel,
+            where: { id: sharingFlowId, workspaceId: conversation.workspaceId },
+            message: "Flow not found",
+          })
+
+          await integrationQueue.add(IntegrationJobAction.sendFlow, {
+            type: IntegrationJobAction.sendFlow,
+            data: {
+              conversationId: conversation,
+              contactInboxId: contactInbox,
+              flowId: sharingFlow.id,
+              nodeId: sharingNodeId,
+              origin: webhookChannelOrigin(),
+            },
+          })
+          dispatched = true
+        } catch (error) {
+          // An admin can delete the configured flow at any time; that must
+          // neither block the referral credit below nor retry forever.
+          logger.warn(error, "Minigame share ref: sharing flow unavailable")
+        }
+      }
+
+      // Credited even when no flow ran: the referral is about the friend
+      // arriving, not about the message they happened to receive.
+      try {
+        await minigameContactService.creditSharedLinkReferral({
+          minigame,
+          contactId: conversation.contactId,
+          contactInboxId: contactInbox.id,
+          referrerContactId,
+        })
+      } catch (error) {
+        logger.warn(error, "Failed to credit minigame share referral")
+      }
+
+      // Only report a bot response when one was actually enqueued, or the
+      // analytics dashboard records a reply that never happened.
+      if (dispatched) {
+        emitSuccess()
+      }
       return
     }
 

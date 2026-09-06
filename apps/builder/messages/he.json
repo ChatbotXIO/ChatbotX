@@ -5642,10 +5642,7 @@
       "rulesDescription": "תיאור החוקים",
       "openerTags": "תיוג אנשי קשר שפותחים את קישור המשחק",
       "playerTags": "תיוג שחקנים",
-      "newFriendTags": "תיוג חברים חדשים",
-      "shareEnabled": "אפשרו שיתוף עם חברים",
-      "shareMessage": "הודעת שיתוף",
-      "shareMessageHint": "השתמשו ב-'{{shareUrl}}' כדי להוסיף את קישור המשחק בפועל — נא לא להסיר אותו."
+      "newFriendTags": "תיוג חברים חדשים"
     },
     "appearance": {
       "backgroundColor": "צבע רקע",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "מספר הזדמנויות הגרלה לכל אדם",
+      "maxSharesPerPerson": "מקסימום הגרלות בונוס מהפניות",
+      "maxSharesPerPersonHint": "כל חבר שמצטרף דרך קישור ההזמנה של השחקן הזה ושולח לך הודעה מזכה אותו בהגרלה נוספת אחת, עד למגבלה הזו. הגדר 0 כדי לכבות בונוסי הפניה. יש להשתמש בהגרלות הבונוס לפני האיפוס הבא.",
+      "sharingNode": "שלב שיתוף",
+      "sharingNodeHint": "שלב התהליך שרץ כאשר חבר פותח את קישור השיתוף של שחקן זה. השאר ריק כדי להסתיר את כפתור השיתוף.",
       "resetPolicyLabel": "איפוס הגרלות",
       "resetNever": "אין לאפס את מספר ההגרלות",
       "resetEveryNDays": "איפוס מספר ההגרלות כל",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "הגישה נדחתה",
       "forbiddenDescription": "קישור זה אינו תקף או שפג תוקפו.",
       "comingSoonTitle": "בקרוב",
-      "comingSoonDescription": "לא ניתן עדיין לשחק בסוג מיני-משחק זה."
+      "comingSoonDescription": "לא ניתן עדיין לשחק בסוג מיני-משחק זה.",
+      "rateLimited": "יותר מדי בקשות. המתן רגע ונסה שוב."
     },
     "list": {
       "gamesPlayed": "משחקים ששוחקו",
       "participants": "משתתפים",
-      "winners": "זוכים"
+      "winners": "זוכים",
+      "shares": "הפניות"
     },
     "history": {
       "title": "היסטוריה",
       "played": "משחקים",
       "remaining": "הגרלות שנותרו",
+      "shares": "הפניות",
       "openedAt": "נפתח לראשונה",
       "lastPlayedAt": "שוחק לאחרונה",
       "unknownContact": "איש קשר לא ידוע",

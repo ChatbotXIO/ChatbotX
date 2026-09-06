@@ -197,6 +197,18 @@ export function MinigamesTable({ workspaceId, promises }: MinigamesTableProps) {
         enableSorting: true,
       },
       {
+        id: "sharesCount",
+        accessorKey: "sharesCount",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("minigames.list.shares")}
+          />
+        ),
+        cell: ({ row }) => <span>{row.original.sharesCount}</span>,
+        enableSorting: true,
+      },
+      {
         id: "enabled",
         accessorKey: "enabled",
         size: 10,

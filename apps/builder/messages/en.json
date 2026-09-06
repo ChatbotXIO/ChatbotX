@@ -5642,10 +5642,7 @@
       "rulesDescription": "Rules Description",
       "openerTags": "Tag contacts who open the game link",
       "playerTags": "Tag players",
-      "newFriendTags": "Tag new friends",
-      "shareEnabled": "Allow sharing with friends",
-      "shareMessage": "Sharing Message",
-      "shareMessageHint": "Use '{{shareUrl}}' to insert the actual game link — please don't remove it."
+      "newFriendTags": "Tag new friends"
     },
     "appearance": {
       "backgroundColor": "Background Color",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Number of lucky draw chances per person",
+      "maxSharesPerPerson": "Max bonus draws from referrals",
+      "maxSharesPerPersonHint": "Each friend who joins through this player's invite link and messages you gets them 1 extra draw, up to this limit. Set 0 to turn referral bonuses off. Bonus draws must be used before the next reset.",
+      "sharingNode": "Sharing node",
+      "sharingNodeHint": "The flow step that runs when a friend opens this player's share link. Leave empty to hide the Share button.",
       "resetPolicyLabel": "Reset draws",
       "resetNever": "Do not reset the number of draws",
       "resetEveryNDays": "Reset the number of draws every",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "Access denied",
       "forbiddenDescription": "This link is invalid or has expired.",
       "comingSoonTitle": "Coming soon",
-      "comingSoonDescription": "This minigame type is not playable yet."
+      "comingSoonDescription": "This minigame type is not playable yet.",
+      "rateLimited": "Too many requests. Please wait a moment and try again."
     },
     "list": {
       "gamesPlayed": "Games played",
       "participants": "Participants",
-      "winners": "Winners"
+      "winners": "Winners",
+      "shares": "Referrals"
     },
     "history": {
       "title": "History",
       "played": "Plays",
       "remaining": "Remaining draws",
+      "shares": "Referrals",
       "openedAt": "First opened",
       "lastPlayedAt": "Last played",
       "unknownContact": "Unknown contact",

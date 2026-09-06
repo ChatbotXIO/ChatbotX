@@ -5642,10 +5642,7 @@
       "rulesDescription": "Descripción de las reglas",
       "openerTags": "Etiquetar a los contactos que abren el enlace del juego",
       "playerTags": "Etiquetar a los jugadores",
-      "newFriendTags": "Etiquetar a los nuevos amigos",
-      "shareEnabled": "Permitir compartir con amigos",
-      "shareMessage": "Mensaje para compartir",
-      "shareMessageHint": "Usa '{{shareUrl}}' para insertar el enlace real del juego — por favor, no lo elimines."
+      "newFriendTags": "Etiquetar a los nuevos amigos"
     },
     "appearance": {
       "backgroundColor": "Color de fondo",
@@ -5661,6 +5658,10 @@
     },
     "playerSettings": {
       "drawsPerPerson": "Número de intentos de sorteo por persona",
+      "maxSharesPerPerson": "Máx. tiradas extra por referidos",
+      "maxSharesPerPersonHint": "Cada amigo que se una mediante el enlace de invitación de este jugador y te escriba le da 1 tirada extra, hasta este límite. Pon 0 para desactivar las bonificaciones por recomendación. Las tiradas extra deben usarse antes del siguiente reinicio.",
+      "sharingNode": "Paso de compartir",
+      "sharingNodeHint": "El paso del flujo que se ejecuta cuando un amigo abre el enlace para compartir de este jugador. Déjalo vacío para ocultar el botón Compartir.",
       "resetPolicyLabel": "Reiniciar intentos",
       "resetNever": "No reiniciar el número de intentos",
       "resetEveryNDays": "Reiniciar el número de intentos cada",
@@ -5679,17 +5680,20 @@
       "forbiddenTitle": "Acceso denegado",
       "forbiddenDescription": "Este enlace no es válido o ha caducado.",
       "comingSoonTitle": "Próximamente",
-      "comingSoonDescription": "Este tipo de minijuego aún no está disponible."
+      "comingSoonDescription": "Este tipo de minijuego aún no está disponible.",
+      "rateLimited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo."
     },
     "list": {
       "gamesPlayed": "Partidas jugadas",
       "participants": "Participantes",
-      "winners": "Ganadores"
+      "winners": "Ganadores",
+      "shares": "Referidos"
     },
     "history": {
       "title": "Historial",
       "played": "Jugadas",
       "remaining": "Tiradas restantes",
+      "shares": "Referidos",
       "openedAt": "Primera apertura",
       "lastPlayedAt": "Última jugada",
       "unknownContact": "Contacto desconocido",

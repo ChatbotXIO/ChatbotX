@@ -27,6 +27,7 @@ type LuckyWheelPlayScreenProps = {
   minigame: MinigameModel
   contactState: MinigameContactModel
   token: string
+  shareUrl: string | null
 }
 
 const FAST_SPIN_TURNS = 2
@@ -42,6 +43,7 @@ export function LuckyWheelPlayScreen({
   minigame,
   contactState,
   token,
+  shareUrl,
 }: LuckyWheelPlayScreenProps) {
   const t = useTranslations()
   const { appearance, generalSettings, prizeSettings } = minigame
@@ -172,6 +174,7 @@ export function LuckyWheelPlayScreen({
       name={generalSettings.name}
       prizeDescriptionImageUrl={appearance.prizeDescriptionImage.url}
       rulesDescription={generalSettings.rulesDescription}
+      shareUrl={shareUrl}
       showName={generalSettings.showName ?? true}
       status={
         <>
