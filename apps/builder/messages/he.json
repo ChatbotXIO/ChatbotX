@@ -1542,6 +1542,7 @@
   "validation": {
     "maxSize": "גודל הקובץ חורג מהמגבלה המרבית",
     "maxItemsReached": "מותר לכל היותר {max} {feature} בכל סביבת עבודה",
+    "maxCharacters": "מקסימום {max} תווים.",
     "invalidApiKey": "מפתח API לא תקין",
     "maxMustBeGreaterThanMin": "{maxField} חייב להיות גדול או שווה ל-{minField}"
   },

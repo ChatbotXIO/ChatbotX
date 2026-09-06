@@ -3378,6 +3378,7 @@
   "validation": {
     "maxSize": "ファイルサイズが上限を超えています",
     "maxItemsReached": "ワークスペースごとに許可される{feature}は最大{max}件です",
+    "maxCharacters": "最大{max}文字です。",
     "invalidApiKey": "APIキーが無効です",
     "maxMustBeGreaterThanMin": "{maxField}は{minField}以上である必要があります"
   },

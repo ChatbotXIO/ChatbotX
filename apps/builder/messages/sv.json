@@ -4706,6 +4706,7 @@
   "validation": {
     "invalidApiKey": "Ogiltig API-nyckel",
     "maxItemsReached": "Högst {max} {feature} tillåts per arbetsyta",
+    "maxCharacters": "Högst {max} tecken.",
     "maxMustBeGreaterThanMin": "{maxField} måste vara större än eller lika med {minField}",
     "maxSize": "Filstorleken överskrider maxgränsen"
   },

@@ -5,7 +5,11 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { aiFileModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
+import {
+  getHeavyJobOptions,
+  HeavyJobAction,
+  heavyQueue,
+} from "@chatbotx.io/worker-config"
 import { getTranslations } from "next-intl/server"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -41,12 +45,19 @@ export const createAIFileAction = workspaceActionClient
       .returning({ id: aiFileModel.id })
 
     // Enqueue embedding job right after creation
-    await aiAgentQueue.add(AIJobAction.processAIFile, {
-      type: AIJobAction.processAIFile,
-      data: {
-        aiFileId: created[0].id,
+    await heavyQueue.add(
+      HeavyJobAction.processAIFile,
+      {
+        type: HeavyJobAction.processAIFile,
+        data: {
+          aiFileId: created[0].id,
+        },
       },
-    })
+      {
+        ...getHeavyJobOptions(HeavyJobAction.processAIFile),
+        jobId: `heavy-ai-file-${created[0].id}`,
+      },
+    )
 
     await auditService.record({
       workspaceId,

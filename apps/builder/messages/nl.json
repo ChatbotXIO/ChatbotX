@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "De bestandsgrootte overschrijdt de maximale limiet",
     "maxItemsReached": "Maximaal {max} {feature} toegestaan per workspace",
+    "maxCharacters": "Maximaal {max} tekens.",
     "invalidApiKey": "Ongeldige API-sleutel",
     "maxMustBeGreaterThanMin": "{maxField} moet groter zijn dan of gelijk zijn aan {minField}"
   },

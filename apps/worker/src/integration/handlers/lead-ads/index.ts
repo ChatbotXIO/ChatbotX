@@ -198,12 +198,15 @@ export async function processLeadgen(
     }
 
     if (automation.flowId) {
-      await runFlowNode({
-        flowId: automation.flowId,
-        conversationId: conversation,
-        contactInboxId: contactInbox,
-        origin: "channel",
-      })
+      await runFlowNode(
+        {
+          flowId: automation.flowId,
+          conversationId: conversation,
+          contactInboxId: contactInbox,
+          origin: "channel",
+        },
+        { flowExecutionKey: job.id },
+      )
     }
 
     await facebookLeadAdsAutomationService.incrementLeadsHandled(automation.id)

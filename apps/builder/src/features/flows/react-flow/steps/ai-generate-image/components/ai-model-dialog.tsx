@@ -36,12 +36,13 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
     getValues: getParentValues,
     setValue: setParentValue,
   } = useFormContext()
-  const provider = useWatch({ name: `${parentName}.provider`, control })
 
   const form = useForm({
     resolver: zodResolver(aiGenerateImageSchema),
     defaultValues: getParentValues(parentName),
   })
+  const provider = useWatch({ name: `${parentName}.provider`, control })
+  const model = useWatch({ control: form.control, name: "model" })
 
   useEffect(() => {
     if (!open) {
@@ -96,7 +97,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
               {isOpenAI && <QualitySelect name="quality" />}
 
-              <SizeSelect name="size" provider={provider} />
+              <SizeSelect model={model ?? ""} name="size" provider={provider} />
 
               <CustomFieldSelect
                 allowCreate={true}

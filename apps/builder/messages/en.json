@@ -3586,6 +3586,7 @@
   "validation": {
     "maxSize": "File size exceeds maximum limit",
     "maxItemsReached": "Maximum {max} {feature} allowed per workspace",
+    "maxCharacters": "Maximum {max} characters.",
     "invalidApiKey": "Invalid API key",
     "maxMustBeGreaterThanMin": "{maxField} must be greater than or equal to {minField}"
   },

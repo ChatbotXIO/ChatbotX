@@ -4,10 +4,8 @@ import {
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
 import { resolveTenantSettings } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
-  type AIGenerateImageQualityType,
   type AIGenerateImageSchema,
   getAIGeneratedImagePath,
   IMAGE_AUTO_VALUE,
@@ -16,53 +14,21 @@ import {
   IMAGE_DEFAULT_MIME_TYPE,
 } from "@chatbotx.io/flow-config"
 import { generateImage } from "ai"
-import { normalizeError } from "universal-error-normalizer"
-import { logger } from "../../../lib/logger"
-import {
-  getIntegrationContext,
-  saveResultToCustomField,
-} from "../../utils/contact"
-import type { ExecuteStepProps } from "../flow"
-import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
-import type { ExecuteStepResult } from "../step"
+import { env } from "../../env"
+import type { HeavyStepComputeProps } from "../../integration/handlers/flow-utils"
+import { getIntegrationContext } from "../../integration/utils/contact"
+import { logger } from "../../lib/logger"
+import { ExpectedHeavyStepError } from "./errors"
+import { getOpenAIImageQuality } from "./image-options"
 
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"])
-const GPT_IMAGE_QUALITY_MAP: Record<
-  AIGenerateImageQualityType,
-  "auto" | "high" | "medium" | "low"
-> = {
-  auto: "auto",
-  hd: "high",
-  md: "medium",
-  ld: "low",
-}
 
-const DALL_E_QUALITY_MAP: Record<
-  AIGenerateImageQualityType,
-  "auto" | "hd" | "standard"
-> = {
-  auto: "auto",
-  hd: "hd",
-  md: "standard",
-  ld: "standard",
-}
-
-function getOpenAIImageQuality(
-  modelId: string,
-  quality: AIGenerateImageQualityType,
-) {
-  return modelId.startsWith("gpt-image") || modelId.startsWith("chatgpt-image")
-    ? GPT_IMAGE_QUALITY_MAP[quality]
-    : DALL_E_QUALITY_MAP[quality]
-}
-
-export async function handleAIGenerateImage({
+export async function generateImageOutput({
   conversation,
-  contactInbox: baseContactInbox,
+  contactInbox,
   metadata,
   step,
-}: ExecuteStepProps<AIGenerateImageSchema>): Promise<ExecuteStepResult> {
+}: HeavyStepComputeProps<AIGenerateImageSchema>): Promise<string> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
@@ -73,17 +39,13 @@ export async function handleAIGenerateImage({
     })
 
     if (!aiConfig) {
-      return {
-        status: "error",
-        errorMessage: "AI integration not found",
-        result: null,
-      }
+      throw new ExpectedHeavyStepError("AI integration not found")
     }
 
     const ctx = await getIntegrationContext({
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
-      contactInbox: baseContactInbox,
+      contactInbox,
     })
 
     if (!ctx) {
@@ -94,17 +56,11 @@ export async function handleAIGenerateImage({
         },
         "[ai-generate-image] Integration context not found, skipping",
       )
-      return {
-        status: "error",
-        errorMessage: "Integration context not found",
-        result: null,
-      }
+      throw new ExpectedHeavyStepError("Integration context not found")
     }
 
     let buffer: Buffer | null = null
-
     const modelId = step.model
-
     const model = createAIImageModelInstance({
       model: aiConfig,
       provider: step.provider,
@@ -153,8 +109,8 @@ export async function handleAIGenerateImage({
       throw new Error("[ai-generate-image] Empty image payload from provider")
     }
 
-    if (buffer.length > MAX_IMAGE_BYTES) {
-      throw new Error(
+    if (buffer.length > env.HEAVY_MAX_IMAGE_BYTES) {
+      throw new ExpectedHeavyStepError(
         `[ai-generate-image] Image too large: ${buffer.length} bytes`,
       )
     }
@@ -164,8 +120,6 @@ export async function handleAIGenerateImage({
       ? rawExt
       : IMAGE_DEFAULT_EXTENSION
 
-    // Use a deterministic execution ID so BullMQ retries overwrite the same
-    // S3 object instead of orphaning the previously uploaded file.
     const executionId = metadata?.stepId ?? step.id
     const fileName = `${executionId}.${extension}`
     const storagePath = getAIGeneratedImagePath({
@@ -181,36 +135,8 @@ export async function handleAIGenerateImage({
     const { storageUrl } = await resolveTenantSettings({
       workspaceId: conversation.workspaceId,
     })
-    const finalImageUrl = getPublicFileUrl(storagePath, storageUrl)
 
-    if (step.outputFieldId) {
-      await saveResultToCustomField({
-        contactId: conversation.contactId,
-        customFieldId: step.outputFieldId,
-        fullText: finalImageUrl,
-        workspaceId: conversation.workspaceId,
-        contactInboxId: baseContactInbox.id,
-      })
-    }
-
-    return { status: "success", result: null }
-  } catch (err) {
-    const error = normalizeError(err)
-    logger.error(
-      {
-        err: error,
-        workspaceId: conversation.workspaceId,
-        conversationId: conversation.id,
-      },
-      "[ai-generate-image] Step failed",
-    )
-    await logProviderError({
-      provider: aiErrorLogProvider(step.provider),
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      error: err,
-    })
-    return { status: "error", errorMessage: error.message, result: null }
+    return getPublicFileUrl(storagePath, storageUrl)
   } finally {
     clearTimeout(timeoutId)
   }

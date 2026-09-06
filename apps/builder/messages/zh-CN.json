@@ -4706,6 +4706,7 @@
   "validation": {
     "invalidApiKey": "API 密钥无效",
     "maxItemsReached": "最大 {max}{feature}",
+    "maxCharacters": "最多 {max} 个字符。",
     "maxMustBeGreaterThanMin": "{maxField} 必须大于或等于 {minField}",
     "maxSize": "文件大小超出上限"
   },

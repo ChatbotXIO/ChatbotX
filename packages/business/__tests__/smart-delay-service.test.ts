@@ -268,6 +268,17 @@ describe("smartDelayService", () => {
     ).resolves.toBe(false)
   })
 
+  test("requeueClaimedRun only restores rows claimed as completed", async () => {
+    mockDbReturning.mockResolvedValueOnce([{ id: "row-1" }])
+
+    await expect(
+      smartDelayService.requeueClaimedRun({ id: "row-1" }),
+    ).resolves.toBe(true)
+
+    expect(mockDbSet).toHaveBeenCalledWith({ status: "scheduled" })
+    expect(mockEq).toHaveBeenCalledWith(expect.anything(), "completed")
+  })
+
   test("listStuckScheduled returns a bounded batch of overdue scheduled rows", async () => {
     const olderThan = new Date("2026-07-16T00:10:00.000Z")
     const stuckRows = [

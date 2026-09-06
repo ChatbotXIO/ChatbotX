@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "Dosya boyutu izin verilen maksimum sınırı aşıyor",
     "maxItemsReached": "Çalışma alanı başına en fazla {max} {feature} izin verilir",
+    "maxCharacters": "En fazla {max} karakter.",
     "invalidApiKey": "Geçersiz API anahtarı",
     "maxMustBeGreaterThanMin": "{maxField}, {minField} değerinden büyük veya ona eşit olmalıdır"
   },

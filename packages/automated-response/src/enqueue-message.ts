@@ -1,10 +1,7 @@
 import { aiAgentService, workspaceService } from "@chatbotx.io/business"
 import { isSmartResponseDelayOption } from "@chatbotx.io/database/partials"
 import { simpleQueue } from "@chatbotx.io/redis"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
+import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
 import { getKey } from "./constants"
 import { matchesAnyKeywordRule } from "./keyword-match"
 import { logger } from "./lib/logger"
@@ -60,10 +57,10 @@ export const enqueueMessage = async (props: {
 
   try {
     await Promise.all([
-      integrationQueue.add(
-        IntegrationJobAction.processAutomatedResonse,
+      aiAgentQueue.add(
+        AIJobAction.processAutomatedResponse,
         {
-          type: IntegrationJobAction.processAutomatedResonse,
+          type: AIJobAction.processAutomatedResponse,
           data: {
             conversationId: props.conversationId,
             contactInboxId: props.contactInboxId,
@@ -78,6 +75,7 @@ export const enqueueMessage = async (props: {
             replace: true,
           },
           delay: timing.delaySeconds * 1000,
+          jobId: `automated-response-${props.messageId}`,
         },
       ),
       simpleQueue.enqueue(

@@ -257,6 +257,8 @@ export const openAITTSVoiceTypes = z.enum([
   "sage",
   "shimmer",
   "verse",
+  "marin",
+  "cedar",
 ])
 export type OpenAITTSVoiceType = z.infer<typeof openAITTSVoiceTypes>
 

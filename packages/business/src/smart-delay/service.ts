@@ -226,6 +226,33 @@ class SmartDelayService extends BaseService {
     return rows.length > 0
   }
 
+  /**
+   * Re-open a wait row whose claimed resume job failed before completing the
+   * flow. The compare-and-set prevents a stale retry from resurrecting a row
+   * that a different terminal path has since changed.
+   */
+  async requeueClaimedRun(props: {
+    tx?: DatabaseClient
+    id: string
+  }): Promise<boolean> {
+    const { tx = db, id } = props
+    const rows = await tx
+      .update(contactOnSmartDelayModel)
+      .set({ status: smartDelayStatuses.enum.scheduled })
+      .where(
+        and(
+          eq(contactOnSmartDelayModel.id, id),
+          eq(
+            contactOnSmartDelayModel.status,
+            smartDelayStatuses.enum.completed,
+          ),
+        ),
+      )
+      .returning({ id: contactOnSmartDelayModel.id })
+
+    return rows.length > 0
+  }
+
   // Recovery input for the scanner sweeper: scheduled rows whose wake-up never
   // ran (lost or stuck BullMQ job). Returns triggerAt too so the caller can
   // rebuild the deterministic jobId and remove the stale job BEFORE the row is
