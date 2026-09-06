@@ -1,18 +1,12 @@
 "use server"
 
-import { auditService } from "@chatbotx.io/business/audit"
+import { triggerService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq } from "@chatbotx.io/database/client"
-import { folderTypes } from "@chatbotx.io/database/partials"
-import { triggerModel } from "@chatbotx.io/database/schema"
-import { updateTriggerCache } from "@chatbotx.io/events"
-import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
-import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"
 import {
@@ -33,10 +27,8 @@ export const createTriggerAction = workspaceActionClient
     }) => {
       const t = await getTranslations()
 
-      const existingTriggersCount = await db.$count(
-        triggerModel,
-        eq(triggerModel.workspaceId, workspaceId),
-      )
+      const existingTriggersCount =
+        await triggerService.countByWorkspaceId(workspaceId)
 
       if (existingTriggersCount >= MAX_TRIGGERS_PER_CHATBOT) {
         throw new ChatbotXException(
@@ -47,35 +39,9 @@ export const createTriggerAction = workspaceActionClient
         )
       }
 
-      if (parsedInput.folderId) {
-        await ensureFolderIsExists(
-          parsedInput.folderId,
-          workspaceId,
-          folderTypes.enum.trigger,
-        )
-      }
-
-      const { ...triggerData } = parsedInput
-
-      const result = await db
-        .insert(triggerModel)
-        .values({
-          id: createId(),
-          ...triggerData,
-          actions: [],
-          workspaceId,
-        })
-        .returning()
-        .then((rows) => rows[0])
-
-      await updateTriggerCache(workspaceId)
-
-      await auditService.record({
+      return await triggerService.create({
+        ...parsedInput,
         workspaceId,
-        action: "create",
-        detail: `created a new trigger (#${result.id})`,
       })
-
-      return result
     },
   )

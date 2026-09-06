@@ -8,6 +8,7 @@ import {
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import type { FlowVersionModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 
@@ -284,6 +285,86 @@ class FlowVersionService extends BaseService {
 
   async invalidateList(flowId: string): Promise<void> {
     await this.invalidateCacheTags(`flows:${flowId}:versions`)
+  }
+
+  /**
+   * Publishes the flow's draft version as a new immutable version: resets
+   * every other `isLatest` version for the flow, syncs the draft's
+   * nodes/edges to what was just published, inserts the new published
+   * version, and repoints `Flow.currentVersionId` at it — all in one
+   * transaction, mirroring `publish-flow-action.ts` verbatim.
+   */
+  async publish(input: {
+    workspaceId: string
+    flowId: string
+    nodes: FlowVersionModel["nodes"]
+    edges: FlowVersionModel["edges"]
+  }): Promise<void> {
+    const flow = await db.query.flowModel.findFirst({
+      where: {
+        id: input.flowId,
+        workspaceId: input.workspaceId,
+      },
+      with: {
+        flowVersions: {
+          where: {
+            isDraft: true,
+          },
+        },
+      },
+    })
+
+    if (!flow || flow.flowVersions.length === 0) {
+      throw notFoundException("Flow not found")
+    }
+
+    const draftVersion = flow.flowVersions[0]
+
+    await db.transaction(async (tx) => {
+      // Remove all other latest versions
+      await tx
+        .update(flowVersionModel)
+        .set({
+          isLatest: false,
+        })
+        .where(
+          and(
+            eq(flowVersionModel.flowId, flow.id),
+            eq(flowVersionModel.isLatest, true),
+          ),
+        )
+
+      await tx
+        .update(flowVersionModel)
+        .set({
+          nodes: input.nodes,
+          edges: input.edges,
+        })
+        .where(eq(flowVersionModel.id, draftVersion.id))
+
+      const newVersionId = createId()
+      await tx.insert(flowVersionModel).values({
+        id: newVersionId,
+        workspaceId: flow.workspaceId,
+        flowId: flow.id,
+        isDraft: false,
+        isLatest: true,
+        nodes: input.nodes,
+        edges: input.edges,
+        startNodeId: draftVersion.startNodeId,
+      })
+
+      await tx
+        .update(flowModel)
+        .set({
+          currentVersionId: newVersionId,
+        })
+        .where(eq(flowModel.id, flow.id))
+    })
+
+    await this.invalidateCacheTags(`flows:${flow.id}:versions`)
+
+    await this.audit("publish", `published a flow (#${flow.id})`)
   }
 }
 

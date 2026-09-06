@@ -5,6 +5,7 @@ import {
   db,
   desc,
   eq,
+  findOrFail,
   gt,
   inArray,
   isNotNull,
@@ -49,9 +50,10 @@ import type {
 } from "@chatbotx.io/database/types"
 import { chunkById, likeContains } from "@chatbotx.io/database/utils"
 import type { WaTemplateParams } from "@chatbotx.io/flow-config"
+import { createId } from "@chatbotx.io/utils"
 import { startOfMinute } from "date-fns"
 import { BaseService } from "../base.service"
-import { ChatbotXException } from "../errors"
+import { ChatbotXException, validationException } from "../errors"
 import { inboxService } from "../inbox/service"
 import type {
   BroadcastAudienceInput,
@@ -1070,6 +1072,182 @@ class BroadcastService extends BaseService {
           .limit(chunkSize),
       { chunkSize, callback: onChunk },
     )
+  }
+
+  /**
+   * Validates channel/subaction/flow-or-template rules, verifies any
+   * integration ids and the flow/template actually belong to the workspace,
+   * resolves the broadcast's stored `name`, inserts it, and audits — the
+   * full `createBroadcastAction` body. Every validation failure throws
+   * `validationException(field, message)` so the action can re-map it to a
+   * `returnValidationErrors` payload on the same field.
+   */
+  async create(
+    input: UpdateDraftBroadcastData & {
+      workspaceId: string
+      canViewEmailAndPhone: boolean
+    },
+  ): Promise<BroadcastModel> {
+    const { workspaceId, canViewEmailAndPhone, buttons, saveAsDraft, ...rest } =
+      input
+
+    const capability = findBroadcastChannelCapability(rest.channel)
+    if (!capability) {
+      throw validationException("channel", "Unsupported broadcast channel")
+    }
+    if (!capability.subactions.includes(rest.subaction)) {
+      throw validationException("subaction", "Unsupported broadcast subaction")
+    }
+    if (!(rest.flowId || rest.templateId)) {
+      throw validationException(
+        "flowId",
+        "Either flow or template must be selected",
+      )
+    }
+    if (rest.templateId && !capability.supportsTemplateBroadcast) {
+      throw validationException(
+        "templateId",
+        "Template broadcasts are not supported for this channel",
+      )
+    }
+
+    // Never trust integration ids from the client: they scope the audience,
+    // so a foreign id would let a broadcast target another workspace's pages.
+    // Checked independently so the validation error lands on the field that
+    // actually failed (the original action validated each id on its own).
+    if (rest.integrationMessengerId) {
+      await this.assertBroadcastIntegrationsOwned({
+        workspaceId,
+        integrationMessengerId: rest.integrationMessengerId,
+      }).catch(() => {
+        throw validationException(
+          "integrationMessengerId",
+          "Integration not found",
+        )
+      })
+    }
+    if (rest.integrationWhatsappId) {
+      await this.assertBroadcastIntegrationsOwned({
+        workspaceId,
+        integrationWhatsappId: rest.integrationWhatsappId,
+      }).catch(() => {
+        throw validationException(
+          "integrationWhatsappId",
+          "Integration not found",
+        )
+      })
+    }
+
+    let broadcastName = DEFAULT_BROADCAST_NAME
+    if (rest.flowId) {
+      broadcastName = await this.requireFlowName(
+        workspaceId,
+        rest.flowId,
+      ).catch(() => {
+        throw validationException("flowId", "Flow not found")
+      })
+    }
+
+    if (rest.templateId) {
+      const templateBroadcastName = await this.resolveTemplateBroadcastName({
+        workspaceId,
+        channel: rest.channel,
+        templateId: rest.templateId,
+        integrationMessengerId: rest.integrationMessengerId,
+        integrationWhatsappId: rest.integrationWhatsappId,
+      })
+
+      if (!templateBroadcastName) {
+        throw validationException("templateId", "Template not found")
+      }
+
+      broadcastName = templateBroadcastName
+    }
+
+    const contactFilter = pruneEmailPhoneFilterConditions(
+      rest.contactFilter,
+      canViewEmailAndPhone,
+    )
+
+    const [broadcast] = await db
+      .insert(broadcastModel)
+      .values({
+        ...rest,
+        contactFilter,
+        name: broadcastName,
+        workspaceId,
+        status: saveAsDraft ? "draft" : "scheduled",
+        schedulesAt: startOfMinute(new Date(rest.schedulesAt ?? new Date())),
+        templateData: rest.templateData
+          ? {
+              ...(rest.templateData as Record<string, unknown>),
+              buttons: buttons ?? [],
+            }
+          : null,
+      })
+      .returning()
+
+    await this.audit("create", `created a new broadcast (#${broadcast.id})`)
+
+    // A draft is never launched — it only leaves `draft` through
+    // `scheduleBroadcastAction`, which records its own `launch` entry.
+    if (rest.schedulesType === "now" && !saveAsDraft) {
+      await this.audit("launch", `launched a broadcast (#${broadcast.id})`)
+    }
+
+    return broadcast
+  }
+
+  /**
+   * Clones a `sent`/`failed` broadcast as a new immediately-scheduled one.
+   * The transaction wraps a single insert — kept verbatim rather than
+   * simplified, to avoid any semantic argument about what belongs inside it.
+   */
+  async resend(input: {
+    workspaceId: string
+    id: string
+    contactFilter?: ContactFilterCriteriaInput | null
+  }): Promise<BroadcastModel> {
+    const broadcast = await findOrFail({
+      table: broadcastModel,
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
+      },
+    })
+    if (broadcast.status !== "sent" && broadcast.status !== "failed") {
+      throw new ChatbotXException("Broadcast is not sent")
+    }
+
+    const newBroadcast = await db.transaction(async (tx) => {
+      const inserted = await tx
+        .insert(broadcastModel)
+        .values({
+          workspaceId: input.workspaceId,
+          flowId: broadcast.flowId,
+          integrationWhatsappId: broadcast.integrationWhatsappId,
+          integrationMessengerId: broadcast.integrationMessengerId,
+          channel: broadcast.channel,
+          subaction: broadcast.subaction,
+          templateId: broadcast.templateId,
+          templateData: broadcast.templateData,
+          status: "scheduled",
+          schedulesType: "now",
+          schedulesAt: new Date(),
+          contactFilter: input.contactFilter,
+          name: `${broadcast.name} (Resend)`,
+          id: createId(),
+        })
+        .returning()
+        .then((result) => result[0])
+
+      return inserted
+    })
+
+    await this.audit("launch", `launched a broadcast (#${newBroadcast.id})`)
+
+    return newBroadcast
   }
 }
 

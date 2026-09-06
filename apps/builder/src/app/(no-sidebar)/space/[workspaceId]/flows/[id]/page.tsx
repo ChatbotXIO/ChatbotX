@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { flowRepository } from "@chatbotx.io/database/repositories"
 import { notFound } from "next/navigation"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { isSameContent } from "@/features/flows/flow-version-content"
@@ -18,14 +18,9 @@ export default async function FlowPage({ params }: FlowPageProps) {
 
   await requireWorkspacePermission(data.workspaceId, "flows")
 
-  const flow = await db.query.flowModel.findFirst({
-    where: {
-      id: data.id,
-      workspaceId: data.workspaceId,
-    },
-    with: {
-      flowVersions: true,
-    },
+  const flow = await flowRepository.findWithVersions({
+    id: data.id,
+    workspaceId: data.workspaceId,
   })
   if (!flow) {
     return notFound()

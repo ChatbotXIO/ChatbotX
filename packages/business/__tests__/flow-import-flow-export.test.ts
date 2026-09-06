@@ -44,6 +44,10 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   rootFolderId: "0",
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  flowRepository: { listIdsByIds: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   flowAnalyticsSessionModel,
   flowModel,
@@ -52,6 +56,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   remapFlowGraphReferences: mockRemapFlowGraphReferences,
+  sendMessageNodeDefaultFn: vi.fn(() => ({ id: "default-node" })),
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({

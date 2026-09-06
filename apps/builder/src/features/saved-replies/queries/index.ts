@@ -1,17 +1,10 @@
-import { db } from "@chatbotx.io/database/client"
+import { savedReplyService } from "@chatbotx.io/business"
 import type { ListSavedReplyResponse } from "../schema/mutation"
 
 export async function listSavedReplies(input: {
   workspaceId: string
 }): Promise<ListSavedReplyResponse> {
-  const data = await db.query.savedReplyModel.findMany({
-    where: {
-      workspaceId: input.workspaceId,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  })
+  const data = await savedReplyService.listByWorkspaceId(input.workspaceId)
 
   return { data }
 }
