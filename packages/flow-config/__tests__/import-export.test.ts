@@ -46,12 +46,12 @@ const buildFixtureFlow = (): FlowExportedFlow => {
     detailProps: {
       steps: [
         {
-          id: "cond-1",
+          id: "20",
           stepType: stepTypes.enum.condition,
-          otherwiseId: "otherwise-1",
+          otherwiseId: "21",
           cases: [
             {
-              id: "case-1",
+              id: "22",
               operator: "and",
               conditions: [{ field: "name", operator: "equals", value: "Ada" }],
             },

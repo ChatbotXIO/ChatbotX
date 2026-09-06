@@ -122,7 +122,7 @@ describe("OpenAI-compatible AI flow steps", () => {
       provider: "openaiCompatible",
       integrationId: "integration-1",
       model: "agent-model",
-      aiAgentId: "agent-1",
+      aiAgentId: "1",
       message: "Reply from this message",
       outputFieldId: "output-field",
     })
@@ -133,7 +133,7 @@ describe("OpenAI-compatible AI flow steps", () => {
   test("rejects OpenAI-compatible generate text agent without integration or model", () => {
     const step = aiGenerateTextAgentDefaultFn({
       provider: "openaiCompatible",
-      aiAgentId: "agent-1",
+      aiAgentId: "1",
       message: "Reply from this message",
       outputFieldId: "output-field",
     })

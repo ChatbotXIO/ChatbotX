@@ -2,10 +2,10 @@ import { describe, expect, test } from "vitest"
 import { appointmentSchedulingStepSchema, metadataSchema } from "../src"
 
 const baseStep = {
-  id: "step-1",
+  id: "1",
   stepType: "appointmentScheduling",
   mode: "checkAvailability",
-  calendarId: "calendar-1",
+  calendarId: "1",
   outputCustomFieldId: "output-field",
   states: [
     { id: "1", stateType: "success" },
@@ -46,10 +46,10 @@ describe("appointment scheduling schemas", () => {
 
   test("bookFromCustomField requires dateTimeFieldId", () => {
     const step = {
-      id: "step-1",
+      id: "1",
       stepType: "appointmentScheduling",
       mode: "bookFromCustomField",
-      calendarId: "calendar-1",
+      calendarId: "1",
       states: [
         { id: "1", stateType: "success" },
         { id: "2", stateType: "error" },

@@ -64,7 +64,7 @@ describe("isTiktokCardTitleTruncated", () => {
 
 describe("sendTextValidator", () => {
   const step = {
-    id: "step-1",
+    id: "1",
     stepType: "sendText" as const,
     text: "x".repeat(TIKTOK_CARD_TITLE_MAX + 1),
     buttons: [button()],
