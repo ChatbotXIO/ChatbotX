@@ -4,6 +4,7 @@ import {
   db,
   eq,
   inArray,
+  isDatabaseError,
   type RelationsFieldFilter,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
@@ -22,7 +23,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
 import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 import { folderService } from "../folder/service"
 import type { PaginatedResult } from "../types"
 
@@ -312,13 +313,19 @@ class CustomFieldService extends BaseService {
       })
     }
 
-    const [field] = await tx
-      .insert(customFieldModel)
-      .values({ id: createId(), workspaceId, showInInbox: true, ...data })
-      .returning()
-
-    await this.invalidate({ workspaceId })
-    return field
+    try {
+      const [field] = await tx
+        .insert(customFieldModel)
+        .values({ id: createId(), workspaceId, showInInbox: true, ...data })
+        .returning()
+      await this.invalidate({ workspaceId })
+      return field
+    } catch (error) {
+      if (isDatabaseError(error) && error.cause.code === "23505") {
+        throw validationException("name", "Name is already taken")
+      }
+      throw error
+    }
   }
 
   async update(

@@ -112,6 +112,22 @@ export type ConversationWithContactInboxes = ConversationModel & {
 }
 
 class ConversationService extends BaseService {
+  async markAgentReplied(input: { id: string; workspaceId: string; at: Date }) {
+    await db
+      .update(conversationModel)
+      .set({
+        agentLastReadAt: input.at,
+        lastActivityAt: input.at,
+        adminRepliedAt: input.at,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, input.id),
+          eq(conversationModel.workspaceId, input.workspaceId),
+        ),
+      )
+    await this.invalidate({ workspaceId: input.workspaceId, ids: [input.id] })
+  }
   protected readonly cachePrefix: string = "conversations"
 
   // ─── Reads (cached) ──────────────────────────────────────────────────────

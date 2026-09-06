@@ -43,28 +43,58 @@ class WorkspaceApiTokenService extends BaseService {
     // still roll back, and caching it here could serve uncommitted/stale
     // data for the full TTL. The auth middleware never passes `tx`, so this
     // does not affect the hot path's hit rate.
-    const apiToken = props.tx
-      ? await workspaceApiTokenRepository.findByTokenHash(tokenHash, tx)
-      : await withCache(
-          `workspace-api-tokens:hash:${tokenHash}`,
-          async () =>
-            await workspaceApiTokenRepository.findByTokenHash(tokenHash, tx),
-          {
-            ttl: WORKSPACE_API_TOKEN_CACHE_TTL_SECONDS,
-            dynamicTags: (row) =>
-              row ? [workspaceApiTokenCacheTag(row.workspaceId)] : undefined,
-          },
-        )
-    if (!apiToken) {
-      return
+    if (props.tx) {
+      const apiToken = await workspaceApiTokenRepository.findByTokenHash(
+        tokenHash,
+        tx,
+      )
+      if (!apiToken) {
+        return
+      }
+      // FK is ON DELETE CASCADE, so a matching token row always has a live
+      // workspace — findById's findOrFail() is safe here, not a leak risk.
+      const workspace = await workspaceService.findById({
+        id: apiToken.workspaceId,
+        tx,
+      })
+      return { workspace, apiToken }
     }
-    // FK is ON DELETE CASCADE, so a matching token row always has a live
-    // workspace — findById's findOrFail() is safe here, not a leak risk.
-    const workspace = await workspaceService.findById({
-      id: apiToken.workspaceId,
-      tx,
-    })
-    return { workspace, apiToken }
+
+    // Cache the resolved {workspace, apiToken} pair under one key, keyed by
+    // token hash — was two separate cached lookups (token-by-hash, then
+    // workspace-by-id), each its own Redis round trip on a hit. Tagged with
+    // BOTH the token's cache tag (so `deleteToken` still busts it) and the
+    // workspace's own tag (so a workspace update/rename still busts it,
+    // matching `workspaceService.find`'s existing invalidation contract) —
+    // dropping either tag would let one of those writes serve stale data
+    // for the rest of this entry's TTL.
+    return await withCache(
+      `workspace-api-tokens:hash:${tokenHash}`,
+      async () => {
+        const apiToken = await workspaceApiTokenRepository.findByTokenHash(
+          tokenHash,
+          tx,
+        )
+        if (!apiToken) {
+          return
+        }
+        const workspace = await workspaceService.findById({
+          id: apiToken.workspaceId,
+          tx,
+        })
+        return { workspace, apiToken }
+      },
+      {
+        ttl: WORKSPACE_API_TOKEN_CACHE_TTL_SECONDS,
+        dynamicTags: (result) =>
+          result
+            ? [
+                workspaceApiTokenCacheTag(result.apiToken.workspaceId),
+                `workspaces:${result.workspace.id}`,
+              ]
+            : undefined,
+      },
+    )
   }
 
   async listTokens(props: {

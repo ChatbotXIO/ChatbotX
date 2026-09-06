@@ -128,6 +128,18 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   lastInteraction: DATE_OPERATORS,
 }
 
+/**
+ * The authoritative operator allow-list per field — the same map
+ * `staticFieldFilter`'s `superRefine` validates against, so a caller can
+ * never see an operator the schema itself would reject. Exposed for the
+ * public API's filter-fields discovery endpoint
+ * (`features/contacts/api/public/filter-fields.ts`).
+ */
+export const enabledOperatorsForStaticField = (
+  field: string,
+): readonly OperatorType[] =>
+  STATIC_OPERATOR_RULES[field] ?? TEXT_FREE_OPERATORS
+
 const isValuelessOperator = (operator: OperatorType): boolean =>
   (VALUELESS_OPERATORS as readonly OperatorType[]).includes(operator)
 

@@ -4,7 +4,6 @@ import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/cust
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { MinigameForm } from "@/features/minigames/minigame-form"
 import { findMinigame } from "@/features/minigames/queries"
-import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
 
 export default async function EditMinigamePage({
@@ -29,16 +28,14 @@ export default async function EditMinigamePage({
 
   return (
     <FlowStoreProvider workspaceId={workspaceId}>
-      <TagStoreProvider workspaceId={workspaceId}>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <MinigameForm
-            minigame={minigame}
-            mode="edit"
-            publicUrl={publicUrl}
-            workspaceId={workspaceId}
-          />
-        </CustomFieldStoreProvider>
-      </TagStoreProvider>
+      <CustomFieldStoreProvider workspaceId={workspaceId}>
+        <MinigameForm
+          minigame={minigame}
+          mode="edit"
+          publicUrl={publicUrl}
+          workspaceId={workspaceId}
+        />
+      </CustomFieldStoreProvider>
     </FlowStoreProvider>
   )
 }

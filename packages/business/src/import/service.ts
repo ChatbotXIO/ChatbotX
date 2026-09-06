@@ -8,6 +8,7 @@ import {
   isDatabaseError,
   type SQL,
 } from "@chatbotx.io/database/client"
+import type { ContactImportMeta } from "@chatbotx.io/database/partials"
 import {
   fileContextTypes,
   fileStatuses,
@@ -23,11 +24,14 @@ import {
   likeContains,
   parseOrderBy,
 } from "@chatbotx.io/database/utils"
+import { inferImportFormat } from "@chatbotx.io/imports"
 import { resolveImportFileFormat } from "@chatbotx.io/imports/file-validation"
 import { getImportEntry } from "@chatbotx.io/imports/registry"
 import { createId } from "@chatbotx.io/utils"
+import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 import { ChatbotXException, toPublicErrorMessage } from "../errors"
+import { inboxService } from "../inbox/service"
 
 const GENERIC_IMPORT_FAILURE =
   "The import failed. Please try again or contact support."
@@ -48,6 +52,106 @@ const isActiveProductImportViolation = (error: unknown): boolean =>
   error.cause.constraint === ACTIVE_PRODUCT_IMPORT_CONSTRAINT
 
 class ImportService extends BaseService {
+  async startContactImport(input: {
+    workspaceId: string
+    userId: string | null
+    inboxId: string
+    fileId: string
+    meta: ContactImportMeta
+    actor?: { ipAddress?: string; userAgent?: string }
+  }): Promise<{ importId: string }> {
+    const { workspaceId } = input
+    const file = await db.query.fileModel.findFirst({
+      where: { id: input.fileId, workspaceId },
+    })
+    if (!file) {
+      throw new ChatbotXException("File not found", "contactImportFileNotFound")
+    }
+    if (
+      file.contextType !== fileContextTypes.enum.import ||
+      file.subType !== importTypes.enum.contacts
+    ) {
+      throw new ChatbotXException(
+        "File is not a contacts import",
+        "contactImportFileTypeInvalid",
+      )
+    }
+
+    const format = inferImportFormat({
+      mimeType: file.mimeType,
+      fileName: file.fileName,
+    })
+    const contactsConfig = getImportEntry(importTypes.enum.contacts).config
+    if (!(format && contactsConfig.acceptedFormats.includes(format))) {
+      throw new ChatbotXException(
+        "Unsupported file format",
+        "contactImportUnsupportedFormat",
+      )
+    }
+
+    const inbox = await inboxService.find({
+      where: { id: input.inboxId, workspaceId },
+    })
+    if (!inbox) {
+      throw new ChatbotXException(
+        "Inbox not found",
+        "contactImportInboxNotFound",
+      )
+    }
+
+    const activeImport = await db.query.importModel.findFirst({
+      where: {
+        workspaceId,
+        type: importTypes.enum.contacts,
+        OR: [{ status: "pending" }, { status: "processing" }],
+      },
+      columns: { id: true },
+    })
+    if (activeImport) {
+      throw new ChatbotXException(
+        "An import is already in progress for this workspace. Please wait for it to complete.",
+        "contactImportAlreadyRunning",
+      )
+    }
+
+    const importId = createId()
+    const meta = input.meta
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(fileModel)
+        .set({ status: fileStatuses.enum.uploaded, uploadedAt: new Date() })
+        .where(
+          and(
+            eq(fileModel.id, file.id),
+            eq(fileModel.workspaceId, workspaceId),
+          ),
+        )
+      await tx.insert(importModel).values({
+        userId: input.userId,
+        id: importId,
+        workspaceId,
+        inboxId: input.inboxId,
+        fileId: file.id,
+        type: importTypes.enum.contacts,
+        format,
+        status: "pending",
+        meta,
+      })
+    })
+
+    const actor = input.actor
+    await defaultQueue.add(DefaultJobAction.runImport, {
+      type: DefaultJobAction.runImport,
+      data: {
+        importId,
+        ipAddress: actor?.ipAddress,
+        userAgent: actor?.userAgent,
+      },
+    })
+
+    return { importId }
+  }
   async findForWorker(importId: string) {
     return await db.query.importModel.findFirst({
       where: { id: importId },

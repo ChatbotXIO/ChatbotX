@@ -1,6 +1,6 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
+import { contactRepository } from "@chatbotx.io/database/repositories"
 import {
   maskContactEmailAndPhone,
   resolveContactPermissionScope,
@@ -15,26 +15,9 @@ export async function getContact(
     throw notFoundException("Contact not found")
   }
 
-  const contact = await db.query.contactModel.findFirst({
-    where: {
-      id: input.contactId,
-      workspaceId: input.workspaceId,
-    },
-    with: {
-      tags: true,
-      contactCustomFields: {
-        with: {
-          customField: true,
-        },
-      },
-      contactNotes: true,
-      contactsOnSequences: {
-        with: {
-          sequence: true,
-        },
-      },
-      conversation: true,
-    },
+  const contact = await contactRepository.findDetailById({
+    id: input.contactId,
+    workspaceId: input.workspaceId,
   })
 
   if (!contact) {

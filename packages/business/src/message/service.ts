@@ -7,6 +7,7 @@ import {
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
+import { createOutgoing } from "./create-outgoing"
 
 type FindByProps = {
   conversationId: string
@@ -15,6 +16,7 @@ type FindByProps = {
 }
 
 class MessageService extends BaseService {
+  createOutgoing = createOutgoing
   protected readonly cachePrefix: string = "messages"
 
   async findByUncached(props: {

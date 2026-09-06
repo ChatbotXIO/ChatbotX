@@ -2228,6 +2228,9 @@ importers:
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
+      remeda:
+        specifier: ^2.37.0
+        version: 2.37.0
       universal-error-normalizer:
         specifier: ^1.0.0
         version: 1.0.0

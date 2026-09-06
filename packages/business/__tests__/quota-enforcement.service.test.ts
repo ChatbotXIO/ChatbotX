@@ -45,7 +45,12 @@ const distributedLock = {
     async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
   ),
 }
-vi.mock("@chatbotx.io/redis", () => ({ distributedLock }))
+// withCache just calls through — resolveContext's tenantId cache is not
+// under test here, only its downstream behavior.
+const withCache = vi.fn(
+  async (_key: string, fn: () => unknown, _options?: unknown) => fn(),
+)
+vi.mock("@chatbotx.io/redis", () => ({ distributedLock, withCache }))
 
 const tenantService = {
   findByOwner: vi.fn(async () => undefined as unknown),
@@ -217,6 +222,21 @@ describe("quotaEnforcementService.tryConsume", () => {
 
     expect(result).toEqual({ ok: false, level: "user" })
     expect(userQuotaService.consume).not.toHaveBeenCalled()
+  })
+
+  test("caches the actor's tenantId lookup under a per-user key with a 60s TTL", async () => {
+    asRootUser()
+
+    await quotaEnforcementService.tryConsume({
+      userId: ROOT_USER,
+      metric: "workspaces",
+    })
+
+    expect(withCache).toHaveBeenCalledWith(
+      `users:${ROOT_USER}:tenant-id`,
+      expect.any(Function),
+      expect.objectContaining({ ttl: 60 }),
+    )
   })
 })
 

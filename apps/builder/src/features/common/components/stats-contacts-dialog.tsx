@@ -25,17 +25,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon, TagIcon } from "lucide-react"
 import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
-import { memo, useCallback, useEffect, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import { useAvatarUrl } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { useTagOptions } from "@/features/tags/provider/tag-hook"
-import {
-  TagStoreProvider,
-  useTagStore,
-} from "@/features/tags/provider/tag-store-context"
+import { useInvalidateTags, useTags } from "@/features/tags/provider/tag-hook"
 import {
   type StatsSelection,
   useStatsSelection,
@@ -80,22 +76,7 @@ type StatsContactsDialogProps = {
 export const StatsContactsDialog = memo(function StatsContactsDialog(
   props: StatsContactsDialogProps,
 ) {
-  const canTag = Boolean(props.onManualTag && props.onBulkTag)
-  const dialog = <StatsContactsDialogInner {...props} />
-
-  return canTag ? (
-    // Only fetch tags once the dialog is actually opened. These dialogs are
-    // rendered per stats cell (many per table) and stay mounted while closed,
-    // so eager initialization fired one /tags request per closed dialog.
-    <TagStoreProvider
-      autoInitialize={props.open}
-      workspaceId={props.workspaceId}
-    >
-      {dialog}
-    </TagStoreProvider>
-  ) : (
-    dialog
-  )
+  return <StatsContactsDialogInner {...props} />
 })
 
 const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
@@ -306,6 +287,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
             open={tagDialogOpen}
             selectedCount={selectionState.selectedCount}
             selection={selectionState.selection}
+            workspaceId={workspaceId}
           />
         )}
       </DialogContent>
@@ -321,6 +303,7 @@ const StatsTagDialog = memo(function StatsTagDialog({
   selection,
   onManualTag,
   onBulkTag,
+  workspaceId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -329,12 +312,18 @@ const StatsTagDialog = memo(function StatsTagDialog({
   selection: StatsSelection
   onManualTag: (contactIds: string[], tags: string[]) => Promise<void>
   onBulkTag: (excludedContactIds: string[], tags: string[]) => Promise<void>
+  workspaceId: string
 }) {
   const t = useTranslations()
   const hasSelectedAll =
     selection.mode === "all" && selection.excludedIds.size === 0
-  const tagOptions = useTagOptions()
-  const { getAllActiveTags } = useTagStore((state) => state)
+  // Only fetch tags once this sub-dialog is actually opened — it stays
+  // mounted (closed) alongside the parent stats dialog, which itself is
+  // rendered once per stats cell (many per table), so an eager fetch here
+  // would fire one /tags request per closed dialog instance.
+  const { data: tags } = useTags(workspaceId, { enabled: open })
+  const tagOptions = useMemo(() => (tags ?? []).map((tag) => tag.name), [tags])
+  const invalidateTags = useInvalidateTags()
   const form = useForm<TagFormValues>({
     resolver: zodResolver(tagFormSchema),
     mode: "onChange",
@@ -359,7 +348,7 @@ const StatsTagDialog = memo(function StatsTagDialog({
         )
       }
 
-      await getAllActiveTags()
+      invalidateTags()
       form.reset({ tags: [] })
       onOpenChange(false)
     } catch (error) {

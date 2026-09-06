@@ -9,6 +9,7 @@ import { customFieldsPublicRouter } from "@/features/custom-fields/api/public"
 import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
 import { externalWebhooksPublicRouter } from "@/features/external-webhooks/api/public"
 import { flowsPublicRouter } from "@/features/flows/api/public"
+import { foldersPublicRouter } from "@/features/folders/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { templateMessagesPublicRouter } from "@/features/integration-whatsapp/message-templates/api/public"
@@ -32,6 +33,7 @@ export const publicRouter = {
   errorLogs: errorLogsPublicRouter,
   externalWebhooks: externalWebhooksPublicRouter,
   flows: flowsPublicRouter,
+  folders: foldersPublicRouter,
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,

@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { contactNoteService } from "@chatbotx.io/business"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListContactNotesRequest } from "../schema/query"
@@ -9,16 +9,8 @@ export async function listContactNotes(
 ): Promise<PaginatedResponse<ContactNoteResource>> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const data = await db.query.contactNoteModel.findMany({
-    where: {
-      contactId: input.contactId,
-      createdById: {
-        isNotNull: true,
-      },
-    },
-    with: {
-      createdBy: true,
-    },
+  const data = await contactNoteService.listWithAuthor({
+    contactId: input.contactId,
   })
 
   return {

@@ -102,6 +102,32 @@ export type ContactInboxWorkspaceRow = Pick<
 >
 
 export const contactInboxRepository = {
+  listWithInboxNameByContactId(
+    input: { contactId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ) {
+    return tx.query.contactInboxModel.findMany({
+      where: {
+        contactId: input.contactId,
+        inbox: { workspaceId: input.workspaceId },
+      },
+      orderBy: { id: "asc" },
+      columns: {
+        id: true,
+        contactId: true,
+        inboxId: true,
+        channel: true,
+        source: true,
+        sourceId: true,
+        sourceUserId: true,
+        sourceUsername: true,
+        language: true,
+        lastIncomingMessageAt: true,
+        contactLastReadAt: true,
+      },
+      with: { inbox: { columns: { name: true } } },
+    })
+  },
   /**
    * Single-row, workspace-scoped load of a contact inbox by id — the cheap
    * "does this contact inbox even exist / what channel is it" lookup, so a

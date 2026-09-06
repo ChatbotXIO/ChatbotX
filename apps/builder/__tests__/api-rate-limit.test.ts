@@ -8,8 +8,7 @@ vi.mock("@/lib/log", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   distributedStore: {
-    incrementCounter: vi.fn(),
-    setNumberIfNotExists: vi.fn(),
+    incrWithWindow: vi.fn(),
   },
 }))
 
@@ -20,19 +19,14 @@ const { checkApiRateLimit, assertApiNotRateLimited } = await import(
 const WINDOW_MS = 10_000
 const REQUEST_LIMIT = 120
 
+// Mirrors `INCR_WITH_WINDOW_LUA`'s contract (see packages/redis) in a single
+// call, matching the real `incrWithWindow` store method's signature.
 function createFakeStore() {
   const counters = new Map<string, number>()
   return {
     counters,
-    setNumberIfNotExists: vi.fn((key: string, value: number) => {
-      if (counters.has(key)) {
-        return Promise.resolve(false)
-      }
-      counters.set(key, value)
-      return Promise.resolve(true)
-    }),
-    incrementCounter: vi.fn((key: string, by: number) => {
-      const next = (counters.get(key) ?? 0) + by
+    incrWithWindow: vi.fn((key: string) => {
+      const next = (counters.get(key) ?? 0) + 1
       counters.set(key, next)
       return Promise.resolve(next)
     }),
@@ -57,7 +51,7 @@ describe("checkApiRateLimit", () => {
 
     expect(result.limited).toBe(false)
     expect(result.retryAfter).toBeGreaterThan(0)
-    expect(store.setNumberIfNotExists).toHaveBeenCalledTimes(1)
+    expect(store.incrWithWindow).toHaveBeenCalledTimes(1)
   })
 
   test("limits once the count exceeds REQUEST_LIMIT within the same window", async () => {
@@ -137,8 +131,7 @@ describe("checkApiRateLimit", () => {
 
   test("falls back to the in-memory counter when the store throws", async () => {
     const failingStore = {
-      setNumberIfNotExists: vi.fn().mockRejectedValue(new Error("redis down")),
-      incrementCounter: vi.fn().mockRejectedValue(new Error("redis down")),
+      incrWithWindow: vi.fn().mockRejectedValue(new Error("redis down")),
     }
 
     const result = await checkApiRateLimit({
@@ -153,8 +146,7 @@ describe("checkApiRateLimit", () => {
 
   test("the in-memory fallback still enforces the limit once the store is down", async () => {
     const failingStore = {
-      setNumberIfNotExists: vi.fn().mockRejectedValue(new Error("redis down")),
-      incrementCounter: vi.fn().mockRejectedValue(new Error("redis down")),
+      incrWithWindow: vi.fn().mockRejectedValue(new Error("redis down")),
     }
 
     const results = await Promise.all(
@@ -176,8 +168,7 @@ describe("checkApiRateLimit", () => {
       "../src/lib/rate-limit/api-rate-limit"
     )
     const failingStore = {
-      setNumberIfNotExists: vi.fn().mockRejectedValue(new Error("redis down")),
-      incrementCounter: vi.fn().mockRejectedValue(new Error("redis down")),
+      incrWithWindow: vi.fn().mockRejectedValue(new Error("redis down")),
     }
     // Far in the future so this test's clock outruns any sweep scheduled by
     // earlier fallback tests (module-level state), letting the sweep run.

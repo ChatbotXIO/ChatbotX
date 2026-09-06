@@ -1,5 +1,41 @@
-import { and, asc, db, eq, inArray, sql } from "../../client"
+import {
+  and,
+  asc,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  sql,
+} from "../../client"
 import { contactCustomFieldModel, contactModel } from "../../schema"
+
+export const contactCustomFieldRepository = {
+  listWithDefinitionByContact(
+    input: { contactId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ) {
+    return tx.query.contactCustomFieldModel.findMany({
+      where: {
+        contactId: input.contactId,
+        customField: { workspaceId: input.workspaceId },
+      },
+      with: { customField: true },
+    })
+  },
+  findWithDefinition(
+    input: { contactId: string; customFieldId: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ) {
+    return tx.query.contactCustomFieldModel.findFirst({
+      where: {
+        contactId: input.contactId,
+        customFieldId: input.customFieldId,
+        customField: { workspaceId: input.workspaceId },
+      },
+      with: { customField: true },
+    })
+  },
+}
 
 export type DateTimeSweepCursor = {
   customFieldId: string
