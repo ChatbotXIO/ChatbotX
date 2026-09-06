@@ -1,13 +1,16 @@
 "use server"
 
-import { automatedResponseService, flowService } from "@chatbotx.io/business"
+import {
+  automatedResponseService,
+  flowService,
+  folderService,
+} from "@chatbotx.io/business"
 import {
   automatedResponseFolderTypeByType,
   automatedResponseTypes,
 } from "@chatbotx.io/database/partials"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
-import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createAutomatedResponseRequest } from "../schema/action"
 
@@ -21,11 +24,11 @@ export const createAutomatedResponseAction = workspaceActionClient
     } = props
 
     if (parsedInput.folderId) {
-      await ensureFolderIsExists(
-        parsedInput.folderId,
+      await folderService.ensureExists({
+        id: parsedInput.folderId,
         workspaceId,
-        automatedResponseFolderTypeByType[type],
-      )
+        folderType: automatedResponseFolderTypeByType[type],
+      })
     }
 
     let flowId: string | undefined = parsedInput.flowId ?? undefined

@@ -106,8 +106,29 @@ mounted in `apps/builder/src/routers/index.ts` at all.
 
 Workspace-token APIs authenticate the workspace, not a member — member
 permission scoping (e.g. `onlyAssignedContacts`, `emailAndPhone`) does NOT
-apply. When a token surface returns contacts or contact-derived data, make the
-intended scope explicit in the API contract and tests.
+apply. `listContactsForAPI`/`publicFindContact` always run "unscoped": a
+token sees every contact in the workspace, with full email/phone (no PII
+masking), regardless of any member's `emailAndPhone`/`onlyAssignedContacts`
+permission. When a token surface returns contacts or contact-derived data,
+make the intended scope explicit in the API contract and tests.
+
+### Contacts scope — endpoint-to-scope table
+
+Contacts' public surface is split by concern across submodules — some in
+`features/contacts/api/public/` (`crud.ts`, `tags.ts`, `custom-fields.ts`,
+`bulk.ts`, `export.ts`, `refresh-profile.ts`, `messages.ts`), some in their
+own owning feature's `api/public.ts` (`contact-notes`, `contact-sequences`,
+`contact-inboxes`, `contact-filter`) that `features/contacts/api/public.ts`
+composes in alongside its own submodules — and every one of them other than
+`messages.ts` calls `workspaceTokenAuthAPIForScope("contacts")` exactly once
+at import. `messages.ts` is the one exception: sending/reading messages,
+auto-replies, and flows for a contact are conversation/automation operations
+even though they hang off `/v1/contacts/{identifier}/...`, so it uses `inbox`
+(`sendMessage`, `listMessages`, `getMessage`) and `automation`
+(`triggerAutoReply`, `sendFlow`) instead. `apps/builder/__tests__/contacts-public-scope.test.ts`
+enforces this split — it fails compile/test if a new submodule (wherever it
+lives) forgets to declare a scope, or if `messages.ts`'s procedures drift
+onto `contacts`.
 
 ## Adding a new scope value
 
@@ -152,6 +173,16 @@ these helpers — import from the business package directly.
 - `apps/builder/__tests__/workspace-token-scope-enforcement.test.ts`
 - `apps/builder/__tests__/workspace-token-scope-registry.test.ts`
 - `apps/builder/__tests__/broadcasts-workspace-token-scope.test.ts`
+- `apps/builder/__tests__/contacts-public-scope.test.ts`
+- `apps/builder/__tests__/contacts-crud-public-api.test.ts`,
+  `contacts-tags-and-fields-public-api.test.ts`,
+  `contacts-notes-public-api.test.ts`, `contacts-sequences-public-api.test.ts`,
+  `contacts-inboxes-public-api.test.ts`, `contacts-filter-fields-public-api.test.ts`,
+  `contacts-export-public-api.test.ts`, `contacts-export-files-public-api.test.ts`,
+  `contacts-bulk-public-api.test.ts`, `contacts-refresh-profile-public-api.test.ts`,
+  `folders-public-api.test.ts` — handler-behavior tests, one per public-API
+  submodule (some under `features/contacts/api/public/`, some in the owning
+  sibling feature's own `api/public.ts`)
 - `apps/builder/__tests__/create-workspace-token-action.test.ts`
 - `apps/builder/__tests__/delete-workspace-token-action.test.ts`
 - `apps/builder/__tests__/integration-api-token-hash.test.ts`

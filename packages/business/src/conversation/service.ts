@@ -112,6 +112,22 @@ export type ConversationWithContactInboxes = ConversationModel & {
 }
 
 class ConversationService extends BaseService {
+  async markAgentReplied(input: { id: string; workspaceId: string; at: Date }) {
+    await db
+      .update(conversationModel)
+      .set({
+        agentLastReadAt: input.at,
+        lastActivityAt: input.at,
+        adminRepliedAt: input.at,
+      })
+      .where(
+        and(
+          eq(conversationModel.id, input.id),
+          eq(conversationModel.workspaceId, input.workspaceId),
+        ),
+      )
+    await this.invalidate({ workspaceId: input.workspaceId, ids: [input.id] })
+  }
   protected readonly cachePrefix: string = "conversations"
 
   // ─── Reads (cached) ──────────────────────────────────────────────────────
@@ -305,6 +321,40 @@ class ConversationService extends BaseService {
       where: { contactId, workspaceId },
       with: { contactInboxes: true },
     })) as ConversationWithContactInboxes | undefined
+  }
+
+  /**
+   * Shared by the public `/v1/contacts/{identifier}/messages|auto-replies|flows`
+   * handlers: resolve the contact's conversation and the specific
+   * `ContactInbox` to send through (or the first one when `inboxId` is
+   * omitted), throwing the same 404 either way instead of repeating both
+   * lookups + both `notFoundException` calls at every call site.
+   */
+  async resolveContactInboxForSend(props: {
+    contactId: string
+    workspaceId: string
+    inboxId?: string
+  }): Promise<{
+    conversation: ConversationWithContactInboxes
+    contactInbox: ContactInboxModel
+  }> {
+    const { contactId, workspaceId, inboxId } = props
+    const conversation = await this.findByContactWithInboxes({
+      contactId,
+      workspaceId,
+    })
+    if (!conversation) {
+      throw notFoundException("Conversation not found")
+    }
+
+    const contactInbox = inboxId
+      ? conversation.contactInboxes.find((ci) => ci.inboxId === inboxId)
+      : conversation.contactInboxes[0]
+    if (!contactInbox) {
+      throw notFoundException("Conversation not found")
+    }
+
+    return { conversation, contactInbox }
   }
 
   async findLatestByContact(props: {

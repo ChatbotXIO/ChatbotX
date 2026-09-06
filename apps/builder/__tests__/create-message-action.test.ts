@@ -1,127 +1,47 @@
 // @vitest-environment node
-
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { z } from "zod"
 
-const {
-  mockChatQueueAdd,
-  mockContactInboxUpdateTracking,
-  mockCreateMessageRepository,
-  mockDbUpdate,
-  mockIntegrationQueueAdd,
-  mockRepositoryCreate,
-  updateBuilder,
-} = vi.hoisted(() => {
-  const updateBuilder = {
-    set: vi.fn(),
-    where: vi.fn(),
-  }
-  updateBuilder.set.mockReturnValue(updateBuilder)
-  updateBuilder.where.mockResolvedValue(undefined)
-
-  const mockRepositoryCreate = vi.fn()
-
-  return {
-    mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
-    mockContactInboxUpdateTracking: vi.fn().mockResolvedValue(null),
-    mockCreateMessageRepository: vi.fn().mockResolvedValue({
-      create: mockRepositoryCreate,
-      createWithAttachments: vi.fn(),
-    }),
-    mockDbUpdate: vi.fn().mockReturnValue(updateBuilder),
-    mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
-    mockRepositoryCreate,
-    updateBuilder,
-  }
-})
-
-vi.mock("@/lib/safe-action", () => ({
-  workspaceActionClient: {
-    bindArgsSchemas: vi.fn(() => ({
-      inputSchema: vi.fn(() => ({
-        action: vi.fn(),
-      })),
-    })),
-  },
-}))
+const mockFindByOrFail = vi.fn()
+const mockFindBy = vi.fn()
+const mockFindRecentByContactId = vi.fn()
+const mockCreateOutgoing = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactInboxService: { updateTracking: mockContactInboxUpdateTracking },
-  resolveTenantSettings: vi
-    .fn()
-    .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
+  conversationService: {
+    findByOrFail: (...args: unknown[]) => mockFindByOrFail(...args),
+  },
+  contactInboxService: {
+    findBy: (...args: unknown[]) => mockFindBy(...args),
+    findRecentByContactId: (...args: unknown[]) =>
+      mockFindRecentByContactId(...args),
+  },
+  messageService: {
+    createOutgoing: (...args: unknown[]) => mockCreateOutgoing(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
 }))
 
-vi.mock("@chatbotx.io/business/utils", () => ({
-  getPublicFileUrl: vi.fn((path: string, base: string) => `${base}/${path}`),
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      contactInboxModel: { findFirst: vi.fn() },
-    },
-    update: mockDbUpdate,
+vi.mock("@/lib/safe-action", () => ({
+  workspaceActionClient: {
+    bindArgsSchemas: () => ({
+      inputSchema: () => ({ action: (fn: unknown) => fn }),
+    }),
   },
-  eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
-  findOrFail: vi.fn(),
-  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
-    strings,
-    values,
-  })),
 }))
 
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  createMessageRepository: mockCreateMessageRepository,
+vi.mock("../src/features/messages/schema/mutation", () => ({
+  createMessageRequest: {},
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactInboxModel: {
-    id: "contactInboxId",
-    firstInteractionAt: "firstInteractionAt",
-  },
-  conversationModel: { id: "conversationId" },
-  mediaLibraryFileModel: {},
-  mediaLibraryFolderModel: {},
-  // media-library/queries/files.ts (pulled in transitively via
-  // findMediaLibraryFileByPath) imports ../schema, which calls
-  // createSelectSchema(...).extend(...) at module scope.
-  createSelectSchema: () => z.object({}),
-}))
-
-// create-message.action.ts now imports findMediaLibraryFileByPath, which
-// transitively imports the real @/lib/auth/utils -> auth.ts -> server.ts
-// (createAuth) unless mocked, and that needs a userModel export this mock
-// doesn't provide.
-vi.mock("@/lib/auth/utils", () => ({
-  assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
-}))
-
-vi.mock("@chatbotx.io/filesystem", () => ({
-  uploadMultipleFiles: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/partysocket-config", () => ({
-  RealtimeEventType: { messageCreated: "messageCreated" },
-}))
-
-vi.mock("@chatbotx.io/worker-config", () => ({
-  ChatJobAction: {
-    broadcastEvent: "broadcastEvent",
-    sendChannelMessage: "sendChannelMessage",
-  },
-  chatQueue: { add: mockChatQueueAdd },
-  IntegrationJobAction: { sendFlow: "sendFlow" },
-  integrationQueue: { add: mockIntegrationQueueAdd },
-}))
-
-const { createMessage } = await import(
+const { createMessageAction: createMessageActionUntyped } = await import(
   "../src/features/messages/actions/create-message.action"
 )
+const createMessageAction = createMessageActionUntyped as unknown as (
+  props: unknown,
+) => Promise<unknown>
 
 const conversation = {
   id: "conv-1",
@@ -129,73 +49,83 @@ const conversation = {
   contactId: "contact-1",
 }
 
-const contactInbox = {
-  id: "ci-1",
-  inboxId: "inbox-1",
-  contactId: "contact-1",
-}
+const contactInbox = { id: "ci-1", inboxId: "inbox-1", contactId: "contact-1" }
 
-describe("createMessage", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    updateBuilder.set.mockReturnValue(updateBuilder)
-    updateBuilder.where.mockResolvedValue(undefined)
-    mockDbUpdate.mockReturnValue(updateBuilder)
-    mockRepositoryCreate.mockImplementation((input) =>
-      Promise.resolve({
-        id: "msg-1",
-        ...input,
-        sourceId: null,
-        updatedAt: input.createdAt,
-      }),
-    )
-    mockCreateMessageRepository.mockResolvedValue({
-      create: mockRepositoryCreate,
-      createWithAttachments: vi.fn(),
-    })
-    mockChatQueueAdd.mockResolvedValue(undefined)
-  })
+beforeEach(() => {
+  vi.clearAllMocks()
+  mockFindByOrFail.mockResolvedValue(conversation)
+  mockFindBy.mockResolvedValue(contactInbox)
+  mockFindRecentByContactId.mockResolvedValue(contactInbox)
+  mockCreateOutgoing.mockResolvedValue({ id: "msg-1" })
+})
 
-  test("uses one shared timestamp for the message and conversation read/activity fields", async () => {
-    await createMessage({
-      conversation: conversation as never,
-      contactInbox: contactInbox as never,
-      parsedInput: { text: "hello", clientId: "client-1" },
-      user: { id: "user-1" } as never,
-    })
-
-    const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
-      createdAt: Date
-    }
-    const conversationSet = updateBuilder.set.mock.calls[0]?.[0] as {
-      agentLastReadAt: Date
-      lastActivityAt: Date
-      adminRepliedAt: Date
-    }
-
-    expect(conversationSet.agentLastReadAt).toBe(messageInput.createdAt)
-    expect(conversationSet.lastActivityAt).toBe(messageInput.createdAt)
-    expect(conversationSet.adminRepliedAt).toBe(messageInput.createdAt)
-  })
-
-  test("updates contact inbox lastMessageAt from the created message timestamp", async () => {
-    await createMessage({
-      conversation: conversation as never,
-      contactInbox: contactInbox as never,
+describe("createMessageAction", () => {
+  test("looks up the conversation scoped to the workspace", async () => {
+    await createMessageAction({
+      bindArgsParsedInputs: ["ws-1", "conv-1"],
       parsedInput: { text: "hello" },
-    })
+      ctx: { user: { id: "user-1" } },
+    } as never)
 
-    const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
-      createdAt: Date
-    }
-    expect(mockContactInboxUpdateTracking).toHaveBeenCalledWith({
-      contactInboxId: "ci-1",
-      contactId: "contact-1",
-      workspaceId: "ws-1",
-      data: {
-        firstInteractionAt: messageInput.createdAt,
-        lastMessageAt: messageInput.createdAt,
-      },
+    expect(mockFindByOrFail).toHaveBeenCalledWith({
+      where: { id: "conv-1", workspaceId: "ws-1" },
     })
+  })
+
+  test("resolves the contact inbox by explicit inboxId when provided", async () => {
+    await createMessageAction({
+      bindArgsParsedInputs: ["ws-1", "conv-1"],
+      parsedInput: { text: "hello", inboxId: "inbox-2" },
+      ctx: { user: { id: "user-1" } },
+    } as never)
+
+    expect(mockFindBy).toHaveBeenCalledWith({
+      where: { contactId: "contact-1", inboxId: "inbox-2" },
+    })
+    expect(mockFindRecentByContactId).not.toHaveBeenCalled()
+  })
+
+  test("falls back to the most recent contact inbox when inboxId is absent", async () => {
+    await createMessageAction({
+      bindArgsParsedInputs: ["ws-1", "conv-1"],
+      parsedInput: { text: "hello" },
+      ctx: { user: { id: "user-1" } },
+    } as never)
+
+    expect(mockFindRecentByContactId).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+    })
+    expect(mockFindBy).not.toHaveBeenCalled()
+  })
+
+  test("throws when no contact inbox can be resolved", async () => {
+    mockFindRecentByContactId.mockResolvedValue(undefined)
+
+    await expect(
+      createMessageAction({
+        bindArgsParsedInputs: ["ws-1", "conv-1"],
+        parsedInput: { text: "hello" },
+        ctx: { user: { id: "user-1" } },
+      } as never),
+    ).rejects.toThrow("Inbox not found")
+
+    expect(mockCreateOutgoing).not.toHaveBeenCalled()
+  })
+
+  test("delegates to messageService.createOutgoing with the resolved conversation and contact inbox", async () => {
+    const result = await createMessageAction({
+      bindArgsParsedInputs: ["ws-1", "conv-1"],
+      parsedInput: { text: "hello", clientId: "client-1" },
+      ctx: { user: { id: "user-1" } },
+    } as never)
+
+    expect(mockCreateOutgoing).toHaveBeenCalledWith({
+      conversation,
+      contactInbox,
+      input: { text: "hello", clientId: "client-1" },
+      user: { id: "user-1" },
+    })
+    expect(result).toEqual({ id: "msg-1" })
   })
 })

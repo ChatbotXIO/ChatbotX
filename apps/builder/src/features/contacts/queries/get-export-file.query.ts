@@ -1,5 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
-import { uploader } from "@chatbotx.io/filesystem"
+import { contactExportService } from "@chatbotx.io/business"
 import { ORPCError } from "@orpc/server"
 import {
   assertCurrentUserCanAccessChatbot,
@@ -22,27 +21,5 @@ export async function getExportFile(
     throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" })
   }
 
-  const file = await db.query.fileModel.findFirst({
-    where: { id: input.fileId, workspaceId: input.workspaceId, userId },
-  })
-
-  if (!file) {
-    throw new ORPCError("NOT_FOUND", { message: "Export file not found" })
-  }
-
-  const status = file.status as GetExportFileResponse["status"]
-
-  // M-2: Short TTL limits the exposure window if the URL leaks via browser
-  // history, Referer headers, or analytics scripts.
-  const downloadUrl =
-    status === "uploaded"
-      ? await uploader.getPresignedDownload(file.path, 5 * 60)
-      : null
-
-  return {
-    status,
-    fileName: file.fileName,
-    downloadUrl,
-    totalRecords: file.meta?.totalRecords ?? null,
-  }
+  return await contactExportService.getFile({ ...input, userId })
 }

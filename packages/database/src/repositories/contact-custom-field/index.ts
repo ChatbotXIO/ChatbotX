@@ -3,6 +3,7 @@ export type {
   DateTimeSweepCursor,
 } from "./repository"
 export {
+  contactCustomFieldRepository,
   listContactCustomFieldsForDateTimeSweep,
   listContactCustomFieldsForDateTimeSweepContacts,
 } from "./repository"

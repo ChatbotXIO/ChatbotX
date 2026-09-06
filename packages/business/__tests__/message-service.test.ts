@@ -27,11 +27,22 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mocks.createMessageRepository,
+  mediaLibraryFileRepository: {},
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: mocks.withCache,
 }))
+
+// The following are reached only because messageService.createOutgoing is
+// wired in as a class field (module-scope import), not because any test here
+// exercises it — this file only covers the pre-existing read/delete methods.
+vi.mock("@chatbotx.io/filesystem", () => ({}))
+vi.mock("@chatbotx.io/partysocket-config", () => ({}))
+vi.mock("@chatbotx.io/worker-config", () => ({}))
+vi.mock("../src/contact-inbox/service", () => ({ contactInboxService: {} }))
+vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
+vi.mock("../src/platform/settings", () => ({ resolveTenantSettings: vi.fn() }))
 
 const { messageService } = await import("../src/message/service")
 

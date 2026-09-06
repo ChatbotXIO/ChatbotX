@@ -59,6 +59,7 @@
     "jose": "^6.2.3",
     "libphonenumber-js": "^1.12.42",
     "qrcode": "^1.5.4",
+    "remeda": "^2.37.0",
     "universal-error-normalizer": "^1.0.0",
     "zod": "^4.3.6"
   },

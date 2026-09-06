@@ -112,6 +112,7 @@ export const toPublicErrorMessage = (
 }
 
 export class ChatbotXException extends Error {
+  field?: string
   code = "systemError"
   httpStatusCode = 400
 
@@ -134,6 +135,12 @@ export class ChatbotXException extends Error {
 
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
+
+export const validationException = (field: string, message: string) => {
+  const error = new ChatbotXException(message, "validation", 400)
+  error.field = field
+  return error
+}
 
 export const channelDuplicatedException = () =>
   new ChatbotXException(

@@ -1,7 +1,7 @@
 import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
+import { contactCustomFieldRepository } from "@chatbotx.io/database/repositories"
 import type {
   ListContactCustomFieldsRequest,
   ListPublicContactCustomFieldsResponse,
@@ -19,17 +19,8 @@ export async function listContactCustomFields(
     })
   }
 
-  const data = await db.query.contactCustomFieldModel.findMany({
-    where: {
-      contactId: input.contactId,
-      customField: {
-        workspaceId: input.workspaceId,
-      },
-    },
-    with: {
-      customField: true,
-    },
-  })
+  const data =
+    await contactCustomFieldRepository.listWithDefinitionByContact(input)
 
   return {
     data: data.map((d) => ({
@@ -45,18 +36,8 @@ export async function findContactCustomField(input: {
   customFieldId: string
   workspaceId: string
 }): Promise<PublicContactCustomFieldResource> {
-  const contactCustomField = await db.query.contactCustomFieldModel.findFirst({
-    where: {
-      contactId: input.contactId,
-      customFieldId: input.customFieldId,
-      customField: {
-        workspaceId: input.workspaceId,
-      },
-    },
-    with: {
-      customField: true,
-    },
-  })
+  const contactCustomField =
+    await contactCustomFieldRepository.findWithDefinition(input)
 
   if (!contactCustomField) {
     throw notFoundException("Contact custom field not found")

@@ -7,8 +7,11 @@ import {
   inArray,
   isNull,
   notExists,
+  notInArray,
+  relationsFilterToSQL,
   sql,
 } from "@chatbotx.io/database/client"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   contactModel,
@@ -17,19 +20,560 @@ import {
   tagModel,
 } from "@chatbotx.io/database/schema"
 import type { TagModel } from "@chatbotx.io/database/types"
+import {
+  likeContains,
+  parseOrderByAsObject,
+  parsePagination,
+} from "@chatbotx.io/database/utils"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
 import { adsConversionService } from "../ads-conversion/service"
 import { BaseService } from "../base.service"
 import { type ContactAccessScope, contactService } from "../contact"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
+import { folderService } from "../folder/service"
 import { logger } from "../logger"
 import { tagSyncService } from "./sync.service"
 
 const CONTACT_CHUNK_SIZE = 200
 
+// Mirrors the `contactCacheTags` pattern in `contact-custom-field/service.ts`:
+// `tags` busts the "tags" collection tag `findByKey`/`list` register under,
+// `tags:{ws}` scopes it to one workspace's tag reads.
+const tagCacheTags = (workspaceId: string): string[] => [
+  "tags",
+  `tags:${workspaceId}`,
+]
+
+// Short TTL because the result embeds `contactsCount`, which changes on
+// every tag attach/detach — those paths don't invalidate this list cache
+// (only create/update/delete do), so a short expiry bounds the staleness.
+const TAG_LIST_CACHE_TTL_SECONDS = 60
+
 class TagService extends BaseService {
+  async list(input: {
+    workspaceId: string
+    name?: string | null
+    folderId?: string | null
+    page?: number | null
+    perPage?: number | null
+    sort?: { id: string; desc: boolean }[] | null
+  }) {
+    const cacheKey = `tags:${input.workspaceId}:list:${JSON.stringify(input)}`
+
+    return await withCache(
+      cacheKey,
+      async () => {
+        const where = {
+          workspaceId: input.workspaceId,
+          deletedAt: { isNull: true as const },
+          name: input.name ? { ilike: likeContains(input.name) } : undefined,
+          folderId: input.folderId
+            ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
+              input.folderId === rootFolderId
+              ? { isNull: true as const }
+              : input.folderId
+            : undefined,
+        }
+
+        const pagination = parsePagination(input)
+        const orderBy = parseOrderByAsObject(tagModel, input)
+
+        const [data, totalRows] = await Promise.all([
+          db.query.tagModel.findMany({
+            where,
+            orderBy,
+            ...pagination,
+            extras: {
+              contactsCount: (table) =>
+                db.$count(
+                  contactsToTagsModel,
+                  eq(contactsToTagsModel.tagId, table.id),
+                ),
+            },
+          }),
+          pagination?.limit
+            ? db.$count(tagModel, relationsFilterToSQL(tagModel, where))
+            : Promise.resolve(1),
+        ])
+
+        const pageCount = pagination?.limit
+          ? Math.ceil(totalRows / pagination.limit)
+          : 1
+
+        return { data, pageCount }
+      },
+      {
+        ttl: TAG_LIST_CACHE_TTL_SECONDS,
+        tags: [`tags:${input.workspaceId}`],
+      },
+    )
+  }
+
+  async create(props: {
+    workspaceId: string
+    data: { name: string; folderId?: string | null }
+  }) {
+    const parsedInput = { workspaceId: props.workspaceId, ...props.data }
+    const existingTag = await db.query.tagModel.findFirst({
+      columns: {
+        id: true,
+      },
+      where: {
+        name: parsedInput.name,
+        workspaceId: parsedInput.workspaceId,
+        deletedAt: { isNull: true as const },
+      },
+    })
+    if (existingTag) {
+      throw validationException("name", "Name is already taken.")
+    }
+
+    if (parsedInput.folderId) {
+      await folderService.ensureExists({
+        id: parsedInput.folderId,
+        workspaceId: parsedInput.workspaceId,
+        folderType: "tag",
+      })
+    }
+
+    const newTag = await db
+      .insert(tagModel)
+      .values({
+        ...parsedInput,
+        folderId: parsedInput.folderId ?? null,
+        id: createId(),
+      })
+      .returning()
+      .then((result) => result[0])
+
+    if (newTag) {
+      await tagSyncService.enqueueCreate({
+        workspaceId: parsedInput.workspaceId,
+        tagId: newTag.id,
+      })
+    }
+
+    await this.invalidateCacheTags(tagCacheTags(parsedInput.workspaceId))
+    return {
+      data: newTag,
+    }
+  }
+
+  async update(
+    ctx: { workspaceId: string; id: string },
+    parsedInput: { name: string },
+  ) {
+    const { workspaceId, id } = ctx
+    const existingTag = await db.query.tagModel.findFirst({
+      columns: {
+        id: true,
+      },
+      where: {
+        name: parsedInput.name,
+        workspaceId,
+        deletedAt: { isNull: true as const },
+        id: {
+          ne: id,
+        },
+      },
+    })
+    if (existingTag) {
+      throw validationException("name", "Name is already taken.")
+    }
+
+    const tag = await findOrFail({
+      table: tagModel,
+      where: { id, workspaceId, deletedAt: { isNull: true as const } },
+      message: "Tag not found",
+    })
+
+    const updatedTag = await db
+      .update(tagModel)
+      .set({
+        name: parsedInput.name,
+      })
+      .where(eq(tagModel.id, tag.id))
+      .returning()
+      .then((result) => result[0])
+
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    return updatedTag
+  }
+
+  async softDelete({
+    workspaceId,
+    ids,
+  }: {
+    workspaceId: string
+    ids: string[]
+  }) {
+    for (let offset = 0; offset < ids.length; offset += CONTACT_CHUNK_SIZE) {
+      const chunk = ids.slice(offset, offset + CONTACT_CHUNK_SIZE)
+      const updated = await db
+        .update(tagModel)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(tagModel.workspaceId, workspaceId),
+            inArray(tagModel.id, chunk),
+            isNull(tagModel.deletedAt),
+          ),
+        )
+        .returning({ id: tagModel.id })
+
+      for (const row of updated) {
+        await tagSyncService.enqueueDelete({ workspaceId, tagId: row.id })
+      }
+    }
+
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+  }
+
+  async attachByNamesToContacts({
+    workspaceId,
+    contactIds,
+    names,
+    accessScope,
+  }: {
+    workspaceId: string
+    contactIds: string[]
+    names: string[]
+    accessScope?: ContactAccessScope
+  }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
+    if (contactIds.length === 0 || names.length === 0) {
+      return { processedContactIds: [], skippedContactIds: [...contactIds] }
+    }
+
+    // Resolve/create the tag set once (bounded by the request, small).
+    const allTags = await this.upsertByNames({
+      workspaceId,
+      names,
+    })
+    if (allTags.length === 0) {
+      return { processedContactIds: [], skippedContactIds: [...contactIds] }
+    }
+
+    const affectedContactIds: string[] = []
+
+    // Process selected contacts in chunks — never load all contacts at once.
+    for (
+      let offset = 0;
+      offset < contactIds.length;
+      offset += CONTACT_CHUNK_SIZE
+    ) {
+      const idChunk = contactIds.slice(offset, offset + CONTACT_CHUNK_SIZE)
+      const contacts = await contactService.findManyByIds({
+        workspaceId,
+        ids: idChunk,
+        accessScope,
+      })
+      if (contacts.length === 0) {
+        continue
+      }
+      affectedContactIds.push(...contacts.map((contact) => contact.id))
+
+      const links = contacts.flatMap((contact) =>
+        allTags.map((selectedTag) => ({
+          contactId: contact.id,
+          tagId: selectedTag.id,
+        })),
+      )
+      // RETURNING from ON CONFLICT DO NOTHING returns only newly-inserted rows.
+      const newlyLinkedPairs = await db
+        .insert(contactsToTagsModel)
+        .values(links)
+        .onConflictDoNothing({
+          target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
+        })
+        .returning({
+          contactId: contactsToTagsModel.contactId,
+          tagId: contactsToTagsModel.tagId,
+        })
+
+      // Emit tag applied for all attempted pairs (existing callers depend on it).
+      for (const contact of contacts) {
+        for (const tag of allTags) {
+          try {
+            await emitTagApplied(workspaceId, contact.id, tag.id)
+          } catch (error) {
+            logger.error({ err: error }, "Failed to emit tagApplied event:")
+          }
+        }
+      }
+      // Channel sync + ads conversion `tagApplied` trigger only for newly
+      // attached pairs (not every attempted pair, unlike the emit loop above).
+      for (const pair of newlyLinkedPairs) {
+        await tagSyncService.enqueueAttach({
+          workspaceId,
+          contactId: pair.contactId,
+          tagId: pair.tagId,
+        })
+      }
+      // One batch resolve+enqueue call per chunk instead of one per pair
+      // (HIGH-1).
+      if (newlyLinkedPairs.length > 0) {
+        await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+          workspaceId,
+          pairs: newlyLinkedPairs.map((pair) => ({
+            contactId: pair.contactId,
+            tagId: pair.tagId,
+          })),
+        })
+      }
+    }
+
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    if (affectedContactIds.length > 0) {
+      await contactService.invalidate({ workspaceId, ids: affectedContactIds })
+    }
+
+    const processedSet = new Set(affectedContactIds)
+    return {
+      processedContactIds: affectedContactIds,
+      skippedContactIds: contactIds.filter((id) => !processedSet.has(id)),
+    }
+  }
+
+  async replaceContactTagsByNames({
+    workspaceId,
+    contactId,
+    names,
+    accessScope,
+  }: {
+    workspaceId: string
+    contactId: string
+    names: string[]
+    accessScope?: ContactAccessScope
+  }): Promise<TagModel[]> {
+    const contact = await contactService.findByIdOrFail({
+      workspaceId,
+      id: contactId,
+      accessScope,
+    })
+
+    // Get old tags before update
+    const oldTags = await db.query.contactsToTagsModel.findMany({
+      where: {
+        contactId: contact.id,
+      },
+      columns: {
+        tagId: true,
+      },
+    })
+    const oldTagIds = new Set(oldTags.map((t) => t.tagId))
+
+    const { returnedTags, newlyAppliedTags, removedTagIds } =
+      await db.transaction(async (tx) => {
+        const upserted = await this.upsertByNames({ workspaceId, names, tx })
+        const tags =
+          upserted.length > 0
+            ? await tx.query.tagModel.findMany({
+                where: { id: { in: upserted.map((tag) => tag.id) } },
+              })
+            : []
+
+        if (tags.length > 0) {
+          await tx
+            .insert(contactsToTagsModel)
+            .values(
+              tags.map((selectedTag) => ({
+                contactId: contact.id,
+                tagId: selectedTag.id,
+              })),
+            )
+            .onConflictDoNothing({
+              target: [
+                contactsToTagsModel.contactId,
+                contactsToTagsModel.tagId,
+              ],
+            })
+        }
+
+        // Remove tags no longer selected (local ContactToTag only).
+        const newTagIdSet = new Set(tags.map((t) => t.id))
+        const removedTagIds = Array.from(oldTagIds).filter(
+          (id) => !newTagIdSet.has(id),
+        )
+        if (removedTagIds.length > 0) {
+          await tx.delete(contactsToTagsModel).where(
+            tags.length > 0
+              ? and(
+                  eq(contactsToTagsModel.contactId, contact.id),
+                  notInArray(
+                    contactsToTagsModel.tagId,
+                    tags.map((t) => t.id),
+                  ),
+                )
+              : eq(contactsToTagsModel.contactId, contact.id),
+          )
+        }
+
+        const newlyAppliedTags = tags.filter((tag) => !oldTagIds.has(tag.id))
+
+        return {
+          returnedTags: tags,
+          newlyAppliedTags,
+          removedTagIds,
+        }
+      })
+
+    // Emit tagApplied for newly added tags + enqueue sync
+    for (const tag of newlyAppliedTags) {
+      try {
+        await emitTagApplied(workspaceId, contact.id, tag.id)
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagApplied event:")
+      }
+
+      await tagSyncService.enqueueAttach({
+        workspaceId,
+        contactId: contact.id,
+        tagId: tag.id,
+      })
+    }
+    // One batch resolve+enqueue call for every newly-applied tag on this
+    // contact instead of one per tag (HIGH-1).
+    if (newlyAppliedTags.length > 0) {
+      await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+        workspaceId,
+        pairs: newlyAppliedTags.map((tag) => ({
+          contactId: contact.id,
+          tagId: tag.id,
+        })),
+      })
+    }
+
+    // Emit tagRemoved + enqueue channel cleanup for removed tags.
+    for (const tagId of removedTagIds) {
+      try {
+        await emitTagRemoved(workspaceId, contact.id, tagId)
+      } catch (error) {
+        logger.error({ err: error }, "Failed to emit tagRemoved event:")
+      }
+
+      await tagSyncService.enqueueDetach({
+        workspaceId,
+        contactId: contact.id,
+        tagId,
+      })
+    }
+
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    await contactService.invalidate({ workspaceId, ids: [contact.id] })
+
+    return returnedTags
+  }
+
+  async detachByNamesFromContacts({
+    workspaceId,
+    contactIds,
+    names,
+    accessScope,
+  }: {
+    workspaceId: string
+    contactIds: string[]
+    names: string[]
+    accessScope?: ContactAccessScope
+  }) {
+    if (contactIds.length === 0 || names.length === 0) {
+      return
+    }
+
+    // contactIds are contact ids; names are tag NAMES (the dialog
+    // uses TagsInputField + useTagOptions, which emit tag names).
+    const allTags = await db.query.tagModel.findMany({
+      where: {
+        workspaceId,
+        deletedAt: { isNull: true as const },
+        name: { in: names },
+      },
+      columns: {
+        id: true,
+      },
+    })
+    const allTagIds = allTags.map((tag) => tag.id)
+    if (allTagIds.length === 0) {
+      return
+    }
+
+    const affectedContactIds: string[] = []
+
+    // Process selected contacts in chunks — never load all contacts at once.
+    for (
+      let offset = 0;
+      offset < contactIds.length;
+      offset += CONTACT_CHUNK_SIZE
+    ) {
+      const idChunk = contactIds.slice(offset, offset + CONTACT_CHUNK_SIZE)
+      const contacts = await contactService.findManyByIds({
+        workspaceId,
+        ids: idChunk,
+        accessScope,
+      })
+      if (contacts.length === 0) {
+        continue
+      }
+      const contactIdsInChunk = contacts.map((contact) => contact.id)
+      affectedContactIds.push(...contactIdsInChunk)
+
+      // One DELETE per chunk instead of one per contact.
+      await db
+        .delete(contactsToTagsModel)
+        .where(
+          and(
+            inArray(contactsToTagsModel.contactId, contactIdsInChunk),
+            inArray(contactsToTagsModel.tagId, allTagIds),
+          ),
+        )
+
+      // Channel cleanup (unassign + delete ContactToTagChannel) runs in the queue.
+      for (const contact of contacts) {
+        for (const tagId of allTagIds) {
+          await tagSyncService.enqueueDetach({
+            workspaceId,
+            contactId: contact.id,
+            tagId,
+          })
+        }
+      }
+
+      // Emit tag removed events per chunk.
+      for (const contact of contacts) {
+        for (const tag of allTags) {
+          try {
+            await emitTagRemoved(workspaceId, contact.id, tag.id)
+          } catch (error) {
+            logger.error({ err: error }, "Failed to emit tagRemoved event:")
+          }
+        }
+      }
+    }
+
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    if (affectedContactIds.length > 0) {
+      await contactService.invalidate({ workspaceId, ids: affectedContactIds })
+    }
+  }
+
+  listForContact(input: { workspaceId: string; contactId: string }) {
+    return db.query.tagModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
+        contactsToTags: { contactId: input.contactId },
+      },
+      orderBy: { name: "asc" },
+    })
+  }
+  listActive(input: { workspaceId: string }) {
+    return db.query.tagModel.findMany({
+      where: { workspaceId: input.workspaceId, deletedAt: { isNull: true } },
+      columns: { id: true, name: true },
+      orderBy: { name: "asc" },
+    })
+  }
   protected readonly cachePrefix: string = "tags"
 
   async listByContactId(props: {
@@ -252,6 +796,7 @@ class TagService extends BaseService {
     }
 
     let attachedPairCount = 0
+    const affectedContactIds: string[] = []
     for (let i = 0; i < uniqueContactIds.length; i += CONTACT_CHUNK_SIZE) {
       const idChunk = uniqueContactIds.slice(i, i + CONTACT_CHUNK_SIZE)
       const contacts = await contactService.findManyByIds({
@@ -262,6 +807,7 @@ class TagService extends BaseService {
       if (contacts.length === 0) {
         continue
       }
+      affectedContactIds.push(...contacts.map((contact) => contact.id))
 
       const links = contacts.flatMap((contact) =>
         tags.map((tag) => ({
@@ -316,11 +862,10 @@ class TagService extends BaseService {
       )
     }
 
-    await this.invalidateCacheTags([
-      `workspaces:${workspaceId}#contacts`,
-      `workspaces:${workspaceId}#conversations`,
-      `workspaces:${workspaceId}#tags`,
-    ])
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    if (affectedContactIds.length > 0) {
+      await contactService.invalidate({ workspaceId, ids: affectedContactIds })
+    }
 
     return { attachedPairCount }
   }

@@ -55,14 +55,11 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       )
     }
 
-    // Best-effort IP-keyed gate BEFORE the lookup: requests with invalid
-    // tokens never reach the per-workspace limiter below, so without this a
-    // token-guessing flood gets unthrottled hash + DB lookups.
+    // The IP-keyed gate must run BEFORE hashing/looking up the token: it
+    // exists to stop unauthenticated token-guessing floods, and a request
+    // already over the ceiling must not pay for a hash + DB/Redis lookup.
     await assertPreAuthNotRateLimited(context.headers)
 
-    // Hash-only lookup: WorkspaceApiToken.tokenHash is authoritative for
-    // auth. The deprecated Workspace.token column (kept read-only for
-    // {{api_key}}) is never consulted here.
     const tokenHash = await hashToken(token)
     let auth: Awaited<
       ReturnType<typeof workspaceApiTokenService.findWorkspaceByTokenHash>

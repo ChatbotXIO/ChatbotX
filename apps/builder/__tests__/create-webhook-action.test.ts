@@ -76,8 +76,8 @@ vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 
-vi.mock("@/features/folders/actions/utils", () => ({
-  ensureFolderIsExists: vi.fn().mockResolvedValue(undefined),
+vi.mock("@chatbotx.io/business", () => ({
+  folderService: { ensureExists: vi.fn().mockResolvedValue(undefined) },
 }))
 
 vi.mock("../src/features/webhooks/schema/create-webhook-schema", () => ({
