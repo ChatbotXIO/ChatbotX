@@ -1,3 +1,4 @@
+import { formatGraphError } from "@chatbotx.io/utils/graph-error"
 import ky, { isHTTPError, type KyInstance } from "ky"
 import { GRAPH_API_URL } from "../constants"
 import { MetaCatalogException } from "../exception"
@@ -36,26 +37,6 @@ type GraphErrorBody = {
     error_subcode?: number
     fbtrace_id?: string
   }
-}
-
-/**
- * Graph's `message` is written for developers ("Invalid parameter"); when it
- * also sends `error_user_msg` that one says what to actually do about it. Both
- * end up in the exception because the pair is what makes a failure in the sync
- * history diagnosable — dropping either leaves the workspace guessing.
- */
-const graphErrorMessage = (
-  error: GraphErrorBody["error"],
-): string | undefined => {
-  const parts = [
-    error?.message,
-    error?.error_user_msg ?? error?.error_user_title,
-  ]
-    .map((part) => part?.trim())
-    .filter((part): part is string => Boolean(part))
-  // Graph sometimes repeats itself across the two fields; a Set keeps the
-  // sentence from being printed twice.
-  return [...new Set(parts)].join(" — ") || undefined
 }
 
 export type GraphResponse<T> = {
@@ -101,7 +82,7 @@ class MetaCatalogHttpClient {
         // "Body has already been consumed" and bury the real Graph error.
         const body: GraphErrorBody = isRecord(error.data) ? error.data : {}
         throw new MetaCatalogException(
-          graphErrorMessage(body.error) ?? `Meta Graph request failed: ${url}`,
+          formatGraphError(body.error) ?? `Meta Graph request failed: ${url}`,
           error.response.status,
           body.error?.code,
           {

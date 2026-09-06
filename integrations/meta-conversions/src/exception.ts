@@ -1,3 +1,5 @@
+import { formatGraphErrorMessage } from "@chatbotx.io/utils/graph-error"
+
 const FALLBACK_HTTP_STATUS = 400
 
 type MetaErrorData = { details?: string }
@@ -130,7 +132,16 @@ export class MetaConversionsException extends Error {
     ),
     originError?: unknown,
   ) {
-    super(source.message ?? "Meta Conversions API call failed")
+    // The readonly fields below still carry each piece on its own; this is
+    // where they become the one string every surface reads.
+    super(
+      formatGraphErrorMessage({
+        code: source.code,
+        subCode: source.subCode,
+        message: source.message,
+        userMessage: source.userMessage ?? source.userTitle,
+      }) ?? "Meta Conversions API call failed",
+    )
     this.name = "MetaConversionsException"
     this.httpStatusCode = source.httpStatusCode
     this.code = source.code ?? "metaConversionsError"

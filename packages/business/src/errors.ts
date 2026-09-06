@@ -73,9 +73,12 @@ const channelErrorMessage = (error: unknown): string | undefined => {
   const detail =
     trimmedText(origin?.userMessage) ?? trimmedText(origin?.userTitle)
   const base = trimmedText(error.message)
-  const text = [base, detail === base ? undefined : detail]
-    .filter(Boolean)
-    .join(": ")
+  // Channel mappers that compose Meta's user sentence into `message` still park
+  // a copy on `originError` for its structured fields, so appending it here
+  // unconditionally would print that sentence twice.
+  const extra =
+    detail !== undefined && base?.includes(detail) ? undefined : detail
+  const text = [base, extra].filter(Boolean).join(": ")
   if (!text) {
     return
   }

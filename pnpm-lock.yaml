@@ -1071,6 +1071,9 @@ importers:
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1456,6 +1459,9 @@ importers:
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       ky:
         specifier: ^2.0.2
         version: 2.0.2

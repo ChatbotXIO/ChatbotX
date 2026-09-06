@@ -8,6 +8,7 @@
     "@chatbotx.io/integration-messenger": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "ky": "^2.0.2",
     "zod": "^4.3.6"
   },

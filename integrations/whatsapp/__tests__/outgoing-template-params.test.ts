@@ -649,7 +649,10 @@ describe("raw Meta error surfacing", () => {
     const error = await rejectWith(400)
     expect(error).toBeInstanceOf(ChannelError)
     expect(error.code).toBe(100)
-    expect(error.message).toContain("(#100) Invalid parameter")
+    // Meta's own `(#100) ` prefix is folded into the one `#(code) ` prefix the
+    // formatter writes, so the code still reads once, not twice.
+    expect(error.message).toContain("#(100) Invalid parameter")
+    expect(error.message).not.toContain("#(100) (#100)")
   })
 
   test("getErrorData reports the real code and a categorized (non-unknown) error", async () => {

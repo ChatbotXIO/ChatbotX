@@ -3,6 +3,7 @@ import {
   ChannelErrorCategory,
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
+import { formatGraphErrorMessage } from "@chatbotx.io/utils/graph-error"
 import {
   type ChannelErrorSource,
   parseOriginError,
@@ -177,7 +178,12 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
   const category = categorize(numCode, fields.type)
 
   const channelError = new ChannelError(
-    fields.message ?? "WhatsApp API call failed",
+    formatGraphErrorMessage({
+      code: fields.code,
+      subCode: fields.subCode,
+      message: fields.message,
+      userMessage: fields.userMessage ?? fields.userTitle,
+    }) ?? "WhatsApp API call failed",
     category,
     {
       code: fields.code ?? UNKNOWN_ERROR.code,
