@@ -44,20 +44,12 @@ export const contactsMessagesPublicRouter = {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
-      const conversation = await conversationService.findByContactWithInboxes({
-        contactId,
-        workspaceId: context.workspace.id,
-      })
-      if (!conversation) {
-        throw notFoundException("Conversation not found")
-      }
-
-      const contactInbox = input.inboxId
-        ? conversation.contactInboxes.find((ci) => ci.inboxId === input.inboxId)
-        : conversation.contactInboxes[0]
-      if (!contactInbox) {
-        throw notFoundException("Conversation not found")
-      }
+      const { conversation, contactInbox } =
+        await conversationService.resolveContactInboxForSend({
+          contactId,
+          workspaceId: context.workspace.id,
+          inboxId: input.inboxId,
+        })
 
       await messageService.createOutgoing({
         conversation,
@@ -162,20 +154,12 @@ export const contactsMessagesPublicRouter = {
         throw notFoundException("No automated response found for this keyword")
       }
 
-      const conversation = await conversationService.findByContactWithInboxes({
-        contactId,
-        workspaceId: context.workspace.id,
-      })
-      if (!conversation) {
-        throw notFoundException("Conversation not found")
-      }
-
-      const contactInbox = input.inboxId
-        ? conversation.contactInboxes.find((ci) => ci.inboxId === input.inboxId)
-        : conversation.contactInboxes[0]
-      if (!contactInbox) {
-        throw notFoundException("Conversation not found")
-      }
+      const { conversation, contactInbox } =
+        await conversationService.resolveContactInboxForSend({
+          contactId,
+          workspaceId: context.workspace.id,
+          inboxId: input.inboxId,
+        })
 
       const parsedInput = autoReply.flowId
         ? { flowId: autoReply.flowId, inboxId: input.inboxId }
@@ -208,20 +192,12 @@ export const contactsMessagesPublicRouter = {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
-      const conversation = await conversationService.findByContactWithInboxes({
-        contactId,
-        workspaceId: context.workspace.id,
-      })
-      if (!conversation) {
-        throw notFoundException("Conversation not found")
-      }
-
-      const contactInbox = input.inboxId
-        ? conversation.contactInboxes.find((ci) => ci.inboxId === input.inboxId)
-        : conversation.contactInboxes[0]
-      if (!contactInbox) {
-        throw notFoundException("Conversation not found")
-      }
+      const { conversation, contactInbox } =
+        await conversationService.resolveContactInboxForSend({
+          contactId,
+          workspaceId: context.workspace.id,
+          inboxId: input.inboxId,
+        })
 
       await messageService.createOutgoing({
         conversation,

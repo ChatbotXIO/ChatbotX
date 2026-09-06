@@ -4,13 +4,12 @@ import {
   exportContactsRequest,
   exportContactsResponse,
 } from "../../schema/action"
-
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
-
 import {
   getExportFilePublicRequest,
   getExportFilePublicResponse,
 } from "../../schema/public/export"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
 export const contactsExportPublicRouter = {
   export: workspaceTokenAuthAPI

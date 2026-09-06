@@ -32,3 +32,15 @@ export const bulkSubscribeSequencesPublicRequest =
 export type BulkSubscribeSequencesPublicRequest = z.infer<
   typeof bulkSubscribeSequencesPublicRequest
 >
+
+export const bulkResultPublicResponse = z.object({
+  processed: z
+    .number()
+    .describe("Number of contact ids that were found and processed."),
+  skippedContactIds: z
+    .array(z.string())
+    .describe(
+      "Contact ids from the request that were not found in this workspace (deleted, wrong workspace, or unknown) and were therefore skipped.",
+    ),
+})
+export type BulkResultPublicResponse = z.infer<typeof bulkResultPublicResponse>

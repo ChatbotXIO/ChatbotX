@@ -5,6 +5,7 @@ import {
   genderTypes,
 } from "@chatbotx.io/database/partials"
 import type { ContactModel } from "@chatbotx.io/database/types"
+import { isNumericId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { contactInboxService } from "../contact-inbox/service"
@@ -30,18 +31,10 @@ export const updateFieldsAndCustomFields = async (
     accessScope: ctx.accessScope,
   })
 
-  const allCustomFields = await customFieldService.list({
-    workspaceId: ctx.workspaceId,
-    perPage: 10_000,
-  })
-  const allCustomFieldsMap = new Map(
-    allCustomFields.data.map((field) => [field.id.toString(), field]),
-  )
-
   // Prepare data
   const submittedContactFields: Partial<ContactModel> = {}
   const contactFields: Partial<ContactModel> = {}
-  const customFields: Record<string, string> = {}
+  const candidateCustomFieldValues: Record<string, string> = {}
   const contactInboxId = parsedInput[contactInboxIdField]
   const clientTimezone = parsedInput[clientTimezoneField]
   const language = normalizeLanguage(parsedInput.language)
@@ -61,7 +54,28 @@ export const updateFieldsAndCustomFields = async (
         key as FillableContactKey,
         value,
       )
-    } else if (allCustomFieldsMap.has(key)) {
+    } else if (isNumericId(key)) {
+      // Not a fillable contact key — only a numeric key can be a custom
+      // field id; `writeValues` re-validates the id against the workspace
+      // below, so this is just a cheap pre-filter, not the source of truth.
+      candidateCustomFieldValues[key] = value
+    }
+  }
+
+  const candidateCustomFieldIds = Object.keys(candidateCustomFieldValues)
+  const matchedCustomFields =
+    candidateCustomFieldIds.length > 0
+      ? await customFieldService.findManyByIds({
+          workspaceId: ctx.workspaceId,
+          ids: candidateCustomFieldIds,
+        })
+      : []
+  const matchedCustomFieldIds = new Set(
+    matchedCustomFields.map((field) => field.id),
+  )
+  const customFields: Record<string, string> = {}
+  for (const [key, value] of Object.entries(candidateCustomFieldValues)) {
+    if (matchedCustomFieldIds.has(key)) {
       customFields[key] = value
     }
   }

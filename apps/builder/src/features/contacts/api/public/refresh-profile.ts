@@ -1,4 +1,5 @@
 import { contactService } from "@chatbotx.io/business"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { refreshContactProfile } from "../../lib/refresh-contact-profile"
@@ -19,7 +20,7 @@ export const contactsRefreshProfilePublicRouter = {
     .input(
       z.object({
         identifier: z.string().min(1),
-        contactInboxId: z.string(),
+        contactInboxId: zodBigintAsString(),
       }),
     )
     .output(refreshContactProfilePublicResponse)

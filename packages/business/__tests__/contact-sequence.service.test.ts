@@ -9,6 +9,7 @@ const {
   loggerWarnSpy,
   selectFromSpy,
   selectWhereSpy,
+  sequenceFindManySpy,
   sequenceStepFindManySpy,
   order,
   removeDispatchesFromScheduleSpy,
@@ -30,6 +31,10 @@ const {
     loggerWarnSpy: vi.fn(),
     selectFromSpy: vi.fn(),
     selectWhereSpy: vi.fn(),
+    // Separate from findManySpy (contactsOnSequenceModel) so
+    // assertSequencesInWorkspace's lookups don't consume the
+    // mockResolvedValueOnce queue the other tests rely on.
+    sequenceFindManySpy: vi.fn(),
     order,
     removeDispatchesFromScheduleSpy: vi.fn().mockImplementation(() => {
       order.push("remove")
@@ -46,6 +51,9 @@ const txClient = {
     contactsOnSequenceModel: {
       findMany: findManySpy,
     },
+    sequenceModel: {
+      findMany: sequenceFindManySpy,
+    },
     sequenceStepModel: {
       findMany: sequenceStepFindManySpy,
     },
@@ -58,6 +66,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       contactsOnSequenceModel: {
         findMany: findManySpy,
+      },
+      sequenceModel: {
+        findMany: sequenceFindManySpy,
       },
       sequenceStepModel: {
         findMany: sequenceStepFindManySpy,
@@ -131,6 +142,11 @@ describe("contactSequenceService", () => {
     selectFromSpy.mockReturnValue({ where: selectWhereSpy })
     selectWhereSpy.mockResolvedValue([{ id: "sequence-1", name: "Sequence 1" }])
     sequenceStepFindManySpy.mockResolvedValue([])
+    // assertSequencesInWorkspace: treat every requested sequenceId as owned
+    // by the workspace by default — echo back whatever ids were queried.
+    sequenceFindManySpy.mockImplementation(({ where }) =>
+      Promise.resolve((where.id.in as string[]).map((id: string) => ({ id }))),
+    )
     deleteWhereSpy.mockImplementation(() => {
       order.push("delete")
       return Promise.resolve(undefined)

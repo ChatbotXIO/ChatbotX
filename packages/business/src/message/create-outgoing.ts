@@ -25,10 +25,11 @@ import {
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { ChatbotXException } from "../errors"
+import { logger } from "../logger"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
 
-export type CreateOutgoingInput = (
+type CreateOutgoingInput = (
   | { flowId: string; nodeId?: string }
   | {
       text?: string
@@ -251,48 +252,90 @@ export const createOutgoing = async (props: {
     })),
   }
 
-  const promises: Promise<unknown>[] = [
-    chatQueue.add(ChatJobAction.broadcastEvent, {
-      type: ChatJobAction.broadcastEvent,
-      data: {
-        workspaceId: messageWithAttachments.workspaceId,
-        event: {
-          eventType: RealtimeEventType.messageCreated,
-          data: {
-            ...messageWithAttachments,
-            clientId: parsedInput.clientId,
+  const jobs: {
+    jobType: (typeof ChatJobAction)[keyof typeof ChatJobAction]
+    promise: Promise<unknown>
+  }[] = [
+    {
+      jobType: ChatJobAction.broadcastEvent,
+      promise: chatQueue.add(ChatJobAction.broadcastEvent, {
+        type: ChatJobAction.broadcastEvent,
+        data: {
+          workspaceId: messageWithAttachments.workspaceId,
+          event: {
+            eventType: RealtimeEventType.messageCreated,
+            data: {
+              ...messageWithAttachments,
+              clientId: parsedInput.clientId,
+            },
           },
         },
-      },
-    }),
-    chatQueue.add(ChatJobAction.sendChannelMessage, {
-      type: ChatJobAction.sendChannelMessage,
-      data: {
-        conversation: targetConversation,
-        contactInbox,
-        message: {
-          ...messageWithAttachments,
-          clientId: parsedInput.clientId,
-          parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
+      }),
+    },
+    {
+      jobType: ChatJobAction.sendChannelMessage,
+      promise: chatQueue.add(ChatJobAction.sendChannelMessage, {
+        type: ChatJobAction.sendChannelMessage,
+        data: {
+          conversation: targetConversation,
+          contactInbox,
+          message: {
+            ...messageWithAttachments,
+            clientId: parsedInput.clientId,
+            parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
+          },
+          sendFrom: "inbox",
         },
-        sendFrom: "inbox",
-      },
-    }),
+      }),
+    },
     ...(user && messageInput.text
       ? [
-          chatQueue.add(ChatJobAction.checkOutboundAutomatedResponse, {
-            type: ChatJobAction.checkOutboundAutomatedResponse,
-            data: {
-              conversation: targetConversation,
-              contactInbox,
-              message: { id: message.id, text: messageInput.text },
-            },
-          }),
+          {
+            jobType: ChatJobAction.checkOutboundAutomatedResponse,
+            promise: chatQueue.add(
+              ChatJobAction.checkOutboundAutomatedResponse,
+              {
+                type: ChatJobAction.checkOutboundAutomatedResponse,
+                data: {
+                  conversation: targetConversation,
+                  contactInbox,
+                  message: { id: message.id, text: messageInput.text },
+                },
+              },
+            ),
+          },
         ]
       : []),
   ]
 
-  await Promise.allSettled(promises)
+  const results = await Promise.allSettled(jobs.map((job) => job.promise))
+
+  let sendChannelMessageError: unknown
+  for (const [index, result] of results.entries()) {
+    if (result.status !== "rejected") {
+      continue
+    }
+    const { jobType } = jobs[index]
+    logger.error(
+      {
+        err: result.reason,
+        workspaceId: conversation.workspaceId,
+        conversationId: targetConversation.id,
+        jobType,
+      },
+      "Failed to enqueue outgoing-message job",
+    )
+    if (jobType === ChatJobAction.sendChannelMessage) {
+      sendChannelMessageError = result.reason
+    }
+  }
+
+  // The message row already exists at this point; if the enqueue that
+  // actually delivers it to the channel failed, the caller must see an
+  // error instead of a false "sent" success — the row stays for retry.
+  if (sendChannelMessageError !== undefined) {
+    throw sendChannelMessageError
+  }
 
   return messageWithAttachments
 }

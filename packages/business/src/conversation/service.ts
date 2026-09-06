@@ -323,6 +323,40 @@ class ConversationService extends BaseService {
     })) as ConversationWithContactInboxes | undefined
   }
 
+  /**
+   * Shared by the public `/v1/contacts/{identifier}/messages|auto-replies|flows`
+   * handlers: resolve the contact's conversation and the specific
+   * `ContactInbox` to send through (or the first one when `inboxId` is
+   * omitted), throwing the same 404 either way instead of repeating both
+   * lookups + both `notFoundException` calls at every call site.
+   */
+  async resolveContactInboxForSend(props: {
+    contactId: string
+    workspaceId: string
+    inboxId?: string
+  }): Promise<{
+    conversation: ConversationWithContactInboxes
+    contactInbox: ContactInboxModel
+  }> {
+    const { contactId, workspaceId, inboxId } = props
+    const conversation = await this.findByContactWithInboxes({
+      contactId,
+      workspaceId,
+    })
+    if (!conversation) {
+      throw notFoundException("Conversation not found")
+    }
+
+    const contactInbox = inboxId
+      ? conversation.contactInboxes.find((ci) => ci.inboxId === inboxId)
+      : conversation.contactInboxes[0]
+    if (!contactInbox) {
+      throw notFoundException("Conversation not found")
+    }
+
+    return { conversation, contactInbox }
+  }
+
   async findLatestByContact(props: {
     contactId: string
     tx?: DatabaseClient

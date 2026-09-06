@@ -49,7 +49,7 @@ export async function listContacts(
  * `listContacts` above (RSC/private) always uses the full relation set and a
  * real count so private behavior never silently changes shape.
  */
-export type ListContactsForAPIOptions = {
+type ListContactsForAPIOptions = {
   include?: readonly ("tags" | "customFields" | "inboxes" | "conversation")[]
   withCount?: boolean
 }
@@ -222,7 +222,7 @@ export async function countContacts(
   return { total }
 }
 
-export async function getTotalContactsFromStats(
+async function getTotalContactsFromStats(
   workspaceId: string,
 ): Promise<{ total: number }> {
   try {

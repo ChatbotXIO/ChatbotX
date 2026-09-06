@@ -7,6 +7,11 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
 export const contactsInboxesPublicRouter = {
+  // Deliberately uncached: channel webhooks create/update ContactInbox
+  // identities and the sequence scheduler advances enrollments, neither of
+  // which routes through the `contacts:*` cache tags this PR controls. A
+  // stale read here is worse for an AI/MCP caller (acting on a channel
+  // identity list that's already changed) than paying for the DB hit.
   listInboxes: workspaceTokenAuthAPI
     .route({
       method: "GET",

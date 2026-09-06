@@ -11,6 +11,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { type ContactAccessScope, contactService } from "../contact/service"
+import { notFoundException } from "../errors"
 
 class ContactNoteService extends BaseService {
   async create(input: {
@@ -82,7 +83,7 @@ class ContactNoteService extends BaseService {
       id: input.contactId,
       accessScope: input.accessScope,
     })
-    await db
+    const deleted = await db
       .delete(contactNoteModel)
       .where(
         and(
@@ -90,15 +91,13 @@ class ContactNoteService extends BaseService {
           eq(contactNoteModel.contactId, input.contactId),
         ),
       )
+      .returning({ id: contactNoteModel.id })
+    if (deleted.length === 0) {
+      throw notFoundException("Contact note not found")
+    }
     await this.invalidateCacheTags([
       `contacts:${input.contactId}:contact-notes`,
     ])
-  }
-  listWithAuthor(input: { contactId: string }) {
-    return db.query.contactNoteModel.findMany({
-      where: { contactId: input.contactId, createdById: { isNotNull: true } },
-      with: { createdBy: true },
-    })
   }
   async listByContactId(props: {
     tx?: DatabaseClient

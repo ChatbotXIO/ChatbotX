@@ -124,9 +124,7 @@ describe("tagService.softDelete", () => {
     updateReturning.mockResolvedValue([])
     await tagService.softDelete({ workspaceId: WS, ids: makeIds(201) })
     expect(invalidateCacheByTags).toHaveBeenCalledTimes(1)
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      `workspaces:${WS}#tags`,
-    ])
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tags", `tags:${WS}`])
   })
 
   test("set includes deletedAt", async () => {

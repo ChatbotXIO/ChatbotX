@@ -11,7 +11,11 @@ export const createContactAction = workspaceActionClient
   .inputSchema(createContactRequest)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     try {
-      await contactService.createWithInbox({ workspaceId, input: parsedInput })
+      const { contact } = await contactService.createWithInbox({
+        workspaceId,
+        input: parsedInput,
+      })
+      return contact
     } catch (error) {
       if (
         error instanceof ChatbotXException &&
