@@ -161,7 +161,7 @@ describe("seedWaTemplateStepButtons", () => {
 
 describe("sendWaTemplateMessageStepSchema — legacy data and configured buttons", () => {
   const baseStep = {
-    id: "step-1",
+    id: "1",
     nodeId: "node-1",
     stepType: stepTypes.enum.sendWaTemplateMessage,
     template: {

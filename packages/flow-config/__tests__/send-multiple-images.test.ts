@@ -6,7 +6,7 @@ import {
 } from "../src/steps/send-multiple-images"
 
 const baseStep = {
-  id: "step-1",
+  id: "1",
   stepType: "sendMultipleImages" as const,
 }
 

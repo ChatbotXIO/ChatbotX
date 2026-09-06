@@ -12,7 +12,7 @@ const refinedStepSchema =
   sendWaTemplateMessageValidator[channelTypes.enum.omnichannel]
 
 const baseStep = {
-  id: "step-1",
+  id: "1",
   nodeId: "node-1",
   stepType: stepTypes.enum.sendWaTemplateMessage,
   template: {

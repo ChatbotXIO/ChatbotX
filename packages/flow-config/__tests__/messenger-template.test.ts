@@ -441,7 +441,7 @@ describe("extractMessengerFlowButtons", () => {
 
 describe("sendMessengerTemplateMessageStepSchema", () => {
   const base = {
-    id: "step-1",
+    id: "1",
     stepType: "sendMessengerTemplateMessage" as const,
     nodeId: "node-1",
     template: {
@@ -479,7 +479,7 @@ describe("sendMessengerTemplateMessageStepSchema", () => {
       ...base,
       buttons: [
         {
-          id: "b1",
+          id: "1",
           label: "Accept",
           steps: [],
           beforeStep: null,
@@ -488,7 +488,7 @@ describe("sendMessengerTemplateMessageStepSchema", () => {
       ],
     })
     expect(result.buttons).toHaveLength(1)
-    expect(result.buttons[0]).toMatchObject({ id: "b1", label: "Accept" })
+    expect(result.buttons[0]).toMatchObject({ id: "1", label: "Accept" })
   })
 
   test("empty template.id (whitespace) → parse fails", () => {
