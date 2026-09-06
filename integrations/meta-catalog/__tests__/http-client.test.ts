@@ -46,7 +46,7 @@ describe("metaCatalogGraphClient error mapping", () => {
       metaCatalogGraphClient.get("v24.0/catalog-1/products"),
     ).rejects.toMatchObject({
       message:
-        "Invalid parameter — This catalog is not connected to a commerce account yet.",
+        "#(100 - 33) Invalid parameter. This catalog is not connected to a commerce account yet.",
       fbTraceId: "trace-1",
       graphCode: 100,
       graphSubcode: 33,

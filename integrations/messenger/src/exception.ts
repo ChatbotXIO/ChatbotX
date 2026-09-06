@@ -1,4 +1,5 @@
 import { SdkException } from "@chatbotx.io/sdk"
+import { formatGraphError } from "@chatbotx.io/utils/graph-error"
 import { isHTTPError } from "ky"
 import { logger } from "./lib/logger"
 
@@ -22,20 +23,6 @@ type ErrorBody = {
 type OriginShape = { httpStatus?: number; errorBody?: ErrorBody }
 type ExplicitShape = { response?: { error?: ErrorBody["error"] } }
 
-// Prefer Facebook's human-readable error (error_user_title/error_user_msg) over
-// the terse generic `message` (e.g. "Invalid parameter").
-function pickErrorMessage(err?: ErrorBody["error"]): string | undefined {
-  if (!err) {
-    return
-  }
-  if (err.error_user_msg) {
-    return err.error_user_title
-      ? `${err.error_user_title}: ${err.error_user_msg}`
-      : err.error_user_msg
-  }
-  return err.message
-}
-
 export type ChannelErrorSource = {
   httpStatusCode: number
   code?: number | string
@@ -53,7 +40,7 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
       code: err?.code,
       subCode: err?.error_subcode ?? err?.subcode,
       type: err?.type,
-      message: pickErrorMessage(err),
+      message: formatGraphError(err),
     }
   }
 
@@ -65,7 +52,7 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
       code: err?.code,
       subCode: err?.error_subcode ?? err?.subcode,
       type: err?.type,
-      message: pickErrorMessage(err),
+      message: formatGraphError(err),
     }
   }
 
@@ -78,7 +65,7 @@ export function parseOriginError(originError: unknown): ChannelErrorSource {
       code: err.code,
       subCode: err.error_subcode ?? err.subcode,
       type: err.type,
-      message: pickErrorMessage(err),
+      message: formatGraphError(err),
     }
   }
   return {
