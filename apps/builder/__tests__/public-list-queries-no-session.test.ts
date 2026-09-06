@@ -16,6 +16,10 @@ const mocks = vi.hoisted(() => ({
   listByWorkspace: vi.fn().mockResolvedValue([]),
   findManyQuery: vi.fn().mockResolvedValue([]),
   findLastByConversation: vi.fn().mockResolvedValue([]),
+  broadcastListWithRelations: vi.fn().mockResolvedValue([]),
+  broadcastCount: vi.fn().mockResolvedValue(0),
+  sequenceListWithCounts: vi.fn().mockResolvedValue([]),
+  sequenceCount: vi.fn().mockResolvedValue(0),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -25,8 +29,6 @@ vi.mock("@/lib/auth/utils", () => ({
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
-      broadcastModel: { findMany: mocks.findMany },
-      sequenceModel: { findMany: mocks.findMany },
       errorLogModel: { findMany: mocks.findMany },
       workspaceMemberModel: { findMany: mocks.findMany },
     },
@@ -37,11 +39,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: { id: "broadcastModelId" },
-  contactsOnBroadcastsModel: { id: "contactsOnBroadcastsModelId" },
-  sequenceModel: { id: "sequenceModelId" },
-  sequenceStepModel: { id: "sequenceStepModelId" },
-  contactsOnSequenceModel: { id: "contactsOnSequenceModelId" },
   errorLogModel: { id: "errorLogModelId" },
   workspaceMemberModel: { id: "workspaceMemberModelId" },
 }))
@@ -80,6 +77,14 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: vi.fn().mockResolvedValue({
     findLastByConversation: mocks.findLastByConversation,
   }),
+  broadcastRepository: {
+    listWithRelations: mocks.broadcastListWithRelations,
+    count: mocks.broadcastCount,
+  },
+  sequenceRepository: {
+    listWithCounts: mocks.sequenceListWithCounts,
+    count: mocks.sequenceCount,
+  },
 }))
 
 vi.mock(
@@ -96,6 +101,10 @@ beforeEach(() => {
   mocks.listByWorkspace.mockResolvedValue([])
   mocks.findManyQuery.mockResolvedValue([])
   mocks.findLastByConversation.mockResolvedValue([])
+  mocks.broadcastListWithRelations.mockResolvedValue([])
+  mocks.broadcastCount.mockResolvedValue(0)
+  mocks.sequenceListWithCounts.mockResolvedValue([])
+  mocks.sequenceCount.mockResolvedValue(0)
 })
 
 describe("public list queries never depend on a session", () => {

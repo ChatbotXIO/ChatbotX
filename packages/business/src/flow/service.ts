@@ -3,6 +3,7 @@ import {
   type CustomFieldType,
   rootFolderId,
 } from "@chatbotx.io/database/partials"
+import { flowRepository } from "@chatbotx.io/database/repositories"
 import {
   flowAnalyticsSessionModel,
   flowModel,
@@ -15,7 +16,10 @@ import type {
   FlowExportCustomField,
   FlowVersionSchema,
 } from "@chatbotx.io/flow-config"
-import { remapFlowGraphReferences } from "@chatbotx.io/flow-config"
+import {
+  remapFlowGraphReferences,
+  sendMessageNodeDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
@@ -390,6 +394,91 @@ class FlowService extends BaseService {
       "delete",
       `deleted flow${flows.length > 1 ? "s" : ""} (${flows.map((flow) => `#${flow.id}`).join(", ")})`,
     )
+  }
+
+  /**
+   * Creates a flow, its analytics session, and a draft version with a
+   * default `sendMessageNode` — the builder's "New flow" action. Kept
+   * separate from `insertFlowWithDraft`: that private helper also sets
+   * `draftVersionId`/`currentVersionId` on the flow row, which this action
+   * historically has NOT done — preserved verbatim to avoid a behavior
+   * change.
+   */
+  async createWithDefaultDraft(input: {
+    workspaceId: string
+    name: string
+    active?: boolean
+    enableInInbox?: boolean
+    folderId?: string | null
+  }): Promise<{ id: string }> {
+    if (input.folderId) {
+      await folderService.ensureExists({
+        id: input.folderId,
+        workspaceId: input.workspaceId,
+        folderType: "flow",
+      })
+    }
+
+    const defaultNode = sendMessageNodeDefaultFn({
+      dataProps: {
+        name: "Send Message #1",
+        isStartNode: true,
+      },
+    })
+
+    const flow = await db.transaction(async (tx) => {
+      const flowId = createId()
+      const insertedFlow = await tx
+        .insert(flowModel)
+        .values({
+          name: input.name,
+          active: input.active,
+          enableInInbox: input.enableInInbox,
+          folderId: input.folderId,
+          id: flowId,
+          workspaceId: input.workspaceId,
+        })
+        .returning()
+        .then((result) => result[0])
+
+      await tx.insert(flowAnalyticsSessionModel).values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        flowId,
+      })
+
+      await tx.insert(flowVersionModel).values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        flowId,
+        // biome-ignore lint/suspicious/noExplicitAny: temporary any to bypass circular dependency between flow and flow version
+        nodes: [defaultNode as any],
+        edges: [],
+        isDraft: true,
+        startNodeId: defaultNode.id,
+      })
+
+      return insertedFlow
+    })
+
+    await this.audit("create", `created a new flow (#${flow.id})`)
+
+    return { id: flow.id }
+  }
+
+  /** Existence check for a set of flow ids, scoped to the workspace. */
+  async assertAllExist(input: {
+    workspaceId: string
+    flowIds: string[]
+  }): Promise<void> {
+    const ids = await flowRepository.listIdsByIds({
+      workspaceId: input.workspaceId,
+      ids: input.flowIds,
+    })
+
+    if (ids.length !== input.flowIds.length) {
+      throw notFoundException("Flow does not exists.")
+    }
   }
 }
 

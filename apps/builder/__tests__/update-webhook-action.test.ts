@@ -2,12 +2,9 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockDbTransaction, mockUpdateWebhookCache, mockRecordAuditLog } =
-  vi.hoisted(() => ({
-    mockDbTransaction: vi.fn(),
-    mockUpdateWebhookCache: vi.fn().mockResolvedValue(undefined),
-    mockRecordAuditLog: vi.fn(),
-  }))
+const { mockUpdateWithConditions } = vi.hoisted(() => ({
+  mockUpdateWithConditions: vi.fn(),
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -17,33 +14,22 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: (...args: unknown[]) => mockRecordAuditLog(...args) },
+vi.mock("@chatbotx.io/business", () => ({
+  webhookService: { updateWithConditions: mockUpdateWithConditions },
 }))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: mockDbTransaction },
-  and: (...args: unknown[]) => ({ __and: args }),
-  eq: (a: unknown, b: unknown) => ({ __eq: [a, b] }),
-  inArray: (a: unknown, b: unknown) => ({ __inArray: [a, b] }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  webhookModel: { id: "id", workspaceId: "workspaceId" },
-  conditionModel: { id: "id" },
-}))
-
-vi.mock("@chatbotx.io/events", () => ({
-  updateWebhookCache: mockUpdateWebhookCache,
-}))
-
-vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
-  return { ...actual, createId: () => "generated-id" }
-})
 
 vi.mock("@/features/conditions/to-condition-columns", () => ({
-  toConditionColumns: (c: unknown) => c,
+  toConditionColumns: (c: {
+    type: string
+    sourceId?: string | null
+    operator?: string | null
+    value?: unknown
+  }) => ({
+    type: c.type,
+    sourceId: c.sourceId ?? null,
+    operator: c.operator ?? null,
+    value: c.value ?? null,
+  }),
 }))
 
 vi.mock("../src/features/webhooks/schema/update-webhook-schema", () => ({
@@ -54,68 +40,74 @@ const { updateWebhookAction } = await import(
   "../src/features/webhooks/actions/update-webhook-action"
 )
 
+type Condition = {
+  id?: string
+  type: string
+  sourceId?: string | null
+  operator?: string | null
+  value?: unknown
+}
+
 type Handler = (args: {
   bindArgsParsedInputs: [string, string]
-  parsedInput: { url: string; conditions: unknown[] }
+  parsedInput: { url: string; conditions: Condition[] }
 }) => Promise<unknown>
 
-const tx = {
-  query: {
-    conditionModel: { findMany: vi.fn().mockResolvedValue([]) },
-    webhookModel: {
-      findFirst: vi
-        .fn()
-        .mockResolvedValue({ id: "webhook-1", name: "New Order" }),
-    },
-  },
-  update: vi.fn().mockReturnValue({
-    set: vi
-      .fn()
-      .mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
-  }),
-  delete: vi
-    .fn()
-    .mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
-  insert: vi
-    .fn()
-    .mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
-}
+const callAction = updateWebhookAction as unknown as Handler
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockDbTransaction.mockImplementation(
-    async (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
-  )
-  tx.query.conditionModel.findMany.mockResolvedValue([])
-  tx.query.webhookModel.findFirst.mockResolvedValue({
+  mockUpdateWithConditions.mockResolvedValue({
     id: "webhook-1",
     name: "New Order",
   })
 })
 
 describe("updateWebhookAction", () => {
-  test("emits an update audit row with the webhook name and id", async () => {
-    const result = await (updateWebhookAction as unknown as Handler)({
+  test("maps conditions via toConditionColumns and delegates to webhookService.updateWithConditions", async () => {
+    const result = await callAction({
       bindArgsParsedInputs: ["ws-1", "webhook-1"],
-      parsedInput: { url: "https://example.com/hook", conditions: [] },
+      parsedInput: {
+        url: "https://example.com/hook",
+        conditions: [
+          { id: "cond-1", type: "newContact" },
+          { type: "tagApplied", sourceId: "tag-1" },
+        ],
+      },
     })
 
-    expect(result).toEqual({ id: "webhook-1", name: "New Order" })
-    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+    expect(mockUpdateWithConditions).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      action: "update",
-      detail: "updated a webhook (#webhook-1)",
+      id: "webhook-1",
+      url: "https://example.com/hook",
+      conditions: [
+        {
+          id: "cond-1",
+          type: "newContact",
+          sourceId: null,
+          operator: null,
+          value: null,
+        },
+        {
+          id: undefined,
+          type: "tagApplied",
+          sourceId: "tag-1",
+          operator: null,
+          value: null,
+        },
+      ],
     })
+    expect(result).toEqual({ id: "webhook-1", name: "New Order" })
   })
 
-  test("does not emit when the webhook row is gone after the transaction", async () => {
-    tx.query.webhookModel.findFirst.mockResolvedValue(undefined)
+  test("returns undefined when the service reports no webhook", async () => {
+    mockUpdateWithConditions.mockResolvedValue(undefined)
 
-    await (updateWebhookAction as unknown as Handler)({
+    const result = await callAction({
       bindArgsParsedInputs: ["ws-1", "webhook-1"],
       parsedInput: { url: "https://example.com/hook", conditions: [] },
     })
 
-    expect(mockRecordAuditLog).not.toHaveBeenCalled()
+    expect(result).toBeUndefined()
   })
 })

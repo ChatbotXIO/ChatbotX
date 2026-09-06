@@ -1,5 +1,7 @@
-import { and, count, db, eq, isNull } from "@chatbotx.io/database/client"
-import { triggerModel } from "@chatbotx.io/database/schema"
+import {
+  conditionRepository,
+  triggerRepository,
+} from "@chatbotx.io/database/repositories"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetTriggersSchema, ListTriggersResponse } from "../schema/query"
@@ -9,52 +11,22 @@ export async function getTriggers(
 ): Promise<ListTriggersResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  // Build SQL conditions
-  const conditions = [eq(triggerModel.workspaceId, input.workspaceId)]
+  const { rows: triggers, total } = await triggerRepository.listPaginated({
+    workspaceId: input.workspaceId,
+    folderId: input.folderId,
+    name: input.name,
+    limit: input.perPage,
+    offset: (input.page - 1) * input.perPage,
+  })
 
-  if (input.folderId !== undefined) {
-    const folderId =
-      input.folderId === null || input.folderId === "" ? null : input.folderId
-    if (folderId === null) {
-      conditions.push(isNull(triggerModel.folderId))
-    } else {
-      conditions.push(eq(triggerModel.folderId, folderId))
-    }
-  }
-
-  if (input.name) {
-    conditions.push(eq(triggerModel.name, input.name))
-  }
-
-  const whereClause = and(...conditions)
-
-  // Execute queries - fetch triggers with SQL builder, then load conditions
-  const [triggers, countResult] = await Promise.all([
-    db
-      .select()
-      .from(triggerModel)
-      .where(whereClause)
-      .limit(input.perPage)
-      .offset((input.page - 1) * input.perPage),
-    db.select({ count: count() }).from(triggerModel).where(whereClause),
-  ])
-
-  // Load conditions for triggers
   const triggerIds = triggers.map((t) => t.id)
-  const conditionsData =
-    triggerIds.length > 0
-      ? await db.query.conditionModel.findMany({
-          where: { triggerId: { in: triggerIds } },
-        })
-      : []
+  const conditionsData = await conditionRepository.listByTriggerIds(triggerIds)
 
-  // Merge triggers with conditions
   const data = triggers.map((trigger) => ({
     ...trigger,
     conditions: conditionsData.filter((c) => c.triggerId === trigger.id),
   }))
 
-  const total = countResult[0]?.count ?? 0
   const pageCount = Math.ceil(total / input.perPage)
 
   return { data, pageCount }
@@ -64,26 +36,9 @@ export async function findTrigger(params: {
   id?: string
   workspaceId?: string
 }): Promise<TriggerModel | null> {
-  const where: Record<string, unknown> = {}
-
-  if (params.id) {
-    where.id = params.id
-  }
-
-  if (params.workspaceId) {
-    where.workspaceId = params.workspaceId
-  }
-
-  if (Object.keys(where).length === 0) {
+  if (!(params.id || params.workspaceId)) {
     return null
   }
 
-  const result = await db.query.triggerModel.findFirst({
-    where,
-    with: {
-      conditions: true,
-    },
-  })
-
-  return result ?? null
+  return await triggerRepository.findWithConditions(params)
 }

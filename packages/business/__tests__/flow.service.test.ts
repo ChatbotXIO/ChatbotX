@@ -46,6 +46,10 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   rootFolderId: "0",
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  flowRepository: { listIdsByIds: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   flowAnalyticsSessionModel,
   flowModel,
@@ -58,6 +62,7 @@ vi.mock("@chatbotx.io/utils", () => ({
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   remapFlowGraphReferences: vi.fn(),
+  sendMessageNodeDefaultFn: vi.fn(() => ({ id: "default-node" })),
   // Mirror the REAL runtime values (O01–O05) — a made-up shape would silently
   // mask a failure if flowService ever starts comparing against the enum.
   FieldOperationType: {
