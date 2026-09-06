@@ -3,36 +3,34 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   buildPayload,
-  contactCustomFieldFindFirst,
+  contactCustomFieldFindValue,
+  customFieldFindBy,
   executeWebhook,
   loggerError,
-  webhookFindMany,
+  listActiveWithConditions,
   workspaceFind,
 } = vi.hoisted(() => ({
   buildPayload: vi.fn(),
-  contactCustomFieldFindFirst: vi.fn(),
+  contactCustomFieldFindValue: vi.fn(),
+  customFieldFindBy: vi.fn(),
   executeWebhook: vi.fn(),
   loggerError: vi.fn(),
-  webhookFindMany: vi.fn(),
+  listActiveWithConditions: vi.fn(),
   workspaceFind: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      contactCustomFieldModel: {
-        findFirst: contactCustomFieldFindFirst,
-      },
-      webhookModel: {
-        findMany: webhookFindMany,
-      },
-    },
-  },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     find: workspaceFind,
+  },
+  webhookService: {
+    listActiveWithConditions,
+  },
+  contactCustomFieldService: {
+    findValue: contactCustomFieldFindValue,
+  },
+  customFieldService: {
+    findBy: customFieldFindBy,
   },
 }))
 
@@ -111,12 +109,12 @@ const datetimePayload = { event: "datetime_based_trigger", sourceId: "cf-1" }
 describe("WebhookMatcherService datetime events", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    contactCustomFieldFindFirst.mockRejectedValue(
+    contactCustomFieldFindValue.mockRejectedValue(
       new Error("datetime should not be re-evaluated by webhook matcher"),
     )
     buildPayload.mockResolvedValue(datetimePayload)
     executeWebhook.mockResolvedValue(undefined)
-    webhookFindMany.mockResolvedValue([webhook])
+    listActiveWithConditions.mockResolvedValue([webhook])
     workspaceFind.mockResolvedValue({ id: "workspace-1", timezone: "UTC" })
   })
 
@@ -125,7 +123,7 @@ describe("WebhookMatcherService datetime events", () => {
 
     await matcher.findAndExecuteWebhooks(datetimeEvent)
 
-    expect(contactCustomFieldFindFirst).not.toHaveBeenCalled()
+    expect(contactCustomFieldFindValue).not.toHaveBeenCalled()
     expect(buildPayload).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: triggerEventTypes.enum.dateTimeBasedTrigger,
@@ -146,7 +144,7 @@ describe("WebhookMatcherService datetime events", () => {
       eventData: { sourceId: "cf-other" },
     })
 
-    expect(contactCustomFieldFindFirst).not.toHaveBeenCalled()
+    expect(contactCustomFieldFindValue).not.toHaveBeenCalled()
     expect(buildPayload).not.toHaveBeenCalled()
     expect(executeWebhook).not.toHaveBeenCalled()
   })
@@ -155,7 +153,7 @@ describe("WebhookMatcherService datetime events", () => {
     executeWebhook
       .mockRejectedValueOnce(new Error("first endpoint failed"))
       .mockResolvedValueOnce(undefined)
-    webhookFindMany.mockResolvedValue([webhook, secondWebhook])
+    listActiveWithConditions.mockResolvedValue([webhook, secondWebhook])
     const matcher = new WebhookMatcherService()
 
     await expect(
@@ -174,7 +172,7 @@ describe("WebhookMatcherService datetime events", () => {
   })
 
   test("builds a matched event payload once for multiple webhook deliveries", async () => {
-    webhookFindMany.mockResolvedValue([webhook, secondWebhook])
+    listActiveWithConditions.mockResolvedValue([webhook, secondWebhook])
     const matcher = new WebhookMatcherService()
 
     await matcher.findAndExecuteWebhooks(datetimeEvent)
@@ -197,7 +195,7 @@ describe("WebhookMatcherService datetime events", () => {
   // nothing has been sent yet, so the queue retry cannot duplicate a webhook.
   test("fails the job without delivering when the payload cannot be built", async () => {
     buildPayload.mockRejectedValue(new Error("contact lookup failed"))
-    webhookFindMany.mockResolvedValue([webhook, secondWebhook])
+    listActiveWithConditions.mockResolvedValue([webhook, secondWebhook])
     const matcher = new WebhookMatcherService()
 
     await expect(matcher.findAndExecuteWebhooks(datetimeEvent)).rejects.toThrow(
@@ -211,10 +209,10 @@ describe("WebhookMatcherService datetime events", () => {
   // job, because matched webhooks are delivered after this step and a retry
   // would send them twice. It must still be visible in the logs.
   test("logs and skips a webhook whose conditions cannot be evaluated", async () => {
-    contactCustomFieldFindFirst.mockRejectedValue(
+    contactCustomFieldFindValue.mockRejectedValue(
       new Error("custom field lookup failed"),
     )
-    webhookFindMany.mockResolvedValue([customFieldWebhook])
+    listActiveWithConditions.mockResolvedValue([customFieldWebhook])
     const matcher = new WebhookMatcherService()
 
     await expect(

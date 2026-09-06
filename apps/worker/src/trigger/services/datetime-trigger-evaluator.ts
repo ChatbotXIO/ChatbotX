@@ -1,11 +1,9 @@
-import { db, sql } from "@chatbotx.io/database/client"
+import { triggerService } from "@chatbotx.io/business"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import {
   listContactCustomFieldsForDateTimeSweep,
   listContactCustomFieldsForDateTimeSweepContacts,
 } from "@chatbotx.io/database/repositories"
-import { triggerExecutionModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
 import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import {
@@ -46,18 +44,11 @@ async function fetchTriggerChunk(
   cursor: string | undefined,
   chunkSize: number,
 ): Promise<{ triggerMap: TriggerMap; nextCursor: string | undefined }> {
-  const triggers = await db.query.triggerModel.findMany({
-    where: {
-      active: true,
-      ...(cursor ? { id: { gt: cursor } } : {}),
-    },
-    with: {
-      conditions: true,
-      workspace: true,
-    },
-    limit: chunkSize,
-    orderBy: { id: "asc" },
-  })
+  const { triggers, nextCursor } =
+    await triggerService.listActiveWithConditionsPage({
+      cursor,
+      limit: chunkSize,
+    })
 
   const filteredTriggers = triggers.filter((t) =>
     t.conditions.some(
@@ -109,9 +100,6 @@ async function fetchTriggerChunk(
     }
   }
 
-  const nextCursor =
-    triggers.length === chunkSize ? triggers.at(-1)?.id : undefined
-
   return { triggerMap, nextCursor }
 }
 
@@ -119,15 +107,9 @@ async function getExecutedTriggers(
   triggerIds: string[],
   contactIds: string[],
 ): Promise<Set<string>> {
-  const executions = await db.query.triggerExecutionModel.findMany({
-    where: {
-      triggerId: { in: triggerIds },
-      contactId: { in: contactIds },
-    },
-    columns: {
-      triggerId: true,
-      contactId: true,
-    },
+  const executions = await triggerService.listExecutedPairs({
+    triggerIds,
+    contactIds,
   })
 
   return new Set(executions.map((e) => `${e.triggerId}:${e.contactId}`))
@@ -191,17 +173,11 @@ async function markTriggerExecuted(
   triggerInfo: TriggerSweepInfo,
   contactId: string,
 ): Promise<void> {
-  await db
-    .insert(triggerExecutionModel)
-    .values({
-      id: createId(),
-      triggerId: triggerInfo.triggerId,
-      contactId,
-      workspaceId: triggerInfo.workspaceId,
-      createdAt: new Date(),
-      executedAt: new Date(),
-    })
-    .onConflictDoNothing()
+  await triggerService.recordExecution({
+    triggerId: triggerInfo.triggerId,
+    contactId,
+    workspaceId: triggerInfo.workspaceId,
+  })
 
   const cacheKey = `trigger:executed:${triggerInfo.triggerId}:${contactId}`
   await redis.setex(cacheKey, 86_400 * 90, "1")
@@ -452,9 +428,5 @@ export async function cleanupOldExecutions(): Promise<number> {
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
 
-  const result = await db.execute(
-    sql`DELETE FROM "TriggerExecution" WHERE "executedAt" < ${ninetyDaysAgo}`,
-  )
-
-  return Number(result.rowCount ?? 0)
+  return await triggerService.purgeExecutionsOlderThan(ninetyDaysAgo)
 }

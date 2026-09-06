@@ -10,34 +10,16 @@ const findFirstWorkspace = vi.fn()
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      contactModel: {
-        findMany: (...args: unknown[]) => findManyContacts(...args),
-      },
-      tagModel: {
-        findMany: (...args: unknown[]) => findManyTags(...args),
-      },
-      customFieldModel: {
-        findMany: (...args: unknown[]) => findManyCustomFields(...args),
-      },
-      // The handler reads the workspace timezone to format date/datetime custom
-      // fields for CSV export.
-      workspaceModel: {
-        findFirst: (...args: unknown[]) => findFirstWorkspace(...args),
-      },
-    },
-    update: () => ({
-      set: (values: unknown) => {
-        updateSet(values)
-        return { where: (cond: unknown) => updateWhere(cond) }
-      },
-    }),
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactRepository: {
+    listForExportPage: (...args: unknown[]) => findManyContacts(...args),
   },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
-  isNull: (column: unknown) => ({ isNull: column }),
+  fileRepository: {
+    updateForWorkspace: (input: { values: unknown }) => {
+      updateSet(input.values)
+      return updateWhere(input)
+    },
+  },
 }))
 
 vi.mock("@chatbotx.io/database/partials", async () =>
@@ -50,7 +32,17 @@ vi.mock("@chatbotx.io/database/queries", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  workspaceService: { find: vi.fn(async () => ({ timezone: "UTC" })) },
+  // The handler reads the workspace timezone to format date/datetime custom
+  // fields for CSV export.
+  workspaceService: {
+    find: (...args: unknown[]) => findFirstWorkspace(...args),
+  },
+  tagService: {
+    findManyByIds: (...args: unknown[]) => findManyTags(...args),
+  },
+  customFieldService: {
+    findManyByIds: (...args: unknown[]) => findManyCustomFields(...args),
+  },
 }))
 
 const recordAuditLog = vi.fn()
@@ -65,11 +57,6 @@ vi.mock("@chatbotx.io/business/audit", async () => {
     auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
   }
 })
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactCustomFieldModel: {},
-  fileModel: { id: "File.id", workspaceId: "File.workspaceId" },
-}))
 
 // Small page size keeps multi-page pagination tests to a few rows.
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -324,20 +311,15 @@ describe("loopableExportContacts", () => {
 
     await loopableExportContacts(buildData({ fields: ["sys:sourceUserId"] }))
 
+    // The `with.contactInboxes` shape now lives inside
+    // contactRepository.listForExportPage (pinned in
+    // packages/database/__tests__/contact-export-page-repository.test.ts); the
+    // handler's job is to signal that the WhatsApp User ID column is selected,
+    // which is what lifts the earliest-row limit.
     const query = findManyContacts.mock.calls[0][0] as {
-      with: {
-        contactInboxes: {
-          columns: Record<string, boolean>
-          limit?: number
-        }
-      }
+      includeSourceUserId: boolean
     }
-    expect(query.with.contactInboxes.columns).toMatchObject({
-      sourceId: true,
-      sourceUserId: true,
-    })
-    // Multi-inbox scan is only paid for when the column is actually selected.
-    expect(query.with.contactInboxes.limit).toBeUndefined()
+    expect(query.includeSourceUserId).toBe(true)
   })
 
   test("keeps the single-row contactInboxes load when the WhatsApp User ID column is NOT selected (regression)", async () => {
@@ -346,10 +328,12 @@ describe("loopableExportContacts", () => {
 
     await loopableExportContacts(buildData())
 
+    // Regression: an ordinary export must NOT ask for the multi-inbox scan,
+    // so the repository keeps its single-row contactInboxes load.
     const query = findManyContacts.mock.calls[0][0] as {
-      with: { contactInboxes: { limit?: number } }
+      includeSourceUserId: boolean
     }
-    expect(query.with.contactInboxes.limit).toBe(1)
+    expect(query.includeSourceUserId).toBe(false)
   })
 
   test("filters by contactIds when no filter is supplied", async () => {

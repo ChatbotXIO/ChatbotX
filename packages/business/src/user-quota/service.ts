@@ -878,6 +878,188 @@ class UserQuotaService extends BaseService {
         return { limit: null, used: 0 }
     }
   }
+
+  /**
+   * `sync-user-quota.ts` reconcileUser (non-reseller path): re-grounds a
+   * plain user's own `UserQuota.*Used` from the source-of-truth DB counts —
+   * modeled directly on `reconcileOwnerPoolUsage` above (same `Promise.all`
+   * shape, same "assigned directly, NOT GREATEST" semantics so deletions
+   * free quota). Unlike the pool path, the live-counter `hset` here has NO
+   * `mac` field — mac is reconciled separately by the caller via
+   * `persistMacUsed`/the ledger reconcile, using the markers this method
+   * returns from one round-trip (`macUsed`, `periodStart`, `periodEnd`,
+   * `monthlyBotMessagesPeriodStart`).
+   */
+  async reconcileUserSelfUsage(userId: string): Promise<{
+    macUsed: number
+    periodStart: Date | null
+    periodEnd: Date | null
+    monthlyBotMessagesPeriodStart: Date | null
+  }> {
+    const client = await cacheConnections.useExisting()
+
+    const [
+      [contactsResult],
+      teamMembersUsed,
+      [workspacesResult],
+      [channelsResult],
+    ] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(contactModel)
+        .innerJoin(
+          workspaceModel,
+          eq(contactModel.workspaceId, workspaceModel.id),
+        )
+        .where(eq(workspaceModel.ownerId, userId)),
+
+      this.countDistinctTeamMembersForOwner(userId),
+
+      db
+        .select({ count: count() })
+        .from(workspaceModel)
+        .where(eq(workspaceModel.ownerId, userId)),
+
+      db
+        .select({ count: count() })
+        .from(inboxModel)
+        .innerJoin(
+          workspaceModel,
+          eq(inboxModel.workspaceId, workspaceModel.id),
+        )
+        .where(eq(workspaceModel.ownerId, userId)),
+    ])
+
+    const contactsUsed = contactsResult?.count ?? 0
+    const workspacesUsed = workspacesResult?.count ?? 0
+    const channelsUsed = channelsResult?.count ?? 0
+
+    await db
+      .insert(userQuotaModel)
+      .values({
+        userId,
+        contactsUsed,
+        teamMembersUsed,
+        workspacesUsed,
+        channelsUsed,
+        syncedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: userQuotaModel.userId,
+        set: {
+          // Authoritative current count from the source tables (already
+          // reflects deletions). Assigned directly — NOT GREATEST — so
+          // removing contacts, team members, workspaces, or channels frees
+          // quota.
+          contactsUsed,
+          teamMembersUsed,
+          workspacesUsed,
+          channelsUsed,
+          syncedAt: new Date(),
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
+
+    // Mirror the live counters to the same authoritative current counts.
+    // No `mac` field here — this path's mac reconcile is separate.
+    await client.hset(
+      this.store.liveKey(userId),
+      "contacts",
+      String(contactsUsed),
+      "teamMembers",
+      String(teamMembersUsed),
+      "workspaces",
+      String(workspacesUsed),
+      "channels",
+      String(channelsUsed),
+    )
+
+    const stored = await db.query.userQuotaModel.findFirst({
+      where: { userId },
+      columns: {
+        macUsed: true,
+        periodStart: true,
+        periodEnd: true,
+        monthlyBotMessagesPeriodStart: true,
+      },
+    })
+
+    return {
+      macUsed: stored?.macUsed ?? 0,
+      periodStart: stored?.periodStart ?? null,
+      periodEnd: stored?.periodEnd ?? null,
+      monthlyBotMessagesPeriodStart:
+        stored?.monthlyBotMessagesPeriodStart ?? null,
+    }
+  }
+
+  /** `sync-user-quota.ts` persistMacUsed: upsert `UserQuota.macUsed` to an absolute value. */
+  async persistMacUsed(userId: string, value: number): Promise<void> {
+    await db
+      .insert(userQuotaModel)
+      .values({ userId, macUsed: value, syncedAt: new Date() })
+      .onConflictDoUpdate({
+        target: userQuotaModel.userId,
+        set: {
+          macUsed: value,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
+  }
+
+  /**
+   * `sync-user-quota.ts` reconcileMonthlyBotMessages: applies the resolved
+   * reset/stamp decision. The `reset` branch zeroes `monthlyBotMessagesUsed`
+   * and stamps the period; the else branch stamps only (adopt-into-current-
+   * period for an unstamped row, without touching the counter). Ordering is
+   * load-bearing: the DB counter is zeroed BEFORE the live Redis field, so a
+   * crash between the two writes fails closed (briefly over-blocks) rather
+   * than open — the caller must still write the live
+   * `monthlyBotMessages` hash field AFTER calling this, in that order.
+   */
+  async applyMonthlyBotMessagesReset(input: {
+    userId: string
+    periodStart: Date | null
+    reset: boolean
+  }): Promise<void> {
+    const { userId, periodStart, reset } = input
+
+    if (reset) {
+      await db
+        .insert(userQuotaModel)
+        .values({
+          userId,
+          monthlyBotMessagesUsed: 0,
+          monthlyBotMessagesPeriodStart: periodStart,
+          syncedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: userQuotaModel.userId,
+          set: {
+            monthlyBotMessagesUsed: 0,
+            monthlyBotMessagesPeriodStart: periodStart,
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          },
+        })
+      return
+    }
+
+    // Unstamped row: adopt into the current period without touching the counter.
+    await db
+      .insert(userQuotaModel)
+      .values({
+        userId,
+        monthlyBotMessagesPeriodStart: periodStart,
+        syncedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: userQuotaModel.userId,
+        set: {
+          monthlyBotMessagesPeriodStart: periodStart,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
+  }
 }
 
 export const userQuotaService = new UserQuotaService()

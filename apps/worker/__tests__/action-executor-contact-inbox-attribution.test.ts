@@ -12,14 +12,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
-  conversationFindFirst: vi.fn(),
-  tagFindMany: vi.fn(),
-  flowFindFirst: vi.fn(),
-  workspaceMemberFindFirst: vi.fn(),
-  inboxTeamFindFirst: vi.fn(),
+  findLatestCreatedByContact: vi.fn(),
+  attachExistingToContactForTrigger: vi.fn(),
+  detachFromContactForTrigger: vi.fn(),
+  findActiveById: vi.fn(),
+  findByWorkspaceIdAndUserId: vi.fn(),
+  findTeamById: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
-  insertReturning: vi.fn(),
   enqueueEvent: vi.fn(),
   buildSourceKey: vi.fn(),
   setValues: vi.fn(),
@@ -35,45 +35,7 @@ const mocks = vi.hoisted(() => ({
   getSpreadsheetRow: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      conversationModel: {
-        findFirst: (...args: unknown[]) => mocks.conversationFindFirst(...args),
-      },
-      tagModel: {
-        findMany: (...args: unknown[]) => mocks.tagFindMany(...args),
-      },
-      flowModel: {
-        findFirst: (...args: unknown[]) => mocks.flowFindFirst(...args),
-      },
-      workspaceMemberModel: {
-        findFirst: (...args: unknown[]) =>
-          mocks.workspaceMemberFindFirst(...args),
-      },
-      inboxTeamModel: {
-        findFirst: (...args: unknown[]) => mocks.inboxTeamFindFirst(...args),
-      },
-    },
-    insert: () => ({
-      values: () => ({
-        onConflictDoNothing: () => ({
-          returning: (...args: unknown[]) => mocks.insertReturning(...args),
-        }),
-      }),
-    }),
-    delete: () => ({ where: vi.fn() }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactsToTagsModel: {
-    contactId: "contactsToTagsModel.contactId",
-    tagId: "contactsToTagsModel.tagId",
-  },
   metaCapiEventChannelSchema: {
     safeParse: (value: unknown) =>
       value === "messenger" || value === "instagram" || value === "whatsapp"
@@ -98,10 +60,28 @@ vi.mock("@chatbotx.io/business", () => ({
       mocks.deleteByCustomFieldId(...args),
   },
   conversationService: {
+    findLatestCreatedByContact: (...args: unknown[]) =>
+      mocks.findLatestCreatedByContact(...args),
     updateArchived: (...args: unknown[]) => mocks.updateArchived(...args),
     updateAssignment: (...args: unknown[]) => mocks.updateAssignment(...args),
     disableBotState: (...args: unknown[]) => mocks.disableBotState(...args),
     enableBotState: (...args: unknown[]) => mocks.enableBotState(...args),
+  },
+  tagService: {
+    attachExistingToContactForTrigger: (...args: unknown[]) =>
+      mocks.attachExistingToContactForTrigger(...args),
+    detachFromContactForTrigger: (...args: unknown[]) =>
+      mocks.detachFromContactForTrigger(...args),
+  },
+  flowService: {
+    findActiveById: (...args: unknown[]) => mocks.findActiveById(...args),
+  },
+  workspaceMemberService: {
+    findByWorkspaceIdAndUserId: (...args: unknown[]) =>
+      mocks.findByWorkspaceIdAndUserId(...args),
+  },
+  inboxService: {
+    findTeamById: (...args: unknown[]) => mocks.findTeamById(...args),
   },
   tagSyncService: {
     enqueueAttach: (...args: unknown[]) => mocks.enqueueAttach(...args),
@@ -177,7 +157,7 @@ const MESSENGER_INBOX = {
 describe("ActionExecutor — per-integration contact inbox attribution", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.conversationFindFirst.mockResolvedValue({
+    mocks.findLatestCreatedByContact.mockResolvedValue({
       id: "conv-1",
       contactId: "contact-1",
       workspaceId: "ws-1",
@@ -192,7 +172,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       mocks.findByIdForContact.mockResolvedValue(WHATSAPP_INBOX)
       mocks.findMostRecentByContact.mockResolvedValue(MESSENGER_INBOX)
       mocks.buildSourceKey.mockReturnValue("source-key")
-      mocks.flowFindFirst.mockResolvedValue({
+      mocks.findActiveById.mockResolvedValue({
         id: "flow-1",
         currentVersionId: "fv-1",
       })
@@ -326,10 +306,11 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       mocks.findMostRecentByContact.mockRejectedValue(
         new Error("resolver should never be called for this branch"),
       )
-      mocks.tagFindMany.mockResolvedValue([{ id: "tag-1" }])
-      mocks.insertReturning.mockResolvedValue([{ tagId: "tag-1" }])
-      mocks.workspaceMemberFindFirst.mockResolvedValue({ id: "wm-1" })
-      mocks.inboxTeamFindFirst.mockResolvedValue({ id: "it-1" })
+      mocks.attachExistingToContactForTrigger.mockResolvedValue([
+        { tagId: "tag-1" },
+      ])
+      mocks.findByWorkspaceIdAndUserId.mockResolvedValue({ id: "wm-1" })
+      mocks.findTeamById.mockResolvedValue({ id: "it-1" })
     })
 
     test.each([

@@ -11,37 +11,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
-  conversationFindFirst: vi.fn(),
+  findLatestCreatedByContact: vi.fn(),
   setValues: vi.fn(),
   deleteByCustomFieldId: vi.fn(),
   applyValueOperation: vi.fn(),
   clearValueByKey: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      conversationModel: {
-        findFirst: (...args: unknown[]) => mocks.conversationFindFirst(...args),
-      },
-    },
-    insert: () => ({
-      values: () => ({
-        onConflictDoNothing: () => ({ returning: vi.fn() }),
-      }),
-    }),
-    delete: () => ({ where: vi.fn() }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactsToTagsModel: {
-    contactId: "contactsToTagsModel.contactId",
-    tagId: "contactsToTagsModel.tagId",
-  },
   metaCapiEventChannelSchema: { safeParse: () => ({ success: false }) },
 }))
 
@@ -66,7 +43,14 @@ vi.mock("@chatbotx.io/business", () => ({
     deleteByCustomFieldId: (...args: unknown[]) =>
       mocks.deleteByCustomFieldId(...args),
   },
-  conversationService: {},
+  conversationService: {
+    findLatestCreatedByContact: (...args: unknown[]) =>
+      mocks.findLatestCreatedByContact(...args),
+  },
+  tagService: {},
+  flowService: {},
+  workspaceMemberService: {},
+  inboxService: {},
   metaConversionsService: {
     enqueueEvent: vi.fn(),
     buildSourceKey: vi.fn(),
@@ -120,7 +104,7 @@ const { ActionExecutor } = await import(
 describe("ActionExecutor setCustomField / clearCustomField — field-reference dispatch", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.conversationFindFirst.mockResolvedValue({
+    mocks.findLatestCreatedByContact.mockResolvedValue({
       id: "conv-1",
       contactId: "contact-1",
       workspaceId: "ws-1",

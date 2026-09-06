@@ -5,6 +5,7 @@ import {
   eq,
   findOrFail,
   inArray,
+  isNotNull,
   isNull,
   notExists,
   sql,
@@ -422,6 +423,162 @@ class TagService extends BaseService {
       emitTagRemoved(workspaceId, contactId, tag.id) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
         .catch(() => {})
     }
+  }
+
+  /**
+   * `export-contacts.ts` buildSelectedFields: tag name map for the export's
+   * selected tag columns. Scoped by workspace + `deletedAt IS NULL` — moved
+   * verbatim from the handler's inline query.
+   */
+  async findManyByIds(props: {
+    workspaceId: string
+    ids: string[]
+    tx?: DatabaseClient
+  }): Promise<TagModel[]> {
+    const { workspaceId, ids, tx = db } = props
+    if (ids.length === 0) {
+      return []
+    }
+    return await tx.query.tagModel.findMany({
+      where: {
+        id: { in: ids },
+        workspaceId,
+        deletedAt: { isNull: true as const },
+      },
+    })
+  }
+
+  /**
+   * Unscoped-by-deletedAt single-tag lookup, distinct from the cached
+   * `findByKey`: import-handler and sync-tag call sites need the tag row
+   * (including a soft-deleted one) purely by id, with no `deletedAt` filter
+   * and no cache.
+   */
+  async findById(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }): Promise<TagModel | undefined> {
+    const { workspaceId, id, tx = db } = props
+    return await tx.query.tagModel.findFirst({
+      where: { id, workspaceId },
+    })
+  }
+
+  /**
+   * Workspace-scoped tag name lookup used by the webhook payload builder.
+   * Tag ids are globally unique, so an id-only lookup would leak another
+   * tenant's tag name into this workspace's outbound payload — the
+   * workspace + `deletedAt IS NULL` scope here is load-bearing.
+   */
+  async findNameByIdForWorkspace(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }): Promise<string | null> {
+    const { workspaceId, id, tx = db } = props
+    const tag = await tx.query.tagModel.findFirst({
+      where: { id, workspaceId, deletedAt: { isNull: true as const } },
+      columns: { name: true },
+    })
+    return tag?.name ?? null
+  }
+
+  /**
+   * `sync-tag.ts` full workspace delete: hard-deletes a Tag row that is
+   * already soft-deleted. The `isNotNull(deletedAt)` guard is what stops an
+   * un-deleted tag from being hard-deleted — never drop it. Mirrors the
+   * cache tags `softDelete` invalidates.
+   */
+  async hardDeleteSoftDeleted(props: {
+    workspaceId: string
+    tagId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, tagId, tx = db } = props
+    await tx
+      .delete(tagModel)
+      .where(
+        and(
+          eq(tagModel.id, tagId),
+          eq(tagModel.workspaceId, workspaceId),
+          isNotNull(tagModel.deletedAt),
+        ),
+      )
+
+    await this.invalidateCacheTags([
+      `tags:${workspaceId}`,
+      `tags:${workspaceId}:${tagId}`,
+    ])
+  }
+
+  /**
+   * Trigger-action tag attach: links tags to a contact and returns only the
+   * newly-linked pairs. Deliberately does **not** emit `tagApplied` or call
+   * `enqueueTagAppliedEvaluationsBulk` (unlike `attachToContact`) — the
+   * trigger action-executor enqueues `tagSyncService.enqueueAttach` and
+   * `adsConversionService.enqueueTagAppliedEvaluations` itself, per pair, so
+   * duplicating that here would double-fire channel sync and ads evaluation.
+   */
+  async attachExistingToContactForTrigger(props: {
+    workspaceId: string
+    contactId: string
+    tagIds: string[]
+    tx?: DatabaseClient
+  }): Promise<{ tagId: string }[]> {
+    const { workspaceId, contactId, tagIds, tx = db } = props
+    if (tagIds.length === 0) {
+      return []
+    }
+
+    const existingTags = await tx.query.tagModel.findMany({
+      where: {
+        id: { in: tagIds },
+        workspaceId,
+        deletedAt: { isNull: true as const },
+      },
+    })
+
+    if (existingTags.length === 0) {
+      return []
+    }
+
+    return await tx
+      .insert(contactsToTagsModel)
+      .values(
+        existingTags.map((tag) => ({
+          contactId,
+          tagId: tag.id,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning({ tagId: contactsToTagsModel.tagId })
+  }
+
+  /**
+   * Trigger-action tag detach: plain delete, no `emitTagRemoved`. The trigger
+   * action-executor enqueues `tagSyncService.enqueueDetach` itself per tag —
+   * unlike `detachFromContact`, this must not emit here too.
+   */
+  async detachFromContactForTrigger(props: {
+    workspaceId: string
+    contactId: string
+    tagIds: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { contactId, tagIds, tx = db } = props
+    if (tagIds.length === 0) {
+      return
+    }
+
+    await tx
+      .delete(contactsToTagsModel)
+      .where(
+        and(
+          eq(contactsToTagsModel.contactId, contactId),
+          inArray(contactsToTagsModel.tagId, tagIds),
+        ),
+      )
   }
 }
 

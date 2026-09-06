@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ── db spies ──────────────────────────────────────────────────────────────────
-const findManyBroadcast = vi.fn()
+// ── service spy ───────────────────────────────────────────────────────────────
+const listSendingAwaitingHandoff = vi.fn()
 
 // ── queue spies ───────────────────────────────────────────────────────────────
 const scheduleAddSpy = vi.fn()
@@ -10,19 +10,10 @@ const scheduleAddSpy = vi.fn()
 const runExclusiveSpy = vi.fn()
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      broadcastModel: {
-        findMany: (...args: unknown[]) => findManyBroadcast(...args),
-      },
-    },
-  },
-}))
-
-vi.mock("@chatbotx.io/database/partials", () => ({
-  broadcastStatuses: {
-    enum: { scheduled: "scheduled", sending: "sending", sent: "sent" },
+vi.mock("@chatbotx.io/business", () => ({
+  broadcastService: {
+    listSendingAwaitingHandoff: (...args: unknown[]) =>
+      listSendingAwaitingHandoff(...args),
   },
 }))
 
@@ -56,7 +47,7 @@ const { reconcileBroadcasts } = await import(
 // ── setup ─────────────────────────────────────────────────────────────────────
 beforeEach(() => {
   vi.clearAllMocks()
-  findManyBroadcast.mockResolvedValue([])
+  listSendingAwaitingHandoff.mockResolvedValue([])
   scheduleAddSpy.mockResolvedValue(undefined)
 })
 
@@ -74,18 +65,12 @@ describe("reconcileBroadcasts", () => {
   })
 
   test("enqueues one sendBroadcast revive job per sending broadcast", async () => {
-    findManyBroadcast.mockResolvedValue([{ id: "b-1" }, { id: "b-2" }])
+    listSendingAwaitingHandoff.mockResolvedValue([{ id: "b-1" }, { id: "b-2" }])
 
     const result = await reconcileBroadcasts()
 
     expect(result).toEqual({ reconciled: 2 })
-    expect(findManyBroadcast).toHaveBeenCalledWith({
-      where: {
-        status: "sending",
-        handoffCompletedAt: { isNull: true },
-        deletedAt: { isNull: true },
-      },
-    })
+    expect(listSendingAwaitingHandoff).toHaveBeenCalledTimes(1)
     expect(scheduleAddSpy).toHaveBeenCalledTimes(2)
     expect(scheduleAddSpy).toHaveBeenNthCalledWith(
       1,
@@ -125,7 +110,7 @@ describe("reconcileBroadcasts", () => {
   })
 
   test("uses a jobId free of ':' (BullMQ rejects custom ids containing ':')", async () => {
-    findManyBroadcast.mockResolvedValue([{ id: "b-1" }])
+    listSendingAwaitingHandoff.mockResolvedValue([{ id: "b-1" }])
 
     await reconcileBroadcasts()
 

@@ -42,6 +42,11 @@ import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
+import {
+  type InsertImportedContactBatchInput,
+  type InsertImportedContactBatchResult,
+  insertImportedContactBatch,
+} from "./insert-imported-batch"
 import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
 
 const NUMERIC_RE = /^\d+$/
@@ -94,7 +99,7 @@ export type ContactAccessScope = {
   restrictToAssignedUserId?: string
 }
 
-class ContactService extends BaseService {
+export class ContactService extends BaseService {
   // ─── Legacy generic find (preserved for backward compat) ────────────────
   async findBy(props: {
     tx?: DatabaseClient
@@ -714,6 +719,16 @@ class ContactService extends BaseService {
       .set({ emailOptIn: false })
       .where(eq(contactModel.id, cid))
     await invalidateCacheByTags([`contacts:${cid}`])
+  }
+
+  /**
+   * Bulk-insert a validated batch of imported contacts. Body lives in
+   * `./insert-imported-batch` to keep this file's merge surface small.
+   */
+  insertImportedContactBatch(
+    input: InsertImportedContactBatchInput,
+  ): Promise<InsertImportedContactBatchResult> {
+    return insertImportedContactBatch(input)
   }
 }
 

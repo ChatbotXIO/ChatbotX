@@ -1055,6 +1055,24 @@ class ConversationService extends BaseService {
     ]
     await this.invalidateCacheTags(tags)
   }
+
+  /**
+   * `trigger/services/action-executor.ts` execute: the trigger action's own
+   * conversation lookup, ordered by `createdAt` desc and workspace-scoped.
+   * Distinct from `findLatestByContact` (orders by `lastActivityAt`, not
+   * workspace-scoped) — do not reuse that one here.
+   */
+  async findLatestCreatedByContact(props: {
+    workspaceId: string
+    contactId: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel | undefined> {
+    const { tx = db, workspaceId, contactId } = props
+    return await tx.query.conversationModel.findFirst({
+      where: { contactId, workspaceId },
+      orderBy: { createdAt: "desc" },
+    })
+  }
 }
 
 export const conversationService = new ConversationService()

@@ -1,5 +1,4 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
+import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 import { logger } from "../../lib/logger"
 import type { DispatchWithRelations } from "./types"
 
@@ -10,20 +9,11 @@ export class DispatchProcessorService {
     workspaceId: string,
   ) {
     try {
-      const dispatch = await db.query.sequenceDispatchModel.findFirst({
-        where: {
-          id: dispatchId,
-          status: expectedStatus,
-          workspaceId,
-        },
-        with: {
-          sequence: true,
-          contact: true,
-          enrollment: true,
-        },
+      return await sequenceDispatchRepository.findWithRelations({
+        id: dispatchId,
+        status: expectedStatus,
+        workspaceId,
       })
-
-      return dispatch ?? null
     } catch (error) {
       logger.error(error, "Error fetchDispatch query failed")
       return null
@@ -48,23 +38,10 @@ export class DispatchProcessorService {
   }
 
   async lockDispatch(dispatch: DispatchWithRelations): Promise<boolean> {
-    const updated = await db
-      .update(sequenceDispatchModel)
-      .set({
-        status: "running",
-        lockedAt: new Date(),
-        lockOwner: process.env.HOSTNAME || "unknown",
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(sequenceDispatchModel.id, dispatch.id),
-          eq(sequenceDispatchModel.workspaceId, dispatch.workspaceId),
-          eq(sequenceDispatchModel.status, "pending"),
-        ),
-      )
-      .returning({ id: sequenceDispatchModel.id })
-
-    return updated.length > 0
+    return await sequenceDispatchRepository.claim({
+      id: dispatch.id,
+      workspaceId: dispatch.workspaceId,
+      lockOwner: process.env.HOSTNAME || "unknown",
+    })
   }
 }

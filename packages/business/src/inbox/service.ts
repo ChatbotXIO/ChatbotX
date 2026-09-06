@@ -293,5 +293,17 @@ class InboxService extends BaseService {
       .limit(1)
     return !!row
   }
+
+  /** `trigger/services/action-executor.ts` assignConversation: an inbox team by id, workspace-scoped. */
+  async findTeamById(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }) {
+    const { tx = db, workspaceId, id } = props
+    return await tx.query.inboxTeamModel.findFirst({
+      where: { id, workspaceId },
+    })
+  }
 }
 export const inboxService = new InboxService()

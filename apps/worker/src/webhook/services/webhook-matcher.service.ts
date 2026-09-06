@@ -1,5 +1,4 @@
-import { workspaceService } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import { webhookService, workspaceService } from "@chatbotx.io/business"
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import {
@@ -54,14 +53,8 @@ export class WebhookMatcherService {
 
     const sourceId = metadata.sourceId as string | undefined
 
-    const webhooks = await db.query.webhookModel.findMany({
-      where: {
-        workspaceId,
-        active: true,
-      },
-      with: {
-        conditions: true,
-      },
+    const webhooks = await webhookService.listActiveWithConditions({
+      workspaceId,
     })
 
     // Filter webhooks that have matching conditions

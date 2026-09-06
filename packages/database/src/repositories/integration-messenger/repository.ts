@@ -253,4 +253,40 @@ export const integrationMessengerRepository = {
 
     return row ?? null
   },
+
+  /**
+   * Unscoped single-row lookup by id — `sync-channel-labels.ts` /
+   * `sync-tag.ts` resolve the integration first and only then know its
+   * workspace, so no `workspaceId` filter is available at this call site.
+   */
+  async findById(
+    input: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel | null> {
+    const row = await tx.query.integrationMessengerModel.findFirst({
+      where: { id: input.id },
+    })
+    return row ?? null
+  },
+
+  /** `sync-tag.ts` attach path: resolve the Messenger integration owning an inbox. */
+  async findByInboxId(
+    input: { inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel | null> {
+    const row = await tx.query.integrationMessengerModel.findFirst({
+      where: { inboxId: input.inboxId },
+    })
+    return row ?? null
+  },
+
+  /** `sync-tag.ts` create path: every Messenger integration in the workspace, full rows. */
+  async listByWorkspace(
+    input: { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel[]> {
+    return await tx.query.integrationMessengerModel.findMany({
+      where: { workspaceId: input.workspaceId },
+    })
+  },
 }

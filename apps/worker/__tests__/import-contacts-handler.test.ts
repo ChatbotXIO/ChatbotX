@@ -20,77 +20,68 @@ const deleteWhere = vi.fn()
 // per-test updates.
 const conflict = { drop: 0 }
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      inboxModel: {
-        findFirst: (...args: unknown[]) => findFirstInbox(...args),
-      },
-      tagModel: {
-        findFirst: (...args: unknown[]) => findFirstTag(...args),
-      },
-      customFieldModel: {
-        findMany: (...args: unknown[]) => findManyCustomFields(...args),
-      },
-      contactInboxModel: {
-        findMany: (...args: unknown[]) => findManyContactInbox(...args),
-      },
-    },
-    update: () => ({
-      set: (values: unknown) => {
-        updateSet(values)
-        return { where: (cond: unknown) => updateWhere(cond) }
-      },
-    }),
-    transaction: (cb: (tx: unknown) => unknown) => {
-      transactionFn()
-      return cb({
-        insert: () => ({
-          values: (v: unknown) => {
-            insertValues(v)
-            const rows = Array.isArray(v)
-              ? (v as Array<{ contactId?: string; sourceId?: string }>)
-              : [v as { contactId?: string; sourceId?: string }]
-            return {
-              onConflictDoNothing: () => ({
-                // Echo back the contactId of each inserted row so the handler can
-                // compute which contacts survived. ContactInbox rows carry a
-                // `sourceId`; drop `inboxConflictDrop` of them to simulate a
-                // concurrent-insert conflict.
-                returning: () => {
-                  const isContactInbox = rows.some(
-                    (r) => r && typeof r === "object" && "sourceId" in r,
-                  )
-                  const surviving =
-                    isContactInbox && conflict.drop > 0
-                      ? rows.slice(0, Math.max(0, rows.length - conflict.drop))
-                      : rows
-                  return surviving.map((item) => ({
-                    contactId: item.contactId,
-                  }))
-                },
-              }),
-            }
-          },
-        }),
-        delete: () => ({
-          where: (cond: unknown) => deleteWhere(cond),
-        }),
-      })
-    },
+// The contact-insert transaction now lives in
+// `contactService.insertImportedContactBatch` (packages/business). This fake
+// reproduces its observable behaviour at the new boundary so every assertion
+// below still holds: `insertBatch` stands in for the single bulk transaction,
+// `insertValues` records the ContactInbox rows it was handed, `deleteWhere`
+// records the orphan prune, and `conflict.drop` still simulates a late
+// ON CONFLICT DO NOTHING race. The transaction internals themselves are
+// covered by packages/business/__tests__/contact-insert-imported-batch.test.ts.
+const insertImportedContactBatch = vi.fn(
+  (input: {
+    workspaceId: string
+    inbox: { id: string; channel: string }
+    accepted: Array<{
+      contactId: string
+      contactInboxId: string
+      row: {
+        externalId?: string | null
+        sourceUserId?: string | null
+        customFields: Array<{ customFieldId: string; value: string }>
+      }
+    }>
+    tagId?: string
+  }) => {
+    transactionFn()
+    insertValues(
+      input.accepted.map(({ contactId, contactInboxId, row }) => ({
+        id: contactInboxId,
+        contactId,
+        inboxId: input.inbox.id,
+        channel: input.inbox.channel,
+        sourceId: row.externalId,
+        sourceUserId: row.sourceUserId ?? null,
+      })),
+    )
+    const survivors =
+      conflict.drop > 0
+        ? input.accepted.slice(
+            0,
+            Math.max(0, input.accepted.length - conflict.drop),
+          )
+        : input.accepted
+    const orphanCount = input.accepted.length - survivors.length
+    if (orphanCount > 0) {
+      deleteWhere(
+        input.accepted
+          .slice(survivors.length)
+          .map(({ contactId }) => contactId),
+      )
+    }
+    if (survivors.length === 0) {
+      return Promise.resolve({ inserted: 0, orphanCount })
+    }
+    insertNormalizedCustomFieldValues({
+      workspaceId: input.workspaceId,
+      entries: survivors.map(({ contactId, row }) => ({
+        contactId,
+        fields: row.customFields,
+      })),
+    })
+    return Promise.resolve({ inserted: survivors.length, orphanCount })
   },
-  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
-  inArray: (a: unknown, b: unknown) => ({ inArray: [a, b] }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactCustomFieldModel: {},
-  contactInboxModel: {},
-  contactModel: {},
-  contactsToTagsModel: {},
-  conversationModel: {},
-  importModel: { id: "Import.id" },
-}))
+)
 
 const workspaceFind = vi.fn()
 // Returns the sourceId/sourceUserId identities already linked to the inbox.
@@ -166,6 +157,19 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   workspaceService: {
     find: (...args: unknown[]) => workspaceFind(...args),
+  },
+  inboxService: {
+    find: (...args: unknown[]) => findFirstInbox(...args),
+  },
+  tagService: {
+    findById: (...args: unknown[]) => findFirstTag(...args),
+  },
+  customFieldService: {
+    findManyByIds: (...args: unknown[]) => findManyCustomFields(...args),
+  },
+  contactService: {
+    insertImportedContactBatch: (...args: unknown[]) =>
+      (insertImportedContactBatch as (...a: unknown[]) => unknown)(...args),
   },
   contactInboxService: {
     findExistingSourceIdentities: (...args: unknown[]) =>
@@ -307,6 +311,7 @@ beforeEach(() => {
   transactionFn.mockReset()
   deleteWhere.mockReset()
   conflict.drop = 0
+  insertImportedContactBatch.mockClear()
   getObjectStream.mockReset()
   headObject.mockReset()
   // Default: small file, passes the size check.
@@ -436,11 +441,10 @@ describe("contacts import pipeline", () => {
 
     expect(lastUpdate()).toMatchObject({ status: "completed" })
     // The custom-field lookup only sees the real custom field id.
-    expect(findManyCustomFields).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ id: { in: ["7"] } }),
-      }),
-    )
+    expect(findManyCustomFields).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["7"],
+    })
     expect(botFieldUpdateByKey).toHaveBeenCalledTimes(1)
     expect(botFieldUpdateByKey).toHaveBeenCalledWith({
       workspaceId: "ws-1",

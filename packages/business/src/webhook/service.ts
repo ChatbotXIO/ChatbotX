@@ -1,6 +1,6 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { conditionModel, webhookModel } from "@chatbotx.io/database/schema"
-import type { WebhookModel } from "@chatbotx.io/database/types"
+import type { ConditionModel, WebhookModel } from "@chatbotx.io/database/types"
 import { removeWebhookCache, updateWebhookCache } from "@chatbotx.io/events"
 import { distributedLock } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
@@ -16,6 +16,11 @@ export type WebhookConditionInput = {
   sourceId?: string | null
   operator?: string | null
   value?: unknown
+}
+
+/** `webhook-matcher.service.ts` shape: an active webhook with its conditions. */
+export type WebhookWithConditions = WebhookModel & {
+  conditions: ConditionModel[]
 }
 
 class WebhookService extends BaseService {
@@ -105,6 +110,21 @@ class WebhookService extends BaseService {
     await removeWebhookCache(workspaceId)
 
     await this.audit("delete", `deleted webhook(s) (#${id})`)
+  }
+
+  /** `webhook-matcher.service.ts` findAndExecuteWebhooks: every active webhook in a workspace, with conditions. */
+  async listActiveWithConditions(input: {
+    workspaceId: string
+  }): Promise<WebhookWithConditions[]> {
+    return (await db.query.webhookModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        active: true,
+      },
+      with: {
+        conditions: true,
+      },
+    })) as WebhookWithConditions[]
   }
 }
 
