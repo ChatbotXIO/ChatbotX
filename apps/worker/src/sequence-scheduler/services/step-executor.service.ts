@@ -1,12 +1,7 @@
-import { db } from "@chatbotx.io/database/client"
+import type { SequenceStepWithFlow } from "@chatbotx.io/database/repositories"
+import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 
-type StepQueryResult = Awaited<
-  ReturnType<
-    typeof db.query.sequenceStepModel.findFirst<{ with: { flow: true } }>
-  >
->
-
-export type StepWithFlow = NonNullable<StepQueryResult>
+export type StepWithFlow = SequenceStepWithFlow
 export type StepWithConfiguredFlow = StepWithFlow & {
   flow: NonNullable<StepWithFlow["flow"]>
 }
@@ -17,17 +12,10 @@ export type StepValidationResult =
 
 export class StepExecutorService {
   async fetchStep(stepId: string) {
-    const step = await db.query.sequenceStepModel.findFirst({
-      where: {
-        id: stepId,
-      },
-      with: { flow: true },
-    })
-
-    return step
+    return await sequenceDispatchRepository.findStepWithFlow({ id: stepId })
   }
 
-  validateStep(step: StepQueryResult): StepValidationResult {
+  validateStep(step: StepWithFlow | undefined): StepValidationResult {
     if (!step) {
       return { valid: false, reason: "step_not_found" }
     }

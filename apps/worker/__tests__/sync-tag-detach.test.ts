@@ -1,80 +1,35 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ── select chain spy ──────────────────────────────────────────────────────────
-// syncTagDetach builds: db.select(...).from(...).innerJoin(...).innerJoin(...).where(...)
-const selectWhere = vi.fn()
-
-// ── delete spy ────────────────────────────────────────────────────────────────
-const dbDeleteCalls: Array<{ model: unknown; condition: unknown }> = []
+// ── repository / service spies ────────────────────────────────────────────────
+// syncTagDetach resolves mapping rows via tagChannelRepository.listContactTagChannelRows
+const listContactTagChannelRows = vi.fn()
+const unlinkContactInbox = vi.fn()
 
 // ── integration context resolution ────────────────────────────────────────────
-const findMessengerIntegrationFirst = vi.fn()
-const findZaloIntegrationFirst = vi.fn()
+const findMessengerIntegrationById = vi.fn()
+const findZaloIntegrationUnscoped = vi.fn()
 
 // ── channel API spies ─────────────────────────────────────────────────────────
 const messengerRemoveLabel = vi.fn()
 const zaloRemoveFollower = vi.fn()
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      integrationMessengerModel: {
-        findFirst: (...args: unknown[]) =>
-          findMessengerIntegrationFirst(...args),
-      },
-      integrationZaloModel: {
-        findFirst: (...args: unknown[]) => findZaloIntegrationFirst(...args),
-      },
-    },
-    select: () => ({
-      from: () => ({
-        innerJoin: () => ({
-          innerJoin: () => ({
-            where: (cond: unknown) => selectWhere(cond),
-          }),
-        }),
-      }),
-    }),
-    delete: (model: unknown) => ({
-      where: (cond: unknown) => {
-        dbDeleteCalls.push({ model, condition: cond })
-        return Promise.resolve()
-      },
-    }),
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  tagChannelRepository: {
+    listContactTagChannelRows: (...args: unknown[]) =>
+      listContactTagChannelRows(...args),
+    unlinkContactInbox: (...args: unknown[]) => unlinkContactInbox(...args),
   },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-  isNotNull: (col: unknown) => ({ isNotNull: col }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  tagModel: { __name: "Tag" },
-  tagChannelModel: {
-    __name: "TagChannel",
-    id: "TagChannel.id",
-    channelType: "TagChannel.channelType",
-    integrationId: "TagChannel.integrationId",
-    externalLabelId: "TagChannel.externalLabelId",
+  integrationMessengerRepository: {
+    findById: (...args: unknown[]) => findMessengerIntegrationById(...args),
   },
-  contactToTagChannelModel: {
-    __name: "ContactToTagChannel",
-    tagId: "ContactToTagChannel.tagId",
-    tagChannelId: "ContactToTagChannel.tagChannelId",
-    contactInboxId: "ContactToTagChannel.contactInboxId",
-  },
-  contactInboxModel: {
-    __name: "ContactInbox",
-    id: "ContactInbox.id",
-    contactId: "ContactInbox.contactId",
-    sourceId: "ContactInbox.sourceId",
-  },
-  integrationMessengerModel: { __name: "IntegrationMessenger" },
-  integrationZaloModel: { __name: "IntegrationZalo" },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn().mockResolvedValue({ auth: {}, workspaceId: "ws-1" }),
+  zaloIntegrationService: {
+    findByIdUnscoped: (...args: unknown[]) =>
+      findZaloIntegrationUnscoped(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
@@ -105,17 +60,10 @@ vi.mock("@chatbotx.io/redis", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
-  return { ...actual, createId: () => "generated-id" }
-})
-
-vi.mock("@chatbotx.io/database/partials", async () => {
-  const actual = await vi.importActual<
-    typeof import("@chatbotx.io/database/partials")
-  >("@chatbotx.io/database/partials")
-  return actual
-})
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: vi.fn(),
+  logProviderErrorForChannel: vi.fn(),
+}))
 
 vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -164,33 +112,34 @@ const runDetach = () =>
   })
 
 beforeEach(() => {
-  selectWhere.mockReset()
-  findMessengerIntegrationFirst.mockReset()
-  findZaloIntegrationFirst.mockReset()
+  listContactTagChannelRows.mockReset()
+  unlinkContactInbox.mockReset()
+  findMessengerIntegrationById.mockReset()
+  findZaloIntegrationUnscoped.mockReset()
   messengerRemoveLabel.mockReset()
   zaloRemoveFollower.mockReset()
-  dbDeleteCalls.length = 0
 
-  selectWhere.mockResolvedValue([])
-  findMessengerIntegrationFirst.mockResolvedValue(ENABLED_MESSENGER)
-  findZaloIntegrationFirst.mockResolvedValue(ENABLED_ZALO)
+  listContactTagChannelRows.mockResolvedValue([])
+  unlinkContactInbox.mockResolvedValue(undefined)
+  findMessengerIntegrationById.mockResolvedValue(ENABLED_MESSENGER)
+  findZaloIntegrationUnscoped.mockResolvedValue(ENABLED_ZALO)
   messengerRemoveLabel.mockResolvedValue(undefined)
   zaloRemoveFollower.mockResolvedValue(undefined)
 })
 
 describe("syncTagDetach", () => {
-  test("no mapping rows: no API calls, no deletes", async () => {
-    selectWhere.mockResolvedValue([])
+  test("no mapping rows: no API calls, no unlinks", async () => {
+    listContactTagChannelRows.mockResolvedValue([])
 
     await runDetach()
 
     expect(messengerRemoveLabel).not.toHaveBeenCalled()
     expect(zaloRemoveFollower).not.toHaveBeenCalled()
-    expect(dbDeleteCalls).toHaveLength(0)
+    expect(unlinkContactInbox).not.toHaveBeenCalled()
   })
 
-  test("messenger row: calls removeLabel then deletes mapping", async () => {
-    selectWhere.mockResolvedValue([MESSENGER_ROW])
+  test("messenger row: calls removeLabel then unlinks mapping", async () => {
+    listContactTagChannelRows.mockResolvedValue([MESSENGER_ROW])
 
     await runDetach()
 
@@ -203,11 +152,11 @@ describe("syncTagDetach", () => {
         }),
       }),
     )
-    expect(dbDeleteCalls).toHaveLength(1)
+    expect(unlinkContactInbox).toHaveBeenCalledTimes(1)
   })
 
-  test("zalo row: calls removeFollowerFromTag then deletes mapping", async () => {
-    selectWhere.mockResolvedValue([ZALO_ROW])
+  test("zalo row: calls removeFollowerFromTag then unlinks mapping", async () => {
+    listContactTagChannelRows.mockResolvedValue([ZALO_ROW])
 
     await runDetach()
 
@@ -218,22 +167,22 @@ describe("syncTagDetach", () => {
         tagName: ZALO_ROW.externalLabelId,
       }),
     )
-    expect(dbDeleteCalls).toHaveLength(1)
+    expect(unlinkContactInbox).toHaveBeenCalledTimes(1)
   })
 
-  test("deletes local mapping even when channel API throws", async () => {
-    selectWhere.mockResolvedValue([MESSENGER_ROW])
+  test("unlinks local mapping even when channel API throws", async () => {
+    listContactTagChannelRows.mockResolvedValue([MESSENGER_ROW])
     messengerRemoveLabel.mockRejectedValue(new Error("Facebook API down"))
 
     await runDetach()
 
-    // API failed but the local mapping is still deleted
-    expect(dbDeleteCalls).toHaveLength(1)
+    // API failed but the local mapping is still unlinked
+    expect(unlinkContactInbox).toHaveBeenCalledTimes(1)
   })
 
-  test("skips messenger API when integration sync disabled, still deletes mapping", async () => {
-    selectWhere.mockResolvedValue([MESSENGER_ROW])
-    findMessengerIntegrationFirst.mockResolvedValue({
+  test("skips messenger API when integration sync disabled, still unlinks mapping", async () => {
+    listContactTagChannelRows.mockResolvedValue([MESSENGER_ROW])
+    findMessengerIntegrationById.mockResolvedValue({
       ...ENABLED_MESSENGER,
       syncTagEnabledAt: null,
     })
@@ -241,12 +190,12 @@ describe("syncTagDetach", () => {
     await runDetach()
 
     expect(messengerRemoveLabel).not.toHaveBeenCalled()
-    expect(dbDeleteCalls).toHaveLength(1)
+    expect(unlinkContactInbox).toHaveBeenCalledTimes(1)
   })
 
-  test("skips zalo API when integration sync disabled, still deletes mapping", async () => {
-    selectWhere.mockResolvedValue([ZALO_ROW])
-    findZaloIntegrationFirst.mockResolvedValue({
+  test("skips zalo API when integration sync disabled, still unlinks mapping", async () => {
+    listContactTagChannelRows.mockResolvedValue([ZALO_ROW])
+    findZaloIntegrationUnscoped.mockResolvedValue({
       ...ENABLED_ZALO,
       syncTagEnabledAt: null,
     })
@@ -254,37 +203,38 @@ describe("syncTagDetach", () => {
     await runDetach()
 
     expect(zaloRemoveFollower).not.toHaveBeenCalled()
-    expect(dbDeleteCalls).toHaveLength(1)
+    expect(unlinkContactInbox).toHaveBeenCalledTimes(1)
   })
 
-  test("processes multiple rows: one delete per row", async () => {
-    selectWhere.mockResolvedValue([MESSENGER_ROW, ZALO_ROW])
+  test("processes multiple rows: one unlink per row", async () => {
+    listContactTagChannelRows.mockResolvedValue([MESSENGER_ROW, ZALO_ROW])
 
     await runDetach()
 
     expect(messengerRemoveLabel).toHaveBeenCalledTimes(1)
     expect(zaloRemoveFollower).toHaveBeenCalledTimes(1)
-    expect(dbDeleteCalls).toHaveLength(2)
+    expect(unlinkContactInbox).toHaveBeenCalledTimes(2)
   })
 
-  test("delete is scoped by tagChannelId AND contactInboxId", async () => {
-    selectWhere.mockResolvedValue([MESSENGER_ROW])
+  test("unlink is scoped by tagChannelId AND contactInboxId", async () => {
+    listContactTagChannelRows.mockResolvedValue([MESSENGER_ROW])
 
     await runDetach()
 
-    const condStr = JSON.stringify(dbDeleteCalls[0]?.condition)
-    expect(condStr).toContain("tc-1")
-    expect(condStr).toContain("ci-1")
+    expect(unlinkContactInbox).toHaveBeenCalledWith({
+      tagChannelId: MESSENGER_ROW.tagChannelId,
+      contactInboxId: MESSENGER_ROW.contactInboxId,
+    })
   })
 
   test("continues to second row when first row API throws", async () => {
-    selectWhere.mockResolvedValue([MESSENGER_ROW, ZALO_ROW])
+    listContactTagChannelRows.mockResolvedValue([MESSENGER_ROW, ZALO_ROW])
     messengerRemoveLabel.mockRejectedValue(new Error("boom"))
 
     await runDetach()
 
-    // Both rows still deleted; zalo API still called
+    // Both rows still unlinked; zalo API still called
     expect(zaloRemoveFollower).toHaveBeenCalledTimes(1)
-    expect(dbDeleteCalls).toHaveLength(2)
+    expect(unlinkContactInbox).toHaveBeenCalledTimes(2)
   })
 })

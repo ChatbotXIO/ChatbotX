@@ -248,6 +248,29 @@ class ZaloIntegrationService extends BaseService {
     }
     await db.transaction(run)
   }
+
+  /**
+   * Unscoped single-row lookup by id — `sync-channel-labels.ts` / `sync-
+   * tag.ts` resolve the integration first and only then know its workspace,
+   * so no `workspaceId` filter is available at this call site. Distinct
+   * name from `findById` above, which requires `workspaceId`.
+   */
+  async findByIdUnscoped(props: {
+    id: string
+  }): Promise<IntegrationZaloModel | null> {
+    const row = await db.query.integrationZaloModel.findFirst({
+      where: { id: props.id },
+    })
+    return row ?? null
+  }
+
+  /** `sync-tag.ts` attach path: resolve the Zalo integration owning an inbox. */
+  async findByInboxId(props: { inboxId: string }) {
+    const row = await db.query.integrationZaloModel.findFirst({
+      where: { inboxId: props.inboxId },
+    })
+    return row ?? null
+  }
 }
 
 export const zaloIntegrationService = new ZaloIntegrationService()

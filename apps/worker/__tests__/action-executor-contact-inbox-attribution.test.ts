@@ -12,14 +12,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
-  conversationFindFirst: vi.fn(),
-  tagFindMany: vi.fn(),
-  flowFindFirst: vi.fn(),
-  workspaceMemberFindFirst: vi.fn(),
-  inboxTeamFindFirst: vi.fn(),
+  findLatestCreatedByContact: vi.fn(),
+  attachExistingToContactForTrigger: vi.fn(),
+  detachFromContactForTrigger: vi.fn(),
+  findActiveById: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
-  insertReturning: vi.fn(),
   enqueueEvent: vi.fn(),
   buildSourceKey: vi.fn(),
   setValues: vi.fn(),
@@ -36,45 +34,7 @@ const mocks = vi.hoisted(() => ({
   getSpreadsheetRow: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      conversationModel: {
-        findFirst: (...args: unknown[]) => mocks.conversationFindFirst(...args),
-      },
-      tagModel: {
-        findMany: (...args: unknown[]) => mocks.tagFindMany(...args),
-      },
-      flowModel: {
-        findFirst: (...args: unknown[]) => mocks.flowFindFirst(...args),
-      },
-      workspaceMemberModel: {
-        findFirst: (...args: unknown[]) =>
-          mocks.workspaceMemberFindFirst(...args),
-      },
-      inboxTeamModel: {
-        findFirst: (...args: unknown[]) => mocks.inboxTeamFindFirst(...args),
-      },
-    },
-    insert: () => ({
-      values: () => ({
-        onConflictDoNothing: () => ({
-          returning: (...args: unknown[]) => mocks.insertReturning(...args),
-        }),
-      }),
-    }),
-    delete: () => ({ where: vi.fn() }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactsToTagsModel: {
-    contactId: "contactsToTagsModel.contactId",
-    tagId: "contactsToTagsModel.tagId",
-  },
   metaCapiEventChannelSchema: {
     safeParse: (value: unknown) =>
       value === "messenger" || value === "instagram" || value === "whatsapp"
@@ -99,11 +59,22 @@ vi.mock("@chatbotx.io/business", () => ({
       mocks.deleteByCustomFieldId(...args),
   },
   conversationService: {
+    findLatestCreatedByContact: (...args: unknown[]) =>
+      mocks.findLatestCreatedByContact(...args),
     updateArchived: (...args: unknown[]) => mocks.updateArchived(...args),
     updateAssignment: (...args: unknown[]) => mocks.updateAssignment(...args),
     assignOneOrSkip: (...args: unknown[]) => mocks.assignOneOrSkip(...args),
     disableBotState: (...args: unknown[]) => mocks.disableBotState(...args),
     enableBotState: (...args: unknown[]) => mocks.enableBotState(...args),
+  },
+  tagService: {
+    attachExistingToContactForTrigger: (...args: unknown[]) =>
+      mocks.attachExistingToContactForTrigger(...args),
+    detachFromContactForTrigger: (...args: unknown[]) =>
+      mocks.detachFromContactForTrigger(...args),
+  },
+  flowService: {
+    findActiveById: (...args: unknown[]) => mocks.findActiveById(...args),
   },
   tagSyncService: {
     enqueueAttach: (...args: unknown[]) => mocks.enqueueAttach(...args),
@@ -121,6 +92,16 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/events/context", () => ({
   webhookChannelOrigin: vi.fn(() => "webhook"),
+}))
+
+// `capi-input-error.ts` (imported transitively for the sendMetaCapiEvent
+// branch) pulls `logProviderError` from this separate package subpath, which
+// is not covered by the `@chatbotx.io/business` mock above (subpath exports
+// are independent module specifiers). Left unmocked, it loads the real
+// `@chatbotx.io/database/client` and relations graph against the partial
+// schema mock below and crashes at import time.
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/logger", () => ({
@@ -179,7 +160,7 @@ const MESSENGER_INBOX = {
 describe("ActionExecutor — per-integration contact inbox attribution", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.conversationFindFirst.mockResolvedValue({
+    mocks.findLatestCreatedByContact.mockResolvedValue({
       id: "conv-1",
       contactId: "contact-1",
       workspaceId: "ws-1",
@@ -194,7 +175,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       mocks.findByIdForContact.mockResolvedValue(WHATSAPP_INBOX)
       mocks.findMostRecentByContact.mockResolvedValue(MESSENGER_INBOX)
       mocks.buildSourceKey.mockReturnValue("source-key")
-      mocks.flowFindFirst.mockResolvedValue({
+      mocks.findActiveById.mockResolvedValue({
         id: "flow-1",
         currentVersionId: "fv-1",
       })
@@ -328,8 +309,9 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       mocks.findMostRecentByContact.mockRejectedValue(
         new Error("resolver should never be called for this branch"),
       )
-      mocks.tagFindMany.mockResolvedValue([{ id: "tag-1" }])
-      mocks.insertReturning.mockResolvedValue([{ tagId: "tag-1" }])
+      mocks.attachExistingToContactForTrigger.mockResolvedValue([
+        { tagId: "tag-1" },
+      ])
       mocks.assignOneOrSkip.mockResolvedValue(undefined)
     })
 

@@ -1,4 +1,4 @@
-import { db, sql } from "@chatbotx.io/database/client"
+import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { ensureBootstrapped } from "../lib/bootstrap"
@@ -93,23 +93,13 @@ export class ReconcileJob {
       let offset = 0
 
       while (hasMore) {
-        const dispatches = await db.query.sequenceDispatchModel.findMany({
-          // status=pending intentionally prunes this scan to SequenceDispatch_pending.
-          where: {
-            status: "pending",
-            runAtMs: { lte: String(windowEnd.getTime()) },
-          },
-          columns: {
-            id: true,
-            bucket: true,
-            runAtMs: true,
-            workspaceId: true,
-            contactId: true,
-          },
-          orderBy: (d, { asc }) => [asc(d.runAtMs)],
-          offset,
-          limit: BATCH_SIZE,
-        })
+        // status=pending intentionally prunes this scan to SequenceDispatch_pending.
+        const dispatches =
+          await sequenceDispatchRepository.listPendingForReconcile({
+            maxRunAtMs: String(windowEnd.getTime()),
+            offset,
+            limit: BATCH_SIZE,
+          })
 
         if (dispatches.length === 0) {
           hasMore = false
@@ -179,13 +169,9 @@ export class ReconcileJob {
           continue
         }
 
-        const validDispatches = await db.query.sequenceDispatchModel.findMany({
-          where: {
-            id: { in: allIds },
-            status: "pending",
-          },
-          columns: { id: true },
-        })
+        const validDispatches = await sequenceDispatchRepository.listPendingIds(
+          { ids: allIds },
+        )
 
         const validIds = new Set(validDispatches.map((d) => d.id))
         const orphanIds = allIds.filter((id) => !validIds.has(id))
@@ -239,21 +225,10 @@ export class ReconcileJob {
     let deletedCount = 0
 
     while (true) {
-      const result = await db.execute<{ id: string }>(sql`
-        WITH rows AS (
-          SELECT "id", "workspaceId"
-          FROM "SequenceDispatch"
-          WHERE "status" IN ('completed', 'failed', 'canceled')
-            AND "updatedAt" < NOW() - (${retentionTtlDays} * INTERVAL '1 day')
-          LIMIT ${batchSize}
-        )
-        DELETE FROM "SequenceDispatch" sd
-        USING rows
-        WHERE sd."id" = rows."id"
-          AND sd."workspaceId" = rows."workspaceId"
-        RETURNING sd."id"
-      `)
-      const rowCount = result.rows.length
+      const rowCount = await sequenceDispatchRepository.deleteTerminalBatch({
+        retentionTtlDays,
+        batchSize,
+      })
       deletedCount += rowCount
 
       if (rowCount < batchSize) {

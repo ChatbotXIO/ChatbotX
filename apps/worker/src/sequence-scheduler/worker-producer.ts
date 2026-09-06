@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import {
@@ -181,16 +181,10 @@ export class SchedulerWorker {
     dispatches: { dispatchId: string; bucket: number }[],
   ) {
     const dispatchIds = dispatches.map((dispatch) => dispatch.dispatchId)
-    const pendingDispatches = await db.query.sequenceDispatchModel.findMany({
-      where: {
-        id: { in: dispatchIds },
-        status: "pending",
-      },
-      columns: {
-        id: true,
-        workspaceId: true,
-      },
-    })
+    const pendingDispatches =
+      await sequenceDispatchRepository.listPendingWorkspaceIds({
+        ids: dispatchIds,
+      })
     const workspaceByDispatchId = new Map(
       pendingDispatches.map((dispatch) => [dispatch.id, dispatch.workspaceId]),
     )

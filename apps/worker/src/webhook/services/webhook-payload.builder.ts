@@ -1,8 +1,8 @@
 import {
   contactCustomFieldService,
   contactService,
+  tagService,
 } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import type { MatchableEventType } from "@chatbotx.io/events"
 import type { MatchableWebhookEventData, WebhookPayload } from "../types"
@@ -53,18 +53,14 @@ async function buildTagPayload(
   // Scoped by workspace because the tag id comes from event metadata and tag ids
   // are globally unique: an id-only lookup would resolve another tenant's tag
   // and put its name in this workspace's outbound payload.
-  const tag = await db.query.tagModel.findFirst({
-    where: {
-      id: data.tagId as string,
-      workspaceId,
-      deletedAt: { isNull: true as const },
-    },
-    columns: { name: true },
+  const tagName = await tagService.findNameByIdForWorkspace({
+    workspaceId,
+    id: data.tagId as string,
   })
 
   return {
     ...basePayload,
-    tag: tag?.name || "",
+    tag: tagName || "",
   }
 }
 
