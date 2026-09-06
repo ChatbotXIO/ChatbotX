@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { integrationMessengerRepository } from "@chatbotx.io/database/repositories"
 import { selectRegisteredPersonas } from "@chatbotx.io/integration-messenger"
 import type {
   ListMessengerPersonasRequest,
@@ -16,11 +16,10 @@ import type {
 export async function listMessengerPersonaOptions(
   input: ListMessengerPersonasRequest,
 ): Promise<ListMessengerPersonasResponse> {
-  const integrations = await db.query.integrationMessengerModel.findMany({
-    where: { workspaceId: input.workspaceId },
-    columns: { name: true, personas: true },
-    orderBy: { createdAt: "asc" },
-  })
+  const integrations =
+    await integrationMessengerRepository.listPersonasByWorkspaceId(
+      input.workspaceId,
+    )
 
   const data = integrations.flatMap((integration) =>
     selectRegisteredPersonas(integration.personas).map((persona) => ({

@@ -5,6 +5,7 @@ const {
   mockDelete,
   mockDeleteReturning,
   mockFindFirst,
+  mockFindMany,
   mockInstalledResourceFindMany,
   mockInstallationFindMany,
   mockInsert,
@@ -29,6 +30,7 @@ const {
     mockDelete,
     mockDeleteReturning,
     mockFindFirst: vi.fn(),
+    mockFindMany: vi.fn(async () => []),
     mockInstalledResourceFindMany: vi.fn(),
     mockInstallationFindMany: vi.fn(),
     mockInsert,
@@ -45,6 +47,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       aiFunctionModel: {
         findFirst: mockFindFirst,
+        findMany: mockFindMany,
       },
       templateInstalledResourceModel: {
         findMany: mockInstalledResourceFindMany,
@@ -159,5 +162,16 @@ describe("aiFunctionService audit messages", () => {
     ).rejects.toThrow()
 
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("list returns AI Functions scoped to the workspace", async () => {
+    mockFindMany.mockResolvedValue([aiFunction])
+
+    const result = await aiFunctionService.list({ workspaceId })
+
+    expect(result).toEqual([aiFunction])
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where: { workspaceId },
+    })
   })
 })
