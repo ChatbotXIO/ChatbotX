@@ -16,6 +16,10 @@ const mocks = vi.hoisted(() => ({
   listByWorkspace: vi.fn().mockResolvedValue([]),
   findManyQuery: vi.fn().mockResolvedValue([]),
   findLastByConversation: vi.fn().mockResolvedValue([]),
+  listWorkspaceMembersPaginated: vi
+    .fn()
+    .mockResolvedValue({ data: [], pageCount: 0 }),
+  listErrorLogsService: vi.fn().mockResolvedValue({ data: [], pageCount: 0 }),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -60,12 +64,20 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 }))
 
 vi.mock("@chatbotx.io/utils/error-log", () => ({
+  errorLogProviders: { safeParse: () => ({ success: false }) },
   errorLogProvidersMatchingLabel: () => [],
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   inboxTeamService: { listByWorkspace: mocks.listByWorkspace },
   conversationService: { findManyQuery: mocks.findManyQuery },
+  workspaceMemberService: {
+    listPaginated: mocks.listWorkspaceMembersPaginated,
+  },
+}))
+
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  listErrorLogs: mocks.listErrorLogsService,
 }))
 
 vi.mock("@chatbotx.io/business/ads-conversion/channel-fields", () => ({
@@ -96,6 +108,11 @@ beforeEach(() => {
   mocks.listByWorkspace.mockResolvedValue([])
   mocks.findManyQuery.mockResolvedValue([])
   mocks.findLastByConversation.mockResolvedValue([])
+  mocks.listWorkspaceMembersPaginated.mockResolvedValue({
+    data: [],
+    pageCount: 0,
+  })
+  mocks.listErrorLogsService.mockResolvedValue({ data: [], pageCount: 0 })
 })
 
 describe("public list queries never depend on a session", () => {

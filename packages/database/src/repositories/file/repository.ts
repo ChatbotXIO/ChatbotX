@@ -27,4 +27,12 @@ export const fileRepository = {
       .limit(1)
     return row ?? null
   },
+
+  async create(
+    values: typeof fileModel.$inferInsert,
+    tx: DatabaseClient = db,
+  ): Promise<FileModel> {
+    const [row] = await tx.insert(fileModel).values(values).returning()
+    return row
+  },
 }

@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { reflinkService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
@@ -25,11 +25,9 @@ export default async function ReflinkAnalyticsPage({ params }: Props) {
     return redirect("/")
   }
 
-  const reflink = await db.query.reflinkModel.findFirst({
-    where: {
-      id: data.reflinkId,
-      workspaceId: data.workspaceId,
-    },
+  const reflink = await reflinkService.findRefLink({
+    workspaceId: data.workspaceId,
+    id: data.reflinkId,
   })
   if (!reflink) {
     return notFound()

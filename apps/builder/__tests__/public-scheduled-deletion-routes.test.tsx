@@ -30,14 +30,6 @@ vi.mock("@/lib/workspace/load-servable-workspace", () => ({
   loadServableWorkspace: mockLoadServableWorkspace,
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      magicLinkModel: { findFirst: mockMagicLinkFindFirst },
-    },
-  },
-}))
-
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: mockEmit,
 }))
@@ -48,6 +40,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   inboxService: {
     list: vi.fn(),
+  },
+  magicLinkService: {
+    findByName: mockMagicLinkFindFirst,
   },
   qrCodeService: {
     find: mockQrCodeFind,
