@@ -1,7 +1,21 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
-import { and, type DatabaseClient, db, eq, isNull, sql } from "../../client"
-import { integrationMessengerModel } from "../../schema"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+  isNull,
+  sql,
+} from "../../client"
+import {
+  integrationMessengerModel,
+  messengerMessageTemplateModel,
+} from "../../schema"
 import type { IntegrationMessengerModel } from "../../types"
+
+type MessengerMessageTemplateModel =
+  typeof messengerMessageTemplateModel.$inferSelect
 
 type WorkspaceIntegrationRef = {
   id: string
@@ -252,5 +266,99 @@ export const integrationMessengerRepository = {
       .returning()
 
     return row ?? null
+  },
+
+  /**
+   * Resolves a message template to clone, scoped to the source integration AND
+   * the caller's workspace via the `integrationMessenger` relation — a
+   * template id from another workspace must never be readable here.
+   */
+  async findMessageTemplateForClone(
+    input: {
+      workspaceId: string
+      integrationMessengerId: string
+      templateId: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<MessengerMessageTemplateModel | null> {
+    const row = await tx.query.messengerMessageTemplateModel.findFirst({
+      where: {
+        id: input.templateId,
+        integrationMessengerId: input.integrationMessengerId,
+        integrationMessenger: {
+          workspaceId: input.workspaceId,
+        },
+      },
+    })
+
+    return row ?? null
+  },
+
+  async findPageIdById(
+    input: { workspaceId: string; id: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ pageId: string } | null> {
+    const row = await tx.query.integrationMessengerModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId },
+      columns: { pageId: true },
+    })
+
+    return row ?? null
+  },
+
+  /**
+   * Cross-workspace by design — clone targets may live in other workspaces;
+   * the caller authorises per target via workspace-owner membership.
+   */
+  listByIds(
+    input: { ids: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel[]> {
+    if (input.ids.length === 0) {
+      return Promise.resolve([])
+    }
+    return tx
+      .select()
+      .from(integrationMessengerModel)
+      .where(inArray(integrationMessengerModel.id, input.ids))
+  },
+
+  async deleteMessageTemplate(
+    input: { integrationMessengerId: string; templateId: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .delete(messengerMessageTemplateModel)
+      .where(
+        and(
+          eq(messengerMessageTemplateModel.id, input.templateId),
+          eq(
+            messengerMessageTemplateModel.integrationMessengerId,
+            input.integrationMessengerId,
+          ),
+        ),
+      )
+  },
+
+  listForWorkspace(
+    input: { workspaceId: string; id?: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel[]> {
+    return tx.query.integrationMessengerModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        ...(input.id ? { id: input.id } : {}),
+      },
+      orderBy: { createdAt: "asc" },
+    })
+  },
+
+  async deleteById(
+    input: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .delete(integrationMessengerModel)
+      .where(eq(integrationMessengerModel.id, input.id))
   },
 }

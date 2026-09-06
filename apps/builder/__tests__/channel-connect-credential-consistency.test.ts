@@ -39,11 +39,13 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
   workspaceService: { create: vi.fn() },
   resolveTenantSettings: vi.fn(),
-  updateInstagramIntegrationUserInfo: vi.fn(),
-  updateMessengerIntegrationUserInfo: vi.fn(),
+  messengerIntegrationService: { updateUserInfo: vi.fn() },
+  instagramIntegrationService: { updateUserInfo: vi.fn() },
   tagSyncService: { enqueueChannelScan: vi.fn() },
   userQuotaService: { getAccessState: vi.fn(async () => ({ blocked: false })) },
   connectChannelIntegration: vi.fn(),
+  connectMessengerPage: vi.fn(),
+  connectInstagramAccount: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

@@ -2,16 +2,13 @@
 
 import {
   buildContext,
-  connectChannelIntegration,
+  connectInstagramAccount,
   instagramIntegrationService,
   platformCredentialService,
-  resolveTenantSettings,
-  workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, isDatabaseError } from "@chatbotx.io/database/client"
-import { integrationInstagramModel } from "@chatbotx.io/database/schema"
+import { isDatabaseError } from "@chatbotx.io/database/client"
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram-facebook"
 import {
@@ -19,7 +16,6 @@ import {
   subscribePageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram-facebook"
 import { AuthType, SdkException } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils/id"
 import { redirect } from "next/navigation"
 import {
   BRANDING_TITLE,
@@ -79,91 +75,50 @@ export const selectFacebookAccountAction = authActionClient
           )
         }
 
+        const auth: InstagramAuthValue = {
+          authType: AuthType.oauth2,
+          clientId: instagramSettings.clientId,
+          clientSecret: instagramSettings.clientSecret,
+          redirectUrl: "",
+          tokens: {
+            accessToken: parsedInput.pageAccessToken,
+          },
+          metadata: {
+            igId: parsedInput.igId,
+            igName: parsedInput.igName,
+            pageId: parsedInput.pageId,
+            version: parsedInput.version ?? instagramSettings.version,
+          },
+        }
+
         // DB work only — no external API calls inside the transaction so a
         // rolled-back commit doesn't leave orphaned Facebook webhook subscriptions.
-        const { appUrl, createdWorkspace, integrationRow, wasCreated } =
-          await db.transaction(async (tx) => {
-            let createdWorkspace = false
+        const {
+          workspaceId: connectedWorkspaceId,
+          appUrl,
+          createdWorkspace,
+          integrationRow,
+          wasCreated,
+        } = await connectInstagramAccount({
+          ownerId,
+          userId: ctx.user.id,
+          workspaceId,
+          igId: parsedInput.igId,
+          igName: parsedInput.igName,
+          igUsername: parsedInput.igUsername,
+          pageId: parsedInput.pageId,
+          auth,
+          type: "facebook",
+          buildPersistentMenus: (resolvedAppUrl) => [
+            {
+              label: BRANDING_TITLE,
+              type: "url" as const,
+              url: getBrandingUrl("instagram", resolvedAppUrl),
+            },
+          ],
+        })
 
-            if (!workspaceId) {
-              const workspace = await workspaceService.create({
-                tx,
-                createdBy: ctx.user.id,
-                data: {
-                  name: parsedInput.igName,
-                  timezone: "UTC",
-                  ownerId: ctx.user.id,
-                },
-              })
-              workspaceId = workspace.id
-              createdWorkspace = true
-            }
-
-            const { appUrl } = await resolveTenantSettings({
-              workspaceId,
-              tx,
-            })
-
-            const auth: InstagramAuthValue = {
-              authType: AuthType.oauth2,
-              clientId: instagramSettings.clientId,
-              clientSecret: instagramSettings.clientSecret,
-              redirectUrl: "",
-              tokens: {
-                accessToken: parsedInput.pageAccessToken,
-              },
-              metadata: {
-                igId: parsedInput.igId,
-                igName: parsedInput.igName,
-                pageId: parsedInput.pageId,
-                version: parsedInput.version ?? instagramSettings.version,
-              },
-            }
-
-            const { integration: integrationRow, wasCreated } =
-              await connectChannelIntegration({
-                tx,
-                ownerId,
-                inboxData: {
-                  id: createId(),
-                  workspaceId: workspaceId as string,
-                  name: parsedInput.igName,
-                  channel: "instagram",
-                  sourceId: parsedInput.igId,
-                },
-                insertIntegration: async (inboxId) =>
-                  tx
-                    .insert(integrationInstagramModel)
-                    .values({
-                      id: createId(),
-                      workspaceId: workspaceId as string,
-                      inboxId,
-                      igId: parsedInput.igId,
-                      pageId: parsedInput.pageId,
-                      auth,
-                      name: parsedInput.igName,
-                      username: parsedInput.igUsername,
-                      type: "facebook",
-                      persistentMenus: [
-                        {
-                          label: BRANDING_TITLE,
-                          type: "url" as const,
-                          url: getBrandingUrl("instagram", appUrl),
-                        },
-                      ],
-                      conversationStarters: [],
-                    })
-                    .returning()
-                    .then((result) => result[0]),
-              })
-
-            return {
-              integrationRow,
-              appUrl,
-              createdWorkspace,
-              wasCreated,
-            }
-          })
+        workspaceId = connectedWorkspaceId
 
         if (createdWorkspace) {
           await auditService.record({

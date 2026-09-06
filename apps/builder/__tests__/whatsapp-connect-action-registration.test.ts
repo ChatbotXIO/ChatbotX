@@ -24,19 +24,17 @@ const {
   addSystemUserMock,
   auditRecordMock,
   buildContextMock,
-  connectChannelIntegrationMock,
+  connectPhoneNumberMock,
   createSignupSessionMock,
   consumeSignupSessionMock,
   findActiveSignupSessionMock,
   createIdMock,
-  dbTransactionMock,
   exchangeAccessTokenMock,
   findConnectedPhoneNumberIdsMock,
   findWabaMock,
   getCoexistEligibilityMock,
   getSharedWabaIdMock,
   invalidateCacheByTagsMock,
-  isUniqueViolationErrorMock,
   listPhoneNumbersMock,
   platformCredentialResolveMock,
   recordRegistrationOutcomeMock,
@@ -44,25 +42,21 @@ const {
   shareCreditLineMock,
   subscribeWebhookMock,
   updateWorkspaceLogoMock,
-  workspaceCreateMock,
-  workspaceFindMock,
 } = vi.hoisted(() => ({
   addSystemUserMock: vi.fn(),
   auditRecordMock: vi.fn().mockResolvedValue(undefined),
   buildContextMock: vi.fn(),
-  connectChannelIntegrationMock: vi.fn(),
+  connectPhoneNumberMock: vi.fn(),
   createSignupSessionMock: vi.fn(),
   consumeSignupSessionMock: vi.fn(),
   findActiveSignupSessionMock: vi.fn(),
   createIdMock: vi.fn(),
-  dbTransactionMock: vi.fn(),
   exchangeAccessTokenMock: vi.fn(),
   findConnectedPhoneNumberIdsMock: vi.fn(),
   findWabaMock: vi.fn(),
   getCoexistEligibilityMock: vi.fn(),
   getSharedWabaIdMock: vi.fn(),
   invalidateCacheByTagsMock: vi.fn(),
-  isUniqueViolationErrorMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
   platformCredentialResolveMock: vi.fn(),
   recordRegistrationOutcomeMock: vi.fn(),
@@ -70,8 +64,6 @@ const {
   shareCreditLineMock: vi.fn(),
   subscribeWebhookMock: vi.fn(),
   updateWorkspaceLogoMock: vi.fn(),
-  workspaceCreateMock: vi.fn(),
-  workspaceFindMock: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -95,7 +87,15 @@ vi.mock("@/lib/log", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {},
+  ChatbotXException: class ChatbotXException extends Error {
+    code: string
+    httpStatusCode: number
+    constructor(message: string, code = "systemError", httpStatusCode = 400) {
+      super(message)
+      this.code = code
+      this.httpStatusCode = httpStatusCode
+    }
+  },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -104,13 +104,14 @@ vi.mock("@chatbotx.io/business/audit", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: buildContextMock,
-  connectChannelIntegration: connectChannelIntegrationMock,
   integrationWhatsappService: {
+    connectPhoneNumber: connectPhoneNumberMock,
     createSignupSession: createSignupSessionMock,
     consumeSignupSession: consumeSignupSessionMock,
     findActiveSignupSession: findActiveSignupSessionMock,
     findConnectedPhoneNumberIds: findConnectedPhoneNumberIdsMock,
     recordRegistrationOutcome: recordRegistrationOutcomeMock,
+    markWebhookOverrideOk: vi.fn().mockResolvedValue(undefined),
     // Post-connect CAPI scope cache refresh (Phase 2 CTWA); connect flow
     // treats its result as best-effort, so a resolved null is sufficient.
     refreshCapiScopeCache: vi.fn().mockResolvedValue(null),
@@ -119,27 +120,6 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     resolveForOwner: platformCredentialResolveMock,
   },
-  workspaceService: {
-    create: workspaceCreateMock,
-    find: workspaceFindMock,
-  },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    transaction: dbTransactionMock,
-  },
-  eq: (left: unknown, right: unknown) => ({ left, right }),
-  isUniqueViolationError: isUniqueViolationErrorMock,
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationWhatsappModel: {
-    inboxId: "inboxId",
-    id: "id",
-  },
-  WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT:
-    "IntegrationWhatsapp_phoneNumberId_key",
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
@@ -257,16 +237,12 @@ const integrationRow = {
 describe("connectWhatsappAction registration", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
-    // The happy paths below never collide on the phone number; the tests that
-    // exercise the constraint opt in explicitly.
-    isUniqueViolationErrorMock.mockReturnValue(false)
+    createIdMock.mockReset()
 
     createIdMock
       .mockReturnValueOnce("integration-1")
       .mockReturnValueOnce("inbox-source-id")
 
-    workspaceFindMock.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
     platformCredentialResolveMock.mockResolvedValue({
       config: {
         clientId: "client-1",
@@ -280,8 +256,8 @@ describe("connectWhatsappAction registration", () => {
         businessId: "",
       },
     })
-    // The session is read up front and only spent inside the write transaction,
-    // so the two halves return different shapes: the payload, then whether the
+    // The session is read up front and only spent inside the write, so the
+    // two halves return different shapes: the payload, then whether the
     // claim was still unspent.
     findActiveSignupSessionMock.mockResolvedValue({
       accessToken: "access-token-1",
@@ -314,34 +290,15 @@ describe("connectWhatsappAction registration", () => {
     shareCreditLineMock.mockResolvedValue(undefined)
     buildContextMock.mockResolvedValue({})
     updateWorkspaceLogoMock.mockResolvedValue(undefined)
-    workspaceCreateMock.mockResolvedValue({
-      id: "ws-new",
-      name: selectedPhoneNumber.verified_name,
-    })
     subscribeWebhookMock.mockResolvedValue(undefined)
     invalidateCacheByTagsMock.mockResolvedValue(undefined)
-    connectChannelIntegrationMock.mockImplementation(
-      async (props: {
-        insertIntegration: (inboxId: string) => Promise<void>
-      }) => {
-        await props.insertIntegration("inbox-1")
-        return { wasCreated: true }
-      },
-    )
 
-    const insertBuilder = {
-      values: vi.fn(),
-      onConflictDoUpdate: vi.fn(),
-      returning: vi.fn().mockResolvedValue([integrationRow]),
-    }
-    insertBuilder.values.mockReturnValue(insertBuilder)
-    insertBuilder.onConflictDoUpdate.mockReturnValue(insertBuilder)
-
-    dbTransactionMock.mockImplementation(
-      async (
-        callback: (tx: { insert: () => typeof insertBuilder }) => unknown,
-      ) => await callback({ insert: () => insertBuilder }),
-    )
+    connectPhoneNumberMock.mockResolvedValue({
+      workspaceId: "ws-1",
+      createdWorkspace: false,
+      integrationRow,
+      wasCreated: true,
+    })
   })
 
   test("does not register the selected phone number when the selected phone is eligible for coexist", async () => {
@@ -372,6 +329,13 @@ describe("connectWhatsappAction registration", () => {
   })
 
   test("audits workspace creation before channel connect when connecting the first WhatsApp workspace", async () => {
+    connectPhoneNumberMock.mockResolvedValueOnce({
+      workspaceId: "ws-new",
+      createdWorkspace: true,
+      integrationRow: { ...integrationRow, workspaceId: "ws-new" },
+      wasCreated: true,
+    })
+
     await callConnectWhatsappAction({
       ctx: { user: { id: "user-1" } },
       parsedInput: {
@@ -389,13 +353,11 @@ describe("connectWhatsappAction registration", () => {
       },
     })
 
-    expect(workspaceCreateMock).toHaveBeenCalledWith(
+    expect(connectPhoneNumberMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        createdBy: "user-1",
-        data: expect.objectContaining({
-          name: selectedPhoneNumber.verified_name,
-          ownerId: "user-1",
-        }),
+        ownerId: expect.any(String),
+        userId: "user-1",
+        workspaceId: null,
       }),
     )
     expect(auditRecordMock).toHaveBeenNthCalledWith(1, {
@@ -574,12 +536,17 @@ describe("connectWhatsappAction registration", () => {
     ).rejects.toThrow(
       "Your WhatsApp signup session has expired. Please start the connection again.",
     )
-    expect(consumeSignupSessionMock).not.toHaveBeenCalled()
-    expect(dbTransactionMock).not.toHaveBeenCalled()
+    expect(connectPhoneNumberMock).not.toHaveBeenCalled()
   })
 
   test("aborts the connect when the session was already spent by a concurrent request", async () => {
-    consumeSignupSessionMock.mockResolvedValueOnce(false)
+    connectPhoneNumberMock.mockRejectedValueOnce(
+      new ChatbotXException(
+        "Signup session expired",
+        "whatsappSignupSessionExpired",
+        409,
+      ),
+    )
 
     await expect(
       callConnectWhatsappAction({
@@ -607,9 +574,12 @@ describe("connectWhatsappAction registration", () => {
     // The pre-flight check can pass and still lose the race, so the constraint
     // is the real gate; its violation has to read like the pre-flight rejection
     // rather than a raw Postgres error.
-    isUniqueViolationErrorMock.mockReturnValue(true)
-    dbTransactionMock.mockRejectedValueOnce(
-      new Error("duplicate key value violates unique constraint"),
+    connectPhoneNumberMock.mockRejectedValueOnce(
+      new ChatbotXException(
+        "Phone number already connected",
+        "whatsappPhoneNumberAlreadyConnected",
+        409,
+      ),
     )
 
     await expect(
@@ -659,20 +629,20 @@ describe("connectWhatsappAction registration", () => {
     ).rejects.toThrow(
       "This WhatsApp number is already connected to another workspace.",
     )
-    expect(dbTransactionMock).not.toHaveBeenCalled()
+    expect(connectPhoneNumberMock).not.toHaveBeenCalled()
   })
 
   test("surfaces the real quota error instead of the generic token-verification message", async () => {
     // Regression guard: a typed ChatbotXException raised deep inside
-    // connectChannelIntegration (e.g. InboxService.create hitting the
-    // owner's channel quota) must reach the caller verbatim rather than
-    // being swallowed by the outer catch-all's "unable to verify token"
-    // fallback.
+    // integrationWhatsappService.connectPhoneNumber (e.g. InboxService.create
+    // hitting the owner's channel quota) must reach the caller verbatim
+    // rather than being swallowed by the outer catch-all's "unable to verify
+    // token" fallback.
     const quotaError = new ChatbotXException(
       "Channel limit reached for this plan",
+      "channelLimitReached",
     )
-    Object.assign(quotaError, { code: "channelLimitReached" })
-    connectChannelIntegrationMock.mockRejectedValueOnce(quotaError)
+    connectPhoneNumberMock.mockRejectedValueOnce(quotaError)
 
     await expect(
       callConnectWhatsappAction({

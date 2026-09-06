@@ -1,6 +1,6 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
+import { messengerIntegrationService } from "@chatbotx.io/business"
 import { createPageMessageTemplate } from "@chatbotx.io/integration-messenger/apis/message-templates"
 import { resumableUploadImage } from "@chatbotx.io/integration-messenger/apis/upload"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
@@ -35,11 +35,9 @@ export const createMessengerMessageTemplateAction = workspaceActionClient
     } = props
 
     const integrationMessenger =
-      await db.query.integrationMessengerModel.findFirst({
-        where: {
-          id: integrationMessengerId,
-          workspaceId,
-        },
+      await messengerIntegrationService.findByIdForWorkspace({
+        id: integrationMessengerId,
+        workspaceId,
       })
 
     if (!integrationMessenger) {
