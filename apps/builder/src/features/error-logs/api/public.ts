@@ -1,0 +1,28 @@
+import { withPublicPaging } from "@/lib/public-api/list"
+import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { listErrorLogs } from "../queries"
+import {
+  listErrorLogsRequest,
+  publicListErrorLogsResponse,
+} from "../schema/query"
+
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("analytics")
+
+export const errorLogsPublicRouter = {
+  list: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/error-logs",
+      summary: "List error logs",
+      tags: ["Error Logs"],
+    })
+    .input(withPublicPaging(listErrorLogsRequest.omit({ workspaceId: true })))
+    .output(publicListErrorLogsResponse)
+    .handler(
+      async ({ context, input }) =>
+        await listErrorLogs({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
+}

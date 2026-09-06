@@ -8,6 +8,7 @@ interface OpenAPISpec {
 }
 
 interface OpenAPIOperation {
+  deprecated?: boolean
   description?: string
   operationId?: string
   parameters?: OpenAPIParameter[]
@@ -19,7 +20,37 @@ interface OpenAPIOperation {
       }
     }
   }
+  security?: Record<string, string[]>[]
   summary?: string
+}
+
+// Workspace-token security schemes only — a channel-token op (or any scheme
+// this list doesn't know about) is deliberately excluded so a token type the
+// CLI client doesn't hold never becomes a command that always 401s.
+const WORKSPACE_TOKEN_SECURITY_SCHEMES = new Set([
+  "bearerAuth",
+  "developerAccessToken",
+  "tokenInSearchParams",
+])
+
+/**
+ * `undefined` security means the document-level default applies (workspace
+ * token, in this API) — true. An explicit `security` array is true only if
+ * at least one alternative names a workspace-token scheme; `[]` (no auth) or
+ * an array of non-workspace schemes (e.g. `channelApiToken`) is false.
+ */
+export function isWorkspaceTokenOperation(
+  operation: OpenAPIOperation,
+): boolean {
+  if (!operation.security) {
+    return true
+  }
+
+  return operation.security.some((requirement) =>
+    Object.keys(requirement).some((scheme) =>
+      WORKSPACE_TOKEN_SECURITY_SCHEMES.has(scheme),
+    ),
+  )
 }
 
 interface OpenAPIParameter {
@@ -288,6 +319,12 @@ export async function loadOpenApiSpecForCli(
         continue
       }
       if (!operation.operationId) {
+        continue
+      }
+      if (operation.deprecated) {
+        continue
+      }
+      if (!isWorkspaceTokenOperation(operation)) {
         continue
       }
 

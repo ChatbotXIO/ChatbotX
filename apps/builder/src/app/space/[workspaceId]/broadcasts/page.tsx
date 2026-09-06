@@ -14,6 +14,7 @@ import {
 import { listBroadcasts } from "@/features/broadcasts/queries"
 import { listBroadcastsForCalendar } from "@/features/broadcasts/queries/list-broadcasts-for-calendar"
 import { getBroadcastsSearchParamsCache } from "@/features/broadcasts/schema/query"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { getUserTimezone } from "@/lib/timezone"
 
 export default async function BroadcastsPage(props: {
@@ -54,6 +55,8 @@ export default async function BroadcastsPage(props: {
       </BroadcastsListShell>
     )
   }
+
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const promises = Promise.all([listBroadcasts({ ...search, workspaceId })])
   return (

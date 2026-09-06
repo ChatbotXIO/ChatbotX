@@ -5,12 +5,6 @@ import {
   activeCampaignSyncContactDefaultFn,
   activeCampaignSyncContactSchema,
 } from "@chatbotx.io/flow-config"
-import type {
-  ActiveCampaignAutomation,
-  ActiveCampaignCustomField,
-  ActiveCampaignList,
-  ActiveCampaignTag,
-} from "@chatbotx.io/integration-active-campaign"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -26,6 +20,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import {
   ArrowRightIcon,
   CircleHelpIcon,
@@ -44,7 +39,7 @@ import {
 import type { z } from "zod"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { orpc } from "@/lib/orpc/query"
 import { BaseStepEditor } from "../base/editor"
 
 const FieldLabel = (props: {
@@ -103,39 +98,43 @@ const ActiveCampaignDialog = ({ parentName }: { parentName: string }) => {
 
   const {
     data: listsResponse,
-    error: listsError,
+    isError: listsError,
     isLoading: listsLoading,
-  } = callAPI<{ data: ActiveCampaignList[] }>(
-    isAutomationMode
-      ? null
-      : `/api/workspaces/${workspaceId}/active-campaign/lists`,
+  } = useQuery(
+    orpc.integrationActiveCampaignAPI.listLists.queryOptions({
+      input: { workspaceId },
+      enabled: !isAutomationMode,
+    }),
   )
   const {
     data: automationsResponse,
-    error: automationsError,
+    isError: automationsError,
     isLoading: automationsLoading,
-  } = callAPI<{ data: ActiveCampaignAutomation[] }>(
-    isAutomationMode
-      ? `/api/workspaces/${workspaceId}/active-campaign/automations`
-      : null,
+  } = useQuery(
+    orpc.integrationActiveCampaignAPI.listAutomations.queryOptions({
+      input: { workspaceId },
+      enabled: isAutomationMode,
+    }),
   )
   const {
     data: tagsResponse,
-    error: tagsError,
+    isError: tagsError,
     isLoading: tagsLoading,
-  } = callAPI<{ data: ActiveCampaignTag[] }>(
-    isAutomationMode
-      ? null
-      : `/api/workspaces/${workspaceId}/active-campaign/tags`,
+  } = useQuery(
+    orpc.integrationActiveCampaignAPI.listTags.queryOptions({
+      input: { workspaceId },
+      enabled: !isAutomationMode,
+    }),
   )
   const {
     data: customFieldsResponse,
-    error: customFieldsError,
+    isError: customFieldsError,
     isLoading: customFieldsLoading,
-  } = callAPI<{ data: ActiveCampaignCustomField[] }>(
-    isAutomationMode
-      ? null
-      : `/api/workspaces/${workspaceId}/active-campaign/custom-fields`,
+  } = useQuery(
+    orpc.integrationActiveCampaignAPI.listCustomFields.queryOptions({
+      input: { workspaceId },
+      enabled: !isAutomationMode,
+    }),
   )
 
   const listOptions = useMemo(

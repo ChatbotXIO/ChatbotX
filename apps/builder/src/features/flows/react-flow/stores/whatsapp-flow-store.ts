@@ -1,6 +1,7 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListWhatsappFlowsResponse } from "@/features/integration-whatsapp/flows/schema/query"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 
 export type WhatsappFlowState = {
   error: string | null
@@ -42,10 +43,7 @@ export const createWhatsappFlowStore = (props: Partial<WhatsappFlowState>) =>
         await fetchWhatsappFlows()
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch WA flows",
+          error: getClientErrorMessage(error, "Failed to fetch WA flows"),
         })
       } finally {
         set({ initialized: true })
@@ -61,21 +59,17 @@ export const createWhatsappFlowStore = (props: Partial<WhatsappFlowState>) =>
 
       set({ loadingWhatsappFlows: true, error: null })
       try {
-        const flows = await ky
-          .get<ListWhatsappFlowsResponse>(
-            `/api/workspaces/${workspaceId}/whatsapp-flows`,
-          )
-          .json()
+        const flows =
+          await client.whatsappFlowAPIs.listWhatsappFlowsInternalAPI({
+            workspaceId,
+          })
 
         set({
           whatsappFlows: flows,
         })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch WA flows",
+          error: getClientErrorMessage(error, "Failed to fetch WA flows"),
         })
       } finally {
         set({ loadingWhatsappFlows: false })

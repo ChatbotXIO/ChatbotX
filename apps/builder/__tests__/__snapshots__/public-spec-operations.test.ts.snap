@@ -1,0 +1,366 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`public API spec — operation naming guard > operation list (operationId, method, path) matches the committed snapshot 1`] = `
+[
+  {
+    "method": "GET",
+    "operationId": "aiAgents.list",
+    "path": "/v1/ai-agents",
+  },
+  {
+    "method": "PUT",
+    "operationId": "botFields.bulkUpdate",
+    "path": "/v1/bot-fields/bulk-update",
+  },
+  {
+    "method": "POST",
+    "operationId": "botFields.create",
+    "path": "/v1/bot-fields",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "botFields.delete",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "botFields.get",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "botFields.list",
+    "path": "/v1/bot-fields",
+  },
+  {
+    "method": "PUT",
+    "operationId": "botFields.set",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "botFields.setMany",
+    "path": "/v1/bot-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.get",
+    "path": "/v1/broadcasts/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.getAudience",
+    "path": "/v1/broadcasts/{idOrName}/audience",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.list",
+    "path": "/v1/broadcasts",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.deliveryStatus",
+    "path": "/v1/channels/api/delivery-status",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.markRead",
+    "path": "/v1/channels/api/read",
+  },
+  {
+    "method": "GET",
+    "operationId": "channels.me",
+    "path": "/v1/channels/api/me",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.sendMessage",
+    "path": "/v1/channels/api/messages",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.typing",
+    "path": "/v1/channels/api/typing",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.addTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.block",
+    "path": "/v1/contacts/{identifier}/block",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.clearCustomField",
+    "path": "/v1/contacts/{identifier}/custom-fields/{idOrName}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.clearCustomFields",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.create",
+    "path": "/v1/contacts",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.delete",
+    "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.findByCustomField",
+    "path": "/v1/contacts/find-by-custom-field",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.get",
+    "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getCustomField",
+    "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getMessage",
+    "path": "/v1/contacts/{identifier}/messages/{messageId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.import",
+    "path": "/v1/contacts/import",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.list",
+    "path": "/v1/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listCustomFields",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listMessages",
+    "path": "/v1/contacts/{identifier}/messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.removeTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.sendFlow",
+    "path": "/v1/contacts/{identifier}/flows",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.sendMessage",
+    "path": "/v1/contacts/{identifier}/messages",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.setCustomField",
+    "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.setCustomFields",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.triggerAutoReply",
+    "path": "/v1/contacts/{identifier}/auto-replies",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.unblock",
+    "path": "/v1/contacts/{identifier}/unblock",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.update",
+    "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.upsert",
+    "path": "/v1/contacts/{identifier}/upsert",
+  },
+  {
+    "method": "GET",
+    "operationId": "conversations.list",
+    "path": "/v1/conversations",
+  },
+  {
+    "method": "POST",
+    "operationId": "customFields.create",
+    "path": "/v1/custom-fields",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "customFields.delete",
+    "path": "/v1/custom-fields/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "customFields.get",
+    "path": "/v1/custom-fields/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "customFields.list",
+    "path": "/v1/custom-fields",
+  },
+  {
+    "method": "PUT",
+    "operationId": "customFields.update",
+    "path": "/v1/custom-fields/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "errorLogs.list",
+    "path": "/v1/error-logs",
+  },
+  {
+    "method": "POST",
+    "operationId": "externalWebhooks.create",
+    "path": "/v1/external-webhooks",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "externalWebhooks.delete",
+    "path": "/v1/external-webhooks/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "externalWebhooks.list",
+    "path": "/v1/external-webhooks",
+  },
+  {
+    "method": "GET",
+    "operationId": "flows.list",
+    "path": "/v1/flows",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxes.list",
+    "path": "/v1/inboxes",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxes.listChannels",
+    "path": "/v1/channels",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxTeams.list",
+    "path": "/v1/teams",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.list",
+    "path": "/v1/integrations",
+  },
+  {
+    "method": "GET",
+    "operationId": "keywords.list",
+    "path": "/v1/keywords",
+  },
+  {
+    "method": "GET",
+    "operationId": "reflinks.get",
+    "path": "/v1/ref-links/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "savedReplies.list",
+    "path": "/v1/saved-replies",
+  },
+  {
+    "method": "GET",
+    "operationId": "sequences.get",
+    "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "sequences.list",
+    "path": "/v1/sequences",
+  },
+  {
+    "method": "POST",
+    "operationId": "tags.create",
+    "path": "/v1/tags",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "tags.delete",
+    "path": "/v1/tags/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tags.get",
+    "path": "/v1/tags/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tags.list",
+    "path": "/v1/tags",
+  },
+  {
+    "method": "PUT",
+    "operationId": "tags.update",
+    "path": "/v1/tags/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateMessages.list",
+    "path": "/v1/template-messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "triggers.list",
+    "path": "/v1/triggers",
+  },
+  {
+    "method": "POST",
+    "operationId": "webhooks.create",
+    "path": "/v1/webhooks",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "webhooks.delete",
+    "path": "/v1/webhooks/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "webhooks.list",
+    "path": "/v1/webhooks",
+  },
+  {
+    "method": "GET",
+    "operationId": "workspaceMembers.get",
+    "path": "/v1/members/{memberId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "workspaceMembers.list",
+    "path": "/v1/members",
+  },
+]
+`;

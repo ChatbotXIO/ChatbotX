@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
+import { useInvalidateAIAgents } from "@/features/ai-agents/hooks/use-ai-agents"
 import type { listAIAgents } from "@/features/ai-agents/queries"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
 import type { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
@@ -43,6 +44,7 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
 
   const t = useTranslations()
   const router = useRouter()
+  const invalidateAIAgents = useInvalidateAIAgents()
 
   const [rowAction, setRowAction] =
     useState<AIAgentDataTableRowAction<AIAgentModel> | null>(null)
@@ -81,6 +83,7 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
             <CreateAIAgentDialog
               onSuccess={() => {
                 router.refresh()
+                invalidateAIAgents()
               }}
               openaiCompatibleIntegrations={openaiCompatibleIntegrations}
               workspaceId={workspaceId}
@@ -94,6 +97,7 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
           onSuccess={() => {
             rowAction?.row.toggleSelected(false)
             router.refresh()
+            invalidateAIAgents()
           }}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
@@ -105,6 +109,7 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             router.refresh()
+            invalidateAIAgents()
           }}
           open={rowAction?.variant === "update"}
           openaiCompatibleIntegrations={openaiCompatibleIntegrations}
@@ -116,6 +121,7 @@ export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             router.refresh()
+            invalidateAIAgents()
           }}
           open={rowAction?.variant === "toggleDefault"}
         />

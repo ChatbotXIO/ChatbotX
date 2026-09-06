@@ -747,6 +747,17 @@
       "pendingBlockedToast": "Bu çalışma alanının silinmesi planlandı. Erişimi geri yüklemek için bir çalışma alanı yöneticisiyle iletişime geçin.",
       "navDisabledTooltip": "Çalışma alanı silme işlemi planlıyken kullanılamaz",
       "badge": "Silme planlandı"
+    },
+    "supportAccess": {
+      "bannerTitle": "Platform destek oturumu",
+      "bannerDescription": "Bir platform destek temsilcisinin bu çalışma alanına {time} tarihine kadar geçici erişimi var.",
+      "cardTitle": "Platform destek erişimi",
+      "cardDescription": "Platform destek ekibinin bu çalışma alanını 7 gün boyunca tam erişimle açmasına izin verin. Bunu istediğiniz zaman kapatabilirsiniz.",
+      "enabledUntil": "{time} tarihine kadar etkin",
+      "permissionRequired": "Platform destek erişimini değiştirmek için süper yönetici olmanız gerekir.",
+      "enabledToast": "Platform destek erişimi etkinleştirildi.",
+      "disabledToast": "Platform destek erişimi devre dışı bırakıldı.",
+      "toggleError": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
     }
   },
   "workspaces": {
@@ -885,7 +896,8 @@
       "label": "Temsilci"
     },
     "aiAgent": {
-      "label": "Yapay Zekâ Temsilcisi"
+      "label": "Yapay Zekâ Temsilcisi",
+      "loadError": "Yapay zeka temsilcileri yüklenemedi. Lütfen tekrar deneyin."
     },
     "aiQueuedMessages": {
       "label": "Kuyruğa Alınmış Yapay Zekâ Mesajları"
@@ -4532,6 +4544,17 @@
     },
     "queues": {
       "title": "Kuyruklar"
+    },
+    "workspaces": {
+      "title": "Çalışma alanları",
+      "description": "Sahibi platform destek erişimini etkinleştirmiş çalışma alanları burada açılabilir.",
+      "owner": "Sahip",
+      "tenant": "Kiracı",
+      "supportStatus": "Destek durumu",
+      "openAsSupport": "Destek olarak aç",
+      "supportEnabledUntil": "{time} tarihine kadar etkin",
+      "supportOff": "Kapalı",
+      "searchPlaceholder": "Ada, sahibinin e-postasına veya kimliğe göre ara"
     }
   },
   "platformCredentials": {

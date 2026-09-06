@@ -1,9 +1,8 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ListBotFieldsResponse } from "@/features/bot-fields/schema/query"
 import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
-import { maxPerPageString } from "@/lib/shared-request"
-import type { ListCustomFieldsResponse } from "../schema/query"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
+import { maxPerPage } from "@/lib/shared-request"
 import type { CustomFieldResource } from "../schema/resource"
 
 export type CustomFieldState = {
@@ -36,16 +35,6 @@ export type CustomFieldActions = {
 
 export type CustomFieldStore = CustomFieldState & CustomFieldActions
 
-const resolveFetchErrorMessage = (error: unknown, fallback: string): string =>
-  error instanceof HTTPError ? error.message : fallback
-
-const fetchAllPages = async <T extends { data: unknown }>(
-  url: string,
-): Promise<T> => {
-  const searchParams = new URLSearchParams({ perPage: maxPerPageString })
-  return await ky.get<T>(`${url}?${searchParams.toString()}`).json()
-}
-
 export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
   createStore<CustomFieldStore>((set, get) => ({
     loading: false,
@@ -72,10 +61,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
         await get().getAllCustomFields()
       } catch (error: unknown) {
         set({
-          error: resolveFetchErrorMessage(
-            error,
-            "Failed to fetch custom fields",
-          ),
+          error: getClientErrorMessage(error, "Failed to fetch custom fields"),
         })
       } finally {
         set({ initialized: true })
@@ -93,16 +79,15 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
       set({ loading: true, error: null })
 
       try {
-        const { data } = await fetchAllPages<ListCustomFieldsResponse>(
-          `/api/workspaces/${workspaceId}/custom-fields`,
-        )
+        const { data } =
+          await client.customFieldsAPI.privateListCustomFieldsAPI({
+            workspaceId,
+            perPage: maxPerPage,
+          })
         set({ customFields: data })
       } catch (error: unknown) {
         set({
-          error: resolveFetchErrorMessage(
-            error,
-            "Failed to fetch custom fields",
-          ),
+          error: getClientErrorMessage(error, "Failed to fetch custom fields"),
         })
       } finally {
         set({ loading: false })
@@ -121,16 +106,17 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
       set({ botFieldsLoading: true, botFieldsError: null })
 
       try {
-        const { data } = await fetchAllPages<ListBotFieldsResponse>(
-          `/api/workspaces/${workspaceId}/bot-fields`,
-        )
+        const { data } = await client.botFieldAPIs.privateListBotFieldsAPI({
+          workspaceId,
+          perPage: maxPerPage,
+        })
         set({ botFields: data, botFieldsInitialized: true })
       } catch (error: unknown) {
         // Leave `botFieldsInitialized` false on failure — unlike a poisoned
         // "loaded" state, this lets a later picker mount retry the fetch
         // instead of getting stuck with an empty list forever.
         set({
-          botFieldsError: resolveFetchErrorMessage(
+          botFieldsError: getClientErrorMessage(
             error,
             "Failed to fetch bot fields",
           ),

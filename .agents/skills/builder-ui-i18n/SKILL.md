@@ -106,7 +106,7 @@ Available defined fields (import from `@chatbotx.io/ui/components/form/<name>`):
 | `InputField` | Text inputs |
 | `InputNumberField` | Numeric inputs (renders stepper) |
 | `TextareaField` | Multi-line text |
-| `SelectField` | Single-select dropdowns; supports `allowClear`, `options`, `fetchOptionsUrl` |
+| `SelectField` | Single-select dropdowns; supports `allowClear`, `options` |
 | `ComboboxField` | Searchable single-select |
 | `MultiSelectField` | Multi-select |
 | `CheckboxField` | Boolean checkbox |

@@ -40,6 +40,7 @@ export type ListTagsResponse = z.infer<typeof listTagsResponse>
 
 export const publicListTagsResponse = z.object({
   data: z.array(publicTagResource),
+  pageCount: z.number().int(),
 })
 export type ListPublicTagResponse = z.infer<typeof publicListTagsResponse>
 

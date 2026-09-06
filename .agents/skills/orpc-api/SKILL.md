@@ -11,8 +11,9 @@ description: >-
 ## Architecture
 
 - **oRPC** serves both **RPC** (`/rpc`) and **OpenAPI** (`/api`) endpoints
+- `/api` serves **only** `publicRouter` (workspace-token / channel-token authed procedures). Private, session-authed procedures are reachable via `/rpc` (from the builder) only — there is no full-router HTTP mirror. `OpenAPIReferencePlugin` serves Scalar docs at `GET /api` and the spec at `/api/spec.json` for the public router.
 - Base context: `{ headers, url?, user?, workspace?, apiToken? }`
-- Two auth stacks: `authorizedAPI` (session) and `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token)
+- Three auth stacks: `authorizedAPI` (session), `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token) and `channelApiTokenAPI` (Bearer channel API token)
 - Routers are plain objects of procedures, composed via object spreading
 
 ## Auth Stacks
@@ -21,7 +22,7 @@ Defined in `apps/builder/src/orpc.ts`:
 
 - **`authorizedAPI`**: `base` → error mapping → `authMiddleware` (session/cookie auth)
 - **`workspaceTokenAuthAPIForScope(scope)`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header) → `requireTokenScope(scope)`. There is deliberately no unscoped variant — every workspace-token endpoint must declare its resource scope. The middleware sets `context.workspace` plus a projected `context.apiToken` (`id`, `workspaceId`, `permission`, `scopes`, `isDefault` — never `tokenHash`/`encryptedToken`). See `docs/developer/workspace-api-tokens.md`.
-- **`channelApiTokenAPI`**: `base` → error mapping → `channelApiTokenAuthMidddleware` (API-channel token)
+- **`channelApiTokenAPI`**: `base` → error mapping → `channelApiTokenAuthMidddleware` (Authorization: Bearer header only — no query fallback; token is looked up by hash, never plaintext; scoped to a single inbox, not a whole workspace; see `middlewares/channel-api-token-auth.ts`)
 
 Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per-procedure.
 
@@ -87,24 +88,37 @@ Each feature has `api/` directory with optional split:
 ```
 features/my-feature/
   api/
-    index.ts            → merges private (session) + workspace-token APIs
-    private.ts          → session-based procedures
-    workspace-token.ts  → token-based procedures (for public API)
+    index.ts    → private (session) API only — public procedures are NOT
+                  spread in here; they're mounted separately in
+                  routers/public.ts (see below)
+    private.ts  → session-based procedures (private naming: see below)
+    public.ts   → token-based procedures (for public API)
 ```
 
-### api/index.ts
+If a feature has no private procedures at all, it has no `api/index.ts` and
+is not mounted in `routers/index.ts` — only `api/public.ts`, wired into
+`routers/public.ts`.
+
+### api/index.ts (private only)
 
 ```typescript
 import { myFeatureAuthenticatedAPI } from "./private"
-import myFeatureWorkspaceTokenAPIs from "./workspace-token"
 
 export const myFeatureAPI = {
-  ...myFeatureWorkspaceTokenAPIs,
   ...myFeatureAuthenticatedAPI,
 }
 ```
 
-### Workspace-token procedures (public API)
+### Public procedures (`api/public.ts`)
+
+Key naming: CRUD resources use plain `list`, `get`, `create`, `update`,
+`delete`; anything else is a verb + secondary noun (`listOptions`,
+`getStats`, `upsert`, `block`, `sendMessage`). Never prefix keys with the
+resource name or an auth suffix (no `WorkspaceTokenAPI`, no
+`listMyFeature`) — the resource name already comes from the router nesting
+in `routers/public.ts`, and the key becomes the last segment of the
+generated `operationId` (`myFeature.get`), which the MCP server turns into
+the tool name (`my_feature_get`).
 
 ```typescript
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -113,8 +127,8 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 // (workspaceApiTokenScopes in packages/database/src/partials/workspace-api-token.ts)
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
-const workspaceTokenAPIs = {
-  findMyFeaturePublicAPI: workspaceTokenAuthAPI
+export const myFeaturePublicRouter = {
+  get: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/v1/my-feature/{id}",
@@ -131,8 +145,18 @@ const workspaceTokenAPIs = {
       })
     }),
 }
+```
 
-export default workspaceTokenAPIs
+Register it in `apps/builder/src/routers/public.ts`, nested under the
+resource name:
+
+```typescript
+import { myFeaturePublicRouter } from "@/features/my-feature/api/public"
+
+export const publicRouter = {
+  // ...existing resources
+  myFeature: myFeaturePublicRouter,
+}
 ```
 
 ## Registering the Router
@@ -162,8 +186,12 @@ name must match the module's actual export — a mismatch produces
 at build time. Dynamic `import()` is allowed here because `apps/builder` is
 Next.js-built (see `.agents/rules/no-dynamic-import.md`).
 
-For public API (workspace-token), also add to `apps/builder/src/routers/public.ts` —
-that router stays **eager** (plain imports); it feeds `/api/public-spec.json`.
+For public API (`api/public.ts`), don't add the feature to `routers/index.ts`
+at all if it has no private procedures — register it only in
+`apps/builder/src/routers/public.ts` (see above), nested under the resource
+name. That router stays **eager** (plain imports); it feeds `/api/spec.json`,
+and its `operationId`s (`resource.key`) are what the MCP server turns into
+tool names.
 
 ## Schema Patterns
 
@@ -192,7 +220,38 @@ import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 
 ## Client Usage
 
-### Browser (client components)
+### React components (TanStack Query)
+
+Rendering a list/detail read in a client component goes through TanStack
+Query, not a bare `client.*()` call — it dedupes concurrent reads app-wide,
+caches per query key, and lets any mutation invalidate every reader. See
+`feature-scaffold` skill's "Server data (TanStack Query)" section for the full
+hook shape (`features/ai-agents/hooks/use-ai-agents.ts` is the reference
+implementation):
+
+```typescript
+import { useQuery } from "@tanstack/react-query"
+import { orpc } from "@/lib/orpc/query"
+
+const { data, isPending } = useQuery(
+  orpc.myFeatureAPI.listMyFeatureAPI.queryOptions({
+    input: { workspaceId },
+    enabled: Boolean(workspaceId),
+  }),
+)
+```
+
+Invalidate after a mutation with `.key()`:
+
+```typescript
+import { useQueryClient } from "@tanstack/react-query"
+import { orpc } from "@/lib/orpc/query"
+
+const queryClient = useQueryClient()
+queryClient.invalidateQueries({ queryKey: orpc.myFeatureAPI.key() })
+```
+
+### Imperative calls (event handlers, non-React code)
 
 ```typescript
 import { client } from "@/lib/orpc/orpc"
@@ -209,7 +268,7 @@ const data = await client.myFeatureAPI.listMyFeatureAPI({ workspaceId })
 
 ## Error Handling
 
-Throw `ChatbotXException` or `ModelNotfoundException` — they are auto-mapped to oRPC errors in the global `onError` interceptor:
+Throw `ChatbotXException` or `ModelNotfoundException` — they are auto-mapped to oRPC errors by `mapKnownOrpcErrors` (`apps/builder/src/orpc.ts`), the middleware-level `onError` interceptor shared by all three auth stacks: it warn-logs and remaps known errors, leaving anything else untouched. Unknown errors are logged exactly once at error level by `logUnexpectedOrpcErrorCallback` (`apps/builder/src/lib/orpc/handlers.ts`), the route-level interceptor used by the `/api` and `/rpc` handlers:
 
 ```typescript
 import { ChatbotXException, notFoundException } from "@chatbotx.io/sdk"

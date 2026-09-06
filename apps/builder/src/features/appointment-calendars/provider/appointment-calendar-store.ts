@@ -1,5 +1,6 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 import type { ListAppointmentCalendarsForFlowResponse } from "../schema/query"
 
 export type AppointmentCalendarState = {
@@ -50,19 +51,18 @@ export const createAppointmentCalendarStore = (
       set({ loading: true, error: null })
 
       try {
-        const appointmentCalendars = await ky
-          .get<ListAppointmentCalendarsForFlowResponse>(
-            `/api/workspaces/${workspaceId}/appointment-calendars/for-flow`,
+        const appointmentCalendars =
+          await client.appointmentCalendarsAPI.listAppointmentCalendarsForFlowAPI(
+            { workspaceId },
           )
-          .json()
 
         set({ appointmentCalendars, loading: false })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch appointment calendars",
+          error: getClientErrorMessage(
+            error,
+            "Failed to fetch appointment calendars",
+          ),
         })
       } finally {
         set({ loading: false })

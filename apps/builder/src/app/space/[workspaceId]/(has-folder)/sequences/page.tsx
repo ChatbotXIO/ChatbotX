@@ -11,6 +11,7 @@ import type { SearchParams } from "nuqs/server"
 import { listSequences } from "@/features/sequences/queries"
 import { listSequencesSearchParamsCache } from "@/features/sequences/schema/action"
 import { SequencesTable } from "@/features/sequences/sequences-table"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export default async function SequencesPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -24,6 +25,8 @@ export default async function SequencesPage(props: {
   const searchParams = await props.searchParams
   const search = await listSequencesSearchParamsCache.parse(searchParams)
   const t = await getTranslations()
+
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const promises = Promise.all([
     listSequences({

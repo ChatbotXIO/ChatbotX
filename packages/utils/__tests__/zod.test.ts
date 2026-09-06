@@ -1,6 +1,21 @@
 import { describe, expect, test } from "vitest"
 import { containsVariablePlaceholder } from "../src/variables"
-import { zodUrlWithVariables } from "../src/zod"
+import { zodBigintAsString, zodUrlWithVariables } from "../src/zod"
+
+describe("zodBigintAsString", () => {
+  const schema = zodBigintAsString()
+
+  test.each(["123", "0"])("accepts %j", (value) => {
+    expect(schema.safeParse(value).success).toBe(true)
+  })
+
+  // Anchored so a value with a non-numeric run anywhere is rejected, not just
+  // one that lacks digits entirely — ids are numeric snowflakes (createId),
+  // never a mixed string.
+  test.each(["abc123", "12a", "", " 12"])("rejects %j", (value) => {
+    expect(schema.safeParse(value).success).toBe(false)
+  })
+})
 
 describe("containsVariablePlaceholder", () => {
   // Mirrors the runtime resolver grammar (`@chatbotx.io/variables`), which

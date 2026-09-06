@@ -9,6 +9,7 @@ import { Suspense } from "react"
 import { listWorkspaceMembers } from "@/features/workspace-members/queries"
 import { getWorkspaceMembersSearchParamsCache } from "@/features/workspace-members/schema/query"
 import { WorkspaceMembersTable } from "@/features/workspace-members/workspace-members-table"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export default async function AgentsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -21,6 +22,8 @@ export default async function AgentsPage(props: {
 
   const searchParams = await props.searchParams
   const search = getWorkspaceMembersSearchParamsCache.parse(searchParams)
+
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const promises = Promise.all([
     listWorkspaceMembers({

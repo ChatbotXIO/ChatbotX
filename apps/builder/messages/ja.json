@@ -811,7 +811,8 @@
       "label": "エージェント"
     },
     "aiAgent": {
-      "label": "AIエージェント"
+      "label": "AIエージェント",
+      "loadError": "AIエージェントの読み込みに失敗しました。もう一度お試しください。"
     },
     "aiQueuedMessages": {
       "label": "AI待機中メッセージ"
@@ -2956,6 +2957,17 @@
       "pendingBlockedToast": "このワークスペースは削除予定です。アクセスを復元するには、ワークスペース管理者にお問い合わせください。",
       "navDisabledTooltip": "ワークスペースの削除が予定されている間は利用できません",
       "badge": "削除予定"
+    },
+    "supportAccess": {
+      "bannerTitle": "プラットフォームサポートセッション",
+      "bannerDescription": "プラットフォームサポート担当者が {time} までこのワークスペースに一時的にアクセスできます。",
+      "cardTitle": "プラットフォームサポートアクセス",
+      "cardDescription": "プラットフォームサポートチームがこのワークスペースを7日間フルアクセスで開けるようにします。いつでもオフにできます。",
+      "enabledUntil": "{time} まで有効",
+      "permissionRequired": "プラットフォームサポートアクセスを変更するにはスーパー管理者である必要があります。",
+      "enabledToast": "プラットフォームサポートアクセスを有効にしました。",
+      "disabledToast": "プラットフォームサポートアクセスを無効にしました。",
+      "toggleError": "問題が発生しました。もう一度お試しください。"
     }
   },
   "workspaces": {
@@ -4532,6 +4544,17 @@
     },
     "queues": {
       "title": "キュー"
+    },
+    "workspaces": {
+      "title": "ワークスペース",
+      "description": "オーナーがプラットフォームサポートアクセスを有効にしたワークスペースはここから開けます。",
+      "owner": "オーナー",
+      "tenant": "テナント",
+      "supportStatus": "サポート状況",
+      "openAsSupport": "サポートとして開く",
+      "supportEnabledUntil": "{time} まで有効",
+      "supportOff": "オフ",
+      "searchPlaceholder": "名前、オーナーのメール、IDで検索"
     }
   },
   "platformCredentials": {

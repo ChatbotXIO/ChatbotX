@@ -10,15 +10,12 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
-import ky from "ky"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import type { SetCoexistInstagramResponse } from "@/features/integration-instagram/api/coexist"
-import type { SetCoexistMessengerResponse } from "@/features/integration-messenger/api/coexist"
-import type { SetCoexistWhatsappResponse } from "@/features/integration-whatsapp/api/coexist"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
+import { client } from "@/lib/orpc/orpc"
 
 type CoexistPopupProps = {
   channel: "whatsapp" | "messenger" | "instagram"
@@ -27,16 +24,33 @@ type CoexistPopupProps = {
   onDone: () => void
 }
 
-type CoexistResponse =
-  | SetCoexistWhatsappResponse
-  | SetCoexistMessengerResponse
-  | SetCoexistInstagramResponse
+type CoexistPayload = {
+  workspaceId: string
+  integrationId: string
+  enabled: boolean
+  aiReadsSyncedHistory: boolean
+}
 
 const CHANNEL_DESCRIPTION_KEYS = {
   whatsapp: "coexist.descriptionWhatsapp",
   messenger: "coexist.descriptionMessenger",
   instagram: "coexist.descriptionInstagram",
 } as const satisfies Record<CoexistPopupProps["channel"], string>
+
+// The three coexist procedures share the same input/output shape — this map
+// replaces a channel === "x" ? ... : channel === "y" ? ... chain (flagged as
+// a nested ternary) with a single dispatch. Wrapped in arrow functions
+// rather than passed as bare method references — oRPC client procedures can
+// rely on their receiver, and a bare reference would drop that binding
+// (see AGENTS.md invariant on `.bind`-losing callback references).
+const COEXIST_SETTERS = {
+  whatsapp: (payload: CoexistPayload) =>
+    client.integrationWhatsappAPIs.setCoexistWhatsappAPI(payload),
+  messenger: (payload: CoexistPayload) =>
+    client.integrationMessengerAPIs.setCoexistMessengerAPI(payload),
+  instagram: (payload: CoexistPayload) =>
+    client.integrationInstagramAPIs.setCoexistInstagramAPI(payload),
+} as const satisfies Record<CoexistPopupProps["channel"], unknown>
 
 const KNOWN_REASONS = [
   "already_triggered",
@@ -73,12 +87,14 @@ export function CoexistPopup({
   const handleChoice = async (enabled: boolean) => {
     setPending(enabled ? "enable" : "decline")
     try {
-      const endpoint = `/api/workspaces/${workspaceId}/integrations/${channel}/${integrationId}/coexist`
-      const result = await ky
-        .post<CoexistResponse>(endpoint, {
-          json: { workspaceId, integrationId, enabled, aiReadsSyncedHistory },
-        })
-        .json()
+      const payload = {
+        workspaceId,
+        integrationId,
+        enabled,
+        aiReadsSyncedHistory,
+      }
+      const setCoexist = COEXIST_SETTERS[channel]
+      const result = await setCoexist(payload)
 
       setPending(null)
 

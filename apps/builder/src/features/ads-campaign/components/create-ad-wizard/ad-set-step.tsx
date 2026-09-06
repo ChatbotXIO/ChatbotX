@@ -6,12 +6,13 @@ import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { RefreshCwIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
-import useSWR from "swr"
 import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 import { messagingAdCountryOptions } from "../../lib/country-options"
 import {
   AGE_OPTIONS,
@@ -33,44 +34,43 @@ export function AdSetStep({ workspaceId, channel, integrationId }: Props) {
   const adAccountId = useWatch({ control, name: "adAccountId" })
   const specialAdCategories = useWatch({ control, name: "specialAdCategories" })
 
-  const adAccounts = useSWR(
-    ["ads-campaign-ad-accounts", workspaceId, channel, integrationId],
-    () =>
+  const queryClient = useQueryClient()
+  const adAccountsInput = { workspaceId, channel, integrationId }
+  const adAccounts = useQuery(
+    orpc.adsCampaignAPI.listAdAccounts.queryOptions({ input: adAccountsInput }),
+  )
+  const accountDetails = useQuery(
+    orpc.adsCampaignAPI.getAdAccountDetails.queryOptions({
+      input: {
+        workspaceId,
+        channel,
+        integrationId,
+        adAccountId: adAccountId ?? "",
+      },
+      enabled: Boolean(adAccountId),
+    }),
+  )
+  const messengerPages = useQuery(
+    orpc.adsCampaignAPI.listMessengerPages.queryOptions({
+      input: { workspaceId, channel, integrationId },
+      enabled: channel === "whatsapp",
+    }),
+  )
+  const refreshAdAccountsMutation = useMutation({
+    mutationFn: () =>
       client.adsCampaignAPI.listAdAccounts({
-        workspaceId,
-        channel,
-        integrationId,
+        ...adAccountsInput,
+        refresh: true,
       }),
-  )
-  const accountDetails = useSWR(
-    adAccountId
-      ? [
-          "ads-campaign-ad-account-details",
-          workspaceId,
-          channel,
-          integrationId,
-          adAccountId,
-        ]
-      : null,
-    () =>
-      client.adsCampaignAPI.getAdAccountDetails({
-        workspaceId,
-        channel,
-        integrationId,
-        adAccountId,
-      }),
-  )
-  const messengerPages = useSWR(
-    channel === "whatsapp"
-      ? ["ads-campaign-messenger-pages", workspaceId, channel, integrationId]
-      : null,
-    () =>
-      client.adsCampaignAPI.listMessengerPages({
-        workspaceId,
-        channel,
-        integrationId,
-      }),
-  )
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        orpc.adsCampaignAPI.listAdAccounts.queryKey({
+          input: adAccountsInput,
+        }),
+        data,
+      )
+    },
+  })
 
   const isRestricted = useMemo(
     () =>
@@ -95,15 +95,10 @@ export function AdSetStep({ workspaceId, channel, integrationId }: Props) {
     label: String(age),
   }))
 
-  const refreshAdAccounts = () =>
-    adAccounts.mutate(
-      client.adsCampaignAPI.listAdAccounts({
-        workspaceId,
-        channel,
-        integrationId,
-        refresh: true,
-      }),
-    )
+  // SWR's `isValidating` was true on first load too; matching that here
+  // needs both the initial fetch and the manual refresh mutation.
+  const isRefreshingAdAccounts =
+    adAccounts.isFetching || refreshAdAccountsMutation.isPending
 
   return (
     <div className="space-y-4">
@@ -119,15 +114,15 @@ export function AdSetStep({ workspaceId, channel, integrationId }: Props) {
         </div>
         <Button
           aria-label={t("adsCampaign.box.refresh")}
-          disabled={adAccounts.isValidating}
-          onClick={refreshAdAccounts}
+          disabled={isRefreshingAdAccounts}
+          onClick={() => refreshAdAccountsMutation.mutate()}
           size="icon"
           type="button"
           variant="outline"
         >
           <RefreshCwIcon
             className={
-              adAccounts.isValidating ? "size-4 animate-spin" : "size-4"
+              isRefreshingAdAccounts ? "size-4 animate-spin" : "size-4"
             }
           />
         </Button>

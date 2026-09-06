@@ -1,9 +1,7 @@
 import {
   flowAnalyticsService,
-  flowContactStatsRequest,
   flowNodeStatsResponse,
   flowStatsRequest,
-  listFlowNodeContactsResponse,
 } from "@chatbotx.io/analytics"
 import { flowVersionService } from "@chatbotx.io/business"
 import { convertStartNodeToMessengerAdsJson } from "@chatbotx.io/integration-messenger/messenger-ads"
@@ -117,26 +115,6 @@ export const privateFlowsAPI = {
 
       return { status: "ok" as const, json: JSON.stringify(result.messages) }
     }),
-
-  privateGetFlowContactStatsAPI: authorizedAPI
-    .route({
-      method: "GET",
-      path: "/workspaces/{workspaceId}/flows/{flowId}/contacts",
-      summary: "Get flow event contacts",
-      tags: ["Flows"],
-    })
-    .input(flowContactStatsRequest)
-    .output(listFlowNodeContactsResponse)
-    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(
-      async ({ input }) =>
-        await flowAnalyticsService.getContactStats({
-          workspaceId: input.workspaceId,
-          flowId: input.flowId,
-          eventType: input.eventType,
-          nodeId: input.nodeId,
-        }),
-    ),
 
   privateResetFlowStatsAPI: authorizedAPI
     .route({

@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
+import { useQuery } from "@tanstack/react-query"
 import {
   AlertCircle,
   CheckCircle2,
@@ -20,11 +21,13 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import useSWR from "swr"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
+import { pollUntilSettled } from "@/lib/query/poll-until-settled"
 import { exportCouponsAction } from "../actions/export-coupons.action"
 import type { ExportCouponRequest } from "../schema/mutation"
+import type { GetCouponExportFileResponse } from "../schema/query"
 
 type ExportCouponDialogProps = {
   workspaceId: string
@@ -77,17 +80,15 @@ export function ExportCouponDialog({
     }
   }
 
-  const { data: exportFile } = useSWR(
-    fileId ? ["coupon-export", workspaceId, fileId] : null,
-    () =>
-      client.couponsAPI.getCouponExportFileAPI({
-        workspaceId,
-        fileId: fileId ?? "",
-      }),
-    {
-      refreshInterval: (data) =>
-        data?.status === "uploaded" || data?.status === "failed" ? 0 : 5000,
-    },
+  const { data: exportFile } = useQuery(
+    orpc.couponsAPI.getCouponExportFileAPI.queryOptions({
+      input: { workspaceId, fileId: fileId ?? "" },
+      enabled: Boolean(fileId),
+      refetchInterval: pollUntilSettled<GetCouponExportFileResponse>([
+        "uploaded",
+        "failed",
+      ]),
+    }),
   )
 
   useEffect(() => {

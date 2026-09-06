@@ -54,6 +54,7 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import type { AdsEligibleChannelType } from "@chatbotx.io/utils/channel"
+import { useQuery } from "@tanstack/react-query"
 import {
   ChevronDownIcon,
   DownloadIcon,
@@ -66,8 +67,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import useSWR from "swr"
-import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 import { retargetAdAction } from "../actions/retarget"
 import { useAdsRangeUrl } from "../hooks/use-ads-range-url"
 import { parseLocalDateKey } from "../lib/ads-date-key"
@@ -354,22 +354,17 @@ function RetargetAudienceDialog({
   const [audienceName, setAudienceName] = useState("")
   const [customAudienceId, setCustomAudienceId] = useState("")
 
-  const adAccounts = useSWR(
-    open ? (["facebook-ads-ad-accounts", workspaceId] as const) : null,
-    ([, ws]) =>
-      client.integrationFacebookAdsAPI.listAdAccounts({
-        workspaceId: ws,
-      }),
+  const adAccounts = useQuery(
+    orpc.integrationFacebookAdsAPI.listAdAccounts.queryOptions({
+      input: { workspaceId },
+      enabled: open,
+    }),
   )
-  const customAudiences = useSWR(
-    open && adAccountId
-      ? (["facebook-ads-custom-audiences", workspaceId, adAccountId] as const)
-      : null,
-    ([, ws, accountId]) =>
-      client.integrationFacebookAdsAPI.listCustomAudiences({
-        workspaceId: ws,
-        adAccountId: accountId,
-      }),
+  const customAudiences = useQuery(
+    orpc.integrationFacebookAdsAPI.listCustomAudiences.queryOptions({
+      input: { workspaceId, adAccountId: adAccountId || "" },
+      enabled: open && Boolean(adAccountId),
+    }),
   )
 
   const suggestedName = useMemo(() => {
@@ -455,7 +450,7 @@ function RetargetAudienceDialog({
             >
               <SelectTrigger
                 className="w-full"
-                disabled={adAccounts.isLoading || Boolean(adAccounts.error)}
+                disabled={adAccounts.isLoading || adAccounts.isError}
                 id="ads-retarget-ad-account"
               >
                 <SelectValue placeholder={t("facebookAds.fields.adAccount")} />
@@ -468,7 +463,7 @@ function RetargetAudienceDialog({
                 ))}
               </SelectContent>
             </Select>
-            {adAccounts.error && (
+            {adAccounts.isError && (
               <p className="text-destructive text-sm">
                 {t("facebookAds.adAccounts.error")}
               </p>
@@ -523,7 +518,7 @@ function RetargetAudienceDialog({
                   disabled={
                     !adAccountId ||
                     customAudiences.isLoading ||
-                    Boolean(customAudiences.error)
+                    customAudiences.isError
                   }
                   id="ads-retarget-custom-audience"
                 >
@@ -539,7 +534,7 @@ function RetargetAudienceDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {customAudiences.error && (
+              {customAudiences.isError && (
                 <p className="text-destructive text-sm">
                   {t("facebookAds.customAudiences.error")}
                 </p>

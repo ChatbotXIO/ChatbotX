@@ -125,4 +125,26 @@ export const listPhoneNumbersRequest = z.object({
   wabaId: z.string(),
   accessToken: z.string(),
 })
-export type ListPhoneNumbersRequest = z.infer<typeof listPhoneNumbersRequest>
+
+const whatsappPhoneNumberResource = z.object({
+  verified_name: z.string(),
+  code_verification_status: z.string(),
+  name_status: z.string().optional(),
+  display_phone_number: z.string(),
+  quality_rating: z.string(),
+  platform_type: z.string(),
+  throughput: z.record(z.string(), z.unknown()),
+  webhook_configuration: z.record(z.string(), z.unknown()),
+  id: z.string(),
+})
+
+export const listPhoneNumbersResponse = z.object({
+  data: z.array(whatsappPhoneNumberResource),
+  paging: z.object({
+    cursors: z.object({
+      before: z.string(),
+      after: z.string(),
+    }),
+    next: z.string().optional(),
+  }),
+})

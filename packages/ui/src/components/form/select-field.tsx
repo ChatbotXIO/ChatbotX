@@ -1,7 +1,5 @@
-import { logger } from "@chatbotx.io/ui/lib/logger"
-import ky from "ky"
 import type { LucideIcon } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import type { FieldPath, FieldValues } from "react-hook-form"
 import {
   Select,
@@ -35,7 +33,6 @@ export type SelectFieldProps<T extends FieldValues> = React.ComponentProps<
   descriptionType?: "inline" | "tooltip"
   descriptionHref?: string
   options?: SelectOption[]
-  fetchOptionsUrl?: string
   formItemClassName?: string
   className?: string
   allowClear?: boolean
@@ -65,7 +62,6 @@ export const SelectField = <T extends FieldValues>(
     descriptionType = "inline",
     descriptionHref,
     options = [],
-    fetchOptionsUrl,
     formItemClassName,
     allowClear,
     clearLabel,
@@ -74,16 +70,9 @@ export const SelectField = <T extends FieldValues>(
     ...rest
   } = props
 
-  const [fetchedOptions, setFetchedOptions] = useState<SelectOption[]>([])
-
-  const normalizedOptions = useMemo<SelectOption[]>(
-    () => (options.length > 0 ? options : fetchedOptions),
-    [options, fetchedOptions],
-  )
-
   const optionItems = useMemo(
     () =>
-      normalizedOptions.map((option) => (
+      options.map((option) => (
         <SelectItem
           disabled={option.disabled ?? disableValues?.includes(option.value)}
           key={option.value}
@@ -97,11 +86,11 @@ export const SelectField = <T extends FieldValues>(
           {option.label}
         </SelectItem>
       )),
-    [normalizedOptions, disableValues],
+    [options, disableValues],
   )
 
   const items = useMemo(() => {
-    const mappedItems = normalizedOptions.map((option) => ({
+    const mappedItems = options.map((option) => ({
       label: option.label,
       value: option.value,
     }))
@@ -114,40 +103,7 @@ export const SelectField = <T extends FieldValues>(
     }
 
     return mappedItems
-  }, [normalizedOptions, allowClear, clearLabel])
-
-  useEffect(() => {
-    if (!fetchOptionsUrl || options.length > 0) {
-      return
-    }
-
-    let isCancelled = false
-
-    const fetchOptions = async () => {
-      try {
-        const body = await ky
-          .get<{ data: { id: string; name: string }[] }>(fetchOptionsUrl)
-          .json()
-
-        if (!isCancelled) {
-          setFetchedOptions(
-            body.data.map((v) => ({ value: v.id, label: v.name })),
-          )
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          logger.error(error, "Error fetching options:")
-          setFetchedOptions([])
-        }
-      }
-    }
-
-    fetchOptions()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [fetchOptionsUrl, options.length])
+  }, [options, allowClear, clearLabel])
 
   return (
     <FormFieldWrapper<T>

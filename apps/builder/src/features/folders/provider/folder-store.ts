@@ -1,8 +1,8 @@
 import type { FolderType } from "@chatbotx.io/database/partials"
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { maxPerPageString } from "@/lib/shared-request"
-import type { FolderResource, ListFoldersResponse } from "../schema/resource"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
+import type { FolderResource } from "../schema/resource"
 
 export type FolderState = {
   // Initialization
@@ -45,10 +45,7 @@ export const createFolderStore = (props: Partial<FolderState>) =>
         await get().getAllFolders()
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch folders",
+          error: getClientErrorMessage(error, "Failed to fetch folders"),
         })
       } finally {
         set({ initialized: true })
@@ -64,23 +61,15 @@ export const createFolderStore = (props: Partial<FolderState>) =>
 
       set({ loading: true, error: null })
       try {
-        const searchParams = new URLSearchParams({
-          perPage: maxPerPageString,
+        const { data } = await client.foldersAPI.listFoldersAuthenticatedAPI({
+          workspaceId,
           folderType: folderType ?? "",
         })
-        const { data } = await ky
-          .get<ListFoldersResponse>(
-            `/api/workspaces/${get().workspaceId}/folders?${searchParams.toString()}`,
-          )
-          .json()
 
         set({ folders: data })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch folders",
+          error: getClientErrorMessage(error, "Failed to fetch folders"),
         })
       } finally {
         set({ loading: false })

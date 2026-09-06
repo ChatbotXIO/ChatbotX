@@ -1,13 +1,7 @@
-import { zodBigintAsString } from "@chatbotx.io/utils"
-import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { createTag } from "../actions/create-tag-action"
-import { deleteTags } from "../actions/delete-tag-action"
-import { updateTag } from "../actions/update-tag-action"
 import { listTags } from "../queries"
-import { createTagRequest, updateTagSchema } from "../schema/action"
 import { listTagsRequest, listTagsResponse } from "../schema/query"
 
 const privateListWorkspaceTagsAPI = authorizedAPI
@@ -22,71 +16,6 @@ const privateListWorkspaceTagsAPI = authorizedAPI
   .output(listTagsResponse)
   .handler(async ({ input }) => await listTags(input))
 
-const privateCreateWorkspaceTagAPI = authorizedAPI
-  .route({
-    method: "POST",
-    path: "/workspaces/{workspaceId}/tags",
-    summary: "Create a tag",
-    tags: ["Tags"],
-  })
-  .input(createTagRequest.and(withWorkspaceIdSchema))
-  .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-  .output(z.object({ id: zodBigintAsString() }))
-  .handler(async ({ input }) => {
-    const { data } = await createTag(input)
-    return { id: data.id }
-  })
-
-const privateUpdateTagAPI = authorizedAPI
-  .route({
-    method: "PUT",
-    path: "/workspaces/{workspaceId}/tags/{id}",
-    summary: "Update tag",
-    tags: ["Tags"],
-  })
-  .input(
-    updateTagSchema.and(withWorkspaceIdSchema).and(
-      z.object({
-        id: zodBigintAsString(),
-      }),
-    ),
-  )
-  .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-  .handler(async ({ input }) => {
-    const { id, workspaceId, ...rest } = input
-    return await updateTag({
-      workspaceId,
-      id,
-      parsedInput: rest,
-    })
-  })
-
-const privateDeleteTagsAPI = authorizedAPI
-  .route({
-    method: "DELETE",
-    path: "/workspaces/{workspaceId}/tags/{id}",
-    summary: "Delete tag",
-    tags: ["Tags"],
-  })
-  .input(
-    withWorkspaceIdSchema.and(
-      z.object({
-        id: zodBigintAsString(),
-      }),
-    ),
-  )
-  .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-  .handler(async ({ input }) => {
-    const { workspaceId, id } = input
-    return await deleteTags({
-      workspaceId,
-      ids: [id],
-    })
-  })
-
 export const privateTagsAPI = {
   privateListWorkspaceTagsAPI,
-  privateCreateWorkspaceTagAPI,
-  privateUpdateTagAPI,
-  privateDeleteTagsAPI,
 }

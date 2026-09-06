@@ -16,7 +16,7 @@ export type RequestApiToken = Pick<
   "id" | "workspaceId" | "permission" | "scopes" | "isDefault"
 >
 
-export const base = os.$context<{
+export type BaseContext = {
   headers: Headers
   url?: string
   session?: {
@@ -26,4 +26,6 @@ export const base = os.$context<{
   user?: SessionUser
   workspace?: WorkspaceModel
   apiToken?: RequestApiToken
-}>()
+}
+
+export const base = os.$context<BaseContext>()

@@ -96,11 +96,13 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 ```
 
 Per-feature workspace-token procedures live in
-`features/<feature>/api/workspace-token.ts` (see
-`apps/builder/src/features/broadcasts/api/workspace-token.ts` for the
-pattern). Register the feature router as a lazy branch in
-`apps/builder/src/routers/index.ts` and eagerly in
-`apps/builder/src/routers/public.ts` (feeds `/api/public-spec.json`).
+`features/<feature>/api/public.ts` (see
+`apps/builder/src/features/broadcasts/api/public.ts` for the
+pattern), exporting a named `<resource>PublicRouter` with CRUD-style keys
+(`list`, `get`, `create`, `update`, `delete`). Register it eagerly, nested
+under the resource name, in `apps/builder/src/routers/public.ts` (feeds
+`/api/spec.json`); a feature with no private/session procedures is not
+mounted in `apps/builder/src/routers/index.ts` at all.
 
 Workspace-token APIs authenticate the workspace, not a member — member
 permission scoping (e.g. `onlyAssignedContacts`, `emailAndPhone`) does NOT

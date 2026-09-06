@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   AlertTriangleIcon,
   Loader2Icon,
@@ -31,9 +32,9 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type ReactNode, useMemo, useState } from "react"
 import { toast } from "sonner"
-import useSWR from "swr"
 import { DisconnectIntegrationDialog } from "@/features/common/components/disconnect-integration-dialog"
 import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 import { connectMessagingAdsAction } from "../actions/connect.action"
 import { disconnectMessagingAdsAction } from "../actions/disconnect.action"
 import type { MessagingAdInsightResource } from "../schema/resource"
@@ -150,23 +151,20 @@ export function MessagingAdsBox({
     DEFAULT_INSIGHTS_DATE_PRESET,
   )
   const labelKeys = CHANNEL_LABEL_KEY[channel]
+  const queryClient = useQueryClient()
 
-  const list = useSWR(
-    initialConnectionState.connected
-      ? ["messaging-ads-list", workspaceId, channel, integrationId]
-      : null,
-    () =>
-      client.adsCampaignAPI.listMessagingAds({
-        workspaceId,
-        channel,
-        integrationId,
-      }),
+  const listInput = { workspaceId, channel, integrationId }
+  const list = useQuery(
+    orpc.adsCampaignAPI.listMessagingAds.queryOptions({
+      input: listInput,
+      enabled: initialConnectionState.connected,
+    }),
   )
 
-  // Insights load via a SEPARATE SWR (and thus a separate API call) from the
-  // list above, so the list itself renders immediately and performance data
-  // fills in once it arrives — never joined into `listMessagingAds`. Only
-  // enabled once the list has resolved AND has at least one row with a
+  // Insights load via a SEPARATE query (and thus a separate API call) from
+  // the list above, so the list itself renders immediately and performance
+  // data fills in once it arrives — never joined into `listMessagingAds`.
+  // Only enabled once the list has resolved AND has at least one row with a
   // `metaAdId` (an ad actually created on Meta) to fetch insights for.
   const insightGroups = useMemo(
     () => groupAdIdsByAdAccount(list.data?.data ?? []),
@@ -175,42 +173,40 @@ export function MessagingAdsBox({
   const insightGroupsKey = insightGroups
     .map((group) => `${group.adAccountId}:${[...group.adIds].sort().join(",")}`)
     .join("|")
-  const fetchInsights = async (): Promise<
-    Map<string, MessagingAdInsightResource>
-  > => {
-    const results = await Promise.all(
-      insightGroups.map((group) =>
-        client.adsCampaignAPI.getMessagingAdsInsights({
-          workspaceId,
-          channel,
-          integrationId,
-          adAccountId: group.adAccountId,
-          adIds: group.adIds,
-          datePreset,
-        }),
-      ),
-    )
-    const byAdId = new Map<string, MessagingAdInsightResource>()
-    for (const result of results) {
-      for (const item of result.data) {
-        byAdId.set(item.adId, item)
+  const insights = useQuery({
+    queryKey: [
+      ...orpc.adsCampaignAPI.getMessagingAdsInsights.key(),
+      { workspaceId, channel, integrationId, datePreset, insightGroupsKey },
+    ],
+    queryFn: async (): Promise<Map<string, MessagingAdInsightResource>> => {
+      const results = await Promise.all(
+        insightGroups.map((group) =>
+          client.adsCampaignAPI.getMessagingAdsInsights({
+            workspaceId,
+            channel,
+            integrationId,
+            adAccountId: group.adAccountId,
+            adIds: group.adIds,
+            datePreset,
+          }),
+        ),
+      )
+      const byAdId = new Map<string, MessagingAdInsightResource>()
+      for (const result of results) {
+        for (const item of result.data) {
+          byAdId.set(item.adId, item)
+        }
       }
-    }
-    return byAdId
-  }
-  const insights = useSWR(
-    insightGroups.length > 0
-      ? [
-          "messaging-ads-insights",
-          workspaceId,
-          channel,
-          integrationId,
-          datePreset,
-          insightGroupsKey,
-        ]
-      : null,
-    () => fetchInsights(),
-  )
+      return byAdId
+    },
+    enabled: insightGroups.length > 0,
+  })
+  const invalidateList = () =>
+    queryClient.invalidateQueries({
+      queryKey: orpc.adsCampaignAPI.listMessagingAds.key({
+        input: listInput,
+      }),
+    })
 
   const { executeAsync: onConnect, isPending: isConnecting } = useAction(
     connectMessagingAdsAction.bind(null, workspaceId, integrationId),
@@ -238,13 +234,15 @@ export function MessagingAdsBox({
   )
 
   // Show a spinner ONLY during a genuine load — the first list/insights fetch,
-  // or a date-preset change (a fresh insights key with no cache). Never on SWR's
-  // background revalidation (`isValidating` on focus/reconnect), which would
-  // read as "always loading". Data otherwise refreshes itself: SWR revalidates
-  // on focus and after every create/publish/pause/delete (`list.mutate()`).
+  // or a date-preset change (a fresh insights key with no cache). Never on
+  // TanStack's background refetch (`isFetching` on focus/reconnect), which
+  // would read as "always loading". Data otherwise refreshes itself: the
+  // default `refetchOnWindowFocus` covers focus, and every
+  // create/publish/pause/delete invalidates the list query explicitly
+  // (`invalidateList`).
   const isLoading = list.isLoading || insights.isLoading
   // The insights date range only means something once at least one ad
-  // exists on Meta (same gate as the insights SWR above).
+  // exists on Meta (same gate as the insights query above).
   const showDatePreset =
     initialConnectionState.connected && insightGroups.length > 0
 
@@ -372,7 +370,7 @@ export function MessagingAdsBox({
           <CampaignListTable
             insightsByAdId={insights.data}
             insightsLoading={insights.isLoading}
-            onChanged={() => list.mutate()}
+            onChanged={invalidateList}
             rows={list.data?.data ?? []}
             workspaceId={workspaceId}
           />
@@ -383,7 +381,7 @@ export function MessagingAdsBox({
         <CreateAdWizardDialog
           channel={channel}
           integrationId={integrationId}
-          onCreated={() => list.mutate()}
+          onCreated={invalidateList}
           onOpenChange={setWizardOpen}
           open={wizardOpen}
           workspaceId={workspaceId}

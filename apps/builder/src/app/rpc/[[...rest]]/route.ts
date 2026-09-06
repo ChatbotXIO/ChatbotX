@@ -1,20 +1,12 @@
 import { onError } from "@orpc/server"
 import { RPCHandler } from "@orpc/server/fetch"
 import { BatchHandlerPlugin } from "@orpc/server/plugins"
-import { logger } from "@/lib/log"
+import { logUnexpectedOrpcErrorCallback } from "@/lib/orpc/handlers"
 import { router } from "@/routers"
 import "../../../polyfill"
 
 const rpcHandler = new RPCHandler(router, {
-  interceptors: [
-    // Log the real error before oRPC masks undefined errors as a generic 500.
-    onError((error) => {
-      logger.error(
-        { err: error, cause: JSON.stringify((error as Error)?.cause) },
-        "Error in RPC handler",
-      )
-    }),
-  ],
+  interceptors: [onError(logUnexpectedOrpcErrorCallback("RPC handler"))],
   plugins: [new BatchHandlerPlugin()],
 })
 

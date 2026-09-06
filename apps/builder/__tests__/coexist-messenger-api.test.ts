@@ -19,6 +19,16 @@ vi.mock("@chatbotx.io/business", () => ({
       userId: "user-1",
     })),
   },
+  resolveWorkspaceAccess: vi.fn(({ realMember }) => {
+    if (!realMember) {
+      return
+    }
+    return {
+      workspace: realMember.workspace,
+      member: realMember,
+      isSupportSession: false,
+    }
+  }),
 }))
 
 vi.mock("@/lib/auth/auth", () => ({

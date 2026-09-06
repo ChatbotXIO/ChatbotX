@@ -4,11 +4,6 @@ import {
   type SendGridAddContactSchema,
   sendGridAddContactSchema,
 } from "@chatbotx.io/flow-config"
-import type {
-  SendGridCustomField,
-  SendGridList,
-  SendGridListPage,
-} from "@chatbotx.io/integration-sendgrid"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -22,7 +17,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import ky from "ky"
+import { useQuery } from "@tanstack/react-query"
 import {
   ArrowRightIcon,
   CircleHelpIcon,
@@ -33,11 +28,15 @@ import {
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray, useForm, useFormContext } from "react-hook-form"
-import useSWRImmutable from "swr/immutable"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
+import { fetchAllPages } from "@/lib/query/fetch-all-pages"
 import { BaseStepEditor } from "../base/editor"
+
+const SENDGRID_ALL_LISTS_MAX_PAGES = 10
+const SENDGRID_ALL_LISTS_PAGE_SIZE = 1000
 
 const FieldLabel = (props: {
   label: string
@@ -76,37 +75,41 @@ const SendGridDialog = ({ parentName }: { parentName: string }) => {
   const {
     data: allListItems,
     isLoading: listsLoading,
-    error: listsError,
-  } = useSWRImmutable<SendGridList[]>(
-    workspaceId ? `sendgrid-lists-all-${workspaceId}` : null,
-    async () => {
-      const all: SendGridList[] = []
+    isError: listsError,
+  } = useQuery({
+    queryKey: [
+      ...orpc.integrationSendGridAPI.listLists.key(),
+      "all-pages",
+      { workspaceId },
+    ],
+    queryFn: () => {
       const seen = new Set<string>()
-      let pageToken: string | undefined
-      for (let page = 0; page < 10; page++) {
-        const params = new URLSearchParams({ pageSize: "1000" })
-        if (pageToken) {
-          params.set("pageToken", pageToken)
-        }
-        const data = await ky
-          .get(`/api/workspaces/${workspaceId}/sendgrid/lists?${params}`)
-          .json<SendGridListPage>()
-        for (const item of data.data) {
-          if (!seen.has(item.id)) {
+      return fetchAllPages({
+        initialPageParam: undefined as string | undefined,
+        maxPages: SENDGRID_ALL_LISTS_MAX_PAGES,
+        fetchPage: async (pageToken) => {
+          const data = await client.integrationSendGridAPI.listLists({
+            workspaceId,
+            pageSize: SENDGRID_ALL_LISTS_PAGE_SIZE,
+            pageToken,
+          })
+          const items = data.data.filter((item) => {
+            if (seen.has(item.id)) {
+              return false
+            }
             seen.add(item.id)
-            all.push(item)
-          }
-        }
-        if (!data.nextPageToken) {
-          break
-        }
-        pageToken = data.nextPageToken
-      }
-      return all
+            return true
+          })
+          return { items, nextPageParam: data.nextPageToken }
+        },
+      })
     },
-  )
-  const customFields = callAPI<{ data: SendGridCustomField[] }>(
-    `/api/workspaces/${workspaceId}/sendgrid/custom-fields`,
+    enabled: Boolean(workspaceId),
+  })
+  const customFields = useQuery(
+    orpc.integrationSendGridAPI.listCustomFields.queryOptions({
+      input: { workspaceId },
+    }),
   )
   const listOptions = useMemo(
     () =>
@@ -182,7 +185,7 @@ const SendGridDialog = ({ parentName }: { parentName: string }) => {
                   {t("sendGrid.customFields.loading")}
                 </p>
               )}
-              {customFields.error && (
+              {customFields.isError && (
                 <p className="text-destructive text-sm">
                   {t("sendGrid.customFields.error")}
                 </p>

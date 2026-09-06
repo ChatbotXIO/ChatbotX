@@ -811,7 +811,8 @@
       "label": "Agente"
     },
     "aiAgent": {
-      "label": "Agente de IA"
+      "label": "Agente de IA",
+      "loadError": "Falha ao carregar agentes de IA. Tente novamente."
     },
     "aiQueuedMessages": {
       "label": "Mensagens de IA em fila"
@@ -2977,6 +2978,17 @@
       "pendingBlockedToast": "A eliminação deste espaço de trabalho está agendada. Contacte um administrador do espaço de trabalho para restaurar o acesso.",
       "navDisabledTooltip": "Indisponível enquanto a eliminação do espaço de trabalho estiver agendada",
       "badge": "Eliminação agendada"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sessão de suporte da plataforma",
+      "bannerDescription": "Um agente de suporte da plataforma tem acesso temporário a este espaço de trabalho até às {time}.",
+      "cardTitle": "Acesso de suporte da plataforma",
+      "cardDescription": "Permita que a equipa de suporte da plataforma abra este espaço de trabalho com acesso total durante 7 dias. Pode desativá-lo a qualquer momento.",
+      "enabledUntil": "Ativado até {time}",
+      "permissionRequired": "Tem de ser super administrador para alterar o acesso de suporte da plataforma.",
+      "enabledToast": "Acesso de suporte da plataforma ativado.",
+      "disabledToast": "Acesso de suporte da plataforma desativado.",
+      "toggleError": "Algo correu mal. Por favor, tente novamente."
     }
   },
   "workspaces": {
@@ -4532,6 +4544,17 @@
     },
     "queues": {
       "title": "Filas"
+    },
+    "workspaces": {
+      "title": "Espaços de trabalho",
+      "description": "Os espaços de trabalho cujo proprietário ativou o acesso de suporte da plataforma podem ser abertos aqui.",
+      "owner": "Proprietário",
+      "tenant": "Inquilino",
+      "supportStatus": "Estado do suporte",
+      "openAsSupport": "Abrir como suporte",
+      "supportEnabledUntil": "Ativado até {time}",
+      "supportOff": "Desativado",
+      "searchPlaceholder": "Pesquisar por nome, email do proprietário ou ID"
     }
   },
   "platformCredentials": {

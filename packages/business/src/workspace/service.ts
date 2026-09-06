@@ -82,6 +82,20 @@ class WorkspaceService extends BaseService {
     )
   }
 
+  // Auth gate — membership must take effect immediately on removal, so this
+  // intentionally skips withCache (unlike find() above), matching
+  // WorkspaceMemberService.findMembership. Used to fetch the workspace for a
+  // platform-support caller with no real WorkspaceMember row, so a revoke
+  // (disable()) ends the session on the very next request even if cache
+  // invalidation failed.
+  async findForAuth(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel | undefined> {
+    const { id, tx = db } = props
+    return await tx.query.workspaceModel.findFirst({ where: { id } })
+  }
+
   isActiveNow(workspace: {
     isActive: boolean
     startTime: string | null

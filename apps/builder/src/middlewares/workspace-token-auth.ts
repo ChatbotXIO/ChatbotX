@@ -9,10 +9,8 @@ import { logger } from "@/lib/log"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
-  checkWorkspaceOwnerAccess,
+  assertWorkspaceOwnerAccessForMethod,
   isReadOnlyTokenAllowedMethod,
-  isWorkspaceMutationMethod,
-  workspaceAccessDenialOrpcError,
 } from "@/lib/workspace/authorize-workspace-access"
 import { base, type RequestApiToken } from "./context"
 
@@ -101,12 +99,11 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     }
 
     const method = procedure["~orpc"].route.method
-    const isMutation = isWorkspaceMutationMethod(method)
 
-    // Read-only tokens may only GET/HEAD — unlike isWorkspaceMutationMethod
-    // above, DELETE is not exempt here: a read_only token must not be able to
-    // delete data. Checked before the owner-quota gate below — no DB call
-    // needed to enforce this.
+    // Read-only tokens may only GET/HEAD — unlike the owner-quota gate below,
+    // DELETE is not exempt here: a read_only token must not be able to
+    // delete data. Checked before the owner-quota gate — no DB call needed
+    // to enforce this.
     if (
       apiToken.permission === "read_only" &&
       !isReadOnlyTokenAllowedMethod(method)
@@ -117,16 +114,11 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     }
 
     // Owner-quota/trial gate — mirrors workspaceActionClient in safe-action.ts.
-    // Mutations only: an expired workspace must stay readable via the public
-    // API just like it stays readable in the builder (invariant #14).
-    if (isMutation) {
-      const denialReason = await checkWorkspaceOwnerAccess({
-        ownerId: workspace.ownerId,
-      })
-      if (denialReason) {
-        throw workspaceAccessDenialOrpcError(denialReason)
-      }
-    }
+    // Reads and deletes stay open (invariant #14).
+    await assertWorkspaceOwnerAccessForMethod({
+      method,
+      ownerId: workspace.ownerId,
+    })
 
     const requestApiToken: RequestApiToken = {
       id: apiToken.id,

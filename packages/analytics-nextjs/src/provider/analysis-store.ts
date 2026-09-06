@@ -8,20 +8,6 @@ import type {
   ConversationAssignedStats,
   ConversationFollowUpStats,
   ConversationHandoffStats,
-  GetBotMessagesAIProvidersResponseSchema,
-  GetContactCountsResponseSchema,
-  GetContactsByDimensionStatsResponseSchema,
-  GetContactsCountResponseSchema,
-  GetConversationArchivedResponse,
-  GetConversationAssignedByAdminResponse,
-  GetConversationAssignedResponse,
-  GetConversationFollowUpsResponse,
-  GetConversationHandoffsResponse,
-  GetHumanAgentStatsResponseSchema,
-  GetMessagesByAdminStatsResponseSchema,
-  GetMessagesBySenderStatsResponseSchema,
-  GetMessagesStatsResponseSchema,
-  GetUniqueConversationsByAdminResponse,
   HumanAgentStats,
   ListFlowNodeContactsResponse,
   MessagesByAdminStats,
@@ -29,20 +15,31 @@ import type {
   RefLinkTimeseriesRow,
   UniqueConversationsByAdminStats,
 } from "@chatbotx.io/analytics"
+import { ORPCError } from "@orpc/client"
 import { endOfToday, startOfToday, subDays } from "date-fns"
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
+import type { AnalyticsApi } from "./analytics-api-context"
 
 const REFLINK_CONTACTS_PER_PAGE = 10
 
 export type AnalysisDashboardType = "dashboard" | "reflinks" | "magic-links"
 
 export type AnalysisState = {
+  api: AnalyticsApi
   type: AnalysisDashboardType
   loading: boolean
   errors: Map<string, string>
 
-  defaultSearchParams: { [x: string]: string }
+  // `linkId`/`timezone` are only guaranteed by the reflink/magic-link
+  // dashboards (see `ReflinkAnalytics`/`MagicLinkAnalytics`); named here as
+  // optional so `getRefLinkStats` et al. can assert their presence at the
+  // point of use instead of losing type safety through the index signature.
+  defaultSearchParams: {
+    workspaceId: string
+    linkId?: string
+    timezone?: string
+    [x: string]: string | undefined
+  }
   from: Date
   to: Date
 
@@ -125,14 +122,18 @@ export type AnalysisActions = {
 
 export type AnalysisStore = AnalysisState & AnalysisActions
 
-export const createAnalysisStore = (props: Partial<AnalysisState>) =>
+export const createAnalysisStore = (
+  props: Partial<AnalysisState> & {
+    api: AnalyticsApi
+    defaultSearchParams: AnalysisState["defaultSearchParams"]
+  },
+) =>
   createStore<AnalysisStore>((set, get) => ({
     type: "dashboard",
     loading: false,
     errors: new Map<string, string>(),
 
     // Default option is last 7 days
-    defaultSearchParams: {},
     from: subDays(startOfToday(), 7),
     to: endOfToday(),
     ...props,
@@ -181,7 +182,7 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
 
     handleError: (action: string, error: unknown) => {
       const { errors } = get()
-      if (error instanceof HTTPError) {
+      if (error instanceof ORPCError) {
         set({ errors: errors.set(action, error.message) })
       } else {
         set({
@@ -275,18 +276,15 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getContactCounts: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: contactCounts } = await ky
-          .get("/api/analytics/contact-counts-per-day", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
+        const { data: contactCounts } =
+          await api.contactCountsPerDayAnalyticsAPI({
+            ...defaultSearchParams,
+            from: from.toISOString(),
+            to: to.toISOString(),
           })
-          .json<GetContactCountsResponseSchema>()
 
         set({ contactCounts })
       } catch (error: unknown) {
@@ -295,18 +293,15 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getNewContactCounts: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: newContactCounts } = await ky
-          .get("/api/analytics/new-contact-counts-per-day", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
+        const { data: newContactCounts } =
+          await api.newContactCountsPerDayAnalyticsAPI({
+            ...defaultSearchParams,
+            from: from.toISOString(),
+            to: to.toISOString(),
           })
-          .json<GetContactCountsResponseSchema>()
 
         set({ newContactCounts })
       } catch (error: unknown) {
@@ -315,18 +310,15 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getBlockedContactCounts: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: blockedContactCounts } = await ky
-          .get("/api/analytics/blocked-contacts-per-day", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
+        const { data: blockedContactCounts } =
+          await api.blockedContactsPerDayAnalyticsAPI({
+            ...defaultSearchParams,
+            from: from.toISOString(),
+            to: to.toISOString(),
           })
-          .json<GetContactCountsResponseSchema>()
 
         set({ blockedContactCounts })
       } catch (error: unknown) {
@@ -335,18 +327,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getInboxBlockedContacts: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/blocked-contacts-count", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetContactsCountResponseSchema>()
+        const result = await api.blockedContactsCountAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ inboxBlockedContacts: result.data.count })
       } catch (error: unknown) {
@@ -356,18 +344,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getInboxTotalContacts: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/contacts-count", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetContactsCountResponseSchema>()
+        const result = await api.contactsCountAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ inboxTotalContacts: result.data.count })
       } catch (error: unknown) {
@@ -377,18 +361,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getInboxNewContacts: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/new-contacts-count", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetContactsCountResponseSchema>()
+        const result = await api.newContactsCountAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ inboxNewContacts: result.data.count })
       } catch (error: unknown) {
@@ -398,18 +378,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getInboxActiveContacts: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/active-contacts-count", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetContactsCountResponseSchema>()
+        const result = await api.activeContactsCountAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ inboxActiveContacts: result.data.count })
       } catch (error: unknown) {
@@ -419,19 +395,16 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getBotMessagesByResult: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: botMessagesByResult } = await ky
-          .get("/api/analytics/bot-messages-by-result", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-              granularity: "day",
-            },
+        const { data: botMessagesByResult } =
+          await api.botMessagesByResultAnalyticsAPI({
+            ...defaultSearchParams,
+            from: from.toISOString(),
+            to: to.toISOString(),
+            granularity: "day",
           })
-          .json<GetMessagesStatsResponseSchema>()
 
         set({ botMessagesByResult })
       } catch (error: unknown) {
@@ -440,18 +413,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getBotMessagesAIProviders: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/bot-messages-ai-providers", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetBotMessagesAIProvidersResponseSchema>()
+        const result = await api.botMessagesAIProvidersAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ botMessagesAIProviders: result.data })
       } catch (error: unknown) {
@@ -460,17 +429,13 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getMessagesBySender: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
       try {
-        const result = await ky
-          .get("/api/analytics/messages-by-sender", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetMessagesBySenderStatsResponseSchema>()
+        const result = await api.messagesBySenderAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ messagesBySender: result.data })
       } catch (error: unknown) {
@@ -479,19 +444,15 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getContactsByChannel: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/contacts-by-dimension", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-              dimension: "channel",
-            },
-          })
-          .json<GetContactsByDimensionStatsResponseSchema>()
+        const result = await api.contactsByDimensionAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          dimension: "channel",
+        })
 
         set({ contactsByChannel: result.data })
       } catch (error: unknown) {
@@ -500,19 +461,15 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getContactsByCountry: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/contacts-by-dimension", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-              dimension: "country",
-            },
-          })
-          .json<GetContactsByDimensionStatsResponseSchema>()
+        const result = await api.contactsByDimensionAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          dimension: "country",
+        })
 
         set({ contactsByCountry: result.data })
       } catch (error: unknown) {
@@ -521,19 +478,15 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getContactsBySource: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/contacts-by-dimension", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-              dimension: "source",
-            },
-          })
-          .json<GetContactsByDimensionStatsResponseSchema>()
+        const result = await api.contactsByDimensionAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+          dimension: "source",
+        })
 
         set({ contactsBySource: result.data })
       } catch (error: unknown) {
@@ -542,18 +495,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getConversationHandoffs: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/conversation-handoffs", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetConversationHandoffsResponse>()
+        const result = await api.conversationHandoffsAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ conversationHandoffs: result.data })
       } catch (error: unknown) {
@@ -562,18 +511,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getConversationFollowUps: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/conversation-followups", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetConversationFollowUpsResponse>()
+        const result = await api.conversationFollowUpsAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ conversationFollowUps: result.data })
       } catch (error: unknown) {
@@ -582,18 +527,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getConversationArchived: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/conversation-archived", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetConversationArchivedResponse>()
+        const result = await api.conversationArchivedAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ conversationArchived: result.data })
       } catch (error: unknown) {
@@ -602,18 +543,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getConversationAssigned: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/conversation-assigned", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetConversationAssignedResponse>()
+        const result = await api.conversationAssignedAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ conversationAssigned: result.data })
       } catch (error: unknown) {
@@ -622,18 +559,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getConversationAssignedByAdmin: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/conversation-assigned-by-admin", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetConversationAssignedByAdminResponse>()
+        const result = await api.conversationAssignedByAdminAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ conversationAssignedByAdmin: result.data })
       } catch (error: unknown) {
@@ -642,18 +575,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getUniqueConversationsByAdmin: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/unique-conversations-by-admin", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetUniqueConversationsByAdminResponse>()
+        const result = await api.uniqueConversationsByAdminAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ uniqueConversationsByAdmin: result.data })
       } catch (error: unknown) {
@@ -662,18 +591,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getMessagesByAdmin: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/messages-by-admin", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetMessagesByAdminStatsResponseSchema>()
+        const result = await api.messagesByAdminAnalyticsAPI({
+          ...defaultSearchParams,
+          from: from.toISOString(),
+          to: to.toISOString(),
+        })
 
         set({ messagesByAdmin: result.data })
       } catch (error: unknown) {
@@ -682,19 +607,16 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getBotMessagesWithResponse: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: botMessagesWithResponse } = await ky
-          .get("/api/analytics/bot-messages-with-response", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-              granularity: "day",
-            },
+        const { data: botMessagesWithResponse } =
+          await api.botMessagesWithResponseAnalyticsAPI({
+            ...defaultSearchParams,
+            from: from.toISOString(),
+            to: to.toISOString(),
+            granularity: "day",
           })
-          .json<GetMessagesStatsResponseSchema>()
 
         set({ botMessagesWithResponse })
       } catch (error: unknown) {
@@ -703,19 +625,16 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getBotMessagesNoResponse: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: botMessagesNoResponse } = await ky
-          .get("/api/analytics/bot-messages-no-response", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-              granularity: "day",
-            },
+        const { data: botMessagesNoResponse } =
+          await api.botMessagesNoResponseAnalyticsAPI({
+            ...defaultSearchParams,
+            from: from.toISOString(),
+            to: to.toISOString(),
+            granularity: "day",
           })
-          .json<GetMessagesStatsResponseSchema>()
 
         set({ botMessagesNoResponse })
       } catch (error: unknown) {
@@ -724,18 +643,16 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getHumanAgentStats: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: humanAgentStats } = await ky
-          .get("/api/analytics/human-agent-stats", {
-            searchParams: {
-              ...defaultSearchParams,
-              from: from.toISOString(),
-              to: to.toISOString(),
-            },
-          })
-          .json<GetHumanAgentStatsResponseSchema>()
+        const { data: humanAgentStats } = await api.humanAgentStatsAnalyticsAPI(
+          {
+            ...defaultSearchParams,
+            from: from.toISOString(),
+            to: to.toISOString(),
+          },
+        )
 
         set({ humanAgentStats })
       } catch (error: unknown) {
@@ -743,19 +660,22 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
       }
     },
 
+    // `linkId`/`timezone` are only present in `defaultSearchParams` when the
+    // reflink dashboard mounted the store (see `ReflinkAnalytics`), the only
+    // place these two actions are wired up — the `as string` assertions
+    // below reflect that runtime contract, which the shared
+    // `defaultSearchParams` type can't express.
     getRefLinkStats: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: refLinkStats } = await ky
-          .get("/api/analytics/ref-links-stats", {
-            searchParams: {
-              ...defaultSearchParams,
-              startDate: from.toISOString(),
-              endDate: to.toISOString(),
-            },
-          })
-          .json<{ data: RefLinkTimeseriesRow[] }>()
+        const { data: refLinkStats } = await api.refLinkStats({
+          ...defaultSearchParams,
+          linkId: defaultSearchParams.linkId as string,
+          timezone: defaultSearchParams.timezone as string,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
 
         set({ refLinkStats })
       } catch (error: unknown) {
@@ -763,21 +683,20 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
       }
     },
 
+    // Same reflink-only runtime contract as `getRefLinkStats` above — the
+    // `as string` assertion on `linkId` reflects that, not a type gap.
     getReflinkContacts: async () => {
-      const { defaultSearchParams, reflinkContactsPage, from, to } = get()
+      const { api, defaultSearchParams, reflinkContactsPage, from, to } = get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/ref-links-contacts", {
-            searchParams: {
-              ...defaultSearchParams,
-              page: reflinkContactsPage,
-              perPage: REFLINK_CONTACTS_PER_PAGE,
-              startDate: from.toISOString(),
-              endDate: to.toISOString(),
-            },
-          })
-          .json<ListFlowNodeContactsResponse>()
+        const result = await api.refLinkContacts({
+          ...defaultSearchParams,
+          linkId: defaultSearchParams.linkId as string,
+          page: reflinkContactsPage,
+          perPage: REFLINK_CONTACTS_PER_PAGE,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
 
         set({
           reflinkContacts: result.data,
@@ -795,19 +714,22 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
       await getReflinkContacts()
     },
 
+    // `linkId`/`timezone` are only present in `defaultSearchParams` when the
+    // magic-link dashboard mounted the store (see `MagicLinkAnalytics`), the
+    // only place these two actions are wired up — the `as string` assertions
+    // below reflect that runtime contract, which the shared
+    // `defaultSearchParams` type can't express.
     getMagicLinkStats: async () => {
-      const { defaultSearchParams, from, to } = get()
+      const { api, defaultSearchParams, from, to } = get()
 
       try {
-        const { data: magicLinkStats } = await ky
-          .get("/api/analytics/magic-links-stats", {
-            searchParams: {
-              ...defaultSearchParams,
-              startDate: from.toISOString(),
-              endDate: to.toISOString(),
-            },
-          })
-          .json<{ data: RefLinkTimeseriesRow[] }>()
+        const { data: magicLinkStats } = await api.magicLinkStats({
+          ...defaultSearchParams,
+          linkId: defaultSearchParams.linkId as string,
+          timezone: defaultSearchParams.timezone as string,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
 
         set({ magicLinkStats })
       } catch (error: unknown) {
@@ -816,20 +738,18 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getMagicLinkContacts: async () => {
-      const { defaultSearchParams, magicLinkContactsPage, from, to } = get()
+      const { api, defaultSearchParams, magicLinkContactsPage, from, to } =
+        get()
 
       try {
-        const result = await ky
-          .get("/api/analytics/magic-links-contacts", {
-            searchParams: {
-              ...defaultSearchParams,
-              page: magicLinkContactsPage,
-              perPage: REFLINK_CONTACTS_PER_PAGE,
-              startDate: from.toISOString(),
-              endDate: to.toISOString(),
-            },
-          })
-          .json<ListFlowNodeContactsResponse>()
+        const result = await api.magicLinkContacts({
+          ...defaultSearchParams,
+          linkId: defaultSearchParams.linkId as string,
+          page: magicLinkContactsPage,
+          perPage: REFLINK_CONTACTS_PER_PAGE,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
 
         set({
           magicLinkContacts: result.data,

@@ -26,7 +26,9 @@
     "./system-field": "./src/system-field/index.ts",
     "./utils": "./src/utils.ts",
     "./workspace-api-token/credentials": "./src/workspace-api-token/credentials.ts",
-    "./workspace-lifecycle/predicates": "./src/workspace-lifecycle/predicates.ts"
+    "./workspace-lifecycle/predicates": "./src/workspace-lifecycle/predicates.ts",
+    "./workspace-member/predicates": "./src/workspace-member/predicates.ts",
+    "./workspace-member/permissions": "./src/workspace-member/permissions.ts"
   },
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",

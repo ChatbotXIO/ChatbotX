@@ -624,7 +624,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI-agent"
+      "label": "AI-agent",
+      "loadError": "AI-agenten laden mislukt. Probeer het opnieuw."
     },
     "aiQueuedMessages": {
       "label": "AI-berichten in wachtrij"
@@ -2977,6 +2978,17 @@
       "pendingBlockedToast": "Deze workspace staat gepland voor verwijdering. Neem contact op met een workspacebeheerder om de toegang te herstellen.",
       "navDisabledTooltip": "Niet beschikbaar zolang de verwijdering van de workspace gepland staat",
       "badge": "Verwijdering gepland"
+    },
+    "supportAccess": {
+      "bannerTitle": "Platformondersteuningssessie",
+      "bannerDescription": "Een platformondersteuningsmedewerker heeft tot {time} tijdelijke toegang tot deze werkruimte.",
+      "cardTitle": "Platformondersteuningstoegang",
+      "cardDescription": "Laat het platformondersteuningsteam deze werkruimte 7 dagen lang met volledige toegang openen. Je kunt dit op elk moment uitschakelen.",
+      "enabledUntil": "Ingeschakeld tot {time}",
+      "permissionRequired": "Je moet superbeheerder zijn om platformondersteuningstoegang te wijzigen.",
+      "enabledToast": "Platformondersteuningstoegang ingeschakeld.",
+      "disabledToast": "Platformondersteuningstoegang uitgeschakeld.",
+      "toggleError": "Er is iets misgegaan. Probeer het opnieuw."
     }
   },
   "workspaces": {
@@ -4532,6 +4544,17 @@
     },
     "queues": {
       "title": "Wachtrijen"
+    },
+    "workspaces": {
+      "title": "Werkruimtes",
+      "description": "Werkruimtes waarvan de eigenaar platformondersteuningstoegang heeft ingeschakeld, kunnen hier worden geopend.",
+      "owner": "Eigenaar",
+      "tenant": "Huurder",
+      "supportStatus": "Ondersteuningsstatus",
+      "openAsSupport": "Openen als ondersteuning",
+      "supportEnabledUntil": "Ingeschakeld tot {time}",
+      "supportOff": "Uit",
+      "searchPlaceholder": "Zoeken op naam, e-mailadres eigenaar of ID"
     }
   },
   "platformCredentials": {

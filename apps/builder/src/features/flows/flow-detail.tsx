@@ -4,7 +4,6 @@ import { ReactFlowProvider } from "@xyflow/react"
 import { AppointmentCalendarStoreProvider } from "@/features/appointment-calendars/provider/appointment-calendar-store-context"
 import { PlatformCredentialsStoreProvider } from "@/features/platform-credentials/provider/platform-credentials-store-context"
 import { QuestionnaireStoreProvider } from "@/features/questionnaires/provider/questionnaire-store-context"
-import { AIAgentStoreProvider } from "../ai-agents/provider/ai-agent-store-context"
 import { AIToolsStoreProvider } from "../ai-tools/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
 import { EmailTopicStoreProvider } from "../email-topics/provider/email-topic-store-context"
@@ -63,16 +62,12 @@ export function FlowDetail({
                               workspaceId={flow.workspaceId}
                             >
                               <PlatformCredentialsStoreProvider>
-                                <AIAgentStoreProvider
-                                  workspaceId={flow.workspaceId}
-                                >
-                                  <ReactFlowFrame
-                                    canRevertToPublished={canRevertToPublished}
-                                    flow={flow}
-                                    flowVersion={flowVersion}
-                                    hasPublishedVersion={hasPublishedVersion}
-                                  />
-                                </AIAgentStoreProvider>
+                                <ReactFlowFrame
+                                  canRevertToPublished={canRevertToPublished}
+                                  flow={flow}
+                                  flowVersion={flowVersion}
+                                  hasPublishedVersion={hasPublishedVersion}
+                                />
                               </PlatformCredentialsStoreProvider>
                             </AIToolsStoreProvider>
                           </CustomFieldStoreProvider>

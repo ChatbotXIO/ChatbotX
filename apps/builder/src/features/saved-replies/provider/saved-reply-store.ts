@@ -1,7 +1,6 @@
-import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { maxPerPageString } from "@/lib/shared-request"
-import type { ListSavedReplyResponse } from "../schema/mutation"
+import { getClientErrorMessage } from "@/lib/orpc/client-error"
+import { client } from "@/lib/orpc/orpc"
 import type { SavedReplyResource } from "../schema/resource"
 
 export type SavedReplyStoreState = {
@@ -42,10 +41,7 @@ export const createSavedReplyStore = (props: Partial<SavedReplyStoreState>) =>
         await get().getAllSavedReplies()
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch saved replies",
+          error: getClientErrorMessage(error, "Failed to fetch saved replies"),
         })
       } finally {
         set({ initialized: true })
@@ -63,26 +59,17 @@ export const createSavedReplyStore = (props: Partial<SavedReplyStoreState>) =>
       set({ isLoading: true })
 
       try {
-        const { data } = await ky
-          .get<ListSavedReplyResponse>(
-            `/api/workspaces/${workspaceId}/saved-replies`,
-            {
-              searchParams: {
-                perPage: maxPerPageString,
-              },
-            },
-          )
-          .json()
+        const { data } =
+          await client.savedRepliesAPI.listSavedRepliesAuthorizedAPI({
+            workspaceId,
+          })
 
         set({
           savedReplies: data,
         })
       } catch (error: unknown) {
         set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch saved replies",
+          error: getClientErrorMessage(error, "Failed to fetch saved replies"),
         })
       } finally {
         set({ isLoading: false })

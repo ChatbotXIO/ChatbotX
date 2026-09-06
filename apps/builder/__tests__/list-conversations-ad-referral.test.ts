@@ -12,7 +12,6 @@ const mocks = vi.hoisted(() => {
     createMessageRepository: vi.fn().mockResolvedValue(repo),
     findManyQuery: vi.fn().mockResolvedValue([]),
     findWithFullRelations: vi.fn().mockResolvedValue(null),
-    getCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue(null),
     getSafeSinceTime: vi.fn((value: Date | undefined) => value),
     notFoundException: (message: string) => new Error(message),
     repo,
@@ -37,7 +36,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@/lib/auth/utils", () => ({
   assertCurrentUserCanAccessChatbot: mocks.assertCurrentUserCanAccessChatbot,
-  getCurrentUserAndTargetWorkspace: mocks.getCurrentUserAndTargetWorkspace,
 }))
 
 vi.mock(
@@ -89,7 +87,6 @@ describe("listConversations / findConversation adReferral mapping", () => {
     vi.clearAllMocks()
     mocks.createMessageRepository.mockResolvedValue(mocks.repo)
     mocks.repo.findLastByConversation.mockResolvedValue([])
-    mocks.getCurrentUserAndTargetWorkspace.mockResolvedValue(null)
     mocks.buildConversationWhere.mockReturnValue({})
   })
 
@@ -105,7 +102,10 @@ describe("listConversations / findConversation adReferral mapping", () => {
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
-    const result = await listConversations({ workspaceId: "ws-1" })
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
 
     const mappedContactInboxes = result.data[0]?.contactInboxes ?? []
     expect(mappedContactInboxes[0]?.adReferral).toEqual({
@@ -127,7 +127,10 @@ describe("listConversations / findConversation adReferral mapping", () => {
     }
     mocks.findManyQuery.mockResolvedValue([conversation])
 
-    const result = await listConversations({ workspaceId: "ws-1" })
+    const result = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
 
     const mappedContactInbox = result.data[0]?.contactInboxes[0]
     expect(mappedContactInbox).not.toHaveProperty("referral")
@@ -180,7 +183,10 @@ describe("listConversations / findConversation adReferral mapping", () => {
       assignedInboxTeam: null,
     }
     mocks.findManyQuery.mockResolvedValue([listConversation])
-    const listResult = await listConversations({ workspaceId: "ws-1" })
+    const listResult = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
 
     const findConversationRow = {
       id: "conv-1",

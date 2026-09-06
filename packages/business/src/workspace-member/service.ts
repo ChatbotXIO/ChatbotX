@@ -141,6 +141,11 @@ export class WorkspaceMemberService extends BaseService {
     )
   }
 
+  // Auth gate — membership must take effect immediately on removal, so this
+  // intentionally skips withCache (unlike the list methods above). Does not
+  // see platform-support access: that is a synthetic membership granted at
+  // the call site when `isSupportAccessEnabled(workspace) && isSuperAdmin`,
+  // never a real row here. See docs/support-access.md.
   async findMembership(props: {
     tx?: DatabaseClient
     workspaceId: string
@@ -153,8 +158,9 @@ export class WorkspaceMemberService extends BaseService {
     })
   }
 
-  // Auth gate — membership must take effect immediately on revoke, so this
-  // intentionally skips withCache (unlike the list methods above).
+  // Auth gate — membership must take effect immediately on removal, so this
+  // intentionally skips withCache (unlike the list methods above). See
+  // findMembership for the platform-support-access note.
   async isMember(props: {
     tx?: DatabaseClient
     workspaceId: string

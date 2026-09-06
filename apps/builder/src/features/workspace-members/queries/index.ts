@@ -6,7 +6,6 @@ import {
   getPaginationWithDefaults,
   likeContains,
 } from "@chatbotx.io/database/utils"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetWorkspaceMemberRequest,
   GetWorkspaceMemberResponse,
@@ -18,8 +17,6 @@ import type { WorkspaceMemberResource } from "../schema/resource"
 export async function listWorkspaceMembers(
   input: ListWorkspaceMembersRequest,
 ): Promise<ListWorkspaceMembersResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   const pagination = getPaginationWithDefaults(input)
 
   const where = {

@@ -15,14 +15,14 @@ import {
   PopoverTrigger,
 } from "@chatbotx.io/ui/components/ui/popover"
 import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Check, ChevronsUpDown, PackageSearch } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
-import useSWR from "swr"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
+import { orpc } from "@/lib/orpc/query"
 
 export type MetaCatalogProductOption = {
   retailerId: string
@@ -84,24 +84,19 @@ export function MetaCatalogProductSelect({
     applyDebouncedKeyword(next)
   }
 
-  // SWR keys the request by workspace + debounced keyword: reopening the
-  // popover with an unchanged keyword serves the cached result instead of
-  // re-hitting the API, and out-of-order responses can never overwrite a
-  // newer keystroke's results (each keyword is its own cache entry).
-  const search = useSWR(
-    open && workspaceId
-      ? ([
-          "wa-template-meta-catalog-products",
-          workspaceId,
-          debouncedKeyword.trim(),
-        ] as const)
-      : null,
-    ([, id, searchKeyword]) =>
-      client.whatsappMessageTemplateAPIs.searchMetaCatalogProductsAPI({
-        workspaceId: id,
-        keyword: searchKeyword || undefined,
-      }),
-    { keepPreviousData: true, revalidateOnFocus: false },
+  // Keyed by workspace + debounced keyword: reopening the popover with an
+  // unchanged keyword serves the cached result instead of re-hitting the
+  // API, and out-of-order responses can never overwrite a newer keystroke's
+  // results (each keyword is its own cache entry). `placeholderData:
+  // keepPreviousData` keeps the previous list on screen while a new keyword
+  // is in flight instead of flashing empty.
+  const search = useQuery(
+    orpc.whatsappMessageTemplateAPIs.searchMetaCatalogProductsAPI.queryOptions({
+      input: { workspaceId, keyword: debouncedKeyword.trim() || undefined },
+      enabled: open && Boolean(workspaceId),
+      placeholderData: keepPreviousData,
+      refetchOnWindowFocus: false,
+    }),
   )
 
   const items = search.data?.items ?? []

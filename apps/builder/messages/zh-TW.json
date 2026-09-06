@@ -151,7 +151,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "載入 AI 代理失敗，請再試一次。"
     },
     "aiQueuedMessages": {
       "label": "AI 排隊訊息"
@@ -2357,6 +2358,17 @@
       "pendingBlockedToast": "此工作區已排定刪除。請聯絡工作區管理員以還原存取。",
       "navDisabledTooltip": "排定刪除工作區時不可用",
       "badge": "排定刪除"
+    },
+    "supportAccess": {
+      "bannerTitle": "平台支援工作階段",
+      "bannerDescription": "平台支援人員對此工作區擁有臨時存取權限，直到 {time}。",
+      "cardTitle": "平台支援存取",
+      "cardDescription": "允許平台支援團隊在 7 天內以完整存取權限開啟此工作區。您可以隨時關閉此功能。",
+      "enabledUntil": "已啟用，至 {time}",
+      "permissionRequired": "您需要是超級管理員才能變更平台支援存取權限。",
+      "enabledToast": "已啟用平台支援存取。",
+      "disabledToast": "已停用平台支援存取。",
+      "toggleError": "發生錯誤，請重試。"
     }
   },
   "workspaces": {
@@ -4565,6 +4577,17 @@
     },
     "queues": {
       "title": "佇列"
+    },
+    "workspaces": {
+      "title": "工作區",
+      "description": "擁有者已啟用平台支援存取的工作區可在此開啟。",
+      "owner": "擁有者",
+      "tenant": "租戶",
+      "supportStatus": "支援狀態",
+      "openAsSupport": "以支援身分開啟",
+      "supportEnabledUntil": "已啟用，至 {time}",
+      "supportOff": "已關閉",
+      "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋"
     }
   },
   "platformCredentials": {

@@ -17,6 +17,7 @@ import {
   cleanupWebhookExecutions,
   scanDateTimeWebhooks,
 } from "../webhook/datetime-webhook-scanner"
+import { clearExpiredSupportAccess } from "./handlers/clear-expired-support-access"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
@@ -140,6 +141,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.purgeWorkspaces:
               await purgeWorkspaces()
+              return
+
+            case ScheduleJobData.clearExpiredSupportAccess:
+              await clearExpiredSupportAccess()
               return
 
             case ScheduleJobData.purgeBroadcasts:

@@ -3,7 +3,6 @@ import type {
   ConversationBotCategory,
   ConversationStatus,
 } from "@chatbotx.io/database/partials"
-import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contact-filter/schema"
 import type { ContactResource } from "@/features/contacts/schema/resource"
@@ -13,7 +12,6 @@ import type {
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
-import type { ListMessagesResponse } from "@/features/messages/schema/query"
 import type {
   MessageResource,
   MessageResourceWithRelations,
@@ -271,23 +269,20 @@ export const createChatStore = () => {
       set({ isLoadingConversation: true })
 
       try {
-        const { data: newConversations, nextCursor } = await ky
-          .post<ListConversationsResponse>(
-            `/api/workspaces/${workspaceId}/conversations/list`,
+        const { data: newConversations, nextCursor } =
+          await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
             {
-              json: {
-                perPage: "20",
-                cursor: nextCursorConversation ?? "",
-                ...filters,
-              },
-              // Default ky timeout (10s) is too tight for this endpoint: it
-              // fans out into per-conversation sharded message lookups, which
-              // can legitimately take longer under cold caches or dev-server
-              // recompiles, so a stricter timeout was tripping spuriously.
-              timeout: 30_000,
+              workspaceId,
+              perPage: 20,
+              cursor: nextCursorConversation ?? "",
+              ...filters,
             },
+            // This endpoint fans out into per-conversation sharded message
+            // lookups, which can legitimately take longer under cold caches
+            // or dev-server recompiles, so a longer explicit timeout avoids
+            // spurious aborts.
+            { signal: AbortSignal.timeout(30_000) },
           )
-          .json()
 
         const hasUrlConversationId =
           shouldRespectUrlConversationId && hasConversationIdInUrl()
@@ -575,21 +570,26 @@ export const createChatStore = () => {
       const { nextCursorMessage, messages, activeConversationId } = get()
       set({ isLoadMoreMessage: true })
 
-      const { data, nextCursor } = await ky
-        .get<ListMessagesResponse>(`/api/workspaces/${workspaceId}/messages`, {
-          searchParams: {
+      try {
+        const { data, nextCursor } =
+          await client.messagesAPI.listMessagesAuthenticatedAPI({
+            workspaceId,
             perPage,
             cursor: nextCursorMessage ?? "",
-            conversationId: activeConversationId ?? "",
-          },
+            conversationId: activeConversationId ?? undefined,
+          })
+        set({
+          messages: [...data.reverse(), ...messages],
+          nextCursorMessage: nextCursor,
+          hasNextMessagePage: nextCursor !== null,
+          isLoadMoreMessage: false,
         })
-        .json()
-      set({
-        messages: [...data.reverse(), ...messages],
-        nextCursorMessage: nextCursor,
-        hasNextMessagePage: nextCursor !== null,
-        isLoadMoreMessage: false,
-      })
+      } catch (error) {
+        // Reset the in-flight flag or the `isLoadMoreMessage` guard above
+        // would block every later scroll-up load for this store instance.
+        set({ isLoadMoreMessage: false })
+        throw error
+      }
     },
 
     updateConversationViaMessage: async (message: MessageResource) => {
@@ -736,16 +736,12 @@ export const createChatStore = () => {
           })
         } else {
           // New conversation, we'll need basic details
-          const newMessage = await ky
-            .get<MessageResourceWithRelations>(
-              `/api/workspaces/${message.workspaceId}/messages/${message.id}`,
-              {
-                searchParams: {
-                  createdAt: new Date(message.createdAt).toISOString(),
-                },
-              },
-            )
-            .json()
+          const newMessage =
+            await client.messagesAPI.findMessageAuthenticatedAPI({
+              workspaceId: message.workspaceId,
+              id: message.id,
+              createdAt: new Date(message.createdAt),
+            })
           appendMessage(newMessage)
         }
       } else {

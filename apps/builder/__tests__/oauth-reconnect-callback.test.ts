@@ -11,7 +11,7 @@ const {
   mockFindWhatsappIntegration,
   mockUpsertMessagingAdsConnection,
   mockResolveForOwner,
-  mockIsMember,
+  mockHasWorkspaceAccess,
   mockFindWorkspaceById,
   mockUpsertFacebookAds,
   mockExchangeMessengerCode,
@@ -36,7 +36,7 @@ const {
   mockExchangeAndVerifyGoogleCalendar,
   mockCreateGoogleFromOAuthCallback,
   mockResolveOwnerForWorkspace,
-  mockGetCurrentUserId,
+  mockGetCurrentUser,
   mockEncryptAuth,
   mockCookieSet,
   mockNotFound,
@@ -52,7 +52,7 @@ const {
   mockFindWhatsappIntegration: vi.fn(),
   mockUpsertMessagingAdsConnection: vi.fn(),
   mockResolveForOwner: vi.fn(),
-  mockIsMember: vi.fn(),
+  mockHasWorkspaceAccess: vi.fn(),
   mockFindWorkspaceById: vi.fn(),
   mockUpsertFacebookAds: vi.fn(),
   mockExchangeMessengerCode: vi.fn(),
@@ -77,7 +77,7 @@ const {
   mockExchangeAndVerifyGoogleCalendar: vi.fn(),
   mockCreateGoogleFromOAuthCallback: vi.fn(),
   mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
-  mockGetCurrentUserId: vi.fn(),
+  mockGetCurrentUser: vi.fn(),
   mockEncryptAuth: vi.fn(async () => "encrypted-token"),
   mockCookieSet: vi.fn(),
   mockNotFound: vi.fn(() => {
@@ -120,7 +120,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   integrationFacebookAdsService: { upsert: mockUpsertFacebookAds },
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
-  workspaceMemberService: { isMember: mockIsMember },
+  hasWorkspaceAccess: mockHasWorkspaceAccess,
   workspaceService: {
     findById: mockFindWorkspaceById,
     create: vi.fn(),
@@ -231,7 +231,7 @@ vi.mock("@/lib/platform-credential-owner", () => ({
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
-  getCurrentUserId: mockGetCurrentUserId,
+  getCurrentUser: mockGetCurrentUser,
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -278,7 +278,7 @@ const buildCallbackRequest = (
 describe("handleCallback OAuth reconnect", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetCurrentUserId.mockResolvedValue("user-1")
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1" })
     mockGetMessengerFacebookUser.mockResolvedValue({
       id: "fb-user-1",
       name: "FB User",
@@ -294,7 +294,7 @@ describe("handleCallback OAuth reconnect", () => {
       ownerId: "owner-1",
       tenantId: "1",
     })
-    mockIsMember.mockResolvedValue(true)
+    mockHasWorkspaceAccess.mockResolvedValue(true)
     mockResolveOwnerForWorkspace.mockResolvedValue("platform-owner-1")
     mockResolveForOwner.mockResolvedValue({
       config: {

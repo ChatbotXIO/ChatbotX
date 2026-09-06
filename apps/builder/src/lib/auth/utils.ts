@@ -1,5 +1,6 @@
 "use server"
 
+import { resolveWorkspaceAccess } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type {
@@ -105,6 +106,7 @@ export const getCurrentUserAndTargetWorkspace = async (
   user: SessionUser
   targetWorkspace: WorkspaceModel
   targetWorkspaceMember: WorkspaceMemberModel
+  isSupportSession: boolean
   allWorkspaces: WorkspaceModel[]
   allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
 } | null> => {
@@ -113,16 +115,23 @@ export const getCurrentUserAndTargetWorkspace = async (
     return null
   }
 
-  const targetWorkspaceMember = userAndWorkspaces.allWorkspaceMembers.find(
+  const realMember = userAndWorkspaces.allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspaceId === workspaceId,
   )
-  if (!targetWorkspaceMember) {
+
+  const access = await resolveWorkspaceAccess({
+    realMember,
+    workspaceId,
+    user: userAndWorkspaces.user,
+  })
+  if (!access) {
     return null
   }
 
   return {
     ...userAndWorkspaces,
-    targetWorkspace: targetWorkspaceMember.workspace,
-    targetWorkspaceMember,
+    targetWorkspace: access.workspace,
+    targetWorkspaceMember: access.member,
+    isSupportSession: access.isSupportSession,
   }
 }

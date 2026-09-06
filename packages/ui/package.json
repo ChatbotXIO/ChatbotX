@@ -63,7 +63,6 @@
     "framer-motion": "^12.38.0",
     "frimousse": "^0.3.0",
     "input-otp": "^1.4.2",
-    "ky": "^2.0.2",
     "lucide-react": "^1.14.0",
     "mime-types": "^3.0.2",
     "motion": "^12.38.0",
