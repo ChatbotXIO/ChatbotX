@@ -110,7 +110,26 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 |---|---|---|---|
 | `none` | — | no-op | no-op |
 | `text` | the text | Posts a public comment reply: message `type: "comment"` + `contentAttributes.replyToCommentId`, enqueued as `sendChannelMessage`. | `PRIVATE_REPLY_TEXT_SENDERS[channelType]` (`private-reply.ts`) → the channel's comment_id-anchored Send API DM. |
-| `flow` | flow id | Enqueues `sendFlow` with `flowId` and a `public` `commentAnchor`, so the flow's first step is posted as a comment reply. | Same job with a `private` anchor: the flow's **first** message is sent through the comment_id-anchored Send API (comment window, not the 24-hour messaging window); later messages take the normal window-gated path. |
+| `flow` | flow id | Enqueues `sendFlow` with `flowId` and a `public` `commentAnchor`, so the flow's first step is posted as a comment reply. Runs on the **comment-anchored** conversation. | Same job with a `private` anchor: the flow's **first** message is sent through the comment_id-anchored Send API (comment window, not the 24-hour messaging window); later messages take the normal window-gated path. Runs on the **DM** conversation — see below. |
+
+### Which conversation a flow reply runs on
+
+Delivery and state are two different things, and a comment splits them:
+
+- **`commentAnchor` governs delivery.** It rides the `sendFlow` job and only decides
+  whether the *first* outgoing message goes out through the comment_id-anchored Send API.
+- **`conversationId` governs state.** The flow writes `currentStep` and
+  `additionalAttributes.challenge` onto that conversation, and `resolveIncomingTextRouting`
+  reads the challenge back off whichever conversation the contact's next message lands on.
+
+A comment anchors its conversation to the post (`Conversation.sourceId = postId`,
+`receiveComment`), while DM replies always land on the DM conversation
+(`sourceId IS NULL`). So:
+
+| Reply channel | Conversation | Why |
+|---|---|---|
+| `private` | the **DM** conversation, resolved by `resolveDirectMessageConversationId` (`findDMByContact`, falling back to `findOrCreate({ sourceId: null })`) | The contact answers in the DM. Running the flow on the comment conversation parks its state where no reply can reach it — the flow stalls at its first waiting step with no error anywhere ([#1063](https://github.com/ChatbotXIO/ChatbotX/issues/1063)). |
+| `public` | the **comment-anchored** conversation (`ctx.conversationId`, unchanged) | The contact answers with another comment, which `receiveComment` resolves back to that same conversation. Switching this one to the DM conversation would break it. |
 | `AIAgent` | **AI agent id** | Enqueues a delayed `commentAIReply` job → `processCommentAIReply` generates text with the **selected** agent (`generateAIReplyText`, tools/rich off) and posts it as a **public comment reply**. | Same job, `replyChannel: "private"` → generated text sent as a **DM**. |
 
 The `AIAgent` path deliberately does **not** reuse the DM auto-responder pipeline
@@ -134,6 +153,12 @@ send), and the comment handler owns the channel routing.
   each toggle separately: the like switch renders only for `instagramFacebook`, while
   `hasImage`/`hasVideo` are hidden for both Instagram variants. Keep that pattern —
   hide an unsupported toggle rather than rendering a dead one.
+- **A private flow reply must be enqueued on the DM conversation.** Reusing the
+  comment-anchored `conversationId` strands the flow: the first message is delivered, the
+  flow parks on the post conversation, and the contact's reply arrives on the DM
+  conversation where no challenge exists. Nothing throws, no queue errors, no `sendError` —
+  the routing simply falls through to `automatedResponse`. See
+  [Which conversation a flow reply runs on](#which-conversation-a-flow-reply-runs-on).
 - **`options.trackUserTags` is defined but not implemented** — the toggle has no effect.
 - **`getPriorContactInboxCount` counts `ContactInbox` rows**, so a contact who DM'd via
   another inbox is treated as "not new."

@@ -17,6 +17,8 @@ const {
   mockIsActiveNow,
   mockAiAgentFindBy,
   mockConversationFindBy,
+  mockConversationFindDMByContact,
+  mockConversationFindOrCreate,
   mockIdentifyInboxAndIntegrationAuth,
   mockCreateMessageRepository,
   mockMessageCreate,
@@ -43,6 +45,8 @@ const {
   mockIsActiveNow: vi.fn(),
   mockAiAgentFindBy: vi.fn(),
   mockConversationFindBy: vi.fn(),
+  mockConversationFindDMByContact: vi.fn(),
+  mockConversationFindOrCreate: vi.fn(),
   mockIdentifyInboxAndIntegrationAuth: vi.fn(),
   mockCreateMessageRepository: vi.fn(),
   mockMessageCreate: vi.fn(),
@@ -62,7 +66,11 @@ vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
   contactInboxService: { findBy: mockFindContactInboxBy },
   aiAgentService: { findBy: mockAiAgentFindBy },
-  conversationService: { findBy: mockConversationFindBy },
+  conversationService: {
+    findBy: mockConversationFindBy,
+    findDMByContact: mockConversationFindDMByContact,
+    findOrCreate: mockConversationFindOrCreate,
+  },
   fbCommentAutomationService: {
     findActiveAutomations: mockFindActiveAutomations,
     isWithinSchedule: mockIsWithinSchedule,
@@ -238,6 +246,7 @@ beforeEach(() => {
   mockFindContactInboxBy.mockResolvedValue({
     id: "contact-inbox-1",
     contactId: "contact-1",
+    channel: "messenger",
   })
   mockWorkspaceFindById.mockResolvedValue({ timezone: "UTC" })
   mockIsActiveNow.mockReturnValue(true)
@@ -245,6 +254,20 @@ beforeEach(() => {
     id: "conversation-1",
     workspaceId: "workspace-1",
     contactId: "contact-1",
+  })
+  // The DM conversation (sourceId IS NULL), distinct from the comment-anchored
+  // "conversation-1" the job carries.
+  mockConversationFindDMByContact.mockResolvedValue({
+    id: "dm-conversation-1",
+    workspaceId: "workspace-1",
+    contactId: "contact-1",
+    sourceId: null,
+  })
+  mockConversationFindOrCreate.mockResolvedValue({
+    id: "dm-conversation-created",
+    workspaceId: "workspace-1",
+    contactId: "contact-1",
+    sourceId: null,
   })
   mockIsWithinSchedule.mockReturnValue(true)
   mockHasRepliedOnOtherPost.mockResolvedValue(false)
@@ -542,7 +565,11 @@ describe("processCommentAutomation text reply variable resolution", () => {
 
     expect(mockContactVariableGetAll).toHaveBeenCalledWith({
       contactId: "contact-1",
-      contactInbox: { id: "contact-inbox-1", contactId: "contact-1" },
+      contactInbox: {
+        id: "contact-inbox-1",
+        contactId: "contact-1",
+        channel: "messenger",
+      },
     })
     expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
       text: "Hi {{contact.firstName}}",
@@ -567,7 +594,11 @@ describe("processCommentAutomation text reply variable resolution", () => {
 
     expect(mockContactVariableGetAll).toHaveBeenCalledWith({
       contactId: "contact-1",
-      contactInbox: { id: "contact-inbox-1", contactId: "contact-1" },
+      contactInbox: {
+        id: "contact-inbox-1",
+        contactId: "contact-1",
+        channel: "messenger",
+      },
     })
     expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
       text: "Hi {{contact.firstName}}",
@@ -636,6 +667,11 @@ describe("processCommentAutomation flow private reply", () => {
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
     ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "instagram",
+    })
 
     await processCommentAutomation({
       ...buildJobData(),
@@ -659,6 +695,11 @@ describe("processCommentAutomation flow private reply", () => {
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
     ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "instagramFacebook",
+    })
 
     await processCommentAutomation({
       ...buildJobData(),
@@ -676,6 +717,82 @@ describe("processCommentAutomation flow private reply", () => {
       }),
       expect.anything(),
     )
+  })
+})
+
+// #1063: the flow's state has to live on the DM conversation, where the
+// contact's replies arrive — the comment-anchored conversation only governs how
+// the first message is delivered (commentAnchor).
+describe("processCommentAutomation flow private reply DM conversation", () => {
+  test("runs the flow on the existing DM conversation, not the comment-anchored one", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockConversationFindDMByContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      channel: "messenger",
+    })
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          conversationId: "dm-conversation-1",
+          // The anchor still rides along untouched.
+          commentAnchor: { commentId: COMMENT_ID, replyChannel: "private" },
+        }),
+      }),
+      expect.anything(),
+    )
+    expect(mockConversationFindOrCreate).not.toHaveBeenCalled()
+  })
+
+  test("opens the DM conversation when the comment is the contact's first interaction", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
+    ])
+    mockConversationFindDMByContact.mockResolvedValue(undefined)
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockConversationFindOrCreate).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      sourceId: null,
+    })
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          conversationId: "dm-conversation-created",
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("falls back to the comment conversation and still dispatches when the DM lookup fails", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "flow", value: "flow-1" } }),
+    ])
+    mockConversationFindDMByContact.mockRejectedValue(new Error("db down"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockLoggerWarn).toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({ conversationId: "conversation-1" }),
+      }),
+      expect.anything(),
+    )
+    // A throw here would skip the dedup row and let a retry post the public
+    // reply twice.
+    expect(mockInsertDedup).toHaveBeenCalled()
   })
 })
 
@@ -719,6 +836,24 @@ describe("processCommentAutomation flow public reply", () => {
       }),
       expect.anything(),
     )
+  })
+
+  test("keeps the comment-anchored conversation — a public flow is answered on the post (#1063 applies to private only)", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "flow", value: "flow-1" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({ conversationId: "conversation-1" }),
+      }),
+      expect.anything(),
+    )
+    expect(mockConversationFindDMByContact).not.toHaveBeenCalled()
+    expect(mockConversationFindOrCreate).not.toHaveBeenCalled()
   })
 })
 

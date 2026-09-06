@@ -1,4 +1,8 @@
-import type { FBCommentReply } from "@chatbotx.io/database/partials"
+import { conversationService } from "@chatbotx.io/business"
+import type {
+  ChannelType,
+  FBCommentReply,
+} from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import {
@@ -45,6 +49,57 @@ export const PRIVATE_REPLY_TEXT_SENDERS: Record<
       commentId,
       text,
     ),
+}
+
+/**
+ * A comment anchors its conversation to the post (`Conversation.sourceId =
+ * postId`), but the contact's DM replies always land on the DM conversation
+ * (`sourceId IS NULL`). Starting the flow on the comment conversation parks its
+ * state — `currentStep` and `additionalAttributes.challenge` — where no reply
+ * can reach it, so the flow never advances past its first waiting step and
+ * nothing errors (#1063). Resolve the DM conversation instead; `commentAnchor`
+ * rides the job separately and still delivers the first message through the
+ * comment_id-anchored Send API.
+ *
+ * The `sourceId: null` fallback covers a contact whose first ever interaction
+ * is this comment. It holds because every comment-automation channel
+ * (messenger, instagram, instagramFacebook) keys its DM conversation with a
+ * null sourceId — revisit it if a channel like TikTok, whose DM lives on a
+ * non-null sourceId, ever grows comment automation.
+ */
+async function resolveDirectMessageConversationId(ctx: {
+  commentId: string
+  conversationId: string
+  contactInbox: ContactInboxModel
+  workspaceId: string
+}): Promise<string> {
+  try {
+    const existing = await conversationService.findDMByContact({
+      workspaceId: ctx.workspaceId,
+      contactId: ctx.contactInbox.contactId,
+      channel: ctx.contactInbox.channel as ChannelType,
+    })
+    if (existing) {
+      return existing.id
+    }
+
+    const created = await conversationService.findOrCreate({
+      workspaceId: ctx.workspaceId,
+      contactId: ctx.contactInbox.contactId,
+      sourceId: null,
+    })
+    return created.id
+  } catch (err) {
+    // Fall back to the pre-#1063 behaviour (flow starts, on the wrong
+    // conversation) rather than throwing: the caller would mark the dispatch
+    // failed, skip the dedup row, and a job retry would post the public reply
+    // a second time.
+    logger.warn(
+      { err, commentId: ctx.commentId, conversationId: ctx.conversationId },
+      "Failed to resolve the DM conversation for a comment-triggered flow, falling back to the comment conversation",
+    )
+    return ctx.conversationId
+  }
 }
 
 export async function executePrivateReply(
@@ -94,12 +149,17 @@ export async function executePrivateReply(
   }
 
   if (privateReply.type === "flow" && privateReply.value) {
+    // The flow's *state* lives on the DM conversation, where the contact's
+    // replies arrive; only its first message's *delivery* is anchored to the
+    // comment. See resolveDirectMessageConversationId.
+    const conversationId = await resolveDirectMessageConversationId(ctx)
+
     await integrationQueue.add(
       IntegrationJobAction.sendFlow,
       {
         type: IntegrationJobAction.sendFlow,
         data: {
-          conversationId: ctx.conversationId,
+          conversationId,
           contactInboxId: ctx.contactInboxId,
           flowId: privateReply.value,
           origin: webhookChannelOrigin(),

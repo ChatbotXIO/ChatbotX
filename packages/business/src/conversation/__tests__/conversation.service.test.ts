@@ -172,3 +172,84 @@ describe("ConversationService.findDMByContactIds", () => {
     expect(mocks.conversationFindMany).not.toHaveBeenCalled()
   })
 })
+
+// `Conversation` carries two partial unique indexes — `Conversation_contactId_dm_key`
+// on (contactId) WHERE sourceId IS NULL, and `Conversation_contactId_sourceId_key`
+// otherwise — so a find-then-insert can lose the race to a concurrent writer.
+describe("ConversationService.findOrCreate concurrent insert", () => {
+  function buildTx(props: {
+    findFirst: ReturnType<typeof vi.fn>
+    returning: ReturnType<typeof vi.fn>
+  }) {
+    const onConflictDoNothing = vi.fn(() => ({ returning: props.returning }))
+    const values = vi.fn(() => ({ onConflictDoNothing }))
+    const insert = vi.fn(() => ({ values }))
+    return {
+      tx: {
+        query: { conversationModel: { findFirst: props.findFirst } },
+        insert,
+      } as unknown as Parameters<
+        typeof conversationService.findOrCreate
+      >[0]["tx"],
+      onConflictDoNothing,
+    }
+  }
+
+  test("returns the row the concurrent writer created instead of throwing", async () => {
+    const winner = { id: "conv-winner", contactId: "contact-1", sourceId: null }
+    const findFirst = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(winner)
+    const { tx, onConflictDoNothing } = buildTx({
+      findFirst,
+      // ON CONFLICT DO NOTHING swallowed the insert.
+      returning: vi.fn().mockResolvedValue([]),
+    })
+
+    const result = await conversationService.findOrCreate({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      sourceId: null,
+      tx,
+    })
+
+    expect(result).toEqual(winner)
+    expect(onConflictDoNothing).toHaveBeenCalledOnce()
+    expect(findFirst).toHaveBeenCalledTimes(2)
+  })
+
+  test("throws when the insert produced nothing and no row can be re-read", async () => {
+    const findFirst = vi.fn().mockResolvedValue(undefined)
+    const { tx } = buildTx({
+      findFirst,
+      returning: vi.fn().mockResolvedValue([]),
+    })
+
+    await expect(
+      conversationService.findOrCreate({
+        workspaceId: WORKSPACE_ID,
+        contactId: "contact-1",
+        sourceId: null,
+        tx,
+      }),
+    ).rejects.toThrow("Conversation not found")
+  })
+
+  test("skips the insert entirely when the conversation already exists", async () => {
+    const existing = { id: "conv-existing", contactId: "contact-1" }
+    const findFirst = vi.fn().mockResolvedValue(existing)
+    const returning = vi.fn()
+    const { tx } = buildTx({ findFirst, returning })
+
+    const result = await conversationService.findOrCreate({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      sourceId: null,
+      tx,
+    })
+
+    expect(result).toEqual(existing)
+    expect(returning).not.toHaveBeenCalled()
+  })
+})
