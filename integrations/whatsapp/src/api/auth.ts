@@ -118,19 +118,20 @@ export function debugTokenOrThrow(
 }
 
 /**
- * Resolve the WhatsApp Business Account id granted to the access token. Embedded
- * signup grants exactly one WABA via the `whatsapp_business_management` scope, so
- * its `target_ids[0]` is the connected WABA. Used to reconstruct the connect
- * inputs server-side when the OAuth dialog returns only a `code` (the SDK-only
- * `WA_EMBEDDED_SIGNUP` postMessage that normally carries the ids never fires).
+ * Resolve every WhatsApp Business Account id the access token was granted via
+ * the `whatsapp_business_management` scope. A system-user token from embedded
+ * signup carries every WABA the business has already shared with the app — not
+ * only the one picked in the dialog — and Meta does not keep the order stable
+ * between tokens. Callers that already know which WABA they expect must check
+ * membership in this list instead of trusting the first entry.
  */
-export async function getSharedWabaId(
+export async function getSharedWabaIds(
   accessToken: string,
   appAccessToken: string,
-): Promise<string | null> {
+): Promise<string[]> {
   const data = await debugToken(accessToken, appAccessToken)
   const scope = data?.granular_scopes?.find(
     (s) => s.scope === WHATSAPP_BUSINESS_MANAGEMENT_SCOPE,
   )
-  return scope?.target_ids?.[0] ?? null
+  return scope?.target_ids ?? []
 }

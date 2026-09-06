@@ -10,7 +10,7 @@ import type { WhatsappCredential } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import {
   exchangeAccessToken,
-  getSharedWabaId,
+  getSharedWabaIds,
 } from "@chatbotx.io/integration-whatsapp/api/auth"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { findWaba } from "@chatbotx.io/integration-whatsapp/api/waba"
@@ -24,6 +24,7 @@ import { logger } from "@/lib/log"
 import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { WHATSAPP_OAUTH_CALLBACK_PATH } from "../libs/embedded-signup"
+import { requireGrantedWabaId } from "../libs/waba-grant"
 import { buildAuthValue, buildWebhookConfig } from "./webhook-url"
 
 const reconnectWhatsappSchema = z.object({
@@ -89,17 +90,14 @@ async function exchangeAndValidateWhatsappAccount(input: {
     )
   ).access_token
   const appAccessToken = `${input.whatsappSettings.clientId}|${input.whatsappSettings.clientSecret}`
-  const wabaId = await getSharedWabaId(accessToken, appAccessToken)
-  if (!wabaId) {
-    throw new ChatbotXException(
-      input.t("whatsapp.connect.errors.wabaResolveFailed"),
-    )
-  }
-  if (wabaId !== input.existing.wabaId) {
-    throw new ChatbotXException(
-      input.t("whatsapp.reconnect.errors.wabaMismatch"),
-    )
-  }
+  const wabaId = requireGrantedWabaId({
+    grantedWabaIds: await getSharedWabaIds(accessToken, appAccessToken),
+    requestedWabaId: input.existing.wabaId,
+    errorMessages: {
+      none: input.t("whatsapp.connect.errors.wabaResolveFailed"),
+      mismatch: input.t("whatsapp.reconnect.errors.wabaMismatch"),
+    },
+  })
 
   const [waba, phoneNumbers] = await Promise.all([
     findWaba({

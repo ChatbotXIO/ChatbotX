@@ -34,7 +34,7 @@ const {
   findConnectedPhoneNumberIdsMock,
   findWabaMock,
   getCoexistEligibilityMock,
-  getSharedWabaIdMock,
+  getSharedWabaIdsMock,
   invalidateCacheByTagsMock,
   isUniqueViolationErrorMock,
   listPhoneNumbersMock,
@@ -60,7 +60,7 @@ const {
   findConnectedPhoneNumberIdsMock: vi.fn(),
   findWabaMock: vi.fn(),
   getCoexistEligibilityMock: vi.fn(),
-  getSharedWabaIdMock: vi.fn(),
+  getSharedWabaIdsMock: vi.fn(),
   invalidateCacheByTagsMock: vi.fn(),
   isUniqueViolationErrorMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
@@ -152,7 +152,7 @@ vi.mock("@chatbotx.io/integration-whatsapp", () => ({
 vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
   debugToken: vi.fn(),
   exchangeAccessToken: exchangeAccessTokenMock,
-  getSharedWabaId: getSharedWabaIdMock,
+  getSharedWabaIds: getSharedWabaIdsMock,
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/phone-number", () => ({
@@ -293,7 +293,7 @@ describe("connectWhatsappAction registration", () => {
     exchangeAccessTokenMock.mockResolvedValue({
       access_token: "access-token-1",
     })
-    getSharedWabaIdMock.mockResolvedValue("waba-1")
+    getSharedWabaIdsMock.mockResolvedValue(["waba-1"])
     findWabaMock.mockResolvedValue({
       id: "waba-1",
       owner_business_info: { id: "business-1" },
@@ -454,6 +454,62 @@ describe("connectWhatsappAction registration", () => {
       }),
     )
     expect(registerPhoneNumberMock).not.toHaveBeenCalled()
+  })
+
+  test("keeps the client-selected WABA when the token lists it after other WABAs", async () => {
+    // A system-user token grants every WABA shared with the app, in no stable
+    // order; the selected one must win by membership, not by position.
+    getSharedWabaIdsMock.mockResolvedValue(["waba-9", "waba-1"])
+
+    await callConnectWhatsappAction({
+      ctx: { user: { id: "user-1" } },
+      parsedInput: {
+        businessId: null,
+        wabaId: "waba-1",
+        connectExisting: false,
+        transferPhoneNumber: false,
+        manualConnect: false,
+        marketingMessageLite: true,
+        phoneNumberId: null,
+        workspaceId: "ws-1",
+        signupSessionId: null,
+        accessToken: null,
+        code: "oauth-code-1",
+      },
+    })
+
+    expect(findWabaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ wabaId: "waba-1" }),
+    )
+    expect(listPhoneNumbersMock).toHaveBeenCalledWith(
+      expect.objectContaining({ wabaId: "waba-1" }),
+    )
+  })
+
+  test("rejects a client-selected WABA the token does not grant", async () => {
+    getSharedWabaIdsMock.mockResolvedValue(["waba-9"])
+
+    await expect(
+      callConnectWhatsappAction({
+        ctx: { user: { id: "user-1" } },
+        parsedInput: {
+          businessId: null,
+          wabaId: "waba-1",
+          connectExisting: false,
+          transferPhoneNumber: false,
+          manualConnect: false,
+          marketingMessageLite: true,
+          phoneNumberId: null,
+          workspaceId: "ws-1",
+          signupSessionId: null,
+          accessToken: null,
+          code: "oauth-code-1",
+        },
+      }),
+    ).rejects.toThrow(
+      "Selected WhatsApp Business Account does not match the authorization.",
+    )
+    expect(findWabaMock).not.toHaveBeenCalled()
   })
 
   test("returns phone verification result when registration requires OTP", async () => {
