@@ -1,5 +1,6 @@
 import {
   appointmentExternalCalendarService,
+  facebookMarketingMessagesService,
   hasWorkspaceAccess,
   instagramIntegrationService,
   integrationFacebookAdsService,
@@ -90,7 +91,13 @@ const stateValidationSchema = z.object({
   // this flag so the Messenger branch dispatches to the right token-storage /
   // webhook-subscription logic instead of the page picker.
   flow: z
-    .enum(["facebookAds", "facebookLeadAds", "metaCatalog", "messagingAds"])
+    .enum([
+      "facebookAds",
+      "facebookLeadAds",
+      "metaCatalog",
+      "messagingAds",
+      "facebookMarketingMessages",
+    ])
     .optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
   // of this existing integration row (matched against its stored page/account
@@ -136,6 +143,50 @@ const storeFacebookAdsConnection = async (args: {
     workspaceId: args.workspaceId,
     auth: facebookAdsAuth,
     tokenExpiresAt,
+  })
+}
+
+// Exchange the OAuth code for a long-lived token and store it (encrypted) as
+// the workspace's Marketing Messages grant. Deliberately does NOT reuse
+// `storeFacebookAdsConnection`: that writes `IntegrationFacebookAds`, the
+// workspace-wide Ads connection, whose token is granted with a different
+// permission set and must not be overwritten by a Marketing Messages grant.
+const storeMarketingMessagesConnection = async (args: {
+  credentialConfig: { clientId: string; clientSecret: string; version?: string }
+  code: string
+  callbackUrl: string
+  workspaceId: string
+}): Promise<void> => {
+  const shortLivedToken = await exchangeFacebookAdsCode(
+    args.credentialConfig,
+    args.code,
+    args.callbackUrl,
+  )
+  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
+    args.credentialConfig,
+    shortLivedToken,
+  )
+  const tokenExpiresAt = expiresIn
+    ? new Date(Date.now() + expiresIn * 1000)
+    : null
+
+  // Best-effort: the grant must succeed even when the identity lookup fails,
+  // which is why `facebookUserId` is nullable on the row.
+  const fbUser = await lookupFacebookUser(() =>
+    getMessengerFacebookUser(accessToken, args.credentialConfig.version),
+  )
+
+  const auth: FacebookAdsAuthValue = {
+    authType: AuthType.custom,
+    accessToken,
+    expiresAt: tokenExpiresAt?.toISOString(),
+    version: args.credentialConfig.version,
+  }
+  await facebookMarketingMessagesService.upsertAuth({
+    workspaceId: args.workspaceId,
+    auth,
+    tokenExpiresAt,
+    facebookUserId: fbUser?.id,
   })
 }
 
@@ -470,6 +521,29 @@ export const handleCallback = async (
       // token is stored and the Messenger page-picker is skipped.
       if (stateParams.flow === "facebookLeadAds") {
         await enableLeadgenForWorkspacePages(workspace.id)
+        return redirect(safeReferer)
+      }
+
+      // Marketing Messages grant. `withAuditContext` is required for the same
+      // reason the facebookAds branch uses it: this raw OAuth route never
+      // populates the ALS actor context, so `BaseService.audit()` would
+      // silently no-op.
+      if (stateParams.flow === "facebookMarketingMessages") {
+        await withAuditContext(
+          {
+            userId,
+            workspaceId: workspace.id,
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          },
+          () =>
+            storeMarketingMessagesConnection({
+              credentialConfig: messengerCredential.config,
+              code,
+              callbackUrl,
+              workspaceId: workspace.id,
+            }),
+        )
         return redirect(safeReferer)
       }
 

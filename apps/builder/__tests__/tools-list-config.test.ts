@@ -23,7 +23,7 @@ describe("TOOLS_CONFIG — click-to-message-ads entry", () => {
     expect(entry).toBeDefined()
   })
 
-  test("sits immediately after facebook-lead-ads", () => {
+  test("sits two after facebook-lead-ads", () => {
     const leadAdsIndex = TOOLS_CONFIG.findIndex(
       (config) => config.id === "facebook-lead-ads",
     )
@@ -31,7 +31,8 @@ describe("TOOLS_CONFIG — click-to-message-ads entry", () => {
       (config) => config.id === "click-to-message-ads",
     )
 
-    expect(clickToMessageAdsIndex).toBe(leadAdsIndex + 1)
+    // `facebook-marketing-messages` now sits between them.
+    expect(clickToMessageAdsIndex).toBe(leadAdsIndex + 2)
   })
 
   test("has permission: superAdmin", () => {
@@ -93,5 +94,48 @@ describe("canShowTool", () => {
 
   test("is hidden (fail-closed) for a superAdmin permission when permissions is an empty partial object", () => {
     expect(canShowTool("superAdmin", permissions({}))).toBe(false)
+  })
+})
+
+describe("TOOLS_CONFIG — facebook-marketing-messages entry", () => {
+  test("exists in the config", () => {
+    const entry = TOOLS_CONFIG.find(
+      (config) => config.id === "facebook-marketing-messages",
+    )
+
+    expect(entry).toBeDefined()
+  })
+
+  test("sits immediately after facebook-lead-ads", () => {
+    const leadAdsIndex = TOOLS_CONFIG.findIndex(
+      (config) => config.id === "facebook-lead-ads",
+    )
+    const marketingMessagesIndex = TOOLS_CONFIG.findIndex(
+      (config) => config.id === "facebook-marketing-messages",
+    )
+
+    expect(marketingMessagesIndex).toBe(leadAdsIndex + 1)
+  })
+
+  test("links to the tool route", () => {
+    const entry = TOOLS_CONFIG.find(
+      (config) => config.id === "facebook-marketing-messages",
+    )
+
+    expect(entry && "getLink" in entry && entry.getLink?.("42")).toBe(
+      "/space/42/fb-marketing-messages",
+    )
+  })
+
+  test("is visible to a member with no permissions set", () => {
+    const entry = TOOLS_CONFIG.find(
+      (config) => config.id === "facebook-marketing-messages",
+    )
+    const permission =
+      entry && "permission" in entry
+        ? (entry.permission as Parameters<typeof canShowTool>[0])
+        : undefined
+
+    expect(canShowTool(permission, permissions({}))).toBe(true)
   })
 })
