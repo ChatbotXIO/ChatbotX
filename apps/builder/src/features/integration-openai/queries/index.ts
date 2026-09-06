@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { integrationOpenAIService } from "@chatbotx.io/business"
 import type { IntegrationOpenAIResource } from "../schema/request"
 
 export const findIntegrationOpenAI = async ({
@@ -8,11 +8,7 @@ export const findIntegrationOpenAI = async ({
 }): Promise<{
   data: IntegrationOpenAIResource | null
 }> => {
-  const data = await db.query.integrationOpenaiModel.findFirst({
-    where: {
-      workspaceId,
-    },
-  })
+  const data = await integrationOpenAIService.findByWorkspaceId(workspaceId)
 
   return {
     data: data ?? null,

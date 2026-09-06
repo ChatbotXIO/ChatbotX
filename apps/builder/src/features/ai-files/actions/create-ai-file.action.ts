@@ -1,11 +1,7 @@
 "use server"
 
-import { auditService } from "@chatbotx.io/business/audit"
+import { aiFileService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
-import { aiFileModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
-import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
 import { getTranslations } from "next-intl/server"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -17,40 +13,16 @@ export const createAIFileAction = workspaceActionClient
   .action(async ({ bindArgsParsedInputs, parsedInput }) => {
     const [workspaceId] = bindArgsParsedInputs
 
-    const hasOpenAI = await db.query.integrationOpenaiModel.findFirst({
-      where: { workspaceId },
-      columns: { id: true },
-    })
-    const hasGemini = await db.query.integrationGeminiModel.findFirst({
-      where: { workspaceId },
-      columns: { id: true },
-    })
-
-    if (!(hasOpenAI || hasGemini)) {
-      const t = await getTranslations("aiFiles")
-      throw new ChatbotXException(t("noEmbeddingProvider"))
+    try {
+      await aiFileService.create({ workspaceId, ...parsedInput })
+    } catch (error) {
+      if (
+        error instanceof ChatbotXException &&
+        error.code === "noEmbeddingProvider"
+      ) {
+        const t = await getTranslations("aiFiles")
+        throw new ChatbotXException(t("noEmbeddingProvider"))
+      }
+      throw error
     }
-
-    const created = await db
-      .insert(aiFileModel)
-      .values({
-        ...parsedInput,
-        id: createId(),
-        workspaceId,
-      })
-      .returning({ id: aiFileModel.id })
-
-    // Enqueue embedding job right after creation
-    await aiAgentQueue.add(AIJobAction.processAIFile, {
-      type: AIJobAction.processAIFile,
-      data: {
-        aiFileId: created[0].id,
-      },
-    })
-
-    await auditService.record({
-      workspaceId,
-      action: "create",
-      detail: `created a new Knowledge (#${created[0].id})`,
-    })
   })
