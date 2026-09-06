@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { aiMcpServerService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListAIMcpServersRequest,
@@ -10,10 +10,8 @@ export async function listAIMcpServers(
 ): Promise<ListAIMcpServersResponse & { pageCount: number }> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const data = await db.query.aiMCPServerModel.findMany({
-    where: {
-      workspaceId: input.workspaceId,
-    },
+  const data = await aiMcpServerService.list({
+    where: { workspaceId: input.workspaceId },
   })
 
   return { data, pageCount: 1 }

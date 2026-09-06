@@ -2,14 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
-import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq } from "@chatbotx.io/database/client"
-import {
-  integrationClaudeModel,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
-import { AuthType, type SecretTextAuthValue } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
+import { integrationClaudeService } from "@chatbotx.io/business"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -44,64 +37,18 @@ export const connectClaudeAction = workspaceActionClient
         })
       }
 
-      const integrationClaude = await db.query.integrationClaudeModel.findFirst(
-        {
-          where: { workspaceId },
-        },
-      )
-
-      await db.transaction(async (tx) => {
-        if (integrationClaude) {
-          await tx
-            .update(integrationClaudeModel)
-            .set({
-              model: parsedInput.model,
-              auth: {
-                authType: AuthType.secretText,
-                secretText: parsedInput.apiKey,
-              } as SecretTextAuthValue,
-              temperature: parsedInput.temperature,
-              maxOutputTokens: parsedInput.maxOutputTokens,
-            })
-            .where(eq(integrationClaudeModel.id, integrationClaude.id))
-        } else {
-          const integration = await tx
-            .insert(integrationModel)
-            .values({
-              id: createId(),
-              workspaceId,
-              integrationType: "claude",
-            })
-            .returning()
-            .then((result) => result[0])
-
-          await tx.insert(integrationClaudeModel).values({
-            id: createId(),
-            integrationId: integration.id,
-            workspaceId,
-            model: parsedInput.model,
-            auth: {
-              authType: AuthType.secretText,
-              secretText: parsedInput.apiKey,
-            } as SecretTextAuthValue,
-            temperature: parsedInput.temperature,
-            maxOutputTokens: parsedInput.maxOutputTokens,
-          })
-        }
+      await integrationClaudeService.connect({
+        workspaceId,
+        apiKey: parsedInput.apiKey,
+        model: parsedInput.model,
+        temperature: parsedInput.temperature,
+        maxOutputTokens: parsedInput.maxOutputTokens,
       })
 
       await aiIntegrationService.invalidateCache(
         workspaceId,
         aiProviders.enum.claude,
       )
-
-      await auditService.record({
-        workspaceId,
-        action: integrationClaude ? "update" : "connect",
-        detail: integrationClaude
-          ? "updated the Claude integration configuration"
-          : "connected a new Claude integration",
-      })
 
       return
     },

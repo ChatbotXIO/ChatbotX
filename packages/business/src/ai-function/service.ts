@@ -153,6 +153,16 @@ class AiFunctionService extends BaseService {
       .where(eq(aiFunctionModel.id, id))
       .returning()
   }
+
+  async list(props: {
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<AIFunctionModel[]> {
+    const { tx = db, workspaceId } = props
+    return await tx.query.aiFunctionModel.findMany({
+      where: { workspaceId },
+    })
+  }
 }
 
 export const aiFunctionService = new AiFunctionService()

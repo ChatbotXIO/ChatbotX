@@ -68,6 +68,26 @@ export const integrationMessengerRepository = {
       .orderBy(integrationMessengerModel.createdAt)
   },
 
+  /**
+   * Projected read for the flow editor's "Set Persona" picker. Selects only
+   * `name` and `personas`, excluding the encrypted auth blob and the
+   * persistent-menu jsonb so a workspace with many connected Pages doesn't
+   * ship those bytes on every flow-editor open.
+   */
+  listPersonasByWorkspaceId(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+  ): Promise<Pick<IntegrationMessengerModel, "name" | "personas">[]> {
+    return tx
+      .select({
+        name: integrationMessengerModel.name,
+        personas: integrationMessengerModel.personas,
+      })
+      .from(integrationMessengerModel)
+      .where(eq(integrationMessengerModel.workspaceId, workspaceId))
+      .orderBy(integrationMessengerModel.createdAt)
+  },
+
   async findWorkspaceIntegration(
     input: WorkspaceIntegrationRef,
     tx: DatabaseClient = db,

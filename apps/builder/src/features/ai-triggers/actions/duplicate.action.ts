@@ -1,7 +1,6 @@
 "use server"
 
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { aiTriggerModel } from "@chatbotx.io/database/schema"
+import { aiTriggerService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -12,25 +11,5 @@ export const duplicateAITriggerAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    return await duplicateAITrigger({ workspaceId, id })
+    await aiTriggerService.duplicate({ workspaceId, id })
   })
-
-export const duplicateAITrigger = async (ctx: {
-  workspaceId: string
-  id: string
-}) => {
-  const targetAITrigger = await findOrFail({
-    table: aiTriggerModel,
-    where: {
-      id: ctx.id,
-      workspaceId: ctx.workspaceId,
-    },
-    message: "AITrigger not found",
-  })
-  const { id: eid, name, createdAt, updatedAt, ...rest } = targetAITrigger
-
-  await db.insert(aiTriggerModel).values({
-    ...rest,
-    name: `${name} _copy`,
-  })
-}

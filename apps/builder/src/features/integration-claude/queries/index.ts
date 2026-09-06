@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { integrationClaudeService } from "@chatbotx.io/business"
 import type { IntegrationClaudeResource } from "../schema/resource"
 
 export const findIntegrationClaude = async ({
@@ -6,8 +6,4 @@ export const findIntegrationClaude = async ({
 }: {
   workspaceId: string
 }): Promise<IntegrationClaudeResource | null> =>
-  (await db.query.integrationClaudeModel.findFirst({
-    where: {
-      workspaceId,
-    },
-  })) ?? null
+  (await integrationClaudeService.findByWorkspaceId(workspaceId)) ?? null

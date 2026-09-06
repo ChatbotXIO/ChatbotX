@@ -1,8 +1,6 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { aiTriggerModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { aiTriggerService } from "@chatbotx.io/business"
 import { createAITriggerRequest } from "@/features/ai-triggers/schema/action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -16,9 +14,5 @@ export const createAITriggerAction = workspaceActionClient
       parsedInput,
     } = props
 
-    await db.insert(aiTriggerModel).values({
-      ...parsedInput,
-      workspaceId,
-      id: createId(),
-    })
+    await aiTriggerService.create(workspaceId, parsedInput)
   })

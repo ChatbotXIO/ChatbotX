@@ -2,14 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
-import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq } from "@chatbotx.io/database/client"
-import {
-  integrationDeepseekModel,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
-import { AuthType, type SecretTextAuthValue } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
+import { integrationDeepSeekService } from "@chatbotx.io/business"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -44,63 +37,18 @@ export const connectDeepSeekAction = workspaceActionClient
         })
       }
 
-      const integrationDeepseek =
-        await db.query.integrationDeepseekModel.findFirst({
-          where: { workspaceId },
-        })
-
-      await db.transaction(async (tx) => {
-        if (integrationDeepseek) {
-          await tx
-            .update(integrationDeepseekModel)
-            .set({
-              model: parsedInput.model,
-              auth: {
-                authType: AuthType.secretText,
-                secretText: parsedInput.apiKey,
-              } as SecretTextAuthValue,
-              temperature: parsedInput.temperature,
-              maxOutputTokens: parsedInput.maxOutputTokens,
-            })
-            .where(eq(integrationDeepseekModel.id, integrationDeepseek.id))
-        } else {
-          const integration = await tx
-            .insert(integrationModel)
-            .values({
-              id: createId(),
-              workspaceId,
-              integrationType: "deepseek",
-            })
-            .returning()
-            .then((result) => result[0])
-
-          await tx.insert(integrationDeepseekModel).values({
-            id: createId(),
-            integrationId: integration.id,
-            workspaceId,
-            model: parsedInput.model,
-            auth: {
-              authType: AuthType.secretText,
-              secretText: parsedInput.apiKey,
-            } as SecretTextAuthValue,
-            temperature: parsedInput.temperature,
-            maxOutputTokens: parsedInput.maxOutputTokens,
-          })
-        }
+      await integrationDeepSeekService.connect({
+        workspaceId,
+        apiKey: parsedInput.apiKey,
+        model: parsedInput.model,
+        temperature: parsedInput.temperature,
+        maxOutputTokens: parsedInput.maxOutputTokens,
       })
 
       await aiIntegrationService.invalidateCache(
         workspaceId,
         aiProviders.enum.deepseek,
       )
-
-      await auditService.record({
-        workspaceId,
-        action: integrationDeepseek ? "update" : "connect",
-        detail: integrationDeepseek
-          ? "updated the DeepSeek integration configuration"
-          : "connected a new DeepSeek integration",
-      })
 
       return
     },
