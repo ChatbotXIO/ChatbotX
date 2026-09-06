@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const geminiEmbeddingModels = z.enum(["text-embedding-004"])
+export const geminiEmbeddingModels = z.enum(["gemini-embedding-001"])
 export type GeminiEmbeddingModel = z.infer<typeof geminiEmbeddingModels>
 
 export const geminiModels = z.enum([

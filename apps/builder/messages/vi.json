@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "Kích thước tệp vượt quá giới hạn tối đa",
     "maxItemsReached": "Tối đa {max} {feature} cho mỗi workspace",
+    "maxCharacters": "Tối đa {max} ký tự.",
     "invalidApiKey": "API key không hợp lệ",
     "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}"
   },

@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "Dimensiunea fișierului depășește limita maximă",
     "maxItemsReached": "Sunt permise maximum {max} {feature} per spațiu de lucru",
+    "maxCharacters": "Maximum {max} caractere.",
     "invalidApiKey": "Cheie API invalidă",
     "maxMustBeGreaterThanMin": "{maxField} trebuie să fie mai mare sau egal cu {minField}"
   },

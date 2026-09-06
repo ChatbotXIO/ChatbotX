@@ -1,7 +1,10 @@
 "use client"
 
 import { openAITTSVoiceTypes } from "@chatbotx.io/ai"
-import { aiTextToSpeechSchema } from "@chatbotx.io/flow-config"
+import {
+  AI_TEXT_TO_SPEECH_MESSAGE_MAX_LENGTH,
+  aiTextToSpeechSchema,
+} from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -57,6 +60,22 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
   const handleSubmit = form.handleSubmit((values) => {
     const currentValues = getParentValues(parentName)
+    const currentMessage =
+      typeof currentValues.message === "string"
+        ? currentValues.message.trim()
+        : ""
+    const message = values.message.trim()
+    if (
+      message.length > AI_TEXT_TO_SPEECH_MESSAGE_MAX_LENGTH &&
+      message !== currentMessage
+    ) {
+      form.setError("message", {
+        message: t("validation.maxCharacters", {
+          max: AI_TEXT_TO_SPEECH_MESSAGE_MAX_LENGTH,
+        }),
+      })
+      return
+    }
     setParentValue(parentName, {
       ...currentValues,
       ...values,
@@ -88,6 +107,9 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
           <form className="flex flex-col space-y-6" onSubmit={handleSubmit}>
             <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-6 overflow-y-auto">
               <TiptapEditorField
+                description={t("validation.maxCharacters", {
+                  max: AI_TEXT_TO_SPEECH_MESSAGE_MAX_LENGTH,
+                })}
                 label={t("fields.inputText.label")}
                 name="message"
                 required

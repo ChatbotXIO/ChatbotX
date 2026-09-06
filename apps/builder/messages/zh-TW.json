@@ -3432,6 +3432,7 @@
   "validation": {
     "maxSize": "檔案大小超出上限",
     "maxItemsReached": "最大 {max}{feature}",
+    "maxCharacters": "最多 {max} 個字元。",
     "invalidApiKey": "API 金鑰無效",
     "maxMustBeGreaterThanMin": "{maxField} 必須大於或等於 {minField}"
   },
