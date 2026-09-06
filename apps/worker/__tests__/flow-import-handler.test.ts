@@ -111,13 +111,13 @@ const buildExportJson = (overrides: Record<string, unknown> = {}) => ({
             isStartNode: true,
             details: {
               beforeStep: {
-                id: "b1",
+                id: "1001",
                 stepType: "chooseChannel",
                 channel: "omnichannel",
               },
               steps: [
                 {
-                  id: "s1",
+                  id: "1002",
                   stepType: "subscribeSequence",
                   sequenceId: "999",
                 },
@@ -293,13 +293,13 @@ describe("runFlowImport", () => {
                 isStartNode: true,
                 details: {
                   beforeStep: {
-                    id: "b1",
+                    id: "1001",
                     stepType: "chooseChannel",
                     channel: "omnichannel",
                   },
                   steps: [
                     {
-                      id: "s1",
+                      id: "1002",
                       stepType: "setCustomField",
                       inputFieldId: "source-field-1",
                       operation: "O01",
@@ -331,7 +331,7 @@ describe("runFlowImport", () => {
               ...exportJson.flows[0].nodes[0].data.details,
               steps: [
                 {
-                  id: "s1",
+                  id: "1002",
                   stepType: "setCustomField",
                   inputFieldId: "target-field-1",
                   operation: "O01",
@@ -373,13 +373,13 @@ describe("runFlowImport", () => {
                 isStartNode: true,
                 details: {
                   beforeStep: {
-                    id: "b1",
+                    id: "1001",
                     stepType: "chooseChannel",
                     channel: "omnichannel",
                   },
                   steps: [
                     {
-                      id: "s1",
+                      id: "1002",
                       stepType: "setCustomField",
                       inputFieldId: "999",
                       operation: "O01",
@@ -434,13 +434,13 @@ describe("runFlowImport", () => {
                 isStartNode: true,
                 details: {
                   beforeStep: {
-                    id: "b1",
+                    id: "1001",
                     stepType: "chooseChannel",
                     channel: "omnichannel",
                   },
                   steps: [
                     {
-                      id: "s1",
+                      id: "1002",
                       stepType: "setCustomField",
                       inputFieldId: "bot_field:7",
                       operation: "O01",
@@ -473,7 +473,7 @@ describe("runFlowImport", () => {
               ...exportJson.flows[0].nodes[0].data.details,
               steps: [
                 {
-                  id: "s1",
+                  id: "1002",
                   stepType: "setCustomField",
                   inputFieldId: "bot_field:77",
                   operation: "O01",
@@ -515,13 +515,13 @@ describe("runFlowImport", () => {
                 isStartNode: true,
                 details: {
                   beforeStep: {
-                    id: "b1",
+                    id: "1001",
                     stepType: "chooseChannel",
                     channel: "omnichannel",
                   },
                   steps: [
                     {
-                      id: "s1",
+                      id: "1002",
                       stepType: "setCustomField",
                       inputFieldId: "bot_field:999",
                       operation: "O01",
