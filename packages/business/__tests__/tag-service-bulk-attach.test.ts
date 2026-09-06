@@ -9,6 +9,7 @@ const emitTagApplied = vi.fn()
 const invalidateCacheByTags = vi.fn()
 const selectWhere = vi.fn()
 const enqueueTagAppliedEvaluationsBulk = vi.fn()
+const contactInvalidate = vi.fn()
 
 const createSelectBuilder = () => {
   const builder = {
@@ -90,6 +91,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("../src/contact", () => ({
   contactService: {
     findManyByIds: (...args: unknown[]) => findManyByIds(...args),
+    invalidate: (...args: unknown[]) => contactInvalidate(...args),
   },
 }))
 
@@ -110,6 +112,7 @@ describe("TagService.bulkAttachToContacts", () => {
     enqueueAttachMany.mockReset()
     emitTagApplied.mockReset()
     invalidateCacheByTags.mockReset()
+    contactInvalidate.mockReset()
     selectWhere.mockReset()
     selectWhere.mockResolvedValue([])
     enqueueTagAppliedEvaluationsBulk.mockReset()
@@ -163,10 +166,13 @@ describe("TagService.bulkAttachToContacts", () => {
       pairs: [{ contactId: "contact-1", tagId: "tag-2" }],
     })
     expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "workspaces:workspace-1#contacts",
-      "workspaces:workspace-1#conversations",
-      "workspaces:workspace-1#tags",
+      "tags",
+      "tags:workspace-1",
     ])
+    expect(contactInvalidate).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["contact-1"],
+    })
     expect(result).toEqual({ attachedPairCount: 1 })
   })
 

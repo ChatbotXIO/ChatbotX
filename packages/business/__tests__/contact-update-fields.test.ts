@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   setValuesInTransaction: vi.fn(),
   emitCustomFieldChanges: vi.fn(),
   emitContactInfoChangeEvents: vi.fn(),
-  customFieldList: vi.fn(),
+  customFieldFindManyByIds: vi.fn(),
   dispatchAuditRecord: vi.fn(),
 }))
 
@@ -51,7 +51,7 @@ vi.mock("../src/contact-custom-field/service", () => ({
 }))
 
 vi.mock("../src/custom-field/service", () => ({
-  customFieldService: { list: mocks.customFieldList },
+  customFieldService: { findManyByIds: mocks.customFieldFindManyByIds },
 }))
 
 vi.mock("../src/contact-locale", () => ({
@@ -130,9 +130,9 @@ describe("contactService.updateFieldsAndCustomFields — custom-field event orde
       email: null,
     })
     mocks.findContactInboxByUncached.mockResolvedValue(undefined)
-    mocks.customFieldList.mockResolvedValue({
-      data: [{ id: "cf-1", name: "plan" }],
-    })
+    mocks.customFieldFindManyByIds.mockResolvedValue([
+      { id: "1", name: "plan" },
+    ])
     mocks.emitCustomFieldChanges.mockResolvedValue(undefined)
     mocks.emitContactInfoChangeEvents.mockResolvedValue(undefined)
   })
@@ -140,7 +140,7 @@ describe("contactService.updateFieldsAndCustomFields — custom-field event orde
   test("writes inside the transaction and emits custom-field changes only after commit", async () => {
     const persisted = [
       {
-        customFieldId: "cf-1",
+        customFieldId: "1",
         customFieldName: "plan",
         oldValue: null,
         newValue: "pro",
@@ -149,7 +149,7 @@ describe("contactService.updateFieldsAndCustomFields — custom-field event orde
     mocks.setValuesInTransaction.mockResolvedValue(persisted)
 
     await updateFieldsAndCustomFields(CTX, {
-      "cf-1": "pro",
+      "1": "pro",
       clientTimezone: "Asia/Ho_Chi_Minh",
     })
 
@@ -162,7 +162,7 @@ describe("contactService.updateFieldsAndCustomFields — custom-field event orde
       {
         workspaceId: "ws-1",
         contactId: "contact-1",
-        fields: [{ customFieldId: "cf-1", value: "pro" }],
+        fields: [{ customFieldId: "1", value: "pro" }],
         sourceTimezone: "Asia/Ho_Chi_Minh",
       },
       txHandle,
@@ -213,7 +213,7 @@ describe("contactService.updateFieldsAndCustomFields — custom-field event orde
       timezone: "Asia/Ho_Chi_Minh",
       phoneNumber: "84901234567",
       email: "ada@example.com",
-      "cf-1": "pro",
+      "1": "pro",
     })
 
     expect(mocks.contactUpdate).not.toHaveBeenCalled()
@@ -284,5 +284,43 @@ describe("contactService.updateFieldsAndCustomFields — custom-field event orde
     expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
     expect(mocks.emitContactInfoChangeEvents).not.toHaveBeenCalled()
     expect(mocks.emitCustomFieldChanges).not.toHaveBeenCalled()
+  })
+
+  // A2 fix: the old `customFieldService.list({ perPage: 10_000 })` call was
+  // silently clamped to 50 by `parsePagination`'s maxLimit, so a workspace
+  // with more than 50 custom fields could never update field #51+. The
+  // candidate-key + `findManyByIds` approach has no such limit.
+  test("writes a custom field beyond the old 50-row clamp (60 fields, field #55)", async () => {
+    // Every numeric key the payload carries is a resolution *candidate* —
+    // findManyByIds decides which ones are real custom fields, so a
+    // workspace with 60 custom fields is exercised by echoing back
+    // whichever numeric ids were actually queried.
+    mocks.customFieldFindManyByIds.mockImplementation(async ({ ids }) => [
+      ...ids.map((id: string) => ({ id, name: `field-${id}` })),
+    ])
+    mocks.setValuesInTransaction.mockResolvedValue([
+      {
+        customFieldId: "55",
+        customFieldName: "field-55",
+        oldValue: null,
+        newValue: "value-55",
+      },
+    ])
+
+    await updateFieldsAndCustomFields(CTX, { "55": "value-55" })
+
+    expect(mocks.customFieldFindManyByIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["55"],
+    })
+    expect(mocks.setValuesInTransaction).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        fields: [{ customFieldId: "55", value: "value-55" }],
+        sourceTimezone: undefined,
+      },
+      txHandle,
+    )
   })
 })

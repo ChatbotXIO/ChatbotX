@@ -94,6 +94,7 @@ const contactFindByIdOrFail = vi.fn(() => {
   return Promise.resolve(state.findOrFailResult ?? {})
 })
 const enqueueTagAppliedEvaluationsBulk = vi.fn(async () => undefined)
+const contactInvalidate = vi.fn(async () => undefined)
 
 vi.mock("../src/tag/sync.service", () => ({
   tagSyncService: { enqueueAttach, enqueueDetach },
@@ -107,6 +108,7 @@ vi.mock("../src/contact", () => ({
   contactService: {
     findByIdOrFail: contactFindByIdOrFail,
     findManyByIds: contactFindManyByIds,
+    invalidate: contactInvalidate,
   },
 }))
 
@@ -297,7 +299,7 @@ describe("tagService.attachByNamesToContacts", () => {
         contactIds: ["c-1"],
         names: ["tag-a"],
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ processedContactIds: ["c-1"], skippedContactIds: [] })
 
     expect(enqueueAttach).toHaveBeenCalledOnce()
     expect(enqueueAttach).toHaveBeenCalledWith({
@@ -384,11 +386,11 @@ describe("tagService.attachByNamesToContacts", () => {
       names: ["tag-a"],
     })
 
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "workspaces:ws-42#contacts",
-      "workspaces:ws-42#conversations",
-      "workspaces:ws-42#tags",
-    ])
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tags", "tags:ws-42"])
+    expect(contactInvalidate).toHaveBeenCalledWith({
+      workspaceId: "ws-42",
+      ids: ["c-1"],
+    })
   })
 })
 
@@ -466,7 +468,9 @@ describe("tagService.detachByNamesFromContacts", () => {
       names: ["tag-a", "tag-b"],
     })
 
-    expect(db.delete).toHaveBeenCalledTimes(2)
+    // One DELETE per chunk (both contacts fall in the same 200-sized chunk),
+    // not one per contact.
+    expect(db.delete).toHaveBeenCalledTimes(1)
     expect(enqueueDetach).toHaveBeenCalledTimes(4)
     expect(enqueueDetach).toHaveBeenCalledWith({
       workspaceId: "ws-1",
@@ -521,11 +525,11 @@ describe("tagService.detachByNamesFromContacts", () => {
       names: ["tag-a"],
     })
 
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "workspaces:ws-99#contacts",
-      "workspaces:ws-99#conversations",
-      "workspaces:ws-99#tags",
-    ])
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tags", "tags:ws-99"])
+    expect(contactInvalidate).toHaveBeenCalledWith({
+      workspaceId: "ws-99",
+      ids: ["c-1"],
+    })
   })
 
   test("passes assigned-contact access scope to contact lookup", async () => {
@@ -752,10 +756,10 @@ describe("tagService.replaceContactTagsByNames", () => {
       names: [],
     })
 
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "workspaces:ws-7#contacts",
-      "workspaces:ws-7#conversations",
-      "workspaces:ws-7#tags",
-    ])
+    expect(invalidateCacheByTags).toHaveBeenCalledWith(["tags", "tags:ws-7"])
+    expect(contactInvalidate).toHaveBeenCalledWith({
+      workspaceId: "ws-7",
+      ids: ["c-1"],
+    })
   })
 })

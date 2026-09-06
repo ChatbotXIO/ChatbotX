@@ -1,5 +1,4 @@
 import { contactService, importService } from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { contactRepository } from "@chatbotx.io/database/repositories"
 import { z } from "zod"
@@ -19,6 +18,7 @@ import {
 import {
   countContactsPublicRequest,
   countContactsPublicResponse,
+  importContactsPublicResponse,
   listContactsPublicRequest,
 } from "../../schema/public/crud"
 import {
@@ -101,14 +101,10 @@ export const contactsCrudPublicRouter = {
         identifier: input.identifier,
         workspaceId: context.workspace.id,
       })
-      const contact = await contactRepository.findPublicById({
+      return await contactService.findPublicContactOrFail({
         id: contactId,
         workspaceId: context.workspace.id,
       })
-      if (!contact) {
-        throw notFoundException("Contact not found")
-      }
-      return contact
     }),
 
   create: workspaceTokenAuthAPI
@@ -125,14 +121,10 @@ export const contactsCrudPublicRouter = {
         workspaceId: context.workspace.id,
         input,
       })
-      const newContact = await contactRepository.findPublicById({
+      return await contactService.findPublicContactOrFail({
         id: contact.id,
         workspaceId: context.workspace.id,
       })
-      if (!newContact) {
-        throw notFoundException("Contact not found")
-      }
-      return newContact
     }),
 
   findByCustomField: workspaceTokenAuthAPI
@@ -163,6 +155,7 @@ export const contactsCrudPublicRouter = {
       tags: ["Contacts"],
     })
     .input(importContactsRequest)
+    .output(importContactsPublicResponse)
     .handler(
       async ({ context, input }) =>
         await importService.startContactImport({
@@ -306,13 +299,9 @@ export const contactsCrudPublicRouter = {
         },
       })
 
-      const result = await contactRepository.findPublicById({
+      return await contactService.findPublicContactOrFail({
         id: contact.id,
         workspaceId,
       })
-      if (!result) {
-        throw notFoundException("Contact not found")
-      }
-      return result
     }),
 }

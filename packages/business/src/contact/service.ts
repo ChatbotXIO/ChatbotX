@@ -100,26 +100,45 @@ export type ContactAccessScope = {
 class ContactService extends BaseService {
   createWithInbox = createContactWithInbox
   updateFieldsAndCustomFields = updateFieldsAndCustomFields
+  /**
+   * Runs on every contact-addressed public request. Safe to cache: every
+   * contact write path (update, delete, custom-field writes, tag writes)
+   * invalidates `contacts:{id}`, and `withCache` never caches a negative
+   * (undefined) result, so a not-yet-existing contact is never stuck
+   * unresolvable.
+   */
   async resolveIdByIdentifier(input: {
     workspaceId: string
     identifier: string
   }): Promise<string> {
     const { where } = parseContactIdentifier(input.identifier)
-    const contact = await contactRepository.findIdByIdentityWhere({
-      workspaceId: input.workspaceId,
-      ...where,
-    })
-    if (!contact) {
+    const key = `contacts:${input.workspaceId}:identity:${input.identifier}`
+
+    const id = await withCache(
+      key,
+      async () => {
+        const contact = await contactRepository.findIdByIdentityWhere({
+          workspaceId: input.workspaceId,
+          ...where,
+        })
+        return contact?.id
+      },
+      {
+        dynamicTags: (result) => (result ? [`contacts:${result}`] : undefined),
+      },
+    )
+
+    if (!id) {
       throw notFoundException("Contact not found")
     }
-    return contact.id
+    return id
   }
   async deleteAndRecord(ctx: {
     triggerSource: string
     workspaceId: string
     ids: string[]
     accessScope?: ContactAccessScope
-  }) {
+  }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
     const contacts = await contactService.delete(ctx)
 
     if (contacts.length > 0) {
@@ -150,6 +169,12 @@ class ContactService extends BaseService {
           },
         })
       }
+    }
+
+    const processedSet = new Set(contacts.map((contact) => contact.id))
+    return {
+      processedContactIds: [...processedSet],
+      skippedContactIds: ctx.ids.filter((id) => !processedSet.has(id)),
     }
   }
 
@@ -210,19 +235,9 @@ class ContactService extends BaseService {
     tx?: DatabaseClient
   }): Promise<ContactModel | undefined> {
     const { workspaceId, id, accessScope, tx = db } = props
-    // return await withCache(
-    //   `contacts:${workspaceId}:${id}`,
-    //   async () =>
     return await tx.query.contactModel.findFirst({
       where: withContactAccessScope({ id, workspaceId }, accessScope),
     })
-    // {
-    //   dynamicTags: (result) =>
-    //     result
-    //       ? ["contacts", `contacts:${workspaceId}`, `contacts:${result.id}`]
-    //       : undefined,
-    // },
-    // )
   }
 
   async findByIdOrFail(props: {
@@ -232,6 +247,19 @@ class ContactService extends BaseService {
     tx?: DatabaseClient
   }): Promise<ContactModel> {
     const contact = await this.findById(props)
+    if (!contact) {
+      throw notFoundException("Contact not found")
+    }
+    return contact
+  }
+
+  /**
+   * The public-API "get full contact with relations" read — shared by
+   * `get`/`create`/`upsert` in `contacts/api/public/crud.ts` so the
+   * "findPublicById or 404" pair isn't repeated at each call site.
+   */
+  async findPublicContactOrFail(props: { workspaceId: string; id: string }) {
+    const contact = await contactRepository.findPublicById(props)
     if (!contact) {
       throw notFoundException("Contact not found")
     }

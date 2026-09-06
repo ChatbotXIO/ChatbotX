@@ -23,7 +23,7 @@ import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceService } from "../workspace/service"
 import { contactService } from "./service"
 
-export type CreateContactInput = {
+type CreateContactInput = {
   phoneNumber?: string
   email: string
   contactId?: string

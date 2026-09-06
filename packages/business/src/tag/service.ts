@@ -38,6 +38,19 @@ import { tagSyncService } from "./sync.service"
 
 const CONTACT_CHUNK_SIZE = 200
 
+// Mirrors the `contactCacheTags` pattern in `contact-custom-field/service.ts`:
+// `tags` busts the "tags" collection tag `findByKey`/`list` register under,
+// `tags:{ws}` scopes it to one workspace's tag reads.
+const tagCacheTags = (workspaceId: string): string[] => [
+  "tags",
+  `tags:${workspaceId}`,
+]
+
+// Short TTL because the result embeds `contactsCount`, which changes on
+// every tag attach/detach — those paths don't invalidate this list cache
+// (only create/update/delete do), so a short expiry bounds the staleness.
+const TAG_LIST_CACHE_TTL_SECONDS = 60
+
 class TagService extends BaseService {
   async list(input: {
     workspaceId: string
@@ -47,44 +60,55 @@ class TagService extends BaseService {
     perPage?: number | null
     sort?: { id: string; desc: boolean }[] | null
   }) {
-    const where = {
-      workspaceId: input.workspaceId,
-      deletedAt: { isNull: true as const },
-      name: input.name ? { ilike: likeContains(input.name) } : undefined,
-      folderId: input.folderId
-        ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
-          input.folderId === rootFolderId
-          ? { isNull: true as const }
-          : input.folderId
-        : undefined,
-    }
+    const cacheKey = `tags:${input.workspaceId}:list:${JSON.stringify(input)}`
 
-    const pagination = parsePagination(input)
-    const orderBy = parseOrderByAsObject(tagModel, input)
+    return await withCache(
+      cacheKey,
+      async () => {
+        const where = {
+          workspaceId: input.workspaceId,
+          deletedAt: { isNull: true as const },
+          name: input.name ? { ilike: likeContains(input.name) } : undefined,
+          folderId: input.folderId
+            ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
+              input.folderId === rootFolderId
+              ? { isNull: true as const }
+              : input.folderId
+            : undefined,
+        }
 
-    const [data, totalRows] = await Promise.all([
-      db.query.tagModel.findMany({
-        where,
-        orderBy,
-        ...pagination,
-        extras: {
-          contactsCount: (table) =>
-            db.$count(
-              contactsToTagsModel,
-              eq(contactsToTagsModel.tagId, table.id),
-            ),
-        },
-      }),
-      pagination?.limit
-        ? db.$count(tagModel, relationsFilterToSQL(tagModel, where))
-        : Promise.resolve(1),
-    ])
+        const pagination = parsePagination(input)
+        const orderBy = parseOrderByAsObject(tagModel, input)
 
-    const pageCount = pagination?.limit
-      ? Math.ceil(totalRows / pagination.limit)
-      : 1
+        const [data, totalRows] = await Promise.all([
+          db.query.tagModel.findMany({
+            where,
+            orderBy,
+            ...pagination,
+            extras: {
+              contactsCount: (table) =>
+                db.$count(
+                  contactsToTagsModel,
+                  eq(contactsToTagsModel.tagId, table.id),
+                ),
+            },
+          }),
+          pagination?.limit
+            ? db.$count(tagModel, relationsFilterToSQL(tagModel, where))
+            : Promise.resolve(1),
+        ])
 
-    return { data, pageCount }
+        const pageCount = pagination?.limit
+          ? Math.ceil(totalRows / pagination.limit)
+          : 1
+
+        return { data, pageCount }
+      },
+      {
+        ttl: TAG_LIST_CACHE_TTL_SECONDS,
+        tags: [`tags:${input.workspaceId}`],
+      },
+    )
   }
 
   async create(props: {
@@ -131,9 +155,7 @@ class TagService extends BaseService {
       })
     }
 
-    await this.invalidateCacheTags([
-      `workspaces:${parsedInput.workspaceId}#tags`,
-    ])
+    await this.invalidateCacheTags(tagCacheTags(parsedInput.workspaceId))
     return {
       data: newTag,
     }
@@ -176,7 +198,7 @@ class TagService extends BaseService {
       .returning()
       .then((result) => result[0])
 
-    await this.invalidateCacheTags([`workspaces:${workspaceId}#tags`])
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
     return updatedTag
   }
 
@@ -206,7 +228,7 @@ class TagService extends BaseService {
       }
     }
 
-    await this.invalidateCacheTags([`workspaces:${workspaceId}#tags`])
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
   }
 
   async attachByNamesToContacts({
@@ -219,19 +241,21 @@ class TagService extends BaseService {
     contactIds: string[]
     names: string[]
     accessScope?: ContactAccessScope
-  }) {
+  }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
     if (contactIds.length === 0 || names.length === 0) {
-      return
+      return { processedContactIds: [], skippedContactIds: [...contactIds] }
     }
 
     // Resolve/create the tag set once (bounded by the request, small).
-    const allTags = await tagService.upsertByNames({
+    const allTags = await this.upsertByNames({
       workspaceId,
       names,
     })
     if (allTags.length === 0) {
-      return
+      return { processedContactIds: [], skippedContactIds: [...contactIds] }
     }
+
+    const affectedContactIds: string[] = []
 
     // Process selected contacts in chunks — never load all contacts at once.
     for (
@@ -248,6 +272,7 @@ class TagService extends BaseService {
       if (contacts.length === 0) {
         continue
       }
+      affectedContactIds.push(...contacts.map((contact) => contact.id))
 
       const links = contacts.flatMap((contact) =>
         allTags.map((selectedTag) => ({
@@ -299,11 +324,16 @@ class TagService extends BaseService {
       }
     }
 
-    await this.invalidateCacheTags([
-      `workspaces:${workspaceId}#contacts`,
-      `workspaces:${workspaceId}#conversations`,
-      `workspaces:${workspaceId}#tags`,
-    ])
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    if (affectedContactIds.length > 0) {
+      await contactService.invalidate({ workspaceId, ids: affectedContactIds })
+    }
+
+    const processedSet = new Set(affectedContactIds)
+    return {
+      processedContactIds: affectedContactIds,
+      skippedContactIds: contactIds.filter((id) => !processedSet.has(id)),
+    }
   }
 
   async replaceContactTagsByNames({
@@ -336,29 +366,13 @@ class TagService extends BaseService {
 
     const { returnedTags, newlyAppliedTags, removedTagIds } =
       await db.transaction(async (tx) => {
-        if (names.length > 0) {
-          await tx
-            .insert(tagModel)
-            .values(
-              names.map((name) => ({
-                id: createId(),
-                name,
-                workspaceId,
-              })),
-            )
-            .onConflictDoNothing({
-              target: [tagModel.workspaceId, tagModel.name],
-              where: isNull(tagModel.deletedAt),
-            })
-        }
-
-        const tags = await tx.query.tagModel.findMany({
-          where: {
-            workspaceId,
-            deletedAt: { isNull: true as const },
-            name: { in: names },
-          },
-        })
+        const upserted = await this.upsertByNames({ workspaceId, names, tx })
+        const tags =
+          upserted.length > 0
+            ? await tx.query.tagModel.findMany({
+                where: { id: { in: upserted.map((tag) => tag.id) } },
+              })
+            : []
 
         if (tags.length > 0) {
           await tx
@@ -446,11 +460,8 @@ class TagService extends BaseService {
       })
     }
 
-    await this.invalidateCacheTags([
-      `workspaces:${workspaceId}#contacts`,
-      `workspaces:${workspaceId}#conversations`,
-      `workspaces:${workspaceId}#tags`,
-    ])
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    await contactService.invalidate({ workspaceId, ids: [contact.id] })
 
     return returnedTags
   }
@@ -487,6 +498,8 @@ class TagService extends BaseService {
       return
     }
 
+    const affectedContactIds: string[] = []
+
     // Process selected contacts in chunks — never load all contacts at once.
     for (
       let offset = 0;
@@ -502,17 +515,18 @@ class TagService extends BaseService {
       if (contacts.length === 0) {
         continue
       }
+      const contactIdsInChunk = contacts.map((contact) => contact.id)
+      affectedContactIds.push(...contactIdsInChunk)
 
-      for (const contact of contacts) {
-        await db
-          .delete(contactsToTagsModel)
-          .where(
-            and(
-              eq(contactsToTagsModel.contactId, contact.id),
-              inArray(contactsToTagsModel.tagId, allTagIds),
-            ),
-          )
-      }
+      // One DELETE per chunk instead of one per contact.
+      await db
+        .delete(contactsToTagsModel)
+        .where(
+          and(
+            inArray(contactsToTagsModel.contactId, contactIdsInChunk),
+            inArray(contactsToTagsModel.tagId, allTagIds),
+          ),
+        )
 
       // Channel cleanup (unassign + delete ContactToTagChannel) runs in the queue.
       for (const contact of contacts) {
@@ -537,11 +551,10 @@ class TagService extends BaseService {
       }
     }
 
-    await this.invalidateCacheTags([
-      `workspaces:${workspaceId}#contacts`,
-      `workspaces:${workspaceId}#conversations`,
-      `workspaces:${workspaceId}#tags`,
-    ])
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    if (affectedContactIds.length > 0) {
+      await contactService.invalidate({ workspaceId, ids: affectedContactIds })
+    }
   }
 
   listForContact(input: { workspaceId: string; contactId: string }) {
@@ -783,6 +796,7 @@ class TagService extends BaseService {
     }
 
     let attachedPairCount = 0
+    const affectedContactIds: string[] = []
     for (let i = 0; i < uniqueContactIds.length; i += CONTACT_CHUNK_SIZE) {
       const idChunk = uniqueContactIds.slice(i, i + CONTACT_CHUNK_SIZE)
       const contacts = await contactService.findManyByIds({
@@ -793,6 +807,7 @@ class TagService extends BaseService {
       if (contacts.length === 0) {
         continue
       }
+      affectedContactIds.push(...contacts.map((contact) => contact.id))
 
       const links = contacts.flatMap((contact) =>
         tags.map((tag) => ({
@@ -847,11 +862,10 @@ class TagService extends BaseService {
       )
     }
 
-    await this.invalidateCacheTags([
-      `workspaces:${workspaceId}#contacts`,
-      `workspaces:${workspaceId}#conversations`,
-      `workspaces:${workspaceId}#tags`,
-    ])
+    await this.invalidateCacheTags(tagCacheTags(workspaceId))
+    if (affectedContactIds.length > 0) {
+      await contactService.invalidate({ workspaceId, ids: affectedContactIds })
+    }
 
     return { attachedPairCount }
   }

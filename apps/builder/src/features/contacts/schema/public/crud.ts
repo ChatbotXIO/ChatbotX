@@ -39,3 +39,10 @@ export type CountContactsPublicRequest = z.infer<
 >
 
 export const countContactsPublicResponse = z.object({ total: z.number() })
+
+export const importContactsPublicResponse = z.object({
+  importId: z.string(),
+})
+export type ImportContactsPublicResponse = z.infer<
+  typeof importContactsPublicResponse
+>

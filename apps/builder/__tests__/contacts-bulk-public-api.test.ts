@@ -80,9 +80,12 @@ describe("POST /v1/contacts/bulk/tags", () => {
   const procedure = findProcedure("POST", "/v1/contacts/bulk/tags")
 
   test("delegates to addContactTags with all given contact ids", async () => {
-    addContactTags.mockResolvedValueOnce(undefined)
+    addContactTags.mockResolvedValueOnce({
+      processedContactIds: ["1", "2", "3"],
+      skippedContactIds: [],
+    })
 
-    await procedure.handler?.({
+    const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { contactIds: ["1", "2", "3"], tags: ["VIP"] },
     })
@@ -92,6 +95,7 @@ describe("POST /v1/contacts/bulk/tags", () => {
       contactIds: ["1", "2", "3"],
       names: ["VIP"],
     })
+    expect(result).toEqual({ processed: 3, skippedContactIds: [] })
   })
 })
 
@@ -99,9 +103,12 @@ describe("POST /v1/contacts/bulk/delete", () => {
   const procedure = findProcedure("POST", "/v1/contacts/bulk/delete")
 
   test("delegates to deleteContact with all given contact ids", async () => {
-    deleteContact.mockResolvedValueOnce(undefined)
+    deleteContact.mockResolvedValueOnce({
+      processedContactIds: ["1", "2"],
+      skippedContactIds: [],
+    })
 
-    await procedure.handler?.({
+    const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { contactIds: ["1", "2"] },
     })
@@ -111,6 +118,7 @@ describe("POST /v1/contacts/bulk/delete", () => {
       workspaceId: "workspace-1",
       ids: ["1", "2"],
     })
+    expect(result).toEqual({ processed: 2, skippedContactIds: [] })
   })
 })
 
@@ -118,9 +126,12 @@ describe("POST /v1/contacts/bulk/sequences", () => {
   const procedure = findProcedure("POST", "/v1/contacts/bulk/sequences")
 
   test("delegates to enrollContactsInSequences with all given contact ids", async () => {
-    enrollContactsInSequences.mockResolvedValueOnce(undefined)
+    enrollContactsInSequences.mockResolvedValueOnce({
+      processedContactIds: ["1", "2"],
+      skippedContactIds: [],
+    })
 
-    await procedure.handler?.({
+    const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { contactIds: ["1", "2"], sequenceIds: ["seq-1"] },
     })
@@ -130,5 +141,6 @@ describe("POST /v1/contacts/bulk/sequences", () => {
       contactIds: ["1", "2"],
       sequenceIds: ["seq-1"],
     })
+    expect(result).toEqual({ processed: 2, skippedContactIds: [] })
   })
 })
