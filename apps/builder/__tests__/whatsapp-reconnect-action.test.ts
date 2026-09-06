@@ -18,7 +18,7 @@ const {
   findWabaMock,
   findWorkspaceIntegrationMock,
   getCurrentUserAndTargetWorkspaceMock,
-  getSharedWabaIdMock,
+  getSharedWabaIdsMock,
   hasWhatsappCapiScopeMock,
   listPhoneNumbersMock,
   platformCredentialResolveMock,
@@ -29,7 +29,7 @@ const {
   findWabaMock: vi.fn(),
   findWorkspaceIntegrationMock: vi.fn(),
   getCurrentUserAndTargetWorkspaceMock: vi.fn(),
-  getSharedWabaIdMock: vi.fn(),
+  getSharedWabaIdsMock: vi.fn(),
   hasWhatsappCapiScopeMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
   platformCredentialResolveMock: vi.fn(),
@@ -79,7 +79,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
   exchangeAccessToken: exchangeAccessTokenMock,
-  getSharedWabaId: getSharedWabaIdMock,
+  getSharedWabaIds: getSharedWabaIdsMock,
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/phone-number", () => ({
@@ -131,7 +131,7 @@ describe("reconnectWhatsappAction", () => {
         },
       },
     })
-    getSharedWabaIdMock.mockResolvedValue("waba-1")
+    getSharedWabaIdsMock.mockResolvedValue(["waba-1"])
     hasWhatsappCapiScopeMock.mockResolvedValue(true)
     listPhoneNumbersMock.mockResolvedValue({
       data: [
@@ -182,6 +182,43 @@ describe("reconnectWhatsappAction", () => {
     expect(exchangeAccessTokenMock).not.toHaveBeenCalled()
     expect(replaceAuthMock).not.toHaveBeenCalled()
     expect(subscribeWebhookMock).not.toHaveBeenCalled()
+  })
+
+  test("accepts the reconnect when the existing WABA is not first in the token's target list", async () => {
+    // Meta returns every WABA shared with the app and does not keep the order
+    // stable between tokens, so matching on the first entry made reconnect
+    // fail at random for businesses with several WABAs.
+    getSharedWabaIdsMock.mockResolvedValue(["waba-9", "waba-1", "waba-5"])
+
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code" },
+    })
+
+    expect(replaceAuthMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auth: expect.objectContaining({
+          metadata: expect.objectContaining({ wabaId: "waba-1" }),
+        }),
+      }),
+    )
+    expect(findWabaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ wabaId: "waba-1" }),
+    )
+  })
+
+  test("rejects the reconnect when the token does not cover the existing WABA", async () => {
+    getSharedWabaIdsMock.mockResolvedValue(["waba-9", "waba-5"])
+
+    await expect(
+      callReconnectWhatsappAction({
+        bindArgsParsedInputs: ["ws-1", "iw-1"],
+        ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+        parsedInput: { code: "oauth-code" },
+      }),
+    ).rejects.toThrow("whatsapp.reconnect.errors.wabaMismatch")
+    expect(replaceAuthMock).not.toHaveBeenCalled()
   })
 
   test("resubscribes with automatic_events during ads reconnect", async () => {

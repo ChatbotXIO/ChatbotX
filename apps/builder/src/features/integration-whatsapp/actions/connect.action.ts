@@ -33,7 +33,7 @@ import {
 } from "@chatbotx.io/integration-whatsapp"
 import {
   exchangeAccessToken,
-  getSharedWabaId,
+  getSharedWabaIds,
 } from "@chatbotx.io/integration-whatsapp/api/auth"
 import {
   getCoexistEligibility,
@@ -58,6 +58,7 @@ import {
   WHATSAPP_OAUTH_CALLBACK_PATH,
 } from "../libs/embedded-signup"
 import { toRegistrationOutcome } from "../libs/registration-outcome"
+import { requireGrantedWabaId } from "../libs/waba-grant"
 import {
   CONNECT_WHATSAPP_RESULT_TYPES,
   type ConnectWhatsappResult,
@@ -102,14 +103,19 @@ async function deriveSignupTargets(
   appAccessToken: string,
   version: string,
   messages: ConnectErrorMessages,
+  requestedWabaId?: string | null,
 ): Promise<{
   wabaId: string
   businessId: string
 }> {
-  const wabaId = await getSharedWabaId(accessToken, appAccessToken)
-  if (!wabaId) {
-    throw new ChatbotXException(messages.wabaResolveFailed)
-  }
+  const wabaId = requireGrantedWabaId({
+    grantedWabaIds: await getSharedWabaIds(accessToken, appAccessToken),
+    requestedWabaId,
+    errorMessages: {
+      none: messages.wabaResolveFailed,
+      mismatch: messages.wabaMismatch,
+    },
+  })
 
   const waba = await findWaba({
     wabaId,
@@ -443,11 +449,8 @@ async function prepareConnectInput(params: {
     `${whatsappSettings.clientId}|${whatsappSettings.clientSecret}`,
     whatsappSettings.version,
     messages,
+    input.wabaId,
   )
-
-  if (input.wabaId && input.wabaId !== targets.wabaId) {
-    throw new ChatbotXException(messages.wabaMismatch)
-  }
 
   if (input.phoneNumberId) {
     return {
