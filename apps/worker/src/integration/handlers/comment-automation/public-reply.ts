@@ -139,6 +139,11 @@ export async function executePublicReply(
       {
         type: IntegrationJobAction.sendFlow,
         data: {
+          // Deliberately the comment-anchored conversation, unlike the private
+          // branch (#1063): a public flow answers on the post, and the
+          // contact's next comment resolves back to this very conversation
+          // through `receiveComment`, so its flow state is reachable here.
+          // Do not "fix" this to the DM conversation.
           conversationId: ctx.conversationId,
           contactInboxId: ctx.contactInboxId,
           flowId: publicReply.value,

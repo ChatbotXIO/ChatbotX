@@ -458,13 +458,16 @@ class ConversationService extends BaseService {
   }): Promise<ConversationModel> {
     const { workspaceId, contactId, sourceId, tx = db } = props
 
-    const existing = await tx.query.conversationModel.findFirst({
-      where: {
-        workspaceId,
-        contactId,
-        sourceId: sourceId === null ? { isNull: true } : sourceId,
-      },
-    })
+    const findExisting = () =>
+      tx.query.conversationModel.findFirst({
+        where: {
+          workspaceId,
+          contactId,
+          sourceId: sourceId === null ? { isNull: true } : sourceId,
+        },
+      })
+
+    const existing = await findExisting()
     if (existing) {
       return existing
     }
@@ -472,10 +475,22 @@ class ConversationService extends BaseService {
     const created = await tx
       .insert(conversationModel)
       .values({ id: createId(), workspaceId, contactId, sourceId })
+      .onConflictDoNothing()
       .returning()
       .then((result) => result[0])
+
     if (!created) {
-      throw new Error("Conversation not found")
+      // A concurrent writer (e.g. the message echo webhook opening the same DM
+      // while a comment automation resolves it) won the partial unique index —
+      // `Conversation_contactId_dm_key` for DMs, otherwise
+      // `Conversation_contactId_sourceId_key` — so the insert produced no row.
+      // Re-read rather than fail: the winner already broadcast
+      // `conversationCreated`, so this path must not broadcast again.
+      const concurrent = await findExisting()
+      if (!concurrent) {
+        throw new Error("Conversation not found")
+      }
+      return concurrent
     }
 
     await this.broadcastConversationEvent(workspaceId, {
