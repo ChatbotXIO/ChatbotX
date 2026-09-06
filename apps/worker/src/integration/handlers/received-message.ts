@@ -20,20 +20,22 @@ import {
   finalizeContactProfile,
   normalizeLanguage,
 } from "@chatbotx.io/business/contact-locale"
-import { db, eq, isUniqueViolationError } from "@chatbotx.io/database/client"
+import { isUniqueViolationError } from "@chatbotx.io/database/client"
 import {
   type ChannelType,
   type ContactSource,
   contactSources,
   type IntegrationType,
 } from "@chatbotx.io/database/partials"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
+import {
+  contactInboxRepository,
+  createMessageRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   CONTACT_INBOX_SOURCE_ID_KEY,
   CONTACT_INBOX_SOURCE_USER_ID_KEY,
   contactInboxModel,
   contactModel,
-  conversationModel,
 } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -876,32 +878,17 @@ const persistNewMessageSideEffects = async (props: {
     contactLocation,
   } = props
 
-  const trackingInvalidation = await db.transaction(async (tx) => {
-    const invalidation = await contactInboxService.updateTracking({
-      tx,
-      contactInboxId: contactInbox.id,
-      contactId: contactInbox.contactId,
-      workspaceId: inbox.workspaceId,
-      data: {
-        ...getMessageActivityTracking({ incomingMessage, message, storageUrl }),
-        ...contactInboxTracking,
-      },
-    })
-
-    if (contactLocation) {
-      await contactService.update(
-        { workspaceId: inbox.workspaceId, id: contactInbox.contactId },
-        { location: contactLocation },
-        tx,
-      )
-    }
-
-    await tx
-      .update(conversationModel)
-      .set({ lastActivityAt: message.createdAt })
-      .where(eq(conversationModel.id, conversation.id))
-
-    return invalidation
+  const trackingInvalidation = await conversationService.recordInboundActivity({
+    workspaceId: inbox.workspaceId,
+    conversationId: conversation.id,
+    contactInboxId: contactInbox.id,
+    contactId: contactInbox.contactId,
+    tracking: {
+      ...getMessageActivityTracking({ incomingMessage, message, storageUrl }),
+      ...contactInboxTracking,
+    },
+    contactLocation,
+    at: message.createdAt,
   })
 
   if (trackingInvalidation) {
@@ -1209,9 +1196,8 @@ const resolveExistingContactInbox = async ({
   incomingContact,
 }: ContactInboxResolverProps): Promise<ContactInboxWithContact | undefined> =>
   await resolveWithSourceUserIdFallback(incomingContact, (where) =>
-    db.query.contactInboxModel.findFirst({
+    contactInboxRepository.findWithContact({
       where: { inboxId: inbox.id, channel: inbox.channel, ...where },
-      with: { contact: true },
     }),
   )
 

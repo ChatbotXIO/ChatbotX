@@ -1,30 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { z } from "zod"
 
-const setSpy = vi.fn<(values: Record<string, unknown>) => unknown>()
-const whereSpy = vi.fn<(...args: unknown[]) => unknown>()
-const updateSpy = vi.fn<(table: unknown) => unknown>()
+const subscribeBroadcastIfUnsubscribed = vi.fn()
+const unsubscribeBroadcastSpy = vi.fn()
 
+// Never call the real db client — this test never reaches it (contact.ts no
+// longer imports it directly), but a transitive import chain still resolves
+// the module, which would otherwise open a real DB connection at import time.
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    update: (table: unknown) => {
-      updateSpy(table)
-      return {
-        set: (values: Record<string, unknown>) => {
-          setSpy(values)
-          return {
-            where: (...args: unknown[]) => {
-              whereSpy(...args)
-              return Promise.resolve()
-            },
-          }
-        },
-      }
-    },
-  },
+  db: {},
   and: (...args: unknown[]) => ({ __and: args }),
   eq: (column: unknown, value: unknown) => ({ __eq: [column, value] }),
   isNull: (column: unknown) => ({ __isNull: column }),
+  inArray: (column: unknown, values: unknown) => ({
+    __inArray: [column, values],
+  }),
 }))
 
 // Do NOT importOriginal the real schema module here: its index pulls in the
@@ -193,7 +183,11 @@ vi.mock("@chatbotx.io/business", () => ({
   // The rest below are never called by this test — only needed so the real
   // (unmocked) contactVariableService import chain (@chatbotx.io/variables)
   // resolves without throwing on missing exports.
-  contactService: { delete: vi.fn() },
+  contactService: {
+    delete: vi.fn(),
+    subscribeBroadcastIfUnsubscribed,
+    unsubscribeBroadcast: unsubscribeBroadcastSpy,
+  },
   contactCustomFieldService: {
     setValueByKey: vi.fn(),
     deleteByKey: vi.fn(),
@@ -253,56 +247,32 @@ const buildProps = () =>
   >[0]
 
 beforeEach(() => {
-  updateSpy.mockClear()
-  setSpy.mockClear()
-  whereSpy.mockClear()
+  subscribeBroadcastIfUnsubscribed.mockClear()
+  unsubscribeBroadcastSpy.mockClear()
   emitContactUnsubscribed.mockClear()
 })
 
 describe("subscribeBroadcast", () => {
-  test("sets broadcastSubscribedAt to current Date scoped by contact + workspace", async () => {
-    const before = Date.now()
-    await subscribeBroadcast(buildProps())
-    const after = Date.now()
-
-    expect(updateSpy).toHaveBeenCalledTimes(1)
-    expect(setSpy).toHaveBeenCalledTimes(1)
-    expect(whereSpy).toHaveBeenCalledTimes(1)
-
-    const setCall = setSpy.mock.calls[0][0]
-    expect(setCall.broadcastSubscribedAt).toBeInstanceOf(Date)
-    const ts = (setCall.broadcastSubscribedAt as Date).getTime()
-    expect(ts).toBeGreaterThanOrEqual(before)
-    expect(ts).toBeLessThanOrEqual(after)
-
-    const whereArg = whereSpy.mock.calls[0][0] as { __and: unknown[] }
-    expect(whereArg.__and).toHaveLength(3)
-  })
-
-  test("is idempotent — WHERE includes isNull guard to preserve original subscription date", async () => {
+  test("delegates to contactService.subscribeBroadcastIfUnsubscribed scoped by contact + workspace", async () => {
     await subscribeBroadcast(buildProps())
 
-    const whereArg = whereSpy.mock.calls[0][0] as {
-      __and: Array<{ __isNull?: unknown }>
-    }
-    const hasIsNullGuard = whereArg.__and.some((c) => "__isNull" in c)
-    expect(hasIsNullGuard).toBe(true)
+    expect(subscribeBroadcastIfUnsubscribed).toHaveBeenCalledTimes(1)
+    expect(subscribeBroadcastIfUnsubscribed).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
   })
 })
 
 describe("unsubscribeBroadcast", () => {
-  test("sets broadcastSubscribedAt to null scoped by contact + workspace", async () => {
+  test("delegates to contactService.unsubscribeBroadcast scoped by contact + workspace", async () => {
     await unsubscribeBroadcast(buildProps())
 
-    expect(updateSpy).toHaveBeenCalledTimes(1)
-    expect(setSpy).toHaveBeenCalledTimes(1)
-    expect(whereSpy).toHaveBeenCalledTimes(1)
-
-    const setCall = setSpy.mock.calls[0][0]
-    expect(setCall.broadcastSubscribedAt).toBeNull()
-
-    const whereArg = whereSpy.mock.calls[0][0] as { __and: unknown[] }
-    expect(whereArg.__and).toHaveLength(2)
+    expect(unsubscribeBroadcastSpy).toHaveBeenCalledTimes(1)
+    expect(unsubscribeBroadcastSpy).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
     expect(emitContactUnsubscribed).toHaveBeenCalledWith(
       "workspace-1",
       "contact-1",

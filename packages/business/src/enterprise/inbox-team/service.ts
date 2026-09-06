@@ -214,6 +214,36 @@ class InboxTeamService extends BaseService {
       `inbox-teams:${props.workspaceId}`,
     ])
   }
+
+  /** Validate one assignee team id (flow-step assign). */
+  async exists(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }): Promise<boolean> {
+    const { workspaceId, id, tx = db } = props
+    const team = await tx.query.inboxTeamModel.findFirst({
+      where: { id, workspaceId },
+      columns: { id: true },
+    })
+    return Boolean(team)
+  }
+
+  /** Bulk team validation for round-robin allocation. */
+  async listExistingIds(props: {
+    workspaceId: string
+    ids: string[]
+    tx?: DatabaseClient
+  }): Promise<{ id: string }[]> {
+    const { workspaceId, ids, tx = db } = props
+    if (ids.length === 0) {
+      return []
+    }
+    return await tx.query.inboxTeamModel.findMany({
+      where: { workspaceId, id: { in: ids } },
+      columns: { id: true },
+    })
+  }
 }
 
 export const inboxTeamService = new InboxTeamService()

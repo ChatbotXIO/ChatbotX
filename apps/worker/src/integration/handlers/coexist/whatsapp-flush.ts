@@ -1,27 +1,17 @@
+import {
+  coexistService,
+  integrationWhatsappService,
+} from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
-  and,
-  db,
-  eq,
-  findOrFail,
-  inArray,
-  isNull,
-  lt,
-  ne,
-  or,
-  sql,
-} from "@chatbotx.io/database/client"
-import {
+  contactInboxRepository,
   createMessageRepository,
   getSafeSinceTime,
+  integrationWhatsappRepository,
+  whatsappCoexistStagingRepository,
 } from "@chatbotx.io/database/repositories"
-import {
-  coexistSyncRunModel,
-  contactInboxModel,
-  inboxModel,
-  integrationWhatsappModel,
-  whatsappCoexistStagingModel,
-} from "@chatbotx.io/database/schema"
+import { inboxModel } from "@chatbotx.io/database/schema"
 import {
   guessFileTypeFromMimeType,
   type IncomingAttachment,
@@ -630,20 +620,11 @@ const resolveContactInboxIds = async (
     return ids
   }
   const uniq = Array.from(new Set(contactWaIds))
-  const rows = await db
-    .select({
-      id: contactInboxModel.id,
-      sourceId: contactInboxModel.sourceId,
-      lastIncomingMessageAt: contactInboxModel.lastIncomingMessageAt,
-      createdAt: contactInboxModel.createdAt,
+  const rows =
+    await contactInboxRepository.listIdentityColumnsByInboxAndSourceIds({
+      inboxId,
+      sourceIds: uniq,
     })
-    .from(contactInboxModel)
-    .where(
-      and(
-        eq(contactInboxModel.inboxId, inboxId),
-        inArray(contactInboxModel.sourceId, uniq),
-      ),
-    )
   for (const row of rows) {
     if (row.sourceId) {
       ids.set(row.sourceId, {
@@ -833,8 +814,8 @@ export const coexistWhatsappFlush = async (
   const { phoneNumberId } = data
   const jobStart = Date.now()
 
-  const integration = await db.query.integrationWhatsappModel.findFirst({
-    where: { phoneNumberId },
+  const integration = await integrationWhatsappRepository.findByPhoneNumberId({
+    phoneNumberId,
   })
   if (!integration) {
     logger.warn({ phoneNumberId }, "[coexist] Flush: WhatsApp integration gone")
@@ -853,51 +834,31 @@ export const coexistWhatsappFlush = async (
   // newest non-terminal run owned by popup-enable.
   let runId = data.runId
   if (!runId) {
-    const liveRun = await db.query.coexistSyncRunModel.findFirst({
-      where: {
-        integrationId: integration.id,
-        channel: "whatsapp",
-        status: { in: ["init", "running"] },
-      },
-      columns: { id: true },
-      orderBy: { createdAt: "desc" },
+    const liveRunId = await coexistService.findNewestLiveRunId({
+      integrationId: integration.id,
+      channel: "whatsapp",
     })
-    if (!liveRun) {
+    if (!liveRunId) {
       logger.info(
         { phoneNumberId },
         "[coexist] Flush: no live run — payloads remain staged",
       )
       return
     }
-    runId = liveRun.id
+    runId = liveRunId
   }
 
   // Optimistic claim FIRST — avoids wasting a SELECT + inbox lookup if another
   // worker already owns this run. 10-minute stale heartbeat fallback recovers
   // a crashed prior worker. `startedAt` uses COALESCE so the FIRST chunk's
-  // start is preserved across resume.
-  const claimed = await db
-    .update(coexistSyncRunModel)
-    .set({
-      status: "running",
-      startedAt: sql`COALESCE(${coexistSyncRunModel.startedAt}, NOW())`,
-      lastHeartbeatAt: new Date(),
-    })
-    .where(
-      and(
-        eq(coexistSyncRunModel.id, runId),
-        or(
-          ne(coexistSyncRunModel.status, "running"),
-          lt(
-            coexistSyncRunModel.lastHeartbeatAt,
-            sql`NOW() - INTERVAL '10 minutes'`,
-          ),
-        ),
-      ),
-    )
-    .returning({ id: coexistSyncRunModel.id })
+  // start is preserved across resume. No `updatedAt` bump here — same claim
+  // shape as before this refactor (`touchUpdatedAt: false`).
+  const claimedRun = await coexistService.claimRunForSync({
+    runId,
+    touchUpdatedAt: false,
+  })
 
-  if (claimed.length === 0) {
+  if (!claimedRun) {
     logger.warn(
       { runId, phoneNumberId },
       "[coexist] WhatsApp flush run already claimed by another worker — abandoning",
@@ -906,21 +867,7 @@ export const coexistWhatsappFlush = async (
   }
 
   // ── Read resume state (after claim — counter values are stable now) ──────
-  const [runRow] = await db
-    .select({
-      workspaceId: coexistSyncRunModel.workspaceId,
-      currentPageNumber: coexistSyncRunModel.currentPageNumber,
-      attempts: coexistSyncRunModel.attempts,
-      importedContactCount: coexistSyncRunModel.importedContactCount,
-      importedMessageCount: coexistSyncRunModel.importedMessageCount,
-      skippedCount: coexistSyncRunModel.skippedCount,
-      failedCount: coexistSyncRunModel.failedCount,
-      currentScan: coexistSyncRunModel.currentScan,
-      currentError: coexistSyncRunModel.currentError,
-    })
-    .from(coexistSyncRunModel)
-    .where(eq(coexistSyncRunModel.id, runId))
-    .limit(1)
+  const runRow = await coexistService.findFlushResumeState({ runId })
 
   if (!runRow) {
     logger.warn({ runId }, "[coexist] Flush: CoexistSyncRun row missing")
@@ -940,14 +887,10 @@ export const coexistWhatsappFlush = async (
       },
       "[coexist] Flush: workspaceId mismatch — refusing",
     )
-    await db
-      .update(coexistSyncRunModel)
-      .set({
-        status: "failed",
-        currentError: "workspaceId mismatch between integration and run",
-        finishedAt: new Date(),
-      })
-      .where(eq(coexistSyncRunModel.id, runId))
+    await coexistService.markFailed({
+      runId,
+      currentError: "workspaceId mismatch between integration and run",
+    })
     return
   }
 
@@ -982,22 +925,17 @@ export const coexistWhatsappFlush = async (
       batchNumber += 1
       // Pre-batch heartbeat only — counters + currentStep are written at
       // batch end. Keeps the stale-claim window honest while bulk import runs.
-      await db
-        .update(coexistSyncRunModel)
-        .set({ lastHeartbeatAt: new Date() })
-        .where(eq(coexistSyncRunModel.id, runId))
+      await coexistService.updateProgress({
+        runId,
+        fields: { lastHeartbeatAt: new Date() },
+      })
 
-      const stagedRows = await db
-        .select()
-        .from(whatsappCoexistStagingModel)
-        .where(
-          and(
-            eq(whatsappCoexistStagingModel.phoneNumberId, phoneNumberId),
-            isNull(whatsappCoexistStagingModel.processedAt),
-          ),
-        )
-        .orderBy(whatsappCoexistStagingModel.id)
-        .limit(BATCH_SIZE)
+      const stagedRows = await whatsappCoexistStagingRepository.listUnprocessed(
+        {
+          phoneNumberId,
+          limit: BATCH_SIZE,
+        },
+      )
 
       if (stagedRows.length === 0) {
         exhausted = true
@@ -1147,19 +1085,13 @@ export const coexistWhatsappFlush = async (
       // Mark ALL rows in this batch processed — bulk pipeline was atomic.
       // Cap-rejected contacts also count as "processed" (deterministic skip,
       // re-processing won't recover them).
-      await db
-        .update(whatsappCoexistStagingModel)
-        .set({ processedAt: new Date() })
-        .where(
-          inArray(
-            whatsappCoexistStagingModel.id,
-            stagedRows.map((r) => r.id),
-          ),
-        )
+      await whatsappCoexistStagingRepository.markProcessed({
+        ids: stagedRows.map((r) => r.id),
+      })
 
-      await db
-        .update(coexistSyncRunModel)
-        .set({
+      await coexistService.updateProgress({
+        runId,
+        fields: {
           currentScan: totalRows,
           importedContactCount: importedContacts,
           importedMessageCount: importedMessages,
@@ -1176,18 +1108,17 @@ export const coexistWhatsappFlush = async (
                 syncProgress: batchMetadata.progress,
               }
             : {}),
-        })
-        .where(eq(coexistSyncRunModel.id, runId))
+        },
+      })
 
       // History-decline short-circuit: user declined chat-history sharing in
       // the WA Business app. Mark integration so UI hides retry CTA, then
       // finish the run as succeeded (no data loss — there is nothing to
       // import) with a sentinel `currentError` for the UI to read.
       if (batchDeclined) {
-        await db
-          .update(integrationWhatsappModel)
-          .set({ historyDeclined: true, updatedAt: new Date() })
-          .where(eq(integrationWhatsappModel.id, integration.id))
+        await integrationWhatsappService.markHistoryDeclined({
+          id: integration.id,
+        })
         finalStatus = "succeeded"
         finalError = "history_declined"
         exhausted = true
@@ -1206,18 +1137,11 @@ export const coexistWhatsappFlush = async (
       // orphaned — a buffer-triggered flush finds no live run to claim. Instead
       // keep the run alive and let the existing continuation drain them
       // (coalesced: one continuation, not one job per late webhook).
-      const [tailRow] = await db
-        .select({ id: whatsappCoexistStagingModel.id })
-        .from(whatsappCoexistStagingModel)
-        .where(
-          and(
-            eq(whatsappCoexistStagingModel.phoneNumberId, phoneNumberId),
-            isNull(whatsappCoexistStagingModel.processedAt),
-          ),
-        )
-        .limit(1)
+      const hasTailRow = await whatsappCoexistStagingRepository.hasUnprocessed({
+        phoneNumberId,
+      })
 
-      if (tailRow) {
+      if (hasTailRow) {
         continueLater = true
       } else if (failed > 0 && (importedMessages > 0 || skipped > 0)) {
         finalStatus = "partial"
@@ -1256,13 +1180,10 @@ export const coexistWhatsappFlush = async (
           { error, runId },
           "[coexist] WhatsApp continuation enqueue failed — fallback to scheduler",
         )
-        await db
-          .update(coexistSyncRunModel)
-          .set({
-            status: "init",
-            lastHeartbeatAt: new Date(),
-          })
-          .where(eq(coexistSyncRunModel.id, runId))
+        await coexistService.updateProgress({
+          runId,
+          fields: { status: "init", lastHeartbeatAt: new Date() },
+        })
       }
     }
   } catch (error) {
@@ -1277,9 +1198,9 @@ export const coexistWhatsappFlush = async (
     })
   } finally {
     if (finalStatus !== null) {
-      await db
-        .update(coexistSyncRunModel)
-        .set({
+      await coexistService.updateProgress({
+        runId,
+        fields: {
           status: finalStatus,
           finishedAt: new Date(),
           lastHeartbeatAt: new Date(),
@@ -1290,8 +1211,8 @@ export const coexistWhatsappFlush = async (
           skippedCount: skipped,
           failedCount: failed,
           currentError: finalError ?? null,
-        })
-        .where(eq(coexistSyncRunModel.id, runId))
+        },
+      })
     }
   }
 

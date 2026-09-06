@@ -35,17 +35,12 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      contactInboxModel: { findFirst: mockFindContactInbox },
-    },
-  },
-}))
-
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
   getSafeSinceTime: vi.fn((date: Date | null) => date ?? new Date(0)),
+  contactInboxRepository: {
+    findWithConversationAndContact: mockFindContactInbox,
+  },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

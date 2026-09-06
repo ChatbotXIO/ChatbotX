@@ -14,9 +14,10 @@ import {
   contactModel,
   contactsToTagsModel,
   contactToTagChannelModel,
+  tagChannelModel,
   tagModel,
 } from "@chatbotx.io/database/schema"
-import type { TagModel } from "@chatbotx.io/database/types"
+import type { TagChannelModel, TagModel } from "@chatbotx.io/database/types"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { withCache } from "@chatbotx.io/redis"
 import { createId, isNumericId } from "@chatbotx.io/utils"
@@ -422,6 +423,317 @@ class TagService extends BaseService {
       emitTagRemoved(workspaceId, contactId, tag.id) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
         .catch(() => {})
     }
+  }
+
+  /**
+   * Upsert tags by name + link to one contact, capturing only newly-inserted
+   * pairs — moved VERBATIM from the worker's `attachTagsByNames` transaction
+   * body. Returns just the newly-linked tag ids; the worker handler keeps its
+   * own `tagSyncService.enqueueAttach` loop, `emitTagApplied` fan-out, and
+   * `adsConversionService.enqueueTagAppliedEvaluationsForInbox` call.
+   *
+   * Do NOT confuse this with `attachByNamesToContacts` (plural) — that method
+   * emits `tagApplied` for every ATTEMPTED pair (not just new ones), uses
+   * `enqueueTagAppliedEvaluationsBulk`, and invalidates 3 workspace cache
+   * tags. This one intentionally has none of that; the worker owns those
+   * side effects itself.
+   */
+  async attachByNamesToContact(props: {
+    workspaceId: string
+    contactId: string
+    names: string[]
+    tx?: DatabaseClient
+  }): Promise<string[]> {
+    const { workspaceId, contactId, names: tagNames } = props
+    if (tagNames.length === 0) {
+      return []
+    }
+
+    const newlyLinkedTagIds: string[] = []
+    const run = async (tx: DatabaseClient) => {
+      await tx
+        .insert(tagModel)
+        .values(
+          tagNames.map((t) => ({
+            name: t,
+            workspaceId,
+            id: createId(),
+          })),
+        )
+        .onConflictDoNothing()
+        .returning()
+
+      const existingTags = await tx
+        .select()
+        .from(tagModel)
+        .where(
+          and(
+            eq(tagModel.workspaceId, workspaceId),
+            inArray(tagModel.name, tagNames),
+          ),
+        )
+
+      if (existingTags.length > 0) {
+        // Capture only the pairs that were actually inserted so we mirror /
+        // emit exactly once per newly-applied tag (not for pre-existing links).
+        const linked = await tx
+          .insert(contactsToTagsModel)
+          .values(
+            existingTags.map((t) => ({
+              contactId,
+              tagId: t.id,
+            })),
+          )
+          .onConflictDoNothing()
+          .returning({ tagId: contactsToTagsModel.tagId })
+
+        newlyLinkedTagIds.push(...linked.map((l) => l.tagId))
+      }
+    }
+
+    if (props.tx) {
+      await run(props.tx)
+    } else {
+      await db.transaction(run)
+    }
+
+    return newlyLinkedTagIds
+  }
+
+  /**
+   * Resolve tag ids by name — NO `deletedAt IS NULL` filter (matches the
+   * worker's `detachTagsByNames` exact filter set; do not add one).
+   */
+  async listIdsByNames(props: {
+    workspaceId: string
+    names: string[]
+    tx?: DatabaseClient
+  }): Promise<{ id: string }[]> {
+    const { workspaceId, names, tx = db } = props
+    if (names.length === 0) {
+      return []
+    }
+    return await tx.query.tagModel.findMany({
+      where: { workspaceId, name: { in: names } },
+      columns: { id: true },
+    })
+  }
+
+  /** Unlink tags from one contact by tag id. Handler keeps its own emit/enqueue fan-out. */
+  async detachTagIdsFromContact(props: {
+    contactId: string
+    tagIds: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { contactId, tagIds, tx = db } = props
+    if (tagIds.length === 0) {
+      return
+    }
+    await tx
+      .delete(contactsToTagsModel)
+      .where(
+        and(
+          eq(contactsToTagsModel.contactId, contactId),
+          inArray(contactsToTagsModel.tagId, tagIds),
+        ),
+      )
+  }
+
+  /** Unlink one workspace tag from many contacts (inbox-label unassign). */
+  async detachTagFromContacts(props: {
+    tagId: string
+    contactIds: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tagId, contactIds, tx = db } = props
+    if (contactIds.length === 0) {
+      return
+    }
+    await tx
+      .delete(contactsToTagsModel)
+      .where(
+        and(
+          eq(contactsToTagsModel.tagId, tagId),
+          inArray(contactsToTagsModel.contactId, contactIds),
+        ),
+      )
+  }
+
+  /**
+   * Link a workspace tag to many contacts, returning the NEWLY-linked
+   * contact ids (untargeted `onConflictDoNothing()` — verbatim from
+   * `inbox_labels/sync.ts` `assignLabel`).
+   */
+  async linkTagToContactsReturningNew(props: {
+    tagId: string
+    contactIds: string[]
+    tx?: DatabaseClient
+  }): Promise<{ contactId: string }[]> {
+    const { tagId, contactIds, tx = db } = props
+    if (contactIds.length === 0) {
+      return []
+    }
+    return await tx
+      .insert(contactsToTagsModel)
+      .values(contactIds.map((contactId) => ({ contactId, tagId })))
+      .onConflictDoNothing()
+      .returning({ contactId: contactsToTagsModel.contactId })
+  }
+
+  /** Record per-channel tag assignments (used for reconciliation / detach). */
+  async recordTagChannelAssignments(props: {
+    tagId: string
+    tagChannelId: string
+    contactInboxIds: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tagId, tagChannelId, contactInboxIds, tx = db } = props
+    if (contactInboxIds.length === 0) {
+      return
+    }
+    await tx
+      .insert(contactToTagChannelModel)
+      .values(
+        contactInboxIds.map((contactInboxId) => ({
+          tagId,
+          tagChannelId,
+          contactInboxId,
+        })),
+      )
+      .onConflictDoNothing()
+  }
+
+  /** Remove per-channel tag assignments (inbox-label unassign). */
+  async deleteTagChannelAssignments(props: {
+    tagChannelId: string
+    contactInboxIds: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tagChannelId, contactInboxIds, tx = db } = props
+    if (contactInboxIds.length === 0) {
+      return
+    }
+    await tx
+      .delete(contactToTagChannelModel)
+      .where(
+        and(
+          eq(contactToTagChannelModel.tagChannelId, tagChannelId),
+          inArray(contactToTagChannelModel.contactInboxId, contactInboxIds),
+        ),
+      )
+  }
+
+  /** Find the channel mapping for an external label id. */
+  async findTagChannel(props: {
+    workspaceId: string
+    channelType: TagChannelModel["channelType"]
+    integrationId: string
+    externalLabelId: string
+    tx?: DatabaseClient
+  }): Promise<Pick<TagChannelModel, "id" | "tagId"> | undefined> {
+    const {
+      workspaceId,
+      channelType,
+      integrationId,
+      externalLabelId,
+      tx = db,
+    } = props
+    return await tx.query.tagChannelModel.findFirst({
+      where: { workspaceId, channelType, integrationId, externalLabelId },
+      columns: { id: true, tagId: true },
+    })
+  }
+
+  /**
+   * Get-or-create a tag by name — moved VERBATIM from `inbox_labels/sync.ts`
+   * `ensureTag`, including the three-step race handling (find → insert with
+   * the partial-unique `onConflictDoNothing` → read-back retry on a lost
+   * race). Do not simplify.
+   */
+  async ensureTagByName(props: {
+    workspaceId: string
+    name: string
+    tx?: DatabaseClient
+  }): Promise<string | undefined> {
+    const { workspaceId, name, tx = db } = props
+    const where = { workspaceId, name, deletedAt: { isNull: true as const } }
+
+    const found = await tx.query.tagModel.findFirst({
+      where,
+      columns: { id: true },
+    })
+    if (found) {
+      return found.id
+    }
+
+    const [created] = await tx
+      .insert(tagModel)
+      .values({ id: createId(), workspaceId, name })
+      .onConflictDoNothing({
+        // Tag_workspaceId_name_key is a partial unique index (deletedAt IS NULL).
+        target: [tagModel.workspaceId, tagModel.name],
+        where: isNull(tagModel.deletedAt),
+      })
+      .returning({ id: tagModel.id })
+    if (created) {
+      return created.id
+    }
+
+    // Lost a race against a concurrent insert — read the winner back.
+    const retry = await tx.query.tagModel.findFirst({
+      where,
+      columns: { id: true },
+    })
+    return retry?.id
+  }
+
+  /**
+   * Get-or-create a tag's channel mapping — moved VERBATIM from
+   * `inbox_labels/sync.ts` `ensureChannel`, including the read-back retry.
+   */
+  async ensureTagChannel(props: {
+    workspaceId: string
+    tagId: string
+    channelType: TagChannelModel["channelType"]
+    integrationId: string
+    externalLabelId: string
+    tx?: DatabaseClient
+  }): Promise<string | undefined> {
+    const {
+      workspaceId,
+      tagId,
+      channelType,
+      integrationId,
+      externalLabelId,
+      tx = db,
+    } = props
+    const [created] = await tx
+      .insert(tagChannelModel)
+      .values({
+        id: createId(),
+        workspaceId,
+        tagId,
+        channelType,
+        integrationId,
+        externalLabelId,
+      })
+      .onConflictDoNothing({
+        target: [
+          tagChannelModel.tagId,
+          tagChannelModel.channelType,
+          tagChannelModel.integrationId,
+        ],
+      })
+      .returning({ id: tagChannelModel.id })
+    if (created) {
+      return created.id
+    }
+
+    const retry = await tx.query.tagChannelModel.findFirst({
+      where: { tagId, workspaceId, channelType, integrationId },
+      columns: { id: true },
+    })
+    return retry?.id
   }
 }
 

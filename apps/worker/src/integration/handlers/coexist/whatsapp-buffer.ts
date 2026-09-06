@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto"
-import { db } from "@chatbotx.io/database/client"
-import { whatsappCoexistStagingModel } from "@chatbotx.io/database/schema"
+import {
+  integrationWhatsappRepository,
+  whatsappCoexistStagingRepository,
+} from "@chatbotx.io/database/repositories"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -34,8 +36,8 @@ export const coexistWhatsappBuffer = async (
   // Validate ownership BEFORE touching the staging table — otherwise a
   // spoofed or stale phoneNumberId would orphan rows that no flush can
   // ever drain (no integration row exists to gate them).
-  const integration = await db.query.integrationWhatsappModel.findFirst({
-    where: { phoneNumberId },
+  const integration = await integrationWhatsappRepository.findByPhoneNumberId({
+    phoneNumberId,
   })
 
   if (!integration) {
@@ -48,15 +50,12 @@ export const coexistWhatsappBuffer = async (
 
   // Idempotency: Meta retries webhook deliveries. (phoneNumberId, payloadHash)
   // is uniquely indexed, so duplicate deliveries collapse to one staging row.
-  await db
-    .insert(whatsappCoexistStagingModel)
-    .values({
-      id: createId(),
-      phoneNumberId,
-      payload,
-      payloadHash: hashPayload(payload),
-    })
-    .onConflictDoNothing()
+  await whatsappCoexistStagingRepository.stagePayload({
+    id: createId(),
+    phoneNumberId,
+    payload,
+    payloadHash: hashPayload(payload),
+  })
 
   // Only enqueue flush jobs when coexistEnabled — staging rows are always
   // persisted (to avoid data loss before the user enables coexist), but the

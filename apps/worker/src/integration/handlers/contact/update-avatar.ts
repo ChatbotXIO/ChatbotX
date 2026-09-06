@@ -1,5 +1,4 @@
-import { and, db, eq, isNull } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
+import { contactInboxService, contactService } from "@chatbotx.io/business"
 import type { IntegrationJobUpdateContactAvatar } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import {
@@ -21,7 +20,7 @@ export const updateContactAvatar = async (
 ): Promise<void> => {
   const { workspaceId, contactInboxId, sourceId } = data
 
-  const contactInbox = await db.query.contactInboxModel.findFirst({
+  const contactInbox = await contactInboxService.findByUncached({
     where: { id: contactInboxId },
   })
   if (!contactInbox) {
@@ -29,9 +28,9 @@ export const updateContactAvatar = async (
     return
   }
 
-  const contact = await db.query.contactModel.findFirst({
-    where: { id: contactInbox.contactId },
-    columns: { id: true, avatar: true },
+  const contact = await contactService.findById({
+    workspaceId,
+    id: contactInbox.contactId,
   })
   if (!contact) {
     logger.warn(
@@ -73,8 +72,9 @@ export const updateContactAvatar = async (
     return
   }
 
-  await db
-    .update(contactModel)
-    .set({ avatar, updatedAt: new Date() })
-    .where(and(eq(contactModel.id, contact.id), isNull(contactModel.avatar)))
+  await contactService.setAvatarIfEmpty({
+    workspaceId,
+    contactId: contact.id,
+    avatar,
+  })
 }

@@ -4,6 +4,8 @@ import {
   db,
   eq,
   inArray,
+  or,
+  type SQL,
   sql,
 } from "@chatbotx.io/database/client"
 import {
@@ -49,6 +51,11 @@ import {
   notificationQueue,
 } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
+import { contactService } from "../contact"
+import type {
+  ContactInboxTrackingData,
+  ContactInboxTrackingInvalidation,
+} from "../contact-inbox/service"
 import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
@@ -1054,6 +1061,213 @@ class ConversationService extends BaseService {
       ...(props.ids?.map((id) => `${this.cachePrefix}:${id}`) ?? []),
     ]
     await this.invalidateCacheTags(tags)
+  }
+
+  /** Conversation + contact, for the hot send-flow-step path (do NOT use `findWithFullRelations` here — it fetches far more). */
+  async findByIdWithContact(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<
+    (ConversationModel & { contact: ContactModel | null }) | undefined
+  > {
+    const { id, tx = db } = props
+    return await tx.query.conversationModel.findFirst({
+      where: { id },
+      with: { contact: true },
+    })
+  }
+
+  /**
+   * Inbound-message activity write — owns the transaction: contact-inbox
+   * tracking update, an optional contact location write, and the
+   * conversation's `lastActivityAt` advance (via `updateFlowStepState`
+   * instead of a raw `tx.update`). Moved from
+   * `received-message.ts`'s `persistNewMessageSideEffects`.
+   *
+   * NOTE: `updateFlowStepState`'s WHERE includes `workspaceId` — the raw
+   * worker version did not scope by `workspaceId` on this UPDATE. Safe here
+   * because the conversation is already loaded workspace-scoped upstream,
+   * but this is a deliberate behavior change — call it out in the PR body.
+   */
+  async recordInboundActivity(props: {
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    contactId: string
+    tracking: ContactInboxTrackingData
+    contactLocation?: ContactModel["location"] | null
+    at: Date
+  }): Promise<ContactInboxTrackingInvalidation | null> {
+    const {
+      workspaceId,
+      conversationId,
+      contactInboxId,
+      contactId,
+      tracking,
+      contactLocation,
+      at,
+    } = props
+
+    return await db.transaction(async (tx) => {
+      const invalidation = await contactInboxService.updateTracking({
+        tx,
+        contactInboxId,
+        contactId,
+        workspaceId,
+        data: tracking,
+      })
+
+      if (contactLocation) {
+        await contactService.update(
+          { workspaceId, id: contactId },
+          { location: contactLocation },
+          tx,
+        )
+      }
+
+      await this.updateFlowStepState({
+        tx,
+        workspaceId,
+        conversationId,
+        lastActivityAt: at,
+      })
+
+      return invalidation
+    })
+  }
+
+  /**
+   * Outbound flow-step send activity — owns the transaction:
+   * `recordOutboundMessageCreated` + `updateFlowStepState` (advances
+   * `currentStep`/`lastStep`/`lastActivityAt`). Moved from
+   * `chat/handlers/send-flow-step.ts`'s `sendFlowStep`.
+   */
+  async recordOutboundFlowStep(props: {
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    contactId: string
+    at: Date
+    lastStep?: string | null
+    currentStep?: string | null
+  }): Promise<ContactInboxTrackingInvalidation | null> {
+    const {
+      workspaceId,
+      conversationId,
+      contactInboxId,
+      contactId,
+      at,
+      lastStep,
+      currentStep,
+    } = props
+
+    return await db.transaction(async (tx) => {
+      const invalidation =
+        await contactInboxService.recordOutboundMessageCreated({
+          tx,
+          contactInboxId,
+          contactId,
+          workspaceId,
+          at,
+        })
+
+      await this.updateFlowStepState({
+        tx,
+        workspaceId,
+        conversationId,
+        lastActivityAt: at,
+        lastStep,
+        currentStep,
+      })
+
+      return invalidation
+    })
+  }
+
+  /**
+   * Outbound message activity (chat / template sends) — owns the
+   * transaction: `recordOutboundMessageCreated` + `updateFlowStepState`
+   * (`lastActivityAt` only). Shared by `sendChatMessage`,
+   * `send-messenger-template.ts`, and `send-whatsapp-template.ts` — write
+   * once, call from all three.
+   *
+   * NOTE: `updateFlowStepState`'s WHERE includes `workspaceId` — the raw
+   * worker version's `tx.update(conversationModel)` scoped only by `id`.
+   * Safe here (conversation is already workspace-scoped upstream) but a
+   * deliberate behavior change — call it out in the PR body.
+   */
+  async recordOutboundMessageActivity(props: {
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    contactId: string
+    at: Date
+  }): Promise<ContactInboxTrackingInvalidation | null> {
+    const { workspaceId, conversationId, contactInboxId, contactId, at } = props
+
+    return await db.transaction(async (tx) => {
+      const invalidation =
+        await contactInboxService.recordOutboundMessageCreated({
+          tx,
+          contactInboxId,
+          contactId,
+          workspaceId,
+          at,
+        })
+
+      await this.updateFlowStepState({
+        tx,
+        workspaceId,
+        conversationId,
+        lastActivityAt: at,
+      })
+
+      return invalidation
+    })
+  }
+
+  /**
+   * Per-assignee open-conversation counts for round-robin allocation
+   * (`step-handlers.ts`'s `stepAutoAssignConversation`). Accepts the raw
+   * `filterConditions` `SQL[]` built by the caller (e.g. the "last N hours"
+   * rule) rather than a semantic filter object — a documented fallback to
+   * avoid a larger move of `filterConversationConditions` construction.
+   */
+  async countByAssignee(props: {
+    filterConditions: SQL[]
+    userIds: string[]
+    inboxTeamIds: string[]
+    tx?: DatabaseClient
+  }): Promise<
+    Array<{
+      assignedUserId: string | null
+      assignedInboxTeamId: string | null
+      conversationsCount: number
+    }>
+  > {
+    const { filterConditions, userIds, inboxTeamIds, tx = db } = props
+    return await tx
+      .select({
+        assignedUserId: conversationModel.assignedUserId,
+        assignedInboxTeamId: conversationModel.assignedInboxTeamId,
+        conversationsCount: sql<number>`cast(count(${conversationModel.id}) as int)`,
+      })
+      .from(conversationModel)
+      .groupBy(
+        conversationModel.assignedUserId,
+        conversationModel.assignedInboxTeamId,
+      )
+      .where(
+        and(
+          ...filterConditions,
+          and(
+            or(
+              inArray(conversationModel.assignedUserId, userIds),
+              inArray(conversationModel.assignedInboxTeamId, inboxTeamIds),
+            ),
+          ),
+        ),
+      )
   }
 }
 

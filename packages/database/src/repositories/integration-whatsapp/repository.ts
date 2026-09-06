@@ -692,6 +692,17 @@ class IntegrationWhatsappRepository {
 
     return deleted.length
   }
+
+  /** Mark that the operator declined the coexist history-import prompt. */
+  async markHistoryDeclined(
+    props: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ historyDeclined: true, updatedAt: new Date() })
+      .where(eq(integrationWhatsappModel.id, props.id))
+  }
 }
 
 export const integrationWhatsappRepository = new IntegrationWhatsappRepository()

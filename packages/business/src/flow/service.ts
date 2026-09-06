@@ -391,6 +391,36 @@ class FlowService extends BaseService {
       `deleted flow${flows.length > 1 ? "s" : ""} (${flows.map((flow) => `#${flow.id}`).join(", ")})`,
     )
   }
+
+  /**
+   * Active flow by id, scoped to workspace. Used by worker's
+   * `detectFlowVersion` to resolve the current version off `currentVersionId`.
+   */
+  async findActiveById(props: {
+    id: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<FlowModel | undefined> {
+    const { id, workspaceId, tx = db } = props
+    return await tx.query.flowModel.findFirst({
+      where: { id, workspaceId, active: true },
+    })
+  }
+
+  /**
+   * Any active flow in the workspace, with NO ordering — used only as
+   * button-encoding context (e.g. `send-messenger-template.ts`). The
+   * "no ordering" behavior is intentional; do not add an `orderBy`.
+   */
+  async findAnyActive(props: {
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<FlowModel | undefined> {
+    const { workspaceId, tx = db } = props
+    return await tx.query.flowModel.findFirst({
+      where: { workspaceId, active: true },
+    })
+  }
 }
 
 export const flowService = new FlowService()

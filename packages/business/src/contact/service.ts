@@ -6,6 +6,7 @@ import {
   eq,
   findOrFail,
   inArray,
+  isNull,
   sql,
 } from "@chatbotx.io/database/client"
 import {
@@ -714,6 +715,84 @@ class ContactService extends BaseService {
       .set({ emailOptIn: false })
       .where(eq(contactModel.id, cid))
     await invalidateCacheByTags([`contacts:${cid}`])
+  }
+
+  /**
+   * Thin flow-step flag write (email verified / opt-in / opt-out). Skips the
+   * pre-read and `emitContactInfoChangeEvents` that `update()` performs — this
+   * is a hot flow-step path and those steps never emitted before — but DOES
+   * invalidate the contact cache, which the raw `db.update` this replaces did
+   * NOT do. That cache invalidation is a deliberate bug fix; call it out in
+   * the PR body. Do not route through `update()` (adds `findByIdOrFail` +
+   * `emitContactInfoChangeEvents` on this hot step).
+   */
+  async setFlowFlags(
+    ctx: { workspaceId: string; id: string },
+    data: Partial<Pick<ContactModel, "emailVerified" | "emailOptIn">>,
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx.update(contactModel).set(data).where(eq(contactModel.id, ctx.id))
+    await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
+  }
+
+  /**
+   * Conditional broadcast subscribe — the `isNull(broadcastSubscribedAt)`
+   * predicate is a TOCTOU guard and MUST stay in the WHERE clause (mirrors
+   * `updateIfProfileNameEmpty`).
+   */
+  async subscribeBroadcastIfUnsubscribed(
+    props: { workspaceId: string; contactId: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const { workspaceId, contactId } = props
+    await tx
+      .update(contactModel)
+      .set({ broadcastSubscribedAt: new Date() })
+      .where(
+        and(
+          eq(contactModel.id, contactId),
+          eq(contactModel.workspaceId, workspaceId),
+          isNull(contactModel.broadcastSubscribedAt),
+        ),
+      )
+  }
+
+  /** Unconditional broadcast unsubscribe. Handler keeps `emitContactUnsubscribed`. */
+  async unsubscribeBroadcast(
+    props: { workspaceId: string; contactId: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const { workspaceId, contactId } = props
+    await tx
+      .update(contactModel)
+      .set({ broadcastSubscribedAt: null })
+      .where(
+        and(
+          eq(contactModel.id, contactId),
+          eq(contactModel.workspaceId, workspaceId),
+        ),
+      )
+  }
+
+  /**
+   * Conditional avatar write — keeps `isNull(avatar)` in the WHERE clause (a
+   * TOCTOU guard, same pattern as `updateIfProfileNameEmpty`).
+   */
+  async setAvatarIfEmpty(
+    props: { workspaceId: string; contactId: string; avatar: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const { workspaceId, contactId, avatar } = props
+    await tx
+      .update(contactModel)
+      .set({ avatar, updatedAt: new Date() })
+      .where(
+        and(
+          eq(contactModel.id, contactId),
+          eq(contactModel.workspaceId, workspaceId),
+          isNull(contactModel.avatar),
+        ),
+      )
   }
 }
 

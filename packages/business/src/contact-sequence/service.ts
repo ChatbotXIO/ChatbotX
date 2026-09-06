@@ -447,6 +447,48 @@ class ContactSequenceService extends BaseService {
   ): Promise<T> {
     return await db.transaction(callback)
   }
+
+  /** Already-enrolled guard for the "Subscribe to Sequence" flow step. */
+  async isEnrolled(props: {
+    workspaceId: string
+    contactId: string
+    sequenceId: string
+    tx?: DrizzleClient
+  }): Promise<boolean> {
+    const { workspaceId, contactId, sequenceId, tx = db } = props
+    const existing = await tx.query.contactsOnSequenceModel.findFirst({
+      where: { contactId, sequenceId, workspaceId },
+      columns: { id: true },
+    })
+    return Boolean(existing)
+  }
+
+  /** First active step (order 0) — used to compute `nextRunAt` on enroll. */
+  async findFirstActiveStep(props: {
+    sequenceId: string
+    tx?: DrizzleClient
+  }): Promise<
+    { id: string; delayDays: number; delayMinutes: number } | undefined
+  > {
+    const { sequenceId, tx = db } = props
+    return await tx.query.sequenceStepModel.findFirst({
+      where: { sequenceId, order: 0, isActive: true },
+      columns: { id: true, delayDays: true, delayMinutes: true },
+    })
+  }
+
+  /** Sequence name for the `sequenceSubscribed` emit. */
+  async findSequenceName(props: {
+    sequenceId: string
+    tx?: DrizzleClient
+  }): Promise<string | undefined> {
+    const { sequenceId, tx = db } = props
+    const sequence = await tx.query.sequenceModel.findFirst({
+      where: { id: sequenceId },
+      columns: { name: true },
+    })
+    return sequence?.name
+  }
 }
 
 export const contactSequenceService = new ContactSequenceService()

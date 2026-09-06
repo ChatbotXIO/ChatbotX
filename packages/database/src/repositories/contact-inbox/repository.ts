@@ -16,7 +16,11 @@ import {
   integrationMessengerModel,
   integrationWhatsappModel,
 } from "../../schema"
-import type { ContactInboxModel } from "../../types"
+import type {
+  ContactInboxModel,
+  ContactModel,
+  ConversationModel,
+} from "../../types"
 
 export type WhatsappCtwaInboxRow = {
   contactInboxId: string
@@ -375,5 +379,88 @@ export const contactInboxRepository = {
     )
 
     return perChannelRows.flat()
+  },
+
+  /**
+   * Resolve a contact inbox with its `conversation` + `contact` relations,
+   * by an arbitrary `where` (e.g. `{ inboxId, sourceId }` or
+   * `{ inboxId, sourceUserId }`) — used by `message-status.ts`'s
+   * `resolveStatusContactInbox` behind `resolveWithSourceUserIdFallback`.
+   * Keep the caller's probe order/spread exactly as-is; this repo method
+   * only executes one shape of the query.
+   */
+  findWithConversationAndContact(
+    props: { where: Record<string, unknown> },
+    tx: DatabaseClient = db,
+  ): Promise<
+    | (ContactInboxModel & {
+        conversation: ConversationModel | null
+        contact: ContactModel
+      })
+    | undefined
+  > {
+    return tx.query.contactInboxModel.findFirst({
+      where: props.where,
+      with: { conversation: true, contact: true },
+    })
+  },
+
+  /**
+   * Resolve a contact inbox with its `contact` relation, by an arbitrary
+   * `where` — used by `received-message.ts`'s `resolveExistingContactInbox`
+   * behind `resolveWithSourceUserIdFallback`. Keep the caller's
+   * `{ inboxId, channel, ...where }` spread and probe order exactly as-is.
+   */
+  findWithContact(
+    props: { where: Record<string, unknown> },
+    tx: DatabaseClient = db,
+  ): Promise<(ContactInboxModel & { contact: ContactModel }) | undefined> {
+    return tx.query.contactInboxModel.findFirst({
+      where: props.where,
+      with: { contact: true },
+    })
+  },
+
+  /**
+   * Resolve `{ id, contactId }` for contact inboxes matching an inbox +
+   * source-id list — used by `inbox_labels/sync.ts`'s `findInboxes` to map
+   * external label event user ids to local contacts.
+   */
+  listIdsByInboxAndSourceIds(
+    props: { inboxId: string; sourceIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<Pick<ContactInboxModel, "id" | "contactId">[]> {
+    return tx.query.contactInboxModel.findMany({
+      where: { inboxId: props.inboxId, sourceId: { in: props.sourceIds } },
+      columns: { id: true, contactId: true },
+    })
+  },
+
+  /**
+   * Map `sourceId → { id, lastIncomingMessageAt, createdAt }` for an inbox —
+   * used by `coexist/whatsapp-flush.ts` to resolve identity columns for a
+   * batch of staged contacts.
+   */
+  listIdentityColumnsByInboxAndSourceIds(
+    props: { inboxId: string; sourceIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<
+    Pick<
+      ContactInboxModel,
+      "id" | "sourceId" | "lastIncomingMessageAt" | "createdAt"
+    >[]
+  > {
+    if (props.sourceIds.length === 0) {
+      return Promise.resolve([])
+    }
+    return tx.query.contactInboxModel.findMany({
+      where: { inboxId: props.inboxId, sourceId: { in: props.sourceIds } },
+      columns: {
+        id: true,
+        sourceId: true,
+        lastIncomingMessageAt: true,
+        createdAt: true,
+      },
+    })
   },
 }
