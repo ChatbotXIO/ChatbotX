@@ -33,6 +33,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  workspaceUsageModel: {},
+  userQuotaModel: {},
+  refLinkStatModel: {},
+  magicLinkStatModel: {},
   fileModel: { id: "fileModel.id", workspaceId: "fileModel.workspaceId" },
   importModel: {},
 }))

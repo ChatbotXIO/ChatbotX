@@ -17,6 +17,7 @@ import {
   type ContactFilterCriteriaInput,
   contactFilterHasPredicate,
 } from "@chatbotx.io/database/queries"
+import { contactRepository } from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
   contactModel,
@@ -32,6 +33,7 @@ import { emitContactCreated } from "@chatbotx.io/events"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
+import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { getContactInboxSinceTime } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
@@ -42,9 +44,10 @@ import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
+import { createContactWithInbox } from "./create-with-inbox"
 import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
-
-const NUMERIC_RE = /^\d+$/
+import { updateFieldsAndCustomFields } from "./update-fields"
+import { parseContactIdentifier } from "./utils"
 
 // One DELETE per chunk keeps each statement's lock scope and cascade work
 // bounded (mirrors CONTACT_CHUNK_SIZE in tag/service.ts).
@@ -95,6 +98,92 @@ export type ContactAccessScope = {
 }
 
 class ContactService extends BaseService {
+  createWithInbox = createContactWithInbox
+  updateFieldsAndCustomFields = updateFieldsAndCustomFields
+  async resolveIdByIdentifier(input: {
+    workspaceId: string
+    identifier: string
+  }): Promise<string> {
+    const { where } = parseContactIdentifier(input.identifier)
+    const contact = await contactRepository.findIdByIdentityWhere({
+      workspaceId: input.workspaceId,
+      ...where,
+    })
+    if (!contact) {
+      throw notFoundException("Contact not found")
+    }
+    return contact.id
+  }
+  async deleteAndRecord(ctx: {
+    triggerSource: string
+    workspaceId: string
+    ids: string[]
+    accessScope?: ContactAccessScope
+  }) {
+    const contacts = await contactService.delete(ctx)
+
+    if (contacts.length > 0) {
+      await dispatchAuditRecord({
+        workspaceId: ctx.workspaceId,
+        action: "delete",
+        detail: `deleted contact${contacts.length > 1 ? "s" : ""} (${contacts.map((contact) => `#${contact.id}`).join(", ")})`,
+      })
+    }
+
+    const occurredAt = new Date()
+    for (const contact of contacts) {
+      for (const contactInbox of contact.contactInboxes) {
+        emit("analytics:dashboard", {
+          eventType: "contact:deleted",
+          workspaceId: ctx.workspaceId,
+          contactId: contact.id,
+          occurredAt,
+          source: contactInbox.source,
+          channel: contactInbox.channel,
+          sourceId: contactInbox.sourceId,
+          metadata: {
+            triggerContext: {
+              triggerSource: ctx.triggerSource,
+              triggerHandler: "deleteContact",
+              triggerType: "contact_deleted",
+            },
+          },
+        })
+      }
+    }
+  }
+
+  async blockAndRecord(ctx: {
+    workspaceId: string
+    id: string
+    accessScope?: ContactAccessScope
+  }) {
+    const contact = await contactService.block(ctx)
+
+    emit("analytics:dashboard", {
+      eventType: "contact:blocked",
+      workspaceId: ctx.workspaceId,
+      contactId: contact.id,
+      occurredAt: contact.blockedAt ?? new Date(),
+      country: contact.country,
+      metadata: {
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "blockContactAction",
+          triggerType: "contact_blocked",
+          origin: "manual",
+        },
+      },
+    })
+  }
+
+  async unblockAndRecord(ctx: {
+    workspaceId: string
+    id: string
+    accessScope?: ContactAccessScope
+  }) {
+    await contactService.unblock(ctx)
+  }
   // ─── Legacy generic find (preserved for backward compat) ────────────────
   async findBy(props: {
     tx?: DatabaseClient
@@ -536,32 +625,8 @@ class ContactService extends BaseService {
   }): Promise<{ contact: ContactModel; isNew: boolean }> {
     const { workspaceId, identifier, data, source, avatar } = props
 
-    const colonIdx = identifier.indexOf(":")
-    if (colonIdx === -1) {
-      throw notFoundException("Invalid identifier format")
-    }
-
-    const prefix = identifier.slice(0, colonIdx)
-    const value = identifier.slice(colonIdx + 1)
-    if (!value) {
-      throw notFoundException("Invalid identifier format")
-    }
-
-    const whereClause: Record<string, unknown> = { workspaceId }
-    if (prefix === "id") {
-      if (!NUMERIC_RE.test(value)) {
-        throw notFoundException("Contact not found")
-      }
-      whereClause.id = value
-    } else if (prefix === "email") {
-      whereClause.email = value
-    } else if (prefix === "phone") {
-      whereClause.phoneNumber = value
-    } else {
-      throw notFoundException(
-        "Invalid identifier format. Use id:, email:, or phone: prefix",
-      )
-    }
+    const { prefix, value, where } = parseContactIdentifier(identifier)
+    const whereClause = { workspaceId, ...where }
 
     const existing = await db.query.contactModel.findFirst({
       where: whereClause,

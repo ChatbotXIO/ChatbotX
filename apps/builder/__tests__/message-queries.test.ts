@@ -24,6 +24,9 @@ const mocks = vi.hoisted(() => {
       findByUncached: vi.fn().mockResolvedValue(null),
       findRecentByContactId: vi.fn().mockResolvedValue(null),
     },
+    conversationService: {
+      findBy: vi.fn().mockResolvedValue(undefined),
+    },
     uploader: { getPresignedDownload: vi.fn() },
   }
 })
@@ -31,6 +34,7 @@ const mocks = vi.hoisted(() => {
 vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettings: mocks.resolveTenantSettings,
   contactInboxService: mocks.contactInboxService,
+  conversationService: mocks.conversationService,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -106,7 +110,7 @@ describe("message queries", () => {
 
   test("publicFindContactMessage uses conversation-scoped lookup without requiring createdAt from the caller", async () => {
     const conversationCreatedAt = new Date("2026-05-01T00:00:00Z")
-    mocks.db.query.conversationModel.findFirst.mockResolvedValue({
+    mocks.conversationService.findBy.mockResolvedValue({
       id: "conv-1",
       workspaceId: "ws-1",
       createdAt: conversationCreatedAt,
@@ -119,7 +123,7 @@ describe("message queries", () => {
       workspaceId: "ws-1",
     })
 
-    expect(mocks.db.query.conversationModel.findFirst).toHaveBeenCalledWith({
+    expect(mocks.conversationService.findBy).toHaveBeenCalledWith({
       where: { id: "conv-1", workspaceId: "ws-1" },
     })
     expect(mocks.repo.findTriggerMessage).toHaveBeenCalledWith({
@@ -139,7 +143,7 @@ describe("message queries", () => {
       perPage: 20,
     })
 
-    expect(mocks.db.query.conversationModel.findFirst).toHaveBeenCalledWith({
+    expect(mocks.conversationService.findBy).toHaveBeenCalledWith({
       where: { id: "conv-1", workspaceId: "ws-1" },
     })
   })

@@ -39,6 +39,15 @@ features/<feature-name>/
 
 Not every feature needs all directories. Use what's appropriate.
 
+Never add a `server/` directory — it is not a recognized layout and every
+prior instance of one was a de-facto ad-hoc business layer with `db` access
+straight from `apps/builder`. Data access and side effects belong in
+`packages/business` (service) or `packages/database/src/repositories`
+(repository); logic that only builder can see (e.g. it depends on
+`profileFetcherFactories` or another builder-only registry) goes in
+`features/<feature>/lib/*.ts` or `features/<feature>/queries/*.ts` instead,
+never `"use server"`.
+
 ## Page Pattern (Server Component)
 
 ```typescript

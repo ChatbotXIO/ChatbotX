@@ -2,11 +2,11 @@
 
 import {
   contactInboxService,
+  conversationService,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db } from "@chatbotx.io/database/client"
 import {
   createMessageRepository,
   getSafeSinceTime,
@@ -62,7 +62,7 @@ export const listMessages = async (
   })
 
   const conversation = input.conversationId
-    ? await db.query.conversationModel.findFirst({
+    ? await conversationService.findBy({
         where: { id: input.conversationId, workspaceId: input.workspaceId },
       })
     : null
@@ -147,7 +147,7 @@ export const publicFindContactMessage = async ({
 }): Promise<MessageResourceWithRelations> => {
   const { storageUrl } = await resolveTenantSettings({ workspaceId })
   const repository = await createMessageRepository()
-  const conversation = await db.query.conversationModel.findFirst({
+  const conversation = await conversationService.findBy({
     where: { id: conversationId, workspaceId },
   })
   if (!conversation) {

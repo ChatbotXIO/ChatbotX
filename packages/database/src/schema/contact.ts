@@ -70,6 +70,16 @@ export const contactModel = pgTable(
       table.workspaceId,
       table.createdAt,
     ),
+    // Covers the identifier→id equality lookup on `resolveContactId`
+    // (`apps/builder/src/features/contacts/queries/public-find-contact.ts`)
+    // for the public API's `identifier: "email:..."/"phone:..."` syntax —
+    // previously only the GIN trigram indexes existed, which are built for
+    // substring/similarity search, not exact-match lookups.
+    index("idx_contact_workspace_email").on(table.workspaceId, table.email),
+    index("idx_contact_workspace_phone_number").on(
+      table.workspaceId,
+      table.phoneNumber,
+    ),
     index("Contact_firstName_trgm_idx").using(
       "gin",
       table.firstName.op("gin_trgm_ops"),

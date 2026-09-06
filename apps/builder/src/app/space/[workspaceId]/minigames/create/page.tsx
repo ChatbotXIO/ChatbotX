@@ -7,7 +7,6 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { MinigameForm } from "@/features/minigames/minigame-form"
-import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 
 export default async function CreateMinigamePage({
   params,
@@ -45,15 +44,13 @@ export default async function CreateMinigamePage({
         ]}
       />
       <FlowStoreProvider workspaceId={workspaceId}>
-        <TagStoreProvider workspaceId={workspaceId}>
-          <CustomFieldStoreProvider workspaceId={workspaceId}>
-            <MinigameForm
-              mode="create"
-              type={parsedType.data}
-              workspaceId={workspaceId}
-            />
-          </CustomFieldStoreProvider>
-        </TagStoreProvider>
+        <CustomFieldStoreProvider workspaceId={workspaceId}>
+          <MinigameForm
+            mode="create"
+            type={parsedType.data}
+            workspaceId={workspaceId}
+          />
+        </CustomFieldStoreProvider>
       </FlowStoreProvider>
     </div>
   )

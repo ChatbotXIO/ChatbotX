@@ -30,6 +30,34 @@ function withIncrIfExists(client: Redis): IncrIfExistsClient {
   return client as IncrIfExistsClient
 }
 
+// Fixed-window rate-limit counter in one round-trip: increments unconditionally,
+// then sets the TTL only on the request that created the key (result === 1) —
+// a plain `EXPIRE` on every call would let a steady stream of requests keep
+// extending the window's TTL indefinitely, which is exactly the bug the
+// separate SETNX-then-INCR two-call pattern was written to avoid.
+const INCR_WITH_WINDOW_LUA = `
+local next = redis.call('INCR', KEYS[1])
+if next == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return next
+`
+
+type IncrWithWindowClient = Redis & {
+  incrWithWindow: (key: string, ttlSeconds: string) => Promise<number>
+}
+
+const clientsWithIncrWithWindow = new WeakSet<Redis>()
+
+function withIncrWithWindow(client: Redis): IncrWithWindowClient {
+  if (!clientsWithIncrWithWindow.has(client)) {
+    client.defineCommand("incrWithWindow", {
+      numberOfKeys: 1,
+      lua: INCR_WITH_WINDOW_LUA,
+    })
+    clientsWithIncrWithWindow.add(client)
+  }
+  return client as IncrWithWindowClient
+}
+
 export const distributedStoreFactory = (
   getRedisClient: () => Promise<Redis>,
 ) => ({
@@ -314,6 +342,19 @@ export const distributedStoreFactory = (
   ): Promise<void> {
     const redisClient = await getRedisClient()
     await redisClient.set(key, String(value), "EX", ttlInSeconds)
+  },
+
+  /**
+   * Fixed-window rate-limit increment in a single round-trip — replaces the
+   * `setNumberIfNotExists` + `incrementCounter` two-call pattern
+   * (`api-rate-limit.ts`'s original `incrementWindowCounter`), which cost 2
+   * Redis round-trips on the very first request of a window (a failed SETNX
+   * then an INCR) and 1 on every request after. See `INCR_WITH_WINDOW_LUA`
+   * above for why this can't just be `INCR` + unconditional `EXPIRE`.
+   */
+  async incrWithWindow(key: string, ttlSeconds: number): Promise<number> {
+    const redisClient = withIncrWithWindow(await getRedisClient())
+    return await redisClient.incrWithWindow(key, String(ttlSeconds))
   },
 })
 

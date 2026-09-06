@@ -55,22 +55,21 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       )
     }
 
-    // Best-effort IP-keyed gate BEFORE the lookup: requests with invalid
-    // tokens never reach the per-workspace limiter below, so without this a
-    // token-guessing flood gets unthrottled hash + DB lookups.
-    await assertPreAuthNotRateLimited(context.headers)
-
-    // Hash-only lookup: WorkspaceApiToken.tokenHash is authoritative for
-    // auth. The deprecated Workspace.token column (kept read-only for
-    // {{api_key}}) is never consulted here.
+    // The IP-keyed gate is best-effort defense against token-guessing floods
+    // — it doesn't need the lookup's result, so it runs concurrently with
+    // hash + lookup rather than gating them, saving one round-trip of
+    // latency off the common (valid-token) path. A rejection from either
+    // promise still fails the whole request; the lookup's cost is "wasted"
+    // only in the rare case the IP is already over its ceiling.
     const tokenHash = await hashToken(token)
     let auth: Awaited<
       ReturnType<typeof workspaceApiTokenService.findWorkspaceByTokenHash>
     >
     try {
-      auth = await workspaceApiTokenService.findWorkspaceByTokenHash({
-        tokenHash,
-      })
+      ;[, auth] = await Promise.all([
+        assertPreAuthNotRateLimited(context.headers),
+        workspaceApiTokenService.findWorkspaceByTokenHash({ tokenHash }),
+      ])
     } catch (error) {
       // The token-row cache (up to 300s TTL) can outlive the workspace it
       // points at if a purge runs before the tag is invalidated — the

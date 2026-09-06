@@ -1,6 +1,7 @@
 import {
   contactInboxService,
   conversationService,
+  messageService,
   userService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -10,7 +11,6 @@ import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { changeMessageAttributes } from "../actions/change-message-attributes.action"
-import { createMessage } from "../actions/create-message.action"
 import { deleteMessage } from "../actions/delete-message.action"
 import { editMessage } from "../actions/edit-message.action"
 import { findMessage, listMessages } from "../queries"
@@ -92,10 +92,10 @@ export const messagesAuthenticatedAPI = {
       // session context only carries the lighter better-auth user shape.
       const user = await userService.findByIdOrFail(context.user.id)
 
-      return createMessage({
+      return messageService.createOutgoing({
         conversation,
         contactInbox,
-        parsedInput: input,
+        input,
         user,
       })
     }),

@@ -1,5 +1,6 @@
 "use server"
 
+import { folderService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
@@ -12,7 +13,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
-import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"
 import {
@@ -48,11 +48,11 @@ export const createTriggerAction = workspaceActionClient
       }
 
       if (parsedInput.folderId) {
-        await ensureFolderIsExists(
-          parsedInput.folderId,
+        await folderService.ensureExists({
+          id: parsedInput.folderId,
           workspaceId,
-          folderTypes.enum.trigger,
-        )
+          folderType: folderTypes.enum.trigger,
+        })
       }
 
       const { ...triggerData } = parsedInput

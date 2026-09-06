@@ -1,5 +1,6 @@
 "use server"
 
+import { folderService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { db } from "@chatbotx.io/database/client"
 import {
@@ -13,7 +14,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
-import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type CreateFlowSchema, createFlowSchema } from "../schema/action"
 
@@ -29,7 +29,11 @@ export const createFlowAction = workspaceActionClient
       parsedInput: CreateFlowSchema
     }) => {
       if (parsedInput.folderId) {
-        await ensureFolderIsExists(parsedInput.folderId, workspaceId, "flow")
+        await folderService.ensureExists({
+          id: parsedInput.folderId,
+          workspaceId,
+          folderType: "flow",
+        })
       }
 
       const defaultNode = sendMessageNodeDefaultFn({

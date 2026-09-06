@@ -8,7 +8,11 @@ import {
   version as packageVersion,
 } from "../../package.json"
 import { env } from "../env"
-import { type DynamicTool, getCachedTools } from "../openapi-loader"
+import {
+  type DynamicTool,
+  getCachedTools,
+  refreshOpenApiSpecIfStale,
+} from "../openapi-loader"
 
 export type CreateMcpServerOptions = {
   getApiKey?: () => string
@@ -133,13 +137,16 @@ export const createMcpServer = (
   // the OpenAPI spec. We register handlers on the underlying low-level server.
   mcpServer.server.registerCapabilities({ tools: {} })
 
-  mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: getCachedTools().map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      inputSchema: tool.inputSchema as InputSchema,
-    })),
-  }))
+  mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => {
+    const tools = await refreshOpenApiSpecIfStale()
+    return {
+      tools: tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema as InputSchema,
+      })),
+    }
+  })
 
   mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params

@@ -10,10 +10,6 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { createTag } from "../actions/create-tag-action"
-import { deleteTag } from "../actions/delete-tag-action"
-import { updateTag } from "../actions/update-tag-action"
-import { listTags } from "../queries"
 import { createTagRequest } from "../schema/action"
 import { publicListTagsResponse } from "../schema/query"
 import { publicTagResource, tagResource } from "../schema/resource"
@@ -33,7 +29,7 @@ export const tagsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
-        await listTags({
+        await tagService.list({
           ...input,
           workspaceId: context.workspace.id,
           sort: [{ id: "createdAt", desc: true }],
@@ -52,8 +48,8 @@ export const tagsPublicRouter = {
     .output(publicTagResource)
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      const { data } = await createTag({
-        ...input,
+      const { data } = await tagService.create({
+        data: input,
         workspaceId: context.workspace.id,
       })
 
@@ -94,11 +90,10 @@ export const tagsPublicRouter = {
     .errors(possibleErrorsOnUpdatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...rest } = input
-      return await updateTag({
-        workspaceId: context.workspace.id,
-        id,
-        parsedInput: rest,
-      })
+      return await tagService.update(
+        { workspaceId: context.workspace.id, id },
+        rest,
+      )
     }),
 
   delete: workspaceTokenAuthAPI
@@ -114,9 +109,9 @@ export const tagsPublicRouter = {
     .handler(async ({ context, input }) => {
       const { id } = input
 
-      return await deleteTag({
+      return await tagService.softDelete({
         workspaceId: context.workspace.id,
-        id,
+        ids: [id],
       })
     }),
 }

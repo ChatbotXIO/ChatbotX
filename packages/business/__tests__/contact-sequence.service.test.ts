@@ -73,6 +73,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  workspaceUsageModel: {},
+  userQuotaModel: {},
+  questionnaireSubmissionModel: {},
+  conversationModel: {},
+  adsConversionEventModel: {},
+  refLinkStatModel: {},
+  contactsOnBroadcastsModel: {},
+  contactsToTagsModel: {},
+  contactInboxModel: {},
   contactsOnSequenceModel: {
     id: { __column: "id" },
     workspaceId: { __column: "workspaceId" },
@@ -81,6 +90,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     id: { __column: "sequence.id" },
     name: { __column: "sequence.name" },
   },
+}))
+
+vi.mock("@chatbotx.io/analytics", () => ({
+  macAnalyticsService: {},
 }))
 
 vi.mock("@chatbotx.io/events", () => ({

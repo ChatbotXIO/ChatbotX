@@ -159,7 +159,7 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
     expect(workspaceService.findById).not.toHaveBeenCalled()
   })
 
-  test("caches the token-row lookup with a workspace-scoped tag and TTL", async () => {
+  test("caches the merged {workspace, apiToken} pair under one key, tagged for both invalidation paths", async () => {
     findByTokenHash.mockResolvedValue({
       id: "t-1",
       workspaceId: "ws-1",
@@ -180,12 +180,32 @@ describe("workspaceApiTokenService.findWorkspaceByTokenHash", () => {
     )
 
     const options = withCache.mock.calls[0]?.[2] as {
-      dynamicTags: (row: unknown) => string[] | undefined
+      dynamicTags: (result: unknown) => string[] | undefined
     }
-    expect(options.dynamicTags({ workspaceId: "ws-1" })).toEqual([
-      workspaceApiTokenCacheTag("ws-1"),
-    ])
+    // Both tags must be present: `deleteToken` invalidates only the token
+    // tag, a workspace update invalidates only `workspaces:<id>` — losing
+    // either one would let that write serve stale cached auth data.
+    expect(
+      options.dynamicTags({
+        workspace: { id: "ws-1" },
+        apiToken: { workspaceId: "ws-1" },
+      }),
+    ).toEqual([workspaceApiTokenCacheTag("ws-1"), "workspaces:ws-1"])
     expect(options.dynamicTags(undefined)).toBeUndefined()
+  })
+
+  test("only calls workspaceService.findById once, inside the cached fn — not a second time after the cache resolves", async () => {
+    findByTokenHash.mockResolvedValue({
+      id: "t-1",
+      workspaceId: "ws-1",
+      permission: "full",
+    })
+
+    await workspaceApiTokenService.findWorkspaceByTokenHash({
+      tokenHash: TOKEN_HASH,
+    })
+
+    expect(workspaceService.findById).toHaveBeenCalledTimes(1)
   })
 
   test("bypasses the cache when a caller-owned transaction is provided", async () => {

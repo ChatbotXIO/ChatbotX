@@ -159,6 +159,66 @@ export const publicRouter = {
 }
 ```
 
+**`summary` is what the MCP server shows as the tool description** —
+`apps/mcp-server/src/openapi-loader.ts`'s `buildToolDescription` joins
+`summary` and `description` (when both are set) into one string, so use
+`summary` for the one-line action and `description` for longer usage
+guidance (valid values, example payloads, edge cases) an LLM needs to pick
+the right tool and fill it in correctly. A `findByCustomField`-style
+endpoint with ambiguous input shape should always set `description`.
+
+**`include`/`withCount` convention for list endpoints**: a public list
+endpoint whose row shape has optional relations or an expensive count query
+should accept `include?: string[]` (narrows the response payload — see
+`features/contacts/queries/list-contacts.queries.ts`'s
+`stripUnrequestedContactRelations`, which strips fields post-query rather
+than fighting Drizzle's relational-query type inference with a dynamic
+`with:`) and `withCount?: boolean` (default `true`, skips the count query
+entirely when `false` — the actual latency win, since the DB join happens
+either way). Only add this pair when a list endpoint's default response is
+genuinely heavy; a small resource with no relations doesn't need it.
+
+**Split `api/public.ts` (and its `schema/public.ts`) into submodules once
+either exceeds ~400 lines or accumulates more than one unrelated concern** —
+see `features/contacts/api/public/{crud,tags,custom-fields,bulk,export,
+refresh-profile,messages}.ts` and the matching
+`features/contacts/schema/public/*.ts`. Each submodule should import only
+what its own procedures need; a shared `schema/public.ts` that pulls in
+every feature's resource schemas (e.g. through a heavyweight file like
+`schema/query.ts`) makes every submodule's unit test pay that whole import
+cost even when it only needs one small schema. A submodule that hangs
+routes off another resource's path prefix (like `messages.ts`'s
+`/v1/contacts/{identifier}/messages`) still calls
+`workspaceTokenAuthAPIForScope` with **its own** scope, never the owning
+feature's — see the endpoint-to-scope table in
+`docs/developer/workspace-api-tokens.md`.
+
+**Prefer a sibling feature's own `api/public.ts` over a submodule when the
+resource already has its own feature directory** — contact notes, contact
+sequences, contact inboxes, and contact filter fields each publish their own
+`features/<feature>/api/public.ts` + `schema/public.ts` (not
+`features/contacts/api/public/{notes,sequences,inboxes,filter-fields}.ts`),
+and `features/contacts/api/public.ts` composes their exported router objects
+in alongside its own submodules:
+
+```ts
+import { contactsNotesPublicRouter } from "@/features/contact-notes/api/public"
+// ...
+export const contactsPublicRouter = {
+  ...contactsCrudPublicRouter,
+  ...contactsNotesPublicRouter,
+  // ...
+}
+```
+
+Router key and path stay unchanged either way — only the source file moves
+to live with the feature that owns the resource's business logic. The
+public handler and its equivalent server action must call the **same**
+service method; the action is the only place that resolves the caller's
+permission scope (via `requireContactPermissionScope`/
+`resolveContactPermissionScope`) — the public handler passes no
+`accessScope`, since a workspace-token caller is never member-scoped.
+
 ## Registering the Router
 
 Add to `apps/builder/src/routers/index.ts` as a **lazy branch** — every feature
