@@ -1,7 +1,10 @@
 import { ChannelErrorCategory } from "@chatbotx.io/sdk"
 import { describe, expect, test } from "vitest"
 import { MessengerException } from "../src/exception"
-import { mapToChannelError } from "../src/lib/error-mapper"
+import {
+  isDisconnectSafeError,
+  mapToChannelError,
+} from "../src/lib/error-mapper"
 
 describe("messenger error-mapper USER_BLOCKED detection", () => {
   test("code 551 maps to USER_BLOCKED", () => {
@@ -39,5 +42,84 @@ describe("messenger error-mapper USER_BLOCKED detection", () => {
     const data = await mapped.getErrorData()
     expect(data.category).toBe("user_blocked")
     expect(data.isPermanent).toBe(true)
+  })
+})
+
+describe("messenger error-mapper isDisconnectSafeError", () => {
+  test("code 100 'App is not installed' (no subcode) is safe to disconnect", () => {
+    const exc = new MessengerException(
+      "(#100) App is not installed: 419370077795677",
+      400,
+      100,
+      null,
+      "OAuthException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(true)
+  })
+
+  test("code 100 + subcode 33 (object does not exist) is safe to disconnect", () => {
+    const exc = new MessengerException(
+      "Unsupported get request. Object with ID '1' does not exist",
+      400,
+      100,
+      33,
+      "GraphMethodException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(true)
+  })
+
+  test("code 803 (alias does not exist) is safe to disconnect", () => {
+    const exc = new MessengerException(
+      "(#803) Some of the aliases you requested do not exist: 1",
+      404,
+      803,
+    )
+    expect(isDisconnectSafeError(exc)).toBe(true)
+  })
+
+  test.each([
+    10, 200, 210,
+  ])("permission-lost code %i is safe to disconnect", (code) => {
+    const exc = new MessengerException("Permissions error", 403, code)
+    expect(isDisconnectSafeError(exc)).toBe(true)
+  })
+
+  test("revoked page token (190 + subcode 458) stays safe to disconnect", () => {
+    const exc = new MessengerException(
+      "Error validating access token",
+      401,
+      190,
+      458,
+      "OAuthException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(true)
+  })
+
+  test("code 100 with an unrelated message is NOT safe to disconnect", () => {
+    const exc = new MessengerException("(#100) Invalid parameter", 400, 100)
+    expect(isDisconnectSafeError(exc)).toBe(false)
+  })
+
+  test.each([
+    1, 2, 4, 17, 32, 613,
+  ])("transient code %i is NOT safe to disconnect", (code) => {
+    const exc = new MessengerException("Transient", 500, code)
+    expect(isDisconnectSafeError(exc)).toBe(false)
+  })
+
+  test("code 190 without a subcode is NOT safe to disconnect", () => {
+    const exc = new MessengerException(
+      "Bad token",
+      401,
+      190,
+      null,
+      "OAuthException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(false)
+  })
+
+  test("non-Messenger errors are NOT safe to disconnect", () => {
+    expect(isDisconnectSafeError(new Error("boom"))).toBe(false)
+    expect(isDisconnectSafeError(undefined)).toBe(false)
   })
 })
