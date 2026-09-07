@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./ads-conversion/channel-fields": "./src/ads-conversion/channel-fields.ts",
+    "./ads-conversion/schema": "./src/ads-conversion/schema.ts",
     "./audit": "./src/audit/index.ts",
     "./branding": "./src/platform/branding.ts",
     "./contact-custom-field": "./src/contact-custom-field/index.ts",
@@ -18,6 +19,7 @@
     "./dynamic-image": "./src/dynamic-image/index.ts",
     "./error-log": "./src/error-log/index.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
+    "./inbox/schema": "./src/inbox/schema.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",
     "./minigame": "./src/minigame/index.ts",

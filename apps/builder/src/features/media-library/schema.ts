@@ -6,8 +6,6 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export { MEDIA_LIBRARY_FILES_PAGE_SIZE } from "@chatbotx.io/business"
-
 export const mediaLibraryFolderResource = createSelectSchema(
   mediaLibraryFolderModel,
   {

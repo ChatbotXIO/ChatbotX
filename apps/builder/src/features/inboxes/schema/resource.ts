@@ -1,4 +1,4 @@
-export { inboxResource } from "@chatbotx.io/business"
+export { inboxResource } from "@chatbotx.io/business/inbox/schema"
 
 import type {
   InboxModel,

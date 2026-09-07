@@ -1,5 +1,3 @@
-"use server"
-
 import { mediaLibraryFileService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListFilesRequest, ListFilesResponse } from "../schema"
