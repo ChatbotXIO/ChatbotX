@@ -21,11 +21,16 @@ export async function processPendingEmbedding(
   }
 
   try {
-    const embeddingModel = await resolveEmbeddingModel(aiEmbedding.workspaceId)
+    const { model: embeddingModel } = await resolveEmbeddingModel(
+      aiEmbedding.workspaceId,
+    )
 
     const { embedding } = await embed({
       model: embeddingModel,
       value: aiEmbedding.content,
+      providerOptions: {
+        google: { outputDimensionality: 1536 },
+      },
     })
 
     await db
@@ -42,11 +47,8 @@ export async function processPendingEmbedding(
       `processPendingEmbedding item failed for embeddingId: ${aiEmbedding.id}`,
     )
 
-    await db
-      .update(aiEmbeddingModel)
-      .set({
-        status: aiEmbeddingStatuses.enum.error,
-      })
-      .where(eq(aiEmbeddingModel.id, aiEmbedding.id))
+    // Preserve the pending state and let BullMQ retry transient provider
+    // failures. Acknowledging this job would make the reconciler skip it.
+    throw error
   }
 }

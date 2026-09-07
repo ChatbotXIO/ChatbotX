@@ -205,13 +205,16 @@ async function retrieveUrlChunks(
     }))
   }
 
-  const embeddingModel = await resolveEmbeddingModel(
+  const { model: embeddingModel } = await resolveEmbeddingModel(
     resolvedSource.source.workspaceId,
   )
 
   const { embedding } = await embed({
     model: embeddingModel,
     value: input.query,
+    providerOptions: {
+      google: { outputDimensionality: 1536 },
+    },
   })
 
   const queryEmbeddingVector = `[${embedding.join(",")}]`

@@ -5,7 +5,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
-import type { IntegrationJobCommentAIReply } from "@chatbotx.io/worker-config"
+import type { AIJobCommentAIReply } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
 import { generateAIReplyText } from "../automated-response/replies"
@@ -24,7 +24,7 @@ import { postPublicCommentReply } from "./public-reply"
  * blocks the comment-automation loop.
  */
 export async function processCommentAIReply(
-  data: IntegrationJobCommentAIReply["data"],
+  data: AIJobCommentAIReply["data"],
 ): Promise<void> {
   if (!data.message?.trim()) {
     // Image/sticker-only comment: nothing for the agent to answer.

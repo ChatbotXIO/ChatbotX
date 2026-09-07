@@ -32,33 +32,45 @@ export const QualitySelect = (props: QualitySelectProps) => {
 
 type SizeSelectProps = {
   name: string
+  model: string
   required?: boolean
   provider: AIGenerateImageProvider
 }
 
 export const SizeSelect = (props: SizeSelectProps) => {
-  const { provider, ...rest } = props
+  const { model, provider, ...rest } = props
   const t = useTranslations()
+
+  const isGPTImage =
+    model.startsWith("gpt-image") || model.startsWith("chatgpt-image")
 
   const optionsMap = useMemo<Record<AIGenerateImageProvider, SelectOption[]>>(
     () => ({
       openai: [
         { label: t("fields.size.options.auto"), value: "auto" },
-        { label: t("fields.size.options.square1024"), value: "1024x1024" },
-        {
-          label: t("fields.size.options.landscape1536x1024"),
-          value: "1536x1024",
-        },
-        {
-          label: t("fields.size.options.portrait1024x1536"),
-          value: "1024x1536",
-        },
-        { label: t("fields.size.options.dalle2_256"), value: "256x256" },
-        { label: t("fields.size.options.dalle2_512"), value: "512x512" },
-        {
-          label: t("fields.size.options.dalle3_1792x1024"),
-          value: "1792x1024",
-        },
+        ...(isGPTImage
+          ? [
+              {
+                label: t("fields.size.options.square1024"),
+                value: "1024x1024",
+              },
+              {
+                label: t("fields.size.options.landscape1536x1024"),
+                value: "1536x1024",
+              },
+              {
+                label: t("fields.size.options.portrait1024x1536"),
+                value: "1024x1536",
+              },
+            ]
+          : [
+              { label: t("fields.size.options.dalle2_256"), value: "256x256" },
+              { label: t("fields.size.options.dalle2_512"), value: "512x512" },
+              {
+                label: t("fields.size.options.dalle3_1792x1024"),
+                value: "1792x1024",
+              },
+            ]),
       ],
       gemini: [
         { label: t("fields.size.options.auto"), value: "auto" },
@@ -69,7 +81,7 @@ export const SizeSelect = (props: SizeSelectProps) => {
         { label: "16:9", value: "16:9" },
       ],
     }),
-    [t],
+    [isGPTImage, t],
   )
 
   return (

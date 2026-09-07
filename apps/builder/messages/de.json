@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "Die Dateigröße überschreitet das Höchstlimit",
     "maxItemsReached": "Pro Arbeitsbereich sind höchstens {max} {feature} zulässig",
+    "maxCharacters": "Maximal {max} Zeichen.",
     "invalidApiKey": "Ungültiger API-Schlüssel",
     "maxMustBeGreaterThanMin": "{maxField} muss größer als oder gleich {minField} sein"
   },

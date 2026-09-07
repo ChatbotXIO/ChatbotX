@@ -22,7 +22,7 @@ export async function getAIFileTools(
     fileSearchNoResult = "No relevant information found.",
     fileSearchFoundPrefix = (count: number) =>
       `Found ${count} matching results:`,
-    similarityThreshold = 0.7,
+    similarityThreshold,
     maxResults = 5,
   } = options
   try {

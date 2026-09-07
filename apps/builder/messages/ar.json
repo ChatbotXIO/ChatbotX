@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "يتجاوز حجم الملف الحد الأقصى",
     "maxItemsReached": "الحد الأقصى المسموح به لكل مساحة عمل هو {max} من {feature}",
+    "maxCharacters": "الحد الأقصى {max} حرفًا.",
     "invalidApiKey": "مفتاح API غير صالح",
     "maxMustBeGreaterThanMin": "يجب أن يكون {maxField} أكبر من أو يساوي {minField}"
   },

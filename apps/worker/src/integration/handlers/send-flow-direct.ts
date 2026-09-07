@@ -4,6 +4,7 @@ import { runFlowNode } from "./flow"
 
 export interface SendFlowDirectParams {
   contactId: string
+  flowExecutionKey?: string
   flowId: string
   metadata?: MetadataPayload
   workspaceId: string
@@ -12,7 +13,7 @@ export interface SendFlowDirectParams {
 export async function sendFlowDirect(
   params: SendFlowDirectParams,
 ): Promise<Date> {
-  const { flowId, workspaceId, contactId, metadata } = params
+  const { flowExecutionKey, flowId, workspaceId, contactId, metadata } = params
 
   const conversation = await db.query.conversationModel.findFirst({
     where: {
@@ -33,12 +34,15 @@ export async function sendFlowDirect(
 
   await Promise.all(
     allContactInboxes.map(async (contactInbox) => {
-      await runFlowNode({
-        flowId,
-        metadata,
-        conversationId: conversation,
-        contactInboxId: contactInbox,
-      })
+      await runFlowNode(
+        {
+          flowId,
+          metadata,
+          conversationId: conversation,
+          contactInboxId: contactInbox,
+        },
+        { flowExecutionKey },
+      )
     }),
   )
 

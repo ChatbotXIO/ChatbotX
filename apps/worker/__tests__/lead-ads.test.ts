@@ -306,6 +306,7 @@ describe("processLeadgen", () => {
     )
     expect(mockRunFlowNode).toHaveBeenCalledWith(
       expect.objectContaining({ flowId: "flow-9" }),
+      { flowExecutionKey: undefined },
     )
     expect(mockSetContactId).toHaveBeenCalledWith({
       id: "claim-1",

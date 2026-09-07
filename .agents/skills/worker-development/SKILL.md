@@ -21,12 +21,21 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | integration | `integration` | `src/integration/worker.ts` |
 | chat | `chat` | `src/chat/worker.ts` |
 | ai-agent | `aiAgent` | `src/ai-agent/worker.ts` |
+| heavy | `heavy` | `src/heavy/worker.ts` |
 | default | `default` | `src/default/worker.ts` |
 | trigger | `trigger` | `src/trigger/worker.ts` |
 | webhook | `webhook` | `src/webhook/worker.ts` |
 | schedule | (cron) | `src/schedule/worker.ts` |
 | sequence-scheduler | Kafka | `src/sequence-scheduler/worker*.ts` |
 | notification | `notification` | `src/notification/worker.ts` |
+
+The `heavy` queue/worker is a **workload-class** queue, not a domain queue:
+use it for bounded but RAM/CPU/I/O/model-heavy jobs that should not occupy
+latency-sensitive domain workers. AI file processing, media generation,
+speech/text conversion, document extraction, and image analysis are current
+tenants. Future heavy workloads can join this queue with their own
+`src/heavy/handlers/<domain-or-capability>/` handler area when the same
+resource-isolation tradeoff applies.
 
 ## Creating a New Queue
 

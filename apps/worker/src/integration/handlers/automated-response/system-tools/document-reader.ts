@@ -1,21 +1,28 @@
+import { createHash } from "node:crypto"
 import type { systemFunctionNames } from "@chatbotx.io/ai"
 import type {
   DocumentReaderInput,
   SystemToolExecutors,
 } from "@chatbotx.io/ai/server"
+import {
+  getHeavyJobCompletionWaitTimeoutMs,
+  getHeavyJobOptions,
+  getHeavyQueueEvents,
+  HeavyJobAction,
+  heavyExtractTextFromFileResultSchema,
+  heavyQueue,
+  waitForJobCompletionWithRetries,
+} from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
-import { withTimeout } from "../../../../ai-agent/lib/async-utils"
-import { extractTextFromFile } from "../../../../ai-agent/lib/text-extractor"
+import { env } from "../../../../env"
 import { logger } from "../../../../lib/logger"
 import { getContextSourceAdapter } from "./context-sources/registry"
 import type { ConversationContextSnippet } from "./context-sources/types"
-import {
-  FALLBACK_MAX_TEXT_CHARS,
-  pickRelevantFallbackSnippets,
-  summarizeSnippets,
-} from "./fallback-text-utils"
+import { summarizeSnippets } from "./fallback-text-utils"
 
-const FALLBACK_TEXT_TIMEOUT_MS = 15_000
+function hash(input: string): string {
+  return createHash("sha256").update(input).digest("hex").slice(0, 32)
+}
 
 function formatToolOutput(props: {
   fileOnlyTrigger: boolean
@@ -47,18 +54,47 @@ function formatToolOutput(props: {
   return output.join("\n")
 }
 
-async function parseFallbackSnippets(
-  originPath: string,
-  mimeType: string,
-  query: string,
-): Promise<ConversationContextSnippet[]> {
-  const parsedText = await withTimeout(
-    extractTextFromFile(originPath, mimeType),
-    FALLBACK_TEXT_TIMEOUT_MS,
+async function parseFallbackSnippets(input: {
+  attachmentId: string
+  conversationId: string
+  mimeType: string
+  originPath: string
+  query: string
+  workspaceId: string
+}): Promise<ConversationContextSnippet[]> {
+  const job = await heavyQueue.add(
+    HeavyJobAction.extractTextFromFile,
+    {
+      type: HeavyJobAction.extractTextFromFile,
+      data: input,
+    },
+    {
+      ...getHeavyJobOptions(HeavyJobAction.extractTextFromFile),
+      jobId: `heavy-document-reader-${input.conversationId}-${input.attachmentId}-${hash(input.query)}`,
+    },
   )
 
-  const normalizedText = parsedText.slice(0, FALLBACK_MAX_TEXT_CHARS)
-  return pickRelevantFallbackSnippets(normalizedText, query)
+  if (!(job && typeof job === "object" && "waitUntilFinished" in job)) {
+    throw new Error("Heavy queue did not return a waitable document job")
+  }
+
+  const rawResult = await waitForJobCompletionWithRetries(
+    job,
+    heavyQueue,
+    getHeavyQueueEvents(),
+    getHeavyJobCompletionWaitTimeoutMs(
+      HeavyJobAction.extractTextFromFile,
+      env.HEAVY_JOB_WAIT_TIMEOUT_MS,
+    ),
+  )
+  const result = heavyExtractTextFromFileResultSchema.parse(rawResult)
+
+  return result.snippets.map((content, index) => ({
+    chunkIndex: index,
+    content,
+    similarity: null,
+    source: "fallback_parse",
+  }))
 }
 
 export function createDocumentReaderExecutor(options: {
@@ -93,11 +129,14 @@ export function createDocumentReaderExecutor(options: {
 
       let snippets = preparedContext.snippets
       if (snippets.length === 0 && preparedContext.resolvedSource.attachment) {
-        snippets = await parseFallbackSnippets(
-          preparedContext.resolvedSource.attachment.originPath,
-          preparedContext.resolvedSource.attachment.mimeType,
-          args.query,
-        )
+        snippets = await parseFallbackSnippets({
+          attachmentId: preparedContext.resolvedSource.attachment.id,
+          conversationId: context.conversationId,
+          mimeType: preparedContext.resolvedSource.attachment.mimeType,
+          originPath: preparedContext.resolvedSource.attachment.originPath,
+          query: args.query,
+          workspaceId: context.workspaceId,
+        })
       }
 
       const summary = summarizeSnippets(

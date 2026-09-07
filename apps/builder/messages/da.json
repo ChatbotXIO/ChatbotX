@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "Fil størrelse exceeds maksimum limit",
     "maxItemsReached": "Maksimum {max} {feature} allowed per arbejdsområde",
+    "maxCharacters": "Maksimalt {max} tegn.",
     "invalidApiKey": "Ugyldig API-nøgle",
     "maxMustBeGreaterThanMin": "{maxField} must være greater than eller equal til {minField}"
   },

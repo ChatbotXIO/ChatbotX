@@ -1,18 +1,15 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiIntegrationService, getAIModel } from "@chatbotx.io/ai/server"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { AITextToSpeechSchema } from "@chatbotx.io/flow-config"
 import {
   experimental_generateSpeech as generateSpeech,
   NoSpeechGeneratedError,
 } from "ai"
 import { normalizeError } from "universal-error-normalizer"
-import { logger } from "../../../lib/logger"
-import { saveResultToCustomField } from "../../utils/contact"
-import type { ExecuteStepProps } from "../flow"
-import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
-import type { ExecuteStepResult } from "../step"
-import { textToSpeechStorageService } from "./storage"
+import type { HeavyStepComputeProps } from "../../integration/handlers/flow-utils"
+import { textToSpeechStorageService } from "../../integration/handlers/text-to-speech/storage"
+import { logger } from "../../lib/logger"
+import { ExpectedHeavyStepError } from "./errors"
 
 function getExecutionId(
   metadataStepId: string | undefined,
@@ -21,12 +18,11 @@ function getExecutionId(
   return metadataStepId ?? stepId
 }
 
-export async function handleAITextToSpeech({
+export async function textToSpeechOutput({
   conversation,
-  contactInbox,
   metadata,
   step,
-}: ExecuteStepProps<AITextToSpeechSchema>): Promise<ExecuteStepResult> {
+}: HeavyStepComputeProps<AITextToSpeechSchema>): Promise<string> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
@@ -41,17 +37,13 @@ export async function handleAITextToSpeech({
         { workspaceId: conversation.workspaceId, provider: step.provider },
         "[ai-text-to-speech] AI configuration not found",
       )
-      return {
-        status: "error",
-        errorMessage: "AI integration not found",
-        result: null,
-      }
+      throw new ExpectedHeavyStepError("AI integration not found")
     }
 
     const openaiProvider = getAIModel(aiConfig, "openai")
 
     if (!("speech" in openaiProvider)) {
-      throw new Error(
+      throw new ExpectedHeavyStepError(
         `Provider ${step.provider} does not support text-to-speech`,
       )
     }
@@ -61,7 +53,10 @@ export async function handleAITextToSpeech({
       text: step.message,
       voice: step.voiceType,
       abortSignal: controller.signal,
-      instructions: step.voiceTone || undefined,
+      instructions:
+        step.model === "gpt-4o-mini-tts"
+          ? step.voiceTone || undefined
+          : undefined,
     })
 
     const audioData =
@@ -81,42 +76,21 @@ export async function handleAITextToSpeech({
       mediaType: result.audio.mediaType,
     })
 
-    if (step.outputFieldId) {
-      await saveResultToCustomField({
-        contactId: conversation.contactId,
-        customFieldId: step.outputFieldId,
-        fullText: audioOutput.publicUrl,
-        workspaceId: conversation.workspaceId,
-        contactInboxId: contactInbox.id,
-      })
-    }
-
-    return { status: "success", result: null }
+    return audioOutput.publicUrl
   } catch (err) {
     if (err instanceof NoSpeechGeneratedError) {
       logger.error(
         {
-          cause: err.cause,
-          responses: err.responses,
+          conversationId: conversation.id,
+          err: normalizeError(err),
+          model: step.model,
+          provider: step.provider,
+          workspaceId: conversation.workspaceId,
         },
         "[ai-text-to-speech] No speech generated",
       )
-    } else {
-      const error = normalizeError(err)
-      logger.error(error, "[ai-text-to-speech] Step failed")
     }
-    await logProviderError({
-      provider: aiErrorLogProvider(step.provider),
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      error: err,
-    })
-    return {
-      status: "error",
-      errorMessage:
-        err instanceof Error ? err.message : "Text to speech failed",
-      result: null,
-    }
+    throw err
   } finally {
     clearTimeout(timeoutId)
   }

@@ -1,6 +1,7 @@
 export * from "./cache"
 export * from "./cache/ai-context-store"
 export * from "./cache/schema"
+export * from "./embedding-model"
 export * from "./factory"
 export * from "./knowledge-base"
 export * from "./mcp-client"

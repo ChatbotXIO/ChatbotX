@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockAiAgentFindDefault,
+  mockAiAgentQueueAdd,
   mockAutomatedResponseGetAll,
-  mockIntegrationQueueAdd,
   mockLoggerWarn,
   mockSimpleQueueEnqueue,
   mockWorkspaceFindById,
 } = vi.hoisted(() => ({
   mockAiAgentFindDefault: vi.fn(),
+  mockAiAgentQueueAdd: vi.fn().mockResolvedValue(undefined),
   mockAutomatedResponseGetAll: vi.fn(),
-  mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
   mockLoggerWarn: vi.fn(),
   mockSimpleQueueEnqueue: vi.fn().mockResolvedValue(undefined),
   mockWorkspaceFindById: vi.fn(),
@@ -38,11 +38,11 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
-    processAutomatedResonse: "processAutomatedResonse",
+  AIJobAction: {
+    processAutomatedResponse: "processAutomatedResponse",
   },
-  integrationQueue: {
-    add: mockIntegrationQueueAdd,
+  aiAgentQueue: {
+    add: mockAiAgentQueueAdd,
   },
 }))
 
@@ -89,10 +89,10 @@ describe("enqueueMessage", () => {
     expect(mockWorkspaceFindById).toHaveBeenCalledWith({ id: "workspace-1" })
     expect(mockAutomatedResponseGetAll).toHaveBeenCalledWith("workspace-1")
     expect(mockAiAgentFindDefault).toHaveBeenCalledWith("workspace-1")
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
-      "processAutomatedResonse",
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
+      "processAutomatedResponse",
       {
-        type: "processAutomatedResonse",
+        type: "processAutomatedResponse",
         data: {
           conversationId: "conversation-1",
           contactInboxId: "contact-inbox-1",
@@ -107,6 +107,7 @@ describe("enqueueMessage", () => {
           replace: true,
         },
         delay: 30_000,
+        jobId: "automated-response-message-1",
       },
     )
     expect(mockSimpleQueueEnqueue).toHaveBeenCalledWith(
@@ -126,7 +127,7 @@ describe("enqueueMessage", () => {
 
     await enqueueMessage(enqueueProps)
 
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(Object),
       expect.objectContaining({
@@ -151,7 +152,7 @@ describe("enqueueMessage", () => {
 
     await enqueueMessage(enqueueProps)
 
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(Object),
       expect.objectContaining({
@@ -177,7 +178,7 @@ describe("enqueueMessage", () => {
 
     expect(mockAutomatedResponseGetAll).not.toHaveBeenCalled()
     expect(mockAiAgentFindDefault).toHaveBeenCalledWith("workspace-1")
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(Object),
       expect.objectContaining({
@@ -198,7 +199,7 @@ describe("enqueueMessage", () => {
 
     expect(mockAutomatedResponseGetAll).not.toHaveBeenCalled()
     expect(mockAiAgentFindDefault).not.toHaveBeenCalled()
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(Object),
       expect.objectContaining({
@@ -225,7 +226,7 @@ describe("enqueueMessage", () => {
       lookupError,
       "Smart delay lookup failed; using default timing",
     )
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(Object),
       expect.objectContaining({

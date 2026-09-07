@@ -261,6 +261,7 @@ export async function processCommentAutomation(
       try {
         await executePublicReply(automation.publicReply, {
           auth,
+          automationId: automation.id,
           integrationType,
           integrationIdentifier,
           commentId,
@@ -287,6 +288,7 @@ export async function processCommentAutomation(
       try {
         await executePrivateReply(automation.privateReply, {
           auth,
+          automationId: automation.id,
           integrationType,
           integrationIdentifier,
           commentId,

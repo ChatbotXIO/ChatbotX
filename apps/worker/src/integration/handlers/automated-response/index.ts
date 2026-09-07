@@ -23,7 +23,7 @@ import {
   IMAGE_MIME_TYPES,
   PDF_MIME_TYPES,
 } from "@chatbotx.io/sdk"
-import type { IntegrationJobProcessAutomatedResponse } from "@chatbotx.io/worker-config"
+import type { AIJobProcessAutomatedResponse } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { sendTypingToChannel } from "../../../chat/handlers/send-message"
@@ -53,7 +53,7 @@ function isSupportedImageMimeType(mimeType: string): boolean {
 }
 
 export async function processAutomatedResponse(
-  props: IntegrationJobProcessAutomatedResponse["data"],
+  props: AIJobProcessAutomatedResponse["data"],
 ) {
   const { conversationId, contactInboxId, messageId } = props
   const { conversation, contactInbox } =

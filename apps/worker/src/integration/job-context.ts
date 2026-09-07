@@ -12,6 +12,32 @@ function stringifyError(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+export async function runWithOrphanedIntegrationCleanup<T>(
+  callback: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await callback()
+  } catch (error) {
+    if (!(error instanceof IntegrationNotFoundError)) {
+      throw error
+    }
+
+    try {
+      await handleOrphanedIntegration(error)
+    } catch (cleanupError) {
+      logger.warn(
+        {
+          channel: error.channel,
+          identifier: error.identifier,
+          err: stringifyError(cleanupError),
+        },
+        "Orphaned integration cleanup threw before marking job unrecoverable",
+      )
+    }
+    throw new UnrecoverableError(error.message)
+  }
+}
+
 export async function runIntegrationJobWithWebhookContext<T>(
   jobData: IntegrationJobData,
   callback: () => Promise<T>,
@@ -21,28 +47,7 @@ export async function runIntegrationJobWithWebhookContext<T>(
     ? { source: "webhook" as const }
     : {}
 
-  try {
-    return await runWithWebhookExecutionContext(
-      webhookExecutionContext,
-      callback,
-    )
-  } catch (error) {
-    if (error instanceof IntegrationNotFoundError) {
-      try {
-        await handleOrphanedIntegration(error)
-      } catch (cleanupError) {
-        logger.warn(
-          {
-            channel: error.channel,
-            identifier: error.identifier,
-            err: stringifyError(cleanupError),
-          },
-          "Orphaned integration cleanup threw before marking job unrecoverable",
-        )
-      }
-      throw new UnrecoverableError(error.message)
-    }
-
-    throw error
-  }
+  return await runWithWebhookExecutionContext(webhookExecutionContext, () =>
+    runWithOrphanedIntegrationCleanup(callback),
+  )
 }

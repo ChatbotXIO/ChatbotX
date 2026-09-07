@@ -19,6 +19,8 @@ import {
 } from "@chatbotx.io/integration-messenger"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
+  AIJobAction,
+  aiAgentQueue,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
@@ -108,6 +110,7 @@ export async function executePrivateReply(
     auth: PrivateReplyAuth
     integrationType: string
     integrationIdentifier: string
+    automationId: string
     commentId: string
     channelType: CommentAutomationChannelType
     conversationId: string
@@ -180,11 +183,12 @@ export async function executePrivateReply(
   }
 
   if (privateReply.type === "AIAgent" && privateReply.value) {
-    await integrationQueue.add(
-      IntegrationJobAction.commentAIReply,
+    await aiAgentQueue.add(
+      AIJobAction.commentAIReply,
       {
-        type: IntegrationJobAction.commentAIReply,
+        type: AIJobAction.commentAIReply,
         data: {
+          automationId: ctx.automationId,
           integrationType: ctx.integrationType,
           integrationIdentifier: ctx.integrationIdentifier,
           workspaceId: ctx.workspaceId,
@@ -199,6 +203,7 @@ export async function executePrivateReply(
       },
       {
         delay: ctx.delay,
+        jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-private`,
       },
     )
   }

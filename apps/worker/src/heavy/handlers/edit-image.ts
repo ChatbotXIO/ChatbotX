@@ -3,8 +3,7 @@ import {
   aiIntegrationService,
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
-import { assertPublicUrl, resolveTenantSettings } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
+import { resolveTenantSettings } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL,
@@ -15,39 +14,42 @@ import {
   IMAGE_DEFAULT_MIME_TYPE,
 } from "@chatbotx.io/flow-config"
 import { generateImage, type ImageModel } from "ai"
-import ky from "ky"
 import { normalizeError } from "universal-error-normalizer"
-import { logger } from "../../../lib/logger"
+import { env } from "../../env"
+import { editImageInputSchema } from "../../integration/handlers/edit-image/schema"
+import type { HeavyStepComputeProps } from "../../integration/handlers/flow-utils"
 import {
   getIntegrationContext,
   readCustomFieldValue,
-  saveResultToCustomField,
-} from "../../utils/contact"
-import type { ExecuteStepProps } from "../flow"
-import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
-import type { ExecuteStepResult } from "../step"
-import { editImageInputSchema } from "./schema"
+} from "../../integration/utils/contact"
+import { logger } from "../../lib/logger"
+import { downloadWithByteLimit } from "./bounded-download"
+import { ExpectedHeavyStepError } from "./errors"
+import { getOpenAIEditImageQuality } from "./image-options"
 
 const FETCH_IMAGE_TIMEOUT_MS = 30_000
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"])
 
 async function fetchImageAsBuffer(
   url: string,
   signal: AbortSignal,
 ): Promise<Buffer> {
-  const arrayBuffer = await ky
-    .get(url, { signal, timeout: FETCH_IMAGE_TIMEOUT_MS })
-    .arrayBuffer()
-  return Buffer.from(arrayBuffer)
+  const { buffer } = await downloadWithByteLimit({
+    label: "image",
+    maxBytes: env.HEAVY_MAX_IMAGE_BYTES,
+    signal,
+    timeout: FETCH_IMAGE_TIMEOUT_MS,
+    url,
+  })
+  return buffer
 }
 
-export async function handleAIEditImage({
+export async function editImageOutput({
   conversation,
-  contactInbox: baseContactInbox,
+  contactInbox,
   metadata,
   step,
-}: ExecuteStepProps<AIEditImageSchema>): Promise<ExecuteStepResult> {
+}: HeavyStepComputeProps<AIEditImageSchema>): Promise<string> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
@@ -55,15 +57,11 @@ export async function handleAIEditImage({
     const ctx = await getIntegrationContext({
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
-      contactInbox: baseContactInbox,
+      contactInbox,
     })
 
     if (!ctx) {
-      return {
-        status: "error",
-        errorMessage: "Integration context not found",
-        result: null,
-      }
+      throw new ExpectedHeavyStepError("Integration context not found")
     }
 
     const imageUrl = await readCustomFieldValue({
@@ -88,11 +86,7 @@ export async function handleAIEditImage({
         },
         "[ai-edit-image] Invalid input, skipping",
       )
-      return {
-        status: "error",
-        errorMessage: "Invalid input for image edit",
-        result: null,
-      }
+      throw new ExpectedHeavyStepError("Invalid input for image edit")
     }
 
     const aiConfig = await aiIntegrationService.findBy({
@@ -101,11 +95,7 @@ export async function handleAIEditImage({
     })
 
     if (!aiConfig) {
-      return {
-        status: "error",
-        errorMessage: "AI integration not found",
-        result: null,
-      }
+      throw new ExpectedHeavyStepError("AI integration not found")
     }
 
     let model: ImageModel
@@ -119,7 +109,7 @@ export async function handleAIEditImage({
     } catch (modelError) {
       logger.warn(
         {
-          err: modelError,
+          err: normalizeError(modelError),
           modelId: step.model,
           provider: step.provider,
           conversationId: conversation.id,
@@ -133,27 +123,25 @@ export async function handleAIEditImage({
           modelId: AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL,
         })
       } else {
-        throw new Error(
+        throw new ExpectedHeavyStepError(
           `[ai-edit-image] Cannot create image model for provider: ${step.provider}`,
         )
       }
     }
-
-    await assertPublicUrl(inputValidation.data.imageUrl, "image URL")
 
     const inputImageBuffer = await fetchImageAsBuffer(
       inputValidation.data.imageUrl,
       controller.signal,
     )
 
-    if (inputImageBuffer.length > MAX_IMAGE_BYTES) {
-      throw new Error(
+    if (inputImageBuffer.length > env.HEAVY_MAX_IMAGE_BYTES) {
+      throw new ExpectedHeavyStepError(
         `[ai-edit-image] Input image too large: ${inputImageBuffer.length} bytes`,
       )
     }
 
     const size =
-      step.provider === aiProviders.enum.openai
+      step.provider === aiProviders.enum.openai && step.size !== "auto"
         ? (step.size as `${number}x${number}`)
         : undefined
 
@@ -166,7 +154,7 @@ export async function handleAIEditImage({
       step.provider === aiProviders.enum.openai && step.quality !== "auto"
         ? {
             openai: {
-              quality: step.quality === "hd" ? "hd" : "standard",
+              quality: getOpenAIEditImageQuality(step.quality),
             },
           }
         : undefined
@@ -200,8 +188,10 @@ export async function handleAIEditImage({
       throw new Error("[ai-edit-image] Empty image payload from provider")
     }
 
-    if (buffer.length > MAX_IMAGE_BYTES) {
-      throw new Error(`[ai-edit-image] Image too large: ${buffer.length} bytes`)
+    if (buffer.length > env.HEAVY_MAX_IMAGE_BYTES) {
+      throw new ExpectedHeavyStepError(
+        `[ai-edit-image] Image too large: ${buffer.length} bytes`,
+      )
     }
 
     const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
@@ -225,37 +215,8 @@ export async function handleAIEditImage({
     const { storageUrl } = await resolveTenantSettings({
       workspaceId: conversation.workspaceId,
     })
-    const finalImageUrl = getPublicFileUrl(storagePath, storageUrl)
 
-    if (step.outputFieldId) {
-      await saveResultToCustomField({
-        contactId: conversation.contactId,
-        customFieldId: step.outputFieldId,
-        fullText: finalImageUrl,
-        workspaceId: conversation.workspaceId,
-        contactInboxId: baseContactInbox.id,
-      })
-    }
-
-    return { status: "success", result: null }
-  } catch (err) {
-    const error = normalizeError(err)
-    logger.error(
-      {
-        err: error,
-        workspaceId: conversation.workspaceId,
-        conversationId: conversation.id,
-        action: "aiEditImage",
-      },
-      "[ai-edit-image] Step failed",
-    )
-    await logProviderError({
-      provider: aiErrorLogProvider(step.provider),
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      error: err,
-    })
-    return { status: "error", errorMessage: error.message, result: null }
+    return getPublicFileUrl(storagePath, storageUrl)
   } finally {
     clearTimeout(timeoutId)
   }

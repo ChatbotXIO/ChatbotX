@@ -5,6 +5,7 @@ const { runFlowNode, smartDelayService } = vi.hoisted(() => ({
   smartDelayService: {
     claimForRun: vi.fn(),
     findById: vi.fn(),
+    requeueClaimedRun: vi.fn(),
   },
 }))
 
@@ -51,6 +52,7 @@ describe("runWaitResume", () => {
     vi.setSystemTime(new Date("2026-07-16T00:01:00.000Z"))
     smartDelayService.findById.mockResolvedValue(waitRow)
     smartDelayService.claimForRun.mockResolvedValue(true)
+    smartDelayService.requeueClaimedRun.mockResolvedValue(true)
   })
 
   test("runs the connected node after claiming the scheduled row", async () => {
@@ -60,13 +62,16 @@ describe("runWaitResume", () => {
       id: "smart-delay-1",
       to: "completed",
     })
-    expect(runFlowNode).toHaveBeenCalledWith({
-      conversationId: "conversation-1",
-      contactInboxId: "contact-inbox-1",
-      flowId: "flow-1",
-      flowVersionId: "flow-version-1",
-      nodeId: "next-node",
-    })
+    expect(runFlowNode).toHaveBeenCalledWith(
+      {
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        flowId: "flow-1",
+        flowVersionId: "flow-version-1",
+        nodeId: "next-node",
+      },
+      { flowExecutionKey: undefined },
+    )
   })
 
   test("preserves broadcast metadata when resuming the connected node", async () => {
@@ -89,6 +94,7 @@ describe("runWaitResume", () => {
           contactInboxId: "contact-inbox-1",
         },
       }),
+      { flowExecutionKey: undefined },
     )
   })
 
@@ -104,6 +110,7 @@ describe("runWaitResume", () => {
       expect.objectContaining({
         appointmentId: "appointment-1",
       }),
+      { flowExecutionKey: undefined },
     )
   })
 
@@ -113,6 +120,19 @@ describe("runWaitResume", () => {
     await runWaitResume({ smartDelayId: "smart-delay-1" })
 
     expect(runFlowNode).not.toHaveBeenCalled()
+  })
+
+  test("requeues the claimed row and rethrows when the resumed flow fails", async () => {
+    const error = new Error("heavy step timed out")
+    runFlowNode.mockRejectedValueOnce(error)
+
+    await expect(runWaitResume({ smartDelayId: "smart-delay-1" })).rejects.toBe(
+      error,
+    )
+
+    expect(smartDelayService.requeueClaimedRun).toHaveBeenCalledWith({
+      id: "smart-delay-1",
+    })
   })
 
   test("does not touch rows scheduled for the future", async () => {

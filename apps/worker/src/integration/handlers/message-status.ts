@@ -16,6 +16,7 @@ import {
   IntegrationJobAction,
   type IntegrationJobMessageStatus,
 } from "@chatbotx.io/worker-config"
+import type { Job } from "bullmq"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -62,6 +63,7 @@ const resolveStatusContactInbox = async (
 
 export const handleMessageStatus = async (
   job: IntegrationJobMessageStatus["data"],
+  parentJob?: Job,
 ) => {
   const { integrationType, integrationIdentifier, payload } = job
 
@@ -219,13 +221,16 @@ export const handleMessageStatus = async (
       return
     }
 
-    await runFlowPostback({
-      conversationId: message.conversationId,
-      action: button.postback,
-      ref: null,
-      contactInboxId: contactInbox.id,
-      webhookType: IntegrationJobAction.messageStatus,
-    })
+    await runFlowPostback(
+      {
+        conversationId: message.conversationId,
+        action: button.postback,
+        ref: null,
+        contactInboxId: contactInbox.id,
+        webhookType: IntegrationJobAction.messageStatus,
+      },
+      { flowExecutionKey: parentJob?.id },
+    )
   } catch (error) {
     logger.error(
       error,

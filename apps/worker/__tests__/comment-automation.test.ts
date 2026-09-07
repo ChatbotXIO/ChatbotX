@@ -22,6 +22,7 @@ const {
   mockIdentifyInboxAndIntegrationAuth,
   mockCreateMessageRepository,
   mockMessageCreate,
+  mockAiAgentQueueAdd,
   mockIntegrationQueueAdd,
   mockChatQueueAdd,
   mockSendPrivateReply,
@@ -50,6 +51,7 @@ const {
   mockIdentifyInboxAndIntegrationAuth: vi.fn(),
   mockCreateMessageRepository: vi.fn(),
   mockMessageCreate: vi.fn(),
+  mockAiAgentQueueAdd: vi.fn(),
   mockIntegrationQueueAdd: vi.fn(),
   mockChatQueueAdd: vi.fn(),
   mockSendPrivateReply: vi.fn(),
@@ -114,6 +116,10 @@ vi.mock("@chatbotx.io/variables", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
+  AIJobAction: {
+    commentAIReply: "commentAIReply",
+  },
+  aiAgentQueue: { add: mockAiAgentQueueAdd },
   ChatJobAction: {
     changeChannelMessageState: "changeChannelMessageState",
     sendChannelMessage: "sendChannelMessage",
@@ -121,7 +127,6 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   chatQueue: { add: mockChatQueueAdd },
   IntegrationJobAction: {
     processCommentAutomation: "processCommentAutomation",
-    commentAIReply: "commentAIReply",
     sendFlow: "sendFlow",
   },
   integrationQueue: { add: mockIntegrationQueueAdd },
@@ -181,6 +186,7 @@ const COMMENT_ID = `${STORY_ID}_1544045903933592`
 const OTHER_COMMENT_ID = `${STORY_ID}_9999999999999999`
 
 type AutomationOverrides = {
+  id?: string
   options?: Record<string, boolean>
   post?: { type: string; value: string[] }
   publicReply?: { type: string; value: string | null }
@@ -190,7 +196,7 @@ type AutomationOverrides = {
 
 function buildAutomation(overrides: AutomationOverrides = {}) {
   return {
-    id: "automation-1",
+    id: overrides.id ?? "automation-1",
     post: overrides.post ?? { type: "all", value: [] },
     includeKeywords: { type: "all", value: [] },
     excludeKeywords: [],
@@ -281,6 +287,7 @@ beforeEach(() => {
   })
   mockInsertDedup.mockResolvedValue(undefined)
   mockChatQueueAdd.mockResolvedValue(undefined)
+  mockAiAgentQueueAdd.mockResolvedValue(undefined)
   mockIntegrationQueueAdd.mockResolvedValue(undefined)
   mockContactVariableGetAll.mockResolvedValue({})
   mockContactVariableReplaceAll.mockImplementation(({ text }) => text)
@@ -439,17 +446,20 @@ describe("processCommentAutomation AIAgent reply", () => {
 
     await processCommentAutomation(buildJobData() as any)
 
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       "commentAIReply",
       expect.objectContaining({
         type: "commentAIReply",
         data: expect.objectContaining({
           agentId: "agent-1",
+          automationId: "automation-1",
           replyChannel: "public",
           commentId: COMMENT_ID,
         }),
       }),
-      expect.anything(),
+      expect.objectContaining({
+        jobId: `comment-ai-reply-automation-1-${COMMENT_ID}-public`,
+      }),
     )
     // no more silent sendFlow-without-flowId
     expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
@@ -466,15 +476,18 @@ describe("processCommentAutomation AIAgent reply", () => {
 
     await processCommentAutomation(buildJobData() as any)
 
-    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       "commentAIReply",
       expect.objectContaining({
         data: expect.objectContaining({
           agentId: "agent-9",
+          automationId: "automation-1",
           replyChannel: "private",
         }),
       }),
-      expect.anything(),
+      expect.objectContaining({
+        jobId: `comment-ai-reply-automation-1-${COMMENT_ID}-private`,
+      }),
     )
   })
 
@@ -485,12 +498,35 @@ describe("processCommentAutomation AIAgent reply", () => {
 
     await processCommentAutomation(buildJobData() as any)
 
-    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+    expect(mockAiAgentQueueAdd).not.toHaveBeenCalledWith(
       "commentAIReply",
       expect.anything(),
       expect.anything(),
     )
     expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  test("keeps matching automations distinct for the same comment and channel", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        publicReply: { type: "AIAgent", value: "agent-1" },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        publicReply: { type: "AIAgent", value: "agent-2" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    const jobIds = mockAiAgentQueueAdd.mock.calls.map((call) => call[2]?.jobId)
+    expect(jobIds).toEqual([
+      `comment-ai-reply-automation-1-${COMMENT_ID}-public`,
+      `comment-ai-reply-automation-2-${COMMENT_ID}-public`,
+    ])
+    expect(new Set(jobIds).size).toBe(2)
+    expect(jobIds.every((jobId) => !jobId?.includes(":"))).toBe(true)
   })
 })
 
@@ -869,6 +905,7 @@ describe("processCommentAIReply", () => {
 
   function buildAIJobData(overrides: Partial<Record<string, unknown>> = {}) {
     return {
+      automationId: "automation-1",
       integrationType: "messenger",
       integrationIdentifier: PAGE_ID,
       workspaceId: "workspace-1",

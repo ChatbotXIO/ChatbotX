@@ -45,10 +45,20 @@ export type ExecuteMultipleStepsProps = {
   triggerMessageCreatedAt?: Date
   commentAnchor?: CommentAnchor
   appointmentId?: string
+  flowExecutionKey?: string
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
   step: T
+}
+
+export type HeavyStepComputeProps<T> = Pick<
+  ExecuteStepProps<T>,
+  "conversation" | "contactInbox" | "metadata" | "step"
+>
+
+export type HeavyStepProps<T> = ExecuteStepProps<T> & {
+  flowExecutionKey: string
 }
 
 /**

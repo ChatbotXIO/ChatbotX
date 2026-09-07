@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "Ukuran file melebihi batas maksimum",
     "maxItemsReached": "Maksimum {max} {feature} diizinkan per ruang kerja",
+    "maxCharacters": "Maksimum {max} karakter.",
     "invalidApiKey": "Kunci API tidak valid",
     "maxMustBeGreaterThanMin": "{maxField} harus lebih besar dari atau sama dengan {minField}"
   },

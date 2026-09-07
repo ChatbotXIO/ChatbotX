@@ -10,6 +10,8 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
+  AIJobAction,
+  aiAgentQueue,
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
@@ -86,6 +88,7 @@ export async function executePublicReply(
     auth: MessengerAuthValue
     integrationType: string
     integrationIdentifier: string
+    automationId: string
     commentId: string
     channelType: CommentAutomationChannelType
     conversationId: string
@@ -157,11 +160,12 @@ export async function executePublicReply(
   }
 
   if (publicReply.type === "AIAgent" && publicReply.value) {
-    await integrationQueue.add(
-      IntegrationJobAction.commentAIReply,
+    await aiAgentQueue.add(
+      AIJobAction.commentAIReply,
       {
-        type: IntegrationJobAction.commentAIReply,
+        type: AIJobAction.commentAIReply,
         data: {
+          automationId: ctx.automationId,
           integrationType: ctx.integrationType,
           integrationIdentifier: ctx.integrationIdentifier,
           workspaceId: ctx.workspaceId,
@@ -177,7 +181,10 @@ export async function executePublicReply(
             ctx.parentMessageCreatedAt?.toISOString() ?? null,
         },
       },
-      { delay: ctx.delay },
+      {
+        delay: ctx.delay,
+        jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
+      },
     )
   }
 }

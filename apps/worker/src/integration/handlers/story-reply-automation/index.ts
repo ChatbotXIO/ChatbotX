@@ -17,10 +17,10 @@ import type {
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
+  type AIJobProcessStoryReplyAutomation,
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
-  type IntegrationJobProcessStoryReplyAutomation,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
@@ -129,7 +129,7 @@ const logAutomationSkipped = ({
 }
 
 export async function processStoryReplyAutomation(
-  data: IntegrationJobProcessStoryReplyAutomation["data"],
+  data: AIJobProcessStoryReplyAutomation["data"],
 ): Promise<void> {
   const {
     workspaceId,

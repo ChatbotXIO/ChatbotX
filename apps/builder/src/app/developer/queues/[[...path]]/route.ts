@@ -7,6 +7,7 @@ import {
   chatQueue,
   defaultQueue,
   getSequenceSchedulerQueue,
+  heavyQueue,
   integrationQueue,
   quotaQueue,
   scheduleQueue,
@@ -48,6 +49,7 @@ async function buildApp() {
   const queues = [
     chatQueue,
     aiAgentQueue,
+    heavyQueue,
     triggerQueue,
     webhookQueue,
     defaultQueue,

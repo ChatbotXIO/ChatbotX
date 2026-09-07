@@ -1,11 +1,18 @@
+import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { conversationService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoryReply } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils"
 import {
+  AIJobAction,
+  aiAgentQueue,
+  closeHeavyQueueEvents,
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
+  getHeavyJobCompletionWaitTimeoutMs,
   getRedisConnection,
+  HeavyJobAction,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
@@ -20,7 +27,6 @@ import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
-import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
 import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
@@ -28,7 +34,6 @@ import { coexistMessengerSync } from "./handlers/coexist/messenger-sync"
 import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
 import { processCommentAutomation } from "./handlers/comment-automation"
-import { processCommentAIReply } from "./handlers/comment-automation/ai-reply"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
@@ -37,6 +42,7 @@ import {
   runFlowQuickReply,
 } from "./handlers/flow"
 import { runFollowUpResume } from "./handlers/follow-up"
+import { resumeHeavyStep } from "./handlers/heavy-step-resume"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processLeadgen } from "./handlers/lead-ads"
 import { handleMessageStatus } from "./handlers/message-status"
@@ -51,12 +57,43 @@ import {
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
-import { processStoryReplyAutomation } from "./handlers/story-reply-automation"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
+
+const integrationWorkerLockDuration = Math.max(
+  10 * 60 * 1000,
+  getHeavyJobCompletionWaitTimeoutMs(
+    HeavyJobAction.aiGenerateImage,
+    env.HEAVY_JOB_WAIT_TIMEOUT_MS,
+  ) + 60_000,
+)
+
+function normalizeToId(value: string | { id: string }): string {
+  return typeof value === "string" ? value : value.id
+}
+
+function hashLegacyPayload(payload: object): string {
+  return createHash("sha256")
+    .update(JSON.stringify(payload))
+    .digest("hex")
+    .slice(0, 24)
+}
+
+function getFlowExecutionKey(job: Job): string {
+  if (job.id) {
+    return job.id
+  }
+
+  const flowExecutionKey = `integration-job-${createId()}`
+  logger.warn(
+    { flowExecutionKey, jobName: job.name },
+    "Integration job is missing id; generated flow execution key",
+  )
+  return flowExecutionKey
+}
 
 async function startIntegrationWorker() {
   try {
@@ -107,10 +144,10 @@ async function startIntegrationWorker() {
                 const storyReply = getStoryReply(message.contentAttributes)
 
                 if (isFromContact && storyReply) {
-                  await integrationQueue.add(
-                    IntegrationJobAction.processStoryReplyAutomation,
+                  await aiAgentQueue.add(
+                    AIJobAction.processStoryReplyAutomation,
                     {
-                      type: IntegrationJobAction.processStoryReplyAutomation,
+                      type: AIJobAction.processStoryReplyAutomation,
                       data: {
                         workspaceId: conversation.workspaceId,
                         conversationId: conversation.id,
@@ -208,7 +245,14 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.sendFlow: {
-                await runFlowNode(job.data.data)
+                await runFlowNode(job.data.data, {
+                  flowExecutionKey:
+                    job.data.data.flowExecutionKey ?? getFlowExecutionKey(job),
+                })
+                return
+              }
+              case IntegrationJobAction.resumeHeavyStep: {
+                await resumeHeavyStep(job.data.data)
                 return
               }
               case IntegrationJobAction.sendSequenceFlow: {
@@ -216,15 +260,36 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.runFlowPostback: {
-                await runFlowPostback(job.data.data)
+                await runFlowPostback(job.data.data, {
+                  flowExecutionKey: getFlowExecutionKey(job),
+                })
                 return
               }
               case IntegrationJobAction.runFlowQuickReply: {
-                await runFlowQuickReply(job.data.data)
+                await runFlowQuickReply(job.data.data, {
+                  flowExecutionKey: getFlowExecutionKey(job),
+                })
                 return
               }
               case IntegrationJobAction.processAutomatedResonse: {
-                await processAutomatedResponse(job.data.data)
+                await aiAgentQueue.add(
+                  AIJobAction.processAutomatedResponse,
+                  {
+                    type: AIJobAction.processAutomatedResponse,
+                    data: {
+                      conversationId: normalizeToId(
+                        job.data.data.conversationId,
+                      ),
+                      contactInboxId: normalizeToId(
+                        job.data.data.contactInboxId,
+                      ),
+                      messageId: job.data.data.messageId,
+                    },
+                  },
+                  {
+                    jobId: `automated-response-${job.data.data.messageId}`,
+                  },
+                )
                 return
               }
               case IntegrationJobAction.agentMarkAsRead: {
@@ -244,7 +309,7 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.resumeWait: {
-                await runWaitResume(job.data.data)
+                await runWaitResume(job.data.data, job)
                 return
               }
               case IntegrationJobAction.resumeFollowUp: {
@@ -252,7 +317,7 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.messageStatus: {
-                await handleMessageStatus(job.data.data)
+                await handleMessageStatus(job.data.data, job)
                 return
               }
               case IntegrationJobAction.coexistWhatsappBuffer: {
@@ -303,11 +368,42 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.commentAIReply: {
-                await processCommentAIReply(job.data.data)
+                const payloadHash = hashLegacyPayload(job.data.data)
+                const automationId =
+                  "automationId" in job.data.data &&
+                  typeof job.data.data.automationId === "string" &&
+                  job.data.data.automationId.length > 0
+                    ? job.data.data.automationId
+                    : undefined
+
+                await aiAgentQueue.add(
+                  AIJobAction.commentAIReply,
+                  {
+                    type: AIJobAction.commentAIReply,
+                    data: {
+                      ...job.data.data,
+                      automationId: automationId ?? `legacy-${payloadHash}`,
+                    },
+                  },
+                  {
+                    jobId: automationId
+                      ? `comment-ai-reply-${automationId}-${job.data.data.commentId}-${job.data.data.replyChannel}`
+                      : `comment-ai-reply-legacy-${job.data.data.commentId}-${job.data.data.replyChannel}-${payloadHash}`,
+                  },
+                )
                 return
               }
               case IntegrationJobAction.processStoryReplyAutomation: {
-                await processStoryReplyAutomation(job.data.data)
+                await aiAgentQueue.add(
+                  AIJobAction.processStoryReplyAutomation,
+                  {
+                    type: AIJobAction.processStoryReplyAutomation,
+                    data: job.data.data,
+                  },
+                  {
+                    jobId: `story-reply-auto-${job.data.data.messageId}`,
+                  },
+                )
                 return
               }
               case IntegrationJobAction.captureTemplateFlowResponse: {
@@ -346,8 +442,10 @@ async function startIntegrationWorker() {
       // Coexist historical sync chunks are bounded to ~4 min via self-continuation
       // (see coexist-messenger-sync / coexist-whatsapp-flush). Lock sized as:
       // 4 min active + 4 min Graph 5xx retry tail + 2 min bulk INSERT tail.
-      lockDuration: 10 * 60 * 1000,
-      stalledInterval: 10 * 60 * 1000,
+      // Heavy flow steps also wait for every configured provider retry and
+      // backoff; their full budget must fit within the parent job lock.
+      lockDuration: integrationWorkerLockDuration,
+      stalledInterval: integrationWorkerLockDuration,
       maxStalledCount: 1,
     },
   )
@@ -365,10 +463,11 @@ async function startIntegrationWorker() {
     }
     isShuttingDown = true
     try {
+      await worker.close()
       await Promise.all([
-        worker.close(),
         closeChatQueueEvents(),
         closeIntegrationQueueEvents(),
+        closeHeavyQueueEvents(),
       ])
       process.exit(0)
     } catch (err) {

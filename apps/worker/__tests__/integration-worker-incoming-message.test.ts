@@ -406,8 +406,11 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     removeOnFail: { count: 5000 },
   },
   getRedisConnection: () => ({}),
+  closeHeavyQueueEvents: vi.fn().mockResolvedValue(undefined),
   closeIntegrationQueueEvents: vi.fn().mockResolvedValue(undefined),
+  getHeavyJobCompletionWaitTimeoutMs: vi.fn().mockReturnValue(10 * 60 * 1000),
   queueNames: { enum: { integration: "integration" } },
+  HeavyJobAction: { aiGenerateImage: "aiGenerateImage" },
   ChatJobAction: { sendChatMessage: "sendChatMessage" },
   chatQueue: { add: vi.fn().mockResolvedValue(undefined) },
   IntegrationJobAction: {

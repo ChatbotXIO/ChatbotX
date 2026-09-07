@@ -20,6 +20,7 @@ import type { BotResponseTrackingContext } from "../types"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
+  resumeHeavyStep: "resumeHeavyStep",
   sendSequenceFlow: "sendSequenceFlow",
   runRef: "runRef",
   incomingMessage: "incomingMessage",
@@ -162,6 +163,8 @@ export type IntegrationJobRunFlowNode = {
     flowVersionId?: string
     nodeId?: string
     startFromStepId?: string
+    /** Stable logical execution identity for asynchronous flow continuations. */
+    flowExecutionKey?: string
     /**
      * Set when this job resumes a button/quickReply's own multi-step chain
      * (one step per job) rather than a node's. Without it, resolving by
@@ -193,6 +196,18 @@ export type IntegrationJobRunFlowNode = {
     origin?: "channel"
     /** See {@link CommentAnchor}. */
     commentAnchor?: CommentAnchor
+  }
+}
+
+/**
+ * Durable continuation for a flow step that completed on the heavy worker.
+ * It reuses the normal send-flow payload so the flow engine remains the sole
+ * owner of success/error routing.
+ */
+export type IntegrationJobResumeHeavyStep = {
+  type: typeof IntegrationJobAction.resumeHeavyStep
+  data: IntegrationJobRunFlowNode["data"] & {
+    outcomeKey: string
   }
 }
 
@@ -607,6 +622,7 @@ export type IntegrationJobData =
   | IntegrationJobMessageReaction
   | IntegrationJobMessageStatus
   | IntegrationJobRunFlowNode
+  | IntegrationJobResumeHeavyStep
   | IntegrationJobSendFlowPostback
   | IntegrationJobSendFlowQuickReply
   | IntegrationJobAgentMarkAsRead

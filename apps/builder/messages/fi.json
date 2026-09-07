@@ -3399,6 +3399,7 @@
   "validation": {
     "maxSize": "Tiedoston koko ylittää enimmäisrajan",
     "maxItemsReached": "Työtilassa sallitaan enintään {max} kohdetta {feature}",
+    "maxCharacters": "Enintään {max} merkkiä.",
     "invalidApiKey": "Virheellinen API-avain",
     "maxMustBeGreaterThanMin": "Kentän {maxField} arvon on oltava vähintään kentän {minField} arvo"
   },

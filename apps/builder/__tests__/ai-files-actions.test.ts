@@ -46,8 +46,9 @@ vi.mock("@chatbotx.io/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  AIJobAction: { processAIFile: "processAIFile" },
-  aiAgentQueue: { add: mocks.queueAdd },
+  HeavyJobAction: { processAIFile: "processAIFile" },
+  getHeavyJobOptions: () => ({}),
+  heavyQueue: { add: mocks.queueAdd },
 }))
 
 vi.mock("next-intl/server", () => ({
@@ -104,6 +105,21 @@ beforeEach(() => {
 })
 
 describe("Knowledge tab audit messages", () => {
+  test("allows creating a Knowledge with Gemini as the only provider", async () => {
+    mocks.findFirstOpenai.mockResolvedValue(undefined)
+    mocks.findFirstGemini.mockResolvedValue({ id: "gemini-1" })
+
+    await (
+      createAIFileAction as unknown as ActionHandler<{ name: string }, [string]>
+    )({
+      parsedInput: { name: "manual.pdf" },
+      bindArgsParsedInputs: [workspaceId],
+    })
+
+    expect(mocks.insertReturning).toHaveBeenCalled()
+    expect(mocks.queueAdd).toHaveBeenCalled()
+  })
+
   test("createAIFileAction logs created a new Knowledge by id", async () => {
     await (
       createAIFileAction as unknown as ActionHandler<{ name: string }, [string]>
@@ -117,6 +133,14 @@ describe("Knowledge tab audit messages", () => {
       action: "create",
       detail: "created a new Knowledge (#file-1)",
     })
+    expect(mocks.queueAdd).toHaveBeenCalledWith(
+      "processAIFile",
+      {
+        type: "processAIFile",
+        data: { aiFileId: "file-1" },
+      },
+      { jobId: "heavy-ai-file-file-1" },
+    )
   })
 
   test("deleteAIFile logs deleted a Knowledge by id", async () => {

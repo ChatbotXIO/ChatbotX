@@ -32,6 +32,7 @@ import {
   SdkException,
   type Variables,
 } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils"
 import {
   type BotResponseTrackingContext,
   IntegrationJobAction,
@@ -120,6 +121,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   triggerMessageCreatedAt?: Date
   commentAnchor?: CommentAnchor
   appointmentId?: string
+  flowExecutionKey?: string
 }
 
 /** A job carries either an entity ID or the already-loaded entity. */
@@ -129,6 +131,26 @@ type FlowJobEntityRef =
 
 const getFlowJobEntityId = (value: FlowJobEntityRef): string =>
   typeof value === "string" ? value : value.id
+
+type FlowExecutionOptions = {
+  flowExecutionKey?: string
+}
+
+function resolveFlowExecutionKey(
+  options: FlowExecutionOptions | undefined,
+  context: Record<string, unknown>,
+): string {
+  if (options?.flowExecutionKey) {
+    return options.flowExecutionKey
+  }
+
+  const flowExecutionKey = `flow-inline-${createId()}`
+  logger.warn(
+    { ...context, flowExecutionKey },
+    "Flow execution is missing parent job id; generated fallback key",
+  )
+  return flowExecutionKey
+}
 
 const createFlowActionWarningContext = (data: {
   conversationId: FlowJobEntityRef
@@ -140,7 +162,10 @@ const createFlowActionWarningContext = (data: {
   action: data.action,
 })
 
-export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
+export const runFlowNode = async (
+  props: IntegrationJobRunFlowNode["data"],
+  options?: FlowExecutionOptions,
+) => {
   if (!props.flowId) {
     logger.debug({ props }, "runFlowNode is called without flowId")
     return
@@ -196,6 +221,11 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
   }
 
   const { trackingContext, metadata, sendFrom, commentAnchor } = props
+  const flowExecutionKey = resolveFlowExecutionKey(options, {
+    conversationId: getFlowJobEntityId(props.conversationId),
+    contactInboxId: getFlowJobEntityId(props.contactInboxId),
+    flowId: props.flowId,
+  })
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId: props.conversationId,
@@ -269,6 +299,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
       nodeVisits: props.nodeVisits,
       commentAnchor,
       appointmentId: props.appointmentId,
+      flowExecutionKey,
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
@@ -739,12 +770,17 @@ const flowActionClickTypes = {
 async function runFlowAction(
   data: IntegrationJobSendFlowPostback["data"],
   handler: FlowActionHandler,
+  options?: FlowExecutionOptions,
 ) {
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId: data.conversationId,
       contactInboxId: data.contactInboxId,
     })
+  const flowExecutionKey = resolveFlowExecutionKey(options, {
+    ...createFlowActionWarningContext(data),
+    handler: handler.name,
+  })
 
   // Bare flow IDs (Messenger ad payloads) are only honored for Messenger
   // conversations. The channel is read from the persisted contactInbox, not
@@ -782,12 +818,15 @@ async function runFlowAction(
       }
       throw error
     }
-    await runFlowNode({
-      conversationId: data.conversationId,
-      contactInboxId: data.contactInboxId,
-      flowId: parsedAction.flowId,
-      flowVersionId: parsedAction.flowVersionId,
-    })
+    await runFlowNode(
+      {
+        conversationId: data.conversationId,
+        contactInboxId: data.contactInboxId,
+        flowId: parsedAction.flowId,
+        flowVersionId: parsedAction.flowVersionId,
+      },
+      { flowExecutionKey },
+    )
     return
   }
 
@@ -909,6 +948,7 @@ async function runFlowAction(
       ctx: {
         variables: initVariables(),
       },
+      flowExecutionKey,
     })
     if (data.messageId) {
       emit("analytics:dashboard", {
@@ -962,12 +1002,16 @@ async function runFlowAction(
   }
 }
 
-export function runFlowPostback(data: IntegrationJobSendFlowPostback["data"]) {
-  return runFlowAction(data, flowActionHandlers.postback)
+export function runFlowPostback(
+  data: IntegrationJobSendFlowPostback["data"],
+  options?: FlowExecutionOptions,
+) {
+  return runFlowAction(data, flowActionHandlers.postback, options)
 }
 
 export function runFlowQuickReply(
   data: IntegrationJobSendFlowQuickReply["data"],
+  options?: FlowExecutionOptions,
 ) {
-  return runFlowAction(data, flowActionHandlers.quickReply)
+  return runFlowAction(data, flowActionHandlers.quickReply, options)
 }
