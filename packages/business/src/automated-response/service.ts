@@ -130,11 +130,15 @@ class AutomatedResponseService extends BaseService {
   }
 
   /**
-   * `flowId` and `text` are mutually exclusive: a `flowId` (verified to
-   * exist in the workspace) wins and `text` is nulled out; otherwise `text`
-   * alone is kept and `flowId` is nulled out. Enforced here — not in the
-   * caller — so every insert path (the create action, template install)
-   * shares one invariant instead of re-deriving it.
+   * `flowId` and `text` are mutually exclusive — a keyword either replies
+   * with literal text or hands off to a flow, never both. Enforced here —
+   * not in the caller — so every insert path (the create action, template
+   * install) shares one invariant instead of re-deriving it.
+   *
+   * Both-set is a caller bug, so it throws rather than silently discarding
+   * one side: template install (`template/adapters/keywords.ts`) passes the
+   * manifest's `text` and `flowId` straight through, and nulling `text`
+   * there would drop authored content with no error surfaced.
    */
   async create(
     workspaceId: string,
@@ -149,17 +153,21 @@ class AutomatedResponseService extends BaseService {
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
 
-    let flowId = values.flowId ?? undefined
-    let text = values.text
+    const flowId = values.flowId ?? undefined
+    const text = values.text ?? undefined
+
+    if (flowId && text) {
+      throw validationException(
+        "flowId",
+        "A keyword replies with either text or a flow, not both",
+      )
+    }
 
     if (flowId) {
       const exists = await flowService.exists(workspaceId, flowId, tx)
       if (!exists) {
         throw validationException("flowId", "Flow not found")
       }
-      text = undefined
-    } else if (text) {
-      flowId = undefined
     }
 
     if (values.folderId) {

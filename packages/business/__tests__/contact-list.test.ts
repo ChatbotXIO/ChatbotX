@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 //  - scope.canViewEmailAndPhone=false masks email/phone on every row and
 //    forwards includeEmailAndPhone:false + restrictToAssignedUserId to
 //    buildListWhere.
-//  - unscoped calls (no `scope`) never mask.
+//  - unscoped calls (scope: UNSCOPED) never mask.
 //  - withCount:false skips the count round-trip entirely (totalCount: 0).
 //  - the O1 projection/relation optimization: listForTable is used for
 //    projection:"table", or when `include` omits both "tags" and
@@ -17,7 +17,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const { contactRepository } = await import("@chatbotx.io/database/repositories")
-const { list } = await import("../src/contact/list")
+const { list, UNSCOPED } = await import("../src/contact/list")
 
 const where = { workspaceId: "ws-1" }
 const orderBy = { createdAt: "desc" }
@@ -76,7 +76,7 @@ describe("contactService.list", () => {
     )
   })
 
-  test("unscoped call (no scope) does not mask email/phone", async () => {
+  test("unscoped call (scope: UNSCOPED) does not mask email/phone", async () => {
     const rows = [
       {
         id: "contact-1",
@@ -88,7 +88,7 @@ describe("contactService.list", () => {
       rows as never,
     )
 
-    const result = await list({ workspaceId: "ws-1" })
+    const result = await list({ workspaceId: "ws-1", scope: UNSCOPED })
 
     expect(result.data).toEqual(rows)
     expect(contactRepository.buildListWhere).toHaveBeenCalledWith(
@@ -102,7 +102,11 @@ describe("contactService.list", () => {
   test("withCount:false skips the count round-trip and returns totalCount: 0", async () => {
     const countSpy = vi.spyOn(contactRepository, "countCapped")
 
-    const result = await list({ workspaceId: "ws-1", withCount: false })
+    const result = await list({
+      workspaceId: "ws-1",
+      scope: UNSCOPED,
+      withCount: false,
+    })
 
     expect(countSpy).not.toHaveBeenCalled()
     expect(result.totalCount).toBe(0)
@@ -114,7 +118,7 @@ describe("contactService.list", () => {
     const tableSpy = vi.spyOn(contactRepository, "listForTable")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
-    await list({ workspaceId: "ws-1", projection: "table" })
+    await list({ workspaceId: "ws-1", scope: UNSCOPED, projection: "table" })
 
     expect(tableSpy).toHaveBeenCalledTimes(1)
     expect(relationsSpy).not.toHaveBeenCalled()
@@ -124,7 +128,7 @@ describe("contactService.list", () => {
     const tableSpy = vi.spyOn(contactRepository, "listForTable")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
-    await list({ workspaceId: "ws-1", include: ["inboxes"] })
+    await list({ workspaceId: "ws-1", scope: UNSCOPED, include: ["inboxes"] })
 
     expect(tableSpy).toHaveBeenCalledTimes(1)
     expect(relationsSpy).not.toHaveBeenCalled()
@@ -134,7 +138,7 @@ describe("contactService.list", () => {
     const tableSpy = vi.spyOn(contactRepository, "listForTable")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
-    await list({ workspaceId: "ws-1", include: ["tags"] })
+    await list({ workspaceId: "ws-1", scope: UNSCOPED, include: ["tags"] })
 
     expect(relationsSpy).toHaveBeenCalledTimes(1)
     expect(tableSpy).not.toHaveBeenCalled()
@@ -144,7 +148,11 @@ describe("contactService.list", () => {
     const tableSpy = vi.spyOn(contactRepository, "listForTable")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
-    await list({ workspaceId: "ws-1", include: ["customFields"] })
+    await list({
+      workspaceId: "ws-1",
+      scope: UNSCOPED,
+      include: ["customFields"],
+    })
 
     expect(relationsSpy).toHaveBeenCalledTimes(1)
     expect(tableSpy).not.toHaveBeenCalled()
@@ -154,7 +162,7 @@ describe("contactService.list", () => {
     const tableSpy = vi.spyOn(contactRepository, "listForTable")
     const relationsSpy = vi.spyOn(contactRepository, "listWithRelations")
 
-    await list({ workspaceId: "ws-1" })
+    await list({ workspaceId: "ws-1", scope: UNSCOPED })
 
     expect(relationsSpy).toHaveBeenCalledTimes(1)
     expect(tableSpy).not.toHaveBeenCalled()

@@ -172,12 +172,12 @@ describe("automatedResponseService.create — flowId XOR text", () => {
     mocks.insertReturning.mockResolvedValue([{ id: "automation-1" }])
   })
 
-  test("verifies flowId exists and nulls out text when flowId is given", async () => {
+  test("verifies flowId exists and inserts it when only flowId is given", async () => {
     mocks.flowExists.mockResolvedValue(true)
 
     await automatedResponseService.create("workspace-1", {
       type: "keyword",
-      text: "ignored",
+      text: null,
       flowId: "flow-1",
       folderId: null,
       keywords: ["hi"],
@@ -191,6 +191,26 @@ describe("automatedResponseService.create — flowId XOR text", () => {
     expect(mocks.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({ flowId: "flow-1", text: undefined }),
     )
+  })
+
+  // Regression: this used to silently null `text` when both were given.
+  // Template install (`template/adapters/keywords.ts`) forwards the
+  // manifest's `text` and `flowId` verbatim, so nulling there dropped
+  // authored content with no error surfaced.
+  test("throws instead of dropping text when both flowId and text are given", async () => {
+    mocks.flowExists.mockResolvedValue(true)
+
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "keyword",
+        text: "do not drop me",
+        flowId: "flow-1",
+        folderId: null,
+        keywords: ["hi"],
+      }),
+    ).rejects.toThrow("A keyword replies with either text or a flow, not both")
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
   })
 
   test("throws a field-scoped validation error when flowId does not exist", async () => {

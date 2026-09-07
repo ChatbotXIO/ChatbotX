@@ -100,6 +100,7 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/business")>()
   return {
     inboxResource: actual.inboxResource,
+    UNSCOPED: actual.UNSCOPED,
     contactService: {
       list: listContacts,
       count: countContacts,
@@ -158,6 +159,9 @@ describe("GET /v1/contacts", () => {
       page: 1,
       perPage: 20,
       workspaceId: "workspace-1",
+      // The workspace-token surface must opt out of member scoping
+      // explicitly, so full PII can never be exposed by a forgotten argument.
+      scope: "unscoped",
       include: ["tags"],
       withCount: false,
     })
@@ -184,6 +188,7 @@ describe("POST /v1/contacts/search", () => {
       page: 1,
       perPage: 20,
       workspaceId: "workspace-1",
+      scope: "unscoped",
       include: undefined,
       withCount: undefined,
     })
@@ -207,6 +212,7 @@ describe("GET /v1/contacts/count", () => {
       page: 1,
       perPage: 20,
       workspaceId: "workspace-1",
+      scope: "unscoped",
     })
   })
 })

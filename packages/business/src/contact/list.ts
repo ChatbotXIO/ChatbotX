@@ -35,10 +35,22 @@ export type ContactListResult<T> = {
   totalCountCapped: boolean
 }
 
+/**
+ * The workspace-token (public API) surface is not scoped to a workspace
+ * member: it sees full PII and every contact. Callers must opt out of member
+ * scoping with this explicit literal rather than by omitting `scope`, so the
+ * restriction can never be dropped by accident on a PII-bearing read.
+ */
+export const UNSCOPED = "unscoped" as const
+
+type ContactListScopeInput = ContactListScope | typeof UNSCOPED
+
+const resolveScope = (
+  scope: ContactListScopeInput,
+): ContactListScope | undefined => (scope === UNSCOPED ? undefined : scope)
+
 type ListInput = ListContactsInput & {
-  /** Unscoped = the workspace-token (public API) caller: full PII, no
-   * assigned-user restriction. */
-  scope?: ContactListScope
+  scope: ContactListScopeInput
   /** "table" mirrors the private RSC contacts-table relation set (no tags /
    * custom fields); "full" is the default public/API relation set. */
   projection?: "full" | "table"
@@ -47,7 +59,7 @@ type ListInput = ListContactsInput & {
 }
 
 type CountInput = ListContactsInput & {
-  scope?: ContactListScope
+  scope: ContactListScopeInput
 }
 
 /**
@@ -107,14 +119,15 @@ async function resolveCount(props: {
  * decision for the cache/perf pass.
  */
 function toListWhereInput(
-  input: ListContactsInput & { scope?: ContactListScope },
+  input: ListContactsInput,
+  scope: ContactListScope | undefined,
 ): Parameters<typeof contactRepository.buildListWhere>[0] {
   return {
     workspaceId: input.workspaceId,
     keyword: input.keyword,
     contactFilter: input.contactFilter,
-    restrictToAssignedUserId: input.scope?.restrictToAssignedUserId,
-    includeEmailAndPhone: input.scope?.canViewEmailAndPhone !== false,
+    restrictToAssignedUserId: scope?.restrictToAssignedUserId,
+    includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
   }
 }
 
@@ -134,13 +147,14 @@ async function getTotalContactsFromStats(
 export async function list<T extends ContactModel = ContactModel>(
   input: ListInput,
 ): Promise<ContactListResult<T>> {
-  const { scope, projection = "full", include, withCount = true } = input
+  const { projection = "full", include, withCount = true } = input
+  const scope = resolveScope(input.scope)
   const normalizedInput = {
     ...input,
     perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
   }
 
-  const where = contactRepository.buildListWhere(toListWhereInput(input))
+  const where = contactRepository.buildListWhere(toListWhereInput(input, scope))
 
   const pagination = getPaginationWithDefaults(normalizedInput)
   const orderBy = contactRepository.resolveOrderBy(normalizedInput)
@@ -184,14 +198,14 @@ export async function list<T extends ContactModel = ContactModel>(
 }
 
 export async function count(input: CountInput): Promise<{ total: number }> {
-  const { scope } = input
+  const scope = resolveScope(input.scope)
   if (
     !(input.keyword || input.contactFilter || scope?.restrictToAssignedUserId)
   ) {
     return getTotalContactsFromStats(input.workspaceId)
   }
 
-  const where = contactRepository.buildListWhere(toListWhereInput(input))
+  const where = contactRepository.buildListWhere(toListWhereInput(input, scope))
 
   const total = await contactRepository.count({ where })
   return { total }

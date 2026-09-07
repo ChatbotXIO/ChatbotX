@@ -52,6 +52,14 @@ import {
   listByCustomFieldValue,
   list as listContacts,
 } from "./list"
+
+/**
+ * Explicit opt-out of workspace-member scoping for the workspace-token
+ * (public API) surface — see `./list`. Re-exported here so callers get it
+ * from the same barrel as `contactService`.
+ */
+export { UNSCOPED } from "./list"
+
 import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
 import { updateFieldsAndCustomFields } from "./update-fields"
 import { parseContactIdentifier } from "./utils"

@@ -1,4 +1,4 @@
-import { contactService, importService } from "@chatbotx.io/business"
+import { contactService, importService, UNSCOPED } from "@chatbotx.io/business"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -42,6 +42,7 @@ export const contactsCrudPublicRouter = {
       return await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
+        scope: UNSCOPED,
         include,
         withCount,
       })
@@ -63,6 +64,7 @@ export const contactsCrudPublicRouter = {
       return await contactService.list({
         ...rest,
         workspaceId: context.workspace.id,
+        scope: UNSCOPED,
         include,
         withCount,
       })
@@ -82,6 +84,7 @@ export const contactsCrudPublicRouter = {
         await contactService.count({
           ...input,
           workspaceId: context.workspace.id,
+          scope: UNSCOPED,
         }),
     ),
 
