@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import { extractFromValue } from "../src/integration/handlers/coexist/whatsapp-flush"
+import { reduceMetadata } from "../src/integration/handlers/coexist/whatsapp-history-payload"
 
 // ---------------------------------------------------------------------------
 // WhatsApp Coexistence — BSUID/username extraction (D7, P7)
@@ -270,7 +271,11 @@ describe("extractFromValue — edits/revokes/media follow-ups (value.messages[])
 })
 
 describe("extractFromValue — malformed payload", () => {
-  test("unrecognized shape: returns the empty result, no throw", () => {
+  // Updated for brief-coexist-history-lifecycle.md §E: an unparseable payload
+  // still yields the empty result and never throws, but now REPORTS the parse
+  // failure so the flush can park the staging row with `parseFailedAt` instead
+  // of marking it processed and losing the data silently.
+  test("unrecognized shape: returns the empty result flagged as parse-failed, no throw", () => {
     expect(extractFromValue("not-an-object")).toEqual({
       entries: [],
       mediaFollowUps: [],
@@ -278,6 +283,76 @@ describe("extractFromValue — malformed payload", () => {
       revokes: [],
       declined: false,
       metadata: null,
+      metadataEntries: [],
+      parseFailed: true,
     })
+  })
+
+  // The terminal signal is evaluated per entry, so every metadata
+  // entry must survive extraction — not just the (progress, chunkOrder) best.
+  test("every history metadata entry is reported, not only the reduced one", () => {
+    const result = extractFromValue({
+      history: [
+        { metadata: { phase: 0, chunk_order: 1, progress: 100 } },
+        { metadata: { phase: 2, chunk_order: 1, progress: 100 } },
+      ],
+    })
+
+    expect(result.metadataEntries.map((entry) => entry.phase)).toEqual([0, 2])
+    // The reduction is lexicographic by (phase, progress, chunkOrder), so it
+    // keeps the furthest phase. The per-entry terminal check does
+    // not depend on it either way.
+    expect(result.metadata?.phase).toBe(2)
+  })
+
+  test("a well-formed payload is not flagged as parse-failed", () => {
+    expect(extractFromValue({ contacts: [] }).parseFailed).toBe(false)
+  })
+})
+
+// The persisted (lastPhase, syncProgress) pair is the ONLY memory of
+// how far Meta got, across flush invocations. Reducing by progress alone paired
+// the max phase with some other phase's progress and read "phase 2 @ 100" out of
+// `p0@100 + p2@40`. Lexicographic (phase, progress, chunkOrder) makes the pair an
+// exact encoding: furthest phase, and that phase's own progress.
+describe("reduceMetadata", () => {
+  const m = (phase: number, progress: number, chunkOrder: number) => ({
+    phase,
+    chunkOrder,
+    progress,
+  })
+
+  test("a higher phase wins even when its progress is lower", () => {
+    expect(reduceMetadata(m(0, 100, 1), m(2, 40, 1))).toEqual(m(2, 40, 1))
+  })
+
+  test("a lower phase never displaces a higher one", () => {
+    expect(reduceMetadata(m(2, 40, 1), m(0, 100, 9))).toEqual(m(2, 40, 1))
+  })
+
+  test("within one phase, higher progress wins", () => {
+    expect(reduceMetadata(m(1, 80, 5), m(1, 10, 6))).toEqual(m(1, 80, 5))
+    expect(reduceMetadata(m(1, 10, 6), m(1, 80, 5))).toEqual(m(1, 80, 5))
+  })
+
+  test("within one phase and progress, higher chunkOrder wins", () => {
+    expect(reduceMetadata(m(1, 80, 5), m(1, 80, 6))).toEqual(m(1, 80, 6))
+    expect(reduceMetadata(m(1, 80, 6), m(1, 80, 5))).toEqual(m(1, 80, 6))
+  })
+
+  test("seeds from null", () => {
+    expect(reduceMetadata(null, m(0, 100, 1))).toEqual(m(0, 100, 1))
+  })
+
+  test("the live triple reduces to the terminal pair", () => {
+    const reduced = [
+      m(0, 100, 1),
+      m(1, 100, 1),
+      m(2, 100, 1),
+    ].reduce<ReturnType<typeof m> | null>(
+      (acc, next) => reduceMetadata(acc, next),
+      null,
+    )
+    expect(reduced).toEqual(m(2, 100, 1))
   })
 })

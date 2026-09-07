@@ -1,813 +1,42 @@
+import { coexistService } from "@chatbotx.io/business/coexist"
+import {
+  COEXIST_HISTORY_DECLINED_ERROR,
+  isWhatsappHistoryTerminal,
+} from "@chatbotx.io/business/coexist/history"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import {
-  and,
-  db,
-  eq,
-  findOrFail,
-  inArray,
-  isNull,
-  lt,
-  ne,
-  or,
-  sql,
-} from "@chatbotx.io/database/client"
-import {
-  createMessageRepository,
-  getSafeSinceTime,
+  integrationWhatsappRepository,
+  whatsappCoexistStagingRepository,
 } from "@chatbotx.io/database/repositories"
+import type { WhatsappCoexistStagingModel } from "@chatbotx.io/database/types"
 import {
-  coexistSyncRunModel,
-  contactInboxModel,
-  inboxModel,
-  integrationWhatsappModel,
-  whatsappCoexistStagingModel,
-} from "@chatbotx.io/database/schema"
-import {
-  guessFileTypeFromMimeType,
-  type IncomingAttachment,
-  type IncomingContact,
-  type IncomingMessage,
-} from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
-import {
+  buildCoexistPageJobId,
   IntegrationJobAction,
   type IntegrationJobCoexistWhatsappFlush,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { z } from "zod"
 import { logger } from "../../../lib/logger"
+import { bulkImportHistorical } from "./bulk-historical-import"
 import {
-  bulkImportHistorical,
-  type HistoricalContactMessages,
-} from "./bulk-historical-import"
+  abandon,
+  type FlushContext,
+  type FlushState,
+  loadFlushContext,
+  seedState,
+  stillOwnsRun,
+} from "./whatsapp-flush-context"
+import {
+  applyPostBatchPatches,
+  capPendingPatches,
+  pendingPatchesToBatch,
+  pendingPatchKey,
+} from "./whatsapp-flush-patches"
+import { type ReducedBatch, reduceStagedRows } from "./whatsapp-flush-reduce"
+import { reduceMetadata } from "./whatsapp-history-payload"
 
-/**
- * WhatsApp Coexistence webhook payloads are loosely documented. Schemas are
- * intentionally permissive (`.passthrough()`, optional fields) — unrecognized
- * shapes are skipped rather than crashing the flush job.
- */
-const waProfileSchema = z
-  .object({ name: z.string().optional(), username: z.string().optional() })
-  .passthrough()
-
-const waContactSchema = z
-  .object({
-    wa_id: z.string(),
-    // Business-Scoped User ID (BSUID): present for WhatsApp Username
-    // adopters, alongside a possibly-empty `wa_id` (hidden phone).
-    user_id: z.string().optional(),
-    profile: waProfileSchema.optional(),
-  })
-  .passthrough()
-
-const waMediaSchema = z
-  .object({
-    caption: z.string().optional(),
-    mime_type: z.string().optional(),
-    sha256: z.string().optional(),
-    id: z.string().optional(),
-    url: z.string().optional(),
-  })
-  .passthrough()
-
-const waEditSchema = z
-  .object({
-    original_message_id: z.string(),
-    message: z
-      .object({
-        type: z.string().optional(),
-        text: z.object({ body: z.string() }).passthrough().optional(),
-      })
-      .passthrough()
-      .optional(),
-  })
-  .passthrough()
-
-const waRevokeSchema = z
-  .object({ original_message_id: z.string() })
-  .passthrough()
-
-const waMessageSchema = z
-  .object({
-    id: z.string(),
-    from: z.string().optional(),
-    to: z.string().optional(),
-    // BSUID counterparts of `from`/`to`, present when the phone-based field
-    // is an empty string (Meta changelog 2026-06-12).
-    from_user_id: z.string().optional(),
-    to_user_id: z.string().optional(),
-    timestamp: z.union([z.string(), z.number()]).optional(),
-    type: z.string().optional(),
-    text: z.object({ body: z.string() }).passthrough().optional(),
-    image: waMediaSchema.optional(),
-    video: waMediaSchema.optional(),
-    audio: waMediaSchema.optional(),
-    document: waMediaSchema.optional(),
-    sticker: waMediaSchema.optional(),
-    edit: waEditSchema.optional(),
-    revoke: waRevokeSchema.optional(),
-  })
-  .passthrough()
-
-const waThreadSchema = z
-  .object({
-    id: z.string(),
-    // BSUID for this thread's counterparty, present when `id` (wa_id) is an
-    // empty string (username adopter with a hidden phone).
-    user_id: z.string().optional(),
-    messages: z.array(waMessageSchema).optional(),
-  })
-  .passthrough()
-
-const waHistoryMetadataSchema = z
-  .object({
-    phase: z.number().optional(),
-    chunk_order: z.number().optional(),
-    progress: z.number().optional(),
-  })
-  .passthrough()
-
-const waHistoryErrorSchema = z
-  .object({
-    code: z.number(),
-    title: z.string().optional(),
-    message: z.string().optional(),
-  })
-  .passthrough()
-
-const waHistoryEntrySchema = z
-  .object({
-    threads: z.array(waThreadSchema).optional(),
-    metadata: waHistoryMetadataSchema.optional(),
-    errors: z.array(waHistoryErrorSchema).optional(),
-  })
-  .passthrough()
-
-const smbStateSyncEntrySchema = z
-  .object({
-    type: z.string().optional(),
-    action: z.string().optional(),
-    contact: z
-      .object({
-        phone_number: z.string().optional(),
-        full_name: z.string().optional(),
-        first_name: z.string().optional(),
-      })
-      .passthrough()
-      .optional(),
-  })
-  .passthrough()
-
-const waEchoSchema = z
-  .object({
-    from: z.string(),
-    to: z.string(),
-    // BSUID counterparts of `from`/`to`, present when the phone-based field
-    // is an empty string (Meta changelog 2026-06-12).
-    from_user_id: z.string().optional(),
-    to_user_id: z.string().optional(),
-    id: z.string(),
-    timestamp: z.union([z.string(), z.number()]).optional(),
-    type: z.string().optional(),
-    text: z.object({ body: z.string() }).passthrough().optional(),
-    image: waMediaSchema.optional(),
-    video: waMediaSchema.optional(),
-    audio: waMediaSchema.optional(),
-    document: waMediaSchema.optional(),
-    sticker: waMediaSchema.optional(),
-  })
-  .passthrough()
-
-const waValueSchema = z
-  .object({
-    contacts: z.array(waContactSchema).optional(),
-    history: z.array(waHistoryEntrySchema).optional(),
-    state_sync: z.array(smbStateSyncEntrySchema).optional(),
-    message_echoes: z.array(waEchoSchema).optional(),
-    smb_app_state_sync: z.array(smbStateSyncEntrySchema).optional(),
-    smb_message_echoes: z.array(waEchoSchema).optional(),
-    messages: z.array(waMessageSchema).optional(),
-  })
-  .passthrough()
-
-/** Meta media-type keys carried on a message object. */
-const MEDIA_KEYS = ["image", "video", "audio", "document", "sticker"] as const
-type MediaKey = (typeof MEDIA_KEYS)[number]
-
-const extractMedia = (
-  msg: z.infer<typeof waMessageSchema> | z.infer<typeof waEchoSchema>,
-): { fileType: MediaKey; payload: z.infer<typeof waMediaSchema> } | null => {
-  for (const key of MEDIA_KEYS) {
-    const payload = (msg as Record<string, unknown>)[key]
-    if (payload && typeof payload === "object") {
-      return {
-        fileType: key,
-        payload: payload as z.infer<typeof waMediaSchema>,
-      }
-    }
-  }
-  return null
-}
-
-/**
- * Convert one extracted Meta media payload into the SDK shape inserted by
- * `bulkImportMessages` / `applyMediaFollowUps`. The Coexist webhook delivers
- * only `mediaId` for thread + echo messages — never a direct URL — so we
- * stash the id in `originPath` with the `wa-media:` sentinel. The follow-up
- * `coexistAttachmentDownload` job resolves it via `client.retrieveMedia(id)`,
- * mirrors the bytes to S3, and rewrites `originPath` to the S3 path.
- *
- * Returns null when no mediaId is present — a placeholder media stub we
- * cannot resolve.
- */
-const buildWaIncomingAttachment = (
-  _fileType: MediaKey,
-  payload: z.infer<typeof waMediaSchema>,
-): IncomingAttachment | null => {
-  if (!payload.id) {
-    return null
-  }
-  const mimeType = payload.mime_type ?? "application/octet-stream"
-  return {
-    sourceId: payload.id,
-    fileType: guessFileTypeFromMimeType(mimeType),
-    mimeType,
-    originPath: `wa-media:${payload.id}`,
-    size: 0,
-    width: null,
-    height: null,
-    name: payload.caption,
-  }
-}
-
-/** History-decline error code per Meta docs. */
-const HISTORY_DECLINED_ERROR_CODE = 2_593_109
-
-/**
- * Media follow-up: `value.messages[]` carries the media asset for a thread
- * message Meta sent earlier. The history row is already in `Message`; we
- * insert an Attachment row pointing at the resolved (contactInboxId, sourceId)
- * → messageId. Followed by a `coexistAttachmentDownload` enqueue.
- */
-type MediaFollowUp = {
-  sourceId: string
-  contactWaId: string
-  attachment: IncomingAttachment
-}
-
-type EditPatch = {
-  sourceId: string
-  contactWaId: string
-  text: string | null
-  /** When the edit carries new media, an Attachment row is inserted in
-   *  addition to the text UPDATE. Null when text-only edit. */
-  attachment: IncomingAttachment | null
-}
-
-type RevokePatch = {
-  sourceId: string
-  contactWaId: string
-}
-
-type HistoryMetadata = {
-  phase: number
-  chunkOrder: number
-  progress: number
-}
-
-// Pick the metadata row with the highest progress (ties broken by chunkOrder).
-// Used twice: inside extractFromValue across history entries, and across
-// staging rows in the flush loop.
-const reduceMetadata = (
-  current: HistoryMetadata | null,
-  next: HistoryMetadata,
-): HistoryMetadata => {
-  if (current === null) {
-    return next
-  }
-  if (next.progress > current.progress) {
-    return next
-  }
-  if (
-    next.progress === current.progress &&
-    next.chunkOrder > current.chunkOrder
-  ) {
-    return next
-  }
-  return current
-}
-
-type ExtractResult = {
-  entries: ContactWithMessage[]
-  mediaFollowUps: MediaFollowUp[]
-  edits: EditPatch[]
-  revokes: RevokePatch[]
-  declined: boolean
-  metadata: HistoryMetadata | null
-}
-
-type ContactWithMessage = {
-  contact: IncomingContact
-  message: (IncomingMessage & { createdAt?: Date }) | null
-}
-
-/**
- * Determines whether a thread message/echo was sent BY the customer
- * (incoming) or by the business (outgoing). Prefers the phone-based `from`
- * field (today's behavior, regression-safe); falls back to comparing the
- * BSUID counterpart (`fromUserId`) against the thread's resolved scoped user
- * id when `from` is an empty string (username adopter, D7 in the BSUID
- * plan) — deterministic, no phone-format sniffing.
- */
-const resolveIsOutgoingMessage = (props: {
-  from: string | undefined
-  fromUserId: string | undefined
-  customerWaId: string
-  customerUserId: string | undefined
-}): boolean => {
-  const { from, fromUserId, customerWaId, customerUserId } = props
-  if (from) {
-    return from !== customerWaId
-  }
-  if (fromUserId && customerUserId) {
-    return fromUserId !== customerUserId
-  }
-  return false
-}
-
-const toDate = (timestamp: string | number | undefined): Date | undefined => {
-  if (timestamp === undefined) {
-    return
-  }
-  const seconds = Number(timestamp)
-  if (Number.isFinite(seconds)) {
-    return new Date(seconds * 1000)
-  }
-}
-
-const EMPTY_EXTRACT: ExtractResult = {
-  entries: [],
-  mediaFollowUps: [],
-  edits: [],
-  revokes: [],
-  declined: false,
-  metadata: null,
-}
-
-/**
- * Extracts contacts + historical messages + post-batch patches from one
- * buffered `changes[].value` slice.
- *
- * Group chats are not synced by WhatsApp Coexistence, so every thread here is
- * a 1:1 conversation keyed by the customer `wa_id`.
- *
- * Five Meta payload shapes are recognized:
- *   - `value.history[].threads[]`            → historical text/media messages
- *   - `value.history[].errors[code=2593109]` → history-sharing declined
- *   - `value.history[].metadata`             → phase/chunk_order/progress
- *   - `value.smb_app_state_sync[]`           → contact backfill
- *   - `value.smb_message_echoes[]`           → outgoing messages from WA Business app
- *   - `value.messages[]`                     → media-asset follow-up / edit / revoke
- */
-// Exported for direct unit testing of the BSUID/username extraction and
-// direction-resolution logic — the full `coexistWhatsappFlush` orchestration
-// (DB queries, bulk import, run-state machine) is tested separately.
-type WaIdentityLookups = {
-  nameByWaId: Map<string, string>
-  userIdByWaId: Map<string, string>
-  usernameByWaId: Map<string, string>
-}
-
-/**
- * Builds the coexist `IncomingContact` for a raw wa_id + optional scoped user
- * id. Username adopters: Meta can send an empty wa_id (hidden phone)
- * alongside a Business-Scoped User ID — fall back to it instead of dropping
- * the row (D2/D7 in the BSUID plan; deterministic, no phone-format sniffing).
- */
-const buildCoexistIncomingContact = (
-  rawWaId: string,
-  rawUserId: string | undefined,
-  lookups: WaIdentityLookups,
-): {
-  contact: IncomingContact
-  customerWaId: string
-  customerUserId: string | undefined
-} => {
-  const customerUserId = rawUserId ?? lookups.userIdByWaId.get(rawWaId)
-  const customerWaId = rawWaId || customerUserId || ""
-  const sourceUsername = lookups.usernameByWaId.get(rawWaId)
-  return {
-    customerWaId,
-    customerUserId,
-    contact: {
-      sourceId: customerWaId,
-      // Only a real wa_id is a phone number — never the BSUID fallback.
-      ...(rawWaId ? { phoneNumber: rawWaId } : {}),
-      firstName: lookups.nameByWaId.get(rawWaId),
-      ...(customerUserId ? { sourceUserId: customerUserId } : {}),
-      ...(sourceUsername ? { sourceUsername } : {}),
-    },
-  }
-}
-
-export const extractFromValue = (payload: unknown): ExtractResult => {
-  const parsed = waValueSchema.safeParse(payload)
-  if (!parsed.success) {
-    logger.warn(
-      { error: parsed.error.message },
-      "[coexist] Unrecognized WhatsApp history payload — skipped",
-    )
-    return EMPTY_EXTRACT
-  }
-  const value = parsed.data
-
-  const nameByWaId = new Map<string, string>()
-  const userIdByWaId = new Map<string, string>()
-  const usernameByWaId = new Map<string, string>()
-  for (const contact of value.contacts ?? []) {
-    if (contact.profile?.name) {
-      nameByWaId.set(contact.wa_id, contact.profile.name)
-    }
-    if (contact.user_id) {
-      userIdByWaId.set(contact.wa_id, contact.user_id)
-    }
-    if (contact.profile?.username) {
-      usernameByWaId.set(contact.wa_id, contact.profile.username)
-    }
-  }
-
-  const entries: ContactWithMessage[] = []
-  const mediaFollowUps: MediaFollowUp[] = []
-  const edits: EditPatch[] = []
-  const revokes: RevokePatch[] = []
-  let declined = false
-  let metadata: HistoryMetadata | null = null
-
-  for (const entry of value.history ?? []) {
-    if (entry.errors?.some((e) => e.code === HISTORY_DECLINED_ERROR_CODE)) {
-      declined = true
-    }
-    if (entry.metadata) {
-      metadata = reduceMetadata(metadata, {
-        phase: entry.metadata.phase ?? 0,
-        chunkOrder: entry.metadata.chunk_order ?? 0,
-        progress: entry.metadata.progress ?? 0,
-      })
-    }
-
-    for (const thread of entry.threads ?? []) {
-      const { contact, customerWaId, customerUserId } =
-        buildCoexistIncomingContact(thread.id, thread.user_id, {
-          nameByWaId,
-          userIdByWaId,
-          usernameByWaId,
-        })
-
-      const rawMessages = thread.messages ?? []
-      // Skip type="errors" entries — Meta could not decode the message
-      // (e.g. code 131051 "Message type unknown"). They carry no usable
-      // content and are not user-authored.
-      const messages = rawMessages.filter((m) => m.type !== "errors")
-
-      // Thread had only error placeholders → contact is meaningless, skip.
-      if (rawMessages.length > 0 && messages.length === 0) {
-        continue
-      }
-
-      if (messages.length === 0) {
-        entries.push({ contact, message: null })
-        continue
-      }
-
-      for (const message of messages) {
-        const isOutgoing = resolveIsOutgoingMessage({
-          from: message.from,
-          fromUserId: message.from_user_id,
-          customerWaId,
-          customerUserId,
-        })
-        const text =
-          message.text?.body ?? (message.type ? `[${message.type}]` : "")
-        const media = extractMedia(message)
-        const attachment = media
-          ? buildWaIncomingAttachment(media.fileType, media.payload)
-          : null
-        entries.push({
-          contact,
-          message: {
-            sourceId: message.id,
-            messageType: isOutgoing ? "outgoing" : "incoming",
-            contentType: "text",
-            text,
-            createdAt: toDate(message.timestamp),
-            ...(attachment ? { attachments: [attachment] } : {}),
-          },
-        })
-      }
-    }
-  }
-
-  for (const entry of [
-    ...(value.smb_app_state_sync ?? []),
-    ...(value.state_sync ?? []),
-  ]) {
-    if (entry.action === "remove" || !entry.contact?.phone_number) {
-      continue
-    }
-    const phone = entry.contact.phone_number
-    entries.push({
-      contact: {
-        sourceId: phone,
-        phoneNumber: phone,
-        firstName: entry.contact.first_name ?? entry.contact.full_name,
-      },
-      message: null,
-    })
-  }
-
-  for (const echo of [
-    ...(value.smb_message_echoes ?? []),
-    ...(value.message_echoes ?? []),
-  ]) {
-    const { contact } = buildCoexistIncomingContact(echo.to, echo.to_user_id, {
-      nameByWaId,
-      userIdByWaId,
-      usernameByWaId,
-    })
-    const text = echo.text?.body ?? (echo.type ? `[${echo.type}]` : "")
-    const media = extractMedia(echo)
-    const attachment = media
-      ? buildWaIncomingAttachment(media.fileType, media.payload)
-      : null
-    entries.push({
-      contact,
-      message: {
-        sourceId: echo.id,
-        messageType: "outgoing",
-        contentType: "text",
-        text,
-        createdAt: toDate(echo.timestamp),
-        ...(attachment ? { attachments: [attachment] } : {}),
-      },
-    })
-  }
-
-  for (const message of value.messages ?? []) {
-    // Username adopters: fall back to the BSUID when `from` is an empty
-    // string (D2/D7) so patches still resolve to the right ContactInbox
-    // instead of being dropped.
-    const messageContactWaId = message.from || message.from_user_id
-    if (message.type === "revoke" || message.revoke) {
-      const original = message.revoke?.original_message_id
-      if (original && messageContactWaId) {
-        revokes.push({ sourceId: original, contactWaId: messageContactWaId })
-      }
-      continue
-    }
-    if (message.type === "edit" || message.edit) {
-      const original = message.edit?.original_message_id
-      if (!(original && messageContactWaId)) {
-        continue
-      }
-      const editedText = message.edit?.message?.text?.body ?? null
-      const editedMediaSource = message.edit?.message as
-        | z.infer<typeof waMessageSchema>
-        | undefined
-      const editedMedia = editedMediaSource
-        ? extractMedia(editedMediaSource)
-        : null
-      const editedAttachment = editedMedia
-        ? buildWaIncomingAttachment(editedMedia.fileType, editedMedia.payload)
-        : null
-      edits.push({
-        sourceId: original,
-        contactWaId: messageContactWaId,
-        text: editedText,
-        attachment: editedAttachment,
-      })
-      continue
-    }
-
-    const media = extractMedia(message)
-    if (media && messageContactWaId) {
-      const attachment = buildWaIncomingAttachment(
-        media.fileType,
-        media.payload,
-      )
-      if (attachment) {
-        mediaFollowUps.push({
-          sourceId: message.id,
-          contactWaId: messageContactWaId,
-          attachment,
-        })
-      }
-    }
-  }
-
-  return { entries, mediaFollowUps, edits, revokes, declined, metadata }
-}
-
-/**
- * Resolves a set of customer wa_ids to their ContactInbox rows for this inbox.
- * Returns a Map keyed by sourceId (= wa_id). Missing keys mean either Meta
- * delivered a media follow-up before the history insert (next chunk picks it
- * up) or the contact was cap-rejected by bulkImportHistorical.
- */
-const resolveContactInboxIds = async (
-  inboxId: string,
-  contactWaIds: string[],
-): Promise<
-  Map<
-    string,
-    { id: string; lastIncomingMessageAt: Date | null; createdAt: Date }
-  >
-> => {
-  const ids = new Map<
-    string,
-    { id: string; lastIncomingMessageAt: Date | null; createdAt: Date }
-  >()
-  if (contactWaIds.length === 0) {
-    return ids
-  }
-  const uniq = Array.from(new Set(contactWaIds))
-  const rows = await db
-    .select({
-      id: contactInboxModel.id,
-      sourceId: contactInboxModel.sourceId,
-      lastIncomingMessageAt: contactInboxModel.lastIncomingMessageAt,
-      createdAt: contactInboxModel.createdAt,
-    })
-    .from(contactInboxModel)
-    .where(
-      and(
-        eq(contactInboxModel.inboxId, inboxId),
-        inArray(contactInboxModel.sourceId, uniq),
-      ),
-    )
-  for (const row of rows) {
-    if (row.sourceId) {
-      ids.set(row.sourceId, {
-        id: row.id,
-        lastIncomingMessageAt: row.lastIncomingMessageAt,
-        createdAt: row.createdAt,
-      })
-    }
-  }
-  return ids
-}
-
-/**
- * Applies the three post-batch patch families that bulkImportHistorical cannot
- * express (insert-only contract):
- *
- *   - Media follow-ups → INSERT one Attachment row per follow-up, pointing at
- *     the existing Message row. Returned IDs are enqueued for download by the
- *     caller. Drops silently when the parent message hasn't been inserted yet.
- *   - Edits → UPDATE text and merge `edited: true` into contentAttributes.
- *     When the edit carries media, also INSERT a fresh Attachment row.
- *   - Revokes → merge `revoked: true` into contentAttributes (text retained).
- *
- * Returns the Attachment IDs inserted in this batch so the caller can enqueue
- * `coexistAttachmentDownload` jobs after the flush UPDATEs commit.
- */
-const applyPostBatchPatches = async (input: {
-  workspaceId: string
-  inboxId: string
-  mediaFollowUps: MediaFollowUp[]
-  edits: EditPatch[]
-  revokes: RevokePatch[]
-}): Promise<{ insertedAttachmentIds: string[] }> => {
-  const { workspaceId, inboxId, mediaFollowUps, edits, revokes } = input
-  const insertedAttachmentIds: string[] = []
-  if (
-    mediaFollowUps.length === 0 &&
-    edits.length === 0 &&
-    revokes.length === 0
-  ) {
-    return { insertedAttachmentIds }
-  }
-  const allWaIds = [
-    ...mediaFollowUps.map((p) => p.contactWaId),
-    ...edits.map((p) => p.contactWaId),
-    ...revokes.map((p) => p.contactWaId),
-  ]
-  const contactInboxByWaId = await resolveContactInboxIds(inboxId, allWaIds)
-  const safeSinceTimes = Array.from(contactInboxByWaId.values())
-    .map((contactInbox) =>
-      getSafeSinceTime(
-        contactInbox.lastIncomingMessageAt ?? contactInbox.createdAt,
-        365 * 24 * 60 * 60 * 1000,
-      ),
-    )
-    .filter((value): value is Date => value !== undefined)
-  if (safeSinceTimes.length === 0) {
-    return { insertedAttachmentIds }
-  }
-  const sinceTime = new Date(
-    Math.min(...safeSinceTimes.map((value) => value.getTime())),
-  )
-  const repo = await createMessageRepository(db)
-
-  // Pre-load message rows for both attachment-inserting paths (follow-ups +
-  // edits-with-media). Single round-trip per batch.
-  const attachmentInsertPatches = [
-    ...mediaFollowUps,
-    ...edits
-      .filter((e) => e.attachment !== null)
-      .map((e) => ({
-        sourceId: e.sourceId,
-        contactWaId: e.contactWaId,
-        attachment: e.attachment as IncomingAttachment,
-      })),
-  ]
-  const lookupContactInboxIds: string[] = []
-  const lookupSourceIds: string[] = []
-  for (const patch of attachmentInsertPatches) {
-    const contactInbox = contactInboxByWaId.get(patch.contactWaId)
-    if (contactInbox) {
-      lookupContactInboxIds.push(contactInbox.id)
-      lookupSourceIds.push(patch.sourceId)
-    }
-  }
-  const messageRows = await repo.findManyBySourceIds({
-    contactInboxIds: lookupContactInboxIds,
-    sourceIds: lookupSourceIds,
-    workspaceId,
-    sinceTime,
-  })
-  const messageByKey = new Map(
-    messageRows
-      .filter((row) => row.sourceId)
-      .map((row) => [`${row.contactInboxId}:${row.sourceId}`, row]),
-  )
-
-  const attachmentRows: Parameters<typeof repo.bulkCreateAttachments>[0] = []
-  for (const patch of attachmentInsertPatches) {
-    const contactInbox = contactInboxByWaId.get(patch.contactWaId)
-    if (!contactInbox) {
-      continue
-    }
-    const msg = messageByKey.get(`${contactInbox.id}:${patch.sourceId}`)
-    if (!msg) {
-      continue
-    }
-    attachmentRows.push({
-      id: createId(),
-      workspaceId,
-      conversationId: msg.conversationId,
-      messageId: msg.id,
-      messageCreatedAt: msg.createdAt,
-      sourceId: patch.attachment.sourceId,
-      fileType: patch.attachment.fileType,
-      mimeType: patch.attachment.mimeType,
-      originPath: patch.attachment.originPath,
-      size: patch.attachment.size,
-      width: patch.attachment.width ?? undefined,
-      height: patch.attachment.height ?? undefined,
-      name: patch.attachment.name,
-    })
-  }
-  if (attachmentRows.length > 0) {
-    const inserted = await repo.bulkCreateAttachments(attachmentRows)
-    for (const r of inserted) {
-      insertedAttachmentIds.push(r.id)
-    }
-  }
-
-  const patches = [
-    ...edits.flatMap((patch) => {
-      const contactInbox = contactInboxByWaId.get(patch.contactWaId)
-      if (!contactInbox) {
-        return []
-      }
-      return [
-        {
-          contactInboxId: contactInbox.id,
-          sourceId: patch.sourceId,
-          overlay: { edited: true },
-          text: patch.text === null ? undefined : patch.text,
-        },
-      ]
-    }),
-    ...revokes.flatMap((patch) => {
-      const contactInbox = contactInboxByWaId.get(patch.contactWaId)
-      if (!contactInbox) {
-        return []
-      }
-      return [
-        {
-          contactInboxId: contactInbox.id,
-          sourceId: patch.sourceId,
-          overlay: { revoked: true },
-        },
-      ]
-    }),
-  ]
-
-  await repo.bulkPatchContentAttributes({ workspaceId, patches, sinceTime })
-
-  return { insertedAttachmentIds }
-}
+// Re-exported so the payload-shape tests keep importing it from the handler
+// module they exercise.
+export { extractFromValue } from "./whatsapp-history-payload"
 
 /** Staging rows processed per chunk. Tuned for ~30s wall-time per chunk. */
 const BATCH_SIZE = 100
@@ -819,6 +48,497 @@ const BATCH_SIZE = 100
 const CHUNK_BUDGET_MS = 4 * 60 * 1000
 
 /**
+ * Statuses this handler may write. `waiting` is the non-terminal one: the run
+ * drained everything staged so far and Meta still owes it history.
+ */
+type FlushFinalStatus = "succeeded" | "failed" | "partial" | "waiting"
+
+/** Why the drain loop stopped. */
+type DrainOutcome =
+  /** Nothing left staged — the run may now be finalized or parked. */
+  | "exhausted"
+  /** Time budget spent, or late rows staged after the drain. */
+  | "continueLater"
+  /** A guarded write reported 0 rows: this worker no longer owns the run. */
+  | "lostClaim"
+
+/** The outcome decision, applied ONLY once Meta's terminal signal is in. */
+const resolveTerminalStatus = (counters: {
+  failed: number
+  importedMessages: number
+  skipped: number
+}): FlushFinalStatus => {
+  if (
+    counters.failed > 0 &&
+    (counters.importedMessages > 0 || counters.skipped > 0)
+  ) {
+    return "partial"
+  }
+  if (counters.failed > 0) {
+    return "failed"
+  }
+  return "succeeded"
+}
+
+/**
+ * Enqueues one download job per Attachment inserted by this batch (inline or
+ * post-batch). Never throws: the bytes stay pending and the row is recoverable.
+ */
+const enqueueAttachmentDownloads = async (
+  context: FlushContext,
+  attachmentIds: string[],
+): Promise<void> => {
+  if (attachmentIds.length === 0) {
+    return
+  }
+  try {
+    await integrationQueue.addBulk(
+      attachmentIds.map((attachmentId) => ({
+        name: IntegrationJobAction.coexistAttachmentDownload,
+        data: {
+          type: IntegrationJobAction.coexistAttachmentDownload,
+          data: {
+            attachmentId,
+            workspaceId: context.integration.workspaceId,
+            channel: "whatsapp" as const,
+            integrationId: context.integration.id,
+          },
+        },
+        opts: {
+          jobId: `att-${attachmentId}`,
+          attempts: 5,
+          backoff: { type: "exponential", delay: 30_000 },
+          removeOnComplete: true,
+          removeOnFail: { count: 100 },
+        },
+      })),
+    )
+  } catch (error) {
+    logger.error(
+      { error, runId: context.runId, count: attachmentIds.length },
+      "[coexist] WhatsApp attachment download enqueue failed — bytes left as pending",
+    )
+  }
+}
+
+/** Replays carried patches plus this batch's, and re-caps what stays pending. */
+const applyBatchPatches = async (
+  context: FlushContext,
+  state: FlushState,
+  reduced: ReducedBatch,
+): Promise<string[]> => {
+  const carried = pendingPatchesToBatch(state.pendingPatches)
+  const result = await applyPostBatchPatches({
+    workspaceId: context.integration.workspaceId,
+    inboxId: context.integration.inboxId,
+    mediaFollowUps: [...carried.mediaFollowUps, ...reduced.mediaFollowUps],
+    edits: [...carried.edits, ...reduced.edits],
+    revokes: [...carried.revokes, ...reduced.revokes],
+    stagedAtByKey: new Map(
+      state.pendingPatches.map((patch) => [
+        pendingPatchKey(patch),
+        patch.stagedAt,
+      ]),
+    ),
+  })
+  state.pendingPatches = capPendingPatches(result.unresolved)
+  return result.insertedAttachmentIds
+}
+
+/** The run-level bookkeeping written at the end of every batch. */
+const persistBatchProgress = (
+  context: FlushContext,
+  state: FlushState,
+): Promise<number> =>
+  coexistService.updateProgress({
+    runId: context.runId,
+    expect: context.guard,
+    fields: {
+      currentScan: state.totalRows,
+      importedContactCount: state.importedContacts,
+      importedMessageCount: state.importedMessages,
+      skippedCount: state.skipped,
+      failedCount: state.failed,
+      currentPageNumber: state.batchNumber,
+      currentStep: `flushing batch ${state.batchNumber}`,
+      currentError: state.currentError ?? null,
+      lastHeartbeatAt: new Date(),
+      pendingPatches: { entries: state.pendingPatches },
+      // Written from the RUN-level reduction, not the batch's: the furthest
+      // point Meta reached, reduced lexicographically by
+      // (phase, progress, chunkOrder). `syncProgress` is Meta's PER-PHASE
+      // percentage, so it may legitimately drop when a new phase starts
+      // (phase 1 @100 → phase 2 @10); within a phase it never regresses.
+      ...(state.runMetadata
+        ? {
+            lastPhase: state.runMetadata.phase,
+            lastChunkOrder: state.runMetadata.chunkOrder,
+            syncProgress: state.runMetadata.progress,
+          }
+        : {}),
+    },
+  })
+
+/** How one batch ended. */
+type BatchOutcome = "next" | "exhausted" | "declined" | "lostClaim"
+
+/**
+ * Selects, imports and books one batch of staged rows.
+ *
+ * Ownership is re-validated at THREE points — before the select, immediately
+ * before the import, and before staging rows are marked processed — so a worker
+ * that lost the run to a reclaim stops at the next boundary instead of writing
+ * on top of the new owner.
+ */
+const drainBatch = async (
+  context: FlushContext,
+  state: FlushState,
+): Promise<BatchOutcome> => {
+  state.batchNumber += 1
+  if (!(await stillOwnsRun(context))) {
+    return "lostClaim"
+  }
+
+  const stagedRows = await whatsappCoexistStagingRepository.listPending({
+    phoneNumberId: context.phoneNumberId,
+    limit: BATCH_SIZE,
+  })
+  if (stagedRows.length === 0) {
+    return "exhausted"
+  }
+
+  const reduced = reduceStagedRows(stagedRows, context)
+  state.terminalSeen ||= reduced.terminalSeen
+  if (reduced.metadata) {
+    state.runMetadata = reduceMetadata(state.runMetadata, reduced.metadata)
+  }
+
+  // Last ownership check before the expensive, side-effecting step. Bounds any
+  // overlap with a reclaiming worker to at most ONE in-flight import.
+  if (!(await stillOwnsRun(context))) {
+    return "lostClaim"
+  }
+
+  await importAndPatch(context, state, reduced, stagedRows)
+
+  // Re-validate before the staging writes: they are the ones that would hide
+  // work from the run's new owner.
+  if (!(await stillOwnsRun(context))) {
+    return "lostClaim"
+  }
+  await markBatchStagingRows(stagedRows, reduced)
+
+  if ((await persistBatchProgress(context, state)) === 0) {
+    // The rows this batch committed above stay `processedAt` — they WERE
+    // imported; only the run-level bookkeeping is lost with the claim.
+    return "lostClaim"
+  }
+
+  if (reduced.declined) {
+    return "declined"
+  }
+  return stagedRows.length < BATCH_SIZE ? "exhausted" : "next"
+}
+
+/**
+ * The side-effecting half of a batch: bulk import, post-batch patches, and one
+ * download job per Attachment inserted by EITHER phase (inline and post-batch).
+ */
+const importAndPatch = async (
+  context: FlushContext,
+  state: FlushState,
+  reduced: ReducedBatch,
+  stagedRows: WhatsappCoexistStagingModel[],
+): Promise<void> => {
+  const batchResult = await importBatch(context, state, reduced, stagedRows)
+  const patchAttachmentIds = await applyBatchPatches(context, state, reduced)
+  await enqueueAttachmentDownloads(context, [
+    ...batchResult.insertedAttachmentIds,
+    ...patchAttachmentIds,
+  ])
+}
+
+/**
+ * Runs the bulk import and folds its counters into the state. A throw is
+ * re-thrown after counting the batch as failed: staging rows are NOT marked
+ * processed, so the scheduler retries the batch.
+ */
+const importBatch = async (
+  context: FlushContext,
+  state: FlushState,
+  reduced: ReducedBatch,
+  stagedRows: WhatsappCoexistStagingModel[],
+): Promise<Awaited<ReturnType<typeof bulkImportHistorical>>> => {
+  let batchResult: Awaited<ReturnType<typeof bulkImportHistorical>>
+  try {
+    batchResult = await bulkImportHistorical({
+      inbox: context.inbox,
+      workspaceId: context.integration.workspaceId,
+      runId: context.runId,
+      batch: reduced.batch,
+      aiReadsSyncedHistory: context.integration.coexistAiReadsSyncedHistory,
+    })
+  } catch (error) {
+    state.failed += reduced.batch.reduce(
+      (sum, item) => sum + item.messages.length,
+      0,
+    )
+    state.totalRows += stagedRows.length
+    logger.error(
+      { error, runId: context.runId, batchNumber: state.batchNumber },
+      "[coexist] WhatsApp bulk import threw — batch lost",
+    )
+    throw error
+  }
+
+  state.importedContacts += batchResult.importedContacts
+  state.importedMessages += batchResult.importedMessages
+  state.skipped += batchResult.skippedMessages + batchResult.skippedContacts
+  state.failed += batchResult.failedMessages
+  state.totalRows += stagedRows.length
+
+  // Surface non-throw failure (e.g. workspace cap hit) so currentError is
+  // populated even when bulkImportHistorical returns failedMessages > 0 without
+  // raising. Otherwise the UI shows failedCount=N with an empty error.
+  if (batchResult.failureReason) {
+    state.currentError = `batch ${state.batchNumber}: ${batchResult.failureReason}`
+  }
+  return batchResult
+}
+
+/**
+ * Marks this batch's rows processed — the bulk pipeline was atomic.
+ * Cap-rejected contacts also count as processed (deterministic skip; a re-run
+ * would not recover them). Unparseable rows are parked with `parseFailedAt`
+ * instead, so they leave every later batch without being reported as imported.
+ */
+const markBatchStagingRows = async (
+  stagedRows: WhatsappCoexistStagingModel[],
+  reduced: ReducedBatch,
+): Promise<void> => {
+  const parkedIds = new Set(reduced.parseFailedRowIds)
+  await whatsappCoexistStagingRepository.markProcessed({
+    ids: stagedRows.map((row) => row.id).filter((id) => !parkedIds.has(id)),
+  })
+  await whatsappCoexistStagingRepository.markParseFailed({
+    ids: reduced.parseFailedRowIds,
+  })
+}
+
+/** Walks batches until the chunk budget, the staging table or the claim runs out. */
+const drainRun = async (
+  context: FlushContext,
+  state: FlushState,
+): Promise<DrainOutcome> => {
+  while (Date.now() - context.jobStart < CHUNK_BUDGET_MS) {
+    const outcome = await drainBatch(context, state)
+    if (outcome === "lostClaim") {
+      return "lostClaim"
+    }
+    if (outcome === "declined") {
+      // A decline is a terminal signal in its own right: Meta will never send
+      // history for this number, so the run must not park in `waiting`.
+      await integrationWhatsappRepository.markHistoryDeclined({
+        id: context.integration.id,
+      })
+      state.terminalSeen = true
+      state.currentError = COEXIST_HISTORY_DECLINED_ERROR
+      return "exhausted"
+    }
+    if (outcome === "exhausted") {
+      return "exhausted"
+    }
+  }
+  return "continueLater"
+}
+
+/**
+ * Decides the run's status once the drain reports `exhausted`.
+ *
+ * Tail re-check first: rows can be staged between the loop's last empty query
+ * and now. Finalizing then would orphan them — a buffer-triggered flush finds
+ * no live run to claim — so the run is kept alive and the existing continuation
+ * drains them (coalesced: one continuation, not one job per late webhook).
+ * Parse-failed rows are excluded so a poison row cannot chain forever.
+ *
+ * @returns the status to write, or null to enqueue a continuation instead.
+ */
+const resolveFinalStatus = async (
+  context: FlushContext,
+  state: FlushState,
+): Promise<FlushFinalStatus | null> => {
+  const [tailRow] = await whatsappCoexistStagingRepository.listPending({
+    phoneNumberId: context.phoneNumberId,
+    limit: 1,
+  })
+  if (tailRow) {
+    return null
+  }
+
+  if (
+    state.terminalSeen ||
+    // Resume seed: an earlier chunk of THIS run may have seen the terminal
+    // entry and then yielded (time budget / late rows) without finalizing. The
+    // persisted pair is the only memory of it across invocations, and because
+    // the reduction is lexicographic by (phase, progress, …) the pair always
+    // describes the furthest phase AND that phase's own progress — so this can
+    // neither miss nor invent a terminal signal.
+    isWhatsappHistoryTerminal({
+      lastPhase: state.runMetadata?.phase ?? null,
+      syncProgress: state.runMetadata?.progress ?? null,
+    })
+  ) {
+    // Meta said it is done (last phase at 100%, or history declined): only now
+    // may the run reach a terminal status.
+    return resolveTerminalStatus(state)
+  }
+
+  // Everything staged so far is imported, but Meta is still pushing history.
+  // Park the run instead of closing it: `finishedAt` stays NULL, counters are
+  // persisted, and either the next buffer flush or the scheduler's recovery
+  // pass wakes it when more rows land. The 24h window is enforced by the
+  // scheduler, not here.
+  return "waiting"
+}
+
+/**
+ * Hot-chains the next chunk. On enqueue failure the run is handed back to the
+ * scheduler rather than left `running` with nobody driving it.
+ */
+const enqueueContinuation = async (
+  context: FlushContext,
+  state: FlushState,
+): Promise<void> => {
+  try {
+    await integrationQueue.add(
+      IntegrationJobAction.coexistWhatsappFlush,
+      {
+        type: IntegrationJobAction.coexistWhatsappFlush,
+        data: { runId: context.runId, phoneNumberId: context.phoneNumberId },
+      },
+      {
+        jobId: buildCoexistPageJobId({
+          runId: context.runId,
+          attempts: context.run.attempts,
+          pageNumber: state.batchNumber + 1,
+        }),
+        attempts: 1,
+        removeOnComplete: true,
+        removeOnFail: { count: 100 },
+      },
+    )
+    logger.info(
+      {
+        runId: context.runId,
+        batchNumber: state.batchNumber,
+        phoneNumberId: context.phoneNumberId,
+      },
+      "[coexist] WhatsApp flush chunk done — continuation enqueued",
+    )
+  } catch (error) {
+    logger.error(
+      { error, runId: context.runId },
+      "[coexist] WhatsApp continuation enqueue failed — fallback to scheduler",
+    )
+    await coexistService.resetForRetry({
+      runId: context.runId,
+      currentError: state.currentError ?? "continuation enqueue failed",
+      expect: context.guard,
+    })
+  }
+}
+
+/** The one terminal/parking write. @returns false when the claim was lost. */
+const finalizeRun = async (
+  context: FlushContext,
+  state: FlushState,
+  finalStatus: FlushFinalStatus,
+): Promise<boolean> => {
+  const finalized = await coexistService.updateProgress({
+    runId: context.runId,
+    expect: context.guard,
+    fields: {
+      status: finalStatus,
+      // `waiting` is NOT an end: the run has drained what Meta sent so far and
+      // is still open for the rest.
+      finishedAt: finalStatus === "waiting" ? null : new Date(),
+      lastHeartbeatAt: new Date(),
+      currentScan: state.totalRows,
+      currentStep: finalStatus === "waiting" ? "waiting for history" : "done",
+      importedContactCount: state.importedContacts,
+      importedMessageCount: state.importedMessages,
+      skippedCount: state.skipped,
+      failedCount: state.failed,
+      currentError: state.currentError ?? null,
+      pendingPatches: { entries: state.pendingPatches },
+    },
+  })
+  return finalized > 0
+}
+
+/**
+ * A thrown error is TRANSIENT until proven otherwise (a dropped connection, a
+ * bulk-import hiccup). Terminalizing the run here used to strand every later
+ * history payload: the retry found no live run to claim. Reset to `init` with
+ * the counters intact and rethrow so BullMQ's own `attempts` and the
+ * scheduler's MAX_ATTEMPTS + markMaxAttemptsFailed bound the retries and own
+ * the eventual `failed`.
+ *
+ * @returns false when the run was torn down mid-flight — swallow the error then,
+ *   because retrying a job whose run is gone only burns attempts.
+ */
+const handleDrainError = async (
+  context: FlushContext,
+  state: FlushState,
+  error: unknown,
+): Promise<boolean> => {
+  state.currentError =
+    error instanceof Error ? error.message : "Unknown error during flush"
+  logger.error(error, "[coexist] WhatsApp flush chunk failed — will retry")
+  await logProviderError({
+    provider: "whatsapp",
+    workspaceId: context.integration.workspaceId,
+    error,
+  })
+  const reset = await coexistService.resetForRetry({
+    runId: context.runId,
+    currentError: state.currentError,
+    expect: context.guard,
+    fields: {
+      currentScan: state.totalRows,
+      importedContactCount: state.importedContacts,
+      importedMessageCount: state.importedMessages,
+      skippedCount: state.skipped,
+      failedCount: state.failed,
+      pendingPatches: { entries: state.pendingPatches },
+    },
+  })
+  return reset > 0
+}
+
+const logChunkComplete = (
+  context: FlushContext,
+  state: FlushState,
+  finalStatus: FlushFinalStatus | null,
+  continued: boolean,
+): void => {
+  logger.info(
+    {
+      phoneNumberId: context.phoneNumberId,
+      importedContacts: state.importedContacts,
+      importedMessages: state.importedMessages,
+      skipped: state.skipped,
+      failed: state.failed,
+      rows: state.totalRows,
+      runId: context.runId,
+      finalStatus,
+      continued,
+    },
+    "[coexist] WhatsApp flush chunk complete",
+  )
+}
+
+/**
  * Drains buffered WhatsApp staging rows into Contact/ContactInbox/Message via
  * the bulk pipeline. Page-per-job pattern: one chunk per invocation, then
  * either hot-chain a continuation enqueue or yield to the scheduler.
@@ -826,487 +546,66 @@ const CHUNK_BUDGET_MS = 4 * 60 * 1000
  * Gated by `coexistEnabled` — a no-op when the user has not confirmed the
  * popup. Idempotent: safe to re-run as more history arrives over the ~24h
  * window Meta uses to push it.
+ *
+ * EXCLUSIVE OWNERSHIP. `claimRun` mints a `claimToken` on the run; every write
+ * this handler makes afterwards is conditional on BOTH `status = 'running'` and
+ * that token. A write that reports 0 rows therefore covers both ways the run
+ * can move out from under us — a `disconnect`/`disable`/workspace teardown that
+ * flipped it to `failed`, and a second worker that reclaimed it after a stale
+ * heartbeat (which leaves the status `running` but replaces the token) — and
+ * the handler abandons quietly: no continuation enqueue, no further staging
+ * writes, no rethrow.
+ *
+ * Ownership is re-validated immediately before every batch import and before
+ * every staging write, so the worst case is ONE in-flight `bulkImportHistorical`
+ * overlapping the reclaim. Those inserts are idempotent (unique
+ * (contactInbox, sourceId)), and only the reclaiming worker's progress and
+ * finalize writes land, so counters cannot double-count and the terminal status
+ * has exactly one author.
  */
 export const coexistWhatsappFlush = async (
   data: IntegrationJobCoexistWhatsappFlush["data"],
 ): Promise<void> => {
-  const { phoneNumberId } = data
-  const jobStart = Date.now()
-
-  const integration = await db.query.integrationWhatsappModel.findFirst({
-    where: { phoneNumberId },
-  })
-  if (!integration) {
-    logger.warn({ phoneNumberId }, "[coexist] Flush: WhatsApp integration gone")
-    return
-  }
-  if (!integration.coexistEnabled) {
-    logger.info(
-      { phoneNumberId },
-      "[coexist] Flush skipped — coexist disabled, payloads remain staged",
-    )
+  const context = await loadFlushContext(data)
+  if (!context) {
     return
   }
 
-  // Resolve runId. Webhook-driven enqueues omit it (delayed + jobId-dedup);
-  // scheduler + self-continuation pass it explicitly. Lookup picks the
-  // newest non-terminal run owned by popup-enable.
-  let runId = data.runId
-  if (!runId) {
-    const liveRun = await db.query.coexistSyncRunModel.findFirst({
-      where: {
-        integrationId: integration.id,
-        channel: "whatsapp",
-        status: { in: ["init", "running"] },
-      },
-      columns: { id: true },
-      orderBy: { createdAt: "desc" },
-    })
-    if (!liveRun) {
-      logger.info(
-        { phoneNumberId },
-        "[coexist] Flush: no live run — payloads remain staged",
-      )
+  const state = seedState(context.run)
+
+  let finalStatus: FlushFinalStatus | null = null
+  let continueLater = false
+  try {
+    const outcome = await drainRun(context, state)
+    if (outcome === "lostClaim") {
+      abandon(context, "a guarded write matched no rows")
       return
     }
-    runId = liveRun.id
-  }
-
-  // Optimistic claim FIRST — avoids wasting a SELECT + inbox lookup if another
-  // worker already owns this run. 10-minute stale heartbeat fallback recovers
-  // a crashed prior worker. `startedAt` uses COALESCE so the FIRST chunk's
-  // start is preserved across resume.
-  const claimed = await db
-    .update(coexistSyncRunModel)
-    .set({
-      status: "running",
-      startedAt: sql`COALESCE(${coexistSyncRunModel.startedAt}, NOW())`,
-      lastHeartbeatAt: new Date(),
-    })
-    .where(
-      and(
-        eq(coexistSyncRunModel.id, runId),
-        or(
-          ne(coexistSyncRunModel.status, "running"),
-          lt(
-            coexistSyncRunModel.lastHeartbeatAt,
-            sql`NOW() - INTERVAL '10 minutes'`,
-          ),
-        ),
-      ),
-    )
-    .returning({ id: coexistSyncRunModel.id })
-
-  if (claimed.length === 0) {
-    logger.warn(
-      { runId, phoneNumberId },
-      "[coexist] WhatsApp flush run already claimed by another worker — abandoning",
-    )
-    return
-  }
-
-  // ── Read resume state (after claim — counter values are stable now) ──────
-  const [runRow] = await db
-    .select({
-      workspaceId: coexistSyncRunModel.workspaceId,
-      currentPageNumber: coexistSyncRunModel.currentPageNumber,
-      attempts: coexistSyncRunModel.attempts,
-      importedContactCount: coexistSyncRunModel.importedContactCount,
-      importedMessageCount: coexistSyncRunModel.importedMessageCount,
-      skippedCount: coexistSyncRunModel.skippedCount,
-      failedCount: coexistSyncRunModel.failedCount,
-      currentScan: coexistSyncRunModel.currentScan,
-      currentError: coexistSyncRunModel.currentError,
-    })
-    .from(coexistSyncRunModel)
-    .where(eq(coexistSyncRunModel.id, runId))
-    .limit(1)
-
-  if (!runRow) {
-    logger.warn({ runId }, "[coexist] Flush: CoexistSyncRun row missing")
-    return
-  }
-
-  // Cross-tenant guard: refuse if integration's workspaceId doesn't match
-  // the run's workspaceId (defends against phoneNumberId collisions or
-  // stale job payloads referencing a re-assigned integration).
-  if (integration.workspaceId !== runRow.workspaceId) {
-    logger.warn(
-      {
-        phoneNumberId,
-        runId,
-        integrationWorkspaceId: integration.workspaceId,
-        runWorkspaceId: runRow.workspaceId,
-      },
-      "[coexist] Flush: workspaceId mismatch — refusing",
-    )
-    await db
-      .update(coexistSyncRunModel)
-      .set({
-        status: "failed",
-        currentError: "workspaceId mismatch between integration and run",
-        finishedAt: new Date(),
-      })
-      .where(eq(coexistSyncRunModel.id, runId))
-    return
-  }
-
-  const inbox = await findOrFail({
-    table: inboxModel,
-    where: { id: integration.inboxId },
-    message: "Inbox not found",
-  })
-
-  let importedContacts = runRow.importedContactCount
-  let importedMessages = runRow.importedMessageCount
-  let skipped = runRow.skippedCount
-  let failed = runRow.failedCount
-  let totalRows = runRow.currentScan
-  let batchNumber = runRow.currentPageNumber
-  const attempts = runRow.attempts
-
-  let finalStatus: "succeeded" | "failed" | "partial" | null = null
-  // Carry prior attempt's error so retry doesn't wipe it. New errors during
-  // this attempt will overwrite via the per-batch UPDATE or outer catch.
-  let finalError: string | undefined = runRow.currentError ?? undefined
-  let continueLater = false
-  let exhausted = false
-
-  try {
-    while (true) {
-      if (Date.now() - jobStart >= CHUNK_BUDGET_MS) {
-        continueLater = true
-        break
-      }
-
-      batchNumber += 1
-      // Pre-batch heartbeat only — counters + currentStep are written at
-      // batch end. Keeps the stale-claim window honest while bulk import runs.
-      await db
-        .update(coexistSyncRunModel)
-        .set({ lastHeartbeatAt: new Date() })
-        .where(eq(coexistSyncRunModel.id, runId))
-
-      const stagedRows = await db
-        .select()
-        .from(whatsappCoexistStagingModel)
-        .where(
-          and(
-            eq(whatsappCoexistStagingModel.phoneNumberId, phoneNumberId),
-            isNull(whatsappCoexistStagingModel.processedAt),
-          ),
-        )
-        .orderBy(whatsappCoexistStagingModel.id)
-        .limit(BATCH_SIZE)
-
-      if (stagedRows.length === 0) {
-        exhausted = true
-        break
-      }
-
-      // Flatten + coalesce per sourceId across rows in this batch. Also
-      // accumulate post-batch patches (media follow-ups, edits, revokes),
-      // a decline flag, and the highest-progress history metadata seen.
-      const rowGroups = new Map<string, ContactWithMessage[]>()
-      const batchMediaFollowUps: MediaFollowUp[] = []
-      const batchEdits: EditPatch[] = []
-      const batchRevokes: RevokePatch[] = []
-      let batchDeclined = false
-      let batchMetadata: HistoryMetadata | null = null
-      for (const row of stagedRows) {
-        const extracted = extractFromValue(row.payload)
-        for (const e of extracted.entries) {
-          if (!e.contact.sourceId) {
-            continue
-          }
-          const group = rowGroups.get(e.contact.sourceId) ?? []
-          group.push(e)
-          rowGroups.set(e.contact.sourceId, group)
-        }
-        batchMediaFollowUps.push(...extracted.mediaFollowUps)
-        batchEdits.push(...extracted.edits)
-        batchRevokes.push(...extracted.revokes)
-        if (extracted.declined) {
-          batchDeclined = true
-        }
-        if (extracted.metadata) {
-          batchMetadata = reduceMetadata(batchMetadata, extracted.metadata)
-        }
-      }
-
-      const flat: HistoricalContactMessages[] = []
-      for (const entries of rowGroups.values()) {
-        // Coalesce contact fields across entries (first non-null wins).
-        // Seed from entries[0] so sourceId is non-empty from the start.
-        const [first, ...rest] = entries
-        const merged: IncomingContact = rest.reduce<IncomingContact>(
-          (acc, e) => ({
-            sourceId: acc.sourceId,
-            phoneNumber: acc.phoneNumber ?? e.contact.phoneNumber,
-            phoneNumberId: acc.phoneNumberId ?? e.contact.phoneNumberId,
-            firstName: acc.firstName ?? e.contact.firstName,
-            lastName: acc.lastName ?? e.contact.lastName,
-            email: acc.email ?? e.contact.email,
-            avatar: acc.avatar ?? e.contact.avatar,
-            gender: acc.gender ?? e.contact.gender,
-            sourceUserId: acc.sourceUserId ?? e.contact.sourceUserId,
-            sourceUsername: acc.sourceUsername ?? e.contact.sourceUsername,
-          }),
-          first.contact,
-        )
-        const messages = entries.flatMap((e) => (e.message ? [e.message] : []))
-        flat.push({ contact: merged, messages })
-      }
-
-      let batchResult: Awaited<ReturnType<typeof bulkImportHistorical>>
-      try {
-        batchResult = await bulkImportHistorical({
-          inbox,
-          workspaceId: integration.workspaceId,
-          runId,
-          batch: flat,
-          aiReadsSyncedHistory: integration.coexistAiReadsSyncedHistory,
-        })
-      } catch (error) {
-        // Count every message in this batch as failed; staging rows are NOT
-        // marked processed → scheduler retries the batch. Outer catch + finally
-        // write the final counters, so no per-batch UPDATE is needed here.
-        failed += flat.reduce((sum, b) => sum + b.messages.length, 0)
-        totalRows += stagedRows.length
-        logger.error(
-          { error, runId, batchNumber },
-          "[coexist] WhatsApp bulk import threw — batch lost",
-        )
-        throw error
-      }
-
-      importedContacts += batchResult.importedContacts
-      importedMessages += batchResult.importedMessages
-      skipped += batchResult.skippedMessages + batchResult.skippedContacts
-      failed += batchResult.failedMessages
-      totalRows += stagedRows.length
-
-      // Surface non-throw failure (e.g. workspace cap hit) so currentError is
-      // populated even when bulkImportHistorical returns failedMessages > 0
-      // without raising. Otherwise UI shows failedCount=N with empty error.
-      if (batchResult.failureReason) {
-        finalError = `batch ${batchNumber}: ${batchResult.failureReason}`
-      }
-
-      // Apply post-batch patches (media follow-ups, edits, revokes). These
-      // target rows already inserted by bulkImportHistorical (or by an earlier
-      // batch). Patches that cannot resolve a contactInboxId / messageId are
-      // silently dropped — Meta sometimes delivers a media follow-up before
-      // the history insert, and the next chunk picks it up.
-      const patchResult = await applyPostBatchPatches({
-        workspaceId: integration.workspaceId,
-        inboxId: integration.inboxId,
-        mediaFollowUps: batchMediaFollowUps,
-        edits: batchEdits,
-        revokes: batchRevokes,
-      })
-
-      // Collect Attachment IDs from both phases: inline (bulkImportHistorical)
-      // and post-batch (media follow-ups + edit-with-media). Enqueue each as
-      // a separate download job — handler is idempotent + jobId-dedup'd.
-      const attachmentIdsToDownload = [
-        ...batchResult.insertedAttachmentIds,
-        ...patchResult.insertedAttachmentIds,
-      ]
-      if (attachmentIdsToDownload.length > 0) {
-        try {
-          await integrationQueue.addBulk(
-            attachmentIdsToDownload.map((attachmentId) => ({
-              name: IntegrationJobAction.coexistAttachmentDownload,
-              data: {
-                type: IntegrationJobAction.coexistAttachmentDownload,
-                data: {
-                  attachmentId,
-                  workspaceId: integration.workspaceId,
-                  channel: "whatsapp" as const,
-                  integrationId: integration.id,
-                },
-              },
-              opts: {
-                jobId: `att-${attachmentId}`,
-                attempts: 5,
-                backoff: { type: "exponential", delay: 30_000 },
-                removeOnComplete: true,
-                removeOnFail: { count: 100 },
-              },
-            })),
-          )
-        } catch (error) {
-          logger.error(
-            { error, runId, count: attachmentIdsToDownload.length },
-            "[coexist] WhatsApp attachment download enqueue failed — bytes left as pending",
-          )
-        }
-      }
-
-      // Mark ALL rows in this batch processed — bulk pipeline was atomic.
-      // Cap-rejected contacts also count as "processed" (deterministic skip,
-      // re-processing won't recover them).
-      await db
-        .update(whatsappCoexistStagingModel)
-        .set({ processedAt: new Date() })
-        .where(
-          inArray(
-            whatsappCoexistStagingModel.id,
-            stagedRows.map((r) => r.id),
-          ),
-        )
-
-      await db
-        .update(coexistSyncRunModel)
-        .set({
-          currentScan: totalRows,
-          importedContactCount: importedContacts,
-          importedMessageCount: importedMessages,
-          skippedCount: skipped,
-          failedCount: failed,
-          currentPageNumber: batchNumber,
-          currentStep: `flushing batch ${batchNumber}`,
-          currentError: finalError ?? null,
-          lastHeartbeatAt: new Date(),
-          ...(batchMetadata
-            ? {
-                lastPhase: batchMetadata.phase,
-                lastChunkOrder: batchMetadata.chunkOrder,
-                syncProgress: batchMetadata.progress,
-              }
-            : {}),
-        })
-        .where(eq(coexistSyncRunModel.id, runId))
-
-      // History-decline short-circuit: user declined chat-history sharing in
-      // the WA Business app. Mark integration so UI hides retry CTA, then
-      // finish the run as succeeded (no data loss — there is nothing to
-      // import) with a sentinel `currentError` for the UI to read.
-      if (batchDeclined) {
-        await db
-          .update(integrationWhatsappModel)
-          .set({ historyDeclined: true, updatedAt: new Date() })
-          .where(eq(integrationWhatsappModel.id, integration.id))
-        finalStatus = "succeeded"
-        finalError = "history_declined"
-        exhausted = true
-        break
-      }
-
-      if (stagedRows.length < BATCH_SIZE) {
-        exhausted = true
-        break
-      }
+    if (outcome === "exhausted") {
+      finalStatus = await resolveFinalStatus(context, state)
     }
-
-    if (exhausted) {
-      // Tail re-check: rows can be staged between the loop's last empty query
-      // and now. If we finalized the run as succeeded, those late rows would be
-      // orphaned — a buffer-triggered flush finds no live run to claim. Instead
-      // keep the run alive and let the existing continuation drain them
-      // (coalesced: one continuation, not one job per late webhook).
-      const [tailRow] = await db
-        .select({ id: whatsappCoexistStagingModel.id })
-        .from(whatsappCoexistStagingModel)
-        .where(
-          and(
-            eq(whatsappCoexistStagingModel.phoneNumberId, phoneNumberId),
-            isNull(whatsappCoexistStagingModel.processedAt),
-          ),
-        )
-        .limit(1)
-
-      if (tailRow) {
-        continueLater = true
-      } else if (failed > 0 && (importedMessages > 0 || skipped > 0)) {
-        finalStatus = "partial"
-      } else if (failed > 0) {
-        finalStatus = "failed"
-      } else {
-        finalStatus = "succeeded"
-      }
-    }
-
-    // continueLater is set either by the time-budget break at the top of the
-    // loop, or by the tail re-check above when late rows were staged after the
-    // drain. In both cases finalStatus stays null, so the run is not finalized
-    // and a continuation is enqueued to keep draining.
+    // `continueLater` is set either by the chunk time budget or by the tail
+    // re-check finding rows staged after the drain. finalStatus stays null in
+    // both cases, so the run is not finalized and a continuation keeps draining.
+    continueLater = finalStatus === null
     if (continueLater) {
-      try {
-        await integrationQueue.add(
-          IntegrationJobAction.coexistWhatsappFlush,
-          {
-            type: IntegrationJobAction.coexistWhatsappFlush,
-            data: { runId, phoneNumberId },
-          },
-          {
-            jobId: `coexist-run-${runId}-${attempts}-page-${batchNumber + 1}`,
-            attempts: 1,
-            removeOnComplete: true,
-            removeOnFail: { count: 100 },
-          },
-        )
-        logger.info(
-          { runId, batchNumber, phoneNumberId },
-          "[coexist] WhatsApp flush chunk done — continuation enqueued",
-        )
-      } catch (error) {
-        logger.error(
-          { error, runId },
-          "[coexist] WhatsApp continuation enqueue failed — fallback to scheduler",
-        )
-        await db
-          .update(coexistSyncRunModel)
-          .set({
-            status: "init",
-            lastHeartbeatAt: new Date(),
-          })
-          .where(eq(coexistSyncRunModel.id, runId))
-      }
+      await enqueueContinuation(context, state)
     }
   } catch (error) {
-    finalStatus = "failed"
-    finalError =
-      error instanceof Error ? error.message : "Unknown error during flush"
-    logger.error(error, "[coexist] WhatsApp flush encountered fatal error")
-    await logProviderError({
-      provider: "whatsapp",
-      workspaceId: integration.workspaceId,
-      error,
-    })
+    finalStatus = null
+    if (!(await handleDrainError(context, state, error))) {
+      abandon(context, "reset after error matched no rows")
+      return
+    }
+    throw error
   } finally {
-    if (finalStatus !== null) {
-      await db
-        .update(coexistSyncRunModel)
-        .set({
-          status: finalStatus,
-          finishedAt: new Date(),
-          lastHeartbeatAt: new Date(),
-          currentScan: totalRows,
-          currentStep: "done",
-          importedContactCount: importedContacts,
-          importedMessageCount: importedMessages,
-          skippedCount: skipped,
-          failedCount: failed,
-          currentError: finalError ?? null,
-        })
-        .where(eq(coexistSyncRunModel.id, runId))
+    if (
+      finalStatus !== null &&
+      !(await finalizeRun(context, state, finalStatus))
+    ) {
+      abandon(context, `finalize to ${finalStatus} matched no rows`)
     }
   }
 
-  logger.info(
-    {
-      phoneNumberId,
-      importedContacts,
-      importedMessages,
-      skipped,
-      failed,
-      rows: totalRows,
-      runId,
-      finalStatus,
-      continued: continueLater,
-    },
-    "[coexist] WhatsApp flush chunk complete",
-  )
+  logChunkComplete(context, state, finalStatus, continueLater)
 }

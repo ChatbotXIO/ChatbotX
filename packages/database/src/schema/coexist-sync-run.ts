@@ -1,7 +1,12 @@
+import {
+  COEXIST_CHANNELS,
+  type CoexistChannel,
+} from "@chatbotx.io/utils/channel"
 import { sql } from "drizzle-orm"
 import {
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -26,19 +31,82 @@ import {
  * 3. UPDATE importedContactCount/importedMessageCount/skippedCount/failedCount in batches
  * 4. UPDATE status/finishedAt/currentError on finish
  */
-export const coexistChannel = pgEnum("coexistChannel", [
-  "whatsapp",
-  "messenger",
-  "instagram",
-])
+// Values come from `@chatbotx.io/utils/channel` (`COEXIST_CHANNELS`) so this
+// enum can never drift from the shared list other layers (e.g.
+// `@chatbotx.io/business`) key off of. Same three values as before this
+// change — verified to emit no migration SQL.
+//
+// Cast to the literal union (not `[string, ...string[]]` like e.g.
+// `whatsappRegistrationStatus`): `COEXIST_CHANNELS` is a plain
+// `CoexistChannel[]` at the type level (zod's `.options` doesn't preserve
+// tuple-ness), and widening the cast to `string` would widen
+// `coexistChannel`'s inferred column type too, breaking every
+// `Record<CoexistChannel, ...>` consumer (e.g. `apps/worker`'s
+// `scan-coexist-runs.ts`).
+export const coexistChannel = pgEnum(
+  "coexistChannel",
+  COEXIST_CHANNELS as [CoexistChannel, ...CoexistChannel[]],
+)
 
+// `waiting` is WhatsApp-only and NON-terminal: the run has drained everything
+// staged so far and is waiting for Meta to push the next history chunk (which
+// can take up to 24h). `finishedAt` stays NULL while waiting. Messenger and
+// Instagram runs never enter it.
 export const coexistRunStatus = pgEnum("coexistRunStatus", [
   "init",
   "running",
   "succeeded",
   "failed",
   "partial",
+  "waiting",
 ])
+
+/**
+ * Post-batch patches (media follow-up, edit, revoke) that could not be applied
+ * because Meta delivered them BEFORE the message they target. They are carried
+ * on the run and retried at the start of every later flush batch instead of
+ * being dropped — the staging rows that carried them are still marked
+ * processed, so dropping them lost the media for good.
+ *
+ * Structurally compatible with the SDK's `IncomingAttachment` in both
+ * directions, without `packages/database` depending on `@chatbotx.io/sdk`.
+ */
+export type PendingCoexistAttachment = {
+  sourceId: string
+  fileType: "image" | "audio" | "video" | "file"
+  mimeType: string
+  originPath: string
+  size: number
+  url?: string
+  width?: number | null
+  height?: number | null
+  name?: string
+}
+
+type PendingCoexistPatchBase = {
+  /** Customer wa_id (or BSUID fallback) the patched message belongs to. */
+  contactWaId: string
+  /** wamid of the message being patched. */
+  sourceId: string
+  /** ISO timestamp of the first flush that failed to resolve this patch. */
+  stagedAt: string
+}
+
+export type PendingCoexistPatch =
+  | (PendingCoexistPatchBase & {
+      kind: "media"
+      attachment: PendingCoexistAttachment
+    })
+  | (PendingCoexistPatchBase & {
+      kind: "edit"
+      text: string | null
+      attachment: PendingCoexistAttachment | null
+    })
+  | (PendingCoexistPatchBase & { kind: "revoke" })
+
+export type PendingCoexistPatches = {
+  entries: PendingCoexistPatch[]
+}
 
 // Messenger 2-phase sync: phase 1 walks /conversations and upserts contacts;
 // phase 2 walks /conversations again per conv to fetch and persist messages.
@@ -109,6 +177,22 @@ export const coexistSyncRunModel = pgTable(
     messengerSyncPhase: coexistMessengerSyncPhase()
       .notNull()
       .default("contacts"),
+
+    // WhatsApp coexist: patches Meta delivered before the message they target.
+    // Nullable with NO `.default()` on purpose (see AGENTS.md "phantom jsonb
+    // defaults") — every insert path writes it explicitly.
+    pendingPatches: jsonb().$type<PendingCoexistPatches>(),
+
+    // Exclusive-ownership token, re-minted by every claim. `status = 'running'`
+    // cannot distinguish the worker that holds the run from one whose claim was
+    // taken over after a stale heartbeat — both see `running`. Every write a
+    // claim holder makes is additionally conditional on this token, so the
+    // moment a second worker claims, the first worker's writes affect 0 rows
+    // and it abandons (see `coexistWhatsappFlush`).
+    //
+    // Nullable with NO `.default()` on purpose (AGENTS.md "phantom defaults")
+    // — `createRun` writes it explicitly. NULL means "never claimed".
+    claimToken: text(),
   },
   (t) => [
     index("CoexistSyncRun_workspace_idx").on(t.workspaceId),

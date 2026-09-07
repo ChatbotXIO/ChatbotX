@@ -4,6 +4,7 @@
  *
  * Usage: DATABASE_URL=... node ./scripts/run-migrations.mjs
  */
+import { readdirSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { sql } from "drizzle-orm"
@@ -25,6 +26,28 @@ const migrationLockName = "chatbotx:database:migrations"
 // relevant to the pending migrations.
 const useSequentialMigrations =
   process.env.DATABASE_MIGRATIONS_SEQUENTIAL !== "false"
+
+// `check-schema-drift.mjs` has to let drizzle-kit write its probe into this
+// same folder, and it names that probe `<timestamp>_schema_drift_probe`. It
+// removes the folder again on every exit path, but a hard kill can still
+// outrun that — so refuse to apply one rather than turn a lint interrupt into
+// an applied migration.
+const driftProbeFolders = readdirSync(migrationsFolder, {
+  withFileTypes: true,
+})
+  .filter(
+    (entry) =>
+      entry.isDirectory() && entry.name.endsWith("_schema_drift_probe"),
+  )
+  .map((entry) => entry.name)
+
+if (driftProbeFolders.length > 0) {
+  console.error(
+    `Refusing to migrate: ${driftProbeFolders.join(", ")} is a leftover schema-drift probe, not a real migration.\n` +
+      "Delete the folder(s) and re-run `pnpm --filter @chatbotx.io/database db:check-drift`.",
+  )
+  process.exit(1)
+}
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) {

@@ -44,6 +44,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  LIVE_RUN_STATUSES: ["init", "running", "waiting"],
   metaCapiEventRepository: {
     deleteByIntegration: mocks.metaCapiDeleteByIntegration,
   },
@@ -128,6 +129,30 @@ describe("disconnectWhatsappAction", () => {
       workspaceId: "workspace-1",
       tx: mocks.tx,
     })
+  })
+
+  // A WhatsApp coexist run parked in `waiting` survived disconnect,
+  // and pass 1 could not revive it (its staging join to IntegrationWhatsapp is
+  // gone), so it lingered until the 24h timeout closed it `history_timeout`.
+  test("abandons coexist runs in waiting as well as init/running", async () => {
+    await (disconnectWhatsappAction as (props: unknown) => Promise<unknown>)({
+      bindArgsParsedInputs: ["workspace-1", "whatsapp-1"],
+    })
+
+    const statusFilters = mocks.txChain.where.mock.calls
+      .flatMap((args) => {
+        const condition = args[0] as { conditions?: unknown[] } | undefined
+        return condition?.conditions ?? []
+      })
+      .filter(
+        (condition): condition is { field: unknown; values: string[] } =>
+          typeof condition === "object" &&
+          condition !== null &&
+          "values" in condition,
+      )
+      .map((condition) => condition.values)
+
+    expect(statusFilters).toContainEqual(["init", "running", "waiting"])
   })
 
   test("still disconnects the integration when the provider token is already revoked", async () => {

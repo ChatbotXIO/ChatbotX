@@ -101,6 +101,15 @@ export type ContactInboxWorkspaceRow = Pick<
   "id" | "channel" | "inboxId"
 >
 
+/**
+ * The columns a coexist history patch needs to decide (a) which ContactInbox a
+ * `wa_id` belongs to and (b) how far back it may safely read messages.
+ */
+export type ContactInboxBySourceIdRow = Pick<
+  ContactInboxModel,
+  "id" | "sourceId" | "lastIncomingMessageAt" | "createdAt"
+>
+
 export const contactInboxRepository = {
   listWithInboxNameByContactId(
     input: { contactId: string; workspaceId: string },
@@ -128,6 +137,42 @@ export const contactInboxRepository = {
       with: { inbox: { columns: { name: true } } },
     })
   },
+  /**
+   * Resolves a batch of channel-side ids (`sourceId` — a WhatsApp `wa_id`, a
+   * Messenger PSID, …) to their ContactInbox rows within ONE inbox, in a single
+   * round trip. Rows with a null `sourceId` cannot be addressed this way and
+   * are dropped.
+   *
+   * A missing key is meaningful to the caller, not an error: the WhatsApp
+   * coexist flush uses it to tell "Meta delivered a patch before the message it
+   * targets" (carry the patch, retry next flush) from "resolved".
+   */
+  async findByInboxAndSourceIds(
+    input: { inboxId: string; sourceIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxBySourceIdRow[]> {
+    const sourceIds = Array.from(new Set(input.sourceIds))
+    if (sourceIds.length === 0) {
+      return []
+    }
+    const rows = await tx
+      .select({
+        id: contactInboxModel.id,
+        sourceId: contactInboxModel.sourceId,
+        lastIncomingMessageAt: contactInboxModel.lastIncomingMessageAt,
+        createdAt: contactInboxModel.createdAt,
+      })
+      .from(contactInboxModel)
+      .where(
+        and(
+          eq(contactInboxModel.inboxId, input.inboxId),
+          inArray(contactInboxModel.sourceId, sourceIds),
+        ),
+      )
+
+    return rows.filter((row) => Boolean(row.sourceId))
+  },
+
   /**
    * Single-row, workspace-scoped load of a contact inbox by id — the cheap
    * "does this contact inbox even exist / what channel is it" lookup, so a

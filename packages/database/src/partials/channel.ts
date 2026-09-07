@@ -12,8 +12,12 @@ export {
   CHANNEL_CAPABILITIES,
   type ChannelCapability,
   type ChannelType,
+  COEXIST_CHANNELS,
+  type CoexistChannel,
   CREATABLE_CHANNELS,
   channelTypes,
+  coexistChannels,
+  isCoexistChannel,
   MANAGEABLE_CHANNELS,
 } from "@chatbotx.io/utils/channel"
 

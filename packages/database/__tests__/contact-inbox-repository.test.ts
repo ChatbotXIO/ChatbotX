@@ -268,3 +268,79 @@ describe("contactInboxRepository.listAdEligibleInboxesByContacts", () => {
     ])
   })
 })
+
+describe("contactInboxRepository.findByInboxAndSourceIds", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const wireSelect = (rows: unknown[]) => {
+    const chain = { select: vi.fn(), from: vi.fn(), where: vi.fn() }
+    chain.select.mockReturnValue(chain)
+    chain.from.mockReturnValue(chain)
+    chain.where.mockResolvedValue(rows)
+    return chain
+  }
+
+  test("scopes by inbox, dedups the source ids, and returns the rows", async () => {
+    const chain = wireSelect([
+      {
+        id: "ci-1",
+        sourceId: "601234567890",
+        lastIncomingMessageAt: null,
+        createdAt: new Date("2026-01-01"),
+      },
+    ])
+
+    const rows = await contactInboxRepository.findByInboxAndSourceIds(
+      { inboxId: "inbox-1", sourceIds: ["601234567890", "601234567890"] },
+      { select: chain.select } as never,
+    )
+
+    expect(chain.select).toHaveBeenCalledWith({
+      id: contactInboxModel.id,
+      sourceId: contactInboxModel.sourceId,
+      lastIncomingMessageAt: contactInboxModel.lastIncomingMessageAt,
+      createdAt: contactInboxModel.createdAt,
+    })
+    expect(chain.from).toHaveBeenCalledWith(contactInboxModel)
+    expect(rows).toHaveLength(1)
+  })
+
+  test("makes no query at all for an empty id list", async () => {
+    const chain = wireSelect([])
+
+    await expect(
+      contactInboxRepository.findByInboxAndSourceIds(
+        { inboxId: "inbox-1", sourceIds: [] },
+        { select: chain.select } as never,
+      ),
+    ).resolves.toEqual([])
+
+    expect(chain.select).not.toHaveBeenCalled()
+  })
+
+  test("drops rows whose sourceId is null — they cannot be addressed by wa_id", async () => {
+    const chain = wireSelect([
+      {
+        id: "ci-1",
+        sourceId: null,
+        lastIncomingMessageAt: null,
+        createdAt: new Date("2026-01-01"),
+      },
+      {
+        id: "ci-2",
+        sourceId: "601234567890",
+        lastIncomingMessageAt: null,
+        createdAt: new Date("2026-01-01"),
+      },
+    ])
+
+    const rows = await contactInboxRepository.findByInboxAndSourceIds(
+      { inboxId: "inbox-1", sourceIds: ["601234567890"] },
+      { select: chain.select } as never,
+    )
+
+    expect(rows.map((row) => row.id)).toEqual(["ci-2"])
+  })
+})

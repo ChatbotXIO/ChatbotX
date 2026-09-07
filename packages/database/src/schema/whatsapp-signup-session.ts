@@ -41,6 +41,12 @@ export const whatsappSignupSessionModel = pgTable(
     encryptedAccessToken: jsonb().$type<EncryptedData>().notNull(),
     apiVersion: text().notNull(),
     candidatePhoneNumberIds: text().array().notNull(),
+    // Phone numbers already claimed via `claimSignupSessionPhoneNumber` (the
+    // per-number atomic UPDATE — see that repository method). Grows one id at
+    // a time as each number's connect transaction commits; `consumedAt` is
+    // stamped once this equals `candidatePhoneNumberIds` in length (every
+    // offered number has been claimed).
+    claimedPhoneNumberIds: text().array().notNull().default([]),
     expiresAt: timestamp(timestampConfig).notNull(),
     consumedAt: timestamp(timestampConfig),
   },

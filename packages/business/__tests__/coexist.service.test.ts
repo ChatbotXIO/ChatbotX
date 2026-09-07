@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   createRun: vi.fn(),
+  findLiveRun: vi.fn(),
   findIntegrationForCoexist: vi.fn(),
   setIntegrationCoexistEnabled: vi.fn(),
   tearDownActiveRunsForIntegration: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     claimRun: vi.fn(),
     createRun: mocks.createRun,
     findIntegrationForCoexist: mocks.findIntegrationForCoexist,
+    findLiveRun: mocks.findLiveRun,
     findResumeCeiling: vi.fn(),
     findRunById: vi.fn(),
     markFailed: vi.fn(),
@@ -66,6 +68,7 @@ describe("coexistService", () => {
       channel: "instagram",
     })
     mocks.createRun.mockResolvedValue({ id: "run-1" })
+    mocks.findLiveRun.mockResolvedValue(null)
     mocks.tearDownActiveRunsForIntegration.mockResolvedValue(undefined)
   })
 
@@ -126,6 +129,61 @@ describe("coexistService", () => {
 
     expect(mocks.setIntegrationCoexistEnabled).toHaveBeenCalled()
     expect(mocks.createRun).toHaveBeenCalled()
+  })
+
+  // Re-confirming the popup while a WhatsApp run is parked in
+  // `waiting` used to create a SECOND live run — the partial unique index only
+  // dedups `init`. The buffer flush then picked the newest and the older run
+  // lingered until the 24h timeout closed it `partial`/`history_timeout`.
+  test("enable reuses a run already parked in `waiting` instead of creating a second", async () => {
+    mocks.findIntegrationForCoexist.mockResolvedValue({
+      id: "integration-1",
+      channel: "whatsapp",
+    })
+    mocks.setIntegrationCoexistEnabled.mockResolvedValue({
+      id: "integration-1",
+      channel: "whatsapp",
+    })
+    mocks.findLiveRun.mockResolvedValue({
+      id: "run-waiting",
+      status: "waiting",
+    })
+
+    await expect(
+      coexistService.enable({
+        workspaceId: "workspace-1",
+        integrationId: "integration-1",
+        channel: "whatsapp",
+      }),
+    ).resolves.toEqual({ success: true, runId: "run-waiting" })
+
+    expect(mocks.createRun).not.toHaveBeenCalled()
+    // The flag flip still happens — re-enabling must be idempotent, not a no-op.
+    expect(mocks.setIntegrationCoexistEnabled).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: true }),
+    )
+    expect(mocks.findLiveRun).toHaveBeenCalledWith({
+      integrationId: "integration-1",
+      channel: "whatsapp",
+      tx,
+    })
+  })
+
+  test("enable reuses a run already `running`", async () => {
+    mocks.findLiveRun.mockResolvedValue({
+      id: "run-running",
+      status: "running",
+    })
+
+    await expect(
+      coexistService.enable({
+        workspaceId: "workspace-1",
+        integrationId: "integration-1",
+        channel: "instagram",
+      }),
+    ).resolves.toEqual({ success: true, runId: "run-running" })
+
+    expect(mocks.createRun).not.toHaveBeenCalled()
   })
 
   test("disable flips the flag off and tears down active runs", async () => {

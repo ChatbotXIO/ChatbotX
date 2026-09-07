@@ -23,6 +23,15 @@ import { flowModel } from "./flow"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
+/**
+ * Enforces that a Meta IG account backs exactly one integration.
+ *
+ * Exported so callers can recognise this specific collision: the table has
+ * more than one unique index, and this one means "already connected" rather
+ * than a bug (mirrors `WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT`).
+ */
+export const INSTAGRAM_IG_ID_UNIQUE_CONSTRAINT = "IntegrationInstagram_igId_key"
+
 export const integrationInstagramModel = pgTable(
   "IntegrationInstagram",
   {
@@ -91,7 +100,7 @@ export const integrationInstagramModel = pgTable(
       "btree",
       table.inboxId.asc().nullsLast(),
     ),
-    uniqueIndex("IntegrationInstagram_igId_key").using(
+    uniqueIndex(INSTAGRAM_IG_ID_UNIQUE_CONSTRAINT).using(
       "btree",
       table.igId.asc().nullsLast(),
     ),

@@ -9,17 +9,20 @@ import type {
 } from "@chatbotx.io/database/repositories"
 import { getChildLogger } from "@chatbotx.io/logger"
 import {
+  buildCoexistRunJobId,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import {
+  type CoexistRunEnqueuer,
+  coexistRecoveryPasses,
+} from "../../integration/handlers/coexist/recovery-strategies"
 
 const log = getChildLogger("scan-coexist-runs")
 
 const BATCH = 500
 const MAX_ATTEMPTS = 5
-
-type CoexistRunEnqueuer = (run: PickedCoexistRun) => Promise<void>
 
 const pullSyncActions = {
   messenger: IntegrationJobAction.coexistMessengerSync,
@@ -50,7 +53,7 @@ const coexistRunEnqueuers = {
   instagram: async (run) => {
     await enqueueRun(run, createPullSyncPayload(run, pullSyncActions.instagram))
   },
-  whatsapp: async (run) => {
+  whatsapp: async (run, jobIdSuffix?: string) => {
     const integration = await coexistService.findIntegrationForCoexist({
       workspaceId: run.workspaceId,
       integrationId: run.integrationId,
@@ -69,26 +72,54 @@ const coexistRunEnqueuers = {
       return
     }
 
-    await enqueueRun(run, {
-      type: IntegrationJobAction.coexistWhatsappFlush,
-      data: { runId: run.id, phoneNumberId: integration.phoneNumberId },
-    })
+    await enqueueRun(
+      run,
+      {
+        type: IntegrationJobAction.coexistWhatsappFlush,
+        data: { runId: run.id, phoneNumberId: integration.phoneNumberId },
+      },
+      jobIdSuffix,
+    )
   },
 } satisfies Record<CoexistChannel, CoexistRunEnqueuer>
 
 async function enqueueRun(
   run: PickedCoexistRun,
   payload: IntegrationJobData,
+  jobIdSuffix?: string,
 ): Promise<void> {
+  const jobId = buildCoexistRunJobId({
+    runId: run.id,
+    attempts: run.attempts,
+    suffix: jobIdSuffix,
+  })
   await integrationQueue.add(payload.type, payload, {
-    jobId: `coexist-run-${run.id}-${run.attempts}`,
+    jobId,
     attempts: 1,
     removeOnComplete: true,
     removeOnFail: { count: 100 },
   })
 }
 
+/**
+ * Runs each channel's recovery pass before the normal pick pass. Which channels
+ * have one is data (`coexistRecoveryStrategies`), not a branch here — the
+ * scheduler is shared, so it must not name a channel. Best-effort: a failing
+ * pass never starves the pick pass.
+ */
+async function runRecoveryPasses(): Promise<void> {
+  for (const [channel, recover] of coexistRecoveryPasses) {
+    try {
+      await recover(coexistRunEnqueuers[channel])
+    } catch (err) {
+      log.error({ err, channel }, "scanCoexistRuns: recovery pass failed")
+    }
+  }
+}
+
 export async function scanCoexistRuns(): Promise<void> {
+  await runRecoveryPasses()
+
   await coexistService.markMaxAttemptsFailed({ maxAttempts: MAX_ATTEMPTS })
 
   const picked = await coexistService.pickDueRuns({
