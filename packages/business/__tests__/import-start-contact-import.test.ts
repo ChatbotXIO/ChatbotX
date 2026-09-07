@@ -101,12 +101,15 @@ beforeEach(() => {
 })
 
 describe("importService.startContactImport", () => {
-  test("throws contactImportFileNotFound when the file doesn't resolve", async () => {
+  test("throws contactImportFileNotFound (404) when the file doesn't resolve", async () => {
     mocks.fileFindFirst.mockResolvedValueOnce(undefined)
 
     await expect(
       importService.startContactImport(BASE_INPUT),
-    ).rejects.toMatchObject({ code: "contactImportFileNotFound" })
+    ).rejects.toMatchObject({
+      code: "contactImportFileNotFound",
+      httpStatusCode: 404,
+    })
   })
 
   test("throws contactImportFileTypeInvalid when the file isn't a contacts import", async () => {
@@ -138,7 +141,7 @@ describe("importService.startContactImport", () => {
     ).rejects.toMatchObject({ code: "contactImportUnsupportedFormat" })
   })
 
-  test("throws contactImportInboxNotFound when the inbox doesn't resolve", async () => {
+  test("throws contactImportInboxNotFound (404) when the inbox doesn't resolve", async () => {
     mocks.fileFindFirst.mockResolvedValueOnce({
       id: "file-1",
       contextType: "import",
@@ -151,7 +154,10 @@ describe("importService.startContactImport", () => {
 
     await expect(
       importService.startContactImport(BASE_INPUT),
-    ).rejects.toMatchObject({ code: "contactImportInboxNotFound" })
+    ).rejects.toMatchObject({
+      code: "contactImportInboxNotFound",
+      httpStatusCode: 404,
+    })
 
     expect(mocks.transaction).not.toHaveBeenCalled()
   })

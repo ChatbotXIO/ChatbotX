@@ -5,8 +5,6 @@ import {
   tagService,
 } from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
-import { and, db, eq, isNull } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
 import { emitContactUnsubscribed } from "@chatbotx.io/events"
 import type {
   AddContactNotesStepSchema,
@@ -172,6 +170,7 @@ export async function attachTagsByNames(
     contactIds: [contactId],
     names: tagNames,
     contactInbox,
+    emitFor: "newlyLinked",
   })
 }
 
@@ -250,31 +249,22 @@ export async function removeContactSequence({
 export async function subscribeBroadcast({
   conversation,
 }: ExecuteStepProps<SubscribeBroadcastStepSchema>) {
-  await db
-    .update(contactModel)
-    .set({ broadcastSubscribedAt: new Date() })
-    .where(
-      and(
-        eq(contactModel.id, conversation.contactId),
-        eq(contactModel.workspaceId, conversation.workspaceId),
-        isNull(contactModel.broadcastSubscribedAt),
-      ),
-    )
+  await contactService.setBroadcastSubscription({
+    workspaceId: conversation.workspaceId,
+    id: conversation.contactId,
+    subscribed: true,
+  })
 }
 
 export async function unsubscribeBroadcast({
   conversation,
   contactInbox,
 }: ExecuteStepProps<UnsubscribeBroadcastStepSchema>) {
-  await db
-    .update(contactModel)
-    .set({ broadcastSubscribedAt: null })
-    .where(
-      and(
-        eq(contactModel.id, conversation.contactId),
-        eq(contactModel.workspaceId, conversation.workspaceId),
-      ),
-    )
+  await contactService.setBroadcastSubscription({
+    workspaceId: conversation.workspaceId,
+    id: conversation.contactId,
+    subscribed: false,
+  })
 
   await emitContactUnsubscribed(
     conversation.workspaceId,

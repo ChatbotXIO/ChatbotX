@@ -6,8 +6,8 @@ import { logger } from "../logger"
 import type { ContactAccessScope } from "./service"
 import { maskContactEmailAndPhone } from "./utils"
 
-export const CONTACTS_DEFAULT_PER_PAGE = 50
-export const CONTACT_LIST_COUNT_CAP = 10_000
+const CONTACTS_DEFAULT_PER_PAGE = 50
+const CONTACT_LIST_COUNT_CAP = 10_000
 
 export type ContactListScope = ContactAccessScope & {
   canViewEmailAndPhone: boolean
@@ -106,6 +106,18 @@ async function resolveCount(props: {
  * live COUNT) — folding it into every count call is a separate, measured
  * decision for the cache/perf pass.
  */
+function toListWhereInput(
+  input: ListContactsInput & { scope?: ContactListScope },
+): Parameters<typeof contactRepository.buildListWhere>[0] {
+  return {
+    workspaceId: input.workspaceId,
+    keyword: input.keyword,
+    contactFilter: input.contactFilter,
+    restrictToAssignedUserId: input.scope?.restrictToAssignedUserId,
+    includeEmailAndPhone: input.scope?.canViewEmailAndPhone !== false,
+  }
+}
+
 async function getTotalContactsFromStats(
   workspaceId: string,
 ): Promise<{ total: number }> {
@@ -128,19 +140,21 @@ export async function list<T extends ContactModel = ContactModel>(
     perPage: input.perPage ?? CONTACTS_DEFAULT_PER_PAGE,
   }
 
-  const where = contactRepository.buildListWhere({
-    workspaceId: input.workspaceId,
-    keyword: input.keyword,
-    contactFilter: input.contactFilter,
-    restrictToAssignedUserId: scope?.restrictToAssignedUserId,
-    includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
-  })
+  const where = contactRepository.buildListWhere(toListWhereInput(input))
 
   const pagination = getPaginationWithDefaults(normalizedInput)
   const orderBy = contactRepository.resolveOrderBy(normalizedInput)
 
+  // `listForTable` is the "full" relation set minus tags/customFields — use
+  // it whenever the caller can't need those two joins, either because the
+  // table projection never returns them, or because `include` was given and
+  // omits both.
+  const skipsTagsAndCustomFields =
+    !!include && !include.includes("tags") && !include.includes("customFields")
+  const usesTableRelations = projection === "table" || skipsTagsAndCustomFields
+
   const [data, countResult] = await Promise.all([
-    projection === "table"
+    usesTableRelations
       ? contactRepository.listForTable({ where, ...pagination, orderBy })
       : contactRepository.listWithRelations({ where, ...pagination, orderBy }),
     resolveCount({ withCount, where }),
@@ -177,13 +191,7 @@ export async function count(input: CountInput): Promise<{ total: number }> {
     return getTotalContactsFromStats(input.workspaceId)
   }
 
-  const where = contactRepository.buildListWhere({
-    workspaceId: input.workspaceId,
-    keyword: input.keyword,
-    contactFilter: input.contactFilter,
-    restrictToAssignedUserId: scope?.restrictToAssignedUserId,
-    includeEmailAndPhone: scope?.canViewEmailAndPhone !== false,
-  })
+  const where = contactRepository.buildListWhere(toListWhereInput(input))
 
   const total = await contactRepository.count({ where })
   return { total }

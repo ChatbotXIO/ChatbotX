@@ -6,6 +6,7 @@ import {
   eq,
   findOrFail,
   inArray,
+  isNull,
   sql,
 } from "@chatbotx.io/database/client"
 import {
@@ -457,6 +458,39 @@ class ContactService extends BaseService {
         updated,
       )
     }
+    return updated
+  }
+
+  /**
+   * Conditional write for the flow-step broadcast subscribe/unsubscribe
+   * handlers. Subscribing keeps the `isNull(broadcastSubscribedAt)` idempotency
+   * guard folded into the WHERE (matches the pre-migration worker behavior);
+   * unsubscribing has no such guard since it is always safe to re-clear.
+   */
+  async setBroadcastSubscription(ctx: {
+    workspaceId: string
+    id: string
+    subscribed: boolean
+  }): Promise<ContactModel | undefined> {
+    const [updated] = await db
+      .update(contactModel)
+      .set({ broadcastSubscribedAt: ctx.subscribed ? new Date() : null })
+      .where(
+        and(
+          eq(contactModel.id, ctx.id),
+          eq(contactModel.workspaceId, ctx.workspaceId),
+          ctx.subscribed
+            ? isNull(contactModel.broadcastSubscribedAt)
+            : undefined,
+        ),
+      )
+      .returning()
+
+    if (!updated) {
+      return
+    }
+
+    await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
     return updated
   }
 

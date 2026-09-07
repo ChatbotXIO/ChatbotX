@@ -17,7 +17,7 @@ export const contactCustomFieldResource = createSelectSchema(
 )
 
 export const addContactCustomFieldRequest = z.object({
-  ids: z.array(zodBigintAsString()),
+  ids: z.array(zodBigintAsString()).max(200),
   customFieldId: zodBigintAsString(),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),

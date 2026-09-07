@@ -51,8 +51,13 @@ const folderService = {
   create: vi.fn(),
   update: vi.fn(),
   bulkDelete: vi.fn(),
+  findOrFail: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ folderService }))
+
+vi.mock("@chatbotx.io/business/errors", () => ({
+  notFoundException: (message: string) => new Error(message),
+}))
 
 vi.mock("@chatbotx.io/database/schema", () => {
   const schema = {
@@ -86,6 +91,23 @@ beforeEach(() => {
 
 test("registers the folders public router under the contacts scope", () => {
   expect(scopeArgAtImport).toBe("contacts")
+})
+
+describe("contactsFolderTypes schema", () => {
+  test("accepts tag and customField", async () => {
+    const { contactsFolderTypes } = await import(
+      "@/features/folders/schema/public"
+    )
+    expect(contactsFolderTypes.safeParse("tag").success).toBe(true)
+    expect(contactsFolderTypes.safeParse("customField").success).toBe(true)
+  })
+
+  test("rejects folderType 'flow' — a public POST /v1/folders with it fails validation", async () => {
+    const { contactsFolderTypes } = await import(
+      "@/features/folders/schema/public"
+    )
+    expect(contactsFolderTypes.safeParse("flow").success).toBe(false)
+  })
 })
 
 describe("GET /v1/folders", () => {
@@ -144,7 +166,11 @@ describe("POST /v1/folders", () => {
 describe("PUT /v1/folders/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/folders/{id}")
 
-  test("renames the folder", async () => {
+  test("renames the folder when it is a contacts-owned folderType", async () => {
+    folderService.findOrFail.mockResolvedValueOnce({
+      id: "f-1",
+      folderType: "tag",
+    })
     folderService.update.mockResolvedValueOnce({ id: "f-1", name: "Renamed" })
 
     await procedure.handler?.({
@@ -152,18 +178,57 @@ describe("PUT /v1/folders/{id}", () => {
       input: { id: "f-1", name: "Renamed" },
     })
 
+    expect(folderService.findOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "f-1",
+    })
     expect(folderService.update).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "f-1",
       data: { name: "Renamed" },
     })
   })
+
+  test("404s (does not call update) when the folder's type is outside contacts scope", async () => {
+    folderService.findOrFail.mockResolvedValueOnce({
+      id: "f-1",
+      folderType: "flow",
+    })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "f-1", name: "Renamed" },
+      }),
+    ).rejects.toThrow("Folder not found")
+
+    expect(folderService.update).not.toHaveBeenCalled()
+  })
+
+  test("404s when the folder does not exist", async () => {
+    folderService.findOrFail.mockRejectedValueOnce(
+      new Error("Folder not found"),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "missing", name: "Renamed" },
+      }),
+    ).rejects.toThrow("Folder not found")
+
+    expect(folderService.update).not.toHaveBeenCalled()
+  })
 })
 
 describe("DELETE /v1/folders/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/folders/{id}")
 
-  test("deletes the folder", async () => {
+  test("deletes the folder when it is a contacts-owned folderType", async () => {
+    folderService.findOrFail.mockResolvedValueOnce({
+      id: "f-1",
+      folderType: "customField",
+    })
     folderService.bulkDelete.mockResolvedValueOnce(undefined)
 
     await procedure.handler?.({
@@ -175,5 +240,36 @@ describe("DELETE /v1/folders/{id}", () => {
       workspaceId: "workspace-1",
       ids: ["f-1"],
     })
+  })
+
+  test("404s (does not call bulkDelete) for a nonexistent id", async () => {
+    folderService.findOrFail.mockRejectedValueOnce(
+      new Error("Folder not found"),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "missing" },
+      }),
+    ).rejects.toThrow("Folder not found")
+
+    expect(folderService.bulkDelete).not.toHaveBeenCalled()
+  })
+
+  test("404s (does not call bulkDelete) when the folder's type is outside contacts scope", async () => {
+    folderService.findOrFail.mockResolvedValueOnce({
+      id: "f-1",
+      folderType: "webhook",
+    })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "f-1" },
+      }),
+    ).rejects.toThrow("Folder not found")
+
+    expect(folderService.bulkDelete).not.toHaveBeenCalled()
   })
 })

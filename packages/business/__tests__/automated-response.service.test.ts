@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => {
     deleteReturning,
     deleteWhere,
     dispatchAuditRecord: vi.fn(),
+    ensureExists: vi.fn(),
     findFirst: vi.fn(),
     flowExists: vi.fn(),
     insertReturning,
@@ -53,6 +54,10 @@ vi.mock("../src/flow/service", () => ({
   flowService: { exists: mocks.flowExists },
 }))
 
+vi.mock("../src/folder/service", () => ({
+  folderService: { ensureExists: mocks.ensureExists },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   db: makeClient(),
@@ -63,6 +68,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
+  automatedResponseFolderTypeByType: { keyword: "automatedResponse" },
   rootFolderId: "root",
 }))
 
@@ -216,5 +222,34 @@ describe("automatedResponseService.create — flowId XOR text", () => {
     expect(mocks.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({ flowId: undefined, text: "Hello there" }),
     )
+  })
+
+  test("ensures the folder exists before creating when a folderId is given", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "Hello there",
+      flowId: null,
+      folderId: "folder-1",
+      keywords: ["hi"],
+    })
+
+    expect(mocks.ensureExists).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: "workspace-1",
+      folderType: "automatedResponse",
+      tx: undefined,
+    })
+  })
+
+  test("does not check folder existence when no folderId is given", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "Hello there",
+      flowId: null,
+      folderId: null,
+      keywords: ["hi"],
+    })
+
+    expect(mocks.ensureExists).not.toHaveBeenCalled()
   })
 })

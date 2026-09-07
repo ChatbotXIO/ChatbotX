@@ -106,6 +106,239 @@ beforeEach(() => {
   resolveContactId.mockResolvedValue("contact-1")
 })
 
+describe("GET /v1/contacts/{identifier}/tags", () => {
+  const procedure = findProcedure("GET", "/v1/contacts/{identifier}/tags")
+
+  test("resolves the contact id via resolveIdByIdentifier, then returns listContactTags", async () => {
+    const tags = [{ id: "tag-1", name: "VIP" }]
+    listContactTags.mockResolvedValueOnce(tags)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(listContactTags).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+    expect(result).toEqual(tags)
+  })
+})
+
+describe("POST /v1/contacts/{identifier}/tags", () => {
+  const procedure = findProcedure("POST", "/v1/contacts/{identifier}/tags")
+
+  test("resolves the contact id via resolveIdByIdentifier before attaching tags", async () => {
+    tagService.attachToContact.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123", tagIds: ["tag-1", "tag-2"] },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(tagService.attachToContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      tagIds: ["tag-1", "tag-2"],
+    })
+  })
+})
+
+describe("DELETE /v1/contacts/{identifier}/tags", () => {
+  const procedure = findProcedure("DELETE", "/v1/contacts/{identifier}/tags")
+
+  test("resolves the contact id via resolveIdByIdentifier before detaching tags", async () => {
+    tagService.detachFromContact.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123", tagIds: ["tag-1"] },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(tagService.detachFromContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      tagIds: ["tag-1"],
+    })
+  })
+})
+
+describe("GET /v1/contacts/{identifier}/custom-fields", () => {
+  const procedure = findProcedure(
+    "GET",
+    "/v1/contacts/{identifier}/custom-fields",
+  )
+
+  test("resolves the contact id via resolveIdByIdentifier, then returns listContactCustomFields", async () => {
+    const fields = [{ customFieldId: "cf-1", value: "a" }]
+    listContactCustomFields.mockResolvedValueOnce(fields)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(listContactCustomFields).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+    expect(result).toEqual(fields)
+  })
+})
+
+describe("GET /v1/contacts/{identifier}/custom-fields/{customFieldId}", () => {
+  const procedure = findProcedure(
+    "GET",
+    "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+  )
+
+  test("resolves the contact id via resolveIdByIdentifier, then returns findContactCustomField", async () => {
+    const field = { customFieldId: "cf-1", value: "a" }
+    findContactCustomField.mockResolvedValueOnce(field)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123", customFieldId: "cf-1" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(findContactCustomField).toHaveBeenCalledWith({
+      contactId: "contact-1",
+      customFieldId: "cf-1",
+      workspaceId: "workspace-1",
+    })
+    expect(result).toEqual(field)
+  })
+})
+
+describe("POST /v1/contacts/{identifier}/custom-fields/{customFieldId}", () => {
+  const procedure = findProcedure(
+    "POST",
+    "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+  )
+
+  test("resolves the contact id via resolveIdByIdentifier before setting the value", async () => {
+    setContactCustomFieldValue.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123", customFieldId: "cf-1", value: "hello" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(setContactCustomFieldValue).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      customFieldId: "cf-1",
+      value: "hello",
+    })
+  })
+})
+
+describe("PUT /v1/contacts/{identifier}/custom-fields", () => {
+  const procedure = findProcedure(
+    "PUT",
+    "/v1/contacts/{identifier}/custom-fields",
+  )
+
+  test("resolves the contact id via resolveIdByIdentifier before setting multiple values", async () => {
+    contactCustomFieldService.setValues.mockResolvedValueOnce(undefined)
+
+    const fields = [
+      { customFieldId: "cf-1", value: "a" },
+      { customFieldId: "cf-2", value: "b" },
+    ]
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123", fields },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(contactCustomFieldService.setValues).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      fields,
+    })
+  })
+})
+
+describe("DELETE /v1/contacts/{identifier}/custom-fields/{idOrName}", () => {
+  const procedure = findProcedure(
+    "DELETE",
+    "/v1/contacts/{identifier}/custom-fields/{idOrName}",
+  )
+
+  test("resolves the contact id via resolveIdByIdentifier before deleting by key", async () => {
+    contactCustomFieldService.deleteByKey.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123", idOrName: "cf-1" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(contactCustomFieldService.deleteByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      keyword: "cf-1",
+    })
+  })
+})
+
+describe("DELETE /v1/contacts/{identifier}/custom-fields", () => {
+  const procedure = findProcedure(
+    "DELETE",
+    "/v1/contacts/{identifier}/custom-fields",
+  )
+
+  test("resolves the contact id via resolveIdByIdentifier before clearing all custom fields", async () => {
+    contactCustomFieldService.clearByContactId.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:123" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:123",
+      workspaceId: "workspace-1",
+    })
+    expect(contactCustomFieldService.clearByContactId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+    })
+  })
+})
+
 describe("POST /v1/contacts/{identifier}/tags/by-name", () => {
   const procedure = findProcedure(
     "POST",

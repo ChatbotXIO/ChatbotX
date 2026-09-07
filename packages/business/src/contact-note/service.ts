@@ -101,9 +101,15 @@ class ContactNoteService extends BaseService {
   }
   async listByContactId(props: {
     tx?: DatabaseClient
+    workspaceId: string
     contactId: string
   }): Promise<ContactNoteModel[]> {
-    const { tx = db, contactId } = props
+    const { tx = db, workspaceId, contactId } = props
+
+    // `ContactNote` has no `workspaceId` column of its own — scope through
+    // the parent contact the same way create/update/delete do, so a caller
+    // can't list notes on another workspace's contact by guessing its id.
+    await contactService.findByIdOrFail({ workspaceId, id: contactId, tx })
 
     return await withCache(
       `contacts:${contactId}:contact-notes`,

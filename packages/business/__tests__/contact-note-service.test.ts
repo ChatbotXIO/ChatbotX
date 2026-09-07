@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   insertReturning: vi.fn(),
   updateReturning: vi.fn(),
   deleteReturning: vi.fn(),
+  findMany: vi.fn(),
 }))
 
 const insertBuilder = {
@@ -34,6 +35,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
     insert: vi.fn(() => insertBuilder),
     update: vi.fn(() => updateBuilder),
     delete: vi.fn(() => deleteBuilder),
+    query: {
+      contactNoteModel: {
+        findMany: (...args: unknown[]) => mocks.findMany(...args),
+      },
+    },
   },
   and: (...args: unknown[]) => ({ and: args }),
   eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
@@ -158,6 +164,39 @@ describe("contactNoteService.update", () => {
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
       `contacts:${CONTACT_ID}:contact-notes`,
     ])
+  })
+})
+
+describe("contactNoteService.listByContactId", () => {
+  test("throws (without querying notes) when the contact is out of scope", async () => {
+    mocks.findByIdOrFail.mockRejectedValueOnce(new Error("Contact not found"))
+
+    await expect(
+      contactNoteService.listByContactId({
+        workspaceId: WORKSPACE_ID,
+        contactId: CONTACT_ID,
+      }),
+    ).rejects.toThrow("Contact not found")
+
+    expect(mocks.findMany).not.toHaveBeenCalled()
+  })
+
+  test("scopes the contact lookup by workspaceId before listing notes", async () => {
+    mocks.findByIdOrFail.mockResolvedValueOnce({ id: CONTACT_ID })
+    mocks.findMany.mockResolvedValueOnce([{ id: "note-1" }])
+
+    const result = await contactNoteService.listByContactId({
+      workspaceId: WORKSPACE_ID,
+      contactId: CONTACT_ID,
+    })
+
+    expect(mocks.findByIdOrFail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        id: CONTACT_ID,
+      }),
+    )
+    expect(result).toEqual([{ id: "note-1" }])
   })
 })
 

@@ -8,7 +8,10 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import {
+  automatedResponseFolderTypeByType,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import {
@@ -21,6 +24,7 @@ import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
 import { flowService } from "../flow/service"
+import { folderService } from "../folder/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
 
@@ -156,6 +160,15 @@ class AutomatedResponseService extends BaseService {
       text = undefined
     } else if (text) {
       flowId = undefined
+    }
+
+    if (values.folderId) {
+      await folderService.ensureExists({
+        id: values.folderId,
+        workspaceId,
+        folderType: automatedResponseFolderTypeByType[values.type],
+        tx,
+      })
     }
 
     const [created] = await client

@@ -26,7 +26,10 @@ export const contactsNotesPublicRouter = {
         identifier: input.identifier,
         workspaceId,
       })
-      const data = await contactNoteService.listByContactId({ contactId })
+      const data = await contactNoteService.listByContactId({
+        workspaceId,
+        contactId,
+      })
       return { data }
     }),
 

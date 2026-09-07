@@ -11,34 +11,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // mechanics, which are covered by the business package's own tests.
 // ---------------------------------------------------------------------------
 
-const state = {
-  sequenceEnrollments: [] as unknown[],
-}
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    update: vi.fn(() => ({
-      set: vi.fn(() => ({ where: vi.fn() })),
-    })),
-    query: {
-      contactsOnSequenceModel: {
-        findMany: vi.fn(async () => state.sequenceEnrollments),
-      },
-    },
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
-  isNull: (col: unknown) => ({ isNull: col }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactModel: {
-    id: "contactModel.id",
-    workspaceId: "contactModel.workspaceId",
-    broadcastSubscribedAt: "contactModel.broadcastSubscribedAt",
-  },
-}))
-
 // ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/business
 // ---------------------------------------------------------------------------
@@ -51,11 +23,13 @@ const attachByNamesToContacts = vi.fn(async () => ({
   skippedContactIds: [],
 }))
 const detachByNamesFromContacts = vi.fn(async () => undefined)
+const setBroadcastSubscription = vi.fn(async () => ({ id: "c-1" }))
 
 const order: string[] = []
 
 vi.mock("@chatbotx.io/business", () => ({
   tagService: { attachByNamesToContacts, detachByNamesFromContacts },
+  contactService: { setBroadcastSubscription },
 }))
 
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
@@ -88,6 +62,7 @@ const {
   addContactTag,
   removeContactSequence,
   removeContactTag,
+  subscribeBroadcast,
   unsubscribeBroadcast,
 } = await import("../src/integration/handlers/contact")
 
@@ -151,8 +126,13 @@ function unsubscribeBroadcastProps(workspaceId = "ws-1", contactId = "c-1") {
   } as unknown as Parameters<typeof unsubscribeBroadcast>[0]
 }
 
+function subscribeBroadcastProps(workspaceId = "ws-1", contactId = "c-1") {
+  return {
+    conversation: { workspaceId, contactId },
+  } as unknown as Parameters<typeof subscribeBroadcast>[0]
+}
+
 function reset() {
-  state.sequenceEnrollments = []
   order.length = 0
   vi.clearAllMocks()
   removeContactSequencesForContact.mockImplementation(() => {
@@ -210,16 +190,36 @@ describe("addContactSequence", () => {
 })
 
 // ============================================================================
+// subscribeBroadcast
+// ============================================================================
+describe("subscribeBroadcast", () => {
+  beforeEach(reset)
+
+  test("delegates to contactService.setBroadcastSubscription with subscribed:true", async () => {
+    await subscribeBroadcast(subscribeBroadcastProps())
+
+    expect(setBroadcastSubscription).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "c-1",
+      subscribed: true,
+    })
+  })
+})
+
+// ============================================================================
 // unsubscribeBroadcast
 // ============================================================================
 describe("unsubscribeBroadcast", () => {
   beforeEach(reset)
 
-  test("updates contact and emits contact unsubscribed event", async () => {
+  test("delegates to contactService.setBroadcastSubscription and emits contact unsubscribed event", async () => {
     await unsubscribeBroadcast(unsubscribeBroadcastProps())
 
-    const { db } = await import("@chatbotx.io/database/client")
-    expect(db.update).toHaveBeenCalled()
+    expect(setBroadcastSubscription).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "c-1",
+      subscribed: false,
+    })
     expect(emitContactUnsubscribed).toHaveBeenCalledWith("ws-1", "c-1", "ci-1")
   })
 })
@@ -238,6 +238,7 @@ describe("addContactTag", () => {
       contactIds: ["c-1"],
       names: ["alpha", "beta"],
       contactInbox: undefined,
+      emitFor: "newlyLinked",
     })
   })
 
@@ -255,7 +256,16 @@ describe("addContactTag", () => {
       contactIds: ["c-1"],
       names: ["alpha"],
       contactInbox: { id: "ci-1", inboxId: "inbox-1", channel: "whatsapp" },
+      emitFor: "newlyLinked",
     })
+  })
+
+  test("passes emitFor:'newlyLinked' so replaying an Add-Tag node doesn't re-fire triggers for tags already on the contact", async () => {
+    await addContactTag(addProps(["alpha"]))
+
+    expect(attachByNamesToContacts).toHaveBeenCalledWith(
+      expect.objectContaining({ emitFor: "newlyLinked" }),
+    )
   })
 
   test("uses workspaceId and contactId from the conversation", async () => {

@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const contactFilterFieldPublicResource = z.object({
+const contactFilterFieldPublicResource = z.object({
   field: z.string(),
   schemaKind: z.enum([
     "boolean",
@@ -17,13 +17,13 @@ export type ContactFilterFieldPublicResource = z.infer<
   typeof contactFilterFieldPublicResource
 >
 
-export const contactFilterCustomFieldPublicResource = z.object({
+const contactFilterCustomFieldPublicResource = z.object({
   id: z.string(),
   name: z.string(),
   type: z.string(),
 })
 
-export const contactFilterTagPublicResource = z.object({
+const contactFilterTagPublicResource = z.object({
   id: z.string(),
   name: z.string(),
 })

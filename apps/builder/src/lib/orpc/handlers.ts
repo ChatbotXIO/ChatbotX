@@ -41,8 +41,8 @@ export function logUnexpectedOrpcErrorCallback(label: string) {
 
 /**
  * Request-level timing — logs every request through this handler (not
- * sampled: this is cheap and the sole in-process latency signal today, see
- * the plan's C0 measurement step). Registered as a plain `interceptors` entry
+ * sampled: this is cheap and the sole in-process latency signal today).
+ * Registered as a plain `interceptors` entry
  * (not `onFinish`, which only observes the end of the call) so the timer
  * starts before `next()` runs the rest of the pipeline — auth middleware,
  * rate limiting, and the handler itself all fall inside the measured

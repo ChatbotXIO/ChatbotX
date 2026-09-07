@@ -1,13 +1,12 @@
 import { z } from "zod"
 import { listContactsRequest } from "../query"
 
-export const contactIncludeOptions = z.enum([
+const contactIncludeOptions = z.enum([
   "tags",
   "customFields",
   "inboxes",
   "conversation",
 ])
-export type ContactIncludeOption = z.infer<typeof contactIncludeOptions>
 
 const includeDescription =
   'Relations to embed in each contact. Omit to include everything (default); pass an empty selection or a narrower list — e.g. `["tags"]` — to shrink the response when scanning many contacts.'

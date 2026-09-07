@@ -2,15 +2,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mockCreate = vi.fn()
-const mockEnsureExists = vi.fn()
 const mockReturnValidationErrors = vi.fn((_schema, errors) => errors)
 
 vi.mock("@chatbotx.io/business", () => ({
   automatedResponseService: {
     create: (...args: unknown[]) => mockCreate(...args),
-  },
-  folderService: {
-    ensureExists: (...args: unknown[]) => mockEnsureExists(...args),
   },
 }))
 
@@ -86,26 +82,6 @@ describe("createAutomatedResponseAction", () => {
       flowId: null,
       folderId: null,
       keywords: ["hi"],
-    })
-  })
-
-  test("ensures the folder exists before creating when a folderId is given", async () => {
-    mockCreate.mockResolvedValue({ id: "ar-1" })
-
-    await createAutomatedResponseAction({
-      bindArgsParsedInputs: ["ws-1", "keyword"],
-      parsedInput: {
-        text: "hello",
-        flowId: null,
-        folderId: "folder-1",
-        keywords: [{ value: "hi" }],
-      },
-    } as never)
-
-    expect(mockEnsureExists).toHaveBeenCalledWith({
-      id: "folder-1",
-      workspaceId: "ws-1",
-      folderType: "automatedResponse",
     })
   })
 

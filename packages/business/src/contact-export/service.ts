@@ -100,6 +100,8 @@ class ContactExportService extends BaseService {
       throw notFoundException("Export file not found")
     }
     const status = file.status as "pending" | "uploaded" | "failed"
+    // Short TTL limits the exposure window if the URL leaks via browser
+    // history, Referer headers, or analytics scripts.
     const downloadUrl =
       status === "uploaded"
         ? await uploader.getPresignedDownload(file.path, 300)

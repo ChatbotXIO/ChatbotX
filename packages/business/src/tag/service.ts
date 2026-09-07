@@ -248,12 +248,14 @@ class TagService extends BaseService {
     names,
     accessScope,
     contactInbox,
+    emitFor = "all",
   }: {
     workspaceId: string
     contactIds: string[]
     names: string[]
     accessScope?: ContactAccessScope
     contactInbox?: { id: string; inboxId: string; channel: string | null }
+    emitFor?: "all" | "newlyLinked"
   }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
     if (contactIds.length === 0 || names.length === 0) {
       return { processedContactIds: [], skippedContactIds: [...contactIds] }
@@ -305,14 +307,32 @@ class TagService extends BaseService {
           tagId: contactsToTagsModel.tagId,
         })
 
-      // Emit tag applied for all attempted pairs (existing callers depend on it).
-      for (const contact of contacts) {
-        for (const tag of allTags) {
+      // Emit tag applied for all attempted pairs by default (existing callers
+      // depend on it for manual re-apply triggers). Flow-step callers that
+      // loop through an Add-Tag node pass emitFor:"newlyLinked" so replays
+      // don't re-fire triggers/webhooks for tags already on the contact.
+      if (emitFor === "all") {
+        for (const contact of contacts) {
+          for (const tag of allTags) {
+            try {
+              await emitTagApplied(
+                workspaceId,
+                contact.id,
+                tag.id,
+                contactInbox?.id,
+              )
+            } catch (error) {
+              logger.error({ err: error }, "Failed to emit tagApplied event:")
+            }
+          }
+        }
+      } else {
+        for (const pair of newlyLinkedPairs) {
           try {
             await emitTagApplied(
               workspaceId,
-              contact.id,
-              tag.id,
+              pair.contactId,
+              pair.tagId,
               contactInbox?.id,
             )
           } catch (error) {
@@ -975,8 +995,12 @@ class TagService extends BaseService {
       .returning({ tagId: contactsToTagsModel.tagId })
 
     for (const pair of removed) {
-      emitTagRemoved(workspaceId, contactId, pair.tagId) // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget
-        .catch(() => {})
+      emitTagRemoved(workspaceId, contactId, pair.tagId).catch((error) => {
+        logger.warn(
+          { err: error, workspaceId, contactId, tagId: pair.tagId },
+          "Failed to emit tagRemoved event",
+        )
+      })
     }
   }
 

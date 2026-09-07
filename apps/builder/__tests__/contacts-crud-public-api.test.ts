@@ -90,6 +90,10 @@ const deleteContact = vi.fn()
 
 const updateContactFields = vi.fn()
 
+const blockAndRecord = vi.fn()
+const unblockAndRecord = vi.fn()
+const upsertByIdentifier = vi.fn()
+
 const contactImportService = { startImport: vi.fn() }
 
 vi.mock("@chatbotx.io/business", async (importOriginal) => {
@@ -105,6 +109,9 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => {
       deleteAndRecord: deleteContact,
       updateFieldsAndCustomFields: updateContactFields,
       listByCustomFieldValue,
+      blockAndRecord,
+      unblockAndRecord,
+      upsertByIdentifier,
     },
     importService: { startContactImport: contactImportService.startImport },
   }
@@ -201,5 +208,208 @@ describe("GET /v1/contacts/count", () => {
       perPage: 20,
       workspaceId: "workspace-1",
     })
+  })
+})
+
+describe("GET /v1/contacts/{identifier}", () => {
+  const procedure = findProcedure("GET", "/v1/contacts/{identifier}")
+
+  test("resolves the contact id via resolveIdByIdentifier, then returns findPublicContactOrFail", async () => {
+    resolveContactId.mockResolvedValueOnce("contact-1")
+    const publicContact = { id: "contact-1", firstName: "Ada" }
+    findPublicContactOrFail.mockResolvedValueOnce(publicContact)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(findPublicContactOrFail).toHaveBeenCalledWith({
+      id: "contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(result).toEqual(publicContact)
+  })
+})
+
+describe("POST /v1/contacts", () => {
+  const procedure = findProcedure("POST", "/v1/contacts")
+
+  test("creates the contact then returns the result of findPublicContactOrFail", async () => {
+    createContact.mockResolvedValueOnce({ contact: { id: "contact-1" } })
+    const publicContact = { id: "contact-1", firstName: "Ada" }
+    findPublicContactOrFail.mockResolvedValueOnce(publicContact)
+
+    const input = { firstName: "Ada", inboxId: "inbox-1" }
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input,
+    })
+
+    expect(createContact).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      input,
+    })
+    expect(findPublicContactOrFail).toHaveBeenCalledWith({
+      id: "contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(result).toEqual(publicContact)
+  })
+})
+
+describe("PUT /v1/contacts/{identifier}", () => {
+  const procedure = findProcedure("PUT", "/v1/contacts/{identifier}")
+
+  test("resolves the contact id via resolveIdByIdentifier before updating fields", async () => {
+    resolveContactId.mockResolvedValueOnce("contact-1")
+    updateContactFields.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1", firstName: "Ada" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(updateContactFields).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "contact-1" },
+      { firstName: "Ada" },
+    )
+  })
+})
+
+describe("DELETE /v1/contacts/{identifier}", () => {
+  const procedure = findProcedure("DELETE", "/v1/contacts/{identifier}")
+
+  test("resolves the contact id via resolveIdByIdentifier before deleting", async () => {
+    resolveContactId.mockResolvedValueOnce("contact-1")
+    deleteContact.mockResolvedValueOnce({
+      processedContactIds: ["contact-1"],
+      skippedContactIds: [],
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(deleteContact).toHaveBeenCalledWith({
+      triggerSource: "api",
+      workspaceId: "workspace-1",
+      ids: ["contact-1"],
+    })
+  })
+})
+
+describe("POST /v1/contacts/{identifier}/block", () => {
+  const procedure = findProcedure("POST", "/v1/contacts/{identifier}/block")
+
+  test("resolves the contact id via resolveIdByIdentifier before blocking", async () => {
+    resolveContactId.mockResolvedValueOnce("contact-1")
+    blockAndRecord.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(blockAndRecord).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "contact-1",
+    })
+  })
+})
+
+describe("POST /v1/contacts/{identifier}/unblock", () => {
+  const procedure = findProcedure("POST", "/v1/contacts/{identifier}/unblock")
+
+  test("resolves the contact id via resolveIdByIdentifier before unblocking", async () => {
+    resolveContactId.mockResolvedValueOnce("contact-1")
+    unblockAndRecord.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1" },
+    })
+
+    expect(resolveContactId).toHaveBeenCalledWith({
+      identifier: "id:contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(unblockAndRecord).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "contact-1",
+    })
+  })
+})
+
+describe("POST /v1/contacts/{identifier}/upsert", () => {
+  const procedure = findProcedure("POST", "/v1/contacts/{identifier}/upsert")
+
+  test("upserts by identifier then returns the result of findPublicContactOrFail", async () => {
+    upsertByIdentifier.mockResolvedValueOnce({
+      contact: { id: "contact-1" },
+      isNew: true,
+    })
+    const publicContact = { id: "contact-1", firstName: "Ada" }
+    findPublicContactOrFail.mockResolvedValueOnce(publicContact)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1", firstName: "Ada" },
+    })
+
+    expect(upsertByIdentifier).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        identifier: "id:contact-1",
+        data: { firstName: "Ada" },
+      }),
+    )
+    expect(findPublicContactOrFail).toHaveBeenCalledWith({
+      id: "contact-1",
+      workspaceId: "workspace-1",
+    })
+    expect(result).toEqual(publicContact)
+  })
+
+  test("only spreads fields that were actually provided in the input, not blanking unset ones", async () => {
+    upsertByIdentifier.mockResolvedValueOnce({
+      contact: { id: "contact-1" },
+      isNew: false,
+    })
+    findPublicContactOrFail.mockResolvedValueOnce({ id: "contact-1" })
+
+    // Only lastName provided — firstName/email/phoneNumber/gender are unset.
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { identifier: "id:contact-1", lastName: "Lovelace" },
+    })
+
+    expect(upsertByIdentifier).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { lastName: "Lovelace" },
+      }),
+    )
+    const call = upsertByIdentifier.mock.calls.at(-1)?.[0]
+    expect(call.data).not.toHaveProperty("firstName")
+    expect(call.data).not.toHaveProperty("email")
+    expect(call.data).not.toHaveProperty("phoneNumber")
+    expect(call.data).not.toHaveProperty("gender")
   })
 })

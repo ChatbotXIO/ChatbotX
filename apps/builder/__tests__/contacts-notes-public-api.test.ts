@@ -103,6 +103,7 @@ describe("GET /v1/contacts/{identifier}/notes", () => {
       workspaceId: "workspace-1",
     })
     expect(contactNoteService.listByContactId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
       contactId: "contact-1",
     })
   })

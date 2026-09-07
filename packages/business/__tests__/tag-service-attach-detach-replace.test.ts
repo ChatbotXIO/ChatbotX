@@ -441,6 +441,72 @@ describe("tagService.attachByNamesToContacts", () => {
       ids: ["c-1"],
     })
   })
+
+  test("emitFor 'all' (default): emits tagApplied for every attempted pair, including already-linked ones", async () => {
+    state.tagFindMany = [{ id: "tag-1" }, { id: "tag-2" }]
+    state.contactFindMany = [{ id: "c-1" }]
+    // Empty RETURNING = both pairs already existed (ON CONFLICT DO NOTHING).
+    mockInsertBuilder.returning.mockResolvedValue([])
+
+    await tagService.attachByNamesToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a", "tag-b"],
+    })
+
+    expect(emitTagApplied).toHaveBeenCalledTimes(2)
+    expect(emitTagApplied).toHaveBeenCalledWith(
+      "ws-1",
+      "c-1",
+      "tag-1",
+      undefined,
+    )
+    expect(emitTagApplied).toHaveBeenCalledWith(
+      "ws-1",
+      "c-1",
+      "tag-2",
+      undefined,
+    )
+  })
+
+  test("emitFor 'newlyLinked': skips emitTagApplied entirely when every pair already existed", async () => {
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+    mockInsertBuilder.returning.mockResolvedValue([])
+
+    await tagService.attachByNamesToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a"],
+      emitFor: "newlyLinked",
+    })
+
+    expect(emitTagApplied).not.toHaveBeenCalled()
+  })
+
+  test("emitFor 'newlyLinked': only emits tagApplied for newly-inserted pairs, not re-applied ones", async () => {
+    state.tagFindMany = [{ id: "tag-1" }, { id: "tag-2" }]
+    state.contactFindMany = [{ id: "c-1" }]
+    // Only tag-2 is newly linked; tag-1 was already on the contact.
+    mockInsertBuilder.returning.mockResolvedValue([
+      { contactId: "c-1", tagId: "tag-2" },
+    ])
+
+    await tagService.attachByNamesToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a", "tag-b"],
+      emitFor: "newlyLinked",
+    })
+
+    expect(emitTagApplied).toHaveBeenCalledOnce()
+    expect(emitTagApplied).toHaveBeenCalledWith(
+      "ws-1",
+      "c-1",
+      "tag-2",
+      undefined,
+    )
+  })
 })
 
 describe("tagService.detachByNamesFromContacts", () => {

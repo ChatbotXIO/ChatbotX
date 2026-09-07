@@ -65,7 +65,11 @@ class ImportService extends BaseService {
       where: { id: input.fileId, workspaceId },
     })
     if (!file) {
-      throw new ChatbotXException("File not found", "contactImportFileNotFound")
+      throw new ChatbotXException(
+        "File not found",
+        "contactImportFileNotFound",
+        404,
+      )
     }
     if (
       file.contextType !== fileContextTypes.enum.import ||
@@ -96,6 +100,7 @@ class ImportService extends BaseService {
       throw new ChatbotXException(
         "Inbox not found",
         "contactImportInboxNotFound",
+        404,
       )
     }
 

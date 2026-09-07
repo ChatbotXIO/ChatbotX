@@ -29,8 +29,10 @@ export const findPrimaryContactChannel = async (
 
 export const listContactNotesString = async (
   contactId: string,
+  workspaceId: string,
 ): Promise<string> => {
   const contactNotes = await contactNoteService.listByContactId({
+    workspaceId,
     contactId,
   })
   return contactNotes.map((note) => note.text).join("\n")
@@ -38,7 +40,11 @@ export const listContactNotesString = async (
 
 export const getLatestContactNoteString = async (
   contactId: string,
+  workspaceId: string,
 ): Promise<string | null> => {
-  const notes = await contactNoteService.listByContactId({ contactId })
+  const notes = await contactNoteService.listByContactId({
+    workspaceId,
+    contactId,
+  })
   return notes[0]?.text ?? null
 }
