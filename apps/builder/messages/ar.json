@@ -716,6 +716,58 @@
       "button": "تحديث كل الأذونات",
       "resultSuccess": "تم تحديث {refreshed} قناة.",
       "resultWithFailures": "تم تحديث {refreshed} قناة، وفشلت {failed}."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "جارٍ بدء مزامنة السجل…",
+        "done": "بدأت مزامنة السجل",
+        "failed": "فشلت مزامنة السجل"
+      },
+      "selectAll": "تحديد الكل",
+      "selected": "تم تحديد {count}/{max}",
+      "dialogTitleRunning": "جارٍ توصيل {count} {feature}…",
+      "dialogTitleDone": "تم توصيل {connected} من {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "اكتمل {done} من {total}",
+      "status": {
+        "waiting": "بالانتظار",
+        "connecting": "جارٍ التوصيل…",
+        "connected": "متصل",
+        "duplicated": "متصل بالفعل",
+        "limitReached": "تم بلوغ الحد",
+        "failed": "فشل",
+        "timedOut": "انتهت المهلة",
+        "cancelled": "أُلغي"
+      },
+      "reason": {
+        "notSelectable": "لا يمكن تحديد هذا العنصر.",
+        "channelLimit": "تم بلوغ حد القنوات.",
+        "workspaceLimit": "تم بلوغ حد مساحة العمل.",
+        "providerRejected": "رفض المزوّد هذا الطلب.",
+        "unknown": "حدث خطأ ما.",
+        "followUpFailed": "الإعداد غير مكتمل — أكمله من إعدادات القناة."
+      },
+      "sessionError": {
+        "sessionExpired": "انتهت صلاحية جلستك. يرجى إعادة الاتصال.",
+        "notMember": "لم تعد عضوًا في مساحة العمل هذه.",
+        "trialExpired": "انتهت فترة تجربتك.",
+        "macLimitReached": "لقد بلغت حد حسابك.",
+        "credentialMissing": "بيانات الاعتماد مفقودة. يرجى إعادة الاتصال."
+      },
+      "cancelRemaining": "إلغاء المتبقي",
+      "retryFailed": "إعادة المحاولة ({count})",
+      "retry": "إعادة المحاولة",
+      "goToChannels": "الانتقال إلى القنوات",
+      "close": "إغلاق",
+      "leaveNotice": "يمكنك المغادرة؛ سيتم الاحتفاظ بالحسابات المتصلة",
+      "stepConnecting": "التوصيل",
+      "stepCoexist": "مزامنة السجل",
+      "validation": {
+        "min": "اختر عنصرًا واحدًا على الأقل",
+        "max": "يمكنك تحديد ما يصل إلى {max}",
+        "duplicate": "تحديد مكرر"
+      },
+      "progressLabel": "التقدم"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "الإعدادات العامة",
       "conversionsApi": "تحسين الإعلانات"
+    },
+    "selectPage": {
+      "noAccountsTitle": "لم يتم العثور على حسابات إنستغرام",
+      "noAccountsDescription": "لم يتم العثور على أي حساب أعمال على إنستغرام مرتبط بصفحات فيسبوك التي تديرها. أعد ربط إنستغرام وامنح جميع الأذونات المطلوبة.",
+      "alreadyConnectedNote": "هذا الحساب متصل بالفعل",
+      "tryAgain": "محاولة إعادة الاتصال"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "الشخصية الافتراضية",
     "reconnect": "إعادة الاتصال",
     "reconnectDescription": "أعد ربط البوت دائمًا إذا كان بوت Messenger لا يستجيب أو إذا ظهر أي خطأ في الأذونات ضمن سجل الأخطاء.",
-    "selectFacebookPage": "اختيار صفحة Facebook",
     "selectPage": {
       "noPagesTitle": "لم يتم العثور على صفحات Facebook",
       "noPagesDescription": "تتطلب الصفحات الموجودة داخل مدير الأعمال منح صلاحية الوصول إليه أثناء الاتصال. أعد ربط Messenger وامنح جميع الأذونات المطلوبة.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "رمز التحقق لخطاف الويب",
       "qrCodeHint": "امسح رمز QR لفتح عنوان URL لخطاف الويب",
       "moreSettings": "إعدادات إضافية",
-      "goToInbox": "الانتقال إلى صندوق الوارد"
+      "goToInbox": "الانتقال إلى صندوق الوارد",
+      "multipleTitle": "صناديق واتساب الخاصة بك جاهزة الآن!"
     },
     "phoneVerification": {
       "title": "التحقق من رقم هاتف WhatsApp",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "إرسال الرمز",
         "resendIn": "إعادة الإرسال خلال {seconds} ث",
-        "verify": "التحقق والتسجيل"
+        "verify": "تسجيل",
+        "skip": "تخطي"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "تعذّر إرسال رمز تحقق WhatsApp.",
         "codeNotVerified": "تعذّر التحقق من رمز WhatsApp.",
         "registrationFailed": "فشل التحقق من رقم هاتف WhatsApp."
-      }
+      },
+      "queueProgress": "جارٍ التحقق من {current} من {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "رمز وصول WhatsApp مطلوب.",
         "appSettingsNotFound": "لم يتم العثور على إعدادات تطبيق WhatsApp.",
-        "failedToPersistIntegration": "تعذّر حفظ تكامل WhatsApp.",
-        "noPhoneNumberFound": "لم يتم العثور على رقم هاتف WhatsApp.",
-        "noPhoneNumbersFound": "لم يتم العثور على أرقام هاتف لحساب WhatsApp Business هذا.",
-        "phoneNumberNotFound": "لم يتم العثور على رقم هاتف WhatsApp المحدد.",
-        "unableToVerifyToken": "تعذّر التحقق من رمز WhatsApp.",
-        "wabaMismatch": "حساب WhatsApp Business المحدد لا يطابق التفويض.",
         "wabaResolveFailed": "تعذّر تحديد حساب WhatsApp Business من التفويض."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "رأس القالب"
     },
     "transferPhoneNumber": "نقل رقم الهاتف من مزوّد WhatsApp آخر",
-    "signupSessionExpired": "انتهت صلاحية جلسة تسجيل WhatsApp. يُرجى بدء الاتصال من جديد.",
     "capi": {
       "automaticEvents": {
         "title": "الأحداث التلقائية",
         "description": "أرسل أحداث التحويل من رقم واتساب هذا إلى Meta تلقائيًا. إذا كان الإذن مفقودًا، فأعد ربط الحساب لمنحه."
       }
+    },
+    "selectPage": {
+      "tryAgain": "محاولة إعادة الاتصال"
     }
   },
   "zalo": {

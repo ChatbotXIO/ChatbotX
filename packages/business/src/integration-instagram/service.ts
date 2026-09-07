@@ -1,7 +1,40 @@
 import { and, db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
-import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
+import type {
+  InstagramPersistentMenu,
+  IntegrationUserInfo,
+} from "@chatbotx.io/database/partials"
+import { integrationInstagramRepository } from "@chatbotx.io/database/repositories"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
+import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import {
+  auditChannelConnected,
+  connectChannelIntegration,
+  runConnectTransaction,
+} from "../inbox/connect-channel"
+
+export type ConnectInstagramAccountInput = {
+  actorUserId: string
+  ownerId: string
+  workspaceId: string
+  type: IntegrationInstagramModel["type"]
+  account: {
+    igId: string
+    igName: string
+    igUsername: string
+    pageId: string
+  }
+  auth: unknown
+  persistentMenus: InstagramPersistentMenu[]
+}
+
+export type ConnectInstagramAccountResult = {
+  workspaceId: string
+  integrationId: string
+  wasCreated: boolean
+  integration: IntegrationInstagramModel
+}
 
 class InstagramIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -160,6 +193,82 @@ class InstagramIntegrationService extends BaseService {
 
   existsByPageId(pageId: string): Promise<boolean> {
     return this.existsForPage({ pageId })
+  }
+
+  /**
+   * Instagram ids from the given list that already have an integration.
+   * `IntegrationInstagram.igId` is unique platform-wide, so a match means
+   * the account cannot be connected again anywhere.
+   */
+  findConnectedIgIds(igIds: string[]): Promise<Set<string>> {
+    return integrationInstagramRepository.findConnectedIgIds(igIds)
+  }
+
+  /**
+   * Persists an Instagram account connect (native login or Facebook-linked
+   * — both share this table/method, `type` disambiguates the row). One
+   * `db.transaction` that settles with the write; nothing after it may
+   * reject, so a failing audit dispatch is logged, never thrown. Workspace
+   * is always required (the OAuth callback stores it in the cookie before
+   * this runs).
+   */
+  async connectAccount(
+    input: ConnectInstagramAccountInput,
+  ): Promise<ConnectInstagramAccountResult> {
+    const { integration, wasCreated } = await this.insertAccount(input)
+
+    if (wasCreated) {
+      await auditChannelConnected({
+        channel: "instagram",
+        actorUserId: input.actorUserId,
+        workspaceId: input.workspaceId,
+        integrationId: integration.id,
+      })
+    }
+
+    return {
+      workspaceId: input.workspaceId,
+      integrationId: integration.id,
+      wasCreated,
+      integration,
+    }
+  }
+
+  private insertAccount(input: ConnectInstagramAccountInput): Promise<{
+    integration: IntegrationInstagramModel
+    wasCreated: boolean
+  }> {
+    return runConnectTransaction("instagram", async (tx) => {
+      const { integration, wasCreated } = await connectChannelIntegration({
+        tx,
+        ownerId: input.ownerId,
+        inboxData: {
+          id: createId(),
+          workspaceId: input.workspaceId,
+          name: input.account.igName,
+          channel: "instagram",
+          sourceId: input.account.igId,
+        },
+        insertIntegration: (inboxId) =>
+          integrationInstagramRepository.insert(
+            {
+              id: createId(),
+              workspaceId: input.workspaceId,
+              inboxId,
+              igId: input.account.igId,
+              pageId: input.account.pageId,
+              auth: input.auth,
+              name: input.account.igName,
+              username: input.account.igUsername,
+              type: input.type,
+              persistentMenus: input.persistentMenus,
+            },
+            tx,
+          ),
+      })
+
+      return { integration, wasCreated }
+    })
   }
 }
 

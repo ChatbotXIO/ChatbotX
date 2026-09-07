@@ -716,6 +716,58 @@
       "button": "Actualizar todos los permisos",
       "resultSuccess": "Se actualizaron {refreshed} canal(es).",
       "resultWithFailures": "Se actualizaron {refreshed} canal(es), {failed} fallaron."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Iniciando la sincronización del historial…",
+        "done": "Sincronización del historial iniciada",
+        "failed": "Error al sincronizar el historial"
+      },
+      "selectAll": "Seleccionar todo",
+      "selected": "{count}/{max} seleccionados",
+      "dialogTitleRunning": "Conectando {count} {feature}…",
+      "dialogTitleDone": "Conectados {connected} de {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} de {total} completados",
+      "status": {
+        "waiting": "En espera",
+        "connecting": "Conectando…",
+        "connected": "Conectado",
+        "duplicated": "Ya conectado",
+        "limitReached": "Límite alcanzado",
+        "failed": "Fallido",
+        "timedOut": "Tiempo agotado",
+        "cancelled": "Cancelado"
+      },
+      "reason": {
+        "notSelectable": "Este elemento no se puede seleccionar.",
+        "channelLimit": "Se alcanzó el límite de canales.",
+        "workspaceLimit": "Se alcanzó el límite del espacio de trabajo.",
+        "providerRejected": "El proveedor rechazó esta solicitud.",
+        "unknown": "Algo salió mal.",
+        "followUpFailed": "Configuración incompleta: complétala desde los ajustes del canal."
+      },
+      "sessionError": {
+        "sessionExpired": "Tu sesión expiró. Vuelve a conectarte.",
+        "notMember": "Ya no eres miembro de este espacio de trabajo.",
+        "trialExpired": "Tu período de prueba ha finalizado.",
+        "macLimitReached": "Has alcanzado el límite de tu cuenta.",
+        "credentialMissing": "Faltan credenciales. Vuelve a conectarte."
+      },
+      "cancelRemaining": "Cancelar restantes",
+      "retryFailed": "Reintentar ({count})",
+      "retry": "Reintentar",
+      "goToChannels": "Ir a canales",
+      "close": "Cerrar",
+      "leaveNotice": "Puedes salir; las cuentas conectadas se conservan",
+      "stepConnecting": "Conectando",
+      "stepCoexist": "Sincronizar historial",
+      "validation": {
+        "min": "Selecciona al menos 1",
+        "max": "Puedes seleccionar hasta {max}",
+        "duplicate": "Selección duplicada"
+      },
+      "progressLabel": "Progreso"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Ajustes generales",
       "conversionsApi": "Optimización de anuncios"
+    },
+    "selectPage": {
+      "noAccountsTitle": "No se encontraron cuentas de Instagram",
+      "noAccountsDescription": "No se encontraron cuentas de empresa de Instagram en las páginas de Facebook que administras. Vuelve a conectar Instagram y concede todos los permisos solicitados.",
+      "alreadyConnectedNote": "Esta cuenta ya está conectada",
+      "tryAgain": "Intenta volver a conectar"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Predeterminado Persona",
     "reconnect": "Volver a conectar",
     "reconnectDescription": "Always reConectar tu bot si tu Messenger bot es not responding, o si tú son seem cualquier permiso error en el error log.",
-    "selectFacebookPage": "Seleccionar Facebook Página",
     "selectPage": {
       "noPagesTitle": "No Facebook Páginas found",
       "noPagesDescription": "Páginas inside un Empresa Manager require Empresa Manager access during connection. ReConectar Messenger y grant todos requested permisos.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Token de verificación del webhook",
       "qrCodeHint": "Scan el QR código un Abrir el webhook URL",
       "moreSettings": "Más ajustes",
-      "goToInbox": "Ir allí"
+      "goToInbox": "Ir allí",
+      "multipleTitle": "¡Tus bandejas de entrada de WhatsApp están listas!"
     },
     "phoneVerification": {
       "title": "Verificar WhatsApp teléfono number",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Enviar código",
         "resendIn": "ReEnviar en {seconds}s",
-        "verify": "Verificar y register"
+        "verify": "Registrar",
+        "skip": "Omitir"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "WhatsApp verification código podría not be sent.",
         "codeNotVerified": "WhatsApp verification código podría not be verificado.",
         "registrationFailed": "WhatsApp teléfono number verification ftodosó."
-      }
+      },
+      "queueProgress": "Verificando {current} de {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "WhatsApp access token es obligatorio.",
         "appSettingsNotFound": "WhatsApp app ajustes were no encontrado.",
-        "failedToPersistIntegration": "Failed un Guardar el WhatsApp integración.",
-        "noPhoneNumberFound": "No WhatsApp teléfono number was found.",
-        "noPhoneNumbersFound": "No teléfono numbers were found para este WhatsApp Empresa Cuenta.",
-        "phoneNumberNotFound": "Selected WhatsApp teléfono number was no encontrado.",
-        "unableToVerifyToken": "Unable un verificar el WhatsApp token.",
-        "wabaMismatch": "Selected WhatsApp Empresa Cuenta hace not match el authorization.",
         "wabaResolveFailed": "Could not resolve el WhatsApp Empresa Cuenta desde el authorization."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Plantilla Header"
     },
     "transferPhoneNumber": "Transfer teléfono desde another Whatsapp proveedor",
-    "signupSessionExpired": "Your WhatsApp signup session tiene caducado. Por favor, start el connection again.",
     "capi": {
       "automaticEvents": {
         "title": "Eventos automáticos",
         "description": "Envía automáticamente eventos de conversión desde este número de WhatsApp a Meta. Si falta el permiso, vuelve a conectar la cuenta para concederlo."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Intenta volver a conectar"
     }
   },
   "zalo": {

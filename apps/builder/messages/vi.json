@@ -716,6 +716,58 @@
       "button": "Làm mới tất cả quyền",
       "resultSuccess": "Đã làm mới {refreshed} channel.",
       "resultWithFailures": "Đã làm mới {refreshed} channel, {failed} bị lỗi."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Đang bắt đầu đồng bộ lịch sử…",
+        "done": "Đã bắt đầu đồng bộ lịch sử",
+        "failed": "Đồng bộ lịch sử thất bại"
+      },
+      "selectAll": "Chọn tất cả",
+      "selected": "Đã chọn {count}/{max}",
+      "dialogTitleRunning": "Đang kết nối {count} {feature}…",
+      "dialogTitleDone": "Đã kết nối {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "Đã hoàn tất {done}/{total}",
+      "status": {
+        "waiting": "Đang chờ",
+        "connecting": "Đang kết nối…",
+        "connected": "Đã kết nối",
+        "duplicated": "Đã được kết nối",
+        "limitReached": "Đã đạt giới hạn",
+        "failed": "Thất bại",
+        "timedOut": "Hết thời gian chờ",
+        "cancelled": "Đã hủy"
+      },
+      "reason": {
+        "notSelectable": "Không thể chọn mục này.",
+        "channelLimit": "Đã đạt giới hạn kênh.",
+        "workspaceLimit": "Đã đạt giới hạn không gian làm việc.",
+        "providerRejected": "Nhà cung cấp đã từ chối yêu cầu này.",
+        "unknown": "Đã xảy ra lỗi.",
+        "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh."
+      },
+      "sessionError": {
+        "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng kết nối lại.",
+        "notMember": "Bạn không còn là thành viên của không gian làm việc này.",
+        "trialExpired": "Thời gian dùng thử của bạn đã hết hạn.",
+        "macLimitReached": "Bạn đã đạt giới hạn tài khoản.",
+        "credentialMissing": "Thiếu thông tin xác thực. Vui lòng kết nối lại."
+      },
+      "cancelRemaining": "Hủy phần còn lại",
+      "retryFailed": "Thử lại ({count})",
+      "retry": "Thử lại",
+      "goToChannels": "Đến các kênh",
+      "close": "Đóng",
+      "leaveNotice": "Bạn có thể rời đi; các tài khoản đã kết nối vẫn được giữ lại",
+      "stepConnecting": "Đang kết nối",
+      "stepCoexist": "Đồng bộ lịch sử",
+      "validation": {
+        "min": "Chọn ít nhất 1",
+        "max": "Bạn có thể chọn tối đa {max}",
+        "duplicate": "Lựa chọn trùng lặp"
+      },
+      "progressLabel": "Tiến trình"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Cài đặt chung",
       "conversionsApi": "Tối ưu quảng cáo"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Không tìm thấy tài khoản Instagram",
+      "noAccountsDescription": "Không tìm thấy tài khoản Instagram Doanh nghiệp nào trên các Trang Facebook bạn quản lý. Hãy kết nối lại Instagram và cấp tất cả quyền được yêu cầu.",
+      "alreadyConnectedNote": "Tài khoản này đã được kết nối",
+      "tryAgain": "Kết nối lại"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Nhân cách mặc định",
     "reconnect": "Kết nối lại",
     "reconnectDescription": "Luôn kết nối lại bot của bạn nếu bot Messenger không phản hồi, hoặc nếu bạn thấy bất kỳ lỗi quyền nào trong nhật ký lỗi.",
-    "selectFacebookPage": "Chọn trang Facebook",
     "selectPage": {
       "noPagesTitle": "Không tìm thấy trang Facebook",
       "noPagesDescription": "Các trang nằm trong Business Manager cần được cấp quyền Business Manager khi kết nối. Hãy kết nối lại Messenger và cấp tất cả quyền được yêu cầu.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Mã xác minh webhook",
       "qrCodeHint": "Quét mã QR để mở URL webhook",
       "moreSettings": "Cài đặt thêm",
-      "goToInbox": "Đưa tôi đến đó"
+      "goToInbox": "Đưa tôi đến đó",
+      "multipleTitle": "Hộp thư WhatsApp của bạn đã sẵn sàng!"
     },
     "phoneVerification": {
       "title": "Xác minh số điện thoại WhatsApp",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Gửi mã",
         "resendIn": "Gửi lại sau {seconds}s",
-        "verify": "Xác minh và đăng ký"
+        "verify": "Đăng ký",
+        "skip": "Bỏ qua"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "Không gửi được mã xác minh WhatsApp.",
         "codeNotVerified": "Không xác minh được mã WhatsApp.",
         "registrationFailed": "Xác minh số điện thoại WhatsApp không thành công."
-      }
+      },
+      "queueProgress": "Đang xác minh {current}/{total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "Thiếu access token WhatsApp.",
         "appSettingsNotFound": "Không tìm thấy cấu hình ứng dụng WhatsApp.",
-        "failedToPersistIntegration": "Không lưu được kết nối WhatsApp.",
-        "noPhoneNumberFound": "Không tìm thấy số điện thoại WhatsApp.",
-        "noPhoneNumbersFound": "Không tìm thấy số điện thoại trong WhatsApp Business Account này.",
-        "phoneNumberNotFound": "Không tìm thấy số điện thoại WhatsApp đã chọn.",
-        "unableToVerifyToken": "Không xác minh được token WhatsApp.",
-        "wabaMismatch": "WhatsApp Business Account đã chọn không khớp với quyền đã cấp.",
         "wabaResolveFailed": "Không xác định được WhatsApp Business Account từ quyền đã cấp."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Tiêu đề mẫu"
     },
     "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
-    "signupSessionExpired": "Phiên đăng ký WhatsApp đã hết hạn. Vui lòng bắt đầu kết nối lại.",
     "capi": {
       "automaticEvents": {
         "title": "Automatic Events",
         "description": "Tự động gửi sự kiện chuyển đổi từ số WhatsApp này đến Meta. Nếu thiếu quyền, hãy kết nối lại tài khoản để cấp quyền."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Kết nối lại"
     }
   },
   "zalo": {

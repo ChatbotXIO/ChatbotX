@@ -1653,8 +1653,6 @@
 | coexist.descriptionWhatsapp | When enabled, contacts and up to 6 months of chat history will be imported from this WhatsApp number. | 啟用後，將從該WhatsApp號碼匯入聯絡人和最多 6 個月的聊天記錄。 |
 | coexist.descriptionMessenger | When enabled, existing Messenger contacts and up to 3 months of conversation history will be imported from this Page. | 啟用後，將從該頁面匯入現有的 Messenger 聯絡人和最多 3 個月的對話歷史記錄。 |
 | coexist.descriptionInstagram | When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account. | 啟用後，將從該 Instagram 帳戶匯入現有的 Instagram 聯絡人和最多 3 個月的對話記錄。 |
-| coexist.enable | Enable sync | 啟用同步 |
-| coexist.decline | Don't sync | 不同步 |
 | coexist.billingNote | Large pages may take several hours to complete. | 大頁面可能需要幾個小時才能完成。 |
 | coexist.toggleLabel | Sync existing contacts and chat history | 同步現有聯絡人與聊天記錄 |
 | coexist.toggleHelper | Re-enabling only works if Meta has buffered data (within 24 hours of onboarding). Otherwise disconnect and reconnect. | 僅當Meta 有緩衝資料時（啟動後 24 小時內），重新啟用才有效。否則斷開並重新連接。 |
@@ -1872,7 +1870,6 @@
 | whatsapp.connect.errors.failedToPersistIntegration | Failed to save the WhatsApp integration. | 無法儲存WhatsApp 整合。 |
 | whatsapp.connect.errors.noPhoneNumberFound | No WhatsApp phone number was found. | 找不到 WhatsApp 電話號碼。 |
 | whatsapp.connect.errors.noPhoneNumbersFound | No phone numbers were found for this WhatsApp Business Account. | 找不到此 WhatsApp 企業帳戶的電話號碼。 |
-| whatsapp.connect.errors.phoneNumberNotFound | Selected WhatsApp phone number was not found. | 所選WhatsApp 電話號碼找不到。 |
 | whatsapp.connect.errors.unableToVerifyToken | Unable to verify the WhatsApp token. | 無法驗證WhatsApp 權杖。 |
 | whatsapp.connect.errors.wabaMismatch | Selected WhatsApp Business Account does not match the authorization. | 所選WhatsApp 企業帳戶與授權不符。 |
 | whatsapp.connect.errors.wabaResolveFailed | Could not resolve the WhatsApp Business Account from the authorization. | 無法從授權解析WhatsApp 企業帳號。 |

@@ -2947,6 +2947,58 @@
       "button": "Alle Berechtigungen aktualisieren",
       "resultSuccess": "{refreshed} Kanal/Kanäle aktualisiert.",
       "resultWithFailures": "{refreshed} Kanal/Kanäle aktualisiert, {failed} fehlgeschlagen."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Verlaufssynchronisierung wird gestartet…",
+        "done": "Verlaufssynchronisierung gestartet",
+        "failed": "Verlaufssynchronisierung fehlgeschlagen"
+      },
+      "selectAll": "Alle auswählen",
+      "selected": "{count}/{max} ausgewählt",
+      "dialogTitleRunning": "{count} {feature} werden verbunden…",
+      "dialogTitleDone": "{connected} von {total} verbunden",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} von {total} abgeschlossen",
+      "status": {
+        "waiting": "Wartet",
+        "connecting": "Verbinden…",
+        "connected": "Verbunden",
+        "duplicated": "Bereits verbunden",
+        "limitReached": "Limit erreicht",
+        "failed": "Fehlgeschlagen",
+        "timedOut": "Zeitüberschreitung",
+        "cancelled": "Abgebrochen"
+      },
+      "reason": {
+        "notSelectable": "Dieser Eintrag kann nicht ausgewählt werden.",
+        "channelLimit": "Kanal-Limit erreicht.",
+        "workspaceLimit": "Workspace-Limit erreicht.",
+        "providerRejected": "Der Anbieter hat diese Anfrage abgelehnt.",
+        "unknown": "Etwas ist schiefgelaufen.",
+        "followUpFailed": "Einrichtung unvollständig – bitte in den Kanaleinstellungen abschließen."
+      },
+      "sessionError": {
+        "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte erneut verbinden.",
+        "notMember": "Sie sind kein Mitglied dieses Workspace mehr.",
+        "trialExpired": "Ihre Testphase ist abgelaufen.",
+        "macLimitReached": "Sie haben Ihr Kontolimit erreicht.",
+        "credentialMissing": "Anmeldedaten fehlen. Bitte erneut verbinden."
+      },
+      "cancelRemaining": "Verbleibende abbrechen",
+      "retryFailed": "Erneut versuchen ({count})",
+      "retry": "Erneut versuchen",
+      "goToChannels": "Zu den Kanälen",
+      "close": "Schließen",
+      "leaveNotice": "Sie können die Seite verlassen; verbundene Konten bleiben erhalten",
+      "stepConnecting": "Verbinden",
+      "stepCoexist": "Verlauf synchronisieren",
+      "validation": {
+        "min": "Wähle mindestens 1 aus",
+        "max": "Du kannst bis zu {max} auswählen",
+        "duplicate": "Doppelte Auswahl"
+      },
+      "progressLabel": "Fortschritt"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Allgemeine Einstellungen",
       "conversionsApi": "Anzeigenoptimierung"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Keine Instagram-Konten gefunden",
+      "noAccountsDescription": "Auf den von dir verwalteten Facebook-Seiten wurden keine Instagram-Unternehmenskonten gefunden. Verbinde Instagram erneut und erteile alle angeforderten Berechtigungen.",
+      "alreadyConnectedNote": "Dieses Konto ist bereits verbunden",
+      "tryAgain": "Erneute Verbindung versuchen"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Standard-Persona",
     "reconnect": "Erneut verbinden",
     "reconnectDescription": "Verbinden Sie Ihren Bot immer erneut, wenn Ihr Messenger-Bot nicht antwortet oder im Fehlerprotokoll ein Berechtigungsfehler angezeigt wird.",
-    "selectFacebookPage": "Facebook-Seite auswählen",
     "selectPage": {
       "noPagesTitle": "Keine Facebook-Seiten gefunden",
       "noPagesDescription": "Seiten in einem Business Manager erfordern während der Verbindung Zugriff auf den Business Manager. Verbinden Sie Messenger erneut und erteilen Sie alle angeforderten Berechtigungen.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Webhook-Verifizierungstoken",
       "qrCodeHint": "Scannen Sie den QR-Code, um die Webhook-URL zu öffnen",
       "moreSettings": "Weitere Einstellungen",
-      "goToInbox": "Zum Posteingang"
+      "goToInbox": "Zum Posteingang",
+      "multipleTitle": "Ihre WhatsApp-Postfächer sind bereit!"
     },
     "phoneVerification": {
       "title": "WhatsApp-Telefonnummer verifizieren",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Code senden",
         "resendIn": "Erneut senden in {seconds}s",
-        "verify": "Verifizieren und registrieren"
+        "verify": "Registrieren",
+        "skip": "Überspringen"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "Der WhatsApp-Bestätigungscode konnte nicht gesendet werden.",
         "codeNotVerified": "Der WhatsApp-Bestätigungscode konnte nicht verifiziert werden.",
         "registrationFailed": "Die Verifizierung der WhatsApp-Telefonnummer ist fehlgeschlagen."
-      }
+      },
+      "queueProgress": "Überprüfe {current} von {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "WhatsApp-Zugriffstoken ist erforderlich.",
         "appSettingsNotFound": "WhatsApp-App-Einstellungen wurden nicht gefunden.",
-        "failedToPersistIntegration": "Die WhatsApp-Integration konnte nicht gespeichert werden.",
-        "noPhoneNumberFound": "Keine WhatsApp-Telefonnummer gefunden.",
-        "noPhoneNumbersFound": "Für dieses WhatsApp-Business-Konto wurden keine Telefonnummern gefunden.",
-        "phoneNumberNotFound": "Die ausgewählte WhatsApp-Telefonnummer wurde nicht gefunden.",
-        "unableToVerifyToken": "Das WhatsApp-Token konnte nicht verifiziert werden.",
-        "wabaMismatch": "Das ausgewählte WhatsApp-Business-Konto stimmt nicht mit der Autorisierung überein.",
         "wabaResolveFailed": "Das WhatsApp-Business-Konto konnte nicht aus der Autorisierung ermittelt werden."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Vorlagen-Header"
     },
     "transferPhoneNumber": "Telefonnummer von einem anderen WhatsApp-Anbieter übertragen",
-    "signupSessionExpired": "Ihre WhatsApp-Registrierungssitzung ist abgelaufen. Starten Sie die Verbindung erneut.",
     "capi": {
       "automaticEvents": {
         "title": "Automatische Ereignisse",
         "description": "Conversion-Events dieser WhatsApp-Nummer automatisch an Meta senden. Fehlt die Berechtigung, verbinden Sie das Konto erneut, um sie zu erteilen."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Erneute Verbindung versuchen"
     }
   },
   "zalo": {

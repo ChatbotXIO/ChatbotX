@@ -2947,6 +2947,58 @@
       "button": "Atualizar todas as permissões",
       "resultSuccess": "{refreshed} canal(is) atualizado(s).",
       "resultWithFailures": "{refreshed} canal(is) atualizado(s), {failed} com falha."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "A iniciar a sincronização do histórico…",
+        "done": "Sincronização do histórico iniciada",
+        "failed": "Falha na sincronização do histórico"
+      },
+      "selectAll": "Selecionar tudo",
+      "selected": "{count}/{max} selecionados",
+      "dialogTitleRunning": "A ligar {count} {feature}…",
+      "dialogTitleDone": "Ligados {connected} de {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} de {total} concluídos",
+      "status": {
+        "waiting": "A aguardar",
+        "connecting": "A ligar…",
+        "connected": "Ligado",
+        "duplicated": "Já ligado",
+        "limitReached": "Limite atingido",
+        "failed": "Falhou",
+        "timedOut": "Tempo esgotado",
+        "cancelled": "Cancelado"
+      },
+      "reason": {
+        "notSelectable": "Este item não pode ser selecionado.",
+        "channelLimit": "Limite de canais atingido.",
+        "workspaceLimit": "Limite do espaço de trabalho atingido.",
+        "providerRejected": "O fornecedor rejeitou este pedido.",
+        "unknown": "Algo correu mal.",
+        "followUpFailed": "Configuração incompleta — conclua nas definições do canal."
+      },
+      "sessionError": {
+        "sessionExpired": "A sua sessão expirou. Volte a ligar-se.",
+        "notMember": "Já não é membro deste espaço de trabalho.",
+        "trialExpired": "O seu período de teste expirou.",
+        "macLimitReached": "Atingiu o limite da sua conta.",
+        "credentialMissing": "Credenciais em falta. Volte a ligar-se."
+      },
+      "cancelRemaining": "Cancelar restantes",
+      "retryFailed": "Tentar novamente ({count})",
+      "retry": "Tentar novamente",
+      "goToChannels": "Ir para canais",
+      "close": "Fechar",
+      "leaveNotice": "Pode sair; as contas ligadas serão mantidas",
+      "stepConnecting": "A ligar",
+      "stepCoexist": "Sincronizar histórico",
+      "validation": {
+        "min": "Selecione pelo menos 1",
+        "max": "Pode selecionar até {max}",
+        "duplicate": "Seleção duplicada"
+      },
+      "progressLabel": "Progresso"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Definições gerais",
       "conversionsApi": "Otimização de anúncios"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Nenhuma conta do Instagram encontrada",
+      "noAccountsDescription": "Não foi encontrada nenhuma conta empresarial do Instagram nas Páginas do Facebook que geres. Liga novamente o Instagram e concede todas as permissões solicitadas.",
+      "alreadyConnectedNote": "Esta conta já está ligada",
+      "tryAgain": "Tentar ligar novamente"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Persona predefinida",
     "reconnect": "Ligar novamente",
     "reconnectDescription": "Volte sempre a ligar o bot se este não responder no Messenger ou se encontrar algum erro de permissão no registo de erros.",
-    "selectFacebookPage": "Selecionar Página do Facebook",
     "selectPage": {
       "noPagesTitle": "Não foram encontradas Páginas do Facebook",
       "noPagesDescription": "As Páginas num Gestor de Negócios exigem acesso ao Gestor de Negócios durante a ligação. Volte a ligar o Messenger e conceda todas as permissões solicitadas.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Token de verificação do webhook",
       "qrCodeHint": "Leia o código QR para abrir o URL do webhook",
       "moreSettings": "Mais definições",
-      "goToInbox": "Ir para a caixa de entrada"
+      "goToInbox": "Ir para a caixa de entrada",
+      "multipleTitle": "As suas caixas de entrada do WhatsApp estão prontas!"
     },
     "phoneVerification": {
       "title": "Verificar número de telefone do WhatsApp",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Enviar código",
         "resendIn": "Reenviar dentro de {seconds}s",
-        "verify": "Verificar e registar"
+        "verify": "Registar",
+        "skip": "Ignorar"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "Não foi possível enviar o código de verificação do WhatsApp.",
         "codeNotVerified": "Não foi possível verificar o código do WhatsApp.",
         "registrationFailed": "A verificação do número de telefone do WhatsApp falhou."
-      }
+      },
+      "queueProgress": "A verificar {current} de {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "O token de acesso do WhatsApp é obrigatório.",
         "appSettingsNotFound": "As definições da aplicação do WhatsApp não foram encontradas.",
-        "failedToPersistIntegration": "Não foi possível guardar a integração com o WhatsApp.",
-        "noPhoneNumberFound": "Não foi encontrado nenhum número de telefone do WhatsApp.",
-        "noPhoneNumbersFound": "Não foram encontrados números de telefone para esta conta do WhatsApp Business.",
-        "phoneNumberNotFound": "O número de telefone do WhatsApp selecionado não foi encontrado.",
-        "unableToVerifyToken": "Não foi possível verificar o token do WhatsApp.",
-        "wabaMismatch": "A conta do WhatsApp Business selecionada não corresponde à autorização.",
         "wabaResolveFailed": "Não foi possível identificar a conta do WhatsApp Business a partir da autorização."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Cabeçalho do modelo"
     },
     "transferPhoneNumber": "Transferir telefone de outro fornecedor do WhatsApp",
-    "signupSessionExpired": "A sua sessão de registo no WhatsApp expirou. Inicie novamente a ligação.",
     "capi": {
       "automaticEvents": {
         "title": "Eventos Automáticos",
         "description": "Envie automaticamente eventos de conversão deste número de WhatsApp para a Meta. Se a permissão estiver em falta, volte a ligar a conta para a conceder."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Tentar ligar novamente"
     }
   },
   "zalo": {

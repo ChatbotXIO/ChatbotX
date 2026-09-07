@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
+import { CONNECT_PICKER_CARD_CLASS } from "@/features/channel-connect/components/connect-picker-card"
 import { InstagramAccounts } from "@/features/integration-instagram/components/instagram-accounts"
 
 export type SelectAccountProps = {
@@ -19,7 +20,7 @@ export function SelectAccount({ account, workspaceId }: SelectAccountProps) {
   const t = useTranslations()
 
   return (
-    <Card className="mx-auto mt-40 max-w-md">
+    <Card className={CONNECT_PICKER_CARD_CLASS}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>
           {t("actions.connectFeature", { feature: "Instagram" })}

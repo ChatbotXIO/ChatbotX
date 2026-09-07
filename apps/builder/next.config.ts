@@ -118,6 +118,24 @@ const nextConfig: NextConfig = {
   },
   headers() {
     return [
+      // `next dev` serves chunks under stable, content-independent URLs
+      // (`/_next/static/chunks/<module-path>.css`). Anyone developing through a
+      // caching proxy or tunnel (Cloudflare Tunnel in front of localhost) gets
+      // a 4-hour edge cache on those URLs by default, so a newly used Tailwind
+      // class simply never reaches the browser. Tell every cache to stay out
+      // of the way in development; production chunk names are content-hashed
+      // and keep their normal immutable caching.
+      ...(process.env.NODE_ENV === "development"
+        ? [
+            {
+              source: "/_next/static/:path*",
+              headers: [
+                { key: "Cache-Control", value: "no-store, must-revalidate" },
+                { key: "CDN-Cache-Control", value: "no-store" },
+              ],
+            },
+          ]
+        : []),
       {
         source: "/chat-widget/:path*",
         headers: [

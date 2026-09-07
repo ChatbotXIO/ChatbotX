@@ -17,8 +17,10 @@ import {
   encryptAuth,
   FB_MESSENGER_PENDING_AUTH_COOKIE,
   FB_PENDING_AUTH_MAX_AGE,
+  writePendingAuth,
 } from "@/lib/facebook-pending-auth"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
+import { createFirstWorkspace } from "@/lib/workspace/create-first-workspace"
 
 /**
  * Reached only via a redirect from `/channels/create?channel=messenger`
@@ -62,10 +64,7 @@ export async function GET(req: NextRequest) {
     // that points nowhere.
     const targetWorkspace = workspaceId
       ? await workspaceService.findById({ id: workspaceId })
-      : await workspaceService.create({
-          data: { name: "New Workspace", ownerId: userId },
-          createdBy: userId,
-        })
+      : await createFirstWorkspace(userId)
     const referer = await buildMessengerReferer(targetWorkspace.id)
     const token = await encryptAuth({
       userToken: reuse.userToken,
@@ -78,13 +77,7 @@ export async function GET(req: NextRequest) {
       expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
     })
     const cookieStore = await cookies()
-    cookieStore.set(FB_MESSENGER_PENDING_AUTH_COOKIE, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: FB_PENDING_AUTH_MAX_AGE,
-      path: "/channels/messenger/select",
-    })
+    writePendingAuth(cookieStore, FB_MESSENGER_PENDING_AUTH_COOKIE, token)
     redirect("/channels/messenger/select")
   }
 

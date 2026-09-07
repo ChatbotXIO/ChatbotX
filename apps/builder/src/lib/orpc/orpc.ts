@@ -31,6 +31,15 @@ export const UNBATCHED_PROCEDURE_PATHS: ReadonlySet<ProcedurePath> =
     "conversationsAPI.listConversationsByPOSTAuthenticatedAPI",
     "aiMcpServerAPIs.validateAIMcpServerAuthenticatedAPI",
     "whatsappMessageTemplateAPIs.listWhatsappMessageTemplatesInternalAPI",
+    // The four multi-select connect procedures. Batching would merge a
+    // fan-out of N connects into ONE request, undoing the concurrency
+    // `useConnectBatch` exists to provide — and each connect fans out to
+    // several Meta Graph calls, so one merged request would also hold a
+    // single response open for the slowest of them.
+    "integrationMessengerAPIs.connectMessengerPageAPI",
+    "integrationInstagramAPIs.connectInstagramFacebookAccountAPI",
+    "integrationInstagramAPIs.connectInstagramAccountAPI",
+    "integrationWhatsappAPIs.connectWhatsappNumberAPI",
   ])
 
 /**
@@ -46,8 +55,16 @@ export function isUnbatchedProcedure({ path }: { path: readonly string[] }) {
   )
 }
 
+/**
+ * The one path every typed-client call is sent to — the session-authenticated
+ * router's route handler (`app/rpc/[[...rest]]/route.ts`). Exported so nothing
+ * else has to spell it: `/api` now serves only `publicRouter`, so a procedure
+ * posted there would 404.
+ */
+export const RPC_ENDPOINT_PATH = "/rpc"
+
 const link = new RPCLink({
-  url: `${typeof window === "undefined" ? "http://localhost:3123" : window.location.origin}/rpc`,
+  url: `${typeof window === "undefined" ? "http://localhost:3123" : window.location.origin}${RPC_ENDPOINT_PATH}`,
   plugins: [
     new BatchLinkPlugin({
       exclude: isUnbatchedProcedure,

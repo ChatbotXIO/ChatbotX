@@ -2947,6 +2947,58 @@
       "button": "Perbarui semua izin",
       "resultSuccess": "Berhasil menyegarkan {refreshed} channel.",
       "resultWithFailures": "Berhasil menyegarkan {refreshed} channel, {failed} gagal."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Memulai sinkronisasi riwayat…",
+        "done": "Sinkronisasi riwayat dimulai",
+        "failed": "Sinkronisasi riwayat gagal"
+      },
+      "selectAll": "Pilih semua",
+      "selected": "{count}/{max} dipilih",
+      "dialogTitleRunning": "Menghubungkan {count} {feature}…",
+      "dialogTitleDone": "Terhubung {connected} dari {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} dari {total} selesai",
+      "status": {
+        "waiting": "Menunggu",
+        "connecting": "Menghubungkan…",
+        "connected": "Terhubung",
+        "duplicated": "Sudah terhubung",
+        "limitReached": "Batas tercapai",
+        "failed": "Gagal",
+        "timedOut": "Waktu habis",
+        "cancelled": "Dibatalkan"
+      },
+      "reason": {
+        "notSelectable": "Item ini tidak dapat dipilih.",
+        "channelLimit": "Batas saluran tercapai.",
+        "workspaceLimit": "Batas ruang kerja tercapai.",
+        "providerRejected": "Penyedia menolak permintaan ini.",
+        "unknown": "Terjadi kesalahan.",
+        "followUpFailed": "Penyiapan belum selesai — selesaikan dari pengaturan saluran."
+      },
+      "sessionError": {
+        "sessionExpired": "Sesi Anda telah berakhir. Silakan hubungkan kembali.",
+        "notMember": "Anda tidak lagi menjadi anggota ruang kerja ini.",
+        "trialExpired": "Masa uji coba Anda telah berakhir.",
+        "macLimitReached": "Anda telah mencapai batas akun Anda.",
+        "credentialMissing": "Kredensial tidak ditemukan. Silakan hubungkan kembali."
+      },
+      "cancelRemaining": "Batalkan sisanya",
+      "retryFailed": "Coba lagi ({count})",
+      "retry": "Coba lagi",
+      "goToChannels": "Buka saluran",
+      "close": "Tutup",
+      "leaveNotice": "Anda dapat meninggalkan halaman; akun yang terhubung tetap disimpan",
+      "stepConnecting": "Menghubungkan",
+      "stepCoexist": "Sinkronkan riwayat",
+      "validation": {
+        "min": "Pilih minimal 1",
+        "max": "Anda dapat memilih hingga {max}",
+        "duplicate": "Pilihan duplikat"
+      },
+      "progressLabel": "Progres"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Pengaturan Umum",
       "conversionsApi": "Optimasi Iklan"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Tidak ada akun Instagram yang ditemukan",
+      "noAccountsDescription": "Tidak ditemukan akun Bisnis Instagram di Halaman Facebook yang Anda kelola. Hubungkan kembali Instagram dan berikan semua izin yang diminta.",
+      "alreadyConnectedNote": "Akun ini sudah terhubung",
+      "tryAgain": "Coba hubungkan kembali"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Persona Default",
     "reconnect": "Hubungkan kembali",
     "reconnectDescription": "Selalu hubungkan kembali bot jika bot Messenger Anda tidak merespons atau jika Anda melihat kesalahan izin di log kesalahan.",
-    "selectFacebookPage": "Pilih Halaman Facebook",
     "selectPage": {
       "noPagesTitle": "Tidak ada Halaman Facebook yang ditemukan",
       "noPagesDescription": "Halaman di dalam Business Manager memerlukan akses Business Manager saat dihubungkan. Hubungkan kembali Messenger dan berikan semua izin yang diminta.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Token verifikasi webhook",
       "qrCodeHint": "Pindai kode QR untuk membuka URL webhook",
       "moreSettings": "Pengaturan lainnya",
-      "goToInbox": "Bawa saya ke sana"
+      "goToInbox": "Bawa saya ke sana",
+      "multipleTitle": "Kotak masuk WhatsApp Anda sudah siap!"
     },
     "phoneVerification": {
       "title": "Verifikasi nomor telepon WhatsApp",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Kirim kode",
         "resendIn": "Kirim ulang dalam {seconds} dtk",
-        "verify": "Verifikasi dan daftarkan"
+        "verify": "Daftarkan",
+        "skip": "Lewati"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "Kode verifikasi WhatsApp tidak dapat dikirim.",
         "codeNotVerified": "Kode verifikasi WhatsApp tidak dapat diverifikasi.",
         "registrationFailed": "Verifikasi nomor telepon WhatsApp gagal."
-      }
+      },
+      "queueProgress": "Memverifikasi {current} dari {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "Token akses WhatsApp diperlukan.",
         "appSettingsNotFound": "Pengaturan aplikasi WhatsApp tidak ditemukan.",
-        "failedToPersistIntegration": "Gagal menyimpan integrasi WhatsApp.",
-        "noPhoneNumberFound": "Nomor telepon WhatsApp tidak ditemukan.",
-        "noPhoneNumbersFound": "Tidak ada nomor telepon yang ditemukan untuk Akun WhatsApp Business ini.",
-        "phoneNumberNotFound": "Nomor telepon WhatsApp yang dipilih tidak ditemukan.",
-        "unableToVerifyToken": "Tidak dapat memverifikasi token WhatsApp.",
-        "wabaMismatch": "Akun WhatsApp Business yang dipilih tidak cocok dengan otorisasi.",
         "wabaResolveFailed": "Tidak dapat menentukan Akun WhatsApp Business dari otorisasi."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Header Templat"
     },
     "transferPhoneNumber": "Transfer telepon dari penyedia WhatsApp lain",
-    "signupSessionExpired": "Sesi pendaftaran WhatsApp Anda telah kedaluwarsa. Mulai kembali proses koneksi.",
     "capi": {
       "automaticEvents": {
         "title": "Peristiwa Otomatis",
         "description": "Kirim peristiwa konversi dari nomor WhatsApp ini ke Meta secara otomatis. Jika izin belum ada, sambungkan ulang akun untuk memberikannya."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Coba hubungkan kembali"
     }
   },
   "zalo": {

@@ -24,18 +24,28 @@ vi.mock("@chatbotx.io/database/client", () => ({
   findOrFail: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationInstagramModel: {
-    id: "IntegrationInstagram.id",
-    auth: "IntegrationInstagram.auth",
-    pageId: "IntegrationInstagram.pageId",
-  },
-  integrationMessengerModel: {
-    id: "IntegrationMessenger.id",
-    auth: "IntegrationMessenger.auth",
-    pageId: "IntegrationMessenger.pageId",
-  },
-}))
+// The messenger/instagram services now also import
+// `@chatbotx.io/database/repositories` (for `connectPage`/`connectAccount`),
+// whose barrel transitively touches every table in the schema (e.g. via
+// `@chatbotx.io/analytics`'s repositories) — so this mock must carry the real
+// schema forward and only override the two models these tests inspect.
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/database/schema")>()
+  return {
+    ...actual,
+    integrationInstagramModel: {
+      id: "IntegrationInstagram.id",
+      auth: "IntegrationInstagram.auth",
+      pageId: "IntegrationInstagram.pageId",
+    },
+    integrationMessengerModel: {
+      id: "IntegrationMessenger.id",
+      auth: "IntegrationMessenger.auth",
+      pageId: "IntegrationMessenger.pageId",
+    },
+  }
+})
 
 const whereCondition = () => JSON.stringify(mocks.where.mock.calls[0]?.[0])
 

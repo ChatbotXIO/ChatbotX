@@ -2947,6 +2947,58 @@
       "button": "Actualiser toutes les autorisations",
       "resultSuccess": "{refreshed} canal/canaux actualisé(s).",
       "resultWithFailures": "{refreshed} canal/canaux actualisé(s), {failed} en échec."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Démarrage de la synchronisation de l'historique…",
+        "done": "Synchronisation de l'historique démarrée",
+        "failed": "Échec de la synchronisation de l'historique"
+      },
+      "selectAll": "Tout sélectionner",
+      "selected": "{count}/{max} sélectionné(s)",
+      "dialogTitleRunning": "Connexion de {count} {feature}…",
+      "dialogTitleDone": "{connected} sur {total} connecté(s)",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} sur {total} terminé(s)",
+      "status": {
+        "waiting": "En attente",
+        "connecting": "Connexion…",
+        "connected": "Connecté",
+        "duplicated": "Déjà connecté",
+        "limitReached": "Limite atteinte",
+        "failed": "Échec",
+        "timedOut": "Délai dépassé",
+        "cancelled": "Annulé"
+      },
+      "reason": {
+        "notSelectable": "Cet élément ne peut pas être sélectionné.",
+        "channelLimit": "Limite de canaux atteinte.",
+        "workspaceLimit": "Limite de l'espace de travail atteinte.",
+        "providerRejected": "Le fournisseur a rejeté cette demande.",
+        "unknown": "Une erreur s'est produite.",
+        "followUpFailed": "Configuration incomplète — terminez-la depuis les paramètres du canal."
+      },
+      "sessionError": {
+        "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+        "notMember": "Vous n'êtes plus membre de cet espace de travail.",
+        "trialExpired": "Votre période d'essai a expiré.",
+        "macLimitReached": "Vous avez atteint la limite de votre compte.",
+        "credentialMissing": "Identifiants manquants. Veuillez vous reconnecter."
+      },
+      "cancelRemaining": "Annuler le reste",
+      "retryFailed": "Réessayer ({count})",
+      "retry": "Réessayer",
+      "goToChannels": "Aller aux canaux",
+      "close": "Fermer",
+      "leaveNotice": "Vous pouvez quitter la page ; les comptes connectés sont conservés",
+      "stepConnecting": "Connexion",
+      "stepCoexist": "Synchroniser l'historique",
+      "validation": {
+        "min": "Sélectionnez au moins 1",
+        "max": "Vous pouvez sélectionner jusqu'à {max}",
+        "duplicate": "Sélection en double"
+      },
+      "progressLabel": "Progression"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Paramètres généraux",
       "conversionsApi": "Optimisation des publicités"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Aucun compte Instagram trouvé",
+      "noAccountsDescription": "Aucun compte professionnel Instagram n'a été trouvé sur les Pages Facebook que vous gérez. Reconnectez Instagram et accordez toutes les autorisations demandées.",
+      "alreadyConnectedNote": "Ce compte est déjà connecté",
+      "tryAgain": "Réessayer la connexion"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Persona par défaut",
     "reconnect": "Reconnecter",
     "reconnectDescription": "Reconnectez toujours votre bot s’il ne répond pas ou si le journal des erreurs signale un problème d’autorisation.",
-    "selectFacebookPage": "Sélectionnez une Page Facebook",
     "selectPage": {
       "noPagesTitle": "Aucune Page Facebook trouvée",
       "noPagesDescription": "Les Pages d’un Business Manager nécessitent un accès à celui-ci pendant la connexion. Reconnectez Messenger et accordez toutes les autorisations demandées.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Jeton de vérification du webhook",
       "qrCodeHint": "Scannez le code QR pour ouvrir l’URL du webhook",
       "moreSettings": "Plus de paramètres",
-      "goToInbox": "Accéder à la boîte de réception"
+      "goToInbox": "Accéder à la boîte de réception",
+      "multipleTitle": "Vos boîtes de réception WhatsApp sont prêtes !"
     },
     "phoneVerification": {
       "title": "Vérifier le numéro de téléphone WhatsApp",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Envoyer le code",
         "resendIn": "Renvoyer dans {seconds} s",
-        "verify": "Vérifier et enregistrer"
+        "verify": "Enregistrer",
+        "skip": "Ignorer"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "Impossible d’envoyer le code de vérification WhatsApp.",
         "codeNotVerified": "Impossible de vérifier le code WhatsApp.",
         "registrationFailed": "Échec de la vérification du numéro WhatsApp."
-      }
+      },
+      "queueProgress": "Vérification de {current} sur {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "Le jeton d’accès WhatsApp est requis.",
         "appSettingsNotFound": "Paramètres de l’application WhatsApp introuvables.",
-        "failedToPersistIntegration": "Échec de l’enregistrement de l’intégration WhatsApp.",
-        "noPhoneNumberFound": "Aucun numéro WhatsApp trouvé.",
-        "noPhoneNumbersFound": "Aucun numéro trouvé pour ce compte WhatsApp Business.",
-        "phoneNumberNotFound": "Le numéro WhatsApp sélectionné est introuvable.",
-        "unableToVerifyToken": "Impossible de vérifier le jeton WhatsApp.",
-        "wabaMismatch": "Le compte WhatsApp Business sélectionné ne correspond pas à l’autorisation.",
         "wabaResolveFailed": "Impossible d’identifier le compte WhatsApp Business à partir de l’autorisation."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "En-tête du modèle"
     },
     "transferPhoneNumber": "Transférer le téléphone depuis un autre fournisseur WhatsApp",
-    "signupSessionExpired": "Votre session d’inscription WhatsApp a expiré. Recommencez la connexion.",
     "capi": {
       "automaticEvents": {
         "title": "Événements automatiques",
         "description": "Envoyez automatiquement les événements de conversion de ce numéro WhatsApp vers Meta. Si l’autorisation manque, reconnectez le compte pour l’accorder."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Réessayer la connexion"
     }
   },
   "zalo": {

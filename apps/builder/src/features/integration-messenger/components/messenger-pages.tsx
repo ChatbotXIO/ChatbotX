@@ -1,147 +1,70 @@
 "use client"
 
-import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@chatbotx.io/ui/components/ui/alert"
-import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon } from "lucide-react"
+import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
-import { useWatch } from "react-hook-form"
-import { toast } from "sonner"
-import { selectPageAction } from "../actions/select-page.action"
-import { selectPageRequest } from "../schema/action"
+import { ConnectPickerScreen } from "@/features/channel-connect/components/connect-picker-screen"
+import { connectViaApi } from "@/features/channel-connect/lib/connect-client"
+import type { ConnectPickerItem } from "@/features/channel-connect/lib/picker-items"
+import {
+  CONNECT_CHANNEL_REGISTRY,
+  CONNECT_RETRY_HREF,
+} from "@/features/channel-connect/lib/registry"
+import { connectActionResultSchemaDefault } from "@/features/channel-connect/schema"
 
-export type CoexistTrigger = {
-  integrationId: string
-  resolvedWorkspaceId: string
-}
-
-export type PickerFacebookPage = ConnectableFacebookPage & {
+/**
+ * `ConnectPickerItem` plus the raw provider flags this component needs to
+ * decide which warning alert to show — kept as booleans instead of
+ * re-deriving the decision from `disabledReason`'s (translated, therefore
+ * unstable) display text.
+ */
+export type MessengerPickerItem = ConnectPickerItem & {
+  isConnectable: boolean
   isAlreadyConnected: boolean
 }
 
-function getPageOptionNote(
-  page: PickerFacebookPage,
-  t: ReturnType<typeof useTranslations>,
-): string | undefined {
-  if (page.isAlreadyConnected) {
-    return t("messenger.selectPage.alreadyConnectedNote")
-  }
-  if (!page.isConnectable) {
-    return t("messenger.selectPage.notAdminNote")
-  }
-  return
-}
-
-export function FacebookPages({
+export function MessengerPages({
   workspaceId,
-  pages,
-  onCoexistRequired,
+  items,
 }: {
-  workspaceId?: string | null
-  pages: PickerFacebookPage[]
-  onCoexistRequired: (trigger: CoexistTrigger) => void
+  workspaceId: string
+  items: MessengerPickerItem[]
 }) {
   const t = useTranslations()
 
-  const cancelHref = `/space/${workspaceId}/settings/channels/messenger`
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    selectPageAction,
-    zodResolver(selectPageRequest),
-    {
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          workspaceId,
-          pageId: "",
-          pageName: "",
-          accessToken: "",
-        },
-      },
-      actionProps: {
-        onSuccess: ({ data }) => {
-          // Hand off to parent so it can close this dialog and mount the
-          // CoexistPopup at a level that survives unmount of FacebookPages.
-          onCoexistRequired({
-            integrationId: data.integrationId,
-            resolvedWorkspaceId: data.workspaceId ?? "",
-          })
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
-      },
-      errorMapProps: {},
-    },
+  // The oRPC route, not the server action: Next serializes server actions
+  // from one browser, so the batch could only ever connect one page at a
+  // time (`CONNECT_CONCURRENCY` is what this buys).
+  const connectOne = (item: MessengerPickerItem) =>
+    connectViaApi({
+      route: CONNECT_CHANNEL_REGISTRY.messenger.connectRoute,
+      body: { pageId: item.id },
+      parse: (data) => connectActionResultSchemaDefault.parse(data),
+      item,
+    })
+
+  // A page with no selectable rows only happens when every page is either
+  // not-admin or already connected — the row-level note already explains
+  // each case, so this warning only fires for the not-admin reason so it
+  // doesn't duplicate a purely "already connected" list's own explanation.
+  const hasSelectablePage = items.some(
+    (item) => item.isConnectable && !item.isAlreadyConnected,
   )
-
-  const { control, setValue } = form
-  const watchedPageId = useWatch({ control, name: "pageId" })
-  useEffect(() => {
-    const selectPage = pages.find((page) => page.id === watchedPageId)
-
-    setValue("accessToken", selectPage?.access_token ?? "")
-    setValue("pageName", selectPage?.name ?? "")
-  }, [watchedPageId, setValue, pages])
-
-  const hasSelectablePage = pages.some(
-    (page) => page.isConnectable && !page.isAlreadyConnected,
-  )
-  // The warning copy blames missing admin permission, so it must only appear
-  // when a non-admin page is actually the reason nothing is selectable. A list
-  // of solely already-connected pages explains itself via each row's note.
   const showNotAdminWarning =
     !hasSelectablePage &&
-    pages.some((page) => !(page.isConnectable || page.isAlreadyConnected))
-
-  if (pages.length === 0) {
-    return (
-      <div className="space-y-4">
-        <Alert variant="warning">
-          <AlertTitle>{t("messenger.selectPage.noPagesTitle")}</AlertTitle>
-          <AlertDescription>
-            {t("messenger.selectPage.noPagesDescription")}
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-end gap-2">
-          <Link
-            className={buttonVariants({ size: "sm", variant: "ghost" })}
-            href={cancelHref}
-          >
-            {t("actions.cancel")}
-          </Link>
-          <Link
-            className={buttonVariants({ size: "sm" })}
-            href="/channels/create"
-          >
-            {t("messenger.selectPage.tryAgain")}
-          </Link>
-        </div>
-      </div>
-    )
-  }
+    items.some((item) => !(item.isConnectable || item.isAlreadyConnected))
 
   return (
-    <Form {...form}>
-      <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <div className="hidden">
-          <InputField name="accessToken" type="hidden" />
-          <InputField name="pageName" type="hidden" />
-        </div>
-
-        {showNotAdminWarning && (
+    <ConnectPickerScreen
+      channel="messenger"
+      connectOne={connectOne}
+      extraAlert={
+        showNotAdminWarning && (
           <Alert variant="warning">
             <AlertTitle>
               {t("messenger.selectPage.noConnectablePagesTitle")}
@@ -150,48 +73,17 @@ export function FacebookPages({
               <p>{t("messenger.selectPage.noConnectablePagesDescription")}</p>
               <Link
                 className={buttonVariants({ size: "sm" })}
-                href="/channels/create"
+                href={CONNECT_RETRY_HREF}
               >
                 {t("messenger.selectPage.tryAgain")}
               </Link>
             </AlertDescription>
           </Alert>
-        )}
-
-        {/* Styling ::-webkit-scrollbar opts out of the OS overlay scrollbar,
-            so the bar stays visible whenever the list overflows. */}
-        <div className="max-h-75 overflow-y-auto pe-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:w-2">
-          <RadioGroupField
-            label={t("messenger.selectFacebookPage")}
-            name="pageId"
-            options={pages.map((page) => ({
-              value: page.id,
-              label: page.name,
-              disabled: !page.isConnectable || page.isAlreadyConnected,
-              description: getPageOptionNote(page, t),
-            }))}
-            required
-          />
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <Link
-            className={buttonVariants({ size: "sm", variant: "ghost" })}
-            href={cancelHref}
-          >
-            {t("actions.cancel")}
-          </Link>
-          <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
-            type="submit"
-          >
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="animate-spin" />
-            )}
-            {t("actions.continue")}
-          </Button>
-        </div>
-      </form>
-    </Form>
+        )
+      }
+      idsFieldName="pageIds"
+      items={items}
+      workspaceId={workspaceId}
+    />
   )
 }

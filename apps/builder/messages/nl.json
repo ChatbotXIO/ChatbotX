@@ -2947,6 +2947,58 @@
       "button": "Alle machtigingen vernieuwen",
       "resultSuccess": "{refreshed} kanaal/kanalen vernieuwd.",
       "resultWithFailures": "{refreshed} kanaal/kanalen vernieuwd, {failed} mislukt."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Geschiedenissynchronisatie starten…",
+        "done": "Geschiedenissynchronisatie gestart",
+        "failed": "Geschiedenissynchronisatie mislukt"
+      },
+      "selectAll": "Alles selecteren",
+      "selected": "{count}/{max} geselecteerd",
+      "dialogTitleRunning": "{count} {feature} verbinden…",
+      "dialogTitleDone": "{connected} van {total} verbonden",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} van {total} voltooid",
+      "status": {
+        "waiting": "Wachten",
+        "connecting": "Verbinden…",
+        "connected": "Verbonden",
+        "duplicated": "Al verbonden",
+        "limitReached": "Limiet bereikt",
+        "failed": "Mislukt",
+        "timedOut": "Time-out",
+        "cancelled": "Geannuleerd"
+      },
+      "reason": {
+        "notSelectable": "Dit item kan niet worden geselecteerd.",
+        "channelLimit": "Kanaallimiet bereikt.",
+        "workspaceLimit": "Werkruimtelimiet bereikt.",
+        "providerRejected": "De provider heeft dit verzoek geweigerd.",
+        "unknown": "Er is iets misgegaan.",
+        "followUpFailed": "Instellen niet voltooid — rond dit af via de kanaalinstellingen."
+      },
+      "sessionError": {
+        "sessionExpired": "Je sessie is verlopen. Maak opnieuw verbinding.",
+        "notMember": "Je bent geen lid meer van deze werkruimte.",
+        "trialExpired": "Je proefperiode is verlopen.",
+        "macLimitReached": "Je hebt je accountlimiet bereikt.",
+        "credentialMissing": "Ontbrekende inloggegevens. Maak opnieuw verbinding."
+      },
+      "cancelRemaining": "Resterende annuleren",
+      "retryFailed": "Opnieuw proberen ({count})",
+      "retry": "Opnieuw proberen",
+      "goToChannels": "Naar kanalen",
+      "close": "Sluiten",
+      "leaveNotice": "Je kunt de pagina verlaten; verbonden accounts blijven behouden",
+      "stepConnecting": "Verbinden",
+      "stepCoexist": "Geschiedenis synchroniseren",
+      "validation": {
+        "min": "Selecteer minimaal 1",
+        "max": "Je kunt tot {max} selecteren",
+        "duplicate": "Dubbele selectie"
+      },
+      "progressLabel": "Voortgang"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Algemene instellingen",
       "conversionsApi": "Advertentie-optimalisatie"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Geen Instagram-accounts gevonden",
+      "noAccountsDescription": "Er zijn geen Instagram-zakelijke accounts gevonden op de Facebook-pagina's die je beheert. Koppel Instagram opnieuw en geef alle gevraagde machtigingen.",
+      "alreadyConnectedNote": "Dit account is al gekoppeld",
+      "tryAgain": "Probeer opnieuw te koppelen"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Standaardpersona",
     "reconnect": "Opnieuw koppelen",
     "reconnectDescription": "Koppel je bot opnieuw als je Messenger-bot niet reageert of als je een machtigingsfout in het foutenlogboek ziet.",
-    "selectFacebookPage": "Facebook-pagina selecteren",
     "selectPage": {
       "noPagesTitle": "Geen Facebook-pagina's gevonden",
       "noPagesDescription": "Voor pagina's in Bedrijfsmanager is tijdens het koppelen toegang tot Bedrijfsmanager vereist. Koppel Messenger opnieuw en verleen alle gevraagde machtigingen.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Webhook-verificatietoken",
       "qrCodeHint": "Scan de QR-code om de webhook-URL te openen",
       "moreSettings": "Meer instellingen",
-      "goToInbox": "Breng me erheen"
+      "goToInbox": "Breng me erheen",
+      "multipleTitle": "Je WhatsApp-inboxen zijn klaar!"
     },
     "phoneVerification": {
       "title": "WhatsApp-telefoonnummer verifiëren",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Code verzenden",
         "resendIn": "Opnieuw verzenden over {seconds}s",
-        "verify": "Verifiëren en registreren"
+        "verify": "Registreren",
+        "skip": "Overslaan"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "De WhatsApp-verificatiecode kon niet worden verzonden.",
         "codeNotVerified": "De WhatsApp-verificatiecode kon niet worden geverifieerd.",
         "registrationFailed": "Verificatie van het WhatsApp-telefoonnummer is mislukt."
-      }
+      },
+      "queueProgress": "Verifiëren {current} van {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "Een WhatsApp-toegangstoken is vereist.",
         "appSettingsNotFound": "De WhatsApp-appinstellingen zijn niet gevonden.",
-        "failedToPersistIntegration": "Opslaan van de WhatsApp-integratie is mislukt.",
-        "noPhoneNumberFound": "Er is geen WhatsApp-telefoonnummer gevonden.",
-        "noPhoneNumbersFound": "Er zijn geen telefoonnummers gevonden voor dit WhatsApp Business-account.",
-        "phoneNumberNotFound": "Het geselecteerde WhatsApp-telefoonnummer is niet gevonden.",
-        "unableToVerifyToken": "Het WhatsApp-token kan niet worden geverifieerd.",
-        "wabaMismatch": "Het geselecteerde WhatsApp Business-account komt niet overeen met de autorisatie.",
         "wabaResolveFailed": "Het WhatsApp Business-account kon niet uit de autorisatie worden bepaald."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Koptekst van sjabloon"
     },
     "transferPhoneNumber": "Telefoonnummer van een andere WhatsApp-provider overdragen",
-    "signupSessionExpired": "Je WhatsApp-registratiesessie is verlopen. Start de koppeling opnieuw.",
     "capi": {
       "automaticEvents": {
         "title": "Automatische events",
         "description": "Verstuur conversiegebeurtenissen van dit WhatsApp-nummer automatisch naar Meta. Ontbreekt de machtiging, verbind het account dan opnieuw om deze te verlenen."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Probeer opnieuw te koppelen"
     }
   },
   "zalo": {

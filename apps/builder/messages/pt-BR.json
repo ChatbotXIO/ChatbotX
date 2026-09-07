@@ -2926,6 +2926,58 @@
       "button": "Atualizar todas as permissões",
       "resultSuccess": "{refreshed} canal(is) atualizado(s).",
       "resultWithFailures": "{refreshed} canal(is) atualizado(s), {failed} com falha."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Iniciando a sincronização do histórico…",
+        "done": "Sincronização do histórico iniciada",
+        "failed": "Falha na sincronização do histórico"
+      },
+      "selectAll": "Selecionar tudo",
+      "selected": "{count}/{max} selecionados",
+      "dialogTitleRunning": "Conectando {count} {feature}…",
+      "dialogTitleDone": "Conectados {connected} de {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} de {total} concluídos",
+      "status": {
+        "waiting": "Aguardando",
+        "connecting": "Conectando…",
+        "connected": "Conectado",
+        "duplicated": "Já conectado",
+        "limitReached": "Limite atingido",
+        "failed": "Falhou",
+        "timedOut": "Tempo esgotado",
+        "cancelled": "Cancelado"
+      },
+      "reason": {
+        "notSelectable": "Este item não pode ser selecionado.",
+        "channelLimit": "Limite de canais atingido.",
+        "workspaceLimit": "Limite do workspace atingido.",
+        "providerRejected": "O provedor rejeitou esta solicitação.",
+        "unknown": "Algo deu errado.",
+        "followUpFailed": "Configuração incompleta — conclua nas configurações do canal."
+      },
+      "sessionError": {
+        "sessionExpired": "Sua sessão expirou. Reconecte-se.",
+        "notMember": "Você não é mais membro deste workspace.",
+        "trialExpired": "Seu período de teste expirou.",
+        "macLimitReached": "Você atingiu o limite da sua conta.",
+        "credentialMissing": "Credenciais ausentes. Reconecte-se."
+      },
+      "cancelRemaining": "Cancelar restantes",
+      "retryFailed": "Tentar novamente ({count})",
+      "retry": "Tentar novamente",
+      "goToChannels": "Ir para canais",
+      "close": "Fechar",
+      "leaveNotice": "Você pode sair; as contas conectadas serão mantidas",
+      "stepConnecting": "Conectando",
+      "stepCoexist": "Sincronizar histórico",
+      "validation": {
+        "min": "Selecione pelo menos 1",
+        "max": "Você pode selecionar até {max}",
+        "duplicate": "Seleção duplicada"
+      },
+      "progressLabel": "Progresso"
     }
   },
   "workspace": {
@@ -3118,6 +3170,12 @@
     "tabs": {
       "generalSettings": "Configurações gerais",
       "conversionsApi": "Otimização de anúncios"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Nenhuma conta do Instagram encontrada",
+      "noAccountsDescription": "Nenhuma conta comercial do Instagram foi encontrada nas Páginas do Facebook que você gerencia. Reconecte o Instagram e conceda todas as permissões solicitadas.",
+      "alreadyConnectedNote": "Esta conta já está conectada",
+      "tryAgain": "Tentar reconectar"
     }
   },
   "coexist": {
@@ -3163,7 +3221,6 @@
     "defaultPersona": "Persona padrão",
     "reconnect": "Reconectar",
     "reconnectDescription": "Sempre reconecte seu bot se ele não estiver respondendo no Messenger ou se você encontrar algum erro de permissão no registro de erros.",
-    "selectFacebookPage": "Selecionar Página do Facebook",
     "selectPage": {
       "noPagesTitle": "Nenhuma Página do Facebook encontrada",
       "noPagesDescription": "Páginas dentro de um Gerenciador de Negócios exigem acesso a ele durante a conexão. Reconecte o Messenger e conceda todas as permissões solicitadas.",
@@ -3428,7 +3485,8 @@
       "verifyToken": "Token de verificação do webhook",
       "qrCodeHint": "Escaneie o código QR para abrir a URL do webhook",
       "moreSettings": "Mais configurações",
-      "goToInbox": "Ir para a caixa de entrada"
+      "goToInbox": "Ir para a caixa de entrada",
+      "multipleTitle": "Suas caixas de entrada do WhatsApp estão prontas!"
     },
     "phoneVerification": {
       "title": "Verificar número de telefone do WhatsApp",
@@ -3441,7 +3499,8 @@
       "actions": {
         "sendCode": "Enviar código",
         "resendIn": "Reenviar em {seconds}s",
-        "verify": "Verificar e registrar"
+        "verify": "Registrar",
+        "skip": "Pular"
       },
       "fields": {
         "code": {
@@ -3459,18 +3518,12 @@
         "codeNotSent": "Não foi possível enviar o código de verificação do WhatsApp.",
         "codeNotVerified": "Não foi possível verificar o código do WhatsApp.",
         "registrationFailed": "Falha na verificação do número de telefone do WhatsApp."
-      }
+      },
+      "queueProgress": "Verificando {current} de {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "O token de acesso do WhatsApp é obrigatório.",
         "appSettingsNotFound": "As configurações do aplicativo do WhatsApp não foram encontradas.",
-        "failedToPersistIntegration": "Falha ao salvar a integração com o WhatsApp.",
-        "noPhoneNumberFound": "Nenhum número de telefone do WhatsApp foi encontrado.",
-        "noPhoneNumbersFound": "Nenhum número de telefone foi encontrado para esta conta do WhatsApp Business.",
-        "phoneNumberNotFound": "O número de telefone do WhatsApp selecionado não foi encontrado.",
-        "unableToVerifyToken": "Não foi possível verificar o token do WhatsApp.",
-        "wabaMismatch": "A conta do WhatsApp Business selecionada não corresponde à autorização.",
         "wabaResolveFailed": "Não foi possível identificar a conta do WhatsApp Business a partir da autorização."
       }
     },
@@ -3701,12 +3754,14 @@
       "label": "Cabeçalho do modelo"
     },
     "transferPhoneNumber": "Transferir telefone de outro provedor do WhatsApp",
-    "signupSessionExpired": "Sua sessão de cadastro do WhatsApp expirou. Inicie a conexão novamente.",
     "capi": {
       "automaticEvents": {
         "title": "Eventos Automáticos",
         "description": "Envie automaticamente eventos de conversão deste número do WhatsApp para a Meta. Se a permissão estiver faltando, reconecte a conta para concedê-la."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Tentar reconectar"
     }
   },
   "zalo": {
