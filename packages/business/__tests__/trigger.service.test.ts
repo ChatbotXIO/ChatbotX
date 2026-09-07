@@ -3,26 +3,42 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockAudit,
+  mockCount,
   mockDelete,
+  mockEnsureExists,
+  mockInsertReturning,
+  mockInsertValues,
   mockInstalledResourceFindMany,
   mockInstallationFindMany,
   mockRemoveTriggerCache,
   mockTriggerFindMany,
+  mockUpdateTriggerCache,
 } = vi.hoisted(() => {
   const mockDeleteWhere = vi.fn().mockResolvedValue(undefined)
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
+  const mockInsertReturning = vi.fn()
+  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
   return {
+    mockAudit: vi.fn(),
+    mockCount: vi.fn(),
     mockDelete,
+    mockEnsureExists: vi.fn(),
+    mockInsertReturning,
+    mockInsertValues,
     mockInstalledResourceFindMany: vi.fn(),
     mockInstallationFindMany: vi.fn(),
     mockRemoveTriggerCache: vi.fn(),
     mockTriggerFindMany: vi.fn(),
+    mockUpdateTriggerCache: vi.fn(),
   }
 })
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
+    $count: mockCount,
     delete: mockDelete,
+    insert: vi.fn(() => ({ values: mockInsertValues })),
     query: {
       templateInstalledResourceModel: {
         findMany: mockInstalledResourceFindMany,
@@ -46,10 +62,21 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/events", () => ({
   removeTriggerCache: mockRemoveTriggerCache,
+  updateTriggerCache: mockUpdateTriggerCache,
+}))
+
+vi.mock("@chatbotx.io/utils", () => ({
+  createId: vi.fn(() => "generated-id"),
 }))
 
 vi.mock("../src/base.service", () => ({
-  BaseService: class BaseService {},
+  BaseService: class BaseService {
+    audit = mockAudit
+  },
+}))
+
+vi.mock("../src/folder/service", () => ({
+  folderService: { ensureExists: mockEnsureExists },
 }))
 
 const { triggerService } = await import("../src/trigger/service")
@@ -85,5 +112,74 @@ describe("triggerService.deleteMany", () => {
 
     expect(mockDelete).toHaveBeenCalled()
     expect(mockRemoveTriggerCache).toHaveBeenCalledWith("ws-1")
+  })
+})
+
+describe("triggerService.create", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("rejects when the workspace is already at the trigger quota", async () => {
+    mockCount.mockResolvedValue(50)
+
+    await expect(
+      triggerService.create({
+        workspaceId: "ws-1",
+        data: { name: "New trigger" },
+        folderType: "trigger",
+      }),
+    ).rejects.toMatchObject({
+      field: "_",
+      message: "validation.maxItemsReached",
+      data: { max: 50, feature: "triggers" },
+    })
+
+    expect(mockEnsureExists).not.toHaveBeenCalled()
+    expect(mockInsertValues).not.toHaveBeenCalled()
+    expect(mockUpdateTriggerCache).not.toHaveBeenCalled()
+  })
+
+  test("checks the folder exists when a folderId is given", async () => {
+    mockCount.mockResolvedValue(0)
+    mockInsertReturning.mockResolvedValue([{ id: "trigger-1" }])
+
+    await triggerService.create({
+      workspaceId: "ws-1",
+      data: { name: "New trigger", folderId: "folder-1" },
+      folderType: "trigger",
+    })
+
+    expect(mockEnsureExists).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: "ws-1",
+      folderType: "trigger",
+    })
+  })
+
+  test("inserts, invalidates the cache, and audits on success", async () => {
+    mockCount.mockResolvedValue(0)
+    mockInsertReturning.mockResolvedValue([{ id: "trigger-1" }])
+
+    const result = await triggerService.create({
+      workspaceId: "ws-1",
+      data: { name: "New trigger" },
+      folderType: "trigger",
+    })
+
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "generated-id",
+        workspaceId: "ws-1",
+        name: "New trigger",
+        actions: [],
+      }),
+    )
+    expect(mockUpdateTriggerCache).toHaveBeenCalledWith("ws-1")
+    expect(mockAudit).toHaveBeenCalledWith(
+      "create",
+      "created a new trigger (#trigger-1)",
+    )
+    expect(result).toEqual({ id: "trigger-1" })
   })
 })

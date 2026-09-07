@@ -125,6 +125,10 @@ For automatic context injection on every prompt, add the hook to your **own** `.
 
 - **New or changed channels:** `integrations/<channel>/` and the **integration-channel** skill. Respect webhook send/receive patterns already used by sibling integrations.
 
+### Business logic
+
+- Any DB read/write from app code, a new service method, or shared validation/cache/event logic: **`packages/business`**. The chain is `action | API handler → service → repository → DB` — app code calls a service, never `db` directly. Use the **business-data-access** skill.
+
 ### Dependencies
 
 - Add deps with **`pnpm add <pkg> --filter <workspace>`**. Import internal packages via their **`exports`** (e.g. `@chatbotx.io/database/client`).
@@ -133,7 +137,7 @@ For automatic context injection on every prompt, add the hook to your **own** `.
 
 - **Rules (always apply):** `.agents/rules/` — `data-access.md` (no direct `db` in app layer), `git.md` (commit/PR/staging), `no-dynamic-import.md` (dynamic `import()` breaks the tsdown build — applies to `packages/*`, `integrations/*`, `apps/{worker,cli,mcp-server,javascript-executor}`; allowed in `apps/builder`).
 - **Per-tool rule mirrors:** `.devin/rules/chatbotx.md` and the ChatbotX section in `.github/copilot-instructions.md` receive generated copies of the shared invariants below. **This file (`AGENTS.md`) is canonical**; run `pnpm sync:agent-instructions` after changing them.
-- **Agent skills (detailed runbooks):** `.agents/skills/` — notably `turborepo-workflow`, `feature-scaffold`, `orpc-api`, `drizzle-database`, `integration-channel`, `worker-development`, `contact-filter`, plus `security-review`, `testing-workflow`, `reliability-concurrency`.
+- **Agent skills (detailed runbooks):** `.agents/skills/` — notably `turborepo-workflow`, `feature-scaffold`, `orpc-api`, `business-data-access`, `drizzle-database`, `integration-channel`, `worker-development`, `contact-filter`, plus `security-review`, `testing-workflow`, `reliability-concurrency`.
 - **Specialist subagents:** `.claude/agents/` — `invariant-guard` (post-edit invariant check), `rag-eval` (retrieval/tenant scoping), `incident-responder` (prod triage). General reviewers/planners come from the `~/.claude/` global set.
 - **Test placement:** use `<workspace>/__tests__/` for app/package/integration-level tests, especially tests covering actions, routes, API behavior, cache behavior, worker behavior, or multiple feature boundaries (e.g. `apps/builder/__tests__`, `apps/worker/__tests__`, `packages/sdk/__tests__`, `integrations/messenger/__tests__`). Use colocated `src/**/__tests__` only for narrow unit/component tests clearly owned by that module.
 - **Quality bar:** Run `pnpm lint` (and typecheck scripts for touched packages) before considering work done. Keep changes scoped to the requested behavior.
@@ -159,7 +163,7 @@ These are the most common mistakes — read before writing any code:
 
 8. **`docs/tech-stack.md` is authoritative** — If you see references to Prisma anywhere in older docs, those are stale. This project uses Drizzle ORM exclusively.
 
-9. **No direct `db` in app layer** — Code in `apps/` and `integrations/` must NOT import `db` from `@chatbotx.io/database/client`. All database access goes through a service (`packages/business/`) or repository (`packages/database/src/repositories/`). Existing direct imports are legacy exceptions. See `.agents/rules/data-access.md`.
+9. **The chain is `action | API handler → service → repository → DB`** — code in `apps/` and `integrations/` must NOT import `db` from `@chatbotx.io/database/client`; call a service from `packages/business/`. A service may call a repository from `packages/database/src/repositories/`; a repository is raw only (where-builders, joins, pagination — never cache/events/validation). The one exception: a **pure read with zero business logic** may call a repository directly from the app layer. A `.query.ts` file under `apps/builder/src/features/*/queries/` is a thin request adapter — it may turn session context into plain params and shape a service's response, but must not hold where-builders, pagination, or count logic, and must not import `db`; a session-free read is called straight from the handler with no query file. The public API handler and its private-path equivalent for the same resource must call the **same service method** — only the app layer resolves the caller's permission scope and passes it in as plain data (`scope`/`accessScope`). Existing direct `db` imports outside this chain are legacy exceptions. See `.agents/rules/data-access.md`.
 
 10. **White-label tenancy** — `User`/`Workspace` carry a `tenantId` that defaults to `ROOT_TENANT_ID` (`"1"`, the platform). `User` email is unique *per tenant* (`User_email_tenant_key`), never globally. Derive a new workspace's tenant via `workspaceService.resolveTenantForOwner` (owner-derived, never host-derived) — don't set `tenantId` from request input. Never accept or return `tenantId` from client input in auth: the tenant-scoped adapter stamps it from `getTenantId()`. See `docs/tenancy.md`.
 

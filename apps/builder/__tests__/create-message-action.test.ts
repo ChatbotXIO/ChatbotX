@@ -2,26 +2,18 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mockFindByOrFail = vi.fn()
-const mockFindBy = vi.fn()
-const mockFindRecentByContactId = vi.fn()
+const mockResolveContactInboxForConversation = vi.fn()
 const mockCreateOutgoing = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     findByOrFail: (...args: unknown[]) => mockFindByOrFail(...args),
-  },
-  contactInboxService: {
-    findBy: (...args: unknown[]) => mockFindBy(...args),
-    findRecentByContactId: (...args: unknown[]) =>
-      mockFindRecentByContactId(...args),
+    resolveContactInboxForConversation: (...args: unknown[]) =>
+      mockResolveContactInboxForConversation(...args),
   },
   messageService: {
     createOutgoing: (...args: unknown[]) => mockCreateOutgoing(...args),
   },
-}))
-
-vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {},
 }))
 
 vi.mock("@/lib/safe-action", () => ({
@@ -54,8 +46,7 @@ const contactInbox = { id: "ci-1", inboxId: "inbox-1", contactId: "contact-1" }
 beforeEach(() => {
   vi.clearAllMocks()
   mockFindByOrFail.mockResolvedValue(conversation)
-  mockFindBy.mockResolvedValue(contactInbox)
-  mockFindRecentByContactId.mockResolvedValue(contactInbox)
+  mockResolveContactInboxForConversation.mockResolvedValue(contactInbox)
   mockCreateOutgoing.mockResolvedValue({ id: "msg-1" })
 })
 
@@ -72,35 +63,24 @@ describe("createMessageAction", () => {
     })
   })
 
-  test("resolves the contact inbox by explicit inboxId when provided", async () => {
+  test("resolves the contact inbox via resolveContactInboxForConversation", async () => {
     await createMessageAction({
       bindArgsParsedInputs: ["ws-1", "conv-1"],
       parsedInput: { text: "hello", inboxId: "inbox-2" },
       ctx: { user: { id: "user-1" } },
     } as never)
 
-    expect(mockFindBy).toHaveBeenCalledWith({
-      where: { contactId: "contact-1", inboxId: "inbox-2" },
-    })
-    expect(mockFindRecentByContactId).not.toHaveBeenCalled()
-  })
-
-  test("falls back to the most recent contact inbox when inboxId is absent", async () => {
-    await createMessageAction({
-      bindArgsParsedInputs: ["ws-1", "conv-1"],
-      parsedInput: { text: "hello" },
-      ctx: { user: { id: "user-1" } },
-    } as never)
-
-    expect(mockFindRecentByContactId).toHaveBeenCalledWith({
+    expect(mockResolveContactInboxForConversation).toHaveBeenCalledWith({
+      conversation,
       workspaceId: "ws-1",
-      contactId: "contact-1",
+      inboxId: "inbox-2",
     })
-    expect(mockFindBy).not.toHaveBeenCalled()
   })
 
-  test("throws when no contact inbox can be resolved", async () => {
-    mockFindRecentByContactId.mockResolvedValue(undefined)
+  test("propagates a not-found error when no contact inbox can be resolved", async () => {
+    mockResolveContactInboxForConversation.mockRejectedValue(
+      new Error("Inbox not found"),
+    )
 
     await expect(
       createMessageAction({

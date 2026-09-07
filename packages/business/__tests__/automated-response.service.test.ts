@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => {
   const updateSet = vi.fn(() => ({ where: updateWhere }))
   const deleteReturning = vi.fn()
   const deleteWhere = vi.fn(() => ({ returning: deleteReturning }))
+  const insertReturning = vi.fn()
+  const insertValues = vi.fn(() => ({ returning: insertReturning }))
 
   return {
     assertDeletable: vi.fn(),
@@ -13,6 +15,9 @@ const mocks = vi.hoisted(() => {
     deleteWhere,
     dispatchAuditRecord: vi.fn(),
     findFirst: vi.fn(),
+    flowExists: vi.fn(),
+    insertReturning,
+    insertValues,
     invalidateCacheKeys: vi.fn(),
     updateReturning,
     updateSet,
@@ -27,6 +32,7 @@ const makeClient = () => ({
       findMany: vi.fn(),
     },
   },
+  insert: vi.fn(() => ({ values: mocks.insertValues })),
   update: vi.fn(() => ({ set: mocks.updateSet })),
   delete: vi.fn(() => ({ where: mocks.deleteWhere })),
 })
@@ -37,6 +43,14 @@ vi.mock("../src/audit/dispatcher", () => ({
 
 vi.mock("../src/template/installed-resource.service", () => ({
   assertDeletable: mocks.assertDeletable,
+}))
+
+// This suite doesn't exercise `create` (which needs `flowService.exists`),
+// but the real `flow/service.ts` transitively needs `@chatbotx.io/flow-config`
+// (needs the real `zodBigintAsString` from `@chatbotx.io/utils`, conflicting
+// with the narrow mock below).
+vi.mock("../src/flow/service", () => ({
+  flowService: { exists: mocks.flowExists },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -143,5 +157,64 @@ describe("automatedResponseService audit side effects", () => {
       action: "delete",
       detail: "deleted keyword automation (#automation-1)",
     })
+  })
+})
+
+describe("automatedResponseService.create — flowId XOR text", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.insertReturning.mockResolvedValue([{ id: "automation-1" }])
+  })
+
+  test("verifies flowId exists and nulls out text when flowId is given", async () => {
+    mocks.flowExists.mockResolvedValue(true)
+
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "ignored",
+      flowId: "flow-1",
+      folderId: null,
+      keywords: ["hi"],
+    })
+
+    expect(mocks.flowExists).toHaveBeenCalledWith(
+      "workspace-1",
+      "flow-1",
+      undefined,
+    )
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ flowId: "flow-1", text: undefined }),
+    )
+  })
+
+  test("throws a field-scoped validation error when flowId does not exist", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "keyword",
+        text: null,
+        flowId: "missing-flow",
+        folderId: null,
+        keywords: ["hi"],
+      }),
+    ).rejects.toMatchObject({ field: "flowId", message: "Flow not found" })
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+  })
+
+  test("nulls out flowId when only text is given", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "Hello there",
+      flowId: null,
+      folderId: null,
+      keywords: ["hi"],
+    })
+
+    expect(mocks.flowExists).not.toHaveBeenCalled()
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ flowId: undefined, text: "Hello there" }),
+    )
   })
 })

@@ -146,15 +146,15 @@ export const contactsCustomFieldsPublicRouter = {
         workspaceId,
       })
 
-      for (const op of input.operations) {
-        await contactCustomFieldService.applyOperationToContacts({
-          workspaceId,
-          contactIds: [contactId],
+      await contactCustomFieldService.applyOperations({
+        workspaceId,
+        contactId,
+        operations: input.operations.map((op) => ({
           customFieldId: op.customFieldId,
           operation: publicFieldOperationNameToCode[op.operation],
           value: op.value,
-        })
-      }
+        })),
+      })
     }),
 
   clearCustomField: workspaceTokenAuthAPI

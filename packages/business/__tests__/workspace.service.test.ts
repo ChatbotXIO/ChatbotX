@@ -34,6 +34,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceUsageModel: { workspaceId: "workspaceId-column" },
   ROOT_TENANT_ID: "1",
 }))
+// `workspace/service.ts` doesn't use `@chatbotx.io/database/repositories`, but
+// vitest's SSR deps optimizer bundles the whole `@chatbotx.io/database`
+// package graph together once any subpath is imported, which otherwise pulls
+// in `contactRepository`'s real contact-filter query graph (needs the real
+// schema, conflicting with the narrow mock above).
+vi.mock("@chatbotx.io/database/repositories", () => ({}))
 
 const tenantService = { findByOwner: vi.fn(async () => undefined as unknown) }
 vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))

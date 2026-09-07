@@ -1,12 +1,7 @@
 import { contactService, importService } from "@chatbotx.io/business"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
-import { contactRepository } from "@chatbotx.io/database/repositories"
 import { z } from "zod"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import {
-  countContactsForAPI,
-  listContactsForAPI,
-} from "../../queries/list-contacts.queries"
 import {
   createContactRequest,
   updateContactFieldRequest,
@@ -44,10 +39,12 @@ export const contactsCrudPublicRouter = {
     .output(listContactsResponse)
     .handler(async ({ context, input }) => {
       const { include, withCount, ...rest } = input
-      return await listContactsForAPI(
-        { ...rest, workspaceId: context.workspace.id },
-        { include, withCount },
-      )
+      return await contactService.list({
+        ...rest,
+        workspaceId: context.workspace.id,
+        include,
+        withCount,
+      })
     }),
 
   search: workspaceTokenAuthAPI
@@ -63,10 +60,12 @@ export const contactsCrudPublicRouter = {
     .output(listContactsResponse)
     .handler(async ({ context, input }) => {
       const { include, withCount, ...rest } = input
-      return await listContactsForAPI(
-        { ...rest, workspaceId: context.workspace.id },
-        { include, withCount },
-      )
+      return await contactService.list({
+        ...rest,
+        workspaceId: context.workspace.id,
+        include,
+        withCount,
+      })
     }),
 
   count: workspaceTokenAuthAPI
@@ -80,7 +79,7 @@ export const contactsCrudPublicRouter = {
     .output(countContactsPublicResponse)
     .handler(
       async ({ context, input }) =>
-        await countContactsForAPI({
+        await contactService.count({
           ...input,
           workspaceId: context.workspace.id,
         }),
@@ -140,7 +139,7 @@ export const contactsCrudPublicRouter = {
     .output(publicListContactsResponse)
     .handler(
       async ({ context, input }) =>
-        await contactRepository.listPublicByCustomField({
+        await contactService.listByCustomFieldValue({
           ...input,
           workspaceId: context.workspace.id,
         }),

@@ -6,6 +6,8 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
+export { MEDIA_LIBRARY_FILES_PAGE_SIZE } from "@chatbotx.io/business"
+
 export const mediaLibraryFolderResource = createSelectSchema(
   mediaLibraryFolderModel,
   {
@@ -61,8 +63,6 @@ export const deleteFolderRequest = z.object({
 export type DeleteFolderRequest = z.infer<typeof deleteFolderRequest>
 
 // File requests
-export const MEDIA_LIBRARY_FILES_PAGE_SIZE = 60
-
 export const listFilesRequest = z.object({
   workspaceId: zodBigintAsString(),
   folderId: zodBigintAsString().nullish(),

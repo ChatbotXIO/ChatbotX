@@ -357,6 +357,35 @@ class ConversationService extends BaseService {
     return { conversation, contactInbox }
   }
 
+  /**
+   * Shared by the authenticated `POST .../messages` handler and
+   * `createMessageAction`: resolve the `ContactInbox` to send an outgoing
+   * message through, scoped to an already-identified `conversationId` rather
+   * than `contactId` (see `resolveContactInboxForSend` for the public-API
+   * variant, which starts from `contactId` and falls back to the
+   * conversation's first `ContactInbox` instead of the most recently
+   * active one).
+   */
+  async resolveContactInboxForConversation(props: {
+    conversation: Pick<ConversationModel, "contactId">
+    workspaceId: string
+    inboxId?: string
+  }): Promise<ContactInboxModel> {
+    const { conversation, workspaceId, inboxId } = props
+    const contactInbox = inboxId
+      ? await contactInboxService.findBy({
+          where: { contactId: conversation.contactId, inboxId },
+        })
+      : await contactInboxService.findRecentByContactId({
+          workspaceId,
+          contactId: conversation.contactId,
+        })
+    if (!contactInbox) {
+      throw notFoundException("Inbox not found")
+    }
+    return contactInbox
+  }
+
   async findLatestByContact(props: {
     contactId: string
     tx?: DatabaseClient

@@ -15,7 +15,10 @@ import type {
   FlowExportCustomField,
   FlowVersionSchema,
 } from "@chatbotx.io/flow-config"
-import { remapFlowGraphReferences } from "@chatbotx.io/flow-config"
+import {
+  remapFlowGraphReferences,
+  sendMessageNodeDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
 import { BaseService } from "../base.service"
@@ -201,6 +204,70 @@ class FlowService extends BaseService {
     ])
 
     return { flowId, draftVersionId, publishedVersionId }
+  }
+
+  /**
+   * The builder create-flow form's flow: a single new (unpublished) draft
+   * version seeded with one default "Send Message" start node — unlike
+   * `createPublishedDefault` (template install: draft + published version
+   * pair, external `tx`), this owns its own transaction and audits the
+   * result.
+   */
+  async createDraft(input: {
+    workspaceId: string
+    data: { name: string; folderId?: string | null }
+  }): Promise<{ id: string }> {
+    const { workspaceId, data } = input
+
+    if (data.folderId) {
+      await folderService.ensureExists({
+        id: data.folderId,
+        workspaceId,
+        folderType: "flow",
+      })
+    }
+
+    const defaultNode = sendMessageNodeDefaultFn({
+      dataProps: {
+        name: "Send Message #1",
+        isStartNode: true,
+      },
+    })
+
+    const flow = await db.transaction(async (tx) => {
+      const flowId = createId()
+      const [created] = await tx
+        .insert(flowModel)
+        .values({
+          ...data,
+          id: flowId,
+          workspaceId,
+        })
+        .returning()
+
+      await tx.insert(flowAnalyticsSessionModel).values({
+        id: createId(),
+        workspaceId,
+        flowId,
+      })
+
+      await tx.insert(flowVersionModel).values({
+        id: createId(),
+        workspaceId,
+        flowId,
+        // biome-ignore lint/suspicious/noExplicitAny: temporary any to bypass circular dependency between flow and flow version
+        nodes: [defaultNode as any],
+        edges: [],
+        isDraft: true,
+        startNodeId: defaultNode.id,
+      })
+
+      return created
+    })
+
+    await this.audit("create", `created a new flow (#${flow.id})`)
+
+    return { id: flow.id }
   }
 
   duplicate(input: { workspaceId: string; id: string }): Promise<string> {

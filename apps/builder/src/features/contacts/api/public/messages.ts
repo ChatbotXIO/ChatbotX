@@ -7,10 +7,7 @@ import {
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import {
-  listMessages,
-  publicFindContactMessage,
-} from "@/features/messages/queries"
+import { listMessages } from "@/features/messages/queries"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
@@ -119,7 +116,7 @@ export const contactsMessagesPublicRouter = {
       if (!conversation) {
         throw notFoundException("Conversation not found")
       }
-      return publicFindContactMessage({
+      return await messageService.findForContact({
         messageId: input.messageId,
         conversationId: conversation.id,
         workspaceId: context.workspace.id,

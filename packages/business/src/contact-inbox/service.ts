@@ -12,6 +12,7 @@ import {
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
+import { contactInboxRepository } from "@chatbotx.io/database/repositories"
 import type { ContactInboxReferral } from "@chatbotx.io/database/schema"
 import {
   CONTACT_INBOX_SOURCE_USER_ID_KEY,
@@ -174,6 +175,17 @@ class ContactInboxService extends BaseService {
     return await tx.query.contactInboxModel.findFirst({
       where,
     })
+  }
+
+  /**
+   * Deliberately uncached: channel webhooks create/update ContactInbox
+   * identities and the sequence scheduler advances enrollments, neither of
+   * which routes through the `contact-inboxes:*` cache tags this service
+   * controls. A stale read here is worse for a caller acting on a channel
+   * identity list that's already changed than paying for the DB hit.
+   */
+  listByContactIdUncached(props: { workspaceId: string; contactId: string }) {
+    return contactInboxRepository.listWithInboxNameByContactId(props)
   }
 
   /**

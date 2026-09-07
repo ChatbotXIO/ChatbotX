@@ -287,4 +287,28 @@ describe("refreshExistingContactProfile against the real contactProfileRefreshSe
       expect.any(String),
     )
   })
+
+  test("skips a channelApi fetch for a channel with no on-demand profile API, without ever resolving the integration context", async () => {
+    const nonCapableContactInbox = {
+      ...fakeContactInbox,
+      channel: "webchat",
+    }
+
+    await refreshExistingContactProfile({
+      source: "channelApi",
+      inbox: { ...fakeInbox, channel: "webchat" },
+      contactInbox: nonCapableContactInbox,
+      incomingContact: fakeIncomingContact,
+      contactId: "contact-1",
+    })
+
+    expect(mockResolveIntegrationContextFromContactInbox).not.toHaveBeenCalled()
+    expect(findByIdOrFailMock).not.toHaveBeenCalled()
+    expect(mockLoggerDebug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        result: { status: "skipped", reason: "channelNotCapable" },
+      }),
+      expect.any(String),
+    )
+  })
 })

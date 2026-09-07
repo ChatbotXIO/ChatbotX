@@ -11,10 +11,9 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: {
     findByIdOrFail: mocks.findByIdOrFail,
   },
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  contactCustomFieldRepository: { listWithDefinitionByContact: mocks.findMany },
+  contactCustomFieldService: {
+    listWithDefinitionByContact: mocks.findMany,
+  },
 }))
 
 describe("listContactCustomFields", () => {

@@ -1,15 +1,6 @@
 "use server"
 
-import { folderService } from "@chatbotx.io/business"
-import { auditService } from "@chatbotx.io/business/audit"
-import { db } from "@chatbotx.io/database/client"
-import {
-  flowAnalyticsSessionModel,
-  flowModel,
-  flowVersionModel,
-} from "@chatbotx.io/database/schema"
-import { sendMessageNodeDefaultFn } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
+import { flowService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -27,60 +18,9 @@ export const createFlowAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateFlowSchema
-    }) => {
-      if (parsedInput.folderId) {
-        await folderService.ensureExists({
-          id: parsedInput.folderId,
-          workspaceId,
-          folderType: "flow",
-        })
-      }
-
-      const defaultNode = sendMessageNodeDefaultFn({
-        dataProps: {
-          name: "Send Message #1",
-          isStartNode: true,
-        },
-      })
-
-      const flow = await db.transaction(async (tx) => {
-        const flowId = createId()
-        const flow = await tx
-          .insert(flowModel)
-          .values({
-            ...parsedInput,
-            id: flowId,
-            workspaceId,
-          })
-          .returning()
-          .then((result) => result[0])
-
-        await tx.insert(flowAnalyticsSessionModel).values({
-          id: createId(),
-          workspaceId,
-          flowId,
-        })
-
-        await tx.insert(flowVersionModel).values({
-          id: createId(),
-          workspaceId,
-          flowId,
-          // biome-ignore lint/suspicious/noExplicitAny: temporary any to bypass circular dependency between flow and flow version
-          nodes: [defaultNode as any],
-          edges: [],
-          isDraft: true,
-          startNodeId: defaultNode.id,
-        })
-
-        return flow
-      })
-
-      await auditService.record({
+    }) =>
+      await flowService.createDraft({
         workspaceId,
-        action: "create",
-        detail: `created a new flow (#${flow.id})`,
-      })
-
-      return { id: flow.id }
-    },
+        data: parsedInput,
+      }),
   )

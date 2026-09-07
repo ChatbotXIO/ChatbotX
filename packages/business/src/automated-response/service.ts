@@ -19,7 +19,8 @@ import {
 import { invalidateCacheKeys } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
+import { flowService } from "../flow/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
 
@@ -124,6 +125,13 @@ class AutomatedResponseService extends BaseService {
     return { data, pageCount }
   }
 
+  /**
+   * `flowId` and `text` are mutually exclusive: a `flowId` (verified to
+   * exist in the workspace) wins and `text` is nulled out; otherwise `text`
+   * alone is kept and `flowId` is nulled out. Enforced here — not in the
+   * caller — so every insert path (the create action, template install)
+   * shares one invariant instead of re-deriving it.
+   */
   async create(
     workspaceId: string,
     values: {
@@ -136,14 +144,28 @@ class AutomatedResponseService extends BaseService {
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
+
+    let flowId = values.flowId ?? undefined
+    let text = values.text
+
+    if (flowId) {
+      const exists = await flowService.exists(workspaceId, flowId, tx)
+      if (!exists) {
+        throw validationException("flowId", "Flow not found")
+      }
+      text = undefined
+    } else if (text) {
+      flowId = undefined
+    }
+
     const [created] = await client
       .insert(automatedResponseModel)
       .values({
         id: createId(),
         workspaceId,
         status: true,
-        text: values.text,
-        flowId: values.flowId,
+        text,
+        flowId,
         folderId: values.folderId,
         keywords: values.keywords,
         type: values.type,

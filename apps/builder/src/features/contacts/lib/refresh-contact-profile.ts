@@ -4,7 +4,7 @@ import {
   contactInboxService,
   contactProfileRefreshService,
   contactService,
-  hasOnDemandProfileApi,
+  type OnDemandProfileChannel,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import type { ChannelType } from "@chatbotx.io/database/partials"
@@ -13,8 +13,9 @@ import type { ContactResource } from "../schema/resource"
 import { profileFetcherFactories } from "./profile-fetcher-factories"
 
 // Maps the channel-agnostic service result onto the builder's client
-// contract. `channelNotCapable` is a builder-level reason — the service
-// itself never inspects the channel name, so it never produces it.
+// contract. `channelNotCapable` is now produced by
+// `contactProfileRefreshService.refresh` itself (the on-demand capability
+// gate lives there, shared with the worker's inbound `channelApi` fetch).
 const toClientResult = (
   result: ContactProfileRefreshResult,
 ): RefreshContactProfileResult => {
@@ -59,15 +60,16 @@ export const refreshContactProfile = async (input: {
   }
 
   const channel = contactInbox.channel as ChannelType
-  if (!hasOnDemandProfileApi(channel)) {
-    return { status: "skipped", reason: "channelNotCapable" }
-  }
-
-  const fetchProfile = profileFetcherFactories[channel]({
-    workspaceId,
-    inboxId: contactInbox.inboxId,
-    sourceId: contactInbox.sourceId,
-  })
+  // Lazy: `profileFetcherFactories` is only defined for on-demand-capable
+  // channels — this closure is only invoked by the service after it confirms
+  // `hasOnDemandProfileApi(channel)`, so an unsupported channel never reaches
+  // the (otherwise `undefined`) factory lookup.
+  const fetchProfile = () =>
+    profileFetcherFactories[channel as OnDemandProfileChannel]({
+      workspaceId,
+      inboxId: contactInbox.inboxId,
+      sourceId: contactInbox.sourceId,
+    })()
 
   const result = await contactProfileRefreshService.refresh({
     workspaceId,

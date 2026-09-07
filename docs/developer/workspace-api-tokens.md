@@ -106,11 +106,15 @@ mounted in `apps/builder/src/routers/index.ts` at all.
 
 Workspace-token APIs authenticate the workspace, not a member — member
 permission scoping (e.g. `onlyAssignedContacts`, `emailAndPhone`) does NOT
-apply. `listContactsForAPI`/`publicFindContact` always run "unscoped": a
-token sees every contact in the workspace, with full email/phone (no PII
+apply. `contactService.list` (unscoped — the public API handler passes no
+`scope`) and `contactService.findPublicContactOrFail` always run "unscoped":
+a token sees every contact in the workspace, with full email/phone (no PII
 masking), regardless of any member's `emailAndPhone`/`onlyAssignedContacts`
-permission. When a token surface returns contacts or contact-derived data,
-make the intended scope explicit in the API contract and tests.
+permission. The private path resolves a `scope` from the member's
+permissions and calls the same `contactService.list` method — see
+`.agents/skills/business-data-access/SKILL.md`. When a token surface returns
+contacts or contact-derived data, make the intended scope explicit in the
+API contract and tests.
 
 ### Contacts scope — endpoint-to-scope table
 

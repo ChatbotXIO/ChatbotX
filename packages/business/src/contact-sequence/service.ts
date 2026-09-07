@@ -10,7 +10,10 @@ import {
   contactsOnSequenceModel,
   sequenceModel,
 } from "@chatbotx.io/database/schema"
-import { emitSequenceUnsubscribed } from "@chatbotx.io/events"
+import {
+  emitSequenceSubscribed,
+  emitSequenceUnsubscribed,
+} from "@chatbotx.io/events"
 import {
   calculateNextRunAtFromStep,
   cancelPendingDispatches,
@@ -220,6 +223,70 @@ class ContactSequenceService extends BaseService {
       skippedContactIds: contactIds.filter((id) => !processedSet.has(id)),
     }
   }
+  /**
+   * The flow-step `addContactTag`/`addContactSequence`-equivalent single-
+   * contact enrollment: unlike `enrollContacts` (bulk, no per-enrollment
+   * event), this emits `sequenceSubscribed` for the flow-step UI to react to,
+   * matching the worker's original hand-rolled `nextRunAt` calculation
+   * (`delayDays`/`delayMinutes` only — `delayUnit`/`specificDateTime` are
+   * NOT honored here, carried over verbatim from the pre-existing worker
+   * logic; unifying with `calculateNextRunAtFromStep`, which does honor
+   * them, is a separate follow-up).
+   */
+  async enrollFromFlow(props: {
+    workspaceId: string
+    contactId: string
+    sequenceId: string
+    contactInboxId: string
+  }): Promise<void> {
+    const { workspaceId, contactId, sequenceId, contactInboxId } = props
+
+    const existing = await db.query.contactsOnSequenceModel.findFirst({
+      where: { contactId, sequenceId, workspaceId },
+      columns: { id: true },
+    })
+    if (existing) {
+      return
+    }
+
+    const now = new Date()
+
+    const firstStep = await db.query.sequenceStepModel.findFirst({
+      where: { sequenceId, order: 0, isActive: true },
+      columns: { id: true, delayDays: true, delayMinutes: true },
+    })
+
+    const nextRunAt = firstStep
+      ? new Date(
+          now.getTime() +
+            firstStep.delayDays * 24 * 60 * 60 * 1000 +
+            firstStep.delayMinutes * 60 * 1000,
+        )
+      : now
+
+    await enrollContactInSequence({
+      workspaceId,
+      contactId,
+      sequenceId,
+      nextRunAt,
+      nextStepId: firstStep?.id ?? null,
+      enrolledAt: now,
+    })
+
+    const sequence = await db.query.sequenceModel.findFirst({
+      where: { id: sequenceId },
+      columns: { name: true },
+    })
+
+    await emitSequenceSubscribed(
+      workspaceId,
+      contactId,
+      sequenceId,
+      sequence?.name ?? "",
+      contactInboxId,
+    )
+  }
+
   async listByContactId(props: {
     workspaceId: string
     contactId: string

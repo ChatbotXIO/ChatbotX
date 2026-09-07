@@ -1,1 +1,1 @@
-export const MAX_TRIGGERS_PER_CHATBOT = 50
+export { MAX_TRIGGERS_PER_WORKSPACE as MAX_TRIGGERS_PER_CHATBOT } from "@chatbotx.io/business"

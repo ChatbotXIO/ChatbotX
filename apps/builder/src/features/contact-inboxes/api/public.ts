@@ -1,5 +1,4 @@
-import { contactService } from "@chatbotx.io/business"
-import { contactInboxRepository } from "@chatbotx.io/database/repositories"
+import { contactInboxService, contactService } from "@chatbotx.io/business"
 import { z } from "zod"
 import { listContactInboxesPublicResponse } from "@/features/contact-inboxes/schema/public"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -7,11 +6,6 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
 export const contactsInboxesPublicRouter = {
-  // Deliberately uncached: channel webhooks create/update ContactInbox
-  // identities and the sequence scheduler advances enrollments, neither of
-  // which routes through the `contacts:*` cache tags this PR controls. A
-  // stale read here is worse for an AI/MCP caller (acting on a channel
-  // identity list that's already changed) than paying for the DB hit.
   listInboxes: workspaceTokenAuthAPI
     .route({
       method: "GET",
@@ -27,7 +21,7 @@ export const contactsInboxesPublicRouter = {
         identifier: input.identifier,
         workspaceId,
       })
-      const data = await contactInboxRepository.listWithInboxNameByContactId({
+      const data = await contactInboxService.listByContactIdUncached({
         workspaceId,
         contactId,
       })

@@ -8,10 +8,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   sequenceFindMany: vi.fn(),
+  sequenceFindFirst: vi.fn(),
   sequenceStepFindMany: vi.fn(),
+  sequenceStepFindFirst: vi.fn(),
   contactsOnSequenceFindMany: vi.fn(),
+  contactsOnSequenceFindFirst: vi.fn(),
   findManyByIds: vi.fn(),
   enrollContactsInSequenceBulk: vi.fn(),
+  enrollContactInSequence: vi.fn(),
+  emitSequenceSubscribed: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -19,13 +24,17 @@ vi.mock("@chatbotx.io/database/client", () => ({
     query: {
       sequenceModel: {
         findMany: (...args: unknown[]) => mocks.sequenceFindMany(...args),
+        findFirst: (...args: unknown[]) => mocks.sequenceFindFirst(...args),
       },
       sequenceStepModel: {
         findMany: (...args: unknown[]) => mocks.sequenceStepFindMany(...args),
+        findFirst: (...args: unknown[]) => mocks.sequenceStepFindFirst(...args),
       },
       contactsOnSequenceModel: {
         findMany: (...args: unknown[]) =>
           mocks.contactsOnSequenceFindMany(...args),
+        findFirst: (...args: unknown[]) =>
+          mocks.contactsOnSequenceFindFirst(...args),
       },
     },
   },
@@ -41,12 +50,15 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/events", () => ({
   emitSequenceUnsubscribed: vi.fn(),
+  emitSequenceSubscribed: (...args: unknown[]) =>
+    mocks.emitSequenceSubscribed(...args),
 }))
 
 vi.mock("@chatbotx.io/sequence-scheduler", () => ({
   calculateNextRunAtFromStep: vi.fn(() => new Date("2026-01-01T00:00:00Z")),
   cancelPendingDispatches: vi.fn(),
-  enrollContactInSequence: vi.fn(),
+  enrollContactInSequence: (...args: unknown[]) =>
+    mocks.enrollContactInSequence(...args),
   enrollContactsInSequenceBulk: (...args: unknown[]) =>
     mocks.enrollContactsInSequenceBulk(...args),
   removeDispatchesFromSchedule: vi.fn(),
@@ -72,7 +84,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.sequenceStepFindMany.mockResolvedValue([])
   mocks.contactsOnSequenceFindMany.mockResolvedValue([])
+  mocks.contactsOnSequenceFindFirst.mockResolvedValue(null)
+  mocks.sequenceStepFindFirst.mockResolvedValue(null)
+  mocks.sequenceFindFirst.mockResolvedValue(null)
   mocks.enrollContactsInSequenceBulk.mockResolvedValue(undefined)
+  mocks.enrollContactInSequence.mockResolvedValue(undefined)
 })
 
 describe("contactSequenceService.enrollContacts", () => {
@@ -157,5 +173,88 @@ describe("contactSequenceService.enrollContacts", () => {
       processedContactIds: ["contact-1"],
       skippedContactIds: ["deleted-contact"],
     })
+  })
+})
+
+describe("contactSequenceService.enrollFromFlow", () => {
+  test("does nothing when the contact is already enrolled", async () => {
+    mocks.contactsOnSequenceFindFirst.mockResolvedValueOnce({ id: "enr-1" })
+
+    await contactSequenceService.enrollFromFlow({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      sequenceId: "seq-1",
+      contactInboxId: "ci-1",
+    })
+
+    expect(mocks.enrollContactInSequence).not.toHaveBeenCalled()
+    expect(mocks.emitSequenceSubscribed).not.toHaveBeenCalled()
+  })
+
+  test("enrolls at the first active step and emits sequenceSubscribed with the sequence name", async () => {
+    mocks.sequenceStepFindFirst.mockResolvedValueOnce({
+      id: "step-1",
+      delayDays: 1,
+      delayMinutes: 30,
+    })
+    mocks.sequenceFindFirst.mockResolvedValueOnce({ name: "Welcome" })
+
+    await contactSequenceService.enrollFromFlow({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      sequenceId: "seq-1",
+      contactInboxId: "ci-1",
+    })
+
+    expect(mocks.enrollContactInSequence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        contactId: "contact-1",
+        sequenceId: "seq-1",
+        nextStepId: "step-1",
+      }),
+    )
+    expect(mocks.emitSequenceSubscribed).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      "contact-1",
+      "seq-1",
+      "Welcome",
+      "ci-1",
+    )
+  })
+
+  test("enrolls immediately (nextRunAt = now, nextStepId = null) when no first step exists", async () => {
+    mocks.sequenceStepFindFirst.mockResolvedValueOnce(null)
+    mocks.sequenceFindFirst.mockResolvedValueOnce({ name: "Welcome" })
+
+    await contactSequenceService.enrollFromFlow({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      sequenceId: "seq-1",
+      contactInboxId: "ci-1",
+    })
+
+    expect(mocks.enrollContactInSequence).toHaveBeenCalledWith(
+      expect.objectContaining({ nextStepId: null }),
+    )
+  })
+
+  test("emits sequenceSubscribed with an empty name when the sequence lookup misses", async () => {
+    mocks.sequenceFindFirst.mockResolvedValueOnce(null)
+
+    await contactSequenceService.enrollFromFlow({
+      workspaceId: WORKSPACE_ID,
+      contactId: "contact-1",
+      sequenceId: "seq-1",
+      contactInboxId: "ci-1",
+    })
+
+    expect(mocks.emitSequenceSubscribed).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      "contact-1",
+      "seq-1",
+      "",
+      "ci-1",
+    )
   })
 })

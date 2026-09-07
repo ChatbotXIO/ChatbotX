@@ -1,125 +1,120 @@
 // @vitest-environment node
-
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const {
-  mockInsertReturning,
-  mockInsertValues,
-  mockInsert,
-  mockCount,
-  mockGetTranslations,
-  mockCreateId,
-  mockUpdateWebhookCache,
-  mockRecordAuditLog,
-} = vi.hoisted(() => {
-  const mockInsertReturning = vi.fn()
-  const mockInsertValues = vi.fn()
-  mockInsertValues.mockReturnValue({ returning: mockInsertReturning })
-  const mockInsert = vi.fn()
-  mockInsert.mockReturnValue({ values: mockInsertValues })
+const mockCreate = vi.fn()
+const mockGetTranslations = vi.fn()
 
-  return {
-    mockInsertReturning,
-    mockInsertValues,
-    mockInsert,
-    mockCount: vi.fn().mockResolvedValue(0),
-    mockGetTranslations: vi.fn().mockResolvedValue((k: string) => k),
-    mockCreateId: vi.fn().mockReturnValue("webhook-1"),
-    mockUpdateWebhookCache: vi.fn().mockResolvedValue(undefined),
-    mockRecordAuditLog: vi.fn(),
-  }
-})
-
-vi.mock("@/lib/safe-action", () => {
-  const chain: Record<string, unknown> = {}
-  chain.bindArgsSchemas = () => chain
-  chain.inputSchema = () => chain
-  chain.action = (fn: unknown) => fn
-  return { workspaceActionClient: chain }
-})
-
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: (...args: unknown[]) => mockRecordAuditLog(...args) },
+vi.mock("@chatbotx.io/business", () => ({
+  webhookService: { create: (...args: unknown[]) => mockCreate(...args) },
 }))
+
+class FakeChatbotXException extends Error {
+  code: string
+  field?: string
+  data?: Record<string, string | number>
+  constructor(
+    message: string,
+    code = "validation",
+    field?: string,
+    data?: Record<string, string | number>,
+  ) {
+    super(message)
+    this.code = code
+    this.field = field
+    this.data = data
+  }
+}
 
 vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {},
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { insert: mockInsert, $count: mockCount },
-  eq: (a: unknown, b: unknown) => ({ __eq: [a, b] }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  webhookModel: { workspaceId: "workspaceId" },
+  ChatbotXException: FakeChatbotXException,
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   folderTypes: { enum: { webhook: "webhook" } },
 }))
 
-vi.mock("@chatbotx.io/events", () => ({
-  updateWebhookCache: mockUpdateWebhookCache,
-}))
-
-vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
-  return { ...actual, createId: mockCreateId }
-})
-
 vi.mock("next-intl/server", () => ({
-  getTranslations: mockGetTranslations,
+  getTranslations: () => mockGetTranslations(),
 }))
 
 vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
-  folderService: { ensureExists: vi.fn().mockResolvedValue(undefined) },
+vi.mock("@/lib/safe-action", () => ({
+  workspaceActionClient: {
+    bindArgsSchemas: () => ({
+      inputSchema: () => ({ action: (fn: unknown) => fn }),
+    }),
+  },
 }))
 
 vi.mock("../src/features/webhooks/schema/create-webhook-schema", () => ({
   createWebhookSchema: {},
 }))
 
-vi.mock("../src/features/webhooks/constants", () => ({
-  MAX_WEBHOOKS_PER_CHATBOT: 100,
-}))
-
-const { createWebhookAction } = await import(
+const { createWebhookAction: createWebhookActionUntyped } = await import(
   "../src/features/webhooks/actions/create-webhook-action"
 )
-
-type Handler = (args: {
-  bindArgsParsedInputs: [string]
-  parsedInput: { name: string; folderId?: string | null }
-}) => Promise<unknown>
+const createWebhookAction = createWebhookActionUntyped as unknown as (
+  props: unknown,
+) => Promise<unknown>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockInsertValues.mockReturnValue({ returning: mockInsertReturning })
-  mockInsert.mockReturnValue({ values: mockInsertValues })
-  mockCount.mockResolvedValue(0)
+  mockGetTranslations.mockResolvedValue(
+    (key: string, params?: Record<string, unknown>) =>
+      `${key}:${JSON.stringify(params)}`,
+  )
 })
 
 describe("createWebhookAction", () => {
-  test("emits a create audit row with the webhook name and id", async () => {
-    mockInsertReturning.mockResolvedValue([
-      { id: "webhook-1", name: "New Order" },
-    ])
+  test("delegates to webhookService.create with the resolved workspaceId and folderType", async () => {
+    mockCreate.mockResolvedValue({ id: "webhook-1", name: "New Order" })
 
-    const result = await (createWebhookAction as unknown as Handler)({
+    const result = await createWebhookAction({
       bindArgsParsedInputs: ["ws-1"],
       parsedInput: { name: "New Order", folderId: null },
-    })
+    } as never)
 
-    expect(result).toEqual({ id: "webhook-1", name: "New Order" })
-    expect(mockRecordAuditLog).toHaveBeenCalledWith({
+    expect(mockCreate).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      action: "create",
-      detail: "created a new webhook (#webhook-1)",
+      data: { name: "New Order", folderId: null },
+      folderType: "webhook",
     })
+    expect(result).toEqual({ id: "webhook-1", name: "New Order" })
+  })
+
+  test("localizes a maxItemsReached validation error via getTranslations", async () => {
+    mockCreate.mockRejectedValue(
+      new FakeChatbotXException(
+        "validation.maxItemsReached",
+        "validation",
+        "_",
+        { max: 100, feature: "webhooks" },
+      ),
+    )
+
+    await expect(
+      createWebhookAction({
+        bindArgsParsedInputs: ["ws-1"],
+        parsedInput: { name: "New Order", folderId: null },
+      } as never),
+    ).rejects.toThrow(
+      'validation.maxItemsReached:{"max":100,"feature":"webhooks"}',
+    )
+  })
+
+  test("re-throws non-validation errors without localizing", async () => {
+    mockCreate.mockRejectedValue(new Error("boom"))
+
+    await expect(
+      createWebhookAction({
+        bindArgsParsedInputs: ["ws-1"],
+        parsedInput: { name: "New Order", folderId: null },
+      } as never),
+    ).rejects.toThrow("boom")
+
+    expect(mockGetTranslations).not.toHaveBeenCalled()
   })
 })

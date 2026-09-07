@@ -94,6 +94,7 @@ const contactFindByIdOrFail = vi.fn(() => {
   return Promise.resolve(state.findOrFailResult ?? {})
 })
 const enqueueTagAppliedEvaluationsBulk = vi.fn(async () => undefined)
+const enqueueTagAppliedEvaluationsForInbox = vi.fn(async () => undefined)
 const contactInvalidate = vi.fn(async () => undefined)
 
 vi.mock("../src/tag/sync.service", () => ({
@@ -101,7 +102,12 @@ vi.mock("../src/tag/sync.service", () => ({
 }))
 
 vi.mock("../src/ads-conversion/service", () => ({
-  adsConversionService: { enqueueTagAppliedEvaluationsBulk },
+  adsConversionService: {
+    enqueueTagAppliedEvaluationsBulk,
+    enqueueTagAppliedEvaluationsForInbox,
+    isEligibleChannel: (channel: string | null | undefined) =>
+      channel === "whatsapp",
+  },
 }))
 
 vi.mock("../src/contact", () => ({
@@ -283,6 +289,49 @@ describe("tagService.attachByNamesToContacts", () => {
         { contactId: "c-1", tagId: "tag-2" },
       ],
     })
+  })
+
+  test("with a contactInbox on a WhatsApp-eligible channel: uses the precise per-inbox enqueue, not the bulk fan-out", async () => {
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+    mockInsertBuilder.returning.mockResolvedValue([
+      { contactId: "c-1", tagId: "tag-1" },
+    ])
+
+    await tagService.attachByNamesToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a"],
+      contactInbox: { id: "ci-1", inboxId: "inbox-1", channel: "whatsapp" },
+    })
+
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      inboxId: "inbox-1",
+      contactInboxId: "ci-1",
+      tagIds: ["tag-1"],
+    })
+    expect(enqueueTagAppliedEvaluationsBulk).not.toHaveBeenCalled()
+    expect(emitTagApplied).toHaveBeenCalledWith("ws-1", "c-1", "tag-1", "ci-1")
+  })
+
+  test("with a contactInbox on a non-eligible channel: skips both the per-inbox and bulk ads-conversion enqueue", async () => {
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+    mockInsertBuilder.returning.mockResolvedValue([
+      { contactId: "c-1", tagId: "tag-1" },
+    ])
+
+    await tagService.attachByNamesToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a"],
+      contactInbox: { id: "ci-1", inboxId: "inbox-1", channel: "messenger" },
+    })
+
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
+    expect(enqueueTagAppliedEvaluationsBulk).not.toHaveBeenCalled()
   })
 
   test("swallows emitTagApplied errors and continues to enqueueAttach", async () => {
@@ -492,6 +541,20 @@ describe("tagService.detachByNamesFromContacts", () => {
       contactId: "c-2",
       tagId: "tag-2",
     })
+  })
+
+  test("forwards contactInboxId into the emitTagRemoved event scope", async () => {
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+
+    await tagService.detachByNamesFromContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a"],
+      contactInboxId: "ci-1",
+    })
+
+    expect(emitTagRemoved).toHaveBeenCalledWith("ws-1", "c-1", "tag-1", "ci-1")
   })
 
   test("swallows emitTagRemoved errors and completes normally", async () => {

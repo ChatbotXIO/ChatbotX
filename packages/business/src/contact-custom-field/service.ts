@@ -5,6 +5,7 @@ import {
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
+import { contactCustomFieldRepository } from "@chatbotx.io/database/repositories"
 import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import {
@@ -302,6 +303,35 @@ class ContactCustomFieldService extends BaseService {
     )
   }
 
+  /**
+   * Applies a sequence of arithmetic/append operations to one contact's
+   * custom field, in order — the public `PATCH .../custom-fields` handler's
+   * single call site for what would otherwise be a per-op loop in the app
+   * layer.
+   */
+  async applyOperations(input: {
+    workspaceId: string
+    contactId: string
+    operations: Array<{
+      customFieldId: string
+      operation: FieldOperationType
+      value: string
+    }>
+    accessScope?: ContactAccessScope
+  }): Promise<void> {
+    const { workspaceId, contactId, operations, accessScope } = input
+    for (const op of operations) {
+      await this.applyOperationToContacts({
+        workspaceId,
+        contactIds: [contactId],
+        customFieldId: op.customFieldId,
+        operation: op.operation,
+        value: op.value,
+        accessScope,
+      })
+    }
+  }
+
   async setValueForContact(input: {
     workspaceId: string
     contactId: string
@@ -360,6 +390,21 @@ class ContactCustomFieldService extends BaseService {
       name: row.customField.name,
       value: row.value,
     }))
+  }
+
+  listWithDefinitionByContact(input: {
+    contactId: string
+    workspaceId: string
+  }) {
+    return contactCustomFieldRepository.listWithDefinitionByContact(input)
+  }
+
+  findWithDefinition(input: {
+    contactId: string
+    customFieldId: string
+    workspaceId: string
+  }) {
+    return contactCustomFieldRepository.findWithDefinition(input)
   }
 
   /**

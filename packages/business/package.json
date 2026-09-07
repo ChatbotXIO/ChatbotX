@@ -12,6 +12,7 @@
     "./contact-inbox": "./src/contact-inbox/index.ts",
     "./contact-locale": "./src/contact-locale/index.ts",
     "./contact-profile-rules": "./src/contact/profile-refresh/rules.ts",
+    "./contact-utils": "./src/contact/utils.ts",
     "./contact-sequence": "./src/contact-sequence/index.ts",
     "./coupon": "./src/coupon/index.ts",
     "./dynamic-image": "./src/dynamic-image/index.ts",

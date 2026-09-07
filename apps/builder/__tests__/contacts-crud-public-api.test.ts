@@ -15,6 +15,23 @@ vi.mock("@chatbotx.io/database/client", () => {
   return { db: proxy }
 })
 
+// The real `@chatbotx.io/business` barrel (kept for `inboxResource`, see
+// below) pulls in `contactRepository`, which transitively needs the real
+// contact-filter query graph (`applyContactFilter` → `contactInboxExists` →
+// real `contactInboxModel`). This test never exercises real repository
+// behavior — `contactService` is fully stubbed below — so proxy-mock the
+// repositories module the same way as `database/client` above.
+vi.mock("@chatbotx.io/database/repositories", () => {
+  const nestedProxy: unknown = new Proxy(
+    {},
+    { get: (_obj, prop) => (prop === "then" ? undefined : nestedProxy) },
+  )
+  return new Proxy(
+    {},
+    { get: (_obj, prop) => (prop === "then" ? undefined : nestedProxy) },
+  ) as Record<string, unknown>
+})
+
 type RouteConfig = {
   method: string
   path: string
@@ -61,17 +78,11 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
-const listContactsForAPI = vi.fn()
-vi.mock("../src/features/contacts/queries/list-contacts.queries", () => ({
-  listContactsForAPI,
-  countContactsForAPI,
-}))
-
-const countContactsForAPI = vi.fn()
-
+const listContacts = vi.fn()
+const countContacts = vi.fn()
 const resolveContactId = vi.fn()
-const publicFindContact = vi.fn()
-const publicListContactsByCustomField = vi.fn()
+const findPublicContactOrFail = vi.fn()
+const listByCustomFieldValue = vi.fn()
 
 const createContact = vi.fn()
 
@@ -86,20 +97,18 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => {
   return {
     inboxResource: actual.inboxResource,
     contactService: {
+      list: listContacts,
+      count: countContacts,
       resolveIdByIdentifier: resolveContactId,
+      findPublicContactOrFail,
       createWithInbox: createContact,
       deleteAndRecord: deleteContact,
       updateFieldsAndCustomFields: updateContactFields,
+      listByCustomFieldValue,
     },
     importService: { startContactImport: contactImportService.startImport },
   }
 })
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  contactRepository: {
-    findPublicById: publicFindContact,
-    listPublicByCustomField: publicListContactsByCustomField,
-  },
-}))
 
 await import("@/features/contacts/api/public/crud")
 
@@ -121,7 +130,7 @@ describe("GET /v1/contacts", () => {
   const procedure = findProcedure("GET", "/v1/contacts")
 
   test("passes include/withCount through as separate options, not merged into the query filter", async () => {
-    listContactsForAPI.mockResolvedValueOnce({
+    listContacts.mockResolvedValueOnce({
       data: [],
       pageCount: 0,
       totalCount: 0,
@@ -138,18 +147,21 @@ describe("GET /v1/contacts", () => {
       },
     })
 
-    expect(listContactsForAPI).toHaveBeenCalledWith(
-      { page: 1, perPage: 20, workspaceId: "workspace-1" },
-      { include: ["tags"], withCount: false },
-    )
+    expect(listContacts).toHaveBeenCalledWith({
+      page: 1,
+      perPage: 20,
+      workspaceId: "workspace-1",
+      include: ["tags"],
+      withCount: false,
+    })
   })
 })
 
 describe("POST /v1/contacts/search", () => {
   const procedure = findProcedure("POST", "/v1/contacts/search")
 
-  test("delegates to the same listContactsForAPI as GET /v1/contacts", async () => {
-    listContactsForAPI.mockResolvedValueOnce({
+  test("delegates to the same contactService.list as GET /v1/contacts", async () => {
+    listContacts.mockResolvedValueOnce({
       data: [],
       pageCount: 0,
       totalCount: 0,
@@ -161,18 +173,21 @@ describe("POST /v1/contacts/search", () => {
       input: { page: 1, perPage: 20 },
     })
 
-    expect(listContactsForAPI).toHaveBeenCalledWith(
-      { page: 1, perPage: 20, workspaceId: "workspace-1" },
-      { include: undefined, withCount: undefined },
-    )
+    expect(listContacts).toHaveBeenCalledWith({
+      page: 1,
+      perPage: 20,
+      workspaceId: "workspace-1",
+      include: undefined,
+      withCount: undefined,
+    })
   })
 })
 
 describe("GET /v1/contacts/count", () => {
   const procedure = findProcedure("GET", "/v1/contacts/count")
 
-  test("delegates to countContactsForAPI", async () => {
-    countContactsForAPI.mockResolvedValueOnce({ total: 7 })
+  test("delegates to contactService.count", async () => {
+    countContacts.mockResolvedValueOnce({ total: 7 })
 
     await expect(
       procedure.handler?.({
@@ -181,7 +196,7 @@ describe("GET /v1/contacts/count", () => {
       }),
     ).resolves.toEqual({ total: 7 })
 
-    expect(countContactsForAPI).toHaveBeenCalledWith({
+    expect(countContacts).toHaveBeenCalledWith({
       page: 1,
       perPage: 20,
       workspaceId: "workspace-1",

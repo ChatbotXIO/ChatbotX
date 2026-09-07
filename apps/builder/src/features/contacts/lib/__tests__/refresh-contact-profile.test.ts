@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // refreshContactProfile: authorization (findByIdOrFail) gates everything
-// else; a missing ContactInbox 404s; a non-capable channel short-circuits
-// before the fetcher factory; a capable channel resolves the factory and
-// forwards the service result, with and without an accessScope.
+// else; a missing ContactInbox 404s; otherwise it resolves the channel's
+// fetcher factory lazily and forwards whatever
+// `contactProfileRefreshService.refresh` decides — including the
+// `channelNotCapable` skip, which the service itself now owns.
 
 const mocks = vi.hoisted(() => ({
   findByIdOrFail: vi.fn(),
   findContactInboxByUncached: vi.fn(),
   refresh: vi.fn(),
-  hasOnDemandProfileApi: vi.fn(),
   fetcherFactory: vi.fn(),
 }))
 
@@ -17,8 +17,6 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: { findByIdOrFail: mocks.findByIdOrFail },
   contactInboxService: { findByUncached: mocks.findContactInboxByUncached },
   contactProfileRefreshService: { refresh: mocks.refresh },
-  hasOnDemandProfileApi: (channel: string) =>
-    mocks.hasOnDemandProfileApi(channel),
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -72,7 +70,7 @@ describe("refreshContactProfile", () => {
     expect(mocks.refresh).not.toHaveBeenCalled()
   })
 
-  test("skips with channelNotCapable when the channel has no on-demand profile API", async () => {
+  test("forwards the service's channelNotCapable skip for a non-capable channel without ever invoking a fetcher factory", async () => {
     mocks.findByIdOrFail.mockResolvedValueOnce({ id: CONTACT_ID })
     mocks.findContactInboxByUncached.mockResolvedValueOnce({
       id: CONTACT_INBOX_ID,
@@ -82,7 +80,10 @@ describe("refreshContactProfile", () => {
       sourceId: "source-1",
       language: "en",
     })
-    mocks.hasOnDemandProfileApi.mockReturnValueOnce(false)
+    mocks.refresh.mockResolvedValueOnce({
+      status: "skipped",
+      reason: "channelNotCapable",
+    })
 
     const result = await refreshContactProfile({
       workspaceId: WORKSPACE_ID,
@@ -92,7 +93,6 @@ describe("refreshContactProfile", () => {
 
     expect(result).toEqual({ status: "skipped", reason: "channelNotCapable" })
     expect(mocks.fetcherFactory).not.toHaveBeenCalled()
-    expect(mocks.refresh).not.toHaveBeenCalled()
   })
 
   test("refreshes via the resolved channel fetcher and forwards the service result", async () => {
@@ -105,7 +105,6 @@ describe("refreshContactProfile", () => {
       sourceId: "source-1",
       language: "en",
     })
-    mocks.hasOnDemandProfileApi.mockReturnValueOnce(true)
     const fetchProfile = vi.fn()
     mocks.fetcherFactory.mockReturnValueOnce(fetchProfile)
     const updatedContact = { id: CONTACT_ID, firstName: "Ada" }
@@ -120,20 +119,26 @@ describe("refreshContactProfile", () => {
       contactInboxId: CONTACT_INBOX_ID,
     })
 
-    expect(mocks.fetcherFactory).toHaveBeenCalledWith({
-      workspaceId: WORKSPACE_ID,
-      inboxId: "inbox-1",
-      sourceId: "source-1",
-    })
     expect(mocks.refresh).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: WORKSPACE_ID,
         contactId: CONTACT_ID,
         source: "channelApi",
-        fetchProfile,
         accessScope: undefined,
       }),
     )
+
+    // The fetcher factory is only invoked lazily, when the service's
+    // `fetchProfile` callback is actually called.
+    const call = mocks.refresh.mock.calls[0]?.[0]
+    expect(mocks.fetcherFactory).not.toHaveBeenCalled()
+    await call.fetchProfile()
+    expect(mocks.fetcherFactory).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      inboxId: "inbox-1",
+      sourceId: "source-1",
+    })
+
     expect(result).toEqual({ status: "updated", contact: updatedContact })
   })
 
@@ -147,7 +152,6 @@ describe("refreshContactProfile", () => {
       sourceId: "source-1",
       language: "en",
     })
-    mocks.hasOnDemandProfileApi.mockReturnValueOnce(true)
     mocks.fetcherFactory.mockReturnValueOnce(vi.fn())
     mocks.refresh.mockResolvedValueOnce({ status: "unavailable" })
     const accessScope = { restrictToAssignedUserId: "user-1" }

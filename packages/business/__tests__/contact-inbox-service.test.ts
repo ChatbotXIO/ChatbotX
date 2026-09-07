@@ -103,6 +103,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: mockSql,
 }))
 
+// This suite never exercises `listByContactIdUncached`, but vitest's SSR deps
+// optimizer bundles the whole `@chatbotx.io/database` package graph together
+// once any subpath is imported, which otherwise pulls in
+// `contactInboxRepository`'s real contact-filter query graph (needs the real
+// schema, conflicting with the narrow mock below).
+vi.mock("@chatbotx.io/database/repositories", () => ({}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   CONTACT_INBOX_SOURCE_USER_ID_KEY: "ContactInbox_inboxId_sourceUserId_key",
   contactModel: {

@@ -26,9 +26,19 @@ Defined in `apps/builder/src/orpc.ts`:
 
 Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per-procedure.
 
+Handlers never talk to the database themselves — see the `business-data-access`
+skill and `.agents/rules/data-access.md` for the full `action | API handler →
+service → repository → DB` chain and the `.query.ts` file contract.
+
 ## Creating a New Procedure
 
+The chain is `action | API handler → service → repository → DB` (see
+`.agents/rules/data-access.md`). A handler's job is: resolve session context
+(or none, for a token caller) → call a service method → shape the response.
+It never holds where-builders, pagination, or count logic itself.
+
 ```typescript
+import { myFeatureService } from "@chatbotx.io/business"
 import { authorizedAPI } from "@/orpc"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { z } from "zod"
@@ -52,7 +62,7 @@ export const myFeatureAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(myFeatureListResponse)
     .handler(async ({ input, context }) => {
-      return await listMyFeature(input)
+      return await myFeatureService.list(input)
     }),
 
   createMyFeatureAPI: authorizedAPI
@@ -65,10 +75,47 @@ export const myFeatureAuthenticatedAPI = {
     .input(createMyFeatureRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      return await createMyFeature(input)
+      return await myFeatureService.create(input)
     }),
 }
 ```
+
+### Public and private procedures for the same resource share one service method
+
+Only the app layer resolves the caller's permission scope and passes it into
+the service as plain data — the service itself never inspects whether the
+caller was a signed-in member or a workspace token:
+
+```typescript
+// Private (session) — resolves a scope from the member's permissions
+export const myFeatureAuthenticatedAPI = {
+  listMyFeatureAPI: authorizedAPI
+    // ...
+    .handler(async ({ input, context }) => {
+      const scope = await requireMyFeaturePermissionScope(input.workspaceId)
+      return await myFeatureService.list({ ...input, scope })
+    }),
+}
+
+// Public (workspace token) — unscoped, no member permissions to resolve
+export const myFeaturePublicRouter = {
+  list: workspaceTokenAuthAPI
+    // ...
+    .handler(async ({ context, input }) =>
+      await myFeatureService.list({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+    ),
+}
+```
+
+Never write a second implementation of the same list/filter/mutation logic
+for the public path — both handlers must converge on the same service method
+so a bug fix or a new filter only has to happen once. See
+`packages/business/src/contact/list.ts` for a worked example
+(`contactService.list`/`count` called from both the private
+`list-contacts.queries.ts` adapter and the public `crud.ts` handler).
 
 ### Procedure Chain
 
@@ -170,13 +217,14 @@ endpoint with ambiguous input shape should always set `description`.
 **`include`/`withCount` convention for list endpoints**: a public list
 endpoint whose row shape has optional relations or an expensive count query
 should accept `include?: string[]` (narrows the response payload — see
-`features/contacts/queries/list-contacts.queries.ts`'s
-`stripUnrequestedContactRelations`, which strips fields post-query rather
-than fighting Drizzle's relational-query type inference with a dynamic
-`with:`) and `withCount?: boolean` (default `true`, skips the count query
-entirely when `false` — the actual latency win, since the DB join happens
-either way). Only add this pair when a list endpoint's default response is
-genuinely heavy; a small resource with no relations doesn't need it.
+`contactService.list`'s `include`/`withCount` options in
+`packages/business/src/contact/list.ts`, which strips fields post-query
+rather than fighting Drizzle's relational-query type inference with a
+dynamic `with:`) and `withCount?: boolean` (default `true`, skips the count
+query entirely when `false` — the actual latency win, since the DB join
+happens either way). Only add this pair when a list endpoint's default
+response is genuinely heavy; a small resource with no relations doesn't need
+it.
 
 **Split `api/public.ts` (and its `schema/public.ts`) into submodules once
 either exceeds ~400 lines or accumulates more than one unrelated concern** —

@@ -5,6 +5,7 @@ import {
   db,
 } from "../../client"
 import { contactModel } from "../../schema"
+import { buildContactListWhere, resolveContactOrderBy } from "./list-where"
 
 type ContactListInput = {
   where: Record<string, unknown>
@@ -13,7 +14,16 @@ type ContactListInput = {
   orderBy: Record<string, unknown>
 }
 
+const PUBLIC_CONTACT_RELATIONS = {
+  tags: true,
+  contactCustomFields: true,
+  contactInboxes: { with: { inbox: true } },
+  conversation: { with: { assignedUser: true, assignedInboxTeam: true } },
+} as const
+
 export const contactRepository = {
+  buildListWhere: buildContactListWhere,
+  resolveOrderBy: resolveContactOrderBy,
   findIdByIdentityWhere(
     input: {
       workspaceId: string
@@ -33,49 +43,30 @@ export const contactRepository = {
   ) {
     return tx.query.contactModel.findFirst({
       where: input,
-      with: {
-        tags: true,
-        contactCustomFields: true,
-        contactInboxes: { with: { inbox: true } },
-        conversation: { with: { assignedUser: true, assignedInboxTeam: true } },
-      },
+      with: PUBLIC_CONTACT_RELATIONS,
     })
   },
   async listPublicByCustomField(
-    input: { workspaceId: string; customFieldId: string; value: string },
+    input: {
+      where: Record<string, unknown>
+      limit: number
+      orderBy: Record<string, unknown>
+    },
     tx: DatabaseClient = db,
   ) {
-    const { workspaceId, customFieldId, value } = input
-    const where: Record<string, unknown> = { workspaceId }
-    if (customFieldId === "email") {
-      where.email = value
-    } else if (customFieldId === "phone") {
-      where.phoneNumber = value
-    } else {
-      where.contactCustomFields = { customFieldId, value }
-    }
+    const { where, limit, orderBy } = input
     const data = await tx.query.contactModel.findMany({
       where,
-      limit: 100,
-      orderBy: { updatedAt: "desc" },
-      with: {
-        tags: true,
-        contactCustomFields: true,
-        contactInboxes: { with: { inbox: true } },
-        conversation: { with: { assignedUser: true, assignedInboxTeam: true } },
-      },
+      limit,
+      orderBy,
+      with: PUBLIC_CONTACT_RELATIONS,
     })
     return { data }
   },
   listWithRelations(input: ContactListInput, tx: DatabaseClient = db) {
     return tx.query.contactModel.findMany({
       ...input,
-      with: {
-        tags: true,
-        contactCustomFields: true,
-        contactInboxes: { with: { inbox: true } },
-        conversation: { with: { assignedUser: true, assignedInboxTeam: true } },
-      },
+      with: PUBLIC_CONTACT_RELATIONS,
     })
   },
   listForTable(input: ContactListInput, tx: DatabaseClient = db) {

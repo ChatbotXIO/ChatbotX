@@ -50,8 +50,8 @@ const mocks = vi.hoisted(() => ({
   findByContactWithInboxes: vi.fn(),
   createOutgoing: vi.fn(),
   findByInboundKeyword: vi.fn(),
+  findForContact: vi.fn(),
   listMessages: vi.fn(),
-  publicFindContactMessage: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -60,7 +60,10 @@ vi.mock("@chatbotx.io/business", () => ({
     resolveContactInboxForSend: mocks.resolveContactInboxForSend,
     findByContactWithInboxes: mocks.findByContactWithInboxes,
   },
-  messageService: { createOutgoing: mocks.createOutgoing },
+  messageService: {
+    createOutgoing: mocks.createOutgoing,
+    findForContact: mocks.findForContact,
+  },
   automatedResponseService: {
     findByInboundKeyword: mocks.findByInboundKeyword,
   },
@@ -72,7 +75,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@/features/messages/queries", () => ({
   listMessages: mocks.listMessages,
-  publicFindContactMessage: mocks.publicFindContactMessage,
 }))
 
 await import("@/features/contacts/api/public/messages")
@@ -182,14 +184,14 @@ describe("GET /v1/contacts/{identifier}/messages/{messageId}", () => {
 
   test("returns the message scoped to the contact's conversation", async () => {
     mocks.findByContactWithInboxes.mockResolvedValueOnce({ id: "conv-1" })
-    mocks.publicFindContactMessage.mockResolvedValueOnce({ id: "msg-1" })
+    mocks.findForContact.mockResolvedValueOnce({ id: "msg-1" })
 
     const result = await procedure.handler?.({
       context: { workspace: { id: WORKSPACE_ID } },
       input: { identifier: "id:1", messageId: "msg-1" },
     })
 
-    expect(mocks.publicFindContactMessage).toHaveBeenCalledWith({
+    expect(mocks.findForContact).toHaveBeenCalledWith({
       messageId: "msg-1",
       conversationId: "conv-1",
       workspaceId: WORKSPACE_ID,

@@ -55,7 +55,7 @@ const tagService = { attachToContact: vi.fn(), detachFromContact: vi.fn() }
 
 const resolveContactId = vi.fn()
 
-const addContactCustomFields = vi.fn()
+const applyCustomFieldOperations = vi.fn()
 const setContactCustomFieldValue = vi.fn()
 
 const updateContactTags = vi.fn()
@@ -83,7 +83,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   contactCustomFieldService: {
     ...contactCustomFieldService,
-    applyOperationToContacts: addContactCustomFields,
+    applyOperations: applyCustomFieldOperations,
     setValueForContact: setContactCustomFieldValue,
   },
 }))
@@ -154,7 +154,7 @@ describe("PATCH /v1/contacts/{identifier}/custom-fields", () => {
   )
 
   test("maps friendly operation names to internal FieldOperationType codes", async () => {
-    addContactCustomFields.mockResolvedValue(undefined)
+    applyCustomFieldOperations.mockResolvedValue(undefined)
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
@@ -166,17 +166,15 @@ describe("PATCH /v1/contacts/{identifier}/custom-fields", () => {
       },
     })
 
-    expect(addContactCustomFields).toHaveBeenCalledWith({
+    expect(applyCustomFieldOperations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      contactIds: ["contact-1"],
-      customFieldId: "cf-1",
-      operation: "O04",
-      value: "1",
+      contactId: "contact-1",
+      operations: [{ customFieldId: "cf-1", operation: "O04", value: "1" }],
     })
   })
 
-  test("applies operations in order, one call per operation", async () => {
-    addContactCustomFields.mockResolvedValue(undefined)
+  test("makes a single applyOperations call carrying every operation in order", async () => {
+    applyCustomFieldOperations.mockResolvedValue(undefined)
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
@@ -189,20 +187,14 @@ describe("PATCH /v1/contacts/{identifier}/custom-fields", () => {
       },
     })
 
-    expect(addContactCustomFields).toHaveBeenCalledTimes(2)
-    expect(addContactCustomFields).toHaveBeenNthCalledWith(1, {
+    expect(applyCustomFieldOperations).toHaveBeenCalledTimes(1)
+    expect(applyCustomFieldOperations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      contactIds: ["contact-1"],
-      customFieldId: "cf-1",
-      operation: "O01",
-      value: "a",
-    })
-    expect(addContactCustomFields).toHaveBeenNthCalledWith(2, {
-      workspaceId: "workspace-1",
-      contactIds: ["contact-1"],
-      customFieldId: "cf-1",
-      operation: "O02",
-      value: "b",
+      contactId: "contact-1",
+      operations: [
+        { customFieldId: "cf-1", operation: "O01", value: "a" },
+        { customFieldId: "cf-1", operation: "O02", value: "b" },
+      ],
     })
   })
 })

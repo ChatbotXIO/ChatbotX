@@ -48,19 +48,20 @@ integrations/
 - Worker, BullMQ, Kafka, scheduled job: use `worker-development`.
 - Channel integration or webhook behavior: use `integration-channel`.
 - Flow step or state-based routing: use `flow-step-development`.
-- CLI, MCP server, generated public client: use `public-api-tooling`.
+- CLI, MCP server, generated public client: use `orpc-api`.
 - Dev server, build, lint, package management: use `turborepo-workflow`.
 
 ## Basecode Scan Checklist
 
 1. Read the nearest `package.json`, route/module files, and sibling features.
-2. Identify the owning layer before editing:
-   - UI/app orchestration: `apps/builder`
-   - business rules: `packages/business`
-   - raw database queries: `packages/database/src/repositories`
+2. Identify the owning layer before editing — the chain is
+   `action | API handler → service → repository → DB`:
+   - UI/app orchestration (calls a service, never `db`): `apps/builder`
+   - business rules, cache invalidation, events (calls a repository): `packages/business`
+   - raw database queries, shard routing: `packages/database/src/repositories`
    - schema/migrations: `packages/database`
-   - async processing: `apps/worker` + `packages/worker-config`
-   - external channel protocol: `integrations/<channel>`
+   - async processing (calls a service, never `db`): `apps/worker` + `packages/worker-config`
+   - external channel protocol (calls a service, never `db`): `integrations/<channel>`
 3. Search for a similar feature and mirror naming, imports, error handling, and tests.
 4. Check `.agents/rules/*` for local invariants, especially data access and git.
 5. Keep changes scoped to the user request; do not refactor legacy exceptions unless required.

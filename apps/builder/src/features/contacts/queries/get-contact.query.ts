@@ -1,6 +1,6 @@
+import { contactService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import { contactRepository } from "@chatbotx.io/database/repositories"
 import {
   maskContactEmailAndPhone,
   resolveContactPermissionScope,
@@ -15,21 +15,11 @@ export async function getContact(
     throw notFoundException("Contact not found")
   }
 
-  const contact = await contactRepository.findDetailById({
-    id: input.contactId,
+  const contact = await contactService.findDetailOrFail({
     workspaceId: input.workspaceId,
+    id: input.contactId,
+    accessScope: { restrictToAssignedUserId: scope.restrictToAssignedUserId },
   })
-
-  if (!contact) {
-    throw notFoundException("Contact not found")
-  }
-
-  if (
-    scope.restrictToAssignedUserId &&
-    contact.conversation?.assignedUserId !== scope.restrictToAssignedUserId
-  ) {
-    throw notFoundException("Contact not found")
-  }
 
   const {
     contactCustomFields,

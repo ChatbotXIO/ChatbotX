@@ -36,6 +36,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     $count: mocks.count,
     transaction: mocks.transaction,
     delete: mocks.deleteFn,
+    insert: vi.fn(() => mocks.insertBuilder),
   },
   eq: vi.fn(() => "eq"),
   and: vi.fn(() => "and"),
@@ -65,6 +66,11 @@ vi.mock("@chatbotx.io/utils", () => ({
 
 const assertPublicUrl = vi.fn(async () => undefined)
 vi.mock("../src/net/ssrf-guard", () => ({ assertPublicUrl }))
+
+const ensureExists = vi.fn()
+vi.mock("../src/folder/service", () => ({
+  folderService: { ensureExists },
+}))
 
 const dispatchAuditRecord = vi.fn(async () => undefined)
 vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
@@ -193,5 +199,62 @@ describe("webhookService.unregister", () => {
     ).rejects.toThrow("Webhook not found")
 
     expect(removeWebhookCache).not.toHaveBeenCalled()
+  })
+})
+
+describe("webhookService.create", () => {
+  test("rejects once the workspace has reached the cap", async () => {
+    mocks.count.mockResolvedValue(MAX_WEBHOOKS_PER_WORKSPACE)
+
+    await expect(
+      webhookService.create({
+        workspaceId: "workspace-1",
+        data: { name: "My webhook" },
+        folderType: "webhook",
+      }),
+    ).rejects.toMatchObject({
+      field: "_",
+      message: "validation.maxItemsReached",
+      data: { max: MAX_WEBHOOKS_PER_WORKSPACE, feature: "webhooks" },
+    })
+
+    expect(ensureExists).not.toHaveBeenCalled()
+    expect(mocks.insertBuilder.values).not.toHaveBeenCalled()
+  })
+
+  test("checks the folder exists when a folderId is given", async () => {
+    await webhookService.create({
+      workspaceId: "workspace-1",
+      data: { name: "My webhook", folderId: "folder-1" },
+      folderType: "webhook",
+    })
+
+    expect(ensureExists).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: "workspace-1",
+      folderType: "webhook",
+    })
+  })
+
+  test("inserts with an empty url, invalidates the cache, and audits on success", async () => {
+    const result = await webhookService.create({
+      workspaceId: "workspace-1",
+      data: { name: "My webhook" },
+      folderType: "webhook",
+    })
+
+    expect(mocks.insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        name: "My webhook",
+        url: "",
+      }),
+    )
+    expect(updateWebhookCache).toHaveBeenCalledWith("workspace-1")
+    expect(dispatchAuditRecord).toHaveBeenCalledWith({
+      action: "create",
+      detail: "created a new webhook (#webhook-1)",
+    })
+    expect(result).toEqual({ id: "webhook-1" })
   })
 })

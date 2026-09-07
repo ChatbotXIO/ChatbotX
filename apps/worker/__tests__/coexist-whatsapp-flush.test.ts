@@ -103,6 +103,13 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   integrationQueue: { add: mockQueueAdd },
 }))
 
+// vitest's SSR deps optimizer bundles the whole `@chatbotx.io/database`
+// package graph together once any subpath is imported, which otherwise pulls
+// in `contactRepository`'s real contact-filter query graph (needs the real
+// schema, conflicting with the narrow mock below) even though this handler
+// never touches `@chatbotx.io/database/repositories`.
+vi.mock("@chatbotx.io/database/repositories", () => ({}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   whatsappCoexistStagingModel: {
     id: "id",

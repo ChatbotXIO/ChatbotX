@@ -231,16 +231,29 @@ class TagService extends BaseService {
     await this.invalidateCacheTags(tagCacheTags(workspaceId))
   }
 
+  /**
+   * `contactInbox` is only passed by the flow-step `addContactTag` path,
+   * which already runs inside one specific active conversation: when given,
+   * the ads-conversion `tagApplied` trigger resolves and enqueues against
+   * that ONE contactInbox (`enqueueTagAppliedEvaluationsForInbox`) instead
+   * of the default bulk fan-out across every ad-eligible inbox the contact
+   * has (`enqueueTagAppliedEvaluationsBulk`) — precise rather than broad,
+   * since the caller already knows which conversation the tag came from.
+   * Every other caller (bulk contact actions, public API) omits it and gets
+   * the unchanged bulk-fan-out behavior.
+   */
   async attachByNamesToContacts({
     workspaceId,
     contactIds,
     names,
     accessScope,
+    contactInbox,
   }: {
     workspaceId: string
     contactIds: string[]
     names: string[]
     accessScope?: ContactAccessScope
+    contactInbox?: { id: string; inboxId: string; channel: string | null }
   }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
     if (contactIds.length === 0 || names.length === 0) {
       return { processedContactIds: [], skippedContactIds: [...contactIds] }
@@ -296,7 +309,12 @@ class TagService extends BaseService {
       for (const contact of contacts) {
         for (const tag of allTags) {
           try {
-            await emitTagApplied(workspaceId, contact.id, tag.id)
+            await emitTagApplied(
+              workspaceId,
+              contact.id,
+              tag.id,
+              contactInbox?.id,
+            )
           } catch (error) {
             logger.error({ err: error }, "Failed to emit tagApplied event:")
           }
@@ -311,16 +329,29 @@ class TagService extends BaseService {
           tagId: pair.tagId,
         })
       }
-      // One batch resolve+enqueue call per chunk instead of one per pair
-      // (HIGH-1).
       if (newlyLinkedPairs.length > 0) {
-        await adsConversionService.enqueueTagAppliedEvaluationsBulk({
-          workspaceId,
-          pairs: newlyLinkedPairs.map((pair) => ({
-            contactId: pair.contactId,
-            tagId: pair.tagId,
-          })),
-        })
+        if (
+          contactInbox &&
+          adsConversionService.isEligibleChannel(contactInbox.channel)
+        ) {
+          await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
+            workspaceId,
+            channel: contactInbox.channel,
+            inboxId: contactInbox.inboxId,
+            contactInboxId: contactInbox.id,
+            tagIds: newlyLinkedPairs.map((pair) => pair.tagId),
+          })
+        } else if (!contactInbox) {
+          // One batch resolve+enqueue call per chunk instead of one per pair
+          // (HIGH-1).
+          await adsConversionService.enqueueTagAppliedEvaluationsBulk({
+            workspaceId,
+            pairs: newlyLinkedPairs.map((pair) => ({
+              contactId: pair.contactId,
+              tagId: pair.tagId,
+            })),
+          })
+        }
       }
     }
 
@@ -471,11 +502,13 @@ class TagService extends BaseService {
     contactIds,
     names,
     accessScope,
+    contactInboxId,
   }: {
     workspaceId: string
     contactIds: string[]
     names: string[]
     accessScope?: ContactAccessScope
+    contactInboxId?: string
   }) {
     if (contactIds.length === 0 || names.length === 0) {
       return
@@ -543,7 +576,12 @@ class TagService extends BaseService {
       for (const contact of contacts) {
         for (const tag of allTags) {
           try {
-            await emitTagRemoved(workspaceId, contact.id, tag.id)
+            await emitTagRemoved(
+              workspaceId,
+              contact.id,
+              tag.id,
+              contactInboxId,
+            )
           } catch (error) {
             logger.error({ err: error }, "Failed to emit tagRemoved event:")
           }

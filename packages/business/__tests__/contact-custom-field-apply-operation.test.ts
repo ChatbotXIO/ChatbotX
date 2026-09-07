@@ -93,6 +93,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
 }))
 
+// This suite never exercises `listWithDefinitionByContact`/`findWithDefinition`,
+// but vitest's SSR deps optimizer bundles the whole `@chatbotx.io/database`
+// package graph together once any subpath is imported, which otherwise pulls
+// in `contactCustomFieldRepository`'s real contact-filter query graph (needs
+// the real schema, conflicting with the narrow mock below).
+vi.mock("@chatbotx.io/database/repositories", () => ({}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactCustomFieldModel: {
     value: "value",

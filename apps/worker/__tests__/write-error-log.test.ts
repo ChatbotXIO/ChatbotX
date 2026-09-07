@@ -30,6 +30,19 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   errorLogModel: { _: "ErrorLog" },
 }))
 
+// The handler under test only needs `insertErrorLogs` — reimplemented here
+// against the mocked `insert`/`values` above, matching
+// `packages/database/src/repositories/error-log/repository.ts` verbatim —
+// rather than the real repositories barrel: vitest's SSR deps optimizer
+// bundles the whole `@chatbotx.io/database` package graph together once any
+// subpath is imported, which otherwise pulls in `contactRepository`'s real
+// contact-filter query graph (needs the real schema, conflicting with the
+// narrow mock above).
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  insertErrorLogs: (rows: unknown[]) =>
+    insert().values(rows).onConflictDoNothing(),
+}))
+
 const warn = vi.fn()
 const error = vi.fn()
 vi.mock("../src/lib/logger", () => ({

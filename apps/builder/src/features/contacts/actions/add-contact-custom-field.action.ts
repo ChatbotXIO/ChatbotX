@@ -1,12 +1,12 @@
 "use server"
 import { contactCustomFieldService } from "@chatbotx.io/business"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { requireContactPermissionScope } from "../permissions"
 import { addContactCustomFieldRequest } from "../schema/contact-custom-field"
 
 export const addContactCustomFieldAction = workspaceActionClient
-  .bindArgsSchemas([zodBigintAsString()])
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(addContactCustomFieldRequest)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
     const accessScope = await requireContactPermissionScope(workspaceId)

@@ -45,6 +45,12 @@ import { workspaceService } from "../workspace/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
 import { createContactWithInbox } from "./create-with-inbox"
+import {
+  type ContactListScope as ContactListScopeType,
+  count as countContacts,
+  listByCustomFieldValue,
+  list as listContacts,
+} from "./list"
 import { PROFILE_NAME_BLANK_CHARACTERS } from "./profile-refresh/rules"
 import { updateFieldsAndCustomFields } from "./update-fields"
 import { parseContactIdentifier } from "./utils"
@@ -65,6 +71,7 @@ type ContactWriteData = Partial<
     | "city"
     | "blockedAt"
     | "emailOptIn"
+    | "emailVerified"
     | "timezone"
     | "locale"
     | "avatar"
@@ -97,9 +104,14 @@ export type ContactAccessScope = {
   restrictToAssignedUserId?: string
 }
 
+export type ContactListScope = ContactListScopeType
+
 class ContactService extends BaseService {
   createWithInbox = createContactWithInbox
   updateFieldsAndCustomFields = updateFieldsAndCustomFields
+  list = listContacts
+  count = countContacts
+  listByCustomFieldValue = listByCustomFieldValue
   /**
    * Runs on every contact-addressed public request. Safe to cache: every
    * contact write path (update, delete, custom-field writes, tag writes)
@@ -263,6 +275,35 @@ class ContactService extends BaseService {
     if (!contact) {
       throw notFoundException("Contact not found")
     }
+    return contact
+  }
+
+  /**
+   * The contact-detail read shared by the private `get-contact.query.ts`
+   * adapter: applies `restrictToAssignedUserId` against
+   * `conversation.assignedUserId` so that rule lives in one place, alongside
+   * `withContactAccessScope`.
+   */
+  async findDetailOrFail(props: {
+    workspaceId: string
+    id: string
+    accessScope?: ContactAccessScope
+  }) {
+    const { workspaceId, id, accessScope } = props
+    const contact = await contactRepository.findDetailById({ workspaceId, id })
+
+    if (!contact) {
+      throw notFoundException("Contact not found")
+    }
+
+    if (
+      accessScope?.restrictToAssignedUserId &&
+      contact.conversation?.assignedUserId !==
+        accessScope.restrictToAssignedUserId
+    ) {
+      throw notFoundException("Contact not found")
+    }
+
     return contact
   }
 

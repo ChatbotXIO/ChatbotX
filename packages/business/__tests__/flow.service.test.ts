@@ -3,22 +3,33 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockAudit,
   mockCreateId,
   mockDbTransaction,
+  mockEnsureExists,
   mockFindDraft,
   mockFlowFindFirst,
   mockInsert,
+  mockInsertReturning,
   mockInsertValues,
 } = vi.hoisted(() => {
-  const mockInsertValues = vi.fn().mockResolvedValue(undefined)
+  const mockInsertReturning = vi.fn().mockResolvedValue([{ id: "flow-1" }])
+  const mockInsertValues = vi.fn(() =>
+    Object.assign(Promise.resolve(undefined), {
+      returning: mockInsertReturning,
+    }),
+  )
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
 
   return {
+    mockAudit: vi.fn(),
     mockCreateId: vi.fn(),
     mockDbTransaction: vi.fn(),
+    mockEnsureExists: vi.fn(),
     mockFindDraft: vi.fn(),
     mockFlowFindFirst: vi.fn(),
     mockInsert,
+    mockInsertReturning,
     mockInsertValues,
   }
 })
@@ -39,6 +50,7 @@ const transaction = {
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: mockDbTransaction,
+    insert: mockInsert,
   },
 }))
 
@@ -58,6 +70,7 @@ vi.mock("@chatbotx.io/utils", () => ({
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   remapFlowGraphReferences: vi.fn(),
+  sendMessageNodeDefaultFn: vi.fn(() => ({ id: "default-node-1" })),
   // Mirror the REAL runtime values (O01–O05) — a made-up shape would silently
   // mask a failure if flowService ever starts comparing against the enum.
   FieldOperationType: {
@@ -70,7 +83,9 @@ vi.mock("@chatbotx.io/flow-config", () => ({
 }))
 
 vi.mock("../src/base.service", () => ({
-  BaseService: class BaseService {},
+  BaseService: class BaseService {
+    audit = mockAudit
+  },
 }))
 
 vi.mock("../src/errors", () => ({
@@ -92,7 +107,7 @@ vi.mock("../src/custom-field/service", () => ({
 }))
 
 vi.mock("../src/folder/service", () => ({
-  folderService: { find: vi.fn() },
+  folderService: { find: vi.fn(), ensureExists: mockEnsureExists },
 }))
 
 const { flowService } = await import("../src/flow/service")
@@ -310,5 +325,87 @@ describe("flowService.createPublishedDefault", () => {
         startNodeId: "node-1",
       },
     ])
+  })
+})
+
+describe("flowService.createDraft", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("checks the folder exists when a folderId is given", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockInsertValues.mockImplementation(() =>
+      Object.assign(Promise.resolve(undefined), {
+        returning: mockInsertReturning,
+      }),
+    )
+    mockCreateId.mockReturnValue("flow-1")
+    mockInsertReturning.mockResolvedValue([{ id: "flow-1" }])
+
+    await flowService.createDraft({
+      workspaceId: "ws-1",
+      data: { name: "New flow", folderId: "folder-1" },
+    })
+
+    expect(mockEnsureExists).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: "ws-1",
+      folderType: "flow",
+    })
+  })
+
+  test("inserts the flow, its analytics session, and a draft version with one default start node", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockInsertValues.mockImplementation(() =>
+      Object.assign(Promise.resolve(undefined), {
+        returning: mockInsertReturning,
+      }),
+    )
+    mockCreateId
+      .mockReturnValueOnce("flow-1")
+      .mockReturnValueOnce("analytics-1")
+      .mockReturnValueOnce("version-1")
+    mockInsertReturning.mockResolvedValue([{ id: "flow-1" }])
+
+    const result = await flowService.createDraft({
+      workspaceId: "ws-1",
+      data: { name: "New flow" },
+    })
+
+    expect(mockInsert).toHaveBeenNthCalledWith(1, flowModel)
+    expect(mockInsertValues).toHaveBeenNthCalledWith(1, {
+      id: "flow-1",
+      name: "New flow",
+      workspaceId: "ws-1",
+    })
+    expect(mockInsert).toHaveBeenNthCalledWith(2, flowAnalyticsSessionModel)
+    expect(mockInsertValues).toHaveBeenNthCalledWith(2, {
+      id: "analytics-1",
+      workspaceId: "ws-1",
+      flowId: "flow-1",
+    })
+    expect(mockInsert).toHaveBeenNthCalledWith(3, flowVersionModel)
+    expect(mockInsertValues).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        id: "version-1",
+        workspaceId: "ws-1",
+        flowId: "flow-1",
+        nodes: [{ id: "default-node-1" }],
+        edges: [],
+        isDraft: true,
+        startNodeId: "default-node-1",
+      }),
+    )
+    expect(mockAudit).toHaveBeenCalledWith(
+      "create",
+      "created a new flow (#flow-1)",
+    )
+    expect(result).toEqual({ id: "flow-1" })
   })
 })

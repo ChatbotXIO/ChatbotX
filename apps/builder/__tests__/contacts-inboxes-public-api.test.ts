@@ -52,11 +52,7 @@ const listContactInboxesForAPI = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   contactService: { resolveIdByIdentifier: resolveContactId },
-}))
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  contactInboxRepository: {
-    listWithInboxNameByContactId: listContactInboxesForAPI,
-  },
+  contactInboxService: { listByContactIdUncached: listContactInboxesForAPI },
 }))
 
 await import("@/features/contact-inboxes/api/public")

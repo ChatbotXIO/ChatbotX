@@ -1,12 +1,7 @@
 // @vitest-environment node
 import { describe, expect, test, vi } from "vitest"
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  countWithRelationsFilterCapped: vi.fn(),
-  countWithRelationsFilter: vi.fn(),
-  db: { query: { contactModel: { findMany: vi.fn() } }, $count: vi.fn() },
-}))
-vi.mock("@chatbotx.io/database/queries", () => ({
+vi.mock("../src/queries", () => ({
   applyContactFilter: (criteria: unknown) => ({
     conversation: { status: "open" },
     __filter: criteria,
@@ -55,51 +50,40 @@ vi.mock("@chatbotx.io/database/queries", () => ({
           }),
         },
 }))
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("../src/schema", () => ({
   contactModel: { createdAt: "createdAt", fullName: "fullName" },
 }))
-vi.mock("@/lib/auth/utils", () => ({
-  getCurrentUserAndTargetWorkspace: vi.fn(),
-}))
-vi.mock("@/lib/log", () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
-}))
 
-const { countWithRelationsFilterCapped, db } = await import(
-  "@chatbotx.io/database/client"
+const { buildContactListWhere, resolveContactOrderBy } = await import(
+  "../src/repositories/contact/list-where"
 )
-const { generateWhere, listContactsForAPI, resolveOrderBy } = await import(
-  "../list-contacts.queries"
-)
-const { CONTACTS_DEFAULT_PER_PAGE } = await import("../../constants")
 
-const baseInput = { workspaceId: "1" }
+const baseInput = { workspaceId: "1", includeEmailAndPhone: true }
 
-describe("resolveOrderBy", () => {
+describe("resolveContactOrderBy", () => {
   test("falls back to createdAt desc when sort is missing", () => {
-    expect(resolveOrderBy(baseInput)).toEqual({ createdAt: "desc" })
+    expect(resolveContactOrderBy({})).toEqual({ createdAt: "desc" })
   })
 
   test("falls back to createdAt desc when sort is an empty array", () => {
-    expect(resolveOrderBy({ ...baseInput, sort: [] })).toEqual({
+    expect(resolveContactOrderBy({ sort: [] })).toEqual({
       createdAt: "desc",
     })
   })
 
   test("uses the explicit sort when a valid column is provided", () => {
     expect(
-      resolveOrderBy({
-        ...baseInput,
+      resolveContactOrderBy({
         sort: [{ id: "fullName", desc: false }],
       }),
     ).toEqual({ fullName: "asc" })
   })
 })
 
-describe("generateWhere", () => {
+describe("buildContactListWhere", () => {
   test("adds the assigned-user conversation filter", () => {
-    const where = generateWhere(baseInput, {
-      canViewEmailAndPhone: true,
+    const where = buildContactListWhere({
+      ...baseInput,
       restrictToAssignedUserId: "user-1",
     })
 
@@ -107,10 +91,11 @@ describe("generateWhere", () => {
   })
 
   test("drops email and phone keyword clauses when emailAndPhone is denied", () => {
-    const where = generateWhere(
-      { ...baseInput, keyword: "Alice" },
-      { canViewEmailAndPhone: false },
-    )
+    const where = buildContactListWhere({
+      ...baseInput,
+      keyword: "Alice",
+      includeEmailAndPhone: false,
+    })
 
     expect(where.OR).toEqual([
       { firstName: { ilike: "%alice%" } },
@@ -119,16 +104,11 @@ describe("generateWhere", () => {
   })
 
   test("preserves existing conversation filters when adding assigned-user scope", () => {
-    const where = generateWhere(
-      {
-        ...baseInput,
-        contactFilter: { operator: "and", conditions: [] },
-      },
-      {
-        canViewEmailAndPhone: true,
-        restrictToAssignedUserId: "user-1",
-      },
-    )
+    const where = buildContactListWhere({
+      ...baseInput,
+      contactFilter: { operator: "and", conditions: [] },
+      restrictToAssignedUserId: "user-1",
+    })
 
     expect(where.conversation).toEqual({
       status: "open",
@@ -137,19 +117,17 @@ describe("generateWhere", () => {
   })
 
   test("prunes email/phone contact-filter conditions when emailAndPhone is denied", () => {
-    const where = generateWhere(
-      {
-        ...baseInput,
-        contactFilter: {
-          operator: "and",
-          conditions: [
-            { field: "email", operator: "eq", value: "ada@example.com" },
-            { field: "fullName", operator: "contains", value: "Ada" },
-          ],
-        },
+    const where = buildContactListWhere({
+      ...baseInput,
+      includeEmailAndPhone: false,
+      contactFilter: {
+        operator: "and",
+        conditions: [
+          { field: "email", operator: "eq", value: "ada@example.com" },
+          { field: "fullName", operator: "contains", value: "Ada" },
+        ],
       },
-      { canViewEmailAndPhone: false },
-    )
+    })
 
     expect(where.__filter).toEqual({
       operator: "and",
@@ -168,14 +146,11 @@ describe("generateWhere", () => {
         },
       ],
     }
-    const where = generateWhere(
-      {
-        ...baseInput,
-        keyword: "Alice",
-        contactFilter,
-      },
-      { canViewEmailAndPhone: true },
-    )
+    const where = buildContactListWhere({
+      ...baseInput,
+      keyword: "Alice",
+      contactFilter,
+    })
 
     expect(where).toEqual({
       workspaceId: "1",
@@ -193,59 +168,6 @@ describe("generateWhere", () => {
           __filter: contactFilter,
         },
       ],
-    })
-  })
-})
-
-describe("listContactsForAPI", () => {
-  test("defaults to the contacts table page size when perPage is omitted", async () => {
-    vi.mocked(db.query.contactModel.findMany).mockResolvedValue([])
-    vi.mocked(countWithRelationsFilterCapped).mockResolvedValue({
-      total: 10_000,
-      capped: true,
-      cap: 10_000,
-    })
-
-    const result = await listContactsForAPI({
-      workspaceId: "1",
-      page: 1,
-    })
-
-    expect(db.query.contactModel.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        limit: CONTACTS_DEFAULT_PER_PAGE,
-        offset: 0,
-      }),
-    )
-    expect(result.pageCount).toBe(200)
-  })
-
-  test("uses capped count metadata for page count and total display", async () => {
-    vi.mocked(db.query.contactModel.findMany).mockResolvedValue([])
-    vi.mocked(countWithRelationsFilterCapped).mockResolvedValue({
-      total: 10_000,
-      capped: true,
-      cap: 10_000,
-    })
-
-    const result = await listContactsForAPI({
-      workspaceId: "1",
-      page: 1,
-      perPage: 20,
-    })
-
-    expect(countWithRelationsFilterCapped).toHaveBeenCalledWith(
-      expect.objectContaining({
-        cap: 10_000,
-        table: { createdAt: "createdAt", fullName: "fullName" },
-        tsName: "contactModel",
-      }),
-    )
-    expect(result).toEqual({
-      data: [],
-      pageCount: 500,
-      totalCount: 10_000,
-      totalCountCapped: true,
     })
   })
 })

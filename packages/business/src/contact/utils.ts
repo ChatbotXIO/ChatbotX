@@ -74,3 +74,13 @@ export async function verifyUnsubscribeToken(
   }
   return payload
 }
+
+export function maskContactEmailAndPhone<
+  TContact extends { email: string | null; phoneNumber: string | null },
+>(contact: TContact): TContact {
+  return {
+    ...contact,
+    email: null,
+    phoneNumber: null,
+  }
+}

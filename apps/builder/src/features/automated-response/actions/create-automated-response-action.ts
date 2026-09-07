@@ -1,10 +1,7 @@
 "use server"
 
-import {
-  automatedResponseService,
-  flowService,
-  folderService,
-} from "@chatbotx.io/business"
+import { automatedResponseService, folderService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   automatedResponseFolderTypeByType,
   automatedResponseTypes,
@@ -31,29 +28,25 @@ export const createAutomatedResponseAction = workspaceActionClient
       })
     }
 
-    let flowId: string | undefined = parsedInput.flowId ?? undefined
-    let text: string | null | undefined = parsedInput.text
-
-    if (flowId) {
-      const exists = await flowService.exists(workspaceId, flowId)
-      if (!exists) {
-        return returnValidationErrors(createAutomatedResponseRequest, {
+    try {
+      await automatedResponseService.create(workspaceId, {
+        type,
+        text: parsedInput.text,
+        flowId: parsedInput.flowId,
+        folderId: parsedInput.folderId,
+        keywords: parsedInput.keywords.map((m) => m.value),
+      })
+    } catch (error) {
+      if (
+        error instanceof ChatbotXException &&
+        error.code === "validation" &&
+        error.field
+      ) {
+        returnValidationErrors(createAutomatedResponseRequest, {
           _errors: ["Validation Exception"],
-          flowId: {
-            _errors: ["Flow not found"],
-          },
+          [error.field]: { _errors: [error.message] },
         })
       }
-      text = undefined
-    } else if (text) {
-      flowId = undefined
+      throw error
     }
-
-    await automatedResponseService.create(workspaceId, {
-      type,
-      text,
-      flowId,
-      folderId: parsedInput.folderId,
-      keywords: parsedInput.keywords.map((m) => m.value),
-    })
   })
