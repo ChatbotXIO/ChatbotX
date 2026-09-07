@@ -49,6 +49,12 @@ type WhatsappPhoneVerificationPanelProps = {
   registrationError?: IntegrationWhatsappRegistrationError | null
   initialCodeRequestedAt?: string | null
   onVerified?: () => void
+  /**
+   * When given, a "Skip" sits left of the submit button and lets the operator
+   * leave this number unverified for now; the number keeps its verification
+   * state and this panel can be reopened from its account-health page.
+   */
+  onSkip?: () => void
 }
 
 type VerificationMethodConfig = {
@@ -82,19 +88,30 @@ function calculateRemainingSeconds(requestedAt: string | null): number {
   return Math.max(0, Math.ceil((nextAllowedTime - Date.now()) / 1000))
 }
 
-export function WhatsappPhoneVerificationPanel({
+/** Both actions surface a server error the same way. */
+const toastServerError = ({ error }: { error: { serverError?: string } }) => {
+  if (error.serverError) {
+    toast.error(error.serverError)
+  }
+}
+
+/**
+ * The "send code" action together with the cooldown countdown it drives — the
+ * server owns the cooldown, so a `cooldown` response overrides the local
+ * count rather than the other way round.
+ */
+function useVerificationCodeRequest({
   workspaceId,
   integrationId,
-  displayPhoneNumber,
-  verifiedName,
-  registrationError,
-  initialCodeRequestedAt = null,
-  onVerified,
-}: WhatsappPhoneVerificationPanelProps) {
+  initialCodeRequestedAt,
+  codeMethod,
+}: {
+  workspaceId: string
+  integrationId: string
+  initialCodeRequestedAt: string | null
+  codeMethod: WhatsappVerificationCodeMethod
+}) {
   const t = useTranslations()
-  const router = useRouter()
-  const [codeMethod, setCodeMethod] =
-    useState<WhatsappVerificationCodeMethod>("SMS")
   const [codeRequestedAt, setCodeRequestedAt] = useState<string | null>(
     initialCodeRequestedAt,
   )
@@ -119,14 +136,10 @@ export function WhatsappPhoneVerificationPanel({
     [codeMethod, t],
   )
 
-  const requestCodeAction = useAction(
+  const action = useAction(
     requestWhatsappVerificationCodeAction.bind(null, workspaceId),
     {
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
+      onError: toastServerError,
       onSuccess: ({ data }) => {
         if (!data) {
           return
@@ -153,16 +166,32 @@ export function WhatsappPhoneVerificationPanel({
     },
   )
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
+  return {
+    remainingSeconds,
+    isPending: action.isPending,
+    requestCode: () => action.execute({ integrationId, codeMethod }),
+  }
+}
+
+/** The code-entry form, wired to the verify action. */
+function useVerifyPhoneCodeForm({
+  workspaceId,
+  integrationId,
+  onVerified,
+}: {
+  workspaceId: string
+  integrationId: string
+  onVerified?: () => void
+}) {
+  const t = useTranslations()
+  const router = useRouter()
+
+  return useHookFormAction(
     verifyWhatsappPhoneCodeAction.bind(null, workspaceId),
     zodResolver(verifyWhatsappPhoneCodeSchema),
     {
       actionProps: {
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
+        onError: toastServerError,
         onSuccess: () => {
           toast.success(t("whatsapp.phoneVerification.messages.verified"))
           router.refresh()
@@ -171,19 +200,186 @@ export function WhatsappPhoneVerificationPanel({
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          integrationId,
-          code: "",
-        },
+        defaultValues: { integrationId, code: "" },
       },
     },
   )
+}
 
-  const isRequestDisabled = requestCodeAction.isPending || remainingSeconds > 0
+/** The number this panel is verifying, plus what Meta said went wrong. */
+function VerificationSummary({
+  verifiedName,
+  displayPhoneNumber,
+  registrationError,
+}: Pick<
+  WhatsappPhoneVerificationPanelProps,
+  "verifiedName" | "displayPhoneNumber" | "registrationError"
+>) {
+  const t = useTranslations()
   const errorMessage =
     registrationError?.userMessage ??
     registrationError?.userTitle ??
     registrationError?.message
+
+  return (
+    <>
+      <div className="flex flex-col gap-1 text-sm">
+        {verifiedName && <p className="font-medium">{verifiedName}</p>}
+        {displayPhoneNumber && (
+          <p className="text-muted-foreground">{displayPhoneNumber}</p>
+        )}
+        <p className="text-muted-foreground">
+          {t("whatsapp.phoneVerification.description")}
+        </p>
+      </div>
+
+      {errorMessage && (
+        <Alert variant="warning">
+          <TriangleAlertIcon />
+          <AlertTitle>
+            {registrationError?.userTitle ??
+              t("whatsapp.phoneVerification.errorTitle")}
+          </AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
+    </>
+  )
+}
+
+/** SMS / voice-call picker. */
+function VerificationMethodPicker({
+  codeMethod,
+  onSelect,
+}: {
+  codeMethod: WhatsappVerificationCodeMethod
+  onSelect: (method: WhatsappVerificationCodeMethod) => void
+}) {
+  const t = useTranslations()
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {VERIFICATION_METHODS.map((method) => {
+        const Icon = method.icon
+        const isSelected = method.value === codeMethod
+
+        return (
+          <Button
+            aria-pressed={isSelected}
+            key={method.value}
+            onClick={() => onSelect(method.value)}
+            type="button"
+            variant={isSelected ? "secondary" : "outline"}
+          >
+            <Icon className="size-4" />
+            {t(method.translationKey)}
+          </Button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** "Send code" / "Resend in Ns", with its own pending spinner. */
+function SendCodeButton({
+  disabled,
+  isPending,
+  onSend,
+  remainingSeconds,
+}: {
+  disabled: boolean
+  isPending: boolean
+  onSend: () => void
+  remainingSeconds: number
+}) {
+  const t = useTranslations()
+  return (
+    <div className="flex justify-end">
+      <Button
+        disabled={disabled}
+        onClick={onSend}
+        size="sm"
+        type="button"
+        variant="secondary"
+      >
+        {isPending ? (
+          <Loader2Icon className="animate-spin" />
+        ) : (
+          <SendIcon className="size-4" />
+        )}
+        {remainingSeconds > 0
+          ? t("whatsapp.phoneVerification.actions.resendIn", {
+              seconds: remainingSeconds,
+            })
+          : t("whatsapp.phoneVerification.actions.sendCode")}
+      </Button>
+    </div>
+  )
+}
+
+/**
+ * Verify, plus Skip when the caller offers one. Skip belongs to the connect
+ * dialog's OTP queue (it advances to the next number); the account-health page
+ * passes no `onSkip`, so no button renders there.
+ */
+function VerifyFormActions({
+  isSubmitting,
+  isValid,
+  onSkip,
+}: {
+  isSubmitting: boolean
+  isValid: boolean
+  onSkip?: () => void
+}) {
+  const t = useTranslations()
+  return (
+    <div className="flex justify-end gap-2">
+      {onSkip ? (
+        <Button
+          disabled={isSubmitting}
+          onClick={onSkip}
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          {t("whatsapp.phoneVerification.actions.skip")}
+        </Button>
+      ) : null}
+      <Button disabled={!isValid || isSubmitting} size="sm" type="submit">
+        {isSubmitting && <Loader2Icon className="animate-spin" />}
+        {t("whatsapp.phoneVerification.actions.verify")}
+      </Button>
+    </div>
+  )
+}
+
+export function WhatsappPhoneVerificationPanel({
+  workspaceId,
+  integrationId,
+  displayPhoneNumber,
+  verifiedName,
+  registrationError,
+  initialCodeRequestedAt = null,
+  onVerified,
+  onSkip,
+}: WhatsappPhoneVerificationPanelProps) {
+  const t = useTranslations()
+  const [codeMethod, setCodeMethod] =
+    useState<WhatsappVerificationCodeMethod>("SMS")
+
+  const { remainingSeconds, isPending, requestCode } =
+    useVerificationCodeRequest({
+      workspaceId,
+      integrationId,
+      initialCodeRequestedAt,
+      codeMethod,
+    })
+  const { form, handleSubmitWithAction } = useVerifyPhoneCodeForm({
+    workspaceId,
+    integrationId,
+    onVerified,
+  })
+
+  const isRequestDisabled = isPending || remainingSeconds > 0
 
   return (
     <Card className="my-4">
@@ -194,72 +390,23 @@ export function WhatsappPhoneVerificationPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1 text-sm">
-          {verifiedName && <p className="font-medium">{verifiedName}</p>}
-          {displayPhoneNumber && (
-            <p className="text-muted-foreground">{displayPhoneNumber}</p>
-          )}
-          <p className="text-muted-foreground">
-            {t("whatsapp.phoneVerification.description")}
-          </p>
-        </div>
+        <VerificationSummary
+          displayPhoneNumber={displayPhoneNumber}
+          registrationError={registrationError}
+          verifiedName={verifiedName}
+        />
 
-        {errorMessage && (
-          <Alert variant="warning">
-            <TriangleAlertIcon />
-            <AlertTitle>
-              {registrationError?.userTitle ??
-                t("whatsapp.phoneVerification.errorTitle")}
-            </AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        )}
+        <VerificationMethodPicker
+          codeMethod={codeMethod}
+          onSelect={setCodeMethod}
+        />
 
-        <div className="grid grid-cols-2 gap-2">
-          {VERIFICATION_METHODS.map((method) => {
-            const Icon = method.icon
-            const isSelected = method.value === codeMethod
-
-            return (
-              <Button
-                aria-pressed={isSelected}
-                key={method.value}
-                onClick={() => setCodeMethod(method.value)}
-                type="button"
-                variant={isSelected ? "secondary" : "outline"}
-              >
-                <Icon className="size-4" />
-                {t(method.translationKey)}
-              </Button>
-            )
-          })}
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            disabled={isRequestDisabled}
-            onClick={() =>
-              requestCodeAction.execute({
-                integrationId,
-                codeMethod,
-              })
-            }
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            {requestCodeAction.isPending ? (
-              <Loader2Icon className="animate-spin" />
-            ) : (
-              <SendIcon className="size-4" />
-            )}
-            {remainingSeconds > 0
-              ? t("whatsapp.phoneVerification.actions.resendIn", {
-                  seconds: remainingSeconds,
-                })
-              : t("whatsapp.phoneVerification.actions.sendCode")}
-          </Button>
-        </div>
+        <SendCodeButton
+          disabled={isRequestDisabled}
+          isPending={isPending}
+          onSend={requestCode}
+          remainingSeconds={remainingSeconds}
+        />
 
         <Form {...form}>
           <form
@@ -275,20 +422,11 @@ export function WhatsappPhoneVerificationPanel({
               )}
               required
             />
-            <div className="flex justify-end">
-              <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                size="sm"
-                type="submit"
-              >
-                {form.formState.isSubmitting && (
-                  <Loader2Icon className="animate-spin" />
-                )}
-                {t("whatsapp.phoneVerification.actions.verify")}
-              </Button>
-            </div>
+            <VerifyFormActions
+              isSubmitting={form.formState.isSubmitting}
+              isValid={form.formState.isValid}
+              onSkip={onSkip}
+            />
           </form>
         </Form>
       </CardContent>

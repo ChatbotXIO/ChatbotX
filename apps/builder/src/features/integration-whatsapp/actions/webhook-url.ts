@@ -38,6 +38,93 @@ export function buildWebhookConfig(params: {
 }
 
 /**
+ * Shared shape every `WhatsappAuthValue` this module builds is assembled
+ * from — kept private so `buildAuthValue` (full, phone-number-specific,
+ * persisted to the integration row) and `buildWabaAuthValue` (WABA-level
+ * subset, used only for the WABA/business pre-work calls) can never drift on
+ * the fields they share.
+ */
+function buildBaseAuthValue(params: {
+  whatsappSettings: WhatsappCredential
+  accessToken: string
+  verifyToken: string
+  redirectUrl: string
+  metadata: WhatsappAuthValue["metadata"]
+  clientId?: string
+  clientSecret?: string
+}): WhatsappAuthValue {
+  const {
+    whatsappSettings,
+    accessToken,
+    verifyToken,
+    redirectUrl,
+    metadata,
+    clientId = whatsappSettings.clientId,
+    clientSecret = whatsappSettings.clientSecret,
+  } = params
+
+  return {
+    clientId,
+    clientSecret,
+    verifyToken,
+    redirectUrl,
+    authType: AuthType.oauth2,
+    tokens: { accessToken },
+    metadata,
+  }
+}
+
+/**
+ * WABA-level subset of `buildAuthValue`, used only for the WABA/business
+ * pre-work calls (`setupOAuthResources`, the plain `subscribeWebhook`) that
+ * run before a specific phone number is known to be connectable — never
+ * persisted. Session/OAuth paths only: manual connect never calls this (it
+ * has no WABA-level pre-work of its own, see `subscribeManualWebhook`).
+ *
+ * `phoneNumber` is threaded through only because `WhatsappAuthValue["metadata"]`
+ * requires one — `addSystemUser` / `shareCreditLine` / the plain
+ * `subscribeWebhook` read only `metadata.wabaId` and the token, never
+ * `metadata.phoneNumber`, so this is unused by the calls this auth value is
+ * built for.
+ */
+export function buildWabaAuthValue(params: {
+  whatsappSettings: WhatsappCredential
+  accessToken: string
+  wabaId: string
+  businessId: string
+  originUrl: string
+  phoneNumber: WhatsappPhoneNumber
+}): WhatsappAuthValue {
+  const {
+    whatsappSettings,
+    accessToken,
+    wabaId,
+    businessId,
+    originUrl,
+    phoneNumber,
+  } = params
+
+  const { webhookUrl, verifyToken } = buildWebhookConfig({
+    isManual: false,
+    integrationId: "",
+    originUrl,
+    whatsappSettings,
+  })
+  const redirectUrl = new URL(
+    "/integrations/whatsapp/callback",
+    originUrl,
+  ).toString()
+
+  return buildBaseAuthValue({
+    whatsappSettings,
+    accessToken,
+    verifyToken,
+    redirectUrl,
+    metadata: { wabaId, businessId, phoneNumber, webhookUrl },
+  })
+}
+
+/**
  * Build the persisted WhatsApp auth value. `originUrl` follows the same rule
  * as `buildWebhookConfig`: the stored `redirectUrl` lives on the tenant's
  * custom domain for a tenant-owned credential, otherwise the broker.
@@ -96,13 +183,13 @@ export async function buildAuthValue(params: {
     clientId = tokenData?.app_id ?? ""
   }
 
-  return {
-    clientId,
-    clientSecret,
+  return buildBaseAuthValue({
+    whatsappSettings,
+    accessToken,
     verifyToken,
     redirectUrl,
-    authType: AuthType.oauth2,
-    tokens: { accessToken },
     metadata,
-  }
+    clientId,
+    clientSecret,
+  })
 }

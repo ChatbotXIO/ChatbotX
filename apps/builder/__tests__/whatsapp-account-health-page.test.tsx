@@ -127,6 +127,24 @@ describe("WhatsappAccountHealthsPage", () => {
     )
   })
 
+  // The Skip button belongs to the CONNECT dialog's OTP queue,
+  // where skipping advances to the next number. On the account-health page
+  // there is nothing to advance to, so the page must not pass `onSkip` — and
+  // the panel renders the button only when it is given one.
+  test("does not offer Skip on the account-health page (no onSkip is passed)", async () => {
+    findPhoneNumberDetailMock.mockRejectedValueOnce(
+      new Error("Unsupported get request"),
+    )
+
+    const page = await WhatsappAccountHealthsPage({ params })
+    renderToStaticMarkup(page)
+
+    expect(verificationPanelMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({ onSkip: expect.anything() }),
+      undefined,
+    )
+  })
+
   test("still renders phone health when only WABA health cannot be loaded", async () => {
     const phoneNumber = {
       id: "phone-1",

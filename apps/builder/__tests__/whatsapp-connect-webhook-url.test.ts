@@ -4,11 +4,14 @@ import type { WhatsappPhoneNumber } from "@chatbotx.io/integration-whatsapp/api/
 import { describe, expect, test, vi } from "vitest"
 import {
   buildAuthValue,
+  buildWabaAuthValue,
   buildWebhookConfig,
 } from "@/features/integration-whatsapp/actions/webhook-url"
 
 // debugToken is only hit on the manual path; non-manual tests never call it.
 vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
+  appAccessToken: (settings: { clientId: string; clientSecret: string }) =>
+    `${settings.clientId}|${settings.clientSecret}`,
   debugToken: vi.fn(async () => ({ app_id: "app-123", is_valid: true })),
 }))
 
@@ -115,5 +118,49 @@ describe("buildAuthValue", () => {
     // The caller's credential object must not be mutated.
     expect(input.clientId).toBe(whatsappSettings.clientId)
     expect(input.clientSecret).toBe(whatsappSettings.clientSecret)
+  })
+})
+
+describe("buildWabaAuthValue", () => {
+  test("builds the shared non-manual webhook config without a phone number", () => {
+    const auth = buildWabaAuthValue({
+      whatsappSettings: { ...whatsappSettings },
+      accessToken: "token",
+      wabaId: "waba-1",
+      businessId: "biz-1",
+      originUrl: BROKER_ORIGIN,
+      phoneNumber,
+    })
+
+    expect(new URL(auth.redirectUrl).host).toBe(new URL(BROKER_ORIGIN).host)
+    expect(new URL(auth.redirectUrl).pathname).toBe(
+      "/integrations/whatsapp/callback",
+    )
+    expect(auth.verifyToken).toBe(whatsappSettings.verifyToken)
+    expect(auth.tokens.accessToken).toBe("token")
+    expect(auth.metadata).toEqual({
+      wabaId: "waba-1",
+      businessId: "biz-1",
+      phoneNumber,
+      webhookUrl: `${BROKER_ORIGIN}/integrations/whatsapp/webhook`,
+    })
+    expect(auth.clientId).toBe(whatsappSettings.clientId)
+    expect(auth.clientSecret).toBe(whatsappSettings.clientSecret)
+  })
+
+  test("regression: a white-label host never leaks into the WABA auth value", () => {
+    const auth = buildWabaAuthValue({
+      whatsappSettings: { ...whatsappSettings },
+      accessToken: "token",
+      wabaId: "waba-1",
+      businessId: "biz-1",
+      originUrl: BROKER_ORIGIN,
+      phoneNumber,
+    })
+
+    expect(auth.redirectUrl).not.toContain(new URL(WHITE_LABEL_ORIGIN).host)
+    expect(auth.metadata?.webhookUrl).not.toContain(
+      new URL(WHITE_LABEL_ORIGIN).host,
+    )
   })
 })

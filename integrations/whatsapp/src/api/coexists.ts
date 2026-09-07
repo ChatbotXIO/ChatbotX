@@ -28,7 +28,13 @@ export function triggerSmbAppDataSync({
   phoneNumberId,
   syncType,
 }: {
-  auth: WhatsappAuthValue
+  /**
+   * Only the two fields this call actually reads. Narrowed from the full
+   * `WhatsappAuthValue` so callers that hold just a token and a version (the
+   * builder's coexist route, which gets primitives back from the business
+   * layer) no longer have to cast a partial object.
+   */
+  auth: Pick<WhatsappAuthValue, "tokens" | "version">
   phoneNumberId: string
   syncType: SmbSyncType
 }): Promise<SmbAppDataResult> {

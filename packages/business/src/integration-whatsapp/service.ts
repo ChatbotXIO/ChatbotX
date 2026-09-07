@@ -1,6 +1,9 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
-import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
+import {
+  integrationWhatsappRepository,
+  whatsappSignupSessionRepository,
+} from "@chatbotx.io/database/repositories"
 import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
 import type {
   IntegrationWhatsappModel,
@@ -14,6 +17,38 @@ import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import { platformCredentialService } from "../platform-credential/service"
 import { workspaceService } from "../workspace/service"
+import {
+  WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS,
+  whatsappAuthForCapiScopeSchema,
+} from "./auth-schema"
+import {
+  type SetCoexistInput,
+  type SetCoexistResult,
+  setCoexist,
+} from "./coexist"
+import {
+  type ConnectPhoneNumberInput,
+  type ConnectPhoneNumberResult,
+  connectPhoneNumber,
+} from "./connect"
+
+export {
+  WHATSAPP_CAPI_SCOPE,
+  WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS,
+  whatsappAuthForCapiScopeSchema,
+} from "./auth-schema"
+export {
+  type SetCoexistInput,
+  type SetCoexistResult,
+  type SetCoexistTriggerSync,
+  type SetCoexistTriggerSyncResult,
+  WHATSAPP_COEXIST_SYNC_TYPES,
+  type WhatsappCoexistSyncType,
+} from "./coexist"
+export type {
+  ConnectPhoneNumberInput,
+  ConnectPhoneNumberResult,
+} from "./connect"
 
 export type RegistrationStatus = WhatsappRegistrationStatus
 
@@ -57,19 +92,6 @@ type EnsureDatasetIdInput = FindWorkspaceIntegrationInput & {
   }) => Promise<string>
 }
 
-export const WHATSAPP_CAPI_SCOPE = "whatsapp_business_manage_events"
-export const WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS = 24 * 60 * 60 * 1000
-
-export const whatsappAuthForCapiScopeSchema = z.object({
-  version: z.string().trim().min(1).optional(),
-  tokens: z.object({
-    accessToken: z.string().trim().min(1),
-  }),
-  metadata: z.object({
-    wabaId: z.string().trim().min(1),
-  }),
-})
-
 // `isManual` is set only for manual token-entry connections; embedded-signup
 // (OAuth) connections leave it undefined. It gates whether the agency System
 // User has access to the WABA (see `resolveDatasetCreationTokens`).
@@ -106,15 +128,19 @@ type CreateSignupSessionInput = {
   candidatePhoneNumberIds: string[]
 }
 
-type SignupSessionClaimInput = {
+type FindActiveSignupSessionForUserInput = {
   id: string
   userId: string
-  ownerId: string
-  phoneNumberId: string
   tx?: DatabaseClient
 }
 
-type AuthorizedSignupSession = WhatsappSignupSessionModel & {
+/**
+ * A WhatsApp signup-session row with its access token decrypted. Exported so
+ * callers (`apps/builder`'s connect action) can type the already-verified
+ * session they thread through `prepareConnectInput` without re-deriving the
+ * shape from `findActiveSignupSessionForUser`'s return type.
+ */
+export type WhatsappSignupSessionAuthorized = WhatsappSignupSessionModel & {
   accessToken: string
 }
 
@@ -211,7 +237,7 @@ class IntegrationWhatsappService extends BaseService {
       input.accessToken,
     )
 
-    return integrationWhatsappRepository.createSignupSession({
+    return whatsappSignupSessionRepository.createSignupSession({
       userId: input.userId,
       ownerId: input.ownerId,
       workspaceId: input.workspaceId,
@@ -225,27 +251,17 @@ class IntegrationWhatsappService extends BaseService {
 
   /**
    * Reads a pending phone-number selection without spending it, so the caller
-   * can finish its provider calls before committing to the single use.
+   * can finish its provider calls before committing to the single use, then
+   * decrypts the stored access token for it. Deliberately not ownerId-scoped
+   * — see `whatsappSignupSessionRepository.findActiveSignupSessionForUser`.
    */
-  async findActiveSignupSession(
-    input: SignupSessionClaimInput,
-  ): Promise<AuthorizedSignupSession | null> {
+  async findActiveSignupSessionForUser(
+    input: FindActiveSignupSessionForUserInput,
+  ): Promise<WhatsappSignupSessionAuthorized | null> {
     const session =
-      await integrationWhatsappRepository.findActiveSignupSession(input)
-
-    return session ? await this.withAccessToken(session) : null
-  }
-
-  /**
-   * Spends the session. Pass the connect transaction as `input.tx` so the
-   * session survives a failed connect and the user can pick again without
-   * repeating Meta's signup.
-   */
-  async consumeSignupSession(
-    input: SignupSessionClaimInput,
-  ): Promise<AuthorizedSignupSession | null> {
-    const session =
-      await integrationWhatsappRepository.consumeSignupSession(input)
+      await whatsappSignupSessionRepository.findActiveSignupSessionForUser(
+        input,
+      )
 
     return session ? await this.withAccessToken(session) : null
   }
@@ -254,12 +270,12 @@ class IntegrationWhatsappService extends BaseService {
     now?: Date
     batchSize?: number
   }): Promise<number> {
-    return integrationWhatsappRepository.purgeFinishedSignupSessions(input)
+    return whatsappSignupSessionRepository.purgeFinishedSignupSessions(input)
   }
 
   private async withAccessToken(
     session: WhatsappSignupSessionModel,
-  ): Promise<AuthorizedSignupSession> {
+  ): Promise<WhatsappSignupSessionAuthorized> {
     const accessToken = await encryptUtils.decryptText(
       encryptedDataSchema.parse(session.encryptedAccessToken),
     )
@@ -575,6 +591,26 @@ class IntegrationWhatsappService extends BaseService {
     input: ReleaseVerificationCodeSlotInput,
   ): Promise<void> {
     return integrationWhatsappRepository.releaseVerificationCodeSlot(input)
+  }
+
+  /**
+   * Persists a WhatsApp phone-number connect. See `./connect.ts` for the
+   * full contract (per-number signup-session claim, one-shot workspace
+   * bind, upsert).
+   */
+  connectPhoneNumber(
+    input: ConnectPhoneNumberInput,
+  ): Promise<ConnectPhoneNumberResult> {
+    return connectPhoneNumber(input)
+  }
+
+  /**
+   * Flips WhatsApp Coexistence on/off. See `./coexist.ts` for the full
+   * contract (run creation, sequential state/history trigger, error
+   * strings).
+   */
+  setCoexist(input: SetCoexistInput): Promise<SetCoexistResult> {
+    return setCoexist(input)
   }
 }
 

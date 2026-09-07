@@ -1,6 +1,11 @@
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
-import { FormProvider, useForm } from "react-hook-form"
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from "react-hook-form"
 import {
   afterEach,
   beforeEach,
@@ -25,7 +30,7 @@ type ProbeProps = {
   callbackOrigin?: string
 }
 
-/** Mirrors the hook's output into the DOM so assertions read one source. */
+/** Mirrors the hook's output (and the form fields it resets) into the DOM so assertions read one source. */
 function Probe({
   hasFailed,
   onSubmit,
@@ -38,8 +43,20 @@ function Probe({
     onRelayError,
     callbackOrigin,
   })
+  const { control } = useFormContext<ConnectWhatsappSchema>()
+  const wabaId = useWatch({ control, name: "wabaId" })
+  const phoneNumberIds = useWatch({ control, name: "phoneNumberIds" })
+  const signupSessionId = useWatch({ control, name: "signupSessionId" })
+  const code = useWatch({ control, name: "code" })
 
-  return <output data-testid="is-connecting">{String(isConnecting)}</output>
+  return (
+    <>
+      <output data-testid="is-connecting">{String(isConnecting)}</output>
+      <output data-testid="form-snapshot">
+        {JSON.stringify({ wabaId, phoneNumberIds, signupSessionId, code })}
+      </output>
+    </>
+  )
 }
 
 /**
@@ -53,9 +70,9 @@ function Harness({ children }: { children: ReactNode }) {
       transferPhoneNumber: false,
       manualConnect: false,
       marketingMessageLite: true,
-      wabaId: "",
-      phoneNumberId: "",
-      signupSessionId: "",
+      wabaId: "seed-waba",
+      phoneNumberIds: ["seed-phone-1", "seed-phone-2"],
+      signupSessionId: "seed-session",
       code: "",
     },
   })
@@ -115,6 +132,19 @@ describe("useEmbeddedSignupAutoConnect", () => {
   const isConnecting = () =>
     container.querySelector<HTMLElement>("[data-testid='is-connecting']")
       ?.textContent
+  const formSnapshot = () => {
+    const raw = container.querySelector<HTMLElement>(
+      "[data-testid='form-snapshot']",
+    )?.textContent
+    return raw
+      ? (JSON.parse(raw) as {
+          wabaId: string
+          phoneNumberIds: string[]
+          signupSessionId: string
+          code: string
+        })
+      : null
+  }
 
   test("submits as soon as the callback origin relays a code", () => {
     render()
@@ -230,6 +260,46 @@ describe("useEmbeddedSignupAutoConnect", () => {
 
     expect(isConnecting()).toBe("true")
     expect(onSubmit).toHaveBeenCalledTimes(2)
+  })
+
+  test("hasFailed resets code, wabaId, signupSessionId, and unsets phoneNumberIds", () => {
+    render()
+    expect(formSnapshot()).toEqual({
+      wabaId: "seed-waba",
+      phoneNumberIds: ["seed-phone-1", "seed-phone-2"],
+      signupSessionId: "seed-session",
+      code: "",
+    })
+
+    render(true)
+
+    // `undefined`, not `[]`: the picker's field is 1..max when it holds a
+    // value, so an empty array would fail validation and block the retry's
+    // submit — the card would freeze on "connecting".
+    expect(formSnapshot()).toEqual({
+      wabaId: "",
+      phoneNumberIds: undefined,
+      signupSessionId: "",
+      code: "",
+    })
+  })
+
+  test('a non-failure render (e.g. a `kind: "outcome"` per-item failure, which never sets hasFailed) does not reset the form', () => {
+    render(false)
+    relay(successPayload())
+
+    // The card only ever passes `hasFailed: true` for a genuine framework
+    // throw or a typed `kind: "sessionError"` result — a `kind: "outcome"`
+    // per-item failure (notSelectable/duplicated) computes `hasFailed` as
+    // `false`, so re-rendering with it must leave the seeded fields alone.
+    render(false)
+
+    expect(formSnapshot()).toEqual({
+      wabaId: "seed-waba",
+      phoneNumberIds: ["seed-phone-1", "seed-phone-2"],
+      signupSessionId: "seed-session",
+      code: OAUTH_CODE,
+    })
   })
 
   test("stops listening to the relay after unmount", () => {
