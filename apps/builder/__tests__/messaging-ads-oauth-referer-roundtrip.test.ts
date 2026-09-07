@@ -50,6 +50,7 @@ const {
   mockAuditRecord,
   mockWithAuditContext,
   mockAssertSuperAdmin,
+  mockCreateFromOAuthCallback,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockFindInstagramIntegration: vi.fn(),
@@ -83,6 +84,7 @@ const {
     async (_ctx: unknown, fn: () => Promise<unknown>) => await fn(),
   ),
   mockAssertSuperAdmin: vi.fn(async () => undefined),
+  mockCreateFromOAuthCallback: vi.fn(async () => ({ integrationId: "int-1" })),
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -113,6 +115,9 @@ vi.mock("@chatbotx.io/business", () => ({
     createGoogleFromOAuthCallback: mockCreateGoogleFromOAuthCallback,
   },
   integrationFacebookAdsService: { upsert: vi.fn() },
+  integrationService: {
+    createFromOAuthCallback: mockCreateFromOAuthCallback,
+  },
   // Real `@/lib/oauth-referer` calls this to decide whether a foreign
   // `referer` host is nonetheless one we control (a white-label custom
   // domain) — defaults to "no active domain" so a foreign origin is never
@@ -124,16 +129,6 @@ vi.mock("@chatbotx.io/business", () => ({
     findById: mockFindWorkspaceById,
     create: vi.fn(),
   },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: vi.fn() },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationGoogleSheetsModel: {},
-  integrationModel: {},
-  ROOT_TENANT_ID: "1",
 }))
 
 vi.mock("@chatbotx.io/integration-facebook-ads", () => ({

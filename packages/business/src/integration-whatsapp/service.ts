@@ -1,15 +1,32 @@
-import type { DatabaseClient } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  isUniqueViolationError,
+} from "@chatbotx.io/database/client"
 import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
-import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
-import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
+import {
+  integrationWhatsappRepository,
+  metaCapiEventRepository,
+  whatsappCoexistStagingRepository,
+} from "@chatbotx.io/database/repositories"
+import {
+  type IntegrationWhatsappRegistrationError,
+  integrationWhatsappModel,
+  WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT,
+} from "@chatbotx.io/database/schema"
 import type {
   IntegrationWhatsappModel,
   WhatsappSignupSessionModel,
 } from "@chatbotx.io/database/types"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { coexistService } from "../coexist/service"
+import { ChatbotXException } from "../errors"
+import { connectChannelIntegration } from "../inbox/connect-channel"
+import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import { platformCredentialService } from "../platform-credential/service"
@@ -575,6 +592,256 @@ class IntegrationWhatsappService extends BaseService {
     input: ReleaseVerificationCodeSlotInput,
   ): Promise<void> {
     return integrationWhatsappRepository.releaseVerificationCodeSlot(input)
+  }
+
+  /**
+   * Writes the integration and spends the signup session as one unit
+   * (`connectInTransaction` + `persistIntegration` from the builder action).
+   * A concurrent connect for the same phone number surfaces as a unique
+   * violation, mapped here to a typed exception the action can translate to
+   * an already-translated, user-visible message.
+   */
+  async connectPhoneNumber(input: {
+    signupSessionClaim?: {
+      id: string
+      userId: string
+      ownerId: string
+      phoneNumberId: string
+    }
+    ownerId: string
+    userId: string
+    workspaceId?: string | null
+    integrationId: string
+    phoneNumber: {
+      id: string
+      verified_name: string
+      display_phone_number: string
+    }
+    displayPhoneNumber: string
+    phoneName: string
+    wabaId: string
+    businessId: string
+    auth: unknown
+    isCoexist: boolean
+    platformType: string
+  }): Promise<{
+    workspaceId: string
+    createdWorkspace: boolean
+    integrationRow: IntegrationWhatsappModel
+    wasCreated: boolean
+  }> {
+    try {
+      return await db.transaction(async (tx) => {
+        if (input.signupSessionClaim) {
+          const consumed = await this.consumeSignupSession({
+            ...input.signupSessionClaim,
+            tx,
+          })
+          if (!consumed) {
+            throw new ChatbotXException(
+              "Signup session expired",
+              "whatsappSignupSessionExpired",
+              409,
+            )
+          }
+        }
+
+        let resolvedWorkspaceId = input.workspaceId
+        let createdWorkspace = false
+
+        if (!resolvedWorkspaceId) {
+          const workspace = await workspaceService.create({
+            tx,
+            createdBy: input.userId,
+            data: {
+              name: input.phoneNumber.verified_name,
+              timezone: "UTC",
+              ownerId: input.userId,
+            },
+          })
+          resolvedWorkspaceId = workspace.id
+          createdWorkspace = true
+        }
+
+        let integrationRow: IntegrationWhatsappModel | undefined
+
+        const { wasCreated } = await connectChannelIntegration({
+          tx,
+          ownerId: input.ownerId,
+          inboxData: {
+            id: createId(),
+            workspaceId: resolvedWorkspaceId,
+            channel: "whatsapp",
+            sourceId: input.phoneNumber.id,
+            name: input.phoneName,
+          },
+          insertIntegration: async (inboxId) => {
+            const [row] = await tx
+              .insert(integrationWhatsappModel)
+              .values({
+                id: input.integrationId,
+                workspaceId: resolvedWorkspaceId as string,
+                inboxId,
+                auth: input.auth,
+                phoneNumberId: input.phoneNumber.id,
+                wabaId: input.wabaId,
+                businessId: input.businessId,
+                name: input.phoneName,
+                displayPhoneNumber: input.displayPhoneNumber,
+                isCoexist: input.isCoexist,
+                platformType: input.platformType,
+                registrationStatus: "pending_verification",
+              })
+              .onConflictDoUpdate({
+                target: [integrationWhatsappModel.inboxId],
+                set: {
+                  name: input.phoneName,
+                  displayPhoneNumber: input.displayPhoneNumber,
+                  isCoexist: input.isCoexist,
+                  platformType: input.platformType,
+                  updatedAt: new Date(),
+                },
+              })
+              .returning()
+            integrationRow = row
+          },
+        })
+
+        if (!integrationRow) {
+          throw new ChatbotXException(
+            "Failed to persist WhatsApp integration",
+            "whatsappFailedToPersistIntegration",
+          )
+        }
+
+        return {
+          workspaceId: resolvedWorkspaceId,
+          createdWorkspace,
+          integrationRow,
+          wasCreated,
+        }
+      })
+    } catch (err) {
+      if (
+        isUniqueViolationError(err, WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT)
+      ) {
+        throw new ChatbotXException(
+          "Phone number already connected",
+          "whatsappPhoneNumberAlreadyConnected",
+          409,
+        )
+      }
+
+      throw err
+    }
+  }
+
+  /**
+   * Transactional cleanup for a WhatsApp disconnect: coexist teardown
+   * (narrows to `channel: "whatsapp"` via `coexistService.tearDownForIntegration`,
+   * safe because `integrationId` is unique per integration), the coexist
+   * staging rows for this phone number, the polymorphic MetaCapiEvent rows,
+   * the integration row itself, and the owning inbox. The external Meta-API
+   * disconnect call and the (deliberately workspace-less) audit record stay
+   * in the builder action (see disconnect.action.ts).
+   */
+  async deleteWithCleanup(input: {
+    workspaceId: string
+    id: string
+    phoneNumberId: string
+    inboxId: string
+    ownerId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const run = async (tx: DatabaseClient) => {
+      await coexistService.tearDownForIntegration({
+        workspaceId: input.workspaceId,
+        integrationId: input.id,
+        channel: "whatsapp",
+        currentError: "Integration disconnected",
+        tx,
+      })
+
+      await whatsappCoexistStagingRepository.deleteByPhoneNumberId(
+        { phoneNumberId: input.phoneNumberId },
+        tx,
+      )
+
+      // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep
+      // occupying the (workspaceId, channel, sourceKey) dedup slot after a
+      // reconnect.
+      await metaCapiEventRepository.deleteByIntegration(
+        {
+          workspaceId: input.workspaceId,
+          channel: "whatsapp",
+          integrationId: input.id,
+        },
+        tx,
+      )
+
+      await integrationWhatsappRepository.deleteById({ id: input.id }, tx)
+
+      await inboxService.disconnect({
+        inboxId: input.inboxId,
+        ownerId: input.ownerId,
+        workspaceId: input.workspaceId,
+        tx,
+      })
+    }
+
+    if (input.tx) {
+      await run(input.tx)
+      return
+    }
+
+    await db.transaction(run)
+  }
+
+  /**
+   * Stamps `metadata.webhookVerifiedAt` after the webhook challenge
+   * succeeds. Backs `findIntegrationWhatsappById` + `markWhatsappWebhookVerified`
+   * (`apps/builder/src/app/integrations/whatsapp/webhook/[integrationId]/route.ts`).
+   */
+  async markWebhookVerified(input: {
+    id: string
+    auth: Record<string, unknown> & { metadata?: Record<string, unknown> }
+  }): Promise<void> {
+    const updatedAuth = {
+      ...input.auth,
+      metadata: {
+        ...input.auth.metadata,
+        webhookVerifiedAt: new Date().toISOString(),
+      },
+    }
+
+    await integrationWhatsappRepository.updateAuthById({
+      id: input.id,
+      auth: updatedAuth,
+    })
+  }
+
+  /**
+   * Stamps `metadata.subscribeOverrideOk` after a manual-connect webhook
+   * override subscribe succeeds. Kept separate from `replaceAuth`
+   * (`service.ts` above), which also writes capi-scope fields this call must
+   * not touch.
+   */
+  async markWebhookOverrideOk(input: {
+    id: string
+    auth: Record<string, unknown> & { metadata?: Record<string, unknown> }
+  }): Promise<void> {
+    const updatedAuth = {
+      ...input.auth,
+      metadata: {
+        ...input.auth.metadata,
+        subscribeOverrideOk: true,
+      },
+    }
+
+    await integrationWhatsappRepository.updateAuthById({
+      id: input.id,
+      auth: updatedAuth,
+    })
   }
 }
 

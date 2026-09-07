@@ -233,4 +233,23 @@ export const integrationInstagramRepository = {
 
     return row ?? null
   },
+
+  listForWorkspace(
+    input: { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationInstagramModel[]> {
+    return tx.query.integrationInstagramModel.findMany({
+      where: { workspaceId: input.workspaceId },
+      orderBy: { createdAt: "asc" },
+    })
+  },
+
+  async deleteById(
+    input: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .delete(integrationInstagramModel)
+      .where(eq(integrationInstagramModel.id, input.id))
+  },
 }

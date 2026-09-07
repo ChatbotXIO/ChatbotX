@@ -1,17 +1,10 @@
 import {
-  coexistService,
-  inboxService,
+  deleteMessengerIntegrationWithCleanup,
   instagramIntegrationService,
+  messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
-import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
-import {
-  integrationMessengerModel,
-  tagChannelModel,
-} from "@chatbotx.io/database/schema"
 import {
   isRevokedTokenError,
   type MessengerAuthValue,
@@ -25,16 +18,16 @@ export const disconnectMessenger = async (ctx: {
   id: string
 }) => {
   const [integrationMessenger, workspace] = await Promise.all([
-    findOrFail({
-      table: integrationMessengerModel,
-      where: {
-        id: ctx.id,
-        workspaceId: ctx.workspaceId,
-      },
-      message: "Integration Messenger not found",
+    messengerIntegrationService.findByIdForWorkspace({
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     }),
     workspaceService.findById({ id: ctx.workspaceId }),
   ])
+
+  if (!integrationMessenger) {
+    throw new Error("Integration Messenger not found")
+  }
 
   const authValue = integrationMessenger.auth as MessengerAuthValue
 
@@ -71,46 +64,11 @@ export const disconnectMessenger = async (ctx: {
     }
   }
 
-  await db.transaction(async (tx) => {
-    await coexistService.tearDownForIntegration({
-      workspaceId: ctx.workspaceId,
-      integrationId: integrationMessenger.id,
-      channel: "messenger",
-      currentError: "Integration disconnected",
-      tx,
-    })
-
-    // Polymorphic FK cleanup — no DB-level cascade for TagChannel.integrationId
-    await tx
-      .delete(tagChannelModel)
-      .where(
-        and(
-          eq(tagChannelModel.channelType, channelTypes.enum.messenger),
-          eq(tagChannelModel.integrationId, integrationMessenger.id),
-        ),
-      )
-
-    // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep occupying
-    // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.
-    await metaCapiEventRepository.deleteByIntegration(
-      {
-        workspaceId: ctx.workspaceId,
-        channel: "messenger",
-        integrationId: integrationMessenger.id,
-      },
-      tx,
-    )
-
-    await tx
-      .delete(integrationMessengerModel)
-      .where(eq(integrationMessengerModel.id, integrationMessenger.id))
-
-    await inboxService.disconnect({
-      inboxId: integrationMessenger.inboxId,
-      ownerId: workspace.ownerId,
-      workspaceId: ctx.workspaceId,
-      tx,
-    })
+  await deleteMessengerIntegrationWithCleanup({
+    workspaceId: ctx.workspaceId,
+    id: integrationMessenger.id,
+    inboxId: integrationMessenger.inboxId,
+    ownerId: workspace.ownerId,
   })
 
   await auditService.record({

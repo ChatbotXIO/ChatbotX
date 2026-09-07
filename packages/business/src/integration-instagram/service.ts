@@ -1,5 +1,6 @@
 import { and, db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
+import { integrationInstagramRepository } from "@chatbotx.io/database/repositories"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import { BaseService } from "../base.service"
 
@@ -160,6 +161,26 @@ class InstagramIntegrationService extends BaseService {
 
   existsByPageId(pageId: string): Promise<boolean> {
     return this.existsForPage({ pageId })
+  }
+
+  async updateSettings(input: {
+    workspaceId: string
+    id: string
+    values: Partial<typeof integrationInstagramModel.$inferInsert>
+  }): Promise<void> {
+    await db
+      .update(integrationInstagramModel)
+      .set(input.values)
+      .where(
+        and(
+          eq(integrationInstagramModel.id, input.id),
+          eq(integrationInstagramModel.workspaceId, input.workspaceId),
+        ),
+      )
+  }
+
+  listForWorkspace(input: { workspaceId: string }) {
+    return integrationInstagramRepository.listForWorkspace(input)
   }
 }
 

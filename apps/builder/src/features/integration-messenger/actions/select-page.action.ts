@@ -2,19 +2,16 @@
 
 import {
   buildContext,
-  connectChannelIntegration,
+  connectMessengerPage,
   messengerIntegrationService,
   platformCredentialService,
-  resolveTenantSettings,
   tagSyncService,
   userQuotaService,
-  workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, isDatabaseError } from "@chatbotx.io/database/client"
+import { isDatabaseError } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
@@ -23,7 +20,6 @@ import {
   subscribePageToAppWebhook,
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType, SdkException } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { isCloud } from "@/env"
 import {
@@ -100,121 +96,85 @@ export const selectPageAction = authActionClient
           )
         }
 
-        const { brandingCtx, createdWorkspace, wasCreated } =
-          await db.transaction(async (tx) => {
-            const longLivedToken = await exchangeLongLivedToken(
-              messengerSettings,
-              parsedInput.accessToken,
-            )
-            let createdWorkspace = false
+        const longLivedToken = await exchangeLongLivedToken(
+          messengerSettings,
+          parsedInput.accessToken,
+        )
 
-            if (!workspaceId) {
-              const workspace = await workspaceService.create({
-                tx,
-                createdBy: ctx.user.id,
-                data: {
-                  name: parsedInput.pageName,
-                  timezone: "UTC",
-                  ownerId: ctx.user.id,
-                },
-              })
-              workspaceId = workspace.id
-              createdWorkspace = true
-            }
+        // Best-effort preserve-branch: a failed webhook subscribe must not
+        // roll back the connect. This intentionally now runs before the DB
+        // write (previously inside the same transaction) — see PR notes:
+        // `packages/business` has no dependency on
+        // `@chatbotx.io/integration-messenger`, so the subscribe call can no
+        // longer live inside `connectMessengerPage`'s transaction.
+        await subscribePageToAppWebhook({
+          pageId: parsedInput.pageId,
+          accessToken: longLivedToken,
+          version: messengerSettings.version,
+        })
 
-            const { appUrl } = await resolveTenantSettings({
-              workspaceId,
-              tx,
-            })
+        const auth: MessengerAuthValue = {
+          authType: AuthType.oauth2,
+          clientId: messengerSettings.clientId,
+          clientSecret: messengerSettings.clientSecret,
+          redirectUrl: "",
+          version: messengerSettings.version,
+          tokens: {
+            accessToken: longLivedToken,
+          },
+          metadata: {
+            pageId: parsedInput.pageId,
+            pageName: parsedInput.pageName,
+            version: messengerSettings.version,
+          },
+        }
 
-            await subscribePageToAppWebhook({
-              pageId: parsedInput.pageId,
-              accessToken: longLivedToken,
-              version: messengerSettings.version,
-            })
+        const {
+          workspaceId: connectedWorkspaceId,
+          createdWorkspace,
+          integrationRow,
+          wasCreated,
+          appUrl,
+        } = await connectMessengerPage({
+          ownerId: platformOwnerId,
+          userId: ctx.user.id,
+          workspaceId,
+          pageName: parsedInput.pageName,
+          pageId: parsedInput.pageId,
+          auth,
+          buildPersistentMenus: (resolvedAppUrl) => [
+            {
+              label: BRANDING_TITLE,
+              type: "url" as const,
+              url: getBrandingUrl("messenger", resolvedAppUrl),
+            },
+          ],
+        })
 
-            const auth: MessengerAuthValue = {
-              authType: AuthType.oauth2,
-              clientId: messengerSettings.clientId,
-              clientSecret: messengerSettings.clientSecret,
-              redirectUrl: "",
-              version: messengerSettings.version,
-              tokens: {
-                accessToken: longLivedToken,
-              },
-              metadata: {
-                pageId: parsedInput.pageId,
-                pageName: parsedInput.pageName,
-                version: messengerSettings.version,
-              },
-            }
+        workspaceId = connectedWorkspaceId
+        integrationId = integrationRow.id
+        connectedIntegrationId = integrationRow.id
 
-            const { integration: integrationRow, wasCreated } =
-              await connectChannelIntegration({
-                tx,
-                ownerId: platformOwnerId,
-                inboxData: {
-                  id: createId(),
-                  workspaceId: workspaceId as string,
-                  name: parsedInput.pageName,
-                  channel: "messenger",
-                  sourceId: parsedInput.pageId,
-                },
-                insertIntegration: async (inboxId) =>
-                  tx
-                    .insert(integrationMessengerModel)
-                    .values({
-                      id: createId(),
-                      workspaceId: workspaceId as string,
-                      inboxId,
-                      pageId: parsedInput.pageId,
-                      auth,
-                      name: parsedInput.pageName,
-                      persistentMenus: [
-                        {
-                          label: BRANDING_TITLE,
-                          type: "url" as const,
-                          url: getBrandingUrl("messenger", appUrl),
-                        },
-                      ],
-                      conversationStarters: [],
-                      personas: [],
-                    })
-                    .returning()
-                    .then((result) => result[0]),
-              })
+        const brandingCtx = await buildContext({
+          workspaceId,
+          integrationType: "messenger",
+          integration: { ...integrationRow, auth },
+        })
 
-            integrationId = integrationRow.id
-            connectedIntegrationId = integrationRow?.id
-
-            const brandingCtx = await buildContext({
-              workspaceId,
-              integrationType: "messenger",
-              integration: { ...integrationRow, auth },
-            })
-
-            // Best-effort: the connection is already live, so a failed
-            // branding write must never roll back the transaction or fail
-            // the action.
-            try {
-              await integrationMessenger.runChannelHandler(
-                "bot",
-                "addBranding",
-                {
-                  ctx: brandingCtx,
-                  title: BRANDING_TITLE,
-                  url: getBrandingUrl("messenger", appUrl),
-                },
-              )
-            } catch (error) {
-              logger.warn(
-                { err: error },
-                "Failed to add branding to Messenger persistent menu",
-              )
-            }
-
-            return { brandingCtx, createdWorkspace, wasCreated }
+        // Best-effort: the connection is already live, so a failed branding
+        // write must never fail the action.
+        try {
+          await integrationMessenger.runChannelHandler("bot", "addBranding", {
+            ctx: brandingCtx,
+            title: BRANDING_TITLE,
+            url: getBrandingUrl("messenger", appUrl),
           })
+        } catch (error) {
+          logger.warn(
+            { err: error },
+            "Failed to add branding to Messenger persistent menu",
+          )
+        }
 
         await updateWorkspaceLogo({
           id: workspaceId as string,

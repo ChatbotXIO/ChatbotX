@@ -2,61 +2,25 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const mocks = vi.hoisted(() => {
-  const txChain = {
-    set: vi.fn(),
-    where: vi.fn(),
-  }
-  txChain.set.mockReturnValue(txChain)
-  txChain.where.mockResolvedValue(undefined)
-
-  const tx = {
-    update: vi.fn(() => txChain),
-    delete: vi.fn(() => txChain),
-  }
-
-  return {
-    dbTransaction: vi.fn(async (callback: (tx: unknown) => Promise<void>) =>
-      callback(tx),
-    ),
-    findOrFail: vi.fn(),
-    inboxDisconnect: vi.fn().mockResolvedValue(undefined),
-    isRevokedTokenError: vi.fn(() => false),
-    metaCapiDeleteByIntegration: vi.fn().mockResolvedValue(undefined),
-    tx,
-    txChain,
-    whatsappDisconnect: vi.fn().mockResolvedValue(undefined),
-    workspaceFindById: vi.fn(),
-  }
-})
+const mocks = vi.hoisted(() => ({
+  auditRecord: vi.fn().mockResolvedValue(undefined),
+  deleteWithCleanup: vi.fn().mockResolvedValue(undefined),
+  findByIdForWorkspace: vi.fn(),
+  isRevokedTokenError: vi.fn(() => false),
+  whatsappDisconnect: vi.fn().mockResolvedValue(undefined),
+  workspaceFindById: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
-  inboxService: { disconnect: mocks.inboxDisconnect },
+  integrationWhatsappService: {
+    deleteWithCleanup: mocks.deleteWithCleanup,
+    findByIdForWorkspace: mocks.findByIdForWorkspace,
+  },
   workspaceService: { findById: mocks.workspaceFindById },
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
-  db: { transaction: mocks.dbTransaction },
-  eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
-  findOrFail: mocks.findOrFail,
-  inArray: vi.fn((field: unknown, values: unknown[]) => ({ field, values })),
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  metaCapiEventRepository: {
-    deleteByIntegration: mocks.metaCapiDeleteByIntegration,
-  },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  coexistSyncRunModel: {
-    finishedAt: "finishedAt",
-    integrationId: "integrationId",
-    status: "status",
-  },
-  integrationWhatsappModel: { id: "whatsappId" },
-  whatsappCoexistStagingModel: { phoneNumberId: "phoneNumberId" },
+vi.mock("@chatbotx.io/business/audit", () => ({
+  auditService: { record: mocks.auditRecord },
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
@@ -96,37 +60,27 @@ const integrationWhatsappRow = {
 describe("disconnectWhatsappAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.dbTransaction.mockImplementation(
-      async (callback: (tx: unknown) => Promise<void>) => callback(mocks.tx),
-    )
-    mocks.findOrFail.mockResolvedValue(integrationWhatsappRow)
+    mocks.findByIdForWorkspace.mockResolvedValue(integrationWhatsappRow)
     mocks.workspaceFindById.mockResolvedValue({
       id: "workspace-1",
       ownerId: "owner-1",
     })
     mocks.whatsappDisconnect.mockResolvedValue(undefined)
     mocks.isRevokedTokenError.mockReturnValue(false)
+    mocks.deleteWithCleanup.mockResolvedValue(undefined)
   })
 
-  test("purges MetaCapiEvent rows for the whatsapp channel before deleting the integration", async () => {
+  test("delegates cleanup to integrationWhatsappService.deleteWithCleanup with the phoneNumberId", async () => {
     await (disconnectWhatsappAction as (props: unknown) => Promise<unknown>)({
       bindArgsParsedInputs: ["workspace-1", "whatsapp-1"],
     })
 
-    expect(mocks.metaCapiDeleteByIntegration).toHaveBeenCalledWith(
-      {
-        workspaceId: "workspace-1",
-        channel: "whatsapp",
-        integrationId: "whatsapp-1",
-      },
-      mocks.tx,
-    )
-    expect(mocks.tx.delete).toHaveBeenCalledWith({ id: "whatsappId" })
-    expect(mocks.inboxDisconnect).toHaveBeenCalledWith({
+    expect(mocks.deleteWithCleanup).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "whatsapp-1",
+      phoneNumberId: "phone-1",
       inboxId: "inbox-1",
       ownerId: "owner-1",
-      workspaceId: "workspace-1",
-      tx: mocks.tx,
     })
   })
 
@@ -138,13 +92,23 @@ describe("disconnectWhatsappAction", () => {
       bindArgsParsedInputs: ["workspace-1", "whatsapp-1"],
     })
 
-    expect(mocks.metaCapiDeleteByIntegration).toHaveBeenCalledWith(
-      {
-        workspaceId: "workspace-1",
-        channel: "whatsapp",
-        integrationId: "whatsapp-1",
-      },
-      mocks.tx,
-    )
+    expect(mocks.deleteWithCleanup).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "whatsapp-1",
+      phoneNumberId: "phone-1",
+      inboxId: "inbox-1",
+      ownerId: "owner-1",
+    })
+  })
+
+  test("records the workspace-less audit event after cleanup resolves", async () => {
+    await (disconnectWhatsappAction as (props: unknown) => Promise<unknown>)({
+      bindArgsParsedInputs: ["workspace-1", "whatsapp-1"],
+    })
+
+    expect(mocks.auditRecord).toHaveBeenCalledWith({
+      action: "disconnect",
+      detail: "disconnected the WhatsApp channel (#whatsapp-1)",
+    })
   })
 })

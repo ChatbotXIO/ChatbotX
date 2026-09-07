@@ -1,4 +1,5 @@
-import { sql } from "../../client"
+import { type DatabaseClient, db, eq, sql } from "../../client"
+import { whatsappCoexistStagingModel } from "../../schema"
 import { type ChunkedPurgeStopReason, chunkedPurge } from "../chunked-purge"
 
 export type PurgeProcessedCoexistStagingOptions = {
@@ -25,4 +26,15 @@ export function purgeProcessedCoexistStaging(
     orderBy: "processedAt",
     ...bounds,
   })
+}
+
+export const whatsappCoexistStagingRepository = {
+  async deleteByPhoneNumberId(
+    input: { phoneNumberId: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .delete(whatsappCoexistStagingModel)
+      .where(eq(whatsappCoexistStagingModel.phoneNumberId, input.phoneNumberId))
+  },
 }

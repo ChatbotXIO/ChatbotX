@@ -2,31 +2,23 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const mocks = vi.hoisted(() => {
-  const txWhere = vi.fn().mockResolvedValue(undefined)
-  const txSet = vi.fn(() => ({ where: txWhere }))
-  const txUpdate = vi.fn(() => ({ set: txSet }))
-
-  return {
-    buildContext: vi.fn(),
-    dbTransaction: vi.fn(
-      async (callback: (tx: { update: typeof txUpdate }) => Promise<void>) =>
-        callback({ update: txUpdate }),
-    ),
-    encodeButtonPayload: vi.fn(() => "encoded-payload"),
-    ensureMessengerWhitelistedDomain: vi.fn().mockResolvedValue(undefined),
-    findIntegrationMessenger: vi.fn(),
-    moveBrandingMenuLast: vi.fn((menus: unknown[]) => menus),
-    runAction: vi.fn(),
-    runChannelHandler: vi.fn(),
-    txSet,
-    txUpdate,
-    txWhere,
-  }
-})
+const mocks = vi.hoisted(() => ({
+  buildContext: vi.fn(),
+  encodeButtonPayload: vi.fn(() => "encoded-payload"),
+  ensureMessengerWhitelistedDomain: vi.fn().mockResolvedValue(undefined),
+  findByIdForWorkspace: vi.fn(),
+  moveBrandingMenuLast: vi.fn((menus: unknown[]) => menus),
+  runAction: vi.fn(),
+  runChannelHandler: vi.fn(),
+  updateSettings: vi.fn().mockResolvedValue(undefined),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mocks.buildContext,
+  messengerIntegrationService: {
+    findByIdForWorkspace: mocks.findByIdForWorkspace,
+    updateSettings: mocks.updateSettings,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/branding", () => ({
@@ -35,15 +27,6 @@ vi.mock("@chatbotx.io/business/branding", () => ({
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: mocks.dbTransaction },
-  eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationMessengerModel: { id: "id" },
 }))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
@@ -78,33 +61,30 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("../src/features/integration-messenger/queries", () => ({
-  findIntegrationMessenger: mocks.findIntegrationMessenger,
-}))
-
 const { updateMessenger } = await import(
   "../src/features/integration-messenger/actions/update-messenger-action"
 )
 
+const baseIntegration = {
+  id: "messenger-1",
+  auth: { tokens: { accessToken: "token-1" } },
+  personas: [],
+  persistentMenus: [],
+  conversationStarters: [],
+  welcomeFlowId: null,
+}
+
 describe("updateMessenger", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.findIntegrationMessenger.mockResolvedValue({
-      id: "messenger-1",
-      auth: { tokens: { accessToken: "token-1" } },
-      personas: [],
-      persistentMenus: [],
-      conversationStarters: [],
-      welcomeFlowId: null,
-    })
+    mocks.findByIdForWorkspace.mockResolvedValue({ ...baseIntegration })
     mocks.buildContext.mockResolvedValue({
       platform: { appUrl: "https://app.example.test" },
     })
     mocks.runAction.mockResolvedValue({ personas: [] })
     mocks.runChannelHandler.mockResolvedValue(undefined)
     mocks.ensureMessengerWhitelistedDomain.mockResolvedValue(undefined)
-    mocks.txSet.mockReturnValue({ where: mocks.txWhere })
-    mocks.txWhere.mockResolvedValue(undefined)
+    mocks.updateSettings.mockResolvedValue(undefined)
   })
 
   test("keeps saved settings when post-commit profile field deletion fails", async () => {
@@ -130,7 +110,7 @@ describe("updateMessenger", () => {
       },
     )
 
-    expect(mocks.txUpdate).toHaveBeenCalled()
+    expect(mocks.updateSettings).toHaveBeenCalled()
     expect(mocks.ensureMessengerWhitelistedDomain).toHaveBeenCalled()
     expect(mocks.runChannelHandler).toHaveBeenCalledWith(
       "bot",
@@ -139,5 +119,37 @@ describe("updateMessenger", () => {
         data: expect.objectContaining({ get_started: expect.any(Object) }),
       }),
     )
+  })
+
+  test("throws before writing when the default persona failed to register with Facebook", async () => {
+    mocks.runAction.mockResolvedValue({
+      personas: [{ id: "persona-1", facebookPersonaId: undefined }],
+    })
+
+    await expect(
+      updateMessenger(
+        {
+          workspace: { id: "workspace-1" } as never,
+          id: "messenger-1",
+        },
+        {
+          welcomeFlowId: null,
+          persistentMenus: [],
+          personas: [
+            {
+              id: "persona-1",
+              isDefault: true,
+              name: "Support",
+              profilePicture: { url: "https://example.test/avatar.png" },
+            } as never,
+          ],
+          conversationStarters: [],
+        },
+      ),
+    ).rejects.toThrow(
+      "Couldn't register the default persona with Facebook. Please try saving again.",
+    )
+
+    expect(mocks.updateSettings).not.toHaveBeenCalled()
   })
 })

@@ -692,6 +692,77 @@ class IntegrationWhatsappRepository {
 
     return deleted.length
   }
+
+  /**
+   * Client-facing list: explicit allowlist mirroring `integrationWhatsappResource`
+   * (see `packages/business/src/integration-whatsapp/schema.ts`) so the encrypted
+   * `auth` and `capiAccessToken` columns can never reach this list, even at
+   * runtime. Keep this in sync with that pick() when either changes.
+   */
+  listClientSafeByWorkspaceId(
+    input: { workspaceId: string },
+    tx: DatabaseClient = db,
+  ) {
+    return tx.query.integrationWhatsappModel.findMany({
+      where: { workspaceId: input.workspaceId },
+      columns: {
+        id: true,
+        name: true,
+        inboxId: true,
+        displayPhoneNumber: true,
+        tokenRefreshError: true,
+        phoneNumberId: true,
+        wabaId: true,
+        hasCapiScope: true,
+        capiScopeCheckedAt: true,
+        datasetId: true,
+        workspaceId: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "asc" },
+      with: {
+        inbox: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+  }
+
+  /**
+   * No workspace scope — the webhook route only has an `integrationId`.
+   */
+  async findById(
+    input: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const row = await tx.query.integrationWhatsappModel.findFirst({
+      where: { id: input.id },
+    })
+
+    return row ?? null
+  }
+
+  async updateAuthById(
+    input: { id: string; auth: unknown },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ auth: input.auth })
+      .where(eq(integrationWhatsappModel.id, input.id))
+  }
+
+  async deleteById(
+    input: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .delete(integrationWhatsappModel)
+      .where(eq(integrationWhatsappModel.id, input.id))
+  }
 }
 
 export const integrationWhatsappRepository = new IntegrationWhatsappRepository()

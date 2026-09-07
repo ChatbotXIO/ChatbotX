@@ -1,16 +1,14 @@
 "use server"
 
-import { buildContext } from "@chatbotx.io/business"
-import { db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import {
-  integrationMessengerModel,
-  messengerMessageTemplateModel,
-} from "@chatbotx.io/database/schema"
+  buildContext,
+  messengerIntegrationService,
+} from "@chatbotx.io/business"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { SdkException } from "@chatbotx.io/sdk"
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -66,68 +64,10 @@ export async function syncMessengerMessageTemplatesForIntegration({
     return true
   })
 
-  await db.transaction(async (tx) => {
-    if (!isPartialSync) {
-      const existingTemplates = await tx
-        .select({
-          id: messengerMessageTemplateModel.id,
-          sourceId: messengerMessageTemplateModel.sourceId,
-        })
-        .from(messengerMessageTemplateModel)
-        .where(
-          eq(
-            messengerMessageTemplateModel.integrationMessengerId,
-            integrationMessenger.id,
-          ),
-        )
-
-      const incomingSourceIds = new Set(templates.map((t) => t.id))
-
-      const templatesToDelete = existingTemplates.filter(
-        (t) => !incomingSourceIds.has(t.sourceId),
-      )
-
-      if (templatesToDelete.length > 0) {
-        await tx.delete(messengerMessageTemplateModel).where(
-          inArray(
-            messengerMessageTemplateModel.id,
-            templatesToDelete.map((t) => t.id),
-          ),
-        )
-      }
-    }
-
-    for (const template of templates) {
-      await tx
-        .insert(messengerMessageTemplateModel)
-        .values([
-          {
-            id: createId(),
-            name: template.name,
-            integrationMessengerId: integrationMessenger.id,
-            language: template.language,
-            category: template.category,
-            status: template.status,
-            parameterFormat: template.parameter_format ?? "POSITIONAL",
-            sourceId: template.id,
-            components: template.components,
-          },
-        ])
-        .onConflictDoUpdate({
-          target: [
-            messengerMessageTemplateModel.integrationMessengerId,
-            messengerMessageTemplateModel.sourceId,
-          ],
-          set: {
-            name: template.name,
-            language: template.language,
-            category: template.category,
-            status: template.status,
-            parameterFormat: template.parameter_format ?? "POSITIONAL",
-            components: template.components,
-          },
-        })
-    }
+  await messengerIntegrationService.syncMessageTemplates({
+    integrationMessengerId: integrationMessenger.id,
+    templates,
+    isPartialSync,
   })
 }
 
@@ -138,14 +78,15 @@ export const syncMessengerMessageTemplateAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    const integrationMessenger = await findOrFail({
-      table: integrationMessengerModel,
-      where: {
+    const integrationMessenger =
+      await messengerIntegrationService.findByIdForWorkspace({
         workspaceId,
         id,
-      },
-      message: "Messenger integration not found",
-    })
+      })
+
+    if (!integrationMessenger) {
+      throw new Error("Messenger integration not found")
+    }
 
     await syncMessengerMessageTemplatesForIntegration({
       workspaceId,

@@ -44,6 +44,7 @@ const {
   mockAuditRecord,
   mockWithAuditContext,
   mockAssertSuperAdmin,
+  mockCreateFromOAuthCallback,
 } = vi.hoisted(() => ({
   mockFindMessengerIntegration: vi.fn(),
   mockUpdateMessengerIntegrationAuth: vi.fn(),
@@ -89,6 +90,7 @@ const {
     async (_ctx: unknown, fn: () => Promise<unknown>) => await fn(),
   ),
   mockAssertSuperAdmin: vi.fn(async () => undefined),
+  mockCreateFromOAuthCallback: vi.fn(async () => ({ integrationId: "int-1" })),
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -119,22 +121,15 @@ vi.mock("@chatbotx.io/business", () => ({
     createGoogleFromOAuthCallback: mockCreateGoogleFromOAuthCallback,
   },
   integrationFacebookAdsService: { upsert: mockUpsertFacebookAds },
+  integrationService: {
+    createFromOAuthCallback: mockCreateFromOAuthCallback,
+  },
   platformCredentialService: { resolveForOwner: mockResolveForOwner },
   hasWorkspaceAccess: mockHasWorkspaceAccess,
   workspaceService: {
     findById: mockFindWorkspaceById,
     create: vi.fn(),
   },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: vi.fn() },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationGoogleSheetsModel: {},
-  integrationModel: {},
-  ROOT_TENANT_ID: "1",
 }))
 
 vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
