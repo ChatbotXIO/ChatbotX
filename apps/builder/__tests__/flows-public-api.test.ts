@@ -133,6 +133,31 @@ describe("GET /v1/flows", () => {
       workspaceId: "workspace-1",
     })
   })
+
+  test("returns only id and name per flow, not the full resource", async () => {
+    flowService.list.mockResolvedValueOnce({
+      data: [
+        {
+          id: "flow-1",
+          name: "Flow 1",
+          workspaceId: "workspace-1",
+          active: true,
+          flowVersions: [{ id: "version-1" }],
+        },
+      ],
+      pageCount: 1,
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { page: 1, perPage: 50, active: true },
+    })
+
+    expect(result).toEqual({
+      data: [{ id: "flow-1", name: "Flow 1" }],
+      pageCount: 1,
+    })
+  })
 })
 
 describe("GET /v1/flows/{id}", () => {

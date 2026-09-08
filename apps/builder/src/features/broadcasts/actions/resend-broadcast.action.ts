@@ -26,7 +26,10 @@ export const resendBroadcast = async (ctx: {
   // Verify the broadcast exists (not soft-deleted, in-workspace) and is in
   // a resendable status before reading its `contactFilter` — main checked
   // existence first; reading before the guard would let a foreign or
-  // deleted id be processed.
+  // deleted id be processed. `broadcastService.resend` re-asserts this
+  // itself before its own insert, so the check is intentionally duplicated
+  // rather than redundant: this pre-check exists to guard the
+  // `contactFilter` read below, not the resend itself.
   await broadcastService.assertResendable({
     workspaceId: ctx.workspaceId,
     id: ctx.id,

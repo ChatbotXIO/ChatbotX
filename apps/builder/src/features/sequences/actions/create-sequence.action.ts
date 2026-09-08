@@ -7,6 +7,7 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
+import { isValidationException } from "@/lib/errors/validation-exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateSequenceRequest,
@@ -33,11 +34,7 @@ export const createSequenceAction = workspaceActionClient
           folderId: parsedInput.folderId,
         })
       } catch (error) {
-        if (
-          error instanceof Error &&
-          "code" in error &&
-          error.code === "validation"
-        ) {
+        if (isValidationException(error)) {
           return returnValidationErrors(createSequenceRequest, {
             _errors: [t("sequences.validation.exception")],
             name: {

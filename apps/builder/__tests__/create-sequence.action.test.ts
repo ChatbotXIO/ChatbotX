@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { validationException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { mockCreate, mockReturnValidationErrors, mockGetTranslations } =
@@ -77,10 +78,10 @@ describe("createSequenceAction", () => {
   })
 
   test("maps a validationException(name) to returnValidationErrors with the createSequenceRequest schema", async () => {
-    const validationError = Object.assign(new Error("Name is already taken."), {
-      code: "validation",
-      field: "name",
-    })
+    const validationError = validationException(
+      "name",
+      "Name is already taken.",
+    )
     mockCreate.mockRejectedValue(validationError)
 
     const result = await callAction({

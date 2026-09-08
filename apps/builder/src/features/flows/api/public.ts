@@ -23,7 +23,7 @@ import {
   updateDraftFlowVersionSchema,
   updateFlowSchema,
 } from "../schema/action"
-import { flowWithVersionsResource } from "../schema/resource"
+import { flowResource, flowWithVersionsResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
@@ -33,20 +33,26 @@ export const flowsPublicRouter = {
       method: "GET",
       path: "/v1/flows",
       summary: "List flows",
-      description:
-        "Lists flows in the workspace. Omit `active` to return both active and inactive flows.",
+      description: "Lists active flows in the workspace.",
       tags: ["Flows"],
     })
-    .input(publicListRequest.extend({ active: z.boolean().optional() }))
-    .output(publicListResponse(flowWithVersionsResource))
+    .input(
+      publicListRequest.extend({
+        active: z.boolean().optional().default(true),
+      }),
+    )
+    .output(publicListResponse(flowResource.pick({ id: true, name: true })))
     .errors(possibleErrorsOnListingResource)
-    .handler(
-      async ({ context, input }) =>
-        await flowService.list({
-          ...input,
-          workspaceId: context.workspace.id,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      const { data, pageCount } = await flowService.list({
+        ...input,
+        workspaceId: context.workspace.id,
+      })
+      return {
+        data: data.map((flow) => ({ id: flow.id, name: flow.name })),
+        pageCount,
+      }
+    }),
 
   get: workspaceTokenAuthAPI
     .route({

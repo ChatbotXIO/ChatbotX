@@ -5,6 +5,7 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
+import { isValidationException } from "@/lib/errors/validation-exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateSequenceSchema } from "../schema/action"
 
@@ -22,11 +23,7 @@ export const updateSequenceAction = workspaceActionClient
     try {
       await sequenceService.update({ workspaceId, id }, parsedInput)
     } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        error.code === "validation"
-      ) {
+      if (isValidationException(error)) {
         return returnValidationErrors(updateSequenceSchema, {
           _errors: [t("sequences.validation.exception")],
           name: {

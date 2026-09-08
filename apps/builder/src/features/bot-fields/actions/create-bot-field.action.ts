@@ -3,6 +3,7 @@
 import { botFieldService } from "@chatbotx.io/business"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
+import { isValidationException } from "@/lib/errors/validation-exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBotFieldRequest } from "../schema/action"
 
@@ -20,14 +21,10 @@ export const createBotFieldAction = workspaceActionClient
     } catch (error) {
       // Unique (workspaceId, type, name) — surface a field-level error under
       // Name instead of the generic toast (mirrors createCustomFieldAction).
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        error.code === "validation"
-      ) {
+      if (isValidationException(error)) {
         return returnValidationErrors(createBotFieldRequest, {
           _errors: ["Validation Exception"],
-          name: { _errors: ["Name is already taken"] },
+          name: { _errors: [error.message] },
         })
       }
       throw error
