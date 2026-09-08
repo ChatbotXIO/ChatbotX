@@ -11,6 +11,10 @@ import { listMessages } from "@/features/messages/queries"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import {
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnMutatingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 // Sending/reading messages, auto-replies, and flows for a contact are
@@ -36,6 +40,7 @@ export const contactsMessagesPublicRouter = {
         }),
       ),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -70,6 +75,7 @@ export const contactsMessagesPublicRouter = {
       }),
     )
     .output(listMessagesResponse)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -104,6 +110,7 @@ export const contactsMessagesPublicRouter = {
       }),
     )
     .output(messageResourceWithRelations)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -138,6 +145,7 @@ export const contactsMessagesPublicRouter = {
         inboxId: zodBigintAsString().optional(),
       }),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -184,6 +192,7 @@ export const contactsMessagesPublicRouter = {
         inboxId: zodBigintAsString().optional(),
       }),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,

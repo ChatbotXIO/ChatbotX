@@ -1,3 +1,4 @@
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxes } from "../queries"
 import {
@@ -20,6 +21,7 @@ export const inboxesPublicRouter = {
     })
     .input(publishInboxesRequest)
     .output(publicListInboxResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listInboxes({
@@ -40,6 +42,7 @@ export const inboxesPublicRouter = {
     })
     .input(publishInboxesRequest)
     .output(publicListInboxesResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const result = await listInboxes({
         ...input,

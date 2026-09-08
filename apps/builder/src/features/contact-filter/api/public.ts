@@ -1,5 +1,6 @@
 import { listContactFilterFieldsForAPI } from "@/features/contact-filter/queries/list-contact-filter-fields"
 import { listContactFilterFieldsPublicResponse } from "@/features/contact-filter/schema/public"
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -15,6 +16,7 @@ export const contactsFilterFieldsPublicRouter = {
       tags: ["Contacts"],
     })
     .output(listContactFilterFieldsPublicResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context }) =>
         await listContactFilterFieldsForAPI({

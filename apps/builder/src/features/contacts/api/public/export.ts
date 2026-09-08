@@ -1,4 +1,8 @@
 import { contactExportService } from "@chatbotx.io/business"
+import {
+  possibleErrorsOnCreatingResource,
+  possibleErrorsOnFindingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   exportContactsRequest,
@@ -24,6 +28,7 @@ export const contactsExportPublicRouter = {
     })
     .input(exportContactsRequest)
     .output(exportContactsResponse)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
         await contactExportService.start({
@@ -46,6 +51,7 @@ export const contactsExportPublicRouter = {
     })
     .input(getExportFilePublicRequest)
     .output(getExportFilePublicResponse)
+    .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
         await contactExportService.getFile({

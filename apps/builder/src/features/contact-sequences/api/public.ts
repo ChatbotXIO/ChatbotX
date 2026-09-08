@@ -6,6 +6,11 @@ import {
   listContactSequencesPublicResponse,
   setContactSequencesPublicRequest,
 } from "@/features/contact-sequences/schema/public"
+import {
+  possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnMutatingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -20,6 +25,7 @@ export const contactsSequencesPublicRouter = {
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(listContactSequencesPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -46,6 +52,7 @@ export const contactsSequencesPublicRouter = {
         z.object({ identifier: z.string().min(1) }),
       ),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -72,6 +79,7 @@ export const contactsSequencesPublicRouter = {
         z.object({ identifier: z.string().min(1) }),
       ),
     )
+    .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -101,6 +109,7 @@ export const contactsSequencesPublicRouter = {
         z.object({ identifier: z.string().min(1) }),
       ),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({

@@ -49,6 +49,18 @@ vi.mock("@chatbotx.io/sdk", () => ({
   },
 }))
 
+// `@/orpc` now attaches `commonApiErrors` (from orpc-error-helper.ts) to the
+// public stacks, which reuses `DENIAL_MESSAGES` from this module — stub it so
+// importing `@/orpc` doesn't pull in the real `@chatbotx.io/business` barrel
+// (and transitively the google-calendar integration's `@chatbotx.io/sdk`
+// `Integration` export, which the mock above doesn't provide).
+vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
+  DENIAL_MESSAGES: {
+    trialExpired: "Trial expired",
+    macLimitReached: "Monthly active contact limit reached",
+  },
+}))
+
 const { ChatbotXException } = await import("@chatbotx.io/business/errors")
 const { ModelNotfoundException } = await import("@chatbotx.io/database/errors")
 const { SdkException } = await import("@chatbotx.io/sdk")
@@ -102,6 +114,28 @@ describe("mapKnownOrpcErrors", () => {
 
     expect(() => mapKnownOrpcErrors(error)).toThrow(
       expect.objectContaining({ code: "invalidRequestData", status: 422 }),
+    )
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
+  })
+
+  test("maps a validationException-shaped ChatbotXException to a 422 validation error", () => {
+    const error = new ChatbotXException("Name already taken", "validation", 422)
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({ code: "validation", status: 422 }),
+    )
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
+  })
+
+  test("maps a tooManyRequests ChatbotXException to a 429 error", () => {
+    const error = new ChatbotXException(
+      "Too many requests. Retry after 5s.",
+      "tooManyRequests",
+      429,
+    )
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({ code: "tooManyRequests", status: 429 }),
     )
     expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
   })

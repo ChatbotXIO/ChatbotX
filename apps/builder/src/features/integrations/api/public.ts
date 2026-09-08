@@ -1,4 +1,5 @@
 import { integrationService } from "@chatbotx.io/business"
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import {
   paginateInMemory,
   publicListRequest,
@@ -19,6 +20,7 @@ export const integrationsPublicRouter = {
     })
     .input(publicListRequest)
     .output(publicListResponse(publicIntegrationResource))
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const data = await integrationService.listByWorkspaceId(
         context.workspace.id,

@@ -1,4 +1,5 @@
 import { aiAgentService } from "@chatbotx.io/business"
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listAIAgentsResponse } from "../schema/query"
@@ -15,6 +16,7 @@ export const aiAgentsPublicRouter = {
     })
     .input(publicListRequest)
     .output(listAIAgentsResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await aiAgentService.listAIAgents({

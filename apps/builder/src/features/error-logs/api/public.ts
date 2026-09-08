@@ -1,3 +1,4 @@
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listErrorLogs } from "../queries"
@@ -18,6 +19,7 @@ export const errorLogsPublicRouter = {
     })
     .input(withPublicPaging(listErrorLogsRequest.omit({ workspaceId: true })))
     .output(publicListErrorLogsResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listErrorLogs({

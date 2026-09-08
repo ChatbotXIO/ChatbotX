@@ -1,5 +1,6 @@
 import { contactService, tagService } from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
+import { possibleErrorsOnCreatingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   bulkAddTagsPublicRequest,
@@ -22,6 +23,7 @@ export const contactsBulkPublicRouter = {
     })
     .input(bulkAddTagsPublicRequest)
     .output(bulkResultPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { processedContactIds, skippedContactIds } =
         await tagService.attachByNamesToContacts({
@@ -43,6 +45,7 @@ export const contactsBulkPublicRouter = {
     })
     .input(bulkContactIdsPublicRequest)
     .output(bulkResultPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { processedContactIds, skippedContactIds } =
         await contactService.deleteAndRecord({
@@ -64,6 +67,7 @@ export const contactsBulkPublicRouter = {
     })
     .input(bulkSubscribeSequencesPublicRequest)
     .output(bulkResultPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { processedContactIds, skippedContactIds } =
         await contactSequenceService.enrollContacts({

@@ -2,6 +2,7 @@ import { incomingApiMessageSchema } from "@chatbotx.io/integration-api"
 import { enqueueIntegrationJob } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { logger } from "@/lib/log"
+import { possibleErrorsOnCreatingResource } from "@/lib/orpc/orpc-error-helper"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { channelApiTokenAPI } from "@/orpc"
 
@@ -26,6 +27,7 @@ export const channelsPublicRouter = {
         messageSourceId: z.string(),
       }),
     )
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       await assertNotRateLimited(context.inbox.id)
 
@@ -55,6 +57,7 @@ export const channelsPublicRouter = {
         typing: z.boolean(),
       }),
     )
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       await assertNotRateLimited(context.inbox.id)
 
@@ -81,6 +84,7 @@ export const channelsPublicRouter = {
         contact: z.object({ sourceId: z.string().min(1) }),
       }),
     )
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       await assertNotRateLimited(context.inbox.id)
 
@@ -113,6 +117,7 @@ export const channelsPublicRouter = {
         error: z.unknown().optional(),
       }),
     )
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       await assertNotRateLimited(context.inbox.id)
 

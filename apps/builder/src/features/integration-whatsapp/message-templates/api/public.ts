@@ -1,3 +1,4 @@
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { whatsappMessageTemplateService } from "../queries"
 import {
@@ -21,6 +22,7 @@ export const templateMessagesPublicRouter = {
       }),
     )
     .output(listWhatsappMessageTemplatesResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await whatsappMessageTemplateService.list({

@@ -151,7 +151,7 @@ export const validationException = (
   message: string,
   data?: Record<string, string | number>,
 ) => {
-  const error = new ChatbotXException(message, "validation", 400)
+  const error = new ChatbotXException(message, "validation", 422)
   error.field = field
   error.data = data
   return error
