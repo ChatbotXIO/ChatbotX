@@ -230,6 +230,7 @@ export const tenantService = {
   async suspend(ownerId: string): Promise<void> {
     await workspaceLifecycleService.deactivateOwnerWorkspaces({
       ownerId,
+      reason: "tenant_suspended",
       teardownLevel: "pause",
     })
     return this.setStatusByOwner(ownerId, "suspended")

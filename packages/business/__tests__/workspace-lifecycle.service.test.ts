@@ -198,6 +198,7 @@ test("disconnectWorkspaceChannels tears down active native Instagram coexist run
     workspaceId: "workspace-1",
     ownerId: "owner-1",
     teardownLevel: "disconnect",
+    reason: "manual",
     tx: tx as never,
   })
 
@@ -235,6 +236,7 @@ test("disconnectWorkspaceChannels does not apply native coexist teardown to inst
     workspaceId: "workspace-1",
     ownerId: "owner-1",
     teardownLevel: "disconnect",
+    reason: "manual",
     tx: tx as never,
   })
 

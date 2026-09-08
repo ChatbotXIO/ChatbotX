@@ -106,6 +106,7 @@ class IntegrationApiService extends BaseService {
         inboxId: input.inboxId,
         ownerId: input.ownerId,
         workspaceId: input.workspaceId,
+        reason: "manual",
         tx,
       })
     })

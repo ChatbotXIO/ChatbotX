@@ -6,11 +6,15 @@ const add = vi.fn()
 const runExclusive = vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) =>
   fn(),
 )
+const loggerError = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { listDueExpiredTrials },
 }))
 vi.mock("@chatbotx.io/redis", () => ({ distributedLock: { runExclusive } }))
+vi.mock("../src/lib/logger", () => ({
+  logger: { error: loggerError, warn: vi.fn(), info: vi.fn() },
+}))
 
 const envState = vi.hoisted(() => ({ NEXT_PUBLIC_EDITION: "cloud" }))
 vi.mock("../src/env", () => ({ env: envState }))
@@ -33,6 +37,7 @@ beforeEach(() => {
   addBulk.mockReset()
   add.mockReset()
   runExclusive.mockClear()
+  loggerError.mockReset()
   listDueExpiredTrials.mockResolvedValue({ userIds: [], nextCursor: undefined })
   envState.NEXT_PUBLIC_EDITION = "cloud"
 })
@@ -133,5 +138,25 @@ describe("unsubscribeExpiredTrials", () => {
     expect(runExclusive).not.toHaveBeenCalled()
     expect(listDueExpiredTrials).not.toHaveBeenCalled()
     expect(addBulk).not.toHaveBeenCalled()
+  })
+
+  test("enqueues every owner and follows the cursor for a large page", async () => {
+    const userIds = Array.from({ length: 21 }, (_, i) => `owner-${i}`)
+    listDueExpiredTrials.mockResolvedValue({
+      userIds,
+      nextCursor: "owner-20",
+    })
+
+    await unsubscribeExpiredTrials()
+
+    expect(addBulk).toHaveBeenCalledOnce()
+    expect(addBulk.mock.calls[0][0]).toHaveLength(21)
+    expect(add).toHaveBeenCalledWith(
+      "unsubscribeExpiredTrials",
+      { type: "unsubscribeExpiredTrials", data: { cursor: "owner-20" } },
+      expect.objectContaining({
+        jobId: "unsubscribe-expired-trials-scan-owner-20",
+      }),
+    )
   })
 })

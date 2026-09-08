@@ -111,6 +111,7 @@ class IntegrationWebchatService extends BaseService {
         inboxId: integrationWebchat.inboxId,
         ownerId: workspace.ownerId,
         workspaceId: input.workspaceId,
+        reason: "manual",
         tx,
       })
     })

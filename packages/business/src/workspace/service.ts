@@ -360,6 +360,7 @@ class WorkspaceService extends BaseService {
       await workspaceLifecycleService.disconnectWorkspaceChannels({
         integrations,
         teardownLevel: "disconnect",
+        reason: "workspace_purge",
         workspaceId: workspace.id,
         ownerId: workspace.ownerId,
       })

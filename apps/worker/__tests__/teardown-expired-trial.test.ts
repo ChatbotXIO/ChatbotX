@@ -50,6 +50,7 @@ describe("teardownExpiredTrial", () => {
 
     expect(deactivateOwnerWorkspaces).toHaveBeenCalledWith({
       ownerId: "owner-1",
+      reason: "trial_expired",
       integrations: ["integration"],
       teardownLevel: "disconnect",
     })

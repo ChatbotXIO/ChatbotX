@@ -127,6 +127,7 @@ describe("disconnectWhatsappAction", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
       tx: mocks.tx,
     })
   })

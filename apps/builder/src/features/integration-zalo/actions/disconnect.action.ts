@@ -65,6 +65,7 @@ export const disconnectZaloAction = workspaceActionClientAllowExpired
         inboxId: integrationZalo.inboxId,
         ownerId: workspace.ownerId,
         workspaceId,
+        reason: "manual",
         tx,
       })
     })

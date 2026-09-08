@@ -33,6 +33,20 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+// Real AsyncLocalStorage context, isolated from the audit dispatcher's
+// Snowflake id generator — this test only needs the wrapped calls to
+// succeed, not a real enqueue.
+vi.mock("@chatbotx.io/business/audit", async () => {
+  const { AsyncLocalStorage } = await import("node:async_hooks")
+  const storage = new AsyncLocalStorage<Record<string, unknown>>()
+  return {
+    SYSTEM_ACTOR: "system",
+    withAuditContext: (actor: Record<string, unknown>, fn: () => unknown) =>
+      storage.run(actor, fn),
+    getAuditActor: () => storage.getStore(),
+  }
+})
+
 vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))

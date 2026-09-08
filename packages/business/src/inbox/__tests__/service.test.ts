@@ -68,7 +68,6 @@ const { workspaceUsageService } = (await import(
     decrement: ReturnType<typeof vi.fn>
   }
 }
-
 beforeEach(() => {
   mocks.inboxFindMany.mockReset()
   mocks.inboxFindFirst.mockReset()
@@ -104,16 +103,19 @@ beforeEach(() => {
 })
 
 describe("InboxService.disconnect", () => {
-  test("disconnects only the requested inbox", async () => {
+  test("disconnects only the requested inbox and records the reason", async () => {
     await inboxService.disconnect({
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
     })
 
     expect(mocks.inboxUpdate).toHaveBeenCalledTimes(1)
     expect(mocks.inboxUpdateSet).toHaveBeenCalledWith({
       status: "disconnected",
+      disconnectedAt: expect.any(Date),
+      disconnectReason: "manual",
     })
     expect(mocks.inboxUpdateWhere).toHaveBeenCalledWith({
       column: "id",
@@ -130,6 +132,7 @@ describe("InboxService.disconnect", () => {
       inboxId: "inbox-2",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
       tx: tx as never,
     })
 
@@ -145,6 +148,7 @@ describe("InboxService.disconnect", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
     })
 
     expect(quotaEnforcementService.release).toHaveBeenCalledWith({
@@ -163,6 +167,7 @@ describe("InboxService.disconnect", () => {
         inboxId: "inbox-1",
         ownerId: "owner-1",
         workspaceId: "workspace-1",
+        reason: "manual",
       }),
     ).resolves.toBeUndefined()
   })
@@ -172,6 +177,7 @@ describe("InboxService.disconnect", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
     })
 
     expect(workspaceUsageService.decrement).toHaveBeenCalledWith(
@@ -190,6 +196,7 @@ describe("InboxService.disconnect", () => {
         inboxId: "inbox-1",
         ownerId: "owner-1",
         workspaceId: "workspace-1",
+        reason: "manual",
       }),
     ).resolves.toBeUndefined()
   })
@@ -257,6 +264,29 @@ describe("InboxService.create", () => {
 
     expect(quotaEnforcementService.tryConsume).not.toHaveBeenCalled()
     expect(mocks.inboxUpdate).toHaveBeenCalledTimes(1)
+  })
+
+  test("clears the disconnect fields on reconnect", async () => {
+    mocks.inboxFindFirst.mockResolvedValue({
+      id: "existing-inbox",
+      status: "disconnected",
+    })
+
+    await inboxService.create({
+      data: {
+        workspaceId: "workspace-1",
+        channel: "whatsapp",
+        name: "WhatsApp",
+      } as never,
+      ownerId: "owner-1",
+    })
+
+    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith({
+      status: "connected",
+      name: "WhatsApp",
+      disconnectedAt: null,
+      disconnectReason: null,
+    })
   })
 })
 

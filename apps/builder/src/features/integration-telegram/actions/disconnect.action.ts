@@ -49,6 +49,7 @@ export const disconnectTelegramAction = workspaceActionClientAllowExpired
           inboxId: integrationTelegram.inboxId,
           ownerId: workspace.ownerId,
           workspaceId,
+          reason: "manual",
           tx,
         })
       })

@@ -182,6 +182,7 @@ describe("workspaceLifecycleService", () => {
           },
         },
         teardownLevel: "disconnect",
+        reason: "workspace_purge",
         tx: tx as never,
         workspaceId: "workspace-1",
         ownerId: "owner-1",
@@ -195,6 +196,7 @@ describe("workspaceLifecycleService", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "workspace_purge",
       tx,
     })
   })
@@ -225,6 +227,7 @@ describe("workspaceLifecycleService", () => {
         },
       },
       teardownLevel: "disconnect",
+      reason: "workspace_purge",
       tx: tx as never,
       workspaceId: "workspace-1",
       ownerId: "owner-1",

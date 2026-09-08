@@ -119,6 +119,7 @@ export const disconnectMessenger = async (ctx: {
       inboxId: integrationMessenger.inboxId,
       ownerId: workspace.ownerId,
       workspaceId: ctx.workspaceId,
+      reason: "manual",
       tx,
     })
   })

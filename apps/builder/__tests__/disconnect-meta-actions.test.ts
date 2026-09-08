@@ -192,6 +192,7 @@ describe("Meta disconnect actions", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
       tx: mocks.tx,
     })
   })
@@ -227,6 +228,7 @@ describe("Meta disconnect actions", () => {
       inboxId: "inbox-2",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
       tx: mocks.tx,
     })
   })
@@ -275,6 +277,7 @@ describe("Meta disconnect actions", () => {
       inboxId: "inbox-1",
       ownerId: "owner-1",
       workspaceId: "workspace-1",
+      reason: "manual",
       tx: mocks.tx,
     })
     expect(mocks.auditRecord).toHaveBeenCalled()

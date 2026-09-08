@@ -35,6 +35,7 @@ export const disconnectTiktokAction = workspaceActionClientAllowExpired
           inboxId: integrationTiktok.inboxId,
           ownerId: workspace.ownerId,
           workspaceId,
+          reason: "manual",
           tx,
         })
       })

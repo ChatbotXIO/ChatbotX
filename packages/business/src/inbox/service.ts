@@ -9,6 +9,7 @@ import {
 import {
   type ChannelType,
   channelTypes,
+  type InboxDisconnectReason,
   inboxStatuses,
 } from "@chatbotx.io/database/partials"
 import { inboxModel } from "@chatbotx.io/database/schema"
@@ -203,7 +204,12 @@ class InboxService extends BaseService {
       if (existing.status === inboxStatuses.enum.disconnected) {
         const [updated] = await tx
           .update(inboxModel)
-          .set({ status: inboxStatuses.enum.connected, name: data.name })
+          .set({
+            status: inboxStatuses.enum.connected,
+            name: data.name,
+            disconnectedAt: null,
+            disconnectReason: null,
+          })
           .where(eq(inboxModel.id, existing.id))
           .returning()
         return { inbox: updated, wasCreated: true }
@@ -240,13 +246,18 @@ class InboxService extends BaseService {
     inboxId: string
     ownerId: string
     workspaceId: string
+    reason: InboxDisconnectReason
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
 
     await client
       .update(inboxModel)
-      .set({ status: inboxStatuses.enum.disconnected })
+      .set({
+        status: inboxStatuses.enum.disconnected,
+        disconnectedAt: new Date(),
+        disconnectReason: props.reason,
+      })
       .where(eq(inboxModel.id, props.inboxId))
 
     // Best-effort: never block/roll back the disconnect if release fails, the
