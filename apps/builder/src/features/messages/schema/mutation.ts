@@ -1,6 +1,7 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000
 
@@ -115,7 +116,7 @@ export const createWebchatMessageRequest = z
       clientId: z.string().optional(),
       workspaceId: zodBigintAsString(),
       webchatId: zodBigintAsString(),
-      guestConversationId: zodBigintAsString(),
+      guestConversationId: zodGuestConversationId(),
       ref: z.string().optional(),
       parentUrl: z.url().max(2048).optional(),
       locale: z.string().max(35).optional(),
