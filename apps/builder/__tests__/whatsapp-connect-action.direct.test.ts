@@ -99,6 +99,10 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
   appAccessToken: (settings: { clientId: string; clientSecret: string }) =>
     `${settings.clientId}|${settings.clientSecret}`,
   debugToken: mocks.debugTokenMock,
+  // `getWhatsappGrantedScopes` reads the grant through this one, and
+  // `persistConnectedWaba` swallows its own failures — leaving it off the mock
+  // silently skipped the WABA record write instead of failing the test.
+  debugTokenOrThrow: mocks.debugTokenMock,
   exchangeAccessToken: mocks.exchangeAccessTokenMock,
 }))
 
@@ -130,6 +134,7 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/webhook", () => ({
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mocks.distributedLockRunExclusiveMock },
   invalidateCacheByTags: mocks.invalidateCacheByTagsMock,
 }))
 

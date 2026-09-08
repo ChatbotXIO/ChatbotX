@@ -66,7 +66,9 @@ export interface CapiSendAdapter<
     integration: MetaConversionsIntegrationByChannel[TChannel],
   ): CapiScopeCheckInput | Promise<CapiScopeCheckInput>
   claimCapiScopeCacheRefresh(
-    input: CapiScopeCacheClaim,
+    input: CapiScopeCacheClaim & {
+      integration: MetaConversionsIntegrationByChannel[TChannel]
+    },
     tx?: DatabaseClient,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null>
   findWorkspaceIntegration(

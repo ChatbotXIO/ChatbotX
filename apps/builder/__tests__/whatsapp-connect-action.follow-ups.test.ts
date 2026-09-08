@@ -96,6 +96,10 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
   appAccessToken: (settings: { clientId: string; clientSecret: string }) =>
     `${settings.clientId}|${settings.clientSecret}`,
   debugToken: mocks.debugTokenMock,
+  // `getWhatsappGrantedScopes` reads the grant through this one, and
+  // `persistConnectedWaba` swallows its own failures — leaving it off the mock
+  // silently skipped the WABA record write instead of failing the test.
+  debugTokenOrThrow: mocks.debugTokenMock,
   exchangeAccessToken: mocks.exchangeAccessTokenMock,
 }))
 
@@ -123,6 +127,7 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/webhook", () => ({
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mocks.distributedLockRunExclusiveMock },
   invalidateCacheByTags: mocks.invalidateCacheByTagsMock,
 }))
 
@@ -145,6 +150,63 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
   })
 
   describe("WABA pre-work", () => {
+    test("serializes concurrent first connects so WABA provisioning runs once", async () => {
+      const secondPhoneNumber = { ...selectedPhoneNumber, id: "phone-2" }
+      let waba: { provisionedAt: Date | null; revision: number } | null = null
+      let tail = Promise.resolve()
+      mocks.findActiveSignupSessionForUserMock.mockResolvedValue({
+        ...defaultSession,
+        workspaceId: "ws-1",
+        candidatePhoneNumberIds: [selectedPhoneNumber.id, secondPhoneNumber.id],
+      })
+      mocks.findWabaRecordMock.mockImplementation(async () => waba)
+      mocks.upsertWabaCredentialMock.mockImplementation(() => {
+        waba ??= { provisionedAt: null, revision: 1 }
+        return waba
+      })
+      mocks.markWabaProvisionedMock.mockImplementation(() => {
+        waba = { provisionedAt: new Date(), revision: 2 }
+        return waba
+      })
+      mocks.distributedLockRunExclusiveMock.mockImplementation(
+        async ({ fn }: { fn: () => Promise<unknown> }) => {
+          const previous = tail
+          let release: (() => void) | undefined
+          tail = new Promise<void>((resolve) => {
+            release = resolve
+          })
+          await previous
+          try {
+            return await fn()
+          } finally {
+            release?.()
+          }
+        },
+      )
+
+      await Promise.all([
+        callConnectWhatsappAction({
+          ctx: { user: { id: "user-1" } },
+          parsedInput: {
+            ...BASE_INPUT,
+            phoneNumberId: selectedPhoneNumber.id,
+            signupSessionId: "signup-session-1",
+          },
+        }),
+        callConnectWhatsappAction({
+          ctx: { user: { id: "user-1" } },
+          parsedInput: {
+            ...BASE_INPUT,
+            phoneNumberId: secondPhoneNumber.id,
+            signupSessionId: "signup-session-1",
+          },
+        }),
+      ])
+
+      expect(mocks.addSystemUserMock).toHaveBeenCalledTimes(1)
+      expect(mocks.markWabaProvisionedMock).toHaveBeenCalledTimes(1)
+    })
+
     test("skips provisioning for a second number when the WABA is provisioned", async () => {
       const secondPhoneNumber = { ...selectedPhoneNumber, id: "phone-2" }
       mocks.findActiveSignupSessionForUserMock.mockResolvedValue({

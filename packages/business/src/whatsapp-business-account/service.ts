@@ -36,6 +36,12 @@ type UpdateScopeCacheInput = Omit<
   "tx"
 > & { tx?: DatabaseClient }
 
+type ClaimScopeCacheRefreshInput = WabaRef & {
+  capiScopeCheckedAt: Date
+  expectedCapiScopeCheckedAt: Date | null
+  tx?: DatabaseClient
+}
+
 const wabaCredentialAad = ({ workspaceId, wabaId }: WabaRef) =>
   `whatsapp-waba:${workspaceId}:${wabaId}`
 
@@ -89,6 +95,30 @@ export class WhatsappBusinessAccountService extends BaseService {
 
   async updateScopeCache(input: UpdateScopeCacheInput) {
     return await whatsappBusinessAccountRepository.updateScopeCache(input)
+  }
+
+  /**
+   * Advances the authoritative WABA cache timestamp while preserving its
+   * scopes. The revision CAS makes concurrent scope checks single-flight.
+   */
+  async claimScopeCacheRefresh(input: ClaimScopeCacheRefreshInput) {
+    const current = await this.findByWaba(input)
+    if (
+      !current ||
+      current.scopeCheckedAt?.getTime() !==
+        input.expectedCapiScopeCheckedAt?.getTime()
+    ) {
+      return null
+    }
+
+    return await this.updateScopeCache({
+      workspaceId: input.workspaceId,
+      wabaId: input.wabaId,
+      grantedScopes: current.grantedScopes,
+      scopeCheckedAt: input.capiScopeCheckedAt,
+      expectedRevision: current.revision,
+      tx: input.tx,
+    })
   }
 
   async markProvisioned(

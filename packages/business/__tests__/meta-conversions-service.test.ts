@@ -814,6 +814,49 @@ describe("MetaConversionsService", () => {
     })
   })
 
+  test("refreshes a stale WABA scope cache without using the phone-row timestamp", async () => {
+    const stale = new Date("2026-08-09T12:00:00.000Z")
+    const now = new Date("2026-08-10T12:00:00.000Z")
+    const waba = {
+      revision: 4,
+      grantedScopes: [] as string[],
+      scopeCheckedAt: stale,
+    }
+    mocks.whatsappFindByIdForWorkspace.mockResolvedValue(whatsappIntegration)
+    mocks.whatsappBusinessAccountFindByWaba.mockImplementation(async () => ({
+      ...waba,
+    }))
+    mocks.whatsappBusinessAccountUpdateScopeCache.mockImplementation(
+      (input: { grantedScopes: string[]; scopeCheckedAt: Date }) => {
+        waba.grantedScopes = input.grantedScopes
+        waba.scopeCheckedAt = input.scopeCheckedAt
+        waba.revision += 1
+        return { ...waba }
+      },
+    )
+
+    const refreshed = await metaConversionsService.refreshCapiScopeCache({
+      channel: "whatsapp",
+      integration: whatsappIntegration,
+      checkScope: vi.fn().mockResolvedValue(true),
+      now,
+    })
+
+    expect(refreshed).toMatchObject({
+      hasCapiScope: true,
+      capiScopeCheckedAt: now,
+    })
+    expect(mocks.whatsappClaimCapiScopeCacheRefresh).not.toHaveBeenCalled()
+    expect(
+      mocks.whatsappBusinessAccountUpdateScopeCache,
+    ).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        grantedScopes: ["whatsapp_business_manage_events"],
+        expectedRevision: 5,
+      }),
+    )
+  })
+
   test("resolves OAuth CAPI access token for whatsapp when no manual token is saved", async () => {
     await expect(resolveCapiAccessToken(whatsappIntegration)).resolves.toEqual({
       accessToken: "whatsapp-token",

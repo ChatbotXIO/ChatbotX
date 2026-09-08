@@ -277,6 +277,7 @@ class MetaConversionsService extends BaseService {
     }
     const claimed = await adapter.claimCapiScopeCacheRefresh({
       ...ref,
+      integration: input.integration,
       capiScopeCheckedAt: now,
       expectedCapiScopeCheckedAt,
     })

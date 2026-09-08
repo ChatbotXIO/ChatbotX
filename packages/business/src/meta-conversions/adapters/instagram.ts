@@ -43,7 +43,7 @@ export const instagramCapiReadinessAdapter: CapiReadinessAdapter<"instagram"> =
     },
     resolveCapiAccessToken,
     resolveCapiScopeState: (integration) => Promise.resolve(integration),
-    claimCapiScopeCacheRefresh: (input, tx) =>
+    claimCapiScopeCacheRefresh: ({ integration: _, ...input }, tx) =>
       integrationInstagramRepository.claimCapiScopeCacheRefresh(input, tx),
     findWorkspaceIntegration: (input, tx) =>
       integrationInstagramRepository.findWorkspaceIntegration(input, tx),
