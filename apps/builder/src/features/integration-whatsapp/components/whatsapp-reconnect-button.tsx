@@ -9,7 +9,10 @@ import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { reconnectWhatsappAction } from "../actions/reconnect.action"
-import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
+import {
+  buildFacebookOAuthDialogUrl,
+  FACEBOOK_AUTH_TYPES,
+} from "../libs/embedded-signup"
 import { parseOAuthRelayResult } from "../libs/oauth-relay"
 
 export function WhatsappReconnectButton({
@@ -100,6 +103,10 @@ export function WhatsappReconnectButton({
         connectExisting: false,
         transferPhoneNumber: false,
         locale: document.documentElement.lang || undefined,
+        // A reconnect exists to pick up a permission the account is missing.
+        // Without this the dialog hands back the permissions it already
+        // granted and the operator sees no change.
+        authType: FACEBOOK_AUTH_TYPES.REREQUEST,
       }),
       "_blank",
     )

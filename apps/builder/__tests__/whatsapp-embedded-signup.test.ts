@@ -23,6 +23,52 @@ afterEach(() => {
 })
 
 describe("buildFacebookOAuthDialogUrl", () => {
+  test("omits auth_type on a first connect", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+      }),
+    )
+
+    expect(result.searchParams.get("auth_type")).toBeNull()
+  })
+
+  test("asks Meta to re-request permissions when the caller is reconnecting", async () => {
+    const { buildFacebookOAuthDialogUrl, FACEBOOK_AUTH_TYPES } = await loadWith(
+      {
+        NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+      },
+    )
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+        authType: FACEBOOK_AUTH_TYPES.REREQUEST,
+      }),
+    )
+
+    // Without it Meta returns a code carrying the permissions the account
+    // already granted, so a permission added to the Embedded Signup
+    // configuration is never offered and the reconnect looks like a no-op.
+    expect(result.searchParams.get("auth_type")).toBe("rerequest")
+  })
+
   test("opens the Facebook dialog with the caller-supplied redirect_uri", async () => {
     const { buildFacebookOAuthDialogUrl, decodeOAuthState } = await loadWith({
       NEXT_PUBLIC_BROKER_URL: BROKER_URL,

@@ -22,6 +22,21 @@ const EMBEDDED_SIGNUP_FEATURES = {
   MARKETING_MESSAGES_LITE: "marketing_messages_lite",
 } as const
 
+/**
+ * Meta's `auth_type` values for the login dialog.
+ *
+ * Without one, the dialog does not re-ask for a permission the account did not
+ * grant last time — Meta returns a code carrying the permissions it already
+ * has. A reconnect whose whole purpose is to pick up a permission added to the
+ * Embedded Signup configuration therefore has to say so explicitly.
+ */
+export const FACEBOOK_AUTH_TYPES = {
+  REREQUEST: "rerequest",
+} as const
+
+export type FacebookAuthType =
+  (typeof FACEBOOK_AUTH_TYPES)[keyof typeof FACEBOOK_AUTH_TYPES]
+
 const FACEBOOK_DIALOG_BASE = "https://www.facebook.com"
 
 /** Route Facebook redirects the `code` to — path only; see `redirectUri` above for the host. */
@@ -143,6 +158,11 @@ export type FacebookOAuthDialogParams = {
   connectExisting: boolean
   transferPhoneNumber: boolean
   locale?: string
+  /**
+   * Set on a reconnect, left off on a first connect: the first connect has
+   * nothing to re-ask for, and the dialog already shows every permission.
+   */
+  authType?: FacebookAuthType
 }
 
 /**
@@ -159,6 +179,9 @@ export function buildFacebookOAuthDialogUrl(
   url.searchParams.set("config_id", params.configId)
   url.searchParams.set("redirect_uri", params.redirectUri)
   url.searchParams.set("response_type", "code")
+  if (params.authType) {
+    url.searchParams.set("auth_type", params.authType)
+  }
   url.searchParams.set(
     "state",
     encodeOAuthState({
