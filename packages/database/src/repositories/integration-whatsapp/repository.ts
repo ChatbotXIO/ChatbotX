@@ -135,6 +135,7 @@ class IntegrationWhatsappRepository {
       .select({
         id: integrationWhatsappModel.id,
         workspaceId: integrationWhatsappModel.workspaceId,
+        wabaId: integrationWhatsappModel.wabaId,
         auth: integrationWhatsappModel.auth,
       })
       .from(integrationWhatsappModel)
