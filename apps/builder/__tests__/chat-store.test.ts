@@ -33,7 +33,8 @@ type TestConversation = {
   contactId: string
   messages: unknown[]
   lastActivityAt: Date | null
-  agentLastReadAt?: Date
+  agentLastReadAt?: Date | null
+  adminRepliedAt?: Date | null
 }
 
 type TestMessage = {
@@ -42,6 +43,8 @@ type TestMessage = {
   conversationId: string
   createdAt: Date
   messageType: string
+  senderType?: string
+  senderId?: string | null
 }
 
 const makeConversation = (id: string, lastActivityAt: Date) =>
@@ -60,6 +63,22 @@ const makeMessage = (conversationId: string, createdAt: Date) =>
     conversationId,
     createdAt,
     messageType: "incoming",
+  }) as TestMessage
+
+const makeOutgoingMessage = (
+  conversationId: string,
+  createdAt: Date,
+  senderType: "user" | "api" | "bot" | "system",
+  // `received-message` stamps a channel echo senderType "user" with a null
+  // senderId; `createOutgoing` always carries the acting user's id.
+  senderId: string | null = senderType === "user" ? "user-1" : null,
+) =>
+  ({
+    ...makeMessage(conversationId, createdAt),
+    id: `msg-${conversationId}-${senderType}`,
+    messageType: "outgoing",
+    senderType,
+    senderId,
   }) as TestMessage
 
 const setConversationUrl = (conversationId: string | null) => {
@@ -387,6 +406,131 @@ describe("chat store conversation updates", () => {
     expect(conversations[1]).toEqual({
       ...second,
       agentLastReadAt: new Date("2026-01-02T00:00:00Z"),
+    })
+  })
+})
+
+describe("chat store handleNewMessage read state", () => {
+  const AGENT_LAST_READ_AT = new Date("2026-01-01T00:00:00Z")
+
+  const makeUnreadStore = (activeConversationId: string | null = null) => {
+    const store = createChatStore()
+    const conversation = {
+      ...makeConversation("conv-1", new Date("2026-01-01T01:00:00Z")),
+      agentLastReadAt: AGENT_LAST_READ_AT,
+      adminRepliedAt: null,
+    }
+    store.setState({
+      conversations: [conversation] as never,
+      activeConversationId,
+    })
+    return store
+  }
+
+  const readStateOf = (store: ReturnType<typeof createChatStore>) => {
+    const conversation = store
+      .getState()
+      .conversations.find((c) => c.id === "conv-1") as TestConversation
+    return {
+      agentLastReadAt: conversation.agentLastReadAt,
+      adminRepliedAt: conversation.adminRepliedAt,
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setConversationUrl(null)
+  })
+
+  test.each([
+    "bot",
+    "system",
+  ] as const)("a %s outgoing message leaves the conversation unread", async (senderType) => {
+    const store = makeUnreadStore()
+
+    await store
+      .getState()
+      .handleNewMessage(
+        makeOutgoingMessage(
+          "conv-1",
+          new Date("2026-01-01T02:00:00Z"),
+          senderType,
+        ) as never,
+      )
+
+    expect(readStateOf(store)).toEqual({
+      agentLastReadAt: AGENT_LAST_READ_AT,
+      adminRepliedAt: null,
+    })
+  })
+
+  test.each([
+    "user",
+    "api",
+  ] as const)("a %s outgoing message marks the conversation read and replied", async (senderType) => {
+    const store = makeUnreadStore()
+
+    await store
+      .getState()
+      .handleNewMessage(
+        makeOutgoingMessage(
+          "conv-1",
+          new Date("2026-01-01T02:00:00Z"),
+          senderType,
+        ) as never,
+      )
+
+    const { agentLastReadAt, adminRepliedAt } = readStateOf(store)
+    expect(agentLastReadAt).not.toEqual(AGENT_LAST_READ_AT)
+    expect(agentLastReadAt).toEqual(adminRepliedAt)
+  })
+
+  test("a channel echo (senderType user, no senderId) leaves the conversation unread", async () => {
+    const store = makeUnreadStore()
+
+    await store
+      .getState()
+      .handleNewMessage(
+        makeOutgoingMessage(
+          "conv-1",
+          new Date("2026-01-01T02:00:00Z"),
+          "user",
+          null,
+        ) as never,
+      )
+
+    expect(readStateOf(store)).toEqual({
+      agentLastReadAt: AGENT_LAST_READ_AT,
+      adminRepliedAt: null,
+    })
+  })
+
+  test("an incoming message on the open conversation marks it read without an admin reply", async () => {
+    const store = makeUnreadStore("conv-1")
+
+    await store
+      .getState()
+      .handleNewMessage(
+        makeMessage("conv-1", new Date("2026-01-01T02:00:00Z")) as never,
+      )
+
+    const { agentLastReadAt, adminRepliedAt } = readStateOf(store)
+    expect(agentLastReadAt).not.toEqual(AGENT_LAST_READ_AT)
+    expect(adminRepliedAt).toBeNull()
+  })
+
+  test("an incoming message on a background conversation stays unread", async () => {
+    const store = makeUnreadStore("conv-other")
+
+    await store
+      .getState()
+      .handleNewMessage(
+        makeMessage("conv-1", new Date("2026-01-01T02:00:00Z")) as never,
+      )
+
+    expect(readStateOf(store)).toEqual({
+      agentLastReadAt: AGENT_LAST_READ_AT,
+      adminRepliedAt: null,
     })
   })
 })

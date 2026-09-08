@@ -694,14 +694,38 @@ export const createChatStore = () => {
             : {}),
         })
       }
-      if (
-        message.messageType === "outgoing" ||
-        (message.messageType === "incoming" &&
-          message.conversationId === activeConversationId)
-      ) {
+      // Only an outgoing message that `createOutgoing` itself produced clears
+      // the unread state — a bot/system reply (flow step, template, comment
+      // automation) must leave it alone. This mirrors the server exactly:
+      // `createOutgoing` is the only writer that calls `markAgentReplied`,
+      // and it stamps senderType "user" with a senderId (inbox composer) or
+      // "api" with none (public API); the worker handlers that send on the
+      // bot's behalf only bump `lastActivityAt`. Without this guard a flow
+      // reply broadcast over realtime marked every open inbox tab as read
+      // even though nobody had opened the conversation.
+      //
+      // The senderId check is what excludes a channel echo: `received-message`
+      // stamps every outgoing echo senderType "user" with a null senderId
+      // whatever its origin (see its `isEchoOfOwnSend` comment), so a bot send
+      // whose sourceId dedup missed comes back looking like an agent reply.
+      // Echoes never persist a read state server-side either, so honouring
+      // them here would only produce a state that reverts on reload.
+      const isAgentReply =
+        message.messageType === "outgoing" &&
+        ((message.senderType === "user" && message.senderId !== null) ||
+          message.senderType === "api")
+      // An incoming message only counts as read while the agent has that
+      // conversation open — and it is never an admin reply, so it must not
+      // touch `adminRepliedAt` (that drives the "no admin reply" filter).
+      const isReadWhileConversationOpen =
+        message.messageType === "incoming" &&
+        message.conversationId === activeConversationId
+
+      if (isAgentReply || isReadWhileConversationOpen) {
+        const readAt = new Date()
         updateConversation(message.conversationId, {
-          agentLastReadAt: new Date(),
-          adminRepliedAt: new Date(),
+          agentLastReadAt: readAt,
+          ...(isAgentReply ? { adminRepliedAt: readAt } : {}),
         })
       }
 
