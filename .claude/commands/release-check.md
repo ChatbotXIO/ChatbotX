@@ -3,7 +3,7 @@ description: Run the full pre-release verification gate (lint, types, tests, cov
 allowed-tools: Bash, Read, Grep
 ---
 
-Verify the repo is release-ready by running the gate sequence from the `testing-workflow` skill. CI only builds Docker images, so this gate is your real safety net — run it before tagging a release or opening a release PR.
+Verify the repo is release-ready by running the gate sequence from the `testing-workflow` skill. CI runs Types, Lint, and Tests on every PR (`.github/workflows/ci.yml`); this gate additionally enforces coverage and the invariant/secret scans, so run it before tagging a release or opening a release PR.
 
 ## Steps
 

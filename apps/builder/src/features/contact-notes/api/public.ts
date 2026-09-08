@@ -7,7 +7,6 @@ import {
   updateContactNotePublicRequest,
 } from "@/features/contact-notes/schema/public"
 import {
-  possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
@@ -52,7 +51,10 @@ export const contactsNotesPublicRouter = {
         z.object({ identifier: z.string().min(1) }),
       ),
     )
-    .errors(possibleErrorsOnCreatingResource)
+    // Mutating, not creating: the note is new, but `{identifier}` is resolved
+    // via `contactService.resolveIdByIdentifier`, which throws a 404 when the
+    // contact does not exist — so this route must declare `notFound` too.
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({

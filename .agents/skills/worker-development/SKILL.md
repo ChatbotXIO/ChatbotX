@@ -28,6 +28,11 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | schedule | (cron) | `src/schedule/worker.ts` |
 | sequence-scheduler | Kafka | `src/sequence-scheduler/worker*.ts` |
 | notification | `notification` | `src/notification/worker.ts` |
+| events | event-bus (not BullMQ) | `src/events/worker.ts` — `startWorker([...listeners])` from `@chatbotx.io/event-bus/worker` |
+
+`queueNames` (`packages/worker-config/src/lib/types.ts:3`) also declares `broadcast` and
+`quota`, which have queues but no dedicated worker entry — their jobs are consumed by the
+workers above. Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 
 The `heavy` queue/worker is a **workload-class** queue, not a domain queue:
 use it for bounded but RAM/CPU/I/O/model-heavy jobs that should not occupy
@@ -41,14 +46,18 @@ resource-isolation tradeoff applies.
 
 ### 1. Define Queue Name
 
-Add to `packages/worker-config/src/lib/types.ts`:
+Add the member to the `queueNames` **zod enum** in
+`packages/worker-config/src/lib/types.ts` (it is a `z.enum([...])`, not an object literal —
+there is no `queueName` symbol):
 
 ```typescript
-export const queueName = {
+export const queueNames = z.enum([
   // ...existing
-  myQueue: "myQueue",
-} as const
+  "myQueue",
+])
 ```
+
+Refer to it everywhere as `queueNames.enum.myQueue`.
 
 ### 2. Define Job Types
 
@@ -95,60 +104,23 @@ export * from "./queues/<name>"
 
 ## Creating a New Worker
 
-Create `apps/worker/src/<domain>/worker.ts`:
+**Copy `apps/worker/src/notification/worker.ts`** — it is the smallest complete example and
+already shows the shape you need: `ensureBootstrapped()`, `new Worker(queueNames.enum.<queue>,
+…)`, a `withBlockedOwnerGuard(workspaceId, …)`-wrapped processor, `{ connection:
+getRedisConnection(), ...defaultWorkerOptions, concurrency: env.<X>_WORKER_CONCURRENCY }`, and
+`failed` / `completed` listeners.
 
-```typescript
-import { Worker, type Job } from "bullmq"
-import { queueNames } from "@chatbotx.io/worker-config"
-import {
-  getRedisConnection,
-  defaultWorkerOptions,
-} from "@chatbotx.io/worker-config"
-import type { MyQueueJobData } from "@chatbotx.io/worker-config"
-import { MyQueueJobAction } from "@chatbotx.io/worker-config"
-import { ensureBootstrapped } from "../lib/bootstrap"
-import { logger } from "@chatbotx.io/logger"
+Create `apps/worker/src/<domain>/worker.ts` from it and change four things:
 
-const startMyWorker = async () => {
-  try {
-    await ensureBootstrapped()
-    logger.info("My worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap my worker")
-    process.exit(1)
-  }
+1. The queue: `queueNames.enum.myQueue`.
+2. The job type: `Job<MyQueueJobData>`.
+3. The processor body — `switch (job.data.type)` over your `MyQueueJobAction` members, with a
+   `default: return` so an unknown action is a no-op rather than a throw.
+4. The concurrency env var, if the workload needs one.
 
-  const worker = new Worker(
-    queueNames.enum.myQueue,
-    async (job: Job<MyQueueJobData>) => {
-      logger.info(job.data, "Worker received job")
-
-      switch (job.data.type) {
-        case MyQueueJobAction.processItem:
-          return await handleProcessItem(job.data.data)
-        case MyQueueJobAction.syncData:
-          return await handleSyncData(job.data.data)
-        default:
-          return
-      }
-    },
-    {
-      connection: getRedisConnection(),
-      ...defaultWorkerOptions,
-    },
-  )
-
-  worker.on("failed", (job, err) => {
-    logger.error({ err, jobId: job?.id }, "Job failed")
-  })
-
-  worker.on("completed", (job) => {
-    logger.info({ jobId: job.id }, "Job completed")
-  })
-}
-
-startMyWorker()
-```
+**Do not drop `withBlockedOwnerGuard`.** Every workspace-scoped processor must wrap its body in
+it (repo invariant 15) — a template without it is the single most common mistake here. See
+"Blocked-owner guard" below for which jobs are exempt.
 
 ### Register Build Entry
 
@@ -231,14 +203,6 @@ For at least one enqueue path, prefer an integration test against real (or `iore
 
 ## Scheduled Jobs (Cron)
 
-Scheduled work follows four touchpoints:
-
-1. Add a `ScheduleJobData` const, its inferred type, and the union entry in
-   `packages/worker-config`.
-2. Register the cadence with `upsertJobScheduler` in `register-schedules.ts`.
-3. Import the handler and add its `case` in `schedule/worker.ts`.
-4. Implement the handler in `schedule/handlers/<name>.ts`.
-
 Handlers that mutate shared state must wrap their body in
 `distributedLock.runExclusive({ key, timeoutInSeconds, fn })`. The TTL must be
 shorter than the schedule cadence so concurrent worker replicas cannot overlap.
@@ -299,27 +263,9 @@ Only used for sequence dispatch currently. Prefer BullMQ for standard job queues
 
 ## Logging
 
-Import the child logger from `../../lib/logger` inside `apps/worker`, or `@chatbotx.io/logger` for shared packages.
-
-**Always use `err` (not `error`) as the key for Error objects.**
-
-pino's built-in serializer is keyed on `err`. Using any other key (e.g. `error`) skips serialization, so the stack trace and error message are lost from structured logs.
-
-```typescript
-// ✅ correct — stack trace preserved
-logger.error({ err: error, conversationId }, "Failed to emit analytics event")
-
-// ❌ wrong — object serialized as [Object] with no stack trace
-logger.error({ error, conversationId }, "Failed to emit analytics event")
-```
-
-For fire-and-forget `.catch()` handlers on analytics/event-bus emissions, always log the error rather than swallowing it:
-
-```typescript
-emit("analytics:dashboard", payload).catch((err) => {
-  logger.error({ err, conversationId }, "[handler] Failed to emit analytics event")
-})
-```
+Import `logger` from `apps/worker/src/lib/logger.ts` (a `getChildLogger("worker")` child);
+never use `console`. Log errors as `{ err, jobId: job?.id }` — the key is `err`, not `error`
+(repo invariant 20 in `AGENTS.md`).
 
 ## Environment
 

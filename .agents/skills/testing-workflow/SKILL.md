@@ -5,7 +5,7 @@ description: Use when adding or changing tests, or before considering a change d
 
 # Testing Workflow (ChatbotX)
 
-The verification gate every change passes before it is "done". CI currently does **not** run these (it builds Docker images only), so they are enforced locally — run them yourself, do not assume CI catches regressions.
+The verification gate every change passes before it is "done". CI runs Types, Lint, and Tests on every PR and on push to `main` (`.github/workflows/ci.yml`), so a failure here blocks the merge — run the gate locally first rather than discovering it in CI.
 
 ## The gate sequence (run in order, fix before advancing)
 

@@ -7,7 +7,7 @@
     "fix": "ultracite fix --unsafe",
     "lint": "pnpm check:agent-instructions && turbo run lint && ultracite check",
     "sync:agent-instructions": "node scripts/sync-agent-instructions.mjs --write",
-    "check:agent-instructions": "node scripts/sync-agent-instructions.mjs --check",
+    "check:agent-instructions": "node scripts/sync-agent-instructions.mjs --check && node scripts/check-skills.mjs",
     "test": "turbo run test",
     "test:watch": "vitest",
     "test:coverage": "turbo run test -- --coverage",

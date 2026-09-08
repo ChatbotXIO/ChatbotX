@@ -12,7 +12,9 @@ Package: `packages/database` (`@chatbotx.io/database`)
 
 ## Table Definition
 
-Tables use `pgTable` with `sharedColumns` spread for consistent `id`, `createdAt`, `updatedAt`:
+Tables use `pgTable` with `sharedColumns` spread for consistent `id`, `createdAt`,
+`updatedAt`. For a real workspace-scoped table to copy, read
+`packages/database/src/schema/minigame.ts` or any sibling in `schema/`; the shape is:
 
 ```typescript
 import { pgTable, text, index, uniqueIndex } from "drizzle-orm/pg-core"

@@ -1,19 +1,10 @@
+import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
 
 const notFound = {
   message: "Resource not found",
   status: 404,
-}
-
-const invalidRequestData = {
-  message: "Validation error",
-  status: 422,
-}
-
-const validation = {
-  message: "Validation error",
-  status: 422,
 }
 
 const businessError = {
@@ -70,10 +61,22 @@ export const commonApiErrors = {
     message: DENIAL_MESSAGES.macLimitReached,
     status: 403,
   },
-  BAD_REQUEST: {
+  /**
+   * oRPC's input-schema rejection, after `mapKnownOrpcErrors` remaps it from
+   * the raw `BAD_REQUEST`/400 (see `toKnownOrpcError` in `@/orpc`). Declared
+   * here rather than per-router because *every* route with an `.input()` can
+   * throw it, including the 22 mutation routes that previously declared only
+   * the business-level `validation` code and so emitted an undocumented 422.
+   */
+  invalidRequestData: {
     message: "Input validation failed",
     status: 422,
     data: z.looseObject({ issues: z.array(validationIssue) }),
+  },
+  /** Business-level validation, via `validationException` in @chatbotx.io/business. */
+  validation: {
+    message: "Validation error",
+    status: 422,
   },
   tooManyRequests: {
     message: "Too many requests",
@@ -83,30 +86,32 @@ export const commonApiErrors = {
     message: "An unexpected error occurred",
     status: 500,
   },
-}
+} satisfies ErrorMap
 
 export const possibleErrorsOnFindingResource = {
   notFound,
   businessError,
-}
+} satisfies ErrorMap
 
 export const possibleErrorsOnListingResource = {
   businessError,
-}
+} satisfies ErrorMap
 
+/**
+ * Per-router sets carry only what varies by operation shape. The auth,
+ * rate-limit, and both validation codes come from `commonApiErrors`, attached
+ * once to the public stacks in `@/orpc` — never re-declare them here.
+ */
 export const possibleErrorsOnCreatingResource = {
-  invalidRequestData,
-  validation,
   businessError,
-}
+} satisfies ErrorMap
 
 export const possibleErrorsOnMutatingResource = {
   notFound,
-  validation,
   businessError,
-}
+} satisfies ErrorMap
 
 export const possibleErrorsOnDeletingResource = {
   notFound,
   businessError,
-}
+} satisfies ErrorMap

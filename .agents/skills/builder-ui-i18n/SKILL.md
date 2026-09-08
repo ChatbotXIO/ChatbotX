@@ -27,13 +27,13 @@ All user-facing strings must use translations. Do not hardcode labels,
 placeholders, button text, empty states, tab names, toasts, or dialog copy in
 builder UI.
 
-Primary files:
-
-- `apps/builder/messages/en.json`
-- `apps/builder/messages/vi.json`
+Source of truth: `apps/builder/messages/en.json`. **All 20 locale files in
+`apps/builder/messages/` must carry every key** — `apps/builder`'s own `lint` script is
+`i18n:check --source en --locales messages` (`apps/builder/package.json:11-12`), which runs
+in CI's Lint job. Adding a key to `en.json` + `vi.json` only will fail the parity check.
 
 Before adding keys, check existing `fields.*`, common actions, table labels, and
-feature namespaces. Add both English and Vietnamese values for new keys.
+feature namespaces.
 
 Typical component pattern:
 

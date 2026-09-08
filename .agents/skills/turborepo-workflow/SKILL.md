@@ -14,41 +14,15 @@ Monorepo managed by **pnpm workspaces + Turborepo**. Node >= 24, TypeScript 5.
 
 ### Workspace Layout
 
-```
-apps/
-  builder/     → Next.js 16 web UI (port 3123)
-  worker/      → Background workers (BullMQ, Kafka)
-  realtime/    → Realtime server (port 1999)
-  cli/         → CLI tool (yargs)
-  mcp-server/  → MCP server
+The authoritative layout table is **`AGENTS.md` → "Repository layout"**. A hand-copied tree
+here would drift (and did) — list the real thing instead:
 
-packages/
-  database/    → Drizzle ORM + PostgreSQL
-  ui/          → Shared UI (Tailwind 4, Radix, Dice UI)
-  utils/       → Shared utilities
-  redis/       → Redis/Dragonfly client
-  kafka/       → Kafka client
-  analytics/   → Analytics services
-  worker-config/ → BullMQ queues, job types
-  sdk/         → Types, integration contracts
-  ai/          → AI model/provider config
-  events/      → Domain events
-  flow-config/ → Flow step definitions
-  mail/        → Email templates
-  public-apis/ → Public API surface
-  ...
-
-integrations/
-  messenger/   → Facebook Messenger
-  whatsapp/    → WhatsApp Business
-  zalo/        → Zalo OA
-  tiktok/      → TikTok for Business
-  telegram/    → Telegram Bot API
-  webchat/     → In-app webchat
-  chatbotx/    → Internal chatbot
-  google-sheets/ → Google Sheets
-  openai/      → OpenAI integration
+```bash
+ls apps packages integrations
+pnpm ls -r --depth -1        # every workspace package with its name
 ```
+
+Ports worth knowing: builder `3123`, realtime `1999`.
 
 ## Common Commands
 
@@ -110,7 +84,7 @@ pnpm check:unused
 
 - Use `pnpm add <pkg> --filter <workspace>` to add dependencies to specific workspace
 - Workspace packages use `@chatbotx.io/*` scope
-- Cross-workspace imports: `@chatbotx.io/database/client`, `@chatbotx.io/ui/button`, etc.
+- Cross-workspace imports must go through a package's `exports` map: `@chatbotx.io/database/client`, `@chatbotx.io/ui/components/ui/button` (the UI package exports `./components/*`, `./lib/*`, `./hooks/*`, … — there is no bare `@chatbotx.io/ui/button`).
 - Package exports are defined in each `package.json` `exports` field
 
 ### Adding a New Workspace Package

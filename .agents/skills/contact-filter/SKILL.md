@@ -17,16 +17,26 @@ Lives in two packages:
 
 - **Frontend feature** — `apps/builder/src/features/contact-filter/` (Zod schemas,
   UI config, React components). Barrel: `index.ts`.
-- **Backend query builder** — `packages/database/src/queries/contact-filter.ts`
+- **Backend query builder** — `packages/database/src/queries/contact-filter/`
   (`@chatbotx.io/database/queries`). Shared by the builder app **and** the worker
-  so both resolve the same contacts.
+  so both resolve the same contacts. **`queries/contact-filter.ts` is now a one-line
+  re-export barrel** (`export * from "./contact-filter/index"`) — the real code is the
+  14-file directory beside it:
+
+  | Concern | File |
+  |---|---|
+  | Per-field dispatch (`buildConditionWhere`) | `contact-filter/index.ts:412` |
+  | Negation/NULL predicates, 24h window | `contact-filter/predicates.ts` (`COLUMN_NEGATION_OPERATORS:21`, `contactInboxInteractedWithin24hSQL:27`) |
+  | Operator inversion map | `contact-filter/field-value-predicates.ts` (`NEGATION_TO_POSITIVE:41`) |
+  | Relation EXISTS subqueries | `contact-filter/relation-sets.ts` (`RELATION_SET_FILTERS:76`, `buildRelationSetWhere:131`) |
+  | Custom / bot fields, CTWA, timezone, continent | `custom-field-predicates.ts`, `bot-field-predicates.ts`, `ctwa-retarget.ts`, `timezone.ts`, `continent.ts` |
 
 ## Architecture
 
 ```
 contactFilterFields enum (partials/contact.ts)     ← the field "universe" (~90)
         │
-CONTACT_FILTER_FIELD_DEFINITIONS (schema/definitions.ts)  ← 22 ACTIVE fields = single source of truth
+CONTACT_FILTER_FIELD_DEFINITIONS (schema/definitions.ts)  ← ~49 ACTIVE fields = single source of truth
         │  (each: { field, schemaKind, optionSource })
         ├──► Zod condition schemas  (schema/*.ts, via staticFieldFilter)
         └──► UI FieldConfig[]        (components/contact-filter-config.ts, getFieldConfigs)
@@ -60,15 +70,16 @@ Operators + form-field types: `packages/database/src/partials/custom-field.ts`
    - Zod validation: `STATIC_OPERATOR_RULES` in `schema/static-field-filter.ts`
    - UI enablement: `staticFieldRules` in `components/static-field-filter-config.ts`
 4. **Backend SQL** — add a `case` to `buildConditionWhere`
-   (`packages/database/src/queries/contact-filter.ts`). Without it the field
-   silently produces **no condition** (the `default: return {}` branch).
+   (`packages/database/src/queries/contact-filter/index.ts:412`; it takes
+   `(condition, context)`). Without it the field silently produces **no condition**
+   (the `default: return {}` branch).
 5. **Options / group** (if not `none`) — wire the option source in
    `use-contact-filter-configs.ts` / `contact-filter-config.ts`; group is assigned
    by `getContactFilterFieldGroup`.
 
 ## Where filter application lives
 
-`contactRepository.buildListWhere` (`packages/database/src/repositories/contact/list-where.ts`)
+`contactRepository.buildListWhere` (aliases `buildContactListWhere`, `packages/database/src/repositories/contact/list-where.ts:42`)
 is the one place `applyContactFilter` is called to build the where clause for
 a contacts list/count — used by both the builder (private RSC) and the public
 API, via `contactService.list`/`count` (`packages/business/src/contact/list.ts`).
@@ -78,10 +89,10 @@ split exists to prevent (see `.agents/rules/data-access.md`). The worker's
 `export-contacts.ts` still hand-builds its own where clause — a known
 follow-up, not a pattern to extend.
 
-## Backend query builder (`packages/database/src/queries/contact-filter.ts`)
+## Backend query builder (`packages/database/src/queries/contact-filter/`)
 
 - `applyContactFilter(criteria)` → maps `conditions` to `{ AND: [...] }` or
-  `{ OR: [...] }`; `buildConditionWhere(condition)` switches on `field`.
+  `{ OR: [...] }`; `buildConditionWhere(condition, context)` switches on `field`.
 - `buildContactWhere({ workspaceId, keyword?, contactFilter? })` → relational
   where for `contactModel`.
 - `buildContactInboxContactFilterSQL({ contactIdColumn, workspaceId, contactFilter })`
@@ -131,7 +142,7 @@ Messenger/WhatsApp subactions).
 
 ## Shared 24h window predicate
 
-`contactInboxInteractedWithin24hSQL()` (in `contact-filter.ts`) is the single
+`contactInboxInteractedWithin24hSQL()` (`contact-filter/predicates.ts:27`) is the single
 source for `lastIncomingMessageAt >= NOW() - INTERVAL '24 hours'`, used by:
 - the `interactedInLast24h` filter case (wrapped in a contact-level EXISTS), and
 - the broadcast audience (`apps/worker/src/schedule/handlers/prepare-broadcast.ts`)
