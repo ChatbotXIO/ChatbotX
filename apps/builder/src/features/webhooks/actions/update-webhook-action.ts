@@ -2,7 +2,6 @@
 
 import { webhookService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { toConditionColumns } from "@/features/conditions/to-condition-columns"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateWebhookRequest } from "../schema/update-webhook-schema"
 
@@ -16,13 +15,13 @@ export const updateWebhookAction = workspaceActionClient
     } = props
     const { conditions, url } = parsedInput
 
+    // `toConditionColumnsShared` inside `updateWithConditions` already
+    // normalizes each condition's columns (`?? null` defaults) — mapping
+    // again here was dead work now that the service owns it.
     return await webhookService.updateWithConditions({
       workspaceId,
       id,
       url,
-      conditions: conditions.map((condition) => ({
-        id: "id" in condition ? condition.id : undefined,
-        ...toConditionColumns(condition),
-      })),
+      conditions,
     })
   })

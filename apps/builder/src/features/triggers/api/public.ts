@@ -1,11 +1,13 @@
 import { triggerService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { folderTypes } from "@chatbotx.io/database/partials"
-import { triggerRepository } from "@chatbotx.io/database/repositories"
+import {
+  conditionRepository,
+  triggerRepository,
+} from "@chatbotx.io/database/repositories"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { toConditionColumns } from "@/features/conditions/to-condition-columns"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -13,11 +15,7 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import {
-  paginateInMemory,
-  publicListRequest,
-  publicListResponse,
-} from "@/lib/public-api/list"
+import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { createTriggerSchema, updateTriggerSchema } from "../schema/mutation"
 import { triggerResource } from "../schema/resource"
@@ -52,21 +50,12 @@ export const triggersPublicRouter = {
     .output(publicListResponse(triggerResource))
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
-      const triggers = await triggerService.listByWorkspaceId(
-        context.workspace.id,
-      )
-      const withConditions = await Promise.all(
-        triggers.map((trigger) =>
-          triggerRepository.findWithConditions({
-            id: trigger.id,
-            workspaceId: context.workspace.id,
-          }),
-        ),
-      )
-      return paginateInMemory(
-        withConditions.filter((trigger) => trigger !== null).map(toResource),
-        input,
-      )
+      const { data, pageCount } = await triggerService.list({
+        workspaceId: context.workspace.id,
+        page: input.page,
+        perPage: input.perPage,
+      })
+      return { data: data.map(toResource), pageCount }
     }),
 
   get: workspaceTokenAuthAPI
@@ -129,22 +118,13 @@ export const triggersPublicRouter = {
         workspaceId: context.workspace.id,
         id,
         actions,
-        conditions: conditions.map((condition) => ({
-          id: "id" in condition ? condition.id : undefined,
-          ...toConditionColumns(condition),
-        })),
+        conditions,
       })
       if (!updated) {
         throw notFoundException("Trigger not found")
       }
-      const withConditions = await triggerRepository.findWithConditions({
-        id,
-        workspaceId: context.workspace.id,
-      })
-      if (!withConditions) {
-        throw notFoundException("Trigger not found")
-      }
-      return toResource(withConditions)
+      const updatedConditions = await conditionRepository.listByTriggerIds([id])
+      return toResource({ ...updated, conditions: updatedConditions })
     }),
 
   updateSettings: workspaceTokenAuthAPI
@@ -161,6 +141,7 @@ export const triggersPublicRouter = {
         active: z.boolean().optional(),
       }),
     )
+    .output(triggerResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...patch } = input
@@ -169,6 +150,14 @@ export const triggersPublicRouter = {
         id,
         ...patch,
       })
+      const updated = await triggerRepository.findWithConditions({
+        id,
+        workspaceId: context.workspace.id,
+      })
+      if (!updated) {
+        throw notFoundException("Trigger not found")
+      }
+      return toResource(updated)
     }),
 
   delete: workspaceTokenAuthAPI

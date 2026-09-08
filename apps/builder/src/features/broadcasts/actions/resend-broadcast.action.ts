@@ -23,6 +23,15 @@ export const resendBroadcast = async (ctx: {
   workspaceId: string
   id: string
 }) => {
+  // Verify the broadcast exists (not soft-deleted, in-workspace) and is in
+  // a resendable status before reading its `contactFilter` — main checked
+  // existence first; reading before the guard would let a foreign or
+  // deleted id be processed.
+  await broadcastService.assertResendable({
+    workspaceId: ctx.workspaceId,
+    id: ctx.id,
+  })
+
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(
     ctx.workspaceId,
   )

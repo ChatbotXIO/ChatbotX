@@ -18,20 +18,6 @@ vi.mock("@chatbotx.io/business", () => ({
   webhookService: { updateWithConditions: mockUpdateWithConditions },
 }))
 
-vi.mock("@/features/conditions/to-condition-columns", () => ({
-  toConditionColumns: (c: {
-    type: string
-    sourceId?: string | null
-    operator?: string | null
-    value?: unknown
-  }) => ({
-    type: c.type,
-    sourceId: c.sourceId ?? null,
-    operator: c.operator ?? null,
-    value: c.value ?? null,
-  }),
-}))
-
 vi.mock("../src/features/webhooks/schema/update-webhook-schema", () => ({
   updateWebhookRequest: {},
 }))
@@ -64,15 +50,20 @@ beforeEach(() => {
 })
 
 describe("updateWebhookAction", () => {
-  test("maps conditions via toConditionColumns and delegates to webhookService.updateWithConditions", async () => {
+  test("passes conditions through unmapped and delegates to webhookService.updateWithConditions", async () => {
+    // `toConditionColumnsShared` inside the service now owns the column
+    // normalization (`?? null` defaults) — the action forwards conditions
+    // as-is instead of mapping them a second time.
+    const conditions = [
+      { id: "cond-1", type: "newContact" },
+      { type: "tagApplied", sourceId: "tag-1" },
+    ]
+
     const result = await callAction({
       bindArgsParsedInputs: ["ws-1", "webhook-1"],
       parsedInput: {
         url: "https://example.com/hook",
-        conditions: [
-          { id: "cond-1", type: "newContact" },
-          { type: "tagApplied", sourceId: "tag-1" },
-        ],
+        conditions,
       },
     })
 
@@ -80,22 +71,7 @@ describe("updateWebhookAction", () => {
       workspaceId: "ws-1",
       id: "webhook-1",
       url: "https://example.com/hook",
-      conditions: [
-        {
-          id: "cond-1",
-          type: "newContact",
-          sourceId: null,
-          operator: null,
-          value: null,
-        },
-        {
-          id: undefined,
-          type: "tagApplied",
-          sourceId: "tag-1",
-          operator: null,
-          value: null,
-        },
-      ],
+      conditions,
     })
     expect(result).toEqual({ id: "webhook-1", name: "New Order" })
   })

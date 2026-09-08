@@ -166,6 +166,89 @@ describe("automatedResponseService audit side effects", () => {
   })
 })
 
+describe("automatedResponseService.update — keywords and flowId/text invariants", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findFirst.mockResolvedValue({
+      folderId: null,
+      keywords: ["hello", "hi"],
+      text: null,
+      flowId: null,
+      status: true,
+    })
+    mocks.updateReturning.mockResolvedValue([
+      { id: "automation-1", keywords: ["hello", "hi"] },
+    ])
+  })
+
+  // Regression: PUT /v1/keywords/{id} with only `{ text }` used to
+  // unconditionally set keywords to `[]`, silently wiping the automation.
+  test("omitting keywords does not wipe the existing keywords column", async () => {
+    await automatedResponseService.update(
+      { workspaceId: "workspace-1", id: "automation-1" },
+      { text: "hi" },
+    )
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.not.objectContaining({ keywords: expect.anything() }),
+    )
+  })
+
+  test("explicitly supplied keywords are still applied", async () => {
+    await automatedResponseService.update(
+      { workspaceId: "workspace-1", id: "automation-1" },
+      { keywords: [{ value: "new" }] },
+    )
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ keywords: ["new"] }),
+    )
+  })
+
+  test("nulls flowId when text is set", async () => {
+    await automatedResponseService.update(
+      { workspaceId: "workspace-1", id: "automation-1" },
+      { text: "hi", flowId: "flow-1" },
+    )
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ flowId: null, text: "hi" }),
+    )
+    expect(mocks.flowExists).not.toHaveBeenCalled()
+  })
+
+  test("validates flowId against the workspace and nulls text when flowId is set", async () => {
+    mocks.flowExists.mockResolvedValue(true)
+
+    await automatedResponseService.update(
+      { workspaceId: "workspace-1", id: "automation-1" },
+      { flowId: "flow-1" },
+    )
+
+    expect(mocks.flowExists).toHaveBeenCalledWith(
+      "workspace-1",
+      "flow-1",
+      undefined,
+    )
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ flowId: "flow-1", text: null }),
+    )
+  })
+
+  test("rejects a flowId that does not belong to the workspace", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      automatedResponseService.update(
+        { workspaceId: "workspace-1", id: "automation-1" },
+        { flowId: "foreign-flow" },
+      ),
+    ).rejects.toMatchObject({ field: "flowId", message: "Flow not found" })
+
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+})
+
 describe("automatedResponseService.create — flowId XOR text", () => {
   beforeEach(() => {
     vi.clearAllMocks()

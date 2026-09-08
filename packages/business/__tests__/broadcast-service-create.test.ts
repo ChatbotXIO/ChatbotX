@@ -274,4 +274,89 @@ describe("broadcastService.create — validation branches", () => {
       expect.objectContaining({ action: "launch" }),
     )
   })
+
+  test("persists the expected insert shape", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+    findFirstIntegrationMessenger.mockResolvedValue({ id: "integration-1" })
+    mockPruneFilter.mockReturnValue({ pruned: true })
+
+    const schedulesAt = new Date("2026-01-01T10:30:45.123Z")
+
+    await broadcastService.create({
+      ...baseInput,
+      integrationMessengerId: "integration-1",
+      schedulesAt,
+      contactFilter: { raw: true } as never,
+      templateData: { header: "hi" } as never,
+      buttons: [{ label: "Click" }] as never,
+      saveAsDraft: false,
+    } as never)
+
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "My Flow",
+        status: "scheduled",
+        integrationMessengerId: "integration-1",
+        workspaceId: WS,
+        // startOfMinute(...) — seconds/ms zeroed
+        schedulesAt: new Date("2026-01-01T10:30:00.000Z"),
+        contactFilter: { pruned: true },
+        templateData: { header: "hi", buttons: [{ label: "Click" }] },
+      }),
+    )
+  })
+
+  test("draft status is persisted from saveAsDraft", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+
+    await broadcastService.create({ ...baseInput, saveAsDraft: true })
+
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "draft" }),
+    )
+  })
+
+  test("templateData is null when not supplied", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+
+    await broadcastService.create(baseInput)
+
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ templateData: null }),
+    )
+  })
+
+  test("pruneEmailPhoneFilterConditions is applied to contactFilter", async () => {
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "My Flow" })
+    mockPruneFilter.mockReturnValue({ pruned: "yes" })
+
+    await broadcastService.create({
+      ...baseInput,
+      contactFilter: { raw: "criteria" } as never,
+    } as never)
+
+    expect(mockPruneFilter).toHaveBeenCalledWith(
+      { raw: "criteria" },
+      true, // canViewEmailAndPhone from baseInput
+    )
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: { pruned: "yes" } }),
+    )
+  })
 })

@@ -1,5 +1,6 @@
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import type { FolderType } from "@chatbotx.io/database/partials"
+import { triggerRepository } from "@chatbotx.io/database/repositories"
 import { conditionModel, triggerModel } from "@chatbotx.io/database/schema"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { removeTriggerCache, updateTriggerCache } from "@chatbotx.io/events"
@@ -69,6 +70,35 @@ class TriggerService extends BaseService {
       .select()
       .from(triggerModel)
       .where(eq(triggerModel.workspaceId, workspaceId))
+  }
+
+  /**
+   * SQL-paginated triggers with their real `conditions` joined in — for the
+   * public API's `GET /v1/triggers`, which previously loaded every trigger
+   * in the workspace and re-queried each one individually.
+   */
+  async list(input: {
+    workspaceId: string
+    page: number
+    perPage: number
+  }): Promise<{
+    data: (TriggerModel & {
+      conditions: (typeof conditionModel.$inferSelect)[]
+    })[]
+    pageCount: number
+  }> {
+    const { rows, total } = await triggerRepository.listPaginatedWithConditions(
+      {
+        workspaceId: input.workspaceId,
+        limit: input.perPage,
+        offset: (input.page - 1) * input.perPage,
+      },
+    )
+
+    return {
+      data: rows,
+      pageCount: Math.max(1, Math.ceil(total / input.perPage)),
+    }
   }
 
   async deleteMany(input: {

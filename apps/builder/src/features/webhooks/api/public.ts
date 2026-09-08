@@ -15,7 +15,6 @@ import {
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import { conditionSchema } from "../../conditions/schema"
-import { toConditionColumns } from "../../conditions/to-condition-columns"
 import { publicWebhookResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
@@ -68,7 +67,7 @@ export const webhooksPublicRouter = {
         workspaceId: context.workspace.id,
         name,
         url,
-        conditions: conditions.map(toConditionColumns),
+        conditions,
       })
     }),
 

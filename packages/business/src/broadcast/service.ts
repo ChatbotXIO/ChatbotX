@@ -1141,22 +1141,28 @@ class BroadcastService extends BaseService {
       await this.assertBroadcastIntegrationsOwned({
         workspaceId,
         integrationMessengerId: rest.integrationMessengerId,
-      }).catch(() => {
-        throw validationException(
-          "integrationMessengerId",
-          "Integration not found",
-        )
+      }).catch((error: unknown) => {
+        if (error instanceof ChatbotXException) {
+          throw validationException(
+            "integrationMessengerId",
+            "Integration not found",
+          )
+        }
+        throw error
       })
     }
     if (rest.integrationWhatsappId) {
       await this.assertBroadcastIntegrationsOwned({
         workspaceId,
         integrationWhatsappId: rest.integrationWhatsappId,
-      }).catch(() => {
-        throw validationException(
-          "integrationWhatsappId",
-          "Integration not found",
-        )
+      }).catch((error: unknown) => {
+        if (error instanceof ChatbotXException) {
+          throw validationException(
+            "integrationWhatsappId",
+            "Integration not found",
+          )
+        }
+        throw error
       })
     }
 
@@ -1165,8 +1171,11 @@ class BroadcastService extends BaseService {
       broadcastName = await this.requireFlowName(
         workspaceId,
         rest.flowId,
-      ).catch(() => {
-        throw validationException("flowId", "Flow not found")
+      ).catch((error: unknown) => {
+        if (error instanceof ChatbotXException) {
+          throw validationException("flowId", "Flow not found")
+        }
+        throw error
       })
     }
 
@@ -1225,10 +1234,15 @@ class BroadcastService extends BaseService {
    * The transaction wraps a single insert — kept verbatim rather than
    * simplified, to avoid any semantic argument about what belongs inside it.
    */
-  async resend(input: {
+  /**
+   * Runs `resend`'s existence/status guards up front so the caller can
+   * safely read `contactFilter` for pruning before the resend write — a
+   * foreign or soft-deleted id, or a broadcast that isn't sent/failed,
+   * throws here instead of the caller processing a row it shouldn't see.
+   */
+  async assertResendable(input: {
     workspaceId: string
     id: string
-    contactFilter?: ContactFilterCriteriaInput | null
   }): Promise<BroadcastModel> {
     const broadcast = await findOrFail({
       table: broadcastModel,
@@ -1241,6 +1255,15 @@ class BroadcastService extends BaseService {
     if (broadcast.status !== "sent" && broadcast.status !== "failed") {
       throw new ChatbotXException("Broadcast is not sent")
     }
+    return broadcast
+  }
+
+  async resend(input: {
+    workspaceId: string
+    id: string
+    contactFilter?: ContactFilterCriteriaInput | null
+  }): Promise<BroadcastModel> {
+    const broadcast = await this.assertResendable(input)
 
     const newBroadcast = await db.transaction(async (tx) => {
       const inserted = await tx

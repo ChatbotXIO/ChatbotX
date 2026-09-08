@@ -2,11 +2,9 @@
 
 import {
   automatedResponseService,
-  flowService,
   type UpdateAutomatedResponseRequest,
 } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { returnValidationErrors } from "next-safe-action"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateAutomatedResponseRequest } from "../schema/action"
 
@@ -31,20 +29,8 @@ export const updateAutomatedResponse = async (
     id: ctx.id,
   })
 
-  if (parsedInput.text?.length) {
-    parsedInput.flowId = undefined
-  } else if (parsedInput.flowId) {
-    const exists = await flowService.exists(ctx.workspaceId, parsedInput.flowId)
-    if (!exists) {
-      return returnValidationErrors(updateAutomatedResponseRequest, {
-        _errors: ["Validation Exception"],
-        flowId: {
-          _errors: ["Flow not found"],
-        },
-      })
-    }
-    parsedInput.text = null
-  }
-
+  // `text`/`flowId` mutual-exclusion and cross-workspace `flowId`
+  // validation now live in `automatedResponseService.update` so every
+  // caller (this action and the public API) gets the same invariants.
   await automatedResponseService.update(ctx, parsedInput)
 }

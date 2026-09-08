@@ -129,18 +129,21 @@ describe("POST /v1/webhooks", () => {
     )
   })
 
-  test("maps conditions and delegates to webhookService.register", async () => {
+  test("passes conditions through unmapped and delegates to webhookService.register", async () => {
+    // `register` normalizes each condition's columns (`?? null` defaults)
+    // internally now — the handler forwards conditions as-is.
     webhookService.register.mockResolvedValueOnce({ id: "webhook-1" })
+    const conditions = [
+      { type: "newContact" },
+      { type: "tagApplied", sourceId: "tag-1" },
+    ]
 
     const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
         name: "n8n trigger",
         url: "https://n8n.example.com/webhook/abc",
-        conditions: [
-          { type: "newContact" },
-          { type: "tagApplied", sourceId: "tag-1" },
-        ],
+        conditions,
       },
     })
 
@@ -149,15 +152,7 @@ describe("POST /v1/webhooks", () => {
       workspaceId: "workspace-1",
       name: "n8n trigger",
       url: "https://n8n.example.com/webhook/abc",
-      conditions: [
-        { type: "newContact", sourceId: null, operator: null, value: null },
-        {
-          type: "tagApplied",
-          sourceId: "tag-1",
-          operator: null,
-          value: null,
-        },
-      ],
+      conditions,
     })
   })
 })

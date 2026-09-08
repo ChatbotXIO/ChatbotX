@@ -69,9 +69,9 @@ export const aiAgentsPublicRouter = {
     .output(aiAgentResourceSchema)
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      await aiAgentService.create(context.workspace.id, input)
+      const id = await aiAgentService.create(context.workspace.id, input)
       const created = await aiAgentService.findBy({
-        where: { workspaceId: context.workspace.id, name: input.name },
+        where: { id, workspaceId: context.workspace.id },
       })
       if (!created) {
         throw notFoundException("AI agent not found")

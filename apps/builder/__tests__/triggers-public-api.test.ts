@@ -47,7 +47,7 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const triggerService = {
-  listByWorkspaceId: vi.fn(),
+  list: vi.fn(),
   create: vi.fn(),
   updateWithConditions: vi.fn(),
   updateSettings: vi.fn(),
@@ -62,7 +62,13 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 const triggerRepository = {
   findWithConditions: vi.fn(),
 }
-vi.mock("@chatbotx.io/database/repositories", () => ({ triggerRepository }))
+const conditionRepository = {
+  listByTriggerIds: vi.fn(),
+}
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  triggerRepository,
+  conditionRepository,
+}))
 
 vi.mock("@chatbotx.io/database/schema", () => {
   const schema = {
@@ -102,14 +108,16 @@ test("registers the triggers public router under the automation scope", () => {
 describe("GET /v1/triggers", () => {
   const procedure = findProcedure("GET", "/v1/triggers")
 
-  test("returns real conditions and actions, not hardcoded empty arrays", async () => {
-    triggerService.listByWorkspaceId.mockResolvedValueOnce([
-      { id: "trigger-1" },
-    ])
-    triggerRepository.findWithConditions.mockResolvedValueOnce({
-      id: "trigger-1",
-      conditions: [{ id: "c1", type: "newContact" }],
-      actions: [{ id: "a1", type: "sendFlow" }],
+  test("returns real conditions and actions via a single paginated query", async () => {
+    triggerService.list.mockResolvedValueOnce({
+      data: [
+        {
+          id: "trigger-1",
+          conditions: [{ id: "c1", type: "newContact" }],
+          actions: [{ id: "a1", type: "sendFlow" }],
+        },
+      ],
+      pageCount: 1,
     })
 
     const result = await procedure.handler?.({
@@ -117,15 +125,16 @@ describe("GET /v1/triggers", () => {
       input: { page: 1, perPage: 50 },
     })
 
-    expect(triggerService.listByWorkspaceId).toHaveBeenCalledWith("workspace-1")
-    expect(triggerRepository.findWithConditions).toHaveBeenCalledWith({
-      id: "trigger-1",
+    expect(triggerService.list).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
+      page: 1,
+      perPage: 50,
     })
     expect(result.data[0].conditions).toEqual([
       { id: "c1", type: "newContact" },
     ])
     expect(result.data[0].actions).toEqual([{ id: "a1", type: "sendFlow" }])
+    expect(result.pageCount).toBe(1)
   })
 })
 
@@ -184,17 +193,15 @@ describe("POST /v1/triggers", () => {
 describe("PUT /v1/triggers/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/triggers/{id}")
 
-  test("delegates to triggerService.updateWithConditions", async () => {
+  test("delegates to triggerService.updateWithConditions and returns the service's result plus fresh conditions", async () => {
     triggerService.updateWithConditions.mockResolvedValueOnce({
       id: "trigger-1",
     })
-    triggerRepository.findWithConditions.mockResolvedValueOnce({
-      id: "trigger-1",
-      conditions: [],
-      actions: [],
-    })
+    conditionRepository.listByTriggerIds.mockResolvedValueOnce([
+      { id: "c1", type: "newContact" },
+    ])
 
-    await procedure.handler?.({
+    const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
         id: "trigger-1",
@@ -203,20 +210,20 @@ describe("PUT /v1/triggers/{id}", () => {
       },
     })
 
+    // Conditions pass through unmapped — the service's
+    // toConditionColumnsShared owns the column normalization now.
     expect(triggerService.updateWithConditions).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "trigger-1",
       actions: [{ type: "sendFlow" }],
-      conditions: [
-        {
-          id: undefined,
-          type: "newContact",
-          sourceId: null,
-          operator: null,
-          value: null,
-        },
-      ],
+      conditions: [{ type: "newContact" }],
     })
+    // No redundant re-read of the trigger row itself — only conditions.
+    expect(triggerRepository.findWithConditions).not.toHaveBeenCalled()
+    expect(conditionRepository.listByTriggerIds).toHaveBeenCalledWith([
+      "trigger-1",
+    ])
+    expect(result.conditions).toEqual([{ id: "c1", type: "newContact" }])
   })
 
   test("throws not found when the trigger update fails to match", async () => {
@@ -234,10 +241,16 @@ describe("PUT /v1/triggers/{id}", () => {
 describe("PATCH /v1/triggers/{id}/settings", () => {
   const procedure = findProcedure("PATCH", "/v1/triggers/{id}/settings")
 
-  test("delegates to triggerService.updateSettings", async () => {
+  test("delegates to triggerService.updateSettings and returns the updated resource", async () => {
     triggerService.updateSettings.mockResolvedValueOnce(undefined)
+    triggerRepository.findWithConditions.mockResolvedValueOnce({
+      id: "trigger-1",
+      active: false,
+      conditions: [],
+      actions: [],
+    })
 
-    await procedure.handler?.({
+    const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { id: "trigger-1", active: false },
     })
@@ -247,6 +260,23 @@ describe("PATCH /v1/triggers/{id}/settings", () => {
       id: "trigger-1",
       active: false,
     })
+    expect(triggerRepository.findWithConditions).toHaveBeenCalledWith({
+      id: "trigger-1",
+      workspaceId: "workspace-1",
+    })
+    expect(result.active).toBe(false)
+  })
+
+  test("throws not found when the trigger no longer exists after updateSettings", async () => {
+    triggerService.updateSettings.mockResolvedValueOnce(undefined)
+    triggerRepository.findWithConditions.mockResolvedValueOnce(null)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "missing", active: false },
+      }),
+    ).rejects.toThrow("Trigger not found")
   })
 })
 

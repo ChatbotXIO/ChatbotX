@@ -1,5 +1,17 @@
 import type { sequenceStepModel } from "@chatbotx.io/database/schema"
 
+// The `delayUnit` column is a bare `text()` with no DB-level enum — this is
+// the canonical union both the builder schema (`schema/action.ts`) and this
+// write-boundary conform to, so the two can't drift apart.
+export const SEQUENCE_STEP_DELAY_UNITS = [
+  "immediate",
+  "minutes",
+  "hours",
+  "days",
+  "specificTime",
+] as const
+export type SequenceStepDelayUnit = (typeof SEQUENCE_STEP_DELAY_UNITS)[number]
+
 /**
  * The subset of `upsertSequenceStepRequest` fields relevant to a step's
  * create/update payload — kept loose (`Partial`-friendly, all optional
@@ -10,7 +22,7 @@ export type SequenceStepPayloadInput = {
   order: number
   delayDays?: number
   delayMinutes?: number
-  delayUnit?: string
+  delayUnit?: SequenceStepDelayUnit
   flowId?: string | null
   specificDateTime?: string | null
   isActive?: boolean

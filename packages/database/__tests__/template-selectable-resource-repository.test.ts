@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   flowFindMany: vi.fn(),
+  tagFindMany: vi.fn(),
   automatedResponseFindMany: vi.fn(),
   savedReplyFindMany: vi.fn(),
   botFieldFindMany: vi.fn(),
@@ -14,7 +15,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
       flowModel: { findMany: mocks.flowFindMany },
-      tagModel: { findMany: vi.fn() },
+      tagModel: { findMany: mocks.tagFindMany },
       customFieldModel: { findMany: vi.fn() },
       productModel: { findMany: vi.fn() },
       aiFunctionModel: { findMany: vi.fn() },
@@ -93,6 +94,34 @@ describe("templateSelectableResourceRepository.listFlows", () => {
     expect(result.allIds).toBeUndefined()
     // Only the page query ran, not the allIds query.
     expect(mocks.flowFindMany).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("templateSelectableResourceRepository.listTags", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("filters out soft-deleted tags via deletedAt isNull", async () => {
+    mocks.tagFindMany
+      .mockResolvedValueOnce([{ id: "tag-1", name: "Tag 1" }])
+      .mockResolvedValueOnce([{ id: "tag-1" }])
+    mocks.count.mockResolvedValue(1)
+
+    const result = await templateSelectableResourceRepository.listTags({
+      workspaceId: "ws-1",
+      offset: 0,
+      limit: 100,
+    })
+
+    expect(result.rows).toEqual([{ id: "tag-1", name: "Tag 1" }])
+    expect(mocks.tagFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          deletedAt: { isNull: true },
+        }),
+      }),
+    )
   })
 })
 

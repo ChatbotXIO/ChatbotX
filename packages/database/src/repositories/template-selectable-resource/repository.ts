@@ -1,3 +1,4 @@
+import type { PgTable } from "drizzle-orm/pg-core"
 import { type DatabaseClient, db, relationsFilterToSQL } from "../../client"
 import {
   aiAgentModel,
@@ -42,365 +43,108 @@ type CategoryInput = {
   limit: number
 }
 
+/**
+ * Shared shape behind 11 of the 12 `list*` categories below: a
+ * `{id, name}`-selectable table filtered by `workspaceId` (+ optional
+ * `deletedAt`/extra predicate) and an ILIKE `name` search, paginated with a
+ * capped `allIds` "select all" list. `listKeywords` (no `name` column) and
+ * `listSettings` (two tables, no search/pagination) are genuine special
+ * cases and stay hand-written below.
+ */
+function findAllQuery<TTable extends PgTable>(
+  tableQuery: {
+    findMany: (args: {
+      where: Record<string, unknown>
+      columns: { id: true; name: true }
+      limit: number
+      offset: number
+      orderBy: { name: "asc" }
+    }) => Promise<{ id: string; name: string }[]>
+  },
+  table: TTable,
+  extraWhere?: Record<string, unknown>,
+) {
+  return async (
+    input: CategoryInput,
+    tx: DatabaseClient = db,
+  ): Promise<ListSelectableResourceRowsResult> => {
+    const { workspaceId, keyword, offset, limit } = input
+    const where = {
+      workspaceId,
+      ...extraWhere,
+      name: keyword ? { ilike: likeContains(keyword) } : undefined,
+    }
+
+    const [rows, total] = await Promise.all([
+      tableQuery.findMany({
+        where,
+        columns: { id: true, name: true },
+        limit,
+        offset,
+        orderBy: { name: "asc" },
+      }),
+      tx.$count(table, relationsFilterToSQL(table, where)),
+    ])
+
+    const allIds = await buildAllIds(offset, total, async () =>
+      (
+        await tableQuery.findMany({
+          where,
+          columns: { id: true, name: true },
+          limit: ALL_IDS_CAP,
+          offset: 0,
+          orderBy: { name: "asc" },
+        })
+      ).map((row) => row.id),
+    )
+
+    return { rows, total, allIds }
+  }
+}
+
 export const templateSelectableResourceRepository = {
-  async listFlows(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
+  listFlows: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.flowModel, flowModel)(input, tx),
 
-    const [rows, total] = await Promise.all([
-      tx.query.flowModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(flowModel, relationsFilterToSQL(flowModel, where)),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (await tx.query.flowModel.findMany({ where, columns: { id: true } })).map(
-        (row) => row.id,
-      ),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listTags(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
+  listTags: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.tagModel, tagModel, {
       deletedAt: { isNull: true as const },
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
+    })(input, tx),
 
-    const [rows, total] = await Promise.all([
-      tx.query.tagModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(tagModel, relationsFilterToSQL(tagModel, where)),
-    ])
+  listCustomFields: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.customFieldModel, customFieldModel)(input, tx),
 
-    const allIds = await buildAllIds(offset, total, async () =>
-      (await tx.query.tagModel.findMany({ where, columns: { id: true } })).map(
-        (row) => row.id,
-      ),
-    )
+  listProducts: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.productModel, productModel)(input, tx),
 
-    return { rows, total, allIds }
-  },
+  listAIFunctions: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.aiFunctionModel, aiFunctionModel)(input, tx),
 
-  async listCustomFields(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
+  listAIAgents: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.aiAgentModel, aiAgentModel)(input, tx),
 
-    const [rows, total] = await Promise.all([
-      tx.query.customFieldModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(
-        customFieldModel,
-        relationsFilterToSQL(customFieldModel, where),
-      ),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.customFieldModel.findMany({
-          where,
-          columns: { id: true },
-        })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listProducts(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
-
-    const [rows, total] = await Promise.all([
-      tx.query.productModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(productModel, relationsFilterToSQL(productModel, where)),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.productModel.findMany({ where, columns: { id: true } })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listAIFunctions(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
-
-    const [rows, total] = await Promise.all([
-      tx.query.aiFunctionModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(aiFunctionModel, relationsFilterToSQL(aiFunctionModel, where)),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.aiFunctionModel.findMany({
-          where,
-          columns: { id: true },
-        })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listAIAgents(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
-
-    const [rows, total] = await Promise.all([
-      tx.query.aiAgentModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(aiAgentModel, relationsFilterToSQL(aiAgentModel, where)),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.aiAgentModel.findMany({ where, columns: { id: true } })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listCalendars(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
+  listCalendars: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.appointmentCalendarModel, appointmentCalendarModel, {
       deletedAt: { isNull: true as const },
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
+    })(input, tx),
 
-    const [rows, total] = await Promise.all([
-      tx.query.appointmentCalendarModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(
-        appointmentCalendarModel,
-        relationsFilterToSQL(appointmentCalendarModel, where),
-      ),
-    ])
+  listWebchats: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.integrationWebchatModel, integrationWebchatModel)(
+      input,
+      tx,
+    ),
 
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.appointmentCalendarModel.findMany({
-          where,
-          columns: { id: true },
-        })
-      ).map((row) => row.id),
-    )
+  listTriggers: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.triggerModel, triggerModel)(input, tx),
 
-    return { rows, total, allIds }
-  },
+  listFbCommentAutomations: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.fbCommentAutomationModel, fbCommentAutomationModel)(
+      input,
+      tx,
+    ),
 
-  async listWebchats(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
-
-    const [rows, total] = await Promise.all([
-      tx.query.integrationWebchatModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(
-        integrationWebchatModel,
-        relationsFilterToSQL(integrationWebchatModel, where),
-      ),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.integrationWebchatModel.findMany({
-          where,
-          columns: { id: true },
-        })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listTriggers(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
-
-    const [rows, total] = await Promise.all([
-      tx.query.triggerModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(triggerModel, relationsFilterToSQL(triggerModel, where)),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.triggerModel.findMany({ where, columns: { id: true } })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listFbCommentAutomations(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
-
-    const [rows, total] = await Promise.all([
-      tx.query.fbCommentAutomationModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(
-        fbCommentAutomationModel,
-        relationsFilterToSQL(fbCommentAutomationModel, where),
-      ),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.fbCommentAutomationModel.findMany({
-          where,
-          columns: { id: true },
-        })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
-
-  async listEntryPointLinks(
-    input: CategoryInput,
-    tx: DatabaseClient = db,
-  ): Promise<ListSelectableResourceRowsResult> {
-    const { workspaceId, keyword, offset, limit } = input
-    const where = {
-      workspaceId,
-      name: keyword ? { ilike: likeContains(keyword) } : undefined,
-    }
-
-    const [rows, total] = await Promise.all([
-      tx.query.reflinkModel.findMany({
-        where,
-        columns: { id: true, name: true },
-        limit,
-        offset,
-        orderBy: { name: "asc" },
-      }),
-      tx.$count(reflinkModel, relationsFilterToSQL(reflinkModel, where)),
-    ])
-
-    const allIds = await buildAllIds(offset, total, async () =>
-      (
-        await tx.query.reflinkModel.findMany({ where, columns: { id: true } })
-      ).map((row) => row.id),
-    )
-
-    return { rows, total, allIds }
-  },
+  listEntryPointLinks: (input: CategoryInput, tx: DatabaseClient = db) =>
+    findAllQuery(tx.query.reflinkModel, reflinkModel)(input, tx),
 
   /**
    * `AutomatedResponse` (Keywords) has no `name` column — inbound rows are
@@ -456,6 +200,7 @@ export const templateSelectableResourceRepository = {
         await tx.query.automatedResponseModel.findMany({
           where,
           columns: { id: true },
+          limit: ALL_IDS_CAP,
         })
       ).map((row) => row.id),
     )

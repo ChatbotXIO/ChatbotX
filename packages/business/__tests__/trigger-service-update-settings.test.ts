@@ -38,6 +38,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   triggerModel: { id: "triggerModel.id" },
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  triggerRepository: { listPaginatedWithConditions: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/events", () => ({
   removeTriggerCache: vi.fn(),
   updateTriggerCache: vi.fn(),

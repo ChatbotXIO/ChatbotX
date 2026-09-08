@@ -2,6 +2,7 @@ import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { aiTriggerRepository } from "@chatbotx.io/database/repositories"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import type { AITriggerModel } from "@chatbotx.io/database/types"
+import { maxLimit } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
@@ -27,7 +28,7 @@ class AITriggerService extends BaseService {
       aiTriggerRepository.count(input),
     ])
 
-    const pageCount = Math.ceil(total / input.perPage)
+    const pageCount = Math.ceil(total / Math.min(maxLimit, input.perPage))
 
     return { data, pageCount }
   }

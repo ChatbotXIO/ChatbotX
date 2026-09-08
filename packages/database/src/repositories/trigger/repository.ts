@@ -56,6 +56,34 @@ export const triggerRepository = {
     return { rows, total: countResult[0]?.count ?? 0 }
   },
 
+  /**
+   * Paginated trigger rows with their real `conditions` joined in, SQL-level
+   * — for the public API's `GET /v1/triggers`, which needs the same shape
+   * as `findWithConditions` but for a page of rows instead of one.
+   */
+  async listPaginatedWithConditions(
+    input: {
+      workspaceId: string
+      limit: number
+      offset: number
+    },
+    tx: DatabaseClient = db,
+  ) {
+    const whereClause = eq(triggerModel.workspaceId, input.workspaceId)
+
+    const [rows, total] = await Promise.all([
+      tx.query.triggerModel.findMany({
+        where: { workspaceId: input.workspaceId },
+        with: { conditions: true },
+        limit: input.limit,
+        offset: input.offset,
+      }),
+      tx.$count(triggerModel, whereClause),
+    ])
+
+    return { rows, total }
+  },
+
   async findWithConditions(
     params: { id?: string; workspaceId?: string },
     tx: DatabaseClient = db,

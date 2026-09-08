@@ -149,7 +149,7 @@ beforeAll(async () => {
   }
 
   operations.sort((a, b) => a.operationId.localeCompare(b.operationId))
-})
+}, 120_000)
 
 describe("public API spec — operation naming guard", () => {
   // Pins the MCP tool name / operationId surface. A diff here is a

@@ -4,7 +4,7 @@ import {
   db,
   eq,
   inArray,
-  isDatabaseError,
+  isUniqueViolationError,
   relationsFilterToSQL,
   type SQL,
   sql,
@@ -66,7 +66,6 @@ type CreateBotFieldData = {
 type UpdateBotFieldData = Partial<CreateBotFieldData>
 
 const REGEX_BOT_FIELD_ID = /^\d+$/
-const UNIQUE_VIOLATION_CODE = "23505"
 
 /**
  * Which `CustomFieldType`s each `FieldOperationType` is valid against.
@@ -473,10 +472,7 @@ class BotFieldService extends BaseService {
         .where(eq(botFieldModel.id, existing.id))
         .returning()
     } catch (error) {
-      if (
-        isDatabaseError(error) &&
-        error.cause.code === UNIQUE_VIOLATION_CODE
-      ) {
+      if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken")
       }
       throw error
@@ -515,10 +511,7 @@ class BotFieldService extends BaseService {
         .values({ id: createId(), workspaceId, ...preparedData })
         .returning()
     } catch (error) {
-      if (
-        isDatabaseError(error) &&
-        error.cause.code === UNIQUE_VIOLATION_CODE
-      ) {
+      if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken")
       }
       throw error

@@ -7,7 +7,7 @@ const {
   mockInsert,
   mockInsertValues,
   mockFindOrFail,
-  mockIsDatabaseError,
+  mockIsUniqueViolationError,
   mockDelete,
   mockDispatchAuditRecord,
   mockStepFindFirst,
@@ -49,7 +49,7 @@ const {
     mockInsert,
     mockInsertValues,
     mockFindOrFail: vi.fn(),
-    mockIsDatabaseError: vi.fn(() => false),
+    mockIsUniqueViolationError: vi.fn(() => false),
     mockDelete,
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
     mockStepFindFirst: vi.fn(),
@@ -80,7 +80,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   eq: (...args: unknown[]) => ({ eq: args }),
   findOrFail: mockFindOrFail,
-  isDatabaseError: mockIsDatabaseError,
+  isUniqueViolationError: mockIsUniqueViolationError,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -126,7 +126,7 @@ describe("sequenceService.create", () => {
       cause: { code: "23505" },
     })
     mockInsertValues.mockRejectedValueOnce(dbError)
-    mockIsDatabaseError.mockReturnValueOnce(true)
+    mockIsUniqueViolationError.mockReturnValueOnce(true)
 
     await expect(
       sequenceService.create({ workspaceId: WS, name: "Duplicate" }),
@@ -142,7 +142,7 @@ describe("sequenceService.create", () => {
       cause: { code: "XXXXX" },
     })
     mockInsertValues.mockRejectedValueOnce(dbError)
-    mockIsDatabaseError.mockReturnValueOnce(true)
+    mockIsUniqueViolationError.mockReturnValueOnce(false)
 
     await expect(
       sequenceService.create({ workspaceId: WS, name: "Seq" }),
@@ -223,7 +223,7 @@ describe("sequenceService.update", () => {
       cause: { code: "23505" },
     })
     mockStepUpdateReturning.mockRejectedValueOnce(dbError)
-    mockIsDatabaseError.mockReturnValueOnce(true)
+    mockIsUniqueViolationError.mockReturnValueOnce(true)
 
     await expect(
       sequenceService.update(
@@ -293,20 +293,22 @@ describe("sequenceService.updateStep / deleteStep cross-workspace rejection", ()
     ).rejects.toThrow("Step not found")
   })
 
-  test("updateStep throws when the step belongs to a different workspace", async () => {
+  test("updateStep throws not-found (not an ownership-revealing message) for a step in a different workspace", async () => {
     mockStepFindFirst.mockResolvedValue({
       id: "step-1",
       order: 1,
       sequence: { workspaceId: "other-ws" },
     })
 
+    // Masked as "not found" rather than an "Unauthorized" message, so a
+    // caller can't distinguish a missing step from a foreign one.
     await expect(
       sequenceService.updateStep({
         workspaceId: WS,
         stepId: "step-1",
         data: { order: 0 },
       }),
-    ).rejects.toThrow("Unauthorized: Step does not belong to this workspace")
+    ).rejects.toThrow("Step not found")
   })
 
   test("deleteStep throws when the step does not exist", async () => {
@@ -317,7 +319,7 @@ describe("sequenceService.updateStep / deleteStep cross-workspace rejection", ()
     ).rejects.toThrow("Step not found")
   })
 
-  test("deleteStep throws when the step belongs to a different workspace", async () => {
+  test("deleteStep throws not-found (not an ownership-revealing message) for a step in a different workspace", async () => {
     mockStepFindFirst.mockResolvedValue({
       id: "step-1",
       sequence: { workspaceId: "other-ws" },
@@ -325,7 +327,7 @@ describe("sequenceService.updateStep / deleteStep cross-workspace rejection", ()
 
     await expect(
       sequenceService.deleteStep({ workspaceId: WS, stepId: "step-1" }),
-    ).rejects.toThrow("Unauthorized: Step does not belong to this workspace")
+    ).rejects.toThrow("Step not found")
 
     expect(mockStepDelete).not.toHaveBeenCalled()
   })

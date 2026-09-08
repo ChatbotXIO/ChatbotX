@@ -300,7 +300,7 @@ describe("GET /v1/flows/{id}/versions", () => {
 describe("POST /v1/flows/import", () => {
   const procedure = findProcedure("POST", "/v1/flows/import")
 
-  test("delegates to importService.startFlowImport and queues the import job", async () => {
+  test("delegates to importService.startFlowImport with a null userId and queues the import job", async () => {
     importService.startFlowImport.mockResolvedValueOnce({
       ok: true,
       importId: "import-1",
@@ -313,9 +313,11 @@ describe("POST /v1/flows/import", () => {
       }),
     ).resolves.toEqual({ importId: "import-1" })
 
+    // `userId: null` — matches the contacts public-API precedent so a
+    // token-initiated import is never mis-attributed to the workspace owner.
     expect(importService.startFlowImport).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      userId: "user-1",
+      userId: null,
       fileId: "file-1",
       folderId: null,
     })

@@ -4,10 +4,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockResend,
+  mockAssertResendable,
   mockFindContactFilter,
   mockGetCurrentUserAndTargetWorkspace,
 } = vi.hoisted(() => ({
   mockResend: vi.fn(),
+  mockAssertResendable: vi.fn().mockResolvedValue({ id: "bc-1" }),
   mockFindContactFilter: vi.fn(),
   mockGetCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue({
     targetWorkspaceMember: { permissions: ["emailAndPhone"] },
@@ -23,7 +25,10 @@ vi.mock("@/lib/safe-action", () => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastService: { resend: mockResend },
+  broadcastService: {
+    resend: mockResend,
+    assertResendable: mockAssertResendable,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -59,6 +64,7 @@ const BROADCAST_ID = "bc-1"
 describe("resendBroadcast", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockAssertResendable.mockResolvedValue({ id: BROADCAST_ID })
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
       targetWorkspaceMember: { permissions: ["emailAndPhone"] },
     })
@@ -88,20 +94,28 @@ describe("resendBroadcast", () => {
     expect(result).toEqual({ id: "new-bc-id" })
   })
 
-  test("propagates a 'Broadcast is not sent' error from the service", async () => {
-    mockResend.mockRejectedValue(new Error("Broadcast is not sent"))
+  test("propagates a 'Broadcast is not sent' error from assertResendable, before reading the contact filter", async () => {
+    mockAssertResendable.mockRejectedValue(new Error("Broadcast is not sent"))
 
     await expect(
       resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID }),
     ).rejects.toThrow("Broadcast is not sent")
+
+    // The guard runs before the contact-filter read — a not-resendable
+    // broadcast's filter is never touched.
+    expect(mockFindContactFilter).not.toHaveBeenCalled()
+    expect(mockResend).not.toHaveBeenCalled()
   })
 
-  test("propagates a not-found error when the source broadcast is missing", async () => {
-    mockResend.mockRejectedValue(new Error("Record not found"))
+  test("propagates a not-found error when the source broadcast is missing, before reading the contact filter", async () => {
+    mockAssertResendable.mockRejectedValue(new Error("Record not found"))
 
     await expect(
       resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID }),
     ).rejects.toThrow("Record not found")
+
+    expect(mockFindContactFilter).not.toHaveBeenCalled()
+    expect(mockResend).not.toHaveBeenCalled()
   })
 
   test("passes undefined contactFilter when the source has none stored", async () => {

@@ -242,7 +242,7 @@ class AiAgentService extends BaseService {
     workspaceId: string,
     data: CreateAIAgentRequest,
     tx?: DatabaseClient,
-  ): Promise<void> {
+  ): Promise<string> {
     const id = createId()
 
     const execute = async (client: DatabaseClient) => {
@@ -270,6 +270,8 @@ class AiAgentService extends BaseService {
     if (!tx) {
       await this.audit("create", `created a new AI Agent (#${id})`)
     }
+
+    return id
   }
 
   async updateAIAgent(

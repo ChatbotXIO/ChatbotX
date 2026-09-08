@@ -18,5 +18,5 @@ export async function listReflinks(
 export async function findReflink(
   where: GetReflinkRequest,
 ): Promise<ReflinkResource | undefined> {
-  return await reflinkService.findOrFail(where).catch(() => undefined)
+  return (await reflinkService.find(where)) ?? undefined
 }

@@ -70,6 +70,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  triggerRepository: { listPaginatedWithConditions: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/events", () => ({
   removeTriggerCache: vi.fn(),
   updateTriggerCache: mockUpdateTriggerCache,

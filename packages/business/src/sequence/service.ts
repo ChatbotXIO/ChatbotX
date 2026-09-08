@@ -3,7 +3,7 @@ import {
   db,
   eq,
   findOrFail,
-  isDatabaseError,
+  isUniqueViolationError,
 } from "@chatbotx.io/database/client"
 import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
 import type {
@@ -12,14 +12,12 @@ import type {
 } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { validationException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 import {
   buildCreateData,
   buildUpdateData,
   type SequenceStepPayloadInput,
 } from "./step-payload"
-
-const UNIQUE_VIOLATION_CODE = "23505"
 
 class SequenceService extends BaseService {
   async create(input: {
@@ -37,10 +35,7 @@ class SequenceService extends BaseService {
         folderId: input.folderId || null,
       })
     } catch (error) {
-      if (
-        isDatabaseError(error) &&
-        error.cause.code === UNIQUE_VIOLATION_CODE
-      ) {
+      if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken.")
       }
       throw error
@@ -82,17 +77,19 @@ class SequenceService extends BaseService {
       const updated = await db
         .update(sequenceModel)
         .set(data)
-        .where(and(eq(sequenceModel.id, ctx.id)))
+        .where(
+          and(
+            eq(sequenceModel.id, ctx.id),
+            eq(sequenceModel.workspaceId, ctx.workspaceId),
+          ),
+        )
         .returning({ id: sequenceModel.id })
 
       if (updated.length === 0) {
         return
       }
     } catch (error) {
-      if (
-        isDatabaseError(error) &&
-        error.cause.code === UNIQUE_VIOLATION_CODE
-      ) {
+      if (isUniqueViolationError(error)) {
         throw validationException("name", "Name is already taken.")
       }
       throw error
@@ -174,11 +171,11 @@ class SequenceService extends BaseService {
     })
 
     if (!step) {
-      throw new Error("Step not found")
+      throw notFoundException("Step not found")
     }
 
     if (step.sequence.workspaceId !== input.workspaceId) {
-      throw new Error("Unauthorized: Step does not belong to this workspace")
+      throw notFoundException("Step not found")
     }
 
     const updateData = buildUpdateData(input.data)
@@ -206,11 +203,11 @@ class SequenceService extends BaseService {
     })
 
     if (!step) {
-      throw new Error("Step not found")
+      throw notFoundException("Step not found")
     }
 
     if (step.sequence.workspaceId !== input.workspaceId) {
-      throw new Error("Unauthorized: Step does not belong to this workspace")
+      throw notFoundException("Step not found")
     }
 
     await db

@@ -18,20 +18,6 @@ vi.mock("@chatbotx.io/business", () => ({
   triggerService: { updateWithConditions: mockUpdateWithConditions },
 }))
 
-vi.mock("@/features/conditions/to-condition-columns", () => ({
-  toConditionColumns: (condition: {
-    type: string
-    sourceId?: string | null
-    operator?: string | null
-    value?: unknown
-  }) => ({
-    type: condition.type,
-    sourceId: condition.sourceId ?? null,
-    operator: condition.operator ?? null,
-    value: condition.value ?? null,
-  }),
-}))
-
 vi.mock("../src/features/triggers/schema/mutation", () => ({
   updateTriggerSchema: {},
 }))
@@ -61,21 +47,26 @@ describe("updateTriggerAction", () => {
     mockUpdateWithConditions.mockResolvedValue({ id: "trigger-1" })
   })
 
-  test("maps conditions via toConditionColumns and delegates to triggerService.updateWithConditions", async () => {
+  test("passes conditions through unmapped and delegates to triggerService.updateWithConditions", async () => {
+    // `toConditionColumnsShared` inside the service now owns the column
+    // normalization (`?? null` defaults) — the action forwards conditions
+    // as-is instead of mapping them a second time.
+    const conditions = [
+      {
+        id: "condition-1",
+        type: "contact",
+        sourceId: "email",
+        operator: "eq",
+        value: "ada@example.com",
+      },
+      { type: "contact", sourceId: "phone", operator: "exists" },
+    ]
+
     const result = await callAction({
       bindArgsParsedInputs: ["workspace-1", "trigger-1"],
       parsedInput: {
         actions: [{ type: "startFlow", flowId: "flow-1" }],
-        conditions: [
-          {
-            id: "condition-1",
-            type: "contact",
-            sourceId: "email",
-            operator: "eq",
-            value: "ada@example.com",
-          },
-          { type: "contact", sourceId: "phone", operator: "exists" },
-        ],
+        conditions,
       },
     })
 
@@ -83,22 +74,7 @@ describe("updateTriggerAction", () => {
       workspaceId: "workspace-1",
       id: "trigger-1",
       actions: [{ type: "startFlow", flowId: "flow-1" }],
-      conditions: [
-        {
-          id: "condition-1",
-          type: "contact",
-          sourceId: "email",
-          operator: "eq",
-          value: "ada@example.com",
-        },
-        {
-          id: undefined,
-          type: "contact",
-          sourceId: "phone",
-          operator: "exists",
-          value: null,
-        },
-      ],
+      conditions,
     })
     expect(result).toEqual({ id: "trigger-1" })
   })

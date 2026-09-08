@@ -57,6 +57,13 @@ class ReflinkService extends BaseService {
     return reflink
   }
 
+  async find(input: {
+    workspaceId: string
+    id: string
+  }): Promise<ReflinkModel | null> {
+    return (await reflinkRepository.findByIdAndWorkspace(input)) ?? null
+  }
+
   async create(input: {
     workspaceId: string
     data: ReflinkCreateData
@@ -90,7 +97,12 @@ class ReflinkService extends BaseService {
       const [updated] = await db
         .update(reflinkModel)
         .set(data)
-        .where(and(eq(reflinkModel.id, reflink.id)))
+        .where(
+          and(
+            eq(reflinkModel.id, reflink.id),
+            eq(reflinkModel.workspaceId, ctx.workspaceId),
+          ),
+        )
         .returning()
       return updated
     } catch (error) {

@@ -224,7 +224,7 @@ export const flowsPublicRouter = {
     .handler(async ({ context, input }) => {
       const result = await importService.startFlowImport({
         workspaceId: context.workspace.id,
-        userId: context.workspace.ownerId,
+        userId: null,
         fileId: input.fileId,
         folderId: input.folderId,
       })

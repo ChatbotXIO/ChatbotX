@@ -1,6 +1,7 @@
 "use server"
 
 import { sequenceService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
@@ -32,6 +33,13 @@ export const updateSequenceAction = workspaceActionClient
             _errors: [t("sequences.validation.nameExists")],
           },
         })
+      }
+
+      // A `ChatbotXException` (e.g. not-found) already carries a correct
+      // status/message — rethrow it unchanged so it doesn't get masked as
+      // a generic 500. Only genuinely unknown errors get wrapped.
+      if (error instanceof ChatbotXException) {
+        throw error
       }
 
       throw new Error("Failed to update sequence")

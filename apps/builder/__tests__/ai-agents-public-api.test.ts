@@ -145,8 +145,11 @@ describe("GET /v1/ai-agents/{id}", () => {
 describe("POST /v1/ai-agents", () => {
   const procedure = findProcedure("POST", "/v1/ai-agents")
 
-  test("delegates to aiAgentService.create then re-fetches via findBy", async () => {
-    aiAgentService.create.mockResolvedValueOnce(undefined)
+  test("delegates to aiAgentService.create then re-fetches by the created id", async () => {
+    // Regression test: `create` returns the created id and the handler
+    // re-fetches by that id — not by `name`, which has no unique
+    // constraint and could match a pre-existing row on a duplicate name.
+    aiAgentService.create.mockResolvedValueOnce("agent-1")
     aiAgentService.findBy.mockResolvedValueOnce({ id: "agent-1" })
 
     await procedure.handler?.({
@@ -158,8 +161,28 @@ describe("POST /v1/ai-agents", () => {
       name: "Support agent",
     })
     expect(aiAgentService.findBy).toHaveBeenCalledWith({
-      where: { workspaceId: "workspace-1", name: "Support agent" },
+      where: { id: "agent-1", workspaceId: "workspace-1" },
     })
+  })
+
+  test("two creates with the same name return distinct ids", async () => {
+    aiAgentService.create
+      .mockResolvedValueOnce("agent-1")
+      .mockResolvedValueOnce("agent-2")
+    aiAgentService.findBy
+      .mockResolvedValueOnce({ id: "agent-1", name: "Support agent" })
+      .mockResolvedValueOnce({ id: "agent-2", name: "Support agent" })
+
+    const first = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { name: "Support agent" },
+    })
+    const second = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { name: "Support agent" },
+    })
+
+    expect(first.id).not.toBe(second.id)
   })
 })
 

@@ -224,14 +224,42 @@ class AutomatedResponseService extends BaseService {
       where: { id: ctx.id, workspaceId: ctx.workspaceId },
       columns: { folderId: true, keywords: true, text: true, flowId: true },
     })
-    const nextKeywords = data.keywords?.map((m) => m.value) ?? []
+
+    // `text` and `flowId` are mutually exclusive: setting one nulls the
+    // other, mirroring `create`'s behavior. Validate `flowId` belongs to
+    // this workspace before persisting it.
+    let nextFlowId = data.flowId
+    let nextText = data.text
+    if (data.text?.length) {
+      nextFlowId = null
+    } else if (data.flowId) {
+      const flowExists = await flowService.exists(
+        ctx.workspaceId,
+        data.flowId,
+        tx,
+      )
+      if (!flowExists) {
+        throw validationException("flowId", "Flow not found")
+      }
+      nextText = null
+    }
+
+    const { keywords: _keywords, ...restData } = data
+    const updatePayload: Partial<AutomatedResponseModel> = {
+      ...restData,
+      text: nextText,
+      flowId: nextFlowId,
+    }
+    // Only touch the `keywords` column when the caller actually supplied a
+    // value — omitting it must never wipe existing keywords.
+    const nextKeywords = data.keywords?.map((m) => m.value)
+    if (nextKeywords !== undefined) {
+      updatePayload.keywords = nextKeywords
+    }
 
     const [updated] = await client
       .update(automatedResponseModel)
-      .set({
-        ...data,
-        keywords: nextKeywords,
-      })
+      .set(updatePayload)
       .where(
         and(
           eq(automatedResponseModel.id, ctx.id),
@@ -246,16 +274,17 @@ class AutomatedResponseService extends BaseService {
     }
 
     const keywordsChanged =
-      !existing ||
-      nextKeywords.length !== existing.keywords.length ||
-      nextKeywords.some(
-        (keyword, index) => keyword !== existing.keywords[index],
-      )
+      nextKeywords !== undefined &&
+      (!existing ||
+        nextKeywords.length !== existing.keywords.length ||
+        nextKeywords.some(
+          (keyword, index) => keyword !== existing.keywords[index],
+        ))
     const changed =
       !existing ||
       (data.folderId !== undefined && data.folderId !== existing.folderId) ||
-      (data.text !== undefined && data.text !== existing.text) ||
-      (data.flowId !== undefined && data.flowId !== existing.flowId) ||
+      (nextText !== undefined && nextText !== existing.text) ||
+      (nextFlowId !== undefined && nextFlowId !== existing.flowId) ||
       keywordsChanged
 
     if (!tx && changed) {

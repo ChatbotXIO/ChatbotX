@@ -143,7 +143,11 @@ export const broadcastRepository = {
     tx: DatabaseClient = db,
   ): Promise<{ contactFilter: unknown } | undefined> {
     return await tx.query.broadcastModel.findFirst({
-      where: { id: input.id, workspaceId: input.workspaceId },
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
+      },
       columns: { contactFilter: true },
     })
   },
