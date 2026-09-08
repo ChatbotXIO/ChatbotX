@@ -23,6 +23,54 @@ afterEach(() => {
 })
 
 describe("buildFacebookOAuthDialogUrl", () => {
+  test("pins the reconnect flow to Embedded Signup v4", async () => {
+    const { buildFacebookOAuthDialogUrl, EMBEDDED_SIGNUP_VERSIONS } =
+      await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+        embeddedSignupVersion: EMBEDDED_SIGNUP_VERSIONS.V4,
+      }),
+    )
+    const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
+
+    expect(extras.version).toBe("v4")
+    // v4 dropped `marketing_messages_lite` as a feature — it is a Login
+    // Configuration product there — and only v2 needs `sessionInfoVersion`.
+    expect(extras.features).toBeUndefined()
+    expect(extras.sessionInfoVersion).toBeUndefined()
+  })
+
+  test("leaves an unpinned flow on the shape Meta accepted before v4", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+      }),
+    )
+    const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
+
+    expect(extras.version).toBeUndefined()
+    expect(extras.sessionInfoVersion).toBe(3)
+    expect(extras.features).toEqual(["marketing_messages_lite"])
+  })
+
   test("omits auth_type on a first connect", async () => {
     const { buildFacebookOAuthDialogUrl } = await loadWith({
       NEXT_PUBLIC_BROKER_URL: BROKER_URL,

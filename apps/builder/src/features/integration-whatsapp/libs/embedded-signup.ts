@@ -131,15 +131,44 @@ export function isCoexistOnboardingIntent(
   )
 }
 
-/** The exact embedded-signup `extras` object Meta expects. */
-function buildEmbeddedSignupExtras(featureType?: string) {
-  return {
+/**
+ * Embedded Signup versions this app pins explicitly. Meta runs them side by
+ * side — "the versions are not exclusive, partners can gradually roll out a new
+ * version to reduce risk" — so one flow can move forward without dragging the
+ * others with it.
+ */
+export const EMBEDDED_SIGNUP_VERSIONS = {
+  V4: "v4",
+} as const
+
+export type EmbeddedSignupVersion =
+  (typeof EMBEDDED_SIGNUP_VERSIONS)[keyof typeof EMBEDDED_SIGNUP_VERSIONS]
+
+/** No `extras.version`: Meta picks its own default, which is what every flow did before v4. */
+const UNPINNED_EMBEDDED_SIGNUP = "unpinned"
+
+/**
+ * `extras` is version-specific, so each version owns its builder instead of one
+ * function accumulating conditionals.
+ *
+ * The v4 shape drops two things the older one carries: `marketing_messages_lite`
+ * is no longer a feature there (it became a Login Configuration product), and
+ * `sessionInfoVersion` is only needed by v2, since v3 onward returns session
+ * info for every flow.
+ */
+const EMBEDDED_SIGNUP_EXTRAS_BUILDERS = {
+  [UNPINNED_EMBEDDED_SIGNUP]: (featureType?: string) => ({
     sessionInfoVersion: 3,
     setup: {},
     features: [EMBEDDED_SIGNUP_FEATURES.MARKETING_MESSAGES_LITE],
     ...(featureType ? { featureType } : {}),
-  }
-}
+  }),
+  [EMBEDDED_SIGNUP_VERSIONS.V4]: (featureType?: string) => ({
+    setup: {},
+    version: EMBEDDED_SIGNUP_VERSIONS.V4,
+    ...(featureType ? { featureType } : {}),
+  }),
+} satisfies Record<string, (featureType?: string) => Record<string, unknown>>
 
 export type FacebookOAuthDialogParams = {
   /** The reseller origin the callback relays the result back to. */
@@ -163,6 +192,11 @@ export type FacebookOAuthDialogParams = {
    * nothing to re-ask for, and the dialog already shows every permission.
    */
   authType?: FacebookAuthType
+  /**
+   * Pins the Embedded Signup version for this flow. Left off, Meta uses its own
+   * default — the behaviour every flow had before any version was pinned.
+   */
+  embeddedSignupVersion?: EmbeddedSignupVersion
 }
 
 /**
@@ -194,10 +228,11 @@ export function buildFacebookOAuthDialogUrl(
     connectExisting: params.connectExisting,
     transferPhoneNumber: params.transferPhoneNumber,
   })
-  url.searchParams.set(
-    "extras",
-    JSON.stringify(buildEmbeddedSignupExtras(featureType)),
-  )
+  const buildExtras =
+    EMBEDDED_SIGNUP_EXTRAS_BUILDERS[
+      params.embeddedSignupVersion ?? UNPINNED_EMBEDDED_SIGNUP
+    ]
+  url.searchParams.set("extras", JSON.stringify(buildExtras(featureType)))
 
   return url.toString()
 }
