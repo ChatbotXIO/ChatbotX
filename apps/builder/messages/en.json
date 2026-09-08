@@ -716,6 +716,58 @@
       "button": "Refresh All Permissions",
       "resultSuccess": "Refreshed {refreshed} channel(s).",
       "resultWithFailures": "Refreshed {refreshed} channel(s), {failed} failed."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Starting history sync…",
+        "done": "History sync started",
+        "failed": "History sync failed"
+      },
+      "selectAll": "Select all",
+      "selected": "{count}/{max} selected",
+      "dialogTitleRunning": "Connecting {count} {feature}…",
+      "dialogTitleDone": "Connected {connected} of {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} of {total} finished",
+      "status": {
+        "waiting": "Waiting",
+        "connecting": "Connecting…",
+        "connected": "Connected",
+        "duplicated": "Already connected",
+        "limitReached": "Limit reached",
+        "failed": "Failed",
+        "timedOut": "Timed out",
+        "cancelled": "Cancelled"
+      },
+      "reason": {
+        "notSelectable": "This item can't be selected.",
+        "channelLimit": "Channel limit reached.",
+        "workspaceLimit": "Workspace limit reached.",
+        "providerRejected": "The provider rejected this request.",
+        "unknown": "Something went wrong.",
+        "followUpFailed": "Setup incomplete — finish from the channel settings."
+      },
+      "sessionError": {
+        "sessionExpired": "Your session expired. Please reconnect.",
+        "notMember": "You are no longer a member of this workspace.",
+        "trialExpired": "Your trial has expired.",
+        "macLimitReached": "You've reached your account limit.",
+        "credentialMissing": "Missing credentials. Please reconnect."
+      },
+      "cancelRemaining": "Cancel remaining",
+      "retryFailed": "Retry failed ({count})",
+      "retry": "Retry",
+      "goToChannels": "Go to channels",
+      "close": "Close",
+      "leaveNotice": "You can leave; connected accounts are kept",
+      "stepConnecting": "Connecting",
+      "stepCoexist": "Sync history",
+      "validation": {
+        "min": "Select at least 1",
+        "max": "You can select up to {max}",
+        "duplicate": "Duplicate selection"
+      },
+      "progressLabel": "Progress"
     }
   },
   "workspace": {
@@ -3326,6 +3378,12 @@
     "tabs": {
       "generalSettings": "General Settings",
       "conversionsApi": "Ads Optimization"
+    },
+    "selectPage": {
+      "noAccountsTitle": "No Instagram accounts found",
+      "noAccountsDescription": "No Instagram Business accounts were found on the Facebook Pages you manage. Reconnect Instagram and grant all requested permissions.",
+      "alreadyConnectedNote": "This account is already connected",
+      "tryAgain": "Try reconnecting"
     }
   },
   "coexist": {
@@ -3371,7 +3429,6 @@
     "defaultPersona": "Default Persona",
     "reconnect": "Reconnect",
     "reconnectDescription": "Always reconnect your bot if your Messenger bot is not responding, or if you are seem any permission error on the error log.",
-    "selectFacebookPage": "Select Facebook Page",
     "selectPage": {
       "noPagesTitle": "No Facebook Pages found",
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during connection. Reconnect Messenger and grant all requested permissions.",
@@ -3636,7 +3693,8 @@
       "verifyToken": "Webhook verification token",
       "qrCodeHint": "Scan the QR code to open the webhook URL",
       "moreSettings": "More settings",
-      "goToInbox": "Take me there"
+      "goToInbox": "Take me there",
+      "multipleTitle": "Your WhatsApp inboxes are ready!"
     },
     "phoneVerification": {
       "title": "Verify WhatsApp phone number",
@@ -3649,7 +3707,8 @@
       "actions": {
         "sendCode": "Send code",
         "resendIn": "Resend in {seconds}s",
-        "verify": "Verify and register"
+        "verify": "Register",
+        "skip": "Skip"
       },
       "fields": {
         "code": {
@@ -3667,18 +3726,12 @@
         "codeNotSent": "WhatsApp verification code could not be sent.",
         "codeNotVerified": "WhatsApp verification code could not be verified.",
         "registrationFailed": "WhatsApp phone number verification failed."
-      }
+      },
+      "queueProgress": "Verifying {current} of {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "WhatsApp access token is required.",
         "appSettingsNotFound": "WhatsApp app settings were not found.",
-        "failedToPersistIntegration": "Failed to save the WhatsApp integration.",
-        "noPhoneNumberFound": "No WhatsApp phone number was found.",
-        "noPhoneNumbersFound": "No phone numbers were found for this WhatsApp Business Account.",
-        "phoneNumberNotFound": "Selected WhatsApp phone number was not found.",
-        "unableToVerifyToken": "Unable to verify the WhatsApp token.",
-        "wabaMismatch": "Selected WhatsApp Business Account does not match the authorization.",
         "wabaResolveFailed": "Could not resolve the WhatsApp Business Account from the authorization."
       }
     },
@@ -3909,12 +3962,14 @@
       "label": "Template Header"
     },
     "transferPhoneNumber": "Transfer phone from another Whatsapp provider",
-    "signupSessionExpired": "Your WhatsApp signup session has expired. Please start the connection again.",
     "capi": {
       "automaticEvents": {
         "title": "Automatic Events",
         "description": "Automatically send conversion events from this WhatsApp number to Meta. If the permission is missing, reconnect the account to grant it."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Try reconnecting"
     }
   },
   "zalo": {

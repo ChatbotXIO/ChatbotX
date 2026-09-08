@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   inArray: vi.fn((column: unknown, values: unknown[]) => ({
     inArray: [column, values],
   })),
+  isNull: vi.fn((column: unknown) => ({ isNull: column })),
   isUniqueViolationError: vi.fn(),
   lt: vi.fn((column: unknown, value: unknown) => ({ lt: [column, value] })),
   ne: vi.fn((column: unknown, value: unknown) => ({ ne: [column, value] })),
@@ -20,6 +21,7 @@ vi.mock("../src/client", () => ({
   db: {},
   eq: mocks.eq,
   inArray: mocks.inArray,
+  isNull: mocks.isNull,
   isUniqueViolationError: mocks.isUniqueViolationError,
   lt: mocks.lt,
   ne: mocks.ne,
@@ -83,6 +85,38 @@ describe("CoexistSyncRunRepository", () => {
         and: expect.arrayContaining([
           { eq: ["runId", "run-1"] },
           { inArray: ["status", ["init", "running"]] },
+        ]),
+      }),
+    )
+  })
+
+  test("markMaxAttemptsFailed spares a run still heart-beating", async () => {
+    const where = vi.fn().mockResolvedValue(undefined)
+    const set = vi.fn(() => ({ where }))
+    const update = vi.fn(() => ({ set }))
+    const repository = new CoexistSyncRunRepository()
+
+    await repository.markMaxAttemptsFailed({
+      maxAttempts: 5,
+      tx: { update } as never,
+    })
+
+    // Attempts alone used to be enough, so a healthy multi-hour backfill that
+    // burned its retries was terminalized mid-import — taking its pending
+    // media patches with it. The same 10-minute staleness `claimRun` uses now
+    // gates it, so only a run nobody is driving can be failed.
+    expect(mocks.isNull).toHaveBeenCalledWith("lastHeartbeatAt")
+    expect(mocks.lt).toHaveBeenCalledWith("lastHeartbeatAt", expect.anything())
+    expect(where).toHaveBeenCalledWith(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          { inArray: ["status", ["init", "running"]] },
+          {
+            or: [
+              { isNull: "lastHeartbeatAt" },
+              { lt: ["lastHeartbeatAt", expect.anything()] },
+            ],
+          },
         ]),
       }),
     )

@@ -3,6 +3,7 @@ import { db } from "@chatbotx.io/database/client"
 import { whatsappCoexistStagingModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
+  buildCoexistFlushJobId,
   IntegrationJobAction,
   type IntegrationJobCoexistWhatsappBuffer,
   integrationQueue,
@@ -12,9 +13,9 @@ import { logger } from "../../../lib/logger"
 const hashPayload = (payload: unknown): string =>
   createHash("sha256").update(JSON.stringify(payload)).digest("hex")
 
-// Coalesce burst webhooks into a single delayed flush. BullMQ jobId dedup
-// drops subsequent webhooks within the delay window; the in-flight job
-// drains everything staged so far in one pass.
+// Coalesce burst webhooks into a single delayed flush: while a job with this
+// id is delayed or active, later `add`s with the same id are ignored and the
+// in-flight job drains everything staged so far in one pass.
 const FLUSH_DELAY_MS = 60_000
 
 /**
@@ -70,6 +71,17 @@ export const coexistWhatsappBuffer = async (
   // drains, it re-checks for unprocessed rows and self-enqueues one follow-up
   // (also coalesced) — see coexistWhatsappFlush. That keeps the queue free of
   // a per-webhook follow-up storm during a multi-hour history backfill.
+  //
+  // `removeOnComplete`/`removeOnFail` are REQUIRED, not tidiness: a BullMQ job
+  // id stays reserved until the job is REMOVED, not until it finishes
+  // (`addStandardJob` does a bare `EXISTS jobIdKey` regardless of state). The
+  // integration worker's defaults keep completed jobs, so without these every
+  // history payload Meta delivered after the first flush completed was
+  // silently dropped — the id was still taken by the finished job.
+  //
+  // For the same reason the id carries a generation (`buildCoexistFlushJobId`):
+  // jobs enqueued BEFORE that fix shipped are still retained in Redis and
+  // would keep swallowing the add.
   await integrationQueue.add(
     IntegrationJobAction.coexistWhatsappFlush,
     {
@@ -78,7 +90,9 @@ export const coexistWhatsappBuffer = async (
     },
     {
       delay: FLUSH_DELAY_MS,
-      jobId: `coexist-flush-${phoneNumberId}`,
+      jobId: buildCoexistFlushJobId(phoneNumberId),
+      removeOnComplete: true,
+      removeOnFail: true,
     },
   )
 }

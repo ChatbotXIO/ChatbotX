@@ -2926,6 +2926,58 @@
       "button": "すべての権限を更新",
       "resultSuccess": "{refreshed} 件のチャネルを更新しました。",
       "resultWithFailures": "{refreshed} 件のチャネルを更新しました。{failed} 件は失敗しました。"
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "履歴の同期を開始しています…",
+        "done": "履歴の同期を開始しました",
+        "failed": "履歴の同期に失敗しました"
+      },
+      "selectAll": "すべて選択",
+      "selected": "{count}/{max} 件選択中",
+      "dialogTitleRunning": "{feature} を {count} 件接続しています…",
+      "dialogTitleDone": "{total} 件中 {connected} 件を接続しました",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{total} 件中 {done} 件が完了しました",
+      "status": {
+        "waiting": "待機中",
+        "connecting": "接続中…",
+        "connected": "接続済み",
+        "duplicated": "接続済みです",
+        "limitReached": "上限に達しました",
+        "failed": "失敗しました",
+        "timedOut": "タイムアウトしました",
+        "cancelled": "キャンセルされました"
+      },
+      "reason": {
+        "notSelectable": "この項目は選択できません。",
+        "channelLimit": "チャネルの上限に達しました。",
+        "workspaceLimit": "ワークスペースの上限に達しました。",
+        "providerRejected": "プロバイダーがこのリクエストを拒否しました。",
+        "unknown": "問題が発生しました。",
+        "followUpFailed": "設定が未完了です。チャネル設定から完了してください。"
+      },
+      "sessionError": {
+        "sessionExpired": "セッションの有効期限が切れました。再接続してください。",
+        "notMember": "このワークスペースのメンバーではなくなりました。",
+        "trialExpired": "トライアル期間が終了しました。",
+        "macLimitReached": "アカウントの上限に達しました。",
+        "credentialMissing": "認証情報がありません。再接続してください。"
+      },
+      "cancelRemaining": "残りをキャンセル",
+      "retryFailed": "再試行 ({count})",
+      "retry": "再試行",
+      "goToChannels": "チャネルへ移動",
+      "close": "閉じる",
+      "leaveNotice": "画面を離れても、接続済みのアカウントは保持されます",
+      "stepConnecting": "接続中",
+      "stepCoexist": "履歴を同期",
+      "validation": {
+        "min": "1件以上選択してください",
+        "max": "最大 {max} 件まで選択できます",
+        "duplicate": "選択が重複しています"
+      },
+      "progressLabel": "進行状況"
     }
   },
   "workspace": {
@@ -3118,6 +3170,12 @@
     "tabs": {
       "generalSettings": "一般設定",
       "conversionsApi": "広告最適化"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Instagramアカウントが見つかりません",
+      "noAccountsDescription": "管理しているFacebookページにInstagramビジネスアカウントが見つかりませんでした。Instagramを再接続し、要求されたすべての権限を許可してください。",
+      "alreadyConnectedNote": "このアカウントはすでに接続されています",
+      "tryAgain": "再接続を試す"
     }
   },
   "coexist": {
@@ -3163,7 +3221,6 @@
     "defaultPersona": "デフォルトのペルソナ",
     "reconnect": "再接続",
     "reconnectDescription": "Messengerボットが応答しない場合や、エラーログに権限エラーが表示された場合は、必ずボットを再接続してください。",
-    "selectFacebookPage": "Facebookページを選択",
     "selectPage": {
       "noPagesTitle": "Facebookページが見つかりません",
       "noPagesDescription": "ビジネスマネージャ内のページに接続するには、ビジネスマネージャへのアクセス権が必要です。Messengerを再接続し、要求されたすべての権限を許可してください。",
@@ -3428,7 +3485,8 @@
       "verifyToken": "Webhook検証トークン",
       "qrCodeHint": "QRコードをスキャンしてWebhook URLを開く",
       "moreSettings": "その他の設定",
-      "goToInbox": "受信トレイへ移動"
+      "goToInbox": "受信トレイへ移動",
+      "multipleTitle": "WhatsApp の受信トレイの準備ができました！"
     },
     "phoneVerification": {
       "title": "WhatsApp電話番号を確認",
@@ -3441,7 +3499,8 @@
       "actions": {
         "sendCode": "コードを送信",
         "resendIn": "{seconds}秒後に再送信",
-        "verify": "確認して登録"
+        "verify": "登録",
+        "skip": "スキップ"
       },
       "fields": {
         "code": {
@@ -3459,18 +3518,12 @@
         "codeNotSent": "WhatsApp確認コードを送信できませんでした。",
         "codeNotVerified": "WhatsApp確認コードを検証できませんでした。",
         "registrationFailed": "WhatsApp電話番号の確認に失敗しました。"
-      }
+      },
+      "queueProgress": "{total} 件中 {current} 件を確認しています"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "WhatsAppアクセストークンが必要です。",
         "appSettingsNotFound": "WhatsAppアプリの設定が見つかりませんでした。",
-        "failedToPersistIntegration": "WhatsApp連携の保存に失敗しました。",
-        "noPhoneNumberFound": "WhatsApp電話番号が見つかりませんでした。",
-        "noPhoneNumbersFound": "このWhatsApp Businessアカウントの電話番号が見つかりませんでした。",
-        "phoneNumberNotFound": "選択したWhatsApp電話番号が見つかりませんでした。",
-        "unableToVerifyToken": "WhatsAppトークンを検証できません。",
-        "wabaMismatch": "選択したWhatsApp Businessアカウントが認証情報と一致しません。",
         "wabaResolveFailed": "認証情報からWhatsApp Businessアカウントを特定できませんでした。"
       }
     },
@@ -3701,12 +3754,14 @@
       "label": "テンプレートのヘッダー"
     },
     "transferPhoneNumber": "別のWhatsAppプロバイダーから電話番号を移行",
-    "signupSessionExpired": "WhatsApp登録セッションの有効期限が切れました。接続を最初からやり直してください。",
     "capi": {
       "automaticEvents": {
         "title": "自動イベント",
         "description": "この WhatsApp 番号からコンバージョンイベントを Meta に自動送信します。権限がない場合は、アカウントを再接続して付与してください。"
       }
+    },
+    "selectPage": {
+      "tryAgain": "再接続を試す"
     }
   },
   "zalo": {

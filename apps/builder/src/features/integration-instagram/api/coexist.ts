@@ -1,29 +1,10 @@
 import { coexistService } from "@chatbotx.io/business"
-import { z } from "zod"
+import {
+  setCoexistRequestSchema,
+  setCoexistResponseSchema,
+} from "@/features/channel-connect/schema/coexist"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-
-const setCoexistInstagramRequest = z.object({
-  workspaceId: z.string(),
-  integrationId: z.string(),
-  enabled: z.boolean(),
-  aiReadsSyncedHistory: z.boolean().optional().default(false),
-})
-export type SetCoexistInstagramRequest = z.infer<
-  typeof setCoexistInstagramRequest
->
-
-const setCoexistInstagramResponse = z.discriminatedUnion("success", [
-  z.object({ success: z.literal(true), runId: z.string().optional() }),
-  z.object({
-    success: z.literal(false),
-    reason: z.string().optional(),
-    msg: z.string().optional(),
-  }),
-])
-export type SetCoexistInstagramResponse = z.infer<
-  typeof setCoexistInstagramResponse
->
 
 export const integrationInstagramCoexistAPIs = {
   setCoexistInstagramAPI: authorizedAPI
@@ -33,8 +14,8 @@ export const integrationInstagramCoexistAPIs = {
       summary: "Enable or disable native Instagram coexist sync",
       tags: ["Integrations"],
     })
-    .input(setCoexistInstagramRequest)
-    .output(setCoexistInstagramResponse)
+    .input(setCoexistRequestSchema)
+    .output(setCoexistResponseSchema)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) =>
       input.enabled

@@ -1,177 +1,40 @@
 "use client"
 
-import type { InstagramAccount } from "@chatbotx.io/integration-instagram-facebook"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { toast } from "sonner"
-import { CoexistPopup } from "@/features/shared/coexist-popup"
-import { selectFacebookAccountAction } from "../actions/select-account-facebook.action"
-import { selectFacebookAccountRequest } from "../schema/action-facebook"
+import { ConnectPickerScreen } from "@/features/channel-connect/components/connect-picker-screen"
+import { connectViaApi } from "@/features/channel-connect/lib/connect-client"
+import type { ConnectPickerItem } from "@/features/channel-connect/lib/picker-items"
+import { CONNECT_CHANNEL_REGISTRY } from "@/features/channel-connect/lib/registry"
+import { connectActionResultSchemaDefault } from "@/features/channel-connect/schema"
 
-type SelectFacebookAccountsProps = {
-  accounts: InstagramAccount[]
-  workspaceId: string
-  version?: string
-}
-
-type InstagramCoexistTrigger = {
-  integrationId: string
-  resolvedWorkspaceId: string
-}
-
+/**
+ * Instagram-via-Facebook mirror of `MessengerPages` (plan §3.2): the
+ * provider list has already been narrowed to accounts the user administers
+ * (`getUserInstagramAccounts`), so — unlike Messenger's pages — there is no
+ * "not an admin" state, only selectable vs. already-connected.
+ */
 export function SelectFacebookAccounts({
-  accounts,
   workspaceId,
-  version,
-}: SelectFacebookAccountsProps) {
-  const t = useTranslations()
-  const router = useRouter()
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [coexist, setCoexist] = useState<InstagramCoexistTrigger | null>(null)
-
-  const selected = accounts[selectedIndex]
-
-  const navigateAfterConnect = (
-    resolvedWorkspaceId: string | null | undefined,
-  ) => {
-    if (workspaceId && resolvedWorkspaceId) {
-      router.push(`/space/${resolvedWorkspaceId}/settings/channels/instagram`)
-    } else {
-      router.push("/")
-    }
-  }
-
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    selectFacebookAccountAction,
-    zodResolver(selectFacebookAccountRequest),
-    {
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          workspaceId,
-          igId: selected?.id ?? "",
-          igName: selected?.name ?? "",
-          igUsername: selected?.username ?? "",
-          pageId: selected?.pageId ?? "",
-          pageAccessToken: selected?.pageAccessToken ?? "",
-          version,
-        },
-      },
-      actionProps: {
-        onSuccess: ({ data }) => {
-          if (data?.integrationId && data.workspaceId) {
-            setCoexist({
-              integrationId: data.integrationId,
-              resolvedWorkspaceId: data.workspaceId,
-            })
-            return
-          }
-          navigateAfterConnect(data?.workspaceId)
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
-      },
-      errorMapProps: {},
-    },
-  )
-
-  const handleSelectAccount = (index: number) => {
-    const account = accounts[index]
-    if (!account) {
-      return
-    }
-    setSelectedIndex(index)
-    form.setValue("igId", account.id)
-    form.setValue("igName", account.name)
-    form.setValue("igUsername", account.username)
-    form.setValue("pageId", account.pageId)
-    form.setValue("pageAccessToken", account.pageAccessToken)
-  }
+  items,
+}: {
+  workspaceId: string
+  items: ConnectPickerItem[]
+}) {
+  // The oRPC route, not the server action — see `MessengerPages`.
+  const connectOne = (item: ConnectPickerItem) =>
+    connectViaApi({
+      route: CONNECT_CHANNEL_REGISTRY.instagram.connectRoute,
+      body: { igId: item.id },
+      parse: (data) => connectActionResultSchemaDefault.parse(data),
+      item,
+    })
 
   return (
-    <>
-      <Form {...form}>
-        <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-          <div className="hidden">
-            <InputField name="igId" type="hidden" />
-            <InputField name="pageAccessToken" type="hidden" />
-            <InputField name="igName" type="hidden" />
-            <InputField name="igUsername" type="hidden" />
-            <InputField name="pageId" type="hidden" />
-            <InputField name="version" type="hidden" />
-          </div>
-
-          <div className="space-y-2">
-            {accounts.map((account, index) => (
-              <button
-                className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border p-4 text-start transition-colors ${
-                  selectedIndex === index
-                    ? "border-primary bg-primary/5"
-                    : "hover:bg-muted/50"
-                }`}
-                key={account.id}
-                onClick={() => handleSelectAccount(index)}
-                type="button"
-              >
-                {account.profile_picture_url && (
-                  <Image
-                    alt={account.name}
-                    className="size-12 rounded-full object-cover"
-                    height={48}
-                    src={account.profile_picture_url}
-                    width={48}
-                  />
-                )}
-                <div>
-                  <p className="font-medium">{account.name}</p>
-                  <p className="text-muted-foreground text-sm">
-                    @{account.username}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Link
-              className={buttonVariants({ size: "sm", variant: "ghost" })}
-              href={`/space/${workspaceId}/settings/channels/instagram`}
-            >
-              {t("actions.cancel")}
-            </Link>
-            <Button disabled={form.formState.isSubmitting} type="submit">
-              {form.formState.isSubmitting && (
-                <Loader2Icon className="animate-spin" />
-              )}
-              {t("actions.continue")}
-            </Button>
-          </div>
-        </form>
-      </Form>
-      {coexist && (
-        <CoexistPopup
-          channel="instagram"
-          integrationId={coexist.integrationId}
-          onDone={() => {
-            const resolvedWorkspaceId = coexist.resolvedWorkspaceId
-            setCoexist(null)
-            navigateAfterConnect(resolvedWorkspaceId)
-          }}
-          workspaceId={coexist.resolvedWorkspaceId}
-        />
-      )}
-    </>
+    <ConnectPickerScreen
+      channel="instagram"
+      connectOne={connectOne}
+      idsFieldName="igIds"
+      items={items}
+      workspaceId={workspaceId}
+    />
   )
 }

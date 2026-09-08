@@ -26,6 +26,19 @@ type DebugTokenResponse = {
   data: DebugTokenData
 }
 
+/**
+ * Meta's app access token: `<app-id>|<app-secret>`, the credential every
+ * app-level Graph call (`debug_token`, subscribed-apps, target probes) uses.
+ *
+ * One helper rather than the same template literal at each call site — the
+ * separator is Meta's format, not ours. Structural parameter so
+ * `integrations/whatsapp` does not have to depend on the credential row type.
+ */
+export const appAccessToken = (settings: {
+  clientId: string
+  clientSecret: string
+}): string => `${settings.clientId}|${settings.clientSecret}`
+
 const WHATSAPP_BUSINESS_MANAGEMENT_SCOPE = "whatsapp_business_management"
 
 export const exchangeAccessToken = (
@@ -118,19 +131,22 @@ export function debugTokenOrThrow(
 }
 
 /**
- * Resolve the WhatsApp Business Account id granted to the access token. Embedded
- * signup grants exactly one WABA via the `whatsapp_business_management` scope, so
- * its `target_ids[0]` is the connected WABA. Used to reconstruct the connect
- * inputs server-side when the OAuth dialog returns only a `code` (the SDK-only
+ * Every `whatsapp_business_management` target id the access token was granted,
+ * in the order Meta listed them. Used to reconstruct the connect inputs
+ * server-side when the OAuth dialog returns only a `code` (the SDK-only
  * `WA_EMBEDDED_SIGNUP` postMessage that normally carries the ids never fires).
+ *
+ * Meta gives no guarantee that the first target is the WABA — a coexistence
+ * "WhatsApp account" node can be listed ahead of it — so callers must narrow
+ * the list with `resolveOwningWabaId` rather than taking `[0]`.
  */
-export async function getSharedWabaId(
+export async function getSharedWabaTargetIds(
   accessToken: string,
   appAccessToken: string,
-): Promise<string | null> {
+): Promise<string[]> {
   const data = await debugToken(accessToken, appAccessToken)
   const scope = data?.granular_scopes?.find(
     (s) => s.scope === WHATSAPP_BUSINESS_MANAGEMENT_SCOPE,
   )
-  return scope?.target_ids?.[0] ?? null
+  return scope?.target_ids ?? []
 }

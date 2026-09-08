@@ -5,6 +5,7 @@ import {
   type ChannelType,
   CREATABLE_CHANNELS,
 } from "@chatbotx.io/database/partials"
+import { Alert, AlertDescription } from "@chatbotx.io/ui/components/ui/alert"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -16,10 +17,13 @@ import {
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { memo, useCallback } from "react"
+import type { MessageKey } from "@/features/channel-connect/lib/message-key"
 import { InboxIcon } from "./inbox-icon"
 
 type InboxSelectCardProps = {
   configuredChannels: ChannelType[]
+  /** Why the previous connect attempt could not start (e.g. the plan's workspace limit); rendered above the channel list. */
+  errorMessageKey?: MessageKey
   /**
    * Channels offered on this picker, already filtered to what the caller's
    * platform admin / white-label owner allows. Defaults to every creatable
@@ -31,6 +35,7 @@ type InboxSelectCardProps = {
 
 function InboxSelectCard({
   configuredChannels,
+  errorMessageKey,
   offeredChannels = CREATABLE_CHANNELS,
 }: InboxSelectCardProps) {
   const t = useTranslations()
@@ -55,6 +60,11 @@ function InboxSelectCard({
         <CardDescription />
       </CardHeader>
       <CardContent>
+        {errorMessageKey && (
+          <Alert className="mb-4" role="alert" variant="destructive">
+            <AlertDescription>{t(errorMessageKey)}</AlertDescription>
+          </Alert>
+        )}
         <ul aria-label="Available inbox types" className="flex flex-col gap-4">
           {offeredChannels.map((channel) => (
             <li className="flex items-center gap-2" key={channel}>

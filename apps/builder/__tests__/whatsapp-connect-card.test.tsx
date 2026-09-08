@@ -1,13 +1,31 @@
-import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import { act } from "react"
-import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
-import { WA_OAUTH_RESULT } from "@/features/integration-whatsapp/libs/embedded-signup"
+import {
+  connectedResult,
+  createCardHarness,
+  installDomPolyfills,
+  type MockedConnectActionInput,
+  type MockedConnectActionResult,
+  PHONE_A,
+  phoneNumberSelectionResult,
+  setNativeInputValue,
+} from "./whatsapp-connect-card.test-utils"
 
-const BROKER_ORIGIN = "https://broker.test"
-const OAUTH_CALLBACK_URL = `${BROKER_ORIGIN}/integrations/whatsapp/callback`
-const OAUTH_CODE = "AQD-relayed-code"
+const {
+  pushMock,
+  connectActionMock,
+  setCoexistWhatsappAPI,
+  listWhatsappPhoneNumbersInternalAPI,
+  toastErrorMock,
+} = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  connectActionMock: vi.fn<
+    (input?: MockedConnectActionInput) => Promise<MockedConnectActionResult>
+  >(async () => ({ data: undefined })),
+  setCoexistWhatsappAPI: vi.fn(),
+  listWhatsappPhoneNumbersInternalAPI: vi.fn(),
+  toastErrorMock: vi.fn(),
+}))
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -16,15 +34,24 @@ vi.mock("next-intl", () => ({
 }))
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ push: pushMock, replace: vi.fn(), refresh: vi.fn() }),
 }))
 
 vi.mock("sonner", () => ({
-  toast: { error: vi.fn(), success: vi.fn() },
+  toast: { error: toastErrorMock, success: vi.fn() },
 }))
 
 vi.mock("@/features/integration-whatsapp/actions/connect.action", () => ({
-  connectWhatsappAction: vi.fn(async () => ({ data: undefined })),
+  connectWhatsappAction: connectActionMock,
+}))
+
+// The picker fans out over the oRPC route now (a server action cannot run in
+// parallel), while the top-level form keeps the action. Both funnel into the
+// same mock here — the transport returns the result directly, where the
+// action wraps it in next-safe-action's `{ data }` envelope.
+vi.mock("@/features/channel-connect/lib/connect-client", () => ({
+  connectViaApi: async ({ body }: { body: Record<string, unknown> }) =>
+    (await connectActionMock(body))?.data,
 }))
 
 vi.mock("@/features/integration-whatsapp/verification/actions", () => ({
@@ -42,108 +69,212 @@ vi.mock("@/features/shared/coexist-popup", () => ({
   CoexistPopup: () => null,
 }))
 
-// jsdom ships no ResizeObserver, and Radix measures the switch thumb through it.
-Object.assign(globalThis, {
-  ResizeObserver: class {
-    observe = vi.fn()
-    unobserve = vi.fn()
-    disconnect = vi.fn()
+// Coexist and the manual phone-number listing both go through the typed oRPC
+// client now: `/api` serves only `publicRouter`, so those session-authenticated
+// procedures 404 there.
+vi.mock("@/lib/orpc/orpc", () => ({
+  client: {
+    integrationWhatsappAPIs: {
+      setCoexistWhatsappAPI,
+      listWhatsappPhoneNumbersInternalAPI,
+    },
   },
-})
+}))
 
-const SETTINGS: WhatsappCredentialPublic = {
-  clientId: "client-id",
-  configId: "config-id",
-  version: "v23.0",
-  systemUserId: "system-user-id",
-  businessName: "Acme",
-  verifyToken: "verify-token",
-}
+installDomPolyfills()
 
 describe("WhatsappCreate connect card", () => {
-  let container: HTMLDivElement
-  let root: Root
+  const harness = createCardHarness()
+  const { click, clickButtonByText, flush, radios, relayCode, switches } =
+    harness
+  const container = () => harness.container
 
   beforeEach(() => {
-    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    container = document.createElement("div")
-    document.body.append(container)
-    root = createRoot(container)
-
-    act(() => {
-      root.render(
-        <WhatsappCreate
-          oauthCallbackUrl={OAUTH_CALLBACK_URL}
-          settings={SETTINGS}
-          workspaceId="ws-1"
-        />,
-      )
-    })
+    pushMock.mockClear()
+    connectActionMock.mockReset()
+    connectActionMock.mockImplementation(async () => ({ data: undefined }))
+    setCoexistWhatsappAPI.mockReset()
+    listWhatsappPhoneNumbersInternalAPI.mockReset()
+    toastErrorMock.mockClear()
+    harness.mount()
   })
 
   afterEach(() => {
-    act(() => {
-      root.unmount()
-    })
-    container.remove()
+    harness.unmount()
   })
-
-  const relayCode = () => {
-    act(() => {
-      window.dispatchEvent(
-        new MessageEvent("message", {
-          data: { type: WA_OAUTH_RESULT, status: "success", code: OAUTH_CODE },
-          origin: BROKER_ORIGIN,
-        }),
-      )
-    })
-  }
-
-  const switches = () =>
-    Array.from(container.querySelectorAll<HTMLButtonElement>('[role="switch"]'))
-  /** Each option's on/off state, in render order. */
-  const optionStates = () =>
-    switches().map((option) => option.getAttribute("aria-checked"))
-  // Every control inherits the frozen state from the fieldset, which is what
-  // `:disabled` resolves through, so the fieldset carries that assertion.
-  const fieldset = () => container.querySelector("fieldset")
-  // A Radix switch is itself a `type="button"` element, so the card's single
-  // action is whichever button is not one of the switches.
-  const actionButton = () =>
-    Array.from(container.querySelectorAll("button")).find(
-      (button) => button.getAttribute("role") !== "switch",
-    )
 
   test("offers the connect options unfrozen before Meta returns a code", () => {
     expect(switches().length).toBeGreaterThan(0)
-    expect(fieldset()?.disabled).toBe(false)
-    expect(actionButton()?.textContent).toBe("actions.continue")
-    expect(actionButton()?.disabled).toBe(false)
+    expect(container().querySelector("fieldset")?.disabled).toBe(false)
   })
 
   test("freezes the connect options in place instead of hiding them", () => {
-    const statesBefore = optionStates()
+    const statesBefore = switches().map((el) => el.getAttribute("aria-checked"))
 
     relayCode()
 
-    // Three things at once, and the regression was each of them in turn: the
-    // options stay on screen, they all go disabled (so the existing `disabled:`
-    // styles dim them), and every on/off choice the user made is still shown.
-    expect(switches().length).toBe(statesBefore.length)
-    expect(fieldset()?.disabled).toBe(true)
-    expect(optionStates()).toEqual(statesBefore)
+    expect(container().querySelector("fieldset")?.disabled).toBe(true)
+    expect(switches().map((el) => el.getAttribute("aria-checked"))).toEqual(
+      statesBefore,
+    )
   })
 
-  test("reports the connect as in progress the moment the code arrives", () => {
-    relayCode()
+  test("a retry after a failed signup reaches the action again, with no validation copy", async () => {
+    // The action never rejects — `handleServerError` turns a throw into a
+    // `{ serverError }` result (see `@/lib/safe-action`), which is what sets
+    // `action.hasErrored` and so `hasFailed`.
+    connectActionMock.mockResolvedValueOnce({
+      serverError: "connect blew up",
+    } as MockedConnectActionResult)
+    relayCode("failing-code")
+    await flush()
 
-    // No waiting step to observe any more — the card goes straight to connecting.
-    expect(actionButton()?.textContent).toContain(
-      "whatsapp.autoConnect.inProgress",
+    connectActionMock.mockClear()
+    connectActionMock.mockImplementationOnce(async () =>
+      phoneNumberSelectionResult(),
     )
-    // The launch affordance is replaced, not merely covered: the one remaining
-    // action is the frozen status control, so no second signup can be started.
-    expect(actionButton()?.type).toBe("submit")
-    expect(actionButton()?.disabled).toBe(true)
+    relayCode("retry-code")
+    await flush()
+
+    // The failed attempt resets the picker field. Resetting it to `[]` made
+    // it fail the 1..max rule, so `handleSubmit` blocked every later submit:
+    // the retry never reached the action and the card stayed frozen on
+    // "connecting". The absent validation copy is the same error seen from
+    // the other side — `handleSubmit` stores it for the field whether or not
+    // anything is rendering it.
+    expect(connectActionMock).toHaveBeenCalledTimes(1)
+    expect(container().textContent).not.toContain(
+      "channels.connectMany.validation.min",
+    )
+  })
+
+  describe("manual connect", () => {
+    test("the manual radio still binds to a single scalar id and submits", async () => {
+      listWhatsappPhoneNumbersInternalAPI.mockResolvedValue({
+        data: [PHONE_A],
+      })
+      connectActionMock.mockImplementationOnce(
+        async (input: MockedConnectActionInput = {}) =>
+          connectedResult({
+            phoneNumberId:
+              (input.manualPhoneNumberId as string | undefined) ?? "",
+          }),
+      )
+
+      // switches()[0] = connectExisting; clicking it reveals the manual
+      // switch in place of transferPhoneNumber (switches()[1]).
+      click(switches()[0])
+      await flush()
+      click(switches()[1])
+      await flush()
+
+      const wabaInput = container().querySelector<HTMLInputElement>(
+        'input[name="wabaId"]',
+      )
+      const tokenInput = container().querySelector<HTMLInputElement>(
+        'input[name="accessToken"]',
+      )
+      act(() => {
+        setNativeInputValue(wabaInput, "waba-1")
+        setNativeInputValue(tokenInput, "token-1")
+      })
+
+      clickButtonByText("actions.continue")
+      await flush()
+
+      // `workspaceId` is load-bearing: the procedure hands it to
+      // `resolvePlatformOwnerId`, so dropping it resolves the platform-global
+      // WhatsApp credential instead of the reseller's for a sub-account.
+      expect(listWhatsappPhoneNumbersInternalAPI).toHaveBeenCalledWith({
+        wabaId: "waba-1",
+        accessToken: "token-1",
+        workspaceId: "ws-1",
+      })
+      expect(radios()).toHaveLength(1)
+
+      click(radios()[0])
+      await flush()
+
+      clickButtonByText("whatsapp.continueManualConnect")
+      await flush()
+
+      expect(connectActionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          manualConnect: true,
+          manualPhoneNumberId: PHONE_A.id,
+        }),
+      )
+      const lastCall =
+        connectActionMock.mock.calls.at(-1)?.[0] ??
+        ({} as Record<string, unknown>)
+      expect(Array.isArray(lastCall.manualPhoneNumberId)).toBe(false)
+    })
+  })
+  describe("direct-submit failure toasts (top-level form's own auto-submit, not the picker)", () => {
+    test("a limitReached outcome toasts its own reason key, not the generic notSelectable copy", async () => {
+      connectActionMock.mockImplementationOnce(async () => ({
+        data: {
+          kind: "outcome",
+          outcome: {
+            sourceId: "phone-single",
+            name: "phone-single",
+            status: "limitReached",
+            reason: "channelLimit",
+            coexistEligible: false,
+          },
+        },
+      }))
+
+      relayCode()
+      await flush()
+
+      expect(toastErrorMock).toHaveBeenCalledWith(
+        "channels.connectMany.reason.channelLimit",
+      )
+    })
+
+    test("a providerRejected failure outcome toasts its own reason key, not the generic notSelectable copy", async () => {
+      connectActionMock.mockImplementationOnce(async () => ({
+        data: {
+          kind: "outcome",
+          outcome: {
+            sourceId: "phone-single",
+            name: "phone-single",
+            status: "failed",
+            reason: "providerRejected",
+            coexistEligible: false,
+          },
+        },
+      }))
+
+      relayCode()
+      await flush()
+
+      expect(toastErrorMock).toHaveBeenCalledWith(
+        "channels.connectMany.reason.providerRejected",
+      )
+    })
+
+    test("a duplicated outcome still toasts the channel's duplicated key", async () => {
+      connectActionMock.mockImplementationOnce(async () => ({
+        data: {
+          kind: "outcome",
+          outcome: {
+            sourceId: "phone-single",
+            name: "phone-single",
+            status: "duplicated",
+            reason: "alreadyConnected",
+            coexistEligible: false,
+          },
+        },
+      }))
+
+      relayCode()
+      await flush()
+
+      expect(toastErrorMock).toHaveBeenCalledWith(
+        "channels.duplicated.whatsapp",
+      )
+    })
   })
 })

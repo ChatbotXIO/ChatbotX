@@ -1,0 +1,1 @@
+export { inboxRepository } from "./repository"

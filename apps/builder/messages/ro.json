@@ -2947,6 +2947,58 @@
       "button": "Reîmprospătează toate permisiunile",
       "resultSuccess": "{refreshed} canal(e) reîmprospătat(e).",
       "resultWithFailures": "{refreshed} canal(e) reîmprospătat(e), {failed} eșuat(e)."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Se pornește sincronizarea istoricului…",
+        "done": "Sincronizarea istoricului a început",
+        "failed": "Sincronizarea istoricului a eșuat"
+      },
+      "selectAll": "Selectează tot",
+      "selected": "{count}/{max} selectate",
+      "dialogTitleRunning": "Se conectează {count} {feature}…",
+      "dialogTitleDone": "Conectate {connected} din {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} din {total} finalizate",
+      "status": {
+        "waiting": "În așteptare",
+        "connecting": "Se conectează…",
+        "connected": "Conectat",
+        "duplicated": "Deja conectat",
+        "limitReached": "Limită atinsă",
+        "failed": "Eșuat",
+        "timedOut": "Timp expirat",
+        "cancelled": "Anulat"
+      },
+      "reason": {
+        "notSelectable": "Acest element nu poate fi selectat.",
+        "channelLimit": "Limita de canale a fost atinsă.",
+        "workspaceLimit": "Limita spațiului de lucru a fost atinsă.",
+        "providerRejected": "Furnizorul a respins această solicitare.",
+        "unknown": "Ceva nu a funcționat corect.",
+        "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului."
+      },
+      "sessionError": {
+        "sessionExpired": "Sesiunea ta a expirat. Te rugăm să te reconectezi.",
+        "notMember": "Nu mai ești membru al acestui spațiu de lucru.",
+        "trialExpired": "Perioada de probă a expirat.",
+        "macLimitReached": "Ai atins limita contului tău.",
+        "credentialMissing": "Lipsesc datele de autentificare. Te rugăm să te reconectezi."
+      },
+      "cancelRemaining": "Anulează restul",
+      "retryFailed": "Reîncearcă ({count})",
+      "retry": "Reîncearcă",
+      "goToChannels": "Mergi la canale",
+      "close": "Închide",
+      "leaveNotice": "Poți părăsi pagina; conturile conectate rămân",
+      "stepConnecting": "Se conectează",
+      "stepCoexist": "Sincronizează istoricul",
+      "validation": {
+        "min": "Selectează cel puțin 1",
+        "max": "Poți selecta până la {max}",
+        "duplicate": "Selecție duplicată"
+      },
+      "progressLabel": "Progres"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Setări generale",
       "conversionsApi": "Optimizare anunțuri"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Nu s-a găsit niciun cont Instagram",
+      "noAccountsDescription": "Nu s-a găsit niciun cont de afaceri Instagram pe paginile de Facebook pe care le administrezi. Reconectează Instagram și acordă toate permisiunile solicitate.",
+      "alreadyConnectedNote": "Acest cont este deja conectat",
+      "tryAgain": "Încearcă să te reconectezi"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Persona implicită",
     "reconnect": "Reconectează",
     "reconnectDescription": "Reconectează întotdeauna botul dacă botul tău Messenger nu răspunde sau dacă vezi vreo eroare de permisiune în jurnalul de erori.",
-    "selectFacebookPage": "Selectează pagina Facebook",
     "selectPage": {
       "noPagesTitle": "Nicio pagină de Facebook găsită",
       "noPagesDescription": "Paginile din interiorul unui Business Manager necesită acces Business Manager în timpul conectării. Reconectează Messenger și acordă toate permisiunile solicitate.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Token de verificare webhook",
       "qrCodeHint": "Scanează codul QR pentru a deschide URL-ul webhook-ului",
       "moreSettings": "Mai multe setări",
-      "goToInbox": "Du-mă acolo"
+      "goToInbox": "Du-mă acolo",
+      "multipleTitle": "Căsuțele tale WhatsApp sunt pregătite!"
     },
     "phoneVerification": {
       "title": "Verifică numărul de telefon WhatsApp",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Trimite codul",
         "resendIn": "Retrimite în {seconds}s",
-        "verify": "Verifică și înregistrează"
+        "verify": "Înregistrează",
+        "skip": "Omite"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "Codul de verificare WhatsApp nu a putut fi trimis.",
         "codeNotVerified": "Codul de verificare WhatsApp nu a putut fi verificat.",
         "registrationFailed": "Verificarea numărului de telefon WhatsApp a eșuat."
-      }
+      },
+      "queueProgress": "Se verifică {current} din {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "Tokenul de acces WhatsApp este necesar.",
         "appSettingsNotFound": "Setările aplicației WhatsApp nu au fost găsite.",
-        "failedToPersistIntegration": "Salvarea integrării WhatsApp a eșuat.",
-        "noPhoneNumberFound": "Nu a fost găsit niciun număr de telefon WhatsApp.",
-        "noPhoneNumbersFound": "Nu au fost găsite numere de telefon pentru acest Cont WhatsApp Business.",
-        "phoneNumberNotFound": "Numărul de telefon WhatsApp selectat nu a fost găsit.",
-        "unableToVerifyToken": "Tokenul WhatsApp nu a putut fi verificat.",
-        "wabaMismatch": "Contul WhatsApp Business selectat nu corespunde autorizației.",
         "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Antet șablon"
     },
     "transferPhoneNumber": "Transferă numărul de telefon de la un alt furnizor WhatsApp",
-    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea.",
     "capi": {
       "automaticEvents": {
         "title": "Evenimente Automate",
         "description": "Trimite automat evenimente de conversie de la acest număr WhatsApp către Meta. Dacă lipsește permisiunea, reconectează contul pentru a o acorda."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Încearcă să te reconectezi"
     }
   },
   "zalo": {

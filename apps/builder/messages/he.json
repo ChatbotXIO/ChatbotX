@@ -1090,6 +1090,58 @@
       "button": "רענון כל ההרשאות",
       "resultSuccess": "רוענן {refreshed} ערוצים.",
       "resultWithFailures": "רוענן {refreshed} ערוצים, {failed} נכשלו."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "מתחיל סנכרון היסטוריה…",
+        "done": "סנכרון ההיסטוריה התחיל",
+        "failed": "סנכרון ההיסטוריה נכשל"
+      },
+      "selectAll": "בחר הכול",
+      "selected": "{count}/{max} נבחרו",
+      "dialogTitleRunning": "מחבר {count} {feature}…",
+      "dialogTitleDone": "חוברו {connected} מתוך {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} מתוך {total} הושלמו",
+      "status": {
+        "waiting": "ממתין",
+        "connecting": "מתחבר…",
+        "connected": "מחובר",
+        "duplicated": "כבר מחובר",
+        "limitReached": "המגבלה הושגה",
+        "failed": "נכשל",
+        "timedOut": "פג הזמן הקצוב",
+        "cancelled": "בוטל"
+      },
+      "reason": {
+        "notSelectable": "לא ניתן לבחור פריט זה.",
+        "channelLimit": "המגבלה של הערוצים הושגה.",
+        "workspaceLimit": "המגבלה של סביבת העבודה הושגה.",
+        "providerRejected": "הספק דחה את הבקשה הזו.",
+        "unknown": "משהו השתבש.",
+        "followUpFailed": "ההגדרה לא הושלמה — סיים אותה מהגדרות הערוץ."
+      },
+      "sessionError": {
+        "sessionExpired": "פג תוקף ההפעלה שלך. יש להתחבר שוב.",
+        "notMember": "אינך עוד חבר בסביבת עבודה זו.",
+        "trialExpired": "תקופת הניסיון שלך הסתיימה.",
+        "macLimitReached": "הגעת למגבלת החשבון שלך.",
+        "credentialMissing": "חסרים פרטי גישה. יש להתחבר שוב."
+      },
+      "cancelRemaining": "בטל את השאר",
+      "retryFailed": "נסה שוב ({count})",
+      "retry": "נסה שוב",
+      "goToChannels": "עבור לערוצים",
+      "close": "סגור",
+      "leaveNotice": "אפשר לצאת; החשבונות המחוברים יישמרו",
+      "stepConnecting": "מתחבר",
+      "stepCoexist": "סנכרון היסטוריה",
+      "validation": {
+        "min": "בחר לפחות פריט אחד",
+        "max": "ניתן לבחור עד {max}",
+        "duplicate": "בחירה כפולה"
+      },
+      "progressLabel": "התקדמות"
     }
   },
   "workspace": {
@@ -1282,6 +1334,12 @@
     "tabs": {
       "generalSettings": "הגדרות כלליות",
       "conversionsApi": "אופטימיזציית מודעות"
+    },
+    "selectPage": {
+      "noAccountsTitle": "לא נמצאו חשבונות אינסטגרם",
+      "noAccountsDescription": "לא נמצאו חשבונות עסקיים באינסטגרם בדפי הפייסבוק שאתה מנהל. חבר מחדש את אינסטגרם ואשר את כל ההרשאות המבוקשות.",
+      "alreadyConnectedNote": "חשבון זה כבר מחובר",
+      "tryAgain": "ניסיון חיבור מחדש"
     }
   },
   "messenger": {
@@ -1301,7 +1359,6 @@
     "defaultPersona": "פרסונת ברירת מחדל",
     "reconnect": "חיבור מחדש",
     "reconnectDescription": "חברו מחדש את הבוט בכל פעם שבוט Messenger אינו מגיב או כאשר מופיעה שגיאת הרשאה ביומן השגיאות.",
-    "selectFacebookPage": "בחירת דף Facebook",
     "selectPage": {
       "noPagesTitle": "לא נמצאו דפי Facebook",
       "noPagesDescription": "דפים בתוך Business Manager דורשים גישה ל-Business Manager במהלך החיבור. חברו מחדש את Messenger והעניקו את כל ההרשאות המבוקשות.",
@@ -1592,7 +1649,8 @@
       "verifyToken": "אסימון אימות Webhook",
       "qrCodeHint": "סרקו את קוד ה-QR כדי לפתוח את כתובת ה-Webhook",
       "moreSettings": "הגדרות נוספות",
-      "goToInbox": "מעבר לתיבת הדואר הנכנס"
+      "goToInbox": "מעבר לתיבת הדואר הנכנס",
+      "multipleTitle": "תיבות ה-WhatsApp שלך מוכנות!"
     },
     "phoneVerification": {
       "title": "אימות מספר טלפון WhatsApp",
@@ -1605,7 +1663,8 @@
       "actions": {
         "sendCode": "שליחת קוד",
         "resendIn": "שליחה מחדש בעוד {seconds} שניות",
-        "verify": "אימות ורישום"
+        "verify": "רישום",
+        "skip": "דלג"
       },
       "fields": {
         "code": {
@@ -1623,18 +1682,12 @@
         "codeNotSent": "לא ניתן היה לשלוח את קוד האימות של WhatsApp.",
         "codeNotVerified": "לא ניתן היה לאמת את קוד האימות של WhatsApp.",
         "registrationFailed": "אימות מספר הטלפון של WhatsApp נכשל."
-      }
+      },
+      "queueProgress": "מאמת {current} מתוך {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "נדרש אסימון גישה של WhatsApp.",
         "appSettingsNotFound": "הגדרות אפליקציית WhatsApp לא נמצאו.",
-        "failedToPersistIntegration": "שמירת השילוב עם WhatsApp נכשלה.",
-        "noPhoneNumberFound": "לא נמצא מספר טלפון של WhatsApp.",
-        "noPhoneNumbersFound": "לא נמצאו מספרי טלפון עבור חשבון WhatsApp Business זה.",
-        "phoneNumberNotFound": "מספר הטלפון שנבחר ב-WhatsApp לא נמצא.",
-        "unableToVerifyToken": "לא ניתן לאמת את אסימון WhatsApp.",
-        "wabaMismatch": "חשבון WhatsApp Business שנבחר אינו תואם להרשאה.",
         "wabaResolveFailed": "לא ניתן היה לזהות את חשבון WhatsApp Business מתוך ההרשאה."
       }
     },
@@ -1865,12 +1918,14 @@
       "label": "כותרת התבנית"
     },
     "transferPhoneNumber": "העברת מספר טלפון מספק WhatsApp אחר",
-    "signupSessionExpired": "פג תוקף הפעלת ההרשמה ל-WhatsApp. התחילו את החיבור מחדש.",
     "capi": {
       "automaticEvents": {
         "title": "אירועים אוטומטיים",
         "description": "שלח אירועי המרה ממספר וואטסאפ זה אל Meta באופן אוטומטי. אם ההרשאה חסרה, חבר מחדש את החשבון כדי להעניק אותה."
       }
+    },
+    "selectPage": {
+      "tryAgain": "ניסיון חיבור מחדש"
     }
   },
   "zalo": {

@@ -662,6 +662,58 @@
       "button": "Uppdatera alla behörigheter",
       "resultSuccess": "Uppdaterade {refreshed} kanal(er).",
       "resultWithFailures": "Uppdaterade {refreshed} kanal(er), {failed} misslyckades."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Startar synkronisering av historik…",
+        "done": "Synkronisering av historik startad",
+        "failed": "Synkroniseringen av historik misslyckades"
+      },
+      "selectAll": "Markera alla",
+      "selected": "{count}/{max} markerade",
+      "dialogTitleRunning": "Ansluter {count} {feature}…",
+      "dialogTitleDone": "Anslutna {connected} av {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} av {total} klara",
+      "status": {
+        "waiting": "Väntar",
+        "connecting": "Ansluter…",
+        "connected": "Ansluten",
+        "duplicated": "Redan ansluten",
+        "limitReached": "Gräns nådd",
+        "failed": "Misslyckades",
+        "timedOut": "Tidsgräns nådd",
+        "cancelled": "Avbruten"
+      },
+      "reason": {
+        "notSelectable": "Det här objektet kan inte väljas.",
+        "channelLimit": "Kanalgränsen har nåtts.",
+        "workspaceLimit": "Arbetsytans gräns har nåtts.",
+        "providerRejected": "Leverantören avvisade den här begäran.",
+        "unknown": "Något gick fel.",
+        "followUpFailed": "Konfigurationen är inte klar – slutför den i kanalinställningarna."
+      },
+      "sessionError": {
+        "sessionExpired": "Din session har gått ut. Anslut igen.",
+        "notMember": "Du är inte längre medlem i den här arbetsytan.",
+        "trialExpired": "Din provperiod har gått ut.",
+        "macLimitReached": "Du har nått ditt kontos gräns.",
+        "credentialMissing": "Autentiseringsuppgifter saknas. Anslut igen."
+      },
+      "cancelRemaining": "Avbryt återstående",
+      "retryFailed": "Försök igen ({count})",
+      "retry": "Försök igen",
+      "goToChannels": "Gå till kanaler",
+      "close": "Stäng",
+      "leaveNotice": "Du kan lämna sidan; anslutna konton behålls",
+      "stepConnecting": "Ansluter",
+      "stepCoexist": "Synkronisera historik",
+      "validation": {
+        "min": "Välj minst 1",
+        "max": "Du kan välja upp till {max}",
+        "duplicate": "Dubbelt val"
+      },
+      "progressLabel": "Förlopp"
     }
   },
   "claude": {
@@ -677,11 +729,11 @@
   },
   "coexist": {
     "billingNote": "Det kan ta flera timmar att slutföra synkroniseringen för stora sidor.",
-    "decline": "Synkronisera inte",
     "descriptionMessenger": "När detta är aktiverat importeras befintliga Messenger-kontakter och upp till 3 månaders konversationshistorik från den här sidan.",
     "descriptionInstagram": "When enabled, existing Instagram contacts and up to 3 months of conversation history will be imported from this Instagram account.",
-    "descriptionWhatsapp": "När detta är aktiverat importeras kontakter och upp till 6 månaders chatthistorik från det här WhatsApp-numret.",
     "enable": "Aktivera synkronisering",
+    "decline": "Synkronisera inte",
+    "descriptionWhatsapp": "När detta är aktiverat importeras kontakter och upp till 6 månaders chatthistorik från det här WhatsApp-numret.",
     "errors": {
       "alreadyTriggered": "Synkroniseringen har redan utlösts för det här numret. Vänta tills Meta levererar historiska data.",
       "notEligible": "Det här numret är inte berättigat till historisk synkronisering.",
@@ -3242,6 +3294,12 @@
     "tabs": {
       "generalSettings": "Allmänna inställningar",
       "conversionsApi": "Annonsoptimering"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Inga Instagram-konton hittades",
+      "noAccountsDescription": "Inga Instagram-företagskonton hittades på de Facebook-sidor du hanterar. Återanslut Instagram och bevilja alla begärda behörigheter.",
+      "alreadyConnectedNote": "Det här kontot är redan anslutet",
+      "tryAgain": "Försök återansluta"
     }
   },
   "instagramCommentAutomation": {
@@ -3711,7 +3769,6 @@
     "personasDescription": "Med den här inställningen kan du ange ett annat namn och en annan bild för din bot",
     "reconnect": "Återanslut",
     "reconnectDescription": "Återanslut alltid boten om din Messenger-bot inte svarar eller om du ser behörighetsfel i felloggen.",
-    "selectFacebookPage": "Välj Facebook-sida",
     "selectPage": {
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
       "bmLookupFailedDescription": "Återanslut Messenger och bevilja åtkomst till Business Manager så att sidor som hanteras där kan visas.",
@@ -4865,14 +4922,7 @@
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "En åtkomsttoken för WhatsApp krävs.",
         "appSettingsNotFound": "Inställningarna för WhatsApp-appen hittades inte.",
-        "failedToPersistIntegration": "Det gick inte att spara WhatsApp-integrationen.",
-        "noPhoneNumberFound": "Inget WhatsApp-telefonnummer hittades.",
-        "noPhoneNumbersFound": "Inga telefonnummer hittades för det här WhatsApp Business-kontot.",
-        "phoneNumberNotFound": "Det valda WhatsApp-telefonnumret hittades inte.",
-        "unableToVerifyToken": "Det gick inte att verifiera WhatsApp-token.",
-        "wabaMismatch": "Det valda WhatsApp Business-kontot matchar inte auktoriseringen.",
         "wabaResolveFailed": "Det gick inte att fastställa WhatsApp Business-kontot från auktoriseringen."
       }
     },
@@ -4900,7 +4950,8 @@
       "qrCodeHint": "Skanna QR-koden för att öppna webhook-URL:en",
       "title": "Din WhatsApp-inkorg är klar!",
       "verifyToken": "Verifieringstoken för webhook",
-      "webhookUrl": "Webhook-URL"
+      "webhookUrl": "Webhook-URL",
+      "multipleTitle": "Dina WhatsApp-inkorgar är klara!"
     },
     "marketingMessageLite": "Marketing Messages Lite",
     "messageTemplate": {
@@ -4972,7 +5023,8 @@
       "actions": {
         "resendIn": "Skicka igen om {seconds} s",
         "sendCode": "Skicka kod",
-        "verify": "Verifiera och registrera"
+        "verify": "Registrera",
+        "skip": "Hoppa över"
       },
       "description": "Begär en verifieringskod från Meta, ange koden här så registreras telefonnumret automatiskt.",
       "errorTitle": "Telefonnumret måste verifieras",
@@ -4997,7 +5049,8 @@
         "sms": "SMS",
         "voice": "Röstsamtal"
       },
-      "title": "Verifiera WhatsApp-telefonnummer"
+      "title": "Verifiera WhatsApp-telefonnummer",
+      "queueProgress": "Verifierar {current} av {total}"
     },
     "sampleBodyCardContent": {
       "label": "Exempelinnehåll för kortets brödtext"
@@ -5014,7 +5067,6 @@
     "showHeader": {
       "label": "Visa sidhuvud"
     },
-    "signupSessionExpired": "Din registreringssession för WhatsApp har löpt ut. Starta anslutningen igen.",
     "tabs": {
       "accountHealths": "Kontostatus",
       "automation": "Automatisering",
@@ -5038,6 +5090,9 @@
         "title": "Automatiska händelser",
         "description": "Skicka konverteringshändelser från detta WhatsApp-nummer automatiskt till Meta. Om behörigheten saknas, återanslut kontot för att bevilja den."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Försök återansluta"
     }
   },
   "workspace": {

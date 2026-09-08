@@ -2327,6 +2327,58 @@
       "button": "重新整理所有權限",
       "resultSuccess": "已重新整理 {refreshed} 個頻道。",
       "resultWithFailures": "已重新整理 {refreshed} 個頻道，{failed} 個失敗。"
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "正在開始同步歷史記錄…",
+        "done": "已開始同步歷史記錄",
+        "failed": "歷史記錄同步失敗"
+      },
+      "selectAll": "全選",
+      "selected": "已選擇 {count}/{max}",
+      "dialogTitleRunning": "正在連接 {count} 個{feature}…",
+      "dialogTitleDone": "已連接 {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "已完成 {done}/{total}",
+      "status": {
+        "waiting": "等待中",
+        "connecting": "連接中…",
+        "connected": "已連接",
+        "duplicated": "已連接過",
+        "limitReached": "已達上限",
+        "failed": "失敗",
+        "timedOut": "已逾時",
+        "cancelled": "已取消"
+      },
+      "reason": {
+        "notSelectable": "此項目無法選擇。",
+        "channelLimit": "已達渠道上限。",
+        "workspaceLimit": "已達工作區上限。",
+        "providerRejected": "服務提供方拒絕了此請求。",
+        "unknown": "發生錯誤。",
+        "followUpFailed": "設定尚未完成——請在渠道設定中完成。"
+      },
+      "sessionError": {
+        "sessionExpired": "您的工作階段已過期，請重新連接。",
+        "notMember": "您已不再是該工作區的成員。",
+        "trialExpired": "您的試用期已結束。",
+        "macLimitReached": "您已達到帳戶上限。",
+        "credentialMissing": "憑證缺失，請重新連接。"
+      },
+      "cancelRemaining": "取消其餘項",
+      "retryFailed": "重試（{count}）",
+      "retry": "重試",
+      "goToChannels": "前往渠道",
+      "close": "關閉",
+      "leaveNotice": "您可以離開此頁面，已連接的帳號將保留",
+      "stepConnecting": "連接中",
+      "stepCoexist": "同步歷史記錄",
+      "validation": {
+        "min": "至少選擇 1 個",
+        "max": "最多可選擇 {max} 個",
+        "duplicate": "選擇重複"
+      },
+      "progressLabel": "進度"
     }
   },
   "workspace": {
@@ -3172,6 +3224,12 @@
     "tabs": {
       "generalSettings": "一般設定",
       "conversionsApi": "廣告優化"
+    },
+    "selectPage": {
+      "noAccountsTitle": "找不到 Instagram 帳戶",
+      "noAccountsDescription": "在您管理的 Facebook 粉絲專頁中找不到 Instagram 商業帳戶。請重新連接 Instagram 並授予所有要求的權限。",
+      "alreadyConnectedNote": "此帳戶已連接",
+      "tryAgain": "嘗試重新連接"
     }
   },
   "coexist": {
@@ -3217,7 +3275,6 @@
     "defaultPersona": "預設角色",
     "reconnect": "重新連接",
     "reconnectDescription": "請務必重新連接您的機器人。",
-    "selectFacebookPage": "選擇Facebook 頁",
     "selectPage": {
       "noPagesTitle": "找不到Facebook 頁面",
       "noPagesDescription": "商務管理平台內的頁面需要在連線期間存取商務管理平台。重新連線Messenger並授予所有請求的權限。",
@@ -3482,7 +3539,8 @@
       "verifyToken": "Webhook 驗證權杖",
       "qrCodeHint": "掃描 QR Code 以開啟 webhook URL",
       "moreSettings": "更多設定",
-      "goToInbox": "帶我去那裡"
+      "goToInbox": "帶我去那裡",
+      "multipleTitle": "您的 WhatsApp 收件匣已就緒！"
     },
     "phoneVerification": {
       "title": "驗證WhatsApp電話號碼",
@@ -3495,7 +3553,8 @@
       "actions": {
         "sendCode": "傳送代碼",
         "resendIn": "在 {seconds} 內重新傳送",
-        "verify": "驗證並註冊"
+        "verify": "註冊",
+        "skip": "略過"
       },
       "fields": {
         "code": {
@@ -3513,18 +3572,12 @@
         "codeNotSent": "WhatsApp驗證碼無法傳送。",
         "codeNotVerified": "WhatsApp驗證碼無法驗證。",
         "registrationFailed": "WhatsApp 電話號碼驗證失敗。"
-      }
+      },
+      "queueProgress": "正在驗證 {current}/{total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "必須提供 WhatsApp Access Token。",
         "appSettingsNotFound": "WhatsApp應用程式設定。",
-        "failedToPersistIntegration": "無法儲存WhatsApp 整合。",
-        "noPhoneNumberFound": "找不到 WhatsApp 電話號碼。",
-        "noPhoneNumbersFound": "找不到此 WhatsApp 企業帳戶的電話號碼。",
-        "phoneNumberNotFound": "所選WhatsApp 電話號碼找不到。",
-        "unableToVerifyToken": "無法驗證WhatsApp 權杖。",
-        "wabaMismatch": "所選WhatsApp 企業帳戶與授權不符。",
         "wabaResolveFailed": "無法從授權解析WhatsApp 企業帳號。"
       }
     },
@@ -3755,12 +3808,14 @@
       "label": "範本標頭"
     },
     "transferPhoneNumber": "從其他 Whatsapp 供應商轉接電話",
-    "signupSessionExpired": "您的WhatsApp註冊會話已過期。請重新開始連線。",
     "capi": {
       "automaticEvents": {
         "title": "自動事件",
         "description": "自動將此 WhatsApp 號碼的轉換事件傳送到 Meta。如果缺少權限,請重新連接帳號以授予權限。"
       }
+    },
+    "selectPage": {
+      "tryAgain": "嘗試重新連接"
     }
   },
   "zalo": {

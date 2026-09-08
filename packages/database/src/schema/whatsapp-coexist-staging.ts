@@ -28,6 +28,11 @@ export const whatsappCoexistStagingModel = pgTable(
     payload: jsonb().notNull(),
     payloadHash: text().notNull(),
     processedAt: timestamp(timestampConfig),
+    // Set when the flush could not parse the payload at all (a Meta schema
+    // change). Such a row is NOT marked processed — it is excluded from every
+    // batch query so it cannot poison a run, kept for 7 days so the payload can
+    // be inspected, then purged. Nullable, no default (AGENTS.md invariant 11).
+    parseFailedAt: timestamp(timestampConfig),
   },
   (table) => [
     index("WhatsappCoexistStaging_phoneNumberId_idx").using(
@@ -42,5 +47,9 @@ export const whatsappCoexistStagingModel = pgTable(
     index("WhatsappCoexistStaging_processedAt_idx")
       .using("btree", table.processedAt.asc().nullsLast())
       .where(sql`"processedAt" IS NOT NULL`),
+    // Powers the 7-day purge of poison rows.
+    index("WhatsappCoexistStaging_parseFailedAt_idx")
+      .using("btree", table.parseFailedAt.asc().nullsLast())
+      .where(sql`"parseFailedAt" IS NOT NULL`),
   ],
 )

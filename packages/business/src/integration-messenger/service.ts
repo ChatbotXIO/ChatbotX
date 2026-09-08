@@ -6,9 +6,36 @@ import {
   inArray,
   sql,
 } from "@chatbotx.io/database/client"
-import type { IntegrationUserInfo } from "@chatbotx.io/database/partials"
+import type {
+  IntegrationUserInfo,
+  MessengerPersistentMenu,
+} from "@chatbotx.io/database/partials"
+import { integrationMessengerRepository } from "@chatbotx.io/database/repositories"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
+import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import {
+  auditChannelConnected,
+  connectChannelIntegration,
+  runConnectTransaction,
+} from "../inbox/connect-channel"
+
+export type ConnectPageInput = {
+  actorUserId: string
+  ownerId: string
+  workspaceId: string
+  page: { pageId: string; pageName: string }
+  auth: unknown
+  persistentMenus: MessengerPersistentMenu[]
+}
+
+export type ConnectPageResult = {
+  workspaceId: string
+  integrationId: string
+  wasCreated: boolean
+  integration: IntegrationMessengerModel
+}
 
 class MessengerIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -124,17 +151,69 @@ class MessengerIntegrationService extends BaseService {
    * `IntegrationMessenger.pageId` is unique platform-wide, so a match means the
    * page cannot be connected again anywhere.
    */
-  async findConnectedPageIds(pageIds: string[]): Promise<string[]> {
-    if (pageIds.length === 0) {
-      return []
+  findConnectedPageIds(pageIds: string[]): Promise<Set<string>> {
+    return integrationMessengerRepository.findConnectedPageIds(pageIds)
+  }
+
+  /**
+   * Persists a Messenger page connect: one `db.transaction` (via
+   * `connectChannelIntegration` → `integrationMessengerRepository.insert`)
+   * that settles with the write — nothing after it may reject, so a
+   * failing audit dispatch is logged, never thrown. Workspace is always
+   * required (the OAuth callback stores it in the cookie before this runs).
+   */
+  async connectPage(input: ConnectPageInput): Promise<ConnectPageResult> {
+    const { integration, wasCreated } = await this.insertPage(input)
+
+    if (wasCreated) {
+      await auditChannelConnected({
+        channel: "messenger",
+        actorUserId: input.actorUserId,
+        workspaceId: input.workspaceId,
+        integrationId: integration.id,
+      })
     }
 
-    const rows = await db
-      .select({ pageId: integrationMessengerModel.pageId })
-      .from(integrationMessengerModel)
-      .where(inArray(integrationMessengerModel.pageId, pageIds))
+    return {
+      workspaceId: input.workspaceId,
+      integrationId: integration.id,
+      wasCreated,
+      integration,
+    }
+  }
 
-    return rows.map((row) => row.pageId)
+  private insertPage(input: ConnectPageInput): Promise<{
+    integration: IntegrationMessengerModel
+    wasCreated: boolean
+  }> {
+    return runConnectTransaction("messenger", async (tx) => {
+      const { integration, wasCreated } = await connectChannelIntegration({
+        tx,
+        ownerId: input.ownerId,
+        inboxData: {
+          id: createId(),
+          workspaceId: input.workspaceId,
+          name: input.page.pageName,
+          channel: "messenger",
+          sourceId: input.page.pageId,
+        },
+        insertIntegration: (inboxId) =>
+          integrationMessengerRepository.insert(
+            {
+              id: createId(),
+              workspaceId: input.workspaceId,
+              inboxId,
+              pageId: input.page.pageId,
+              auth: input.auth,
+              name: input.page.pageName,
+              persistentMenus: input.persistentMenus,
+            },
+            tx,
+          ),
+      })
+
+      return { integration, wasCreated }
+    })
   }
 
   /**

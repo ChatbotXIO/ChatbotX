@@ -2947,6 +2947,58 @@
       "button": "Opdater alle tilladelser",
       "resultSuccess": "Opdaterede {refreshed} kanal(er).",
       "resultWithFailures": "Opdaterede {refreshed} kanal(er), {failed} mislykkedes."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Starter synkronisering af historik…",
+        "done": "Synkronisering af historik startet",
+        "failed": "Synkronisering af historik mislykkedes"
+      },
+      "selectAll": "Vælg alle",
+      "selected": "{count}/{max} valgt",
+      "dialogTitleRunning": "Forbinder {count} {feature}…",
+      "dialogTitleDone": "Forbandt {connected} ud af {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} ud af {total} er færdige",
+      "status": {
+        "waiting": "Venter",
+        "connecting": "Forbinder…",
+        "connected": "Forbundet",
+        "duplicated": "Allerede forbundet",
+        "limitReached": "Grænse nået",
+        "failed": "Mislykkedes",
+        "timedOut": "Timeout",
+        "cancelled": "Annulleret"
+      },
+      "reason": {
+        "notSelectable": "Dette element kan ikke vælges.",
+        "channelLimit": "Kanalgrænsen er nået.",
+        "workspaceLimit": "Workspace-grænsen er nået.",
+        "providerRejected": "Udbyderen afviste denne anmodning.",
+        "unknown": "Noget gik galt.",
+        "followUpFailed": "Opsætning ufuldstændig – afslut den fra kanalindstillingerne."
+      },
+      "sessionError": {
+        "sessionExpired": "Din session udløb. Opret forbindelse igen.",
+        "notMember": "Du er ikke længere medlem af dette workspace.",
+        "trialExpired": "Din prøveperiode er udløbet.",
+        "macLimitReached": "Du har nået din kontogrænse.",
+        "credentialMissing": "Manglende legitimationsoplysninger. Opret forbindelse igen."
+      },
+      "cancelRemaining": "Annuller resterende",
+      "retryFailed": "Prøv igen ({count})",
+      "retry": "Prøv igen",
+      "goToChannels": "Gå til kanaler",
+      "close": "Luk",
+      "leaveNotice": "Du kan forlade siden; forbundne konti bevares",
+      "stepConnecting": "Forbinder",
+      "stepCoexist": "Synkroniser historik",
+      "validation": {
+        "min": "Vælg mindst 1",
+        "max": "Du kan vælge op til {max}",
+        "duplicate": "Dobbelt valg"
+      },
+      "progressLabel": "Fremskridt"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Generelt Indstillinger",
       "conversionsApi": "Ads Optimization"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Ingen Instagram-konti fundet",
+      "noAccountsDescription": "Der blev ikke fundet nogen Instagram Business-konti på de Facebook-sider, du administrerer. Genopret forbindelsen til Instagram, og giv alle de ønskede tilladelser.",
+      "alreadyConnectedNote": "Denne konto er allerede forbundet",
+      "tryAgain": "Prøv at forbinde igen"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Standard Persona",
     "reconnect": "Forbind igen",
     "reconnectDescription": "Always forbind igen din bot hvis din Messenger bot er ikke responding, eller hvis du er seem vilkårlig permission fejl på den fejl log.",
-    "selectFacebookPage": "Vælg Facebook Page",
     "selectPage": {
       "noPagesTitle": "Ingen Facebook Pages found",
       "noPagesDescription": "Pages inside a Business Manager require Business Manager access during forbindelse. Forbind igen Messenger og grant alle requested tilladelser.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Webhook verification token",
       "qrCodeHint": "Scan den QR kode til åbn den webhook URL",
       "moreSettings": "Flere indstillinger",
-      "goToInbox": "Take me there"
+      "goToInbox": "Take me there",
+      "multipleTitle": "Dine WhatsApp-indbakker er klar!"
     },
     "phoneVerification": {
       "title": "Verify WhatsApp telefon nummer",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Send kode",
         "resendIn": "Send igen i {seconds}s",
-        "verify": "Verify og register"
+        "verify": "Registrer",
+        "skip": "Spring over"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "WhatsApp verification kode could ikke være sendt.",
         "codeNotVerified": "WhatsApp verification kode could ikke være verified.",
         "registrationFailed": "WhatsApp telefon nummer verification mislykkedes."
-      }
+      },
+      "queueProgress": "Bekræfter {current} ud af {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "WhatsApp access token er påkrævet.",
         "appSettingsNotFound": "WhatsApp app indstillinger were ikke found.",
-        "failedToPersistIntegration": "Mislykkedes til gem den WhatsApp integration.",
-        "noPhoneNumberFound": "Ingen WhatsApp telefon nummer var found.",
-        "noPhoneNumbersFound": "Ingen telefon numbers were found for denne WhatsApp Business Konto.",
-        "phoneNumberNotFound": "Selected WhatsApp telefon nummer var ikke found.",
-        "unableToVerifyToken": "Unable til verify den WhatsApp token.",
-        "wabaMismatch": "Selected WhatsApp Business Konto does ikke match den authorization.",
         "wabaResolveFailed": "Could ikke resolve den WhatsApp Business Konto fra den authorization."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Skabelon Overskrift"
     },
     "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
-    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen.",
     "capi": {
       "automaticEvents": {
         "title": "Automatiske hændelser",
         "description": "Send automatisk konverteringshændelser fra dette WhatsApp-nummer til Meta. Hvis tilladelsen mangler, skal du gentilslutte kontoen for at give den."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Try reconnecting"
     }
   },
   "zalo": {

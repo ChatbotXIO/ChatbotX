@@ -84,6 +84,10 @@ describe("coexist APIs", () => {
     mockDisable.mockResolvedValue({ success: true })
   })
 
+  // The Messenger and Instagram routes now share one response schema with
+  // Instagram (plan §2.9: "shared response schema keeps Instagram's optional
+  // runId"), so a runId `coexistService.enable` returns passes through for
+  // Messenger too — the old Messenger-only schema used to silently strip it.
   test("Messenger enabled:true delegates to coexistService.enable with aiReadsSyncedHistory defaulted to false", async () => {
     const result = await call(
       integrationMessengerCoexistAPIs.setCoexistMessengerAPI,
@@ -91,7 +95,7 @@ describe("coexist APIs", () => {
       { context: stubContext },
     )
 
-    expect(result).toEqual({ success: true })
+    expect(result).toEqual({ success: true, runId: "run-1" })
     expect(mockEnable).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       integrationId: "int-1",
@@ -113,7 +117,7 @@ describe("coexist APIs", () => {
       { context: stubContext },
     )
 
-    expect(result).toEqual({ success: true })
+    expect(result).toEqual({ success: true, runId: "run-1" })
     expect(mockEnable).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       integrationId: "int-1",

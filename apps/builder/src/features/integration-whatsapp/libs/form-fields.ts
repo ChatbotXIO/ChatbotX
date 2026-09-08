@@ -15,7 +15,15 @@ export const FORM_FIELDS = {
   TRANSFER_PHONE_NUMBER: "transferPhoneNumber",
   MANUAL_CONNECT: "manualConnect",
   MARKETING_MESSAGE_LITE: "marketingMessageLite",
-  PHONE_NUMBER_ID: "phoneNumberId",
+  // Multi-select picker field (`CheckboxGroupField`) — the client fans out
+  // one action call per id (`phoneNumberId`) rather than sending this array.
+  PHONE_NUMBER_IDS: "phoneNumberIds",
+  // The two per-row coexist switches: sync history, and (nested) AI reads it.
+  COEXIST_PHONE_NUMBER_IDS: "coexistPhoneNumberIds",
+  AI_READS_SYNCED_HISTORY_PHONE_NUMBER_IDS:
+    "aiReadsSyncedHistoryPhoneNumberIds",
+  // Manual connect's single radio — a scalar id, never an array.
+  MANUAL_PHONE_NUMBER_ID: "manualPhoneNumberId",
   BUSINESS_ID: "businessId",
   SIGNUP_SESSION_ID: "signupSessionId",
   CODE: "code",

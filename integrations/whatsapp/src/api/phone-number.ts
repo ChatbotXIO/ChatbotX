@@ -42,7 +42,34 @@ export type WhatsappPhoneNumber = {
   throughput: Record<string, unknown>
   webhook_configuration: Record<string, unknown>
   id: string
+  /**
+   * Meta's truth about whether the number is live on the WhatsApp Business
+   * app (coexistence). Only present when the listing explicitly asked for it
+   * — `PHONE_NUMBER_LIST_COEXIST_FIELDS` below — since Graph's default field
+   * set for `/{waba}/phone_numbers` leaves it out.
+   */
+  is_on_biz_app?: boolean
 }
+
+/**
+ * Graph's default `/{waba}/phone_numbers` field set plus `is_on_biz_app`.
+ *
+ * Naming any `fields` at all narrows the response to exactly that list, so the
+ * default set has to be restated here — dropping one would silently strip it
+ * from every caller that passes this constant.
+ */
+export const PHONE_NUMBER_LIST_COEXIST_FIELDS = [
+  "id",
+  "verified_name",
+  "display_phone_number",
+  "code_verification_status",
+  "name_status",
+  "quality_rating",
+  "platform_type",
+  "throughput",
+  "webhook_configuration",
+  "is_on_biz_app",
+].join(",")
 
 export type WhatsappPhoneNumberResponse = {
   data: WhatsappPhoneNumber[]
@@ -55,17 +82,28 @@ export type WhatsappPhoneNumberResponse = {
  * All pages are aggregated, so the returned cursors describe no remaining
  * page — they are kept only because callers type against
  * `WhatsappPhoneNumberResponse`.
+ *
+ * `fields` is opt-in: omitting it keeps Graph's default field set, which is
+ * what every existing caller relies on. Pass
+ * `PHONE_NUMBER_LIST_COEXIST_FIELDS` to get `is_on_biz_app` alongside it.
  */
 export function listPhoneNumbers(props: {
   wabaId: string
   accessToken: string
   version?: string
+  fields?: string
 }): Promise<WhatsappPhoneNumberResponse> {
   const { version = DEFAULT_API_VERSION } = props
+  const firstUrl = new URL(
+    `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
+  )
+  if (props.fields) {
+    firstUrl.searchParams.set("fields", props.fields)
+  }
 
   return rescue(async () => {
     const data = await fetchAllWhatsappPages<WhatsappPhoneNumber>({
-      firstUrl: `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
+      firstUrl: firstUrl.toString(),
       accessToken: props.accessToken,
       resource: "phone_numbers",
     })

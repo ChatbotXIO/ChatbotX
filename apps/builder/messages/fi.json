@@ -2947,6 +2947,58 @@
       "button": "Päivitä kaikki käyttöoikeudet",
       "resultSuccess": "Päivitettiin {refreshed} kanava(a).",
       "resultWithFailures": "Päivitettiin {refreshed} kanava(a), {failed} epäonnistui."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Aloitetaan historian synkronointia…",
+        "done": "Historian synkronointi aloitettu",
+        "failed": "Historian synkronointi epäonnistui"
+      },
+      "selectAll": "Valitse kaikki",
+      "selected": "{count}/{max} valittu",
+      "dialogTitleRunning": "Yhdistetään {count} {feature}…",
+      "dialogTitleDone": "Yhdistetty {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done}/{total} valmiina",
+      "status": {
+        "waiting": "Odottaa",
+        "connecting": "Yhdistetään…",
+        "connected": "Yhdistetty",
+        "duplicated": "Jo yhdistetty",
+        "limitReached": "Raja saavutettu",
+        "failed": "Epäonnistui",
+        "timedOut": "Aikakatkaisu",
+        "cancelled": "Peruttu"
+      },
+      "reason": {
+        "notSelectable": "Tätä kohdetta ei voi valita.",
+        "channelLimit": "Kanavaraja saavutettu.",
+        "workspaceLimit": "Työtilan raja saavutettu.",
+        "providerRejected": "Palveluntarjoaja hylkäsi pyynnön.",
+        "unknown": "Jotain meni pieleen.",
+        "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista."
+      },
+      "sessionError": {
+        "sessionExpired": "Istuntosi vanheni. Yhdistä uudelleen.",
+        "notMember": "Et ole enää tämän työtilan jäsen.",
+        "trialExpired": "Kokeilujaksosi on päättynyt.",
+        "macLimitReached": "Olet saavuttanut tilisi rajan.",
+        "credentialMissing": "Tunnukset puuttuvat. Yhdistä uudelleen."
+      },
+      "cancelRemaining": "Peruuta loput",
+      "retryFailed": "Yritä uudelleen ({count})",
+      "retry": "Yritä uudelleen",
+      "goToChannels": "Siirry kanaviin",
+      "close": "Sulje",
+      "leaveNotice": "Voit poistua; yhdistetyt tilit säilyvät",
+      "stepConnecting": "Yhdistäminen",
+      "stepCoexist": "Synkronoi historia",
+      "validation": {
+        "min": "Valitse vähintään 1",
+        "max": "Voit valita enintään {max}",
+        "duplicate": "Kaksoisvalinta"
+      },
+      "progressLabel": "Edistyminen"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Yleiset asetukset",
       "conversionsApi": "Mainosten optimointi"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Instagram-tilejä ei löytynyt",
+      "noAccountsDescription": "Hallinnoimiltasi Facebook-sivuilta ei löytynyt Instagram-yritystilejä. Yhdistä Instagram uudelleen ja myönnä kaikki pyydetyt käyttöoikeudet.",
+      "alreadyConnectedNote": "Tämä tili on jo yhdistetty",
+      "tryAgain": "Yritä yhdistää uudelleen"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Oletuspersoona",
     "reconnect": "Yhdistä uudelleen",
     "reconnectDescription": "Yhdistä botti aina uudelleen, jos Messenger-bottisi ei vastaa tai jos virhelokissa näkyy käyttöoikeusvirheitä.",
-    "selectFacebookPage": "Valitse Facebook-sivu",
     "selectPage": {
       "noPagesTitle": "Facebook-sivuja ei löytynyt",
       "noPagesDescription": "Business Managerin sivut edellyttävät Business Manager -käyttöoikeutta yhdistämisen aikana. Yhdistä Messenger uudelleen ja myönnä kaikki pyydetyt oikeudet.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Webhook-vahvistustunnus",
       "qrCodeHint": "Avaa webhook-URL skannaamalla QR-koodi",
       "moreSettings": "Lisää asetuksia",
-      "goToInbox": "Siirry sinne"
+      "goToInbox": "Siirry sinne",
+      "multipleTitle": "WhatsApp-postilaatikkosi ovat valmiit!"
     },
     "phoneVerification": {
       "title": "Vahvista WhatsApp-puhelinnumero",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Lähetä koodi",
         "resendIn": "Lähetä uudelleen {seconds} s kuluttua",
-        "verify": "Vahvista ja rekisteröi"
+        "verify": "Rekisteröi",
+        "skip": "Ohita"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "WhatsApp-vahvistuskoodia ei voitu lähettää.",
         "codeNotVerified": "WhatsApp-vahvistuskoodia ei voitu vahvistaa.",
         "registrationFailed": "WhatsApp-puhelinnumeron vahvistus epäonnistui."
-      }
+      },
+      "queueProgress": "Vahvistetaan {current}/{total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "WhatsApp-käyttöoikeustunnus vaaditaan.",
         "appSettingsNotFound": "WhatsApp-sovelluksen asetuksia ei löytynyt.",
-        "failedToPersistIntegration": "WhatsApp-integraation tallentaminen epäonnistui.",
-        "noPhoneNumberFound": "WhatsApp-puhelinnumeroa ei löytynyt.",
-        "noPhoneNumbersFound": "Tälle WhatsApp Business -tilille ei löytynyt puhelinnumeroita.",
-        "phoneNumberNotFound": "Valittua WhatsApp-puhelinnumeroa ei löytynyt.",
-        "unableToVerifyToken": "WhatsApp-tunnusta ei voitu vahvistaa.",
-        "wabaMismatch": "Valittu WhatsApp Business -tili ei vastaa valtuutusta.",
         "wabaResolveFailed": "WhatsApp Business -tiliä ei voitu selvittää valtuutuksesta."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Mallin ylätunniste"
     },
     "transferPhoneNumber": "Siirrä puhelin toiselta WhatsApp-palveluntarjoajalta",
-    "signupSessionExpired": "WhatsApp-rekisteröinti-istuntosi on vanhentunut. Aloita yhdistäminen uudelleen.",
     "capi": {
       "automaticEvents": {
         "title": "Automaattiset tapahtumat",
         "description": "Lähetä konversiotapahtumat tästä WhatsApp-numerosta automaattisesti Metalle. Jos lupa puuttuu, yhdistä tili uudelleen myöntääksesi sen."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Yritä yhdistää uudelleen"
     }
   },
   "zalo": {

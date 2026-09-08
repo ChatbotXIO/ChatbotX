@@ -18,6 +18,8 @@ import {
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
+export * from "./coexist-job-ids"
+
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
   resumeHeavyStep: "resumeHeavyStep",

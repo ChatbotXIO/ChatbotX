@@ -162,6 +162,84 @@ export function isRevokedTokenError(error: unknown): boolean {
   )
 }
 
+// === Disconnect-safe error detection ===
+// `DELETE /{page-id}/subscribed_apps` (app access token) fails *permanently*
+// when the page-side link is already gone; retrying can never succeed, so the
+// local teardown must proceed. Transient failures (rate limits, 5xx, network)
+// are deliberately excluded so the operator retries them instead of tearing
+// down on a failure that would have succeeded a minute later.
+//
+// Sources: developers.facebook.com/docs/graph-api/guides/error-handling and
+// developers.facebook.com/docs/graph-api/reference/page/subscribed_apps.
+
+// Page (or page ID) no longer resolvable from the app's point of view.
+const PAGE_GONE_CODES = new Set([
+  803, // Some of the aliases you requested do not exist
+])
+
+// Code 100 is the generic "Invalid parameter"; only these variants mean "gone".
+const PAGE_GONE_SUBCODES_FOR_CODE_100 = new Set([
+  33, // Object does not exist / cannot be loaded due to missing permissions
+])
+
+// "(#100) App is not installed: <pageId>" — the page admin already removed the
+// app. Meta emits this with no error_subcode, so the message is the only key.
+const APP_NOT_INSTALLED_PATTERN = /app is not installed/i
+
+// The app lost its standing on the page; only a reconnect can restore it, so
+// the unsubscribe is knowingly abandoned: if Meta still holds a subscription
+// it stays there, and the warn log at the call site is the audit trail. That
+// trade is the point — the alternative is an integration the operator can
+// never delete. Meta's transient policy blocks (341, 368) are deliberately
+// NOT here: those clear on their own, so the operator should retry.
+const PERMISSION_LOST_CODES = new Set([
+  10, // Permission denied
+  200, // Permissions error
+  210, // User not visible
+])
+
+const INVALID_PARAMETER_CODE = 100
+
+/**
+ * True when the remote unsubscribe can never succeed by retrying, so the
+ * caller should drop the local integration anyway. Covers a revoked page
+ * token, an already-uninstalled app, a deleted/unreachable page, and lost
+ * page permissions. Everything else (transient, unknown, non-Messenger)
+ * returns false and must surface to the user.
+ */
+export function isDisconnectSafeError(error: unknown): boolean {
+  if (!(error instanceof MessengerException)) {
+    return false
+  }
+
+  if (isRevokedTokenError(error)) {
+    return true
+  }
+
+  const code = typeof error.code === "number" ? error.code : undefined
+  if (code === undefined) {
+    return false
+  }
+
+  if (PAGE_GONE_CODES.has(code) || PERMISSION_LOST_CODES.has(code)) {
+    return true
+  }
+
+  if (code !== INVALID_PARAMETER_CODE) {
+    return false
+  }
+
+  const subCode =
+    error.subCode === null || error.subCode === undefined
+      ? undefined
+      : Number(error.subCode)
+  if (subCode !== undefined && PAGE_GONE_SUBCODES_FOR_CODE_100.has(subCode)) {
+    return true
+  }
+
+  return APP_NOT_INSTALLED_PATTERN.test(error.message)
+}
+
 export function mapToChannelError(rawError: unknown): ChannelError {
   if (rawError instanceof ChannelError) {
     return rawError

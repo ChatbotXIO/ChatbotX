@@ -71,12 +71,22 @@ vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserId: mockGetCurrentUserId,
 }))
 
-vi.mock("@/lib/facebook-pending-auth", () => ({
-  encryptAuth: mockEncryptAuth,
-  FB_MESSENGER_PENDING_AUTH_COOKIE: "fb_messenger_pending_auth",
-  FB_PENDING_AUTH_MAX_AGE: 600,
-}))
+vi.mock("@/lib/facebook-pending-auth", async (importOriginal) => {
+  // The real `pendingAuthCookieOptions` — these tests assert the set site
+  // passes the helper's own value through, not a copy that could drift from
+  // it (the cookie's `path` is what makes the connect routes reachable).
+  const actual =
+    await importOriginal<typeof import("@/lib/facebook-pending-auth")>()
 
+  return {
+    encryptAuth: mockEncryptAuth,
+    FB_MESSENGER_PENDING_AUTH_COOKIE: "fb_messenger_pending_auth",
+    FB_PENDING_AUTH_MAX_AGE: 600,
+    // The real writer: these tests assert what actually reaches the cookie
+    // store, including the expiry of the picker-scoped predecessor.
+    writePendingAuth: actual.writePendingAuth,
+  }
+})
 vi.mock("@/features/integration-messenger/libs/oauth", () => ({
   buildMessengerReferer: mockBuildMessengerReferer,
   generateMessengerRedirectUri: mockGenerateMessengerRedirectUri,
@@ -150,7 +160,9 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     expect(mockCookieSet).toHaveBeenCalledWith(
       "fb_messenger_pending_auth",
       "encrypted-token",
-      expect.objectContaining({ path: "/channels/messenger/select" }),
+      // The connect route reads this cookie, so it must not be scoped to the
+      // picker page (see `pendingAuthCookieOptions`).
+      expect.objectContaining({ path: "/", httpOnly: true, sameSite: "lax" }),
     )
     expect(mockGenerateMessengerRedirectUri).not.toHaveBeenCalled()
   })
@@ -173,6 +185,26 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     expect(mockEncryptAuth).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "ws-new" }),
     )
+  })
+
+  test("redirects to /channels/create?error=… instead of 500 when the first workspace hits the plan limit", async () => {
+    const { workspaceLimitReachedException } = await import(
+      "@chatbotx.io/business/errors"
+    )
+    mockTryReuseFacebookSsoToken.mockResolvedValue({
+      reusable: true,
+      userToken: "long-lived-user-token",
+      userId: "fb-1",
+      userName: "Jane Doe",
+      userAvatarUrl: "https://example.com/a.png",
+    })
+    mockWorkspaceCreate.mockRejectedValueOnce(workspaceLimitReachedException())
+
+    await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
+      "redirect:/channels/create?error=workspaceLimitReached",
+    )
+
+    expect(mockCookieSet).not.toHaveBeenCalled()
   })
 
   test("falls back to the full OAuth redirect when there is no reusable token", async () => {

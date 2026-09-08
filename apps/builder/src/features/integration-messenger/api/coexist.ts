@@ -1,29 +1,10 @@
 import { coexistService } from "@chatbotx.io/business"
-import { z } from "zod"
+import {
+  setCoexistRequestSchema,
+  setCoexistResponseSchema,
+} from "@/features/channel-connect/schema/coexist"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-
-const setCoexistMessengerRequest = z.object({
-  workspaceId: z.string(),
-  integrationId: z.string(),
-  enabled: z.boolean(),
-  aiReadsSyncedHistory: z.boolean().optional().default(false),
-})
-export type SetCoexistMessengerRequest = z.infer<
-  typeof setCoexistMessengerRequest
->
-
-const setCoexistMessengerResponse = z.discriminatedUnion("success", [
-  z.object({ success: z.literal(true) }),
-  z.object({
-    success: z.literal(false),
-    reason: z.string().optional(),
-    msg: z.string().optional(),
-  }),
-])
-export type SetCoexistMessengerResponse = z.infer<
-  typeof setCoexistMessengerResponse
->
 
 export const integrationMessengerCoexistAPIs = {
   setCoexistMessengerAPI: authorizedAPI
@@ -33,8 +14,8 @@ export const integrationMessengerCoexistAPIs = {
       summary: "Enable or disable Messenger coexist sync",
       tags: ["Integrations"],
     })
-    .input(setCoexistMessengerRequest)
-    .output(setCoexistMessengerResponse)
+    .input(setCoexistRequestSchema)
+    .output(setCoexistResponseSchema)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { workspaceId, integrationId, enabled, aiReadsSyncedHistory } =

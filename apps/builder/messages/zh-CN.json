@@ -848,6 +848,58 @@
       "cta": "重新连接",
       "description": "以下频道未能自动刷新其访问权杖。请重新连接，以持续收发消息。",
       "title": "紧急"
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "正在开始同步历史记录…",
+        "done": "已开始同步历史记录",
+        "failed": "历史记录同步失败"
+      },
+      "selectAll": "全选",
+      "selected": "已选择 {count}/{max}",
+      "dialogTitleRunning": "正在连接 {count} 个{feature}…",
+      "dialogTitleDone": "已连接 {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "已完成 {done}/{total}",
+      "status": {
+        "waiting": "等待中",
+        "connecting": "连接中…",
+        "connected": "已连接",
+        "duplicated": "已连接过",
+        "limitReached": "已达上限",
+        "failed": "失败",
+        "timedOut": "已超时",
+        "cancelled": "已取消"
+      },
+      "reason": {
+        "notSelectable": "该项目无法选择。",
+        "channelLimit": "已达渠道上限。",
+        "workspaceLimit": "已达工作区上限。",
+        "providerRejected": "服务提供方拒绝了此请求。",
+        "unknown": "出现问题。",
+        "followUpFailed": "设置未完成——请在渠道设置中完成。"
+      },
+      "sessionError": {
+        "sessionExpired": "您的会话已过期，请重新连接。",
+        "notMember": "您已不再是该工作区的成员。",
+        "trialExpired": "您的试用期已结束。",
+        "macLimitReached": "您已达到账户上限。",
+        "credentialMissing": "凭据缺失，请重新连接。"
+      },
+      "cancelRemaining": "取消其余项",
+      "retryFailed": "重试（{count}）",
+      "retry": "重试",
+      "goToChannels": "前往渠道",
+      "close": "关闭",
+      "leaveNotice": "您可以离开此页面，已连接的账号将保留",
+      "stepConnecting": "连接中",
+      "stepCoexist": "同步历史记录",
+      "validation": {
+        "min": "至少选择 1 个",
+        "max": "最多可选择 {max} 个",
+        "duplicate": "选择重复"
+      },
+      "progressLabel": "进度"
     }
   },
   "claude": {
@@ -863,11 +915,11 @@
   },
   "coexist": {
     "billingNote": "大页面可能需要几个小时才能完成。",
-    "decline": "不同步",
     "descriptionInstagram": "激活后，将从该 Instagram 帐户导入现有的 Instagram 联系人和最多 3 个月的对话记录。",
+    "enable": "激活同步",
+    "decline": "不同步",
     "descriptionMessenger": "激活后，将从该页面导入现有的 Messenger 联系人和最多 3 个月的对话历史记录。",
     "descriptionWhatsapp": "激活后，将从该WhatsApp号码导入联系人和最多 6 个月的聊天记录。",
-    "enable": "激活同步",
     "errors": {
       "alreadyTriggered": "此号码已触发同步。请等待Meta发送历史数据。",
       "notEligible": "此号码不符合历史同步条件。",
@@ -3242,6 +3294,12 @@
     "tabs": {
       "generalSettings": "常规设置",
       "conversionsApi": "广告优化"
+    },
+    "selectPage": {
+      "noAccountsTitle": "未找到 Instagram 账户",
+      "noAccountsDescription": "在您管理的 Facebook 主页中未找到 Instagram 商业账户。请重新连接 Instagram 并授予所有请求的权限。",
+      "alreadyConnectedNote": "该账户已连接",
+      "tryAgain": "尝试重新连接"
     }
   },
   "instagramCommentAutomation": {
@@ -3711,7 +3769,6 @@
     "personasDescription": "此设置可让您为机器人设置不同的名称和影像",
     "reconnect": "重新连接",
     "reconnectDescription": "请务必重新连接您的机器人。",
-    "selectFacebookPage": "选择Facebook 页",
     "selectPage": {
       "alreadyConnectedNote": "该页面已连接",
       "bmLookupFailedDescription": "重新连接Messenger 并授予商务管理平台访问权限，以便可以列出通过商务管理平台管理的页面。",
@@ -4865,14 +4922,7 @@
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "必须提供 WhatsApp Access Token。",
         "appSettingsNotFound": "WhatsApp应用程序设置。",
-        "failedToPersistIntegration": "无法保存WhatsApp 集成。",
-        "noPhoneNumberFound": "找不到 WhatsApp 电话号码。",
-        "noPhoneNumbersFound": "找不到此 WhatsApp 企业帐户的电话号码。",
-        "phoneNumberNotFound": "所选WhatsApp 电话号码找不到。",
-        "unableToVerifyToken": "无法验证WhatsApp 权杖。",
-        "wabaMismatch": "所选WhatsApp 企业帐户与授权不符。",
         "wabaResolveFailed": "无法从授权解析WhatsApp 企业帐号。"
       }
     },
@@ -4893,7 +4943,8 @@
       "qrCodeHint": "扫描 QR Code 以打开 webhook URL",
       "title": "您的 WhatsApp 收件匣已准备好！",
       "verifyToken": "Webhook 验证权杖",
-      "webhookUrl": "Webhook URL"
+      "webhookUrl": "Webhook URL",
+      "multipleTitle": "您的 WhatsApp 收件箱已就绪！"
     },
     "marketingMessageLite": "行销消息 Lite",
     "messageTemplate": {
@@ -4965,7 +5016,8 @@
       "actions": {
         "resendIn": "在 {seconds} 内重新发送",
         "sendCode": "发送代码",
-        "verify": "验证并注册"
+        "verify": "注册",
+        "skip": "跳过"
       },
       "description": "向Meta要求验证码，在此输入验证码，电话号码将自动注册。",
       "errorTitle": "需要电话号码验证",
@@ -4990,7 +5042,8 @@
         "sms": "短信",
         "voice": "语音通话"
       },
-      "title": "验证WhatsApp电话号码"
+      "title": "验证WhatsApp电话号码",
+      "queueProgress": "正在验证 {current}/{total}"
     },
     "reconnect": {
       "errors": {
@@ -5014,7 +5067,6 @@
     "showHeader": {
       "label": "显示标题"
     },
-    "signupSessionExpired": "您的WhatsApp注册会话已过期。请重新开始连接。",
     "tabs": {
       "accountHealths": "帐户健康状况",
       "automation": "自动化",
@@ -5038,6 +5090,9 @@
         "title": "Automatic Events",
         "description": "自动将此 WhatsApp 号码的转化事件发送到 Meta。如果缺少权限,请重新连接账户以授予权限。"
       }
+    },
+    "selectPage": {
+      "tryAgain": "尝试重新连接"
     }
   },
   "workspace": {

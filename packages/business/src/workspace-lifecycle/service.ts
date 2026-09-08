@@ -9,6 +9,10 @@ import {
 } from "@chatbotx.io/database/client"
 import { channelTypes, ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
 import {
+  LIVE_RUN_STATUSES,
+  PULL_CLAIMABLE_STATUSES,
+} from "@chatbotx.io/database/repositories"
+import {
   attachmentModel,
   coexistSyncRunModel,
   integrationInstagramModel,
@@ -490,7 +494,7 @@ class WorkspaceLifecycleService extends BaseService {
                   coexistSyncRunModel.integrationId,
                   inbox.integrationMessenger.id,
                 ),
-                inArray(coexistSyncRunModel.status, ["init", "running"]),
+                inArray(coexistSyncRunModel.status, PULL_CLAIMABLE_STATUSES),
               ),
             )
           await tx
@@ -528,7 +532,11 @@ class WorkspaceLifecycleService extends BaseService {
                   coexistSyncRunModel.integrationId,
                   inbox.integrationWhatsapp.id,
                 ),
-                inArray(coexistSyncRunModel.status, ["init", "running"]),
+                // `waiting` included: a WhatsApp coexist run parked waiting for
+                // more Meta history must be torn down with its integration.
+                // The list comes from the repository constant so it can never
+                // drift from the one the flush and recovery passes use.
+                inArray(coexistSyncRunModel.status, LIVE_RUN_STATUSES),
               ),
             )
           await tx

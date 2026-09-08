@@ -13,7 +13,7 @@ import {
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
 import {
-  isRevokedTokenError,
+  isDisconnectSafeError,
   type MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger"
 import { subscribePageToAppWebhook } from "@chatbotx.io/integration-messenger/apis/page"
@@ -65,9 +65,19 @@ export const disconnectMessenger = async (ctx: {
     try {
       await integrations.messenger.disconnect(authValue)
     } catch (error) {
-      if (!isRevokedTokenError(error)) {
+      // Only non-retryable Graph errors (app already uninstalled, page gone,
+      // token revoked, permissions lost) may skip the remote unsubscribe.
+      // Transient failures still surface so the user retries.
+      if (!isDisconnectSafeError(error)) {
         throw error
       }
+      logger.warn(
+        {
+          err: error instanceof Error ? error.message : String(error),
+          pageId: authValue.metadata.pageId,
+        },
+        "Messenger page unsubscribe failed with a non-retryable Graph error — proceeding with local disconnect",
+      )
     }
   }
 

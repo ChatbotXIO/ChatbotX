@@ -12,7 +12,20 @@
  * The probe is the generator itself, so there are no false positives: when the
  * chain is in sync drizzle-kit writes nothing at all. Any folder it does write
  * is the drift, and is removed again before exiting so the check never mutates
- * the repository.
+ * the repository. `drizzle-kit generate` has to write into the real `drizzle/`
+ * (it diffs against the chain that lives there), so the probe folder is removed
+ * on the way out AND on SIGINT/SIGTERM, a leftover one from an earlier crash is
+ * swept before the run, and `run-migrations.mjs` refuses to apply anything with
+ * this name — an interrupted check must never turn into an applied migration.
+ *
+ * What this does NOT catch: a `.default()` the generator itself drops. drizzle-
+ * kit serializes `jsonb().default(sql`[]`)` as an empty default, so the schema,
+ * the snapshot and the database all agree that the column has none while
+ * `$inferInsert` still marks it optional. That mismatch is pinned from the
+ * database side by `__tests__/integration/schema-default-parity.test.ts`.
+ *
+ * Needs no database connection — it is wired into `pnpm lint` via this
+ * package's `lint` script.
  *
  * Usage: node ./scripts/check-schema-drift.mjs
  * Exit codes: 0 = in sync | 1 = drift detected | 2 = script error
@@ -25,6 +38,7 @@ import { fileURLToPath } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DRIZZLE_DIR = join(__dirname, "../drizzle")
+// Shared with `run-migrations.mjs`, which aborts on any folder carrying it.
 const PROBE_NAME = "schema_drift_probe"
 
 const listMigrationFolders = () =>
@@ -33,6 +47,25 @@ const listMigrationFolders = () =>
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name),
   )
+
+const removeProbeFolders = () => {
+  for (const folder of listMigrationFolders()) {
+    if (folder.endsWith(`_${PROBE_NAME}`)) {
+      rmSync(join(DRIZZLE_DIR, folder), { recursive: true, force: true })
+    }
+  }
+}
+
+// Sweep anything a previously killed run left behind, then make sure this run
+// cannot leave its own: spawnSync blocks the loop, so a signal that arrives
+// during generation is delivered here as soon as it returns.
+removeProbeFolders()
+for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+  process.on(signal, () => {
+    removeProbeFolders()
+    process.exit(2)
+  })
+}
 
 const before = listMigrationFolders()
 
@@ -46,8 +79,12 @@ if (result.error) {
   process.exit(2)
 }
 
+// Only THIS run's probe output is ours to delete: the folder name drizzle-kit
+// gives it ends with the probe marker. A migration another command writes
+// concurrently (e.g. `make:migration`) is left untouched even though it also
+// appeared during the run.
 const created = [...listMigrationFolders()].filter(
-  (folder) => !before.has(folder),
+  (folder) => !before.has(folder) && folder.endsWith(`_${PROBE_NAME}`),
 )
 
 // Always clean up before reporting, so a failing check never leaves a stray

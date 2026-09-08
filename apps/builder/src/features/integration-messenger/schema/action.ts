@@ -7,12 +7,8 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 
 export const selectPageRequest = z.object({
-  workspaceId: z.string().nullish(),
-  pageId: z.string(),
-  pageName: z.string(),
-  accessToken: z.string(),
+  pageId: z.string().min(1),
 })
-export type SelectPageRequest = z.infer<typeof selectPageRequest>
 
 export const updateMessengerRequest = z.object({
   welcomeFlowId: zodBigintAsString().nullable(),

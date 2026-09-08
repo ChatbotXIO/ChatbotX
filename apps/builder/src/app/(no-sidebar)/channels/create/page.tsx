@@ -17,6 +17,10 @@ import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permiss
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
+import {
+  CREATE_CHANNEL_ERROR_MESSAGE_KEYS,
+  isCreateChannelErrorCode,
+} from "@/lib/workspace/create-first-workspace"
 
 export const dynamic = "force-dynamic"
 
@@ -24,6 +28,8 @@ type CreateChannelPageProps = {
   searchParams: Promise<{
     channel?: string | null
     workspaceId?: string | null
+    /** Set by the OAuth callback / SSO-reuse route when the first-channel workspace could not be created (plan limit). */
+    error?: string | null
   }>
 }
 
@@ -163,26 +169,28 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     redirect(redirectUri)
   }
 
-  const configuredChannels: ChannelType[] = []
-  if (whatsapp) {
-    configuredChannels.push("whatsapp")
-  }
-  if (messenger) {
-    configuredChannels.push("messenger")
-  }
-  if (instagram) {
-    configuredChannels.push("instagram")
-  }
-  if (zalo) {
-    configuredChannels.push("zalo")
-  }
-  if (tiktok) {
-    configuredChannels.push("tiktok")
-  }
+  // `instagramFacebook` is deliberately absent: it is a login flavor of the
+  // `instagram` channel, never a channel of its own.
+  const configuredChannels: ChannelType[] = (
+    [
+      ["whatsapp", whatsapp],
+      ["messenger", messenger],
+      ["instagram", instagram],
+      ["zalo", zalo],
+      ["tiktok", tiktok],
+    ] as const
+  )
+    .filter(([, credential]) => Boolean(credential))
+    .map(([channel]) => channel)
+
+  const errorMessageKey = isCreateChannelErrorCode(searchParams.error)
+    ? CREATE_CHANNEL_ERROR_MESSAGE_KEYS[searchParams.error]
+    : undefined
 
   return (
     <InboxSelectCard
       configuredChannels={configuredChannels}
+      errorMessageKey={errorMessageKey}
       offeredChannels={visibleChannels}
     />
   )

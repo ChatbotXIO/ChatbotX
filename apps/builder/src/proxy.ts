@@ -7,30 +7,9 @@ import { getSessionCookie } from "better-auth/cookies"
 import { headers } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
+import { isPublicRoute } from "@/lib/public-routes"
 import { httpLogger } from "./lib/log"
 
-const publicRoutes = [
-  "/integrations",
-  "/r",
-  "/l",
-  "/dynamic-images",
-  "/minigames",
-  "/auth",
-  "/api",
-  "/ws",
-  "/storage",
-  "/checkout",
-  "/unsubscribe",
-  "/email-topic",
-  "/extensions",
-  "/booking",
-  "/portal/redeem",
-  "/webchat",
-  // Trailing slash is deliberate: `isPublicRoute` below is a bare
-  // unanchored `startsWith`, so "/t" (no slash) would also match
-  // "/templates" and make the authenticated template list world-readable.
-  "/t/",
-]
 const signinPath = "/auth/sign-in"
 
 async function _logRequest(request: NextRequest) {
@@ -110,15 +89,6 @@ function buildSigninUrl(
     `${publicOrigin}${pathname}${search}`,
   )
   return signinUrl
-}
-
-function isPublicRoute(pathname: string) {
-  for (const route of publicRoutes) {
-    if (pathname.startsWith(route)) {
-      return true
-    }
-  }
-  return false
 }
 
 export const config = {

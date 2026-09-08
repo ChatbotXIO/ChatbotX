@@ -18,7 +18,7 @@ const {
   findWabaMock,
   findWorkspaceIntegrationMock,
   getCurrentUserAndTargetWorkspaceMock,
-  getSharedWabaIdMock,
+  resolveOwningWabaIdMock,
   hasWhatsappCapiScopeMock,
   listPhoneNumbersMock,
   platformCredentialResolveMock,
@@ -29,7 +29,7 @@ const {
   findWabaMock: vi.fn(),
   findWorkspaceIntegrationMock: vi.fn(),
   getCurrentUserAndTargetWorkspaceMock: vi.fn(),
-  getSharedWabaIdMock: vi.fn(),
+  resolveOwningWabaIdMock: vi.fn(),
   hasWhatsappCapiScopeMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
   platformCredentialResolveMock: vi.fn(),
@@ -78,8 +78,13 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
+  appAccessToken: (settings: { clientId: string; clientSecret: string }) =>
+    `${settings.clientId}|${settings.clientSecret}`,
   exchangeAccessToken: exchangeAccessTokenMock,
-  getSharedWabaId: getSharedWabaIdMock,
+}))
+
+vi.mock("@chatbotx.io/integration-whatsapp/api/waba-owner", () => ({
+  resolveOwningWabaId: resolveOwningWabaIdMock,
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/phone-number", () => ({
@@ -131,7 +136,7 @@ describe("reconnectWhatsappAction", () => {
         },
       },
     })
-    getSharedWabaIdMock.mockResolvedValue("waba-1")
+    resolveOwningWabaIdMock.mockResolvedValue("waba-1")
     hasWhatsappCapiScopeMock.mockResolvedValue(true)
     listPhoneNumbersMock.mockResolvedValue({
       data: [
@@ -145,6 +150,8 @@ describe("reconnectWhatsappAction", () => {
       config: {
         clientId: "client-1",
         clientSecret: "secret-1",
+        systemUserId: "system-user-1",
+        systemUserToken: "system-token-1",
         verifyToken: "verify-token-1",
         version: "v23.0",
       },
@@ -197,5 +204,21 @@ describe("reconnectWhatsappAction", () => {
       }),
       includeAutomaticEvents: true,
     })
+  })
+
+  test("hints the WABA resolver with the number this integration already owns", async () => {
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(resolveOwningWabaIdMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phoneNumberIds: ["phone-number-1"],
+        systemUserToken: "system-token-1",
+        systemUserId: "system-user-1",
+      }),
+    )
   })
 })

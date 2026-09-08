@@ -6,8 +6,7 @@ const { repositoryMock, encryptTextMock, decryptTextMock, loggerWarnMock } =
   vi.hoisted(() => ({
     repositoryMock: {
       createSignupSession: vi.fn(),
-      consumeSignupSession: vi.fn(),
-      findActiveSignupSession: vi.fn(),
+      findActiveSignupSessionForUser: vi.fn(),
       findConnectedPhoneNumberIds: vi.fn(),
       findByIdForWorkspace: vi.fn(),
       listByWorkspaceId: vi.fn(),
@@ -28,6 +27,12 @@ const { repositoryMock, encryptTextMock, decryptTextMock, loggerWarnMock } =
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationWhatsappRepository: repositoryMock,
+  // createSignupSession / findActiveSignupSessionForUser /
+  // purgeFinishedSignupSessions now live on whatsappSignupSessionRepository
+  // (the facade on integrationWhatsappRepository was removed); this suite
+  // only asserts on repositoryMock's method calls, not which binding the
+  // service imported them through, so sharing one mock object is enough.
+  whatsappSignupSessionRepository: repositoryMock,
 }))
 
 vi.mock("../src/logger", () => ({
@@ -610,47 +615,43 @@ describe("integrationWhatsappService signup sessions", () => {
     )
   })
 
-  test("decrypts access token after atomically consuming a session", async () => {
+  test("decrypts access token after reading an active session", async () => {
     const encryptedAccessToken = {
       v: 1,
       iv: "0".repeat(24),
       text: "ciphertext",
       tag: "1".repeat(32),
     }
-    repositoryMock.consumeSignupSession.mockResolvedValue({
+    repositoryMock.findActiveSignupSessionForUser.mockResolvedValue({
       id: "session-1",
       encryptedAccessToken,
     })
     decryptTextMock.mockResolvedValue("plain-token")
 
-    const result = await integrationWhatsappService.consumeSignupSession({
-      id: "session-1",
-      userId: "user-1",
-      ownerId: "owner-1",
-      phoneNumberId: "phone-1",
-    })
+    const result =
+      await integrationWhatsappService.findActiveSignupSessionForUser({
+        id: "session-1",
+        userId: "user-1",
+      })
 
     expect(result).toMatchObject({
       id: "session-1",
       accessToken: "plain-token",
     })
-    expect(repositoryMock.consumeSignupSession).toHaveBeenCalledWith({
+    expect(repositoryMock.findActiveSignupSessionForUser).toHaveBeenCalledWith({
       id: "session-1",
       userId: "user-1",
-      ownerId: "owner-1",
-      phoneNumberId: "phone-1",
     })
   })
 
-  test("returns null when the repository cannot consume the session", async () => {
-    repositoryMock.consumeSignupSession.mockResolvedValue(null)
+  test("returns null when the repository finds no active session", async () => {
+    repositoryMock.findActiveSignupSessionForUser.mockResolvedValue(null)
 
-    const result = await integrationWhatsappService.consumeSignupSession({
-      id: "session-1",
-      userId: "user-1",
-      ownerId: "owner-1",
-      phoneNumberId: "phone-1",
-    })
+    const result =
+      await integrationWhatsappService.findActiveSignupSessionForUser({
+        id: "session-1",
+        userId: "user-1",
+      })
 
     expect(result).toBeNull()
     expect(decryptTextMock).not.toHaveBeenCalled()

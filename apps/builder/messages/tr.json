@@ -716,6 +716,58 @@
       "button": "Tüm izinleri yenile",
       "resultSuccess": "{refreshed} kanal yenilendi.",
       "resultWithFailures": "{refreshed} kanal yenilendi, {failed} başarısız oldu."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Geçmiş senkronizasyonu başlatılıyor…",
+        "done": "Geçmiş senkronizasyonu başlatıldı",
+        "failed": "Geçmiş senkronizasyonu başarısız oldu"
+      },
+      "selectAll": "Tümünü seç",
+      "selected": "{count}/{max} seçildi",
+      "dialogTitleRunning": "{count} {feature} bağlanıyor…",
+      "dialogTitleDone": "{total} üzerinden {connected} bağlandı",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{total} üzerinden {done} tamamlandı",
+      "status": {
+        "waiting": "Bekliyor",
+        "connecting": "Bağlanıyor…",
+        "connected": "Bağlandı",
+        "duplicated": "Zaten bağlı",
+        "limitReached": "Sınıra ulaşıldı",
+        "failed": "Başarısız oldu",
+        "timedOut": "Zaman aşımına uğradı",
+        "cancelled": "İptal edildi"
+      },
+      "reason": {
+        "notSelectable": "Bu öğe seçilemez.",
+        "channelLimit": "Kanal sınırına ulaşıldı.",
+        "workspaceLimit": "Çalışma alanı sınırına ulaşıldı.",
+        "providerRejected": "Sağlayıcı bu isteği reddetti.",
+        "unknown": "Bir şeyler ters gitti.",
+        "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın."
+      },
+      "sessionError": {
+        "sessionExpired": "Oturumunuzun süresi doldu. Lütfen yeniden bağlanın.",
+        "notMember": "Artık bu çalışma alanının üyesi değilsiniz.",
+        "trialExpired": "Deneme süreniz doldu.",
+        "macLimitReached": "Hesap sınırınıza ulaştınız.",
+        "credentialMissing": "Kimlik bilgileri eksik. Lütfen yeniden bağlanın."
+      },
+      "cancelRemaining": "Kalanları iptal et",
+      "retryFailed": "Yeniden dene ({count})",
+      "retry": "Yeniden dene",
+      "goToChannels": "Kanallara git",
+      "close": "Kapat",
+      "leaveNotice": "Sayfadan ayrılabilirsiniz; bağlanan hesaplar korunur",
+      "stepConnecting": "Bağlanıyor",
+      "stepCoexist": "Geçmişi senkronize et",
+      "validation": {
+        "min": "En az 1 tane seçin",
+        "max": "En fazla {max} tane seçebilirsiniz",
+        "duplicate": "Yinelenen seçim"
+      },
+      "progressLabel": "İlerleme"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Genel Ayarlar",
       "conversionsApi": "Reklam Optimizasyonu"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Instagram hesabı bulunamadı",
+      "noAccountsDescription": "Yönettiğiniz Facebook Sayfalarında Instagram İşletme hesabı bulunamadı. Instagram'ı yeniden bağlayın ve istenen tüm izinleri verin.",
+      "alreadyConnectedNote": "Bu hesap zaten bağlı",
+      "tryAgain": "Yeniden bağlanmayı dene"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Varsayılan Persona",
     "reconnect": "Yeniden Bağlan",
     "reconnectDescription": "Messenger botunuz yanıt vermiyorsa veya hata günlüğünde herhangi bir izin hatası görüyorsanız botunuzu her zaman yeniden bağlayın.",
-    "selectFacebookPage": "Facebook Sayfası Seç",
     "selectPage": {
       "noPagesTitle": "Facebook Sayfası bulunamadı",
       "noPagesDescription": "Bir İşletme Yöneticisi içindeki sayfalar, bağlantı sırasında İşletme Yöneticisi erişimi gerektirir. Messenger'ı yeniden bağlayın ve istenen tüm izinleri verin.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Webhook doğrulama token'ı",
       "qrCodeHint": "Webhook URL'sini açmak için QR kodu tarayın",
       "moreSettings": "Daha fazla ayar",
-      "goToInbox": "Beni oraya götür"
+      "goToInbox": "Beni oraya götür",
+      "multipleTitle": "WhatsApp gelen kutularınız hazır!"
     },
     "phoneVerification": {
       "title": "WhatsApp telefon numarasını doğrula",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Kodu gönder",
         "resendIn": "{seconds}sn içinde yeniden gönder",
-        "verify": "Doğrula ve kaydet"
+        "verify": "Kaydet",
+        "skip": "Atla"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "WhatsApp doğrulama kodu gönderilemedi.",
         "codeNotVerified": "WhatsApp doğrulama kodu doğrulanamadı.",
         "registrationFailed": "WhatsApp telefon numarası doğrulaması başarısız oldu."
-      }
+      },
+      "queueProgress": "{total} üzerinden {current} doğrulanıyor"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "WhatsApp erişim token'ı gereklidir.",
         "appSettingsNotFound": "WhatsApp uygulama ayarları bulunamadı.",
-        "failedToPersistIntegration": "WhatsApp entegrasyonu kaydedilemedi.",
-        "noPhoneNumberFound": "WhatsApp telefon numarası bulunamadı.",
-        "noPhoneNumbersFound": "Bu WhatsApp Business Hesabı için telefon numarası bulunamadı.",
-        "phoneNumberNotFound": "Seçilen WhatsApp telefon numarası bulunamadı.",
-        "unableToVerifyToken": "WhatsApp token'ı doğrulanamıyor.",
-        "wabaMismatch": "Seçilen WhatsApp Business Hesabı yetkilendirmeyle eşleşmiyor.",
         "wabaResolveFailed": "Yetkilendirmeden WhatsApp Business Hesabı çözümlenemedi."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Şablon Üst Bilgisi"
     },
     "transferPhoneNumber": "Telefonu başka bir WhatsApp sağlayıcısından aktar",
-    "signupSessionExpired": "WhatsApp kayıt oturumunuzun süresi doldu. Lütfen bağlantıyı yeniden başlatın.",
     "capi": {
       "automaticEvents": {
         "title": "Otomatik Olaylar",
         "description": "Bu WhatsApp numarasından dönüşüm etkinliklerini Meta’ya otomatik olarak gönderin. İzin eksikse, vermek için hesabı yeniden bağlayın."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Yeniden bağlanmayı dene"
     }
   },
   "zalo": {

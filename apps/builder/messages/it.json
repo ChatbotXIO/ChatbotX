@@ -2947,6 +2947,58 @@
       "button": "Aggiorna tutte le autorizzazioni",
       "resultSuccess": "Aggiornati {refreshed} canale/i.",
       "resultWithFailures": "Aggiornati {refreshed} canale/i, {failed} non riusciti."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Avvio della sincronizzazione della cronologia…",
+        "done": "Sincronizzazione della cronologia avviata",
+        "failed": "Sincronizzazione della cronologia non riuscita"
+      },
+      "selectAll": "Seleziona tutto",
+      "selected": "{count}/{max} selezionati",
+      "dialogTitleRunning": "Connessione di {count} {feature}…",
+      "dialogTitleDone": "Connessi {connected} su {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} su {total} completati",
+      "status": {
+        "waiting": "In attesa",
+        "connecting": "Connessione…",
+        "connected": "Connesso",
+        "duplicated": "Già connesso",
+        "limitReached": "Limite raggiunto",
+        "failed": "Non riuscito",
+        "timedOut": "Tempo scaduto",
+        "cancelled": "Annullato"
+      },
+      "reason": {
+        "notSelectable": "Questo elemento non può essere selezionato.",
+        "channelLimit": "Limite di canali raggiunto.",
+        "workspaceLimit": "Limite dello spazio di lavoro raggiunto.",
+        "providerRejected": "Il provider ha rifiutato questa richiesta.",
+        "unknown": "Qualcosa è andato storto.",
+        "followUpFailed": "Configurazione incompleta: completala dalle impostazioni del canale."
+      },
+      "sessionError": {
+        "sessionExpired": "La sessione è scaduta. Riconnettiti.",
+        "notMember": "Non sei più membro di questo spazio di lavoro.",
+        "trialExpired": "Il tuo periodo di prova è scaduto.",
+        "macLimitReached": "Hai raggiunto il limite del tuo account.",
+        "credentialMissing": "Credenziali mancanti. Riconnettiti."
+      },
+      "cancelRemaining": "Annulla i restanti",
+      "retryFailed": "Riprova ({count})",
+      "retry": "Riprova",
+      "goToChannels": "Vai ai canali",
+      "close": "Chiudi",
+      "leaveNotice": "Puoi uscire; gli account connessi verranno mantenuti",
+      "stepConnecting": "Connessione",
+      "stepCoexist": "Sincronizza cronologia",
+      "validation": {
+        "min": "Seleziona almeno 1",
+        "max": "Puoi selezionare fino a {max}",
+        "duplicate": "Selezione duplicata"
+      },
+      "progressLabel": "Avanzamento"
     }
   },
   "workspace": {
@@ -3139,6 +3191,12 @@
     "tabs": {
       "generalSettings": "Impostazioni generali",
       "conversionsApi": "Ottimizzazione annunci"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Nessun account Instagram trovato",
+      "noAccountsDescription": "Non è stato trovato alcun account aziendale Instagram sulle Pagine Facebook che gestisci. Ricollega Instagram e concedi tutte le autorizzazioni richieste.",
+      "alreadyConnectedNote": "Questo account è già collegato",
+      "tryAgain": "Prova a ricollegarti"
     }
   },
   "coexist": {
@@ -3184,7 +3242,6 @@
     "defaultPersona": "Profilo predefinito",
     "reconnect": "Ricollega",
     "reconnectDescription": "Ricollega sempre il bot se il bot Messenger non risponde o se nel registro degli errori compaiono errori relativi alle autorizzazioni.",
-    "selectFacebookPage": "Seleziona Pagina Facebook",
     "selectPage": {
       "noPagesTitle": "Nessuna Pagina Facebook trovata",
       "noPagesDescription": "Le Pagine in un Business Manager richiedono l'accesso a Business Manager durante la connessione. Ricollega Messenger e concedi tutte le autorizzazioni richieste.",
@@ -3449,7 +3506,8 @@
       "verifyToken": "Token di verifica del webhook",
       "qrCodeHint": "Scansiona il codice QR per aprire l'URL del webhook",
       "moreSettings": "Altre impostazioni",
-      "goToInbox": "Portami lì"
+      "goToInbox": "Portami lì",
+      "multipleTitle": "Le tue caselle WhatsApp sono pronte!"
     },
     "phoneVerification": {
       "title": "Verifica il numero di telefono WhatsApp",
@@ -3462,7 +3520,8 @@
       "actions": {
         "sendCode": "Invia codice",
         "resendIn": "Invia di nuovo tra {seconds}s",
-        "verify": "Verifica e registra"
+        "verify": "Registra",
+        "skip": "Salta"
       },
       "fields": {
         "code": {
@@ -3480,18 +3539,12 @@
         "codeNotSent": "Impossibile inviare il codice di verifica WhatsApp.",
         "codeNotVerified": "Impossibile verificare il codice di verifica WhatsApp.",
         "registrationFailed": "Verifica del numero di telefono WhatsApp non riuscita."
-      }
+      },
+      "queueProgress": "Verifica di {current} su {total}"
     },
     "connect": {
       "errors": {
-        "accessTokenRequired": "Il token di accesso WhatsApp è obbligatorio.",
         "appSettingsNotFound": "Le impostazioni dell'app WhatsApp non sono state trovate.",
-        "failedToPersistIntegration": "Impossibile salvare l'integrazione WhatsApp.",
-        "noPhoneNumberFound": "Non è stato trovato alcun numero di telefono WhatsApp.",
-        "noPhoneNumbersFound": "Non è stato trovato alcun numero di telefono per questo account WhatsApp Business.",
-        "phoneNumberNotFound": "Il numero di telefono WhatsApp selezionato non è stato trovato.",
-        "unableToVerifyToken": "Impossibile verificare il token WhatsApp.",
-        "wabaMismatch": "L'account WhatsApp Business selezionato non corrisponde all'autorizzazione.",
         "wabaResolveFailed": "Impossibile determinare l'account WhatsApp Business dall'autorizzazione."
       }
     },
@@ -3722,12 +3775,14 @@
       "label": "Intestazione del modello"
     },
     "transferPhoneNumber": "Trasferisci il numero di telefono da un altro provider WhatsApp",
-    "signupSessionExpired": "La sessione di registrazione a WhatsApp è scaduta. Avvia nuovamente la connessione.",
     "capi": {
       "automaticEvents": {
         "title": "Eventi automatici",
         "description": "Invia automaticamente gli eventi di conversione da questo numero WhatsApp a Meta. Se manca l’autorizzazione, ricollega l’account per concederla."
       }
+    },
+    "selectPage": {
+      "tryAgain": "Prova a ricollegarti"
     }
   },
   "zalo": {

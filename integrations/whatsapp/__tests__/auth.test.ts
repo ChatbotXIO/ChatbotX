@@ -11,7 +11,7 @@ vi.mock("ky", async () => {
   }
 })
 
-import { debugToken, getSharedWabaId } from "../src/api/auth"
+import { debugToken, getSharedWabaTargetIds } from "../src/api/auth"
 
 type KyGetOptions = {
   searchParams: {
@@ -45,7 +45,7 @@ describe("debugToken", () => {
     })
   })
 
-  it("resolves the WABA id from a token debugged by the app token", async () => {
+  it("returns every granted WABA target from a token debugged by the app token", async () => {
     getMock.mockReturnValueOnce(
       okResponse({
         data: {
@@ -55,17 +55,20 @@ describe("debugToken", () => {
           granular_scopes: [
             {
               scope: "whatsapp_business_management",
-              target_ids: ["waba-1"],
+              target_ids: ["waba-1", "waba-2"],
             },
           ],
         },
       }),
     )
 
-    const wabaId = await getSharedWabaId("user-token", "app-id|app-secret")
+    const targetIds = await getSharedWabaTargetIds(
+      "user-token",
+      "app-id|app-secret",
+    )
 
     const [, options] = getMock.mock.calls[0] as [string, KyGetOptions]
-    expect(wabaId).toBe("waba-1")
+    expect(targetIds).toEqual(["waba-1", "waba-2"])
     expect(options.searchParams).toMatchObject({
       input_token: "user-token",
       access_token: "app-id|app-secret",
