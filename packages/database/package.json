@@ -50,17 +50,18 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
-    "./types": "./src/types.ts",
-    "./keys": "./src/keys.ts",
     "./enums": "./src/enums.ts",
-    "./schema": "./src/schema/index.ts",
     "./errors": "./src/errors.ts",
-    "./utils": "./src/utils.ts",
+    "./keys": "./src/keys.ts",
     "./partials": "./src/partials/index.ts",
     "./queries": "./src/queries/index.ts",
     "./queries/contact-filter": "./src/queries/contact-filter/index.ts",
     "./queries/contact-filter/permission": "./src/queries/contact-filter/permission.ts",
     "./queries/contact-filter/value-format": "./src/queries/contact-filter/value-format.ts",
-    "./repositories": "./src/repositories/index.ts"
+    "./queries/date-bucket": "./src/queries/date-bucket.ts",
+    "./repositories": "./src/repositories/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./types": "./src/types.ts",
+    "./utils": "./src/utils.ts"
   }
 }

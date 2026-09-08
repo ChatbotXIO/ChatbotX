@@ -10,17 +10,23 @@ import { contactInboxModel } from "../schema"
 // type from `repositories/contact-inbox` — so hosting them there would close an
 // import cycle (`madge` flags it even though that one is type-only).
 
-const referral = contactInboxModel.referral
+// Every table reference below is dereferenced INSIDE a function, never at
+// module scope. `queries/index.ts` re-exports this file, so importing any
+// query pulls it in — and a suite that mocks `@chatbotx.io/database/schema`
+// narrowly (only the tables it needs) would crash on import if the column were
+// read eagerly. Same reasoning as `conflictTargetFactoryByChannel` in the
+// ads-conversion-event repository.
+const referral = () => contactInboxModel.referral
 
 /** `referral.adId` is set AND `referral.source` marks a PAID placement. */
 const paidAdReferral = (
   source: (typeof PAID_AD_REFERRAL_SOURCE)[keyof typeof PAID_AD_REFERRAL_SOURCE],
 ): SQL =>
-  sql`(${referral}->>'adId' IS NOT NULL AND ${referral}->>'source' = ${source})`
+  sql`(${referral()}->>'adId' IS NOT NULL AND ${referral()}->>'source' = ${source})`
 
 /** WhatsApp's click id, present on every CTWA click except Status placements. */
 const ctwaClickId = (): SQL =>
-  sql`(${referral}->>'ctwaClid' IS NOT NULL AND ${referral}->>'ctwaClid' <> '')`
+  sql`(${referral()}->>'ctwaClid' IS NOT NULL AND ${referral()}->>'ctwaClid' <> '')`
 
 type AdConversationPredicate = () => SQL
 
