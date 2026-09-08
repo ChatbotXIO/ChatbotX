@@ -1,3 +1,4 @@
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
   ContactModel,
@@ -23,6 +24,7 @@ import {
   type ContactProfileNameSource,
   type ContactProfileUpdate,
   hasEmptyProfileName,
+  hasOnDemandProfileApi,
   hasProfileName,
 } from "./rules"
 
@@ -38,7 +40,10 @@ export type ContactProfileFetcher = () => Promise<
 
 export type ContactProfileRefreshResult =
   | { status: "updated"; contact: ContactModel }
-  | { status: "skipped"; reason: "profileComplete" | "coolingDown" }
+  | {
+      status: "skipped"
+      reason: "profileComplete" | "coolingDown" | "channelNotCapable"
+    }
   | { status: "unavailable" } // fetched (or nullish), but no usable name → nothing written, cooldown started
   | { status: "failed" } // fetch/resolution error or write error → recorded, cooldown started, never thrown
 
@@ -312,10 +317,12 @@ export const applyContactProfileIfNameEmpty = async (
   )
 
 /**
- * Linear pipeline, each step returns early with a typed result. Channel
- * eligibility is decided by the caller from the capability table — this
- * function receives `source` and never inspects the channel name (it only
- * forwards `contactInbox.channel` as opaque data to the error logger).
+ * Linear pipeline, each step returns early with a typed result. Most channel
+ * eligibility is decided by the caller from the capability table (which
+ * `source` to fetch with) — the one exception is the `channelApi` on-demand
+ * capability gate below, checked here so both the builder's manual-refresh
+ * trigger and the worker's inbound `channelApi` fetch share one enforcement
+ * point instead of each re-deriving it from `contactInbox.channel`.
  */
 const refresh = async (
   input: RefreshContactProfileInput,
@@ -328,6 +335,13 @@ const refresh = async (
     accessScope,
     fetchProfile,
   } = input
+
+  if (
+    source === "channelApi" &&
+    !hasOnDemandProfileApi(contactInbox.channel as ChannelType)
+  ) {
+    return { status: "skipped", reason: "channelNotCapable" }
+  }
 
   const contact = await contactService.findByIdOrFail({
     workspaceId,

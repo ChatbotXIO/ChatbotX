@@ -21,7 +21,7 @@ features/<feature-name>/
     index.ts
     private.ts
     workspace-token.ts
-  queries/              → Server-side DB queries
+  queries/              → Request adapters over business services
     index.ts
   schema/               → Zod schemas
     query.ts            → List/filter params
@@ -38,6 +38,18 @@ features/<feature-name>/
 ```
 
 Not every feature needs all directories. Use what's appropriate.
+
+Never add a `server/` directory — it is not a recognized layout and every
+prior instance of one was a de-facto ad-hoc business layer with `db` access
+straight from `apps/builder`. Data access and side effects belong in
+`packages/business` (service), which may call `packages/database/src/repositories`
+(repository) itself; logic that only builder can see (e.g. it depends on
+`profileFetcherFactories` or another builder-only registry) goes in
+`features/<feature>/lib/*.ts` or `features/<feature>/queries/*.ts` instead,
+never `"use server"`.
+
+A `queries/*.ts` file is a **thin request adapter**, not a place to write
+business logic — see the "Queries (Server-Side)" section below.
 
 ## Page Pattern (Server Component)
 
@@ -146,14 +158,42 @@ export const createItemAction = workspaceActionClient
 
 ## Queries (Server-Side)
 
-**Rule:** Queries must NOT import `db` directly. Call a service from `@chatbotx.io/business` or a repository. See `.agents/rules/data-access.md`.
+**Rule:** The chain is `action | API handler → service → repository → DB`.
+Queries must NOT import `db` or `@chatbotx.io/database/schema` directly — call
+a service from `@chatbotx.io/business`. Neither module is importable from
+`apps/builder/src/features/*/queries/*.ts`. See `.agents/rules/data-access.md`
+for the full contract.
+
+A query file's job is narrow: turn session context into plain params, call
+the service, shape the response. It holds no where-builders, pagination, or
+count logic — that lives in the service (or the repository behind it).
+
+### No session context needed → skip the query file
+
+If a query would do nothing but forward its arguments to a service, don't
+write the file — call the service directly from the caller:
 
 ```typescript
-// queries/index.ts
-import { itemService } from "@chatbotx.io/business"
+// No query file needed — tagService.list needs nothing from the session.
+import { tagService } from "@chatbotx.io/business"
 
-export const listItems = async (params: ListItemsParams) => {
-  return itemService.list({ workspaceId: params.workspaceId })
+const { data } = await tagService.list({ workspaceId })
+```
+
+### Session context needed → a thin adapter
+
+```typescript
+// queries/get-contact.query.ts
+import { contactService } from "@chatbotx.io/business"
+import { requireContactPermissionScope } from "../permissions"
+
+export async function getContact(input: { workspaceId: string; id: string }) {
+  const accessScope = await requireContactPermissionScope(input.workspaceId)
+  return await contactService.findDetailOrFail({
+    workspaceId: input.workspaceId,
+    id: input.id,
+    accessScope,
+  })
 }
 
 // RSC wrapper with auth check
@@ -475,8 +515,11 @@ Wrap with React context provider (`provider/item-store-provider.tsx`).
 |------|------|
 | App internal | `@/features/<feature>/...`, `@/lib/...`, `@/components/...` |
 | Shared UI | `@chatbotx.io/ui/<component>` |
-| Database | `@chatbotx.io/database/client`, `@chatbotx.io/database/schema` |
+| Business services | `@chatbotx.io/business` — the only way to reach data from a feature |
 | Types | `@chatbotx.io/database/types` |
+
+`@chatbotx.io/database/client` and `@chatbotx.io/database/schema` are **not**
+importable from `apps/builder/src/features/*` — see `.agents/rules/data-access.md`.
 | oRPC client | `@/lib/orpc/orpc` |
 | oRPC stacks | `@/orpc` (for `authorizedAPI`, `workspaceTokenAuthAPIForScope`) |
 | Auth middleware | `@/middlewares/auth` |
@@ -698,11 +741,12 @@ import { integrationService, webhookService } from "@chatbotx.io/business"
 
 1. Create feature directory under `src/features/<name>/`
 2. Define Zod schemas in `schema/`
-3. Create DB queries in `queries/`
-4. Add server actions in `actions/` (if mutations needed)
-5. Create oRPC API in `api/` (if API access needed)
-6. Register router in `src/routers/index.ts` as a `lazy()` branch (see the orpc-api skill — every feature router there is lazy so the route handler stays small)
-7. Create page(s) under `src/app/space/[workspaceId]/...`
-8. Build UI components (server page → client table/form)
-9. **Add i18n translations** to `apps/builder/messages/en.json` — reuse `fields.*` for form labels, add feature-specific text under `<featureName>.*`
-10. **Verify no hardcoded strings** — all user-facing text uses `useTranslations()` + `t()`
+3. Add or extend the service method in `packages/business` first — the query/action file only adapts to it
+4. Create request adapters in `queries/` (only where session context needs adapting — see "Queries (Server-Side)" above)
+5. Add server actions in `actions/` (if mutations needed)
+6. Create oRPC API in `api/` (if API access needed)
+7. Register router in `src/routers/index.ts` as a `lazy()` branch (see the orpc-api skill — every feature router there is lazy so the route handler stays small)
+8. Create page(s) under `src/app/space/[workspaceId]/...`
+9. Build UI components (server page → client table/form)
+10. **Add i18n translations** to `apps/builder/messages/en.json` — reuse `fields.*` for form labels, add feature-specific text under `<featureName>.*`
+11. **Verify no hardcoded strings** — all user-facing text uses `useTranslations()` + `t()`

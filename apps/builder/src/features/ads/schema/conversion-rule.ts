@@ -5,7 +5,7 @@ import {
   removeAdsConversionRuleInput,
   toggleAdsConversionRuleInput,
   updateAdsConversionRuleInput,
-} from "@chatbotx.io/business"
+} from "@chatbotx.io/business/ads-conversion/schema"
 import { z } from "zod"
 
 export const createAdsConversionRuleRequest = createAdsConversionRuleInput.omit(

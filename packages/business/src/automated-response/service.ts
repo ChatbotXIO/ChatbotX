@@ -8,7 +8,10 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import {
+  automatedResponseFolderTypeByType,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import {
@@ -19,7 +22,9 @@ import {
 import { invalidateCacheKeys } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
+import { flowService } from "../flow/service"
+import { folderService } from "../folder/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
 
@@ -124,6 +129,17 @@ class AutomatedResponseService extends BaseService {
     return { data, pageCount }
   }
 
+  /**
+   * `flowId` and `text` are mutually exclusive — a keyword either replies
+   * with literal text or hands off to a flow, never both. Enforced here —
+   * not in the caller — so every insert path (the create action, template
+   * install) shares one invariant instead of re-deriving it.
+   *
+   * Both-set is a caller bug, so it throws rather than silently discarding
+   * one side: template install (`template/adapters/keywords.ts`) passes the
+   * manifest's `text` and `flowId` straight through, and nulling `text`
+   * there would drop authored content with no error surfaced.
+   */
   async create(
     workspaceId: string,
     values: {
@@ -136,14 +152,41 @@ class AutomatedResponseService extends BaseService {
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
+
+    const flowId = values.flowId ?? undefined
+    const text = values.text ?? undefined
+
+    if (flowId && text) {
+      throw validationException(
+        "flowId",
+        "A keyword replies with either text or a flow, not both",
+      )
+    }
+
+    if (flowId) {
+      const exists = await flowService.exists(workspaceId, flowId, tx)
+      if (!exists) {
+        throw validationException("flowId", "Flow not found")
+      }
+    }
+
+    if (values.folderId) {
+      await folderService.ensureExists({
+        id: values.folderId,
+        workspaceId,
+        folderType: automatedResponseFolderTypeByType[values.type],
+        tx,
+      })
+    }
+
     const [created] = await client
       .insert(automatedResponseModel)
       .values({
         id: createId(),
         workspaceId,
         status: true,
-        text: values.text,
-        flowId: values.flowId,
+        text,
+        flowId,
         folderId: values.folderId,
         keywords: values.keywords,
         type: values.type,

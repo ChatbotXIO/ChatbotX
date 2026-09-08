@@ -1,11 +1,17 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
+import type { FolderType } from "@chatbotx.io/database/partials"
 import { conditionModel, webhookModel } from "@chatbotx.io/database/schema"
 import type { WebhookModel } from "@chatbotx.io/database/types"
 import { removeWebhookCache, updateWebhookCache } from "@chatbotx.io/events"
 import { distributedLock } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { ChatbotXException, notFoundException } from "../errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "../errors"
+import { folderService } from "../folder/service"
 import { assertPublicUrl } from "../net/ssrf-guard"
 
 export const MAX_WEBHOOKS_PER_WORKSPACE = 100
@@ -24,6 +30,55 @@ class WebhookService extends BaseService {
       .select()
       .from(webhookModel)
       .where(eq(webhookModel.workspaceId, workspaceId))
+  }
+
+  /**
+   * The builder create-webhook form's flow: unlike `register` (a full
+   * webhook + conditions insert for a programmatic caller), this only
+   * creates the row with an empty `url` — the URL is set by a later
+   * generate/regenerate step.
+   */
+  async create(input: {
+    workspaceId: string
+    data: { name: string; folderId?: string | null }
+    folderType: FolderType
+  }): Promise<WebhookModel> {
+    const { workspaceId, data, folderType } = input
+
+    const existingWebhooksCount = await db.$count(
+      webhookModel,
+      eq(webhookModel.workspaceId, workspaceId),
+    )
+    if (existingWebhooksCount >= MAX_WEBHOOKS_PER_WORKSPACE) {
+      throw validationException("_", "validation.maxItemsReached", {
+        max: MAX_WEBHOOKS_PER_WORKSPACE,
+        feature: "webhooks",
+      })
+    }
+
+    if (data.folderId) {
+      await folderService.ensureExists({
+        id: data.folderId,
+        workspaceId,
+        folderType,
+      })
+    }
+
+    const [created] = await db
+      .insert(webhookModel)
+      .values({
+        id: createId(),
+        ...data,
+        workspaceId,
+        url: "",
+      })
+      .returning()
+
+    await updateWebhookCache(workspaceId)
+
+    await this.audit("create", `created a new webhook (#${created.id})`)
+
+    return created
   }
 
   async register(props: {

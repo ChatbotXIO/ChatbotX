@@ -66,6 +66,18 @@ Operators + form-field types: `packages/database/src/partials/custom-field.ts`
    `use-contact-filter-configs.ts` / `contact-filter-config.ts`; group is assigned
    by `getContactFilterFieldGroup`.
 
+## Where filter application lives
+
+`contactRepository.buildListWhere` (`packages/database/src/repositories/contact/list-where.ts`)
+is the one place `applyContactFilter` is called to build the where clause for
+a contacts list/count — used by both the builder (private RSC) and the public
+API, via `contactService.list`/`count` (`packages/business/src/contact/list.ts`).
+`.query.ts` files never call `applyContactFilter` directly — that duplicates
+the where-builder per caller, which is exactly what the service/repository
+split exists to prevent (see `.agents/rules/data-access.md`). The worker's
+`export-contacts.ts` still hand-builds its own where clause — a known
+follow-up, not a pattern to extend.
+
 ## Backend query builder (`packages/database/src/queries/contact-filter.ts`)
 
 - `applyContactFilter(criteria)` → maps `conditions` to `{ AND: [...] }` or

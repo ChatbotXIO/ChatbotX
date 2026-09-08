@@ -1,19 +1,12 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const mockDelete = vi.fn()
-const mockEmit = vi.fn()
-const mockRecordAuditLog = vi.fn()
+const mockDeleteAndRecord = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactService: { delete: (...args: unknown[]) => mockDelete(...args) },
-}))
-
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: (...args: unknown[]) => mockRecordAuditLog(...args) },
-}))
-
-vi.mock("@chatbotx.io/event-bus", () => ({
-  emit: (...args: unknown[]) => mockEmit(...args),
+  contactService: {
+    deleteAndRecord: (...args: unknown[]) => mockDeleteAndRecord(...args),
+  },
 }))
 
 vi.mock("@/lib/safe-action", () => ({
@@ -25,58 +18,50 @@ vi.mock("@/lib/safe-action", () => ({
 }))
 
 vi.mock("../src/features/contacts/permissions", () => ({
-  requireContactPermissionScope: vi.fn(),
+  requireContactPermissionScope: vi.fn(async () => ({
+    restrictToAssignedUserId: undefined,
+  })),
 }))
 
 vi.mock("../src/features/contacts/schema/contact-delete", () => ({
   deleteContactRequest: {},
 }))
 
-const { deleteContact } = await import(
+const { deleteContactAction: deleteContactActionUntyped } = await import(
   "../src/features/contacts/actions/delete-contact.action"
+)
+const deleteContactAction = deleteContactActionUntyped as unknown as (
+  props: unknown,
+) => Promise<unknown>
+const { requireContactPermissionScope } = await import(
+  "../src/features/contacts/permissions"
 )
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(requireContactPermissionScope).mockResolvedValue({
+    restrictToAssignedUserId: undefined,
+  } as never)
 })
 
-describe("deleteContact", () => {
-  test("emits one delete audit row listing every deleted contact", async () => {
-    mockDelete.mockResolvedValue([
-      { id: "contact-1", contactInboxes: [] },
-      { id: "contact-2", contactInboxes: [] },
-    ])
+describe("deleteContactAction", () => {
+  test("delegates to contactService.deleteAndRecord with the resolved access scope", async () => {
+    const accessScope = { restrictToAssignedUserId: "user-1" }
+    vi.mocked(requireContactPermissionScope).mockResolvedValue(
+      accessScope as never,
+    )
+    mockDeleteAndRecord.mockResolvedValue(undefined)
 
-    await deleteContact({
+    await deleteContactAction({
+      bindArgsParsedInputs: ["ws-1"],
+      parsedInput: { ids: ["contact-1", "contact-2"] },
+    } as never)
+
+    expect(mockDeleteAndRecord).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["contact-1", "contact-2"],
+      accessScope,
+      triggerSource: "api",
     })
-
-    expect(mockRecordAuditLog).toHaveBeenCalledTimes(1)
-    expect(mockRecordAuditLog).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      action: "delete",
-      detail: "deleted contacts (#contact-1, #contact-2)",
-    })
-  })
-
-  test("uses singular wording for a single deleted contact", async () => {
-    mockDelete.mockResolvedValue([{ id: "contact-1", contactInboxes: [] }])
-
-    await deleteContact({ workspaceId: "ws-1", ids: ["contact-1"] })
-
-    expect(mockRecordAuditLog).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      action: "delete",
-      detail: "deleted contact (#contact-1)",
-    })
-  })
-
-  test("emits no audit row when nothing was deleted", async () => {
-    mockDelete.mockResolvedValue([])
-
-    await deleteContact({ workspaceId: "ws-1", ids: ["missing"] })
-
-    expect(mockRecordAuditLog).not.toHaveBeenCalled()
   })
 })

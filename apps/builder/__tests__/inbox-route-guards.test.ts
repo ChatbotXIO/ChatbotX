@@ -59,10 +59,6 @@ vi.mock("@/features/sequences/provider/sequence-store-context", () => ({
   SequenceStoreProvider: ({ children }: { children: unknown }) => children,
 }))
 
-vi.mock("@/features/tags/provider/tag-store-context", () => ({
-  TagStoreProvider: ({ children }: { children: unknown }) => children,
-}))
-
 vi.mock("@/features/users/provider/user-store-context", () => ({
   UserStoreProvider: ({ children }: { children: unknown }) => children,
 }))

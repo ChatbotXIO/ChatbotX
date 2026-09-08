@@ -25,12 +25,31 @@ const CHANNEL_ERROR_FALLBACK = "The provider rejected the request."
  * "(#100) …") reaches the UI instead of a generic 500 — a service must NOT
  * hand-roll its own error wrapping.
  */
+/**
+ * A `ChatbotXException` carrying `data` holds an i18n KEY in `message` (e.g.
+ * `"validation.maxItemsReached"`), which server actions re-localize in their
+ * own catch via `getTranslations()`. This interceptor is sync and has no
+ * request-scoped translator, so it cannot localize — but it must never emit a
+ * bare key to an API consumer. Fall back to the key plus its params so the
+ * response is at least self-describing; a handler that wants real
+ * localization should translate before the error reaches here.
+ */
+function toDisplayMessage(error: ChatbotXException): string {
+  if (!error.data) {
+    return error.message
+  }
+  const params = Object.entries(error.data)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ")
+  return params ? `${error.message} (${params})` : error.message
+}
+
 function toKnownOrpcError(
   error: unknown,
 ): ORPCError<string, unknown> | undefined {
   if (error instanceof ChatbotXException) {
     return new ORPCError(error.code, {
-      message: error.message,
+      message: toDisplayMessage(error),
       status: error.httpStatusCode ?? 400,
     })
   }

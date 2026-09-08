@@ -39,9 +39,11 @@ error surfacing without throwing, and invalidation triggering a refetch.
 ## What to test first (highest signal in this repo)
 
 - New oRPC route / server action → its happy path + auth-scoping + one failure path.
+- New service method → unit test in `packages/business/__tests__`, mocking the repositories/services it calls — this is the layer that carries validation, cache invalidation, and events, so it's the highest-signal place to test new business logic (see `.agents/rules/data-access.md`).
 - New repository method → query correctness incl. `workspaceId` scoping.
 - New worker consumer → success / error / retry / idempotency on re-run.
 - New channel integration → webhook receive parse + outgoing send mapping.
+- Public handler and private action converge on one service method → assert both call sites resolve to the same method call, with only the caller's scope differing. See `apps/builder/__tests__/contacts-crud-public-api.test.ts` (public, unscoped) alongside `apps/builder/__tests__/contacts-permissions.test.ts` (private, scoped) — both exercise `contactService.list`/`count`, never a parallel implementation.
 
 ## Stop condition
 

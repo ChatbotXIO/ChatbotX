@@ -89,8 +89,33 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contacts.addTagsByName",
+    "path": "/v1/contacts/{identifier}/tags/by-name",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "contacts.applyCustomFieldOperations",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "POST",
     "operationId": "contacts.block",
     "path": "/v1/contacts/{identifier}/block",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkAddTags",
+    "path": "/v1/contacts/bulk/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkDelete",
+    "path": "/v1/contacts/bulk/delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkSubscribeSequences",
+    "path": "/v1/contacts/bulk/sequences",
   },
   {
     "method": "DELETE",
@@ -103,14 +128,34 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/custom-fields",
   },
   {
+    "method": "GET",
+    "operationId": "contacts.count",
+    "path": "/v1/contacts/count",
+  },
+  {
     "method": "POST",
     "operationId": "contacts.create",
     "path": "/v1/contacts",
   },
   {
+    "method": "POST",
+    "operationId": "contacts.createNote",
+    "path": "/v1/contacts/{identifier}/notes",
+  },
+  {
     "method": "DELETE",
     "operationId": "contacts.delete",
     "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.deleteNote",
+    "path": "/v1/contacts/{identifier}/notes/{noteId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.export",
+    "path": "/v1/contacts/export",
   },
   {
     "method": "GET",
@@ -126,6 +171,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "contacts.getCustomField",
     "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getExportFile",
+    "path": "/v1/contacts/export-files/{fileId}",
   },
   {
     "method": "GET",
@@ -149,8 +199,28 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "contacts.listFilterFields",
+    "path": "/v1/contacts/filter-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listInboxes",
+    "path": "/v1/contacts/{identifier}/inboxes",
+  },
+  {
+    "method": "GET",
     "operationId": "contacts.listMessages",
     "path": "/v1/contacts/{identifier}/messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listNotes",
+    "path": "/v1/contacts/{identifier}/notes",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
   },
   {
     "method": "GET",
@@ -158,9 +228,19 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/tags",
   },
   {
+    "method": "POST",
+    "operationId": "contacts.refreshProfile",
+    "path": "/v1/contacts/{identifier}/refresh-profile",
+  },
+  {
     "method": "DELETE",
     "operationId": "contacts.removeTags",
     "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.search",
+    "path": "/v1/contacts/search",
   },
   {
     "method": "POST",
@@ -183,6 +263,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/custom-fields",
   },
   {
+    "method": "PUT",
+    "operationId": "contacts.setSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.setTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.subscribeSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
+  },
+  {
     "method": "POST",
     "operationId": "contacts.triggerAutoReply",
     "path": "/v1/contacts/{identifier}/auto-replies",
@@ -193,9 +288,19 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/unblock",
   },
   {
+    "method": "DELETE",
+    "operationId": "contacts.unsubscribeSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
+  },
+  {
     "method": "PUT",
     "operationId": "contacts.update",
     "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.updateNote",
+    "path": "/v1/contacts/{identifier}/notes/{noteId}",
   },
   {
     "method": "POST",
@@ -256,6 +361,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "flows.list",
     "path": "/v1/flows",
+  },
+  {
+    "method": "POST",
+    "operationId": "folders.create",
+    "path": "/v1/folders",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "folders.delete",
+    "path": "/v1/folders/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "folders.list",
+    "path": "/v1/folders",
+  },
+  {
+    "method": "PUT",
+    "operationId": "folders.update",
+    "path": "/v1/folders/{id}",
   },
   {
     "method": "GET",

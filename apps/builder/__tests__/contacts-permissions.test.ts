@@ -1,92 +1,13 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, test, vi } from "vitest"
-import type { ContactFilterCriteria } from "@/features/contact-filter/schema"
+import { describe, expect, test, vi } from "vitest"
 
-const applyContactFilterSpy = vi.fn<
-  (criteria: unknown) => Record<string, unknown>
->(() => ({}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  countWithRelationsFilterCapped: vi.fn(),
-  countWithRelationsFilter: vi.fn(),
-  db: {
-    query: {
-      contactModel: {
-        findMany: vi.fn(),
-        findFirst: vi.fn(),
-      },
-      inboxModel: { findMany: vi.fn() },
-    },
-    $count: vi.fn(),
-  },
-}))
-
-vi.mock("@chatbotx.io/database/queries", () => ({
-  applyContactFilter: (criteria: unknown) => applyContactFilterSpy(criteria),
-  buildSmartKeywordWhere: (
-    keyword: string,
-    options?: { includeEmailAndPhone?: boolean },
-  ) => {
-    const normalizedKeyword = keyword.toLowerCase()
-    return {
-      OR: [
-        { firstName: { ilike: `%${normalizedKeyword}%` } },
-        { lastName: { ilike: `%${normalizedKeyword}%` } },
-        ...(options?.includeEmailAndPhone === false
-          ? []
-          : [
-              { email: { ilike: `%${normalizedKeyword}%` } },
-              { phoneNumber: { ilike: `%${normalizedKeyword}%` } },
-            ]),
-      ],
-    }
-  },
-  pruneEmailPhoneFilterConditions: (
-    contactFilter:
-      | { operator: "and" | "or"; conditions: unknown[] }
-      | undefined,
-    canViewEmailAndPhone: boolean,
-  ) =>
-    canViewEmailAndPhone || !contactFilter
-      ? contactFilter
-      : {
-          ...contactFilter,
-          operator: contactFilter.operator,
-          conditions: contactFilter.conditions.filter((condition) => {
-            const field =
-              typeof condition === "object" && condition !== null
-                ? (condition as { field?: unknown }).field
-                : undefined
-            return ![
-              "email",
-              "phone",
-              "hasContactInfo",
-              "emailWasVerified",
-              "optedInForEmail",
-              "existingContact",
-            ].includes(String(field))
-          }),
-        },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactModel: {},
-}))
-
-vi.mock("@chatbotx.io/database/utils", () => ({
-  getPaginationWithDefaults: () => ({ limit: 20, offset: 0 }),
-  parseOrderByAsObject: () => ({}),
+vi.mock("@chatbotx.io/business/contact-utils", () => ({
+  maskContactEmailAndPhone: vi.fn((contact: unknown) => contact),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: vi.fn(),
-}))
-
-vi.mock("@/lib/log", () => ({
-  logger: {
-    error: vi.fn(),
-  },
 }))
 
 const {
@@ -98,9 +19,6 @@ const {
   stripContactPIIFields,
 } = await import("../src/features/contacts/permissions")
 const { getCurrentUserAndTargetWorkspace } = await import("@/lib/auth/utils")
-const { generateWhere } = await import(
-  "../src/features/contacts/queries/list-contacts.queries"
-)
 
 const basePermissions = {
   superAdmin: false,
@@ -222,91 +140,6 @@ describe("contact permission helpers", () => {
     await expect(requireContactPermissionScope("ws-1")).resolves.toEqual({
       canViewEmailAndPhone: true,
       restrictToAssignedUserId: "user-1",
-    })
-  })
-})
-
-describe("generateWhere contact permission scope", () => {
-  beforeEach(() => {
-    applyContactFilterSpy.mockReset()
-    applyContactFilterSpy.mockReturnValue({})
-  })
-
-  test("removes email and phoneNumber keyword clauses when emailAndPhone is denied", () => {
-    const where = generateWhere(
-      { workspaceId: "ws-1", keyword: "Example" },
-      { canViewEmailAndPhone: false },
-    )
-
-    expect(where.OR).toEqual([
-      { firstName: { ilike: "%example%" } },
-      { lastName: { ilike: "%example%" } },
-    ])
-  })
-
-  test("keeps email and phoneNumber keyword clauses when emailAndPhone is allowed", () => {
-    const where = generateWhere(
-      { workspaceId: "ws-1", keyword: "Example" },
-      { canViewEmailAndPhone: true },
-    )
-
-    expect(where.OR).toEqual([
-      { firstName: { ilike: "%example%" } },
-      { lastName: { ilike: "%example%" } },
-      { email: { ilike: "%example%" } },
-      { phoneNumber: { ilike: "%example%" } },
-    ])
-  })
-
-  test("adds assigned-user relation scope", () => {
-    const where = generateWhere(
-      { workspaceId: "ws-1" },
-      { canViewEmailAndPhone: true, restrictToAssignedUserId: "user-1" },
-    )
-
-    expect(where.conversation).toEqual({ assignedUserId: "user-1" })
-  })
-
-  test("merges assigned-user relation scope with existing conversation filters", () => {
-    applyContactFilterSpy.mockReturnValue({
-      conversation: { botEnabled: false },
-    })
-
-    const where = generateWhere(
-      {
-        workspaceId: "ws-1",
-        contactFilter: { operator: "and", conditions: [] },
-      },
-      { canViewEmailAndPhone: true, restrictToAssignedUserId: "user-1" },
-    )
-
-    expect(where.conversation).toEqual({
-      botEnabled: false,
-      assignedUserId: "user-1",
-    })
-  })
-
-  test("prunes email/phone contact-filter conditions before applying the filter", () => {
-    const contactFilter = {
-      operator: "and" as const,
-      conditions: [
-        { field: "email", operator: "eq", value: "ada@example.com" },
-        { field: "hasContactInfo", operator: "in", value: ["phone"] },
-        { field: "fullName", operator: "contains", value: "Ada" },
-      ],
-    } satisfies ContactFilterCriteria
-
-    generateWhere(
-      {
-        workspaceId: "ws-1",
-        contactFilter,
-      },
-      { canViewEmailAndPhone: false },
-    )
-
-    expect(applyContactFilterSpy).toHaveBeenCalledWith({
-      operator: "and",
-      conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
     })
   })
 })

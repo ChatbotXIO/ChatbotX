@@ -10,14 +10,20 @@ import {
   contactsOnSequenceModel,
   sequenceModel,
 } from "@chatbotx.io/database/schema"
-import { emitSequenceUnsubscribed } from "@chatbotx.io/events"
+import {
+  emitSequenceSubscribed,
+  emitSequenceUnsubscribed,
+} from "@chatbotx.io/events"
 import {
   calculateNextRunAtFromStep,
   cancelPendingDispatches,
   enrollContactInSequence,
+  enrollContactsInSequenceBulk,
   removeDispatchesFromSchedule,
 } from "@chatbotx.io/sequence-scheduler"
 import { BaseService } from "../base.service"
+import { type ContactAccessScope, contactService } from "../contact/service"
+import { notFoundException } from "../errors"
 import { logger } from "../logger"
 
 type DrizzleClient = DatabaseClient | Transaction
@@ -68,7 +74,219 @@ type UpdateContactSequencesParams = {
   workspaceId: string
 }
 
+const CHUNK_SIZE = 1000
+
+async function getExistingEnrollments(
+  workspaceId: string,
+  contactIds: string[],
+  sequenceIds: string[],
+): Promise<Set<string>> {
+  const enrollments = await db.query.contactsOnSequenceModel.findMany({
+    where: {
+      workspaceId,
+      contactId: { in: contactIds },
+      sequenceId: { in: sequenceIds },
+    },
+    columns: {
+      contactId: true,
+      sequenceId: true,
+    },
+  })
+
+  return new Set<string>(
+    enrollments.map((e) => `${e.contactId}-${e.sequenceId}`),
+  )
+}
+
+function buildEnrollmentRecords(
+  contacts: Array<{ id: string }>,
+  sequenceIds: string[],
+  existingKeys: Set<string>,
+  nextRunAtMap: Map<string, { nextRunAt: Date; nextStepId: string | null }>,
+  workspaceId: string,
+  now: Date,
+) {
+  return contacts.flatMap((contact) =>
+    sequenceIds
+      .filter((sequenceId) => !existingKeys.has(`${contact.id}-${sequenceId}`))
+      .map((sequenceId) => {
+        const result = nextRunAtMap.get(sequenceId) ?? {
+          nextRunAt: now,
+          nextStepId: null,
+        }
+        return {
+          contactId: contact.id,
+          sequenceId,
+          workspaceId,
+          currentStep: 0,
+          status: "active" as const,
+          nextRunAt: result.nextRunAt,
+          nextStepId: result.nextStepId,
+          enrolledAt: now,
+        }
+      }),
+  )
+}
 class ContactSequenceService extends BaseService {
+  /**
+   * Sequence ids come straight from the public API and are sequential
+   * bigints — without this check a workspace-A token can enroll its
+   * contacts into a workspace-B sequence just by guessing an id.
+   */
+  private async assertSequencesInWorkspace(props: {
+    workspaceId: string
+    sequenceIds: string[]
+    tx?: DrizzleClient
+  }): Promise<void> {
+    const { workspaceId, sequenceIds, tx = db } = props
+    if (sequenceIds.length === 0) {
+      return
+    }
+
+    const owned = await tx.query.sequenceModel.findMany({
+      where: { workspaceId, id: { in: sequenceIds } },
+      columns: { id: true },
+    })
+    const ownedIds = new Set(owned.map((sequence) => sequence.id))
+    const missing = sequenceIds.filter((id) => !ownedIds.has(id))
+    if (missing.length > 0) {
+      throw notFoundException("Sequence not found")
+    }
+  }
+
+  async enrollContacts(props: {
+    workspaceId: string
+    contactIds: string[]
+    sequenceIds: string[]
+    accessScope?: ContactAccessScope
+  }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
+    const { workspaceId, contactIds, sequenceIds, accessScope } = props
+    await this.assertSequencesInWorkspace({ workspaceId, sequenceIds })
+    const now = new Date()
+    const nextRunAtMap = await this.calculateNextRunAtBulk(
+      workspaceId,
+      sequenceIds,
+      now,
+      db,
+    )
+
+    const processedContactIds: string[] = []
+
+    for (let offset = 0; offset < contactIds.length; offset += CHUNK_SIZE) {
+      const contactIdChunk = contactIds.slice(offset, offset + CHUNK_SIZE)
+
+      const contacts = await contactService.findManyByIds({
+        workspaceId,
+        ids: contactIdChunk,
+        accessScope,
+      })
+
+      if (contacts.length === 0) {
+        continue
+      }
+      processedContactIds.push(...contacts.map((contact) => contact.id))
+
+      const existingKeys = await getExistingEnrollments(
+        workspaceId,
+        contacts.map((contact) => contact.id),
+        sequenceIds,
+      )
+
+      const records = buildEnrollmentRecords(
+        contacts,
+        sequenceIds,
+        existingKeys,
+        nextRunAtMap,
+        workspaceId,
+        now,
+      )
+
+      if (records.length === 0) {
+        continue
+      }
+
+      await enrollContactsInSequenceBulk({
+        workspaceId,
+        enrollments: records.map((record) => ({
+          contactId: record.contactId,
+          sequenceId: record.sequenceId,
+          nextRunAt: record.nextRunAt,
+          nextStepId: record.nextStepId,
+        })),
+        enrolledAt: now,
+      })
+    }
+
+    const processedSet = new Set(processedContactIds)
+    return {
+      processedContactIds,
+      skippedContactIds: contactIds.filter((id) => !processedSet.has(id)),
+    }
+  }
+  /**
+   * The flow-step `addContactTag`/`addContactSequence`-equivalent single-
+   * contact enrollment: unlike `enrollContacts` (bulk, no per-enrollment
+   * event), this emits `sequenceSubscribed` for the flow-step UI to react to,
+   * matching the worker's original hand-rolled `nextRunAt` calculation
+   * (`delayDays`/`delayMinutes` only — `delayUnit`/`specificDateTime` are
+   * NOT honored here, carried over verbatim from the pre-existing worker
+   * logic; unifying with `calculateNextRunAtFromStep`, which does honor
+   * them, is a separate follow-up).
+   */
+  async enrollFromFlow(props: {
+    workspaceId: string
+    contactId: string
+    sequenceId: string
+    contactInboxId: string
+  }): Promise<void> {
+    const { workspaceId, contactId, sequenceId, contactInboxId } = props
+
+    const existing = await db.query.contactsOnSequenceModel.findFirst({
+      where: { contactId, sequenceId, workspaceId },
+      columns: { id: true },
+    })
+    if (existing) {
+      return
+    }
+
+    const now = new Date()
+
+    const firstStep = await db.query.sequenceStepModel.findFirst({
+      where: { sequenceId, order: 0, isActive: true },
+      columns: { id: true, delayDays: true, delayMinutes: true },
+    })
+
+    const nextRunAt = firstStep
+      ? new Date(
+          now.getTime() +
+            firstStep.delayDays * 24 * 60 * 60 * 1000 +
+            firstStep.delayMinutes * 60 * 1000,
+        )
+      : now
+
+    await enrollContactInSequence({
+      workspaceId,
+      contactId,
+      sequenceId,
+      nextRunAt,
+      nextStepId: firstStep?.id ?? null,
+      enrolledAt: now,
+    })
+
+    const sequence = await db.query.sequenceModel.findFirst({
+      where: { id: sequenceId },
+      columns: { name: true },
+    })
+
+    await emitSequenceSubscribed(
+      workspaceId,
+      contactId,
+      sequenceId,
+      sequence?.name ?? "",
+      contactInboxId,
+    )
+  }
+
   async listByContactId(props: {
     workspaceId: string
     contactId: string
@@ -198,6 +416,12 @@ class ContactSequenceService extends BaseService {
         currentIds,
         sequenceIds,
       )
+
+      await this.assertSequencesInWorkspace({
+        workspaceId,
+        sequenceIds: toAdd,
+        tx,
+      })
 
       const dispatchesToRemove = await this.removeContactSequencesForContact({
         workspaceId,
@@ -376,6 +600,7 @@ class ContactSequenceService extends BaseService {
 
     const now = new Date()
     const nextRunAtMap = await this.calculateNextRunAtBulk(
+      workspaceId,
       sequenceIds,
       now,
       client,
@@ -400,6 +625,7 @@ class ContactSequenceService extends BaseService {
   }
 
   private async calculateNextRunAtBulk(
+    workspaceId: string,
     sequenceIds: string[],
     enrolledAt: Date,
     client: DrizzleClient,
@@ -409,6 +635,7 @@ class ContactSequenceService extends BaseService {
         sequenceId: { in: sequenceIds },
         order: 0,
         isActive: true,
+        sequence: { workspaceId },
       },
       columns: {
         id: true,

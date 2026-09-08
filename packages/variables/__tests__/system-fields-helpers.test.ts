@@ -192,8 +192,14 @@ describe("getSystemFieldValue — helper-backed fields", () => {
     ).resolves.toBe("note two")
 
     expect(mocks.listContactTagsString).toHaveBeenCalledWith("contact-1")
-    expect(mocks.listContactNotesString).toHaveBeenCalledWith("contact-1")
-    expect(mocks.getLatestContactNoteString).toHaveBeenCalledWith("contact-1")
+    expect(mocks.listContactNotesString).toHaveBeenCalledWith(
+      "contact-1",
+      "workspace-1",
+    )
+    expect(mocks.getLatestContactNoteString).toHaveBeenCalledWith(
+      "contact-1",
+      "workspace-1",
+    )
   })
 
   test("last_input and last_input_type call separate helpers", async () => {

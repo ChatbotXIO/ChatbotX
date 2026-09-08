@@ -1,11 +1,17 @@
 import { macAnalyticsService, macTrackingService } from "@chatbotx.io/analytics"
 import { db, type Transaction } from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
-import { distributedLock } from "@chatbotx.io/redis"
+import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
 import { logger } from "../logger"
 import { type QuotaMetric, userQuotaService } from "../user-quota/service"
 import { workspaceUsageService } from "../workspace-usage/service"
+
+// No write path here invalidates by tag — a user's tenantId is effectively
+// immutable in practice (set once at signup/creation), so a short TTL alone
+// bounds staleness in the rare case it's ever changed, without needing a new
+// invalidation hook on every place `User.tenantId` could be written.
+const USER_TENANT_ID_CACHE_TTL_SECONDS = 60
 
 const ALL_METRICS: readonly QuotaMetric[] = [
   "workspaces",
@@ -78,10 +84,15 @@ class QuotaEnforcementService {
    * circular import: workspace → quota-enforcement → workspace).
    */
   private async resolveContext(userId: string): Promise<QuotaContext> {
-    const creator = await db.query.userModel.findFirst({
-      where: { id: userId },
-      columns: { tenantId: true },
-    })
+    const creator = await withCache(
+      `users:${userId}:tenant-id`,
+      async () =>
+        await db.query.userModel.findFirst({
+          where: { id: userId },
+          columns: { tenantId: true },
+        }),
+      { ttl: USER_TENANT_ID_CACHE_TTL_SECONDS },
+    )
 
     let tenantId = ROOT_TENANT_ID
     if (creator && creator.tenantId !== ROOT_TENANT_ID) {

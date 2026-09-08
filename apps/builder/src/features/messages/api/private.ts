@@ -1,16 +1,14 @@
 import {
-  contactInboxService,
   conversationService,
+  messageService,
   userService,
 } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { changeMessageAttributes } from "../actions/change-message-attributes.action"
-import { createMessage } from "../actions/create-message.action"
 import { deleteMessage } from "../actions/delete-message.action"
 import { editMessage } from "../actions/edit-message.action"
 import { findMessage, listMessages } from "../queries"
@@ -76,26 +74,21 @@ export const messagesAuthenticatedAPI = {
 
       const inboxId =
         "inboxId" in input && input.inboxId ? input.inboxId : undefined
-      const contactInbox = inboxId
-        ? await contactInboxService.findBy({
-            where: { contactId: conversation.contactId, inboxId },
-          })
-        : await contactInboxService.findRecentByContactId({
-            workspaceId: input.workspaceId,
-            contactId: conversation.contactId,
-          })
-      if (!contactInbox) {
-        throw new ChatbotXException("Inbox not found")
-      }
+      const contactInbox =
+        await conversationService.resolveContactInboxForConversation({
+          conversation,
+          workspaceId: input.workspaceId,
+          inboxId,
+        })
 
       // createMessage expects a full UserModel (needs tenantId); the oRPC
       // session context only carries the lighter better-auth user shape.
       const user = await userService.findByIdOrFail(context.user.id)
 
-      return createMessage({
+      return messageService.createOutgoing({
         conversation,
         contactInbox,
-        parsedInput: input,
+        input,
         user,
       })
     }),

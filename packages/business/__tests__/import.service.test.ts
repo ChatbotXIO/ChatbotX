@@ -33,9 +33,20 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  workspaceUsageModel: {},
+  userQuotaModel: {},
+  refLinkStatModel: {},
+  magicLinkStatModel: {},
   fileModel: { id: "fileModel.id", workspaceId: "fileModel.workspaceId" },
   importModel: {},
 }))
+
+// vitest's SSR deps optimizer bundles the whole `@chatbotx.io/database`
+// package graph together once any subpath is imported, which otherwise pulls
+// in `contactRepository`'s real contact-filter query graph (needs the real
+// schema, conflicting with the narrow mock above) even though this service
+// never touches `@chatbotx.io/database/repositories`.
+vi.mock("@chatbotx.io/database/repositories", () => ({}))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
   getPaginationWithDefaults: vi.fn(),

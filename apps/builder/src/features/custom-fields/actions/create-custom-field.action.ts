@@ -1,64 +1,23 @@
 "use server"
-
+import { customFieldService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, isDatabaseError } from "@chatbotx.io/database/client"
-import { customFieldModel } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
-import {
-  type WorkspaceIdRequestParams,
-  workspaceIdrequestParams,
-} from "@/features/common/schema"
-import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type CreateCustomFieldRequest,
-  createCustomFieldRequest,
-} from "../schema/action"
-import type { CustomFieldResource } from "../schema/resource"
-
+import { createCustomFieldRequest } from "../schema/action"
 export const createCustomFieldAction = workspaceActionClient
-  .bindArgsSchemas(workspaceIdrequestParams)
+  .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(createCustomFieldRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [workspaceId],
-      parsedInput,
-    }: {
-      bindArgsParsedInputs: WorkspaceIdRequestParams
-      parsedInput: CreateCustomFieldRequest
-    }) => {
-      await createCustomField(workspaceId, parsedInput)
-    },
-  )
-
-export const createCustomField = async (
-  workspaceId: string,
-  parsedInput: CreateCustomFieldRequest,
-): Promise<CustomFieldResource> => {
-  if (parsedInput.folderId) {
-    await ensureFolderIsExists(parsedInput.folderId, workspaceId, "customField")
-  }
-
-  try {
-    const newField = await db
-      .insert(customFieldModel)
-      .values({
-        workspaceId,
-        showInInbox: true,
-        ...parsedInput,
-      })
-      .returning()
-      .then((result) => result[0])
-
-    return newField
-  } catch (error) {
-    if (isDatabaseError(error) && error.cause.code === "23505") {
-      return returnValidationErrors(createCustomFieldRequest, {
-        _errors: ["Validation Exception"],
-        name: { _errors: ["Name is already taken"] },
-      })
+  .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
+    try {
+      await customFieldService.create({ workspaceId, data: parsedInput })
+    } catch (error) {
+      if (error instanceof ChatbotXException && error.code === "validation") {
+        returnValidationErrors(createCustomFieldRequest, {
+          _errors: ["Validation Exception"],
+          name: { _errors: [error.message] },
+        })
+      }
+      throw error
     }
-
-    throw new ChatbotXException("Failed to create custom field")
-  }
-}
+  })

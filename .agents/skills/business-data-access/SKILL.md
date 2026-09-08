@@ -12,6 +12,15 @@ description: >-
 Use this skill whenever code outside `packages/business` or
 `packages/database/src/repositories` needs database-backed behavior.
 
+## The chain
+
+`action | API handler → service (packages/business) → repository
+(packages/database/src/repositories) → DB`. This is the wording to use —
+never "service **or** repository" as if they were interchangeable
+alternatives for the app layer. The app layer calls a service; the service
+may call a repository. See `.agents/rules/data-access.md` for the full rule
+and the per-layer responsibility table.
+
 ## Boundary Rule
 
 Do not add direct database imports in:
@@ -20,14 +29,31 @@ Do not add direct database imports in:
 - `apps/worker`
 - `integrations`
 
-These layers call services from `@chatbotx.io/business` or repositories from
-`@chatbotx.io/database/repositories`. Legacy direct `db` imports are exceptions,
-not examples to copy.
+These layers call services from `@chatbotx.io/business`. Legacy direct `db`
+imports are exceptions, not examples to copy. The one narrow exception is a
+**pure read with zero business logic** — no cache, no validation, no
+cross-table composition — which may call a repository from
+`@chatbotx.io/database/repositories` directly; this is the exception, not
+the default, so reach for a service first.
 
 Allowed direct `db` usage:
 
 - `packages/business/src/**`
 - `packages/database/src/repositories/**`
+
+## Service responsibilities
+
+A service owns:
+
+- Input validation and authorization-adjacent checks (e.g. quota, ownership).
+- Orchestration across one or more repositories.
+- Cache invalidation (`this.invalidateCacheTags(...)`).
+- Event emission (`emit*` from `@chatbotx.io/events`, `@chatbotx.io/event-bus`).
+- Audit records (`this.audit(...)`).
+- An optional `tx?: DatabaseClient` passthrough so callers can compose it into
+  their own transaction.
+- **Never** imports from `apps/` or `integrations/` — a service has no idea
+  who is calling it (a builder action, a worker job, a public API handler).
 
 ## Choosing Service vs Repository
 
@@ -36,7 +62,11 @@ adjacent constraints, cache invalidation, event emission, composition across
 tables, or is reused by app and worker code.
 
 Use a repository when the method is a low-level persistence concern such as
-shard routing, specialized pagination, or reusable raw query mechanics.
+shard routing, specialized pagination, a where-builder shared across callers,
+or reusable raw query mechanics. **Repositories are raw only** — no cache
+invalidation, no event emission, no validation. If a query needs any of
+those, it belongs behind a service method that calls the repository, not in
+the repository itself.
 
 ## Service Pattern
 
@@ -101,15 +131,71 @@ Use the `drizzle-database` skill for schema, relation, and migration work.
 
 ## App Layer Usage
 
-Builder feature queries/actions should call services:
+### Session-free read: no query file needed
+
+`tagService.list` needs nothing from the request session — the builder calls
+it directly from wherever it's needed (a page, another query), with no
+`.query.ts` adapter in between:
 
 ```typescript
 import { tagService } from "@chatbotx.io/business"
 
-export const listTags = async (params: { workspaceId: string }) => {
-  return tagService.list({ workspaceId: params.workspaceId })
+const { data } = await tagService.list({ workspaceId })
+```
+
+If you find yourself writing a one-line pass-through query file that only
+forwards its arguments to a service, delete the file and call the service
+directly instead.
+
+### Session-context read: a thin `.query.ts` adapter
+
+`get-contact.query.ts` needs the current member's permission scope before it
+can call the service — that's the shape a query file exists for:
+
+```typescript
+// apps/builder/src/features/contacts/queries/get-contact.query.ts
+import { contactService } from "@chatbotx.io/business"
+import { requireContactPermissionScope } from "../permissions"
+
+export async function getContact(input: { workspaceId: string; id: string }) {
+  const accessScope = await requireContactPermissionScope(input.workspaceId)
+  const contact = await contactService.findDetailOrFail({
+    workspaceId: input.workspaceId,
+    id: input.id,
+    accessScope,
+  })
+  return maskIfNeeded(contact, accessScope)
 }
 ```
+
+The query file's only job is: resolve session context → plain params → call
+the service → shape the response. It holds no where-builders, no pagination,
+no count strategy — see `.agents/rules/data-access.md` for the full
+`.query.ts` contract.
+
+### Public API and private paths share one service method
+
+An unscoped workspace-token caller and a signed-in member both resolve to
+`contactService.list({ ...input, scope })` — the only difference is what
+`scope` the app layer resolved (`undefined` for the token, a permission
+scope for the member):
+
+```typescript
+// Public API handler (workspace token — unscoped)
+.handler(async ({ context, input }) =>
+  await contactService.list({ ...input, workspaceId: context.workspace.id }),
+)
+
+// Private query adapter (signed-in member — scoped)
+export async function listContacts(input: ListContactsRequest) {
+  const scope = await requireContactPermissionScope(input.workspaceId)
+  return await contactService.list({ ...input, scope })
+}
+```
+
+Never write a second implementation of the list/count/filter logic for the
+public path — both callers must converge on the same service method so a bug
+fix or a new filter only has to happen once.
 
 Workers and integrations follow the same boundary.
 

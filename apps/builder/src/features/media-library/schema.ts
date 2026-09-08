@@ -61,8 +61,6 @@ export const deleteFolderRequest = z.object({
 export type DeleteFolderRequest = z.infer<typeof deleteFolderRequest>
 
 // File requests
-export const MEDIA_LIBRARY_FILES_PAGE_SIZE = 60
-
 export const listFilesRequest = z.object({
   workspaceId: zodBigintAsString(),
   folderId: zodBigintAsString().nullish(),

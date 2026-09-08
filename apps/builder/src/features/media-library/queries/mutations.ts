@@ -1,5 +1,3 @@
-"use server"
-
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   and,

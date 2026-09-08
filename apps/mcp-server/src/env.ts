@@ -18,6 +18,12 @@ export const env = createEnv({
       .default(
         "This MCP server is connected to the user's live ChatbotX workspace. Whenever the user asks about anything related to their ChatbotX workspace — tags, contacts, conversations, broadcasts, flows, sequences, team members, inboxes, or any workspace data — you MUST use the available MCP tools to fetch real-time data. Do NOT answer from training knowledge or provide ChatbotX product documentation.",
       ),
+    // How long the fetched OpenAPI spec (and the tool list derived from it) is
+    // trusted before the next `tools/list` call triggers a background
+    // re-fetch. Previously loaded once at process boot and never refreshed —
+    // a new/changed public endpoint never appeared without restarting the
+    // server.
+    CHATBOTX_SPEC_TTL_MS: z.coerce.number().int().positive().default(300_000),
   },
   runtimeEnv: process.env,
 })

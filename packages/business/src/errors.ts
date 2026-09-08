@@ -115,8 +115,16 @@ export const toPublicErrorMessage = (
 }
 
 export class ChatbotXException extends Error {
+  field?: string
   code = "systemError"
   httpStatusCode = 400
+  /**
+   * Structured params for a caller that wants to re-localize `message`
+   * (e.g. `t(message, data)`) instead of showing the raw English string —
+   * optional, so every existing throw site (plain-message `message`) stays
+   * valid.
+   */
+  data?: Record<string, string | number>
 
   constructor(message: string, code?: string, httpStatusCode?: number) {
     super(message)
@@ -137,6 +145,17 @@ export class ChatbotXException extends Error {
 
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
+
+export const validationException = (
+  field: string,
+  message: string,
+  data?: Record<string, string | number>,
+) => {
+  const error = new ChatbotXException(message, "validation", 400)
+  error.field = field
+  error.data = data
+  return error
+}
 
 export const channelDuplicatedException = () =>
   new ChatbotXException(

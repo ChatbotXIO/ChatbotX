@@ -363,26 +363,21 @@ export type Integration<Channel>Resource = z.infer<typeof integration<Channel>Re
 
 - Uses `workspaceActionClient.bindArgsSchemas([zodBigintAsString(), zodBigintAsString()]).action(...)`
 - **No `.inputSchema()`** — delete has no input
-- Runs the integration delete and `inboxService.disconnect({ inboxId, tx })` inside the same `db.transaction(...)`
-- Imports `inboxService` from `@chatbotx.io/business`; do not inline the inbox status update in the action
-- **CRITICAL:** Every channel delete action must call `inboxService.disconnect()` inside its transaction after deleting the integration row. This keeps disconnected inboxes out of active inbox queries and prevents channel-specific drift.
+- Calls `integration<Channel>Service.delete({ workspaceId, id })` — the service (not the action) owns the transaction, deletes the integration row, and calls `inboxService.disconnect({ inboxId, tx })` inside it. The action never opens its own `db.transaction(...)`.
+- **CRITICAL:** Every channel delete service method must call `inboxService.disconnect()` inside the same transaction as the integration-row delete. This keeps disconnected inboxes out of active inbox queries and prevents channel-specific drift.
 
-**`queries/index.ts`** — Server-side queries:
+**`queries/index.ts`** — A thin adapter over the service, per
+`.agents/rules/data-access.md` — no `db`/`@chatbotx.io/database/schema`
+import here:
 
 ```typescript
 "use server"
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { integration<Channel>Model } from "@chatbotx.io/database/schema"
-import type { Integration<Channel>Model } from "@chatbotx.io/database/types"
+import { integration<Channel>Service } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export const listIntegration<Channel>s = async (input: { workspaceId: string }) => {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
-  const data = await db.query.integration<Channel>Model.findMany({
-    where: { workspaceId: input.workspaceId },
-    orderBy: { createdAt: "desc" },
-  })
-  return { data }
+  return { data: await integration<Channel>Service.listByWorkspaceId(input.workspaceId) }
 }
 ```
 

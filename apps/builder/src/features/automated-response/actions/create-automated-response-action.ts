@@ -1,13 +1,10 @@
 "use server"
 
-import { automatedResponseService, flowService } from "@chatbotx.io/business"
-import {
-  automatedResponseFolderTypeByType,
-  automatedResponseTypes,
-} from "@chatbotx.io/database/partials"
+import { automatedResponseService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { automatedResponseTypes } from "@chatbotx.io/database/partials"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
-import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createAutomatedResponseRequest } from "../schema/action"
 
@@ -20,37 +17,25 @@ export const createAutomatedResponseAction = workspaceActionClient
       parsedInput,
     } = props
 
-    if (parsedInput.folderId) {
-      await ensureFolderIsExists(
-        parsedInput.folderId,
-        workspaceId,
-        automatedResponseFolderTypeByType[type],
-      )
-    }
-
-    let flowId: string | undefined = parsedInput.flowId ?? undefined
-    let text: string | null | undefined = parsedInput.text
-
-    if (flowId) {
-      const exists = await flowService.exists(workspaceId, flowId)
-      if (!exists) {
-        return returnValidationErrors(createAutomatedResponseRequest, {
+    try {
+      await automatedResponseService.create(workspaceId, {
+        type,
+        text: parsedInput.text,
+        flowId: parsedInput.flowId,
+        folderId: parsedInput.folderId,
+        keywords: parsedInput.keywords.map((m) => m.value),
+      })
+    } catch (error) {
+      if (
+        error instanceof ChatbotXException &&
+        error.code === "validation" &&
+        error.field
+      ) {
+        returnValidationErrors(createAutomatedResponseRequest, {
           _errors: ["Validation Exception"],
-          flowId: {
-            _errors: ["Flow not found"],
-          },
+          [error.field]: { _errors: [error.message] },
         })
       }
-      text = undefined
-    } else if (text) {
-      flowId = undefined
+      throw error
     }
-
-    await automatedResponseService.create(workspaceId, {
-      type,
-      text,
-      flowId,
-      folderId: parsedInput.folderId,
-      keywords: parsedInput.keywords.map((m) => m.value),
-    })
   })

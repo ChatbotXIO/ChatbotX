@@ -1,1 +1,0 @@
-export const MAX_TRIGGERS_PER_CHATBOT = 50

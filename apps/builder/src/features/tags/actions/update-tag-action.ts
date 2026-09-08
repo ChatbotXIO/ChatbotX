@@ -1,74 +1,22 @@
 "use server"
-
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { tagModel } from "@chatbotx.io/database/schema"
+import { tagService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { returnValidationErrors } from "next-safe-action"
-import {
-  type WorkspaceIdAndIdRequestParams,
-  workspaceIdAndIdRequestParams,
-} from "@/features/common/schema"
+import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { type UpdateTagSchema, updateTagSchema } from "../schema/action"
-
+import { updateTagSchema } from "../schema/action"
 export const updateTagAction = workspaceActionClient
-  .inputSchema(updateTagSchema)
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
-  .action(
-    async ({
-      parsedInput,
-      bindArgsParsedInputs: [workspaceId, id],
-    }: {
-      parsedInput: UpdateTagSchema
-      bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
-    }) => {
-      await updateTag({ workspaceId, id, parsedInput })
-    },
-  )
-
-export const updateTag = async ({
-  workspaceId,
-  id,
-  parsedInput,
-}: {
-  workspaceId: string
-  id: string
-  parsedInput: UpdateTagSchema
-}) => {
-  const existingTag = await db.query.tagModel.findFirst({
-    columns: {
-      id: true,
-    },
-    where: {
-      name: parsedInput.name,
-      workspaceId,
-      deletedAt: { isNull: true as const },
-      id: {
-        ne: id,
-      },
-    },
+  .inputSchema(updateTagSchema)
+  .action(async ({ bindArgsParsedInputs: [workspaceId, id], parsedInput }) => {
+    try {
+      return await tagService.update({ workspaceId, id }, parsedInput)
+    } catch (error) {
+      if (error instanceof ChatbotXException && error.code === "validation") {
+        returnValidationErrors(updateTagSchema, {
+          name: { _errors: [error.message] },
+        })
+      }
+      throw error
+    }
   })
-  if (existingTag) {
-    return returnValidationErrors(updateTagSchema, {
-      name: {
-        _errors: ["Name is already taken."],
-      },
-    })
-  }
-
-  const tag = await findOrFail({
-    table: tagModel,
-    where: { id, workspaceId, deletedAt: { isNull: true as const } },
-    message: "Tag not found",
-  })
-
-  const updatedTag = await db
-    .update(tagModel)
-    .set({
-      name: parsedInput.name,
-    })
-    .where(eq(tagModel.id, tag.id))
-    .returning()
-    .then((result) => result[0])
-
-  return updatedTag
-}

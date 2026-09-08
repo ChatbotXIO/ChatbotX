@@ -1,5 +1,3 @@
-"use server"
-
 import { count, db, eq } from "@chatbotx.io/database/client"
 import { mediaLibraryFileModel } from "@chatbotx.io/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"

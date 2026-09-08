@@ -8,6 +8,7 @@ import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 type Permissions = WorkspaceMemberPermissions | Record<string, unknown>
 
+export { maskContactEmailAndPhone } from "@chatbotx.io/business/contact-utils"
 export { stripContactPIIFields } from "@chatbotx.io/worker-config/contact-pii"
 
 export type ContactPermissionScope = {
@@ -79,15 +80,5 @@ export async function requireContactPermissionScope(
       permissions,
       userId: user.id,
     }),
-  }
-}
-
-export function maskContactEmailAndPhone<
-  TContact extends { email: string | null; phoneNumber: string | null },
->(contact: TContact): TContact {
-  return {
-    ...contact,
-    email: null,
-    phoneNumber: null,
   }
 }

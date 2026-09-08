@@ -11,10 +11,7 @@ export const memoryCounters = new Map<
   { count: number; expiresAt: number }
 >()
 
-type RateLimitStore = Pick<
-  typeof distributedStore,
-  "incrementCounter" | "setNumberIfNotExists"
->
+type RateLimitStore = Pick<typeof distributedStore, "incrWithWindow">
 
 /**
  * Closed set of rate-limit bucket names: the scope is joined verbatim into
@@ -101,14 +98,7 @@ const incrementWindowCounter = async (
   store: RateLimitStore,
   key: string,
   windowSeconds: number,
-) => {
-  const created = await store.setNumberIfNotExists(key, 1, windowSeconds)
-  if (created) {
-    return 1
-  }
-
-  return (await store.incrementCounter(key, 1, windowSeconds)) ?? 1
-}
+) => await store.incrWithWindow(key, windowSeconds)
 
 /**
  * Keyed on the caller's authenticated identity (inbox id, workspace id, ...),

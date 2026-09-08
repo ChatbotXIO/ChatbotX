@@ -27,18 +27,10 @@ const mocks = vi.hoisted(() => ({
   telegramRunChannelHandler: vi.fn(),
 }))
 
-const ON_DEMAND_CHANNELS = new Set([
-  "messenger",
-  "instagram",
-  "zalo",
-  "telegram",
-])
-
 vi.mock("@chatbotx.io/business", () => ({
   contactService: { findByIdOrFail: mocks.findByIdOrFail },
   contactInboxService: { findByUncached: mocks.findContactInboxByUncached },
   contactProfileRefreshService: { refresh: mocks.refresh },
-  hasOnDemandProfileApi: (channel: string) => ON_DEMAND_CHANNELS.has(channel),
   messengerIntegrationService: {
     findByInboxIdForWorkspace: mocks.messengerFindByInboxIdForWorkspace,
   },
@@ -188,7 +180,13 @@ describe("refreshContactProfileAction — authorization gate", () => {
 })
 
 describe("refreshContactProfileAction — channel capability gate", () => {
-  test("onDemand:false channel (whatsapp) returns skipped/channelNotCapable, factory uncalled", async () => {
+  // The on-demand capability gate now lives inside
+  // `contactProfileRefreshService.refresh` itself (shared with the worker's
+  // inbound `channelApi` fetch) — the action always calls `refresh` and
+  // forwards whatever it decides, including this skip. The factory table
+  // lookup is still lazy (only invoked from inside the service's
+  // `fetchProfile` callback), so it stays uncalled for a non-capable channel.
+  test("onDemand:false channel (whatsapp) forwards the service's channelNotCapable skip, factory uncalled", async () => {
     mocks.findContactInboxByUncached.mockResolvedValueOnce({
       id: "ci-1",
       contactId: "contact-1",
@@ -196,17 +194,20 @@ describe("refreshContactProfileAction — channel capability gate", () => {
       inboxId: "inbox-1",
       sourceId: "source-1",
     })
+    mocks.refresh.mockResolvedValueOnce({
+      status: "skipped",
+      reason: "channelNotCapable",
+    })
 
     await expect(callAction({})).resolves.toEqual({
       status: "skipped",
       reason: "channelNotCapable",
     })
 
-    expect(mocks.refresh).not.toHaveBeenCalled()
     noFactoryMocksCalled()
   })
 
-  test("unknown/legacy channel string returns skipped/channelNotCapable, never throws, factory uncalled", async () => {
+  test("unknown/legacy channel string forwards the service's channelNotCapable skip, never throws, factory uncalled", async () => {
     mocks.findContactInboxByUncached.mockResolvedValueOnce({
       id: "ci-1",
       contactId: "contact-1",
@@ -214,13 +215,16 @@ describe("refreshContactProfileAction — channel capability gate", () => {
       inboxId: "inbox-1",
       sourceId: "source-1",
     })
+    mocks.refresh.mockResolvedValueOnce({
+      status: "skipped",
+      reason: "channelNotCapable",
+    })
 
     await expect(callAction({})).resolves.toEqual({
       status: "skipped",
       reason: "channelNotCapable",
     })
 
-    expect(mocks.refresh).not.toHaveBeenCalled()
     noFactoryMocksCalled()
   })
 })

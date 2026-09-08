@@ -1,5 +1,8 @@
-import { type ContactAccessScope, contactService } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import {
+  type ContactAccessScope,
+  contactService,
+  tagService,
+} from "@chatbotx.io/business"
 import type {
   ListContactTagsRequest,
   ListContactTagsResponse,
@@ -16,15 +19,7 @@ export async function listContactTags(
     })
   }
 
-  const data = await db.query.tagModel.findMany({
-    where: {
-      workspaceId: input.workspaceId,
-      deletedAt: { isNull: true as const },
-      contactsToTags: {
-        contactId: input.contactId,
-      },
-    },
-  })
+  const data = await tagService.listForContact(input)
 
   return {
     data,

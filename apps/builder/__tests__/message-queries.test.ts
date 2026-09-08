@@ -1,86 +1,31 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const mocks = vi.hoisted(() => {
-  const repo = {
-    findById: vi.fn(),
-    findTriggerMessage: vi.fn(),
-    listByConversation: vi.fn(),
-  }
-  return {
-    assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
-    db: {
-      query: {
-        conversationModel: { findFirst: vi.fn() },
-        contactInboxModel: { findFirst: vi.fn() },
-      },
-    },
-    getSafeSinceTime: vi.fn((value: Date | undefined) => value),
-    repo,
-    createMessageRepository: vi.fn().mockResolvedValue(repo),
-    resolveTenantSettings: vi
-      .fn()
-      .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
-    contactInboxService: {
-      findByUncached: vi.fn().mockResolvedValue(null),
-      findRecentByContactId: vi.fn().mockResolvedValue(null),
-    },
-    uploader: { getPresignedDownload: vi.fn() },
-  }
-})
+const mocks = vi.hoisted(() => ({
+  assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
+  listForConversation: vi.fn(),
+  findByIdWithUrls: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
-  resolveTenantSettings: mocks.resolveTenantSettings,
-  contactInboxService: mocks.contactInboxService,
-}))
-
-vi.mock("@chatbotx.io/business/errors", () => ({
-  notFoundException: (message: string) => new Error(message),
-}))
-
-vi.mock("@chatbotx.io/business/utils", () => ({
-  getPublicFileUrl: (path: string, storageUrl: string) =>
-    `${storageUrl}/${path}`,
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: mocks.db,
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  createMessageRepository: mocks.createMessageRepository,
-  getSafeSinceTime: mocks.getSafeSinceTime,
-}))
-
-vi.mock("@chatbotx.io/filesystem", () => ({
-  uploader: mocks.uploader,
+  messageService: {
+    listForConversation: mocks.listForConversation,
+    findByIdWithUrls: mocks.findByIdWithUrls,
+  },
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
   assertCurrentUserCanAccessChatbot: mocks.assertCurrentUserCanAccessChatbot,
 }))
 
-const { findMessage, listMessages, publicFindContactMessage } = await import(
+const { findMessage, listMessages } = await import(
   "../src/features/messages/queries"
 )
 
-describe("message queries", () => {
+describe("message queries adapter", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.createMessageRepository.mockResolvedValue(mocks.repo)
-    mocks.resolveTenantSettings.mockResolvedValue({
-      storageUrl: "https://storage.example.com",
-    })
-    mocks.repo.listByConversation.mockResolvedValue({
-      data: [],
-      nextCursor: null,
-    })
-    mocks.repo.findById.mockResolvedValue({
-      id: "msg-1",
-      workspaceId: "ws-1",
-      conversationId: "conv-1",
-      attachments: [],
-    })
-    mocks.repo.findTriggerMessage.mockResolvedValue({
+    mocks.listForConversation.mockResolvedValue({ data: [], nextCursor: null })
+    mocks.findByIdWithUrls.mockResolvedValue({
       id: "msg-1",
       workspaceId: "ws-1",
       conversationId: "conv-1",
@@ -88,59 +33,43 @@ describe("message queries", () => {
     })
   })
 
-  test("findMessage scopes repository lookup by workspaceId", async () => {
+  test("findMessage asserts access before delegating to messageService", async () => {
     const createdAt = new Date("2026-06-01T00:00:00Z")
 
-    await findMessage({
-      id: "msg-1",
-      workspaceId: "ws-1",
-      createdAt,
-    })
+    await findMessage({ id: "msg-1", workspaceId: "ws-1", createdAt })
 
-    expect(mocks.repo.findById).toHaveBeenCalledWith({
+    expect(mocks.assertCurrentUserCanAccessChatbot).toHaveBeenCalledWith("ws-1")
+    expect(mocks.findByIdWithUrls).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
       id: "msg-1",
       createdAt,
-      workspaceId: "ws-1",
     })
   })
 
-  test("publicFindContactMessage uses conversation-scoped lookup without requiring createdAt from the caller", async () => {
-    const conversationCreatedAt = new Date("2026-05-01T00:00:00Z")
-    mocks.db.query.conversationModel.findFirst.mockResolvedValue({
-      id: "conv-1",
-      workspaceId: "ws-1",
-      createdAt: conversationCreatedAt,
-    })
-    mocks.repo.findById.mockRejectedValue(new Error("unscoped lookup"))
-
-    await publicFindContactMessage({
-      messageId: "msg-1",
-      conversationId: "conv-1",
-      workspaceId: "ws-1",
-    })
-
-    expect(mocks.db.query.conversationModel.findFirst).toHaveBeenCalledWith({
-      where: { id: "conv-1", workspaceId: "ws-1" },
-    })
-    expect(mocks.repo.findTriggerMessage).toHaveBeenCalledWith({
-      id: "msg-1",
-      conversationId: "conv-1",
-      workspaceId: "ws-1",
-      sinceTime: conversationCreatedAt,
-      requireCompleteResults: true,
-    })
-    expect(mocks.repo.findById).not.toHaveBeenCalled()
-  })
-
-  test("listMessages scopes conversation metadata lookup by workspaceId", async () => {
+  test("listMessages delegates the request as-is when no cursor is given", async () => {
     await listMessages({
       workspaceId: "ws-1",
       conversationId: "conv-1",
       perPage: 20,
     })
 
-    expect(mocks.db.query.conversationModel.findFirst).toHaveBeenCalledWith({
-      where: { id: "conv-1", workspaceId: "ws-1" },
+    expect(mocks.listForConversation).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: undefined,
+      cursor: undefined,
+      limit: 20,
     })
+  })
+
+  test("listMessages returns null cursors when the service reports no next page", async () => {
+    const result = await listMessages({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      perPage: 20,
+    })
+
+    expect(result.nextCursor).toBeNull()
+    expect(result.prevCursor).toBeNull()
   })
 })

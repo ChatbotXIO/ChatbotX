@@ -403,7 +403,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum["ai.queued.messages"]:
       return await getQueuedMessages(context)
     case systemFieldTypes.enum.user_notes:
-      return await listContactNotesString(contact.id)
+      return await listContactNotesString(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.avatar:
       return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.current_time:
@@ -452,7 +452,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.last_interaction:
       return formatDateTime(contactInbox?.lastIncomingMessageAt, timezone)
     case systemFieldTypes.enum.last_user_note:
-      return await getLatestContactNoteString(contact.id)
+      return await getLatestContactNoteString(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.member_name:
       return await resolveAssigneeName(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.team_name:

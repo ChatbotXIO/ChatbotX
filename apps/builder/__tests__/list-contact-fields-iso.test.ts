@@ -11,15 +11,8 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: {
     findByIdOrFail: mocks.findByIdOrFail,
   },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      contactCustomFieldModel: {
-        findMany: mocks.findMany,
-      },
-    },
+  contactCustomFieldService: {
+    listWithDefinitionByContact: mocks.findMany,
   },
 }))
 
@@ -69,15 +62,8 @@ describe("listContactCustomFields", () => {
       },
     ])
     expect(mocks.findMany).toHaveBeenCalledWith({
-      where: {
-        contactId: "contact-1",
-        customField: {
-          workspaceId: "workspace-1",
-        },
-      },
-      with: {
-        customField: true,
-      },
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
     })
   })
 })

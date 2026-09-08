@@ -6,13 +6,19 @@ const mocks = vi.hoisted(() => {
   const updateSet = vi.fn(() => ({ where: updateWhere }))
   const deleteReturning = vi.fn()
   const deleteWhere = vi.fn(() => ({ returning: deleteReturning }))
+  const insertReturning = vi.fn()
+  const insertValues = vi.fn(() => ({ returning: insertReturning }))
 
   return {
     assertDeletable: vi.fn(),
     deleteReturning,
     deleteWhere,
     dispatchAuditRecord: vi.fn(),
+    ensureExists: vi.fn(),
     findFirst: vi.fn(),
+    flowExists: vi.fn(),
+    insertReturning,
+    insertValues,
     invalidateCacheKeys: vi.fn(),
     updateReturning,
     updateSet,
@@ -27,6 +33,7 @@ const makeClient = () => ({
       findMany: vi.fn(),
     },
   },
+  insert: vi.fn(() => ({ values: mocks.insertValues })),
   update: vi.fn(() => ({ set: mocks.updateSet })),
   delete: vi.fn(() => ({ where: mocks.deleteWhere })),
 })
@@ -39,6 +46,18 @@ vi.mock("../src/template/installed-resource.service", () => ({
   assertDeletable: mocks.assertDeletable,
 }))
 
+// This suite doesn't exercise `create` (which needs `flowService.exists`),
+// but the real `flow/service.ts` transitively needs `@chatbotx.io/flow-config`
+// (needs the real `zodBigintAsString` from `@chatbotx.io/utils`, conflicting
+// with the narrow mock below).
+vi.mock("../src/flow/service", () => ({
+  flowService: { exists: mocks.flowExists },
+}))
+
+vi.mock("../src/folder/service", () => ({
+  folderService: { ensureExists: mocks.ensureExists },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   db: makeClient(),
@@ -49,6 +68,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
+  automatedResponseFolderTypeByType: { keyword: "automatedResponse" },
   rootFolderId: "root",
 }))
 
@@ -143,5 +163,113 @@ describe("automatedResponseService audit side effects", () => {
       action: "delete",
       detail: "deleted keyword automation (#automation-1)",
     })
+  })
+})
+
+describe("automatedResponseService.create — flowId XOR text", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.insertReturning.mockResolvedValue([{ id: "automation-1" }])
+  })
+
+  test("verifies flowId exists and inserts it when only flowId is given", async () => {
+    mocks.flowExists.mockResolvedValue(true)
+
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: null,
+      flowId: "flow-1",
+      folderId: null,
+      keywords: ["hi"],
+    })
+
+    expect(mocks.flowExists).toHaveBeenCalledWith(
+      "workspace-1",
+      "flow-1",
+      undefined,
+    )
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ flowId: "flow-1", text: undefined }),
+    )
+  })
+
+  // Regression: this used to silently null `text` when both were given.
+  // Template install (`template/adapters/keywords.ts`) forwards the
+  // manifest's `text` and `flowId` verbatim, so nulling there dropped
+  // authored content with no error surfaced.
+  test("throws instead of dropping text when both flowId and text are given", async () => {
+    mocks.flowExists.mockResolvedValue(true)
+
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "keyword",
+        text: "do not drop me",
+        flowId: "flow-1",
+        folderId: null,
+        keywords: ["hi"],
+      }),
+    ).rejects.toThrow("A keyword replies with either text or a flow, not both")
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+  })
+
+  test("throws a field-scoped validation error when flowId does not exist", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      automatedResponseService.create("workspace-1", {
+        type: "keyword",
+        text: null,
+        flowId: "missing-flow",
+        folderId: null,
+        keywords: ["hi"],
+      }),
+    ).rejects.toMatchObject({ field: "flowId", message: "Flow not found" })
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+  })
+
+  test("nulls out flowId when only text is given", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "Hello there",
+      flowId: null,
+      folderId: null,
+      keywords: ["hi"],
+    })
+
+    expect(mocks.flowExists).not.toHaveBeenCalled()
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ flowId: undefined, text: "Hello there" }),
+    )
+  })
+
+  test("ensures the folder exists before creating when a folderId is given", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "Hello there",
+      flowId: null,
+      folderId: "folder-1",
+      keywords: ["hi"],
+    })
+
+    expect(mocks.ensureExists).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: "workspace-1",
+      folderType: "automatedResponse",
+      tx: undefined,
+    })
+  })
+
+  test("does not check folder existence when no folderId is given", async () => {
+    await automatedResponseService.create("workspace-1", {
+      type: "keyword",
+      text: "Hello there",
+      flowId: null,
+      folderId: null,
+      keywords: ["hi"],
+    })
+
+    expect(mocks.ensureExists).not.toHaveBeenCalled()
   })
 })

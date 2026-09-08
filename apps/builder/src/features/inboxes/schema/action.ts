@@ -1,4 +1,4 @@
-import { listInboxesRequest } from "@chatbotx.io/business"
+import { listInboxesRequest } from "@chatbotx.io/business/inbox/schema"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
 import { inboxResource } from "./resource"
