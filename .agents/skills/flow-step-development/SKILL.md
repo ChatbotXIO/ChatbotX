@@ -30,29 +30,10 @@ States live **on the step**, not on the node. Each state has:
 |-------|---------|
 | `id` | React Flow **Handle ID** — used as `sourceHandle` in edges to connect to a target node |
 | `stateType` | `"success"` \| `"error"` \| `"skip"` |
-| `nodeId` | *(future)* Direct target node ID for programmatic flow generation (no edge needed) |
 
-### Why `nodeId` on state (future use)
-
-When flows are **generated programmatically** (e.g. by AI, import, or API), there are no React Flow edges. Setting `state.nodeId` directly lets the worker route without edge lookup:
-
-```
-// Worker routing (flow.ts — executeMultipleStepsGenerator)
-const connectedNodeId = targetState.nodeId          // prefer direct nodeId
-  || seekConnectedNode(flowVersion, targetState.id)  // fall back to edge lookup
-```
-
-Until `nodeId` is added to the schema, routing always uses edge lookup via `state.id`.
-
-### State Schema (`packages/flow-config/src/states`)
-
-```typescript
-// current
-baseStateSchema = { id, stateType }
-
-// planned addition
-baseStateSchema = { id, stateType, nodeId?: string }
-```
+`baseStateSchema` (`packages/flow-config/src/states/index.ts:11`) is exactly
+`{ id, stateType }`; `successStateSchema` / `errorStateSchema` / `skipStateSchema` extend it.
+Routing is always edge lookup via `state.id` — there is no direct target-node field.
 
 ## Step Status Types
 
@@ -116,7 +97,9 @@ export const myStepDefaultFn = (): MyStepSchema => ({
 
 **When to add a `skip` state**: only when the step has a meaningful "no-op but not an error" outcome — e.g. `getUserData` skips when the user doesn't respond. Most action steps use only `[success, error]`.
 
-Export from `packages/flow-config/src/steps/index.ts` and `packages/flow-config/src/index.ts`.
+Add one `export * from "./steps/<my-step>"` line to `packages/flow-config/src/index.ts`
+(there is no `steps/index.ts` barrel — each step is re-exported individually, ~100 lines
+starting around L36).
 
 ### Step 2 — Register the step type
 
@@ -150,10 +133,13 @@ export async function handleMyStep(
 
 ### Step 4 — Register in `step.ts`
 
-Add to the `flowStepHandlers` map in `apps/worker/src/integration/handlers/step.ts`:
+Add to the `flowStepHandlers` map in `apps/worker/src/integration/handlers/step.ts:404`.
+It is a full `Record`, **not** `Partial<Record<...>>` — so adding a `StepType` without a
+handler is a compile error. That exhaustiveness is deliberate; do not widen it to `Partial`
+to silence the error.
 
 ```typescript
-export const flowStepHandlers: Partial<Record<StepType, StepHandler>> = {
+export const flowStepHandlers: Record<StepType, StepHandler> = {
   // ...existing
   [stepTypes.enum.myStep]: handleMyStep,
 }
@@ -220,7 +206,10 @@ export const myStep: StepDefinition<MyStepSchema> = {
 
 ## Routing Mechanics (Worker)
 
-The routing loop in `apps/worker/src/integration/handlers/flow.ts` (`executeMultipleStepsGenerator`):
+State-based step routing lives in `apps/worker/src/integration/handlers/step.ts:267`
+(the `seekConnectedNode` call that resolves a step's target state to a node). The node-level
+loop `executeMultipleStepsGenerator` (`flow.ts:568`, its own `seekConnectedNode` call at
+`flow.ts:615`) is a separate concern — a new step hooks into `step.ts`, not `flow.ts`:
 
 1. Execute the step → get `ExecuteStepResult`
 2. If status is `success | error | skip`, find the matching state: `step.states.find(s => s.stateType === result.status)`
@@ -230,7 +219,7 @@ The routing loop in `apps/worker/src/integration/handlers/flow.ts` (`executeMult
 6. If not branched (no edge connected), continue to the next step in the node
 
 ```typescript
-// flow-utils.ts
+// flow-utils.ts:93 (helper; re-exported from flow.ts:96)
 export const seekConnectedNode = (flowVersion, sourceId) =>
   (flowVersion.edges as EdgeSchema[])
     .find(edge => edge.sourceHandle === sourceId)?.target

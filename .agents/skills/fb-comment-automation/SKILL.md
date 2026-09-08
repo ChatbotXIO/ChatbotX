@@ -102,7 +102,8 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 3. Add the guard inside the loop in `processCommentAutomation`, **with a
    `logAutomationSkipped(..., reason)` before `continue`**.
 4. Surface the toggle in `apps/builder/src/features/fb-comments/components/fb-comment-form.tsx`
-   and add i18n keys to `apps/builder/messages/en.json` + `vi.json`.
+   and add i18n keys to **every** locale file in `apps/builder/messages/` (the i18n parity
+   check in `pnpm lint` fails on a missing key in any of the 20 locales).
 5. Extend `apps/worker/__tests__/comment-automation.test.ts`.
 
 ## Adding a new reply type (recipe)

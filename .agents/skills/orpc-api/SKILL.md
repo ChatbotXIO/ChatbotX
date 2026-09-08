@@ -11,7 +11,7 @@ description: >-
 ## Architecture
 
 - **oRPC** serves both **RPC** (`/rpc`) and **OpenAPI** (`/api`) endpoints
-- `/api` serves **only** `publicRouter` (workspace-token / channel-token authed procedures). Private, session-authed procedures are reachable via `/rpc` (from the builder) only — there is no full-router HTTP mirror. `OpenAPIReferencePlugin` serves Scalar docs at `GET /api` and the spec at `/api/spec.json` for the public router.
+- `/api` serves **only** `publicRouter` (workspace-token / channel-token authed procedures). Private, session-authed procedures are reachable via `/rpc` (from the builder) only — there is no full-router HTTP mirror. `OpenAPIReferencePlugin` serves Scalar docs at `GET /api` and the spec at `/api/public-spec.json` for the public router.
 - Base context: `{ headers, url?, user?, workspace?, apiToken? }`
 - Three auth stacks: `authorizedAPI` (session), `workspaceTokenAuthAPIForScope(scope)` (Bearer workspace API token) and `channelApiTokenAPI` (Bearer channel API token)
 - Routers are plain objects of procedures, composed via object spreading
@@ -42,7 +42,7 @@ import { myFeatureService } from "@chatbotx.io/business"
 import { authorizedAPI } from "@/orpc"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { z } from "zod"
-import { zodBigintAsString } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 
 export const myFeatureAuthenticatedAPI = {
   listMyFeatureAPI: authorizedAPI
@@ -300,7 +300,7 @@ Next.js-built (see `.agents/rules/no-dynamic-import.md`).
 For public API (`api/public.ts`), don't add the feature to `routers/index.ts`
 at all if it has no private procedures — register it only in
 `apps/builder/src/routers/public.ts` (see above), nested under the resource
-name. That router stays **eager** (plain imports); it feeds `/api/spec.json`,
+name. That router stays **eager** (plain imports); it feeds `/api/public-spec.json`,
 and its `operationId`s (`resource.key`) are what the MCP server turns into
 tool names.
 
@@ -379,10 +379,10 @@ const data = await client.myFeatureAPI.listMyFeatureAPI({ workspaceId })
 
 ## Error Handling
 
-Throw `ChatbotXException` or `ModelNotfoundException` — they are auto-mapped to oRPC errors by `mapKnownOrpcErrors` (`apps/builder/src/orpc.ts`), the middleware-level `onError` interceptor shared by all three auth stacks: it warn-logs and remaps known errors, leaving anything else untouched. Unknown errors are logged exactly once at error level by `logUnexpectedOrpcErrorCallback` (`apps/builder/src/lib/orpc/handlers.ts`), the route-level interceptor used by the `/api` and `/rpc` handlers:
+Throw `ChatbotXException` (`@chatbotx.io/business/errors`) or `ModelNotfoundException` (`@chatbotx.io/database/errors`) — they are auto-mapped to oRPC errors by `mapKnownOrpcErrors` (`apps/builder/src/orpc.ts`), the middleware-level `onError` interceptor shared by all three auth stacks: it warn-logs and remaps known errors, leaving anything else untouched. Unknown errors are logged exactly once at error level by `logUnexpectedOrpcErrorCallback` (`apps/builder/src/lib/orpc/handlers.ts`), the route-level interceptor used by the `/api` and `/rpc` handlers:
 
 ```typescript
-import { ChatbotXException, notFoundException } from "@chatbotx.io/sdk"
+import { ChatbotXException, notFoundException } from "@chatbotx.io/business/errors"
 
 throw notFoundException("Item not found")
 throw new ChatbotXException("Custom error", "BAD_REQUEST", 400)
@@ -425,19 +425,5 @@ one of these sets.
 
 ## Logging
 
-Import the logger from the nearest `lib/log` or `lib/logger` module. Never use `console` in handlers.
-
-```typescript
-import { logger } from "../lib/log"
-
-.handler(async ({ input }) => {
-  try {
-    return await doWork(input)
-  } catch (error) {
-    logger.error({ err: error, ...input }, "[myFeature] handler failed")
-    throw error
-  }
-})
-```
-
-**Key rule:** always use `err: error` (not `error: error`) so pino serializes the stack trace.
+Import the logger from the nearest `lib/log` / `lib/logger` module; never use `console` in a
+handler. Log errors as `{ err: error }` — see repo invariant 20 in `AGENTS.md`.

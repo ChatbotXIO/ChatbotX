@@ -42,7 +42,7 @@ Channel name → determines package name (`@chatbotx.io/integration-<channel>`),
 
 | Base                          | When to use                                               | Examples                          |
 | ----------------------------- | --------------------------------------------------------- | --------------------------------- |
-| `customAuthSchema` (from SDK) | User provides credentials directly. No OAuth.             | email, webchat                    |
+| `customAuthSchema` (from SDK) | User provides credentials directly. No OAuth.             | smtp, webchat, telegram           |
 | `Oauth2AuthValue` (from SDK)  | Platform uses OAuth2 with clientId/clientSecret + tokens. | messenger, whatsapp, zalo, tiktok |
 
 For EACH field: name, Zod type, required or optional. Infer types from context (e.g. "port" → `z.number().int().positive()`).
@@ -52,7 +52,7 @@ For EACH field: name, Zod type, required or optional. Infer types from context (
 | Scenario                                                   | Platform credentials? | Examples                          |
 | ---------------------------------------------------------- | --------------------- | --------------------------------- |
 | OAuth app (clientId/clientSecret shared across workspaces) | YES                   | messenger, whatsapp, zalo, tiktok |
-| Per-workspace credentials only                             | NO                    | email, webchat, smtp              |
+| Per-workspace credentials only                             | NO                    | smtp, webchat, telegram           |
 | Shared third-party API key                                 | YES                   | giphy, stripe                     |
 
 ### Confirmation Summary
@@ -76,133 +76,27 @@ After confirmation, execute these 4 phases **in order**. Each phase ends with a 
 
 ### Phase 1: Integration Package (create `integrations/<channel>/`)
 
-Create 5 files. All are boilerplate — write them in a single batch.
+**Copy `integrations/telegram/`** — a live, minimal `customAuthSchema` integration. Copying a
+sibling keeps dependency versions and the `exports`/`scripts` blocks correct; a hand-written
+template drifts on every bump.
 
-**Directory structure:**
-
-```
-integrations/<channel>/
-  package.json
-  tsconfig.json
-  src/
-    index.ts
-    schema.ts
-    integration.ts
-    handlers/
-      webhook.ts
+```bash
+cp -r integrations/telegram integrations/<channel>
 ```
 
-**`package.json`:**
+Then rename throughout and strip Telegram-specific logic. The five files that matter:
 
-```json
-{
-  "name": "@chatbotx.io/integration-<channel>",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./**/*": "./src/**/*.ts"
-  },
-  "dependencies": {
-    "@chatbotx.io/sdk": "workspace:*",
-    "zod": "^4.3.6"
-  },
-  "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
-    "@types/node": "^24.10.4",
-    "typescript": "^5"
-  }
-}
-```
+| File | What to change |
+|---|---|
+| `package.json` | `name` → `@chatbotx.io/integration-<channel>`. Keep the `exports` and `scripts` blocks as-is. Drop deps the new channel doesn't use. |
+| `tsconfig.json` | Nothing — it just extends `@chatbotx.io/typescript-config/base.json`. |
+| `src/index.ts` | Nothing — re-exports `./integration`. |
+| `src/schema.ts` | `<channel>AuthSchema` — extend `customAuthSchema` (SDK) with the auth fields from the confirmation step, or use `Oauth2AuthValue` for OAuth channels. Export `<Channel>Config`, `<Channel>AuthValue`, `<Channel>Actions`. |
+| `src/integration.ts` | `name: "<channel>"`, the `channels`/`actions` maps, and the `handleRequest` switch that routes the URL's last path segment (`case "webhook"`) to your handler. Implement `disconnect` if the platform supports it. |
+| `src/handlers/webhook.ts` | Parse the platform's payload and `props.queue?.add("incomingMessage", { type: "incomingMessage", data: { integrationType: "<channel>", integrationIdentifier, payload } })`. |
 
-**`tsconfig.json`:**
-
-```json
-{
-  "extends": "@chatbotx.io/typescript-config/base.json",
-  "include": ["src/**/*.ts"],
-  "compilerOptions": { "strictNullChecks": true }
-}
-```
-
-**`src/index.ts`:**
-
-```typescript
-export * from "./integration";
-```
-
-**`src/schema.ts`** — fill in auth fields from confirmation:
-
-```typescript
-import type { BaseConfig } from "@chatbotx.io/sdk"
-import { customAuthSchema } from "@chatbotx.io/sdk"
-import { z } from "zod"
-
-export type <Channel>Config = BaseConfig
-
-export const <channel>AuthSchema = customAuthSchema.extend({
-  // confirmed auth fields here
-})
-export type <Channel>AuthValue = z.infer<typeof <channel>AuthSchema>
-
-export type <Channel>Actions = Record<string, never>
-```
-
-**`src/integration.ts`:**
-
-```typescript
-import {
-  type BaseConfig,
-  type HandleRequestProps,
-  Integration,
-  type IntegrationDefinition,
-  type Oauth2AuthValue,
-} from "@chatbotx.io/sdk"
-import { webhookHandler } from "./handlers/webhook"
-import type { <Channel>Actions, <Channel>AuthValue } from "./schema"
-
-const config: IntegrationDefinition<BaseConfig, <Channel>AuthValue, <Channel>Actions> = {
-  name: "<channel>",
-  channels: { channel: { message: {} } },
-  actions: {},
-  async handleRequest(props: HandleRequestProps<BaseConfig>): Promise<string | number | Oauth2AuthValue> {
-    const segments = new URL(props.req.url).pathname.split("/")
-    const action = segments.pop()
-    switch (action) {
-      case "webhook":
-        return await webhookHandler(props)
-      default:
-        throw new Error(`Not implemented: ${props.req.method} ${props.req.url}`)
-    }
-  },
-  disconnect(_props: <Channel>AuthValue): Promise<void> {
-    throw new Error("Method is not implemented.")
-  },
-}
-
-export const integration = new Integration(config)
-```
-
-**`src/handlers/webhook.ts`:**
-
-```typescript
-import type { HandleRequestProps } from "@chatbotx.io/sdk"
-import type { <Channel>Config } from "../schema"
-
-export const webhookHandler = async (props: HandleRequestProps<<Channel>Config>) => {
-  const payload = await props.req.json()
-  await props.queue?.add("incomingMessage", {
-    type: "incomingMessage",
-    data: {
-      integrationType: "<channel>",
-      integrationIdentifier: payload.identifier,
-      payload,
-    },
-  })
-  return "OK"
-}
-```
+The `Integration` class and `customAuthSchema` come from `@chatbotx.io/sdk`
+(`packages/sdk/src/lib/integration.ts`, `packages/sdk/src/lib/auth/index.ts`).
 
 ### Phase 2: Database (create schema + register in 7 files)
 
@@ -258,7 +152,7 @@ export const integration<Channel>Relations = defineRelationsPart(schema, (r) => 
 
 | #   | File                                            | Edit                                                                                               |
 | --- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 1   | `packages/database/src/partials/channel.ts`     | Add `"<channel>"` to `channelTypes` z.enum array                                                   |
+| 1   | `packages/utils/src/channel.ts`                 | Add `"<channel>"` to the `channelTypes` z.enum. **Defined here**, not in `database/partials/channel.ts` (that file only re-exports it, so `flow-config` can depend on it without the database layer) |
 | 2   | `packages/database/src/partials/integration.ts` | Add `"<channel>"` to `integrationTypes` z.enum array                                               |
 | 3   | `packages/database/src/schema/index.ts`         | Add `export * from "./integration-<channel>"`                                                      |
 | 4   | `packages/database/src/relations/index.ts`      | Add import at top AND spread in `relations` object                                                 |
@@ -271,7 +165,7 @@ export const integration<Channel>Relations = defineRelationsPart(schema, (r) => 
 
 After editing, immediately read back each file to verify both import AND spread are present.
 
-### Phase 3: Registration (edit 6 files)
+### Phase 3: Registration (edit 7 files)
 
 **Integration registration (4 files, single batch):**
 
@@ -353,7 +247,7 @@ export type Integration<Channel>Resource = z.infer<typeof integration<Channel>Re
 
 **`actions/create-<channel>.action.ts`** — Create action pattern:
 
-- Uses `workspaceActionClient.bindArgsSchemas(workspaceIdrequestParams).inputSchema(schema).action(...)`
+- Uses `workspaceActionClient.bindArgsSchemas(workspaceIdAndIdRequestParams).inputSchema(schema).action(...)` — see `apps/builder/src/features/integration-telegram/actions/disconnect.action.ts:17`
 - Creates `Inbox` + `Integration<Channel>` in a DB transaction
 - The inbox `channel` value must match the enum value added in Phase 2: `channelTypes.enum.<channel>`
 - The inbox `name` should be set from `parsedInput.name`
@@ -367,11 +261,11 @@ export type Integration<Channel>Resource = z.infer<typeof integration<Channel>Re
 - **CRITICAL:** Every channel delete service method must call `inboxService.disconnect()` inside the same transaction as the integration-row delete. This keeps disconnected inboxes out of active inbox queries and prevents channel-specific drift.
 
 **`queries/index.ts`** — A thin adapter over the service, per
-`.agents/rules/data-access.md` — no `db`/`@chatbotx.io/database/schema`
-import here:
+`.agents/rules/data-access.md`: resolve session context → plain params → call the service →
+shape the response. **No `db` / `@chatbotx.io/database/schema` import, and no `"use server"`**
+(a query file is not a server-action module).
 
 ```typescript
-"use server"
 import { integration<Channel>Service } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
@@ -380,6 +274,11 @@ export const listIntegration<Channel>s = async (input: { workspaceId: string }) 
   return { data: await integration<Channel>Service.listByWorkspaceId(input.workspaceId) }
 }
 ```
+
+> **Do not copy a sibling channel's `queries/index.ts` verbatim.** Every existing channel
+> feature (e.g. `apps/builder/src/features/integration-telegram/queries/index.ts`) still opens
+> with `import { db } from "@chatbotx.io/database/client"` — those are legacy exceptions that
+> predate the rule, not the pattern. New code calls a service.
 
 **`components/create-<channel>-form.tsx`** — Form pattern:
 
@@ -449,10 +348,9 @@ A capability entry without this page 404s loudly when the row is clicked.
 
 Run these checks **in order**:
 
-1. **`ReadLints`** on ALL modified files
-2. **`pnpm fix`** — auto-fix formatting (ignore pre-existing errors in other files)
-3. **`CI=true pnpm install --no-frozen-lockfile`** — link new workspace package (use `CI=true` to avoid TTY prompt)
-4. **`pnpm turbo build`** — if it fails, read errors, fix, re-run
+1. **`CI=true pnpm install --no-frozen-lockfile`** — link the new workspace package (`CI=true` avoids the TTY prompt)
+2. **`pnpm fix`** then **`pnpm lint`** — auto-fix formatting, then confirm clean (ignore pre-existing errors in untouched files)
+3. **`pnpm turbo build`** — if it fails, read errors, fix, re-run
 
 ### Common Build Errors
 
@@ -472,25 +370,14 @@ If platform credentials ARE needed, also update:
 | #   | File                                           | What to add                                                                                                                       |
 | --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | `packages/database/src/partials/credential.ts` | New `<channel>CredentialSchema` + add to `platformCredentialSchema`                                                               |
-| 2   | `apps/builder/src/features/platform-settings/` | Settings panel component + action                                                                                                 |
-| 3   | `manage-platform-settings.tsx`                 | Import and render new panel                                                                                                       |
+| 2   | `apps/builder/src/features/platform-credentials/` | Settings panel component + action                                                                                                 |
+| 3   | `manage-platform-credentials.tsx`                 | Import and render new panel                                                                                                       |
 | 4   | `<channel>-manage.tsx`                         | Gate "Add" button on presence of a verified credential via `platformCredentialService.findForUser({ userId, type: '<channel>' })` |
 
 ## Logging
 
-Never use `console` in integration code. Import `@chatbotx.io/logger` for shared packages, or the app-local logger for worker/builder code.
-
-```typescript
-import logger from "@chatbotx.io/logger";
-
-// ✅ correct — preserves stack trace
-logger.error({ err: error, channel: "<channel>" }, "Webhook handler failed");
-
-// ❌ wrong — stack trace lost
-logger.error({ error }, "Webhook handler failed");
-```
-
-Always use `err: error` (not `error: error`) — pino's built-in serializer is registered under the `err` key.
+Use the structured logger, never `console`, and log with `{ err: error }` — see repo
+invariant 20 in `AGENTS.md`.
 
 ## Comment Handler Pattern
 
@@ -549,6 +436,13 @@ branded domain, so a webhook on the reseller domain silently fails. See
 
 ## Existing Integrations Reference
 
+**Channel vs integration.** Not every integration is a channel. `channelTypes`
+(`packages/utils/src/channel.ts:18`) is exactly: `omnichannel`, `webchat`, `messenger`,
+`whatsapp`, `zalo`, `smtp`, `telegram`, `instagram`, `tiktok`, `api`. Entries below that are
+not in that list (`google-sheets`, `instagram-facebook`, …) are `integrationTypes` only —
+they connect an external service but carry no inbox conversation.
+
+
 | Integration         | Auth type | Platform credentials? | Notes                                                                                                                              |
 | ------------------- | --------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | messenger           | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
@@ -557,7 +451,6 @@ branded domain, so a webhook on the reseller domain silently fails. See
 | tiktok              | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
 | google-sheets       | OAuth2    | YES                   | clientId/clientSecret as platform credential                                                                                       |
 | instagram-facebook  | OAuth2    | YES                   | Meta/Facebook app (clientId/clientSecret); auth via Facebook Graph API for Instagram Business/Creator accounts linked to FB Pages; handles DMs + post comments; Personal accounts filtered out; integration name in code: `instagramFacebook` |
-| email               | Custom    | NO                    | SMTP credentials per workspace                                                                                                     |
 | smtp                | Custom    | NO                    | SMTP with provider presets                                                                                                         |
 | webchat             | Custom    | NO                    | PartySocket-based                                                                                                                  |
 | chatbotx            | Custom    | NO                    | Internal chatbot                                                                                                                   |

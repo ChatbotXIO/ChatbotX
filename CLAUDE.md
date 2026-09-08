@@ -13,7 +13,9 @@
 
 | Task | Skill to read first |
 |------|---------------------|
+| Broad/ambiguous request, onboarding, "where does X live" | `chatbotx-basecode` |
 | New feature / page | `feature-scaffold` |
+| Builder UI component, form, table, dialog, or any user-facing string | `builder-ui-i18n` |
 | New API endpoint | `orpc-api` |
 | Business logic, new service method, any DB read/write from app code | `business-data-access` |
 | New DB table or migration | `drizzle-database` |

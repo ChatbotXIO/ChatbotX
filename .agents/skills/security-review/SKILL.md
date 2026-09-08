@@ -34,7 +34,7 @@ Invariants: `hasWorkspacePermission` treats missing jsonb keys as **denied** (fa
 ## 2. Prompt injection (untrusted channel content → agent context)
 
 - Customer messages (WhatsApp/Messenger/webchat), uploaded documents, and fetched URLs are **untrusted**. When their content reaches an AI prompt or RAG context, it must be framed as data, not instructions (clear delimiters, "the following is user-provided content").
-- Flag raw `content: row.content` passthrough from a context-source adapter into a model prompt (`apps/worker/.../context-sources/`, `packages/ai/`).
+- Flag raw `content: row.content` passthrough from a context-source adapter into a model prompt (`apps/worker/src/integration/handlers/automated-response/system-tools/context-sources/`, `packages/ai/`).
 
 ## 3. Tool / permission allowlist (`.claude/settings.local.json`)
 

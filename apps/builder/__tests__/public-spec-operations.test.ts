@@ -279,12 +279,94 @@ describe("public API spec — error response coverage", () => {
 
     expect(missing422).toEqual([])
   })
+})
 
-  test("no operation documents 413 — the payload-too-large status is out of scope", () => {
-    const with413 = operations
-      .filter((op) => op.responseStatuses.includes("413"))
-      .map((op) => op.operationId)
+/**
+ * The spec assertions above check only that a *status code* slot exists. That
+ * cannot catch the failure this suite actually exists to prevent: a route
+ * throwing an `ORPCError` whose `code` no route declares. oRPC does not fail
+ * loudly there — `validateORPCError` looks the code up in the route's error
+ * map and, on a miss, passes the error through with `defined: false`, so it
+ * silently leaves the OpenAPI contract while still returning a status. These
+ * tests read each procedure's real `errorMap` instead of the rendered spec.
+ */
+describe("public API spec — declared codes match what the mapper throws", () => {
+  // Every code `mapKnownOrpcErrors`/`toKnownOrpcError` (`@/orpc`) or the shared
+  // auth + rate-limit middlewares can throw on ANY public route, regardless of
+  // that route's own resource shape. Each must come from `commonApiErrors`.
+  const UNIVERSAL_CODES = [
+    "UNAUTHORIZED",
+    "INVALID_CHATBOT_TOKEN",
+    "FORBIDDEN",
+    "trialExpired",
+    "macLimitReached",
+    // Thrown by oRPC's own input-schema rejection, remapped from the raw
+    // `BAD_REQUEST` — so it applies to every route with an `.input()`.
+    "invalidRequestData",
+    // Thrown by `validationException` in @chatbotx.io/business.
+    "validation",
+    "tooManyRequests",
+    "INTERNAL_SERVER_ERROR",
+  ]
 
-    expect(with413).toEqual([])
+  type ProcedureErrorMap = { path: string; codes: string[] }
+
+  function collectErrorMaps(
+    node: unknown,
+    path: string[],
+    out: ProcedureErrorMap[],
+  ): void {
+    if (!node || typeof node !== "object") {
+      return
+    }
+    const def = (node as Record<string, { errorMap?: object }>)["~orpc"]
+    if (def?.errorMap) {
+      out.push({ path: path.join("."), codes: Object.keys(def.errorMap) })
+      return
+    }
+    for (const [key, child] of Object.entries(node)) {
+      collectErrorMaps(child, [...path, key], out)
+    }
+  }
+
+  let procedures: ProcedureErrorMap[]
+
+  beforeAll(async () => {
+    const { publicRouter } = await import("@/routers/public")
+    procedures = []
+    collectErrorMaps(publicRouter, [], procedures)
+  })
+
+  test("every public procedure declares the universal error codes", () => {
+    expect(procedures.length).toBeGreaterThan(0)
+
+    const missing = procedures
+      .map((proc) => ({
+        path: proc.path,
+        absent: UNIVERSAL_CODES.filter((code) => !proc.codes.includes(code)),
+      }))
+      .filter((entry) => entry.absent.length > 0)
+
+    expect(missing).toEqual([])
+  })
+
+  test("no procedure re-declares a code commonApiErrors already provides", async () => {
+    const { commonApiErrors, possibleErrorsOnFindingResource } = await import(
+      "@/lib/orpc/orpc-error-helper"
+    )
+    const shared = new Set(Object.keys(commonApiErrors))
+
+    // Sanity-check the sets really are disjoint at the source, so a future
+    // edit that moves a code back into a per-router set fails here first.
+    for (const code of Object.keys(possibleErrorsOnFindingResource)) {
+      expect(shared.has(code)).toBe(false)
+    }
+
+    // Each procedure's codes = commonApiErrors + its own set, with no overlap,
+    // so the total is exactly the sum. A duplicate would shrink the key count.
+    const duplicated = procedures.filter(
+      (proc) => new Set(proc.codes).size !== proc.codes.length,
+    )
+    expect(duplicated).toEqual([])
   })
 })

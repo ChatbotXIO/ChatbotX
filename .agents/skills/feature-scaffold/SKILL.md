@@ -56,7 +56,7 @@ business logic — see the "Queries (Server-Side)" section below.
 ```typescript
 // app/space/[workspaceId]/(has-folder)/<feature>/page.tsx
 import { Suspense } from "react"
-import { getIdFromParams } from "@/lib/params"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { listItems } from "@/features/<feature>/queries"
 import { ItemsTable } from "@/features/<feature>/items-table"
 
@@ -152,9 +152,17 @@ export const createItemAction = workspaceActionClient
 
 ### Action Clients
 
-- `workspaceActionClient` — requires workspace membership
-- `workspaceActionClientAllowExpired` — resolves membership the same way but skips the trial-expiry gate for delete, disconnect, and cancel actions that must remain available post-expiry. New actions should default to the gated client (fail closed) and opt into this escape hatch only when the operation is intentionally allowed.
-- `authActionClient` — requires authenticated session only
+All six live in `apps/builder/src/lib/safe-action.ts`. Default to the most restrictive one
+that fits (fail closed):
+
+| Client | Gate |
+|---|---|
+| `workspaceActionClient` (`:141`) | workspace membership **+** trial-expiry gate — the default for feature actions |
+| `workspaceActionClientAllowExpired` (`:96`) | membership, **skips** the expiry gate. Only for delete/disconnect/cancel that must stay available post-expiry (repo invariant 14) |
+| `workspaceActionClientAllowScheduledDeletion` (`:174`) | membership, tolerates a workspace inside its soft-delete grace window |
+| `superAdminActionClient` (`:89`) | authenticated **+** super admin |
+| `platformAdminActionClient` (`:80`) | authenticated **+** platform admin |
+| `authActionClient` (`:43`) | authenticated session only — no workspace scope |
 
 ## Queries (Server-Side)
 
@@ -260,102 +268,19 @@ Available defined fields:
 All defined fields read `control` from `useFormContext` — no `control` prop
 needed as long as a `<Form {...form}>` provider wraps the form.
 
-### Form Section Layout — Use `<Card>`
+### Use the shared components, never raw HTML
 
-Multi-section forms (create/edit pages) use `<Card>` to group related fields. **Never use a plain `<div className="rounded-lg border p-6">` wrapper** — always use the Card component.
+- **Sections:** group multi-section forms with `<Card>` / `<CardHeader>` / `<CardTitle>` /
+  `<CardContent className="space-y-4">` (`@chatbotx.io/ui/components/ui/card`). Never a plain
+  `<div className="rounded-lg border p-6">`.
+- **Buttons:** always `<Button>` (`@chatbotx.io/ui/components/ui/button`) — including icon-only
+  buttons and ones inside a base-ui trigger's `render` prop. Never a raw `<button>`. Use the
+  `variant` prop (`ghost`, `outline`, `dashed`, …) rather than re-styling with `className`.
+- **Sticky save bars, empty states, and table shells** already exist in `@chatbotx.io/ui` and in
+  sibling features — copy the nearest real page rather than rebuilding the markup.
 
-```typescript
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-
-// Section with a title
-<Card>
-  <CardHeader>
-    <CardTitle className="text-base">{t("feature.sections.pricing")}</CardTitle>
-  </CardHeader>
-  <CardContent className="space-y-4">
-    <InputField ... />
-    <InputField ... />
-  </CardContent>
-</Card>
-
-// Section without a title (e.g. basic info / first card)
-<Card>
-  <CardContent className="space-y-4 pt-6">
-    <InputField ... />
-  </CardContent>
-</Card>
-```
-
-Full-page create/edit forms follow this layout:
-
-```typescript
-<div className="flex min-h-screen flex-col bg-muted/20">
-  {/* Sticky top bar with title + Save/Cancel */}
-  <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-6 py-3">
-    <h1 className="font-semibold text-lg">{t("feature.create.title")}</h1>
-    <div className="flex items-center gap-2">
-      <Button onClick={() => router.back()} type="button" variant="ghost">
-        {t("actions.cancel")}
-      </Button>
-      <Button type="submit">{t("actions.save")}</Button>
-    </div>
-  </div>
-
-  {/* Scrollable form content */}
-  <Form {...form}>
-    <form className="mx-auto w-full max-w-3xl space-y-6 px-6 py-8" onSubmit={handleSubmitWithAction}>
-      <Card>...</Card>
-      <Card>...</Card>
-    </form>
-  </Form>
-</div>
-```
-
-### Interactive Elements — Use `<Button>`
-
-**Never use a raw `<button>` element.** Always use `Button` from `@chatbotx.io/ui/components/ui/button` — including icon-only buttons, buttons wrapped in a `group`/`hover` container, and buttons rendered inside a base-ui trigger (`DropdownMenuTrigger`, `DialogClose`, etc. via their `render` prop).
-
-```typescript
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-
-// WRONG — raw HTML button
-<button className="flex items-center gap-2 rounded-md px-3 py-2" onClick={onClick} type="button">
-  <PlusIcon className="size-4" />
-  {t("actions.create")}
-</button>
-
-// CORRECT — Button component
-<Button onClick={onClick} type="button" variant="ghost">
-  <PlusIcon className="size-4" />
-  {t("actions.create")}
-</Button>
-```
-
-Variants: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, `dashed`. Sizes: `default`, `sm`, `lg`, `icon` (use `icon` for icon-only buttons, not a text-labelled size with padding overrides).
-
-For a base-ui trigger that needs a custom element (`DropdownMenuTrigger`, `DialogClose`, `TooltipTrigger`), pass `<Button>` via the `render` prop instead of a raw `<button>`:
-
-```typescript
-<DropdownMenuTrigger
-  render={
-    <Button size="icon" type="button" variant="ghost">
-      <MoreVerticalIcon className="size-3.5" />
-    </Button>
-  }
-/>
-```
-
-`Button` renders as `inline-flex items-center justify-center` with size-driven height/padding (`buttonVariants` in `packages/ui/src/components/ui/button.tsx`). When reusing it for a non-standard layout (e.g. a full-width nav item, or a card that stacks children vertically), override what doesn't fit instead of fighting it with a raw `<button>`:
-
-- Full-width, left-aligned row (sidebar nav item, list row): add `justify-start`.
-- Vertically stacked children (a clickable card): add `flex-col items-stretch justify-start h-auto gap-0` — `Button`'s base classes lay out children in a row by default.
-- Compact icon-only button that shouldn't be a fixed 36px square: use `size="icon"` and override with `size-auto` (or an explicit `size-*`) plus your own padding.
-- A `bg-primary`/active-state button must also override `hover:bg-primary` (or similar) — `variant="ghost"`'s default `hover:bg-accent` will otherwise flash a different color on hover while the button is in its active/selected state.
+For the full component ladder (which field component to reach for first) see the
+**`builder-ui-i18n`** skill.
 
 ### CRITICAL — Default Values for Nullable Text Fields
 
@@ -514,16 +439,17 @@ Wrap with React context provider (`provider/item-store-provider.tsx`).
 | What | Path |
 |------|------|
 | App internal | `@/features/<feature>/...`, `@/lib/...`, `@/components/...` |
-| Shared UI | `@chatbotx.io/ui/<component>` |
+| Shared UI | `@chatbotx.io/ui/components/ui/<component>` (via the package's `exports` map) |
 | Business services | `@chatbotx.io/business` — the only way to reach data from a feature |
 | Types | `@chatbotx.io/database/types` |
-
-`@chatbotx.io/database/client` and `@chatbotx.io/database/schema` are **not**
-importable from `apps/builder/src/features/*` — see `.agents/rules/data-access.md`.
+| Shared helpers | `@chatbotx.io/utils` (`getIdFromParams`, `zodBigintAsString`, …) |
 | oRPC client | `@/lib/orpc/orpc` |
 | oRPC stacks | `@/orpc` (for `authorizedAPI`, `workspaceTokenAuthAPIForScope`) |
 | Auth middleware | `@/middlewares/auth` |
 | Safe action clients | `@/lib/safe-action` |
+
+`@chatbotx.io/database/client` and `@chatbotx.io/database/schema` are **not**
+importable from `apps/builder/src/features/*` — see `.agents/rules/data-access.md`.
 
 ## Layout Patterns
 
@@ -534,208 +460,35 @@ importable from `apps/builder/src/features/*` — see `.agents/rules/data-access
 - Server layouts: auth checks, data loading
 - Client layouts: tabs, accordions, interactive navigation
 
-## Internationalization (i18n) — next-intl
+## Internationalization (i18n)
 
-All user-facing text **MUST** be internationalized using `next-intl`. Never hardcode labels, placeholders, messages, or button text.
+All user-facing text **must** use `useTranslations()` — never hardcode a label, placeholder,
+button, or toast. Reuse existing `fields.*` / `actions.*` / `messages.*` keys before adding new
+ones, and add every new key to **all** locale files in `apps/builder/messages/` (the parity
+check in `pnpm lint` fails otherwise).
 
-### Setup
-
-```typescript
-import { useTranslations } from "next-intl"
-
-const t = useTranslations()
-```
-
-### Translation File Structure
-
-Translations live in `apps/builder/messages/en.json`. The file is organized into namespaces:
-
-| Namespace | Purpose | Example |
-|-----------|---------|---------|
-| `fields.*` | Reusable field labels, placeholders, descriptions | `fields.name.label`, `fields.email.placeholder` |
-| `actions.*` | Button/action labels | `actions.cancel`, `actions.create`, `actions.save` |
-| `messages.*` | Toast messages, confirmations, descriptions | `messages.createdSuccess`, `messages.deleteConfirmation` |
-| `<feature>.*` | Feature-specific text (titles, descriptions, unique labels) | `smtp.setting.label`, `webchat.title` |
-
-### Form Fields — Reuse `fields.*` Definitions
-
-Form field `label` and `placeholder` props **MUST** use translations from the `fields` namespace in `en.json`. This ensures consistency across the entire app.
-
-**Pattern:**
-```typescript
-<InputField
-  label={t("fields.name.label")}
-  name="name"
-  placeholder={t("fields.name.placeholder")}
-  required
-/>
-
-<SelectField
-  label={t("fields.type.label")}
-  name="type"
-  options={options}
-  required
-/>
-```
-
-**Reusable fields already defined** (check `en.json` → `fields` before creating new ones):
-- `fields.name` — Name
-- `fields.email` — Email
-- `fields.password` — Password
-- `fields.description` — Description
-- `fields.type` — Type
-- `fields.url` — URL
-- `fields.status` — Status
-- `fields.provider` — Provider
-- `fields.host` — Host
-- `fields.port` — Port
-- `fields.username` — Username
-- `fields.fromAddress` — From Address
-- ... and many more (always check `en.json` first)
-
-**Adding new field definitions** — When a field doesn't exist in `en.json`, add it to the `fields` object:
-```json
-{
-  "fields": {
-    "myNewField": {
-      "label": "My New Field",
-      "placeholder": "Enter value"
-    }
-  }
-}
-```
-
-Each field entry can have: `label` (required), `placeholder` (optional), `description` (optional).
-
-### CRITICAL — Never Hardcode Labels in Forms
-
-```typescript
-// WRONG — hardcoded label strings
-<InputField label="Username" name="username" placeholder="user@example.com" />
-<InputField label="Password" name="password" />
-
-// CORRECT — use t() with fields namespace
-<InputField
-  label={t("fields.username.label")}
-  name="username"
-  placeholder={t("fields.username.placeholder")}
-/>
-<InputField
-  label={t("fields.password.label")}
-  name="password"
-/>
-```
-
-### Actions (Buttons)
-
-Use `actions.*` for all button labels:
-
-```typescript
-<Button onClick={onCancel} type="button" variant="ghost">
-  {t("actions.cancel")}
-</Button>
-<Button type="submit">
-  {t("actions.create")}
-</Button>
-```
-
-Common actions: `actions.cancel`, `actions.create`, `actions.save`, `actions.delete`, `actions.update`, `actions.confirm`, `actions.connect`, `actions.disconnect`.
-
-Parametric actions with `{feature}` interpolation:
-```typescript
-t("actions.createFeature", { feature: t("fields.sequences.label") })
-t("actions.connectFeature", { feature: "WhatsApp" })
-```
-
-### Toast Messages
-
-Use `messages.*` with `{feature}` interpolation:
-
-```typescript
-// Success
-toast.success(t("messages.createdSuccess", { feature: "SMTP" }))
-toast.success(t("messages.updatedSuccess", { feature: t("fields.webhook.label") }))
-
-// Error — prefer translated messages, fallback to serverError
-toast.error(error.serverError || t("messages.unknownError"))
-```
-
-### Feature-Specific Translations
-
-For text unique to a feature (not reusable), add a feature namespace:
-
-```json
-{
-  "smtp": {
-    "setting": {
-      "description": "Send emails using your SMTP server.",
-      "label": "(Email) SMTP"
-    }
-  }
-}
-```
-
-Access: `t("smtp.setting.label")`, `t("smtp.setting.description")`
-
-### Dialog / Confirmation Text
-
-Use `messages.*`:
-```typescript
-t("messages.deleteConfirmation", { feature: "contact" })
-t("messages.disconnectFeatureDescription", { feature: "SMTP" })
-```
-
-### i18n Checklist
-
-Before submitting any feature:
-1. **No hardcoded user-facing strings** — every label, placeholder, button, message uses `t()`
-2. **Reuse `fields.*`** — check existing field definitions before creating new ones
-3. **Add missing translations** — if a field key doesn't exist in `en.json`, add it
-4. **Use interpolation** — for dynamic text, use `{feature}`, `{name}` params
-5. **Feature namespace** — feature-specific text goes under `<featureName>.*`
+Full rules — namespaces, form-field reuse, dynamic keys, RTL — are in the **`builder-ui-i18n`**
+skill. Read it for any UI work; it is not duplicated here.
 
 ## Logging
 
-Never use `console.log`, `console.error`, or `console.warn` in server-side code (actions, queries, API handlers). Use the structured logger instead.
+Server code (actions, queries, API handlers) uses the structured logger, never `console`:
+`const logger = baseLogger.child({ feature: "myFeature" })` from `@chatbotx.io/logger`, then
+`logger.error({ err: error }, "[myFeature] operation failed")`. **The key is `err`, not `error`** —
+see repo invariant 20 in `AGENTS.md`.
 
-```typescript
-// ✅ correct — server action / query
-import baseLogger from "@chatbotx.io/logger"
-const logger = baseLogger.child({ feature: "myFeature" })
+## Services — business logic lives in `@chatbotx.io/business`
 
-try {
-  return await doWork(input)
-} catch (error) {
-  logger.error({ err: error }, "[myFeature] operation failed")
-  throw error
-}
-```
+**Never** create a `*.service.ts` inside a feature folder. Business logic (DB queries, domain
+mutations, cache invalidation, events) belongs in `packages/business/src/<domain>/service.ts`;
+a feature imports it: `import { integrationService } from "@chatbotx.io/business"`. If a
+legacy service already sits in a feature folder, move it before extending it.
 
-Use `err: error` (not `error: error`) — pino's serializer is keyed on `err`.
+A feature folder holds only `actions/`, `api/`, `queries/`, `schema/`, `components/`, `hooks/`,
+`provider/` — see the directory structure at the top of this file.
 
-Client components may use `console` only for local development debugging that is removed before merge.
-
-## Services — Business Logic Belongs in @chatbotx.io/business
-
-Business logic services (DB queries, domain mutations, cache management) **MUST NOT** be placed inside `features/<name>/`. They belong in `packages/business/src/<domain>/service.ts`.
-
-### Pattern
-- `packages/business/src/<domain>/service.ts` — class extending `BaseService`, singleton export
-- `packages/business/src/<domain>/index.ts` — `export * from "./service"`
-- `packages/business/src/index.ts` — add `export * from "./<domain>"`
-
-### Feature folders only contain
-- `queries/` — RSC wrappers that call business services + add auth checks
-- `actions/` — next-safe-action handlers that call business services
-- `api/` — oRPC handlers
-- `schema/` — Zod validation schemas (NOT imported by business package)
-- `components/`, `hooks/`, `provider/` — UI concerns (`hooks/` = TanStack Query + derived hooks; `provider/` = client-only zustand)
-
-**Never** create a `*.service.ts` inside a feature folder for new work. If one already exists, move it to `@chatbotx.io/business` before extending it.
-
-```typescript
-import { integrationService, webhookService } from "@chatbotx.io/business"
-```
+Service/repository layering, the `.query.ts` contract, and the shared-service rule for
+public vs private paths: **`business-data-access`** skill and `.agents/rules/data-access.md`.
 
 ## Checklist for New Feature
 
