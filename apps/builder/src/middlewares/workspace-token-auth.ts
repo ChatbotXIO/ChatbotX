@@ -33,6 +33,12 @@ const assertPreAuthNotRateLimited = (headers: Headers): Promise<void> =>
     limit: PREAUTH_REQUEST_LIMIT,
   })
 
+const invalidTokenError = () =>
+  new ORPCError("INVALID_CHATBOT_TOKEN", {
+    status: 401,
+    message: "Invalid or missing workspace API token",
+  })
+
 export const workspaceTokenAuthMidddleware = base.middleware(
   async ({ context, next, procedure }) => {
     const authHeader = context.headers.get("Authorization")
@@ -46,7 +52,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     const apiKeyToken = url?.searchParams.get("token") ?? null
     const token = bearerToken ?? apiKeyToken
     if (!token) {
-      throw new ORPCError("INVALID_CHATBOT_TOKEN")
+      throw invalidTokenError()
     }
     if (!bearerToken && apiKeyToken) {
       logger.warn(
@@ -78,12 +84,12 @@ export const workspaceTokenAuthMidddleware = base.middleware(
           { err: error, tokenHash },
           "Workspace token cache pointed at a purged workspace",
         )
-        throw new ORPCError("INVALID_CHATBOT_TOKEN")
+        throw invalidTokenError()
       }
       throw error
     }
     if (!auth) {
-      throw new ORPCError("INVALID_CHATBOT_TOKEN")
+      throw invalidTokenError()
     }
     const { workspace, apiToken } = auth
 

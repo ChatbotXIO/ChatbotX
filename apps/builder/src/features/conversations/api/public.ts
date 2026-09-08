@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import z from "zod"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter"
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { cursorPaginationRequest } from "@/lib/pagination"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
@@ -62,6 +63,7 @@ export const conversationsPublicRouter = {
     })
     .input(listConversationsQueryRequest)
     .output(listConversationsResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listConversations(

@@ -1,6 +1,7 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { possibleErrorsOnFindingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { findReflink } from "../queries"
 import { reflinkResource } from "../schema/resource"
@@ -17,6 +18,7 @@ export const reflinksPublicRouter = {
     })
     .input(z.object({ id: zodBigintAsString() }))
     .output(reflinkResource)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const reflink = await findReflink({
         workspaceId: context.workspace.id,

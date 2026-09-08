@@ -5,9 +5,10 @@ import {
 import { ModelNotfoundException } from "@chatbotx.io/database/errors"
 import type { WorkspaceApiTokenScope } from "@chatbotx.io/database/partials"
 import { SdkException } from "@chatbotx.io/sdk"
-import { ORPCError, onError } from "@orpc/server"
+import { ORPCError, onError, ValidationError } from "@orpc/server"
 import { ActionValidationError } from "next-safe-action"
 import { logger } from "./lib/log"
+import { commonApiErrors } from "./lib/orpc/orpc-error-helper"
 import { authMiddleware } from "./middlewares/auth"
 import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-auth"
 import { base } from "./middlewares/context"
@@ -75,6 +76,23 @@ function toKnownOrpcError(
     })
   }
 
+  // oRPC's own input-schema parsing throws a raw ORPCError("BAD_REQUEST",
+  // { cause: ValidationError }) before the handler runs, which would
+  // otherwise bypass this mapper entirely and surface as a 400. Remap it to
+  // 422 so every validation failure — schema-level or business-level — uses
+  // the same status.
+  if (
+    error instanceof ORPCError &&
+    error.code === "BAD_REQUEST" &&
+    error.cause instanceof ValidationError
+  ) {
+    return new ORPCError("invalidRequestData", {
+      message: error.message,
+      status: 422,
+      data: error.data,
+    })
+  }
+
   return
 }
 
@@ -103,6 +121,8 @@ export function mapKnownOrpcErrors(error: unknown) {
 const withErrorMapping = base.use(onError(mapKnownOrpcErrors))
 
 export const authorizedAPI = withErrorMapping.use(authMiddleware)
+
+const publicAPI = withErrorMapping.errors(commonApiErrors)
 
 /**
  * Enforces the resource-area axis on top of `workspaceTokenAuthMidddleware`.
@@ -135,10 +155,6 @@ const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
  * into the router-sweep checklist.
  */
 export const workspaceTokenAuthAPIForScope = (scope: WorkspaceApiTokenScope) =>
-  withErrorMapping
-    .use(workspaceTokenAuthMidddleware)
-    .use(requireTokenScope(scope))
+  publicAPI.use(workspaceTokenAuthMidddleware).use(requireTokenScope(scope))
 
-export const channelApiTokenAPI = withErrorMapping.use(
-  channelApiTokenAuthMidddleware,
-)
+export const channelApiTokenAPI = publicAPI.use(channelApiTokenAuthMidddleware)

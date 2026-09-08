@@ -1,4 +1,8 @@
 import z from "zod"
+import {
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnListingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -24,6 +28,7 @@ export const broadcastsPublicRouter = {
     })
     .input(publicListRequest)
     .output(publicListBroadcastsResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listBroadcasts({
@@ -43,6 +48,7 @@ export const broadcastsPublicRouter = {
     })
     .input(z.object({ idOrName: z.string() }))
     .output(publicBroadcastResource)
+    .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
         await publicGetBroadcast(context.workspace.id, input.idOrName),
@@ -63,6 +69,7 @@ export const broadcastsPublicRouter = {
       }),
     )
     .output(listBroadcastAudienceResponse)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const broadcast = await publicGetBroadcast(
         context.workspace.id,

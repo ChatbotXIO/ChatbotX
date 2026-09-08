@@ -118,6 +118,7 @@ describe("workspaceTokenAuthMidddleware", () => {
 
     await expect(callMiddleware(headers, "GET")).rejects.toMatchObject({
       code: "INVALID_CHATBOT_TOKEN",
+      status: 401,
     })
   })
 
@@ -128,6 +129,7 @@ describe("workspaceTokenAuthMidddleware", () => {
 
     await expect(callMiddleware(headers, "GET")).rejects.toMatchObject({
       code: "INVALID_CHATBOT_TOKEN",
+      status: 401,
     })
     expect(findWorkspaceByTokenHash).toHaveBeenCalledTimes(1)
     // Invalid guesses never resolve a workspace, so only the pre-auth

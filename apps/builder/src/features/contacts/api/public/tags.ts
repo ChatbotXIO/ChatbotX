@@ -2,6 +2,11 @@ import { contactService, tagService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicTagResource } from "@/features/tags/schema/resource"
+import {
+  possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnMutatingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listContactTags } from "../../queries/list-contact-tags.query"
 import {
@@ -21,6 +26,7 @@ export const contactsTagsPublicRouter = {
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(z.object({ data: z.array(publicTagResource) }))
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -46,6 +52,7 @@ export const contactsTagsPublicRouter = {
         tagIds: z.array(zodBigintAsString()).min(1).max(100),
       }),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -72,6 +79,7 @@ export const contactsTagsPublicRouter = {
         tagIds: z.array(zodBigintAsString()).min(1).max(100),
       }),
     )
+    .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -95,6 +103,7 @@ export const contactsTagsPublicRouter = {
       tags: ["Contacts"],
     })
     .input(addTagsByNamePublicRequest)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -119,6 +128,7 @@ export const contactsTagsPublicRouter = {
       tags: ["Contacts"],
     })
     .input(setAllContactTagsPublicRequest)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({

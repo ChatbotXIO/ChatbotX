@@ -6,7 +6,7 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
-  possibleErrorsOnUpdatingResource,
+  possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -87,7 +87,7 @@ export const tagsPublicRouter = {
         .and(z.object({ id: zodBigintAsString() })),
     )
     .output(publicTagResource)
-    .errors(possibleErrorsOnUpdatingResource)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...rest } = input
       return await tagService.update(

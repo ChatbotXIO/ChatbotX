@@ -1,4 +1,8 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
+import {
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnListingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { getWorkspaceMember, listWorkspaceMembers } from "../queries"
@@ -23,6 +27,7 @@ export const workspaceMembersPublicRouter = {
       withPublicPaging(listWorkspaceMembersRequest.omit({ workspaceId: true })),
     )
     .output(listWorkspaceMembersResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listWorkspaceMembers({
@@ -41,6 +46,7 @@ export const workspaceMembersPublicRouter = {
     })
     .input(getWorkspaceMemberRequest.omit({ workspaceId: true }))
     .output(getWorkspaceMemberResponse)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const member = await getWorkspaceMember({
         ...input,

@@ -3,6 +3,12 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  possibleErrorsOnCreatingResource,
+  possibleErrorsOnDeletingResource,
+  possibleErrorsOnListingResource,
+  possibleErrorsOnMutatingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   contactsFolderTypes,
@@ -33,6 +39,7 @@ export const foldersPublicRouter = {
     })
     .input(listFoldersPublicRequest)
     .output(listFoldersPublicResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const data = await folderService.list({
         workspaceId: context.workspace.id,
@@ -51,6 +58,7 @@ export const foldersPublicRouter = {
     })
     .input(createFolderPublicRequest)
     .output(folderResource)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const parentId =
         input.parentId && input.parentId !== rootFolderId
@@ -75,6 +83,7 @@ export const foldersPublicRouter = {
     })
     .input(updateFolderPublicRequest)
     .output(folderResource)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       await requireContactsFolder({
         workspaceId: context.workspace.id,
@@ -96,6 +105,7 @@ export const foldersPublicRouter = {
       tags: ["Folders"],
     })
     .input(z.object({ id: zodBigintAsString() }))
+    .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const folder = await requireContactsFolder({
         workspaceId: context.workspace.id,

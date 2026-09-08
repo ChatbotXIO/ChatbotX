@@ -182,6 +182,19 @@ describe("workspace API token resource-scope enforcement", () => {
 
     await expect(invoke(procedure)).rejects.toMatchObject({
       code: "INVALID_CHATBOT_TOKEN",
+      status: 401,
+    })
+  })
+
+  test("an invalid token error is upgraded to defined:true once commonApiErrors is attached", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(undefined)
+
+    const procedure = buildProcedure("contacts", "GET")
+
+    await expect(invoke(procedure)).rejects.toMatchObject({
+      code: "INVALID_CHATBOT_TOKEN",
+      status: 401,
+      defined: true,
     })
   })
 })

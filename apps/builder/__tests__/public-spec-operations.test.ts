@@ -30,6 +30,7 @@ type SpecOperation = {
   tags: string[]
   summary?: string
   security?: Record<string, string[]>[]
+  responseStatuses: string[]
 }
 
 const LEGACY_WORKSPACE_TOKEN_PATTERN = /workspace[_.]?token/i
@@ -133,6 +134,7 @@ beforeAll(async () => {
         tags: op.tags ?? [],
         summary: op.summary,
         security: op.security,
+        responseStatuses: Object.keys(op.responses ?? {}),
       })
 
       const successResponse = Object.entries(op.responses ?? {}).find(
@@ -219,5 +221,70 @@ describe("public API spec — operation naming guard", () => {
 
       expect(keys.has("workspaceId")).toBe(false)
     }
+  })
+})
+
+const PATH_PARAM_PATTERN = /\{[^}]+\}/
+
+describe("public API spec — error response coverage", () => {
+  const COMMON_ERROR_STATUSES = ["400", "401", "403", "429", "500"]
+
+  // `channels.me` has no `.input()` and no possible business-logic failure —
+  // it echoes the authenticated token's identity — so it legitimately has no
+  // 400 (business error) or 422 (validation error) case.
+  const NO_400_OPERATION_IDS = new Set(["channels.me"])
+
+  test("every operation documents the shared 400/401/403/429/500 errors", () => {
+    const missing = operations
+      .filter((op) => !NO_400_OPERATION_IDS.has(op.operationId))
+      .filter((op) =>
+        COMMON_ERROR_STATUSES.some(
+          (status) => !op.responseStatuses.includes(status),
+        ),
+      )
+      .map((op) => op.operationId)
+
+    expect(missing).toEqual([])
+  })
+
+  test("every DELETE, PUT/PATCH, and GET-by-id operation documents 404", () => {
+    const shouldDocument404 = operations.filter(
+      (op) =>
+        op.method === "DELETE" ||
+        op.method === "PUT" ||
+        op.method === "PATCH" ||
+        (op.method === "GET" && PATH_PARAM_PATTERN.test(op.path)),
+    )
+
+    expect(shouldDocument404.length).toBeGreaterThan(0)
+
+    const missing404 = shouldDocument404
+      .filter((op) => !op.responseStatuses.includes("404"))
+      .map((op) => op.operationId)
+
+    expect(missing404).toEqual([])
+  })
+
+  test("every POST/PUT/PATCH operation documents 422", () => {
+    const bodyMethods = operations.filter(
+      (op) =>
+        op.method === "POST" || op.method === "PUT" || op.method === "PATCH",
+    )
+
+    expect(bodyMethods.length).toBeGreaterThan(0)
+
+    const missing422 = bodyMethods
+      .filter((op) => !op.responseStatuses.includes("422"))
+      .map((op) => op.operationId)
+
+    expect(missing422).toEqual([])
+  })
+
+  test("no operation documents 413 — the payload-too-large status is out of scope", () => {
+    const with413 = operations
+      .filter((op) => op.responseStatuses.includes("413"))
+      .map((op) => op.operationId)
+
+    expect(with413).toEqual([])
   })
 })

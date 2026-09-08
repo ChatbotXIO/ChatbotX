@@ -1,4 +1,5 @@
 import { automatedResponseService } from "@chatbotx.io/business"
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { publicKeywordResource } from "../schema/resource"
@@ -15,6 +16,7 @@ export const keywordsPublicRouter = {
     })
     .input(publicListRequest)
     .output(publicListResponse(publicKeywordResource))
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const result = await automatedResponseService.list({
         workspaceId: context.workspace.id,

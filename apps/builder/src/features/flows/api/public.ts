@@ -1,3 +1,4 @@
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listFlows } from "../queries"
@@ -15,6 +16,7 @@ export const flowsPublicRouter = {
     })
     .input(publicListRequest)
     .output(publicListResponse(flowResource.pick({ id: true, name: true })))
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listFlows({

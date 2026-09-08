@@ -1,4 +1,8 @@
 import z from "zod"
+import {
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnListingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { getSequence, listSequences } from "../queries"
@@ -17,6 +21,7 @@ export const sequencesPublicRouter = {
     })
     .input(publicListRequest)
     .output(listSequencesResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
         await listSequences({
@@ -34,6 +39,7 @@ export const sequencesPublicRouter = {
     })
     .input(z.object({ id: z.string() }))
     .output(sequenceResource)
+    .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
         await getSequence(context.workspace.id, input.id),

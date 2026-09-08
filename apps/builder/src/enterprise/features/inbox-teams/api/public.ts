@@ -1,3 +1,4 @@
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { paginateInMemory, publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxTeams } from "../queries"
@@ -15,6 +16,7 @@ export const inboxTeamsPublicRouter = {
     })
     .input(publicListRequest)
     .output(publicListInboxTeamsResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { data } = await listInboxTeams({
         workspaceId: context.workspace.id,

@@ -9,7 +9,7 @@ import { isCloud } from "@/env"
 
 export type WorkspaceAccessDenialReason = "trialExpired" | "macLimitReached"
 
-const DENIAL_MESSAGES: Record<WorkspaceAccessDenialReason, string> = {
+export const DENIAL_MESSAGES: Record<WorkspaceAccessDenialReason, string> = {
   trialExpired: "Trial expired",
   macLimitReached: "Monthly active contact limit reached",
 }

@@ -1,6 +1,7 @@
 import { contactService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { possibleErrorsOnMutatingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { refreshContactProfile } from "../../lib/refresh-contact-profile"
 import { refreshContactProfilePublicResponse } from "../../schema/public/refresh-profile"
@@ -24,6 +25,7 @@ export const contactsRefreshProfilePublicRouter = {
       }),
     )
     .output(refreshContactProfilePublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({

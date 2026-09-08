@@ -1,3 +1,4 @@
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { paginateInMemory, publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listSavedReplies } from "../queries"
@@ -15,6 +16,7 @@ export const savedRepliesPublicRouter = {
     })
     .input(publicListRequest)
     .output(publicListSavedReplyResponse)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { data } = await listSavedReplies({
         workspaceId: context.workspace.id,

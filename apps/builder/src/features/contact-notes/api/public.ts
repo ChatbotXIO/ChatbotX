@@ -6,6 +6,12 @@ import {
   listContactNotesPublicResponse,
   updateContactNotePublicRequest,
 } from "@/features/contact-notes/schema/public"
+import {
+  possibleErrorsOnCreatingResource,
+  possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnMutatingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
@@ -20,6 +26,7 @@ export const contactsNotesPublicRouter = {
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(listContactNotesPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -45,6 +52,7 @@ export const contactsNotesPublicRouter = {
         z.object({ identifier: z.string().min(1) }),
       ),
     )
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -74,6 +82,7 @@ export const contactsNotesPublicRouter = {
         }),
       ),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -102,6 +111,7 @@ export const contactsNotesPublicRouter = {
         noteId: zodBigintAsString(),
       }),
     )
+    .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({

@@ -4,6 +4,7 @@ import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
+  possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -84,7 +85,7 @@ export const botFieldsPublicRouter = {
       z.object({ idOrName: z.string().max(255), value: z.string().max(255) }),
     )
     .output(publicBotFieldResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { idOrName, ...rest } = input
       return await botFieldService.updateByKey({
@@ -109,7 +110,7 @@ export const botFieldsPublicRouter = {
         ),
       }),
     )
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       await Promise.all(
         input.fields.map(({ key, value }) =>
@@ -146,7 +147,7 @@ export const botFieldsPublicRouter = {
         ),
       }),
     )
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       await botFieldService.bulkUpdateByKeys({
         workspaceId: context.workspace.id,

@@ -1,4 +1,5 @@
 import { triggerService } from "@chatbotx.io/business"
+import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import {
   paginateInMemory,
   publicListRequest,
@@ -20,6 +21,7 @@ export const triggersPublicRouter = {
     })
     .input(publicListRequest)
     .output(publicListResponse(triggerResource))
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const triggers = await triggerService.listByWorkspaceId(
         context.workspace.id,

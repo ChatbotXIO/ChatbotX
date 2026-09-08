@@ -5,7 +5,7 @@ import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
-  possibleErrorsOnUpdatingResource,
+  possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -87,7 +87,7 @@ export const customFieldsPublicRouter = {
     })
     .input(updateCustomFieldRequest.and(z.object({ id: zodBigintAsString() })))
     .output(publicCustomFieldResource)
-    .errors(possibleErrorsOnUpdatingResource)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...rest } = input
       return await customFieldService.update(

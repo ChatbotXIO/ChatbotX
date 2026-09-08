@@ -4,6 +4,11 @@ import {
 } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
+  possibleErrorsOnMutatingResource,
+} from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   findContactCustomField,
@@ -30,6 +35,7 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(listPublicContactCustomFieldsResponse)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -55,6 +61,7 @@ export const contactsCustomFieldsPublicRouter = {
       }),
     )
     .output(publicContactCustomFieldResource)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -81,6 +88,7 @@ export const contactsCustomFieldsPublicRouter = {
         value: z.string().trim(),
       }),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -116,6 +124,7 @@ export const contactsCustomFieldsPublicRouter = {
           .max(20),
       }),
     )
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -139,6 +148,7 @@ export const contactsCustomFieldsPublicRouter = {
       tags: ["Contacts"],
     })
     .input(addContactCustomFieldOperationsPublicRequest)
+    .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -171,6 +181,7 @@ export const contactsCustomFieldsPublicRouter = {
         idOrName: z.string().min(1),
       }),
     )
+    .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
@@ -192,6 +203,7 @@ export const contactsCustomFieldsPublicRouter = {
       tags: ["Contacts"],
     })
     .input(z.object({ identifier: z.string().min(1) }))
+    .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
