@@ -17,6 +17,7 @@ export async function teardownExpiredTrial(userId: string): Promise<void> {
         const tornDownWorkspaceIds =
           await workspaceLifecycleService.deactivateOwnerWorkspaces({
             ownerId: userId,
+            reason: "trial_expired",
             integrations: allIntegrations,
             teardownLevel: "disconnect",
           })

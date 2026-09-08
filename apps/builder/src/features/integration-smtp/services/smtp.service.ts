@@ -185,6 +185,7 @@ export async function deleteSmtp(workspaceId: string, id: string) {
       inboxId: integration.inboxId,
       ownerId: workspace.ownerId,
       workspaceId,
+      reason: "manual",
       tx,
     })
   })

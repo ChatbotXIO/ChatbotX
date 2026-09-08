@@ -7,7 +7,11 @@ import {
   liftDecompressionLimit,
   sql,
 } from "@chatbotx.io/database/client"
-import { channelTypes, ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  type InboxDisconnectReason,
+  ROOT_TENANT_ID,
+} from "@chatbotx.io/database/partials"
 import {
   LIVE_RUN_STATUSES,
   PULL_CLAIMABLE_STATUSES,
@@ -133,6 +137,7 @@ class WorkspaceLifecycleService extends BaseService {
   async disconnectWorkspaceChannels(props: {
     workspaceId: string
     ownerId: string
+    reason: InboxDisconnectReason
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel?: WorkspaceTeardownLevel
     tx?: DatabaseClient
@@ -148,6 +153,7 @@ class WorkspaceLifecycleService extends BaseService {
       await this.disconnectWorkspaceInbox({
         inbox,
         ownerId: props.ownerId,
+        reason: props.reason,
         integrations: props.integrations,
         teardownLevel: props.teardownLevel ?? "disconnect",
         tx,
@@ -404,6 +410,7 @@ class WorkspaceLifecycleService extends BaseService {
   /** Returns the ids of the owner's workspaces this call tore down, so callers that need to attribute a per-workspace side effect (e.g. audit rows) don't have to re-query. */
   async deactivateOwnerWorkspaces(props: {
     ownerId: string
+    reason: InboxDisconnectReason
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel?: WorkspaceTeardownLevel
   }): Promise<string[]> {
@@ -421,6 +428,7 @@ class WorkspaceLifecycleService extends BaseService {
       await this.disconnectWorkspaceChannels({
         integrations: props.integrations,
         teardownLevel,
+        reason: props.reason,
         workspaceId: workspace.id,
         ownerId: props.ownerId,
       })
@@ -440,11 +448,12 @@ class WorkspaceLifecycleService extends BaseService {
   private async disconnectWorkspaceInbox(props: {
     inbox: InboxWithIntegrations
     ownerId: string
+    reason: InboxDisconnectReason
     integrations?: WorkspaceTeardownIntegrations
     teardownLevel: WorkspaceTeardownLevel
     tx: DatabaseClient
   }): Promise<void> {
-    const { inbox, ownerId, integrations, teardownLevel, tx } = props
+    const { inbox, ownerId, reason, integrations, teardownLevel, tx } = props
     const removeIntegrationRow = teardownLevel === "disconnect"
 
     const finish = async (disconnect?: WorkspaceTeardownIntegration) => {
@@ -466,6 +475,21 @@ class WorkspaceLifecycleService extends BaseService {
         }
       }
 
+      // This is the community-edition forensic trail: audit is gated off
+      // outside cloud/enterprise, so this structured log is the only record
+      // of an automated teardown on every edition.
+      logger.error(
+        {
+          inboxId: inbox.id,
+          workspaceId: inbox.workspaceId,
+          ownerId,
+          channel: inbox.channel,
+          teardownLevel,
+          reason,
+        },
+        "workspace-teardown: inbox disconnected",
+      )
+
       // Delegates to inboxService (already a dependency here) rather than
       // calling quotaEnforcementService/workspaceUsageService directly: those
       // import back through tenant/workspace services and would close a
@@ -474,6 +498,7 @@ class WorkspaceLifecycleService extends BaseService {
         inboxId: inbox.id,
         ownerId,
         workspaceId: inbox.workspaceId,
+        reason,
         tx,
       })
     }

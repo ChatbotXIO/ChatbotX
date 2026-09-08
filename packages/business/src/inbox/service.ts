@@ -9,6 +9,7 @@ import {
 import {
   type ChannelType,
   channelTypes,
+  type InboxDisconnectReason,
   inboxStatuses,
 } from "@chatbotx.io/database/partials"
 import { inboxModel } from "@chatbotx.io/database/schema"
@@ -18,6 +19,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
+import { dispatchAuditRecordSafely } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { channelLimitReachedException } from "../errors"
 import { logger } from "../logger"
@@ -240,13 +242,18 @@ class InboxService extends BaseService {
     inboxId: string
     ownerId: string
     workspaceId: string
+    reason: InboxDisconnectReason
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
 
     await client
       .update(inboxModel)
-      .set({ status: inboxStatuses.enum.disconnected })
+      .set({
+        status: inboxStatuses.enum.disconnected,
+        disconnectedAt: new Date(),
+        disconnectReason: props.reason,
+      })
       .where(eq(inboxModel.id, props.inboxId))
 
     // Best-effort: never block/roll back the disconnect if release fails, the
@@ -270,6 +277,27 @@ class InboxService extends BaseService {
           "inbox disconnect: workspace usage channel decrement failed",
         )
       })
+
+    // Best-effort forensic trail. The `disconnectReason` column above is the
+    // primary trail (works on every edition); this is a supplementary layer
+    // that's gated off on community. Dispatched indirectly (not via
+    // `auditService` directly) so this file — reachable from the Edge-safe
+    // barrel through inbox/index.ts — never statically pulls in
+    // `node:async_hooks` via `audit/context.ts`.
+    await dispatchAuditRecordSafely(
+      {
+        action: "disconnect",
+        detail: `Inbox ${props.inboxId} disconnected (${props.reason})`,
+        workspaceId: props.workspaceId,
+        source: props.reason,
+      },
+      "inbox disconnect: audit record failed",
+    ).catch((err) => {
+      logger.warn(
+        { err, inboxId: props.inboxId, workspaceId: props.workspaceId },
+        "inbox disconnect: audit record failed",
+      )
+    })
   }
 
   async isConnected(props: {

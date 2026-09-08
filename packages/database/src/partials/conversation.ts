@@ -19,6 +19,15 @@ export type AssignerFilterType =
 export const inboxStatuses = z.enum(["connected", "disconnected"])
 export type InboxStatus = z.infer<typeof inboxStatuses>
 
+export const inboxDisconnectReasons = z.enum([
+  "manual",
+  "workspace_purge",
+  "trial_expired",
+  "tenant_suspended",
+  "token_revoked",
+])
+export type InboxDisconnectReason = z.infer<typeof inboxDisconnectReasons>
+
 export type ConversationAttributes = {
   phoneNumber?: string
   challenge?: {

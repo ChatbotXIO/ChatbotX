@@ -90,6 +90,7 @@ async function purgeWhatsappIntegration(
     inboxId: integrationWhatsapp.inboxId,
     ownerId,
     workspaceId,
+    reason: "manual",
     tx,
   })
 }

@@ -1,6 +1,7 @@
 import { workspaceService } from "@chatbotx.io/business"
 import { getChildLogger } from "@chatbotx.io/logger"
 import { distributedLock, distributedStore } from "@chatbotx.io/redis"
+import { runJobWithAuditContext } from "../../lib/run-job-with-audit-context"
 import { allIntegrations } from "../../services/integrations"
 
 const LOCK_KEY = "schedule:purge-workspaces"
@@ -21,15 +22,19 @@ export async function purgeWorkspaces(): Promise<void> {
       key: LOCK_KEY,
       timeoutInSeconds: LOCK_TTL_SECONDS,
       retryTimeoutInSeconds: LOCK_ACQUIRE_RETRY_SECONDS,
-      fn: async () => {
-        const deleted = await workspaceService.purgeDueScheduled({
-          integrations: allIntegrations,
-        })
+      fn: () =>
+        runJobWithAuditContext(
+          { source: "schedule:purgeWorkspaces" },
+          async () => {
+            const deleted = await workspaceService.purgeDueScheduled({
+              integrations: allIntegrations,
+            })
 
-        if (deleted > 0) {
-          log.info({ deleted }, "purgeWorkspaces: workspaces purged")
-        }
-      },
+            if (deleted > 0) {
+              log.info({ deleted }, "purgeWorkspaces: workspaces purged")
+            }
+          },
+        ),
     })
   } catch (err) {
     if (isLockAcquisitionFailure(err) && (await isPurgeLockHeld())) {

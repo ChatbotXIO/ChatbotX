@@ -6,10 +6,16 @@ import {
   teardownExpiredTrialJobId,
 } from "@chatbotx.io/worker-config"
 import { env } from "../../env"
+import { logger } from "../../lib/logger"
 
 const SCAN_PAGE_SIZE = 500
 const GRACE_DAYS = 7
 const LOCK_TTL_SECONDS = 55
+// Normal traffic is a handful of expired trials per hour. A batch this large
+// is far more consistent with a quota-worker bug (e.g. every user reads as
+// expired) than real churn — abort instead of silently disconnecting channels
+// for everyone.
+const MAX_TEARDOWNS_PER_RUN = 20
 
 export async function unsubscribeExpiredTrials(cursor?: string): Promise<void> {
   // Belt-and-braces behind the scheduler gate: trial teardown disconnects
@@ -32,6 +38,14 @@ export async function unsubscribeExpiredTrials(cursor?: string): Promise<void> {
         })
 
       if (userIds.length === 0) {
+        return
+      }
+
+      if (userIds.length > MAX_TEARDOWNS_PER_RUN) {
+        logger.error(
+          { count: userIds.length, sample: userIds.slice(0, 5) },
+          "unsubscribe-expired-trials: abnormal batch size, aborting",
+        )
         return
       }
 
