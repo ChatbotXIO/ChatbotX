@@ -72,7 +72,13 @@ export const productCategoriesPublicRouter = {
         workspaceId: context.workspace.id,
         categoryId: id,
         name: data.name,
-        parentId: data.parentId ?? null,
+        // Three distinct states, so absent must not collapse to null: omitting
+        // `parentId` leaves the category where it is, `null` promotes it to the
+        // top level, and an id files it under that parent. Coercing absent to
+        // null would un-parent a sub-category on a rename-only request, and
+        // would also skip the service's reparent guards, which branch on
+        // `undefined`.
+        ...("parentId" in data ? { parentId: data.parentId ?? null } : {}),
       })
     }),
 

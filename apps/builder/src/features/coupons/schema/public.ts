@@ -11,15 +11,33 @@ import {
   couponTopicResource,
 } from "./resource"
 
-export const publicCouponTopicResource = couponTopicResource
+// Explicit allow-list, not the internal resource: every field picked here
+// becomes a stable contract MCP agents depend on, so `createdById` (an internal
+// member id) and `deletedAt` (soft-delete bookkeeping already surfaced through
+// `status`) stay out. See products/schema/public.ts for the same pattern.
+export const publicCouponTopicResource = couponTopicResource.pick({
+  id: true,
+  workspaceId: true,
+  name: true,
+  description: true,
+  expiresAt: true,
+  status: true,
+  hasEverHadCoupon: true,
+  createdAt: true,
+  updatedAt: true,
+})
 
 export const listCouponTopicsPublicRequest = basePaginationRequest.extend({
   archived: z.boolean().optional(),
   search: z.string().optional(),
 })
 
+// `list` is the only topic route that joins the coupon count; the six
+// single-topic routes return the bare row, so `couponCount` belongs here rather
+// than on `publicCouponTopicResource` where it would be an optional field that
+// is in practice never present.
 export const listCouponTopicsPublicResponse = z.object({
-  data: z.array(couponTopicResource.extend({ couponCount: z.number() })),
+  data: z.array(publicCouponTopicResource.extend({ couponCount: z.number() })),
   pageCount: z.number(),
 })
 

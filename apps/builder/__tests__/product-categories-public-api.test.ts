@@ -148,6 +148,42 @@ describe("PATCH /v1/product-categories/{id}", () => {
       parentId: null,
     })
   })
+
+  // `parentId` has three states, and the service branches on `undefined` to
+  // decide whether to run the reparent guards. Collapsing an absent key into
+  // `null` would silently un-parent a sub-category on a rename-only request.
+  test("omits parentId entirely when the caller did not send it", async () => {
+    productCategoryService.update.mockResolvedValueOnce({ id: "c-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "c-1", name: "Renamed" },
+    })
+
+    expect(productCategoryService.update).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      categoryId: "c-1",
+      name: "Renamed",
+    })
+    const [call] = productCategoryService.update.mock.calls
+    expect(call?.[0]).not.toHaveProperty("parentId")
+  })
+
+  test("files the category under a parent when parentId is an id", async () => {
+    productCategoryService.update.mockResolvedValueOnce({ id: "c-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "c-1", name: "Phones", parentId: "c-parent" },
+    })
+
+    expect(productCategoryService.update).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      categoryId: "c-1",
+      name: "Phones",
+      parentId: "c-parent",
+    })
+  })
 })
 
 describe("DELETE /v1/product-categories/{id}", () => {

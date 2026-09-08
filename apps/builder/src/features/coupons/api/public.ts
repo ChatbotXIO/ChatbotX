@@ -200,6 +200,15 @@ export const couponsPublicRouter = {
       },
     })
     .handler(async ({ context, input }) => {
+      // The coupon row is workspace-scoped but `issuedContactId` is written
+      // unchecked, so an unvalidated `contactId` would stamp a foreign
+      // workspace's contact onto this workspace's coupon. Every other caller
+      // (the flow step) takes `contactId` from the conversation, which is
+      // already workspace-bound; a token-supplied id is not.
+      await contactService.findByIdOrFail({
+        workspaceId: context.workspace.id,
+        id: input.contactId,
+      })
       const result = await couponService.issueCoupon({
         workspaceId: context.workspace.id,
         topicId: input.id,
@@ -234,6 +243,12 @@ export const couponsPublicRouter = {
       },
     })
     .handler(async ({ context, input }) => {
+      // Same reason as `issueCoupon`: scope the caller-supplied contact to
+      // this workspace before it reaches the coupon row.
+      await contactService.findByIdOrFail({
+        workspaceId: context.workspace.id,
+        id: input.contactId,
+      })
       const result = await couponService.markCouponUsed({
         workspaceId: context.workspace.id,
         topicId: input.id,
