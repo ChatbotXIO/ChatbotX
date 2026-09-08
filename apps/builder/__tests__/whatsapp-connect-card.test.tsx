@@ -182,9 +182,13 @@ describe("WhatsappCreate connect card", () => {
       clickButtonByText("actions.continue")
       await flush()
 
+      // `workspaceId` is load-bearing: the procedure hands it to
+      // `resolvePlatformOwnerId`, so dropping it resolves the platform-global
+      // WhatsApp credential instead of the reseller's for a sub-account.
       expect(listWhatsappPhoneNumbersInternalAPI).toHaveBeenCalledWith({
         wabaId: "waba-1",
         accessToken: "token-1",
+        workspaceId: "ws-1",
       })
       expect(radios()).toHaveLength(1)
 

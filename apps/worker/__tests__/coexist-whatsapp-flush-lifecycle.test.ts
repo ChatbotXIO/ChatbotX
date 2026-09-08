@@ -781,4 +781,68 @@ describe("coexistWhatsappFlush — run lifecycle", () => {
     ]
     expect(bulkArgs?.batch).toEqual([])
   })
+
+  // ── the chunk chain must hand the run back before queueing the next one ──
+  // `claimRun` refuses a `running` run whose heartbeat is under 10 minutes
+  // old. A continuation queued while this worker still held the claim
+  // therefore lost its own claim and abandoned, leaving the chain to the
+  // scheduler's 1-hour stale sweep — one chunk per hour, then `failed`.
+
+  /** Makes the post-drain tail re-check find a late row, forcing a continuation. */
+  const stageLateTailRow = () => {
+    harness.lastStagedChain?.limit
+      .mockReset()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: "row-late" }])
+      .mockResolvedValue([])
+  }
+
+  it("releases the claim before queueing the continuation, so the next chunk can claim it", async () => {
+    wireSelect(runRow(), [])
+    stageLateTailRow()
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    const released = setPayloads().find(
+      (payload) => payload.status === "init" && "lastHeartbeatAt" in payload,
+    )
+    expect(released?.status).toBe("init")
+    expect(released?.lastHeartbeatAt).toBeInstanceOf(Date)
+    // The run must be `init` BEFORE the job exists, or the continuation can
+    // start against a still-`running` row and abandon.
+    expect(Math.min(...mockRunWrite.mock.invocationCallOrder)).toBeLessThan(
+      mockQueueAdd.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
+    )
+    expect(mockQueueAdd).toHaveBeenCalledWith(
+      "coexistWhatsappFlush",
+      expect.objectContaining({
+        data: { runId, phoneNumberId },
+      }),
+      expect.anything(),
+    )
+    // Still a guarded write: a worker that lost the run cannot release it.
+    expect(mockRunWriteGuards()).toContainEqual(
+      expect.objectContaining({ status: "running" }),
+    )
+  })
+
+  it("queues no continuation when the release finds the run already reclaimed", async () => {
+    // Write 0 is the drain's ownership heartbeat (still ours); write 1 is the
+    // release, which a reclaim by another worker makes match no rows.
+    wireUpdate((callIndex) => (callIndex === 0 ? 1 : 0))
+    wireSelect(runRow(), [])
+    stageLateTailRow()
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    expect(mockQueueAdd).not.toHaveBeenCalled()
+    expect(mockWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runId,
+        phoneNumberId,
+        reason: "release before continuation matched no rows",
+      }),
+      expect.stringContaining("no longer claimed"),
+    )
+  })
 })

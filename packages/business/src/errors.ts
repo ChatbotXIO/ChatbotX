@@ -11,7 +11,10 @@ const QUERY_DUMP_REGEX = /failed\s+query:/i
 const MAX_PUBLIC_ERROR_LENGTH = 500
 const BEARER_TOKEN_REGEX = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi
 // A provider or transport message may echo the request URL, which carries
-// account ids and query parameters the operator must never see.
+// account ids and query parameters. Opt-in only (`redactUrls`): a persisted
+// flow/webhook/import error names the endpoint the operator configured
+// themselves, and stripping it there would take away the one detail that
+// makes the failure diagnosable.
 const URL_REGEX = /https?:\/\/\S+/gi
 const AUTHORIZATION_CREDENTIAL_REGEX =
   /\bAuthorization\s*[:=]\s*(?:Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/gi
@@ -28,6 +31,17 @@ const trimmedText = (value: unknown): string | undefined => {
   return text.length > 0 ? text : undefined
 }
 
+type SanitizeOptions = {
+  maxLength?: number
+  /**
+   * Replace every absolute URL with `[url]`. On for the connect row, whose
+   * `detail` comes straight from a provider response aimed at an OAuth
+   * endpoint we own; off everywhere else, where the URL in the message is the
+   * operator's own and is the point of the message.
+   */
+  redactUrls?: boolean
+}
+
 /**
  * Redacts credentials/tokens, flattens control characters and whitespace, and
  * caps the result. Exported so every surface that shows provider text to a
@@ -37,16 +51,19 @@ const trimmedText = (value: unknown): string | undefined => {
  */
 export const sanitizePublicText = (
   value: string,
-  maxLength: number = MAX_PUBLIC_ERROR_LENGTH,
+  options: SanitizeOptions = {},
 ): string => {
+  const { maxLength = MAX_PUBLIC_ERROR_LENGTH, redactUrls = false } = options
   const withoutControlCharacters = Array.from(value, (character) => {
     const code = character.charCodeAt(0)
     return code < 32 || code === 127 ? " " : character
   }).join("")
-  const redacted = withoutControlCharacters
+  const withoutUrls = redactUrls
+    ? withoutControlCharacters.replace(URL_REGEX, "[url]")
+    : withoutControlCharacters
+  const redacted = withoutUrls
     .replace(AUTHORIZATION_CREDENTIAL_REGEX, "Authorization: [REDACTED]")
     .replace(BEARER_TOKEN_REGEX, "Bearer [REDACTED]")
-    .replace(URL_REGEX, "[url]")
     .replace(
       SENSITIVE_ASSIGNMENT_REGEX,
       (

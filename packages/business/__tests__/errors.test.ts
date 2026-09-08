@@ -146,6 +146,29 @@ describe("toPublicErrorMessage", () => {
     expect(toPublicErrorMessage(error, FALLBACK)).toBe("Zalo request timed out")
   })
 
+  test("keeps the endpoint a persisted flow/webhook error names", () => {
+    // The URL in these messages is the one the operator configured; the
+    // connect row redacts it (see connect-outcome.test.ts) because there the
+    // URL is our own OAuth endpoint, not theirs.
+    const error = new ChatbotXException(
+      "Failed to POST https://api.customer.example/hook — 500",
+    )
+
+    expect(toPublicErrorMessage(error, FALLBACK)).toBe(
+      "Failed to POST https://api.customer.example/hook — 500",
+    )
+  })
+
+  test("still redacts credentials that ride along with a URL", () => {
+    const error = new ChatbotXException(
+      "GET https://graph.facebook.com/v21.0/me?access_token=SECRET failed",
+    )
+
+    expect(toPublicErrorMessage(error, FALLBACK)).toBe(
+      "GET https://graph.facebook.com/v21.0/me?access_token=[REDACTED] failed",
+    )
+  })
+
   test("falls back for values that carry no message at all", () => {
     expect(toPublicErrorMessage(undefined, FALLBACK)).toBe(FALLBACK)
     expect(toPublicErrorMessage({ message: "spoofed" }, FALLBACK)).toBe(

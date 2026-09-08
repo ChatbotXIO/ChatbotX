@@ -166,8 +166,8 @@ export function isRevokedTokenError(error: unknown): boolean {
 // `DELETE /{page-id}/subscribed_apps` (app access token) fails *permanently*
 // when the page-side link is already gone; retrying can never succeed, so the
 // local teardown must proceed. Transient failures (rate limits, 5xx, network)
-// are deliberately excluded so the operator retries instead of orphaning a
-// live webhook subscription.
+// are deliberately excluded so the operator retries them instead of tearing
+// down on a failure that would have succeeded a minute later.
 //
 // Sources: developers.facebook.com/docs/graph-api/guides/error-handling and
 // developers.facebook.com/docs/graph-api/reference/page/subscribed_apps.
@@ -186,7 +186,12 @@ const PAGE_GONE_SUBCODES_FOR_CODE_100 = new Set([
 // app. Meta emits this with no error_subcode, so the message is the only key.
 const APP_NOT_INSTALLED_PATTERN = /app is not installed/i
 
-// The app lost its standing on the page; only a reconnect can restore it.
+// The app lost its standing on the page; only a reconnect can restore it, so
+// the unsubscribe is knowingly abandoned: if Meta still holds a subscription
+// it stays there, and the warn log at the call site is the audit trail. That
+// trade is the point — the alternative is an integration the operator can
+// never delete. Meta's transient policy blocks (341, 368) are deliberately
+// NOT here: those clear on their own, so the operator should retry.
 const PERMISSION_LOST_CODES = new Set([
   10, // Permission denied
   200, // Permissions error

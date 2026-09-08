@@ -181,7 +181,12 @@ export function providerDetailFrom(error: unknown): string | undefined {
   if (!text) {
     return
   }
-  return sanitizePublicText(text, MAX_CONNECT_DETAIL_LENGTH) || undefined
+  return (
+    sanitizePublicText(text, {
+      maxLength: MAX_CONNECT_DETAIL_LENGTH,
+      redactUrls: true,
+    }) || undefined
+  )
 }
 
 /**

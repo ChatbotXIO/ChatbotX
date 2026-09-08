@@ -26,20 +26,22 @@ export const PUBLIC_ROUTES = [
   "/booking",
   "/portal/redeem",
   "/webchat",
-  // Trailing slash is deliberate: `isPublicRoute` below is a bare
-  // unanchored `startsWith`, so "/t" (no slash) would also match
-  // "/templates" and make the authenticated template list world-readable.
   "/t/",
 ]
 
 /**
- * Whether the middleware lets a request through without a session. A prefix
- * added to `PUBLIC_ROUTES` silently opens every path under it, so the list is
- * pinned by a test.
+ * Whether the middleware lets a request through without a session.
+ *
+ * Matching is by path SEGMENT, never by bare `startsWith`: a plain prefix test
+ * opens far more than the entry names — "/t" would also match "/templates",
+ * and "/rpc" would match a future "/rpcadmin". A trailing slash on an entry is
+ * therefore cosmetic here, and an entry still opens everything nested under it,
+ * so the list is pinned by a test.
  */
 export function isPublicRoute(pathname: string) {
   for (const route of PUBLIC_ROUTES) {
-    if (pathname.startsWith(route)) {
+    const base = route.endsWith("/") ? route.slice(0, -1) : route
+    if (pathname === base || pathname.startsWith(`${base}/`)) {
       return true
     }
   }

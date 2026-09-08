@@ -47,6 +47,17 @@ vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
   }
 })
 
+// Imported once, at module scope, rather than inside each test: these service
+// modules pull the whole schema barrel through their repository imports, and
+// paying that per test put the first one over vitest's 30s timeout whenever the
+// full monorepo suite ran in parallel.
+const { messengerIntegrationService } = await import(
+  "../src/integration-messenger/service"
+)
+const { instagramIntegrationService } = await import(
+  "../src/integration-instagram/service"
+)
+
 const whereCondition = () => JSON.stringify(mocks.where.mock.calls[0]?.[0])
 
 describe("Meta sibling integration service helpers", () => {
@@ -59,9 +70,6 @@ describe("Meta sibling integration service helpers", () => {
   })
 
   test("messengerIntegrationExistsForPage returns true when a row is found", async () => {
-    const { messengerIntegrationService } = await import(
-      "../src/integration-messenger/service"
-    )
     mocks.limit.mockResolvedValueOnce([{ id: "messenger-1" }])
 
     await expect(
@@ -76,10 +84,6 @@ describe("Meta sibling integration service helpers", () => {
   })
 
   test("instagramIntegrationExistsForPage filters by page id and client id", async () => {
-    const { instagramIntegrationService } = await import(
-      "../src/integration-instagram/service"
-    )
-
     await expect(
       instagramIntegrationService.existsForPage({
         pageId: "page-2",
@@ -92,10 +96,6 @@ describe("Meta sibling integration service helpers", () => {
   })
 
   test("instagramIntegrationExistsByPageId omits the client id filter", async () => {
-    const { instagramIntegrationService } = await import(
-      "../src/integration-instagram/service"
-    )
-
     await instagramIntegrationService.existsByPageId("page-3")
 
     const condition = mocks.where.mock.calls[0]?.[0] as { and: unknown[] }

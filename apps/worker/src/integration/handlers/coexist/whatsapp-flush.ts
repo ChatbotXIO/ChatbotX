@@ -402,13 +402,45 @@ const resolveFinalStatus = async (
 }
 
 /**
- * Hot-chains the next chunk. On enqueue failure the run is handed back to the
- * scheduler rather than left `running` with nobody driving it.
+ * Hands the run back before the continuation is queued.
+ *
+ * `claimRun` refuses a run that is `running` with a heartbeat under 10 minutes
+ * old — that is what stops two workers driving one run. A continuation
+ * enqueued while this worker still holds the claim therefore loses its own
+ * claim and abandons, so the chunk chain has to release ownership first: back
+ * to `init` with a fresh heartbeat, counters and pending patches untouched,
+ * exactly as `resetForRetry` hands a run back after a transient error. The
+ * refreshed `updatedAt` also keeps `pickDueRuns` (which only considers `init`
+ * runs idle for 10s) from racing a second job in alongside the continuation.
+ *
+ * @returns false when the claim was already lost, in which case no
+ * continuation is queued — whoever holds the run now is driving it.
+ */
+const releaseForContinuation = async (
+  context: FlushContext,
+): Promise<boolean> => {
+  const written = await coexistService.updateProgress({
+    runId: context.runId,
+    expect: context.guard,
+    fields: { status: "init", lastHeartbeatAt: new Date() },
+  })
+
+  return written > 0
+}
+
+/**
+ * Hot-chains the next chunk. On enqueue failure the run is left `init` for the
+ * scheduler rather than `running` with nobody driving it.
  */
 const enqueueContinuation = async (
   context: FlushContext,
   state: FlushState,
 ): Promise<void> => {
+  if (!(await releaseForContinuation(context))) {
+    abandon(context, "release before continuation matched no rows")
+    return
+  }
+
   try {
     await integrationQueue.add(
       IntegrationJobAction.coexistWhatsappFlush,
@@ -436,15 +468,13 @@ const enqueueContinuation = async (
       "[coexist] WhatsApp flush chunk done — continuation enqueued",
     )
   } catch (error) {
+    // The run is already `init` with a fresh heartbeat, so the scheduler's
+    // next pass drives it — nothing left to write here, and the claim this
+    // worker held is gone.
     logger.error(
       { error, runId: context.runId },
       "[coexist] WhatsApp continuation enqueue failed — fallback to scheduler",
     )
-    await coexistService.resetForRetry({
-      runId: context.runId,
-      currentError: state.currentError ?? "continuation enqueue failed",
-      expect: context.guard,
-    })
   }
 }
 

@@ -21,8 +21,14 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/channels/create")).toBe(false)
   })
 
-  test("the /t/ prefix keeps its trailing slash so /templates stays private", () => {
+  test("matching is by segment, so no entry opens a longer first segment", () => {
+    // "/t" vs "/templates" is the case that already bit us; the same bare
+    // `startsWith` would have opened "/rpcadmin" or "/storage-exports" the
+    // day either route appeared.
     expect(isPublicRoute("/t/abc")).toBe(true)
     expect(isPublicRoute("/templates")).toBe(false)
+    expect(isPublicRoute("/rpcadmin")).toBe(false)
+    expect(isPublicRoute("/apikeys")).toBe(false)
+    expect(isPublicRoute("/authorized-apps")).toBe(false)
   })
 })

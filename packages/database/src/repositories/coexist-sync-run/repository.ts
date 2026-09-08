@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto"
 import type { CoexistChannel } from "@chatbotx.io/utils/channel"
 import {
   and,
@@ -6,6 +5,7 @@ import {
   db,
   eq,
   inArray,
+  isNull,
   lt,
   ne,
   or,
@@ -325,7 +325,9 @@ export class CoexistSyncRunRepository {
       .update(coexistSyncRunModel)
       .set({
         status: "running",
-        claimToken: randomUUID(),
+        // Web Crypto, not `node:crypto`: this repository is reachable from a
+        // Next Server Component, and only the Web API exists in both runtimes.
+        claimToken: crypto.randomUUID(),
         startedAt: sql`COALESCE(${coexistSyncRunModel.startedAt}, NOW())`,
         lastHeartbeatAt: new Date(),
         updatedAt: new Date(),
@@ -348,6 +350,16 @@ export class CoexistSyncRunRepository {
     return run ?? null
   }
 
+  /**
+   * Terminalizes runs the scheduler has retried to exhaustion.
+   *
+   * Gated on the same 10-minute staleness `claimRun` uses: a run being driven
+   * right now heartbeats every batch, and a healthy multi-hour backfill that
+   * happens to have burned its attempts must not be killed mid-import — that
+   * would strand its `pendingPatches` along with it. Only a run nobody has
+   * touched for 10 minutes (or one that never started, `lastHeartbeatAt IS
+   * NULL`) is genuinely exhausted.
+   */
   async markMaxAttemptsFailed(input: {
     maxAttempts: number
     tx?: DatabaseClient
@@ -365,6 +377,13 @@ export class CoexistSyncRunRepository {
         and(
           sql`${coexistSyncRunModel.attempts} >= ${input.maxAttempts}`,
           inArray(coexistSyncRunModel.status, ["init", "running"]),
+          or(
+            isNull(coexistSyncRunModel.lastHeartbeatAt),
+            lt(
+              coexistSyncRunModel.lastHeartbeatAt,
+              sql`NOW() - INTERVAL '10 minutes'`,
+            ),
+          ),
         ),
       )
   }

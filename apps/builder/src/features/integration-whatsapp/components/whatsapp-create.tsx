@@ -116,7 +116,12 @@ export default function WhatsappCreate({
     }
 
     if (watchManualConnect) {
-      return <ManualConnectSection watchManualConnect={watchManualConnect} />
+      return (
+        <ManualConnectSection
+          watchManualConnect={watchManualConnect}
+          workspaceId={workspaceId}
+        />
+      )
     }
 
     return (

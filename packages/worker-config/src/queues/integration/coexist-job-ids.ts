@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto"
-
 /**
  * Every BullMQ job id the Coexistence pipeline mints, in one place.
  *
@@ -56,9 +54,9 @@ export const buildCoexistPageJobId = (input: {
  * (`removeOnFail: { count: 100 }`) and BullMQ would return that job instead of
  * enqueuing.
  *
- * `randomUUID()` rather than a process-local counter: two scheduler processes
+ * A random uuid rather than a process-local counter: two scheduler processes
  * restarted in the same millisecond would otherwise mint the same suffix.
  * The `-revive-` prefix is kept so the ids stay greppable.
  */
 export const buildCoexistReviveJobSuffix = (): string =>
-  `-revive-${randomUUID()}`
+  `-revive-${crypto.randomUUID()}`

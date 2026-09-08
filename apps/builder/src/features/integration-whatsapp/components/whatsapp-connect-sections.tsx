@@ -31,8 +31,15 @@ export const SWITCH_FIELD_CLASS =
  * The manual path's phone-number lookup: the numbers Meta returned for the
  * WABA id + token typed into the form, cleared again whenever the operator
  * leaves manual mode so a stale list can never be submitted.
+ *
+ * `workspaceId` is what lets `resolvePlatformOwnerId` reach the reseller's
+ * WhatsApp credential; without it the listing falls back to the acting user
+ * and a sub-account resolves the platform-global credential instead.
  */
-function useManualPhoneNumbers(isManualConnect: boolean) {
+function useManualPhoneNumbers(
+  isManualConnect: boolean,
+  workspaceId?: string | null,
+) {
   const t = useTranslations()
   const { getValues, setValue } = useFormContext()
   const [phoneNumbers, setPhoneNumbers] = useState<WhatsappPhoneNumber[]>([])
@@ -65,6 +72,7 @@ function useManualPhoneNumbers(isManualConnect: boolean) {
             {
               wabaId: formData.wabaId ?? "",
               accessToken: formData.accessToken ?? "",
+              workspaceId: workspaceId ?? undefined,
             },
           )
 
@@ -77,7 +85,7 @@ function useManualPhoneNumbers(isManualConnect: boolean) {
         await clientErrorHandler(error)
       }
     })
-  }, [getValues, t])
+  }, [getValues, t, workspaceId])
 
   return { phoneNumbers, isLoading, listPhoneNumbers }
 }
@@ -206,6 +214,7 @@ export function PhoneNumberSelectionSection({
 
 type ManualConnectSectionProps = {
   watchManualConnect: boolean
+  workspaceId?: string | null
 }
 
 /** WABA id + access token, until they yield a phone-number list. */
@@ -280,10 +289,13 @@ function ManualPhoneNumberStep({
 
 export function ManualConnectSection({
   watchManualConnect,
+  workspaceId,
 }: ManualConnectSectionProps) {
   const t = useTranslations()
-  const { phoneNumbers, isLoading, listPhoneNumbers } =
-    useManualPhoneNumbers(watchManualConnect)
+  const { phoneNumbers, isLoading, listPhoneNumbers } = useManualPhoneNumbers(
+    watchManualConnect,
+    workspaceId,
+  )
 
   return (
     <>

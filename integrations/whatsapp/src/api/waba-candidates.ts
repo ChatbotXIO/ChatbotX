@@ -108,6 +108,15 @@ async function resolveOwnerForPhoneNumber(
   return owners.find((owner) => owner.targetId === pickedTargetId) ?? null
 }
 
+/**
+ * The twin group a number sits in. One coexistence pair routinely holds
+ * several numbers, and Graph answers the probe identically for all of them, so
+ * the group — not the number — is what the probe result belongs to.
+ */
+function ownerGroupKey(owners: TargetCandidate[]): string {
+  return owners.map((owner) => owner.targetId).join("|")
+}
+
 /** Meta's target order, and each WABA's own listing order within it. */
 async function collectCandidates(
   listings: WabaBusinessAppNumbers[],
@@ -115,12 +124,20 @@ async function collectCandidates(
 ): Promise<BusinessAppCandidate[]> {
   const ownersByPhoneNumberId = groupOwnersByPhoneNumberId(listings)
   const resolved = new Map<string, TargetCandidate | null>()
+  // Probe each twin group once: the assignment POST is a real write, and
+  // repeating it per number would assign the system user again for every
+  // number the pair holds.
+  const ownerByGroup = new Map<string, TargetCandidate | null>()
 
   for (const [phoneNumberId, owners] of ownersByPhoneNumberId) {
-    resolved.set(
-      phoneNumberId,
-      await resolveOwnerForPhoneNumber(owners, context),
-    )
+    const groupKey = ownerGroupKey(owners)
+    if (!ownerByGroup.has(groupKey)) {
+      ownerByGroup.set(
+        groupKey,
+        await resolveOwnerForPhoneNumber(owners, context),
+      )
+    }
+    resolved.set(phoneNumberId, ownerByGroup.get(groupKey) ?? null)
   }
 
   const candidates: BusinessAppCandidate[] = []
@@ -169,8 +186,8 @@ async function collectCandidates(
  * returned candidates (`partitionAvailablePhoneNumbers` in the builder).
  *
  * Graph calls: one `debug_token`, one introspection per granted target, one
- * phone-number listing per real WABA, and one assignment attempt per twin —
- * never for a number a single WABA owns.
+ * phone-number listing per real WABA, and one assignment attempt per twin
+ * group — never per number, and never for a number a single WABA owns.
  */
 /** One granted target with the Business App numbers it lists (empty for non-WABAs). */
 function listBusinessAppNumbersPerWaba(
