@@ -1,13 +1,10 @@
 "use server"
 
 import { botFieldService } from "@chatbotx.io/business"
-import { isDatabaseError } from "@chatbotx.io/database/client"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBotFieldRequest } from "../schema/action"
-
-const UNIQUE_VIOLATION_CODE = "23505"
 
 export const createBotFieldAction = workspaceActionClient
   .inputSchema(createBotFieldRequest)
@@ -24,8 +21,9 @@ export const createBotFieldAction = workspaceActionClient
       // Unique (workspaceId, type, name) — surface a field-level error under
       // Name instead of the generic toast (mirrors createCustomFieldAction).
       if (
-        isDatabaseError(error) &&
-        error.cause.code === UNIQUE_VIOLATION_CODE
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "validation"
       ) {
         return returnValidationErrors(createBotFieldRequest, {
           _errors: ["Validation Exception"],

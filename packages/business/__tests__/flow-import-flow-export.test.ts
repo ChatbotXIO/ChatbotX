@@ -46,6 +46,7 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   flowRepository: { listIdsByIds: vi.fn() },
+  whatsappMessageTemplateRepository: { listIdsByIntegration: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -57,6 +58,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/flow-config", () => ({
   remapFlowGraphReferences: mockRemapFlowGraphReferences,
   sendMessageNodeDefaultFn: vi.fn(() => ({ id: "default-node" })),
+  // flowService.list's startType filtering imports stepTypes for the
+  // sendWaTemplateMessage branch — this suite never exercises `list`, so a
+  // minimal stub (rather than the real enum) keeps the mock self-contained.
+  stepTypes: { enum: { sendWaTemplateMessage: "sendWaTemplateMessage" } },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({

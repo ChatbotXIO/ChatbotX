@@ -283,6 +283,39 @@ class FlowVersionService extends BaseService {
     )
   }
 
+  /**
+   * Updates a draft flow version's nodes/edges in place — used for autosave
+   * while editing, distinct from `publish` which cuts a new immutable
+   * version. Mirrors `publish`'s not-found handling: a missing/non-draft
+   * version throws rather than silently no-op'ing.
+   */
+  async updateDraft(input: {
+    workspaceId: string
+    id: string
+    nodes: FlowVersionModel["nodes"]
+    edges: FlowVersionModel["edges"]
+  }): Promise<void> {
+    const flowVersion = await db.query.flowVersionModel.findFirst({
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        isDraft: true,
+      },
+    })
+
+    if (!flowVersion) {
+      throw notFoundException("Draft flow version not found")
+    }
+
+    await db
+      .update(flowVersionModel)
+      .set({
+        nodes: input.nodes,
+        edges: input.edges,
+      })
+      .where(eq(flowVersionModel.id, flowVersion.id))
+  }
+
   async invalidateList(flowId: string): Promise<void> {
     await this.invalidateCacheTags(`flows:${flowId}:versions`)
   }

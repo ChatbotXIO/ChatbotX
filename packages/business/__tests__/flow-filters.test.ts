@@ -1,37 +1,24 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { describe, expect, test } from "vitest"
-import type { FlowWithVersionsResource } from "../../schema/resource"
 import {
   filterFlowsByStartStepType,
   filterFlowsByTemplateIds,
   hasStartNode,
-} from "../filter-flow-action"
+} from "../src/flow/filters"
+
+type TestFlow = {
+  id: string
+  flowVersions: Array<{ nodes: unknown }>
+}
 
 const flowWithSteps = (
   id: string,
   steps: Array<{ stepType?: string; template?: { id?: string } }>,
   options?: { isStartNode?: boolean },
-): FlowWithVersionsResource => ({
+): TestFlow => ({
   id,
-  name: `Flow ${id}`,
-  active: true,
-  enableInInbox: true,
-  workspaceId: "workspace-1",
-  folderId: null,
-  currentVersionId: null,
-  draftVersionId: null,
-  createdAt: new Date("2026-01-01T00:00:00Z"),
-  updatedAt: new Date("2026-01-01T00:00:00Z"),
   flowVersions: [
     {
-      id: `${id}-version`,
-      flowId: id,
-      workspaceId: "workspace-1",
-      startNodeId: "node-1",
-      createdAt: new Date("2026-01-01T00:00:00Z"),
-      isDraft: true,
-      isLatest: false,
-      edges: [],
       nodes: [
         {
           id: "node-1",
@@ -45,7 +32,7 @@ const flowWithSteps = (
   ],
 })
 
-describe("flow action filters", () => {
+describe("flow filters", () => {
   test("detects a step on the start node only", () => {
     expect(
       hasStartNode(
@@ -129,16 +116,10 @@ describe("flow action filters", () => {
         template: { id: "template-2" },
       },
     ])
-    const wrongStartTemplateFlow = {
-      ...flowWithSteps("wrong-start-template", [
-        {
-          stepType: stepTypes.enum.sendWaTemplateMessage,
-          template: { id: "template-2" },
-        },
-      ]),
+    const wrongStartTemplateFlow: TestFlow = {
+      id: "wrong-start-template",
       flowVersions: [
         {
-          ...flowWithSteps("wrong-start-template", []).flowVersions[0],
           nodes: [
             {
               id: "start-node",
@@ -171,7 +152,7 @@ describe("flow action filters", () => {
           ],
         },
       ],
-    } satisfies FlowWithVersionsResource
+    }
 
     expect(
       filterFlowsByTemplateIds(

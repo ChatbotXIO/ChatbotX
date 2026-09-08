@@ -51,6 +51,64 @@ class SequenceService extends BaseService {
     return { sequenceId }
   }
 
+  /**
+   * Partial update of a sequence's name/active/folderId. No-ops when
+   * nothing changed. A duplicate `name` raises `validationException("name",
+   * ...)` — the action maps that to a form-level `returnValidationErrors`
+   * response, mirroring `create`'s handling of the same unique constraint.
+   */
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: { name?: string; active?: boolean; folderId?: string | null },
+  ): Promise<void> {
+    const sequence = await findOrFail({
+      table: sequenceModel,
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+      },
+      message: "Sequence not found",
+    })
+
+    const changedEntries = Object.entries(data).filter(
+      ([key, value]) => sequence[key as keyof typeof data] !== value,
+    )
+
+    if (changedEntries.length === 0) {
+      return
+    }
+
+    try {
+      const updated = await db
+        .update(sequenceModel)
+        .set(data)
+        .where(and(eq(sequenceModel.id, ctx.id)))
+        .returning({ id: sequenceModel.id })
+
+      if (updated.length === 0) {
+        return
+      }
+    } catch (error) {
+      if (
+        isDatabaseError(error) &&
+        error.cause.code === UNIQUE_VIOLATION_CODE
+      ) {
+        throw validationException("name", "Name is already taken.")
+      }
+      throw error
+    }
+
+    const changedKeys = changedEntries.map(([key]) => key)
+    let detail = `updated a sequence (#${sequence.id})`
+    if (changedKeys.length === 1 && changedKeys[0] === "active") {
+      detail = data.active
+        ? `enabled a sequence (#${sequence.id})`
+        : `disabled a sequence (#${sequence.id})`
+    }
+
+    await this.audit("update", detail)
+  }
+
   async delete(input: { workspaceId: string; id: string }): Promise<void> {
     const sequence = await findOrFail({
       table: sequenceModel,

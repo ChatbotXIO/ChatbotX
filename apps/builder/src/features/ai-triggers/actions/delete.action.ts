@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { aiTriggerModel } from "@chatbotx.io/database/schema"
+import { aiTriggerService } from "@chatbotx.io/business"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
@@ -17,12 +16,5 @@ export const deleteAITriggerAction = workspaceActionClient
       parsedInput: { ids },
     } = props
 
-    await db
-      .delete(aiTriggerModel)
-      .where(
-        and(
-          eq(aiTriggerModel.workspaceId, workspaceId),
-          inArray(aiTriggerModel.id, ids),
-        ),
-      )
+    await aiTriggerService.deleteMany({ workspaceId, ids })
   })

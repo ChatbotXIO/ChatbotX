@@ -12,6 +12,10 @@ const {
   mockInsert,
   mockInsertReturning,
   mockInsertValues,
+  mockTopLevelFlowFindFirst,
+  mockUpdate,
+  mockUpdateSet,
+  mockUpdateReturning,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn().mockResolvedValue([{ id: "flow-1" }])
   const mockInsertValues = vi.fn(() =>
@@ -20,6 +24,11 @@ const {
     }),
   )
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
+
+  const mockUpdateReturning = vi.fn()
+  const mockUpdateWhere = vi.fn(() => ({ returning: mockUpdateReturning }))
+  const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }))
+  const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }))
 
   return {
     mockAudit: vi.fn(),
@@ -31,6 +40,11 @@ const {
     mockInsert,
     mockInsertReturning,
     mockInsertValues,
+    mockTopLevelFlowFindFirst: vi.fn(),
+    mockUpdate,
+    mockUpdateSet,
+    mockUpdateWhere,
+    mockUpdateReturning,
   }
 })
 
@@ -51,7 +65,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: mockDbTransaction,
     insert: mockInsert,
+    update: mockUpdate,
+    query: {
+      flowModel: { findFirst: mockTopLevelFlowFindFirst },
+    },
   },
+  eq: (...args: unknown[]) => ({ eq: args }),
 }))
 
 // The repositories barrel transitively pulls in the contact-filter query
@@ -59,6 +78,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // uses `listIdsByIds` (covered elsewhere), so a stub keeps that chain out.
 vi.mock("@chatbotx.io/database/repositories", () => ({
   flowRepository: { listIdsByIds: vi.fn(async () => []) },
+  whatsappMessageTemplateRepository: { listIdsByIntegration: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -87,6 +107,10 @@ vi.mock("@chatbotx.io/flow-config", () => ({
     increase: "O04",
     decrease: "O05",
   },
+  // flowService.list's startType filtering imports stepTypes for the
+  // sendWaTemplateMessage branch — this suite never exercises `list`, so a
+  // minimal stub (rather than the real enum) keeps the mock self-contained.
+  stepTypes: { enum: { sendWaTemplateMessage: "sendWaTemplateMessage" } },
 }))
 
 vi.mock("../src/base.service", () => ({
@@ -262,6 +286,62 @@ describe("flowService.duplicate", () => {
     ).rejects.toThrow("insert failed")
 
     expect(mockInsert).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("flowService.update", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("throws when the flow does not exist in the workspace", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      flowService.update(
+        { workspaceId: "ws-1", id: "flow-1" },
+        { name: "New Name" },
+      ),
+    ).rejects.toThrow("Flow not found")
+
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+
+  test("no-ops when nothing changed", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue({
+      id: "flow-1",
+      workspaceId: "ws-1",
+      name: "Welcome",
+      active: true,
+      enableInInbox: true,
+    })
+
+    await flowService.update(
+      { workspaceId: "ws-1", id: "flow-1" },
+      { name: "Welcome", active: true },
+    )
+
+    expect(mockUpdate).not.toHaveBeenCalled()
+    expect(mockAudit).not.toHaveBeenCalled()
+  })
+
+  test("updates and audits when a field changed", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue({
+      id: "flow-1",
+      workspaceId: "ws-1",
+      name: "Welcome",
+      active: true,
+      enableInInbox: true,
+    })
+    mockUpdateReturning.mockResolvedValue([{ id: "flow-1" }])
+
+    await flowService.update(
+      { workspaceId: "ws-1", id: "flow-1" },
+      { name: "Onboarding" },
+    )
+
+    expect(mockUpdateSet).toHaveBeenCalledWith({ name: "Onboarding" })
+    expect(mockAudit).toHaveBeenCalledWith("update", "updated a flow (#flow-1)")
   })
 })
 

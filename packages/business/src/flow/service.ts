@@ -1,24 +1,33 @@
-import { type DatabaseClient, db, inArray } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+} from "@chatbotx.io/database/client"
 import {
   type CustomFieldType,
   rootFolderId,
 } from "@chatbotx.io/database/partials"
-import { flowRepository } from "@chatbotx.io/database/repositories"
+import {
+  type FlowListInput,
+  flowRepository,
+  whatsappMessageTemplateRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   flowAnalyticsSessionModel,
   flowModel,
   flowVersionModel,
 } from "@chatbotx.io/database/schema"
 import type { FlowModel, FlowVersionModel } from "@chatbotx.io/database/types"
-import type {
-  EdgeSchema,
-  FlowExportBotField,
-  FlowExportCustomField,
-  FlowVersionSchema,
-} from "@chatbotx.io/flow-config"
+import { parsePagination } from "@chatbotx.io/database/utils"
 import {
+  type EdgeSchema,
+  type FlowExportBotField,
+  type FlowExportCustomField,
+  type FlowVersionSchema,
   remapFlowGraphReferences,
   sendMessageNodeDefaultFn,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { customFieldResolutionKey } from "@chatbotx.io/utils/custom-field"
@@ -29,6 +38,7 @@ import { notFoundException } from "../errors"
 import { flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
 import { assertDeletable } from "../template/installed-resource.service"
+import { filterFlowsByStartStepType, filterFlowsByTemplateIds } from "./filters"
 
 type FieldManifestEntry = { name: string; type: CustomFieldType }
 
@@ -78,6 +88,73 @@ class FlowService extends BaseService {
     return await client.query.flowModel.findFirst({
       where: { id: input.id, workspaceId: input.workspaceId },
     })
+  }
+
+  /**
+   * Paginated flow list with draft/latest versions attached. When
+   * `startType` is given, the DB-level page is re-filtered in memory by the
+   * first start node's step type (and, for WhatsApp template steps, by
+   * `integrationWhatsappId`'s bound template ids) — mirrors the pre-move
+   * `listFlows` query adapter, including recomputing `total`/`pageCount`
+   * off the filtered set rather than the DB count.
+   */
+  async list(
+    input: FlowListInput & {
+      page?: number | null
+      perPage?: number | null
+      startType?: string | null
+      integrationWhatsappId?: string | null
+    },
+  ): Promise<{
+    data: Awaited<ReturnType<typeof flowRepository.listWithVersions>>
+    pageCount: number
+    page?: number
+    perPage?: number
+  }> {
+    const pagination = parsePagination(input)
+
+    let [data, total] = await Promise.all([
+      flowRepository.listWithVersions(input),
+      flowRepository.count(input),
+    ])
+
+    if (input.startType) {
+      data = filterFlowsByStartStepType(data, input.startType)
+
+      if (input.startType === stepTypes.enum.sendWaTemplateMessage) {
+        if (input.integrationWhatsappId) {
+          const templateIds =
+            await whatsappMessageTemplateRepository.listIdsByIntegration({
+              integrationWhatsappId: input.integrationWhatsappId,
+            })
+          data = filterFlowsByTemplateIds(data, templateIds)
+        } else {
+          data = []
+        }
+      }
+
+      total = data.length
+    }
+
+    const pageCount = pagination?.limit
+      ? Math.ceil(total / pagination.limit)
+      : 1
+
+    return { data, pageCount, ...pagination }
+  }
+
+  /** Unguarded flow detail with all versions — callers enforce access. */
+  async findById(input: {
+    workspaceId: string
+    id: string
+  }): Promise<
+    NonNullable<Awaited<ReturnType<typeof flowRepository.findWithVersions>>>
+  > {
+    const flow = await flowRepository.findWithVersions(input)
+    if (!flow) {
+      throw notFoundException("Flow does not exists.")
+    }
+    return flow
   }
 
   async exists(
@@ -269,6 +346,40 @@ class FlowService extends BaseService {
     await this.audit("create", `created a new flow (#${flow.id})`)
 
     return { id: flow.id }
+  }
+
+  /**
+   * Partial update of a flow's name/active/enableInInbox. No-ops (and skips
+   * the audit record) when every field matches the current row, mirroring
+   * the guard the old `update-flow-action.ts` implementation had.
+   */
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: { name?: string; active?: boolean; enableInInbox?: boolean },
+  ): Promise<void> {
+    const flow = await this.findBy(ctx)
+    if (!flow) {
+      throw notFoundException("Flow not found")
+    }
+
+    const hasChanges = Object.entries(data).some(
+      ([key, value]) => flow[key as keyof typeof data] !== value,
+    )
+    if (!hasChanges) {
+      return
+    }
+
+    const updated = await db
+      .update(flowModel)
+      .set(data)
+      .where(eq(flowModel.id, flow.id))
+      .returning({ id: flowModel.id })
+
+    if (updated.length === 0) {
+      return
+    }
+
+    await this.audit("update", `updated a flow (#${flow.id})`)
   }
 
   duplicate(input: { workspaceId: string; id: string }): Promise<string> {

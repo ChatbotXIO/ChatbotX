@@ -12,6 +12,8 @@ const {
   mockDispatchAuditRecord,
   mockStepFindFirst,
   mockStepUpdate,
+  mockStepUpdateSet,
+  mockStepUpdateReturning,
   mockStepInsert,
   mockStepDelete,
   sequenceModelStub,
@@ -52,6 +54,8 @@ const {
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
     mockStepFindFirst: vi.fn(),
     mockStepUpdate,
+    mockStepUpdateSet,
+    mockStepUpdateReturning,
     mockStepInsert,
     mockStepDelete,
     sequenceModelStub: {
@@ -143,6 +147,104 @@ describe("sequenceService.create", () => {
     await expect(
       sequenceService.create({ workspaceId: WS, name: "Seq" }),
     ).rejects.toThrow("other db error")
+  })
+})
+
+describe("sequenceService.update", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("no-ops when nothing changed", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      active: true,
+    })
+
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { active: true },
+    )
+
+    expect(mockStepUpdate).not.toHaveBeenCalled()
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("updates and audits with a generic detail for multi-field changes", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      active: false,
+    })
+    mockStepUpdateReturning.mockResolvedValue([{ id: "seq-1" }])
+
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { name: "New Name", active: true },
+    )
+
+    expect(mockStepUpdateSet).toHaveBeenCalledWith({
+      name: "New Name",
+      active: true,
+    })
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "update",
+      detail: "updated a sequence (#seq-1)",
+    })
+  })
+
+  test("audits an 'enabled' detail when only active flips true", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      active: false,
+    })
+    mockStepUpdateReturning.mockResolvedValue([{ id: "seq-1" }])
+
+    await sequenceService.update(
+      { workspaceId: WS, id: "seq-1" },
+      { active: true },
+    )
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "update",
+      detail: "enabled a sequence (#seq-1)",
+    })
+  })
+
+  test("throws validationException on the name field for a 23505 unique violation", async () => {
+    mockFindOrFail.mockResolvedValue({
+      id: "seq-1",
+      name: "Seq",
+      active: false,
+    })
+    const dbError = Object.assign(new Error("unique violation"), {
+      cause: { code: "23505" },
+    })
+    mockStepUpdateReturning.mockRejectedValueOnce(dbError)
+    mockIsDatabaseError.mockReturnValueOnce(true)
+
+    await expect(
+      sequenceService.update(
+        { workspaceId: WS, id: "seq-1" },
+        { name: "Duplicate" },
+      ),
+    ).rejects.toMatchObject({
+      code: "validation",
+      field: "name",
+      message: "Name is already taken.",
+    })
+  })
+
+  test("propagates the not-found error and never updates", async () => {
+    mockFindOrFail.mockRejectedValue(new Error("Sequence not found"))
+
+    await expect(
+      sequenceService.update({ workspaceId: WS, id: "missing" }, { name: "X" }),
+    ).rejects.toThrow("Sequence not found")
+
+    expect(mockStepUpdate).not.toHaveBeenCalled()
   })
 })
 

@@ -1,8 +1,6 @@
 "use server"
 
-import { db, isUniqueViolationError } from "@chatbotx.io/database/client"
-import { reflinkModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { reflinkService } from "@chatbotx.io/business"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
@@ -26,14 +24,13 @@ export const createReflinkAction = workspaceActionClient
       parsedInput: CreateReflinkRequest
     }) => {
       try {
-        await db.insert(reflinkModel).values({
-          id: createId(),
-          workspaceId,
-          type: "refLink",
-          ...parsedInput,
-        })
+        await reflinkService.create({ workspaceId, data: parsedInput })
       } catch (error) {
-        if (isUniqueViolationError(error)) {
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "validation"
+        ) {
           return returnValidationErrors(createReflinkRequest, {
             _errors: ["Validation Exception"],
             name: { _errors: ["Name is already taken"] },

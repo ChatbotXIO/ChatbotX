@@ -1,7 +1,6 @@
 "use server"
 
 import { botFieldService } from "@chatbotx.io/business"
-import { isDatabaseError } from "@chatbotx.io/database/client"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdAndIdRequestParams,
@@ -33,7 +32,11 @@ export const updateBotFieldAction = workspaceActionClient
       } catch (error) {
         // Renaming into an existing (type, name) hits the same unique index
         // as create — surface it under the Name field, not a generic toast.
-        if (isDatabaseError(error) && error.cause.code === "23505") {
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "validation"
+        ) {
           return returnValidationErrors(updateBotFieldRequest, {
             _errors: ["Validation Exception"],
             name: { _errors: ["Name is already taken"] },

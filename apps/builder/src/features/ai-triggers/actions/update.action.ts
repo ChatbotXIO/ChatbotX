@@ -1,12 +1,8 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { aiTriggerModel } from "@chatbotx.io/database/schema"
+import { aiTriggerService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import {
-  type UpdateAITriggerRequest,
-  updateAITriggerRequest,
-} from "@/features/ai-triggers/schema/action"
+import { updateAITriggerRequest } from "@/features/ai-triggers/schema/action"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const updateAITriggerAction = workspaceActionClient
@@ -18,24 +14,5 @@ export const updateAITriggerAction = workspaceActionClient
       parsedInput,
     } = props
 
-    return await updateAITrigger({ workspaceId, id }, parsedInput)
+    return await aiTriggerService.update({ workspaceId, id }, parsedInput)
   })
-
-export const updateAITrigger = async (
-  ctx: { workspaceId: string; id: string },
-  parsedInput: UpdateAITriggerRequest,
-) => {
-  const aiTrigger = await findOrFail({
-    table: aiTriggerModel,
-    where: {
-      id: ctx.id,
-      workspaceId: ctx.workspaceId,
-    },
-    message: "AITrigger not found",
-  })
-
-  await db
-    .update(aiTriggerModel)
-    .set(parsedInput)
-    .where(eq(aiTriggerModel.id, aiTrigger.id))
-}

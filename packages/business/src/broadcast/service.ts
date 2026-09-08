@@ -543,6 +543,28 @@ class BroadcastService extends BaseService {
     return row ?? null
   }
 
+  /** Renames a broadcast. Distinct from `updateDraft`, which re-applies a full create payload. */
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: { name: string },
+  ): Promise<void> {
+    const broadcast = await findOrFail({
+      table: broadcastModel,
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+        deletedAt: { isNull: true },
+      },
+    })
+
+    await db
+      .update(broadcastModel)
+      .set(data)
+      .where(eq(broadcastModel.id, broadcast.id))
+
+    await this.audit("update", `updated a broadcast (#${broadcast.id})`)
+  }
+
   /**
    * Re-applies a validated create payload to an existing draft. `saveAsDraft`
    * decides whether the row stays a draft or becomes `scheduled`, mirroring
