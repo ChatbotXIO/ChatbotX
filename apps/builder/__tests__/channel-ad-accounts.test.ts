@@ -278,4 +278,20 @@ describe("resolveChannelAdAccountSources", () => {
     expect(result).toEqual([])
     expect(mocks.warn).toHaveBeenCalledTimes(1)
   })
+  // The integration lookup sits inside the same guard as the Graph call: a
+  // database blip on that preliminary read must degrade the union to "no
+  // workspace-wide accounts", exactly as a Graph failure does — never fail the
+  // whole Ads page.
+  test("a failing integration lookup degrades instead of failing the union", async () => {
+    mocks.findByWorkspaceId.mockRejectedValue(new Error("connection reset"))
+    mocks.listForChannel.mockResolvedValue([])
+
+    const result = await resolveChannelAdAccountSources({
+      workspaceId: "ws-1",
+      channel: "messenger",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.warn).toHaveBeenCalledTimes(1)
+  })
 })

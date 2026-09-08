@@ -498,4 +498,47 @@ describe("Messenger receiveMessage", () => {
 
     expect(result.referral?.adId).toBe("postback-ad")
   })
+  // Regression guard: adding `referral` to the message schema must not make a
+  // malformed one able to reject the whole webhook. Before it existed, zod
+  // stripped the object and delivered the message; a payload whose referral
+  // lacks `source`/`type` must still behave that way — losing a customer's
+  // message to save an attribution label is never the right trade.
+  test("delivers the message when a nested referral is malformed", async () => {
+    const result = await receiveMessage({
+      ctx: {
+        auth: {
+          metadata: { pageId: "page-1" },
+        },
+      } as never,
+      data: {
+        integrationType: "messenger",
+        integrationIdentifier: "inbox-1",
+        payload: {
+          object: "page",
+          entry: [
+            {
+              id: "page-1",
+              time: 1,
+              messaging: [
+                {
+                  sender: { id: "psid-1" },
+                  recipient: { id: "page-1" },
+                  timestamp: 1,
+                  message: {
+                    mid: "mid-1",
+                    text: "hello",
+                    // No `source`, no `type` — both required by the schema.
+                    referral: { ad_id: "ad-1" },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.message?.text).toBe("hello")
+    expect(result.referral).toBeNull()
+  })
 })

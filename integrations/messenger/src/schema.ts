@@ -175,7 +175,13 @@ export const messengerMessageSchema = z.object({
   // event and not on a postback. Omitting it made zod strip the object
   // before the handler ever saw it, silently dropping ad attribution
   // for every such conversation.
-  referral: messengerReferralSchema.optional(),
+  //
+  // `.catch(undefined)` because this rides along with a real message: a
+  // payload whose referral is missing `source`/`type` used to be stripped and
+  // the MESSAGE still delivered. Validating it strictly would start rejecting
+  // the whole webhook over an attribution field, losing the customer's message
+  // to save a label. Attribution degrades; delivery does not.
+  referral: messengerReferralSchema.optional().catch(undefined),
 })
 export type MessengerMessage = z.infer<typeof messengerMessageSchema>
 

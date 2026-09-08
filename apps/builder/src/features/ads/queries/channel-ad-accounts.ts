@@ -90,13 +90,13 @@ async function listWorkspaceWideAccounts(
   // EVERY ordinary dashboard load: noise that reads like a real fault, buries
   // the failures that are real, and sent at least one debugging session
   // chasing it as if it were the cause of an unrelated crash.
-  const integration =
-    await integrationFacebookAdsService.findByWorkspaceId(workspaceId)
-  if (!integration) {
-    return []
-  }
-
   try {
+    const integration =
+      await integrationFacebookAdsService.findByWorkspaceId(workspaceId)
+    if (!integration) {
+      return []
+    }
+
     const accounts = await getCachedAdAccounts(workspaceId)
     return accounts.map((account) => ({
       account,
