@@ -27,6 +27,10 @@ const { repositoryMock, encryptTextMock, decryptTextMock, loggerWarnMock } =
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationWhatsappRepository: repositoryMock,
+  whatsappBusinessAccountRepository: {
+    findByWaba: vi.fn().mockResolvedValue(null),
+    updateScopeCache: vi.fn(),
+  },
   // createSignupSession / findActiveSignupSessionForUser /
   // purgeFinishedSignupSessions now live on whatsappSignupSessionRepository
   // (the facade on integrationWhatsappRepository was removed); this suite
@@ -461,8 +465,13 @@ describe("integrationWhatsappService signup sessions", () => {
       accessToken: "token-1",
       wabaId: "waba-1",
     })
-    expect(repositoryMock.updateCapiScopeCache).not.toHaveBeenCalled()
-    expect(loggerWarnMock).toHaveBeenCalledOnce()
+    expect(repositoryMock.updateCapiScopeCache).toHaveBeenCalledWith({
+      id: "iw-1",
+      workspaceId: "ws-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: new Date("2026-08-09T00:00:00.000Z"),
+      expectedCapiScopeCheckedAt: new Date("2026-08-10T12:00:00.000Z"),
+    })
   })
 
   test("stores a definitive false CAPI scope result", async () => {

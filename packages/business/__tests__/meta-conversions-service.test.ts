@@ -41,6 +41,8 @@ const mocks = vi.hoisted(() => ({
   whatsappConnectCustomCapi: vi.fn(),
   whatsappSetCapiDisconnectedAt: vi.fn(),
   whatsappClearCapiDisconnectedAt: vi.fn(),
+  whatsappBusinessAccountFindByWaba: vi.fn(),
+  whatsappBusinessAccountUpdateScopeCache: vi.fn(),
   encryptedDataParse: vi.fn((value: unknown) => value),
   encryptObject: vi.fn(),
   decryptObject: vi.fn(),
@@ -88,6 +90,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     setCapiDisconnectedAt: mocks.whatsappSetCapiDisconnectedAt,
     clearCapiDisconnectedAt: mocks.whatsappClearCapiDisconnectedAt,
   },
+  whatsappBusinessAccountRepository: {
+    findByWaba: mocks.whatsappBusinessAccountFindByWaba,
+    updateScopeCache: mocks.whatsappBusinessAccountUpdateScopeCache,
+  },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -130,9 +136,11 @@ vi.mock("@chatbotx.io/encryption", () => ({
   },
 }))
 
-const { metaConversionsService, resolveCapiAccessToken } = await import(
-  "../src/meta-conversions"
-)
+const {
+  metaConversionsService,
+  resolveCapiAccessToken,
+  resolveCapiAccessTokenForChannel,
+} = await import("../src/meta-conversions")
 
 const messengerIntegration = {
   id: "im-1",
@@ -196,6 +204,7 @@ describe("MetaConversionsService", () => {
     mocks.whatsappFindByInboxIdForWorkspace.mockResolvedValue(
       whatsappIntegration,
     )
+    mocks.whatsappBusinessAccountFindByWaba.mockResolvedValue(null)
     mocks.whatsappClaimCapiScopeCacheRefresh.mockImplementation(
       async (input: Record<string, unknown>) => ({
         ...whatsappIntegration,
@@ -796,16 +805,13 @@ describe("MetaConversionsService", () => {
       accessToken: "whatsapp-token",
       resourceId: "waba-1",
     })
-    expect(mocks.whatsappUpdateCapiScopeCache).toHaveBeenCalledWith(
-      {
-        id: "wa-1",
-        workspaceId: "ws-1",
-        hasCapiScope: true,
-        capiScopeCheckedAt: now,
-        expectedCapiScopeCheckedAt: now,
-      },
-      undefined,
-    )
+    expect(mocks.whatsappUpdateCapiScopeCache).toHaveBeenCalledWith({
+      id: "wa-1",
+      workspaceId: "ws-1",
+      hasCapiScope: true,
+      capiScopeCheckedAt: now,
+      expectedCapiScopeCheckedAt: now,
+    })
   })
 
   test("resolves OAuth CAPI access token for whatsapp when no manual token is saved", async () => {
@@ -815,6 +821,25 @@ describe("MetaConversionsService", () => {
     })
 
     expect(mocks.decryptObject).not.toHaveBeenCalled()
+  })
+
+  test("resolves a shared WABA credential for a second WhatsApp number", async () => {
+    mocks.whatsappBusinessAccountFindByWaba.mockResolvedValue({
+      credential: { encrypted: true },
+      grantedScopes: ["whatsapp_business_manage_events"],
+      scopeCheckedAt: new Date("2026-09-08T00:00:00.000Z"),
+    })
+    mocks.decryptObject.mockResolvedValue({
+      accessToken: "waba-token",
+      apiVersion: "v23.0",
+    })
+
+    await expect(
+      resolveCapiAccessTokenForChannel("whatsapp", whatsappIntegration),
+    ).resolves.toEqual({
+      accessToken: "waba-token",
+      source: "waba",
+    })
   })
 
   test("resolves manual CAPI access token for whatsapp before OAuth auth (v1.7 custom connection)", async () => {

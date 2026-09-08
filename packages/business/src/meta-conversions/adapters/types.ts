@@ -7,6 +7,7 @@ import type {
   MetaConversionsChannel,
   MetaConversionsIntegrationByChannel,
 } from "../schema"
+import type { ResolvedCapiAccessToken } from "../token"
 
 type WorkspaceIntegrationRef = {
   id: string
@@ -63,7 +64,7 @@ export interface CapiSendAdapter<
   ): Promise<DatasetProvisionInput>
   buildScopeCheckInput(
     integration: MetaConversionsIntegrationByChannel[TChannel],
-  ): CapiScopeCheckInput
+  ): CapiScopeCheckInput | Promise<CapiScopeCheckInput>
   claimCapiScopeCacheRefresh(
     input: CapiScopeCacheClaim,
     tx?: DatabaseClient,
@@ -72,6 +73,12 @@ export interface CapiSendAdapter<
     input: WorkspaceIntegrationRef,
     tx?: DatabaseClient,
   ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null>
+  resolveCapiAccessToken(
+    integration: MetaConversionsIntegrationByChannel[TChannel],
+  ): Promise<ResolvedCapiAccessToken>
+  resolveCapiScopeState(
+    integration: MetaConversionsIntegrationByChannel[TChannel],
+  ): Promise<{ hasCapiScope: boolean; capiScopeCheckedAt: Date | null }>
   /** Compare-and-swap write, safe to call from the concurrent send path. */
   updateCapiScopeCache(
     input: CapiScopeCacheUpdate,

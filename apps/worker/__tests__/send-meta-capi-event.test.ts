@@ -61,7 +61,7 @@ vi.mock("@chatbotx.io/business", async () => {
       refreshCapiScopeCache: mocks.refreshCapiScopeCache,
       ensureDatasetId: mocks.ensureDatasetId,
     },
-    resolveCapiAccessToken: mocks.resolveCapiAccessToken,
+    resolveCapiAccessTokenForChannel: mocks.resolveCapiAccessToken,
     withBlockedOwnerGuard: mocks.withBlockedOwnerGuard,
     workspaceService: {
       findById: mocks.findWorkspaceById,

@@ -8,7 +8,8 @@ import {
   isAdReferralChannel,
   type MetaConversionsIntegrationByChannel,
   metaConversionsService,
-  resolveCapiAccessToken,
+  resolveCapiAccessTokenForChannel,
+  resolveCapiScopeStateForChannel,
   whatsappAuthForCapiScopeSchema,
   withBlockedOwnerGuard,
   workspaceService,
@@ -265,8 +266,13 @@ async function handleSendWhatsappConversionEvent(
     return
   }
 
-  const auth = whatsappAuthForCapiScopeSchema.parse(integration.auth)
-  if (!integration.hasCapiScope) {
+  const oauth = whatsappAuthForCapiScopeSchema.parse(integration.auth)
+  const auth = await resolveCapiAccessTokenForChannel("whatsapp", integration)
+  const scopeState = await resolveCapiScopeStateForChannel(
+    "whatsapp",
+    integration,
+  )
+  if (auth.source !== "manual" && !scopeState.hasCapiScope) {
     await adsConversionEventRepository.updateCapiStatus({
       id: event.id,
       workspaceId: event.workspaceId,
@@ -299,7 +305,7 @@ async function handleSendWhatsappConversionEvent(
           wabaId,
           accessToken,
           datasetName: buildDatasetName(wabaName),
-          version: auth.version,
+          version: oauth.version,
         }),
     })
 
@@ -307,8 +313,8 @@ async function handleSendWhatsappConversionEvent(
 
     await sendWhatsappConversionEvent({
       datasetId,
-      accessToken: auth.tokens.accessToken,
-      version: auth.version,
+      accessToken: auth.accessToken,
+      version: oauth.version,
       event: {
         eventType: event.eventType,
         occurredAt: event.occurredAt,
@@ -460,7 +466,7 @@ async function handleSendMetaChannelConversionEvent(
   })
 
   try {
-    const auth = await resolveCapiAccessToken(integration)
+    const auth = await resolveCapiAccessTokenForChannel(channel, integration)
     const integrationForSend =
       auth.source === "manual"
         ? integration
@@ -475,7 +481,7 @@ async function handleSendMetaChannelConversionEvent(
       return
     }
 
-    if (auth.source === "oauth" && !integrationForSend.hasCapiScope) {
+    if (auth.source !== "manual" && !integrationForSend.hasCapiScope) {
       await adsConversionEventRepository.updateCapiStatus({
         id: event.id,
         workspaceId: event.workspaceId,

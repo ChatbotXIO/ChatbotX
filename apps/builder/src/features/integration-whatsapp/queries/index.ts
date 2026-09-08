@@ -38,21 +38,18 @@ const CLIENT_SAFE_COLUMNS = {
 export const listIntegrationWhatsapps = async (
   props: Pick<IntegrationWhatsappModel, "workspaceId">,
 ): Promise<PaginatedResponse<IntegrationWhatsappWithInbox>> => {
-  const data = await db.query.integrationWhatsappModel.findMany({
-    where: props,
-    columns: CLIENT_SAFE_COLUMNS,
-    orderBy: {
-      createdAt: "asc",
-    },
-    with: {
-      inbox: {
-        columns: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-  })
+  const integrations = await integrationWhatsappService.listByWorkspaceId(
+    props.workspaceId,
+  )
+  const data = integrations.map(({ inbox, ...integration }) => ({
+    ...Object.fromEntries(
+      Object.keys(CLIENT_SAFE_COLUMNS).map((key) => [
+        key,
+        integration[key as keyof typeof integration],
+      ]),
+    ),
+    inbox: inbox ?? undefined,
+  })) as IntegrationWhatsappWithInbox[]
 
   return { data, pageCount: 1 }
 }

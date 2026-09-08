@@ -14,11 +14,16 @@ const oauthCapiAccessTokenSchema = z.object({
 
 export type ResolvedCapiAccessToken = {
   accessToken: string
-  source: "manual" | "oauth"
+  source: "manual" | "oauth" | "waba"
 }
+
+export type ResolveOauthCapiAccessToken = (
+  integration: MetaConversionsIntegration,
+) => Promise<string | null>
 
 export async function resolveCapiAccessToken(
   integration: MetaConversionsIntegration,
+  resolveOauthAccessToken?: ResolveOauthCapiAccessToken,
 ): Promise<ResolvedCapiAccessToken> {
   // A manual (Custom-connection) token wins over the OAuth page token when
   // present. Read via a property guard, not a channel switch: the column
@@ -33,6 +38,14 @@ export async function resolveCapiAccessToken(
     return {
       accessToken: manual.accessToken,
       source: "manual",
+    }
+  }
+
+  const oauthAccessToken = await resolveOauthAccessToken?.(integration)
+  if (oauthAccessToken) {
+    return {
+      accessToken: oauthAccessToken,
+      source: "waba",
     }
   }
 

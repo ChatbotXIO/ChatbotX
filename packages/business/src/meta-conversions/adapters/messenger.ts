@@ -31,6 +31,8 @@ export const messengerCapiReadinessAdapter: CapiReadinessAdapter<"messenger"> =
         resourceId: integration.pageId,
       }
     },
+    resolveCapiAccessToken,
+    resolveCapiScopeState: (integration) => Promise.resolve(integration),
     claimCapiScopeCacheRefresh: (input, tx) =>
       integrationMessengerRepository.claimCapiScopeCacheRefresh(input, tx),
     findWorkspaceIntegration: (input, tx) =>
