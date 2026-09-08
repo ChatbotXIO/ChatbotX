@@ -1,6 +1,9 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
-import { and, type DatabaseClient, db, eq, sql } from "../../client"
-import { whatsappBusinessAccountModel } from "../../schema"
+import { and, type DatabaseClient, db, eq, notExists, sql } from "../../client"
+import {
+  integrationWhatsappModel,
+  whatsappBusinessAccountModel,
+} from "../../schema"
 import type { WhatsappBusinessAccountModel } from "../../types"
 
 type WabaRef = {
@@ -22,6 +25,12 @@ export type UpdateWhatsappBusinessAccountScopeCacheInput = WabaRef & {
   grantedScopes: string[]
   scopeCheckedAt: Date
   expectedRevision: number
+  tx?: DatabaseClient
+}
+
+export type MarkWhatsappBusinessAccountProvisionedInput = WabaRef & {
+  expectedRevision: number
+  creditLineId?: string | null
   tx?: DatabaseClient
 }
 
@@ -108,6 +117,53 @@ export class WhatsappBusinessAccountRepository {
       .returning()
 
     return row ?? null
+  }
+
+  async markProvisioned(
+    input: MarkWhatsappBusinessAccountProvisionedInput,
+  ): Promise<WhatsappBusinessAccountModel | null> {
+    const [row] = await (input.tx ?? db)
+      .update(whatsappBusinessAccountModel)
+      .set({
+        provisionedAt: new Date(),
+        creditLineId: input.creditLineId ?? undefined,
+        revision: sql`${whatsappBusinessAccountModel.revision} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          wabaFilter(input),
+          eq(whatsappBusinessAccountModel.revision, input.expectedRevision),
+        ),
+      )
+      .returning()
+
+    return row ?? null
+  }
+
+  async deleteIfOrphaned(
+    input: WabaRef & { tx?: DatabaseClient },
+  ): Promise<boolean> {
+    const [row] = await (input.tx ?? db)
+      .delete(whatsappBusinessAccountModel)
+      .where(
+        and(
+          wabaFilter(input),
+          notExists(
+            (input.tx ?? db)
+              .select({ id: integrationWhatsappModel.id })
+              .from(integrationWhatsappModel)
+              .where(
+                and(
+                  eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+                  eq(integrationWhatsappModel.wabaId, input.wabaId),
+                ),
+              ),
+          ),
+        ),
+      )
+      .returning({ id: whatsappBusinessAccountModel.id })
+    return Boolean(row)
   }
 }
 

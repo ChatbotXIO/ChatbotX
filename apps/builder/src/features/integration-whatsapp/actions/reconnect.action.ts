@@ -4,6 +4,7 @@ import {
   integrationWhatsappService,
   platformCredentialService,
   WHATSAPP_CAPI_SCOPE,
+  whatsappBusinessAccountService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
@@ -19,7 +20,7 @@ import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
-import { hasWhatsappCapiScope } from "@/features/integration-whatsapp/libs/capi-scope"
+import { getWhatsappGrantedScopes } from "@/features/integration-whatsapp/libs/capi-scope"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { logger } from "@/lib/log"
 import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
@@ -168,18 +169,27 @@ async function buildReconnectAuth(input: {
     businessId: input.waba.owner_business_info?.id ?? input.existing.businessId,
     isManual: false,
   })
-  const hasCapiScope = await hasWhatsappCapiScope({
+  const grantedScopes = await getWhatsappGrantedScopes({
     accessToken: input.accessToken,
     appAccessToken: input.appAccessToken,
     wabaId: input.wabaId,
   })
 
-  return { auth, hasCapiScope }
+  return {
+    auth,
+    grantedScopes,
+    hasCapiScope: grantedScopes.includes(WHATSAPP_CAPI_SCOPE),
+  }
 }
 
 async function persistReconnectAuthAndResubscribe(input: {
   auth: Awaited<ReturnType<typeof buildAuthValue>>
   hasCapiScope: boolean
+  grantedScopes: string[]
+  businessId: string
+  accessToken: string
+  apiVersion: string
+  wabaId: string
   integrationWhatsappId: string
   workspaceId: string
 }): Promise<boolean> {
@@ -189,6 +199,24 @@ async function persistReconnectAuthAndResubscribe(input: {
     auth: input.auth,
     hasCapiScope: input.hasCapiScope,
   })
+  try {
+    await whatsappBusinessAccountService.upsertCurrentCredential({
+      workspaceId: input.workspaceId,
+      wabaId: input.wabaId,
+      businessId: input.businessId,
+      credential: {
+        accessToken: input.accessToken,
+        apiVersion: input.apiVersion,
+      },
+      grantedScopes: input.grantedScopes,
+      scopeCheckedAt: new Date(),
+    })
+  } catch (err) {
+    logger.warn(
+      { err, workspaceId: input.workspaceId, wabaId: input.wabaId },
+      "Unable to persist WhatsApp Business Account credential after reconnect",
+    )
+  }
   let resubscribed = true
   try {
     await subscribeWebhook({
@@ -239,7 +267,7 @@ async function reconnectWhatsapp(input: {
       whatsappSettings,
       originUrl,
     })
-  const { auth, hasCapiScope } = await buildReconnectAuth({
+  const { auth, hasCapiScope, grantedScopes } = await buildReconnectAuth({
     accessToken,
     appAccessToken,
     existing,
@@ -254,6 +282,11 @@ async function reconnectWhatsapp(input: {
   const resubscribed = await persistReconnectAuthAndResubscribe({
     auth,
     hasCapiScope,
+    grantedScopes,
+    businessId: waba.owner_business_info?.id ?? existing.businessId,
+    accessToken,
+    apiVersion: whatsappSettings.version,
+    wabaId,
     integrationWhatsappId: input.integrationWhatsappId,
     workspaceId: input.workspaceId,
   })

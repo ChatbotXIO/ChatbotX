@@ -29,6 +29,7 @@ import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import { platformCredentialService } from "../platform-credential/service"
+import { whatsappBusinessAccountService } from "../whatsapp-business-account/service"
 import { workspaceService } from "../workspace/service"
 import {
   WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS,
@@ -459,7 +460,7 @@ class IntegrationWhatsappService extends BaseService {
       throw new Error("WhatsApp integration not found")
     }
 
-    await this.audit("update", "reconnected the WhatsApp channel")
+    await this.audit("update", "re-authorized the WhatsApp Business Account")
 
     return updated
   }
@@ -699,6 +700,14 @@ class IntegrationWhatsappService extends BaseService {
     await tx
       .delete(integrationWhatsappModel)
       .where(eq(integrationWhatsappModel.id, integrationWhatsapp.id))
+
+    // The business-account credential outlives a single number, so it is only
+    // dropped once this workspace has no other number on that account.
+    await whatsappBusinessAccountService.deleteIfOrphaned({
+      workspaceId,
+      wabaId: integrationWhatsapp.wabaId,
+      tx,
+    })
 
     await inboxService.disconnect({
       inboxId: integrationWhatsapp.inboxId,

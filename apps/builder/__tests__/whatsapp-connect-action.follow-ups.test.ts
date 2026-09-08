@@ -72,6 +72,11 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     resolveForOwner: mocks.platformCredentialResolveMock,
   },
+  whatsappBusinessAccountService: {
+    findByWaba: mocks.findWabaRecordMock,
+    markProvisioned: mocks.markWabaProvisionedMock,
+    upsertCurrentCredential: mocks.upsertWabaCredentialMock,
+  },
   workspaceMemberService: {
     isMember: mocks.isMemberMock,
   },
@@ -140,7 +145,7 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
   })
 
   describe("WABA pre-work", () => {
-    test("runs before persist and is idempotent across two requests", async () => {
+    test("skips provisioning for a second number when the WABA is provisioned", async () => {
       const secondPhoneNumber = { ...selectedPhoneNumber, id: "phone-2" }
       mocks.findActiveSignupSessionForUserMock.mockResolvedValue({
         ...defaultSession,
@@ -187,6 +192,15 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
 
       mocks.addSystemUserMock.mockClear()
       mocks.subscribeWebhookMock.mockClear()
+      mocks.findActiveSignupSessionForUserMock.mockResolvedValue({
+        ...defaultSession,
+        workspaceId: "ws-1",
+        candidatePhoneNumberIds: [selectedPhoneNumber.id, secondPhoneNumber.id],
+      })
+      mocks.findWabaRecordMock.mockResolvedValue({
+        id: "waba-row",
+        provisionedAt: new Date("2026-09-08T00:00:00.000Z"),
+      })
 
       await callConnectWhatsappAction({
         ctx: { user: { id: "user-1" } },
@@ -197,13 +211,12 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
         },
       })
 
-      // Same request shape runs the same idempotent calls again — no
-      // state carried between requests that would skip them.
-      expect(mocks.addSystemUserMock).toHaveBeenCalledTimes(1)
-      // Plain subscribeWebhook now also runs once from the manual follow-up
-      // path on OTHER requests, but this is the non-manual pre-work call —
-      // exactly one per request here too.
-      expect(mocks.subscribeWebhookMock).toHaveBeenCalledTimes(1)
+      expect(mocks.addSystemUserMock).not.toHaveBeenCalled()
+      expect(mocks.subscribeWebhookMock).not.toHaveBeenCalled()
+      expect(mocks.findWabaRecordMock).toHaveBeenLastCalledWith({
+        workspaceId: "ws-1",
+        wabaId: "waba-1",
+      })
     })
 
     test("manual connect never runs WABA-level pre-work", async () => {

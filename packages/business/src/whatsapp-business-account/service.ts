@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
+  type MarkWhatsappBusinessAccountProvisionedInput,
   type UpdateWhatsappBusinessAccountScopeCacheInput,
   whatsappBusinessAccountRepository,
 } from "@chatbotx.io/database/repositories"
@@ -76,8 +77,30 @@ export class WhatsappBusinessAccountService extends BaseService {
     })
   }
 
+  async upsertCurrentCredential(
+    input: Omit<UpsertCredentialInput, "expectedRevision">,
+  ) {
+    const existing = await this.findByWaba(input)
+    return await this.upsertCredential({
+      ...input,
+      expectedRevision: existing?.revision ?? 0,
+    })
+  }
+
   async updateScopeCache(input: UpdateScopeCacheInput) {
     return await whatsappBusinessAccountRepository.updateScopeCache(input)
+  }
+
+  async markProvisioned(
+    input: Omit<MarkWhatsappBusinessAccountProvisionedInput, "tx"> & {
+      tx?: DatabaseClient
+    },
+  ) {
+    return await whatsappBusinessAccountRepository.markProvisioned(input)
+  }
+
+  async deleteIfOrphaned(input: WabaRef & { tx?: DatabaseClient }) {
+    return await whatsappBusinessAccountRepository.deleteIfOrphaned(input)
   }
 }
 

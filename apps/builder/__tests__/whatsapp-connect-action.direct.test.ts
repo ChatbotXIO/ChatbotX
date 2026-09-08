@@ -75,6 +75,11 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     resolveForOwner: mocks.platformCredentialResolveMock,
   },
+  whatsappBusinessAccountService: {
+    findByWaba: mocks.findWabaRecordMock,
+    markProvisioned: mocks.markWabaProvisionedMock,
+    upsertCurrentCredential: mocks.upsertWabaCredentialMock,
+  },
   workspaceMemberService: {
     isMember: mocks.isMemberMock,
   },

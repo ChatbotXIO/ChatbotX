@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     inboxDisconnect: vi.fn().mockResolvedValue(undefined),
     isRevokedTokenError: vi.fn(() => false),
     metaCapiDeleteByIntegration: vi.fn().mockResolvedValue(undefined),
+    deleteWabaIfOrphaned: vi.fn().mockResolvedValue(false),
     tx,
     txChain,
     whatsappDisconnect: vi.fn().mockResolvedValue(undefined),
@@ -38,7 +39,12 @@ const mocks = vi.hoisted(() => {
 // require booting the real business/database module graph).
 const integrationWhatsappServiceDisconnect = vi.fn(
   async (props: {
-    integrationWhatsapp: { id: string; inboxId: string; phoneNumberId: string }
+    integrationWhatsapp: {
+      id: string
+      inboxId: string
+      phoneNumberId: string
+      wabaId: string
+    }
     ownerId: string
     workspaceId: string
     tx: typeof mocks.tx
@@ -68,6 +74,11 @@ const integrationWhatsappServiceDisconnect = vi.fn(
       props.tx,
     )
     tx.delete({ id: "whatsappId" })
+    await mocks.deleteWabaIfOrphaned({
+      workspaceId: props.workspaceId,
+      wabaId: props.integrationWhatsapp.wabaId,
+      tx: props.tx,
+    })
     await mocks.inboxDisconnect({
       inboxId: props.integrationWhatsapp.inboxId,
       ownerId: props.ownerId,
@@ -83,6 +94,9 @@ vi.mock("@chatbotx.io/business", () => ({
     disconnect: integrationWhatsappServiceDisconnect,
   },
   workspaceService: { findById: mocks.workspaceFindById },
+  whatsappBusinessAccountService: {
+    deleteIfOrphaned: mocks.deleteWabaIfOrphaned,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -126,6 +140,7 @@ const integrationWhatsappRow = {
   auth: { clientId: "client-1" },
   inboxId: "inbox-1",
   phoneNumberId: "phone-1",
+  wabaId: "waba-1",
 }
 
 describe("disconnectWhatsappAction", () => {
@@ -162,6 +177,11 @@ describe("disconnectWhatsappAction", () => {
       ownerId: "owner-1",
       workspaceId: "workspace-1",
       reason: "manual",
+      tx: mocks.tx,
+    })
+    expect(mocks.deleteWabaIfOrphaned).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      wabaId: "waba-1",
       tx: mocks.tx,
     })
   })

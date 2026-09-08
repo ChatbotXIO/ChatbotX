@@ -74,6 +74,26 @@ describe("WhatsappBusinessAccountService", () => {
     )
   })
 
+  test("does not treat a stale credential revision as a successful write", async () => {
+    repositoryMock.findByWaba.mockResolvedValue({ revision: 4 })
+    repositoryMock.upsertCredential.mockResolvedValue(null)
+
+    await expect(
+      whatsappBusinessAccountService.upsertCurrentCredential({
+        workspaceId: "ws-1",
+        wabaId: "waba-1",
+        businessId: "business-1",
+        credential: { accessToken: "token-2", apiVersion: "v22.0" },
+        grantedScopes: [],
+        scopeCheckedAt: new Date("2026-09-08T00:00:00.000Z"),
+      }),
+    ).resolves.toBeNull()
+
+    expect(repositoryMock.upsertCredential).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedRevision: 4 }),
+    )
+  })
+
   test("round-trips a credential using the same WABA AAD", async () => {
     await expect(
       whatsappBusinessAccountService.findDecryptedCredential({
