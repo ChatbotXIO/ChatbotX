@@ -1,9 +1,6 @@
 "use server"
 
-import { auditService } from "@chatbotx.io/business/audit"
-import { db, isDatabaseError } from "@chatbotx.io/database/client"
-import { sequenceModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { sequenceService } from "@chatbotx.io/business"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -30,24 +27,17 @@ export const createSequenceAction = workspaceActionClient
       const t = await getTranslations()
 
       try {
-        const sequenceId = createId()
-
-        await db.insert(sequenceModel).values({
-          id: sequenceId,
+        return await sequenceService.create({
           workspaceId,
           name: parsedInput.name,
-          folderId: parsedInput.folderId || null,
+          folderId: parsedInput.folderId,
         })
-
-        await auditService.record({
-          workspaceId,
-          action: "create",
-          detail: `created a new sequence (#${sequenceId})`,
-        })
-
-        return { sequenceId }
       } catch (error) {
-        if (isDatabaseError(error) && error.cause.code === "23505") {
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "validation"
+        ) {
           return returnValidationErrors(createSequenceRequest, {
             _errors: [t("sequences.validation.exception")],
             name: {

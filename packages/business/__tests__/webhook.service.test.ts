@@ -37,9 +37,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
     transaction: mocks.transaction,
     delete: mocks.deleteFn,
     insert: vi.fn(() => mocks.insertBuilder),
+    query: { webhookModel: { findMany: vi.fn(async () => []) } },
   },
   eq: vi.fn(() => "eq"),
   and: vi.fn(() => "and"),
+  inArray: vi.fn(() => "inArray"),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -74,6 +76,20 @@ vi.mock("../src/folder/service", () => ({
 
 const dispatchAuditRecord = vi.fn(async () => undefined)
 vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
+
+vi.mock("../src/trigger/condition-columns", () => ({
+  toConditionColumnsShared: (condition: {
+    type: string
+    sourceId?: string | null
+    operator?: string | null
+    value?: unknown
+  }) => ({
+    type: condition.type,
+    sourceId: condition.sourceId ?? null,
+    operator: condition.operator ?? null,
+    value: condition.value ?? null,
+  }),
+}))
 
 const { updateWebhookCache, removeWebhookCache } = await import(
   "@chatbotx.io/events"

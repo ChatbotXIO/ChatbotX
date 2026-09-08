@@ -1,6 +1,6 @@
 import { flowAnalyticsService } from "@chatbotx.io/analytics"
 import { smartDelayService } from "@chatbotx.io/business/smart-delay"
-import { db } from "@chatbotx.io/database/client"
+import { flowRepository } from "@chatbotx.io/database/repositories"
 import type { FlowNode } from "@chatbotx.io/flow-config"
 import { notFound } from "next/navigation"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
@@ -23,14 +23,9 @@ export default async function FlowAnalyticsPage({
 
   await requireWorkspacePermission(data.workspaceId, "flows")
 
-  const flow = await db.query.flowModel.findFirst({
-    where: {
-      id: data.id,
-      workspaceId: data.workspaceId,
-    },
-    with: {
-      flowVersions: true,
-    },
+  const flow = await flowRepository.findWithVersions({
+    id: data.id,
+    workspaceId: data.workspaceId,
   })
   if (!flow) {
     return notFound()

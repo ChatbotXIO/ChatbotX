@@ -1,9 +1,6 @@
 "use server"
 
-import { auditService } from "@chatbotx.io/business/audit"
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { webhookModel } from "@chatbotx.io/database/schema"
-import { removeWebhookCache } from "@chatbotx.io/events"
+import { webhookService } from "@chatbotx.io/business"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -23,28 +20,9 @@ export const deleteWebhooksAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      const deletedWebhooks = await db.query.webhookModel.findMany({
-        where: { workspaceId, id: { in: parsedInput.ids } },
-        columns: { id: true },
+      await webhookService.deleteMany({
+        workspaceId,
+        ids: parsedInput.ids,
       })
-
-      await db
-        .delete(webhookModel)
-        .where(
-          and(
-            eq(webhookModel.workspaceId, workspaceId),
-            inArray(webhookModel.id, parsedInput.ids),
-          ),
-        )
-
-      await removeWebhookCache(workspaceId)
-
-      if (deletedWebhooks.length > 0) {
-        await auditService.record({
-          workspaceId,
-          action: "delete",
-          detail: `deleted webhook${deletedWebhooks.length > 1 ? "s" : ""} (${deletedWebhooks.map((webhook) => `#${webhook.id}`).join(", ")})`,
-        })
-      }
     },
   )

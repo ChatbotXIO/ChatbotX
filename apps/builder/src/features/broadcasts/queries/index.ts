@@ -1,14 +1,6 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import {
-  broadcastModel,
-  contactsOnBroadcastsModel,
-} from "@chatbotx.io/database/schema"
-import {
-  getPaginationWithDefaults,
-  likeContains,
-  parseOrderByAsObject,
-} from "@chatbotx.io/database/utils"
+import { broadcastRepository } from "@chatbotx.io/database/repositories"
+import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import type { GetBroadcastsSchema } from "../schema/query"
 import type { BroadcastResourceWithRelations } from "../schema/resource"
@@ -16,51 +8,17 @@ import type { BroadcastResourceWithRelations } from "../schema/resource"
 export async function listBroadcasts(
   input: GetBroadcastsSchema,
 ): Promise<PaginatedResponse<BroadcastResourceWithRelations>> {
-  const where = {
-    workspaceId: input.workspaceId,
-    name: input.name ? { ilike: likeContains(input.name) } : undefined,
-    status: input.status ?? undefined,
-    deletedAt: { isNull: true as const },
-  }
-
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(broadcastModel, input)
 
   const [data, total] = await Promise.all([
-    db.query.broadcastModel.findMany({
-      where,
-      with: {
-        flow: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
-        integrationWhatsapp: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
-        integrationMessenger: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      ...pagination,
-      orderBy,
-    }),
-    db.$count(broadcastModel, relationsFilterToSQL(broadcastModel, where)),
+    broadcastRepository.listWithRelations(input),
+    broadcastRepository.count(input),
   ])
 
   const pageCount = Math.ceil(total / pagination.limit)
 
   return { data, pageCount }
 }
-
-const NUMERIC_RE = /^\d+$/
 
 export async function listBroadcastAudience(input: {
   broadcastId: string
@@ -74,13 +32,9 @@ export async function listBroadcastAudience(input: {
   // findByIdForResponse/listExistingIds so a soft-deleted (or foreign)
   // broadcast never leaks its audience, even if a future caller skips the
   // publicGetBroadcast lookup the current API handler happens to run first.
-  const broadcast = await db.query.broadcastModel.findFirst({
-    where: {
-      id: input.broadcastId,
-      workspaceId: input.workspaceId,
-      deletedAt: { isNull: true },
-    },
-    columns: { id: true },
+  const broadcast = await broadcastRepository.findIdIfActive({
+    id: input.broadcastId,
+    workspaceId: input.workspaceId,
   })
 
   if (!broadcast) {
@@ -88,16 +42,12 @@ export async function listBroadcastAudience(input: {
   }
 
   const [rows, total] = await Promise.all([
-    db.query.contactsOnBroadcastsModel.findMany({
-      where: { broadcastId: input.broadcastId },
-      with: { contact: true },
+    broadcastRepository.listAudience({
+      broadcastId: input.broadcastId,
       limit,
       offset,
     }),
-    db.$count(
-      contactsOnBroadcastsModel,
-      eq(contactsOnBroadcastsModel.broadcastId, input.broadcastId),
-    ),
+    broadcastRepository.countAudience(input.broadcastId),
   ])
 
   return {
@@ -123,14 +73,10 @@ export async function publicGetBroadcast(
   workspaceId: string,
   idOrName: string,
 ) {
-  const where = {
-    ...(NUMERIC_RE.test(idOrName)
-      ? { id: idOrName, workspaceId }
-      : { name: idOrName, workspaceId }),
-    deletedAt: { isNull: true as const },
-  }
-
-  const broadcast = await db.query.broadcastModel.findFirst({ where })
+  const broadcast = await broadcastRepository.findByIdOrName({
+    workspaceId,
+    idOrName,
+  })
 
   if (!broadcast) {
     throw notFoundException("Broadcast not found")

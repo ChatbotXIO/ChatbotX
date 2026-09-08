@@ -54,6 +54,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
 }))
 
+// The repositories barrel transitively pulls in the contact-filter query
+// builders, which read schema models this file does not mock. flowService only
+// uses `listIdsByIds` (covered elsewhere), so a stub keeps that chain out.
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  flowRepository: { listIdsByIds: vi.fn(async () => []) },
+}))
+
 vi.mock("@chatbotx.io/database/partials", () => ({
   rootFolderId: "0",
 }))

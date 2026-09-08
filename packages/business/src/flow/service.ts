@@ -3,6 +3,7 @@ import {
   type CustomFieldType,
   rootFolderId,
 } from "@chatbotx.io/database/partials"
+import { flowRepository } from "@chatbotx.io/database/repositories"
 import {
   flowAnalyticsSessionModel,
   flowModel,
@@ -487,6 +488,21 @@ class FlowService extends BaseService {
     return await tx.query.flowModel.findFirst({
       where: { workspaceId, active: true },
     })
+  }
+
+  /** Existence check for a set of flow ids, scoped to the workspace. */
+  async assertAllExist(input: {
+    workspaceId: string
+    flowIds: string[]
+  }): Promise<void> {
+    const ids = await flowRepository.listIdsByIds({
+      workspaceId: input.workspaceId,
+      ids: input.flowIds,
+    })
+
+    if (ids.length !== input.flowIds.length) {
+      throw notFoundException("Flow does not exists.")
+    }
   }
 }
 

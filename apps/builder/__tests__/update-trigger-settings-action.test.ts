@@ -2,20 +2,9 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const mocks = vi.hoisted(() => {
-  const updateReturning = vi.fn()
-  const updateWhere = vi.fn(() => ({ returning: updateReturning }))
-  const updateSet = vi.fn(() => ({ where: updateWhere }))
-  const dbUpdate = vi.fn(() => ({ set: updateSet }))
-
-  return {
-    auditRecord: vi.fn(),
-    dbUpdate,
-    findFirst: vi.fn(),
-    updateReturning,
-    updateSet,
-  }
-})
+const { mockUpdateSettings } = vi.hoisted(() => ({
+  mockUpdateSettings: vi.fn().mockResolvedValue(undefined),
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -25,80 +14,48 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: mocks.auditRecord },
+vi.mock("@chatbotx.io/business", () => ({
+  triggerService: { updateSettings: mockUpdateSettings },
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: { triggerModel: { findFirst: mocks.findFirst } },
-    update: mocks.dbUpdate,
-  },
-  eq: (...args: unknown[]) => ({ eq: args }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  triggerModel: { id: "trigger.id" },
-}))
-
-const { updateTriggerSettings } = await import(
+const { updateTriggerSettingsAction } = await import(
   "../src/features/triggers/actions/update-trigger-settings-action"
 )
 
-describe("updateTriggerSettings", () => {
+type Handler = (args: {
+  bindArgsParsedInputs: [string, string]
+  parsedInput: { name?: string; active?: boolean }
+}) => Promise<unknown>
+
+const callAction = updateTriggerSettingsAction as unknown as Handler
+
+describe("updateTriggerSettingsAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.findFirst.mockResolvedValue({
-      id: "trigger-1",
+    mockUpdateSettings.mockResolvedValue(undefined)
+  })
+
+  test("delegates to triggerService.updateSettings with workspaceId, id, and the patch", async () => {
+    await callAction({
+      bindArgsParsedInputs: ["workspace-1", "trigger-1"],
+      parsedInput: { active: true },
+    })
+
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      name: "Cart abandoned",
+      id: "trigger-1",
       active: true,
     })
-    mocks.updateReturning.mockResolvedValue([{ id: "trigger-1" }])
   })
 
-  test("skips update and audit when active is unchanged", async () => {
-    await updateTriggerSettings(
-      { workspaceId: "workspace-1", id: "trigger-1" },
-      { active: true },
-    )
+  test("propagates a not-found error from the service", async () => {
+    mockUpdateSettings.mockRejectedValue(new Error("Trigger not found"))
 
-    expect(mocks.dbUpdate).not.toHaveBeenCalled()
-    expect(mocks.auditRecord).not.toHaveBeenCalled()
-  })
-
-  test("records enabled detail for a real active toggle", async () => {
-    mocks.findFirst.mockResolvedValue({
-      id: "trigger-1",
-      workspaceId: "workspace-1",
-      name: "Cart abandoned",
-      active: false,
-    })
-
-    await updateTriggerSettings(
-      { workspaceId: "workspace-1", id: "trigger-1" },
-      { active: true },
-    )
-
-    expect(mocks.auditRecord).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      action: "update",
-      detail: "enabled a trigger (#trigger-1)",
-    })
-  })
-
-  test("records generic update detail for a settings update", async () => {
-    await updateTriggerSettings(
-      { workspaceId: "workspace-1", id: "trigger-1" },
-      { name: "New name" },
-    )
-
-    expect(mocks.updateSet).toHaveBeenCalledWith({ name: "New name" })
-    expect(mocks.updateReturning).toHaveBeenCalledWith({ id: "trigger.id" })
-    expect(mocks.auditRecord).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      action: "update",
-      detail: "updated a trigger (#trigger-1)",
-    })
+    await expect(
+      callAction({
+        bindArgsParsedInputs: ["workspace-1", "trigger-1"],
+        parsedInput: { name: "New name" },
+      }),
+    ).rejects.toThrow("Trigger not found")
   })
 })

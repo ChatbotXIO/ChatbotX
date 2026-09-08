@@ -1,7 +1,6 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
+import { sequenceService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -18,41 +17,6 @@ const deleteSequenceStepRequest = z.object({
 
 type DeleteSequenceStepRequest = z.infer<typeof deleteSequenceStepRequest>
 
-async function validateSequenceOwnership(
-  sequenceId: string,
-  workspaceId: string,
-) {
-  await findOrFail({
-    table: sequenceModel,
-    where: {
-      id: sequenceId,
-      workspaceId,
-    },
-    message: "Sequence not found",
-  })
-}
-
-async function deleteStep(stepId: string, workspaceId: string) {
-  const step = await db.query.sequenceStepModel.findFirst({
-    where: {
-      id: stepId,
-    },
-    with: {
-      sequence: true,
-    },
-  })
-
-  if (!step) {
-    throw new Error("Step not found")
-  }
-
-  if (step.sequence.workspaceId !== workspaceId) {
-    throw new Error("Unauthorized: Step does not belong to this workspace")
-  }
-
-  await db.delete(sequenceStepModel).where(eq(sequenceStepModel.id, stepId))
-}
-
 export const deleteSequenceStepAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(deleteSequenceStepRequest)
@@ -66,8 +30,8 @@ export const deleteSequenceStepAction = workspaceActionClient
     }) => {
       const { stepId, sequenceId } = parsedInput
 
-      await validateSequenceOwnership(sequenceId, workspaceId)
-      await deleteStep(stepId, workspaceId)
+      await sequenceService.assertOwned({ workspaceId, sequenceId })
+      await sequenceService.deleteStep({ workspaceId, stepId })
       await recalculateAllContactsInSequence(sequenceId, workspaceId)
 
       return { success: true }

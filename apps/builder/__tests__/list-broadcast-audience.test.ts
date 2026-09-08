@@ -3,38 +3,23 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockFindFirstBroadcast,
-  mockFindManyContacts,
-  mockCount,
-  mockEq,
+  mockFindIdIfActive,
+  mockListAudience,
+  mockCountAudience,
   mockNotFoundException,
 } = vi.hoisted(() => ({
-  mockFindFirstBroadcast: vi.fn(),
-  mockFindManyContacts: vi.fn().mockResolvedValue([]),
-  mockCount: vi.fn().mockResolvedValue(0),
-  mockEq: vi.fn((a: unknown, b: unknown) => ({ __eq: [a, b] })),
+  mockFindIdIfActive: vi.fn(),
+  mockListAudience: vi.fn().mockResolvedValue([]),
+  mockCountAudience: vi.fn().mockResolvedValue(0),
   mockNotFoundException: vi.fn((message: string) => new Error(message)),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      broadcastModel: {
-        findFirst: mockFindFirstBroadcast,
-      },
-      contactsOnBroadcastsModel: {
-        findMany: mockFindManyContacts,
-      },
-    },
-    $count: mockCount,
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  broadcastRepository: {
+    findIdIfActive: mockFindIdIfActive,
+    listAudience: mockListAudience,
+    countAudience: mockCountAudience,
   },
-  eq: mockEq,
-  relationsFilterToSQL: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: { id: "broadcastModelId" },
-  contactsOnBroadcastsModel: { broadcastId: "contactsOnBroadcastsBroadcastId" },
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
@@ -61,12 +46,12 @@ const { listBroadcastAudience } = await import(
 describe("listBroadcastAudience deletedAt gate", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFindManyContacts.mockResolvedValue([])
-    mockCount.mockResolvedValue(0)
+    mockListAudience.mockResolvedValue([])
+    mockCountAudience.mockResolvedValue(0)
   })
 
   test("looks up the broadcast scoped to workspaceId + id + deletedAt IS NULL before listing recipients", async () => {
-    mockFindFirstBroadcast.mockResolvedValue({ id: "b-1" })
+    mockFindIdIfActive.mockResolvedValue({ id: "b-1" })
 
     await listBroadcastAudience({
       broadcastId: "b-1",
@@ -75,19 +60,15 @@ describe("listBroadcastAudience deletedAt gate", () => {
       perPage: 10,
     })
 
-    expect(mockFindFirstBroadcast).toHaveBeenCalledWith({
-      where: {
-        id: "b-1",
-        workspaceId: "ws-1",
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
+    expect(mockFindIdIfActive).toHaveBeenCalledWith({
+      id: "b-1",
+      workspaceId: "ws-1",
     })
-    expect(mockFindManyContacts).toHaveBeenCalled()
+    expect(mockListAudience).toHaveBeenCalled()
   })
 
   test("throws not-found for a soft-deleted broadcast and never queries recipients", async () => {
-    mockFindFirstBroadcast.mockResolvedValue(undefined)
+    mockFindIdIfActive.mockResolvedValue(undefined)
 
     await expect(
       listBroadcastAudience({
@@ -99,12 +80,12 @@ describe("listBroadcastAudience deletedAt gate", () => {
     ).rejects.toThrow("Broadcast not found")
 
     expect(mockNotFoundException).toHaveBeenCalledWith("Broadcast not found")
-    expect(mockFindManyContacts).not.toHaveBeenCalled()
-    expect(mockCount).not.toHaveBeenCalled()
+    expect(mockListAudience).not.toHaveBeenCalled()
+    expect(mockCountAudience).not.toHaveBeenCalled()
   })
 
   test("throws not-found when the broadcast exists but belongs to a different workspace", async () => {
-    mockFindFirstBroadcast.mockResolvedValue(undefined)
+    mockFindIdIfActive.mockResolvedValue(undefined)
 
     await expect(
       listBroadcastAudience({
@@ -115,13 +96,9 @@ describe("listBroadcastAudience deletedAt gate", () => {
       }),
     ).rejects.toThrow("Broadcast not found")
 
-    expect(mockFindFirstBroadcast).toHaveBeenCalledWith({
-      where: {
-        id: "b-1",
-        workspaceId: "ws-foreign",
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
+    expect(mockFindIdIfActive).toHaveBeenCalledWith({
+      id: "b-1",
+      workspaceId: "ws-foreign",
     })
   })
 })
