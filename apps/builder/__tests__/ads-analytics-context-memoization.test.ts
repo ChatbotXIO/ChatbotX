@@ -36,6 +36,12 @@ vi.mock("@chatbotx.io/business", () => ({
     listForChannel: mocks.listForChannel,
   },
   listCachedMessagingAdAccounts: vi.fn(),
+  // The union's workspace-wide leg checks for the integration up front
+  // (absence is a normal state, not a logged failure) — these suites
+  // exercise the messaging leg, so report it as present.
+  integrationFacebookAdsService: {
+    findByWorkspaceId: vi.fn(async () => ({ id: "ifa-1" })),
+  },
   buildMessagingAdsContext: vi.fn(),
   isAdsEligibleChannel: (channel: unknown) =>
     channel === "whatsapp" ||

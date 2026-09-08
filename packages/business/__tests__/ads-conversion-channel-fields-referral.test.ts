@@ -74,7 +74,7 @@ describe("resolveAdReferral", () => {
     })
   })
 
-  // SQL-parity edge cases: resolveAdReferral must mirror adReferralPredicate
+  // SQL-parity edge cases: resolveAdReferral must mirror anyChannelAdConversationPredicate
   // (ctwa-retarget.ts) byte-for-byte. These lock the OR semantics and the
   // asymmetry between the two branches (ctwaClid is guarded `<> ''`, adId is
   // only `IS NOT NULL`) so future drift in either side is caught.
@@ -131,5 +131,31 @@ describe("resolveAdReferral", () => {
       adTitle: "Promo",
       sourceUrl: "https://fb.com/ad/123",
     })
+  })
+  // A WhatsApp Status ad placement: Meta omits `ctwa_clid` entirely, leaving
+  // only the ad id plus the lowercase paid `source_type`. The SQL predicate
+  // counts it, so this must too — the two are documented as byte-for-byte
+  // mirrors, and this is the case that first drifted between them.
+  test("matches a WhatsApp Status ad: adId + source 'ad', no ctwaClid", () => {
+    const referral: ContactInboxReferral = { adId: "5", source: "ad" }
+
+    expect(resolveAdReferral(referral)).toEqual({
+      adTitle: null,
+      sourceUrl: null,
+    })
+  })
+
+  // `source_type` is `"post"` for an organic post — an ad id alone never means
+  // the conversation was paid for on WhatsApp.
+  test("does not match an organic WhatsApp post: adId + source 'post'", () => {
+    const referral: ContactInboxReferral = { adId: "5", source: "post" }
+
+    expect(resolveAdReferral(referral)).toBeNull()
+  })
+
+  test("does not match an ig.me SHORTLINK referral", () => {
+    const referral: ContactInboxReferral = { adId: "5", source: "SHORTLINK" }
+
+    expect(resolveAdReferral(referral)).toBeNull()
   })
 })

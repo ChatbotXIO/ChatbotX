@@ -1,4 +1,7 @@
-import { perChannelIntegrationIds } from "@chatbotx.io/business"
+import {
+  type CapiDeliverySummary,
+  perChannelIntegrationIds,
+} from "@chatbotx.io/business"
 import {
   type AdsEligibleChannelType,
   adsEligibleChannelTypes,
@@ -11,7 +14,6 @@ import { resolveChannelIntegrations } from "@/features/ads/lib/resolve-channel-i
 import {
   getAdsAnalyticsData,
   getAdsAnalyticsTimeseries,
-  getCapiDeliveryData,
 } from "@/features/ads/queries/analytics"
 import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
 import { adsAnalyticsSearchParamsCache } from "@/features/ads/schema/analytics"
@@ -74,7 +76,20 @@ export default async function AdsChannelAnalyticsPage(props: {
 
   const promises = Promise.all([
     getAdsAnalyticsData(workspaceId, analyticsRange),
-    getCapiDeliveryData(workspaceId, analyticsRange),
+    // TEMPORARILY HIDDEN (conversion tracking unfinished): the delivery card
+    // that consumes this is commented out in `AdsAnalyticsView`, so running
+    // the query would cost every dashboard load a round trip nothing renders.
+    // A resolved zero summary keeps the tuple shape — and therefore the
+    // component's `promises` prop type — unchanged, so restoring the card is
+    // swapping this one line back for:
+    //   getCapiDeliveryData(workspaceId, analyticsRange),
+    Promise.resolve<CapiDeliverySummary>({
+      sent: 0,
+      pending: 0,
+      failed: 0,
+      skippedNoScope: 0,
+      skippedRegion: 0,
+    }),
     getAdsAnalyticsTimeseries(workspaceId, analyticsRange),
   ])
 

@@ -1,5 +1,6 @@
 import {
   type AdReferralChannelType,
+  channelTypes,
   DEFAULT_ADS_CONVERSION_CHANNEL,
 } from "@chatbotx.io/utils/channel"
 import type { IndexColumn } from "drizzle-orm/pg-core"
@@ -18,9 +19,11 @@ import {
   sql,
 } from "../../client"
 import {
-  adReferralPredicate,
-  buildCtwaSegmentPredicate,
-} from "../../queries/contact-filter/ctwa-retarget"
+  adConversationPredicate,
+  anyChannelAdConversationPredicate,
+} from "../../queries/ad-referral"
+import { buildCtwaSegmentPredicate } from "../../queries/contact-filter/ctwa-retarget"
+import { zonedDateKey } from "../../queries/date-bucket"
 import type {
   AdsConversionCapiStatus,
   AdsConversionChannel,
@@ -299,23 +302,6 @@ function adReferralIntegrationModel(channel: AdReferralChannel) {
   return adReferralIntegrationModelFactoryByChannel[channel]()
 }
 
-/**
- * Ad-referral attribution predicate pair (messenger/instagram — no
- * `ctwaClid` equivalent exists): `referral.adId` present + `referral.source
- * === "ADS"`. Kept LOCAL to this file (not shared with the identical pair in
- * `contact-inbox/repository.ts`) — importing across repository modules here
- * risks a circular import (`ads-conversion-event/repository.ts` already
- * imports from `contact-inbox/repository.ts` for `AdEligibleInboxChannel`,
- * and the reverse direction is plausible for a future shared helper module),
- * so each file keeps its own copy rather than reaching into the other.
- */
-function adReferralConditions(): SQL[] {
-  return [
-    sql`${contactInboxModel.referral}->>'adId' IS NOT NULL`,
-    sql`${contactInboxModel.referral}->>'source' = 'ADS'`,
-  ]
-}
-
 function adReferralIntegrationId(
   input: Pick<
     AdConversationDateRangeInput,
@@ -339,9 +325,30 @@ function adIntegrationScope(
   return sql`EXISTS (SELECT 1 FROM ${model} WHERE ${model.id} = ${integrationId} AND ${model.workspaceId} = ${input.workspaceId} AND ${model.inboxId} = ${contactInboxModel.inboxId})`
 }
 
+/**
+ * Shared WhatsApp "conversation from a paid ad" filters — the CTWA counterpart
+ * of `adConversationBaseFilters`, and the single definition both
+ * `countCtwaConversationsByAd` and its day-bucketed sibling build on so the two
+ * aggregates cannot drift.
+ *
+ * The channel filter is NOT optional. `referral.ctwaClid` used to scope these
+ * queries to WhatsApp on its own (no other channel writes that field); the
+ * predicate now also accepts an ad id plus a paid `source`, a shape that is
+ * WhatsApp's only by convention. The aggregate branch (no
+ * `integrationWhatsappId`) has no WhatsApp join to lean on, so the column
+ * filter is what restores an intrinsic scope.
+ */
+const ctwaConversationBaseFilters = (input: DateRangeInput) => [
+  eq(contactModel.workspaceId, input.workspaceId),
+  adConversationPredicate(channelTypes.enum.whatsapp),
+  eq(contactInboxModel.channel, channelTypes.enum.whatsapp),
+  gte(contactInboxModel.firstInteractionAt, input.since),
+  lte(contactInboxModel.firstInteractionAt, input.until),
+]
+
 const adConversationBaseFilters = (input: AdConversationDateRangeInput) => [
   eq(contactModel.workspaceId, input.workspaceId),
-  ...adReferralConditions(),
+  adConversationPredicate(input.channel),
   gte(contactInboxModel.firstInteractionAt, input.since),
   lte(contactInboxModel.firstInteractionAt, input.until),
   // Channel scoping is REQUIRED (not just an optimization): messenger and
@@ -588,7 +595,7 @@ export const adsConversionEventRepository = {
       // rule (or vice versa) — that would insert the conversion event under
       // the wrong channel. The aggregate count queries carry the same guard.
       eq(contactInboxModel.channel, input.channel),
-      ...adReferralConditions(),
+      adConversationPredicate(input.channel),
     )
     const selection = {
       id: contactInboxModel.id,
@@ -678,12 +685,7 @@ export const adsConversionEventRepository = {
     input: DateRangeInput,
     tx: DatabaseClient = db,
   ): Promise<CtwaConversationCountByAd[]> {
-    const filters = and(
-      eq(contactModel.workspaceId, input.workspaceId),
-      sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL`,
-      gte(contactInboxModel.firstInteractionAt, input.since),
-      lte(contactInboxModel.firstInteractionAt, input.until),
-    )
+    const filters = and(...ctwaConversationBaseFilters(input))
     const adIdExpression = sql<
       string | null
     >`${contactInboxModel.referral}->>'adId'`
@@ -731,12 +733,7 @@ export const adsConversionEventRepository = {
     input: DateRangeInput,
     tx: DatabaseClient = db,
   ): Promise<CtwaConversationCountByDayAndAd[]> {
-    const filters = and(
-      eq(contactModel.workspaceId, input.workspaceId),
-      sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL`,
-      gte(contactInboxModel.firstInteractionAt, input.since),
-      lte(contactInboxModel.firstInteractionAt, input.until),
-    )
+    const filters = and(...ctwaConversationBaseFilters(input))
     const adIdExpression = sql<
       string | null
     >`${contactInboxModel.referral}->>'adId'`
@@ -751,7 +748,10 @@ export const adsConversionEventRepository = {
     // repeating `dateExpression`: the bound `${timezone}` param would render as
     // a DIFFERENT placeholder ($1 in SELECT vs $6 in GROUP BY) and Postgres
     // rejects the two as non-matching expressions.
-    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
+    const dateExpression = zonedDateKey(
+      contactInboxModel.firstInteractionAt,
+      timezone,
+    )
     const rows = input.integrationWhatsappId
       ? await tx
           .select({
@@ -848,7 +848,10 @@ export const adsConversionEventRepository = {
     // Explicit date bucketing pinned to `input.timezone` — see
     // countCtwaConversationsByDayAndAd.
     const timezone = input.timezone ?? "UTC"
-    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
+    const dateExpression = zonedDateKey(
+      contactInboxModel.firstInteractionAt,
+      timezone,
+    )
 
     const rows = await tx
       .select({
@@ -870,7 +873,7 @@ export const adsConversionEventRepository = {
 
   /**
    * "All channels" (Ads Analytics default) conversation counts — reuses
-   * `adReferralPredicate()`, the SAME ctwaClid-OR-ad-referral predicate
+   * `anyChannelAdConversationPredicate()`, the SAME ctwaClid-OR-ad-referral predicate
    * `buildCtwaSegmentPredicate` already uses for its "both channel and
    * integration omitted" case, rather than a parallel predicate. GROUP BY
    * `(adId, channel)`: per-ad identity stays `adId` upstream — the business
@@ -884,7 +887,7 @@ export const adsConversionEventRepository = {
   ): Promise<AllChannelConversationCountByAd[]> {
     const filters = and(
       eq(contactModel.workspaceId, input.workspaceId),
-      adReferralPredicate(),
+      anyChannelAdConversationPredicate(),
       gte(contactInboxModel.firstInteractionAt, input.since),
       lte(contactInboxModel.firstInteractionAt, input.until),
     )
@@ -917,7 +920,7 @@ export const adsConversionEventRepository = {
   ): Promise<AllChannelConversationCountByDayAndAd[]> {
     const filters = and(
       eq(contactModel.workspaceId, input.workspaceId),
-      adReferralPredicate(),
+      anyChannelAdConversationPredicate(),
       gte(contactInboxModel.firstInteractionAt, input.since),
       lte(contactInboxModel.firstInteractionAt, input.until),
     )
@@ -927,7 +930,10 @@ export const adsConversionEventRepository = {
     // Explicit date bucketing pinned to `input.timezone` — see
     // countCtwaConversationsByDayAndAd.
     const timezone = input.timezone ?? "UTC"
-    const dateExpression = sql<string>`to_char(${contactInboxModel.firstInteractionAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
+    const dateExpression = zonedDateKey(
+      contactInboxModel.firstInteractionAt,
+      timezone,
+    )
 
     const rows = await tx
       .select({
@@ -1023,7 +1029,10 @@ export const adsConversionEventRepository = {
     // Explicit date bucketing pinned to `input.timezone` — see
     // countCtwaConversationsByDayAndAd.
     const timezone = input.timezone ?? "UTC"
-    const dateExpression = sql<string>`to_char(${adsConversionEventModel.occurredAt} AT TIME ZONE ${timezone}, 'YYYY-MM-DD')`
+    const dateExpression = zonedDateKey(
+      adsConversionEventModel.occurredAt,
+      timezone,
+    )
 
     // Same byte-identical-when-falsy, early-return branching as
     // countConversionEventsByAd.

@@ -1,4 +1,5 @@
 import { db, sql } from "@chatbotx.io/database/client"
+import { resolvedTimezone } from "@chatbotx.io/database/queries"
 import { analyticsContactEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
@@ -174,7 +175,7 @@ export class ContactStatsRepository extends BaseRepository {
     const query = shouldUseCagg(props)
       ? sql`
           SELECT
-            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             "eventType",
             SUM(count)::int AS count
           FROM analytics_contact_events_hourly
@@ -187,7 +188,7 @@ export class ContactStatsRepository extends BaseRepository {
         `
       : sql`
           SELECT
-            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             "eventType",
             COUNT(*)::int AS count
           FROM "AnalyticsContactEvent"
@@ -239,7 +240,7 @@ export class ContactStatsRepository extends BaseRepository {
     // Month granularity always > 7 days — use raw hypertable
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
         "eventType",
         COUNT(*)::int AS count
       FROM "AnalyticsContactEvent"
@@ -280,7 +281,7 @@ export class ContactStatsRepository extends BaseRepository {
 
     const { workspaceId, from, to, timezone } = props
 
-    const dayStart = sql`date_trunc('day', ${from}::timestamptz AT TIME ZONE ${timezone}) AT TIME ZONE ${timezone}`
+    const dayStart = sql`date_trunc('day', ${from}::timestamptz AT TIME ZONE ${resolvedTimezone(timezone)}) AT TIME ZONE ${resolvedTimezone(timezone)}`
 
     // KNOWN PERF: baseline scans all historical rows before dayStart with no
     // upper bound. On large workspaces this can be the dominant query cost.
@@ -304,7 +305,7 @@ export class ContactStatsRepository extends BaseRepository {
     const seriesQuery = shouldUseCagg(props)
       ? sql`
           SELECT
-            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+            time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
             SUM(CASE WHEN "eventType" = 'contact_created' THEN count ELSE 0 END)::int -
             SUM(CASE WHEN "eventType" = 'contact_deleted' THEN count ELSE 0 END)::int AS net
           FROM analytics_contact_events_hourly
@@ -317,7 +318,7 @@ export class ContactStatsRepository extends BaseRepository {
         `
       : sql`
           SELECT
-            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
             SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END)::int -
             SUM(CASE WHEN "eventType" = 'contact_deleted' THEN 1 ELSE 0 END)::int AS net
           FROM "AnalyticsContactEvent"
@@ -361,7 +362,7 @@ export class ContactStatsRepository extends BaseRepository {
   ): Promise<ContactCountsSchema[]> {
     const { workspaceId, from, to, timezone } = props
 
-    const monthStart = sql`date_trunc('month', ${from}::timestamptz AT TIME ZONE ${timezone}) AT TIME ZONE ${timezone}`
+    const monthStart = sql`date_trunc('month', ${from}::timestamptz AT TIME ZONE ${resolvedTimezone(timezone)}) AT TIME ZONE ${resolvedTimezone(timezone)}`
 
     // Baseline uses the raw hypertable (not the cagg) for the same reason as
     // the daily path: the cagg refresh policy only materializes the last 7
@@ -380,7 +381,7 @@ export class ContactStatsRepository extends BaseRepository {
       `),
       db.execute(sql`
         SELECT
-          time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
+          time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
           SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END)::int -
           SUM(CASE WHEN "eventType" = 'contact_deleted' THEN 1 ELSE 0 END)::int AS net
         FROM "AnalyticsContactEvent"
@@ -430,7 +431,7 @@ export class ContactStatsRepository extends BaseRepository {
     // of daily values consistent with `getNewContactsCount`.
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+        time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
         COUNT(DISTINCT "contactId")::int AS new_contacts
       FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}
@@ -458,7 +459,7 @@ export class ContactStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
         COUNT(DISTINCT "contactId")::int AS new_contacts
       FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}
@@ -507,7 +508,7 @@ export class ContactStatsRepository extends BaseRepository {
     // path + auto-detect via message:failed) collapses to 1.
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+        time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
         COUNT(DISTINCT "contactId")::int AS blocked_contacts
       FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}
@@ -535,7 +536,7 @@ export class ContactStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
         COUNT(DISTINCT "contactId")::int AS blocked_contacts
       FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}

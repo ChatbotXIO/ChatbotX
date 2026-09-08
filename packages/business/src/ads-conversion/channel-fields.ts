@@ -7,6 +7,10 @@ import {
   adReferralChannelTypes,
   adsEligibleChannelTypes,
 } from "@chatbotx.io/utils/channel"
+import {
+  PAID_AD_REFERRAL_SOURCES,
+  type PaidAdReferralSource,
+} from "@chatbotx.io/utils/referral"
 
 // Deliberately imports ONLY a type from `@chatbotx.io/database` (erased at
 // build time — zero runtime import). This file is also published as its own
@@ -178,16 +182,17 @@ export type AdReferralInfo = {
 /**
  * Channel-agnostic "did this ContactInbox originate from a paid ad click"
  * check for a single already-fetched `ContactInbox.referral`, mirroring
- * {@link adReferralPredicate} (`packages/database/src/queries/contact-filter/
- * ctwa-retarget.ts`) byte-for-byte — that function expresses the identical
+ * {@link anyChannelAdConversationPredicate} (`packages/database/src/queries/ad-referral.ts`) byte-for-byte — that function expresses the identical
  * OR of the same two branches as SQL for the `fromCtwaAd` filter field. Both
  * MUST stay in sync (enforced by a shared case-matrix unit test):
  *
  *  - WhatsApp CTWA: `referral.ctwaClid` is set and non-empty.
- *  - Messenger/Instagram CTM/CTID: `referral.adId` is set AND
- *    `referral.source === "ADS"` (excludes ig.me SHORTLINK referrals).
+ *  - An ad id plus a PAID `referral.source` — Messenger/Instagram CTM/CTID
+ *    (`"ADS"`, which excludes ig.me SHORTLINK referrals) or a WhatsApp Status
+ *    ad placement (`"ad"`, which excludes organic `"post"` referrals and is the
+ *    one case Meta sends no click id for).
  *
- * No `channel` parameter is needed — same reasoning as `adReferralPredicate`:
+ * No `channel` parameter is needed — same reasoning as `anyChannelAdConversationPredicate`:
  * the two branches key off channel-exclusive referral fields, so they can
  * never double-match a single referral payload.
  *
@@ -202,10 +207,14 @@ export function resolveAdReferral(
     return null
   }
 
-  const isWhatsappCtwa = referral.ctwaClid != null && referral.ctwaClid !== ""
-  const isMetaAdReferral = referral.adId != null && referral.source === "ADS"
+  const cameFromPaidAd =
+    (referral.ctwaClid != null && referral.ctwaClid !== "") ||
+    (referral.adId != null &&
+      PAID_AD_REFERRAL_SOURCES.includes(
+        referral.source as PaidAdReferralSource,
+      ))
 
-  if (!(isWhatsappCtwa || isMetaAdReferral)) {
+  if (!cameFromPaidAd) {
     return null
   }
 

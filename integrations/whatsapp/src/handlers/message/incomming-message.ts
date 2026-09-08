@@ -28,6 +28,14 @@ import type {
 type WhatsappReferralPayload = Record<string, unknown> & {
   ctwa_clid?: string
   source_url?: string
+  /**
+   * `whatsappReferralSources` — `"ad"` for a paid placement, `"post"` for an
+   * organic post. Stored verbatim as `referral.source` below (WhatsApp has no
+   * `source` field of its own) and read back by the funnel predicates via
+   * `PAID_AD_REFERRAL_SOURCE`. Kept as `string`, not the enum: this is
+   * unvalidated webhook input, and a value Meta adds later must round-trip
+   * into `referral.raw` rather than be dropped at the boundary.
+   */
   source_type?: string
   source_id?: string
   headline?: string

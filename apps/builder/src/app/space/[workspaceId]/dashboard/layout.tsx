@@ -38,7 +38,15 @@ export default async function DashboardLayout({
   const cloud = isCloud()
   const { targetWorkspace } = userAndWorkspace
   const [inboxesResult, { blocked, blockReason }] = await Promise.all([
-    listInboxes({ workspaceId, includes: ["integration"] }),
+    // Disconnected inboxes stay listed: Settings -> Channels shows an
+    // integration whether or not its inbox is still connected, so hiding them
+    // here made a channel silently disappear from one surface while remaining
+    // on the other, with nothing on screen explaining the difference.
+    listInboxes({
+      workspaceId,
+      includes: ["integration"],
+      statuses: ["connected", "disconnected"],
+    }),
     resolveWorkspaceBlockState(targetWorkspace.ownerId),
   ])
   const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")

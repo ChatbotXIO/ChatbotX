@@ -92,11 +92,13 @@ type ConcreteAdsChannel = AdsEligibleChannelType
 // mirrors buildCapiSettingsHref's original whatsapp-only comment: the
 // Automatic Events / CAPI permission lives per-integration, so the CTA needs
 // a concrete integration + channel to target.
-const CAPI_SETTINGS_SEGMENT_BY_CHANNEL: Record<ConcreteAdsChannel, string> = {
-  whatsapp: "whatsapps",
-  messenger: "messengers",
-  instagram: "instagrams",
-}
+// TEMPORARILY HIDDEN (conversion tracking unfinished): only used by the hidden
+// conversion delivery card's reconnect CTA. Uncomment together with it.
+// const CAPI_SETTINGS_SEGMENT_BY_CHANNEL: Record<ConcreteAdsChannel, string> = {
+//   whatsapp: "whatsapps",
+//   messenger: "messengers",
+//   instagram: "instagrams",
+// }
 
 type RetargetSegment = "conversations" | "leads" | "purchases"
 type AudienceMode = "create" | "existing"
@@ -129,12 +131,14 @@ type AdsAnalyticsViewProps = {
   workspaceCreatedAt: Date
 }
 
-const formatFunnelPercent = (value: number, total: number) => {
-  if (total === 0) {
-    return "0%"
-  }
-  return `${Number(((value / total) * 100).toFixed(1))}%`
-}
+// TEMPORARILY HIDDEN (conversion tracking unfinished): only used by the hidden
+// funnel leads/purchases stages. Uncomment together with it.
+// const formatFunnelPercent = (value: number, total: number) => {
+//   if (total === 0) {
+//     return "0%"
+//   }
+//   return `${Number(((value / total) * 100).toFixed(1))}%`
+// }
 
 const FUNNEL_CLIP_PATHS = [
   "polygon(0 0, 100% 0, 91% 100%, 9% 100%)",
@@ -212,38 +216,42 @@ function CostTile({
   )
 }
 
-function DeliveryCount({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: number
-  tone?: string
-}) {
-  const locale = useLocale()
-
-  return (
-    <div>
-      <div className="text-muted-foreground text-sm">{label}</div>
-      <div className={`mt-1 font-semibold text-2xl ${tone ?? ""}`}>
-        {value.toLocaleString(locale)}
-      </div>
-    </div>
-  )
-}
+// TEMPORARILY HIDDEN (conversion tracking unfinished): only used by the hidden
+// conversion delivery card. Uncomment together with it.
+// function DeliveryCount({
+//   label,
+//   value,
+//   tone,
+// }: {
+//   label: string
+//   value: number
+//   tone?: string
+// }) {
+//   const locale = useLocale()
+//
+//   return (
+//     <div>
+//       <div className="text-muted-foreground text-sm">{label}</div>
+//       <div className={`mt-1 font-semibold text-2xl ${tone ?? ""}`}>
+//         {value.toLocaleString(locale)}
+//       </div>
+//     </div>
+//   )
+// }
 
 // The Automatic Events / CAPI permission lives on each channel integration's
 // Ads Optimization (ads) tab (Phase 6: generalized beyond WhatsApp), so the
 // CTA needs a concrete channel + integration to target.
-function buildCapiSettingsHref(
-  workspaceId: string,
-  channel: ConcreteAdsChannel,
-  integrationId: string,
-) {
-  const segment = CAPI_SETTINGS_SEGMENT_BY_CHANNEL[channel]
-  return `/space/${workspaceId}/${segment}/${integrationId}/ads`
-}
+// TEMPORARILY HIDDEN (conversion tracking unfinished): only used by the hidden
+// conversion delivery card's reconnect CTA. Uncomment together with it.
+// function buildCapiSettingsHref(
+//   workspaceId: string,
+//   channel: ConcreteAdsChannel,
+//   integrationId: string,
+// ) {
+//   const segment = CAPI_SETTINGS_SEGMENT_BY_CHANNEL[channel]
+//   return `/space/${workspaceId}/${segment}/${integrationId}/ads`
+// }
 
 // Formatters take the next-intl locale explicitly: it is identical on the
 // server render and client hydration, unlike the Intl default locale.
@@ -267,9 +275,11 @@ function formatMoney(
   ).format(value)
 }
 
-function formatRoas(value: number | null): string {
-  return value === null ? "-" : `${value.toFixed(2)}x`
-}
+// TEMPORARILY HIDDEN (conversion tracking unfinished): only used by the hidden
+// ROAS tile and the ROAS table column. Uncomment together with it.
+// function formatRoas(value: number | null): string {
+//   return value === null ? "-" : `${value.toFixed(2)}x`
+// }
 
 function formatCount(locale: string, value: number | null): string {
   return value === null ? "-" : value.toLocaleString(locale)
@@ -594,7 +604,10 @@ export function AdsAnalyticsView({
     channel === "whatsapp" ? selectedChannelIntegrationId : null
   const t = useTranslations()
   const locale = useLocale()
-  const [data, delivery, timeseries] = use(promises)
+  // `delivery` (CAPI delivery summary) is still fetched by the page so the
+  // hidden delivery card can be restored by uncommenting alone — skipped here
+  // while that card is hidden. See "TEMPORARILY HIDDEN (conversion tracking unfinished)".
+  const [data, , timeseries] = use(promises)
   const router = useRouter()
   const pushAdsRange = useAdsRangeUrl()
 
@@ -614,12 +627,13 @@ export function AdsAnalyticsView({
     data.totals.leads > 0 ||
     data.totals.purchases > 0 ||
     data.totals.spend > 0
-  const deliveryTotal =
-    delivery.sent +
-    delivery.pending +
-    delivery.failed +
-    delivery.skippedNoScope +
-    delivery.skippedRegion
+  // TEMPORARILY HIDDEN (conversion tracking unfinished): restore with the delivery card.
+  // const deliveryTotal =
+  //   delivery.sent +
+  //   delivery.pending +
+  //   delivery.failed +
+  //   delivery.skippedNoScope +
+  //   delivery.skippedRegion
 
   // Per-ad row action builder — each item seeds the retarget dialog with
   // the page's current channel (the only channel a row can ever belong to
@@ -629,6 +643,11 @@ export function AdsAnalyticsView({
     adName: string | null | undefined,
   ) => (
     <>
+      {/* TEMPORARILY HIDDEN (conversion tracking unfinished): the "purchased" and
+          "qualified leads" audiences resolve to an empty contact set until the
+          conversion-rule engine ships, so retargeting them would silently build
+          an empty custom audience. Restore both items with it. */}
+      {/*
       <DropdownMenuItem
         onClick={() =>
           setRetargetDialog({
@@ -653,6 +672,7 @@ export function AdsAnalyticsView({
       >
         {t("ads.analytics.qualifiedLeads")}
       </DropdownMenuItem>
+      */}
       <DropdownMenuItem
         onClick={() =>
           setRetargetDialog({
@@ -680,7 +700,9 @@ export function AdsAnalyticsView({
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
         <DropdownMenuSubContent>
-          {(["purchases", "leads", "conversations"] as const).map((segment) => (
+          {/* TEMPORARILY HIDDEN (conversion tracking unfinished): see
+              renderRetargetSegmentItems — restore the full tuple with it. */}
+          {(["conversations"] as const).map((segment) => (
             <DropdownMenuItem
               key={segment}
               onClick={() =>
@@ -768,6 +790,13 @@ export function AdsAnalyticsView({
                 tone="bg-blue-600"
                 value={data.totals.conversations.toLocaleString(locale)}
               />
+              {/* TEMPORARILY HIDDEN (conversion tracking unfinished): leads and purchases only ever
+                  become non-zero once an AdsConversionRule exists, and the
+                  only page that creates one (/dashboard/ads/conversion-events)
+                  is hidden while the feature is being finished — so these two
+                  stages would sit at a permanent 0 and read as "broken".
+                  Restore this block together with that page. */}
+              {/*
               <FunnelStage
                 clipPath={FUNNEL_CLIP_PATHS[1]}
                 label={t("ads.analytics.qualifiedLeads")}
@@ -788,6 +817,7 @@ export function AdsAnalyticsView({
                 tone="bg-emerald-600"
                 value={data.totals.purchases.toLocaleString(locale)}
               />
+              */}
             </div>
           </CardContent>
         </Card>
@@ -802,6 +832,11 @@ export function AdsAnalyticsView({
             label={t("ads.analytics.adSpend")}
             value={formatMoney(locale, data.totals.spend, data.spendCurrency)}
           />
+          {/* TEMPORARILY HIDDEN (conversion tracking unfinished): every tile below divides by
+              leads/purchases/revenue, which stay 0 until the conversion-rule
+              engine ships — a cost-per-lead of "–" next to a real ad spend
+              reads as a bug. Ad spend above is Insights-sourced and stays. */}
+          {/*
           <CostTile
             label={t("ads.analytics.costPerLead")}
             value={formatMoney(
@@ -827,6 +862,7 @@ export function AdsAnalyticsView({
             label={t("ads.analytics.roas")}
             value={formatRoas(data.totals.roas)}
           />
+          */}
         </div>
       </div>
 
@@ -866,6 +902,20 @@ export function AdsAnalyticsView({
 
       <AdsPerformanceChart data={timeseries} />
 
+      {/* TEMPORARILY HIDDEN (conversion tracking unfinished): this card reports
+          CAPI delivery of AdsConversionEvent rows. No rows are produced while
+          the conversion-rule engine is unfinished, so it always renders the
+          "no conversion events" empty state. Restore it with the funnel stages,
+          and re-add `delivery` to the `use(promises)` destructuring plus the
+          `deliveryTotal` sum above.
+
+          NOTE when restoring: the block below originally carried its own JSX
+          comment on the reconnect CTA, removed here because JSX comments cannot
+          nest. It said: the reconnect CTA is delivery-summary-level (it needs
+          ONE integration + scope), so it is hidden under "All accounts" (no
+          selected account to link to) while the delivery counts stay visible
+          either way. */}
+      {/*
       <Card>
         <CardContent className="flex flex-col gap-4 p-5">
           <div className="font-medium text-sm">
@@ -911,10 +961,6 @@ export function AdsAnalyticsView({
               {delivery.skippedNoScope > 0 ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 text-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                   <span>{t("ads.analytics.delivery.noScopeWarning")}</span>
-                  {/* The reconnect CTA is delivery-summary-level (needs ONE
-                      integration + scope) — hidden under "All accounts"
-                      (no selected account to link to); delivery counts
-                      above stay visible either way. */}
                   {selectedChannelIntegrationId ? (
                     <Link
                       className={buttonVariants({
@@ -937,28 +983,30 @@ export function AdsAnalyticsView({
         </CardContent>
       </Card>
 
+      */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="flex flex-wrap gap-2">
-            {(["conversations", "leads", "purchases"] as const).map(
-              (segment) => (
-                <Link
-                  className={buttonVariants({ size: "sm", variant: "outline" })}
-                  href={buildExportHref({
-                    workspaceId,
-                    segment,
-                    range,
-                    channel,
-                    integrationWhatsappId: selectedIntegrationWhatsappId,
-                    selectedChannelIntegrationId,
-                  })}
-                  key={segment}
-                >
-                  <DownloadIcon className="size-4" />
-                  {t(`ads.analytics.export.${segment}`)}
-                </Link>
-              ),
-            )}
+            {/* TEMPORARILY HIDDEN (conversion tracking unfinished): "leads" and "purchases"
+                export an empty AdsConversionEvent set until the conversion-rule
+                engine ships — restore the full tuple below with it. */}
+            {(["conversations"] as const).map((segment) => (
+              <Link
+                className={buttonVariants({ size: "sm", variant: "outline" })}
+                href={buildExportHref({
+                  workspaceId,
+                  segment,
+                  range,
+                  channel,
+                  integrationWhatsappId: selectedIntegrationWhatsappId,
+                  selectedChannelIntegrationId,
+                })}
+                key={segment}
+              >
+                <DownloadIcon className="size-4" />
+                {t(`ads.analytics.export.${segment}`)}
+              </Link>
+            ))}
           </div>
         </div>
         <Card>
@@ -973,12 +1021,18 @@ export function AdsAnalyticsView({
                     {t("ads.analytics.channelFilter.label")}
                   </TableHead>
                   <TableHead>{t("ads.analytics.adSpend")}</TableHead>
+                  {/* TEMPORARILY HIDDEN (conversion tracking unfinished): these six columns
+                      are AdsConversionEvent-backed and stay 0/"–" until the
+                      conversion-rule engine ships. Restore them together with
+                      the matching <TableCell>s below. */}
+                  {/*
                   <TableHead>{t("ads.analytics.purchases")}</TableHead>
                   <TableHead>{t("ads.analytics.revenue")}</TableHead>
                   <TableHead>{t("ads.analytics.costPerPurchase")}</TableHead>
                   <TableHead>{t("ads.analytics.roas")}</TableHead>
                   <TableHead>{t("ads.analytics.qualifiedLeads")}</TableHead>
                   <TableHead>{t("ads.analytics.costPerLead")}</TableHead>
+                  */}
                   <TableHead>{t("ads.analytics.cpc")}</TableHead>
                   <TableHead className="text-right"> </TableHead>
                 </TableRow>
@@ -997,6 +1051,9 @@ export function AdsAnalyticsView({
                     <TableCell>
                       {formatMoney(locale, ad.spend, data.spendCurrency)}
                     </TableCell>
+                    {/* TEMPORARILY HIDDEN (conversion tracking unfinished): paired with the
+                        commented-out <TableHead>s above — restore together. */}
+                    {/*
                     <TableCell>{ad.purchases.toLocaleString(locale)}</TableCell>
                     <TableCell>
                       {formatMoney(locale, ad.revenue, data.spendCurrency)}
@@ -1013,6 +1070,7 @@ export function AdsAnalyticsView({
                     <TableCell>
                       {formatMoney(locale, ad.costPerLead, data.spendCurrency)}
                     </TableCell>
+                    */}
                     <TableCell>
                       {formatMoney(locale, ad.cpc, data.spendCurrency)}
                     </TableCell>

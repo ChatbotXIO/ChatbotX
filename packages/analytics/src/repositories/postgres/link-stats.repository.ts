@@ -1,4 +1,5 @@
 import { type Column, db, sql, type Table } from "@chatbotx.io/database/client"
+import { resolvedTimezone } from "@chatbotx.io/database/queries"
 import { BaseRepository } from "./base.repository"
 
 type LinkStatColumns = {
@@ -35,7 +36,7 @@ export class LinkStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        TO_CHAR((${occurredAt} AT TIME ZONE ${timezone})::date, 'YYYY-MM-DD') AS "dateReport",
+        TO_CHAR((${occurredAt} AT TIME ZONE ${resolvedTimezone(timezone)})::date, 'YYYY-MM-DD') AS "dateReport",
         COUNT(*)::int AS count
       FROM ${this.table}
       WHERE ${wsCol} = ${workspaceId}

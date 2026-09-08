@@ -1,3 +1,7 @@
+import {
+  type AdsEligibleChannelType,
+  channelTypes,
+} from "@chatbotx.io/utils/channel"
 import { type AnyColumn, eq, gte, lte, type SQL, sql } from "drizzle-orm"
 import type { AdEligibleInboxChannel } from "../../repositories/contact-inbox/repository"
 import {
@@ -8,6 +12,10 @@ import {
   integrationMessengerModel,
   integrationWhatsappModel,
 } from "../../schema"
+import {
+  adConversationPredicate,
+  anyChannelAdConversationPredicate,
+} from "../ad-referral"
 
 // Table each ads-eligible channel's integration row lives in — the ONE map
 // entry a future channel needs so `integrationInboxExists` below can resolve
@@ -158,7 +166,9 @@ export function buildCtwaSegmentPredicate(
     // otherwise match same-adId events from any channel. Callers that omit
     // BOTH stay unfiltered on purpose — the saved contact-filter contract is
     // "any channel" when no narrowing is chosen (see ctwaRetargetConditionSchema).
-    predicates.push(eq(adsConversionEventModel.channel, "whatsapp"))
+    predicates.push(
+      eq(adsConversionEventModel.channel, channelTypes.enum.whatsapp),
+    )
   }
   if (input.integrationWhatsappId) {
     predicates.push(
@@ -206,19 +216,19 @@ function buildConversationsPredicate(input: CtwaSegmentPredicateInput): SQL {
   //    contact-filter contract (ctwaRetargetConditionSchema) — via the shared
   //    ctwaClid-OR-ad-referral predicate, matching the events branch which
   //    applies no channel filter in that case.
+  // The channel this segment is scoped to, or `null` for "any channel". The
+  // legacy caller passes no `channel`, only `integrationWhatsappId` — that is
+  // still WhatsApp, hence the literal rather than a bare `input.channel`.
   const isWhatsapp =
-    input.channel === "whatsapp" ||
+    input.channel === channelTypes.enum.whatsapp ||
     (!input.channel && Boolean(input.integrationWhatsappId))
-  const isAnyChannel = !(input.channel || input.integrationWhatsappId)
-  const referralPredicate = (): SQL => {
-    if (isAnyChannel) {
-      return adReferralPredicate()
-    }
-    if (isWhatsapp) {
-      return sql`${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL`
-    }
-    return sql`${contactInboxModel.referral}->>'adId' IS NOT NULL AND ${contactInboxModel.referral}->>'source' = 'ADS'`
-  }
+  const scopedChannel: AdsEligibleChannelType | null = isWhatsapp
+    ? channelTypes.enum.whatsapp
+    : ((input.channel as AdsEligibleChannelType | undefined) ?? null)
+  const referralPredicate = (): SQL =>
+    scopedChannel
+      ? adConversationPredicate(scopedChannel)
+      : anyChannelAdConversationPredicate()
   const predicates: SQL[] = [
     referralPredicate(),
     gte(contactInboxModel.firstInteractionAt, input.since),
@@ -227,17 +237,21 @@ function buildConversationsPredicate(input: CtwaSegmentPredicateInput): SQL {
   if (input.adId) {
     predicates.push(sql`${contactInboxModel.referral}->>'adId' = ${input.adId}`)
   }
-  // Channel scoping is REQUIRED (not just an optimization) for
-  // messenger/instagram: both channels share the same ad-referral
-  // predicate above (`referral.adId` + `source === "ADS"`), and
-  // `ContactInbox.channel` is the only column distinguishing an
-  // Instagram-via-Messenger inbox from a genuine Messenger one. Without
-  // this, a messenger-scoped retarget/segment would also match Instagram
-  // conversations (and vice versa) whenever no integration id narrows it
-  // further — so this is added independent of `integrationMessengerId`/
-  // `integrationInstagramId` below.
-  if (input.channel && input.channel !== "whatsapp") {
-    predicates.push(sql`${contactInboxModel.channel} = ${input.channel}`)
+  // Channel scoping is REQUIRED (not just an optimization) for EVERY
+  // single-channel branch:
+  //  - messenger/instagram share one ad-referral predicate (`referral.adId` +
+  //    `source === "ADS"`), and `ContactInbox.channel` is the only column
+  //    distinguishing an Instagram-via-Messenger inbox from a genuine
+  //    Messenger one;
+  //  - whatsapp USED to be intrinsically scoped, because `referral.ctwaClid`
+  //    exists on no other channel. `adConversationPredicate` widened
+  //    that to also accept `adId` + `source === "ad"` (Status ad placements
+  //    carry no click id), and "lowercase `ad` means WhatsApp" is a
+  //    convention no schema enforces — so the branch now needs the same
+  //    explicit scope the other two always had.
+  // Added independent of any integration id narrowing below.
+  if (scopedChannel) {
+    predicates.push(sql`${contactInboxModel.channel} = ${scopedChannel}`)
   }
   // NOTE: no `Contact.workspaceId` predicate here. In the filter EXISTS the
   // subquery must NOT re-join `Contact` (an unaliased self-join would make
@@ -296,40 +310,6 @@ export function buildCtwaSegmentContactExists(
   }
 
   return sql`SELECT 1 FROM ${adsConversionEventModel} INNER JOIN ${contactInboxModel} ON ${contactInboxModel.id} = ${adsConversionEventModel.contactInboxId} WHERE ${contactInboxModel.contactId} = ${contactIdColumn} AND ${predicate}`
-}
-
-/**
- * Channel-agnostic "did this ContactInbox originate from a paid ad click"
- * predicate for the `fromCtwaAd` boolean filter field. Unlike
- * {@link buildCtwaSegmentPredicate}'s `conversations` branch — which is
- * explicitly channel-scoped and picks ONE of the two predicates below based
- * on `channel` — `fromCtwaAd` has no channel scoping in the UI, so it must
- * match a contact coming from ANY channel's ad-referral convention. ORs both:
- *
- *  - WhatsApp CTWA: `referral.ctwaClid` is set. WhatsApp's raw referral
- *    payload sets `referral.source` from `source_type`, whose values are
- *    `"ad"`/`"post"` — never `"ADS"` — so the second branch below can never
- *    match a WhatsApp row (see `getWhatsappReferral` in
- *    `integrations/whatsapp/src/handlers/message/incomming-message.ts`).
- *  - Messenger/Instagram CTM/CTID: `referral.adId` is set AND
- *    `referral.source === "ADS"` — the verbatim Graph API referral fields
- *    (see `normalizeReferral` in
- *    `integrations/messenger/src/handlers/message/incomming-message.ts` and
- *    the Instagram counterpart). WhatsApp rows never set `source` to
- *    `"ADS"`, so this branch can never double-match a WhatsApp row.
- *
- * ORing (instead of replacing) the original WhatsApp-only predicate keeps
- * every pre-existing WhatsApp `fromCtwaAd` filter result unchanged.
- */
-// Deliberately a function (not a module-scope SQL constant): building the
-// `sql` tag eagerly at import time crashes test suites that mock
-// `@chatbotx.io/database` schema exports narrowly — same reasoning as
-// `getConflictTarget` in the ads-conversion-event repository.
-export function adReferralPredicate(): SQL {
-  return sql`(
-  (${contactInboxModel.referral}->>'ctwaClid' IS NOT NULL AND ${contactInboxModel.referral}->>'ctwaClid' <> '')
-  OR (${contactInboxModel.referral}->>'adId' IS NOT NULL AND ${contactInboxModel.referral}->>'source' = 'ADS')
-)`
 }
 
 /**

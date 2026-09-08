@@ -20,7 +20,6 @@ import { buildBotFieldWhere } from "./bot-field-predicates"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import {
-  adReferralPredicate,
   buildCtwaSegmentContactExists,
   type CtwaSegmentPredicateInput,
   ctwaRetargetDateRange,
@@ -89,6 +88,8 @@ export {
   NUMERIC_VALUE_PATTERN,
   valueContainsVariablePlaceholder,
 } from "./value-format"
+
+import { anyChannelAdConversationPredicate } from "../ad-referral"
 
 const hasWhereParts = (where: ContactWhere): boolean =>
   Object.keys(where).length > 0
@@ -534,7 +535,7 @@ function buildConditionWhere(
     case "fromCtwaAd":
       return buildExistsBooleanWhere(
         contactInboxExists,
-        adReferralPredicate(),
+        anyChannelAdConversationPredicate(),
         operator,
         value,
       )

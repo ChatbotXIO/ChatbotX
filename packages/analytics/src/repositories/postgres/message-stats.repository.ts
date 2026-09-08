@@ -1,4 +1,5 @@
 import { db, sql } from "@chatbotx.io/database/client"
+import { resolvedTimezone } from "@chatbotx.io/database/queries"
 import { analyticsMessageEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
@@ -177,7 +178,7 @@ export class MessageStatsRepository extends BaseRepository {
     const query = shouldUseCagg(props)
       ? sql`
           SELECT
-            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             "eventType",
             SUM(count)::int AS count
           FROM analytics_message_events_hourly
@@ -190,7 +191,7 @@ export class MessageStatsRepository extends BaseRepository {
         `
       : sql`
           SELECT
-            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             "eventType",
             COUNT(*)::int AS count
           FROM "AnalyticsMessageEvent"
@@ -242,7 +243,7 @@ export class MessageStatsRepository extends BaseRepository {
     // Month granularity always > 7 days — use raw hypertable
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
         "eventType",
         COUNT(*)::int AS count
       FROM "AnalyticsMessageEvent"
@@ -286,7 +287,7 @@ export class MessageStatsRepository extends BaseRepository {
       useMonth || !shouldUseCagg(props)
         ? sql`
             SELECT
-              time_bucket(${interval}, "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket(${interval}, "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "channel",
               "senderType",
               COUNT(*)::int AS count
@@ -301,7 +302,7 @@ export class MessageStatsRepository extends BaseRepository {
           `
         : sql`
             SELECT
-              time_bucket(${interval}, bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket(${interval}, bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "channel",
               "senderType",
               SUM(count)::int AS count

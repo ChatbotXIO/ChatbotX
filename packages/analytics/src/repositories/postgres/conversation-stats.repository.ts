@@ -1,4 +1,5 @@
 import { db, sql } from "@chatbotx.io/database/client"
+import { resolvedTimezone } from "@chatbotx.io/database/queries"
 import { analyticsConversationEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
@@ -62,7 +63,7 @@ export class ConversationStatsRepository extends BaseRepository {
     const query = shouldUseCagg(props)
       ? sql`
           SELECT
-            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             CASE
               WHEN "eventType" = 'conversation_transferred_to_human' THEN 'to_human'
               WHEN "eventType" = 'conversation_transferred_to_bot' THEN 'to_bot'
@@ -78,7 +79,7 @@ export class ConversationStatsRepository extends BaseRepository {
         `
       : sql`
           SELECT
-            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             CASE
               WHEN "eventType" = 'conversation_transferred_to_human' THEN 'to_human'
               WHEN "eventType" = 'conversation_transferred_to_bot' THEN 'to_bot'
@@ -117,7 +118,7 @@ export class ConversationStatsRepository extends BaseRepository {
     const query = shouldUseCagg(props)
       ? sql`
           SELECT
-            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             SUM(count)::int AS count
           FROM analytics_conversation_events_hourly
           WHERE "workspaceId" = ${workspaceId}
@@ -129,7 +130,7 @@ export class ConversationStatsRepository extends BaseRepository {
         `
       : sql`
           SELECT
-            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
           WHERE "workspaceId" = ${workspaceId}
@@ -162,7 +163,7 @@ export class ConversationStatsRepository extends BaseRepository {
     const query = shouldUseCagg(props)
       ? sql`
           SELECT
-            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             SUM(count)::int AS count
           FROM analytics_conversation_events_hourly
           WHERE "workspaceId" = ${workspaceId}
@@ -174,7 +175,7 @@ export class ConversationStatsRepository extends BaseRepository {
         `
       : sql`
           SELECT
-            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
           WHERE "workspaceId" = ${workspaceId}
@@ -207,7 +208,7 @@ export class ConversationStatsRepository extends BaseRepository {
     const query = shouldUseCagg(props)
       ? sql`
           SELECT
-            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             SUM(count)::int AS count
           FROM analytics_conversation_events_hourly
           WHERE "workspaceId" = ${workspaceId}
@@ -219,7 +220,7 @@ export class ConversationStatsRepository extends BaseRepository {
         `
       : sql`
           SELECT
-            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
           WHERE "workspaceId" = ${workspaceId}
