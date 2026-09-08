@@ -74,6 +74,7 @@ export default async function WhatsappAdsPage(props: {
         displayPhoneNumber: resolved.displayPhoneNumber,
         wabaId: resolved.wabaId,
         hasCapiScope: scopeState.hasCapiScope,
+        isCoexist: resolved.isCoexist,
         datasetId: resolved.datasetId,
         capiTestEventCode: resolved.capiTestEventCode,
       }}

@@ -23,6 +23,33 @@ afterEach(() => {
 })
 
 describe("buildFacebookOAuthDialogUrl", () => {
+  test("asks for the WhatsApp Business app screen when reconnecting a coexistence number", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    const extrasFor = (connectExisting: boolean) =>
+      JSON.parse(
+        new URL(
+          buildFacebookOAuthDialogUrl({
+            resellerOrigin: RESELLER_ORIGIN,
+            redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+            clientId: "client-1",
+            configId: "config-1",
+            version: "v21.0",
+            connectExisting,
+            transferPhoneNumber: false,
+          }),
+        ).searchParams.get("extras") ?? "{}",
+      )
+
+    // Meta only lists a WhatsApp Business app account behind this feature
+    // type; the default screen shows Cloud API WABAs and nothing else, which
+    // left such a number with nothing to select on reconnect.
+    expect(extrasFor(true).featureType).toBe("whatsapp_business_app_onboarding")
+    expect(extrasFor(false).featureType).toBeUndefined()
+  })
+
   test("pins the reconnect flow to Embedded Signup v4", async () => {
     const { buildFacebookOAuthDialogUrl, EMBEDDED_SIGNUP_VERSIONS } =
       await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })

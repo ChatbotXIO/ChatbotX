@@ -39,6 +39,7 @@ type WhatsappCapiTabProps = {
     | "displayPhoneNumber"
     | "wabaId"
     | "hasCapiScope"
+    | "isCoexist"
     | "datasetId"
     | "capiTestEventCode"
   >

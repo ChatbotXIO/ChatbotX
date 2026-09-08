@@ -15,6 +15,7 @@ export type AdsSwitcherIntegration = {
   displayPhoneNumber: string
   inboxId: string
   hasCapiScope: boolean
+  isCoexist: boolean
 }
 
 // Redacted to id + name — the channel filter (Phase 6) only needs these to
@@ -69,6 +70,7 @@ export async function getAdsSwitcherData(
       displayPhoneNumber: integration.displayPhoneNumber,
       inboxId: integration.inboxId,
       hasCapiScope: integration.hasCapiScope,
+      isCoexist: integration.isCoexist,
     })),
     whatsappCredentialPublic: whatsappCredential?.publicConfig ?? null,
     oauthCallbackUrl: new URL(

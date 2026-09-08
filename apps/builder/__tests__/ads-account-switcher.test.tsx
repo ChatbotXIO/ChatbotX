@@ -73,12 +73,16 @@ const integrations = [
     name: "Primary",
     displayPhoneNumber: "+12025550101",
     hasCapiScope: true,
+    isCoexist: false,
   },
   {
     id: "iw-2",
     name: "Secondary",
     displayPhoneNumber: "+12025550102",
     hasCapiScope: true,
+    // A WhatsApp Business app number, so its reconnect must ask Meta for the
+    // coexistence screen — the only place such an account is listed.
+    isCoexist: true,
   },
 ]
 

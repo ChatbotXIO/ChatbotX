@@ -21,12 +21,20 @@ export function WhatsappReconnectButton({
   settings,
   workspaceId,
   disabled = false,
+  isCoexist = false,
   oauthCallbackUrl,
 }: {
   integrationWhatsappId: string
   settings: WhatsappCredentialPublic | null
   workspaceId: string
   disabled?: boolean
+  /**
+   * Whether this number lives on the WhatsApp Business app. Meta only offers
+   * "connect an existing WhatsApp Business app account" when the dialog asks
+   * for that flow, so without this such an account is missing from the list
+   * and the operator has nothing to reconnect to.
+   */
+  isCoexist?: boolean
   /**
    * Absolute callback URL registered with Meta for this credential — the
    * broker callback for inherited/platform credentials, or the reseller's
@@ -101,7 +109,10 @@ export function WhatsappReconnectButton({
         clientId: settings.clientId,
         configId: settings.configId,
         version: settings.version,
-        connectExisting: false,
+        // Selects Meta's WhatsApp Business app onboarding screen, which is
+        // where a coexistence account appears. A Cloud API number keeps the
+        // default WABA selection screen.
+        connectExisting: isCoexist,
         transferPhoneNumber: false,
         locale: document.documentElement.lang || undefined,
         // A reconnect exists to pick up a permission the account is missing.

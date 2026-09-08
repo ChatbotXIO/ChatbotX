@@ -32,6 +32,7 @@ const baseIntegration = {
   displayPhoneNumber: "84339426550",
   wabaId: "1303031825154214",
   hasCapiScope: true,
+  isCoexist: false,
 }
 
 const whatsappCredentialPublic: WhatsappCredentialPublic = {
