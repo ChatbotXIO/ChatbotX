@@ -134,6 +134,7 @@ import { userDeviceTokenRelations } from "./user-device-token"
 import { userPersistentMenuRelations } from "./user-persistent-menu"
 import { webhookRelations } from "./webhook"
 import { webhookExecutionRelations } from "./webhook-execution"
+import { whatsappBusinessAccountRelations } from "./whatsapp-business-account"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { whatsappSignupSessionRelations } from "./whatsapp-signup-session"
@@ -210,6 +211,7 @@ export const relations = {
   ...sessionRelations,
   ...spreadsheetRelations,
   ...whatsappFlowRelations,
+  ...whatsappBusinessAccountRelations,
   ...integrationWhatsappRelations,
   ...whatsappMessageTemplateRelations,
   ...workspaceMemberRelations,
