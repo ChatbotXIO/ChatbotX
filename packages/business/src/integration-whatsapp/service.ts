@@ -1,10 +1,23 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  inArray,
+} from "@chatbotx.io/database/client"
 import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
 import {
   integrationWhatsappRepository,
+  LIVE_RUN_STATUSES,
+  metaCapiEventRepository,
   whatsappSignupSessionRepository,
 } from "@chatbotx.io/database/repositories"
-import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
+import {
+  coexistSyncRunModel,
+  type IntegrationWhatsappRegistrationError,
+  integrationWhatsappModel,
+  whatsappCoexistStagingModel,
+} from "@chatbotx.io/database/schema"
 import type {
   IntegrationWhatsappModel,
   WhatsappMessageTemplateModel,
@@ -14,6 +27,7 @@ import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import { platformCredentialService } from "../platform-credential/service"
@@ -355,6 +369,17 @@ class IntegrationWhatsappService extends BaseService {
     return integrationWhatsappRepository.markTokenRefreshError(id, error)
   }
 
+  /**
+   * No workspace scope — for the inbound webhook-verification handler, which
+   * has not yet resolved a workspace when it stamps `webhookVerifiedAt`.
+   */
+  markWebhookVerified(
+    id: string,
+    auth: Record<string, unknown>,
+  ): Promise<void> {
+    return integrationWhatsappRepository.updateAuthUnscoped(id, auth)
+  }
+
   async refreshCapiScopeCache(
     input: RefreshCapiScopeCacheInput,
   ): Promise<IntegrationWhatsappModel | null> {
@@ -630,6 +655,73 @@ class IntegrationWhatsappService extends BaseService {
         integrationWhatsappId: props.integrationWhatsappId,
         status: "APPROVED",
       },
+    })
+  }
+
+  /**
+   * Everything one disconnect must abandon or delete, in a single
+   * transaction. Sync history (importedCount / lastSyncedAt / …) is
+   * deliberately preserved for audit and so a reconnect can resume from the
+   * prior watermark; only ACTIVE runs are abandoned so the scheduler stops
+   * trying to drive them forward against a now-missing integration.
+   * `LIVE_RUN_STATUSES` includes `waiting`: a WhatsApp coexist run parked for
+   * more Meta history must be abandoned here too, otherwise the scheduler
+   * cannot revive it (its staging rows are deleted below) and it lingers
+   * until the 24h history-window timeout closes it.
+   */
+  async disconnect(props: {
+    integrationWhatsapp: IntegrationWhatsappModel
+    ownerId: string
+    workspaceId: string
+    tx: DatabaseClient
+  }): Promise<void> {
+    const { integrationWhatsapp, ownerId, workspaceId, tx } = props
+
+    await tx
+      .update(coexistSyncRunModel)
+      .set({
+        status: "failed",
+        finishedAt: new Date(),
+        currentError: "Integration disconnected",
+      })
+      .where(
+        and(
+          eq(coexistSyncRunModel.integrationId, integrationWhatsapp.id),
+          inArray(coexistSyncRunModel.status, LIVE_RUN_STATUSES),
+        ),
+      )
+
+    await tx
+      .delete(whatsappCoexistStagingModel)
+      .where(
+        eq(
+          whatsappCoexistStagingModel.phoneNumberId,
+          integrationWhatsapp.phoneNumberId,
+        ),
+      )
+
+    // Polymorphic FK cleanup — no DB-level cascade for
+    // MetaCapiEvent.integrationId; stale rows would keep occupying the
+    // (workspaceId, channel, sourceKey) dedup slot after a reconnect.
+    await metaCapiEventRepository.deleteByIntegration(
+      {
+        workspaceId,
+        channel: "whatsapp",
+        integrationId: integrationWhatsapp.id,
+      },
+      tx,
+    )
+
+    await tx
+      .delete(integrationWhatsappModel)
+      .where(eq(integrationWhatsappModel.id, integrationWhatsapp.id))
+
+    await inboxService.disconnect({
+      inboxId: integrationWhatsapp.inboxId,
+      ownerId,
+      workspaceId,
+      reason: "manual",
+      tx,
     })
   }
 }

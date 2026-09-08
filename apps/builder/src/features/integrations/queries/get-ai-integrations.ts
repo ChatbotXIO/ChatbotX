@@ -1,5 +1,5 @@
 import { aiProviders } from "@chatbotx.io/ai"
-import { db } from "@chatbotx.io/database/client"
+import { integrationService } from "@chatbotx.io/business"
 
 type ListAIIntegrationsProps = {
   where: {
@@ -8,25 +8,15 @@ type ListAIIntegrationsProps = {
 }
 
 export async function listAIIntegrations(props: ListAIIntegrationsProps) {
-  return await db.query.integrationModel.findMany({
-    where: {
-      integrationType: {
-        in: [...aiProviders.options],
-      },
-      workspaceId: props.where.workspaceId,
-    },
+  return await integrationService.listByWorkspaceIdAndTypes({
+    workspaceId: props.where.workspaceId,
+    integrationTypes: [...aiProviders.options],
   })
 }
 
 export async function hasAIIntegration(workspaceId: string): Promise<boolean> {
-  const exists = await db.query.integrationModel.findFirst({
-    where: {
-      integrationType: {
-        in: [...aiProviders.options],
-      },
-      workspaceId,
-    },
+  return await integrationService.existsByWorkspaceIdAndTypes({
+    workspaceId,
+    integrationTypes: [...aiProviders.options],
   })
-
-  return !!exists
 }

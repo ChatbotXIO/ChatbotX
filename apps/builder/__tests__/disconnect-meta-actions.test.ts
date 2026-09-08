@@ -29,6 +29,18 @@ const mocks = vi.hoisted(() => {
     messengerDisconnect: vi.fn().mockResolvedValue(undefined),
     messengerDisconnectSafe: vi.fn(() => false),
     messengerExists: vi.fn().mockResolvedValue(false),
+    messengerServiceDisconnect: vi.fn(
+      (props: {
+        id: string
+        tx: { delete: (...args: unknown[]) => unknown }
+      }) => Promise.resolve(props.tx.delete()),
+    ),
+    instagramServiceDisconnect: vi.fn(
+      (props: {
+        id: string
+        tx: { delete: (...args: unknown[]) => unknown }
+      }) => Promise.resolve(props.tx.delete()),
+    ),
     instagramDisconnect: vi.fn().mockResolvedValue(undefined),
     instagramFacebookDisconnect: vi.fn().mockResolvedValue(undefined),
     subscribePageToAppWebhook: vi.fn().mockResolvedValue(undefined),
@@ -47,8 +59,16 @@ vi.mock("@chatbotx.io/business", () => ({
     tearDownForIntegration: mocks.coexistTearDownForIntegration,
   },
   inboxService: { disconnect: mocks.inboxDisconnect },
-  instagramIntegrationService: { existsForPage: mocks.instagramExists },
-  messengerIntegrationService: { existsForPage: mocks.messengerExists },
+  instagramIntegrationService: {
+    existsForPage: mocks.instagramExists,
+    findByIdForWorkspace: mocks.findOrFail,
+    disconnect: mocks.instagramServiceDisconnect,
+  },
+  messengerIntegrationService: {
+    existsForPage: mocks.messengerExists,
+    findByIdForWorkspace: mocks.findOrFail,
+    disconnect: mocks.messengerServiceDisconnect,
+  },
   workspaceService: { findById: mocks.workspaceFindById },
 }))
 

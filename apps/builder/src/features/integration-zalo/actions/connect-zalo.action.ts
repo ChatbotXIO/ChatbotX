@@ -1,7 +1,7 @@
 import {
-  connectChannelIntegration,
   tagSyncService,
   workspaceService,
+  zaloIntegrationService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -10,7 +10,6 @@ import {
   channelTypes,
   type ZaloCredential,
 } from "@chatbotx.io/database/partials"
-import { integrationZaloModel } from "@chatbotx.io/database/schema"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { redirect } from "next/navigation"
@@ -46,37 +45,21 @@ export async function connectZaloHandler({
 
   let connectedIntegrationId: string | undefined
   let channelWasCreated = false
+  let wasDuplicate = false
   try {
     await db.transaction(async (tx) => {
-      const { wasCreated } = await connectChannelIntegration({
-        tx,
-        ownerId,
-        inboxData: {
+      const { integrationId, wasCreated } =
+        await zaloIntegrationService.connect({
+          tx,
+          ownerId,
           workspaceId,
-          name: authValue.metadata.oaName,
-          channel: "zalo",
-          sourceId: authValue.oaId,
-        },
-        insertIntegration: async (inboxId, insertWasCreated) => {
-          if (!insertWasCreated) {
-            redirect(
-              `/space/${workspaceId}/settings/channels?channel=zalo&error=duplicated`,
-            )
-          }
-          const [row] = await tx
-            .insert(integrationZaloModel)
-            .values({
-              inboxId,
-              workspaceId,
-              oaId: authValue.oaId,
-              auth: authValue,
-              name: authValue.metadata.oaName,
-            })
-            .returning({ id: integrationZaloModel.id })
-          connectedIntegrationId = row?.id
-        },
-      })
+          oaId: authValue.oaId,
+          oaName: authValue.metadata.oaName,
+          auth: authValue,
+        })
+      connectedIntegrationId = integrationId
       channelWasCreated = wasCreated
+      wasDuplicate = !integrationId
     })
   } catch (error) {
     if (
@@ -88,6 +71,12 @@ export async function connectZaloHandler({
       )
     }
     throw error
+  }
+
+  if (wasDuplicate) {
+    redirect(
+      `/space/${workspaceId}/settings/channels?channel=zalo&error=duplicated`,
+    )
   }
 
   if (channelWasCreated) {

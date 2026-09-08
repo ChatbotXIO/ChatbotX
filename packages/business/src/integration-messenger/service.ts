@@ -1,17 +1,22 @@
 import {
   and,
+  type DatabaseClient,
   db,
   eq,
   findOrFail,
   inArray,
   sql,
 } from "@chatbotx.io/database/client"
-import type {
-  IntegrationUserInfo,
-  MessengerPersistentMenu,
+import {
+  channelTypes,
+  type IntegrationUserInfo,
+  type MessengerPersistentMenu,
 } from "@chatbotx.io/database/partials"
 import { integrationMessengerRepository } from "@chatbotx.io/database/repositories"
-import { integrationMessengerModel } from "@chatbotx.io/database/schema"
+import {
+  integrationMessengerModel,
+  tagChannelModel,
+} from "@chatbotx.io/database/schema"
 import type {
   IntegrationMessengerModel,
   MessengerMessageTemplateModel,
@@ -55,6 +60,16 @@ class MessengerIntegrationService extends BaseService {
   findByIdForWorkspace(props: { id: string; workspaceId: string }) {
     return db.query.integrationMessengerModel.findFirst({
       where: { id: props.id, workspaceId: props.workspaceId },
+    })
+  }
+
+  /** No workspace scope — targets in a clone-across-workspaces flow may live in other workspaces. */
+  findByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return Promise.resolve([])
+    }
+    return db.query.integrationMessengerModel.findMany({
+      where: { id: { in: ids } },
     })
   }
 
@@ -273,6 +288,66 @@ class MessengerIntegrationService extends BaseService {
         status: "APPROVED",
       },
     })
+  }
+
+  listByWorkspaceIdOrId(
+    where: Partial<Pick<IntegrationMessengerModel, "id" | "workspaceId">>,
+  ) {
+    return db.query.integrationMessengerModel.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+    })
+  }
+
+  async updateTagSync(props: {
+    workspaceId: string
+    integrationId: string
+    enabled: boolean
+  }): Promise<Date | null> {
+    const updated = await db
+      .update(integrationMessengerModel)
+      .set({ syncTagEnabledAt: props.enabled ? new Date() : null })
+      .where(
+        and(
+          eq(integrationMessengerModel.id, props.integrationId),
+          eq(integrationMessengerModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({
+        syncTagEnabledAt: integrationMessengerModel.syncTagEnabledAt,
+      })
+
+    return updated[0]?.syncTagEnabledAt ?? null
+  }
+
+  async updateProfileFields(
+    props: { id: string },
+    data: Record<string, unknown>,
+    tx: DatabaseClient,
+  ) {
+    await tx
+      .update(integrationMessengerModel)
+      .set(data)
+      .where(eq(integrationMessengerModel.id, props.id))
+  }
+
+  /**
+   * Deletes the integration row and its polymorphic TagChannel entries within
+   * the caller's transaction. Coexist teardown, remote unsubscribe, and inbox
+   * disconnect stay orchestrated by the caller.
+   */
+  async disconnect(props: { id: string; tx: DatabaseClient }) {
+    await props.tx
+      .delete(tagChannelModel)
+      .where(
+        and(
+          eq(tagChannelModel.channelType, channelTypes.enum.messenger),
+          eq(tagChannelModel.integrationId, props.id),
+        ),
+      )
+    await props.tx
+      .delete(integrationMessengerModel)
+      .where(eq(integrationMessengerModel.id, props.id))
   }
 }
 

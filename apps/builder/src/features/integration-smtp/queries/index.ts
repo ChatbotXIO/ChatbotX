@@ -1,6 +1,7 @@
 "use server"
 
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { integrationSmtpService } from "@chatbotx.io/business"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { integrationSmtpModel } from "@chatbotx.io/database/schema"
 import type { IntegrationSmtpModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -16,14 +17,7 @@ export const listIntegrationSmtps = async (input: {
 }): Promise<{ data: IntegrationSmtpResource[] }> => {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const data = await db.query.integrationSmtpModel.findMany({
-    where: {
-      workspaceId: input.workspaceId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
+  const data = await integrationSmtpService.listByWorkspaceId(input.workspaceId)
 
   return {
     data: data.map(({ id, name, fromAddress }) => ({

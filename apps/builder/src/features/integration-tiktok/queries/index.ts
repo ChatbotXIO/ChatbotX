@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { tiktokIntegrationService } from "@chatbotx.io/business"
 import type { IntegrationTiktokModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
@@ -7,12 +7,7 @@ export const listIntegrationTiktoks = async ({
 }: {
   where: Partial<Pick<IntegrationTiktokModel, "workspaceId">>
 }): Promise<{ data: IntegrationTiktokModel[] }> => {
-  const data = await db.query.integrationTiktokModel.findMany({
-    where,
-    orderBy: {
-      createdAt: "asc",
-    },
-  })
+  const data = await tiktokIntegrationService.listByWorkspaceId(where)
   return { data }
 }
 
@@ -23,11 +18,7 @@ export const findIntegrationTiktok = async ({
 }): Promise<IntegrationTiktokModel | null> => {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  return (
-    (await db.query.integrationTiktokModel.findFirst({
-      where: { workspaceId },
-    })) ?? null
-  )
+  return (await tiktokIntegrationService.findByWorkspaceId(workspaceId)) ?? null
 }
 
 export const findIntegrationTiktokByOpenId = async ({
@@ -35,6 +26,4 @@ export const findIntegrationTiktokByOpenId = async ({
 }: {
   openId: string
 }): Promise<IntegrationTiktokModel | null> =>
-  (await db.query.integrationTiktokModel.findFirst({
-    where: { openId },
-  })) ?? null
+  (await tiktokIntegrationService.findByOpenId(openId)) ?? null

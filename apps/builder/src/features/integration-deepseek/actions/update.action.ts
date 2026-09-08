@@ -2,9 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
-import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationDeepseekModel } from "@chatbotx.io/database/schema"
+import { integrationDeepSeekService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -26,26 +24,11 @@ export const updateIntegrationDeepSeekAction = workspaceActionClient
       parsedInput: UpdateDeepSeekRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      const integrationDeepseek = await findOrFail({
-        table: integrationDeepseekModel,
-        where: { workspaceId },
-        message: "Integration DeepSeek not found",
-      })
-
-      await db
-        .update(integrationDeepseekModel)
-        .set(parsedInput)
-        .where(eq(integrationDeepseekModel.id, integrationDeepseek.id))
+      await integrationDeepSeekService.update(workspaceId, parsedInput)
 
       await aiIntegrationService.invalidateCache(
         workspaceId,
         aiProviders.enum.deepseek,
       )
-
-      await auditService.record({
-        workspaceId,
-        action: "update",
-        detail: "updated the DeepSeek integration configuration",
-      })
     },
   )

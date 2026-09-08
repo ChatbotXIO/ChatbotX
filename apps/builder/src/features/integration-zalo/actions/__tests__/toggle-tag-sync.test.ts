@@ -37,39 +37,17 @@ vi.mock("@/features/workspace-members/queries", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/client
-// Zalo action does NOT call .returning(), so the chainable builder only needs
-// update → set → where.
+// Mock @chatbotx.io/database/client — findOrFail is still reached by the
+// workspaceActionClient auth chain, even though the action itself no longer
+// calls `db` directly.
 // ---------------------------------------------------------------------------
-const dbUpdateBuilder = {
-  set: vi.fn(),
-  where: vi.fn(),
-}
-
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    update: vi.fn(),
-  },
   findOrFail: vi.fn(),
   isDatabaseError: vi.fn(() => false),
-  and: (...args: unknown[]) => args,
-  eq: (...args: unknown[]) => args,
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/schema
-// ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationZaloModel: {
-    id: "id",
-    workspaceId: "workspaceId",
-    syncTagEnabledAt: "syncTagEnabledAt",
-  },
-  userModel: { id: "id" },
-}))
-
-// ---------------------------------------------------------------------------
-// Mock @chatbotx.io/business (isPlatformAdmin) and errors
+// Mock @chatbotx.io/business (isPlatformAdmin, zaloIntegrationService) and errors
 //
 // This factory mock enumerates exports, so it must cover everything
 // `workspaceActionClient` reaches — not just what this action calls directly.
@@ -78,6 +56,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // unrelated failure. `isWorkspaceScheduledForDeletion` is the deletion gate in
 // `lib/safe-action.ts`; `false` = an active workspace, this action's precondition.
 // ---------------------------------------------------------------------------
+const updateTagSync = vi.fn()
+
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(async () => false),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
@@ -91,6 +71,7 @@ vi.mock("@chatbotx.io/business", () => ({
       isSupportSession: false,
     }
   }),
+  zaloIntegrationService: { updateTagSync },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -123,7 +104,7 @@ vi.mock("@/lib/log", () => ({
 // ---------------------------------------------------------------------------
 const { toggleZaloTagSyncAction } = await import("../toggle-tag-sync.action")
 const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
-const { db, findOrFail } = await import("@chatbotx.io/database/client")
+const { findOrFail } = await import("@chatbotx.io/database/client")
 const { getCurrentUserId } = await import("@/lib/auth/utils")
 const { getAllWorkspaceMembers } = await import(
   "@/features/workspace-members/queries"
@@ -132,7 +113,6 @@ const { getAllWorkspaceMembers } = await import(
 const invalidateCacheByTagsMock = invalidateCacheByTags as ReturnType<
   typeof vi.fn
 >
-const dbUpdate = db.update as ReturnType<typeof vi.fn>
 const findOrFailMock = findOrFail as ReturnType<typeof vi.fn>
 const getCurrentUserIdMock = getCurrentUserId as ReturnType<typeof vi.fn>
 const getAllWorkspaceMembersMock = getAllWorkspaceMembers as ReturnType<
@@ -165,36 +145,21 @@ describe("toggleZaloTagSyncAction", () => {
       workspaceIds: [WORKSPACE_ID],
     })
 
-    // Re-wire the chainable DB builder (Zalo action: update().set().where())
-    dbUpdateBuilder.set.mockReturnValue(dbUpdateBuilder)
-    // where() must resolve to a promise since the action awaits the chain
-    dbUpdateBuilder.where.mockResolvedValue(undefined)
-    dbUpdate.mockReturnValue(dbUpdateBuilder)
+    updateTagSync.mockResolvedValue(undefined)
   })
 
   // ── enabled: true ──────────────────────────────────────────────────────────
 
   describe("enabled: true", () => {
-    test("sets syncTagEnabledAt to a Date instance (not null)", async () => {
+    test("calls zaloIntegrationService.updateTagSync with a truthy enabled flag", async () => {
       await invokeAction(true)
 
-      expect(dbUpdate).toHaveBeenCalledTimes(1)
-
-      const setArg = dbUpdateBuilder.set.mock.calls[0]?.[0] as {
-        syncTagEnabledAt: unknown
-      }
-      expect(setArg.syncTagEnabledAt).toBeInstanceOf(Date)
-      expect(setArg.syncTagEnabledAt).not.toBeNull()
-    })
-
-    test("scopes the WHERE clause by both workspaceId and integrationId", async () => {
-      await invokeAction(true)
-
-      expect(dbUpdateBuilder.where).toHaveBeenCalledTimes(1)
-      // and() mock returns [...args], so the array has two eq() calls
-      const whereArg = dbUpdateBuilder.where.mock.calls[0]?.[0] as unknown[]
-      expect(Array.isArray(whereArg)).toBe(true)
-      expect(whereArg).toHaveLength(2)
+      expect(updateTagSync).toHaveBeenCalledTimes(1)
+      expect(updateTagSync).toHaveBeenCalledWith({
+        workspaceId: WORKSPACE_ID,
+        integrationId: INTEGRATION_ID,
+        enabled: true,
+      })
     })
 
     test("calls invalidateCacheByTags with the workspace-scoped zalo key", async () => {
@@ -210,13 +175,14 @@ describe("toggleZaloTagSyncAction", () => {
   // ── enabled: false ─────────────────────────────────────────────────────────
 
   describe("enabled: false", () => {
-    test("sets syncTagEnabledAt to null", async () => {
+    test("calls zaloIntegrationService.updateTagSync with a falsy enabled flag", async () => {
       await invokeAction(false)
 
-      const setArg = dbUpdateBuilder.set.mock.calls[0]?.[0] as {
-        syncTagEnabledAt: unknown
-      }
-      expect(setArg.syncTagEnabledAt).toBeNull()
+      expect(updateTagSync).toHaveBeenCalledWith({
+        workspaceId: WORKSPACE_ID,
+        integrationId: INTEGRATION_ID,
+        enabled: false,
+      })
     })
 
     test("calls invalidateCacheByTags with the workspace-scoped zalo key", async () => {
@@ -226,25 +192,15 @@ describe("toggleZaloTagSyncAction", () => {
         `workspaces:${WORKSPACE_ID}#zalos`,
       ])
     })
-
-    test("scopes the WHERE clause by both workspaceId and integrationId", async () => {
-      await invokeAction(false)
-
-      const whereArg = dbUpdateBuilder.where.mock.calls[0]?.[0] as unknown[]
-      expect(Array.isArray(whereArg)).toBe(true)
-      expect(whereArg).toHaveLength(2)
-    })
   })
 
   // ── no matching row (no-op) ────────────────────────────────────────────────
-  // Zalo action does NOT use .returning() — it returns void.
-  // When no row matches, the update is a no-op at DB level; the action still
-  // completes without throwing.
+  // The service's update is a no-op at DB level when no row matches; the
+  // action still completes without throwing.
 
   describe("no matching row (no-op)", () => {
     test("returns void (undefined data) without throwing", async () => {
-      // where() resolves to undefined (no rows affected) — action returns void
-      dbUpdateBuilder.where.mockResolvedValue(undefined)
+      updateTagSync.mockResolvedValue(undefined)
 
       const result = await invokeAction(true)
 
@@ -253,7 +209,7 @@ describe("toggleZaloTagSyncAction", () => {
     })
 
     test("still calls invalidateCacheByTags even when no row was updated", async () => {
-      dbUpdateBuilder.where.mockResolvedValue(undefined)
+      updateTagSync.mockResolvedValue(undefined)
 
       await invokeAction(false)
 

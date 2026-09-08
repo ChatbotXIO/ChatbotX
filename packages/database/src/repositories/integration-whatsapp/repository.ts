@@ -196,6 +196,21 @@ class IntegrationWhatsappRepository {
   }
 
   /**
+   * No workspace scope — called from the inbound webhook-verification handler
+   * before a workspace context is resolved.
+   */
+  async updateAuthUnscoped(
+    id: string,
+    auth: Record<string, unknown>,
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ auth })
+      .where(eq(integrationWhatsappModel.id, id))
+  }
+
+  /**
    * Resolves the WhatsApp integration that owns a given `Inbox.id`. Ads
    * conversion trigger hook points (tag applied, keyword matched, contact
    * replied) only have the inbox/contactInbox in scope, not the integration

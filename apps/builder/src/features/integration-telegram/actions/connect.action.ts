@@ -1,18 +1,14 @@
 "use server"
 
 import {
-  connectChannelIntegration,
+  telegramIntegrationService,
   userQuotaService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
-import { integrationTypes } from "@chatbotx.io/database/partials"
-import { integrationTelegramModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
-import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
-import { createId } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { isCloud } from "@/env"
 import { integrations } from "@/integration"
@@ -67,10 +63,6 @@ export const connectTelegramAction = authActionClient
         }
 
         const result = await db.transaction(async (tx) => {
-          const auth: TelegramAuthValue = {
-            authType: "secretText",
-            secretText: parsedInput.botToken,
-          }
           let createdWorkspace = false
 
           if (!workspaceId) {
@@ -87,28 +79,15 @@ export const connectTelegramAction = authActionClient
             createdWorkspace = true
           }
 
-          const integrationId = createId()
-          const { wasCreated } = await connectChannelIntegration({
-            tx,
-            ownerId,
-            inboxData: {
-              id: createId(),
+          const { integrationId, wasCreated } =
+            await telegramIntegrationService.connect({
+              tx,
+              ownerId,
               workspaceId: workspaceId as string,
-              name: botData.username,
-              channel: integrationTypes.enum.telegram,
-              sourceId: botData.id,
-            },
-            insertIntegration: async (inboxId) => {
-              await tx.insert(integrationTelegramModel).values({
-                id: integrationId,
-                inboxId,
-                workspaceId: workspaceId as string,
-                botId: botData.id,
-                name: botData.username,
-                auth,
-              })
-            },
-          })
+              botId: botData.id,
+              botUsername: botData.username,
+              botToken: parsedInput.botToken,
+            })
 
           // Register webhook URL with Telegram
           const webhookUrl = buildBrokerCallbackUrl(

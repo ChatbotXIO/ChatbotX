@@ -1,18 +1,18 @@
 "use server"
 
-import { buildContext } from "@chatbotx.io/business"
+import {
+  buildContext,
+  instagramIntegrationService,
+} from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   type InstagramConversationStarter,
   type InstagramPersistentMenu,
   instagramPersistentMenuTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  flowVersionModel,
-  integrationInstagramModel,
-} from "@chatbotx.io/database/schema"
+import { flowVersionModel } from "@chatbotx.io/database/schema"
 import type {
   IntegrationInstagramModel,
   WorkspaceModel,
@@ -59,14 +59,15 @@ export const updateInstagramAction = workspaceActionClient
             id,
           })
 
-          await tx
-            .update(integrationInstagramModel)
-            .set({
+          await instagramIntegrationService.updateProfileFields(
+            { id },
+            {
               welcomeFlowId: parsedInput.welcomeFlowId,
               conversationStarters: parsedInput.conversationStarters,
               persistentMenus: parsedInput.persistentMenus,
-            })
-            .where(eq(integrationInstagramModel.id, id))
+            },
+            tx,
+          )
 
           if (integrationInstagramData) {
             const auth = integrationInstagramData.auth as InstagramAuthValue

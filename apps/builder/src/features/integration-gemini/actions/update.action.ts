@@ -1,8 +1,6 @@
 "use server"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
-import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationGeminiModel } from "@chatbotx.io/database/schema"
+import { integrationGeminiService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -24,23 +22,8 @@ export const updateGeminiAction = workspaceActionClient
       parsedInput: UpdateGeminiRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      const integrationGemini = await findOrFail({
-        table: integrationGeminiModel,
-        where: { workspaceId },
-        message: "Integration Gemini not found",
-      })
-
-      await db
-        .update(integrationGeminiModel)
-        .set(parsedInput)
-        .where(eq(integrationGeminiModel.id, integrationGemini.id))
+      await integrationGeminiService.update(workspaceId, parsedInput)
 
       await aiIntegrationService.invalidateCache(workspaceId, "gemini")
-
-      await auditService.record({
-        workspaceId,
-        action: "update",
-        detail: "updated the Gemini integration configuration",
-      })
     },
   )

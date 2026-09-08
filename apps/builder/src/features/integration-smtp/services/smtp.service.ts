@@ -1,17 +1,7 @@
-import {
-  connectChannelIntegration,
-  inboxService,
-  workspaceService,
-} from "@chatbotx.io/business"
-import { auditService, isSameJsonValue } from "@chatbotx.io/business/audit"
+import { integrationSmtpService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
-import { integrationSmtpModel } from "@chatbotx.io/database/schema"
-import type { SmtpAuthValue } from "@chatbotx.io/integration-smtp"
 import { smtpHostMap } from "@chatbotx.io/integration-smtp"
 import { createSmtpTransporter } from "@chatbotx.io/mail/transport"
-import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import type { CreateSmtpRequest, UpdateSmtpRequest } from "../schema/mutation"
 
@@ -39,65 +29,28 @@ export async function verifySmtpConnection(input: CreateSmtpRequest) {
   }
 }
 
+const resolveHostAndPort = (input: {
+  provider: CreateSmtpRequest["provider"]
+  host: string
+  port: number
+}) => {
+  if (input.provider !== "other") {
+    return smtpHostMap[input.provider]
+  }
+  return { host: input.host, port: input.port }
+}
+
 export async function createSmtp(
   workspaceId: string,
   input: CreateSmtpRequest,
 ) {
-  let { host, port, fromAddress, ...rest } = input
   await verifySmtpConnection(input)
-
-  if (input.provider !== "other") {
-    const defaultHostAndPort = smtpHostMap[input.provider]
-    host = defaultHostAndPort.host
-    port = defaultHostAndPort.port
-  }
-
-  const workspace = await workspaceService.find({ where: { id: workspaceId } })
-  if (!workspace) {
-    throw new ChatbotXException("Workspace not found")
-  }
-
-  const { inbox, wasCreated } = await db.transaction(async (tx) => {
-    const smtpId = createId()
-    const name = input.username
-
-    return await connectChannelIntegration({
-      tx,
-      ownerId: workspace.ownerId,
-      inboxData: {
-        id: smtpId,
-        workspaceId,
-        channel: channelTypes.enum.smtp,
-        name,
-        sourceId: smtpId,
-      },
-      insertIntegration: async (inboxId) => {
-        await tx.insert(integrationSmtpModel).values({
-          id: smtpId,
-          name,
-          workspaceId,
-          inboxId,
-          fromAddress,
-          auth: {
-            authType: "custom" as const,
-            ...rest,
-            host,
-            port,
-          },
-        })
-      },
-    })
+  const { host, port } = resolveHostAndPort(input)
+  return await integrationSmtpService.create(workspaceId, {
+    ...input,
+    host,
+    port,
   })
-
-  if (wasCreated) {
-    await auditService.record({
-      workspaceId,
-      action: "connect",
-      detail: `connected a new SMTP channel (#${inbox.id})`,
-    })
-  }
-
-  return inbox
 }
 
 export async function updateSmtp(
@@ -106,93 +59,14 @@ export async function updateSmtp(
   input: UpdateSmtpRequest,
 ) {
   await verifySmtpConnection(input)
-
-  const integration = await findOrFail({
-    table: integrationSmtpModel,
-    where: { id, workspaceId },
-    message: "SMTP integration not found",
-  })
-
-  const currentAuth = integration.auth as SmtpAuthValue
-  const provider = input.provider ?? currentAuth.provider
-
-  let host = input.host || currentAuth.host
-  let port = input.port || currentAuth.port
-
-  if (provider !== "other") {
-    const defaults = smtpHostMap[provider]
-    host = defaults.host
-    port = defaults.port
-  }
-
-  const updatedAuth: SmtpAuthValue = {
-    authType: "custom",
-    provider,
+  const { host, port } = resolveHostAndPort(input)
+  return await integrationSmtpService.update(workspaceId, id, {
+    ...input,
     host,
     port,
-    username: input.username ?? currentAuth.username,
-    password: input.password ?? currentAuth.password,
-  }
-
-  const name = input.username ?? integration.name
-
-  const updated = await db
-    .update(integrationSmtpModel)
-    .set({ auth: updatedAuth, name, fromAddress: input.fromAddress })
-    .where(eq(integrationSmtpModel.id, integration.id))
-    .returning()
-    .then((result) => result[0])
-
-  const hasChanged = !isSameJsonValue(
-    { auth: updatedAuth, name, fromAddress: input.fromAddress },
-    {
-      auth: currentAuth,
-      name: integration.name,
-      fromAddress: integration.fromAddress,
-    },
-  )
-
-  if (hasChanged) {
-    await auditService.record({
-      workspaceId,
-      action: "update",
-      detail: "updated the SMTP channel configuration",
-    })
-  }
-
-  return updated
+  })
 }
 
 export async function deleteSmtp(workspaceId: string, id: string) {
-  const [integration, workspace] = await Promise.all([
-    findOrFail({
-      table: integrationSmtpModel,
-      where: {
-        id,
-        workspaceId,
-      },
-      message: "SMTP integration not found",
-    }),
-    workspaceService.findById({ id: workspaceId }),
-  ])
-
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(integrationSmtpModel)
-      .where(eq(integrationSmtpModel.id, integration.id))
-
-    await inboxService.disconnect({
-      inboxId: integration.inboxId,
-      ownerId: workspace.ownerId,
-      workspaceId,
-      reason: "manual",
-      tx,
-    })
-  })
-
-  await auditService.record({
-    workspaceId,
-    action: "disconnect",
-    detail: `disconnected the SMTP channel (#${integration.id})`,
-  })
+  await integrationSmtpService.delete(workspaceId, id)
 }

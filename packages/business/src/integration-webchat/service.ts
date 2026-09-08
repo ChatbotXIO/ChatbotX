@@ -23,6 +23,8 @@ export type CreateWebchatRequest = {
   welcomeFlowId?: string | null
 }
 
+export type UpdateWebchatRequest = Partial<CreateWebchatRequest>
+
 class IntegrationWebchatService extends BaseService {
   /**
    * Provisions a new Inbox + IntegrationWebchat row together, mirroring
@@ -84,6 +86,56 @@ class IntegrationWebchatService extends BaseService {
       .returning()
 
     return created
+  }
+
+  findByWorkspaceIdAndId(where: { id: string; workspaceId: string }) {
+    return findOrFail({
+      table: integrationWebchatModel,
+      where,
+      message: "Integration webchat not found",
+    })
+  }
+
+  listByWorkspaceId(props: {
+    workspaceId: string
+    pagination?: { limit: number; offset: number } | null
+  }) {
+    const where = { workspaceId: props.workspaceId }
+    return Promise.all([
+      db.query.integrationWebchatModel.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        ...props.pagination,
+      }),
+      props.pagination?.limit
+        ? db.$count(
+            integrationWebchatModel,
+            eq(integrationWebchatModel.workspaceId, props.workspaceId),
+          )
+        : Promise.resolve(1),
+    ])
+  }
+
+  async update(
+    where: { workspaceId: string; id: string },
+    data: UpdateWebchatRequest & {
+      welcomeFlowId?: string | null
+      authorizedDomains?: string[]
+    },
+  ): Promise<void> {
+    const existing = await this.findByWorkspaceIdAndId(where)
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(integrationWebchatModel)
+        .set({
+          ...data,
+          conversationStarters: data.conversationStarters as never,
+          persistentMenus: data.persistentMenus as never,
+          workspaceId: where.workspaceId,
+        })
+        .where(eq(integrationWebchatModel.id, existing.id))
+    })
   }
 
   async delete(input: { workspaceId: string; id: string }): Promise<void> {

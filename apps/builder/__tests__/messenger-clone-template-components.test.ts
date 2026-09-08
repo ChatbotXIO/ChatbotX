@@ -17,6 +17,16 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   messengerMessageTemplateModel: {},
 }))
 
+vi.mock("@chatbotx.io/business", () => ({
+  messengerIntegrationService: {
+    findByIdForWorkspace: vi.fn(),
+    findByIds: vi.fn(),
+  },
+  messengerMessageTemplateService: {
+    findByIdForIntegration: vi.fn(),
+  },
+}))
+
 vi.mock("@chatbotx.io/integration-messenger/apis/message-templates", () => ({
   createPageMessageTemplate: vi.fn(),
 }))

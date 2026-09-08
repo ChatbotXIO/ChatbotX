@@ -14,11 +14,27 @@ const findOrFailMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   findOrFail: findOrFailMock,
+  db: {},
+  eq: vi.fn(),
+  and: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationZaloModel: { __table: "IntegrationZalo" },
   integrationTelegramModel: { __table: "IntegrationTelegram" },
+  tagChannelModel: { __table: "TagChannel" },
+}))
+
+vi.mock("@chatbotx.io/database/partials", () => ({
+  channelTypes: { enum: { zalo: "zalo", telegram: "telegram" } },
+}))
+
+vi.mock("@chatbotx.io/utils", () => ({
+  createId: vi.fn(() => "generated-id"),
+}))
+
+vi.mock("../src/inbox/connect-channel", () => ({
+  connectChannelIntegration: vi.fn(),
 }))
 
 beforeEach(() => {

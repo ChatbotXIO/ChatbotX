@@ -1,4 +1,5 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { instagramIntegrationService } from "@chatbotx.io/business"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 
@@ -16,14 +17,7 @@ export const listIntegrationInstagrams = async ({
 }: {
   workspaceId: string
 }): Promise<{ data: IntegrationInstagramModel[] }> => {
-  const data = await db.query.integrationInstagramModel.findMany({
-    where: {
-      workspaceId,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  })
+  const data = await instagramIntegrationService.listByWorkspaceId(workspaceId)
 
   return { data }
 }

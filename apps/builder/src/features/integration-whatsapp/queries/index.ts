@@ -1,5 +1,8 @@
-import type { IntegrationWhatsappResource } from "@chatbotx.io/business"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import {
+  type IntegrationWhatsappResource,
+  integrationWhatsappService,
+} from "@chatbotx.io/business"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
@@ -109,8 +112,5 @@ export const markWhatsappWebhookVerified = async (
     },
   }
 
-  await db
-    .update(integrationWhatsappModel)
-    .set({ auth: updatedAuth })
-    .where(eq(integrationWhatsappModel.id, id))
+  await integrationWhatsappService.markWebhookVerified(id, updatedAuth)
 }

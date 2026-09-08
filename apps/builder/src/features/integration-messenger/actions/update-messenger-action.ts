@@ -1,11 +1,14 @@
 "use server"
 
-import { buildContext, type IntegrationContext } from "@chatbotx.io/business"
+import {
+  buildContext,
+  type IntegrationContext,
+  messengerIntegrationService,
+} from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq } from "@chatbotx.io/database/client"
+import { db } from "@chatbotx.io/database/client"
 import type { MessengerPersona } from "@chatbotx.io/database/partials"
-import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type {
   IntegrationMessengerModel,
   WorkspaceModel,
@@ -83,14 +86,15 @@ export const updateMessenger = async (
         )
       }
 
-      await tx
-        .update(integrationMessengerModel)
-        .set({
+      await messengerIntegrationService.updateProfileFields(
+        { id: ctx.id },
+        {
           ...parsedInput,
           personas: syncedPersonas,
           personaId: defaultPersona?.facebookPersonaId ?? null,
-        })
-        .where(eq(integrationMessengerModel.id, ctx.id))
+        },
+        tx,
+      )
 
       botContext = await buildContext({
         workspaceId: ctx.workspace.id,
