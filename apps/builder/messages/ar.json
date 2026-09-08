@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "الإعدادات العامة",
       "appearanceTitle": "المظهر",
       "playerSettingsTitle": "إعدادات اللاعب",
-      "prizeSettingsTitle": "إعدادات الجوائز"
+      "prizeSettingsTitle": "إعدادات الجوائز",
+      "validationFailed": "يرجى تصحيح الحقول المميزة قبل الحفظ."
     },
     "generalSettings": {
       "showName": "مرئي",

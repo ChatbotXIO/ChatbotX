@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Thiết lập chung",
       "appearanceTitle": "Giao diện",
       "playerSettingsTitle": "Cài đặt người chơi",
-      "prizeSettingsTitle": "Thiết lập giải thưởng"
+      "prizeSettingsTitle": "Thiết lập giải thưởng",
+      "validationFailed": "Vui lòng sửa các trường được đánh dấu trước khi lưu."
     },
     "generalSettings": {
       "showName": "Hiển thị",

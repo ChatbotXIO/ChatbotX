@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Setări generale",
       "appearanceTitle": "Aspect",
       "playerSettingsTitle": "Setări jucător",
-      "prizeSettingsTitle": "Setări premii"
+      "prizeSettingsTitle": "Setări premii",
+      "validationFailed": "Corectați câmpurile evidențiate înainte de a salva."
     },
     "generalSettings": {
       "showName": "Vizibil",

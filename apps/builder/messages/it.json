@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Impostazioni generali",
       "appearanceTitle": "Aspetto",
       "playerSettingsTitle": "Impostazioni giocatore",
-      "prizeSettingsTitle": "Impostazioni premi"
+      "prizeSettingsTitle": "Impostazioni premi",
+      "validationFailed": "Correggi i campi evidenziati prima di salvare."
     },
     "generalSettings": {
       "showName": "Visibile",

@@ -8,12 +8,12 @@ import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-f
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { createId } from "@chatbotx.io/utils"
 import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { createDefaultMinigamePrize } from "../constants"
 import { PrizeItemEditDialog } from "./prize-item-edit-dialog"
 
 type EditTarget =
@@ -22,8 +22,26 @@ type EditTarget =
 
 export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
-  const { control } = useFormContext()
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext()
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
+
+  // `name`/`title` live inside the edit dialog, so their `FormMessage` is not
+  // mounted while the list is shown. Surface the error on the badge instead —
+  // otherwise a blank name blocks submit with nothing visible on screen.
+  const prizeErrors = (
+    errors as {
+      prizeSettings?: {
+        prizes?: { name?: unknown }[]
+        nonWinning?: { title?: unknown }
+      }
+    }
+  ).prizeSettings
+  const hasPrizeNameError = (index: number) =>
+    Boolean(prizeErrors?.prizes?.[index]?.name)
+  const hasNonWinningTitleError = Boolean(prizeErrors?.nonWinning?.title)
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -79,7 +97,11 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
         {fields.map((field, index) => (
           <div className="flex items-center gap-3" key={field.id}>
             <Badge
-              className="w-40 cursor-pointer gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300"
+              className={cn(
+                "w-40 cursor-pointer gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300",
+                hasPrizeNameError(index) &&
+                  "bg-destructive/10 text-destructive ring-1 ring-destructive dark:bg-destructive/20 dark:text-destructive",
+              )}
               render={
                 <button
                   onClick={() => setEditTarget({ variant: "prize", index })}
@@ -115,7 +137,11 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
 
         <div className="flex items-center gap-3">
           <Badge
-            className="w-40 cursor-pointer gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-800"
+            className={cn(
+              "w-40 cursor-pointer gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-800",
+              hasNonWinningTitleError &&
+                "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+            )}
             render={
               <button
                 onClick={() => setEditTarget({ variant: "nonWinning" })}
@@ -143,14 +169,7 @@ export function PrizeListEditor({ workspaceId }: { workspaceId: string }) {
 
       <Button
         className="w-fit"
-        onClick={() =>
-          append({
-            id: createId(),
-            name: "",
-            icon: { mode: "file", url: "" },
-            winRate: 0,
-          })
-        }
+        onClick={() => append(createDefaultMinigamePrize(fields.length, 0))}
         type="button"
         variant="outline"
       >

@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Allmänna inställningar",
       "appearanceTitle": "Utseende",
       "playerSettingsTitle": "Spelarinställningar",
-      "prizeSettingsTitle": "Prisinställningar"
+      "prizeSettingsTitle": "Prisinställningar",
+      "validationFailed": "Åtgärda de markerade fälten innan du sparar."
     },
     "generalSettings": {
       "showName": "Synlig",

@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "一般設定",
       "appearanceTitle": "デザイン",
       "playerSettingsTitle": "プレイヤー設定",
-      "prizeSettingsTitle": "景品設定"
+      "prizeSettingsTitle": "景品設定",
+      "validationFailed": "保存する前に、ハイライトされた項目を修正してください。"
     },
     "generalSettings": {
       "showName": "表示",

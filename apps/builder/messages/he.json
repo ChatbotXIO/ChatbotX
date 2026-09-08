@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "הגדרות כלליות",
       "appearanceTitle": "מראה",
       "playerSettingsTitle": "הגדרות שחקן",
-      "prizeSettingsTitle": "הגדרות פרסים"
+      "prizeSettingsTitle": "הגדרות פרסים",
+      "validationFailed": "יש לתקן את השדות המסומנים לפני השמירה."
     },
     "generalSettings": {
       "showName": "גלוי",
