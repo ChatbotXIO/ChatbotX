@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Paramètres généraux",
       "appearanceTitle": "Apparence",
       "playerSettingsTitle": "Paramètres du joueur",
-      "prizeSettingsTitle": "Paramètres des lots"
+      "prizeSettingsTitle": "Paramètres des lots",
+      "validationFailed": "Veuillez corriger les champs en surbrillance avant d'enregistrer."
     },
     "generalSettings": {
       "showName": "Visible",

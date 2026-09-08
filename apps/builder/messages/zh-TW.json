@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "一般設定",
       "appearanceTitle": "外觀",
       "playerSettingsTitle": "玩家設定",
-      "prizeSettingsTitle": "獎項設定"
+      "prizeSettingsTitle": "獎項設定",
+      "validationFailed": "儲存前請修正標紅的欄位。"
     },
     "generalSettings": {
       "showName": "可見",

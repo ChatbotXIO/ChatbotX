@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Algemene instellingen",
       "appearanceTitle": "Uiterlijk",
       "playerSettingsTitle": "Spelerinstellingen",
-      "prizeSettingsTitle": "Prijsinstellingen"
+      "prizeSettingsTitle": "Prijsinstellingen",
+      "validationFailed": "Corrigeer de gemarkeerde velden voordat je opslaat."
     },
     "generalSettings": {
       "showName": "Zichtbaar",

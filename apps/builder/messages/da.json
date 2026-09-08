@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Generelle indstillinger",
       "appearanceTitle": "Udseende",
       "playerSettingsTitle": "Spillerindstillinger",
-      "prizeSettingsTitle": "Gevinstindstillinger"
+      "prizeSettingsTitle": "Gevinstindstillinger",
+      "validationFailed": "Ret venligst de markerede felter, før du gemmer."
     },
     "generalSettings": {
       "showName": "Synlig",

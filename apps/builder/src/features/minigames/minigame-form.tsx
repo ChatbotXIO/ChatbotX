@@ -289,7 +289,14 @@ export function MinigameForm(props: MinigameFormProps) {
     prizeNameCustomFieldId: prizeSettings?.prizeNameCustomFieldId ?? null,
   }
 
-  const onSubmit = form.handleSubmit((values) => action.execute(values))
+  // Several required fields (prize name, non-winning title, outcome messages)
+  // only render inside dialogs, so their `FormMessage` is unmounted when Save
+  // is pressed. Without this toast a failed validation is completely silent
+  // and the button reads as broken.
+  const onSubmit = form.handleSubmit(
+    (values) => action.execute(values),
+    () => toast.error(t("minigames.form.validationFailed")),
+  )
 
   return (
     <Form {...form}>

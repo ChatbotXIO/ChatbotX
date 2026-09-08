@@ -5611,7 +5611,8 @@
       "generalSettingsTitle": "常规设置",
       "appearanceTitle": "外观",
       "playerSettingsTitle": "玩家设置",
-      "prizeSettingsTitle": "奖品设置"
+      "prizeSettingsTitle": "奖品设置",
+      "validationFailed": "保存前请修正标红的字段。"
     },
     "generalSettings": {
       "showName": "可见",

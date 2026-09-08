@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "General Setting",
       "appearanceTitle": "Appearance",
       "playerSettingsTitle": "Player Settings",
-      "prizeSettingsTitle": "Prize Settings"
+      "prizeSettingsTitle": "Prize Settings",
+      "validationFailed": "Please fix the highlighted fields before saving."
     },
     "generalSettings": {
       "showName": "Visible",

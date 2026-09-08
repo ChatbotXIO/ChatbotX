@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Pengaturan Umum",
       "appearanceTitle": "Tampilan",
       "playerSettingsTitle": "Pengaturan Pemain",
-      "prizeSettingsTitle": "Pengaturan Hadiah"
+      "prizeSettingsTitle": "Pengaturan Hadiah",
+      "validationFailed": "Perbaiki kolom yang ditandai sebelum menyimpan."
     },
     "generalSettings": {
       "showName": "Terlihat",

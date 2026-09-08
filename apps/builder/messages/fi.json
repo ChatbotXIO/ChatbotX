@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Yleiset asetukset",
       "appearanceTitle": "Ulkoasu",
       "playerSettingsTitle": "Pelaaja-asetukset",
-      "prizeSettingsTitle": "Palkintoasetukset"
+      "prizeSettingsTitle": "Palkintoasetukset",
+      "validationFailed": "Korjaa korostetut kentät ennen tallentamista."
     },
     "generalSettings": {
       "showName": "Näkyvä",

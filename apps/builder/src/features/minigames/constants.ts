@@ -3,6 +3,7 @@ import type {
   MinigameGeneralSettings,
   MinigameNonWinningMessageSettings,
   MinigamePlayerSettings,
+  MinigamePrizeItem,
   MinigamePrizeSettings,
   MinigameType,
   MinigameWinningMessageSettings,
@@ -199,14 +200,29 @@ export function getDefaultMinigamePlayerSettings(): MinigamePlayerSettings {
 
 const DEFAULT_PRIZE_COUNT = 3
 
+/**
+ * A prize row that already satisfies `minigamePrizeItemSchema`. The name must
+ * never start out empty: `name` is `min(1)` and is only editable inside the
+ * prize dialog, so a blank one makes the form fail validation with the error
+ * attached to a field that isn't rendered — the Save button then looks dead.
+ */
+export function createDefaultMinigamePrize(
+  index: number,
+  winRate: number,
+): MinigamePrizeItem {
+  return {
+    id: createId(),
+    name: `Prize ${index + 1}`,
+    icon: { mode: "file", url: "" },
+    winRate,
+  }
+}
+
 export function getDefaultMinigamePrizeSettings(): MinigamePrizeSettings {
   return {
-    prizes: Array.from({ length: DEFAULT_PRIZE_COUNT }, (_, index) => ({
-      id: createId(),
-      name: `Prize ${index + 1}`,
-      icon: { mode: "file" as const, url: "" },
-      winRate: 25,
-    })),
+    prizes: Array.from({ length: DEFAULT_PRIZE_COUNT }, (_, index) =>
+      createDefaultMinigamePrize(index, 25),
+    ),
     nonWinning: {
       title: "Non-winning",
       loseRate: 25,

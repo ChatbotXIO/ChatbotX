@@ -5635,7 +5635,8 @@
       "generalSettingsTitle": "Genel Ayar",
       "appearanceTitle": "Görünüm",
       "playerSettingsTitle": "Oyuncu Ayarları",
-      "prizeSettingsTitle": "Ödül Ayarları"
+      "prizeSettingsTitle": "Ödül Ayarları",
+      "validationFailed": "Kaydetmeden önce vurgulanan alanları düzeltin."
     },
     "generalSettings": {
       "showName": "Görünür",
