@@ -314,6 +314,61 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "coupons.archiveTopic",
+    "path": "/v1/coupon-topics/{id}/archive",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.createTopic",
+    "path": "/v1/coupon-topics",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "coupons.deleteTopic",
+    "path": "/v1/coupon-topics/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.getTopic",
+    "path": "/v1/coupon-topics/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.issueCoupon",
+    "path": "/v1/coupon-topics/{id}/issue",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.listContactCoupons",
+    "path": "/v1/contacts/{contactId}/coupons",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.listCoupons",
+    "path": "/v1/coupons",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.listTopics",
+    "path": "/v1/coupon-topics",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.markCouponUsed",
+    "path": "/v1/coupon-topics/{id}/mark-used",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.unarchiveTopic",
+    "path": "/v1/coupon-topics/{id}/unarchive",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "coupons.updateTopic",
+    "path": "/v1/coupon-topics/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "customFields.create",
     "path": "/v1/custom-fields",
   },
@@ -406,6 +461,51 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "keywords.list",
     "path": "/v1/keywords",
+  },
+  {
+    "method": "POST",
+    "operationId": "productCategories.create",
+    "path": "/v1/product-categories",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "productCategories.delete",
+    "path": "/v1/product-categories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "productCategories.list",
+    "path": "/v1/product-categories",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "productCategories.update",
+    "path": "/v1/product-categories/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "products.create",
+    "path": "/v1/products",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "products.delete",
+    "path": "/v1/products/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.get",
+    "path": "/v1/products/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.list",
+    "path": "/v1/products",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "products.update",
+    "path": "/v1/products/{id}",
   },
   {
     "method": "GET",
