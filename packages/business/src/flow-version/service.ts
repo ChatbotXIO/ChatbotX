@@ -316,6 +316,35 @@ class FlowVersionService extends BaseService {
       .where(eq(flowVersionModel.id, flowVersion.id))
   }
 
+  /**
+   * Same as `updateDraft`, but resolves the draft version from a flow id
+   * instead of a flow-version id — for callers (like the public API) that
+   * only know the flow.
+   */
+  async updateDraftByFlowId(input: {
+    workspaceId: string
+    flowId: string
+    nodes: FlowVersionModel["nodes"]
+    edges: FlowVersionModel["edges"]
+  }): Promise<void> {
+    const draftVersion = await this.findDraft({
+      flowId: input.flowId,
+      workspaceId: input.workspaceId,
+    })
+
+    if (!draftVersion) {
+      throw notFoundException("Draft flow version not found")
+    }
+
+    await db
+      .update(flowVersionModel)
+      .set({
+        nodes: input.nodes,
+        edges: input.edges,
+      })
+      .where(eq(flowVersionModel.id, draftVersion.id))
+  }
+
   async invalidateList(flowId: string): Promise<void> {
     await this.invalidateCacheTags(`flows:${flowId}:versions`)
   }

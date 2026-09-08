@@ -286,6 +286,11 @@ class AiAgentService extends BaseService {
       throw notFoundException("AI agent not found")
     }
 
+    const hasChanges = Object.values(data).some((value) => value !== undefined)
+    if (!hasChanges) {
+      return
+    }
+
     await db.transaction(async (tx) => {
       if (data.isDefault) {
         await tx

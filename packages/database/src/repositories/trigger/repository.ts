@@ -75,6 +75,7 @@ export const triggerRepository = {
       tx.query.triggerModel.findMany({
         where: { workspaceId: input.workspaceId },
         with: { conditions: true },
+        orderBy: { createdAt: "desc", id: "desc" },
         limit: input.limit,
         offset: input.offset,
       }),

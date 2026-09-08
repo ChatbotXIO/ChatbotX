@@ -183,9 +183,9 @@ export const flowsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, nodes, edges } = input
-      await flowVersionService.updateDraft({
+      await flowVersionService.updateDraftByFlowId({
         workspaceId: context.workspace.id,
-        id,
+        flowId: id,
         nodes,
         edges,
       })

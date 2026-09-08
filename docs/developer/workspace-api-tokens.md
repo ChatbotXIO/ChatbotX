@@ -151,10 +151,10 @@ method the corresponding UI action calls (`.agents/rules/data-access.md`).
 | Flows | `DELETE /v1/flows/{id}` | `flowService.deleteMany` |
 | Flows | `POST /v1/flows/{id}/duplicate` | `flowService.duplicate` |
 | Flows | `POST /v1/flows/{id}/publish` | `flowVersionService.publish` |
-| Flows | `PUT /v1/flows/{id}/draft` | `flowVersionService.updateDraft` |
+| Flows | `PUT /v1/flows/{id}/draft` | `flowVersionService.updateDraftByFlowId` |
 | Flows | `GET /v1/flows/{id}/versions` | `flowVersionService.list` |
 | Flows | `POST /v1/flows/import` | `importService.startFlowImport` |
-| Triggers | `GET /v1/triggers` | `triggerService.listByWorkspaceId` + `triggerRepository.findWithConditions` |
+| Triggers | `GET /v1/triggers` | `triggerRepository.listPaginatedWithConditions` |
 | Triggers | `GET /v1/triggers/{id}` | `triggerRepository.findWithConditions` |
 | Triggers | `POST /v1/triggers` | `triggerService.create` |
 | Triggers | `PUT /v1/triggers/{id}` | `triggerService.updateWithConditions` |

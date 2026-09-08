@@ -108,8 +108,8 @@ class FlowService extends BaseService {
   ): Promise<{
     data: Awaited<ReturnType<typeof flowRepository.listWithVersions>>
     pageCount: number
-    page?: number
-    perPage?: number
+    limit?: number
+    offset?: number
   }> {
     const pagination = parsePagination(input)
 

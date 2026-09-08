@@ -38,6 +38,7 @@ export type UpdateAutomatedResponseRequest = {
 export type FindAutomatedResponseRequest = {
   workspaceId: string
   id: string
+  type?: AutomatedResponseType
 }
 
 export type ListAutomatedResponsesRequest = {
@@ -60,6 +61,7 @@ class AutomatedResponseService extends BaseService {
       where: {
         workspaceId: input.workspaceId,
         id: input.id,
+        ...(input.type ? { type: input.type } : {}),
       },
     })
   }
@@ -212,7 +214,7 @@ class AutomatedResponseService extends BaseService {
   }
 
   async update(
-    ctx: { id: string; workspaceId: string },
+    ctx: { id: string; workspaceId: string; type?: AutomatedResponseType },
     data: UpdateAutomatedResponseRequest,
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
@@ -221,7 +223,11 @@ class AutomatedResponseService extends BaseService {
     // Fetched before the write so a Save that resubmits identical values
     // doesn't produce an "updated" audit entry.
     const existing = await client.query.automatedResponseModel.findFirst({
-      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+        ...(ctx.type ? { type: ctx.type } : {}),
+      },
       columns: { folderId: true, keywords: true, text: true, flowId: true },
     })
 
@@ -264,6 +270,7 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.id, ctx.id),
           eq(automatedResponseModel.workspaceId, ctx.workspaceId),
+          ...(ctx.type ? [eq(automatedResponseModel.type, ctx.type)] : []),
         ),
       )
       .returning()
@@ -298,14 +305,18 @@ class AutomatedResponseService extends BaseService {
   }
 
   async setStatus(
-    ctx: { id: string; workspaceId: string },
+    ctx: { id: string; workspaceId: string; type?: AutomatedResponseType },
     status: boolean,
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
 
     const existing = await client.query.automatedResponseModel.findFirst({
-      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+        ...(ctx.type ? { type: ctx.type } : {}),
+      },
       columns: { status: true },
     })
 
@@ -316,6 +327,7 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.id, ctx.id),
           eq(automatedResponseModel.workspaceId, ctx.workspaceId),
+          ...(ctx.type ? [eq(automatedResponseModel.type, ctx.type)] : []),
         ),
       )
       .returning()
@@ -339,6 +351,7 @@ class AutomatedResponseService extends BaseService {
     workspaceId: string,
     ids: string[],
     tx?: DatabaseClient,
+    type?: AutomatedResponseType,
   ): Promise<void> {
     await assertDeletable({
       workspaceId,
@@ -354,6 +367,7 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.workspaceId, workspaceId),
           inArray(automatedResponseModel.id, ids),
+          ...(type ? [eq(automatedResponseModel.type, type)] : []),
         ),
       )
       .returning({ id: automatedResponseModel.id })

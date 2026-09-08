@@ -57,6 +57,7 @@ export const keywordsPublicRouter = {
         await automatedResponseService.findOrFail({
           workspaceId: context.workspace.id,
           id: input.id,
+          type: "inbound",
         }),
     ),
 
@@ -107,9 +108,10 @@ export const keywordsPublicRouter = {
       await automatedResponseService.findOrFail({
         workspaceId: context.workspace.id,
         id,
+        type: "inbound",
       })
       return await automatedResponseService.update(
-        { workspaceId: context.workspace.id, id },
+        { workspaceId: context.workspace.id, id, type: "inbound" },
         {
           ...rest,
           keywords: keywords?.map((value) => ({ value })),
@@ -131,9 +133,10 @@ export const keywordsPublicRouter = {
       await automatedResponseService.findOrFail({
         workspaceId: context.workspace.id,
         id: input.id,
+        type: "inbound",
       })
       return await automatedResponseService.setStatus(
-        { workspaceId: context.workspace.id, id: input.id },
+        { workspaceId: context.workspace.id, id: input.id, type: "inbound" },
         input.status,
       )
     }),
@@ -149,8 +152,11 @@ export const keywordsPublicRouter = {
     .input(z.object({ id: zodBigintAsString() }))
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await automatedResponseService.deleteMany(context.workspace.id, [
-        input.id,
-      ])
+      await automatedResponseService.deleteMany(
+        context.workspace.id,
+        [input.id],
+        undefined,
+        "inbound",
+      )
     }),
 }

@@ -56,7 +56,7 @@ const flowService = {
 }
 const flowVersionService = {
   publish: vi.fn(),
-  updateDraft: vi.fn(),
+  updateDraftByFlowId: vi.fn(),
   list: vi.fn(),
 }
 const importService = {
@@ -285,17 +285,17 @@ describe("POST /v1/flows/{id}/publish", () => {
 describe("PUT /v1/flows/{id}/draft", () => {
   const procedure = findProcedure("PUT", "/v1/flows/{id}/draft")
 
-  test("delegates to flowVersionService.updateDraft", async () => {
-    flowVersionService.updateDraft.mockResolvedValueOnce(undefined)
+  test("delegates to flowVersionService.updateDraftByFlowId", async () => {
+    flowVersionService.updateDraftByFlowId.mockResolvedValueOnce(undefined)
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { id: "flow-1", nodes: [], edges: [] },
     })
 
-    expect(flowVersionService.updateDraft).toHaveBeenCalledWith({
+    expect(flowVersionService.updateDraftByFlowId).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      id: "flow-1",
+      flowId: "flow-1",
       nodes: [],
       edges: [],
     })

@@ -148,6 +148,7 @@ describe("GET /v1/keywords/{id}", () => {
     expect(automatedResponseService.findOrFail).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "keyword-1",
+      type: "inbound",
     })
   })
 })
@@ -191,9 +192,10 @@ describe("PUT /v1/keywords/{id}", () => {
     expect(automatedResponseService.findOrFail).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "keyword-1",
+      type: "inbound",
     })
     expect(automatedResponseService.update).toHaveBeenCalledWith(
-      { workspaceId: "workspace-1", id: "keyword-1" },
+      { workspaceId: "workspace-1", id: "keyword-1", type: "inbound" },
       { keywords: [{ value: "hello" }] },
     )
   })
@@ -216,7 +218,7 @@ describe("PATCH /v1/keywords/{id}/status", () => {
     })
 
     expect(automatedResponseService.setStatus).toHaveBeenCalledWith(
-      { workspaceId: "workspace-1", id: "keyword-1" },
+      { workspaceId: "workspace-1", id: "keyword-1", type: "inbound" },
       false,
     )
   })
@@ -236,6 +238,8 @@ describe("DELETE /v1/keywords/{id}", () => {
     expect(automatedResponseService.deleteMany).toHaveBeenCalledWith(
       "workspace-1",
       ["keyword-1"],
+      undefined,
+      "inbound",
     )
   })
 })

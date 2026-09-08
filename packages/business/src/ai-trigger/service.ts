@@ -54,6 +54,7 @@ class AITriggerService extends BaseService {
       .values({
         id: createId(),
         workspaceId: input.workspaceId,
+        questions: [],
         ...input.data,
       })
       .returning()
@@ -68,6 +69,11 @@ class AITriggerService extends BaseService {
     data: AITriggerWriteData,
   ): Promise<AITriggerModel> {
     const aiTrigger = await this.findOrFail(ctx)
+
+    const hasChanges = Object.values(data).some((value) => value !== undefined)
+    if (!hasChanges) {
+      return aiTrigger
+    }
 
     const [updated] = await db
       .update(aiTriggerModel)

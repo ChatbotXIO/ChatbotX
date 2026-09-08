@@ -65,13 +65,6 @@ class TriggerService extends BaseService {
     return created
   }
 
-  async listByWorkspaceId(workspaceId: string): Promise<TriggerModel[]> {
-    return await db
-      .select()
-      .from(triggerModel)
-      .where(eq(triggerModel.workspaceId, workspaceId))
-  }
-
   /**
    * SQL-paginated triggers with their real `conditions` joined in — for the
    * public API's `GET /v1/triggers`, which previously loaded every trigger

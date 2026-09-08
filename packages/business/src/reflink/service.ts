@@ -93,6 +93,11 @@ class ReflinkService extends BaseService {
   ): Promise<ReflinkModel> {
     const reflink = await this.findOrFail(ctx)
 
+    const hasChanges = Object.values(data).some((value) => value !== undefined)
+    if (!hasChanges) {
+      return reflink
+    }
+
     try {
       const [updated] = await db
         .update(reflinkModel)
