@@ -19,7 +19,6 @@ import type {
 } from "@chatbotx.io/database/types"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
-import { dispatchAuditRecordSafely } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { channelLimitReachedException } from "../errors"
 import { logger } from "../logger"
@@ -205,7 +204,12 @@ class InboxService extends BaseService {
       if (existing.status === inboxStatuses.enum.disconnected) {
         const [updated] = await tx
           .update(inboxModel)
-          .set({ status: inboxStatuses.enum.connected, name: data.name })
+          .set({
+            status: inboxStatuses.enum.connected,
+            name: data.name,
+            disconnectedAt: null,
+            disconnectReason: null,
+          })
           .where(eq(inboxModel.id, existing.id))
           .returning()
         return { inbox: updated, wasCreated: true }
@@ -277,27 +281,6 @@ class InboxService extends BaseService {
           "inbox disconnect: workspace usage channel decrement failed",
         )
       })
-
-    // Best-effort forensic trail. The `disconnectReason` column above is the
-    // primary trail (works on every edition); this is a supplementary layer
-    // that's gated off on community. Dispatched indirectly (not via
-    // `auditService` directly) so this file — reachable from the Edge-safe
-    // barrel through inbox/index.ts — never statically pulls in
-    // `node:async_hooks` via `audit/context.ts`.
-    await dispatchAuditRecordSafely(
-      {
-        action: "disconnect",
-        detail: `Inbox ${props.inboxId} disconnected (${props.reason})`,
-        workspaceId: props.workspaceId,
-        source: props.reason,
-      },
-      "inbox disconnect: audit record failed",
-    ).catch((err) => {
-      logger.warn(
-        { err, inboxId: props.inboxId, workspaceId: props.workspaceId },
-        "inbox disconnect: audit record failed",
-      )
-    })
   }
 
   async isConnected(props: {

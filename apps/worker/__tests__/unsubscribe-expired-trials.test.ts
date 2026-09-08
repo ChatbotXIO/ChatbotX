@@ -140,27 +140,23 @@ describe("unsubscribeExpiredTrials", () => {
     expect(addBulk).not.toHaveBeenCalled()
   })
 
-  test("aborts and logs without enqueuing when the batch exceeds the circuit breaker threshold", async () => {
+  test("enqueues every owner and follows the cursor for a large page", async () => {
     const userIds = Array.from({ length: 21 }, (_, i) => `owner-${i}`)
-    listDueExpiredTrials.mockResolvedValue({ userIds, nextCursor: undefined })
-
-    await unsubscribeExpiredTrials()
-
-    expect(addBulk).not.toHaveBeenCalled()
-    expect(add).not.toHaveBeenCalled()
-    expect(loggerError).toHaveBeenCalledWith(
-      expect.objectContaining({ count: 21 }),
-      expect.stringContaining("abnormal batch size"),
-    )
-  })
-
-  test("runs normally at the circuit breaker threshold", async () => {
-    const userIds = Array.from({ length: 19 }, (_, i) => `owner-${i}`)
-    listDueExpiredTrials.mockResolvedValue({ userIds, nextCursor: undefined })
+    listDueExpiredTrials.mockResolvedValue({
+      userIds,
+      nextCursor: "owner-20",
+    })
 
     await unsubscribeExpiredTrials()
 
     expect(addBulk).toHaveBeenCalledOnce()
-    expect(loggerError).not.toHaveBeenCalled()
+    expect(addBulk.mock.calls[0][0]).toHaveLength(21)
+    expect(add).toHaveBeenCalledWith(
+      "unsubscribeExpiredTrials",
+      { type: "unsubscribeExpiredTrials", data: { cursor: "owner-20" } },
+      expect.objectContaining({
+        jobId: "unsubscribe-expired-trials-scan-owner-20",
+      }),
+    )
   })
 })

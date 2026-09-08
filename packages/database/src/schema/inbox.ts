@@ -5,6 +5,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
+import type { InboxDisconnectReason } from "../partials/conversation"
 import {
   bigintAsString,
   sharedColumns,
@@ -27,7 +28,7 @@ export const inboxModel = pgTable(
       }),
     status: text().notNull().default("connected"),
     disconnectedAt: timestamp(timestampConfig),
-    disconnectReason: text(),
+    disconnectReason: text().$type<InboxDisconnectReason>(),
   },
   (table) => [
     index("Inbox_workspaceId_idx").using(

@@ -159,10 +159,7 @@ export const tenantService = {
    * Every branch is a no-op when already in the target state, so repeated or
    * concurrent calls are safe.
    */
-  async reconcileOwnerEntitlement(
-    ownerId: string,
-    options?: { skipDowngrade?: boolean },
-  ): Promise<void> {
+  async reconcileOwnerEntitlement(ownerId: string): Promise<void> {
     const [hasWhiteLabel, tenant] = await Promise.all([
       userQuotaService.hasWhiteLabelEntitlement(ownerId),
       this.findByOwner(ownerId),
@@ -177,7 +174,7 @@ export const tenantService = {
       return
     }
 
-    if (tenant?.status === "active" && !options?.skipDowngrade) {
+    if (tenant?.status === "active") {
       await this.downgrade(ownerId)
     }
   },
