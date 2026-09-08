@@ -130,24 +130,5 @@ export const contactInboxModel = pgTable(
       .where(
         sql`${table.referral}->>'adId' IS NOT NULL AND ${table.referral}->>'source' = 'ADS'`,
       ),
-    // Serves EVERY ad-referral family, keyed on `source` rather than pinned to
-    // one value of it. `ContactInbox_referral_adId_idx` above cannot: its
-    // partial predicate hard-codes `source = 'ADS'`, and `adConversationPredicate`
-    // binds that value as a query PARAMETER, which the planner cannot prove
-    // implies a literal partial predicate — so a partial-on-value index stops
-    // being usable the moment the value is parameterized.
-    //
-    // `adId IS NOT NULL` stays partial because the query states it verbatim
-    // (the planner can prove that one) and it prunes every non-ad ContactInbox.
-    // `source` leads so an equality on it is an index-key lookup, which is what
-    // makes one index cover both Messenger's `ADS` and WhatsApp's `ad` — and
-    // any family added later, without another migration.
-    index("ContactInbox_referral_source_adId_idx")
-      .using(
-        "btree",
-        sql`(${table.referral}->>'source')`,
-        sql`(${table.referral}->>'adId')`,
-      )
-      .where(sql`${table.referral}->>'adId' IS NOT NULL`),
   ],
 )

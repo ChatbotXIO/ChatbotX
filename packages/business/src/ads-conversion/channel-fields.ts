@@ -187,10 +187,8 @@ export type AdReferralInfo = {
  * MUST stay in sync (enforced by a shared case-matrix unit test):
  *
  *  - WhatsApp CTWA: `referral.ctwaClid` is set and non-empty.
- *  - An ad id plus a PAID `referral.source` — Messenger/Instagram CTM/CTID
- *    (`"ADS"`, which excludes ig.me SHORTLINK referrals) or a WhatsApp Status
- *    ad placement (`"ad"`, which excludes organic `"post"` referrals and is the
- *    one case Meta sends no click id for).
+ *  - Messenger/Instagram CTM/CTID: `referral.adId` is set AND
+ *    `referral.source === "ADS"` (excludes ig.me SHORTLINK referrals).
  *
  * No `channel` parameter is needed — same reasoning as `anyChannelAdConversationPredicate`:
  * the two branches key off channel-exclusive referral fields, so they can

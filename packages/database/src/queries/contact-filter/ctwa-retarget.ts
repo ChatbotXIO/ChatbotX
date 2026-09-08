@@ -237,20 +237,13 @@ function buildConversationsPredicate(input: CtwaSegmentPredicateInput): SQL {
   if (input.adId) {
     predicates.push(sql`${contactInboxModel.referral}->>'adId' = ${input.adId}`)
   }
-  // Channel scoping is REQUIRED (not just an optimization) for EVERY
-  // single-channel branch:
-  //  - messenger/instagram share one ad-referral predicate (`referral.adId` +
-  //    `source === "ADS"`), and `ContactInbox.channel` is the only column
-  //    distinguishing an Instagram-via-Messenger inbox from a genuine
-  //    Messenger one;
-  //  - whatsapp USED to be intrinsically scoped, because `referral.ctwaClid`
-  //    exists on no other channel. `adConversationPredicate` widened
-  //    that to also accept `adId` + `source === "ad"` (Status ad placements
-  //    carry no click id), and "lowercase `ad` means WhatsApp" is a
-  //    convention no schema enforces — so the branch now needs the same
-  //    explicit scope the other two always had.
+  // Channel scoping is REQUIRED (not just an optimization) for
+  // messenger/instagram: both share one ad-referral predicate (`referral.adId`
+  // + `source === "ADS"`), and `ContactInbox.channel` is the only column
+  // distinguishing an Instagram-via-Messenger inbox from a genuine Messenger
+  // one. WhatsApp needs none — `referral.ctwaClid` exists on no other channel.
   // Added independent of any integration id narrowing below.
-  if (scopedChannel) {
+  if (scopedChannel && scopedChannel !== channelTypes.enum.whatsapp) {
     predicates.push(sql`${contactInboxModel.channel} = ${scopedChannel}`)
   }
   // NOTE: no `Contact.workspaceId` predicate here. In the filter EXISTS the

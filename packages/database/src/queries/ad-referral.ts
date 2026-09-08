@@ -29,12 +29,14 @@ type AdConversationPredicate = () => SQL
  * gives the two families different webhook vocabularies, so they cannot share
  * one shape:
  *
- * - `ctwaClickId` — WhatsApp. Normally keyed on `referral.ctwaClid`, but a
- *   **Status ad placement omits `ctwa_clid` entirely** (Meta's WhatsApp
- *   `messages` webhook reference), leaving only the ad id; `source` must then
- *   confirm the placement was paid, since WhatsApp sets an ad id for organic
- *   `"post"` referrals too.
+ * - `ctwaClickId` — WhatsApp, keyed on `referral.ctwaClid`.
  * - `metaAdReferral` — Messenger/Instagram. No click id exists there at all.
+ *
+ * KNOWN GAP: Meta omits `ctwa_clid` for ads placed in WhatsApp Status, so those
+ * conversations never reach the funnel. Attributing them by ad id instead needs
+ * `referral.source_type` to confirm the placement was paid — a value set Meta
+ * does not document, so it cannot be done safely from the reference alone. It
+ * needs a real Status-ad payload first.
  *
  * REPORTING ONLY. The CAPI attribution paths (`findAttributionByCtwaClid`,
  * `findAttributionByContactInbox`, `listWhatsappCtwaInboxesByContact(s)`) still
@@ -42,8 +44,7 @@ type AdConversationPredicate = () => SQL
  * conversation without one cannot be reported to CAPI at all.
  */
 const AD_CONVERSATION_PREDICATE_BY_FAMILY = {
-  ctwaClickId: (): SQL =>
-    sql`(${ctwaClickId()} OR ${paidAdReferral(PAID_AD_REFERRAL_SOURCE.whatsapp)})`,
+  ctwaClickId,
   metaAdReferral: (): SQL => paidAdReferral(PAID_AD_REFERRAL_SOURCE.meta),
 } satisfies Record<string, AdConversationPredicate>
 
@@ -64,10 +65,9 @@ const AD_ATTRIBUTION_FAMILY_BY_CHANNEL = {
 /**
  * "This ContactInbox came from a paid ad on `channel`."
  *
- * Callers must pair this with a `ContactInbox.channel` scope. The predicate
- * describes a referral SHAPE, and the shapes are only distinguishable by
- * convention (`"ADS"` vs `"ad"`) — nothing in the schema enforces that a row
- * carrying one shape belongs to that family's channel.
+ * Each family keys on a field the other channel never writes — `ctwaClid` is
+ * WhatsApp-only, `source === "ADS"` is Messenger/Instagram-only — so the
+ * predicates are mutually exclusive without an extra channel scope.
  */
 export function adConversationPredicate(channel: AdsEligibleChannelType): SQL {
   return AD_CONVERSATION_PREDICATE_BY_FAMILY[

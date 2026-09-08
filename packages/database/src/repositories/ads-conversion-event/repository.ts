@@ -331,17 +331,12 @@ function adIntegrationScope(
  * `countCtwaConversationsByAd` and its day-bucketed sibling build on so the two
  * aggregates cannot drift.
  *
- * The channel filter is NOT optional. `referral.ctwaClid` used to scope these
- * queries to WhatsApp on its own (no other channel writes that field); the
- * predicate now also accepts an ad id plus a paid `source`, a shape that is
- * WhatsApp's only by convention. The aggregate branch (no
- * `integrationWhatsappId`) has no WhatsApp join to lean on, so the column
- * filter is what restores an intrinsic scope.
+ * No explicit `ContactInbox.channel` filter: `referral.ctwaClid` is written by
+ * no channel but WhatsApp, so the predicate is intrinsically scoped.
  */
 const ctwaConversationBaseFilters = (input: DateRangeInput) => [
   eq(contactModel.workspaceId, input.workspaceId),
   adConversationPredicate(channelTypes.enum.whatsapp),
-  eq(contactInboxModel.channel, channelTypes.enum.whatsapp),
   gte(contactInboxModel.firstInteractionAt, input.since),
   lte(contactInboxModel.firstInteractionAt, input.until),
 ]
