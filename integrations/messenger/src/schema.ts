@@ -128,6 +128,33 @@ export const messengerAttachmentSchema = z.object({
 })
 export type MessengerAttachment = z.infer<typeof messengerAttachmentSchema>
 
+export const messengerReferralSchema = z.object({
+  // Meta only includes `ref` when the ad/link actually sets a ref param —
+  // most CTM ad referrals arrive without it.
+  ref: z.string().optional(),
+  source: z.string(),
+  type: z.string(),
+  ad_id: z.string().optional(),
+  // The URI of the site the message was sent from — the field Meta's
+  // `messaging_referrals` reference documents (there is no `source_url` on
+  // Messenger/Instagram; `source_url`/`source_platform` are kept only as
+  // tolerant fallbacks for payloads that carry them).
+  referer_uri: z.string().optional(),
+  source_url: z.string().optional(),
+  source_platform: z.string().optional(),
+  ads_context_data: z
+    .object({
+      ad_title: z.string().optional(),
+      post_id: z.string().optional(),
+      photo_url: z.string().optional(),
+      video_url: z.string().optional(),
+      product_id: z.string().optional(),
+      flow_id: z.string().optional(),
+    })
+    .optional(),
+})
+export type MessengerReferral = z.infer<typeof messengerReferralSchema>
+
 export const messengerMessageSchema = z.object({
   mid: z.string(),
   text: z.string().optional(),
@@ -143,6 +170,18 @@ export const messengerMessageSchema = z.object({
       title: z.string().optional(),
     })
     .optional(),
+  // A CTM/CTD ad that opens a NEW thread delivers its referral HERE,
+  // nested in the message — not as a standalone `messaging_referrals`
+  // event and not on a postback. Omitting it made zod strip the object
+  // before the handler ever saw it, silently dropping ad attribution
+  // for every such conversation.
+  //
+  // `.catch(undefined)` because this rides along with a real message: a
+  // payload whose referral is missing `source`/`type` used to be stripped and
+  // the MESSAGE still delivered. Validating it strictly would start rejecting
+  // the whole webhook over an attribution field, losing the customer's message
+  // to save a label. Attribution degrades; delivery does not.
+  referral: messengerReferralSchema.optional().catch(undefined),
 })
 export type MessengerMessage = z.infer<typeof messengerMessageSchema>
 
@@ -154,28 +193,6 @@ export const messengerDeliverySchema = z.object({
 export const messengerReadSchema = z.object({
   watermark: z.number(),
 })
-
-export const messengerReferralSchema = z.object({
-  // Meta only includes `ref` when the ad/link actually sets a ref param —
-  // most CTM ad referrals arrive without it.
-  ref: z.string().optional(),
-  source: z.string(),
-  type: z.string(),
-  ad_id: z.string().optional(),
-  source_url: z.string().optional(),
-  source_platform: z.string().optional(),
-  ads_context_data: z
-    .object({
-      ad_title: z.string().optional(),
-      post_id: z.string().optional(),
-      photo_url: z.string().optional(),
-      video_url: z.string().optional(),
-      product_id: z.string().optional(),
-      flow_id: z.string().optional(),
-    })
-    .optional(),
-})
-export type MessengerReferral = z.infer<typeof messengerReferralSchema>
 
 export const messengerPostbackSchema = z.object({
   mid: z.string(),

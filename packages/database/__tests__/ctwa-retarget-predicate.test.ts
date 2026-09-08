@@ -88,7 +88,7 @@ describe("buildCtwaSegmentPredicate — conversations segment channel scoping", 
     expect(query.sql).not.toContain('"ContactInbox"."channel" =')
   })
 
-  test("whatsapp (channel explicit) keeps the original ctwaClid predicate with no ContactInbox.channel scope", () => {
+  test("whatsapp (channel explicit) keeps the ctwaClid predicate with no ContactInbox.channel scope", () => {
     const query = render(
       buildCtwaSegmentPredicate({
         segment: "conversations",

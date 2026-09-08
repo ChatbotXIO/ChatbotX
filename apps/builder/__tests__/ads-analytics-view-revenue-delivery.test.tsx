@@ -187,7 +187,21 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     container.remove()
   })
 
-  test("renders revenue, ROAS, and delivery status details", async () => {
+  // Renamed and narrowed: revenue/ROAS/delivery are
+  // TEMPORARILY HIDDEN (conversion tracking unfinished). When they come back,
+  // restore the name and these assertions:
+  //   expect(container.textContent).toContain("ads.analytics.revenue")
+  //   expect(container.textContent).toContain("ads.analytics.roas")
+  //   expect(container.textContent).toContain("2.50x")
+  //   expect(container.textContent).toContain("ads.analytics.delivery.title")
+  //   expect(container.textContent).toContain("ads.analytics.delivery.sent")
+  //   expect(container.textContent).toContain("ads.analytics.delivery.skippedNoScope")
+  //   expect(container.textContent).toContain("ads.analytics.delivery.noScopeWarning")
+  //   expect(container.textContent).toContain("ads.analytics.delivery.reconnectCta")
+  //   expect(Array.from(container.querySelectorAll("a")).some((anchor) =>
+  //     anchor.href.includes("/whatsapps/iw-1/ads"))).toBe(true)
+  //   expect(container.textContent).not.toContain("ads.analytics.delivery.skippedRegion")
+  test("renders the Insights-sourced spend metrics", async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -209,9 +223,6 @@ describe("AdsAnalyticsView revenue and delivery", () => {
       await Promise.resolve()
     })
 
-    expect(container.textContent).toContain("ads.analytics.revenue")
-    expect(container.textContent).toContain("ads.analytics.roas")
-    expect(container.textContent).toContain("2.50x")
     expect(container.textContent).toContain("ads.analytics.impressions")
     expect(container.textContent).toContain("5,000")
     expect(container.textContent).toContain("ads.analytics.clicks")
@@ -221,28 +232,14 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     expect(container.textContent).toContain("4.00%")
     expect(container.textContent).toContain("ads.analytics.cpm")
     expect(container.textContent).toContain("ads.analytics.costPerConversation")
-    expect(container.textContent).toContain("ads.analytics.delivery.title")
-    expect(container.textContent).toContain("ads.analytics.delivery.sent")
-    expect(container.textContent).toContain(
-      "ads.analytics.delivery.skippedNoScope",
-    )
-    expect(container.textContent).toContain(
-      "ads.analytics.delivery.noScopeWarning",
-    )
-    expect(container.textContent).toContain(
-      "ads.analytics.delivery.reconnectCta",
-    )
-    expect(
-      Array.from(container.querySelectorAll("a")).some((anchor) =>
-        anchor.href.includes("/whatsapps/iw-1/ads"),
-      ),
-    ).toBe(true)
-    expect(container.textContent).not.toContain(
-      "ads.analytics.delivery.skippedRegion",
-    )
+    // Guards the hidden state itself: the delivery card must not render while
+    // the conversion-rule engine is unfinished. Delete this when restoring.
+    expect(container.textContent).not.toContain("ads.analytics.delivery.title")
   })
 
-  test("omits the reconnect CTA link in the aggregate (no account) view", async () => {
+  // TEMPORARILY HIDDEN (conversion tracking unfinished): the delivery card this
+  // exercises is commented out in AdsAnalyticsView. Un-skip when it returns.
+  test.skip("omits the reconnect CTA link in the aggregate (no account) view", async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -272,7 +269,9 @@ describe("AdsAnalyticsView revenue and delivery", () => {
     )
   })
 
-  test("shows a messenger-channel reconnect CTA linked to the messenger ads settings page", async () => {
+  // TEMPORARILY HIDDEN (conversion tracking unfinished): the delivery card this
+  // exercises is commented out in AdsAnalyticsView. Un-skip when it returns.
+  test.skip("shows a messenger-channel reconnect CTA linked to the messenger ads settings page", async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>

@@ -156,18 +156,32 @@ const getMessageEntity = async (
     }
     postbackAction = messaging.postback.payload
     buttonTitle = messaging.postback.title
-
-    if (messaging.postback.referral) {
-      ref = messaging.postback.referral.ref ?? null
-      referralSource = messaging.postback.referral.source
-      referral = normalizeMetaAdReferral(messaging.postback.referral)
-    }
   }
 
-  if (messaging.referral) {
-    ref = messaging.referral.ref ?? null
-    referralSource = messaging.referral.source
-    referral = normalizeMetaAdReferral(messaging.referral)
+  // Meta delivers the SAME ad referral through three different slots depending
+  // on the thread's state, and only ever one of them per event:
+  //   - `messaging.referral`          -> `messaging_referral`, existing thread
+  //   - `messaging.message.referral`  -> `messages`, NEW thread opened by a CTD
+  //                                      ad where the user sends a message
+  //                                      straight away (the common CTD case)
+  //   - `messaging.postback.referral` -> NEW thread opened via an icebreaker
+  // Resolving all three in one place (rather than assigning at each parse site)
+  // keeps the precedence explicit: an explicit referral event outranks one that
+  // merely rode along with a message or a postback.
+  // Order matters only for a payload carrying more than one of them, which
+  // Meta does not send — but it is pinned deliberately rather than left to
+  // chance: `postback.referral` stays ahead of `message.referral` so this
+  // change adds the missing slot WITHOUT altering what an existing
+  // postback-carrying payload resolves to.
+  const rawReferral =
+    messaging.referral ??
+    messaging.postback?.referral ??
+    messaging.message?.referral
+
+  if (rawReferral) {
+    ref = rawReferral.ref ?? null
+    referralSource = rawReferral.source
+    referral = normalizeMetaAdReferral(rawReferral)
   }
 
   return {

@@ -24,7 +24,7 @@ import { channelLimitReachedException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
-import type { ListInboxesRequest, ListInboxesResponse } from "./schema"
+import type { ListInboxesInput, ListInboxesResponse } from "./schema"
 
 type InboxWhere = Partial<{ id: string; workspaceId: string }>
 
@@ -40,20 +40,23 @@ class InboxService extends BaseService {
     integrationTiktok: true,
   }
 
-  async list(input: ListInboxesRequest): Promise<ListInboxesResponse> {
+  async list(input: ListInboxesInput): Promise<ListInboxesResponse> {
+    // One `where`, shared by the page query and the count, so the two can
+    // never drift (they previously repeated the same literal side by side).
+    // `statuses` omitted keeps the connected-only default every existing
+    // caller — including the public `/v1/inboxes` endpoint — depends on.
     const where = {
       workspaceId: input.workspaceId,
-      status: inboxStatuses.enum.connected,
+      status: input.statuses
+        ? { in: [...input.statuses] }
+        : inboxStatuses.enum.connected,
     }
 
     const pagination = getPaginationWithDefaults(input)
     const [data, totalRows] = await Promise.all([
       db.query.inboxModel.findMany({
         ...pagination,
-        where: {
-          workspaceId: input.workspaceId,
-          status: inboxStatuses.enum.connected,
-        },
+        where,
         with: input.includes?.includes("integration")
           ? InboxService.withIntegrations
           : undefined,

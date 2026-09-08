@@ -2332,9 +2332,8 @@ describe("applyContactFilter — CTWA fields", () => {
     expect(positive.sql).toContain(
       `"ContactInbox"."referral"->>'adId' IS NOT NULL`,
     )
-    expect(positive.sql).toContain(
-      `"ContactInbox"."referral"->>'source' = 'ADS'`,
-    )
+    expect(positive.sql).toContain(`"ContactInbox"."referral"->>'source' = `)
+    expect(positive.params).toContain("ADS")
 
     const negative = renderContactWhere(
       applyContactFilter({
@@ -2612,7 +2611,8 @@ describe("applyContactFilter — ctwaRetarget", () => {
     expect(query.sql).toContain(
       `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
     )
-    expect(query.sql).toContain(`"ContactInbox"."referral"->>'source' = 'ADS'`)
+    expect(query.sql).toContain(`"ContactInbox"."referral"->>'source' = `)
+    expect(query.params).toContain("ADS")
   })
 
   test("channel: whatsapp renders the ctwaClid-keyed predicate (pre-generalization behavior)", () => {
@@ -2659,7 +2659,8 @@ describe("applyContactFilter — ctwaRetarget", () => {
     expect(query.sql).toContain(
       `"ContactInbox"."referral"->>'adId' IS NOT NULL`,
     )
-    expect(query.sql).toContain(`"ContactInbox"."referral"->>'source' = 'ADS'`)
+    expect(query.sql).toContain(`"ContactInbox"."referral"->>'source' = `)
+    expect(query.params).toContain("ADS")
     expect(query.sql).not.toContain(
       `"ContactInbox"."referral"->>'ctwaClid' IS NOT NULL`,
     )

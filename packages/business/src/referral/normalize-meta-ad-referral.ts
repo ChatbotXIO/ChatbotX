@@ -14,6 +14,14 @@ export type MetaAdReferralInput = {
   source: string
   type: string
   ad_id?: string
+  /**
+   * The URI of the site the message was sent from. This is the field Meta's
+   * `messaging_referrals` reference actually documents for Messenger and
+   * Instagram; `source_url` is WhatsApp's equivalent (its own referral payload
+   * documents `source_url`, not `referer_uri`). Both are accepted here so one
+   * normalizer serves every Meta channel.
+   */
+  referer_uri?: string
   source_url?: string
   source_platform?: string
   ads_context_data?: {
@@ -40,15 +48,21 @@ export type MetaAdReferralInput = {
 export function normalizeMetaAdReferral(
   referral: MetaAdReferralInput,
 ): MessageReferral {
+  // Messenger/Instagram send `referer_uri`; WhatsApp sends `source_url`.
+  // Preferring the documented Messenger field first keeps `sourceUrl` (and the
+  // platform derived from it) populated on CTM/CTD referrals, which previously
+  // read a `source_url` those channels never send and so were always null.
+  const sourceUrl = referral.referer_uri ?? referral.source_url ?? null
+
   return {
     ref: referral.ref,
     source: referral.source,
     type: referral.type,
     adId: referral.ad_id ?? null,
     adTitle: referral.ads_context_data?.ad_title ?? null,
-    sourceUrl: referral.source_url ?? null,
+    sourceUrl,
     sourcePlatform:
-      referral.source_platform ?? deriveAdSourcePlatform(referral.source_url),
+      referral.source_platform ?? deriveAdSourcePlatform(sourceUrl),
     postId: referral.ads_context_data?.post_id ?? null,
     photoUrl: referral.ads_context_data?.photo_url ?? null,
     videoUrl: referral.ads_context_data?.video_url ?? null,

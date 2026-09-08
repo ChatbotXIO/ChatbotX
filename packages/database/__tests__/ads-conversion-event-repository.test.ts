@@ -931,7 +931,8 @@ describe("adsConversionEventRepository — allChannels ('All channels' Ads Analy
       chain.where.mock.calls[0][0] as never,
     )
     expect(query.sql).toContain("ctwaClid")
-    expect(query.sql).toContain("'ADS'")
+    // `referral.source` is bound, not inlined — see `paidAdReferral`.
+    expect(query.params).toContain("ADS")
     expect(chain.groupBy).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),

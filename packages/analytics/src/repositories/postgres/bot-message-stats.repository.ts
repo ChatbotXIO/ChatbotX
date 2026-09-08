@@ -1,4 +1,9 @@
 import { db, sql } from "@chatbotx.io/database/client"
+// Narrow subpath, NOT the `queries` barrel: that barrel re-exports the
+// contact-filter modules, which dereference schema tables at module scope
+// and therefore crash any suite that mocks `@chatbotx.io/database/schema`
+// narrowly. Analytics only needs the one timezone helper.
+import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { analyticsBotMessageEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
@@ -103,7 +108,7 @@ export class BotMessageStatsRepository extends BaseRepository {
     if (granularity === "day" && shouldUseMonthlyGranularity(props)) {
       const result = await db.execute(sql`
         SELECT
-          time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+          time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
           "result",
           "responseType",
           "aiProvider",
@@ -129,7 +134,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       const query = shouldUseCagg(props)
         ? sql`
             SELECT
-              time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "result",
               "responseType",
               "aiProvider",
@@ -144,7 +149,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           `
         : sql`
             SELECT
-              time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "result",
               "responseType",
               "aiProvider",
@@ -217,7 +222,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       const query = shouldUseCagg(props)
         ? sql`
             SELECT
-              time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "hasResponse",
               "responseType",
               SUM(count)::int AS count
@@ -231,7 +236,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           `
         : sql`
             SELECT
-              time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "hasResponse",
               "responseType",
               COUNT(*)::int AS count
@@ -339,7 +344,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       const query = shouldUseCagg(props)
         ? sql`
             SELECT
-              time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket('1 day', bucket AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "responseType",
               "result",
               "aiProvider",
@@ -354,7 +359,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           `
         : sql`
             SELECT
-              time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
               "responseType",
               "result",
               "aiProvider",

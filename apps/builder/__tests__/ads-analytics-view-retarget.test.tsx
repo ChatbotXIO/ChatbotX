@@ -279,12 +279,17 @@ describe("AdsAnalyticsView — single-channel retarget row actions", () => {
     const buttons = Array.from(
       container.querySelectorAll<HTMLButtonElement>("button[data-menu-item]"),
     )
-    const purchasesButton = buttons.find(
-      (button) => button.textContent === "ads.analytics.thoseWhoPurchased",
+    // Was "ads.analytics.thoseWhoPurchased" — that entry is
+    // TEMPORARILY HIDDEN (conversion tracking unfinished), so this drives the same
+    // regression through the one segment still rendered. Switch it back when
+    // the purchases/leads entries are restored.
+    const conversationsButton = buttons.find(
+      (button) =>
+        button.textContent === "ads.analytics.thoseWhoStartedConversation",
     )
 
     await act(async () => {
-      purchasesButton?.click()
+      conversationsButton?.click()
       await flush()
     })
 

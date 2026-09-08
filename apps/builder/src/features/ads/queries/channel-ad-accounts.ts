@@ -1,4 +1,5 @@
 import {
+  integrationFacebookAdsService,
   listCachedMessagingAdAccounts,
   messagingAdsConnectionService,
 } from "@chatbotx.io/business"
@@ -80,19 +81,34 @@ async function listMessagingAccountsForIntegration(input: {
 async function listWorkspaceWideAccounts(
   workspaceId: string,
 ): Promise<AccountEntry[]> {
+  // Absence is a STATE, not a failure. Most workspaces have no workspace-wide
+  // `IntegrationFacebookAds` at all now that each box connects its own token,
+  // so this leg simply has nothing to contribute — checked up front with the
+  // non-throwing lookup rather than by catching what `getCachedAdAccounts`
+  // throws (it reaches `findByWorkspaceIdOrFail`). Catching it worked, but
+  // logged `WARN "Facebook Ads integration not found"` with a full stack on
+  // EVERY ordinary dashboard load: noise that reads like a real fault, buries
+  // the failures that are real, and sent at least one debugging session
+  // chasing it as if it were the cause of an unrelated crash.
   try {
+    const integration =
+      await integrationFacebookAdsService.findByWorkspaceId(workspaceId)
+    if (!integration) {
+      return []
+    }
+
     const accounts = await getCachedAdAccounts(workspaceId)
     return accounts.map((account) => ({
       account,
       source: { kind: "workspace" as const },
     }))
   } catch (error) {
-    // getCachedAdAccounts THROWS when the workspace has no workspace-wide
-    // Facebook Ads integration — a very common case now that boxes connect
-    // their own tokens, so this is expected, not exceptional.
+    // Reached only for a genuine fault — an expired/invalid token, a decrypt
+    // failure, a Graph API error. Warn + skip so one broken source never
+    // blanks out the whole union.
     logger.warn(
       { err: error, workspaceId },
-      "No workspace-wide Facebook Ads account list for the channel ad-account union",
+      "Failed to load the workspace-wide Facebook Ads account list for the channel ad-account union",
     )
     return []
   }

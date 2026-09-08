@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   listCachedMessagingAdAccounts: vi.fn(),
   listForChannel: vi.fn(),
   getCachedAdAccounts: vi.fn(),
+  findByWorkspaceId: vi.fn(),
   warn: vi.fn(),
 }))
 
@@ -14,6 +15,9 @@ vi.mock("@chatbotx.io/business", () => ({
   listCachedMessagingAdAccounts: mocks.listCachedMessagingAdAccounts,
   messagingAdsConnectionService: {
     listForChannel: mocks.listForChannel,
+  },
+  integrationFacebookAdsService: {
+    findByWorkspaceId: mocks.findByWorkspaceId,
   },
 }))
 
@@ -28,6 +32,9 @@ vi.mock("@/lib/log", () => ({
 describe("resolveChannelAdAccountSources", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Default: the workspace HAS a workspace-wide Facebook Ads integration, so
+    // existing cases keep exercising the `getCachedAdAccounts` leg unchanged.
+    mocks.findByWorkspaceId.mockResolvedValue({ id: "ifa-1" })
   })
 
   test("integrationId given -> narrows to that integration's own connection, tagged with a messaging source", async () => {
@@ -235,5 +242,56 @@ describe("resolveChannelAdAccountSources", () => {
       { id: "act_1", name: "Legacy", sources: [{ kind: "workspace" }] },
     ])
     expect(mocks.listCachedMessagingAdAccounts).not.toHaveBeenCalled()
+  })
+
+  // A workspace with no workspace-wide Facebook Ads integration is the normal
+  // case now that each box connects its own token. Absence is a STATE, not a
+  // failure: the union must simply skip that leg, without reaching for a
+  // throwing lookup and without writing a stack trace to the log. The previous
+  // implementation called `findByWorkspaceIdOrFail` through
+  // `getCachedAdAccounts`, so every ordinary dashboard load logged
+  // `WARN "Facebook Ads integration not found"` with a full stack — noise that
+  // reads like a real fault while nothing is actually wrong.
+  test("no workspace-wide integration -> skips that leg silently, no log", async () => {
+    mocks.findByWorkspaceId.mockResolvedValue(undefined)
+    mocks.listForChannel.mockResolvedValue([])
+
+    const result = await resolveChannelAdAccountSources({
+      workspaceId: "ws-1",
+      channel: "messenger",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.getCachedAdAccounts).not.toHaveBeenCalled()
+    expect(mocks.warn).not.toHaveBeenCalled()
+  })
+
+  test("a genuine failure loading the workspace-wide list is still warned about", async () => {
+    mocks.listForChannel.mockResolvedValue([])
+    mocks.getCachedAdAccounts.mockRejectedValue(new Error("graph exploded"))
+
+    const result = await resolveChannelAdAccountSources({
+      workspaceId: "ws-1",
+      channel: "messenger",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.warn).toHaveBeenCalledTimes(1)
+  })
+  // The integration lookup sits inside the same guard as the Graph call: a
+  // database blip on that preliminary read must degrade the union to "no
+  // workspace-wide accounts", exactly as a Graph failure does — never fail the
+  // whole Ads page.
+  test("a failing integration lookup degrades instead of failing the union", async () => {
+    mocks.findByWorkspaceId.mockRejectedValue(new Error("connection reset"))
+    mocks.listForChannel.mockResolvedValue([])
+
+    const result = await resolveChannelAdAccountSources({
+      workspaceId: "ws-1",
+      channel: "messenger",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.warn).toHaveBeenCalledTimes(1)
   })
 })

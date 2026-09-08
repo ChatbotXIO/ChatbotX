@@ -74,7 +74,7 @@ describe("resolveAdReferral", () => {
     })
   })
 
-  // SQL-parity edge cases: resolveAdReferral must mirror adReferralPredicate
+  // SQL-parity edge cases: resolveAdReferral must mirror anyChannelAdConversationPredicate
   // (ctwa-retarget.ts) byte-for-byte. These lock the OR semantics and the
   // asymmetry between the two branches (ctwaClid is guarded `<> ''`, adId is
   // only `IS NOT NULL`) so future drift in either side is caught.
@@ -131,5 +131,10 @@ describe("resolveAdReferral", () => {
       adTitle: "Promo",
       sourceUrl: "https://fb.com/ad/123",
     })
+  })
+  test("does not match an ig.me SHORTLINK referral", () => {
+    const referral: ContactInboxReferral = { adId: "5", source: "SHORTLINK" }
+
+    expect(resolveAdReferral(referral)).toBeNull()
   })
 })

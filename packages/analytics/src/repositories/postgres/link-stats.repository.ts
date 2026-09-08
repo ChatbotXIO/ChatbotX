@@ -1,4 +1,9 @@
 import { type Column, db, sql, type Table } from "@chatbotx.io/database/client"
+// Narrow subpath, NOT the `queries` barrel: that barrel re-exports the
+// contact-filter modules, which dereference schema tables at module scope
+// and therefore crash any suite that mocks `@chatbotx.io/database/schema`
+// narrowly. Analytics only needs the one timezone helper.
+import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { BaseRepository } from "./base.repository"
 
 type LinkStatColumns = {
@@ -35,7 +40,7 @@ export class LinkStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        TO_CHAR((${occurredAt} AT TIME ZONE ${timezone})::date, 'YYYY-MM-DD') AS "dateReport",
+        TO_CHAR((${occurredAt} AT TIME ZONE ${resolvedTimezone(timezone)})::date, 'YYYY-MM-DD') AS "dateReport",
         COUNT(*)::int AS count
       FROM ${this.table}
       WHERE ${wsCol} = ${workspaceId}

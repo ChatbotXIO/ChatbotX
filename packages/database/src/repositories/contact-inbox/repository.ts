@@ -1,4 +1,7 @@
-import type { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
+import type {
+  AdReferralChannelType,
+  adsEligibleChannelTypes,
+} from "@chatbotx.io/utils/channel"
 import {
   and,
   type DatabaseClient,
@@ -8,6 +11,7 @@ import {
   type SQL,
   sql,
 } from "../../client"
+import { adConversationPredicate } from "../../queries/ad-referral"
 import type { AdsConversionChannel } from "../../schema"
 import {
   contactInboxModel,
@@ -40,18 +44,16 @@ export type AdEligibleInboxByContactRow = {
 }
 
 /**
- * Ad-referral attribution predicate pair (messenger/instagram — no
- * `ctwaClid` equivalent exists): `referral.adId` present + `referral.source
- * === "ADS"`. Kept LOCAL to this file (not shared with the identical pair in
- * `ads-conversion-event/repository.ts`) — see that file's own copy for the
- * circular-import hazard that rules out a shared module.
+ * Messenger/Instagram ad-referral attribution, from the shared leaf module.
+ *
+ * NOT used for the WhatsApp entry below: this map feeds CAPI eligibility, not
+ * reporting, and the CAPI send needs a real `ctwaClid` (see
+ * `evaluateWhatsappTemplateSent`). Widening WhatsApp here would only push rows
+ * into the evaluator for it to drop again — wasted work per request.
  */
-function adReferralConditions(): SQL[] {
-  return [
-    sql`${contactInboxModel.referral}->>'adId' IS NOT NULL`,
-    sql`${contactInboxModel.referral}->>'source' = 'ADS'`,
-  ]
-}
+const adReferralConditions = (channel: AdReferralChannelType): SQL[] => [
+  adConversationPredicate(channel),
+]
 
 type AdEligibleIntegrationModel =
   | typeof integrationWhatsappModel
@@ -87,12 +89,12 @@ const adEligibleInboxChannelConfigs = {
   messenger: {
     model: () => integrationMessengerModel,
     channel: "messenger",
-    referralConditions: adReferralConditions,
+    referralConditions: () => adReferralConditions("messenger"),
   },
   instagram: {
     model: () => integrationInstagramModel,
     channel: "instagram",
-    referralConditions: adReferralConditions,
+    referralConditions: () => adReferralConditions("instagram"),
   },
 } satisfies Record<AdEligibleInboxChannel, AdEligibleInboxChannelConfig>
 

@@ -251,4 +251,97 @@ describe("Instagram-via-Facebook receiveMessage", () => {
     expect(result.referralSource).toBe("ADS")
     expect(result.referral?.adId).toBe("ad-42")
   })
+  // Meta's Instagram messaging webhook reference: a CTD ad that opens a NEW
+  // thread delivers its referral INSIDE `message.referral` — there is no
+  // standalone `messaging_referral` event and no postback to carry it.
+  test("captures an ad referral carried inside message.referral (new CTD thread)", async () => {
+    const result = await receiveMessage({
+      ctx: {
+        auth: {
+          metadata: { igId: "ig-1" },
+        },
+      } as never,
+      data: {
+        integrationType: "instagram",
+        integrationIdentifier: "inbox-1",
+        payload: {
+          object: "instagram",
+          entry: [
+            {
+              id: "ig-1",
+              time: 1,
+              messaging: [
+                {
+                  sender: { id: "ig-user-1" },
+                  recipient: { id: "ig-1" },
+                  timestamp: 1,
+                  message: {
+                    mid: "mid-1",
+                    text: "hello",
+                    referral: {
+                      ref: "ad-ref",
+                      ad_id: "120249578414030286",
+                      source: "ADS",
+                      type: "OPEN_THREAD",
+                      ads_context_data: {
+                        ad_title: "Summer succulents are here!",
+                        photo_url: "https://scontent.xx.fbcdn.net/photo.jpg",
+                        video_url: "https://scontent.xx.fbcdn.net/thumb.jpg",
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.ref).toBe("ad-ref")
+    expect(result.referralSource).toBe("ADS")
+    expect(result.referral?.adId).toBe("120249578414030286")
+    expect(result.referral?.adTitle).toBe("Summer succulents are here!")
+    expect(result.message?.text).toBe("hello")
+  })
+
+  test("derives the ad platform from referer_uri", async () => {
+    const result = await receiveMessage({
+      ctx: {
+        auth: {
+          metadata: { igId: "ig-1" },
+        },
+      } as never,
+      data: {
+        integrationType: "instagram",
+        integrationIdentifier: "inbox-1",
+        payload: {
+          object: "instagram",
+          entry: [
+            {
+              id: "ig-1",
+              time: 1,
+              messaging: [
+                {
+                  sender: { id: "ig-user-1" },
+                  recipient: { id: "ig-1" },
+                  timestamp: 1,
+                  message: { mid: "mid-1", text: "hello" },
+                  referral: {
+                    source: "ADS",
+                    type: "OPEN_THREAD",
+                    ad_id: "ad-1",
+                    referer_uri: "https://www.instagram.com/ads/123",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result.referral?.sourceUrl).toBe("https://www.instagram.com/ads/123")
+    expect(result.referral?.sourcePlatform).toBe("instagram")
+  })
 })
