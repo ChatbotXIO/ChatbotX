@@ -453,9 +453,34 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/teams",
   },
   {
+    "method": "PUT",
+    "operationId": "integrations.connectAiProvider",
+    "path": "/v1/integrations/ai/{provider}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "integrations.disconnectAiProvider",
+    "path": "/v1/integrations/ai/{provider}",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.get",
+    "path": "/v1/integrations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.getAiProvider",
+    "path": "/v1/integrations/ai/{provider}",
+  },
+  {
     "method": "GET",
     "operationId": "integrations.list",
     "path": "/v1/integrations",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.tokenErrors",
+    "path": "/v1/integrations/status/token-errors",
   },
   {
     "method": "GET",

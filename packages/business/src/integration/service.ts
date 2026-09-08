@@ -36,6 +36,15 @@ export type TokenRefreshErrorIntegration = {
 }
 
 class IntegrationService extends BaseService {
+  findByIdForWorkspace(props: {
+    id: string
+    workspaceId: string
+  }): Promise<IntegrationModel | undefined> {
+    return db.query.integrationModel.findFirst({
+      where: { id: props.id, workspaceId: props.workspaceId },
+    })
+  }
+
   async listByWorkspaceIdAndTypes(props: {
     workspaceId: string
     integrationTypes: string[]
