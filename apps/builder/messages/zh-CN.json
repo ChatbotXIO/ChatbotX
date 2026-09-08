@@ -5436,10 +5436,19 @@
       "confirmationFlowId": "确认流程",
       "cancellationFlowId": "取消流程",
       "externalConnectionId": "外部日历",
+      "externalEventTitleTemplate": "Event title template",
+      "externalEventDescriptionTemplate": "Event description template",
+      "externalEventAttendeesTemplate": "Attendees template",
       "reminders": "提醒",
       "reminderTimingValue": "数值",
       "reminderTimingUnit": "单位"
     },
+    "placeholders": {
+      "externalEventTitleTemplate": "Appointment: '{{booking_calendar}}'",
+      "externalEventDescriptionTemplate": "Add appointment details or variables",
+      "externalEventAttendeesTemplate": "one@example.com, another@example.com"
+    },
+    "externalEventDisclosure": "Template values and attendees are shared with the connected Google Calendar.",
     "locationTypes": {
       "inPerson": "线下会面",
       "phoneCall": "电话通话",

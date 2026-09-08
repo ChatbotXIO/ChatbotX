@@ -73,6 +73,7 @@ export type GoogleCalendarActions = {
         startAt: string
         endAt: string
         timeZone: string
+        eventId: string
         attendees?: GoogleCalendarEventAttendee[]
       }
     },

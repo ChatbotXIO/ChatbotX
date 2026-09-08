@@ -59,6 +59,9 @@ export type UpdateAppointmentCalendarInput = {
   confirmationFlowId?: string | null
   cancellationFlowId?: string | null
   externalConnectionId?: string | null
+  externalEventTitleTemplate?: string | null
+  externalEventDescriptionTemplate?: string | null
+  externalEventAttendeesTemplate?: string | null
 }
 
 const calendarWhere = (input: { workspaceId: string; search?: string }) =>
@@ -211,6 +214,10 @@ export const appointmentCalendarRepository = {
         confirmationFlowId: input.confirmationFlowId,
         cancellationFlowId: input.cancellationFlowId,
         externalConnectionId: input.externalConnectionId,
+        externalEventTitleTemplate: input.externalEventTitleTemplate,
+        externalEventDescriptionTemplate:
+          input.externalEventDescriptionTemplate,
+        externalEventAttendeesTemplate: input.externalEventAttendeesTemplate,
       })
       .where(
         and(

@@ -5344,10 +5344,19 @@
       "confirmationFlowId": "Flow Konfirmasi",
       "cancellationFlowId": "Flow Pembatalan",
       "externalConnectionId": "Kalender Eksternal",
+      "externalEventTitleTemplate": "Event title template",
+      "externalEventDescriptionTemplate": "Event description template",
+      "externalEventAttendeesTemplate": "Attendees template",
       "reminders": "Pengingat",
       "reminderTimingValue": "Nilai",
       "reminderTimingUnit": "Satuan"
     },
+    "placeholders": {
+      "externalEventTitleTemplate": "Appointment: '{{booking_calendar}}'",
+      "externalEventDescriptionTemplate": "Add appointment details or variables",
+      "externalEventAttendeesTemplate": "one@example.com, another@example.com"
+    },
+    "externalEventDisclosure": "Template values and attendees are shared with the connected Google Calendar.",
     "locationTypes": {
       "inPerson": "Pertemuan Tatap Muka",
       "phoneCall": "Panggilan Telepon",

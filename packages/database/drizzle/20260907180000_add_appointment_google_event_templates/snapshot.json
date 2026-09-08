@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e52fd6fb-fdc9-4bd9-8415-c5aeb3d138b7",
+  "id": "84714791-3218-44f8-837e-e9dca69347c8",
   "prevIds": [
-    "2cc90f0a-c9e5-4a54-bbc6-7d145ebd7962"
+    "e52fd6fb-fdc9-4bd9-8415-c5aeb3d138b7"
   ],
   "ddl": [
     {
@@ -42972,6 +42972,113 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Contact"
+    },
+    {
+      "values": [
+        "init",
+        "running",
+        "succeeded",
+        "failed",
+        "partial"
+      ],
+      "name": "coexistRunStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventIntegrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventProviderCalendarId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventTitleTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventDescriptionTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventAttendeesTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Appointment_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Appointment"
     }
   ],
   "renames": []

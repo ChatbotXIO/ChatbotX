@@ -2,6 +2,7 @@ import { type DatabaseClient, db, sql } from "@chatbotx.io/database/client"
 import {
   type AppointmentListTab,
   appointmentRepository,
+  contactInboxRepository,
 } from "@chatbotx.io/database/repositories"
 import {
   type AppointmentWebviewPayload,
@@ -22,6 +23,7 @@ import {
   appointmentCalendarService,
   matchesAvailabilityFingerprint,
 } from "../appointment-calendar"
+import { appointmentExternalCalendarService } from "../appointment-external-calendar"
 import { appointmentReminderService } from "../appointment-reminder"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
@@ -265,7 +267,7 @@ class AppointmentService extends BaseService {
     calendarId: string
     contactId: string
     conversationId?: string | null
-    contactInboxId?: string
+    contactInboxId: string
     startAt: Date
     inviteeTimezone?: string
     metadata?: MetadataPayload
@@ -357,18 +359,50 @@ class AppointmentService extends BaseService {
         throw new SlotUnavailableException()
       }
 
+      if (input.contactInboxId) {
+        const contactInbox = await contactInboxRepository.findByIdForContact(
+          {
+            id: input.contactInboxId,
+            contactId: input.contactId,
+            workspaceId: input.workspaceId,
+          },
+          tx,
+        )
+        if (!contactInbox) {
+          throw new ChatbotXException(
+            "Appointment contact inbox does not belong to the contact",
+            "invalidAppointmentContactInbox",
+            400,
+          )
+        }
+      }
+
+      const externalConnection = calendar.externalConnectionId
+        ? await appointmentExternalCalendarService.getGoogleConnectionForProviderCall(
+            {
+              workspaceId: input.workspaceId,
+              integrationId: calendar.externalConnectionId,
+            },
+            tx,
+          )
+        : null
+
       const appointment = await appointmentRepository.create(
         {
           workspaceId: input.workspaceId,
           calendarId: input.calendarId,
           contactId: input.contactId,
           conversationId: input.conversationId,
+          contactInboxId: input.contactInboxId,
           startAt: slot.startAt,
           endAt: slot.endAt,
           inviteeTimezone: input.inviteeTimezone ?? calendar.timezone,
           locationType: calendar.locationType,
           locationDetail: calendar.locationDetail,
-          externalSyncStatus: calendar.externalConnectionId ? "pending" : null,
+          externalSyncStatus: externalConnection ? "pending" : null,
+          externalEventIntegrationId: calendar.externalConnectionId,
+          externalEventProviderCalendarId:
+            externalConnection?.providerCalendarId ?? null,
         },
         tx,
       )
@@ -380,7 +414,7 @@ class AppointmentService extends BaseService {
       workspaceId: input.workspaceId,
       appointmentId: appointment.id,
       operation: "create",
-      externalConnectionId: calendar.externalConnectionId,
+      externalConnectionId: appointment.externalEventIntegrationId,
     })
     try {
       await appointmentReminderService.scheduleForAppointment({
@@ -533,7 +567,9 @@ class AppointmentService extends BaseService {
       conversationId: input.conversationId,
       contactInboxId: input.contactInboxId,
       metadata: input.metadata,
-      externalConnectionId: appointment.calendar.externalConnectionId,
+      externalConnectionId:
+        appointment.externalEventIntegrationId ??
+        appointment.calendar.externalConnectionId,
       cancellationFlowId: appointment.calendar.cancellationFlowId,
     })
 
@@ -619,7 +655,9 @@ class AppointmentService extends BaseService {
         appointmentId: result.appointment.id,
         conversationId: result.appointment.conversationId,
         contactInboxId: input.contactInboxId,
-        externalConnectionId: result.appointment.calendar.externalConnectionId,
+        externalConnectionId:
+          result.appointment.externalEventIntegrationId ??
+          result.appointment.calendar.externalConnectionId,
         cancellationFlowId: result.appointment.calendar.cancellationFlowId,
       })
     }
@@ -668,7 +706,9 @@ class AppointmentService extends BaseService {
       workspaceId: input.workspaceId,
       appointmentId: appointment.id,
       conversationId: appointment.conversationId,
-      externalConnectionId: appointment.calendar.externalConnectionId,
+      externalConnectionId:
+        appointment.externalEventIntegrationId ??
+        appointment.calendar.externalConnectionId,
       cancellationFlowId: appointment.calendar.cancellationFlowId,
     })
 
@@ -756,6 +796,62 @@ class AppointmentService extends BaseService {
       workspaceId: input.workspaceId,
       id: input.appointmentId,
       externalSyncStatus: "failed",
+    })
+  }
+
+  async persistExternalDestinationIfScheduled(input: {
+    workspaceId: string
+    appointmentId: string
+    integrationId: string
+    providerCalendarId: string
+  }) {
+    return await appointmentRepository.persistExternalDestinationIfScheduled({
+      workspaceId: input.workspaceId,
+      id: input.appointmentId,
+      integrationId: input.integrationId,
+      providerCalendarId: input.providerCalendarId,
+    })
+  }
+
+  async markExternalCreateSucceededIfScheduled(input: {
+    workspaceId: string
+    appointmentId: string
+    externalEventId: string
+  }) {
+    return await appointmentRepository.markExternalCreateSucceededIfScheduled({
+      workspaceId: input.workspaceId,
+      id: input.appointmentId,
+      externalEventId: input.externalEventId,
+    })
+  }
+
+  async markExternalCreateFailedIfScheduled(input: {
+    workspaceId: string
+    appointmentId: string
+  }) {
+    return await appointmentRepository.markExternalCreateFailedIfScheduled({
+      workspaceId: input.workspaceId,
+      id: input.appointmentId,
+    })
+  }
+
+  async markExternalCancelSucceededIfCancelled(input: {
+    workspaceId: string
+    appointmentId: string
+  }) {
+    return await appointmentRepository.markExternalCancelSucceededIfCancelled({
+      workspaceId: input.workspaceId,
+      id: input.appointmentId,
+    })
+  }
+
+  async markExternalCancelFailedIfCancelled(input: {
+    workspaceId: string
+    appointmentId: string
+  }) {
+    return await appointmentRepository.markExternalCancelFailedIfCancelled({
+      workspaceId: input.workspaceId,
+      id: input.appointmentId,
     })
   }
 
@@ -904,9 +1000,11 @@ function getAppointmentContactName(contact: {
 
 function getCancellationExternalSyncStatus(appointment: {
   externalSyncStatus?: "pending" | "synced" | "failed" | null
+  externalEventIntegrationId?: string | null
   calendar: { externalConnectionId?: string | null }
 }) {
-  return appointment.calendar.externalConnectionId
+  return appointment.externalEventIntegrationId ||
+    appointment.calendar.externalConnectionId
     ? "pending"
     : appointment.externalSyncStatus
 }

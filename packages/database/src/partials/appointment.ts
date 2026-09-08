@@ -85,6 +85,10 @@ export type AppointmentExternalProviderType = z.infer<
   typeof appointmentExternalProviderTypes
 >
 
+export const defaultAppointmentExternalEventTitleTemplate =
+  "Appointment: {{booking_calendar}}"
+export const defaultAppointmentExternalEventAttendeesTemplate = "{{email}}"
+
 /**
  * `scheduleWindowConfig` is stored as free-form jsonb (no DB-level shape
  * constraint); this schema is the single source of truth for validating it

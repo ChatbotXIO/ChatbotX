@@ -38,6 +38,7 @@ type PlainTextTiptapEditorProps = {
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
+  className?: string
   /** Single-line height with the variable picker rendered inside on the right. */
   inline?: boolean
 }
@@ -45,6 +46,7 @@ type PlainTextTiptapEditorProps = {
 export const PlainTextTiptapEditor = ({
   initValue,
   onChange,
+  className,
   channels,
   includeCouponVariables = false,
   includeRawCustomFieldVariables = false,
@@ -101,9 +103,12 @@ export const PlainTextTiptapEditor = ({
     },
     editorProps: {
       attributes: {
-        class: inline
-          ? "tiptap-plain-text tiptap-plain-text-inline"
-          : "tiptap-plain-text",
+        class: cn(
+          inline
+            ? "tiptap-plain-text tiptap-plain-text-inline"
+            : "tiptap-plain-text",
+          className,
+        ),
       },
       handlePaste(view, event) {
         const clipboardHtml = event.clipboardData?.getData("text/html")

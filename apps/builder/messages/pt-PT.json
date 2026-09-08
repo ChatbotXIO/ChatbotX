@@ -5344,10 +5344,19 @@
       "confirmationFlowId": "Fluxo de confirmação",
       "cancellationFlowId": "Fluxo de cancelamento",
       "externalConnectionId": "Calendário externo",
+      "externalEventTitleTemplate": "Event title template",
+      "externalEventDescriptionTemplate": "Event description template",
+      "externalEventAttendeesTemplate": "Attendees template",
       "reminders": "Lembretes",
       "reminderTimingValue": "Valor",
       "reminderTimingUnit": "Unidade"
     },
+    "placeholders": {
+      "externalEventTitleTemplate": "Appointment: '{{booking_calendar}}'",
+      "externalEventDescriptionTemplate": "Add appointment details or variables",
+      "externalEventAttendeesTemplate": "one@example.com, another@example.com"
+    },
+    "externalEventDisclosure": "Template values and attendees are shared with the connected Google Calendar.",
     "locationTypes": {
       "inPerson": "Reunião presencial",
       "phoneCall": "Chamada telefónica",

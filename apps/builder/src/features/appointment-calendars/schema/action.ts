@@ -39,6 +39,13 @@ const optionalFlowIdField = z.preprocess(
   zodBigintAsString().optional().nullable(),
 )
 
+const optionalExternalEventTemplate = (maxLength: number) =>
+  z.preprocess(
+    (value) =>
+      typeof value === "string" && value.trim() === "" ? null : value,
+    z.string().max(maxLength).nullable(),
+  )
+
 const appointmentAvailabilityIntervalRequest = z.object({
   weekday: z.number().int().min(0).max(6),
   startMinute: z.number().int().min(0).max(1425).multipleOf(15),
@@ -104,6 +111,9 @@ export const updateAppointmentCalendarRequest = z
     confirmationFlowId: optionalFlowIdField,
     cancellationFlowId: optionalFlowIdField,
     externalConnectionId: optionalFlowIdField,
+    externalEventTitleTemplate: optionalExternalEventTemplate(1024),
+    externalEventDescriptionTemplate: optionalExternalEventTemplate(8192),
+    externalEventAttendeesTemplate: optionalExternalEventTemplate(8192),
     availability: z.array(appointmentAvailabilityIntervalRequest).max(70),
     reminders: z.array(appointmentReminderRequest).max(50),
   })

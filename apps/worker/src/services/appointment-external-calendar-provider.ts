@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import {
   appointmentExternalCalendarService,
   buildContext,
@@ -8,6 +9,9 @@ import {
   googleCalendarAuthSchema,
   integration as integrationGoogleCalendar,
 } from "@chatbotx.io/integration-google-calendar"
+
+export const createDeterministicGoogleEventId = (appointmentId: string) =>
+  `abe${createHash("sha256").update(appointmentId).digest("hex")}`
 
 async function buildGoogleCalendarContext(input: {
   workspaceId: string
@@ -40,6 +44,7 @@ export async function createGoogleCalendarEvent(input: {
   startAt: string
   endAt: string
   timeZone: string
+  eventId: string
   attendees?: GoogleCalendarEventAttendee[]
 }) {
   const { ctx } = await buildGoogleCalendarContext(input)
@@ -47,6 +52,7 @@ export async function createGoogleCalendarEvent(input: {
     ctx,
     props: {
       calendarId: input.calendarId,
+      eventId: input.eventId,
       summary: input.summary,
       description: input.description,
       location: input.location,

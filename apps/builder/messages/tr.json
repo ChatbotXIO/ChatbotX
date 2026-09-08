@@ -5344,10 +5344,19 @@
       "confirmationFlowId": "Onay Akışı",
       "cancellationFlowId": "İptal Akışı",
       "externalConnectionId": "Harici Takvim",
+      "externalEventTitleTemplate": "Event title template",
+      "externalEventDescriptionTemplate": "Event description template",
+      "externalEventAttendeesTemplate": "Attendees template",
       "reminders": "Hatırlatmalar",
       "reminderTimingValue": "Değer",
       "reminderTimingUnit": "Birim"
     },
+    "placeholders": {
+      "externalEventTitleTemplate": "Appointment: '{{booking_calendar}}'",
+      "externalEventDescriptionTemplate": "Add appointment details or variables",
+      "externalEventAttendeesTemplate": "one@example.com, another@example.com"
+    },
+    "externalEventDisclosure": "Template values and attendees are shared with the connected Google Calendar.",
     "locationTypes": {
       "inPerson": "Yüz Yüze Görüşme",
       "phoneCall": "Telefon Görüşmesi",
