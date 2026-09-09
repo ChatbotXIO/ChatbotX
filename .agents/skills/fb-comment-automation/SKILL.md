@@ -108,6 +108,22 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    instead of disappearing behind a `logger.warn`. Never "fix" that back into an empty
    `{ messageIds: [] }` return.
 
+10. **Instagram-via-Facebook private replies use the Page node, not the IG node.**
+    `sendPrivateReplyMessage` (`integrations/instagram-facebook/src/apis/comment.ts`) must
+    post to `/{pageId}/messages`. `/{igId}/messages` returns `(#3) Application does not
+    have the capability to make this API call.` even with `instagram_manage_messages`,
+    `pages_messaging` and Human Agent at Advanced Access — code 3 means "this edge does
+    not exist on this node", so it is NOT an App-dashboard problem. Already regressed
+    twice (#875 fixed it, #945 reverted it to green a stale test whose fixture had no
+    `pageId`, making the URL `/undefined/messages`). It breaks every private reply on the
+    channel: `text`, `AIAgent`, a `flow` reply's first message, and the agent's manual
+    inbox private reply (which enters via `handlers/comment/outgoing-private-reply`, not
+    the automation loop). Instagram Login is different on purpose — `me/messages` on
+    `graph.instagram.com`. Keep the `send-private-reply.test.ts` guard that asserts the IG
+    node is never called. Also note both Instagram packages log
+    `module=integration-instagram`, so attribute production failures by request host, not
+    module name.
+
 ## Adding a new filter option (recipe)
 
 1. Add the field to `fbCommentOptionsSchema` (partials) + DB default in the schema file

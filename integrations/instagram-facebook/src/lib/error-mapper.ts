@@ -28,6 +28,10 @@ const AUTH_FAILED_CODES = new Set([
 ])
 
 const PERMISSION_DENIED_CODES = new Set([
+  // "Application does not have the capability to make this API call" — the app
+  // lacks a permission/feature, or the edge does not exist on the node being
+  // addressed. Never retryable. Mirrors messenger's mapper.
+  3,
   10, // Permission denied (FB Graph)
   24, // Permission error (IG Content Publishing)
   25, // IG account restricted/checkpointed
@@ -163,13 +167,35 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
 }
 
 // === Revoked / invalidated access token detection ===
-// Facebook returns error code 190 (OAuthException) when a page access token is
-// expired or revoked. Returning true triggers the upstream re-auth flow.
+// Facebook signals revoked/expired page tokens via OAuthException + code 190.
+// Sub-codes: 458 = app not installed, 460 = password changed,
+//   463 = access token expired, 467 = invalid access token.
+// Code 190 with no subcode is ambiguous and is NOT treated as revoked, to
+// avoid false-positive channel disconnects. Mirrors the Instagram Login
+// variant (`integrations/instagram`), which already gates this way.
+//
+// Matching on `type === "OAuthException"` alone (as this did before) was wrong:
+// Meta uses that type for unrelated failures such as code 3 ("Application does
+// not have the capability to make this API call"), so a plain endpoint or
+// capability error was reported as a revoked token and made the disconnect flow
+// skip its remote teardown.
+const REVOKED_TOKEN_SUBCODES = new Set([458, 460, 463, 467])
+
 export function isRevokedTokenError(error: unknown): boolean {
-  if (error instanceof InstagramException) {
-    return error.code === 190 || error.type === "OAuthException"
+  if (!(error instanceof InstagramException)) {
+    return false
   }
-  return false
+
+  const mappedError = mapToChannelError(error)
+  if (mappedError.subCode === null || mappedError.subCode === undefined) {
+    return false
+  }
+
+  return (
+    mappedError.category === ChannelErrorCategory.AUTH_FAILED &&
+    mappedError.code === 190 &&
+    REVOKED_TOKEN_SUBCODES.has(Number(mappedError.subCode))
+  )
 }
 
 export function mapToChannelError(rawError: unknown): ChannelError {

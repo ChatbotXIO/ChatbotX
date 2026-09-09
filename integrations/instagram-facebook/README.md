@@ -119,6 +119,14 @@ Each message is stamped with `metadata: "SENT_FROM_CHATBOTX"` so echo events can
 | `hideComment` | `POST /<version>/<commentId>?hide=true\|false` | |
 | `likeComment` | `POST /<version>/<igId>/likes` | Toggle via POST/DELETE |
 | `editComment` | — | No-op; Facebook API does not support editing comments |
+| `sendPrivateReply(Message)` | `POST /<version>/<pageId>/messages` | `recipient: { comment_id }`. **Page** node — see below |
+
+Messaging edges use the **Page** node (`<pageId>/messages`, `<pageId>/message_attachments`, `me/messages`);
+Instagram content edges use the **IG** node (`<igId>/media`, `<igId>/stories`, `<igId>/likes`). Posting a
+private reply to `<igId>/messages` fails with `(#3) Application does not have the capability to make this
+API call.` regardless of granted permissions, because Meta does not expose that edge on the IG node for
+Facebook-Login connections. The Instagram Login package (`integrations/instagram`) uses `me/messages` on
+`graph.instagram.com` instead.
 
 ---
 
@@ -128,16 +136,22 @@ All API errors are normalised by `mapToChannelError()` into a typed `ChannelErro
 
 | Category | Trigger |
 |---|---|
-| `AUTH_FAILED` | Error code 190 / `OAuthException` type |
+| `AUTH_FAILED` | Error code 190; `OAuthException` type as a last-resort fallback |
 | `RATE_LIMITED` | Codes 4, 17, 613; subcode 2207051 |
 | `QUOTA_EXCEEDED` | Code 9; subcodes 2018028, 2207042 |
 | `USER_BLOCKED` | Code 551; subcode 1545041 |
-| `PERMISSION_DENIED` | Codes 10, 24, 25, 368; codes 200–299; subcode 2207050 |
+| `PERMISSION_DENIED` | Codes 3, 10, 24, 25, 368; codes 200–299; subcode 2207050 |
 | `PAYLOAD_INVALID` | Codes 1, 100, 352, 9004, 9007, 36000–36004; subcodes 2207020, 2207052 |
 | `NETWORK_ERROR` | Codes −1, −2 |
 | `INVALID_RECIPIENT` | Subcode 2018001 |
 
-`isRevokedTokenError(error)` returns `true` for error code 190 or `type === "OAuthException"`, triggering the upstream re-auth flow.
+Code 3 (`Application does not have the capability to make this API call`) arrives as an
+`OAuthException` but is a capability/endpoint problem, not a token problem — it is mapped to
+`PERMISSION_DENIED` so it is treated as permanent and never sends the operator off to reconnect.
+
+`isRevokedTokenError(error)` returns `true` only for error code 190 **with** a revoked subcode
+(458, 460, 463, 467), triggering the upstream re-auth flow. A bare 190 is ambiguous and is
+deliberately excluded to avoid false-positive disconnects, matching `integrations/instagram`.
 
 ---
 
@@ -181,3 +195,9 @@ src/
 ## API version
 
 Default: `v23.0` (`DEFAULT_API_VERSION` in `constants.ts`). The version is stored in `auth.metadata.version` so it can be pinned per integration instance.
+
+> **Known inconsistency:** `apis/page.ts` (`sendInstagramMessage`, the `messenger_profile` helpers)
+> reads the version off `auth.version`, which the connect flow never writes — it only writes
+> `auth.metadata.version`. Those calls therefore always fall back to `DEFAULT_API_VERSION`, while
+> `apis/comment.ts` and `apis/attachment.ts` (which read `auth.metadata.version`) use the version the
+> UI configured. `integrations/instagram` reads `metadata.version` everywhere and is unaffected.

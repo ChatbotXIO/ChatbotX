@@ -52,8 +52,9 @@ export const PRIVATE_REPLY_TEXT_SENDERS: Record<
   instagram: (auth, commentId, text) =>
     sendInstagramLoginPrivateReply(auth as InstagramAuthValue, commentId, text),
   // Instagram via Facebook Login sends the private DM through the
-  // {igId}/messages endpoint (Page/Business-asset token), addressing the
-  // commenter by comment id.
+  // {pageId}/messages endpoint (Page access token), addressing the commenter
+  // by comment id — Meta exposes the `messages` edge only on the Page node for
+  // this login type; the IG node answers with error #3.
   instagramFacebook: (auth, commentId, text) =>
     sendInstagramFacebookPrivateReply(
       auth as InstagramFacebookAuthValue,

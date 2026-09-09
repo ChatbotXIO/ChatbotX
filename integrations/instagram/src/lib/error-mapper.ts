@@ -28,6 +28,10 @@ const AUTH_FAILED_CODES = new Set([
 ])
 
 const PERMISSION_DENIED_CODES = new Set([
+  // "Application does not have the capability to make this API call" — the app
+  // lacks a permission/feature, or the edge does not exist on the node being
+  // addressed. Never retryable. Mirrors messenger's mapper.
+  3,
   10, // Permission denied (FB Graph)
   24, // Permission error (IG Content Publishing)
   25, // IG account restricted/checkpointed
