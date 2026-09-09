@@ -48,6 +48,7 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const triggerService = {
   list: vi.fn(),
+  findWithConditions: vi.fn(),
   create: vi.fn(),
   updateWithConditions: vi.fn(),
   updateSettings: vi.fn(),
@@ -59,14 +60,10 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   notFoundException: (message: string) => new Error(message),
 }))
 
-const triggerRepository = {
-  findWithConditions: vi.fn(),
-}
 const conditionRepository = {
   listByTriggerIds: vi.fn(),
 }
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  triggerRepository,
   conditionRepository,
 }))
 
@@ -141,8 +138,8 @@ describe("GET /v1/triggers", () => {
 describe("GET /v1/triggers/{id}", () => {
   const procedure = findProcedure("GET", "/v1/triggers/{id}")
 
-  test("delegates to triggerRepository.findWithConditions", async () => {
-    triggerRepository.findWithConditions.mockResolvedValueOnce({
+  test("delegates to triggerService.findWithConditions", async () => {
+    triggerService.findWithConditions.mockResolvedValueOnce({
       id: "trigger-1",
       conditions: [],
       actions: [],
@@ -153,14 +150,14 @@ describe("GET /v1/triggers/{id}", () => {
       input: { id: "trigger-1" },
     })
 
-    expect(triggerRepository.findWithConditions).toHaveBeenCalledWith({
+    expect(triggerService.findWithConditions).toHaveBeenCalledWith({
       id: "trigger-1",
       workspaceId: "workspace-1",
     })
   })
 
   test("throws not found when the trigger does not exist", async () => {
-    triggerRepository.findWithConditions.mockResolvedValueOnce(null)
+    triggerService.findWithConditions.mockResolvedValueOnce(null)
 
     await expect(
       procedure.handler?.({
@@ -219,7 +216,7 @@ describe("PUT /v1/triggers/{id}", () => {
       conditions: [{ type: "newContact" }],
     })
     // No redundant re-read of the trigger row itself — only conditions.
-    expect(triggerRepository.findWithConditions).not.toHaveBeenCalled()
+    expect(triggerService.findWithConditions).not.toHaveBeenCalled()
     expect(conditionRepository.listByTriggerIds).toHaveBeenCalledWith([
       "trigger-1",
     ])
@@ -243,7 +240,7 @@ describe("PATCH /v1/triggers/{id}/settings", () => {
 
   test("delegates to triggerService.updateSettings and returns the updated resource", async () => {
     triggerService.updateSettings.mockResolvedValueOnce(undefined)
-    triggerRepository.findWithConditions.mockResolvedValueOnce({
+    triggerService.findWithConditions.mockResolvedValueOnce({
       id: "trigger-1",
       active: false,
       conditions: [],
@@ -260,7 +257,7 @@ describe("PATCH /v1/triggers/{id}/settings", () => {
       id: "trigger-1",
       active: false,
     })
-    expect(triggerRepository.findWithConditions).toHaveBeenCalledWith({
+    expect(triggerService.findWithConditions).toHaveBeenCalledWith({
       id: "trigger-1",
       workspaceId: "workspace-1",
     })
@@ -269,7 +266,7 @@ describe("PATCH /v1/triggers/{id}/settings", () => {
 
   test("throws not found when the trigger no longer exists after updateSettings", async () => {
     triggerService.updateSettings.mockResolvedValueOnce(undefined)
-    triggerRepository.findWithConditions.mockResolvedValueOnce(null)
+    triggerService.findWithConditions.mockResolvedValueOnce(null)
 
     await expect(
       procedure.handler?.({

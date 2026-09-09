@@ -65,6 +65,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  listWebhooksPaginated: vi.fn(),
+  conditionRepository: { listByWebhookIds: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/events", () => ({
   removeWebhookCache: vi.fn(),
   updateWebhookCache: mockUpdateWebhookCache,

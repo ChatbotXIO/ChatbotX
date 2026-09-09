@@ -59,7 +59,7 @@ export const flowRepository = {
     return await tx.$count(flowModel, relationsFilterToSQL(flowModel, where))
   },
 
-  /** Flow detail with all versions — shared by both flow detail pages. */
+  /** Flow detail with all versions — used by flowService.findById. */
   async findWithVersions(
     input: { workspaceId: string; id: string },
     tx: DatabaseClient = db,

@@ -28,6 +28,8 @@ const mocks = vi.hoisted(() => {
       async (fn: (tx: typeof tx) => Promise<unknown>) => await fn(tx),
     ),
     deleteFn: vi.fn(() => deleteBuilder),
+    listWebhooksPaginated: vi.fn(),
+    listByWebhookIds: vi.fn(async () => []),
   }
 })
 
@@ -47,6 +49,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/schema", () => ({
   webhookModel: mocks.webhookModel,
   conditionModel: mocks.conditionModel,
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  listWebhooksPaginated: mocks.listWebhooksPaginated,
+  conditionRepository: { listByWebhookIds: mocks.listByWebhookIds },
 }))
 
 vi.mock("@chatbotx.io/events", () => ({
@@ -272,5 +279,58 @@ describe("webhookService.create", () => {
       detail: "created a new webhook (#webhook-1)",
     })
     expect(result).toEqual({ id: "webhook-1" })
+  })
+})
+
+describe("webhookService.list", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("paginates via listWebhooksPaginated and joins conditions per row", async () => {
+    mocks.listWebhooksPaginated.mockResolvedValue({
+      rows: [{ id: "webhook-1" }, { id: "webhook-2" }],
+      total: 21,
+    })
+    mocks.listByWebhookIds.mockResolvedValue([
+      { id: "c1", webhookId: "webhook-1" },
+      { id: "c2", webhookId: "webhook-2" },
+    ])
+
+    const result = await webhookService.list({
+      workspaceId: "workspace-1",
+      page: 1,
+      perPage: 10,
+    })
+
+    expect(mocks.listWebhooksPaginated).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      folderId: undefined,
+      name: undefined,
+      limit: 10,
+      offset: 0,
+    })
+    expect(mocks.listByWebhookIds).toHaveBeenCalledWith([
+      "webhook-1",
+      "webhook-2",
+    ])
+    expect(result.data).toEqual([
+      { id: "webhook-1", conditions: [{ id: "c1", webhookId: "webhook-1" }] },
+      { id: "webhook-2", conditions: [{ id: "c2", webhookId: "webhook-2" }] },
+    ])
+    expect(result.pageCount).toBe(3)
+  })
+
+  test("returns pageCount 0 for an empty workspace", async () => {
+    mocks.listWebhooksPaginated.mockResolvedValue({ rows: [], total: 0 })
+    mocks.listByWebhookIds.mockResolvedValue([])
+
+    const result = await webhookService.list({
+      workspaceId: "workspace-1",
+      page: 1,
+      perPage: 10,
+    })
+
+    expect(result).toEqual({ data: [], pageCount: 0 })
   })
 })

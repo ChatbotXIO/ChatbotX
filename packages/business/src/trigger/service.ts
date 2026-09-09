@@ -66,12 +66,15 @@ class TriggerService extends BaseService {
   }
 
   /**
-   * SQL-paginated triggers with their real `conditions` joined in — for the
-   * public API's `GET /v1/triggers`, which previously loaded every trigger
-   * in the workspace and re-queried each one individually.
+   * SQL-paginated triggers with their real `conditions` joined in — shared
+   * by the public API's `GET /v1/triggers` and the builder's triggers page,
+   * so both paginate identically instead of the builder hand-rolling a
+   * second implementation.
    */
   async list(input: {
     workspaceId: string
+    folderId?: string | null
+    name?: string
     page: number
     perPage: number
   }): Promise<{
@@ -83,6 +86,8 @@ class TriggerService extends BaseService {
     const { rows, total } = await triggerRepository.listPaginatedWithConditions(
       {
         workspaceId: input.workspaceId,
+        folderId: input.folderId,
+        name: input.name,
         limit: input.perPage,
         offset: (input.page - 1) * input.perPage,
       },
@@ -90,8 +95,19 @@ class TriggerService extends BaseService {
 
     return {
       data: rows,
-      pageCount: Math.max(1, Math.ceil(total / input.perPage)),
+      pageCount: Math.ceil(total / input.perPage),
     }
+  }
+
+  /** A single trigger with its real `conditions` joined in. */
+  async findWithConditions(params: {
+    id?: string
+    workspaceId?: string
+  }): Promise<
+    | (TriggerModel & { conditions: (typeof conditionModel.$inferSelect)[] })
+    | null
+  > {
+    return await triggerRepository.findWithConditions(params)
   }
 
   async deleteMany(input: {

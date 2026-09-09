@@ -1,4 +1,4 @@
-import { flowRepository } from "@chatbotx.io/database/repositories"
+import { flowService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { isSameContent } from "@/features/flows/flow-version-content"
@@ -18,11 +18,13 @@ export default async function FlowPage({ params }: FlowPageProps) {
 
   await requireWorkspacePermission(data.workspaceId, "flows")
 
-  const flow = await flowRepository.findWithVersions({
-    id: data.id,
-    workspaceId: data.workspaceId,
-  })
-  if (!flow) {
+  let flow: Awaited<ReturnType<typeof flowService.findById>>
+  try {
+    flow = await flowService.findById({
+      id: data.id,
+      workspaceId: data.workspaceId,
+    })
+  } catch {
     return notFound()
   }
 

@@ -1,5 +1,9 @@
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import type { FolderType } from "@chatbotx.io/database/partials"
+import {
+  conditionRepository,
+  listWebhooksPaginated,
+} from "@chatbotx.io/database/repositories"
 import { conditionModel, webhookModel } from "@chatbotx.io/database/schema"
 import type { WebhookModel } from "@chatbotx.io/database/types"
 import { removeWebhookCache, updateWebhookCache } from "@chatbotx.io/events"
@@ -29,11 +33,46 @@ export type WebhookConditionInput = {
 }
 
 class WebhookService extends BaseService {
-  async listByWorkspaceId(workspaceId: string): Promise<WebhookModel[]> {
-    return await db
-      .select()
-      .from(webhookModel)
-      .where(eq(webhookModel.workspaceId, workspaceId))
+  /**
+   * SQL-paginated webhook list with conditions joined in — shared by the
+   * public API (`GET /v1/webhooks`) and the builder's webhooks page, so both
+   * paginate identically instead of one loading the whole workspace.
+   */
+  async list(input: {
+    workspaceId: string
+    folderId?: string | null
+    name?: string
+    page: number
+    perPage: number
+  }): Promise<{
+    data: (WebhookModel & {
+      conditions: (typeof conditionModel.$inferSelect)[]
+    })[]
+    pageCount: number
+  }> {
+    const { rows, total } = await listWebhooksPaginated({
+      workspaceId: input.workspaceId,
+      folderId: input.folderId,
+      name: input.name,
+      limit: input.perPage,
+      offset: (input.page - 1) * input.perPage,
+    })
+
+    const webhookIds = rows.map((webhook) => webhook.id)
+    const conditionsData =
+      await conditionRepository.listByWebhookIds(webhookIds)
+
+    const data = rows.map((webhook) => ({
+      ...webhook,
+      conditions: conditionsData.filter(
+        (condition) => condition.webhookId === webhook.id,
+      ),
+    }))
+
+    return {
+      data,
+      pageCount: Math.ceil(total / input.perPage),
+    }
   }
 
   /**

@@ -47,7 +47,7 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const webhookService = {
-  listByWorkspaceId: vi.fn(),
+  list: vi.fn(),
   register: vi.fn(),
   unregister: vi.fn(),
 }
@@ -100,10 +100,11 @@ describe("GET /v1/webhooks", () => {
     )
   })
 
-  test("delegates to webhookService.listByWorkspaceId", async () => {
-    webhookService.listByWorkspaceId.mockResolvedValueOnce([
-      { id: "webhook-1" },
-    ])
+  test("delegates to webhookService.list", async () => {
+    webhookService.list.mockResolvedValueOnce({
+      data: [{ id: "webhook-1" }],
+      pageCount: 1,
+    })
 
     await expect(
       procedure.handler?.({
@@ -112,7 +113,11 @@ describe("GET /v1/webhooks", () => {
       }),
     ).resolves.toEqual({ data: [{ id: "webhook-1" }], pageCount: 1 })
 
-    expect(webhookService.listByWorkspaceId).toHaveBeenCalledWith("workspace-1")
+    expect(webhookService.list).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      page: 1,
+      perPage: 50,
+    })
   })
 })
 

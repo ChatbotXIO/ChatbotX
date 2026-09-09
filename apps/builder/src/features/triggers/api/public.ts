@@ -1,10 +1,7 @@
 import { triggerService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { folderTypes } from "@chatbotx.io/database/partials"
-import {
-  conditionRepository,
-  triggerRepository,
-} from "@chatbotx.io/database/repositories"
+import { conditionRepository } from "@chatbotx.io/database/repositories"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -70,7 +67,7 @@ export const triggersPublicRouter = {
     .output(triggerResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const trigger = await triggerRepository.findWithConditions({
+      const trigger = await triggerService.findWithConditions({
         id: input.id,
         workspaceId: context.workspace.id,
       })
@@ -150,7 +147,7 @@ export const triggersPublicRouter = {
         id,
         ...patch,
       })
-      const updated = await triggerRepository.findWithConditions({
+      const updated = await triggerService.findWithConditions({
         id,
         workspaceId: context.workspace.id,
       })

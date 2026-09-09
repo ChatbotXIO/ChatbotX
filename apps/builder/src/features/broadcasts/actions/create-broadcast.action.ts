@@ -5,6 +5,7 @@ import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { isValidationException } from "@/lib/errors/validation-exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBroadcastRequest } from "../schema/action"
 
@@ -31,16 +32,10 @@ export const createBroadcastAction = workspaceActionClient
         canViewEmailAndPhone,
       })
     } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        error.code === "validation" &&
-        "field" in error
-      ) {
-        const field = error.field as string
+      if (isValidationException(error) && error.field) {
         return returnValidationErrors(createBroadcastRequest, {
           _errors: ["Validation Exception"],
-          [field]: {
+          [error.field]: {
             _errors: [error.message],
           },
         })

@@ -2,35 +2,19 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const mocks = vi.hoisted(() => {
-  const selectWhereLimitOffset = {
-    limit: vi.fn(),
-  }
-  const selectWhere = {
-    limit: vi.fn(() => selectWhereLimitOffset),
-    where: vi.fn(),
-  }
-  const selectFrom = {
-    where: vi.fn(() => selectWhere),
-  }
-  const select = vi.fn(() => ({ from: vi.fn(() => selectFrom) }))
-  return {
-    select,
-    selectFrom,
-    selectWhere,
-    selectWhereLimitOffset,
-    findFirst: vi.fn(),
-  }
-})
+const mocks = vi.hoisted(() => ({
+  findFirst: vi.fn(),
+  findMany: vi.fn(),
+  $count: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
-  count: vi.fn(() => "count-expr"),
   db: {
-    select: mocks.select,
     query: {
-      triggerModel: { findFirst: mocks.findFirst },
+      triggerModel: { findFirst: mocks.findFirst, findMany: mocks.findMany },
     },
+    $count: mocks.$count,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ eq: [field, value] })),
   isNull: vi.fn((field: unknown) => ({ isNull: field })),
@@ -44,25 +28,17 @@ const { triggerRepository } = await import(
   "../src/repositories/trigger/repository"
 )
 
-describe("triggerRepository.listPaginated", () => {
+describe("triggerRepository.listPaginatedWithConditions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   test("resolves an empty-string folderId to isNull (trigger sentinel, not rootFolderId)", async () => {
-    const rows = [{ id: "trigger-1" }]
-    const offsetFn = vi.fn().mockResolvedValue(rows)
-    mocks.selectWhere.limit.mockReturnValue({ offset: offsetFn })
-    const countBuilder = { where: vi.fn().mockResolvedValue([{ count: 1 }]) }
-    mocks.select
-      .mockReturnValueOnce({
-        from: vi.fn(() => ({ where: vi.fn(() => mocks.selectWhere) })),
-      })
-      .mockReturnValueOnce({
-        from: vi.fn(() => countBuilder),
-      })
+    const rows = [{ id: "trigger-1", conditions: [] }]
+    mocks.findMany.mockResolvedValue(rows)
+    mocks.$count.mockResolvedValue(1)
 
-    const result = await triggerRepository.listPaginated({
+    const result = await triggerRepository.listPaginatedWithConditions({
       workspaceId: "ws-1",
       folderId: "",
       limit: 10,
@@ -71,6 +47,53 @@ describe("triggerRepository.listPaginated", () => {
 
     expect(result.rows).toEqual(rows)
     expect(result.total).toBe(1)
+    expect(mocks.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          workspaceId: "ws-1",
+          folderId: { isNull: true },
+        }),
+        with: { conditions: true },
+      }),
+    )
+  })
+
+  test("filters by folderId and name when provided", async () => {
+    mocks.findMany.mockResolvedValue([])
+    mocks.$count.mockResolvedValue(0)
+
+    await triggerRepository.listPaginatedWithConditions({
+      workspaceId: "ws-1",
+      folderId: "folder-1",
+      name: "Welcome",
+      limit: 10,
+      offset: 0,
+    })
+
+    expect(mocks.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          workspaceId: "ws-1",
+          folderId: "folder-1",
+          name: "Welcome",
+        }),
+      }),
+    )
+  })
+
+  test("omits folderId/name filters entirely when not provided", async () => {
+    mocks.findMany.mockResolvedValue([])
+    mocks.$count.mockResolvedValue(0)
+
+    await triggerRepository.listPaginatedWithConditions({
+      workspaceId: "ws-1",
+      limit: 10,
+      offset: 0,
+    })
+
+    const call = mocks.findMany.mock.calls[0]?.[0]
+    expect(call.where).not.toHaveProperty("folderId")
+    expect(call.where).not.toHaveProperty("name")
   })
 })
 

@@ -1,4 +1,4 @@
-import { and, count, type DatabaseClient, db, eq, isNull } from "../../client"
+import { and, type DatabaseClient, db, eq, isNull } from "../../client"
 import { triggerModel } from "../../schema"
 
 const buildWhere = (input: {
@@ -27,11 +27,12 @@ const buildWhere = (input: {
 
 export const triggerRepository = {
   /**
-   * Paginated trigger rows, SQL-builder style — preserves the exact
-   * `folderId === null || ""` → `isNull` semantics that triggers use (unlike
-   * webhooks, which use `rootFolderId`). Do not unify the two.
+   * Paginated trigger rows with their real `conditions` joined in, SQL-level
+   * — shared by the public API's `GET /v1/triggers` and the builder's
+   * triggers page, so both paginate identically instead of the builder
+   * hand-rolling a second implementation.
    */
-  async listPaginated(
+  async listPaginatedWithConditions(
     input: {
       workspaceId: string
       folderId?: string | null
@@ -43,37 +44,20 @@ export const triggerRepository = {
   ) {
     const whereClause = buildWhere(input)
 
-    const [rows, countResult] = await Promise.all([
-      tx
-        .select()
-        .from(triggerModel)
-        .where(whereClause)
-        .limit(input.limit)
-        .offset(input.offset),
-      tx.select({ count: count() }).from(triggerModel).where(whereClause),
-    ])
-
-    return { rows, total: countResult[0]?.count ?? 0 }
-  },
-
-  /**
-   * Paginated trigger rows with their real `conditions` joined in, SQL-level
-   * — for the public API's `GET /v1/triggers`, which needs the same shape
-   * as `findWithConditions` but for a page of rows instead of one.
-   */
-  async listPaginatedWithConditions(
-    input: {
-      workspaceId: string
-      limit: number
-      offset: number
-    },
-    tx: DatabaseClient = db,
-  ) {
-    const whereClause = eq(triggerModel.workspaceId, input.workspaceId)
+    const relationalFolderId =
+      input.folderId === null || input.folderId === ""
+        ? { isNull: true as const }
+        : input.folderId
 
     const [rows, total] = await Promise.all([
       tx.query.triggerModel.findMany({
-        where: { workspaceId: input.workspaceId },
+        where: {
+          workspaceId: input.workspaceId,
+          ...(input.folderId === undefined
+            ? {}
+            : { folderId: relationalFolderId }),
+          ...(input.name ? { name: input.name } : {}),
+        },
         with: { conditions: true },
         orderBy: { createdAt: "desc", id: "desc" },
         limit: input.limit,

@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { validationException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -66,7 +67,7 @@ const baseInput = {
 }
 
 const validationError = (field: string, message: string) =>
-  Object.assign(new Error(message), { code: "validation", field })
+  validationException(field, message)
 
 beforeEach(() => {
   vi.clearAllMocks()
