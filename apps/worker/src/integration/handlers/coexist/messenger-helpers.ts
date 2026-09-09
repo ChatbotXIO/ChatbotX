@@ -1,6 +1,7 @@
 import { extractContactInfo } from "@chatbotx.io/business"
 import {
   listMessages,
+  type MessengerConversation,
   type MessengerHistoryAttachment,
   type MessengerHistoryMessage,
 } from "@chatbotx.io/integration-messenger/apis/sync"
@@ -11,8 +12,48 @@ import {
   type MessageButtonTemplate,
   type MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
+import { z } from "zod"
 import { logger } from "../../../lib/logger"
+import { isRetryable } from "../shared/http-retry"
 import type { HistoricalMessage } from "./bulk-historical-import"
+
+// Re-exported so existing coexist importers keep resolving `isRetryable` from
+// here after it moved to the channel-neutral `../shared/http-retry` (the
+// `import` above is for this file's own `withInlineRetry`).
+export { isRetryable } from "../shared/http-retry"
+
+/**
+ * `IntegrationMessenger.auth` jsonb shape shared by the coexist historical
+ * sync and the Automatic Customer Scan adapter — both need only the access
+ * token + optional Graph API version out of it.
+ */
+export const messengerAuthSchema = z
+  .object({
+    tokens: z.object({ accessToken: z.string() }).passthrough(),
+    metadata: z
+      .object({ version: z.string().optional() })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough()
+
+/**
+ * Resolves the non-Page participant of a Messenger conversation (the
+ * customer) and its display name. Shared by coexist historical sync and the
+ * contact-scan adapter — both walk the same `/conversations` payload shape.
+ */
+export const participantSourceId = (
+  conv: MessengerConversation,
+  pageId: string,
+): { sourceId: string; name?: string } | null => {
+  const participant = conv.participants?.data?.find(
+    (entry) => entry.id !== pageId,
+  )
+  if (!participant) {
+    return null
+  }
+  return { sourceId: participant.id, name: participant.name }
+}
 
 /**
  * Convert one Graph attachment into the SDK shape.
@@ -122,23 +163,6 @@ export const STORE_WINDOW_MS = 90 * 24 * 60 * 60 * 1000
  * a conversation never contains extractable contact info.
  */
 export const MAX_DISCOVERY_PAGES = 10
-
-/** Returns true if the error is an HTTP status we should retry inline. */
-export function isRetryable(error: unknown): boolean {
-  if (
-    error != null &&
-    typeof error === "object" &&
-    "response" in error &&
-    error.response != null &&
-    typeof error.response === "object" &&
-    "status" in error.response &&
-    typeof error.response.status === "number"
-  ) {
-    const status = error.response.status
-    return status === 429 || status >= 500
-  }
-  return false
-}
 
 /**
  * Wraps a Graph API call with inline retry on 429 / 5xx. Preserves the

@@ -11,6 +11,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import { isContactScanChannel } from "@chatbotx.io/utils/channel"
 import type { Table } from "@tanstack/react-table"
 import {
   ArchiveIcon,
@@ -26,10 +27,12 @@ import {
   TagIcon,
   UserIcon,
   UserRoundXIcon,
+  UserSearchIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
 import DisableBotDialog from "../conversations/components/disable-bot-dialog"
@@ -61,6 +64,10 @@ export function ContactListAction({
 
   const rows = table.getFilteredSelectedRowModel().rows
   const exportAll = table.getIsAllPageRowsSelected()
+
+  const hasContactScanInbox = useInboxStore((state) =>
+    state.inboxes.some((inbox) => isContactScanChannel(inbox.channel)),
+  )
 
   return (
     <DropdownMenu>
@@ -163,14 +170,36 @@ export function ContactListAction({
           workspaceId={workspaceId}
         />
 
-        <DropdownMenuItem
-          render={
-            <Link href={`/space/${workspaceId}/contacts/import`}>
-              <CloudUploadIcon />
-              {t("actions.import")}
-            </Link>
-          }
-        />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="px-3 py-2">
+            <CloudUploadIcon />
+            {t("actions.import")}
+          </DropdownMenuSubTrigger>
+
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent className="w-56">
+              <DropdownMenuItem
+                render={
+                  <Link href={`/space/${workspaceId}/contacts/import`}>
+                    <CloudUploadIcon />
+                    {t("contactScan.menu.importFromFile")}
+                  </Link>
+                }
+              />
+
+              {hasContactScanInbox && (
+                <DropdownMenuItem
+                  render={
+                    <Link href={`/space/${workspaceId}/contacts/scan`}>
+                      <UserSearchIcon />
+                      {t("contactScan.menu.automaticScan")}
+                    </Link>
+                  }
+                />
+              )}
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="px-3 py-2">

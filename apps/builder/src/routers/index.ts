@@ -81,6 +81,11 @@ export const router = {
       default: m.contactsAPIs,
     })),
   ),
+  contactScanAPIs: lazy(() =>
+    import("@/features/contact-scan/api").then((m) => ({
+      default: m.contactScanAPIs,
+    })),
+  ),
   botFieldAPIs: lazy(() =>
     import("@/features/bot-fields/api").then((m) => ({
       default: m.botFieldAPIs,

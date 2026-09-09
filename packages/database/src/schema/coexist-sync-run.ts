@@ -14,10 +14,15 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
+  type CoexistRunType,
+  coexistRunTypes,
+} from "../partials/coexist-sync-run"
+import {
   bigintAsString,
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import { userModel } from "./auth-user"
 
 /**
  * Aggregate sync log for WhatsApp and Messenger coexistence history imports.
@@ -60,6 +65,18 @@ export const coexistRunStatus = pgEnum("coexistRunStatus", [
   "partial",
   "waiting",
 ])
+
+// Discriminates the two kinds of run this shared table now carries: a
+// WhatsApp/Messenger/Instagram coexistence history import (`coexist`, the
+// original/default kind — existing rows backfill to it) or an Automatic
+// Customer Scan (`contact_scan`). Every existing coexist set-query MUST
+// filter `type = 'coexist'` and every scan set-query MUST filter
+// `type = 'contact_scan'` — see `coexist-sync-run/repository.ts`'s method
+// table. By-id methods are safe as-is (the PK is unique across types).
+export const coexistRunType = pgEnum(
+  "coexistRunType",
+  coexistRunTypes.options as [CoexistRunType, ...CoexistRunType[]],
+)
 
 /**
  * Post-batch patches (media follow-up, edit, revoke) that could not be applied
@@ -124,6 +141,10 @@ export const coexistSyncRunModel = pgTable(
     workspaceId: bigintAsString().notNull(),
     integrationId: bigintAsString().notNull(),
     channel: coexistChannel().notNull(),
+    // Discriminates a coexist history import from an Automatic Customer
+    // Scan. Existing rows backfill to "coexist". See the `coexistRunType`
+    // comment above for the scoping invariant this enforces.
+    type: coexistRunType().notNull().default("coexist"),
     status: coexistRunStatus().notNull().default("init"),
     // "popup-enable" | "buffer-chain" | "sweep-cron" | "manual"
     triggerSource: text().notNull(),
@@ -193,6 +214,24 @@ export const coexistSyncRunModel = pgTable(
     // Nullable with NO `.default()` on purpose (AGENTS.md "phantom defaults")
     // — `createRun` writes it explicitly. NULL means "never claimed".
     claimToken: text(),
+
+    // Contact-scan-only columns below. NULL for `type = 'coexist'` rows.
+
+    // Scan lower bound: the operator-picked "scan inbox from" time, and the
+    // walk ceiling the engine stops at (the same role `startedAt`/prior-run
+    // `lastSyncedAt` plays for coexist's `findResumeCeiling`).
+    scanFromAt: timestamp(timestampConfig),
+    // The user who requested the scan (v1's `user_id`). `set null` so
+    // deleting the user does not cascade into losing scan history.
+    requestedByUserId: bigintAsString().references(() => userModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    // Provider `after` cursor of the next page, persisted every progress
+    // write so a continuation resumes from where it left off instead of
+    // re-walking page 1. Cleared on terminal write. Coexist keeps its cursor
+    // in memory, unchanged — this column is scan-only.
+    resumeCursor: text(),
   },
   (t) => [
     index("CoexistSyncRun_workspace_idx").on(t.workspaceId),
@@ -209,9 +248,21 @@ export const coexistSyncRunModel = pgTable(
       .where(sql`status IN ('succeeded', 'partial')`),
     // Prevent duplicate init rows when coexist is toggled rapidly on the same
     // (integration, channel). Scheduler INSERT race → second row would never
-    // get claimed and would clutter the table.
+    // get claimed and would clutter the table. Scoped to `type = 'coexist'`
+    // so a scan `init` row on the same (integrationId, messenger) does not
+    // collide with a coexist `init` row — they are independent lifecycles
+    // sharing this table.
     uniqueIndex("CoexistSyncRun_integration_init_uq")
       .on(t.integrationId, t.channel)
-      .where(sql`status = 'init'`),
+      .where(sql`status = 'init' AND type = 'coexist'`),
+    // v1's one-active-scan rule: at most one live (init/running) scan per
+    // integration (inbox ↔ integration is 1:1 per channel).
+    uniqueIndex("CoexistSyncRun_contact_scan_active_uq")
+      .on(t.integrationId)
+      .where(sql`type = 'contact_scan' AND status IN ('init', 'running')`),
+    // Powers the scan sweeper's `pickDueRuns({ type: 'contact_scan' })`.
+    index("CoexistSyncRun_contact_scan_due_idx")
+      .on(t.type, t.status, t.createdAt)
+      .where(sql`type = 'contact_scan'`),
   ],
 )

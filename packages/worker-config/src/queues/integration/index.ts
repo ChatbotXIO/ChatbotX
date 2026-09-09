@@ -19,6 +19,7 @@ import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
 export * from "./coexist-job-ids"
+export * from "./contact-scan-job-ids"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
@@ -64,6 +65,7 @@ export const IntegrationJobAction = {
   sendConversionEvent: "sendConversionEvent",
   sendMetaCapiEvent: "sendMetaCapiEvent",
   syncRetargetAudience: "syncRetargetAudience",
+  contactScan: "contactScan",
 } as const
 
 type IntegrationJobActionValue =
@@ -615,6 +617,20 @@ export type IntegrationJobProcessLeadgen = {
   }
 }
 
+/**
+ * Runs one budgeted chunk of an Automatic Customer Scan run. Only carries
+ * `runId`/`workspaceId` — channel, integration, and inbox are read off the
+ * claimed run row instead of the payload, so a stale/forged job can't steer
+ * the engine at another channel or workspace.
+ */
+export type IntegrationJobContactScan = {
+  type: typeof IntegrationJobAction.contactScan
+  data: {
+    runId: string
+    workspaceId: string
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobReceiveComment
@@ -654,6 +670,7 @@ export type IntegrationJobData =
   | AdsConversionJobEvaluateTemplateSent
   | AdsConversionJobEvaluateConversionTrigger
   | AdsConversionJobSyncRetargetAudience
+  | IntegrationJobContactScan
 
 export const integrationQueue = isNoRedisEnv()
   ? fakeQueue

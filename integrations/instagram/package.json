@@ -25,7 +25,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./apis/*": "./src/apis/*.ts",
-    "./schemas": "./src/schemas.ts"
+    "./schemas": "./src/schemas.ts",
+    "./exception": "./src/exception.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

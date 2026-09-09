@@ -36,6 +36,7 @@ import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
+import { scanContactScans } from "./handlers/scan-contact-scans"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
@@ -125,6 +126,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.scanCoexistRuns:
               await scanCoexistRuns()
+              return
+
+            case ScheduleJobData.scanContactScans:
+              await scanContactScans()
               return
 
             case ScheduleJobData.reconcileMetaCatalogSyncs:
