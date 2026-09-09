@@ -204,3 +204,87 @@ describe("broadcastService.resend", () => {
     })
   })
 })
+
+describe("broadcastService.resendWithPruning", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockDbTransaction.mockImplementation(
+      async (fn: (tx: { insert: typeof mockTxInsert }) => Promise<unknown>) =>
+        fn({ insert: mockTxInsert }),
+    )
+    mockTxInsertReturning.mockResolvedValue([
+      { id: "new-broadcast-id", name: "My Broadcast (Resend)" },
+    ])
+  })
+
+  test("passes the persisted contactFilter through to resend when it has the expected shape", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: { operator: "and", conditions: [] },
+    })
+
+    const result = await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(result).toEqual({
+      id: "new-broadcast-id",
+      name: "My Broadcast (Resend)",
+    })
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactFilter: { operator: "and", conditions: [] },
+      }),
+    )
+  })
+
+  test("passes undefined contactFilter when the source has none stored", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: null,
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test("passes undefined contactFilter when the persisted value has an unexpected shape", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: { unexpected: true },
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test("propagates a 'Broadcast is not sent' error from the existence/status guard", async () => {
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, status: "draft" })
+
+    await expect(
+      broadcastService.resendWithPruning({
+        workspaceId: WS,
+        id: SOURCE_ID,
+        canViewEmailAndPhone: true,
+      }),
+    ).rejects.toThrow("Broadcast is not sent")
+
+    expect(mockDbTransaction).not.toHaveBeenCalled()
+  })
+})

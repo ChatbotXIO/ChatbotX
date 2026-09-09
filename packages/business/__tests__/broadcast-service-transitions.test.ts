@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const updateReturning = vi.fn()
 const updateWhere = vi.fn()
 const findFirstBroadcast = vi.fn()
+const mockDispatchAuditRecord = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -105,6 +106,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
+vi.mock("../src/audit/dispatcher", () => ({
+  dispatchAuditRecord: mockDispatchAuditRecord,
+}))
+
 const { broadcastService } = await import("../src/broadcast/service")
 
 const flatten = (condition: unknown): unknown[] => {
@@ -122,6 +127,7 @@ beforeEach(() => {
   updateReturning.mockReset()
   updateWhere.mockReset()
   findFirstBroadcast.mockReset()
+  mockDispatchAuditRecord.mockClear()
 })
 
 describe("broadcastService.moveToDraft", () => {
@@ -153,6 +159,10 @@ describe("broadcastService.moveToDraft", () => {
       { __eq: ["broadcast.status", "scheduled"] },
       { __isNull: "broadcast.deletedAt" },
     ])
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "broadcast_moved_to_draft",
+      detail: "moved broadcast (#b-1) to draft",
+    })
   })
 
   test("throws when the broadcast is no longer scheduled", async () => {
@@ -182,6 +192,10 @@ describe("broadcastService.stopSending", () => {
       { __eq: ["broadcast.status", "sending"] },
       { __isNull: "broadcast.deletedAt" },
     ])
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "broadcast_stopped",
+      detail: "stopped a broadcast (#b-1)",
+    })
   })
 
   test("throws when the broadcast is not in progress", async () => {
@@ -224,6 +238,10 @@ describe("broadcastService.resumeSending", () => {
     // A single pinned UPDATE — not a read-then-write — closes both the
     // stop-after-handoff hole and the finalize race.
     expect(updateReturning).toHaveBeenCalledTimes(1)
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "broadcast_resumed",
+      detail: "resumed a broadcast (#b-1)",
+    })
   })
 
   test("throws when the broadcast is not stopped", async () => {
@@ -277,6 +295,10 @@ describe("broadcastService.softDeleteBroadcasts", () => {
       { __ne: ["broadcast.status", "sending"] },
       { __isNull: "broadcast.deletedAt" },
     ])
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "delete",
+      detail: "deleted 2 broadcast(s)",
+    })
   })
 
   test("returns zero counts and skips the query when ids is empty", async () => {
@@ -287,6 +309,19 @@ describe("broadcastService.softDeleteBroadcasts", () => {
 
     expect(result).toEqual({ deletedCount: 0, requestedCount: 0 })
     expect(updateReturning).not.toHaveBeenCalled()
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("does not audit when no requested ids were actually deleted", async () => {
+    updateReturning.mockResolvedValue([])
+
+    const result = await broadcastService.softDeleteBroadcasts({
+      workspaceId: "ws-1",
+      ids: ["b-1"],
+    })
+
+    expect(result).toEqual({ deletedCount: 0, requestedCount: 1 })
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
   })
 })
 

@@ -1,7 +1,6 @@
 "use server"
 
 import { broadcastService } from "@chatbotx.io/business"
-import { auditService } from "@chatbotx.io/business/audit"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
@@ -15,20 +14,11 @@ export const deleteBroadcastsAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
-    const result = await broadcastService.softDeleteBroadcasts({
+    // The service owns the deletable-status guard and the audit record
+    // (only when `deletedCount > 0`) — shared with the public API's
+    // `delete` route.
+    return await broadcastService.softDeleteBroadcasts({
       workspaceId,
       ids: parsedInput.ids,
     })
-
-    // Some requested ids can be silently skipped (already deleted, foreign,
-    // or `sending`) — only audit when something actually changed.
-    if (result.deletedCount > 0) {
-      await auditService.record({
-        workspaceId,
-        action: "delete",
-        detail: `deleted ${result.deletedCount} broadcast(s)`,
-      })
-    }
-
-    return result
   })

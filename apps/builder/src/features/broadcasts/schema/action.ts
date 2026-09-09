@@ -160,3 +160,16 @@ export const scheduleBroadcastSchema = z
     }
   })
 export type ScheduleBroadcastSchema = z.infer<typeof scheduleBroadcastSchema>
+
+// A `now` draft gets `schedulesAt = startOfMinute(now) <= now`, so
+// `enqueueBroadcast`'s `schedulesAt <= startTime AND status = scheduled` scan
+// picks it up on its next minute tick — the same path a "send now" create takes.
+// Shared by `scheduleBroadcastAction` and the public API's `schedule` route.
+export const resolveScheduleTime = (
+  parsedInput: ScheduleBroadcastSchema,
+): Date =>
+  normalizeScheduleTime(
+    parsedInput.schedulesType === "future" && parsedInput.schedulesAt
+      ? parsedInput.schedulesAt
+      : new Date().toISOString(),
+  )

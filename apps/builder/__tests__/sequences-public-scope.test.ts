@@ -21,24 +21,18 @@ vi.mock("@chatbotx.io/business", () => ({
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
-  broadcastService: {
-    findByIdOrName: vi.fn(),
-    listExistingIds: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    updateDraft: vi.fn(),
-    scheduleDraft: vi.fn(),
-    moveToDraft: vi.fn(),
-    stopSending: vi.fn(),
-    resumeSending: vi.fn(),
-    resendWithPruning: vi.fn(),
-    softDeleteBroadcasts: vi.fn(),
-  },
-  contactInboxService: { findManyByIds: vi.fn() },
 }))
 
-vi.mock("@chatbotx.io/analytics", () => ({
-  broadcastAnalyticsService: { getContacts: vi.fn() },
+vi.mock("@chatbotx.io/business/sequence", () => ({
+  sequenceService: {
+    findWithSteps: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    assertOwned: vi.fn(),
+    upsertStep: vi.fn(),
+    deleteStep: vi.fn(),
+  },
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -55,24 +49,20 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 
 vi.mock("@/env", () => ({ isCloud: () => true }))
 
-// `@/orpc` also exports `authorizedAPI`, which pulls in the full better-auth
-// stack via `authMiddleware` — irrelevant here and unsafe to initialize in a
-// unit test. Same stub as workspace-token-scope-enforcement.test.ts.
 vi.mock("@/middlewares/auth", () => ({
   authMiddleware: vi.fn(),
 }))
 
-// The broadcasts router's queries hit the database at import time
+// The sequences router's queries hit the database at import time
 // (`@chatbotx.io/database/client`); never reached on the FORBIDDEN path this
 // test exercises, but the import chain must not try to open a connection.
-vi.mock("../src/features/broadcasts/queries", () => ({
-  listBroadcasts: vi.fn(),
-  listBroadcastAudience: vi.fn(),
+vi.mock("../src/features/sequences/queries", () => ({
+  listSequences: vi.fn(),
 }))
 
 const { call } = await import("@orpc/server")
-const { broadcastsPublicRouter } = await import(
-  "../src/features/broadcasts/api/public"
+const { sequencesPublicRouter } = await import(
+  "../src/features/sequences/api/public"
 )
 
 const TOKEN = "cbx_ws_fixture"
@@ -97,40 +87,36 @@ beforeEach(() => {
   assertApiNotRateLimited.mockResolvedValue(undefined)
 })
 
-describe("real router: broadcasts public API scope wiring", () => {
-  test("a contacts-scoped token is denied the real GET /v1/broadcasts route with FORBIDDEN", async () => {
+describe("real router: sequences public API scope wiring", () => {
+  test("a contacts-scoped token is denied the real GET /v1/sequences route with FORBIDDEN", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["contacts"]))
 
-    await expect(invoke(broadcastsPublicRouter.list)).rejects.toMatchObject({
+    await expect(invoke(sequencesPublicRouter.list)).rejects.toMatchObject({
       code: "FORBIDDEN",
       message: "Token is not authorized for the 'broadcasts' scope",
     })
   })
 
-  test("null scopes (unrestricted) passes the real GET /v1/broadcasts route", async () => {
+  test("null scopes (unrestricted) passes the real GET /v1/sequences route", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
-    const { listBroadcasts } = await import(
-      "../src/features/broadcasts/queries"
-    )
-    vi.mocked(listBroadcasts).mockResolvedValue({
+    const { listSequences } = await import("../src/features/sequences/queries")
+    vi.mocked(listSequences).mockResolvedValue({
       data: [],
       pageCount: 1,
     } as never)
 
-    await expect(invoke(broadcastsPublicRouter.list)).resolves.toMatchObject({
+    await expect(invoke(sequencesPublicRouter.list)).resolves.toMatchObject({
       data: [],
       pageCount: 1,
     })
   })
 
   // Every procedure the router exports must be built from
-  // `workspaceTokenAuthAPIForScope("broadcasts")` — a route that forgot it
-  // would either compile-fail (wrong base client) or, if built from an
-  // unscoped client by mistake, silently accept a contacts-scoped token
-  // here. Iterating every key means a newly added procedure is covered
-  // automatically without a matching test being written by hand.
-  const routeKeys = Object.keys(broadcastsPublicRouter) as Array<
-    keyof typeof broadcastsPublicRouter
+  // `workspaceTokenAuthAPIForScope("broadcasts")` (sequences share the
+  // broadcasts scope) — iterating every key means a newly added procedure
+  // is covered automatically without a matching test being written by hand.
+  const routeKeys = Object.keys(sequencesPublicRouter) as Array<
+    keyof typeof sequencesPublicRouter
   >
 
   test.each(
@@ -139,14 +125,14 @@ describe("real router: broadcasts public API scope wiring", () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["contacts"]))
 
     await expect(
-      invoke(broadcastsPublicRouter[key], { id: "b-1", idOrName: "b-1" }),
+      invoke(sequencesPublicRouter[key], { id: "seq-1", stepId: "step-1" }),
     ).rejects.toMatchObject({
       code: "FORBIDDEN",
       message: "Token is not authorized for the 'broadcasts' scope",
     })
   })
 
-  test("a read_only token is denied POST /v1/broadcasts before any service call", async () => {
+  test("a read_only token is denied POST /v1/sequences before any service call", async () => {
     findWorkspaceByTokenHash.mockResolvedValue({
       workspace: { id: "ws-1", ownerId: "owner-1" },
       apiToken: {
@@ -157,17 +143,10 @@ describe("real router: broadcasts public API scope wiring", () => {
     })
 
     await expect(
-      invoke(broadcastsPublicRouter.create, {
-        channel: "whatsapp",
-        flowId: "flow-1",
-        subaction: "whatsappTemplateMessage",
-        schedulesType: "now",
-        schedulesAt: null,
-        contactFilter: { operator: "and", conditions: [] },
-      }),
+      invoke(sequencesPublicRouter.create, { name: "My sequence" }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
 
-    const { broadcastService } = await import("@chatbotx.io/business")
-    expect(broadcastService.create).not.toHaveBeenCalled()
+    const { sequenceService } = await import("@chatbotx.io/business/sequence")
+    expect(sequenceService.create).not.toHaveBeenCalled()
   })
 })

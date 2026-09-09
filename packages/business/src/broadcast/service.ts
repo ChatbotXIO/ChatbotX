@@ -670,6 +670,17 @@ class BroadcastService extends BaseService {
       // same normalization `create`/`updateDraft` apply to a non-draft — and
       // the worker never enrols, then fails, its recipients.
       await this.dropUndeliverableTargets(tx, row)
+
+      // Mirrors `createBroadcastAction`: only an immediate send is audited as a
+      // launch. A future-scheduled broadcast is NOT audited here, and the
+      // worker send path (`prepare-broadcast`/`enqueue-broadcast`/
+      // `process-broadcast-contacts`) emits no audit record either — so a
+      // future schedule currently produces no "launch" entry at any point.
+      // Reconstructing launch history from the audit log will miss those.
+      if (input.schedulesType === "now") {
+        await this.audit("launch", `launched a broadcast (#${row.id})`)
+      }
+
       return { id: row.id }
     })
   }
@@ -742,6 +753,12 @@ class BroadcastService extends BaseService {
     if (!row) {
       throw new ChatbotXException("Broadcast is no longer scheduled")
     }
+
+    await this.audit(
+      "broadcast_moved_to_draft",
+      `moved broadcast (#${row.id}) to draft`,
+    )
+
     return row
   }
 
@@ -761,6 +778,9 @@ class BroadcastService extends BaseService {
     if (!row) {
       throw new ChatbotXException("Broadcast is not in progress")
     }
+
+    await this.audit("broadcast_stopped", `stopped a broadcast (#${row.id})`)
+
     return row
   }
 
@@ -805,6 +825,9 @@ class BroadcastService extends BaseService {
     if (!row) {
       throw new ChatbotXException("Broadcast is not stopped")
     }
+
+    await this.audit("broadcast_resumed", `resumed a broadcast (#${row.id})`)
+
     return row
   }
 
@@ -836,6 +859,12 @@ class BroadcastService extends BaseService {
         ),
       )
       .returning({ id: broadcastModel.id })
+
+    // Some requested ids can be silently skipped (already deleted, foreign,
+    // or `sending`) — only audit when something actually changed.
+    if (rows.length > 0) {
+      await this.audit("delete", `deleted ${rows.length} broadcast(s)`)
+    }
 
     return { deletedCount: rows.length, requestedCount }
   }
@@ -1243,6 +1272,17 @@ class BroadcastService extends BaseService {
 
     if (!row) {
       throw new ChatbotXException("Broadcast is not a draft")
+    }
+
+    // Mirrors `createBroadcastAction`: only an immediate send is audited as a
+    // launch, and an edit that stays a draft never launches at all. As in
+    // `scheduleDraft`, a future-scheduled broadcast produces no "launch"
+    // audit entry at any point — the worker send path emits none.
+    if (
+      status === broadcastStatuses.enum.scheduled &&
+      data.schedulesType === "now"
+    ) {
+      await this.audit("launch", `launched a broadcast (#${row.id})`)
     }
 
     // `status` is the value we just wrote, so it needs no unsafe narrowing of
@@ -2043,6 +2083,48 @@ class BroadcastService extends BaseService {
     await this.audit("launch", `launched a broadcast (#${newBroadcast.id})`)
 
     return newBroadcast
+  }
+
+  /**
+   * Wraps `resend` with the same existence/status guard + email/phone
+   * pruning the private `resendBroadcastAction` used to do inline, so the
+   * public API and the builder UI share one code path (invariant #9). A
+   * caller with `canViewEmailAndPhone: true` (every workspace-token caller,
+   * per plan decision) short-circuits `pruneEmailPhoneFilterConditions` to
+   * `contactFilter ?? undefined` — the persisted filter still needs a
+   * minimal runtime shape-check first because `Broadcast.contactFilter` is
+   * an untyped jsonb column (`unknown`, not `ContactFilterCriteriaInput`).
+   */
+  async resendWithPruning(input: {
+    workspaceId: string
+    id: string
+    canViewEmailAndPhone: boolean
+  }): Promise<BroadcastModel> {
+    const broadcast = await this.assertResendable({
+      workspaceId: input.workspaceId,
+      id: input.id,
+    })
+
+    const persisted = broadcast.contactFilter as unknown
+    const isContactFilterShape = (
+      value: unknown,
+    ): value is ContactFilterCriteriaInput =>
+      typeof value === "object" &&
+      value !== null &&
+      "operator" in value &&
+      "conditions" in value &&
+      Array.isArray((value as { conditions: unknown }).conditions)
+
+    const contactFilter = pruneEmailPhoneFilterConditions(
+      isContactFilterShape(persisted) ? persisted : undefined,
+      input.canViewEmailAndPhone,
+    )
+
+    return await this.resend({
+      workspaceId: input.workspaceId,
+      id: input.id,
+      contactFilter,
+    })
   }
 }
 

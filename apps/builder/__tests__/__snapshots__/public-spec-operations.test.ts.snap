@@ -323,6 +323,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/bot-fields",
   },
   {
+    "method": "POST",
+    "operationId": "broadcasts.create",
+    "path": "/v1/broadcasts",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "broadcasts.delete",
+    "path": "/v1/broadcasts/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "broadcasts.get",
     "path": "/v1/broadcasts/{idOrName}",
@@ -336,6 +346,46 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "broadcasts.list",
     "path": "/v1/broadcasts",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.listContacts",
+    "path": "/v1/broadcasts/{id}/contacts",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.moveToDraft",
+    "path": "/v1/broadcasts/{id}/move-to-draft",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.resend",
+    "path": "/v1/broadcasts/{id}/resend",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.resume",
+    "path": "/v1/broadcasts/{id}/resume",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.schedule",
+    "path": "/v1/broadcasts/{id}/schedule",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.stop",
+    "path": "/v1/broadcasts/{id}/stop",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "broadcasts.update",
+    "path": "/v1/broadcasts/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "broadcasts.updateDraft",
+    "path": "/v1/broadcasts/{id}/draft",
   },
   {
     "method": "POST",
@@ -1043,6 +1093,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/saved-replies/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "sequences.create",
+    "path": "/v1/sequences",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "sequences.delete",
+    "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "sequences.deleteStep",
+    "path": "/v1/sequences/{id}/steps/{stepId}",
+  },
+  {
     "method": "GET",
     "operationId": "sequences.get",
     "path": "/v1/sequences/{id}",
@@ -1051,6 +1116,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "sequences.list",
     "path": "/v1/sequences",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "sequences.update",
+    "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "sequences.upsertStep",
+    "path": "/v1/sequences/{id}/steps",
   },
   {
     "method": "POST",

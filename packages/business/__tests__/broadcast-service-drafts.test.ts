@@ -9,6 +9,7 @@ const updateReturning = vi.fn()
 const findManyBroadcastTarget = vi.fn()
 const deleteTargetsWhere = vi.fn()
 const pruneFilter = vi.fn()
+const mockDispatchAuditRecord = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -115,6 +116,10 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
+vi.mock("../src/audit/dispatcher", () => ({
+  dispatchAuditRecord: mockDispatchAuditRecord,
+}))
+
 const { broadcastService } = await import("../src/broadcast/service")
 
 const flatten = (condition: unknown): unknown[] => {
@@ -138,6 +143,7 @@ beforeEach(() => {
   findManyBroadcastTarget.mockReset().mockResolvedValue([])
   deleteTargetsWhere.mockReset()
   pruneFilter.mockReset().mockImplementation((filter: unknown) => filter)
+  mockDispatchAuditRecord.mockClear()
 })
 
 describe("broadcastService.scheduleDraft", () => {
@@ -165,6 +171,25 @@ describe("broadcastService.scheduleDraft", () => {
       { __eq: ["broadcast.status", "draft"] },
       { __isNull: "broadcast.deletedAt" },
     ])
+    // A future schedule is audited as a launch only when the send actually
+    // happens, not here.
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("audits a launch when scheduling for 'now'", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "now",
+      schedulesAt: new Date("2026-09-01T09:00:00Z"),
+    })
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "launch",
+      detail: "launched a broadcast (#b-1)",
+    })
   })
 
   test("throws when the broadcast is not a draft of this workspace", async () => {
@@ -177,6 +202,7 @@ describe("broadcastService.scheduleDraft", () => {
         schedulesAt: new Date(),
       }),
     ).rejects.toThrow("Broadcast is not a draft")
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
   })
 
   test("drops a page left without a template when scheduling, keeping the ready pages", async () => {
@@ -412,6 +438,8 @@ describe("broadcastService.updateDraft", () => {
       { __eq: ["broadcast.status", "draft"] },
       { __isNull: "broadcast.deletedAt" },
     ])
+    // An edit that stays a draft never launches.
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
   })
 
   test("moves the draft to scheduled when saveAsDraft is false", async () => {
@@ -427,6 +455,26 @@ describe("broadcastService.updateDraft", () => {
 
     expect(result.status).toBe("scheduled")
     expect(updateReturning.mock.calls[0][0].values.status).toBe("scheduled")
+    // A future schedule is audited as a launch when the send actually
+    // happens, not on this edit.
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("audits a launch when the edit promotes the draft to scheduled 'now'", async () => {
+    findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.updateDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      canViewEmailAndPhone: true,
+      data: { ...flowDraftData, saveAsDraft: false, schedulesType: "now" },
+    })
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "launch",
+      detail: "launched a broadcast (#b-1)",
+    })
   })
 
   test("prunes email/phone conditions the member may not view", async () => {
