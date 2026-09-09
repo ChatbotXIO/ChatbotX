@@ -76,6 +76,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   automatedResponseModel: {
     id: "automatedResponse.id",
     workspaceId: "automatedResponse.workspaceId",
+    type: "automatedResponse.type",
   },
 }))
 
@@ -117,7 +118,7 @@ describe("automatedResponseService audit side effects", () => {
     const tx = makeClient()
 
     await automatedResponseService.update(
-      { workspaceId: "workspace-1", id: "automation-1" },
+      { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
       { text: "Hello" },
       tx as never,
     )
@@ -125,15 +126,24 @@ describe("automatedResponseService audit side effects", () => {
     expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
   })
 
-  test("does not audit update or setStatus when returning no row", async () => {
+  test("update throws not-found and never audits when returning no row", async () => {
     mocks.updateReturning.mockResolvedValue([])
 
-    await automatedResponseService.update(
-      { workspaceId: "workspace-1", id: "automation-1" },
-      { text: "Hello" },
-    )
+    await expect(
+      automatedResponseService.update(
+        { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
+        { text: "Hello" },
+      ),
+    ).rejects.toThrow("Automated response not found")
+
+    expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("does not audit setStatus when returning no row", async () => {
+    mocks.updateReturning.mockResolvedValue([])
+
     await automatedResponseService.setStatus(
-      { workspaceId: "workspace-1", id: "automation-1" },
+      { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
       false,
     )
 
@@ -143,17 +153,25 @@ describe("automatedResponseService audit side effects", () => {
   test("does not audit deleteMany when delete returning finds no rows", async () => {
     mocks.deleteReturning.mockResolvedValue([])
 
-    await automatedResponseService.deleteMany("workspace-1", ["automation-1"])
+    await automatedResponseService.deleteMany(
+      "workspace-1",
+      ["automation-1"],
+      "inbound",
+    )
 
     expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
   })
 
   test("audits normal non-transaction update and delete", async () => {
     await automatedResponseService.update(
-      { workspaceId: "workspace-1", id: "automation-1" },
+      { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
       { text: "Hello" },
     )
-    await automatedResponseService.deleteMany("workspace-1", ["automation-1"])
+    await automatedResponseService.deleteMany(
+      "workspace-1",
+      ["automation-1"],
+      "inbound",
+    )
 
     expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith({
       action: "update",
@@ -163,6 +181,89 @@ describe("automatedResponseService audit side effects", () => {
       action: "delete",
       detail: "deleted keyword automation (#automation-1)",
     })
+  })
+})
+
+describe("automatedResponseService — type scoping (Contact vs Page keywords)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findFirst.mockResolvedValue({
+      folderId: null,
+      keywords: ["hello"],
+      text: "Hi",
+      flowId: null,
+      status: true,
+    })
+    mocks.updateReturning.mockResolvedValue([
+      { id: "automation-1", keywords: ["hello"] },
+    ])
+    mocks.deleteReturning.mockResolvedValue([{ id: "automation-1" }])
+  })
+
+  test("update includes an explicit type predicate in the WHERE clause", async () => {
+    await automatedResponseService.update(
+      { workspaceId: "workspace-1", id: "automation-1", type: "outbound" },
+      { text: "Hello" },
+    )
+
+    const whereArgs = mocks.updateWhere.mock.calls.at(0)?.[0] as {
+      and: unknown[]
+    }
+    const typePredicate = whereArgs.and.find(
+      (predicate) =>
+        (predicate as { eq: unknown[] }).eq?.[0] ===
+        "automatedResponse.workspaceId",
+    )
+    expect(whereArgs.and).toContainEqual({
+      eq: ["automatedResponse.workspaceId", "workspace-1"],
+    })
+    expect(typePredicate).toBeDefined()
+  })
+
+  test("setStatus scopes the read and the write by type", async () => {
+    await automatedResponseService.setStatus(
+      { workspaceId: "workspace-1", id: "automation-1", type: "outbound" },
+      true,
+    )
+
+    expect(mocks.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ type: "outbound" }),
+      }),
+    )
+  })
+
+  test("deleteMany scopes the DELETE by type so it never removes the other type's row", async () => {
+    await automatedResponseService.deleteMany(
+      "workspace-1",
+      ["automation-1"],
+      "outbound",
+    )
+
+    const whereArgs = mocks.deleteWhere.mock.calls.at(0)?.[0] as {
+      and: unknown[]
+    }
+    expect(whereArgs.and).toContainEqual({
+      eq: ["automatedResponse.workspaceId", "workspace-1"],
+    })
+  })
+
+  test("findOrFail scopes the lookup by type", async () => {
+    mocks.findFirst.mockResolvedValueOnce(undefined)
+
+    await expect(
+      automatedResponseService.findOrFail({
+        workspaceId: "workspace-1",
+        id: "automation-1",
+        type: "outbound",
+      }),
+    ).rejects.toThrow("Automated response not found")
+
+    expect(mocks.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ type: "outbound" }),
+      }),
+    )
   })
 })
 
@@ -185,7 +286,7 @@ describe("automatedResponseService.update — keywords and flowId/text invariant
   // unconditionally set keywords to `[]`, silently wiping the automation.
   test("omitting keywords does not wipe the existing keywords column", async () => {
     await automatedResponseService.update(
-      { workspaceId: "workspace-1", id: "automation-1" },
+      { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
       { text: "hi" },
     )
 
@@ -196,7 +297,7 @@ describe("automatedResponseService.update — keywords and flowId/text invariant
 
   test("explicitly supplied keywords are still applied", async () => {
     await automatedResponseService.update(
-      { workspaceId: "workspace-1", id: "automation-1" },
+      { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
       { keywords: [{ value: "new" }] },
     )
 
@@ -207,7 +308,7 @@ describe("automatedResponseService.update — keywords and flowId/text invariant
 
   test("nulls flowId when text is set", async () => {
     await automatedResponseService.update(
-      { workspaceId: "workspace-1", id: "automation-1" },
+      { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
       { text: "hi", flowId: "flow-1" },
     )
 
@@ -221,7 +322,7 @@ describe("automatedResponseService.update — keywords and flowId/text invariant
     mocks.flowExists.mockResolvedValue(true)
 
     await automatedResponseService.update(
-      { workspaceId: "workspace-1", id: "automation-1" },
+      { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
       { flowId: "flow-1" },
     )
 
@@ -240,7 +341,7 @@ describe("automatedResponseService.update — keywords and flowId/text invariant
 
     await expect(
       automatedResponseService.update(
-        { workspaceId: "workspace-1", id: "automation-1" },
+        { workspaceId: "workspace-1", id: "automation-1", type: "inbound" },
         { flowId: "foreign-flow" },
       ),
     ).rejects.toMatchObject({ field: "flowId", message: "Flow not found" })

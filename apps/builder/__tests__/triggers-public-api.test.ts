@@ -60,13 +60,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   notFoundException: (message: string) => new Error(message),
 }))
 
-const conditionRepository = {
-  listByTriggerIds: vi.fn(),
-}
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  conditionRepository,
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => {
   const schema = {
     pick: vi.fn(() => schema),
@@ -190,13 +183,11 @@ describe("POST /v1/triggers", () => {
 describe("PUT /v1/triggers/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/triggers/{id}")
 
-  test("delegates to triggerService.updateWithConditions and returns the service's result plus fresh conditions", async () => {
+  test("delegates to triggerService.updateWithConditions and returns its trigger plus conditions", async () => {
     triggerService.updateWithConditions.mockResolvedValueOnce({
-      id: "trigger-1",
+      trigger: { id: "trigger-1" },
+      conditions: [{ id: "c1", type: "newContact" }],
     })
-    conditionRepository.listByTriggerIds.mockResolvedValueOnce([
-      { id: "c1", type: "newContact" },
-    ])
 
     const result = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
@@ -215,11 +206,9 @@ describe("PUT /v1/triggers/{id}", () => {
       actions: [{ type: "sendFlow" }],
       conditions: [{ type: "newContact" }],
     })
-    // No redundant re-read of the trigger row itself — only conditions.
+    // No redundant re-read — the service already returns conditions from
+    // inside its own transaction.
     expect(triggerService.findWithConditions).not.toHaveBeenCalled()
-    expect(conditionRepository.listByTriggerIds).toHaveBeenCalledWith([
-      "trigger-1",
-    ])
     expect(result.conditions).toEqual([{ id: "c1", type: "newContact" }])
   })
 
@@ -238,9 +227,8 @@ describe("PUT /v1/triggers/{id}", () => {
 describe("PATCH /v1/triggers/{id}/settings", () => {
   const procedure = findProcedure("PATCH", "/v1/triggers/{id}/settings")
 
-  test("delegates to triggerService.updateSettings and returns the updated resource", async () => {
-    triggerService.updateSettings.mockResolvedValueOnce(undefined)
-    triggerService.findWithConditions.mockResolvedValueOnce({
+  test("delegates to triggerService.updateSettings and returns its result", async () => {
+    triggerService.updateSettings.mockResolvedValueOnce({
       id: "trigger-1",
       active: false,
       conditions: [],
@@ -257,16 +245,13 @@ describe("PATCH /v1/triggers/{id}/settings", () => {
       id: "trigger-1",
       active: false,
     })
-    expect(triggerService.findWithConditions).toHaveBeenCalledWith({
-      id: "trigger-1",
-      workspaceId: "workspace-1",
-    })
     expect(result.active).toBe(false)
   })
 
-  test("throws not found when the trigger no longer exists after updateSettings", async () => {
-    triggerService.updateSettings.mockResolvedValueOnce(undefined)
-    triggerService.findWithConditions.mockResolvedValueOnce(null)
+  test("propagates a not-found error from updateSettings", async () => {
+    triggerService.updateSettings.mockRejectedValueOnce(
+      new Error("Trigger not found"),
+    )
 
     await expect(
       procedure.handler?.({

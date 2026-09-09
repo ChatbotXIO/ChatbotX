@@ -155,7 +155,13 @@ class TriggerService extends BaseService {
     id: string
     actions: TriggerModel["actions"]
     conditions: ConditionInput[]
-  }): Promise<TriggerModel | undefined> {
+  }): Promise<
+    | {
+        trigger: TriggerModel
+        conditions: (typeof conditionModel.$inferSelect)[]
+      }
+    | undefined
+  > {
     const { workspaceId, id, actions, conditions } = input
 
     const result = await db.transaction(async (tx) => {
@@ -174,7 +180,11 @@ class TriggerService extends BaseService {
       ])
 
       if (!existingTrigger) {
-        return { trigger: undefined, hasRealChange: false }
+        return {
+          trigger: undefined,
+          conditions: undefined,
+          hasRealChange: false,
+        }
       }
 
       const existingIds = new Set(existingConditions.map((c) => c.id))
@@ -253,14 +263,22 @@ class TriggerService extends BaseService {
         )
       }
 
-      const trigger = await tx.query.triggerModel.findFirst({
-        where: {
-          id,
-        },
-      })
+      const [trigger, updatedConditions] = await Promise.all([
+        tx.query.triggerModel.findFirst({
+          where: {
+            id,
+          },
+        }),
+        tx.query.conditionModel.findMany({
+          where: {
+            triggerId: id,
+          },
+        }),
+      ])
 
       return {
         trigger,
+        conditions: updatedConditions,
         hasRealChange:
           actionsChanged ||
           conditionsToDelete.length > 0 ||
@@ -278,6 +296,8 @@ class TriggerService extends BaseService {
     }
 
     return result.trigger
+      ? { trigger: result.trigger, conditions: result.conditions ?? [] }
+      : undefined
   }
 
   /**
@@ -291,7 +311,9 @@ class TriggerService extends BaseService {
     id: string
     name?: string
     active?: boolean
-  }): Promise<void> {
+  }): Promise<
+    TriggerModel & { conditions: (typeof conditionModel.$inferSelect)[] }
+  > {
     const { workspaceId, id, ...patch } = input
 
     const trigger = await db.query.triggerModel.findFirst({
@@ -309,29 +331,32 @@ class TriggerService extends BaseService {
       ([key, value]) => trigger[key as keyof typeof patch] !== value,
     )
 
-    if (changedEntries.length === 0) {
-      return
+    if (changedEntries.length > 0) {
+      const updated = await db
+        .update(triggerModel)
+        .set(patch)
+        .where(eq(triggerModel.id, trigger.id))
+        .returning({ id: triggerModel.id })
+
+      if (updated.length > 0) {
+        const changedKeys = changedEntries.map(([key]) => key)
+        let detail = `updated a trigger (#${trigger.id})`
+        if (changedKeys.length === 1 && changedKeys[0] === "active") {
+          detail = patch.active
+            ? `enabled a trigger (#${trigger.id})`
+            : `disabled a trigger (#${trigger.id})`
+        }
+
+        await this.audit("update", detail)
+      }
     }
 
-    const updated = await db
-      .update(triggerModel)
-      .set(patch)
-      .where(eq(triggerModel.id, trigger.id))
-      .returning({ id: triggerModel.id })
+    const withConditions = await triggerRepository.findWithConditions({
+      id,
+      workspaceId,
+    })
 
-    if (updated.length === 0) {
-      return
-    }
-
-    const changedKeys = changedEntries.map(([key]) => key)
-    let detail = `updated a trigger (#${trigger.id})`
-    if (changedKeys.length === 1 && changedKeys[0] === "active") {
-      detail = patch.active
-        ? `enabled a trigger (#${trigger.id})`
-        : `disabled a trigger (#${trigger.id})`
-    }
-
-    await this.audit("update", detail)
+    return withConditions ?? { ...trigger, conditions: [] }
   }
 }
 

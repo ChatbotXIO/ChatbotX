@@ -1,7 +1,7 @@
 "use server"
 
-import { sequenceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { sequenceService } from "@chatbotx.io/business/sequence"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"

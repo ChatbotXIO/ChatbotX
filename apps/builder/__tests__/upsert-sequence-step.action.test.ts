@@ -2,18 +2,9 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const {
-  mockAssertOwned,
-  mockCreateStep,
-  mockUpdateStep,
-  mockHandleStepCreationImpact,
-  mockHandleStepUpdateImpact,
-} = vi.hoisted(() => ({
+const { mockAssertOwned, mockUpsertStep } = vi.hoisted(() => ({
   mockAssertOwned: vi.fn().mockResolvedValue(undefined),
-  mockCreateStep: vi.fn(),
-  mockUpdateStep: vi.fn(),
-  mockHandleStepCreationImpact: vi.fn().mockResolvedValue(undefined),
-  mockHandleStepUpdateImpact: vi.fn().mockResolvedValue(undefined),
+  mockUpsertStep: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -24,21 +15,15 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("@chatbotx.io/business/sequence", () => ({
   sequenceService: {
     assertOwned: mockAssertOwned,
-    createStep: mockCreateStep,
-    updateStep: mockUpdateStep,
+    upsertStep: mockUpsertStep,
   },
 }))
 
 vi.mock("@/features/common/schema", () => ({
   workspaceIdrequestParams: [],
-}))
-
-vi.mock("@/features/contact-sequences/utils/calculate-next-run-at", () => ({
-  handleStepCreationImpact: mockHandleStepCreationImpact,
-  handleStepUpdateImpact: mockHandleStepUpdateImpact,
 }))
 
 vi.mock("@/features/sequences/schema/action", () => ({
@@ -73,196 +58,72 @@ describe("upsertSequenceStepAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockAssertOwned.mockResolvedValue(undefined)
-    mockCreateStep.mockResolvedValue({ id: "new-step-id" })
-    mockUpdateStep.mockResolvedValue({
-      previousOrder: 1,
-      step: { id: STEP_ID },
+    mockUpsertStep.mockResolvedValue({ stepId: STEP_ID })
+  })
+
+  test("validates ownership before delegating to sequenceService.upsertStep", async () => {
+    const parsedInput = { sequenceId: SEQ_ID, order: 0 }
+
+    const result = await callAction({
+      bindArgsParsedInputs: [WS],
+      parsedInput,
+    })
+
+    expect(mockAssertOwned).toHaveBeenCalledWith({
+      workspaceId: WS,
+      sequenceId: SEQ_ID,
+    })
+    expect(mockUpsertStep).toHaveBeenCalledWith({
+      workspaceId: WS,
+      sequenceId: SEQ_ID,
+      stepId: undefined,
+      data: parsedInput,
+    })
+    expect(result).toEqual({ stepId: STEP_ID })
+  })
+
+  test("passes stepId through on the update path", async () => {
+    const parsedInput = {
+      stepId: STEP_ID,
+      sequenceId: SEQ_ID,
+      order: 1,
+      delayDays: 2,
+    }
+
+    await callAction({
+      bindArgsParsedInputs: [WS],
+      parsedInput,
+    })
+
+    expect(mockUpsertStep).toHaveBeenCalledWith({
+      workspaceId: WS,
+      sequenceId: SEQ_ID,
+      stepId: STEP_ID,
+      data: parsedInput,
     })
   })
 
-  describe("create path (no stepId)", () => {
-    test("validates ownership, creates the step, and recalculates for affected contacts", async () => {
-      const result = await callAction({
+  test("propagates a sequence-not-found error before upsertStep is called", async () => {
+    mockAssertOwned.mockRejectedValue(new Error("Sequence not found"))
+
+    await expect(
+      callAction({
         bindArgsParsedInputs: [WS],
         parsedInput: { sequenceId: SEQ_ID, order: 0 },
-      })
+      }),
+    ).rejects.toThrow("Sequence not found")
 
-      expect(mockAssertOwned).toHaveBeenCalledWith({
-        workspaceId: WS,
-        sequenceId: SEQ_ID,
-      })
-      expect(mockCreateStep).toHaveBeenCalledWith({
-        workspaceId: WS,
-        sequenceId: SEQ_ID,
-        data: { sequenceId: SEQ_ID, order: 0 },
-      })
-      expect(mockHandleStepCreationImpact).toHaveBeenCalledWith(SEQ_ID, WS, 0)
-      expect(mockHandleStepUpdateImpact).not.toHaveBeenCalled()
-      expect(result).toEqual({ stepId: "new-step-id" })
-    })
-
-    test("does not call updateStep on the create path", async () => {
-      await callAction({
-        bindArgsParsedInputs: [WS],
-        parsedInput: { sequenceId: SEQ_ID, order: 0 },
-      })
-
-      expect(mockUpdateStep).not.toHaveBeenCalled()
-    })
+    expect(mockUpsertStep).not.toHaveBeenCalled()
   })
 
-  describe("update path (stepId provided)", () => {
-    test("validates ownership, updates the step, and returns its id", async () => {
-      const result = await callAction({
-        bindArgsParsedInputs: [WS],
-        parsedInput: {
-          stepId: STEP_ID,
-          sequenceId: SEQ_ID,
-          order: 1,
-          delayDays: 2,
-        },
-      })
+  test("propagates an upsertStep error", async () => {
+    mockUpsertStep.mockRejectedValue(new Error("Step not found"))
 
-      expect(mockUpdateStep).toHaveBeenCalledWith({
-        workspaceId: WS,
-        stepId: STEP_ID,
-        data: {
-          stepId: STEP_ID,
-          sequenceId: SEQ_ID,
-          order: 1,
-          delayDays: 2,
-        },
-      })
-      expect(result).toEqual({ stepId: STEP_ID })
-    })
-
-    test("calls handleStepUpdateImpact when delayDays changes", async () => {
-      mockUpdateStep.mockResolvedValue({
-        previousOrder: 1,
-        step: { id: STEP_ID },
-      })
-
-      await callAction({
-        bindArgsParsedInputs: [WS],
-        parsedInput: {
-          stepId: STEP_ID,
-          sequenceId: SEQ_ID,
-          order: 1,
-          delayDays: 3,
-        },
-      })
-
-      expect(mockHandleStepUpdateImpact).toHaveBeenCalledWith(
-        SEQ_ID,
-        WS,
-        STEP_ID,
-        1,
-      )
-      expect(mockHandleStepCreationImpact).not.toHaveBeenCalled()
-    })
-
-    test("calls handleStepUpdateImpact when isActive changes", async () => {
-      mockUpdateStep.mockResolvedValue({
-        previousOrder: 0,
-        step: { id: STEP_ID },
-      })
-
-      await callAction({
-        bindArgsParsedInputs: [WS],
-        parsedInput: {
-          stepId: STEP_ID,
-          sequenceId: SEQ_ID,
-          order: 0,
-          isActive: false,
-        },
-      })
-
-      expect(mockHandleStepUpdateImpact).toHaveBeenCalledTimes(1)
-    })
-
-    test("calls handleStepUpdateImpact when order changed from previousOrder", async () => {
-      mockUpdateStep.mockResolvedValue({
-        previousOrder: 5,
-        step: { id: STEP_ID },
-      })
-
-      await callAction({
-        bindArgsParsedInputs: [WS],
-        parsedInput: {
-          stepId: STEP_ID,
-          sequenceId: SEQ_ID,
-          order: 1,
-        },
-      })
-
-      expect(mockHandleStepUpdateImpact).toHaveBeenCalledTimes(1)
-    })
-
-    test("does not call handleStepUpdateImpact when only flowId changes and order is unchanged", async () => {
-      mockUpdateStep.mockResolvedValue({
-        previousOrder: 1,
-        step: { id: STEP_ID },
-      })
-
-      await callAction({
-        bindArgsParsedInputs: [WS],
-        parsedInput: {
-          stepId: STEP_ID,
-          sequenceId: SEQ_ID,
-          order: 1,
-          flowId: "flow-abc",
-        },
-      })
-
-      expect(mockHandleStepUpdateImpact).not.toHaveBeenCalled()
-    })
-
-    test("does not call createStep on the update path", async () => {
-      await callAction({
+    await expect(
+      callAction({
         bindArgsParsedInputs: [WS],
         parsedInput: { stepId: STEP_ID, sequenceId: SEQ_ID, order: 0 },
-      })
-
-      expect(mockCreateStep).not.toHaveBeenCalled()
-    })
-  })
-
-  describe("errors", () => {
-    test("propagates a sequence-not-found error on the create path", async () => {
-      mockAssertOwned.mockRejectedValue(new Error("Sequence not found"))
-
-      await expect(
-        callAction({
-          bindArgsParsedInputs: [WS],
-          parsedInput: { sequenceId: SEQ_ID, order: 0 },
-        }),
-      ).rejects.toThrow("Sequence not found")
-    })
-
-    test("propagates a step-not-found error on the update path", async () => {
-      mockUpdateStep.mockRejectedValue(new Error("Step not found"))
-
-      await expect(
-        callAction({
-          bindArgsParsedInputs: [WS],
-          parsedInput: { stepId: STEP_ID, sequenceId: SEQ_ID, order: 0 },
-        }),
-      ).rejects.toThrow("Step not found")
-
-      expect(mockHandleStepUpdateImpact).not.toHaveBeenCalled()
-    })
-
-    test("propagates an unauthorized cross-workspace error on the update path", async () => {
-      mockUpdateStep.mockRejectedValue(
-        new Error("Unauthorized: Step does not belong to this workspace"),
-      )
-
-      await expect(
-        callAction({
-          bindArgsParsedInputs: [WS],
-          parsedInput: { stepId: STEP_ID, sequenceId: SEQ_ID, order: 0 },
-        }),
-      ).rejects.toThrow("Unauthorized: Step does not belong to this workspace")
-    })
+      }),
+    ).rejects.toThrow("Step not found")
   })
 })

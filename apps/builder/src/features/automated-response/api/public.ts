@@ -49,7 +49,12 @@ export const keywordsPublicRouter = {
       summary: "Get a keyword automation by id",
       tags: ["Keywords"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString(),
+        type: automatedResponseTypes.default("inbound"),
+      }),
+    )
     .output(publicKeywordResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -57,7 +62,7 @@ export const keywordsPublicRouter = {
         await automatedResponseService.findOrFail({
           workspaceId: context.workspace.id,
           id: input.id,
-          type: "inbound",
+          type: input.type,
         }),
     ),
 
@@ -95,6 +100,7 @@ export const keywordsPublicRouter = {
     .input(
       z.object({
         id: zodBigintAsString(),
+        type: automatedResponseTypes.default("inbound"),
         keywords: z.array(z.string().min(1).max(255)).min(1).optional(),
         text: z.string().min(1).nullish(),
         flowId: zodBigintAsString().nullish(),
@@ -104,14 +110,9 @@ export const keywordsPublicRouter = {
     .output(publicKeywordResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, keywords, ...rest } = input
-      await automatedResponseService.findOrFail({
-        workspaceId: context.workspace.id,
-        id,
-        type: "inbound",
-      })
+      const { id, type, keywords, ...rest } = input
       return await automatedResponseService.update(
-        { workspaceId: context.workspace.id, id, type: "inbound" },
+        { workspaceId: context.workspace.id, id, type },
         {
           ...rest,
           keywords: keywords?.map((value) => ({ value })),
@@ -126,17 +127,23 @@ export const keywordsPublicRouter = {
       summary: "Enable or disable a keyword automation",
       tags: ["Keywords"],
     })
-    .input(z.object({ id: zodBigintAsString(), status: z.boolean() }))
+    .input(
+      z.object({
+        id: zodBigintAsString(),
+        status: z.boolean(),
+        type: automatedResponseTypes.default("inbound"),
+      }),
+    )
     .output(publicKeywordResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       await automatedResponseService.findOrFail({
         workspaceId: context.workspace.id,
         id: input.id,
-        type: "inbound",
+        type: input.type,
       })
       return await automatedResponseService.setStatus(
-        { workspaceId: context.workspace.id, id: input.id, type: "inbound" },
+        { workspaceId: context.workspace.id, id: input.id, type: input.type },
         input.status,
       )
     }),
@@ -149,14 +156,18 @@ export const keywordsPublicRouter = {
       successStatus: 204,
       tags: ["Keywords"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString(),
+        type: automatedResponseTypes.default("inbound"),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await automatedResponseService.deleteMany(
         context.workspace.id,
         [input.id],
-        undefined,
-        "inbound",
+        input.type,
       )
     }),
 }

@@ -139,7 +139,7 @@ describe("triggerService.updateWithConditions", () => {
       conditions: [],
     })
 
-    expect(result).toEqual({ id: TRIGGER_ID })
+    expect(result).toEqual({ trigger: { id: TRIGGER_ID }, conditions: [] })
     // Cache updates when the trigger exists, regardless of hasRealChange.
     expect(mockUpdateTriggerCache).toHaveBeenCalledWith(WS)
     expect(mockDispatchAuditRecord).not.toHaveBeenCalled()

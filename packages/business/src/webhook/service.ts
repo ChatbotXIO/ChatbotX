@@ -335,7 +335,8 @@ class WebhookService extends BaseService {
   async updateSettings(input: {
     workspaceId: string
     id: string
-    [key: string]: unknown
+    name?: string
+    active?: boolean
   }): Promise<void> {
     const { workspaceId, id, ...patch } = input
 

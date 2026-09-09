@@ -38,7 +38,7 @@ export type UpdateAutomatedResponseRequest = {
 export type FindAutomatedResponseRequest = {
   workspaceId: string
   id: string
-  type?: AutomatedResponseType
+  type: AutomatedResponseType
 }
 
 export type ListAutomatedResponsesRequest = {
@@ -61,7 +61,7 @@ class AutomatedResponseService extends BaseService {
       where: {
         workspaceId: input.workspaceId,
         id: input.id,
-        ...(input.type ? { type: input.type } : {}),
+        type: input.type,
       },
     })
   }
@@ -214,7 +214,7 @@ class AutomatedResponseService extends BaseService {
   }
 
   async update(
-    ctx: { id: string; workspaceId: string; type?: AutomatedResponseType },
+    ctx: { id: string; workspaceId: string; type: AutomatedResponseType },
     data: UpdateAutomatedResponseRequest,
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
@@ -226,7 +226,7 @@ class AutomatedResponseService extends BaseService {
       where: {
         id: ctx.id,
         workspaceId: ctx.workspaceId,
-        ...(ctx.type ? { type: ctx.type } : {}),
+        type: ctx.type,
       },
       columns: { folderId: true, keywords: true, text: true, flowId: true },
     })
@@ -270,14 +270,14 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.id, ctx.id),
           eq(automatedResponseModel.workspaceId, ctx.workspaceId),
-          ...(ctx.type ? [eq(automatedResponseModel.type, ctx.type)] : []),
+          eq(automatedResponseModel.type, ctx.type),
         ),
       )
       .returning()
     await this.invalidateCache(ctx.workspaceId)
 
     if (!updated) {
-      return updated as unknown as AutomatedResponseModel
+      throw notFoundException("Automated response not found")
     }
 
     const keywordsChanged =
@@ -305,7 +305,7 @@ class AutomatedResponseService extends BaseService {
   }
 
   async setStatus(
-    ctx: { id: string; workspaceId: string; type?: AutomatedResponseType },
+    ctx: { id: string; workspaceId: string; type: AutomatedResponseType },
     status: boolean,
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
@@ -315,7 +315,7 @@ class AutomatedResponseService extends BaseService {
       where: {
         id: ctx.id,
         workspaceId: ctx.workspaceId,
-        ...(ctx.type ? { type: ctx.type } : {}),
+        type: ctx.type,
       },
       columns: { status: true },
     })
@@ -327,7 +327,7 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.id, ctx.id),
           eq(automatedResponseModel.workspaceId, ctx.workspaceId),
-          ...(ctx.type ? [eq(automatedResponseModel.type, ctx.type)] : []),
+          eq(automatedResponseModel.type, ctx.type),
         ),
       )
       .returning()
@@ -350,8 +350,8 @@ class AutomatedResponseService extends BaseService {
   async deleteMany(
     workspaceId: string,
     ids: string[],
+    type: AutomatedResponseType,
     tx?: DatabaseClient,
-    type?: AutomatedResponseType,
   ): Promise<void> {
     await assertDeletable({
       workspaceId,
@@ -367,7 +367,7 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.workspaceId, workspaceId),
           inArray(automatedResponseModel.id, ids),
-          ...(type ? [eq(automatedResponseModel.type, type)] : []),
+          eq(automatedResponseModel.type, type),
         ),
       )
       .returning({ id: automatedResponseModel.id })

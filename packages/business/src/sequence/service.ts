@@ -5,21 +5,76 @@ import {
   findOrFail,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
+import {
+  type SequenceListInput,
+  sequenceRepository,
+} from "@chatbotx.io/database/repositories"
 import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
 import type {
   SequenceModel,
   SequenceStepModel,
 } from "@chatbotx.io/database/types"
+import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
+import {
+  handleStepCreationImpact,
+  handleStepUpdateImpact,
+  recalculateAllContactsInSequence,
+} from "./contact-schedule"
 import {
   buildCreateData,
   buildUpdateData,
   type SequenceStepPayloadInput,
 } from "./step-payload"
 
+/**
+ * Check if we need to recalculate contact schedules when UPDATING a step.
+ *
+ * RECALCULATE when these fields change:
+ * delayDays/delayMinutes/delayUnit: Changes step timing
+ * isActive: Step becomes available/unavailable → contacts skip or process
+ * order: Step position changes → affects timeline
+ *
+ * NO RECALCULATE when these fields change:
+ * flowId: Only changes message content, does not affect schedule
+ * sendTimeStart/sendTimeEnd: Only affects worker dispatch time
+ * sendDays: Only affects worker dispatch days
+ * anytime: Only affects worker dispatch logic
+ * specificDateTime: Handled within recalculation logic
+ */
+function shouldRecalculateOnUpdate(
+  parsedInput: SequenceStepPayloadInput,
+  previousOrder: number,
+): boolean {
+  const { delayDays, delayMinutes, delayUnit, isActive, order } = parsedInput
+
+  return (
+    delayDays !== undefined ||
+    delayMinutes !== undefined ||
+    delayUnit !== undefined ||
+    isActive !== undefined ||
+    order !== previousOrder
+  )
+}
+
 class SequenceService extends BaseService {
+  /**
+   * SQL-paginated sequence list with step counts — shared by the public API
+   * (`GET /v1/sequences`) and the builder's sequences page.
+   */
+  async list(input: SequenceListInput) {
+    const pagination = getPaginationWithDefaults(input)
+
+    const [data, total] = await Promise.all([
+      sequenceRepository.listWithCounts(input),
+      sequenceRepository.count(input),
+    ])
+
+    return { data, pageCount: Math.ceil(total / pagination.limit) }
+  }
+
   async create(input: {
     workspaceId: string
     name: string
@@ -142,6 +197,22 @@ class SequenceService extends BaseService {
     })
   }
 
+  async findWithSteps(input: { workspaceId: string; id: string }) {
+    const sequence = await sequenceRepository.findWithSteps({
+      id: input.id,
+      workspaceId: input.workspaceId,
+    })
+
+    if (!sequence) {
+      throw notFoundException("Sequence not found")
+    }
+
+    return {
+      ...sequence,
+      steps: sequence.sequenceSteps,
+    }
+  }
+
   async createStep(input: {
     workspaceId: string
     sequenceId: string
@@ -213,6 +284,52 @@ class SequenceService extends BaseService {
     await db
       .delete(sequenceStepModel)
       .where(eq(sequenceStepModel.id, input.stepId))
+
+    await recalculateAllContactsInSequence(step.sequenceId, input.workspaceId)
+  }
+
+  /**
+   * Creates or updates a sequence step and recalculates contact schedules
+   * when the change actually affects timing (see `shouldRecalculateOnUpdate`).
+   */
+  async upsertStep(input: {
+    workspaceId: string
+    sequenceId: string
+    stepId?: string
+    data: SequenceStepPayloadInput
+  }): Promise<{ stepId: string }> {
+    if (input.stepId) {
+      const { previousOrder, step } = await this.updateStep({
+        workspaceId: input.workspaceId,
+        stepId: input.stepId,
+        data: input.data,
+      })
+
+      if (shouldRecalculateOnUpdate(input.data, previousOrder)) {
+        await handleStepUpdateImpact(
+          input.sequenceId,
+          input.workspaceId,
+          input.stepId,
+          input.data.order,
+        )
+      }
+
+      return { stepId: step.id }
+    }
+
+    const step = await this.createStep({
+      workspaceId: input.workspaceId,
+      sequenceId: input.sequenceId,
+      data: input.data,
+    })
+
+    await handleStepCreationImpact(
+      input.sequenceId,
+      input.workspaceId,
+      input.data.order,
+    )
+
+    return { stepId: step.id }
   }
 }
 

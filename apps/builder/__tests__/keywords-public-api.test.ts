@@ -142,13 +142,30 @@ describe("GET /v1/keywords/{id}", () => {
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
-      input: { id: "keyword-1" },
+      input: { id: "keyword-1", type: "inbound" },
     })
 
     expect(automatedResponseService.findOrFail).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "keyword-1",
       type: "inbound",
+    })
+  })
+
+  test("threads type=outbound through so an outbound id doesn't 404", async () => {
+    automatedResponseService.findOrFail.mockResolvedValueOnce({
+      id: "keyword-2",
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "keyword-2", type: "outbound" },
+    })
+
+    expect(automatedResponseService.findOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "keyword-2",
+      type: "outbound",
     })
   })
 })
@@ -176,27 +193,37 @@ describe("POST /v1/keywords", () => {
 describe("PUT /v1/keywords/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/keywords/{id}")
 
-  test("verifies existence then delegates to automatedResponseService.update", async () => {
-    automatedResponseService.findOrFail.mockResolvedValueOnce({
-      id: "keyword-1",
-    })
+  test("delegates to automatedResponseService.update without a redundant pre-check", async () => {
     automatedResponseService.update.mockResolvedValueOnce({
       id: "keyword-1",
     })
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
-      input: { id: "keyword-1", keywords: ["hello"] },
+      input: { id: "keyword-1", type: "inbound", keywords: ["hello"] },
     })
 
-    expect(automatedResponseService.findOrFail).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      id: "keyword-1",
-      type: "inbound",
-    })
+    // `update` throws not-found itself now — no separate existence check.
+    expect(automatedResponseService.findOrFail).not.toHaveBeenCalled()
     expect(automatedResponseService.update).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "keyword-1", type: "inbound" },
       { keywords: [{ value: "hello" }] },
+    )
+  })
+
+  test("threads type=outbound through to the service call", async () => {
+    automatedResponseService.update.mockResolvedValueOnce({
+      id: "keyword-2",
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "keyword-2", type: "outbound", keywords: ["hi"] },
+    })
+
+    expect(automatedResponseService.update).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "keyword-2", type: "outbound" },
+      { keywords: [{ value: "hi" }] },
     )
   })
 })
@@ -214,12 +241,36 @@ describe("PATCH /v1/keywords/{id}/status", () => {
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
-      input: { id: "keyword-1", status: false },
+      input: { id: "keyword-1", status: false, type: "inbound" },
     })
 
     expect(automatedResponseService.setStatus).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "keyword-1", type: "inbound" },
       false,
+    )
+  })
+
+  test("threads type=outbound through to findOrFail and setStatus", async () => {
+    automatedResponseService.findOrFail.mockResolvedValueOnce({
+      id: "keyword-2",
+    })
+    automatedResponseService.setStatus.mockResolvedValueOnce({
+      id: "keyword-2",
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "keyword-2", status: true, type: "outbound" },
+    })
+
+    expect(automatedResponseService.findOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "keyword-2",
+      type: "outbound",
+    })
+    expect(automatedResponseService.setStatus).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "keyword-2", type: "outbound" },
+      true,
     )
   })
 })
@@ -232,14 +283,28 @@ describe("DELETE /v1/keywords/{id}", () => {
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
-      input: { id: "keyword-1" },
+      input: { id: "keyword-1", type: "inbound" },
     })
 
     expect(automatedResponseService.deleteMany).toHaveBeenCalledWith(
       "workspace-1",
       ["keyword-1"],
-      undefined,
       "inbound",
+    )
+  })
+
+  test("threads type=outbound through to deleteMany", async () => {
+    automatedResponseService.deleteMany.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "keyword-2", type: "outbound" },
+    })
+
+    expect(automatedResponseService.deleteMany).toHaveBeenCalledWith(
+      "workspace-1",
+      ["keyword-2"],
+      "outbound",
     )
   })
 })

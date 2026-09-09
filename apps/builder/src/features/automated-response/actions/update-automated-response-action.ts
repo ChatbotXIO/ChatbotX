@@ -4,6 +4,8 @@ import {
   automatedResponseService,
   type UpdateAutomatedResponseRequest,
 } from "@chatbotx.io/business"
+import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
+import { automatedResponseTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import { isValidationException } from "@/lib/errors/validation-exception"
@@ -11,26 +13,25 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import { updateAutomatedResponseRequest } from "../schema/action"
 
 export const updateAutomatedResponseAction = workspaceActionClient
-  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .bindArgsSchemas([
+    zodBigintAsString(),
+    zodBigintAsString(),
+    automatedResponseTypes,
+  ])
   .inputSchema(updateAutomatedResponseRequest)
   .action(async (props) => {
     const {
-      bindArgsParsedInputs: [workspaceId, id],
+      bindArgsParsedInputs: [workspaceId, id, type],
       parsedInput,
     } = props
 
-    return await updateAutomatedResponse({ workspaceId, id }, parsedInput)
+    return await updateAutomatedResponse({ workspaceId, id, type }, parsedInput)
   })
 
 export const updateAutomatedResponse = async (
-  ctx: { workspaceId: string; id: string },
+  ctx: { workspaceId: string; id: string; type: AutomatedResponseType },
   parsedInput: UpdateAutomatedResponseRequest,
 ) => {
-  await automatedResponseService.findOrFail({
-    workspaceId: ctx.workspaceId,
-    id: ctx.id,
-  })
-
   try {
     // `text`/`flowId` mutual-exclusion and cross-workspace `flowId`
     // validation live in `automatedResponseService.update` so every caller

@@ -20,6 +20,10 @@ const mocks = vi.hoisted(() => ({
   broadcastCount: vi.fn().mockResolvedValue(0),
   sequenceListWithCounts: vi.fn().mockResolvedValue([]),
   sequenceCount: vi.fn().mockResolvedValue(0),
+  sequenceFindWithSteps: vi.fn().mockResolvedValue({
+    id: "seq-1",
+    sequenceSteps: [],
+  }),
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -63,6 +67,36 @@ vi.mock("@chatbotx.io/utils/error-log", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   inboxTeamService: { listByWorkspace: mocks.listByWorkspace },
   conversationService: { findManyQuery: mocks.findManyQuery },
+  broadcastService: {
+    list: async (input: { page?: number; perPage?: number }) => {
+      const pagination = {
+        limit: input.perPage ?? 10,
+        offset: ((input.page ?? 1) - 1) * (input.perPage ?? 10),
+      }
+      const [data, total] = await Promise.all([
+        mocks.broadcastListWithRelations(input),
+        mocks.broadcastCount(input),
+      ])
+      return { data, pageCount: Math.ceil(total / pagination.limit) }
+    },
+  },
+}))
+
+vi.mock("@chatbotx.io/business/sequence", () => ({
+  sequenceService: {
+    findWithSteps: mocks.sequenceFindWithSteps,
+    list: async (input: { page?: number; perPage?: number }) => {
+      const pagination = {
+        limit: input.perPage ?? 10,
+        offset: ((input.page ?? 1) - 1) * (input.perPage ?? 10),
+      }
+      const [data, total] = await Promise.all([
+        mocks.sequenceListWithCounts(input),
+        mocks.sequenceCount(input),
+      ])
+      return { data, pageCount: Math.ceil(total / pagination.limit) }
+    },
+  },
 }))
 
 vi.mock("@chatbotx.io/business/ads-conversion/channel-fields", () => ({
@@ -84,6 +118,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   sequenceRepository: {
     listWithCounts: mocks.sequenceListWithCounts,
     count: mocks.sequenceCount,
+    findWithSteps: mocks.sequenceFindWithSteps,
   },
 }))
 
@@ -105,6 +140,10 @@ beforeEach(() => {
   mocks.broadcastCount.mockResolvedValue(0)
   mocks.sequenceListWithCounts.mockResolvedValue([])
   mocks.sequenceCount.mockResolvedValue(0)
+  mocks.sequenceFindWithSteps.mockResolvedValue({
+    id: "seq-1",
+    sequenceSteps: [],
+  })
 })
 
 describe("public list queries never depend on a session", () => {
@@ -129,6 +168,14 @@ describe("public list queries never depend on a session", () => {
     const { listSequences } = await import("../src/features/sequences/queries")
     await expect(
       listSequences({ workspaceId: "ws-1", page: 1, perPage: 10 }),
+    ).resolves.toBeDefined()
+    expect(mocks.assertCurrentUserCanAccessChatbot).not.toHaveBeenCalled()
+  })
+
+  test("sequenceService.findWithSteps resolves without a session", async () => {
+    const { sequenceService } = await import("@chatbotx.io/business/sequence")
+    await expect(
+      sequenceService.findWithSteps({ workspaceId: "ws-1", id: "seq-1" }),
     ).resolves.toBeDefined()
     expect(mocks.assertCurrentUserCanAccessChatbot).not.toHaveBeenCalled()
   })

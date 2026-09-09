@@ -38,8 +38,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   triggerModel: { id: "triggerModel.id" },
 }))
 
+const mockFindWithConditions = vi.fn()
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  triggerRepository: { listPaginatedWithConditions: vi.fn() },
+  triggerRepository: {
+    listPaginatedWithConditions: vi.fn(),
+    findWithConditions: mockFindWithConditions,
+  },
 }))
 
 vi.mock("@chatbotx.io/events", () => ({
@@ -69,6 +74,13 @@ describe("triggerService.updateSettings", () => {
     vi.clearAllMocks()
   })
 
+  const setUpMocks = () => {
+    mockFindWithConditions.mockResolvedValue({
+      id: TRIGGER_ID,
+      conditions: [],
+    })
+  }
+
   test("throws notFoundException when the trigger does not exist", async () => {
     mockTriggerFindFirst.mockResolvedValue(undefined)
 
@@ -84,6 +96,7 @@ describe("triggerService.updateSettings", () => {
   })
 
   test("no-ops without writing or auditing when nothing changed", async () => {
+    setUpMocks()
     mockTriggerFindFirst.mockResolvedValue({
       id: TRIGGER_ID,
       name: "Same name",
@@ -101,6 +114,7 @@ describe("triggerService.updateSettings", () => {
   })
 
   test("audits as 'enabled' when only active flips to true", async () => {
+    setUpMocks()
     mockTriggerFindFirst.mockResolvedValue({
       id: TRIGGER_ID,
       name: "Trigger",
@@ -120,6 +134,7 @@ describe("triggerService.updateSettings", () => {
   })
 
   test("audits as 'disabled' when only active flips to false", async () => {
+    setUpMocks()
     mockTriggerFindFirst.mockResolvedValue({
       id: TRIGGER_ID,
       name: "Trigger",
@@ -139,6 +154,7 @@ describe("triggerService.updateSettings", () => {
   })
 
   test("audits a generic 'updated' detail when a non-active field changes", async () => {
+    setUpMocks()
     mockTriggerFindFirst.mockResolvedValue({
       id: TRIGGER_ID,
       name: "Old name",
@@ -158,6 +174,7 @@ describe("triggerService.updateSettings", () => {
   })
 
   test("does not audit when the update affects zero rows", async () => {
+    setUpMocks()
     mockTriggerFindFirst.mockResolvedValue({
       id: TRIGGER_ID,
       name: "Old name",

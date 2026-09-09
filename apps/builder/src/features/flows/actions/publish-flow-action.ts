@@ -14,12 +14,10 @@ export const publishFlowAction = workspaceActionClient
       parsedInput,
     } = props
 
-    const validated = publishFlowSchema.parse(parsedInput)
-
     await flowVersionService.publish({
       workspaceId,
       flowId: id,
-      nodes: validated.nodes,
-      edges: validated.edges,
+      nodes: parsedInput.nodes,
+      edges: parsedInput.edges,
     })
   })

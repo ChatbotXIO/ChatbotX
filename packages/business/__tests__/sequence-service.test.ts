@@ -15,6 +15,7 @@ const {
   mockStepUpdateSet,
   mockStepUpdateReturning,
   mockStepInsert,
+  mockStepInsertReturning,
   mockStepDelete,
   sequenceModelStub,
   sequenceStepModelStub,
@@ -57,6 +58,7 @@ const {
     mockStepUpdateSet,
     mockStepUpdateReturning,
     mockStepInsert,
+    mockStepInsertReturning,
     mockStepDelete,
     sequenceModelStub: {
       id: "sequenceModel.id",
@@ -92,8 +94,35 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  sequenceRepository: {
+    listWithCounts: vi.fn().mockResolvedValue([]),
+    count: vi.fn().mockResolvedValue(0),
+    findWithSteps: vi.fn(),
+  },
+}))
+
+vi.mock("@chatbotx.io/database/utils", () => ({
+  getPaginationWithDefaults: (input: { page?: number; perPage?: number }) => ({
+    limit: input.perPage ?? 10,
+    offset: ((input.page ?? 1) - 1) * (input.perPage ?? 10),
+  }),
+}))
+
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
+}))
+
+const mockRecalculateAllContactsInSequence = vi
+  .fn()
+  .mockResolvedValue(undefined)
+const mockHandleStepCreationImpact = vi.fn().mockResolvedValue(undefined)
+const mockHandleStepUpdateImpact = vi.fn().mockResolvedValue(undefined)
+
+vi.mock("../src/sequence/contact-schedule", () => ({
+  recalculateAllContactsInSequence: mockRecalculateAllContactsInSequence,
+  handleStepCreationImpact: mockHandleStepCreationImpact,
+  handleStepUpdateImpact: mockHandleStepUpdateImpact,
 }))
 
 const { sequenceService } = await import("../src/sequence/service")
@@ -332,14 +361,82 @@ describe("sequenceService.updateStep / deleteStep cross-workspace rejection", ()
     expect(mockStepDelete).not.toHaveBeenCalled()
   })
 
-  test("deleteStep deletes when the step belongs to the workspace", async () => {
+  test("deleteStep deletes when the step belongs to the workspace and recalculates contact schedules", async () => {
     mockStepFindFirst.mockResolvedValue({
       id: "step-1",
+      sequenceId: "seq-1",
       sequence: { workspaceId: WS },
     })
 
     await sequenceService.deleteStep({ workspaceId: WS, stepId: "step-1" })
 
     expect(mockStepDelete).toHaveBeenCalled()
+    expect(mockRecalculateAllContactsInSequence).toHaveBeenCalledWith(
+      "seq-1",
+      WS,
+    )
+  })
+})
+
+describe("sequenceService.upsertStep", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("create path: creates the step and calls handleStepCreationImpact", async () => {
+    mockStepInsertReturning.mockResolvedValue([{ id: "new-step-id" }])
+
+    const result = await sequenceService.upsertStep({
+      workspaceId: WS,
+      sequenceId: "seq-1",
+      data: { order: 0 },
+    })
+
+    expect(mockHandleStepCreationImpact).toHaveBeenCalledWith("seq-1", WS, 0)
+    expect(mockHandleStepUpdateImpact).not.toHaveBeenCalled()
+    expect(result).toEqual({ stepId: "new-step-id" })
+  })
+
+  test("update path: calls handleStepUpdateImpact when delayDays changes", async () => {
+    mockStepFindFirst.mockResolvedValue({
+      id: "step-1",
+      order: 1,
+      sequence: { workspaceId: WS },
+    })
+    mockStepUpdateReturning.mockResolvedValue([{ id: "step-1" }])
+
+    const result = await sequenceService.upsertStep({
+      workspaceId: WS,
+      sequenceId: "seq-1",
+      stepId: "step-1",
+      data: { order: 1, delayDays: 3 },
+    })
+
+    expect(mockHandleStepUpdateImpact).toHaveBeenCalledWith(
+      "seq-1",
+      WS,
+      "step-1",
+      1,
+    )
+    expect(mockHandleStepCreationImpact).not.toHaveBeenCalled()
+    expect(result).toEqual({ stepId: "step-1" })
+  })
+
+  test("update path: does not recalculate when only flowId changes and order is unchanged", async () => {
+    mockStepFindFirst.mockResolvedValue({
+      id: "step-1",
+      order: 1,
+      sequence: { workspaceId: WS },
+    })
+    mockStepUpdateReturning.mockResolvedValue([{ id: "step-1" }])
+
+    await sequenceService.upsertStep({
+      workspaceId: WS,
+      sequenceId: "seq-1",
+      stepId: "step-1",
+      data: { order: 1, flowId: "flow-abc" },
+    })
+
+    expect(mockHandleStepUpdateImpact).not.toHaveBeenCalled()
   })
 })

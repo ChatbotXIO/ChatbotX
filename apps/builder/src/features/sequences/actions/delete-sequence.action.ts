@@ -1,6 +1,6 @@
 "use server"
 
-import { sequenceService } from "@chatbotx.io/business"
+import { sequenceService } from "@chatbotx.io/business/sequence"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 

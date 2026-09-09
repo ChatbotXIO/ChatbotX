@@ -32,6 +32,10 @@ import {
   pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
 import {
+  type BroadcastListInput,
+  broadcastRepository,
+} from "@chatbotx.io/database/repositories"
+import {
   broadcastModel,
   contactInboxModel,
   contactModel,
@@ -48,12 +52,20 @@ import type {
   IntegrationMessengerModel,
   IntegrationWhatsappModel,
 } from "@chatbotx.io/database/types"
-import { chunkById, likeContains } from "@chatbotx.io/database/utils"
+import {
+  chunkById,
+  getPaginationWithDefaults,
+  likeContains,
+} from "@chatbotx.io/database/utils"
 import type { WaTemplateParams } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { startOfMinute } from "date-fns"
 import { BaseService } from "../base.service"
-import { ChatbotXException, validationException } from "../errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "../errors"
 import { inboxService } from "../inbox/service"
 import type {
   BroadcastAudienceInput,
@@ -127,6 +139,82 @@ export type BroadcastCalendarRow = BroadcastModel & {
 }
 
 class BroadcastService extends BaseService {
+  /**
+   * Paginated broadcast list with relations — shared by the public API
+   * (`GET /v1/broadcasts`) and the builder's broadcasts page.
+   */
+  async list(input: BroadcastListInput) {
+    const pagination = getPaginationWithDefaults(input)
+
+    const [data, total] = await Promise.all([
+      broadcastRepository.listWithRelations(input),
+      broadcastRepository.count(input),
+    ])
+
+    return { data, pageCount: Math.ceil(total / pagination.limit) }
+  }
+
+  /**
+   * Gates the audience read behind a non-deleted broadcast owned by this
+   * workspace (resolved by id-or-name), then returns the paginated audience
+   * rows. A single existence gate — callers must not re-resolve the
+   * broadcast separately before calling this.
+   */
+  async listAudience(input: {
+    idOrName: string
+    workspaceId: string
+    page?: number | null
+    perPage?: number | null
+  }) {
+    const { limit, offset } = getPaginationWithDefaults(input)
+
+    const broadcast = await broadcastRepository.findByIdOrName({
+      idOrName: input.idOrName,
+      workspaceId: input.workspaceId,
+    })
+
+    if (!broadcast) {
+      throw notFoundException("Broadcast not found")
+    }
+
+    const [rows, total] = await Promise.all([
+      broadcastRepository.listAudience({
+        broadcastId: broadcast.id,
+        limit,
+        offset,
+      }),
+      broadcastRepository.countAudience(broadcast.id),
+    ])
+
+    return {
+      data: rows.map((row) => ({
+        contactId: row.contactId,
+        contact: {
+          id: row.contact.id,
+          firstName: row.contact.firstName,
+          lastName: row.contact.lastName,
+          fullName: row.contact.fullName,
+          email: row.contact.email,
+          phoneNumber: row.contact.phoneNumber,
+          avatar: row.contact.avatar,
+          gender: row.contact.gender,
+        },
+        sent: row.sent,
+      })),
+      pageCount: Math.ceil(total / limit),
+    }
+  }
+
+  async findByIdOrName(input: { workspaceId: string; idOrName: string }) {
+    const broadcast = await broadcastRepository.findByIdOrName(input)
+
+    if (!broadcast) {
+      throw notFoundException("Broadcast not found")
+    }
+
+    return broadcast
+  }
+
   async findByIdForResponse(input: {
     workspaceId: string
     broadcastId: string

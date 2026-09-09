@@ -75,6 +75,18 @@ vi.mock("@chatbotx.io/database/queries", () => ({
 vi.mock("@chatbotx.io/database/utils", () => ({
   chunkById: vi.fn(),
   likeContains: vi.fn(),
+  getPaginationWithDefaults: vi.fn(() => ({ limit: 10, offset: 0 })),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  broadcastRepository: {
+    listWithRelations: vi.fn(),
+    count: vi.fn(),
+    findIdIfActive: vi.fn(),
+    listAudience: vi.fn(),
+    countAudience: vi.fn(),
+    findByIdOrName: vi.fn(),
+  },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({

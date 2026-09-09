@@ -14,7 +14,11 @@ export default async function EditPageAutomatedResponePage({
   }
 
   const { workspaceId, id } = data
-  const automatedResponse = await findAutomatedResponse({ workspaceId, id })
+  const automatedResponse = await findAutomatedResponse({
+    workspaceId,
+    id,
+    type: "outbound",
+  })
   if (!automatedResponse) {
     return notFound()
   }
@@ -22,6 +26,7 @@ export default async function EditPageAutomatedResponePage({
   return (
     <EditAutomatedResponseForm
       automatedResponse={automatedResponse}
+      type="outbound"
       workspaceId={workspaceId}
     />
   )

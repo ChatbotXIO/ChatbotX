@@ -1,4 +1,7 @@
-import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
+import {
+  type AutomatedResponseType,
+  automatedResponseTypes,
+} from "@chatbotx.io/database/partials"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -27,6 +30,7 @@ export type ListAutomatedResponsesRequest = Awaited<
 export const findAutomatedResponseRequest = z.object({
   workspaceId: zodBigintAsString(),
   id: zodBigintAsString(),
+  type: automatedResponseTypes,
 })
 export type FindAutomatedResponseRequest = z.infer<
   typeof findAutomatedResponseRequest

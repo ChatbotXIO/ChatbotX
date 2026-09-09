@@ -68,16 +68,10 @@ export const aiAgentsPublicRouter = {
     .input(createAIAgentRequest)
     .output(aiAgentResourceSchema)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(async ({ context, input }) => {
-      const id = await aiAgentService.create(context.workspace.id, input)
-      const created = await aiAgentService.findBy({
-        where: { id, workspaceId: context.workspace.id },
-      })
-      if (!created) {
-        throw notFoundException("AI agent not found")
-      }
-      return created
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await aiAgentService.createAndReturn(context.workspace.id, input),
+    ),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -91,17 +85,10 @@ export const aiAgentsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      await aiAgentService.updateAIAgent(
+      return await aiAgentService.updateAIAgent(
         { workspaceId: context.workspace.id, id },
         data,
       )
-      const updated = await aiAgentService.findBy({
-        where: { id, workspaceId: context.workspace.id },
-      })
-      if (!updated) {
-        throw notFoundException("AI agent not found")
-      }
-      return updated
     }),
 
   delete: workspaceTokenAuthAPI

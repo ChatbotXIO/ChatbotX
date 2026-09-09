@@ -1,7 +1,6 @@
 import { triggerService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { folderTypes } from "@chatbotx.io/database/partials"
-import { conditionRepository } from "@chatbotx.io/database/repositories"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -120,8 +119,10 @@ export const triggersPublicRouter = {
       if (!updated) {
         throw notFoundException("Trigger not found")
       }
-      const updatedConditions = await conditionRepository.listByTriggerIds([id])
-      return toResource({ ...updated, conditions: updatedConditions })
+      return toResource({
+        ...updated.trigger,
+        conditions: updated.conditions,
+      })
     }),
 
   updateSettings: workspaceTokenAuthAPI
@@ -142,18 +143,11 @@ export const triggersPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...patch } = input
-      await triggerService.updateSettings({
+      const updated = await triggerService.updateSettings({
         workspaceId: context.workspace.id,
         id,
         ...patch,
       })
-      const updated = await triggerService.findWithConditions({
-        id,
-        workspaceId: context.workspace.id,
-      })
-      if (!updated) {
-        throw notFoundException("Trigger not found")
-      }
       return toResource(updated)
     }),
 

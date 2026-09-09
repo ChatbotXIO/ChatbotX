@@ -1,5 +1,6 @@
 "use client"
 
+import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -26,12 +27,13 @@ import { responseModes, updateAutomatedResponseRequest } from "./schema/action"
 type EditAutomatedResponseFormProps = {
   workspaceId: string
   automatedResponse: AutomatedResponseModel
+  type: AutomatedResponseType
 }
 
 export default function EditAutomatedResponseForm(
   props: EditAutomatedResponseFormProps,
 ) {
-  const { workspaceId, automatedResponse } = props
+  const { workspaceId, automatedResponse, type } = props
   const t = useTranslations()
   const router = useRouter()
 
@@ -43,7 +45,12 @@ export default function EditAutomatedResponseForm(
     handleSubmitWithAction,
     form: { control, setValue },
   } = useHookFormAction(
-    updateAutomatedResponseAction.bind(null, workspaceId, automatedResponse.id),
+    updateAutomatedResponseAction.bind(
+      null,
+      workspaceId,
+      automatedResponse.id,
+      type,
+    ),
     zodResolver(updateAutomatedResponseRequest),
     {
       actionProps: {
