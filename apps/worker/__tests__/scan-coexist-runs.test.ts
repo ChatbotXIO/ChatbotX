@@ -119,8 +119,12 @@ describe("scanCoexistRuns", () => {
 
     await scanCoexistRuns()
 
-    expect(mockMarkMaxAttemptsFailed).toHaveBeenCalledWith({ maxAttempts: 5 })
+    expect(mockMarkMaxAttemptsFailed).toHaveBeenCalledWith({
+      type: "coexist",
+      maxAttempts: 5,
+    })
     expect(mockPickDueRuns).toHaveBeenCalledWith({
+      type: "coexist",
       batchSize: 500,
       maxAttempts: 5,
     })

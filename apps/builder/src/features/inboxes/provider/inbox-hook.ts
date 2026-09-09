@@ -87,6 +87,30 @@ export const useInboxOptionsByChannel = (
   )
 }
 
+/**
+ * Generalises `useInboxOptionsByChannel` for a caller that supports a FIXED
+ * SET of channels rather than a single one (e.g. the Automatic Customer Scan
+ * dialog, whose eligible channels come from `CONTACT_SCAN_CHANNELS`
+ * `@chatbotx.io/utils/channel`). `useInboxOptionsByChannel` stays as-is for
+ * its existing single-channel callers.
+ */
+export const useInboxOptionsForChannels = (
+  channels: readonly string[],
+): SelectOption[] => {
+  const inboxes = useInboxStore((state) => state.inboxes)
+
+  return useMemo(
+    () =>
+      inboxes
+        .filter((inbox) => channels.includes(inbox.channel))
+        .map((inbox) => ({
+          label: inbox.name,
+          value: inbox.id,
+        })),
+    [inboxes, channels],
+  )
+}
+
 export const useWhatsappInboxOptions = (): SelectOption[] => {
   const inboxes = useInboxStore((state) => state.inboxes)
 

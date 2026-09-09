@@ -1,10 +1,11 @@
 // biome-ignore-all lint/suspicious/noBitwiseOperators: bit-packing 63-bit snowflake IDs
 
 import {
-  coexistImportService,
+  type BulkImportChannelContactsResult,
+  bulkImportChannelContacts,
+  type ChannelContactImportLink,
   contactInboxService,
   conversationService,
-  workspaceUsageService,
 } from "@chatbotx.io/business"
 import { describeDatabaseError } from "@chatbotx.io/database/client"
 import type {
@@ -17,12 +18,24 @@ import {
   createMessageRepository,
 } from "@chatbotx.io/database/repositories"
 import type { InboxModel } from "@chatbotx.io/database/types"
-import { emit } from "@chatbotx.io/event-bus"
-import { emitContactCreated } from "@chatbotx.io/events"
 import type { IncomingContact, IncomingMessage } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import pLimit from "p-limit"
 import { logger } from "../../../lib/logger"
+
+/**
+ * Phase 4a extraction shim (`docs/plans/2026-09-09-automatic-contact-scan.md`)
+ * — `bulkImportContacts` moved verbatim to
+ * `packages/business/src/contact/bulk-import-channel-contacts.ts` as
+ * `bulkImportChannelContacts`, since the Automatic Customer Scan worker
+ * engine needs the same contact-import logic and worker code must not import
+ * `db`. Re-exported under the original names so `messenger-sync.ts` /
+ * `instagram-sync.ts` and their tests (which mock `./bulk-historical-import`)
+ * are unaffected by the move.
+ */
+export const bulkImportContacts = bulkImportChannelContacts
+export type ContactImportLink = ChannelContactImportLink
+export type BulkImportContactsResult = BulkImportChannelContactsResult
 
 // ---------- Coexist time-derived Message IDs ----------
 // Layout mirrors `@chatbotx.io/utils` `createId()` shift so coexist IDs share
@@ -281,21 +294,6 @@ const convergePkCollisions = async (
 
 export type HistoricalMessage = IncomingMessage & { createdAt?: Date }
 
-export type ContactImportLink = {
-  contactInboxId: string
-  contactId: string
-  conversationId: string
-}
-
-export type BulkImportContactsResult = {
-  importedContacts: number
-  skippedContacts: number
-  /** sourceId → resolved link (existing or newly inserted). */
-  contactInboxIds: Map<string, ContactImportLink>
-  /** Non-throw failure (e.g. workspace contact cap hit). */
-  failureReason?: string
-}
-
 export type BulkImportMessagesResult = {
   importedMessages: number
   skippedMessages: number
@@ -512,142 +510,6 @@ export type BulkImportHistoricalResult = {
    *  batch. Caller drives the post-commit download enqueue. */
   insertedAttachmentIds: string[]
   failureReason?: string
-}
-
-/**
- * Phase 1 of Coexist historical sync: dedup contacts by sourceId, resolve
- * existing ContactInbox rows, and bulk-insert new Contact/ContactInbox/
- * Conversation rows. Bulk imports create contact records only; MAC is counted
- * later when a real interaction occurs.
- *
- * Race-safe via `onConflictDoNothing` + post-insert re-select for losers, with
- * orphan Contact cleanup. Idempotent — re-running with the same batch returns
- * the existing links without creating duplicates.
- *
- * Returns one `ContactImportLink` per dedup'd sourceId (existing + newly
- * created). Callers use this map to dispatch downstream avatar / message
- * fetches without an additional DB lookup.
- */
-export const bulkImportContacts = async (props: {
-  inbox: InboxModel
-  workspaceId: string
-  contacts: IncomingContact[]
-}): Promise<BulkImportContactsResult> => {
-  const { inbox, workspaceId, contacts } = props
-
-  const empty: BulkImportContactsResult = {
-    importedContacts: 0,
-    skippedContacts: 0,
-    contactInboxIds: new Map(),
-  }
-  if (contacts.length === 0) {
-    return empty
-  }
-
-  // Dedup by sourceId — prefer first non-null field across duplicates.
-  const dedup = new Map<string, IncomingContact>()
-  for (const entry of contacts) {
-    const key = entry.sourceId
-    if (!key) {
-      continue
-    }
-    const existing = dedup.get(key)
-    if (!existing) {
-      dedup.set(key, { ...entry })
-      continue
-    }
-    dedup.set(key, {
-      sourceId: existing.sourceId,
-      phoneNumber: existing.phoneNumber ?? entry.phoneNumber,
-      phoneNumberId: existing.phoneNumberId ?? entry.phoneNumberId,
-      firstName: existing.firstName ?? entry.firstName,
-      lastName: existing.lastName ?? entry.lastName,
-      email: existing.email ?? entry.email,
-      avatar: existing.avatar ?? entry.avatar,
-      gender: existing.gender ?? entry.gender,
-      sourceUserId: existing.sourceUserId ?? entry.sourceUserId,
-      sourceUsername: existing.sourceUsername ?? entry.sourceUsername,
-    })
-  }
-
-  if (dedup.size === 0) {
-    return empty
-  }
-
-  const sourceIds = [...dedup.keys()]
-  const skippedContacts = 0
-  const failureReason: string | undefined = undefined
-
-  // A thread's scoped user id (e.g. a WhatsApp BSUID) may already belong to a
-  // row in this inbox under a different sourceId. Matching on it up front
-  // resolves the thread to that row instead of attempting an insert that
-  // would violate the partial unique index (inboxId, sourceUserId).
-  const sourceUserIds = [...dedup.values()].flatMap((entry) =>
-    entry.sourceUserId ? [entry.sourceUserId] : [],
-  )
-
-  const { importedContacts, contactInboxIds, newContactCreatedEvents } =
-    await coexistImportService.resolveOrCreateContactLinks({
-      workspaceId,
-      inboxId: inbox.id,
-      inboxChannel: inbox.channel,
-      dedup,
-      sourceIds,
-      sourceUserIds,
-    })
-
-  // Post-commit side effects.
-  for (const ev of newContactCreatedEvents) {
-    emitContactCreated(
-      ev.workspaceId,
-      ev.contactId,
-      ev.firstName,
-      ev.phoneNumber,
-      ev.email,
-      ev.contactInboxId,
-    ).catch((error) => {
-      logger.error(error, "[coexist] Failed to emit contactCreated event")
-    })
-
-    emit("analytics:dashboard", {
-      eventType: "contact:created",
-      workspaceId: ev.workspaceId,
-      contactId: ev.contactInboxId,
-      occurredAt: ev.createdAt,
-      source: ev.source,
-      sourceId: ev.sourceId,
-      channel: ev.channel,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "bulkImportContacts",
-          triggerType: "contact_created",
-        },
-      },
-    })?.catch((error) => {
-      logger.error(error, "[coexist] Failed to emit contact:created")
-    })
-  }
-
-  // Info-only workspace usage for newly-created contacts. Coexist is a passive
-  // historical backfill and does not consume billing quota.
-  if (importedContacts > 0) {
-    await workspaceUsageService
-      .increment(workspaceId, "contacts", importedContacts)
-      .catch((err) => {
-        logger.warn(
-          { err, workspaceId },
-          "workspace usage contact increment failed",
-        )
-      })
-  }
-
-  return {
-    importedContacts,
-    skippedContacts,
-    contactInboxIds,
-    failureReason,
-  }
 }
 
 /**

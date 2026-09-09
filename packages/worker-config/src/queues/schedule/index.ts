@@ -26,6 +26,7 @@ export const ScheduleJobData = {
   reconcileMac: "reconcileMac",
   maintainMacPartitions: "maintainMacPartitions",
   scanCoexistRuns: "scanCoexistRuns",
+  scanContactScans: "scanContactScans",
   reconcileMetaCatalogSyncs: "reconcileMetaCatalogSyncs",
   purgeCoexistStaging: "purgeCoexistStaging",
   purgeWhatsappSignupSessions: "purgeWhatsappSignupSessions",
@@ -153,6 +154,11 @@ export type ScheduleJobScanCoexistRuns = {
   data: Record<string, never>
 }
 
+export type ScheduleJobScanContactScans = {
+  type: typeof ScheduleJobData.scanContactScans
+  data: Record<string, never>
+}
+
 export type ScheduleJobReconcileMetaCatalogSyncs = {
   type: typeof ScheduleJobData.reconcileMetaCatalogSyncs
   data: Record<string, never>
@@ -237,6 +243,7 @@ export type ScheduleJobData =
   | ScheduleJobReconcileMac
   | ScheduleJobMaintainMacPartitions
   | ScheduleJobScanCoexistRuns
+  | ScheduleJobScanContactScans
   | ScheduleJobReconcileMetaCatalogSyncs
   | ScheduleJobPurgeCoexistStaging
   | ScheduleJobPurgeWhatsappSignupSessions

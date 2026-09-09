@@ -14,11 +14,19 @@ export * from "./broadcast"
 export * from "./coexist"
 export * from "./coexist-import"
 export * from "./contact"
+// Exported here, NOT from ./contact/index.ts, on purpose: it drags in
+// coexist-import + workspace-usage (→ analytics/mac-tracking → redis bloomFilter),
+// and conversation/service imports the ./contact barrel — re-exporting it there
+// would widen conversation/service's module graph into those heavy deps. The
+// worker consumers (contact-scan engine, coexist shim) import it from the
+// top-level "@chatbotx.io/business" barrel, so this placement serves them fine.
+export * from "./contact/bulk-import-channel-contacts"
 export * from "./contact-custom-field"
 export * from "./contact-export"
 export * from "./contact-inbox"
 export * from "./contact-locale"
 export * from "./contact-note"
+export * from "./contact-scan"
 export * from "./conversation"
 export * from "./coupon"
 export * from "./custom-field"

@@ -88,10 +88,10 @@ const { default: ContactsPage } = await import(
   "../src/app/space/[workspaceId]/contacts/page"
 )
 const { default: ImportContactsPage } = await import(
-  "../src/app/(no-sidebar)/space/[workspaceId]/contacts/import/page"
+  "../src/app/space/[workspaceId]/contacts/import/page"
 )
 const { default: ImportContactsHistoriesPage } = await import(
-  "../src/app/(no-sidebar)/space/[workspaceId]/contacts/import/histories/page"
+  "../src/app/space/[workspaceId]/contacts/import/histories/page"
 )
 
 const basePermissions = {

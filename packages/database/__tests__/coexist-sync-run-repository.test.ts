@@ -44,6 +44,11 @@ vi.mock("../src/schema", () => ({
     importedMessageCount: "importedMessageCount",
     skippedCount: "skippedCount",
     failedCount: "failedCount",
+    claimToken: "claimToken",
+    type: "type",
+    scanFromAt: "scanFromAt",
+    requestedByUserId: "requestedByUserId",
+    resumeCursor: "resumeCursor",
   },
   integrationInstagramModel: {
     id: "instagramId",
@@ -102,6 +107,7 @@ describe("CoexistSyncRunRepository", () => {
     const repository = new CoexistSyncRunRepository()
 
     await repository.markMaxAttemptsFailed({
+      type: "coexist",
       maxAttempts: 5,
       tx: { update } as never,
     })
@@ -115,6 +121,7 @@ describe("CoexistSyncRunRepository", () => {
     expect(where).toHaveBeenCalledWith(
       expect.objectContaining({
         and: expect.arrayContaining([
+          { eq: ["type", "coexist"] },
           { inArray: ["status", ["init", "running"]] },
           {
             or: [
@@ -184,6 +191,7 @@ describe("CoexistSyncRunRepository", () => {
         integrationId: "integration-1",
         channel: "instagram",
         status: "init",
+        type: "coexist",
       },
     })
   })
@@ -302,7 +310,8 @@ describe("CoexistSyncRunRepository", () => {
   })
 
   test("incrementProgress uses an atomic `col + N` expression, never a read-modify-write", async () => {
-    const where = vi.fn().mockResolvedValue(undefined)
+    const returning = vi.fn().mockResolvedValue([])
+    const where = vi.fn(() => ({ returning }))
     const set = vi.fn(() => ({ where }))
     const update = vi.fn(() => ({ set }))
     const select = vi.fn()
@@ -339,11 +348,14 @@ describe("CoexistSyncRunRepository", () => {
     expect(strings.join("")).toContain("+")
     // Plain-value fields ride along untouched.
     expect(setArg.currentStep).toBe("importing")
-    expect(where).toHaveBeenCalledWith({ eq: ["runId", "run-1"] })
+    // No `expect` guard passed: id-only predicate, same as before this
+    // method grew the optional `expect` fencing.
+    expect(where).toHaveBeenCalledWith({ and: [{ eq: ["runId", "run-1"] }] })
   })
 
   test("incrementProgress skips counters whose increment is undefined", async () => {
-    const where = vi.fn().mockResolvedValue(undefined)
+    const returning = vi.fn().mockResolvedValue([])
+    const where = vi.fn(() => ({ returning }))
     const set = vi.fn(() => ({ where }))
     const repository = new CoexistSyncRunRepository()
 
@@ -356,5 +368,47 @@ describe("CoexistSyncRunRepository", () => {
     const setArg = set.mock.calls[0]?.[0] as Record<string, unknown>
     expect(setArg).toHaveProperty("currentScan")
     expect(setArg).not.toHaveProperty("failedCount")
+  })
+
+  test("incrementProgress with `expect` fences the write and returns the affected-row count", async () => {
+    const returning = vi.fn().mockResolvedValue([{ id: "run-1" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    const update = vi.fn(() => ({ set }))
+    const repository = new CoexistSyncRunRepository()
+
+    await expect(
+      repository.incrementProgress({
+        runId: "run-1",
+        increments: { currentScan: 1 },
+        expect: { status: "running", claimToken: "token-1" },
+        tx: { update } as never,
+      }),
+    ).resolves.toBe(1)
+
+    expect(where).toHaveBeenCalledWith({
+      and: [
+        { eq: ["runId", "run-1"] },
+        { eq: ["status", "running"] },
+        { eq: ["claimToken", "token-1"] },
+      ],
+    })
+  })
+
+  test("incrementProgress with `expect` returns 0 when the write lands on no rows (claim taken over)", async () => {
+    const returning = vi.fn().mockResolvedValue([])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    const update = vi.fn(() => ({ set }))
+    const repository = new CoexistSyncRunRepository()
+
+    await expect(
+      repository.incrementProgress({
+        runId: "run-1",
+        increments: { currentScan: 1 },
+        expect: { status: "running", claimToken: "stale-token" },
+        tx: { update } as never,
+      }),
+    ).resolves.toBe(0)
   })
 })

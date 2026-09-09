@@ -222,3 +222,30 @@ export const isCoexistChannel = (
   channel: string | null | undefined,
 ): channel is CoexistChannel =>
   channel != null && (COEXIST_CHANNELS as readonly string[]).includes(channel)
+
+/**
+ * Channels that support the Automatic Customer Scan (walking a channel's
+ * conversation/follower list to import existing contacts that never
+ * messaged first). Subset of `channelTypes`.
+ *
+ * Lives here for the same reason as `channelTypes`/`coexistChannels` (see the
+ * comments above): `@chatbotx.io/business`'s scan channel registry and
+ * `packages/database`'s scan queries need the same list without adding a
+ * database dependency.
+ */
+export const contactScanChannels = z.enum(["messenger", "instagram"])
+
+export type ContactScanChannel = z.infer<typeof contactScanChannels>
+
+/**
+ * Same values as `contactScanChannels.options`, exposed as a plain array for
+ * callers that want that shape directly.
+ */
+export const CONTACT_SCAN_CHANNELS = contactScanChannels.options
+
+/** Whether a channel string is one of the contact-scan-eligible channels. */
+export const isContactScanChannel = (
+  channel: string | null | undefined,
+): channel is ContactScanChannel =>
+  channel != null &&
+  (CONTACT_SCAN_CHANNELS as readonly string[]).includes(channel)

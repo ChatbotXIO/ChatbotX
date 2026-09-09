@@ -22,8 +22,8 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import pLimit from "p-limit"
-import { z } from "zod"
 import { logger } from "../../../lib/logger"
+import { enqueueContactAvatarJobs } from "../contact/enqueue-avatar-jobs"
 import {
   applyCoexistActivityUpdates,
   bulkImportContacts,
@@ -33,22 +33,15 @@ import {
   createHistoricalIdFactory,
   maxNumericId,
 } from "./bulk-historical-import"
+import { filterConversationWindow } from "./conversation-window"
 import {
   fetchConvMessages,
+  messengerAuthSchema,
+  participantSourceId,
   STORE_WINDOW_MS,
   splitName,
   withInlineRetry,
 } from "./messenger-helpers"
-
-const messengerAuthSchema = z
-  .object({
-    tokens: z.object({ accessToken: z.string() }).passthrough(),
-    metadata: z
-      .object({ version: z.string().optional() })
-      .passthrough()
-      .optional(),
-  })
-  .passthrough()
 
 /** Default Graph concurrency when BUC usage signals "plenty of budget". */
 const DEFAULT_CONCURRENCY = 5
@@ -69,6 +62,11 @@ type ConvFilter = {
  * Apply within-run frontier + cross-run ceiling filters to one Graph
  * conversations page. Shared by both phases since each phase walks
  * `/conversations` DESC and tracks its own `lastSyncedAt` watermark.
+ *
+ * Thin wrapper preserving the original positional signature/shape over the
+ * generic `filterConversationWindow` (moved to `./conversation-window.ts` in
+ * Phase 4a of the Automatic Customer Scan plan so the scan engine can reuse
+ * the same window logic) — call sites and tests are unchanged.
  */
 function filterConversations(
   conversations: MessengerConversation[],
@@ -76,50 +74,19 @@ function filterConversations(
   ceiling: Date | null,
   currentOldest: Date | null,
 ): ConvFilter {
-  let stopAll = false
-  let oldestConvProcessed = currentOldest
-  const convsToProcess: MessengerConversation[] = []
-
-  for (const conv of conversations) {
-    const convTime = conv.updated_time ? new Date(conv.updated_time) : null
-
-    // No timestamp = can't position vs frontier/ceiling and can't update
-    // watermark. Skip — Graph rarely returns this, and importing without
-    // ordering risks re-import on every run (M1).
-    if (!convTime) {
-      continue
-    }
-
-    if (ceiling && convTime <= ceiling) {
-      stopAll = true
-      break
-    }
-
-    if (frontier && convTime > frontier) {
-      continue
-    }
-
-    convsToProcess.push(conv)
-
-    if (oldestConvProcessed === null || convTime < oldestConvProcessed) {
-      oldestConvProcessed = convTime
-    }
+  const result = filterConversationWindow({
+    items: conversations,
+    getUpdatedAt: (conv) =>
+      conv.updated_time ? new Date(conv.updated_time) : null,
+    frontier,
+    ceiling,
+    currentOldest,
+  })
+  return {
+    convsToProcess: result.itemsToProcess,
+    stopAll: result.stopAll,
+    oldestConvProcessed: result.oldestProcessed,
   }
-
-  return { convsToProcess, stopAll, oldestConvProcessed }
-}
-
-const participantSourceId = (
-  conv: MessengerConversation,
-  pageId: string,
-): { sourceId: string; name?: string } | null => {
-  const participant = conv.participants?.data?.find(
-    (entry) => entry.id !== pageId,
-  )
-  if (!participant) {
-    return null
-  }
-  return { sourceId: participant.id, name: participant.name }
 }
 
 type SyncContext = {
@@ -281,41 +248,17 @@ async function runContactsPhase(ctx: SyncContext): Promise<PhaseResult> {
           importedContacts: 0,
           skippedContacts: 0,
           contactInboxIds: new Map(),
+          newContactInboxIds: new Map(),
         }
         ctx.errorRef.current = `phase=contacts page ${pageNumber} bulk import failed: ${errMsg}`
       }
 
       // Bulk-enqueue one avatar-mirror job per resolved contact.
-      if (pageResult.contactInboxIds.size > 0) {
-        const avatarJobs = Array.from(
-          pageResult.contactInboxIds,
-          ([sourceId, link]) => ({
-            name: IntegrationJobAction.updateContactAvatar,
-            data: {
-              type: IntegrationJobAction.updateContactAvatar,
-              data: {
-                workspaceId,
-                contactInboxId: link.contactInboxId,
-                sourceId,
-              },
-            },
-            opts: {
-              jobId: `update-avatar-${link.contactInboxId}`,
-              attempts: 2,
-              removeOnComplete: true,
-              removeOnFail: { count: 100 },
-            },
-          }),
-        )
-        try {
-          await integrationQueue.addBulk(avatarJobs)
-        } catch (error) {
-          logger.error(
-            { error, runId, pageNumber, jobCount: avatarJobs.length },
-            "[coexist] avatar addBulk failed — continuing run",
-          )
-        }
-      }
+      await enqueueContactAvatarJobs({
+        workspaceId,
+        contactInboxIds: pageResult.contactInboxIds,
+        logContext: { runId, pageNumber },
+      })
 
       if (pageResult.failureReason) {
         ctx.errorRef.current = `phase=contacts page ${pageNumber}: ${pageResult.failureReason}`

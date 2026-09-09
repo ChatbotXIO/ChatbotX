@@ -182,6 +182,9 @@ vi.mock("../src/integration/handlers/comment-automation/ai-reply", () => ({
 vi.mock("../src/integration/handlers/contact/update-avatar", () => ({
   updateContactAvatar: vi.fn(),
 }))
+vi.mock("../src/integration/handlers/contact-scan/engine", () => ({
+  runContactScan: vi.fn(),
+}))
 vi.mock("../src/integration/handlers/conversation", () => ({
   agentMarkAsRead: vi.fn(),
   contactMarkAsRead: vi.fn(),

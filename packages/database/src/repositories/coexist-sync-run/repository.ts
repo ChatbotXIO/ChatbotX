@@ -9,10 +9,13 @@ import {
   lt,
   ne,
   or,
+  relationsFilterToSQL,
   sql,
 } from "../../client"
+import type { CoexistRunType } from "../../partials"
 import { coexistSyncRunModel } from "../../schema"
 import type { CoexistSyncRunModel } from "../../types"
+import { getPaginationWithDefaults, parseOrderByAsObject } from "../../utils"
 import {
   type CoexistIntegrationRow,
   integrationLookups,
@@ -129,6 +132,8 @@ export type CoexistRunProgressInput = {
       | "lastPhase"
       | "lastChunkOrder"
       | "syncProgress"
+      // Contact-scan-only: provider `after` cursor for continuation resume.
+      | "resumeCursor"
     >
   >
   /**
@@ -160,6 +165,12 @@ export type CoexistRunWriteGuard = {
 }
 
 export type PickDueRunsInput = {
+  /**
+   * No default: every call site must state which run kind it is scheduling,
+   * so a scan-scheduler bug can never fall back to silently sweeping coexist
+   * runs (or vice versa).
+   */
+  type: CoexistRunType
   batchSize: number
   maxAttempts: number
   tx?: DatabaseClient
@@ -169,6 +180,27 @@ export type FindResumeCeilingInput = {
   integrationId: string
   channel: PullCoexistChannel
   currentRunId: string
+  tx?: DatabaseClient
+}
+
+export type IncrementProgressCounters = Partial<
+  Record<
+    | "currentScan"
+    | "importedContactCount"
+    | "importedMessageCount"
+    | "skippedCount"
+    | "failedCount",
+    number
+  >
+>
+
+export type CreateContactScanRunInput = {
+  workspaceId: string
+  integrationId: string
+  channel: CoexistChannel
+  requestedByUserId: string | null
+  scanFromAt: Date
+  triggerSource: string
   tx?: DatabaseClient
 }
 
@@ -205,6 +237,10 @@ export class CoexistSyncRunRepository {
         workspaceId: input.workspaceId,
         integrationId: input.integrationId,
         channel: input.channel,
+        // Explicit even though it is the column default — the partial
+        // unique index this insert dedups against is scoped to
+        // `type = 'coexist'`, so the write must be unambiguous.
+        type: "coexist",
         status: "init",
         triggerSource: input.triggerSource,
         // `pendingPatches` and `claimToken` have no database default (see
@@ -245,6 +281,10 @@ export class CoexistSyncRunRepository {
           integrationId: input.integrationId,
           channel: input.channel,
           status: "init",
+          // MUST scope: without this, a contact-scan `init` row on the same
+          // (integrationId, channel) would make `createRun`'s recovery
+          // return a scan row as if it were the coexist run just inserted.
+          type: "coexist",
         },
       })) ?? null
     )
@@ -268,6 +308,9 @@ export class CoexistSyncRunRepository {
           integrationId: input.integrationId,
           channel: input.channel,
           status: { in: LIVE_RUN_STATUSES },
+          // MUST scope: without this, `enable` could reuse a live scan run
+          // instead of opening/reusing a coexist run.
+          type: "coexist",
         },
         orderBy: { createdAt: "desc" },
       })) ?? null
@@ -361,6 +404,11 @@ export class CoexistSyncRunRepository {
    * NULL`) is genuinely exhausted.
    */
   async markMaxAttemptsFailed(input: {
+    /**
+     * No default — see `PickDueRunsInput.type`: every call site must state
+     * which run kind it is terminalizing.
+     */
+    type: CoexistRunType
     maxAttempts: number
     tx?: DatabaseClient
   }): Promise<void> {
@@ -371,10 +419,14 @@ export class CoexistSyncRunRepository {
         status: "failed",
         currentError: "Max scheduler retries exceeded",
         finishedAt: new Date(),
+        // Terminal write clears the scan continuation cursor (no-op for
+        // coexist rows, which never set it).
+        resumeCursor: null,
         updatedAt: new Date(),
       })
       .where(
         and(
+          eq(coexistSyncRunModel.type, input.type),
           sql`${coexistSyncRunModel.attempts} >= ${input.maxAttempts}`,
           inArray(coexistSyncRunModel.status, ["init", "running"]),
           or(
@@ -412,6 +464,7 @@ export class CoexistSyncRunRepository {
           (status = 'init' AND "updatedAt" < NOW() - INTERVAL '10 seconds')
           OR (status = 'running' AND "lastHeartbeatAt" < NOW() - INTERVAL '1 hour')
         )
+        AND type = ${input.type}
         AND attempts < ${input.maxAttempts}
         ORDER BY "createdAt" ASC
         LIMIT ${input.batchSize}
@@ -442,6 +495,9 @@ export class CoexistSyncRunRepository {
         SELECT r.id FROM "CoexistSyncRun" r
         WHERE r.channel = 'whatsapp'
           AND r.status = 'waiting'
+          -- Belt: WhatsApp coexist is already isolated from scan (messenger-
+          -- only), but scope explicitly like every other set-query.
+          AND r.type = 'coexist'
           AND EXISTS (
             SELECT 1 FROM "WhatsappCoexistStaging" s
             JOIN "IntegrationWhatsapp" i
@@ -486,6 +542,9 @@ export class CoexistSyncRunRepository {
         SELECT r.id FROM "CoexistSyncRun" r
         WHERE r.channel = 'whatsapp'
           AND r.status = 'waiting'
+          -- Belt: WhatsApp coexist is already isolated from scan (messenger-
+          -- only), but scope explicitly like every other set-query.
+          AND r.type = 'coexist'
           AND COALESCE(r."startedAt", r."createdAt")
               < NOW() - make_interval(secs => ${windowSeconds})
           AND NOT EXISTS (
@@ -536,6 +595,10 @@ export class CoexistSyncRunRepository {
           SELECT 1 FROM "CoexistSyncRun" r
           WHERE r."integrationId" = i.id
             AND r.channel = 'whatsapp'
+            -- Belt: WhatsApp coexist is already isolated from scan
+            -- (messenger-only), but scope explicitly like every other
+            -- set-query.
+            AND r.type = 'coexist'
             AND r.status IN (${liveRunStatusList()})
         )
       ORDER BY i.id ASC
@@ -572,6 +635,7 @@ export class CoexistSyncRunRepository {
         status: "failed",
         currentError: input.currentError,
         finishedAt: new Date(),
+        resumeCursor: null,
       },
       expect: input.expect,
       tx: input.tx,
@@ -590,6 +654,7 @@ export class CoexistSyncRunRepository {
         status: "partial",
         currentError: input.currentError,
         finishedAt: new Date(),
+        resumeCursor: null,
       },
       expect: input.expect,
       tx: input.tx,
@@ -606,6 +671,7 @@ export class CoexistSyncRunRepository {
       fields: {
         status: "succeeded",
         finishedAt: new Date(),
+        resumeCursor: null,
       },
       expect: input.expect,
       tx: input.tx,
@@ -620,6 +686,10 @@ export class CoexistSyncRunRepository {
         channel: input.channel,
         status: { in: ["succeeded", "partial"] },
         id: { ne: input.currentRunId },
+        // MUST scope — CRITICAL: a scan `succeeded` on this
+        // (integrationId, channel) would otherwise become the next coexist
+        // history run's ceiling, silently losing message history.
+        type: "coexist",
       },
       orderBy: { startedAt: "desc" },
       columns: { startedAt: true, lastSyncedAt: true, status: true },
@@ -652,6 +722,9 @@ export class CoexistSyncRunRepository {
         and(
           eq(coexistSyncRunModel.channel, input.channel),
           eq(coexistSyncRunModel.integrationId, input.integrationId),
+          // MUST scope: without this, disabling coexist would also tear
+          // down a live contact-scan run on the same integration.
+          eq(coexistSyncRunModel.type, "coexist"),
           // `waiting` included: disabling coexist must also tear down a
           // WhatsApp run parked waiting for more Meta history, otherwise the
           // run outlives the feature it belongs to.
@@ -715,23 +788,42 @@ export class CoexistSyncRunRepository {
    * read-modify-write, which would reintroduce a lost-update race across the
    * two concurrent phase workers) while also setting the given plain-value
    * fields.
+   *
+   * `expect` is optional and additive: omitted, this behaves exactly as
+   * before (id-only predicate, no return value the caller can inspect —
+   * kept as `Promise<void>` so the Messenger/Instagram coexist callers are
+   * unaffected). Passed, the write is fenced by `runWriteFilter` like every
+   * other claim-holder write and the affected-row count is returned — the
+   * contact-scan engine's per-page loop needs this to detect a claim
+   * takeover (0 rows) after every write.
    */
+  // No-expect overload keeps `Promise<undefined>` (not `Promise<void>`) so
+  // the implementation signature below can declare a plain `number |
+  // undefined` union — `void` inside a union trips the linter, and the
+  // resolved value is `undefined` either way, so no coexist caller
+  // (`messenger-sync.ts`, which only `await`s and never reads the result)
+  // observes a behavior change.
   async incrementProgress(input: {
     runId: string
-    increments: Partial<
-      Record<
-        | "currentScan"
-        | "importedContactCount"
-        | "importedMessageCount"
-        | "skippedCount"
-        | "failedCount",
-        number
-      >
-    >
+    increments: IncrementProgressCounters
     fields?: CoexistRunProgressInput["fields"]
     tx?: DatabaseClient
-  }): Promise<void> {
-    const { tx = db, runId, increments, fields } = input
+  }): Promise<undefined>
+  async incrementProgress(input: {
+    runId: string
+    increments: IncrementProgressCounters
+    fields?: CoexistRunProgressInput["fields"]
+    expect: CoexistRunWriteGuard
+    tx?: DatabaseClient
+  }): Promise<number>
+  async incrementProgress(input: {
+    runId: string
+    increments: IncrementProgressCounters
+    fields?: CoexistRunProgressInput["fields"]
+    expect?: CoexistRunWriteGuard
+    tx?: DatabaseClient
+  }): Promise<number | undefined> {
+    const { tx = db, runId, increments, fields, expect } = input
     const incrementSet: Record<string, unknown> = {}
     for (const [key, amount] of Object.entries(increments)) {
       if (amount === undefined) {
@@ -742,10 +834,15 @@ export class CoexistSyncRunRepository {
       incrementSet[key] = sql`${column} + ${amount}`
     }
 
-    await tx
+    const rows = await tx
       .update(coexistSyncRunModel)
       .set({ ...incrementSet, ...fields, updatedAt: new Date() })
-      .where(eq(coexistSyncRunModel.id, runId))
+      .where(and(...runWriteFilter(runId, expect)))
+      .returning({ id: coexistSyncRunModel.id })
+
+    if (expect) {
+      return rows.length
+    }
   }
 
   /** Init-row read (attempts/currentError/messengerSyncPhase) before claim. */
@@ -828,6 +925,225 @@ export class CoexistSyncRunRepository {
         },
       })) ?? null
     )
+  }
+
+  // ---------------------------------------------------------------------
+  // Contact scan (`type = 'contact_scan'`) — dedicated lifecycle methods.
+  // Every method below ANDs `type = 'contact_scan'` into its WHERE, so it
+  // only ever touches scan rows; a coexist row is untouched even if a
+  // misrouted job passes its id. `claimRunWithNewToken` is intentionally
+  // NOT reused here (see its own doc comment / plan §3(b)) — the scan gets
+  // its own type-scoped claim instead.
+  // ---------------------------------------------------------------------
+
+  /**
+   * Claims a scan run for THIS worker and mints a fresh ownership token.
+   * Mirrors `claimRunWithNewToken`, type-scoped, with one addition: the
+   * `claimToken IS NULL` arm lets a **continuation** re-claim the
+   * fresh-heartbeat `running` row a previous chunk released via
+   * `yieldForContinuation` — coexist's claim has no such arm because it has
+   * no lease-release protocol.
+   *
+   * @returns the claimed row, or null when this worker did not win it.
+   */
+  async claimContactScanRun(input: {
+    runId: string
+    tx?: DatabaseClient
+  }): Promise<CoexistSyncRunModel | null> {
+    const { tx = db, runId } = input
+    const [run] = await tx
+      .update(coexistSyncRunModel)
+      .set({
+        status: "running",
+        claimToken: crypto.randomUUID(),
+        startedAt: sql`COALESCE(${coexistSyncRunModel.startedAt}, NOW())`,
+        lastHeartbeatAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(coexistSyncRunModel.id, runId),
+          eq(coexistSyncRunModel.type, "contact_scan"),
+          inArray(coexistSyncRunModel.status, PULL_CLAIMABLE_STATUSES),
+          or(
+            ne(coexistSyncRunModel.status, "running"),
+            isNull(coexistSyncRunModel.claimToken),
+            lt(
+              coexistSyncRunModel.lastHeartbeatAt,
+              sql`NOW() - INTERVAL '10 minutes'`,
+            ),
+          ),
+        ),
+      )
+      .returning()
+
+    return run ?? null
+  }
+
+  /**
+   * Releases the claim token while the run STAYS `running` (never flips to
+   * `init`) — flipping to `init` would let the sweeper double-dispatch a
+   * healthy scan every minute. This keeps one live dispatcher (the enqueued
+   * continuation job, which wins `claimContactScanRun`'s null-token arm
+   * immediately) with the sweeper only as crash fallback via
+   * `reopenReleased`.
+   *
+   * @returns how many rows the write landed on — 0 means the guard failed
+   * (claim taken over), so the caller must not enqueue a continuation.
+   */
+  async yieldForContinuation(input: {
+    runId: string
+    expect: CoexistRunWriteGuard
+    tx?: DatabaseClient
+  }): Promise<number> {
+    const { tx = db, runId, expect } = input
+    const rows = await tx
+      .update(coexistSyncRunModel)
+      .set({
+        claimToken: null,
+        lastHeartbeatAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(coexistSyncRunModel.type, "contact_scan"),
+          ...runWriteFilter(runId, expect),
+        ),
+      )
+      .returning({ id: coexistSyncRunModel.id })
+
+    return rows.length
+  }
+
+  /**
+   * Sweeper fallback for a run `yieldForContinuation` released but whose
+   * continuation job could never be enqueued — reopens it to `init` so the
+   * normal `pickDueRuns({ type: "contact_scan" })` path picks it back up.
+   * Only matches a row still exactly in that released state (`running` +
+   * no token), so it cannot clobber a run a continuation already re-claimed.
+   */
+  async reopenReleased(input: {
+    runId: string
+    tx?: DatabaseClient
+  }): Promise<number> {
+    const { tx = db, runId } = input
+    const rows = await tx
+      .update(coexistSyncRunModel)
+      .set({ status: "init", updatedAt: new Date() })
+      .where(
+        and(
+          eq(coexistSyncRunModel.id, runId),
+          eq(coexistSyncRunModel.type, "contact_scan"),
+          eq(coexistSyncRunModel.status, "running"),
+          isNull(coexistSyncRunModel.claimToken),
+        ),
+      )
+      .returning({ id: coexistSyncRunModel.id })
+
+    return rows.length
+  }
+
+  /**
+   * Creates a fresh scan run, targetless `onConflictDoNothing()` — a
+   * `target` cannot match a partial unique index without repeating its
+   * predicate (see `createRun`'s comment / `ads-conversion-event/repository.ts`),
+   * and the `CoexistSyncRun_contact_scan_active_uq` partial index already
+   * dedups concurrent submits for the same integration.
+   *
+   * @returns the created row, or null when a live scan already exists for
+   * this integration (the caller should treat this as a race loss and
+   * surface "already running").
+   */
+  async createContactScanRun(
+    input: CreateContactScanRunInput,
+  ): Promise<CoexistSyncRunModel | null> {
+    const { tx = db } = input
+    const [run] = await tx
+      .insert(coexistSyncRunModel)
+      .values({
+        workspaceId: input.workspaceId,
+        integrationId: input.integrationId,
+        channel: input.channel,
+        type: "contact_scan",
+        status: "init",
+        triggerSource: input.triggerSource,
+        scanFromAt: input.scanFromAt,
+        requestedByUserId: input.requestedByUserId,
+        // Same phantom-default discipline as `createRun` — no `.default()`
+        // on these, so every insert path writes them explicitly. A fresh
+        // scan is unowned and has not walked any page yet.
+        pendingPatches: null,
+        claimToken: null,
+        resumeCursor: null,
+      })
+      .onConflictDoNothing()
+      .returning()
+
+    return run ?? null
+  }
+
+  /** Newest scan run for this integration, workspace-scoped. */
+  async findLatestContactScanRun(input: {
+    workspaceId: string
+    integrationId: string
+    tx?: DatabaseClient
+  }): Promise<CoexistSyncRunModel | null> {
+    const { tx = db } = input
+    return (
+      (await tx.query.coexistSyncRunModel.findFirst({
+        where: {
+          workspaceId: input.workspaceId,
+          integrationId: input.integrationId,
+          type: "contact_scan",
+        },
+        orderBy: { createdAt: "desc" },
+      })) ?? null
+    )
+  }
+
+  /**
+   * Paginated scan-run history for the Automatic Customer Scan history page
+   * — the `type='contact_scan'` mirror of `ImportService.list`. Workspace-
+   * scoped AND type-scoped (both ANDed into the same `where`), so it can
+   * never surface a `type='coexist'` row even when the workspace also has
+   * coexist history. Channel-agnostic: returns every column the caller may
+   * need (`channel` included) with no per-channel branching here.
+   */
+  async listContactScanRuns(input: {
+    workspaceId: string
+    page?: number
+    perPage?: number
+    sort?: { id: string; desc: boolean }[]
+    tx?: DatabaseClient
+  }): Promise<{ data: CoexistSyncRunModel[]; pageCount: number }> {
+    const { tx = db, workspaceId } = input
+    const where = {
+      workspaceId,
+      type: "contact_scan" as const,
+    }
+    const pagination = getPaginationWithDefaults(input)
+    const sortObject = parseOrderByAsObject(coexistSyncRunModel, input)
+    const orderBy =
+      Object.keys(sortObject).length > 0
+        ? sortObject
+        : { createdAt: "desc" as const }
+
+    const [data, total] = await Promise.all([
+      tx.query.coexistSyncRunModel.findMany({
+        where,
+        orderBy,
+        ...pagination,
+      }),
+      tx.$count(
+        coexistSyncRunModel,
+        relationsFilterToSQL(coexistSyncRunModel, where),
+      ),
+    ])
+
+    return {
+      data,
+      pageCount: Math.ceil(total / pagination.limit),
+    }
   }
 }
 

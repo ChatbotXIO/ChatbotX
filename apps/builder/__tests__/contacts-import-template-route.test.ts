@@ -26,7 +26,7 @@ const VI_TEMPLATE =
   '"1234567890","+84155550100","an.nguyen@example.com","An","Nguyễn","user.9187654321098765"\n'
 
 const { GET } = await import(
-  "../src/app/(no-sidebar)/space/[workspaceId]/contacts/import/template/route"
+  "../src/app/space/[workspaceId]/contacts/import/template/route"
 )
 
 const callRoute = (workspaceId: string) =>

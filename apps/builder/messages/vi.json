@@ -3901,6 +3901,60 @@
     "countCapped": "{count}+ liên hệ",
     "exportAllNotice": "Tất cả liên hệ khớp với bộ lọc hiện tại sẽ được xuất."
   },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Nhập từ tệp",
+      "automaticScan": "Quét Khách Hàng Tự Động"
+    },
+    "title": "Quét Khách Hàng Tự Động",
+    "submit": "Quét tự động",
+    "fields": {
+      "inbox": "Hộp thư",
+      "scanFrom": "Quét Inbox từ thời gian"
+    },
+    "hint": {
+      "range": "Hệ thống sẽ quét khách hàng đã từng inbox page từ {from} đến hiện tại.",
+      "beforeChoose": "Sau khi quét, bạn phải chờ sau 24h tiếp theo mới tiếp tục sử dụng được tính năng này."
+    },
+    "status": {
+      "idle": "Chưa có lượt quét nào được chạy cho hộp thư này. Chọn ngày bắt đầu và chạy lượt Quét khách hàng tự động đầu tiên.",
+      "running": "Hệ thống đang tự động quét, thời gian ước tính hoàn thành vào lúc {eta}",
+      "nextScan": "Thời gian quét tiếp theo: {at}",
+      "finished": "Hệ thống đã hoàn thành yêu cầu quét khách hàng lần cuối vào lúc {at}.",
+      "total": "Tổng số khách hàng quét được: {count}",
+      "waitCooldown": "Bạn phải chờ sau 24h tiếp theo mới tiếp tục sử dụng được tính năng này.",
+      "failed": "Lượt quét gần nhất đã thất bại. Bạn có thể thử lại sau khi hết thời gian chờ.",
+      "partial": "Lượt quét gần nhất chỉ hoàn tất một phần — một số cuộc hội thoại không thể nhập được."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Thời gian quét từ phải ở trong quá khứ.",
+      "contactScanInboxNotFound": "Không tìm thấy hộp thư.",
+      "contactScanChannelUnsupported": "Kênh này không hỗ trợ Quét khách hàng tự động.",
+      "contactScanIntegrationDisconnected": "Hộp thư này chưa được kết nối.",
+      "contactScanCooldown": "Hộp thư này vừa được quét gần đây. Vui lòng đợi trước khi quét lại.",
+      "contactScanAlreadyRunning": "Đã có một lượt quét đang chạy cho hộp thư này.",
+      "contactScanForbidden": "Bạn không có quyền chạy Quét khách hàng tự động."
+    },
+    "histories": {
+      "title": "Lịch sử quét",
+      "columns": {
+        "channel": "Kênh",
+        "scanFrom": "Quét từ",
+        "importedContacts": "Liên hệ đã nhập",
+        "scannedConversations": "Cuộc hội thoại đã quét",
+        "finishedAt": "Hoàn tất lúc",
+        "error": "Lỗi"
+      },
+      "status": {
+        "init": "Đang chờ",
+        "running": "Đang chạy",
+        "succeeded": "Thành công",
+        "partial": "Một phần",
+        "failed": "Thất bại"
+      },
+      "empty": "Chưa có lượt quét nào được chạy."
+    }
+  },
   "errorLogs": {
     "title": "Nhật ký lỗi",
     "unknownContact": "Liên hệ không xác định"

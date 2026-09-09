@@ -1,4 +1,5 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import type { CoexistRunType } from "@chatbotx.io/database/partials"
 import {
   type CoexistChannel,
   type CoexistIntegrationRow,
@@ -8,6 +9,7 @@ import {
   type CoexistRunWriteGuard,
   type CoexistTriggerSource,
   coexistSyncRunRepository,
+  type IncrementProgressCounters,
   type PickedCoexistRun,
   type PullCoexistChannel,
 } from "@chatbotx.io/database/repositories"
@@ -153,11 +155,20 @@ class CoexistService extends BaseService {
     await coexistSyncRunRepository.tearDownActiveRunsForIntegration(input)
   }
 
-  markMaxAttemptsFailed(input: { maxAttempts: number }): Promise<void> {
+  /**
+   * `type` has no default — see `PickDueRunsInput.type` on the repository —
+   * so this coexist-only service always passes `"coexist"` explicitly, the
+   * same discipline the caller (`scanCoexistRuns`) is required to follow.
+   */
+  markMaxAttemptsFailed(input: {
+    type: CoexistRunType
+    maxAttempts: number
+  }): Promise<void> {
     return coexistSyncRunRepository.markMaxAttemptsFailed(input)
   }
 
   pickDueRuns(input: {
+    type: CoexistRunType
     batchSize: number
     maxAttempts: number
   }): Promise<PickedCoexistRun[]> {
@@ -314,9 +325,33 @@ class CoexistService extends BaseService {
     return coexistSyncRunRepository.findLastSyncedAt(input)
   }
 
-  incrementProgress(
-    input: Parameters<typeof coexistSyncRunRepository.incrementProgress>[0],
-  ): Promise<void> {
+  /**
+   * Mirrors the repository's overloads by hand rather than
+   * `Parameters<typeof coexistSyncRunRepository.incrementProgress>[0]` —
+   * that utility type resolves to an overloaded function's LAST signature
+   * only, which would have silently forced every coexist caller (none of
+   * which pass `expect`) onto the `expect`-required overload.
+   */
+  incrementProgress(input: {
+    runId: string
+    increments: IncrementProgressCounters
+    fields?: CoexistRunProgressInput["fields"]
+    tx?: DatabaseClient
+  }): Promise<undefined>
+  incrementProgress(input: {
+    runId: string
+    increments: IncrementProgressCounters
+    fields?: CoexistRunProgressInput["fields"]
+    expect: CoexistRunWriteGuard
+    tx?: DatabaseClient
+  }): Promise<number>
+  incrementProgress(input: {
+    runId: string
+    increments: IncrementProgressCounters
+    fields?: CoexistRunProgressInput["fields"]
+    expect?: CoexistRunWriteGuard
+    tx?: DatabaseClient
+  }): Promise<number | undefined> {
     return coexistSyncRunRepository.incrementProgress(input)
   }
 

@@ -94,6 +94,22 @@ class InboxService extends BaseService {
     // )
   }
 
+  /**
+   * Workspace-scoped generalization of `findWithIntegrationsById` — callers
+   * that already have a `workspaceId` (e.g. `ContactScanService`) should
+   * prefer this so a forged/foreign `id` can never resolve into another
+   * tenant's inbox. `findWithIntegrationsById` stays for its existing
+   * unscoped callers.
+   */
+  async findWithIntegrations(props: {
+    where: InboxWhere
+  }): Promise<InboxWithIntegrations | undefined> {
+    return await db.query.inboxModel.findFirst({
+      where: props.where,
+      with: InboxService.withIntegrations,
+    })
+  }
+
   async findWithIntegrationsById(props: {
     id: string
   }): Promise<InboxWithIntegrations | undefined> {

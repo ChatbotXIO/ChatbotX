@@ -120,9 +120,13 @@ async function runRecoveryPasses(): Promise<void> {
 export async function scanCoexistRuns(): Promise<void> {
   await runRecoveryPasses()
 
-  await coexistService.markMaxAttemptsFailed({ maxAttempts: MAX_ATTEMPTS })
+  await coexistService.markMaxAttemptsFailed({
+    type: "coexist",
+    maxAttempts: MAX_ATTEMPTS,
+  })
 
   const picked = await coexistService.pickDueRuns({
+    type: "coexist",
     batchSize: BATCH,
     maxAttempts: MAX_ATTEMPTS,
   })
