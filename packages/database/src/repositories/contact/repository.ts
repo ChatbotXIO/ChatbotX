@@ -1,8 +1,12 @@
 import {
+  and,
   countWithRelationsFilter,
   countWithRelationsFilterCapped,
   type DatabaseClient,
   db,
+  eq,
+  inArray,
+  isNull,
   sql,
 } from "../../client"
 import { contactModel } from "../../schema"
@@ -148,5 +152,32 @@ export const contactRepository = {
           )
       `)
     })
+  },
+  /**
+   * Atomically transition contacts to blocked, scoped to one workspace.
+   *
+   * The `isNull(blockedAt)` guard in the WHERE is load-bearing: callers use
+   * the RETURNING set as the "really transitioned" list to decide which
+   * analytics events to emit. A read-then-write would leave a TOCTOU window
+   * that double-counts `contact_blocked`.
+   */
+  async blockManyIfNotBlocked(
+    props: { workspaceId: string; ids: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string }[]> {
+    if (props.ids.length === 0) {
+      return []
+    }
+    return await tx
+      .update(contactModel)
+      .set({ blockedAt: new Date() })
+      .where(
+        and(
+          eq(contactModel.workspaceId, props.workspaceId),
+          inArray(contactModel.id, props.ids),
+          isNull(contactModel.blockedAt),
+        ),
+      )
+      .returning({ id: contactModel.id })
   },
 }

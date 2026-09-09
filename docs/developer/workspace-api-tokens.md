@@ -39,6 +39,11 @@ automatically). Scope values are defined by the `workspaceApiTokenScopes` zod
 enum in `packages/database/src/partials/workspace-api-token.ts` and stored as
 plain `text[]`, so adding a scope is an enum change, never a migration.
 
+The `analytics` scope covers both `/v1/error-logs`
+(`apps/builder/src/features/error-logs/api/public.ts`) and, as of the public
+analytics router, every `/v1/analytics/*` route
+(`apps/builder/src/features/analytics/api/public.ts`).
+
 ## The default token and `{{api_key}}`
 
 Exactly one row per workspace may have `isDefault = true` (partial unique

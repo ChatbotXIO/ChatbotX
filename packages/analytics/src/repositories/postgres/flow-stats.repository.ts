@@ -22,6 +22,32 @@ import type {
 import { BaseRepository } from "./base.repository"
 
 export class FlowStatsRepository extends BaseRepository {
+  async findAnalyticsSessionsByFlowIds(
+    flowIds: string[],
+  ): Promise<{ flowId: string; id: string }[]> {
+    return await db.query.flowAnalyticsSessionModel.findMany({
+      where: {
+        flowId: { in: flowIds },
+        deletedAt: { isNull: true },
+      },
+      columns: { flowId: true, id: true },
+    })
+  }
+
+  async findActiveAnalyticsSession(input: {
+    workspaceId: string
+    flowId: string
+  }): Promise<{ id: string } | undefined> {
+    return await db.query.flowAnalyticsSessionModel.findFirst({
+      where: {
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+  }
+
   /**
    * Aggregate per-node counts (delivered / failed / clicked) for every node in
    * one grouped query instead of per-node round-trips.
@@ -370,6 +396,15 @@ export class FlowStatsRepository extends BaseRepository {
   }
 
   async resetStatsSession(input: RemoveFlowStatsRequest): Promise<void> {
+    const flow = await db.query.flowModel.findFirst({
+      where: { id: input.flowId, workspaceId: input.workspaceId },
+      columns: { id: true },
+    })
+
+    if (!flow) {
+      return
+    }
+
     await db.transaction(async (tx) => {
       await tx
         .update(flowAnalyticsSessionModel)

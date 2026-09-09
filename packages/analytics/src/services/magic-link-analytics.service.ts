@@ -1,5 +1,3 @@
-import { db } from "@chatbotx.io/database/client"
-import { magicLinkStatModel } from "@chatbotx.io/database/schema"
 import type { MagicLinkStatModel } from "@chatbotx.io/database/types"
 import {
   type ClickedPayload,
@@ -9,7 +7,10 @@ import {
 } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
 import { toDate } from "../lib/date"
-import { magicLinkStatsRepository } from "../repositories/postgres/magic-link-stats.repository"
+import {
+  magicLinkStatsRepository,
+  verifyMagicLinkExists,
+} from "../repositories/postgres/magic-link-stats.repository"
 import type { ListFlowNodeContactsResponse } from "../schemas/flow-stats"
 import type {
   MagicLinkContactStatsInput,
@@ -59,17 +60,7 @@ export class MagicLinkAnalyticsService {
       createdAt: new Date(),
     }))
 
-    await db
-      .insert(magicLinkStatModel)
-      .values(items)
-      .onConflictDoNothing({
-        target: [
-          magicLinkStatModel.workspaceId,
-          magicLinkStatModel.linkId,
-          magicLinkStatModel.contactInboxId,
-          magicLinkStatModel.occurredAt,
-        ],
-      })
+    await magicLinkStatsRepository.insertStats(items)
   }
 
   async getMagicLinkStatsByDateRange(input: MagicLinkStatsInput) {
@@ -90,13 +81,7 @@ export class MagicLinkAnalyticsService {
     return listLinkContactStats({
       params: input,
       repository: magicLinkStatsRepository,
-      verifyLink: async ({ workspaceId, linkId }) => {
-        const row = await db.query.magicLinkModel.findFirst({
-          where: { workspaceId, id: linkId },
-          columns: { id: true },
-        })
-        return Boolean(row)
-      },
+      verifyLink: verifyMagicLinkExists,
     })
   }
 }

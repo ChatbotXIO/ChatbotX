@@ -1,10 +1,11 @@
-import { db } from "@chatbotx.io/database/client"
-import { refLinkStatModel } from "@chatbotx.io/database/schema"
 import type { RefLinkStatModel } from "@chatbotx.io/database/types"
 import type { RefLinkPayload } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
 import { toDate } from "../lib/date"
-import { refLinkStatsRepository } from "../repositories/postgres/ref-link-stats.repository"
+import {
+  refLinkStatsRepository,
+  verifyRefLinkExists,
+} from "../repositories/postgres/ref-link-stats.repository"
 import type { ListFlowNodeContactsResponse } from "../schemas/flow-stats"
 import type {
   MagicLinkContactStatsInput,
@@ -49,17 +50,7 @@ export class RefLinkAnalyticsService {
       createdAt: new Date(),
     }))
 
-    await db
-      .insert(refLinkStatModel)
-      .values(items)
-      .onConflictDoNothing({
-        target: [
-          refLinkStatModel.workspaceId,
-          refLinkStatModel.linkId,
-          refLinkStatModel.contactInboxId,
-          refLinkStatModel.occurredAt,
-        ],
-      })
+    await refLinkStatsRepository.insertStats(items)
   }
 
   async getRefLinkStatsByDateRange(input: MagicLinkStatsInput) {
@@ -80,13 +71,7 @@ export class RefLinkAnalyticsService {
     return listLinkContactStats({
       params: input,
       repository: refLinkStatsRepository,
-      verifyLink: async ({ workspaceId, linkId }) => {
-        const row = await db.query.reflinkModel.findFirst({
-          where: { workspaceId, id: linkId },
-          columns: { id: true },
-        })
-        return Boolean(row)
-      },
+      verifyLink: verifyRefLinkExists,
     })
   }
 }

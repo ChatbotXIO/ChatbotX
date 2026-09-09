@@ -1,42 +1,24 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ── db mock ──────────────────────────────────────────────────────────────────
+// ── repository mock ───────────────────────────────────────────────────────────
 
 const capturedInsertValues: unknown[] = []
 
-const builder: Record<string, unknown> = {}
-builder.values = vi.fn((payload: unknown) => {
-  if (Array.isArray(payload)) {
-    capturedInsertValues.push(...payload)
-  } else {
-    capturedInsertValues.push(payload)
-  }
-  return builder
-})
-builder.onConflictDoNothing = vi.fn(() => builder)
-
-const db = {
-  insert: vi.fn(() => builder),
-}
-
-vi.mock("@chatbotx.io/database/client", () => ({ db }))
-
-// ── schema mock ───────────────────────────────────────────────────────────────
-
-const magicLinkStatModel = { workspaceId: "ws_col", linkId: "link_col" }
-
-vi.mock("@chatbotx.io/database/schema", () => ({ magicLinkStatModel }))
-
-// ── repository mock ───────────────────────────────────────────────────────────
-
 const magicLinkStatsRepository = {
+  insertStats: vi.fn((items: unknown[]) => {
+    capturedInsertValues.push(...items)
+    return Promise.resolve()
+  }),
   getStatsByDateRange: vi.fn(),
   getContactStats: vi.fn(),
   getContactCount: vi.fn(),
 }
 
+const verifyMagicLinkExists = vi.fn()
+
 vi.mock("../src/repositories/postgres/magic-link-stats.repository", () => ({
   magicLinkStatsRepository,
+  verifyMagicLinkExists,
 }))
 
 // ── listLinkContactStats mock ─────────────────────────────────────────────────
@@ -94,7 +76,7 @@ describe("MagicLinkAnalyticsService — onClicked filtering", () => {
     const svc = new MagicLinkAnalyticsService()
     await svc.onClicked([makePayload()])
 
-    expect(db.insert).toHaveBeenCalledTimes(1)
+    expect(magicLinkStatsRepository.insertStats).toHaveBeenCalledTimes(1)
     expect(capturedInsertValues).toHaveLength(1)
 
     const row = capturedInsertValues[0] as Record<string, unknown>
@@ -108,7 +90,7 @@ describe("MagicLinkAnalyticsService — onClicked filtering", () => {
     const svc = new MagicLinkAnalyticsService()
     await svc.onClicked([makePayload({ magicLinkId: null })])
 
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(magicLinkStatsRepository.insertStats).not.toHaveBeenCalled()
   })
 
   test("skips payloads with a non-magic_link clickType", async () => {
@@ -118,7 +100,7 @@ describe("MagicLinkAnalyticsService — onClicked filtering", () => {
       makePayload({ clickType: "quick_reply" }),
     ])
 
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(magicLinkStatsRepository.insertStats).not.toHaveBeenCalled()
   })
 
   test("only inserts the valid payloads from a mixed batch", async () => {
@@ -149,7 +131,7 @@ describe("MagicLinkAnalyticsService — onClicked filtering", () => {
     const svc = new MagicLinkAnalyticsService()
     await svc.onClicked([])
 
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(magicLinkStatsRepository.insertStats).not.toHaveBeenCalled()
   })
 })
 

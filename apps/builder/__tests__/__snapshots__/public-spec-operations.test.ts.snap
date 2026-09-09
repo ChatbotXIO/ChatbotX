@@ -58,6 +58,156 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ai-triggers/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "analytics.activeContactsCount",
+    "path": "/v1/analytics/active-contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.blockedContactsCount",
+    "path": "/v1/analytics/blocked-contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.blockedContactsPerDay",
+    "path": "/v1/analytics/blocked-contacts-per-day",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesAiProviders",
+    "path": "/v1/analytics/bot-messages-ai-providers",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesByResult",
+    "path": "/v1/analytics/bot-messages-by-result",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesNoResponse",
+    "path": "/v1/analytics/bot-messages-no-response",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesWithResponse",
+    "path": "/v1/analytics/bot-messages-with-response",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.broadcastStats",
+    "path": "/v1/analytics/broadcasts/{broadcastId}/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.contactCountsPerDay",
+    "path": "/v1/analytics/contact-counts-per-day",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.contactsByDimension",
+    "path": "/v1/analytics/contacts-by-dimension",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.contactsCount",
+    "path": "/v1/analytics/contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationArchived",
+    "path": "/v1/analytics/conversation-archived",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationAssigned",
+    "path": "/v1/analytics/conversation-assigned",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationAssignedByAdmin",
+    "path": "/v1/analytics/conversation-assigned-by-admin",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationFollowUps",
+    "path": "/v1/analytics/conversation-followups",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationHandoffs",
+    "path": "/v1/analytics/conversation-handoffs",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.flowStats",
+    "path": "/v1/analytics/flows/{flowId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.humanAgentStats",
+    "path": "/v1/analytics/human-agent-stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.macActiveContactCount",
+    "path": "/v1/analytics/mac/active-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.magicLinkContacts",
+    "path": "/v1/analytics/magic-links/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.magicLinkStats",
+    "path": "/v1/analytics/magic-links/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.messagesByAdmin",
+    "path": "/v1/analytics/messages-by-admin",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.messagesBySender",
+    "path": "/v1/analytics/messages-by-sender",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.newContactCountsPerDay",
+    "path": "/v1/analytics/new-contact-counts-per-day",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.newContactsCount",
+    "path": "/v1/analytics/new-contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.refLinkContacts",
+    "path": "/v1/analytics/ref-links/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.refLinkStats",
+    "path": "/v1/analytics/ref-links/stats",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "analytics.resetFlowStats",
+    "path": "/v1/analytics/flows/{flowId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.sequenceStepStats",
+    "path": "/v1/analytics/sequences/{sequenceId}/steps/{stepId}/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.uniqueConversationsByAdmin",
+    "path": "/v1/analytics/unique-conversations-by-admin",
+  },
+  {
     "method": "PUT",
     "operationId": "botFields.bulkUpdate",
     "path": "/v1/bot-fields/bulk-update",

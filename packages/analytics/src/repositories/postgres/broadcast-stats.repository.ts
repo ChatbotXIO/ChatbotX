@@ -10,7 +10,10 @@ import {
   or,
   sql,
 } from "@chatbotx.io/database/client"
-import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
+import {
+  broadcastModel,
+  contactsOnBroadcastsModel,
+} from "@chatbotx.io/database/schema"
 import type {
   BroadcastBulkUpdateItem,
   BroadcastEventType,
@@ -21,6 +24,67 @@ import type { ContactEventData } from "../../schemas/common"
 import { BaseRepository } from "./base.repository"
 
 export class BroadcastStatsRepository extends BaseRepository {
+  async getUnreadBroadcastsForContactInboxes(input: {
+    broadcastIds: string[]
+    contactInboxIds: string[]
+  }): Promise<{ broadcastId: string; contactInboxId: string }[]> {
+    return await db.query.contactsOnBroadcastsModel.findMany({
+      where: {
+        broadcastId: { in: input.broadcastIds },
+        contactInboxId: { in: input.contactInboxIds },
+        isRead: false,
+      },
+      columns: {
+        broadcastId: true,
+        contactInboxId: true,
+      },
+    })
+  }
+
+  async updateOccurredAtBulk(
+    items: { broadcastId: string; contactInboxId: string; timestamp: Date }[],
+    updateField: "deliveredAt" | "seenAt",
+  ): Promise<void> {
+    if (items.length === 0) {
+      return
+    }
+
+    const cases = items.map(
+      (item) =>
+        sql`WHEN "broadcastId" = ${item.broadcastId} AND "contactInboxId" = ${item.contactInboxId} THEN ${item.timestamp}`,
+    )
+
+    const tuples = items.map(
+      (i) => sql`(${i.broadcastId}, ${i.contactInboxId})`,
+    )
+
+    await db.execute(sql`
+      UPDATE "ContactOnBroadcast"
+      SET ${sql.identifier(updateField)} = CASE ${sql.join(cases, sql` `)} ELSE ${sql.identifier(updateField)} END
+      WHERE ("broadcastId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
+    `)
+  }
+
+  async getUnreadBroadcastsWithWorkspace(contactInboxIds: string[]): Promise<
+    {
+      broadcastId: string
+      contactId: string
+      contactInboxId: string
+      broadcast: { id: string; workspaceId: string }
+    }[]
+  > {
+    return await db.query.contactsOnBroadcastsModel.findMany({
+      where: {
+        contactInboxId: { in: contactInboxIds },
+        isRead: false,
+      },
+      with: {
+        broadcast: { columns: { id: true, workspaceId: true } },
+      },
+      columns: { broadcastId: true, contactId: true, contactInboxId: true },
+    })
+  }
+
   async updateFailedBulk(
     items: BroadcastFailedBulkUpdateItem[],
   ): Promise<void> {
@@ -88,48 +152,38 @@ export class BroadcastStatsRepository extends BaseRepository {
     }
 
     const t = contactsOnBroadcastsModel
+    const b = broadcastModel
+
+    const scopedBroadcastIds = and(
+      inArray(t.broadcastId, input.broadcastIds),
+      eq(b.workspaceId, input.workspaceId),
+    )
 
     const [deliveredRows, seenRows, clickedRows, failedRows] =
       await Promise.all([
         db
           .select({ broadcastId: t.broadcastId, count: count() })
           .from(t)
-          .where(
-            and(
-              inArray(t.broadcastId, input.broadcastIds),
-              isNotNull(t.deliveredAt),
-            ),
-          )
+          .innerJoin(b, eq(t.broadcastId, b.id))
+          .where(and(scopedBroadcastIds, isNotNull(t.deliveredAt)))
           .groupBy(t.broadcastId),
         db
           .select({ broadcastId: t.broadcastId, count: count() })
           .from(t)
-          .where(
-            and(
-              inArray(t.broadcastId, input.broadcastIds),
-              isNotNull(t.seenAt),
-            ),
-          )
+          .innerJoin(b, eq(t.broadcastId, b.id))
+          .where(and(scopedBroadcastIds, isNotNull(t.seenAt)))
           .groupBy(t.broadcastId),
         db
           .select({ broadcastId: t.broadcastId, count: count() })
           .from(t)
-          .where(
-            and(
-              inArray(t.broadcastId, input.broadcastIds),
-              isNotNull(t.clickedAt),
-            ),
-          )
+          .innerJoin(b, eq(t.broadcastId, b.id))
+          .where(and(scopedBroadcastIds, isNotNull(t.clickedAt)))
           .groupBy(t.broadcastId),
         db
           .select({ broadcastId: t.broadcastId, count: count() })
           .from(t)
-          .where(
-            and(
-              inArray(t.broadcastId, input.broadcastIds),
-              isNotNull(t.failedAt),
-            ),
-          )
+          .innerJoin(b, eq(t.broadcastId, b.id))
+          .where(and(scopedBroadcastIds, isNotNull(t.failedAt)))
           .groupBy(t.broadcastId),
       ])
 
@@ -169,9 +223,10 @@ export class BroadcastStatsRepository extends BaseRepository {
     contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
   }> {
-    const { broadcastId, eventType, page, perPage } = input
+    const { workspaceId, broadcastId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
     const t = contactsOnBroadcastsModel
+    const b = broadcastModel
 
     const { eventCondition, orderColumn } = this.buildEventFilter(eventType)
 
@@ -187,7 +242,10 @@ export class BroadcastStatsRepository extends BaseRepository {
         errorContent: t.errorContent,
       })
       .from(t)
-      .where(sql`${t.broadcastId} = ${broadcastId} AND ${eventCondition}`)
+      .innerJoin(b, eq(t.broadcastId, b.id))
+      .where(
+        sql`${t.broadcastId} = ${broadcastId} AND ${b.workspaceId} = ${workspaceId} AND ${eventCondition}`,
+      )
       .orderBy(sql`${orderColumn} DESC NULLS LAST`)
       .limit(perPage)
       .offset(offset)

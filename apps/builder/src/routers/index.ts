@@ -270,6 +270,18 @@ export const router = {
     })),
   ),
   analyticsRoutes: authorizedAPI
+    // `workspaceAuthorizedMidddleware` (middlewares/auth.ts) takes an
+    // `(input) => input.workspaceId` mapper. Every other call site applies it
+    // to a single procedure whose `.input()` is already declared, so the
+    // mapper typechecks against a known input type. Here it's applied to the
+    // whole `analyticsRoutes` router before `.router()`, where oRPC has no
+    // single input type to infer from — `input` is `unknown`. The mapper is
+    // correct at runtime because every internal analytics route declares
+    // `workspaceId` in its own `.input()`. Real fix: per-procedure `.use()`
+    // across all 30 internal routes (orthogonal refactor, doubles this PR's
+    // blast radius) — deferred. The new public analytics router
+    // (features/analytics/api/public.ts) is independently typed and needs no
+    // such suppression.
     // @ts-expect-error
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .router(analyticsRoutes),

@@ -38,6 +38,7 @@ const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
 
 let operations: SpecOperation[]
 let responseSchemasByOperationId: Record<string, unknown>
+let requestSchemasByOperationId: Record<string, unknown[]>
 let componentSchemas: Record<string, unknown>
 
 // Recursively collects every property key across a JSON schema, including
@@ -110,6 +111,7 @@ beforeAll(async () => {
 
   operations = []
   responseSchemasByOperationId = {}
+  requestSchemasByOperationId = {}
   for (const [path, methods] of Object.entries(spec.paths ?? {})) {
     for (const [method, operation] of Object.entries(
       methods as Record<string, unknown>,
@@ -119,6 +121,10 @@ beforeAll(async () => {
         summary?: string
         tags?: string[]
         security?: Record<string, string[]>[]
+        parameters?: { schema?: unknown }[]
+        requestBody?: {
+          content?: Record<string, { schema?: unknown }>
+        }
         responses?: Record<
           string,
           { content?: Record<string, { schema?: unknown }> }
@@ -144,6 +150,20 @@ beforeAll(async () => {
         successResponse?.content?.["application/json"]?.schema
       if (responseSchema) {
         responseSchemasByOperationId[op.operationId] = responseSchema
+      }
+
+      const requestSchemas: unknown[] = []
+      for (const param of op.parameters ?? []) {
+        if (param.schema) {
+          requestSchemas.push(param.schema)
+        }
+      }
+      const bodySchema = op.requestBody?.content?.["application/json"]?.schema
+      if (bodySchema) {
+        requestSchemas.push(bodySchema)
+      }
+      if (requestSchemas.length > 0) {
+        requestSchemasByOperationId[op.operationId] = requestSchemas
       }
     }
   }
@@ -202,25 +222,124 @@ describe("public API spec — operation naming guard", () => {
     }
   })
 
-  test("integrations.list, webhooks.list, and keywords.list responses never widen to include workspaceId", () => {
-    for (const operationId of [
-      "integrations.list",
-      "webhooks.list",
-      "keywords.list",
-    ]) {
-      const responseSchema = responseSchemasByOperationId[operationId]
-      expect(responseSchema, `${operationId} response schema`).toBeDefined()
+  test("no public operation response schema leaks workspaceId", () => {
+    // Add a commented, explicit exception list here ONLY if you find a
+    // legitimate need after auditing all operations — do not add exceptions
+    // preemptively.
+    const ALLOWED_WORKSPACE_ID_OPERATIONS = new Set<string>([
+      // `channels.me` legitimately echoes the authenticated token's own
+      // workspace/inbox identity — that IS the endpoint's purpose.
+      "channels.me",
 
-      const keys = new Set<string>()
-      collectSchemaPropertyKeys(
-        responseSchema,
-        componentSchemas,
-        keys,
-        new Set(),
+      // Pre-existing leaks, confirmed present on `main` before the analytics
+      // router this test was strengthened for (verified via a clean
+      // `main` worktree — none of these are touched by that change).
+      // Each response schema below includes `workspaceId` somewhere in its
+      // shape (often via a shared internal row schema reused as-is for the
+      // public response). This is a real minor information leak (the
+      // workspace's own id, not another tenant's), not a cross-tenant
+      // authorization bug, but it should still be cleaned up — tracked as
+      // follow-up work, out of scope for the analytics router PR that
+      // tightened this test from a 3-operation allow-list to a full sweep.
+      // Fix per operation by `.omit({ workspaceId: true })`-ing the
+      // offending row schema in that feature's `schema/public.ts`, mirroring
+      // how `apps/builder/src/features/analytics/schema/public.ts` does it.
+      "aiAgents.list",
+      "contacts.list",
+      "contacts.create",
+      "contacts.search",
+      "contacts.get",
+      "contacts.findByCustomField",
+      "contacts.upsert",
+      "contacts.listMessages",
+      "contacts.getMessage",
+      "contacts.refreshProfile",
+      "conversations.list",
+      "coupons.listTopics",
+      "coupons.createTopic",
+      "coupons.getTopic",
+      "coupons.updateTopic",
+      "coupons.deleteTopic",
+      "coupons.archiveTopic",
+      "coupons.unarchiveTopic",
+      "coupons.listCoupons",
+      "coupons.issueCoupon",
+      "coupons.markCouponUsed",
+      "errorLogs.list",
+      "folders.list",
+      "folders.create",
+      "folders.update",
+      "inboxTeams.list",
+      "products.list",
+      "products.create",
+      "products.get",
+      "reflinks.get",
+      "savedReplies.list",
+      "sequences.list",
+      "sequences.get",
+      "triggers.list",
+      "webhooks.create",
+      "workspaceMembers.list",
+      "workspaceMembers.get",
+
+      // Same pre-existing-shared-resource-schema leak pattern as above,
+      // introduced by the automation public API (flows, triggers, keywords,
+      // ai-agents, reflinks, ai-triggers) — see PR that added
+      // `aiAgentsPublicRouter`/`aiTriggersPublicRouter`/etc. Each of these
+      // reuses a resource schema shared with private (non-public) callers,
+      // so `workspaceId` can't be omitted from the shared schema without
+      // breaking those callers. Fix per operation by giving the public
+      // router its own `.omit({ workspaceId: true })` output schema,
+      // mirroring `apps/builder/src/features/analytics/schema/public.ts`.
+      "aiAgents.create",
+      "aiAgents.get",
+      "aiAgents.update",
+      "aiTriggers.list",
+      "aiTriggers.create",
+      "aiTriggers.get",
+      "aiTriggers.update",
+      "aiTriggers.duplicate",
+      "flows.get",
+      "flows.versions",
+      "reflinks.list",
+      "reflinks.create",
+      "reflinks.update",
+      "triggers.create",
+      "triggers.get",
+      "triggers.update",
+      "triggers.updateSettings",
+    ])
+
+    const leaking = Object.entries(responseSchemasByOperationId)
+      .filter(
+        ([operationId]) => !ALLOWED_WORKSPACE_ID_OPERATIONS.has(operationId),
       )
+      .filter(([, schema]) => {
+        const keys = new Set<string>()
+        collectSchemaPropertyKeys(schema, componentSchemas, keys, new Set())
+        return keys.has("workspaceId")
+      })
+      .map(([operationId]) => operationId)
 
-      expect(keys.has("workspaceId")).toBe(false)
-    }
+    expect(leaking).toEqual([])
+  })
+
+  test("no public operation request schema accepts a client-supplied workspaceId", () => {
+    // A route that *accepts* workspaceId is the actual cross-tenant vector —
+    // strictly worse than echoing one back in a response. Every
+    // `schema/public.ts` is expected to `.omit({ workspaceId: true })`; this
+    // is a full sweep, not a spot-check, so it should never need exceptions.
+    const leaking = Object.entries(requestSchemasByOperationId)
+      .filter(([, schemas]) =>
+        schemas.some((schema) => {
+          const keys = new Set<string>()
+          collectSchemaPropertyKeys(schema, componentSchemas, keys, new Set())
+          return keys.has("workspaceId")
+        }),
+      )
+      .map(([operationId]) => operationId)
+
+    expect(leaking).toEqual([])
   })
 })
 

@@ -1,3 +1,5 @@
+import { db } from "@chatbotx.io/database/client"
+
 export type MessageEventType =
   | "message:sent"
   | "message:delivered"
@@ -6,6 +8,25 @@ export type MessageEventType =
   | "flow:clicked"
 
 export abstract class BaseRepository {
+  /**
+   * Resolve contact inboxes by id with the narrow contact/conversation
+   * columns needed to build a contact-event row. Shared here so
+   * `LinkStatsRepository` and `FlowStatsRepository` don't keep two
+   * byte-identical copies in sync.
+   */
+  findContactInboxesWithContact(contactInboxIds: string[]) {
+    return db.query.contactInboxModel.findMany({
+      where: { id: { in: contactInboxIds } },
+      with: {
+        contact: {
+          columns: { id: true, firstName: true, lastName: true, avatar: true },
+        },
+        conversation: { columns: { id: true } },
+      },
+      columns: { id: true, sourceId: true, channel: true },
+    })
+  }
+
   protected getOccurredAt(
     row: {
       deliveredAt: Date | null
